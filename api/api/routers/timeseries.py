@@ -4,6 +4,7 @@ from typing import List, Optional, Union, Sequence
 from fastapi import APIRouter, Query, Depends
 
 from webviz_services import sumo_discovery
+
 from ..auth.auth_helper import AuthHelper, AuthenticatedUser
 from .. import schemas
 from ..config import SUMO_CONFIG
@@ -63,6 +64,19 @@ async def get_timestamps(
     For other resampling frequencies, the date range will be expanded to cover the entire
     time range of all the requested realizations before computing the resampled dates."""
 
+    ...
+
+
+@router.get("/historical_vector_data/", tags=["timeseries"])
+async def get_historical_vector_data(
+    authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
+    sumo_case_id: str = Query(None, description="Sumo case id"),
+    non_historical_vector_name: str = Query(None, description="Name of the non-historical vector"),
+    resampling_frequency: Optional[schemas.timeseries.Frequency] = Query(
+        None, description="Resampling frequency"
+    ),  # ??
+    relative_to_timestamp: Optional[datetime.datetime] = Query(None, description="Calculate relative to timestamp"),
+) -> schemas.timeseries.VectorHistoricalData:
     ...
 
 

@@ -8,6 +8,7 @@ from pydantic import BaseModel
 class VectorDescription(BaseModel):
     name: str
     descriptive_name: str
+    has_historical: bool
     """ Ytelse vs plassering av business logikk
     group: str
     subgroup: str
@@ -20,10 +21,15 @@ class VectorMetadata(BaseModel):
     unit: str
     is_total: bool
     is_rate: bool
-    is_historical: bool
+    _historical: bool
     keyword: str
     wgname: Optional[str]
     get_num: Optional[int]
+
+
+class VectorHistoricalData(BaseModel):
+    timestamps: List[datetime.datetime]
+    values: List[float]
 
 
 class VectorRealizationData(BaseModel):
