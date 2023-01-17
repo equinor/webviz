@@ -300,18 +300,6 @@ files = [
 pycparser = "*"
 
 [[package]]
-name = "cfgv"
-version = "3.3.1"
-description = "Validate configuration and produce human readable error messages."
-category = "dev"
-optional = false
-python-versions = ">=3.6.1"
-files = [
-    {file = "cfgv-3.3.1-py2.py3-none-any.whl", hash = "sha256:c6a0883f3917a037485059700b9e75da2464e6c27051014ad85ba6aaa5884426"},
-    {file = "cfgv-3.3.1.tar.gz", hash = "sha256:f5a830efb9ce7a445376bb66ec94c638a9787422f96264c98edc6bdeed8ab736"},
-]
-
-[[package]]
 name = "charset-normalizer"
 version = "3.0.1"
 description = "The Real First Universal Charset Detector. Open, modern and actively maintained alternative to Chardet."
@@ -648,18 +636,6 @@ files = [
 graph = ["objgraph (>=1.7.2)"]
 
 [[package]]
-name = "distlib"
-version = "0.3.6"
-description = "Distribution utilities"
-category = "dev"
-optional = false
-python-versions = "*"
-files = [
-    {file = "distlib-0.3.6-py2.py3-none-any.whl", hash = "sha256:f35c4b692542ca110de7ef0bea44d73981caeb34ca0b9b6b2e6d7790dda8f80e"},
-    {file = "distlib-0.3.6.tar.gz", hash = "sha256:14bad2d9b04d3a36127ac97f30b12a19268f211063d8f8ee4f47108896e11b46"},
-]
-
-[[package]]
 name = "ecl-data-io"
 version = "2.1.0"
 description = "A (lazy) parser and writer for the ecl output format."
@@ -712,22 +688,6 @@ doc = ["mdx-include (>=1.4.1,<2.0.0)", "mkdocs (>=1.1.2,<2.0.0)", "mkdocs-markdo
 test = ["anyio[trio] (>=3.2.1,<4.0.0)", "black (==22.10.0)", "coverage[toml] (>=6.5.0,<8.0)", "databases[sqlite] (>=0.3.2,<0.7.0)", "email-validator (>=1.1.1,<2.0.0)", "flask (>=1.1.2,<3.0.0)", "httpx (>=0.23.0,<0.24.0)", "isort (>=5.0.6,<6.0.0)", "mypy (==0.982)", "orjson (>=3.2.1,<4.0.0)", "passlib[bcrypt] (>=1.7.2,<2.0.0)", "peewee (>=3.13.3,<4.0.0)", "pytest (>=7.1.3,<8.0.0)", "python-jose[cryptography] (>=3.3.0,<4.0.0)", "python-multipart (>=0.0.5,<0.0.6)", "pyyaml (>=5.3.1,<7.0.0)", "ruff (==0.0.138)", "sqlalchemy (>=1.3.18,<1.4.43)", "types-orjson (==3.6.2)", "types-ujson (==5.6.0.0)", "ujson (>=4.0.1,!=4.0.2,!=4.1.0,!=4.2.0,!=4.3.0,!=5.0.0,!=5.1.0,<6.0.0)"]
 
 [[package]]
-name = "filelock"
-version = "3.9.0"
-description = "A platform independent file lock."
-category = "dev"
-optional = false
-python-versions = ">=3.7"
-files = [
-    {file = "filelock-3.9.0-py3-none-any.whl", hash = "sha256:f58d535af89bb9ad5cd4df046f741f8553a418c01a7856bf0d173bbc9f6bd16d"},
-    {file = "filelock-3.9.0.tar.gz", hash = "sha256:7b319f24340b51f55a2bf7a12ac0755a9b03e718311dac567a0f4f7fabd2f5de"},
-]
-
-[package.extras]
-docs = ["furo (>=2022.12.7)", "sphinx (>=5.3)", "sphinx-autodoc-typehints (>=1.19.5)"]
-testing = ["covdefaults (>=2.2.2)", "coverage (>=7.0.1)", "pytest (>=7.2)", "pytest-cov (>=4)", "pytest-timeout (>=2.1)"]
-
-[[package]]
 name = "fmu-sumo"
 version = "0.2.3"
 description = "Python package for interacting with Sumo in an FMU setting"
@@ -754,8 +714,8 @@ tests = ["pytest (>=6.1.1)"]
 
 [package.source]
 type = "git"
-url = "https://github.com/equinor/fmu-sumo"
-reference = "HEAD"
+url = "https://github.com/equinor/fmu-sumo.git"
+reference = "master"
 resolved_reference = "8ca646be278549dbd440e1e64462a2e34d0b8dbc"
 
 [[package]]
@@ -870,18 +830,18 @@ numpy = ">=1.14.5"
 
 [[package]]
 name = "hdf5plugin"
-version = "4.0.1"
+version = "4.1.0"
 description = "HDF5 Plugins for Windows, MacOS, and Linux"
 category = "main"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "hdf5plugin-4.0.1-py3-none-macosx_10_9_universal2.whl", hash = "sha256:69c68d5453b7f7eb07bf9da38fc9e978978bb184e598399dfee911368f2f4135"},
-    {file = "hdf5plugin-4.0.1-py3-none-manylinux_2_12_x86_64.manylinux2010_x86_64.whl", hash = "sha256:abc9405c81043eeb3b8979d8fb297227cceb04e6a70364b0fa9e0874845673e0"},
-    {file = "hdf5plugin-4.0.1-py3-none-manylinux_2_17_ppc64le.manylinux2014_ppc64le.whl", hash = "sha256:2e08e7961a10c41ba64a4661ca24cb0978081bbef23d24e035cdeb3b952259a4"},
-    {file = "hdf5plugin-4.0.1-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:5d7e24fe4c4c5eb4be201811f49400083b83dc502d8fcbec24c55d8ea3af2457"},
-    {file = "hdf5plugin-4.0.1-py3-none-win_amd64.whl", hash = "sha256:9c34eee1b296ab2e5027d6304db647a16f08b51cb7eb4868d798f68543c2b32e"},
-    {file = "hdf5plugin-4.0.1.tar.gz", hash = "sha256:b185fea987f582e3a51e7994cc07415664ac8be54dbad863d9f65a4fb5bd635c"},
+    {file = "hdf5plugin-4.1.0-py3-none-macosx_10_9_universal2.whl", hash = "sha256:baadc86900842ada80541d9029c9dbd6845ef184ebb602dd80fd69f77ecf3ca8"},
+    {file = "hdf5plugin-4.1.0-py3-none-manylinux_2_12_x86_64.manylinux2010_x86_64.whl", hash = "sha256:9e326f3f54f11aa777523d568d7e84bdca236a3ee7f8a22902cbb297e5b4da22"},
+    {file = "hdf5plugin-4.1.0-py3-none-manylinux_2_17_ppc64le.manylinux2014_ppc64le.whl", hash = "sha256:7622657982704dd98e1b61c43a62f5e4b1acbcd7011aebdfa2ed40a8feff9e4e"},
+    {file = "hdf5plugin-4.1.0-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:7452e04983e940331d96214a53850f3054813f768429e46c4f9c2a26c599db44"},
+    {file = "hdf5plugin-4.1.0-py3-none-win_amd64.whl", hash = "sha256:51d91891ab74d93e847599739ef530114f7bdd27b126c27d2919d4a0c169e910"},
+    {file = "hdf5plugin-4.1.0.tar.gz", hash = "sha256:d59afda87eaba5810d34b739d7b167d37a4e998144c1b325ea818d7afb483964"},
 ]
 
 [package.dependencies]
@@ -889,21 +849,6 @@ h5py = "*"
 
 [package.extras]
 dev = ["sphinx", "sphinx-rtd-theme"]
-
-[[package]]
-name = "identify"
-version = "2.5.13"
-description = "File identification library for Python"
-category = "dev"
-optional = false
-python-versions = ">=3.7"
-files = [
-    {file = "identify-2.5.13-py2.py3-none-any.whl", hash = "sha256:8aa48ce56e38c28b6faa9f261075dea0a942dfbb42b341b4e711896cbb40f3f7"},
-    {file = "identify-2.5.13.tar.gz", hash = "sha256:abb546bca6f470228785338a01b539de8a85bbf46491250ae03363956d8ebb10"},
-]
-
-[package.extras]
-license = ["ukkonen"]
 
 [[package]]
 name = "idna"
@@ -1443,21 +1388,6 @@ files = [
 ]
 
 [[package]]
-name = "nodeenv"
-version = "1.7.0"
-description = "Node.js virtual environment builder"
-category = "dev"
-optional = false
-python-versions = ">=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,!=3.5.*,!=3.6.*"
-files = [
-    {file = "nodeenv-1.7.0-py2.py3-none-any.whl", hash = "sha256:27083a7b96a25f2f5e1d8cb4b6317ee8aeda3bdd121394e5ac54e498028a042e"},
-    {file = "nodeenv-1.7.0.tar.gz", hash = "sha256:e0e7f7dfb85fc5394c6fe1e8fa98131a2473e04311a45afb6508f7cf1836fa2b"},
-]
-
-[package.dependencies]
-setuptools = "*"
-
-[[package]]
 name = "numexpr"
 version = "2.8.4"
 description = "Fast numerical expression evaluator for NumPy"
@@ -1826,25 +1756,6 @@ pywin32 = {version = ">=226", markers = "platform_system == \"Windows\""}
 docs = ["sphinx (>=1.7.1)"]
 redis = ["redis"]
 tests = ["pytest (>=5.4.1)", "pytest-cov (>=2.8.1)", "pytest-mypy (>=0.8.0)", "pytest-timeout (>=2.1.0)", "redis", "sphinx (>=3.0.3)"]
-
-[[package]]
-name = "pre-commit"
-version = "2.21.0"
-description = "A framework for managing and maintaining multi-language pre-commit hooks."
-category = "dev"
-optional = false
-python-versions = ">=3.7"
-files = [
-    {file = "pre_commit-2.21.0-py2.py3-none-any.whl", hash = "sha256:e2f91727039fc39a92f58a588a25b87f936de6567eed4f0e673e0507edc75bad"},
-    {file = "pre_commit-2.21.0.tar.gz", hash = "sha256:31ef31af7e474a8d8995027fefdfcf509b5c913ff31f2015b4ec4beb26a6f658"},
-]
-
-[package.dependencies]
-cfgv = ">=2.0.0"
-identify = ">=1.0.0"
-nodeenv = ">=0.11.1"
-pyyaml = ">=5.1"
-virtualenv = ">=20.10.0"
 
 [[package]]
 name = "py-cpuinfo"
@@ -2624,27 +2535,6 @@ h11 = ">=0.8"
 standard = ["colorama (>=0.4)", "httptools (>=0.5.0)", "python-dotenv (>=0.13)", "pyyaml (>=5.1)", "uvloop (>=0.14.0,!=0.15.0,!=0.15.1)", "watchfiles (>=0.13)", "websockets (>=10.4)"]
 
 [[package]]
-name = "virtualenv"
-version = "20.17.1"
-description = "Virtual Python Environment builder"
-category = "dev"
-optional = false
-python-versions = ">=3.6"
-files = [
-    {file = "virtualenv-20.17.1-py3-none-any.whl", hash = "sha256:ce3b1684d6e1a20a3e5ed36795a97dfc6af29bc3970ca8dab93e11ac6094b3c4"},
-    {file = "virtualenv-20.17.1.tar.gz", hash = "sha256:f8b927684efc6f1cc206c9db297a570ab9ad0e51c16fa9e45487d36d1905c058"},
-]
-
-[package.dependencies]
-distlib = ">=0.3.6,<1"
-filelock = ">=3.4.1,<4"
-platformdirs = ">=2.4,<3"
-
-[package.extras]
-docs = ["proselint (>=0.13)", "sphinx (>=5.3)", "sphinx-argparse (>=0.3.2)", "sphinx-rtd-theme (>=1)", "towncrier (>=22.8)"]
-testing = ["coverage (>=6.2)", "coverage-enable-subprocess (>=1)", "flaky (>=3.7)", "packaging (>=21.3)", "pytest (>=7.0.1)", "pytest-env (>=0.6.2)", "pytest-freezegun (>=0.4.2)", "pytest-mock (>=3.6.1)", "pytest-randomly (>=3.10.3)", "pytest-timeout (>=2.1)"]
-
-[[package]]
 name = "webviz-services"
 version = "0.1.0"
 description = ""
@@ -2655,7 +2545,7 @@ files = []
 develop = true
 
 [package.dependencies]
-fmu-sumo = {git = "https://github.com/equinor/fmu-sumo"}
+fmu-sumo = {git = "https://github.com/equinor/fmu-sumo.git", rev = "master"}
 sumo-wrapper-python = {git = "https://github.com/equinor/sumo-wrapper-python.git", rev = "master"}
 
 [package.source]
@@ -2896,4 +2786,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.8"
-content-hash = "59d72dae87ab705bf640be5d6b45e8f307525de53f2118701016703efb35f89a"
+content-hash = "4e5bf223cced30185d6ba6b76a2692bd14470cc2d25be267a1edd3697da3caf7"

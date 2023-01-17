@@ -8,7 +8,7 @@ readme = "README.md"
 [tool.poetry.dependencies]
 python = "^3.8"
 sumo-wrapper-python = {git = "https://github.com/equinor/sumo-wrapper-python.git", rev = "master"}
-fmu-sumo = {git = "https://github.com/equinor/fmu-sumo"}
+fmu-sumo = {git = "https://github.com/equinor/fmu-sumo.git", rev = "master"}
 
 [tool.poetry.group.dev.dependencies]
 black = "^22.12.0"
