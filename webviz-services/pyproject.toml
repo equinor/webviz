@@ -1,12 +1,14 @@
 [tool.poetry]
-name = "services"
+name = "webviz-services"
 version = "0.1.0"
 description = ""
-authors = ["R&T Equinor", "Ceetron Solutions AS]
+authors = ["R&T Equinor", "Ceetron Solutions AS"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.8"
+sumo-wrapper-python = {git = "https://github.com/equinor/sumo-wrapper-python.git", rev = "master"}
+fmu-sumo = {git = "https://github.com/equinor/fmu-sumo"}
 
 [tool.poetry.group.dev.dependencies]
 black = "^22.12.0"
