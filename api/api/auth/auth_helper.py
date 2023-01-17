@@ -32,7 +32,7 @@ class AuthHelper:
         )
 
     async def _login_route(self, request: Request, redirect_url_after_login: Optional[str] = None) -> RedirectResponse:
-        print("######################### _login_route()")
+        # print("######################### _login_route()")
 
         await starsessions.load_session(request)
         request.session.clear()
@@ -59,7 +59,7 @@ class AuthHelper:
         return RedirectResponse(flow_dict["auth_uri"])
 
     async def _authorized_callback_route(self, request: Request) -> Response:
-        print("######################### _authorized_callback_route()")
+        # print("######################### _authorized_callback_route()")
 
         await starsessions.load_session(request)
 
@@ -84,8 +84,8 @@ class AuthHelper:
             )
 
             if "error" in token_dict:
-                print("!!!!! Error validating redirected auth response")
-                print(f"!!!!! {token_dict=}")
+                # print("!!!!! Error validating redirected auth response")
+                # print(f"!!!!! {token_dict=}")
                 return Response(
                     f"Error validating redirected auth response, error: {token_dict['error']}",
                     400,
@@ -95,8 +95,8 @@ class AuthHelper:
 
         except ValueError as err:
             # Usually caused by CSRF
-            print("!!!!! Hit an exception, probably CSRF error")
-            print(f"!!!!! exception: {err}")
+            # print("!!!!! Hit an exception, probably CSRF error")
+            # print(f"!!!!! exception: {err}")
             return Response(f"Error processing auth response, probably CSRF error", 400)
 
         target_url_str_after_auth = request.session.get("target_url_str_after_auth")
@@ -116,7 +116,7 @@ class AuthHelper:
         try:
             maybe_authenticated_user_obj = request_with_session.state.authenticated_user_obj
             if maybe_authenticated_user_obj and isinstance(maybe_authenticated_user_obj, AuthenticatedUser):
-                print("Found an authenticated user on the request object")
+                # print("Found an authenticated user on the request object")
                 return maybe_authenticated_user_obj
         except:
             pass
@@ -128,15 +128,15 @@ class AuthHelper:
         if not token_cache:
             return None
 
-        print(f"  load token cache {timer.lap_ms():.1f}ms")
+        # print(f"  load token cache {timer.lap_ms():.1f}ms")
 
         cca = _create_msal_confidential_client_app(token_cache)
-        print(f"  create app {timer.lap_ms():.1f}ms")
+        # print(f"  create app {timer.lap_ms():.1f}ms")
         accounts = cca.get_accounts()
         if not accounts:
             return None
 
-        print(f"  get accounts {timer.lap_ms():.1f}ms")
+        # print(f"  get accounts {timer.lap_ms():.1f}ms")
 
         # Try and get the current claims for the ID token from session storage
         # id_token_claims = request_with_session.session.get("logged_in_user_id_token_claims")
@@ -150,15 +150,15 @@ class AuthHelper:
             # It seems we can get a new ID token by passing in our application/client ID
             token_dict = cca.acquire_token_silent(scopes=[config.CLIENT_ID], account=accounts[0])
 
-            print("..................")
+            # print("..................")
             decoded_id_token = jwt.decode(
                 token_dict["id_token"],
                 algorithms=["RS256"],
                 options={"verify_signature": False},
             )
-            print(f"{decoded_id_token=}")
-            print(f"{token_dict['id_token_claims']=}")
-            print("..................")
+            # print(f"{decoded_id_token=}")
+            # print(f"{token_dict['id_token_claims']=}")
+            # print("..................")
 
             id_token_claims = token_dict.get("id_token_claims") if token_dict else None
             request_with_session.session["logged_in_user_id_token_claims"] = id_token_claims
@@ -168,38 +168,38 @@ class AuthHelper:
         timer.lap_ms()
 
         token_dict = cca.acquire_token_silent(scopes=config.RESOURCE_SCOPES_DICT["sumo"], account=accounts[0])
-        print("---------------------SUMO------------------------")
-        print(token_dict)
-        print("------")
-        print(
-            jwt.decode(
-                token_dict["access_token"],
-                algorithms=["RS256"],
-                options={"verify_signature": False},
-            )
-        )
-        print("-------------------------------------------------")
+        # print("---------------------SUMO------------------------")
+        # print(token_dict)
+        # print("------")
+        # print(
+        #     jwt.decode(
+        #         token_dict["access_token"],
+        #         algorithms=["RS256"],
+        #         options={"verify_signature": False},
+        #     )
+        # )
+        # print("-------------------------------------------------")
         sumo_token = token_dict.get("access_token") if token_dict else None
 
         token_dict = cca.acquire_token_silent(scopes=config.RESOURCE_SCOPES_DICT["smda"], account=accounts[0])
-        print("---------------------SMDA------------------------")
-        print(token_dict)
-        print("------")
-        print(
-            jwt.decode(
-                token_dict["access_token"],
-                algorithms=["RS256"],
-                options={"verify_signature": False},
-            )
-        )
-        print("-------------------------------------------------")
+        # print("---------------------SMDA------------------------")
+        # print(token_dict)
+        # print("------")
+        # print(
+        #     jwt.decode(
+        #         token_dict["access_token"],
+        #         algorithms=["RS256"],
+        #         options={"verify_signature": False},
+        #     )
+        # )
+        # print("-------------------------------------------------")
         smda_token = token_dict.get("access_token") if token_dict else None
 
-        print(f"  get tokens {timer.lap_ms():.1f}ms")
+        # print(f"  get tokens {timer.lap_ms():.1f}ms")
 
         _save_token_cache_in_session(request_with_session, token_cache)
 
-        print(f"  save cache {timer.lap_ms():.1f}ms")
+        # print(f"  save cache {timer.lap_ms():.1f}ms")
 
         # Could use either 'oid' or 'sub' here, but 'sub' is probably good enough, and it doesn't require
         # the profile scope (in case it matters). See this page for more info:
@@ -217,7 +217,7 @@ class AuthHelper:
 
         request_with_session.state.authenticated_user_obj = authenticated_user
 
-        print(f"get_authenticated_user() took {timer.elapsed_s():.2f}s")
+        # print(f"get_authenticated_user() took {timer.elapsed_s():.2f}s")
 
         return authenticated_user
 

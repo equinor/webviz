@@ -2,8 +2,9 @@
 name = "api"
 version = "0.1.0"
 description = ""
-authors = ["R&T Equinor", "Ceetron Solutions AS]
+authors = ["R&T Equinor", "Ceetron Solutions AS"]
 readme = "README.md"
+
 
 [tool.poetry.dependencies]
 python = "^3.8"
@@ -16,7 +17,7 @@ python-dotenv = "^0.21.0"
 pyjwt = "^2.6.0"
 pydantic = "^1.10.4"
 numpy = "^1.24.1"
-
+webviz-services={ path = "../webviz-services", develop=true}
 
 [tool.poetry.group.dev.dependencies]
 black = "^22.12.0"

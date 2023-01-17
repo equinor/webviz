@@ -28,5 +28,3 @@ SESSION_STORAGE = "in_memory"  # "in_memory" / "filesystem" / "redis"
 SESSION_STORAGE = os.environ.get("WEBVIZ_SESSION_STORAGE", SESSION_STORAGE)
 
 SUMO_CONFIG = {"sumo_env": "prod", "field": "DROGON", "status": None}
-
-

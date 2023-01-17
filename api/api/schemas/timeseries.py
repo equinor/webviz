@@ -8,7 +8,12 @@ from pydantic import BaseModel
 class VectorDescription(BaseModel):
     name: str
     descriptive_name: str
-    type: str
+    """ Ytelse vs plassering av business logikk
+    group: str
+    subgroup: str
+    unit:str
+    is_rate:bool
+"""
 
 
 class VectorMetadata(BaseModel):
@@ -42,18 +47,17 @@ class Frequency(str, Enum):
     YEARLY = "yearly"
 
 
-class VariableVectorMapInfo(BaseModel):
+class StatisticsOptions(str, Enum):
     """
-    Variable vector map pair
-    `Description`:
-    Dictionary with pair of varible name and mapped vector name
-    `Required keys`:
-    * variableName: str, variable name
-    * vectorName: List[str], vector name
+    Type definition of statistics options
     """
 
-    variableName: str
-    vectorName: List[str]
+    MEAN = "Mean"
+    MIN = "Min"
+    MAX = "Max"
+    P10 = "P10"
+    P90 = "P90"
+    P50 = "P50"
 
 
 class VectorExpressionInfo(BaseModel):
@@ -62,18 +66,31 @@ class VectorExpressionInfo(BaseModel):
     `Description`:
     Dictionary with all required items for an expression
     `Required keys`:
-    name: str, expression name
-    description:str, description of mathematical expression
+
     expression: str, mathematical expression
-    id: str, identifier string
-    variableVectorMap: List[VariableVectorMapInfo], List of variable- and vector name pairs
-    isValid: bool, valid state for expression
-    isDeletable: bool, True if expression can be deleted, False otherwise
+    variable_names: List[str], list of variable names
+    vector_names: List[str], list of vector names
+
     """
 
-    name: str
     expression: str
-    id: str
-    variableVectorMap: List[VariableVectorMapInfo]
-    isValid: bool
-    isDeletable: bool
+    variable_names: str
+    vector_names: str
+
+
+class VectorExpressionInfo2(BaseModel):
+    """
+
+    `Description`:
+    Dictionary with all required items for an expression
+    `Required keys`:
+
+    expression: str, mathematical expression
+    variable_names: List[str], list of variable names
+    vector_names: List[str], list of vector names
+
+    """
+
+    expression: str
+    variable_names: str
+    vector_names: str
