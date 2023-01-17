@@ -1,0 +1,36 @@
+[tool.poetry]
+name = "api"
+version = "0.1.0"
+description = ""
+authors = ["R&T Equinor", "Ceetron Solutions AS"]
+readme = "README.md"
+
+
+[tool.poetry.dependencies]
+python = "^3.8"
+fastapi = "^0.89.1"
+uvicorn = "^0.20.0"
+msal = "^1.20.0"
+starsessions = "^2.1.1"
+redis = "^4.4.2"
+python-dotenv = "^0.21.0"
+pyjwt = "^2.6.0"
+pydantic = "^1.10.4"
+numpy = "^1.24.1"
+webviz-services={ path = "../webviz-services", develop=true}
+
+[tool.poetry.group.dev.dependencies]
+black = "^22.12.0"
+pylint = "^2.15.10"
+mypy = "^0.991"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.black]
+line-length = 120
+
+[tool.pylint]
+max-line-length = 120
+disable=["no-name-in-module","missing-class-docstring","too-few-public-methods"]
