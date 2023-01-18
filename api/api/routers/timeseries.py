@@ -3,9 +3,10 @@ from typing import List, Optional, Union, Sequence
 
 from fastapi import APIRouter, Query, Depends
 
-from webviz_services import sumo_discovery
+from webviz_services.sumo_access import sumo_discovery
+from webviz_services.utils.authenticated_user import AuthenticatedUser
 
-from ..auth.auth_helper import AuthHelper, AuthenticatedUser
+from ..auth.auth_helper import AuthHelper
 from .. import schemas
 from ..config import SUMO_CONFIG
 

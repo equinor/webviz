@@ -11,8 +11,8 @@ import jwt
 
 
 from .. import config
-from ..utils.authenticated_user import AuthenticatedUser
-from ..utils.perf_timer import PerfTimer
+from webviz_services.utils.authenticated_user import AuthenticatedUser
+from webviz_services.utils.perf_timer import PerfTimer
 
 
 class AuthHelper:
