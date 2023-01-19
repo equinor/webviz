@@ -3,9 +3,10 @@ from typing import List, Optional, Union, Sequence
 
 from fastapi import APIRouter, Query, Depends
 
-from webviz_services import sumo_discovery
+from webviz_services.sumo_access.discovery import Discovery
+from webviz_services.utils.authenticated_user import AuthenticatedUser
 
-from ..auth.auth_helper import AuthHelper, AuthenticatedUser
+from ..auth.auth_helper import AuthHelper
 from .. import schemas
 from ..config import SUMO_CONFIG
 
@@ -17,8 +18,10 @@ async def get_case_ids(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
 ) -> List[str]:
     """Test function to get valid case ids"""
-    token = authenticated_user.get_sumo_access_token()
-    return sumo_discovery.get_case_ids_with_smry_data(token, SUMO_CONFIG["field"])
+    sumo_discovery = Discovery(authenticated_user.get_sumo_access_token())
+    case_ids = sumo_discovery.get_case_ids_with_smry_data(SUMO_CONFIG["field"])
+    print(case_ids)
+    return case_ids
 
 
 @router.get("/vector_names_and_description/", tags=["timeseries"])
