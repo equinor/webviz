@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "api"
+name = "backend"
 version = "0.1.0"
 description = ""
 authors = ["R&T Equinor", "Ceetron Solutions AS"]
@@ -17,7 +17,9 @@ python-dotenv = "^0.21.0"
 pyjwt = "^2.6.0"
 pydantic = "^1.10.4"
 numpy = "^1.24.1"
-webviz-services={ path = "../webviz-services", develop=true}
+sumo-wrapper-python = {git = "https://github.com/equinor/sumo-wrapper-python.git", rev = "master"}
+fmu-sumo = {git = "https://github.com/equinor/fmu-sumo.git", rev = "master"}
+
 
 [tool.poetry.group.dev.dependencies]
 black = "^22.12.0"

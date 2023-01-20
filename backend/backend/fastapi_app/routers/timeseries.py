@@ -3,8 +3,8 @@ from typing import List, Optional, Union, Sequence
 
 from fastapi import APIRouter, Query, Depends
 
-from webviz_services.sumo_access.discovery import Discovery
-from webviz_services.utils.authenticated_user import AuthenticatedUser
+from backend.services.sumo_access.discovery import Discovery
+from backend.services.utils.authenticated_user import AuthenticatedUser
 
 from ..auth.auth_helper import AuthHelper
 from .. import schemas
