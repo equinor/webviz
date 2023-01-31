@@ -1,0 +1,6 @@
+{
+    "importOrderSeparation": true,
+    "importOrderSortSpecifiers": true,
+    "singleQuote": false,
+    "tabWidth": 4
+}
