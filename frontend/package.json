@@ -11,8 +11,10 @@
   "dependencies": {
     "@headlessui/react": "^1.7.8",
     "@heroicons/react": "^2.0.14",
+    "@trivago/prettier-plugin-sort-imports": "^4.0.0",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react-dom": "^18.2.0",
+    "uuid4": "^2.0.3"
   },
   "devDependencies": {
     "@types/node": "^18.11.18",

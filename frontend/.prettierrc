@@ -1,4 +1,15 @@
 {
+    "importOrder": [
+        "^react?.+$",
+        "^@",
+        "^@core",
+        "^@components",
+        "^@shared-types",
+        "^@assets",
+        "^(?![@\\.]).+$",
+        "^\\./",
+        "^\\.\\./"
+    ],
     "importOrderSeparation": true,
     "importOrderSortSpecifiers": true,
     "singleQuote": false,
