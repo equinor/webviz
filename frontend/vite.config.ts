@@ -1,7 +1,9 @@
-import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 
-import aliases from "./aliases";
+import path from "path";
+import { defineConfig } from "vite";
+
+import aliases from "./aliases.json";
 
 const paths = {
     public: "./public",
@@ -20,7 +22,16 @@ export default defineConfig({
         },
     },
     resolve: {
-        alias: aliases,
+        alias: Object.keys(aliases.compilerOptions.paths).reduce(
+            (prev, current) => ({
+                ...prev,
+                [current.replace("/*", "")]: path.resolve(
+                    __dirname,
+                    aliases.compilerOptions.paths[current][0].replace("/*", "")
+                ),
+            }),
+            {}
+        ),
     },
     server: {
         open: paths.publicHtmlFile,

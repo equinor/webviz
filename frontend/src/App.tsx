@@ -1,3 +1,4 @@
+import { Content } from "@core/components/Content";
 import { Settings } from "@core/components/Settings";
 import { TopNavBar } from "@core/components/TopNavBar";
 
@@ -7,9 +8,7 @@ function App() {
             <Settings />
             <div className="flex flex-col flex-grow">
                 <TopNavBar />
-                <div className="bg-slate-200 p-4 flex-grow border-spacing-x-8">
-                    Content
-                </div>
+                <Content />
             </div>
         </div>
     );

@@ -5,18 +5,21 @@ import { WorkbenchContext, workbench } from "@/core/framework/workbench";
 import { useWorkbenchActiveModuleId } from "@/core/hooks/useWorkbenchActiveModuleId";
 import { useWorkbenchModuleInstances } from "@/core/hooks/useWorkbenchModules";
 
+workbench.makeLayout(["MyModule", "MyModule2", "MyModule"]);
+
 const workbenchContext: WorkbenchContext = {
     useWorkbenchStateValue: workbench.getStateStore().useStateValue(),
 };
 
-export const Settings: React.FC = () => {
+export const Content: React.FC = () => {
     const moduleInstances = useWorkbenchModuleInstances();
     const activeModuleId = useWorkbenchActiveModuleId();
 
     return (
-        <div className="bg-white p-4 w-72">
+        <div className="bg-slate-200 p-4 flex-grow border-spacing-x-8">
             {moduleInstances.map((module) => {
-                if (module.loading) return null;
+                if (module.loading)
+                    return <div key={module.id}>Loading...</div>;
                 const moduleContext: ModuleContext = {
                     useModuleState: module.stateStore.useState(),
                     useModuleStateValue: module.stateStore.useStateValue(),
@@ -25,12 +28,13 @@ export const Settings: React.FC = () => {
                 return (
                     <div
                         key={module.id}
-                        style={{
-                            display:
-                                activeModuleId === module.id ? "block" : "none",
-                        }}
+                        className={`bg-white p-4 ${
+                            activeModuleId === module.id ? "border-red-600" : ""
+                        } m-4 border-solid border`}
+                        onClick={() => (workbench.activeModuleId = module.id)}
                     >
-                        <module.Settings
+                        <h1>{module.name}</h1>
+                        <module.View
                             moduleContext={moduleContext}
                             workbenchContext={workbenchContext}
                         />
