@@ -1,13 +1,15 @@
 import React from "react";
 
+import { StateStore } from "./state-store";
+import { WorkbenchContext } from "./workbench";
+
 export type ModuleContext = {
     useModuleState: <T>(
         key: string,
-        initialState: T
+        initialState?: T
     ) => [T, (value: T) => void];
-    useModuleStateValue: <T>(key: string) => T;
+    useModuleStateValue: <T>(key: string, initialState?: T) => T;
     useSetModuleStateValue: <T>(key: string) => (newValue: T) => void;
-    // useWorkbenchData
 };
 
 export type ModuleInstance =
@@ -16,12 +18,15 @@ export type ModuleInstance =
           name: string;
           View: ModuleFC;
           Settings: ModuleFC;
-          stateStore: ModuleStateStore;
+          stateStore: StateStore;
           loading?: false;
       }
     | { id: string; name: string; loading: true };
 
-export type ModuleFC = React.FC<{ moduleContext: ModuleContext }>;
+export type ModuleFC = React.FC<{
+    moduleContext: ModuleContext;
+    workbenchContext: WorkbenchContext;
+}>;
 
 export class Module {
     private _name: string;
@@ -46,53 +51,7 @@ export class Module {
             name: this._name,
             View: this.view,
             Settings: this.settings,
-            stateStore: new ModuleStateStore(),
+            stateStore: new StateStore(),
         };
-    }
-}
-
-export class ModuleStateStore {
-    private _state: { [key: string]: any } = {};
-
-    public getState(key: string): unknown {
-        return this._state[key];
-    }
-
-    public setState(key: string, value: unknown) {
-        this._state[key] = value;
-    }
-
-    public useModuleState<T>(
-        key: string,
-        initialState: T
-    ): [T, (value: T) => void] {
-        if (!this._state[key]) {
-            this._state[key] = initialState;
-        }
-
-        // This needs to be adjusted to module's state types
-        return [
-            this.getState.bind(this, key) as T,
-            this.setState.bind(this, key),
-        ];
-    }
-
-    public useModuleStateValue<T>(key: string): T {
-        return this.getState(key) as T;
-    }
-
-    public setModuleStateValue<T>(key: string) {
-        return (newValue: T) => this.setState(key, newValue);
-    }
-}
-
-export class ModulePlaceholder extends Module {
-    public view: ModuleFC;
-    public settings: ModuleFC;
-
-    constructor() {
-        super("Placeholder");
-        this.view = () => <div>Loading</div>;
-        this.settings = () => <div>Loading</div>;
     }
 }

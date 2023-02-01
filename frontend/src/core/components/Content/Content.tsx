@@ -1,26 +1,43 @@
 import React from "react";
 
 import { ModuleContext } from "@/core/framework/module";
-import { workbench } from "@/core/framework/workbench";
+import { WorkbenchContext, workbench } from "@/core/framework/workbench";
+import { useWorkbenchActiveModuleId } from "@/core/hooks/useWorkbenchActiveModuleId";
+import { useWorkbenchModuleInstances } from "@/core/hooks/useWorkbenchModules";
 
-workbench.makeLayout(["MyModule"]);
+workbench.makeLayout(["MyModule", "MyModule2", "MyModule"]);
+
+const workbenchContext: WorkbenchContext = {
+    useWorkbenchStateValue: workbench.getStateStore().useStateValue(),
+};
 
 export const Content: React.FC = () => {
-    React.useEffect(() => {}, [workbench.getModuleInstances()]);
+    const moduleInstances = useWorkbenchModuleInstances();
+    const activeModuleId = useWorkbenchActiveModuleId();
+
     return (
         <div className="bg-slate-200 p-4 flex-grow border-spacing-x-8">
-            {workbench.getModuleInstances().map((module) => {
-                if (module.loading) return <div>Loading...</div>;
-                const context: ModuleContext = {
-                    useModuleState: module.stateStore.useModuleState,
-                    useModuleStateValue: module.stateStore.useModuleStateValue,
-                    useSetModuleStateValue:
-                        module.stateStore.setModuleStateValue,
+            {moduleInstances.map((module) => {
+                if (module.loading)
+                    return <div key={module.id}>Loading...</div>;
+                const moduleContext: ModuleContext = {
+                    useModuleState: module.stateStore.useState(),
+                    useModuleStateValue: module.stateStore.useStateValue(),
+                    useSetModuleStateValue: module.stateStore.setStateValue,
                 };
                 return (
-                    <div key={module.id}>
+                    <div
+                        key={module.id}
+                        className={`bg-white p-4 ${
+                            activeModuleId === module.id ? "border-red-600" : ""
+                        } m-4 border-solid border`}
+                        onClick={() => (workbench.activeModuleId = module.id)}
+                    >
                         <h1>{module.name}</h1>
-                        <module.View moduleContext={context} />
+                        <module.View
+                            moduleContext={moduleContext}
+                            workbenchContext={workbenchContext}
+                        />
                     </div>
                 );
             })}

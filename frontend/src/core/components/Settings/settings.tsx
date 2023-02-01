@@ -1,29 +1,39 @@
 import React from "react";
 
-import { workbench } from "@/core/framework/workbench";
+import { ModuleContext } from "@/core/framework/module";
+import { WorkbenchContext, workbench } from "@/core/framework/workbench";
+import { useWorkbenchActiveModuleId } from "@/core/hooks/useWorkbenchActiveModuleId";
+import { useWorkbenchModuleInstances } from "@/core/hooks/useWorkbenchModules";
+
+const workbenchContext: WorkbenchContext = {
+    useWorkbenchStateValue: workbench.getStateStore().useStateValue(),
+};
 
 export const Settings: React.FC = () => {
+    const moduleInstances = useWorkbenchModuleInstances();
+    const activeModuleId = useWorkbenchActiveModuleId();
+
     return (
-        <div className="bg-white p-4">
-            {workbench.getModuleInstances().map((module) => {
-                if (module.loading) return <div>Loading...</div>;
-                const context = {
-                    useModuleState: module.stateStore.useModuleState,
-                    useModuleStateValue: module.stateStore.useModuleStateValue,
-                    useSetModuleStateValue:
-                        module.stateStore.setModuleStateValue,
+        <div className="bg-white p-4 w-72">
+            {moduleInstances.map((module) => {
+                if (module.loading) return null;
+                const moduleContext: ModuleContext = {
+                    useModuleState: module.stateStore.useState(),
+                    useModuleStateValue: module.stateStore.useStateValue(),
+                    useSetModuleStateValue: module.stateStore.setStateValue,
                 };
                 return (
                     <div
                         key={module.id}
                         style={{
                             display:
-                                workbench.activeModuleId === module.id
-                                    ? "block"
-                                    : "none",
+                                activeModuleId === module.id ? "block" : "none",
                         }}
                     >
-                        <module.Settings moduleContext={context} />
+                        <module.Settings
+                            moduleContext={moduleContext}
+                            workbenchContext={workbenchContext}
+                        />
                     </div>
                 );
             })}
