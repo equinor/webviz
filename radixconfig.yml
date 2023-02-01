@@ -1,0 +1,22 @@
+apiVersion: radix.equinor.com/v1
+kind: RadixApplication
+metadata:
+  name: webviz
+spec:
+  environments:
+    - name: prod
+      build:
+        from: main
+  components:
+    - name: frontend
+      image: ghcr.io/equinor/webviz_nginx:latest
+      alwaysPullImageOnDeploy: true
+      publicPort: http
+      ports:
+        - name: http
+          port: 8080
+      environmentConfig:
+        - environment: prod
+  dnsAppAlias:
+    environment: prod
+    component: frontend
