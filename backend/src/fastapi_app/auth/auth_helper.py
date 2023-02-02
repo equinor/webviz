@@ -11,8 +11,8 @@ import jwt
 
 
 from .. import config
-from backend.services.utils.authenticated_user import AuthenticatedUser
-from backend.services.utils.perf_timer import PerfTimer
+from ...services.utils.authenticated_user import AuthenticatedUser
+from ...services.utils.perf_timer import PerfTimer
 
 
 class AuthHelper:

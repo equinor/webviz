@@ -28,5 +28,8 @@ jobs:
 
     - name: 🐳 Build and push Docker images
       run: | 
-        docker build -f nginx.Dockerfile -t ghcr.io/equinor/webviz_nginx:latest .
-        docker push ghcr.io/equinor/webviz_nginx:latest
+        docker build -f frontend-prod.Dockerfile -t ghcr.io/equinor/webviz_frontend:latest .
+        docker push ghcr.io/equinor/webviz_frontend:latest
+
+        docker build -f backend.Dockerfile -t ghcr.io/equinor/webviz_backend:latest .
+        docker push ghcr.io/equinor/webviz_backend:latest
