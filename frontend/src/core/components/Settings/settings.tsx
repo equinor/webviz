@@ -1,38 +1,36 @@
 import React from "react";
 
-import { ModuleContext } from "@/core/framework/module";
-import { WorkbenchContext, workbench } from "@/core/framework/workbench";
-import { useWorkbenchActiveModuleId } from "@/core/hooks/useWorkbenchActiveModuleId";
-import { useWorkbenchModuleInstances } from "@/core/hooks/useWorkbenchModules";
+import { ImportState } from "@/core/framework/Module";
+import { Workbench } from "@/core/framework/Workbench";
+import { useActiveModuleId } from "@/core/hooks/workbenchHooks";
 
-const workbenchContext: WorkbenchContext = {
-    useWorkbenchStateValue: workbench.getStateStore().useStateValue(),
+type SettingsProps = {
+    workbench: Workbench;
 };
 
-export const Settings: React.FC = () => {
-    const moduleInstances = useWorkbenchModuleInstances();
-    const activeModuleId = useWorkbenchActiveModuleId();
+export const Settings: React.FC<SettingsProps> = (props) => {
+    const moduleInstances = props.workbench.getModuleInstances();
+    const activeModuleId = useActiveModuleId(props.workbench);
 
     return (
         <div className="bg-white p-4 w-72">
-            {moduleInstances.map((module) => {
-                if (module.loading) return null;
-                const moduleContext: ModuleContext = {
-                    useModuleState: module.stateStore.useState(),
-                    useModuleStateValue: module.stateStore.useStateValue(),
-                    useSetModuleStateValue: module.stateStore.setStateValue,
-                };
+            {moduleInstances.map((instance) => {
+                if (instance.getImportState() !== ImportState.Imported) {
+                    return null;
+                }
+
+                const Settings = instance.getSettingsFC();
+
                 return (
                     <div
-                        key={module.id}
+                        key={instance.getId()}
                         style={{
-                            display:
-                                activeModuleId === module.id ? "block" : "none",
+                            display: activeModuleId === instance.getId() ? "block" : "none",
                         }}
                     >
-                        <module.Settings
-                            moduleContext={moduleContext}
-                            workbenchContext={workbenchContext}
+                        <Settings
+                            moduleContext={instance.getOrCreateContext()}
+                            workbenchServices={props.workbench.getWorkbenchServices()}
                         />
                     </div>
                 );

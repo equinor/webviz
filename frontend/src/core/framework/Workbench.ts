@@ -1,0 +1,99 @@
+import { ImportState } from "./Module";
+import { ModuleInstance } from "./ModuleInstance";
+import { ModuleRegistry } from "./ModuleRegistry";
+import { StateStore } from "./StateStore";
+import { WorkbenchServices } from "./WorkbenchServices";
+
+export enum WorkbenchEvents {
+    ActiveModuleChanged = "ActiveModuleChanged",
+    FullModuleRerenderRequested = "FullModuleRerenderRequested",
+}
+
+export class Workbench {
+    private moduleInstances: ModuleInstance[];
+    private _activeModuleId: string;
+    private stateStore: StateStore;
+    private _workbenchServices: WorkbenchServices;
+    private _subscribersMap: { [key: string]: Set<() => void> };
+
+    constructor() {
+        this.moduleInstances = [];
+        this._activeModuleId = "";
+        this.stateStore = new StateStore();
+        this._workbenchServices = new WorkbenchServices();
+        this._subscribersMap = {};
+    }
+
+    public getStateStore(): StateStore {
+        return this.stateStore;
+    }
+
+    public getWorkbenchServices(): WorkbenchServices {
+        return this._workbenchServices;
+    }
+
+    public getActiveModuleId(): string {
+        return this._activeModuleId;
+    }
+
+    public getActiveModuleName(): string {
+        return (
+            this.moduleInstances.find((moduleInstance) => moduleInstance.getId() === this._activeModuleId)?.getName() ||
+            ""
+        );
+    }
+
+    public setActiveModuleId(id: string) {
+        this._activeModuleId = id;
+        this.notifySubscribers(WorkbenchEvents.ActiveModuleChanged);
+    }
+
+    private notifySubscribers(event: WorkbenchEvents): void {
+        const subscribers = this._subscribersMap[event];
+        if (!subscribers) return;
+
+        subscribers.forEach((subscriber) => {
+            subscriber();
+        });
+    }
+
+    subscribe(event: WorkbenchEvents, cb: () => void) {
+        const subscribersSet = this._subscribersMap[event] || new Set();
+        subscribersSet.add(cb);
+        this._subscribersMap[event] = subscribersSet;
+        return () => {
+            subscribersSet.delete(cb);
+        };
+    }
+
+    public getModuleInstances(): ModuleInstance[] {
+        return this.moduleInstances;
+    }
+
+    public makeLayout(layout: string[]): void {
+        this.moduleInstances = [];
+        layout.forEach((moduleName) => {
+            this.addModuleToLayout(moduleName);
+        });
+        this.maybeMakeFirstModuleInstanceActive();
+    }
+
+    private addModuleToLayout(moduleName: string): void {
+        const module = ModuleRegistry.getModule(moduleName);
+        if (!module) {
+            throw new Error(`Module ${moduleName} not found`);
+        }
+
+        this.moduleInstances.push(module.makeInstance());
+    }
+
+    public maybeMakeFirstModuleInstanceActive(): void {
+        if (!this.moduleInstances.some((el) => el.getId() === this._activeModuleId)) {
+            this._activeModuleId =
+                this.moduleInstances
+                    .filter((el) => el.getImportState() === ImportState.Imported)
+                    .at(0)
+                    ?.getId() || "";
+        }
+    }
+}

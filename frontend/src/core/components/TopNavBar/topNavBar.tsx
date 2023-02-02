@@ -1,22 +1,22 @@
 import React from "react";
 
-import { workbench } from "@/core/framework/workbench";
-import { useWorkbenchActiveModuleName } from "@/core/hooks/useWorkbenchActiveModuleName";
+// import { useWorkbenchActiveModuleName } from "@/core/hooks/useWorkbenchActiveModuleName";
 import { ListBox } from "@/lib/components/ListBox";
+import { Workbench } from "@/core/framework/Workbench";
 
-const useWorkbenchState = workbench.getStateStore().useState();
+type TopNavBarProps = {
+    workbench: Workbench;
+}
 
-export const TopNavBar: React.FC = () => {
-    const [currentField, setCurrentField] = useWorkbenchState("field");
-    const [currentCase, setCurrentCase] = useWorkbenchState("case");
-    const activeModuleName = useWorkbenchActiveModuleName();
+export const TopNavBar: React.FC<TopNavBarProps> = (props) => {
+    const activeModuleName = ""; // useWorkbenchActiveModuleName();
 
     const handleFieldChange = (field: string) => {
-        setCurrentField(field);
+        return;
     };
 
     const handleCaseChange = (caseName: string) => {
-        setCurrentCase(caseName);
+        return;
     };
 
     const fields = [
@@ -47,12 +47,12 @@ export const TopNavBar: React.FC = () => {
                 <h1 className="flex-grow">{activeModuleName}</h1>
                 <ListBox
                     items={fields}
-                    selectedItem={(currentField as string) || "None"}
+                    selectedItem={"None"}
                     onSelect={handleFieldChange}
                 />
                 <ListBox
                     items={cases}
-                    selectedItem={(currentCase as string) || "None"}
+                    selectedItem={"None"}
                     onSelect={handleCaseChange}
                 />
             </div>
