@@ -9,12 +9,20 @@ spec:
         from: main
   components:
     - name: frontend
-      image: ghcr.io/equinor/webviz_nginx:latest
+      image: ghcr.io/equinor/webviz_frontend:latest
       alwaysPullImageOnDeploy: true
       publicPort: http
       ports:
         - name: http
           port: 8080
+      environmentConfig:
+        - environment: prod
+    - name: backend
+      image: ghcr.io/equinor/webviz_backend:latest
+      alwaysPullImageOnDeploy: true
+      ports:
+        - name: http
+          port: 5000
       environmentConfig:
         - environment: prod
   dnsAppAlias:

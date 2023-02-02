@@ -2,7 +2,6 @@ import datetime
 
 from fastapi import FastAPI, HTTPException, Request, Response
 from fastapi.routing import APIRoute, Request
-from fastapi.middleware.cors import CORSMiddleware
 from starsessions import InMemoryStore, SessionMiddleware, load_session
 from starsessions.stores.redis import RedisStore
 
@@ -18,25 +17,13 @@ def custom_generate_unique_id(route: APIRoute):
     return f"{route.name}"
 
 
-app = FastAPI(generate_unique_id_function=custom_generate_unique_id)
+app = FastAPI(generate_unique_id_function=custom_generate_unique_id, root_path="/api")
 
 app.include_router(timeseries_router, prefix="/timeseries")
 
 authHelper = AuthHelper()
 app.include_router(authHelper.router)
 app.include_router(general_router)
-
-allowed_origins = [
-    "http://localhost:3000",
-]
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=allowed_origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["Accept", "Accept-Language", "Content-Language", "Content-Type"],
-)
 
 # Add out custom middleware to enforce that user is logged in
 # Also redirects to /login endpoint for some select paths
