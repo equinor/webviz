@@ -1,0 +1,27 @@
+# This configuration aims at being a good approximation
+# of how the application is running in Radix
+
+version: '3.6'
+
+services:
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend-prod.Dockerfile
+    ports:
+      - 8080:8080
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend.Dockerfile
+    ports:
+      - 5000:5000
+    environment:
+      - UVICORN_WORKERS=4
+      - WEBVIZ_TENANT_ID
+      - WEBVIZ_CLIENT_ID
+      - WEBVIZ_CLIENT_SECRET
+      - WEBVIZ_SUMO_RESOURCE_SCOPE
+      - WEBVIZ_SMDA_RESOURCE_SCOPE

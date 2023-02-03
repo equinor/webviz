@@ -1,0 +1,33 @@
+# This configuration aims at being a good setup
+# for doing development of the frontend + backend in combination.
+
+version: '3.6'
+
+services:
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend-dev.Dockerfile
+    ports:
+      - 8080:8080
+    volumes:
+      - ./frontend/public:/usr/src/app/frontend/public
+      - ./frontend/src:/usr/src/app/frontend/src
+      - ./frontend/theme:/usr/src/app/frontend/theme
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend.Dockerfile
+    ports:
+      - 5000:5000
+    environment:
+      - UVICORN_RELOAD=true
+      - WEBVIZ_TENANT_ID
+      - WEBVIZ_CLIENT_ID
+      - WEBVIZ_CLIENT_SECRET
+      - WEBVIZ_SUMO_RESOURCE_SCOPE
+      - WEBVIZ_SMDA_RESOURCE_SCOPE
+    volumes:
+      - ./backend/src:/home/appuser/backend/src

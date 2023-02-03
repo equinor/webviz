@@ -34,6 +34,12 @@ export default defineConfig({
         ),
     },
     server: {
-        open: paths.publicHtmlFile,
+        port: 8080,
+        proxy: {
+            "/api": {
+                target: "http://backend:5000",
+                rewrite: (path) => path.replace(/^\/api/, '')
+            },
+        }
     },
 });

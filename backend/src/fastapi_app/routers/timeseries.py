@@ -3,8 +3,8 @@ from typing import List, Optional, Union, Sequence
 
 from fastapi import APIRouter, Query, Depends
 
-from backend.services.sumo_access.discovery import Discovery
-from backend.services.utils.authenticated_user import AuthenticatedUser
+from ...services.sumo_access.discovery import Discovery
+from ...services.utils.authenticated_user import AuthenticatedUser
 
 from ..auth.auth_helper import AuthHelper
 from .. import schemas
