@@ -1,24 +1,24 @@
 import { Module } from "./Module";
-
+import { StateBaseType } from "./StateStore";
 
 export class ModuleRegistry {
-    private static _registeredModules: Module[] = [];
+    private static _registeredModules: Record<string, Module<any>> = {};
+    private constructor() {}
 
-    private constructor() {
-    }
-
-    public static registerModule(moduleName: string): Module {
-        const module = new Module(moduleName);
-        this._registeredModules.push(module);
+    public static registerModule<ModuleStateType extends StateBaseType>(
+        moduleName: string,
+        initialState: ModuleStateType
+    ): Module<ModuleStateType> {
+        const module = new Module<ModuleStateType>(moduleName, initialState);
+        this._registeredModules[moduleName] = module;
         return module;
     }
 
-    public static getModule(moduleName: string) : Module {
-        const module = this._registeredModules.find((m) => m.getName() === moduleName);
+    public static getModule<ModuleStateType extends StateBaseType>(moduleName: string): Module<ModuleStateType> {
+        const module = this._registeredModules[moduleName];
         if (module) {
-            return module;
+            return module as Module<ModuleStateType>;
         }
         throw "Did you forget to register your module in 'src/modules/index.ts'?";
     }
 }
-

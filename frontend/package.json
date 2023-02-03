@@ -7,7 +7,7 @@
         "dev": "vite --host",
         "build": "tsc && vite build",
         "preview": "vite preview",
-        "generate-api": "openapi --input http://127.0.0.1:8000/openapi.json --output ./src/api --client axios --name AppClient"
+        "generate-api": "openapi --input http://127.0.0.1:8000/openapi.json --output ./src/api --client axios --name ApiService"
     },
     "dependencies": {
         "@headlessui/react": "^1.7.8",

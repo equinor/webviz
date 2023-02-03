@@ -1,9 +1,12 @@
 import React from "react";
+
 import { ModuleContext, ModuleInstance } from "./ModuleInstance";
+import { StateBaseType } from "./StateStore";
+import { Workbench, WorkbenchEvents } from "./Workbench";
 import { WorkbenchServices } from "./WorkbenchServices";
 
-export type ModuleFC = React.FC<{
-    moduleContext: ModuleContext;
+export type ModuleFC<S extends StateBaseType> = React.FC<{
+    moduleContext: ModuleContext<S>;
     workbenchServices: WorkbenchServices;
 }>;
 
@@ -11,36 +14,46 @@ export enum ImportState {
     NotImported = "NotImported",
     Importing = "Importing",
     Imported = "Imported",
-    Failed = "Failed"
+    Failed = "Failed",
 }
 
-export class Module {
+export class Module<StateType extends StateBaseType> {
     private _name: string;
-    public viewFC: ModuleFC;
-    public settingsFC: ModuleFC;
+    public viewFC: ModuleFC<StateType>;
+    public settingsFC: ModuleFC<StateType>;
     private numInstances: number;
     private importState: ImportState;
-    private moduleInstances: ModuleInstance[];
+    private moduleInstances: ModuleInstance<StateType>[];
+    private initialState: StateType;
+    private workbench: Workbench | null;
 
-    constructor(name: string) {
+    constructor(name: string, initialState: StateType) {
         this._name = name;
         this.numInstances = 0;
         this.viewFC = () => <div>Not defined</div>;
         this.settingsFC = () => <div>Not defined</div>;
         this.importState = ImportState.NotImported;
         this.moduleInstances = [];
+        this.initialState = initialState;
+        this.workbench = null;
     }
 
     public getImportState(): ImportState {
         return this.importState;
     }
 
+    public getInitialState: () => StateType = () => this.initialState;
+
     public getName() {
         return this._name;
     }
 
-    public makeInstance(): ModuleInstance {
-        const instance = new ModuleInstance(this, this.numInstances++);
+    public setWorkbench(workbench: Workbench): void {
+        this.workbench = workbench;
+    }
+
+    public makeInstance(): ModuleInstance<StateType> {
+        const instance = new ModuleInstance<StateType>(this, this.numInstances++, this.initialState);
         this.moduleInstances.push(instance);
         this.maybeImportSelf();
         return instance;
@@ -50,7 +63,11 @@ export class Module {
         this.importState = state;
         this.moduleInstances.forEach((instance) => {
             instance.notifySubscribersAboutImportStateChange();
-        })
+        });
+
+        if (this.workbench && state === ImportState.Imported) {
+            this.workbench.maybeMakeFirstModuleInstanceActive();
+        }
     }
 
     private maybeImportSelf(): void {
@@ -59,8 +76,8 @@ export class Module {
         }
 
         this.setImportState(ImportState.Importing);
-        
-        import(`/src/modules/${this._name}/module.tsx`)
+
+        import(`../../modules/${this._name}/module.tsx`)
             .then(() => {
                 this.setImportState(ImportState.Imported);
             })

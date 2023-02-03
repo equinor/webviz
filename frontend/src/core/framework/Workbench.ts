@@ -6,25 +6,26 @@ import { WorkbenchServices } from "./WorkbenchServices";
 
 export enum WorkbenchEvents {
     ActiveModuleChanged = "ActiveModuleChanged",
+    ModuleInstancesChanged = "ModuleInstancesChanged",
     FullModuleRerenderRequested = "FullModuleRerenderRequested",
 }
 
 export class Workbench {
-    private moduleInstances: ModuleInstance[];
+    private moduleInstances: ModuleInstance<any>[];
     private _activeModuleId: string;
-    private stateStore: StateStore;
+    private stateStore: StateStore<{}>;
     private _workbenchServices: WorkbenchServices;
     private _subscribersMap: { [key: string]: Set<() => void> };
 
     constructor() {
         this.moduleInstances = [];
         this._activeModuleId = "";
-        this.stateStore = new StateStore();
+        this.stateStore = new StateStore<{}>({});
         this._workbenchServices = new WorkbenchServices();
         this._subscribersMap = {};
     }
 
-    public getStateStore(): StateStore {
+    public getStateStore(): StateStore<{}> {
         return this.stateStore;
     }
 
@@ -66,7 +67,7 @@ export class Workbench {
         };
     }
 
-    public getModuleInstances(): ModuleInstance[] {
+    public getModuleInstances(): ModuleInstance<any>[] {
         return this.moduleInstances;
     }
 
@@ -75,7 +76,6 @@ export class Workbench {
         layout.forEach((moduleName) => {
             this.addModuleToLayout(moduleName);
         });
-        this.maybeMakeFirstModuleInstanceActive();
     }
 
     private addModuleToLayout(moduleName: string): void {
@@ -85,6 +85,8 @@ export class Workbench {
         }
 
         this.moduleInstances.push(module.makeInstance());
+        this.notifySubscribers(WorkbenchEvents.ModuleInstancesChanged);
+        module.setWorkbench(this);
     }
 
     public maybeMakeFirstModuleInstanceActive(): void {
@@ -94,6 +96,7 @@ export class Workbench {
                     .filter((el) => el.getImportState() === ImportState.Imported)
                     .at(0)
                     ?.getId() || "";
+            this.notifySubscribers(WorkbenchEvents.ActiveModuleChanged);
         }
     }
 }

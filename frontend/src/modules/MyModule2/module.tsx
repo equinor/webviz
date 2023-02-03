@@ -1,13 +1,12 @@
 import { ModuleRegistry } from "@/core/framework/ModuleRegistry";
 import { Input } from "@/lib/components/Input";
 
-const module = ModuleRegistry.getModule("MyModule2");
+import { State } from "./state";
+
+const module = ModuleRegistry.getModule<State>("MyModule2");
 
 module.viewFC = (props) => {
-    const text = props.moduleContext.useStoreValue(
-        "text",
-        "Hello"
-    );
+    const text = props.moduleContext.useStoreValue("text");
 
     return (
         <div>
@@ -17,10 +16,7 @@ module.viewFC = (props) => {
 };
 
 module.settingsFC = (props) => {
-    const [text, setText] = props.moduleContext.useStoreState(
-        "text",
-        "Hello"
-    );
+    const [text, setText] = props.moduleContext.useStoreState("text");
 
     return (
         <div>

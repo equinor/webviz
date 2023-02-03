@@ -8,7 +8,7 @@ import { Workbench } from "@/core/framework/Workbench";
 
 type ViewWrapperProps = {
     isActive: boolean;
-    moduleInstance: ModuleInstance;
+    moduleInstance: ModuleInstance<any>;
     workbench: Workbench;
 };
 
@@ -16,6 +16,8 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
     const [importState, setImportState] = React.useState<ImportState>(ImportState.NotImported);
 
     React.useEffect(() => {
+        setImportState(props.moduleInstance.getImportState());
+
         function handleModuleInstanceImportStateChange() {
             setImportState(props.moduleInstance.getImportState());
         }
@@ -29,6 +31,10 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
 
     const createContent = React.useCallback(
         function createContent(): React.ReactElement {
+            if (importState === ImportState.NotImported) {
+                return <div>Not imported</div>;
+            }
+
             if (importState === ImportState.Importing) {
                 return <div>Loading...</div>;
             }
@@ -36,8 +42,6 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
             if (importState === ImportState.Failed) {
                 return <div>Failed</div>;
             }
-
-            props.workbench.maybeMakeFirstModuleInstanceActive();
 
             const View = props.moduleInstance.getViewFC();
             return (

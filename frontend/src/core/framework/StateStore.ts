@@ -1,23 +1,25 @@
 import React from "react";
 
-export class StateStore {
-    private _state: { [key: string]: any };
-    private _subscribersMap: { [key: string]: Set<any> };
+export type StateBaseType = object;
 
-    constructor() {
-        this._state = {};
+export class StateStore<StateType extends StateBaseType> {
+    private _state: Record<keyof StateType, any>;
+    private _subscribersMap: Partial<Record<keyof StateType, Set<any>>>;
+
+    constructor(initialState: StateType) {
+        this._state = initialState;
         this._subscribersMap = {};
     }
 
-    public hasState(key: string): boolean {
+    public hasKey(key: keyof StateType): boolean {
         return key in this._state;
     }
 
-    public getState(key: string): unknown {
+    public getValue<K extends keyof StateType>(key: K): StateType[K] {
         return this._state[key];
     }
 
-    public setState(key: string, value: unknown) {
+    public setValue<K extends keyof StateType>(key: K, value: StateType[K]) {
         this._state[key] = value;
         const subscribersSet = this._subscribersMap[key] || new Set();
         for (let cb of subscribersSet) {
@@ -25,57 +27,52 @@ export class StateStore {
         }
     }
 
-    subscribe(key: string, cb: (value: any) => void) {
+    public subscribe<K extends keyof StateType>(key: K, cb: (value: StateType[K]) => void) {
         const subscribersSet = this._subscribersMap[key] || new Set();
         subscribersSet.add(cb);
-        this._subscribersMap[key] = subscribersSet
+        this._subscribersMap[key] = subscribersSet;
         return () => {
             subscribersSet.delete(cb);
-        }
+        };
     }
-    
 }
 
+export function useStoreState<T extends keyof S, S extends StateBaseType>(
+    stateStore: StateStore<S>,
+    key: T
+): [S[T], (value: S[T] | ((prev: S[T]) => S[T])) => void] {
+    const [state, setState] = React.useState<S[T]>(stateStore.getValue(key));
 
+    React.useEffect(() => {
+        const handleStateChange = (value: S[T]) => {
+            setState(value);
+        };
 
-export function useStoreState<T>(stateStore: StateStore, key: string, initialState?: T): [T, (value: T | ((prev: T) => T)) => void] {
-        const [state, setState] = React.useState<T>(
-            initialState !== undefined ? initialState : (stateStore.getState(key) as T)
-        );
+        const unsubscribeFunc = stateStore.subscribe(key, handleStateChange);
 
-        React.useEffect(() => {
-            if (!stateStore.hasState(key)) {
-                stateStore.setState(key, initialState);
-            }
-        }, [key, initialState]);
+        return unsubscribeFunc;
+    }, [key]);
 
-        React.useEffect(() => {
-            const handleStateChange = (value: T) => {
-                setState(value);
-            };
-
-           const unsubscribeFunc = stateStore.subscribe(key, handleStateChange)
-
-           return unsubscribeFunc;
-        }, [key]);
-
-        function setter(valueOrFunc: T | ((prev: T) => T)): void {
-            if (valueOrFunc instanceof Function){
-                stateStore.setState(key, valueOrFunc(state));
-                return;
-            }
-            stateStore.setState(key, valueOrFunc);
+    function setter(valueOrFunc: S[T] | ((prev: S[T]) => S[T])): void {
+        if (valueOrFunc instanceof Function) {
+            stateStore.setValue(key, valueOrFunc(state));
+            return;
         }
+        stateStore.setValue(key, valueOrFunc);
+    }
 
-        return [state, setter];
+    return [state, setter];
 }
 
-export function useStoreValue<T>(stateStore: StateStore, key: string, initialState?: T): T {
-    const [state] = useStoreState(stateStore, key, initialState);
+export function useStoreValue<T extends keyof S, S extends StateBaseType>(stateStore: StateStore<S>, key: T): S[T] {
+    const [state] = useStoreState(stateStore, key);
     return state;
 }
 
-export function useSetStoreValue<T>(stateStore: StateStore, key: string): (value: T | ((prev: T) => T)) => void {
-    const [,setter] = useStoreState(stateStore, key);
+export function useSetStoreValue<T extends keyof S, S extends StateBaseType>(
+    stateStore: StateStore<S>,
+    key: T
+): (value: S[T] | ((prev: S[T]) => S[T])) => void {
+    const [, setter] = useStoreState(stateStore, key);
     return setter;
 }

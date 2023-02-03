@@ -17,7 +17,7 @@
         "jsx": "react-jsx",
         "paths": {
             "@/*": ["./src/*"],
-            "@core/*": ["./src/core/*"],
+            "@core/*": ["src/core/*"],
             "@modules/*": ["./src/modules/*"]
         }
     },

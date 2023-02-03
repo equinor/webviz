@@ -1,34 +1,53 @@
 import { ImportState, Module, ModuleFC } from "./Module";
-import { StateStore, useSetStoreValue, useStoreState, useStoreValue } from "./StateStore";
+import { StateBaseType, StateStore, useSetStoreValue, useStoreState, useStoreValue } from "./StateStore";
 
-export type ModuleContext = {
-    useStoreState: (key: string, initialState?: unknown) => ReturnType<typeof useStoreState>;
-    useStoreValue: (key: string, initialState?: unknown) => unknown;
-    useSetStoreValue: (key: string) => (newValue: unknown | ((prev: unknown) => unknown)) => void;
+export type ModuleContext<S extends StateBaseType> = {
+    useStoreState: (key: keyof S) => [S[keyof S], (value: S[keyof S] | ((prev: S[keyof S]) => S[keyof S])) => void];
+    useStoreValue: (key: keyof S) => S[keyof S];
+    useSetStoreValue: (key: keyof S) => (newValue: S[keyof S] | ((prev: S[keyof S]) => S[keyof S])) => void;
 };
 
-export class ModuleInstance {
+export class ModuleInstance<StateType extends StateBaseType> {
     private id: string;
     private name: string;
-    private stateStore: StateStore;
-    private module: Module;
-    private context: ModuleContext | null;
+    private stateStore: StateStore<StateType>;
+    private module: Module<StateType>;
+    private context: ModuleContext<StateType>;
     private importStateSubscribers: Set<() => void>;
 
-    constructor(module: Module, instanceNumber: number) {
+    constructor(module: Module<StateType>, instanceNumber: number, initialState: StateType) {
         this.id = `${module.getName()}-${instanceNumber}`;
         this.name = module.getName();
-        this.stateStore = new StateStore();
+        this.stateStore = new StateStore<StateType>(initialState);
         this.module = module;
         this.importStateSubscribers = new Set();
-        this.context = null;
+        this.context = {
+            useStoreState: (
+                key: keyof StateType
+            ): [
+                StateType[keyof StateType],
+                (
+                    value:
+                        | StateType[keyof StateType]
+                        | ((prev: StateType[keyof StateType]) => StateType[keyof StateType])
+                ) => void
+            ] => useStoreState(this.stateStore, key),
+            useStoreValue: (key: keyof StateType): StateType[keyof StateType] => useStoreValue(this.stateStore, key),
+            useSetStoreValue: (
+                key: keyof StateType
+            ): ((
+                newValue:
+                    | StateType[keyof StateType]
+                    | ((prev: StateType[keyof StateType]) => StateType[keyof StateType])
+            ) => void) => useSetStoreValue(this.stateStore, key),
+        };
     }
 
-    public getViewFC(): ModuleFC {
+    public getViewFC(): ModuleFC<StateType> {
         return this.module.viewFC;
     }
 
-    public getSettingsFC(): ModuleFC {
+    public getSettingsFC(): ModuleFC<StateType> {
         return this.module.settingsFC;
     }
 
@@ -36,15 +55,7 @@ export class ModuleInstance {
         return this.module.getImportState();
     }
 
-    public getOrCreateContext(): ModuleContext {
-        if (!this.context) {
-            this.context = {
-                useStoreState: useStoreState.bind({}, this.stateStore),
-                useStoreValue: useStoreValue.bind({}, this.stateStore),
-                useSetStoreValue: useSetStoreValue.bind({}, this.stateStore),
-            };
-        }
-
+    public getOrCreateContext(): ModuleContext<StateType> {
         return this.context;
     }
 
