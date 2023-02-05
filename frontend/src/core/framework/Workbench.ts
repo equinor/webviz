@@ -3,6 +3,8 @@ import { ModuleInstance } from "./ModuleInstance";
 import { ModuleRegistry } from "./ModuleRegistry";
 import { StateStore } from "./StateStore";
 import { WorkbenchServices } from "./WorkbenchServices";
+import { PrivateWorkbenchServices } from "./internal/PrivateWorkbenchServices";
+
 
 export enum WorkbenchEvents {
     ActiveModuleChanged = "ActiveModuleChanged",
@@ -14,14 +16,14 @@ export class Workbench {
     private moduleInstances: ModuleInstance<any>[];
     private _activeModuleId: string;
     private stateStore: StateStore<{}>;
-    private _workbenchServices: WorkbenchServices;
+    private _workbenchServices: PrivateWorkbenchServices;
     private _subscribersMap: { [key: string]: Set<() => void> };
 
     constructor() {
         this.moduleInstances = [];
         this._activeModuleId = "";
         this.stateStore = new StateStore<{}>({});
-        this._workbenchServices = new WorkbenchServices();
+        this._workbenchServices = new PrivateWorkbenchServices(this);
         this._subscribersMap = {};
     }
 
@@ -98,5 +100,15 @@ export class Workbench {
                     ?.getId() || "";
             this.notifySubscribers(WorkbenchEvents.ActiveModuleChanged);
         }
+    }
+
+    // Temporary, for testing
+    public setNavigatorFieldName(fieldName: string) {
+        this._workbenchServices.publishNavigatorData("navigator.fieldName", fieldName);
+    }
+
+    // Temporary, for testing
+    public setNavigatorCaseId(caseId: string) {
+        this._workbenchServices.publishNavigatorData("navigator.caseId", caseId);
     }
 }

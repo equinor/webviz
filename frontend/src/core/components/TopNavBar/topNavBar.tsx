@@ -11,12 +11,12 @@ type TopNavBarProps = {
 export const TopNavBar: React.FC<TopNavBarProps> = (props) => {
     const activeModuleName = ""; // useWorkbenchActiveModuleName();
 
-    const handleFieldChange = (field: string) => {
-        return;
+    const handleFieldChange = (fieldName: string) => {
+        props.workbench.setNavigatorFieldName(fieldName);
     };
 
-    const handleCaseChange = (caseName: string) => {
-        return;
+    const handleCaseChange = (caseId: string) => {
+        props.workbench.setNavigatorCaseId(caseId);
     };
 
     const fields = [

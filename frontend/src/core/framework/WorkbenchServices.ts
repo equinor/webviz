@@ -1,66 +1,69 @@
 import React from "react";
 
+import { Workbench } from "./Workbench";
 
-namespace TopicMap {
-    export type Workbench = {
-        FieldName: string;
-        CaseId: string;
-      }
+export type NavigatorTopicDefinitions = {
+    "navigator.fieldName": string;
+    "navigator.caseId": string;
+};
 
-    export type SharedData = {
-          InfoMessage: string;
-          Depth: number;
-          Position: { x: number, y: number}
-      }
-} 
+export type GlobalTopicDefinitions = {
+    "global.infoMessage": string;
+    "global.depth": number;
+    "global.position": { x: number; y: number };
+};
 
-
-type TopicMapAll = TopicMap.Workbench & TopicMap.SharedData;
-
-
+export type AllTopicDefinitions = NavigatorTopicDefinitions & GlobalTopicDefinitions;
 
 export class WorkbenchServices {
-    private _subscribersMap: { [key: string]: Set<any> } = {}
+    protected _workbench: Workbench;
+    protected _subscribersMap: { [key: string]: Set<Function> };
 
-    subscribe<T extends keyof TopicMapAll>(topic: T, cb: (value: TopicMapAll[T]) => void) {
+    protected constructor(workbench: Workbench) {
+        this._workbench = workbench;
+        this._subscribersMap = {};
+    }
+
+    subscribe<T extends keyof AllTopicDefinitions>(topic: T, callbackFn: (value: AllTopicDefinitions[T]) => void) {
         const subscribersSet = this._subscribersMap[topic] || new Set();
-        subscribersSet.add(cb);
-        this._subscribersMap[topic.toString()] = subscribersSet
+        subscribersSet.add(callbackFn);
+        this._subscribersMap[topic] = subscribersSet;
         return () => {
-            subscribersSet.delete(cb);
-        }
+            subscribersSet.delete(callbackFn);
+        };
     }
 
-    publishSharedData<T extends keyof TopicMap.SharedData>(topic: T, value: TopicMap.SharedData[T]) {
-        console.log(`PUB SHARED ${topic}=${value}`);
-        const subscribersSet = this._subscribersMap[topic] || new Set();
-        for (let cb of subscribersSet) {
-            cb(value);
-        }
+    publishGlobalData<T extends keyof GlobalTopicDefinitions>(topic: T, value: GlobalTopicDefinitions[T]) {
+        this.internalPublishAnyTopic(topic, value);
     }
 
-    internal_publishWorkbenchData<T extends keyof TopicMap.Workbench>(topic: T, value: TopicMap.Workbench[T]) {
-      console.log(`PUB WORKBENCH ${topic}=${value}`);
-      const subscribersSet = this._subscribersMap[topic] || new Set();
-      for (let cb of subscribersSet) {
-          cb(value);
-      }
-  }
+    protected internalPublishAnyTopic<T extends keyof AllTopicDefinitions>(topic: T, value: unknown) {
+        const subscribersSet = this._subscribersMap[topic];
+        if (!subscribersSet) {
+            return;
+        }
+        for (const callbackFn of subscribersSet) {
+            callbackFn(value);
+        }
+    }
 }
 
+export function useSubscribedValue<T extends keyof AllTopicDefinitions>(
+    topic: T,
+    workbenchServices: WorkbenchServices
+): AllTopicDefinitions[T] | null {
+    const [latestValue, setLatestValue] = React.useState<AllTopicDefinitions[T] | null>(null);
 
-export function useWorkbenchSubscribedValue<T extends keyof TopicMapAll>(topic: T, workbenchServices: WorkbenchServices): TopicMapAll[T] | null {
-  const [latestValue, setLatestValue] = React.useState<TopicMapAll[T]|null>(null);
+    React.useEffect(
+        function subscribeToServiceTopic() {
+            function handleNewValue(newValue: AllTopicDefinitions[T]) {
+                setLatestValue(newValue);
+            }
+            const unsubscribeFunc = workbenchServices.subscribe(topic, handleNewValue);
+            return unsubscribeFunc;
+        },
+        [topic, workbenchServices]
+    );
 
-  React.useEffect(function subscribeToWorkbench() {
-      function handleNewMessageFromWorkbench(newValue: TopicMapAll[T]) {
-        setLatestValue(newValue);
-      }
-  
-      const unsubscribeFunc = workbenchServices.subscribe(topic, handleNewMessageFromWorkbench)
-      return unsubscribeFunc;
-  }, [workbenchServices]);
-
-  return latestValue;
+    return latestValue;
 }
-
