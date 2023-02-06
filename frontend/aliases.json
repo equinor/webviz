@@ -1,8 +1,9 @@
 {
     "compilerOptions": {
         "paths": {
-            "@/*": ["./src/*"],
-            "@core/*": ["./src/core/*"],
+            "@api": ["./src/api"],
+            "@framework/*": ["./src/framework/*"],
+            "@lib/*": ["./src/lib/*"],
             "@modules/*": ["./src/modules/*"]
         }
     }

@@ -13,5 +13,6 @@
     "importOrderSeparation": true,
     "importOrderSortSpecifiers": true,
     "singleQuote": false,
+    "printWidth": 120,
     "tabWidth": 4
 }

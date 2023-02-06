@@ -1,16 +1,30 @@
-import { Content } from "@core/components/Content";
-import { Settings } from "@core/components/Settings";
-import { TopNavBar } from "@core/components/TopNavBar";
+import React from "react";
+
+import { Workbench } from "@framework/Workbench";
+import { Content } from "@framework/components/Content";
+import { Settings } from "@framework/components/Settings";
+import { TopNavBar } from "@framework/components/TopNavBar";
+import { CustomQueryClientProvider } from "@framework/providers/QueryClientProvider";
+
+import "./modules/registerAllModules.ts";
 
 function App() {
+    const workbench = new Workbench();
+
+    React.useEffect(() => {
+        workbench.makeLayout(["MyModule", "MyModule2", "MyModule"]);
+    }, []);
+
     return (
-        <div className="h-screen flex flex-row">
-            <Settings />
-            <div className="flex flex-col flex-grow">
-                <TopNavBar />
-                <Content />
+        <CustomQueryClientProvider>
+            <div className="h-screen flex flex-row">
+                <Settings workbench={workbench} />
+                <div className="flex flex-col flex-grow">
+                    <TopNavBar workbench={workbench} />
+                    <Content workbench={workbench} />
+                </div>
             </div>
-        </div>
+        </CustomQueryClientProvider>
     );
 }
 
