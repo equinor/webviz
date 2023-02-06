@@ -1,8 +1,10 @@
 import React from "react";
 
+import { cloneDeep } from "lodash";
+
 import { ModuleContext, ModuleInstance } from "./ModuleInstance";
 import { StateBaseType } from "./StateStore";
-import { Workbench, WorkbenchEvents } from "./Workbench";
+import { Workbench } from "./Workbench";
 import { WorkbenchServices } from "./WorkbenchServices";
 
 export type ModuleFCProps<S extends StateBaseType> = {
@@ -26,25 +28,23 @@ export class Module<StateType extends StateBaseType> {
     private numInstances: number;
     private importState: ImportState;
     private moduleInstances: ModuleInstance<StateType>[];
-    private initialState: StateType;
+    private initialState: StateType | null;
     private workbench: Workbench | null;
 
-    constructor(name: string, initialState: StateType) {
+    constructor(name: string) {
         this._name = name;
         this.numInstances = 0;
         this.viewFC = () => <div>Not defined</div>;
         this.settingsFC = () => <div>Not defined</div>;
         this.importState = ImportState.NotImported;
         this.moduleInstances = [];
-        this.initialState = initialState;
+        this.initialState = null;
         this.workbench = null;
     }
 
     public getImportState(): ImportState {
         return this.importState;
     }
-
-    public getInitialState: () => StateType = () => this.initialState;
 
     public getName() {
         return this._name;
@@ -54,8 +54,12 @@ export class Module<StateType extends StateBaseType> {
         this.workbench = workbench;
     }
 
+    public setInitialState(initialState: StateType): void {
+        this.initialState = initialState;
+    }
+
     public makeInstance(): ModuleInstance<StateType> {
-        const instance = new ModuleInstance<StateType>(this, this.numInstances++, this.initialState);
+        const instance = new ModuleInstance<StateType>(this, this.numInstances++);
         this.moduleInstances.push(instance);
         this.maybeImportSelf();
         return instance;
@@ -74,6 +78,13 @@ export class Module<StateType extends StateBaseType> {
 
     private maybeImportSelf(): void {
         if (this.importState !== ImportState.NotImported) {
+            if (this.initialState && this.importState === ImportState.Imported) {
+                this.moduleInstances.forEach((instance) => {
+                    if (this.initialState) {
+                        instance.setInitialState(cloneDeep(this.initialState));
+                    }
+                });
+            }
             return;
         }
 
@@ -82,6 +93,11 @@ export class Module<StateType extends StateBaseType> {
         import(`@modules/${this._name}/loadModule.tsx`)
             .then(() => {
                 this.setImportState(ImportState.Imported);
+                this.moduleInstances.forEach((instance) => {
+                    if (this.initialState) {
+                        instance.setInitialState(cloneDeep(this.initialState));
+                    }
+                });
             })
             .catch(() => {
                 this.setImportState(ImportState.Failed);

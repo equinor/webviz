@@ -1,5 +1,3 @@
-import React from "react";
-
 import { Workbench } from "../Workbench";
 import { WorkbenchServices } from "../WorkbenchServices";
 import { NavigatorTopicDefinitions } from "../WorkbenchServices";

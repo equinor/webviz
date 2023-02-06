@@ -5,7 +5,6 @@ import { StateStore } from "./StateStore";
 import { WorkbenchServices } from "./WorkbenchServices";
 import { PrivateWorkbenchServices } from "./internal/PrivateWorkbenchServices";
 
-
 export enum WorkbenchEvents {
     ActiveModuleChanged = "ActiveModuleChanged",
     ModuleInstancesChanged = "ModuleInstancesChanged",

@@ -9,8 +9,8 @@ class ApiService extends ApiServiceBase {
                 makeUrl({
                     hostname: "localhost",
                     protocol: "http",
-                    port: 8000,
-                    pathname: "",
+                    port: 8080,
+                    pathname: "api/",
                 })
             ),
             WITH_CREDENTIALS: true,
