@@ -10,17 +10,23 @@ export type ModuleContext<S extends StateBaseType> = {
 export class ModuleInstance<StateType extends StateBaseType> {
     private id: string;
     private name: string;
-    private stateStore: StateStore<StateType>;
+    private stateStore: StateStore<StateType> | null;
     private module: Module<StateType>;
-    private context: ModuleContext<StateType>;
+    private context: ModuleContext<StateType> | null;
     private importStateSubscribers: Set<() => void>;
 
-    constructor(module: Module<StateType>, instanceNumber: number, initialState: StateType) {
+    constructor(module: Module<StateType>, instanceNumber: number) {
         this.id = `${module.getName()}-${instanceNumber}`;
         this.name = module.getName();
-        this.stateStore = new StateStore<StateType>(initialState);
+        this.stateStore = null;
         this.module = module;
         this.importStateSubscribers = new Set();
+        this.context = null;
+    }
+
+    public setInitialState(initialState: StateType): void {
+        this.stateStore = new StateStore<StateType>(initialState);
+
         this.context = {
             useStoreState: (
                 key: keyof StateType
@@ -31,15 +37,16 @@ export class ModuleInstance<StateType extends StateBaseType> {
                         | StateType[keyof StateType]
                         | ((prev: StateType[keyof StateType]) => StateType[keyof StateType])
                 ) => void
-            ] => useStoreState(this.stateStore, key),
-            useStoreValue: (key: keyof StateType): StateType[keyof StateType] => useStoreValue(this.stateStore, key),
+            ] => useStoreState(this.stateStore as Exclude<typeof this.stateStore, null>, key),
+            useStoreValue: (key: keyof StateType): StateType[keyof StateType] =>
+                useStoreValue(this.stateStore as Exclude<typeof this.stateStore, null>, key),
             useSetStoreValue: (
                 key: keyof StateType
             ): ((
                 newValue:
                     | StateType[keyof StateType]
                     | ((prev: StateType[keyof StateType]) => StateType[keyof StateType])
-            ) => void) => useSetStoreValue(this.stateStore, key),
+            ) => void) => useSetStoreValue(this.stateStore as Exclude<typeof this.stateStore, null>, key),
         };
     }
 
@@ -55,7 +62,10 @@ export class ModuleInstance<StateType extends StateBaseType> {
         return this.module.getImportState();
     }
 
-    public getOrCreateContext(): ModuleContext<StateType> {
+    public getContext(): ModuleContext<StateType> {
+        if (!this.context) {
+            throw `Module context is not available yet. Did you forget to init the module '${this.name}.'?`;
+        }
         return this.context;
     }
 

@@ -4,7 +4,11 @@ import { settings } from "./settings";
 import { State } from "./state";
 import { view } from "./view";
 
-const module = ModuleRegistry.getModule<State>("MyModule");
+const initialState: State = {
+    count: 0,
+};
+
+const module = ModuleRegistry.initModule<State>("MyModule", initialState);
 
 module.viewFC = view;
 module.settingsFC = settings;

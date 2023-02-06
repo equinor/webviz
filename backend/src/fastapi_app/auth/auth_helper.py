@@ -38,8 +38,8 @@ class AuthHelper:
         request.session.clear()
 
         all_scopes_list = config.GRAPH_SCOPES.copy()
-        # for key in config.RESOURCE_SCOPES_DICT:
-        #     all_scopes_list.extend(config.RESOURCE_SCOPES_DICT[key])
+        for key in config.RESOURCE_SCOPES_DICT:
+            all_scopes_list.extend(config.RESOURCE_SCOPES_DICT[key])
 
         cca = _create_msal_confidential_client_app(token_cache=None)
         flow_dict = cca.initiate_auth_code_flow(

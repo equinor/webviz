@@ -52,7 +52,7 @@ class Discovery:
         return case_info_arr
 
     def get_case_ids_with_smry_data(self, field_identifier: str):
-        hits = self._sumo_explorer.sumo.get(
+        hits = self._sumo_explorer._sumo.get(
             "/search",
             query=f"class:table AND \
                     masterdata.smda.field.identifier:{field_identifier} AND \
