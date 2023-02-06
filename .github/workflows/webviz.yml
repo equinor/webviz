@@ -1,6 +1,7 @@
 name: webviz
 
 on:
+  push:
   pull_request:
     branches:
       - main
@@ -10,6 +11,7 @@ on:
 
 jobs:
   webviz:
+    if: github.event_name != 'push' || github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
     - name: 📖 Checkout commit locally
@@ -19,17 +21,21 @@ jobs:
       with:
         node-version: 18
 
+    - name: 🐳 Build Docker images
+      run: | 
+        docker build -f frontend-prod.Dockerfile -t ghcr.io/equinor/webviz_frontend:latest .
+        docker build -f backend.Dockerfile -t ghcr.io/equinor/webviz_backend:latest .
+
     - name: GitHub Container Registry login
+      if: github.ref == 'refs/heads/main'
       uses: docker/login-action@v2
       with:
         registry: ghcr.io
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: 🐳 Build and push Docker images
+    - name: 🐳 Push Docker images
+      if: github.ref == 'refs/heads/main'
       run: | 
-        docker build -f frontend-prod.Dockerfile -t ghcr.io/equinor/webviz_frontend:latest .
         docker push ghcr.io/equinor/webviz_frontend:latest
-
-        docker build -f backend.Dockerfile -t ghcr.io/equinor/webviz_backend:latest .
         docker push ghcr.io/equinor/webviz_backend:latest
