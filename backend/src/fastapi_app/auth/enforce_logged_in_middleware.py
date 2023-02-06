@@ -30,12 +30,15 @@ class EnforceLoggedInMiddleware(BaseHTTPMiddleware):
         print("##################################### ensure_logged_in")
 
         path_to_check = request.url.path
-        root_path = request.scope.get('root_path')
+
+        # Look for root_path path as specified when initializing FastAPI
+        # If there is one, strip it out before comparing paths
+        root_path = request.scope.get("root_path", "")
         if root_path:
             path_to_check = path_to_check.replace(root_path, "")
 
         print(f"##### {request.url.path=}")
-        print(f"##### {request.scope.get('root_path')=}")
+        print(f"##### {root_path=}")
         print(f"##### {path_to_check=}")
 
         path_is_protected = True
@@ -56,7 +59,7 @@ class EnforceLoggedInMiddleware(BaseHTTPMiddleware):
                 if path_to_check in self._paths_redirected_to_login:
                     print("##### LOGGING IN USING REDIRECT")
                     target_url_b64 = base64.urlsafe_b64encode(str(request.url).encode()).decode()
-                    return RedirectResponse(f"/login?redirect_url_after_login={target_url_b64}")
+                    return RedirectResponse(f"{root_path}/login?redirect_url_after_login={target_url_b64}")
                 else:
                     return PlainTextResponse("Not authorized yet, must log in", 401)
 
