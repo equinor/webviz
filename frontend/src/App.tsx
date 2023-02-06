@@ -1,6 +1,6 @@
 import React from "react";
 
-import { Workbench } from "@framework/Workbench";
+import { LayoutElement, Workbench } from "@framework/Workbench";
 import { Content } from "@framework/components/Content";
 import { Settings } from "@framework/components/Settings";
 import { TopNavBar } from "@framework/components/TopNavBar";
@@ -8,11 +8,32 @@ import { CustomQueryClientProvider } from "@framework/providers/QueryClientProvi
 
 import "./modules/registerAllModules.ts";
 
+const layout: LayoutElement[] = [
+    {
+        moduleName: "MyModule",
+        position: 1,
+        width: 50,
+        height: 50,
+    },
+    {
+        moduleName: "MyModule2",
+        position: 2,
+        width: 50,
+        height: 50,
+    },
+    {
+        moduleName: "MyModule",
+        position: 1,
+        width: 100,
+        height: 50,
+    },
+];
+
 function App() {
     const workbench = new Workbench();
 
     React.useEffect(() => {
-        workbench.makeLayout(["MyModule", "MyModule2", "MyModule"]);
+        workbench.makeLayout(layout);
     }, []);
 
     return (

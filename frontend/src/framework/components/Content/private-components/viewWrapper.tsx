@@ -10,6 +10,8 @@ type ViewWrapperProps = {
     isActive: boolean;
     moduleInstance: ModuleInstance<any>;
     workbench: Workbench;
+    width: string;
+    height: string;
 };
 
 export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
@@ -56,7 +58,10 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
 
     return (
         <div
-            className={`bg-white p-4 ${props.isActive ? "border-red-600" : ""} m-4 border-solid border`}
+            className={`bg-white p-4 ${
+                props.isActive ? "border-red-600" : ""
+            } m-2 border-solid border float-left box-border`}
+            style={{ width: props.width, height: props.height }}
             onClick={() => props.workbench.setActiveModuleId(props.moduleInstance.getId())}
         >
             {createContent()}

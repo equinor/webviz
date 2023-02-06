@@ -11,12 +11,21 @@ export enum WorkbenchEvents {
     FullModuleRerenderRequested = "FullModuleRerenderRequested",
 }
 
+export type LayoutElement = {
+    moduleInstanceId?: string;
+    moduleName: string;
+    position: number;
+    height: number;
+    width: number;
+};
+
 export class Workbench {
     private moduleInstances: ModuleInstance<any>[];
     private _activeModuleId: string;
     private stateStore: StateStore<{}>;
     private _workbenchServices: PrivateWorkbenchServices;
     private _subscribersMap: { [key: string]: Set<() => void> };
+    private layout: LayoutElement[];
 
     constructor() {
         this.moduleInstances = [];
@@ -24,10 +33,15 @@ export class Workbench {
         this.stateStore = new StateStore<{}>({});
         this._workbenchServices = new PrivateWorkbenchServices(this);
         this._subscribersMap = {};
+        this.layout = [];
     }
 
     public getStateStore(): StateStore<{}> {
         return this.stateStore;
+    }
+
+    public getLayout(): LayoutElement[] {
+        return this.layout;
     }
 
     public getWorkbenchServices(): WorkbenchServices {
@@ -72,20 +86,23 @@ export class Workbench {
         return this.moduleInstances;
     }
 
-    public makeLayout(layout: string[]): void {
+    public makeLayout(layout: LayoutElement[]): void {
         this.moduleInstances = [];
-        layout.forEach((moduleName) => {
-            this.addModuleToLayout(moduleName);
+        this.layout = layout;
+        layout.forEach((element, index: number) => {
+            this.addModuleToLayout(element.moduleName, index);
         });
     }
 
-    private addModuleToLayout(moduleName: string): void {
+    private addModuleToLayout(moduleName: string, elementIndex: number): void {
         const module = ModuleRegistry.getModule(moduleName);
         if (!module) {
             throw new Error(`Module ${moduleName} not found`);
         }
 
-        this.moduleInstances.push(module.makeInstance());
+        const moduleInstance = module.makeInstance();
+        this.moduleInstances.push(moduleInstance);
+        this.layout[elementIndex] = { ...this.layout[elementIndex], moduleInstanceId: moduleInstance.getId() };
         this.notifySubscribers(WorkbenchEvents.ModuleInstancesChanged);
         module.setWorkbench(this);
     }
