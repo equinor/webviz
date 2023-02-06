@@ -1,7 +1,7 @@
 import React from "react";
 
-import { Workbench, WorkbenchEvents } from "@/core/framework/Workbench";
-import { useActiveModuleId, useModuleInstances } from "@/core/hooks/workbenchHooks";
+import { Workbench, WorkbenchEvents } from "@framework/Workbench";
+import { useActiveModuleId, useModuleInstances } from "@framework/hooks/workbenchHooks";
 
 import { ViewWrapper } from "./private-components/viewWrapper";
 

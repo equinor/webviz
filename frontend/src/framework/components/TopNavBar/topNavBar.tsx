@@ -1,12 +1,12 @@
 import React from "react";
 
-// import { useWorkbenchActiveModuleName } from "@/core/hooks/useWorkbenchActiveModuleName";
-import { ListBox } from "@/lib/components/ListBox";
-import { Workbench } from "@/core/framework/Workbench";
+import { Workbench } from "@framework/Workbench";
+// import { useWorkbenchActiveModuleName } from "@framework/hooks/useWorkbenchActiveModuleName";
+import { ListBox } from "@lib/components/ListBox";
 
 type TopNavBarProps = {
     workbench: Workbench;
-}
+};
 
 export const TopNavBar: React.FC<TopNavBarProps> = (props) => {
     const activeModuleName = ""; // useWorkbenchActiveModuleName();
@@ -45,16 +45,8 @@ export const TopNavBar: React.FC<TopNavBarProps> = (props) => {
         <div className="bg-slate-100 p-4">
             <div className="flex flex-row gap-4 items-center">
                 <h1 className="flex-grow">{activeModuleName}</h1>
-                <ListBox
-                    items={fields}
-                    selectedItem={"None"}
-                    onSelect={handleFieldChange}
-                />
-                <ListBox
-                    items={cases}
-                    selectedItem={"None"}
-                    onSelect={handleCaseChange}
-                />
+                <ListBox items={fields} selectedItem={"None"} onSelect={handleFieldChange} />
+                <ListBox items={cases} selectedItem={"None"} onSelect={handleCaseChange} />
             </div>
         </div>
     );

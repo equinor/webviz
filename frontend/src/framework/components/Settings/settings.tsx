@@ -1,8 +1,8 @@
 import React from "react";
 
-import { ImportState } from "@/core/framework/Module";
-import { Workbench } from "@/core/framework/Workbench";
-import { useActiveModuleId } from "@/core/hooks/workbenchHooks";
+import { ImportState } from "@framework/Module";
+import { Workbench } from "@framework/Workbench";
+import { useActiveModuleId } from "@framework/hooks/workbenchHooks";
 
 type SettingsProps = {
     workbench: Workbench;

@@ -5,10 +5,12 @@ import { StateBaseType } from "./StateStore";
 import { Workbench, WorkbenchEvents } from "./Workbench";
 import { WorkbenchServices } from "./WorkbenchServices";
 
-export type ModuleFC<S extends StateBaseType> = React.FC<{
+export type ModuleFCProps<S extends StateBaseType> = {
     moduleContext: ModuleContext<S>;
     workbenchServices: WorkbenchServices;
-}>;
+};
+
+export type ModuleFC<S extends StateBaseType> = React.FC<ModuleFCProps<S>>;
 
 export enum ImportState {
     NotImported = "NotImported",
@@ -77,7 +79,7 @@ export class Module<StateType extends StateBaseType> {
 
         this.setImportState(ImportState.Importing);
 
-        import(`../../modules/${this._name}/module.tsx`)
+        import(`@modules/${this._name}/loadModule.tsx`)
             .then(() => {
                 this.setImportState(ImportState.Imported);
             })

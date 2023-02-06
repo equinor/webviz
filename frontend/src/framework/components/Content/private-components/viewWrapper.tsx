@@ -1,10 +1,10 @@
 import React from "react";
 
-import { ImportState } from "@/core/framework/Module";
-import { ModuleInstance } from "@/core/framework/ModuleInstance";
-import { Workbench } from "@/core/framework/Workbench";
+import { ImportState } from "@framework/Module";
+import { ModuleInstance } from "@framework/ModuleInstance";
+import { Workbench } from "@framework/Workbench";
 
-// import { useWorkbenchActiveModuleId } from "@/core/hooks/useWorkbenchActiveModuleId";
+// import { useWorkbenchActiveModuleId } from "@framework/hooks/useWorkbenchActiveModuleId";
 
 type ViewWrapperProps = {
     isActive: boolean;

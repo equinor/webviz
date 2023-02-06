@@ -1,7 +1,7 @@
 import React from "react";
 
-import { ModuleInstance } from "../framework/ModuleInstance";
-import { Workbench, WorkbenchEvents } from "../framework/Workbench";
+import { ModuleInstance } from "../ModuleInstance";
+import { Workbench, WorkbenchEvents } from "../Workbench";
 
 export function useActiveModuleId(workbench: Workbench): string {
     const [activeModuleId, setActiveModuleId] = React.useState<string>("");

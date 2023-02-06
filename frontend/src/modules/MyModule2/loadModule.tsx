@@ -1,5 +1,5 @@
-import { ModuleRegistry } from "@/core/framework/ModuleRegistry";
-import { Input } from "@/lib/components/Input";
+import { ModuleRegistry } from "@framework/ModuleRegistry";
+import { Input } from "@lib/components/Input";
 
 import { State } from "./state";
 

@@ -1,13 +1,12 @@
 import React from "react";
 
-import { Content } from "@/core/components/Content";
-import { Settings } from "@/core/components/Settings";
-import { TopNavBar } from "@/core/components/TopNavBar";
-import { Workbench } from "@/core/framework/Workbench";
-import { ApiServiceWrapper } from "@/core/providers/ApiServiceProvider";
-import { CustomQueryClientProvider } from "@/core/providers/QueryClientProvider";
+import { Workbench } from "@framework/Workbench";
+import { Content } from "@framework/components/Content";
+import { Settings } from "@framework/components/Settings";
+import { TopNavBar } from "@framework/components/TopNavBar";
+import { CustomQueryClientProvider } from "@framework/providers/QueryClientProvider";
 
-import "./modules/index.ts";
+import "./modules/registerAllModules.ts";
 
 function App() {
     const workbench = new Workbench();
@@ -18,15 +17,13 @@ function App() {
 
     return (
         <CustomQueryClientProvider>
-            <ApiServiceWrapper>
-                <div className="h-screen flex flex-row">
-                    <Settings workbench={workbench} />
-                    <div className="flex flex-col flex-grow">
-                        <TopNavBar workbench={workbench} />
-                        <Content workbench={workbench} />
-                    </div>
+            <div className="h-screen flex flex-row">
+                <Settings workbench={workbench} />
+                <div className="flex flex-col flex-grow">
+                    <TopNavBar workbench={workbench} />
+                    <Content workbench={workbench} />
                 </div>
-            </ApiServiceWrapper>
+            </div>
         </CustomQueryClientProvider>
     );
 }
