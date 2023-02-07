@@ -5,6 +5,7 @@ export type ModuleContext<S extends StateBaseType> = {
     useStoreState: (key: keyof S) => [S[keyof S], (value: S[keyof S] | ((prev: S[keyof S]) => S[keyof S])) => void];
     useStoreValue: (key: keyof S) => S[keyof S];
     useSetStoreValue: (key: keyof S) => (newValue: S[keyof S] | ((prev: S[keyof S]) => S[keyof S])) => void;
+    stateStore: StateStore<S>;
 };
 
 export class ModuleInstance<StateType extends StateBaseType> {
@@ -47,6 +48,7 @@ export class ModuleInstance<StateType extends StateBaseType> {
                     | StateType[keyof StateType]
                     | ((prev: StateType[keyof StateType]) => StateType[keyof StateType])
             ) => void) => useSetStoreValue(this.stateStore as Exclude<typeof this.stateStore, null>, key),
+            stateStore: this.stateStore
         };
     }
 
