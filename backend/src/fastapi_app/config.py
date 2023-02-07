@@ -20,12 +20,12 @@ RESOURCE_SCOPES_DICT = {
     "smda": [SMDA_RESOURCE_SCOPE],
 }
 
+
 # Format: redis://[[username]:[password]]@localhost:6379/0
 # REDIS_URL = "redis://localhost"
 # REDIS_URL = f"redis://:{REDIS_PASSWORD}@redis:6379"
 REDIS_URL = f"redis://redis:6379"
 
-SESSION_STORAGE = "redis"  # "in_memory" / "filesystem" / "redis"
-# SESSION_STORAGE = os.environ.get("WEBVIZ_SESSION_STORAGE", SESSION_STORAGE)
+SESSION_STORAGE = "redis"
 
 SUMO_CONFIG = {"sumo_env": "prod", "field": "DROGON", "status": None}

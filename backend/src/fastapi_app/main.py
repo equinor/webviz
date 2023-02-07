@@ -1,8 +1,8 @@
 import datetime
 
-from fastapi import FastAPI, HTTPException, Request, Response
-from fastapi.routing import APIRoute, Request
-from starsessions import InMemoryStore, SessionMiddleware, load_session
+from fastapi import FastAPI
+from fastapi.routing import APIRoute
+from starsessions import SessionMiddleware
 from starsessions.stores.redis import RedisStore
 
 from .routers.timeseries import router as timeseries_router
@@ -13,12 +13,10 @@ from . import config
 
 
 def custom_generate_unique_id(route: APIRoute):
-    print(route.tags, route.name)
     return f"{route.name}"
 
 
-# app = FastAPI(generate_unique_id_function=custom_generate_unique_id, root_path="/api")
-app = FastAPI(generate_unique_id_function=custom_generate_unique_id)
+app = FastAPI(generate_unique_id_function=custom_generate_unique_id, root_path="/api")
 
 app.include_router(timeseries_router, prefix="/timeseries")
 
@@ -36,10 +34,7 @@ app.add_middleware(
     paths_redirected_to_login=paths_redirected_to_login,
 )
 
-# if config.SESSION_STORAGE == "redis":
 session_store = RedisStore(config.REDIS_URL)
-# if config.SESSION_STORAGE == "in_memory":
-# session_store = InMemoryStore()
 
 app.add_middleware(SessionMiddleware, store=session_store)
 
