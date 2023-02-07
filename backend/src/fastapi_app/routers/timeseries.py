@@ -37,8 +37,6 @@ async def get_vector_names_and_descriptions(
 ) -> List[schemas.timeseries.VectorDescription]:
     """Get all vector names and descriptive names in a given Sumo ensemble"""
 
-    sumo_discovery = Discovery(authenticated_user.get_sumo_access_token())
-    case_ids = sumo_discovery.get_case_ids_with_smry_data(SUMO_CONFIG["field"])
     case = CaseAccess(authenticated_user.get_sumo_access_token(), sumo_case_id)
     vector_names = case.get_vector_names(iteration_id=sumo_iteration_id)
     return [
@@ -58,11 +56,9 @@ async def get_realizations_vector_data(
     relative_to_timestamp: Optional[datetime.datetime] = Query(None, description="Calculate relative to timestamp"),
 ) -> List[schemas.timeseries.VectorRealizationData]:
     """Get vector data per realization"""
-    sumo_discovery = Discovery(authenticated_user.get_sumo_access_token())
-    case_ids = sumo_discovery.get_case_ids_with_smry_data(SUMO_CONFIG["field"])
     case = CaseAccess(authenticated_user.get_sumo_access_token(), sumo_case_id)
     vector_data = case.get_vector_realizations_data(iteration_id=sumo_iteration_id, vector_name=vector_name)
-    return vector_data
+    return vector_data if vector_data else []
 
 
 @router.get("/vector_metadata/", tags=["timeseries"])
