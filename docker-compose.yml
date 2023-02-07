@@ -31,3 +31,16 @@ services:
       - WEBVIZ_SMDA_RESOURCE_SCOPE
     volumes:
       - ./backend/src:/home/appuser/backend/src
+
+  redis:
+    image: "redis:alpine"
+    command: redis-server
+    expose:
+      - "6379"
+    volumes:
+      - redis-data:/data
+      - redis-conf:/usr/local/etc/redis/redis.conf
+
+volumes:
+  redis-data:
+  redis-conf:
