@@ -14,7 +14,8 @@ export enum WorkbenchEvents {
 export type LayoutElement = {
     moduleInstanceId?: string;
     moduleName: string;
-    position: number;
+    x: number;
+    y: number;
     height: number;
     width: number;
 };

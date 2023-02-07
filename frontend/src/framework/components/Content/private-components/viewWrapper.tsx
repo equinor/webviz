@@ -1,21 +1,29 @@
-import React from "react";
+import React, { PointerEventHandler } from "react";
 
 import { ImportState } from "@framework/Module";
 import { ModuleInstance } from "@framework/ModuleInstance";
 import { Workbench } from "@framework/Workbench";
+import { Point, pointDistance, pointRelativeToDomRect, pointerEventToPoint } from "@framework/utils/geometry";
 
-// import { useWorkbenchActiveModuleId } from "@framework/hooks/useWorkbenchActiveModuleId";
+import { LayoutEventTypes } from "./layout";
+
+import { pointDifference } from "../../../utils/geometry";
 
 type ViewWrapperProps = {
     isActive: boolean;
     moduleInstance: ModuleInstance<any>;
     workbench: Workbench;
-    width: string;
-    height: string;
+    width: number;
+    height: number;
+    x: number;
+    y: number;
+    isDragged: boolean;
+    dragPosition: Point;
 };
 
 export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
     const [importState, setImportState] = React.useState<ImportState>(ImportState.NotImported);
+    const ref = React.useRef<HTMLDivElement>(null);
 
     React.useEffect(() => {
         setImportState(props.moduleInstance.getImportState());
@@ -56,15 +64,70 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
         [props.moduleInstance, props.workbench, importState]
     );
 
+    const handlePointerDown = React.useCallback(
+        function handlePointerDown(e: React.PointerEvent<HTMLDivElement>) {
+            if (ref.current) {
+                const point = pointerEventToPoint(e.nativeEvent);
+                const rect = ref.current.getBoundingClientRect();
+                document.dispatchEvent(
+                    new CustomEvent(LayoutEventTypes.MODULE_INSTANCE_POINTER_DOWN, {
+                        detail: {
+                            id: props.moduleInstance.getId(),
+                            elementPosition: pointDifference(point, pointRelativeToDomRect(point, rect)),
+                            pointerPoint: point,
+                        },
+                    })
+                );
+            }
+        },
+        [props.moduleInstance]
+    );
+
     return (
-        <div
-            className={`bg-white p-4 ${
-                props.isActive ? "border-red-600" : ""
-            } m-2 border-solid border float-left box-border`}
-            style={{ width: props.width, height: props.height }}
-            onClick={() => props.workbench.setActiveModuleId(props.moduleInstance.getId())}
-        >
-            {createContent()}
-        </div>
+        <>
+            {props.isDragged && (
+                <div
+                    className="absolute box-border p-2"
+                    style={{
+                        width: props.width,
+                        height: props.height,
+                        left: props.x,
+                        top: props.y,
+                    }}
+                >
+                    <div className="bg-red-300 h-full w-full" />
+                </div>
+            )}
+            <div
+                ref={ref}
+                className="absolute box-border p-2"
+                style={{
+                    width: props.width,
+                    height: props.height,
+                    left: props.isDragged ? props.dragPosition.x : props.x,
+                    top: props.isDragged ? props.dragPosition.y : props.y,
+                    zIndex: props.isDragged ? 1 : 0,
+                }}
+            >
+                <div
+                    className={`bg-white h-full w-full ${
+                        props.isActive ? "border-red-600" : ""
+                    } border-solid border box-border shadow ${
+                        props.isDragged ? "cursor-grabbing select-none" : "cursor-grab"
+                    }}`}
+                    onClick={() => props.workbench.setActiveModuleId(props.moduleInstance.getId())}
+                >
+                    <div
+                        className={`bg-slate-100 p-4 select-none ${
+                            props.isDragged ? "cursor-grabbing" : "cursor-move"
+                        }`}
+                        onPointerDown={handlePointerDown}
+                    >
+                        {props.moduleInstance.getName()}
+                    </div>
+                    <div className="p-4">{createContent()}</div>
+                </div>
+            </div>
+        </>
     );
 };

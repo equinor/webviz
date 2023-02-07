@@ -11,21 +11,38 @@ import "./modules/registerAllModules.ts";
 const layout: LayoutElement[] = [
     {
         moduleName: "MyModule",
-        position: 1,
-        width: 50,
-        height: 50,
+        width: 0.25,
+        height: 0.5,
+        x: 0,
+        y: 0,
     },
     {
         moduleName: "MyModule2",
-        position: 2,
-        width: 50,
-        height: 50,
+        width: 0.25,
+        height: 0.5,
+        x: 0.25,
+        y: 0,
+    },
+    {
+        moduleName: "MyModule2",
+        width: 0.25,
+        height: 0.5,
+        x: 0.5,
+        y: 0,
+    },
+    {
+        moduleName: "MyModule2",
+        width: 0.25,
+        height: 0.5,
+        x: 0.75,
+        y: 0,
     },
     {
         moduleName: "MyModule",
-        position: 1,
-        width: 100,
-        height: 50,
+        width: 1,
+        height: 0.5,
+        x: 0,
+        y: 0.5,
     },
 ];
 

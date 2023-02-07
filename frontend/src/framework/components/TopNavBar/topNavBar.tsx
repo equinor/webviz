@@ -13,9 +13,17 @@ type TopNavBarProps = {
 export const TopNavBar: React.FC<TopNavBarProps> = (props) => {
     const activeModuleName = ""; // useWorkbenchActiveModuleName();
 
+    /*
     const cases = useQuery([], async (): Promise<string[]> => {
         return apiService.timeseries.getCaseIds();
     });
+    */
+
+    const cases = {
+        isLoading: false,
+        isSuccess: true,
+        data: ["Drogon", "Rhaegal", "Viserion"],
+    };
 
     const handleFieldChange = (fieldName: string) => {
         props.workbench.setNavigatorFieldName(fieldName);
