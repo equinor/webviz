@@ -4,6 +4,7 @@ from typing import List, Optional, Union, Sequence
 from fastapi import APIRouter, Query, Depends
 
 from ...services.sumo_access.discovery import Discovery
+from ...services.sumo_access.case_access import CaseAccess
 from ...services.utils.authenticated_user import AuthenticatedUser
 
 from ..auth.auth_helper import AuthHelper
@@ -36,7 +37,32 @@ async def get_vector_names_and_descriptions(
 ) -> List[schemas.timeseries.VectorDescription]:
     """Get all vector names and descriptive names in a given Sumo ensemble"""
 
-    ...
+    sumo_discovery = Discovery(authenticated_user.get_sumo_access_token())
+    case_ids = sumo_discovery.get_case_ids_with_smry_data(SUMO_CONFIG["field"])
+    case = CaseAccess(authenticated_user.get_sumo_access_token(), sumo_case_id)
+    vector_names = case.get_vector_names(iteration_id=sumo_iteration_id)
+    return [
+        schemas.timeseries.VectorDescription(name=vector_name, descriptive_name=vector_name, has_historical=False)
+        for vector_name in vector_names
+    ]
+
+
+@router.get("/realizations_vector_data/", tags=["timeseries"])
+async def get_realizations_vector_data(
+    authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
+    sumo_case_id: str = Query(None, description="Sumo case id"),
+    sumo_iteration_id: str = Query(None, description="Sumo iteration id"),
+    vector_name: str = Query(None, description="Name of the vector"),
+    resampling_frequency: Optional[schemas.timeseries.Frequency] = Query(None, description="Resampling frequency"),
+    realizations: Union[Sequence[int], None] = Query(None, description="Optional list of realizations to include"),
+    relative_to_timestamp: Optional[datetime.datetime] = Query(None, description="Calculate relative to timestamp"),
+) -> List[schemas.timeseries.VectorRealizationData]:
+    """Get vector data per realization"""
+    sumo_discovery = Discovery(authenticated_user.get_sumo_access_token())
+    case_ids = sumo_discovery.get_case_ids_with_smry_data(SUMO_CONFIG["field"])
+    case = CaseAccess(authenticated_user.get_sumo_access_token(), sumo_case_id)
+    vector_data = case.get_vector_realizations_data(iteration_id=sumo_iteration_id, vector_name=vector_name)
+    return vector_data
 
 
 @router.get("/vector_metadata/", tags=["timeseries"])
@@ -80,20 +106,6 @@ async def get_historical_vector_data(
     ),  # ??
     relative_to_timestamp: Optional[datetime.datetime] = Query(None, description="Calculate relative to timestamp"),
 ) -> schemas.timeseries.VectorHistoricalData:
-    ...
-
-
-@router.get("/realizations_vector_data/", tags=["timeseries"])
-async def get_realizations_vector_data(
-    authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
-    sumo_case_id: str = Query(None, description="Sumo case id"),
-    sumo_iteration_id: str = Query(None, description="Sumo iteration id"),
-    vector_name: str = Query(None, description="Name of the vector"),
-    resampling_frequency: Optional[schemas.timeseries.Frequency] = Query(None, description="Resampling frequency"),
-    realizations: Union[Sequence[int], None] = Query(None, description="Optional list of realizations to include"),
-    relative_to_timestamp: Optional[datetime.datetime] = Query(None, description="Calculate relative to timestamp"),
-) -> List[schemas.timeseries.VectorRealizationData]:
-    """Get vector data per realization"""
     ...
 
 

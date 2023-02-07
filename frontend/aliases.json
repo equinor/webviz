@@ -1,10 +1,18 @@
 {
     "compilerOptions": {
         "paths": {
-            "@api": ["./src/api"],
-            "@framework/*": ["./src/framework/*"],
-            "@lib/*": ["./src/lib/*"],
-            "@modules/*": ["./src/modules/*"]
+            "@api/*": [
+                "./src/api"
+            ],
+            "@framework/*": [
+                "./src/framework/*"
+            ],
+            "@lib/*": [
+                "./src/lib/*"
+            ],
+            "@modules/*": [
+                "./src/modules/*"
+            ]
         }
     }
 }

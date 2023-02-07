@@ -12,7 +12,7 @@ function App() {
     const workbench = new Workbench();
 
     React.useEffect(() => {
-        workbench.makeLayout(["MyModule", "MyModule2", "MyModule"]);
+        workbench.makeLayout(["SimulationTimeSeries", "SimulationTimeSeries", "SimulationTimeSeries"]);
     }, []);
 
     return (

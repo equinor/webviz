@@ -4,7 +4,7 @@ import { Workbench } from "./Workbench";
 
 export type NavigatorTopicDefinitions = {
     "navigator.fieldName": string;
-    "navigator.caseId": string;
+    "navigator.caseId": string | null;
 };
 
 export type GlobalTopicDefinitions = {

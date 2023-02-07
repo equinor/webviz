@@ -19,7 +19,7 @@ export const ListBox: React.FC<ListBoxProps> = (props) => {
         props.items.find((item) => item.value === props.selectedItem)?.label ||
         "Please select...";
     return (
-        <div className="w-72">
+        <div >
             <Listbox value={props.selectedItem} onChange={props.onSelect}>
                 <div className="relative mt-1">
                     <Listbox.Button className="relative w-full cursor-default rounded-lg bg-white py-2 pl-3 pr-10 text-left shadow-md focus:outline-none focus-visible:border-indigo-500 focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-opacity-75 focus-visible:ring-offset-2 focus-visible:ring-offset-orange-300 sm:text-sm">
@@ -39,15 +39,14 @@ export const ListBox: React.FC<ListBoxProps> = (props) => {
                         leaveFrom="opacity-100"
                         leaveTo="opacity-0"
                     >
-                        <Listbox.Options className="absolute mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm left-0 top-0">
+                        <Listbox.Options className="z-10 absolute mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm left-0 top-0">
                             {props.items.map((item) => (
                                 <Listbox.Option
                                     key={item.value}
                                     className={({ active }) =>
-                                        `relative cursor-default select-none py-2 pl-10 pr-4 ${
-                                            active
-                                                ? "bg-amber-100 text-amber-900"
-                                                : "text-gray-900"
+                                        `relative cursor-default select-none py-2 pl-10 pr-4 ${active
+                                            ? "bg-amber-100 text-amber-900"
+                                            : "text-gray-900"
                                         }`
                                     }
                                     value={item.value}
@@ -56,11 +55,10 @@ export const ListBox: React.FC<ListBoxProps> = (props) => {
                                     {({ selected }) => (
                                         <>
                                             <span
-                                                className={`block truncate ${
-                                                    selected
-                                                        ? "font-medium"
-                                                        : "font-normal"
-                                                }`}
+                                                className={`block truncate ${selected
+                                                    ? "font-medium"
+                                                    : "font-normal"
+                                                    }`}
                                             >
                                                 {item.label}
                                             </span>
