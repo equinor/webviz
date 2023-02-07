@@ -3,7 +3,7 @@ import { apiService } from "@framework/ApiService";
 
 import { ModuleFCProps } from "@framework/Module";
 import { useSubscribedValue } from "@framework/WorkbenchServices";
-import { VectorRealizationData } from "@api/models/VectorRealizationData";
+import { VectorRealizationData } from "@api";
 import { PlotlyLineChart } from "@lib/components/PlotlyLineChart";
 import { State } from "./state";
 

@@ -1,7 +1,7 @@
 import { useQuery } from "react-query";
 
 import { apiService } from "@framework/ApiService";
-import { VectorDescription } from "../../api/models/VectorDescription";
+import { VectorDescription } from "@api";
 import { useSubscribedValue } from "@framework/WorkbenchServices";
 
 import { ModuleFCProps } from "@framework/Module";

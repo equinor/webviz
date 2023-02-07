@@ -1,7 +1,7 @@
 {
     "compilerOptions": {
         "paths": {
-            "@api/*": [
+            "@api": [
                 "./src/api"
             ],
             "@framework/*": [
