@@ -1,4 +1,4 @@
-import { ApiService as ApiServiceBase } from "@api";
+import { ApiService as ApiServiceBase } from "@api/ApiService";
 
 import { makeUrl, urlToString } from "./utils/url";
 
