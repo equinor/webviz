@@ -95,6 +95,15 @@ export const rectContainsPoint = (rect: Rect, point: Point): boolean => {
     return point.x >= rect.x && point.x <= rect.x + rect.width && point.y >= rect.y && point.y <= rect.y + rect.height;
 };
 
+export const outerRectContainsInnerRect = (outerRect: Rect, innerRect: Rect): boolean => {
+    return (
+        outerRect.x <= innerRect.x &&
+        outerRect.y <= innerRect.y &&
+        outerRect.x + outerRect.width >= innerRect.x + innerRect.width &&
+        outerRect.y + outerRect.height >= innerRect.y + innerRect.height
+    );
+};
+
 export const pointRelativeToDomRect = (point: Point, domRect: DOMRect): Point => {
     return { x: point.x - domRect.x, y: point.y - domRect.y };
 };
@@ -121,6 +130,9 @@ export const pointsAreEqual = (point1: Point, point2: Point): boolean => point1.
 
 export const sizesAreEqual = (size1: Size, size2: Size): boolean =>
     size1.width === size2.width && size1.height === size2.height;
+
+export const rectsAreEqual = (rect1: Rect, rect2: Rect): boolean =>
+    rect1.x === rect2.x && rect1.y === rect2.y && rect1.width === rect2.width && rect1.height === rect2.height;
 
 export const isDOMRectContained = (inner: DOMRect, outer: DOMRect): boolean => {
     return (
