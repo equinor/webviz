@@ -14,4 +14,4 @@ RUN pip install poetry \
     && poetry export --without-hashes -f requirements.txt -o requirements.txt \
     && pip install -r requirements.txt
 
-CMD ["uvicorn", "--proxy-headers", "--forwarded-allow-ips='*'", "--host=0.0.0.0", "--port=5000", "src.fastapi_app.main:app"]
+CMD ["uvicorn", "--proxy-headers", "--host=0.0.0.0", "--port=5000", "src.fastapi_app.main:app"]
