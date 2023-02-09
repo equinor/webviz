@@ -20,7 +20,10 @@ const prepareVectorNames = (vectorNames: VectorDescription[]): ListBoxItem[] => 
 }
 
 const mockedData: any = {
-    vectorDescriptions: [{ name: "FOPT", descriptive_name: "FOPT", has_historical: false }, { name: "FOPR", descriptive_name: "FOPR", has_historical: false }]
+    vectorDescriptions: [
+        { name: "FOPT", descriptive_name: "FOPT", has_historical: false },
+        { name: "FOPR", descriptive_name: "FOPR", has_historical: false },
+        { name: "GOPT", descriptive_name: "GOPT", has_historical: false }]
 }
 
 const visualizationTypes: string[] = ["realization", "statistic"]
@@ -33,6 +36,8 @@ export const settings = (props: ModuleFCProps<State>) => {
 
     const setSelectedVector = props.moduleContext.useSetStoreValue("selectedVector");
     const selectedVector = props.moduleContext.useStoreValue("selectedVector");
+    const setSelectedVector2 = props.moduleContext.useSetStoreValue("selectedVector2");
+    const selectedVector2 = props.moduleContext.useStoreValue("selectedVector2");
     const setVisualizationType = props.moduleContext.useSetStoreValue("visualizationType");
     const visualizationType = props.moduleContext.useStoreValue("visualizationType");
 
@@ -47,9 +52,16 @@ export const settings = (props: ModuleFCProps<State>) => {
                         </label>
 
                         <ListBox
-                            items={prepareVectorNames(caseVectorNames.data)}
+                            // items={prepareVectorNames(caseVectorNames.data)}
+                            items={prepareVectorNames(mockedData.vectorDescriptions)}
                             selectedItem={selectedVector}
                             onSelect={(value: string) => setSelectedVector(value)} />
+
+                        <ListBox
+                            // items={prepareVectorNames(caseVectorNames.data)}
+                            items={prepareVectorNames(mockedData.vectorDescriptions)}
+                            selectedItem={selectedVector2}
+                            onSelect={(value: string) => setSelectedVector2(value)} />
                     </div>
 
                     <label className="block text-base text-gray-700 font-bold mb-2" >

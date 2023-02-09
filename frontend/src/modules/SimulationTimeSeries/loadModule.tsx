@@ -6,7 +6,10 @@ import { view } from "./view";
 
 const initialState: State = {
     selectedVector: "FOPT",
-    visualizationType: "realization",
+    selectedVector2: "FOPT",
+    highlightedTrace: undefined,
+    xAxisRange: undefined,
+    visualizationType: "realization"
 }
 
 const module = ModuleRegistry.initModule<State>("SimulationTimeSeries", initialState);
