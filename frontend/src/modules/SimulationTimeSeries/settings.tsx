@@ -3,7 +3,7 @@ import { useQuery } from "react-query";
 import { apiService } from "@framework/ApiService";
 import { VectorDescription } from "@api";
 import { useSubscribedValue } from "@framework/WorkbenchServices";
-
+import { useStoreState } from "@framework/StateStore";
 import { ModuleFCProps } from "@framework/Module";
 import { State } from "./state";
 
@@ -26,21 +26,21 @@ const mockedData: any = {
         { name: "GOPT", descriptive_name: "GOPT", has_historical: false }]
 }
 
-const visualizationTypes: string[] = ["realization", "statistic"]
+
 export const settings = (props: ModuleFCProps<State>) => {
     const sumoCaseId: any = useSubscribedValue("navigator.caseId", props.workbenchServices);
     const sumoIterationId: string = "0"
-    const caseVectorNames = useQuery([sumoCaseId, sumoIterationId], async (): Promise<VectorDescription[]> => {
-        return apiService.timeseries.getVectorNamesAndDescriptions(sumoCaseId, sumoIterationId)
+    const caseVectorNames = useQuery({
+        queryKey:["getVectorNamesAndDescriptions",sumoCaseId, sumoIterationId],
+        queryFn: (): Promise<VectorDescription[]> => {
+            return apiService.timeseries.getVectorNamesAndDescriptions(sumoCaseId, sumoIterationId)
+        }
     })
-
-    const setSelectedVector = props.moduleContext.useSetStoreValue("selectedVector");
-    const selectedVector = props.moduleContext.useStoreValue("selectedVector");
-    const setSelectedVector2 = props.moduleContext.useSetStoreValue("selectedVector2");
-    const selectedVector2 = props.moduleContext.useStoreValue("selectedVector2");
-    const setVisualizationType = props.moduleContext.useSetStoreValue("visualizationType");
-    const visualizationType = props.moduleContext.useStoreValue("visualizationType");
-
+    
+    const [selectedVector, setSelectedVector] = useStoreState(props.moduleContext.stateStore, "selectedVector");
+    const [selectedVector2, setSelectedVector2] = useStoreState(props.moduleContext.stateStore, "selectedVector2");
+    const [visualizationType, setVisualizationType] = useStoreState(props.moduleContext.stateStore, "visualizationType");
+    
     if (caseVectorNames.data) {
         return (
             <>

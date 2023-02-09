@@ -1,7 +1,7 @@
-import React from "react";
+import React, {useState} from "react";
 import { useQuery } from "react-query";
 import { apiService } from "@framework/ApiService";
-
+import { useStoreValue } from "@framework/StateStore";
 import { ModuleFCProps } from "@framework/Module";
 import { useSubscribedValue } from "@framework/WorkbenchServices";
 import { VectorRealizationData } from "@api";
@@ -25,7 +25,7 @@ const realizationDataToTraces = (data: VectorRealizationData[], highlightedTrace
     })
 }
 
-const plotLayout = (xaxisRange: [number, number] | undefined): Partial<Plotly.Layout> => {
+const plotLayout = (xaxisRange: [number|undefined, number|undefined] | undefined): Partial<Plotly.Layout> => {
     if (xaxisRange) {
         return {
             "xaxis": {
@@ -35,7 +35,7 @@ const plotLayout = (xaxisRange: [number, number] | undefined): Partial<Plotly.La
     }
     return {}
 }
-const getTraceNumberFromHoverData = (hoverData: Plotly.PlotMouseEvent): any => {
+const getTraceNumberFromHoverData = (hoverData: Plotly.PlotHoverEvent): any => {
     if (hoverData.points && hoverData.points.length > 0) {
         return hoverData.points[0].data.customdata
     }
@@ -49,16 +49,16 @@ const getXaxisRangeFromLayoutChange = (onRelayout: Plotly.PlotRelayoutEvent): [n
 export const view = (props: ModuleFCProps<State>) => {
     const sumoCaseId: any = useSubscribedValue("navigator.caseId", props.workbenchServices);
     const sumoIterationId: string = "0"
-    const selectedVector = props.moduleContext.useStoreValue("selectedVector");
-    const selectedVector2 = props.moduleContext.useStoreValue("selectedVector2");
-
-    const highlightedTrace = props.moduleContext.useStoreValue("highlightedTrace");
-    const setHighlightedTrace = props.moduleContext.useSetStoreValue("highlightedTrace");
-    const xAxisRange = props.moduleContext.useStoreValue("xAxisRange");
-    const setxAxisRange = props.moduleContext.useSetStoreValue("xAxisRange");
-
-    const queryVector = (vector: string) => useQuery([sumoCaseId, sumoIterationId, vector], async (): Promise<VectorRealizationData[]> => {
-        return apiService.timeseries.getRealizationsVectorData(sumoCaseId, sumoIterationId, vector)
+    const selectedVector = useStoreValue(props.moduleContext.stateStore,"selectedVector");
+    const selectedVector2 = useStoreValue(props.moduleContext.stateStore,"selectedVector2");
+    const [highlightedTrace,setHighlightedTrace] = useState<number | undefined>(undefined);
+    const [xAxisRange, setxAxisRange] = useState<[number|undefined, number|undefined] | undefined>(undefined);
+    
+    const queryVector = (vector: string) => useQuery({
+        queryKey:["getRealizationsVectorData",sumoCaseId, sumoIterationId, vector],
+        queryFn: (): Promise<VectorRealizationData[]> => {
+            return apiService.timeseries.getRealizationsVectorData(sumoCaseId, sumoIterationId, vector)
+        }
     })
     const vectorData = queryVector(selectedVector)
     const vectorData2 = queryVector(selectedVector2)
@@ -68,8 +68,8 @@ export const view = (props: ModuleFCProps<State>) => {
             <PlotlyLineChart
                 data={(vectorData?.data) ? realizationDataToTraces(vectorData.data, highlightedTrace) : []}
                 layout={{ autosize: true, title: selectedVector, ...plotLayout(xAxisRange) }}
-                onHover={(data: any) => { setHighlightedTrace(getTraceNumberFromHoverData(data)) }}
-                onRelayout={(data: any) => { setxAxisRange(getXaxisRangeFromLayoutChange(data)) }}
+                onHover={(e: Plotly.PlotHoverEvent) => { setHighlightedTrace(getTraceNumberFromHoverData(e)) }}
+                onRelayout={(e: Plotly.PlotRelayoutEvent) => { setxAxisRange(getXaxisRangeFromLayoutChange(e)) }}
                 useResizeHandler={true}
                 style={{ width: "100%", height: "100%" }}
 
@@ -77,8 +77,8 @@ export const view = (props: ModuleFCProps<State>) => {
             <PlotlyLineChart
                 data={(vectorData2?.data) ? realizationDataToTraces(vectorData2.data, highlightedTrace) : []}
                 layout={{ autosize: true, title: selectedVector, ...plotLayout(xAxisRange) }}
-                onHover={(data: any) => { setHighlightedTrace(getTraceNumberFromHoverData(data)) }}
-                onRelayout={(data: any) => { setxAxisRange(getXaxisRangeFromLayoutChange(data)) }}
+                onHover={(e: Plotly.PlotHoverEvent) => { setHighlightedTrace(getTraceNumberFromHoverData(e)) }}
+                onRelayout={(e: Plotly.PlotRelayoutEvent) => { setxAxisRange(getXaxisRangeFromLayoutChange(e)) }}
                 useResizeHandler={true}
                 style={{ width: "100%", height: "100%" }}
 
