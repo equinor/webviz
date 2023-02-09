@@ -33,10 +33,11 @@ services:
       - ./backend/src:/home/appuser/backend/src
 
   redis:
-    image: "redis:alpine"
-    command: redis-server
+    image: "bitnami/redis:6.2.10@sha256:bd42fcdab5959ce2b21b6ea8410d4b3ee87ecb2e320260326ec731ecfcffbd0e"
     expose:
       - "6379"
+    environment:
+      - ALLOW_EMPTY_PASSWORD=yes
     volumes:
       - redis-data:/data
       - redis-conf:/usr/local/etc/redis/redis.conf
