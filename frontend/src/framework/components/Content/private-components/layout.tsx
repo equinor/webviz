@@ -57,9 +57,6 @@ export const Layout: React.FC<LayoutProps> = (props) => {
     const [position, setPosition] = React.useState<Point>({ x: 0, y: 0 });
     const [layout, setLayout] = React.useState<LayoutElement[]>([]);
     const [size, setSize] = React.useState<Size>({ width: 0, height: 0 });
-    const [layoutBox, setLayoutBox] = React.useState<LayoutBox | null>(null);
-    const [activeLayoutBox, setActiveLayoutBox] = React.useState<string | null>(null);
-    const [pointer, setPointer] = React.useState<Point | null>(null);
     const ref = React.useRef<HTMLDivElement>(null);
 
     React.useEffect(() => {
@@ -105,27 +102,13 @@ export const Layout: React.FC<LayoutProps> = (props) => {
         setLayout(props.workbench.getLayout());
         let layout: LayoutElement[] = props.workbench.getLayout();
         let layoutBox = makeLayoutBoxes(layout);
-        setLayoutBox(layoutBox);
+        let previewLayoutBox: LayoutBox | null = null;
         let intermediateLayout: LayoutElement[] = props.workbench.getLayout();
-        let pointerElement: HTMLDivElement | null = null;
 
         const handlePointerDown = (e: LayoutEvents[LayoutEventTypes.MODULE_INSTANCE_POINTER_DOWN]) => {
             pointerDownPoint = e.detail.pointerPoint;
             pointerDownElementPosition = e.detail.elementPosition;
             pointerDownElementId = e.detail.id;
-            pointerElement = document.createElement("div");
-            pointerElement.classList.add(
-                "absolute",
-                "pointer-events-none",
-                "z-50",
-                "w-6",
-                "h-6",
-                "bg-gray-500",
-                "rounded-full"
-            );
-            if (ref.current) {
-                ref.current.appendChild(pointerElement);
-            }
         };
 
         const handlePointerUp = (e: PointerEvent) => {
@@ -137,11 +120,8 @@ export const Layout: React.FC<LayoutProps> = (props) => {
             dragging = false;
             document.body.classList.remove("select-none");
             layout = intermediateLayout;
-            setActiveLayoutBox(null);
-            if (ref.current && pointerElement) {
-                ref.current.removeChild(pointerElement);
-            }
-            setPointer(null);
+            layoutBox = makeLayoutBoxes(layout);
+            previewLayoutBox = null;
         };
 
         const handlePointerMove = (e: PointerEvent) => {
@@ -167,12 +147,14 @@ export const Layout: React.FC<LayoutProps> = (props) => {
                 setPosition(pointDifference(pointDifference(pointerEventToPoint(e), rect), pointerToElementDiff));
                 relativePointerPosition = pointDifference(pointerEventToPoint(e), rect);
                 const layoutBoxContainingPoint = layoutBox.findBoxContainingPoint(relativePointerPosition, size);
-                setActiveLayoutBox(layoutBoxContainingPoint?.toString() || null);
-                if (pointerElement) {
-                    pointerElement.style.left = `calc(${relativePointerPosition.x}px - 0.75rem)`;
-                    pointerElement.style.top = `calc(${relativePointerPosition.y}px - 0.75rem)`;
+
+                if (layoutBox) {
+                    const preview = layoutBox.previewLayout(relativePointerPosition, size, moduleInstanceId);
+                    if (preview) {
+                        intermediateLayout = preview.toLayout();
+                        setLayout(intermediateLayout);
+                    }
                 }
-                setPointer(relativePointerPosition);
             }
         };
 
@@ -192,15 +174,6 @@ export const Layout: React.FC<LayoutProps> = (props) => {
     }, [size]);
     return (
         <div ref={ref} className="relative h-full w-full">
-            {layoutBox && (
-                <LayoutBoxComponents
-                    pointer={pointer}
-                    active={activeLayoutBox}
-                    zIndex={10}
-                    layoutBox={layoutBox}
-                    realSize={size}
-                />
-            )}
             {props.moduleInstances.map((instance) => {
                 const layoutElement = layout.find((element) => element.moduleInstanceId === instance.getId());
                 if (!layoutElement) {
