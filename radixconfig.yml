@@ -39,6 +39,15 @@ spec:
                 envVar: WEBVIZ_SMDA_RESOURCE_SCOPE
       environmentConfig:
         - environment: prod
+    - name: redis
+      image: bitnami/redis:6.2.10@sha256:bd42fcdab5959ce2b21b6ea8410d4b3ee87ecb2e320260326ec731ecfcffbd0e
+      ports:
+        - name: http
+          port: 6379
+      variables:
+        ALLOW_EMPTY_PASSWORD: yes
+      environmentConfig:
+        - environment: prod
   dnsAppAlias:
     environment: prod
     component: frontend
