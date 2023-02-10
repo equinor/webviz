@@ -27,5 +27,3 @@ RESOURCE_SCOPES_DICT = {
 REDIS_URL = f"redis://redis:6379"
 
 SESSION_STORAGE = "redis"
-
-SUMO_CONFIG = {"sumo_env": "prod", "field": "DROGON", "status": None}
