@@ -13,12 +13,13 @@ uvicorn = "^0.20.0"
 msal = "^1.20.0"
 starsessions = "^2.1.1"
 redis = "^4.4.2"
+pyarrow = "^10.0.1"
 python-dotenv = "^0.21.0"
 pyjwt = "^2.6.0"
 pydantic = "^1.10.4"
 numpy = "^1.24.1"
 sumo-wrapper-python = {git = "https://github.com/equinor/sumo-wrapper-python.git", rev = "master"}
-fmu-sumo = {git = "https://github.com/equinor/fmu-sumo.git", rev = "master"}
+fmu-sumo = {git = "https://github.com/equinor/fmu-sumo.git", rev = "f84a32cddfa624550615311d91d829f28ec9877e"}
 
 
 [tool.poetry.group.dev.dependencies]
