@@ -2,7 +2,9 @@ import { Module } from "./Module";
 import { StateBaseType } from "./StateStore";
 
 export class ModuleRegistry {
+    /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
     private static _registeredModules: Record<string, Module<any>> = {};
+    /* eslint-disable-next-line @typescript-eslint/no-empty-function */
     private constructor() {}
 
     public static registerModule<ModuleStateType extends StateBaseType>(moduleName: string): Module<ModuleStateType> {
@@ -23,9 +25,11 @@ export class ModuleRegistry {
         throw "Did you forget to register your module in 'src/modules/index.ts'?";
     }
 
+    /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
     public static getModule(moduleName: string): Module<any> {
         const module = this._registeredModules[moduleName];
         if (module) {
+            /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
             return module as Module<any>;
         }
         throw "Did you forget to register your module in 'src/modules/index.ts'?";

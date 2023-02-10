@@ -12,21 +12,22 @@ export enum WorkbenchEvents {
 }
 
 export class Workbench {
+    /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
     private moduleInstances: ModuleInstance<any>[];
     private _activeModuleId: string;
-    private stateStore: StateStore<{}>;
+    private stateStore: StateStore<object>;
     private _workbenchServices: PrivateWorkbenchServices;
     private _subscribersMap: { [key: string]: Set<() => void> };
 
     constructor() {
         this.moduleInstances = [];
         this._activeModuleId = "";
-        this.stateStore = new StateStore<{}>({});
+        this.stateStore = new StateStore<object>({});
         this._workbenchServices = new PrivateWorkbenchServices(this);
         this._subscribersMap = {};
     }
 
-    public getStateStore(): StateStore<{}> {
+    public getStateStore(): StateStore<object> {
         return this.stateStore;
     }
 
@@ -68,6 +69,7 @@ export class Workbench {
         };
     }
 
+    /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
     public getModuleInstances(): ModuleInstance<any>[] {
         return this.moduleInstances;
     }

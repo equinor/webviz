@@ -1,3 +1,4 @@
+import React from "react";
 import { useQuery } from "react-query";
 
 import { apiService } from "@framework/ApiService";
@@ -23,7 +24,7 @@ export const view = (props: ModuleFCProps<State>) => {
             <h4>Case ids:</h4>
             <br />
             {data.data?.map((id) => (
-                <div>{id}</div>
+                <div key={id}>{id}</div>
             ))}
         </div>
     );

@@ -19,7 +19,9 @@ export function useActiveModuleId(workbench: Workbench): string {
     return activeModuleId;
 }
 
+/* eslint-disable-next-line @typescript-eslint/no-explicit-any */
 export function useModuleInstances(workbench: Workbench): ModuleInstance<any>[] {
+    /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
     const [moduleInstances, setModuleInstances] = React.useState<ModuleInstance<any>[]>([]);
 
     React.useEffect(() => {
