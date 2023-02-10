@@ -16,31 +16,18 @@ export class TimeseriesService {
     constructor(public readonly httpRequest: BaseHttpRequest) {}
 
     /**
-     * Get Case Ids
-     * Test function to get valid case ids
-     * @returns string Successful Response
-     * @throws ApiError
-     */
-    public getCaseIds(): CancelablePromise<Array<string>> {
-        return this.httpRequest.request({
-            method: 'GET',
-            url: '/timeseries/case_ids/',
-        });
-    }
-
-    /**
      * Get Vector Names And Descriptions
      * Get all vector names and descriptive names in a given Sumo ensemble
-     * @param sumoCaseId Sumo case id
-     * @param sumoIterationId Sumo iteration id
+     * @param caseUuid Sumo case uuid
+     * @param ensembleName Ensemble name
      * @param excludeAllValuesZero Exclude all vectors where all values are zero
      * @param excludeAllValuesConstant Exclude all vectors where all values are the same value
      * @returns VectorDescription Successful Response
      * @throws ApiError
      */
     public getVectorNamesAndDescriptions(
-        sumoCaseId?: string,
-        sumoIterationId?: string,
+        caseUuid: string,
+        ensembleName: string,
         excludeAllValuesZero: boolean = false,
         excludeAllValuesConstant: boolean = false,
     ): CancelablePromise<Array<VectorDescription>> {
@@ -48,10 +35,47 @@ export class TimeseriesService {
             method: 'GET',
             url: '/timeseries/vector_names_and_description/',
             query: {
-                'sumo_case_id': sumoCaseId,
-                'sumo_iteration_id': sumoIterationId,
+                'case_uuid': caseUuid,
+                'ensemble_name': ensembleName,
                 'exclude_all_values_zero': excludeAllValuesZero,
                 'exclude_all_values_constant': excludeAllValuesConstant,
+            },
+            errors: {
+                422: `Validation Error`,
+            },
+        });
+    }
+
+    /**
+     * Get Realizations Vector Data
+     * Get vector data per realization
+     * @param caseUuid Sumo case uuid
+     * @param ensembleName Ensemble name
+     * @param vectorName Name of the vector
+     * @param resamplingFrequency Resampling frequency
+     * @param realizations Optional list of realizations to include
+     * @param relativeToTimestamp Calculate relative to timestamp
+     * @returns VectorRealizationData Successful Response
+     * @throws ApiError
+     */
+    public getRealizationsVectorData(
+        caseUuid: string,
+        ensembleName: string,
+        vectorName: string,
+        resamplingFrequency?: Frequency,
+        realizations?: Array<number>,
+        relativeToTimestamp?: string,
+    ): CancelablePromise<Array<VectorRealizationData>> {
+        return this.httpRequest.request({
+            method: 'GET',
+            url: '/timeseries/realizations_vector_data/',
+            query: {
+                'case_uuid': caseUuid,
+                'ensemble_name': ensembleName,
+                'vector_name': vectorName,
+                'resampling_frequency': resamplingFrequency,
+                'realizations': realizations,
+                'relative_to_timestamp': relativeToTimestamp,
             },
             errors: {
                 422: `Validation Error`,
@@ -63,23 +87,23 @@ export class TimeseriesService {
      * Get Vector Metadata
      * Get metadata for the specified vector. Returns None if no metadata
      * exists or if any of the non-optional properties of `VectorMetadata` are missing.
-     * @param sumoCaseId Sumo case id
-     * @param sumoIterationId Sumo iteration id
-     * @param vectorName Sumo case id
+     * @param caseUuid Sumo case uuid
+     * @param ensembleName Ensemble name
+     * @param vectorName Name of the vector
      * @returns VectorMetadata Successful Response
      * @throws ApiError
      */
     public getVectorMetadata(
-        sumoCaseId?: string,
-        sumoIterationId?: string,
-        vectorName?: string,
+        caseUuid: string,
+        ensembleName: string,
+        vectorName: string,
     ): CancelablePromise<VectorMetadata> {
         return this.httpRequest.request({
             method: 'GET',
             url: '/timeseries/vector_metadata/',
             query: {
-                'sumo_case_id': sumoCaseId,
-                'sumo_iteration_id': sumoIterationId,
+                'case_uuid': caseUuid,
+                'ensemble_name': ensembleName,
                 'vector_name': vectorName,
             },
             errors: {
@@ -96,16 +120,16 @@ export class TimeseriesService {
      * dates from long running realizations.
      * For other resampling frequencies, the date range will be expanded to cover the entire
      * time range of all the requested realizations before computing the resampled dates.
-     * @param sumoCaseId Sumo case id
-     * @param sumoIterationId Sumo iteration id
+     * @param caseUuid Sumo case uuid
+     * @param ensembleName Ensemble name
      * @param resamplingFrequency Resampling frequency
      * @param realizations Optional list of realizations to include
      * @returns string Successful Response
      * @throws ApiError
      */
     public getTimestamps(
-        sumoCaseId?: string,
-        sumoIterationId?: string,
+        caseUuid: string,
+        ensembleName: string,
         resamplingFrequency?: Frequency,
         realizations?: Array<number>,
     ): CancelablePromise<Array<string>> {
@@ -113,8 +137,8 @@ export class TimeseriesService {
             method: 'GET',
             url: '/timeseries/timestamps/',
             query: {
-                'sumo_case_id': sumoCaseId,
-                'sumo_iteration_id': sumoIterationId,
+                'case_uuid': caseUuid,
+                'ensemble_name': ensembleName,
                 'resampling_frequency': resamplingFrequency,
                 'realizations': realizations,
             },
@@ -126,7 +150,7 @@ export class TimeseriesService {
 
     /**
      * Get Historical Vector Data
-     * @param sumoCaseId Sumo case id
+     * @param caseUuid Sumo case uuid
      * @param nonHistoricalVectorName Name of the non-historical vector
      * @param resamplingFrequency Resampling frequency
      * @param relativeToTimestamp Calculate relative to timestamp
@@ -134,8 +158,8 @@ export class TimeseriesService {
      * @throws ApiError
      */
     public getHistoricalVectorData(
-        sumoCaseId?: string,
-        nonHistoricalVectorName?: string,
+        caseUuid: string,
+        nonHistoricalVectorName: string,
         resamplingFrequency?: Frequency,
         relativeToTimestamp?: string,
     ): CancelablePromise<VectorHistoricalData> {
@@ -143,7 +167,7 @@ export class TimeseriesService {
             method: 'GET',
             url: '/timeseries/historical_vector_data/',
             query: {
-                'sumo_case_id': sumoCaseId,
+                'case_uuid': caseUuid,
                 'non_historical_vector_name': nonHistoricalVectorName,
                 'resampling_frequency': resamplingFrequency,
                 'relative_to_timestamp': relativeToTimestamp,
@@ -155,47 +179,10 @@ export class TimeseriesService {
     }
 
     /**
-     * Get Realizations Vector Data
-     * Get vector data per realization
-     * @param sumoCaseId Sumo case id
-     * @param sumoIterationId Sumo iteration id
-     * @param vectorName Name of the vector
-     * @param resamplingFrequency Resampling frequency
-     * @param realizations Optional list of realizations to include
-     * @param relativeToTimestamp Calculate relative to timestamp
-     * @returns VectorRealizationData Successful Response
-     * @throws ApiError
-     */
-    public getRealizationsVectorData(
-        sumoCaseId?: string,
-        sumoIterationId?: string,
-        vectorName?: string,
-        resamplingFrequency?: Frequency,
-        realizations?: Array<number>,
-        relativeToTimestamp?: string,
-    ): CancelablePromise<Array<VectorRealizationData>> {
-        return this.httpRequest.request({
-            method: 'GET',
-            url: '/timeseries/realizations_vector_data/',
-            query: {
-                'sumo_case_id': sumoCaseId,
-                'sumo_iteration_id': sumoIterationId,
-                'vector_name': vectorName,
-                'resampling_frequency': resamplingFrequency,
-                'realizations': realizations,
-                'relative_to_timestamp': relativeToTimestamp,
-            },
-            errors: {
-                422: `Validation Error`,
-            },
-        });
-    }
-
-    /**
      * Get Statistical Vector Data
      * Get statistical vector data for an ensemble
-     * @param sumoCaseId Sumo case id
-     * @param sumoIterationId Sumo iteration id
+     * @param caseUuid Sumo case uuid
+     * @param ensembleName Ensemble name
      * @param statistic Statistical calculations to apply
      * @param vectorName Name of the vector
      * @param resamplingFrequency Resampling frequency
@@ -205,10 +192,10 @@ export class TimeseriesService {
      * @throws ApiError
      */
     public getStatisticalVectorData(
-        sumoCaseId?: string,
-        sumoIterationId?: string,
-        statistic?: Array<StatisticsOptions>,
-        vectorName?: string,
+        caseUuid: string,
+        ensembleName: string,
+        statistic: Array<StatisticsOptions>,
+        vectorName: string,
         resamplingFrequency?: Frequency,
         realizations?: Array<number>,
         relativeToTimestamp?: string,
@@ -217,8 +204,8 @@ export class TimeseriesService {
             method: 'GET',
             url: '/timeseries/statistical_vector_data/',
             query: {
-                'sumo_case_id': sumoCaseId,
-                'sumo_iteration_id': sumoIterationId,
+                'case_uuid': caseUuid,
+                'ensemble_name': ensembleName,
                 'statistic': statistic,
                 'vector_name': vectorName,
                 'resampling_frequency': resamplingFrequency,
@@ -234,22 +221,22 @@ export class TimeseriesService {
     /**
      * Get Realizations Calculated Vector Data
      * Get calculated vector data per realization
+     * @param caseUuid Sumo case uuid
+     * @param ensembleName Ensemble name
      * @param expression
      * @param variableNames
      * @param vectorNames
-     * @param sumoCaseId Sumo case id
-     * @param sumoIterationId Sumo iteration id
      * @param resamplingFrequency Resampling frequency
      * @param relativeToTimestamp Calculate relative to timestamp
      * @returns string Successful Response
      * @throws ApiError
      */
     public getRealizationsCalculatedVectorData(
+        caseUuid: string,
+        ensembleName: string,
         expression: string,
         variableNames: string,
         vectorNames: string,
-        sumoCaseId?: string,
-        sumoIterationId?: string,
         resamplingFrequency?: Frequency,
         relativeToTimestamp?: string,
     ): CancelablePromise<string> {
@@ -257,8 +244,8 @@ export class TimeseriesService {
             method: 'GET',
             url: '/timeseries/realizations_calculated_vector_data/',
             query: {
-                'sumo_case_id': sumoCaseId,
-                'sumo_iteration_id': sumoIterationId,
+                'case_uuid': caseUuid,
+                'ensemble_name': ensembleName,
                 'resampling_frequency': resamplingFrequency,
                 'relative_to_timestamp': relativeToTimestamp,
                 'expression': expression,
