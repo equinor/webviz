@@ -2,9 +2,9 @@ import { ImportState, Module, ModuleFC } from "./Module";
 import { StateBaseType, StateStore, useSetStoreValue, useStoreState, useStoreValue } from "./StateStore";
 
 export type ModuleContext<S extends StateBaseType> = {
-    useStoreState: (key: keyof S) => [S[keyof S], (value: S[keyof S] | ((prev: S[keyof S]) => S[keyof S])) => void];
-    useStoreValue: (key: keyof S) => S[keyof S];
-    useSetStoreValue: (key: keyof S) => (newValue: S[keyof S] | ((prev: S[keyof S]) => S[keyof S])) => void;
+    useStoreState: <K extends keyof S>(key: K) => [S[K], (value: S[K] | ((prev: S[K]) => S[K])) => void];
+    useStoreValue: <K extends keyof S>(key: K) => S[K];
+    useSetStoreValue: <K extends keyof S>(key: K) => (newValue: S[K] | ((prev: S[K]) => S[K])) => void;
     stateStore: StateStore<S>;
 };
 
@@ -29,26 +29,17 @@ export class ModuleInstance<StateType extends StateBaseType> {
         this.stateStore = new StateStore<StateType>(initialState);
 
         this.context = {
-            useStoreState: (
-                key: keyof StateType
-            ): [
-                StateType[keyof StateType],
-                (
-                    value:
-                        | StateType[keyof StateType]
-                        | ((prev: StateType[keyof StateType]) => StateType[keyof StateType])
-                ) => void
-            ] => useStoreState(this.stateStore as Exclude<typeof this.stateStore, null>, key),
-            useStoreValue: (key: keyof StateType): StateType[keyof StateType] =>
+            useStoreState: <K extends keyof StateType>(
+                key: K
+            ): [StateType[K], (value: StateType[K] | ((prev: StateType[K]) => StateType[K])) => void] =>
+                useStoreState(this.stateStore as Exclude<typeof this.stateStore, null>, key),
+            useStoreValue: <K extends keyof StateType>(key: K): StateType[K] =>
                 useStoreValue(this.stateStore as Exclude<typeof this.stateStore, null>, key),
-            useSetStoreValue: (
-                key: keyof StateType
-            ): ((
-                newValue:
-                    | StateType[keyof StateType]
-                    | ((prev: StateType[keyof StateType]) => StateType[keyof StateType])
-            ) => void) => useSetStoreValue(this.stateStore as Exclude<typeof this.stateStore, null>, key),
-            stateStore: this.stateStore
+            useSetStoreValue: <K extends keyof StateType>(
+                key: K
+            ): ((newValue: StateType[K] | ((prev: StateType[K]) => StateType[K])) => void) =>
+                useSetStoreValue(this.stateStore as Exclude<typeof this.stateStore, null>, key),
+            stateStore: this.stateStore,
         };
     }
 

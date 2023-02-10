@@ -12,9 +12,17 @@ type TopNavBarProps = {
 
 export const TopNavBar: React.FC<TopNavBarProps> = (props) => {
     const activeModuleName = ""; // useWorkbenchActiveModuleName();
+    const [selectedCaseId, setSelectedCaseId] = React.useState("")
 
-    const cases = useQuery([], async (): Promise<string[]> => {
-        return apiService.timeseries.getCaseIds();
+    const casesQueryRes = useQuery({
+        queryKey: ["getCases"],
+        queryFn: () => apiService.explore.getCases("DROGON"),
+        onSuccess: function selectFirstCase(caseArr) {
+            if (caseArr.length > 0) {
+                setSelectedCaseId(caseArr[0].uuid);
+                props.workbench.setNavigatorCaseId(caseArr[0].uuid);
+            }
+        },
     });
 
     const handleFieldChange = (fieldName: string) => {
@@ -22,6 +30,7 @@ export const TopNavBar: React.FC<TopNavBarProps> = (props) => {
     };
 
     const handleCaseChange = (caseId: string) => {
+        setSelectedCaseId(caseId);
         props.workbench.setNavigatorCaseId(caseId);
     };
 
@@ -37,12 +46,12 @@ export const TopNavBar: React.FC<TopNavBarProps> = (props) => {
             <div className="flex flex-row gap-4 items-center">
                 <h1 className="flex-grow">{activeModuleName}</h1>
                 <ListBox items={fields} selectedItem={"Drogon"} onSelect={handleFieldChange} />
-                {cases.isLoading ? (
+                {casesQueryRes.isLoading ? (
                     "Loading"
                 ) : (
                     <ListBox
-                        items={cases.isSuccess ? cases.data?.map((id) => ({ value: id, label: id })) || [] : []}
-                        selectedItem={cases.data?.at(0) || "None"}
+                        items={casesQueryRes.isSuccess ? casesQueryRes.data?.map((aCase) => ({ value: aCase.uuid, label: aCase.name })) || [] : []}
+                        selectedItem={selectedCaseId || "None"}
                         onSelect={handleCaseChange}
                     />
                 )}

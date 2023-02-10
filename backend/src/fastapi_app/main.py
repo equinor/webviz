@@ -5,6 +5,7 @@ from fastapi.routing import APIRoute
 from starsessions import SessionMiddleware
 from starsessions.stores.redis import RedisStore
 
+from .routers.explore import router as explore_router
 from .routers.timeseries import router as timeseries_router
 from .routers.general import router as general_router
 from .auth.auth_helper import AuthHelper
@@ -18,6 +19,7 @@ def custom_generate_unique_id(route: APIRoute):
 
 app = FastAPI(generate_unique_id_function=custom_generate_unique_id, root_path="/api")
 
+app.include_router(explore_router)
 app.include_router(timeseries_router, prefix="/timeseries")
 
 authHelper = AuthHelper()
