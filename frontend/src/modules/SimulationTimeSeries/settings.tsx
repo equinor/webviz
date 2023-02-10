@@ -28,13 +28,12 @@ const mockedData: any = {
 
 
 export const settings = (props: ModuleFCProps<State>) => {
-    const sumoCaseId: any = useSubscribedValue("navigator.caseId", props.workbenchServices);
-    const sumoIterationId: string = "0"
+    const sumoCaseId = useSubscribedValue("navigator.caseId", props.workbenchServices);
+    const ensembleName: string = "iter-0"
     const caseVectorNames = useQuery({
-        queryKey:["getVectorNamesAndDescriptions",sumoCaseId, sumoIterationId],
-        queryFn: (): Promise<VectorDescription[]> => {
-            return apiService.timeseries.getVectorNamesAndDescriptions(sumoCaseId, sumoIterationId)
-        }
+        queryKey:["getVectorNamesAndDescriptions",sumoCaseId, ensembleName],
+        queryFn: () => apiService.timeseries.getVectorNamesAndDescriptions(sumoCaseId || "", ensembleName),
+        enabled: sumoCaseId ? true : false
     })
     
     const [selectedVector, setSelectedVector] = useStoreState(props.moduleContext.stateStore, "selectedVector");

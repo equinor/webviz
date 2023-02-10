@@ -47,19 +47,18 @@ const getXaxisRangeFromLayoutChange = (onRelayout: Plotly.PlotRelayoutEvent): [n
     }
 }
 export const view = (props: ModuleFCProps<State>) => {
-    const sumoCaseId: any = useSubscribedValue("navigator.caseId", props.workbenchServices);
-    const sumoIterationId: string = "0"
+    const sumoCaseId = useSubscribedValue("navigator.caseId", props.workbenchServices);
+    const ensembleName: string = "iter-0"
     const selectedVector = useStoreValue(props.moduleContext.stateStore,"selectedVector");
     const selectedVector2 = useStoreValue(props.moduleContext.stateStore,"selectedVector2");
     const [highlightedTrace,setHighlightedTrace] = useState<number | undefined>(undefined);
     const [xAxisRange, setxAxisRange] = useState<[number|undefined, number|undefined] | undefined>(undefined);
     
     const queryVector = (vector: string) => useQuery({
-        queryKey:["getRealizationsVectorData",sumoCaseId, sumoIterationId, vector],
-        queryFn: (): Promise<VectorRealizationData[]> => {
-            return apiService.timeseries.getRealizationsVectorData(sumoCaseId, sumoIterationId, vector)
-        }
-    })
+        queryKey:["getRealizationsVectorData", sumoCaseId, ensembleName, vector],
+        queryFn: () => apiService.timeseries.getRealizationsVectorData(sumoCaseId || "", ensembleName, vector),
+        enabled: (sumoCaseId && vector) ? true : false
+    });
     const vectorData = queryVector(selectedVector)
     const vectorData2 = queryVector(selectedVector2)
 
