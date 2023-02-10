@@ -25,7 +25,6 @@ export type CallbackFunction<T extends keyof AllTopicDefinitions> = (value: AllT
 
 export class WorkbenchServices {
     protected _workbench: Workbench;
-    /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
     protected _subscribersMap: { [key: string]: Set<CallbackFunction<any>> };
 
     protected constructor(workbench: Workbench) {

@@ -8,7 +8,6 @@ import { Workbench } from "@framework/Workbench";
 
 type ViewWrapperProps = {
     isActive: boolean;
-    /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
     moduleInstance: ModuleInstance<any>;
     workbench: Workbench;
 };

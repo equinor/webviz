@@ -12,7 +12,6 @@ export enum WorkbenchEvents {
 }
 
 export class Workbench {
-    /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
     private moduleInstances: ModuleInstance<any>[];
     private _activeModuleId: string;
     private stateStore: StateStore<object>;
@@ -69,7 +68,6 @@ export class Workbench {
         };
     }
 
-    /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
     public getModuleInstances(): ModuleInstance<any>[] {
         return this.moduleInstances;
     }

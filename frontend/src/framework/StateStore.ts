@@ -3,9 +3,7 @@ import React from "react";
 export type StateBaseType = object;
 
 export class StateStore<StateType extends StateBaseType> {
-    /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
     private _state: Record<keyof StateType, any>;
-    /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
     private _subscribersMap: Partial<Record<keyof StateType, Set<any>>>;
 
     constructor(initialState: StateType) {
