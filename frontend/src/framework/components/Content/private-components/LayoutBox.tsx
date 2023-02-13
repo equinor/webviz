@@ -108,31 +108,37 @@ export class LayoutBox {
     }
 
     public transformRectToRelative(rect: Rect): Rect {
-        let currentParent = this._parent;
-        let newRect = rect;
-        while (currentParent !== null) {
-            newRect = {
-                x: (newRect.x - currentParent._rectRelativeToParent.x) / this._rectRelativeToParent.width,
-                y: (newRect.y - currentParent._rectRelativeToParent.y) / this._rectRelativeToParent.height,
-                width: newRect.width / this._rectRelativeToParent.width,
-                height: newRect.height / this._rectRelativeToParent.height,
-            };
-            currentParent = currentParent._parent;
+        let newRect = {
+            x: (rect.x - this._rectRelativeToParent.x) / this._rectRelativeToParent.width,
+            y: (rect.y - this._rectRelativeToParent.y) / this._rectRelativeToParent.height,
+            width: rect.width / this._rectRelativeToParent.width,
+            height: rect.height / this._rectRelativeToParent.height,
+        };
+
+        if (this._parent !== null) {
+            newRect = this._parent.transformRectToRelative(newRect);
         }
+
         return newRect;
     }
 
+    private getAbsoluteRect(): Rect {
+        if (this._parent === null) {
+            return this._rectRelativeToParent;
+        }
+        return this._parent.transformRectToAbsolute(this._rectRelativeToParent);
+    }
+
     public transformRectToAbsolute(rect: Rect): Rect {
-        let currentParent = this._parent;
-        let newRect = rect;
-        while (currentParent !== null) {
-            newRect = {
-                x: newRect.x * currentParent._rectRelativeToParent.width + currentParent._rectRelativeToParent.x,
-                y: newRect.y * currentParent._rectRelativeToParent.height + currentParent._rectRelativeToParent.y,
-                width: newRect.width * currentParent._rectRelativeToParent.width,
-                height: newRect.height * currentParent._rectRelativeToParent.height,
-            };
-            currentParent = currentParent._parent;
+        let newRect = {
+            x: rect.x * this._rectRelativeToParent.width + this._rectRelativeToParent.x,
+            y: rect.y * this._rectRelativeToParent.height + this._rectRelativeToParent.y,
+            width: rect.width * this._rectRelativeToParent.width,
+            height: rect.height * this._rectRelativeToParent.height,
+        };
+
+        if (this._parent !== null) {
+            newRect = this._parent.transformRectToAbsolute(newRect);
         }
         return newRect;
     }
@@ -151,12 +157,11 @@ export class LayoutBox {
 
         // First try to rasterize vertically
         const rasterY: number[] = [];
-        const absoluteRect = this.transformRectToAbsolute(this._rectRelativeToParent);
+        const absoluteRect = this.getAbsoluteRect();
         let y = absoluteRect.y;
         while (y < absoluteRect.y + absoluteRect.height) {
             const elementsAtY = containedElements.filter((layoutElement) => layoutElement.y === y);
             if (elementsAtY.length === 0) {
-                rasterY.push(absoluteRect.y);
                 break;
             }
             const maxHeight = Math.max(...elementsAtY.map((layoutElement) => layoutElement.height));
@@ -213,7 +218,6 @@ export class LayoutBox {
         while (x < absoluteRect.x + absoluteRect.width) {
             const elementsAtX = containedElements.filter((layoutElement) => layoutElement.x === x);
             if (elementsAtX.length === 0) {
-                rasterX.push(absoluteRect.x);
                 break;
             }
             const maxWidth = Math.max(...elementsAtX.map((layoutElement) => layoutElement.width));
@@ -279,9 +283,10 @@ export class LayoutBox {
     private reorderChildren() {
         if (this._layoutDirection === LayoutDirection.HORIZONTAL) {
             let currentX = 0;
-            const totalWidth = this.getTotalWidth();
+            // const totalWidth = this.getTotalWidth();
+            const newWidth = 1 / this._children.length;
             this._children.forEach((child) => {
-                const newWidth = child._rectRelativeToParent.width / totalWidth;
+                // const newWidth = child._rectRelativeToParent.width / totalWidth;
                 child._rectRelativeToParent = {
                     x: currentX,
                     y: 0,
@@ -293,9 +298,10 @@ export class LayoutBox {
             });
         } else {
             let currentY = 0;
-            const totalHeight = this.getTotalHeight();
+            // const totalHeight = this.getTotalHeight();
+            const newHeight = 1 / this._children.length;
             this._children.forEach((child) => {
-                const newHeight = child._rectRelativeToParent.height / totalHeight;
+                // const newHeight = child._rectRelativeToParent.height / totalHeight;
                 child._rectRelativeToParent = {
                     x: 0,
                     y: currentY,
@@ -486,7 +492,9 @@ export class LayoutBox {
             return null;
         }
 
-        const layoutBox = this.findBoxContainingPoint(pointerPoint, realSize);
+        const preview = this.clone();
+
+        const layoutBox = preview.findBoxContainingPoint(pointerPoint, realSize);
         if (!layoutBox) {
             return null;
         }
@@ -496,12 +504,11 @@ export class LayoutBox {
             return null;
         }
 
-        const draggedBox = this.findBoxContainingModuleInstance(draggedModuleInstanceId);
+        const draggedBox = preview.findBoxContainingModuleInstance(draggedModuleInstanceId);
         if (!draggedBox) {
             return null;
         }
 
-        const preview = this.clone();
         preview.moveLayoutElement(draggedBox, layoutBox, edge);
         return preview;
     }
@@ -534,9 +541,13 @@ export class LayoutBox {
             return;
         }
 
+        console.log(edge.edge);
+
         if (edge.edge === LayoutBoxEdgeType.LEFT || edge.edge === LayoutBoxEdgeType.TOP) {
             if (destination._layoutDirection === LayoutDirection.SINGLE) {
-                destination.convertSingleLayoutToWrapper(LayoutDirection.HORIZONTAL);
+                const layoutType =
+                    edge.edge === LayoutBoxEdgeType.LEFT ? LayoutDirection.HORIZONTAL : LayoutDirection.VERTICAL;
+                destination.convertSingleLayoutToWrapper(layoutType);
             }
             if (source._parent !== destination) {
                 destination.prependChild(source);
@@ -550,7 +561,9 @@ export class LayoutBox {
 
         if (edge.edge === LayoutBoxEdgeType.RIGHT || edge.edge === LayoutBoxEdgeType.BOTTOM) {
             if (destination._layoutDirection === LayoutDirection.SINGLE) {
-                destination.convertSingleLayoutToWrapper(LayoutDirection.HORIZONTAL);
+                const layoutType =
+                    edge.edge === LayoutBoxEdgeType.RIGHT ? LayoutDirection.HORIZONTAL : LayoutDirection.VERTICAL;
+                destination.convertSingleLayoutToWrapper(layoutType);
             }
             if (source._parent !== destination) {
                 destination.appendChild(source);
@@ -590,7 +603,7 @@ export class LayoutBox {
                 layout.push(...child.toLayout());
             });
         } else {
-            const absoluteRect = this.transformRectToAbsolute(this._rectRelativeToParent);
+            const absoluteRect = this.getAbsoluteRect();
             layout.push({
                 x: absoluteRect.x,
                 y: absoluteRect.y,

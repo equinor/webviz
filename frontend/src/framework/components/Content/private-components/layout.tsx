@@ -119,6 +119,7 @@ export const Layout: React.FC<LayoutProps> = (props) => {
             moduleInstanceId = null;
             dragging = false;
             document.body.classList.remove("select-none");
+            setLayout(intermediateLayout);
             layout = intermediateLayout;
             layoutBox = makeLayoutBoxes(layout);
             previewLayoutBox = null;
@@ -138,6 +139,7 @@ export const Layout: React.FC<LayoutProps> = (props) => {
                     document.body.classList.add("select-none");
                     dragging = true;
                     pointerToElementDiff = pointDifference(pointerDownPoint, pointerDownElementPosition);
+                    console.log(layoutBox.toLayout());
                 }
             } else {
                 if (!moduleInstanceId || !pointerDownPoint) {
@@ -146,7 +148,6 @@ export const Layout: React.FC<LayoutProps> = (props) => {
                 const rect = ref.current.getBoundingClientRect();
                 setPosition(pointDifference(pointDifference(pointerEventToPoint(e), rect), pointerToElementDiff));
                 relativePointerPosition = pointDifference(pointerEventToPoint(e), rect);
-                const layoutBoxContainingPoint = layoutBox.findBoxContainingPoint(relativePointerPosition, size);
 
                 if (layoutBox) {
                     const preview = layoutBox.previewLayout(relativePointerPosition, size, moduleInstanceId);

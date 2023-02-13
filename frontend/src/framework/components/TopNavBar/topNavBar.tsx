@@ -12,8 +12,9 @@ type TopNavBarProps = {
 
 export const TopNavBar: React.FC<TopNavBarProps> = (props) => {
     const activeModuleName = ""; // useWorkbenchActiveModuleName();
-    const [selectedCaseId, setSelectedCaseId] = React.useState("")
+    const [selectedCaseId, setSelectedCaseId] = React.useState("");
 
+    /*
     const casesQueryRes = useQuery({
         queryKey: ["getCases"],
         queryFn: () => apiService.explore.getCases("DROGON"),
@@ -26,10 +27,15 @@ export const TopNavBar: React.FC<TopNavBarProps> = (props) => {
     });
     */
 
-    const cases = {
+    const casesQueryRes = {
         isLoading: false,
         isSuccess: true,
-        data: ["Drogon", "Rhaegal", "Viserion"],
+        data: [
+            {
+                uuid: "Drogon",
+                name: "Drogon",
+            },
+        ],
     };
 
     const handleFieldChange = (fieldName: string) => {
@@ -57,7 +63,11 @@ export const TopNavBar: React.FC<TopNavBarProps> = (props) => {
                     "Loading"
                 ) : (
                     <ListBox
-                        items={casesQueryRes.isSuccess ? casesQueryRes.data?.map((aCase) => ({ value: aCase.uuid, label: aCase.name })) || [] : []}
+                        items={
+                            casesQueryRes.isSuccess
+                                ? casesQueryRes.data?.map((aCase) => ({ value: aCase.uuid, label: aCase.name })) || []
+                                : []
+                        }
                         selectedItem={selectedCaseId || "None"}
                         onSelect={handleCaseChange}
                     />
