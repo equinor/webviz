@@ -1,5 +1,3 @@
-import React from "react";
-
 import { ModuleRegistry } from "@framework/ModuleRegistry";
 import { Input } from "@lib/components/Input";
 

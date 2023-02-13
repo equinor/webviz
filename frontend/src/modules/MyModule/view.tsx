@@ -1,4 +1,3 @@
-import React from "react";
 import { useQuery } from "react-query";
 
 import { apiService } from "@framework/ApiService";
@@ -25,8 +24,10 @@ export const view = (props: ModuleFCProps<State>) => {
             <h3>Count: {count}</h3>
             <br />
             <h4>Ensembles:</h4>
-            <ul> 
-                {ensemblesQueryRes.data?.map((ens) => (<li key={ens.name}>{ens.name}</li>))} 
+            <ul>
+                {ensemblesQueryRes.data?.map((ens) => (
+                    <li key={ens.name}>{ens.name}</li>
+                ))}
             </ul>
         </div>
     );

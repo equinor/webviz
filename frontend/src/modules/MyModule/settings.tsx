@@ -1,5 +1,3 @@
-import React from "react";
-
 import { ModuleFCProps } from "@framework/Module";
 import { Button } from "@lib/components/Button";
 
