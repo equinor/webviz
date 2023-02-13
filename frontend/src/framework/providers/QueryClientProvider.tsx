@@ -1,5 +1,5 @@
 import React from "react";
-import { QueryClient, QueryClientProvider, setLogger } from "react-query";
+import { QueryClient, QueryClientProvider } from "react-query";
 import { ReactQueryDevtools } from "react-query/devtools";
 
 export const CustomQueryClientProvider: React.FC<{ children: React.ReactElement }> = (props) => {
@@ -13,11 +13,6 @@ export const CustomQueryClientProvider: React.FC<{ children: React.ReactElement 
                 cacheTime: 0,
             },
         },
-    });
-    setLogger({
-        log: () => {},
-        warn: () => {},
-        error: () => {},
     });
 
     return (

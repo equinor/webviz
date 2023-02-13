@@ -3,6 +3,7 @@ import { StateBaseType } from "./StateStore";
 
 export class ModuleRegistry {
     private static _registeredModules: Record<string, Module<any>> = {};
+    /* eslint-disable-next-line @typescript-eslint/no-empty-function */
     private constructor() {}
 
     public static registerModule<ModuleStateType extends StateBaseType>(moduleName: string): Module<ModuleStateType> {

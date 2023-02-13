@@ -22,7 +22,7 @@ export class StateStore<StateType extends StateBaseType> {
     public setValue<K extends keyof StateType>(key: K, value: StateType[K]) {
         this._state[key] = value;
         const subscribersSet = this._subscribersMap[key] || new Set();
-        for (let cb of subscribersSet) {
+        for (const cb of subscribersSet) {
             cb(value);
         }
     }
