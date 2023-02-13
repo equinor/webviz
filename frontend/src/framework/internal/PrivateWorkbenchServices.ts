@@ -1,5 +1,5 @@
 import { Workbench } from "../Workbench";
-import { WorkbenchServices } from "../WorkbenchServices";
+import { TopicDefinitionsType, WorkbenchServices } from "../WorkbenchServices";
 import { NavigatorTopicDefinitions } from "../WorkbenchServices";
 
 export class PrivateWorkbenchServices extends WorkbenchServices {
@@ -7,7 +7,7 @@ export class PrivateWorkbenchServices extends WorkbenchServices {
         super(workbench);
     }
 
-    publishNavigatorData<T extends keyof NavigatorTopicDefinitions>(topic: T, value: NavigatorTopicDefinitions[T]) {
+    publishNavigatorData<T extends keyof NavigatorTopicDefinitions>(topic: T, value: TopicDefinitionsType<T>) {
         this.internalPublishAnyTopic(topic, value);
     }
 }

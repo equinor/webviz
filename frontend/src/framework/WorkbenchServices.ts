@@ -15,16 +15,24 @@ export type GlobalTopicDefinitions = {
 
 export type AllTopicDefinitions = NavigatorTopicDefinitions & GlobalTopicDefinitions;
 
+export type TopicDefinitionsType<T extends keyof AllTopicDefinitions> = T extends keyof GlobalTopicDefinitions
+    ? GlobalTopicDefinitions[T]
+    : T extends keyof NavigatorTopicDefinitions
+    ? NavigatorTopicDefinitions[T]
+    : never;
+
+export type CallbackFunction<T extends keyof AllTopicDefinitions> = (value: AllTopicDefinitions[T]) => void;
+
 export class WorkbenchServices {
     protected _workbench: Workbench;
-    protected _subscribersMap: { [key: string]: Set<Function> };
+    protected _subscribersMap: { [key: string]: Set<CallbackFunction<any>> };
 
     protected constructor(workbench: Workbench) {
         this._workbench = workbench;
         this._subscribersMap = {};
     }
 
-    subscribe<T extends keyof AllTopicDefinitions>(topic: T, callbackFn: (value: AllTopicDefinitions[T]) => void) {
+    subscribe<T extends keyof AllTopicDefinitions>(topic: T, callbackFn: CallbackFunction<T>) {
         const subscribersSet = this._subscribersMap[topic] || new Set();
         subscribersSet.add(callbackFn);
         this._subscribersMap[topic] = subscribersSet;
@@ -33,11 +41,11 @@ export class WorkbenchServices {
         };
     }
 
-    publishGlobalData<T extends keyof GlobalTopicDefinitions>(topic: T, value: GlobalTopicDefinitions[T]) {
+    publishGlobalData<T extends keyof GlobalTopicDefinitions>(topic: T, value: TopicDefinitionsType<T>) {
         this.internalPublishAnyTopic(topic, value);
     }
 
-    protected internalPublishAnyTopic<T extends keyof AllTopicDefinitions>(topic: T, value: unknown) {
+    protected internalPublishAnyTopic<T extends keyof AllTopicDefinitions>(topic: T, value: TopicDefinitionsType<T>) {
         const subscribersSet = this._subscribersMap[topic];
         if (!subscribersSet) {
             return;

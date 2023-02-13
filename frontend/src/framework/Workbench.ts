@@ -23,7 +23,7 @@ export type LayoutElement = {
 export class Workbench {
     private moduleInstances: ModuleInstance<any>[];
     private _activeModuleId: string;
-    private stateStore: StateStore<{}>;
+    private stateStore: StateStore<object>;
     private _workbenchServices: PrivateWorkbenchServices;
     private _subscribersMap: { [key: string]: Set<() => void> };
     private layout: LayoutElement[];
@@ -31,13 +31,13 @@ export class Workbench {
     constructor() {
         this.moduleInstances = [];
         this._activeModuleId = "";
-        this.stateStore = new StateStore<{}>({});
+        this.stateStore = new StateStore<object>({});
         this._workbenchServices = new PrivateWorkbenchServices(this);
         this._subscribersMap = {};
         this.layout = [];
     }
 
-    public getStateStore(): StateStore<{}> {
+    public getStateStore(): StateStore<object> {
         return this.stateStore;
     }
 

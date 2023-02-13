@@ -23,6 +23,29 @@ spec:
       ports:
         - name: http
           port: 5000
+      secretRefs:
+        azureKeyVaults:
+          - name: webviz
+            items:
+              - name: WEBVIZ-TENANT-ID
+                envVar: WEBVIZ_TENANT_ID
+              - name: WEBVIZ-CLIENT-ID
+                envVar: WEBVIZ_CLIENT_ID
+              - name: WEBVIZ-CLIENT-SECRET
+                envVar: WEBVIZ_CLIENT_SECRET
+              - name: WEBVIZ-SUMO-RESOURCE-SCOPE
+                envVar: WEBVIZ_SUMO_RESOURCE_SCOPE
+              - name: WEBVIZ-SMDA-RESOURCE-SCOPE
+                envVar: WEBVIZ_SMDA_RESOURCE_SCOPE
+      environmentConfig:
+        - environment: prod
+    - name: redis
+      image: bitnami/redis:6.2.10@sha256:bd42fcdab5959ce2b21b6ea8410d4b3ee87ecb2e320260326ec731ecfcffbd0e
+      ports:
+        - name: http
+          port: 6379
+      variables:
+        ALLOW_EMPTY_PASSWORD: yes
       environmentConfig:
         - environment: prod
   dnsAppAlias:

@@ -10,32 +10,118 @@ on:
       - published
 
 jobs:
+  frontend:
+    if: github.event_name != 'push' || github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📖 Checkout commit locally
+        uses: actions/checkout@v3
+
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: ℹ️ Node and npm versions
+        run: |
+          node -v
+          npm -v
+
+      - name: 📦 Install build dependencies
+        working-directory: ./frontend
+        run: |
+          npm ci --ignore-scripts --include=dev
+
+      - name: ℹ️ Installed npm packages (depth = 0)
+        working-directory: ./frontend
+        run: npm list --depth=0
+
+      - name: 🏗️ Build JavaScript bundle
+        working-directory: ./frontend
+        run: |
+          npm run build
+
+      - name: 🕵️ Check code style & linting
+        working-directory: ./frontend
+        run: |
+          npm run validate
+
+      - name: 🤖 Run tests
+        working-directory: ./frontend
+        run: |
+          npm run test
+
+  backend:
+    if: false && (github.event_name != 'push' || github.ref == 'refs/heads/main') # Disabled for now
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.8"]
+
+    steps:
+      - name: 📖 Checkout commit locally
+        uses: actions/checkout@v3
+
+      - name: 🐍 Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: 📦 Install poetry and export requirements.txt
+        working-directory: ./backend
+        run: |
+          pip install --upgrade pip
+          pip install poetry
+          poetry export --without-hashes --with dev -o requirements.txt
+
+      - name: 📦 Install dependencies
+        working-directory: ./backend
+        run: |
+          pip install -r requirements.txt
+
+      - name: 🧾 List all installed packages
+        working-directory: ./backend
+        run: pip freeze
+
+      - name: 🕵️ Check code style & linting
+        working-directory: ./backend
+        run: |
+          black --check src/ tests/
+          pylint src/ tests/
+          mypy src/ tests/
+
+      - name: 🤖 Run tests
+        working-directory: ./backend
+        run: |
+          pytest ./tests --headless
+
   webviz:
     if: github.event_name != 'push' || github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+
     steps:
-    - name: 📖 Checkout commit locally
-      uses: actions/checkout@v3
+      - name: 📖 Checkout commit locally
+        uses: actions/checkout@v3
 
-    - uses: actions/setup-node@v3
-      with:
-        node-version: 18
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 18
 
-    - name: 🐳 Build Docker images
-      run: | 
-        docker build -f frontend-prod.Dockerfile -t ghcr.io/equinor/webviz_frontend:latest .
-        docker build -f backend.Dockerfile -t ghcr.io/equinor/webviz_backend:latest .
+      - name: 🐳 Build Docker images
+        run: |
+          docker build -f frontend-prod.Dockerfile -t ghcr.io/equinor/webviz_frontend:latest .
+          docker build -f backend.Dockerfile -t ghcr.io/equinor/webviz_backend:latest .
 
-    - name: GitHub Container Registry login
-      if: github.ref == 'refs/heads/main'
-      uses: docker/login-action@v2
-      with:
-        registry: ghcr.io
-        username: ${{ github.actor }}
-        password: ${{ secrets.GITHUB_TOKEN }}
+      - name: GitHub Container Registry login
+        if: github.ref == 'refs/heads/main'
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: 🐳 Push Docker images
-      if: github.ref == 'refs/heads/main'
-      run: | 
-        docker push ghcr.io/equinor/webviz_frontend:latest
-        docker push ghcr.io/equinor/webviz_backend:latest
+      - name: 🐳 Push Docker images
+        if: github.ref == 'refs/heads/main'
+        run: |
+          docker push ghcr.io/equinor/webviz_frontend:latest
+          docker push ghcr.io/equinor/webviz_backend:latest

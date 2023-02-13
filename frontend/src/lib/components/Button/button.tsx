@@ -16,3 +16,5 @@ export const Button = React.forwardRef((props: ButtonUnstyledProps, ref: React.F
         />
     );
 });
+
+Button.displayName = "Button";

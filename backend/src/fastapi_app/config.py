@@ -12,7 +12,7 @@ SUMO_RESOURCE_SCOPE = os.environ["WEBVIZ_SUMO_RESOURCE_SCOPE"]
 SMDA_RESOURCE_SCOPE = os.environ["WEBVIZ_SMDA_RESOURCE_SCOPE"]
 
 # Allow None her for now, since we don't always run with redis and a password
-REDIS_PASSWORD: str = os.environ.get("WEBVIZ_REDIS_PASSWORD")
+# REDIS_PASSWORD: str = os.environ.get("WEBVIZ_REDIS_PASSWORD")
 
 GRAPH_SCOPES = ["User.Read"]
 RESOURCE_SCOPES_DICT = {
@@ -20,11 +20,10 @@ RESOURCE_SCOPES_DICT = {
     "smda": [SMDA_RESOURCE_SCOPE],
 }
 
+
 # Format: redis://[[username]:[password]]@localhost:6379/0
 # REDIS_URL = "redis://localhost"
-REDIS_URL = f"redis://:{REDIS_PASSWORD}@redis:6379"
+# REDIS_URL = f"redis://:{REDIS_PASSWORD}@redis:6379"
+REDIS_URL = f"redis://redis:6379"
 
-SESSION_STORAGE = "in_memory"  # "in_memory" / "filesystem" / "redis"
-SESSION_STORAGE = os.environ.get("WEBVIZ_SESSION_STORAGE", SESSION_STORAGE)
-
-SUMO_CONFIG = {"sumo_env": "prod", "field": "DROGON", "status": None}
+SESSION_STORAGE = "redis"
