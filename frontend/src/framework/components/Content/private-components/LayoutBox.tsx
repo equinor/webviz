@@ -11,12 +11,13 @@ import {
 } from "@framework/utils/geometry";
 
 import uniqolor from "uniqolor";
+import { v4 } from "uuid";
 
 function layoutElementToRect(layoutElement: LayoutElement): Rect {
     return { x: layoutElement.x, y: layoutElement.y, width: layoutElement.width, height: layoutElement.height };
 }
 
-const layoutBoxMargin = 8;
+const layoutBoxMargin = 16;
 
 export enum LayoutBoxEdgeType {
     TOP = "top",
@@ -82,7 +83,7 @@ export class LayoutBox {
     }
 
     public getRectWithMargin(realSizeFactor: Size): Rect {
-        const absoluteRect = this.transformRectToAbsolute(this._rectRelativeToParent);
+        const absoluteRect = this.getAbsoluteRect();
         return {
             x: absoluteRect.x * realSizeFactor.width + layoutBoxMargin * this._level,
             y: absoluteRect.y * realSizeFactor.height + layoutBoxMargin * this._level,
@@ -333,6 +334,9 @@ export class LayoutBox {
         this._children = this._children.filter((c) => c !== child);
         if (this._children.length > 0) {
             this.reorderChildren();
+            if (this._children.length === 1 && this._children[0]._children.length === 0) {
+                this.convertWrapperToSingleLayout();
+            }
         } else if (this._parent) {
             this._parent.removeChild(this);
         }
@@ -410,7 +414,7 @@ export class LayoutBox {
         if (this._layoutDirection === LayoutDirection.HORIZONTAL) {
             edges.push(
                 {
-                    rect: { x: rect.x, y: rect.y + rect.height - edgeWeight, width: rect.width, height: edgeWeight },
+                    rect: { x: rect.x + rect.width - edgeWeight, y: rect.y, width: edgeWeight, height: rect.height },
                     edge: LayoutBoxEdgeType.RIGHT,
                 },
                 { rect: { x: rect.x, y: rect.y, width: edgeWeight, height: rect.height }, edge: LayoutBoxEdgeType.LEFT }
@@ -420,54 +424,45 @@ export class LayoutBox {
             edges.push(
                 { rect: { x: rect.x, y: rect.y, width: rect.width, height: edgeWeight }, edge: LayoutBoxEdgeType.TOP },
                 {
-                    rect: { x: rect.x + rect.width - edgeWeight, y: rect.y, width: edgeWeight, height: rect.height },
-                    edge: LayoutBoxEdgeType.BOTTOM,
-                }
-            );
-        }
-        if (this._layoutDirection === LayoutDirection.MAIN) {
-            edges.push(
-                {
                     rect: { x: rect.x, y: rect.y + rect.height - edgeWeight, width: rect.width, height: edgeWeight },
-                    edge: LayoutBoxEdgeType.RIGHT,
-                },
-                {
-                    rect: { x: rect.x, y: rect.y, width: edgeWeight, height: rect.height },
-                    edge: LayoutBoxEdgeType.LEFT,
-                },
-                { rect: { x: rect.x, y: rect.y, width: rect.width, height: edgeWeight }, edge: LayoutBoxEdgeType.TOP },
-                {
-                    rect: { x: rect.x + rect.width - edgeWeight, y: rect.y, width: edgeWeight, height: rect.height },
                     edge: LayoutBoxEdgeType.BOTTOM,
                 }
             );
         }
 
-        this._innerVerticalEdges.forEach((x) => {
-            edges.push({
-                rect: {
-                    x: x * realSize.width - 2 * layoutBoxMargin,
-                    y: rect.y,
-                    width: layoutBoxMargin * 4,
-                    height: rect.height,
-                },
-                edge: LayoutBoxEdgeType.VERTICAL,
-                position: x,
-            });
-        });
+        if (this._layoutDirection === LayoutDirection.HORIZONTAL) {
+            for (let i = 1; i < this._children.length; i++) {
+                const child = this._children[i];
+                const absoluteRect = child.getAbsoluteRect();
+                edges.push({
+                    rect: {
+                        x: absoluteRect.x * realSize.width - 2 * layoutBoxMargin,
+                        y: absoluteRect.y * realSize.height,
+                        width: layoutBoxMargin * 4,
+                        height: absoluteRect.height * realSize.height,
+                    },
+                    edge: LayoutBoxEdgeType.VERTICAL,
+                    position: absoluteRect.x,
+                });
+            }
+        }
 
-        this._innerHorizontalEdges.forEach((y) => {
-            edges.push({
-                rect: {
-                    x: rect.x,
-                    y: y * realSize.height - 2 * layoutBoxMargin,
-                    width: rect.width,
-                    height: layoutBoxMargin * 4,
-                },
-                edge: LayoutBoxEdgeType.HORIZONTAL,
-                position: y,
-            });
-        });
+        if (this._layoutDirection === LayoutDirection.VERTICAL) {
+            for (let i = 1; i < this._children.length; i++) {
+                const child = this._children[i];
+                const absoluteRect = child.getAbsoluteRect();
+                edges.push({
+                    rect: {
+                        x: absoluteRect.x * realSize.width,
+                        y: absoluteRect.y * realSize.height - 2 * layoutBoxMargin,
+                        width: absoluteRect.width * realSize.width,
+                        height: layoutBoxMargin * 4,
+                    },
+                    edge: LayoutBoxEdgeType.HORIZONTAL,
+                    position: absoluteRect.y,
+                });
+            }
+        }
 
         return edges;
     }
@@ -504,9 +499,11 @@ export class LayoutBox {
             return null;
         }
 
-        const draggedBox = preview.findBoxContainingModuleInstance(draggedModuleInstanceId);
+        let draggedBox = preview.findBoxContainingModuleInstance(draggedModuleInstanceId);
         if (!draggedBox) {
-            return null;
+            draggedBox = new LayoutBox({ x: 0, y: 0, width: 1, height: 1 }, LayoutDirection.SINGLE, null, 0);
+            draggedBox._moduleInstanceId = draggedModuleInstanceId;
+            draggedBox._isWrapper = false;
         }
 
         preview.moveLayoutElement(draggedBox, layoutBox, edge);
@@ -536,12 +533,40 @@ export class LayoutBox {
         this._layoutDirection = convertTo;
     }
 
+    private convertWrapperToSingleLayout(): void {
+        if (this._layoutDirection === LayoutDirection.SINGLE) {
+            return;
+        }
+
+        if (this._children.length !== 1) {
+            return;
+        }
+
+        const child = this._children[0];
+        this._moduleInstanceId = child._moduleInstanceId;
+        this._moduleName = child._moduleName;
+        this._isWrapper = false;
+        this._layoutDirection = LayoutDirection.SINGLE;
+        this._children = [];
+    }
+
+    private positionToIndex(position: number): number {
+        if (this._layoutDirection === LayoutDirection.HORIZONTAL) {
+            const elementsBeforePosition = this._children.filter((child) => child._rectRelativeToParent.x < position);
+            return elementsBeforePosition.length;
+        }
+        if (this._layoutDirection === LayoutDirection.VERTICAL) {
+            const elementsBeforePosition = this._children.filter((child) => child._rectRelativeToParent.y < position);
+            return elementsBeforePosition.length;
+        }
+
+        return position;
+    }
+
     public moveLayoutElement(source: LayoutBox, destination: LayoutBox, edge: LayoutBoxEdge): void {
         if (source === destination) {
             return;
         }
-
-        console.log(edge.edge);
 
         if (edge.edge === LayoutBoxEdgeType.LEFT || edge.edge === LayoutBoxEdgeType.TOP) {
             if (destination._layoutDirection === LayoutDirection.SINGLE) {
@@ -555,6 +580,7 @@ export class LayoutBox {
                 source._parent = destination;
             } else {
                 destination._children = [source, ...destination._children.filter((child) => child !== source)];
+                destination.reorderChildren();
             }
             return;
         }
@@ -571,28 +597,26 @@ export class LayoutBox {
                 source._parent = destination;
             } else {
                 destination._children = [...destination._children.filter((child) => child !== source), source];
+                destination.reorderChildren();
             }
             return;
         }
 
-        /*
-        if (edge.edge === "vertical") {
-            source._rectRelativeToParent = {
-                ...source._rectRelativeToParent,
-                x: edge.position,
-            };
-        } else if (edge.edge === "horizontal") {
-            source._rectRelativeToParent = {
-                ...source._rectRelativeToParent,
-                y: edge.position,
-            };
-        } else if (edge.edge === "top") {
-            destination.insertChild(source);
-            source._parent?.removeChild(source);
-            source._parent = destination;
+        if (edge.edge === LayoutBoxEdgeType.VERTICAL || edge.edge === LayoutBoxEdgeType.HORIZONTAL) {
+            const index = destination.positionToIndex(edge.position);
+            if (source._parent !== destination) {
+                destination.insertChildAt(source, index);
+                source._parent?.removeChild(source);
+                source._parent = destination;
+            } else {
+                const otherElements = destination._children.filter((child) => child !== source);
+                const elementsBefore = otherElements.slice(0, index);
+                const elementsAfter = otherElements.slice(index);
+                destination._children = [...elementsBefore, source, ...elementsAfter];
+                destination.reorderChildren();
+            }
             return;
         }
-        */
     }
 
     public toLayout(): LayoutElement[] {
@@ -621,7 +645,6 @@ export class LayoutBox {
 export function makeLayoutBoxes(layoutElements: LayoutElement[]): LayoutBox {
     const mainBox = new LayoutBox({ x: 0, y: 0, width: 1, height: 1 }, LayoutDirection.MAIN, null, 1);
     mainBox.makeChildren(layoutElements);
-    console.log(mainBox.log());
     return mainBox;
 }
 
@@ -641,14 +664,15 @@ export const LayoutBoxComponents: React.FC<{
     const makeBox = (box: LayoutBox) => {
         const rect = box.getRectWithMargin(props.realSize);
         const color = uniqolor(box.toString());
-        const edges = box.getEdgeRects(props.realSize);
+        const edges: LayoutBoxEdge[] = box.getEdgeRects(props.realSize);
         let hoveredEdge: Rect | null = null;
         if (props.active === box.toString() && props.pointer) {
             hoveredEdge = box.findEdgeContainingPoint(props.pointer, props.realSize)?.rect || null;
         }
+
         return (
             <div
-                key={box.toString()}
+                key={v4()}
                 style={{
                     backgroundColor: "transparent",
                     pointerEvents: "none",
@@ -661,8 +685,9 @@ export const LayoutBoxComponents: React.FC<{
                     zIndex: props.zIndex,
                 }}
             >
-                {edges.map((edge, index) => (
+                {edges.map((edge) => (
                     <div
+                        key={v4()}
                         style={{
                             position: "absolute",
                             left: edge.rect.x - rect.x,
@@ -671,7 +696,7 @@ export const LayoutBoxComponents: React.FC<{
                             height: edge.rect.height,
                             zIndex: props.zIndex + 1,
                             backgroundColor:
-                                hoveredEdge && rectsAreEqual(hoveredEdge, edge.rect) ? "darkred" : "transparent",
+                                hoveredEdge && rectsAreEqual(hoveredEdge, edge.rect) ? "darkred" : color.color,
                         }}
                     />
                 ))}

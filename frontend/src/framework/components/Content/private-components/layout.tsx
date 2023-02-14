@@ -6,16 +6,15 @@ import {
     MANHATTAN_LENGTH,
     Point,
     Rect,
-    Size,
     pointDifference,
     pointDistance,
     pointRelativeToDomRect,
     pointerEventToPoint,
-    rectContainsPoint,
-    scaleRectIndividually,
 } from "@framework/utils/geometry";
+import { useSize } from "@lib/hooks/useSize";
 
 import { LayoutBox, LayoutBoxComponents, makeLayoutBoxes } from "./LayoutBox";
+import { ModulesList } from "./modulesList";
 import { ViewWrapper } from "./viewWrapper";
 
 type LayoutProps = {
@@ -26,11 +25,17 @@ type LayoutProps = {
 
 export enum LayoutEventTypes {
     MODULE_INSTANCE_POINTER_DOWN = "MODULE_INSTANCE_POINTER_DOWN",
+    NEW_MODULE_POINTER_DOWN = "NEW_MODULE_POINTER_DOWN",
 }
 
 export interface LayoutEvents {
     [LayoutEventTypes.MODULE_INSTANCE_POINTER_DOWN]: CustomEvent<{
         id: string;
+        elementPosition: Point;
+        pointerPoint: Point;
+    }>;
+    [LayoutEventTypes.NEW_MODULE_POINTER_DOWN]: CustomEvent<{
+        name: string;
         elementPosition: Point;
         pointerPoint: Point;
     }>;
@@ -56,28 +61,9 @@ export const Layout: React.FC<LayoutProps> = (props) => {
     const [draggedModuleInstanceId, setDraggedModuleInstanceId] = React.useState<string | null>(null);
     const [position, setPosition] = React.useState<Point>({ x: 0, y: 0 });
     const [layout, setLayout] = React.useState<LayoutElement[]>([]);
-    const [size, setSize] = React.useState<Size>({ width: 0, height: 0 });
     const ref = React.useRef<HTMLDivElement>(null);
-
-    React.useEffect(() => {
-        const handleSizeChange = () => {
-            if (ref.current) {
-                const rect = ref.current.getBoundingClientRect();
-                setSize({
-                    width: rect.width,
-                    height: rect.height,
-                });
-            }
-        };
-
-        handleSizeChange();
-
-        window.addEventListener("resize", handleSizeChange);
-
-        return () => {
-            window.removeEventListener("resize", handleSizeChange);
-        };
-    }, []);
+    const size = useSize(ref);
+    const layoutBoxRef = React.useRef<LayoutBox | null>(null);
 
     const convertLayoutRectToRealRect = React.useCallback(
         (element: LayoutElement): Rect => {
@@ -99,19 +85,25 @@ export const Layout: React.FC<LayoutProps> = (props) => {
         let pointerToElementDiff: Point = { x: 0, y: 0 };
         let dragging = false;
         let moduleInstanceId: string | null = null;
+        let moduleName: string | null = null;
         setLayout(props.workbench.getLayout());
         let layout: LayoutElement[] = props.workbench.getLayout();
         let layoutBox = makeLayoutBoxes(layout);
-        let previewLayoutBox: LayoutBox | null = null;
-        let intermediateLayout: LayoutElement[] = props.workbench.getLayout();
+        layoutBoxRef.current = layoutBox;
 
-        const handlePointerDown = (e: LayoutEvents[LayoutEventTypes.MODULE_INSTANCE_POINTER_DOWN]) => {
+        const handleModuleInstancePointerDown = (e: LayoutEvents[LayoutEventTypes.MODULE_INSTANCE_POINTER_DOWN]) => {
             pointerDownPoint = e.detail.pointerPoint;
             pointerDownElementPosition = e.detail.elementPosition;
             pointerDownElementId = e.detail.id;
         };
 
-        const handlePointerUp = (e: PointerEvent) => {
+        const handleNewModulePointerDown = (e: LayoutEvents[LayoutEventTypes.NEW_MODULE_POINTER_DOWN]) => {
+            pointerDownPoint = e.detail.pointerPoint;
+            pointerDownElementPosition = e.detail.elementPosition;
+            moduleName = e.detail.name;
+        };
+
+        const handlePointerUp = () => {
             pointerDownPoint = null;
             pointerDownElementPosition = null;
             pointerDownElementId = null;
@@ -119,14 +111,17 @@ export const Layout: React.FC<LayoutProps> = (props) => {
             moduleInstanceId = null;
             dragging = false;
             document.body.classList.remove("select-none");
-            setLayout(intermediateLayout);
-            layout = intermediateLayout;
             layoutBox = makeLayoutBoxes(layout);
-            previewLayoutBox = null;
+            setLayout(layout);
         };
 
         const handlePointerMove = (e: PointerEvent) => {
-            if (!pointerDownPoint || !ref.current || !pointerDownElementId || !pointerDownElementPosition) {
+            if (
+                !pointerDownPoint ||
+                !ref.current ||
+                (!pointerDownElementId && !moduleName) ||
+                !pointerDownElementPosition
+            ) {
                 return;
             }
             if (!dragging) {
@@ -139,10 +134,9 @@ export const Layout: React.FC<LayoutProps> = (props) => {
                     document.body.classList.add("select-none");
                     dragging = true;
                     pointerToElementDiff = pointDifference(pointerDownPoint, pointerDownElementPosition);
-                    console.log(layoutBox.toLayout());
                 }
             } else {
-                if (!moduleInstanceId || !pointerDownPoint) {
+                if ((!pointerDownElementId && !moduleName) || !pointerDownPoint) {
                     return;
                 }
                 const rect = ref.current.getBoundingClientRect();
@@ -150,53 +144,74 @@ export const Layout: React.FC<LayoutProps> = (props) => {
                 relativePointerPosition = pointDifference(pointerEventToPoint(e), rect);
 
                 if (layoutBox) {
-                    const preview = layoutBox.previewLayout(relativePointerPosition, size, moduleInstanceId);
+                    let preview: LayoutBox | null = null;
+                    if (!moduleInstanceId && moduleName) {
+                        const moduleInstance = props.workbench.addModule(moduleName);
+                        moduleInstanceId = moduleInstance.getId();
+                        setDraggedModuleInstanceId(moduleInstanceId);
+                    }
+                    if (moduleInstanceId) {
+                        preview = layoutBox.previewLayout(relativePointerPosition, size, moduleInstanceId);
+                    }
                     if (preview) {
-                        intermediateLayout = preview.toLayout();
-                        setLayout(intermediateLayout);
+                        layoutBox = preview;
+                        layout = preview.toLayout();
+                        setLayout(layout);
+                        layoutBoxRef.current = layoutBox;
                     }
                 }
             }
         };
-
-        if (ref.current) {
-            document.addEventListener(LayoutEventTypes.MODULE_INSTANCE_POINTER_DOWN, handlePointerDown);
-            document.addEventListener("pointerup", handlePointerUp);
-            document.addEventListener("pointermove", handlePointerMove);
-        }
+        document.addEventListener(LayoutEventTypes.MODULE_INSTANCE_POINTER_DOWN, handleModuleInstancePointerDown);
+        document.addEventListener(LayoutEventTypes.NEW_MODULE_POINTER_DOWN, handleNewModulePointerDown);
+        document.addEventListener("pointerup", handlePointerUp);
+        document.addEventListener("pointermove", handlePointerMove);
 
         return () => {
-            if (ref.current) {
-                document.removeEventListener(LayoutEventTypes.MODULE_INSTANCE_POINTER_DOWN, handlePointerDown);
-                document.removeEventListener("pointerup", handlePointerUp);
-                document.removeEventListener("pointermove", handlePointerMove);
-            }
+            document.removeEventListener(
+                LayoutEventTypes.MODULE_INSTANCE_POINTER_DOWN,
+                handleModuleInstancePointerDown
+            );
+            document.removeEventListener("pointerup", handlePointerUp);
+            document.removeEventListener("pointermove", handlePointerMove);
         };
     }, [size]);
     return (
-        <div ref={ref} className="relative h-full w-full">
-            {props.moduleInstances.map((instance) => {
-                const layoutElement = layout.find((element) => element.moduleInstanceId === instance.getId());
-                if (!layoutElement) {
-                    return null;
-                }
-                const rect = convertLayoutRectToRealRect(layoutElement);
-                const isDragged = draggedModuleInstanceId === instance.getId();
-                return (
-                    <ViewWrapper
-                        key={instance.getId()}
-                        moduleInstance={instance}
-                        workbench={props.workbench}
-                        isActive={props.activeModuleId === instance.getId()}
-                        width={rect.width}
-                        height={rect.height}
-                        x={rect.x}
-                        y={rect.y}
-                        isDragged={isDragged}
-                        dragPosition={position}
+        <div className="relative flex h-full w-full">
+            <div ref={ref} className="h-full flex-grow">
+                {layoutBoxRef.current && (
+                    <LayoutBoxComponents
+                        active={null}
+                        layoutBox={layoutBoxRef.current}
+                        realSize={size}
+                        zIndex={1}
+                        pointer={position}
                     />
-                );
-            })}
+                )}
+                {props.moduleInstances.map((instance) => {
+                    const layoutElement = layout.find((element) => element.moduleInstanceId === instance.getId());
+                    if (!layoutElement) {
+                        return null;
+                    }
+                    const rect = convertLayoutRectToRealRect(layoutElement);
+                    const isDragged = draggedModuleInstanceId === instance.getId();
+                    return (
+                        <ViewWrapper
+                            key={instance.getId()}
+                            moduleInstance={instance}
+                            workbench={props.workbench}
+                            isActive={props.activeModuleId === instance.getId()}
+                            width={rect.width}
+                            height={rect.height}
+                            x={rect.x}
+                            y={rect.y}
+                            isDragged={isDragged}
+                            dragPosition={position}
+                        />
+                    );
+                })}
+            </div>
+            <ModulesList workbench={props.workbench} />
         </div>
     );
 };

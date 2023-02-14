@@ -14,7 +14,7 @@ export const Content: React.FC<ContentProps> = (props) => {
     const moduleInstances = useModuleInstances(props.workbench);
 
     return (
-        <div className="bg-slate-200 flex-grow p-1">
+        <div className="bg-slate-200 flex-grow">
             <Layout workbench={props.workbench} activeModuleId={activeModuleId} moduleInstances={moduleInstances} />
         </div>
     );

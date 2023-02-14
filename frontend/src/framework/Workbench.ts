@@ -20,10 +20,14 @@ export type LayoutElement = {
     width: number;
 };
 
+export type WorkbenchState = {
+    modulesListOpen: boolean;
+};
+
 export class Workbench {
     private moduleInstances: ModuleInstance<any>[];
     private _activeModuleId: string;
-    private stateStore: StateStore<object>;
+    private stateStore: StateStore<WorkbenchState>;
     private _workbenchServices: PrivateWorkbenchServices;
     private _subscribersMap: { [key: string]: Set<() => void> };
     private layout: LayoutElement[];
@@ -31,13 +35,15 @@ export class Workbench {
     constructor() {
         this.moduleInstances = [];
         this._activeModuleId = "";
-        this.stateStore = new StateStore<object>({});
+        this.stateStore = new StateStore<WorkbenchState>({
+            modulesListOpen: false,
+        });
         this._workbenchServices = new PrivateWorkbenchServices(this);
         this._subscribersMap = {};
         this.layout = [];
     }
 
-    public getStateStore(): StateStore<object> {
+    public getStateStore(): StateStore<WorkbenchState> {
         return this.stateStore;
     }
 
@@ -93,6 +99,26 @@ export class Workbench {
         layout.forEach((element, index: number) => {
             this.addModuleToLayout(element.moduleName, index);
         });
+    }
+
+    public addModule(moduleName: string): ModuleInstance<any> {
+        const module = ModuleRegistry.getModule(moduleName);
+        if (!module) {
+            throw new Error(`Module ${moduleName} not found`);
+        }
+
+        const moduleInstance = module.makeInstance();
+        this.moduleInstances.push(moduleInstance);
+        this.layout.push({
+            moduleName,
+            x: 0,
+            y: 0,
+            height: 0,
+            width: 0,
+        });
+        this.notifySubscribers(WorkbenchEvents.ModuleInstancesChanged);
+        module.setWorkbench(this);
+        return moduleInstance;
     }
 
     private addModuleToLayout(moduleName: string, elementIndex: number): void {

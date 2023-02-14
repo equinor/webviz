@@ -1,9 +1,9 @@
-import React, { PointerEventHandler } from "react";
+import React from "react";
 
 import { ImportState } from "@framework/Module";
 import { ModuleInstance } from "@framework/ModuleInstance";
 import { Workbench } from "@framework/Workbench";
-import { Point, pointDistance, pointRelativeToDomRect, pointerEventToPoint } from "@framework/utils/geometry";
+import { Point, pointRelativeToDomRect, pointerEventToPoint } from "@framework/utils/geometry";
 
 import { LayoutEventTypes } from "./layout";
 
