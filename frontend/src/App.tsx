@@ -8,43 +8,7 @@ import { CustomQueryClientProvider } from "@framework/providers/QueryClientProvi
 
 import "./modules/registerAllModules.ts";
 
-const layout: LayoutElement[] = [
-    {
-        moduleName: "MyModule",
-        width: 0.25,
-        height: 0.5,
-        x: 0,
-        y: 0,
-    },
-    {
-        moduleName: "MyModule2",
-        width: 0.25,
-        height: 0.5,
-        x: 0.25,
-        y: 0,
-    },
-    {
-        moduleName: "MyModule2",
-        width: 0.25,
-        height: 0.5,
-        x: 0.5,
-        y: 0,
-    },
-    {
-        moduleName: "MyModule2",
-        width: 0.25,
-        height: 0.5,
-        x: 0.75,
-        y: 0,
-    },
-    {
-        moduleName: "MyModule",
-        width: 1,
-        height: 0.5,
-        x: 0,
-        y: 0.5,
-    },
-];
+const layout: LayoutElement[] = [];
 
 function App() {
     const workbench = new Workbench();

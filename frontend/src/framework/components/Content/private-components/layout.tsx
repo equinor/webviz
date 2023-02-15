@@ -1,7 +1,7 @@
 import React from "react";
 
-import { ModuleInstance } from "@framework/ModuleInstance";
 import { LayoutElement, Workbench } from "@framework/Workbench";
+import { useModuleInstances } from "@framework/hooks/workbenchHooks";
 import {
     MANHATTAN_LENGTH,
     Point,
@@ -13,19 +13,24 @@ import {
 } from "@framework/utils/geometry";
 import { useSize } from "@lib/hooks/useSize";
 
+import { v4 } from "uuid";
+
 import { LayoutBox, LayoutBoxComponents, makeLayoutBoxes } from "./LayoutBox";
 import { ModulesList } from "./modulesList";
 import { ViewWrapper } from "./viewWrapper";
+import { ViewWrapperPlaceholder } from "./viewWrapperPlaceholder";
+
+import { addMarginToRect, rectContainsPoint } from "../../../utils/geometry";
 
 type LayoutProps = {
     workbench: Workbench;
     activeModuleId: string | null;
-    moduleInstances: ModuleInstance<any>[];
 };
 
 export enum LayoutEventTypes {
     MODULE_INSTANCE_POINTER_DOWN = "MODULE_INSTANCE_POINTER_DOWN",
     NEW_MODULE_POINTER_DOWN = "NEW_MODULE_POINTER_DOWN",
+    REMOVE_MODULE_INSTANCE_REQUEST = "REMOVE_MODULE_INSTANCE_REQUEST",
 }
 
 export interface LayoutEvents {
@@ -38,6 +43,9 @@ export interface LayoutEvents {
         name: string;
         elementPosition: Point;
         pointerPoint: Point;
+    }>;
+    [LayoutEventTypes.REMOVE_MODULE_INSTANCE_REQUEST]: CustomEvent<{
+        id: string;
     }>;
 }
 
@@ -60,10 +68,14 @@ declare global {
 export const Layout: React.FC<LayoutProps> = (props) => {
     const [draggedModuleInstanceId, setDraggedModuleInstanceId] = React.useState<string | null>(null);
     const [position, setPosition] = React.useState<Point>({ x: 0, y: 0 });
+    const [pointer, setPointer] = React.useState<Point>({ x: -1, y: -1 });
     const [layout, setLayout] = React.useState<LayoutElement[]>([]);
+    const [tempLayoutBoxId, setTempLayoutBoxId] = React.useState<string | null>(null);
     const ref = React.useRef<HTMLDivElement>(null);
+    const mainRef = React.useRef<HTMLDivElement>(null);
     const size = useSize(ref);
     const layoutBoxRef = React.useRef<LayoutBox | null>(null);
+    const moduleInstances = useModuleInstances(props.workbench);
 
     const convertLayoutRectToRealRect = React.useCallback(
         (element: LayoutElement): Rect => {
@@ -87,23 +99,65 @@ export const Layout: React.FC<LayoutProps> = (props) => {
         let moduleInstanceId: string | null = null;
         let moduleName: string | null = null;
         setLayout(props.workbench.getLayout());
-        let layout: LayoutElement[] = props.workbench.getLayout();
-        let layoutBox = makeLayoutBoxes(layout);
-        layoutBoxRef.current = layoutBox;
+        let originalLayout: LayoutElement[] = props.workbench.getLayout();
+        let currentLayout: LayoutElement[] = props.workbench.getLayout();
+        let originalLayoutBox = makeLayoutBoxes(originalLayout);
+        let currentLayoutBox = originalLayoutBox;
+        layoutBoxRef.current = currentLayoutBox;
+        let lastTimeStamp = 0;
+        let lastMovePosition: Point = { x: 0, y: 0 };
+        let delayTimer: ReturnType<typeof setTimeout> | null = null;
+        let isNewModule = false;
+
+        const adjustLayout = () => {
+            if (currentLayoutBox && moduleInstanceId) {
+                const preview = currentLayoutBox.previewLayout(
+                    relativePointerPosition,
+                    size,
+                    moduleInstanceId,
+                    isNewModule
+                );
+                if (preview) {
+                    currentLayout = preview.toLayout();
+                    currentLayoutBox = preview;
+                }
+                setLayout(currentLayout);
+                layoutBoxRef.current = currentLayoutBox;
+            }
+            delayTimer = null;
+        };
 
         const handleModuleInstancePointerDown = (e: LayoutEvents[LayoutEventTypes.MODULE_INSTANCE_POINTER_DOWN]) => {
             pointerDownPoint = e.detail.pointerPoint;
             pointerDownElementPosition = e.detail.elementPosition;
             pointerDownElementId = e.detail.id;
+            isNewModule = false;
         };
 
         const handleNewModulePointerDown = (e: LayoutEvents[LayoutEventTypes.NEW_MODULE_POINTER_DOWN]) => {
             pointerDownPoint = e.detail.pointerPoint;
             pointerDownElementPosition = e.detail.elementPosition;
+            pointerDownElementId = v4();
+            setTempLayoutBoxId(pointerDownElementId);
+            isNewModule = true;
             moduleName = e.detail.name;
         };
 
         const handlePointerUp = () => {
+            if (!dragging) {
+                return;
+            }
+            if (delayTimer) {
+                clearTimeout(delayTimer);
+                adjustLayout();
+            }
+            if (isNewModule && moduleName) {
+                const layoutElement = currentLayout.find((el) => el.moduleInstanceId === pointerDownElementId);
+                if (layoutElement) {
+                    const instance = props.workbench.makeModuleInstance(moduleName, layoutElement);
+                    layoutElement.moduleInstanceId = instance.getId();
+                }
+            }
             pointerDownPoint = null;
             pointerDownElementPosition = null;
             pointerDownElementId = null;
@@ -111,17 +165,20 @@ export const Layout: React.FC<LayoutProps> = (props) => {
             moduleInstanceId = null;
             dragging = false;
             document.body.classList.remove("select-none");
-            layoutBox = makeLayoutBoxes(layout);
-            setLayout(layout);
+            originalLayout = currentLayout;
+            currentLayoutBox = makeLayoutBoxes(currentLayout);
+            originalLayoutBox = currentLayoutBox;
+            layoutBoxRef.current = currentLayoutBox;
+            setLayout(currentLayout);
+            isNewModule = false;
+            setTempLayoutBoxId(null);
+            props.workbench.setLayout(currentLayout);
+            setPosition({ x: 0, y: 0 });
+            setPointer({ x: -1, y: -1 });
         };
 
         const handlePointerMove = (e: PointerEvent) => {
-            if (
-                !pointerDownPoint ||
-                !ref.current ||
-                (!pointerDownElementId && !moduleName) ||
-                !pointerDownElementPosition
-            ) {
+            if (!pointerDownPoint || !ref.current || !pointerDownElementId || !pointerDownElementPosition) {
                 return;
             }
             if (!dragging) {
@@ -134,38 +191,86 @@ export const Layout: React.FC<LayoutProps> = (props) => {
                     document.body.classList.add("select-none");
                     dragging = true;
                     pointerToElementDiff = pointDifference(pointerDownPoint, pointerDownElementPosition);
+                    lastTimeStamp = e.timeStamp;
+                    lastMovePosition = pointerEventToPoint(e);
                 }
             } else {
-                if ((!pointerDownElementId && !moduleName) || !pointerDownPoint) {
+                if (!pointerDownElementId || !pointerDownPoint) {
                     return;
                 }
                 const rect = ref.current.getBoundingClientRect();
                 setPosition(pointDifference(pointDifference(pointerEventToPoint(e), rect), pointerToElementDiff));
+                setPointer(pointDifference(pointerEventToPoint(e), rect));
                 relativePointerPosition = pointDifference(pointerEventToPoint(e), rect);
+                const speed = pointDistance(pointerEventToPoint(e), lastMovePosition) / (e.timeStamp - lastTimeStamp);
+                lastTimeStamp = e.timeStamp;
+                lastMovePosition = pointerEventToPoint(e);
 
-                if (layoutBox) {
-                    let preview: LayoutBox | null = null;
-                    if (!moduleInstanceId && moduleName) {
-                        const moduleInstance = props.workbench.addModule(moduleName);
-                        moduleInstanceId = moduleInstance.getId();
-                        setDraggedModuleInstanceId(moduleInstanceId);
-                    }
-                    if (moduleInstanceId) {
-                        preview = layoutBox.previewLayout(relativePointerPosition, size, moduleInstanceId);
-                    }
-                    if (preview) {
-                        layoutBox = preview;
-                        layout = preview.toLayout();
-                        setLayout(layout);
-                        layoutBoxRef.current = layoutBox;
-                    }
+                if (!rectContainsPoint(addMarginToRect(rect, 25), pointerEventToPoint(e))) {
+                    currentLayout = originalLayout;
+                    currentLayoutBox = originalLayoutBox;
+                    setLayout(currentLayout);
+                    layoutBoxRef.current = currentLayoutBox;
+                    return;
+                }
+
+                if (delayTimer && speed > 0.5) {
+                    clearTimeout(delayTimer);
+                    delayTimer = null;
+                }
+                if (delayTimer === null) {
+                    delayTimer = setTimeout(adjustLayout, 500);
                 }
             }
         };
+
+        const handleButtonClick = (e: KeyboardEvent) => {
+            if (e.key === "Escape") {
+                if (delayTimer) {
+                    clearTimeout(delayTimer);
+                }
+                setLayout(originalLayout);
+                currentLayout = originalLayout;
+                pointerDownPoint = null;
+                pointerDownElementPosition = null;
+                pointerDownElementId = null;
+                setDraggedModuleInstanceId(null);
+                moduleInstanceId = null;
+                dragging = false;
+                document.body.classList.remove("select-none");
+                originalLayout = currentLayout;
+                currentLayoutBox = makeLayoutBoxes(currentLayout);
+                originalLayoutBox = currentLayoutBox;
+                setLayout(currentLayout);
+                isNewModule = false;
+                setTempLayoutBoxId(null);
+            }
+        };
+
+        const handleRemoveModuleInstanceRequest = (
+            e: LayoutEvents[LayoutEventTypes.REMOVE_MODULE_INSTANCE_REQUEST]
+        ) => {
+            if (delayTimer) {
+                clearTimeout(delayTimer);
+            }
+            if (dragging) {
+                return;
+            }
+            props.workbench.removeModuleInstance(e.detail.id);
+            currentLayoutBox.removeLayoutElement(e.detail.id);
+            currentLayout = currentLayoutBox.toLayout();
+            setLayout(currentLayout);
+            originalLayout = currentLayout;
+            originalLayoutBox = currentLayoutBox;
+            props.workbench.setLayout(currentLayout);
+        };
+
         document.addEventListener(LayoutEventTypes.MODULE_INSTANCE_POINTER_DOWN, handleModuleInstancePointerDown);
         document.addEventListener(LayoutEventTypes.NEW_MODULE_POINTER_DOWN, handleNewModulePointerDown);
+        document.addEventListener(LayoutEventTypes.REMOVE_MODULE_INSTANCE_REQUEST, handleRemoveModuleInstanceRequest);
         document.addEventListener("pointerup", handlePointerUp);
         document.addEventListener("pointermove", handlePointerMove);
+        document.addEventListener("keydown", handleButtonClick);
 
         return () => {
             document.removeEventListener(
@@ -174,21 +279,46 @@ export const Layout: React.FC<LayoutProps> = (props) => {
             );
             document.removeEventListener("pointerup", handlePointerUp);
             document.removeEventListener("pointermove", handlePointerMove);
+            document.removeEventListener("keydown", handleButtonClick);
+            if (delayTimer) {
+                clearTimeout(delayTimer);
+            }
         };
     }, [size]);
+
+    const makeTempViewWrapperPlaceholder = () => {
+        if (!tempLayoutBoxId) {
+            return null;
+        }
+        const layoutElement = layout.find((element) => element.moduleInstanceId === tempLayoutBoxId);
+        if (!layoutElement) {
+            return null;
+        }
+        const rect = convertLayoutRectToRealRect(layoutElement);
+        return (
+            <ViewWrapperPlaceholder
+                key={tempLayoutBoxId}
+                width={rect.width}
+                height={rect.height}
+                x={rect.x}
+                y={rect.y}
+            />
+        );
+    };
+
     return (
-        <div className="relative flex h-full w-full">
+        <div ref={mainRef} className="relative flex h-full w-full">
             <div ref={ref} className="h-full flex-grow">
                 {layoutBoxRef.current && (
                     <LayoutBoxComponents
-                        active={null}
+                        active={draggedModuleInstanceId}
                         layoutBox={layoutBoxRef.current}
                         realSize={size}
                         zIndex={1}
-                        pointer={position}
+                        pointer={pointer}
                     />
                 )}
-                {props.moduleInstances.map((instance) => {
+                {moduleInstances.map((instance) => {
                     const layoutElement = layout.find((element) => element.moduleInstanceId === instance.getId());
                     if (!layoutElement) {
                         return null;
@@ -210,8 +340,9 @@ export const Layout: React.FC<LayoutProps> = (props) => {
                         />
                     );
                 })}
+                {makeTempViewWrapperPlaceholder()}
             </div>
-            <ModulesList workbench={props.workbench} />
+            <ModulesList relContainer={mainRef.current} workbench={props.workbench} />
         </div>
     );
 };

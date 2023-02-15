@@ -6,6 +6,7 @@ import { Workbench } from "@framework/Workbench";
 import { Point, pointRelativeToDomRect, pointerEventToPoint } from "@framework/utils/geometry";
 
 import { LayoutEventTypes } from "./layout";
+import { ViewWrapperPlaceholder } from "./viewWrapperPlaceholder";
 
 import { pointDifference } from "../../../utils/geometry";
 
@@ -83,20 +84,25 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
         [props.moduleInstance]
     );
 
+    const handleRemoveClick = React.useCallback(
+        function handleRemoveClick(e: React.PointerEvent<HTMLDivElement>) {
+            document.dispatchEvent(
+                new CustomEvent(LayoutEventTypes.REMOVE_MODULE_INSTANCE_REQUEST, {
+                    detail: {
+                        id: props.moduleInstance.getId(),
+                    },
+                })
+            );
+            e.preventDefault();
+            e.stopPropagation();
+        },
+        [props.moduleInstance]
+    );
+
     return (
         <>
             {props.isDragged && (
-                <div
-                    className="absolute box-border p-2"
-                    style={{
-                        width: props.width,
-                        height: props.height,
-                        left: props.x,
-                        top: props.y,
-                    }}
-                >
-                    <div className="bg-red-300 h-full w-full" />
-                </div>
+                <ViewWrapperPlaceholder width={props.width} height={props.height} x={props.x} y={props.y} />
             )}
             <div
                 ref={ref}
@@ -107,6 +113,7 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
                     left: props.isDragged ? props.dragPosition.x : props.x,
                     top: props.isDragged ? props.dragPosition.y : props.y,
                     zIndex: props.isDragged ? 1 : 0,
+                    opacity: props.isDragged ? 0.5 : 1,
                 }}
             >
                 <div
@@ -118,12 +125,15 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
                     onClick={() => props.workbench.setActiveModuleId(props.moduleInstance.getId())}
                 >
                     <div
-                        className={`bg-slate-100 p-4 select-none ${
+                        className={`bg-slate-100 p-4 flex select-none ${
                             props.isDragged ? "cursor-grabbing" : "cursor-move"
                         }`}
                         onPointerDown={handlePointerDown}
                     >
-                        {props.moduleInstance.getName()}
+                        <div className="flex-grow">{props.moduleInstance.getName()}</div>
+                        <div className="hover:text-slate-500 cursor-pointer" onPointerDown={handleRemoveClick}>
+                            X
+                        </div>
                     </div>
                     <div className="p-4">{createContent()}</div>
                 </div>

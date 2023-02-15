@@ -101,7 +101,7 @@ export class Workbench {
         });
     }
 
-    public addModule(moduleName: string): ModuleInstance<any> {
+    public makeModuleInstance(moduleName: string, layout: LayoutElement): ModuleInstance<any> {
         const module = ModuleRegistry.getModule(moduleName);
         if (!module) {
             throw new Error(`Module ${moduleName} not found`);
@@ -109,16 +109,16 @@ export class Workbench {
 
         const moduleInstance = module.makeInstance();
         this.moduleInstances.push(moduleInstance);
-        this.layout.push({
-            moduleName,
-            x: 0,
-            y: 0,
-            height: 0,
-            width: 0,
-        });
+        this.layout.push({ ...layout, moduleInstanceId: moduleInstance.getId() });
         this.notifySubscribers(WorkbenchEvents.ModuleInstancesChanged);
         module.setWorkbench(this);
         return moduleInstance;
+    }
+
+    public removeModuleInstance(moduleInstanceId: string): void {
+        this.moduleInstances = this.moduleInstances.filter((el) => el.getId() !== moduleInstanceId);
+        this.layout = this.layout.filter((el) => el.moduleInstanceId !== moduleInstanceId);
+        this.notifySubscribers(WorkbenchEvents.ModuleInstancesChanged);
     }
 
     private addModuleToLayout(moduleName: string, elementIndex: number): void {
@@ -132,6 +132,11 @@ export class Workbench {
         this.layout[elementIndex] = { ...this.layout[elementIndex], moduleInstanceId: moduleInstance.getId() };
         this.notifySubscribers(WorkbenchEvents.ModuleInstancesChanged);
         module.setWorkbench(this);
+    }
+
+    public setLayout(layout: LayoutElement[]): void {
+        this.layout = layout;
+        this.notifySubscribers(WorkbenchEvents.FullModuleRerenderRequested);
     }
 
     public maybeMakeFirstModuleInstanceActive(): void {

@@ -95,6 +95,24 @@ export const rectContainsPoint = (rect: Rect, point: Point): boolean => {
     return point.x >= rect.x && point.x <= rect.x + rect.width && point.y >= rect.y && point.y <= rect.y + rect.height;
 };
 
+export const scaleRectAroundCenter = (rect: Rect, factor: number): Rect => {
+    return {
+        x: rect.x - (rect.width * factor - rect.width) / 2,
+        y: rect.y - (rect.height * factor - rect.height) / 2,
+        width: rect.width * factor,
+        height: rect.height * factor,
+    };
+};
+
+export const addMarginToRect = (rect: Rect, margin: number): Rect => {
+    return {
+        x: rect.x - margin,
+        y: rect.y - margin,
+        width: rect.width + margin * 2,
+        height: rect.height + margin * 2,
+    };
+};
+
 export const outerRectContainsInnerRect = (outerRect: Rect, innerRect: Rect): boolean => {
     return (
         outerRect.x <= innerRect.x &&

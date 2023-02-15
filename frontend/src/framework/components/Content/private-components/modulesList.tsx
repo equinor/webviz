@@ -6,6 +6,7 @@ import { Workbench } from "@framework/Workbench";
 import {
     MANHATTAN_LENGTH,
     Point,
+    Size,
     pointDifference,
     pointDistance,
     pointRelativeToDomRect,
@@ -18,19 +19,27 @@ import { LayoutEventTypes } from "./layout";
 
 type ModulesListItemProps = {
     moduleName: string;
+    relContainer: HTMLDivElement | null;
 };
 
 const ModulesListItem: React.FC<ModulesListItemProps> = (props) => {
     const ref = React.useRef<HTMLDivElement>(null);
+    const mainRef = React.useRef<HTMLDivElement>(null);
+    const [isDragged, setIsDragged] = React.useState<boolean>(false);
+    const [dragPosition, setDragPosition] = React.useState<Point>({ x: 0, y: 0 });
+    const [dragSize, setDragSize] = React.useState<Size>({ width: 0, height: 0 });
 
     React.useEffect(() => {
         let pointerDownPoint: Point | null = null;
         let dragging = false;
+        let pointerDownElementPosition: Point | null = null;
+        let pointerToElementDiff: Point = { x: 0, y: 0 };
 
         const handlePointerDown = (e: PointerEvent) => {
             if (ref.current) {
                 const point = pointerEventToPoint(e);
                 const rect = ref.current.getBoundingClientRect();
+                pointerDownElementPosition = pointDifference(point, pointRelativeToDomRect(point, rect));
                 document.dispatchEvent(
                     new CustomEvent(LayoutEventTypes.NEW_MODULE_POINTER_DOWN, {
                         detail: {
@@ -47,6 +56,8 @@ const ModulesListItem: React.FC<ModulesListItemProps> = (props) => {
         const handlePointerUp = () => {
             pointerDownPoint = null;
             dragging = false;
+            setIsDragged(false);
+            pointerDownElementPosition = null;
         };
 
         const handlePointerMove = (e: PointerEvent) => {
@@ -54,8 +65,28 @@ const ModulesListItem: React.FC<ModulesListItemProps> = (props) => {
                 return;
             }
 
-            if (!dragging && pointDistance(pointerEventToPoint(e), pointerDownPoint) > MANHATTAN_LENGTH) {
+            if (
+                !dragging &&
+                pointDistance(pointerEventToPoint(e), pointerDownPoint) > MANHATTAN_LENGTH &&
+                pointerDownElementPosition
+            ) {
                 dragging = true;
+                setIsDragged(true);
+                if (mainRef.current) {
+                    const rect = mainRef.current.getBoundingClientRect();
+                    setDragSize({ width: rect.width, height: rect.height });
+                }
+                pointerToElementDiff = pointDifference(pointerDownPoint, pointerDownElementPosition);
+                return;
+            }
+
+            if (dragging) {
+                const rect = props.relContainer?.getBoundingClientRect();
+                if (rect) {
+                    setDragPosition(
+                        pointDifference(pointDifference(pointerEventToPoint(e), rect), pointerToElementDiff)
+                    );
+                }
             }
         };
 
@@ -72,20 +103,36 @@ const ModulesListItem: React.FC<ModulesListItemProps> = (props) => {
             document.removeEventListener("pointerup", handlePointerUp);
             document.removeEventListener("pointermove", handlePointerMove);
         };
-    }, []);
+    }, [props.relContainer]);
 
     return (
-        <div className="m-1 border border-slate-600 border-solid text-sm text-gray-700 w-full h-40">
-            <div ref={ref} className="bg-slate-100 p-4 cursor-move">
-                {props.moduleName}
+        <>
+            {isDragged && <div ref={mainRef} className="bg-red-500 w-full h-40 m-1" />}
+            <div
+                ref={isDragged ? undefined : mainRef}
+                className="mb-4 border box-border border-slate-600 border-solid text-sm text-gray-700 w-full h-40 select-none"
+                style={{
+                    width: isDragged ? dragSize.width : undefined,
+                    height: isDragged ? dragSize.height : undefined,
+                    left: isDragged ? dragPosition.x : undefined,
+                    top: isDragged ? dragPosition.y : undefined,
+                    zIndex: isDragged ? 1 : 0,
+                    opacity: isDragged ? 0.5 : 1,
+                    position: isDragged ? "absolute" : "inherit",
+                }}
+            >
+                <div ref={ref} className="bg-slate-100 p-4 cursor-move">
+                    {props.moduleName}
+                </div>
+                <div className="p-4">Preview</div>
             </div>
-            <div className="p-4">Preview</div>
-        </div>
+        </>
     );
 };
 
 type ModulesListProps = {
     workbench: Workbench;
+    relContainer: HTMLDivElement | null;
 };
 
 export const ModulesList: React.FC<ModulesListProps> = (props) => {
@@ -97,17 +144,17 @@ export const ModulesList: React.FC<ModulesListProps> = (props) => {
     };
 
     return (
-        <div className={`bg-white p-4 w-96 h-full${visible ? "" : " hidden"}`}>
+        <div className={`flex flex-col bg-white p-4 w-96 min-h-0 h-full${visible ? "" : " hidden"}`}>
             <Input
                 placeholder="Module name..."
                 startAdornment={<MagnifyingGlassIcon className="w-4 h-4" />}
                 onChange={handleSearchQueryChange}
             />
-            <div className="mt-4">
+            <div className="mt-4 flex-grow p-4 min-h-0 overflow-y-auto max-h-full">
                 {Object.keys(ModuleRegistry.getRegisteredModules())
                     .filter((module) => module.includes(searchQuery))
                     .map((moduleName) => (
-                        <ModulesListItem key={moduleName} moduleName={moduleName} />
+                        <ModulesListItem relContainer={props.relContainer} key={moduleName} moduleName={moduleName} />
                     ))}
             </div>
         </div>
