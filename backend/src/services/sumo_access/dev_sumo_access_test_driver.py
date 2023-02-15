@@ -1,12 +1,11 @@
+import sys
 from typing import List
 
 import pyarrow as pa
-
 from fmu.sumo.explorer.explorer import SumoClient
 
-from .summary_access import SummaryAccess, VectorRealizationData
+from .summary_access import Frequency, RealizationVector, SummaryAccess
 from .sumo_explore import SumoExplore
-
 
 
 def main() -> None:
@@ -28,7 +27,7 @@ def main() -> None:
 
     if not sumo_case_name:
         print("The sumo case id was not found")
-        exit(1)
+        sys.exit(1)
 
     iterations = explore.get_iterations(sumo_case_id)
     print("\n\n")
@@ -41,13 +40,27 @@ def main() -> None:
     print("\n\n")
     print(vector_names)
 
-    arrow_table: pa.Table = summary_access.get_vector_realizations_data_as_arrow_table("FOPT")
-    print("\n\n")
-    print(arrow_table)
+    vector_table: pa.Table = summary_access.get_vector_table(vector_name="FOPT", resampling_frequency=None)
+    print("\n\nRAW")
+    print(vector_table.shape)
 
-    vector_data_arr: List[VectorRealizationData] = summary_access.get_vector_realizations_data("FOPT")
+    vector_table = summary_access.get_vector_table(vector_name="FOPT", resampling_frequency=Frequency.DAILY)
+    print("\n\nDAILY")
+    print(vector_table.shape)
+
+    vector_table = summary_access.get_vector_table(vector_name="FOPT", resampling_frequency=Frequency.YEARLY)
+    print("\n\nYEARLY")
+    print(vector_table)
+    print(vector_table.shape)
+
+    print("\n\nYEARLY - filtered")
+    vector_table = vector_table.filter(pa.compute.equal(vector_table["REAL"], 0))
+    print(vector_table)
+    print(vector_table.shape)
+
+    vector_arr: List[RealizationVector] = summary_access.get_vector("FOPT", resampling_frequency=Frequency.YEARLY)
     print("\n\n")
-    print(vector_data_arr[0])
+    print(vector_arr[0])
 
 
 # Running:

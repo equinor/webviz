@@ -6,9 +6,9 @@
  * An enumeration.
  */
 export enum Frequency {
-    DAILY = 'daily',
-    WEEKLY = 'weekly',
-    MONTHLY = 'monthly',
-    QUARTERLY = 'quarterly',
-    YEARLY = 'yearly',
+    DAILY = 'DAILY',
+    WEEKLY = 'WEEKLY',
+    MONTHLY = 'MONTHLY',
+    QUARTERLY = 'QUARTERLY',
+    YEARLY = 'YEARLY',
 }

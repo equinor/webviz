@@ -1,28 +1,25 @@
-from typing import List
-from io import BytesIO
 import datetime
-from pydantic import BaseModel
+from io import BytesIO
+from typing import List, Optional
+
 import numpy as np
 import pyarrow as pa
-
-from ._helpers import create_sumo_client_instance
-from ._arrow_helpers import create_float_downcasting_schema
-from ._arrow_helpers import set_date_column_type_to_timestamp_ms
-from ._arrow_helpers import set_real_column_type_to_int16
-
 from fmu.sumo.explorer.explorer import CaseCollection, SumoClient
 
+from ._arrow_helpers import create_float_downcasting_schema, set_date_column_type_to_timestamp_ms, set_real_column_type_to_int16
+from ._field_metadata import create_vector_metadata_from_field_meta
+from ._helpers import create_sumo_client_instance
+from ._resampling import resample_segmented_multi_real_table
+from .types import Frequency, RealizationVector
 
-class VectorRealizationData(BaseModel):
-    realization: int
-    timestamps: List[datetime.datetime]
-    values: List[float]
+
+
 
 
 class SummaryAccess:
     def __init__(self, access_token: str, case_uuid: str, iteration_name: str):
         self._sumo_client: SumoClient = create_sumo_client_instance(access_token)
-        
+
         self._case_uuid = case_uuid
         self._iteration_name = iteration_name
 
@@ -41,7 +38,7 @@ class SummaryAccess:
     def get_vector_names(self) -> List[str]:
         case_collection = CaseCollection(self._sumo_client).filter(id=self._case_uuid)
         if len(case_collection) != 1:
-            raise ValueError(f"None or multiple sumo cases found {self._iter_spec.case_uuid=}")
+            raise ValueError(f"None or multiple sumo cases found {self._case_uuid=}")
 
         case = case_collection[0]
 
@@ -53,7 +50,13 @@ class SummaryAccess:
         return vec_names
 
 
-    def get_vector_realizations_data_as_arrow_table(self, vector_name: str) -> pa.Table:
+    def get_vector_table(self, vector_name: str, resampling_frequency: Optional[Frequency]) -> pa.Table:
+        """
+        Get pyarrow.Table containing values for the specified vector.
+        The returned table will always contain a 'DATE' and 'REAL' column in addition to the requested vector.
+        The 'DATE' column will be of type timestamp[ms] and the 'REAL' column will be of type int16.
+        The vector column will be of type float.
+        """
         case_collection = CaseCollection(self._sumo_client).filter(id=self._case_uuid)
         if len(case_collection) != 1:
             raise ValueError(f"None or multiple sumo cases found {self._case_uuid=}")
@@ -63,7 +66,7 @@ class SummaryAccess:
         # Currently it seems we have to filter on tagname using the iteration name in
         # order to qualify actually get the smry vectors
         maybe_smry_table_collection = case.tables.filter(name=[vector_name, "DATE"], operation="collection", iteration=self._iteration_id, tagname=self._iteration_name)
-        assert(len(maybe_smry_table_collection) == 2)
+        assert len(maybe_smry_table_collection) == 2
 
         # We don't know the order of the tables within the collection :-(
         if maybe_smry_table_collection[0].name == "DATE":
@@ -85,30 +88,53 @@ class SummaryAccess:
 
         ret_table = vec_arrow_table.add_column(0, "DATE", date_arrow_table["DATE"])
 
+        # Our assumption is that the reconstructed table is segmented on REAL and that within each segment, the DATE
+        # column is sorted. We may want to add some checks here to verify this assumption since the resampling algorithm
+        # below assumes this and will fail if it is not true.
+
+        # Until SUMO gets the datatypes right, do the casting here
         schema = ret_table.schema
         schema = set_date_column_type_to_timestamp_ms(schema)
         schema = create_float_downcasting_schema(schema)
         schema = set_real_column_type_to_int16(schema)
         ret_table = ret_table.cast(schema)
 
+        if resampling_frequency is not None:
+            ret_table = resample_segmented_multi_real_table(ret_table, resampling_frequency)
+
+        # Should we always combine the chunks?
+        ret_table = ret_table.combine_chunks()
+
         return ret_table
 
 
-    def get_vector_realizations_data(self, vector_name: str) -> List[VectorRealizationData]:
-        table = self.get_vector_realizations_data_as_arrow_table(vector_name)
+    def get_vector(self, vector_name: str, resampling_frequency: Optional[Frequency]) -> List[RealizationVector]:
+
+        table = self.get_vector_table(vector_name, resampling_frequency=resampling_frequency )
+
+        # Retrieve vector metadata from the field's metadata
+        # Unfortunately it seems that currently the data we get from SUMO does not have this metadata
+        field = table.schema.field(vector_name)
+        vector_metadata = create_vector_metadata_from_field_meta(field)
+
         real_arr_np = table.column("REAL").to_numpy()
         unique_reals, first_occurrence_idx, real_counts = np.unique(real_arr_np, return_index=True, return_counts=True)
 
         whole_date_np_arr = table.column("DATE").to_numpy()
         whole_value_np_arr = table.column(vector_name).to_numpy()
 
-        ret_arr: List[VectorRealizationData] = []
+        ret_arr: List[RealizationVector] = []
         for i, real in enumerate(unique_reals):
             start_row_idx = first_occurrence_idx[i]
             row_count = real_counts[i]
             date_np_arr = whole_date_np_arr[start_row_idx : start_row_idx + row_count]
             value_np_arr = whole_value_np_arr[start_row_idx : start_row_idx + row_count]
 
-            ret_arr.append(VectorRealizationData(realization=real, timestamps=date_np_arr.astype(datetime.datetime).tolist(), values=value_np_arr.tolist()))
+            ret_arr.append(RealizationVector(
+                realization=real,
+                timestamps=date_np_arr.astype(datetime.datetime).tolist(),
+                values=value_np_arr.tolist(),
+                metadata=vector_metadata
+            ))
 
         return ret_arr

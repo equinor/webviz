@@ -37,4 +37,8 @@ line-length = 120
 
 [tool.pylint]
 max-line-length = 120
-disable=["no-name-in-module","missing-class-docstring","too-few-public-methods"]
+disable=["no-name-in-module","missing-docstring","too-few-public-methods"]
+
+[tool.mypy]
+ignore_missing_imports = true
+disallow_untyped_defs = true

@@ -5,6 +5,14 @@ import datetime
 from pydantic import BaseModel
 
 
+class Frequency(str, Enum):
+    DAILY = "DAILY"
+    WEEKLY = "WEEKLY"
+    MONTHLY = "MONTHLY"
+    QUARTERLY = "QUARTERLY"
+    YEARLY = "YEARLY"
+
+
 class VectorDescription(BaseModel):
     name: str
     descriptive_name: str
@@ -36,6 +44,8 @@ class VectorRealizationData(BaseModel):
     realization: int
     timestamps: List[datetime.datetime]
     values: List[float]
+    # unit: str
+    # is_rate: bool
 
 
 class VectorStatisticData(BaseModel):
@@ -43,14 +53,6 @@ class VectorStatisticData(BaseModel):
     realizations: List[int]
     timestamps: List[datetime.datetime]
     values: List[float]
-
-
-class Frequency(str, Enum):
-    DAILY = "daily"
-    WEEKLY = "weekly"
-    MONTHLY = "monthly"
-    QUARTERLY = "quarterly"
-    YEARLY = "yearly"
 
 
 class StatisticsOptions(str, Enum):
