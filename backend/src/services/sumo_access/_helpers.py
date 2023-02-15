@@ -23,4 +23,4 @@ def decode_iteration_pseudo_uuid(iteration_pseudo_uuid: str) -> Optional[IterSpe
     if len(str_arr) != 3:
         return None
 
-    return IterSpec(iteration_id=str_arr[0], iteration_name=str_arr[1], case_uuid=str_arr[2])
+    return IterSpec(iteration_id=int(str_arr[0]), iteration_name=str_arr[1], case_uuid=str_arr[2])

@@ -13,7 +13,7 @@ export class ExploreService {
 
     /**
      * Get Cases
-     * Get list of cases (currently only for Drogon)
+     * Get list of cases for specified field
      * @param fieldIdentifier Field identifier
      * @returns Case Successful Response
      * @throws ApiError

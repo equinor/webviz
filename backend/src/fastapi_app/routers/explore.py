@@ -27,7 +27,7 @@ async def get_cases(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     field_identifier: str = Query(description="Field identifier"),
 ) -> List[Case]:
-    """Get list of cases for specified field)"""
+    """Get list of cases for specified field"""
     sumo_discovery = SumoExplore(authenticated_user.get_sumo_access_token())
     case_info_arr = sumo_discovery.get_cases(field_identifier=field_identifier)
     
