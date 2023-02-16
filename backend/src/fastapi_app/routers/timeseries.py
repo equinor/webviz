@@ -1,7 +1,7 @@
 import datetime
 from typing import List, Optional, Union, Sequence
 
-from fastapi import APIRouter, Query, Depends
+from fastapi import APIRouter, Query, Depends, HTTPException
 
 from ...services.sumo_access.summary_access import SummaryAccess, Frequency
 from ...services.summary_vector_statistics import compute_vector_statistics, StatisticFunction, VectorStatistics
@@ -126,30 +126,15 @@ async def get_statistical_vector_data(
 
     vector_table = access.get_vector_table(vector_name=vector_name, resampling_frequency=service_freq, realizations=realizations)
     statistics = compute_vector_statistics(vector_table, vector_name, service_stat_funcs_to_compute)
+    if not statistics:
+        raise HTTPException(status_code=404, detail="Could not compute statistics")
 
     ret_data:schemas.timeseries.VectorStatisticData = _to_api_vector_statistic_data(statistics)
 
     return ret_data
 
 
-def _to_api_vector_statistic_data(vector_statistics: VectorStatistics) -> schemas.timeseries.VectorStatisticData:
-    """
-    Create API VectorStatisticData from service layer VectorStatistics
-    """
-    value_objects: List[schemas.timeseries.StatisticValueObject] = []
-    for api_func_enum in schemas.timeseries.StatisticFunction:
-        value_arr = vector_statistics.values_dict.get(StatisticFunction.from_string_value(api_func_enum.value))
-        if value_arr is not None:
-            value_objects.append(schemas.timeseries.StatisticValueObject(statistic_function=api_func_enum, values=value_arr))
-
-    ret_data = schemas.timeseries.VectorStatisticData(
-        realizations=vector_statistics.realizations, timestamps=vector_statistics.timestamps, value_objects=value_objects
-    )
-
-    return ret_data
-
-
-def _to_service_statistic_functions(api_stat_funcs: Optional[List[schemas.timeseries.StatisticFunction]]) -> Optional[List[StatisticFunction]]:
+def _to_service_statistic_functions(api_stat_funcs: Optional[Sequence[schemas.timeseries.StatisticFunction]]) -> Optional[List[StatisticFunction]]:
     """
     Convert incoming list of API statistic function enum values to service layer StatisticFunction enums, 
     also accounting for the case where the list is None
@@ -164,6 +149,25 @@ def _to_service_statistic_functions(api_stat_funcs: Optional[List[schemas.timese
             service_stat_funcs.append(service_func_enum)
 
     return service_stat_funcs
+
+
+def _to_api_vector_statistic_data(vector_statistics: VectorStatistics) -> schemas.timeseries.VectorStatisticData:
+    """
+    Create API VectorStatisticData from service layer VectorStatistics
+    """
+    value_objects: List[schemas.timeseries.StatisticValueObject] = []
+    for api_func_enum in schemas.timeseries.StatisticFunction:
+        service_func_enum = StatisticFunction.from_string_value(api_func_enum.value)
+        if service_func_enum is not None:
+            value_arr = vector_statistics.values_dict.get(service_func_enum)
+            if value_arr is not None:
+                value_objects.append(schemas.timeseries.StatisticValueObject(statistic_function=api_func_enum, values=value_arr))
+
+    ret_data = schemas.timeseries.VectorStatisticData(
+        realizations=vector_statistics.realizations, timestamps=vector_statistics.timestamps, value_objects=value_objects
+    )
+
+    return ret_data
 
 
 @router.get("/realizations_calculated_vector_data/", tags=["timeseries"])

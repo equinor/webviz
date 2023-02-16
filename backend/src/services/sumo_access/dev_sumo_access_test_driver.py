@@ -44,7 +44,7 @@ def main() -> None:
     print("\n\n")
     print(vector_names)
 
-    vector_table: pa.Table = summary_access.get_vector_table(vector_name="FOPT", resampling_frequency=None, realizations=None)
+    vector_table = summary_access.get_vector_table(vector_name="FOPT", resampling_frequency=None, realizations=None)
     print("\n\nRAW")
     print(vector_table.shape)
 
@@ -71,11 +71,12 @@ def main() -> None:
 
 
     print("\n\nYEARLY")
-    vector_table: pa.Table = summary_access.get_vector_table(vector_name="FOPT", resampling_frequency=Frequency.YEARLY, realizations=None)
+    vector_table = summary_access.get_vector_table(vector_name="FOPT", resampling_frequency=Frequency.YEARLY, realizations=None)
     print(vector_table)
 
     print("\n\nSTATS table")
     stat_table = compute_vector_statistics_table(vector_table, "FOPT", None)
+    assert stat_table
     print(stat_table)
     print(stat_table.schema)
 
