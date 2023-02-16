@@ -11,6 +11,7 @@ export type ModuleContext<S extends StateBaseType> = {
 export class ModuleInstance<StateType extends StateBaseType> {
     private id: string;
     private name: string;
+    private initialised: boolean;
     private stateStore: StateStore<StateType> | null;
     private module: Module<StateType>;
     private context: ModuleContext<StateType> | null;
@@ -23,6 +24,7 @@ export class ModuleInstance<StateType extends StateBaseType> {
         this.module = module;
         this.importStateSubscribers = new Set();
         this.context = null;
+        this.initialised = false;
     }
 
     public setInitialState(initialState: StateType): void {
@@ -41,6 +43,12 @@ export class ModuleInstance<StateType extends StateBaseType> {
                 useSetStoreValue(this.stateStore as Exclude<typeof this.stateStore, null>, key),
             stateStore: this.stateStore,
         };
+
+        this.initialised = true;
+    }
+
+    public isInitialised(): boolean {
+        return this.initialised;
     }
 
     public getViewFC(): ModuleFC<StateType> {

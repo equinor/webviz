@@ -31,4 +31,8 @@ export class ModuleRegistry {
         }
         throw "Did you forget to register your module in 'src/modules/index.ts'?";
     }
+
+    public static getRegisteredModules(): Record<string, Module<any>> {
+        return this._registeredModules;
+    }
 }

@@ -2,9 +2,11 @@ import React from "react";
 import { useQuery } from "react-query";
 
 import { apiService } from "@framework/ApiService";
+import { useStoreState } from "@framework/StateStore";
 import { Workbench } from "@framework/Workbench";
 // import { useWorkbenchActiveModuleName } from "@framework/hooks/useWorkbenchActiveModuleName";
 import { ListBox } from "@lib/components/ListBox";
+import { ToggleButton } from "@lib/components/ToggleButton";
 
 type TopNavBarProps = {
     workbench: Workbench;
@@ -12,7 +14,8 @@ type TopNavBarProps = {
 
 export const TopNavBar: React.FC<TopNavBarProps> = (props) => {
     const activeModuleName = ""; // useWorkbenchActiveModuleName();
-    const [selectedCaseId, setSelectedCaseId] = React.useState("")
+    const [selectedCaseId, setSelectedCaseId] = React.useState("");
+    const [modulesListOpen, setModulesListOpen] = useStoreState(props.workbench.getStateStore(), "modulesListOpen");
 
     const casesQueryRes = useQuery({
         queryKey: ["getCases"],
@@ -34,6 +37,10 @@ export const TopNavBar: React.FC<TopNavBarProps> = (props) => {
         props.workbench.setNavigatorCaseId(caseId);
     };
 
+    const handleToggleModulesList = (value: boolean) => {
+        setModulesListOpen(value);
+    };
+
     const fields = [
         {
             value: "Drogon",
@@ -50,11 +57,18 @@ export const TopNavBar: React.FC<TopNavBarProps> = (props) => {
                     "Loading"
                 ) : (
                     <ListBox
-                        items={casesQueryRes.isSuccess ? casesQueryRes.data?.map((aCase) => ({ value: aCase.uuid, label: aCase.name })) || [] : []}
+                        items={
+                            casesQueryRes.isSuccess
+                                ? casesQueryRes.data?.map((aCase) => ({ value: aCase.uuid, label: aCase.name })) || []
+                                : []
+                        }
                         selectedItem={selectedCaseId || "None"}
                         onSelect={handleCaseChange}
                     />
                 )}
+                <ToggleButton active={modulesListOpen} onToggle={(active: boolean) => handleToggleModulesList(active)}>
+                    Add modules
+                </ToggleButton>
             </div>
         </div>
     );

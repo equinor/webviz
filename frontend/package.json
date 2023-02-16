@@ -21,7 +21,9 @@
         "lodash": "^4.17.21",
         "react": "^18.2.0",
         "react-dom": "^18.2.0",
+        "react-plotly.js": "^2.6.0",
         "react-query": "^3.39.3",
+        "uniqolor": "^1.1.0",
         "uuid": "^9.0.0",
         "uuid4": "^2.0.3"
     },
@@ -34,6 +36,7 @@
         "@types/node": "^18.11.18",
         "@types/react": "^18.0.26",
         "@types/react-dom": "^18.0.9",
+        "@types/react-plotly.js": "^2.6.0",
         "@types/uuid": "^9.0.0",
         "@typescript-eslint/eslint-plugin": "^5.51.0",
         "@typescript-eslint/parser": "^5.51.0",
