@@ -5,10 +5,10 @@ import { State } from "./state";
 import { view } from "./view";
 
 const initialState: State = {
-    count: 0,
+    exponent: 2,
 };
 
-const module = ModuleRegistry.initModule<State>("MyModule", initialState);
+const module = ModuleRegistry.initModule<State>("SimulationTimeSeries", initialState);
 
 module.viewFC = view;
 module.settingsFC = settings;

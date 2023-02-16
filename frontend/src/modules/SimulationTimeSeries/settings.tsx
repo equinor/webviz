@@ -1,14 +1,15 @@
 import { ModuleFCProps } from "@framework/Module";
-import { Button } from "@lib/components/Button";
+import { Input } from "@lib/components/Input";
 
 import { State } from "./state";
 
 export const settings = (props: ModuleFCProps<State>) => {
-    const setCount = props.moduleContext.useSetStoreValue("count");
+    const [exponent, setExponent] = props.moduleContext.useStoreState("exponent");
 
     return (
         <div>
-            <Button onClick={() => setCount((prev: number) => prev + 1)}>Count</Button>
+            <label htmlFor="exponent">Exponent</label>
+            <Input id="exponent" value={exponent} onChange={(e) => setExponent(Number(e.target.value))} type="number" />
         </div>
     );
 };

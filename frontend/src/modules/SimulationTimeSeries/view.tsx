@@ -1,34 +1,58 @@
-import { useQuery } from "react-query";
+import React from "react";
+import Plot from "react-plotly.js";
 
-import { apiService } from "@framework/ApiService";
 import { ModuleFCProps } from "@framework/Module";
 import { useSubscribedValue } from "@framework/WorkbenchServices";
+import { useSize } from "@lib/hooks/useSize";
+
+import { Data, Layout, PlotHoverEvent } from "plotly.js";
 
 import { State } from "./state";
 
 export const view = (props: ModuleFCProps<State>) => {
-    const count = props.moduleContext.useStoreValue("count");
-    const fieldName = useSubscribedValue("navigator.fieldName", props.workbenchServices);
-    const caseId = useSubscribedValue("navigator.caseId", props.workbenchServices);
+    const exponent = props.moduleContext.useStoreValue("exponent");
+    const ref = React.useRef<HTMLDivElement>(null);
+    const size = useSize(ref);
+    const x = [];
+    const y = [];
 
-    const ensemblesQueryRes = useQuery({
-        queryKey: ["getEnsembles", caseId],
-        queryFn: () => apiService.explore.getEnsembles(caseId || ""),
-        enabled: caseId ? true : false,
-    });
+    const timestamp = new Date().getTime();
+    for (let i = 0; i < 100; i++) {
+        x.push(new Date(timestamp + i * 24 * 60 * 60 * 1000));
+        y.push(i ** exponent);
+    }
+
+    const plotlyHover = useSubscribedValue("global.timestamp", props.workbenchServices);
+
+    const handleHover = (e: PlotHoverEvent) => {
+        if (e.xvals.length > 0 && typeof e.xvals[0]) {
+            props.workbenchServices.publishGlobalData("global.timestamp", { timestamp: e.xvals[0] as number });
+        }
+    };
+
+    const data: Data[] = [{ x, y, type: "scatter", mode: "lines+markers", marker: { color: "red" } }];
+    const layout: Partial<Layout> = { width: size.width, height: size.height, title: "Simulation Time Series" };
+    if (plotlyHover) {
+        layout["shapes"] = [
+            {
+                type: "line",
+                xref: "x",
+                yref: "paper",
+                x0: new Date(plotlyHover.timestamp),
+                y0: 0,
+                x1: new Date(plotlyHover.timestamp),
+                y1: 1,
+                line: {
+                    color: "#ccc",
+                    width: 1,
+                },
+            },
+        ];
+    }
 
     return (
-        <div>
-            <h2>FieldName: {fieldName || "N/A"}</h2>
-            <h2>CaseId: {caseId || "N/A"}</h2>
-            <h3>Count: {count}</h3>
-            <br />
-            <h4>Ensembles:</h4>
-            <ul>
-                {ensemblesQueryRes.data?.map((ens) => (
-                    <li key={ens.name}>{ens.name}</li>
-                ))}
-            </ul>
+        <div className="w-full h-full" ref={ref}>
+            <Plot data={data} layout={layout} onHover={handleHover} />
         </div>
     );
 };

@@ -1,3 +1,3 @@
 export type State = {
-    count: number;
+    exponent: number;
 };

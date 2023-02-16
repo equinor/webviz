@@ -11,6 +11,7 @@ export type GlobalTopicDefinitions = {
     "global.infoMessage": string;
     "global.depth": number;
     "global.position": { x: number; y: number };
+    "global.timestamp": { timestamp: number };
 };
 
 export type AllTopicDefinitions = NavigatorTopicDefinitions & GlobalTopicDefinitions;
