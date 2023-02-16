@@ -3,12 +3,12 @@
 /* eslint-disable */
 
 /**
- * Type definition of statistics options
+ * An enumeration.
  */
-export enum StatisticsOptions {
-    MEAN = 'Mean',
-    MIN = 'Min',
-    MAX = 'Max',
+export enum StatisticFunction {
+    MEAN = 'MEAN',
+    MIN = 'MIN',
+    MAX = 'MAX',
     P10 = 'P10',
     P90 = 'P90',
     P50 = 'P50',
