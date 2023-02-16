@@ -1,9 +1,9 @@
 import React from "react";
 
 import { Workbench } from "@framework/Workbench";
-import { useActiveModuleId, useModuleInstances } from "@framework/hooks/workbenchHooks";
+import { useActiveModuleId } from "@framework/hooks/workbenchHooks";
 
-import { ViewWrapper } from "./private-components/viewWrapper";
+import { Layout } from "./private-components/layout";
 
 type ContentProps = {
     workbench: Workbench;
@@ -11,18 +11,9 @@ type ContentProps = {
 
 export const Content: React.FC<ContentProps> = (props) => {
     const activeModuleId = useActiveModuleId(props.workbench);
-    const moduleInstances = useModuleInstances(props.workbench);
-
     return (
-        <div className="bg-slate-200 p-4 flex-grow border-spacing-x-8">
-            {moduleInstances.map((instance) => (
-                <ViewWrapper
-                    key={instance.getId()}
-                    moduleInstance={instance}
-                    workbench={props.workbench}
-                    isActive={activeModuleId === instance.getId()}
-                />
-            ))}
+        <div className="bg-slate-200 flex-grow">
+            <Layout workbench={props.workbench} activeModuleId={activeModuleId} />
         </div>
     );
 };

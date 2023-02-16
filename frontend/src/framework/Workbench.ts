@@ -11,23 +11,44 @@ export enum WorkbenchEvents {
     FullModuleRerenderRequested = "FullModuleRerenderRequested",
 }
 
+export type LayoutElement = {
+    moduleInstanceId?: string;
+    moduleName: string;
+    x: number;
+    y: number;
+    height: number;
+    width: number;
+};
+
+export type WorkbenchState = {
+    modulesListOpen: boolean;
+};
+
 export class Workbench {
     private moduleInstances: ModuleInstance<any>[];
     private _activeModuleId: string;
-    private stateStore: StateStore<object>;
+    private stateStore: StateStore<WorkbenchState>;
     private _workbenchServices: PrivateWorkbenchServices;
     private _subscribersMap: { [key: string]: Set<() => void> };
+    private layout: LayoutElement[];
 
     constructor() {
         this.moduleInstances = [];
         this._activeModuleId = "";
-        this.stateStore = new StateStore<object>({});
+        this.stateStore = new StateStore<WorkbenchState>({
+            modulesListOpen: false,
+        });
         this._workbenchServices = new PrivateWorkbenchServices(this);
         this._subscribersMap = {};
+        this.layout = [];
     }
 
-    public getStateStore(): StateStore<object> {
+    public getStateStore(): StateStore<WorkbenchState> {
         return this.stateStore;
+    }
+
+    public getLayout(): LayoutElement[] {
+        return this.layout;
     }
 
     public getWorkbenchServices(): WorkbenchServices {
@@ -72,22 +93,56 @@ export class Workbench {
         return this.moduleInstances;
     }
 
-    public makeLayout(layout: string[]): void {
+    public makeLayout(layout: LayoutElement[]): void {
         this.moduleInstances = [];
-        layout.forEach((moduleName) => {
-            this.addModuleToLayout(moduleName);
+        this.layout = layout;
+        layout.forEach((element, index: number) => {
+            this.addModuleToLayout(element.moduleName, index);
         });
     }
 
-    private addModuleToLayout(moduleName: string): void {
+    public makeModuleInstance(moduleName: string, layout: LayoutElement): ModuleInstance<any> {
         const module = ModuleRegistry.getModule(moduleName);
         if (!module) {
             throw new Error(`Module ${moduleName} not found`);
         }
 
-        this.moduleInstances.push(module.makeInstance());
+        const moduleInstance = module.makeInstance();
+        this.moduleInstances.push(moduleInstance);
+        this.layout.push({ ...layout, moduleInstanceId: moduleInstance.getId() });
         this.notifySubscribers(WorkbenchEvents.ModuleInstancesChanged);
         module.setWorkbench(this);
+        this._activeModuleId = moduleInstance.getId();
+        this.notifySubscribers(WorkbenchEvents.ActiveModuleChanged);
+        return moduleInstance;
+    }
+
+    public removeModuleInstance(moduleInstanceId: string): void {
+        this.moduleInstances = this.moduleInstances.filter((el) => el.getId() !== moduleInstanceId);
+        this.layout = this.layout.filter((el) => el.moduleInstanceId !== moduleInstanceId);
+        if (this._activeModuleId === moduleInstanceId) {
+            this._activeModuleId = "";
+            this.notifySubscribers(WorkbenchEvents.ActiveModuleChanged);
+        }
+        this.notifySubscribers(WorkbenchEvents.ModuleInstancesChanged);
+    }
+
+    private addModuleToLayout(moduleName: string, elementIndex: number): void {
+        const module = ModuleRegistry.getModule(moduleName);
+        if (!module) {
+            throw new Error(`Module ${moduleName} not found`);
+        }
+
+        const moduleInstance = module.makeInstance();
+        this.moduleInstances.push(moduleInstance);
+        this.layout[elementIndex] = { ...this.layout[elementIndex], moduleInstanceId: moduleInstance.getId() };
+        this.notifySubscribers(WorkbenchEvents.ModuleInstancesChanged);
+        module.setWorkbench(this);
+    }
+
+    public setLayout(layout: LayoutElement[]): void {
+        this.layout = layout;
+        this.notifySubscribers(WorkbenchEvents.FullModuleRerenderRequested);
     }
 
     public maybeMakeFirstModuleInstanceActive(): void {
