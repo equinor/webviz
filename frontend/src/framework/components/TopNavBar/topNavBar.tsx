@@ -2,11 +2,10 @@ import React from "react";
 import { useQuery } from "react-query";
 
 import { apiService } from "@framework/ApiService";
+import { useStoreState } from "@framework/StateStore";
 import { Workbench } from "@framework/Workbench";
 // import { useWorkbenchActiveModuleName } from "@framework/hooks/useWorkbenchActiveModuleName";
 import { ListBox } from "@lib/components/ListBox";
-import { Button } from "@lib/components/Button";
-import { useStoreState } from "@framework/StateStore";
 import { ToggleButton } from "@lib/components/ToggleButton";
 
 type TopNavBarProps = {
@@ -18,7 +17,6 @@ export const TopNavBar: React.FC<TopNavBarProps> = (props) => {
     const [selectedCaseId, setSelectedCaseId] = React.useState("");
     const [modulesListOpen, setModulesListOpen] = useStoreState(props.workbench.getStateStore(), "modulesListOpen");
 
-    /*
     const casesQueryRes = useQuery({
         queryKey: ["getCases"],
         queryFn: () => apiService.explore.getCases("DROGON"),
@@ -29,18 +27,6 @@ export const TopNavBar: React.FC<TopNavBarProps> = (props) => {
             }
         },
     });
-    */
-
-    const casesQueryRes = {
-        isLoading: false,
-        isSuccess: true,
-        data: [
-            {
-                uuid: "Drogon",
-                name: "Drogon",
-            },
-        ],
-    };
 
     const handleFieldChange = (fieldName: string) => {
         props.workbench.setNavigatorFieldName(fieldName);
@@ -80,7 +66,7 @@ export const TopNavBar: React.FC<TopNavBarProps> = (props) => {
                         onSelect={handleCaseChange}
                     />
                 )}
-                <ToggleButton active={modulesListOpen} onToggle={(active: boolean) => handleToggleModulesList(active)} >
+                <ToggleButton active={modulesListOpen} onToggle={(active: boolean) => handleToggleModulesList(active)}>
                     Add modules
                 </ToggleButton>
             </div>
