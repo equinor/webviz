@@ -13,6 +13,15 @@ class Frequency(str, Enum):
     YEARLY = "YEARLY"
 
 
+class StatisticFunction(str, Enum):
+    MEAN = "MEAN"
+    MIN = "MIN"
+    MAX = "MAX"
+    P10 = "P10"
+    P90 = "P90"
+    P50 = "P50"
+
+
 class VectorDescription(BaseModel):
     name: str
     descriptive_name: str
@@ -48,24 +57,17 @@ class VectorRealizationData(BaseModel):
     # is_rate: bool
 
 
-class VectorStatisticData(BaseModel):
-    statistic: str
-    realizations: List[int]
-    timestamps: List[datetime.datetime]
+class StatisticValueObject(BaseModel):
+    statistic_function: StatisticFunction
     values: List[float]
 
 
-class StatisticsOptions(str, Enum):
-    """
-    Type definition of statistics options
-    """
-
-    MEAN = "Mean"
-    MIN = "Min"
-    MAX = "Max"
-    P10 = "P10"
-    P90 = "P90"
-    P50 = "P50"
+class VectorStatisticData(BaseModel):
+    realizations: List[int]
+    timestamps: List[datetime.datetime]
+    value_objects: List[StatisticValueObject]
+    # unit: str
+    # is_rate: bool
 
 
 class VectorExpressionInfo(BaseModel):

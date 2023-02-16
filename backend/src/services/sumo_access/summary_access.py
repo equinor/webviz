@@ -1,9 +1,10 @@
 import datetime
 from io import BytesIO
-from typing import List, Optional
+from typing import List, Optional, Sequence
 
 import numpy as np
 import pyarrow as pa
+import pyarrow.compute as pc
 from fmu.sumo.explorer.explorer import CaseCollection, SumoClient
 
 from ._arrow_helpers import create_float_downcasting_schema, set_date_column_type_to_timestamp_ms, set_real_column_type_to_int16
@@ -50,12 +51,13 @@ class SummaryAccess:
         return vec_names
 
 
-    def get_vector_table(self, vector_name: str, resampling_frequency: Optional[Frequency]) -> pa.Table:
+    def get_vector_table(self, vector_name: str, resampling_frequency: Optional[Frequency], realizations: Optional[Sequence[int]]) -> pa.Table:
         """
         Get pyarrow.Table containing values for the specified vector.
         The returned table will always contain a 'DATE' and 'REAL' column in addition to the requested vector.
         The 'DATE' column will be of type timestamp[ms] and the 'REAL' column will be of type int16.
         The vector column will be of type float.
+        If `resampling_frequency` is None, the data will be returned with full/raw resolution.
         """
         case_collection = CaseCollection(self._sumo_client).filter(id=self._case_uuid)
         if len(case_collection) != 1:
@@ -86,31 +88,37 @@ class SummaryAccess:
         with pa.ipc.open_file(vec_arrow_bytes) as reader:
             vec_arrow_table = reader.read_all()
 
-        ret_table = vec_arrow_table.add_column(0, "DATE", date_arrow_table["DATE"])
+        # Create the combined table for the vector. 
+        # After this we expect the table to have the following columns: DATE, REAL, <vector_name>
+        table = vec_arrow_table.add_column(0, "DATE", date_arrow_table["DATE"])
 
         # Our assumption is that the reconstructed table is segmented on REAL and that within each segment, the DATE
         # column is sorted. We may want to add some checks here to verify this assumption since the resampling algorithm
         # below assumes this and will fail if it is not true.
 
+        if realizations is not None:
+            mask = pc.is_in(table["REAL"], value_set=pa.array(realizations))
+            table = table.filter(mask)
+
         # Until SUMO gets the datatypes right, do the casting here
-        schema = ret_table.schema
+        schema = table.schema
         schema = set_date_column_type_to_timestamp_ms(schema)
         schema = create_float_downcasting_schema(schema)
         schema = set_real_column_type_to_int16(schema)
-        ret_table = ret_table.cast(schema)
+        table = table.cast(schema)
 
         if resampling_frequency is not None:
-            ret_table = resample_segmented_multi_real_table(ret_table, resampling_frequency)
+            table = resample_segmented_multi_real_table(table, resampling_frequency)
 
         # Should we always combine the chunks?
-        ret_table = ret_table.combine_chunks()
+        table = table.combine_chunks()
 
-        return ret_table
+        return table
 
 
-    def get_vector(self, vector_name: str, resampling_frequency: Optional[Frequency]) -> List[RealizationVector]:
+    def get_vector(self, vector_name: str, resampling_frequency: Optional[Frequency], realizations: Optional[Sequence[int]]) -> List[RealizationVector]:
 
-        table = self.get_vector_table(vector_name, resampling_frequency=resampling_frequency )
+        table = self.get_vector_table(vector_name, resampling_frequency, realizations)
 
         # Retrieve vector metadata from the field's metadata
         # Unfortunately it seems that currently the data we get from SUMO does not have this metadata
