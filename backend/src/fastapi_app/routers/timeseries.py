@@ -1,14 +1,13 @@
 import datetime
-from typing import List, Optional, Union, Sequence
+from typing import List, Optional, Sequence, Union
 
-from fastapi import APIRouter, Query, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 
-from ...services.sumo_access.summary_access import SummaryAccess, Frequency
-from ...services.summary_vector_statistics import compute_vector_statistics, StatisticFunction, VectorStatistics
+from ...services.summary_vector_statistics import StatisticFunction, VectorStatistics, compute_vector_statistics
+from ...services.sumo_access.summary_access import Frequency, SummaryAccess
 from ...services.utils.authenticated_user import AuthenticatedUser
-
-from ..auth.auth_helper import AuthHelper
 from .. import schemas
+from ..auth.auth_helper import AuthHelper
 
 
 router = APIRouter()
@@ -129,14 +128,16 @@ async def get_statistical_vector_data(
     if not statistics:
         raise HTTPException(status_code=404, detail="Could not compute statistics")
 
-    ret_data:schemas.timeseries.VectorStatisticData = _to_api_vector_statistic_data(statistics)
+    ret_data: schemas.timeseries.VectorStatisticData = _to_api_vector_statistic_data(statistics)
 
     return ret_data
 
 
-def _to_service_statistic_functions(api_stat_funcs: Optional[Sequence[schemas.timeseries.StatisticFunction]]) -> Optional[List[StatisticFunction]]:
+def _to_service_statistic_functions(
+    api_stat_funcs: Optional[Sequence[schemas.timeseries.StatisticFunction]],
+) -> Optional[List[StatisticFunction]]:
     """
-    Convert incoming list of API statistic function enum values to service layer StatisticFunction enums, 
+    Convert incoming list of API statistic function enum values to service layer StatisticFunction enums,
     also accounting for the case where the list is None
     """
     if api_stat_funcs is None:
@@ -164,7 +165,9 @@ def _to_api_vector_statistic_data(vector_statistics: VectorStatistics) -> schema
                 value_objects.append(schemas.timeseries.StatisticValueObject(statistic_function=api_func_enum, values=value_arr))
 
     ret_data = schemas.timeseries.VectorStatisticData(
-        realizations=vector_statistics.realizations, timestamps=vector_statistics.timestamps, value_objects=value_objects
+        realizations=vector_statistics.realizations,
+        timestamps=vector_statistics.timestamps,
+        value_objects=value_objects,
     )
 
     return ret_data

@@ -1,6 +1,6 @@
 import datetime
 from enum import Enum
-from typing import Sequence, List, Optional, Dict
+from typing import Dict, List, Optional, Sequence
 
 import numpy as np
 import pandas as pd
@@ -34,8 +34,9 @@ class VectorStatistics(BaseModel):
     metadata: Optional[VectorMetadata]  # Must be optional until SUMO delivers arrow tables with metadata
 
 
-
-def compute_vector_statistics_table(summary_vector_table: pa.Table, vector_name: str, statistic_functions: Optional[Sequence[StatisticFunction]]) -> Optional[pa.Table]:
+def compute_vector_statistics_table(
+    summary_vector_table: pa.Table, vector_name: str, statistic_functions: Optional[Sequence[StatisticFunction]]
+) -> Optional[pa.Table]:
     """
     Compute statistics for specified summary vector in the pyarrow table.
     If statistics is None, all available statistics are computed.
@@ -49,7 +50,7 @@ def compute_vector_statistics_table(summary_vector_table: pa.Table, vector_name:
             StatisticFunction.MEAN,
             StatisticFunction.P10,
             StatisticFunction.P90,
-            StatisticFunction.P50
+            StatisticFunction.P50,
         ]
 
     # Invert p10 and p90 due to oil industry convention.
@@ -97,7 +98,9 @@ def compute_vector_statistics_table(summary_vector_table: pa.Table, vector_name:
     return statistics_table
 
 
-def compute_vector_statistics(summary_vector_table: pa.Table, vector_name: str, statistic_functions: Optional[Sequence[StatisticFunction]]) -> Optional[VectorStatistics]:
+def compute_vector_statistics(
+    summary_vector_table: pa.Table, vector_name: str, statistic_functions: Optional[Sequence[StatisticFunction]]
+) -> Optional[VectorStatistics]:
     statistics_table = compute_vector_statistics_table(summary_vector_table, vector_name, statistic_functions)
     if not statistics_table:
         return None
@@ -115,8 +118,7 @@ def compute_vector_statistics(summary_vector_table: pa.Table, vector_name: str, 
     ret_data = VectorStatistics(
         realizations=unique_realizations,
         timestamps=statistics_table["DATE"].to_numpy().astype(datetime.datetime).tolist(),
-        values_dict=values_dict
+        values_dict=values_dict,
     )
 
     return ret_data
-

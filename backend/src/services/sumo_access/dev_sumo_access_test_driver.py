@@ -2,7 +2,6 @@ import sys
 from typing import List
 
 import pyarrow as pa
-import pyarrow.compute as pc
 
 from fmu.sumo.explorer.explorer import SumoClient
 

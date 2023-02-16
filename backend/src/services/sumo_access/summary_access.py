@@ -14,9 +14,6 @@ from ._resampling import resample_segmented_multi_real_table
 from .types import Frequency, RealizationVector
 
 
-
-
-
 class SummaryAccess:
     def __init__(self, access_token: str, case_uuid: str, iteration_name: str):
         self._sumo_client: SumoClient = create_sumo_client_instance(access_token)
@@ -28,13 +25,12 @@ class SummaryAccess:
         # For now, just do a hack to extract the ID from the name
         iter_id = 0
         try:
-            dash_idx =  iteration_name.rindex("-")
-            iter_id = int(iteration_name[dash_idx + 1:])
+            dash_idx = iteration_name.rindex("-")
+            iter_id = int(iteration_name[dash_idx + 1 :])
         except:
             pass
 
         self._iteration_id = iter_id
-
 
     def get_vector_names(self) -> List[str]:
         case_collection = CaseCollection(self._sumo_client).filter(id=self._case_uuid)
@@ -50,8 +46,9 @@ class SummaryAccess:
         vec_names = maybe_smry_table_collection.names
         return vec_names
 
-
-    def get_vector_table(self, vector_name: str, resampling_frequency: Optional[Frequency], realizations: Optional[Sequence[int]]) -> pa.Table:
+    def get_vector_table(
+        self, vector_name: str, resampling_frequency: Optional[Frequency], realizations: Optional[Sequence[int]]
+    ) -> pa.Table:
         """
         Get pyarrow.Table containing values for the specified vector.
         The returned table will always contain a 'DATE' and 'REAL' column in addition to the requested vector.
@@ -67,7 +64,12 @@ class SummaryAccess:
 
         # Currently it seems we have to filter on tagname using the iteration name in
         # order to qualify actually get the smry vectors
-        maybe_smry_table_collection = case.tables.filter(name=[vector_name, "DATE"], operation="collection", iteration=self._iteration_id, tagname=self._iteration_name)
+        maybe_smry_table_collection = case.tables.filter(
+            name=[vector_name, "DATE"],
+            operation="collection",
+            iteration=self._iteration_id,
+            tagname=self._iteration_name,
+        )
         assert len(maybe_smry_table_collection) == 2
 
         # We don't know the order of the tables within the collection :-(
@@ -78,17 +80,17 @@ class SummaryAccess:
             vec_sumo_table = maybe_smry_table_collection[0]
             date_sumo_table = maybe_smry_table_collection[1]
 
-        date_arrow_bytes:BytesIO = date_sumo_table.blob
-        #date_arrow_bytes = sumo_client.get(f"/objects('{date_table.id}')/blob")
+        date_arrow_bytes: BytesIO = date_sumo_table.blob
+        # date_arrow_bytes = sumo_client.get(f"/objects('{date_table.id}')/blob")
         with pa.ipc.open_file(date_arrow_bytes) as reader:
             date_arrow_table = reader.read_all()
 
-        vec_arrow_bytes:BytesIO = vec_sumo_table.blob
-        #vec_arrow_bytes = sumo_client.get(f"/objects('{vec_table.id}')/blob")
+        vec_arrow_bytes: BytesIO = vec_sumo_table.blob
+        # vec_arrow_bytes = sumo_client.get(f"/objects('{vec_table.id}')/blob")
         with pa.ipc.open_file(vec_arrow_bytes) as reader:
             vec_arrow_table = reader.read_all()
 
-        # Create the combined table for the vector. 
+        # Create the combined table for the vector.
         # After this we expect the table to have the following columns: DATE, REAL, <vector_name>
         table = vec_arrow_table.add_column(0, "DATE", date_arrow_table["DATE"])
 
@@ -115,8 +117,9 @@ class SummaryAccess:
 
         return table
 
-
-    def get_vector(self, vector_name: str, resampling_frequency: Optional[Frequency], realizations: Optional[Sequence[int]]) -> List[RealizationVector]:
+    def get_vector(
+        self, vector_name: str, resampling_frequency: Optional[Frequency], realizations: Optional[Sequence[int]]
+    ) -> List[RealizationVector]:
 
         table = self.get_vector_table(vector_name, resampling_frequency, realizations)
 
@@ -138,11 +141,13 @@ class SummaryAccess:
             date_np_arr = whole_date_np_arr[start_row_idx : start_row_idx + row_count]
             value_np_arr = whole_value_np_arr[start_row_idx : start_row_idx + row_count]
 
-            ret_arr.append(RealizationVector(
-                realization=real,
-                timestamps=date_np_arr.astype(datetime.datetime).tolist(),
-                values=value_np_arr.tolist(),
-                metadata=vector_metadata
-            ))
+            ret_arr.append(
+                RealizationVector(
+                    realization=real,
+                    timestamps=date_np_arr.astype(datetime.datetime).tolist(),
+                    values=value_np_arr.tolist(),
+                    metadata=vector_metadata,
+                )
+            )
 
         return ret_arr
