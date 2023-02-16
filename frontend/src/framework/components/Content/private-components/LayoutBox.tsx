@@ -52,8 +52,6 @@ export class LayoutBox {
     private _level: number;
     private _moduleInstanceId: string | undefined;
     private _moduleName: string;
-    private _innerVerticalEdges: number[];
-    private _innerHorizontalEdges: number[];
     private _isWrapper: boolean;
     private _parent: LayoutBox | null;
     private _layoutDirection: LayoutDirection;
@@ -68,8 +66,6 @@ export class LayoutBox {
         this._rectRelativeToParent = rect;
         this._children = children;
         this._level = level;
-        this._innerVerticalEdges = [];
-        this._innerHorizontalEdges = [];
         this._isWrapper = true;
 
         this._moduleInstanceId = "";
@@ -113,7 +109,13 @@ export class LayoutBox {
     }
 
     public toString(): string {
-        return `LayoutBox(${this._rectRelativeToParent.x}, ${this._rectRelativeToParent.y}, ${this._rectRelativeToParent.width}, ${this._rectRelativeToParent.height})`;
+        let text = `LayoutBox(${this._rectRelativeToParent.x}, ${this._rectRelativeToParent.y}, ${this._rectRelativeToParent.width}, ${this._rectRelativeToParent.height})`;
+        let currentParent = this._parent;
+        while (currentParent) {
+            text += currentParent.toString();
+            currentParent = currentParent._parent;
+        }
+        return text;
     }
 
     public log(): string {
@@ -300,16 +302,6 @@ export class LayoutBox {
         }
 
         this._children = layoutBoxes;
-    }
-
-    private getTotalWidth(): number {
-        // Usually returns 1, unless the layout box is not adjusted yet
-        return this._children.reduce((acc, child) => acc + child._rectRelativeToParent.width, 0);
-    }
-
-    private getTotalHeight(): number {
-        // Usually returns 1, unless the layout box is not adjusted yet
-        return this._children.reduce((acc, child) => acc + child._rectRelativeToParent.height, 0);
     }
 
     private reorderChildren() {
@@ -855,39 +847,27 @@ export const LayoutBoxComponents: React.FC<{
     const flatBoxes = flattenLayoutBoxes(props.layoutBox);
     const activeBox = props.layoutBox.findBoxContainingPoint(props.pointer, props.realSize);
 
-    const makeBox = (box: LayoutBox) => {
-        const rect = box.getRectWithMargin(props.realSize);
+    const makeBoxEdges = (box: LayoutBox) => {
         const edges: LayoutBoxEdge[] = box.getEdgeRects(props.realSize);
         let hoveredEdge: Rect | null = null;
         if (props.active && props.active !== box.getModuleInstanceId() && activeBox === box) {
             hoveredEdge = box.findEdgeContainingPoint(props.pointer, props.realSize, props.active)?.rect || null;
         }
+        const id = v4();
 
         return (
-            <div
-                key={v4()}
-                style={{
-                    backgroundColor: "transparent",
-                    pointerEvents: "none",
-                    position: "absolute",
-                    left: rect.x,
-                    top: rect.y,
-                    width: rect.width,
-                    height: rect.height,
-                    zIndex: props.zIndex,
-                }}
-            >
+            <div key={box.toString()}>
                 {edges.map((edge) => (
                     <div
-                        key={v4()}
-                        className="absolute rounded bg-slate-400 flex justify-center items-center"
+                        key={`${edge.edge}`}
+                        className="absolute rounded bg-slate-400 justify-center items-center opacity-50"
                         style={{
-                            left: edge.rect.x - rect.x,
-                            top: edge.rect.y - rect.y,
+                            left: edge.rect.x,
+                            top: edge.rect.y,
                             width: edge.rect.width,
                             height: edge.rect.height,
                             zIndex: props.zIndex + 1,
-                            opacity: hoveredEdge && rectsAreEqual(hoveredEdge, edge.rect) ? 0.5 : 0,
+                            display: hoveredEdge && rectsAreEqual(hoveredEdge, edge.rect) ? "flex" : "none",
                             flexDirection: [
                                 LayoutBoxEdgeType.LEFT,
                                 LayoutBoxEdgeType.RIGHT,
@@ -932,7 +912,7 @@ export const LayoutBoxComponents: React.FC<{
         return (
             <div
                 className="bg-transparent absolute pointer-events-none flex justify-center items-center"
-                key={v4()}
+                key={flatBoxes[0].toString()}
                 style={{
                     left: rect.x,
                     top: rect.y,
@@ -946,5 +926,5 @@ export const LayoutBoxComponents: React.FC<{
             </div>
         );
     }
-    return <>{flatBoxes.map((box) => makeBox(box))}</>;
+    return <>{flatBoxes.map((box) => makeBoxEdges(box))}</>;
 };

@@ -112,12 +112,18 @@ export class Workbench {
         this.layout.push({ ...layout, moduleInstanceId: moduleInstance.getId() });
         this.notifySubscribers(WorkbenchEvents.ModuleInstancesChanged);
         module.setWorkbench(this);
+        this._activeModuleId = moduleInstance.getId();
+        this.notifySubscribers(WorkbenchEvents.ActiveModuleChanged);
         return moduleInstance;
     }
 
     public removeModuleInstance(moduleInstanceId: string): void {
         this.moduleInstances = this.moduleInstances.filter((el) => el.getId() !== moduleInstanceId);
         this.layout = this.layout.filter((el) => el.moduleInstanceId !== moduleInstanceId);
+        if (this._activeModuleId === moduleInstanceId) {
+            this._activeModuleId = "";
+            this.notifySubscribers(WorkbenchEvents.ActiveModuleChanged);
+        }
         this.notifySubscribers(WorkbenchEvents.ModuleInstancesChanged);
     }
 

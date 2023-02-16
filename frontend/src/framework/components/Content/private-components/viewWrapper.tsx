@@ -4,6 +4,7 @@ import { ImportState } from "@framework/Module";
 import { ModuleInstance } from "@framework/ModuleInstance";
 import { Workbench } from "@framework/Workbench";
 import { Point, pointRelativeToDomRect, pointerEventToPoint } from "@framework/utils/geometry";
+import { XMarkIcon } from "@heroicons/react/20/solid";
 
 import { LayoutEventTypes } from "./layout";
 import { ViewWrapperPlaceholder } from "./viewWrapperPlaceholder";
@@ -51,7 +52,12 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
             }
 
             if (importState === ImportState.Failed) {
-                return <div>Failed</div>;
+                return (
+                    <div>
+                        Module could not be imported. Please check the spelling when registering and initialising the
+                        module.
+                    </div>
+                );
             }
 
             const View = props.moduleInstance.getViewFC();
@@ -117,9 +123,9 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
                 }}
             >
                 <div
-                    className={`bg-white h-full w-full ${
-                        props.isActive ? "border-red-600" : ""
-                    } border-solid border box-border shadow ${
+                    className={`bg-white h-full w-full flex flex-col ${
+                        props.isActive ? "border-blue-500" : ""
+                    } border-solid border-2 box-border shadow ${
                         props.isDragged ? "cursor-grabbing select-none" : "cursor-grab"
                     }}`}
                     onClick={() => props.workbench.setActiveModuleId(props.moduleInstance.getId())}
@@ -131,11 +137,17 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
                         onPointerDown={handlePointerDown}
                     >
                         <div className="flex-grow">{props.moduleInstance.getName()}</div>
-                        <div className="hover:text-slate-500 cursor-pointer" onPointerDown={handleRemoveClick}>
-                            X
+                        <div
+                            className="hover:text-slate-500 cursor-pointer"
+                            onPointerDown={handleRemoveClick}
+                            title="Remove this module"
+                        >
+                            <XMarkIcon width={24} />
                         </div>
                     </div>
-                    <div className="p-4">{createContent()}</div>
+                    <div className="flex-grow overflow-auto h-0">
+                        <div className="p-4 h-full w-full">{createContent()}</div>
+                    </div>
                 </div>
             </div>
         </>

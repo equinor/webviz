@@ -22,6 +22,24 @@ type ModulesListItemProps = {
     relContainer: HTMLDivElement | null;
 };
 
+const makeStyle = (isDragged: boolean, dragSize: Size, dragPosition: Point): React.CSSProperties => {
+    if (isDragged) {
+        return {
+            width: dragSize.width,
+            height: dragSize.height,
+            left: dragPosition.x,
+            top: dragPosition.y,
+            zIndex: 1,
+            opacity: 0.5,
+            position: "absolute",
+        };
+    }
+    return {
+        zIndex: 0,
+        opacity: 1,
+    };
+};
+
 const ModulesListItem: React.FC<ModulesListItemProps> = (props) => {
     const ref = React.useRef<HTMLDivElement>(null);
     const mainRef = React.useRef<HTMLDivElement>(null);
@@ -107,19 +125,11 @@ const ModulesListItem: React.FC<ModulesListItemProps> = (props) => {
 
     return (
         <>
-            {isDragged && <div ref={mainRef} className="bg-red-500 w-full h-40 m-1" />}
+            {isDragged && <div ref={mainRef} className="bg-red-500 w-full h-40 mb-4" />}
             <div
                 ref={isDragged ? undefined : mainRef}
                 className="mb-4 border box-border border-slate-600 border-solid text-sm text-gray-700 w-full h-40 select-none"
-                style={{
-                    width: isDragged ? dragSize.width : undefined,
-                    height: isDragged ? dragSize.height : undefined,
-                    left: isDragged ? dragPosition.x : undefined,
-                    top: isDragged ? dragPosition.y : undefined,
-                    zIndex: isDragged ? 1 : 0,
-                    opacity: isDragged ? 0.5 : 1,
-                    position: isDragged ? "absolute" : "inherit",
-                }}
+                style={makeStyle(isDragged, dragSize, dragPosition)}
             >
                 <div ref={ref} className="bg-slate-100 p-4 cursor-move">
                     {props.moduleName}
@@ -135,6 +145,11 @@ type ModulesListProps = {
     relContainer: HTMLDivElement | null;
 };
 
+/*
+    @rmt: This component does probably need virtualization and therefore refactoring. 
+    As this includes a lot more implementation, 
+    I will skip it for now and come back to it when it becomes a problem.
+*/
 export const ModulesList: React.FC<ModulesListProps> = (props) => {
     const visible = useStoreValue(props.workbench.getStateStore(), "modulesListOpen");
     const [searchQuery, setSearchQuery] = React.useState("");
@@ -146,11 +161,11 @@ export const ModulesList: React.FC<ModulesListProps> = (props) => {
     return (
         <div className={`flex flex-col bg-white p-4 w-96 min-h-0 h-full${visible ? "" : " hidden"}`}>
             <Input
-                placeholder="Module name..."
+                placeholder="Filter modules..."
                 startAdornment={<MagnifyingGlassIcon className="w-4 h-4" />}
                 onChange={handleSearchQueryChange}
             />
-            <div className="mt-4 flex-grow p-4 min-h-0 overflow-y-auto max-h-full">
+            <div className="mt-4 flex-grow min-h-0 overflow-y-auto max-h-full h-0">
                 {Object.keys(ModuleRegistry.getRegisteredModules())
                     .filter((module) => module.includes(searchQuery))
                     .map((moduleName) => (
