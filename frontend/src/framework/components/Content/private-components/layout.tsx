@@ -144,24 +144,24 @@ export const Layout: React.FC<LayoutProps> = (props) => {
         };
 
         const handlePointerUp = () => {
-            if (!dragging) {
-                return;
-            }
-            if (delayTimer) {
-                clearTimeout(delayTimer);
-                adjustLayout();
-            }
-            if (isNewModule && moduleName) {
-                const layoutElement = currentLayout.find((el) => el.moduleInstanceId === pointerDownElementId);
-                if (layoutElement) {
-                    const instance = props.workbench.makeModuleInstance(moduleName, layoutElement);
-                    layoutElement.moduleInstanceId = instance.getId();
+            if (dragging) {
+                if (delayTimer) {
+                    clearTimeout(delayTimer);
+                    adjustLayout();
+                }
+                if (isNewModule && moduleName) {
+                    const layoutElement = currentLayout.find((el) => el.moduleInstanceId === pointerDownElementId);
+                    if (layoutElement) {
+                        const instance = props.workbench.makeModuleInstance(moduleName, layoutElement);
+                        layoutElement.moduleInstanceId = instance.getId();
+                    }
                 }
             }
             pointerDownPoint = null;
             pointerDownElementPosition = null;
             pointerDownElementId = null;
             setDraggedModuleInstanceId(null);
+            setTempLayoutBoxId(null);
             moduleInstanceId = null;
             dragging = false;
             document.body.classList.remove("select-none");
@@ -170,8 +170,6 @@ export const Layout: React.FC<LayoutProps> = (props) => {
             originalLayoutBox = currentLayoutBox;
             layoutBoxRef.current = currentLayoutBox;
             setLayout(currentLayout);
-            isNewModule = false;
-            setTempLayoutBoxId(null);
             props.workbench.setLayout(currentLayout);
             setPosition({ x: 0, y: 0 });
             setPointer({ x: -1, y: -1 });
@@ -211,6 +209,10 @@ export const Layout: React.FC<LayoutProps> = (props) => {
                     currentLayoutBox = originalLayoutBox;
                     setLayout(currentLayout);
                     layoutBoxRef.current = currentLayoutBox;
+                    if (delayTimer) {
+                        clearTimeout(delayTimer);
+                        delayTimer = null;
+                    }
                     return;
                 }
 
