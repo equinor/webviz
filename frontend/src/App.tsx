@@ -4,6 +4,7 @@ import { LayoutElement, Workbench } from "@framework/Workbench";
 import { Content } from "@framework/components/Content";
 import { Settings } from "@framework/components/Settings";
 import { TopNavBar } from "@framework/components/TopNavBar";
+import { AuthProvider } from "@framework/providers/AuthProvider";
 import { CustomQueryClientProvider } from "@framework/providers/QueryClientProvider";
 
 import "./modules/registerAllModules.ts";
@@ -18,15 +19,17 @@ function App() {
     }, []);
 
     return (
-        <CustomQueryClientProvider>
-            <div className="h-screen flex flex-row">
-                <Settings workbench={workbench} />
-                <div className="flex flex-col flex-grow">
-                    <TopNavBar workbench={workbench} />
-                    <Content workbench={workbench} />
+        <AuthProvider>
+            <CustomQueryClientProvider>
+                <div className="h-screen flex flex-row">
+                    <Settings workbench={workbench} />
+                    <div className="flex flex-col flex-grow">
+                        <TopNavBar workbench={workbench} />
+                        <Content workbench={workbench} />
+                    </div>
                 </div>
-            </div>
-        </CustomQueryClientProvider>
+            </CustomQueryClientProvider>
+        </AuthProvider>
     );
 }
 
