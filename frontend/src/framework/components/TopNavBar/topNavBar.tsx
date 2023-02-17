@@ -8,6 +8,8 @@ import { Workbench } from "@framework/Workbench";
 import { ListBox } from "@lib/components/ListBox";
 import { ToggleButton } from "@lib/components/ToggleButton";
 
+import { LoginButton } from "../LoginButton";
+
 type TopNavBarProps = {
     workbench: Workbench;
 };
@@ -69,6 +71,7 @@ export const TopNavBar: React.FC<TopNavBarProps> = (props) => {
                 <ToggleButton active={modulesListOpen} onToggle={(active: boolean) => handleToggleModulesList(active)}>
                     Add modules
                 </ToggleButton>
+                <LoginButton />
             </div>
         </div>
     );
