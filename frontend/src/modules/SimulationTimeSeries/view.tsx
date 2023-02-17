@@ -3,6 +3,7 @@ import Plot from "react-plotly.js";
 
 import { ModuleFCProps } from "@framework/Module";
 import { useSubscribedValue } from "@framework/WorkbenchServices";
+import { Table, TableLayoutDirection } from "@lib/components/Table";
 import { useSize } from "@lib/hooks/useSize";
 
 import { Data, Layout, PlotHoverEvent } from "plotly.js";
@@ -49,10 +50,58 @@ export const view = (props: ModuleFCProps<State>) => {
             },
         ];
     }
+    return (
+        <Table
+            layoutDirection={TableLayoutDirection.Vertical}
+            headings={[
+                {
+                    key: "a",
+                    label: "A",
+                    subHeadings: [
+                        { key: "a1", label: "A1", subHeadings: [{ key: "a11", label: "A11" }] },
+                        { key: "a2", label: "A2" },
+                    ],
+                },
+                { key: "b", label: "B" },
+                {
+                    key: "c",
+                    label: "C",
+                    subHeadings: [
+                        {
+                            key: "c1",
+                            label: "C1",
+                            subHeadings: [
+                                { key: "c11", label: "C11" },
+                                { key: "c12", label: "C12" },
+                            ],
+                        },
+                    ],
+                },
+            ]}
+            data={[
+                [1, 2, 3, 4, 5],
+                [4, 5, 6, 7, 8],
+                [7, 8, 9, 10, 11],
+            ]}
+        />
+    );
 
     return (
         <div className="w-full h-full" ref={ref}>
             <Plot data={data} layout={layout} onHover={handleHover} />
+            <Table
+                layoutDirection={TableLayoutDirection.Vertical}
+                headings={[
+                    { key: "a", label: "A" },
+                    { key: "b", label: "B" },
+                    { key: "c", label: "C" },
+                ]}
+                data={[
+                    [1, 2, 3],
+                    [4, 5, 6],
+                    [7, 8, 9],
+                ]}
+            />
         </div>
     );
 };
