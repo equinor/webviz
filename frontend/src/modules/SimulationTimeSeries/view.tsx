@@ -5,32 +5,111 @@ import { ModuleFCProps } from "@framework/Module";
 import { useSubscribedValue } from "@framework/WorkbenchServices";
 import { useSize } from "@lib/hooks/useSize";
 
-import { Data, Layout, PlotHoverEvent } from "plotly.js";
-
+import {  Layout, PlotHoverEvent,PlotData, PlotMouseEvent, PlotRelayoutEvent} from "plotly.js";
+import { useStatisticalVectorDataQuery, useVectorDataQuery } from "./plotlyQueryHooks";
 import { State } from "./state";
 
-export const view = (props: ModuleFCProps<State>) => {
-    const exponent = props.moduleContext.useStoreValue("exponent");
+interface MyPlotData extends Partial<PlotData> {
+    realizationNumber?: number | null;
+
+    // Did they forget to expose this one
+    legendrank?: number;
+}
+export const view = ({ moduleContext, workbenchServices }: ModuleFCProps<State>) => {
     const ref = React.useRef<HTMLDivElement>(null);
     const size = useSize(ref);
-    const x = [];
-    const y = [];
+    const caseUuid = useSubscribedValue("navigator.caseId", workbenchServices);
+    const ensembleName = moduleContext.useStoreValue("ensembleName");
+    const vectorName = moduleContext.useStoreValue("vectorName");
+    const resampleFrequency = moduleContext.useStoreValue("resamplingFrequency");
+    const showStatistics = moduleContext.useStoreValue("showStatistics");
+    const realizationsToInclude = moduleContext.useStoreValue("realizationsToInclude");
+    const [highlightRealization, setHighlightRealization] = React.useState(-1);
 
-    const timestamp = new Date().getTime();
-    for (let i = 0; i < 100; i++) {
-        x.push(new Date(timestamp + i * 24 * 60 * 60 * 1000));
-        y.push(i ** exponent);
-    }
+    const vectorQuery = useVectorDataQuery(
+        caseUuid,
+        ensembleName,
+        vectorName,
+        resampleFrequency,
+        realizationsToInclude
+    );
 
-    const plotlyHover = useSubscribedValue("global.timestamp", props.workbenchServices);
+    const statisticsQuery = useStatisticalVectorDataQuery(
+        caseUuid,
+        ensembleName,
+        vectorName,
+        resampleFrequency,
+        realizationsToInclude,
+        showStatistics
+    );
+
+  
+    const plotlyHover = useSubscribedValue("global.timestamp", workbenchServices);
 
     const handleHover = (e: PlotHoverEvent) => {
         if (e.xvals.length > 0 && typeof e.xvals[0]) {
-            props.workbenchServices.publishGlobalData("global.timestamp", { timestamp: e.xvals[0] as number });
+            workbenchServices.publishGlobalData("global.timestamp", { timestamp: e.xvals[0] as number });
         }
-    };
+        const curveData = e.points[0].data as MyPlotData;
+        if (typeof curveData.realizationNumber === "number") {
+            setHighlightRealization(curveData.realizationNumber);
+            workbenchServices.publishGlobalData("global.hoverRealization", {
+                realization: curveData.realizationNumber,
+            });
+        }
+    }
+    
+    function handleUnHover(e: PlotMouseEvent) {
+        setHighlightRealization(-1);
+    }
 
-    const data: Data[] = [{ x, y, type: "scatter", mode: "lines+markers", marker: { color: "red" } }];
+
+    const tracesDataArr: MyPlotData[] = [];
+
+    if (vectorQuery.data && vectorQuery.data.length > 0) {
+        let highlightedTrace: MyPlotData | null = null;
+        for (let i = 0; i < Math.min(vectorQuery.data.length, 10); i++) {
+            const vec = vectorQuery.data[i];
+            const isHighlighted = vec.realization === highlightRealization ? true : false;
+            const curveColor = vec.realization === highlightRealization ? "red" : "green";
+            const lineWidth = vec.realization === highlightRealization ? 3 : 1;
+            const trace: MyPlotData = {
+                x: vec.timestamps,
+                y: vec.values,
+                name: `real-${vec.realization}`,
+                realizationNumber: vec.realization,
+                legendrank: vec.realization,
+                type: "scatter",
+                mode: "lines",
+                line: { color: curveColor, width: lineWidth },
+            };
+
+            if (isHighlighted) {
+                highlightedTrace = trace;
+            } else {
+                tracesDataArr.push(trace);
+            }
+        }
+
+        if (highlightedTrace) {
+            tracesDataArr.push(highlightedTrace);
+        }
+    }
+
+    if (showStatistics && statisticsQuery.data) {
+        for (const statValueObj of statisticsQuery.data.value_objects) {
+            const trace: MyPlotData = {
+                x: statisticsQuery.data.timestamps,
+                y: statValueObj.values,
+                name: statValueObj.statistic_function,
+                legendrank: -1,
+                type: "scatter",
+                mode: "lines",
+                line: { color: "lightblue", width: 2, dash: "dot" },
+            };
+            tracesDataArr.push(trace);
+        }
+    }
     const layout: Partial<Layout> = { width: size.width, height: size.height, title: "Simulation Time Series" };
     if (plotlyHover) {
         layout["shapes"] = [
@@ -52,7 +131,7 @@ export const view = (props: ModuleFCProps<State>) => {
 
     return (
         <div className="w-full h-full" ref={ref}>
-            <Plot data={data} layout={layout} onHover={handleHover} />
+            <Plot data={tracesDataArr} layout={layout} onHover={handleHover} onUnhover={handleUnHover} />
         </div>
     );
 };
