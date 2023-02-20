@@ -43,6 +43,15 @@ export class Workbench {
         this.layout = [];
     }
 
+    public loadLayoutFromLocalStorage(): boolean {
+        const layoutString = localStorage.getItem("layout");
+        if (!layoutString) return false;
+
+        const layout = JSON.parse(layoutString) as LayoutElement[];
+        this.makeLayout(layout);
+        return true;
+    }
+
     public getStateStore(): StateStore<WorkbenchState> {
         return this.stateStore;
     }
@@ -95,13 +104,22 @@ export class Workbench {
 
     public makeLayout(layout: LayoutElement[]): void {
         this.moduleInstances = [];
-        this.layout = layout;
+        this.setLayout(layout);
         layout.forEach((element, index: number) => {
-            this.addModuleToLayout(element.moduleName, index);
+            const module = ModuleRegistry.getModule(element.moduleName);
+            if (!module) {
+                throw new Error(`Module ${element.moduleName} not found`);
+            }
+
+            const moduleInstance = module.makeInstance();
+            this.moduleInstances.push(moduleInstance);
+            this.layout[index] = { ...this.layout[index], moduleInstanceId: moduleInstance.getId() };
+            this.notifySubscribers(WorkbenchEvents.ModuleInstancesChanged);
+            module.setWorkbench(this);
         });
     }
 
-    public makeModuleInstance(moduleName: string, layout: LayoutElement): ModuleInstance<any> {
+    public makeAndAddModuleInstance(moduleName: string, layout: LayoutElement): ModuleInstance<any> {
         const module = ModuleRegistry.getModule(moduleName);
         if (!module) {
             throw new Error(`Module ${moduleName} not found`);
@@ -109,6 +127,7 @@ export class Workbench {
 
         const moduleInstance = module.makeInstance();
         this.moduleInstances.push(moduleInstance);
+
         this.layout.push({ ...layout, moduleInstanceId: moduleInstance.getId() });
         this.notifySubscribers(WorkbenchEvents.ModuleInstancesChanged);
         module.setWorkbench(this);
@@ -119,7 +138,8 @@ export class Workbench {
 
     public removeModuleInstance(moduleInstanceId: string): void {
         this.moduleInstances = this.moduleInstances.filter((el) => el.getId() !== moduleInstanceId);
-        this.layout = this.layout.filter((el) => el.moduleInstanceId !== moduleInstanceId);
+        const newLayout = this.layout.filter((el) => el.moduleInstanceId !== moduleInstanceId);
+        this.setLayout(newLayout);
         if (this._activeModuleId === moduleInstanceId) {
             this._activeModuleId = "";
             this.notifySubscribers(WorkbenchEvents.ActiveModuleChanged);
@@ -127,22 +147,14 @@ export class Workbench {
         this.notifySubscribers(WorkbenchEvents.ModuleInstancesChanged);
     }
 
-    private addModuleToLayout(moduleName: string, elementIndex: number): void {
-        const module = ModuleRegistry.getModule(moduleName);
-        if (!module) {
-            throw new Error(`Module ${moduleName} not found`);
-        }
-
-        const moduleInstance = module.makeInstance();
-        this.moduleInstances.push(moduleInstance);
-        this.layout[elementIndex] = { ...this.layout[elementIndex], moduleInstanceId: moduleInstance.getId() };
-        this.notifySubscribers(WorkbenchEvents.ModuleInstancesChanged);
-        module.setWorkbench(this);
-    }
-
     public setLayout(layout: LayoutElement[]): void {
         this.layout = layout;
         this.notifySubscribers(WorkbenchEvents.FullModuleRerenderRequested);
+
+        const modifiedLayout = layout.map((el) => {
+            return { ...el, moduleInstanceId: undefined };
+        });
+        localStorage.setItem("layout", JSON.stringify(modifiedLayout));
     }
 
     public maybeMakeFirstModuleInstanceActive(): void {

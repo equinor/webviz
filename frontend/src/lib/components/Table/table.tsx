@@ -1,5 +1,7 @@
 import React from "react";
 
+import { Input } from "../Input";
+
 export enum TableLayoutDirection {
     Horizontal = "horizontal",
     Vertical = "vertical",
@@ -94,7 +96,7 @@ const countNumberOfHeadings = (headings: TableHeading[]): number => {
     return count;
 };
 
-const makeLayoutHeadings = (headings: TableHeading[]): React.ReactElement => {
+const makeLayoutHeadings = (headings: TableHeading[], onFilter: (key: string) => void): React.ReactElement => {
     const layoutCells = makeLayoutCells(headings, 0, null);
     const maxSubheadingsDepth = layoutCells.reduce((max, cell) => Math.max(cell.depth, max), 0);
 
@@ -103,17 +105,30 @@ const makeLayoutHeadings = (headings: TableHeading[]): React.ReactElement => {
             {Array.from({ length: maxSubheadingsDepth + 1 }).map((_, depth) => {
                 const cells = layoutCells.filter((cell) => cell.depth === depth);
                 return (
-                    <tr key={depth}>
-                        {cells.map((cell) => {
-                            const colSpan = cell.maxNumberOfSubheadings > 0 ? cell.maxNumberOfSubheadings : 1;
-                            const rowSpan = cell.numChildren > 0 ? 1 : maxSubheadingsDepth - depth + 1;
-                            return (
-                                <th key={cell.key} colSpan={colSpan} rowSpan={rowSpan} className="border">
-                                    {cell.label}
-                                </th>
-                            );
-                        })}
-                    </tr>
+                    <>
+                        <tr key={depth}>
+                            {cells.map((cell) => {
+                                const colSpan = cell.maxNumberOfSubheadings > 0 ? cell.maxNumberOfSubheadings : 1;
+                                const rowSpan = cell.numChildren > 0 ? 1 : maxSubheadingsDepth - depth + 1;
+                                return (
+                                    <th key={cell.key} colSpan={colSpan} rowSpan={rowSpan} className="border">
+                                        {cell.label}
+                                    </th>
+                                );
+                            })}
+                        </tr>
+                        {depth === maxSubheadingsDepth && (
+                            <tr key={depth}>
+                                {cells.map((cell) => {
+                                    return (
+                                        <th key={cell.key} className="border">
+                                            <Input type="text" onChange={(e) => onFilter(cell.key)} />
+                                        </th>
+                                    );
+                                })}
+                            </tr>
+                        )}
+                    </>
                 );
             })}
         </thead>
@@ -164,7 +179,7 @@ export const Table: React.FC<TableProps> = (props) => {
     if (props.layoutDirection === TableLayoutDirection.Vertical) {
         return (
             <table>
-                {makeLayoutHeadings(props.headings)}
+                {makeLayoutHeadings(props.headings, (key) => console.log(key))}
                 <tbody>
                     {props.data.map((series, index) => {
                         return (
