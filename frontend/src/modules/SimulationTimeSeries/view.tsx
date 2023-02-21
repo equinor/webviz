@@ -10,6 +10,11 @@ import { Data, Layout, PlotHoverEvent } from "plotly.js";
 
 import { State } from "./state";
 
+const series = [{ datetime: 1, b: 2, c: 3 }];
+for (let i = 0; i < 10; i++) {
+    series.push({ datetime: i * 24 * 60 * 60 * 1000, b: i, c: i });
+}
+
 export const view = (props: ModuleFCProps<State>) => {
     const exponent = props.moduleContext.useStoreValue("exponent");
     const ref = React.useRef<HTMLDivElement>(null);
@@ -50,41 +55,26 @@ export const view = (props: ModuleFCProps<State>) => {
             },
         ];
     }
+
+    console.log(plotlyHover);
+
     return (
         <div className="w-full h-full" ref={ref}>
             <Table
                 width={size.width}
                 layoutDirection={TableLayoutDirection.Vertical}
-                headings={[
-                    {
-                        key: "a",
-                        label: "A",
-                        subHeadings: [
-                            { key: "a1", label: "A1", subHeadings: [{ key: "a11", label: "A11" }] },
-                            { key: "a2", label: "A2" },
-                        ],
-                    },
-                    { key: "b", label: "B" },
-                    {
-                        key: "c",
-                        label: "C",
-                        subHeadings: [
-                            {
-                                key: "c1",
-                                label: "C1",
-                                subHeadings: [
-                                    { key: "c11", label: "C11" },
-                                    { key: "c12", label: "C12" },
-                                ],
-                            },
-                        ],
-                    },
-                ]}
-                data={[
-                    [1, 2, 3, 4, 5],
-                    [4, 5, 6, 7, 8],
-                    [7, 8, 9, 10, 11],
-                ]}
+                headings={{
+                    datetime: { label: "Datetime" },
+                    b: { label: "B" },
+                    c: { label: "C" },
+                }}
+                series={series}
+                onHover={(series) => {
+                    props.workbenchServices.publishGlobalData("global.timestamp", {
+                        timestamp: series.datetime as number,
+                    });
+                }}
+                highlightSeriesIndex={series.findIndex((el) => el.datetime === plotlyHover?.timestamp)}
             />
         </div>
     );
@@ -99,11 +89,7 @@ export const view = (props: ModuleFCProps<State>) => {
                     { key: "b", label: "B" },
                     { key: "c", label: "C" },
                 ]}
-                data={[
-                    [1, 2, 3],
-                    [4, 5, 6],
-                    [7, 8, 9],
-                ]}
+                series={[{}]}
             />
         </div>
     );
