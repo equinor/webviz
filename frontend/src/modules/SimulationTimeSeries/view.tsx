@@ -51,39 +51,42 @@ export const view = (props: ModuleFCProps<State>) => {
         ];
     }
     return (
-        <Table
-            layoutDirection={TableLayoutDirection.Vertical}
-            headings={[
-                {
-                    key: "a",
-                    label: "A",
-                    subHeadings: [
-                        { key: "a1", label: "A1", subHeadings: [{ key: "a11", label: "A11" }] },
-                        { key: "a2", label: "A2" },
-                    ],
-                },
-                { key: "b", label: "B" },
-                {
-                    key: "c",
-                    label: "C",
-                    subHeadings: [
-                        {
-                            key: "c1",
-                            label: "C1",
-                            subHeadings: [
-                                { key: "c11", label: "C11" },
-                                { key: "c12", label: "C12" },
-                            ],
-                        },
-                    ],
-                },
-            ]}
-            data={[
-                [1, 2, 3, 4, 5],
-                [4, 5, 6, 7, 8],
-                [7, 8, 9, 10, 11],
-            ]}
-        />
+        <div className="w-full h-full" ref={ref}>
+            <Table
+                width={size.width}
+                layoutDirection={TableLayoutDirection.Vertical}
+                headings={[
+                    {
+                        key: "a",
+                        label: "A",
+                        subHeadings: [
+                            { key: "a1", label: "A1", subHeadings: [{ key: "a11", label: "A11" }] },
+                            { key: "a2", label: "A2" },
+                        ],
+                    },
+                    { key: "b", label: "B" },
+                    {
+                        key: "c",
+                        label: "C",
+                        subHeadings: [
+                            {
+                                key: "c1",
+                                label: "C1",
+                                subHeadings: [
+                                    { key: "c11", label: "C11" },
+                                    { key: "c12", label: "C12" },
+                                ],
+                            },
+                        ],
+                    },
+                ]}
+                data={[
+                    [1, 2, 3, 4, 5],
+                    [4, 5, 6, 7, 8],
+                    [7, 8, 9, 10, 11],
+                ]}
+            />
+        </div>
     );
 
     return (

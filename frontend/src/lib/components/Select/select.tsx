@@ -5,7 +5,7 @@ import { v4 } from "uuid";
 import { Input } from "../Input";
 import { withDefaults } from "../_utils/components";
 
-export type SelectProps<T extends string | number> = {
+export type SelectProps<T = string | number> = {
     options: { value: T; label: string }[];
     value?: T | T[];
     onChange?: (value: T | T[]) => void;
@@ -20,11 +20,12 @@ const defaultProps = {
     filter: false,
     size: 1,
     multiple: false,
+    test: "test",
 };
 
 const elementHeight = 24;
 
-export const Select = withDefaults<SelectProps<string | number>>((props) => {
+export const Select = withDefaults<SelectProps>()(defaultProps, (props) => {
     const [filter, setFilter] = React.useState<string>("");
     const [selected, setSelected] = React.useState<(string | number)[]>([]);
     const [keysPressed, setKeysPressed] = React.useState<Key[]>([]);
@@ -126,7 +127,8 @@ export const Select = withDefaults<SelectProps<string | number>>((props) => {
         setCurrentScrollPosition(target.scrollTop);
     };
 
-    const startIndex = Math.floor(currentScrollPosition / elementHeight);
+    const startIndex = Math.max(0, Math.floor(currentScrollPosition / elementHeight) - 1);
+    const endIndex = Math.min(props.options.length - 1, startIndex + (props.size || 1) + 1);
     const filteredOptionsLength = filteredOptions.length;
 
     const handleFilterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -150,13 +152,13 @@ export const Select = withDefaults<SelectProps<string | number>>((props) => {
             )}
             <div
                 className="overflow-y-scroll border border-gray-300 rounded-md w-full"
-                style={{ height: (props.size || 1) * elementHeight }}
+                style={{ height: props.size * elementHeight }}
                 onScroll={handleScroll}
                 ref={ref}
             >
                 <div style={{ height: Math.floor(currentScrollPosition / elementHeight) * elementHeight }} />
                 {filteredOptions.map((option, index) => {
-                    if (index >= startIndex && index < startIndex + (props.size || 1)) {
+                    if (index >= startIndex && index <= endIndex) {
                         return (
                             <div
                                 key={option.value}
@@ -172,8 +174,8 @@ export const Select = withDefaults<SelectProps<string | number>>((props) => {
                     }
                     return null;
                 })}
-                <div style={{ height: (filteredOptionsLength - (props.size || 1) - startIndex) * elementHeight }} />
+                <div style={{ height: (filteredOptionsLength - endIndex - 1) * elementHeight }} />
             </div>
         </div>
     );
-}, defaultProps);
+});

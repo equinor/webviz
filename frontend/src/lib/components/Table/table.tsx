@@ -1,7 +1,5 @@
 import React from "react";
 
-import { Input } from "../Input";
-
 export enum TableLayoutDirection {
     Horizontal = "horizontal",
     Vertical = "vertical",
@@ -9,23 +7,42 @@ export enum TableLayoutDirection {
 }
 
 export type TableHeading = {
-    key: string;
-    label: string;
-    sortable?: boolean;
-    subHeadings?: TableHeading[];
+    [key: string]: {
+        label: string;
+        sortable?: boolean;
+    };
 };
 
-export type TableProps =
-    | {
-          layoutDirection: Exclude<TableLayoutDirection, TableLayoutDirection.Both>;
-          headings: TableHeading[];
-          data: (string | number)[][];
-      }
-    | {
-          layoutDirection: TableLayoutDirection.Both;
-          horizontalHeadings: TableHeading[];
-          verticalHeadings: TableHeading[];
-          data: (string | number)[][];
+type TableSeries<T extends TableHeading> = {
+    [key in keyof T]: {
+        value: string | number;
+    };
+};
+
+type TableMatrix<T extends TableHeading, U extends TableHeading> = {
+    [key in keyof T]: {
+        [key in keyof U]: {
+            value: string | number;
+        };
+    };
+};
+
+export type TableProps<T extends TableHeading, U extends TableHeading> =
+    | (
+          | {
+                layoutDirection: Exclude<TableLayoutDirection, TableLayoutDirection.Both>;
+                headings: T;
+                series: TableSeries<T>;
+            }
+          | {
+                layoutDirection: TableLayoutDirection.Both;
+                horizontalHeadings: T;
+                verticalHeadings: U;
+                matrix: TableMatrix<T, U>;
+            }
+      ) & {
+          width?: number | string;
+          height?: number | string;
       };
 
 type LayoutError = {
@@ -111,23 +128,17 @@ const makeLayoutHeadings = (headings: TableHeading[], onFilter: (key: string) =>
                                 const colSpan = cell.maxNumberOfSubheadings > 0 ? cell.maxNumberOfSubheadings : 1;
                                 const rowSpan = cell.numChildren > 0 ? 1 : maxSubheadingsDepth - depth + 1;
                                 return (
-                                    <th key={cell.key} colSpan={colSpan} rowSpan={rowSpan} className="border">
+                                    <th
+                                        key={cell.key}
+                                        colSpan={colSpan}
+                                        rowSpan={rowSpan}
+                                        className="border border-white p-4 bg-slate-200 text-left"
+                                    >
                                         {cell.label}
                                     </th>
                                 );
                             })}
                         </tr>
-                        {depth === maxSubheadingsDepth && (
-                            <tr key={depth}>
-                                {cells.map((cell) => {
-                                    return (
-                                        <th key={cell.key} className="border">
-                                            <Input type="text" onChange={(e) => onFilter(cell.key)} />
-                                        </th>
-                                    );
-                                })}
-                            </tr>
-                        )}
                     </>
                 );
             })}
@@ -178,14 +189,14 @@ export const Table: React.FC<TableProps> = (props) => {
 
     if (props.layoutDirection === TableLayoutDirection.Vertical) {
         return (
-            <table>
+            <table style={{ width: props.width, height: props.height }}>
                 {makeLayoutHeadings(props.headings, (key) => console.log(key))}
                 <tbody>
                     {props.data.map((series, index) => {
                         return (
                             <tr key={index}>
                                 {series.map((value, index) => (
-                                    <td key={index} className="border">
+                                    <td key={index} className="border p-4">
                                         {value}
                                     </td>
                                 ))}
