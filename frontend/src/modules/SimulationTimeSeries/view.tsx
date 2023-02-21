@@ -43,24 +43,35 @@ export const view = ({ moduleContext, workbenchServices }: ModuleFCProps<State>)
         showStatistics
     );
 
-  
-    const plotlyHover = useSubscribedValue("global.timestamp", workbenchServices);
+    // React.useEffect(
+    //     function subscribeToHoverRealizationTopic() {
+    //         const unsubscribeFunc = workbenchServices.subscribe("global.hoverRealization", ({ realization }) => {
+    //             setHighlightRealization(realization);
+    //         });
+    //         return unsubscribeFunc;
+    //     },
+    //     [workbenchServices]
+    // );
 
+    const subscribedPlotlyTimeStamp = useSubscribedValue("global.timestamp", workbenchServices);
+    const subscribedPlotlyRealization = useSubscribedValue("global.realization", workbenchServices);
+    // const highlightedTrace
     const handleHover = (e: PlotHoverEvent) => {
         if (e.xvals.length > 0 && typeof e.xvals[0]) {
             workbenchServices.publishGlobalData("global.timestamp", { timestamp: e.xvals[0] as number });
         }
         const curveData = e.points[0].data as MyPlotData;
         if (typeof curveData.realizationNumber === "number") {
-            setHighlightRealization(curveData.realizationNumber);
-            workbenchServices.publishGlobalData("global.hoverRealization", {
+            // setHighlightRealization(curveData.realizationNumber);
+
+            workbenchServices.publishGlobalData("global.realization", {
                 realization: curveData.realizationNumber,
             });
         }
     }
     
     function handleUnHover(e: PlotMouseEvent) {
-        setHighlightRealization(-1);
+        workbenchServices.publishGlobalData("global.realization", {realization: -1});
     }
 
 
@@ -70,9 +81,9 @@ export const view = ({ moduleContext, workbenchServices }: ModuleFCProps<State>)
         let highlightedTrace: MyPlotData | null = null;
         for (let i = 0; i < Math.min(vectorQuery.data.length, 10); i++) {
             const vec = vectorQuery.data[i];
-            const isHighlighted = vec.realization === highlightRealization ? true : false;
-            const curveColor = vec.realization === highlightRealization ? "red" : "green";
-            const lineWidth = vec.realization === highlightRealization ? 3 : 1;
+            const isHighlighted = vec.realization === subscribedPlotlyRealization?.realization ? true : false;
+            const curveColor = vec.realization === subscribedPlotlyRealization?.realization ? "red" : "green";
+            const lineWidth = vec.realization === subscribedPlotlyRealization?.realization ? 3 : 1;
             const trace: MyPlotData = {
                 x: vec.timestamps,
                 y: vec.values,
@@ -111,15 +122,15 @@ export const view = ({ moduleContext, workbenchServices }: ModuleFCProps<State>)
         }
     }
     const layout: Partial<Layout> = { width: size.width, height: size.height, title: "Simulation Time Series" };
-    if (plotlyHover) {
+    if (subscribedPlotlyTimeStamp) {
         layout["shapes"] = [
             {
                 type: "line",
                 xref: "x",
                 yref: "paper",
-                x0: new Date(plotlyHover.timestamp),
+                x0: new Date(subscribedPlotlyTimeStamp.timestamp),
                 y0: 0,
-                x1: new Date(plotlyHover.timestamp),
+                x1: new Date(subscribedPlotlyTimeStamp.timestamp),
                 y1: 1,
                 line: {
                     color: "#ccc",
@@ -131,7 +142,7 @@ export const view = ({ moduleContext, workbenchServices }: ModuleFCProps<State>)
 
     return (
         <div className="w-full h-full" ref={ref}>
-            <Plot data={tracesDataArr} layout={layout} onHover={handleHover} onUnhover={handleUnHover} />
+            <Plot data={tracesDataArr} layout={layout} config={{"scrollZoom":true}} onHover={handleHover} onUnhover={handleUnHover} />
         </div>
     );
 };
