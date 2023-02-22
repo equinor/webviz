@@ -98,38 +98,42 @@ export const Table: React.FC<TableProps<any, any>> = (props) => {
 
     if (props.layoutDirection === TableLayoutDirection.Vertical) {
         return (
-            <table style={{ width: props.width, height: props.height }}>
-                <thead>
-                    <tr>
-                        {Object.keys(props.headings).map((key, index) => (
-                            <th key={index} className="border p-1 text-left">
-                                {props.headings[key].label}
-                            </th>
-                        ))}
-                    </tr>
-                </thead>
-                <tbody>
-                    {props.series.map((series, index) => {
-                        return (
-                            <tr
-                                key={index}
-                                className={`${
-                                    props.highlightSeriesIndex === index ? "bg-blue-50 " : ""
-                                } hover:bg-blue-100`}
-                                onPointerOver={() => handlePointerOver(series)}
-                            >
-                                {Object.keys(series).map((key, index) => (
-                                    <td key={index} className="border p-1">
-                                        {series[key]}
-                                    </td>
-                                ))}
-                            </tr>
-                        );
-                    })}
-                </tbody>
-            </table>
+            <div className="overflow-auto relative" style={{ width: props.width, height: props.height }}>
+                <table className="w-full h-full">
+                    <thead className="sticky">
+                        <tr className="sticky">
+                            {Object.keys(props.headings).map((key, index) => (
+                                <th key={index} className="border p-1 text-left sticky top-0 bg-white drop-shadow">
+                                    {props.headings[key].label}
+                                </th>
+                            ))}
+                        </tr>
+                    </thead>
+                    <tbody style={{ width: props.width, height: props.height }}>
+                        {props.series.map((series, index) => {
+                            return (
+                                <tr
+                                    key={index}
+                                    className={`${
+                                        props.highlightSeriesIndex === index ? "bg-blue-50 " : ""
+                                    } hover:bg-blue-100`}
+                                    onPointerOver={() => handlePointerOver(series)}
+                                >
+                                    {Object.keys(series).map((key, index) => (
+                                        <td key={index} className="border p-1">
+                                            {series[key]}
+                                        </td>
+                                    ))}
+                                </tr>
+                            );
+                        })}
+                    </tbody>
+                </table>
+            </div>
         );
     }
 
     return <div>Table</div>;
 };
+
+Table.displayName = "Table";

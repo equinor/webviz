@@ -3,6 +3,8 @@ import Plot from "react-plotly.js";
 
 import { ModuleFCProps } from "@framework/Module";
 import { useSubscribedValue } from "@framework/WorkbenchServices";
+import { RadioGroup } from "@lib/components/RadioGroup";
+import { Switch } from "@lib/components/Switch";
 import { Table, TableLayoutDirection } from "@lib/components/Table";
 import { useSize } from "@lib/hooks/useSize";
 
@@ -10,22 +12,21 @@ import { Data, Layout, PlotHoverEvent } from "plotly.js";
 
 import { State } from "./state";
 
-const series = [{ datetime: 1, b: 2, c: 3 }];
-for (let i = 0; i < 10; i++) {
-    series.push({ datetime: i * 24 * 60 * 60 * 1000, b: i, c: i });
-}
+const timestamp = new Date().getTime();
 
 export const view = (props: ModuleFCProps<State>) => {
     const exponent = props.moduleContext.useStoreValue("exponent");
+    const [view, setView] = React.useState<"table" | "plot" | "both">("plot");
     const ref = React.useRef<HTMLDivElement>(null);
     const size = useSize(ref);
     const x = [];
     const y = [];
+    const series = [];
 
-    const timestamp = new Date().getTime();
-    for (let i = 0; i < 100; i++) {
+    for (let i = 0; i < 50; i++) {
         x.push(new Date(timestamp + i * 24 * 60 * 60 * 1000));
         y.push(i ** exponent);
+        series.push({ datetime: timestamp + i * 24 * 60 * 60 * 1000, b: i ** exponent, c: i ** exponent });
     }
 
     const plotlyHover = useSubscribedValue("global.timestamp", props.workbenchServices);
@@ -37,7 +38,11 @@ export const view = (props: ModuleFCProps<State>) => {
     };
 
     const data: Data[] = [{ x, y, type: "scatter", mode: "lines+markers", marker: { color: "red" } }];
-    const layout: Partial<Layout> = { width: size.width, height: size.height, title: "Simulation Time Series" };
+    const layout: Partial<Layout> = {
+        width: size.width,
+        height: view === "both" ? size.height / 2 : size.height,
+        title: "Simulation Time Series",
+    };
     if (plotlyHover) {
         layout["shapes"] = [
             {
@@ -56,41 +61,44 @@ export const view = (props: ModuleFCProps<State>) => {
         ];
     }
 
-    console.log(plotlyHover);
+    const highlightSeriesIndex = series.findIndex((el) => el.datetime === Math.round(plotlyHover?.timestamp || -1));
 
     return (
-        <div className="w-full h-full" ref={ref}>
-            <Table
-                width={size.width}
-                layoutDirection={TableLayoutDirection.Vertical}
-                headings={{
-                    datetime: { label: "Datetime" },
-                    b: { label: "B" },
-                    c: { label: "C" },
-                }}
-                series={series}
-                onHover={(series) => {
-                    props.workbenchServices.publishGlobalData("global.timestamp", {
-                        timestamp: series.datetime as number,
-                    });
-                }}
-                highlightSeriesIndex={series.findIndex((el) => el.datetime === plotlyHover?.timestamp)}
-            />
-        </div>
-    );
-
-    return (
-        <div className="w-full h-full" ref={ref}>
-            <Plot data={data} layout={layout} onHover={handleHover} />
-            <Table
-                layoutDirection={TableLayoutDirection.Vertical}
-                headings={[
-                    { key: "a", label: "A" },
-                    { key: "b", label: "B" },
-                    { key: "c", label: "C" },
-                ]}
-                series={[{}]}
-            />
+        <div className="w-full h-full flex flex-col">
+            <div>
+                <RadioGroup
+                    options={[
+                        { label: "Plot", value: "plot" },
+                        { label: "Table", value: "table" },
+                        { label: "Both", value: "both" },
+                    ]}
+                    value={view}
+                    onChange={(_, value) => setView(value as "plot" | "table" | "both")}
+                    direction="horizontal"
+                />
+            </div>
+            <div className="flex-grow h-0" ref={ref}>
+                {view !== "table" && <Plot data={data} layout={layout} onHover={handleHover} />}
+                {view !== "plot" && (
+                    <Table
+                        width={size.width}
+                        height={view === "both" ? size.height / 2 : size.height}
+                        layoutDirection={TableLayoutDirection.Vertical}
+                        headings={{
+                            datetime: { label: "Datetime" },
+                            b: { label: "B" },
+                            c: { label: "C" },
+                        }}
+                        series={series}
+                        onHover={(series) => {
+                            props.workbenchServices.publishGlobalData("global.timestamp", {
+                                timestamp: series.datetime as number,
+                            });
+                        }}
+                        highlightSeriesIndex={highlightSeriesIndex}
+                    />
+                )}
+            </div>
         </div>
     );
 };

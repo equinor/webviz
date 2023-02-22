@@ -7,7 +7,7 @@ type OptionalKeys<T> = {
 type AssignableKeys<T, U> = {
     [K in keyof U]-?: K extends keyof T ? K : never;
 }[keyof U];
-type OptionalValues<T> = Pick<T, OptionalKeys<T>>;
+export type OptionalValues<T> = Pick<T, OptionalKeys<T>>;
 type ValidValues<T, U> = Pick<U, AssignableKeys<T, U>>;
 
 type WithDefaults<T, U extends OptionalValues<T>> = Omit<T, keyof U> & Pick<U, keyof ValidValues<T, U>>;

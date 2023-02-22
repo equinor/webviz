@@ -179,3 +179,5 @@ export const Select = withDefaults<SelectProps>()(defaultProps, (props) => {
         </div>
     );
 });
+
+Select.displayName = "Select";
