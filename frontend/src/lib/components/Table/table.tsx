@@ -99,11 +99,14 @@ export const Table: React.FC<TableProps<any, any>> = (props) => {
     if (props.layoutDirection === TableLayoutDirection.Vertical) {
         return (
             <div className="overflow-auto relative" style={{ width: props.width, height: props.height }}>
-                <table className="w-full h-full">
-                    <thead className="sticky">
-                        <tr className="sticky">
+                <table className="w-full h-full border-0 border-separate border-spacing-0">
+                    <thead className="border-0 m-0 p-0">
+                        <tr className="sticky p-0 border-0">
                             {Object.keys(props.headings).map((key, index) => (
-                                <th key={index} className="border p-1 text-left sticky top-0 bg-white drop-shadow">
+                                <th
+                                    key={index}
+                                    className="bg-slate-300 border border-gray-400 border-solid p-1 text-left sticky top-0 drop-shadow"
+                                >
                                     {props.headings[key].label}
                                 </th>
                             ))}
