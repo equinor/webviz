@@ -3,6 +3,7 @@ import Plot from "react-plotly.js";
 
 import { ModuleFCProps } from "@framework/Module";
 import { useSubscribedValue } from "@framework/WorkbenchServices";
+import { Dropdown } from "@lib/components/Dropdown";
 import { RadioGroup } from "@lib/components/RadioGroup";
 import { Table, TableLayoutDirection } from "@lib/components/Table";
 import { useSize } from "@lib/hooks/useSize";
@@ -75,6 +76,7 @@ export const view = (props: ModuleFCProps<State>) => {
                     onChange={(_, value) => setView(value as "plot" | "table" | "both")}
                     direction="horizontal"
                 />
+                <Dropdown />
             </div>
             <div className="flex-grow h-0" ref={ref}>
                 {view !== "table" && <Plot data={data} layout={layout} onHover={handleHover} />}
