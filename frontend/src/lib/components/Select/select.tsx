@@ -3,6 +3,7 @@ import React, { Key } from "react";
 import { v4 } from "uuid";
 
 import { Input } from "../Input";
+import { Virtualization } from "../Virtualization";
 import { withDefaults } from "../_utils/components";
 
 export type SelectProps<T = string | number> = {
@@ -20,16 +21,13 @@ const defaultProps = {
     filter: false,
     size: 1,
     multiple: false,
-    test: "test",
 };
-
-const elementHeight = 24;
 
 export const Select = withDefaults<SelectProps>()(defaultProps, (props) => {
     const [filter, setFilter] = React.useState<string>("");
     const [selected, setSelected] = React.useState<(string | number)[]>([]);
     const [keysPressed, setKeysPressed] = React.useState<Key[]>([]);
-    const [currentScrollPosition, setCurrentScrollPosition] = React.useState<number>(0);
+    const [startIndex, setStartIndex] = React.useState<number>(0);
 
     const id = React.useRef<string>(v4());
     const ref = React.useRef<HTMLDivElement>(null);
@@ -44,10 +42,8 @@ export const Select = withDefaults<SelectProps>()(defaultProps, (props) => {
                 );
                 const newIndex = Math.max(0, currentIndex - 1);
                 toggleValue(props.options[newIndex].value);
-                if (newIndex * elementHeight < currentScrollPosition) {
-                    if (ref.current) {
-                        ref.current.scrollTop = newIndex * elementHeight;
-                    }
+                if (newIndex < startIndex) {
+                    setStartIndex(newIndex);
                 }
             }
             if (e.key === "ArrowDown") {
@@ -57,10 +53,8 @@ export const Select = withDefaults<SelectProps>()(defaultProps, (props) => {
                 );
                 const newIndex = Math.max(0, currentIndex + 1);
                 toggleValue(props.options[newIndex].value);
-                if (newIndex * elementHeight > currentScrollPosition + ((props.size || 1) - 1) * elementHeight) {
-                    if (ref.current) {
-                        ref.current.scrollTop = (newIndex - (props.size || 1) + 1) * elementHeight;
-                    }
+                if (newIndex >= startIndex + props.size - 1) {
+                    setStartIndex(Math.max(0, newIndex - props.size + 1));
                 }
             }
         };
@@ -76,7 +70,7 @@ export const Select = withDefaults<SelectProps>()(defaultProps, (props) => {
             window.removeEventListener("keydown", handleKeyDown);
             window.removeEventListener("keyup", handleKeyUp);
         };
-    }, [selected, currentScrollPosition, props.options, props.size]);
+    }, [selected, props.options, props.size]);
 
     React.useLayoutEffect(() => {
         if (props.value) {
@@ -122,15 +116,6 @@ export const Select = withDefaults<SelectProps>()(defaultProps, (props) => {
         }
     };
 
-    const handleScroll = (e: React.UIEvent<HTMLDivElement, UIEvent>) => {
-        const target = e.target as HTMLDivElement;
-        setCurrentScrollPosition(target.scrollTop);
-    };
-
-    const startIndex = Math.max(0, Math.floor(currentScrollPosition / elementHeight) - 1);
-    const endIndex = Math.min(props.options.length - 1, startIndex + (props.size || 1) + 1);
-    const filteredOptionsLength = filteredOptions.length;
-
     const handleFilterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setFilter(e.target.value);
         if (ref.current) {
@@ -152,13 +137,14 @@ export const Select = withDefaults<SelectProps>()(defaultProps, (props) => {
             )}
             <div
                 className="overflow-y-scroll border border-gray-300 rounded-md w-full"
-                style={{ height: props.size * elementHeight }}
-                onScroll={handleScroll}
+                style={{ height: props.size * 24 }}
                 ref={ref}
             >
-                <div style={{ height: Math.floor(currentScrollPosition / elementHeight) * elementHeight }} />
-                {filteredOptions.map((option, index) => {
-                    if (index >= startIndex && index <= endIndex) {
+                <Virtualization
+                    containerRef={ref}
+                    elements={filteredOptions}
+                    itemSize={24}
+                    renderItem={(option) => {
                         return (
                             <div
                                 key={option.value}
@@ -166,15 +152,15 @@ export const Select = withDefaults<SelectProps>()(defaultProps, (props) => {
                                     selected.includes(option.value) ? " bg-blue-700 text-white box-border" : ""
                                 } select-none`}
                                 onClick={() => toggleValue(option.value)}
-                                style={{ height: elementHeight }}
+                                style={{ height: 24 }}
                             >
                                 {option.label}
                             </div>
                         );
-                    }
-                    return null;
-                })}
-                <div style={{ height: (filteredOptionsLength - endIndex - 1) * elementHeight }} />
+                    }}
+                    direction="vertical"
+                    startIndex={startIndex}
+                />
             </div>
         </div>
     );

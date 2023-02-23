@@ -10,10 +10,12 @@ export type RadioGroupProps<T = string | number> = {
     options: {
         label: string;
         value: T;
+        disabled?: boolean;
     }[];
     value: T;
     onChange?: (event: React.ChangeEvent<HTMLInputElement>, value: string | number) => void;
     direction?: "horizontal" | "vertical";
+    disabled?: boolean;
 };
 
 const defaultProps: OptionalValues<RadioGroupProps> = {
@@ -26,11 +28,16 @@ type RadioProps = {
     value: string | number;
     checked: boolean;
     onChange?: (event: React.ChangeEvent<HTMLInputElement>, value: string | number) => void;
+    disabled?: boolean;
 };
 
 const Radio: React.FC<RadioProps> = (props) => {
     return (
-        <label className="relative cursor-pointer inline-flex align-middle gap-2">
+        <label
+            className={resolveClassNames("relative", "cursor-pointer", "inline-flex", "align-middle", "gap-2", {
+                "opacity-30": props.disabled === true,
+            })}
+        >
             <span
                 className={resolveClassNames(
                     "rounded-full",
@@ -61,6 +68,7 @@ const Radio: React.FC<RadioProps> = (props) => {
                     value={props.value}
                     checked={props.checked}
                     onChange={(e) => props.onChange && props.onChange(e, props.value)}
+                    disabled={props.disabled}
                 />
             </span>
             {props.label}
@@ -71,7 +79,11 @@ const Radio: React.FC<RadioProps> = (props) => {
 export const RadioGroup = withDefaults<RadioGroupProps>()(defaultProps, (props) => {
     const name = React.useRef<string>(props.name || v4());
     return (
-        <div>
+        <div
+            className={resolveClassNames({
+                "opacity-30 pointer-events-none": props.disabled === true,
+            })}
+        >
             <span>{props.name}</span>
             <div
                 className={resolveClassNames("flex", "radio-group", "gap-4", "m-1", {
@@ -86,6 +98,7 @@ export const RadioGroup = withDefaults<RadioGroupProps>()(defaultProps, (props) 
                         value={option.value}
                         checked={option.value === props.value}
                         onChange={props.onChange}
+                        disabled={option.disabled}
                     />
                 ))}
             </div>

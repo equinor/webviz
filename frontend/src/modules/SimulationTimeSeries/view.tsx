@@ -4,7 +4,6 @@ import Plot from "react-plotly.js";
 import { ModuleFCProps } from "@framework/Module";
 import { useSubscribedValue } from "@framework/WorkbenchServices";
 import { RadioGroup } from "@lib/components/RadioGroup";
-import { Switch } from "@lib/components/Switch";
 import { Table, TableLayoutDirection } from "@lib/components/Table";
 import { useSize } from "@lib/hooks/useSize";
 
@@ -16,18 +15,19 @@ const timestamp = new Date().getTime();
 
 export const view = (props: ModuleFCProps<State>) => {
     const exponent = props.moduleContext.useStoreValue("exponent");
-    const [view, setView] = React.useState<"table" | "plot" | "both">("plot");
+    const [view, setView] = React.useState<"table" | "plot" | "both">("table");
     const ref = React.useRef<HTMLDivElement>(null);
     const size = useSize(ref);
-    const x = [];
-    const y = [];
-    const series = [];
+    const series = React.useMemo(() => {
+        const series = [];
+        for (let i = 0; i < 50; i++) {
+            series.push({ datetime: timestamp + i * 24 * 60 * 60 * 1000, b: i ** exponent, c: i ** exponent });
+        }
+        return series;
+    }, [exponent]);
 
-    for (let i = 0; i < 50; i++) {
-        x.push(new Date(timestamp + i * 24 * 60 * 60 * 1000));
-        y.push(i ** exponent);
-        series.push({ datetime: timestamp + i * 24 * 60 * 60 * 1000, b: i ** exponent, c: i ** exponent });
-    }
+    const x = React.useMemo(() => series.map((el) => new Date(el.datetime)), [series]);
+    const y = React.useMemo(() => series.map((el) => el.b), [series]);
 
     const plotlyHover = useSubscribedValue("global.timestamp", props.workbenchServices);
 
@@ -43,6 +43,7 @@ export const view = (props: ModuleFCProps<State>) => {
         height: view === "both" ? size.height / 2 : size.height,
         title: "Simulation Time Series",
     };
+
     if (plotlyHover) {
         layout["shapes"] = [
             {
@@ -60,8 +61,6 @@ export const view = (props: ModuleFCProps<State>) => {
             },
         ];
     }
-
-    const highlightSeriesIndex = series.findIndex((el) => el.datetime === Math.round(plotlyHover?.timestamp || -1));
 
     return (
         <div className="w-full h-full flex flex-col">
@@ -85,9 +84,9 @@ export const view = (props: ModuleFCProps<State>) => {
                         height={view === "both" ? size.height / 2 : size.height}
                         layoutDirection={TableLayoutDirection.Vertical}
                         headings={{
-                            datetime: { label: "Datetime" },
-                            b: { label: "B" },
-                            c: { label: "C" },
+                            datetime: { label: "Datetime", sizeInPercent: 50 },
+                            b: { label: "B", sizeInPercent: 25 },
+                            c: { label: "C", sizeInPercent: 25 },
                         }}
                         series={series}
                         onHover={(series) => {
@@ -95,7 +94,7 @@ export const view = (props: ModuleFCProps<State>) => {
                                 timestamp: series.datetime as number,
                             });
                         }}
-                        highlightSeriesIndex={highlightSeriesIndex}
+                        highlightFilter={(series) => series.datetime === plotlyHover?.timestamp}
                     />
                 )}
             </div>

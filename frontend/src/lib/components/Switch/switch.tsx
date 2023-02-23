@@ -1,17 +1,18 @@
 import React from "react";
 
-import { SwitchUnstyled, UseSwitchParameters, switchUnstyledClasses, useSwitch } from "@mui/base";
+import { SwitchUnstyled, UseSwitchParameters, useSwitch } from "@mui/base";
 
 import { resolveClassNames } from "../_utils/resolveClassNames";
 
 export const Switch = React.forwardRef((props: UseSwitchParameters, ref: React.ForwardedRef<HTMLInputElement>) => {
-    const { getInputProps, checked, disabled, focusVisible } = useSwitch(props);
+    const { getInputProps, checked, disabled } = useSwitch(props);
 
     console.log(checked);
 
     return (
         <SwitchUnstyled
             {...getInputProps()}
+            ref={ref}
             slotProps={{
                 root: {
                     className: resolveClassNames(
@@ -19,12 +20,14 @@ export const Switch = React.forwardRef((props: UseSwitchParameters, ref: React.F
                         "inline-block",
                         "w-10",
                         "h-6",
-                        "m-4",
                         "cursor-pointer",
                         "rounded-full",
                         checked ? "bg-blue-500" : "bg-gray-400",
                         {
                             "bg-blue-500": checked,
+                        },
+                        {
+                            "opacity-30": disabled,
                         }
                     ),
                 },
