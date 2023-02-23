@@ -6,7 +6,7 @@ import { useSubscribedValue } from "@framework/WorkbenchServices";
 import { useSize } from "@lib/hooks/useSize";
 
 import {  Layout, PlotHoverEvent,PlotData, PlotMouseEvent, PlotRelayoutEvent} from "plotly.js";
-import { useStatisticalVectorDataQuery, useVectorDataQuery } from "./plotlyQueryHooks";
+import { useStatisticalVectorDataQuery, useVectorDataQuery } from "./queryHooks";
 import { State } from "./state";
 
 interface MyPlotData extends Partial<PlotData> {
