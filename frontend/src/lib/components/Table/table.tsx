@@ -1,6 +1,6 @@
 import React from "react";
 
-import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/20/solid";
+import { ChevronDownIcon, ChevronUpIcon, XMarkIcon } from "@heroicons/react/20/solid";
 
 import { v4 } from "uuid";
 
@@ -19,6 +19,7 @@ export type TableHeading = {
         label: string;
         sortable?: boolean;
         sizeInPercent: number;
+        format?: (value: string | number) => string | number;
     };
 };
 
@@ -69,13 +70,15 @@ enum SortDirection {
 
 function filterData(
     data: IdentifiedTableSeries<TableHeading>[],
-    filterValues: { [key: string]: string }
+    filterValues: { [key: string]: string },
+    headings: TableHeading
 ): IdentifiedTableSeries<TableHeading>[] {
     return data.filter((series) => {
         for (const key in filterValues) {
+            const format = headings[key].format || ((value: string | number) => value);
             if (
                 filterValues[key] !== "" &&
-                series.values[key].toString().toLowerCase().indexOf(filterValues[key].toLowerCase()) === -1
+                format(series.values[key]).toString().toLowerCase().indexOf(filterValues[key].toLowerCase()) === -1
             ) {
                 return false;
             }
@@ -111,28 +114,6 @@ function preprocessData(data: TableSeries<TableHeading>[]): IdentifiedTableSerie
     });
 }
 
-function makeRows(
-    data: IdentifiedTableSeries<TableHeading>[],
-    headings: TableHeading
-): { [key: string]: React.ReactNode[] } {
-    const rows: { [key: string]: React.ReactNode[] } = {};
-
-    data.forEach((series) => {
-        Object.keys(headings).forEach((key) => {
-            if (!rows[key]) {
-                rows[key] = [];
-            }
-            rows[key].push(
-                <td key={series.id} className="px-2 py-2 whitespace-nowrap">
-                    {series.values[key]}
-                </td>
-            );
-        });
-    });
-
-    return rows;
-}
-
 export const Table: React.FC<TableProps<TableHeading, TableHeading>> = (props) => {
     const [layoutError, setLayoutError] = React.useState<LayoutError>({ error: false, message: "" });
     const [preprocessedData, setPreprocessedData] = React.useState<IdentifiedTableSeries<TableHeading>[]>([]);
@@ -159,7 +140,7 @@ export const Table: React.FC<TableProps<TableHeading, TableHeading>> = (props) =
             return;
         }
 
-        setFilteredData(filterData(preprocessedData, filterValues));
+        setFilteredData(filterData(preprocessedData, filterValues, props.headings));
     }, [props.layoutDirection, preprocessedData, filterValues]);
 
     React.useEffect(() => {
@@ -236,7 +217,7 @@ export const Table: React.FC<TableProps<TableHeading, TableHeading>> = (props) =
                             {Object.keys(props.headings).map((key) => (
                                 <th
                                     key={key}
-                                    className="bg-slate-300 border border-gray-400 border-solid p-0 text-left sticky top-0 drop-shadow"
+                                    className="bg-slate-100 border border-gray-400 border-solid p-0 text-left sticky top-0 drop-shadow"
                                     style={{ width: `${props.headings[key].sizeInPercent}%` }}
                                 >
                                     <div className="p-1 flex items-center">
@@ -271,8 +252,14 @@ export const Table: React.FC<TableProps<TableHeading, TableHeading>> = (props) =
                                     <div className="border-gray-400 border-t border-solid p-1">
                                         <Input
                                             type="text"
+                                            value={filterValues[key] || ""}
                                             placeholder={`Filter ${props.headings[key].label}...`}
                                             onChange={(e) => handleFilterChange(key, e.target.value)}
+                                            endAdornment={
+                                                <IconButton size="small" onClick={() => handleFilterChange(key, "")}>
+                                                    <XMarkIcon />
+                                                </IconButton>
+                                            }
                                         />
                                     </div>
                                 </th>
@@ -298,11 +285,14 @@ export const Table: React.FC<TableProps<TableHeading, TableHeading>> = (props) =
                                         onPointerOver={() => handlePointerOver(item.values)}
                                         style={{ height: 30 }}
                                     >
-                                        {Object.keys(item.values).map((key) => (
-                                            <td key={`${item.id}-${key}`} className="border p-1">
-                                                {item.values[key]}
-                                            </td>
-                                        ))}
+                                        {Object.keys(item.values).map((key) => {
+                                            const format = props.headings[key].format;
+                                            return (
+                                                <td key={`${item.id}-${key}`} className="border p-1">
+                                                    {format ? format(item.values[key]) : item.values[key]}
+                                                </td>
+                                            );
+                                        })}
                                     </tr>
                                 );
                             }}
@@ -361,8 +351,14 @@ export const Table: React.FC<TableProps<TableHeading, TableHeading>> = (props) =
                                     <div className="border-gray-400 border-t border-solid p-1">
                                         <Input
                                             type="text"
+                                            value={filterValues[key]}
                                             placeholder={`Filter ${props.headings[key].label}...`}
                                             onChange={(e) => handleFilterChange(key, e.target.value)}
+                                            endAdornment={
+                                                <IconButton size="small" onClick={() => handleFilterChange(key, "")}>
+                                                    <XMarkIcon />
+                                                </IconButton>
+                                            }
                                         />
                                     </div>
                                 </th>

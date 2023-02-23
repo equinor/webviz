@@ -20,7 +20,7 @@ export const view = (props: ModuleFCProps<State>) => {
     const size = useSize(ref);
     const series = React.useMemo(() => {
         const series = [];
-        for (let i = 0; i < 50; i++) {
+        for (let i = 0; i < 50000; i++) {
             series.push({ datetime: timestamp + i * 24 * 60 * 60 * 1000, b: i ** exponent, c: i ** exponent });
         }
         return series;
@@ -84,7 +84,11 @@ export const view = (props: ModuleFCProps<State>) => {
                         height={view === "both" ? size.height / 2 : size.height}
                         layoutDirection={TableLayoutDirection.Vertical}
                         headings={{
-                            datetime: { label: "Datetime", sizeInPercent: 50 },
+                            datetime: {
+                                label: "Datetime",
+                                sizeInPercent: 50,
+                                format: (value) => new Date(value).toLocaleDateString(),
+                            },
                             b: { label: "B", sizeInPercent: 25 },
                             c: { label: "C", sizeInPercent: 25 },
                         }}
