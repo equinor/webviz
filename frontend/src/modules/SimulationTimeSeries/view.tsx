@@ -53,25 +53,25 @@ export const view = ({ moduleContext, workbenchServices }: ModuleFCProps<State>)
     //     [workbenchServices]
     // );
 
-    const subscribedPlotlyTimeStamp = useSubscribedValue("global.timestamp", workbenchServices);
-    const subscribedPlotlyRealization = useSubscribedValue("global.realization", workbenchServices);
+    const subscribedPlotlyTimeStamp = useSubscribedValue("global.hoverTimestamp", workbenchServices);
+    const subscribedPlotlyRealization = useSubscribedValue("global.hoverRealization", workbenchServices);
     // const highlightedTrace
     const handleHover = (e: PlotHoverEvent) => {
         if (e.xvals.length > 0 && typeof e.xvals[0]) {
-            workbenchServices.publishGlobalData("global.timestamp", { timestamp: e.xvals[0] as number });
+            workbenchServices.publishGlobalData("global.hoverTimestamp", { timestamp: e.xvals[0] as number });
         }
         const curveData = e.points[0].data as MyPlotData;
         if (typeof curveData.realizationNumber === "number") {
             // setHighlightRealization(curveData.realizationNumber);
 
-            workbenchServices.publishGlobalData("global.realization", {
+            workbenchServices.publishGlobalData("global.hoverRealization", {
                 realization: curveData.realizationNumber,
             });
         }
     }
     
     function handleUnHover(e: PlotMouseEvent) {
-        workbenchServices.publishGlobalData("global.realization", {realization: -1});
+        workbenchServices.publishGlobalData("global.hoverRealization", {realization: -1});
     }
 
 
