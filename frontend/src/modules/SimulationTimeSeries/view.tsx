@@ -3,7 +3,7 @@ import Plot from "react-plotly.js";
 
 import { ModuleFCProps } from "@framework/Module";
 import { useSubscribedValue } from "@framework/WorkbenchServices";
-import { useSize } from "@lib/hooks/useSize";
+import { useElementSize } from "@lib/hooks/useElementSize";
 
 import {  Layout, PlotHoverEvent,PlotData, PlotMouseEvent, PlotRelayoutEvent} from "plotly.js";
 import { useStatisticalVectorDataQuery, useVectorDataQuery } from "./queryHooks";
@@ -18,7 +18,7 @@ interface MyPlotData extends Partial<PlotData> {
 
 export const view = ({ moduleContext, workbenchServices }: ModuleFCProps<State>) => {
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);
-    const wrapperDivSize = useSize(wrapperDivRef);
+    const wrapperDivSize = useElementSize(wrapperDivRef);
     const caseUuid = useSubscribedValue("navigator.caseId", workbenchServices);
     const ensembleName = moduleContext.useStoreValue("ensembleName");
     const vectorName = moduleContext.useStoreValue("vectorName");
