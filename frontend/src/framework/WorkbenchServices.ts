@@ -9,11 +9,8 @@ export type NavigatorTopicDefinitions = {
 
 export type GlobalTopicDefinitions = {
     "global.infoMessage": string;
-    "global.depth": number;
-    "global.position": { x: number; y: number };
-    "global.realization": { realization: number };
-    
-    "global.timestamp": { timestamp: number };
+    "global.hoverRealization": { realization: number };
+    "global.hoverTimestamp": { timestamp: number };
 };
 
 export type AllTopicDefinitions = NavigatorTopicDefinitions & GlobalTopicDefinitions;

@@ -11,7 +11,7 @@ import {
     pointRelativeToDomRect,
     pointerEventToPoint,
 } from "@framework/utils/geometry";
-import { useSize } from "@lib/hooks/useSize";
+import { useElementSize } from "@lib/hooks/useElementSize";
 
 import { v4 } from "uuid";
 
@@ -73,17 +73,17 @@ export const Layout: React.FC<LayoutProps> = (props) => {
     const [tempLayoutBoxId, setTempLayoutBoxId] = React.useState<string | null>(null);
     const ref = React.useRef<HTMLDivElement>(null);
     const mainRef = React.useRef<HTMLDivElement>(null);
-    const size = useSize(ref);
+    const size = useElementSize(ref);
     const layoutBoxRef = React.useRef<LayoutBox | null>(null);
     const moduleInstances = useModuleInstances(props.workbench);
 
     const convertLayoutRectToRealRect = React.useCallback(
         (element: LayoutElement): Rect => {
             return {
-                x: element.x * size.width,
-                y: element.y * size.height,
-                width: element.width * size.width,
-                height: element.height * size.height,
+                x: element.relX * size.width,
+                y: element.relY * size.height,
+                width: element.relWidth * size.width,
+                height: element.relHeight * size.height,
             };
         },
         [size]

@@ -13,7 +13,12 @@ import {
 import { v4 } from "uuid";
 
 function layoutElementToRect(layoutElement: LayoutElement): Rect {
-    return { x: layoutElement.x, y: layoutElement.y, width: layoutElement.width, height: layoutElement.height };
+    return {
+        x: layoutElement.relX,
+        y: layoutElement.relY,
+        width: layoutElement.relWidth,
+        height: layoutElement.relHeight,
+    };
 }
 
 const layoutBoxMargin = 25;
@@ -201,11 +206,11 @@ export class LayoutBox {
         const absoluteRect = this.getAbsoluteRect();
         let y = absoluteRect.y;
         while (y < absoluteRect.y + absoluteRect.height) {
-            const elementsAtY = containedElements.filter((layoutElement) => layoutElement.y === y);
+            const elementsAtY = containedElements.filter((layoutElement) => layoutElement.relY === y);
             if (elementsAtY.length === 0) {
                 break;
             }
-            const maxHeight = Math.max(...elementsAtY.map((layoutElement) => layoutElement.height));
+            const maxHeight = Math.max(...elementsAtY.map((layoutElement) => layoutElement.relHeight));
             y += maxHeight;
             rasterY.push(y);
         }
@@ -253,11 +258,11 @@ export class LayoutBox {
         const rasterX: number[] = [];
         let x = absoluteRect.x;
         while (x < absoluteRect.x + absoluteRect.width) {
-            const elementsAtX = containedElements.filter((layoutElement) => layoutElement.x === x);
+            const elementsAtX = containedElements.filter((layoutElement) => layoutElement.relX === x);
             if (elementsAtX.length === 0) {
                 break;
             }
-            const maxWidth = Math.max(...elementsAtX.map((layoutElement) => layoutElement.width));
+            const maxWidth = Math.max(...elementsAtX.map((layoutElement) => layoutElement.relWidth));
             x += maxWidth;
             rasterX.push(x);
         }
@@ -814,10 +819,10 @@ export class LayoutBox {
         } else {
             const absoluteRect = this.getAbsoluteRect();
             layout.push({
-                x: absoluteRect.x,
-                y: absoluteRect.y,
-                width: absoluteRect.width,
-                height: absoluteRect.height,
+                relX: absoluteRect.x,
+                relY: absoluteRect.y,
+                relWidth: absoluteRect.width,
+                relHeight: absoluteRect.height,
                 moduleInstanceId: this._moduleInstanceId || undefined,
                 moduleName: this._moduleName,
             });

@@ -3,10 +3,10 @@ import Plot from "react-plotly.js";
 
 import { ModuleFCProps } from "@framework/Module";
 import { useSubscribedValue } from "@framework/WorkbenchServices";
-import { useSize } from "@lib/hooks/useSize";
+import { useElementSize } from "@lib/hooks/useElementSize";
 
 import {  Layout, PlotHoverEvent,PlotData, PlotMouseEvent, PlotRelayoutEvent} from "plotly.js";
-import { useStatisticalVectorDataQuery, useVectorDataQuery } from "./plotlyQueryHooks";
+import { useStatisticalVectorDataQuery, useVectorDataQuery } from "./queryHooks";
 import { State } from "./state";
 
 interface MyPlotData extends Partial<PlotData> {
@@ -15,9 +15,10 @@ interface MyPlotData extends Partial<PlotData> {
     // Did they forget to expose this one
     legendrank?: number;
 }
+
 export const view = ({ moduleContext, workbenchServices }: ModuleFCProps<State>) => {
-    const ref = React.useRef<HTMLDivElement>(null);
-    const size = useSize(ref);
+    const wrapperDivRef = React.useRef<HTMLDivElement>(null);
+    const wrapperDivSize = useElementSize(wrapperDivRef);
     const caseUuid = useSubscribedValue("navigator.caseId", workbenchServices);
     const ensembleName = moduleContext.useStoreValue("ensembleName");
     const vectorName = moduleContext.useStoreValue("vectorName");
@@ -53,25 +54,25 @@ export const view = ({ moduleContext, workbenchServices }: ModuleFCProps<State>)
     //     [workbenchServices]
     // );
 
-    const subscribedPlotlyTimeStamp = useSubscribedValue("global.timestamp", workbenchServices);
-    const subscribedPlotlyRealization = useSubscribedValue("global.realization", workbenchServices);
+    const subscribedPlotlyTimeStamp = useSubscribedValue("global.hoverTimestamp", workbenchServices);
+    const subscribedPlotlyRealization = useSubscribedValue("global.hoverRealization", workbenchServices);
     // const highlightedTrace
     const handleHover = (e: PlotHoverEvent) => {
         if (e.xvals.length > 0 && typeof e.xvals[0]) {
-            workbenchServices.publishGlobalData("global.timestamp", { timestamp: e.xvals[0] as number });
+            workbenchServices.publishGlobalData("global.hoverTimestamp", { timestamp: e.xvals[0] as number });
         }
         const curveData = e.points[0].data as MyPlotData;
         if (typeof curveData.realizationNumber === "number") {
             // setHighlightRealization(curveData.realizationNumber);
 
-            workbenchServices.publishGlobalData("global.realization", {
+            workbenchServices.publishGlobalData("global.hoverRealization", {
                 realization: curveData.realizationNumber,
             });
         }
     }
     
     function handleUnHover(e: PlotMouseEvent) {
-        workbenchServices.publishGlobalData("global.realization", {realization: -1});
+        workbenchServices.publishGlobalData("global.hoverRealization", {realization: -1});
     }
 
 
@@ -121,7 +122,7 @@ export const view = ({ moduleContext, workbenchServices }: ModuleFCProps<State>)
             tracesDataArr.push(trace);
         }
     }
-    const layout: Partial<Layout> = { width: size.width, height: size.height, title: "Simulation Time Series" };
+    const layout: Partial<Layout> = { width: wrapperDivSize.width, height: wrapperDivSize.height, title: "Simulation Time Series" };
     if (subscribedPlotlyTimeStamp) {
         layout["shapes"] = [
             {
@@ -141,7 +142,7 @@ export const view = ({ moduleContext, workbenchServices }: ModuleFCProps<State>)
     }
 
     return (
-        <div className="w-full h-full" ref={ref}>
+        <div className="w-full h-full" ref={wrapperDivRef}>
             <Plot data={tracesDataArr} layout={layout} config={{"scrollZoom":true}} onHover={handleHover} onUnhover={handleUnHover} />
         </div>
     );

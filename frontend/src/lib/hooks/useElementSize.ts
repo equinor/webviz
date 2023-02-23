@@ -2,7 +2,7 @@ import React from "react";
 
 import { Size } from "@framework/utils/geometry";
 
-export const useSize = (ref: React.RefObject<HTMLElement>) => {
+export const useElementSize = (ref: React.RefObject<HTMLElement>) => {
     const [size, setSize] = React.useState<Size>({ width: 0, height: 0 });
 
     React.useLayoutEffect(() => {

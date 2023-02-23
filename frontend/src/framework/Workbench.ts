@@ -14,10 +14,10 @@ export enum WorkbenchEvents {
 export type LayoutElement = {
     moduleInstanceId?: string;
     moduleName: string;
-    x: number;
-    y: number;
-    height: number;
-    width: number;
+    relX: number;
+    relY: number;
+    relHeight: number;
+    relWidth: number;
 };
 
 export type WorkbenchState = {
