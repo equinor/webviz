@@ -15,9 +15,10 @@ interface MyPlotData extends Partial<PlotData> {
     // Did they forget to expose this one
     legendrank?: number;
 }
+
 export const view = ({ moduleContext, workbenchServices }: ModuleFCProps<State>) => {
-    const ref = React.useRef<HTMLDivElement>(null);
-    const size = useSize(ref);
+    const wrapperDivRef = React.useRef<HTMLDivElement>(null);
+    const wrapperDivSize = useSize(wrapperDivRef);
     const caseUuid = useSubscribedValue("navigator.caseId", workbenchServices);
     const ensembleName = moduleContext.useStoreValue("ensembleName");
     const vectorName = moduleContext.useStoreValue("vectorName");
@@ -121,7 +122,7 @@ export const view = ({ moduleContext, workbenchServices }: ModuleFCProps<State>)
             tracesDataArr.push(trace);
         }
     }
-    const layout: Partial<Layout> = { width: size.width, height: size.height, title: "Simulation Time Series" };
+    const layout: Partial<Layout> = { width: wrapperDivSize.width, height: wrapperDivSize.height, title: "Simulation Time Series" };
     if (subscribedPlotlyTimeStamp) {
         layout["shapes"] = [
             {
@@ -141,7 +142,7 @@ export const view = ({ moduleContext, workbenchServices }: ModuleFCProps<State>)
     }
 
     return (
-        <div className="w-full h-full" ref={ref}>
+        <div className="w-full h-full" ref={wrapperDivRef}>
             <Plot data={tracesDataArr} layout={layout} config={{"scrollZoom":true}} onHover={handleHover} onUnhover={handleUnHover} />
         </div>
     );
