@@ -80,10 +80,10 @@ export const Layout: React.FC<LayoutProps> = (props) => {
     const convertLayoutRectToRealRect = React.useCallback(
         (element: LayoutElement): Rect => {
             return {
-                x: element.x * size.width,
-                y: element.y * size.height,
-                width: element.width * size.width,
-                height: element.height * size.height,
+                x: element.relX * size.width,
+                y: element.relY * size.height,
+                width: element.relWidth * size.width,
+                height: element.relHeight * size.height,
             };
         },
         [size]
