@@ -6,7 +6,7 @@ import { withDefaults } from "../_utils/components";
 export type VirtualizationProps<T = any> = {
     placeholderComponent?: string;
     containerRef: React.RefObject<HTMLElement>;
-    elements: Array<T>;
+    items: Array<T>;
     renderItem: (item: T, index: number) => React.ReactNode;
     itemSize: number;
     direction: "vertical" | "horizontal";
@@ -35,9 +35,16 @@ export const Virtualization = withDefaults<VirtualizationProps>()(defaultProps, 
                 props.containerRef.current.scrollLeft = props.startIndex * props.itemSize;
             }
         }
-    }, [props.containerRef, props.direction, props.startIndex, props.itemSize]);
+    }, [
+        props.containerRef,
+        props.direction,
+        props.startIndex,
+        props.itemSize,
+        containerSize.height,
+        containerSize.width,
+    ]);
 
-    React.useEffect(() => {
+    React.useLayoutEffect(() => {
         let lastScrollPosition = -1;
         let timer: ReturnType<typeof setTimeout> | null = null;
         const handleScroll = () => {
@@ -57,14 +64,14 @@ export const Virtualization = withDefaults<VirtualizationProps>()(defaultProps, 
 
                 const startIndex = Math.max(0, Math.floor(scrollPosition / props.itemSize) - 1);
                 const endIndex = Math.min(
-                    props.elements.length - 1,
+                    props.items.length - 1,
                     Math.ceil((scrollPosition + size) / props.itemSize) + 1
                 );
 
                 setRange({ start: startIndex, end: endIndex });
                 setPlaceholderSizes({
                     start: startIndex * props.itemSize,
-                    end: (props.elements.length - 1 - endIndex) * props.itemSize,
+                    end: (props.items.length - 1 - endIndex) * props.itemSize,
                 });
             }
         };
@@ -83,14 +90,7 @@ export const Virtualization = withDefaults<VirtualizationProps>()(defaultProps, 
                 }
             }
         };
-    }, [
-        props.containerRef,
-        props.direction,
-        props.elements,
-        props.itemSize,
-        containerSize.height,
-        containerSize.width,
-    ]);
+    }, [props.containerRef, props.direction, props.items, props.itemSize, containerSize.height, containerSize.width]);
 
     const makeStyle = (size: number) => {
         if (props.direction === "vertical") {
@@ -103,12 +103,12 @@ export const Virtualization = withDefaults<VirtualizationProps>()(defaultProps, 
     return (
         <>
             {placeholderSizes.start > 0 &&
-                React.createElement(props.placeholderComponent, { style: makeStyle(placeholderSizes.start) }, ["-"])}
-            {props.elements
+                React.createElement(props.placeholderComponent, { style: makeStyle(placeholderSizes.start) })}
+            {props.items
                 .slice(range.start, range.end + 1)
                 .map((item, index) => props.renderItem(item, range.start + index))}
             {placeholderSizes.end > 0 &&
-                React.createElement(props.placeholderComponent, { style: makeStyle(placeholderSizes.end) }, ["-"])}
+                React.createElement(props.placeholderComponent, { style: makeStyle(placeholderSizes.end) })}
         </>
     );
 });

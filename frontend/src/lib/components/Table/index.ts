@@ -1,1 +1,1 @@
-export { Table, TableLayoutDirection } from "./table";
+export { Table } from "./table";

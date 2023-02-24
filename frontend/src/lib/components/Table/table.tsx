@@ -7,12 +7,7 @@ import { v4 } from "uuid";
 import { IconButton } from "../IconButton";
 import { Input } from "../Input";
 import { Virtualization } from "../Virtualization";
-
-export enum TableLayoutDirection {
-    Horizontal = "horizontal",
-    Vertical = "vertical",
-    Both = "both",
-}
+import { BaseComponent, BaseComponentProps } from "../_BaseComponent/baseComponent";
 
 export type TableHeading = {
     [key: string]: {
@@ -23,40 +18,23 @@ export type TableHeading = {
     };
 };
 
-type TableSeries<T extends TableHeading> = {
+type TableRow<T extends TableHeading> = {
     [key in keyof T]: string | number;
 };
 
-type IdentifiedTableSeries<T extends TableHeading> = {
+type IdentifiedTableRow<T extends TableHeading> = {
     id: string;
     values: { [key in keyof T]: string | number };
 };
 
-type TableMatrix<T extends TableHeading, U extends TableHeading> = {
-    [key in keyof T]: {
-        [key in keyof U]: string | number;
-    };
-};
-
-export type TableProps<T extends TableHeading, U extends TableHeading> =
-    | (
-          | {
-                layoutDirection: Exclude<TableLayoutDirection, TableLayoutDirection.Both>;
-                headings: T;
-                series: TableSeries<T>[];
-            }
-          | {
-                layoutDirection: TableLayoutDirection.Both;
-                horizontalHeadings: T;
-                verticalHeadings: U;
-                series: TableMatrix<T, U>;
-            }
-      ) & {
-          width?: number | string;
-          height?: number | string;
-          onHover?: (series: TableSeries<T> | TableMatrix<T, U>) => void;
-          highlightFilter?: (series: TableSeries<T> | TableMatrix<T, U>) => boolean;
-      };
+export type TableProps<T extends TableHeading> = {
+    headings: T;
+    data: TableRow<T>[];
+    width?: number | string;
+    height?: number | string;
+    onHover?: (row: TableRow<T>) => void;
+    highlightFilter?: (row: TableRow<T>) => boolean;
+} & BaseComponentProps;
 
 type LayoutError = {
     error: boolean;
@@ -69,16 +47,16 @@ enum SortDirection {
 }
 
 function filterData(
-    data: IdentifiedTableSeries<TableHeading>[],
+    data: IdentifiedTableRow<TableHeading>[],
     filterValues: { [key: string]: string },
     headings: TableHeading
-): IdentifiedTableSeries<TableHeading>[] {
+): IdentifiedTableRow<TableHeading>[] {
     return data.filter((series) => {
-        for (const key in filterValues) {
-            const format = headings[key].format || ((value: string | number) => value);
+        for (const col in filterValues) {
+            const format = headings[col].format || ((value: string | number) => value);
             if (
-                filterValues[key] !== "" &&
-                format(series.values[key]).toString().toLowerCase().indexOf(filterValues[key].toLowerCase()) === -1
+                filterValues[col] !== "" &&
+                format(series.values[col]).toString().toLowerCase().indexOf(filterValues[col].toLowerCase()) === -1
             ) {
                 return false;
             }
@@ -88,10 +66,10 @@ function filterData(
 }
 
 function sortData(
-    data: IdentifiedTableSeries<TableHeading>[],
+    data: IdentifiedTableRow<TableHeading>[],
     col: string,
     dir: SortDirection
-): IdentifiedTableSeries<TableHeading>[] {
+): IdentifiedTableRow<TableHeading>[] {
     return [
         ...data.sort((a, b) => {
             if (a.values[col] < b.values[col]) {
@@ -105,7 +83,7 @@ function sortData(
     ];
 }
 
-function preprocessData(data: TableSeries<TableHeading>[]): IdentifiedTableSeries<TableHeading>[] {
+function preprocessData(data: TableRow<TableHeading>[]): IdentifiedTableRow<TableHeading>[] {
     return data.map((series) => {
         return {
             id: v4(),
@@ -114,10 +92,10 @@ function preprocessData(data: TableSeries<TableHeading>[]): IdentifiedTableSerie
     });
 }
 
-export const Table: React.FC<TableProps<TableHeading, TableHeading>> = (props) => {
+export const Table: React.FC<TableProps<TableHeading>> = (props) => {
     const [layoutError, setLayoutError] = React.useState<LayoutError>({ error: false, message: "" });
-    const [preprocessedData, setPreprocessedData] = React.useState<IdentifiedTableSeries<TableHeading>[]>([]);
-    const [filteredData, setFilteredData] = React.useState<IdentifiedTableSeries<TableHeading>[]>([]);
+    const [preprocessedData, setPreprocessedData] = React.useState<IdentifiedTableRow<TableHeading>[]>([]);
+    const [filteredData, setFilteredData] = React.useState<IdentifiedTableRow<TableHeading>[]>([]);
     const [filterValues, setFilterValues] = React.useState<{ [key: string]: string }>({});
     const [sortColumnAndDirection, setSortColumnAndDirection] = React.useState<{ col: string; dir: SortDirection }>({
         col: "",
@@ -126,69 +104,33 @@ export const Table: React.FC<TableProps<TableHeading, TableHeading>> = (props) =
     const containerRef = React.useRef<HTMLDivElement>(null);
 
     React.useEffect(() => {
-        if (props.layoutDirection === TableLayoutDirection.Both) {
-            setPreprocessedData([]);
-            return;
-        }
-
-        setPreprocessedData(preprocessData(props.series));
-    }, [props.layoutDirection, props.series]);
+        setPreprocessedData(preprocessData(props.data));
+    }, [props.data]);
 
     React.useEffect(() => {
-        if (props.layoutDirection === TableLayoutDirection.Both) {
-            setFilteredData([]);
-            return;
-        }
-
         setFilteredData(filterData(preprocessedData, filterValues, props.headings));
-    }, [props.layoutDirection, preprocessedData, filterValues]);
+    }, [preprocessedData, filterValues]);
 
     React.useEffect(() => {
-        if (props.layoutDirection === TableLayoutDirection.Both) {
-            return;
-        }
-
         setFilteredData((prev) => sortData(prev, sortColumnAndDirection.col, sortColumnAndDirection.dir));
-    }, [props.layoutDirection, sortColumnAndDirection]);
+    }, [sortColumnAndDirection]);
 
     React.useEffect(() => {
-        if (props.layoutDirection === TableLayoutDirection.Both) {
-            /*
-            if (props.verticalHeadings.length !== props.matrix.length) {
+        const maxNumberOfSubheadings = Object.keys(props.headings).length;
+        for (const row of props.data) {
+            if (Object.keys(row).length !== maxNumberOfSubheadings) {
                 setLayoutError({
                     error: true,
-                    message: "The number of vertical headings does not match the number of data series.",
+                    message: "The number of headings does not match the number of data series.",
                 });
-                return;
-            }
-            const maxNumberOfSubheadings = countMaxNumberOfSubheadings(props.horizontalHeadings, 0);
-            for (const series of props.matrix) {
-                if (maxNumberOfSubheadings !== series.length) {
-                    setLayoutError({
-                        error: true,
-                        message: "The number of horizontal headings does not match the number of data series.",
-                    });
-                    return;
-                }
-            }
-            */
-        } else {
-            const maxNumberOfSubheadings = Object.keys(props.headings).length;
-            for (const series of props.series) {
-                if (Object.keys(series).length !== maxNumberOfSubheadings) {
-                    setLayoutError({
-                        error: true,
-                        message: "The number of headings does not match the number of data series.",
-                    });
-                    break;
-                }
+                break;
             }
         }
-    }, [props]);
+    }, [props.headings, props.data]);
 
-    const handlePointerOver = (series: TableSeries<any> | TableMatrix<any, any>) => {
+    const handlePointerOver = (row: TableRow<any>) => {
         if (props.onHover) {
-            props.onHover(series);
+            props.onHover(row);
         }
     };
 
@@ -204,8 +146,8 @@ export const Table: React.FC<TableProps<TableHeading, TableHeading>> = (props) =
         return <div>{layoutError.message}</div>;
     }
 
-    if (props.layoutDirection === TableLayoutDirection.Vertical) {
-        return (
+    return (
+        <BaseComponent disabled={props.disabled}>
             <div
                 ref={containerRef}
                 className="overflow-auto relative"
@@ -214,20 +156,20 @@ export const Table: React.FC<TableProps<TableHeading, TableHeading>> = (props) =
                 <table className="w-full h-full border-0 border-separate border-spacing-0">
                     <thead className="border-0 m-0 p-0">
                         <tr className="sticky p-0 border-0">
-                            {Object.keys(props.headings).map((key) => (
+                            {Object.keys(props.headings).map((col) => (
                                 <th
-                                    key={key}
+                                    key={col}
                                     className="bg-slate-100 border border-gray-400 border-solid p-0 text-left sticky top-0 drop-shadow"
-                                    style={{ width: `${props.headings[key].sizeInPercent}%` }}
+                                    style={{ width: `${props.headings[col].sizeInPercent}%` }}
                                 >
                                     <div className="p-1 flex items-center">
-                                        <span className="flex-grow">{props.headings[key].label}</span>
+                                        <span className="flex-grow">{props.headings[col].label}</span>
                                         <div className="flex flex-col">
                                             <IconButton
                                                 size="small"
-                                                onClick={() => handleSortDirectionChange(key, SortDirection.Asc)}
+                                                onClick={() => handleSortDirectionChange(col, SortDirection.Asc)}
                                                 color={
-                                                    sortColumnAndDirection.col === key &&
+                                                    sortColumnAndDirection.col === col &&
                                                     sortColumnAndDirection.dir === SortDirection.Asc
                                                         ? "text-red-600"
                                                         : undefined
@@ -237,9 +179,9 @@ export const Table: React.FC<TableProps<TableHeading, TableHeading>> = (props) =
                                             </IconButton>
                                             <IconButton
                                                 size="small"
-                                                onClick={() => handleSortDirectionChange(key, SortDirection.Desc)}
+                                                onClick={() => handleSortDirectionChange(col, SortDirection.Desc)}
                                                 color={
-                                                    sortColumnAndDirection.col === key &&
+                                                    sortColumnAndDirection.col === col &&
                                                     sortColumnAndDirection.dir === SortDirection.Desc
                                                         ? "text-red-600"
                                                         : undefined
@@ -252,11 +194,11 @@ export const Table: React.FC<TableProps<TableHeading, TableHeading>> = (props) =
                                     <div className="border-gray-400 border-t border-solid p-1">
                                         <Input
                                             type="text"
-                                            value={filterValues[key] || ""}
-                                            placeholder={`Filter ${props.headings[key].label}...`}
-                                            onChange={(e) => handleFilterChange(key, e.target.value)}
+                                            value={filterValues[col] || ""}
+                                            placeholder={`Filter ${props.headings[col].label}...`}
+                                            onChange={(e) => handleFilterChange(col, e.target.value)}
                                             endAdornment={
-                                                <IconButton size="small" onClick={() => handleFilterChange(key, "")}>
+                                                <IconButton size="small" onClick={() => handleFilterChange(col, "")}>
                                                     <XMarkIcon />
                                                 </IconButton>
                                             }
@@ -271,9 +213,9 @@ export const Table: React.FC<TableProps<TableHeading, TableHeading>> = (props) =
                             containerRef={containerRef}
                             direction="vertical"
                             placeholderComponent="tr"
-                            elements={filteredData}
+                            items={filteredData}
                             itemSize={30}
-                            renderItem={(item: IdentifiedTableSeries<any>) => {
+                            renderItem={(item: IdentifiedTableRow<any>) => {
                                 return (
                                     <tr
                                         key={item.id}
@@ -285,11 +227,11 @@ export const Table: React.FC<TableProps<TableHeading, TableHeading>> = (props) =
                                         onPointerOver={() => handlePointerOver(item.values)}
                                         style={{ height: 30 }}
                                     >
-                                        {Object.keys(item.values).map((key) => {
-                                            const format = props.headings[key].format;
+                                        {Object.keys(item.values).map((col) => {
+                                            const format = props.headings[col].format;
                                             return (
-                                                <td key={`${item.id}-${key}`} className="border p-1">
-                                                    {format ? format(item.values[key]) : item.values[key]}
+                                                <td key={`${item.id}-${col}`} className="border p-1">
+                                                    {format ? format(item.values[col]) : item.values[col]}
                                                 </td>
                                             );
                                         })}
@@ -300,100 +242,8 @@ export const Table: React.FC<TableProps<TableHeading, TableHeading>> = (props) =
                     </tbody>
                 </table>
             </div>
-        );
-    }
-
-    if (props.layoutDirection === TableLayoutDirection.Horizontal) {
-        return (
-            <div
-                ref={containerRef}
-                className="overflow-auto relative"
-                style={{ maxWidth: props.width, height: props.height }}
-            >
-                <table className="w-full h-full border-0 border-separate border-spacing-0 table-fixed">
-                    <tbody>
-                        {Object.keys(props.headings).map((key) => (
-                            <tr key={key}>
-                                <th
-                                    key={key}
-                                    className="bg-slate-300 border border-gray-400 border-solid p-0 text-left sticky left-0 drop-shadow w-40"
-                                    style={{ height: `${props.headings[key].sizeInPercent}%` }}
-                                >
-                                    <div className="p-1 flex items-center">
-                                        <span className="flex-grow">{props.headings[key].label}</span>
-                                        <div className="flex flex-col">
-                                            <IconButton
-                                                size="small"
-                                                onClick={() => handleSortDirectionChange(key, SortDirection.Asc)}
-                                                color={
-                                                    sortColumnAndDirection.col === key &&
-                                                    sortColumnAndDirection.dir === SortDirection.Asc
-                                                        ? "text-red-600"
-                                                        : undefined
-                                                }
-                                            >
-                                                <ChevronUpIcon />
-                                            </IconButton>
-                                            <IconButton
-                                                size="small"
-                                                onClick={() => handleSortDirectionChange(key, SortDirection.Desc)}
-                                                color={
-                                                    sortColumnAndDirection.col === key &&
-                                                    sortColumnAndDirection.dir === SortDirection.Desc
-                                                        ? "text-red-600"
-                                                        : undefined
-                                                }
-                                            >
-                                                <ChevronDownIcon />
-                                            </IconButton>
-                                        </div>
-                                    </div>
-                                    <div className="border-gray-400 border-t border-solid p-1">
-                                        <Input
-                                            type="text"
-                                            value={filterValues[key]}
-                                            placeholder={`Filter ${props.headings[key].label}...`}
-                                            onChange={(e) => handleFilterChange(key, e.target.value)}
-                                            endAdornment={
-                                                <IconButton size="small" onClick={() => handleFilterChange(key, "")}>
-                                                    <XMarkIcon />
-                                                </IconButton>
-                                            }
-                                        />
-                                    </div>
-                                </th>
-                                <Virtualization
-                                    containerRef={containerRef}
-                                    direction="horizontal"
-                                    placeholderComponent="td"
-                                    elements={filteredData}
-                                    itemSize={130}
-                                    renderItem={(item: IdentifiedTableSeries<any>) => {
-                                        return (
-                                            <td
-                                                key={`${item.id}-${key}`}
-                                                className={`${
-                                                    props.highlightFilter && props.highlightFilter(item.values)
-                                                        ? "bg-blue-50 "
-                                                        : ""
-                                                } hover:bg-blue-100 border p-1`}
-                                                onPointerOver={() => handlePointerOver(item.values)}
-                                                style={{ width: 130 }}
-                                            >
-                                                {item.values[key]}
-                                            </td>
-                                        );
-                                    }}
-                                />
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
-        );
-    }
-
-    return <div>Table</div>;
+        </BaseComponent>
+    );
 };
 
 Table.displayName = "Table";

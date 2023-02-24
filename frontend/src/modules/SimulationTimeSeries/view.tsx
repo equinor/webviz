@@ -3,9 +3,8 @@ import Plot from "react-plotly.js";
 
 import { ModuleFCProps } from "@framework/Module";
 import { useSubscribedValue } from "@framework/WorkbenchServices";
-import { Dropdown } from "@lib/components/Dropdown";
 import { RadioGroup } from "@lib/components/RadioGroup";
-import { Table, TableLayoutDirection } from "@lib/components/Table";
+import { Table } from "@lib/components/Table";
 import { useSize } from "@lib/hooks/useSize";
 
 import { Data, Layout, PlotHoverEvent } from "plotly.js";
@@ -76,7 +75,6 @@ export const view = (props: ModuleFCProps<State>) => {
                     onChange={(_, value) => setView(value as "plot" | "table" | "both")}
                     direction="horizontal"
                 />
-                <Dropdown />
             </div>
             <div className="flex-grow h-0" ref={ref}>
                 {view !== "table" && <Plot data={data} layout={layout} onHover={handleHover} />}
@@ -84,7 +82,6 @@ export const view = (props: ModuleFCProps<State>) => {
                     <Table
                         width={size.width}
                         height={view === "both" ? size.height / 2 : size.height}
-                        layoutDirection={TableLayoutDirection.Vertical}
                         headings={{
                             datetime: {
                                 label: "Datetime",
@@ -94,7 +91,7 @@ export const view = (props: ModuleFCProps<State>) => {
                             b: { label: "B", sizeInPercent: 25 },
                             c: { label: "C", sizeInPercent: 25 },
                         }}
-                        series={series}
+                        data={series}
                         onHover={(series) => {
                             props.workbenchServices.publishGlobalData("global.timestamp", {
                                 timestamp: series.datetime as number,

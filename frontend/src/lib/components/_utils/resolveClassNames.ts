@@ -1,4 +1,4 @@
-export function resolveClassNames(...classNamesOrLists: (Record<string, boolean> | string)[]): string {
+export function resolveClassNames(...classNamesOrLists: (Record<string, boolean | undefined> | string)[]): string {
     const classNames = classNamesOrLists.reduce((acc, curr) => {
         if (typeof curr === "string") {
             acc.push(curr);
