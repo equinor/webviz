@@ -24,10 +24,7 @@ services:
       - 5000:5000
     environment:
       - UVICORN_RELOAD=true
-      - WEBVIZ_TENANT_ID
-      - WEBVIZ_CLIENT_ID
       - WEBVIZ_CLIENT_SECRET
-      - WEBVIZ_SUMO_RESOURCE_SCOPE
       - WEBVIZ_SMDA_RESOURCE_SCOPE
     volumes:
       - ./backend/src:/home/appuser/backend/src
