@@ -1,35 +1,23 @@
 import base64
-import os
-from typing import Optional, List
 import time
+from typing import List, Optional
 
+import jwt
+import msal
+import starsessions
 from fastapi import APIRouter, Request, Response
 from fastapi.responses import RedirectResponse
-import starsessions
-import msal
-import jwt
 
-
-from .. import config
 from ...services.utils.authenticated_user import AuthenticatedUser
 from ...services.utils.perf_timer import PerfTimer
+from .. import config
 
 
 class AuthHelper:
     def __init__(self) -> None:
         self.router = APIRouter()
-
-        self.router.add_api_route(
-            path="/login",
-            endpoint=self._login_route,
-            methods=["GET"],
-        )
-
-        self.router.add_api_route(
-            path="/auth-callback",
-            endpoint=self._authorized_callback_route,
-            methods=["GET"],
-        )
+        self.router.add_api_route(path="/login", endpoint=self._login_route, methods=["GET"])
+        self.router.add_api_route(path="/auth-callback", endpoint=self._authorized_callback_route, methods=["GET"])
 
     async def _login_route(self, request: Request, redirect_url_after_login: Optional[str] = None) -> RedirectResponse:
         # print("######################### _login_route()")
@@ -43,8 +31,7 @@ class AuthHelper:
 
         cca = _create_msal_confidential_client_app(token_cache=None)
         flow_dict = cca.initiate_auth_code_flow(
-            scopes=all_scopes_list,
-            redirect_uri=request.url_for("_authorized_callback_route"),
+            scopes=all_scopes_list, redirect_uri=request.url_for("_authorized_callback_route")
         )
 
         request.session["flow"] = flow_dict
@@ -86,10 +73,7 @@ class AuthHelper:
             if "error" in token_dict:
                 # print("!!!!! Error validating redirected auth response")
                 # print(f"!!!!! {token_dict=}")
-                return Response(
-                    f"Error validating redirected auth response, error: {token_dict['error']}",
-                    400,
-                )
+                return Response(f"Error validating redirected auth response, error: {token_dict['error']}", 400)
 
             _save_token_cache_in_session(request, token_cache)
 
@@ -106,9 +90,7 @@ class AuthHelper:
         return Response("Login OK")
 
     @staticmethod
-    def get_authenticated_user(
-        request_with_session: Request,
-    ) -> Optional[AuthenticatedUser]:
+    def get_authenticated_user(request_with_session: Request) -> Optional[AuthenticatedUser]:
 
         timer = PerfTimer()
 
@@ -151,11 +133,7 @@ class AuthHelper:
             token_dict = cca.acquire_token_silent(scopes=[config.CLIENT_ID], account=accounts[0])
 
             # print("..................")
-            decoded_id_token = jwt.decode(
-                token_dict["id_token"],
-                algorithms=["RS256"],
-                options={"verify_signature": False},
-            )
+            # decoded_id_token = _decode_jwt(token_dict["id_token"])
             # print(f"{decoded_id_token=}")
             # print(f"{token_dict['id_token_claims']=}")
             # print("..................")
@@ -171,29 +149,19 @@ class AuthHelper:
         # print("---------------------SUMO------------------------")
         # print(token_dict)
         # print("------")
-        # print(
-        #     jwt.decode(
-        #         token_dict["access_token"],
-        #         algorithms=["RS256"],
-        #         options={"verify_signature": False},
-        #     )
-        # )
+        # print(_decode_jwt(token_dict["access_token"]))
         # print("-------------------------------------------------")
         sumo_token = token_dict.get("access_token") if token_dict else None
 
-        token_dict = cca.acquire_token_silent(scopes=config.RESOURCE_SCOPES_DICT["smda"], account=accounts[0])
-        # print("---------------------SMDA------------------------")
-        # print(token_dict)
-        # print("------")
-        # print(
-        #     jwt.decode(
-        #         token_dict["access_token"],
-        #         algorithms=["RS256"],
-        #         options={"verify_signature": False},
-        #     )
-        # )
-        # print("-------------------------------------------------")
-        smda_token = token_dict.get("access_token") if token_dict else None
+        smda_token = None
+        if config.RESOURCE_SCOPES_DICT.get("smda"):
+            token_dict = cca.acquire_token_silent(scopes=config.RESOURCE_SCOPES_DICT["smda"], account=accounts[0])
+            # print("---------------------SMDA------------------------")
+            # print(token_dict)
+            # print("------")
+            # print(_decode_jwt(token_dict["access_token"]))
+            # print("-------------------------------------------------")
+            smda_token = token_dict.get("access_token") if token_dict else None
 
         # print(f"  get tokens {timer.lap_ms():.1f}ms")
 
@@ -221,49 +189,8 @@ class AuthHelper:
 
         return authenticated_user
 
-    @staticmethod
-    def is_logged_in(request_with_session: Request) -> bool:
-        if not starsessions.is_loaded(request_with_session):
-            raise ValueError("Session data has not been loaded for this request")
 
-        token_dict = _get_token_dict_from_session_token_cache(request_with_session, config.GRAPH_SCOPES)
-        if not token_dict:
-            return False
-
-        access_token = token_dict.get("access_token")
-        if not access_token:
-            return False
-
-        return True
-
-    @staticmethod
-    def get_sumo_access_token(request_with_session: Request) -> Optional[str]:
-        if not starsessions.is_loaded(request_with_session):
-            raise ValueError("Session data has not been loaded for this request")
-
-        token_dict = _get_token_dict_from_session_token_cache(request_with_session, config.RESOURCE_SCOPES_DICT["sumo"])
-        if not token_dict:
-            return None
-
-        access_token = token_dict.get("access_token")
-        return access_token
-
-    @staticmethod
-    def get_smda_access_token(request_with_session: Request) -> Optional[str]:
-        if not starsessions.is_loaded(request_with_session):
-            raise ValueError("Session data has not been loaded for this request")
-
-        token_dict = _get_token_dict_from_session_token_cache(request_with_session, config.RESOURCE_SCOPES_DICT["smda"])
-        if not token_dict:
-            return None
-
-        access_token = token_dict.get("access_token")
-        return access_token
-
-
-def _create_msal_confidential_client_app(
-    token_cache: msal.TokenCache,
-) -> msal.ConfidentialClientApplication:
+def _create_msal_confidential_client_app(token_cache: msal.TokenCache) -> msal.ConfidentialClientApplication:
 
     authority = f"https://login.microsoftonline.com/{config.TENANT_ID}"
     return msal.ConfidentialClientApplication(
@@ -292,9 +219,7 @@ def _get_token_dict_from_session_token_cache(request_with_session: Request, scop
     return None
 
 
-def _load_token_cache_from_session(
-    request_with_session: Request,
-) -> msal.SerializableTokenCache:
+def _load_token_cache_from_session(request_with_session: Request) -> msal.SerializableTokenCache:
     token_cache = msal.SerializableTokenCache()
 
     serialized_token_cache = request_with_session.session.get("token_cache")
@@ -306,3 +231,7 @@ def _load_token_cache_from_session(
 def _save_token_cache_in_session(request_with_session: Request, token_cache: msal.SerializableTokenCache):
     if token_cache.has_state_changed:
         request_with_session.session["token_cache"] = token_cache.serialize()
+
+
+def _decode_jwt(jwt_str: str) -> dict:
+    return jwt.decode(jwt_str, algorithms=["RS256"], options={"verify_signature": False})
