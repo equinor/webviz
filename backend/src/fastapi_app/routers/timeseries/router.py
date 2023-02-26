@@ -3,12 +3,11 @@ from typing import List, Optional, Sequence, Union
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 
-from ...services.summary_vector_statistics import StatisticFunction, VectorStatistics, compute_vector_statistics
-from ...services.sumo_access.summary_access import Frequency, SummaryAccess
-from ...services.utils.authenticated_user import AuthenticatedUser
-from .. import schemas
-from ..auth.auth_helper import AuthHelper
-
+from ....services.summary_vector_statistics import StatisticFunction, VectorStatistics, compute_vector_statistics
+from ....services.sumo_access.summary_access import Frequency, SummaryAccess
+from ....services.utils.authenticated_user import AuthenticatedUser
+from ...auth.auth_helper import AuthHelper
+from . import schemas
 
 router = APIRouter()
 
@@ -22,14 +21,14 @@ async def get_vector_names_and_descriptions(
     exclude_all_values_zero: bool = Query(False, description="Exclude all vectors where all values are zero"),
     exclude_all_values_constant: bool = Query(False, description="Exclude all vectors where all values are the same value"),
     # fmt:on
-) -> List[schemas.timeseries.VectorDescription]:
+) -> List[schemas.VectorDescription]:
     """Get all vector names and descriptive names in a given Sumo ensemble"""
 
     access = SummaryAccess(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
     vector_names = access.get_vector_names()
 
-    ret_arr: List[schemas.timeseries.VectorDescription] = [
-        schemas.timeseries.VectorDescription(name=vector_name, descriptive_name=vector_name, has_historical=False) for vector_name in vector_names
+    ret_arr: List[schemas.VectorDescription] = [
+        schemas.VectorDescription(name=vector_name, descriptive_name=vector_name, has_historical=False) for vector_name in vector_names
     ]
 
     return ret_arr
@@ -42,11 +41,11 @@ async def get_realizations_vector_data(
     case_uuid: str = Query(description="Sumo case uuid"),
     ensemble_name: str = Query(description="Ensemble name"),
     vector_name: str = Query(description="Name of the vector"),
-    resampling_frequency: Optional[schemas.timeseries.Frequency] = Query(None, description="Resampling frequency. If not specified, raw data without resampling wil be returned."),
+    resampling_frequency: Optional[schemas.Frequency] = Query(None, description="Resampling frequency. If not specified, raw data without resampling wil be returned."),
     realizations: Optional[Sequence[int]] = Query(None, description="Optional list of realizations to include. If not specified, all realizations will be returned."),
     relative_to_timestamp: Optional[datetime.datetime] = Query(None, description="Calculate relative to timestamp"),
     # fmt:on
-) -> List[schemas.timeseries.VectorRealizationData]:
+) -> List[schemas.VectorRealizationData]:
     """Get vector data per realization"""
 
     access = SummaryAccess(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
@@ -54,9 +53,9 @@ async def get_realizations_vector_data(
     sumo_freq = Frequency.from_string_value(resampling_frequency.value if resampling_frequency else "dummy")
     sumo_vec_arr = access.get_vector(vector_name=vector_name, resampling_frequency=sumo_freq, realizations=realizations)
 
-    ret_arr: List[schemas.timeseries.VectorRealizationData] = []
+    ret_arr: List[schemas.VectorRealizationData] = []
     for vec in sumo_vec_arr:
-        ret_arr.append(schemas.timeseries.VectorRealizationData(realization=vec.realization, timestamps=vec.timestamps, values=vec.values))
+        ret_arr.append(schemas.VectorRealizationData(realization=vec.realization, timestamps=vec.timestamps, values=vec.values))
 
     return ret_arr
 
@@ -67,7 +66,7 @@ async def get_vector_metadata(
     case_uuid: str = Query(description="Sumo case uuid"),
     ensemble_name: str = Query(description="Ensemble name"),
     vector_name: str = Query(description="Name of the vector"),
-) -> schemas.timeseries.VectorMetadata:
+) -> schemas.VectorMetadata:
     """Get metadata for the specified vector. Returns None if no metadata
     exists or if any of the non-optional properties of `VectorMetadata` are missing."""
 
@@ -79,7 +78,7 @@ async def get_timestamps(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     case_uuid: str = Query(description="Sumo case uuid"),
     ensemble_name: str = Query(description="Ensemble name"),
-    resampling_frequency: Optional[schemas.timeseries.Frequency] = Query(None, description="Resampling frequency"),
+    resampling_frequency: Optional[schemas.Frequency] = Query(None, description="Resampling frequency"),
     realizations: Union[Sequence[int], None] = Query(None, description="Optional list of realizations to include"),
 ) -> List[datetime.datetime]:
     """Get the intersection of available timestamps.
@@ -97,9 +96,9 @@ async def get_historical_vector_data(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     case_uuid: str = Query(description="Sumo case uuid"),
     non_historical_vector_name: str = Query(description="Name of the non-historical vector"),
-    resampling_frequency: Optional[schemas.timeseries.Frequency] = Query(None, description="Resampling frequency"),
+    resampling_frequency: Optional[schemas.Frequency] = Query(None, description="Resampling frequency"),
     relative_to_timestamp: Optional[datetime.datetime] = Query(None, description="Calculate relative to timestamp"),
-) -> schemas.timeseries.VectorHistoricalData:
+) -> schemas.VectorHistoricalData:
     ...
 
 
@@ -110,12 +109,12 @@ async def get_statistical_vector_data(
     case_uuid: str = Query(description="Sumo case uuid"),
     ensemble_name: str = Query(description="Ensemble name"),
     vector_name: str = Query(description="Name of the vector"),
-    resampling_frequency: schemas.timeseries.Frequency = Query(description="Resampling frequency"),
-    statistic_functions: Optional[Sequence[schemas.timeseries.StatisticFunction]] = Query(None, description="Optional list of statistics to calculate. If not specified, all statistics will be calculated."),
+    resampling_frequency: schemas.Frequency = Query(description="Resampling frequency"),
+    statistic_functions: Optional[Sequence[schemas.StatisticFunction]] = Query(None, description="Optional list of statistics to calculate. If not specified, all statistics will be calculated."),
     realizations: Optional[Sequence[int]] = Query(None, description="Optional list of realizations to include. If not specified, all realizations will be included."),
     relative_to_timestamp: Optional[datetime.datetime] = Query(None, description="Calculate relative to timestamp"),
     # fmt:on
-) -> schemas.timeseries.VectorStatisticData:
+) -> schemas.VectorStatisticData:
     """Get statistical vector data for an ensemble"""
 
     access = SummaryAccess(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
@@ -128,13 +127,13 @@ async def get_statistical_vector_data(
     if not statistics:
         raise HTTPException(status_code=404, detail="Could not compute statistics")
 
-    ret_data: schemas.timeseries.VectorStatisticData = _to_api_vector_statistic_data(statistics)
+    ret_data: schemas.VectorStatisticData = _to_api_vector_statistic_data(statistics)
 
     return ret_data
 
 
 def _to_service_statistic_functions(
-    api_stat_funcs: Optional[Sequence[schemas.timeseries.StatisticFunction]],
+    api_stat_funcs: Optional[Sequence[schemas.StatisticFunction]],
 ) -> Optional[List[StatisticFunction]]:
     """
     Convert incoming list of API statistic function enum values to service layer StatisticFunction enums,
@@ -152,19 +151,19 @@ def _to_service_statistic_functions(
     return service_stat_funcs
 
 
-def _to_api_vector_statistic_data(vector_statistics: VectorStatistics) -> schemas.timeseries.VectorStatisticData:
+def _to_api_vector_statistic_data(vector_statistics: VectorStatistics) -> schemas.VectorStatisticData:
     """
     Create API VectorStatisticData from service layer VectorStatistics
     """
-    value_objects: List[schemas.timeseries.StatisticValueObject] = []
-    for api_func_enum in schemas.timeseries.StatisticFunction:
+    value_objects: List[schemas.StatisticValueObject] = []
+    for api_func_enum in schemas.StatisticFunction:
         service_func_enum = StatisticFunction.from_string_value(api_func_enum.value)
         if service_func_enum is not None:
             value_arr = vector_statistics.values_dict.get(service_func_enum)
             if value_arr is not None:
-                value_objects.append(schemas.timeseries.StatisticValueObject(statistic_function=api_func_enum, values=value_arr))
+                value_objects.append(schemas.StatisticValueObject(statistic_function=api_func_enum, values=value_arr))
 
-    ret_data = schemas.timeseries.VectorStatisticData(
+    ret_data = schemas.VectorStatisticData(
         realizations=vector_statistics.realizations,
         timestamps=vector_statistics.timestamps,
         value_objects=value_objects,
@@ -178,8 +177,8 @@ async def get_realizations_calculated_vector_data(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     case_uuid: str = Query(description="Sumo case uuid"),
     ensemble_name: str = Query(description="Ensemble name"),
-    expression: schemas.timeseries.VectorExpressionInfo = Depends(),
-    resampling_frequency: Optional[schemas.timeseries.Frequency] = Query(None, description="Resampling frequency"),
+    expression: schemas.VectorExpressionInfo = Depends(),
+    resampling_frequency: Optional[schemas.Frequency] = Query(None, description="Resampling frequency"),
     relative_to_timestamp: Optional[datetime.datetime] = Query(None, description="Calculate relative to timestamp"),
 ) -> str:
     """Get calculated vector data per realization"""
