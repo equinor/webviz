@@ -1,132 +1,129 @@
 import datetime
 from io import BytesIO
-from typing import List, Optional, Sequence
+from typing import List, Optional, Sequence, Tuple
 
 import numpy as np
 import pyarrow as pa
+import pyarrow.parquet as pq
 import pyarrow.compute as pc
 from fmu.sumo.explorer.explorer import CaseCollection, SumoClient
 
-from ._arrow_helpers import create_float_downcasting_schema, set_date_column_type_to_timestamp_ms, set_real_column_type_to_int16
+from ._arrow_helpers import sort_table_on_real_then_date
 from ._field_metadata import create_vector_metadata_from_field_meta
 from ._helpers import create_sumo_client_instance
 from ._resampling import resample_segmented_multi_real_table
-from .types import Frequency, RealizationVector
+from .types import Frequency, RealizationVector, VectorMetadata
 
 
 class SummaryAccess:
     def __init__(self, access_token: str, case_uuid: str, iteration_name: str):
         self._sumo_client: SumoClient = create_sumo_client_instance(access_token)
-
         self._case_uuid = case_uuid
         self._iteration_name = iteration_name
 
-        # Right now, we need both iteration name and id, but this will not last
-        # For now, just do a hack to extract the ID from the name
-        iter_id = 0
-        try:
-            dash_idx = iteration_name.rindex("-")
-            iter_id = int(iteration_name[dash_idx + 1 :])
-        except:
-            pass
-
-        self._iteration_id = iter_id
-
     def get_vector_names(self) -> List[str]:
-        case_collection = CaseCollection(self._sumo_client).filter(id=self._case_uuid)
+        case_collection = CaseCollection(self._sumo_client).filter(uuid=self._case_uuid)
         if len(case_collection) != 1:
             raise ValueError(f"None or multiple sumo cases found {self._case_uuid=}")
 
         case = case_collection[0]
+        smry_table_collection = case.tables.filter(
+            aggregation="collection", name="summary", tagname="eclipse", iteration=self._iteration_name
+        )
 
-        # Currently it seems we have to filter on tagname using the iteration name in
-        # order to qualify actually get the smry vectors
-        maybe_smry_table_collection = case.tables.filter(operation="collection", iteration=self._iteration_id, tagname=self._iteration_name)
-
-        vec_names = maybe_smry_table_collection.names
+        vec_names = [name for name in smry_table_collection.columns if name not in ["DATE", "REAL"]]
         return vec_names
 
     def get_vector_table(
         self, vector_name: str, resampling_frequency: Optional[Frequency], realizations: Optional[Sequence[int]]
-    ) -> pa.Table:
+    ) -> Tuple[pa.Table, VectorMetadata]:
         """
         Get pyarrow.Table containing values for the specified vector.
         The returned table will always contain a 'DATE' and 'REAL' column in addition to the requested vector.
         The 'DATE' column will be of type timestamp[ms] and the 'REAL' column will be of type int16.
-        The vector column will be of type float.
+        The vector column will be of type float32.
         If `resampling_frequency` is None, the data will be returned with full/raw resolution.
         """
-        case_collection = CaseCollection(self._sumo_client).filter(id=self._case_uuid)
+        case_collection = CaseCollection(self._sumo_client).filter(uuid=self._case_uuid)
         if len(case_collection) != 1:
             raise ValueError(f"None or multiple sumo cases found {self._case_uuid=}")
 
         case = case_collection[0]
 
-        # Currently it seems we have to filter on tagname using the iteration name in
-        # order to qualify actually get the smry vectors
-        maybe_smry_table_collection = case.tables.filter(
-            name=[vector_name, "DATE"],
-            operation="collection",
-            iteration=self._iteration_id,
-            tagname=self._iteration_name,
+        smry_table_collection = case.tables.filter(
+            aggregation="collection",
+            name="summary",
+            tagname="eclipse",
+            iteration=self._iteration_name,
+            column=vector_name,
         )
-        assert len(maybe_smry_table_collection) == 2
+        if len(smry_table_collection) == 0:
+            raise ValueError(f"No table found for vector {vector_name=}")
+        if len(smry_table_collection) > 1:
+            raise ValueError(f"Multiple tables found for vector {vector_name=}")
 
-        # We don't know the order of the tables within the collection :-(
-        if maybe_smry_table_collection[0].name == "DATE":
-            date_sumo_table = maybe_smry_table_collection[0]
-            vec_sumo_table = maybe_smry_table_collection[1]
-        else:
-            vec_sumo_table = maybe_smry_table_collection[0]
-            date_sumo_table = maybe_smry_table_collection[1]
+        sumo_table = smry_table_collection[0]
+        # print(f"{sumo_table.format=}")
 
-        date_arrow_bytes: BytesIO = date_sumo_table.blob
-        # date_arrow_bytes = sumo_client.get(f"/objects('{date_table.id}')/blob")
-        with pa.ipc.open_file(date_arrow_bytes) as reader:
-            date_arrow_table = reader.read_all()
+        # Now, read as an arrow table
+        # Note!!!
+        # The tables we have seen so far have format set to 'arrow', but the actual data is in parquet format.
+        # This must be a bug or a misunderstanding.
+        # For now, just read the parquet data into an arrow table
+        byte_stream: BytesIO = sumo_table.blob
+        table = pq.read_table(byte_stream)
 
-        vec_arrow_bytes: BytesIO = vec_sumo_table.blob
-        # vec_arrow_bytes = sumo_client.get(f"/objects('{vec_table.id}')/blob")
-        with pa.ipc.open_file(vec_arrow_bytes) as reader:
-            vec_arrow_table = reader.read_all()
+        # Verify that we got the expected columns
+        if not "DATE" in table.column_names:
+            raise ValueError("Table does not contain a DATE column")
+        if not "REAL" in table.column_names:
+            raise ValueError("Table does not contain a REAL column")
+        if not vector_name in table.column_names:
+            raise ValueError(f"Table does not contain a {vector_name} column")
+        if table.num_columns != 3:
+            raise ValueError("Table should contain exactly 3 columns")
 
-        # Create the combined table for the vector.
-        # After this we expect the table to have the following columns: DATE, REAL, <vector_name>
-        table = vec_arrow_table.add_column(0, "DATE", date_arrow_table["DATE"])
 
-        # Our assumption is that the reconstructed table is segmented on REAL and that within each segment, the DATE
-        # column is sorted. We may want to add some checks here to verify this assumption since the resampling algorithm
-        # below assumes this and will fail if it is not true.
+        # Verify that we got the expected columns
+        if sorted(table.column_names) != sorted(["DATE", "REAL", vector_name]):
+            raise ValueError(f"Unexpected columns in table {table.column_names=}")
 
-        if realizations is not None:
-            mask = pc.is_in(table["REAL"], value_set=pa.array(realizations))
-            table = table.filter(mask)
-
-        # Until SUMO gets the datatypes right, do the casting here
+        # Verify that the column datatypes are as we expect
         schema = table.schema
-        schema = set_date_column_type_to_timestamp_ms(schema)
-        schema = create_float_downcasting_schema(schema)
-        schema = set_real_column_type_to_int16(schema)
-        table = table.cast(schema)
+        if schema.field("DATE").type != pa.timestamp("ms"):
+            raise ValueError(f"Unexpected type for DATE column {schema.field('DATE').type=}")
+        if schema.field("REAL").type != pa.int16():
+            raise ValueError(f"Unexpected type for REAL column {schema.field('REAL').type=}")
+        if schema.field(vector_name).type != pa.float32():
+            raise ValueError(f"Unexpected type for {vector_name} column {schema.field(vector_name).type=}")
 
+        # Our assumption is that the table is segmented on REAL and that within each segment,
+        # the DATE column is sorted. We may want to add some checks here to verify this assumption since the
+        # resampling algorithm below assumes this and will fail if it is not true.
+
+        # ...or just sort it unconditionally here
+        table = sort_table_on_real_then_date(table)
+
+        # The resampling algorithm below uses the field metadata to determine if the vector is a rate or not.
+        # For now, fail hard if metadata is not present. This test could be refined, but should suffice now.
+        vector_metadata = create_vector_metadata_from_field_meta(table.schema.field(vector_name))
+        if not vector_metadata:
+            raise ValueError(f"Did not find valid metadata for vector {vector_name}")
+
+        # Do the actual resampling
         if resampling_frequency is not None:
             table = resample_segmented_multi_real_table(table, resampling_frequency)
 
         # Should we always combine the chunks?
         table = table.combine_chunks()
 
-        return table
+        return table, vector_metadata
 
     def get_vector(
         self, vector_name: str, resampling_frequency: Optional[Frequency], realizations: Optional[Sequence[int]]
     ) -> List[RealizationVector]:
 
-        table = self.get_vector_table(vector_name, resampling_frequency, realizations)
-
-        # Retrieve vector metadata from the field's metadata
-        # Unfortunately it seems that currently the data we get from SUMO does not have this metadata
-        field = table.schema.field(vector_name)
-        vector_metadata = create_vector_metadata_from_field_meta(field)
+        table, vector_metadata = self.get_vector_table(vector_name, resampling_frequency, realizations)
 
         real_arr_np = table.column("REAL").to_numpy()
         unique_reals, first_occurrence_idx, real_counts = np.unique(real_arr_np, return_index=True, return_counts=True)

@@ -34,11 +34,14 @@ async def get_cases(
     print(case_info_arr)
 
     # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    # Note hard-coded to a single (working) sumo case on DROGON for now
+    # Sumo Explorer + Drogon + SMRY data is still a work in progress!
+    # Present the single DROGON case that we know to be good as the first item, also prefixing it with "GOOD"
     ret_arr: List[Case] = []
     if field_identifier == "DROGON":
         for ci in case_info_arr:
-            if ci.uuid == "0db5f2dd-aa62-407f-9ac4-0dbbe30371a2":
+            if ci.uuid == "10f41041-2c17-4374-a735-bb0de62e29dc":
+                ret_arr.insert(0, Case(uuid=ci.uuid, name=f"GOOD -- {ci.name}"))
+            else:
                 ret_arr.append(Case(uuid=ci.uuid, name=ci.name))
     else:
         ret_arr = [Case(uuid=ci.uuid, name=ci.name) for ci in case_info_arr]

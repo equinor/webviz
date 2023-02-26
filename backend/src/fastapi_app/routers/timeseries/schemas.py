@@ -53,8 +53,8 @@ class VectorRealizationData(BaseModel):
     realization: int
     timestamps: List[datetime.datetime]
     values: List[float]
-    # unit: str
-    # is_rate: bool
+    unit: str
+    is_rate: bool
 
 
 class StatisticValueObject(BaseModel):
@@ -66,8 +66,8 @@ class VectorStatisticData(BaseModel):
     realizations: List[int]
     timestamps: List[datetime.datetime]
     value_objects: List[StatisticValueObject]
-    # unit: str
-    # is_rate: bool
+    unit: str
+    is_rate: bool
 
 
 class VectorExpressionInfo(BaseModel):

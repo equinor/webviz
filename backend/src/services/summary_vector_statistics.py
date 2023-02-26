@@ -31,7 +31,6 @@ class VectorStatistics(BaseModel):
     realizations: List[int]
     timestamps: List[datetime.datetime]
     values_dict: Dict[StatisticFunction, List[float]]
-    metadata: Optional[VectorMetadata]  # Must be optional until SUMO delivers arrow tables with metadata
 
 
 def compute_vector_statistics_table(
