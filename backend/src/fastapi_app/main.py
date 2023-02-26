@@ -6,7 +6,7 @@ from starsessions import SessionMiddleware
 from starsessions.stores.redis import RedisStore
 
 from .routers.explore import router as explore_router
-from .routers.timeseries import router as timeseries_router
+from .routers.timeseries.router import router as timeseries_router
 from .routers.general import router as general_router
 from .auth.auth_helper import AuthHelper
 from .auth.enforce_logged_in_middleware import EnforceLoggedInMiddleware
