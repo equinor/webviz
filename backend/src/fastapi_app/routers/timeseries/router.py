@@ -3,10 +3,11 @@ from typing import List, Optional, Sequence, Union
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 
-from ....services.summary_vector_statistics import StatisticFunction, VectorStatistics, compute_vector_statistics
+from ....services.summary_vector_statistics import compute_vector_statistics
 from ....services.sumo_access.summary_access import Frequency, SummaryAccess
 from ....services.utils.authenticated_user import AuthenticatedUser
 from ...auth.auth_helper import AuthHelper
+from . import converters
 from . import schemas
 
 router = APIRouter()
@@ -120,54 +121,14 @@ async def get_statistical_vector_data(
     access = SummaryAccess(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
 
     service_freq = Frequency.from_string_value(resampling_frequency.value)
-    service_stat_funcs_to_compute = _to_service_statistic_functions(statistic_functions)
+    service_stat_funcs_to_compute = converters.to_service_statistic_functions(statistic_functions)
 
     vector_table = access.get_vector_table(vector_name=vector_name, resampling_frequency=service_freq, realizations=realizations)
     statistics = compute_vector_statistics(vector_table, vector_name, service_stat_funcs_to_compute)
     if not statistics:
         raise HTTPException(status_code=404, detail="Could not compute statistics")
 
-    ret_data: schemas.VectorStatisticData = _to_api_vector_statistic_data(statistics)
-
-    return ret_data
-
-
-def _to_service_statistic_functions(
-    api_stat_funcs: Optional[Sequence[schemas.StatisticFunction]],
-) -> Optional[List[StatisticFunction]]:
-    """
-    Convert incoming list of API statistic function enum values to service layer StatisticFunction enums,
-    also accounting for the case where the list is None
-    """
-    if api_stat_funcs is None:
-        return None
-
-    service_stat_funcs: List[StatisticFunction] = []
-    for api_func_enum in api_stat_funcs:
-        service_func_enum = StatisticFunction.from_string_value(api_func_enum.value)
-        if service_func_enum:
-            service_stat_funcs.append(service_func_enum)
-
-    return service_stat_funcs
-
-
-def _to_api_vector_statistic_data(vector_statistics: VectorStatistics) -> schemas.VectorStatisticData:
-    """
-    Create API VectorStatisticData from service layer VectorStatistics
-    """
-    value_objects: List[schemas.StatisticValueObject] = []
-    for api_func_enum in schemas.StatisticFunction:
-        service_func_enum = StatisticFunction.from_string_value(api_func_enum.value)
-        if service_func_enum is not None:
-            value_arr = vector_statistics.values_dict.get(service_func_enum)
-            if value_arr is not None:
-                value_objects.append(schemas.StatisticValueObject(statistic_function=api_func_enum, values=value_arr))
-
-    ret_data = schemas.VectorStatisticData(
-        realizations=vector_statistics.realizations,
-        timestamps=vector_statistics.timestamps,
-        value_objects=value_objects,
-    )
+    ret_data: schemas.VectorStatisticData = converters.to_api_vector_statistic_data(statistics)
 
     return ret_data
 
