@@ -15,7 +15,9 @@ function App() {
     const workbench = new Workbench();
 
     React.useEffect(() => {
-        workbench.makeLayout(layout);
+        if (!workbench.loadLayoutFromLocalStorage()) {
+            workbench.makeLayout(layout);
+        }
     }, []);
 
     return (

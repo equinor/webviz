@@ -1,0 +1,35 @@
+import React from "react";
+import { QueryObserverResult } from "react-query";
+
+import { resolveClassNames } from "../_utils/resolveClassNames";
+
+export type ApiStateWrapperProps = {
+    apiResult: QueryObserverResult;
+    loadingComponent: React.ReactNode;
+    errorComponent: React.ReactNode;
+    children: React.ReactNode;
+};
+
+export const ApiStateWrapper: React.FC<ApiStateWrapperProps> = (props: ApiStateWrapperProps) => {
+    return (
+        <div
+            className={resolveClassNames(
+                "relative rounded",
+                { "outline outline-blue-100 outline-offset-2": props.apiResult.isLoading },
+                { "outline outline-red-100 outline-offset-2": props.apiResult.isError }
+            )}
+        >
+            {props.apiResult.isLoading && (
+                <div className="absolute left-0 right-0 w-full h-full bg-white bg-opacity-80 flex items-center justify-center z-10">
+                    {props.loadingComponent}
+                </div>
+            )}
+            {props.apiResult.isError && (
+                <div className="absolute left-0 right-0 w-full h-full bg-white bg-opacity-80 flex items-center justify-center z-10">
+                    {props.errorComponent}
+                </div>
+            )}
+            {props.children}
+        </div>
+    );
+};
