@@ -52,7 +52,7 @@ export const Select = withDefaults<SelectProps>()(defaultProps, (props) => {
                     const start = Math.min(lastShiftIndex, index);
                     const end = Math.max(lastShiftIndex, index);
                     const newSelected = props.options.slice(start, end + 1).map((option) => option.value);
-                    setSelected([...selected, ...newSelected]);
+                    setSelected(newSelected);
                 } else if (keysPressed.includes("Control")) {
                     if (!selected.includes(value)) {
                         setSelected([...selected, value]);
@@ -188,8 +188,8 @@ export const Select = withDefaults<SelectProps>()(defaultProps, (props) => {
                                         "flex",
                                         "items-center",
                                         "select-none",
-                                        "hover:bg-blue-100",
                                         {
+                                            "hover:bg-blue-100": !selected.includes(option.value),
                                             "bg-blue-600 text-white box-border hover:bg-blue-700": selected.includes(
                                                 option.value
                                             ),

@@ -110,7 +110,9 @@ export const Dropdown = withDefaults<DropdownProps>()(defaultProps, (props) => {
             setDropdownVisible(false);
             setFilter(null);
             setFilteredOptions(props.options);
-            props.onChange?.(value);
+            if (props.onChange) {
+                props.onChange(value);
+            }
             setOptionIndexWithFocus(-1);
         },
         [props.onChange, selection, props.options]

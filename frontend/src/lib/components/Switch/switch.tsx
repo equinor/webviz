@@ -8,8 +8,6 @@ import { resolveClassNames } from "../_utils/resolveClassNames";
 export const Switch = React.forwardRef((props: UseSwitchParameters, ref: React.ForwardedRef<HTMLInputElement>) => {
     const { getInputProps, checked, disabled } = useSwitch(props);
 
-    console.log(checked);
-
     return (
         <BaseComponent disabled={disabled}>
             <SwitchUnstyled
