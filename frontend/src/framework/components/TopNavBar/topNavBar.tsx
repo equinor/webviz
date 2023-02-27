@@ -4,8 +4,10 @@ import { useQuery } from "react-query";
 import { apiService } from "@framework/ApiService";
 import { useStoreState } from "@framework/StateStore";
 import { Workbench } from "@framework/Workbench";
+import { ApiStateWrapper } from "@lib/components/ApiStateWrapper";
+import { CircularProgress } from "@lib/components/CircularProgress";
+import { Dropdown } from "@lib/components/Dropdown";
 // import { useWorkbenchActiveModuleName } from "@framework/hooks/useWorkbenchActiveModuleName";
-import { ListBox } from "@lib/components/ListBox";
 import { ToggleButton } from "@lib/components/ToggleButton";
 
 import { LoginButton } from "../LoginButton";
@@ -30,13 +32,13 @@ export const TopNavBar: React.FC<TopNavBarProps> = (props) => {
         },
     });
 
-    const handleFieldChange = (fieldName: string) => {
-        props.workbench.setNavigatorFieldName(fieldName);
+    const handleFieldChange = (fieldName: string | number) => {
+        props.workbench.setNavigatorFieldName(fieldName as string);
     };
 
-    const handleCaseChange = (caseId: string) => {
-        setSelectedCaseId(caseId);
-        props.workbench.setNavigatorCaseId(caseId);
+    const handleCaseChange = (caseId: string | number) => {
+        setSelectedCaseId(caseId as string);
+        props.workbench.setNavigatorCaseId(caseId as string);
     };
 
     const handleToggleModulesList = (value: boolean) => {
@@ -54,20 +56,22 @@ export const TopNavBar: React.FC<TopNavBarProps> = (props) => {
         <div className="bg-slate-100 p-4">
             <div className="flex flex-row gap-4 items-center">
                 <h1 className="flex-grow">{activeModuleName}</h1>
-                <ListBox items={fields} selectedItem={"Drogon"} onSelect={handleFieldChange} />
-                {casesQueryRes.isLoading ? (
-                    "Loading"
-                ) : (
-                    <ListBox
-                        items={
+                <Dropdown options={fields} value={"Drogon"} onChange={handleFieldChange} />
+                <ApiStateWrapper
+                    apiResult={casesQueryRes}
+                    errorComponent={<div className="text-red-500">Error loading cases</div>}
+                    loadingComponent={<CircularProgress />}
+                >
+                    <Dropdown
+                        options={
                             casesQueryRes.isSuccess
                                 ? casesQueryRes.data?.map((aCase) => ({ value: aCase.uuid, label: aCase.name })) || []
                                 : []
                         }
-                        selectedItem={selectedCaseId || "None"}
-                        onSelect={handleCaseChange}
+                        value={selectedCaseId || "None"}
+                        onChange={handleCaseChange}
                     />
-                )}
+                </ApiStateWrapper>
                 <ToggleButton active={modulesListOpen} onToggle={(active: boolean) => handleToggleModulesList(active)}>
                     Add modules
                 </ToggleButton>
