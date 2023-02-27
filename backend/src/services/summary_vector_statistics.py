@@ -6,7 +6,7 @@ import pandas as pd
 import pyarrow as pa
 from pydantic import BaseModel
 
-from .sumo_access._arrow_helpers import create_float_downcasting_schema, set_date_column_type_to_timestamp_ms
+from .utils.arrow_helpers import create_float_downcasting_schema, set_date_column_type_to_timestamp_ms
 from .utils.statistic_function import StatisticFunction
 
 class VectorStatistics(BaseModel):
