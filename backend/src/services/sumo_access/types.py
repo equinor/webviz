@@ -33,10 +33,10 @@ class RealizationVector(BaseModel):
     realization: int
     timestamps: List[datetime.datetime]
     values: List[float]
-    metadata: Optional[VectorMetadata]  # Must be optional until SUMO delivers arrow tables with metadata
+    metadata: VectorMetadata
 
 
 class HistoricalVector(BaseModel):
     timestamps: List[datetime.datetime]
     values: List[float]
-    metadata: Optional[VectorMetadata]  # Must be optional until SUMO delivers arrow tables with metadata
+    metadata: VectorMetadata

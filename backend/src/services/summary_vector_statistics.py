@@ -1,5 +1,4 @@
 import datetime
-from enum import Enum
 from typing import Dict, List, Optional, Sequence
 
 import numpy as np
@@ -7,31 +6,13 @@ import pandas as pd
 import pyarrow as pa
 from pydantic import BaseModel
 
-from .sumo_access._arrow_helpers import create_float_downcasting_schema, set_date_column_type_to_timestamp_ms
-from .sumo_access.types import VectorMetadata
-
-
-class StatisticFunction(Enum):
-    MIN = "MIN"
-    MAX = "MAX"
-    MEAN = "MEAN"
-    P10 = "P10"
-    P90 = "P90"
-    P50 = "P50"
-
-    @classmethod
-    def from_string_value(cls, value: str) -> Optional["StatisticFunction"]:
-        try:
-            return cls(value)
-        except ValueError:
-            return None
-
+from .utils.arrow_helpers import create_float_downcasting_schema, set_date_column_type_to_timestamp_ms
+from .utils.statistic_function import StatisticFunction
 
 class VectorStatistics(BaseModel):
     realizations: List[int]
     timestamps: List[datetime.datetime]
     values_dict: Dict[StatisticFunction, List[float]]
-    metadata: Optional[VectorMetadata]  # Must be optional until SUMO delivers arrow tables with metadata
 
 
 def compute_vector_statistics_table(

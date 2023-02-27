@@ -14,14 +14,16 @@ def main() -> None:
     print("## Running dev_sumo_access_test_driver")
     print("## =================================================")
 
-    dummy_sumo_client = SumoClient("prod")
+    #dummy_sumo_client = SumoClient("prod")
+    dummy_sumo_client = SumoClient("dev")
     access_token = dummy_sumo_client._retrieve_token()
 
     explore = SumoExplore(access_token=access_token)
     cases = explore.get_cases(field_identifier="DROGON")
     print(cases)
 
-    sumo_case_id = "0db5f2dd-aa62-407f-9ac4-0dbbe30371a2"
+    #sumo_case_id = "0db5f2dd-aa62-407f-9ac4-0dbbe30371a2"
+    sumo_case_id = "10f41041-2c17-4374-a735-bb0de62e29dc"
     sumo_case_name = None
     for case_info in cases:
         if case_info.uuid == sumo_case_id:
@@ -43,21 +45,21 @@ def main() -> None:
     print("\n\n")
     print(vector_names)
 
-    vector_table = summary_access.get_vector_table(vector_name="FOPT", resampling_frequency=None, realizations=None)
+    vector_table, vector_meta = summary_access.get_vector_table(vector_name="FOPT", resampling_frequency=None, realizations=None)
     print("\n\nRAW")
     print(vector_table.shape)
 
-    vector_table = summary_access.get_vector_table(vector_name="FOPT", resampling_frequency=Frequency.DAILY, realizations=None)
+    vector_table, vector_meta = summary_access.get_vector_table(vector_name="FOPT", resampling_frequency=Frequency.DAILY, realizations=None)
     print("\n\nDAILY")
     print(vector_table.shape)
 
-    vector_table = summary_access.get_vector_table(vector_name="FOPT", resampling_frequency=Frequency.YEARLY, realizations=None)
+    vector_table, vector_meta = summary_access.get_vector_table(vector_name="FOPT", resampling_frequency=Frequency.YEARLY, realizations=None)
     print("\n\nYEARLY")
     print(vector_table)
     print(vector_table.shape)
 
     print("\n\nYEARLY - only real 0")
-    vector_table = summary_access.get_vector_table(vector_name="FOPT", resampling_frequency=Frequency.YEARLY, realizations=[0])
+    vector_table, vector_meta = summary_access.get_vector_table(vector_name="FOPT", resampling_frequency=Frequency.YEARLY, realizations=[0])
     vector_table = vector_table.filter(pa.compute.equal(vector_table["REAL"], 0))
     print(vector_table)
     print(vector_table.shape)
@@ -70,7 +72,7 @@ def main() -> None:
 
 
     print("\n\nYEARLY")
-    vector_table = summary_access.get_vector_table(vector_name="FOPT", resampling_frequency=Frequency.YEARLY, realizations=None)
+    vector_table, vector_meta = summary_access.get_vector_table(vector_name="FOPT", resampling_frequency=Frequency.YEARLY, realizations=None)
     print(vector_table)
 
     print("\n\nSTATS table")

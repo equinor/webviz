@@ -1,5 +1,10 @@
 import pyarrow as pa
 
+
+def sort_table_on_real_then_date(table: pa.Table) -> pa.Table:
+    return table.sort_by([("REAL", "ascending"), ("DATE", "ascending")])
+
+
 def create_float_downcasting_schema(schema: pa.Schema) -> pa.Schema:
     dt_float64 = pa.float64()
     dt_float32 = pa.float32()

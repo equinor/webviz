@@ -1,4 +1,5 @@
 import datetime
+import logging
 
 from fastapi import FastAPI
 from fastapi.routing import APIRoute
@@ -11,6 +12,11 @@ from .routers.general import router as general_router
 from .auth.auth_helper import AuthHelper
 from .auth.enforce_logged_in_middleware import EnforceLoggedInMiddleware
 from . import config
+
+logging.basicConfig(
+    level=logging.WARNING, format="%(asctime)s %(levelname)-3s [%(name)s]: %(message)s", datefmt="%H:%M:%S"
+)
+logging.getLogger("src.services.sumo_access").setLevel(level=logging.DEBUG)
 
 
 def custom_generate_unique_id(route: APIRoute):

@@ -1,4 +1,5 @@
 import datetime
+import logging
 from typing import List, Optional, Sequence, Union
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -6,9 +7,12 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from ....services.summary_vector_statistics import compute_vector_statistics
 from ....services.sumo_access.summary_access import Frequency, SummaryAccess
 from ....services.utils.authenticated_user import AuthenticatedUser
+from ....services.utils.perf_timer import PerfTimer
 from ...auth.auth_helper import AuthHelper
 from . import converters
 from . import schemas
+
+LOGGER = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -56,7 +60,7 @@ async def get_realizations_vector_data(
 
     ret_arr: List[schemas.VectorRealizationData] = []
     for vec in sumo_vec_arr:
-        ret_arr.append(schemas.VectorRealizationData(realization=vec.realization, timestamps=vec.timestamps, values=vec.values))
+        ret_arr.append(schemas.VectorRealizationData(realization=vec.realization, timestamps=vec.timestamps, values=vec.values, unit=vec.metadata.unit, is_rate=vec.metadata.is_rate))
 
     return ret_arr
 
@@ -123,12 +127,13 @@ async def get_statistical_vector_data(
     service_freq = Frequency.from_string_value(resampling_frequency.value)
     service_stat_funcs_to_compute = converters.to_service_statistic_functions(statistic_functions)
 
-    vector_table = access.get_vector_table(vector_name=vector_name, resampling_frequency=service_freq, realizations=realizations)
+    vector_table, vector_metadata = access.get_vector_table(vector_name=vector_name, resampling_frequency=service_freq, realizations=realizations)
+
     statistics = compute_vector_statistics(vector_table, vector_name, service_stat_funcs_to_compute)
     if not statistics:
         raise HTTPException(status_code=404, detail="Could not compute statistics")
 
-    ret_data: schemas.VectorStatisticData = converters.to_api_vector_statistic_data(statistics)
+    ret_data: schemas.VectorStatisticData = converters.to_api_vector_statistic_data(statistics, vector_metadata)
 
     return ret_data
 
