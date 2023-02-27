@@ -1,6 +1,6 @@
 import React from "react";
 
-import { useSize } from "../../hooks/useSize";
+import { useElementSize } from "../../hooks/useElementSize";
 import { withDefaults } from "../_utils/components";
 
 export type VirtualizationProps<T = any> = {
@@ -25,7 +25,7 @@ export const Virtualization = withDefaults<VirtualizationProps>()(defaultProps, 
         end: 0,
     });
 
-    const containerSize = useSize(props.containerRef);
+    const containerSize = useElementSize(props.containerRef);
 
     React.useEffect(() => {
         if (props.containerRef.current) {
