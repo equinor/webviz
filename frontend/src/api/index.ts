@@ -10,11 +10,14 @@ export { OpenAPI } from './core/OpenAPI';
 export type { OpenAPIConfig } from './core/OpenAPI';
 
 export type { Case } from './models/Case';
+export type { DynamicSurfaceDirectory } from './models/DynamicSurfaceDirectory';
 export type { Ensemble } from './models/Ensemble';
 export { Frequency } from './models/Frequency';
 export type { HTTPValidationError } from './models/HTTPValidationError';
+export type { StaticSurfaceDirectory } from './models/StaticSurfaceDirectory';
 export { StatisticFunction } from './models/StatisticFunction';
 export type { StatisticValueObject } from './models/StatisticValueObject';
+export type { SurfaceData } from './models/SurfaceData';
 export type { UserInfo } from './models/UserInfo';
 export type { ValidationError } from './models/ValidationError';
 export type { VectorDescription } from './models/VectorDescription';
@@ -25,4 +28,5 @@ export type { VectorStatisticData } from './models/VectorStatisticData';
 
 export { DefaultService } from './services/DefaultService';
 export { ExploreService } from './services/ExploreService';
+export { SurfaceService } from './services/SurfaceService';
 export { TimeseriesService } from './services/TimeseriesService';

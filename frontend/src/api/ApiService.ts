@@ -7,6 +7,7 @@ import { AxiosHttpRequest } from './core/AxiosHttpRequest';
 
 import { DefaultService } from './services/DefaultService';
 import { ExploreService } from './services/ExploreService';
+import { SurfaceService } from './services/SurfaceService';
 import { TimeseriesService } from './services/TimeseriesService';
 
 type HttpRequestConstructor = new (config: OpenAPIConfig) => BaseHttpRequest;
@@ -15,6 +16,7 @@ export class ApiService {
 
     public readonly default: DefaultService;
     public readonly explore: ExploreService;
+    public readonly surface: SurfaceService;
     public readonly timeseries: TimeseriesService;
 
     public readonly request: BaseHttpRequest;
@@ -34,6 +36,7 @@ export class ApiService {
 
         this.default = new DefaultService(this.request);
         this.explore = new ExploreService(this.request);
+        this.surface = new SurfaceService(this.request);
         this.timeseries = new TimeseriesService(this.request);
     }
 }

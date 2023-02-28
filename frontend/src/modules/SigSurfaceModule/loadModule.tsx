@@ -6,6 +6,10 @@ import { SigSurfaceView } from "./sigSurfaceView";
 
 const initialState: SigSurfaceState = {
     ensembleName: null,
+    surfaceName: null,
+    surfaceAttribute: null,
+    realizationNum: 0,
+    timeOrInterval: null,
 };
 
 const module = ModuleRegistry.initModule<SigSurfaceState>("SigSurfaceModule", initialState);

@@ -53,13 +53,13 @@ class SurfaceAccess:
 
         case = case_collection[0]
 
-        timestamp_or_interval_filter = TimeFilter(TimeType.ALL)
+        has_timestamp_or_interval_filter = TimeFilter(TimeType.ALL)
         surface_collection: SurfaceCollection = case.surfaces.filter(
-            iteration=self._iteration_name, aggregation=False, time=timestamp_or_interval_filter
+            iteration=self._iteration_name, aggregation=False, time=has_timestamp_or_interval_filter
         )
 
-        names = surface_collection.names
-        attributes = surface_collection.tagnames
+        names = sorted(surface_collection.names)
+        attributes = sorted(surface_collection.tagnames)
         timestamps: List[str] = surface_collection.timestamps
         intervals: List[Tuple[str, str]] = surface_collection.intervals
 
@@ -95,8 +95,23 @@ class SurfaceAccess:
             iteration=self._iteration_name, aggregation=False, time=no_time_data_filter
         )
 
-        names = surface_collection.names
-        attributes = surface_collection.tagnames
+        names = sorted(surface_collection.names)
+        attributes = sorted(surface_collection.tagnames)
+
+        # unique_combos = set()
+        # for surf in surface_collection.filter(realization=[0, 10, 50]):
+        #     combo_str = surf.name + surf.tagname
+        #     unique_combos.add(combo_str)
+        # print(f"{len(unique_combos)=}")
+
+        # unique_combos = set()
+        # for surf_name in names:
+        #     my_coll = surface_collection.filter(name=surf_name, realization=0)
+        #     my_tagnames = my_coll.tagnames
+        #     for tagname in my_tagnames:
+        #         combo_str = surf_name + tagname
+        #         unique_combos.add(combo_str)
+        # print(f"{len(unique_combos)=}")
 
         surf_dir = StaticSurfaceDirectory(names=names, attributes=attributes)
 
@@ -153,6 +168,45 @@ class SurfaceAccess:
         xtgeo_surf = xtgeo.surface_from_file(byte_stream)
 
         LOGGER.debug(f"Got dynamic surface from Sumo in: {timer.elapsed_ms()}ms ({addr_str})")
+
+        return xtgeo_surf
+
+    def get_static_surf(
+        self, real_num: int, name: str, attribute: str) -> Optional[xtgeo.RegularSurface]:
+        """Get actual surface data for a static surface"""
+
+        timer = PerfTimer()
+
+        addr_str = self._make_addr_str(real_num, name, attribute, None)
+
+        case_collection = CaseCollection(self._sumo_client).filter(uuid=self._case_uuid)
+        if len(case_collection) != 1:
+            raise ValueError(f"None or multiple sumo cases found {self._case_uuid=}")
+
+        case = case_collection[0]
+
+        no_time_data_filter = TimeFilter(TimeType.NONE)
+        surface_collection = case.surfaces.filter(
+            iteration=self._iteration_name,
+            aggregation=False,
+            realization=real_num,
+            name=name,
+            tagname=attribute,
+            time=no_time_data_filter,
+        )
+
+        surf_count = len(surface_collection)
+        if surf_count == 0:
+            LOGGER.warning(f"No static surface found in Sumo for {addr_str}")
+            return None
+        if surf_count > 1:
+            LOGGER.warning(f"Multiple ({surf_count}) surfaces found in Sumo for: {addr_str}. Returning first surface.")
+
+        sumo_surf = surface_collection[0]
+        byte_stream: BytesIO = sumo_surf.blob
+        xtgeo_surf = xtgeo.surface_from_file(byte_stream)
+
+        LOGGER.debug(f"Got static surface from Sumo in: {timer.elapsed_ms()}ms ({addr_str})")
 
         return xtgeo_surf
 

@@ -66,11 +66,14 @@ def test_surface_access(surf_access: SurfaceAccess) -> None:
     static_surf_dir = surf_access.get_static_surf_dir()
     print(f"{static_surf_dir=}")
 
+    surf = surf_access.get_static_surf(real_num=0, name=static_surf_dir.names[0], attribute=static_surf_dir.attributes[2])
+    print(f"{type(surf)=}")
+
     # dyn_surf = surf_access.get_dynamic_surf(real_num=0, name=dynamic_surf_dir.names[0], attribute=dynamic_surf_dir.attributes[0], time_or_interval_str=dynamic_surf_dir.date_strings[0])
     # print(f"{type(dyn_surf)=}")
 
-    dyn_surf = surf_access.get_statistical_dynamic_surf(statistic_function=StatisticFunction.MEAN, name=dynamic_surf_dir.names[0], attribute=dynamic_surf_dir.attributes[0], time_or_interval_str=dynamic_surf_dir.date_strings[0])
-    print(f"{type(dyn_surf)=}")
+    # dyn_surf = surf_access.get_statistical_dynamic_surf(statistic_function=StatisticFunction.MEAN, name=dynamic_surf_dir.names[0], attribute=dynamic_surf_dir.attributes[0], time_or_interval_str=dynamic_surf_dir.date_strings[0])
+    # print(f"{type(dyn_surf)=}")
 
 
 def main() -> None:
