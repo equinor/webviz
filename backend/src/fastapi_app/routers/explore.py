@@ -1,14 +1,11 @@
 from typing import List
 
-from fastapi import APIRouter, Query, Path, Depends
+from fastapi import APIRouter, Depends, Path, Query
 from pydantic import BaseModel
 
 from ...services.sumo_access.sumo_explore import SumoExplore
 from ...services.utils.authenticated_user import AuthenticatedUser
-from ...services.utils.perf_timer import PerfTimer
-
 from ..auth.auth_helper import AuthHelper
-
 
 router = APIRouter()
 
@@ -22,7 +19,7 @@ class Ensemble(BaseModel):
     name: str
 
 
-@router.get("/cases", tags=["explore"])
+@router.get("/cases")
 async def get_cases(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     field_identifier: str = Query(description="Field identifier"),
@@ -49,7 +46,7 @@ async def get_cases(
     return ret_arr
 
 
-@router.get("/cases/{case_uuid}/ensembles", tags=["explore"])
+@router.get("/cases/{case_uuid}/ensembles")
 async def get_ensembles(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     case_uuid: str = Path(description="Sumo case uuid"),

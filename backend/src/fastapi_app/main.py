@@ -6,12 +6,12 @@ from fastapi.routing import APIRoute
 from starsessions import SessionMiddleware
 from starsessions.stores.redis import RedisStore
 
-from .routers.explore import router as explore_router
-from .routers.timeseries.router import router as timeseries_router
-from .routers.general import router as general_router
+from . import config
 from .auth.auth_helper import AuthHelper
 from .auth.enforce_logged_in_middleware import EnforceLoggedInMiddleware
-from . import config
+from .routers.explore import router as explore_router
+from .routers.general import router as general_router
+from .routers.timeseries.router import router as timeseries_router
 
 logging.basicConfig(
     level=logging.WARNING, format="%(asctime)s %(levelname)-3s [%(name)s]: %(message)s", datefmt="%H:%M:%S"
@@ -25,8 +25,10 @@ def custom_generate_unique_id(route: APIRoute):
 
 app = FastAPI(generate_unique_id_function=custom_generate_unique_id, root_path="/api")
 
-app.include_router(explore_router)
-app.include_router(timeseries_router, prefix="/timeseries")
+# The tags we add here will determine the name of the frontend api service for our endpoints as well as
+# providing some grouping when viewing the openapi documentation.
+app.include_router(explore_router, tags=["explore"])
+app.include_router(timeseries_router, prefix="/timeseries", tags=["timeseries"])
 
 authHelper = AuthHelper()
 app.include_router(authHelper.router)
