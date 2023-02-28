@@ -8,6 +8,7 @@ from starsessions.stores.redis import RedisStore
 
 from .routers.explore import router as explore_router
 from .routers.timeseries.router import router as timeseries_router
+from .routers.surface.router import router as surface_router
 from .routers.general import router as general_router
 from .auth.auth_helper import AuthHelper
 from .auth.enforce_logged_in_middleware import EnforceLoggedInMiddleware
@@ -27,6 +28,7 @@ app = FastAPI(generate_unique_id_function=custom_generate_unique_id, root_path="
 
 app.include_router(explore_router)
 app.include_router(timeseries_router, prefix="/timeseries")
+app.include_router(surface_router, prefix="/surface", tags=["sigurd","surface"])
 
 authHelper = AuthHelper()
 app.include_router(authHelper.router)

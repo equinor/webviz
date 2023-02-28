@@ -9,15 +9,17 @@ import { CustomQueryClientProvider } from "@framework/providers/QueryClientProvi
 
 import "./modules/registerAllModules.ts";
 
-const layout: LayoutElement[] = [];
+//const layout: LayoutElement[] = [];
+const layout: LayoutElement[] = [{ moduleName: "SigSurfaceModule", relX: 0, relY: 0, relHeight: 1, relWidth: 1 }];
 
 function App() {
     const workbench = new Workbench();
 
     React.useEffect(() => {
-        if (!workbench.loadLayoutFromLocalStorage()) {
-            workbench.makeLayout(layout);
-        }
+        workbench.makeLayout(layout);
+        // if (!workbench.loadLayoutFromLocalStorage()) {
+        //     workbench.makeLayout(layout);
+        // }
     }, []);
 
     return (

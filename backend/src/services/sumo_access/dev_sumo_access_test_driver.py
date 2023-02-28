@@ -10,6 +10,7 @@ from .summary_access import SummaryAccess, RealizationVector, Frequency
 from .surface_access import SurfaceAccess, DynamicSurfaceDirectory
 from .sumo_explore import SumoExplore
 from ..summary_vector_statistics import compute_vector_statistics_table, compute_vector_statistics
+from ..utils.statistic_function import StatisticFunction
 
 
 def test_summary_access(summary_access: SummaryAccess) -> None:
@@ -65,7 +66,10 @@ def test_surface_access(surf_access: SurfaceAccess) -> None:
     static_surf_dir = surf_access.get_static_surf_dir()
     print(f"{static_surf_dir=}")
 
-    dyn_surf = surf_access.get_dynamic_surf(real_num=0, name=dynamic_surf_dir.names[0], attribute=dynamic_surf_dir.attributes[0], time_or_interval_str=dynamic_surf_dir.date_strings[0])
+    # dyn_surf = surf_access.get_dynamic_surf(real_num=0, name=dynamic_surf_dir.names[0], attribute=dynamic_surf_dir.attributes[0], time_or_interval_str=dynamic_surf_dir.date_strings[0])
+    # print(f"{type(dyn_surf)=}")
+
+    dyn_surf = surf_access.get_statistical_dynamic_surf(statistic_function=StatisticFunction.MEAN, name=dynamic_surf_dir.names[0], attribute=dynamic_surf_dir.attributes[0], time_or_interval_str=dynamic_surf_dir.date_strings[0])
     print(f"{type(dyn_surf)=}")
 
 
