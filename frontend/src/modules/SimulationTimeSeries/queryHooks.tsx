@@ -1,4 +1,4 @@
-import { UseQueryResult, useQuery } from "react-query";
+import { UseQueryResult, useQuery } from "@tanstack/react-query";
 
 import { Frequency, VectorRealizationData, VectorStatisticData } from "@api";
 import { apiService } from "@framework/ApiService";

@@ -1,6 +1,6 @@
 import React from "react";
-import { QueryCache, QueryClient, QueryClientProvider } from "react-query";
-import { ReactQueryDevtools } from "react-query/devtools";
+import { QueryCache, QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 
 import { AuthState, useAuthProvider } from "./AuthProvider";
 

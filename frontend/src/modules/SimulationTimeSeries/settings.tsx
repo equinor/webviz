@@ -1,5 +1,5 @@
 import React from "react";
-import { UseQueryResult, useQuery } from "react-query";
+import { UseQueryResult, useQuery } from "@tanstack/react-query";
 
 import { ModuleFCProps } from "@framework/Module";
 import { Frequency, VectorDescription } from "@api";

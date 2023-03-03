@@ -1,5 +1,5 @@
 import React from "react";
-import { QueryObserverResult } from "react-query";
+import { QueryObserverResult } from "@tanstack/react-query";
 
 import { resolveClassNames } from "../_utils/resolveClassNames";
 
