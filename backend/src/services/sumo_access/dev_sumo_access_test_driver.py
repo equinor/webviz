@@ -43,7 +43,6 @@ def test_summary_access(summary_access: SummaryAccess) -> None:
     print(vector_arr[0])
 
 
-
     print("\n\nYEARLY")
     vector_table, vector_meta = summary_access.get_vector_table(vector_name="FOPT", resampling_frequency=Frequency.YEARLY, realizations=None)
     print(vector_table)
@@ -66,8 +65,15 @@ def test_surface_access(surf_access: SurfaceAccess) -> None:
     static_surf_dir = surf_access.get_static_surf_dir()
     print(f"{static_surf_dir=}")
 
-    surf = surf_access.get_static_surf(real_num=0, name=static_surf_dir.names[0], attribute=static_surf_dir.attributes[2])
+    name_idx = 0
+    valid_attr_indices = static_surf_dir.valid_attributes_for_name[name_idx]
+    surf_name = static_surf_dir.names[name_idx]
+    surf_attr = static_surf_dir.attributes[valid_attr_indices[0]]
+    surf = surf_access.get_static_surf(real_num=0, name=surf_name, attribute=surf_attr)
     print(f"{type(surf)=}")
+
+    # surf = surf_access.get_static_surf(real_num=0, name=static_surf_dir.names[0], attribute=static_surf_dir.attributes[2])
+    # print(f"{type(surf)=}")
 
     # dyn_surf = surf_access.get_dynamic_surf(real_num=0, name=dynamic_surf_dir.names[0], attribute=dynamic_surf_dir.attributes[0], time_or_interval_str=dynamic_surf_dir.date_strings[0])
     # print(f"{type(dyn_surf)=}")

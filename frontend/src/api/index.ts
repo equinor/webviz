@@ -18,6 +18,7 @@ export type { StaticSurfaceDirectory } from './models/StaticSurfaceDirectory';
 export { StatisticFunction } from './models/StatisticFunction';
 export type { StatisticValueObject } from './models/StatisticValueObject';
 export type { SurfaceData } from './models/SurfaceData';
+export { SurfaceStatisticFunction } from './models/SurfaceStatisticFunction';
 export type { UserInfo } from './models/UserInfo';
 export type { ValidationError } from './models/ValidationError';
 export type { VectorDescription } from './models/VectorDescription';

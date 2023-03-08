@@ -1,6 +1,17 @@
-from typing import List
+from enum import Enum
+from typing import List, Tuple, Dict
 
 from pydantic import BaseModel
+
+
+class SurfaceStatisticFunction(str, Enum):
+    MEAN = "MEAN"
+    STD = "STD"
+    MIN = "MIN"
+    MAX = "MAX"
+    P10 = "P10"
+    P90 = "P90"
+    P50 = "P50"
 
 
 class DynamicSurfaceDirectory(BaseModel):
@@ -12,6 +23,7 @@ class DynamicSurfaceDirectory(BaseModel):
 class StaticSurfaceDirectory(BaseModel):
     names: List[str]
     attributes: List[str]
+    valid_attributes_for_name: List[List[int]]
 
 
 class SurfaceData(BaseModel):

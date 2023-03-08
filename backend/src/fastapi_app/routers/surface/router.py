@@ -4,6 +4,7 @@ from typing import List
 from fastapi import APIRouter, Depends, HTTPException, Query
 
 from ....services.sumo_access.surface_access import SurfaceAccess
+from ....services.sumo_access.surface_types import StatisticFunction
 from ....services.utils.authenticated_user import AuthenticatedUser
 from ....services.utils.perf_timer import PerfTimer
 from ...auth.auth_helper import AuthHelper
@@ -47,7 +48,11 @@ def get_static_surface_directory(
     access = SurfaceAccess(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
     surf_dir = access.get_static_surf_dir()
 
-    ret_dir = schemas.StaticSurfaceDirectory(names=surf_dir.names, attributes=surf_dir.attributes)
+    ret_dir = schemas.StaticSurfaceDirectory(
+        names=surf_dir.names,
+        attributes=surf_dir.attributes,
+        valid_attributes_for_name=surf_dir.valid_attributes_for_name,
+    )
 
     return ret_dir
 
@@ -65,17 +70,14 @@ def get_static_surface_data(
     timer = PerfTimer()
 
     access = SurfaceAccess(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
-    xtgeo_surf = access.get_static_surf(
-    real_num=realization_num,
-    name=name,
-    attribute=attribute)
+    xtgeo_surf = access.get_static_surf(real_num=realization_num, name=name, attribute=attribute)
 
     if not xtgeo_surf:
         raise HTTPException(status_code=404, detail="Surface not found")
 
     surf_data_response = converters.to_api_surface_data(xtgeo_surf)
 
-    LOGGER.debug(f"Loaded surface and created image, total time: {timer.elapsed_ms()}ms")
+    LOGGER.debug(f"Loaded static surface and created image, total time: {timer.elapsed_ms()}ms")
 
     return surf_data_response
 
@@ -95,16 +97,76 @@ def get_dynamic_surface_data(
 
     access = SurfaceAccess(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
     xtgeo_surf = access.get_dynamic_surf(
-    real_num=realization_num,
-    name=name,
-    attribute=attribute,
-    time_or_interval_str=time_or_interval)
+        real_num=realization_num, name=name, attribute=attribute, time_or_interval_str=time_or_interval
+    )
 
     if not xtgeo_surf:
         raise HTTPException(status_code=404, detail="Surface not found")
 
     surf_data_response = converters.to_api_surface_data(xtgeo_surf)
 
-    LOGGER.debug(f"Loaded surface and created image, total time: {timer.elapsed_ms()}ms")
+    LOGGER.debug(f"Loaded dynamic surface and created image, total time: {timer.elapsed_ms()}ms")
+
+    return surf_data_response
+
+
+@router.get("/statistical_dynamic_surface_data/")
+def get_statistical_dynamic_surface_data(
+    authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
+    case_uuid: str = Query(description="Sumo case uuid"),
+    ensemble_name: str = Query(description="Ensemble name"),
+    statistic_function: schemas.SurfaceStatisticFunction = Query(description="Statistics to calculate"),
+    name: str = Query(description="Surface name"),
+    attribute: str = Query(description="Surface attribute"),
+    time_or_interval: str = Query(description="Timestamp or time interval string"),
+) -> schemas.SurfaceData:
+
+    timer = PerfTimer()
+
+    access = SurfaceAccess(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
+
+    service_stat_func_to_compute = StatisticFunction.from_string_value(statistic_function)
+    xtgeo_surf = access.get_statistical_dynamic_surf(
+        statistic_function=service_stat_func_to_compute,
+        name=name,
+        attribute=attribute,
+        time_or_interval_str=time_or_interval,
+    )
+
+    if not xtgeo_surf:
+        raise HTTPException(status_code=404, detail="Could not find or compute surface")
+
+    surf_data_response = converters.to_api_surface_data(xtgeo_surf)
+
+    LOGGER.debug(f"Calculated statistical dynamic surface and created image, total time: {timer.elapsed_ms()}ms")
+
+    return surf_data_response
+
+
+@router.get("/statistical_static_surface_data/")
+def get_statistical_static_surface_data(
+    authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
+    case_uuid: str = Query(description="Sumo case uuid"),
+    ensemble_name: str = Query(description="Ensemble name"),
+    statistic_function: schemas.SurfaceStatisticFunction = Query(description="Statistics to calculate"),
+    name: str = Query(description="Surface name"),
+    attribute: str = Query(description="Surface attribute"),
+) -> schemas.SurfaceData:
+
+    timer = PerfTimer()
+
+    access = SurfaceAccess(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
+
+    service_stat_func_to_compute = StatisticFunction.from_string_value(statistic_function)
+    xtgeo_surf = access.get_statistical_static_surf(
+        statistic_function=service_stat_func_to_compute, name=name, attribute=attribute
+    )
+
+    if not xtgeo_surf:
+        raise HTTPException(status_code=404, detail="Could not find or compute surface")
+
+    surf_data_response = converters.to_api_surface_data(xtgeo_surf)
+
+    LOGGER.debug(f"Calculated statistical static surface and created image, total time: {timer.elapsed_ms()}ms")
 
     return surf_data_response

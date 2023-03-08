@@ -1,4 +1,5 @@
-import { UseQueryResult, useQuery } from "react-query";
+import { UseQueryResult, useQuery } from "@tanstack/react-query";
+import { SurfaceStatisticFunction } from "@api";
 
 import { DynamicSurfaceDirectory, Ensemble, StaticSurfaceDirectory, SurfaceData } from "@api";
 import { apiService } from "@framework/ApiService";
@@ -44,54 +45,94 @@ export function useStaticSurfaceDirectoryQuery(
     });
 }
 
-export function useStaticSurfaceDataQuery(
+export function useSomeSurfaceDataQuery(
+    surfTypeToQuery: "dynamic" | "static",
+    aggregationToQuery: SurfaceStatisticFunction | null,
     caseUuid: string | null,
     ensembleName: string | null,
     realizationNum: number,
     name: string | null,
     attribute: string | null,
-    allowEnable: boolean
+    timeOrInterval?: string | null,
 ): UseQueryResult<SurfaceData> {
-    const paramsValid = !!(caseUuid && ensembleName && realizationNum >= 0 && name && attribute);
-    return useQuery({
-        queryKey: ["getStaticSurfaceData", caseUuid, ensembleName, realizationNum, name, attribute],
-        queryFn: () =>
-            apiService.surface.getStaticSurfaceData(
-                caseUuid ?? "",
-                ensembleName ?? "",
-                realizationNum,
-                name ?? "",
-                attribute ?? ""
-            ),
-        staleTime: STALE_TIME,
-        cacheTime: CACHE_TIME,
-        enabled: allowEnable && paramsValid,
-    });
-}
+    if (surfTypeToQuery === "dynamic") {
+        // Dynamic, per realization surface
+        if (aggregationToQuery === null) {
+            const paramsValid = !!(caseUuid && ensembleName && realizationNum >= 0 && name && attribute && timeOrInterval);
+            return useQuery({
+                queryKey: ["getDynamicSurfaceData", caseUuid, ensembleName, realizationNum, name, attribute, timeOrInterval],
+                queryFn: () =>
+                    apiService.surface.getDynamicSurfaceData(
+                        caseUuid ?? "",
+                        ensembleName ?? "",
+                        realizationNum,
+                        name ?? "",
+                        attribute ?? "",
+                        timeOrInterval ?? ""
+                    ),
+                staleTime: STALE_TIME,
+                cacheTime: CACHE_TIME,
+                enabled: paramsValid,
+            });
+        }
+        // Dynamic, statistical surface
+        else {
+            const paramsValid = !!(caseUuid && ensembleName && name && attribute && timeOrInterval);
+            return useQuery({
+                queryKey: ["getStatisticalDynamicSurfaceData", caseUuid, ensembleName, aggregationToQuery, name, attribute, timeOrInterval],
+                queryFn: () =>
+                    apiService.surface.getStatisticalDynamicSurfaceData(
+                        caseUuid ?? "",
+                        ensembleName ?? "",
+                        aggregationToQuery,
+                        name ?? "",
+                        attribute ?? "",
+                        timeOrInterval ?? ""
+                    ),
+                staleTime: STALE_TIME,
+                cacheTime: CACHE_TIME,
+                enabled: paramsValid,
+            });
+        }
+    }
+    else if (surfTypeToQuery === "static") {
+        // Static, per realization surface
+        if (aggregationToQuery === null) {
+            const paramsValid = !!(caseUuid && ensembleName && realizationNum >= 0 && name && attribute);
+            return useQuery({
+                queryKey: ["getStaticSurfaceData", caseUuid, ensembleName, realizationNum, name, attribute],
+                queryFn: () =>
+                    apiService.surface.getStaticSurfaceData(
+                        caseUuid ?? "",
+                        ensembleName ?? "",
+                        realizationNum,
+                        name ?? "",
+                        attribute ?? ""
+                    ),
+                staleTime: STALE_TIME,
+                cacheTime: CACHE_TIME,
+                enabled: paramsValid,
+            });
+        }
+        // Static, statistical surface
+        else {
+            const paramsValid = !!(caseUuid && ensembleName && name && attribute);
+            return useQuery({
+                queryKey: ["getStatisticalStaticSurfaceData", caseUuid, ensembleName, aggregationToQuery, name, attribute],
+                queryFn: () =>
+                    apiService.surface.getStatisticalStaticSurfaceData(
+                        caseUuid ?? "",
+                        ensembleName ?? "",
+                        aggregationToQuery,
+                        name ?? "",
+                        attribute ?? ""
+                    ),
+                staleTime: STALE_TIME,
+                cacheTime: CACHE_TIME,
+                enabled: paramsValid,
+            });
+        }
+    }
 
-export function useDynamicSurfaceDataQuery(
-    caseUuid: string | null,
-    ensembleName: string | null,
-    realizationNum: number,
-    name: string | null,
-    attribute: string | null,
-    timeOrInterval: string | null,
-    allowEnable: boolean
-): UseQueryResult<SurfaceData> {
-    const paramsValid = !!(caseUuid && ensembleName && realizationNum >= 0 && name && attribute && timeOrInterval);
-    return useQuery({
-        queryKey: ["getDynamicSurfaceData", caseUuid, ensembleName, realizationNum, name, attribute, timeOrInterval],
-        queryFn: () =>
-            apiService.surface.getDynamicSurfaceData(
-                caseUuid ?? "",
-                ensembleName ?? "",
-                realizationNum,
-                name ?? "",
-                attribute ?? "",
-                timeOrInterval ?? ""
-            ),
-        staleTime: STALE_TIME,
-        cacheTime: CACHE_TIME,
-        enabled: allowEnable && paramsValid,
-    });
+    throw new Error("Invalid surfTypeToQuery");
 }

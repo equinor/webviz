@@ -4,6 +4,7 @@
 import type { DynamicSurfaceDirectory } from '../models/DynamicSurfaceDirectory';
 import type { StaticSurfaceDirectory } from '../models/StaticSurfaceDirectory';
 import type { SurfaceData } from '../models/SurfaceData';
+import type { SurfaceStatisticFunction } from '../models/SurfaceStatisticFunction';
 
 import type { CancelablePromise } from '../core/CancelablePromise';
 import type { BaseHttpRequest } from '../core/BaseHttpRequest';
@@ -125,6 +126,75 @@ export class SurfaceService {
                 'name': name,
                 'attribute': attribute,
                 'time_or_interval': timeOrInterval,
+            },
+            errors: {
+                422: `Validation Error`,
+            },
+        });
+    }
+
+    /**
+     * Get Statistical Dynamic Surface Data
+     * @param caseUuid Sumo case uuid
+     * @param ensembleName Ensemble name
+     * @param statisticFunction Statistics to calculate
+     * @param name Surface name
+     * @param attribute Surface attribute
+     * @param timeOrInterval Timestamp or time interval string
+     * @returns SurfaceData Successful Response
+     * @throws ApiError
+     */
+    public getStatisticalDynamicSurfaceData(
+        caseUuid: string,
+        ensembleName: string,
+        statisticFunction: SurfaceStatisticFunction,
+        name: string,
+        attribute: string,
+        timeOrInterval: string,
+    ): CancelablePromise<SurfaceData> {
+        return this.httpRequest.request({
+            method: 'GET',
+            url: '/surface/statistical_dynamic_surface_data/',
+            query: {
+                'case_uuid': caseUuid,
+                'ensemble_name': ensembleName,
+                'statistic_function': statisticFunction,
+                'name': name,
+                'attribute': attribute,
+                'time_or_interval': timeOrInterval,
+            },
+            errors: {
+                422: `Validation Error`,
+            },
+        });
+    }
+
+    /**
+     * Get Statistical Static Surface Data
+     * @param caseUuid Sumo case uuid
+     * @param ensembleName Ensemble name
+     * @param statisticFunction Statistics to calculate
+     * @param name Surface name
+     * @param attribute Surface attribute
+     * @returns SurfaceData Successful Response
+     * @throws ApiError
+     */
+    public getStatisticalStaticSurfaceData(
+        caseUuid: string,
+        ensembleName: string,
+        statisticFunction: SurfaceStatisticFunction,
+        name: string,
+        attribute: string,
+    ): CancelablePromise<SurfaceData> {
+        return this.httpRequest.request({
+            method: 'GET',
+            url: '/surface/statistical_static_surface_data/',
+            query: {
+                'case_uuid': caseUuid,
+                'ensemble_name': ensembleName,
+                'statistic_function': statisticFunction,
+                'name': name,
+                'attribute': attribute,
             },
             errors: {
                 422: `Validation Error`,

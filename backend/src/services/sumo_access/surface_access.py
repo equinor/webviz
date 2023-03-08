@@ -10,28 +10,10 @@ from sumo.wrapper import SumoClient
 
 from ..utils.perf_timer import PerfTimer
 from ..utils.statistic_function import StatisticFunction
+from .surface_types import StatisticFunction, DynamicSurfaceDirectory, StaticSurfaceDirectory
 from ._helpers import create_sumo_client_instance
 
 LOGGER = logging.getLogger(__name__)
-
-
-class DynamicSurfaceDirectory(BaseModel):
-    names: List[str]
-    attributes: List[str]
-    date_strings: List[str]
-
-    @classmethod
-    def create_empty(cls):
-        return cls(attributes=[], names=[], date_strings=[])
-
-
-class StaticSurfaceDirectory(BaseModel):
-    names: List[str]
-    attributes: List[str]
-
-    @classmethod
-    def create_empty(cls):
-        return cls(attributes=[], names=[])
 
 
 class SurfaceAccess:
@@ -39,6 +21,7 @@ class SurfaceAccess:
         self._sumo_client: SumoClient = create_sumo_client_instance(access_token)
         self._case_uuid = case_uuid
         self._iteration_name = iteration_name
+        self._sumo_case_obj: Optional[Case] = None
 
     def get_dynamic_surf_dir(self) -> DynamicSurfaceDirectory:
         """
@@ -47,15 +30,11 @@ class SurfaceAccess:
         """
         timer = PerfTimer()
 
-        case_collection = CaseCollection(self._sumo_client).filter(uuid=self._case_uuid)
-        if len(case_collection) != 1:
-            raise ValueError(f"None or multiple sumo cases found {self._case_uuid=}")
+        case = self._get_my_sumo_case_obj()
 
-        case = case_collection[0]
-
-        has_timestamp_or_interval_filter = TimeFilter(TimeType.ALL)
+        filter_with_timestamp_or_interval = TimeFilter(TimeType.ALL)
         surface_collection: SurfaceCollection = case.surfaces.filter(
-            iteration=self._iteration_name, aggregation=False, time=has_timestamp_or_interval_filter
+            iteration=self._iteration_name, aggregation=False, time=filter_with_timestamp_or_interval
         )
 
         names = sorted(surface_collection.names)
@@ -84,36 +63,31 @@ class SurfaceAccess:
         """
         timer = PerfTimer()
 
-        case_collection = CaseCollection(self._sumo_client).filter(uuid=self._case_uuid)
-        if len(case_collection) != 1:
-            raise ValueError(f"None or multiple sumo cases found {self._case_uuid=}")
+        case = self._get_my_sumo_case_obj()
 
-        case = case_collection[0]
-
-        no_time_data_filter = TimeFilter(TimeType.NONE)
+        filter_no_time_data = TimeFilter(TimeType.NONE)
         surface_collection: SurfaceCollection = case.surfaces.filter(
-            iteration=self._iteration_name, aggregation=False, time=no_time_data_filter
+            iteration=self._iteration_name, aggregation=False, time=filter_no_time_data
         )
 
         names = sorted(surface_collection.names)
         attributes = sorted(surface_collection.tagnames)
 
-        # unique_combos = set()
-        # for surf in surface_collection.filter(realization=[0, 10, 50]):
-        #     combo_str = surf.name + surf.tagname
-        #     unique_combos.add(combo_str)
-        # print(f"{len(unique_combos)=}")
+        valid_attributes_for_name: List[List[int]] = []
 
-        # unique_combos = set()
-        # for surf_name in names:
-        #     my_coll = surface_collection.filter(name=surf_name, realization=0)
-        #     my_tagnames = my_coll.tagnames
-        #     for tagname in my_tagnames:
-        #         combo_str = surf_name + tagname
-        #         unique_combos.add(combo_str)
-        # print(f"{len(unique_combos)=}")
+        for name_idx, name in enumerate(names):
+            filtered_coll = surface_collection.filter(name=name)
+            filtered_attributes = filtered_coll.tagnames
+            attribute_indices: List[int] = []
+            for attr in filtered_attributes:
+                attr_idx = attributes.index(attr)
+                attribute_indices.append(attr_idx)
 
-        surf_dir = StaticSurfaceDirectory(names=names, attributes=attributes)
+            valid_attributes_for_name.append(attribute_indices)
+
+        surf_dir = StaticSurfaceDirectory(
+            names=names, attributes=attributes, valid_attributes_for_name=valid_attributes_for_name
+        )
 
         LOGGER.debug(f"Built static surface directory in: {timer.elapsed_ms():}ms")
 
@@ -122,9 +96,13 @@ class SurfaceAccess:
     def get_dynamic_surf(
         self, real_num: int, name: str, attribute: str, time_or_interval_str: str
     ) -> Optional[xtgeo.RegularSurface]:
-        """Get actual surface data for a simulated dynamic surface"""
+        """
+        Get actual surface data for a simulated dynamic surface
+        """
+        timer = PerfTimer()
+        addr_str = self._make_addr_str(real_num, name, attribute, time_or_interval_str)
 
-        # All dynamic sim surfaces should have a string containing a time stamp or time interval
+        # Must be either a string containing a time stamp or a time interval
         if not time_or_interval_str or len(time_or_interval_str) < 1:
             raise ValueError("time_or_interval_str must contain a non-empty string")
 
@@ -132,15 +110,7 @@ class SurfaceAccess:
         if len(timestamp_arr) == 0 or len(timestamp_arr) > 2:
             raise ValueError("time_or_interval_str must contain a single timestamp or interval")
 
-        timer = PerfTimer()
-
-        addr_str = self._make_addr_str(real_num, name, attribute, time_or_interval_str)
-
-        case_collection = CaseCollection(self._sumo_client).filter(uuid=self._case_uuid)
-        if len(case_collection) != 1:
-            raise ValueError(f"None or multiple sumo cases found {self._case_uuid=}")
-
-        case = case_collection[0]
+        case = self._get_my_sumo_case_obj()
 
         if len(timestamp_arr) == 1:
             time_filter = TimeFilter(TimeType.TIMESTAMP, start=timestamp_arr[0], end=timestamp_arr[0], exact=True)
@@ -161,7 +131,7 @@ class SurfaceAccess:
             LOGGER.warning(f"No dynamic surface found in Sumo for {addr_str}")
             return None
         if surf_count > 1:
-            LOGGER.warning(f"Multiple ({surf_count}) surfaces found in Sumo for: {addr_str}. returning first surface.")
+            LOGGER.warning(f"Multiple ({surf_count}) surfaces found in Sumo for: {addr_str}. Returning first surface.")
 
         sumo_surf = surface_collection[0]
         byte_stream: BytesIO = sumo_surf.blob
@@ -171,50 +141,16 @@ class SurfaceAccess:
 
         return xtgeo_surf
 
-    def get_static_surf(
-        self, real_num: int, name: str, attribute: str) -> Optional[xtgeo.RegularSurface]:
-        """Get actual surface data for a static surface"""
-
-        timer = PerfTimer()
-
-        addr_str = self._make_addr_str(real_num, name, attribute, None)
-
-        case_collection = CaseCollection(self._sumo_client).filter(uuid=self._case_uuid)
-        if len(case_collection) != 1:
-            raise ValueError(f"None or multiple sumo cases found {self._case_uuid=}")
-
-        case = case_collection[0]
-
-        no_time_data_filter = TimeFilter(TimeType.NONE)
-        surface_collection = case.surfaces.filter(
-            iteration=self._iteration_name,
-            aggregation=False,
-            realization=real_num,
-            name=name,
-            tagname=attribute,
-            time=no_time_data_filter,
-        )
-
-        surf_count = len(surface_collection)
-        if surf_count == 0:
-            LOGGER.warning(f"No static surface found in Sumo for {addr_str}")
-            return None
-        if surf_count > 1:
-            LOGGER.warning(f"Multiple ({surf_count}) surfaces found in Sumo for: {addr_str}. Returning first surface.")
-
-        sumo_surf = surface_collection[0]
-        byte_stream: BytesIO = sumo_surf.blob
-        xtgeo_surf = xtgeo.surface_from_file(byte_stream)
-
-        LOGGER.debug(f"Got static surface from Sumo in: {timer.elapsed_ms()}ms ({addr_str})")
-
-        return xtgeo_surf
-
     def get_statistical_dynamic_surf(
         self, statistic_function: StatisticFunction, name: str, attribute: str, time_or_interval_str: str
     ) -> Optional[xtgeo.RegularSurface]:
+        """
+        Compute statistic and return surface data for a dynamic surface
+        """
+        timer = PerfTimer()
+        addr_str = self._make_addr_str(-1, name, attribute, time_or_interval_str)
 
-        # All dynamic sim surfaces should have a string containing a time stamp or time interval
+        # Must be either a string containing a time stamp or a time interval
         if not time_or_interval_str or len(time_or_interval_str) < 1:
             raise ValueError("time_or_interval_str must contain a non-empty string")
 
@@ -222,15 +158,7 @@ class SurfaceAccess:
         if len(timestamp_arr) == 0 or len(timestamp_arr) > 2:
             raise ValueError("time_or_interval_str must contain a single timestamp or interval")
 
-        timer = PerfTimer()
-
-        addr_str = self._make_addr_str(-1, name, attribute, time_or_interval_str)
-
-        case_collection = CaseCollection(self._sumo_client).filter(uuid=self._case_uuid)
-        if len(case_collection) != 1:
-            raise ValueError(f"None or multiple sumo cases found {self._case_uuid=}")
-
-        case = case_collection[0]
+        case = self._get_my_sumo_case_obj()
         et_get_case_ms = timer.lap_ms()
 
         if len(timestamp_arr) == 1:
@@ -254,35 +182,139 @@ class SurfaceAccess:
 
         realizations = surface_collection.realizations
 
-        xtgeo_surf: xtgeo.RegularSurface = None
-        if statistic_function == StatisticFunction.MIN:
-            xtgeo_surf = surface_collection.min()
-        elif statistic_function == StatisticFunction.MAX:
-            xtgeo_surf = surface_collection.max()
-        elif statistic_function == StatisticFunction.MEAN:
-            xtgeo_surf = surface_collection.mean()
-        elif statistic_function == StatisticFunction.P10:
-            xtgeo_surf = surface_collection.p10()
-        elif statistic_function == StatisticFunction.P90:
-            xtgeo_surf = surface_collection.p90()
-        elif statistic_function == StatisticFunction.P50:
-            xtgeo_surf = surface_collection.p50()
-
+        xtgeo_surf = _compute_statistical_surface(statistic_function, surface_collection)
         et_calc_stat_ms = timer.lap_ms()
 
         if not xtgeo_surf:
-            LOGGER.warning(f"Could not calculate statistic surface using Sumo for {addr_str}")
+            LOGGER.warning(f"Could not calculate dynamic statistical surface using Sumo for {addr_str}")
             return None
 
-        LOGGER.debug(f"Calculated statistical surface using Sumo in: {timer.elapsed_ms()}ms ("
+        LOGGER.debug(
+            f"Calculated dynamic statistical surface using Sumo in: {timer.elapsed_ms()}ms ("
             f"get_case={et_get_case_ms}ms, "
             f"collect_surfaces={et_collect_surfaces_ms}ms, "
             f"calc_stat={et_calc_stat_ms}ms) "
-            f"({addr_str} {len(realizations)=} )")
+            f"({addr_str} {len(realizations)=} )"
+        )
 
         return xtgeo_surf
 
+    def get_static_surf(self, real_num: int, name: str, attribute: str) -> Optional[xtgeo.RegularSurface]:
+        """
+        Get actual surface data for a static surface
+        """
+        timer = PerfTimer()
+        addr_str = self._make_addr_str(real_num, name, attribute, None)
+
+        case = self._get_my_sumo_case_obj()
+
+        filter_no_time_data = TimeFilter(TimeType.NONE)
+        surface_collection = case.surfaces.filter(
+            iteration=self._iteration_name,
+            aggregation=False,
+            realization=real_num,
+            name=name,
+            tagname=attribute,
+            time=filter_no_time_data,
+        )
+
+        surf_count = len(surface_collection)
+        if surf_count == 0:
+            LOGGER.warning(f"No static surface found in Sumo for {addr_str}")
+            return None
+        if surf_count > 1:
+            LOGGER.warning(f"Multiple ({surf_count}) surfaces found in Sumo for: {addr_str}. Returning first surface.")
+
+        sumo_surf = surface_collection[0]
+        byte_stream: BytesIO = sumo_surf.blob
+        xtgeo_surf = xtgeo.surface_from_file(byte_stream)
+
+        LOGGER.debug(f"Got static surface from Sumo in: {timer.elapsed_ms()}ms ({addr_str})")
+
+        return xtgeo_surf
+
+    def get_statistical_static_surf(
+        self, statistic_function: StatisticFunction, name: str, attribute: str
+    ) -> Optional[xtgeo.RegularSurface]:
+        """
+        Compute statistic and return surface data for a static surface
+        """
+        timer = PerfTimer()
+        addr_str = self._make_addr_str(-1, name, attribute, None)
+
+        case = self._get_my_sumo_case_obj()
+        et_get_case_ms = timer.lap_ms()
+
+        filter_no_time_data = TimeFilter(TimeType.NONE)
+        surface_collection = case.surfaces.filter(
+            iteration=self._iteration_name,
+            aggregation=False,
+            name=name,
+            tagname=attribute,
+            time=filter_no_time_data,
+        )
+        et_collect_surfaces_ms = timer.lap_ms()
+
+        surf_count = len(surface_collection)
+        if surf_count == 0:
+            LOGGER.warning(f"No static surfaces found in Sumo for {addr_str}")
+            return None
+
+        realizations = surface_collection.realizations
+
+        xtgeo_surf = _compute_statistical_surface(statistic_function, surface_collection)
+        et_calc_stat_ms = timer.lap_ms()
+
+        if not xtgeo_surf:
+            LOGGER.warning(f"Could not calculate static statistical surface using Sumo for {addr_str}")
+            return None
+
+        LOGGER.debug(
+            f"Calculated static statistical surface using Sumo in: {timer.elapsed_ms()}ms ("
+            f"get_case={et_get_case_ms}ms, "
+            f"collect_surfaces={et_collect_surfaces_ms}ms, "
+            f"calc_stat={et_calc_stat_ms}ms) "
+            f"({addr_str} {len(realizations)=} )"
+        )
+
+        return xtgeo_surf
+
+    def _get_my_sumo_case_obj(self) -> Case:
+        """
+        Get the Sumo case that we should be working on.
+        Raises exception if case isn't found
+        """
+        if self._sumo_case_obj is None:
+            case_collection = CaseCollection(self._sumo_client).filter(uuid=self._case_uuid)
+            if len(case_collection) != 1:
+                raise ValueError(f"None or multiple sumo cases found {self._case_uuid=}")
+
+            self._sumo_case_obj = case_collection[0]
+
+        return self._sumo_case_obj
 
     def _make_addr_str(self, real_num: int, name: str, attribute: str, date_str: Optional[str]) -> str:
         addr_str = f"R:{real_num}__N:{name}__A:{attribute}__D:{date_str}__I:{self._iteration_name}__C:{self._case_uuid}"
         return addr_str
+
+
+def _compute_statistical_surface(statistic: StatisticFunction, surface_coll: SurfaceCollection) -> xtgeo.RegularSurface:
+    xtgeo_surf: xtgeo.RegularSurface = None
+    if statistic == StatisticFunction.MIN:
+        xtgeo_surf = surface_coll.min()
+    elif statistic == StatisticFunction.MAX:
+        xtgeo_surf = surface_coll.max()
+    elif statistic == StatisticFunction.MEAN:
+        xtgeo_surf = surface_coll.mean()
+    elif statistic == StatisticFunction.P10:
+        xtgeo_surf = surface_coll.p10()
+    elif statistic == StatisticFunction.P90:
+        xtgeo_surf = surface_coll.p90()
+    elif statistic == StatisticFunction.P50:
+        xtgeo_surf = surface_coll.p50()
+    elif statistic == StatisticFunction.STD:
+        xtgeo_surf = surface_coll.std()
+    else:
+        raise ValueError("Unhandled statistic function")
+
+    return xtgeo_surf
