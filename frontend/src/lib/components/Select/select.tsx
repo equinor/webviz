@@ -8,10 +8,10 @@ import { BaseComponent, BaseComponentProps } from "../_BaseComponent/baseCompone
 import { withDefaults } from "../_utils/components";
 import { resolveClassNames } from "../_utils/resolveClassNames";
 
-export type SelectProps<T = string | number> = {
-    options: { value: T; label: string }[];
-    value?: T | T[];
-    onChange?: (value: T | T[]) => void;
+export type SelectProps = {
+    options: { value: string; label: string }[];
+    value?: string[];
+    onChange?: (values: string[]) => void;
     filter?: boolean;
     size?: number;
     multiple?: boolean;
@@ -20,7 +20,7 @@ export type SelectProps<T = string | number> = {
 } & BaseComponentProps;
 
 const defaultProps = {
-    value: "",
+    value: [""],
     filter: false,
     size: 1,
     multiple: false,
@@ -29,7 +29,7 @@ const defaultProps = {
 export const Select = withDefaults<SelectProps>()(defaultProps, (props) => {
     const [filter, setFilter] = React.useState<string>("");
     const [hasFocus, setHasFocus] = React.useState<boolean>(false);
-    const [selected, setSelected] = React.useState<(string | number)[]>([]);
+    const [selected, setSelected] = React.useState<string[]>([]);
     const [keysPressed, setKeysPressed] = React.useState<Key[]>([]);
     const [startIndex, setStartIndex] = React.useState<number>(0);
     const [lastShiftIndex, setLastShiftIndex] = React.useState<number>(-1);
@@ -46,28 +46,29 @@ export const Select = withDefaults<SelectProps>()(defaultProps, (props) => {
     }, [props.options, filter]);
 
     const toggleValue = React.useCallback(
-        (value: string | number, index: number) => {
+        (value: string, index: number) => {
+            let newSelected = [...selected];
             if (props.multiple) {
                 if (keysPressed.includes("Shift")) {
                     const start = Math.min(lastShiftIndex, index);
                     const end = Math.max(lastShiftIndex, index);
-                    const newSelected = props.options.slice(start, end + 1).map((option) => option.value);
-                    setSelected(newSelected);
+                    newSelected = props.options.slice(start, end + 1).map((option) => option.value);
                 } else if (keysPressed.includes("Control")) {
                     if (!selected.includes(value)) {
-                        setSelected([...selected, value]);
+                        newSelected = [...selected, value];
                     } else {
-                        setSelected(selected.filter((v) => v !== value));
+                        newSelected = selected.filter((v) => v !== value);
                     }
                 } else {
-                    setSelected([value]);
+                    newSelected = [value];
                 }
             } else {
-                setSelected([value]);
+                newSelected = [value];
             }
             setCurrentIndex(index);
+            setSelected(newSelected);
             if (props.onChange) {
-                props.onChange(props.multiple ? selected : value);
+                props.onChange(props.multiple ? newSelected : [value]);
             }
         },
         [props.multiple, props.options, selected, props.onChange, keysPressed, lastShiftIndex]
@@ -131,11 +132,7 @@ export const Select = withDefaults<SelectProps>()(defaultProps, (props) => {
 
     React.useLayoutEffect(() => {
         if (props.value) {
-            if (Array.isArray(props.value)) {
-                setSelected(props.value);
-            } else {
-                setSelected([props.value]);
-            }
+            setSelected(props.value);
         }
     }, [props.value]);
 
@@ -197,8 +194,11 @@ export const Select = withDefaults<SelectProps>()(defaultProps, (props) => {
                                     )}
                                     onClick={() => toggleValue(option.value, index)}
                                     style={{ height: 24 }}
+                                    title={option.label}
                                 >
-                                    {option.label}
+                                    <span className="min-w-0 text-ellipsis overflow-hidden whitespace-nowrap">
+                                        {option.label}
+                                    </span>
                                 </div>
                             );
                         }}

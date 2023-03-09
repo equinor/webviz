@@ -99,8 +99,9 @@ export class Module<StateType extends StateBaseType> {
                     }
                 });
             })
-            .catch(() => {
+            .catch((e) => {
                 this.setImportState(ImportState.Failed);
+                throw e;
             });
     }
 }

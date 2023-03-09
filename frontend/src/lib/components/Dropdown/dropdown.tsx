@@ -15,14 +15,14 @@ import { withDefaults } from "../_utils/components";
 import { resolveClassNames } from "../_utils/resolveClassNames";
 
 type Option = {
-    value: string | number;
+    value: string;
     label: string;
 };
 
 export type DropdownProps = {
     options: Option[];
-    value?: string | number;
-    onChange?: (value: string | number) => void;
+    value?: string;
+    onChange?: (value: string) => void;
     filter?: boolean;
     label?: string;
     width?: string | number;
@@ -36,11 +36,17 @@ const defaultProps = {
 const minHeight = 200;
 const optionHeight = 32;
 
+type DropdownRect = {
+    left?: number;
+    top?: number;
+    right?: number;
+    width: number;
+    height: number;
+};
+
 export const Dropdown = withDefaults<DropdownProps>()(defaultProps, (props) => {
     const [dropdownVisible, setDropdownVisible] = React.useState<boolean>(false);
-    const [dropdownRect, setDropdownRect] = React.useState<Rect>({
-        x: 0,
-        y: 0,
+    const [dropdownRect, setDropdownRect] = React.useState<DropdownRect>({
         width: 0,
         height: 0,
     });
@@ -54,7 +60,7 @@ export const Dropdown = withDefaults<DropdownProps>()(defaultProps, (props) => {
 
     const id = React.useRef<string>(v4());
     const inputRef = React.useRef<HTMLInputElement>(null);
-    const dropDownRef = React.useRef<HTMLDivElement>(null);
+    const dropdownRef = React.useRef<HTMLDivElement>(null);
 
     const setOptionIndexWithFocusToCurrentSelection = React.useCallback(() => {
         const index = filteredOptions.findIndex((option) => option.value === selection);
@@ -70,24 +76,29 @@ export const Dropdown = withDefaults<DropdownProps>()(defaultProps, (props) => {
             const height = Math.min(minHeight, Math.max(filteredOptions.length * optionHeight, optionHeight)) + 2;
 
             if (inputBoundingClientRect && bodyBoundingClientRect) {
-                if (inputBoundingClientRect.y + inputBoundingClientRect.height + height > window.innerHeight) {
-                    setDropdownRect({
-                        x: inputBoundingClientRect.x,
-                        y: inputBoundingClientRect.y - minHeight,
-                        width: inputBoundingClientRect.width,
-                        height: Math.min(height, inputBoundingClientRect.y),
-                    });
-                    return;
-                }
-                setDropdownRect({
-                    x: inputBoundingClientRect.x,
-                    y: inputBoundingClientRect.y + inputBoundingClientRect.height,
+                const newDropdownRect: DropdownRect = {
                     width: inputBoundingClientRect.width,
-                    height: Math.min(
+                    height: height,
+                };
+
+                if (inputBoundingClientRect.y + inputBoundingClientRect.height + height > window.innerHeight) {
+                    newDropdownRect.top = inputBoundingClientRect.y - minHeight;
+                    newDropdownRect.height = Math.min(height, inputBoundingClientRect.y);
+                } else {
+                    newDropdownRect.top = inputBoundingClientRect.y + inputBoundingClientRect.height;
+                    newDropdownRect.height = Math.min(
                         height,
                         window.innerHeight - inputBoundingClientRect.y - inputBoundingClientRect.height
-                    ),
-                });
+                    );
+                }
+                if (inputBoundingClientRect.x + inputBoundingClientRect.width > window.innerWidth / 2) {
+                    newDropdownRect.right =
+                        window.innerWidth - (inputBoundingClientRect.x + inputBoundingClientRect.width);
+                } else {
+                    newDropdownRect.left = inputBoundingClientRect.x;
+                }
+
+                setDropdownRect(newDropdownRect);
 
                 setStartIndex(
                     Math.max(
@@ -104,7 +115,7 @@ export const Dropdown = withDefaults<DropdownProps>()(defaultProps, (props) => {
     }, [dropdownVisible, filteredOptions, selection, setOptionIndexWithFocusToCurrentSelection, setStartIndex]);
 
     const handleOptionClick = React.useCallback(
-        (value: string | number) => {
+        (value: string) => {
             setSelection(value);
             setSelectionIndex(props.options.findIndex((option) => option.value === value));
             setDropdownVisible(false);
@@ -120,8 +131,8 @@ export const Dropdown = withDefaults<DropdownProps>()(defaultProps, (props) => {
 
     React.useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
-            if (dropDownRef.current) {
-                const currentStartIndex = Math.round(dropDownRef.current?.scrollTop / optionHeight);
+            if (dropdownRef.current) {
+                const currentStartIndex = Math.round(dropdownRef.current?.scrollTop / optionHeight);
                 if (dropdownVisible) {
                     if (e.key === "ArrowUp") {
                         e.preventDefault();
@@ -215,19 +226,23 @@ export const Dropdown = withDefaults<DropdownProps>()(defaultProps, (props) => {
                             </IconButton>
                         }
                         onChange={handleInputChange}
-                        value={dropdownVisible ? (filter === null ? selection : filter) : selection}
+                        value={
+                            dropdownVisible && filter !== null
+                                ? filter
+                                : props.options.find((el) => el.value === selection)?.label
+                        }
                     />
                     {dropdownVisible &&
                         ReactDOM.createPortal(
                             <div
                                 className="absolute bg-white border border-gray-300 rounded-md shadow-md overflow-y-auto z-50 box-border"
                                 style={{
-                                    left: dropdownRect.x,
-                                    top: dropdownRect.y,
-                                    width: dropdownRect.width,
+                                    left: dropdownRect.left,
+                                    top: dropdownRect.top,
+                                    right: dropdownRect.right,
                                     height: dropdownRect.height,
                                 }}
-                                ref={dropDownRef}
+                                ref={dropdownRef}
                             >
                                 {filteredOptions.length === 0 && (
                                     <div className="p-1 flex items-center text-gray-400 select-none">
@@ -238,7 +253,7 @@ export const Dropdown = withDefaults<DropdownProps>()(defaultProps, (props) => {
                                     direction="vertical"
                                     items={filteredOptions}
                                     itemSize={optionHeight}
-                                    containerRef={dropDownRef}
+                                    containerRef={dropdownRef}
                                     startIndex={startIndex}
                                     renderItem={(option, index) => (
                                         <div
@@ -262,8 +277,11 @@ export const Dropdown = withDefaults<DropdownProps>()(defaultProps, (props) => {
                                             onClick={() => handleOptionClick(option.value)}
                                             style={{ height: optionHeight }}
                                             onPointerMove={() => handlePointerOver(index)}
+                                            title={option.label}
                                         >
-                                            {option.label}
+                                            <span className="whitespace-nowrap text-ellipsis overflow-hidden min-w-0">
+                                                {option.label}
+                                            </span>
                                         </div>
                                     )}
                                 />
