@@ -144,6 +144,9 @@ export const Layout: React.FC<LayoutProps> = (props) => {
         };
 
         const handlePointerUp = () => {
+            if (!pointerDownPoint) {
+                return;
+            }
             if (dragging) {
                 if (delayTimer) {
                     clearTimeout(delayTimer);

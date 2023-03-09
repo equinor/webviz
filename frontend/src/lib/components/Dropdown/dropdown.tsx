@@ -241,6 +241,7 @@ export const Dropdown = withDefaults<DropdownProps>()(defaultProps, (props) => {
                                     top: dropdownRect.top,
                                     right: dropdownRect.right,
                                     height: dropdownRect.height,
+                                    minWidth: dropdownRect.width,
                                 }}
                                 ref={dropdownRef}
                             >

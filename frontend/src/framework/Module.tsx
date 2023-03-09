@@ -3,7 +3,7 @@ import React from "react";
 import { cloneDeep } from "lodash";
 
 import { ModuleContext, ModuleInstance } from "./ModuleInstance";
-import { StateBaseType } from "./StateStore";
+import { StateBaseType, StateOptions } from "./StateStore";
 import { Workbench } from "./Workbench";
 import { WorkbenchServices } from "./WorkbenchServices";
 
@@ -29,6 +29,7 @@ export class Module<StateType extends StateBaseType> {
     private importState: ImportState;
     private moduleInstances: ModuleInstance<StateType>[];
     private initialState: StateType | null;
+    private stateOptions: StateOptions<StateType> | undefined;
     private workbench: Workbench | null;
 
     constructor(name: string) {
@@ -54,8 +55,9 @@ export class Module<StateType extends StateBaseType> {
         this.workbench = workbench;
     }
 
-    public setInitialState(initialState: StateType): void {
+    public setInitialState(initialState: StateType, options?: StateOptions<StateType>): void {
         this.initialState = initialState;
+        this.stateOptions = options;
     }
 
     public makeInstance(): ModuleInstance<StateType> {
@@ -81,7 +83,7 @@ export class Module<StateType extends StateBaseType> {
             if (this.initialState && this.importState === ImportState.Imported) {
                 this.moduleInstances.forEach((instance) => {
                     if (this.initialState && !instance.isInitialised()) {
-                        instance.setInitialState(cloneDeep(this.initialState));
+                        instance.setInitialState(cloneDeep(this.initialState), cloneDeep(this.stateOptions));
                     }
                 });
             }
@@ -95,13 +97,12 @@ export class Module<StateType extends StateBaseType> {
                 this.setImportState(ImportState.Imported);
                 this.moduleInstances.forEach((instance) => {
                     if (this.initialState) {
-                        instance.setInitialState(cloneDeep(this.initialState));
+                        instance.setInitialState(cloneDeep(this.initialState), cloneDeep(this.stateOptions));
                     }
                 });
             })
-            .catch((e) => {
+            .catch(() => {
                 this.setImportState(ImportState.Failed);
-                throw e;
             });
     }
 }

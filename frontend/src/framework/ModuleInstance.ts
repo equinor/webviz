@@ -1,5 +1,5 @@
 import { ImportState, Module, ModuleFC } from "./Module";
-import { StateBaseType, StateStore, useSetStoreValue, useStoreState, useStoreValue } from "./StateStore";
+import { StateBaseType, StateOptions, StateStore, useSetStoreValue, useStoreState, useStoreValue } from "./StateStore";
 
 export type ModuleContext<S extends StateBaseType> = {
     useStoreState: <K extends keyof S>(key: K) => [S[K], (value: S[K] | ((prev: S[K]) => S[K])) => void];
@@ -27,8 +27,8 @@ export class ModuleInstance<StateType extends StateBaseType> {
         this.initialised = false;
     }
 
-    public setInitialState(initialState: StateType): void {
-        this.stateStore = new StateStore<StateType>(initialState);
+    public setInitialState(initialState: StateType, options?: StateOptions<StateType>): void {
+        this.stateStore = new StateStore<StateType>(initialState, options);
 
         this.context = {
             useStoreState: <K extends keyof StateType>(
