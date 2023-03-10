@@ -1,14 +1,23 @@
 import React from "react";
 
+import { cloneDeep, isEqual } from "lodash";
+
 export type StateBaseType = object;
+export type StateOptions<T extends StateBaseType> = {
+    [K in keyof T]?: {
+        deepCompare?: boolean;
+    };
+};
 
 export class StateStore<StateType extends StateBaseType> {
     private _state: Record<keyof StateType, any>;
+    private _options?: StateOptions<StateType>;
     private _subscribersMap: Partial<Record<keyof StateType, Set<any>>>;
 
-    constructor(initialState: StateType) {
+    constructor(initialState: StateType, options?: StateOptions<StateType>) {
         this._state = initialState;
         this._subscribersMap = {};
+        this._options = options;
     }
 
     public hasKey(key: keyof StateType): boolean {
@@ -20,6 +29,16 @@ export class StateStore<StateType extends StateBaseType> {
     }
 
     public setValue<K extends keyof StateType>(key: K, value: StateType[K]) {
+        if (this._state[key] === value) {
+            return;
+        }
+
+        if (this._options && this._options[key]?.deepCompare) {
+            if (isEqual(value, this._state[key])) {
+                return;
+            }
+        }
+
         this._state[key] = value;
         const subscribersSet = this._subscribersMap[key] || new Set();
         for (const cb of subscribersSet) {
