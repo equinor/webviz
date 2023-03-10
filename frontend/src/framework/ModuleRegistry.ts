@@ -1,5 +1,5 @@
 import { Module } from "./Module";
-import { StateBaseType } from "./StateStore";
+import { StateBaseType, StateOptions } from "./StateStore";
 
 export class ModuleRegistry {
     private static _registeredModules: Record<string, Module<any>> = {};
@@ -14,11 +14,12 @@ export class ModuleRegistry {
 
     public static initModule<ModuleStateType extends StateBaseType>(
         moduleName: string,
-        initialState: ModuleStateType
+        initialState: ModuleStateType,
+        options?: StateOptions<ModuleStateType>
     ): Module<ModuleStateType> {
         const module = this._registeredModules[moduleName];
         if (module) {
-            module.setInitialState(initialState);
+            module.setInitialState(initialState, options);
             return module as Module<ModuleStateType>;
         }
         throw "Did you forget to register your module in 'src/modules/index.ts'?";
