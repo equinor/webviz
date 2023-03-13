@@ -1,53 +1,41 @@
 import React from "react";
 
 import { ModuleFCProps } from "@framework/Module";
-import { useSubscribedValue } from "@framework/WorkbenchServices";
 import { useElementSize } from "@lib/hooks/useElementSize";
 
-import { useSomeSurfaceDataQuery } from "./sigSurfaceQueryHooks";
+import { makeSurfAddrString } from "./sigSurfaceAddress";
+import { useSurfaceDataQueryByAddress } from "./sigSurfaceQueryHooks";
 import { SigSurfaceState } from "./sigSurfaceState";
 
 //-----------------------------------------------------------------------------------------------------------
 export function SigSurfaceView({ moduleContext, workbenchServices }: ModuleFCProps<SigSurfaceState>) {
-    console.log("render SigSurfaceView");
-
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);
     const wrapperDivSize = useElementSize(wrapperDivRef);
+    const surfAddr = moduleContext.useStoreValue("surfaceAddress");
 
-    const caseUuid = useSubscribedValue("navigator.caseId", workbenchServices);
-    const surfaceType = moduleContext.useStoreValue("surfaceType");
-    const ensembleName = moduleContext.useStoreValue("ensembleName");
-    const surfaceName = moduleContext.useStoreValue("surfaceName");
-    const surfaceAttribute = moduleContext.useStoreValue("surfaceAttribute");
-    const realizationNum = moduleContext.useStoreValue("realizationNum");
-    const timeOrInterval = moduleContext.useStoreValue("timeOrInterval");
-    const aggregation = moduleContext.useStoreValue("aggregation");
+    console.log(`render SigSurfaceView, surfAddr=${surfAddr ? makeSurfAddrString(surfAddr) : "null"}`);
 
-    const surfDataQuery = useSomeSurfaceDataQuery(
-        surfaceType,
-        aggregation,
-        caseUuid,
-        ensembleName,
-        realizationNum,
-        surfaceName,
-        surfaceAttribute,
-        timeOrInterval
-    );
+    const surfDataQuery = useSurfaceDataQueryByAddress(surfAddr);
+    const surfAddrAsAny = surfAddr as any;
 
     return (
         <div className="w-full h-full flex flex-col">
             <div>
-                ensembleName: {ensembleName ?? "---"}
+                addressType: {surfAddr?.addressType ?? "---"}
                 <br />
-                surfaceName: {surfaceName ?? "---"}
+                caseUuid: {surfAddr?.caseUuid ?? "---"}
                 <br />
-                surfaceAttribute: {surfaceAttribute ?? "---"}
+                ensembleName: {surfAddr?.ensemble ?? "---"}
                 <br />
-                timeOrInterval: {timeOrInterval ?? "---"}
+                surfaceName: {surfAddr?.name ?? "---"}
                 <br />
-                realizationNum: {realizationNum ?? "---"}
+                surfaceAttribute: {surfAddr?.attribute ?? "---"}
                 <br />
-                aggregation: {aggregation ?? "Single realization"}
+                timeOrInterval: {surfAddrAsAny?.timeOrInterval ?? "---"}
+                <br />
+                realizationNum: {surfAddrAsAny?.realizationNum ?? "---"}
+                <br />
+                statisticFunction: {surfAddrAsAny?.statisticFunction ?? "Single realization"}
             </div>
             <br />
             min x,y: {surfDataQuery.data?.x_min.toFixed(2)}, {surfDataQuery.data?.y_min.toFixed(2)}

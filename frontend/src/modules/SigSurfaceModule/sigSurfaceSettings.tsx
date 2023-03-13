@@ -1,32 +1,32 @@
 import React from "react";
-import { UseQueryResult } from "react-query";
 
 import { Ensemble } from "@api";
 import { DynamicSurfaceDirectory, StaticSurfaceDirectory } from "@api";
 import { SurfaceStatisticFunction } from "@api";
 import { ModuleFCProps } from "@framework/Module";
 import { useSubscribedValue } from "@framework/WorkbenchServices";
+import { Checkbox } from "@lib/components/Checkbox";
 import { Input } from "@lib/components/Input";
-import { ListBox, ListBoxItem } from "@lib/components/ListBox/list-box";
 import { Select } from "@lib/components/Select";
-import { ToggleButton } from "@lib/components/ToggleButton";
 
+import { SurfAddr, SurfAddrFactory } from "./sigSurfaceAddress";
 import { useEnsemblesQuery } from "./sigSurfaceQueryHooks";
 import { useDynamicSurfaceDirectoryQuery, useStaticSurfaceDirectoryQuery } from "./sigSurfaceQueryHooks";
 import { SigSurfaceState } from "./sigSurfaceState";
+import { AggregationDropdown, EnsemblesDropdown } from "./sigSurfaceUiComponents";
 
 //-----------------------------------------------------------------------------------------------------------
 export function SigSurfaceSettings({ moduleContext, workbenchServices }: ModuleFCProps<SigSurfaceState>) {
     console.log("render SigSurfaceSettings");
 
     const caseUuid = useSubscribedValue("navigator.caseId", workbenchServices);
-    const [ensembleName, setEnsembleName] = moduleContext.useStoreState("ensembleName");
-    const [surfaceType, setSurfaceType] = moduleContext.useStoreState("surfaceType");
-    const [surfaceName, setSurfaceName] = moduleContext.useStoreState("surfaceName");
-    const [surfaceAttribute, setSurfaceAttribute] = moduleContext.useStoreState("surfaceAttribute");
-    const [realizationNum, setRealizationNum] = moduleContext.useStoreState("realizationNum");
-    const [timeOrInterval, setTimeOrInterval] = moduleContext.useStoreState("timeOrInterval");
-    const [aggregation, setAggregation] = moduleContext.useStoreState("aggregation");
+    const [ensembleName, setEnsembleName] = React.useState<string | null>(null);
+    const [surfaceType, setSurfaceType] = React.useState<"static" | "dynamic">("dynamic");
+    const [surfaceName, setSurfaceName] = React.useState<string | null>(null);
+    const [surfaceAttribute, setSurfaceAttribute] = React.useState<string | null>(null);
+    const [realizationNum, setRealizationNum] = React.useState(0);
+    const [timeOrInterval, setTimeOrInterval] = React.useState<string | null>(null);
+    const [aggregation, setAggregation] = React.useState<SurfaceStatisticFunction | null>(null);
 
     const stashedEnsembleName = React.useRef("");
 
@@ -86,6 +86,39 @@ export function SigSurfaceSettings({ moduleContext, workbenchServices }: ModuleF
         [dynamicSurfDirQuery.data]
     );
 
+    React.useEffect(function propagateSurfaceSelectionToView() {
+        // console.log("propagateSurfaceSelectionToView()");
+        // console.log(`  caseUuid=${caseUuid}`);
+        // console.log(`  ensembleName=${ensembleName}`);
+        // console.log(`  surfaceName=${surfaceName}`);
+        // console.log(`  surfaceAttribute=${surfaceAttribute}`);
+        // console.log(`  surfaceType=${surfaceType}`);
+        // console.log(`  aggregation=${aggregation}`);
+        // console.log(`  realizationNum=${realizationNum}`);
+        // console.log(`  timeOrInterval=${timeOrInterval}`);
+
+        let surfAddr: SurfAddr | null = null;
+        if (caseUuid && ensembleName && surfaceName && surfaceAttribute) {
+            const addrFactory = new SurfAddrFactory(caseUuid, ensembleName, surfaceName, surfaceAttribute);
+            if (surfaceType === "dynamic" && timeOrInterval) {
+                if (aggregation === null) {
+                    surfAddr = addrFactory.createDynamicAddr(realizationNum, timeOrInterval);
+                } else {
+                    surfAddr = addrFactory.createStatisticalDynamicAddr(aggregation, timeOrInterval);
+                }
+            } else if (surfaceType === "static") {
+                if (aggregation === null) {
+                    surfAddr = addrFactory.createStaticAddr(realizationNum);
+                } else {
+                    surfAddr = addrFactory.createStatisticalStaticAddr(aggregation);
+                }
+            }
+        }
+
+        console.log(`propagateSurfaceSelectionToView() => ${surfAddr ? "valid surfAddr" : "NULL surfAddr"}`);
+        moduleContext.stateStore.setValue("surfaceAddress", surfAddr);
+    });
+
     function handleEnsembleSelectionChange(ensembleName: string) {
         console.log("handleEnsembleSelectionChange()");
         setEnsembleName(ensembleName);
@@ -129,8 +162,8 @@ export function SigSurfaceSettings({ moduleContext, workbenchServices }: ModuleF
         setTimeOrInterval(null);
     }
 
-    function handleStaticSurfacesToggle(staticSurfActive: boolean) {
-        const newSurfType = staticSurfActive ? "static" : "dynamic";
+    function handleStaticSurfacesCheckboxChanged(event: React.ChangeEvent<HTMLInputElement>, staticChecked: boolean) {
+        const newSurfType = staticChecked ? "static" : "dynamic";
         setSurfaceType(newSurfType);
         if (newSurfType == "static") {
             fixAndSetStaticSurfaceSelectionStates(surfaceName, surfaceAttribute, null, staticSurfDirQuery.data ?? null);
@@ -144,22 +177,25 @@ export function SigSurfaceSettings({ moduleContext, workbenchServices }: ModuleF
         }
     }
 
-    function handleSurfNameSelectionChange(surfName: string) {
+    function handleSurfNameSelectionChange(selectedSurfNames: string[]) {
         console.log("handleSurfNameSelectionChange()");
-        setSurfaceName(surfName);
+        const newName = selectedSurfNames.length > 0 ? selectedSurfNames[0] : null;
+        setSurfaceName(newName);
         if (surfaceType == "static" && staticSurfDirQuery.data) {
-            setSurfaceAttribute(fixupStaticSurfAttribute(surfName, surfaceAttribute, staticSurfDirQuery.data));
+            setSurfaceAttribute(fixupStaticSurfAttribute(newName, surfaceAttribute, staticSurfDirQuery.data));
         }
     }
 
-    function handleSurfAttributeSelectionChange(attributeName: string) {
+    function handleSurfAttributeSelectionChange(selectedSurfAttributes: string[]) {
         console.log("handleSurfAttributeSelectionChange()");
-        setSurfaceAttribute(attributeName);
+        const newAttr = selectedSurfAttributes.length > 0 ? selectedSurfAttributes[0] : null;
+        setSurfaceAttribute(newAttr);
     }
 
-    function handleTimeOrIntervalSelectionChange(timeOrInterval: string) {
+    function handleTimeOrIntervalSelectionChange(selectedTimeOrIntervals: string[]) {
         console.log("handleTimeOrIntervalSelectionChange()");
-        setTimeOrInterval(timeOrInterval);
+        const newTimeOrInterval = selectedTimeOrIntervals.length > 0 ? selectedTimeOrIntervals[0] : null;
+        setTimeOrInterval(newTimeOrInterval);
     }
 
     function handleAggregationChanged(aggregation: SurfaceStatisticFunction | null) {
@@ -193,120 +229,64 @@ export function SigSurfaceSettings({ moduleContext, workbenchServices }: ModuleF
             dynamicSurfDirQuery.data?.time_or_interval_strings.map((time) => ({ value: time, label: time })) ?? [];
     }
 
-    let chooseTimeOrIntervalElements: JSX.Element | null = null;
+    let chooseTimeOrIntervalElement: JSX.Element | null = null;
     if (surfaceType === "dynamic") {
-        chooseTimeOrIntervalElements = (
-            <>
-                <label>Time or interval:</label>
-                <Select
-                    options={timeOrIntervalOptions}
-                    value={timeOrInterval ?? ""}
-                    onChange={handleTimeOrIntervalSelectionChange}
-                    size={5}
-                />
-            </>
+        chooseTimeOrIntervalElement = (
+            <Select
+                label="Time or interval:"
+                options={timeOrIntervalOptions}
+                value={timeOrInterval ? [timeOrInterval] : []}
+                onChange={handleTimeOrIntervalSelectionChange}
+                size={5}
+            />
+        );
+    }
+
+    let chooseRealizationElement: JSX.Element | null = null;
+    if (aggregation === null) {
+        chooseRealizationElement = (
+            <label>
+                Realization:
+                <Input type={"number"} value={realizationNum} onChange={handleRealizationTextChanged} />
+            </label>
         );
     }
 
     return (
         <>
-            <label>Ensemble:</label>
             <EnsemblesDropdown
                 ensemblesQuery={ensemblesQuery}
                 selectedEnsemble={ensembleName}
                 onEnsembleSelectionChange={handleEnsembleSelectionChange}
             />
-            <ToggleButton active={surfaceType == "static"} onToggle={handleStaticSurfacesToggle}>
-                Static surfaces
-            </ToggleButton>
-            <label>Surface name:</label>
+            <Checkbox
+                label="Static surfaces"
+                checked={surfaceType === "static"}
+                onChange={handleStaticSurfacesCheckboxChanged}
+            />
             <Select
+                label="Surface name:"
                 options={surfNameOptions}
-                value={surfaceName ?? ""}
+                value={surfaceName ? [surfaceName] : []}
                 onChange={handleSurfNameSelectionChange}
                 size={5}
             />
-            <label>Surface attribute:</label>
             <Select
+                label="Surface attribute:"
                 options={surfAttributeOptions}
-                value={surfaceAttribute ?? ""}
+                value={surfaceAttribute ? [surfaceAttribute] : []}
                 onChange={handleSurfAttributeSelectionChange}
                 size={5}
             />
-            {chooseTimeOrIntervalElements}
-            <br />
-            <label>Aggregation/statistic:</label>
+            {chooseTimeOrIntervalElement}
             <AggregationDropdown
                 selectedAggregation={aggregation}
                 onAggregationSelectionChange={handleAggregationChanged}
             />
-            <label>
-                Realizations:
-                <Input type={"number"} value={realizationNum} onChange={handleRealizationTextChanged} />
-            </label>
+            {chooseRealizationElement}
         </>
     );
 }
-
-// Sub-component for ensemble selection
-// -------------------------------------------------------------------------------------
-type EnsemblesDropdownProps = {
-    ensemblesQuery: UseQueryResult<Ensemble[]>;
-    selectedEnsemble: string | null;
-    onEnsembleSelectionChange: (ensembleName: string) => void;
-};
-
-const EnsemblesDropdown = ({ ensemblesQuery, selectedEnsemble, onEnsembleSelectionChange }: EnsemblesDropdownProps) => {
-    const itemArr: ListBoxItem[] = [];
-
-    if (ensemblesQuery.isSuccess && ensemblesQuery.data.length > 0) {
-        for (const ens of ensemblesQuery.data) {
-            itemArr.push({ value: ens.name, label: ens.name });
-        }
-    } else {
-        let placeholderStr = "<no ensembles>";
-        if (ensemblesQuery.isError || ensemblesQuery.isLoading) {
-            placeholderStr = `${ensemblesQuery.status.toString()}...`;
-        }
-
-        itemArr.push({ value: "", label: placeholderStr, disabled: true });
-        selectedEnsemble = "";
-    }
-
-    console.log("render EnsemblesDropdown - selectedEnsemble=" + selectedEnsemble);
-
-    return <ListBox items={itemArr} selectedItem={selectedEnsemble ?? ""} onSelect={onEnsembleSelectionChange} />;
-};
-
-// Sub-component for aggregation/statistic selection
-// -------------------------------------------------------------------------------------
-type AggregationDropdownProps = {
-    selectedAggregation: SurfaceStatisticFunction | null;
-    onAggregationSelectionChange: (aggregation: SurfaceStatisticFunction | null) => void;
-};
-
-const AggregationDropdown = ({ selectedAggregation, onAggregationSelectionChange }: AggregationDropdownProps) => {
-    const itemArr: ListBoxItem[] = [
-        { value: "SINGLE_REAL", label: "Single realization" },
-        { value: SurfaceStatisticFunction.MEAN, label: "Mean" },
-        { value: SurfaceStatisticFunction.STD, label: "Std" },
-        { value: SurfaceStatisticFunction.MIN, label: "Min" },
-        { value: SurfaceStatisticFunction.MAX, label: "Max" },
-        { value: SurfaceStatisticFunction.P10, label: "P10" },
-        { value: SurfaceStatisticFunction.P90, label: "P90" },
-        { value: SurfaceStatisticFunction.P50, label: "P50" },
-    ];
-
-    return (
-        <ListBox
-            items={itemArr}
-            selectedItem={selectedAggregation ?? "SINGLE_REAL"}
-            onSelect={(newVal: string) =>
-                onAggregationSelectionChange(newVal != "SINGLE_REAL" ? (newVal as SurfaceStatisticFunction) : null)
-            }
-        />
-    );
-};
 
 // Helpers
 // -------------------------------------------------------------------------------------
