@@ -125,7 +125,7 @@ export function settings({ moduleContext, workbenchServices }: ModuleFCProps<Sta
             console.log("selectDefaultTable()");
             if (tableDescriptionsQuery.data) {
                 setTableName(tableDescriptionsQuery.data[0].name);
-                let responses = tableDescriptionsQuery.data[0].numerical_column_names;
+                const responses = tableDescriptionsQuery.data[0].numerical_column_names;
                 setResponseName(sortedResponses(responses)[0]);
             } else {
                 setTableName(null);
@@ -156,7 +156,7 @@ export function settings({ moduleContext, workbenchServices }: ModuleFCProps<Sta
         let currentCategoryFilter = categoricalFilter;
         if (currentCategoryFilter) {
 
-            let categoryIndex = currentCategoryFilter.findIndex((category) => category.name === categoryName);
+            const categoryIndex = currentCategoryFilter.findIndex((category) => category.name === categoryName);
             if (categoryIndex > -1) {
                 currentCategoryFilter[categoryIndex].unique_values = categoryValues
             }

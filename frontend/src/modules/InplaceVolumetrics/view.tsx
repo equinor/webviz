@@ -25,9 +25,9 @@ export const view = (props: ModuleFCProps<State>) => {
     const subscribedPlotlyRealization = useSubscribedValue("global.hoverRealization", props.workbenchServices);
     const tracesDataArr: Partial<PlotData>[] = [];
     if (realizationsResponseQuery.data && realizationsResponseQuery.data.realizations.length > 0) {
-        var x: number[] = [];
-        var y: number[] = [];
-        var color: string[] = [];
+        let x: number[] = [];
+        let y: number[] = [];
+        let color: string[] = [];
         for (let i = 0; i < realizationsResponseQuery.data.realizations.length; i++) {
             const realization = realizationsResponseQuery.data.realizations[i];
             const curveColor = realization === subscribedPlotlyRealization?.realization ? "red" : "green";
