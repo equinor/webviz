@@ -10,8 +10,9 @@ from . import config
 from .auth.auth_helper import AuthHelper
 from .auth.enforce_logged_in_middleware import EnforceLoggedInMiddleware
 from .routers.explore import router as explore_router
-from .routers.general import router as general_router
 from .routers.timeseries.router import router as timeseries_router
+from .routers.inplace_volumetrics.router import router as inplace_volumetrics_router
+from .routers.general import router as general_router
 
 logging.basicConfig(
     level=logging.WARNING, format="%(asctime)s %(levelname)-3s [%(name)s]: %(message)s", datefmt="%H:%M:%S"
@@ -29,6 +30,7 @@ app = FastAPI(generate_unique_id_function=custom_generate_unique_id, root_path="
 # providing some grouping when viewing the openapi documentation.
 app.include_router(explore_router, tags=["explore"])
 app.include_router(timeseries_router, prefix="/timeseries", tags=["timeseries"])
+app.include_router(inplace_volumetrics_router, prefix="/inplace_volumetrics", tags=["inplace_volumetrics"])
 
 authHelper = AuthHelper()
 app.include_router(authHelper.router)
