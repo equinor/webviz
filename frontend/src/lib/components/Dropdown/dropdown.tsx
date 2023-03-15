@@ -2,6 +2,7 @@ import React from "react";
 import ReactDOM from "react-dom";
 
 import { Rect } from "@framework/utils/geometry";
+import { getTextWidth } from "@framework/utils/textSize";
 import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/20/solid";
 import { ClickAwayListener } from "@mui/base";
 
@@ -42,12 +43,14 @@ type DropdownRect = {
     right?: number;
     width: number;
     height: number;
+    minWidth: number;
 };
 
 export const Dropdown = withDefaults<DropdownProps>()(defaultProps, (props) => {
     const [dropdownVisible, setDropdownVisible] = React.useState<boolean>(false);
     const [dropdownRect, setDropdownRect] = React.useState<DropdownRect>({
         width: 0,
+        minWidth: 0,
         height: 0,
     });
     const [filter, setFilter] = React.useState<string | null>(null);
@@ -68,6 +71,24 @@ export const Dropdown = withDefaults<DropdownProps>()(defaultProps, (props) => {
         setOptionIndexWithFocus(index);
     }, [filteredOptions, selection]);
 
+    React.useEffect(() => {
+        setSelection(props.value);
+    }, [props.value]);
+
+    React.useEffect(() => {
+        const longestOptionWidth = props.options.reduce((prev, current) => {
+            const labelWidth = getTextWidth(current.label, document.body);
+            if (labelWidth > prev) {
+                return labelWidth;
+            }
+            return prev;
+        }, 0);
+        setDropdownRect((prev) => ({ ...prev, width: longestOptionWidth + 32 }));
+
+        const newFilteredOptions = props.options.filter((option) => option.label.includes(filter || ""));
+        setFilteredOptions(newFilteredOptions);
+    }, [props.options, filter]);
+
     React.useLayoutEffect(() => {
         if (dropdownVisible) {
             const inputBoundingClientRect = inputRef.current?.getBoundingClientRect();
@@ -77,7 +98,8 @@ export const Dropdown = withDefaults<DropdownProps>()(defaultProps, (props) => {
 
             if (inputBoundingClientRect && bodyBoundingClientRect) {
                 const newDropdownRect: DropdownRect = {
-                    width: inputBoundingClientRect.width,
+                    minWidth: inputBoundingClientRect.width,
+                    width: dropdownRect.width,
                     height: height,
                 };
 
@@ -98,7 +120,7 @@ export const Dropdown = withDefaults<DropdownProps>()(defaultProps, (props) => {
                     newDropdownRect.left = inputBoundingClientRect.x;
                 }
 
-                setDropdownRect(newDropdownRect);
+                setDropdownRect((prev) => ({ ...newDropdownRect, width: prev.width }));
 
                 setStartIndex(
                     Math.max(
@@ -229,20 +251,14 @@ export const Dropdown = withDefaults<DropdownProps>()(defaultProps, (props) => {
                         value={
                             dropdownVisible && filter !== null
                                 ? filter
-                                : props.options.find((el) => el.value === selection)?.label
+                                : props.options.find((el) => el.value === selection)?.label || ""
                         }
                     />
                     {dropdownVisible &&
                         ReactDOM.createPortal(
                             <div
                                 className="absolute bg-white border border-gray-300 rounded-md shadow-md overflow-y-auto z-50 box-border"
-                                style={{
-                                    left: dropdownRect.left,
-                                    top: dropdownRect.top,
-                                    right: dropdownRect.right,
-                                    height: dropdownRect.height,
-                                    minWidth: dropdownRect.width,
-                                }}
+                                style={{ ...dropdownRect }}
                                 ref={dropdownRef}
                             >
                                 {filteredOptions.length === 0 && (

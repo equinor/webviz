@@ -1,5 +1,4 @@
 import React from "react";
-import { useQuery } from "@tanstack/react-query";
 
 import { apiService } from "@framework/ApiService";
 import { useStoreState } from "@framework/StateStore";
@@ -9,6 +8,7 @@ import { CircularProgress } from "@lib/components/CircularProgress";
 import { Dropdown } from "@lib/components/Dropdown";
 // import { useWorkbenchActiveModuleName } from "@framework/hooks/useWorkbenchActiveModuleName";
 import { ToggleButton } from "@lib/components/ToggleButton";
+import { useQuery } from "@tanstack/react-query";
 
 import { LoginButton } from "../LoginButton";
 
@@ -18,12 +18,13 @@ type TopNavBarProps = {
 
 export const TopNavBar: React.FC<TopNavBarProps> = (props) => {
     const activeModuleName = ""; // useWorkbenchActiveModuleName();
-    const [selectedCaseId, setSelectedCaseId] = React.useState("");
+    const [selectedField, setSelectedField] = React.useState<string>("");
+    const [selectedCaseId, setSelectedCaseId] = React.useState<string>("");
     const [modulesListOpen, setModulesListOpen] = useStoreState(props.workbench.getStateStore(), "modulesListOpen");
 
     const casesQueryRes = useQuery({
-        queryKey: ["getCases"],
-        queryFn: () => apiService.explore.getCases("DROGON"),
+        queryKey: ["getCases", selectedField],
+        queryFn: () => apiService.explore.getCases(selectedField),
         onSuccess: function selectFirstCase(caseArr) {
             if (caseArr.length > 0) {
                 setSelectedCaseId(caseArr[0].uuid);
@@ -32,13 +33,14 @@ export const TopNavBar: React.FC<TopNavBarProps> = (props) => {
         },
     });
 
-    const handleFieldChange = (fieldName: string | number) => {
-        props.workbench.setNavigatorFieldName(fieldName as string);
+    const handleFieldChange = (fieldName: string) => {
+        setSelectedField(fieldName);
+        props.workbench.setNavigatorFieldName(fieldName);
     };
 
-    const handleCaseChange = (caseId: string | number) => {
-        setSelectedCaseId(caseId as string);
-        props.workbench.setNavigatorCaseId(caseId as string);
+    const handleCaseChange = (caseId: string) => {
+        setSelectedCaseId(caseId);
+        props.workbench.setNavigatorCaseId(caseId);
     };
 
     const handleToggleModulesList = (value: boolean) => {
@@ -47,7 +49,7 @@ export const TopNavBar: React.FC<TopNavBarProps> = (props) => {
 
     const fields = [
         {
-            value: "Drogon",
+            value: "DROGON",
             label: "Drogon",
         },
     ];
@@ -56,7 +58,7 @@ export const TopNavBar: React.FC<TopNavBarProps> = (props) => {
         <div className="bg-slate-100 p-4">
             <div className="flex flex-row gap-4 items-center">
                 <h1 className="flex-grow">{activeModuleName}</h1>
-                <Dropdown options={fields} value={"Drogon"} onChange={handleFieldChange} />
+                <Dropdown options={fields} value={selectedField} onChange={handleFieldChange} />
                 <ApiStateWrapper
                     apiResult={casesQueryRes}
                     errorComponent={<div className="text-red-500">Error loading cases</div>}
@@ -68,7 +70,7 @@ export const TopNavBar: React.FC<TopNavBarProps> = (props) => {
                                 ? casesQueryRes.data?.map((aCase) => ({ value: aCase.uuid, label: aCase.name })) || []
                                 : []
                         }
-                        value={selectedCaseId || "None"}
+                        value={selectedCaseId}
                         onChange={handleCaseChange}
                     />
                 </ApiStateWrapper>
