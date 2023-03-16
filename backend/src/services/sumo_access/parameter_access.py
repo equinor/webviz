@@ -99,6 +99,11 @@ class ParameterAccess:
 
         return ensemble_parameters
 
+    def get_parameter(self, parameter_name: str) -> EnsembleParameter:
+        """Retrieve a single parameter for an ensemble"""
+        parameters = self.get_parameters()
+        return next(parameter for parameter in parameters if parameter.name == parameter_name)
+
     def is_sensitivity_run(self) -> bool:
         """Check if the current ensemble is a sensitivity run"""
         parameters = self.get_parameters()
