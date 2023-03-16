@@ -1,16 +1,17 @@
 import React from "react";
-import { UseQueryResult } from "@tanstack/react-query";
 
 import { Ensemble, InplaceVolumetricsCategoricalMetaData, InplaceVolumetricsTableMetaData } from "@api";
 import { ModuleFCProps } from "@framework/Module";
 import { useSubscribedValue } from "@framework/WorkbenchServices";
-import { Dropdown } from "@lib/components/Dropdown";
-import { Select } from "@lib/components/Select";
 import { ApiStateWrapper } from "@lib/components/ApiStateWrapper/apiStateWrapper";
-import { useEnsemblesQuery, useTableDescriptionsQuery } from "./queryHooks";
-
-import { State } from "./state";
 import { CircularProgress } from "@lib/components/CircularProgress";
+import { Dropdown } from "@lib/components/Dropdown";
+import { Label } from "@lib/components/Label";
+import { Select } from "@lib/components/Select";
+import { UseQueryResult } from "@tanstack/react-query";
+
+import { useEnsemblesQuery, useTableDescriptionsQuery } from "./queryHooks";
+import { State } from "./state";
 
 //-----------------------------------------------------------------------------------------------------------
 
@@ -183,14 +184,12 @@ export function settings({ moduleContext, workbenchServices }: ModuleFCProps<Sta
         <>
             <ApiStateWrapper apiResult={ensemblesQuery} loadingComponent={<CircularProgress />} errorComponent={"feil"} >
                 <Dropdown
-                    label={"Ensemble"}
                     options={ensembleNameOptions}
                     value={ensembleName ?? ""}
                     onChange={(ensembleName) => handleEnsembleSelectionChange(ensembleName as string)}
                 /></ApiStateWrapper>
             <ApiStateWrapper apiResult={tableDescriptionsQuery} loadingComponent={<CircularProgress />} errorComponent={"feil"} >
                 <Dropdown
-                    label="Volumetric table"
                     options={tableNameOptions}
                     value={tableName ?? ""}
                     onChange={(tableName) => handleTableChange(tableName as string)}
@@ -198,7 +197,6 @@ export function settings({ moduleContext, workbenchServices }: ModuleFCProps<Sta
                 />
 
                 <Dropdown
-                    label="Volumetric Response"
                     options={responseOptions}
                     value={responseName ?? ""}
                     onChange={(responseName) => handleResponseChange(responseName as string)}
@@ -213,7 +211,7 @@ export function settings({ moduleContext, workbenchServices }: ModuleFCProps<Sta
 
                                 <Select
                                     key={category.name}
-                                    label={category.name}
+                                options={category.unique_values.map((value) => ({
                                     options={category.unique_values.map((value) => ({ value: value as string, label: value as string }))}
                                     value={category.unique_values as string[]}
                                     onChange={(unique_values) => handleSelectionChange(category.name, unique_values as string[])}
