@@ -6,7 +6,7 @@ import { Frequency, VectorDescription } from "@api";
 import { apiService } from "@framework/ApiService";
 import { useSubscribedValue } from "@framework/WorkbenchServices";
 import { Input } from "@lib/components/Input";
-import { ListBox, ListBoxItem } from "@lib/components/ListBox/list-box";
+import { ListBoxDeprecated, ListBoxItem } from "@lib/components/ListBox/list-box";
 
 import { sortBy, sortedUniq } from "lodash";
 
@@ -102,7 +102,7 @@ export function settings({ moduleContext, workbenchServices }: ModuleFCProps<Sta
     return (
         <>
             <label>Vector:</label>
-            <ListBox
+            <ListBoxDeprecated
                 items={makeVectorListItems(vectorsQuery)}
                 selectedItem={vectorName ?? ""}
                 onSelect={handleVectorSelectionChange}
@@ -110,7 +110,7 @@ export function settings({ moduleContext, workbenchServices }: ModuleFCProps<Sta
 
             <br />
             <label>Frequency:</label>
-            <ListBox
+            <ListBoxDeprecated
                 items={makeFrequencyListItems()}
                 selectedItem={resampleFrequency ?? "RAW"}
                 onSelect={handleFrequencySelectionChange}
