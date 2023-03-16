@@ -13,6 +13,7 @@ from .auth.enforce_logged_in_middleware import EnforceLoggedInMiddleware
 from .routers.explore import router as explore_router
 from .routers.timeseries.router import router as timeseries_router
 from .routers.inplace_volumetrics.router import router as inplace_volumetrics_router
+from .routers.parameters.router import router as parameters_router
 from .routers.general import router as general_router
 
 logging.basicConfig(
@@ -32,6 +33,7 @@ app = FastAPI(generate_unique_id_function=custom_generate_unique_id, root_path="
 app.include_router(explore_router, tags=["explore"])
 app.include_router(timeseries_router, prefix="/timeseries", tags=["timeseries"])
 app.include_router(inplace_volumetrics_router, prefix="/inplace_volumetrics", tags=["inplace_volumetrics"])
+app.include_router(parameters_router, prefix="/parameters", tags=["parameters"])
 
 authHelper = AuthHelper()
 app.include_router(authHelper.router)
