@@ -15,6 +15,7 @@ import { resolveClassNames } from "../_utils/resolveClassNames";
 type Option = {
     value: string;
     label: string;
+    disabled?: boolean;
 };
 
 export type DropdownProps = {
@@ -214,7 +215,7 @@ export const Dropdown = withDefaults<DropdownProps>()(defaultProps, (props) => {
                     if (e.key === "Enter") {
                         e.preventDefault();
                         const option = filteredOptions[keyboardFocus ? optionIndexWithFocus : selectionIndex];
-                        if (option) {
+                        if (option && !option.disabled) {
                             handleOptionClick(option.value);
                         }
                     }
@@ -317,9 +318,16 @@ export const Dropdown = withDefaults<DropdownProps>()(defaultProps, (props) => {
                                                     selection !== option.value && optionIndexWithFocus === index,
                                                 "bg-blue-700":
                                                     selection === option.value && optionIndexWithFocus === index,
+                                                "pointer-events-none": option.disabled,
+                                                "text-gray-400": option.disabled,
                                             }
                                         )}
-                                        onClick={() => handleOptionClick(option.value)}
+                                        onClick={() => {
+                                            if (option.disabled) {
+                                                return;
+                                            }
+                                            handleOptionClick(option.value);
+                                        }}
                                         style={{ height: optionHeight }}
                                         onPointerMove={() => handlePointerOver(index)}
                                         title={option.label}

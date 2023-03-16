@@ -6,10 +6,16 @@ import { BaseComponent, BaseComponentProps } from "../_BaseComponent/baseCompone
 import { withDefaults } from "../_utils/components";
 import { resolveClassNames } from "../_utils/resolveClassNames";
 
+type Option = {
+    value: string;
+    label: string;
+    disabled?: boolean;
+};
+
 export type SelectProps = {
     id?: string;
     wrapperId?: string;
-    options: { value: string; label: string }[];
+    options: Option[];
     value?: string[];
     onChange?: (values: string[]) => void;
     filter?: boolean;
@@ -44,29 +50,42 @@ export const Select = withDefaults<SelectProps>()(defaultProps, (props) => {
     }, [props.options, filter]);
 
     const toggleValue = React.useCallback(
-        (value: string, index: number) => {
+        (option: Option, index: number) => {
             let newSelected = [...selected];
             if (props.multiple) {
                 if (keysPressed.includes("Shift")) {
                     const start = Math.min(lastShiftIndex, index);
                     const end = Math.max(lastShiftIndex, index);
-                    newSelected = props.options.slice(start, end + 1).map((option) => option.value);
-                } else if (keysPressed.includes("Control")) {
-                    if (!selected.includes(value)) {
-                        newSelected = [...selected, value];
+                    newSelected = props.options
+                        .slice(start, end + 1)
+                        .filter((option) => !option.disabled)
+                        .map((option) => option.value);
+                } else if (!option.disabled) {
+                    if (keysPressed.includes("Control")) {
+                        if (!selected.includes(option.value)) {
+                            newSelected = [...selected, option.value];
+                        } else {
+                            newSelected = selected.filter((v) => v !== option.value);
+                        }
                     } else {
-                        newSelected = selected.filter((v) => v !== value);
+                        newSelected = [option.value];
                     }
-                } else {
-                    newSelected = [value];
                 }
+            } else if (!option.disabled) {
+                newSelected = [option.value];
             } else {
-                newSelected = [value];
+                newSelected = [];
             }
             setCurrentIndex(index);
             setSelected(newSelected);
             if (props.onChange) {
-                props.onChange(props.multiple ? newSelected : [value]);
+                if (props.multiple) {
+                    props.onChange(newSelected);
+                } else if (!option.disabled) {
+                    props.onChange([option.value]);
+                } else {
+                    props.onChange([]);
+                }
             }
         },
         [props.multiple, props.options, selected, props.onChange, keysPressed, lastShiftIndex]
@@ -83,7 +102,7 @@ export const Select = withDefaults<SelectProps>()(defaultProps, (props) => {
                 if (e.key === "ArrowUp") {
                     e.preventDefault();
                     const newIndex = Math.max(0, currentIndex - 1);
-                    toggleValue(filteredOptions[newIndex].value, newIndex);
+                    toggleValue(filteredOptions[newIndex], newIndex);
                     if (newIndex < startIndex) {
                         setStartIndex(newIndex);
                     }
@@ -91,7 +110,7 @@ export const Select = withDefaults<SelectProps>()(defaultProps, (props) => {
                 if (e.key === "ArrowDown") {
                     e.preventDefault();
                     const newIndex = Math.min(filteredOptions.length - 1, currentIndex + 1);
-                    toggleValue(filteredOptions[newIndex].value, newIndex);
+                    toggleValue(filteredOptions[newIndex], newIndex);
                     if (newIndex >= startIndex + props.size - 1) {
                         setStartIndex(Math.max(0, newIndex - props.size + 1));
                     }
@@ -99,7 +118,7 @@ export const Select = withDefaults<SelectProps>()(defaultProps, (props) => {
                 if (e.key === "PageUp") {
                     e.preventDefault();
                     const newIndex = Math.max(0, currentIndex - props.size);
-                    toggleValue(filteredOptions[newIndex].value, newIndex);
+                    toggleValue(filteredOptions[newIndex], newIndex);
                     if (newIndex < startIndex) {
                         setStartIndex(newIndex);
                     }
@@ -107,7 +126,7 @@ export const Select = withDefaults<SelectProps>()(defaultProps, (props) => {
                 if (e.key === "PageDown") {
                     e.preventDefault();
                     const newIndex = Math.min(filteredOptions.length - 1, currentIndex + props.size);
-                    toggleValue(filteredOptions[newIndex].value, newIndex);
+                    toggleValue(filteredOptions[newIndex], newIndex);
                     if (newIndex >= startIndex + props.size - 1) {
                         setStartIndex(Math.max(0, newIndex - props.size + 1));
                     }
@@ -162,8 +181,8 @@ export const Select = withDefaults<SelectProps>()(defaultProps, (props) => {
                     />
                 )}
                 <div
-                    className="overflow-y-scroll border border-gray-300 rounded-md w-full"
-                    style={{ height: props.size * 24 }}
+                    className="overflow-y-auto border border-gray-300 rounded-md w-full"
+                    style={{ height: props.size * 24 + 2 }}
                     ref={ref}
                     onFocus={() => setHasFocus(true)}
                     onBlur={() => setHasFocus(false)}
@@ -179,7 +198,8 @@ export const Select = withDefaults<SelectProps>()(defaultProps, (props) => {
                                     key={option.value}
                                     className={resolveClassNames(
                                         "cursor-pointer",
-                                        "p-1",
+                                        "pl-2",
+                                        "pr-2",
                                         "flex",
                                         "items-center",
                                         "select-none",
@@ -188,9 +208,17 @@ export const Select = withDefaults<SelectProps>()(defaultProps, (props) => {
                                             "bg-blue-600 text-white box-border hover:bg-blue-700": selected.includes(
                                                 option.value
                                             ),
+                                            "pointer-events-none": option.disabled,
+                                            "text-gray-400": option.disabled,
+                                            "bg-blue-300": option.disabled && index === currentIndex,
                                         }
                                     )}
-                                    onClick={() => toggleValue(option.value, index)}
+                                    onClick={() => {
+                                        if (option.disabled) {
+                                            return;
+                                        }
+                                        toggleValue(option, index);
+                                    }}
                                     style={{ height: 24 }}
                                     title={option.label}
                                 >

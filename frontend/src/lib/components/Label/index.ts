@@ -1,2 +1,2 @@
 export { Label } from "./label";
-export type { LabelComponentGroupProps } from "./label";
+export type { LabelProps } from "./label";
