@@ -105,7 +105,7 @@ class ParameterAccess:
 
         return ensemble_parameters
 
-    def is_sensitivity_run(self) -> List[EnsembleSensitivity]:
+    def is_sensitivity_run(self) -> bool:
         """Check if the current ensemble is a sensitivity run"""
         parameters = self.get_parameters()
         return any([parameter.name == "SENSNAME" for parameter in parameters])
