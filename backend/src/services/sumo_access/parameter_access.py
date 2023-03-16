@@ -19,12 +19,6 @@ LOGGER = logging.getLogger(__name__)
 
 class EnsembleParameter(BaseModel):
     name: str
-    values: List[Union[str, int, float]]
-    realizations: List[int]
-
-
-class EnsembleParameter(BaseModel):
-    name: str
     group_name: Optional[str]
     descriptive_name: Optional[str]
     realizations: List[int]
