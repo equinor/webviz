@@ -40,3 +40,8 @@ class HistoricalVector(BaseModel):
     timestamps: List[datetime.datetime]
     values: List[float]
     metadata: VectorMetadata
+
+
+class EnsembleVectorAtTimestep(BaseModel):
+    values: List[float]
+    realizations: List[int]

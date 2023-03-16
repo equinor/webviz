@@ -36,9 +36,9 @@ class EnsembleSensitivity(BaseModel):
     cases: List[EnsembleSensitivityCase]
 
 
-class SENSTYPE(str, Enum):
+class SENSITIVITY_TYPES(str, Enum):
     MONTECARLO = "montecarlo"
-    SCALAR = "scalar"
+    SCENARIO = "scenario"
 
 
 class ParameterAccess:
@@ -121,7 +121,7 @@ class ParameterAccess:
         )
         dframe = pd.merge(dframe_sensitivity, dframe_case, on="Realization")
         dframe["type"] = dframe.apply(
-            lambda row: SENSTYPE.MONTECARLO if row["Case"] == "p10_p90" else SENSTYPE.SCALAR, axis=1
+            lambda row: SENSITIVITY_TYPES.MONTECARLO if row["Case"] == "p10_p90" else SENSITIVITY_TYPES.SCENARIO, axis=1
         )
         ensemble_sensitivities = []
         for sensitivity, sensitivity_df in dframe.groupby("Sensitivity"):

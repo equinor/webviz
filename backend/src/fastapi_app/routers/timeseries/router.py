@@ -5,6 +5,8 @@ from typing import List, Optional, Sequence, Union
 from fastapi import APIRouter, Depends, HTTPException, Query
 
 from ....services.summary_vector_statistics import compute_vector_statistics
+from ....services.sumo_access.parameter_access import ParameterAccess
+from ....services.correlations import calculate_sensitivity_averages, SensitivityResponseAverage, EnsembleResponse
 from ....services.sumo_access.summary_access import Frequency, SummaryAccess
 from ....services.utils.authenticated_user import AuthenticatedUser
 from ....services.utils.perf_timer import PerfTimer
@@ -162,6 +164,43 @@ async def get_realizations_calculated_vector_data(
     print(expression)
     print(type(expression))
     return "hei"
+
+
+@router.get("/sensitivity_averages/")
+async def get_sensitivity_averages(
+    authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
+    case_uuid: str = Query(description="Sumo case uuid"),
+    ensemble_name: str = Query(description="Ensemble name"),
+    vector_name: str = Query(description="Name of the vector"),
+    resampling_frequency: Optional[schemas.Frequency] = Query(
+        None, description="Resampling frequency. If not specified, raw data without resampling wil be returned."
+    ),
+    timestep: datetime.datetime = Query(description="Timestep for vector values"),
+    sensitivity_reference_name: str = Query(description="Name of the sensitivity reference"),
+    realizations: Optional[Sequence[int]] = Query(
+        None,
+        description="Optional list of realizations to include. If not specified, all realizations will be returned.",
+    ),
+) -> List[SensitivityResponseAverage]:
+    summary_access = SummaryAccess(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
+
+    sumo_freq = Frequency.from_string_value(resampling_frequency.value if resampling_frequency else "dummy")
+    ensemble_vector_at_timestep = summary_access.get_vector_values_at_timestep(
+        vector_name=vector_name, timestep=timestep, resampling_frequency=sumo_freq, realizations=realizations
+    )
+    ensemble_response = EnsembleResponse(
+        realizations=ensemble_vector_at_timestep.realizations,
+        values=ensemble_vector_at_timestep.values,
+        name=vector_name,
+    )
+    parameter_access = ParameterAccess(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
+    ensemble_sensitivities = parameter_access.get_sensitivities()
+    sensitivity_averages = calculate_sensitivity_averages(
+        ensemble_sensitivities=ensemble_sensitivities,
+        ensemble_response=ensemble_response,
+        sensitivity_reference_name=sensitivity_reference_name,
+    )
+    return sensitivity_averages
 
 
 # @router.get("/statistical_calculated_vector_data/")
