@@ -4,14 +4,14 @@ import { v4 } from "uuid";
 
 import { resolveClassNames } from "../_utils/resolveClassNames";
 
-export type LabelComponentGroupProps = {
+export type LabelProps = {
     text: string;
     children: React.ReactElement;
     wrapperClassName?: string;
     labelClassName?: string;
 };
 
-export const Label: React.FC<LabelComponentGroupProps> = (props) => {
+export const Label: React.FC<LabelProps> = (props) => {
     const id = React.useRef<string>(`label-${v4()}`);
 
     return (
