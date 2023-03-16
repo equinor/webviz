@@ -6,6 +6,7 @@ import { useSubscribedValue } from "@framework/WorkbenchServices";
 import { ApiStateWrapper } from "@lib/components/ApiStateWrapper/apiStateWrapper";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { Dropdown } from "@lib/components/Dropdown";
+import { Label } from "@lib/components/Label";
 import { Select } from "@lib/components/Select";
 import { UseQueryResult } from "@tanstack/react-query";
 
@@ -184,33 +185,38 @@ export function settings({ moduleContext, workbenchServices }: ModuleFCProps<Sta
     return (
         <>
             <ApiStateWrapper apiResult={ensemblesQuery} loadingComponent={<CircularProgress />} errorComponent={"feil"}>
-                <Dropdown
-                    options={ensembleNameOptions}
-                    value={ensembleName ?? ""}
-                    onChange={(ensembleName) => handleEnsembleSelectionChange(ensembleName as string)}
-                />
+                <Label text="Ensemble">
+                    <Dropdown
+                        options={ensembleNameOptions}
+                        value={ensembleName ?? ""}
+                        onChange={(ensembleName) => handleEnsembleSelectionChange(ensembleName as string)}
+                    />
+                </Label>
             </ApiStateWrapper>
             <ApiStateWrapper
                 apiResult={tableDescriptionsQuery}
                 loadingComponent={<CircularProgress />}
-                errorComponent={"feil"}
+                errorComponent={"Could not load table descriptions"}
+                className="flex flex-col gap-4"
             >
-                <Dropdown
-                    options={tableNameOptions}
-                    value={tableName ?? ""}
-                    onChange={(tableName) => handleTableChange(tableName as string)}
-                />
-
-                <Dropdown
-                    options={responseOptions}
-                    value={responseName ?? ""}
-                    onChange={(responseName) => handleResponseChange(responseName as string)}
-                />
-
-                <label className="text-lg">{" Filters"}</label>
+                <Label text="Volumetric table">
+                    <Dropdown
+                        options={tableNameOptions}
+                        value={tableName ?? ""}
+                        onChange={(tableName) => handleTableChange(tableName as string)}
+                    />
+                </Label>
+                <Label text="Volume response">
+                    <Dropdown
+                        options={responseOptions}
+                        value={responseName ?? ""}
+                        onChange={(responseName) => handleResponseChange(responseName as string)}
+                    />
+                </Label>
+                <h6>Filters</h6>
                 {tableCategoricalOptions?.map((category) => {
                     return (
-                        <div key={category.name}>
+                        <Label key={category.name} text={category.name}>
                             <Select
                                 key={category.name}
                                 options={category.unique_values.map((value) => ({
@@ -224,7 +230,7 @@ export function settings({ moduleContext, workbenchServices }: ModuleFCProps<Sta
                                 size={5}
                                 multiple={true}
                             />
-                        </div>
+                        </Label>
                     );
                 })}
             </ApiStateWrapper>
