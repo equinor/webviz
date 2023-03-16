@@ -1,28 +1,13 @@
-from enum import Enum
-from io import BytesIO
-from typing import List, Optional, Sequence, Union, Dict
+from typing import List, Optional, Union, Dict
 import logging
 
-import numpy as np
 from pydantic import BaseModel
-import pyarrow as pa
-import pyarrow.parquet as pq
-import pyarrow.compute as pc
 from fmu.sumo.explorer.explorer import CaseCollection, SumoClient
-from fmu.sumo.explorer.objects import TableCollection
-
-# from fmu.sumo.explorer.objects.table import AggregatedTable
 
 from ..utils.perf_timer import PerfTimer
 from ._helpers import create_sumo_client_instance
 
 LOGGER = logging.getLogger(__name__)
-
-
-class EnsembleParameter(BaseModel):
-    name: str
-    values: List[Union[str, int, float]]
-    realizations: List[int]
 
 
 class EnsembleParameter(BaseModel):
