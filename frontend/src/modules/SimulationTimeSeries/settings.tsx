@@ -1,16 +1,20 @@
 import React from "react";
-import { UseQueryResult, useQuery } from "@tanstack/react-query";
 
-import { ModuleFCProps } from "@framework/Module";
 import { Frequency, VectorDescription } from "@api";
 import { apiService } from "@framework/ApiService";
+import { ModuleFCProps } from "@framework/Module";
 import { useSubscribedValue } from "@framework/WorkbenchServices";
+import { Checkbox } from "@lib/components/Checkbox";
+import { Dropdown } from "@lib/components/Dropdown";
 import { Input } from "@lib/components/Input";
-import { ListBoxDeprecated, ListBoxItem } from "@lib/components/ListBox/list-box";
+import { Label } from "@lib/components/Label";
+import { UseQueryResult, useQuery } from "@tanstack/react-query";
 
 import { sortBy, sortedUniq } from "lodash";
 
 import { State } from "./state";
+
+import { DropdownProps } from "../../lib/components/Dropdown/dropdown";
 
 //-----------------------------------------------------------------------------------------------------------
 export function settings({ moduleContext, workbenchServices }: ModuleFCProps<State>) {
@@ -49,14 +53,14 @@ export function settings({ moduleContext, workbenchServices }: ModuleFCProps<Sta
         },
     });
 
-    function makeVectorListItems(vectorsQuery: UseQueryResult<VectorDescription[]>): ListBoxItem[] {
-        const itemArr: ListBoxItem[] = [];
+    function makeVectorListItems(vectorsQuery: UseQueryResult<VectorDescription[]>): DropdownProps["options"] {
+        const itemArr: DropdownProps["options"] = [];
         if (vectorsQuery.isSuccess && vectorsQuery.data.length > 0) {
             for (const vec of vectorsQuery.data) {
                 itemArr.push({ value: vec.name, label: vec.descriptive_name });
             }
         } else {
-            itemArr.push({ value: "", label: `${vectorsQuery.status.toString()}...`, disabled: true });
+            // itemArr.push({ value: "", label: `${vectorsQuery.status.toString()}...`, disabled: true });
         }
         return itemArr;
     }
@@ -66,8 +70,8 @@ export function settings({ moduleContext, workbenchServices }: ModuleFCProps<Sta
         setVectorName(vecName);
     }
 
-    function makeFrequencyListItems(): ListBoxItem[] {
-        const itemArr: ListBoxItem[] = [
+    function makeFrequencyListItems(): { label: string; value: string }[] {
+        const itemArr: { label: string; value: string }[] = [
             { value: Frequency.DAILY, label: "Daily" },
             { value: Frequency.MONTHLY, label: "Monthly" },
             { value: Frequency.QUARTERLY, label: "Quarterly" },
@@ -101,33 +105,24 @@ export function settings({ moduleContext, workbenchServices }: ModuleFCProps<Sta
 
     return (
         <>
-            <label>Vector:</label>
-            <ListBoxDeprecated
-                items={makeVectorListItems(vectorsQuery)}
-                selectedItem={vectorName ?? ""}
-                onSelect={handleVectorSelectionChange}
-            />
-
-            <br />
-            <label>Frequency:</label>
-            <ListBoxDeprecated
-                items={makeFrequencyListItems()}
-                selectedItem={resampleFrequency ?? "RAW"}
-                onSelect={handleFrequencySelectionChange}
-            />
-
-            <br />
-            <label>
-                <input type="checkbox" checked={showStatistics} onChange={handleShowStatisticsCheckboxChange} />
-                Show statistics
-            </label>
-
-            <br />
-            <br />
-            <label>
-                Realizations:
+            <Label text="Vector">
+                <Dropdown
+                    options={makeVectorListItems(vectorsQuery)}
+                    value={vectorName ?? ""}
+                    onChange={handleVectorSelectionChange}
+                />
+            </Label>
+            <Label text="Frequency">
+                <Dropdown
+                    options={makeFrequencyListItems()}
+                    value={resampleFrequency ?? "RAW"}
+                    onChange={handleFrequencySelectionChange}
+                />
+            </Label>
+            <Checkbox label="Show statistics" checked={showStatistics} onChange={handleShowStatisticsCheckboxChange} />
+            <Label text="Realizations">
                 <Input onChange={handleRealizationRangeTextChanged} />
-            </label>
+            </Label>
         </>
     );
 }
