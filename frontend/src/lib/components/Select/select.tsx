@@ -1,7 +1,5 @@
 import React, { Key } from "react";
 
-import { v4 } from "uuid";
-
 import { Input } from "../Input";
 import { Virtualization } from "../Virtualization";
 import { BaseComponent, BaseComponentProps } from "../_BaseComponent/baseComponent";
@@ -9,13 +7,14 @@ import { withDefaults } from "../_utils/components";
 import { resolveClassNames } from "../_utils/resolveClassNames";
 
 export type SelectProps = {
+    id?: string;
+    wrapperId?: string;
     options: { value: string; label: string }[];
     value?: string[];
     onChange?: (values: string[]) => void;
     filter?: boolean;
     size?: number;
     multiple?: boolean;
-    label?: string;
     width?: string | number;
 } & BaseComponentProps;
 
@@ -35,7 +34,6 @@ export const Select = withDefaults<SelectProps>()(defaultProps, (props) => {
     const [lastShiftIndex, setLastShiftIndex] = React.useState<number>(-1);
     const [currentIndex, setCurrentIndex] = React.useState<number>(0);
 
-    const id = React.useRef<string>(v4());
     const ref = React.useRef<HTMLDivElement>(null);
 
     const filteredOptions = React.useMemo(() => {
@@ -146,6 +144,7 @@ export const Select = withDefaults<SelectProps>()(defaultProps, (props) => {
     return (
         <BaseComponent disabled={props.disabled}>
             <div
+                id={props.wrapperId}
                 className={resolveClassNames("relative", {
                     "no-select": props.disabled,
                     "pointer-events-none": props.disabled,
@@ -153,13 +152,12 @@ export const Select = withDefaults<SelectProps>()(defaultProps, (props) => {
                 })}
                 style={{ width: props.width }}
             >
-                {props.label && <label htmlFor={`filter-${id.current}`}>{props.label}</label>}
                 {props.filter && (
                     <Input
+                        id={props.id}
                         type="text"
                         value={filter}
                         onChange={handleFilterChange}
-                        id={`filter-${id.current}`}
                         placeholder="Filter options..."
                     />
                 )}

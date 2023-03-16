@@ -1,4 +1,5 @@
 import React from "react";
+
 import { QueryObserverResult } from "@tanstack/react-query";
 
 import { resolveClassNames } from "../_utils/resolveClassNames";
@@ -7,6 +8,8 @@ export type ApiStateWrapperProps = {
     apiResult: QueryObserverResult;
     loadingComponent: React.ReactNode;
     errorComponent: React.ReactNode;
+    className?: string;
+    style?: React.CSSProperties;
     children: React.ReactNode;
 };
 
@@ -16,8 +19,10 @@ export const ApiStateWrapper: React.FC<ApiStateWrapperProps> = (props: ApiStateW
             className={resolveClassNames(
                 "relative rounded",
                 { "outline outline-blue-100 outline-offset-2": props.apiResult.isLoading },
-                { "outline outline-red-100 outline-offset-2": props.apiResult.isError }
+                { "outline outline-red-100 outline-offset-2": props.apiResult.isError },
+                props.className ?? ""
             )}
+            style={props.style}
         >
             {props.apiResult.isLoading && (
                 <div className="absolute left-0 right-0 w-full h-full bg-white bg-opacity-80 flex items-center justify-center z-10">
@@ -33,3 +38,5 @@ export const ApiStateWrapper: React.FC<ApiStateWrapperProps> = (props: ApiStateW
         </div>
     );
 };
+
+ApiStateWrapper.displayName = "ApiStateWrapper";

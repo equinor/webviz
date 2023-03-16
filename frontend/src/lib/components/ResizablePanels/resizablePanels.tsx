@@ -220,3 +220,5 @@ export const ResizablePanels: React.FC<ResizablePanelsProps> = (props) => {
         </div>
     );
 };
+
+ResizablePanels.displayName = "ResizablePanels";

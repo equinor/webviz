@@ -3,7 +3,7 @@ import React from "react";
 import { UserInfo } from "@api";
 import { apiService } from "@framework/ApiService";
 
-import { createGenericContext } from "../utils/generic-context";
+import { createGenericContext } from "../utils/genericContext";
 
 export enum AuthState {
     LoggedIn = "LoggedIn",

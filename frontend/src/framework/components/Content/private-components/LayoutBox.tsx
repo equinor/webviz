@@ -10,8 +10,6 @@ import {
     rectsAreEqual,
 } from "@framework/utils/geometry";
 
-import { v4 } from "uuid";
-
 function layoutElementToRect(layoutElement: LayoutElement): Rect {
     return {
         x: layoutElement.relX,
@@ -858,13 +856,12 @@ export const LayoutBoxComponents: React.FC<{
         if (props.active && props.active !== box.getModuleInstanceId() && activeBox === box) {
             hoveredEdge = box.findEdgeContainingPoint(props.pointer, props.realSize, props.active)?.rect || null;
         }
-        const id = v4();
 
         return (
             <div key={box.toString()}>
                 {edges.map((edge) => (
                     <div
-                        key={`${edge.edge}`}
+                        key={`${edge.edge}-${edge.rect.x}-${edge.rect.y}-${edge.rect.width}-${edge.rect.height}`}
                         className="absolute rounded bg-slate-400 justify-center items-center opacity-50"
                         style={{
                             left: edge.rect.x,
