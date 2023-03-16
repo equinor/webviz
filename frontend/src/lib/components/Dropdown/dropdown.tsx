@@ -1,13 +1,10 @@
 import React from "react";
 import ReactDOM from "react-dom";
 
-import { Rect } from "@framework/utils/geometry";
 import { getTextWidth } from "@framework/utils/textSize";
 import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/20/solid";
-import { ClickAwayListener } from "@mui/base";
 
-import { v4 } from "uuid";
-
+import { useElementBoundingRect } from "../../hooks/useElementBoundingRect";
 import { IconButton } from "../IconButton";
 import { Input } from "../Input";
 import { Virtualization } from "../Virtualization";
@@ -21,11 +18,12 @@ type Option = {
 };
 
 export type DropdownProps = {
+    id?: string;
+    wrapperId?: string;
     options: Option[];
     value?: string;
     onChange?: (value: string) => void;
     filter?: boolean;
-    label?: string;
     width?: string | number;
 } & BaseComponentProps;
 
@@ -46,6 +44,9 @@ type DropdownRect = {
     minWidth: number;
 };
 
+const noMatchingOptionsText = "No matching options";
+const noOptionsText = "No options";
+
 export const Dropdown = withDefaults<DropdownProps>()(defaultProps, (props) => {
     const [dropdownVisible, setDropdownVisible] = React.useState<boolean>(false);
     const [dropdownRect, setDropdownRect] = React.useState<DropdownRect>({
@@ -61,9 +62,10 @@ export const Dropdown = withDefaults<DropdownProps>()(defaultProps, (props) => {
     const [startIndex, setStartIndex] = React.useState<number>(0);
     const [keyboardFocus, setKeyboardFocus] = React.useState<boolean>(false);
 
-    const id = React.useRef<string>(v4());
     const inputRef = React.useRef<HTMLInputElement>(null);
     const dropdownRef = React.useRef<HTMLDivElement>(null);
+
+    const inputBoundingRect = useElementBoundingRect(inputRef);
 
     const setOptionIndexWithFocusToCurrentSelection = React.useCallback(() => {
         const index = filteredOptions.findIndex((option) => option.value === selection);
@@ -76,13 +78,38 @@ export const Dropdown = withDefaults<DropdownProps>()(defaultProps, (props) => {
     }, [props.value]);
 
     React.useEffect(() => {
-        const longestOptionWidth = props.options.reduce((prev, current) => {
+        const handleMouseDown = (event: MouseEvent) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+                setDropdownVisible(false);
+                setFilter(null);
+                setFilteredOptions(props.options);
+                setOptionIndexWithFocus(-1);
+            }
+        };
+
+        document.addEventListener("mousedown", handleMouseDown);
+
+        return () => {
+            document.removeEventListener("mousedown", handleMouseDown);
+        };
+    }, [props.options]);
+
+    React.useEffect(() => {
+        let longestOptionWidth = props.options.reduce((prev, current) => {
             const labelWidth = getTextWidth(current.label, document.body);
             if (labelWidth > prev) {
                 return labelWidth;
             }
             return prev;
         }, 0);
+
+        if (longestOptionWidth === 0) {
+            if (props.options.length === 0 || filter === "") {
+                longestOptionWidth = getTextWidth(noOptionsText, document.body);
+            } else {
+                longestOptionWidth = getTextWidth(noMatchingOptionsText, document.body);
+            }
+        }
         setDropdownRect((prev) => ({ ...prev, width: longestOptionWidth + 32 }));
 
         const newFilteredOptions = props.options.filter((option) => option.label.includes(filter || ""));
@@ -91,33 +118,32 @@ export const Dropdown = withDefaults<DropdownProps>()(defaultProps, (props) => {
 
     React.useLayoutEffect(() => {
         if (dropdownVisible) {
-            const inputBoundingClientRect = inputRef.current?.getBoundingClientRect();
-            const bodyBoundingClientRect = document.body.getBoundingClientRect();
+            const inputClientBoundingRect = inputRef.current?.getBoundingClientRect();
+            const bodyClientBoundingRect = document.body.getBoundingClientRect();
 
             const height = Math.min(minHeight, Math.max(filteredOptions.length * optionHeight, optionHeight)) + 2;
 
-            if (inputBoundingClientRect && bodyBoundingClientRect) {
+            if (inputClientBoundingRect && bodyClientBoundingRect) {
                 const newDropdownRect: DropdownRect = {
-                    minWidth: inputBoundingClientRect.width,
+                    minWidth: inputBoundingRect.width,
                     width: dropdownRect.width,
                     height: height,
                 };
 
-                if (inputBoundingClientRect.y + inputBoundingClientRect.height + height > window.innerHeight) {
-                    newDropdownRect.top = inputBoundingClientRect.y - minHeight;
-                    newDropdownRect.height = Math.min(height, inputBoundingClientRect.y);
+                if (inputClientBoundingRect.y + inputBoundingRect.height + height > window.innerHeight) {
+                    newDropdownRect.top = inputClientBoundingRect.y - minHeight;
+                    newDropdownRect.height = Math.min(height, inputClientBoundingRect.y);
                 } else {
-                    newDropdownRect.top = inputBoundingClientRect.y + inputBoundingClientRect.height;
+                    newDropdownRect.top = inputClientBoundingRect.y + inputBoundingRect.height;
                     newDropdownRect.height = Math.min(
                         height,
-                        window.innerHeight - inputBoundingClientRect.y - inputBoundingClientRect.height
+                        window.innerHeight - inputClientBoundingRect.y - inputBoundingRect.height
                     );
                 }
-                if (inputBoundingClientRect.x + inputBoundingClientRect.width > window.innerWidth / 2) {
-                    newDropdownRect.right =
-                        window.innerWidth - (inputBoundingClientRect.x + inputBoundingClientRect.width);
+                if (inputClientBoundingRect.x + inputBoundingRect.width > window.innerWidth / 2) {
+                    newDropdownRect.right = window.innerWidth - (inputClientBoundingRect.x + inputBoundingRect.width);
                 } else {
-                    newDropdownRect.left = inputBoundingClientRect.x;
+                    newDropdownRect.left = inputClientBoundingRect.x;
                 }
 
                 setDropdownRect((prev) => ({ ...newDropdownRect, width: prev.width }));
@@ -134,7 +160,14 @@ export const Dropdown = withDefaults<DropdownProps>()(defaultProps, (props) => {
                 setOptionIndexWithFocusToCurrentSelection();
             }
         }
-    }, [dropdownVisible, filteredOptions, selection, setOptionIndexWithFocusToCurrentSelection, setStartIndex]);
+    }, [
+        inputBoundingRect,
+        dropdownVisible,
+        filteredOptions,
+        selection,
+        setOptionIndexWithFocusToCurrentSelection,
+        setStartIndex,
+    ]);
 
     const handleOptionClick = React.useCallback(
         (value: string) => {
@@ -209,13 +242,6 @@ export const Dropdown = withDefaults<DropdownProps>()(defaultProps, (props) => {
         setDropdownVisible(true);
     }, []);
 
-    const handleAwayClick = React.useCallback(() => {
-        setDropdownVisible(false);
-        setFilter(null);
-        setFilteredOptions(props.options);
-        setOptionIndexWithFocus(-1);
-    }, [props.options, selection]);
-
     const handleInputChange = React.useCallback(
         (event: React.ChangeEvent<HTMLInputElement>) => {
             setFilter(event.target.value);
@@ -231,83 +257,84 @@ export const Dropdown = withDefaults<DropdownProps>()(defaultProps, (props) => {
         setKeyboardFocus(false);
     }, []);
 
+    const makeInputValue = () => {
+        if (dropdownVisible && filter !== null) {
+            return filter;
+        }
+        return props.options.find((el) => el.value === selection)?.label || "";
+    };
+
     return (
-        <ClickAwayListener onClickAway={handleAwayClick}>
-            <BaseComponent disabled={props.disabled}>
-                <div style={{ width: props.width }}>
-                    {props.label && <label htmlFor={`filter-${id.current}`}>{props.label}</label>}
-                    <Input
-                        ref={inputRef}
-                        error={
-                            selection !== "" && props.options.find((option) => option.value === selection) === undefined
-                        }
-                        onClick={() => handleInputClick()}
-                        endAdornment={
-                            <IconButton size="small" onClick={() => setDropdownVisible(!dropdownVisible)}>
-                                {dropdownVisible ? <ChevronUpIcon /> : <ChevronDownIcon />}
-                            </IconButton>
-                        }
-                        onChange={handleInputChange}
-                        value={
-                            dropdownVisible && filter !== null
-                                ? filter
-                                : props.options.find((el) => el.value === selection)?.label || ""
-                        }
-                    />
-                    {dropdownVisible &&
-                        ReactDOM.createPortal(
-                            <div
-                                className="absolute bg-white border border-gray-300 rounded-md shadow-md overflow-y-auto z-50 box-border"
-                                style={{ ...dropdownRect }}
-                                ref={dropdownRef}
-                            >
-                                {filteredOptions.length === 0 && (
-                                    <div className="p-1 flex items-center text-gray-400 select-none">
-                                        No matching options
+        <BaseComponent disabled={props.disabled}>
+            <div style={{ width: props.width }} id={props.wrapperId}>
+                <Input
+                    ref={inputRef}
+                    id={props.id}
+                    error={selection !== "" && props.options.find((option) => option.value === selection) === undefined}
+                    onClick={() => handleInputClick()}
+                    endAdornment={
+                        <IconButton size="small" onClick={() => setDropdownVisible((prev) => !prev)}>
+                            {dropdownVisible ? <ChevronUpIcon /> : <ChevronDownIcon />}
+                        </IconButton>
+                    }
+                    onChange={handleInputChange}
+                    value={makeInputValue()}
+                />
+                {dropdownVisible &&
+                    ReactDOM.createPortal(
+                        <div
+                            className="absolute bg-white border border-gray-300 rounded-md shadow-md overflow-y-auto z-50 box-border"
+                            style={{ ...dropdownRect }}
+                            ref={dropdownRef}
+                        >
+                            {filteredOptions.length === 0 && (
+                                <div className="p-1 flex items-center text-gray-400 select-none">
+                                    {props.options.length === 0 || filter === ""
+                                        ? noOptionsText
+                                        : noMatchingOptionsText}
+                                </div>
+                            )}
+                            <Virtualization
+                                direction="vertical"
+                                items={filteredOptions}
+                                itemSize={optionHeight}
+                                containerRef={dropdownRef}
+                                startIndex={startIndex}
+                                renderItem={(option, index) => (
+                                    <div
+                                        key={option.value}
+                                        className={resolveClassNames(
+                                            "flex",
+                                            "items-center",
+                                            "cursor-pointer",
+                                            "select-none",
+                                            "pl-1",
+                                            "pr-1",
+                                            {
+                                                "bg-blue-600 text-white box-border hover:bg-blue-700":
+                                                    selection === option.value,
+                                                "bg-blue-100":
+                                                    selection !== option.value && optionIndexWithFocus === index,
+                                                "bg-blue-700":
+                                                    selection === option.value && optionIndexWithFocus === index,
+                                            }
+                                        )}
+                                        onClick={() => handleOptionClick(option.value)}
+                                        style={{ height: optionHeight }}
+                                        onPointerMove={() => handlePointerOver(index)}
+                                        title={option.label}
+                                    >
+                                        <span className="whitespace-nowrap text-ellipsis overflow-hidden min-w-0">
+                                            {option.label}
+                                        </span>
                                     </div>
                                 )}
-                                <Virtualization
-                                    direction="vertical"
-                                    items={filteredOptions}
-                                    itemSize={optionHeight}
-                                    containerRef={dropdownRef}
-                                    startIndex={startIndex}
-                                    renderItem={(option, index) => (
-                                        <div
-                                            key={option.value}
-                                            className={resolveClassNames(
-                                                "flex",
-                                                "items-center",
-                                                "cursor-pointer",
-                                                "select-none",
-                                                "pl-1",
-                                                "pr-1",
-                                                {
-                                                    "bg-blue-600 text-white box-border hover:bg-blue-700":
-                                                        selection === option.value,
-                                                    "bg-blue-100":
-                                                        selection !== option.value && optionIndexWithFocus === index,
-                                                    "bg-blue-700":
-                                                        selection === option.value && optionIndexWithFocus === index,
-                                                }
-                                            )}
-                                            onClick={() => handleOptionClick(option.value)}
-                                            style={{ height: optionHeight }}
-                                            onPointerMove={() => handlePointerOver(index)}
-                                            title={option.label}
-                                        >
-                                            <span className="whitespace-nowrap text-ellipsis overflow-hidden min-w-0">
-                                                {option.label}
-                                            </span>
-                                        </div>
-                                    )}
-                                />
-                            </div>,
-                            document.body
-                        )}
-                </div>
-            </BaseComponent>
-        </ClickAwayListener>
+                            />
+                        </div>,
+                        document.body
+                    )}
+            </div>
+        </BaseComponent>
     );
 });
 

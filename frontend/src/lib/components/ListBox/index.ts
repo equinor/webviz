@@ -1,1 +1,1 @@
-export { ListBox } from "./list-box";
+export { ListBoxDeprecated } from "./list-box";

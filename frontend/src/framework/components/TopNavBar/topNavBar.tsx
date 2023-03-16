@@ -24,11 +24,19 @@ export const TopNavBar: React.FC<TopNavBarProps> = (props) => {
 
     const casesQueryRes = useQuery({
         queryKey: ["getCases", selectedField],
-        queryFn: () => apiService.explore.getCases(selectedField),
-        onSuccess: function selectFirstCase(caseArr) {
-            if (caseArr.length > 0) {
-                setSelectedCaseId(caseArr[0].uuid);
-                props.workbench.setNavigatorCaseId(caseArr[0].uuid);
+        queryFn: () => {
+            if (selectedField !== "") {
+                return apiService.explore.getCases(selectedField);
+            }
+            return null;
+        },
+        onSuccess: function selectFirstCase(caseArray) {
+            if (caseArray === null) {
+                return;
+            }
+            if (caseArray.length > 0) {
+                setSelectedCaseId(caseArray[0].uuid);
+                props.workbench.setNavigatorCaseId(caseArray[0].uuid);
             }
         },
     });

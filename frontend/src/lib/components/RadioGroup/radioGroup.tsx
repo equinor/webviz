@@ -105,3 +105,5 @@ export const RadioGroup = withDefaults<RadioGroupProps>()(defaultProps, (props) 
         </BaseComponent>
     );
 });
+
+RadioGroup.displayName = "RadioGroup";
