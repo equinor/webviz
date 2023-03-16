@@ -9,8 +9,10 @@ const initialState: State = {
     ensembleName: null,
     vectorName: null,
     resamplingFrequency: Frequency.MONTHLY,
-    showStatistics: true,
-    realizationsToInclude: null
+    showStatistics: false,
+    realizationsToInclude: null,
+    showParameter: false,
+    parameterName: null
 };
 
 

@@ -6,4 +6,6 @@ export interface State {
     resamplingFrequency: Frequency | null;
     showStatistics: boolean;
     realizationsToInclude: number[] | null;
+    showParameter: boolean,
+    parameterName: string | null;
 }

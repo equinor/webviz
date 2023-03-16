@@ -2,18 +2,108 @@ import React from "react";
 import Plot from "react-plotly.js";
 
 import { ModuleFCProps } from "@framework/Module";
-import { useSubscribedValue } from "@framework/WorkbenchServices";
+import { useSubscribedValue, GlobalTopicDefinitions } from "@framework/WorkbenchServices";
 import { useElementSize } from "@lib/hooks/useElementSize";
-
 import { Layout, PlotHoverEvent, PlotData, PlotMouseEvent, PlotRelayoutEvent } from "plotly.js";
-import { useStatisticalVectorDataQuery, useVectorDataQuery } from "./queryHooks";
+import { useStatisticalVectorDataQuery, useVectorDataQuery, useParameterQuery } from "./queryHooks";
 import { State } from "./state";
+import { UseQueryResult } from "@tanstack/react-query";
+import { VectorRealizationData, EnsembleParameter } from "@api";
+import { find_intermediate_color } from "./utils";
 
 interface MyPlotData extends Partial<PlotData> {
     realizationNumber?: number | null;
 
     // Did they forget to expose this one
     legendrank?: number;
+}
+function normalizeParameter(parameter: EnsembleParameter) {
+    const values: number[] = parameter.values as number[]
+    // find the max value
+    let normMax = 1;
+    let m = 0;
+    for (let x = 0; x < values.length; x++) m = Math.max(m, values[x]);
+    // find the ratio
+    let r = normMax / m;
+    // normalize the array
+    for (let x = 0; x < values.length; x++) values[x] = values[x] * r;
+    parameter.values = values
+    return parameter
+}
+function set_real_color(parameter: EnsembleParameter, real_no: number): string {
+    /*
+    Return color for trace based on normalized parameter value.
+    Midpoint for the colorscale is set on the average value
+    */
+    const values = parameter.values as number[];
+    const realizations = parameter.realizations as number[];
+    const blue = "rgba(39, 67, 245, 0.8)";
+    const mid_color = "rgba(220,220,220,1)";
+    const green = "rgba(62,208,62, 1)";
+    const mean = values.reduce((a, b) => a + b, 0) / values.length;
+    const norm_value = values[realizations.indexOf(real_no)];
+    if (norm_value <= mean) {
+        const intermed = norm_value / mean;
+        return find_intermediate_color(blue, mid_color, intermed, "rgba");
+    }
+    if (norm_value > mean) {
+        const intermed = (norm_value - mean) / (1 - mean);
+        return find_intermediate_color(mid_color, green, intermed, "rgba");
+    }
+    return "rgba(220,220,220, 0.8)";
+}
+
+function createPlotlyTimeseriesRealizationTraces(
+    vectorQuery: UseQueryResult<VectorRealizationData[]>,
+    parameterQuery: UseQueryResult<EnsembleParameter>,
+    showParameter: boolean,
+    subscribedPlotlyRealization: { realization: number } | null): MyPlotData[] {
+    const tracesDataArr: MyPlotData[] = [];
+    let parameter: EnsembleParameter | null = null
+    if (showParameter && parameterQuery.data) {
+        parameter = normalizeParameter(parameterQuery.data)
+
+    }
+    if (vectorQuery.data && vectorQuery.data.length > 0) {
+        let highlightedTrace: MyPlotData | null = null;
+        for (let i = 0; i < vectorQuery.data.length; i++) {
+            const vec = vectorQuery.data[i];
+            let curveColor: string
+            if (vec.realization === subscribedPlotlyRealization?.realization) {
+                curveColor = "red"
+            }
+            else if (parameter && showParameter) {
+                curveColor = set_real_color(parameter, vec.realization as number)
+            }
+            else { curveColor = "green" }
+
+            const isHighlighted = vec.realization === subscribedPlotlyRealization?.realization ? true : false;
+            const lineWidth = vec.realization === subscribedPlotlyRealization?.realization ? 3 : 1;
+            const trace: MyPlotData = {
+                x: vec.timestamps,
+                y: vec.values,
+                name: `real-${vec.realization}`,
+                realizationNumber: vec.realization,
+                legendrank: vec.realization,
+                type: "scatter",
+                mode: "lines",
+                line: { color: curveColor, width: lineWidth },
+            };
+
+            if (isHighlighted) {
+                highlightedTrace = trace;
+            } else {
+                tracesDataArr.push(trace);
+            }
+        }
+
+        if (highlightedTrace) {
+            tracesDataArr.push(highlightedTrace);
+        }
+    }
+
+
+    return tracesDataArr;
 }
 
 export const view = ({ moduleContext, workbenchServices }: ModuleFCProps<State>) => {
@@ -25,8 +115,8 @@ export const view = ({ moduleContext, workbenchServices }: ModuleFCProps<State>)
     const resampleFrequency = moduleContext.useStoreValue("resamplingFrequency");
     const showStatistics = moduleContext.useStoreValue("showStatistics");
     const realizationsToInclude = moduleContext.useStoreValue("realizationsToInclude");
-    const [highlightRealization, setHighlightRealization] = React.useState(-1);
-
+    const [showParameter] = moduleContext.useStoreState("showParameter");
+    const [parameterName] = moduleContext.useStoreState("parameterName");
     const vectorQuery = useVectorDataQuery(
         caseUuid,
         ensembleName,
@@ -43,7 +133,11 @@ export const view = ({ moduleContext, workbenchServices }: ModuleFCProps<State>)
         realizationsToInclude,
         showStatistics
     );
-
+    const parameterQuery = useParameterQuery(
+        caseUuid,
+        ensembleName,
+        parameterName
+    );
     // React.useEffect(
     //     function subscribeToHoverRealizationTopic() {
     //         const unsubscribeFunc = workbenchServices.subscribe("global.hoverRealization", ({ realization }) => {
@@ -76,37 +170,7 @@ export const view = ({ moduleContext, workbenchServices }: ModuleFCProps<State>)
     }
 
 
-    const tracesDataArr: MyPlotData[] = [];
-
-    if (vectorQuery.data && vectorQuery.data.length > 0) {
-        let highlightedTrace: MyPlotData | null = null;
-        for (let i = 0; i < vectorQuery.data.length; i++) {
-            const vec = vectorQuery.data[i];
-            const isHighlighted = vec.realization === subscribedPlotlyRealization?.realization ? true : false;
-            const curveColor = vec.realization === subscribedPlotlyRealization?.realization ? "red" : "green";
-            const lineWidth = vec.realization === subscribedPlotlyRealization?.realization ? 3 : 1;
-            const trace: MyPlotData = {
-                x: vec.timestamps,
-                y: vec.values,
-                name: `real-${vec.realization}`,
-                realizationNumber: vec.realization,
-                legendrank: vec.realization,
-                type: "scatter",
-                mode: "lines",
-                line: { color: curveColor, width: lineWidth },
-            };
-
-            if (isHighlighted) {
-                highlightedTrace = trace;
-            } else {
-                tracesDataArr.push(trace);
-            }
-        }
-
-        if (highlightedTrace) {
-            tracesDataArr.push(highlightedTrace);
-        }
-    }
+    const tracesDataArr = createPlotlyTimeseriesRealizationTraces(vectorQuery, parameterQuery, showParameter, subscribedPlotlyRealization);
 
     if (showStatistics && statisticsQuery.data) {
         for (const statValueObj of statisticsQuery.data.value_objects) {

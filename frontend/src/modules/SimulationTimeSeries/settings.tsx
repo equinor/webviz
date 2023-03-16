@@ -1,6 +1,6 @@
 import React from "react";
 
-import { Frequency, VectorDescription } from "@api";
+import { Frequency, VectorDescription, EnsembleParameterDescription, EnsembleParameter } from "@api";
 import { apiService } from "@framework/ApiService";
 import { ModuleFCProps } from "@framework/Module";
 import { useSubscribedValue } from "@framework/WorkbenchServices";
@@ -10,6 +10,7 @@ import { Input } from "@lib/components/Input";
 import { Label } from "@lib/components/Label";
 import { UseQueryResult, useQuery } from "@tanstack/react-query";
 
+import { useParameterNamesQuery } from "./queryHooks";
 import { sortBy, sortedUniq } from "lodash";
 
 import { State } from "./state";
@@ -25,6 +26,8 @@ export function settings({ moduleContext, workbenchServices }: ModuleFCProps<Sta
     const [vectorName, setVectorName] = moduleContext.useStoreState("vectorName");
     const [resampleFrequency, setResamplingFrequency] = moduleContext.useStoreState("resamplingFrequency");
     const [showStatistics, setShowStatistics] = moduleContext.useStoreState("showStatistics");
+    const [showParameter, setShowParameter] = moduleContext.useStoreState("showParameter");
+    const [parameterName, setParameterName] = moduleContext.useStoreState("parameterName");
 
     const ensemblesQuery = useQuery({
         queryKey: ["getEnsembles", caseUuid],
@@ -47,11 +50,9 @@ export function settings({ moduleContext, workbenchServices }: ModuleFCProps<Sta
                 setVectorName(vectorArr[vectorArr.length - 1].name);
             }
         },
-        select: function capVectorArrayTo50Entries(vectorArr) {
-            console.log("capVectorArrayTo50Entries()");
-            return vectorArr.slice(0, 50);
-        },
+
     });
+    const parameterNamesQuery = useParameterNamesQuery(caseUuid, ensembleName, true);
 
     function makeVectorListItems(vectorsQuery: UseQueryResult<VectorDescription[]>): DropdownProps["options"] {
         const itemArr: DropdownProps["options"] = [];
@@ -80,7 +81,17 @@ export function settings({ moduleContext, workbenchServices }: ModuleFCProps<Sta
         ];
         return itemArr;
     }
-
+    function makeParameterListItems(parameterNamesQuery: UseQueryResult<EnsembleParameterDescription[]>): DropdownProps["options"] {
+        const itemArr: DropdownProps["options"] = [];
+        if (parameterNamesQuery.isSuccess && parameterNamesQuery.data.length > 0) {
+            for (const param of parameterNamesQuery.data) {
+                itemArr.push({ value: param.name, label: param.descriptive_name ?? param.name });
+            }
+        } else {
+            // itemArr.push({ value: "", label: `${vectorsQuery.status.toString()}...`, disabled: true });
+        }
+        return itemArr;
+    }
     function handleFrequencySelectionChange(newFreqStr: string) {
         console.log(`handleFrequencySelectionChange()  newFreqStr=${newFreqStr}`);
         let newFreq: Frequency | null = null;
@@ -103,6 +114,15 @@ export function settings({ moduleContext, workbenchServices }: ModuleFCProps<Sta
         moduleContext.stateStore.setValue("realizationsToInclude", rangeArr.length > 0 ? rangeArr : null);
     }
 
+    function handleShowParameters(event: React.ChangeEvent<HTMLInputElement>) {
+
+        setShowParameter(event.target.checked);
+    }
+
+    function handleParameterNameChange(parameterName: string) {
+
+        setParameterName(parameterName);
+    }
     return (
         <>
             <Label text="Vector">
@@ -123,6 +143,17 @@ export function settings({ moduleContext, workbenchServices }: ModuleFCProps<Sta
             <Label text="Realizations">
                 <Input onChange={handleRealizationRangeTextChanged} />
             </Label>
+            <Checkbox label="Color on parameter" checked={showParameter} onChange={handleShowParameters} />
+            <div className={!showParameter ? "invisible" : ""}><Label text="Parameter">
+                <Dropdown
+
+                    options={makeParameterListItems(parameterNamesQuery)}
+                    value={parameterName ?? ""}
+                    onChange={handleParameterNameChange}
+
+                />
+            </Label>
+            </div>
         </>
     );
 }
