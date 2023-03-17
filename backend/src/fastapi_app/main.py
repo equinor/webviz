@@ -5,6 +5,7 @@ from fastapi import FastAPI
 from fastapi.routing import APIRoute
 from starsessions import SessionMiddleware
 from starsessions.stores.redis import RedisStore
+from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
 
 from . import config
 from .auth.auth_helper import AuthHelper
@@ -40,6 +41,10 @@ app.include_router(general_router)
 # Also redirects to /login endpoint for some select paths
 unprotected_paths = ["/logged_in_user", "/alive", "/openapi.json"]
 paths_redirected_to_login = ["/", "/alive_protected"]
+app.add_middleware(
+    ProxyHeadersMiddleware,
+    trusted_hosts="*"
+)
 app.add_middleware(
     EnforceLoggedInMiddleware,
     unprotected_paths=unprotected_paths,
