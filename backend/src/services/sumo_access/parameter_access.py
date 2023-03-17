@@ -19,6 +19,8 @@ LOGGER = logging.getLogger(__name__)
 
 class EnsembleParameter(BaseModel):
     name: str
+    is_logarithmic: bool
+    is_numerical: bool
     group_name: Optional[str]
     descriptive_name: Optional[str]
     realizations: List[int]
@@ -58,11 +60,16 @@ class ParameterAccess:
             name="summary", tagname="eclipse", iteration="iter-0", aggregation="collection", column="FOPT"
         )[0]
 
-        # The parameters are stored in a nested dictionary, where the first level should be the parameter group name.
-        # Problem is that only some of the parameters are in a group, and some are not.
         parameters_dict: Dict[Dict[str, Union[str, Dict[str, str]]]] = random_table_that_has_parameters["fmu"][
             "iteration"
         ]["parameters"]
+        ensemble_parameters = self._untangle_parameters(parameters_dict)
+        sanitized_ensemble_parameters = self._sanitize_parameters(ensemble_parameters)
+        return sanitized_ensemble_parameters
+
+    def _untangle_parameters(self, parameters_dict: Dict[str, Union[str, Dict[str, str]]]):
+        # The parameters are stored in a nested dictionary, where the first level should be the parameter group name.
+        # Problem is that only some of the parameters are in a group, and some are not.
         # Find parameters that are in a group
         parameter_group_names = []
         for parameter_or_group_name, possible_parameter_group in parameters_dict.items():
@@ -79,25 +86,51 @@ class ParameterAccess:
                     ensemble_parameter = EnsembleParameter(
                         name=parameter_name,
                         group_name=parameter_group_name,
+                        is_logarithmic=parameter_group_name.startswith("LOG10_"),
+                        is_numerical=False,
+                        descriptive_name=f"{parameter_name} (log)"
+                        if parameter_group_name.startswith("LOG10_")
+                        else parameter_name,
                         values=[],
                         realizations=[],
                     )
                     for realization, value in parameter_obj.items():
                         ensemble_parameter.values.append(value)
                         ensemble_parameter.realizations.append(int(realization))
+
+                    ensemble_parameter.is_numerical = is_array_numeric(np.array(ensemble_parameter.values))
                     ensemble_parameters.append(ensemble_parameter)
+
             else:
                 ensemble_parameter = EnsembleParameter(
                     name=parameter_group_name,
+                    is_logarithmic=False,
+                    is_numerical=False,
+                    descriptive_name=parameter_group_name,
                     values=[],
                     realizations=[],
                 )
                 for realization, value in parameter_group_obj.items():
                     ensemble_parameter.values.append(value)
                     ensemble_parameter.realizations.append(int(realization))
+                ensemble_parameter.is_numerical = is_array_numeric(np.array(ensemble_parameter.values))
                 ensemble_parameters.append(ensemble_parameter)
-
         return ensemble_parameters
+
+    def _sanitize_parameters(self, ensemble_parameters: List[EnsembleParameter]):
+        """
+        - Remove non-log parameters if there is a log parameter with the same name
+        """
+        sanitized_ensemble_parameters = []
+        # Drop non-log parameters if there is a log parameter with the same name
+        for ensemble_parameter in ensemble_parameters:
+            if not ensemble_parameter.is_logarithmic:
+                if ensemble_parameter.name not in [p.name for p in ensemble_parameters if p.is_logarithmic]:
+                    print(f"Adding {ensemble_parameter.name} to sanitized parameters")
+                    sanitized_ensemble_parameters.append(ensemble_parameter)
+            else:
+                sanitized_ensemble_parameters.append(ensemble_parameter)
+        return sanitized_ensemble_parameters
 
     def get_parameter(self, parameter_name: str) -> EnsembleParameter:
         """Retrieve a single parameter for an ensemble"""
@@ -136,3 +169,8 @@ class ParameterAccess:
                 )
             )
         return ensemble_sensitivities
+
+
+def is_array_numeric(array: np.ndarray) -> bool:
+    """Check if an array is numeric"""
+    return np.issubdtype(array.dtype, np.number)
