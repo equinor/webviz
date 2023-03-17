@@ -126,7 +126,6 @@ class ParameterAccess:
         for ensemble_parameter in ensemble_parameters:
             if not ensemble_parameter.is_logarithmic:
                 if ensemble_parameter.name not in [p.name for p in ensemble_parameters if p.is_logarithmic]:
-                    print(f"Adding {ensemble_parameter.name} to sanitized parameters")
                     sanitized_ensemble_parameters.append(ensemble_parameter)
             else:
                 sanitized_ensemble_parameters.append(ensemble_parameter)

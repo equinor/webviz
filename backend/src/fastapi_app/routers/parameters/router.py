@@ -32,7 +32,10 @@ async def get_parameter_names_and_description(
         parameters = [p for p in parameters if not len(set(p.values)) == 1]
     return [
         schemas.EnsembleParameterDescription(
-            name=parameter.name, descriptive_name=parameter.descriptive_name, group_name=parameter.group_name
+            name=parameter.name,
+            descriptive_name=parameter.descriptive_name,
+            group_name=parameter.group_name,
+            is_numerical=parameter.is_numerical,
         )
         for parameter in parameters
     ]
