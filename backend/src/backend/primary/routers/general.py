@@ -2,10 +2,12 @@ import datetime
 import logging
 
 import starsessions
-from fastapi import APIRouter, HTTPException, Request, status
+from starlette.responses import StreamingResponse
+from fastapi import APIRouter, HTTPException, Request, status, Depends
 from pydantic import BaseModel
 
-from src.fastapi_app.auth.auth_helper import AuthHelper
+from src.backend.auth.auth_helper import AuthHelper, AuthenticatedUser
+from src.backend.primary.user_session_proxy import proxy_to_user_session
 
 LOGGER = logging.getLogger(__name__)
 
@@ -50,3 +52,11 @@ async def logged_in_user(request: Request) -> UserInfo:
     )
 
     return user_info
+
+
+@router.get("/user_session_container")
+async def user_session_container(
+    request: Request, authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user)
+) -> StreamingResponse:
+    """Get information about user session container (note that one is started if not already running)."""
+    return await proxy_to_user_session(request, authenticated_user)

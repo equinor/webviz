@@ -5,7 +5,7 @@ from pydantic import BaseModel
 
 from src.services.sumo_access.sumo_explore import SumoExplore
 from src.services.utils.authenticated_user import AuthenticatedUser
-from src.fastapi_app.auth.auth_helper import AuthHelper
+from src.backend.auth.auth_helper import AuthHelper
 
 router = APIRouter()
 

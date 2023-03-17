@@ -11,7 +11,7 @@ from src.services.sumo_access.inplace_volumetrics_access import (
     InplaceVolumetricsAccess,
 )
 from src.services.utils.authenticated_user import AuthenticatedUser
-from src.fastapi_app.auth.auth_helper import AuthHelper
+from src.backend.auth.auth_helper import AuthHelper
 
 
 LOGGER = logging.getLogger(__name__)
@@ -35,7 +35,9 @@ def correlate_parameters_with_timeseries(
 
     summary_access = SummaryAccess(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
     parameter_access = ParameterAccess(
-        authenticated_user.get_sumo_access_token(), case_uuid=case_uuid, iteration_name=ensemble_name
+        authenticated_user.get_sumo_access_token(),
+        case_uuid=case_uuid,
+        iteration_name=ensemble_name,
     )
 
     ensemble_response = summary_access.get_vector_values_at_timestep(
@@ -63,7 +65,9 @@ def correlate_parameters_with_inplace_volumes(
 
     inplace_access = InplaceVolumetricsAccess(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
     parameter_access = ParameterAccess(
-        authenticated_user.get_sumo_access_token(), case_uuid=case_uuid, iteration_name=ensemble_name
+        authenticated_user.get_sumo_access_token(),
+        case_uuid=case_uuid,
+        iteration_name=ensemble_name,
     )
     ensemble_response = inplace_access.get_response(
         table_name, response_name, categorical_filters=None, realizations=None

@@ -6,7 +6,7 @@ spec:
   environments:
     - name: prod
       build:
-        from: main
+        from: radixjob  # NB. Rename this back to main before merge!
   components:
     - name: frontend
       image: ghcr.io/equinor/webviz_frontend:latest
@@ -17,7 +17,7 @@ spec:
           port: 8080
       environmentConfig:
         - environment: prod
-    - name: backend
+    - name: backend-primary
       image: ghcr.io/equinor/webviz_backend:latest
       alwaysPullImageOnDeploy: true
       ports:
@@ -33,6 +33,9 @@ spec:
                 envVar: WEBVIZ_SMDA_RESOURCE_SCOPE
       environmentConfig:
         - environment: prod
+          variables:
+            UVICORN_PORT: 5000
+            UVICORN_ENTRYPOINT: src.backend.primary.main:app
     - name: redis
       image: bitnami/redis:6.2.10@sha256:bd42fcdab5959ce2b21b6ea8410d4b3ee87ecb2e320260326ec731ecfcffbd0e
       ports:
@@ -42,6 +45,26 @@ spec:
         ALLOW_EMPTY_PASSWORD: yes
       environmentConfig:
         - environment: prod
+  jobs:
+    - name: backend-user-session
+      image: ghcr.io/equinor/webviz_backend:latest
+      schedulerPort: 8000
+      ports:
+        - name: http
+          port: 8000
+      secretRefs:
+        azureKeyVaults:
+          - name: webviz
+            items:
+              - name: WEBVIZ-CLIENT-SECRET
+                envVar: WEBVIZ_CLIENT_SECRET
+              - name: WEBVIZ-SMDA-RESOURCE-SCOPE
+                envVar: WEBVIZ_SMDA_RESOURCE_SCOPE
+      environmentConfig:
+        - environment: prod
+          variables:
+            UVICORN_PORT: 8000
+            UVICORN_ENTRYPOINT: src.backend.user_session.main:app
   dnsAppAlias:
     environment: prod
     component: frontend

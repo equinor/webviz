@@ -8,7 +8,7 @@ from src.services.summary_vector_statistics import compute_vector_statistics
 from src.services.sumo_access.summary_access import Frequency, SummaryAccess
 from src.services.utils.authenticated_user import AuthenticatedUser
 from src.services.sumo_access.generic_types import EnsembleScalarResponse
-from src.fastapi_app.auth.auth_helper import AuthHelper
+from src.backend.auth.auth_helper import AuthHelper
 from . import converters
 from . import schemas
 
