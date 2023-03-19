@@ -1,5 +1,5 @@
 import { ModuleRegistry } from "@framework/ModuleRegistry";
 import { SigSurfaceState } from "./sigSurfaceState";
 
-ModuleRegistry.registerModule<SigSurfaceState>("SigSurfaceModule");
+ModuleRegistry.registerModule<SigSurfaceState>("Map");
 

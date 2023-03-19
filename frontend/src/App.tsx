@@ -11,7 +11,7 @@ import { ResizablePanels } from "@lib/components/ResizablePanels";
 import "./modules/registerAllModules.ts";
 
 //const layout: LayoutElement[] = [];
-const layout: LayoutElement[] = [{ moduleName: "SigSurfaceModule", relX: 0, relY: 0, relHeight: 1, relWidth: 1 }];
+const layout: LayoutElement[] = [{ moduleName: "Map", relX: 0, relY: 0, relHeight: 1, relWidth: 1 }];
 
 function App() {
     const workbench = new Workbench();

@@ -8,7 +8,7 @@ const initialState: SigSurfaceState = {
     surfaceAddress: null,
 };
 
-const module = ModuleRegistry.initModule<SigSurfaceState>("SigSurfaceModule", initialState, {
+const module = ModuleRegistry.initModule<SigSurfaceState>("Map", initialState, {
     surfaceAddress: { deepCompare: true },
 });
 
