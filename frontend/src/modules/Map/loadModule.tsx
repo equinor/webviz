@@ -1,16 +1,16 @@
 import { ModuleRegistry } from "@framework/ModuleRegistry";
 
-import { SigSurfaceSettings } from "./sigSurfaceSettings";
-import { SigSurfaceState } from "./sigSurfaceState";
-import { SigSurfaceView } from "./sigSurfaceView";
+import { MapSettings } from "./MapSettings";
+import { MapState } from "./MapState";
+import { MapView } from "./MapView";
 
-const initialState: SigSurfaceState = {
+const initialState: MapState = {
     surfaceAddress: null,
 };
 
-const module = ModuleRegistry.initModule<SigSurfaceState>("Map", initialState, {
+const module = ModuleRegistry.initModule<MapState>("Map", initialState, {
     surfaceAddress: { deepCompare: true },
 });
 
-module.viewFC = SigSurfaceView;
-module.settingsFC = SigSurfaceSettings;
+module.viewFC = MapView;
+module.settingsFC = MapSettings;

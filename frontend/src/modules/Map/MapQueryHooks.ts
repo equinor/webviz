@@ -2,7 +2,7 @@ import { DynamicSurfaceDirectory, Ensemble, StaticSurfaceDirectory, SurfaceData 
 import { apiService } from "@framework/ApiService";
 import { QueryFunction, QueryKey, UseQueryResult, useQuery } from "@tanstack/react-query";
 
-import { SurfAddr } from "./sigSurfaceAddress";
+import { SurfAddr } from "./SurfAddr";
 
 const STALE_TIME = 60 * 1000;
 const CACHE_TIME = 60 * 1000;

@@ -3,17 +3,17 @@ import React from "react";
 import { ModuleFCProps } from "@framework/Module";
 import { useElementSize } from "@lib/hooks/useElementSize";
 
-import { makeSurfAddrString } from "./sigSurfaceAddress";
-import { useSurfaceDataQueryByAddress } from "./sigSurfaceQueryHooks";
-import { SigSurfaceState } from "./sigSurfaceState";
+import { makeSurfAddrString } from "./SurfAddr";
+import { useSurfaceDataQueryByAddress } from "./MapQueryHooks";
+import { MapState } from "./MapState";
 
 //-----------------------------------------------------------------------------------------------------------
-export function SigSurfaceView({ moduleContext, workbenchServices }: ModuleFCProps<SigSurfaceState>) {
+export function MapView({ moduleContext, workbenchServices }: ModuleFCProps<MapState>) {
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);
     const wrapperDivSize = useElementSize(wrapperDivRef);
     const surfAddr = moduleContext.useStoreValue("surfaceAddress");
 
-    console.log(`render SigSurfaceView, surfAddr=${surfAddr ? makeSurfAddrString(surfAddr) : "null"}`);
+    console.log(`render MapView, surfAddr=${surfAddr ? makeSurfAddrString(surfAddr) : "null"}`);
 
     const surfDataQuery = useSurfaceDataQueryByAddress(surfAddr);
     const surfAddrAsAny = surfAddr as any;

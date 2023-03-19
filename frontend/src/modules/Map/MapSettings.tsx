@@ -9,15 +9,15 @@ import { Checkbox } from "@lib/components/Checkbox";
 import { Input } from "@lib/components/Input";
 import { Select } from "@lib/components/Select";
 
-import { SurfAddr, SurfAddrFactory } from "./sigSurfaceAddress";
-import { useEnsemblesQuery } from "./sigSurfaceQueryHooks";
-import { useDynamicSurfaceDirectoryQuery, useStaticSurfaceDirectoryQuery } from "./sigSurfaceQueryHooks";
-import { SigSurfaceState } from "./sigSurfaceState";
-import { AggregationDropdown, EnsemblesDropdown } from "./sigSurfaceUiComponents";
+import { SurfAddr, SurfAddrFactory } from "./SurfAddr";
+import { useEnsemblesQuery } from "./MapQueryHooks";
+import { useDynamicSurfaceDirectoryQuery, useStaticSurfaceDirectoryQuery } from "./MapQueryHooks";
+import { MapState } from "./MapState";
+import { AggregationDropdown, EnsemblesDropdown } from "./UiComponents";
 
 //-----------------------------------------------------------------------------------------------------------
-export function SigSurfaceSettings({ moduleContext, workbenchServices }: ModuleFCProps<SigSurfaceState>) {
-    console.log("render SigSurfaceSettings");
+export function MapSettings({ moduleContext, workbenchServices }: ModuleFCProps<MapState>) {
+    console.log("render MapSettings");
 
     const caseUuid = useSubscribedValue("navigator.caseId", workbenchServices);
     const [ensembleName, setEnsembleName] = React.useState<string | null>(null);
