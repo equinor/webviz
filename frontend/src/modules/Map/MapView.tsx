@@ -3,9 +3,9 @@ import React from "react";
 import { ModuleFCProps } from "@framework/Module";
 import { useElementSize } from "@lib/hooks/useElementSize";
 
-import { makeSurfAddrString } from "./SurfAddr";
 import { useSurfaceDataQueryByAddress } from "./MapQueryHooks";
 import { MapState } from "./MapState";
+import { makeSurfAddrString } from "./SurfAddr";
 
 //-----------------------------------------------------------------------------------------------------------
 export function MapView({ moduleContext, workbenchServices }: ModuleFCProps<MapState>) {
