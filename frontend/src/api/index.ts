@@ -9,11 +9,15 @@ export { CancelablePromise, CancelError } from './core/CancelablePromise';
 export { OpenAPI } from './core/OpenAPI';
 export type { OpenAPIConfig } from './core/OpenAPI';
 
+export type { Body_get_realizations_response } from './models/Body_get_realizations_response';
 export type { Case } from './models/Case';
 export type { DynamicSurfaceDirectory } from './models/DynamicSurfaceDirectory';
 export type { Ensemble } from './models/Ensemble';
 export { Frequency } from './models/Frequency';
 export type { HTTPValidationError } from './models/HTTPValidationError';
+export type { InplaceVolumetricsCategoricalMetaData } from './models/InplaceVolumetricsCategoricalMetaData';
+export type { InplaceVolumetricsRealizationsResponse } from './models/InplaceVolumetricsRealizationsResponse';
+export type { InplaceVolumetricsTableMetaData } from './models/InplaceVolumetricsTableMetaData';
 export type { StaticSurfaceDirectory } from './models/StaticSurfaceDirectory';
 export { StatisticFunction } from './models/StatisticFunction';
 export type { StatisticValueObject } from './models/StatisticValueObject';
@@ -29,5 +33,6 @@ export type { VectorStatisticData } from './models/VectorStatisticData';
 
 export { DefaultService } from './services/DefaultService';
 export { ExploreService } from './services/ExploreService';
+export { InplaceVolumetricsService } from './services/InplaceVolumetricsService';
 export { SurfaceService } from './services/SurfaceService';
 export { TimeseriesService } from './services/TimeseriesService';

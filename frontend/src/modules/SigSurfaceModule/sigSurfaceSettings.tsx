@@ -232,13 +232,15 @@ export function SigSurfaceSettings({ moduleContext, workbenchServices }: ModuleF
     let chooseTimeOrIntervalElement: JSX.Element | null = null;
     if (surfaceType === "dynamic") {
         chooseTimeOrIntervalElement = (
-            <Select
-                label="Time or interval:"
-                options={timeOrIntervalOptions}
-                value={timeOrInterval ? [timeOrInterval] : []}
-                onChange={handleTimeOrIntervalSelectionChange}
-                size={5}
-            />
+            <label>
+                Time or interval:
+                <Select
+                    options={timeOrIntervalOptions}
+                    value={timeOrInterval ? [timeOrInterval] : []}
+                    onChange={handleTimeOrIntervalSelectionChange}
+                    size={5}
+                />
+            </label>
         );
     }
 
@@ -264,20 +266,24 @@ export function SigSurfaceSettings({ moduleContext, workbenchServices }: ModuleF
                 checked={surfaceType === "static"}
                 onChange={handleStaticSurfacesCheckboxChanged}
             />
-            <Select
-                label="Surface name:"
-                options={surfNameOptions}
-                value={surfaceName ? [surfaceName] : []}
-                onChange={handleSurfNameSelectionChange}
-                size={5}
-            />
-            <Select
-                label="Surface attribute:"
-                options={surfAttributeOptions}
-                value={surfaceAttribute ? [surfaceAttribute] : []}
-                onChange={handleSurfAttributeSelectionChange}
-                size={5}
-            />
+            <label>
+                Surface name:
+                <Select
+                    options={surfNameOptions}
+                    value={surfaceName ? [surfaceName] : []}
+                    onChange={handleSurfNameSelectionChange}
+                    size={5}
+                />
+            </label>
+            <label>
+                Surface attribute:
+                <Select
+                    options={surfAttributeOptions}
+                    value={surfaceAttribute ? [surfaceAttribute] : []}
+                    onChange={handleSurfAttributeSelectionChange}
+                    size={5}
+                />
+            </label>
             {chooseTimeOrIntervalElement}
             <AggregationDropdown
                 selectedAggregation={aggregation}

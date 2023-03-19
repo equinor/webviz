@@ -112,3 +112,5 @@ export const Virtualization = withDefaults<VirtualizationProps>()(defaultProps, 
         </>
     );
 });
+
+Virtualization.displayName = "Virtualization";

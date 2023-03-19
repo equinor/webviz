@@ -1,7 +1,7 @@
 import { Ensemble } from "@api";
 import { SurfaceStatisticFunction } from "@api";
 import { Dropdown } from "@lib/components/Dropdown";
-import { ListBox, ListBoxItem } from "@lib/components/ListBox/list-box";
+import { ListBoxDeprecated, ListBoxItem } from "@lib/components/ListBox/list-box";
 import { UseQueryResult } from "@tanstack/react-query";
 
 //
@@ -35,7 +35,11 @@ export function EnsemblesDropdown(props: EnsemblesDropdownProps): JSX.Element {
     return (
         <label>
             Ensemble:
-            <ListBox items={itemArr} selectedItem={selectedEnsemble ?? ""} onSelect={props.onEnsembleSelectionChange} />
+            <ListBoxDeprecated
+                items={itemArr}
+                selectedItem={selectedEnsemble ?? ""}
+                onSelect={props.onEnsembleSelectionChange}
+            />
         </label>
     );
 }
@@ -63,15 +67,17 @@ export function AggregationDropdown(props: AggregationDropdownProps): JSX.Elemen
     ];
 
     return (
-        <Dropdown
-            label="Aggregation/statistic:"
-            options={itemArr}
-            value={props.selectedAggregation ?? "SINGLE_REAL"}
-            onChange={(newVal: string) =>
-                props.onAggregationSelectionChange(
-                    newVal != "SINGLE_REAL" ? (newVal as SurfaceStatisticFunction) : null
-                )
-            }
-        />
+        <label>
+            Aggregation/statistic:
+            <Dropdown
+                options={itemArr}
+                value={props.selectedAggregation ?? "SINGLE_REAL"}
+                onChange={(newVal: string) =>
+                    props.onAggregationSelectionChange(
+                        newVal != "SINGLE_REAL" ? (newVal as SurfaceStatisticFunction) : null
+                    )
+                }
+            />
+        </label>
     );
 }

@@ -5,7 +5,7 @@ import { ModuleFCProps } from "@framework/Module";
 import { useSubscribedValue } from "@framework/WorkbenchServices";
 import { useElementSize } from "@lib/hooks/useElementSize";
 
-import {  Layout, PlotHoverEvent,PlotData, PlotMouseEvent, PlotRelayoutEvent} from "plotly.js";
+import { Layout, PlotHoverEvent, PlotData, PlotMouseEvent, PlotRelayoutEvent } from "plotly.js";
 import { useStatisticalVectorDataQuery, useVectorDataQuery } from "./queryHooks";
 import { State } from "./state";
 
@@ -70,9 +70,9 @@ export const view = ({ moduleContext, workbenchServices }: ModuleFCProps<State>)
             });
         }
     }
-    
+
     function handleUnHover(e: PlotMouseEvent) {
-        workbenchServices.publishGlobalData("global.hoverRealization", {realization: -1});
+        workbenchServices.publishGlobalData("global.hoverRealization", { realization: -1 });
     }
 
 
@@ -80,7 +80,7 @@ export const view = ({ moduleContext, workbenchServices }: ModuleFCProps<State>)
 
     if (vectorQuery.data && vectorQuery.data.length > 0) {
         let highlightedTrace: MyPlotData | null = null;
-        for (let i = 0; i < Math.min(vectorQuery.data.length, 10); i++) {
+        for (let i = 0; i < vectorQuery.data.length; i++) {
             const vec = vectorQuery.data[i];
             const isHighlighted = vec.realization === subscribedPlotlyRealization?.realization ? true : false;
             const curveColor = vec.realization === subscribedPlotlyRealization?.realization ? "red" : "green";
@@ -143,7 +143,7 @@ export const view = ({ moduleContext, workbenchServices }: ModuleFCProps<State>)
 
     return (
         <div className="w-full h-full" ref={wrapperDivRef}>
-            <Plot data={tracesDataArr} layout={layout} config={{"scrollZoom":true}} onHover={handleHover} onUnhover={handleUnHover} />
+            <Plot data={tracesDataArr} layout={layout} config={{ "scrollZoom": true }} onHover={handleHover} onUnhover={handleUnHover} />
         </div>
     );
 };

@@ -25,9 +25,10 @@ async def get_cases(
     field_identifier: str = Query(description="Field identifier"),
 ) -> List[Case]:
     """Get list of cases for specified field"""
+    print(authenticated_user.get_sumo_access_token())
     sumo_discovery = SumoExplore(authenticated_user.get_sumo_access_token())
     case_info_arr = sumo_discovery.get_cases(field_identifier=field_identifier)
-    
+
     print(case_info_arr)
 
     # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -50,13 +51,11 @@ async def get_cases(
 async def get_ensembles(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     case_uuid: str = Path(description="Sumo case uuid"),
-
 ) -> List[Ensemble]:
     """Get list of ensembles for a case"""
     sumo_discovery = SumoExplore(authenticated_user.get_sumo_access_token())
     iteration_info_arr = sumo_discovery.get_iterations(case_uuid=case_uuid)
-    
+
     print(iteration_info_arr)
 
     return [Ensemble(name=it.name) for it in iteration_info_arr]
-

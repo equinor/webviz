@@ -12,7 +12,7 @@ export const makeUrl = ({
     protocol = "http",
 }: {
     hostname: string;
-    port: number;
+    port?: number;
     pathname?: string | string[];
     search?: string;
     hash?: string;
