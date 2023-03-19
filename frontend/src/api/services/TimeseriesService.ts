@@ -2,6 +2,7 @@
 /* tslint:disable */
 /* eslint-disable */
 import type { Frequency } from '../models/Frequency';
+import type { SensitivityResponseAverage } from '../models/SensitivityResponseAverage';
 import type { StatisticFunction } from '../models/StatisticFunction';
 import type { VectorDescription } from '../models/VectorDescription';
 import type { VectorHistoricalData } from '../models/VectorHistoricalData';
@@ -252,6 +253,45 @@ export class TimeseriesService {
                 'expression': expression,
                 'variable_names': variableNames,
                 'vector_names': vectorNames,
+            },
+            errors: {
+                422: `Validation Error`,
+            },
+        });
+    }
+
+    /**
+     * Get Sensitivity Averages
+     * @param caseUuid Sumo case uuid
+     * @param ensembleName Ensemble name
+     * @param vectorName Name of the vector
+     * @param timestep Timestep for vector values
+     * @param sensitivityReferenceName Name of the sensitivity reference
+     * @param resamplingFrequency Resampling frequency. If not specified, raw data without resampling wil be returned.
+     * @param realizations Optional list of realizations to include. If not specified, all realizations will be returned.
+     * @returns SensitivityResponseAverage Successful Response
+     * @throws ApiError
+     */
+    public getSensitivityAverages(
+        caseUuid: string,
+        ensembleName: string,
+        vectorName: string,
+        timestep: string,
+        sensitivityReferenceName: string,
+        resamplingFrequency?: Frequency,
+        realizations?: Array<number>,
+    ): CancelablePromise<Array<SensitivityResponseAverage>> {
+        return this.httpRequest.request({
+            method: 'GET',
+            url: '/timeseries/sensitivity_averages/',
+            query: {
+                'case_uuid': caseUuid,
+                'ensemble_name': ensembleName,
+                'vector_name': vectorName,
+                'resampling_frequency': resamplingFrequency,
+                'timestep': timestep,
+                'sensitivity_reference_name': sensitivityReferenceName,
+                'realizations': realizations,
             },
             errors: {
                 422: `Validation Error`,

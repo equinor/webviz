@@ -6,5 +6,6 @@ export type EnsembleParameterDescription = {
     name: string;
     group_name?: string;
     descriptive_name?: string;
+    is_numerical: boolean;
 };
 

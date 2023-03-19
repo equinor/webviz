@@ -21,6 +21,7 @@ export type { HTTPValidationError } from './models/HTTPValidationError';
 export type { InplaceVolumetricsCategoricalMetaData } from './models/InplaceVolumetricsCategoricalMetaData';
 export type { InplaceVolumetricsRealizationsResponse } from './models/InplaceVolumetricsRealizationsResponse';
 export type { InplaceVolumetricsTableMetaData } from './models/InplaceVolumetricsTableMetaData';
+export type { SensitivityResponseAverage } from './models/SensitivityResponseAverage';
 export { StatisticFunction } from './models/StatisticFunction';
 export type { StatisticValueObject } from './models/StatisticValueObject';
 export type { UserInfo } from './models/UserInfo';

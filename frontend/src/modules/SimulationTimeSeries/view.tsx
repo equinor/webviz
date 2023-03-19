@@ -37,7 +37,7 @@ function set_real_color(parameter: EnsembleParameter, real_no: number): string {
     */
     const values = parameter.values as number[];
     const realizations = parameter.realizations as number[];
-    const blue = "rgba(39, 67, 245, 0.8)";
+    const blue = "rgba(39, 67, 245,1)";
     const mid_color = "rgba(220,220,220,1)";
     const green = "rgba(62,208,62, 1)";
     const mean = values.reduce((a, b) => a + b, 0) / values.length;
@@ -50,7 +50,7 @@ function set_real_color(parameter: EnsembleParameter, real_no: number): string {
         const intermed = (norm_value - mean) / (1 - mean);
         return find_intermediate_color(mid_color, green, intermed, "rgba");
     }
-    return "rgba(220,220,220, 0.8)";
+    return mid_color;
 }
 
 function createPlotlyTimeseriesRealizationTraces(
@@ -70,12 +70,12 @@ function createPlotlyTimeseriesRealizationTraces(
             const vec = vectorQuery.data[i];
             let curveColor: string
             if (vec.realization === subscribedPlotlyRealization?.realization) {
-                curveColor = "red"
+                curveColor = "rgba(255, 0, 0, 1)"
             }
             else if (parameter && showParameter) {
                 curveColor = set_real_color(parameter, vec.realization as number)
             }
-            else { curveColor = "green" }
+            else { curveColor = "rgba(62,208,62, 1)" }
 
             const isHighlighted = vec.realization === subscribedPlotlyRealization?.realization ? true : false;
             const lineWidth = vec.realization === subscribedPlotlyRealization?.realization ? 3 : 1;
@@ -102,7 +102,7 @@ function createPlotlyTimeseriesRealizationTraces(
         }
     }
 
-
+    console.log(tracesDataArr)
     return tracesDataArr;
 }
 
