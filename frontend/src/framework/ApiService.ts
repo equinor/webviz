@@ -1,18 +1,8 @@
 import { ApiService as ApiServiceBase } from "@api";
 
-import { makeUrl, urlToString } from "./utils/url";
-
 class ApiService extends ApiServiceBase {
     constructor() {
         const apiConfig = {
-            BASE: urlToString(
-                makeUrl({
-                    hostname: "localhost",
-                    protocol: "http",
-                    port: 8080,
-                    pathname: "api/",
-                })
-            ),
             WITH_CREDENTIALS: true,
         };
         super(apiConfig);

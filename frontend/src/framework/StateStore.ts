@@ -1,6 +1,6 @@
 import React from "react";
 
-import { cloneDeep, isEqual } from "lodash";
+import { isEqual } from "lodash";
 
 export type StateBaseType = object;
 export type StateOptions<T extends StateBaseType> = {

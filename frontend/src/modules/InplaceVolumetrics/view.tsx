@@ -1,16 +1,19 @@
 import React from "react";
-import { useElementSize } from "@lib/hooks/useElementSize";
-import { ApiStateWrapper } from "@lib/components/ApiStateWrapper";
+import Plot from "react-plotly.js";
+
 import { ModuleFCProps } from "@framework/Module";
 import { useSubscribedValue } from "@framework/WorkbenchServices";
-import { useRealizationsResponseQuery } from "./queryHooks";
-import { State } from "./state";
-import Plot from "react-plotly.js";
-import { Body_get_realizations_response } from "../../api/models/Body_get_realizations_response";
-import { Layout, PlotHoverEvent, PlotData, PlotMouseEvent, PlotRelayoutEvent } from "plotly.js";
+import { ApiStateWrapper } from "@lib/components/ApiStateWrapper";
 import { CircularProgress } from "@lib/components/CircularProgress";
-import { VolumetricResponseAbbreviations } from "./settings";
+import { useElementSize } from "@lib/hooks/useElementSize";
 
+import { Layout, PlotData, PlotHoverEvent } from "plotly.js";
+
+import { useRealizationsResponseQuery } from "./queryHooks";
+import { VolumetricResponseAbbreviations } from "./settings";
+import { State } from "./state";
+
+import { Body_get_realizations_response } from "../../api/models/Body_get_realizations_response";
 
 export const view = (props: ModuleFCProps<State>) => {
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);
@@ -20,8 +23,15 @@ export const view = (props: ModuleFCProps<State>) => {
     const tableName = props.moduleContext.useStoreValue("tableName");
     const responseName = props.moduleContext.useStoreValue("responseName");
     const categoryFilter = props.moduleContext.useStoreValue("categoricalFilter");
-    const responseBody: Body_get_realizations_response = { categorical_filter: categoryFilter || undefined }
-    const realizationsResponseQuery = useRealizationsResponseQuery(caseUuid, ensembleName, tableName, responseName, responseBody, true);
+    const responseBody: Body_get_realizations_response = { categorical_filter: categoryFilter || undefined };
+    const realizationsResponseQuery = useRealizationsResponseQuery(
+        caseUuid,
+        ensembleName,
+        tableName,
+        responseName,
+        responseBody,
+        true
+    );
     const subscribedPlotlyRealization = useSubscribedValue("global.hoverRealization", props.workbenchServices);
     const tracesDataArr: Partial<PlotData>[] = [];
     if (realizationsResponseQuery.data && realizationsResponseQuery.data.realizations.length > 0) {
@@ -38,8 +48,9 @@ export const view = (props: ModuleFCProps<State>) => {
         const trace: Partial<PlotData> = {
             x: x,
             y: y,
-            type: "bar", marker: {
-                color: color
+            type: "bar",
+            marker: {
+                color: color,
             },
         };
         tracesDataArr.push(trace);
@@ -51,9 +62,9 @@ export const view = (props: ModuleFCProps<State>) => {
                 realization: realization,
             });
         }
-    }
+    };
 
-    function handleUnHover(e: PlotMouseEvent) {
+    function handleUnHover() {
         props.workbenchServices.publishGlobalData("global.hoverRealization", { realization: -1 });
     }
 
@@ -61,13 +72,22 @@ export const view = (props: ModuleFCProps<State>) => {
         width: wrapperDivSize.width,
         height: wrapperDivSize.height,
         title: VolumetricResponseAbbreviations[responseName as keyof typeof VolumetricResponseAbbreviations] || "",
-        xaxis: { title: "Realization" }
-
+        xaxis: { title: "Realization" },
     };
     return (
         <div className="w-full h-full" ref={wrapperDivRef}>
-            <ApiStateWrapper apiResult={realizationsResponseQuery} loadingComponent={<CircularProgress />} errorComponent={"feil"} >
-                <Plot data={tracesDataArr} layout={layout} config={{ "scrollZoom": true }} onHover={handleHover} onUnhover={handleUnHover} />
+            <ApiStateWrapper
+                apiResult={realizationsResponseQuery}
+                loadingComponent={<CircularProgress />}
+                errorComponent={"feil"}
+            >
+                <Plot
+                    data={tracesDataArr}
+                    layout={layout}
+                    config={{ scrollZoom: true }}
+                    onHover={handleHover}
+                    onUnhover={handleUnHover}
+                />
             </ApiStateWrapper>
         </div>
     );

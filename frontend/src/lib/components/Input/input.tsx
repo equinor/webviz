@@ -5,8 +5,12 @@ import { InputUnstyled, InputUnstyledProps } from "@mui/base";
 import { BaseComponent } from "../_BaseComponent";
 import { resolveClassNames } from "../_utils/resolveClassNames";
 
-export const Input = React.forwardRef((props: InputUnstyledProps, ref: React.ForwardedRef<HTMLInputElement>) => {
-    const { startAdornment, endAdornment, ...other } = props;
+export type InputProps = InputUnstyledProps & {
+    wrapperStyle?: React.CSSProperties;
+};
+
+export const Input = React.forwardRef((props: InputProps, ref: React.ForwardedRef<HTMLInputElement>) => {
+    const { startAdornment, endAdornment, wrapperStyle, ...other } = props;
 
     const internalRef = React.useRef<HTMLInputElement>(null);
 
@@ -46,6 +50,7 @@ export const Input = React.forwardRef((props: InputUnstyledProps, ref: React.For
                         "border-2": props.error,
                     }
                 )}
+                style={wrapperStyle}
             >
                 {startAdornment && (
                     <div className="flex items-center" onClick={handleAdornmentClick}>
