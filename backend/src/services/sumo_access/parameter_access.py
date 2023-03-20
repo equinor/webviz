@@ -7,7 +7,7 @@ import numpy as np
 from pydantic import BaseModel
 import pandas as pd
 from fmu.sumo.explorer.explorer import CaseCollection, SumoClient
-from fmu.sumo.explorer.objects import TableCollection
+from fmu.sumo.explorer import AggregatedTable
 
 # from fmu.sumo.explorer.objects.table import AggregatedTable
 
@@ -56,13 +56,9 @@ class ParameterAccess:
         """Retrieve parameters for an ensemble"""
         case = self.case_collection[0]
         # Parameters are attached to any data object, but currently only accessible with the explorer by downloading a table
-        random_table_that_has_parameters = case.tables.filter(
-            name="summary", tagname="eclipse", iteration="iter-0", aggregation="collection", column="FOPT"
-        )[0]
+        random_table_that_has_parameters = AggregatedTable(case, "summary", "eclipse", "iter-0")
 
-        parameters_dict: Dict[Dict[str, Union[str, Dict[str, str]]]] = random_table_that_has_parameters["fmu"][
-            "iteration"
-        ]["parameters"]
+        parameters_dict: Dict[Dict[str, Union[str, Dict[str, str]]]] = random_table_that_has_parameters.parameters
         ensemble_parameters = self._untangle_parameters(parameters_dict)
         sanitized_ensemble_parameters = self._sanitize_parameters(ensemble_parameters)
         return sanitized_ensemble_parameters

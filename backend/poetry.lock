@@ -641,7 +641,7 @@ test = ["anyio[trio] (>=3.2.1,<4.0.0)", "black (==22.10.0)", "coverage[toml] (>=
 
 [[package]]
 name = "fmu-sumo"
-version = "0.2.5.dev15+ge6f26a6"
+version = "0.3.1.dev8+g01ed315"
 description = "Python package for interacting with Sumo in an FMU setting"
 category = "main"
 optional = false
@@ -666,8 +666,8 @@ tests = ["pytest (>=6.1.1)"]
 [package.source]
 type = "git"
 url = "https://github.com/equinor/fmu-sumo.git"
-reference = "e6f26a6466ba33139522b49f1456c4c561f349ad"
-resolved_reference = "e6f26a6466ba33139522b49f1456c4c561f349ad"
+reference = "a8e9702e71f9812f011a2fe6c684811faeb2fdc3"
+resolved_reference = "a8e9702e71f9812f011a2fe6c684811faeb2fdc3"
 
 [[package]]
 name = "fonttools"
@@ -2333,4 +2333,4 @@ tests = ["hypothesis", "pytest", "pytest-benchmark", "pytest-mock", "pytest-snap
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.8"
-content-hash = "248478baadb3800914c1740852ecca543f26ccdd9abd5b184b8cc29858db0b36"
+content-hash = "661753f140174a7aa58b6a76a3dc05154bc111c73592e3ea354f732638dd0131"
