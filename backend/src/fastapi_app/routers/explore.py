@@ -24,12 +24,15 @@ class Ensemble(BaseModel):
 
 
 @router.get("/fields")
-def get_fields(
-    authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user)
-) -> List[Field]:
-    """Get list of fields"""
-
-    ret_arr = [Field(field_identifier="DROGON"), Field(field_identifier="JOHAN SVERDRUP"), Field(field_identifier="DUMMY_FIELD")]
+def get_fields(authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user)) -> List[Field]:
+    """
+    Get list of fields
+    """
+    ret_arr = [
+        Field(field_identifier="DROGON"),
+        Field(field_identifier="JOHAN SVERDRUP"),
+        Field(field_identifier="DUMMY_FIELD"),
+    ]
     return ret_arr
 
 
