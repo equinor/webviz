@@ -5,7 +5,8 @@ import { ModuleFCProps } from "@framework/Module";
 import { useSubscribedValue } from "@framework/WorkbenchServices";
 import { useElementSize } from "@lib/hooks/useElementSize";
 
-import { Layout, PlotHoverEvent, PlotData, PlotMouseEvent, PlotRelayoutEvent } from "plotly.js";
+import { Layout, PlotData, PlotHoverEvent, PlotMouseEvent, PlotRelayoutEvent } from "plotly.js";
+
 import { useStatisticalVectorDataQuery, useVectorDataQuery } from "./queryHooks";
 import { State } from "./state";
 
@@ -69,22 +70,24 @@ export const view = ({ moduleContext, workbenchServices }: ModuleFCProps<State>)
                 realization: curveData.realizationNumber,
             });
         }
-    }
+    };
 
     function handleUnHover(e: PlotMouseEvent) {
         workbenchServices.publishGlobalData("global.hoverRealization", { realization: -1 });
     }
 
-
     const tracesDataArr: MyPlotData[] = [];
+    let unitString = "";
 
     if (vectorQuery.data && vectorQuery.data.length > 0) {
         let highlightedTrace: MyPlotData | null = null;
+        unitString = vectorQuery.data[0].unit;
         for (let i = 0; i < vectorQuery.data.length; i++) {
             const vec = vectorQuery.data[i];
             const isHighlighted = vec.realization === subscribedPlotlyRealization?.realization ? true : false;
             const curveColor = vec.realization === subscribedPlotlyRealization?.realization ? "red" : "green";
             const lineWidth = vec.realization === subscribedPlotlyRealization?.realization ? 3 : 1;
+            const lineShape = vec.is_rate ? "vh" : "linear";
             const trace: MyPlotData = {
                 x: vec.timestamps,
                 y: vec.values,
@@ -93,7 +96,7 @@ export const view = ({ moduleContext, workbenchServices }: ModuleFCProps<State>)
                 legendrank: vec.realization,
                 type: "scatter",
                 mode: "lines",
-                line: { color: curveColor, width: lineWidth },
+                line: { color: curveColor, width: lineWidth, shape: lineShape },
             };
 
             if (isHighlighted) {
@@ -109,6 +112,7 @@ export const view = ({ moduleContext, workbenchServices }: ModuleFCProps<State>)
     }
 
     if (showStatistics && statisticsQuery.data) {
+        const lineShape = statisticsQuery.data.is_rate ? "vh" : "linear";
         for (const statValueObj of statisticsQuery.data.value_objects) {
             const trace: MyPlotData = {
                 x: statisticsQuery.data.timestamps,
@@ -117,12 +121,16 @@ export const view = ({ moduleContext, workbenchServices }: ModuleFCProps<State>)
                 legendrank: -1,
                 type: "scatter",
                 mode: "lines",
-                line: { color: "lightblue", width: 2, dash: "dot" },
+                line: { color: "lightblue", width: 2, dash: "dot", shape: lineShape },
             };
             tracesDataArr.push(trace);
         }
     }
-    const layout: Partial<Layout> = { width: wrapperDivSize.width, height: wrapperDivSize.height, title: "Simulation Time Series" };
+    const layout: Partial<Layout> = {
+        width: wrapperDivSize.width,
+        height: wrapperDivSize.height,
+        title: `${vectorName ? vectorName.toUpperCase() : "N/A"} - ${unitString}`,
+    };
     if (subscribedPlotlyTimeStamp) {
         layout["shapes"] = [
             {
