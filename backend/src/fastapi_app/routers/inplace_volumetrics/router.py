@@ -18,7 +18,7 @@ router = APIRouter()
 
 
 @router.get("/table_names_and_descriptions/", tags=["inplace_volumetrics"])
-async def get_table_names_and_descriptions(
+def get_table_names_and_descriptions(
     # fmt:off
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     case_uuid: str = Query(description="Sumo case uuid"),
@@ -33,7 +33,7 @@ async def get_table_names_and_descriptions(
 
 
 @router.post("/realizations_response/", tags=["inplace_volumetrics"])
-async def get_realizations_response(
+def get_realizations_response(
     # fmt:off
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     case_uuid: str = Query(description="Sumo case uuid"),
@@ -75,7 +75,7 @@ async def get_realizations_response(
 
 
 # @router.get("/statistic_response/", tags=["inplace_volumetrics"])
-# async def get_statistic_response(
+# def get_statistic_response(
 #     # fmt:off
 #     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
 #     case_uuid: str = Query(description="Sumo case uuid"),

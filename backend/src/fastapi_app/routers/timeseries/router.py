@@ -18,7 +18,7 @@ router = APIRouter()
 
 
 @router.get("/vector_names_and_description/")
-async def get_vector_names_and_descriptions(
+def get_vector_names_and_descriptions(
     # fmt:off
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     case_uuid: str = Query(description="Sumo case uuid"),
@@ -40,7 +40,7 @@ async def get_vector_names_and_descriptions(
 
 
 @router.get("/realizations_vector_data/")
-async def get_realizations_vector_data(
+def get_realizations_vector_data(
     # fmt:off
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     case_uuid: str = Query(description="Sumo case uuid"),
@@ -66,7 +66,7 @@ async def get_realizations_vector_data(
 
 
 @router.get("/vector_metadata/")
-async def get_vector_metadata(
+def get_vector_metadata(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     case_uuid: str = Query(description="Sumo case uuid"),
     ensemble_name: str = Query(description="Ensemble name"),
@@ -79,7 +79,7 @@ async def get_vector_metadata(
 
 
 @router.get("/timestamps/")
-async def get_timestamps(
+def get_timestamps(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     case_uuid: str = Query(description="Sumo case uuid"),
     ensemble_name: str = Query(description="Ensemble name"),
@@ -97,7 +97,7 @@ async def get_timestamps(
 
 
 @router.get("/historical_vector_data/")
-async def get_historical_vector_data(
+def get_historical_vector_data(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     case_uuid: str = Query(description="Sumo case uuid"),
     non_historical_vector_name: str = Query(description="Name of the non-historical vector"),
@@ -108,7 +108,7 @@ async def get_historical_vector_data(
 
 
 @router.get("/statistical_vector_data/")
-async def get_statistical_vector_data(
+def get_statistical_vector_data(
     # fmt:off
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     case_uuid: str = Query(description="Sumo case uuid"),
@@ -139,7 +139,7 @@ async def get_statistical_vector_data(
 
 
 @router.get("/realizations_calculated_vector_data/")
-async def get_realizations_calculated_vector_data(
+def get_realizations_calculated_vector_data(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     case_uuid: str = Query(description="Sumo case uuid"),
     ensemble_name: str = Query(description="Ensemble name"),
@@ -154,7 +154,7 @@ async def get_realizations_calculated_vector_data(
 
 
 # @router.get("/statistical_calculated_vector_data/")
-# async def get_statistical_calculated_vector_data(
+# def get_statistical_calculated_vector_data(
 #     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
 #     sumo_case_id: str = Query(None, description="Sumo case id"),
 #     sumo_iteration_id: str = Query(None, description="Sumo iteration id"),
