@@ -12,6 +12,7 @@ export type { OpenAPIConfig } from './core/OpenAPI';
 export type { Body_get_realizations_response } from './models/Body_get_realizations_response';
 export type { Case } from './models/Case';
 export type { Ensemble } from './models/Ensemble';
+export type { Field } from './models/Field';
 export { Frequency } from './models/Frequency';
 export type { HTTPValidationError } from './models/HTTPValidationError';
 export type { InplaceVolumetricsCategoricalMetaData } from './models/InplaceVolumetricsCategoricalMetaData';
