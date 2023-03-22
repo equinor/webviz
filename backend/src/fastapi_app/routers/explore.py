@@ -10,6 +10,10 @@ from ..auth.auth_helper import AuthHelper
 router = APIRouter()
 
 
+class Field(BaseModel):
+    field_identifier: str
+
+
 class Case(BaseModel):
     uuid: str
     name: str
@@ -19,8 +23,21 @@ class Ensemble(BaseModel):
     name: str
 
 
+@router.get("/fields")
+def get_fields(authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user)) -> List[Field]:
+    """
+    Get list of fields
+    """
+    ret_arr = [
+        Field(field_identifier="DROGON"),
+        Field(field_identifier="JOHAN SVERDRUP"),
+        Field(field_identifier="DUMMY_FIELD"),
+    ]
+    return ret_arr
+
+
 @router.get("/cases")
-async def get_cases(
+def get_cases(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     field_identifier: str = Query(description="Field identifier"),
 ) -> List[Case]:
@@ -48,7 +65,7 @@ async def get_cases(
 
 
 @router.get("/cases/{case_uuid}/ensembles")
-async def get_ensembles(
+def get_ensembles(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     case_uuid: str = Path(description="Sumo case uuid"),
 ) -> List[Ensemble]:
