@@ -5,12 +5,12 @@ import { AllTopicDefinitions, WorkbenchServices } from "@framework/WorkbenchServ
 import { Button } from "@lib/components/Button";
 
 export type SharedState = {
-    refreshCounter: number;
+    triggeredRefreshCounter: number;
 };
 
 //-----------------------------------------------------------------------------------------------------------
 export function WorkbenchSpySettings({ moduleContext, workbenchServices }: ModuleFCProps<SharedState>) {
-    const setRefreshCounter = moduleContext.useSetStoreValue("refreshCounter");
+    const setRefreshCounter = moduleContext.useSetStoreValue("triggeredRefreshCounter");
     return (
         <div>
             <Button onClick={() => setRefreshCounter((prev: number) => prev + 1)}>Trigger Refresh</Button>
@@ -20,40 +20,69 @@ export function WorkbenchSpySettings({ moduleContext, workbenchServices }: Modul
 
 //-----------------------------------------------------------------------------------------------------------
 export function WorkbenchSpyView({ moduleContext, workbenchServices }: ModuleFCProps<SharedState>) {
-    const [fieldName, fieldName_TS] = useSubscribedValueWithUpdatedTS("navigator.fieldName", workbenchServices);
-    const [caseUuid, caseUuid_TS] = useSubscribedValueWithUpdatedTS("navigator.caseId", workbenchServices);
-    const [hoverRealization, hoverRealization_TS] = useSubscribedValueWithUpdatedTS(
-        "global.hoverRealization",
-        workbenchServices
-    );
-    const [hoverTimestamp, hoverTimestamp_TS] = useSubscribedValueWithUpdatedTS(
-        "global.hoverTimestamp",
-        workbenchServices
-    );
-    const refreshCounter = moduleContext.useStoreValue("refreshCounter");
+    const [fieldName, fieldName_TS] = useServiceValueWithTS("navigator.fieldName", workbenchServices);
+    const [caseUuid, caseUuid_TS] = useServiceValueWithTS("navigator.caseId", workbenchServices);
+    const [hoverRealization, hoverRealization_TS] = useServiceValueWithTS("global.hoverRealization", workbenchServices);
+    const [hoverTimestamp, hoverTimestamp_TS] = useServiceValueWithTS("global.hoverTimestamp", workbenchServices);
+    const triggeredRefreshCounter = moduleContext.useStoreValue("triggeredRefreshCounter");
 
-    // prettier-ignore
+    const componentRenderCount = React.useRef(0);
+    React.useEffect(function incrementComponentRenderCount() {
+        componentRenderCount.current = componentRenderCount.current + 1;
+    });
+
+    const componentLastRenderTS = getTimestampString();
+
     return (
         <code>
             Navigator topics:
             <table>
-                <tr>  <td>fieldName</td>  <td><b>{fieldName || "N/A"}</b></td>  <td>({fieldName_TS})</td>  </tr>
-                <tr>  <td>caseUuid</td>   <td><b>{caseUuid || "N/A"}</b></td>   <td>({caseUuid_TS})</td>  </tr>
+                <tbody>
+                    {makeTableRow("fieldName", fieldName, fieldName_TS)}
+                    {makeTableRow("caseUuid", caseUuid, caseUuid_TS)}
+                </tbody>
             </table>
-
-            <br/>
+            <br />
             Global topics:
             <table>
-                <tr>  <td>hoverRealization</td>  <td><b>{hoverRealization?.realization || "N/A"}</b></td>  <td>({hoverRealization_TS})</td>  </tr>
-                <tr>  <td>hoverTimestamp</td>    <td><b>{hoverTimestamp?.timestamp || "N/A"}</b></td>      <td>({hoverTimestamp_TS})</td>  </tr>
+                <tbody>
+                    {makeTableRow("hoverRealization", hoverRealization?.realization, hoverRealization_TS)}
+                    {makeTableRow("hoverTimestamp", hoverTimestamp?.timestamp, hoverTimestamp_TS)}
+                </tbody>
             </table>
-            <br/>
-            refreshCounter: {refreshCounter}
+            <br />
+            <br />
+            refreshCounter: {triggeredRefreshCounter}
+            <br />
+            componentRenderCount: {componentRenderCount.current}
+            <br />
+            componentLastRenderTS: {componentLastRenderTS}
         </code>
     );
 }
 
-export function useSubscribedValueWithUpdatedTS<T extends keyof AllTopicDefinitions>(
+function makeTableRow(label: string, value: any, ts: string) {
+    return (
+        <tr>
+            <td>{label}</td>
+            <td>
+                <b>{value || "N/A"}</b>
+            </td>
+            <td>({ts})</td>
+        </tr>
+    );
+}
+
+function getTimestampString() {
+    return new Date().toLocaleTimeString("en-GB", {
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+        fractionalSecondDigits: 2,
+    });
+}
+
+function useServiceValueWithTS<T extends keyof AllTopicDefinitions>(
     topic: T,
     workbenchServices: WorkbenchServices
 ): [data: AllTopicDefinitions[T] | null, updatedTS: string] {
@@ -64,14 +93,7 @@ export function useSubscribedValueWithUpdatedTS<T extends keyof AllTopicDefiniti
         function subscribeToServiceTopic() {
             function handleNewValue(newValue: AllTopicDefinitions[T]) {
                 setLatestValue(newValue);
-                setLastUpdatedTS(
-                    new Date().toLocaleTimeString("en-GB", {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                        second: "2-digit",
-                        fractionalSecondDigits: 2,
-                    })
-                );
+                setLastUpdatedTS(getTimestampString());
             }
             const unsubscribeFunc = workbenchServices.subscribe(topic, handleNewValue);
             return unsubscribeFunc;
