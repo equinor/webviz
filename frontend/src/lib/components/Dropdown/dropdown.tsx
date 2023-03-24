@@ -80,7 +80,12 @@ export const Dropdown = withDefaults<DropdownProps>()(defaultProps, (props) => {
 
     React.useEffect(() => {
         const handleMouseDown = (event: MouseEvent) => {
-            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+            if (
+                dropdownRef.current &&
+                !dropdownRef.current.contains(event.target as Node) &&
+                inputRef.current &&
+                !inputRef.current.contains(event.target as Node)
+            ) {
                 setDropdownVisible(false);
                 setFilter(null);
                 setFilteredOptions(props.options);
@@ -117,7 +122,7 @@ export const Dropdown = withDefaults<DropdownProps>()(defaultProps, (props) => {
         setFilteredOptions(newFilteredOptions);
     }, [props.options, filter]);
 
-    React.useLayoutEffect(() => {
+    React.useEffect(() => {
         if (dropdownVisible) {
             const inputClientBoundingRect = inputRef.current?.getBoundingClientRect();
             const bodyClientBoundingRect = document.body.getBoundingClientRect();

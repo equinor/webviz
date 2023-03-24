@@ -5,7 +5,7 @@ import { Size } from "@framework/utils/geometry";
 export function useElementSize(ref: React.RefObject<HTMLElement>): Size {
     const [size, setSize] = React.useState<Size>({ width: 0, height: 0 });
 
-    React.useLayoutEffect(() => {
+    React.useEffect(() => {
         const handleResize = (): void => {
             let newSize: Size = { width: 0, height: 0 };
             if (ref.current) {
