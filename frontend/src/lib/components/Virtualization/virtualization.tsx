@@ -44,7 +44,7 @@ export const Virtualization = withDefaults<VirtualizationProps>()(defaultProps, 
         containerSize.width,
     ]);
 
-    React.useLayoutEffect(() => {
+    React.useEffect(() => {
         let lastScrollPosition = -1;
         let timer: ReturnType<typeof setTimeout> | null = null;
         const handleScroll = () => {
