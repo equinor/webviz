@@ -7,6 +7,7 @@ import { Workbench } from "./Workbench";
 export type NavigatorTopicDefinitions = {
     "navigator.fieldName": string;
     "navigator.caseId": string;
+    "navigator.ensembles": { caseUuid: string; caseName: string; ensembleName: string }[];
 };
 
 export type GlobalTopicDefinitions = {

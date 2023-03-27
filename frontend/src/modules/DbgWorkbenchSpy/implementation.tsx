@@ -22,6 +22,7 @@ export function WorkbenchSpySettings({ moduleContext, workbenchServices }: Modul
 export function WorkbenchSpyView({ moduleContext, workbenchServices }: ModuleFCProps<SharedState>) {
     const [fieldName, fieldName_TS] = useServiceValueWithTS("navigator.fieldName", workbenchServices);
     const [caseUuid, caseUuid_TS] = useServiceValueWithTS("navigator.caseId", workbenchServices);
+    const [ensembles, ensembles_TS] = useServiceValueWithTS("navigator.ensembles", workbenchServices);
     const [hoverRealization, hoverRealization_TS] = useServiceValueWithTS("global.hoverRealization", workbenchServices);
     const [hoverTimestamp, hoverTimestamp_TS] = useServiceValueWithTS("global.hoverTimestamp", workbenchServices);
     const triggeredRefreshCounter = moduleContext.useStoreValue("triggeredRefreshCounter");
@@ -33,6 +34,16 @@ export function WorkbenchSpyView({ moduleContext, workbenchServices }: ModuleFCP
 
     const componentLastRenderTS = getTimestampString();
 
+    let ensembleSpecAsString: string | undefined;
+    if (ensembles) {
+        if (ensembles.length > 0) {
+            ensembleSpecAsString = `${ensembles[0].ensembleName}  (${ensembles[0].caseUuid})`;
+        }
+        else {
+            ensembleSpecAsString = "empty array";
+        }
+    }
+
     return (
         <code>
             Navigator topics:
@@ -40,6 +51,7 @@ export function WorkbenchSpyView({ moduleContext, workbenchServices }: ModuleFCP
                 <tbody>
                     {makeTableRow("fieldName", fieldName, fieldName_TS)}
                     {makeTableRow("caseUuid", caseUuid, caseUuid_TS)}
+                    {makeTableRow("ensembles", ensembleSpecAsString, ensembles_TS)}
                 </tbody>
             </table>
             <br />
