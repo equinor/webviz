@@ -6,7 +6,7 @@ import { BaseComponent, BaseComponentProps } from "../_BaseComponent/baseCompone
 import { withDefaults } from "../_utils/components";
 import { resolveClassNames } from "../_utils/resolveClassNames";
 
-type Option = {
+export type SelectOption = {
     value: string;
     label: string;
     disabled?: boolean;
@@ -15,7 +15,7 @@ type Option = {
 export type SelectProps = {
     id?: string;
     wrapperId?: string;
-    options: Option[];
+    options: SelectOption[];
     value?: string[];
     onChange?: (values: string[]) => void;
     filter?: boolean;
@@ -50,7 +50,7 @@ export const Select = withDefaults<SelectProps>()(defaultProps, (props) => {
     }, [props.options, filter]);
 
     const toggleValue = React.useCallback(
-        (option: Option, index: number) => {
+        (option: SelectOption, index: number) => {
             let newSelected = [...selected];
             if (props.multiple) {
                 if (keysPressed.includes("Shift")) {
