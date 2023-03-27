@@ -19,9 +19,9 @@ type TopNavBarProps = {
 
 export const TopNavBar: React.FC<TopNavBarProps> = (props) => {
     const activeModuleName = ""; // useWorkbenchActiveModuleName();
-    const [selectedField, setSelectedField] = React.useState<string>("");
-    const [selectedCaseId, setSelectedCaseId] = React.useState<string>("");
-    const [selectedEnsembleName, setSelectedEnsembleName] = React.useState<string>("");
+    const [userSelectedField, setSelectedField] = React.useState<string>("");
+    const [userSelectedCaseId, setSelectedCaseId] = React.useState<string>("");
+    const [userSelectedEnsembleName, setSelectedEnsembleName] = React.useState<string>("");
     const [modulesListOpen, setModulesListOpen] = useStoreState(props.workbench.getStateStore(), "modulesListOpen");
 
     const renderCount = React.useRef(0);
@@ -36,7 +36,7 @@ export const TopNavBar: React.FC<TopNavBarProps> = (props) => {
         },
     });
 
-    const computedFieldIdentifier = fixupFieldIdentifier(selectedField, fieldsQuery.data);
+    const computedFieldIdentifier = fixupFieldIdentifier(userSelectedField, fieldsQuery.data);
 
     const casesQuery = useQuery({
         queryKey: ["getCases", computedFieldIdentifier],
@@ -49,7 +49,7 @@ export const TopNavBar: React.FC<TopNavBarProps> = (props) => {
         enabled: fieldsQuery.isSuccess,
     });
 
-    const computedCaseUuid = fixupCaseUuid(selectedCaseId, casesQuery.data);
+    const computedCaseUuid = fixupCaseUuid(userSelectedCaseId, casesQuery.data);
 
     const ensemblesQuery = useQuery({
         queryKey: ["getEnsembles", computedCaseUuid],
@@ -62,7 +62,7 @@ export const TopNavBar: React.FC<TopNavBarProps> = (props) => {
         enabled: casesQuery.isSuccess,
     });
 
-    const computedEnsembleName = fixupEnsembleName(selectedEnsembleName, ensemblesQuery.data);
+    const computedEnsembleName = fixupEnsembleName(userSelectedEnsembleName, ensemblesQuery.data);
 
     console.log(
         `TopNavBar renderCount=${renderCount.current}` + makeQueriesDbgString(fieldsQuery, casesQuery, ensemblesQuery)
@@ -110,17 +110,28 @@ export const TopNavBar: React.FC<TopNavBarProps> = (props) => {
         <div className="bg-slate-100 p-4">
             <div className="flex flex-row gap-4 items-center">
                 <h1 className="flex-grow">{activeModuleName}</h1>
-                <Dropdown options={fieldOpts} value={computedFieldIdentifier} onChange={handleFieldChanged} />
+                <ApiStateWrapper
+                    apiResult={fieldsQuery}
+                    errorComponent={<div className="text-red-500">Error loading fields</div>}
+                    loadingComponent={<CircularProgress />}
+                >
+                    <Dropdown
+                        options={fieldOpts}
+                        value={computedFieldIdentifier}
+                        onChange={handleFieldChanged}
+                        disabled={fieldOpts.length === 0}
+                    />
+                </ApiStateWrapper>
                 <ApiStateWrapper
                     apiResult={casesQuery}
                     errorComponent={<div className="text-red-500">Error loading cases</div>}
                     loadingComponent={<CircularProgress />}
                 >
                     <Dropdown
-                        disabled={caseOpts.length === 0}
                         options={caseOpts}
                         value={computedCaseUuid}
                         onChange={handleCaseChanged}
+                        disabled={caseOpts.length === 0}
                     />
                 </ApiStateWrapper>
                 <ApiStateWrapper
@@ -129,10 +140,10 @@ export const TopNavBar: React.FC<TopNavBarProps> = (props) => {
                     loadingComponent={<CircularProgress />}
                 >
                     <Dropdown
-                        disabled={ensembleOpts.length === 0}
                         options={ensembleOpts}
                         value={computedEnsembleName}
                         onChange={handleEnsembleChanged}
+                        disabled={ensembleOpts.length === 0}
                     />
                 </ApiStateWrapper>
                 <ToggleButton active={modulesListOpen} onToggle={(active: boolean) => handleToggleModulesList(active)}>
