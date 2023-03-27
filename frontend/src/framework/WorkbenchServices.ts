@@ -1,5 +1,7 @@
 import React from "react";
 
+import { isEqual } from "lodash";
+
 import { Workbench } from "./Workbench";
 
 export type NavigatorTopicDefinitions = {
@@ -25,26 +27,24 @@ export type CallbackFunction<T extends keyof AllTopicDefinitions> = (value: AllT
 
 export class WorkbenchServices {
     protected _workbench: Workbench;
-    protected _subscribersMap: { [key: string]: Set<CallbackFunction<any>> };
-    protected _topicValueCache: { [key: string]: any };
+    protected _subscribersMap: Map<string, Set<CallbackFunction<any>>>;
+    protected _topicValueCache: Map<string, any>;
 
     protected constructor(workbench: Workbench) {
         this._workbench = workbench;
-        this._subscribersMap = {};
-        this._topicValueCache = {};
+        this._subscribersMap = new Map();
+        this._topicValueCache = new Map();
     }
 
-    subscribe<T extends keyof AllTopicDefinitions>(
-        topic: T,
-        callbackFn: CallbackFunction<T>,
-        callCallbackImmediately = true
-    ) {
-        const subscribersSet = this._subscribersMap[topic] || new Set();
+    subscribe<T extends keyof AllTopicDefinitions>(topic: T, callbackFn: CallbackFunction<T>) {
+        const subscribersSet = this._subscribersMap.get(topic) || new Set();
         subscribersSet.add(callbackFn);
-        this._subscribersMap[topic] = subscribersSet;
+        this._subscribersMap.set(topic, subscribersSet);
 
-        if (callCallbackImmediately && topic in this._topicValueCache) {
-            callbackFn(this._topicValueCache[topic]);
+        // If we already have a value for this topic, trigger the callback immediately
+        // May have to revise this and make it an op-in behavior, but for now it's fine
+        if (this._topicValueCache.has(topic)) {
+            callbackFn(this._topicValueCache.get(topic));
         }
 
         return () => {
@@ -57,9 +57,18 @@ export class WorkbenchServices {
     }
 
     protected internalPublishAnyTopic<T extends keyof AllTopicDefinitions>(topic: T, value: TopicDefinitionsType<T>) {
-        this._topicValueCache[topic] = value;
+        // Always do compression so that if the value is the same as the last value, don't publish
+        // Serves as a sensible default behavior until we see a need for more complex behavior
+        if (this._topicValueCache.has(topic)) {
+            const cachedValue = this._topicValueCache.get(topic);
+            if (isEqual(value, cachedValue)) {
+                return;
+            }
+        }
 
-        const subscribersSet = this._subscribersMap[topic];
+        this._topicValueCache.set(topic, value);
+
+        const subscribersSet = this._subscribersMap.get(topic);
         if (!subscribersSet) {
             return;
         }

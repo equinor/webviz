@@ -105,6 +105,14 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
         [props.moduleInstance]
     );
 
+    const handleModuleHeaderClick = React.useCallback(
+        function handleModuleHeaderClick() {
+            if (props.isActive) return;
+            props.workbench.setActiveModuleId(props.moduleInstance.getId());
+        },
+        [props.moduleInstance, props.workbench, props.isActive]
+    );
+
     return (
         <>
             {props.isDragged && (
@@ -128,7 +136,7 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
                     } border-solid border-2 box-border shadow ${
                         props.isDragged ? "cursor-grabbing select-none" : "cursor-grab"
                     }}`}
-                    onClick={() => props.workbench.setActiveModuleId(props.moduleInstance.getId())}
+                    onClick={handleModuleHeaderClick}
                 >
                     <div
                         className={`bg-slate-100 p-4 flex select-none ${

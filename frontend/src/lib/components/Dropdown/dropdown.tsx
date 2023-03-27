@@ -12,7 +12,7 @@ import { BaseComponent, BaseComponentProps } from "../_BaseComponent";
 import { withDefaults } from "../_utils/components";
 import { resolveClassNames } from "../_utils/resolveClassNames";
 
-type Option = {
+export type DropdownOption = {
     value: string;
     label: string;
     disabled?: boolean;
@@ -21,7 +21,7 @@ type Option = {
 export type DropdownProps = {
     id?: string;
     wrapperId?: string;
-    options: Option[];
+    options: DropdownOption[];
     value?: string;
     onChange?: (value: string) => void;
     filter?: boolean;
@@ -58,7 +58,7 @@ export const Dropdown = withDefaults<DropdownProps>()(defaultProps, (props) => {
     const [filter, setFilter] = React.useState<string | null>(null);
     const [selection, setSelection] = React.useState<string | number>(props.value);
     const [selectionIndex, setSelectionIndex] = React.useState<number>(-1);
-    const [filteredOptions, setFilteredOptions] = React.useState<Option[]>(props.options);
+    const [filteredOptions, setFilteredOptions] = React.useState<DropdownOption[]>(props.options);
     const [optionIndexWithFocus, setOptionIndexWithFocus] = React.useState<number>(-1);
     const [startIndex, setStartIndex] = React.useState<number>(0);
     const [keyboardFocus, setKeyboardFocus] = React.useState<boolean>(false);
@@ -80,7 +80,12 @@ export const Dropdown = withDefaults<DropdownProps>()(defaultProps, (props) => {
 
     React.useEffect(() => {
         const handleMouseDown = (event: MouseEvent) => {
-            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+            if (
+                dropdownRef.current &&
+                !dropdownRef.current.contains(event.target as Node) &&
+                inputRef.current &&
+                !inputRef.current.contains(event.target as Node)
+            ) {
                 setDropdownVisible(false);
                 setFilter(null);
                 setFilteredOptions(props.options);
@@ -117,7 +122,7 @@ export const Dropdown = withDefaults<DropdownProps>()(defaultProps, (props) => {
         setFilteredOptions(newFilteredOptions);
     }, [props.options, filter]);
 
-    React.useLayoutEffect(() => {
+    React.useEffect(() => {
         if (dropdownVisible) {
             const inputClientBoundingRect = inputRef.current?.getBoundingClientRect();
             const bodyClientBoundingRect = document.body.getBoundingClientRect();

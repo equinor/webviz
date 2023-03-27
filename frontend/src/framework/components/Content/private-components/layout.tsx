@@ -160,23 +160,25 @@ export const Layout: React.FC<LayoutProps> = (props) => {
                         layoutElement.moduleName = instance.getName();
                     }
                 }
+                setDraggedModuleInstanceId(null);
+                if (isNewModule) {
+                    setTempLayoutBoxId(null);
+                }
+                currentLayoutBox = makeLayoutBoxes(currentLayout);
+                originalLayoutBox = currentLayoutBox;
+                layoutBoxRef.current = currentLayoutBox;
+                setLayout(currentLayout);
+                props.workbench.setLayout(currentLayout);
+                setPosition({ x: 0, y: 0 });
+                setPointer({ x: -1, y: -1 });
             }
             pointerDownPoint = null;
             pointerDownElementPosition = null;
             pointerDownElementId = null;
-            setDraggedModuleInstanceId(null);
-            setTempLayoutBoxId(null);
             moduleInstanceId = null;
             dragging = false;
             document.body.classList.remove("select-none");
             originalLayout = currentLayout;
-            currentLayoutBox = makeLayoutBoxes(currentLayout);
-            originalLayoutBox = currentLayoutBox;
-            layoutBoxRef.current = currentLayoutBox;
-            setLayout(currentLayout);
-            props.workbench.setLayout(currentLayout);
-            setPosition({ x: 0, y: 0 });
-            setPointer({ x: -1, y: -1 });
         };
 
         const handlePointerMove = (e: PointerEvent) => {
