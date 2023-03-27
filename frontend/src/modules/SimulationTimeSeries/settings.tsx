@@ -4,81 +4,53 @@ import { Frequency, VectorDescription } from "@api";
 import { apiService } from "@framework/ApiService";
 import { ModuleFCProps } from "@framework/Module";
 import { useSubscribedValue } from "@framework/WorkbenchServices";
+import { ApiStateWrapper } from "@lib/components/ApiStateWrapper";
 import { Checkbox } from "@lib/components/Checkbox";
-import { Dropdown } from "@lib/components/Dropdown";
+import { CircularProgress } from "@lib/components/CircularProgress";
+import { Dropdown, DropdownOption } from "@lib/components/Dropdown";
 import { Input } from "@lib/components/Input";
 import { Label } from "@lib/components/Label";
-import { UseQueryResult, useQuery } from "@tanstack/react-query";
+import { Select, SelectOption } from "@lib/components/Select";
 
 import { sortBy, sortedUniq } from "lodash";
 
+import { useVectorsQuery } from "./queryHooks";
 import { State } from "./state";
-
-import { DropdownProps } from "../../lib/components/Dropdown/dropdown";
 
 //-----------------------------------------------------------------------------------------------------------
 export function settings({ moduleContext, workbenchServices }: ModuleFCProps<State>) {
-    console.log("render Settings");
+    console.log("render SimulationTimeSeries settings");
 
-    const caseUuid = useSubscribedValue("navigator.caseId", workbenchServices);
-    const [ensembleName, setEnsembleName] = moduleContext.useStoreState("ensembleName");
-    const [vectorName, setVectorName] = moduleContext.useStoreState("vectorName");
+    const ensembles = useSubscribedValue("navigator.ensembles", workbenchServices);
+    const [userSelectedVectorName, setUserSelectedVectorName] = React.useState("");
     const [resampleFrequency, setResamplingFrequency] = moduleContext.useStoreState("resamplingFrequency");
     const [showStatistics, setShowStatistics] = moduleContext.useStoreState("showStatistics");
 
-    const ensemblesQuery = useQuery({
-        queryKey: ["getEnsembles", caseUuid],
-        queryFn: () => apiService.explore.getEnsembles(caseUuid || ""),
-        enabled: caseUuid ? true : false,
-        onSuccess: function selectDefaultEnsemble(ensembleArr) {
-            if (ensembleArr.length > 0) {
-                setEnsembleName(ensembleArr[0].name);
+    const firstEnsemble = ensembles && ensembles.length > 0 ? ensembles[0] : null;
+    const vectorsQuery = useVectorsQuery(firstEnsemble?.caseUuid, firstEnsemble?.ensembleName);
+
+    const renderVectorName = fixupVectorName(userSelectedVectorName, vectorsQuery.data);
+
+    React.useEffect(
+        function propagateVectorSpecToView() {
+            if (firstEnsemble && renderVectorName) {
+                moduleContext.stateStore.setValue("vectorSpec", {
+                    caseUuid: firstEnsemble.caseUuid,
+                    caseName: firstEnsemble.caseName,
+                    ensembleName: firstEnsemble.ensembleName,
+                    vectorName: renderVectorName,
+                });
+            } else {
+                moduleContext.stateStore.setValue("vectorSpec", null);
             }
         },
-    });
+        [firstEnsemble?.caseUuid, firstEnsemble?.ensembleName, renderVectorName]
+    );
 
-    const vectorsQuery = useQuery({
-        queryKey: ["getVectorNamesAndDescriptions", caseUuid, ensembleName],
-        queryFn: () => apiService.timeseries.getVectorNamesAndDescriptions(caseUuid ?? "", ensembleName ?? ""),
-        enabled: caseUuid && ensembleName ? true : false,
-        onSuccess: function selectDefaultVector(vectorArr) {
-            console.log("selectDefaultVector()");
-            if (vectorArr.length > 0) {
-                setVectorName(vectorArr[vectorArr.length - 1].name);
-            }
-        },
-        select: function capVectorArrayTo50Entries(vectorArr) {
-            console.log("capVectorArrayTo50Entries()");
-            return vectorArr.slice(0, 50);
-        },
-    });
-
-    function makeVectorListItems(vectorsQuery: UseQueryResult<VectorDescription[]>): DropdownProps["options"] {
-        const itemArr: DropdownProps["options"] = [];
-        if (vectorsQuery.isSuccess && vectorsQuery.data.length > 0) {
-            for (const vec of vectorsQuery.data) {
-                itemArr.push({ value: vec.name, label: vec.descriptive_name });
-            }
-        } else {
-            // itemArr.push({ value: "", label: `${vectorsQuery.status.toString()}...`, disabled: true });
-        }
-        return itemArr;
-    }
-
-    function handleVectorSelectionChange(vecName: string) {
+    function handleVectorSelectionChange(selectedVecNames: string[]) {
         console.log("handleVectorSelectionChange()");
-        setVectorName(vecName);
-    }
-
-    function makeFrequencyListItems(): { label: string; value: string }[] {
-        const itemArr: { label: string; value: string }[] = [
-            { value: Frequency.DAILY, label: "Daily" },
-            { value: Frequency.MONTHLY, label: "Monthly" },
-            { value: Frequency.QUARTERLY, label: "Quarterly" },
-            { value: Frequency.YEARLY, label: "Yearly" },
-            { value: "RAW", label: "None (raw)" },
-        ];
-        return itemArr;
+        const newName = selectedVecNames.length > 0 ? selectedVecNames[0] : "";
+        setUserSelectedVectorName(newName);
     }
 
     function handleFrequencySelectionChange(newFreqStr: string) {
@@ -105,16 +77,24 @@ export function settings({ moduleContext, workbenchServices }: ModuleFCProps<Sta
 
     return (
         <>
-            <Label text="Vector">
-                <Dropdown
-                    options={makeVectorListItems(vectorsQuery)}
-                    value={vectorName ?? ""}
-                    onChange={handleVectorSelectionChange}
-                />
-            </Label>
+            <ApiStateWrapper
+                apiResult={vectorsQuery}
+                errorComponent={"Error loading vector names"}
+                loadingComponent={<CircularProgress />}
+            >
+                <Label text="Vector">
+                    <Select
+                        options={makeVectorOptionItems(vectorsQuery.data)}
+                        value={renderVectorName ? [renderVectorName] : []}
+                        onChange={handleVectorSelectionChange}
+                        filter={true}
+                        size={5}
+                    />
+                </Label>
+            </ApiStateWrapper>
             <Label text="Frequency">
                 <Dropdown
-                    options={makeFrequencyListItems()}
+                    options={makeFrequencyOptionItems()}
                     value={resampleFrequency ?? "RAW"}
                     onChange={handleFrequencySelectionChange}
                 />
@@ -129,6 +109,39 @@ export function settings({ moduleContext, workbenchServices }: ModuleFCProps<Sta
 
 //-----------------------------------------------------------------------------------------------------------
 //-----------------------------------------------------------------------------------------------------------
+
+function fixupVectorName(currVectorName: string, vectorDescriptionsArr: VectorDescription[] | undefined): string {
+    if (!vectorDescriptionsArr || vectorDescriptionsArr.length === 0) {
+        return "";
+    }
+
+    if (vectorDescriptionsArr.find((item) => item.name === currVectorName)) {
+        return currVectorName;
+    }
+
+    return vectorDescriptionsArr[0].name;
+}
+
+function makeVectorOptionItems(vectorDescriptionsArr: VectorDescription[] | undefined): SelectOption[] {
+    const itemArr: SelectOption[] = [];
+    if (vectorDescriptionsArr) {
+        for (const vec of vectorDescriptionsArr) {
+            itemArr.push({ value: vec.name, label: vec.descriptive_name });
+        }
+    }
+    return itemArr;
+}
+
+function makeFrequencyOptionItems(): DropdownOption[] {
+    const itemArr: DropdownOption[] = [
+        { value: Frequency.DAILY, label: "Daily" },
+        { value: Frequency.MONTHLY, label: "Monthly" },
+        { value: Frequency.QUARTERLY, label: "Quarterly" },
+        { value: Frequency.YEARLY, label: "Yearly" },
+        { value: "RAW", label: "None (raw)" },
+    ];
+    return itemArr;
+}
 
 // Parse page ranges into array of numbers
 function parseRealizationRangeString(realRangeStr: string, maxLegalReal: number): number[] {

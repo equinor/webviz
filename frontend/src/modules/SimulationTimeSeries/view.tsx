@@ -20,26 +20,24 @@ interface MyPlotData extends Partial<PlotData> {
 export const view = ({ moduleContext, workbenchServices }: ModuleFCProps<State>) => {
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);
     const wrapperDivSize = useElementSize(wrapperDivRef);
-    const caseUuid = useSubscribedValue("navigator.caseId", workbenchServices);
-    const ensembleName = moduleContext.useStoreValue("ensembleName");
-    const vectorName = moduleContext.useStoreValue("vectorName");
+    const vectorSpec = moduleContext.useStoreValue("vectorSpec");
     const resampleFrequency = moduleContext.useStoreValue("resamplingFrequency");
     const showStatistics = moduleContext.useStoreValue("showStatistics");
     const realizationsToInclude = moduleContext.useStoreValue("realizationsToInclude");
     const [highlightRealization, setHighlightRealization] = React.useState(-1);
 
     const vectorQuery = useVectorDataQuery(
-        caseUuid,
-        ensembleName,
-        vectorName,
+        vectorSpec?.caseUuid,
+        vectorSpec?.ensembleName,
+        vectorSpec?.vectorName,
         resampleFrequency,
         realizationsToInclude
     );
 
     const statisticsQuery = useStatisticalVectorDataQuery(
-        caseUuid,
-        ensembleName,
-        vectorName,
+        vectorSpec?.caseUuid,
+        vectorSpec?.ensembleName,
+        vectorSpec?.vectorName,
         resampleFrequency,
         realizationsToInclude,
         showStatistics
@@ -126,11 +124,19 @@ export const view = ({ moduleContext, workbenchServices }: ModuleFCProps<State>)
             tracesDataArr.push(trace);
         }
     }
+
+    let title = "N/A";
+    const hasGotAnyRequestedData = vectorQuery.data || (showStatistics && statisticsQuery.data);
+    if (vectorSpec && hasGotAnyRequestedData) {
+        title = `${vectorSpec.vectorName} [${unitString}] - ${vectorSpec.ensembleName}, ${vectorSpec.caseName}`;
+    }
+
     const layout: Partial<Layout> = {
         width: wrapperDivSize.width,
         height: wrapperDivSize.height,
-        title: `${vectorName ? vectorName.toUpperCase() : "N/A"} - ${unitString}`,
+        title: title,
     };
+
     if (subscribedPlotlyTimeStamp) {
         layout["shapes"] = [
             {

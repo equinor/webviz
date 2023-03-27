@@ -1,15 +1,28 @@
-import { UseQueryResult, useQuery } from "@tanstack/react-query";
-
-import { Frequency, VectorRealizationData, VectorStatisticData } from "@api";
+import { Frequency, VectorDescription } from "@api";
+import { VectorRealizationData, VectorStatisticData } from "@api";
 import { apiService } from "@framework/ApiService";
+import { UseQueryResult, useQuery } from "@tanstack/react-query";
 
 const STALE_TIME = 60 * 1000;
 const CACHE_TIME = 60 * 1000;
 
+export function useVectorsQuery(
+    caseUuid: string | undefined,
+    ensembleName: string | undefined
+): UseQueryResult<Array<VectorDescription>> {
+    return useQuery({
+        queryKey: ["getVectorNamesAndDescriptions", caseUuid, ensembleName],
+        queryFn: () => apiService.timeseries.getVectorNamesAndDescriptions(caseUuid ?? "", ensembleName ?? ""),
+        staleTime: STALE_TIME,
+        cacheTime: CACHE_TIME,
+        enabled: caseUuid && ensembleName ? true : false,
+    });
+}
+
 export function useVectorDataQuery(
-    caseUuid: string | null,
-    ensembleName: string | null,
-    vectorName: string | null,
+    caseUuid: string | undefined,
+    ensembleName: string | undefined,
+    vectorName: string | undefined,
     resampleFrequency: Frequency | null,
     realizationsToInclude: number[] | null
 ): UseQueryResult<Array<VectorRealizationData>> {
@@ -37,9 +50,9 @@ export function useVectorDataQuery(
 }
 
 export function useStatisticalVectorDataQuery(
-    caseUuid: string | null,
-    ensembleName: string | null,
-    vectorName: string | null,
+    caseUuid: string | undefined,
+    ensembleName: string | undefined,
+    vectorName: string | undefined,
     resampleFrequency: Frequency | null,
     realizationsToInclude: number[] | null,
     allowEnable: boolean
