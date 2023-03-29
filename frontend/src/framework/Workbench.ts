@@ -173,8 +173,11 @@ export class Workbench {
         this._workbenchServices.publishNavigatorData("navigator.fieldName", fieldName);
     }
 
-    // Temporary, for testing
     public setNavigatorCaseId(caseId: string) {
         this._workbenchServices.publishNavigatorData("navigator.caseId", caseId);
+    }
+
+    public setNavigatorEnsembles(ensemblesArr: { caseUuid: string; caseName: string; ensembleName: string }[]) {
+        this._workbenchServices.publishNavigatorData("navigator.ensembles", ensemblesArr);
     }
 }

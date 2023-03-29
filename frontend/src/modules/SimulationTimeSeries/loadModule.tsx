@@ -6,8 +6,7 @@ import { State } from "./state";
 import { view } from "./view";
 
 const initialState: State = {
-    ensembleName: null,
-    vectorName: null,
+    vectorSpec: null,
     resamplingFrequency: Frequency.MONTHLY,
     showStatistics: true,
     realizationsToInclude: null
