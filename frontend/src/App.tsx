@@ -10,17 +10,15 @@ import { ResizablePanels } from "@lib/components/ResizablePanels";
 
 import "./modules/registerAllModules.ts";
 
-//const layout: LayoutElement[] = [];
-const layout: LayoutElement[] = [{ moduleName: "Map", relX: 0, relY: 0, relHeight: 1, relWidth: 1 }];
+const layout: LayoutElement[] = [];
 
 function App() {
     const workbench = new Workbench();
 
     React.useEffect(() => {
-        workbench.makeLayout(layout);
-        // if (!workbench.loadLayoutFromLocalStorage()) {
-        //     workbench.makeLayout(layout);
-        // }
+        if (!workbench.loadLayoutFromLocalStorage()) {
+            workbench.makeLayout(layout);
+        }
     }, []);
 
     return (
