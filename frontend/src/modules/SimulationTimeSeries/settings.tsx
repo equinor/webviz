@@ -1,7 +1,6 @@
 import React from "react";
 
 import { Frequency, VectorDescription } from "@api";
-import { apiService } from "@framework/ApiService";
 import { ModuleFCProps } from "@framework/Module";
 import { useSubscribedValue } from "@framework/WorkbenchServices";
 import { ApiStateWrapper } from "@lib/components/ApiStateWrapper";
@@ -22,35 +21,39 @@ export function settings({ moduleContext, workbenchServices }: ModuleFCProps<Sta
     console.log("render SimulationTimeSeries settings");
 
     const ensembles = useSubscribedValue("navigator.ensembles", workbenchServices);
-    const [userSelectedVectorName, setUserSelectedVectorName] = React.useState("");
+    const [selectedVectorName, setSelectedVectorName] = React.useState<string>("");
     const [resampleFrequency, setResamplingFrequency] = moduleContext.useStoreState("resamplingFrequency");
     const [showStatistics, setShowStatistics] = moduleContext.useStoreState("showStatistics");
 
-    const firstEnsemble = ensembles && ensembles.length > 0 ? ensembles[0] : null;
+    const firstEnsemble = ensembles?.at(0) ?? null;
     const vectorsQuery = useVectorsQuery(firstEnsemble?.caseUuid, firstEnsemble?.ensembleName);
 
-    const renderVectorName = fixupVectorName(userSelectedVectorName, vectorsQuery.data);
+    const computedVectorName = fixupVectorName(selectedVectorName, vectorsQuery.data);
+
+    if (computedVectorName && computedVectorName !== selectedVectorName) {
+        setSelectedVectorName(computedVectorName);
+    }
 
     React.useEffect(
         function propagateVectorSpecToView() {
-            if (firstEnsemble && renderVectorName) {
+            if (firstEnsemble && computedVectorName) {
                 moduleContext.stateStore.setValue("vectorSpec", {
                     caseUuid: firstEnsemble.caseUuid,
                     caseName: firstEnsemble.caseName,
                     ensembleName: firstEnsemble.ensembleName,
-                    vectorName: renderVectorName,
+                    vectorName: computedVectorName,
                 });
             } else {
                 moduleContext.stateStore.setValue("vectorSpec", null);
             }
         },
-        [firstEnsemble?.caseUuid, firstEnsemble?.ensembleName, renderVectorName]
+        [firstEnsemble, computedVectorName]
     );
 
     function handleVectorSelectionChange(selectedVecNames: string[]) {
         console.log("handleVectorSelectionChange()");
-        const newName = selectedVecNames.length > 0 ? selectedVecNames[0] : "";
-        setUserSelectedVectorName(newName);
+        const newName = selectedVecNames[0] ?? "";
+        setSelectedVectorName(newName);
     }
 
     function handleFrequencySelectionChange(newFreqStr: string) {
@@ -85,7 +88,7 @@ export function settings({ moduleContext, workbenchServices }: ModuleFCProps<Sta
                 <Label text="Vector">
                     <Select
                         options={makeVectorOptionItems(vectorsQuery.data)}
-                        value={renderVectorName ? [renderVectorName] : []}
+                        value={computedVectorName ? [computedVectorName] : []}
                         onChange={handleVectorSelectionChange}
                         filter={true}
                         size={5}

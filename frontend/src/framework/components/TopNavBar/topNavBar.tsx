@@ -19,9 +19,9 @@ type TopNavBarProps = {
 
 export const TopNavBar: React.FC<TopNavBarProps> = (props) => {
     const activeModuleName = ""; // useWorkbenchActiveModuleName();
-    const [userSelectedField, setSelectedField] = React.useState<string>("");
-    const [userSelectedCaseId, setSelectedCaseId] = React.useState<string>("");
-    const [userSelectedEnsembleName, setSelectedEnsembleName] = React.useState<string>("");
+    const [selectedField, setSelectedField] = React.useState<string>("");
+    const [selectedCaseId, setSelectedCaseId] = React.useState<string>("");
+    const [selectedEnsembleName, setSelectedEnsembleName] = React.useState<string>("");
     const [modulesListOpen, setModulesListOpen] = useStoreState(props.workbench.getStateStore(), "modulesListOpen");
 
     const renderCount = React.useRef(0);
@@ -36,7 +36,7 @@ export const TopNavBar: React.FC<TopNavBarProps> = (props) => {
         },
     });
 
-    const computedFieldIdentifier = fixupFieldIdentifier(userSelectedField, fieldsQuery.data);
+    const computedFieldIdentifier = fixupFieldIdentifier(selectedField, fieldsQuery.data);
 
     const casesQuery = useQuery({
         queryKey: ["getCases", computedFieldIdentifier],
@@ -49,7 +49,7 @@ export const TopNavBar: React.FC<TopNavBarProps> = (props) => {
         enabled: fieldsQuery.isSuccess,
     });
 
-    const computedCaseUuid = fixupCaseUuid(userSelectedCaseId, casesQuery.data);
+    const computedCaseUuid = fixupCaseUuid(selectedCaseId, casesQuery.data);
 
     const ensemblesQuery = useQuery({
         queryKey: ["getEnsembles", computedCaseUuid],
@@ -62,11 +62,21 @@ export const TopNavBar: React.FC<TopNavBarProps> = (props) => {
         enabled: casesQuery.isSuccess,
     });
 
-    const computedEnsembleName = fixupEnsembleName(userSelectedEnsembleName, ensemblesQuery.data);
+    const computedEnsembleName = fixupEnsembleName(selectedEnsembleName, ensemblesQuery.data);
 
     console.log(
         `TopNavBar renderCount=${renderCount.current}` + makeQueriesDbgString(fieldsQuery, casesQuery, ensemblesQuery)
     );
+
+    if (computedFieldIdentifier && computedFieldIdentifier !== selectedField) {
+        setSelectedField(computedFieldIdentifier);
+    }
+    if (computedCaseUuid && computedCaseUuid !== selectedCaseId) {
+        setSelectedCaseId(computedCaseUuid);
+    }
+    if (computedEnsembleName && computedEnsembleName !== selectedEnsembleName) {
+        setSelectedEnsembleName(computedEnsembleName);
+    }
 
     React.useEffect(
         function publishSelectionViaWorkbench() {
@@ -88,13 +98,10 @@ export const TopNavBar: React.FC<TopNavBarProps> = (props) => {
     }
 
     function handleCaseChanged(caseUuid: string) {
-        setSelectedField(computedFieldIdentifier);
         setSelectedCaseId(caseUuid);
     }
 
     function handleEnsembleChanged(ensembleName: string) {
-        setSelectedField(computedFieldIdentifier);
-        setSelectedCaseId(computedCaseUuid);
         setSelectedEnsembleName(ensembleName);
     }
 
@@ -150,7 +157,6 @@ export const TopNavBar: React.FC<TopNavBarProps> = (props) => {
                     Add modules
                 </ToggleButton>
                 <LoginButton />
-                <div>({renderCount.current})</div>
             </div>
         </div>
     );
