@@ -1,4 +1,4 @@
-import { DynamicSurfaceDirectory, Ensemble, StaticSurfaceDirectory, SurfaceData } from "@api";
+import { DynamicSurfaceDirectory, StaticSurfaceDirectory, SurfaceData } from "@api";
 import { apiService } from "@framework/ApiService";
 import { QueryFunction, QueryKey, UseQueryResult, useQuery } from "@tanstack/react-query";
 
@@ -7,41 +7,29 @@ import { SurfAddr } from "./SurfAddr";
 const STALE_TIME = 60 * 1000;
 const CACHE_TIME = 60 * 1000;
 
-export function useEnsemblesQuery(caseUuid: string | null): UseQueryResult<Array<Ensemble>> {
-    return useQuery({
-        queryKey: ["getEnsembles", caseUuid],
-        queryFn: () => apiService.explore.getEnsembles(caseUuid ?? ""),
-        staleTime: STALE_TIME,
-        cacheTime: CACHE_TIME,
-        enabled: caseUuid ? true : false,
-    });
-}
-
 export function useDynamicSurfaceDirectoryQuery(
-    caseUuid: string | null,
-    ensembleName: string | null,
-    allowEnable: boolean
+    caseUuid: string | undefined,
+    ensembleName: string | undefined,
 ): UseQueryResult<DynamicSurfaceDirectory> {
     return useQuery({
         queryKey: ["getDynamicSurfaceDirectory", caseUuid, ensembleName],
         queryFn: () => apiService.surface.getDynamicSurfaceDirectory(caseUuid ?? "", ensembleName ?? ""),
         staleTime: STALE_TIME,
         cacheTime: CACHE_TIME,
-        enabled: allowEnable && caseUuid && ensembleName ? true : false,
+        enabled: caseUuid && ensembleName ? true : false,
     });
 }
 
 export function useStaticSurfaceDirectoryQuery(
-    caseUuid: string | null,
-    ensembleName: string | null,
-    allowEnable: boolean
+    caseUuid: string | undefined,
+    ensembleName: string | undefined,
 ): UseQueryResult<StaticSurfaceDirectory> {
     return useQuery({
         queryKey: ["getStaticSurfaceDirectory", caseUuid, ensembleName],
         queryFn: () => apiService.surface.getStaticSurfaceDirectory(caseUuid ?? "", ensembleName ?? ""),
         staleTime: STALE_TIME,
         cacheTime: CACHE_TIME,
-        enabled: allowEnable && caseUuid && ensembleName ? true : false,
+        enabled: caseUuid && ensembleName ? true : false,
     });
 }
 

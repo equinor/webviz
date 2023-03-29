@@ -1,48 +1,6 @@
-import { Ensemble } from "@api";
 import { SurfaceStatisticFunction } from "@api";
-import { Dropdown } from "@lib/components/Dropdown";
-import { ListBoxDeprecated, ListBoxItem } from "@lib/components/ListBox/list-box";
-import { UseQueryResult } from "@tanstack/react-query";
-
-//
-// Sub-component for ensemble selection
-type EnsemblesDropdownProps = {
-    ensemblesQuery: UseQueryResult<Ensemble[]>;
-    selectedEnsemble: string | null;
-    onEnsembleSelectionChange: (ensembleName: string) => void;
-};
-
-export function EnsemblesDropdown(props: EnsemblesDropdownProps): JSX.Element {
-    const itemArr: ListBoxItem[] = [];
-    let selectedEnsemble = props.selectedEnsemble;
-
-    if (props.ensemblesQuery.isSuccess && props.ensemblesQuery.data.length > 0) {
-        for (const ens of props.ensemblesQuery.data) {
-            itemArr.push({ value: ens.name, label: ens.name });
-        }
-    } else {
-        let placeholderStr = "<no ensembles>";
-        if (props.ensemblesQuery.isError || props.ensemblesQuery.isLoading) {
-            placeholderStr = `${props.ensemblesQuery.status.toString()}...`;
-        }
-
-        itemArr.push({ value: "", label: placeholderStr, disabled: true });
-        selectedEnsemble = "";
-    }
-
-    console.log("render EnsemblesDropdown - selectedEnsemble=" + selectedEnsemble);
-
-    return (
-        <label>
-            Ensemble:
-            <ListBoxDeprecated
-                items={itemArr}
-                selectedItem={selectedEnsemble ?? ""}
-                onSelect={props.onEnsembleSelectionChange}
-            />
-        </label>
-    );
-}
+import { Dropdown, DropdownOption} from "@lib/components/Dropdown";
+import { Label } from "@lib/components/Label";
 
 //
 // Sub-component for aggregation/statistic selection
@@ -52,10 +10,7 @@ type AggregationDropdownProps = {
 };
 
 export function AggregationDropdown(props: AggregationDropdownProps): JSX.Element {
-    // Maybe export this from Dropdown instead=
-    type DropdownItem = { value: string; label: string };
-
-    const itemArr: DropdownItem[] = [
+    const itemArr: DropdownOption[] = [
         { value: "SINGLE_REAL", label: "Single realization" },
         { value: SurfaceStatisticFunction.MEAN, label: "Mean" },
         { value: SurfaceStatisticFunction.STD, label: "Std" },
@@ -67,8 +22,7 @@ export function AggregationDropdown(props: AggregationDropdownProps): JSX.Elemen
     ];
 
     return (
-        <label>
-            Aggregation/statistic:
+        <Label text="Aggregation/statistic:">
             <Dropdown
                 options={itemArr}
                 value={props.selectedAggregation ?? "SINGLE_REAL"}
@@ -78,6 +32,6 @@ export function AggregationDropdown(props: AggregationDropdownProps): JSX.Elemen
                     )
                 }
             />
-        </label>
+        </Label>
     );
 }

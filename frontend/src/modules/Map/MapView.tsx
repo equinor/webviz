@@ -13,6 +13,11 @@ export function MapView({ moduleContext, workbenchServices }: ModuleFCProps<MapS
     const wrapperDivSize = useElementSize(wrapperDivRef);
     const surfAddr = moduleContext.useStoreValue("surfaceAddress");
 
+    const renderCount = React.useRef(0);
+    React.useEffect(function incrementRenderCount() {
+        renderCount.current = renderCount.current + 1;
+    });
+
     console.log(`render MapView, surfAddr=${surfAddr ? makeSurfAddrString(surfAddr) : "null"}`);
 
     const surfDataQuery = useSurfaceDataQueryByAddress(surfAddr);
@@ -43,6 +48,8 @@ export function MapView({ moduleContext, workbenchServices }: ModuleFCProps<MapS
             min/max val: {surfDataQuery.data?.val_min.toFixed(2)}, {surfDataQuery.data?.val_max.toFixed(2)}
             <br />
             rot: {surfDataQuery.data?.rot_deg.toFixed(2)}
+            <br />
+            renderCount: {renderCount.current}
             <div className="flex-grow h-0" ref={wrapperDivRef}>
                 <img
                     alt={surfDataQuery.status}
