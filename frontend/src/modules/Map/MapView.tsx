@@ -8,7 +8,7 @@ import { MapState } from "./MapState";
 import { makeSurfAddrString } from "./SurfAddr";
 
 //-----------------------------------------------------------------------------------------------------------
-export function MapView({ moduleContext, workbenchServices }: ModuleFCProps<MapState>) {
+export function MapView({ moduleContext }: ModuleFCProps<MapState>) {
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);
     const wrapperDivSize = useElementSize(wrapperDivRef);
     const surfAddr = moduleContext.useStoreValue("surfaceAddress");

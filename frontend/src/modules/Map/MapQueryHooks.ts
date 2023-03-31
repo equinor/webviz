@@ -10,37 +10,39 @@ const CACHE_TIME = 60 * 1000;
 export function useDynamicSurfaceDirectoryQuery(
     caseUuid: string | undefined,
     ensembleName: string | undefined,
+    allowEnable: boolean
 ): UseQueryResult<DynamicSurfaceDirectory> {
     return useQuery({
         queryKey: ["getDynamicSurfaceDirectory", caseUuid, ensembleName],
         queryFn: () => apiService.surface.getDynamicSurfaceDirectory(caseUuid ?? "", ensembleName ?? ""),
         staleTime: STALE_TIME,
-        cacheTime: CACHE_TIME,
-        enabled: caseUuid && ensembleName ? true : false,
+        cacheTime: STALE_TIME,
+        enabled: allowEnable && caseUuid && ensembleName ? true : false,
     });
 }
 
 export function useStaticSurfaceDirectoryQuery(
     caseUuid: string | undefined,
     ensembleName: string | undefined,
+    allowEnable: boolean
 ): UseQueryResult<StaticSurfaceDirectory> {
     return useQuery({
         queryKey: ["getStaticSurfaceDirectory", caseUuid, ensembleName],
         queryFn: () => apiService.surface.getStaticSurfaceDirectory(caseUuid ?? "", ensembleName ?? ""),
         staleTime: STALE_TIME,
-        cacheTime: CACHE_TIME,
-        enabled: caseUuid && ensembleName ? true : false,
+        cacheTime: STALE_TIME,
+        enabled: allowEnable && caseUuid && ensembleName ? true : false,
     });
 }
 
 export function useSurfaceDataQueryByAddress(surfAddr: SurfAddr | null): UseQueryResult<SurfaceData> {
+    function dummyApiCall(): Promise<SurfaceData> {
+        return new Promise((_resolve, reject) => {
+            reject(null);
+        });
+    }
+    
     if (!surfAddr) {
-        function dummyApiCall(): Promise<SurfaceData> {
-            return new Promise((_resolve, reject) => {
-                reject(null);
-            });
-        }
-
         return useQuery({
             queryKey: ["getSurfaceData_DUMMY_ALWAYS_DISABLED"],
             queryFn: () => dummyApiCall,

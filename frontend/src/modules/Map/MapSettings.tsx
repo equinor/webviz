@@ -1,13 +1,13 @@
 import React from "react";
 
-import { DynamicSurfaceDirectory, StaticSurfaceDirectory } from "@api";
+import { StaticSurfaceDirectory } from "@api";
 import { SurfaceStatisticFunction } from "@api";
 import { ModuleFCProps } from "@framework/Module";
 import { useSubscribedValue } from "@framework/WorkbenchServices";
 import { Checkbox } from "@lib/components/Checkbox";
 import { Input } from "@lib/components/Input";
 import { Label } from "@lib/components/Label";
-import { Select } from "@lib/components/Select";
+import { Select, SelectOption } from "@lib/components/Select";
 
 import { useDynamicSurfaceDirectoryQuery, useStaticSurfaceDirectoryQuery } from "./MapQueryHooks";
 import { MapState } from "./MapState";
@@ -19,11 +19,12 @@ export function MapSettings({ moduleContext, workbenchServices }: ModuleFCProps<
     console.log("render MapSettings");
 
     const ensembles = useSubscribedValue("navigator.ensembles", workbenchServices);
+
     const [surfaceType, setSurfaceType] = React.useState<"static" | "dynamic">("dynamic");
-    const [surfaceName, setSurfaceName] = React.useState<string | null>(null);
-    const [surfaceAttribute, setSurfaceAttribute] = React.useState<string | null>(null);
-    const [realizationNum, setRealizationNum] = React.useState(0);
-    const [timeOrInterval, setTimeOrInterval] = React.useState<string | null>(null);
+    const [selectedSurfaceName, setSelectedSurfaceName] = React.useState<string | null>(null);
+    const [selectedSurfaceAttribute, setSelectedSurfaceAttribute] = React.useState<string | null>(null);
+    const [realizationNum, setRealizationNum] = React.useState<number>(0);
+    const [selectedTimeOrInterval, setSelectedTimeOrInterval] = React.useState<string | null>(null);
     const [aggregation, setAggregation] = React.useState<SurfaceStatisticFunction | null>(null);
 
     const renderCount = React.useRef(0);
@@ -31,47 +32,35 @@ export function MapSettings({ moduleContext, workbenchServices }: ModuleFCProps<
         renderCount.current = renderCount.current + 1;
     });
 
-    const firstEnsemble = ensembles && ensembles.length > 0 ? ensembles[0] : null;
+    const firstEnsemble = ensembles?.at(0) ?? null;
 
-    const dynamicSurfDirQuery = useDynamicSurfaceDirectoryQuery(firstEnsemble?.caseUuid, firstEnsemble?.ensembleName);
-    const staticSurfDirQuery = useStaticSurfaceDirectoryQuery(firstEnsemble?.caseUuid, firstEnsemble?.ensembleName);
+    const dynamicSurfDirQuery = useDynamicSurfaceDirectoryQuery(firstEnsemble?.caseUuid, firstEnsemble?.ensembleName, surfaceType === "dynamic");
+    const staticSurfDirQuery = useStaticSurfaceDirectoryQuery(firstEnsemble?.caseUuid, firstEnsemble?.ensembleName, surfaceType === "static");
 
-    React.useEffect(
-        function fixSurfaceSelectionOnNewStaticSurfaceDir() {
-            console.log(
-                `fixSurfaceSelectionOnNewStaticSurfaceDir(), surfType=${surfaceType}, data ${
-                    staticSurfDirQuery.data ? "yes" : "no"
-                }`
-            );
-            if (surfaceType == "static") {
-                fixAndSetStaticSurfaceSelectionStates(
-                    surfaceName,
-                    surfaceAttribute,
-                    staticSurfDirQuery.data ?? null
-                );
-            }
-        },
-        [staticSurfDirQuery.data]
-    );
+    let computedSurfaceName: string | null = null;
+    let computedSurfaceAttribute: string | null = null;
+    let computedTimeOrInterval: string | null = null;
+    if (surfaceType == "static" && staticSurfDirQuery.data) {
+        computedSurfaceName = fixupStringValueFromList(selectedSurfaceName, staticSurfDirQuery.data.names);
+        computedSurfaceAttribute = fixupStaticSurfAttribute(computedSurfaceName, selectedSurfaceAttribute, staticSurfDirQuery.data);
+        computedTimeOrInterval = null;
+    }
+    if (surfaceType == "dynamic" && dynamicSurfDirQuery.data) {
+        computedSurfaceName = fixupStringValueFromList(selectedSurfaceName, dynamicSurfDirQuery.data.names);
+        computedSurfaceAttribute = fixupStringValueFromList(selectedSurfaceAttribute, dynamicSurfDirQuery.data.attributes);
+        computedTimeOrInterval = fixupStringValueFromList(selectedTimeOrInterval, dynamicSurfDirQuery.data.time_or_interval_strings);
+    }
 
-    React.useEffect(
-        function fixSurfaceSelectionOnNewDynamicSurfaceDir() {
-            console.log(
-                `fixSurfaceSelectionOnNewDynamicSurfaceDir(), surfType=${surfaceType}, data ${
-                    dynamicSurfDirQuery.data ? "yes" : "no"
-                }`
-            );
-            if (surfaceType == "dynamic") {
-                fixAndSetDynamicSurfaceSelectionStates(
-                    surfaceName,
-                    surfaceAttribute,
-                    timeOrInterval,
-                    dynamicSurfDirQuery.data ?? null
-                );
-            }
-        },
-        [dynamicSurfDirQuery.data]
-    );
+    // Possibly update our surface selection states
+    if (computedSurfaceName && computedSurfaceName !== selectedSurfaceName) {
+        setSelectedSurfaceName(computedSurfaceName);
+    }
+    if (computedSurfaceAttribute && computedSurfaceAttribute !== selectedSurfaceAttribute) {
+        setSelectedSurfaceAttribute(computedSurfaceAttribute);
+    }
+    if (computedTimeOrInterval && computedTimeOrInterval !== selectedTimeOrInterval) {
+        setSelectedTimeOrInterval(computedTimeOrInterval);
+    }
 
     React.useEffect(function propagateSurfaceSelectionToView() {
         // console.log("propagateSurfaceSelectionToView()");
@@ -85,18 +74,18 @@ export function MapSettings({ moduleContext, workbenchServices }: ModuleFCProps<
         // console.log(`  timeOrInterval=${timeOrInterval}`);
 
         let surfAddr: SurfAddr | null = null;
-        if (firstEnsemble && surfaceName && surfaceAttribute) {
+        if (firstEnsemble && computedSurfaceName && computedSurfaceAttribute) {
             const addrFactory = new SurfAddrFactory(
                 firstEnsemble.caseUuid,
                 firstEnsemble.ensembleName,
-                surfaceName,
-                surfaceAttribute
+                computedSurfaceName,
+                computedSurfaceAttribute
             );
-            if (surfaceType === "dynamic" && timeOrInterval) {
+            if (surfaceType === "dynamic" && computedTimeOrInterval) {
                 if (aggregation === null) {
-                    surfAddr = addrFactory.createDynamicAddr(realizationNum, timeOrInterval);
+                    surfAddr = addrFactory.createDynamicAddr(realizationNum, computedTimeOrInterval);
                 } else {
-                    surfAddr = addrFactory.createStatisticalDynamicAddr(aggregation, timeOrInterval);
+                    surfAddr = addrFactory.createStatisticalDynamicAddr(aggregation, computedTimeOrInterval);
                 }
             } else if (surfaceType === "static") {
                 if (aggregation === null) {
@@ -111,77 +100,27 @@ export function MapSettings({ moduleContext, workbenchServices }: ModuleFCProps<
         moduleContext.stateStore.setValue("surfaceAddress", surfAddr);
     });
 
-    function fixAndSetDynamicSurfaceSelectionStates(
-        surfName: string | null,
-        surfAttribute: string | null,
-        time_or_interval: string | null,
-        surfDir: DynamicSurfaceDirectory | null
-    ) {
-        if (!surfDir) {
-            setSurfaceName(null);
-            setSurfaceAttribute(null);
-            setTimeOrInterval(null);
-            return;
-        }
-        setSurfaceName(fixupStringValueFromList(surfName, surfDir.names));
-        setSurfaceAttribute(fixupStringValueFromList(surfAttribute, surfDir.attributes));
-        setTimeOrInterval(fixupStringValueFromList(time_or_interval, surfDir.time_or_interval_strings));
-    }
-
-    function fixAndSetStaticSurfaceSelectionStates(
-        surfName: string | null,
-        surfAttribute: string | null,
-        surfDir: StaticSurfaceDirectory | null
-    ) {
-        if (!surfDir) {
-            setSurfaceName(null);
-            setSurfaceAttribute(null);
-            setTimeOrInterval(null);
-            return;
-        }
-
-        const newSurfName = fixupStringValueFromList(surfName, surfDir.names);
-        const validAttrNames = getValidAttributesForSurfaceName(newSurfName ?? "", surfDir);
-        const newAttrName = fixupStringValueFromList(surfAttribute, validAttrNames);
-        setSurfaceName(newSurfName);
-        setSurfaceAttribute(newAttrName);
-        setTimeOrInterval(null);
-    }
-
     function handleStaticSurfacesCheckboxChanged(event: React.ChangeEvent<HTMLInputElement>, staticChecked: boolean) {
         const newSurfType = staticChecked ? "static" : "dynamic";
         setSurfaceType(newSurfType);
-        if (newSurfType == "static") {
-            fixAndSetStaticSurfaceSelectionStates(surfaceName, surfaceAttribute, staticSurfDirQuery.data ?? null);
-        } else {
-            fixAndSetDynamicSurfaceSelectionStates(
-                surfaceName,
-                surfaceAttribute,
-                timeOrInterval,
-                dynamicSurfDirQuery.data ?? null
-            );
-        }
     }
 
     function handleSurfNameSelectionChange(selectedSurfNames: string[]) {
         console.log("handleSurfNameSelectionChange()");
-        const newName = selectedSurfNames.length > 0 ? selectedSurfNames[0] : null;
-        setSurfaceName(newName);
-        if (surfaceType == "static" && staticSurfDirQuery.data) {
-            setSurfaceAttribute(fixupStaticSurfAttribute(newName, surfaceAttribute, staticSurfDirQuery.data));
-        }
+        const newName = selectedSurfNames[0] ?? null;
+        setSelectedSurfaceName(newName);
     }
 
     function handleSurfAttributeSelectionChange(selectedSurfAttributes: string[]) {
         console.log("handleSurfAttributeSelectionChange()");
-        const newAttr = selectedSurfAttributes.length > 0 ? selectedSurfAttributes[0] : null;
-        setSurfaceAttribute(newAttr);
+        const newAttr = selectedSurfAttributes[0] ?? null;
+        setSelectedSurfaceAttribute(newAttr);
     }
 
     function handleTimeOrIntervalSelectionChange(selectedTimeOrIntervals: string[]) {
         console.log("handleTimeOrIntervalSelectionChange()");
-        const newTimeOrInterval = selectedTimeOrIntervals.length > 0 ? selectedTimeOrIntervals[0] : null;
-        setTimeOrInterval(newTimeOrInterval);
+        const newTimeOrInterval = selectedTimeOrIntervals[0] ?? null;
+        setSelectedTimeOrInterval(newTimeOrInterval);
     }
 
     function handleAggregationChanged(aggregation: SurfaceStatisticFunction | null) {
@@ -197,22 +136,18 @@ export function MapSettings({ moduleContext, workbenchServices }: ModuleFCProps<
         }
     }
 
-    type SelectItemType = { value: string; label: string };
-    let surfNameOptions: SelectItemType[] = [];
-    let surfAttributeOptions: SelectItemType[] = [];
-    let timeOrIntervalOptions: SelectItemType[] = [];
+    let surfNameOptions: SelectOption[] = [];
+    let surfAttributeOptions: SelectOption[] = [];
+    let timeOrIntervalOptions: SelectOption[] = [];
 
-    if (surfaceType == "static") {
-        if (staticSurfDirQuery.data) {
-            const validAttrNames = getValidAttributesForSurfaceName(surfaceName ?? "", staticSurfDirQuery.data);
-            surfNameOptions = staticSurfDirQuery.data.names.map((name) => ({ value: name, label: name }));
-            surfAttributeOptions = validAttrNames.map((attr) => ({ value: attr, label: attr }));
-        }
-    } else if (surfaceType == "dynamic") {
-        surfNameOptions = dynamicSurfDirQuery.data?.names.map((name) => ({ value: name, label: name })) ?? [];
-        surfAttributeOptions = dynamicSurfDirQuery.data?.attributes.map((attr) => ({ value: attr, label: attr })) ?? [];
-        timeOrIntervalOptions =
-            dynamicSurfDirQuery.data?.time_or_interval_strings.map((time) => ({ value: time, label: time })) ?? [];
+    if (surfaceType == "static" && staticSurfDirQuery.data) {
+        const validAttrNames = getValidAttributesForSurfName(computedSurfaceName ?? "", staticSurfDirQuery.data);
+        surfNameOptions = staticSurfDirQuery.data.names.map((name) => ({ value: name, label: name }));
+        surfAttributeOptions = validAttrNames.map((attr) => ({ value: attr, label: attr }));
+    } else if (surfaceType == "dynamic" && dynamicSurfDirQuery.data) {
+        surfNameOptions = dynamicSurfDirQuery.data.names.map((name) => ({ value: name, label: name }));
+        surfAttributeOptions = dynamicSurfDirQuery.data.attributes.map((attr) => ({ value: attr, label: attr }));
+        timeOrIntervalOptions = dynamicSurfDirQuery.data.time_or_interval_strings.map((time) => ({ value: time, label: time }));
     }
 
     let chooseTimeOrIntervalElement: JSX.Element | null = null;
@@ -221,7 +156,7 @@ export function MapSettings({ moduleContext, workbenchServices }: ModuleFCProps<
             <Label text="Time or interval:">
                 <Select
                     options={timeOrIntervalOptions}
-                    value={timeOrInterval ? [timeOrInterval] : []}
+                    value={computedTimeOrInterval ? [computedTimeOrInterval] : []}
                     onChange={handleTimeOrIntervalSelectionChange}
                     size={5}
                 />
@@ -248,7 +183,7 @@ export function MapSettings({ moduleContext, workbenchServices }: ModuleFCProps<
             <Label text="Surface name:">
                 <Select
                     options={surfNameOptions}
-                    value={surfaceName ? [surfaceName] : []}
+                    value={computedSurfaceName ? [computedSurfaceName] : []}
                     onChange={handleSurfNameSelectionChange}
                     size={5}
                 />
@@ -256,7 +191,7 @@ export function MapSettings({ moduleContext, workbenchServices }: ModuleFCProps<
             <Label text="Surface attribute:">
                 <Select
                     options={surfAttributeOptions}
-                    value={surfaceAttribute ? [surfaceAttribute] : []}
+                    value={computedSurfaceAttribute ? [computedSurfaceAttribute] : []}
                     onChange={handleSurfAttributeSelectionChange}
                     size={5}
                 />
@@ -274,7 +209,7 @@ export function MapSettings({ moduleContext, workbenchServices }: ModuleFCProps<
 
 // Helpers
 // -------------------------------------------------------------------------------------
-function getValidAttributesForSurfaceName(surfName: string, surfDir: StaticSurfaceDirectory): string[] {
+function getValidAttributesForSurfName(surfName: string, surfDir: StaticSurfaceDirectory): string[] {
     const idxOfSurfName = surfDir.names.indexOf(surfName);
     if (idxOfSurfName == -1) {
         return [];
@@ -308,7 +243,7 @@ function fixupStaticSurfAttribute(
     if (!surfName) {
         return null;
     }
-    const validAttrNames = getValidAttributesForSurfaceName(surfName, surfDir);
+    const validAttrNames = getValidAttributesForSurfName(surfName, surfDir);
     if (validAttrNames.length == 0) {
         return null;
     }
