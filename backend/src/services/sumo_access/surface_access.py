@@ -30,6 +30,8 @@ class SurfaceAccess:
         """
         timer = PerfTimer()
 
+        LOGGER.debug("Getting data for dynamic surface directory...")
+
         case = self._get_my_sumo_case_obj()
 
         filter_with_timestamp_or_interval = TimeFilter(TimeType.ALL)
@@ -52,7 +54,7 @@ class SurfaceAccess:
 
         surf_dir = DynamicSurfaceDirectory(names=names, attributes=attributes, date_strings=date_strings)
 
-        LOGGER.debug(f"Built dynamic surface directory in: {timer.elapsed_ms():}ms")
+        LOGGER.debug(f"Downloaded and built dynamic surface directory in: {timer.elapsed_ms():}ms")
 
         return surf_dir
 
@@ -63,15 +65,22 @@ class SurfaceAccess:
         """
         timer = PerfTimer()
 
+        LOGGER.debug("Getting data for static surface directory...")
+
         case = self._get_my_sumo_case_obj()
 
         filter_no_time_data = TimeFilter(TimeType.NONE)
         surface_collection: SurfaceCollection = case.surfaces.filter(
-            iteration=self._iteration_name, aggregation=False, time=filter_no_time_data
+            iteration=self._iteration_name, aggregation=False, time=filter_no_time_data, realization=0
         )
 
         names = sorted(surface_collection.names)
         attributes = sorted(surface_collection.tagnames)
+
+        LOGGER.debug(
+            f"Build valid name/attribute combinations for static surface directory "
+            f"(num names={len(names)}, num attributes={len(attributes)})..."
+        )
 
         valid_attributes_for_name: List[List[int]] = []
 
@@ -89,7 +98,7 @@ class SurfaceAccess:
             names=names, attributes=attributes, valid_attributes_for_name=valid_attributes_for_name
         )
 
-        LOGGER.debug(f"Built static surface directory in: {timer.elapsed_ms():}ms")
+        LOGGER.debug(f"Downloaded and built static surface directory in: {timer.elapsed_ms():}ms")
 
         return surf_dir
 
