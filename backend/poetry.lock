@@ -666,8 +666,8 @@ tests = ["pytest (>=6.1.1)"]
 [package.source]
 type = "git"
 url = "https://github.com/equinor/fmu-sumo.git"
-reference = "e6f26a6466ba33139522b49f1456c4c561f349ad"
-resolved_reference = "e6f26a6466ba33139522b49f1456c4c561f349ad"
+reference = "afb37e944fdf510c68033e11b588ff6f44d7a2b6"
+resolved_reference = "afb37e944fdf510c68033e11b588ff6f44d7a2b6"
 
 [[package]]
 name = "fonttools"
@@ -2333,4 +2333,4 @@ tests = ["hypothesis", "pytest", "pytest-benchmark", "pytest-mock", "pytest-snap
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.8"
-content-hash = "248478baadb3800914c1740852ecca543f26ccdd9abd5b184b8cc29858db0b36"
+content-hash = "efe94bab8a37bd6470bf3c29aa5b7411e743095242fbf825c4f5d4838754da57"
