@@ -4,7 +4,9 @@ import { StaticSurfaceDirectory } from "@api";
 import { SurfaceStatisticFunction } from "@api";
 import { ModuleFCProps } from "@framework/Module";
 import { useSubscribedValue } from "@framework/WorkbenchServices";
+import { ApiStateWrapper } from "@lib/components/ApiStateWrapper";
 import { Checkbox } from "@lib/components/Checkbox";
+import { CircularProgress } from "@lib/components/CircularProgress";
 import { Input } from "@lib/components/Input";
 import { Label } from "@lib/components/Label";
 import { Select, SelectOption } from "@lib/components/Select";
@@ -173,6 +175,8 @@ export function MapSettings({ moduleContext, workbenchServices }: ModuleFCProps<
         );
     }
 
+    const activeSurfDirQuery = surfaceType == "static" ? staticSurfDirQuery : dynamicSurfDirQuery;
+
     return (
         <>
             <Checkbox
@@ -180,23 +184,29 @@ export function MapSettings({ moduleContext, workbenchServices }: ModuleFCProps<
                 checked={surfaceType === "static"}
                 onChange={handleStaticSurfacesCheckboxChanged}
             />
-            <Label text="Surface name:">
-                <Select
-                    options={surfNameOptions}
-                    value={computedSurfaceName ? [computedSurfaceName] : []}
-                    onChange={handleSurfNameSelectionChange}
-                    size={5}
-                />
-            </Label>
-            <Label text="Surface attribute:">
-                <Select
-                    options={surfAttributeOptions}
-                    value={computedSurfaceAttribute ? [computedSurfaceAttribute] : []}
-                    onChange={handleSurfAttributeSelectionChange}
-                    size={5}
-                />
-            </Label>
-            {chooseTimeOrIntervalElement}
+            <ApiStateWrapper
+                apiResult={activeSurfDirQuery}
+                errorComponent={"Error loading surface directory"}
+                loadingComponent={<CircularProgress />}
+            >
+                <Label text="Surface name:">
+                    <Select
+                        options={surfNameOptions}
+                        value={computedSurfaceName ? [computedSurfaceName] : []}
+                        onChange={handleSurfNameSelectionChange}
+                        size={5}
+                    />
+                </Label>
+                <Label text="Surface attribute:">
+                    <Select
+                        options={surfAttributeOptions}
+                        value={computedSurfaceAttribute ? [computedSurfaceAttribute] : []}
+                        onChange={handleSurfAttributeSelectionChange}
+                        size={5}
+                    />
+                </Label>
+                {chooseTimeOrIntervalElement}
+            </ApiStateWrapper>
             <AggregationDropdown
                 selectedAggregation={aggregation}
                 onAggregationSelectionChange={handleAggregationChanged}
