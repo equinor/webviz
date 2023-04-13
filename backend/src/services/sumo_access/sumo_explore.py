@@ -25,6 +25,9 @@ class SumoExplore:
         for case in case_collection:
             case_info_arr.append(CaseInfo(uuid=case.uuid, name=case.name))
 
+        # Sort on case name before returning
+        case_info_arr.sort(key=lambda case_info: case_info.name)
+
         return case_info_arr
 
     def get_iterations(self, case_uuid: str) -> List[IterationInfo]:
@@ -39,5 +42,8 @@ class SumoExplore:
         for it in iterations:
             iteration_name = it.get("name")
             iter_info_arr.append(IterationInfo(name=iteration_name))
+
+        # Sort on iteration name before returning
+        iter_info_arr.sort(key=lambda iter_info: iter_info.name)
 
         return iter_info_arr
