@@ -21,6 +21,10 @@ export default defineConfig({
             },
         },
     },
+    define: {
+        "process.env": {}, // In order to avoid "process is not defined" error
+        global: {}, // In order to avoid "global is not defined" error
+    },
     resolve: {
         alias: Object.keys(aliases.compilerOptions.paths).reduce(
             (prev, current) => ({
@@ -38,8 +42,8 @@ export default defineConfig({
         proxy: {
             "/api": {
                 target: "http://backend:5000",
-                rewrite: (path) => path.replace(/^\/api/, '')
+                rewrite: (path) => path.replace(/^\/api/, ""),
             },
-        }
+        },
     },
 });
