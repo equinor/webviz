@@ -23,7 +23,6 @@ export default defineConfig({
     },
     define: {
         "process.env": {}, // In order to avoid "process is not defined" error
-        global: {}, // In order to avoid "global is not defined" error
     },
     resolve: {
         alias: Object.keys(aliases.compilerOptions.paths).reduce(
