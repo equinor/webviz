@@ -58,6 +58,11 @@ export class Module<StateType extends StateBaseType> {
     public setInitialState(initialState: StateType, options?: StateOptions<StateType>): void {
         this.initialState = initialState;
         this.stateOptions = options;
+        this.moduleInstances.forEach((instance) => {
+            if (!instance.isInitialised()) {
+                instance.setInitialState(cloneDeep(initialState), cloneDeep(options));
+            }
+        });
     }
 
     public makeInstance(): ModuleInstance<StateType> {
