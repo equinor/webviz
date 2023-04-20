@@ -151,7 +151,7 @@ type ModulesListProps = {
     I will skip it for now and come back to it when it becomes a problem.
 */
 export const ModulesList: React.FC<ModulesListProps> = (props) => {
-    const visible = useStoreValue(props.workbench.getStateStore(), "modulesListOpen");
+    const visible = useStoreValue(props.workbench.getGuiStateStore(), "modulesListOpen");
     const [searchQuery, setSearchQuery] = React.useState("");
 
     const handleSearchQueryChange = (e: React.ChangeEvent<HTMLInputElement>) => {

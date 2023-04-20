@@ -4,7 +4,8 @@
             "@api": ["./src/api"],
             "@framework/*": ["./src/framework/*"],
             "@lib/*": ["./src/lib/*"],
-            "@modules/*": ["./src/modules/*"]
+            "@modules/*": ["./src/modules/*"],
+            "@shared-types/*": ["./src/shared-types/*"]
         }
     }
 }
