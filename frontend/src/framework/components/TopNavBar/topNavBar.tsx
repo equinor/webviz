@@ -49,7 +49,12 @@ export const TopNavBar: React.FC<TopNavBarProps> = (props) => {
                 onClose={() => setEnsembleDialogOpen(false)}
                 title="Select ensembles"
                 modal
-                width={"50%"}
+                width={"75%"}
+                actions={
+                    <div className="flex gap-4">
+                        <Button onClick={() => setEnsembleDialogOpen(false)}>OK</Button>
+                    </div>
+                }
             >
                 <EnsembleSelector workbench={props.workbench} />
             </Dialog>

@@ -16,6 +16,7 @@ export type DialogProps = {
     height?: string | number;
     minWidth?: string | number;
     minHeight?: string | number;
+    actions?: React.ReactNode;
 };
 
 export const Dialog: React.FC<DialogProps> = (props) => {
@@ -89,6 +90,7 @@ export const Dialog: React.FC<DialogProps> = (props) => {
                     </div>
                 </div>
                 {props.children}
+                {props.actions && <div className="flex justify-end mt-4">{props.actions}</div>}
             </div>
         </div>,
         document.body

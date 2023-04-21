@@ -14,7 +14,7 @@ type SettingProps = {
 export const Setting: React.FC<SettingProps> = (props) => {
     const importState = useImportState(props.moduleInstance);
 
-    if (importState !== ImportState.Imported) {
+    if (importState !== ImportState.Imported || !props.moduleInstance.isInitialised()) {
         return null;
     }
 

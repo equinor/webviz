@@ -59,8 +59,8 @@ export class Module<StateType extends StateBaseType> {
         this.initialState = initialState;
         this.stateOptions = options;
         this.moduleInstances.forEach((instance) => {
-            if (!instance.isInitialised()) {
-                instance.setInitialState(cloneDeep(initialState), cloneDeep(options));
+            if (this.initialState && !instance.isInitialised()) {
+                instance.setInitialState(cloneDeep(this.initialState), cloneDeep(this.stateOptions));
             }
         });
     }
@@ -101,7 +101,7 @@ export class Module<StateType extends StateBaseType> {
             .then(() => {
                 this.setImportState(ImportState.Imported);
                 this.moduleInstances.forEach((instance) => {
-                    if (this.initialState) {
+                    if (this.initialState && !instance.isInitialised()) {
                         instance.setInitialState(cloneDeep(this.initialState), cloneDeep(this.stateOptions));
                     }
                 });
