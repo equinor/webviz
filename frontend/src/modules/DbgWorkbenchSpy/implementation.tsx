@@ -20,9 +20,7 @@ export function WorkbenchSpySettings({ moduleContext, workbenchServices }: Modul
 
 //-----------------------------------------------------------------------------------------------------------
 export function WorkbenchSpyView({ moduleContext, workbenchServices }: ModuleFCProps<SharedState>) {
-    const [fieldName, fieldName_TS] = useServiceValueWithTS("navigator.fieldName", workbenchServices);
-    const [caseUuid, caseUuid_TS] = useServiceValueWithTS("navigator.caseId", workbenchServices);
-    const [ensembles, ensembles_TS] = useServiceValueWithTS("navigator.ensembles", workbenchServices);
+    const [selectedEnsembles, selectedEnsembles_TS] = useServiceValueWithTS("navigator.ensembles", workbenchServices);
     const [hoverRealization, hoverRealization_TS] = useServiceValueWithTS("global.hoverRealization", workbenchServices);
     const [hoverTimestamp, hoverTimestamp_TS] = useServiceValueWithTS("global.hoverTimestamp", workbenchServices);
     const triggeredRefreshCounter = moduleContext.useStoreValue("triggeredRefreshCounter");
@@ -35,11 +33,10 @@ export function WorkbenchSpyView({ moduleContext, workbenchServices }: ModuleFCP
     const componentLastRenderTS = getTimestampString();
 
     let ensembleSpecAsString: string | undefined;
-    if (ensembles) {
-        if (ensembles.length > 0) {
-            ensembleSpecAsString = `${ensembles[0].ensembleName}  (${ensembles[0].caseUuid})`;
-        }
-        else {
+    if (selectedEnsembles) {
+        if (selectedEnsembles.length > 0) {
+            ensembleSpecAsString = `${selectedEnsembles[0].ensembleName}  (${selectedEnsembles[0].caseUuid})`;
+        } else {
             ensembleSpecAsString = "empty array";
         }
     }
@@ -48,11 +45,7 @@ export function WorkbenchSpyView({ moduleContext, workbenchServices }: ModuleFCP
         <code>
             Navigator topics:
             <table>
-                <tbody>
-                    {makeTableRow("fieldName", fieldName, fieldName_TS)}
-                    {makeTableRow("caseUuid", caseUuid, caseUuid_TS)}
-                    {makeTableRow("ensembles", ensembleSpecAsString, ensembles_TS)}
-                </tbody>
+                <tbody>{makeTableRow("ensembles", ensembleSpecAsString, selectedEnsembles_TS)}</tbody>
             </table>
             <br />
             Global topics:
