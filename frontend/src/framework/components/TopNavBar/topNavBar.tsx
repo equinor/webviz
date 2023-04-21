@@ -9,7 +9,7 @@ import { Dialog } from "@lib/components/Dialog";
 import { ToggleButton } from "@lib/components/ToggleButton";
 import { UseQueryResult } from "@tanstack/react-query";
 
-import { EnsembleSelector } from "../EnsembleSelector/ensembleSelector";
+import { EnsembleSelector } from "../EnsembleSelector";
 import { LoginButton } from "../LoginButton";
 
 type TopNavBarProps = {
