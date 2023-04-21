@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import List, Tuple, Dict
+from typing import List, Tuple, Dict, Any
 
 from pydantic import BaseModel
 
@@ -27,11 +27,13 @@ class StaticSurfaceDirectory(BaseModel):
 
 
 class SurfaceData(BaseModel):
-    x_min: float
-    x_max: float
-    y_min: float
-    y_max: float
+    x_ori: float
+    y_ori: float
+    x_count: int
+    y_count: int
+    x_inc: float
+    y_inc: float
     val_min: float
     val_max: float
     rot_deg: float
-    base64_encoded_image: str
+    mesh_data: str
