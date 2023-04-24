@@ -39,6 +39,7 @@ jobs:
       - name: 🏗️ Build JavaScript bundle
         working-directory: ./frontend
         run: |
+          export NODE_OPTIONS="--max_old_space_size=4096" #wsc needs additional memory for building
           npm run build
 
       - name: 🕵️ Check code style & linting
