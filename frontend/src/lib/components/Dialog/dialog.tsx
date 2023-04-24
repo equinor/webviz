@@ -67,7 +67,6 @@ export const Dialog: React.FC<DialogProps> = (props) => {
                     "shadow",
                     "w-50",
                     "h-50",
-                    "p-4",
                     "pointer-events-auto"
                 )}
                 style={{
@@ -79,8 +78,8 @@ export const Dialog: React.FC<DialogProps> = (props) => {
                     minHeight: props.minHeight,
                 }}
             >
-                <div className="flex justify-between">
-                    <h4 className="text-slate-700 font-bold">{props.title}</h4>
+                <div className="flex justify-between p-4 border-b shadow-inner">
+                    <h2 className="text-slate-800 font-bold text-lg">{props.title}</h2>
                     <div
                         className="hover:text-slate-500 cursor-pointer ml-4"
                         onPointerDown={handleClose}
@@ -89,8 +88,8 @@ export const Dialog: React.FC<DialogProps> = (props) => {
                         <XMarkIcon width={24} />
                     </div>
                 </div>
-                {props.children}
-                {props.actions && <div className="flex justify-end mt-4">{props.actions}</div>}
+                <div className="p-4">{props.children}</div>
+                {props.actions && <div className="flex justify-end mt-4 bg-slate-100 p-4">{props.actions}</div>}
             </div>
         </div>,
         document.body

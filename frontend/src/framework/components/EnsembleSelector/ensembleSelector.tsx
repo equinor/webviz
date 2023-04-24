@@ -109,7 +109,7 @@ export const EnsembleSelector: React.FC<EnsembleSelectorProps> = (props) => {
 
     return (
         <div className="flex gap-4 max-w-full">
-            <div className="flex flex-col gap-4 p-4 border-r w-1/2">
+            <div className="flex flex-col gap-4 p-4 border-r bg-slate-100 h-full">
                 <Label text="Field">
                     <ApiStateWrapper
                         apiResult={fieldsQuery}
@@ -136,7 +136,8 @@ export const EnsembleSelector: React.FC<EnsembleSelectorProps> = (props) => {
                             onChange={handleCaseChanged}
                             disabled={caseOpts.length === 0}
                             size={5}
-                            width="100%"
+                            width={400}
+                            filter
                         />
                     </ApiStateWrapper>
                 </Label>
@@ -162,7 +163,7 @@ export const EnsembleSelector: React.FC<EnsembleSelectorProps> = (props) => {
                     </Button>
                 </div>
             </div>
-            <div className="flex flex-col flex-grow gap-4">
+            <div className="flex flex-col flex-grow gap-4 p-4">
                 <Label text="Selected Ensembles">
                     <table className="w-full border border-collapse table-fixed">
                         <thead>

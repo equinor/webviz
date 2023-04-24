@@ -206,7 +206,7 @@ export const Select = withDefaults<SelectProps>()(defaultProps, (props) => {
                     />
                 )}
                 <div
-                    className="overflow-y-auto border border-gray-300 rounded-md w-full"
+                    className="overflow-y-auto border border-gray-300 rounded-md w-full bg-white"
                     style={{ height: props.size * 24 + 2 }}
                     ref={ref}
                     onFocus={() => setHasFocus(true)}
