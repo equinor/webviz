@@ -1,6 +1,4 @@
-import base64
 import orjson
-
 import xtgeo
 
 from ....services.utils.surface_to_float32 import surface_to_float32_array
