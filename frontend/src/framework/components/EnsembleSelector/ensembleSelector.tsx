@@ -12,7 +12,6 @@ import { Dropdown } from "@lib/components/Dropdown";
 import { IconButton } from "@lib/components/IconButton";
 import { Label } from "@lib/components/Label";
 import { Select } from "@lib/components/Select";
-import { TableHeading } from "@lib/components/Table/table";
 import { useQuery } from "@tanstack/react-query";
 
 export type EnsembleSelectorProps = {
