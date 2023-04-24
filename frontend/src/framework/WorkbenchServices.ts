@@ -1,13 +1,13 @@
 import React from "react";
 
+import { Ensemble } from "@shared-types/ensemble";
+
 import { isEqual } from "lodash";
 
 import { Workbench } from "./Workbench";
 
 export type NavigatorTopicDefinitions = {
-    "navigator.fieldName": string;
-    "navigator.caseId": string;
-    "navigator.ensembles": { caseUuid: string; caseName: string; ensembleName: string }[];
+    "navigator.ensembles": Ensemble[];
 };
 
 export type GlobalTopicDefinitions = {

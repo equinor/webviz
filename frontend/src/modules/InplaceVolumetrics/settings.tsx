@@ -1,6 +1,6 @@
 import React from "react";
 
-import { Ensemble, InplaceVolumetricsCategoricalMetaData, InplaceVolumetricsTableMetaData } from "@api";
+import { InplaceVolumetricsCategoricalMetaData, InplaceVolumetricsTableMetaData } from "@api";
 import { ModuleFCProps } from "@framework/Module";
 import { useSubscribedValue } from "@framework/WorkbenchServices";
 import { ApiStateWrapper } from "@lib/components/ApiStateWrapper/apiStateWrapper";
@@ -8,6 +8,7 @@ import { CircularProgress } from "@lib/components/CircularProgress";
 import { Dropdown } from "@lib/components/Dropdown";
 import { Label } from "@lib/components/Label";
 import { Select } from "@lib/components/Select";
+import { Ensemble } from "@shared-types/ensemble";
 import { UseQueryResult } from "@tanstack/react-query";
 
 import { useEnsemblesQuery, useTableDescriptionsQuery } from "./queryHooks";
@@ -67,20 +68,37 @@ function responsesToSelectOptions(responses: string[]): { value: string; label: 
         })) ?? []
     );
 }
-function fixupSelectedEnsembleName(currName: string | null, ensemblesArr: Ensemble[] | null): string | null {
-    const ensembleNames = ensemblesArr ? ensemblesArr.map((item) => item.name) : [];
-    if (currName && ensembleNames.includes(currName)) {
-        return currName;
+function fixupSelectedEnsembleName(currEnsemble: Ensemble | null, ensemblesArr: Ensemble[] | null): Ensemble | null {
+    if (!ensemblesArr) {
+        return null;
     }
 
-    if (ensembleNames.length > 0) {
-        return ensembleNames[0];
+    if (
+        currEnsemble &&
+        ensemblesArr &&
+        ensemblesArr.some(
+            (el) => el.caseUuid === currEnsemble.caseUuid && el.ensembleName === currEnsemble.ensembleName
+        )
+    ) {
+        return currEnsemble;
+    }
+
+    if (ensemblesArr.length > 0) {
+        return ensemblesArr[0];
     }
 
     return null;
 }
-function getEnsembleNameOptions(ensemblesQuery: UseQueryResult<Ensemble[]>): { value: string; label: string }[] {
-    return ensemblesQuery.data?.map((ensemble: Ensemble) => ({ value: ensemble.name, label: ensemble.name })) ?? [];
+function getEnsembleNameOptions(ensembles: Ensemble[] | null): { value: string; label: string }[] {
+    if (!ensembles) {
+        return [];
+    }
+    return (
+        ensembles.map((ensemble: Ensemble) => ({
+            value: `${ensemble.caseUuid}::${ensemble.ensembleName}`,
+            label: `${ensemble.caseName} - ${ensemble.ensembleName}`,
+        })) ?? []
+    );
 }
 function getTableNameOptions(
     tableDescriptionsQuery: UseQueryResult<InplaceVolumetricsTableMetaData[]>
@@ -108,27 +126,30 @@ function getTableResponseOptions(
     return responsesToSelectOptions(responses);
 }
 
+function ensembleToString(ensemble: Ensemble): string {
+    return `${ensemble.caseUuid}-${ensemble.ensembleName}`;
+}
+
 export function settings({ moduleContext, workbenchServices }: ModuleFCProps<State>) {
-    const caseUuid = useSubscribedValue("navigator.caseId", workbenchServices);
-    const [ensembleName, setEnsembleName] = moduleContext.useStoreState("ensembleName");
+    const selectedEnsembles = useSubscribedValue("navigator.ensembles", workbenchServices);
+    const [ensemble, setEnsemble] = moduleContext.useStoreState("ensemble");
     const [tableName, setTableName] = moduleContext.useStoreState("tableName");
     const [categoricalFilter, setCategoricalFilter] = moduleContext.useStoreState("categoricalFilter");
     const [responseName, setResponseName] = moduleContext.useStoreState("responseName");
-    const stashedEnsembleName = React.useRef("");
+    const stashedEnsemble = React.useRef<Ensemble | null>(null);
 
-    const ensemblesQuery = useEnsemblesQuery(caseUuid);
-    const tableDescriptionsQuery = useTableDescriptionsQuery(caseUuid, ensembleName, true);
+    const tableDescriptionsQuery = useTableDescriptionsQuery(ensemble, true);
 
     React.useEffect(
         function selectDefaultEnsemble() {
-            if (ensemblesQuery.data) {
-                const candidateName = ensembleName ?? stashedEnsembleName.current;
-                setEnsembleName(fixupSelectedEnsembleName(candidateName, ensemblesQuery.data));
+            if (selectedEnsembles) {
+                const candidate = selectedEnsembles.length > 0 ? selectedEnsembles[0] : stashedEnsemble.current;
+                setEnsemble(fixupSelectedEnsembleName(candidate, selectedEnsembles));
             } else {
-                stashedEnsembleName.current = ensembleName ?? "";
+                stashedEnsemble.current = ensemble ?? null;
             }
         },
-        [ensemblesQuery.data]
+        [selectedEnsembles, ensemble]
     );
 
     React.useEffect(
@@ -146,9 +167,13 @@ export function settings({ moduleContext, workbenchServices }: ModuleFCProps<Sta
         [tableDescriptionsQuery.data]
     );
 
-    function handleEnsembleSelectionChange(ensembleName: string) {
+    function handleEnsembleSelectionChange(ensembleString: string) {
         console.log("handleEnsembleSelectionChange()");
-        setEnsembleName(ensembleName);
+        const [caseUuid, ensembleName] = ensembleString.split("::");
+        const matchingEnsemble = selectedEnsembles?.find(
+            (el) => el.caseUuid === caseUuid && el.ensembleName === ensembleName
+        );
+        setEnsemble(matchingEnsemble ?? null);
     }
     function handleTableChange(tableName: string) {
         console.log("handleTableChange()");
@@ -177,22 +202,20 @@ export function settings({ moduleContext, workbenchServices }: ModuleFCProps<Sta
         setCategoricalFilter(currentCategoryFilter);
     }, []);
 
-    const ensembleNameOptions = getEnsembleNameOptions(ensemblesQuery);
+    const ensembleOptions = getEnsembleNameOptions(selectedEnsembles);
     const tableNameOptions = getTableNameOptions(tableDescriptionsQuery);
     const tableCategoricalOptions = getTableCategoricalOptions(tableDescriptionsQuery, tableName);
     const responseOptions = getTableResponseOptions(tableDescriptionsQuery, tableName);
 
     return (
         <>
-            <ApiStateWrapper apiResult={ensemblesQuery} loadingComponent={<CircularProgress />} errorComponent={"feil"}>
-                <Label text="Ensemble">
-                    <Dropdown
-                        options={ensembleNameOptions}
-                        value={ensembleName ?? ""}
-                        onChange={(ensembleName) => handleEnsembleSelectionChange(ensembleName as string)}
-                    />
-                </Label>
-            </ApiStateWrapper>
+            <Label text="Ensemble">
+                <Dropdown
+                    options={ensembleOptions}
+                    value={ensemble ? ensembleToString(ensemble) : ""}
+                    onChange={(ensembleName) => handleEnsembleSelectionChange(ensembleName)}
+                />
+            </Label>
             <ApiStateWrapper
                 apiResult={tableDescriptionsQuery}
                 loadingComponent={<CircularProgress />}
