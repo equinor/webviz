@@ -1,12 +1,17 @@
-import { UseQueryResult, useQuery } from "@tanstack/react-query";
-
-import { Ensemble, InplaceVolumetricsTableMetaData, InplaceVolumetricsRealizationsResponse, Body_get_realizations_response } from "@api";
+import {
+    Ensemble as ApiEnsemble,
+    Body_get_realizations_response,
+    InplaceVolumetricsRealizationsResponse,
+    InplaceVolumetricsTableMetaData,
+} from "@api";
 import { apiService } from "@framework/ApiService";
+import { Ensemble } from "@shared-types/ensemble";
+import { UseQueryResult, useQuery } from "@tanstack/react-query";
 
 const STALE_TIME = 60 * 1000;
 const CACHE_TIME = 60 * 1000;
 
-export function useEnsemblesQuery(caseUuid: string | null): UseQueryResult<Array<Ensemble>> {
+export function useEnsemblesQuery(caseUuid: string | null): UseQueryResult<Array<ApiEnsemble>> {
     return useQuery({
         queryKey: ["getEnsembles", caseUuid],
         queryFn: () => apiService.explore.getEnsembles(caseUuid ?? ""),
@@ -17,16 +22,19 @@ export function useEnsemblesQuery(caseUuid: string | null): UseQueryResult<Array
 }
 
 export function useTableDescriptionsQuery(
-    caseUuid: string | null,
-    ensembleName: string | null,
+    ensemble: Ensemble | null,
     allowEnable: boolean
 ): UseQueryResult<Array<InplaceVolumetricsTableMetaData>> {
     return useQuery({
-        queryKey: ["getTableNamesAndDescriptions", caseUuid, ensembleName],
-        queryFn: () => apiService.inplaceVolumetrics.getTableNamesAndDescriptions(caseUuid ?? "", ensembleName ?? ""),
+        queryKey: ["getTableNamesAndDescriptions", ensemble],
+        queryFn: () =>
+            apiService.inplaceVolumetrics.getTableNamesAndDescriptions(
+                ensemble?.caseUuid ?? "",
+                ensemble?.ensembleName ?? ""
+            ),
         staleTime: STALE_TIME,
         cacheTime: CACHE_TIME,
-        enabled: allowEnable && caseUuid && ensembleName ? true : false,
+        enabled: allowEnable && ensemble ? true : false,
     });
 }
 

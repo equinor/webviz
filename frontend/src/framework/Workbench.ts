@@ -1,3 +1,5 @@
+import { Ensemble } from "@shared-types/ensemble";
+
 import { ImportState } from "./Module";
 import { ModuleInstance } from "./ModuleInstance";
 import { ModuleRegistry } from "./ModuleRegistry";
@@ -20,14 +22,19 @@ export type LayoutElement = {
     relWidth: number;
 };
 
-export type WorkbenchState = {
+export type WorkbenchDataState = {
+    selectedEnsembles: Ensemble[];
+};
+
+export type WorkbenchGuiState = {
     modulesListOpen: boolean;
 };
 
 export class Workbench {
     private moduleInstances: ModuleInstance<any>[];
     private _activeModuleId: string;
-    private stateStore: StateStore<WorkbenchState>;
+    private guiStateStore: StateStore<WorkbenchGuiState>;
+    private dataStateStore: StateStore<WorkbenchDataState>;
     private _workbenchServices: PrivateWorkbenchServices;
     private _subscribersMap: { [key: string]: Set<() => void> };
     private layout: LayoutElement[];
@@ -35,8 +42,11 @@ export class Workbench {
     constructor() {
         this.moduleInstances = [];
         this._activeModuleId = "";
-        this.stateStore = new StateStore<WorkbenchState>({
+        this.guiStateStore = new StateStore<WorkbenchGuiState>({
             modulesListOpen: false,
+        });
+        this.dataStateStore = new StateStore<WorkbenchDataState>({
+            selectedEnsembles: [],
         });
         this._workbenchServices = new PrivateWorkbenchServices(this);
         this._subscribersMap = {};
@@ -52,8 +62,12 @@ export class Workbench {
         return true;
     }
 
-    public getStateStore(): StateStore<WorkbenchState> {
-        return this.stateStore;
+    public getGuiStateStore(): StateStore<WorkbenchGuiState> {
+        return this.guiStateStore;
+    }
+
+    public getDataStateStore(): StateStore<WorkbenchDataState> {
+        return this.dataStateStore;
     }
 
     public getLayout(): LayoutElement[] {
@@ -166,15 +180,6 @@ export class Workbench {
                     ?.getId() || "";
             this.notifySubscribers(WorkbenchEvents.ActiveModuleChanged);
         }
-    }
-
-    // Temporary, for testing
-    public setNavigatorFieldName(fieldName: string) {
-        this._workbenchServices.publishNavigatorData("navigator.fieldName", fieldName);
-    }
-
-    public setNavigatorCaseId(caseId: string) {
-        this._workbenchServices.publishNavigatorData("navigator.caseId", caseId);
     }
 
     public setNavigatorEnsembles(ensemblesArr: { caseUuid: string; caseName: string; ensembleName: string }[]) {
