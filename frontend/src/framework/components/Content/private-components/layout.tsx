@@ -16,6 +16,7 @@ import { useElementSize } from "@lib/hooks/useElementSize";
 import { v4 } from "uuid";
 
 import { LayoutBox, LayoutBoxComponents, makeLayoutBoxes } from "./LayoutBox";
+import { GroupModules } from "./groupModules";
 import { ModulesList } from "./modulesList";
 import { ViewWrapper } from "./viewWrapper";
 import { ViewWrapperPlaceholder } from "./viewWrapperPlaceholder";
@@ -351,6 +352,7 @@ export const Layout: React.FC<LayoutProps> = (props) => {
                 {makeTempViewWrapperPlaceholder()}
             </div>
             <ModulesList relContainer={mainRef.current} workbench={props.workbench} />
+            <GroupModules relContainer={mainRef.current} workbench={props.workbench} />
         </div>
     );
 };

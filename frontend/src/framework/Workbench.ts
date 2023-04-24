@@ -28,6 +28,7 @@ export type WorkbenchDataState = {
 
 export type WorkbenchGuiState = {
     modulesListOpen: boolean;
+    groupModulesOpen: boolean;
 };
 
 export class Workbench {
@@ -44,6 +45,7 @@ export class Workbench {
         this._activeModuleId = "";
         this.guiStateStore = new StateStore<WorkbenchGuiState>({
             modulesListOpen: false,
+            groupModulesOpen: false,
         });
         this.dataStateStore = new StateStore<WorkbenchDataState>({
             selectedEnsembles: [],

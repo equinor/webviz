@@ -12,6 +12,7 @@ export class ModuleInstance<StateType extends StateBaseType> {
     private id: string;
     private name: string;
     private initialised: boolean;
+    private groupedAttributes: string[];
     private stateStore: StateStore<StateType> | null;
     private module: Module<StateType>;
     private context: ModuleContext<StateType> | null;
@@ -25,6 +26,7 @@ export class ModuleInstance<StateType extends StateBaseType> {
         this.importStateSubscribers = new Set();
         this.context = null;
         this.initialised = false;
+        this.groupedAttributes = [];
     }
 
     public setInitialState(initialState: StateType, options?: StateOptions<StateType>): void {
@@ -45,6 +47,22 @@ export class ModuleInstance<StateType extends StateBaseType> {
         };
 
         this.initialised = true;
+    }
+
+    public addGroupedAttribute(attribute: string): void {
+        this.groupedAttributes.push(attribute);
+    }
+
+    public getGroupedAttributes(): string[] {
+        return this.groupedAttributes;
+    }
+
+    public isGrouped(attribute: string): boolean {
+        return this.groupedAttributes.includes(attribute);
+    }
+
+    public removedFromGroup(attribute: string): void {
+        this.groupedAttributes = this.groupedAttributes.filter((a) => a !== attribute);
     }
 
     public isInitialised(): boolean {

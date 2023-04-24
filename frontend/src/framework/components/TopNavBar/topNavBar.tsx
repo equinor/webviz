@@ -20,10 +20,18 @@ export const TopNavBar: React.FC<TopNavBarProps> = (props) => {
     const activeModuleName = ""; // useWorkbenchActiveModuleName();
     const [ensembleDialogOpen, setEnsembleDialogOpen] = React.useState<boolean>(false);
     const [modulesListOpen, setModulesListOpen] = useStoreState(props.workbench.getGuiStateStore(), "modulesListOpen");
+    const [groupModulesOpen, setGroupModulesOpen] = useStoreState(
+        props.workbench.getGuiStateStore(),
+        "groupModulesOpen"
+    );
     const selectedEnsembles = useStoreValue(props.workbench.getDataStateStore(), "selectedEnsembles");
 
     const handleToggleModulesList = (value: boolean) => {
         setModulesListOpen(value);
+    };
+
+    const handleToggleGroupModules = (value: boolean) => {
+        setGroupModulesOpen(value);
     };
 
     let ensembleButtonText = "Select ensembles";
@@ -41,6 +49,12 @@ export const TopNavBar: React.FC<TopNavBarProps> = (props) => {
                 <Button onClick={() => setEnsembleDialogOpen(true)}>{ensembleButtonText}</Button>
                 <ToggleButton active={modulesListOpen} onToggle={(active: boolean) => handleToggleModulesList(active)}>
                     Add modules
+                </ToggleButton>
+                <ToggleButton
+                    active={groupModulesOpen}
+                    onToggle={(active: boolean) => handleToggleGroupModules(active)}
+                >
+                    Group modules
                 </ToggleButton>
                 <LoginButton />
             </div>
