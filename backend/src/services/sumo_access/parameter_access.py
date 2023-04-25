@@ -1,6 +1,5 @@
 from enum import Enum
-from io import BytesIO
-from typing import List, Optional, Sequence, Union, Dict
+from typing import List, Optional, Union, Dict
 import logging
 
 import numpy as np
@@ -11,7 +10,6 @@ from fmu.sumo.explorer import AggregatedTable
 
 # from fmu.sumo.explorer.objects.table import AggregatedTable
 
-from src.services.utils.perf_timer import PerfTimer
 from ._helpers import create_sumo_client_instance
 
 LOGGER = logging.getLogger(__name__)
@@ -38,7 +36,7 @@ class EnsembleSensitivity(BaseModel):
     cases: List[EnsembleSensitivityCase]
 
 
-class SENSITIVITY_TYPES(str, Enum):
+class SensitivityTypes(str, Enum):
     MONTECARLO = "montecarlo"
     SCENARIO = "scenario"
 
@@ -135,7 +133,7 @@ class ParameterAccess:
     def is_sensitivity_run(self) -> bool:
         """Check if the current ensemble is a sensitivity run"""
         parameters = self.get_parameters()
-        return any([parameter.name == "SENSNAME" for parameter in parameters])
+        return any(parameter.name == "SENSNAME" for parameter in parameters)
 
     def get_sensitivities(self) -> List[EnsembleSensitivity]:
         parameters = self.get_parameters()
@@ -149,7 +147,7 @@ class ParameterAccess:
         )
         dframe = pd.merge(dframe_sensitivity, dframe_case, on="Realization")
         dframe["type"] = dframe.apply(
-            lambda row: SENSITIVITY_TYPES.MONTECARLO if row["Case"] == "p10_p90" else SENSITIVITY_TYPES.SCENARIO, axis=1
+            lambda row: SensitivityTypes.MONTECARLO if row["Case"] == "p10_p90" else SensitivityTypes.SCENARIO, axis=1
         )
         ensemble_sensitivities = []
         for sensitivity, sensitivity_df in dframe.groupby("Sensitivity"):

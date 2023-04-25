@@ -26,8 +26,8 @@ class AuthHelper:
         request.session.clear()
 
         all_scopes_list = config.GRAPH_SCOPES.copy()
-        for key in config.RESOURCE_SCOPES_DICT:
-            all_scopes_list.extend(config.RESOURCE_SCOPES_DICT[key])
+        for value in config.RESOURCE_SCOPES_DICT.values():
+            all_scopes_list.extend(value)
 
         cca = _create_msal_confidential_client_app(token_cache=None)
         flow_dict = cca.initiate_auth_code_flow(
@@ -77,11 +77,11 @@ class AuthHelper:
 
             _save_token_cache_in_session(request, token_cache)
 
-        except ValueError as err:
+        except ValueError:
             # Usually caused by CSRF
             # print("!!!!! Hit an exception, probably CSRF error")
             # print(f"!!!!! exception: {err}")
-            return Response(f"Error processing auth response, probably CSRF error", 400)
+            return Response("Error processing auth response, probably CSRF error", 400)
 
         target_url_str_after_auth = request.session.get("target_url_str_after_auth")
         if target_url_str_after_auth is not None:
@@ -100,7 +100,7 @@ class AuthHelper:
             if maybe_authenticated_user_obj and isinstance(maybe_authenticated_user_obj, AuthenticatedUser):
                 # print("Found an authenticated user on the request object")
                 return maybe_authenticated_user_obj
-        except:
+        except:  # pylint: disable=bare-except
             pass
 
         if not starsessions.is_loaded(request_with_session):

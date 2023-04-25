@@ -3,7 +3,6 @@ from io import BytesIO
 from typing import List, Optional, Sequence, Union
 import logging
 
-import numpy as np
 from pydantic import BaseModel
 import pyarrow as pa
 import pyarrow.parquet as pq
@@ -13,10 +12,7 @@ from fmu.sumo.explorer.objects import TableCollection
 
 # from fmu.sumo.explorer.objects.table import AggregatedTable
 
-from src.services.utils.perf_timer import PerfTimer
-from ._field_metadata import create_vector_metadata_from_field_meta
 from ._helpers import create_sumo_client_instance
-from ._resampling import resample_segmented_multi_real_table
 
 LOGGER = logging.getLogger(__name__)
 

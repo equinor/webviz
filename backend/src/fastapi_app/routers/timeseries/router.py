@@ -33,7 +33,8 @@ def get_vector_names_and_descriptions(
     vector_names = access.get_vector_names()
 
     ret_arr: List[schemas.VectorDescription] = [
-        schemas.VectorDescription(name=vector_name, descriptive_name=vector_name, has_historical=False) for vector_name in vector_names
+        schemas.VectorDescription(name=vector_name, descriptive_name=vector_name, has_historical=False)
+        for vector_name in vector_names
     ]
 
     return ret_arr
@@ -60,7 +61,15 @@ def get_realizations_vector_data(
 
     ret_arr: List[schemas.VectorRealizationData] = []
     for vec in sumo_vec_arr:
-        ret_arr.append(schemas.VectorRealizationData(realization=vec.realization, timestamps=vec.timestamps, values=vec.values, unit=vec.metadata.unit, is_rate=vec.metadata.is_rate))
+        ret_arr.append(
+            schemas.VectorRealizationData(
+                realization=vec.realization,
+                timestamps=vec.timestamps,
+                values=vec.values,
+                unit=vec.metadata.unit,
+                is_rate=vec.metadata.is_rate,
+            )
+        )
 
     return ret_arr
 
@@ -127,7 +136,9 @@ def get_statistical_vector_data(
     service_freq = Frequency.from_string_value(resampling_frequency.value)
     service_stat_funcs_to_compute = converters.to_service_statistic_functions(statistic_functions)
 
-    vector_table, vector_metadata = access.get_vector_table(vector_name=vector_name, resampling_frequency=service_freq, realizations=realizations)
+    vector_table, vector_metadata = access.get_vector_table(
+        vector_name=vector_name, resampling_frequency=service_freq, realizations=realizations
+    )
 
     statistics = compute_vector_statistics(vector_table, vector_name, service_stat_funcs_to_compute)
     if not statistics:

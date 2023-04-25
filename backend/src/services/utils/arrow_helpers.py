@@ -38,4 +38,3 @@ def set_real_column_type_to_int16(schema: pa.Schema) -> pa.Schema:
 
     field_list = zip(schema.names, types)
     return pa.schema(field_list)
-

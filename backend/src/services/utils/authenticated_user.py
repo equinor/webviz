@@ -1,3 +1,5 @@
+# pylint: disable=bare-except
+
 from typing import Optional
 
 

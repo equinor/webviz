@@ -1,7 +1,5 @@
-from typing import List, Optional, Sequence, Dict
-from enum import Enum
-from pydantic import BaseModel
-from fastapi import APIRouter, Depends, HTTPException, Query, Body
+from typing import List, Optional, Sequence
+from fastapi import APIRouter, Depends, Query
 
 from src.services.sumo_access.inplace_volumetrics_access import (
     InplaceVolumetricsAccess,

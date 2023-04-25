@@ -24,7 +24,7 @@ class Ensemble(BaseModel):
 
 
 @router.get("/fields")
-def get_fields(authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user)) -> List[Field]:
+def get_fields() -> List[Field]:
     """
     Get list of fields
     """
@@ -53,11 +53,11 @@ def get_cases(
     # Present the single DROGON case that we know to be good as the first item, also prefixing it with "GOOD"
     ret_arr: List[Case] = []
     if field_identifier == "DROGON":
-        for ci in case_info_arr:
-            if ci.uuid == "10f41041-2c17-4374-a735-bb0de62e29dc":
-                ret_arr.insert(0, Case(uuid=ci.uuid, name=f"GOOD -- {ci.name}"))
+        for case_info in case_info_arr:
+            if case_info.uuid == "10f41041-2c17-4374-a735-bb0de62e29dc":
+                ret_arr.insert(0, Case(uuid=case_info.uuid, name=f"GOOD -- {case_info.name}"))
             else:
-                ret_arr.append(Case(uuid=ci.uuid, name=ci.name))
+                ret_arr.append(Case(uuid=case_info.uuid, name=case_info.name))
     else:
         ret_arr = [Case(uuid=ci.uuid, name=ci.name) for ci in case_info_arr]
 
