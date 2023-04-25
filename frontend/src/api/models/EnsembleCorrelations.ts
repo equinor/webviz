@@ -2,8 +2,8 @@
 /* tslint:disable */
 /* eslint-disable */
 
-export type InplaceVolumetricsRealizationsResponse = {
-    realizations: Array<number>;
+export type EnsembleCorrelations = {
+    names: Array<string>;
     values: Array<number>;
 };
 
