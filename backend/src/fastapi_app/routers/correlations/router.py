@@ -42,12 +42,12 @@ def correlate_parameters_with_timeseries(
         authenticated_user.get_sumo_access_token(), case_uuid=case_uuid, iteration_name=ensemble_name
     )
 
-    vector_values = summary_access.get_vector_values_at_timestep(
+    ensemble_response = summary_access.get_vector_values_at_timestep(
         vector_name=vector_name, timestep=timestep, realizations=None
     )
     parameters = parameter_access.get_parameters()
 
-    return correlate_parameters_with_response(parameters, vector_values)
+    return correlate_parameters_with_response(parameters, ensemble_response)
 
 
 @router.get("/correlate_parameters_with_inplace_volumes/")
@@ -69,9 +69,9 @@ def correlate_parameters_with_inplace_volumes(
     parameter_access = ParameterAccess(
         authenticated_user.get_sumo_access_token(), case_uuid=case_uuid, iteration_name=ensemble_name
     )
-    inplace_access = InplaceVolumetricsAccess(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
-    response = inplace_access.get_response(table_name, response_name, categorical_filters=None, realizations=None)
-
+    ensemble_response = inplace_access.get_response(
+        table_name, response_name, categorical_filters=None, realizations=None
+    )
     parameters = parameter_access.get_parameters()
 
-    return correlate_parameters_with_response(parameters, response)
+    return correlate_parameters_with_response(parameters, ensemble_response)
