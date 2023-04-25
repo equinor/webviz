@@ -39,6 +39,7 @@ jobs:
       - name: 🏗️ Build JavaScript bundle
         working-directory: ./frontend
         run: |
+          # Building wsc requires increasing memory allocated to Node
           export NODE_OPTIONS="--max_old_space_size=4096"
           npm run build
 
