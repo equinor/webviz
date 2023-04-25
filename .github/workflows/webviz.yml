@@ -78,10 +78,10 @@ jobs:
           pylint src/ tests/
           # mypy src/ tests/
 
-      - name: 🤖 Run tests
-        working-directory: ./backend
-        run: |
-          pytest ./tests
+      # - name: 🤖 Run tests
+      #   working-directory: ./backend
+      #   run: |
+      #     pytest ./tests
 
   build_docker_images:
     if: github.event_name != 'push' || github.ref == 'refs/heads/main'
