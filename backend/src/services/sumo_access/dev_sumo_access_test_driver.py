@@ -7,9 +7,8 @@ import pyarrow as pa
 from fmu.sumo.explorer.explorer import SumoClient
 
 from src.services.summary_vector_statistics import compute_vector_statistics_table, compute_vector_statistics
-from src.services.utils.statistic_function import StatisticFunction
 from .summary_access import SummaryAccess, RealizationVector, Frequency
-from .surface_access import SurfaceAccess, DynamicSurfaceDirectory
+from .surface_access import SurfaceAccess
 from .sumo_explore import SumoExplore
 
 
@@ -18,19 +17,19 @@ def test_summary_access(summary_access: SummaryAccess) -> None:
     print("\n\n")
     print(vector_names)
 
-    vector_table, vector_meta = summary_access.get_vector_table(
+    vector_table, _vector_meta = summary_access.get_vector_table(
         vector_name="FOPT", resampling_frequency=None, realizations=None
     )
     print("\n\nRAW")
     print(vector_table.shape)
 
-    vector_table, vector_meta = summary_access.get_vector_table(
+    vector_table, _vector_meta = summary_access.get_vector_table(
         vector_name="FOPT", resampling_frequency=Frequency.DAILY, realizations=None
     )
     print("\n\nDAILY")
     print(vector_table.shape)
 
-    vector_table, vector_meta = summary_access.get_vector_table(
+    vector_table, _vector_meta = summary_access.get_vector_table(
         vector_name="FOPT", resampling_frequency=Frequency.YEARLY, realizations=None
     )
     print("\n\nYEARLY")
@@ -38,7 +37,7 @@ def test_summary_access(summary_access: SummaryAccess) -> None:
     print(vector_table.shape)
 
     print("\n\nYEARLY - only real 0")
-    vector_table, vector_meta = summary_access.get_vector_table(
+    vector_table, _vector_meta = summary_access.get_vector_table(
         vector_name="FOPT", resampling_frequency=Frequency.YEARLY, realizations=[0]
     )
     vector_table = vector_table.filter(pa.compute.equal(vector_table["REAL"], 0))
@@ -53,7 +52,7 @@ def test_summary_access(summary_access: SummaryAccess) -> None:
     print(vector_arr[0])
 
     print("\n\nYEARLY")
-    vector_table, vector_meta = summary_access.get_vector_table(
+    vector_table, _vector_meta = summary_access.get_vector_table(
         vector_name="FOPT", resampling_frequency=Frequency.YEARLY, realizations=None
     )
     print(vector_table)
@@ -106,7 +105,7 @@ def main() -> None:
 
     # dummy_sumo_client = SumoClient("prod")
     dummy_sumo_client = SumoClient("dev")
-    access_token = dummy_sumo_client._retrieve_token()
+    access_token = dummy_sumo_client._retrieve_token()  # pylint: disable=protected-access
 
     explore = SumoExplore(access_token=access_token)
     cases = explore.get_cases(field_identifier="DROGON")

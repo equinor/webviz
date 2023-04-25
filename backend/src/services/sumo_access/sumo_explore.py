@@ -37,12 +37,9 @@ class SumoExplore:
             raise ValueError(f"Sumo case not found {case_uuid=}")
 
         case = case_collection[0]
-
-        iterations = case.iterations
-        iter_info_arr: List[IterationInfo] = []
-        for it in iterations:
-            iteration_name = it.get("name")
-            iter_info_arr.append(IterationInfo(name=iteration_name))
+        iter_info_arr: List[IterationInfo] = [
+            IterationInfo(name=iteration.get("name")) for iteration in case.iterations
+        ]
 
         # Sort on iteration name before returning
         iter_info_arr.sort(key=lambda iter_info: iter_info.name)

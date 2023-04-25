@@ -30,13 +30,5 @@ if SMDA_RESOURCE_SCOPE is not None:
 
 print(f"{RESOURCE_SCOPES_DICT=}")
 
-
-# Allow None her for now, since we don't always run with redis and a password
-# REDIS_PASSWORD: str = os.environ.get("WEBVIZ_REDIS_PASSWORD")
-
-# Format: redis://[[username]:[password]]@localhost:6379/0
-# REDIS_URL = "redis://localhost"
-# REDIS_URL = f"redis://:{REDIS_PASSWORD}@redis:6379"
-REDIS_URL = f"redis://redis:6379"
-
+REDIS_URL = "redis://redis:6379"
 SESSION_STORAGE = "redis"

@@ -4,8 +4,7 @@ from typing import List, Optional, Tuple
 
 import xtgeo
 from fmu.sumo.explorer import TimeFilter, TimeType
-from fmu.sumo.explorer.objects import Case, CaseCollection, Surface, SurfaceCollection
-from pydantic import BaseModel
+from fmu.sumo.explorer.objects import Case, CaseCollection, SurfaceCollection
 from sumo.wrapper import SumoClient
 
 from src.services.utils.perf_timer import PerfTimer
@@ -84,7 +83,7 @@ class SurfaceAccess:
 
         valid_attributes_for_name: List[List[int]] = []
 
-        for name_idx, name in enumerate(names):
+        for name in names:
             filtered_coll = surface_collection.filter(name=name)
             filtered_attributes = filtered_coll.tagnames
             attribute_indices: List[int] = []
