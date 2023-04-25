@@ -9,6 +9,7 @@ from pydantic import BaseModel
 from .utils.arrow_helpers import create_float_downcasting_schema, set_date_column_type_to_timestamp_ms
 from .utils.statistic_function import StatisticFunction
 
+
 class VectorStatistics(BaseModel):
     realizations: List[int]
     timestamps: List[datetime.datetime]

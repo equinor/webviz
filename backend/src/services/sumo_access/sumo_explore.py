@@ -10,6 +10,7 @@ class CaseInfo(BaseModel):
     uuid: str
     name: str
 
+
 class IterationInfo(BaseModel):
     name: str
 

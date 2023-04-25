@@ -25,7 +25,9 @@ def to_service_statistic_functions(
     return service_stat_funcs
 
 
-def to_api_vector_statistic_data(vector_statistics: VectorStatistics, vector_metadata: VectorMetadata) -> schemas.VectorStatisticData:
+def to_api_vector_statistic_data(
+    vector_statistics: VectorStatistics, vector_metadata: VectorMetadata
+) -> schemas.VectorStatisticData:
     """
     Create API VectorStatisticData from service layer VectorStatistics
     """

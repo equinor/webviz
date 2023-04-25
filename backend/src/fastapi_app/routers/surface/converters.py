@@ -15,7 +15,7 @@ def to_api_surface_data(xtgeo_surf: xtgeo.RegularSurface) -> schemas.SurfaceData
     base64_data = base64.b64encode(png_bytes).decode("ascii")
 
     surf_orient = calc_surface_orientation_for_colormap_layer(xtgeo_surf)
-    
+
     return schemas.SurfaceData(
         x_min=surf_orient.x_min,
         x_max=surf_orient.x_max,
@@ -24,5 +24,5 @@ def to_api_surface_data(xtgeo_surf: xtgeo.RegularSurface) -> schemas.SurfaceData
         val_min=xtgeo_surf.values.min(),
         val_max=xtgeo_surf.values.max(),
         rot_deg=surf_orient.rot_around_xmin_ymax_deg,
-        base64_encoded_image=f"{base64_data}"
+        base64_encoded_image=f"{base64_data}",
     )

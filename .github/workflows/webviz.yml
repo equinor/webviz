@@ -81,7 +81,7 @@ jobs:
       - name: 🤖 Run tests
         working-directory: ./backend
         run: |
-          pytest ./tests --headless
+          pytest ./tests
 
   build_docker_images:
     if: github.event_name != 'push' || github.ref == 'refs/heads/main'
