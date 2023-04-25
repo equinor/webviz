@@ -16,6 +16,7 @@ from ._field_metadata import create_vector_metadata_from_field_meta
 from ._helpers import create_sumo_client_instance
 from ._resampling import resample_segmented_multi_real_table
 from .types import Frequency, RealizationVector, VectorMetadata
+from .generic_types import EnsembleScalarResponse
 
 LOGGER = logging.getLogger(__name__)
 
@@ -28,7 +29,7 @@ class SummaryAccess:
 
     def get_vector_names(self) -> List[str]:
         timer = PerfTimer()
-        
+
         case_collection = CaseCollection(self._sumo_client).filter(uuid=self._case_uuid)
         if len(case_collection) != 1:
             raise ValueError(f"None or multiple sumo cases found {self._case_uuid=}")
@@ -99,7 +100,6 @@ class SummaryAccess:
         if table.num_columns != 3:
             raise ValueError("Table should contain exactly 3 columns")
 
-
         # Verify that we got the expected columns
         if sorted(table.column_names) != sorted(["DATE", "REAL", vector_name]):
             raise ValueError(f"Unexpected columns in table {table.column_names=}")
@@ -116,7 +116,7 @@ class SummaryAccess:
         if realizations is not None:
             mask = pc.is_in(table["REAL"], value_set=pa.array(realizations))
             table = table.filter(mask)
-            
+
         # Our assumption is that the table is segmented on REAL and that within each segment,
         # the DATE column is sorted. We may want to add some checks here to verify this assumption since the
         # resampling algorithm below assumes this and will fail if it is not true.
@@ -139,19 +139,20 @@ class SummaryAccess:
         # Should we always combine the chunks?
         table = table.combine_chunks()
 
-        LOGGER.debug(f"Got vector table from Sumo in: {timer.elapsed_ms()}ms ("
+        LOGGER.debug(
+            f"Got vector table from Sumo in: {timer.elapsed_ms()}ms ("
             f"get_case={et_get_case_ms}ms, "
             f"locate_sumo_table={et_locate_sumo_table_ms}ms, "
             f"get_table_data={et_get_table_data_ms}ms, "
             f"resampling={et_resampling_ms}ms) "
-            f"{resampling_frequency=} {table.shape=}")
+            f"{resampling_frequency=} {table.shape=}"
+        )
 
         return table, vector_metadata
 
     def get_vector(
         self, vector_name: str, resampling_frequency: Optional[Frequency], realizations: Optional[Sequence[int]]
     ) -> List[RealizationVector]:
-
         table, vector_metadata = self.get_vector_table(vector_name, resampling_frequency, realizations)
 
         real_arr_np = table.column("REAL").to_numpy()
@@ -177,3 +178,22 @@ class SummaryAccess:
             )
 
         return ret_arr
+
+    def get_vector_values_at_timestep(
+        self,
+        vector_name: str,
+        timestep: datetime.datetime,
+        realizations: Optional[Sequence[int]] = None,
+    ) -> EnsembleScalarResponse:
+        table, _ = self.get_vector_table(vector_name, resampling_frequency=None, realizations=realizations)
+
+        if realizations is not None:
+            mask = pc.is_in(table["REAL"], value_set=pa.array(realizations))
+            table = table.filter(mask)
+        mask = pc.is_in(table["DATE"], value_set=pa.array([timestep]))
+        table = table.filter(mask)
+
+        return EnsembleScalarResponse(
+            realizations=table["REAL"].to_pylist(),
+            values=table[vector_name].to_pylist(),
+        )
