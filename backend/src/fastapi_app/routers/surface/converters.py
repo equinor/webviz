@@ -2,8 +2,8 @@ import base64
 
 import xtgeo
 
-from ....services.utils.surface_to_png import surface_to_png_bytes_optimized
-from ....services.utils.surface_orientation import calc_surface_orientation_for_colormap_layer
+from src.services.utils.surface_to_png import surface_to_png_bytes_optimized
+from src.services.utils.surface_orientation import calc_surface_orientation_for_colormap_layer
 from . import schemas
 
 

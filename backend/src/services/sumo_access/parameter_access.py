@@ -11,7 +11,7 @@ from fmu.sumo.explorer import AggregatedTable
 
 # from fmu.sumo.explorer.objects.table import AggregatedTable
 
-from ..utils.perf_timer import PerfTimer
+from src.services.utils.perf_timer import PerfTimer
 from ._helpers import create_sumo_client_instance
 
 LOGGER = logging.getLogger(__name__)

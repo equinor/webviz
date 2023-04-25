@@ -4,11 +4,11 @@ from typing import List, Optional, Sequence, Union
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 
-from ....services.summary_vector_statistics import compute_vector_statistics
-from ....services.sumo_access.summary_access import Frequency, SummaryAccess
-from ....services.utils.authenticated_user import AuthenticatedUser
-from ....services.utils.perf_timer import PerfTimer
-from ...auth.auth_helper import AuthHelper
+from src.services.summary_vector_statistics import compute_vector_statistics
+from src.services.sumo_access.summary_access import Frequency, SummaryAccess
+from src.services.utils.authenticated_user import AuthenticatedUser
+from src.services.utils.perf_timer import PerfTimer
+from src.fastapi_app.auth.auth_helper import AuthHelper
 from . import converters
 from . import schemas
 

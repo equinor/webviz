@@ -13,7 +13,7 @@ from fmu.sumo.explorer.objects import TableCollection
 
 # from fmu.sumo.explorer.objects.table import AggregatedTable
 
-from ..utils.perf_timer import PerfTimer
+from src.services.utils.perf_timer import PerfTimer
 from ._field_metadata import create_vector_metadata_from_field_meta
 from ._helpers import create_sumo_client_instance
 from ._resampling import resample_segmented_multi_real_table

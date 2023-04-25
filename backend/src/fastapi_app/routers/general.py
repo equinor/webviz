@@ -5,7 +5,7 @@ import starsessions
 from fastapi import APIRouter, HTTPException, Request, status
 from pydantic import BaseModel
 
-from ..auth.auth_helper import AuthHelper
+from src.fastapi_app.auth.auth_helper import AuthHelper
 
 LOGGER = logging.getLogger(__name__)
 

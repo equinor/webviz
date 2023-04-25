@@ -10,8 +10,8 @@ import pyarrow.compute as pc
 from fmu.sumo.explorer.objects import CaseCollection
 from sumo.wrapper import SumoClient
 
-from ..utils.arrow_helpers import sort_table_on_real_then_date
-from ..utils.perf_timer import PerfTimer
+from src.services.utils.arrow_helpers import sort_table_on_real_then_date
+from src.services.utils.perf_timer import PerfTimer
 from ._field_metadata import create_vector_metadata_from_field_meta
 from ._helpers import create_sumo_client_instance
 from ._resampling import resample_segmented_multi_real_table

@@ -8,9 +8,9 @@ import starsessions
 from fastapi import APIRouter, Request, Response
 from fastapi.responses import RedirectResponse
 
-from ...services.utils.authenticated_user import AuthenticatedUser
-from ...services.utils.perf_timer import PerfTimer
-from .. import config
+from src.services.utils.authenticated_user import AuthenticatedUser
+from src.services.utils.perf_timer import PerfTimer
+from src.fastapi_app import config
 
 
 class AuthHelper:

@@ -8,8 +8,8 @@ from fmu.sumo.explorer.objects import Case, CaseCollection, Surface, SurfaceColl
 from pydantic import BaseModel
 from sumo.wrapper import SumoClient
 
-from ..utils.perf_timer import PerfTimer
-from ..utils.statistic_function import StatisticFunction
+from src.services.utils.perf_timer import PerfTimer
+from src.services.utils.statistic_function import StatisticFunction
 from .surface_types import StatisticFunction, DynamicSurfaceDirectory, StaticSurfaceDirectory
 from ._helpers import create_sumo_client_instance
 
