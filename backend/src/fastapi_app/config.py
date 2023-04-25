@@ -1,13 +1,7 @@
 import os
-from dotenv import load_dotenv
 
 # Import these from sumo wrapper package in order to grab the resource scopes
 from sumo.wrapper.config import APP_REGISTRATION as sumo_app_reg
-
-# Load environment variables from .env file
-# Note that values set in the system environment will override those in the .env file
-load_dotenv()
-
 
 TENANT_ID = "3aa4a235-b6e2-48d5-9195-7fcf05b459b0"
 CLIENT_ID = "900ed417-a860-4970-bd37-73b059ca6f0d"
