@@ -3,11 +3,11 @@ from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 
-from ....services.sumo_access.surface_access import SurfaceAccess
-from ....services.sumo_access.surface_types import StatisticFunction
-from ....services.utils.authenticated_user import AuthenticatedUser
-from ....services.utils.perf_timer import PerfTimer
-from ...auth.auth_helper import AuthHelper
+from src.services.sumo_access.surface_access import SurfaceAccess
+from src.services.sumo_access.surface_types import StatisticFunction
+from src.services.utils.authenticated_user import AuthenticatedUser
+from src.services.utils.perf_timer import PerfTimer
+from src.fastapi_app.auth.auth_helper import AuthHelper
 from . import converters
 from . import schemas
 

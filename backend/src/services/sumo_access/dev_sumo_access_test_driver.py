@@ -6,11 +6,11 @@ import pyarrow as pa
 
 from fmu.sumo.explorer.explorer import SumoClient
 
+from src.services.summary_vector_statistics import compute_vector_statistics_table, compute_vector_statistics
+from src.services.utils.statistic_function import StatisticFunction
 from .summary_access import SummaryAccess, RealizationVector, Frequency
 from .surface_access import SurfaceAccess, DynamicSurfaceDirectory
 from .sumo_explore import SumoExplore
-from ..summary_vector_statistics import compute_vector_statistics_table, compute_vector_statistics
-from ..utils.statistic_function import StatisticFunction
 
 
 def test_summary_access(summary_access: SummaryAccess) -> None:
