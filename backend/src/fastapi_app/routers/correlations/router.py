@@ -5,18 +5,18 @@ from typing import List, Optional, Literal, Sequence, Dict
 from pydantic import BaseModel
 from fastapi import APIRouter, Depends, HTTPException, Query
 
-from ....services.sumo_access.parameter_access import ParameterAccess
-from ....services.sumo_access.generic_types import EnsembleCorrelations
-from ....services.parameter_correlations import correlate_parameters_with_response
-from ....services.sumo_access.summary_access import SummaryAccess
-from ....services.sumo_access.inplace_volumetrics_access import (
+from src.services.sumo_access.parameter_access import ParameterAccess
+from src.services.sumo_access.generic_types import EnsembleCorrelations
+from src.services.parameter_correlations import correlate_parameters_with_response
+from src.services.sumo_access.summary_access import SummaryAccess
+from src.services.sumo_access.inplace_volumetrics_access import (
     InplaceVolumetricsAccess,
     InplaceVolumetricsCategoricalMetaData,
 )
-from ....services.utils.authenticated_user import AuthenticatedUser
-from ....services.utils.perf_timer import PerfTimer
-from ...auth.auth_helper import AuthHelper
-from . import schemas
+from src.services.utils.authenticated_user import AuthenticatedUser
+from src.services.utils.perf_timer import PerfTimer
+from src.fastapi_app.auth.auth_helper import AuthHelper
+
 
 LOGGER = logging.getLogger(__name__)
 
