@@ -8,7 +8,6 @@ from fmu.sumo.explorer.objects import Case, CaseCollection, SurfaceCollection
 from sumo.wrapper import SumoClient
 
 from src.services.utils.perf_timer import PerfTimer
-from src.services.utils.statistic_function import StatisticFunction
 from .surface_types import (
     StatisticFunction,
     DynamicSurfaceDirectory,

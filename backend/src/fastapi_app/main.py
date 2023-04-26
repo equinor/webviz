@@ -26,7 +26,7 @@ logging.basicConfig(
 logging.getLogger("src.services.sumo_access").setLevel(level=logging.DEBUG)
 
 
-def custom_generate_unique_id(route: APIRoute):
+def custom_generate_unique_id(route: APIRoute) -> str:
     return f"{route.name}"
 
 
@@ -66,5 +66,5 @@ app.add_middleware(SessionMiddleware, store=session_store)
 
 
 @app.get("/")
-async def root():
+async def root() -> str:
     return f"Backend is alive at this time: {datetime.datetime.now()}"

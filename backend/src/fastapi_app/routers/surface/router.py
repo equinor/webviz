@@ -68,7 +68,6 @@ def get_static_surface_data(
     name: str = Query(description="Surface name"),
     attribute: str = Query(description="Surface attribute"),
 ) -> schemas.SurfaceData:
-
     timer = PerfTimer()
 
     access = SurfaceAccess(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
@@ -94,7 +93,6 @@ def get_dynamic_surface_data(
     attribute: str = Query(description="Surface attribute"),
     time_or_interval: str = Query(description="Timestamp or time interval string"),
 ) -> schemas.SurfaceData:
-
     timer = PerfTimer()
 
     access = SurfaceAccess(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
@@ -125,18 +123,18 @@ def get_statistical_dynamic_surface_data(
     attribute: str = Query(description="Surface attribute"),
     time_or_interval: str = Query(description="Timestamp or time interval string"),
 ) -> schemas.SurfaceData:
-
     timer = PerfTimer()
 
     access = SurfaceAccess(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
 
     service_stat_func_to_compute = StatisticFunction.from_string_value(statistic_function)
-    xtgeo_surf = access.get_statistical_dynamic_surf(
-        statistic_function=service_stat_func_to_compute,
-        name=name,
-        attribute=attribute,
-        time_or_interval_str=time_or_interval,
-    )
+    if service_stat_func_to_compute is not None:
+        xtgeo_surf = access.get_statistical_dynamic_surf(
+            statistic_function=service_stat_func_to_compute,
+            name=name,
+            attribute=attribute,
+            time_or_interval_str=time_or_interval,
+        )
 
     if not xtgeo_surf:
         raise HTTPException(status_code=404, detail="Could not find or compute surface")
@@ -157,15 +155,15 @@ def get_statistical_static_surface_data(
     name: str = Query(description="Surface name"),
     attribute: str = Query(description="Surface attribute"),
 ) -> schemas.SurfaceData:
-
     timer = PerfTimer()
 
     access = SurfaceAccess(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
 
     service_stat_func_to_compute = StatisticFunction.from_string_value(statistic_function)
-    xtgeo_surf = access.get_statistical_static_surf(
-        statistic_function=service_stat_func_to_compute, name=name, attribute=attribute
-    )
+    if service_stat_func_to_compute is not None:
+        xtgeo_surf = access.get_statistical_static_surf(
+            statistic_function=service_stat_func_to_compute, name=name, attribute=attribute
+        )
 
     if not xtgeo_surf:
         raise HTTPException(status_code=404, detail="Could not find or compute surface")
