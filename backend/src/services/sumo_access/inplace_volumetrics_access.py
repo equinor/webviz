@@ -13,6 +13,8 @@ from fmu.sumo.explorer.objects import TableCollection
 # from fmu.sumo.explorer.objects.table import AggregatedTable
 
 from ._helpers import create_sumo_client_instance
+from .generic_types import EnsembleScalarResponse
+
 
 LOGGER = logging.getLogger(__name__)
 
@@ -65,11 +67,6 @@ class InplaceVolumetricsTableMetaData(BaseModel):
 
     class Config:
         orm_mode = True
-
-
-class InplaceVolumetricsRealizationsResponse(BaseModel):
-    realizations: List[int]
-    values: List[float]
 
 
 class InplaceVolumetricsAccess:
@@ -140,7 +137,7 @@ class InplaceVolumetricsAccess:
         column_name: str,
         categorical_filters: Optional[List[InplaceVolumetricsCategoricalMetaData]] = None,
         realizations: Optional[Sequence[int]] = None,
-    ) -> InplaceVolumetricsRealizationsResponse:
+    ) -> EnsembleScalarResponse:
         """Retrieve the volumetric response for the given table name and column name"""
         table = self.get_table(table_name, column_name)
         if realizations is not None:
@@ -156,7 +153,7 @@ class InplaceVolumetricsAccess:
 
         summed_on_real_table = table.group_by("REAL").aggregate([(column_name, "sum")]).sort_by("REAL")
 
-        return InplaceVolumetricsRealizationsResponse(
+        return EnsembleScalarResponse(
             realizations=summed_on_real_table["REAL"].to_pylist(),
             values=summed_on_real_table[f"{column_name}_sum"].to_pylist(),
         )

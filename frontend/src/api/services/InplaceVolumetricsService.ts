@@ -2,7 +2,7 @@
 /* tslint:disable */
 /* eslint-disable */
 import type { Body_get_realizations_response } from '../models/Body_get_realizations_response';
-import type { InplaceVolumetricsRealizationsResponse } from '../models/InplaceVolumetricsRealizationsResponse';
+import type { EnsembleScalarResponse } from '../models/EnsembleScalarResponse';
 import type { InplaceVolumetricsTableMetaData } from '../models/InplaceVolumetricsTableMetaData';
 
 import type { CancelablePromise } from '../core/CancelablePromise';
@@ -45,7 +45,7 @@ export class InplaceVolumetricsService {
      * @param tableName Table name
      * @param responseName Response name
      * @param requestBody
-     * @returns InplaceVolumetricsRealizationsResponse Successful Response
+     * @returns EnsembleScalarResponse Successful Response
      * @throws ApiError
      */
     public getRealizationsResponse(
@@ -54,7 +54,7 @@ export class InplaceVolumetricsService {
         tableName: string,
         responseName: string,
         requestBody?: Body_get_realizations_response,
-    ): CancelablePromise<InplaceVolumetricsRealizationsResponse> {
+    ): CancelablePromise<EnsembleScalarResponse> {
         return this.httpRequest.request({
             method: 'POST',
             url: '/inplace_volumetrics/realizations_response/',
