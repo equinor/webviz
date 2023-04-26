@@ -26,7 +26,7 @@ class PossibleInplaceVolumetricsCategoricalColumnNames(str, Enum):
     LICENSE = "LICENSE"
 
     @classmethod
-    def has_value(cls, value):
+    def has_value(cls, value: str) -> bool:
         return value in cls._value2member_map_
 
 
@@ -48,7 +48,7 @@ class PossibleInplaceVolumetricsNumericalColumnNames(str, Enum):
     ASSOCIATEDOIL_GAS = "ASSOCIATEDOIL_GAS"
 
     @classmethod
-    def has_value(cls, value):
+    def has_value(cls, value: str) -> bool:
         return value in cls._value2member_map_
 
 
