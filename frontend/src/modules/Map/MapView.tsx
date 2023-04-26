@@ -6,7 +6,7 @@ import { useElementSize } from "@lib/hooks/useElementSize";
 import { useSurfaceDataQueryByAddress } from "./MapQueryHooks";
 import { MapState } from "./MapState";
 import { makeSurfAddrString } from "./SurfAddr";
-
+import {SubsurfaceViewer} from "@webviz/subsurface-components"
 //-----------------------------------------------------------------------------------------------------------
 export function MapView({ moduleContext }: ModuleFCProps<MapState>) {
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);
@@ -22,41 +22,48 @@ export function MapView({ moduleContext }: ModuleFCProps<MapState>) {
 
     const surfDataQuery = useSurfaceDataQueryByAddress(surfAddr);
     const surfAddrAsAny = surfAddr as any;
+    if (surfDataQuery.data) {
+        return (
+        <div className="relative w-full h-full flex flex-col">
+            <SubsurfaceViewer 
+                id="deckgl" 
+                layers={[   {
+                    "@@type": "MapLayer",
+                    "id": "mesh-layer",
+                    "meshData": JSON.parse(surfDataQuery.data?.mesh_data),
+                    "frame": {
+                      "origin": [
+                        surfDataQuery.data?.x_ori,
+                        surfDataQuery.data?.y_ori
+                      ],
+                      "count": [
+                        surfDataQuery.data?.x_count,
+                        surfDataQuery.data?.y_count
+                      ],
+                      "increment": [
+                        surfDataQuery.data?.x_inc,
+                        surfDataQuery.data?.y_inc
+                      ],
+                      "rotDeg": surfDataQuery.data?.rot_deg,
+                      
+                    },
+                    
+                    "contours": [
+                      0,
+                      100
+                    ],
+                    "isContoursDepth": true,
+                    "gridLines": false,
+                    "material": true,
+                    "smoothShading": true,
+                    "colorMapName": "Physics"
+                  }, 
+                ]}
+            />
+           
 
-    return (
-        <div className="w-full h-full flex flex-col">
-            <div>
-                addressType: {surfAddr?.addressType ?? "---"}
-                <br />
-                caseUuid: {surfAddr?.caseUuid ?? "---"}
-                <br />
-                ensembleName: {surfAddr?.ensemble ?? "---"}
-                <br />
-                surfaceName: {surfAddr?.name ?? "---"}
-                <br />
-                surfaceAttribute: {surfAddr?.attribute ?? "---"}
-                <br />
-                timeOrInterval: {surfAddrAsAny?.timeOrInterval ?? "---"}
-                <br />
-                realizationNum: {surfAddrAsAny?.realizationNum ?? "---"}
-                <br />
-                statisticFunction: {surfAddrAsAny?.statisticFunction ?? "Single realization"}
-            </div>
-            <br />
-            min x,y: {surfDataQuery.data?.x_min.toFixed(2)}, {surfDataQuery.data?.y_min.toFixed(2)}
-            <br />
-            min/max val: {surfDataQuery.data?.val_min.toFixed(2)}, {surfDataQuery.data?.val_max.toFixed(2)}
-            <br />
-            rot: {surfDataQuery.data?.rot_deg.toFixed(2)}
-            <br />
-            renderCount: {renderCount.current}
-            <div className="flex-grow h-0" ref={wrapperDivRef}>
-                <img
-                    alt={surfDataQuery.status}
-                    src={surfDataQuery.data ? `data:image/png;base64,${surfDataQuery.data.base64_encoded_image}` : ""}
-                    style={{ objectFit: "contain", width: wrapperDivSize.width, height: wrapperDivSize.height }}
-                ></img>
-            </div>
         </div>
     );
+            }
+    return (<div/>)
 }
