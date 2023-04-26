@@ -3,11 +3,11 @@ from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 
-from ....services.sumo_access.surface_access import SurfaceAccess
-from ....services.sumo_access.surface_types import StatisticFunction
-from ....services.utils.authenticated_user import AuthenticatedUser
-from ....services.utils.perf_timer import PerfTimer
-from ...auth.auth_helper import AuthHelper
+from src.services.sumo_access.surface_access import SurfaceAccess
+from src.services.sumo_access.surface_types import StatisticFunction
+from src.services.utils.authenticated_user import AuthenticatedUser
+from src.services.utils.perf_timer import PerfTimer
+from src.fastapi_app.auth.auth_helper import AuthHelper
 from . import converters
 from . import schemas
 
@@ -29,7 +29,9 @@ def get_dynamic_surface_directory(
     surf_dir = access.get_dynamic_surf_dir()
 
     ret_dir = schemas.DynamicSurfaceDirectory(
-        names=surf_dir.names, attributes=surf_dir.attributes, time_or_interval_strings=surf_dir.date_strings
+        names=surf_dir.names,
+        attributes=surf_dir.attributes,
+        time_or_interval_strings=surf_dir.date_strings,
     )
 
     return ret_dir
@@ -97,7 +99,10 @@ def get_dynamic_surface_data(
 
     access = SurfaceAccess(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
     xtgeo_surf = access.get_dynamic_surf(
-        real_num=realization_num, name=name, attribute=attribute, time_or_interval_str=time_or_interval
+        real_num=realization_num,
+        name=name,
+        attribute=attribute,
+        time_or_interval_str=time_or_interval,
     )
 
     if not xtgeo_surf:

@@ -18,8 +18,7 @@ CLIENT_SECRET = os.environ["WEBVIZ_CLIENT_SECRET"]
 GRAPH_SCOPES = ["User.Read"]
 
 RESOURCE_SCOPES_DICT = {
-    #"sumo": [f"api://{sumo_app_reg['prod']['RESOURCE_ID']}/access_as_user"],
-
+    # "sumo": [f"api://{sumo_app_reg['prod']['RESOURCE_ID']}/access_as_user"],
     # Note that when switching back to prod, SUMO env in create_sumo_client_instance() must also be changed
     "sumo": [f"api://{sumo_app_reg['dev']['RESOURCE_ID']}/access_as_user"],
 }
@@ -31,13 +30,5 @@ if SMDA_RESOURCE_SCOPE is not None:
 
 print(f"{RESOURCE_SCOPES_DICT=}")
 
-
-# Allow None her for now, since we don't always run with redis and a password
-# REDIS_PASSWORD: str = os.environ.get("WEBVIZ_REDIS_PASSWORD")
-
-# Format: redis://[[username]:[password]]@localhost:6379/0
-# REDIS_URL = "redis://localhost"
-# REDIS_URL = f"redis://:{REDIS_PASSWORD}@redis:6379"
-REDIS_URL = f"redis://redis:6379"
-
+REDIS_URL = "redis://redis:6379"
 SESSION_STORAGE = "redis"

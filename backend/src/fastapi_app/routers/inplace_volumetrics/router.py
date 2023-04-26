@@ -1,17 +1,16 @@
-from typing import List, Optional, Sequence, Dict
-from enum import Enum
-from pydantic import BaseModel
-from fastapi import APIRouter, Depends, HTTPException, Query, Body
+from typing import List, Optional, Sequence
+from fastapi import APIRouter, Depends, Query
 
-from ....services.sumo_access.inplace_volumetrics_access import (
+from src.services.sumo_access.inplace_volumetrics_access import (
     InplaceVolumetricsAccess,
     InplaceVolumetricsTableMetaData,
     InplaceVolumetricsCategoricalMetaData,
 )
-from ....services.sumo_access.generic_types import EnsembleScalarResponse
-from ....services.utils.authenticated_user import AuthenticatedUser
 
-from ...auth.auth_helper import AuthHelper
+from src.services.sumo_access.generic_types import EnsembleScalarResponse
+from src.services.utils.authenticated_user import AuthenticatedUser
+
+from src.fastapi_app.auth.auth_helper import AuthHelper
 
 
 router = APIRouter()
