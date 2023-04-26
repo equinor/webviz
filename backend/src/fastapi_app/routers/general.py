@@ -5,7 +5,7 @@ import starsessions
 from fastapi import APIRouter, HTTPException, Request, status
 from pydantic import BaseModel
 
-from ..auth.auth_helper import AuthHelper
+from src.fastapi_app.auth.auth_helper import AuthHelper
 
 LOGGER = logging.getLogger(__name__)
 
@@ -20,19 +20,19 @@ router = APIRouter()
 
 
 @router.get("/alive")
-def alive(request: Request):
+def alive() -> str:
     print("entering alive route")
     return f"ALIVE: Backend is alive at this time: {datetime.datetime.now()}"
 
 
 @router.get("/alive_protected")
-def alive_protected():
+def alive_protected() -> str:
     print("entering alive_protected route")
     return f"ALIVE_PROTECTED: Backend is alive at this time: {datetime.datetime.now()}"
 
 
 @router.get("/logged_in_user", response_model=UserInfo)
-async def logged_in_user(request: Request):
+async def logged_in_user(request: Request) -> UserInfo:
     print("entering logged_in_user route")
 
     await starsessions.load_session(request)

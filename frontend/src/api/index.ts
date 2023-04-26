@@ -13,11 +13,16 @@ export type { Body_get_realizations_response } from './models/Body_get_realizati
 export type { Case } from './models/Case';
 export type { DynamicSurfaceDirectory } from './models/DynamicSurfaceDirectory';
 export type { Ensemble } from './models/Ensemble';
+export type { EnsembleCorrelations } from './models/EnsembleCorrelations';
+export type { EnsembleParameter } from './models/EnsembleParameter';
+export type { EnsembleParameterDescription } from './models/EnsembleParameterDescription';
+export type { EnsembleScalarResponse } from './models/EnsembleScalarResponse';
+export type { EnsembleSensitivity } from './models/EnsembleSensitivity';
+export type { EnsembleSensitivityCase } from './models/EnsembleSensitivityCase';
 export type { Field } from './models/Field';
 export { Frequency } from './models/Frequency';
 export type { HTTPValidationError } from './models/HTTPValidationError';
 export type { InplaceVolumetricsCategoricalMetaData } from './models/InplaceVolumetricsCategoricalMetaData';
-export type { InplaceVolumetricsRealizationsResponse } from './models/InplaceVolumetricsRealizationsResponse';
 export type { InplaceVolumetricsTableMetaData } from './models/InplaceVolumetricsTableMetaData';
 export type { StaticSurfaceDirectory } from './models/StaticSurfaceDirectory';
 export { StatisticFunction } from './models/StatisticFunction';
@@ -32,8 +37,10 @@ export type { VectorMetadata } from './models/VectorMetadata';
 export type { VectorRealizationData } from './models/VectorRealizationData';
 export type { VectorStatisticData } from './models/VectorStatisticData';
 
+export { CorrelationsService } from './services/CorrelationsService';
 export { DefaultService } from './services/DefaultService';
 export { ExploreService } from './services/ExploreService';
 export { InplaceVolumetricsService } from './services/InplaceVolumetricsService';
+export { ParametersService } from './services/ParametersService';
 export { SurfaceService } from './services/SurfaceService';
 export { TimeseriesService } from './services/TimeseriesService';

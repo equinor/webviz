@@ -6,6 +6,7 @@ class StatisticFunction(Enum):
     MIN = "MIN"
     MAX = "MAX"
     MEAN = "MEAN"
+    STD = "STD"
     P10 = "P10"
     P90 = "P90"
     P50 = "P50"
@@ -16,5 +17,3 @@ class StatisticFunction(Enum):
             return cls(value)
         except ValueError:
             return None
-
-

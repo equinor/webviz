@@ -1,5 +1,7 @@
 import React, { Key } from "react";
 
+import { getTextWidth } from "@framework/utils/textSize";
+
 import { Input } from "../Input";
 import { Virtualization } from "../Virtualization";
 import { BaseComponent, BaseComponentProps } from "../_BaseComponent/baseComponent";
@@ -31,6 +33,9 @@ const defaultProps = {
     multiple: false,
 };
 
+const noMatchingOptionsText = "No matching options";
+const noOptionsText = "No options";
+
 export const Select = withDefaults<SelectProps>()(defaultProps, (props) => {
     const [filter, setFilter] = React.useState<string>("");
     const [hasFocus, setHasFocus] = React.useState<boolean>(false);
@@ -39,6 +44,7 @@ export const Select = withDefaults<SelectProps>()(defaultProps, (props) => {
     const [startIndex, setStartIndex] = React.useState<number>(0);
     const [lastShiftIndex, setLastShiftIndex] = React.useState<number>(-1);
     const [currentIndex, setCurrentIndex] = React.useState<number>(0);
+    const [minWidth, setMinWidth] = React.useState<number>(0);
 
     const ref = React.useRef<HTMLDivElement>(null);
 
@@ -47,6 +53,25 @@ export const Select = withDefaults<SelectProps>()(defaultProps, (props) => {
             return props.options;
         }
         return props.options.filter((option) => option.label.toLowerCase().includes(filter.toLowerCase()));
+    }, [props.options, filter]);
+
+    React.useEffect(() => {
+        let longestOptionWidth = props.options.reduce((prev, current) => {
+            const labelWidth = getTextWidth(current.label, document.body);
+            if (labelWidth > prev) {
+                return labelWidth;
+            }
+            return prev;
+        }, 0);
+
+        if (longestOptionWidth === 0) {
+            if (props.options.length === 0 || filter === "") {
+                longestOptionWidth = getTextWidth(noOptionsText, document.body);
+            } else {
+                longestOptionWidth = getTextWidth(noMatchingOptionsText, document.body);
+            }
+        }
+        setMinWidth(longestOptionWidth + 40);
     }, [props.options, filter]);
 
     const toggleValue = React.useCallback(
@@ -169,7 +194,7 @@ export const Select = withDefaults<SelectProps>()(defaultProps, (props) => {
                     "pointer-events-none": props.disabled,
                     "opacity-30": props.disabled,
                 })}
-                style={{ width: props.width }}
+                style={{ width: props.width, minWidth: props.width ?? minWidth }}
             >
                 {props.filter && (
                     <Input
@@ -181,13 +206,18 @@ export const Select = withDefaults<SelectProps>()(defaultProps, (props) => {
                     />
                 )}
                 <div
-                    className="overflow-y-auto border border-gray-300 rounded-md w-full"
+                    className="overflow-y-auto border border-gray-300 rounded-md w-full bg-white"
                     style={{ height: props.size * 24 + 2 }}
                     ref={ref}
                     onFocus={() => setHasFocus(true)}
                     onBlur={() => setHasFocus(false)}
                     tabIndex={0}
                 >
+                    {filteredOptions.length === 0 && (
+                        <div className="p-1 flex items-center text-gray-400 select-none">
+                            {props.options.length === 0 || filter === "" ? noOptionsText : noMatchingOptionsText}
+                        </div>
+                    )}
                     <Virtualization
                         containerRef={ref}
                         items={filteredOptions}

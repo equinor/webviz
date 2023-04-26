@@ -5,13 +5,12 @@ import { State } from "./state";
 import { view } from "./view";
 
 const initialState: State = {
-    ensembleName: null,
+    ensemble: null,
     tableName: null,
     categoricalOptions: null,
     categoricalFilter: null,
     responseName: null,
     realizationsToInclude: null,
-
 };
 
 const module = ModuleRegistry.initModule<State>("InplaceVolumetrics", initialState);

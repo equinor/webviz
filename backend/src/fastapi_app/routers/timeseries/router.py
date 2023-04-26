@@ -4,11 +4,11 @@ from typing import List, Optional, Sequence, Union
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 
-from ....services.summary_vector_statistics import compute_vector_statistics
-from ....services.sumo_access.summary_access import Frequency, SummaryAccess
-from ....services.utils.authenticated_user import AuthenticatedUser
-from ....services.utils.perf_timer import PerfTimer
-from ...auth.auth_helper import AuthHelper
+from src.services.summary_vector_statistics import compute_vector_statistics
+from src.services.sumo_access.summary_access import Frequency, SummaryAccess
+from src.services.utils.authenticated_user import AuthenticatedUser
+from src.services.utils.perf_timer import PerfTimer
+from src.fastapi_app.auth.auth_helper import AuthHelper
 from . import converters
 from . import schemas
 
@@ -33,7 +33,8 @@ def get_vector_names_and_descriptions(
     vector_names = access.get_vector_names()
 
     ret_arr: List[schemas.VectorDescription] = [
-        schemas.VectorDescription(name=vector_name, descriptive_name=vector_name, has_historical=False) for vector_name in vector_names
+        schemas.VectorDescription(name=vector_name, descriptive_name=vector_name, has_historical=False)
+        for vector_name in vector_names
     ]
 
     return ret_arr
@@ -56,16 +57,29 @@ def get_realizations_vector_data(
     access = SummaryAccess(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
 
     sumo_freq = Frequency.from_string_value(resampling_frequency.value if resampling_frequency else "dummy")
-    sumo_vec_arr = access.get_vector(vector_name=vector_name, resampling_frequency=sumo_freq, realizations=realizations)
+    sumo_vec_arr = access.get_vector(
+        vector_name=vector_name,
+        resampling_frequency=sumo_freq,
+        realizations=realizations,
+    )
 
     ret_arr: List[schemas.VectorRealizationData] = []
     for vec in sumo_vec_arr:
-        ret_arr.append(schemas.VectorRealizationData(realization=vec.realization, timestamps=vec.timestamps, values=vec.values, unit=vec.metadata.unit, is_rate=vec.metadata.is_rate))
+        ret_arr.append(
+            schemas.VectorRealizationData(
+                realization=vec.realization,
+                timestamps=vec.timestamps,
+                values=vec.values,
+                unit=vec.metadata.unit,
+                is_rate=vec.metadata.is_rate,
+            )
+        )
 
     return ret_arr
 
 
 @router.get("/vector_metadata/")
+# type: ignore [empty-body]
 def get_vector_metadata(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     case_uuid: str = Query(description="Sumo case uuid"),
@@ -79,6 +93,7 @@ def get_vector_metadata(
 
 
 @router.get("/timestamps/")
+# type: ignore [empty-body]
 def get_timestamps(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     case_uuid: str = Query(description="Sumo case uuid"),
@@ -97,6 +112,7 @@ def get_timestamps(
 
 
 @router.get("/historical_vector_data/")
+# type: ignore [empty-body]
 def get_historical_vector_data(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     case_uuid: str = Query(description="Sumo case uuid"),
@@ -127,7 +143,11 @@ def get_statistical_vector_data(
     service_freq = Frequency.from_string_value(resampling_frequency.value)
     service_stat_funcs_to_compute = converters.to_service_statistic_functions(statistic_functions)
 
-    vector_table, vector_metadata = access.get_vector_table(vector_name=vector_name, resampling_frequency=service_freq, realizations=realizations)
+    vector_table, vector_metadata = access.get_vector_table(
+        vector_name=vector_name,
+        resampling_frequency=service_freq,
+        realizations=realizations,
+    )
 
     statistics = compute_vector_statistics(vector_table, vector_name, service_stat_funcs_to_compute)
     if not statistics:

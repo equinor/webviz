@@ -151,12 +151,19 @@ def resample_segmented_multi_real_table(table: pa.Table, freq: Frequency) -> pa.
             raw_numpy_arr = raw_whole_numpy_arr[start_row_idx : start_row_idx + row_count]
 
             if is_rate:
-                inter = interpolate_backfill(rii.sample_dates_np_as_uint, rii.raw_dates_np_as_uint, raw_numpy_arr, 0, 0)
+                inter = interpolate_backfill(
+                    rii.sample_dates_np_as_uint,
+                    rii.raw_dates_np_as_uint,
+                    raw_numpy_arr,
+                    0,
+                    0,
+                )
             else:
                 inter = np.interp(rii.sample_dates_np_as_uint, rii.raw_dates_np_as_uint, raw_numpy_arr)
 
             arr_length = len(rii.sample_dates_np_as_uint)
-            assert arr_length == len(inter)
+            if arr_length != len(inter):
+                raise RuntimeError("Unequal length between date and value arrays")
 
             vec_arr_list.append(inter)
 

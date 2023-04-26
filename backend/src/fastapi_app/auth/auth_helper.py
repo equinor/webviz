@@ -8,16 +8,20 @@ import starsessions
 from fastapi import APIRouter, Request, Response
 from fastapi.responses import RedirectResponse
 
-from ...services.utils.authenticated_user import AuthenticatedUser
-from ...services.utils.perf_timer import PerfTimer
-from .. import config
+from src.services.utils.authenticated_user import AuthenticatedUser
+from src.services.utils.perf_timer import PerfTimer
+from src.fastapi_app import config
 
 
 class AuthHelper:
     def __init__(self) -> None:
         self.router = APIRouter()
         self.router.add_api_route(path="/login", endpoint=self._login_route, methods=["GET"])
-        self.router.add_api_route(path="/auth-callback", endpoint=self._authorized_callback_route, methods=["GET"])
+        self.router.add_api_route(
+            path="/auth-callback",
+            endpoint=self._authorized_callback_route,
+            methods=["GET"],
+        )
 
     async def _login_route(self, request: Request, redirect_url_after_login: Optional[str] = None) -> RedirectResponse:
         # print("######################### _login_route()")
@@ -26,12 +30,13 @@ class AuthHelper:
         request.session.clear()
 
         all_scopes_list = config.GRAPH_SCOPES.copy()
-        for key in config.RESOURCE_SCOPES_DICT:
-            all_scopes_list.extend(config.RESOURCE_SCOPES_DICT[key])
+        for value in config.RESOURCE_SCOPES_DICT.values():
+            all_scopes_list.extend(value)
 
         cca = _create_msal_confidential_client_app(token_cache=None)
         flow_dict = cca.initiate_auth_code_flow(
-            scopes=all_scopes_list, redirect_uri=request.url_for("_authorized_callback_route")
+            scopes=all_scopes_list,
+            redirect_uri=request.url_for("_authorized_callback_route"),
         )
 
         request.session["flow"] = flow_dict
@@ -73,15 +78,18 @@ class AuthHelper:
             if "error" in token_dict:
                 # print("!!!!! Error validating redirected auth response")
                 # print(f"!!!!! {token_dict=}")
-                return Response(f"Error validating redirected auth response, error: {token_dict['error']}", 400)
+                return Response(
+                    f"Error validating redirected auth response, error: {token_dict['error']}",
+                    400,
+                )
 
             _save_token_cache_in_session(request, token_cache)
 
-        except ValueError as err:
+        except ValueError:
             # Usually caused by CSRF
             # print("!!!!! Hit an exception, probably CSRF error")
             # print(f"!!!!! exception: {err}")
-            return Response(f"Error processing auth response, probably CSRF error", 400)
+            return Response("Error processing auth response, probably CSRF error", 400)
 
         target_url_str_after_auth = request.session.get("target_url_str_after_auth")
         if target_url_str_after_auth is not None:
@@ -90,7 +98,9 @@ class AuthHelper:
         return Response("Login OK")
 
     @staticmethod
-    def get_authenticated_user(request_with_session: Request) -> Optional[AuthenticatedUser]:
+    def get_authenticated_user(
+        request_with_session: Request,
+    ) -> Optional[AuthenticatedUser]:
 
         timer = PerfTimer()
 
@@ -100,7 +110,7 @@ class AuthHelper:
             if maybe_authenticated_user_obj and isinstance(maybe_authenticated_user_obj, AuthenticatedUser):
                 # print("Found an authenticated user on the request object")
                 return maybe_authenticated_user_obj
-        except:
+        except:  # nosec # pylint: disable=bare-except
             pass
 
         if not starsessions.is_loaded(request_with_session):
@@ -190,7 +200,9 @@ class AuthHelper:
         return authenticated_user
 
 
-def _create_msal_confidential_client_app(token_cache: msal.TokenCache) -> msal.ConfidentialClientApplication:
+def _create_msal_confidential_client_app(
+    token_cache: msal.TokenCache,
+) -> msal.ConfidentialClientApplication:
 
     authority = f"https://login.microsoftonline.com/{config.TENANT_ID}"
     return msal.ConfidentialClientApplication(
@@ -219,7 +231,9 @@ def _get_token_dict_from_session_token_cache(request_with_session: Request, scop
     return None
 
 
-def _load_token_cache_from_session(request_with_session: Request) -> msal.SerializableTokenCache:
+def _load_token_cache_from_session(
+    request_with_session: Request,
+) -> msal.SerializableTokenCache:
     token_cache = msal.SerializableTokenCache()
 
     serialized_token_cache = request_with_session.session.get("token_cache")
@@ -228,7 +242,7 @@ def _load_token_cache_from_session(request_with_session: Request) -> msal.Serial
     return token_cache
 
 
-def _save_token_cache_in_session(request_with_session: Request, token_cache: msal.SerializableTokenCache):
+def _save_token_cache_in_session(request_with_session: Request, token_cache: msal.SerializableTokenCache) -> None:
     if token_cache.has_state_changed:
         request_with_session.session["token_cache"] = token_cache.serialize()
 

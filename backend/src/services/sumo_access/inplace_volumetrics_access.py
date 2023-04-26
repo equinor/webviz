@@ -3,7 +3,6 @@ from io import BytesIO
 from typing import List, Optional, Sequence, Union
 import logging
 
-import numpy as np
 from pydantic import BaseModel
 import pyarrow as pa
 import pyarrow.parquet as pq
@@ -13,10 +12,9 @@ from fmu.sumo.explorer.objects import TableCollection
 
 # from fmu.sumo.explorer.objects.table import AggregatedTable
 
-from ..utils.perf_timer import PerfTimer
-from ._field_metadata import create_vector_metadata_from_field_meta
 from ._helpers import create_sumo_client_instance
-from ._resampling import resample_segmented_multi_real_table
+from .generic_types import EnsembleScalarResponse
+
 
 LOGGER = logging.getLogger(__name__)
 
@@ -28,7 +26,7 @@ class PossibleInplaceVolumetricsCategoricalColumnNames(str, Enum):
     LICENSE = "LICENSE"
 
     @classmethod
-    def has_value(cls, value):
+    def has_value(cls, value: str) -> bool:
         return value in cls._value2member_map_
 
 
@@ -50,7 +48,7 @@ class PossibleInplaceVolumetricsNumericalColumnNames(str, Enum):
     ASSOCIATEDOIL_GAS = "ASSOCIATEDOIL_GAS"
 
     @classmethod
-    def has_value(cls, value):
+    def has_value(cls, value: str) -> bool:
         return value in cls._value2member_map_
 
 
@@ -71,11 +69,6 @@ class InplaceVolumetricsTableMetaData(BaseModel):
         orm_mode = True
 
 
-class InplaceVolumetricsRealizationsResponse(BaseModel):
-    realizations: List[int]
-    values: List[float]
-
-
 class InplaceVolumetricsAccess:
     def __init__(self, access_token: str, case_uuid: str, iteration_name: str):
         self._sumo_client: SumoClient = create_sumo_client_instance(access_token)
@@ -94,7 +87,10 @@ class InplaceVolumetricsAccess:
         vol_tables_metadata = []
         for vol_table_name in vol_table_collections.names:
             vol_table_collection: TableCollection = case.tables.filter(
-                aggregation="collection", name=vol_table_name, tagname="vol", iteration=self._iteration_name
+                aggregation="collection",
+                name=vol_table_name,
+                tagname="vol",
+                iteration=self._iteration_name,
             )
             numerical_column_names = [
                 col
@@ -141,7 +137,7 @@ class InplaceVolumetricsAccess:
         column_name: str,
         categorical_filters: Optional[List[InplaceVolumetricsCategoricalMetaData]] = None,
         realizations: Optional[Sequence[int]] = None,
-    ) -> InplaceVolumetricsRealizationsResponse:
+    ) -> EnsembleScalarResponse:
         """Retrieve the volumetric response for the given table name and column name"""
         table = self.get_table(table_name, column_name)
         if realizations is not None:
@@ -157,7 +153,7 @@ class InplaceVolumetricsAccess:
 
         summed_on_real_table = table.group_by("REAL").aggregate([(column_name, "sum")]).sort_by("REAL")
 
-        return InplaceVolumetricsRealizationsResponse(
+        return EnsembleScalarResponse(
             realizations=summed_on_real_table["REAL"].to_pylist(),
             values=summed_on_real_table[f"{column_name}_sum"].to_pylist(),
         )

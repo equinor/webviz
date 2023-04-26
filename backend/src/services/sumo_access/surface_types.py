@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from enum import Enum
 from typing import List, Optional
 
@@ -14,7 +16,7 @@ class StatisticFunction(Enum):
     STD = "STD"
 
     @classmethod
-    def from_string_value(cls, value: str) -> Optional["StatisticFunction"]:
+    def from_string_value(cls, value: str) -> Optional[StatisticFunction]:
         try:
             return cls(value)
         except ValueError:
@@ -27,7 +29,7 @@ class DynamicSurfaceDirectory(BaseModel):
     date_strings: List[str]
 
     @classmethod
-    def create_empty(cls):
+    def create_empty(cls) -> DynamicSurfaceDirectory:
         return cls(attributes=[], names=[], date_strings=[])
 
 
@@ -37,7 +39,5 @@ class StaticSurfaceDirectory(BaseModel):
     valid_attributes_for_name: List[List[int]]
 
     @classmethod
-    def create_empty(cls):
+    def create_empty(cls) -> StaticSurfaceDirectory:
         return cls(attributes=[], names=[])
-
-

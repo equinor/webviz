@@ -1,8 +1,8 @@
 import base64
-from typing import List
+from typing import List, Optional
 
 import starsessions
-from fastapi import Request, Response
+from fastapi import FastAPI, Request, Response
 from fastapi.responses import PlainTextResponse, RedirectResponse
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 
@@ -21,10 +21,15 @@ class EnforceLoggedInMiddleware(BaseHTTPMiddleware):
     should cause redirect to the `/login` endpoint instead.
     """
 
-    def __init__(self, app, unprotected_paths: List[str] = [], paths_redirected_to_login: List[str] = []):
+    def __init__(
+        self,
+        app: FastAPI,
+        unprotected_paths: Optional[List[str]] = None,
+        paths_redirected_to_login: Optional[List[str]] = None,
+    ) -> None:
         super().__init__(app)
-        self._unprotected_paths = unprotected_paths
-        self._paths_redirected_to_login = paths_redirected_to_login
+        self._unprotected_paths = unprotected_paths or []
+        self._paths_redirected_to_login = paths_redirected_to_login or []
 
     async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
         print("##################################### ensure_logged_in")
@@ -60,8 +65,7 @@ class EnforceLoggedInMiddleware(BaseHTTPMiddleware):
                     print("##### LOGGING IN USING REDIRECT")
                     target_url_b64 = base64.urlsafe_b64encode(str(request.url).encode()).decode()
                     return RedirectResponse(f"{root_path}/login?redirect_url_after_login={target_url_b64}")
-                else:
-                    return PlainTextResponse("Not authorized yet, must log in", 401)
+                return PlainTextResponse("Not authorized yet, must log in", 401)
 
         response = await call_next(request)
 

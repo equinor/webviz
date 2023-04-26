@@ -47,7 +47,7 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
                 return <div>Not imported</div>;
             }
 
-            if (importState === ImportState.Importing) {
+            if (importState === ImportState.Importing || !props.moduleInstance.isInitialised()) {
                 return <div>Loading...</div>;
             }
 
