@@ -39,5 +39,3 @@ class StaticSurfaceDirectory(BaseModel):
     @classmethod
     def create_empty(cls):
         return cls(attributes=[], names=[])
-
-

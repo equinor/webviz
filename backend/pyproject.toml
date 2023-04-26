@@ -27,6 +27,7 @@ black = "^22.12.0"
 pylint = "^2.15.10"
 pytest = "^7.2.1"
 mypy = "^0.991"
+bandit = "^1.7.5"
 
 [build-system]
 requires = ["poetry-core"]
@@ -36,8 +37,14 @@ build-backend = "poetry.core.masonry.api"
 line-length = 120
 
 [tool.pylint]
-max-line-length = 120
-disable=["no-name-in-module","missing-docstring","too-few-public-methods"]
+disable = ["missing-docstring", "line-too-long", "logging-fstring-interpolation", "duplicate-code"]
+extension-pkg-whitelist = "pydantic"
+ignored-modules = "pyarrow.compute"
+good-names = ["i", "x", "df"]
+min-public-methods = 0
+max-args = 7
+max-locals = 19
+max-branches = 14
 
 [tool.mypy]
 ignore_missing_imports = true

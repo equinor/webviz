@@ -13,6 +13,10 @@ export type { Body_get_realizations_response } from './models/Body_get_realizati
 export type { Case } from './models/Case';
 export type { DynamicSurfaceDirectory } from './models/DynamicSurfaceDirectory';
 export type { Ensemble } from './models/Ensemble';
+export type { EnsembleParameter } from './models/EnsembleParameter';
+export type { EnsembleParameterDescription } from './models/EnsembleParameterDescription';
+export type { EnsembleSensitivity } from './models/EnsembleSensitivity';
+export type { EnsembleSensitivityCase } from './models/EnsembleSensitivityCase';
 export type { Field } from './models/Field';
 export { Frequency } from './models/Frequency';
 export type { HTTPValidationError } from './models/HTTPValidationError';
@@ -35,5 +39,6 @@ export type { VectorStatisticData } from './models/VectorStatisticData';
 export { DefaultService } from './services/DefaultService';
 export { ExploreService } from './services/ExploreService';
 export { InplaceVolumetricsService } from './services/InplaceVolumetricsService';
+export { ParametersService } from './services/ParametersService';
 export { SurfaceService } from './services/SurfaceService';
 export { TimeseriesService } from './services/TimeseriesService';

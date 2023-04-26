@@ -1,8 +1,8 @@
 from typing import List, Optional, Sequence
 
-from ....services.summary_vector_statistics import VectorStatistics
-from ....services.sumo_access.summary_access import VectorMetadata
-from ....services.utils.statistic_function import StatisticFunction
+from src.services.summary_vector_statistics import VectorStatistics
+from src.services.sumo_access.summary_access import VectorMetadata
+from src.services.utils.statistic_function import StatisticFunction
 from . import schemas
 
 
@@ -25,7 +25,9 @@ def to_service_statistic_functions(
     return service_stat_funcs
 
 
-def to_api_vector_statistic_data(vector_statistics: VectorStatistics, vector_metadata: VectorMetadata) -> schemas.VectorStatisticData:
+def to_api_vector_statistic_data(
+    vector_statistics: VectorStatistics, vector_metadata: VectorMetadata
+) -> schemas.VectorStatisticData:
     """
     Create API VectorStatisticData from service layer VectorStatistics
     """

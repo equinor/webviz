@@ -52,11 +52,7 @@ jobs:
           npm run test
 
   backend:
-    if: false && (github.event_name != 'push' || github.ref == 'refs/heads/main') # Disabled for now
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: ["3.8"]
 
     steps:
       - name: 📖 Checkout commit locally
@@ -65,37 +61,30 @@ jobs:
       - name: 🐍 Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v4
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: 3.8
 
-      - name: 📦 Install poetry and export requirements.txt
+      - name: 📦 Install poetry and dependencies
         working-directory: ./backend
         run: |
           pip install --upgrade pip
           pip install poetry
-          poetry export --without-hashes --with dev -o requirements.txt
-
-      - name: 📦 Install dependencies
-        working-directory: ./backend
-        run: |
-          pip install -r requirements.txt
-
-      - name: 🧾 List all installed packages
-        working-directory: ./backend
-        run: pip freeze
+          poetry config virtualenvs.create false
+          poetry install --with dev
 
       - name: 🕵️ Check code style & linting
         working-directory: ./backend
         run: |
           black --check src/ tests/
           pylint src/ tests/
-          mypy src/ tests/
+          bandit --recursive src/
+          # mypy src/ tests/
 
-      - name: 🤖 Run tests
-        working-directory: ./backend
-        run: |
-          pytest ./tests --headless
+      # - name: 🤖 Run tests
+      #   working-directory: ./backend
+      #   run: |
+      #     pytest ./tests
 
-  webviz:
+  build_docker_images:
     if: github.event_name != 'push' || github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
 

@@ -16,5 +16,3 @@ class StatisticFunction(Enum):
             return cls(value)
         except ValueError:
             return None
-
-

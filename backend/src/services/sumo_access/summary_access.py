@@ -10,8 +10,8 @@ import pyarrow.compute as pc
 from fmu.sumo.explorer.objects import CaseCollection
 from sumo.wrapper import SumoClient
 
-from ..utils.arrow_helpers import sort_table_on_real_then_date
-from ..utils.perf_timer import PerfTimer
+from src.services.utils.arrow_helpers import sort_table_on_real_then_date
+from src.services.utils.perf_timer import PerfTimer
 from ._field_metadata import create_vector_metadata_from_field_meta
 from ._helpers import create_sumo_client_instance
 from ._resampling import resample_segmented_multi_real_table
@@ -28,14 +28,17 @@ class SummaryAccess:
 
     def get_vector_names(self) -> List[str]:
         timer = PerfTimer()
-        
+
         case_collection = CaseCollection(self._sumo_client).filter(uuid=self._case_uuid)
         if len(case_collection) != 1:
             raise ValueError(f"None or multiple sumo cases found {self._case_uuid=}")
 
         case = case_collection[0]
         smry_table_collection = case.tables.filter(
-            aggregation="collection", name="summary", tagname="eclipse", iteration=self._iteration_name
+            aggregation="collection",
+            name="summary",
+            tagname="eclipse",
+            iteration=self._iteration_name,
         )
 
         column_names = smry_table_collection.columns
@@ -46,7 +49,10 @@ class SummaryAccess:
         return vec_names
 
     def get_vector_table(
-        self, vector_name: str, resampling_frequency: Optional[Frequency], realizations: Optional[Sequence[int]]
+        self,
+        vector_name: str,
+        resampling_frequency: Optional[Frequency],
+        realizations: Optional[Sequence[int]],
     ) -> Tuple[pa.Table, VectorMetadata]:
         """
         Get pyarrow.Table containing values for the specified vector.
@@ -99,7 +105,6 @@ class SummaryAccess:
         if table.num_columns != 3:
             raise ValueError("Table should contain exactly 3 columns")
 
-
         # Verify that we got the expected columns
         if sorted(table.column_names) != sorted(["DATE", "REAL", vector_name]):
             raise ValueError(f"Unexpected columns in table {table.column_names=}")
@@ -116,7 +121,7 @@ class SummaryAccess:
         if realizations is not None:
             mask = pc.is_in(table["REAL"], value_set=pa.array(realizations))
             table = table.filter(mask)
-            
+
         # Our assumption is that the table is segmented on REAL and that within each segment,
         # the DATE column is sorted. We may want to add some checks here to verify this assumption since the
         # resampling algorithm below assumes this and will fail if it is not true.
@@ -139,17 +144,22 @@ class SummaryAccess:
         # Should we always combine the chunks?
         table = table.combine_chunks()
 
-        LOGGER.debug(f"Got vector table from Sumo in: {timer.elapsed_ms()}ms ("
+        LOGGER.debug(
+            f"Got vector table from Sumo in: {timer.elapsed_ms()}ms ("
             f"get_case={et_get_case_ms}ms, "
             f"locate_sumo_table={et_locate_sumo_table_ms}ms, "
             f"get_table_data={et_get_table_data_ms}ms, "
             f"resampling={et_resampling_ms}ms) "
-            f"{resampling_frequency=} {table.shape=}")
+            f"{resampling_frequency=} {table.shape=}"
+        )
 
         return table, vector_metadata
 
     def get_vector(
-        self, vector_name: str, resampling_frequency: Optional[Frequency], realizations: Optional[Sequence[int]]
+        self,
+        vector_name: str,
+        resampling_frequency: Optional[Frequency],
+        realizations: Optional[Sequence[int]],
     ) -> List[RealizationVector]:
 
         table, vector_metadata = self.get_vector_table(vector_name, resampling_frequency, realizations)
