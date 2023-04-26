@@ -14,6 +14,18 @@ export type ModuleFCProps<S extends StateBaseType> = {
 
 export type ModuleFC<S extends StateBaseType> = React.FC<ModuleFCProps<S>>;
 
+export enum SyncSettings {
+    ENSEMBLE,
+    DATE,
+    TIMESERIES,
+}
+
+export const SyncedSettingsAbbreviations = {
+    [SyncSettings.ENSEMBLE]: "ENS",
+    [SyncSettings.DATE]: "DATE",
+    [SyncSettings.TIMESERIES]: "TIMESERIES",
+};
+
 export enum ImportState {
     NotImported = "NotImported",
     Importing = "Importing",
@@ -31,8 +43,9 @@ export class Module<StateType extends StateBaseType> {
     private initialState: StateType | null;
     private stateOptions: StateOptions<StateType> | undefined;
     private workbench: Workbench | null;
+    private syncableSettings: SyncSettings[];
 
-    constructor(name: string) {
+    constructor(name: string, syncableSettings: SyncSettings[] = []) {
         this._name = name;
         this.numInstances = 0;
         this.viewFC = () => <div>Not defined</div>;
@@ -41,6 +54,7 @@ export class Module<StateType extends StateBaseType> {
         this.moduleInstances = [];
         this.initialState = null;
         this.workbench = null;
+        this.syncableSettings = syncableSettings;
     }
 
     public getImportState(): ImportState {
@@ -63,6 +77,10 @@ export class Module<StateType extends StateBaseType> {
                 instance.setInitialState(cloneDeep(this.initialState), cloneDeep(this.stateOptions));
             }
         });
+    }
+
+    public getSyncableSettings(): SyncSettings[] {
+        return this.syncableSettings;
     }
 
     public makeInstance(): ModuleInstance<StateType> {

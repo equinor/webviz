@@ -1,4 +1,4 @@
-import { Module } from "./Module";
+import { Module, SyncSettings } from "./Module";
 import { StateBaseType, StateOptions } from "./StateStore";
 
 export class ModuleRegistry {
@@ -6,8 +6,11 @@ export class ModuleRegistry {
     /* eslint-disable-next-line @typescript-eslint/no-empty-function */
     private constructor() {}
 
-    public static registerModule<ModuleStateType extends StateBaseType>(moduleName: string): Module<ModuleStateType> {
-        const module = new Module<ModuleStateType>(moduleName);
+    public static registerModule<ModuleStateType extends StateBaseType>(
+        moduleName: string,
+        syncableSettings: SyncSettings[] = []
+    ): Module<ModuleStateType> {
+        const module = new Module<ModuleStateType>(moduleName, syncableSettings);
         this._registeredModules[moduleName] = module;
         return module;
     }

@@ -1,4 +1,4 @@
-import { ImportState, Module, ModuleFC } from "./Module";
+import { ImportState, Module, ModuleFC, SyncSettings } from "./Module";
 import { StateBaseType, StateOptions, StateStore, useSetStoreValue, useStoreState, useStoreValue } from "./StateStore";
 
 export type ModuleContext<S extends StateBaseType> = {
@@ -12,7 +12,7 @@ export class ModuleInstance<StateType extends StateBaseType> {
     private id: string;
     private name: string;
     private initialised: boolean;
-    private groupedAttributes: string[];
+    private syncedSettings: SyncSettings[];
     private stateStore: StateStore<StateType> | null;
     private module: Module<StateType>;
     private context: ModuleContext<StateType> | null;
@@ -26,7 +26,7 @@ export class ModuleInstance<StateType extends StateBaseType> {
         this.importStateSubscribers = new Set();
         this.context = null;
         this.initialised = false;
-        this.groupedAttributes = [];
+        this.syncedSettings = [];
     }
 
     public setInitialState(initialState: StateType, options?: StateOptions<StateType>): void {
@@ -49,20 +49,20 @@ export class ModuleInstance<StateType extends StateBaseType> {
         this.initialised = true;
     }
 
-    public addGroupedAttribute(attribute: string): void {
-        this.groupedAttributes.push(attribute);
+    public addSyncedSetting(attribute: SyncSettings): void {
+        this.syncedSettings.push(attribute);
     }
 
-    public getGroupedAttributes(): string[] {
-        return this.groupedAttributes;
+    public getSyncedSettings(): SyncSettings[] {
+        return this.syncedSettings;
     }
 
-    public isGrouped(attribute: string): boolean {
-        return this.groupedAttributes.includes(attribute);
+    public isSyncedSetting(setting: SyncSettings): boolean {
+        return this.syncedSettings.includes(setting);
     }
 
-    public removedFromGroup(attribute: string): void {
-        this.groupedAttributes = this.groupedAttributes.filter((a) => a !== attribute);
+    public unsyncSetting(setting: SyncSettings): void {
+        this.syncedSettings = this.syncedSettings.filter((a) => a !== setting);
     }
 
     public isInitialised(): boolean {
