@@ -6,7 +6,10 @@ import pandas as pd
 import pyarrow as pa
 from pydantic import BaseModel
 
-from .utils.arrow_helpers import create_float_downcasting_schema, set_date_column_type_to_timestamp_ms
+from .utils.arrow_helpers import (
+    create_float_downcasting_schema,
+    set_date_column_type_to_timestamp_ms,
+)
 from .utils.statistic_function import StatisticFunction
 
 
@@ -17,7 +20,9 @@ class VectorStatistics(BaseModel):
 
 
 def compute_vector_statistics_table(
-    summary_vector_table: pa.Table, vector_name: str, statistic_functions: Optional[Sequence[StatisticFunction]]
+    summary_vector_table: pa.Table,
+    vector_name: str,
+    statistic_functions: Optional[Sequence[StatisticFunction]],
 ) -> Optional[pa.Table]:
     """
     Compute statistics for specified summary vector in the pyarrow table.
@@ -81,7 +86,9 @@ def compute_vector_statistics_table(
 
 
 def compute_vector_statistics(
-    summary_vector_table: pa.Table, vector_name: str, statistic_functions: Optional[Sequence[StatisticFunction]]
+    summary_vector_table: pa.Table,
+    vector_name: str,
+    statistic_functions: Optional[Sequence[StatisticFunction]],
 ) -> Optional[VectorStatistics]:
     statistics_table = compute_vector_statistics_table(summary_vector_table, vector_name, statistic_functions)
     if not statistics_table:

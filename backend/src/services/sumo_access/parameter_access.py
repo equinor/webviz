@@ -66,7 +66,10 @@ class ParameterAccess:
         # Problem is that only some of the parameters are in a group, and some are not.
         # Find parameters that are in a group
         parameter_group_names = []
-        for parameter_or_group_name, possible_parameter_group in parameters_dict.items():
+        for (
+            parameter_or_group_name,
+            possible_parameter_group,
+        ) in parameters_dict.items():
             for value in possible_parameter_group.values():
                 if isinstance(value, dict):
                     parameter_group_names.append(parameter_or_group_name)
@@ -140,14 +143,17 @@ class ParameterAccess:
         sensname_parameter = next(parameter for parameter in parameters if parameter.name == "SENSNAME")
         senscase_parameter = next(parameter for parameter in parameters if parameter.name == "SENSCASE")
         dframe_sensitivity = pd.DataFrame(
-            columns=["Sensitivity", "Realization"], data=zip(sensname_parameter.values, sensname_parameter.realizations)
+            columns=["Sensitivity", "Realization"],
+            data=zip(sensname_parameter.values, sensname_parameter.realizations),
         )
         dframe_case = pd.DataFrame(
-            columns=["Case", "Realization"], data=zip(senscase_parameter.values, senscase_parameter.realizations)
+            columns=["Case", "Realization"],
+            data=zip(senscase_parameter.values, senscase_parameter.realizations),
         )
         dframe = pd.merge(dframe_sensitivity, dframe_case, on="Realization")
         dframe["type"] = dframe.apply(
-            lambda row: SensitivityTypes.MONTECARLO if row["Case"] == "p10_p90" else SensitivityTypes.SCENARIO, axis=1
+            lambda row: SensitivityTypes.MONTECARLO if row["Case"] == "p10_p90" else SensitivityTypes.SCENARIO,
+            axis=1,
         )
         ensemble_sensitivities = []
         for sensitivity, sensitivity_df in dframe.groupby("Sensitivity"):

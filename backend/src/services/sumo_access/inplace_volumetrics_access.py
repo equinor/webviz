@@ -90,7 +90,10 @@ class InplaceVolumetricsAccess:
         vol_tables_metadata = []
         for vol_table_name in vol_table_collections.names:
             vol_table_collection: TableCollection = case.tables.filter(
-                aggregation="collection", name=vol_table_name, tagname="vol", iteration=self._iteration_name
+                aggregation="collection",
+                name=vol_table_name,
+                tagname="vol",
+                iteration=self._iteration_name,
             )
             numerical_column_names = [
                 col

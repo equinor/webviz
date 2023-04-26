@@ -35,7 +35,10 @@ class SummaryAccess:
 
         case = case_collection[0]
         smry_table_collection = case.tables.filter(
-            aggregation="collection", name="summary", tagname="eclipse", iteration=self._iteration_name
+            aggregation="collection",
+            name="summary",
+            tagname="eclipse",
+            iteration=self._iteration_name,
         )
 
         column_names = smry_table_collection.columns
@@ -46,7 +49,10 @@ class SummaryAccess:
         return vec_names
 
     def get_vector_table(
-        self, vector_name: str, resampling_frequency: Optional[Frequency], realizations: Optional[Sequence[int]]
+        self,
+        vector_name: str,
+        resampling_frequency: Optional[Frequency],
+        realizations: Optional[Sequence[int]],
     ) -> Tuple[pa.Table, VectorMetadata]:
         """
         Get pyarrow.Table containing values for the specified vector.
@@ -150,7 +156,10 @@ class SummaryAccess:
         return table, vector_metadata
 
     def get_vector(
-        self, vector_name: str, resampling_frequency: Optional[Frequency], realizations: Optional[Sequence[int]]
+        self,
+        vector_name: str,
+        resampling_frequency: Optional[Frequency],
+        realizations: Optional[Sequence[int]],
     ) -> List[RealizationVector]:
 
         table, vector_metadata = self.get_vector_table(vector_name, resampling_frequency, realizations)

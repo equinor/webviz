@@ -6,7 +6,10 @@ import pyarrow as pa
 
 from fmu.sumo.explorer.explorer import SumoClient
 
-from src.services.summary_vector_statistics import compute_vector_statistics_table, compute_vector_statistics
+from src.services.summary_vector_statistics import (
+    compute_vector_statistics_table,
+    compute_vector_statistics,
+)
 from .summary_access import SummaryAccess, RealizationVector, Frequency
 from .surface_access import SurfaceAccess
 from .sumo_explore import SumoExplore
@@ -59,7 +62,8 @@ def test_summary_access(summary_access: SummaryAccess) -> None:
 
     print("\n\nSTATS table")
     stat_table = compute_vector_statistics_table(vector_table, "FOPT", None)
-    assert stat_table
+    if not stat_table:
+        raise RuntimeError("No STATS table")
     print(stat_table)
     print(stat_table.schema)
 

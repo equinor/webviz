@@ -5,7 +5,11 @@ from typing import List, Optional, Literal
 from pydantic import BaseModel
 from fastapi import APIRouter, Depends, HTTPException, Query
 
-from src.services.sumo_access.parameter_access import ParameterAccess, EnsembleParameter, EnsembleSensitivity
+from src.services.sumo_access.parameter_access import (
+    ParameterAccess,
+    EnsembleParameter,
+    EnsembleSensitivity,
+)
 from src.services.utils.authenticated_user import AuthenticatedUser
 from src.services.utils.perf_timer import PerfTimer
 from src.fastapi_app.auth.auth_helper import AuthHelper
