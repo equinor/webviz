@@ -9,7 +9,11 @@ from sumo.wrapper import SumoClient
 
 from src.services.utils.perf_timer import PerfTimer
 from src.services.utils.statistic_function import StatisticFunction
-from .surface_types import StatisticFunction, DynamicSurfaceDirectory, StaticSurfaceDirectory
+from .surface_types import (
+    StatisticFunction,
+    DynamicSurfaceDirectory,
+    StaticSurfaceDirectory,
+)
 from ._helpers import create_sumo_client_instance
 
 LOGGER = logging.getLogger(__name__)
@@ -35,7 +39,9 @@ class SurfaceAccess:
 
         filter_with_timestamp_or_interval = TimeFilter(TimeType.ALL)
         surface_collection: SurfaceCollection = case.surfaces.filter(
-            iteration=self._iteration_name, aggregation=False, time=filter_with_timestamp_or_interval
+            iteration=self._iteration_name,
+            aggregation=False,
+            time=filter_with_timestamp_or_interval,
         )
 
         names = sorted(surface_collection.names)
@@ -70,7 +76,10 @@ class SurfaceAccess:
 
         filter_no_time_data = TimeFilter(TimeType.NONE)
         surface_collection: SurfaceCollection = case.surfaces.filter(
-            iteration=self._iteration_name, aggregation=False, time=filter_no_time_data, realization=0
+            iteration=self._iteration_name,
+            aggregation=False,
+            time=filter_no_time_data,
+            realization=0,
         )
 
         names = sorted(surface_collection.names)
@@ -94,7 +103,9 @@ class SurfaceAccess:
             valid_attributes_for_name.append(attribute_indices)
 
         surf_dir = StaticSurfaceDirectory(
-            names=names, attributes=attributes, valid_attributes_for_name=valid_attributes_for_name
+            names=names,
+            attributes=attributes,
+            valid_attributes_for_name=valid_attributes_for_name,
         )
 
         LOGGER.debug(f"Downloaded and built static surface directory in: {timer.elapsed_ms():}ms")
@@ -121,9 +132,19 @@ class SurfaceAccess:
         case = self._get_my_sumo_case_obj()
 
         if len(timestamp_arr) == 1:
-            time_filter = TimeFilter(TimeType.TIMESTAMP, start=timestamp_arr[0], end=timestamp_arr[0], exact=True)
+            time_filter = TimeFilter(
+                TimeType.TIMESTAMP,
+                start=timestamp_arr[0],
+                end=timestamp_arr[0],
+                exact=True,
+            )
         else:
-            time_filter = TimeFilter(TimeType.INTERVAL, start=timestamp_arr[0], end=timestamp_arr[1], exact=True)
+            time_filter = TimeFilter(
+                TimeType.INTERVAL,
+                start=timestamp_arr[0],
+                end=timestamp_arr[1],
+                exact=True,
+            )
 
         surface_collection = case.surfaces.filter(
             iteration=self._iteration_name,
@@ -150,7 +171,11 @@ class SurfaceAccess:
         return xtgeo_surf
 
     def get_statistical_dynamic_surf(
-        self, statistic_function: StatisticFunction, name: str, attribute: str, time_or_interval_str: str
+        self,
+        statistic_function: StatisticFunction,
+        name: str,
+        attribute: str,
+        time_or_interval_str: str,
     ) -> Optional[xtgeo.RegularSurface]:
         """
         Compute statistic and return surface data for a dynamic surface
@@ -170,9 +195,19 @@ class SurfaceAccess:
         et_get_case_ms = timer.lap_ms()
 
         if len(timestamp_arr) == 1:
-            time_filter = TimeFilter(TimeType.TIMESTAMP, start=timestamp_arr[0], end=timestamp_arr[0], exact=True)
+            time_filter = TimeFilter(
+                TimeType.TIMESTAMP,
+                start=timestamp_arr[0],
+                end=timestamp_arr[0],
+                exact=True,
+            )
         else:
-            time_filter = TimeFilter(TimeType.INTERVAL, start=timestamp_arr[0], end=timestamp_arr[1], exact=True)
+            time_filter = TimeFilter(
+                TimeType.INTERVAL,
+                start=timestamp_arr[0],
+                end=timestamp_arr[1],
+                exact=True,
+            )
 
         surface_collection = case.surfaces.filter(
             iteration=self._iteration_name,

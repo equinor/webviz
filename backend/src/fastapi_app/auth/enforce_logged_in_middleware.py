@@ -21,7 +21,12 @@ class EnforceLoggedInMiddleware(BaseHTTPMiddleware):
     should cause redirect to the `/login` endpoint instead.
     """
 
-    def __init__(self, app, unprotected_paths: List[str] = None, paths_redirected_to_login: List[str] = None):
+    def __init__(
+        self,
+        app,
+        unprotected_paths: List[str] = None,
+        paths_redirected_to_login: List[str] = None,
+    ):
         super().__init__(app)
         self._unprotected_paths = unprotected_paths or []
         self._paths_redirected_to_login = paths_redirected_to_login or []

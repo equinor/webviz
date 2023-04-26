@@ -76,6 +76,7 @@ jobs:
         run: |
           black --check src/ tests/
           pylint src/ tests/
+          bandit --recursive src/
           # mypy src/ tests/
 
       # - name: 🤖 Run tests

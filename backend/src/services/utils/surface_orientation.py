@@ -13,7 +13,9 @@ class SurfaceOrientationForColormapLayer:
     rot_around_xmin_ymax_deg: float
 
 
-def calc_surface_orientation_for_colormap_layer(surface: xtgeo.RegularSurface) -> SurfaceOrientationForColormapLayer:
+def calc_surface_orientation_for_colormap_layer(
+    surface: xtgeo.RegularSurface,
+) -> SurfaceOrientationForColormapLayer:
     """
     Computes orientation (bounds and rotation) suitable for use with
     colormapLayer in the DeckGLMap component.
@@ -53,5 +55,9 @@ def calc_surface_orientation_for_colormap_layer(surface: xtgeo.RegularSurface) -
         max_y = max(max_y, y_unrot)
 
     return SurfaceOrientationForColormapLayer(
-        x_min=min_x, x_max=max_x, y_min=min_y, y_max=max_y, rot_around_xmin_ymax_deg=surface.rotation
+        x_min=min_x,
+        x_max=max_x,
+        y_min=min_y,
+        y_max=max_y,
+        rot_around_xmin_ymax_deg=surface.rotation,
     )

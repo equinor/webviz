@@ -57,7 +57,11 @@ def get_realizations_vector_data(
     access = SummaryAccess(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
 
     sumo_freq = Frequency.from_string_value(resampling_frequency.value if resampling_frequency else "dummy")
-    sumo_vec_arr = access.get_vector(vector_name=vector_name, resampling_frequency=sumo_freq, realizations=realizations)
+    sumo_vec_arr = access.get_vector(
+        vector_name=vector_name,
+        resampling_frequency=sumo_freq,
+        realizations=realizations,
+    )
 
     ret_arr: List[schemas.VectorRealizationData] = []
     for vec in sumo_vec_arr:
@@ -137,7 +141,9 @@ def get_statistical_vector_data(
     service_stat_funcs_to_compute = converters.to_service_statistic_functions(statistic_functions)
 
     vector_table, vector_metadata = access.get_vector_table(
-        vector_name=vector_name, resampling_frequency=service_freq, realizations=realizations
+        vector_name=vector_name,
+        resampling_frequency=service_freq,
+        realizations=realizations,
     )
 
     statistics = compute_vector_statistics(vector_table, vector_name, service_stat_funcs_to_compute)
