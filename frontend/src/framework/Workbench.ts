@@ -118,6 +118,10 @@ export class Workbench {
         return this.moduleInstances;
     }
 
+    public getModuleInstance(id: string): ModuleInstance<any> | undefined {
+        return this.moduleInstances.find((moduleInstance) => moduleInstance.getId() === id);
+    }
+
     public makeLayout(layout: LayoutElement[]): void {
         this.moduleInstances = [];
         this.setLayout(layout);

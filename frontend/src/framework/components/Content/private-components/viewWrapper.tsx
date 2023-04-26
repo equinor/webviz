@@ -1,6 +1,6 @@
 import React from "react";
 
-import { ImportState } from "@framework/Module";
+import { ImportState, SyncSettingsAbbreviations } from "@framework/Module";
 import { ModuleInstance } from "@framework/ModuleInstance";
 import { Workbench } from "@framework/Workbench";
 import { Point, pointRelativeToDomRect, pointerEventToPoint } from "@framework/utils/geometry";
@@ -144,7 +144,15 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
                         }`}
                         onPointerDown={handlePointerDown}
                     >
-                        <div className="flex-grow">{props.moduleInstance.getName()}</div>
+                        <div className="flex-grow">
+                            {props.moduleInstance.getName()}
+                            {props.moduleInstance.getSyncedSettings().map((setting) => (
+                                <span key={SyncSettingsAbbreviations[setting]} className="rounded p-2 bg-cyan-300 m-2">
+                                    {SyncSettingsAbbreviations[setting]}
+                                </span>
+                            ))}
+                        </div>
+
                         <div
                             className="hover:text-slate-500 cursor-pointer"
                             onPointerDown={handleRemoveClick}

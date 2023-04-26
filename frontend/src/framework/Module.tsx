@@ -20,10 +20,16 @@ export enum SyncSettings {
     TIMESERIES,
 }
 
-export const SyncedSettingsAbbreviations = {
+export const SyncSettingsAbbreviations = {
     [SyncSettings.ENSEMBLE]: "ENS",
     [SyncSettings.DATE]: "DATE",
     [SyncSettings.TIMESERIES]: "TIMESERIES",
+};
+
+export const SyncSettingsNames = {
+    [SyncSettings.ENSEMBLE]: "Ensemble",
+    [SyncSettings.DATE]: "Date",
+    [SyncSettings.TIMESERIES]: "Timeseries",
 };
 
 export enum ImportState {

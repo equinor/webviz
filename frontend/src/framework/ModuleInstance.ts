@@ -49,8 +49,8 @@ export class ModuleInstance<StateType extends StateBaseType> {
         this.initialised = true;
     }
 
-    public addSyncedSetting(attribute: SyncSettings): void {
-        this.syncedSettings.push(attribute);
+    public syncSetting(setting: SyncSettings): void {
+        this.syncedSettings.push(setting);
     }
 
     public getSyncedSettings(): SyncSettings[] {
@@ -94,6 +94,10 @@ export class ModuleInstance<StateType extends StateBaseType> {
 
     public getName(): string {
         return this.name;
+    }
+
+    public getModule(): Module<StateType> {
+        return this.module;
     }
 
     public subscribeToImportStateChange(cb: () => void) {
