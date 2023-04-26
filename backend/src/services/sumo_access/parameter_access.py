@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import List, Optional, Union, Dict
+from typing import List, Optional, Union, Dict, Any
 import logging
 
 import numpy as np
@@ -56,12 +56,12 @@ class ParameterAccess:
         # Parameters are attached to any data object, but currently only accessible with the explorer by downloading a table
         random_table_that_has_parameters = AggregatedTable(case, "summary", "eclipse", "iter-0")
 
-        parameters_dict: Dict[Dict[str, Union[str, Dict[str, str]]]] = random_table_that_has_parameters.parameters
+        parameters_dict: Dict[str, Any] = random_table_that_has_parameters.parameters
         ensemble_parameters = self._untangle_parameters(parameters_dict)
         sanitized_ensemble_parameters = self._sanitize_parameters(ensemble_parameters)
         return sanitized_ensemble_parameters
 
-    def _untangle_parameters(self, parameters_dict: Dict[str, Union[str, Dict[str, str]]]):
+    def _untangle_parameters(self, parameters_dict: Dict[str, Any]) -> List[EnsembleParameter]:
         # The parameters are stored in a nested dictionary, where the first level should be the parameter group name.
         # Problem is that only some of the parameters are in a group, and some are not.
         # Find parameters that are in a group
@@ -114,7 +114,7 @@ class ParameterAccess:
                 ensemble_parameters.append(ensemble_parameter)
         return ensemble_parameters
 
-    def _sanitize_parameters(self, ensemble_parameters: List[EnsembleParameter]):
+    def _sanitize_parameters(self, ensemble_parameters: List[EnsembleParameter]) -> List[EnsembleParameter]:
         """
         - Remove non-log parameters if there is a log parameter with the same name
         """

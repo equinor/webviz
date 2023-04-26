@@ -77,7 +77,7 @@ jobs:
           black --check src/ tests/
           pylint src/ tests/
           bandit --recursive src/
-          # mypy src/ tests/
+          mypy src/ tests/
 
       # - name: 🤖 Run tests
       #   working-directory: ./backend

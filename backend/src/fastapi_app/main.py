@@ -16,6 +16,7 @@ from .routers.inplace_volumetrics.router import router as inplace_volumetrics_ro
 from .routers.surface.router import router as surface_router
 from .routers.timeseries.router import router as timeseries_router
 from .routers.parameters.router import router as parameters_router
+from .routers.correlations.router import router as correlations_router
 
 logging.basicConfig(
     level=logging.WARNING,
@@ -25,7 +26,7 @@ logging.basicConfig(
 logging.getLogger("src.services.sumo_access").setLevel(level=logging.DEBUG)
 
 
-def custom_generate_unique_id(route: APIRoute):
+def custom_generate_unique_id(route: APIRoute) -> str:
     return f"{route.name}"
 
 
@@ -42,6 +43,7 @@ app.include_router(
 )
 app.include_router(surface_router, prefix="/surface", tags=["surface"])
 app.include_router(parameters_router, prefix="/parameters", tags=["parameters"])
+app.include_router(correlations_router, prefix="/correlations", tags=["correlations"])
 
 authHelper = AuthHelper()
 app.include_router(authHelper.router)
@@ -64,5 +66,5 @@ app.add_middleware(SessionMiddleware, store=session_store)
 
 
 @app.get("/")
-async def root():
+async def root() -> str:
     return f"Backend is alive at this time: {datetime.datetime.now()}"

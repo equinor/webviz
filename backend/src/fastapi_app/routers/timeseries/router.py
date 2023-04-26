@@ -79,6 +79,7 @@ def get_realizations_vector_data(
 
 
 @router.get("/vector_metadata/")
+# type: ignore [empty-body]
 def get_vector_metadata(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     case_uuid: str = Query(description="Sumo case uuid"),
@@ -92,6 +93,7 @@ def get_vector_metadata(
 
 
 @router.get("/timestamps/")
+# type: ignore [empty-body]
 def get_timestamps(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     case_uuid: str = Query(description="Sumo case uuid"),
@@ -110,6 +112,7 @@ def get_timestamps(
 
 
 @router.get("/historical_vector_data/")
+# type: ignore [empty-body]
 def get_historical_vector_data(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     case_uuid: str = Query(description="Sumo case uuid"),

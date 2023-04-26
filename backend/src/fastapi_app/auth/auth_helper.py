@@ -242,7 +242,7 @@ def _load_token_cache_from_session(
     return token_cache
 
 
-def _save_token_cache_in_session(request_with_session: Request, token_cache: msal.SerializableTokenCache):
+def _save_token_cache_in_session(request_with_session: Request, token_cache: msal.SerializableTokenCache) -> None:
     if token_cache.has_state_changed:
         request_with_session.session["token_cache"] = token_cache.serialize()
 

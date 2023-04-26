@@ -1,7 +1,7 @@
 import {
     Ensemble as ApiEnsemble,
     Body_get_realizations_response,
-    InplaceVolumetricsRealizationsResponse,
+    EnsembleScalarResponse,
     InplaceVolumetricsTableMetaData,
 } from "@api";
 import { apiService } from "@framework/ApiService";
@@ -45,7 +45,7 @@ export function useRealizationsResponseQuery(
     responseName: string | null,
     requestBody: Body_get_realizations_response | null,
     allowEnable: boolean
-): UseQueryResult<InplaceVolumetricsRealizationsResponse> {
+): UseQueryResult<EnsembleScalarResponse> {
     return useQuery({
         queryKey: ["getRealizationResponse", caseUuid, ensembleName, tableName, responseName, requestBody],
         queryFn: () =>

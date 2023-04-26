@@ -16,6 +16,7 @@ from ._field_metadata import create_vector_metadata_from_field_meta
 from ._helpers import create_sumo_client_instance
 from ._resampling import resample_segmented_multi_real_table
 from .types import Frequency, RealizationVector, VectorMetadata
+from .generic_types import EnsembleScalarResponse
 
 LOGGER = logging.getLogger(__name__)
 
@@ -161,7 +162,6 @@ class SummaryAccess:
         resampling_frequency: Optional[Frequency],
         realizations: Optional[Sequence[int]],
     ) -> List[RealizationVector]:
-
         table, vector_metadata = self.get_vector_table(vector_name, resampling_frequency, realizations)
 
         real_arr_np = table.column("REAL").to_numpy()
@@ -187,3 +187,22 @@ class SummaryAccess:
             )
 
         return ret_arr
+
+    def get_vector_values_at_timestep(
+        self,
+        vector_name: str,
+        timestep: datetime.datetime,
+        realizations: Optional[Sequence[int]] = None,
+    ) -> EnsembleScalarResponse:
+        table, _ = self.get_vector_table(vector_name, resampling_frequency=None, realizations=realizations)
+
+        if realizations is not None:
+            mask = pc.is_in(table["REAL"], value_set=pa.array(realizations))
+            table = table.filter(mask)
+        mask = pc.is_in(table["DATE"], value_set=pa.array([timestep]))
+        table = table.filter(mask)
+
+        return EnsembleScalarResponse(
+            realizations=table["REAL"].to_pylist(),
+            values=table[vector_name].to_pylist(),
+        )

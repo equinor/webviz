@@ -1,8 +1,8 @@
 import base64
-from typing import List
+from typing import List, Optional
 
 import starsessions
-from fastapi import Request, Response
+from fastapi import FastAPI, Request, Response
 from fastapi.responses import PlainTextResponse, RedirectResponse
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 
@@ -23,10 +23,10 @@ class EnforceLoggedInMiddleware(BaseHTTPMiddleware):
 
     def __init__(
         self,
-        app,
-        unprotected_paths: List[str] = None,
-        paths_redirected_to_login: List[str] = None,
-    ):
+        app: FastAPI,
+        unprotected_paths: Optional[List[str]] = None,
+        paths_redirected_to_login: Optional[List[str]] = None,
+    ) -> None:
         super().__init__(app)
         self._unprotected_paths = unprotected_paths or []
         self._paths_redirected_to_login = paths_redirected_to_login or []

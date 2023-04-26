@@ -4,9 +4,10 @@ from fastapi import APIRouter, Depends, Query
 from src.services.sumo_access.inplace_volumetrics_access import (
     InplaceVolumetricsAccess,
     InplaceVolumetricsTableMetaData,
-    InplaceVolumetricsRealizationsResponse,
     InplaceVolumetricsCategoricalMetaData,
 )
+
+from src.services.sumo_access.generic_types import EnsembleScalarResponse
 from src.services.utils.authenticated_user import AuthenticatedUser
 
 from src.fastapi_app.auth.auth_helper import AuthHelper
@@ -41,12 +42,9 @@ def get_realizations_response(
     categorical_filter:Optional[List[InplaceVolumetricsCategoricalMetaData]] = None,
     realizations: Optional[Sequence[int]] = None,
     # fmt:on
-) -> InplaceVolumetricsRealizationsResponse:
+) -> EnsembleScalarResponse:
     """Get response for a given table and index filter."""
     access = InplaceVolumetricsAccess(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
-    print("sdfsdf", categorical_filter, realizations)
-    # if categorical_filter is not None:
-    # categorical_filter = [InplaceVolumetricsCategoricalMetaData(**category) for category in categorical_filter]
     response = access.get_response(table_name, response_name, categorical_filter, realizations)
     return response
 
