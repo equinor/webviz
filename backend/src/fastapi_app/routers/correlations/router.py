@@ -1,9 +1,7 @@
 import datetime
 import logging
-from typing import List, Optional, Literal, Sequence, Dict
 
-from pydantic import BaseModel
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, Query
 
 from src.services.sumo_access.parameter_access import ParameterAccess
 from src.services.sumo_access.generic_types import EnsembleCorrelations
@@ -11,10 +9,8 @@ from src.services.parameter_correlations import correlate_parameters_with_respon
 from src.services.sumo_access.summary_access import SummaryAccess
 from src.services.sumo_access.inplace_volumetrics_access import (
     InplaceVolumetricsAccess,
-    InplaceVolumetricsCategoricalMetaData,
 )
 from src.services.utils.authenticated_user import AuthenticatedUser
-from src.services.utils.perf_timer import PerfTimer
 from src.fastapi_app.auth.auth_helper import AuthHelper
 
 
@@ -32,7 +28,7 @@ def correlate_parameters_with_timeseries(
     vector_name: str = Query(description="Name of the vector"),
     timestep: datetime.datetime = Query(description= "Timestep"),
     # realizations: Optional[Sequence[int]] = Query(None, description="Optional list of realizations to include. If not specified, all realizations will be returned."),
-    parameter_names: Optional[List[str]] = Query(None, description="Optional subset of parameters to correlate. Default are all parameters.")
+    # parameter_names: Optional[List[str]] = Query(None, description="Optional subset of parameters to correlate. Default are all parameters.")
     # fmt:on
 ) -> EnsembleCorrelations:
     """Get parameter correlations for a timeseries at a given timestep"""
@@ -60,7 +56,7 @@ def correlate_parameters_with_inplace_volumes(
     response_name:str = Query(description="Response name"),
     # categorical_filter:Optional[List[InplaceVolumetricsCategoricalMetaData]] = None,
     # realizations: Optional[Sequence[int]] = Query(None, description="Optional list of realizations to include. If not specified, all realizations will be returned."),
-    parameter_names: Optional[List[str]] = Query(None, description="Optional subset of parameters to correlate. Default are all parameters.")
+    # parameter_names: Optional[List[str]] = Query(None, description="Optional subset of parameters to correlate. Default are all parameters.")
     # fmt:on
 ) -> EnsembleCorrelations:
     """Get parameter correlations for an inplace volumetrics response"""

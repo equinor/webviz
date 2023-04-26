@@ -4,8 +4,6 @@ from pydantic import BaseModel
 
 
 class EnsembleScalarResponse(BaseModel):
-    """ """
-
     realizations: List[int]
     values: List[float]
 

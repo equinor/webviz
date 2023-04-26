@@ -29,15 +29,15 @@ def correlate_parameters_with_response(ensemble_parameters: List[EnsembleParamet
 def _numerical_parameters_to_pandas_table(ensemble_parameters: List[EnsembleParameter]):
     """Convert a list of ensemble parameters to a pandas dataframe"""
     data = []
-    for ep in ensemble_parameters:
+    for parameter in ensemble_parameters:
         # Skip non-numerical parameters
-        if not ep.is_numerical:
+        if not parameter.is_numerical:
             continue
         # Skip parameters where all values are equal
-        if all(value == ep.values[0] for value in ep.values[1:]):
+        if all(value == parameter.values[0] for value in parameter.values[1:]):
             continue
-        for r, v in zip(ep.realizations, ep.values):
-            data.append({"name": ep.name, "realization": r, "value": v})
+        for real, value in zip(parameter.realizations, parameter.values):
+            data.append({"name": parameter.name, "realization": real, "value": value})
 
     # Convert the list of dictionaries to a pandas DataFrame
     df = pd.DataFrame(data)
@@ -50,7 +50,7 @@ def _numerical_parameters_to_pandas_table(ensemble_parameters: List[EnsemblePara
 def _ensemble_scalar_response_to_pandas_table(ensemble_response: EnsembleScalarResponse):
     """Convert a ensemble scalar response to a pandas dataframe"""
     data = []
-    for r, v in zip(ensemble_response.realizations, ensemble_response.values):
-        data.append({"realization": r, "response": v})
+    for real, value in zip(ensemble_response.realizations, ensemble_response.values):
+        data.append({"realization": real, "response": value})
     df = pd.DataFrame(data)
     return df
