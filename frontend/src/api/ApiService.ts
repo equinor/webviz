@@ -15,6 +15,8 @@ import { TimeseriesService } from './services/TimeseriesService';
 
 type HttpRequestConstructor = new (config: OpenAPIConfig) => BaseHttpRequest;
 
+// dummy comment
+
 export class ApiService {
 
     public readonly correlations: CorrelationsService;
