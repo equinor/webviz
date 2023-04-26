@@ -5,7 +5,7 @@ import { ModuleFCProps } from "@framework/Module";
 import { useSubscribedValue } from "@framework/WorkbenchServices";
 import { useElementSize } from "@lib/hooks/useElementSize";
 
-import { Layout, PlotData, PlotHoverEvent, PlotMouseEvent, PlotRelayoutEvent } from "plotly.js";
+import { Layout, PlotData, PlotHoverEvent, PlotSelectionEvent, PlotMouseEvent, PlotRelayoutEvent } from "plotly.js";
 
 import { useStatisticalVectorDataQuery, useVectorDataQuery } from "./queryHooks";
 import { State } from "./state";
@@ -57,9 +57,7 @@ export const view = ({ moduleContext, workbenchServices }: ModuleFCProps<State>)
     const subscribedPlotlyRealization = useSubscribedValue("global.hoverRealization", workbenchServices);
     // const highlightedTrace
     const handleHover = (e: PlotHoverEvent) => {
-        if (e.xvals.length > 0 && typeof e.xvals[0]) {
-            workbenchServices.publishGlobalData("global.hoverTimestamp", { timestamp: e.xvals[0] as number });
-        }
+
         const curveData = e.points[0].data as MyPlotData;
         if (typeof curveData.realizationNumber === "number") {
             // setHighlightRealization(curveData.realizationNumber);
@@ -68,6 +66,13 @@ export const view = ({ moduleContext, workbenchServices }: ModuleFCProps<State>)
                 realization: curveData.realizationNumber,
             });
         }
+    };
+    const handleClick = (e: PlotMouseEvent) => {
+        console.log(e)
+        if (e.points.length > 0 && typeof e.points[0]) {
+            workbenchServices.publishGlobalData("global.hoverTimestamp", { timestamp: e.points[0].x as number });
+        }
+
     };
 
     function handleUnHover(e: PlotMouseEvent) {
@@ -157,7 +162,7 @@ export const view = ({ moduleContext, workbenchServices }: ModuleFCProps<State>)
 
     return (
         <div className="w-full h-full" ref={wrapperDivRef}>
-            <Plot data={tracesDataArr} layout={layout} config={{ "scrollZoom": true }} onHover={handleHover} onUnhover={handleUnHover} />
+            <Plot data={tracesDataArr} layout={layout} config={{ "scrollZoom": true }} onHover={handleHover} onClick={handleClick} onUnhover={handleUnHover} />
         </div>
     );
 };

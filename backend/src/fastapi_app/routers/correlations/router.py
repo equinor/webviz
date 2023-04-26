@@ -42,7 +42,8 @@ def correlate_parameters_with_timeseries(
         vector_name=vector_name, timestep=timestep, realizations=None
     )
     parameters = parameter_access.get_parameters()
-
+    # temporary
+    parameters = [p for p in parameters if p.group_name and "GLOBVAR" in p.group_name]
     return correlate_parameters_with_response(parameters, ensemble_response)
 
 
@@ -69,5 +70,6 @@ def correlate_parameters_with_inplace_volumes(
         table_name, response_name, categorical_filters=None, realizations=None
     )
     parameters = parameter_access.get_parameters()
-
+    # temporary
+    parameters = [p for p in parameters if p.group_name and "GLOBVAR" in p.group_name]
     return correlate_parameters_with_response(parameters, ensemble_response)

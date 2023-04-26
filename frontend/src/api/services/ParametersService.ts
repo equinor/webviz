@@ -18,6 +18,7 @@ export class ParametersService {
      * @param caseUuid Sumo case uuid
      * @param ensembleName Ensemble name
      * @param excludeAllValuesConstant Exclude all parameters where all values are the same value
+     * @param includeOnlyNumerical Include only numerical parameters
      * @param sortOrder Sort order
      * @returns EnsembleParameterDescription Successful Response
      * @throws ApiError
@@ -26,6 +27,7 @@ export class ParametersService {
         caseUuid: string,
         ensembleName: string,
         excludeAllValuesConstant: boolean = true,
+        includeOnlyNumerical: boolean = true,
         sortOrder: 'alphabetically' | 'standard_deviation' = 'alphabetically',
     ): CancelablePromise<Array<EnsembleParameterDescription>> {
         return this.httpRequest.request({
@@ -35,6 +37,7 @@ export class ParametersService {
                 'case_uuid': caseUuid,
                 'ensemble_name': ensembleName,
                 'exclude_all_values_constant': excludeAllValuesConstant,
+                'include_only_numerical': includeOnlyNumerical,
                 'sort_order': sortOrder,
             },
             errors: {

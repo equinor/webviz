@@ -27,6 +27,7 @@ async def get_parameter_names_and_description(
     case_uuid: str = Query(description="Sumo case uuid"),
     ensemble_name: str = Query(description="Ensemble name"),
     exclude_all_values_constant: bool = Query(True, description="Exclude all parameters where all values are the same value"),
+    include_only_numerical: bool = Query(True, description="Include only numerical parameters"),
     sort_order: Optional[Literal[None,"alphabetically", "standard_deviation"]] = Query("alphabetically", description="Sort order"),
     # fmt:on
 ) -> List[schemas.EnsembleParameterDescription]:
@@ -35,6 +36,8 @@ async def get_parameter_names_and_description(
     parameters = access.get_parameters()
     if exclude_all_values_constant:
         parameters = [p for p in parameters if not len(set(p.values)) == 1]
+    if include_only_numerical:
+        parameters = [p for p in parameters if p.is_numerical]
     if sort_order == "alphabetically":
         parameters = sorted(parameters, key=lambda p: p.name.lower())
     # temporary

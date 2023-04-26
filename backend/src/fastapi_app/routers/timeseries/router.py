@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 
 from src.services.summary_vector_statistics import compute_vector_statistics
 from src.services.sumo_access.summary_access import Frequency, SummaryAccess
+from src.services.sumo_access.generic_types import EnsembleScalarResponse
 from src.services.utils.authenticated_user import AuthenticatedUser
 from src.services.utils.perf_timer import PerfTimer
 from src.fastapi_app.auth.auth_helper import AuthHelper
@@ -171,6 +172,27 @@ def get_realizations_calculated_vector_data(
     print(expression)
     print(type(expression))
     return "hei"
+
+
+@router.get("/realization_vector_at_timestep/")
+def get_realization_vector_at_timestep(
+    # fmt:off
+    authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
+    case_uuid: str = Query(description="Sumo case uuid"),
+    ensemble_name: str = Query(description="Ensemble name"),
+    vector_name: str = Query(description="Name of the vector"),
+    timestep: datetime.datetime = Query(description= "Timestep"),
+    # realizations: Optional[Sequence[int]] = Query(None, description="Optional list of realizations to include. If not specified, all realizations will be returned."),
+    # fmt:on
+) -> EnsembleScalarResponse:
+    """Get parameter correlations for a timeseries at a given timestep"""
+
+    summary_access = SummaryAccess(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
+
+    ensemble_response = summary_access.get_vector_values_at_timestep(
+        vector_name=vector_name, timestep=timestep, realizations=None
+    )
+    return ensemble_response
 
 
 # @router.get("/statistical_calculated_vector_data/")
