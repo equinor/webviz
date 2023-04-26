@@ -1,15 +1,15 @@
 import React from "react";
 
-import { ImportState, SyncSettingsAbbreviations } from "@framework/Module";
+import { ImportState } from "@framework/Module";
 import { ModuleInstance } from "@framework/ModuleInstance";
 import { Workbench } from "@framework/Workbench";
 import { Point, pointRelativeToDomRect, pointerEventToPoint } from "@framework/utils/geometry";
-import { XMarkIcon } from "@heroicons/react/20/solid";
 
-import { LayoutEventTypes } from "./layout";
-import { ViewWrapperPlaceholder } from "./viewWrapperPlaceholder";
+import { Header } from "./private-components/header";
 
-import { pointDifference } from "../../../utils/geometry";
+import { pointDifference } from "../../../../utils/geometry";
+import { LayoutEventTypes } from "../layout";
+import { ViewWrapperPlaceholder } from "../viewWrapperPlaceholder";
 
 type ViewWrapperProps = {
     isActive: boolean;
@@ -138,29 +138,12 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
                     }}`}
                     onClick={handleModuleHeaderClick}
                 >
-                    <div
-                        className={`bg-slate-100 p-4 flex select-none ${
-                            props.isDragged ? "cursor-grabbing" : "cursor-move"
-                        }`}
+                    <Header
+                        moduleInstance={props.moduleInstance}
+                        isDragged={props.isDragged}
                         onPointerDown={handlePointerDown}
-                    >
-                        <div className="flex-grow">
-                            {props.moduleInstance.getName()}
-                            {props.moduleInstance.getSyncedSettings().map((setting) => (
-                                <span key={SyncSettingsAbbreviations[setting]} className="rounded p-2 bg-cyan-300 m-2">
-                                    {SyncSettingsAbbreviations[setting]}
-                                </span>
-                            ))}
-                        </div>
-
-                        <div
-                            className="hover:text-slate-500 cursor-pointer"
-                            onPointerDown={handleRemoveClick}
-                            title="Remove this module"
-                        >
-                            <XMarkIcon width={24} />
-                        </div>
-                    </div>
+                        onRemoveClick={handleRemoveClick}
+                    />
                     <div className="flex-grow overflow-auto h-0">
                         <div className="p-4 h-full w-full">{createContent()}</div>
                     </div>

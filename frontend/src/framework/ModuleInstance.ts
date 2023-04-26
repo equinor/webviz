@@ -17,6 +17,7 @@ export class ModuleInstance<StateType extends StateBaseType> {
     private module: Module<StateType>;
     private context: ModuleContext<StateType> | null;
     private importStateSubscribers: Set<() => void>;
+    private syncedSettingsSubscribers: Set<(syncedSettings: SyncSettings[]) => void>;
 
     constructor(module: Module<StateType>, instanceNumber: number) {
         this.id = `${module.getName()}-${instanceNumber}`;
@@ -27,6 +28,7 @@ export class ModuleInstance<StateType extends StateBaseType> {
         this.context = null;
         this.initialised = false;
         this.syncedSettings = [];
+        this.syncedSettingsSubscribers = new Set();
     }
 
     public setInitialState(initialState: StateType, options?: StateOptions<StateType>): void {
@@ -51,6 +53,7 @@ export class ModuleInstance<StateType extends StateBaseType> {
 
     public syncSetting(setting: SyncSettings): void {
         this.syncedSettings.push(setting);
+        this.notifySubscribersAboutSyncedSettingsChange();
     }
 
     public getSyncedSettings(): SyncSettings[] {
@@ -63,6 +66,14 @@ export class ModuleInstance<StateType extends StateBaseType> {
 
     public unsyncSetting(setting: SyncSettings): void {
         this.syncedSettings = this.syncedSettings.filter((a) => a !== setting);
+        this.notifySubscribersAboutSyncedSettingsChange();
+    }
+
+    public subscribeToSyncedSettingsChange(cb: (syncedSettings: SyncSettings[]) => void): () => void {
+        this.syncedSettingsSubscribers.add(cb);
+        return () => {
+            this.syncedSettingsSubscribers.delete(cb);
+        };
     }
 
     public isInitialised(): boolean {
@@ -100,7 +111,7 @@ export class ModuleInstance<StateType extends StateBaseType> {
         return this.module;
     }
 
-    public subscribeToImportStateChange(cb: () => void) {
+    public subscribeToImportStateChange(cb: () => void): () => void {
         this.importStateSubscribers.add(cb);
         return () => {
             this.importStateSubscribers.delete(cb);
@@ -110,6 +121,12 @@ export class ModuleInstance<StateType extends StateBaseType> {
     public notifySubscribersAboutImportStateChange(): void {
         this.importStateSubscribers.forEach((subscriber) => {
             subscriber();
+        });
+    }
+
+    public notifySubscribersAboutSyncedSettingsChange(): void {
+        this.syncedSettingsSubscribers.forEach((subscriber) => {
+            subscriber(this.syncedSettings);
         });
     }
 }

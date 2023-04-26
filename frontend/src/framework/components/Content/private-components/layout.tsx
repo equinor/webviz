@@ -16,9 +16,9 @@ import { useElementSize } from "@lib/hooks/useElementSize";
 import { v4 } from "uuid";
 
 import { LayoutBox, LayoutBoxComponents, makeLayoutBoxes } from "./LayoutBox";
+import { ViewWrapper } from "./ViewWrapper";
 import { GroupModules } from "./groupModules";
 import { ModulesList } from "./modulesList";
-import { ViewWrapper } from "./viewWrapper";
 import { ViewWrapperPlaceholder } from "./viewWrapperPlaceholder";
 
 import { addMarginToRect, rectContainsPoint } from "../../../utils/geometry";
