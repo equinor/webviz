@@ -18,15 +18,13 @@ export const Header: React.FC<HeaderProps> = (props) => {
 
     React.useEffect(() => {
         function handleSyncedSettingsChange(newSyncedSettings: SyncSettings[]) {
-            setSyncedSettings(newSyncedSettings);
+            setSyncedSettings([...newSyncedSettings]);
         }
 
         const unsubscribeFunc = props.moduleInstance.subscribeToSyncedSettingsChange(handleSyncedSettingsChange);
 
         return unsubscribeFunc;
     }, []);
-
-    console.log(syncedSettings);
 
     return (
         <div
