@@ -4,3 +4,4 @@ import "./SimulationTimeSeries/registerModule";
 import "./InplaceVolumetrics/registerModule";
 import "./Map/registerModule";
 import "./DbgWorkbenchSpy/registerModule";
+import "./TimeSeriesParameterDistribution/registerModule"
