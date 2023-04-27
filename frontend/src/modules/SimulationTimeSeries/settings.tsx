@@ -37,14 +37,14 @@ export function settings({ moduleContext, workbenchServices }: ModuleFCProps<Sta
     React.useEffect(
         function propagateVectorSpecToView() {
             if (firstEnsemble && computedVectorName) {
-                moduleContext.stateStore.setValue("vectorSpec", {
+                moduleContext.getStateStore().setValue("vectorSpec", {
                     caseUuid: firstEnsemble.caseUuid,
                     caseName: firstEnsemble.caseName,
                     ensembleName: firstEnsemble.ensembleName,
                     vectorName: computedVectorName,
                 });
             } else {
-                moduleContext.stateStore.setValue("vectorSpec", null);
+                moduleContext.getStateStore().setValue("vectorSpec", null);
             }
         },
         [firstEnsemble, computedVectorName]
@@ -75,7 +75,7 @@ export function settings({ moduleContext, workbenchServices }: ModuleFCProps<Sta
         console.log("handleRealizationRangeTextChanged() " + event.target.value);
         const rangeArr = parseRealizationRangeString(event.target.value, 200);
         console.log(rangeArr);
-        moduleContext.stateStore.setValue("realizationsToInclude", rangeArr.length > 0 ? rangeArr : null);
+        moduleContext.getStateStore().setValue("realizationsToInclude", rangeArr.length > 0 ? rangeArr : null);
     }
 
     return (
