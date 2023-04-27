@@ -10,7 +10,7 @@ export class ModuleContext<S extends StateBaseType> {
         this._stateStore = stateStore;
     }
 
-    instanceIdString(): string {
+    getInstanceIdString(): string {
         return this._moduleInstance.getId();
     }
 
