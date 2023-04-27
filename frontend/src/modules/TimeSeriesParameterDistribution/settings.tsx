@@ -78,7 +78,7 @@ export function settings({ moduleContext, workbenchServices }: ModuleFCProps<Sta
                 errorComponent={"Error loading vector names"}
                 loadingComponent={<CircularProgress />}
             >
-                <Label text="Vector">
+                <Label text="Timestep">
                     <Dropdown
                         options={makeTimeStepsOptions(timeStepsQuery.data)}
                         value={timeStep ? timeStep : undefined}
