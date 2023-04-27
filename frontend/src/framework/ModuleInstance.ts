@@ -28,7 +28,7 @@ export class ModuleInstance<StateType extends StateBaseType> {
     }
 
     public setInitialState(initialState: StateType, options?: StateOptions<StateType>): void {
-        this.stateStore = new StateStore<StateType>(initialState, options);
+        this.stateStore = new StateStore<StateType>(this.id, initialState, options);
 
         this.context = {
             useStoreState: <K extends keyof StateType>(

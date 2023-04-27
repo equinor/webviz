@@ -28,6 +28,7 @@ export type WorkbenchDataState = {
 
 export type WorkbenchGuiState = {
     modulesListOpen: boolean;
+    syncSettingsActive: boolean;
 };
 
 export class Workbench {
@@ -42,12 +43,21 @@ export class Workbench {
     constructor() {
         this.moduleInstances = [];
         this._activeModuleId = "";
-        this.guiStateStore = new StateStore<WorkbenchGuiState>({
+        this.guiStateStore = new StateStore<WorkbenchGuiState>("workbenchGuiState", {
             modulesListOpen: false,
+            syncSettingsActive: false,
         });
-        this.dataStateStore = new StateStore<WorkbenchDataState>({
-            selectedEnsembles: [],
-        });
+        this.dataStateStore = new StateStore<WorkbenchDataState>(
+            "workbenchDataState",
+            {
+                selectedEnsembles: [],
+            },
+            {
+                selectedEnsembles: {
+                    persistent: true,
+                },
+            }
+        );
         this._workbenchServices = new PrivateWorkbenchServices(this);
         this._subscribersMap = {};
         this.layout = [];

@@ -6,18 +6,52 @@ export type StateBaseType = object;
 export type StateOptions<T extends StateBaseType> = {
     [K in keyof T]?: {
         deepCompare?: boolean;
+        persistent?: boolean;
     };
 };
 
 export class StateStore<StateType extends StateBaseType> {
+    private _id: string;
     private _state: Record<keyof StateType, any>;
     private _options?: StateOptions<StateType>;
     private _subscribersMap: Partial<Record<keyof StateType, Set<any>>>;
 
-    constructor(initialState: StateType, options?: StateOptions<StateType>) {
+    constructor(id: string, initialState: StateType, options?: StateOptions<StateType>) {
+        this._id = id;
         this._state = initialState;
         this._subscribersMap = {};
         this._options = options;
+
+        this.loadFromLocalStorage();
+    }
+
+    private makeLocalStorageKey(key: keyof StateType): string {
+        return `${this._id}-${String(key)}`;
+    }
+
+    private loadFromLocalStorage() {
+        if (!this._options) {
+            return;
+        }
+
+        for (const key in this._options) {
+            if (this._options[key]?.persistent) {
+                const value = localStorage.getItem(this.makeLocalStorageKey(key));
+                if (value) {
+                    this._state[key] = JSON.parse(value);
+                }
+            }
+        }
+    }
+
+    private saveToLocalStorage(key: keyof StateType) {
+        if (!this._options) {
+            return;
+        }
+
+        if (this._options[key]?.persistent) {
+            localStorage.setItem(this.makeLocalStorageKey(key), JSON.stringify(this._state[key]));
+        }
     }
 
     public hasKey(key: keyof StateType): boolean {
@@ -40,6 +74,9 @@ export class StateStore<StateType extends StateBaseType> {
         }
 
         this._state[key] = value;
+
+        this.saveToLocalStorage(key);
+
         const subscribersSet = this._subscribersMap[key] || new Set();
         for (const cb of subscribersSet) {
             cb(value);
