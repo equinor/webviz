@@ -1,12 +1,6 @@
 import { ImportState, Module, ModuleFC, SyncSettings } from "./Module";
+import { ModuleContext } from "./ModuleContext";
 import { StateBaseType, StateOptions, StateStore, useSetStoreValue, useStoreState, useStoreValue } from "./StateStore";
-
-export type ModuleContext<S extends StateBaseType> = {
-    useStoreState: <K extends keyof S>(key: K) => [S[K], (value: S[K] | ((prev: S[K]) => S[K])) => void];
-    useStoreValue: <K extends keyof S>(key: K) => S[K];
-    useSetStoreValue: <K extends keyof S>(key: K) => (newValue: S[K] | ((prev: S[K]) => S[K])) => void;
-    stateStore: StateStore<S>;
-};
 
 export class ModuleInstance<StateType extends StateBaseType> {
     private id: string;
@@ -33,21 +27,7 @@ export class ModuleInstance<StateType extends StateBaseType> {
 
     public setInitialState(initialState: StateType, options?: StateOptions<StateType>): void {
         this.stateStore = new StateStore<StateType>(initialState, options);
-
-        this.context = {
-            useStoreState: <K extends keyof StateType>(
-                key: K
-            ): [StateType[K], (value: StateType[K] | ((prev: StateType[K]) => StateType[K])) => void] =>
-                useStoreState(this.stateStore as Exclude<typeof this.stateStore, null>, key),
-            useStoreValue: <K extends keyof StateType>(key: K): StateType[K] =>
-                useStoreValue(this.stateStore as Exclude<typeof this.stateStore, null>, key),
-            useSetStoreValue: <K extends keyof StateType>(
-                key: K
-            ): ((newValue: StateType[K] | ((prev: StateType[K]) => StateType[K])) => void) =>
-                useSetStoreValue(this.stateStore as Exclude<typeof this.stateStore, null>, key),
-            stateStore: this.stateStore,
-        };
-
+        this.context = new ModuleContext<StateType>(this, this.stateStore);
         this.initialised = true;
     }
 

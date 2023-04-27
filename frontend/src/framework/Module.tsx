@@ -2,7 +2,8 @@ import React from "react";
 
 import { cloneDeep } from "lodash";
 
-import { ModuleContext, ModuleInstance } from "./ModuleInstance";
+import { ModuleContext } from "./ModuleContext";
+import { ModuleInstance } from "./ModuleInstance";
 import { StateBaseType, StateOptions } from "./StateStore";
 import { Workbench } from "./Workbench";
 import { WorkbenchServices } from "./WorkbenchServices";
