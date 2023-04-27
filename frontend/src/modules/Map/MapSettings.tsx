@@ -99,7 +99,7 @@ export function MapSettings({ moduleContext, workbenchServices }: ModuleFCProps<
         }
 
         console.log(`propagateSurfaceSelectionToView() => ${surfAddr ? "valid surfAddr" : "NULL surfAddr"}`);
-        moduleContext.stateStore.setValue("surfaceAddress", surfAddr);
+        moduleContext.getStateStore().setValue("surfaceAddress", surfAddr);
     });
 
     function handleStaticSurfacesCheckboxChanged(event: React.ChangeEvent<HTMLInputElement>, staticChecked: boolean) {

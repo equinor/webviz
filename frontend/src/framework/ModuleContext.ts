@@ -14,20 +14,19 @@ export class ModuleContext<S extends StateBaseType> {
         return this._moduleInstance.getId();
     }
 
-    // Make this an ordinary method instead, stateStore()?
-    get stateStore(): StateStore<S> {
+    getStateStore(): StateStore<S> {
         return this._stateStore;
     }
 
     useStoreState<K extends keyof S>(key: K): [S[K], (value: S[K] | ((prev: S[K]) => S[K])) => void] {
-        return useStoreState(this.stateStore, key);
+        return useStoreState(this._stateStore, key);
     }
 
     useStoreValue<K extends keyof S>(key: K): S[K] {
-        return useStoreValue(this.stateStore, key);
+        return useStoreValue(this._stateStore, key);
     }
 
     useSetStoreValue<K extends keyof S>(key: K): (newValue: S[K] | ((prev: S[K]) => S[K])) => void {
-        return useSetStoreValue(this.stateStore, key);
+        return useSetStoreValue(this._stateStore, key);
     }
 }
