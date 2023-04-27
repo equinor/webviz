@@ -22,14 +22,14 @@ export class StateStore<StateType extends StateBaseType> {
         this._subscribersMap = {};
         this._options = options;
 
-        this.loadFromLocalStorage();
+        this.maybeLoadFromLocalStorage();
     }
 
     private makeLocalStorageKey(key: keyof StateType): string {
         return `${this._id}-${String(key)}`;
     }
 
-    private loadFromLocalStorage() {
+    private maybeLoadFromLocalStorage() {
         if (!this._options) {
             return;
         }
@@ -44,7 +44,7 @@ export class StateStore<StateType extends StateBaseType> {
         }
     }
 
-    private saveToLocalStorage(key: keyof StateType) {
+    private maybeSaveToLocalStorage(key: keyof StateType) {
         if (!this._options) {
             return;
         }
@@ -75,7 +75,7 @@ export class StateStore<StateType extends StateBaseType> {
 
         this._state[key] = value;
 
-        this.saveToLocalStorage(key);
+        this.maybeSaveToLocalStorage(key);
 
         const subscribersSet = this._subscribersMap[key] || new Set();
         for (const cb of subscribersSet) {
