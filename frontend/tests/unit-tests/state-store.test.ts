@@ -16,7 +16,7 @@ type TestState = {
 
 describe("StateStore", () => {
     it("Can set and get value", () => {
-        const store = new StateStore<TestState>({
+        const store = new StateStore<TestState>("test", {
             value: "first",
             count: 0,
             object: { test: "test", count: 0 },
