@@ -1,7 +1,7 @@
 import React from "react";
 
 import { ModuleRegistry } from "@framework/ModuleRegistry";
-import { useStoreValue } from "@framework/StateStore";
+import { useStoreState } from "@framework/StateStore";
 import { Workbench } from "@framework/Workbench";
 import {
     MANHATTAN_LENGTH,
@@ -12,7 +12,8 @@ import {
     pointRelativeToDomRect,
     pointerEventToPoint,
 } from "@framework/utils/geometry";
-import { MagnifyingGlassIcon } from "@heroicons/react/20/solid";
+import { MagnifyingGlassIcon, XMarkIcon } from "@heroicons/react/20/solid";
+import { IconButton } from "@lib/components/IconButton";
 import { Input } from "@lib/components/Input";
 
 import { LayoutEventTypes } from "./layout";
@@ -151,7 +152,7 @@ type ModulesListProps = {
     I will skip it for now and come back to it when it becomes a problem.
 */
 export const ModulesList: React.FC<ModulesListProps> = (props) => {
-    const visible = useStoreValue(props.workbench.getGuiStateStore(), "modulesListOpen");
+    const [visible, setVisible] = useStoreState(props.workbench.getGuiStateStore(), "modulesListOpen");
     const [searchQuery, setSearchQuery] = React.useState("");
 
     const handleSearchQueryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -159,7 +160,13 @@ export const ModulesList: React.FC<ModulesListProps> = (props) => {
     };
 
     return (
-        <div className={`flex flex-col bg-white p-4 w-96 min-h-0 h-full${visible ? "" : " hidden"}`}>
+        <div className={`flex flex-col shadow bg-white p-4 w-96 min-h-0 h-full${visible ? "" : " hidden"}`}>
+            <div className="flex justify-center items-center mb-4">
+                <span className="text-lg flex-grow p-0">Add modules</span>
+                <IconButton onClick={() => setVisible(false)} title="Close modules list">
+                    <XMarkIcon className="w-5 h-5" />
+                </IconButton>
+            </div>
             <Input
                 placeholder="Filter modules..."
                 startAdornment={<MagnifyingGlassIcon className="w-4 h-4" />}

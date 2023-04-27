@@ -157,7 +157,7 @@ export const EnsembleSelector: React.FC<EnsembleSelectorProps> = (props) => {
                     </ApiStateWrapper>
                 </Label>
                 <div className="flex justify-end">
-                    <Button onClick={handleAddEnsemble} className="bg-green-800 hover:bg-green-700">
+                    <Button variant="contained" onClick={handleAddEnsemble} className="bg-green-800 hover:bg-green-700">
                         Add
                     </Button>
                 </div>

@@ -1,14 +1,14 @@
 import React from "react";
 
-import { useStoreState } from "@framework/StateStore";
+import { useSetStoreValue } from "@framework/StateStore";
 import { useStoreValue } from "@framework/StateStore";
 import { Workbench } from "@framework/Workbench";
+import { ShareIcon, WindowIcon } from "@heroicons/react/20/solid";
 import { Button } from "@lib/components/Button";
 import { Dialog } from "@lib/components/Dialog";
-// import { useWorkbenchActiveModuleName } from "@framework/hooks/useWorkbenchActiveModuleName";
-import { ToggleButton } from "@lib/components/ToggleButton";
-import { UseQueryResult } from "@tanstack/react-query";
+import { IconButton } from "@lib/components/IconButton";
 
+// import { useWorkbenchActiveModuleName } from "@framework/hooks/useWorkbenchActiveModuleName";
 import { EnsembleSelector } from "../EnsembleSelector";
 import { LoginButton } from "../LoginButton";
 
@@ -19,19 +19,20 @@ type TopNavBarProps = {
 export const TopNavBar: React.FC<TopNavBarProps> = (props) => {
     const activeModuleName = ""; // useWorkbenchActiveModuleName();
     const [ensembleDialogOpen, setEnsembleDialogOpen] = React.useState<boolean>(false);
-    const [modulesListOpen, setModulesListOpen] = useStoreState(props.workbench.getGuiStateStore(), "modulesListOpen");
-    const [groupModulesOpen, setGroupModulesOpen] = useStoreState(
-        props.workbench.getGuiStateStore(),
-        "groupModulesOpen"
-    );
+    const setModulesListOpen = useSetStoreValue(props.workbench.getGuiStateStore(), "modulesListOpen");
+    const setSyncSettingsActive = useSetStoreValue(props.workbench.getGuiStateStore(), "syncSettingsActive");
     const selectedEnsembles = useStoreValue(props.workbench.getDataStateStore(), "selectedEnsembles");
 
-    const handleToggleModulesList = (value: boolean) => {
-        setModulesListOpen(value);
+    const handleEnsembleClick = () => {
+        setEnsembleDialogOpen(true);
     };
 
-    const handleToggleGroupModules = (value: boolean) => {
-        setGroupModulesOpen(value);
+    const handleModulesListClick = () => {
+        setModulesListOpen(true);
+    };
+
+    const handleSyncSettingsClick = () => {
+        setSyncSettingsActive(true);
     };
 
     let ensembleButtonText = "Select ensembles";
@@ -43,19 +44,18 @@ export const TopNavBar: React.FC<TopNavBarProps> = (props) => {
     }
 
     return (
-        <div className="bg-slate-100 p-4">
+        <div className="bg-slate-100 p-4 shadow z-50">
             <div className="flex flex-row gap-4 items-center">
                 <h1 className="flex-grow">{activeModuleName}</h1>
-                <Button onClick={() => setEnsembleDialogOpen(true)}>{ensembleButtonText}</Button>
-                <ToggleButton active={modulesListOpen} onToggle={(active: boolean) => handleToggleModulesList(active)}>
-                    Add modules
-                </ToggleButton>
-                <ToggleButton
-                    active={groupModulesOpen}
-                    onToggle={(active: boolean) => handleToggleGroupModules(active)}
-                >
-                    Group modules
-                </ToggleButton>
+                <Button onClick={handleEnsembleClick} variant="contained">
+                    {ensembleButtonText}
+                </Button>
+                <Button onClick={handleModulesListClick} startIcon={<WindowIcon className="w-5 h-5" />}>
+                    Modules
+                </Button>
+                <Button onClick={handleSyncSettingsClick}>
+                    <ShareIcon className="w-5 h-5" /> Sync settings
+                </Button>
                 <LoginButton />
             </div>
             <Dialog
@@ -75,11 +75,3 @@ export const TopNavBar: React.FC<TopNavBarProps> = (props) => {
         </div>
     );
 };
-
-function makeQueriesDbgString(fields: UseQueryResult, cases: UseQueryResult, ens: UseQueryResult): string {
-    let s = "";
-    s += `  fields: ${fields.status.slice(0, 4)}/${fields.fetchStatus.slice(0, 4)} - data=${fields.data ? "Y" : "N"}`;
-    s += `  cases: ${cases.status.slice(0, 4)}/${cases.fetchStatus.slice(0, 4)} - data=${cases.data ? "Y" : "N"}`;
-    s += `  ensembles: ${ens.status.slice(0, 4)}/${ens.fetchStatus.slice(0, 4)} - data=${ens.data ? "Y" : "N"}`;
-    return s;
-}
