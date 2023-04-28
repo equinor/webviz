@@ -187,7 +187,6 @@ def get_realization_vector_at_timestep(
     """Get parameter correlations for a timeseries at a given timestep"""
 
     summary_access = SummaryAccess(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
-    sumo_freq = Frequency.from_string_value(resampling_frequency.value if resampling_frequency else "dummy")
     ensemble_response = summary_access.get_vector_values_at_timestep(
         vector_name=vector_name, timestep=timestep, realizations=None
     )
