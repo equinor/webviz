@@ -8,7 +8,7 @@ import { view } from "./view";
 const initialState: State = {
     vectorSpec: null,
     timeStep: null,
-    parameterName: null
+    parameterName: undefined
 };
 
 
