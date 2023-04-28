@@ -36,14 +36,14 @@ export function settings({ moduleContext, workbenchServices }: ModuleFCProps<Sta
     React.useEffect(
         function propagateVectorSpecToView() {
             if (firstEnsemble && computedVectorName) {
-                moduleContext.stateStore.setValue("vectorSpec", {
+                moduleContext.getStateStore().setValue("vectorSpec", {
                     caseUuid: firstEnsemble.caseUuid,
                     caseName: firstEnsemble.caseName,
                     ensembleName: firstEnsemble.ensembleName,
                     vectorName: computedVectorName,
                 });
             } else {
-                moduleContext.stateStore.setValue("vectorSpec", null);
+                moduleContext.getStateStore().setValue("vectorSpec", null);
             }
         },
         [firstEnsemble, computedVectorName]
