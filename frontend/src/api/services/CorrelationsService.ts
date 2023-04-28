@@ -17,7 +17,6 @@ export class CorrelationsService {
      * @param ensembleName Ensemble name
      * @param vectorName Name of the vector
      * @param timestep Timestep
-     * @param parameterNames Optional subset of parameters to correlate. Default are all parameters.
      * @returns EnsembleCorrelations Successful Response
      * @throws ApiError
      */
@@ -26,7 +25,6 @@ export class CorrelationsService {
         ensembleName: string,
         vectorName: string,
         timestep: string,
-        parameterNames?: Array<string>,
     ): CancelablePromise<EnsembleCorrelations> {
         return this.httpRequest.request({
             method: 'GET',
@@ -36,7 +34,6 @@ export class CorrelationsService {
                 'ensemble_name': ensembleName,
                 'vector_name': vectorName,
                 'timestep': timestep,
-                'parameter_names': parameterNames,
             },
             errors: {
                 422: `Validation Error`,
@@ -51,7 +48,6 @@ export class CorrelationsService {
      * @param ensembleName Ensemble name
      * @param tableName Table name
      * @param responseName Response name
-     * @param parameterNames Optional subset of parameters to correlate. Default are all parameters.
      * @returns EnsembleCorrelations Successful Response
      * @throws ApiError
      */
@@ -60,7 +56,6 @@ export class CorrelationsService {
         ensembleName: string,
         tableName: string,
         responseName: string,
-        parameterNames?: Array<string>,
     ): CancelablePromise<EnsembleCorrelations> {
         return this.httpRequest.request({
             method: 'GET',
@@ -70,7 +65,6 @@ export class CorrelationsService {
                 'ensemble_name': ensembleName,
                 'table_name': tableName,
                 'response_name': responseName,
-                'parameter_names': parameterNames,
             },
             errors: {
                 422: `Validation Error`,
