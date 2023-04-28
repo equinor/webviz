@@ -108,6 +108,3 @@ dist
 .tern-port
 
 frontend/.vscode
-
-# Temporary OpenAPI.json file
-**/temp_openapi.json

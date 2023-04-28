@@ -45,5 +45,5 @@ in the Python backend. In order to update the auto-generated code you can either
     b) Type `> Tasks` and enter to filter to commands only.
     c) Run task "Generate frontend code from OpenAPI".
 
-In both scenarios your Python environment (with backend dependencies) needs to be active.
-For the VSCode task approach it needs to be activated before starting `code`.
+In both cases the backend needs to already be running (e.g. using `docker-compose`
+as stated above).

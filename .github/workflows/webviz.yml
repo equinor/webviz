@@ -28,9 +28,6 @@ jobs:
           node -v
           npm -v
 
-      - name: 🐍 Set up Python and install Python dependencies
-        uses: ./.github/actions/python-install
-
       - name: 📦 Install build dependencies
         working-directory: ./frontend
         run: |
@@ -39,12 +36,6 @@ jobs:
       - name: ℹ️ Installed npm packages (depth = 0)
         working-directory: ./frontend
         run: npm list --depth=0
-
-      - name: 🕵️ Check auto-generated frontend code is in sync with backend
-        working-directory: ./frontend
-        run: |
-          npm run generate-api
-          git diff --exit-code || exit 1
 
       - name: 🏗️ Build JavaScript bundle
         working-directory: ./frontend
