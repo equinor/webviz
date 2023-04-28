@@ -1,6 +1,6 @@
 import React from "react";
 
-import { SyncSettings, SyncSettingsMeta } from "@framework/Module";
+import { SyncSettingKey, SyncSettingsMeta } from "@framework/Module";
 import { ModuleInstance } from "@framework/ModuleInstance";
 import { XMarkIcon } from "@heroicons/react/20/solid";
 
@@ -12,16 +12,16 @@ export type HeaderProps = {
 };
 
 export const Header: React.FC<HeaderProps> = (props) => {
-    const [syncedSettings, setSyncedSettings] = React.useState<SyncSettings[]>(
-        props.moduleInstance.getSyncedSettings()
+    const [syncedSettings, setSyncedSettings] = React.useState<SyncSettingKey[]>(
+        props.moduleInstance.getSyncedSettingKeys()
     );
 
     React.useEffect(() => {
-        function handleSyncedSettingsChange(newSyncedSettings: SyncSettings[]) {
+        function handleSyncedSettingsChange(newSyncedSettings: SyncSettingKey[]) {
             setSyncedSettings([...newSyncedSettings]);
         }
 
-        const unsubscribeFunc = props.moduleInstance.subscribeToSyncedSettingsChange(handleSyncedSettingsChange);
+        const unsubscribeFunc = props.moduleInstance.subscribeToSyncedSettingKeysChange(handleSyncedSettingsChange);
 
         return unsubscribeFunc;
     }, []);

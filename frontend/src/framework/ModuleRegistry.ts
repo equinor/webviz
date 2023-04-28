@@ -1,4 +1,4 @@
-import { Module, SyncSettings } from "./Module";
+import { Module, SyncSettingKey } from "./Module";
 import { StateBaseType, StateOptions } from "./StateStore";
 
 export class ModuleRegistry {
@@ -8,9 +8,9 @@ export class ModuleRegistry {
 
     public static registerModule<ModuleStateType extends StateBaseType>(
         moduleName: string,
-        syncableSettings: SyncSettings[] = []
+        syncableSettingKeys: SyncSettingKey[] = []
     ): Module<ModuleStateType> {
-        const module = new Module<ModuleStateType>(moduleName, syncableSettings);
+        const module = new Module<ModuleStateType>(moduleName, syncableSettingKeys);
         this._registeredModules[moduleName] = module;
         return module;
     }

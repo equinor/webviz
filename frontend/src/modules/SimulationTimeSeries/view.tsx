@@ -164,6 +164,7 @@ export const view = ({ moduleContext, workbenchServices }: ModuleFCProps<State>)
                 onHover={handleHover}
                 onUnhover={handleUnHover}
             />
+            <div className="absolute bottom-5 right-5 italic text-pink-400">{moduleContext.getInstanceIdString()}</div>
         </div>
     );
 };

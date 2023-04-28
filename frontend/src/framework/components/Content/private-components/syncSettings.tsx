@@ -1,6 +1,6 @@
 import React from "react";
 
-import { SyncSettings, SyncSettingsMeta } from "@framework/Module";
+import { SyncSettingKey, SyncSettingsMeta } from "@framework/Module";
 import { useSetStoreValue, useStoreValue } from "@framework/StateStore";
 import { Workbench } from "@framework/Workbench";
 import { useActiveModuleId } from "@framework/hooks/workbenchHooks";
@@ -20,15 +20,15 @@ export const GroupModules: React.FC<ModulesListProps> = (props) => {
 
     const activeModuleInstance = props.workbench.getModuleInstance(activeModuleId);
 
-    const handleSyncSettingChange = (setting: SyncSettings, value: boolean) => {
+    const handleSyncSettingChange = (setting: SyncSettingKey, value: boolean) => {
         if (activeModuleInstance === undefined) {
             return;
         }
 
         if (value) {
-            activeModuleInstance.syncSetting(setting);
+            activeModuleInstance.addSyncedSetting(setting);
         } else {
-            activeModuleInstance.unsyncSetting(setting);
+            activeModuleInstance.removeSyncedSetting(setting);
         }
     };
 
@@ -47,7 +47,7 @@ export const GroupModules: React.FC<ModulesListProps> = (props) => {
                     <>
                         {activeModuleInstance
                             .getModule()
-                            .getSyncableSettings()
+                            .getSyncableSettingKeys()
                             .map((setting) => {
                                 return (
                                     <div className="mb-2" key={`${activeModuleInstance.getId()}-${setting}`}>

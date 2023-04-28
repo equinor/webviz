@@ -1,17 +1,17 @@
-import { ImportState, Module, ModuleFC, SyncSettings } from "./Module";
+import { ImportState, Module, ModuleFC, SyncSettingKey } from "./Module";
 import { ModuleContext } from "./ModuleContext";
-import { StateBaseType, StateOptions, StateStore, useSetStoreValue, useStoreState, useStoreValue } from "./StateStore";
+import { StateBaseType, StateOptions, StateStore } from "./StateStore";
 
 export class ModuleInstance<StateType extends StateBaseType> {
     private id: string;
     private name: string;
     private initialised: boolean;
-    private syncedSettings: SyncSettings[];
+    private syncedSettingKeys: SyncSettingKey[];
     private stateStore: StateStore<StateType> | null;
     private module: Module<StateType>;
     private context: ModuleContext<StateType> | null;
     private importStateSubscribers: Set<() => void>;
-    private syncedSettingsSubscribers: Set<(syncedSettings: SyncSettings[]) => void>;
+    private syncedSettingsSubscribers: Set<(syncedSettings: SyncSettingKey[]) => void>;
 
     constructor(module: Module<StateType>, instanceNumber: number) {
         this.id = `${module.getName()}-${instanceNumber}`;
@@ -21,7 +21,7 @@ export class ModuleInstance<StateType extends StateBaseType> {
         this.importStateSubscribers = new Set();
         this.context = null;
         this.initialised = false;
-        this.syncedSettings = [];
+        this.syncedSettingKeys = [];
         this.syncedSettingsSubscribers = new Set();
     }
 
@@ -31,26 +31,30 @@ export class ModuleInstance<StateType extends StateBaseType> {
         this.initialised = true;
     }
 
-    public syncSetting(setting: SyncSettings): void {
-        this.syncedSettings.push(setting);
-        this.notifySubscribersAboutSyncedSettingsChange();
+    public addSyncedSetting(settingKey: SyncSettingKey): void {
+        this.syncedSettingKeys.push(settingKey);
+        this.notifySubscribersAboutSyncedSettingKeysChange();
     }
 
-    public getSyncedSettings(): SyncSettings[] {
-        return this.syncedSettings;
+    public getSyncedSettingKeys(): SyncSettingKey[] {
+        return this.syncedSettingKeys;
     }
 
-    public isSyncedSetting(setting: SyncSettings): boolean {
-        return this.syncedSettings.includes(setting);
+    public isSyncedSetting(settingKey: SyncSettingKey): boolean {
+        return this.syncedSettingKeys.includes(settingKey);
     }
 
-    public unsyncSetting(setting: SyncSettings): void {
-        this.syncedSettings = this.syncedSettings.filter((a) => a !== setting);
-        this.notifySubscribersAboutSyncedSettingsChange();
+    public removeSyncedSetting(settingKey: SyncSettingKey): void {
+        this.syncedSettingKeys = this.syncedSettingKeys.filter((a) => a !== settingKey);
+        this.notifySubscribersAboutSyncedSettingKeysChange();
     }
 
-    public subscribeToSyncedSettingsChange(cb: (syncedSettings: SyncSettings[]) => void): () => void {
+    public subscribeToSyncedSettingKeysChange(cb: (syncedSettings: SyncSettingKey[]) => void): () => void {
         this.syncedSettingsSubscribers.add(cb);
+
+        // Trigger callback immediately with our current set og keys
+        cb(this.syncedSettingKeys);
+
         return () => {
             this.syncedSettingsSubscribers.delete(cb);
         };
@@ -104,9 +108,9 @@ export class ModuleInstance<StateType extends StateBaseType> {
         });
     }
 
-    public notifySubscribersAboutSyncedSettingsChange(): void {
+    public notifySubscribersAboutSyncedSettingKeysChange(): void {
         this.syncedSettingsSubscribers.forEach((subscriber) => {
-            subscriber(this.syncedSettings);
+            subscriber(this.syncedSettingKeys);
         });
     }
 }

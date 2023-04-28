@@ -15,22 +15,24 @@ export type ModuleFCProps<S extends StateBaseType> = {
 
 export type ModuleFC<S extends StateBaseType> = React.FC<ModuleFCProps<S>>;
 
-export enum SyncSettings {
-    ENSEMBLE,
-    DATE,
-    TIMESERIES,
+// rename to SyncableItem, SyncableField, SyncableKey, SyncableEntity, SettingsEntry
+export enum SyncSettingKey {
+    ENSEMBLE = "ENSEMBLE",
+    DATE = "DATE",
+    TIMESERIES = "TIMESERIES"
 }
 
+// rename to SyncableItemsMeta ?
 export const SyncSettingsMeta = {
-    [SyncSettings.ENSEMBLE]: {
+    [SyncSettingKey.ENSEMBLE]: {
         name: "Ensemble",
         abbreviation: "ENS",
     },
-    [SyncSettings.DATE]: {
+    [SyncSettingKey.DATE]: {
         name: "Date",
         abbreviation: "DATE",
     },
-    [SyncSettings.TIMESERIES]: {
+    [SyncSettingKey.TIMESERIES]: {
         name: "Timeseries",
         abbreviation: "TS",
     },
@@ -53,9 +55,9 @@ export class Module<StateType extends StateBaseType> {
     private initialState: StateType | null;
     private stateOptions: StateOptions<StateType> | undefined;
     private workbench: Workbench | null;
-    private syncableSettings: SyncSettings[];
+    private syncableSettingKeys: SyncSettingKey[];
 
-    constructor(name: string, syncableSettings: SyncSettings[] = []) {
+    constructor(name: string, syncableSettingKeys: SyncSettingKey[] = []) {
         this._name = name;
         this.numInstances = 0;
         this.viewFC = () => <div>Not defined</div>;
@@ -64,7 +66,7 @@ export class Module<StateType extends StateBaseType> {
         this.moduleInstances = [];
         this.initialState = null;
         this.workbench = null;
-        this.syncableSettings = syncableSettings;
+        this.syncableSettingKeys = syncableSettingKeys;
     }
 
     public getImportState(): ImportState {
@@ -89,8 +91,8 @@ export class Module<StateType extends StateBaseType> {
         });
     }
 
-    public getSyncableSettings(): SyncSettings[] {
-        return this.syncableSettings;
+    public getSyncableSettingKeys(): SyncSettingKey[] {
+        return this.syncableSettingKeys;
     }
 
     public makeInstance(): ModuleInstance<StateType> {
