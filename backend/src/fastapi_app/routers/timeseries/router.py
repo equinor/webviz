@@ -107,7 +107,8 @@ def get_timesteps(
     For other resampling frequencies, the date range will be expanded to cover the entire
     time range of all the requested realizations before computing the resampled dates."""
     access = SummaryAccess(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
-    return access.get_timesteps(resampling_frequency=resampling_frequency)
+    sumo_freq = Frequency.from_string_value(resampling_frequency.value if resampling_frequency else "dummy")
+    return access.get_timesteps(resampling_frequency=sumo_freq)
 
 
 @router.get("/historical_vector_data/")
@@ -186,7 +187,7 @@ def get_realization_vector_at_timestep(
     """Get parameter correlations for a timeseries at a given timestep"""
 
     summary_access = SummaryAccess(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
-
+    sumo_freq = Frequency.from_string_value(resampling_frequency.value if resampling_frequency else "dummy")
     ensemble_response = summary_access.get_vector_values_at_timestep(
         vector_name=vector_name, timestep=timestep, realizations=None
     )
