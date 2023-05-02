@@ -16,7 +16,9 @@ export type GlobalTopicDefinitions = {
     "global.hoverTimestamp": { timestamp: number };
 
     "global.syncValue.ensembles": Ensemble[];
+    "global.syncValue.date": { timeOrInterval: string };
     "global.syncValue.timeSeries": { vectorName: string };
+    "global.syncValue.surface": { name: string; attribute: string };
 };
 
 export type AllTopicDefinitions = NavigatorTopicDefinitions & GlobalTopicDefinitions;
