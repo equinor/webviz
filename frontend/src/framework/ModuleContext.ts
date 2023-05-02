@@ -1,8 +1,8 @@
 import React from "react";
 
-import { SyncSettingKey } from "./Module";
 import { ModuleInstance } from "./ModuleInstance";
 import { StateBaseType, StateStore, useSetStoreValue, useStoreState, useStoreValue } from "./StateStore";
+import { SyncSettingKey } from "./SyncSettings";
 
 export class ModuleContext<S extends StateBaseType> {
     private _moduleInstance: ModuleInstance<S>;

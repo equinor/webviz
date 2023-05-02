@@ -5,6 +5,7 @@ import { cloneDeep } from "lodash";
 import { ModuleContext } from "./ModuleContext";
 import { ModuleInstance } from "./ModuleInstance";
 import { StateBaseType, StateOptions } from "./StateStore";
+import { SyncSettingKey } from "./SyncSettings";
 import { Workbench } from "./Workbench";
 import { WorkbenchServices } from "./WorkbenchServices";
 
@@ -14,29 +15,6 @@ export type ModuleFCProps<S extends StateBaseType> = {
 };
 
 export type ModuleFC<S extends StateBaseType> = React.FC<ModuleFCProps<S>>;
-
-// rename to SyncableItem, SyncableField, SyncableKey, SyncableEntity, SettingsEntry
-export enum SyncSettingKey {
-    ENSEMBLE = "ENSEMBLE",
-    DATE = "DATE",
-    TIMESERIES = "TIMESERIES"
-}
-
-// rename to SyncableItemsMeta ?
-export const SyncSettingsMeta = {
-    [SyncSettingKey.ENSEMBLE]: {
-        name: "Ensemble",
-        abbreviation: "ENS",
-    },
-    [SyncSettingKey.DATE]: {
-        name: "Date",
-        abbreviation: "DATE",
-    },
-    [SyncSettingKey.TIMESERIES]: {
-        name: "Timeseries",
-        abbreviation: "TS",
-    },
-};
 
 export enum ImportState {
     NotImported = "NotImported",

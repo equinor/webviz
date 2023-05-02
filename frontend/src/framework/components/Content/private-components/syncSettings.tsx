@@ -1,7 +1,7 @@
 import React from "react";
 
-import { SyncSettingKey, SyncSettingsMeta } from "@framework/Module";
 import { useSetStoreValue, useStoreValue } from "@framework/StateStore";
+import { SyncSettingKey, SyncSettingsMeta } from "@framework/SyncSettings";
 import { Workbench } from "@framework/Workbench";
 import { useActiveModuleId } from "@framework/hooks/workbenchHooks";
 import { XMarkIcon } from "@heroicons/react/20/solid";

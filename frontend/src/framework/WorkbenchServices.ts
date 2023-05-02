@@ -101,3 +101,32 @@ export function useSubscribedValue<T extends keyof AllTopicDefinitions>(
 
     return latestValue;
 }
+
+export function useSubscribedValueConditionally<T extends keyof AllTopicDefinitions>(
+    topic: T,
+    enable: boolean,
+    workbenchServices: WorkbenchServices
+): AllTopicDefinitions[T] | null {
+    const [latestValue, setLatestValue] = React.useState<AllTopicDefinitions[T] | null>(null);
+
+    React.useEffect(
+        function subscribeToServiceTopic() {
+            if (!enable) {
+                setLatestValue(null);
+                return;
+            }
+
+            function handleNewValue(newValue: AllTopicDefinitions[T]) {
+                setLatestValue(newValue);
+            }
+
+            const unsubscribeFunc = workbenchServices.subscribe(topic, handleNewValue);
+            return () => {
+                unsubscribeFunc();
+            };
+        },
+        [topic, enable, workbenchServices]
+    );
+
+    return latestValue;
+}

@@ -1,7 +1,7 @@
 import React from "react";
 
-import { SyncSettingKey, SyncSettingsMeta } from "@framework/Module";
 import { ModuleInstance } from "@framework/ModuleInstance";
+import { SyncSettingKey, SyncSettingsMeta } from "@framework/SyncSettings";
 import { XMarkIcon } from "@heroicons/react/20/solid";
 
 export type HeaderProps = {

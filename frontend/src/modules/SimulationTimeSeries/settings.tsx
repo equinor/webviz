@@ -1,7 +1,8 @@
 import React from "react";
 
 import { Frequency, VectorDescription } from "@api";
-import { ModuleFCProps, SyncSettingKey } from "@framework/Module";
+import { ModuleFCProps } from "@framework/Module";
+import { SyncSettingsHelper, SyncSettingKey } from "@framework/SyncSettings";
 import { useSubscribedValue } from "@framework/WorkbenchServices";
 import { ApiStateWrapper } from "@lib/components/ApiStateWrapper";
 import { Checkbox } from "@lib/components/Checkbox";
@@ -27,18 +28,17 @@ export function settings({ moduleContext, workbenchServices }: ModuleFCProps<Sta
     const [selectedVectorName, setSelectedVectorName] = React.useState<string>("");
     const [resampleFrequency, setResamplingFrequency] = moduleContext.useStoreState("resamplingFrequency");
     const [showStatistics, setShowStatistics] = moduleContext.useStoreState("showStatistics");
-    const syncedValueEnsembles = useSubscribedValue("global.syncValue.ensembles", workbenchServices);
-    const syncedValueSummaryVector = useSubscribedValue("global.syncValue.timeSeries", workbenchServices);
 
     const syncedSettingKeys = moduleContext.useSyncedSettingKeys();
+    const syncHelper = new SyncSettingsHelper(syncedSettingKeys, workbenchServices);
+    const syncedValueEnsembles = syncHelper.useValue(SyncSettingKey.ENSEMBLE, "global.syncValue.ensembles");
+    const syncedValueSummaryVector = syncHelper.useValue(SyncSettingKey.TIME_SERIES, "global.syncValue.timeSeries");
     console.log(`${myInstanceIdStr} -- synced keys ${JSON.stringify(syncedSettingKeys)}`);
-    const syncSettingFor = {
-        ensemble: syncedSettingKeys.includes(SyncSettingKey.ENSEMBLE),
-        timeSeries: syncedSettingKeys.includes(SyncSettingKey.TIMESERIES),
-    };
+    console.log(`${myInstanceIdStr} -- syncedValueEnsembles=${JSON.stringify(syncedValueEnsembles)}`);
+    console.log(`${myInstanceIdStr} -- syncedValueSummaryVector=${JSON.stringify(syncedValueSummaryVector)}`);
 
     let candidateEnsemble = selectedEnsemble;
-    if (syncSettingFor.ensemble && syncedValueEnsembles?.length) {
+    if (syncedValueEnsembles?.length) {
         console.log(`${myInstanceIdStr} -- syncing ensemble to ${syncedValueEnsembles[0].ensembleName}`);
         candidateEnsemble = syncedValueEnsembles[0];
     }
@@ -47,7 +47,7 @@ export function settings({ moduleContext, workbenchServices }: ModuleFCProps<Sta
     const vectorsQuery = useVectorsQuery(computedEnsemble?.caseUuid, computedEnsemble?.ensembleName);
 
     let candidateVectorName = selectedVectorName;
-    if (syncSettingFor.timeSeries && syncedValueSummaryVector?.vectorName) {
+    if (syncedValueSummaryVector?.vectorName) {
         console.log(`${myInstanceIdStr} -- syncing timeSeries to ${syncedValueSummaryVector.vectorName}`);
         candidateVectorName = syncedValueSummaryVector.vectorName;
     }
@@ -81,8 +81,8 @@ export function settings({ moduleContext, workbenchServices }: ModuleFCProps<Sta
         const newIdStr = selectedEnsembleIdStrArr[0] ?? "";
         const newEnsemble = availableEnsembles?.find((item) => encodeEnsembleAsIdStr(item) === newIdStr);
         setSelectedEnsemble(newEnsemble ?? null);
-        if (syncSettingFor.ensemble) {
-            workbenchServices.publishGlobalData("global.syncValue.ensembles", newEnsemble ? [newEnsemble] : []);
+        if (newEnsemble) {
+            syncHelper.publishValue(SyncSettingKey.ENSEMBLE, "global.syncValue.ensembles", [newEnsemble]);
         }
     }
 
@@ -90,8 +90,8 @@ export function settings({ moduleContext, workbenchServices }: ModuleFCProps<Sta
         console.log("handleVectorSelectionChange()");
         const newName = selectedVecNames[0] ?? "";
         setSelectedVectorName(newName);
-        if (syncSettingFor.timeSeries) {
-            workbenchServices.publishGlobalData("global.syncValue.timeSeries", { vectorName: newName });
+        if (newName) {
+            syncHelper.publishValue(SyncSettingKey.TIME_SERIES, "global.syncValue.timeSeries", { vectorName: newName });
         }
     }
 
@@ -119,7 +119,10 @@ export function settings({ moduleContext, workbenchServices }: ModuleFCProps<Sta
 
     return (
         <>
-            <Label text="Ensemble" labelClassName={syncSettingFor.ensemble ? "bg-indigo-700 text-white" : ""}>
+            <Label
+                text="Ensemble"
+                labelClassName={syncHelper.isSynced(SyncSettingKey.ENSEMBLE) ? "bg-indigo-700 text-white" : ""}
+            >
                 <Select
                     options={makeEnsembleOptionItems(availableEnsembles)}
                     value={computedEnsemble ? [encodeEnsembleAsIdStr(computedEnsemble)] : []}
@@ -132,7 +135,10 @@ export function settings({ moduleContext, workbenchServices }: ModuleFCProps<Sta
                 errorComponent={"Error loading vector names"}
                 loadingComponent={<CircularProgress />}
             >
-                <Label text="Vector" labelClassName={syncSettingFor.timeSeries ? "bg-indigo-700 text-white" : ""}>
+                <Label
+                    text="Vector"
+                    labelClassName={syncHelper.isSynced(SyncSettingKey.TIME_SERIES) ? "bg-indigo-700 text-white" : ""}
+                >
                     <Select
                         options={makeVectorOptionItems(vectorsQuery.data)}
                         value={computedVectorName ? [computedVectorName] : []}

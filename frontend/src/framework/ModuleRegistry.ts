@@ -1,5 +1,6 @@
-import { Module, SyncSettingKey } from "./Module";
+import { Module } from "./Module";
 import { StateBaseType, StateOptions } from "./StateStore";
+import { SyncSettingKey } from "./SyncSettings";
 
 export class ModuleRegistry {
     private static _registeredModules: Record<string, Module<any>> = {};

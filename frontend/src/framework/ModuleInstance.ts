@@ -1,6 +1,7 @@
-import { ImportState, Module, ModuleFC, SyncSettingKey } from "./Module";
+import { ImportState, Module, ModuleFC } from "./Module";
 import { ModuleContext } from "./ModuleContext";
 import { StateBaseType, StateOptions, StateStore } from "./StateStore";
+import { SyncSettingKey } from "./SyncSettings";
 
 export class ModuleInstance<StateType extends StateBaseType> {
     private id: string;
