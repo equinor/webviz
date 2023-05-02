@@ -1,6 +1,7 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
+import type { EnsembleScalarResponse } from '../models/EnsembleScalarResponse';
 import type { Frequency } from '../models/Frequency';
 import type { StatisticFunction } from '../models/StatisticFunction';
 import type { VectorDescription } from '../models/VectorDescription';
@@ -114,8 +115,8 @@ export class TimeseriesService {
     }
 
     /**
-     * Get Timestamps
-     * Get the intersection of available timestamps.
+     * Get Timesteps
+     * Get the intersection of available timesteps.
      * Note that when resampling_frequency is None, the pure intersection of the
      * stored raw dates will be returned. Thus the returned list of dates will not include
      * dates from long running realizations.
@@ -124,24 +125,21 @@ export class TimeseriesService {
      * @param caseUuid Sumo case uuid
      * @param ensembleName Ensemble name
      * @param resamplingFrequency Resampling frequency
-     * @param realizations Optional list of realizations to include
      * @returns string Successful Response
      * @throws ApiError
      */
-    public getTimestamps(
+    public getTimesteps(
         caseUuid: string,
         ensembleName: string,
         resamplingFrequency?: Frequency,
-        realizations?: Array<number>,
     ): CancelablePromise<Array<string>> {
         return this.httpRequest.request({
             method: 'GET',
-            url: '/timeseries/timestamps/',
+            url: '/timeseries/timesteps/',
             query: {
                 'case_uuid': caseUuid,
                 'ensemble_name': ensembleName,
                 'resampling_frequency': resamplingFrequency,
-                'realizations': realizations,
             },
             errors: {
                 422: `Validation Error`,
@@ -252,6 +250,37 @@ export class TimeseriesService {
                 'expression': expression,
                 'variable_names': variableNames,
                 'vector_names': vectorNames,
+            },
+            errors: {
+                422: `Validation Error`,
+            },
+        });
+    }
+
+    /**
+     * Get Realization Vector At Timestep
+     * Get parameter correlations for a timeseries at a given timestep
+     * @param caseUuid Sumo case uuid
+     * @param ensembleName Ensemble name
+     * @param vectorName Name of the vector
+     * @param timestep Timestep
+     * @returns EnsembleScalarResponse Successful Response
+     * @throws ApiError
+     */
+    public getRealizationVectorAtTimestep(
+        caseUuid: string,
+        ensembleName: string,
+        vectorName: string,
+        timestep: string,
+    ): CancelablePromise<EnsembleScalarResponse> {
+        return this.httpRequest.request({
+            method: 'GET',
+            url: '/timeseries/realization_vector_at_timestep/',
+            query: {
+                'case_uuid': caseUuid,
+                'ensemble_name': ensembleName,
+                'vector_name': vectorName,
+                'timestep': timestep,
             },
             errors: {
                 422: `Validation Error`,

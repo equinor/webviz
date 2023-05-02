@@ -45,10 +45,10 @@ export class DefaultService {
 
     /**
      * Alive
-     * @returns any Successful Response
+     * @returns string Successful Response
      * @throws ApiError
      */
-    public alive(): CancelablePromise<any> {
+    public alive(): CancelablePromise<string> {
         return this.httpRequest.request({
             method: 'GET',
             url: '/alive',
@@ -57,10 +57,10 @@ export class DefaultService {
 
     /**
      * Alive Protected
-     * @returns any Successful Response
+     * @returns string Successful Response
      * @throws ApiError
      */
-    public aliveProtected(): CancelablePromise<any> {
+    public aliveProtected(): CancelablePromise<string> {
         return this.httpRequest.request({
             method: 'GET',
             url: '/alive_protected',
@@ -81,10 +81,10 @@ export class DefaultService {
 
     /**
      * Root
-     * @returns any Successful Response
+     * @returns string Successful Response
      * @throws ApiError
      */
-    public root(): CancelablePromise<any> {
+    public root(): CancelablePromise<string> {
         return this.httpRequest.request({
             method: 'GET',
             url: '/',
