@@ -33,3 +33,17 @@ in the following folders are changed:
 If other files are changed through the host operativey system,
 e.g. typically when a new dependency is added, the relevant component needs to be rebuilt. I.e.
 `docker-compose up --build frontend` or `docker-compose up --build backend`.
+
+### Auto-generate `/frontend/src/api`
+
+All the content in `/frontend/src/api` is auto-generated using the defined endpoints
+in the Python backend. In order to update the auto-generated code you can either
+
+1) Run `npm run generate-api --prefix ./frontend`.
+2) Use the VSCode tasks shortcut:
+    a) `Ctrl + P` to open the command palette.
+    b) Type `> Tasks` and enter to filter to commands only.
+    c) Run task "Generate frontend code from OpenAPI".
+
+In both cases the backend needs to already be running (e.g. using `docker-compose`
+as stated above).
