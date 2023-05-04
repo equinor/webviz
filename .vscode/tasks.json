@@ -1,0 +1,12 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "type": "npm",
+            "script": "generate-api",
+            "path": "frontend",
+            "problemMatcher": [],
+            "label": "Generate frontend code from OpenAPI"
+        }
+    ]
+}

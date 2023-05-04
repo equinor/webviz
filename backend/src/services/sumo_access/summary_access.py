@@ -206,3 +206,13 @@ class SummaryAccess:
             realizations=table["REAL"].to_pylist(),
             values=table[vector_name].to_pylist(),
         )
+
+    def get_timesteps(
+        self,
+        resampling_frequency: Optional[Frequency] = None,
+    ) -> List[datetime.datetime]:
+        table, _ = self.get_vector_table(
+            self.get_vector_names()[0], resampling_frequency=resampling_frequency, realizations=None
+        )
+
+        return pc.unique(table.column("DATE")).to_pylist()

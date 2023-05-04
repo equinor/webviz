@@ -7,7 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from src.services.summary_vector_statistics import compute_vector_statistics
 from src.services.sumo_access.summary_access import Frequency, SummaryAccess
 from src.services.utils.authenticated_user import AuthenticatedUser
-from src.services.utils.perf_timer import PerfTimer
+from src.services.sumo_access.generic_types import EnsembleScalarResponse
 from src.fastapi_app.auth.auth_helper import AuthHelper
 from . import converters
 from . import schemas
@@ -92,23 +92,23 @@ def get_vector_metadata(
     ...
 
 
-@router.get("/timestamps/")
-# type: ignore [empty-body]
-def get_timestamps(
+@router.get("/timesteps/")
+def get_timesteps(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     case_uuid: str = Query(description="Sumo case uuid"),
     ensemble_name: str = Query(description="Ensemble name"),
     resampling_frequency: Optional[schemas.Frequency] = Query(None, description="Resampling frequency"),
-    realizations: Union[Sequence[int], None] = Query(None, description="Optional list of realizations to include"),
+    # realizations: Union[Sequence[int], None] = Query(None, description="Optional list of realizations to include"),
 ) -> List[datetime.datetime]:
-    """Get the intersection of available timestamps.
+    """Get the intersection of available timesteps.
         Note that when resampling_frequency is None, the pure intersection of the
     stored raw dates will be returned. Thus the returned list of dates will not include
     dates from long running realizations.
     For other resampling frequencies, the date range will be expanded to cover the entire
     time range of all the requested realizations before computing the resampled dates."""
-
-    ...
+    access = SummaryAccess(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
+    sumo_freq = Frequency.from_string_value(resampling_frequency.value if resampling_frequency else "dummy")
+    return access.get_timesteps(resampling_frequency=sumo_freq)
 
 
 @router.get("/historical_vector_data/")
@@ -171,6 +171,26 @@ def get_realizations_calculated_vector_data(
     print(expression)
     print(type(expression))
     return "hei"
+
+
+@router.get("/realization_vector_at_timestep/")
+def get_realization_vector_at_timestep(
+    # fmt:off
+    authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
+    case_uuid: str = Query(description="Sumo case uuid"),
+    ensemble_name: str = Query(description="Ensemble name"),
+    vector_name: str = Query(description="Name of the vector"),
+    timestep: datetime.datetime = Query(description= "Timestep"),
+    # realizations: Optional[Sequence[int]] = Query(None, description="Optional list of realizations to include. If not specified, all realizations will be returned."),
+    # fmt:on
+) -> EnsembleScalarResponse:
+    """Get parameter correlations for a timeseries at a given timestep"""
+
+    summary_access = SummaryAccess(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
+    ensemble_response = summary_access.get_vector_values_at_timestep(
+        vector_name=vector_name, timestep=timestep, realizations=None
+    )
+    return ensemble_response
 
 
 # @router.get("/statistical_calculated_vector_data/")
