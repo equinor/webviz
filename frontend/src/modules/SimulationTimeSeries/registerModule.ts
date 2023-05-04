@@ -5,6 +5,5 @@ import { State } from "./state";
 
 ModuleRegistry.registerModule<State>("SimulationTimeSeries", [
     SyncSettingKey.ENSEMBLE,
-    SyncSettingKey.DATE,
     SyncSettingKey.TIME_SERIES,
 ]);
