@@ -2,6 +2,7 @@ import react from "@vitejs/plugin-react";
 
 import path from "path";
 import { defineConfig } from "vite";
+import vitePluginChecker from "vite-plugin-checker";
 
 import aliases from "./aliases.json";
 
@@ -24,7 +25,7 @@ export default defineConfig(({ mode }) => {
     }
 
     return {
-        plugins: [react()],
+        plugins: [react(), vitePluginChecker({ typescript: true })],
         build: {
             rollupOptions: {
                 input: {
