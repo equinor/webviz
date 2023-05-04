@@ -11,7 +11,6 @@ on:
 
 jobs:
   frontend:
-    if: github.event_name != 'push' || github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
 
     steps:
@@ -55,6 +54,15 @@ jobs:
         run: |
           npm run test
 
+      - name: 🕵️ Check auto-generated frontend code is in sync with backend
+        run: |
+          docker build -f backend.Dockerfile -t backend:latest .
+          CONTAINER_ID=$(docker run --detach -p 5000:5000 --env WEBVIZ_CLIENT_SECRET=0 backend:latest)
+          sleep 5  # Ensure the backend server is up and running exposing /openapi.json
+          npm run generate-api --prefix ./frontend
+          docker stop $CONTAINER_ID
+          git diff --exit-code ./frontend/src/api || exit 1
+
   backend:
     runs-on: ubuntu-latest
 
@@ -62,7 +70,7 @@ jobs:
       - name: 📖 Checkout commit locally
         uses: actions/checkout@v3
 
-      - name: 🐍 Set up Python ${{ matrix.python-version }}
+      - name: 🐍 Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: 3.8
@@ -91,7 +99,6 @@ jobs:
       #     pytest ./tests
 
   build_docker_images:
-    if: github.event_name != 'push' || github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
 
     steps:
