@@ -51,13 +51,21 @@ as stated above).
 
 # Update `poetry.lock` through Docker
 
-If you do not have the correct Python version and/or `poetry` installed on your host
-machine, you can update the `poetry.lock` command through `docker`:
+If you do not want to install the correct Python version and/or `poetry` on your host
+machine, you can update `pyproject.toml` and `poetry.lock` through `docker`.
+As an example, if you wanted to add the Python package `httpx`:
 
 ```bash
-docker build -f backend.Dockerfile -t backend:latest .
-CONTAINER_ID=$(docker run --detach --env WEBVIZ_CLIENT_SECRET=0 backend:latest)
-docker exec -it $CONTAINER_ID sh -c "poetry lock --no-update"
-docker cp $CONTAINER_ID:/home/appuser/backend/poetry.lock ./backend/poetry.lock
+# Start container. This assumes you have previously ran docker-compose
+CONTAINER_ID=$(docker run --detach --env WEBVIZ_CLIENT_SECRET=0 webviz_backend)
+# Copy pyproject.toml and poetry.lock from host to container in case they have changed since it was built:
+docker cp ./backend/pyproject.toml $CONTAINER_ID:/home/appuser/backend/
+docker cp ./backend/poetry.lock $CONTAINER_ID:/home/appuser/backend/
+# Run your poetry commands:
+docker exec -it $CONTAINER_ID sh -c "poetry add httpx"
+# Copy updated pyproject.toml and poetry.lock from container back to host:
+docker cp $CONTAINER_ID:/home/appuser/backend/pyproject.toml ./backend/
+docker cp $CONTAINER_ID:/home/appuser/backend/poetry.lock ./backend/
+# Stop container
 docker stop $CONTAINER_ID
 ```
