@@ -7,7 +7,7 @@ readme = "README.md"
 
 
 [tool.poetry.dependencies]
-python = "^3.8"
+python = "^3.10"
 fastapi = "^0.89.1"
 uvicorn = "^0.20.0"
 msal = "1.20.0" # Lock version until we fix issues introduced by 1.21.0, see https://github.com/equinor/webviz/issues/105

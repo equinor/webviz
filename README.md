@@ -47,3 +47,17 @@ in the Python backend. In order to update the auto-generated code you can either
 
 In both cases the backend needs to already be running (e.g. using `docker-compose`
 as stated above).
+
+
+# Update `poetry.lock` through Docker
+
+If you do not have the correct Python version and/or `poetry` installed on your host
+machine, you can update the `poetry.lock` command through `docker`:
+
+```bash
+docker build -f backend.Dockerfile -t backend:latest .
+CONTAINER_ID=$(docker run --detach --env WEBVIZ_CLIENT_SECRET=0 backend:latest)
+docker exec -it $CONTAINER_ID sh -c "poetry lock --no-update"
+docker cp $CONTAINER_ID:/home/appuser/backend/poetry.lock ./backend/poetry.lock
+docker stop $CONTAINER_ID
+```
