@@ -1,5 +1,8 @@
+import React from "react";
+
 import { ModuleInstance } from "./ModuleInstance";
 import { StateBaseType, StateStore, useSetStoreValue, useStoreState, useStoreValue } from "./StateStore";
+import { SyncSettingKey } from "./SyncSettings";
 
 export class ModuleContext<S extends StateBaseType> {
     private _moduleInstance: ModuleInstance<S>;
@@ -28,5 +31,20 @@ export class ModuleContext<S extends StateBaseType> {
 
     useSetStoreValue<K extends keyof S>(key: K): (newValue: S[K] | ((prev: S[K]) => S[K])) => void {
         return useSetStoreValue(this._stateStore, key);
+    }
+
+    useSyncedSettingKeys(): SyncSettingKey[] {
+        const [keyArr, setKeyArr] = React.useState<SyncSettingKey[]>([]);
+
+        React.useEffect(() => {
+            function handleNewValue(newArr: SyncSettingKey[]) {
+                setKeyArr([...newArr]);
+            }
+
+            const unsubscribeFunc = this._moduleInstance.subscribeToSyncedSettingKeysChange(handleNewValue);
+            return unsubscribeFunc;
+        }, []);
+
+        return keyArr;
     }
 }

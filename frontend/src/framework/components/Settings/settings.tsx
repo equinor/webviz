@@ -1,5 +1,6 @@
 import React from "react";
 
+import { useStoreValue } from "@framework/StateStore";
 import { Workbench } from "@framework/Workbench";
 import { useActiveModuleId, useModuleInstances } from "@framework/hooks/workbenchHooks";
 
@@ -12,6 +13,12 @@ type SettingsProps = {
 export const Settings: React.FC<SettingsProps> = (props) => {
     const moduleInstances = useModuleInstances(props.workbench);
     const activeModuleId = useActiveModuleId(props.workbench);
+
+    const syncSettingsActive = useStoreValue(props.workbench.getGuiStateStore(), "syncSettingsActive");
+
+    if (syncSettingsActive) {
+        return null;
+    }
 
     return (
         <div className="bg-white p-4">

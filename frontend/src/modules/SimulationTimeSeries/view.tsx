@@ -5,7 +5,7 @@ import { ModuleFCProps } from "@framework/Module";
 import { useSubscribedValue } from "@framework/WorkbenchServices";
 import { useElementSize } from "@lib/hooks/useElementSize";
 
-import { Layout, PlotData, PlotHoverEvent, PlotMouseEvent, PlotRelayoutEvent } from "plotly.js";
+import { Layout, PlotData, PlotHoverEvent, PlotMouseEvent } from "plotly.js";
 
 import { useStatisticalVectorDataQuery, useVectorDataQuery } from "./queryHooks";
 import { State } from "./state";
@@ -70,7 +70,7 @@ export const view = ({ moduleContext, workbenchServices }: ModuleFCProps<State>)
         }
     };
 
-    function handleUnHover(e: PlotMouseEvent) {
+    function handleUnHover() {
         workbenchServices.publishGlobalData("global.hoverRealization", { realization: -1 });
     }
 
@@ -157,7 +157,14 @@ export const view = ({ moduleContext, workbenchServices }: ModuleFCProps<State>)
 
     return (
         <div className="w-full h-full" ref={wrapperDivRef}>
-            <Plot data={tracesDataArr} layout={layout} config={{ "scrollZoom": true }} onHover={handleHover} onUnhover={handleUnHover} />
+            <Plot
+                data={tracesDataArr}
+                layout={layout}
+                config={{ scrollZoom: true }}
+                onHover={handleHover}
+                onUnhover={handleUnHover}
+            />
+            <div className="absolute bottom-5 right-5 italic text-pink-400">{moduleContext.getInstanceIdString()}</div>
         </div>
     );
 };

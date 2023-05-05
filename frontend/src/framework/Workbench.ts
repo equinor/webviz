@@ -28,6 +28,7 @@ export type WorkbenchDataState = {
 
 export type WorkbenchGuiState = {
     modulesListOpen: boolean;
+    syncSettingsActive: boolean;
 };
 
 export class Workbench {
@@ -44,6 +45,7 @@ export class Workbench {
         this._activeModuleId = "";
         this.guiStateStore = new StateStore<WorkbenchGuiState>({
             modulesListOpen: false,
+            syncSettingsActive: false,
         });
         this.dataStateStore = new StateStore<WorkbenchDataState>({
             selectedEnsembles: [],
@@ -114,6 +116,10 @@ export class Workbench {
 
     public getModuleInstances(): ModuleInstance<any>[] {
         return this.moduleInstances;
+    }
+
+    public getModuleInstance(id: string): ModuleInstance<any> | undefined {
+        return this.moduleInstances.find((moduleInstance) => moduleInstance.getId() === id);
     }
 
     public makeLayout(layout: LayoutElement[]): void {

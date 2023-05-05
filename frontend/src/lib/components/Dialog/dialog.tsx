@@ -26,7 +26,6 @@ export const Dialog: React.FC<DialogProps> = (props) => {
     const dialogRef = React.useRef<HTMLDivElement>(null);
 
     const dialogSize = useElementSize(dialogRef);
-    console.log(dialogSize);
 
     React.useEffect(() => {
         setOpen(props.open ?? false);

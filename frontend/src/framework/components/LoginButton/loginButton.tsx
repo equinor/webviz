@@ -1,6 +1,7 @@
 import React from "react";
 
 import { useAuthProvider } from "@framework/providers/AuthProvider";
+import { UserIcon } from "@heroicons/react/20/solid";
 import { Button } from "@lib/components/Button";
 
 export const LoginButton: React.FC = () => {
@@ -15,7 +16,7 @@ export const LoginButton: React.FC = () => {
     };
 
     return (
-        <Button onClick={handleLoginOrLogout}>
+        <Button onClick={handleLoginOrLogout} startIcon={<UserIcon className="w-5 h-5" />}>
             {authState === "LoggedIn" ? `${userInfo?.username} - Logout` : "Login"}
         </Button>
     );
