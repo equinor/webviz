@@ -53,7 +53,7 @@ export class ModuleInstance<StateType extends StateBaseType> {
     public subscribeToSyncedSettingKeysChange(cb: (syncedSettings: SyncSettingKey[]) => void): () => void {
         this.syncedSettingsSubscribers.add(cb);
 
-        // Trigger callback immediately with our current set og keys
+        // Trigger callback immediately with our current set of keys
         cb(this.syncedSettingKeys);
 
         return () => {
