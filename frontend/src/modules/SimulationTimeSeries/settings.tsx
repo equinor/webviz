@@ -2,7 +2,7 @@ import React from "react";
 
 import { Frequency, VectorDescription } from "@api";
 import { ModuleFCProps } from "@framework/Module";
-import { SyncSettingsHelper, SyncSettingKey } from "@framework/SyncSettings";
+import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
 import { useSubscribedValue } from "@framework/WorkbenchServices";
 import { ApiStateWrapper } from "@lib/components/ApiStateWrapper";
 import { Checkbox } from "@lib/components/Checkbox";

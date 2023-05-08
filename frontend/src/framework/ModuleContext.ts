@@ -1,14 +1,15 @@
 import React from "react";
 
+import { BroadcastChannel, BroadcastChannelMeta } from "./Broadcaster";
 import { ModuleInstance } from "./ModuleInstance";
 import { StateBaseType, StateStore, useSetStoreValue, useStoreState, useStoreValue } from "./StateStore";
 import { SyncSettingKey } from "./SyncSettings";
 
-export class ModuleContext<S extends StateBaseType> {
-    private _moduleInstance: ModuleInstance<S>;
+export class ModuleContext<S extends StateBaseType, BCM extends BroadcastChannelMeta> {
+    private _moduleInstance: ModuleInstance<S, BCM>;
     private _stateStore: StateStore<S>;
 
-    constructor(moduleInstance: ModuleInstance<S>, stateStore: StateStore<S>) {
+    constructor(moduleInstance: ModuleInstance<S, BCM>, stateStore: StateStore<S>) {
         this._moduleInstance = moduleInstance;
         this._stateStore = stateStore;
     }
@@ -46,5 +47,9 @@ export class ModuleContext<S extends StateBaseType> {
         }, []);
 
         return keyArr;
+    }
+
+    getChannel<C extends keyof BCM>(channelName: C): BroadcastChannel<BCM[C]> {
+        return this._moduleInstance.getBroadcastChannel<C>(channelName);
     }
 }

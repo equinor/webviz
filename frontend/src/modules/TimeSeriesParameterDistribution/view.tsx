@@ -5,16 +5,14 @@ import { ModuleFCProps } from "@framework/Module";
 import { useElementSize } from "@lib/hooks/useElementSize";
 
 import PlotlyScatter from "./plotlyScatterChart";
-
-import { useVectorAtTimestepQuery, useParameterQuery } from "./queryHooks";
+import { useParameterQuery, useVectorAtTimestepQuery } from "./queryHooks";
 import { State } from "./state";
-
 
 export const view = ({ moduleContext }: ModuleFCProps<State>) => {
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);
     const wrapperDivSize = useElementSize(wrapperDivRef);
     const vectorSpec = moduleContext.useStoreValue("vectorSpec");
-    const [highlightedRealization, setHighlightedRealization] = React.useState(-1)
+    const [highlightedRealization, setHighlightedRealization] = React.useState(-1);
     const parameterName = moduleContext.useStoreValue("parameterName");
     const timeStep = moduleContext.useStoreValue("timeStep");
 
@@ -25,20 +23,15 @@ export const view = ({ moduleContext }: ModuleFCProps<State>) => {
         timeStep
     );
 
-    const parameterQuery = useParameterQuery(
-        vectorSpec?.caseUuid,
-        vectorSpec?.ensembleName,
-        parameterName,
-    )
+    const parameterQuery = useParameterQuery(vectorSpec?.caseUuid, vectorSpec?.ensembleName, parameterName);
 
     const handleHoveredRealization = (real: any) => {
-        setHighlightedRealization(real)
-    }
-
+        setHighlightedRealization(real);
+    };
 
     return (
         <div className="w-full h-full" ref={wrapperDivRef}>
-            {parameterQuery.data && vectorAtTimestepQuery.data &&
+            {parameterQuery.data && vectorAtTimestepQuery.data && (
                 <PlotlyScatter
                     x={parameterQuery.data.values as number[]}
                     y={vectorAtTimestepQuery.data.values as number[]}
@@ -48,7 +41,7 @@ export const view = ({ moduleContext }: ModuleFCProps<State>) => {
                     width={wrapperDivSize.width}
                     height={wrapperDivSize.height}
                 />
-            }
+            )}
         </div>
     );
 };

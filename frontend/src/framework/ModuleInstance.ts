@@ -1,20 +1,22 @@
+import { BroadcastChannel, BroadcastChannelMeta, broadcaster } from "./Broadcaster";
 import { ImportState, Module, ModuleFC } from "./Module";
 import { ModuleContext } from "./ModuleContext";
 import { StateBaseType, StateOptions, StateStore } from "./StateStore";
 import { SyncSettingKey } from "./SyncSettings";
 
-export class ModuleInstance<StateType extends StateBaseType> {
+export class ModuleInstance<StateType extends StateBaseType, BCM extends BroadcastChannelMeta> {
     private id: string;
     private name: string;
     private initialised: boolean;
     private syncedSettingKeys: SyncSettingKey[];
     private stateStore: StateStore<StateType> | null;
-    private module: Module<StateType>;
-    private context: ModuleContext<StateType> | null;
+    private module: Module<StateType, BCM>;
+    private context: ModuleContext<StateType, BCM> | null;
     private importStateSubscribers: Set<() => void>;
     private syncedSettingsSubscribers: Set<(syncedSettings: SyncSettingKey[]) => void>;
+    private broadcastChannels: Record<keyof BCM, BroadcastChannel<any>>;
 
-    constructor(module: Module<StateType>, instanceNumber: number) {
+    constructor(module: Module<StateType, BCM>, instanceNumber: number, broadcastChannelsMeta: BCM) {
         this.id = `${module.getName()}-${instanceNumber}`;
         this.name = module.getName();
         this.stateStore = null;
@@ -24,11 +26,23 @@ export class ModuleInstance<StateType extends StateBaseType> {
         this.initialised = false;
         this.syncedSettingKeys = [];
         this.syncedSettingsSubscribers = new Set();
+
+        this.broadcastChannels = {} as Record<keyof BCM, BroadcastChannel<any>>;
+        if (broadcastChannelsMeta) {
+            for (const channelName in broadcastChannelsMeta) {
+                const channelData = broadcastChannelsMeta[channelName];
+                this.broadcastChannels[channelName] = broadcaster.registerChannel<typeof channelData>(channelName);
+            }
+        }
+    }
+
+    public getBroadcastChannel<C extends keyof BCM>(channelName: keyof BCM): BroadcastChannel<BCM[C]> {
+        return this.broadcastChannels[channelName];
     }
 
     public setInitialState(initialState: StateType, options?: StateOptions<StateType>): void {
         this.stateStore = new StateStore<StateType>(initialState, options);
-        this.context = new ModuleContext<StateType>(this, this.stateStore);
+        this.context = new ModuleContext<StateType, BCM>(this, this.stateStore);
         this.initialised = true;
     }
 
@@ -65,11 +79,11 @@ export class ModuleInstance<StateType extends StateBaseType> {
         return this.initialised;
     }
 
-    public getViewFC(): ModuleFC<StateType> {
+    public getViewFC(): ModuleFC<StateType, BCM> {
         return this.module.viewFC;
     }
 
-    public getSettingsFC(): ModuleFC<StateType> {
+    public getSettingsFC(): ModuleFC<StateType, BCM> {
         return this.module.settingsFC;
     }
 
@@ -77,7 +91,7 @@ export class ModuleInstance<StateType extends StateBaseType> {
         return this.module.getImportState();
     }
 
-    public getContext(): ModuleContext<StateType> {
+    public getContext(): ModuleContext<StateType, BCM> {
         if (!this.context) {
             throw `Module context is not available yet. Did you forget to init the module '${this.name}.'?`;
         }
@@ -92,7 +106,7 @@ export class ModuleInstance<StateType extends StateBaseType> {
         return this.name;
     }
 
-    public getModule(): Module<StateType> {
+    public getModule(): Module<StateType, BCM> {
         return this.module;
     }
 
