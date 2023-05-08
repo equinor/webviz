@@ -43,8 +43,8 @@ class RadixJobScheduler:
 
         try:
             httpx.get(f"http://{existing_job_name}:{self._port}/")
-        except (ConnectionRefusedError, httpx.ConnectError):
-            print("ConnectionRefusedError")
+        except (ConnectionRefusedError, httpx.ConnectError, httpx.ConnectTimeout):
+            print("User container server not yet up")
             return False
 
         return True
