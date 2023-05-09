@@ -44,8 +44,8 @@ export const view = ({ moduleContext }: ModuleFCProps<State>) => {
         }
     }, [channelY]);
 
-    let xValues: number[] = [];
-    let yValues: number[] = [];
+    const xValues: number[] = [];
+    const yValues: number[] = [];
 
     if (dataX && dataY && timeStep) {
         const filteredDataX = dataX.filter((el) => ("datetime" in el ? el.datetime === parseInt(timeStep, 10) : true));
