@@ -7,6 +7,7 @@ import { useElementSize } from "@lib/hooks/useElementSize";
 
 import { Layout, PlotData, PlotHoverEvent, PlotMouseEvent } from "plotly.js";
 
+import { BroadcastChannelNames, BroadcastChannelTypes } from "./broadcastChannel";
 import { useStatisticalVectorDataQuery, useVectorDataQuery } from "./queryHooks";
 import { State } from "./state";
 
@@ -17,7 +18,10 @@ interface MyPlotData extends Partial<PlotData> {
     legendrank?: number;
 }
 
-export const view = ({ moduleContext, workbenchServices }: ModuleFCProps<State>) => {
+export const view = ({
+    moduleContext,
+    workbenchServices,
+}: ModuleFCProps<State, BroadcastChannelNames, BroadcastChannelTypes>) => {
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);
     const wrapperDivSize = useElementSize(wrapperDivRef);
     const vectorSpec = moduleContext.useStoreValue("vectorSpec");
@@ -41,6 +45,26 @@ export const view = ({ moduleContext, workbenchServices }: ModuleFCProps<State>)
         resampleFrequency,
         realizationsToInclude,
         showStatistics
+    );
+
+    React.useEffect(
+        function broadcast() {
+            const data: { key: number; datetime: number; value: number }[] = [];
+            if (vectorQuery.data) {
+                vectorQuery.data.forEach((vec) => {
+                    vec.values.forEach((value, index) => {
+                        data.push({
+                            key: vec.realization,
+                            datetime: Date.parse(vec.timestamps[index]),
+                            value,
+                        });
+                    });
+                });
+            }
+
+            moduleContext.getChannel(BroadcastChannelNames.TimeSeries).broadcast(data);
+        },
+        [vectorQuery.data]
     );
 
     // React.useEffect(

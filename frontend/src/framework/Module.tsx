@@ -10,12 +10,20 @@ import { SyncSettingKey } from "./SyncSettings";
 import { Workbench } from "./Workbench";
 import { WorkbenchServices } from "./WorkbenchServices";
 
-export type ModuleFCProps<S extends StateBaseType, BCM extends BroadcastChannelMeta = {}> = {
-    moduleContext: ModuleContext<S, BCM>;
+export type ModuleFCProps<
+    S extends StateBaseType,
+    ChannelNames extends string = never,
+    BCM extends BroadcastChannelMeta<ChannelNames> = never
+> = {
+    moduleContext: ModuleContext<S, ChannelNames, BCM>;
     workbenchServices: WorkbenchServices;
 };
 
-export type ModuleFC<S extends StateBaseType, BCM extends BroadcastChannelMeta = {}> = React.FC<ModuleFCProps<S, BCM>>;
+export type ModuleFC<
+    S extends StateBaseType,
+    ChannelNames extends string = never,
+    BCM extends BroadcastChannelMeta<ChannelNames> = never
+> = React.FC<ModuleFCProps<S, ChannelNames, BCM>>;
 
 export enum ImportState {
     NotImported = "NotImported",
@@ -24,20 +32,24 @@ export enum ImportState {
     Failed = "Failed",
 }
 
-export class Module<StateType extends StateBaseType, BCM extends BroadcastChannelMeta> {
+export class Module<
+    StateType extends StateBaseType,
+    ChannelNames extends string,
+    BCM extends BroadcastChannelMeta<ChannelNames>
+> {
     private _name: string;
-    public viewFC: ModuleFC<StateType, BCM>;
-    public settingsFC: ModuleFC<StateType, BCM>;
+    public viewFC: ModuleFC<StateType, ChannelNames, BCM>;
+    public settingsFC: ModuleFC<StateType, ChannelNames, BCM>;
     private numInstances: number;
     private importState: ImportState;
-    private moduleInstances: ModuleInstance<StateType, BCM>[];
+    private moduleInstances: ModuleInstance<StateType, ChannelNames, BCM>[];
     private initialState: StateType | null;
     private stateOptions: StateOptions<StateType> | undefined;
     private workbench: Workbench | null;
     private syncableSettingKeys: SyncSettingKey[];
-    private broadcastChannelsMeta: BCM;
+    private channelNames: ChannelNames[];
 
-    constructor(name: string, syncableSettingKeys: SyncSettingKey[] = [], broadcastChannels: BCM) {
+    constructor(name: string, syncableSettingKeys: SyncSettingKey[] = [], channelNames: ChannelNames[] = []) {
         this._name = name;
         this.numInstances = 0;
         this.viewFC = () => <div>Not defined</div>;
@@ -47,7 +59,7 @@ export class Module<StateType extends StateBaseType, BCM extends BroadcastChanne
         this.initialState = null;
         this.workbench = null;
         this.syncableSettingKeys = syncableSettingKeys;
-        this.broadcastChannelsMeta = broadcastChannels;
+        this.channelNames = channelNames;
     }
 
     public getImportState(): ImportState {
@@ -76,8 +88,8 @@ export class Module<StateType extends StateBaseType, BCM extends BroadcastChanne
         return this.syncableSettingKeys;
     }
 
-    public makeInstance(): ModuleInstance<StateType, BCM> {
-        const instance = new ModuleInstance<StateType, BCM>(this, this.numInstances++, this.broadcastChannelsMeta);
+    public makeInstance(): ModuleInstance<StateType, ChannelNames, BCM> {
+        const instance = new ModuleInstance<StateType, ChannelNames, BCM>(this, this.numInstances++, this.channelNames);
         this.moduleInstances.push(instance);
         this.maybeImportSelf();
         return instance;

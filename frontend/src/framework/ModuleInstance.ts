@@ -4,19 +4,27 @@ import { ModuleContext } from "./ModuleContext";
 import { StateBaseType, StateOptions, StateStore } from "./StateStore";
 import { SyncSettingKey } from "./SyncSettings";
 
-export class ModuleInstance<StateType extends StateBaseType, BCM extends BroadcastChannelMeta> {
+export class ModuleInstance<
+    StateType extends StateBaseType,
+    ChannelNames extends string,
+    BCM extends BroadcastChannelMeta<ChannelNames>
+> {
     private id: string;
     private name: string;
     private initialised: boolean;
     private syncedSettingKeys: SyncSettingKey[];
     private stateStore: StateStore<StateType> | null;
-    private module: Module<StateType, BCM>;
-    private context: ModuleContext<StateType, BCM> | null;
+    private module: Module<StateType, ChannelNames, BCM>;
+    private context: ModuleContext<StateType, ChannelNames, BCM> | null;
     private importStateSubscribers: Set<() => void>;
     private syncedSettingsSubscribers: Set<(syncedSettings: SyncSettingKey[]) => void>;
     private broadcastChannels: Record<keyof BCM, BroadcastChannel<any>>;
 
-    constructor(module: Module<StateType, BCM>, instanceNumber: number, broadcastChannelsMeta: BCM) {
+    constructor(
+        module: Module<StateType, ChannelNames, BCM>,
+        instanceNumber: number,
+        broadcastChannelNames: ChannelNames[]
+    ) {
         this.id = `${module.getName()}-${instanceNumber}`;
         this.name = module.getName();
         this.stateStore = null;
@@ -28,11 +36,13 @@ export class ModuleInstance<StateType extends StateBaseType, BCM extends Broadca
         this.syncedSettingsSubscribers = new Set();
 
         this.broadcastChannels = {} as Record<keyof BCM, BroadcastChannel<any>>;
-        if (broadcastChannelsMeta) {
-            for (const channelName in broadcastChannelsMeta) {
-                const channelData = broadcastChannelsMeta[channelName];
-                this.broadcastChannels[channelName] = broadcaster.registerChannel<typeof channelData>(channelName);
-            }
+
+        if (broadcastChannelNames) {
+            broadcastChannelNames.forEach((channelName) => {
+                const enrichedChannelName = `${this.id} - ${channelName}`;
+                this.broadcastChannels[channelName] =
+                    broadcaster.registerChannel<BCM[typeof channelName]>(enrichedChannelName);
+            });
         }
     }
 
@@ -42,7 +52,7 @@ export class ModuleInstance<StateType extends StateBaseType, BCM extends Broadca
 
     public setInitialState(initialState: StateType, options?: StateOptions<StateType>): void {
         this.stateStore = new StateStore<StateType>(initialState, options);
-        this.context = new ModuleContext<StateType, BCM>(this, this.stateStore);
+        this.context = new ModuleContext<StateType, ChannelNames, BCM>(this, this.stateStore);
         this.initialised = true;
     }
 
@@ -79,11 +89,11 @@ export class ModuleInstance<StateType extends StateBaseType, BCM extends Broadca
         return this.initialised;
     }
 
-    public getViewFC(): ModuleFC<StateType, BCM> {
+    public getViewFC(): ModuleFC<StateType, ChannelNames, BCM> {
         return this.module.viewFC;
     }
 
-    public getSettingsFC(): ModuleFC<StateType, BCM> {
+    public getSettingsFC(): ModuleFC<StateType, ChannelNames, BCM> {
         return this.module.settingsFC;
     }
 
@@ -91,7 +101,7 @@ export class ModuleInstance<StateType extends StateBaseType, BCM extends Broadca
         return this.module.getImportState();
     }
 
-    public getContext(): ModuleContext<StateType, BCM> {
+    public getContext(): ModuleContext<StateType, ChannelNames, BCM> {
         if (!this.context) {
             throw `Module context is not available yet. Did you forget to init the module '${this.name}.'?`;
         }
@@ -106,7 +116,7 @@ export class ModuleInstance<StateType extends StateBaseType, BCM extends Broadca
         return this.name;
     }
 
-    public getModule(): Module<StateType, BCM> {
+    public getModule(): Module<StateType, ChannelNames, BCM> {
         return this.module;
     }
 

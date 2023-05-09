@@ -5,7 +5,7 @@ import { SyncSettingKey, SyncSettingsMeta } from "@framework/SyncSettings";
 import { XMarkIcon } from "@heroicons/react/20/solid";
 
 export type HeaderProps = {
-    moduleInstance: ModuleInstance<any, any>;
+    moduleInstance: ModuleInstance<any, any, any>;
     isDragged: boolean;
     onPointerDown: (event: React.PointerEvent<HTMLDivElement>) => void;
     onRemoveClick: (event: React.PointerEvent<HTMLDivElement>) => void;

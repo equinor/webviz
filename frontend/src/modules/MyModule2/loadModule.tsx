@@ -14,26 +14,10 @@ const module = ModuleRegistry.initModule<State>("MyModule2", initialState);
 
 module.viewFC = (props) => {
     const text = props.moduleContext.useStoreValue("text");
-    const [count, setCount] = React.useState<number>(0);
-
-    React.useEffect(() => {
-        const handleCountChange = (data: { count: number }) => {
-            setCount(data.count);
-        };
-
-        const channel = broadcaster.getChannel("MyModule");
-
-        if (channel) {
-            return channel.subscribe(handleCountChange);
-        }
-
-        return () => {};
-    }, []);
 
     return (
         <div>
             <h1>Text: {text as string}</h1>
-            <h1>Count: {count}</h1>
         </div>
     );
 };

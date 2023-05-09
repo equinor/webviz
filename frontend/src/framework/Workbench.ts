@@ -32,7 +32,7 @@ export type WorkbenchGuiState = {
 };
 
 export class Workbench {
-    private moduleInstances: ModuleInstance<any, any>[];
+    private moduleInstances: ModuleInstance<any, any, any>[];
     private _activeModuleId: string;
     private guiStateStore: StateStore<WorkbenchGuiState>;
     private dataStateStore: StateStore<WorkbenchDataState>;
@@ -114,11 +114,11 @@ export class Workbench {
         };
     }
 
-    public getModuleInstances(): ModuleInstance<any, any>[] {
+    public getModuleInstances(): ModuleInstance<any, any, any>[] {
         return this.moduleInstances;
     }
 
-    public getModuleInstance(id: string): ModuleInstance<any, any> | undefined {
+    public getModuleInstance(id: string): ModuleInstance<any, any, any> | undefined {
         return this.moduleInstances.find((moduleInstance) => moduleInstance.getId() === id);
     }
 
@@ -139,7 +139,7 @@ export class Workbench {
         });
     }
 
-    public makeAndAddModuleInstance(moduleName: string, layout: LayoutElement): ModuleInstance<any, any> {
+    public makeAndAddModuleInstance(moduleName: string, layout: LayoutElement): ModuleInstance<any, any, any> {
         const module = ModuleRegistry.getModule(moduleName);
         if (!module) {
             throw new Error(`Module ${moduleName} not found`);

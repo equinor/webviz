@@ -19,8 +19,8 @@ export function useActiveModuleId(workbench: Workbench): string {
     return activeModuleId;
 }
 
-export function useModuleInstances(workbench: Workbench): ModuleInstance<any, any>[] {
-    const [moduleInstances, setModuleInstances] = React.useState<ModuleInstance<any, any>[]>([]);
+export function useModuleInstances(workbench: Workbench): ModuleInstance<any, any, any>[] {
+    const [moduleInstances, setModuleInstances] = React.useState<ModuleInstance<any, any, any>[]>([]);
 
     React.useEffect(() => {
         function handleModuleInstancesChange() {
