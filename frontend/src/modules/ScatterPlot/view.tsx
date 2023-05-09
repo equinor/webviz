@@ -48,8 +48,8 @@ export const view = ({ moduleContext }: ModuleFCProps<State>) => {
     let yValues: number[] = [];
 
     if (dataX && dataY && timeStep) {
-        const filteredDataX = dataX.filter((el) => el.datetime === parseInt(timeStep, 10));
-        const filteredDataY = dataY.filter((el) => el.datetime === parseInt(timeStep, 10));
+        const filteredDataX = dataX.filter((el) => ("datetime" in el ? el.datetime === parseInt(timeStep, 10) : true));
+        const filteredDataY = dataY.filter((el) => ("datetime" in el ? el.datetime === parseInt(timeStep, 10) : true));
         const keysX = filteredDataX.map((el: any) => el.realization);
         const keysY = filteredDataY.map((el: any) => el.realization);
         if (keysX.length === keysY.length && !keysX.some((el, index) => el !== keysY[index])) {

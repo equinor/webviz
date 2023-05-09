@@ -63,9 +63,14 @@ export function settings({ moduleContext, workbenchServices }: ModuleFCProps<Sta
 
     let timeSteps: number[] | null = null;
     if (dataX && dataY) {
-        const set = [...new Set(dataX.map((el: any) => el.datetime))];
-        timeSteps = [...set] as number[];
-        timeSteps = timeSteps.filter((el) => dataY.find((el2: any) => el2.datetime === el) !== undefined);
+        timeSteps = dataX.filter((el) => "datetime" in el).map((el: any) => el.datetime);
+        timeSteps.push(
+            ...[
+                ...dataY
+                    .filter((el) => "datetime" in el && timeSteps && !timeSteps.find((el2) => el.datetime === el2))
+                    .map((el: any) => el.datetime),
+            ]
+        );
     }
 
     return (

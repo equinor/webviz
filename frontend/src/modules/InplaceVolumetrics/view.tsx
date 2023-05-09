@@ -9,13 +9,14 @@ import { useElementSize } from "@lib/hooks/useElementSize";
 
 import { Layout, PlotData, PlotHoverEvent } from "plotly.js";
 
+import { BroadcastChannelNames, BroadcastChannelTypes } from "./broadcastChannel";
 import { useRealizationsResponseQuery } from "./queryHooks";
 import { VolumetricResponseAbbreviations } from "./settings";
 import { State } from "./state";
 
 import { Body_get_realizations_response } from "../../api/models/Body_get_realizations_response";
 
-export const view = (props: ModuleFCProps<State>) => {
+export const view = (props: ModuleFCProps<State, BroadcastChannelNames, BroadcastChannelTypes>) => {
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);
     const wrapperDivSize = useElementSize(wrapperDivRef);
     const ensemble = props.moduleContext.useStoreValue("ensemble");
@@ -66,6 +67,22 @@ export const view = (props: ModuleFCProps<State>) => {
     function handleUnHover() {
         props.workbenchServices.publishGlobalData("global.hoverRealization", { realization: -1 });
     }
+
+    React.useEffect(
+        function broadcast() {
+            const data: { realization: number; value: number }[] = [];
+            if (realizationsResponseQuery.data) {
+                realizationsResponseQuery.data.realizations.forEach((realization, index) => {
+                    data.push({
+                        realization: realization,
+                        value: realizationsResponseQuery.data.values[index],
+                    });
+                });
+            }
+            props.moduleContext.getChannel(BroadcastChannelNames.Response).broadcast(data);
+        },
+        [realizationsResponseQuery.data]
+    );
 
     const layout: Partial<Layout> = {
         width: wrapperDivSize.width,
