@@ -49,12 +49,12 @@ export const view = ({
 
     React.useEffect(
         function broadcast() {
-            const data: { key: number; datetime: number; value: number }[] = [];
+            const data: { realization: number; datetime: number; value: number }[] = [];
             if (vectorQuery.data) {
                 vectorQuery.data.forEach((vec) => {
                     vec.values.forEach((value, index) => {
                         data.push({
-                            key: vec.realization,
+                            realization: vec.realization,
                             datetime: Date.parse(vec.timestamps[index]),
                             value,
                         });

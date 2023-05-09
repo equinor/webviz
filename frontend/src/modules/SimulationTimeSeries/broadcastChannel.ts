@@ -1,19 +1,25 @@
-import { BroadcastChannelDataTypes, BroadcastChannelDataTypesMapping } from "@framework/Broadcaster";
+import {
+    BroadcastChannelDataTypes,
+    BroadcastChannelDataTypesMapping,
+    MapDataTypeToTSType,
+} from "@framework/Broadcaster";
 
 export enum BroadcastChannelNames {
-    TimeSeries = "timeseries",
+    TimeSeries = "Time series",
 }
-
-export type BroadcastChannelTypes = {
-    [BroadcastChannelNames.TimeSeries]: { key: number; datetime: number; value: number }[];
-};
 
 export const broadcastChannelNames = Object.values(BroadcastChannelNames);
 
-export const broadcastChannelTypes = {
+export const broadcastChannelDefs = {
     [BroadcastChannelNames.TimeSeries]: {
         realization: BroadcastChannelDataTypes.realization,
         datetime: BroadcastChannelDataTypes.datetime,
         value: BroadcastChannelDataTypes.value,
     },
+};
+
+export type BroadcastChannelTypes = {
+    [BroadcastChannelNames.TimeSeries]: MapDataTypeToTSType<
+        (typeof broadcastChannelDefs)[BroadcastChannelNames.TimeSeries]
+    >[];
 };

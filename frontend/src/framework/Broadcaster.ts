@@ -12,6 +12,18 @@ export type BroadcastChannelDataTypesMapping = {
     [BroadcastChannelDataTypes.value]: number;
 };
 
+export type MapDataTypeToTSType<DT extends Record<string, BroadcastChannelDataTypes>> = {
+    [key in keyof DT]: BroadcastChannelDataTypesMapping[DT[key]];
+};
+
+export type BroadcastChannelDef = {
+    [key: string]: BroadcastChannelDataTypes;
+};
+
+export type BroadcastChannelsDef = {
+    [key: string]: BroadcastChannelDef;
+};
+
 export type BroadcastChannelData = any;
 
 export type BroadcastChannelMeta<ChannelNames extends string> = {
@@ -22,15 +34,21 @@ export class BroadcastChannel<D> {
     private _name: string;
     private _subscribers: Set<(data: D) => void>;
     private _cachedData: D | null;
+    private _dataDef: BroadcastChannelDef;
 
-    constructor(name: string) {
+    constructor(name: string, def: BroadcastChannelDef) {
         this._name = name;
         this._subscribers = new Set();
         this._cachedData = null;
+        this._dataDef = def;
     }
 
     public getName() {
         return this._name;
+    }
+
+    public getDataDef() {
+        return this._dataDef;
     }
 
     public broadcast(data: D) {
@@ -58,15 +76,18 @@ export class BroadcastChannel<D> {
 
 class Broadcaster {
     private _channels: BroadcastChannel<any>[];
-    private _subscribers: Set<(channelNames: string[]) => void>;
+    private _subscribers: Set<(channels: BroadcastChannel<any>[]) => void>;
 
     constructor() {
         this._channels = [];
         this._subscribers = new Set();
     }
 
-    public registerChannel<D extends Record<string, any>>(channelName: string): BroadcastChannel<D> {
-        const channel = new BroadcastChannel<D>(channelName);
+    public registerChannel<D extends Record<string, any>>(
+        channelName: string,
+        channelDef: BroadcastChannelDef
+    ): BroadcastChannel<D> {
+        const channel = new BroadcastChannel<D>(channelName, channelDef);
         this._channels.push(channel);
         this.notifySubscribersAboutChannelsChanges();
         return channel;
@@ -94,9 +115,9 @@ class Broadcaster {
         return this._channels.map((c) => c.getName());
     }
 
-    public subscribeToChannelsChanges(cb: (channelNames: string[]) => void): () => void {
+    public subscribeToChannelsChanges(cb: (channels: BroadcastChannel<any>[]) => void): () => void {
         this._subscribers.add(cb);
-        cb(this.getChannelNames());
+        cb(this._channels);
         return () => {
             this._subscribers.delete(cb);
         };
@@ -104,7 +125,7 @@ class Broadcaster {
 
     private notifySubscribersAboutChannelsChanges() {
         for (const cb of this._subscribers) {
-            cb(this.getChannelNames());
+            cb(this._channels);
         }
     }
 }

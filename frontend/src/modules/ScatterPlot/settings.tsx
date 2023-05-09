@@ -1,7 +1,7 @@
 import React from "react";
 
 import { EnsembleParameterDescription, VectorDescription } from "@api";
-import { useChannelData } from "@framework/Broadcaster";
+import { BroadcastChannelDataTypes, broadcaster, useChannelData } from "@framework/Broadcaster";
 import { ModuleFCProps } from "@framework/Module";
 import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
 import { useSubscribedValue } from "@framework/WorkbenchServices";
@@ -19,25 +19,73 @@ import { State } from "./state";
 
 //-----------------------------------------------------------------------------------------------------------
 export function settings({ moduleContext, workbenchServices }: ModuleFCProps<State>) {
-    const [channelName, setChannelName] = moduleContext.useStoreState("channelName");
+    const [channelNameX, setChannelNameX] = moduleContext.useStoreState("channelNameX");
+    const [channelNameY, setChannelNameY] = moduleContext.useStoreState("channelNameY");
+    const [dataX, setDataX] = React.useState<any[] | null>(null);
+    const [dataY, setDataY] = React.useState<any[] | null>(null);
+
     const [timeStep, setTimeStep] = moduleContext.useStoreState("timeStep");
 
-    const channelData = useChannelData<Record<string, any>>(channelName || "");
+    const channelX = broadcaster.getChannel(channelNameX ?? "");
+    const channelY = broadcaster.getChannel(channelNameY ?? "");
 
-    const handleChannelChanged = (channelName: string) => {
-        setChannelName(channelName);
+    React.useEffect(() => {
+        if (channelX) {
+            const handleChannelXChanged = (data: any) => {
+                setDataX(data);
+            };
+
+            const unsubscribeFunc = channelX.subscribe(handleChannelXChanged);
+
+            return unsubscribeFunc;
+        }
+    }, [channelX]);
+
+    React.useEffect(() => {
+        if (channelY) {
+            const handleChannelYChanged = (data: any) => {
+                setDataY(data);
+            };
+
+            const unsubscribeFunc = channelY.subscribe(handleChannelYChanged);
+
+            return unsubscribeFunc;
+        }
+    }, [channelY]);
+
+    const handleChannelXChanged = (channelName: string) => {
+        setChannelNameX(channelName);
+    };
+
+    const handleChannelYChanged = (channelName: string) => {
+        setChannelNameY(channelName);
     };
 
     let timeSteps: number[] | null = null;
-    if (channelData) {
-        const set = [...new Set(channelData.map((el: any) => el.datetime))];
+    if (dataX && dataY) {
+        const set = [...new Set(dataX.map((el: any) => el.datetime))];
         timeSteps = [...set] as number[];
+        timeSteps = timeSteps.filter((el) => dataY.find((el2: any) => el2.datetime === el) !== undefined);
     }
 
     return (
         <>
-            <Label text="Data channel">
-                <ChannelSelect onChange={handleChannelChanged} />
+            <Label text="Data channel X axis">
+                <ChannelSelect
+                    onChange={handleChannelXChanged}
+                    channelFilter={{
+                        datetime: BroadcastChannelDataTypes.datetime,
+                        realization: BroadcastChannelDataTypes.realization,
+                        value: BroadcastChannelDataTypes.value,
+                    }}
+                />
+            </Label>
+            <Label text="Data channel Y axis">
+                <ChannelSelect
+                    disabled={channelNameX === null}
+                    onChange={handleChannelYChanged}
+                    channelFilter={channelX?.getDataDef()}
+                />
             </Label>
             <Label text="Timestep">
                 <Dropdown

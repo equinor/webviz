@@ -2,7 +2,7 @@ import React from "react";
 
 import { cloneDeep } from "lodash";
 
-import { BroadcastChannelMeta } from "./Broadcaster";
+import { BroadcastChannelMeta, BroadcastChannelsDef } from "./Broadcaster";
 import { ModuleContext } from "./ModuleContext";
 import { ModuleInstance } from "./ModuleInstance";
 import { StateBaseType, StateOptions } from "./StateStore";
@@ -47,9 +47,13 @@ export class Module<
     private stateOptions: StateOptions<StateType> | undefined;
     private workbench: Workbench | null;
     private syncableSettingKeys: SyncSettingKey[];
-    private channelNames: ChannelNames[];
+    private channelsDef: BroadcastChannelsDef;
 
-    constructor(name: string, syncableSettingKeys: SyncSettingKey[] = [], channelNames: ChannelNames[] = []) {
+    constructor(
+        name: string,
+        syncableSettingKeys: SyncSettingKey[] = [],
+        broadcastChannelsDef: BroadcastChannelsDef = {}
+    ) {
         this._name = name;
         this.numInstances = 0;
         this.viewFC = () => <div>Not defined</div>;
@@ -59,7 +63,7 @@ export class Module<
         this.initialState = null;
         this.workbench = null;
         this.syncableSettingKeys = syncableSettingKeys;
-        this.channelNames = channelNames;
+        this.channelsDef = broadcastChannelsDef;
     }
 
     public getImportState(): ImportState {
@@ -89,7 +93,7 @@ export class Module<
     }
 
     public makeInstance(): ModuleInstance<StateType, ChannelNames, BCM> {
-        const instance = new ModuleInstance<StateType, ChannelNames, BCM>(this, this.numInstances++, this.channelNames);
+        const instance = new ModuleInstance<StateType, ChannelNames, BCM>(this, this.numInstances++, this.channelsDef);
         this.moduleInstances.push(instance);
         this.maybeImportSelf();
         return instance;

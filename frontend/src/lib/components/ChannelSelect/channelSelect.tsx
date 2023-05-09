@@ -1,31 +1,50 @@
 import React from "react";
 
-import { broadcaster } from "@framework/Broadcaster";
+import { BroadcastChannel, BroadcastChannelDef, broadcaster } from "@framework/Broadcaster";
 
 import { Dropdown } from "../Dropdown";
+import { BaseComponentProps } from "../_BaseComponent";
+
+function checkIfChannelDefMatchesFilter(channelDefs: BroadcastChannelDef, filter: BroadcastChannelDef) {
+    Object.keys(filter).forEach((key) => {
+        if (filter[key] !== channelDefs[key]) {
+            return false;
+        }
+    });
+    return true;
+}
 
 export type ChannelSelectProps = {
+    channelFilter?: BroadcastChannelDef;
     onChange?: (channel: string) => void;
-};
+} & BaseComponentProps;
 
 export const ChannelSelect: React.FC<ChannelSelectProps> = (props) => {
+    const { channelFilter, onChange, ...rest } = props;
     const [channel, setChannel] = React.useState<string>("");
     const [channels, setChannels] = React.useState<string[]>([]);
 
     React.useEffect(() => {
-        const handleChannelsChanged = (channels: string[]) => {
-            setChannels(channels);
+        const handleChannelsChanged = (channels: BroadcastChannel<any>[]) => {
+            setChannels(
+                channels
+                    .filter(
+                        (el) =>
+                            !props.channelFilter || checkIfChannelDefMatchesFilter(el.getDataDef(), props.channelFilter)
+                    )
+                    .map((el) => el.getName())
+            );
         };
 
         const unsubscribeFunc = broadcaster.subscribeToChannelsChanges(handleChannelsChanged);
 
         return unsubscribeFunc;
-    }, []);
+    }, [channelFilter]);
 
     const handleChannelsChanged = (channel: string) => {
         setChannel(channel);
-        if (props.onChange) {
-            props.onChange(channel);
+        if (onChange) {
+            onChange(channel);
         }
     };
 
@@ -34,6 +53,7 @@ export const ChannelSelect: React.FC<ChannelSelectProps> = (props) => {
             options={channels.map((el) => ({ label: el, value: el }))}
             value={channel}
             onChange={handleChannelsChanged}
+            {...rest}
         />
     );
 };

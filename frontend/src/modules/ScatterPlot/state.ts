@@ -1,4 +1,5 @@
 export interface State {
-    channelName: string | null;
+    channelNameX: string | null;
+    channelNameY: string | null;
     timeStep: string | null;
 }

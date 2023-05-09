@@ -1,4 +1,4 @@
-import { BroadcastChannel, BroadcastChannelMeta, broadcaster } from "./Broadcaster";
+import { BroadcastChannel, BroadcastChannelMeta, BroadcastChannelsDef, broadcaster } from "./Broadcaster";
 import { ImportState, Module, ModuleFC } from "./Module";
 import { ModuleContext } from "./ModuleContext";
 import { StateBaseType, StateOptions, StateStore } from "./StateStore";
@@ -23,7 +23,7 @@ export class ModuleInstance<
     constructor(
         module: Module<StateType, ChannelNames, BCM>,
         instanceNumber: number,
-        broadcastChannelNames: ChannelNames[]
+        broadcastChannelsDef: BroadcastChannelsDef
     ) {
         this.id = `${module.getName()}-${instanceNumber}`;
         this.name = module.getName();
@@ -37,11 +37,15 @@ export class ModuleInstance<
 
         this.broadcastChannels = {} as Record<keyof BCM, BroadcastChannel<any>>;
 
+        const broadcastChannelNames = Object.keys(broadcastChannelsDef) as (keyof BCM)[];
+
         if (broadcastChannelNames) {
             broadcastChannelNames.forEach((channelName) => {
-                const enrichedChannelName = `${this.id} - ${channelName}`;
-                this.broadcastChannels[channelName] =
-                    broadcaster.registerChannel<BCM[typeof channelName]>(enrichedChannelName);
+                const enrichedChannelName = `${this.id} - ${channelName as string}`;
+                this.broadcastChannels[channelName] = broadcaster.registerChannel<BCM[typeof channelName]>(
+                    enrichedChannelName,
+                    broadcastChannelsDef[channelName as string]
+                );
             });
         }
     }

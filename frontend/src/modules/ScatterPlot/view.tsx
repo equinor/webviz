@@ -1,6 +1,6 @@
 import React from "react";
 
-import { useChannelData } from "@framework/Broadcaster";
+import { broadcaster, useChannelData } from "@framework/Broadcaster";
 import { ModuleFCProps } from "@framework/Module";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { BroadcastChannelTypes } from "@modules/SimulationTimeSeries/broadcastChannel";
@@ -12,22 +12,61 @@ export const view = ({ moduleContext }: ModuleFCProps<State>) => {
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);
     const wrapperDivSize = useElementSize(wrapperDivRef);
     const timeStep = moduleContext.useStoreValue("timeStep");
-    const channelName = moduleContext.useStoreValue("channelName");
+    const channelNameX = moduleContext.useStoreValue("channelNameX");
+    const channelNameY = moduleContext.useStoreValue("channelNameY");
+    const [dataX, setDataX] = React.useState<any[] | null>(null);
+    const [dataY, setDataY] = React.useState<any[] | null>(null);
 
-    const channelData = useChannelData<any>(channelName || "");
+    const channelX = broadcaster.getChannel(channelNameX ?? "");
+    const channelY = broadcaster.getChannel(channelNameY ?? "");
+
+    React.useEffect(() => {
+        if (channelX) {
+            const handleChannelXChanged = (data: any) => {
+                setDataX(data);
+            };
+
+            const unsubscribeFunc = channelX.subscribe(handleChannelXChanged);
+
+            return unsubscribeFunc;
+        }
+    }, [channelX]);
+
+    React.useEffect(() => {
+        if (channelY) {
+            const handleChannelYChanged = (data: any) => {
+                setDataY(data);
+            };
+
+            const unsubscribeFunc = channelY.subscribe(handleChannelYChanged);
+
+            return unsubscribeFunc;
+        }
+    }, [channelY]);
 
     let xValues: number[] = [];
     let yValues: number[] = [];
 
-    if (channelData && timeStep) {
-        const filteredData = channelData.filter((el: any) => el.datetime === parseInt(timeStep, 10));
-        xValues = filteredData.map((el: any) => el.key);
-        yValues = filteredData.map((el: any) => el.value);
+    if (dataX && dataY && timeStep) {
+        const filteredDataX = dataX.filter((el) => el.datetime === parseInt(timeStep, 10));
+        const filteredDataY = dataY.filter((el) => el.datetime === parseInt(timeStep, 10));
+        const keysX = filteredDataX.map((el: any) => el.realization);
+        const keysY = filteredDataY.map((el: any) => el.realization);
+        if (keysX.length === keysY.length && !keysX.some((el, index) => el !== keysY[index])) {
+            keysX.forEach((key) => {
+                const dataPointX = filteredDataX.find((el: any) => el.realization === key);
+                const dataPointY = filteredDataY.find((el: any) => el.realization === key);
+                if (filteredDataX && filteredDataY) {
+                    xValues.push(dataPointX.value);
+                    yValues.push(dataPointY.value);
+                }
+            });
+        }
     }
 
     return (
         <div className="w-full h-full" ref={wrapperDivRef}>
-            {channelData && (
+            {dataX && dataY && (
                 <PlotlyScatter
                     x={xValues}
                     y={yValues}

@@ -1,4 +1,4 @@
-import { BroadcastChannelMeta } from "./Broadcaster";
+import { BroadcastChannelMeta, BroadcastChannelsDef } from "./Broadcaster";
 import { Module } from "./Module";
 import { StateBaseType, StateOptions } from "./StateStore";
 import { SyncSettingKey } from "./SyncSettings";
@@ -15,12 +15,12 @@ export class ModuleRegistry {
     >(
         moduleName: string,
         syncableSettingKeys: SyncSettingKey[] = [],
-        broadcastChannelNames: ChannelNames[] = []
+        broadcastChannelsDef: BroadcastChannelsDef = {}
     ): Module<ModuleStateType, ChannelNames, BCM> {
         const module = new Module<ModuleStateType, ChannelNames, BCM>(
             moduleName,
             syncableSettingKeys,
-            broadcastChannelNames
+            broadcastChannelsDef
         );
         this._registeredModules[moduleName] = module;
         return module;

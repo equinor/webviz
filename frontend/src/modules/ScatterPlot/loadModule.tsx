@@ -6,7 +6,8 @@ import { view } from "./view";
 
 const initialState: State = {
     timeStep: null,
-    channelName: null,
+    channelNameX: null,
+    channelNameY: null,
 };
 
 const module = ModuleRegistry.initModule<State>("ScatterPlot", initialState);
