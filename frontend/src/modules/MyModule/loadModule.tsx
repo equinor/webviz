@@ -1,6 +1,5 @@
 import { ModuleRegistry } from "@framework/ModuleRegistry";
 
-import { broadcastChannels } from "./broadcastChannel";
 import { settings } from "./settings";
 import { State } from "./state";
 import { view } from "./view";
