@@ -31,7 +31,7 @@ jobs:
       - name: 📦 Install build dependencies
         working-directory: ./frontend
         run: |
-          npm ci --ignore-scripts --include=dev
+          npm ci --include=dev
 
       - name: ℹ️ Installed npm packages (depth = 0)
         working-directory: ./frontend
