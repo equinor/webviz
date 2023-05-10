@@ -115,6 +115,7 @@ jobs:
           docker build -f backend.Dockerfile -t ghcr.io/equinor/webviz_backend:latest .
 
       - name: GitHub Container Registry login
+        if: github.ref == 'refs/heads/main'
         uses: docker/login-action@v2
         with:
           registry: ghcr.io
@@ -122,6 +123,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: 🐳 Push Docker images
+        if: github.ref == 'refs/heads/main'
         run: |
           docker push ghcr.io/equinor/webviz_frontend:latest
           docker push ghcr.io/equinor/webviz_backend:latest

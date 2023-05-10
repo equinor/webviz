@@ -6,7 +6,7 @@ spec:
   environments:
     - name: prod
       build:
-        from: radixjob  # NB. Rename this back to main before merge!
+        from: main
   components:
     - name: frontend
       image: ghcr.io/equinor/webviz_frontend:latest
