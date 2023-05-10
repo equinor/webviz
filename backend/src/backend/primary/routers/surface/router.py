@@ -7,7 +7,7 @@ from src.services.sumo_access.surface_access import SurfaceAccess
 from src.services.sumo_access.surface_types import StatisticFunction
 from src.services.utils.authenticated_user import AuthenticatedUser
 from src.services.utils.perf_timer import PerfTimer
-from src.fastapi_app.auth.auth_helper import AuthHelper
+from src.backend.auth.auth_helper import AuthHelper
 from . import converters
 from . import schemas
 
@@ -162,7 +162,9 @@ def get_statistical_static_surface_data(
     service_stat_func_to_compute = StatisticFunction.from_string_value(statistic_function)
     if service_stat_func_to_compute is not None:
         xtgeo_surf = access.get_statistical_static_surf(
-            statistic_function=service_stat_func_to_compute, name=name, attribute=attribute
+            statistic_function=service_stat_func_to_compute,
+            name=name,
+            attribute=attribute,
         )
 
     if not xtgeo_surf:

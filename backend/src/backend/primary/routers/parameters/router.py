@@ -12,7 +12,7 @@ from src.services.sumo_access.parameter_access import (
 )
 from src.services.utils.authenticated_user import AuthenticatedUser
 from src.services.utils.perf_timer import PerfTimer
-from src.fastapi_app.auth.auth_helper import AuthHelper
+from src.backend.auth.auth_helper import AuthHelper
 from . import schemas
 
 LOGGER = logging.getLogger(__name__)

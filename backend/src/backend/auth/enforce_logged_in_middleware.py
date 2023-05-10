@@ -6,7 +6,7 @@ from fastapi import FastAPI, Request, Response
 from fastapi.responses import PlainTextResponse, RedirectResponse
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 
-from .auth_helper import AuthHelper
+from src.backend.auth.auth_helper import AuthHelper
 
 
 class EnforceLoggedInMiddleware(BaseHTTPMiddleware):
