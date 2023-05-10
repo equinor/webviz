@@ -12,15 +12,13 @@ spec:
         from: review
   components:
     - name: frontend
-      image: ghcr.io/equinor/webviz_frontend:latest
-      alwaysPullImageOnDeploy: true
+      dockerFileName: frontend-prod.Dockerfile
       publicPort: http
       ports:
         - name: http
           port: 8080
     - name: backend-primary
-      image: ghcr.io/equinor/webviz_backend:latest
-      alwaysPullImageOnDeploy: true
+      dockerFileName: backend.Dockerfile
       ports:
         - name: http
           port: 5000
@@ -44,7 +42,7 @@ spec:
         ALLOW_EMPTY_PASSWORD: yes
   jobs:
     - name: backend-user-session
-      image: ghcr.io/equinor/webviz_backend:latest
+      dockerFileName: backend.Dockerfile
       schedulerPort: 8000
       ports:
         - name: http
