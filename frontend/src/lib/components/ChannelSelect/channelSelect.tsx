@@ -1,17 +1,12 @@
 import React from "react";
 
-import { BroadcastChannel, BroadcastChannelDef, broadcaster } from "@framework/Broadcaster";
+import { BroadcastChannel, BroadcastChannelDef, broadcaster, checkChannelCompatibility } from "@framework/Broadcaster";
 
 import { Dropdown } from "../Dropdown";
 import { BaseComponentProps } from "../_BaseComponent";
 
 function checkIfChannelDefMatchesFilter(channelDefs: BroadcastChannelDef, filter: BroadcastChannelDef) {
-    Object.keys(filter).forEach((key) => {
-        if (filter["data"][key] !== channelDefs["data"][key] || filter["type"] !== channelDefs["type"]) {
-            return false;
-        }
-    });
-    return true;
+    return checkChannelCompatibility(channelDefs, filter);
 }
 
 export type ChannelSelectProps = {

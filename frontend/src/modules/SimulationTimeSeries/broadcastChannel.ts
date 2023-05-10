@@ -1,16 +1,15 @@
 import { BroadcastChannelDataFormat, BroadcastChannelDataTypes } from "@framework/Broadcaster";
 
 export enum BroadcastChannelNames {
-    TimeSeries = "Time series",
+    Realization_Value = "Value (per realization)",
 }
 
 export const broadcastChannelsDef = {
-    [BroadcastChannelNames.TimeSeries]: {
-        type: BroadcastChannelDataFormat.Array as const,
+    [BroadcastChannelNames.Realization_Value]: {
+        type: BroadcastChannelDataFormat.KeyValuePairs as const,
         data: {
-            realization: BroadcastChannelDataTypes.realization,
-            datetime: BroadcastChannelDataTypes.datetime,
-            value: BroadcastChannelDataTypes.value,
+            key: BroadcastChannelDataTypes.realization as const,
+            value: BroadcastChannelDataTypes.value as const,
         },
     },
 };

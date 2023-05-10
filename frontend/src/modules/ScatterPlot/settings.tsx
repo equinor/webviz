@@ -76,30 +76,13 @@ export function settings({ moduleContext, workbenchServices }: ModuleFCProps<Sta
     return (
         <>
             <Label text="Data channel X axis">
-                <ChannelSelect
-                    onChange={handleChannelXChanged}
-                    channelFilter={{
-                        type: BroadcastChannelDataFormat.Array,
-                        data: {
-                            datetime: BroadcastChannelDataTypes.datetime,
-                            realization: BroadcastChannelDataTypes.realization,
-                            value: BroadcastChannelDataTypes.value,
-                        },
-                    }}
-                />
+                <ChannelSelect onChange={handleChannelXChanged} />
             </Label>
             <Label text="Data channel Y axis">
                 <ChannelSelect
                     disabled={channelNameX === null}
                     onChange={handleChannelYChanged}
                     channelFilter={channelX?.getDataDef()}
-                />
-            </Label>
-            <Label text="Timestep">
-                <Dropdown
-                    options={makeTimeStepsOptions(timeSteps)}
-                    value={timeStep ? timeStep : undefined}
-                    onChange={setTimeStep}
                 />
             </Label>
         </>

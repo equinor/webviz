@@ -5,8 +5,7 @@ export enum BroadcastChannelDataTypes {
 }
 
 export enum BroadcastChannelDataFormat {
-    Array = "array",
-    Object = "object",
+    KeyValuePairs = "key-value-pairs",
 }
 
 export type BroadcastChannelDataTypesMapping = {
@@ -20,9 +19,10 @@ export type MapDataTypeToTSType<DT extends Record<string, BroadcastChannelDataTy
 };
 
 export type BroadcastChannelDef = {
-    type: BroadcastChannelDataFormat;
+    type: BroadcastChannelDataFormat.KeyValuePairs;
     data: {
-        [key: string]: BroadcastChannelDataTypes;
+        key: Exclude<BroadcastChannelDataTypes, BroadcastChannelDataTypes.value>;
+        value: BroadcastChannelDataTypes.value;
     };
 };
 
@@ -30,27 +30,31 @@ export type BroadcastChannelsDef = {
     [key: string]: BroadcastChannelDef;
 };
 
+export function checkChannelCompatibility(channelDef1: BroadcastChannelDef, channelDef2: BroadcastChannelDef): boolean {
+    if (channelDef1.type !== channelDef2.type) {
+        return false;
+    }
+
+    if (channelDef1.data.key !== channelDef2.data.key) {
+        return false;
+    }
+
+    return true;
+}
+
 export class BroadcastChannel<D extends BroadcastChannelDef> {
     private _name: string;
-    private _subscribers: Set<
-        (
-            data: D["type"] extends BroadcastChannelDataFormat.Array
-                ? MapDataTypeToTSType<D["data"]>[]
-                : MapDataTypeToTSType<D["data"]>
-        ) => void
-    >;
-    private _cachedData:
-        | (D["type"] extends BroadcastChannelDataFormat.Array
-              ? MapDataTypeToTSType<D["data"]>[]
-              : MapDataTypeToTSType<D["data"]>)
-        | null;
+    private _subscribers: Set<(data: MapDataTypeToTSType<D["data"]>[]) => void>;
+    private _cachedData: MapDataTypeToTSType<D["data"]>[] | null;
     private _dataDef: BroadcastChannelDef;
+    private _dataGenerator: (() => MapDataTypeToTSType<D["data"]>[]) | null;
 
     constructor(name: string, def: BroadcastChannelDef) {
         this._name = name;
         this._subscribers = new Set();
         this._cachedData = null;
         this._dataDef = def;
+        this._dataGenerator = null;
     }
 
     public getName() {
@@ -61,28 +65,28 @@ export class BroadcastChannel<D extends BroadcastChannelDef> {
         return this._dataDef;
     }
 
-    public broadcast(
-        data: D["type"] extends BroadcastChannelDataFormat.Array
-            ? MapDataTypeToTSType<D["data"]>[]
-            : MapDataTypeToTSType<D["data"]>
-    ) {
-        this._cachedData = data;
+    public broadcast(dataGenerator: () => MapDataTypeToTSType<D["data"]>[]) {
+        this._dataGenerator = dataGenerator;
 
-        console.log("Broadcasting on channel:", this._name, "Data:", data);
+        if (this._subscribers.size === 0) {
+            return;
+        }
+
+        this._cachedData = dataGenerator();
+
+        console.log("Broadcasting on channel:", this._name, "Data:", this._cachedData);
 
         for (const cb of this._subscribers) {
-            cb(data);
+            cb(this._cachedData);
         }
     }
 
-    public subscribe(
-        cb: (
-            data: D["type"] extends BroadcastChannelDataFormat.Array
-                ? MapDataTypeToTSType<D["data"]>[]
-                : MapDataTypeToTSType<D["data"]>
-        ) => void
-    ) {
+    public subscribe(cb: (data: MapDataTypeToTSType<D["data"]>[]) => void) {
         this._subscribers.add(cb);
+
+        if (this._subscribers.size === 1 && this._dataGenerator) {
+            this._cachedData = this._dataGenerator();
+        }
 
         if (this._cachedData) {
             cb(this._cachedData);

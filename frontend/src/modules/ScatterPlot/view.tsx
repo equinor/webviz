@@ -10,7 +10,6 @@ import { State } from "./state";
 export const view = ({ moduleContext }: ModuleFCProps<State>) => {
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);
     const wrapperDivSize = useElementSize(wrapperDivRef);
-    const timeStep = moduleContext.useStoreValue("timeStep");
     const channelNameX = moduleContext.useStoreValue("channelNameX");
     const channelNameY = moduleContext.useStoreValue("channelNameY");
     const [dataX, setDataX] = React.useState<any[] | null>(null);
@@ -46,16 +45,14 @@ export const view = ({ moduleContext }: ModuleFCProps<State>) => {
     const xValues: number[] = [];
     const yValues: number[] = [];
 
-    if (dataX && dataY && timeStep) {
-        const filteredDataX = dataX.filter((el) => ("datetime" in el ? el.datetime === parseInt(timeStep, 10) : true));
-        const filteredDataY = dataY.filter((el) => ("datetime" in el ? el.datetime === parseInt(timeStep, 10) : true));
-        const keysX = filteredDataX.map((el: any) => el.realization);
-        const keysY = filteredDataY.map((el: any) => el.realization);
+    if (dataX && dataY) {
+        const keysX = dataX.map((el: any) => el.key);
+        const keysY = dataY.map((el: any) => el.key);
         if (keysX.length === keysY.length && !keysX.some((el, index) => el !== keysY[index])) {
             keysX.forEach((key) => {
-                const dataPointX = filteredDataX.find((el: any) => el.realization === key);
-                const dataPointY = filteredDataY.find((el: any) => el.realization === key);
-                if (filteredDataX && filteredDataY) {
+                const dataPointX = dataX.find((el: any) => el.key === key);
+                const dataPointY = dataY.find((el: any) => el.key === key);
+                if (dataX && dataY) {
                     xValues.push(dataPointX.value);
                     yValues.push(dataPointY.value);
                 }

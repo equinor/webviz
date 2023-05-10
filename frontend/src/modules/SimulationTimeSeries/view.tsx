@@ -46,20 +46,20 @@ export const view = ({ moduleContext, workbenchServices }: ModuleFCProps<State, 
 
     React.useEffect(
         function broadcast() {
-            const data: { realization: number; datetime: number; value: number }[] = [];
-            if (vectorQuery.data) {
-                vectorQuery.data.forEach((vec) => {
-                    vec.values.forEach((value, index) => {
+            const dataGenerator = (): { key: number; value: number }[] => {
+                const data: { key: number; value: number }[] = [];
+                if (vectorQuery.data) {
+                    vectorQuery.data.forEach((vec) => {
                         data.push({
-                            realization: vec.realization,
-                            datetime: Date.parse(vec.timestamps[index]),
-                            value,
+                            key: vec.realization,
+                            value: vec.values[0],
                         });
                     });
-                });
-            }
+                }
+                return data;
+            };
 
-            moduleContext.getChannel(BroadcastChannelNames.TimeSeries).broadcast(data);
+            moduleContext.getChannel(BroadcastChannelNames.Realization_Value).broadcast(dataGenerator);
         },
         [vectorQuery.data]
     );

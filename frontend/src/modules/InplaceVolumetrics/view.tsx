@@ -70,16 +70,19 @@ export const view = (props: ModuleFCProps<State, typeof broadcastChannelsDef>) =
 
     React.useEffect(
         function broadcast() {
-            const data: { realization: number; value: number }[] = [];
-            if (realizationsResponseQuery.data) {
-                realizationsResponseQuery.data.realizations.forEach((realization, index) => {
-                    data.push({
-                        realization: realization,
-                        value: realizationsResponseQuery.data.values[index],
+            const dataGenerator = (): { key: number; value: number }[] => {
+                const data: { key: number; value: number }[] = [];
+                if (realizationsResponseQuery.data) {
+                    realizationsResponseQuery.data.realizations.forEach((realization, index) => {
+                        data.push({
+                            key: realization,
+                            value: realizationsResponseQuery.data.values[index],
+                        });
                     });
-                });
-            }
-            props.moduleContext.getChannel(BroadcastChannelNames.Response).broadcast(data);
+                }
+                return data;
+            };
+            props.moduleContext.getChannel(BroadcastChannelNames.Response).broadcast(dataGenerator);
         },
         [realizationsResponseQuery.data]
     );
