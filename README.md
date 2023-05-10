@@ -47,3 +47,19 @@ in the Python backend. In order to update the auto-generated code you can either
 
 In both cases the backend needs to already be running (e.g. using `docker-compose`
 as stated above).
+
+### Radix applications
+
+We have two applications in Radix built from this repository:
+* [Main application](https://webviz.app.radix.equinor.com/) built from the `main` branch.
+* [Review application](https://frontend-webviz-review.radix.equinor.com/) built from the `review` branch
+
+The applications are automatically built and redeployed when pushing commits to the respective branch.
+
+You can push/update the `review` branch with state of another feature branch with e.g.:
+```
+git push upstream <featurebranchname>:review --force
+```
+The `main` branch only accepts commits through pull requests.
+
+NB: Note that Radix will always use the `radixconfig.yml` as it is in `main` branch (unless changed in Radix UI).
