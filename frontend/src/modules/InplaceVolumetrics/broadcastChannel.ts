@@ -1,4 +1,4 @@
-import { BroadcastChannelDataTypes, MapDataTypeToTSType } from "@framework/Broadcaster";
+import { BroadcastChannelDataFormat, BroadcastChannelDataTypes } from "@framework/Broadcaster";
 
 export enum BroadcastChannelNames {
     Response = "Response",
@@ -6,15 +6,12 @@ export enum BroadcastChannelNames {
 
 export const broadcastChannelNames = Object.values(BroadcastChannelNames);
 
-export const broadcastChannelDefs = {
+export const broadcastChannelsDef = {
     [BroadcastChannelNames.Response]: {
-        realization: BroadcastChannelDataTypes.realization,
-        value: BroadcastChannelDataTypes.value,
+        type: BroadcastChannelDataFormat.Array as const,
+        data: {
+            realization: BroadcastChannelDataTypes.realization,
+            value: BroadcastChannelDataTypes.value,
+        },
     },
-};
-
-export type BroadcastChannelTypes = {
-    [BroadcastChannelNames.Response]: MapDataTypeToTSType<
-        (typeof broadcastChannelDefs)[BroadcastChannelNames.Response]
-    >[];
 };

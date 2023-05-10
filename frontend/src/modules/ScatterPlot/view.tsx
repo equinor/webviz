@@ -1,9 +1,8 @@
 import React from "react";
 
-import { broadcaster, useChannelData } from "@framework/Broadcaster";
+import { broadcaster } from "@framework/Broadcaster";
 import { ModuleFCProps } from "@framework/Module";
 import { useElementSize } from "@lib/hooks/useElementSize";
-import { BroadcastChannelTypes } from "@modules/SimulationTimeSeries/broadcastChannel";
 
 import PlotlyScatter from "./plotlyScatterChart";
 import { State } from "./state";

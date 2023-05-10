@@ -7,7 +7,7 @@ import { BaseComponentProps } from "../_BaseComponent";
 
 function checkIfChannelDefMatchesFilter(channelDefs: BroadcastChannelDef, filter: BroadcastChannelDef) {
     Object.keys(filter).forEach((key) => {
-        if (filter[key] !== channelDefs[key]) {
+        if (filter["data"][key] !== channelDefs["data"][key] || filter["type"] !== channelDefs["type"]) {
             return false;
         }
     });

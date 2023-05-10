@@ -1,30 +1,22 @@
-import { BroadcastChannel, BroadcastChannelMeta, BroadcastChannelsDef, broadcaster } from "./Broadcaster";
+import { BroadcastChannel, BroadcastChannelsDef, broadcaster } from "./Broadcaster";
 import { ImportState, Module, ModuleFC } from "./Module";
 import { ModuleContext } from "./ModuleContext";
 import { StateBaseType, StateOptions, StateStore } from "./StateStore";
 import { SyncSettingKey } from "./SyncSettings";
 
-export class ModuleInstance<
-    StateType extends StateBaseType,
-    ChannelNames extends string,
-    BCM extends BroadcastChannelMeta<ChannelNames>
-> {
+export class ModuleInstance<StateType extends StateBaseType, BCD extends BroadcastChannelsDef = never> {
     private id: string;
     private name: string;
     private initialised: boolean;
     private syncedSettingKeys: SyncSettingKey[];
     private stateStore: StateStore<StateType> | null;
-    private module: Module<StateType, ChannelNames, BCM>;
-    private context: ModuleContext<StateType, ChannelNames, BCM> | null;
+    private module: Module<StateType, BCD>;
+    private context: ModuleContext<StateType, BCD> | null;
     private importStateSubscribers: Set<() => void>;
     private syncedSettingsSubscribers: Set<(syncedSettings: SyncSettingKey[]) => void>;
-    private broadcastChannels: Record<keyof BCM, BroadcastChannel<any>>;
+    private broadcastChannels: Record<keyof BCD, BroadcastChannel<any>>;
 
-    constructor(
-        module: Module<StateType, ChannelNames, BCM>,
-        instanceNumber: number,
-        broadcastChannelsDef: BroadcastChannelsDef
-    ) {
+    constructor(module: Module<StateType, BCD>, instanceNumber: number, broadcastChannelsDef: BroadcastChannelsDef) {
         this.id = `${module.getName()}-${instanceNumber}`;
         this.name = module.getName();
         this.stateStore = null;
@@ -35,14 +27,14 @@ export class ModuleInstance<
         this.syncedSettingKeys = [];
         this.syncedSettingsSubscribers = new Set();
 
-        this.broadcastChannels = {} as Record<keyof BCM, BroadcastChannel<any>>;
+        this.broadcastChannels = {} as Record<keyof BCD, BroadcastChannel<any>>;
 
-        const broadcastChannelNames = Object.keys(broadcastChannelsDef) as (keyof BCM)[];
+        const broadcastChannelNames = Object.keys(broadcastChannelsDef) as (keyof BCD)[];
 
         if (broadcastChannelNames) {
             broadcastChannelNames.forEach((channelName) => {
                 const enrichedChannelName = `${this.id} - ${channelName as string}`;
-                this.broadcastChannels[channelName] = broadcaster.registerChannel<BCM[typeof channelName]>(
+                this.broadcastChannels[channelName] = broadcaster.registerChannel<BCD[typeof channelName]>(
                     enrichedChannelName,
                     broadcastChannelsDef[channelName as string]
                 );
@@ -50,13 +42,13 @@ export class ModuleInstance<
         }
     }
 
-    public getBroadcastChannel<C extends keyof BCM>(channelName: keyof BCM): BroadcastChannel<BCM[C]> {
+    public getBroadcastChannel<Channel extends keyof BCD>(channelName: keyof BCD): BroadcastChannel<BCD[Channel]> {
         return this.broadcastChannels[channelName];
     }
 
     public setInitialState(initialState: StateType, options?: StateOptions<StateType>): void {
         this.stateStore = new StateStore<StateType>(initialState, options);
-        this.context = new ModuleContext<StateType, ChannelNames, BCM>(this, this.stateStore);
+        this.context = new ModuleContext<StateType, BCD>(this, this.stateStore);
         this.initialised = true;
     }
 
@@ -93,11 +85,11 @@ export class ModuleInstance<
         return this.initialised;
     }
 
-    public getViewFC(): ModuleFC<StateType, ChannelNames, BCM> {
+    public getViewFC(): ModuleFC<StateType, BCD> {
         return this.module.viewFC;
     }
 
-    public getSettingsFC(): ModuleFC<StateType, ChannelNames, BCM> {
+    public getSettingsFC(): ModuleFC<StateType, BCD> {
         return this.module.settingsFC;
     }
 
@@ -105,7 +97,7 @@ export class ModuleInstance<
         return this.module.getImportState();
     }
 
-    public getContext(): ModuleContext<StateType, ChannelNames, BCM> {
+    public getContext(): ModuleContext<StateType, BCD> {
         if (!this.context) {
             throw `Module context is not available yet. Did you forget to init the module '${this.name}.'?`;
         }
@@ -120,7 +112,7 @@ export class ModuleInstance<
         return this.name;
     }
 
-    public getModule(): Module<StateType, ChannelNames, BCM> {
+    public getModule(): Module<StateType, BCD> {
         return this.module;
     }
 

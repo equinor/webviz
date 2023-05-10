@@ -9,14 +9,14 @@ import { useElementSize } from "@lib/hooks/useElementSize";
 
 import { Layout, PlotData, PlotHoverEvent } from "plotly.js";
 
-import { BroadcastChannelNames, BroadcastChannelTypes } from "./broadcastChannel";
+import { BroadcastChannelNames, broadcastChannelsDef } from "./broadcastChannel";
 import { useRealizationsResponseQuery } from "./queryHooks";
 import { VolumetricResponseAbbreviations } from "./settings";
 import { State } from "./state";
 
 import { Body_get_realizations_response } from "../../api/models/Body_get_realizations_response";
 
-export const view = (props: ModuleFCProps<State, BroadcastChannelNames, BroadcastChannelTypes>) => {
+export const view = (props: ModuleFCProps<State, typeof broadcastChannelsDef>) => {
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);
     const wrapperDivSize = useElementSize(wrapperDivRef);
     const ensemble = props.moduleContext.useStoreValue("ensemble");

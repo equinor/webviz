@@ -7,7 +7,7 @@ import { useElementSize } from "@lib/hooks/useElementSize";
 
 import { Layout, PlotData, PlotHoverEvent, PlotMouseEvent } from "plotly.js";
 
-import { BroadcastChannelNames, BroadcastChannelTypes } from "./broadcastChannel";
+import { BroadcastChannelNames, broadcastChannelsDef } from "./broadcastChannel";
 import { useStatisticalVectorDataQuery, useVectorDataQuery } from "./queryHooks";
 import { State } from "./state";
 
@@ -18,10 +18,7 @@ interface MyPlotData extends Partial<PlotData> {
     legendrank?: number;
 }
 
-export const view = ({
-    moduleContext,
-    workbenchServices,
-}: ModuleFCProps<State, BroadcastChannelNames, BroadcastChannelTypes>) => {
+export const view = ({ moduleContext, workbenchServices }: ModuleFCProps<State, typeof broadcastChannelsDef>) => {
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);
     const wrapperDivSize = useElementSize(wrapperDivRef);
     const vectorSpec = moduleContext.useStoreValue("vectorSpec");

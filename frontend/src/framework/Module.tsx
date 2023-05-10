@@ -2,7 +2,7 @@ import React from "react";
 
 import { cloneDeep } from "lodash";
 
-import { BroadcastChannelMeta, BroadcastChannelsDef } from "./Broadcaster";
+import { BroadcastChannelsDef } from "./Broadcaster";
 import { ModuleContext } from "./ModuleContext";
 import { ModuleInstance } from "./ModuleInstance";
 import { StateBaseType, StateOptions } from "./StateStore";
@@ -10,20 +10,14 @@ import { SyncSettingKey } from "./SyncSettings";
 import { Workbench } from "./Workbench";
 import { WorkbenchServices } from "./WorkbenchServices";
 
-export type ModuleFCProps<
-    S extends StateBaseType,
-    ChannelNames extends string = never,
-    BCM extends BroadcastChannelMeta<ChannelNames> = never
-> = {
-    moduleContext: ModuleContext<S, ChannelNames, BCM>;
+export type ModuleFCProps<S extends StateBaseType, BCD extends BroadcastChannelsDef = never> = {
+    moduleContext: ModuleContext<S, BCD>;
     workbenchServices: WorkbenchServices;
 };
 
-export type ModuleFC<
-    S extends StateBaseType,
-    ChannelNames extends string = never,
-    BCM extends BroadcastChannelMeta<ChannelNames> = never
-> = React.FC<ModuleFCProps<S, ChannelNames, BCM>>;
+export type ModuleFC<S extends StateBaseType, BCD extends BroadcastChannelsDef = never> = React.FC<
+    ModuleFCProps<S, BCD>
+>;
 
 export enum ImportState {
     NotImported = "NotImported",
@@ -32,17 +26,13 @@ export enum ImportState {
     Failed = "Failed",
 }
 
-export class Module<
-    StateType extends StateBaseType,
-    ChannelNames extends string,
-    BCM extends BroadcastChannelMeta<ChannelNames>
-> {
+export class Module<StateType extends StateBaseType, BCD extends BroadcastChannelsDef = never> {
     private _name: string;
-    public viewFC: ModuleFC<StateType, ChannelNames, BCM>;
-    public settingsFC: ModuleFC<StateType, ChannelNames, BCM>;
+    public viewFC: ModuleFC<StateType, BCD>;
+    public settingsFC: ModuleFC<StateType, BCD>;
     private numInstances: number;
     private importState: ImportState;
-    private moduleInstances: ModuleInstance<StateType, ChannelNames, BCM>[];
+    private moduleInstances: ModuleInstance<StateType, BCD>[];
     private initialState: StateType | null;
     private stateOptions: StateOptions<StateType> | undefined;
     private workbench: Workbench | null;
@@ -92,8 +82,8 @@ export class Module<
         return this.syncableSettingKeys;
     }
 
-    public makeInstance(): ModuleInstance<StateType, ChannelNames, BCM> {
-        const instance = new ModuleInstance<StateType, ChannelNames, BCM>(this, this.numInstances++, this.channelsDef);
+    public makeInstance(): ModuleInstance<StateType, BCD> {
+        const instance = new ModuleInstance<StateType, BCD>(this, this.numInstances++, this.channelsDef);
         this.moduleInstances.push(instance);
         this.maybeImportSelf();
         return instance;

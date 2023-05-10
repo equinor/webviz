@@ -1,7 +1,7 @@
 import React from "react";
 
 import { EnsembleParameterDescription, VectorDescription } from "@api";
-import { BroadcastChannelDataTypes, broadcaster, useChannelData } from "@framework/Broadcaster";
+import { BroadcastChannelDataFormat, BroadcastChannelDataTypes, broadcaster } from "@framework/Broadcaster";
 import { ModuleFCProps } from "@framework/Module";
 import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
 import { useSubscribedValue } from "@framework/WorkbenchServices";
@@ -79,9 +79,12 @@ export function settings({ moduleContext, workbenchServices }: ModuleFCProps<Sta
                 <ChannelSelect
                     onChange={handleChannelXChanged}
                     channelFilter={{
-                        datetime: BroadcastChannelDataTypes.datetime,
-                        realization: BroadcastChannelDataTypes.realization,
-                        value: BroadcastChannelDataTypes.value,
+                        type: BroadcastChannelDataFormat.Array,
+                        data: {
+                            datetime: BroadcastChannelDataTypes.datetime,
+                            realization: BroadcastChannelDataTypes.realization,
+                            value: BroadcastChannelDataTypes.value,
+                        },
                     }}
                 />
             </Label>

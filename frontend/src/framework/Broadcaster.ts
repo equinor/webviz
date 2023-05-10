@@ -1,9 +1,12 @@
-import React from "react";
-
 export enum BroadcastChannelDataTypes {
     datetime = "datetime",
     realization = "realization",
     value = "value",
+}
+
+export enum BroadcastChannelDataFormat {
+    Array = "array",
+    Object = "object",
 }
 
 export type BroadcastChannelDataTypesMapping = {
@@ -17,23 +20,30 @@ export type MapDataTypeToTSType<DT extends Record<string, BroadcastChannelDataTy
 };
 
 export type BroadcastChannelDef = {
-    [key: string]: BroadcastChannelDataTypes;
+    type: BroadcastChannelDataFormat;
+    data: {
+        [key: string]: BroadcastChannelDataTypes;
+    };
 };
 
 export type BroadcastChannelsDef = {
     [key: string]: BroadcastChannelDef;
 };
 
-export type BroadcastChannelData = any;
-
-export type BroadcastChannelMeta<ChannelNames extends string> = {
-    [key in ChannelNames]: BroadcastChannelData;
-};
-
-export class BroadcastChannel<D> {
+export class BroadcastChannel<D extends BroadcastChannelDef> {
     private _name: string;
-    private _subscribers: Set<(data: D) => void>;
-    private _cachedData: D | null;
+    private _subscribers: Set<
+        (
+            data: D["type"] extends BroadcastChannelDataFormat.Array
+                ? MapDataTypeToTSType<D["data"]>[]
+                : MapDataTypeToTSType<D["data"]>
+        ) => void
+    >;
+    private _cachedData:
+        | (D["type"] extends BroadcastChannelDataFormat.Array
+              ? MapDataTypeToTSType<D["data"]>[]
+              : MapDataTypeToTSType<D["data"]>)
+        | null;
     private _dataDef: BroadcastChannelDef;
 
     constructor(name: string, def: BroadcastChannelDef) {
@@ -51,7 +61,11 @@ export class BroadcastChannel<D> {
         return this._dataDef;
     }
 
-    public broadcast(data: D) {
+    public broadcast(
+        data: D["type"] extends BroadcastChannelDataFormat.Array
+            ? MapDataTypeToTSType<D["data"]>[]
+            : MapDataTypeToTSType<D["data"]>
+    ) {
         this._cachedData = data;
 
         console.log("Broadcasting on channel:", this._name, "Data:", data);
@@ -61,7 +75,13 @@ export class BroadcastChannel<D> {
         }
     }
 
-    public subscribe(cb: (data: D) => void) {
+    public subscribe(
+        cb: (
+            data: D["type"] extends BroadcastChannelDataFormat.Array
+                ? MapDataTypeToTSType<D["data"]>[]
+                : MapDataTypeToTSType<D["data"]>
+        ) => void
+    ) {
         this._subscribers.add(cb);
 
         if (this._cachedData) {
@@ -83,7 +103,7 @@ class Broadcaster {
         this._subscribers = new Set();
     }
 
-    public registerChannel<D extends Record<string, any>>(
+    public registerChannel<D extends BroadcastChannelDef>(
         channelName: string,
         channelDef: BroadcastChannelDef
     ): BroadcastChannel<D> {
@@ -102,7 +122,7 @@ class Broadcaster {
         channel.broadcast(data);
     }
 
-    public getChannel<D>(channelName: string): BroadcastChannel<D> | null {
+    public getChannel<D extends BroadcastChannelDef>(channelName: string): BroadcastChannel<D> | null {
         const channel = this._channels.find((c) => c.getName() === channelName);
         if (!channel) {
             return null;
@@ -128,26 +148,6 @@ class Broadcaster {
             cb(this._channels);
         }
     }
-}
-
-export function useChannelData<D>(channelName: string): D {
-    const [data, setData] = React.useState<any>(null);
-
-    React.useEffect(() => {
-        const channel = broadcaster.getChannel<D>(channelName);
-        if (!channel) {
-            return;
-        }
-
-        function handleNewData(newData: any) {
-            setData(newData);
-        }
-
-        const unsubscribeFunc = channel.subscribe(handleNewData);
-        return unsubscribeFunc;
-    }, [channelName]);
-
-    return data;
 }
 
 export const broadcaster = new Broadcaster();
