@@ -1,4 +1,4 @@
-from typing import Dict, Union, NamedTuple
+from typing import List
 
 import numpy as np
 import orjson
@@ -55,7 +55,7 @@ async def grid(
 
 
 @router.get(
-    "/grid_parameter", response_model=GridGeometry
+    "/grid_parameter", response_model=List[float]
 )  # stating response_model here instead of return type apparently disables pydantic validation of the response (https://stackoverflow.com/a/65715205)
 async def grid_parameter(
     request: Request,
@@ -96,7 +96,7 @@ async def grid_parameter(
 
 
 @router.get(
-    "/statistical_grid_parameter", response_model=GridGeometry
+    "/statistical_grid_parameter", response_model=List[float]
 )  # stating response_model here instead of return type apparently disables pydantic validation of the response (https://stackoverflow.com/a/65715205)
 async def statistical_grid_parameter(
     request: Request,
