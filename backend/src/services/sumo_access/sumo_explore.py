@@ -1,7 +1,7 @@
-from typing import List
+from typing import List, Sequence
 from pydantic import BaseModel
 
-from fmu.sumo.explorer.explorer import CaseCollection, SumoClient
+from fmu.sumo.explorer.explorer import CaseCollection, SumoClient, Case
 
 from ._helpers import create_sumo_client_instance
 
@@ -45,3 +45,9 @@ class SumoExplore:
         iter_info_arr.sort(key=lambda iter_info: iter_info.name)
 
         return iter_info_arr
+
+    def get_realizations(self, case_uuid: str, ensemble_name: str) -> Sequence[int]:
+        """Get list of realizations for a case and ensemble"""
+        case_collection = CaseCollection(self._sumo_client).filter(uuid=case_uuid)
+        realizations = case_collection[0].get_realizations(ensemble_name)
+        return sorted([int(real) for real in realizations])

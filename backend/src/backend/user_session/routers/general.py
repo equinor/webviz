@@ -1,13 +1,15 @@
 import datetime
 from typing import Dict, Union, NamedTuple
+
 import psutil
 from fastapi import APIRouter, Depends
-
 from src.backend.auth.auth_helper import AuthHelper, AuthenticatedUser
 
 router = APIRouter()
 
 START_TIME_CONTAINER = datetime.datetime.now()
+
+grid_data = None
 
 
 def human_readable(psutil_object: NamedTuple) -> Dict[str, Union[str, Dict[str, str]]]:

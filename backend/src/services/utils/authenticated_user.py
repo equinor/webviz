@@ -20,6 +20,12 @@ class AuthenticatedUser:
         self._pdm_access_token = pdm_access_token
         self._ssdl_access_token = ssdl_access_token
 
+    def __hash__(self):
+        return hash(self._user_id)
+
+    def __eq__(self, other):
+        return isinstance(other, AuthenticatedUser) and self._user_id == other._user_id
+
     def get_username(self) -> str:
         return self._username
 
