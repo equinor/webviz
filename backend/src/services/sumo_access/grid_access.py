@@ -7,9 +7,6 @@ from fmu.sumo.explorer.objects import Case
 from sumo.wrapper import SumoClient
 
 from ._helpers import create_sumo_client_instance
-
-LOGGER = logging.getLogger(__name__)
-
 from .sumo_queries import (
     get_grid_geometry_blob_id,
     get_grid_names,
@@ -17,6 +14,9 @@ from .sumo_queries import (
     get_nx_ny_nz_for_ensemble_grids,
     get_static_grid_parameter_names,
 )
+
+
+LOGGER = logging.getLogger(__name__)
 
 
 class GridAccess:

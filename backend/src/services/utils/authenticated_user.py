@@ -1,6 +1,6 @@
 # pylint: disable=bare-except
 
-from typing import Optional
+from typing import Any, Optional
 
 
 class AuthenticatedUser:
@@ -20,10 +20,10 @@ class AuthenticatedUser:
         self._pdm_access_token = pdm_access_token
         self._ssdl_access_token = ssdl_access_token
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return hash(self._user_id)
 
-    def __eq__(self, other):
+    def __eq__(self, other: Any) -> bool:
         return isinstance(other, AuthenticatedUser) and self._user_id == other._user_id
 
     def get_username(self) -> str:
