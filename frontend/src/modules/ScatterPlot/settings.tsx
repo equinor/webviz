@@ -83,6 +83,35 @@ export function settings({ moduleContext, workbenchServices }: ModuleFCProps<Sta
         setCrossPlottingType(value as BroadcastChannelKeyCategory);
     };
 
+    const makeContent = (): React.ReactNode => {
+        if (plotType === null || crossPlottingType === null) {
+            return null;
+        }
+        const content: React.ReactNode[] = [
+            <Label text="Data channel X axis">
+                <ChannelSelect onChange={handleChannelXChanged} channelKeyCategory={crossPlottingType} />
+            </Label>,
+        ];
+
+        if (plotType === "scatter" || plotType === "scatter3d") {
+            content.push(
+                <Label text="Data channel Y axis">
+                    <ChannelSelect onChange={handleChannelYChanged} channelKeyCategory={crossPlottingType} />
+                </Label>
+            );
+        }
+
+        if (plotType === "scatter3d") {
+            content.push(
+                <Label text="Data channel Z axis">
+                    <ChannelSelect onChange={handleChannelZChanged} channelKeyCategory={crossPlottingType} />
+                </Label>
+            );
+        }
+
+        return content;
+    };
+
     return (
         <>
             <Label text="Plot type">
@@ -91,25 +120,7 @@ export function settings({ moduleContext, workbenchServices }: ModuleFCProps<Sta
             <Label text="Cross plotting">
                 <Dropdown options={crossPlottingTypes} onChange={handleCrossPlottingTypeChanged} />
             </Label>
-            <Label text="Data channel X axis">
-                <ChannelSelect onChange={handleChannelXChanged} />
-            </Label>
-            {plotType !== "histogram" && (
-                <Label text="Data channel Y axis">
-                    <ChannelSelect
-                        onChange={handleChannelYChanged}
-                        channelKeyCategory={crossPlottingType as BroadcastChannelKeyCategory}
-                    />
-                </Label>
-            )}
-            {plotType === "scatter3d" && (
-                <Label text="Data channel Z axis">
-                    <ChannelSelect
-                        onChange={handleChannelZChanged}
-                        channelKeyCategory={crossPlottingType as BroadcastChannelKeyCategory}
-                    />
-                </Label>
-            )}
+            {makeContent()}
         </>
     );
 }
