@@ -108,10 +108,13 @@ async def statistical_grid_parameter(
     ensemble_name = request.query_params.get("ensemble_name")
     grid_name = request.query_params.get("grid_name")
     parameter_name = request.query_params.get("parameter_name")
+    # type: ignore
     realizations = orjson.loads(request.query_params.get("realizations"))
 
     print("REALIZATIONS", realizations, flush=True)
+    # type: ignore
     grid_access = GridAccess(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
+    # type: ignore
     if not grid_access.grids_have_equal_nxnynz(grid_name=grid_name):
         raise ValueError("Grids must have equal nx, ny, nz")
 
