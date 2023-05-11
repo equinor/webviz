@@ -1,18 +1,16 @@
+from functools import lru_cache
 from typing import List
 
 import numpy as np
 import orjson
 import xtgeo
-from fastapi import APIRouter, Depends, Response, Request
-from functools import lru_cache
-from src.backend.auth.auth_helper import AuthHelper, AuthenticatedUser
+from fastapi import APIRouter, Depends, Request, Response
+from src.backend.auth.auth_helper import AuthenticatedUser, AuthHelper
+from src.backend.primary.routers.grid.schemas import B64EncodedNumpyArray, GridGeometry
 from src.services.sumo_access.grid_access import GridAccess
-from src.backend.primary.routers.grid.schemas import GridGeometry, B64EncodedNumpyArray
-from src.services.utils.vtk_utils import get_surface, get_scalar_values, VtkGridSurface
 from src.services.utils.b64 import b64_encode_numpy
-from vtkmodules.util.numpy_support import (
-    vtk_to_numpy,
-)
+from src.services.utils.vtk_utils import VtkGridSurface, get_scalar_values, get_surface
+from vtkmodules.util.numpy_support import vtk_to_numpy
 
 router = APIRouter()
 
@@ -20,6 +18,7 @@ router = APIRouter()
 @router.get(
     "/grid_geometry", response_model=GridGeometry
 )  # stating response_model here instead of return type apparently disables pydantic validation of the response (https://stackoverflow.com/a/65715205)
+# type: ignore
 async def grid(
     request: Request,
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
@@ -57,6 +56,7 @@ async def grid(
 @router.get(
     "/grid_parameter", response_model=List[float]
 )  # stating response_model here instead of return type apparently disables pydantic validation of the response (https://stackoverflow.com/a/65715205)
+# type: ignore
 async def grid_parameter(
     request: Request,
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
@@ -98,6 +98,7 @@ async def grid_parameter(
 @router.get(
     "/statistical_grid_parameter", response_model=List[float]
 )  # stating response_model here instead of return type apparently disables pydantic validation of the response (https://stackoverflow.com/a/65715205)
+# type: ignore
 async def statistical_grid_parameter(
     request: Request,
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
@@ -152,7 +153,9 @@ async def statistical_grid_parameter(
 
 
 @lru_cache
-def get_grid_geometry(authenticated_user, case_uuid, ensemble_name, grid_name, realization):
+def get_grid_geometry(
+    authenticated_user: AuthenticatedUser, case_uuid: str, ensemble_name: str, grid_name: str, realization: int
+) -> xtgeo.Grid:
     token = authenticated_user.get_sumo_access_token()
     grid_access = GridAccess(token, case_uuid, ensemble_name)
     print("REALIZATION FOR GEOMETRY", realization, flush=True)
@@ -162,14 +165,21 @@ def get_grid_geometry(authenticated_user, case_uuid, ensemble_name, grid_name, r
 
 
 @lru_cache
-def get_grid_polydata(grid_geometry) -> VtkGridSurface:
+def get_grid_polydata(grid_geometry: xtgeo.Grid) -> VtkGridSurface:
     grid_polydata = get_surface(grid_geometry)
 
     return grid_polydata
 
 
 @lru_cache
-def get_grid_parameter(authenticated_user, case_uuid, ensemble_name, grid_name, parameter_name, realization):
+def get_grid_parameter(
+    authenticated_user: AuthenticatedUser,
+    case_uuid: str,
+    ensemble_name: str,
+    grid_name: str,
+    parameter_name: str,
+    realization: int,
+) -> xtgeo.GridProperty:
     token = authenticated_user.get_sumo_access_token()
     grid_access = GridAccess(token, case_uuid, ensemble_name)
     print("Downloading", case_uuid, ensemble_name, grid_name, parameter_name, realization, flush=True)

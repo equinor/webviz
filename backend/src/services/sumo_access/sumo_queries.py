@@ -3,7 +3,7 @@ from typing import List
 from sumo.wrapper import SumoClient
 
 
-def get_grid_names(sumo_client: SumoClient, case_id: str, iteration: int):
+def get_grid_names(sumo_client: SumoClient, case_id: str, iteration: str) -> List[str]:
     """Get a list of grid names for a case and iteration"""
     query = {
         "size": 0,
@@ -34,7 +34,7 @@ def get_grid_names(sumo_client: SumoClient, case_id: str, iteration: int):
 
 
 # Cant be used for equality on roff
-def get_grid_geometry_checksums(sumo_client: SumoClient, case_id: str, iteration: str, grid_name: str):
+def get_grid_geometry_checksums(sumo_client: SumoClient, case_id: str, iteration: str, grid_name: str) -> List[str]:
     """Get a list of checksums for a grid geometry in a case and iteration"""
     query = {
         "size": 0,
@@ -65,9 +65,10 @@ def get_grid_geometry_checksums(sumo_client: SumoClient, case_id: str, iteration
     return [gp["key"] for gp in checksums]
 
 
-def get_grid_geometry_blob_id(sumo_client: SumoClient, case_id: str, iteration: str, realization: int, grid_name: str):
-    """Get a list of checksums for a grid geometry in a case and iteration"""
-    print(case_id, iteration, realization, grid_name, flush=True)
+def get_grid_geometry_blob_id(
+    sumo_client: SumoClient, case_id: str, iteration: str, realization: int, grid_name: str
+) -> str:
+    """Get the blob id for a given grid geometry in a case, iteration and realization"""
     hits = sumo_client.get(
         "/search",
         query=f"_sumo.parent_object:{case_id} AND \
@@ -85,9 +86,8 @@ def get_grid_geometry_blob_id(sumo_client: SumoClient, case_id: str, iteration: 
 
 def get_grid_parameter_blob_id(
     sumo_client: SumoClient, case_id: str, iteration: str, realization: int, grid_name: str, parameter_name: str
-):
-    """Get a list of checksums for a grid geometry in a case and iteration"""
-    print(case_id, iteration, realization, grid_name, flush=True)
+) -> str:
+    """Get the blob id for a given grid parameter in a case, iteration and realization""" ""
     hits = sumo_client.get(
         "/search",
         query=f"_sumo.parent_object:{case_id} AND \
@@ -105,6 +105,7 @@ def get_grid_parameter_blob_id(
 
 
 def get_static_grid_parameter_names(sumo_client: SumoClient, case_id: str, iteration: str, grid_name: str) -> List[str]:
+    """Get a list of static grid parameter names for a case, iteration and grid name"""
     query = {
         "size": 0,
         "query": {
@@ -135,7 +136,9 @@ def get_static_grid_parameter_names(sumo_client: SumoClient, case_id: str, itera
     return [name["key"] for name in names]
 
 
-def get_nx_ny_nz_for_ensemble_grids(sumo_client: SumoClient, case_uuid: str, iteration: str, grid_name: str):
+def get_nx_ny_nz_for_ensemble_grids(
+    sumo_client: SumoClient, case_uuid: str, iteration: str, grid_name: str
+) -> List[List[int]]:
     """Get a list of nxnynz for all realizations of a grid model in a case and iteration"""
 
     hits = sumo_client.get(

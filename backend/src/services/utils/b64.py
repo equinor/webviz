@@ -1,14 +1,16 @@
 import base64
+from typing import Any, Optional
 
 import numpy as np
 
 
-def b64_encode_numpy(obj):
+def b64_encode_numpy(obj: Any) -> dict:
     # Convert 1D numpy arrays with numeric types to memoryviews with
     # datatype and shape metadata.
     if len(obj) == 0:
         return obj.tolist()
 
+    buffer: Optional[str] = None
     dtype = obj.dtype
     if dtype.kind in ["u", "i", "f"] and str(dtype) != "int64" and str(dtype) != "uint64":
         # We have a numpy array that is compatible with JavaScript typed
@@ -16,8 +18,7 @@ def b64_encode_numpy(obj):
         buffer = base64.b64encode(memoryview(obj.ravel(order="C"))).decode("utf-8")
         return {"bvals": buffer, "dtype": str(dtype), "shape": obj.shape}
 
-    buffer = None
-    dtype_str = None
+    dtype_str: Optional[str] = None
     # Try to see if we can downsize the array
     max_value = np.amax(obj)
     min_value = np.amin(obj)
