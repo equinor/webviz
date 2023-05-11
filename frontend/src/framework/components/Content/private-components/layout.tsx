@@ -344,8 +344,7 @@ export const Layout: React.FC<LayoutProps> = (props) => {
                             height={rect.height}
                             x={rect.x}
                             y={rect.y}
-                            isDragged={isDragged}
-                            dragPosition={position}
+                            dragPosition={isDragged ? position : null}
                         />
                     );
                 })}

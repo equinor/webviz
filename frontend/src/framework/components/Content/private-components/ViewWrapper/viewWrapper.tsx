@@ -19,11 +19,11 @@ type ViewWrapperProps = {
     height: number;
     x: number;
     y: number;
-    isDragged: boolean;
-    dragPosition: Point;
+    dragPosition: Point | null;
 };
 
-export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
+const _ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
+    const isDragged = !!props.dragPosition;
     const [importState, setImportState] = React.useState<ImportState>(ImportState.NotImported);
     const ref = React.useRef<HTMLDivElement>(null);
 
@@ -115,7 +115,7 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
 
     return (
         <>
-            {props.isDragged && (
+            {isDragged && (
                 <ViewWrapperPlaceholder width={props.width} height={props.height} x={props.x} y={props.y} />
             )}
             <div
@@ -124,23 +124,23 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
                 style={{
                     width: props.width,
                     height: props.height,
-                    left: props.isDragged ? props.dragPosition.x : props.x,
-                    top: props.isDragged ? props.dragPosition.y : props.y,
-                    zIndex: props.isDragged ? 1 : 0,
-                    opacity: props.isDragged ? 0.5 : 1,
+                    left: props.dragPosition?.x || props.x,
+                    top: props.dragPosition?.y || props.y,
+                    zIndex: isDragged ? 1 : 0,
+                    opacity: isDragged ? 0.5 : 1,
                 }}
             >
                 <div
                     className={`bg-white h-full w-full flex flex-col ${
                         props.isActive ? "border-blue-500" : ""
                     } border-solid border-2 box-border shadow ${
-                        props.isDragged ? "cursor-grabbing select-none" : "cursor-grab"
+                        isDragged ? "cursor-grabbing select-none" : "cursor-grab"
                     }}`}
                     onClick={handleModuleHeaderClick}
                 >
                     <Header
                         moduleInstance={props.moduleInstance}
-                        isDragged={props.isDragged}
+                        isDragged={isDragged}
                         onPointerDown={handlePointerDown}
                         onRemoveClick={handleRemoveClick}
                     />
@@ -152,3 +152,5 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
         </>
     );
 };
+
+export const ViewWrapper = React.memo(_ViewWrapper);
