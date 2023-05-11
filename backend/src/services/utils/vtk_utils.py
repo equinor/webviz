@@ -1,19 +1,27 @@
-from typing import Tuple, Optional
+from typing import Optional
 from dataclasses import dataclass
 import numpy as np
 import xtgeo
+
+# pylint: disable=no-name-in-module,
 from vtkmodules.util.numpy_support import (
     numpy_to_vtk,
     numpy_to_vtkIdTypeArray,
     vtk_to_numpy,
 )
+
+# pylint: disable=no-name-in-module,
 from vtkmodules.vtkCommonCore import vtkPoints
+
+# pylint: disable=no-name-in-module,
 from vtkmodules.vtkCommonDataModel import (
     vtkCellArray,
     vtkDataSetAttributes,
     vtkExplicitStructuredGrid,
     vtkPolyData,
 )
+
+# pylint: disable=no-name-in-module,
 from vtkmodules.vtkFiltersGeometry import vtkExplicitStructuredGridSurfaceFilter
 
 
