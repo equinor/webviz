@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Sequence
 
 from fastapi import APIRouter, Depends, Path, Query
 from pydantic import BaseModel
@@ -76,3 +76,14 @@ def get_ensembles(
     print(iteration_info_arr)
 
     return [Ensemble(name=it.name) for it in iteration_info_arr]
+
+
+@router.get("/cases/{case_uuid}/ensembles/{ensemble_name}/realizations")
+def get_realizations(
+    authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
+    case_uuid: str = Path(description="Sumo case uuid"),
+    ensemble_name: str = Path(description="Ensemble name"),
+) -> Sequence[int]:
+    """Get list of realizations for an ensemble"""
+    sumo_discovery = SumoExplore(authenticated_user.get_sumo_access_token())
+    return sumo_discovery.get_realizations(case_uuid=case_uuid, ensemble_name=ensemble_name)

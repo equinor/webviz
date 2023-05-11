@@ -43,8 +43,8 @@ class RadixJobScheduler:
 
         try:
             httpx.get(f"http://{existing_job_name}:{self._port}/")
-        except (ConnectionRefusedError, httpx.ConnectError, httpx.ConnectTimeout):
-            print("User container server not yet up")
+        except (ConnectionRefusedError, httpx.ConnectError):
+            print("ConnectionRefusedError")
             return False
 
         return True
@@ -112,7 +112,9 @@ async def proxy_to_user_session(request: Request, authenticated_user: Authentica
         query=request.url.query.encode("utf-8"),
     )
 
-    job_req = client.build_request(request.method, url, headers=request.headers.raw, content=request.stream())
+    job_req = client.build_request(
+        request.method, url, headers=request.headers.raw, content=request.stream(), timeout=600
+    )
     job_resp = await client.send(job_req, stream=True)
 
     return StreamingResponse(

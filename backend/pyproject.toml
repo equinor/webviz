@@ -24,6 +24,7 @@ orjson = "^3.8.10"
 pandas = {version = "2.0.1", extras = ["performance"]}
 httpx = "^0.24.0"
 psutil = "^5.9.5"
+vtk = "^9.2.6"
 
 
 [tool.poetry.group.dev.dependencies]
