@@ -5,9 +5,10 @@ import { State } from "./state";
 import { view } from "./view";
 
 const initialState: State = {
-    timeStep: null,
     channelNameX: null,
     channelNameY: null,
+    channelNameZ: null,
+    plotType: null,
 };
 
 const module = ModuleRegistry.initModule<State>("ScatterPlot", initialState);

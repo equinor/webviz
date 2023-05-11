@@ -14,14 +14,17 @@ export const view = ({ moduleContext }: ModuleFCProps<State>) => {
     const channelNameY = moduleContext.useStoreValue("channelNameY");
     const [dataX, setDataX] = React.useState<any[] | null>(null);
     const [dataY, setDataY] = React.useState<any[] | null>(null);
+    const [xTitle, setXTitle] = React.useState<string>("");
+    const [yTitle, setYTitle] = React.useState<string>("");
 
     const channelX = broadcaster.getChannel(channelNameX ?? "");
     const channelY = broadcaster.getChannel(channelNameY ?? "");
 
     React.useEffect(() => {
         if (channelX) {
-            const handleChannelXChanged = (data: any) => {
+            const handleChannelXChanged = (data: any, description: string) => {
                 setDataX(data);
+                setXTitle(description);
             };
 
             const unsubscribeFunc = channelX.subscribe(handleChannelXChanged);
@@ -32,8 +35,9 @@ export const view = ({ moduleContext }: ModuleFCProps<State>) => {
 
     React.useEffect(() => {
         if (channelY) {
-            const handleChannelYChanged = (data: any) => {
+            const handleChannelYChanged = (data: any, description: string) => {
                 setDataY(data);
+                setYTitle(description);
             };
 
             const unsubscribeFunc = channelY.subscribe(handleChannelYChanged);
@@ -66,6 +70,8 @@ export const view = ({ moduleContext }: ModuleFCProps<State>) => {
                 <PlotlyScatter
                     x={xValues}
                     y={yValues}
+                    xAxisTitle={xTitle}
+                    yAxisTitle={yTitle}
                     realizations={[]}
                     width={wrapperDivSize.width}
                     height={wrapperDivSize.height}

@@ -59,9 +59,11 @@ export const view = ({ moduleContext, workbenchServices }: ModuleFCProps<State, 
                 return data;
             };
 
-            moduleContext.getChannel(BroadcastChannelNames.Realization_Value).broadcast(dataGenerator);
+            const dataDescription = `${vectorSpec?.ensembleName} ${vectorSpec?.vectorName}`;
+
+            moduleContext.getChannel(BroadcastChannelNames.Realization_Value).broadcast(dataDescription, dataGenerator);
         },
-        [vectorQuery.data]
+        [vectorQuery.data, vectorSpec?.ensembleName, vectorSpec?.vectorName, moduleContext]
     );
 
     // React.useEffect(

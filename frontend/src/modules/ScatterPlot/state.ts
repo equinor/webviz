@@ -1,5 +1,6 @@
 export interface State {
     channelNameX: string | null;
     channelNameY: string | null;
-    timeStep: string | null;
+    channelNameZ: string | null;
+    plotType: string | null;
 }

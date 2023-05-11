@@ -36,7 +36,8 @@ export class ModuleInstance<StateType extends StateBaseType, BCD extends Broadca
                 const enrichedChannelName = `${this.id} - ${channelName as string}`;
                 this.broadcastChannels[channelName] = broadcaster.registerChannel<BCD[typeof channelName]>(
                     enrichedChannelName,
-                    broadcastChannelsDef[channelName as string]
+                    broadcastChannelsDef[channelName as string],
+                    this.id
                 );
             });
         }

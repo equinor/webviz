@@ -1,4 +1,4 @@
-import { BroadcastChannelDataFormat, BroadcastChannelDataTypes } from "@framework/Broadcaster";
+import { BroadcastChannelKeyCategory, BroadcastChannelValueType } from "@framework/Broadcaster";
 
 export enum BroadcastChannelNames {
     Realization_Value = "Value (per realization)",
@@ -6,10 +6,7 @@ export enum BroadcastChannelNames {
 
 export const broadcastChannelsDef = {
     [BroadcastChannelNames.Realization_Value]: {
-        type: BroadcastChannelDataFormat.KeyValuePairs as const,
-        data: {
-            key: BroadcastChannelDataTypes.realization as const,
-            value: BroadcastChannelDataTypes.value as const,
-        },
+        key: BroadcastChannelKeyCategory.Realization as const,
+        value: BroadcastChannelValueType.Numeric as const,
     },
 };

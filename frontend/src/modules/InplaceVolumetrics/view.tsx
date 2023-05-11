@@ -82,9 +82,12 @@ export const view = (props: ModuleFCProps<State, typeof broadcastChannelsDef>) =
                 }
                 return data;
             };
-            props.moduleContext.getChannel(BroadcastChannelNames.Response).broadcast(dataGenerator);
+
+            const dataDescription = `${ensemble?.ensembleName ?? ""} ${tableName ?? ""} ${responseName ?? ""}`;
+
+            props.moduleContext.getChannel(BroadcastChannelNames.Response).broadcast(dataDescription, dataGenerator);
         },
-        [realizationsResponseQuery.data]
+        [realizationsResponseQuery.data, ensemble, tableName, responseName]
     );
 
     const layout: Partial<Layout> = {

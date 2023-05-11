@@ -1,7 +1,7 @@
 import React from "react";
 
 import { EnsembleParameterDescription, VectorDescription } from "@api";
-import { BroadcastChannelDataFormat, BroadcastChannelDataTypes, broadcaster } from "@framework/Broadcaster";
+import { BroadcastChannelKeyCategory, broadcaster } from "@framework/Broadcaster";
 import { ModuleFCProps } from "@framework/Module";
 import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
 import { useSubscribedValue } from "@framework/WorkbenchServices";
@@ -17,41 +17,51 @@ import { Ensemble } from "@shared-types/ensemble";
 
 import { State } from "./state";
 
+const plotTypes = [
+    {
+        value: "histogram",
+        label: "Histogram",
+    },
+    {
+        value: "scatter",
+        label: "Scatter",
+    },
+    {
+        value: "scatter3d",
+        label: "Scatter 3D",
+    },
+];
+
+const crossPlottingTypes = [
+    {
+        label: "Realization",
+        value: BroadcastChannelKeyCategory.Realization,
+    },
+    {
+        label: "Time",
+        value: BroadcastChannelKeyCategory.TimestampMs,
+    },
+    {
+        label: "Measured depth",
+        value: BroadcastChannelKeyCategory.MeasuredDepth,
+    },
+    {
+        label: "Grid index",
+        value: BroadcastChannelKeyCategory.GridIndex,
+    },
+    {
+        label: "Grid IJK",
+        value: BroadcastChannelKeyCategory.GridIJK,
+    },
+];
+
 //-----------------------------------------------------------------------------------------------------------
 export function settings({ moduleContext, workbenchServices }: ModuleFCProps<State>) {
     const [channelNameX, setChannelNameX] = moduleContext.useStoreState("channelNameX");
     const [channelNameY, setChannelNameY] = moduleContext.useStoreState("channelNameY");
-    const [dataX, setDataX] = React.useState<any[] | null>(null);
-    const [dataY, setDataY] = React.useState<any[] | null>(null);
-
-    const [timeStep, setTimeStep] = moduleContext.useStoreState("timeStep");
-
-    const channelX = broadcaster.getChannel(channelNameX ?? "");
-    const channelY = broadcaster.getChannel(channelNameY ?? "");
-
-    React.useEffect(() => {
-        if (channelX) {
-            const handleChannelXChanged = (data: any) => {
-                setDataX(data);
-            };
-
-            const unsubscribeFunc = channelX.subscribe(handleChannelXChanged);
-
-            return unsubscribeFunc;
-        }
-    }, [channelX]);
-
-    React.useEffect(() => {
-        if (channelY) {
-            const handleChannelYChanged = (data: any) => {
-                setDataY(data);
-            };
-
-            const unsubscribeFunc = channelY.subscribe(handleChannelYChanged);
-
-            return unsubscribeFunc;
-        }
-    }, [channelY]);
+    const [channelNameZ, setChannelNameZ] = moduleContext.useStoreState("channelNameZ");
+    const [plotType, setPlotType] = moduleContext.useStoreState("plotType");
+    const [crossPlottingType, setCrossPlottingType] = React.useState<BroadcastChannelKeyCategory | null>(null);
 
     const handleChannelXChanged = (channelName: string) => {
         setChannelNameX(channelName);
@@ -61,118 +71,45 @@ export function settings({ moduleContext, workbenchServices }: ModuleFCProps<Sta
         setChannelNameY(channelName);
     };
 
-    let timeSteps: number[] | null = null;
-    if (dataX && dataY) {
-        timeSteps = dataX.filter((el) => "datetime" in el).map((el: any) => el.datetime);
-        timeSteps.push(
-            ...[
-                ...dataY
-                    .filter((el) => "datetime" in el && timeSteps && !timeSteps.find((el2) => el.datetime === el2))
-                    .map((el: any) => el.datetime),
-            ]
-        );
-    }
+    const handleChannelZChanged = (channelName: string) => {
+        setChannelNameZ(channelName);
+    };
+
+    const handlePlotTypeChanged = (value: string) => {
+        setPlotType(value);
+    };
+
+    const handleCrossPlottingTypeChanged = (value: string) => {
+        setCrossPlottingType(value as BroadcastChannelKeyCategory);
+    };
 
     return (
         <>
+            <Label text="Plot type">
+                <Dropdown options={plotTypes} onChange={handlePlotTypeChanged} />
+            </Label>
+            <Label text="Cross plotting">
+                <Dropdown options={crossPlottingTypes} onChange={handleCrossPlottingTypeChanged} />
+            </Label>
             <Label text="Data channel X axis">
                 <ChannelSelect onChange={handleChannelXChanged} />
             </Label>
-            <Label text="Data channel Y axis">
-                <ChannelSelect
-                    disabled={channelNameX === null}
-                    onChange={handleChannelYChanged}
-                    channelFilter={channelX?.getDataDef()}
-                />
-            </Label>
+            {plotType !== "histogram" && (
+                <Label text="Data channel Y axis">
+                    <ChannelSelect
+                        onChange={handleChannelYChanged}
+                        channelKeyCategory={crossPlottingType as BroadcastChannelKeyCategory}
+                    />
+                </Label>
+            )}
+            {plotType === "scatter3d" && (
+                <Label text="Data channel Z axis">
+                    <ChannelSelect
+                        onChange={handleChannelZChanged}
+                        channelKeyCategory={crossPlottingType as BroadcastChannelKeyCategory}
+                    />
+                </Label>
+            )}
         </>
     );
-}
-
-//-----------------------------------------------------------------------------------------------------------
-//-----------------------------------------------------------------------------------------------------------
-
-function fixupEnsemble(currEnsemble: Ensemble | null, availableEnsemblesArr: Ensemble[] | null): Ensemble | null {
-    if (!availableEnsemblesArr || availableEnsemblesArr.length === 0) {
-        return null;
-    }
-
-    if (currEnsemble) {
-        const foundItem = availableEnsemblesArr.find(
-            (item) => item.caseUuid === currEnsemble.caseUuid && item.ensembleName == currEnsemble.ensembleName
-        );
-        if (foundItem) {
-            return foundItem;
-        }
-    }
-
-    return availableEnsemblesArr[0];
-}
-
-function encodeEnsembleAsIdStr(ensemble: Ensemble): string {
-    return `${ensemble.caseUuid}::${ensemble.ensembleName}`;
-}
-
-function makeEnsembleOptionItems(ensemblesArr: Ensemble[] | null): DropdownOption[] {
-    const itemArr: DropdownOption[] = [];
-    if (ensemblesArr) {
-        for (const ens of ensemblesArr) {
-            itemArr.push({ value: encodeEnsembleAsIdStr(ens), label: `${ens.ensembleName} (${ens.caseName})` });
-        }
-    }
-    return itemArr;
-}
-
-function isValidVectorName(vectorName: string, vectorDescriptionsArr: VectorDescription[] | undefined): boolean {
-    if (!vectorName || !vectorDescriptionsArr || vectorDescriptionsArr.length === 0) {
-        return false;
-    }
-
-    if (vectorDescriptionsArr.find((item) => item.name === vectorName)) {
-        return true;
-    }
-
-    return false;
-}
-
-function fixupVectorName(currVectorName: string, vectorDescriptionsArr: VectorDescription[] | undefined): string {
-    if (!vectorDescriptionsArr || vectorDescriptionsArr.length === 0) {
-        return "";
-    }
-
-    if (isValidVectorName(currVectorName, vectorDescriptionsArr)) {
-        return currVectorName;
-    }
-
-    return vectorDescriptionsArr[0].name;
-}
-
-function makeVectorOptionItems(vectorDescriptionsArr: VectorDescription[] | undefined): SelectOption[] {
-    const itemArr: SelectOption[] = [];
-    if (vectorDescriptionsArr) {
-        for (const vec of vectorDescriptionsArr) {
-            itemArr.push({ value: vec.name, label: vec.descriptive_name });
-        }
-    }
-    return itemArr;
-}
-
-function makeParameterNamesOptionItems(parameters: EnsembleParameterDescription[] | undefined): SelectOption[] {
-    const itemArr: SelectOption[] = [];
-    if (parameters) {
-        for (const parameter of parameters) {
-            itemArr.push({ value: parameter.name, label: parameter.name });
-        }
-    }
-    return itemArr;
-}
-
-function makeTimeStepsOptions(timesteps: number[] | null): SelectOption[] {
-    const itemArr: SelectOption[] = [];
-    if (timesteps) {
-        for (const timestep of timesteps) {
-            itemArr.push({ value: `${timestep}`, label: new Date(timestep).toUTCString() });
-        }
-    }
-    return itemArr;
 }
