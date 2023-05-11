@@ -1,6 +1,5 @@
 from typing import List
 
-from fmu.sumo.explorer import Explorer
 from sumo.wrapper import SumoClient
 
 
@@ -11,7 +10,7 @@ def get_grid_names(sumo_client: SumoClient, case_id: str, iteration: int):
         "query": {
             "bool": {
                 "must": [
-                    {"match": {f"_sumo.parent_object.keyword": case_id}},
+                    {"match": {"_sumo.parent_object.keyword": case_id}},
                     {"match": {"class": "cpgrid"}},
                     {"match": {"fmu.iteration.id": iteration}},
                 ]
@@ -42,7 +41,7 @@ def get_grid_geometry_checksums(sumo_client: SumoClient, case_id: str, iteration
         "query": {
             "bool": {
                 "must": [
-                    {"match": {f"_sumo.parent_object.keyword": case_id}},
+                    {"match": {"_sumo.parent_object.keyword": case_id}},
                     {"match": {"class": "cpgrid"}},
                     {"match": {"fmu.iteration.id": iteration}},
                     {"match": {"data.name.keyword": grid_name}},
@@ -111,12 +110,12 @@ def get_static_grid_parameter_names(sumo_client: SumoClient, case_id: str, itera
         "query": {
             "bool": {
                 "must": [
-                    {"match": {f"_sumo.parent_object.keyword": case_id}},
+                    {"match": {"_sumo.parent_object.keyword": case_id}},
                     {"match": {"class": "cpgrid_property"}},
                     {"match": {"fmu.iteration.id": iteration}},
                     {"match": {"fmu.realization.id": 0}},
                     {"match": {"data.tagname.keyword": grid_name}},
-                    # Todo filter on static
+                    # filter on static
                 ]
             }
         },
