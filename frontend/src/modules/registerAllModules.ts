@@ -5,4 +5,5 @@ import "./MyModule2/registerModule";
 import "./MyModule/registerModule";
 import "./ScatterPlot/registerModule";
 import "./SimulationTimeSeries/registerModule";
+import "./Table/registerModule";
 import "./TimeSeriesParameterDistribution/registerModule";

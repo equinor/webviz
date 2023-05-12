@@ -123,7 +123,8 @@ export class Module<StateType extends StateBaseType, BCD extends BroadcastChanne
                     }
                 });
             })
-            .catch(() => {
+            .catch((e) => {
+                console.error(`Failed to import module ${this._name}`, e);
                 this.setImportState(ImportState.Failed);
             });
     }
