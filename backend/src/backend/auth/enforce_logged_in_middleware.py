@@ -32,7 +32,7 @@ class EnforceLoggedInMiddleware(BaseHTTPMiddleware):
         self._paths_redirected_to_login = paths_redirected_to_login or []
 
     async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
-        print("##################################### ensure_logged_in")
+        # print("##################################### ensure_logged_in")
 
         path_to_check = request.url.path
 
@@ -42,27 +42,27 @@ class EnforceLoggedInMiddleware(BaseHTTPMiddleware):
         if root_path:
             path_to_check = path_to_check.replace(root_path, "")
 
-        print(f"##### {request.url.path=}")
-        print(f"##### {root_path=}")
-        print(f"##### {path_to_check=}")
+        # print(f"##### {request.url.path=}")
+        # print(f"##### {root_path=}")
+        # print(f"##### {path_to_check=}")
 
         path_is_protected = True
 
         if path_to_check in ["/login", "/auth-callback"] + self._unprotected_paths:
             path_is_protected = False
-            print(f"##### path not protected: {path_to_check=}")
+            # print(f"##### path not protected: {path_to_check=}")
 
         if path_is_protected:
-            print(f"##### path requires login:  {path_to_check=}")
+            # print(f"##### path requires login:  {path_to_check=}")
             await starsessions.load_session(request)
 
             authenticated_user = AuthHelper.get_authenticated_user(request)
             is_logged_in = authenticated_user is not None
-            print(f"##### {is_logged_in=}")
+            # print(f"##### {is_logged_in=}")
 
             if not is_logged_in:
                 if path_to_check in self._paths_redirected_to_login:
-                    print("##### LOGGING IN USING REDIRECT")
+                    # print("##### LOGGING IN USING REDIRECT")
                     target_url_b64 = base64.urlsafe_b64encode(str(request.url).encode()).decode()
                     return RedirectResponse(f"{root_path}/login?redirect_url_after_login={target_url_b64}")
                 return PlainTextResponse("Not authorized yet, must log in", 401)

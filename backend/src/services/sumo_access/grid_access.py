@@ -2,6 +2,7 @@ import logging
 from io import BytesIO
 from typing import List, Optional
 
+from src.services.utils.perf_timer import PerfTimer
 import xtgeo
 from fmu.sumo.explorer.objects import Case
 from sumo.wrapper import SumoClient
@@ -17,7 +18,6 @@ from .sumo_queries import (
 
 
 LOGGER = logging.getLogger(__name__)
-
 
 class GridAccess:
     def __init__(self, access_token: str, case_uuid: str, iteration_name: str):
@@ -37,6 +37,7 @@ class GridAccess:
         )
 
     def get_grid_geometry(self, grid_name: str, realization: int) -> xtgeo.Grid:
+        timer = PerfTimer()
         geometry_blob_id = get_grid_geometry_blob_id(
             self._sumo_client,
             self._case_uuid,
@@ -45,8 +46,7 @@ class GridAccess:
             grid_name,
         )
         stream = self._sumo_client.get(f"/objects('{geometry_blob_id}')/blob")
-        print("------------------------------------------------")
-        print("GEOMETRY BLOB ID: ", geometry_blob_id)
+        print(f"{grid_name} {realization} {geometry_blob_id} in {round(timer.lap_s(),2)}s")
         grid_geom = xtgeo.grid_from_file(BytesIO(stream))
         grid_geom.activate_all()
         return grid_geom
@@ -54,6 +54,7 @@ class GridAccess:
     def get_grid_parameter(
         self, grid_name: str, grid_parameter_name: str, realization: int
     ) -> xtgeo.GridProperty:
+        timer = PerfTimer()
         parameter_blob_id = get_grid_parameter_blob_id(
             self._sumo_client,
             self._case_uuid,
@@ -63,8 +64,7 @@ class GridAccess:
             grid_parameter_name,
         )
         stream = self._sumo_client.get(f"/objects('{parameter_blob_id}')/blob")
-        print("------------------------------------------------")
-        print("PARAMETER BLOB ID: ", parameter_blob_id)
+        print(f"{grid_name} {grid_parameter_name} {realization} {parameter_blob_id} in {round(timer.lap_s(),2)}s")
         grid_param = xtgeo.gridproperty_from_file(BytesIO(stream))
         return grid_param
 
