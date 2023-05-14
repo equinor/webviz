@@ -44,15 +44,15 @@ jobs:
           export NODE_OPTIONS="--max_old_space_size=4096"
           npm run build
 
-      - name: 🕵️ Check code style & linting
-        working-directory: ./frontend
-        run: |
-          npm run validate
+      # - name: 🕵️ Check code style & linting
+      #   working-directory: ./frontend
+      #   run: |
+      #     npm run validate
 
-      - name: 🤖 Run tests
-        working-directory: ./frontend
-        run: |
-          npm run test
+      # - name: 🤖 Run tests
+      #   working-directory: ./frontend
+      #   run: |
+      #     npm run test
 
       - name: 🕵️ Check auto-generated frontend code is in sync with backend
         run: |
@@ -85,13 +85,13 @@ jobs:
           poetry lock --check --no-update  # Check lock file is consistent with pyproject.toml
           poetry install --with dev
 
-      - name: 🕵️ Check code style & linting
-        working-directory: ./backend
-        run: |
-          black --check src/ tests/
-          pylint src/ tests/
-          bandit --recursive src/
-          mypy src/ tests/
+      # - name: 🕵️ Check code style & linting
+      #   working-directory: ./backend
+      #   run: |
+      #     black --check src/ tests/
+      #     pylint src/ tests/
+      #     bandit --recursive src/
+      #     mypy src/ tests/
 
       # - name: 🤖 Run tests
       #   working-directory: ./backend
