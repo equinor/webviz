@@ -1,4 +1,4 @@
-from functools import lru_cache
+from functools import cache
 from typing import List, Tuple
 
 import numpy as np
@@ -238,7 +238,7 @@ async def grid_parameter(
         case_uuid=case_uuid,
         ensemble_name=ensemble_name,
         grid_name=grid_name,
-        realization=realizations[0],
+        realization=0,
     )
 
     xtgeo_parameters = [
@@ -384,7 +384,7 @@ async def statistical_grid_parameter(
     )
 
 
-@lru_cache
+@cache
 def get_grid_geometry(
     authenticated_user: AuthenticatedUser,
     case_uuid: str,
@@ -400,14 +400,14 @@ def get_grid_geometry(
     return grid_geometry
 
 
-@lru_cache
+@cache
 def get_grid_polydata(grid_geometry: xtgeo.Grid) -> VtkGridSurface:
     grid_polydata = get_surface(grid_geometry)
 
     return grid_polydata
 
 
-@lru_cache
+@cache
 def get_grid_parameter(
     authenticated_user: AuthenticatedUser,
     case_uuid: str,
@@ -434,7 +434,7 @@ def get_grid_parameter(
     return grid_parameter
 
 
-@lru_cache
+@cache
 def generate_grid_intersection(grid_geometry: xtgeo.Grid, xyz_arr: Tuple[List[float]]):
     print("CALCULATE INTERSECTION", flush=True)
     polyline = create_polyline(xyz_arr)

@@ -38,13 +38,13 @@ export function view({ moduleContext, workbenchServices }: ModuleFCProps<state>)
     const useStatistics = moduleContext.useStoreValue("useStatistics");
     const selectedEnsemble = selectedEnsembles && selectedEnsembles.length > 0 ? selectedEnsembles[0] : { caseUuid: null, ensembleName: null };
 
-    const gridGeometryQuery = useGridGeometry(selectedEnsemble.caseUuid, selectedEnsemble.ensembleName, gridName, realizations ? realizations[0] : "0");
-    const gridParameterQuery = useGridParameter(selectedEnsemble.caseUuid, selectedEnsemble.ensembleName, gridName, parameterName, realizations ? realizations[0] : "0", useStatistics);
-    const statisticalGridParameterQuery = useStatisticalGridParameter(selectedEnsemble.caseUuid, selectedEnsemble.ensembleName, gridName, parameterName, realizations, useStatistics);
+    //const gridGeometryQuery = useGridGeometry(selectedEnsemble.caseUuid, selectedEnsemble.ensembleName, gridName, realizations ? realizations[0] : "0");
+    // const gridParameterQuery = useGridParameter(selectedEnsemble.caseUuid, selectedEnsemble.ensembleName, gridName, parameterName, realizations ? realizations[0] : "0", useStatistics);
+    // const statisticalGridParameterQuery = useStatisticalGridParameter(selectedEnsemble.caseUuid, selectedEnsemble.ensembleName, gridName, parameterName, realizations, useStatistics);
     const gridIntersectionQuery = useGridIntersection(selectedEnsemble.caseUuid, selectedEnsemble.ensembleName, gridName, parameterName, realizations ? realizations[0] : "0", useStatistics);
     const statisticalGridIntersectionQuery = useStatisticalGridIntersection(selectedEnsemble.caseUuid, selectedEnsemble.ensembleName, gridName, parameterName, realizations, useStatistics);
 
-    const bounds = gridGeometryQuery?.data ? [gridGeometryQuery.data.xmin, gridGeometryQuery.data.ymin, -gridGeometryQuery.data.zmax, gridGeometryQuery.data.xmax, gridGeometryQuery.data.ymax, -gridGeometryQuery.data.zmin] : [0, 0, 0, 100, 100, 100];
+
 
     if (!gridIntersectionQuery.data && !statisticalGridIntersectionQuery.data) { return (<div>no grid geometry</div>) }
 
