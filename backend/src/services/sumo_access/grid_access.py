@@ -32,21 +32,39 @@ class GridAccess:
 
     def static_parameter_names(self, grid_name: str) -> List[str]:
         """Get a list of grid parameter names"""
-        return get_static_grid_parameter_names(self._sumo_client, self._case_uuid, self._iteration_name, grid_name)
+        return get_static_grid_parameter_names(
+            self._sumo_client, self._case_uuid, self._iteration_name, grid_name
+        )
 
     def get_grid_geometry(self, grid_name: str, realization: int) -> xtgeo.Grid:
         geometry_blob_id = get_grid_geometry_blob_id(
-            self._sumo_client, self._case_uuid, self._iteration_name, realization, grid_name
+            self._sumo_client,
+            self._case_uuid,
+            self._iteration_name,
+            realization,
+            grid_name,
         )
         stream = self._sumo_client.get(f"/objects('{geometry_blob_id}')/blob")
+        print("------------------------------------------------")
+        print("GEOMETRY BLOB ID: ", geometry_blob_id)
         grid_geom = xtgeo.grid_from_file(BytesIO(stream))
+        grid_geom.activate_all()
         return grid_geom
 
-    def get_grid_parameter(self, grid_name: str, grid_parameter_name: str, realization: int) -> xtgeo.GridProperty:
+    def get_grid_parameter(
+        self, grid_name: str, grid_parameter_name: str, realization: int
+    ) -> xtgeo.GridProperty:
         parameter_blob_id = get_grid_parameter_blob_id(
-            self._sumo_client, self._case_uuid, self._iteration_name, realization, grid_name, grid_parameter_name
+            self._sumo_client,
+            self._case_uuid,
+            self._iteration_name,
+            realization,
+            grid_name,
+            grid_parameter_name,
         )
         stream = self._sumo_client.get(f"/objects('{parameter_blob_id}')/blob")
+        print("------------------------------------------------")
+        print("PARAMETER BLOB ID: ", parameter_blob_id)
         grid_param = xtgeo.gridproperty_from_file(BytesIO(stream))
         return grid_param
 
@@ -55,4 +73,6 @@ class GridAccess:
         nx_ny_nz_arr = get_nx_ny_nz_for_ensemble_grids(
             self._sumo_client, self._case_uuid, self._iteration_name, grid_name
         )
-        return all(nx_ny_nz_arr[0] == nx_ny_nz_arr[i] for i in range(1, len(nx_ny_nz_arr)))
+        return all(
+            nx_ny_nz_arr[0] == nx_ny_nz_arr[i] for i in range(1, len(nx_ny_nz_arr))
+        )

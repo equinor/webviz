@@ -3,6 +3,7 @@
 /* eslint-disable */
 import type { B64EncodedNumpyArray } from '../models/B64EncodedNumpyArray';
 import type { GridGeometry } from '../models/GridGeometry';
+import type { GridIntersection } from '../models/GridIntersection';
 
 import type { CancelablePromise } from '../core/CancelablePromise';
 import type { BaseHttpRequest } from '../core/BaseHttpRequest';
@@ -116,6 +117,40 @@ export class GridService {
         return this.httpRequest.request({
             method: 'GET',
             url: '/grid/grid_parameter',
+            query: {
+                'case_uuid': caseUuid,
+                'ensemble_name': ensembleName,
+                'grid_name': gridName,
+                'parameter_name': parameterName,
+                'realization': realization,
+            },
+            errors: {
+                422: `Validation Error`,
+            },
+        });
+    }
+
+    /**
+     * Grid Parameter Intersection
+     * Get a grid parameter
+     * @param caseUuid Sumo case uuid
+     * @param ensembleName Ensemble name
+     * @param gridName Grid name
+     * @param parameterName Grid parameter
+     * @param realization Realization
+     * @returns GridIntersection Successful Response
+     * @throws ApiError
+     */
+    public gridParameterIntersection(
+        caseUuid: string,
+        ensembleName: string,
+        gridName: string,
+        parameterName: string,
+        realization: string,
+    ): CancelablePromise<GridIntersection> {
+        return this.httpRequest.request({
+            method: 'GET',
+            url: '/grid/grid_parameter_intersection',
             query: {
                 'case_uuid': caseUuid,
                 'ensemble_name': ensembleName,

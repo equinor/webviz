@@ -23,6 +23,7 @@ export type { EnsembleSensitivityCase } from './models/EnsembleSensitivityCase';
 export type { Field } from './models/Field';
 export { Frequency } from './models/Frequency';
 export type { GridGeometry } from './models/GridGeometry';
+export type { GridIntersection } from './models/GridIntersection';
 export type { HTTPValidationError } from './models/HTTPValidationError';
 export type { InplaceVolumetricsCategoricalMetaData } from './models/InplaceVolumetricsCategoricalMetaData';
 export type { InplaceVolumetricsTableMetaData } from './models/InplaceVolumetricsTableMetaData';
