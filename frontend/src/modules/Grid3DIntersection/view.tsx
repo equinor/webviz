@@ -2,9 +2,8 @@ import React, { useState } from "react";
 
 import { ModuleFCProps } from "@framework/Module";
 import { useElementSize } from "@lib/hooks/useElementSize";
-import { SubsurfaceViewer } from "@webviz/subsurface-components";
 import { useSubscribedValue } from "@framework/WorkbenchServices";
-import { useGridGeometry, useGridParameter, useStatisticalGridParameter, useGridIntersection } from "./queryHooks";
+import { useGridGeometry, useGridParameter, useStatisticalGridParameter, useGridIntersection, useStatisticalGridIntersection } from "./queryHooks";
 import state from "./state";
 import { useParameterQuery } from "@modules/TimeSeriesParameterDistribution/queryHooks";
 import { toArrayBuffer } from "./vtkUtils";
@@ -43,14 +42,24 @@ export function view({ moduleContext, workbenchServices }: ModuleFCProps<state>)
     const gridParameterQuery = useGridParameter(selectedEnsemble.caseUuid, selectedEnsemble.ensembleName, gridName, parameterName, realizations ? realizations[0] : "0", useStatistics);
     const statisticalGridParameterQuery = useStatisticalGridParameter(selectedEnsemble.caseUuid, selectedEnsemble.ensembleName, gridName, parameterName, realizations, useStatistics);
     const gridIntersectionQuery = useGridIntersection(selectedEnsemble.caseUuid, selectedEnsemble.ensembleName, gridName, parameterName, realizations ? realizations[0] : "0", useStatistics);
+    const statisticalGridIntersectionQuery = useStatisticalGridIntersection(selectedEnsemble.caseUuid, selectedEnsemble.ensembleName, gridName, parameterName, realizations, useStatistics);
+
     const bounds = gridGeometryQuery?.data ? [gridGeometryQuery.data.xmin, gridGeometryQuery.data.ymin, -gridGeometryQuery.data.zmax, gridGeometryQuery.data.xmax, gridGeometryQuery.data.ymax, -gridGeometryQuery.data.zmin] : [0, 0, 0, 100, 100, 100];
 
-    if (!gridGeometryQuery.data) { return (<div>no grid geometry</div>) }
+    if (!gridIntersectionQuery.data && !statisticalGridIntersectionQuery.data) { return (<div>no grid geometry</div>) }
 
-    if (!gridIntersectionQuery?.data) { return (<div>no grid intersection</div>) }
+    let intersectionData: any = []
+    if (!useStatistics && gridIntersectionQuery?.data) {
+        intersectionData = gridIntersectionQuery.data
+    }
+    else if (useStatistics && statisticalGridIntersectionQuery?.data) {
+        intersectionData = statisticalGridIntersectionQuery.data
+    }
+    else { return <div>no data</div> }
+    console.log(intersectionData)
     return (
         <div className="relative w-full h-full flex flex-col" ref={wrapperDivRef}>
-            <PlotlyGridIntersection data={gridIntersectionQuery.data} width={wrapperDivSize.width}
+            <PlotlyGridIntersection data={intersectionData} width={wrapperDivSize.width}
                 height={wrapperDivSize.height} />
             <div className="absolute bottom-5 right-5 italic text-pink-400">{moduleContext.getInstanceIdString()}</div>
         </div>

@@ -165,6 +165,40 @@ export class GridService {
     }
 
     /**
+     * Statistical Grid Parameter Intersection
+     * Get a grid parameter
+     * @param caseUuid Sumo case uuid
+     * @param ensembleName Ensemble name
+     * @param gridName Grid name
+     * @param parameterName Grid parameter
+     * @param realizations Realizations
+     * @returns GridIntersection Successful Response
+     * @throws ApiError
+     */
+    public statisticalGridParameterIntersection(
+        caseUuid: string,
+        ensembleName: string,
+        gridName: string,
+        parameterName: string,
+        realizations: Array<string>,
+    ): CancelablePromise<GridIntersection> {
+        return this.httpRequest.request({
+            method: 'GET',
+            url: '/grid/statistical_grid_parameter_intersection',
+            query: {
+                'case_uuid': caseUuid,
+                'ensemble_name': ensembleName,
+                'grid_name': gridName,
+                'parameter_name': parameterName,
+                'realizations': realizations,
+            },
+            errors: {
+                422: `Validation Error`,
+            },
+        });
+    }
+
+    /**
      * Statistical Grid Parameter
      * Get a grid parameter
      * @param caseUuid Sumo case uuid

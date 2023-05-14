@@ -46,6 +46,15 @@ export function useGridIntersection(caseUuid: string | null, ensembleName: strin
         enabled: caseUuid && ensembleName && gridName && parameterName && realization && !useStatistics ? true : false,
     });
 }
+export function useStatisticalGridIntersection(caseUuid: string | null, ensembleName: string | null, gridName: string | null, parameterName: string | null, realizations: string[] | null, useStatistics: boolean): UseQueryResult<GridIntersection> {
+    return useQuery({
+        queryKey: ["statisticalGridParameterIntersection", caseUuid, ensembleName, gridName, parameterName, realizations],
+        queryFn: () => apiService.grid.statisticalGridParameterIntersection(caseUuid ?? "", ensembleName ?? "", gridName ?? "", parameterName ?? "", realizations ?? []),
+        staleTime: STALE_TIME,
+        cacheTime: 0,
+        enabled: caseUuid && ensembleName && gridName && parameterName && realizations && useStatistics ? true : false,
+    });
+}
 
 
 export function useGridModelNames(caseUuid: string | null, ensembleName: string | null): UseQueryResult<string[]> {
