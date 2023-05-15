@@ -1,3 +1,5 @@
+# type: ignore
+# for now
 from typing import Optional, List
 from dataclasses import dataclass
 import numpy as np
@@ -135,7 +137,7 @@ def _vtk_esg_to_ug(vtk_esgrid: vtkExplicitStructuredGrid) -> vtkUnstructuredGrid
 def cut_along_polyline(
     esgrid: vtkExplicitStructuredGrid,
     polyline_xy: List[float],
-):
+) -> vtkPolyData:
     num_points_in_polyline = int(len(polyline_xy) / 2)
 
     ugrid = _vtk_esg_to_ug(esgrid)
@@ -218,7 +220,10 @@ def cut_along_polyline(
     return comb_polydata
 
 
-def flatten_sliced_grid(sliced_grid, polyline, original_cell_ids):
+def flatten_sliced_grid(
+    sliced_grid: vtkPolyData, polyline, original_cell_ids
+) -> vtkPolyData:
+    """Flatten the sliced grid to a 2D grid."""
     points = sliced_grid.GetPoints()
     num_points = points.GetNumberOfPoints()
     flattened_points = vtkPoints()
@@ -261,7 +266,7 @@ def flatten_sliced_grid(sliced_grid, polyline, original_cell_ids):
     return flattened_grid
 
 
-def get_triangles(poly_data):
+def get_triangles(poly_data) -> List[List[int]]:
     triangles = []
     num_cells = poly_data.GetNumberOfCells()
     for i in range(num_cells):

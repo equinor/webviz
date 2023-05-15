@@ -9,8 +9,6 @@ router = APIRouter()
 
 START_TIME_CONTAINER = datetime.datetime.now()
 
-grid_data = None
-
 
 def human_readable(psutil_object: NamedTuple) -> Dict[str, Union[str, Dict[str, str]]]:
     return {
