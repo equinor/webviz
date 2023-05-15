@@ -10,7 +10,7 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 from vtkmodules.vtkCommonDataModel import vtkPolyData
 
 
-def visualize_with_scalars(
+def visualize_triangles_with_scalars(
     coords: np.ndarray,
     triangles: list,
     scalars: np.ma.core.MaskedArray,
@@ -30,7 +30,9 @@ def visualize_with_scalars(
     # Plot the triangulation with scalar values
     tpc = ax.tripcolor(triang, scalars, shading="flat", cmap=plt.cm.viridis)
     # Get the polyline coordinates
-    polyline_coords = np.array([polyline.GetPoint(i)[:3] for i in range(polyline.GetNumberOfPoints())])
+    polyline_coords = np.array(
+        [polyline.GetPoint(i)[:3] for i in range(polyline.GetNumberOfPoints())]
+    )
 
     # Calculate the cumulative distance along the polyline
     polyline_distances = np.zeros(polyline_coords.shape[0])

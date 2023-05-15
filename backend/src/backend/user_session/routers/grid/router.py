@@ -25,12 +25,11 @@ from src.services.utils.vtk_utils import (
     cut_along_polyline,
     flatten_sliced_grid,
     xtgeo_grid_to_vtk_explicit_structured_grid,
-    create_planes,
     create_polyline,
     grid_to_numpy,
     get_triangles,
 )
-from src.services.utils.mpl_utils import visualize_with_scalars
+from src.services.utils.mpl_utils import visualize_triangles_with_scalars
 from src.services.utils.perf_timer import PerfTimer
 
 router = APIRouter()
@@ -63,8 +62,14 @@ async def grid(
     grid_geometrics = grid_geometry.get_geometrics(allcells=True, return_dict=True)
     grid_polydata = get_grid_polydata(grid_geometry=grid_geometry)
 
-    points_np = vtk_to_numpy(grid_polydata.polydata.GetPoints().GetData()).ravel().astype(np.float32)
-    polys_np = vtk_to_numpy(grid_polydata.polydata.GetPolys().GetData()).astype(np.int64)
+    points_np = (
+        vtk_to_numpy(grid_polydata.polydata.GetPoints().GetData())
+        .ravel()
+        .astype(np.float32)
+    )
+    polys_np = vtk_to_numpy(grid_polydata.polydata.GetPolys().GetData()).astype(
+        np.int64
+    )
     points_np = np.around(points_np, decimals=2)
     # grid_geometry = GridGeometry(points=points_np.tolist(), polys=polys_np.tolist(), **grid_geometrics)
 
@@ -111,7 +116,9 @@ async def grid_parameter(
     )
 
     # using orjson instead of slow FastAPI default encoder (json.dumps)
-    scalar_values = get_scalar_values(xtgeo_parameter, cell_ids=grid_polydata.original_cell_ids)
+    scalar_values = get_scalar_values(
+        xtgeo_parameter, cell_ids=grid_polydata.original_cell_ids
+    )
     scalar_values[scalar_values == -999.0] = np.nan
     scalar_values[scalar_values < np.nanmin(scalar_values)] = np.nanmin(scalar_values)
     scalar_values[scalar_values > np.nanmax(scalar_values)] = np.nanmax(scalar_values)
@@ -176,7 +183,9 @@ async def grid_parameter(
         ]
     )
 
-    coords, triangles, original_cell_indices_np, polyline = generate_grid_intersection(grid_geometry, xyz_arr)
+    coords, triangles, original_cell_indices_np, polyline = generate_grid_intersection(
+        grid_geometry, xyz_arr
+    )
     print(
         f"CALCULATED INTERSECTION: realization: {realization}: {round(timer.lap_s(),2)}s",
         flush=True,
@@ -192,7 +201,9 @@ async def grid_parameter(
     # values[values > 0.4] = 0.4
     # values = values[original_cell_indices_np]
     # scalar_values[scalar_values == -999.0] = 0
-    polyline_coords = np.array([polyline.GetPoint(i)[:3] for i in range(polyline.GetNumberOfPoints())])
+    polyline_coords = np.array(
+        [polyline.GetPoint(i)[:3] for i in range(polyline.GetNumberOfPoints())]
+    )
 
     # Calculate the cumulative distance along the polyline
     polyline_distances = np.zeros(polyline_coords.shape[0])
@@ -203,7 +214,9 @@ async def grid_parameter(
 
     polyline_x = polyline_distances
     polyline_y = polyline_coords[:, 2]
-    image_data = visualize_with_scalars(coords, triangles, values, polyline, "55/33-A-4")
+    image_data = visualize_triangles_with_scalars(
+        coords, triangles, values, polyline, "55/33-A-4"
+    )
     print(
         f"MATPLOTLIB IMAGE: realization: {realization}: {round(timer.lap_s(),2)}s",
         flush=True,
@@ -252,7 +265,9 @@ async def grid_parameter(
     parameter_name = request.query_params.get("parameter_name")
 
     realizations = orjson.loads(request.query_params.get("realizations"))
-    grid_access = GridAccess(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
+    grid_access = GridAccess(
+        authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
+    )
     # type: ignore
     if not grid_access.grids_have_equal_nxnynz(grid_name=grid_name):
         raise ValueError("Grids must have equal nx, ny, nz")
@@ -308,7 +323,9 @@ async def grid_parameter(
     )
     print("-" * 80, flush=True)
     print("GENERATING GRID INTERSECTION", flush=True)
-    coords, triangles, original_cell_indices_np, polyline = generate_grid_intersection(grid_geometry, xyz_arr)
+    coords, triangles, original_cell_indices_np, polyline = generate_grid_intersection(
+        grid_geometry, xyz_arr
+    )
     print(
         f"CALCULATED INTERSECTION: realization: {0}: {round(timer.lap_s(),2)}s",
         flush=True,
@@ -316,7 +333,8 @@ async def grid_parameter(
     print("-" * 80, flush=True)
     print("GETTING SCALAR VALUES", flush=True)
     all_scalar_values = [
-        get_scalar_values(xtgeo_parameter, cell_ids=original_cell_indices_np) for xtgeo_parameter in xtgeo_parameters
+        get_scalar_values(xtgeo_parameter, cell_ids=original_cell_indices_np)
+        for xtgeo_parameter in xtgeo_parameters
     ]
 
     print(np.nanmin(all_scalar_values), np.nanmax(all_scalar_values), flush=True)
@@ -329,7 +347,9 @@ async def grid_parameter(
         f"DOWNLOADED/READ CACHE: scalar_values for {parameter_name}, realizations: {realizations}: {round(timer.lap_s(),2)}s",
         flush=True,
     )
-    polyline_coords = np.array([polyline.GetPoint(i)[:3] for i in range(polyline.GetNumberOfPoints())])
+    polyline_coords = np.array(
+        [polyline.GetPoint(i)[:3] for i in range(polyline.GetNumberOfPoints())]
+    )
 
     # Calculate the cumulative distance along the polyline
     polyline_distances = np.zeros(polyline_coords.shape[0])
@@ -342,7 +362,9 @@ async def grid_parameter(
     polyline_y = polyline_coords[:, 2]
     print("-" * 80, flush=True)
     print("GENERATE MATPLOTLIB IMAGE", flush=True)
-    image_data = visualize_with_scalars(coords, triangles, values, polyline, "55/33-A-4")
+    image_data = visualize_triangles_with_scalars(
+        coords, triangles, values, polyline, "55/33-A-4"
+    )
     print(
         f"GENERATED MATPLOTLIB IMAGE: {parameter_name}, realization: {0}: {round(timer.lap_s(),2)}s",
         flush=True,
@@ -393,7 +415,9 @@ async def statistical_grid_parameter(
     realizations = orjson.loads(request.query_params.get("realizations"))
 
     # type: ignore
-    grid_access = GridAccess(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
+    grid_access = GridAccess(
+        authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
+    )
     # type: ignore
     if not grid_access.grids_have_equal_nxnynz(grid_name=grid_name):
         raise ValueError("Grids must have equal nx, ny, nz")
@@ -424,15 +448,23 @@ async def statistical_grid_parameter(
         for xtgeo_parameter in xtgeo_parameters
     ]
     print(np.nanmin(all_scalar_values), np.nanmax(all_scalar_values), flush=True)
-    mean_scalar_values = np.nanmean([scalar_values for scalar_values in all_scalar_values], axis=0)
+    mean_scalar_values = np.nanmean(
+        [scalar_values for scalar_values in all_scalar_values], axis=0
+    )
     mean_scalar_values[mean_scalar_values == -999.0] = np.nan
-    mean_scalar_values[mean_scalar_values < np.nanmin(mean_scalar_values)] = np.nanmin(mean_scalar_values)
-    mean_scalar_values[mean_scalar_values > np.nanmax(mean_scalar_values)] = np.nanmax(mean_scalar_values)
+    mean_scalar_values[mean_scalar_values < np.nanmin(mean_scalar_values)] = np.nanmin(
+        mean_scalar_values
+    )
+    mean_scalar_values[mean_scalar_values > np.nanmax(mean_scalar_values)] = np.nanmax(
+        mean_scalar_values
+    )
     # using orjson instead of slow FastAPI default encoder (json.dumps)
     # encoded_values = B64EncodedNumpyArray(**b64_encode_numpy(mean_scalar_values))
 
     # return Response(orjson.dumps(encoded_values.__dict__), media_type="application/json")
-    return Response(orjson.dumps(mean_scalar_values.tolist()), media_type="application/json")
+    return Response(
+        orjson.dumps(mean_scalar_values.tolist()), media_type="application/json"
+    )
 
 
 @cache
@@ -469,7 +501,9 @@ def get_grid_parameter(
     token = authenticated_user.get_sumo_access_token()
     grid_access = GridAccess(token, case_uuid, ensemble_name)
 
-    grid_parameter = grid_access.get_grid_parameter(grid_name, parameter_name, int(realization))
+    grid_parameter = grid_access.get_grid_parameter(
+        grid_name, parameter_name, int(realization)
+    )
 
     return grid_parameter
 
@@ -484,14 +518,22 @@ def generate_grid_intersection(grid_geometry: xtgeo.Grid, xyz_arr: Tuple[List[fl
     esgrid = xtgeo_grid_to_vtk_explicit_structured_grid(grid_geometry)
     sliced_grid = cut_along_polyline(esgrid, poly_xy)
     original_cell_indices_np = [
-        int(c) for c in vtk_to_numpy(sliced_grid.GetCellData().GetAbstractArray("vtkOriginalCellIds"))
+        int(c)
+        for c in vtk_to_numpy(
+            sliced_grid.GetCellData().GetAbstractArray("vtkOriginalCellIds")
+        )
     ]
 
-    flattened_grid = flatten_sliced_grid(sliced_grid, polyline, original_cell_ids=original_cell_indices_np)
+    flattened_grid = flatten_sliced_grid(
+        sliced_grid, polyline, original_cell_ids=original_cell_indices_np
+    )
     coords = grid_to_numpy(flattened_grid)
     triangles = get_triangles(flattened_grid)
     original_cell_indices_np = [
-        int(c) for c in vtk_to_numpy(flattened_grid.GetCellData().GetAbstractArray("vtkOriginalCellIds"))
+        int(c)
+        for c in vtk_to_numpy(
+            flattened_grid.GetCellData().GetAbstractArray("vtkOriginalCellIds")
+        )
     ]
 
     return (coords, triangles, original_cell_indices_np, polyline)

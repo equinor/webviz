@@ -3,6 +3,7 @@ import logging
 
 from fastapi import FastAPI
 from fastapi.routing import APIRoute
+from fastapi.responses import ORJSONResponse
 from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
 
 from src.backend.shared_middleware import add_shared_middlewares
@@ -28,7 +29,11 @@ def custom_generate_unique_id(route: APIRoute) -> str:
     return f"{route.name}"
 
 
-app = FastAPI(generate_unique_id_function=custom_generate_unique_id, root_path="/api")
+app = FastAPI(
+    generate_unique_id_function=custom_generate_unique_id,
+    root_path="/api",
+    default_response_class=ORJSONResponse,
+)
 
 # The tags we add here will determine the name of the frontend api service for our endpoints as well as
 # providing some grouping when viewing the openapi documentation.

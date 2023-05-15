@@ -62,8 +62,6 @@ const PlotlyGridIntersection: React.FC<PlotlyGridIntersectionProps> = ({ data, w
         ],
 
     };
-    console.log(layout)
-    console.log(tracesDataArr)
     return (
         <Plot
             data={tracesDataArr}

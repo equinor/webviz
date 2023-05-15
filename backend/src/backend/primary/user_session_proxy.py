@@ -34,7 +34,9 @@ class RadixJobScheduler:
             return True
 
         async with httpx.AsyncClient() as client:
-            r = await client.get(f"http://{self._name}:{self._port}/api/v1/jobs/{existing_job_name}")
+            r = await client.get(
+                f"http://{self._name}:{self._port}/api/v1/jobs/{existing_job_name}"
+            )
 
         job = r.json()
 
@@ -43,8 +45,8 @@ class RadixJobScheduler:
 
         try:
             httpx.get(f"http://{existing_job_name}:{self._port}/")
-        except (ConnectionRefusedError, httpx.ConnectError):
-            print("ConnectionRefusedError")
+        except (ConnectionRefusedError, httpx.ConnectError, httpx.ConnectTimeout):
+            print("User container server not yet up")
             return False
 
         return True
@@ -97,11 +99,15 @@ class RadixJobScheduler:
 RADIX_JOB_SCHEDULER_INSTANCE = RadixJobScheduler("backend-user-session", 8000)
 
 
-async def proxy_to_user_session(request: Request, authenticated_user: AuthenticatedUser) -> Any:
+async def proxy_to_user_session(
+    request: Request, authenticated_user: AuthenticatedUser
+) -> Any:
     # Ideally this function should probably be a starlette/FastAPI middleware, but it appears that
     # it is not yet possible to put middleware on single routes through decorator like in express.js.
 
-    base_url = await RADIX_JOB_SCHEDULER_INSTANCE.get_base_url(authenticated_user._user_id)
+    base_url = await RADIX_JOB_SCHEDULER_INSTANCE.get_base_url(
+        authenticated_user._user_id
+    )
 
     # See https://github.com/tiangolo/fastapi/discussions/7382:
 
@@ -113,7 +119,11 @@ async def proxy_to_user_session(request: Request, authenticated_user: Authentica
     )
 
     job_req = client.build_request(
-        request.method, url, headers=request.headers.raw, content=request.stream(), timeout=600
+        request.method,
+        url,
+        headers=request.headers.raw,
+        content=request.stream(),
+        timeout=600,
     )
     job_resp = await client.send(job_req, stream=True)
 
