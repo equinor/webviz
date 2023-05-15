@@ -40,7 +40,7 @@ export function view({ moduleContext, workbenchServices }: ModuleFCProps<state>)
     }
     const points: Float32Array = new Float32Array(pointsArray as number[])
     const polys: Uint32Array = new Uint32Array(polysArray as number[])
-
+    console.log("polys", Array.from(polys))
     return (
         <div className="relative w-full h-full flex flex-col">
 

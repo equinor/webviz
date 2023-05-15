@@ -2,20 +2,17 @@ import logging
 from io import BytesIO
 from typing import List, Optional
 
-from src.services.utils.perf_timer import PerfTimer
 import xtgeo
 from fmu.sumo.explorer.objects import Case
 from sumo.wrapper import SumoClient
 
-from ._helpers import create_sumo_client_instance
-from .sumo_queries import (
-    get_grid_geometry_blob_id,
-    get_grid_names,
-    get_grid_parameter_blob_id,
-    get_nx_ny_nz_for_ensemble_grids,
-    get_static_grid_parameter_names,
-)
+from src.services.utils.perf_timer import PerfTimer
 
+from ._helpers import create_sumo_client_instance
+from .sumo_queries import (get_grid_geometry_blob_id, get_grid_names,
+                           get_grid_parameter_blob_id,
+                           get_nx_ny_nz_for_ensemble_grids,
+                           get_static_grid_parameter_names)
 
 LOGGER = logging.getLogger(__name__)
 

@@ -5,8 +5,8 @@ import state from "./state";
 import { view } from "./view";
 
 const initialState: state = {
-    gridName: "Simgrid",
-    parameterName: "PORO",
+    gridName: "Geogrid_static",
+    parameterName: "PHIT",
     realizations: ["0"],
     useStatistics: false,
 

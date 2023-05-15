@@ -1,3 +1,4 @@
+# pylint: skip-file
 # type: ignore
 # for now
 from typing import Optional, List
