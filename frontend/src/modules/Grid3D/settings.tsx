@@ -1,7 +1,6 @@
-import React from "react";
+import React, { useEffect } from "react";
 
 import { ModuleFCProps } from "@framework/Module";
-import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
 import { useSubscribedValue } from "@framework/WorkbenchServices";
 import { ApiStateWrapper } from "@lib/components/ApiStateWrapper";
 import { useGridModelNames, useGridParameterNames, useRealizations } from "./queryHooks";
@@ -13,20 +12,40 @@ import { Select, SelectOption } from "@lib/components/Select";
 import state from "./state";
 //-----------------------------------------------------------------------------------------------------------
 export function settings({ moduleContext, workbenchServices }: ModuleFCProps<state>) {
+    // From Workbench
     const selectedEnsembles = useSubscribedValue("navigator.ensembles", workbenchServices);
+    const selectedEnsemble = selectedEnsembles?.[0] ?? { caseUuid: null, ensembleName: null };
 
+    // State
     const [gridName, setGridName] = moduleContext.useStoreState("gridName");
     const [parameterName, setParameterName] = moduleContext.useStoreState("parameterName");
     const [realizations, setRealizations] = moduleContext.useStoreState("realizations");
     const [useStatistics, setUseStatistics] = moduleContext.useStoreState("useStatistics");
-    const selectedEnsemble = selectedEnsembles && selectedEnsembles.length > 0 ? selectedEnsembles[0] : { caseUuid: null, ensembleName: null };
 
+
+    // Queries
     const gridNamesQuery = useGridModelNames(selectedEnsemble.caseUuid, selectedEnsemble.ensembleName);
     const parameterNamesQuery = useGridParameterNames(selectedEnsemble.caseUuid, selectedEnsemble.ensembleName, gridName);
     const realizationsQuery = useRealizations(selectedEnsemble.caseUuid, selectedEnsemble.ensembleName);
+
+    // Handle Linked query
+    useEffect(() => {
+        if (parameterNamesQuery.data) {
+            if (gridName && parameterNamesQuery.data.find(name => name === parameterName)) {
+                // New grid has same parameter
+            } else {
+                // New grid has different parameter. Set to first
+                setParameterName(parameterNamesQuery.data[0])
+            }
+        }
+    }, [parameterNamesQuery.data, parameterName])
+
+    // If no grid names, stop here
     if (!gridNamesQuery.data) { return (<div>Select case: upscaled_grids_realistic_no_unc</div>) }
+
     const parameterNames = parameterNamesQuery.data ? parameterNamesQuery.data : []
     const allRealizations: string[] = realizationsQuery.data ? realizationsQuery.data.map(real => JSON.stringify(real)) : []
+
     return (
         <div>
             <ApiStateWrapper
@@ -63,8 +82,8 @@ export function settings({ moduleContext, workbenchServices }: ModuleFCProps<sta
                     text="Realizations"
                 >
                     <Select
-                        options={stringToOptions(allRealizations as any || [])}
-                        value={realizations ? realizations : [allRealizations[0]]}
+                        options={stringToOptions(allRealizations as string[] || [])}
+                        value={realizations ? realizations : [allRealizations[1]]}
                         onChange={(reals) => setRealizations(reals)}
                         filter={true}
                         size={5}

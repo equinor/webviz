@@ -3,23 +3,29 @@ import React from "react";
 import { ModuleFCProps } from "@framework/Module";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { useSubscribedValue } from "@framework/WorkbenchServices";
+
 import { useGridIntersection, useStatisticalGridIntersection } from "./queryHooks";
 import state from "./state";
-
-
 import PlotlyGridIntersection from "./plotlyGridIntersection";
 
 
 //-----------------------------------------------------------------------------------------------------------
 export function view({ moduleContext, workbenchServices }: ModuleFCProps<state>) {
+    // Viewport size
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);
     const wrapperDivSize = useElementSize(wrapperDivRef);
+
+    // From Workbench
     const selectedEnsembles = useSubscribedValue("navigator.ensembles", workbenchServices);
+    const selectedEnsemble = selectedEnsembles?.[0] ?? { caseUuid: null, ensembleName: null };
+
+    // State
     const gridName = moduleContext.useStoreValue("gridName");
     const parameterName = moduleContext.useStoreValue("parameterName");
     const realizations = moduleContext.useStoreValue("realizations");
     const useStatistics = moduleContext.useStoreValue("useStatistics");
-    const selectedEnsemble = selectedEnsembles && selectedEnsembles.length > 0 ? selectedEnsembles[0] : { caseUuid: null, ensembleName: null };
+
+    // Queries
     const gridIntersectionQuery = useGridIntersection(selectedEnsemble.caseUuid, selectedEnsemble.ensembleName, gridName, parameterName, realizations ? realizations[0] : "0", useStatistics);
     const statisticalGridIntersectionQuery = useStatisticalGridIntersection(selectedEnsemble.caseUuid, selectedEnsemble.ensembleName, gridName, parameterName, realizations, useStatistics);
 

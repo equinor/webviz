@@ -5,7 +5,7 @@ import { SubsurfaceViewer } from "@webviz/subsurface-components";
 import { useSubscribedValue } from "@framework/WorkbenchServices";
 import { useGridGeometry, useGridParameter, useStatisticalGridParameter } from "./queryHooks";
 import state from "./state";
-import { toArrayBuffer } from "./vtkUtils";
+import { toArrayBuffer } from "@shared-utils/vtkUtils";
 
 
 
@@ -13,16 +13,21 @@ import { toArrayBuffer } from "./vtkUtils";
 
 //-----------------------------------------------------------------------------------------------------------
 export function view({ moduleContext, workbenchServices }: ModuleFCProps<state>) {
+    // From Workbench
     const selectedEnsembles = useSubscribedValue("navigator.ensembles", workbenchServices);
+    const selectedEnsemble = selectedEnsembles?.[0] ?? { caseUuid: null, ensembleName: null };
+
+    // State
     const gridName = moduleContext.useStoreValue("gridName");
     const parameterName = moduleContext.useStoreValue("parameterName");
     const realizations = moduleContext.useStoreValue("realizations");
     const useStatistics = moduleContext.useStoreValue("useStatistics");
-    const selectedEnsemble = selectedEnsembles && selectedEnsembles.length > 0 ? selectedEnsembles[0] : { caseUuid: null, ensembleName: null };
 
+    //Queries
     const gridGeometryQuery = useGridGeometry(selectedEnsemble.caseUuid, selectedEnsemble.ensembleName, gridName, realizations ? realizations[0] : "0");
     const gridParameterQuery = useGridParameter(selectedEnsemble.caseUuid, selectedEnsemble.ensembleName, gridName, parameterName, realizations ? realizations[0] : "0", useStatistics);
     const statisticalGridParameterQuery = useStatisticalGridParameter(selectedEnsemble.caseUuid, selectedEnsemble.ensembleName, gridName, parameterName, realizations, useStatistics);
+
 
     const bounds = gridGeometryQuery?.data ? [gridGeometryQuery.data.xmin, gridGeometryQuery.data.ymin, -gridGeometryQuery.data.zmax, gridGeometryQuery.data.xmax, gridGeometryQuery.data.ymax, -gridGeometryQuery.data.zmin] : [0, 0, 0, 100, 100, 100];
 
@@ -40,7 +45,7 @@ export function view({ moduleContext, workbenchServices }: ModuleFCProps<state>)
     }
     const points: Float32Array = new Float32Array(pointsArray as number[])
     const polys: Uint32Array = new Uint32Array(polysArray as number[])
-    console.log("polys", Array.from(polys))
+
     return (
         <div className="relative w-full h-full flex flex-col">
 
