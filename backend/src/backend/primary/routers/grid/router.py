@@ -159,6 +159,7 @@ async def grid_parameter_intersection(
     response = await proxy_to_user_session(updated_request, authenticated_user)
     return response
 
+
 @router.get("/statistical_grid_parameter_intersection")
 async def statistical_grid_parameter_intersection(
     request: Request,
@@ -197,6 +198,7 @@ async def statistical_grid_parameter_intersection(
     response = await proxy_to_user_session(updated_request, authenticated_user)
     return response
 
+
 @router.get("/statistical_grid_parameter")
 async def statistical_grid_parameter(
     request: Request,
@@ -216,7 +218,6 @@ async def statistical_grid_parameter(
         "parameter_name": parameter_name,
         "realizations": [int(realization) for realization in realizations],
     }
-    print("QUERY PARAMETERS", query_params)
     # Add query parameters to the request URL
     # request.url = request.url.include_query_params(**query_params)
     updated_request = Request(

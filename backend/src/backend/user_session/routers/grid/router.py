@@ -35,6 +35,7 @@ router = APIRouter()
 LOGGER = logging.getLogger(__name__)
 process = psutil.Process()
 
+
 @router.get(
     "/grid_geometry", response_model=GridGeometry
 )  # stating response_model here instead of return type apparently disables pydantic validation of the response (https://stackoverflow.com/a/65715205)
@@ -118,6 +119,8 @@ async def grid_parameter(
         xtgeo_parameter, cell_ids=grid_polydata.original_cell_ids
     )
     scalar_values[scalar_values == -999.0] = np.nan
+    scalar_values[scalar_values < np.nanmin(scalar_values)] = np.nanmin(scalar_values)
+    scalar_values[scalar_values > np.nanmax(scalar_values)] = np.nanmax(scalar_values)
     encoded_values = B64EncodedNumpyArray(**b64_encode_numpy(scalar_values))
     # return Response(orjson.dumps(encoded_values.__dict__), media_type="application/json")
     return Response(orjson.dumps(scalar_values.tolist()), media_type="application/json")
@@ -147,9 +150,13 @@ async def grid_parameter(
         grid_name=grid_name,
         realization=realization,
     )
-    print(f"DOWNLOADED/READ CACHE: grid_geometry for {grid_name}, realization: {realization}: {round(timer.lap_s(),2)}s", flush=True)
+    grid_geometry.activate_all()
+    print(
+        f"DOWNLOADED/READ CACHE: grid_geometry for {grid_name}, realization: {realization}: {round(timer.lap_s(),2)}s",
+        flush=True,
+    )
     # grid_polydata = get_grid_polydata(grid_geometry=grid_geometry)
-    
+
     xtgeo_parameter = get_grid_parameter(
         authenticated_user=authenticated_user,
         case_uuid=case_uuid,
@@ -158,26 +165,36 @@ async def grid_parameter(
         parameter_name=parameter_name,
         realization=realization,
     )
-    print(f"DOWNLOADED/READ CACHE: grid_parameter for {parameter_name}, realization: {realization}: {round(timer.lap_s(),2)}s", flush=True)
+    print(
+        f"DOWNLOADED/READ CACHE: grid_parameter for {parameter_name}, realization: {realization}: {round(timer.lap_s(),2)}s",
+        flush=True,
+    )
     xyz_arr = tuple(
         tuple(point)
         for point in [
-            [457072.081, 5935578.079, 0],
-            [457977.354, 5935308.085, -1725.116],
-            [458739.689, 5935053.973, -1717.389],
-            [463109.377, 5931933.392, -1665.353],
-            [466204.051, 5931049.199, -1709.354],
+            [463156.911, 5929542.294, -49.0],
+            [463564.402, 5931057.803, -1293.4185],
+            [463637.925, 5931184.235, -1536.9384],
+            [463690.658, 5931278.837, -1616.4998],
+            [463910.452, 5931688.122, -1630.5153],
+            [464465.876, 5932767.761, -1656.9874],
+            [464765.876, 5934767.761, -1656.9874],
         ]
     )
 
     coords, triangles, original_cell_indices_np, polyline = generate_grid_intersection(
         grid_geometry, xyz_arr
     )
-    print(f"CALCULATED INTERSECTION: realization: {realization}: {round(timer.lap_s(),2)}s", flush=True)
+    print(
+        f"CALCULATED INTERSECTION: realization: {realization}: {round(timer.lap_s(),2)}s",
+        flush=True,
+    )
     values = get_scalar_values(xtgeo_parameter, cell_ids=original_cell_indices_np)
-    print(f"READ SCALAR VALUES: realization: {realization}: {round(timer.lap_s(),2)}s", flush=True)
-    print(np.nanmin(values), np.nanmax(values), flush=True)
-    print(np.min(values), np.max(values), flush=True)
+    print(
+        f"READ SCALAR VALUES: realization: {realization}: {round(timer.lap_s(),2)}s",
+        flush=True,
+    )
+
     values[values < np.nanmin(values)] = np.nanmin(values)
     values[values > np.nanmax(values)] = np.nanmax(values)
     # values[values > 0.4] = 0.4
@@ -196,8 +213,13 @@ async def grid_parameter(
 
     polyline_x = polyline_distances
     polyline_y = polyline_coords[:, 2]
-    image_data = visualize_with_scalars(coords, triangles, values, polyline)
-    print(f"MATPLOTLIB IMAGE: realization: {realization}: {round(timer.lap_s(),2)}s", flush=True)
+    image_data = visualize_with_scalars(
+        coords, triangles, values, polyline, "55/33-A-4"
+    )
+    print(
+        f"MATPLOTLIB IMAGE: realization: {realization}: {round(timer.lap_s(),2)}s",
+        flush=True,
+    )
     y = coords[:, 1]
     x_min, x_max = np.min(coords[:, 0]), np.max(coords[:, 0])
     y_min, y_max = np.min(y), np.max(y)
@@ -230,10 +252,12 @@ async def grid_parameter(
     timer = PerfTimer()
     print("#" * 80, flush=True)
     print("ENTERING STATISTICAL GRID PARAMETER INTERSECTION", flush=True)
-    print(f"Memory usage: {psutil.Process(os.getpid()).memory_info().rss / 1024 ** 2} MB", flush=True)
+    print(
+        f"Memory usage: {psutil.Process(os.getpid()).memory_info().rss / 1024 ** 2} MB",
+        flush=True,
+    )
     print("-" * 80, flush=True)
 
-    
     case_uuid = request.query_params.get("case_uuid")
     ensemble_name = request.query_params.get("ensemble_name")
     grid_name = request.query_params.get("grid_name")
@@ -246,7 +270,7 @@ async def grid_parameter(
     # type: ignore
     if not grid_access.grids_have_equal_nxnynz(grid_name=grid_name):
         raise ValueError("Grids must have equal nx, ny, nz")
-    
+
     print("GETTING GRID GEOMETRY", flush=True)
     grid_geometry = get_grid_geometry(
         authenticated_user=authenticated_user,
@@ -255,12 +279,20 @@ async def grid_parameter(
         grid_name=grid_name,
         realization=0,
     )
-    print(f"DOWNLOADED/READ CACHE: grid_geometry for {grid_name}, realization: {0}: {round(timer.lap_s(),2)}s", flush=True)
+    grid_geometry.activate_all()
+    print(
+        f"DOWNLOADED/READ CACHE: grid_geometry for {grid_name}, realization: {0}: {round(timer.lap_s(),2)}s",
+        flush=True,
+    )
 
     print("-" * 80, flush=True)
     print("GETTING GRID PARAMETERS", flush=True)
-    xtgeo_parameters = [
-        get_grid_parameter(
+
+    ### Using ThreadPoolExecutor to parallelize the download of the grid parameters
+    from concurrent.futures import ThreadPoolExecutor
+
+    def worker(real):
+        return get_grid_parameter(
             authenticated_user=authenticated_user,
             case_uuid=case_uuid,
             ensemble_name=ensemble_name,
@@ -268,18 +300,24 @@ async def grid_parameter(
             parameter_name=parameter_name,
             realization=real,
         )
-        for real in realizations
-    ]
-    print(f"DOWNLOADED/READ CACHE: grid_parameters for {parameter_name}, realizations: {realizations}: {round(timer.lap_s(),2)}s", flush=True)
-    
+
+    with ThreadPoolExecutor() as executor:
+        xtgeo_parameters = list(executor.map(worker, realizations))
+    print(
+        f"DOWNLOADED/READ CACHE: grid_parameters for {parameter_name}, realizations: {realizations}: {round(timer.lap_s(),2)}s",
+        flush=True,
+    )
+
     xyz_arr = tuple(
         tuple(point)
         for point in [
-            [457072.081, 5935578.079, 0],
-            [457977.354, 5935308.085, -1725.116],
-            [458739.689, 5935053.973, -1717.389],
-            [463109.377, 5931933.392, -1665.353],
-            [466204.051, 5931049.199, -1709.354],
+            [463156.911, 5929542.294, -49.0],
+            [463564.402, 5931057.803, -1293.4185],
+            [463637.925, 5931184.235, -1536.9384],
+            [463690.658, 5931278.837, -1616.4998],
+            [463910.452, 5931688.122, -1630.5153],
+            [464465.876, 5932767.761, -1656.9874],
+            [464765.876, 5934767.761, -1656.9874],
         ]
     )
     print("-" * 80, flush=True)
@@ -287,7 +325,10 @@ async def grid_parameter(
     coords, triangles, original_cell_indices_np, polyline = generate_grid_intersection(
         grid_geometry, xyz_arr
     )
-    print(f"CALCULATED INTERSECTION: realization: {0}: {round(timer.lap_s(),2)}s", flush=True)
+    print(
+        f"CALCULATED INTERSECTION: realization: {0}: {round(timer.lap_s(),2)}s",
+        flush=True,
+    )
     print("-" * 80, flush=True)
     print("GETTING SCALAR VALUES", flush=True)
     all_scalar_values = [
@@ -296,14 +337,15 @@ async def grid_parameter(
     ]
 
     print(np.nanmin(all_scalar_values), np.nanmax(all_scalar_values), flush=True)
-    values = np.nanmean(
-        [scalar_values for scalar_values in all_scalar_values], axis=0
-    )
+    values = np.nanmean([scalar_values for scalar_values in all_scalar_values], axis=0)
 
     values[values < np.nanmin(values)] = np.nanmin(values)
     values[values > np.nanmax(values)] = np.nanmax(values)
     values[values == -999.0] = np.nan
-    print(f"DOWNLOADED/READ CACHE: scalar_values for {parameter_name}, realizations: {realizations}: {round(timer.lap_s(),2)}s", flush=True)
+    print(
+        f"DOWNLOADED/READ CACHE: scalar_values for {parameter_name}, realizations: {realizations}: {round(timer.lap_s(),2)}s",
+        flush=True,
+    )
     polyline_coords = np.array(
         [polyline.GetPoint(i)[:3] for i in range(polyline.GetNumberOfPoints())]
     )
@@ -319,8 +361,13 @@ async def grid_parameter(
     polyline_y = polyline_coords[:, 2]
     print("-" * 80, flush=True)
     print("GENERATE MATPLOTLIB IMAGE", flush=True)
-    image_data = visualize_with_scalars(coords, triangles, values, polyline)
-    print(f"GENERATED MATPLOTLIB IMAGE: {parameter_name}, realization: {0}: {round(timer.lap_s(),2)}s", flush=True)
+    image_data = visualize_with_scalars(
+        coords, triangles, values, polyline, "55/33-A-4"
+    )
+    print(
+        f"GENERATED MATPLOTLIB IMAGE: {parameter_name}, realization: {0}: {round(timer.lap_s(),2)}s",
+        flush=True,
+    )
     y = coords[:, 1]
     x_min, x_max = np.min(coords[:, 0]), np.max(coords[:, 0])
     y_min, y_max = np.min(y), np.max(y)
@@ -335,13 +382,14 @@ async def grid_parameter(
         y_min=float(y_min),
         y_max=float(y_max),
     )
-    
+
     print("-" * 80, flush=True)
     print("EXITING STATISTICAL GRID PARAMETER INTERSECTION", flush=True)
-    print(f"Memory usage: {psutil.Process(os.getpid()).memory_info().rss / 1024 ** 2} MB", flush=True)
+    print(
+        f"Memory usage: {psutil.Process(os.getpid()).memory_info().rss / 1024 ** 2} MB",
+        flush=True,
+    )
     print("#" * 80, flush=True)
-    
-
 
     return Response(
         orjson.dumps(intersection_data.__dict__),
@@ -403,9 +451,14 @@ async def statistical_grid_parameter(
         [scalar_values for scalar_values in all_scalar_values], axis=0
     )
     mean_scalar_values[mean_scalar_values == -999.0] = np.nan
-
+    mean_scalar_values[mean_scalar_values < np.nanmin(mean_scalar_values)] = np.nanmin(
+        mean_scalar_values
+    )
+    mean_scalar_values[mean_scalar_values > np.nanmax(mean_scalar_values)] = np.nanmax(
+        mean_scalar_values
+    )
     # using orjson instead of slow FastAPI default encoder (json.dumps)
-    encoded_values = B64EncodedNumpyArray(**b64_encode_numpy(mean_scalar_values))
+    # encoded_values = B64EncodedNumpyArray(**b64_encode_numpy(mean_scalar_values))
 
     # return Response(orjson.dumps(encoded_values.__dict__), media_type="application/json")
     return Response(

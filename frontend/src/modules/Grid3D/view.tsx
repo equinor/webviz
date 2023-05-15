@@ -1,35 +1,18 @@
-import React, { useState } from "react";
+import React from "react";
 
 import { ModuleFCProps } from "@framework/Module";
-import { useElementSize } from "@lib/hooks/useElementSize";
 import { SubsurfaceViewer } from "@webviz/subsurface-components";
 import { useSubscribedValue } from "@framework/WorkbenchServices";
-import { useGridGeometry, useGridParameter, useStatisticalGridParameter, useRealizations } from "./queryHooks";
+import { useGridGeometry, useGridParameter, useStatisticalGridParameter } from "./queryHooks";
 import state from "./state";
-import { useParameterQuery } from "@modules/TimeSeriesParameterDistribution/queryHooks";
 import { toArrayBuffer } from "./vtkUtils";
-import { type } from "os";
 
 
-export type B64EncodedNumpyArray = {
-    bvals: string;
-    dtype: string;
-    shape: Array<number>;
-};
 
 
-const b64toArray = (encodedArray: B64EncodedNumpyArray): number[] => {
-    const bvals = encodedArray.bvals
-    const dtype = encodedArray.dtype
-    const shape = encodedArray.shape
-    const arrayBuffer = toArrayBuffer(bvals)
-    console.log(shape)
-    const array = new Float32Array(arrayBuffer)
-    return Array.from(array)
-}
+
 //-----------------------------------------------------------------------------------------------------------
 export function view({ moduleContext, workbenchServices }: ModuleFCProps<state>) {
-    const wrapperDivRef = React.useRef<HTMLDivElement>(null);
     const selectedEnsembles = useSubscribedValue("navigator.ensembles", workbenchServices);
     const gridName = moduleContext.useStoreValue("gridName");
     const parameterName = moduleContext.useStoreValue("parameterName");
@@ -64,7 +47,33 @@ export function view({ moduleContext, workbenchServices }: ModuleFCProps<state>)
             <SubsurfaceViewer
                 id="deckgl"
                 bounds={[bounds[0], bounds[1], bounds[3], bounds[4]]}
-
+                colorTables={[
+                    {
+                        "name": "viridis (Seq)",
+                        "colors": [
+                            [0.0, 68, 1, 84],
+                            [0.05263157894736842, 71, 20, 102],
+                            [0.10526315789473684, 71, 37, 117],
+                            [0.15789473684210525, 69, 54, 129],
+                            [0.21052631578947367, 63, 69, 135],
+                            [0.2631578947368421, 57, 85, 139],
+                            [0.3157894736842105, 50, 98, 141],
+                            [0.3684210526315789, 44, 112, 142],
+                            [0.42105263157894735, 39, 124, 142],
+                            [0.47368421052631576, 34, 137, 141],
+                            [0.5263157894736842, 31, 150, 139],
+                            [0.5789473684210527, 31, 163, 134],
+                            [0.631578947368421, 41, 175, 127],
+                            [0.6842105263157894, 61, 187, 116],
+                            [0.7368421052631579, 85, 198, 102],
+                            [0.7894736842105263, 116, 208, 84],
+                            [0.8421052631578947, 149, 215, 63],
+                            [0.894736842105263, 186, 222, 39],
+                            [0.9473684210526315, 220, 226, 24],
+                            [1.0, 253, 231, 36],
+                        ],
+                        "discrete": false,
+                    }]}
                 layers={[
                     {
                         "@@type": "AxesLayer",
@@ -78,7 +87,7 @@ export function view({ moduleContext, workbenchServices }: ModuleFCProps<state>)
                         pointsData: Array.from(points),
                         polysData: Array.from(polys),
                         propertiesData: propertiesArray,
-                        colorMapName: "Physics",
+                        colorMapName: "viridis (Seq)",
                     },
                 ]}
                 views={{

@@ -18,7 +18,7 @@ const PlotlyGridIntersection: React.FC<PlotlyGridIntersectionProps> = ({ data, w
 
     const tracesDataArr: TraceData[] = [{
         x: data.polyline_x,
-        y: data.polyline_y.map((y) => -y),
+        y: data.polyline_y,
         type: "scatter",
         mode: "lines",
         line: { "color": "black", "width": 2 },
@@ -27,6 +27,7 @@ const PlotlyGridIntersection: React.FC<PlotlyGridIntersectionProps> = ({ data, w
     const layout: Partial<Layout> = {
         width: width,
         height: height,
+        title: "55/33-A-4",
         xaxis: {
             title: "Distance along well [m]",
             range: [data.x_min, data.x_max],
@@ -47,6 +48,7 @@ const PlotlyGridIntersection: React.FC<PlotlyGridIntersectionProps> = ({ data, w
         },
         images: [
             {
+
                 x: data.x_min,
                 y: data.y_max,
                 sizex: data.x_max - data.x_min,

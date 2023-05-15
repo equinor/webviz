@@ -19,6 +19,7 @@ from .sumo_queries import (
 
 LOGGER = logging.getLogger(__name__)
 
+
 class GridAccess:
     def __init__(self, access_token: str, case_uuid: str, iteration_name: str):
         self._sumo_client: SumoClient = create_sumo_client_instance(access_token)
@@ -46,9 +47,11 @@ class GridAccess:
             grid_name,
         )
         stream = self._sumo_client.get(f"/objects('{geometry_blob_id}')/blob")
-        print(f"{grid_name} {realization} {geometry_blob_id} in {round(timer.lap_s(),2)}s")
+        print(
+            f"{grid_name} {realization} {geometry_blob_id} in {round(timer.lap_s(),2)}s"
+        )
         grid_geom = xtgeo.grid_from_file(BytesIO(stream))
-        grid_geom.activate_all()
+
         return grid_geom
 
     def get_grid_parameter(
@@ -64,7 +67,9 @@ class GridAccess:
             grid_parameter_name,
         )
         stream = self._sumo_client.get(f"/objects('{parameter_blob_id}')/blob")
-        print(f"{grid_name} {grid_parameter_name} {realization} {parameter_blob_id} in {round(timer.lap_s(),2)}s")
+        print(
+            f"{grid_name} {grid_parameter_name} {realization} {parameter_blob_id} in {round(timer.lap_s(),2)}s"
+        )
         grid_param = xtgeo.gridproperty_from_file(BytesIO(stream))
         return grid_param
 

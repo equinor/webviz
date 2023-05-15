@@ -1,7 +1,6 @@
 import React from "react";
 
 import { ModuleFCProps } from "@framework/Module";
-import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
 import { useSubscribedValue } from "@framework/WorkbenchServices";
 import { ApiStateWrapper } from "@lib/components/ApiStateWrapper";
 import { useGridModelNames, useGridParameterNames, useRealizations } from "./queryHooks";
@@ -24,7 +23,7 @@ export function settings({ moduleContext, workbenchServices }: ModuleFCProps<sta
     const gridNamesQuery = useGridModelNames(selectedEnsemble.caseUuid, selectedEnsemble.ensembleName);
     const parameterNamesQuery = useGridParameterNames(selectedEnsemble.caseUuid, selectedEnsemble.ensembleName, gridName);
     const realizationsQuery = useRealizations(selectedEnsemble.caseUuid, selectedEnsemble.ensembleName);
-    if (!gridNamesQuery.data) { return (<div>no grid names</div>) }
+    if (!gridNamesQuery.data) { return (<div>Select case: upscaled_grids_realistic_no_unc</div>) }
     const parameterNames = parameterNamesQuery.data ? parameterNamesQuery.data : []
     const allRealizations: string[] = realizationsQuery.data ? realizationsQuery.data.map(real => JSON.stringify(real)) : []
     return (
