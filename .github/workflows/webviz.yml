@@ -85,18 +85,18 @@ jobs:
           poetry lock --check --no-update  # Check lock file is consistent with pyproject.toml
           poetry install --with dev
 
-      # - name: 🕵️ Check code style & linting
-      #   working-directory: ./backend
-      #   run: |
-      #     black --check src/ tests/
-      #     pylint src/ tests/
-      #     bandit --recursive src/
-      #     mypy src/ tests/
+      - name: 🕵️ Check code style & linting
+        working-directory: ./backend
+        run: |
+          black --check src/ tests/
+          pylint src/ tests/
+          bandit --recursive src/
+          mypy src/ tests/
 
-      # - name: 🤖 Run tests
-      #   working-directory: ./backend
-      #   run: |
-      #     pytest ./tests
+      - name: 🤖 Run tests
+        working-directory: ./backend
+        run: |
+          pytest ./tests
 
   build_docker_images:
     runs-on: ubuntu-latest
