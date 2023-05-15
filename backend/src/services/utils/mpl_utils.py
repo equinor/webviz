@@ -30,9 +30,7 @@ def visualize_with_scalars(
     # Plot the triangulation with scalar values
     tpc = ax.tripcolor(triang, scalars, shading="flat", cmap=plt.cm.viridis)
     # Get the polyline coordinates
-    polyline_coords = np.array(
-        [polyline.GetPoint(i)[:3] for i in range(polyline.GetNumberOfPoints())]
-    )
+    polyline_coords = np.array([polyline.GetPoint(i)[:3] for i in range(polyline.GetNumberOfPoints())])
 
     # Calculate the cumulative distance along the polyline
     polyline_distances = np.zeros(polyline_coords.shape[0])
