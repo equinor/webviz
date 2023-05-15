@@ -31,9 +31,7 @@ class EnforceLoggedInMiddleware(BaseHTTPMiddleware):
         self._unprotected_paths = unprotected_paths or []
         self._paths_redirected_to_login = paths_redirected_to_login or []
 
-    async def dispatch(
-        self, request: Request, call_next: RequestResponseEndpoint
-    ) -> Response:
+    async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
         print("##################################### ensure_logged_in")
 
         path_to_check = request.url.path
@@ -65,12 +63,8 @@ class EnforceLoggedInMiddleware(BaseHTTPMiddleware):
             if not is_logged_in:
                 if path_to_check in self._paths_redirected_to_login:
                     print("##### LOGGING IN USING REDIRECT")
-                    target_url_b64 = base64.urlsafe_b64encode(
-                        str(request.url).encode()
-                    ).decode()
-                    return RedirectResponse(
-                        f"{root_path}/login?redirect_url_after_login={target_url_b64}"
-                    )
+                    target_url_b64 = base64.urlsafe_b64encode(str(request.url).encode()).decode()
+                    return RedirectResponse(f"{root_path}/login?redirect_url_after_login={target_url_b64}")
                 return PlainTextResponse("Not authorized yet, must log in", 401)
 
         response = await call_next(request)

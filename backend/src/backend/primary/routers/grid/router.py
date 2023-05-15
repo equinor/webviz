@@ -22,9 +22,7 @@ def get_grid_model_names(
     """
     Get a list of grid model names
     """
-    access = GridAccess(
-        authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
-    )
+    access = GridAccess(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
     return access.grid_model_names()
 
 
@@ -38,9 +36,7 @@ def get_parameter_names(
     """
     Get a list of grid parameter names
     """
-    access = GridAccess(
-        authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
-    )
+    access = GridAccess(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
     return access.static_parameter_names(grid_name)
 
 
@@ -69,9 +65,7 @@ async def grid_geometry(
             "type": "http",
             "method": request.method,
             "path": request.url.path,
-            "query_string": request.url.include_query_params(
-                **query_params
-            ).query.encode("utf-8"),
+            "query_string": request.url.include_query_params(**query_params).query.encode("utf-8"),
             "headers": request.headers.raw,
         },
         receive=request._receive,
@@ -107,9 +101,7 @@ async def grid_parameter(
             "type": "http",
             "method": request.method,
             "path": request.url.path,
-            "query_string": request.url.include_query_params(
-                **query_params
-            ).query.encode("utf-8"),
+            "query_string": request.url.include_query_params(**query_params).query.encode("utf-8"),
             "headers": request.headers.raw,
         },
         receive=request._receive,
@@ -145,9 +137,7 @@ async def grid_parameter_intersection(
             "type": "http",
             "method": request.method,
             "path": request.url.path,
-            "query_string": request.url.include_query_params(
-                **query_params
-            ).query.encode("utf-8"),
+            "query_string": request.url.include_query_params(**query_params).query.encode("utf-8"),
             "headers": request.headers.raw,
         },
         receive=request._receive,
@@ -183,9 +173,7 @@ async def statistical_grid_parameter_intersection(
             "type": "http",
             "method": request.method,
             "path": request.url.path,
-            "query_string": request.url.include_query_params(
-                **query_params
-            ).query.encode("utf-8"),
+            "query_string": request.url.include_query_params(**query_params).query.encode("utf-8"),
             "headers": request.headers.raw,
         },
         receive=request._receive,
@@ -220,9 +208,7 @@ async def statistical_grid_parameter(
             "type": "http",
             "method": request.method,
             "path": request.url.path,
-            "query_string": request.url.include_query_params(
-                **query_params
-            ).query.encode("utf-8"),
+            "query_string": request.url.include_query_params(**query_params).query.encode("utf-8"),
             "headers": request.headers.raw,
         },
         receive=request._receive,

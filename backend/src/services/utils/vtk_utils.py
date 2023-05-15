@@ -108,15 +108,11 @@ def get_surface(
     es_grid = xtgeo_grid_to_vtk_explicit_structured_grid(xtgeo_grid)
     polydata = _calc_grid_surface(es_grid)
 
-    original_cell_indices_np = vtk_to_numpy(
-        polydata.GetCellData().GetAbstractArray("vtkOriginalCellIds")
-    )
+    original_cell_indices_np = vtk_to_numpy(polydata.GetCellData().GetAbstractArray("vtkOriginalCellIds"))
     return VtkGridSurface(polydata=polydata, original_cell_ids=original_cell_indices_np)
 
 
-def get_scalar_values(
-    xtgeo_grid_property: xtgeo.GridProperty, cell_ids: Optional[np.ndarray] = None
-) -> np.ndarray:
+def get_scalar_values(xtgeo_grid_property: xtgeo.GridProperty, cell_ids: Optional[np.ndarray] = None) -> np.ndarray:
     fill_value = 0.0 if not xtgeo_grid_property.isdiscrete else -1
     raw_scalar_np = xtgeo_grid_property.values.ravel(order="F")
     raw_scalar_np.filled(fill_value)
@@ -221,9 +217,7 @@ def cut_along_polyline(
     return comb_polydata
 
 
-def flatten_sliced_grid(
-    sliced_grid: vtkPolyData, polyline, original_cell_ids
-) -> vtkPolyData:
+def flatten_sliced_grid(sliced_grid: vtkPolyData, polyline, original_cell_ids) -> vtkPolyData:
     """Flatten the sliced grid to a 2D grid."""
     points = sliced_grid.GetPoints()
     num_points = points.GetNumberOfPoints()
@@ -273,9 +267,7 @@ def get_triangles(poly_data) -> List[List[int]]:
     for i in range(num_cells):
         cell = poly_data.GetCell(i)
         if cell.GetNumberOfPoints() == 3:
-            triangles.append(
-                [cell.GetPointId(0), cell.GetPointId(1), cell.GetPointId(2)]
-            )
+            triangles.append([cell.GetPointId(0), cell.GetPointId(1), cell.GetPointId(2)])
     return triangles
 
 
