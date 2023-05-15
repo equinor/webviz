@@ -34,8 +34,7 @@ export function view({ moduleContext, workbenchServices }: ModuleFCProps<state>)
     else if (useStatistics && statisticalGridIntersectionQuery?.data) {
         intersectionData = statisticalGridIntersectionQuery.data
     }
-    else { return <div>no data</div> }
-    console.log(intersectionData)
+    else { return <div>Fetching data...</div> }
     return (
         <div className="relative w-full h-full flex flex-col" ref={wrapperDivRef}>
             <PlotlyGridIntersection data={intersectionData} width={wrapperDivSize.width}
