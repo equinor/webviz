@@ -9,7 +9,7 @@ class B64EncodedNumpyArray(BaseModel):
     shape: List[int]
 
 
-class GridGeometry(BaseModel):
+class GridSurface(BaseModel):
     polys: dict
     points: dict
     xmin: float

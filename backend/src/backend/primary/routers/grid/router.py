@@ -8,7 +8,7 @@ from src.backend.auth.auth_helper import AuthHelper
 from src.backend.primary.user_session_proxy import proxy_to_user_session
 
 from src.services.sumo_access.grid_access import GridAccess
-from .schemas import GridGeometry, B64EncodedNumpyArray, GridIntersection
+from .schemas import GridSurface, B64EncodedNumpyArray, GridIntersection
 
 router = APIRouter()
 
@@ -41,15 +41,15 @@ def get_parameter_names(
 
 
 # Primary backend
-@router.get("/grid_geometry")
-async def grid_geometry(
+@router.get("/grid_surface")
+async def grid_surface(
     request: Request,
     case_uuid: str = Query(description="Sumo case uuid"),
     ensemble_name: str = Query(description="Ensemble name"),
     grid_name: str = Query(description="Grid name"),
     realization: str = Query(description="Realization"),
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
-) -> GridGeometry:
+) -> GridSurface:
     """Get a grid"""
 
     query_params = {

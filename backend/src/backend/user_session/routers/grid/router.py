@@ -1,4 +1,3 @@
-# type: ignore
 # for now
 from functools import cache
 from typing import List, Tuple
@@ -10,10 +9,11 @@ import orjson
 import xtgeo
 from vtkmodules.util.numpy_support import vtk_to_numpy
 from fastapi import APIRouter, Depends, Request, Response
+from fastapi.responses import ORJSONResponse
 from src.backend.auth.auth_helper import AuthenticatedUser, AuthHelper
 from src.backend.primary.routers.grid.schemas import (
     B64EncodedNumpyArray,
-    GridGeometry,
+    GridSurface,
     GridIntersection,
 )
 from src.services.sumo_access.grid_access import GridAccess
@@ -34,14 +34,10 @@ from src.services.utils.perf_timer import PerfTimer
 
 router = APIRouter()
 LOGGER = logging.getLogger(__name__)
-process = psutil.Process()
 
 
-@router.get(
-    "/grid_geometry", response_model=GridGeometry
-)  # stating response_model here instead of return type apparently disables pydantic validation of the response (https://stackoverflow.com/a/65715205)
-# type: ignore
-async def grid(
+@router.get("/grid_surface", response_model=GridSurface)
+async def grid_surface(
     request: Request,
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
 ):
@@ -51,28 +47,34 @@ async def grid(
     grid_name = request.query_params.get("grid_name")
     realization = request.query_params.get("realization")
 
-    print("Sending data to primary", flush=True)
-    grid_geometry = get_grid_geometry(
+    # Get Xtgeo grid
+    xtgeo_grid = get_grid_geometry(
         authenticated_user=authenticated_user,
         case_uuid=case_uuid,
         ensemble_name=ensemble_name,
         grid_name=grid_name,
         realization=realization,
     )
-    grid_geometrics = grid_geometry.get_geometrics(allcells=True, return_dict=True)
-    grid_polydata = get_grid_polydata(grid_geometry=grid_geometry)
 
-    points_np = vtk_to_numpy(grid_polydata.polydata.GetPoints().GetData()).ravel().astype(np.float32)
-    polys_np = vtk_to_numpy(grid_polydata.polydata.GetPolys().GetData()).astype(np.int64)
+    # Get grid information from xtgeo (xmin, ymin, etc...)
+    grid_geometrics = xtgeo_grid.get_geometrics(allcells=True, return_dict=True)
+
+    # Get grid surface (visible cells)
+    grid_surface = get_grid_surface(grid_geometry=xtgeo_grid)
+
+    # Extract points and polygons from surface
+    points_np = vtk_to_numpy(grid_surface.polydata.GetPoints().GetData()).ravel().astype(np.float32)
+    polys_np = vtk_to_numpy(grid_surface.polydata.GetPolys().GetData()).astype(np.int64)
+
+    # Reduce precision of points to 2 decimals
     points_np = np.around(points_np, decimals=2)
-    # grid_geometry = GridGeometry(points=points_np.tolist(), polys=polys_np.tolist(), **grid_geometrics)
 
-    grid_geometry = GridGeometry(
+    grid_surface_payload = GridSurface(
         points=b64_encode_numpy(points_np),
         polys=b64_encode_numpy(polys_np),
         **grid_geometrics,
     )
-    return Response(orjson.dumps(grid_geometry.__dict__), media_type="application/json")
+    return ORJSONResponse(grid_surface_payload.dict())
 
 
 @router.get(
@@ -90,16 +92,18 @@ async def grid_parameter(
     parameter_name = request.query_params.get("parameter_name")
     realization = request.query_params.get("realization")
 
-    print("Sending data to primary", flush=True)
-    grid_geometry = get_grid_geometry(
+    # Get Xtgeo grid
+    xtgeo_grid = get_grid_geometry(
         authenticated_user=authenticated_user,
         case_uuid=case_uuid,
         ensemble_name=ensemble_name,
         grid_name=grid_name,
         realization=realization,
     )
-    grid_polydata = get_grid_polydata(grid_geometry=grid_geometry)
+    # Get grid surface (visible cells)
+    grid_polydata = get_grid_surface(grid_geometry=xtgeo_grid)
 
+    # Get Xtgeo parameter
     xtgeo_parameter = get_grid_parameter(
         authenticated_user=authenticated_user,
         case_uuid=case_uuid,
@@ -109,14 +113,15 @@ async def grid_parameter(
         realization=realization,
     )
 
-    # using orjson instead of slow FastAPI default encoder (json.dumps)
+    # Get scalar values from parameter
     scalar_values = get_scalar_values(xtgeo_parameter, cell_ids=grid_polydata.original_cell_ids)
+
+    # Handle xtgeo undefined values and truncate
     scalar_values[scalar_values == -999.0] = np.nan
     scalar_values[scalar_values < np.nanmin(scalar_values)] = np.nanmin(scalar_values)
     scalar_values[scalar_values > np.nanmax(scalar_values)] = np.nanmax(scalar_values)
-    encoded_values = B64EncodedNumpyArray(**b64_encode_numpy(scalar_values))
-    # return Response(orjson.dumps(encoded_values.__dict__), media_type="application/json")
-    return Response(orjson.dumps(scalar_values.tolist()), media_type="application/json")
+
+    return ORJSONResponse(scalar_values.tolist())
 
 
 @router.get(
@@ -134,22 +139,22 @@ async def grid_parameter(
     parameter_name = request.query_params.get("parameter_name")
     realization = request.query_params.get("realization")
 
-    print("Sending data to primary", flush=True)
     timer = PerfTimer()
-    grid_geometry = get_grid_geometry(
+    # Get Xtgeo grid
+    xtgeo_grid = get_grid_geometry(
         authenticated_user=authenticated_user,
         case_uuid=case_uuid,
         ensemble_name=ensemble_name,
         grid_name=grid_name,
         realization=realization,
     )
-    grid_geometry.activate_all()
+    # Activate all cells. Should we do this?
+    xtgeo_grid.activate_all()
     print(
         f"DOWNLOADED/READ CACHE: grid_geometry for {grid_name}, realization: {realization}: {round(timer.lap_s(),2)}s",
         flush=True,
     )
-    # grid_polydata = get_grid_polydata(grid_geometry=grid_geometry)
-
+    # Get xtgeo parameter
     xtgeo_parameter = get_grid_parameter(
         authenticated_user=authenticated_user,
         case_uuid=case_uuid,
@@ -162,6 +167,8 @@ async def grid_parameter(
         f"DOWNLOADED/READ CACHE: grid_parameter for {parameter_name}, realization: {realization}: {round(timer.lap_s(),2)}s",
         flush=True,
     )
+
+    # HARDCODED POLYLINE FOR TESTING
     xyz_arr = tuple(
         tuple(point)
         for point in [
@@ -175,22 +182,28 @@ async def grid_parameter(
         ]
     )
 
-    coords, triangles, original_cell_indices_np, polyline = generate_grid_intersection(grid_geometry, xyz_arr)
+    # Generate intersection data
+    coords, triangles, original_cell_indices_np, polyline = generate_grid_intersection(xtgeo_grid, xyz_arr)
     print(
         f"CALCULATED INTERSECTION: realization: {realization}: {round(timer.lap_s(),2)}s",
         flush=True,
     )
+
+    # Get scalar values from parameter and select only the cells that intersect with the polyline
     values = get_scalar_values(xtgeo_parameter, cell_ids=original_cell_indices_np)
     print(
         f"READ SCALAR VALUES: realization: {realization}: {round(timer.lap_s(),2)}s",
         flush=True,
     )
 
+    # Handle undefined values and truncate
     values[values < np.nanmin(values)] = np.nanmin(values)
     values[values > np.nanmax(values)] = np.nanmax(values)
     # values[values > 0.4] = 0.4
     # values = values[original_cell_indices_np]
     # scalar_values[scalar_values == -999.0] = 0
+
+    # Get polyline coordinates
     polyline_coords = np.array([polyline.GetPoint(i)[:3] for i in range(polyline.GetNumberOfPoints())])
 
     # Calculate the cumulative distance along the polyline
@@ -202,16 +215,19 @@ async def grid_parameter(
 
     polyline_x = polyline_distances
     polyline_y = polyline_coords[:, 2]
+
+    # Visualize the intersection using matplotlib as a base64 encoded image
     image_data = visualize_triangles_with_scalars(coords, triangles, values, polyline, "55/33-A-4")
     print(
         f"MATPLOTLIB IMAGE: realization: {realization}: {round(timer.lap_s(),2)}s",
         flush=True,
     )
-    y = coords[:, 1]
-    x_min, x_max = np.min(coords[:, 0]), np.max(coords[:, 0])
-    y_min, y_max = np.min(y), np.max(y)
-    # Get the polyline coordinates
 
+    # Get the bounding box of the intersection
+    x_min, x_max = np.min(coords[:, 0]), np.max(coords[:, 0])
+    y_min, y_max = np.min(coords[:, 1]), np.max(coords[:, 1])
+
+    # Create the intersection data object
     intersection_data = GridIntersection(
         image="data:image/png;base64,{}".format(image_data),
         polyline_x=polyline_x.tolist(),
@@ -221,10 +237,7 @@ async def grid_parameter(
         y_min=float(y_min),
         y_max=float(y_max),
     )
-    return Response(
-        orjson.dumps(intersection_data.__dict__),
-        media_type="application/json",
-    )
+    return ORJSONResponse(intersection_data.__dict__)
 
 
 @router.get(
@@ -249,22 +262,27 @@ async def grid_parameter(
     ensemble_name = request.query_params.get("ensemble_name")
     grid_name = request.query_params.get("grid_name")
     parameter_name = request.query_params.get("parameter_name")
-
+    # convert json string of realizations into list
     realizations = orjson.loads(request.query_params.get("realizations"))
+
     grid_access = GridAccess(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
-    # type: ignore
+
+    # Check that all grids have equal nx, ny, nz
+    # Should raise a http exception instead of a value error
     if not grid_access.grids_have_equal_nxnynz(grid_name=grid_name):
         raise ValueError("Grids must have equal nx, ny, nz")
 
-    print("GETTING GRID GEOMETRY", flush=True)
-    grid_geometry = get_grid_geometry(
+    # Get Xtgeo grid
+    xtgeo_grid = get_grid_geometry(
         authenticated_user=authenticated_user,
         case_uuid=case_uuid,
         ensemble_name=ensemble_name,
         grid_name=grid_name,
         realization=0,
     )
-    grid_geometry.activate_all()
+
+    # Activate all cells. Should we do this?
+    xtgeo_grid.activate_all()
     print(
         f"DOWNLOADED/READ CACHE: grid_geometry for {grid_name}, realization: {0}: {round(timer.lap_s(),2)}s",
         flush=True,
@@ -293,6 +311,7 @@ async def grid_parameter(
         flush=True,
     )
 
+    # HARDCODED POLYLINE FOR TESTING
     xyz_arr = tuple(
         tuple(point)
         for point in [
@@ -307,20 +326,24 @@ async def grid_parameter(
     )
     print("-" * 80, flush=True)
     print("GENERATING GRID INTERSECTION", flush=True)
-    coords, triangles, original_cell_indices_np, polyline = generate_grid_intersection(grid_geometry, xyz_arr)
+
+    # Generate intersection data
+    coords, triangles, original_cell_indices_np, polyline = generate_grid_intersection(xtgeo_grid, xyz_arr)
     print(
         f"CALCULATED INTERSECTION: realization: {0}: {round(timer.lap_s(),2)}s",
         flush=True,
     )
     print("-" * 80, flush=True)
-    print("GETTING SCALAR VALUES", flush=True)
+
+    # Get scalar values for each realization
     all_scalar_values = [
         get_scalar_values(xtgeo_parameter, cell_ids=original_cell_indices_np) for xtgeo_parameter in xtgeo_parameters
     ]
 
-    print(np.nanmin(all_scalar_values), np.nanmax(all_scalar_values), flush=True)
+    # Calculate the mean scalar value for each cell
     values = np.nanmean([scalar_values for scalar_values in all_scalar_values], axis=0)
 
+    # Handle xtgeo undefined values and truncate
     values[values < np.nanmin(values)] = np.nanmin(values)
     values[values > np.nanmax(values)] = np.nanmax(values)
     values[values == -999.0] = np.nan
@@ -328,6 +351,8 @@ async def grid_parameter(
         f"DOWNLOADED/READ CACHE: scalar_values for {parameter_name}, realizations: {realizations}: {round(timer.lap_s(),2)}s",
         flush=True,
     )
+
+    # Get polyline coordinates
     polyline_coords = np.array([polyline.GetPoint(i)[:3] for i in range(polyline.GetNumberOfPoints())])
 
     # Calculate the cumulative distance along the polyline
@@ -340,17 +365,21 @@ async def grid_parameter(
     polyline_x = polyline_distances
     polyline_y = polyline_coords[:, 2]
     print("-" * 80, flush=True)
+
     print("GENERATE MATPLOTLIB IMAGE", flush=True)
+
+    # Visualize the intersection using matplotlib as a base64 encoded image
     image_data = visualize_triangles_with_scalars(coords, triangles, values, polyline, "55/33-A-4")
     print(
         f"GENERATED MATPLOTLIB IMAGE: {parameter_name}, realization: {0}: {round(timer.lap_s(),2)}s",
         flush=True,
     )
-    y = coords[:, 1]
-    x_min, x_max = np.min(coords[:, 0]), np.max(coords[:, 0])
-    y_min, y_max = np.min(y), np.max(y)
-    # Get the polyline coordinates
 
+    # Get the bounding box of the intersection
+    x_min, x_max = np.min(coords[:, 0]), np.max(coords[:, 0])
+    y_min, y_max = np.min(coords[:, 1]), np.max(coords[:, 1])
+
+    # Create the intersection data object
     intersection_data = GridIntersection(
         image="data:image/png;base64,{}".format(image_data),
         polyline_x=polyline_x.tolist(),
@@ -369,10 +398,7 @@ async def grid_parameter(
     )
     print("#" * 80, flush=True)
 
-    return Response(
-        orjson.dumps(intersection_data.__dict__),
-        media_type="application/json",
-    )
+    return ORJSONResponse(intersection_data.__dict__)
 
 
 @router.get(
@@ -388,24 +414,28 @@ async def statistical_grid_parameter(
     ensemble_name = request.query_params.get("ensemble_name")
     grid_name = request.query_params.get("grid_name")
     parameter_name = request.query_params.get("parameter_name")
-    # type: ignore
+    # convert json string of realizations into list
     realizations = orjson.loads(request.query_params.get("realizations"))
 
-    # type: ignore
     grid_access = GridAccess(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
-    # type: ignore
+
+    # Check that all grids have equal nx, ny, nz
+    # Should riase a http exception instead of a value error
     if not grid_access.grids_have_equal_nxnynz(grid_name=grid_name):
         raise ValueError("Grids must have equal nx, ny, nz")
 
-    grid_geometry = get_grid_geometry(
+    xtgeo_grid = get_grid_geometry(
         authenticated_user=authenticated_user,
         case_uuid=case_uuid,
         ensemble_name=ensemble_name,
         grid_name=grid_name,
         realization=realizations[0],
     )
-    grid_polydata = get_grid_polydata(grid_geometry=grid_geometry)
 
+    # Get grid surface (visible cells)
+    grid_polydata = get_grid_surface(grid_geometry=xtgeo_grid)
+
+    # Get the xtgeo grid parameters for each realization
     xtgeo_parameters = [
         get_grid_parameter(
             authenticated_user=authenticated_user,
@@ -418,20 +448,21 @@ async def statistical_grid_parameter(
         for real in realizations
     ]
 
+    # Get the scalar values for each parameter
     all_scalar_values = [
         get_scalar_values(xtgeo_parameter, cell_ids=grid_polydata.original_cell_ids)
         for xtgeo_parameter in xtgeo_parameters
     ]
-    print(np.nanmin(all_scalar_values), np.nanmax(all_scalar_values), flush=True)
+
+    # Calculate the mean scalar values for each cell
     mean_scalar_values = np.nanmean([scalar_values for scalar_values in all_scalar_values], axis=0)
+
+    # Handle xtgeo undefined values and truncate
     mean_scalar_values[mean_scalar_values == -999.0] = np.nan
     mean_scalar_values[mean_scalar_values < np.nanmin(mean_scalar_values)] = np.nanmin(mean_scalar_values)
     mean_scalar_values[mean_scalar_values > np.nanmax(mean_scalar_values)] = np.nanmax(mean_scalar_values)
-    # using orjson instead of slow FastAPI default encoder (json.dumps)
-    # encoded_values = B64EncodedNumpyArray(**b64_encode_numpy(mean_scalar_values))
 
-    # return Response(orjson.dumps(encoded_values.__dict__), media_type="application/json")
-    return Response(orjson.dumps(mean_scalar_values.tolist()), media_type="application/json")
+    return ORJSONResponse(mean_scalar_values.tolist())
 
 
 @cache
@@ -442,6 +473,7 @@ def get_grid_geometry(
     grid_name: str,
     realization: int,
 ) -> xtgeo.Grid:
+    """Get the xtgeo grid geometry for a given realization"""
     token = authenticated_user.get_sumo_access_token()
     grid_access = GridAccess(token, case_uuid, ensemble_name)
     grid_geometry = grid_access.get_grid_geometry(grid_name, int(realization))
@@ -450,10 +482,10 @@ def get_grid_geometry(
 
 
 @cache
-def get_grid_polydata(grid_geometry: xtgeo.Grid) -> VtkGridSurface:
-    grid_polydata = get_surface(grid_geometry)
+def get_grid_surface(grid_geometry: xtgeo.Grid) -> VtkGridSurface:
+    grid_surface = get_surface(grid_geometry)
 
-    return grid_polydata
+    return grid_surface
 
 
 @cache
