@@ -1,8 +1,8 @@
 import datetime
 from typing import Dict, Union, NamedTuple
+
 import psutil
 from fastapi import APIRouter, Depends
-
 from src.backend.auth.auth_helper import AuthHelper, AuthenticatedUser
 
 router = APIRouter()

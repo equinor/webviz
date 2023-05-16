@@ -112,7 +112,13 @@ async def proxy_to_user_session(request: Request, authenticated_user: Authentica
         query=request.url.query.encode("utf-8"),
     )
 
-    job_req = client.build_request(request.method, url, headers=request.headers.raw, content=request.stream())
+    job_req = client.build_request(
+        request.method,
+        url,
+        headers=request.headers.raw,
+        content=request.stream(),
+        timeout=600,
+    )
     job_resp = await client.send(job_req, stream=True)
 
     return StreamingResponse(
