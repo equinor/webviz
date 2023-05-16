@@ -14,23 +14,23 @@ interface TraceData extends Partial<PlotData> {
     realizationNumber?: number | null;
 }
 
-const PlotlyGridIntersection: React.FC<PlotlyGridIntersectionProps> = ({ data, width, height }) => {
+const PlotlyGridIntersection: React.FC<PlotlyGridIntersectionProps> = (props) => {
 
     const tracesDataArr: TraceData[] = [{
-        x: data.polyline_x,
-        y: data.polyline_y,
+        x: props.data.polyline_x,
+        y: props.data.polyline_y,
         type: "scatter",
         mode: "lines",
         line: { "color": "black", "width": 2 },
     }];
 
     const layout: Partial<Layout> = {
-        width: width,
-        height: height,
+        width: props.width,
+        height: props.height,
         title: "55/33-A-4",
         xaxis: {
             title: "Distance along well [m]",
-            range: [data.x_min, data.x_max],
+            range: [props.data.x_min, props.data.x_max],
             showgrid: true,
             zeroline: true,
             showline: true,
@@ -39,7 +39,7 @@ const PlotlyGridIntersection: React.FC<PlotlyGridIntersectionProps> = ({ data, w
         },
         yaxis: {
             title: "Depth [m]",
-            range: [data.y_min, data.y_max],
+            range: [props.data.y_min, props.data.y_max],
             showgrid: true,
             zeroline: true,
             showline: true,
@@ -49,11 +49,11 @@ const PlotlyGridIntersection: React.FC<PlotlyGridIntersectionProps> = ({ data, w
         images: [
             {
 
-                x: data.x_min,
-                y: data.y_max,
-                sizex: data.x_max - data.x_min,
-                sizey: data.y_max - data.y_min,
-                source: data.image,
+                x: props.data.x_min,
+                y: props.data.y_max,
+                sizex: props.data.x_max - props.data.x_min,
+                sizey: props.data.y_max - props.data.y_min,
+                source: props.data.image,
                 sizing: "stretch",
                 xref: "x",
                 yref: "y",

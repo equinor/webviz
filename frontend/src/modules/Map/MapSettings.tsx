@@ -20,11 +20,11 @@ import { SurfAddr, SurfAddrFactory } from "./SurfAddr";
 import { AggregationDropdown } from "./UiComponents";
 
 //-----------------------------------------------------------------------------------------------------------
-export function MapSettings({ moduleContext, workbenchServices }: ModuleFCProps<MapState>) {
-    const myInstanceIdStr = moduleContext.getInstanceIdString();
+export function MapSettings(props: ModuleFCProps<MapState>) {
+    const myInstanceIdStr = props.moduleContext.getInstanceIdString();
     console.log(`${myInstanceIdStr} -- render MapSettings`);
 
-    const availableEnsembles = useSubscribedValue("navigator.ensembles", workbenchServices);
+    const availableEnsembles = useSubscribedValue("navigator.ensembles", props.workbenchServices);
     const [selectedEnsemble, setSelectedEnsemble] = React.useState<Ensemble | null>(null);
 
     const [surfaceType, setSurfaceType] = React.useState<"static" | "dynamic">("dynamic");
@@ -34,8 +34,8 @@ export function MapSettings({ moduleContext, workbenchServices }: ModuleFCProps<
     const [selectedTimeOrInterval, setSelectedTimeOrInterval] = React.useState<string | null>(null);
     const [aggregation, setAggregation] = React.useState<SurfaceStatisticFunction | null>(null);
 
-    const syncedSettingKeys = moduleContext.useSyncedSettingKeys();
-    const syncHelper = new SyncSettingsHelper(syncedSettingKeys, workbenchServices);
+    const syncedSettingKeys = props.moduleContext.useSyncedSettingKeys();
+    const syncHelper = new SyncSettingsHelper(syncedSettingKeys, props.workbenchServices);
     const syncedValueEnsembles = syncHelper.useValue(SyncSettingKey.ENSEMBLE, "global.syncValue.ensembles");
     const syncedValueSurface = syncHelper.useValue(SyncSettingKey.SURFACE, "global.syncValue.surface");
     const syncedValueDate = syncHelper.useValue(SyncSettingKey.DATE, "global.syncValue.date");
@@ -153,7 +153,7 @@ export function MapSettings({ moduleContext, workbenchServices }: ModuleFCProps<
         }
 
         console.log(`propagateSurfaceSelectionToView() => ${surfAddr ? "valid surfAddr" : "NULL surfAddr"}`);
-        moduleContext.getStateStore().setValue("surfaceAddress", surfAddr);
+        props.moduleContext.getStateStore().setValue("surfaceAddress", surfAddr);
     });
 
     function handleEnsembleSelectionChange(selectedEnsembleIdStr: string) {

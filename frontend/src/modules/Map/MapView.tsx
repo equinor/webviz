@@ -9,10 +9,10 @@ import { MapState } from "./MapState";
 import { makeSurfAddrString } from "./SurfAddr";
 
 //-----------------------------------------------------------------------------------------------------------
-export function MapView({ moduleContext }: ModuleFCProps<MapState>) {
+export function MapView(props: ModuleFCProps<MapState>) {
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);
     const wrapperDivSize = useElementSize(wrapperDivRef);
-    const surfAddr = moduleContext.useStoreValue("surfaceAddress");
+    const surfAddr = props.moduleContext.useStoreValue("surfaceAddress");
 
     const renderCount = React.useRef(0);
     React.useEffect(function incrementRenderCount() {
@@ -52,7 +52,7 @@ export function MapView({ moduleContext }: ModuleFCProps<MapState>) {
                     },
                 ]}
             />
-            <div className="absolute bottom-5 right-5 italic text-pink-400">{moduleContext.getInstanceIdString()}</div>
+            <div className="absolute bottom-5 right-5 italic text-pink-400">{props.moduleContext.getInstanceIdString()}</div>
         </div>
     );
 }

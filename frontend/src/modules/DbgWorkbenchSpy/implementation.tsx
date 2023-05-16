@@ -9,8 +9,8 @@ export type SharedState = {
 };
 
 //-----------------------------------------------------------------------------------------------------------
-export function WorkbenchSpySettings({ moduleContext, workbenchServices }: ModuleFCProps<SharedState>) {
-    const setRefreshCounter = moduleContext.useSetStoreValue("triggeredRefreshCounter");
+export function WorkbenchSpySettings(props: ModuleFCProps<SharedState>) {
+    const setRefreshCounter = props.moduleContext.useSetStoreValue("triggeredRefreshCounter");
     return (
         <div>
             <Button onClick={() => setRefreshCounter((prev: number) => prev + 1)}>Trigger Refresh</Button>
@@ -19,11 +19,11 @@ export function WorkbenchSpySettings({ moduleContext, workbenchServices }: Modul
 }
 
 //-----------------------------------------------------------------------------------------------------------
-export function WorkbenchSpyView({ moduleContext, workbenchServices }: ModuleFCProps<SharedState>) {
-    const [selectedEnsembles, selectedEnsembles_TS] = useServiceValueWithTS("navigator.ensembles", workbenchServices);
-    const [hoverRealization, hoverRealization_TS] = useServiceValueWithTS("global.hoverRealization", workbenchServices);
-    const [hoverTimestamp, hoverTimestamp_TS] = useServiceValueWithTS("global.hoverTimestamp", workbenchServices);
-    const triggeredRefreshCounter = moduleContext.useStoreValue("triggeredRefreshCounter");
+export function WorkbenchSpyView(props: ModuleFCProps<SharedState>) {
+    const [selectedEnsembles, selectedEnsembles_TS] = useServiceValueWithTS("navigator.ensembles", props.workbenchServices);
+    const [hoverRealization, hoverRealization_TS] = useServiceValueWithTS("global.hoverRealization", props.workbenchServices);
+    const [hoverTimestamp, hoverTimestamp_TS] = useServiceValueWithTS("global.hoverTimestamp", props.workbenchServices);
+    const triggeredRefreshCounter = props.moduleContext.useStoreValue("triggeredRefreshCounter");
 
     const componentRenderCount = React.useRef(0);
     React.useEffect(function incrementComponentRenderCount() {
