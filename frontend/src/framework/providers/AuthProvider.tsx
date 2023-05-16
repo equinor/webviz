@@ -38,7 +38,8 @@ export const AuthProvider: React.FC<{ children: React.ReactElement }> = (props) 
                     setAuthState(AuthState.NotLoggedIn);
                 }
             })
-            .catch(() => {
+            .catch((err) => {
+                console.warn(err)
                 setAuthState(AuthState.NotLoggedIn);
             });
     }, []);
