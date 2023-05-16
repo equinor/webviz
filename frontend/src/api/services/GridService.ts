@@ -2,8 +2,8 @@
 /* tslint:disable */
 /* eslint-disable */
 import type { B64EncodedNumpyArray } from '../models/B64EncodedNumpyArray';
-import type { GridGeometry } from '../models/GridGeometry';
 import type { GridIntersection } from '../models/GridIntersection';
+import type { GridSurface } from '../models/GridSurface';
 
 import type { CancelablePromise } from '../core/CancelablePromise';
 import type { BaseHttpRequest } from '../core/BaseHttpRequest';
@@ -66,24 +66,24 @@ export class GridService {
     }
 
     /**
-     * Grid Geometry
+     * Grid Surface
      * Get a grid
      * @param caseUuid Sumo case uuid
      * @param ensembleName Ensemble name
      * @param gridName Grid name
      * @param realization Realization
-     * @returns GridGeometry Successful Response
+     * @returns GridSurface Successful Response
      * @throws ApiError
      */
-    public gridGeometry(
+    public gridSurface(
         caseUuid: string,
         ensembleName: string,
         gridName: string,
         realization: string,
-    ): CancelablePromise<GridGeometry> {
+    ): CancelablePromise<GridSurface> {
         return this.httpRequest.request({
             method: 'GET',
-            url: '/grid/grid_geometry',
+            url: '/grid/grid_surface',
             query: {
                 'case_uuid': caseUuid,
                 'ensemble_name': ensembleName,

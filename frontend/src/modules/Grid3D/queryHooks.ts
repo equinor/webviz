@@ -1,4 +1,4 @@
-import { GridGeometry } from "@api";
+import { GridSurface } from "@api";
 import { apiService } from "@framework/ApiService";
 import { QueryFunction, QueryKey, UseQueryResult, useQuery } from "@tanstack/react-query";
 
@@ -6,10 +6,10 @@ import { QueryFunction, QueryKey, UseQueryResult, useQuery } from "@tanstack/rea
 const STALE_TIME = 60 * 1000;
 const CACHE_TIME = 60 * 1000;
 
-export function useGridGeometry(caseUuid: string | null, ensembleName: string | null, gridName: string | null, realization: string | null): UseQueryResult<GridGeometry> {
+export function useGridSurface(caseUuid: string | null, ensembleName: string | null, gridName: string | null, realization: string | null): UseQueryResult<GridSurface> {
     return useQuery({
-        queryKey: ["getGridGeometry", caseUuid, ensembleName, gridName, realization],
-        queryFn: () => apiService.grid.gridGeometry(caseUuid ?? "", ensembleName ?? "", gridName ?? "", realization ?? ""),
+        queryKey: ["getGridSurface", caseUuid, ensembleName, gridName, realization],
+        queryFn: () => apiService.grid.gridSurface(caseUuid ?? "", ensembleName ?? "", gridName ?? "", realization ?? ""),
         staleTime: STALE_TIME,
         cacheTime: 0,
         enabled: caseUuid && ensembleName && gridName && realization ? true : false,

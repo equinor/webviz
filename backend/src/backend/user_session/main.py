@@ -9,7 +9,6 @@ from .routers.grid.router import router as grid_router
 
 
 app = FastAPI(default_response_class=ORJSONResponse)
-print("------main", grid_router)
 app.include_router(general_router)
 app.include_router(grid_router, prefix="/grid")
 add_shared_middlewares(app)

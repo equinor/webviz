@@ -3,7 +3,7 @@ import React from "react";
 import { ModuleFCProps } from "@framework/Module";
 import { SubsurfaceViewer } from "@webviz/subsurface-components";
 import { useSubscribedValue } from "@framework/WorkbenchServices";
-import { useGridGeometry, useGridParameter, useStatisticalGridParameter } from "./queryHooks";
+import { useGridSurface, useGridParameter, useStatisticalGridParameter } from "./queryHooks";
 import state from "./state";
 import { toArrayBuffer } from "@shared-utils/vtkUtils";
 
@@ -24,16 +24,16 @@ export function view({ moduleContext, workbenchServices }: ModuleFCProps<state>)
     const useStatistics = moduleContext.useStoreValue("useStatistics");
 
     //Queries
-    const gridGeometryQuery = useGridGeometry(selectedEnsemble.caseUuid, selectedEnsemble.ensembleName, gridName, realizations ? realizations[0] : "0");
+    const gridSurfaceQuery = useGridSurface(selectedEnsemble.caseUuid, selectedEnsemble.ensembleName, gridName, realizations ? realizations[0] : "0");
     const gridParameterQuery = useGridParameter(selectedEnsemble.caseUuid, selectedEnsemble.ensembleName, gridName, parameterName, realizations ? realizations[0] : "0", useStatistics);
     const statisticalGridParameterQuery = useStatisticalGridParameter(selectedEnsemble.caseUuid, selectedEnsemble.ensembleName, gridName, parameterName, realizations, useStatistics);
 
 
-    const bounds = gridGeometryQuery?.data ? [gridGeometryQuery.data.xmin, gridGeometryQuery.data.ymin, -gridGeometryQuery.data.zmax, gridGeometryQuery.data.xmax, gridGeometryQuery.data.ymax, -gridGeometryQuery.data.zmin] : [0, 0, 0, 100, 100, 100];
+    const bounds = gridSurfaceQuery?.data ? [gridSurfaceQuery.data.xmin, gridSurfaceQuery.data.ymin, -gridSurfaceQuery.data.zmax, gridSurfaceQuery.data.xmax, gridSurfaceQuery.data.ymax, -gridSurfaceQuery.data.zmin] : [0, 0, 0, 100, 100, 100];
 
-    if (!gridGeometryQuery.data) { return (<div>no grid geometry</div>) }
-    const pointsArray = gridGeometryQuery?.data ? toArrayBuffer(gridGeometryQuery.data.points as any) : []
-    const polysArray = gridGeometryQuery?.data ? toArrayBuffer(gridGeometryQuery.data.polys as any) : []
+    if (!gridSurfaceQuery.data) { return (<div>no grid geometry</div>) }
+    const pointsArray = gridSurfaceQuery?.data ? toArrayBuffer(gridSurfaceQuery.data.points as any) : []
+    const polysArray = gridSurfaceQuery?.data ? toArrayBuffer(gridSurfaceQuery.data.polys as any) : []
 
 
     let propertiesArray: number[] = []

@@ -2,7 +2,7 @@
 /* tslint:disable */
 /* eslint-disable */
 
-export type GridGeometry = {
+export type GridSurface = {
     polys: any;
     points: any;
     xmin: number;
