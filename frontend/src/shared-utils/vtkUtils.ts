@@ -163,17 +163,17 @@ function writeChunk(b64Str: any, chunk: any, dstOffset: any, uint8: any) {
         default:
             break;
     }
-    console.log("offset", offset)
+    console.debug("offset", offset)
 
     return offset;
 }
 
 export function toArrayBuffer(b64Str: any): ArrayBuffer {
-    console.log(b64Str)
+    console.debug(b64Str)
     b64Str = b64Str["bvals"]
 
     const chunks = extractChunks(b64Str);
-    console.log(chunks)
+    console.debug(chunks)
     const totalEncodedLength = chunks[chunks.length - 1].end + 1;
     const padding = (4 - (totalEncodedLength % 4)) % 4; // -length mod 4
     // Any padding chars in the middle of b64Str is to be interpreted as \x00,

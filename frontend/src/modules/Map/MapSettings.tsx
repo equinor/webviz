@@ -22,7 +22,7 @@ import { AggregationDropdown } from "./UiComponents";
 //-----------------------------------------------------------------------------------------------------------
 export function MapSettings(props: ModuleFCProps<MapState>) {
     const myInstanceIdStr = props.moduleContext.getInstanceIdString();
-    console.log(`${myInstanceIdStr} -- render MapSettings`);
+    console.debug(`${myInstanceIdStr} -- render MapSettings`);
 
     const availableEnsembles = useSubscribedValue("navigator.ensembles", props.workbenchServices);
     const [selectedEnsemble, setSelectedEnsemble] = React.useState<Ensemble | null>(null);
@@ -119,15 +119,15 @@ export function MapSettings(props: ModuleFCProps<MapState>) {
     }
 
     React.useEffect(function propagateSurfaceSelectionToView() {
-        // console.log("propagateSurfaceSelectionToView()");
-        // console.log(`  caseUuid=${caseUuid}`);
-        // console.log(`  ensembleName=${ensembleName}`);
-        // console.log(`  surfaceName=${surfaceName}`);
-        // console.log(`  surfaceAttribute=${surfaceAttribute}`);
-        // console.log(`  surfaceType=${surfaceType}`);
-        // console.log(`  aggregation=${aggregation}`);
-        // console.log(`  realizationNum=${realizationNum}`);
-        // console.log(`  timeOrInterval=${timeOrInterval}`);
+        // console.debug("propagateSurfaceSelectionToView()");
+        // console.debug(`  caseUuid=${caseUuid}`);
+        // console.debug(`  ensembleName=${ensembleName}`);
+        // console.debug(`  surfaceName=${surfaceName}`);
+        // console.debug(`  surfaceAttribute=${surfaceAttribute}`);
+        // console.debug(`  surfaceType=${surfaceType}`);
+        // console.debug(`  aggregation=${aggregation}`);
+        // console.debug(`  realizationNum=${realizationNum}`);
+        // console.debug(`  timeOrInterval=${timeOrInterval}`);
 
         let surfAddr: SurfAddr | null = null;
         if (computedEnsemble && computedSurfaceName && computedSurfaceAttribute) {
@@ -152,12 +152,12 @@ export function MapSettings(props: ModuleFCProps<MapState>) {
             }
         }
 
-        console.log(`propagateSurfaceSelectionToView() => ${surfAddr ? "valid surfAddr" : "NULL surfAddr"}`);
+        console.debug(`propagateSurfaceSelectionToView() => ${surfAddr ? "valid surfAddr" : "NULL surfAddr"}`);
         props.moduleContext.getStateStore().setValue("surfaceAddress", surfAddr);
     });
 
     function handleEnsembleSelectionChange(selectedEnsembleIdStr: string) {
-        console.log("handleEnsembleSelectionChange()");
+        console.debug("handleEnsembleSelectionChange()");
         const newEnsemble = availableEnsembles?.find((item) => encodeEnsembleAsIdStr(item) === selectedEnsembleIdStr);
         setSelectedEnsemble(newEnsemble ?? null);
         if (newEnsemble) {
@@ -171,7 +171,7 @@ export function MapSettings(props: ModuleFCProps<MapState>) {
     }
 
     function handleSurfNameSelectionChange(selectedSurfNames: string[]) {
-        console.log("handleSurfNameSelectionChange()");
+        console.debug("handleSurfNameSelectionChange()");
         const newName = selectedSurfNames[0] ?? null;
         setSelectedSurfaceName(newName);
         if (newName && computedSurfaceAttribute) {
@@ -183,7 +183,7 @@ export function MapSettings(props: ModuleFCProps<MapState>) {
     }
 
     function handleSurfAttributeSelectionChange(selectedSurfAttributes: string[]) {
-        console.log("handleSurfAttributeSelectionChange()");
+        console.debug("handleSurfAttributeSelectionChange()");
         const newAttr = selectedSurfAttributes[0] ?? null;
         setSelectedSurfaceAttribute(newAttr);
         if (newAttr && computedSurfaceName) {
@@ -195,7 +195,7 @@ export function MapSettings(props: ModuleFCProps<MapState>) {
     }
 
     function handleTimeOrIntervalSelectionChange(selectedTimeOrIntervals: string[]) {
-        console.log("handleTimeOrIntervalSelectionChange()");
+        console.debug("handleTimeOrIntervalSelectionChange()");
         const newTimeOrInterval = selectedTimeOrIntervals[0] ?? null;
         setSelectedTimeOrInterval(newTimeOrInterval);
         if (newTimeOrInterval) {
@@ -206,12 +206,12 @@ export function MapSettings(props: ModuleFCProps<MapState>) {
     }
 
     function handleAggregationChanged(aggregation: SurfaceStatisticFunction | null) {
-        console.log("handleAggregationChanged()");
+        console.debug("handleAggregationChanged()");
         setAggregation(aggregation);
     }
 
     function handleRealizationTextChanged(event: React.ChangeEvent<HTMLInputElement>) {
-        console.log("handleRealizationTextChanged() " + event.target.value);
+        console.debug("handleRealizationTextChanged() " + event.target.value);
         const realNum = parseInt(event.target.value, 10);
         if (realNum >= 0) {
             setRealizationNum(realNum);

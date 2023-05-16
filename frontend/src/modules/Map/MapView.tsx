@@ -19,7 +19,7 @@ export function MapView(props: ModuleFCProps<MapState>) {
         renderCount.current = renderCount.current + 1;
     });
 
-    console.log(`render MapView, surfAddr=${surfAddr ? makeSurfAddrString(surfAddr) : "null"}`);
+    console.debug(`render MapView, surfAddr=${surfAddr ? makeSurfAddrString(surfAddr) : "null"}`);
 
     const surfDataQuery = useSurfaceDataQueryByAddress(surfAddr);
     if (!surfDataQuery.data) {

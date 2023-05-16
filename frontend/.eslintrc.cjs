@@ -9,6 +9,7 @@ module.exports = {
         "react/jsx-uses-react": "off", // Import of React is not required anymore in React 17
         "react/react-in-jsx-scope": "off", // Import of React is not required anymore in React 17
         "react/destructuring-assignment": ["error", "never"],
+        "no-console": ["error", { allow: ["debug", "info", "warn", "error"] }],
     },
     parser: "@typescript-eslint/parser",
     parserOptions: {
