@@ -17,7 +17,6 @@ from ._helpers import create_sumo_client_instance
 # from fmu.sumo.explorer.objects.table import AggregatedTable
 
 
-
 LOGGER = logging.getLogger(__name__)
 
 
