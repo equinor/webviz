@@ -3,7 +3,10 @@ from typing import List
 import pandas as pd
 
 from .sumo_access.parameter_access import EnsembleParameter
-from .sumo_access.generic_types import EnsembleScalarResponse, EnsembleCorrelations
+from .sumo_access.types.generic_types import (
+    EnsembleScalarResponse,
+    EnsembleCorrelations,
+)
 
 
 def correlate_parameters_with_response(
@@ -25,10 +28,14 @@ def correlate_parameters_with_response(
     # Sort correlations in descending order
     sorted_corr_series = corr_series.reindex(corr_series.abs().sort_values().index)
 
-    return EnsembleCorrelations(names=sorted_corr_series.index.to_list(), values=sorted_corr_series.to_list())
+    return EnsembleCorrelations(
+        names=sorted_corr_series.index.to_list(), values=sorted_corr_series.to_list()
+    )
 
 
-def _numerical_parameters_to_pandas_table(ensemble_parameters: List[EnsembleParameter]) -> pd.DataFrame:
+def _numerical_parameters_to_pandas_table(
+    ensemble_parameters: List[EnsembleParameter],
+) -> pd.DataFrame:
     """Convert a list of ensemble parameters to a pandas dataframe"""
     data = []
     for parameter in ensemble_parameters:
@@ -45,11 +52,15 @@ def _numerical_parameters_to_pandas_table(ensemble_parameters: List[EnsemblePara
     df = pd.DataFrame(data)
 
     # Pivot name column to individual columns per parameter
-    pivot_df = df.pivot(index="realization", columns="name", values="value").reset_index()
+    pivot_df = df.pivot(
+        index="realization", columns="name", values="value"
+    ).reset_index()
     return pivot_df
 
 
-def _ensemble_scalar_response_to_pandas_table(ensemble_response: EnsembleScalarResponse) -> pd.DataFrame:
+def _ensemble_scalar_response_to_pandas_table(
+    ensemble_response: EnsembleScalarResponse,
+) -> pd.DataFrame:
     """Convert a ensemble scalar response to a pandas dataframe"""
     data = []
     for real, value in zip(ensemble_response.realizations, ensemble_response.values):

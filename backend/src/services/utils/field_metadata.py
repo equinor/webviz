@@ -2,7 +2,7 @@ from typing import Optional
 
 import pyarrow as pa
 
-from .types import VectorMetadata
+from src.services.sumo_access.types.summary_types import VectorMetadata
 
 
 def is_rate_from_field_meta(field: pa.Field) -> bool:
@@ -17,7 +17,9 @@ def is_rate_from_field_meta(field: pa.Field) -> bool:
             is_rate_bytestr = meta_dict[b"is_rate"]
             return bool(is_rate_bytestr == b"True")
         except KeyError as exc:
-            raise KeyError(f"Field {field.name} has metadata, but the is_rate key was not found") from exc
+            raise KeyError(
+                f"Field {field.name} has metadata, but the is_rate key was not found"
+            ) from exc
 
     return False
 

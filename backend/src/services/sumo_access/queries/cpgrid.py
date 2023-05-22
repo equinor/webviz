@@ -34,7 +34,9 @@ def get_grid_names(sumo_client: SumoClient, case_id: str, iteration: str) -> Lis
 
 
 # Cant be used for equality on roff
-def get_grid_geometry_checksums(sumo_client: SumoClient, case_id: str, iteration: str, grid_name: str) -> List[str]:
+def get_grid_geometry_checksums(
+    sumo_client: SumoClient, case_id: str, iteration: str, grid_name: str
+) -> List[str]:
     """Get a list of checksums for a grid geometry in a case and iteration"""
     query = {
         "size": 0,
@@ -66,7 +68,11 @@ def get_grid_geometry_checksums(sumo_client: SumoClient, case_id: str, iteration
 
 
 def get_grid_geometry_blob_id(
-    sumo_client: SumoClient, case_id: str, iteration: str, realization: int, grid_name: str
+    sumo_client: SumoClient,
+    case_id: str,
+    iteration: str,
+    realization: int,
+    grid_name: str,
 ) -> str:
     """Get the blob id for a given grid geometry in a case, iteration and realization"""
     hits = sumo_client.get(
@@ -85,7 +91,12 @@ def get_grid_geometry_blob_id(
 
 
 def get_grid_parameter_blob_id(
-    sumo_client: SumoClient, case_id: str, iteration: str, realization: int, grid_name: str, parameter_name: str
+    sumo_client: SumoClient,
+    case_id: str,
+    iteration: str,
+    realization: int,
+    grid_name: str,
+    parameter_name: str,
 ) -> str:
     """Get the blob id for a given grid parameter in a case, iteration and realization""" ""
     hits = sumo_client.get(
@@ -104,7 +115,9 @@ def get_grid_parameter_blob_id(
     return [hit["_id"] for hit in hits][0]
 
 
-def get_static_grid_parameter_names(sumo_client: SumoClient, case_id: str, iteration: str, grid_name: str) -> List[str]:
+def get_static_grid_parameter_names(
+    sumo_client: SumoClient, case_id: str, iteration: str, grid_name: str
+) -> List[str]:
     """Get a list of static grid parameter names for a case, iteration and grid name"""
     query = {
         "size": 0,

@@ -4,7 +4,7 @@ import logging
 from fastapi import APIRouter, Depends, Query
 
 from src.services.sumo_access.parameter_access import ParameterAccess
-from src.services.sumo_access.generic_types import EnsembleCorrelations
+from src.services.sumo_access.types.generic_types import EnsembleCorrelations
 from src.services.parameter_correlations import correlate_parameters_with_response
 from src.services.sumo_access.summary_access import SummaryAccess
 from src.services.sumo_access.inplace_volumetrics_access import (
@@ -33,7 +33,9 @@ def correlate_parameters_with_timeseries(
 ) -> EnsembleCorrelations:
     """Get parameter correlations for a timeseries at a given timestep"""
 
-    summary_access = SummaryAccess(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
+    summary_access = SummaryAccess(
+        authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
+    )
     parameter_access = ParameterAccess(
         authenticated_user.get_sumo_access_token(),
         case_uuid=case_uuid,
@@ -63,7 +65,9 @@ def correlate_parameters_with_inplace_volumes(
 ) -> EnsembleCorrelations:
     """Get parameter correlations for an inplace volumetrics response"""
 
-    inplace_access = InplaceVolumetricsAccess(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
+    inplace_access = InplaceVolumetricsAccess(
+        authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
+    )
     parameter_access = ParameterAccess(
         authenticated_user.get_sumo_access_token(),
         case_uuid=case_uuid,

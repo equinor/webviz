@@ -7,7 +7,7 @@ from src.services.sumo_access.inplace_volumetrics_access import (
     InplaceVolumetricsCategoricalMetaData,
 )
 
-from src.services.sumo_access.generic_types import EnsembleScalarResponse
+from src.services.sumo_access.types.generic_types import EnsembleScalarResponse
 from src.services.utils.authenticated_user import AuthenticatedUser
 
 from src.backend.auth.auth_helper import AuthHelper
@@ -26,7 +26,9 @@ def get_table_names_and_descriptions(
 ) -> List[InplaceVolumetricsTableMetaData]:
     """Get all volumetric tables for a given ensemble."""
 
-    access = InplaceVolumetricsAccess(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
+    access = InplaceVolumetricsAccess(
+        authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
+    )
     table_names = access.get_table_names_and_metadata()
     return table_names
 
@@ -44,8 +46,12 @@ def get_realizations_response(
     # fmt:on
 ) -> EnsembleScalarResponse:
     """Get response for a given table and index filter."""
-    access = InplaceVolumetricsAccess(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
-    response = access.get_response(table_name, response_name, categorical_filter, realizations)
+    access = InplaceVolumetricsAccess(
+        authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
+    )
+    response = access.get_response(
+        table_name, response_name, categorical_filter, realizations
+    )
     return response
 
 
