@@ -21,9 +21,7 @@ def _quarter_start_month(datetime_day: np.datetime64) -> np.datetime64:
     return datetime_month - (datetime_month.astype(int) % 3)
 
 
-def generate_normalized_sample_dates(
-    min_date: np.datetime64, max_date: np.datetime64, freq: Frequency
-) -> np.ndarray:
+def generate_normalized_sample_dates(min_date: np.datetime64, max_date: np.datetime64, freq: Frequency) -> np.ndarray:
     """
     Returns array of normalized sample dates to cover the min_date to max_date range with the specified frequency.
     The return numpy array will have sample dates with dtype datetime64[ms]
@@ -62,18 +60,14 @@ def generate_normalized_sample_dates(
             stop += 1
         sampledates = np.arange(start, stop + 1)
     else:
-        raise NotImplementedError(
-            f"Currently not supporting resampling to frequency {freq}."
-        )
+        raise NotImplementedError(f"Currently not supporting resampling to frequency {freq}.")
 
     sampledates = sampledates.astype("datetime64[ms]")
 
     return sampledates
 
 
-def interpolate_backfill(
-    x: np.ndarray, xp: np.ndarray, yp: np.ndarray, yleft: float, yright: float
-) -> np.ndarray:
+def interpolate_backfill(x: np.ndarray, xp: np.ndarray, yp: np.ndarray, yleft: float, yright: float) -> np.ndarray:
     # pylint: disable=invalid-name
     """
     Do back-filling interpolation of the coordinates in xp and yp, evaluated at the x-coordinates specified in x.
@@ -131,9 +125,7 @@ def resample_segmented_multi_real_table(table: pa.Table, freq: Frequency) -> pa.
     # pylint: disable=too-many-locals
 
     real_arr_np = table.column("REAL").to_numpy()
-    unique_reals, first_occurrence_idx, real_counts = np.unique(
-        real_arr_np, return_index=True, return_counts=True
-    )
+    unique_reals, first_occurrence_idx, real_counts = np.unique(real_arr_np, return_index=True, return_counts=True)
 
     output_columns_dict: Dict[str, pa.ChunkedArray] = {}
 
@@ -153,14 +145,10 @@ def resample_segmented_multi_real_table(table: pa.Table, freq: Frequency) -> pa.
 
             rii = real_interpolation_info_dict.get(real)
             if not rii:
-                rii = _extract_real_interpolation_info(
-                    table, start_row_idx, row_count, freq
-                )
+                rii = _extract_real_interpolation_info(table, start_row_idx, row_count, freq)
                 real_interpolation_info_dict[real] = rii
 
-            raw_numpy_arr = raw_whole_numpy_arr[
-                start_row_idx : start_row_idx + row_count
-            ]
+            raw_numpy_arr = raw_whole_numpy_arr[start_row_idx : start_row_idx + row_count]
 
             if is_rate:
                 inter = interpolate_backfill(
@@ -171,9 +159,7 @@ def resample_segmented_multi_real_table(table: pa.Table, freq: Frequency) -> pa.
                     0,
                 )
             else:
-                inter = np.interp(
-                    rii.sample_dates_np_as_uint, rii.raw_dates_np_as_uint, raw_numpy_arr
-                )
+                inter = np.interp(rii.sample_dates_np_as_uint, rii.raw_dates_np_as_uint, raw_numpy_arr)
 
             arr_length = len(rii.sample_dates_np_as_uint)
             if arr_length != len(inter):

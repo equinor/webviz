@@ -33,9 +33,7 @@ def correlate_parameters_with_timeseries(
 ) -> EnsembleCorrelations:
     """Get parameter correlations for a timeseries at a given timestep"""
 
-    summary_access = SummaryAccess(
-        authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
-    )
+    summary_access = SummaryAccess(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
     parameter_access = ParameterAccess(
         authenticated_user.get_sumo_access_token(),
         case_uuid=case_uuid,
@@ -65,9 +63,7 @@ def correlate_parameters_with_inplace_volumes(
 ) -> EnsembleCorrelations:
     """Get parameter correlations for an inplace volumetrics response"""
 
-    inplace_access = InplaceVolumetricsAccess(
-        authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
-    )
+    inplace_access = InplaceVolumetricsAccess(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
     parameter_access = ParameterAccess(
         authenticated_user.get_sumo_access_token(),
         case_uuid=case_uuid,

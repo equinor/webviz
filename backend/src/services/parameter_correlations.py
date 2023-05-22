@@ -28,9 +28,7 @@ def correlate_parameters_with_response(
     # Sort correlations in descending order
     sorted_corr_series = corr_series.reindex(corr_series.abs().sort_values().index)
 
-    return EnsembleCorrelations(
-        names=sorted_corr_series.index.to_list(), values=sorted_corr_series.to_list()
-    )
+    return EnsembleCorrelations(names=sorted_corr_series.index.to_list(), values=sorted_corr_series.to_list())
 
 
 def _numerical_parameters_to_pandas_table(
@@ -52,9 +50,7 @@ def _numerical_parameters_to_pandas_table(
     df = pd.DataFrame(data)
 
     # Pivot name column to individual columns per parameter
-    pivot_df = df.pivot(
-        index="realization", columns="name", values="value"
-    ).reset_index()
+    pivot_df = df.pivot(index="realization", columns="name", values="value").reset_index()
     return pivot_df
 
 

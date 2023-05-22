@@ -74,9 +74,7 @@ class InplaceVolumetricsAccess:
         self._sumo_client: SumoClient = create_sumo_client_instance(access_token)
         self._case_uuid = case_uuid
         self._iteration_name = iteration_name
-        self.case_collection = CaseCollection(self._sumo_client).filter(
-            uuid=self._case_uuid
-        )
+        self.case_collection = CaseCollection(self._sumo_client).filter(uuid=self._case_uuid)
         if len(self.case_collection) != 1:
             raise ValueError(f"None or multiple sumo cases found {self._case_uuid=}")
 
@@ -99,15 +97,11 @@ class InplaceVolumetricsAccess:
                 for col in vol_table_collection.columns
                 if PossibleInplaceVolumetricsNumericalColumnNames.has_value(col)
             ]
-            first_numerical_column_table = self.get_table(
-                vol_table_name, numerical_column_names[0]
-            )
+            first_numerical_column_table = self.get_table(vol_table_name, numerical_column_names[0])
             categorical_column_metadata = [
                 InplaceVolumetricsCategoricalMetaData(
                     name=col,
-                    unique_values=pc.unique(
-                        first_numerical_column_table[col]
-                    ).to_pylist(),
+                    unique_values=pc.unique(first_numerical_column_table[col]).to_pylist(),
                 )
                 for col in vol_table_collection.columns
                 if PossibleInplaceVolumetricsCategoricalColumnNames.has_value(col)
@@ -131,9 +125,7 @@ class InplaceVolumetricsAccess:
             column=column_name,
         )
         if len(vol_table_collection) != 1:
-            raise ValueError(
-                f"None or multiple volumetric tables found {self._case_uuid}, {table_name}, {column_name}"
-            )
+            raise ValueError(f"None or multiple volumetric tables found {self._case_uuid}, {table_name}, {column_name}")
         vol_table = vol_table_collection[0]
         byte_stream: BytesIO = vol_table.blob
         table: pa.Table = pq.read_table(byte_stream)
@@ -143,9 +135,7 @@ class InplaceVolumetricsAccess:
         self,
         table_name: str,
         column_name: str,
-        categorical_filters: Optional[
-            List[InplaceVolumetricsCategoricalMetaData]
-        ] = None,
+        categorical_filters: Optional[List[InplaceVolumetricsCategoricalMetaData]] = None,
         realizations: Optional[Sequence[int]] = None,
     ) -> EnsembleScalarResponse:
         """Retrieve the volumetric response for the given table name and column name"""
@@ -157,15 +147,11 @@ class InplaceVolumetricsAccess:
             for category in categorical_filters:
                 print(category)
                 # table = table.filter(table[category.name].is_in(category.unique_values))
-                mask = pc.is_in(
-                    table[category.name], value_set=pa.array(category.unique_values)
-                )
+                mask = pc.is_in(table[category.name], value_set=pa.array(category.unique_values))
                 table = table.filter(mask)
                 print(table)
 
-        summed_on_real_table = (
-            table.group_by("REAL").aggregate([(column_name, "sum")]).sort_by("REAL")
-        )
+        summed_on_real_table = table.group_by("REAL").aggregate([(column_name, "sum")]).sort_by("REAL")
 
         return EnsembleScalarResponse(
             realizations=summed_on_real_table["REAL"].to_pylist(),

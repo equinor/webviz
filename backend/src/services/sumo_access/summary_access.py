@@ -5,24 +5,19 @@ from typing import List, Optional, Sequence, Tuple
 
 import numpy as np
 import pyarrow as pa
-import pyarrow.parquet as pq
 import pyarrow.compute as pc
+import pyarrow.parquet as pq
 from fmu.sumo.explorer.objects import CaseCollection
 from sumo.wrapper import SumoClient
 
-from src.services.utils.arrow_helpers import sort_table_on_real_then_date
-from src.services.utils.perf_timer import PerfTimer
-from src.services.utils.field_metadata import (
-    create_vector_metadata_from_field_meta,
-)
-from ._helpers import create_sumo_client_instance
-from src.services.utils.resampling import resample_segmented_multi_real_table
-from src.services.sumo_access.types.summary_types import (
-    Frequency,
-    RealizationVector,
-    VectorMetadata,
-)
 from src.services.sumo_access.types.generic_types import EnsembleScalarResponse
+from src.services.sumo_access.types.summary_types import Frequency, RealizationVector, VectorMetadata
+from src.services.utils.arrow_helpers import sort_table_on_real_then_date
+from src.services.utils.field_metadata import create_vector_metadata_from_field_meta
+from src.services.utils.perf_timer import PerfTimer
+from src.services.utils.resampling import resample_segmented_multi_real_table
+
+from ._helpers import create_sumo_client_instance
 
 LOGGER = logging.getLogger(__name__)
 
@@ -119,17 +114,11 @@ class SummaryAccess:
         # Verify that the column datatypes are as we expect
         schema = table.schema
         if schema.field("DATE").type != pa.timestamp("ms"):
-            raise ValueError(
-                f"Unexpected type for DATE column {schema.field('DATE').type=}"
-            )
+            raise ValueError(f"Unexpected type for DATE column {schema.field('DATE').type=}")
         if schema.field("REAL").type != pa.int16():
-            raise ValueError(
-                f"Unexpected type for REAL column {schema.field('REAL').type=}"
-            )
+            raise ValueError(f"Unexpected type for REAL column {schema.field('REAL').type=}")
         if schema.field(vector_name).type != pa.float32():
-            raise ValueError(
-                f"Unexpected type for {vector_name} column {schema.field(vector_name).type=}"
-            )
+            raise ValueError(f"Unexpected type for {vector_name} column {schema.field(vector_name).type=}")
 
         if realizations is not None:
             mask = pc.is_in(table["REAL"], value_set=pa.array(realizations))
@@ -144,9 +133,7 @@ class SummaryAccess:
 
         # The resampling algorithm below uses the field metadata to determine if the vector is a rate or not.
         # For now, fail hard if metadata is not present. This test could be refined, but should suffice now.
-        vector_metadata = create_vector_metadata_from_field_meta(
-            table.schema.field(vector_name)
-        )
+        vector_metadata = create_vector_metadata_from_field_meta(table.schema.field(vector_name))
         if not vector_metadata:
             raise ValueError(f"Did not find valid metadata for vector {vector_name}")
 
@@ -176,14 +163,10 @@ class SummaryAccess:
         resampling_frequency: Optional[Frequency],
         realizations: Optional[Sequence[int]],
     ) -> List[RealizationVector]:
-        table, vector_metadata = self.get_vector_table(
-            vector_name, resampling_frequency, realizations
-        )
+        table, vector_metadata = self.get_vector_table(vector_name, resampling_frequency, realizations)
 
         real_arr_np = table.column("REAL").to_numpy()
-        unique_reals, first_occurrence_idx, real_counts = np.unique(
-            real_arr_np, return_index=True, return_counts=True
-        )
+        unique_reals, first_occurrence_idx, real_counts = np.unique(real_arr_np, return_index=True, return_counts=True)
 
         whole_date_np_arr = table.column("DATE").to_numpy()
         whole_value_np_arr = table.column(vector_name).to_numpy()
@@ -212,9 +195,7 @@ class SummaryAccess:
         timestep: datetime.datetime,
         realizations: Optional[Sequence[int]] = None,
     ) -> EnsembleScalarResponse:
-        table, _ = self.get_vector_table(
-            vector_name, resampling_frequency=None, realizations=realizations
-        )
+        table, _ = self.get_vector_table(vector_name, resampling_frequency=None, realizations=realizations)
 
         if realizations is not None:
             mask = pc.is_in(table["REAL"], value_set=pa.array(realizations))
