@@ -11,3 +11,10 @@ class EnsembleScalarResponse(BaseModel):
 class EnsembleCorrelations(BaseModel):
     names: List[str]
     values: List[float]
+
+
+class TableMetaData(BaseModel):
+    name: str
+    tagname: str
+    column_names: List[str]
+    file_format: str
