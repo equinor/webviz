@@ -10,8 +10,12 @@ import pyarrow.parquet as pq
 from fmu.sumo.explorer.objects import CaseCollection
 from sumo.wrapper import SumoClient
 
-from src.services.sumo_access.types.generic_types import EnsembleScalarResponse
-from src.services.sumo_access.types.summary_types import Frequency, RealizationVector, VectorMetadata
+from src.services.types.generic_types import EnsembleScalarResponse
+from src.services.types.summary_types import (
+    Frequency,
+    RealizationVector,
+    VectorMetadata,
+)
 from src.services.utils.arrow_helpers import sort_table_on_real_then_date
 from src.services.utils.field_metadata import create_vector_metadata_from_field_meta
 from src.services.utils.perf_timer import PerfTimer

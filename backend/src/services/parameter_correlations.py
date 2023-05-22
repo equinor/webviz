@@ -2,8 +2,8 @@ from typing import List
 
 import pandas as pd
 
-from .sumo_access.parameter_access import EnsembleParameter
-from .sumo_access.types.generic_types import (
+from src.services.sumo_access.parameter_access import EnsembleParameter
+from src.services.types.generic_types import (
     EnsembleScalarResponse,
     EnsembleCorrelations,
 )

@@ -2,7 +2,7 @@ from typing import Optional
 
 import pyarrow as pa
 
-from src.services.sumo_access.types.summary_types import VectorMetadata
+from src.services.types.summary_types import VectorMetadata
 
 
 def is_rate_from_field_meta(field: pa.Field) -> bool:

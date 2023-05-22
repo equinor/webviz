@@ -4,7 +4,7 @@ import logging
 from fastapi import APIRouter, Depends, Query
 
 from src.services.sumo_access.parameter_access import ParameterAccess
-from src.services.sumo_access.types.generic_types import EnsembleCorrelations
+from src.services.types.generic_types import EnsembleCorrelations
 from src.services.parameter_correlations import correlate_parameters_with_response
 from src.services.sumo_access.summary_access import SummaryAccess
 from src.services.sumo_access.inplace_volumetrics_access import (

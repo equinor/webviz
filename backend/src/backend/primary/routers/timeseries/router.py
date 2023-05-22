@@ -7,7 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from src.services.summary_vector_statistics import compute_vector_statistics
 from src.services.sumo_access.summary_access import Frequency, SummaryAccess
 from src.services.utils.authenticated_user import AuthenticatedUser
-from src.services.sumo_access.types.generic_types import EnsembleScalarResponse
+from src.services.types.generic_types import EnsembleScalarResponse
 from src.backend.auth.auth_helper import AuthHelper
 from . import converters
 from . import schemas

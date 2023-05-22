@@ -7,11 +7,12 @@ from fmu.sumo.explorer import TimeFilter, TimeType
 from fmu.sumo.explorer.objects import Case, CaseCollection, SurfaceCollection
 from sumo.wrapper import SumoClient
 
+from src.services.types.surface_types import (DynamicSurfaceDirectory,
+                                              StaticSurfaceDirectory)
 from src.services.utils.perf_timer import PerfTimer
 from src.services.utils.statistic_function import StatisticFunction
 
 from ._helpers import create_sumo_client_instance
-from .types.surface_types import DynamicSurfaceDirectory, StaticSurfaceDirectory
 
 LOGGER = logging.getLogger(__name__)
 
