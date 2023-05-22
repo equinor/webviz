@@ -66,7 +66,11 @@ def get_grid_geometry_checksums(sumo_client: SumoClient, case_id: str, iteration
 
 
 def get_grid_geometry_blob_id(
-    sumo_client: SumoClient, case_id: str, iteration: str, realization: int, grid_name: str
+    sumo_client: SumoClient,
+    case_id: str,
+    iteration: str,
+    realization: int,
+    grid_name: str,
 ) -> str:
     """Get the blob id for a given grid geometry in a case, iteration and realization"""
     hits = sumo_client.get(
@@ -85,7 +89,12 @@ def get_grid_geometry_blob_id(
 
 
 def get_grid_parameter_blob_id(
-    sumo_client: SumoClient, case_id: str, iteration: str, realization: int, grid_name: str, parameter_name: str
+    sumo_client: SumoClient,
+    case_id: str,
+    iteration: str,
+    realization: int,
+    grid_name: str,
+    parameter_name: str,
 ) -> str:
     """Get the blob id for a given grid parameter in a case, iteration and realization""" ""
     hits = sumo_client.get(

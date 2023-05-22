@@ -7,7 +7,7 @@ from src.services.sumo_access.inplace_volumetrics_access import (
     InplaceVolumetricsCategoricalMetaData,
 )
 
-from src.services.sumo_access.generic_types import EnsembleScalarResponse
+from src.services.types.generic_types import EnsembleScalarResponse
 from src.services.utils.authenticated_user import AuthenticatedUser
 
 from src.backend.auth.auth_helper import AuthHelper

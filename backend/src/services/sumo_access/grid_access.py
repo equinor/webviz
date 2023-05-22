@@ -9,7 +9,7 @@ from sumo.wrapper import SumoClient
 from src.services.utils.perf_timer import PerfTimer
 
 from ._helpers import create_sumo_client_instance
-from .sumo_queries import (
+from .queries.cpgrid import (
     get_grid_geometry_blob_id,
     get_grid_names,
     get_grid_parameter_blob_id,

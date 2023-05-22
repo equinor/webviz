@@ -1,26 +1,8 @@
 from __future__ import annotations
 
-from enum import Enum
-from typing import List, Optional
+from typing import List
 
 from pydantic import BaseModel
-
-
-class StatisticFunction(Enum):
-    MIN = "MIN"
-    MAX = "MAX"
-    MEAN = "MEAN"
-    P10 = "P10"
-    P90 = "P90"
-    P50 = "P50"
-    STD = "STD"
-
-    @classmethod
-    def from_string_value(cls, value: str) -> Optional[StatisticFunction]:
-        try:
-            return cls(value)
-        except ValueError:
-            return None
 
 
 class DynamicSurfaceDirectory(BaseModel):

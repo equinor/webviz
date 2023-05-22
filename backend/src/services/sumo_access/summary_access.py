@@ -5,18 +5,23 @@ from typing import List, Optional, Sequence, Tuple
 
 import numpy as np
 import pyarrow as pa
-import pyarrow.parquet as pq
 import pyarrow.compute as pc
+import pyarrow.parquet as pq
 from fmu.sumo.explorer.objects import CaseCollection
 from sumo.wrapper import SumoClient
 
+from src.services.types.generic_types import EnsembleScalarResponse
+from src.services.types.summary_types import (
+    Frequency,
+    RealizationVector,
+    VectorMetadata,
+)
 from src.services.utils.arrow_helpers import sort_table_on_real_then_date
+from src.services.utils.field_metadata import create_vector_metadata_from_field_meta
 from src.services.utils.perf_timer import PerfTimer
-from ._field_metadata import create_vector_metadata_from_field_meta
+from src.services.utils.resampling import resample_segmented_multi_real_table
+
 from ._helpers import create_sumo_client_instance
-from ._resampling import resample_segmented_multi_real_table
-from .types import Frequency, RealizationVector, VectorMetadata
-from .generic_types import EnsembleScalarResponse
 
 LOGGER = logging.getLogger(__name__)
 
@@ -212,7 +217,9 @@ class SummaryAccess:
         resampling_frequency: Optional[Frequency] = None,
     ) -> List[datetime.datetime]:
         table, _ = self.get_vector_table(
-            self.get_vector_names()[0], resampling_frequency=resampling_frequency, realizations=None
+            self.get_vector_names()[0],
+            resampling_frequency=resampling_frequency,
+            realizations=None,
         )
 
         return pc.unique(table.column("DATE")).to_pylist()

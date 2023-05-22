@@ -7,7 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from src.services.summary_vector_statistics import compute_vector_statistics
 from src.services.sumo_access.summary_access import Frequency, SummaryAccess
 from src.services.utils.authenticated_user import AuthenticatedUser
-from src.services.sumo_access.generic_types import EnsembleScalarResponse
+from src.services.types.generic_types import EnsembleScalarResponse
 from src.backend.auth.auth_helper import AuthHelper
 from . import converters
 from . import schemas
@@ -105,7 +105,8 @@ def get_timesteps(
     stored raw dates will be returned. Thus the returned list of dates will not include
     dates from long running realizations.
     For other resampling frequencies, the date range will be expanded to cover the entire
-    time range of all the requested realizations before computing the resampled dates."""
+    time range of all the requested realizations before computing the resampled dates.
+    """
     access = SummaryAccess(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
     sumo_freq = Frequency.from_string_value(resampling_frequency.value if resampling_frequency else "dummy")
     return access.get_timesteps(resampling_frequency=sumo_freq)

@@ -1,19 +1,20 @@
+import logging
 from enum import Enum
 from io import BytesIO
 from typing import List, Optional, Sequence, Union
-import logging
 
-from pydantic import BaseModel
 import pyarrow as pa
-import pyarrow.parquet as pq
 import pyarrow.compute as pc
+import pyarrow.parquet as pq
 from fmu.sumo.explorer.explorer import CaseCollection, SumoClient
 from fmu.sumo.explorer.objects import TableCollection
+from pydantic import BaseModel
 
-# from fmu.sumo.explorer.objects.table import AggregatedTable
+from src.services.types.generic_types import EnsembleScalarResponse
 
 from ._helpers import create_sumo_client_instance
-from .generic_types import EnsembleScalarResponse
+
+# from fmu.sumo.explorer.objects.table import AggregatedTable
 
 
 LOGGER = logging.getLogger(__name__)
