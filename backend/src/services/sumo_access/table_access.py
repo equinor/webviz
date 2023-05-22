@@ -61,9 +61,9 @@ class TableAccess:
             realization=realization,
         )
         if len(table_collection) == 0:
-            raise ValueError(f"No table found for vector {table_metadata=}")
+            raise ValueError(f"No table found for {table_metadata=}")
         if len(table_collection) > 1:
-            raise ValueError(f"Multiple tables found for vector {table_metadata=}")
+            raise ValueError(f"Multiple tables found for {table_metadata=}")
 
         sumo_table = table_collection[0]
         return sumo_table.arrowtable
