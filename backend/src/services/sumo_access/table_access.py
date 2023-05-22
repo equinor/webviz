@@ -68,7 +68,7 @@ class TableAccess:
         sumo_table = table_collection[0]
         return sumo_table.arrowtable
 
-    def realizations_tables_are_equal(self, table_metadata) -> bool:
+    def realizations_tables_are_equal(self, table_metadata: TableMetaData) -> bool:
         """Check if all realizations have equal table"""
 
         case_collection = CaseCollection(self._sumo_client).filter(uuid=self._case_uuid)

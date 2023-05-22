@@ -48,7 +48,7 @@ def table_data(
     realization: int = Query(description="Realization number"),
     # table_metadata: TableMetaData = Depends(table_metadata),
     # fmt:on
-) -> TableMetaData:
+) -> ORJSONResponse:
     """Get pvt table data for a given Sumo ensemble and realization"""
 
     # Hardcoded for now
