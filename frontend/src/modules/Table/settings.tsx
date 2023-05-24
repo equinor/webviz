@@ -29,7 +29,7 @@ export const Settings = ({ moduleContext }: ModuleFCProps<State>) => {
     return (
         <>
             <Label text="Index column">
-                <ChannelSelect channel={indexColumnChannelName} onChange={handleIndexColumnChannelChanged} />
+                <ChannelSelect initialChannel={indexColumnChannelName} onChange={handleIndexColumnChannelChanged} />
             </Label>
             {indexColumnChannel && (
                 <Label text="Column channels">
@@ -39,7 +39,7 @@ export const Settings = ({ moduleContext }: ModuleFCProps<State>) => {
                                 <ChannelSelect
                                     className="flex-grow"
                                     key={i}
-                                    channel={channel}
+                                    initialChannel={channel}
                                     channelKeyCategory={indexColumnChannel.getDataDef().key}
                                     onChange={(channel) => handleColumnChannelChanged(channel, i)}
                                 />

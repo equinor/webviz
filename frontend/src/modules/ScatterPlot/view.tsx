@@ -5,6 +5,7 @@ import { ModuleFCProps } from "@framework/Module";
 import { useElementSize } from "@lib/hooks/useElementSize";
 
 import { ThreeDScatter } from "./3dscatterplot";
+import { Barchart } from "./barchart";
 import { Histogram } from "./histogram";
 import PlotlyScatter from "./plotlyScatterChart";
 import { State } from "./state";
@@ -20,7 +21,7 @@ function nFormatter(num: number, digits: number): string {
         { value: 1e18, symbol: "E" },
     ];
     const rx = /\.0+$|(\.[0-9]*[1-9])0+$/;
-    var item = lookup
+    const item = lookup
         .slice()
         .reverse()
         .find(function (item) {
@@ -120,6 +121,24 @@ export const view = ({ moduleContext }: ModuleFCProps<State>) => {
                     yAxisTitle={channelX?.getDataDef().key || ""}
                     width={wrapperDivSize.width}
                     height={wrapperDivSize.height}
+                />
+            );
+        }
+
+        if (plotType === "barchart") {
+            if (dataX === null) {
+                return "Please select a channel for the x-axis.";
+            }
+
+            return (
+                <Barchart
+                    x={dataX.map((el: any) => el.value)}
+                    y={dataX.map((el: any) => el.key)}
+                    xAxisTitle={xTitle}
+                    yAxisTitle={channelX?.getDataDef().key || ""}
+                    width={wrapperDivSize.width}
+                    height={wrapperDivSize.height}
+                    orientation="h"
                 />
             );
         }

@@ -12,7 +12,7 @@ import { Dropdown } from "../Dropdown";
 import { BaseComponentProps } from "../_BaseComponent";
 
 export type ChannelSelectProps = {
-    channel?: string;
+    initialChannel?: string;
     channelKeyCategory?: BroadcastChannelKeyCategory;
     onChange?: (channel: string) => void;
     className?: string;
@@ -20,7 +20,7 @@ export type ChannelSelectProps = {
 
 export const ChannelSelect: React.FC<ChannelSelectProps> = (props) => {
     const { channelKeyCategory, onChange, ...rest } = props;
-    const [channel, setChannel] = React.useState<string>(props.channel ?? "");
+    const [channel, setChannel] = React.useState<string>(props.initialChannel ?? "");
     const [channels, setChannels] = React.useState<string[]>([]);
 
     React.useEffect(() => {

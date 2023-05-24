@@ -1,19 +1,10 @@
 import React from "react";
 
-import { EnsembleParameterDescription, VectorDescription } from "@api";
-import { BroadcastChannelKeyCategory, broadcaster } from "@framework/Broadcaster";
+import { BroadcastChannelKeyCategory } from "@framework/Broadcaster";
 import { ModuleFCProps } from "@framework/Module";
-import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
-import { useSubscribedValue } from "@framework/WorkbenchServices";
-import { ApiStateWrapper } from "@lib/components/ApiStateWrapper";
 import { ChannelSelect } from "@lib/components/ChannelSelect";
-import { Checkbox } from "@lib/components/Checkbox";
-import { CircularProgress } from "@lib/components/CircularProgress";
-import { Dropdown, DropdownOption } from "@lib/components/Dropdown";
-import { Input } from "@lib/components/Input";
+import { Dropdown } from "@lib/components/Dropdown";
 import { Label } from "@lib/components/Label";
-import { Select, SelectOption } from "@lib/components/Select";
-import { Ensemble } from "@shared-types/ensemble";
 
 import { State } from "./state";
 
@@ -21,6 +12,10 @@ const plotTypes = [
     {
         value: "histogram",
         label: "Histogram",
+    },
+    {
+        value: "barchart",
+        label: "Bar chart",
     },
     {
         value: "scatter",
@@ -56,7 +51,7 @@ const crossPlottingTypes = [
 ];
 
 //-----------------------------------------------------------------------------------------------------------
-export function settings({ moduleContext, workbenchServices }: ModuleFCProps<State>) {
+export function settings({ moduleContext }: ModuleFCProps<State>) {
     const [channelNameX, setChannelNameX] = moduleContext.useStoreState("channelNameX");
     const [channelNameY, setChannelNameY] = moduleContext.useStoreState("channelNameY");
     const [channelNameZ, setChannelNameZ] = moduleContext.useStoreState("channelNameZ");
@@ -88,23 +83,35 @@ export function settings({ moduleContext, workbenchServices }: ModuleFCProps<Sta
             return null;
         }
         const content: React.ReactNode[] = [
-            <Label text="Data channel X axis">
-                <ChannelSelect onChange={handleChannelXChanged} channelKeyCategory={crossPlottingType} />
+            <Label text="Data channel X axis" key="data-channel-x-axis">
+                <ChannelSelect
+                    onChange={handleChannelXChanged}
+                    channelKeyCategory={crossPlottingType}
+                    initialChannel={channelNameX || undefined}
+                />
             </Label>,
         ];
 
         if (plotType === "scatter" || plotType === "scatter3d") {
             content.push(
-                <Label text="Data channel Y axis">
-                    <ChannelSelect onChange={handleChannelYChanged} channelKeyCategory={crossPlottingType} />
+                <Label text="Data channel Y axis" key="data-channel-y-axis">
+                    <ChannelSelect
+                        onChange={handleChannelYChanged}
+                        channelKeyCategory={crossPlottingType}
+                        initialChannel={channelNameY || undefined}
+                    />
                 </Label>
             );
         }
 
         if (plotType === "scatter3d") {
             content.push(
-                <Label text="Data channel Z axis">
-                    <ChannelSelect onChange={handleChannelZChanged} channelKeyCategory={crossPlottingType} />
+                <Label text="Data channel Z axis" key="data-channel-z-axis">
+                    <ChannelSelect
+                        onChange={handleChannelZChanged}
+                        channelKeyCategory={crossPlottingType}
+                        initialChannel={channelNameZ || undefined}
+                    />
                 </Label>
             );
         }
