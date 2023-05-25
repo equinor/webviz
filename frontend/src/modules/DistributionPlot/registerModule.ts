@@ -3,4 +3,4 @@ import { SyncSettingKey } from "@framework/SyncSettings";
 
 import { State } from "./state";
 
-ModuleRegistry.registerModule<State>("ScatterPlot", [SyncSettingKey.ENSEMBLE, SyncSettingKey.TIME_SERIES]);
+ModuleRegistry.registerModule<State>("DistributionPlot", [SyncSettingKey.ENSEMBLE, SyncSettingKey.TIME_SERIES]);

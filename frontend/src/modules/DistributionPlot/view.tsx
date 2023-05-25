@@ -1,14 +1,16 @@
 import React from "react";
 
-import { broadcaster } from "@framework/Broadcaster";
+import { BroadcastChannelKeyCategory, BroadcastChannelMeta, broadcaster } from "@framework/Broadcaster";
 import { ModuleFCProps } from "@framework/Module";
 import { useElementSize } from "@lib/hooks/useElementSize";
 
-import { ThreeDScatter } from "./3dscatterplot";
-import { Barchart } from "./barchart";
-import { Histogram } from "./histogram";
-import PlotlyScatter from "./plotlyScatterChart";
-import { State } from "./state";
+import { PlotHoverEvent } from "plotly.js";
+
+import { Barchart } from "./components/barchart";
+import { Histogram } from "./components/histogram";
+import PlotlyScatter from "./components/scatterPlot";
+import { ThreeDScatter } from "./components/threeDScatterPlot";
+import { PlotType, State } from "./state";
 
 function nFormatter(num: number, digits: number): string {
     const lookup = [
@@ -30,19 +32,21 @@ function nFormatter(num: number, digits: number): string {
     return item ? (num / item.value).toFixed(digits).replace(rx, "$1") + item.symbol : "0";
 }
 
-export const view = ({ moduleContext }: ModuleFCProps<State>) => {
+export const view = ({ moduleContext, workbenchServices }: ModuleFCProps<State>) => {
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);
     const wrapperDivSize = useElementSize(wrapperDivRef);
     const plotType = moduleContext.useStoreValue("plotType");
     const channelNameX = moduleContext.useStoreValue("channelNameX");
     const channelNameY = moduleContext.useStoreValue("channelNameY");
     const channelNameZ = moduleContext.useStoreValue("channelNameZ");
+    const numBins = moduleContext.useStoreValue("numBins");
+    const orientation = moduleContext.useStoreValue("orientation");
     const [dataX, setDataX] = React.useState<any[] | null>(null);
     const [dataY, setDataY] = React.useState<any[] | null>(null);
     const [dataZ, setDataZ] = React.useState<any[] | null>(null);
-    const [xTitle, setXTitle] = React.useState<string>("");
-    const [yTitle, setYTitle] = React.useState<string>("");
-    const [zTitle, setZTitle] = React.useState<string>("");
+    const [metaDataX, setMetaDataX] = React.useState<BroadcastChannelMeta>({ description: "", unit: "", ensemble: "" });
+    const [metaDataY, setMetaDataY] = React.useState<BroadcastChannelMeta>({ description: "", unit: "", ensemble: "" });
+    const [metaDataZ, setMetaDataZ] = React.useState<BroadcastChannelMeta>({ description: "", unit: "", ensemble: "" });
 
     const channelX = broadcaster.getChannel(channelNameX ?? "");
     const channelY = broadcaster.getChannel(channelNameY ?? "");
@@ -50,9 +54,9 @@ export const view = ({ moduleContext }: ModuleFCProps<State>) => {
 
     React.useEffect(() => {
         if (channelX) {
-            const handleChannelXChanged = (data: any, description: string) => {
+            const handleChannelXChanged = (data: any, metaData: BroadcastChannelMeta) => {
                 setDataX(data);
-                setXTitle(description);
+                setMetaDataX(metaData);
             };
 
             const unsubscribeFunc = channelX.subscribe(handleChannelXChanged);
@@ -63,9 +67,9 @@ export const view = ({ moduleContext }: ModuleFCProps<State>) => {
 
     React.useEffect(() => {
         if (channelY) {
-            const handleChannelYChanged = (data: any, description: string) => {
+            const handleChannelYChanged = (data: any, metaData: BroadcastChannelMeta) => {
                 setDataY(data);
-                setYTitle(description);
+                setMetaDataY(metaData);
             };
 
             const unsubscribeFunc = channelY.subscribe(handleChannelYChanged);
@@ -76,9 +80,9 @@ export const view = ({ moduleContext }: ModuleFCProps<State>) => {
 
     React.useEffect(() => {
         if (channelZ) {
-            const handleChannelZChanged = (data: any, description: string) => {
+            const handleChannelZChanged = (data: any, metaData: BroadcastChannelMeta) => {
                 setDataZ(data);
-                setZTitle(description);
+                setMetaDataZ(metaData);
             };
 
             const unsubscribeFunc = channelZ.subscribe(handleChannelZChanged);
@@ -86,6 +90,17 @@ export const view = ({ moduleContext }: ModuleFCProps<State>) => {
             return unsubscribeFunc;
         }
     }, [channelZ]);
+
+    const handleHoverChanged = (e: PlotHoverEvent) => {
+        if (plotType === PlotType.BarChart) {
+            if (channelX?.getDataDef().key === BroadcastChannelKeyCategory.Realization) {
+                workbenchServices.publishGlobalData("global.hoverRealization", {
+                    realization:
+                        orientation === "h" ? ((e.points[0].y ?? 0) as number) : ((e.points[0].x ?? 0) as number),
+                });
+            }
+        }
+    };
 
     const makeContent = (): React.ReactNode => {
         if (plotType === null) {
@@ -97,7 +112,6 @@ export const view = ({ moduleContext }: ModuleFCProps<State>) => {
                 return "Please select a channel for the x-axis.";
             }
 
-            const numBins = 10;
             const xValues = dataX.map((el: any) => el.value);
             const xMin = Math.min(...xValues);
             const xMax = Math.max(...xValues);
@@ -117,10 +131,11 @@ export const view = ({ moduleContext }: ModuleFCProps<State>) => {
                 <Histogram
                     x={binStrings}
                     y={binValues}
-                    xAxisTitle={xTitle}
+                    xAxisTitle={`${metaDataX.description} [${metaDataX.unit}]`}
                     yAxisTitle={channelX?.getDataDef().key || ""}
                     width={wrapperDivSize.width}
                     height={wrapperDivSize.height}
+                    onHoverData={handleHoverChanged}
                 />
             );
         }
@@ -130,15 +145,22 @@ export const view = ({ moduleContext }: ModuleFCProps<State>) => {
                 return "Please select a channel for the x-axis.";
             }
 
+            const keyData = dataX.map((el: any) => el.key);
+            const valueData = dataX.map((el: any) => el.value);
+
+            const keyTitle = channelX?.getDataDef().key || "";
+            const valueTitle = `${metaDataX.description} [${metaDataX.unit}]`;
+
             return (
                 <Barchart
-                    x={dataX.map((el: any) => el.value)}
-                    y={dataX.map((el: any) => el.key)}
-                    xAxisTitle={xTitle}
-                    yAxisTitle={channelX?.getDataDef().key || ""}
+                    x={orientation === "h" ? valueData : keyData}
+                    y={orientation === "h" ? keyData : valueData}
+                    xAxisTitle={orientation === "h" ? valueTitle : keyTitle}
+                    yAxisTitle={orientation === "h" ? keyTitle : valueTitle}
                     width={wrapperDivSize.width}
                     height={wrapperDivSize.height}
-                    orientation="h"
+                    orientation={orientation}
+                    onHoverData={handleHoverChanged}
                 />
             );
         }
@@ -166,11 +188,12 @@ export const view = ({ moduleContext }: ModuleFCProps<State>) => {
                 <PlotlyScatter
                     x={xValues}
                     y={yValues}
-                    xAxisTitle={xTitle}
-                    yAxisTitle={yTitle}
+                    xAxisTitle={`${metaDataX.description} [${metaDataX.unit}]`}
+                    yAxisTitle={`${metaDataY.description} [${metaDataY.unit}]`}
                     realizations={[]}
                     width={wrapperDivSize.width}
                     height={wrapperDivSize.height}
+                    onHoverData={handleHoverChanged}
                 />
             );
         }
@@ -208,11 +231,12 @@ export const view = ({ moduleContext }: ModuleFCProps<State>) => {
                     x={xValues}
                     y={yValues}
                     z={zValues}
-                    xAxisTitle={xTitle}
-                    yAxisTitle={yTitle}
-                    zAxisTitle={zTitle}
+                    xAxisTitle={`${metaDataX.description} [${metaDataX.unit}]`}
+                    yAxisTitle={`${metaDataY.description} [${metaDataY.unit}]`}
+                    zAxisTitle={`${metaDataZ.description} [${metaDataZ.unit}]`}
                     width={wrapperDivSize.width}
                     height={wrapperDivSize.height}
+                    onHoverData={handleHoverChanged}
                 />
             );
         }

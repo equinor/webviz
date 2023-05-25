@@ -1,28 +1,31 @@
-import React from "react";
+import React, { ChangeEvent } from "react";
 
 import { BroadcastChannelKeyCategory } from "@framework/Broadcaster";
 import { ModuleFCProps } from "@framework/Module";
 import { ChannelSelect } from "@lib/components/ChannelSelect";
+import { Checkbox } from "@lib/components/Checkbox";
 import { Dropdown } from "@lib/components/Dropdown";
+import { Input } from "@lib/components/Input";
 import { Label } from "@lib/components/Label";
+import { RadioGroup } from "@lib/components/RadioGroup";
 
-import { State } from "./state";
+import { PlotType, State } from "./state";
 
 const plotTypes = [
     {
-        value: "histogram",
+        value: PlotType.Histogram,
         label: "Histogram",
     },
     {
-        value: "barchart",
+        value: PlotType.BarChart,
         label: "Bar chart",
     },
     {
-        value: "scatter",
+        value: PlotType.Scatter,
         label: "Scatter",
     },
     {
-        value: "scatter3d",
+        value: PlotType.Scatter3D,
         label: "Scatter 3D",
     },
 ];
@@ -56,6 +59,8 @@ export function settings({ moduleContext }: ModuleFCProps<State>) {
     const [channelNameY, setChannelNameY] = moduleContext.useStoreState("channelNameY");
     const [channelNameZ, setChannelNameZ] = moduleContext.useStoreState("channelNameZ");
     const [plotType, setPlotType] = moduleContext.useStoreState("plotType");
+    const [numBins, setNumBins] = moduleContext.useStoreState("numBins");
+    const [orientation, setOrientation] = moduleContext.useStoreState("orientation");
     const [crossPlottingType, setCrossPlottingType] = React.useState<BroadcastChannelKeyCategory | null>(null);
 
     const handleChannelXChanged = (channelName: string) => {
@@ -71,11 +76,19 @@ export function settings({ moduleContext }: ModuleFCProps<State>) {
     };
 
     const handlePlotTypeChanged = (value: string) => {
-        setPlotType(value);
+        setPlotType(value as PlotType);
     };
 
     const handleCrossPlottingTypeChanged = (value: string) => {
         setCrossPlottingType(value as BroadcastChannelKeyCategory);
+    };
+
+    const handleNumBinsChanged = (e: ChangeEvent<HTMLInputElement>) => {
+        setNumBins(parseInt(e.target.value, 10));
+    };
+
+    const handleOrientationChanged = (e: ChangeEvent<HTMLInputElement>) => {
+        setOrientation(e.target.value as "h" | "v");
     };
 
     const makeContent = (): React.ReactNode => {
@@ -92,7 +105,7 @@ export function settings({ moduleContext }: ModuleFCProps<State>) {
             </Label>,
         ];
 
-        if (plotType === "scatter" || plotType === "scatter3d") {
+        if (plotType === PlotType.Scatter || plotType === PlotType.Scatter3D) {
             content.push(
                 <Label text="Data channel Y axis" key="data-channel-y-axis">
                     <ChannelSelect
@@ -104,13 +117,42 @@ export function settings({ moduleContext }: ModuleFCProps<State>) {
             );
         }
 
-        if (plotType === "scatter3d") {
+        if (plotType === PlotType.Scatter3D) {
             content.push(
                 <Label text="Data channel Z axis" key="data-channel-z-axis">
                     <ChannelSelect
                         onChange={handleChannelZChanged}
                         channelKeyCategory={crossPlottingType}
                         initialChannel={channelNameZ || undefined}
+                    />
+                </Label>
+            );
+        }
+
+        if (plotType === PlotType.Histogram) {
+            content.push(
+                <Label text="Number of bins" key="number-of-bins">
+                    <Input type="number" value={numBins} onChange={handleNumBinsChanged} />
+                </Label>
+            );
+        }
+
+        if (plotType === PlotType.BarChart) {
+            content.push(
+                <Label text="Orientation" key="orientation">
+                    <RadioGroup
+                        options={[
+                            {
+                                label: "Horizontal",
+                                value: "h",
+                            },
+                            {
+                                label: "Vertical",
+                                value: "v",
+                            },
+                        ]}
+                        onChange={handleOrientationChanged}
+                        value={orientation}
                     />
                 </Label>
             );

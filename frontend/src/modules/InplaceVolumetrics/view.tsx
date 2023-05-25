@@ -83,9 +83,18 @@ export const view = (props: ModuleFCProps<State, typeof broadcastChannelsDef>) =
                 return data;
             };
 
-            const dataDescription = `${ensemble?.ensembleName ?? ""} ${tableName ?? ""} ${responseName ?? ""}`;
+            const dataDescription = `${ensemble?.caseName || ""} ${ensemble?.ensembleName ?? ""} ${tableName ?? ""} ${
+                responseName ?? ""
+            }`;
 
-            props.moduleContext.getChannel(BroadcastChannelNames.Response).broadcast(dataDescription, dataGenerator);
+            props.moduleContext.getChannel(BroadcastChannelNames.Response).broadcast(
+                {
+                    ensemble: `${ensemble?.caseUuid || ""}-${ensemble?.ensembleName || ""}`,
+                    description: dataDescription,
+                    unit: "",
+                },
+                dataGenerator
+            );
         },
         [realizationsResponseQuery.data, ensemble, tableName, responseName]
     );

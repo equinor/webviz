@@ -33,6 +33,12 @@ export type BroadcastChannelsDef = {
     [key: string]: BroadcastChannelDef;
 };
 
+export type BroadcastChannelMeta = {
+    ensemble: string;
+    description: string;
+    unit: string;
+};
+
 export type MapDataTypeToTSType<DT extends BroadcastChannelDef> = {
     key: BroadcastChannelKeyMeta[DT["key"]]["type"];
     value: BroadcastChannelValueTypeMeta[DT["value"]]["type"];
@@ -51,9 +57,9 @@ export function checkChannelCompatibility(
 
 export class BroadcastChannel<D extends BroadcastChannelDef> {
     private _name: string;
-    private _dataDescription: string;
+    private _metaData: BroadcastChannelMeta;
     private _moduleInstanceId: string;
-    private _subscribers: Set<(data: MapDataTypeToTSType<D>[], description: string) => void>;
+    private _subscribers: Set<(data: MapDataTypeToTSType<D>[], metaData: BroadcastChannelMeta) => void>;
     private _cachedData: MapDataTypeToTSType<D>[] | null;
     private _dataDef: BroadcastChannelDef;
     private _dataGenerator: (() => MapDataTypeToTSType<D>[]) | null;
@@ -64,29 +70,33 @@ export class BroadcastChannel<D extends BroadcastChannelDef> {
         this._cachedData = null;
         this._dataDef = def;
         this._dataGenerator = null;
-        this._dataDescription = "";
+        this._metaData = {
+            ensemble: "",
+            description: "",
+            unit: "",
+        };
         this._moduleInstanceId = moduleInstanceId;
     }
 
-    public getName() {
+    public getName(): string {
         return this._name;
     }
 
-    public getDataDef() {
+    public getDataDef(): BroadcastChannelDef {
         return this._dataDef;
     }
 
-    public getDataDescription() {
-        return this._dataDescription;
+    public getMetaData(): BroadcastChannelMeta {
+        return this._metaData;
     }
 
-    public getModuleInstanceId() {
+    public getModuleInstanceId(): string {
         return this._moduleInstanceId;
     }
 
-    public broadcast(dataDescription: string, dataGenerator: () => MapDataTypeToTSType<D>[]) {
+    public broadcast(metaData: BroadcastChannelMeta, dataGenerator: () => MapDataTypeToTSType<D>[]) {
         this._dataGenerator = dataGenerator;
-        this._dataDescription = dataDescription;
+        this._metaData = metaData;
 
         if (this._subscribers.size === 0) {
             return;
@@ -97,11 +107,11 @@ export class BroadcastChannel<D extends BroadcastChannelDef> {
         console.log("Broadcasting on channel:", this._name, "Data:", this._cachedData);
 
         for (const cb of this._subscribers) {
-            cb(this._cachedData, this._dataDescription);
+            cb(this._cachedData, this._metaData);
         }
     }
 
-    public subscribe(cb: (data: MapDataTypeToTSType<D>[], description: string) => void) {
+    public subscribe(cb: (data: MapDataTypeToTSType<D>[], metaData: BroadcastChannelMeta) => void) {
         this._subscribers.add(cb);
 
         if (this._subscribers.size === 1 && this._dataGenerator) {
@@ -109,7 +119,7 @@ export class BroadcastChannel<D extends BroadcastChannelDef> {
         }
 
         if (this._cachedData) {
-            cb(this._cachedData, this._dataDescription);
+            cb(this._cachedData, this._metaData);
         }
 
         return () => {
@@ -138,13 +148,13 @@ class Broadcaster {
         return channel;
     }
 
-    public broadcast(channelName: string, dataDescription: string, dataGenerator: () => any) {
+    public broadcast(channelName: string, metaData: BroadcastChannelMeta, dataGenerator: () => any) {
         const channel = this._channels.find((c) => c.getName() === channelName);
         if (!channel) {
             return;
         }
 
-        channel.broadcast(dataDescription, dataGenerator);
+        channel.broadcast(metaData, dataGenerator);
     }
 
     public getChannel<D extends BroadcastChannelDef>(channelName: string): BroadcastChannel<D> | null {

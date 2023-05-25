@@ -9,9 +9,11 @@ const initialState: State = {
     channelNameY: null,
     channelNameZ: null,
     plotType: null,
+    numBins: 10,
+    orientation: "h",
 };
 
-const module = ModuleRegistry.initModule<State>("ScatterPlot", initialState);
+const module = ModuleRegistry.initModule<State>("DistributionPlot", initialState);
 
 module.viewFC = view;
 module.settingsFC = settings;

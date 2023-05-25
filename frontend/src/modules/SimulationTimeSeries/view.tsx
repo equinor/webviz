@@ -59,9 +59,18 @@ export const view = ({ moduleContext, workbenchServices }: ModuleFCProps<State, 
                 return data;
             };
 
-            const dataDescription = `${vectorSpec?.ensembleName} ${vectorSpec?.vectorName}`;
+            const dataDescription = `${vectorSpec?.caseName || ""} ${vectorSpec?.ensembleName} ${
+                vectorSpec?.vectorName
+            }`;
 
-            moduleContext.getChannel(BroadcastChannelNames.Realization_Value).broadcast(dataDescription, dataGenerator);
+            moduleContext.getChannel(BroadcastChannelNames.Realization_Value).broadcast(
+                {
+                    ensemble: `${vectorSpec?.caseUuid || ""}-${vectorSpec?.ensembleName || ""}`,
+                    description: dataDescription,
+                    unit: vectorQuery.data?.at(0)?.unit || "",
+                },
+                dataGenerator
+            );
         },
         [vectorQuery.data, vectorSpec?.ensembleName, vectorSpec?.vectorName, moduleContext]
     );

@@ -9,7 +9,7 @@ export type BarchartProps = {
     xAxisTitle: string;
     yAxisTitle: string;
     onClickData?: (data: any) => void;
-    onHoverData?: (data: any) => void;
+    onHoverData?: (e: PlotHoverEvent) => void;
     height?: number | 100;
     width?: number | 100;
     orientation?: "h" | "v";
@@ -37,9 +37,7 @@ export const Barchart: React.FC<BarchartProps> = (props) => {
 
     const handleHover = (e: PlotHoverEvent) => {
         if (props.onHoverData) {
-            if (e.points.length > 0 && typeof e.points[0]) {
-                props.onHoverData(e.points[0].customdata);
-            }
+            props.onHoverData(e);
         }
     };
     const layout: Partial<Layout> = {

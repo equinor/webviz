@@ -1,6 +1,6 @@
 import React from "react";
 
-import { BroadcastChannel, BroadcastChannelDef, broadcaster } from "@framework/Broadcaster";
+import { BroadcastChannel, BroadcastChannelDef, BroadcastChannelMeta, broadcaster } from "@framework/Broadcaster";
 import { ModuleFCProps } from "@framework/Module";
 import { ChannelSelect } from "@lib/components/ChannelSelect";
 
@@ -25,9 +25,9 @@ export const View = ({ moduleContext }: ModuleFCProps<State>) => {
 
     React.useEffect(() => {
         if (indexChannel) {
-            const handleIndexChannelChanged = (data: any, description: string) => {
+            const handleIndexChannelChanged = (data: any, metaData: BroadcastChannelMeta) => {
                 setIndexData(data);
-                setIndexTitle(description);
+                setIndexTitle(metaData.description);
             };
 
             const unsubscribeFunc = indexChannel.subscribe(handleIndexChannelChanged);
@@ -40,7 +40,7 @@ export const View = ({ moduleContext }: ModuleFCProps<State>) => {
         const unsubscribeFuncs: (() => void)[] = [];
         columnChannels.forEach((channel, i) => {
             if (channel) {
-                const handleColumnChannelsChanged = (data: any, description: string) => {
+                const handleColumnChannelsChanged = (data: any, metaData: BroadcastChannelMeta) => {
                     setColumnsData((prev) => {
                         let newData: any[] = [];
                         if (prev) {
@@ -52,7 +52,7 @@ export const View = ({ moduleContext }: ModuleFCProps<State>) => {
 
                     setColumnsTitles((prev) => {
                         const newDescriptions = [...prev];
-                        newDescriptions[i] = description;
+                        newDescriptions[i] = metaData.description;
                         return newDescriptions;
                     });
                 };

@@ -37,7 +37,7 @@ export class ModuleRegistry {
             module.setInitialState(initialState, options);
             return module as Module<ModuleStateType, BCD>;
         }
-        throw "Did you forget to register your module in 'src/modules/index.ts'?";
+        throw "Did you forget to register your module in 'src/modules/registerAllModules.ts'?";
     }
 
     public static getModule(moduleName: string): Module<any, any> {
@@ -45,7 +45,7 @@ export class ModuleRegistry {
         if (module) {
             return module as Module<any, any>;
         }
-        throw "Did you forget to register your module in 'src/modules/index.ts'?";
+        throw "Did you forget to register your module in 'src/modules/registerAllModules.ts'?";
     }
 
     public static getRegisteredModules(): Record<string, Module<any, any>> {
