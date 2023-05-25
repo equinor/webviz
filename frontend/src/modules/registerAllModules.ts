@@ -7,3 +7,4 @@ import "./DbgWorkbenchSpy/registerModule";
 import "./TimeSeriesParameterDistribution/registerModule"
 import "./Grid3D/registerModule"
 import "./Grid3DIntersection/registerModule"
+import "./Pvt/registerModule"
