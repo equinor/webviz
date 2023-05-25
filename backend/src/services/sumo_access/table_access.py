@@ -17,7 +17,6 @@ class TableAccess:
 
     def __init__(self, access_token: str, case_uuid: str, iteration_name: str):
         sumo_client: SumoClient = create_sumo_client_instance(access_token)
-        case_uuid = case_uuid
         self._iteration_name = iteration_name
         case_collection = CaseCollection(sumo_client).filter(uuid=case_uuid)
 
@@ -67,7 +66,7 @@ class TableAccess:
     def realizations_tables_are_equal(self, table_schema: SumoTableSchema) -> bool:
         """Check if a given table has the same data for all realizations"""
 
-        table_collection = self.tables.filter(
+        table_collection = self.case.tables.filter(
             tagname=table_schema.tagname,
             iteration=self._iteration_name,
             stage="realization",
