@@ -13,8 +13,12 @@ class EnsembleCorrelations(BaseModel):
     values: List[float]
 
 
-class TableMetaData(BaseModel):
-    name: str
-    tagname: str
+class SumoTableSchema(BaseModel):
+    """The necessary information to query Sumo for a specific table"""
+
+    """Needs discussion."""
+    name: str  # For summary this would be "summary". For e.g. PVT, Relperm it would be DROGON-<realization>
+    tagname: str  # For summary this would be e.g. "eclipse". For PVT it would be PVT. ...
     column_names: List[str]
-    file_format: str
+    # context?
+    # stage? (realization, iteration, collection)
