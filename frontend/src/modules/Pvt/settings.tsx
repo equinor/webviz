@@ -108,7 +108,7 @@ export function settings({ moduleContext, workbenchServices }: ModuleFCProps<sta
             }
 
             // Set available plots
-            let newAvailablePlots = pvtNameData.phase === "Oil" ? OilPlotOptions : pvtNameData.phase === "Gas" ? GasPlotOptions : WaterPlotOptions
+            const newAvailablePlots = pvtNameData.phase === "Oil" ? OilPlotOptions : pvtNameData.phase === "Gas" ? GasPlotOptions : WaterPlotOptions
             setAvailablePlots(newAvailablePlots)
 
 
@@ -118,7 +118,7 @@ export function settings({ moduleContext, workbenchServices }: ModuleFCProps<sta
                 setActivePvtPlots(availablePlotValues)
             }
             else if (!activePvtPlots.every(value => availablePlotValues.includes(value))) {
-                let currentVisualizations = activePvtPlots.filter(value => availablePlotValues.includes(value));
+                const currentVisualizations = activePvtPlots.filter(value => availablePlotValues.includes(value));
 
                 if (currentVisualizations.length === 0) {
                     setActivePvtPlots([...availablePlotValues]);
@@ -156,9 +156,9 @@ export function settings({ moduleContext, workbenchServices }: ModuleFCProps<sta
 
             const ratio: number[] = indicesToKeep.map(index => currentPvtData.ratio[index])
             // Loop through each of the active visualizations and add the relevant data for the y-axis to the plot data
-            for (let pvtVisualization of activePvtPlots) {
+            for (const pvtVisualization of activePvtPlots) {
                 const y_values: number[] = []
-                let yUnit: string = ""
+                let yUnit = ""
                 const title = findPlotLabel(pvtVisualization, currentPvtData.phase) + "(" + currentPvtData.phase + ")"
                 if (pvtVisualization === "volumefactor") {
                     y_values.push(...indicesToKeep.map(index => currentPvtData.volumefactor[index]))
@@ -190,7 +190,7 @@ export function settings({ moduleContext, workbenchServices }: ModuleFCProps<sta
                     title: title
                 })
 
-            };
+            }
             setPvtPlotDataSet(pvtPlotData)
         }
     },
