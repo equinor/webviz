@@ -6,7 +6,6 @@ export class PvtQueryDataAccessor {
 
     constructor(pvtQueryData: PvtData[]) {
         this.pvtQueryData = pvtQueryData;
-        console.log(this.pvtQueryData)
     }
 
     getPvtNames(): string[] {

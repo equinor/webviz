@@ -55,7 +55,7 @@ class TableAccess:
             iteration=self._iteration_name,
             realization=realization,
         )
-        if len(table_collection) == 0:
+        if not table_collection:
             raise ValueError(f"No table found for {table_schema=}")
         if len(table_collection) > 1:
             raise ValueError(f"Multiple tables found for {table_schema=}")
@@ -72,7 +72,7 @@ class TableAccess:
             stage="realization",
         )
 
-        if len(table_collection) == 0:
+        if not table_collection:
             raise ValueError(f"No table found for vector {table_schema=}")
 
         # How to get the md5 sum? Maybe something like this, but the md5 is not in the metadata....
