@@ -1,11 +1,6 @@
 export interface PvtPlotData {
-    pressure: number[];
-    pressureUnit: string;
-    y: number[];
-    yUnit: string;
-    ratio: number[];
     pvtNum: number;
-    phaseType: string;
-    title: string;
+    pvtName: string;
+    pvtPlot: string;
 }
-export default interface state { pvtVisualizations: string[] | null, pvtNum: number | null, pvtName: string | null, groupBy: string, realization: number | null, pvtPlotDataSet: PvtPlotData[] | null }
+export default interface state { pvtVisualizations: string[] | null, pvtNum: number | null, pvtName: string | null, groupBy: string, realization: number | null, activeDataSet: PvtPlotData[] | null }

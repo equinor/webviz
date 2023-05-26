@@ -10,7 +10,7 @@ const initialState: state = {
     pvtName: "Oil (PVTO)",
     groupBy: "ENSEMBLE",
     realization: 0,
-    pvtPlotDataSet: null
+    activeDataSet: null
 
 };
 

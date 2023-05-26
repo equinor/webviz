@@ -11,55 +11,14 @@ import { Label } from "@lib/components/Label";
 import { Dropdown, DropdownOption } from "@lib/components/Dropdown";
 
 import state, { PvtPlotData } from "./state";
+
+import { PvtQueryDataAccessor } from "./pvtQueryDataAccessor";
+import { getAvailablePlotsForPhase, PlotOptionType } from "./pvtPlotDataAccessor";
 //-----------------------------------------------------------------------------------------------------------
 
 
-// The different visualization options for each phase
-type PlotOptionType = {
-    value: string;
-    label: string;
-}
-const OilPlotOptions: PlotOptionType[] = [
-    { value: "volumefactor", label: "Formation Volume Factor" },
-    { value: "viscosity", label: "Viscosity" },
-    { value: "density", label: "Density" },
-    { value: "ratio", label: "Gas/Oil Ratio (Rs) at Psat" },
 
-]
-const GasPlotOptions: PlotOptionType[] = [
-    { value: "volumefactor", label: "Formation Volume Factor" },
-    { value: "viscosity", label: "Viscosity" },
-    { value: "density", label: "Density" },
-    { value: "ratio", label: "Vaporized Oil Ratio (Rv) at Psat" },
 
-]
-const WaterPlotOptions: PlotOptionType[] = [
-    { value: "volumefactor", label: "Formation Volume Factor" },
-    { value: "viscosity", label: "Viscosity" },
-    { value: "density", label: "Density" },
-
-]
-
-// Helper to find the relevant label given a plot value and phase
-const findPlotLabel = (value: string, phase: string): string => {
-    if (phase === "Oil") {
-        return OilPlotOptions.filter((plot) => plot.value === value)[0].label
-    }
-    else if (phase === "Gas") {
-        return GasPlotOptions.filter((plot) => plot.value === value)[0].label
-    }
-    else if (phase === "Water") {
-        return WaterPlotOptions.filter((plot) => plot.value === value)[0]?.label || ""
-    }
-    else {
-        return ""
-    }
-}
-
-// Helper to get all unique pvtnum from the pvtdata
-const getUniquePvtNumsFromData = (pvtData: PvtData): number[] => {
-    return [...new Set(pvtData.pvtnum.map((num) => num))]
-}
 
 //Helpers to populate dropdowns
 const stringToOptions = (strings: string[]): DropdownOption[] => {
@@ -84,7 +43,7 @@ export function settings({ moduleContext, workbenchServices }: ModuleFCProps<sta
     const [groupBy, setGroupBy] = moduleContext.useStoreState("groupBy"); // not implemented
 
     // Plot data state for view
-    const setPvtPlotDataSet = moduleContext.useSetStoreValue("pvtPlotDataSet");
+    const setPvtPlotDataSet = moduleContext.useSetStoreValue("activeDataSet");
 
     // Local state to handle available options
     const [availablePvtNums, setAvailablePvtNums] = React.useState<number[]>([]);
@@ -98,35 +57,36 @@ export function settings({ moduleContext, workbenchServices }: ModuleFCProps<sta
     useEffect(() => {
         if (pvtDataQuery.data && activePvtName) {
             // Find the data for the selected phase
-            const pvtNameData = pvtDataQuery.data.filter((pvtData) => pvtData.name === activePvtName)[0]
-            const uniquePvtNums = getUniquePvtNumsFromData(pvtNameData);
+            const pvtDataAccessor = new PvtQueryDataAccessor(pvtDataQuery.data)
+
+            // const pvtNameData = pvtDataQuery.data.filter((pvtData) => pvtData.name === activePvtName)[0]
+            const uniquePvtNums = pvtDataAccessor.getPvtNums(activePvtName)
 
             // Set available pvtNums and set activePvtNum to first available pvtNum if the current one is not available
             setAvailablePvtNums(uniquePvtNums)
-            if (!activePvtNum || !uniquePvtNums.includes(activePvtNum)) {
-                setActivePvtNum(uniquePvtNums[0])
+            let newActivePvtNum = activePvtNum
+            if (!newActivePvtNum || !uniquePvtNums.includes(newActivePvtNum)) {
+                newActivePvtNum = uniquePvtNums[0]
             }
+
 
             // Set available plots
-            const newAvailablePlots = pvtNameData.phase === "Oil" ? OilPlotOptions : pvtNameData.phase === "Gas" ? GasPlotOptions : WaterPlotOptions
-            setAvailablePlots(newAvailablePlots)
+            const currentPvtData = pvtDataAccessor.getPvtData(activePvtName, newActivePvtNum)
 
-
+            const newAvailablePlots = getAvailablePlotsForPhase(currentPvtData.phase)
             // Check if currently selected plots are still valid. Either filter current selections or set to all available plots if none are selected/valid
-            const availablePlotValues = newAvailablePlots.map((plot) => plot.value)
-            if (!activePvtPlots) {
-                setActivePvtPlots(availablePlotValues)
-            }
-            else if (!activePvtPlots.every(value => availablePlotValues.includes(value))) {
-                const currentVisualizations = activePvtPlots.filter(value => availablePlotValues.includes(value));
+            let newAvailablePlotValues = newAvailablePlots.map((plot) => plot.value)
 
-                if (currentVisualizations.length === 0) {
-                    setActivePvtPlots([...availablePlotValues]);
-                }
-                else {
-                    setActivePvtPlots(currentVisualizations);
+            if (activePvtPlots && !activePvtPlots.every(value => newAvailablePlotValues.includes(value))) {
+                const intersectedPlotValues = activePvtPlots.filter(value => newAvailablePlotValues.includes(value));
+
+                if (intersectedPlotValues.length >= 0) {
+                    newAvailablePlotValues = intersectedPlotValues
                 }
             }
+            setActivePvtNum(newActivePvtNum)
+            setAvailablePlots(newAvailablePlots)
+            setActivePvtPlots(newAvailablePlotValues)
 
         }
     }, [pvtDataQuery.data, activePvtName])
@@ -136,60 +96,13 @@ export function settings({ moduleContext, workbenchServices }: ModuleFCProps<sta
     useEffect(() => {
         if (activePvtNum && activePvtName && activePvtPlots && pvtDataQuery.data) {
             // Find the data for the selected phase
-            const currentPvtData = pvtDataQuery.data.filter((pvtData) => pvtData.name === activePvtName)[0]
-
-            // Find the indices of the data that has the selected pvtNum
-            const indicesToKeep: number[] = []
-            currentPvtData.pvtnum.forEach((num, index) => {
-                if (num === activePvtNum) {
-                    indicesToKeep.push(index)
-                }
-            })
-
+            // const currentPvtData = pvtDataQuery.data.filter((pvtData) => (pvtData.name === activePvtName) && (pvtData.pvtnum === activePvtNum))[0]
 
             const pvtPlotData: PvtPlotData[] = []
 
-            // Find relevant pressure (x-values)
-            const pressure: number[] = indicesToKeep.map(index => currentPvtData.pressure[index])
-
-            // Find relevant ratio (text for hover and borderline)
-
-            const ratio: number[] = indicesToKeep.map(index => currentPvtData.ratio[index])
             // Loop through each of the active visualizations and add the relevant data for the y-axis to the plot data
-            for (const pvtVisualization of activePvtPlots) {
-                const y_values: number[] = []
-                let yUnit = ""
-                const title = findPlotLabel(pvtVisualization, currentPvtData.phase) + "(" + currentPvtData.phase + ")"
-                if (pvtVisualization === "volumefactor") {
-                    y_values.push(...indicesToKeep.map(index => currentPvtData.volumefactor[index]))
-                    yUnit = currentPvtData.volumefactor_unit
-
-                }
-                else if (pvtVisualization === "viscosity") {
-                    y_values.push(...indicesToKeep.map(index => currentPvtData.viscosity[index]))
-                    yUnit = currentPvtData.viscosity_unit
-                }
-                else if (pvtVisualization === "density") {
-                    y_values.push(...indicesToKeep.map(index => currentPvtData.density[index]))
-                    yUnit = currentPvtData.density_unit
-                }
-                else if (pvtVisualization === "ratio") {
-                    y_values.push(...indicesToKeep.map(index => currentPvtData.ratio[index]))
-                    yUnit = currentPvtData.ratio_unit
-                }
-
-
-                pvtPlotData.push({
-                    pressure: pressure,
-                    pressureUnit: currentPvtData.pressure_unit,
-                    y: y_values,
-                    yUnit: yUnit,
-                    ratio: ratio,
-                    pvtNum: activePvtNum,
-                    phaseType: currentPvtData.phase,
-                    title: title
-                })
-
+            for (const pvtPlot of activePvtPlots) {
+                pvtPlotData.push({ pvtNum: activePvtNum, pvtName: activePvtName, pvtPlot: pvtPlot })
             }
             setPvtPlotDataSet(pvtPlotData)
         }
@@ -200,8 +113,12 @@ export function settings({ moduleContext, workbenchServices }: ModuleFCProps<sta
     // Handle failed query
     if (!pvtDataQuery.data) { return (<div>No pvt data</div>) }
 
+
     // Get available PvtNames from query
-    const availablePvtNames = pvtDataQuery.data.map((pvtData) => pvtData.name);
+    // Guess "new" will trigger a re-render?
+    const pvtDataAccessor = new PvtQueryDataAccessor(pvtDataQuery.data)
+
+    const availablePvtNames = pvtDataAccessor.getPvtNames()
 
 
     // Handle toggling of visualization checkboxes

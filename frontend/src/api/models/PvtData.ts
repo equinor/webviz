@@ -5,7 +5,7 @@
 export type PvtData = {
     name: string;
     phase: string;
-    pvtnum: Array<number>;
+    pvtnum: number;
     ratio: Array<number>;
     pressure: Array<number>;
     volumefactor: Array<number>;

@@ -62,33 +62,33 @@ def pvt_dataframe_to_api_data(data_frame: pd.DataFrame) -> List[PvtData]:
             name = WATER_KEYWORDS[keyword]
         else:
             continue
-
-        pvt_data = PvtData(
-            pvtnum=df_grouped_on_keyword["PVTNUM"].tolist(),
-            name=name,
-            phase=phase,
-            ratio=df_grouped_on_keyword["RATIO"].tolist(),
-            pressure=df_grouped_on_keyword["PRESSURE"].tolist(),
-            volumefactor=df_grouped_on_keyword["VOLUMEFACTOR"].tolist(),
-            viscosity=df_grouped_on_keyword["VISCOSITY"].tolist(),
-            density=df_grouped_on_keyword["DENSITY"].tolist(),
-            pressure_unit=df_grouped_on_keyword["PRESSURE_UNIT"].iloc[0]
-            if "PRESSURE_UNIT" in df_grouped_on_keyword.columns
-            else "bar",
-            volumefactor_unit=df_grouped_on_keyword["VOLUMEFACTOR_UNIT"].iloc[0]
-            if "VOLUMEFACTOR_UNIT" in df_grouped_on_keyword.columns
-            else "Rm³/Sm³",
-            viscosity_unit=df_grouped_on_keyword["VISCOSITY_UNIT"].iloc[0]
-            if "VISCOSITY_UNIT" in df_grouped_on_keyword.columns
-            else "cP",
-            density_unit=df_grouped_on_keyword["DENSITY_UNIT"].iloc[0]
-            if "DENSITY_UNIT" in df_grouped_on_keyword.columns
-            else "kg/m³",
-            ratio_unit=df_grouped_on_keyword["RATIO_UNIT"].iloc[0]
-            if "RATIO_UNIT" in df_grouped_on_keyword.columns
-            else "Sm³/Sm³",
-        )
-        list_of_pvtdata.append(pvt_data)
+        for pvtnum, df_grouped_on_pvtnum in df_grouped_on_keyword.groupby("PVTNUM"):
+            pvt_data = PvtData(
+                pvtnum=pvtnum,
+                name=name,
+                phase=phase,
+                ratio=df_grouped_on_pvtnum["RATIO"].tolist(),
+                pressure=df_grouped_on_pvtnum["PRESSURE"].tolist(),
+                volumefactor=df_grouped_on_pvtnum["VOLUMEFACTOR"].tolist(),
+                viscosity=df_grouped_on_pvtnum["VISCOSITY"].tolist(),
+                density=df_grouped_on_pvtnum["DENSITY"].tolist(),
+                pressure_unit=df_grouped_on_pvtnum["PRESSURE_UNIT"].iloc[0]
+                if "PRESSURE_UNIT" in df_grouped_on_pvtnum.columns
+                else "bar",
+                volumefactor_unit=df_grouped_on_pvtnum["VOLUMEFACTOR_UNIT"].iloc[0]
+                if "VOLUMEFACTOR_UNIT" in df_grouped_on_pvtnum.columns
+                else "Rm³/Sm³",
+                viscosity_unit=df_grouped_on_pvtnum["VISCOSITY_UNIT"].iloc[0]
+                if "VISCOSITY_UNIT" in df_grouped_on_pvtnum.columns
+                else "cP",
+                density_unit=df_grouped_on_pvtnum["DENSITY_UNIT"].iloc[0]
+                if "DENSITY_UNIT" in df_grouped_on_pvtnum.columns
+                else "kg/m³",
+                ratio_unit=df_grouped_on_pvtnum["RATIO_UNIT"].iloc[0]
+                if "RATIO_UNIT" in df_grouped_on_pvtnum.columns
+                else "Sm³/Sm³",
+            )
+            list_of_pvtdata.append(pvt_data)
 
     return list_of_pvtdata
 

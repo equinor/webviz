@@ -6,7 +6,7 @@ from pydantic import BaseModel
 class PvtData(BaseModel):
     name: str
     phase: str
-    pvtnum: List[int]
+    pvtnum: int
     ratio: list[float]
     pressure: List[float]
     volumefactor: List[float]
