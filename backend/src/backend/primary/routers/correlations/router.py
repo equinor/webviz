@@ -45,7 +45,7 @@ def correlate_parameters_with_timeseries(
     )
     parameters = parameter_access.get_parameters()
 
-    return correlate_parameters_with_response(parameters, ensemble_response)
+    return correlate_parameters_with_response(parameters.parameters, ensemble_response)
 
 
 @router.get("/correlate_parameters_with_inplace_volumes/")
@@ -74,4 +74,4 @@ def correlate_parameters_with_inplace_volumes(
     )
     parameters = parameter_access.get_parameters()
 
-    return correlate_parameters_with_response(parameters, ensemble_response)
+    return correlate_parameters_with_response(parameters.parameters, ensemble_response)
