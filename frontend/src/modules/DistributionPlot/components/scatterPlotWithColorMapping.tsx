@@ -3,11 +3,13 @@ import Plot from "react-plotly.js";
 
 import { Layout, PlotData, PlotHoverEvent } from "plotly.js";
 
-export type ScatterPlotProps = {
+export type ScatterPlotWithColorMappingProps = {
     x: number[];
     y: number[];
+    z: number[];
     xAxisTitle: string;
     yAxisTitle: string;
+    zAxisTitle: string;
     keyData: number[];
     onClickData?: (data: any) => void;
     onHoverData?: (data: any) => void;
@@ -20,9 +22,10 @@ interface TraceData extends Partial<PlotData> {
     realizationNumber?: number | null;
 }
 
-const ScatterPlot: React.FC<ScatterPlotProps> = (props) => {
+const ScatterPlotWithColorMapping: React.FC<ScatterPlotWithColorMappingProps> = (props) => {
     const opacities: number[] = [];
-    const colors = props.keyData.map((real) => {
+
+    const sizes = props.keyData.map((real) => {
         opacities.push(
             real === props.highlightedKey ||
                 props.highlightedKey === undefined ||
@@ -30,8 +33,9 @@ const ScatterPlot: React.FC<ScatterPlotProps> = (props) => {
                 ? 1
                 : 0.25
         );
-        return real === props.highlightedKey ? "red" : "blue";
+        return real === props.highlightedKey ? 30 : 20;
     });
+
     const tracesDataArr: TraceData[] = [
         {
             y: props.y,
@@ -40,7 +44,17 @@ const ScatterPlot: React.FC<ScatterPlotProps> = (props) => {
             orientation: "h",
             type: "scatter",
             mode: "markers",
-            marker: { color: colors, opacity: opacities, size: 20 },
+            marker: {
+                color: props.z,
+                opacity: opacities,
+                size: sizes,
+                colorscale: "Portland",
+                colorbar: {
+                    title: props.zAxisTitle,
+                    titleside: "right",
+                },
+                showscale: true,
+            },
         },
     ];
 
@@ -70,6 +84,7 @@ const ScatterPlot: React.FC<ScatterPlotProps> = (props) => {
         xaxis: { zeroline: false, title: props.xAxisTitle },
         yaxis: { zeroline: false, title: props.yAxisTitle },
     };
+
     return (
         <Plot
             data={tracesDataArr}
@@ -81,4 +96,4 @@ const ScatterPlot: React.FC<ScatterPlotProps> = (props) => {
     );
 };
 
-export default ScatterPlot;
+export default ScatterPlotWithColorMapping;

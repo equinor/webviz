@@ -3,11 +3,10 @@ import React, { ChangeEvent } from "react";
 import { BroadcastChannelKeyCategory } from "@framework/Broadcaster";
 import { ModuleFCProps } from "@framework/Module";
 import { ChannelSelect } from "@lib/components/ChannelSelect";
-import { Checkbox } from "@lib/components/Checkbox";
 import { Dropdown } from "@lib/components/Dropdown";
-import { Input } from "@lib/components/Input";
 import { Label } from "@lib/components/Label";
 import { RadioGroup } from "@lib/components/RadioGroup";
+import { Slider } from "@lib/components/Slider";
 
 import { PlotType, State } from "./state";
 
@@ -22,7 +21,11 @@ const plotTypes = [
     },
     {
         value: PlotType.Scatter,
-        label: "Scatter",
+        label: "Scatter 2D",
+    },
+    {
+        value: PlotType.ScatterWithColorMapping,
+        label: "Scatter 2D with color mapping",
     },
     {
         value: PlotType.Scatter3D,
@@ -83,8 +86,11 @@ export function settings({ moduleContext }: ModuleFCProps<State>) {
         setCrossPlottingType(value as BroadcastChannelKeyCategory);
     };
 
-    const handleNumBinsChanged = (e: ChangeEvent<HTMLInputElement>) => {
-        setNumBins(parseInt(e.target.value, 10));
+    const handleNumBinsChanged = (_: Event, value: number | number[]) => {
+        if (Array.isArray(value)) {
+            return;
+        }
+        setNumBins(value);
     };
 
     const handleOrientationChanged = (e: ChangeEvent<HTMLInputElement>) => {
@@ -105,7 +111,11 @@ export function settings({ moduleContext }: ModuleFCProps<State>) {
             </Label>,
         ];
 
-        if (plotType === PlotType.Scatter || plotType === PlotType.Scatter3D) {
+        if (
+            plotType === PlotType.Scatter ||
+            plotType === PlotType.ScatterWithColorMapping ||
+            plotType === PlotType.Scatter3D
+        ) {
             content.push(
                 <Label text="Data channel Y axis" key="data-channel-y-axis">
                     <ChannelSelect
@@ -129,10 +139,22 @@ export function settings({ moduleContext }: ModuleFCProps<State>) {
             );
         }
 
+        if (plotType === PlotType.ScatterWithColorMapping) {
+            content.push(
+                <Label text="Data channel color mapping" key="data-channel-color-mapping">
+                    <ChannelSelect
+                        onChange={handleChannelZChanged}
+                        channelKeyCategory={crossPlottingType}
+                        initialChannel={channelNameZ || undefined}
+                    />
+                </Label>
+            );
+        }
+
         if (plotType === PlotType.Histogram) {
             content.push(
                 <Label text="Number of bins" key="number-of-bins">
-                    <Input type="number" value={numBins} onChange={handleNumBinsChanged} />
+                    <Slider value={numBins} onChange={handleNumBinsChanged} min={1} max={30} displayValue />
                 </Label>
             );
         }

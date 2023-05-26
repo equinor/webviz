@@ -12,6 +12,8 @@ export type ThreeDScatterProps = {
     zAxisTitle: string;
     onClickData?: (data: any) => void;
     onHoverData?: (data: any) => void;
+    keyData: number[];
+    highlightedKey?: number;
     height?: number | 100;
     width?: number | 100;
 };
@@ -21,13 +23,19 @@ interface TraceData extends Partial<PlotData> {
 }
 
 export const ThreeDScatter: React.FC<ThreeDScatterProps> = (props) => {
+    const colors = props.keyData.map((real) => {
+        return real == props.highlightedKey ? "red" : "blue";
+    });
+
     const dataArray: TraceData[] = [
         {
             y: props.y,
             x: props.x,
             z: props.z,
+            customdata: props.keyData,
             type: "scatter3d",
             mode: "markers",
+            marker: { color: colors, size: 20 },
         },
     ];
 

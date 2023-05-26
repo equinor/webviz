@@ -4,11 +4,10 @@ import { BroadcastChannelKeyCategory, BroadcastChannelMeta, broadcaster } from "
 import { ModuleFCProps } from "@framework/Module";
 import { useElementSize } from "@lib/hooks/useElementSize";
 
-import { PlotHoverEvent } from "plotly.js";
-
 import { Barchart } from "./components/barchart";
 import { Histogram } from "./components/histogram";
-import PlotlyScatter from "./components/scatterPlot";
+import ScatterPlot from "./components/scatterPlot";
+import ScatterPlotWithColorMapping from "./components/scatterPlotWithColorMapping";
 import { ThreeDScatter } from "./components/threeDScatterPlot";
 import { PlotType, State } from "./state";
 
@@ -33,14 +32,14 @@ function nFormatter(num: number, digits: number): string {
 }
 
 export const view = ({ moduleContext, workbenchServices }: ModuleFCProps<State>) => {
-    const wrapperDivRef = React.useRef<HTMLDivElement>(null);
-    const wrapperDivSize = useElementSize(wrapperDivRef);
     const plotType = moduleContext.useStoreValue("plotType");
     const channelNameX = moduleContext.useStoreValue("channelNameX");
     const channelNameY = moduleContext.useStoreValue("channelNameY");
     const channelNameZ = moduleContext.useStoreValue("channelNameZ");
     const numBins = moduleContext.useStoreValue("numBins");
     const orientation = moduleContext.useStoreValue("orientation");
+
+    const [highlightedKey, setHighlightedKey] = React.useState<number | null>(null);
     const [dataX, setDataX] = React.useState<any[] | null>(null);
     const [dataY, setDataY] = React.useState<any[] | null>(null);
     const [dataZ, setDataZ] = React.useState<any[] | null>(null);
@@ -51,6 +50,9 @@ export const view = ({ moduleContext, workbenchServices }: ModuleFCProps<State>)
     const channelX = broadcaster.getChannel(channelNameX ?? "");
     const channelY = broadcaster.getChannel(channelNameY ?? "");
     const channelZ = broadcaster.getChannel(channelNameZ ?? "");
+
+    const wrapperDivRef = React.useRef<HTMLDivElement>(null);
+    const wrapperDivSize = useElementSize(wrapperDivRef);
 
     React.useEffect(() => {
         if (channelX) {
@@ -91,23 +93,30 @@ export const view = ({ moduleContext, workbenchServices }: ModuleFCProps<State>)
         }
     }, [channelZ]);
 
-    const handleHoverChanged = (e: PlotHoverEvent) => {
-        if (plotType === PlotType.BarChart) {
-            if (channelX?.getDataDef().key === BroadcastChannelKeyCategory.Realization) {
-                workbenchServices.publishGlobalData("global.hoverRealization", {
-                    realization:
-                        orientation === "h" ? ((e.points[0].y ?? 0) as number) : ((e.points[0].x ?? 0) as number),
-                });
-            }
+    const handleHoverChanged = (data: any) => {
+        if (channelX?.getDataDef().key === BroadcastChannelKeyCategory.Realization) {
+            workbenchServices.publishGlobalData("global.hoverRealization", {
+                realization: data !== null ? (data as number) : -1,
+            });
         }
     };
+
+    React.useEffect(() => {
+        if (channelX?.getDataDef().key === BroadcastChannelKeyCategory.Realization) {
+            workbenchServices.subscribe("global.hoverRealization", (data) => {
+                if (data.realization !== undefined) {
+                    setHighlightedKey(data.realization);
+                }
+            });
+        }
+    }, [channelX, workbenchServices]);
 
     const makeContent = (): React.ReactNode => {
         if (plotType === null) {
             return "Please select a plot type.";
         }
 
-        if (plotType === "histogram") {
+        if (plotType === PlotType.Histogram) {
             if (dataX === null) {
                 return "Please select a channel for the x-axis.";
             }
@@ -129,18 +138,18 @@ export const view = ({ moduleContext, workbenchServices }: ModuleFCProps<State>)
 
             return (
                 <Histogram
+                    key="histogram"
                     x={binStrings}
                     y={binValues}
                     xAxisTitle={`${metaDataX.description} [${metaDataX.unit}]`}
                     yAxisTitle={channelX?.getDataDef().key || ""}
                     width={wrapperDivSize.width}
                     height={wrapperDivSize.height}
-                    onHoverData={handleHoverChanged}
                 />
             );
         }
 
-        if (plotType === "barchart") {
+        if (plotType === PlotType.BarChart) {
             if (dataX === null) {
                 return "Please select a channel for the x-axis.";
             }
@@ -153,6 +162,7 @@ export const view = ({ moduleContext, workbenchServices }: ModuleFCProps<State>)
 
             return (
                 <Barchart
+                    key="barchart"
                     x={orientation === "h" ? valueData : keyData}
                     y={orientation === "h" ? keyData : valueData}
                     xAxisTitle={orientation === "h" ? valueTitle : keyTitle}
@@ -161,11 +171,13 @@ export const view = ({ moduleContext, workbenchServices }: ModuleFCProps<State>)
                     height={wrapperDivSize.height}
                     orientation={orientation}
                     onHoverData={handleHoverChanged}
+                    keyData={keyData}
+                    highlightedKey={highlightedKey ?? undefined}
                 />
             );
         }
 
-        if (plotType === "scatter") {
+        if (plotType === PlotType.Scatter) {
             if (!dataX || !dataY) {
                 return "Please select a channel for the x-axis and the y-axis.";
             }
@@ -185,20 +197,67 @@ export const view = ({ moduleContext, workbenchServices }: ModuleFCProps<State>)
             }
 
             return (
-                <PlotlyScatter
+                <ScatterPlot
+                    key="scatter"
                     x={xValues}
                     y={yValues}
                     xAxisTitle={`${metaDataX.description} [${metaDataX.unit}]`}
                     yAxisTitle={`${metaDataY.description} [${metaDataY.unit}]`}
-                    realizations={[]}
+                    keyData={keysX}
                     width={wrapperDivSize.width}
                     height={wrapperDivSize.height}
                     onHoverData={handleHoverChanged}
+                    highlightedKey={highlightedKey ?? undefined}
                 />
             );
         }
 
-        if (plotType === "scatter3d") {
+        if (plotType === PlotType.ScatterWithColorMapping) {
+            if (!dataX || !dataY || !dataZ) {
+                return "Please select a channel for the x-axis, the y-axis and the color mapping.";
+            }
+
+            const xValues: number[] = [];
+            const yValues: number[] = [];
+            const zValues: number[] = [];
+
+            const keysX = dataX.map((el: any) => el.key);
+            const keysY = dataY.map((el: any) => el.key);
+            const keysZ = dataZ.map((el: any) => el.key);
+            if (
+                keysX.length === keysY.length &&
+                keysY.length === keysZ.length &&
+                !keysX.some((el, index) => el !== keysY[index]) &&
+                !keysX.some((el, index) => el !== keysZ[index])
+            ) {
+                keysX.forEach((key) => {
+                    const dataPointX = dataX.find((el: any) => el.key === key);
+                    const dataPointY = dataY.find((el: any) => el.key === key);
+                    const dataPointZ = dataZ.find((el: any) => el.key === key);
+                    xValues.push(dataPointX.value);
+                    yValues.push(dataPointY.value);
+                    zValues.push(dataPointZ.value);
+                });
+            }
+
+            return (
+                <ScatterPlotWithColorMapping
+                    key="scatter-with-colormapping"
+                    x={xValues}
+                    y={yValues}
+                    z={zValues}
+                    keyData={keysX}
+                    highlightedKey={highlightedKey ?? undefined}
+                    xAxisTitle={`${metaDataX.description} [${metaDataX.unit}]`}
+                    yAxisTitle={`${metaDataY.description} [${metaDataY.unit}]`}
+                    zAxisTitle={`${metaDataZ.description} [${metaDataZ.unit}]`}
+                    width={wrapperDivSize.width}
+                    height={wrapperDivSize.height}
+                />
+            );
+        }
+
+        if (plotType === PlotType.Scatter3D) {
             if (!dataX || !dataY || !dataZ) {
                 return "Please select a channel for the x-axis, the y-axis and the z-axis.";
             }
@@ -228,15 +287,16 @@ export const view = ({ moduleContext, workbenchServices }: ModuleFCProps<State>)
 
             return (
                 <ThreeDScatter
+                    key="3d-scatter"
                     x={xValues}
                     y={yValues}
                     z={zValues}
+                    keyData={keysX}
                     xAxisTitle={`${metaDataX.description} [${metaDataX.unit}]`}
                     yAxisTitle={`${metaDataY.description} [${metaDataY.unit}]`}
                     zAxisTitle={`${metaDataZ.description} [${metaDataZ.unit}]`}
                     width={wrapperDivSize.width}
                     height={wrapperDivSize.height}
-                    onHoverData={handleHoverChanged}
                 />
             );
         }
