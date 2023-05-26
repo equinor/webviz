@@ -81,7 +81,6 @@ def is_sensitivity_run(
 
     access = ParameterAccess(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
     parameters = access.get_parameters()
-    print(parameters.sensitivities)
     return parameters.sensitivities is not None
 
 
