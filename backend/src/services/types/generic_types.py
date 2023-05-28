@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 
 from pydantic import BaseModel
 
@@ -6,6 +6,8 @@ from pydantic import BaseModel
 class EnsembleScalarResponse(BaseModel):
     realizations: List[int]
     values: List[float]
+    name: Optional[str] = None
+    unit: Optional[str] = None
 
 
 class EnsembleCorrelations(BaseModel):

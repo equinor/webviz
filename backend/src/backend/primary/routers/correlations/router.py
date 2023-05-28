@@ -1,5 +1,6 @@
 import datetime
 import logging
+from typing import List
 
 from fastapi import APIRouter, Depends, Query
 

@@ -8,7 +8,7 @@ from ..types.parameter_types import (
     EnsembleParameter,
     EnsembleSensitivity,
     EnsembleSensitivityCase,
-    SensitivityTypes,
+    SensitivityType,
     SumoEnsembleParameter,
 )
 
@@ -77,8 +77,8 @@ def create_ensemble_sensitivities(
 def find_sensitivity_type(sens_case_names: List[str]) -> str:
     """Find the sensitivity type based on the sensitivity case names"""
     if len(sens_case_names) == 1 and sens_case_names[0] == "p10_p90":
-        return SensitivityTypes.MONTECARLO
-    return SensitivityTypes.SCENARIO
+        return SensitivityType.MONTECARLO
+    return SensitivityType.SCENARIO
 
 
 def create_ensemble_sensitivity_cases(df: pd.DataFrame) -> List[EnsembleSensitivityCase]:

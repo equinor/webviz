@@ -125,12 +125,51 @@ class InplaceVolumetricsAccess:
             iteration=self._iteration_name,
             column=column_name,
         )
-        if len(vol_table_collection) != 1:
+        if not vol_table_collection:
+            print(f"No aggregated volumetric tables found {self._case_uuid}, {table_name}, {column_name}")
+            print("Aggregating manually from realization tables...")
+            full_table = self.TMP_aggregate_from_realization_tables(table_name)
+            return full_table.select([column_name, "REAL", "FACIES", "ZONE", "REGION"])
+
+        if len(vol_table_collection) > 1:
             raise ValueError(f"None or multiple volumetric tables found {self._case_uuid}, {table_name}, {column_name}")
         vol_table = vol_table_collection[0]
         byte_stream: BytesIO = vol_table.blob
         table: pa.Table = pq.read_table(byte_stream)
         return table
+
+    def TMP_aggregate_from_realization_tables(self, table_name: str) -> pa.Table:
+        """Temporary function to aggregate from realization tables when no aggregated table is available
+        Assume Sumo will handle this in the future"""
+        case = self.case_collection[0]
+        vol_table_collection: TableCollection = case.tables.filter(
+            stage="realization",
+            name=table_name,
+            tagname="vol",
+            iteration=self._iteration_name,
+        )
+        if not vol_table_collection:
+            raise ValueError(f"No volumetric realization tables found {self._case_uuid}, {table_name}")
+
+            ### Using ThreadPoolExecutor to parallelize the download of the tables
+        from concurrent.futures import ThreadPoolExecutor
+        import pandas as pd
+
+        def worker(idx):
+            vol_table = vol_table_collection[idx]
+            print(f"Downloading table: {table_name} for realization {vol_table.realization}")
+            byte_stream: BytesIO = vol_table.blob
+
+            table: pd.DataFrame = pd.read_csv(byte_stream)
+            table["REAL"] = vol_table.realization
+            return table
+
+        with ThreadPoolExecutor() as executor:
+            tables = list(executor.map(worker, [i for i in range(len(vol_table_collection))]))
+            tables = pd.concat(tables)
+            tables = pa.Table.from_pandas(tables)
+
+            return tables
 
     def get_response(
         self,
@@ -146,8 +185,6 @@ class InplaceVolumetricsAccess:
             table = table.filter(mask)
         if categorical_filters is not None:
             for category in categorical_filters:
-                print(category)
-                # table = table.filter(table[category.name].is_in(category.unique_values))
                 mask = pc.is_in(table[category.name], value_set=pa.array(category.unique_values))
                 table = table.filter(mask)
                 print(table)

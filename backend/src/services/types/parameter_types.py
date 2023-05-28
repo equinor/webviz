@@ -24,7 +24,7 @@ class EnsembleParameter(BaseModel):
     values: List[Union[str, int, float]]
 
 
-class SensitivityTypes(str, Enum):
+class SensitivityType(str, Enum):
     MONTECARLO = "montecarlo"
     SCENARIO = "scenario"
 
@@ -40,7 +40,7 @@ class EnsembleSensitivity(BaseModel):
     """Description/data for a single sensitivity in an ensemble"""
 
     name: str
-    type: str
+    type: SensitivityType
     cases: List[EnsembleSensitivityCase]
 
 
