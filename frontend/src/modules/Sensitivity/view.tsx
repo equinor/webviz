@@ -8,24 +8,25 @@ import SensitivityTable from "./sensitivityTable";
 import { useSubscribedValue } from "@framework/WorkbenchServices";
 import { useGetSensitivities, useInplaceResponseQuery } from "./queryHooks";
 import { State, PlotType } from "./state";
-import { SensitivityAccessor, SensitivityResponse } from "./sensitivityAccessor";
-import { Ensemble } from "@shared-types/ensemble";
-import { EyeIcon, EyeSlashIcon, ArrowDownIcon, ArrowUpIcon, EllipsisHorizontalIcon, TableCellsIcon, ChartBarIcon } from "@heroicons/react/20/solid";
-
+import { SensitivityAccessor } from "./sensitivityAccessor";
+import { AdjustmentsHorizontalIcon, TableCellsIcon, ChartBarIcon } from "@heroicons/react/20/solid"
 
 
 export const view = ({ moduleContext, workbenchServices }: ModuleFCProps<State>) => {
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);
     const wrapperDivSize = useElementSize(wrapperDivRef);
     const selectedEnsembles = useSubscribedValue("navigator.ensembles", workbenchServices);
-
     const selectedEnsemble = selectedEnsembles?.[0] ?? { caseName: null, caseUuid: null, ensembleName: null };
     const [plotType, setPlotType] = moduleContext.useStoreState("plotType");
-    const setSelectedSensitivity = moduleContext.useSetStoreValue("selectedSensitivity");
-    const [sensitivityResponses, setSensitivityResponses] = React.useState<SensitivityResponse[]>([]);
     const [showLabels, setShowLabels] = React.useState(true);
     const [hideZeroY, setHideZeroY] = React.useState(false);
     const [showRealizationPoints, setShowRealizationPoints] = React.useState(false);
+    const [settingsIsOpen, setSettingsIsOpen] = React.useState(false);
+
+
+    // This is the output slot
+    const setSelectedSensitivity = moduleContext.useSetStoreValue("selectedSensitivity");
+
 
     const togglePlotType = () => {
         if (plotType === PlotType.TORNADO) {
@@ -50,75 +51,78 @@ export const view = ({ moduleContext, workbenchServices }: ModuleFCProps<State>)
         selectedEnsemble?.ensembleName || "",
     );
 
-    // This is the output slot
-    const onSelectedSensitivity = (selectedSensitivity: string) => {
-        if ((selectedEnsemble.caseName !== null) &&
-            (selectedEnsemble.caseUuid !== null) &&
-            (selectedEnsemble.ensembleName !== null) &&
-            (selectedSensitivity !== null)) {
-            setSelectedSensitivity({ selectedEnsemble: selectedEnsemble, selectedSensitivity: selectedSensitivity });
-        }
-    }
 
     // Memoize the computation of sensitivity responses
-    const computedSensitivityResponses = React.useMemo(() => {
+    const computedSensitivityResponseDataset = React.useMemo(() => {
         if (sensitivitiesQuery.data && inplaceResponseQuery.data) {
+            inplaceResponseQuery.data.unit = "Sm³"
+            inplaceResponseQuery.data.name = "STOIIP_OIL"
             const sensitivityAccessor = new SensitivityAccessor(sensitivitiesQuery.data, inplaceResponseQuery.data);
-            return sensitivityAccessor.computeSensitivityResponses();
+            return sensitivityAccessor.computeSensitivitiesForResponse();
         }
-        return [];
+        return null;
     }, [sensitivitiesQuery.data, inplaceResponseQuery.data]);
 
-    React.useEffect(() => {
-        setSensitivityResponses(computedSensitivityResponses);
-    }, [computedSensitivityResponses]);
-
-
-
     return (
-        <div className="w-full h-full" ref={wrapperDivRef}>
-            <div className="flex flex-col">
-                <div className="flex justify-end space-x-2 p-2">
+        <div className="w-full h-full" >
+            <div >
+                <div >
+                    <div className="flex justify-end space-x-2">
+                        <button onClick={togglePlotType} className="p-2 bg-indigo-600 text-white rounded-md">
+                            {plotType == PlotType.TORNADO ? <TableCellsIcon title="Show table" className="h-5 w-5" /> : <ChartBarIcon title="Show tornado" className="h-5 w-5" />}
+                        </button>
+                        <button
+                            className="p-2 bg-indigo-600 text-white rounded-md"
+                            onClick={() => setSettingsIsOpen(!settingsIsOpen)}>
+                            <AdjustmentsHorizontalIcon title="Show no impact sensitivities" className="h-5 w-5" />
+                        </button>
+                    </div>
 
-                    <button onClick={togglePlotType} className="p-2 bg-indigo-600 text-white rounded-md">
-                        {plotType == PlotType.TORNADO ? <TableCellsIcon title="Show table" className="h-5 w-5" /> : <ChartBarIcon title="Show tornado" className="h-5 w-5" />}
-                    </button>
+                    {settingsIsOpen && (
+                        <div
+                            className="origin-top-right absolute right-0 mt-1 z-10 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-1 focus:outline-none"
+                            role="menu"
+                            aria-orientation="vertical"
+                            aria-labelledby="menu-button"
+                            tabIndex={-1}
+                        >
+                            <div className="py-1" role="none">
+                                <button onClick={() => setHideZeroY(!hideZeroY)} className="text-gray-700 block px-4 py-2 text-sm" role="menuitem">
+                                    {hideZeroY ? 'Show no impact sensitivities' : 'Hide no impact sensitivities'}
+                                </button>
 
-                    <button onClick={() => setShowLabels(!showLabels)} className="p-2 bg-indigo-600 text-white rounded-md">
-                        {showLabels ? <EyeIcon title="Hide labels" className="h-5 w-5" /> : <EyeSlashIcon title="Show labels" className="h-5 w-5" />}
-                    </button>
+                                {PlotType.TORNADO === plotType &&
+                                    <>
+                                        <button onClick={() => setShowLabels(!showLabels)} className="text-gray-700 block px-4 py-2 text-sm" role="menuitem">
+                                            {showLabels ? 'Hide labels' : 'Show labels'}
+                                        </button>
 
-                    <button onClick={() => setHideZeroY(!hideZeroY)} className="p-2 bg-indigo-600 text-white rounded-md">
-                        {hideZeroY ?
-                            <ArrowDownIcon title="Show no impact sensitivities" className="h-5 w-5" /> :
-                            <ArrowUpIcon title="Hide no impact sensitivities" className="h-5 w-5" />}
-                    </button>
-
-                    <button
-                        onClick={() => setShowRealizationPoints(!showRealizationPoints)}
-                        className={`p-2 rounded-md ${showRealizationPoints ? 'bg-indigo-600 text-white' : 'bg-gray-300 text-indigo-600'}`}>
-
-                        {showRealizationPoints ?
-                            <EllipsisHorizontalIcon title="Hide realization points" className="h-5 w-5" /> :
-                            <EllipsisHorizontalIcon title="Show realization points" className="h-5 w-5" />
-
-                        }
-                    </button>
+                                        <button onClick={() => setShowRealizationPoints(!showRealizationPoints)} className="text-gray-700 block px-4 py-2 text-sm" role="menuitem">
+                                            {showRealizationPoints ? 'Hide realization points' : 'Show realization points'}
+                                        </button>
+                                    </>
+                                }
+                            </div>
+                        </div>
+                    )}
                 </div>
-
-                {plotType === PlotType.TORNADO &&
+            </div>
+            <div ref={wrapperDivRef} className="w-full h-full">
+                {computedSensitivityResponseDataset && plotType === PlotType.TORNADO &&
                     <SensitivityChart
-                        sensitivityResponses={sensitivityResponses}
+                        sensitivityResponseDataset={computedSensitivityResponseDataset}
                         width={wrapperDivSize.width}
                         height={wrapperDivSize.height}
                         showLabels={showLabels}
                         hideZeroY={hideZeroY}
                         showRealizationPoints={showRealizationPoints}
-                        onSelectedSensitivity={onSelectedSensitivity}
+                        onSelectedSensitivity={setSelectedSensitivity}
 
                     />}
-                {plotType === PlotType.TABLE &&
-                    <SensitivityTable sensitivityResponses={sensitivityResponses} onSelectedSensitivity={onSelectedSensitivity} hideZeroY={hideZeroY} />}
+                {computedSensitivityResponseDataset && plotType === PlotType.TABLE &&
+                    <div className="text-sm">
+                        <SensitivityTable sensitivityResponseDataset={computedSensitivityResponseDataset} onSelectedSensitivity={setSelectedSensitivity} hideZeroY={hideZeroY} />
+                    </div>}
             </div>
         </div>
     );

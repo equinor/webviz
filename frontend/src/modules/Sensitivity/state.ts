@@ -4,8 +4,9 @@ export enum PlotType {
     TABLE = 'table',
 }
 export type SelectedSensitivity = {
-    selectedEnsemble: Ensemble,
+    // selectedEnsemble: Ensemble,
     selectedSensitivity: string,
+    selectedSensitivityCase: string | null
 }
 export interface State {
     plotType: PlotType;

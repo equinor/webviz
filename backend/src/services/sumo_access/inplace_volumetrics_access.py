@@ -3,6 +3,9 @@ from enum import Enum
 from io import BytesIO
 from typing import List, Optional, Sequence, Union
 
+from concurrent.futures import ThreadPoolExecutor
+import pandas as pd
+
 import pyarrow as pa
 import pyarrow.compute as pc
 import pyarrow.parquet as pq
@@ -128,7 +131,7 @@ class InplaceVolumetricsAccess:
         if not vol_table_collection:
             print(f"No aggregated volumetric tables found {self._case_uuid}, {table_name}, {column_name}")
             print("Aggregating manually from realization tables...")
-            full_table = self.TMP_aggregate_from_realization_tables(table_name)
+            full_table = self.temporary_aggregate_from_realization_tables(table_name)
             return full_table.select([column_name, "REAL", "FACIES", "ZONE", "REGION"])
 
         if len(vol_table_collection) > 1:
@@ -138,7 +141,7 @@ class InplaceVolumetricsAccess:
         table: pa.Table = pq.read_table(byte_stream)
         return table
 
-    def TMP_aggregate_from_realization_tables(self, table_name: str) -> pa.Table:
+    def temporary_aggregate_from_realization_tables(self, table_name: str) -> pa.Table:
         """Temporary function to aggregate from realization tables when no aggregated table is available
         Assume Sumo will handle this in the future"""
         case = self.case_collection[0]
@@ -151,9 +154,7 @@ class InplaceVolumetricsAccess:
         if not vol_table_collection:
             raise ValueError(f"No volumetric realization tables found {self._case_uuid}, {table_name}")
 
-            ### Using ThreadPoolExecutor to parallelize the download of the tables
-        from concurrent.futures import ThreadPoolExecutor
-        import pandas as pd
+        ### Using ThreadPoolExecutor to parallelize the download of the tables
 
         def worker(idx):
             vol_table = vol_table_collection[idx]
@@ -165,7 +166,7 @@ class InplaceVolumetricsAccess:
             return table
 
         with ThreadPoolExecutor() as executor:
-            tables = list(executor.map(worker, [i for i in range(len(vol_table_collection))]))
+            tables = list(executor.map(worker, list(range(len(vol_table_collection)))))
             tables = pd.concat(tables)
             tables = pa.Table.from_pandas(tables)
 

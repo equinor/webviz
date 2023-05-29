@@ -1,15 +1,16 @@
 import React from 'react';
 
 import { Table, TableHeading, TableProps } from '@lib/components/Table/table';
-import { SensitivityResponse } from './sensitivityAccessor';
+import { SensitivityResponseDataset } from './sensitivityAccessor';
+import { SelectedSensitivity } from './state';
 
 export interface SensitivityTableProps {
-    sensitivityResponses: SensitivityResponse[]
+    sensitivityResponseDataset: SensitivityResponseDataset
     hideZeroY: boolean
-    onSelectedSensitivity?: (selectedSensitivity: string) => void;
+    onSelectedSensitivity?: (selectedSensitivity: SelectedSensitivity) => void;
 }
-const roundNumber = (num: number, fractionDigits: number = 2): number => {
-    return Number(num.toFixed(fractionDigits));
+const numFormat = (number: number): string => {
+    return Intl.NumberFormat('en', { notation: 'compact', minimumFractionDigits: 2, maximumFractionDigits: 3 }).format(number)
 }
 enum TableColumns {
     RESPONSE = "Response",
@@ -38,30 +39,35 @@ const SensitivityTable: React.FC<SensitivityTableProps> = (props) => {
     const [tableRows, setTableRows] = React.useState<any>([]);
 
     React.useEffect(() => {
-        let filteredSensitivityResponses = props.sensitivityResponses;
+        let filteredSensitivityResponses = props.sensitivityResponseDataset.sensitivityResponses;
         if (props.hideZeroY) {
             filteredSensitivityResponses = filteredSensitivityResponses.filter(s =>
-                (s.lowCaseReferenceDifference !== 0.0 && s.highCaseReferenceDifference !== 0.0));
+                (s.lowCaseReferenceDifference !== 0.0 || s.highCaseReferenceDifference !== 0.0));
         }
         const rows = filteredSensitivityResponses.slice().reverse().map((sensitivityResponse) => (
             {
                 [TableColumns.RESPONSE]: "STOIIP_OIL",
                 [TableColumns.SENSITIVITY]: sensitivityResponse.sensitivityName,
-                [TableColumns.DELTA_LOW]: roundNumber(sensitivityResponse.lowCaseReferenceDifference),
-                [TableColumns.DELTA_HIGH]: roundNumber(sensitivityResponse.highCaseReferenceDifference),
-                [TableColumns.TRUE_LOW]: roundNumber(sensitivityResponse.lowCaseAverage),
-                [TableColumns.TRUE_HIGH]: roundNumber(sensitivityResponse.highCaseAverage),
+                [TableColumns.DELTA_LOW]: numFormat(sensitivityResponse.lowCaseReferenceDifference),
+                [TableColumns.DELTA_HIGH]: numFormat(sensitivityResponse.highCaseReferenceDifference),
+                [TableColumns.TRUE_LOW]: numFormat(sensitivityResponse.lowCaseAverage),
+                [TableColumns.TRUE_HIGH]: numFormat(sensitivityResponse.highCaseAverage),
                 [TableColumns.LOW_REALS]: sensitivityResponse.lowCaseRealizations.length,
                 [TableColumns.HIGH_REALS]: sensitivityResponse.highCaseRealizations.length,
                 [TableColumns.REFERENCE]: "rms_seed",
             }
         ))
         setTableRows(rows);
-    }, [props.sensitivityResponses, props.hideZeroY]);
+    }, [props.sensitivityResponseDataset, props.hideZeroY]);
 
     const handleClick = (row: TableProps<TableHeading>['data'][0]) => {
         if (props.onSelectedSensitivity) {
-            props.onSelectedSensitivity(row.Sensitivity as string);
+            const selectedSensitivity: SelectedSensitivity = {
+                selectedSensitivity: row.Sensitivity as string,
+                selectedSensitivityCase: null
+            }
+
+            props.onSelectedSensitivity(selectedSensitivity);
         }
     };
     return (
