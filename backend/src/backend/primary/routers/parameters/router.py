@@ -1,9 +1,7 @@
-import datetime
 import logging
 from typing import List, Optional, Literal
 
-from pydantic import BaseModel
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, Query
 
 from src.services.types.parameter_types import (
     EnsembleParameter,
@@ -11,8 +9,8 @@ from src.services.types.parameter_types import (
 )
 from src.services.sumo_access.parameter_access import ParameterAccess
 from src.services.utils.authenticated_user import AuthenticatedUser
-from src.services.utils.perf_timer import PerfTimer
 from src.backend.auth.auth_helper import AuthHelper
+
 from . import schemas
 
 LOGGER = logging.getLogger(__name__)
@@ -32,11 +30,11 @@ def get_parameter_names_and_description(
 ) -> List[schemas.EnsembleParameterDescription]:
     """Retrieve parameter names and description for an ensemble"""
     access = ParameterAccess(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
-    parameters = access.get_parameters().parameters
-    # if exclude_all_values_constant:
-    #     parameters = [p for p in parameters if not p.is_constant]
-    # if sort_order == "alphabetically":
-    #     parameters = sorted(parameters, key=lambda p: p.name.lower())
+    parameters = access.get_parameters_and_sensitivities().parameters
+    if exclude_all_values_constant:
+        parameters = [p for p in parameters if not p.is_constant]
+    if sort_order == "alphabetically":
+        parameters = sorted(parameters, key=lambda p: p.name.lower())
     # temporary
     # parameters = [p for p in parameters if p.group_name and "GLOBVAR" in p.group_name]
     return [
@@ -62,7 +60,7 @@ def get_parameter(
     """Get a parameter in a given Sumo ensemble"""
 
     access = ParameterAccess(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
-    parameters = access.get_parameters().parameters
+    parameters = access.get_parameters_and_sensitivities().parameters
     for parameter in parameters:
         if parameter.name == parameter_name:
             return parameter
@@ -80,7 +78,7 @@ def is_sensitivity_run(
     """Check if a given Sumo ensemble is a sensitivity run"""
 
     access = ParameterAccess(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
-    parameters = access.get_parameters()
+    parameters = access.get_parameters_and_sensitivities()
     return parameters.sensitivities is not None
 
 
@@ -96,4 +94,4 @@ def get_sensitivities(
 
     access = ParameterAccess(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
 
-    return access.get_parameters().sensitivities
+    return access.get_parameters_and_sensitivities().sensitivities

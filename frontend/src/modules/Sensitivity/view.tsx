@@ -2,14 +2,17 @@ import React from "react";
 
 import { ModuleFCProps } from "@framework/Module";
 import { useElementSize } from "@lib/hooks/useElementSize";
+import { useSubscribedValue } from "@framework/WorkbenchServices";
 
 import SensitivityChart from "./sensitivityChart";
 import SensitivityTable from "./sensitivityTable";
-import { useSubscribedValue } from "@framework/WorkbenchServices";
 import { useGetSensitivities, useInplaceResponseQuery } from "./queryHooks";
 import { State, PlotType } from "./state";
 import { SensitivityAccessor } from "./sensitivityAccessor";
+import { SensitivityResponseCalculator } from "./sensitivityResponseCalculator";
+
 import { AdjustmentsHorizontalIcon, TableCellsIcon, ChartBarIcon } from "@heroicons/react/20/solid"
+
 
 
 export const view = ({ moduleContext, workbenchServices }: ModuleFCProps<State>) => {
@@ -52,19 +55,35 @@ export const view = ({ moduleContext, workbenchServices }: ModuleFCProps<State>)
     );
 
 
-    // Memoize the computation of sensitivity responses
+    // Memoize the computation of sensitivity responses. Should we use useMemo?
     const computedSensitivityResponseDataset = React.useMemo(() => {
         if (sensitivitiesQuery.data && inplaceResponseQuery.data) {
+            // TODO: Remove
             inplaceResponseQuery.data.unit = "Sm³"
             inplaceResponseQuery.data.name = "STOIIP_OIL"
-            const sensitivityAccessor = new SensitivityAccessor(sensitivitiesQuery.data, inplaceResponseQuery.data);
-            return sensitivityAccessor.computeSensitivitiesForResponse();
+            const sensitivityAccessor = new SensitivityAccessor(sensitivitiesQuery.data);
+
+
+            // How to handle errors?
+            try {
+                const sensitivityResponseCalculator = new SensitivityResponseCalculator(sensitivityAccessor, inplaceResponseQuery.data);
+                return sensitivityResponseCalculator.computeSensitivitiesForResponse();
+            }
+            catch (e) {
+                console.log(e)
+                return null;
+            }
+
         }
         return null;
     }, [sensitivitiesQuery.data, inplaceResponseQuery.data]);
 
+
     return (
         <div className="w-full h-full" >
+            {/* // TODO: Remove */}
+            {!computedSensitivityResponseDataset && <div  >Select case 01_drogon_design_webviz</div>}
+
             <div >
                 <div >
                     <div className="flex justify-end space-x-2">

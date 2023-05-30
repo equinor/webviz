@@ -1,7 +1,7 @@
 import React from 'react';
 
 import { Table, TableHeading, TableProps } from '@lib/components/Table/table';
-import { SensitivityResponseDataset } from './sensitivityAccessor';
+import { SensitivityResponseDataset } from './sensitivityResponseCalculator';
 import { SelectedSensitivity } from './state';
 
 export interface SensitivityTableProps {

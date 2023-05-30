@@ -1,7 +1,7 @@
 from typing import List, Dict
 from sumo.wrapper import SumoClient
 
-from ...types.parameter_types import SumoEnsembleParameter
+from ..types import SumoEnsembleParameter
 
 
 def get_parameters_for_iteration(sumo_client: SumoClient, case_id: str, iteration: str) -> List[SumoEnsembleParameter]:
@@ -23,9 +23,9 @@ def get_parameters_for_iteration(sumo_client: SumoClient, case_id: str, iteratio
 
         // If a design matrix is used:
 
-        SENSNAME: value,
+        SENSNAME: value, // fwl
 
-        SENSCASE: value
+        SENSCASE: value // low
     }
     A flat structure with an optional group name seems better. Added that conversion in this script.
 
@@ -38,7 +38,7 @@ def get_parameters_for_iteration(sumo_client: SumoClient, case_id: str, iteratio
             "bool": {
                 "must": [
                     {"match": {"_sumo.parent_object.keyword": case_id}},
-                    {"match": {"fmu.iteration.id": iteration}},
+                    {"match": {"fmu.iteration.name": iteration}},
                 ]
             }
         },

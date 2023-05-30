@@ -4,13 +4,6 @@ from enum import Enum
 from pydantic import BaseModel
 
 
-class SumoEnsembleParameter(BaseModel):
-    name: str
-    groupname: Optional[str]
-    values: List[Union[str, int, float]]
-    realizations: List[int]
-
-
 class EnsembleParameter(BaseModel):
     """Description/data for a single parameter in an ensemble"""
 
@@ -44,8 +37,10 @@ class EnsembleSensitivity(BaseModel):
     cases: List[EnsembleSensitivityCase]
 
 
-class EnsembleParameters(BaseModel):
+class EnsembleParameters(BaseModel):  # Find a better name
     """Description/data for all parameters in an ensemble"""
+
+    # type: "sensitivity" | "historymatch" | "prediction"
 
     parameters: List[EnsembleParameter]
     sensitivities: Optional[List[EnsembleSensitivity]]
