@@ -22,7 +22,7 @@ import { State } from "./state";
 //-----------------------------------------------------------------------------------------------------------
 export function settings({ moduleContext, workbenchServices }: ModuleFCProps<State, typeof broadcastChannelsDef>) {
     const myInstanceIdStr = moduleContext.getInstanceIdString();
-    console.log(`${myInstanceIdStr} -- render SimulationTimeSeries settings`);
+    console.debug(`${myInstanceIdStr} -- render SimulationTimeSeries settings`);
 
     const availableEnsembles = useSubscribedValue("navigator.ensembles", workbenchServices);
     const [selectedEnsemble, setSelectedEnsemble] = React.useState<Ensemble | null>(null);
@@ -34,13 +34,13 @@ export function settings({ moduleContext, workbenchServices }: ModuleFCProps<Sta
     const syncHelper = new SyncSettingsHelper(syncedSettingKeys, workbenchServices);
     const syncedValueEnsembles = syncHelper.useValue(SyncSettingKey.ENSEMBLE, "global.syncValue.ensembles");
     const syncedValueSummaryVector = syncHelper.useValue(SyncSettingKey.TIME_SERIES, "global.syncValue.timeSeries");
-    console.log(`${myInstanceIdStr} -- synced keys ${JSON.stringify(syncedSettingKeys)}`);
-    console.log(`${myInstanceIdStr} -- syncedValueEnsembles=${JSON.stringify(syncedValueEnsembles)}`);
-    console.log(`${myInstanceIdStr} -- syncedValueSummaryVector=${JSON.stringify(syncedValueSummaryVector)}`);
+    console.debug(`${myInstanceIdStr} -- synced keys ${JSON.stringify(syncedSettingKeys)}`);
+    console.debug(`${myInstanceIdStr} -- syncedValueEnsembles=${JSON.stringify(syncedValueEnsembles)}`);
+    console.debug(`${myInstanceIdStr} -- syncedValueSummaryVector=${JSON.stringify(syncedValueSummaryVector)}`);
 
     let candidateEnsemble = selectedEnsemble;
     if (syncedValueEnsembles?.length) {
-        console.log(`${myInstanceIdStr} -- syncing ensemble to ${syncedValueEnsembles[0].ensembleName}`);
+        console.debug(`${myInstanceIdStr} -- syncing ensemble to ${syncedValueEnsembles[0].ensembleName}`);
         candidateEnsemble = syncedValueEnsembles[0];
     }
     const computedEnsemble = fixupEnsemble(candidateEnsemble, availableEnsembles);
@@ -49,7 +49,7 @@ export function settings({ moduleContext, workbenchServices }: ModuleFCProps<Sta
 
     let candidateVectorName = selectedVectorName;
     if (syncedValueSummaryVector?.vectorName) {
-        console.log(`${myInstanceIdStr} -- syncing timeSeries to ${syncedValueSummaryVector.vectorName}`);
+        console.debug(`${myInstanceIdStr} -- syncing timeSeries to ${syncedValueSummaryVector.vectorName}`);
         candidateVectorName = syncedValueSummaryVector.vectorName;
     }
     const computedVectorName = fixupVectorName(candidateVectorName, vectorsQuery.data);
@@ -78,7 +78,7 @@ export function settings({ moduleContext, workbenchServices }: ModuleFCProps<Sta
     );
 
     function handleEnsembleSelectionChange(selectedEnsembleIdStrArr: string[]) {
-        console.log("handleEnsembleSelectionChange()");
+        console.debug("handleEnsembleSelectionChange()");
         const newIdStr = selectedEnsembleIdStrArr[0] ?? "";
         const newEnsemble = availableEnsembles?.find((item) => encodeEnsembleAsIdStr(item) === newIdStr);
         setSelectedEnsemble(newEnsemble ?? null);
@@ -88,7 +88,7 @@ export function settings({ moduleContext, workbenchServices }: ModuleFCProps<Sta
     }
 
     function handleVectorSelectionChange(selectedVecNames: string[]) {
-        console.log("handleVectorSelectionChange()");
+        console.debug("handleVectorSelectionChange()");
         const newName = selectedVecNames[0] ?? "";
         setSelectedVectorName(newName);
         if (newName) {
@@ -97,24 +97,24 @@ export function settings({ moduleContext, workbenchServices }: ModuleFCProps<Sta
     }
 
     function handleFrequencySelectionChange(newFreqStr: string) {
-        console.log(`handleFrequencySelectionChange()  newFreqStr=${newFreqStr}`);
+        console.debug(`handleFrequencySelectionChange()  newFreqStr=${newFreqStr}`);
         let newFreq: Frequency | null = null;
         if (newFreqStr !== "RAW") {
             newFreq = newFreqStr as Frequency;
         }
-        console.log(`handleFrequencySelectionChange()  newFreqStr=${newFreqStr}  newFreq=${newFreq}`);
+        console.debug(`handleFrequencySelectionChange()  newFreqStr=${newFreqStr}  newFreq=${newFreq}`);
         setResamplingFrequency(newFreq);
     }
 
     function handleShowStatisticsCheckboxChange(event: React.ChangeEvent<HTMLInputElement>) {
-        console.log("handleShowStatisticsCheckboxChange() " + event.target.checked);
+        console.debug("handleShowStatisticsCheckboxChange() " + event.target.checked);
         setShowStatistics(event.target.checked);
     }
 
     function handleRealizationRangeTextChanged(event: React.ChangeEvent<HTMLInputElement>) {
-        console.log("handleRealizationRangeTextChanged() " + event.target.value);
+        console.debug("handleRealizationRangeTextChanged() " + event.target.value);
         const rangeArr = parseRealizationRangeString(event.target.value, 200);
-        console.log(rangeArr);
+        console.debug(rangeArr);
         moduleContext.getStateStore().setValue("realizationsToInclude", rangeArr.length > 0 ? rangeArr : null);
     }
 

@@ -7,19 +7,18 @@ spec:
     - name: prod
       build:
         from: main
+    - name: review
+      build:
+        from: review
   components:
     - name: frontend
-      image: ghcr.io/equinor/webviz_frontend:latest
-      alwaysPullImageOnDeploy: true
+      dockerFileName: frontend-prod.Dockerfile
       publicPort: http
       ports:
         - name: http
           port: 8080
-      environmentConfig:
-        - environment: prod
-    - name: backend
-      image: ghcr.io/equinor/webviz_backend:latest
-      alwaysPullImageOnDeploy: true
+    - name: backend-primary
+      dockerFileName: backend.Dockerfile
       ports:
         - name: http
           port: 5000
@@ -31,8 +30,9 @@ spec:
                 envVar: WEBVIZ_CLIENT_SECRET
               - name: WEBVIZ-SMDA-RESOURCE-SCOPE
                 envVar: WEBVIZ_SMDA_RESOURCE_SCOPE
-      environmentConfig:
-        - environment: prod
+      variables:
+        UVICORN_PORT: 5000
+        UVICORN_ENTRYPOINT: src.backend.primary.main:app
     - name: redis
       image: bitnami/redis:6.2.10@sha256:bd42fcdab5959ce2b21b6ea8410d4b3ee87ecb2e320260326ec731ecfcffbd0e
       ports:
@@ -40,8 +40,24 @@ spec:
           port: 6379
       variables:
         ALLOW_EMPTY_PASSWORD: yes
-      environmentConfig:
-        - environment: prod
+  jobs:
+    - name: backend-user-session
+      dockerFileName: backend.Dockerfile
+      schedulerPort: 8000
+      ports:
+        - name: http
+          port: 8000
+      secretRefs:
+        azureKeyVaults:
+          - name: webviz
+            items:
+              - name: WEBVIZ-CLIENT-SECRET
+                envVar: WEBVIZ_CLIENT_SECRET
+              - name: WEBVIZ-SMDA-RESOURCE-SCOPE
+                envVar: WEBVIZ_SMDA_RESOURCE_SCOPE
+      variables:
+        UVICORN_PORT: 8000
+        UVICORN_ENTRYPOINT: src.backend.user_session.main:app
   dnsAppAlias:
     environment: prod
     component: frontend

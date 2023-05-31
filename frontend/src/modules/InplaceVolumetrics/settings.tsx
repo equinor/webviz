@@ -155,7 +155,7 @@ export function settings({ moduleContext, workbenchServices }: ModuleFCProps<Sta
 
     React.useEffect(
         function selectDefaultTable() {
-            console.log("selectDefaultTable()");
+            console.debug("selectDefaultTable()");
             if (tableDescriptionsQuery.data) {
                 setTableName(tableDescriptionsQuery.data[0].name);
                 const responses = tableDescriptionsQuery.data[0].numerical_column_names;
@@ -169,7 +169,7 @@ export function settings({ moduleContext, workbenchServices }: ModuleFCProps<Sta
     );
 
     function handleEnsembleSelectionChange(ensembleString: string) {
-        console.log("handleEnsembleSelectionChange()");
+        console.debug("handleEnsembleSelectionChange()");
         const [caseUuid, ensembleName] = ensembleString.split("::");
         const matchingEnsemble = selectedEnsembles?.find(
             (el) => el.caseUuid === caseUuid && el.ensembleName === ensembleName
@@ -177,16 +177,16 @@ export function settings({ moduleContext, workbenchServices }: ModuleFCProps<Sta
         setEnsemble(matchingEnsemble ?? null);
     }
     function handleTableChange(tableName: string) {
-        console.log("handleTableChange()");
+        console.debug("handleTableChange()");
         setTableName(tableName);
     }
     function handleResponseChange(responseName: string) {
-        console.log("handleResponseChange()");
+        console.debug("handleResponseChange()");
         setResponseName(responseName);
     }
 
     const handleSelectionChange = React.useCallback((categoryName: string, categoryValues: string[]) => {
-        console.log("handleSelectionChange()");
+        console.debug("handleSelectionChange()");
         let currentCategoryFilter = categoricalFilter;
         if (currentCategoryFilter) {
             const categoryIndex = currentCategoryFilter.findIndex((category) => category.name === categoryName);

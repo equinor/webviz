@@ -69,7 +69,7 @@ export function settings({ moduleContext, workbenchServices }: ModuleFCProps<Sta
     );
 
     function handleEnsembleSelectionChange(selectedEnsembleIdStr: string) {
-        console.log("handleEnsembleSelectionChange()");
+        console.debug("handleEnsembleSelectionChange()");
         const newEnsemble = availableEnsembles?.find((item) => encodeEnsembleAsIdStr(item) === selectedEnsembleIdStr);
         setSelectedEnsemble(newEnsemble ?? null);
         if (newEnsemble) {
@@ -78,7 +78,7 @@ export function settings({ moduleContext, workbenchServices }: ModuleFCProps<Sta
     }
 
     function handleVectorSelectionChange(selectedVecNames: string[]) {
-        console.log("handleVectorSelectionChange()");
+        console.debug("handleVectorSelectionChange()");
         const newName = selectedVecNames[0] ?? "";
         setSelectedVectorName(newName);
         if (newName) {

@@ -50,7 +50,7 @@ export default defineConfig(({ mode }) => {
             port: 8080,
             proxy: {
                 "/api": {
-                    target: "http://backend:5000",
+                    target: "http://backend-primary:5000",
                     rewrite: (path) => path.replace(/^\/api/, ""),
                 },
             },

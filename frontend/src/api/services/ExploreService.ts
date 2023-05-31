@@ -69,4 +69,29 @@ export class ExploreService {
         });
     }
 
+    /**
+     * Get Realizations
+     * Get list of realizations for an ensemble
+     * @param caseUuid Sumo case uuid
+     * @param ensembleName Ensemble name
+     * @returns number Successful Response
+     * @throws ApiError
+     */
+    public getRealizations(
+        caseUuid: string,
+        ensembleName: string,
+    ): CancelablePromise<Array<number>> {
+        return this.httpRequest.request({
+            method: 'GET',
+            url: '/cases/{case_uuid}/ensembles/{ensemble_name}/realizations',
+            path: {
+                'case_uuid': caseUuid,
+                'ensemble_name': ensembleName,
+            },
+            errors: {
+                422: `Validation Error`,
+            },
+        });
+    }
+
 }

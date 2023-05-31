@@ -27,7 +27,7 @@ const compressFile = (filePath) => {
 
       const reduction = (100 * (origSize - compSize)) / origSize;
 
-      console.log(
+      console.info(
         `${filePath} → ${compFilePath} (${reduction.toFixed(1)} % reduction)`
       );
 

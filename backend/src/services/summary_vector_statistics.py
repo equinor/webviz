@@ -73,7 +73,7 @@ def compute_vector_statistics_table(
 
     df = summary_vector_table.select(["DATE", vector_name]).to_pandas(timestamp_as_object=True)
 
-    grouped: pd.DataFrameGroupBy = df.groupby("DATE", as_index=False, sort=True)
+    grouped: pd.core.groupby.DataFrameGroupBy = df.groupby("DATE", as_index=False, sort=True)
     statistics_df: pd.DataFrame = grouped.agg(**agg_dict)
 
     default_schema = pa.Schema.from_pandas(statistics_df, preserve_index=False)

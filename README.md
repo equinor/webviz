@@ -48,24 +48,18 @@ in the Python backend. In order to update the auto-generated code you can either
 In both cases the backend needs to already be running (e.g. using `docker-compose`
 as stated above).
 
+### Radix applications
 
-# Update `poetry.lock` through Docker
+We have two applications in Radix built from this repository:
+* [Main application](https://webviz.app.radix.equinor.com/) built from the `main` branch.
+* [Review application](https://frontend-webviz-review.radix.equinor.com/) built from the `review` branch
 
-If you do not want to install the correct Python version and/or `poetry` on your host
-machine, you can update `pyproject.toml` and `poetry.lock` through `docker`.
-As an example, if you wanted to add the Python package `httpx`:
+The applications are automatically built and redeployed when pushing commits to the respective branch.
 
-```bash
-# Start container. This assumes you have previously ran docker-compose
-CONTAINER_ID=$(docker run --detach --env WEBVIZ_CLIENT_SECRET=0 webviz_backend)
-# Copy pyproject.toml and poetry.lock from host to container in case they have changed since it was built:
-docker cp ./backend/pyproject.toml $CONTAINER_ID:/home/appuser/backend/
-docker cp ./backend/poetry.lock $CONTAINER_ID:/home/appuser/backend/
-# Run your poetry commands:
-docker exec -it $CONTAINER_ID sh -c "poetry add httpx"
-# Copy updated pyproject.toml and poetry.lock from container back to host:
-docker cp $CONTAINER_ID:/home/appuser/backend/pyproject.toml ./backend/
-docker cp $CONTAINER_ID:/home/appuser/backend/poetry.lock ./backend/
-# Stop container
-docker stop $CONTAINER_ID
+You can push/update the `review` branch with state of another feature branch with e.g.:
 ```
+git push upstream <featurebranchname>:review --force
+```
+The `main` branch only accepts commits through pull requests.
+
+NB: Note that Radix will always use the `radixconfig.yml` as it is in `main` branch (unless changed in Radix UI).

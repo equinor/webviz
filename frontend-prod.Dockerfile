@@ -17,7 +17,7 @@ ENV NODE_ENV production
 # Building wsc requires increasing memory allocated to Node
 ENV NODE_OPTIONS="--max-old-space-size=4096"
 
-RUN npm ci --ignore-scripts --include=dev && npm run build && node compress_static.cjs
+RUN npm ci --include=dev && npm run build && node compress_static.cjs
 
 ###########################################
 # Compile brotli extension to nginx image #
