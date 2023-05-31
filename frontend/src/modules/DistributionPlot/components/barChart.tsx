@@ -3,7 +3,7 @@ import Plot from "react-plotly.js";
 
 import { Layout, PlotData, PlotHoverEvent } from "plotly.js";
 
-export type BarchartProps = {
+export type BarChartProps = {
     x: string[];
     y: number[];
     xAxisTitle: string;
@@ -21,7 +21,7 @@ interface TraceData extends Partial<PlotData> {
     realizationNumber?: number | null;
 }
 
-export const Barchart: React.FC<BarchartProps> = (props) => {
+export const BarChart: React.FC<BarChartProps> = (props) => {
     const colors = props.keyData.map((real) => {
         return real == props.highlightedKey ? "red" : "blue";
     });
@@ -66,3 +66,5 @@ export const Barchart: React.FC<BarchartProps> = (props) => {
         <Plot data={dataArray} layout={layout} onClick={handleClick} onHover={handleHover} onUnhover={handleUnhover} />
     );
 };
+
+BarChart.displayName = "BarChart";

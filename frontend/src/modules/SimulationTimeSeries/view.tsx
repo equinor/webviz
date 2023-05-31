@@ -3,6 +3,7 @@ import Plot from "react-plotly.js";
 
 import { ModuleFCProps } from "@framework/Module";
 import { useSubscribedValue } from "@framework/WorkbenchServices";
+import { EnsembleIdent } from "@framework/utils/ensembleIdent";
 import { useElementSize } from "@lib/hooks/useElementSize";
 
 import { Layout, PlotData, PlotHoverEvent, PlotMouseEvent } from "plotly.js";
@@ -46,6 +47,10 @@ export const view = ({ moduleContext, workbenchServices }: ModuleFCProps<State, 
 
     React.useEffect(
         function broadcast() {
+            if (!vectorSpec) {
+                return;
+            }
+
             const dataGenerator = (): { key: number; value: number }[] => {
                 const data: { key: number; value: number }[] = [];
                 if (vectorQuery.data) {
@@ -59,20 +64,21 @@ export const view = ({ moduleContext, workbenchServices }: ModuleFCProps<State, 
                 return data;
             };
 
-            const dataDescription = `${vectorSpec?.caseName || ""} ${vectorSpec?.ensembleName} ${
-                vectorSpec?.vectorName
-            }`;
+            const dataDescription = `${vectorSpec.caseName} ${vectorSpec.ensembleName} ${vectorSpec.vectorName}`;
 
             moduleContext.getChannel(BroadcastChannelNames.Realization_Value).broadcast(
                 {
-                    ensemble: `${vectorSpec?.caseUuid || ""}-${vectorSpec?.ensembleName || ""}`,
+                    ensembleIdent: EnsembleIdent.fromCaseUuidAndEnsembleName(
+                        vectorSpec.caseUuid,
+                        vectorSpec.ensembleName
+                    ),
                     description: dataDescription,
                     unit: vectorQuery.data?.at(0)?.unit || "",
                 },
                 dataGenerator
             );
         },
-        [vectorQuery.data, vectorSpec?.ensembleName, vectorSpec?.vectorName, moduleContext]
+        [vectorQuery.data, vectorSpec, moduleContext]
     );
 
     // React.useEffect(

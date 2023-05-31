@@ -48,3 +48,5 @@ export const Histogram: React.FC<HistogramProps> = (props) => {
     };
     return <Plot data={dataArray} layout={layout} onClick={handleClick} onHover={handleHover} />;
 };
+
+Histogram.displayName = "Histogram";

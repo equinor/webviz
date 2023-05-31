@@ -1,15 +1,12 @@
 import React from "react";
 
 import { ModuleFCProps } from "@framework/Module";
-import { SubsurfaceViewer } from "@webviz/subsurface-components";
 import { useSubscribedValue } from "@framework/WorkbenchServices";
-import { useGridSurface, useGridParameter, useStatisticalGridParameter } from "./queryHooks";
-import state from "./state";
 import { toArrayBuffer } from "@shared-utils/vtkUtils";
+import { SubsurfaceViewer } from "@webviz/subsurface-components";
 
-
-
-
+import { useGridParameter, useGridSurface, useStatisticalGridParameter } from "./queryHooks";
+import state from "./state";
 
 //-----------------------------------------------------------------------------------------------------------
 export function view({ moduleContext, workbenchServices }: ModuleFCProps<state>) {
@@ -24,38 +21,64 @@ export function view({ moduleContext, workbenchServices }: ModuleFCProps<state>)
     const useStatistics = moduleContext.useStoreValue("useStatistics");
 
     //Queries
-    const gridSurfaceQuery = useGridSurface(selectedEnsemble.caseUuid, selectedEnsemble.ensembleName, gridName, realizations ? realizations[0] : "0");
-    const gridParameterQuery = useGridParameter(selectedEnsemble.caseUuid, selectedEnsemble.ensembleName, gridName, parameterName, realizations ? realizations[0] : "0", useStatistics);
-    const statisticalGridParameterQuery = useStatisticalGridParameter(selectedEnsemble.caseUuid, selectedEnsemble.ensembleName, gridName, parameterName, realizations, useStatistics);
+    const gridSurfaceQuery = useGridSurface(
+        selectedEnsemble.caseUuid,
+        selectedEnsemble.ensembleName,
+        gridName,
+        realizations ? realizations[0] : "0"
+    );
+    const gridParameterQuery = useGridParameter(
+        selectedEnsemble.caseUuid,
+        selectedEnsemble.ensembleName,
+        gridName,
+        parameterName,
+        realizations ? realizations[0] : "0",
+        useStatistics
+    );
+    const statisticalGridParameterQuery = useStatisticalGridParameter(
+        selectedEnsemble.caseUuid,
+        selectedEnsemble.ensembleName,
+        gridName,
+        parameterName,
+        realizations,
+        useStatistics
+    );
 
+    const bounds = gridSurfaceQuery?.data
+        ? [
+              gridSurfaceQuery.data.xmin,
+              gridSurfaceQuery.data.ymin,
+              -gridSurfaceQuery.data.zmax,
+              gridSurfaceQuery.data.xmax,
+              gridSurfaceQuery.data.ymax,
+              -gridSurfaceQuery.data.zmin,
+          ]
+        : [0, 0, 0, 100, 100, 100];
 
-    const bounds = gridSurfaceQuery?.data ? [gridSurfaceQuery.data.xmin, gridSurfaceQuery.data.ymin, -gridSurfaceQuery.data.zmax, gridSurfaceQuery.data.xmax, gridSurfaceQuery.data.ymax, -gridSurfaceQuery.data.zmin] : [0, 0, 0, 100, 100, 100];
+    if (!gridSurfaceQuery.data) {
+        return <div>no grid geometry</div>;
+    }
+    const pointsArray = gridSurfaceQuery?.data ? toArrayBuffer(gridSurfaceQuery.data.points as any) : [];
+    const polysArray = gridSurfaceQuery?.data ? toArrayBuffer(gridSurfaceQuery.data.polys as any) : [];
 
-    if (!gridSurfaceQuery.data) { return (<div>no grid geometry</div>) }
-    const pointsArray = gridSurfaceQuery?.data ? toArrayBuffer(gridSurfaceQuery.data.points as any) : []
-    const polysArray = gridSurfaceQuery?.data ? toArrayBuffer(gridSurfaceQuery.data.polys as any) : []
-
-
-    let propertiesArray: number[] = []
+    let propertiesArray: number[] = [];
     if (!useStatistics && gridParameterQuery?.data) {
-        propertiesArray = Array.from(gridParameterQuery.data)
+        propertiesArray = Array.from(gridParameterQuery.data);
+    } else if (useStatistics && statisticalGridParameterQuery?.data) {
+        propertiesArray = Array.from(statisticalGridParameterQuery.data);
     }
-    else if (useStatistics && statisticalGridParameterQuery?.data) {
-        propertiesArray = Array.from(statisticalGridParameterQuery.data)
-    }
-    const points: Float32Array = new Float32Array(pointsArray as number[])
-    const polys: Uint32Array = new Uint32Array(polysArray as number[])
+    const points: Float32Array = new Float32Array(pointsArray as number[]);
+    const polys: Uint32Array = new Uint32Array(polysArray as number[]);
 
     return (
         <div className="relative w-full h-full flex flex-col">
-
             <SubsurfaceViewer
                 id="deckgl"
                 bounds={[bounds[0], bounds[1], bounds[3], bounds[4]]}
                 colorTables={[
                     {
-                        "name": "viridis (Seq)",
-                        "colors": [
+                        name: "viridis (Seq)",
+                        colors: [
                             [0.0, 68, 1, 84],
                             [0.05263157894736842, 71, 20, 102],
                             [0.10526315789473684, 71, 37, 117],
@@ -77,13 +100,14 @@ export function view({ moduleContext, workbenchServices }: ModuleFCProps<state>)
                             [0.9473684210526315, 220, 226, 24],
                             [1.0, 253, 231, 36],
                         ],
-                        "discrete": false,
-                    }]}
+                        discrete: false,
+                    },
+                ]}
                 layers={[
                     {
                         "@@type": "AxesLayer",
-                        "id": "axes-layer",
-                        "bounds": bounds
+                        id: "axes-layer",
+                        bounds: bounds,
                     },
                     {
                         "@@type": "Grid3DLayer",
@@ -96,8 +120,8 @@ export function view({ moduleContext, workbenchServices }: ModuleFCProps<state>)
                     },
                 ]}
                 views={{
-                    "layout": [1, 1],
-                    "viewports": [{ "id": "view_1", "show3D": true }],
+                    layout: [1, 1],
+                    viewports: [{ id: "view_1", show3D: true }],
                 }}
             />
             <div className="absolute bottom-5 right-5 italic text-pink-400">{moduleContext.getInstanceIdString()}</div>

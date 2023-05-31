@@ -3,7 +3,7 @@ import Plot from "react-plotly.js";
 
 import { Layout, PlotData, PlotHoverEvent } from "plotly.js";
 
-export type ThreeDScatterProps = {
+export type ThreeDScatterPlotProps = {
     x: number[];
     y: number[];
     z: number[];
@@ -22,7 +22,7 @@ interface TraceData extends Partial<PlotData> {
     realizationNumber?: number | null;
 }
 
-export const ThreeDScatter: React.FC<ThreeDScatterProps> = (props) => {
+export const ThreeDScatterPlot: React.FC<ThreeDScatterPlotProps> = (props) => {
     const colors = props.keyData.map((real) => {
         return real == props.highlightedKey ? "red" : "blue";
     });
@@ -63,3 +63,5 @@ export const ThreeDScatter: React.FC<ThreeDScatterProps> = (props) => {
     };
     return <Plot data={dataArray} layout={layout} onClick={handleClick} onHover={handleHover} />;
 };
+
+ThreeDScatterPlot.displayName = "ThreeDScatterPlot";

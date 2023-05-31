@@ -4,11 +4,11 @@ import { BroadcastChannelKeyCategory, BroadcastChannelMeta, broadcaster } from "
 import { ModuleFCProps } from "@framework/Module";
 import { useElementSize } from "@lib/hooks/useElementSize";
 
-import { Barchart } from "./components/barchart";
+import { BarChart } from "./components/barChart";
 import { Histogram } from "./components/histogram";
-import ScatterPlot from "./components/scatterPlot";
-import ScatterPlotWithColorMapping from "./components/scatterPlotWithColorMapping";
-import { ThreeDScatter } from "./components/threeDScatterPlot";
+import { ScatterPlot } from "./components/scatterPlot";
+import { ScatterPlotWithColorMapping } from "./components/scatterPlotWithColorMapping";
+import { ThreeDScatterPlot } from "./components/threeDScatterPlot";
 import { PlotType, State } from "./state";
 
 function nFormatter(num: number, digits: number): string {
@@ -43,9 +43,9 @@ export const view = ({ moduleContext, workbenchServices }: ModuleFCProps<State>)
     const [dataX, setDataX] = React.useState<any[] | null>(null);
     const [dataY, setDataY] = React.useState<any[] | null>(null);
     const [dataZ, setDataZ] = React.useState<any[] | null>(null);
-    const [metaDataX, setMetaDataX] = React.useState<BroadcastChannelMeta>({ description: "", unit: "", ensemble: "" });
-    const [metaDataY, setMetaDataY] = React.useState<BroadcastChannelMeta>({ description: "", unit: "", ensemble: "" });
-    const [metaDataZ, setMetaDataZ] = React.useState<BroadcastChannelMeta>({ description: "", unit: "", ensemble: "" });
+    const [metaDataX, setMetaDataX] = React.useState<BroadcastChannelMeta | null>(null);
+    const [metaDataY, setMetaDataY] = React.useState<BroadcastChannelMeta | null>(null);
+    const [metaDataZ, setMetaDataZ] = React.useState<BroadcastChannelMeta | null>(null);
 
     const channelX = broadcaster.getChannel(channelNameX ?? "");
     const channelY = broadcaster.getChannel(channelNameY ?? "");
@@ -141,8 +141,8 @@ export const view = ({ moduleContext, workbenchServices }: ModuleFCProps<State>)
                     key="histogram"
                     x={binStrings}
                     y={binValues}
-                    xAxisTitle={`${metaDataX.description} [${metaDataX.unit}]`}
-                    yAxisTitle={channelX?.getDataDef().key || ""}
+                    xAxisTitle={`${metaDataX?.description ?? ""} [${metaDataX?.unit ?? ""}]`}
+                    yAxisTitle={channelX?.getDataDef().key ?? ""}
                     width={wrapperDivSize.width}
                     height={wrapperDivSize.height}
                 />
@@ -157,11 +157,11 @@ export const view = ({ moduleContext, workbenchServices }: ModuleFCProps<State>)
             const keyData = dataX.map((el: any) => el.key);
             const valueData = dataX.map((el: any) => el.value);
 
-            const keyTitle = channelX?.getDataDef().key || "";
-            const valueTitle = `${metaDataX.description} [${metaDataX.unit}]`;
+            const keyTitle = channelX?.getDataDef().key ?? "";
+            const valueTitle = `${metaDataX?.description ?? ""} [${metaDataX?.unit ?? ""}]`;
 
             return (
-                <Barchart
+                <BarChart
                     key="barchart"
                     x={orientation === "h" ? valueData : keyData}
                     y={orientation === "h" ? keyData : valueData}
@@ -201,8 +201,8 @@ export const view = ({ moduleContext, workbenchServices }: ModuleFCProps<State>)
                     key="scatter"
                     x={xValues}
                     y={yValues}
-                    xAxisTitle={`${metaDataX.description} [${metaDataX.unit}]`}
-                    yAxisTitle={`${metaDataY.description} [${metaDataY.unit}]`}
+                    xAxisTitle={`${metaDataX?.description ?? ""} [${metaDataX?.unit ?? ""}]`}
+                    yAxisTitle={`${metaDataY?.description ?? ""} [${metaDataY?.unit ?? ""}]`}
                     keyData={keysX}
                     width={wrapperDivSize.width}
                     height={wrapperDivSize.height}
@@ -248,9 +248,9 @@ export const view = ({ moduleContext, workbenchServices }: ModuleFCProps<State>)
                     z={zValues}
                     keyData={keysX}
                     highlightedKey={highlightedKey ?? undefined}
-                    xAxisTitle={`${metaDataX.description} [${metaDataX.unit}]`}
-                    yAxisTitle={`${metaDataY.description} [${metaDataY.unit}]`}
-                    zAxisTitle={`${metaDataZ.description} [${metaDataZ.unit}]`}
+                    xAxisTitle={`${metaDataX?.description ?? ""} [${metaDataX?.unit ?? ""}]`}
+                    yAxisTitle={`${metaDataY?.description ?? ""} [${metaDataY?.unit ?? ""}]`}
+                    zAxisTitle={`${metaDataZ?.description ?? ""} [${metaDataZ?.unit ?? ""}]`}
                     width={wrapperDivSize.width}
                     height={wrapperDivSize.height}
                 />
@@ -286,15 +286,15 @@ export const view = ({ moduleContext, workbenchServices }: ModuleFCProps<State>)
             }
 
             return (
-                <ThreeDScatter
+                <ThreeDScatterPlot
                     key="3d-scatter"
                     x={xValues}
                     y={yValues}
                     z={zValues}
                     keyData={keysX}
-                    xAxisTitle={`${metaDataX.description} [${metaDataX.unit}]`}
-                    yAxisTitle={`${metaDataY.description} [${metaDataY.unit}]`}
-                    zAxisTitle={`${metaDataZ.description} [${metaDataZ.unit}]`}
+                    xAxisTitle={`${metaDataX?.description ?? ""} [${metaDataX?.unit ?? ""}]`}
+                    yAxisTitle={`${metaDataY?.description ?? ""} [${metaDataY?.unit ?? ""}]`}
+                    zAxisTitle={`${metaDataZ?.description ?? ""} [${metaDataZ?.unit ?? ""}]`}
                     width={wrapperDivSize.width}
                     height={wrapperDivSize.height}
                 />

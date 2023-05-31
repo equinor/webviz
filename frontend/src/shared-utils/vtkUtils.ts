@@ -32,13 +32,11 @@
 // Decoding infrastructure
 // ----------------------------------------------------------------------------
 
-
 /**
  * Convert a Base64 string to an ArrayBuffer.
  * @param {string} b64Str
  * @return An ArrayBuffer object.
  */
-
 
 /**
  * Convert a Base64 string to an ArrayBuffer.
@@ -53,11 +51,10 @@
 
 // export default Base64;
 const REVERSE_LOOKUP: any = [];
-REVERSE_LOOKUP['-'.charCodeAt(0)] = 62;
-REVERSE_LOOKUP['_'.charCodeAt(0)] = 63;
+REVERSE_LOOKUP["-".charCodeAt(0)] = 62;
+REVERSE_LOOKUP["_".charCodeAt(0)] = 63;
 
-const BASE64_CODE: any =
-    'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+const BASE64_CODE: any = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 for (let i = 0; i < BASE64_CODE.length; i++) {
     REVERSE_LOOKUP[BASE64_CODE.charCodeAt(i)] = i;
 }
@@ -82,7 +79,7 @@ function extractChunks(b64Str: any) {
             }
             currentChunk.count++;
             currentChunk.end = i;
-        } else if (b64Str[i] === '=' && currentChunk) {
+        } else if (b64Str[i] === "=" && currentChunk) {
             // End of chunk (found padding char)
             chunks.push(currentChunk);
             currentChunk = null;
@@ -157,23 +154,23 @@ function writeChunk(b64Str: any, chunk: any, dstOffset: any, uint8: any) {
             uint8[offset++] = tmp & 0xff;
             break;
         case 1:
-            throw new Error('BASE64: remain 1 should not happen');
+            throw new Error("BASE64: remain 1 should not happen");
         case 0:
             break;
         default:
             break;
     }
-    console.debug("offset", offset)
+    console.debug("offset", offset);
 
     return offset;
 }
 
 export function toArrayBuffer(b64Str: any): ArrayBuffer {
-    console.debug(b64Str)
-    b64Str = b64Str["bvals"]
+    console.debug(b64Str);
+    b64Str = b64Str["bvals"];
 
     const chunks = extractChunks(b64Str);
-    console.debug(chunks)
+    console.debug(chunks);
     const totalEncodedLength = chunks[chunks.length - 1].end + 1;
     const padding = (4 - (totalEncodedLength % 4)) % 4; // -length mod 4
     // Any padding chars in the middle of b64Str is to be interpreted as \x00,
@@ -208,11 +205,7 @@ export function fromArrayBuffer(ab: any) {
     const segments = Array(maxTripletIndex / 3);
     for (let i = 0; i < segments.length; i++) {
         const bufOffset = i * 3;
-        segments[i] = encodeTriplet(
-            uint8[bufOffset],
-            uint8[bufOffset + 1],
-            uint8[bufOffset + 2]
-        );
+        segments[i] = encodeTriplet(uint8[bufOffset], uint8[bufOffset + 1], uint8[bufOffset + 2]);
     }
     if (leftoverLength > 0) {
         const segment = encodeTriplet(
@@ -226,10 +219,5 @@ export function fromArrayBuffer(ab: any) {
             segments.push(`${segment.substr(0, 3)}=`);
         }
     }
-    return segments.join('');
+    return segments.join("");
 }
-
-export default {
-    toArrayBuffer,
-    fromArrayBuffer,
-};

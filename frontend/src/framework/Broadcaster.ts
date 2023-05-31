@@ -1,3 +1,5 @@
+import { EnsembleIdent } from "@framework/utils/ensembleIdent";
+
 export enum BroadcastChannelKeyCategory {
     TimestampMs = "timestampms",
     Realization = "realization",
@@ -34,7 +36,7 @@ export type BroadcastChannelsDef = {
 };
 
 export type BroadcastChannelMeta = {
-    ensemble: string;
+    ensembleIdent: EnsembleIdent;
     description: string;
     unit: string;
 };
@@ -57,7 +59,7 @@ export function checkChannelCompatibility(
 
 export class BroadcastChannel<D extends BroadcastChannelDef> {
     private _name: string;
-    private _metaData: BroadcastChannelMeta;
+    private _metaData: BroadcastChannelMeta | null;
     private _moduleInstanceId: string;
     private _subscribers: Set<(data: MapDataTypeToTSType<D>[], metaData: BroadcastChannelMeta) => void>;
     private _cachedData: MapDataTypeToTSType<D>[] | null;
@@ -70,11 +72,7 @@ export class BroadcastChannel<D extends BroadcastChannelDef> {
         this._cachedData = null;
         this._dataDef = def;
         this._dataGenerator = null;
-        this._metaData = {
-            ensemble: "",
-            description: "",
-            unit: "",
-        };
+        this._metaData = null;
         this._moduleInstanceId = moduleInstanceId;
     }
 
@@ -87,6 +85,9 @@ export class BroadcastChannel<D extends BroadcastChannelDef> {
     }
 
     public getMetaData(): BroadcastChannelMeta {
+        if (!this._metaData) {
+            throw new Error("No meta data");
+        }
         return this._metaData;
     }
 
@@ -104,8 +105,6 @@ export class BroadcastChannel<D extends BroadcastChannelDef> {
 
         this._cachedData = dataGenerator();
 
-        console.log("Broadcasting on channel:", this._name, "Data:", this._cachedData);
-
         for (const cb of this._subscribers) {
             cb(this._cachedData, this._metaData);
         }
@@ -118,7 +117,7 @@ export class BroadcastChannel<D extends BroadcastChannelDef> {
             this._cachedData = this._dataGenerator();
         }
 
-        if (this._cachedData) {
+        if (this._cachedData && this._metaData) {
             cb(this._cachedData, this._metaData);
         }
 
@@ -146,15 +145,6 @@ class Broadcaster {
         this._channels.push(channel);
         this.notifySubscribersAboutChannelsChanges();
         return channel;
-    }
-
-    public broadcast(channelName: string, metaData: BroadcastChannelMeta, dataGenerator: () => any) {
-        const channel = this._channels.find((c) => c.getName() === channelName);
-        if (!channel) {
-            return;
-        }
-
-        channel.broadcast(metaData, dataGenerator);
     }
 
     public getChannel<D extends BroadcastChannelDef>(channelName: string): BroadcastChannel<D> | null {

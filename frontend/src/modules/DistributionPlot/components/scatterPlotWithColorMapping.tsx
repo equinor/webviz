@@ -22,7 +22,7 @@ interface TraceData extends Partial<PlotData> {
     realizationNumber?: number | null;
 }
 
-const ScatterPlotWithColorMapping: React.FC<ScatterPlotWithColorMappingProps> = (props) => {
+export const ScatterPlotWithColorMapping: React.FC<ScatterPlotWithColorMappingProps> = (props) => {
     const opacities: number[] = [];
 
     const sizes = props.keyData.map((real) => {
@@ -96,4 +96,4 @@ const ScatterPlotWithColorMapping: React.FC<ScatterPlotWithColorMappingProps> = 
     );
 };
 
-export default ScatterPlotWithColorMapping;
+ScatterPlotWithColorMapping.displayName = "ScatterPlotWithColorMapping";

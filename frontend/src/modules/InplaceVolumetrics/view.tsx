@@ -3,6 +3,7 @@ import Plot from "react-plotly.js";
 
 import { ModuleFCProps } from "@framework/Module";
 import { useSubscribedValue } from "@framework/WorkbenchServices";
+import { EnsembleIdent } from "@framework/utils/ensembleIdent";
 import { ApiStateWrapper } from "@lib/components/ApiStateWrapper";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { useElementSize } from "@lib/hooks/useElementSize";
@@ -70,6 +71,10 @@ export const view = (props: ModuleFCProps<State, typeof broadcastChannelsDef>) =
 
     React.useEffect(
         function broadcast() {
+            if (!ensemble) {
+                return;
+            }
+
             const dataGenerator = (): { key: number; value: number }[] => {
                 const data: { key: number; value: number }[] = [];
                 if (realizationsResponseQuery.data) {
@@ -89,7 +94,10 @@ export const view = (props: ModuleFCProps<State, typeof broadcastChannelsDef>) =
 
             props.moduleContext.getChannel(BroadcastChannelNames.Response).broadcast(
                 {
-                    ensemble: `${ensemble?.caseUuid || ""}-${ensemble?.ensembleName || ""}`,
+                    ensembleIdent: EnsembleIdent.fromCaseUuidAndEnsembleName(
+                        ensemble?.caseUuid,
+                        ensemble?.ensembleName
+                    ),
                     description: dataDescription,
                     unit: "",
                 },
