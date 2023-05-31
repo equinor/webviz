@@ -93,14 +93,6 @@ export const view = ({ moduleContext, workbenchServices }: ModuleFCProps<State>)
         }
     }, [channelZ]);
 
-    const handleHoverChanged = (data: any) => {
-        if (channelX?.getDataDef().key === BroadcastChannelKeyCategory.Realization) {
-            workbenchServices.publishGlobalData("global.hoverRealization", {
-                realization: data !== null ? (data as number) : -1,
-            });
-        }
-    };
-
     React.useEffect(() => {
         if (channelX?.getDataDef().key === BroadcastChannelKeyCategory.Realization) {
             workbenchServices.subscribe("global.hoverRealization", (data) => {
@@ -110,6 +102,14 @@ export const view = ({ moduleContext, workbenchServices }: ModuleFCProps<State>)
             });
         }
     }, [channelX, workbenchServices]);
+
+    const handleHoverChanged = (data: any) => {
+        if (channelX?.getDataDef().key === BroadcastChannelKeyCategory.Realization) {
+            workbenchServices.publishGlobalData("global.hoverRealization", {
+                realization: data !== null ? (data as number) : -1,
+            });
+        }
+    };
 
     const makeContent = (): React.ReactNode => {
         if (plotType === null) {

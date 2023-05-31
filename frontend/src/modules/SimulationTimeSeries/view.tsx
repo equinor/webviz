@@ -6,7 +6,7 @@ import { useSubscribedValue } from "@framework/WorkbenchServices";
 import { EnsembleIdent } from "@framework/utils/ensembleIdent";
 import { useElementSize } from "@lib/hooks/useElementSize";
 
-import { Layout, PlotData, PlotHoverEvent, PlotMouseEvent } from "plotly.js";
+import { Layout, PlotData, PlotHoverEvent } from "plotly.js";
 
 import { BroadcastChannelNames, broadcastChannelsDef } from "./broadcastChannel";
 import { useStatisticalVectorDataQuery, useVectorDataQuery } from "./queryHooks";
@@ -26,7 +26,6 @@ export const view = ({ moduleContext, workbenchServices }: ModuleFCProps<State, 
     const resampleFrequency = moduleContext.useStoreValue("resamplingFrequency");
     const showStatistics = moduleContext.useStoreValue("showStatistics");
     const realizationsToInclude = moduleContext.useStoreValue("realizationsToInclude");
-    const [highlightRealization, setHighlightRealization] = React.useState(-1);
 
     const vectorQuery = useVectorDataQuery(
         vectorSpec?.caseUuid,

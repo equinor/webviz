@@ -1,6 +1,3 @@
-import React from "react";
-
-import { broadcaster } from "@framework/Broadcaster";
 import { ModuleRegistry } from "@framework/ModuleRegistry";
 import { Input } from "@lib/components/Input";
 

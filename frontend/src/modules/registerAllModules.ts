@@ -1,13 +1,10 @@
 import "./DbgWorkbenchSpy/registerModule";
 import "./DistributionPlot/registerModule";
+import "./Grid3D/registerModule";
+import "./Grid3DIntersection/registerModule";
 import "./InplaceVolumetrics/registerModule";
 import "./Map/registerModule";
 import "./MyModule2/registerModule";
 import "./MyModule/registerModule";
 import "./SimulationTimeSeries/registerModule";
-import "./InplaceVolumetrics/registerModule";
-import "./Map/registerModule";
-import "./DbgWorkbenchSpy/registerModule";
-import "./TimeSeriesParameterDistribution/registerModule"
-import "./Grid3D/registerModule"
-import "./Grid3DIntersection/registerModule"
+import "./TimeSeriesParameterDistribution/registerModule";
