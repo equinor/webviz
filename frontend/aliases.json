@@ -1,12 +1,24 @@
 {
     "compilerOptions": {
         "paths": {
-            "@api": ["./src/api"],
-            "@framework/*": ["./src/framework/*"],
-            "@lib/*": ["./src/lib/*"],
-            "@modules/*": ["./src/modules/*"],
-            "@shared-types/*": ["./src/shared-types/*"],
-            "@shared-utils/*": ["./src/shared-utils/*"]
+            "@api": [
+                "./src/api"
+            ],
+            "@framework/*": [
+                "./src/framework/*"
+            ],
+            "@lib/*": [
+                "./src/lib/*"
+            ],
+            "@modules/*": [
+                "./src/modules/*"
+            ],
+            "@shared-types/*": [
+                "./src/shared-types/*"
+            ],
+            "@shared-utils/*": [
+                "./src/shared-utils/*"
+            ]
         }
     }
 }
