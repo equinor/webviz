@@ -6,7 +6,6 @@ import { Workbench } from "@framework/Workbench";
 import { ShareIcon, WindowIcon } from "@heroicons/react/20/solid";
 import { Button } from "@lib/components/Button";
 import { Dialog } from "@lib/components/Dialog";
-import { IconButton } from "@lib/components/IconButton";
 
 // import { useWorkbenchActiveModuleName } from "@framework/hooks/useWorkbenchActiveModuleName";
 import { EnsembleSelector } from "../EnsembleSelector";

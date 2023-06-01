@@ -3,7 +3,6 @@ export enum PlotType {
     BarChart = "barchart",
     Scatter = "scatter",
     ScatterWithColorMapping = "scatterWithColor",
-    Scatter3D = "scatter3d",
 }
 
 export interface State {

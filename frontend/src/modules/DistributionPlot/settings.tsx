@@ -27,10 +27,6 @@ const plotTypes = [
         value: PlotType.ScatterWithColorMapping,
         label: "Scatter 2D with color mapping",
     },
-    {
-        value: PlotType.Scatter3D,
-        label: "Scatter 3D",
-    },
 ];
 
 const crossPlottingTypes = [
@@ -111,29 +107,13 @@ export function settings({ moduleContext }: ModuleFCProps<State>) {
             </Label>,
         ];
 
-        if (
-            plotType === PlotType.Scatter ||
-            plotType === PlotType.ScatterWithColorMapping ||
-            plotType === PlotType.Scatter3D
-        ) {
+        if (plotType === PlotType.Scatter || plotType === PlotType.ScatterWithColorMapping) {
             content.push(
                 <Label text="Data channel Y axis" key="data-channel-y-axis">
                     <ChannelSelect
                         onChange={handleChannelYChanged}
                         channelKeyCategory={crossPlottingType}
                         initialChannel={channelNameY || undefined}
-                    />
-                </Label>
-            );
-        }
-
-        if (plotType === PlotType.Scatter3D) {
-            content.push(
-                <Label text="Data channel Z axis" key="data-channel-z-axis">
-                    <ChannelSelect
-                        onChange={handleChannelZChanged}
-                        channelKeyCategory={crossPlottingType}
-                        initialChannel={channelNameZ || undefined}
                     />
                 </Label>
             );

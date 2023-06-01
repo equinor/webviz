@@ -25,15 +25,14 @@ interface TraceData extends Partial<PlotData> {
 export const ScatterPlotWithColorMapping: React.FC<ScatterPlotWithColorMappingProps> = (props) => {
     const opacities: number[] = [];
 
-    const sizes = props.keyData.map((real) => {
+    props.keyData.forEach((real) => {
         opacities.push(
             real === props.highlightedKey ||
                 props.highlightedKey === undefined ||
                 !props.keyData.includes(props.highlightedKey)
                 ? 1
-                : 0.25
+                : 0.1
         );
-        return real === props.highlightedKey ? 30 : 20;
     });
 
     const tracesDataArr: TraceData[] = [
@@ -47,7 +46,7 @@ export const ScatterPlotWithColorMapping: React.FC<ScatterPlotWithColorMappingPr
             marker: {
                 color: props.z,
                 opacity: opacities,
-                size: sizes,
+                size: 20,
                 colorscale: "Portland",
                 colorbar: {
                     title: props.zAxisTitle,

@@ -2,7 +2,6 @@ import React from "react";
 
 import {
     BroadcastChannel,
-    BroadcastChannelDef,
     BroadcastChannelKeyCategory,
     broadcaster,
     checkChannelCompatibility,
@@ -19,6 +18,7 @@ export type ChannelSelectProps = {
 } & BaseComponentProps;
 
 export const ChannelSelect: React.FC<ChannelSelectProps> = (props) => {
+    // eslint-disable-next-line react/destructuring-assignment
     const { channelKeyCategory, onChange, ...rest } = props;
     const [channel, setChannel] = React.useState<string>(props.initialChannel ?? "");
     const [channels, setChannels] = React.useState<string[]>([]);

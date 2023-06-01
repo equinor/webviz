@@ -8,7 +8,6 @@ import { BarChart } from "./components/barChart";
 import { Histogram } from "./components/histogram";
 import { ScatterPlot } from "./components/scatterPlot";
 import { ScatterPlotWithColorMapping } from "./components/scatterPlotWithColorMapping";
-import { ThreeDScatterPlot } from "./components/threeDScatterPlot";
 import { PlotType, State } from "./state";
 
 function nFormatter(num: number, digits: number): string {
@@ -252,50 +251,7 @@ export const view = ({ moduleContext, workbenchServices }: ModuleFCProps<State>)
                     yAxisTitle={`${metaDataY?.description ?? ""} [${metaDataY?.unit ?? ""}]`}
                     zAxisTitle={`${metaDataZ?.description ?? ""} [${metaDataZ?.unit ?? ""}]`}
                     width={wrapperDivSize.width}
-                    height={wrapperDivSize.height}
-                />
-            );
-        }
-
-        if (plotType === PlotType.Scatter3D) {
-            if (!dataX || !dataY || !dataZ) {
-                return "Please select a channel for the x-axis, the y-axis and the z-axis.";
-            }
-
-            const xValues: number[] = [];
-            const yValues: number[] = [];
-            const zValues: number[] = [];
-
-            const keysX = dataX.map((el: any) => el.key);
-            const keysY = dataY.map((el: any) => el.key);
-            const keysZ = dataZ.map((el: any) => el.key);
-            if (
-                keysX.length === keysY.length &&
-                keysY.length === keysZ.length &&
-                !keysX.some((el, index) => el !== keysY[index]) &&
-                !keysX.some((el, index) => el !== keysZ[index])
-            ) {
-                keysX.forEach((key) => {
-                    const dataPointX = dataX.find((el: any) => el.key === key);
-                    const dataPointY = dataY.find((el: any) => el.key === key);
-                    const dataPointZ = dataZ.find((el: any) => el.key === key);
-                    xValues.push(dataPointX.value);
-                    yValues.push(dataPointY.value);
-                    zValues.push(dataPointZ.value);
-                });
-            }
-
-            return (
-                <ThreeDScatterPlot
-                    key="3d-scatter"
-                    x={xValues}
-                    y={yValues}
-                    z={zValues}
-                    keyData={keysX}
-                    xAxisTitle={`${metaDataX?.description ?? ""} [${metaDataX?.unit ?? ""}]`}
-                    yAxisTitle={`${metaDataY?.description ?? ""} [${metaDataY?.unit ?? ""}]`}
-                    zAxisTitle={`${metaDataZ?.description ?? ""} [${metaDataZ?.unit ?? ""}]`}
-                    width={wrapperDivSize.width}
+                    onHoverData={handleHoverChanged}
                     height={wrapperDivSize.height}
                 />
             );
