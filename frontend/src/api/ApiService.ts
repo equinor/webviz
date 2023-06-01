@@ -8,6 +8,7 @@ import { AxiosHttpRequest } from './core/AxiosHttpRequest';
 import { CorrelationsService } from './services/CorrelationsService';
 import { DefaultService } from './services/DefaultService';
 import { ExploreService } from './services/ExploreService';
+import { GridService } from './services/GridService';
 import { InplaceVolumetricsService } from './services/InplaceVolumetricsService';
 import { ParametersService } from './services/ParametersService';
 import { SurfaceService } from './services/SurfaceService';
@@ -20,6 +21,7 @@ export class ApiService {
     public readonly correlations: CorrelationsService;
     public readonly default: DefaultService;
     public readonly explore: ExploreService;
+    public readonly grid: GridService;
     public readonly inplaceVolumetrics: InplaceVolumetricsService;
     public readonly parameters: ParametersService;
     public readonly surface: SurfaceService;
@@ -43,6 +45,7 @@ export class ApiService {
         this.correlations = new CorrelationsService(this.request);
         this.default = new DefaultService(this.request);
         this.explore = new ExploreService(this.request);
+        this.grid = new GridService(this.request);
         this.inplaceVolumetrics = new InplaceVolumetricsService(this.request);
         this.parameters = new ParametersService(this.request);
         this.surface = new SurfaceService(this.request);

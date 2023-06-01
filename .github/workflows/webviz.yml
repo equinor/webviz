@@ -31,7 +31,7 @@ jobs:
       - name: 📦 Install build dependencies
         working-directory: ./frontend
         run: |
-          npm ci --ignore-scripts --include=dev
+          npm ci --include=dev
 
       - name: ℹ️ Installed npm packages (depth = 0)
         working-directory: ./frontend
@@ -57,7 +57,7 @@ jobs:
       - name: 🕵️ Check auto-generated frontend code is in sync with backend
         run: |
           docker build -f backend.Dockerfile -t backend:latest .
-          CONTAINER_ID=$(docker run --detach -p 5000:5000 --env WEBVIZ_CLIENT_SECRET=0 backend:latest)
+          CONTAINER_ID=$(docker run --detach -p 5000:5000 --env UVICORN_PORT=5000 --env UVICORN_ENTRYPOINT=src.backend.primary.main:app --env WEBVIZ_CLIENT_SECRET=0 backend:latest)
           sleep 5  # Ensure the backend server is up and running exposing /openapi.json
           npm run generate-api --prefix ./frontend
           docker stop $CONTAINER_ID
@@ -73,7 +73,7 @@ jobs:
       - name: 🐍 Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: 3.8
+          python-version: "3.10"
           cache: pip
 
       - name: 📦 Install poetry and dependencies
@@ -109,21 +109,7 @@ jobs:
         with:
           node-version: 18
 
-      - name: 🐳 Build Docker images
+      - name: 🐳 Verify Docker images build
         run: |
-          docker build -f frontend-prod.Dockerfile -t ghcr.io/equinor/webviz_frontend:latest .
-          docker build -f backend.Dockerfile -t ghcr.io/equinor/webviz_backend:latest .
-
-      - name: GitHub Container Registry login
-        if: github.ref == 'refs/heads/main'
-        uses: docker/login-action@v2
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: 🐳 Push Docker images
-        if: github.ref == 'refs/heads/main'
-        run: |
-          docker push ghcr.io/equinor/webviz_frontend:latest
-          docker push ghcr.io/equinor/webviz_backend:latest
+          docker build -f frontend-prod.Dockerfile .
+          docker build -f backend.Dockerfile .

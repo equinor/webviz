@@ -2,68 +2,57 @@ import React from "react";
 
 import { ModuleFCProps } from "@framework/Module";
 import { useElementSize } from "@lib/hooks/useElementSize";
+import { SubsurfaceViewer } from "@webviz/subsurface-components";
 
 import { useSurfaceDataQueryByAddress } from "./MapQueryHooks";
 import { MapState } from "./MapState";
 import { makeSurfAddrString } from "./SurfAddr";
-import {SubsurfaceViewer} from "@webviz/subsurface-components"
+
 //-----------------------------------------------------------------------------------------------------------
-export function MapView({ moduleContext }: ModuleFCProps<MapState>) {
+export function MapView(props: ModuleFCProps<MapState>) {
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);
     const wrapperDivSize = useElementSize(wrapperDivRef);
-    const surfAddr = moduleContext.useStoreValue("surfaceAddress");
+    const surfAddr = props.moduleContext.useStoreValue("surfaceAddress");
 
     const renderCount = React.useRef(0);
     React.useEffect(function incrementRenderCount() {
         renderCount.current = renderCount.current + 1;
     });
 
-    console.log(`render MapView, surfAddr=${surfAddr ? makeSurfAddrString(surfAddr) : "null"}`);
+    console.debug(`render MapView, surfAddr=${surfAddr ? makeSurfAddrString(surfAddr) : "null"}`);
 
     const surfDataQuery = useSurfaceDataQueryByAddress(surfAddr);
-    const surfAddrAsAny = surfAddr as any;
-    if (surfDataQuery.data) {
-        return (
+    if (!surfDataQuery.data) {
+        return <div>No data</div>;
+    }
+
+    const surfData = surfDataQuery.data;
+    return (
         <div className="relative w-full h-full flex flex-col">
-            <SubsurfaceViewer 
-                id="deckgl" 
-                layers={[   {
-                    "@@type": "MapLayer",
-                    "id": "mesh-layer",
-                    "meshData": JSON.parse(surfDataQuery.data?.mesh_data),
-                    "frame": {
-                      "origin": [
-                        surfDataQuery.data?.x_ori,
-                        surfDataQuery.data?.y_ori
-                      ],
-                      "count": [
-                        surfDataQuery.data?.x_count,
-                        surfDataQuery.data?.y_count
-                      ],
-                      "increment": [
-                        surfDataQuery.data?.x_inc,
-                        surfDataQuery.data?.y_inc
-                      ],
-                      "rotDeg": surfDataQuery.data?.rot_deg,
-                      
+            <SubsurfaceViewer
+                id="deckgl"
+                layers={[
+                    {
+                        "@@type": "MapLayer",
+                        id: "mesh-layer",
+                        meshData: JSON.parse(surfData.mesh_data),
+                        frame: {
+                            origin: [surfData.x_ori, surfData.y_ori],
+                            count: [surfData.x_count, surfData.y_count],
+                            increment: [surfData.x_inc, surfData.y_inc],
+                            rotDeg: surfData.rot_deg,
+                        },
+
+                        contours: [0, 100],
+                        isContoursDepth: true,
+                        gridLines: false,
+                        material: true,
+                        smoothShading: true,
+                        colorMapName: "Physics",
                     },
-                    
-                    "contours": [
-                      0,
-                      100
-                    ],
-                    "isContoursDepth": true,
-                    "gridLines": false,
-                    "material": true,
-                    "smoothShading": true,
-                    "colorMapName": "Physics"
-                  }, 
                 ]}
             />
-           
-
+            <div className="absolute bottom-5 right-5 italic text-pink-400">{props.moduleContext.getInstanceIdString()}</div>
         </div>
     );
-            }
-    return (<div/>)
 }

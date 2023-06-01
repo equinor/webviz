@@ -1,13 +1,17 @@
 import { Module } from "./Module";
 import { StateBaseType, StateOptions } from "./StateStore";
+import { SyncSettingKey } from "./SyncSettings";
 
 export class ModuleRegistry {
     private static _registeredModules: Record<string, Module<any>> = {};
     /* eslint-disable-next-line @typescript-eslint/no-empty-function */
     private constructor() {}
 
-    public static registerModule<ModuleStateType extends StateBaseType>(moduleName: string): Module<ModuleStateType> {
-        const module = new Module<ModuleStateType>(moduleName);
+    public static registerModule<ModuleStateType extends StateBaseType>(
+        moduleName: string,
+        syncableSettingKeys: SyncSettingKey[] = []
+    ): Module<ModuleStateType> {
+        const module = new Module<ModuleStateType>(moduleName, syncableSettingKeys);
         this._registeredModules[moduleName] = module;
         return module;
     }

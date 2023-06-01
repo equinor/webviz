@@ -5,6 +5,7 @@ import { cloneDeep } from "lodash";
 import { ModuleContext } from "./ModuleContext";
 import { ModuleInstance } from "./ModuleInstance";
 import { StateBaseType, StateOptions } from "./StateStore";
+import { SyncSettingKey } from "./SyncSettings";
 import { Workbench } from "./Workbench";
 import { WorkbenchServices } from "./WorkbenchServices";
 
@@ -32,8 +33,9 @@ export class Module<StateType extends StateBaseType> {
     private initialState: StateType | null;
     private stateOptions: StateOptions<StateType> | undefined;
     private workbench: Workbench | null;
+    private syncableSettingKeys: SyncSettingKey[];
 
-    constructor(name: string) {
+    constructor(name: string, syncableSettingKeys: SyncSettingKey[] = []) {
         this._name = name;
         this.numInstances = 0;
         this.viewFC = () => <div>Not defined</div>;
@@ -42,6 +44,7 @@ export class Module<StateType extends StateBaseType> {
         this.moduleInstances = [];
         this.initialState = null;
         this.workbench = null;
+        this.syncableSettingKeys = syncableSettingKeys;
     }
 
     public getImportState(): ImportState {
@@ -64,6 +67,10 @@ export class Module<StateType extends StateBaseType> {
                 instance.setInitialState(cloneDeep(this.initialState), cloneDeep(this.stateOptions));
             }
         });
+    }
+
+    public getSyncableSettingKeys(): SyncSettingKey[] {
+        return this.syncableSettingKeys;
     }
 
     public makeInstance(): ModuleInstance<StateType> {
@@ -107,7 +114,8 @@ export class Module<StateType extends StateBaseType> {
                     }
                 });
             })
-            .catch(() => {
+            .catch((err) => {
+                console.warn(err);
                 this.setImportState(ImportState.Failed);
             });
     }

@@ -19,23 +19,14 @@ interface TraceData extends Partial<PlotData> {
     realizationNumber?: number | null;
 }
 
-const PlotlyScatter: React.FC<PlotlyScatterProps> = ({
-    x,
-    y,
-    realizations,
-    onClickData,
-    onHoverData,
-    highlightedRealization,
-    height,
-    width
-}) => {
-    const colors = realizations.map(real => {
-        return real == highlightedRealization ? "red" : "blue"
+const PlotlyScatter: React.FC<PlotlyScatterProps> = (props) => {
+    const colors = props.realizations.map(real => {
+        return real == props.highlightedRealization ? "red" : "blue"
     })
     const tracesDataArr: TraceData[] = [{
-        "y": y,
-        "x": x,
-        "customdata": realizations,
+        "y": props.y,
+        "x": props.x,
+        "customdata": props.realizations,
         "orientation": "h",
         "type": "scatter",
         "mode": "markers",
@@ -43,21 +34,21 @@ const PlotlyScatter: React.FC<PlotlyScatterProps> = ({
     }];
 
     const handleClick = (data: any) => {
-        if (onClickData) {
-            onClickData(data);
+        if (props.onClickData) {
+            props.onClickData(data);
         }
     };
 
     const handleHover = (e: PlotHoverEvent) => {
-        if (onHoverData) {
+        if (props.onHoverData) {
             if (e.points.length > 0 && typeof e.points[0]) {
-                onHoverData(e.points[0].customdata)
+                props.onHoverData(e.points[0].customdata)
             }
         }
     };
     const layout: Partial<Layout> = {
-        width: width,
-        height: height,
+        width: props.width,
+        height: props.height,
         xaxis: { zeroline: false },
         yaxis: { zeroline: false }
 

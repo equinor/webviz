@@ -1,15 +1,18 @@
 import React from "react";
 
-import { StaticSurfaceDirectory } from "@api";
+import { DynamicSurfaceDirectory, StaticSurfaceDirectory } from "@api";
 import { SurfaceStatisticFunction } from "@api";
 import { ModuleFCProps } from "@framework/Module";
+import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
 import { useSubscribedValue } from "@framework/WorkbenchServices";
 import { ApiStateWrapper } from "@lib/components/ApiStateWrapper";
 import { Checkbox } from "@lib/components/Checkbox";
 import { CircularProgress } from "@lib/components/CircularProgress";
+import { Dropdown, DropdownOption } from "@lib/components/Dropdown";
 import { Input } from "@lib/components/Input";
 import { Label } from "@lib/components/Label";
 import { Select, SelectOption } from "@lib/components/Select";
+import { Ensemble } from "@shared-types/ensemble";
 
 import { useDynamicSurfaceDirectoryQuery, useStaticSurfaceDirectoryQuery } from "./MapQueryHooks";
 import { MapState } from "./MapState";
@@ -17,10 +20,12 @@ import { SurfAddr, SurfAddrFactory } from "./SurfAddr";
 import { AggregationDropdown } from "./UiComponents";
 
 //-----------------------------------------------------------------------------------------------------------
-export function MapSettings({ moduleContext, workbenchServices }: ModuleFCProps<MapState>) {
-    console.log("render MapSettings");
+export function MapSettings(props: ModuleFCProps<MapState>) {
+    const myInstanceIdStr = props.moduleContext.getInstanceIdString();
+    console.debug(`${myInstanceIdStr} -- render MapSettings`);
 
-    const ensembles = useSubscribedValue("navigator.ensembles", workbenchServices);
+    const availableEnsembles = useSubscribedValue("navigator.ensembles", props.workbenchServices);
+    const [selectedEnsemble, setSelectedEnsemble] = React.useState<Ensemble | null>(null);
 
     const [surfaceType, setSurfaceType] = React.useState<"static" | "dynamic">("dynamic");
     const [selectedSurfaceName, setSelectedSurfaceName] = React.useState<string | null>(null);
@@ -29,31 +34,80 @@ export function MapSettings({ moduleContext, workbenchServices }: ModuleFCProps<
     const [selectedTimeOrInterval, setSelectedTimeOrInterval] = React.useState<string | null>(null);
     const [aggregation, setAggregation] = React.useState<SurfaceStatisticFunction | null>(null);
 
+    const syncedSettingKeys = props.moduleContext.useSyncedSettingKeys();
+    const syncHelper = new SyncSettingsHelper(syncedSettingKeys, props.workbenchServices);
+    const syncedValueEnsembles = syncHelper.useValue(SyncSettingKey.ENSEMBLE, "global.syncValue.ensembles");
+    const syncedValueSurface = syncHelper.useValue(SyncSettingKey.SURFACE, "global.syncValue.surface");
+    const syncedValueDate = syncHelper.useValue(SyncSettingKey.DATE, "global.syncValue.date");
+
     const renderCount = React.useRef(0);
     React.useEffect(function incrementRenderCount() {
         renderCount.current = renderCount.current + 1;
     });
 
-    const firstEnsemble = ensembles?.at(0) ?? null;
+    let candidateEnsemble = selectedEnsemble;
+    if (syncedValueEnsembles?.length) {
+        candidateEnsemble = syncedValueEnsembles[0];
+    }
+    const computedEnsemble = fixupEnsemble(candidateEnsemble, availableEnsembles);
 
-    const dynamicSurfDirQuery = useDynamicSurfaceDirectoryQuery(firstEnsemble?.caseUuid, firstEnsemble?.ensembleName, surfaceType === "dynamic");
-    const staticSurfDirQuery = useStaticSurfaceDirectoryQuery(firstEnsemble?.caseUuid, firstEnsemble?.ensembleName, surfaceType === "static");
+    const dynamicSurfDirQuery = useDynamicSurfaceDirectoryQuery(
+        computedEnsemble?.caseUuid,
+        computedEnsemble?.ensembleName,
+        surfaceType === "dynamic"
+    );
+    const staticSurfDirQuery = useStaticSurfaceDirectoryQuery(
+        computedEnsemble?.caseUuid,
+        computedEnsemble?.ensembleName,
+        surfaceType === "static"
+    );
 
     let computedSurfaceName: string | null = null;
     let computedSurfaceAttribute: string | null = null;
     let computedTimeOrInterval: string | null = null;
     if (surfaceType == "static" && staticSurfDirQuery.data) {
         computedSurfaceName = fixupStringValueFromList(selectedSurfaceName, staticSurfDirQuery.data.names);
-        computedSurfaceAttribute = fixupStaticSurfAttribute(computedSurfaceName, selectedSurfaceAttribute, staticSurfDirQuery.data);
+        computedSurfaceAttribute = fixupStaticSurfAttribute(
+            computedSurfaceName,
+            selectedSurfaceAttribute,
+            staticSurfDirQuery.data
+        );
         computedTimeOrInterval = null;
+
+        if (syncedValueSurface) {
+            if (isValidStaticSurf(syncedValueSurface.name, syncedValueSurface.attribute, staticSurfDirQuery.data)) {
+                computedSurfaceName = syncedValueSurface.name;
+                computedSurfaceAttribute = syncedValueSurface.attribute;
+            }
+        }
     }
     if (surfaceType == "dynamic" && dynamicSurfDirQuery.data) {
         computedSurfaceName = fixupStringValueFromList(selectedSurfaceName, dynamicSurfDirQuery.data.names);
-        computedSurfaceAttribute = fixupStringValueFromList(selectedSurfaceAttribute, dynamicSurfDirQuery.data.attributes);
-        computedTimeOrInterval = fixupStringValueFromList(selectedTimeOrInterval, dynamicSurfDirQuery.data.time_or_interval_strings);
+        computedSurfaceAttribute = fixupStringValueFromList(
+            selectedSurfaceAttribute,
+            dynamicSurfDirQuery.data.attributes
+        );
+        computedTimeOrInterval = fixupStringValueFromList(
+            selectedTimeOrInterval,
+            dynamicSurfDirQuery.data.time_or_interval_strings
+        );
+
+        if (syncedValueSurface) {
+            if (isValidDynamicSurf(syncedValueSurface.name, syncedValueSurface.attribute, dynamicSurfDirQuery.data)) {
+                computedSurfaceName = syncedValueSurface.name;
+                computedSurfaceAttribute = syncedValueSurface.attribute;
+            }
+        }
+        if (syncedValueDate) {
+            if (isValidDynamicSurfTimeOrInterval(syncedValueDate.timeOrInterval, dynamicSurfDirQuery.data)) {
+                computedTimeOrInterval = syncedValueDate.timeOrInterval;
+            }
+        }
     }
 
-    // Possibly update our surface selection states
+    if (computedEnsemble && computedEnsemble !== selectedEnsemble) {
+        setSelectedEnsemble(computedEnsemble);
+    }
     if (computedSurfaceName && computedSurfaceName !== selectedSurfaceName) {
         setSelectedSurfaceName(computedSurfaceName);
     }
@@ -65,21 +119,21 @@ export function MapSettings({ moduleContext, workbenchServices }: ModuleFCProps<
     }
 
     React.useEffect(function propagateSurfaceSelectionToView() {
-        // console.log("propagateSurfaceSelectionToView()");
-        // console.log(`  caseUuid=${caseUuid}`);
-        // console.log(`  ensembleName=${ensembleName}`);
-        // console.log(`  surfaceName=${surfaceName}`);
-        // console.log(`  surfaceAttribute=${surfaceAttribute}`);
-        // console.log(`  surfaceType=${surfaceType}`);
-        // console.log(`  aggregation=${aggregation}`);
-        // console.log(`  realizationNum=${realizationNum}`);
-        // console.log(`  timeOrInterval=${timeOrInterval}`);
+        // console.debug("propagateSurfaceSelectionToView()");
+        // console.debug(`  caseUuid=${caseUuid}`);
+        // console.debug(`  ensembleName=${ensembleName}`);
+        // console.debug(`  surfaceName=${surfaceName}`);
+        // console.debug(`  surfaceAttribute=${surfaceAttribute}`);
+        // console.debug(`  surfaceType=${surfaceType}`);
+        // console.debug(`  aggregation=${aggregation}`);
+        // console.debug(`  realizationNum=${realizationNum}`);
+        // console.debug(`  timeOrInterval=${timeOrInterval}`);
 
         let surfAddr: SurfAddr | null = null;
-        if (firstEnsemble && computedSurfaceName && computedSurfaceAttribute) {
+        if (computedEnsemble && computedSurfaceName && computedSurfaceAttribute) {
             const addrFactory = new SurfAddrFactory(
-                firstEnsemble.caseUuid,
-                firstEnsemble.ensembleName,
+                computedEnsemble.caseUuid,
+                computedEnsemble.ensembleName,
                 computedSurfaceName,
                 computedSurfaceAttribute
             );
@@ -98,9 +152,18 @@ export function MapSettings({ moduleContext, workbenchServices }: ModuleFCProps<
             }
         }
 
-        console.log(`propagateSurfaceSelectionToView() => ${surfAddr ? "valid surfAddr" : "NULL surfAddr"}`);
-        moduleContext.getStateStore().setValue("surfaceAddress", surfAddr);
+        console.debug(`propagateSurfaceSelectionToView() => ${surfAddr ? "valid surfAddr" : "NULL surfAddr"}`);
+        props.moduleContext.getStateStore().setValue("surfaceAddress", surfAddr);
     });
+
+    function handleEnsembleSelectionChange(selectedEnsembleIdStr: string) {
+        console.debug("handleEnsembleSelectionChange()");
+        const newEnsemble = availableEnsembles?.find((item) => encodeEnsembleAsIdStr(item) === selectedEnsembleIdStr);
+        setSelectedEnsemble(newEnsemble ?? null);
+        if (newEnsemble) {
+            syncHelper.publishValue(SyncSettingKey.ENSEMBLE, "global.syncValue.ensembles", [newEnsemble]);
+        }
+    }
 
     function handleStaticSurfacesCheckboxChanged(event: React.ChangeEvent<HTMLInputElement>, staticChecked: boolean) {
         const newSurfType = staticChecked ? "static" : "dynamic";
@@ -108,30 +171,47 @@ export function MapSettings({ moduleContext, workbenchServices }: ModuleFCProps<
     }
 
     function handleSurfNameSelectionChange(selectedSurfNames: string[]) {
-        console.log("handleSurfNameSelectionChange()");
+        console.debug("handleSurfNameSelectionChange()");
         const newName = selectedSurfNames[0] ?? null;
         setSelectedSurfaceName(newName);
+        if (newName && computedSurfaceAttribute) {
+            syncHelper.publishValue(SyncSettingKey.SURFACE, "global.syncValue.surface", {
+                name: newName,
+                attribute: computedSurfaceAttribute,
+            });
+        }
     }
 
     function handleSurfAttributeSelectionChange(selectedSurfAttributes: string[]) {
-        console.log("handleSurfAttributeSelectionChange()");
+        console.debug("handleSurfAttributeSelectionChange()");
         const newAttr = selectedSurfAttributes[0] ?? null;
         setSelectedSurfaceAttribute(newAttr);
+        if (newAttr && computedSurfaceName) {
+            syncHelper.publishValue(SyncSettingKey.SURFACE, "global.syncValue.surface", {
+                name: computedSurfaceName,
+                attribute: newAttr,
+            });
+        }
     }
 
     function handleTimeOrIntervalSelectionChange(selectedTimeOrIntervals: string[]) {
-        console.log("handleTimeOrIntervalSelectionChange()");
+        console.debug("handleTimeOrIntervalSelectionChange()");
         const newTimeOrInterval = selectedTimeOrIntervals[0] ?? null;
         setSelectedTimeOrInterval(newTimeOrInterval);
+        if (newTimeOrInterval) {
+            syncHelper.publishValue(SyncSettingKey.DATE, "global.syncValue.date", {
+                timeOrInterval: newTimeOrInterval,
+            });
+        }
     }
 
     function handleAggregationChanged(aggregation: SurfaceStatisticFunction | null) {
-        console.log("handleAggregationChanged()");
+        console.debug("handleAggregationChanged()");
         setAggregation(aggregation);
     }
 
     function handleRealizationTextChanged(event: React.ChangeEvent<HTMLInputElement>) {
-        console.log("handleRealizationTextChanged() " + event.target.value);
+        console.debug("handleRealizationTextChanged() " + event.target.value);
         const realNum = parseInt(event.target.value, 10);
         if (realNum >= 0) {
             setRealizationNum(realNum);
@@ -149,13 +229,19 @@ export function MapSettings({ moduleContext, workbenchServices }: ModuleFCProps<
     } else if (surfaceType == "dynamic" && dynamicSurfDirQuery.data) {
         surfNameOptions = dynamicSurfDirQuery.data.names.map((name) => ({ value: name, label: name }));
         surfAttributeOptions = dynamicSurfDirQuery.data.attributes.map((attr) => ({ value: attr, label: attr }));
-        timeOrIntervalOptions = dynamicSurfDirQuery.data.time_or_interval_strings.map((time) => ({ value: time, label: time }));
+        timeOrIntervalOptions = dynamicSurfDirQuery.data.time_or_interval_strings.map((time) => ({
+            value: time,
+            label: time,
+        }));
     }
 
     let chooseTimeOrIntervalElement: JSX.Element | null = null;
     if (surfaceType === "dynamic") {
         chooseTimeOrIntervalElement = (
-            <Label text="Time or interval:">
+            <Label
+                text="Time or interval:"
+                labelClassName={syncHelper.isSynced(SyncSettingKey.DATE) ? "bg-indigo-700 text-white" : ""}
+            >
                 <Select
                     options={timeOrIntervalOptions}
                     value={computedTimeOrInterval ? [computedTimeOrInterval] : []}
@@ -179,6 +265,16 @@ export function MapSettings({ moduleContext, workbenchServices }: ModuleFCProps<
 
     return (
         <>
+            <Label
+                text="Ensemble:"
+                labelClassName={syncHelper.isSynced(SyncSettingKey.ENSEMBLE) ? "bg-indigo-700 text-white" : ""}
+            >
+                <Dropdown
+                    options={makeEnsembleOptionItems(availableEnsembles)}
+                    value={computedEnsemble ? encodeEnsembleAsIdStr(computedEnsemble) : undefined}
+                    onChange={handleEnsembleSelectionChange}
+                />
+            </Label>
             <Checkbox
                 label="Static surfaces"
                 checked={surfaceType === "static"}
@@ -189,7 +285,10 @@ export function MapSettings({ moduleContext, workbenchServices }: ModuleFCProps<
                 errorComponent={"Error loading surface directory"}
                 loadingComponent={<CircularProgress />}
             >
-                <Label text="Surface name:">
+                <Label
+                    text="Surface name:"
+                    labelClassName={syncHelper.isSynced(SyncSettingKey.SURFACE) ? "bg-indigo-700 text-white" : ""}
+                >
                     <Select
                         options={surfNameOptions}
                         value={computedSurfaceName ? [computedSurfaceName] : []}
@@ -197,7 +296,10 @@ export function MapSettings({ moduleContext, workbenchServices }: ModuleFCProps<
                         size={5}
                     />
                 </Label>
-                <Label text="Surface attribute:">
+                <Label
+                    text="Surface attribute:"
+                    labelClassName={syncHelper.isSynced(SyncSettingKey.SURFACE) ? "bg-indigo-700 text-white" : ""}
+                >
                     <Select
                         options={surfAttributeOptions}
                         value={computedSurfaceAttribute ? [computedSurfaceAttribute] : []}
@@ -219,6 +321,37 @@ export function MapSettings({ moduleContext, workbenchServices }: ModuleFCProps<
 
 // Helpers
 // -------------------------------------------------------------------------------------
+function fixupEnsemble(currEnsemble: Ensemble | null, availableEnsemblesArr: Ensemble[] | null): Ensemble | null {
+    if (!availableEnsemblesArr || availableEnsemblesArr.length === 0) {
+        return null;
+    }
+
+    if (currEnsemble) {
+        const foundItem = availableEnsemblesArr.find(
+            (item) => item.caseUuid === currEnsemble.caseUuid && item.ensembleName == currEnsemble.ensembleName
+        );
+        if (foundItem) {
+            return foundItem;
+        }
+    }
+
+    return availableEnsemblesArr[0];
+}
+
+function encodeEnsembleAsIdStr(ensemble: Ensemble): string {
+    return `${ensemble.caseUuid}::${ensemble.ensembleName}`;
+}
+
+function makeEnsembleOptionItems(ensemblesArr: Ensemble[] | null): DropdownOption[] {
+    const itemArr: DropdownOption[] = [];
+    if (ensemblesArr) {
+        for (const ens of ensemblesArr) {
+            itemArr.push({ value: encodeEnsembleAsIdStr(ens), label: `${ens.ensembleName} (${ens.caseName})` });
+        }
+    }
+    return itemArr;
+}
+
 function getValidAttributesForSurfName(surfName: string, surfDir: StaticSurfaceDirectory): string[] {
     const idxOfSurfName = surfDir.names.indexOf(surfName);
     if (idxOfSurfName == -1) {
@@ -263,4 +396,56 @@ function fixupStaticSurfAttribute(
     }
 
     return validAttrNames[0];
+}
+
+function isValidStaticSurf(
+    surfName: string | null,
+    surfAttribute: string | null,
+    surfDir: StaticSurfaceDirectory
+): boolean {
+    if (!surfName || !surfAttribute) {
+        return false;
+    }
+
+    const validAttrNames = getValidAttributesForSurfName(surfName, surfDir);
+    if (validAttrNames.length == 0) {
+        return false;
+    }
+
+    if (!validAttrNames.includes(surfAttribute)) {
+        return false;
+    }
+
+    return true;
+}
+
+function isValidDynamicSurf(
+    surfName: string | null,
+    surfAttribute: string | null,
+    surfDir: DynamicSurfaceDirectory
+): boolean {
+    if (!surfName || !surfAttribute) {
+        return false;
+    }
+
+    if (!surfDir.names.includes(surfName)) {
+        return false;
+    }
+    if (!surfDir.attributes.includes(surfAttribute)) {
+        return false;
+    }
+
+    return true;
+}
+
+function isValidDynamicSurfTimeOrInterval(timeOrInterval: string | null, surfDir: DynamicSurfaceDirectory): boolean {
+    if (!timeOrInterval || !surfDir) {
+        return false;
+    }
+
+    if (!surfDir.time_or_interval_strings.includes(timeOrInterval)) {
+        return false;
+    }
+
+    return true;
 }
