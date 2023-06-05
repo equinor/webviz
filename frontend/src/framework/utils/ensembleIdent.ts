@@ -2,13 +2,17 @@ export class EnsembleIdent {
     private _caseUuid: string;
     private _ensembleName: string;
 
-    private constructor(caseUuid: string, ensembleName: string) {
+    constructor(caseUuid: string, ensembleName: string) {
         this._caseUuid = caseUuid;
         this._ensembleName = ensembleName;
     }
 
     static fromCaseUuidAndEnsembleName(caseUuid: string, ensembleName: string): EnsembleIdent {
         return new EnsembleIdent(caseUuid, ensembleName);
+    }
+
+    static caseUuidAndEnsembleNameToString(caseUuid: string, ensembleName: string): string {
+        return `${caseUuid}::${ensembleName}`;
     }
 
     static fromString(ensembleIdent: string): EnsembleIdent {
@@ -24,15 +28,15 @@ export class EnsembleIdent {
         return new EnsembleIdent(caseUuid, ensembleName);
     }
 
-    public toCaseUuid(): string {
+    public getCaseUuid(): string {
         return this._caseUuid;
     }
 
-    public toEnsembleName(): string {
+    public getEnsembleName(): string {
         return this._ensembleName;
     }
 
     public toString(): string {
-        return `${this._caseUuid}::${this._ensembleName}`;
+        return EnsembleIdent.caseUuidAndEnsembleNameToString(this._caseUuid, this._ensembleName);
     }
 }
