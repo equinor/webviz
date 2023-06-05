@@ -11,6 +11,7 @@ import { ExploreService } from './services/ExploreService';
 import { GridService } from './services/GridService';
 import { InplaceVolumetricsService } from './services/InplaceVolumetricsService';
 import { ParametersService } from './services/ParametersService';
+import { PvtService } from './services/PvtService';
 import { SurfaceService } from './services/SurfaceService';
 import { TimeseriesService } from './services/TimeseriesService';
 
@@ -24,6 +25,7 @@ export class ApiService {
     public readonly grid: GridService;
     public readonly inplaceVolumetrics: InplaceVolumetricsService;
     public readonly parameters: ParametersService;
+    public readonly pvt: PvtService;
     public readonly surface: SurfaceService;
     public readonly timeseries: TimeseriesService;
 
@@ -48,6 +50,7 @@ export class ApiService {
         this.grid = new GridService(this.request);
         this.inplaceVolumetrics = new InplaceVolumetricsService(this.request);
         this.parameters = new ParametersService(this.request);
+        this.pvt = new PvtService(this.request);
         this.surface = new SurfaceService(this.request);
         this.timeseries = new TimeseriesService(this.request);
     }
