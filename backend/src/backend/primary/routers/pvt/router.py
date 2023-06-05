@@ -28,10 +28,6 @@ def table_data(
 ) -> List[PvtData]:
     """Get pvt table data for a given Sumo ensemble and realization"""
 
-    # Hardcoded for now
-    case_uuid = "356ae2c4-f513-4fcd-af30-6d7a3cc3f007"
-    ensemble_name = "iter-0"
-
     access = TableAccess(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
 
     # Get all table schemas for a given realization and find the pvt table
@@ -60,10 +56,6 @@ def realizations_tables_are_equal(
     # fmt:on
 ) -> bool:
     """Check if all realizations has the same pvt table"""
-
-    # Hardcoded for now
-    case_uuid = "356ae2c4-f513-4fcd-af30-6d7a3cc3f007"
-    ensemble_name = "iter-0"
 
     access = TableAccess(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
 
