@@ -38,9 +38,9 @@ class EnsembleSensitivity(BaseModel):
 
 
 class EnsembleParameters(BaseModel):  # Find a better name
-    """Description/data for all parameters in an ensemble"""
-
-    # type: "sensitivity" | "historymatch" | "prediction"
+    """Description/data for all parameters in an ensemble
+    type: "sensitivity" | "historymatch" | "prediction ??"
+    """
 
     parameters: List[EnsembleParameter]
     sensitivities: Optional[List[EnsembleSensitivity]]

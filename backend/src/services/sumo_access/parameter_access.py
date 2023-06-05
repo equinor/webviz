@@ -46,7 +46,7 @@ class ParameterAccess:
 
     def get_parameter(self, parameter_name: str) -> EnsembleParameter:
         """Retrieve a single parameter for an ensemble"""
-        parameters = self.get_parameters()
+        parameters = self.get_parameters_and_sensitivities()
         return next(parameter for parameter in parameters.parameters if parameter.name == parameter_name)
 
 

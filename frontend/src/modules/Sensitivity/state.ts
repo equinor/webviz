@@ -1,4 +1,3 @@
-import { Ensemble } from "@shared-types/ensemble";
 export enum PlotType {
     TORNADO = 'tornado',
     TABLE = 'table',

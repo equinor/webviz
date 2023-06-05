@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Plot from 'react-plotly.js';
-import { Layout, PlotData, PlotMouseEvent } from "plotly.js";
+import { Layout, PlotData, PlotMouseEvent, Shape, YAxisName } from "plotly.js";
 import { SensitivityResponseDataset, SensitivityResponse } from './sensitivityResponseCalculator';
 import { SelectedSensitivity } from './state';
 
@@ -23,6 +23,14 @@ enum TraceGroup {
 type SelectedBar = {
     group: TraceGroup,
     index: number
+}
+
+// Modify the Plotly layout interface to allow use of domain in axis reference
+interface ModifiedPlotlyLayout extends Omit<Partial<Layout>, 'shapes'> {
+    shapes: Partial<ModifiedPlotlyShape>[];
+}
+interface ModifiedPlotlyShape extends Omit<Partial<Shape>, "yref"> {
+    yref: 'paper' | YAxisName | 'y domain';
 }
 
 const lowTrace = (sensitivityResponses: SensitivityResponse[], showLabels: boolean, selectedBar: SelectedBar | null, barColor = "e53935"): Partial<PlotData> => {
@@ -116,7 +124,7 @@ const sensitivityChart: React.FC<sensitivityChartProps> = (props) => {
             props.onSelectedSensitivity(selectedSensitivity);
         }
     };
-    const layout: Partial<Layout> = {
+    const layout: Partial<ModifiedPlotlyLayout> = {
         width,
         height,
         margin: { t: 100, r: 0, b: 100, l: 100 },
@@ -171,8 +179,7 @@ const sensitivityChart: React.FC<sensitivityChartProps> = (props) => {
                 "x1": 0, //if it is not true base else use the reference average, TODO
                 "y0": 0,
                 "y1": 1,
-                "xref": "x",
-                //@ts-ignore */        
+                "xref": "x",   
                 "yref": "y domain",
             }
         ],

@@ -70,7 +70,7 @@ export const view = ({ moduleContext, workbenchServices }: ModuleFCProps<State>)
                 return sensitivityResponseCalculator.computeSensitivitiesForResponse();
             }
             catch (e) {
-                console.log(e)
+                console.warn(e)
                 return null;
             }
 
