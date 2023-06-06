@@ -1,10 +1,9 @@
 # This configuration aims at being a good approximation
 # of how the application is running in Radix
 
-version: '3.6'
+version: "3.6"
 
 services:
-
   frontend-prod:
     build:
       context: .
@@ -23,6 +22,7 @@ services:
       - UVICORN_ENTRYPOINT=src.backend.user_session.main:app
       - WEBVIZ_CLIENT_SECRET
       - WEBVIZ_SMDA_RESOURCE_SCOPE
+      - VDS_HOST_ADDRESS
 
   backend-user-session:
     build:
@@ -35,6 +35,7 @@ services:
       - UVICORN_ENTRYPOINT=src.backend.user_session.main:app
       - WEBVIZ_CLIENT_SECRET
       - WEBVIZ_SMDA_RESOURCE_SCOPE
+      - VDS_HOST_ADDRESS
     volumes:
       - ./backend/src:/home/appuser/backend/src
 

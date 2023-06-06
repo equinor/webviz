@@ -61,6 +61,7 @@ class TableAccess:
             raise ValueError(f"Multiple tables found for {table_schema=}")
 
         sumo_table = table_collection[0]
+        print(sumo_table.uuid)
         return sumo_table.arrowtable
 
     def realizations_tables_are_equal(self, table_schema: SumoTableSchema) -> bool:

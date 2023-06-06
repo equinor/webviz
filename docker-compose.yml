@@ -1,10 +1,9 @@
 # This configuration aims at being a good setup
 # for doing development of the frontend + backend in combination.
 
-version: '3.6'
+version: "3.6"
 
 services:
-
   frontend:
     build:
       context: .
@@ -29,6 +28,7 @@ services:
       - UVICORN_ENTRYPOINT=src.backend.primary.main:app
       - WEBVIZ_CLIENT_SECRET
       - WEBVIZ_SMDA_RESOURCE_SCOPE
+      - VDS_HOST_ADDRESS
     volumes:
       - ./backend/src:/home/appuser/backend/src
 
@@ -44,6 +44,7 @@ services:
       - UVICORN_ENTRYPOINT=src.backend.user_session.main:app
       - WEBVIZ_CLIENT_SECRET
       - WEBVIZ_SMDA_RESOURCE_SCOPE
+      - VDS_HOST_ADDRESS
     volumes:
       - ./backend/src:/home/appuser/backend/src
 

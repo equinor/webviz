@@ -76,7 +76,7 @@ class SurfaceAccess:
             iteration=self._iteration_name,
             aggregation=False,
             time=filter_no_time_data,
-            realization=0,
+            realization=case.get_realizations()[0],
         )
 
         names = sorted(surface_collection.names)

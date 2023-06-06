@@ -26,7 +26,7 @@ export const ToggleButton = React.forwardRef((props: ToggleButtonProps, ref: Rea
                 ref={ref}
                 slotProps={{
                     root: {
-                        className: `inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500${
+                        className: `inline-flex items-center px-4 py-2 border  text-sm font-medium rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500${
                             isActive ? " bg-indigo-400 hover:bg-indigo-500 text-white" : " bg-white hover:bg-slate-100"
                         }`,
                     },
