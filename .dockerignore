@@ -1,0 +1,12 @@
+.git
+.github
+.gitignore
+.vscode
+
+# frontend:
+**/node_modules
+
+# backend:
+**/__pycache__
+*.pyc
+.mypy_cache
