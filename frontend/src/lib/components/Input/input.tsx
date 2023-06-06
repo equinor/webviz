@@ -1,6 +1,6 @@
 import React from "react";
 
-import { InputUnstyled, InputUnstyledProps } from "@mui/base";
+import { Input as InputUnstyled, InputProps as InputUnstyledProps } from "@mui/base";
 
 import { BaseComponent } from "../_BaseComponent";
 import { resolveClassNames } from "../_utils/resolveClassNames";
