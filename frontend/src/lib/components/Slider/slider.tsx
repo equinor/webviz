@@ -1,6 +1,6 @@
 import React from "react";
 
-import { SliderUnstyled, SliderUnstyledProps } from "@mui/base";
+import { Slider as SliderUnstyled, SliderProps as SliderUnstyledProps } from "@mui/base";
 
 import { BaseComponent } from "../_BaseComponent";
 import { resolveClassNames } from "../_utils/resolveClassNames";
