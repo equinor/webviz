@@ -19,7 +19,7 @@ import { state } from "./state";
 import { StaticSurfaceAccessor } from "./staticSurfaceAccessor";
 import { StaticSurfaceSelector,StaticSurface } from "./StaticSurfaceSelector";
 import { SeismicCubeSelector, SeismicCube } from "./SeismicCubeSelector";
-import { ToggleButton } from "@lib/components/ToggleButton";
+import { Switch } from "@lib/components/Switch";
 //-----------------------------------------------------------------------------------------------------------
 export function settings({workbenchServices, moduleContext}: ModuleFCProps<state>) {
     // From Workbench
@@ -62,7 +62,7 @@ export function settings({workbenchServices, moduleContext}: ModuleFCProps<state
             <SeismicCubeSelector seismicCubeDirectory={seismicCubeQuery.data} selectedSeismicCube={setSelectedSeismicCube} />
             
             <Label text={"Show 3D"} >
-                <ToggleButton   active={is3D} onToggle={setIs3D} />
+                <Switch   checked={is3D} onChange={(e) =>setIs3D(e.target.checked)} />
             </Label>
             <Label text={"Sampling window"}>
                 <>
