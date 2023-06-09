@@ -156,7 +156,7 @@ class InplaceVolumetricsAccess:
 
         ### Using ThreadPoolExecutor to parallelize the download of the tables
 
-        def worker(idx):
+        def worker(idx: int) -> pd.DataFrame:
             vol_table = vol_table_collection[idx]
             print(f"Downloading table: {table_name} for realization {vol_table.realization}")
             byte_stream: BytesIO = vol_table.blob

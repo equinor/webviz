@@ -83,6 +83,8 @@ def create_ensemble_sensitivities(
         (parameter for parameter in sumo_ensemble_parameters if parameter.name == "SENSCASE"),
         None,
     )
+    if sens_case_parameter is None or sens_name_parameter is None:
+        return None
     df = pd.DataFrame(
         {
             "name": sens_name_parameter.values,
