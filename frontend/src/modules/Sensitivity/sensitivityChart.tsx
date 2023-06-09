@@ -173,6 +173,7 @@ const sensitivityChart: React.FC<sensitivityChartProps> = (props) => {
                 "y0": 0,
                 "y1": 1,
                 "xref": "x",
+                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
                 //@ts-ignore
                 "yref": "y domain",
             }
