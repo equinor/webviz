@@ -12,7 +12,6 @@ WORKDIR /home/appuser/backend
 ENV PATH="${PATH}:/home/appuser/.local/bin"
 RUN pip install poetry \
     && poetry export --without-hashes -f requirements.txt -o requirements.txt \
-    && pip install -r requirements.txt \
-    && pip install git+https://github.com/equinor/fmu-sumo.git@0.3.7
+    && pip install -r requirements.txt
 
 CMD exec uvicorn --proxy-headers --host=0.0.0.0 $UVICORN_ENTRYPOINT
