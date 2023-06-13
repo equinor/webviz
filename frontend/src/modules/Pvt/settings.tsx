@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 import { ModuleFCProps } from "@framework/Module";
-import { useSubscribedValue } from "@framework/WorkbenchServices";
+import { useFirstEnsembleInEnsembleSet } from "@framework/EnsembleSetHooks";
 import { ApiStateWrapper } from "@lib/components/ApiStateWrapper";
 
 import { PvtData } from "@api";
@@ -29,11 +29,8 @@ const numberToOptions = (numbers: number[]): DropdownOption[] => {
 }
 
 export function settings({ moduleContext, workbenchServices }: ModuleFCProps<state>) {
-    // From Workbench
-    const workbenchEnsembles = useSubscribedValue("navigator.ensembles", workbenchServices);
-
     //Just using the first ensemble for now
-    const selectedEnsemble = workbenchEnsembles?.[0] ?? { caseUuid: null, ensembleName: null };
+    const firstEnsemble = useFirstEnsembleInEnsembleSet(workbenchServices);
 
     // Settings state. Initialized/currently selected values
     const [activeRealization, setActiveRealization] = moduleContext.useStoreState("realization"); // Should be a query. not implemented
@@ -50,7 +47,7 @@ export function settings({ moduleContext, workbenchServices }: ModuleFCProps<sta
     const [availablePlots, setAvailablePlots] = React.useState<PlotOptionType[]>([]);
 
     // Queries
-    const pvtDataQuery = usePvtDataQuery(selectedEnsemble.caseUuid, selectedEnsemble.ensembleName, activeRealization);
+    const pvtDataQuery = usePvtDataQuery(firstEnsemble?.getCaseUuid() ?? null, firstEnsemble?.getEnsembleName() ?? null, activeRealization);
 
 
     // effect triggered by changing pvtName(phase). Updates available pvtNums, available plots and check if currently selected plots are still valid

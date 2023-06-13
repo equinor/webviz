@@ -18,6 +18,8 @@ interface MyPlotData extends Partial<PlotData> {
 }
 
 export const view = ({ moduleContext, workbenchServices }: ModuleFCProps<State>) => {
+    const ensembleSet = workbenchServices.getEnsembleSet();
+
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);
     const wrapperDivSize = useElementSize(wrapperDivRef);
     const vectorSpec = moduleContext.useStoreValue("vectorSpec");
@@ -27,16 +29,16 @@ export const view = ({ moduleContext, workbenchServices }: ModuleFCProps<State>)
     const [highlightRealization, setHighlightRealization] = React.useState(-1);
 
     const vectorQuery = useVectorDataQuery(
-        vectorSpec?.caseUuid,
-        vectorSpec?.ensembleName,
+        vectorSpec?.ensembleIdent.getCaseUuid(),
+        vectorSpec?.ensembleIdent.getEnsembleName(),
         vectorSpec?.vectorName,
         resampleFrequency,
         realizationsToInclude
     );
 
     const statisticsQuery = useStatisticalVectorDataQuery(
-        vectorSpec?.caseUuid,
-        vectorSpec?.ensembleName,
+        vectorSpec?.ensembleIdent.getCaseUuid(),
+        vectorSpec?.ensembleIdent.getEnsembleName(),
         vectorSpec?.vectorName,
         resampleFrequency,
         realizationsToInclude,
@@ -128,7 +130,8 @@ export const view = ({ moduleContext, workbenchServices }: ModuleFCProps<State>)
     let title = "N/A";
     const hasGotAnyRequestedData = vectorQuery.data || (showStatistics && statisticsQuery.data);
     if (vectorSpec && hasGotAnyRequestedData) {
-        title = `${vectorSpec.vectorName} [${unitString}] - ${vectorSpec.ensembleName}, ${vectorSpec.caseName}`;
+        const ensembleDisplayName = ensembleSet.findEnsemble(vectorSpec.ensembleIdent)?.getDisplayName();
+        title = `${vectorSpec.vectorName} [${unitString}] - ${ensembleDisplayName}`;
     }
 
     const layout: Partial<Layout> = {

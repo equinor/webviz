@@ -1,9 +1,8 @@
 import { Frequency } from "@api";
+import { EnsembleIdent } from "@framework/EnsembleIdent";
 
 export interface VectorSpec {
-    caseUuid: string;
-    caseName: string;
-    ensembleName: string;
+    ensembleIdent: EnsembleIdent;
     vectorName: string;
 }
 

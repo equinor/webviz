@@ -2,8 +2,7 @@
 /* tslint:disable */
 /* eslint-disable */
 
-export type Case = {
-    uuid: string;
-    name: string;
+export type FieldInfo = {
+    field_identifier: string;
 };
 

@@ -1,9 +1,9 @@
 import React, { useEffect } from "react";
 
 import { ModuleFCProps } from "@framework/Module";
-import { useSubscribedValue } from "@framework/WorkbenchServices";
+import { useFirstEnsembleInEnsembleSet } from "@framework/EnsembleSetHooks";
 import { ApiStateWrapper } from "@lib/components/ApiStateWrapper";
-import { useGridModelNames, useGridParameterNames, useRealizations } from "./queryHooks";
+import { useGridModelNames, useGridParameterNames } from "./queryHooks";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { Checkbox } from "@lib/components/Checkbox";
 import { Label } from "@lib/components/Label";
@@ -13,8 +13,7 @@ import state from "./state";
 //-----------------------------------------------------------------------------------------------------------
 export function settings({ moduleContext, workbenchServices }: ModuleFCProps<state>) {
     // From Workbench
-    const selectedEnsembles = useSubscribedValue("navigator.ensembles", workbenchServices);
-    const selectedEnsemble = selectedEnsembles?.[0] ?? { caseUuid: null, ensembleName: null };
+    const firstEnsemble = useFirstEnsembleInEnsembleSet(workbenchServices);
 
     // State
     const [gridName, setGridName] = moduleContext.useStoreState("gridName");
@@ -24,9 +23,10 @@ export function settings({ moduleContext, workbenchServices }: ModuleFCProps<sta
 
 
     // Queries
-    const gridNamesQuery = useGridModelNames(selectedEnsemble.caseUuid, selectedEnsemble.ensembleName);
-    const parameterNamesQuery = useGridParameterNames(selectedEnsemble.caseUuid, selectedEnsemble.ensembleName, gridName);
-    const realizationsQuery = useRealizations(selectedEnsemble.caseUuid, selectedEnsemble.ensembleName);
+    const firstCaseUuid = firstEnsemble?.getCaseUuid() ?? null;
+    const firstEnsembleName = firstEnsemble?.getEnsembleName() ?? null;
+    const gridNamesQuery = useGridModelNames(firstCaseUuid, firstEnsembleName);
+    const parameterNamesQuery = useGridParameterNames(firstCaseUuid, firstEnsembleName, gridName);
 
     // Handle Linked query
     useEffect(() => {
@@ -44,7 +44,7 @@ export function settings({ moduleContext, workbenchServices }: ModuleFCProps<sta
     if (!gridNamesQuery.data) { return (<div>Select case: upscaled_grids_realistic_no_unc</div>) }
 
     const parameterNames = parameterNamesQuery.data ? parameterNamesQuery.data : []
-    const allRealizations: string[] = realizationsQuery.data ? realizationsQuery.data.map(real => JSON.stringify(real)) : []
+    const allRealizations: string[] = firstEnsemble ? firstEnsemble.getRealizations().map(real => JSON.stringify(real)) : []
 
     return (
         <div>

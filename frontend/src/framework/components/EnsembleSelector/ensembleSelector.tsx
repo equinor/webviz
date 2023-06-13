@@ -1,6 +1,6 @@
 import React from "react";
 
-import { Case, Ensemble, Field } from "@api";
+import { CaseInfo, EnsembleInfo, FieldInfo } from "@api";
 import { apiService } from "@framework/ApiService";
 import { useStoreState } from "@framework/StateStore";
 import { Workbench } from "@framework/Workbench";
@@ -12,7 +12,13 @@ import { Dropdown } from "@lib/components/Dropdown";
 import { IconButton } from "@lib/components/IconButton";
 import { Label } from "@lib/components/Label";
 import { Select } from "@lib/components/Select";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+
+export type EnsembleItem = {
+    caseUuid: string;
+    caseName: string;
+    ensembleName: string;
+};
 
 export type EnsembleSelectorProps = {
     workbench: Workbench;
@@ -22,10 +28,7 @@ export const EnsembleSelector: React.FC<EnsembleSelectorProps> = (props) => {
     const [selectedField, setSelectedField] = React.useState<string>("");
     const [selectedCaseId, setSelectedCaseId] = React.useState<string>("");
     const [selectedEnsembleName, setSelectedEnsembleName] = React.useState<string>("");
-    const [selectedEnsembles, setSelectedEnsembles] = useStoreState(
-        props.workbench.getDataStateStore(),
-        "selectedEnsembles"
-    );
+    const [selectedEnsembles, setSelectedEnsembles] = React.useState<EnsembleItem[]>([]);
 
     const fieldsQuery = useQuery({
         queryKey: ["getFields"],
@@ -40,7 +43,7 @@ export const EnsembleSelector: React.FC<EnsembleSelectorProps> = (props) => {
         queryKey: ["getCases", computedFieldIdentifier],
         queryFn: () => {
             if (!computedFieldIdentifier) {
-                return Promise.resolve<Case[]>([]);
+                return Promise.resolve<CaseInfo[]>([]);
             }
             return apiService.explore.getCases(computedFieldIdentifier);
         },
@@ -53,7 +56,7 @@ export const EnsembleSelector: React.FC<EnsembleSelectorProps> = (props) => {
         queryKey: ["getEnsembles", computedCaseUuid],
         queryFn: () => {
             if (!computedCaseUuid) {
-                return Promise.resolve<Ensemble[]>([]);
+                return Promise.resolve<EnsembleInfo[]>([]);
             }
             return apiService.explore.getEnsembles(computedCaseUuid);
         },
@@ -89,9 +92,11 @@ export const EnsembleSelector: React.FC<EnsembleSelectorProps> = (props) => {
         }
     }
 
+    const queryClient = useQueryClient();
+
     React.useEffect(
         function publishSelectionViaWorkbench() {
-            props.workbench.setNavigatorEnsembles(selectedEnsembles);
+            props.workbench.fetchMetadataAndSetupEnsembleSet(queryClient, selectedEnsembles);
         },
         [selectedEnsembles]
     );
@@ -104,7 +109,7 @@ export const EnsembleSelector: React.FC<EnsembleSelectorProps> = (props) => {
 
     const fieldOpts = fieldsQuery.data?.map((f) => ({ value: f.field_identifier, label: f.field_identifier })) ?? [];
     const caseOpts = casesQuery.data?.map((c) => ({ value: c.uuid, label: c.name })) ?? [];
-    const ensembleOpts = ensemblesQuery.data?.map((e) => ({ value: e.name, label: e.name })) ?? [];
+    const ensembleOpts = ensemblesQuery.data?.map((e) => ({ value: e.name, label: `${e.name}  (${e.realization_count} reals)` })) ?? [];
 
     return (
         <div className="flex gap-4 max-w-full">
@@ -203,7 +208,7 @@ export const EnsembleSelector: React.FC<EnsembleSelectorProps> = (props) => {
     );
 };
 
-function fixupFieldIdentifier(currFieldIdentifier: string, fieldArr: Field[] | undefined): string {
+function fixupFieldIdentifier(currFieldIdentifier: string, fieldArr: FieldInfo[] | undefined): string {
     const fieldIdentifiers = fieldArr ? fieldArr.map((item) => item.field_identifier) : [];
     if (currFieldIdentifier && fieldIdentifiers.includes(currFieldIdentifier)) {
         return currFieldIdentifier;
@@ -216,7 +221,7 @@ function fixupFieldIdentifier(currFieldIdentifier: string, fieldArr: Field[] | u
     return "";
 }
 
-function fixupCaseUuid(currCaseUuid: string, caseArr: Case[] | undefined): string {
+function fixupCaseUuid(currCaseUuid: string, caseArr: CaseInfo[] | undefined): string {
     const caseIds = caseArr ? caseArr.map((item) => item.uuid) : [];
     if (currCaseUuid && caseIds.includes(currCaseUuid)) {
         return currCaseUuid;
@@ -229,7 +234,7 @@ function fixupCaseUuid(currCaseUuid: string, caseArr: Case[] | undefined): strin
     return "";
 }
 
-function fixupEnsembleName(currEnsembleName: string, ensembleArr: Ensemble[] | undefined): string {
+function fixupEnsembleName(currEnsembleName: string, ensembleArr: EnsembleInfo[] | undefined): string {
     const ensembleNames = ensembleArr ? ensembleArr.map((item) => item.name) : [];
     if (currEnsembleName && ensembleNames.includes(currEnsembleName)) {
         return currEnsembleName;

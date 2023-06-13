@@ -21,7 +21,7 @@ export const TopNavBar: React.FC<TopNavBarProps> = (props) => {
     const [ensembleDialogOpen, setEnsembleDialogOpen] = React.useState<boolean>(false);
     const setModulesListOpen = useSetStoreValue(props.workbench.getGuiStateStore(), "modulesListOpen");
     const setSyncSettingsActive = useSetStoreValue(props.workbench.getGuiStateStore(), "syncSettingsActive");
-    const selectedEnsembles = useStoreValue(props.workbench.getDataStateStore(), "selectedEnsembles");
+    // const selectedEnsembles = useStoreValue(props.workbench.getDataStateStore(), "selectedEnsembles");
 
     const handleEnsembleClick = () => {
         setEnsembleDialogOpen(true);
@@ -36,12 +36,12 @@ export const TopNavBar: React.FC<TopNavBarProps> = (props) => {
     };
 
     let ensembleButtonText = "Select ensembles";
-    if (selectedEnsembles.length > 0) {
-        ensembleButtonText = `${selectedEnsembles[0].caseName} - ${selectedEnsembles[0].ensembleName}`;
-        if (selectedEnsembles.length > 1) {
-            ensembleButtonText += ` and ${selectedEnsembles.length - 1} more`;
-        }
-    }
+    // if (selectedEnsembles.length > 0) {
+    //     ensembleButtonText = `${selectedEnsembles[0].caseName} - ${selectedEnsembles[0].ensembleName}`;
+    //     if (selectedEnsembles.length > 1) {
+    //         ensembleButtonText += ` and ${selectedEnsembles.length - 1} more`;
+    //     }
+    // }
 
     return (
         <div className="bg-slate-100 p-4 shadow z-50">

@@ -2,7 +2,7 @@ import React from "react";
 
 import { ModuleFCProps } from "@framework/Module";
 import { SubsurfaceViewer } from "@webviz/subsurface-components";
-import { useSubscribedValue } from "@framework/WorkbenchServices";
+import { useFirstEnsembleInEnsembleSet } from "@framework/EnsembleSetHooks";
 import { useGridSurface, useGridParameter, useStatisticalGridParameter } from "./queryHooks";
 import state from "./state";
 import { toArrayBuffer } from "@shared-utils/vtkUtils";
@@ -14,8 +14,7 @@ import { toArrayBuffer } from "@shared-utils/vtkUtils";
 //-----------------------------------------------------------------------------------------------------------
 export function view({ moduleContext, workbenchServices }: ModuleFCProps<state>) {
     // From Workbench
-    const selectedEnsembles = useSubscribedValue("navigator.ensembles", workbenchServices);
-    const selectedEnsemble = selectedEnsembles?.[0] ?? { caseUuid: null, ensembleName: null };
+    const firstEnsemble = useFirstEnsembleInEnsembleSet(workbenchServices);
 
     // State
     const gridName = moduleContext.useStoreValue("gridName");
@@ -24,9 +23,11 @@ export function view({ moduleContext, workbenchServices }: ModuleFCProps<state>)
     const useStatistics = moduleContext.useStoreValue("useStatistics");
 
     //Queries
-    const gridSurfaceQuery = useGridSurface(selectedEnsemble.caseUuid, selectedEnsemble.ensembleName, gridName, realizations ? realizations[0] : "0");
-    const gridParameterQuery = useGridParameter(selectedEnsemble.caseUuid, selectedEnsemble.ensembleName, gridName, parameterName, realizations ? realizations[0] : "0", useStatistics);
-    const statisticalGridParameterQuery = useStatisticalGridParameter(selectedEnsemble.caseUuid, selectedEnsemble.ensembleName, gridName, parameterName, realizations, useStatistics);
+    const firstCaseUuid = firstEnsemble?.getCaseUuid() ?? null;
+    const firstEnsembleName = firstEnsemble?.getEnsembleName() ?? null;
+    const gridSurfaceQuery = useGridSurface(firstCaseUuid, firstEnsembleName, gridName, realizations ? realizations[0] : "0");
+    const gridParameterQuery = useGridParameter(firstCaseUuid, firstEnsembleName, gridName, parameterName, realizations ? realizations[0] : "0", useStatistics);
+    const statisticalGridParameterQuery = useStatisticalGridParameter(firstCaseUuid, firstEnsembleName, gridName, parameterName, realizations, useStatistics);
 
 
     const bounds = gridSurfaceQuery?.data ? [gridSurfaceQuery.data.xmin, gridSurfaceQuery.data.ymin, -gridSurfaceQuery.data.zmax, gridSurfaceQuery.data.xmax, gridSurfaceQuery.data.ymax, -gridSurfaceQuery.data.zmin] : [0, 0, 0, 100, 100, 100];

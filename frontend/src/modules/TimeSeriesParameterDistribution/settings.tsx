@@ -1,25 +1,25 @@
 import React from "react";
 
 import { EnsembleParameterDescription, VectorDescription } from "@api";
+import { EnsembleIdent } from "@framework/EnsembleIdent";
+import { useEnsembleSet } from "@framework/EnsembleSetHooks";
+import { SingleEnsembleSelect } from "@framework/EnsembleSetUiComponents";
+import { fixupEnsembleIdent, maybeAssignFirstSyncedEnsemble } from "@framework/EnsembleSetUiHelpers";
 import { ModuleFCProps } from "@framework/Module";
 import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
-import { useSubscribedValue } from "@framework/WorkbenchServices";
 import { ApiStateWrapper } from "@lib/components/ApiStateWrapper";
-import { Checkbox } from "@lib/components/Checkbox";
 import { CircularProgress } from "@lib/components/CircularProgress";
-import { Dropdown, DropdownOption } from "@lib/components/Dropdown";
-import { Input } from "@lib/components/Input";
+import { Dropdown } from "@lib/components/Dropdown";
 import { Label } from "@lib/components/Label";
 import { Select, SelectOption } from "@lib/components/Select";
-import { Ensemble } from "@shared-types/ensemble";
 
 import { useGetParameterNamesQuery, useTimeStepsQuery, useVectorsQuery } from "./queryHooks";
 import { State } from "./state";
 
 //-----------------------------------------------------------------------------------------------------------
 export function settings({ moduleContext, workbenchServices }: ModuleFCProps<State>) {
-    const availableEnsembles = useSubscribedValue("navigator.ensembles", workbenchServices);
-    const [selectedEnsemble, setSelectedEnsemble] = React.useState<Ensemble | null>(null);
+    const ensembleSet = useEnsembleSet(workbenchServices);
+    const [selectedEnsemble, setSelectedEnsemble] = React.useState<EnsembleIdent | null>(null);
 
     const [selectedVectorName, setSelectedVectorName] = React.useState<string>("");
     const [timeStep, setTimeStep] = moduleContext.useStoreState("timeStep");
@@ -30,22 +30,22 @@ export function settings({ moduleContext, workbenchServices }: ModuleFCProps<Sta
     const syncedValueEnsembles = syncHelper.useValue(SyncSettingKey.ENSEMBLE, "global.syncValue.ensembles");
     const syncedValueSummaryVector = syncHelper.useValue(SyncSettingKey.TIME_SERIES, "global.syncValue.timeSeries");
 
-    let candidateEnsemble = selectedEnsemble;
-    if (syncedValueEnsembles?.length) {
-        candidateEnsemble = syncedValueEnsembles[0];
-    }
-    const computedEnsemble = fixupEnsemble(candidateEnsemble, availableEnsembles);
+    const candidateEnsemble = maybeAssignFirstSyncedEnsemble(selectedEnsemble, syncedValueEnsembles);
+    const computedEnsemble = fixupEnsembleIdent(candidateEnsemble, ensembleSet);
 
-    const vectorsQuery = useVectorsQuery(computedEnsemble?.caseUuid, computedEnsemble?.ensembleName);
-    const timeStepsQuery = useTimeStepsQuery(computedEnsemble?.caseUuid, computedEnsemble?.ensembleName);
-    const parameterNamesQuery = useGetParameterNamesQuery(computedEnsemble?.caseUuid, computedEnsemble?.ensembleName);
+    const vectorsQuery = useVectorsQuery(computedEnsemble?.getCaseUuid(), computedEnsemble?.getEnsembleName());
+    const timeStepsQuery = useTimeStepsQuery(computedEnsemble?.getCaseUuid(), computedEnsemble?.getEnsembleName());
+    const parameterNamesQuery = useGetParameterNamesQuery(
+        computedEnsemble?.getCaseUuid(),
+        computedEnsemble?.getEnsembleName()
+    );
 
     let computedVectorName = fixupVectorName(selectedVectorName, vectorsQuery.data);
     if (syncedValueSummaryVector && isValidVectorName(syncedValueSummaryVector.vectorName, vectorsQuery.data)) {
         computedVectorName = syncedValueSummaryVector.vectorName;
     }
 
-    if (computedEnsemble && computedEnsemble !== selectedEnsemble) {
+    if (computedEnsemble && !computedEnsemble.equals(selectedEnsemble)) {
         setSelectedEnsemble(computedEnsemble);
     }
     if (computedVectorName && computedVectorName !== selectedVectorName) {
@@ -56,9 +56,9 @@ export function settings({ moduleContext, workbenchServices }: ModuleFCProps<Sta
         function propagateVectorSpecToView() {
             if (computedEnsemble && computedVectorName) {
                 moduleContext.getStateStore().setValue("vectorSpec", {
-                    caseUuid: computedEnsemble.caseUuid,
-                    caseName: computedEnsemble.caseName,
-                    ensembleName: computedEnsemble.ensembleName,
+                    caseUuid: computedEnsemble.getCaseUuid(),
+                    caseName: ensembleSet.findCaseName(computedEnsemble),
+                    ensembleName: computedEnsemble.getEnsembleName(),
                     vectorName: computedVectorName,
                 });
             } else {
@@ -68,12 +68,11 @@ export function settings({ moduleContext, workbenchServices }: ModuleFCProps<Sta
         [computedEnsemble, computedVectorName]
     );
 
-    function handleEnsembleSelectionChange(selectedEnsembleIdStr: string) {
+    function handleEnsembleSelectionChange(newEnsembleIdent: EnsembleIdent | null) {
         console.debug("handleEnsembleSelectionChange()");
-        const newEnsemble = availableEnsembles?.find((item) => encodeEnsembleAsIdStr(item) === selectedEnsembleIdStr);
-        setSelectedEnsemble(newEnsemble ?? null);
-        if (newEnsemble) {
-            syncHelper.publishValue(SyncSettingKey.ENSEMBLE, "global.syncValue.ensembles", [newEnsemble]);
+        setSelectedEnsemble(newEnsembleIdent);
+        if (newEnsembleIdent) {
+            syncHelper.publishValue(SyncSettingKey.ENSEMBLE, "global.syncValue.ensembles", [newEnsembleIdent]);
         }
     }
 
@@ -92,9 +91,9 @@ export function settings({ moduleContext, workbenchServices }: ModuleFCProps<Sta
                 text="Ensemble:"
                 labelClassName={syncHelper.isSynced(SyncSettingKey.ENSEMBLE) ? "bg-indigo-700 text-white" : ""}
             >
-                <Dropdown
-                    options={makeEnsembleOptionItems(availableEnsembles)}
-                    value={computedEnsemble ? encodeEnsembleAsIdStr(computedEnsemble) : undefined}
+                <SingleEnsembleSelect
+                    ensembleSet={ensembleSet}
+                    value={computedEnsemble}
                     onChange={handleEnsembleSelectionChange}
                 />
             </Label>
@@ -148,37 +147,6 @@ export function settings({ moduleContext, workbenchServices }: ModuleFCProps<Sta
 
 //-----------------------------------------------------------------------------------------------------------
 //-----------------------------------------------------------------------------------------------------------
-
-function fixupEnsemble(currEnsemble: Ensemble | null, availableEnsemblesArr: Ensemble[] | null): Ensemble | null {
-    if (!availableEnsemblesArr || availableEnsemblesArr.length === 0) {
-        return null;
-    }
-
-    if (currEnsemble) {
-        const foundItem = availableEnsemblesArr.find(
-            (item) => item.caseUuid === currEnsemble.caseUuid && item.ensembleName == currEnsemble.ensembleName
-        );
-        if (foundItem) {
-            return foundItem;
-        }
-    }
-
-    return availableEnsemblesArr[0];
-}
-
-function encodeEnsembleAsIdStr(ensemble: Ensemble): string {
-    return `${ensemble.caseUuid}::${ensemble.ensembleName}`;
-}
-
-function makeEnsembleOptionItems(ensemblesArr: Ensemble[] | null): DropdownOption[] {
-    const itemArr: DropdownOption[] = [];
-    if (ensemblesArr) {
-        for (const ens of ensemblesArr) {
-            itemArr.push({ value: encodeEnsembleAsIdStr(ens), label: `${ens.ensembleName} (${ens.caseName})` });
-        }
-    }
-    return itemArr;
-}
 
 function isValidVectorName(vectorName: string, vectorDescriptionsArr: VectorDescription[] | undefined): boolean {
     if (!vectorName || !vectorDescriptionsArr || vectorDescriptionsArr.length === 0) {

@@ -48,13 +48,3 @@ export function useGridParameterNames(caseUuid: string | null, ensembleName: str
         enabled: caseUuid && ensembleName && gridName ? true : false,
     });
 }
-
-export function useRealizations(caseUuid: string | null, ensembleName: string | null): UseQueryResult<number[]> {
-    return useQuery({
-        queryKey: ["getRealizations", caseUuid, ensembleName],
-        queryFn: () => apiService.explore.getRealizations(caseUuid ?? "", ensembleName ?? ""),
-        staleTime: STALE_TIME,
-        cacheTime: CACHE_TIME,
-        enabled: caseUuid && ensembleName ? true : false,
-    });
-}

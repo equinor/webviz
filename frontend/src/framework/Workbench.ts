@@ -1,10 +1,13 @@
-import { Ensemble } from "@shared-types/ensemble";
+import { QueryClient } from "@tanstack/react-query";
 
+import { EnsembleIdent } from "./EnsembleIdent";
+import { EnsembleSet } from "./EnsembleSet";
 import { ImportState } from "./Module";
 import { ModuleInstance } from "./ModuleInstance";
 import { ModuleRegistry } from "./ModuleRegistry";
 import { StateStore } from "./StateStore";
 import { WorkbenchServices } from "./WorkbenchServices";
+import { loadEnsembleSetMetadataFromBackend } from "./internal/EnsembleSetLoader";
 import { PrivateWorkbenchServices } from "./internal/PrivateWorkbenchServices";
 
 export enum WorkbenchEvents {
@@ -22,9 +25,7 @@ export type LayoutElement = {
     relWidth: number;
 };
 
-export type WorkbenchDataState = {
-    selectedEnsembles: Ensemble[];
-};
+export type WorkbenchDataState = {};
 
 export type WorkbenchGuiState = {
     modulesListOpen: boolean;
@@ -40,6 +41,8 @@ export class Workbench {
     private _subscribersMap: { [key: string]: Set<() => void> };
     private layout: LayoutElement[];
 
+    private _ensembleSet: EnsembleSet;
+
     constructor() {
         this.moduleInstances = [];
         this._activeModuleId = "";
@@ -53,6 +56,8 @@ export class Workbench {
         this._workbenchServices = new PrivateWorkbenchServices(this);
         this._subscribersMap = {};
         this.layout = [];
+
+        this._ensembleSet = new EnsembleSet([]);
     }
 
     public loadLayoutFromLocalStorage(): boolean {
@@ -188,7 +193,31 @@ export class Workbench {
         }
     }
 
-    public setNavigatorEnsembles(ensemblesArr: { caseUuid: string; caseName: string; ensembleName: string }[]) {
-        this._workbenchServices.publishNavigatorData("navigator.ensembles", ensemblesArr);
+    public async fetchMetadataAndSetupEnsembleSet(
+        queryClient: QueryClient,
+        specifiedEnsembles: { caseUuid: string; ensembleName: string }[]
+    ): Promise<void> {
+        const ensembleIdentsToLoad: EnsembleIdent[] = [];
+        for (const ensSpec of specifiedEnsembles) {
+            ensembleIdentsToLoad.push(new EnsembleIdent(ensSpec.caseUuid, ensSpec.ensembleName));
+        }
+
+        console.log("fetchMetadataAndSetupEnsembleSet --- starting");
+        const newEnsembleSet = await loadEnsembleSetMetadataFromBackend(queryClient, ensembleIdentsToLoad);
+        console.log("fetchMetadataAndSetupEnsembleSet --- done");
+
+        const newEnsembleIdentArr: EnsembleIdent[] = [];
+        for (const ens of newEnsembleSet.getEnsembleArr()) {
+            newEnsembleIdentArr.push(ens.getIdent());
+        }
+
+        this._ensembleSet = newEnsembleSet;
+
+        console.log("fetchMetadataAndSetupEnsembleSet --- publishing");
+        this._workbenchServices.publishNavigatorData("navigator.ensembles", newEnsembleIdentArr);
+    }
+
+    public getEnsembleSet(): EnsembleSet {
+        return this._ensembleSet;
     }
 }

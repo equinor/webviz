@@ -1,8 +1,8 @@
 import { InplaceVolumetricsCategoricalMetaData } from "@api";
-import { Ensemble } from "@shared-types/ensemble";
+import { EnsembleIdent } from "@framework/EnsembleIdent";
 
 export interface State {
-    ensemble: Ensemble | null;
+    ensembleIdent: EnsembleIdent | null;
     tableName: string | null;
     responseName: string | null;
     categoricalOptions: InplaceVolumetricsCategoricalMetaData[] | null;

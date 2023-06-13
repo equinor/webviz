@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { useSubscribedValue } from "@framework/WorkbenchServices";
+import { useFirstEnsembleInEnsembleSet } from "@framework/EnsembleSetHooks";
 import { ModuleFCProps } from "@framework/Module";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { usePvtDataQuery } from "./queryHooks";
@@ -15,17 +15,15 @@ import { set } from "lodash";
 export function view({ moduleContext, workbenchServices }: ModuleFCProps<state>) {
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);
     const wrapperDivSize = useElementSize(wrapperDivRef);
-    // From Workbench
-    const workbenchEnsembles = useSubscribedValue("navigator.ensembles", workbenchServices);
 
     //Just using the first ensemble for now
-    const selectedEnsemble = workbenchEnsembles?.[0] ?? { caseUuid: null, ensembleName: null };
+    const firstEnsemble = useFirstEnsembleInEnsembleSet(workbenchServices);
 
     const activeDataSet = moduleContext.useStoreValue("activeDataSet");
     const activeRealization = moduleContext.useStoreValue("realization");
 
     const [plotData, setPlotData] = React.useState<PlotDataType[]>([])
-    const pvtDataQuery = usePvtDataQuery(selectedEnsemble.caseUuid, selectedEnsemble.ensembleName, activeRealization);
+    const pvtDataQuery = usePvtDataQuery(firstEnsemble?.getCaseUuid() ?? null, firstEnsemble?.getEnsembleName() ?? null, activeRealization);
 
 
     useEffect(() => {

@@ -3,6 +3,7 @@ import React from "react";
 import { ModuleFCProps } from "@framework/Module";
 import { AllTopicDefinitions, WorkbenchServices } from "@framework/WorkbenchServices";
 import { Button } from "@lib/components/Button";
+import { EnsembleSet } from "@framework/EnsembleSet";
 
 export type SharedState = {
     triggeredRefreshCounter: number;
@@ -20,7 +21,7 @@ export function WorkbenchSpySettings(props: ModuleFCProps<SharedState>) {
 
 //-----------------------------------------------------------------------------------------------------------
 export function WorkbenchSpyView(props: ModuleFCProps<SharedState>) {
-    const [selectedEnsembles, selectedEnsembles_TS] = useServiceValueWithTS("navigator.ensembles", props.workbenchServices);
+    const [availableEnsembles, availableEnsembles_TS] = useServiceValueWithTS("navigator.ensembles", props.workbenchServices);
     const [hoverRealization, hoverRealization_TS] = useServiceValueWithTS("global.hoverRealization", props.workbenchServices);
     const [hoverTimestamp, hoverTimestamp_TS] = useServiceValueWithTS("global.hoverTimestamp", props.workbenchServices);
     const triggeredRefreshCounter = props.moduleContext.useStoreValue("triggeredRefreshCounter");
@@ -33,9 +34,9 @@ export function WorkbenchSpyView(props: ModuleFCProps<SharedState>) {
     const componentLastRenderTS = getTimestampString();
 
     let ensembleSpecAsString: string | undefined;
-    if (selectedEnsembles) {
-        if (selectedEnsembles.length > 0) {
-            ensembleSpecAsString = `${selectedEnsembles[0].ensembleName}  (${selectedEnsembles[0].caseUuid})`;
+    if (availableEnsembles) {
+        if (availableEnsembles.length > 0) {
+            ensembleSpecAsString = `${availableEnsembles[0].getEnsembleName()}  (${availableEnsembles[0].getCaseUuid()})`;
         } else {
             ensembleSpecAsString = "empty array";
         }
@@ -43,9 +44,12 @@ export function WorkbenchSpyView(props: ModuleFCProps<SharedState>) {
 
     return (
         <code>
+            EnsembleSet:
+            {makeEnsembleSetTable(props.workbenchServices.getEnsembleSet())}
+            <br />
             Navigator topics:
             <table>
-                <tbody>{makeTableRow("ensembles", ensembleSpecAsString, selectedEnsembles_TS)}</tbody>
+                <tbody>{makeTableRow("ensembles", ensembleSpecAsString, availableEnsembles_TS)}</tbody>
             </table>
             <br />
             Global topics:
@@ -76,6 +80,24 @@ function makeTableRow(label: string, value: any, ts: string) {
             <td>({ts})</td>
         </tr>
     );
+}
+
+function makeEnsembleSetTable(ensembleSet: EnsembleSet) {
+    const ensembleArr = ensembleSet.getEnsembleArr();
+    return (
+       <table>
+           <tbody>
+               {ensembleArr.map((ens, index) => (
+                   <tr key={index}>
+                       <td> {ens.getEnsembleName()} </td>
+                       <td> ({ens.getCaseUuid()}) </td>
+                       <td> {ens.getRealizations().length} realizations</td>
+                       <td> {ens.hasSensitivities() ? "HasSens" : "noSense"}</td>
+                   </tr>
+               ))}
+           </tbody>
+       </table>
+   );
 }
 
 function getTimestampString() {

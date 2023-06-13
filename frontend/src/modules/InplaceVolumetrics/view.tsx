@@ -18,14 +18,14 @@ import { Body_get_realizations_response } from "../../api/models/Body_get_realiz
 export const view = (props: ModuleFCProps<State>) => {
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);
     const wrapperDivSize = useElementSize(wrapperDivRef);
-    const ensemble = props.moduleContext.useStoreValue("ensemble");
+    const ensembleIdent = props.moduleContext.useStoreValue("ensembleIdent");
     const tableName = props.moduleContext.useStoreValue("tableName");
     const responseName = props.moduleContext.useStoreValue("responseName");
     const categoryFilter = props.moduleContext.useStoreValue("categoricalFilter");
     const responseBody: Body_get_realizations_response = { categorical_filter: categoryFilter || undefined };
     const realizationsResponseQuery = useRealizationsResponseQuery(
-        ensemble?.caseUuid ?? "",
-        ensemble?.ensembleName ?? "",
+        ensembleIdent?.getCaseUuid() ?? "",
+        ensembleIdent?.getEnsembleName() ?? "",
         tableName,
         responseName,
         responseBody,

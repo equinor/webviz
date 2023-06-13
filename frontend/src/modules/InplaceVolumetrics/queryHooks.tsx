@@ -1,17 +1,17 @@
 import {
-    Ensemble as ApiEnsemble,
     Body_get_realizations_response,
+    EnsembleInfo,
     EnsembleScalarResponse,
     InplaceVolumetricsTableMetaData,
 } from "@api";
 import { apiService } from "@framework/ApiService";
-import { Ensemble } from "@shared-types/ensemble";
+import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { UseQueryResult, useQuery } from "@tanstack/react-query";
 
 const STALE_TIME = 60 * 1000;
 const CACHE_TIME = 60 * 1000;
 
-export function useEnsemblesQuery(caseUuid: string | null): UseQueryResult<Array<ApiEnsemble>> {
+export function useEnsemblesQuery(caseUuid: string | null): UseQueryResult<Array<EnsembleInfo>> {
     return useQuery({
         queryKey: ["getEnsembles", caseUuid],
         queryFn: () => apiService.explore.getEnsembles(caseUuid ?? ""),
@@ -22,15 +22,15 @@ export function useEnsemblesQuery(caseUuid: string | null): UseQueryResult<Array
 }
 
 export function useTableDescriptionsQuery(
-    ensemble: Ensemble | null,
+    ensemble: EnsembleIdent | null,
     allowEnable: boolean
 ): UseQueryResult<Array<InplaceVolumetricsTableMetaData>> {
     return useQuery({
         queryKey: ["getTableNamesAndDescriptions", ensemble],
         queryFn: () =>
             apiService.inplaceVolumetrics.getTableNamesAndDescriptions(
-                ensemble?.caseUuid ?? "",
-                ensemble?.ensembleName ?? ""
+                ensemble?.getCaseUuid() ?? "",
+                ensemble?.getEnsembleName() ?? ""
             ),
         staleTime: STALE_TIME,
         cacheTime: CACHE_TIME,

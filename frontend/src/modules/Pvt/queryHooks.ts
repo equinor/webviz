@@ -15,13 +15,3 @@ export function usePvtDataQuery(caseUuid: string | null, ensembleName: string | 
         enabled: caseUuid && ensembleName && realization != null ? true : false,
     });
 }
-
-export function useRealizationsQuery(caseUuid: string | null, ensembleName: string | null): UseQueryResult<number[]> {
-    return useQuery({
-        queryKey: ["getRealizations", caseUuid, ensembleName],
-        queryFn: () => apiService.explore.getRealizations(caseUuid ?? "", ensembleName ?? ""),
-        staleTime: STALE_TIME,
-        cacheTime: CACHE_TIME,
-        enabled: caseUuid && ensembleName ? true : false,
-    });
-}

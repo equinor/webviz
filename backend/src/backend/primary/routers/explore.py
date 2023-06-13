@@ -4,34 +4,43 @@ from fastapi import APIRouter, Depends, Path, Query
 from pydantic import BaseModel
 
 from src.services.sumo_access.sumo_explore import SumoExplore
+from src.services.sumo_access.iteration_inspector import IterationInspector
 from src.services.utils.authenticated_user import AuthenticatedUser
 from src.backend.auth.auth_helper import AuthHelper
 
 router = APIRouter()
 
 
-class Field(BaseModel):
+class FieldInfo(BaseModel):
     field_identifier: str
 
 
-class Case(BaseModel):
+class CaseInfo(BaseModel):
     uuid: str
     name: str
 
 
-class Ensemble(BaseModel):
+class EnsembleInfo(BaseModel):
     name: str
+    realization_count: int
+
+
+class EnsembleDetails(BaseModel):
+    name: str
+    case_name: str
+    case_uuid: str
+    realizations: List[int]
 
 
 @router.get("/fields")
-def get_fields() -> List[Field]:
+def get_fields() -> List[FieldInfo]:
     """
     Get list of fields
     """
     ret_arr = [
-        Field(field_identifier="DROGON"),
-        Field(field_identifier="JOHAN SVERDRUP"),
-        Field(field_identifier="DUMMY_FIELD"),
+        FieldInfo(field_identifier="DROGON"),
+        FieldInfo(field_identifier="JOHAN SVERDRUP"),
+        FieldInfo(field_identifier="DUMMY_FIELD"),
     ]
     return ret_arr
 
@@ -40,7 +49,7 @@ def get_fields() -> List[Field]:
 def get_cases(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     field_identifier: str = Query(description="Field identifier"),
-) -> List[Case]:
+) -> List[CaseInfo]:
     """Get list of cases for specified field"""
     print(authenticated_user.get_sumo_access_token())
     sumo_discovery = SumoExplore(authenticated_user.get_sumo_access_token())
@@ -51,15 +60,15 @@ def get_cases(
     # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # Sumo Explorer + Drogon + SMRY data is still a work in progress!
     # Present the single DROGON case that we know to be good as the first item, also prefixing it with "GOOD"
-    ret_arr: List[Case] = []
+    ret_arr: List[CaseInfo] = []
     if field_identifier == "DROGON":
         for case_info in case_info_arr:
             if case_info.uuid == "10f41041-2c17-4374-a735-bb0de62e29dc":
-                ret_arr.insert(0, Case(uuid=case_info.uuid, name=f"GOOD -- {case_info.name}"))
+                ret_arr.insert(0, CaseInfo(uuid=case_info.uuid, name=f"GOOD -- {case_info.name}"))
             else:
-                ret_arr.append(Case(uuid=case_info.uuid, name=case_info.name))
+                ret_arr.append(CaseInfo(uuid=case_info.uuid, name=case_info.name))
     else:
-        ret_arr = [Case(uuid=ci.uuid, name=ci.name) for ci in case_info_arr]
+        ret_arr = [CaseInfo(uuid=ci.uuid, name=ci.name) for ci in case_info_arr]
 
     return ret_arr
 
@@ -68,22 +77,26 @@ def get_cases(
 def get_ensembles(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     case_uuid: str = Path(description="Sumo case uuid"),
-) -> List[Ensemble]:
+) -> List[EnsembleInfo]:
     """Get list of ensembles for a case"""
     sumo_discovery = SumoExplore(authenticated_user.get_sumo_access_token())
     iteration_info_arr = sumo_discovery.get_iterations(case_uuid=case_uuid)
 
     print(iteration_info_arr)
 
-    return [Ensemble(name=it.name) for it in iteration_info_arr]
+    return [EnsembleInfo(name=it.name, realization_count=it.realization_count) for it in iteration_info_arr]
 
 
-@router.get("/cases/{case_uuid}/ensembles/{ensemble_name}/realizations")
-def get_realizations(
+@router.get("/cases/{case_uuid}/ensembles/{ensemble_name}")
+def get_ensemble_details(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     case_uuid: str = Path(description="Sumo case uuid"),
     ensemble_name: str = Path(description="Ensemble name"),
-) -> Sequence[int]:
-    """Get list of realizations for an ensemble"""
-    sumo_discovery = SumoExplore(authenticated_user.get_sumo_access_token())
-    return sumo_discovery.get_realizations(case_uuid=case_uuid, ensemble_name=ensemble_name)
+) -> EnsembleDetails:
+    """Get more detailed information for an ensemble"""
+    iteration_inspector = IterationInspector(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
+    case_name = iteration_inspector.get_case_name()
+    realizations = iteration_inspector.get_realizations()
+
+    return EnsembleDetails(name=ensemble_name, case_name=case_name, case_uuid=case_uuid, realizations=realizations)
+
