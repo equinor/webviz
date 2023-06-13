@@ -23,7 +23,6 @@ export function view(props: ModuleFCProps<state>) {
     const selectedSeismicCube = props.moduleContext.useStoreValue("selectedSeismicCube");
     const [surfaceData,setSurfaceData] = React.useState<SurfaceMeshAndProperty | null>(null)
     const [initialBounds, setInitialBounds] = React.useState<number[] | null>(null);
-
     const is3D = props.moduleContext.useStoreValue("show3D");
     const attributeQuery = useSeismicAttributeNearSurfaceQuery(
         selectedEnsemble?.caseUuid, 

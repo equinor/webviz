@@ -44,12 +44,14 @@ export class SurfaceService {
      * These are the non-observed surfaces that do NOT have time stamps
      * @param caseUuid Sumo case uuid
      * @param ensembleName Ensemble name
+     * @param contentFilter Sumo content filter
      * @returns StaticSurfaceDirectory Successful Response
      * @throws ApiError
      */
     public getStaticSurfaceDirectory(
         caseUuid: string,
         ensembleName: string,
+        contentFilter?: Array<string>,
     ): CancelablePromise<StaticSurfaceDirectory> {
         return this.httpRequest.request({
             method: 'GET',
@@ -57,6 +59,7 @@ export class SurfaceService {
             query: {
                 'case_uuid': caseUuid,
                 'ensemble_name': ensembleName,
+                'content_filter': contentFilter,
             },
             errors: {
                 422: `Validation Error`,

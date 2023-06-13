@@ -60,7 +60,7 @@ class SurfaceAccess:
 
         return surf_dir
 
-    def get_static_surf_dir(self) -> StaticSurfaceDirectory:
+    def get_static_surf_dir(self, content_filter: Optional[List[str]] = None) -> StaticSurfaceDirectory:
         """
         Get a directory of surface names and attributes for static surfaces.
         These are the non-observed surfaces that do NOT have time stamps
@@ -79,8 +79,15 @@ class SurfaceAccess:
             realization=case.get_realizations()[0],
         )
 
-        names = sorted(surface_collection.names)
-        attributes = sorted(surface_collection.tagnames)
+        if content_filter is not None:
+            surfaces_with_filtered_content = [
+                surf for surf in surface_collection if surf["data"]["content"] in content_filter
+            ]
+            names = sorted(list(set([surf.name for surf in surfaces_with_filtered_content])))
+            attributes = sorted(list(set([surf.tagname for surf in surfaces_with_filtered_content])))
+        else:
+            names = sorted(surface_collection.names)
+            attributes = sorted(surface_collection.tagnames)
 
         LOGGER.debug(
             f"Build valid name/attribute combinations for static surface directory "
@@ -91,7 +98,7 @@ class SurfaceAccess:
 
         for name in names:
             filtered_coll = surface_collection.filter(name=name)
-            filtered_attributes = filtered_coll.tagnames
+            filtered_attributes = [tagname for tagname in filtered_coll.tagnames if tagname in attributes]
             attribute_indices: List[int] = []
             for attr in filtered_attributes:
                 attr_idx = attributes.index(attr)

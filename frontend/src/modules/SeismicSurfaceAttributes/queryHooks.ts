@@ -47,7 +47,7 @@ export function useStaticSurfaceDirectoryQuery(
 ): UseQueryResult<StaticSurfaceDirectory> {
     return useQuery({
         queryKey: ["getStaticSurfaceDirectory", caseUuid, ensembleName],
-        queryFn: () => apiService.surface.getStaticSurfaceDirectory(caseUuid ?? "", ensembleName ?? ""),
+        queryFn: () => apiService.surface.getStaticSurfaceDirectory(caseUuid ?? "", ensembleName ?? "", ["depth"]),
         staleTime: STALE_TIME,
         cacheTime: STALE_TIME,
         enabled:  caseUuid && ensembleName ? true : false,
