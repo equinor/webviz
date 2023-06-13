@@ -21,7 +21,7 @@ router = APIRouter()
 
 
 @router.get("/parameter_names_and_description/")
-async def get_parameter_names_and_description(
+def get_parameter_names_and_description(
     # fmt:off
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     case_uuid: str = Query(description="Sumo case uuid"),
@@ -51,7 +51,7 @@ async def get_parameter_names_and_description(
 
 
 @router.get("/parameter/")
-async def get_parameter(
+def get_parameter(
     # fmt:off
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     case_uuid: str = Query(description="Sumo case uuid"),
@@ -70,7 +70,7 @@ async def get_parameter(
 
 
 @router.get("/is_sensitivity_run/")
-async def is_sensitivity_run(
+def is_sensitivity_run(
     # fmt:off
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     case_uuid: str = Query(description="Sumo case uuid"),
@@ -84,7 +84,7 @@ async def is_sensitivity_run(
 
 
 @router.get("/sensitivities/")
-async def get_sensitivities(
+def get_sensitivities(
     # fmt:off
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     case_uuid: str = Query(description="Sumo case uuid"),
