@@ -99,4 +99,3 @@ def get_ensemble_details(
     realizations = iteration_inspector.get_realizations()
 
     return EnsembleDetails(name=ensemble_name, case_name=case_name, case_uuid=case_uuid, realizations=realizations)
-
