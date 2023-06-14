@@ -6,9 +6,8 @@ import {
     broadcaster,
     checkChannelCompatibility,
 } from "@framework/Broadcaster";
-
-import { Dropdown } from "../../../lib/components/Dropdown";
-import { BaseComponentProps } from "../../../lib/components/_BaseComponent";
+import { Dropdown } from "@lib/components/Dropdown";
+import { BaseComponentProps } from "@lib/components/_BaseComponent";
 
 export type ChannelSelectProps = {
     initialChannel?: string;
