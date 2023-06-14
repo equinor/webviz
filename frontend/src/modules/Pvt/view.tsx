@@ -8,7 +8,6 @@ import state from "./state";
 import { PvtQueryDataAccessor } from "./pvtQueryDataAccessor";
 import { PvtPlotAccessor, PlotDataType } from "./pvtPlotDataAccessor";
 import PlotlyPvtScatter from "./plotlyPvtScatter";
-import { set } from "lodash";
 //-----------------------------------------------------------------------------------------------------------
 
 
