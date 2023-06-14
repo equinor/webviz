@@ -19,17 +19,17 @@ enum Type {
     NumberTriplet = "number-triplet",
 }
 
-export const BroadcastChannelKeyMeta = {
-    [BroadcastChannelKeyCategory.TimestampMs]: { type: Type.Number },
-    [BroadcastChannelKeyCategory.Realization]: { type: Type.Number },
-    [BroadcastChannelKeyCategory.GridIndex]: { type: Type.Number },
-    [BroadcastChannelKeyCategory.GridIJK]: { type: Type.NumberTriplet },
-    [BroadcastChannelKeyCategory.MeasuredDepth]: { type: Type.Number },
+const BroadcastChannelKeyCategoryToTypeMap = {
+    [BroadcastChannelKeyCategory.TimestampMs]: Type.Number,
+    [BroadcastChannelKeyCategory.Realization]: Type.Number,
+    [BroadcastChannelKeyCategory.GridIndex]: Type.Number,
+    [BroadcastChannelKeyCategory.GridIJK]: Type.NumberTriplet,
+    [BroadcastChannelKeyCategory.MeasuredDepth]: Type.Number,
 };
 
-export const BroadcastChannelValueTypeMeta = {
-    [BroadcastChannelValueType.Numeric]: { type: Type.Number },
-    [BroadcastChannelValueType.String]: { type: Type.String },
+const BroadcastChannelValueTypeToTypeMap = {
+    [BroadcastChannelValueType.Numeric]: Type.Number,
+    [BroadcastChannelValueType.String]: Type.String,
 };
 
 function checkValueIsExpectedType(value: any, type: Type): boolean {
@@ -119,12 +119,12 @@ export class BroadcastChannel {
             return;
         }
 
-        const expectedKeyType = BroadcastChannelKeyMeta[this._dataDef.key].type;
+        const expectedKeyType = BroadcastChannelKeyCategoryToTypeMap[this._dataDef.key];
         if (!checkValueIsExpectedType(data[0].key, expectedKeyType)) {
             throw new Error(this.makeExceptionMessage("Key", data[0].key.toString(), expectedKeyType));
         }
 
-        const expectedValueType = BroadcastChannelValueTypeMeta[this._dataDef.value].type;
+        const expectedValueType = BroadcastChannelValueTypeToTypeMap[this._dataDef.value];
         if (!checkValueIsExpectedType(data[0].value, expectedValueType)) {
             throw new Error(this.makeExceptionMessage("Value", data[0].value.toString(), expectedValueType));
         }

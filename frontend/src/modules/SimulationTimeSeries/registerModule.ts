@@ -1,7 +1,7 @@
 import { ModuleRegistry } from "@framework/ModuleRegistry";
 import { SyncSettingKey } from "@framework/SyncSettings";
 
-import { broadcastChannelsDef } from "./broadcastChannel";
+import { broadcastChannelsDef } from "./channelDefs";
 import { State } from "./state";
 
 ModuleRegistry.registerModule<State>(

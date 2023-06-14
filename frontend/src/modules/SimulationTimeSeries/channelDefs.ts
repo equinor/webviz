@@ -6,7 +6,7 @@ export enum BroadcastChannelNames {
 
 export const broadcastChannelsDef = {
     [BroadcastChannelNames.Realization_Value]: {
-        key: BroadcastChannelKeyCategory.Realization as const,
-        value: BroadcastChannelValueType.Numeric as const,
+        key: BroadcastChannelKeyCategory.Realization,
+        value: BroadcastChannelValueType.Numeric,
     },
 };

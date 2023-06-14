@@ -4,11 +4,9 @@ export enum BroadcastChannelNames {
     Response = "Response (per realization)",
 }
 
-export const broadcastChannelNames = Object.values(BroadcastChannelNames);
-
 export const broadcastChannelsDef = {
     [BroadcastChannelNames.Response]: {
-        key: BroadcastChannelKeyCategory.Realization as const,
-        value: BroadcastChannelValueType.Numeric as const,
+        key: BroadcastChannelKeyCategory.Realization,
+        value: BroadcastChannelValueType.Numeric,
     },
 };
