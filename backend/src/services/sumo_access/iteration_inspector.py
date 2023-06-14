@@ -1,4 +1,4 @@
-from typing import List, Sequence
+from typing import Sequence
 from fmu.sumo.explorer.explorer import CaseCollection, Case, SumoClient
 
 from ._helpers import create_sumo_client_instance
