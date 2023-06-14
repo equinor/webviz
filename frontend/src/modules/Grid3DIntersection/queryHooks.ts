@@ -1,6 +1,6 @@
-import { GridSurface, GridIntersection } from "@api";
+import { GridIntersection } from "@api";
 import { apiService } from "@framework/ApiService";
-import { QueryFunction, QueryKey, UseQueryResult, useQuery } from "@tanstack/react-query";
+import { UseQueryResult, useQuery } from "@tanstack/react-query";
 
 
 const STALE_TIME = 60 * 1000;
