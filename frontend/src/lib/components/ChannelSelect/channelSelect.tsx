@@ -34,12 +34,19 @@ export const ChannelSelect: React.FC<ChannelSelectProps> = (props) => {
                     )
                     .map((el) => el.getName())
             );
+
+            if (channels.length === 0 || !channels.find((el) => el.getName() === channel)) {
+                setChannel("");
+                if (onChange) {
+                    onChange("");
+                }
+            }
         };
 
         const unsubscribeFunc = broadcaster.subscribeToChannelsChanges(handleChannelsChanged);
 
         return unsubscribeFunc;
-    }, [channelKeyCategory]);
+    }, [channelKeyCategory, onChange]);
 
     const handleChannelsChanged = (channel: string) => {
         setChannel(channel);

@@ -13,77 +13,48 @@ export enum BroadcastChannelValueType {
     String = "string",
 }
 
-interface Type {
-    test(value: any): boolean;
+enum Type {
+    Number = "number",
+    String = "string",
+    NumberTriplet = "number-triplet",
 }
 
-class TypeArray implements Type {
-    private _type: Type | undefined;
-    private _length: number | undefined;
+export const BroadcastChannelKeyMeta = {
+    [BroadcastChannelKeyCategory.TimestampMs]: { type: Type.Number },
+    [BroadcastChannelKeyCategory.Realization]: { type: Type.Number },
+    [BroadcastChannelKeyCategory.GridIndex]: { type: Type.Number },
+    [BroadcastChannelKeyCategory.GridIJK]: { type: Type.NumberTriplet },
+    [BroadcastChannelKeyCategory.MeasuredDepth]: { type: Type.Number },
+};
 
-    constructor(type?: Type, length?: number) {
-        this._type = type;
-        this._length = length;
+export const BroadcastChannelValueTypeMeta = {
+    [BroadcastChannelValueType.Numeric]: { type: Type.Number },
+    [BroadcastChannelValueType.String]: { type: Type.String },
+};
+
+function checkValueIsExpectedType(value: any, type: Type): boolean {
+    if (type === Type.Number) {
+        return typeof value === "number";
     }
 
-    public test(value: any): boolean {
+    if (type === Type.String) {
+        return typeof value === "string";
+    }
+
+    if (type === Type.NumberTriplet) {
         if (!Array.isArray(value)) {
             return false;
         }
 
-        if (this._length && value.length !== this._length) {
+        if (value.length !== 3) {
             return false;
         }
 
-        if (this._type) {
-            return value.every((item) => {
-                if (this._type) {
-                    return this._type.test(item);
-                }
-                return true;
-            });
-        }
-
-        return true;
+        return value.every((v) => typeof v === "number");
     }
 
-    public toString(): string {
-        return `Array<${this._type ? this._type.toString() : "any"}>(length: ${this._length})`;
-    }
+    throw new Error(`Unknown type '${type}'`);
 }
-
-class TypeNumber implements Type {
-    public test(value: any): boolean {
-        return typeof value === "number";
-    }
-
-    public toString(): string {
-        return "number";
-    }
-}
-
-class TypeString implements Type {
-    public test(value: any): boolean {
-        return typeof value === "string";
-    }
-
-    public toString(): string {
-        return "string";
-    }
-}
-
-export const BroadcastChannelKeyMeta = {
-    [BroadcastChannelKeyCategory.TimestampMs]: { type: new TypeNumber() },
-    [BroadcastChannelKeyCategory.Realization]: { type: new TypeNumber() },
-    [BroadcastChannelKeyCategory.GridIndex]: { type: new TypeNumber() },
-    [BroadcastChannelKeyCategory.GridIJK]: { type: new TypeArray(new TypeNumber(), 3) },
-    [BroadcastChannelKeyCategory.MeasuredDepth]: { type: new TypeNumber() },
-};
-
-export const BroadcastChannelValueTypeMeta = {
-    [BroadcastChannelValueType.Numeric]: { type: new TypeNumber() },
-    [BroadcastChannelValueType.String]: { type: new TypeString() },
-};
 
 export type BroadcastChannelDef = {
     key: BroadcastChannelKeyCategory;
@@ -120,16 +91,14 @@ export class BroadcastChannel {
     private _name: string;
     private _metaData: BroadcastChannelMeta | null;
     private _moduleInstanceId: string;
-    private _dataChangeSubscribers: Set<(data: BroadcastChannelData[], metaData: BroadcastChannelMeta) => void>;
-    private _removalSubscribers: Set<() => void>;
+    private _subscribers: Set<(data: BroadcastChannelData[], metaData: BroadcastChannelMeta) => void>;
     private _cachedData: BroadcastChannelData[] | null;
     private _dataDef: BroadcastChannelDef;
     private _dataGenerator: (() => BroadcastChannelData[]) | null;
 
     constructor(name: string, def: BroadcastChannelDef, moduleInstanceId: string) {
         this._name = name;
-        this._dataChangeSubscribers = new Set();
-        this._removalSubscribers = new Set();
+        this._subscribers = new Set();
         this._cachedData = null;
         this._dataDef = def;
         this._dataGenerator = null;
@@ -137,38 +106,34 @@ export class BroadcastChannel {
         this._moduleInstanceId = moduleInstanceId;
     }
 
-    private verifyGeneratedData(data: BroadcastChannelData[]): void {
+    private makeExceptionMessage(keyOrValue: "Key" | "Value", value: string, expectedType: string): string {
+        return `Generated data is not compatible with channel definition. ${keyOrValue} '${
+            typeof value === "string" ? `"${value}"` : value
+        }' at index 0 is not compatible with channel ${keyOrValue.toLowerCase()} definition of type '${expectedType}'.\n\nChannel definition: ${JSON.stringify(
+            this._dataDef
+        )}\nModule: ${this._moduleInstanceId}\nChannel name: ${this._name}`;
+    }
+
+    private assertGeneratedDataMatchesDefinition(data: BroadcastChannelData[]): void {
         if (data.length === 0) {
             return;
         }
 
-        data.forEach((item, index) => {
-            if (!BroadcastChannelKeyMeta[this._dataDef.key].type.test(item.key)) {
-                throw new Error(
-                    `Generated data is not compatible with channel definition. Key '${
-                        typeof item.key === "string" ? `"${item.key}"` : item.key
-                    }' at index ${index} is not compatible with channel key definition of type '${BroadcastChannelKeyMeta[
-                        this._dataDef.key
-                    ].type.toString()}'.\n\nChannel definition: ${JSON.stringify(this._dataDef)}`
-                );
-            }
+        const expectedKeyType = BroadcastChannelKeyMeta[this._dataDef.key].type;
+        if (!checkValueIsExpectedType(data[0].key, expectedKeyType)) {
+            throw new Error(this.makeExceptionMessage("Key", data[0].key.toString(), expectedKeyType));
+        }
 
-            if (!BroadcastChannelValueTypeMeta[this._dataDef.value].type.test(item.value)) {
-                throw new Error(
-                    `Generated data is not compatible with channel definition. Value '${
-                        typeof item.value === "string" ? `"${item.value}"` : item.value
-                    }' at index ${index} is not compatible with channel value definition of type '${BroadcastChannelValueTypeMeta[
-                        this._dataDef.value
-                    ].type.toString()}'.\n\nChannel definition: ${JSON.stringify(this._dataDef)}`
-                );
-            }
-        });
+        const expectedValueType = BroadcastChannelValueTypeMeta[this._dataDef.value].type;
+        if (!checkValueIsExpectedType(data[0].value, expectedValueType)) {
+            throw new Error(this.makeExceptionMessage("Value", data[0].value.toString(), expectedValueType));
+        }
     }
 
     private generateAndVerifyData(dataGenerator: () => BroadcastChannelData[]): BroadcastChannelData[] {
         const generatedData = dataGenerator();
 
-        this.verifyGeneratedData(generatedData);
+        this.assertGeneratedDataMatchesDefinition(generatedData);
 
         return generatedData;
     }
@@ -196,25 +161,23 @@ export class BroadcastChannel {
         this._dataGenerator = dataGenerator;
         this._metaData = metaData;
 
-        if (this._dataChangeSubscribers.size === 0) {
+        if (this._subscribers.size === 0) {
             return;
         }
 
         this._cachedData = this.generateAndVerifyData(dataGenerator);
 
-        for (const cb of this._dataChangeSubscribers) {
+        for (const cb of this._subscribers) {
             cb(this._cachedData, this._metaData);
         }
     }
 
     public subscribe(
-        callbackChannelDataChanged: (data: BroadcastChannelData[], metaData: BroadcastChannelMeta) => void,
-        callbackChannelRemoved: () => void
+        callbackChannelDataChanged: (data: BroadcastChannelData[], metaData: BroadcastChannelMeta) => void
     ): () => void {
-        this._dataChangeSubscribers.add(callbackChannelDataChanged);
-        this._removalSubscribers.add(callbackChannelRemoved);
+        this._subscribers.add(callbackChannelDataChanged);
 
-        if (this._dataChangeSubscribers.size === 1 && this._dataGenerator) {
+        if (this._subscribers.size === 1 && this._dataGenerator) {
             this._cachedData = this.generateAndVerifyData(this._dataGenerator);
         }
 
@@ -223,15 +186,8 @@ export class BroadcastChannel {
         }
 
         return () => {
-            this._dataChangeSubscribers.delete(callbackChannelDataChanged);
-            this._removalSubscribers.delete(callbackChannelRemoved);
+            this._subscribers.delete(callbackChannelDataChanged);
         };
-    }
-
-    public onRemoval(): void {
-        for (const cb of this._removalSubscribers) {
-            cb();
-        }
     }
 }
 
@@ -256,13 +212,6 @@ class Broadcaster {
     }
 
     public unregisterAllChannelsForModuleInstance(moduleInstanceId: string): void {
-        const channel = this._channels.find((c) => c.getModuleInstanceId() === moduleInstanceId);
-        if (!channel) {
-            return;
-        }
-
-        channel.onRemoval();
-
         this._channels = this._channels.filter((c) => c.getModuleInstanceId() !== moduleInstanceId);
         this.notifySubscribersAboutChannelsChanges();
     }

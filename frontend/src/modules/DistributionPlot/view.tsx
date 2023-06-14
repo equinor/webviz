@@ -54,57 +54,54 @@ export const view = ({ moduleContext, workbenchServices }: ModuleFCProps<State>)
     const wrapperDivSize = useElementSize(wrapperDivRef);
 
     React.useEffect(() => {
-        if (channelX) {
-            const handleChannelXChanged = (data: any, metaData: BroadcastChannelMeta) => {
-                setDataX(data);
-                setMetaDataX(metaData);
-            };
-
-            const handleChannelXRemoved = () => {
-                setDataX(null);
-                setMetaDataX(null);
-            };
-
-            const unsubscribeFunc = channelX.subscribe(handleChannelXChanged, handleChannelXRemoved);
-
-            return unsubscribeFunc;
+        if (!channelX) {
+            setDataX(null);
+            setMetaDataX(null);
+            return;
         }
+
+        const handleChannelXChanged = (data: any, metaData: BroadcastChannelMeta) => {
+            setDataX(data);
+            setMetaDataX(metaData);
+        };
+
+        const unsubscribeFunc = channelX.subscribe(handleChannelXChanged);
+
+        return unsubscribeFunc;
     }, [channelX]);
 
     React.useEffect(() => {
-        if (channelY) {
-            const handleChannelYChanged = (data: any, metaData: BroadcastChannelMeta) => {
-                setDataY(data);
-                setMetaDataY(metaData);
-            };
-
-            const handleChannelYRemoved = () => {
-                setDataY(null);
-                setMetaDataY(null);
-            };
-
-            const unsubscribeFunc = channelY.subscribe(handleChannelYChanged, handleChannelYRemoved);
-
-            return unsubscribeFunc;
+        if (!channelY) {
+            setDataY(null);
+            setMetaDataY(null);
+            return;
         }
+
+        const handleChannelYChanged = (data: any, metaData: BroadcastChannelMeta) => {
+            setDataY(data);
+            setMetaDataY(metaData);
+        };
+
+        const unsubscribeFunc = channelY.subscribe(handleChannelYChanged);
+
+        return unsubscribeFunc;
     }, [channelY]);
 
     React.useEffect(() => {
-        if (channelZ) {
-            const handleChannelZChanged = (data: any, metaData: BroadcastChannelMeta) => {
-                setDataZ(data);
-                setMetaDataZ(metaData);
-            };
-
-            const handleChannelZRemoved = () => {
-                setDataZ(null);
-                setMetaDataZ(null);
-            };
-
-            const unsubscribeFunc = channelZ.subscribe(handleChannelZChanged, handleChannelZRemoved);
-
-            return unsubscribeFunc;
+        if (!channelZ) {
+            setDataZ(null);
+            setMetaDataZ(null);
+            return;
         }
+
+        const handleChannelZChanged = (data: any, metaData: BroadcastChannelMeta) => {
+            setDataZ(data);
+            setMetaDataZ(metaData);
+        };
+
+        const unsubscribeFunc = channelZ.subscribe(handleChannelZChanged);
+
+        return unsubscribeFunc;
     }, [channelZ]);
 
     React.useEffect(() => {
