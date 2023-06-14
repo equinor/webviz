@@ -1,5 +1,5 @@
-import { EnsembleIdent } from "./EnsembleIdent";
-import { EnsembleSet } from "./EnsembleSet";
+import { EnsembleIdent } from "../EnsembleIdent";
+import { EnsembleSet } from "../EnsembleSet";
 
 export function maybeAssignFirstSyncedEnsemble(
     currIdent: EnsembleIdent | null,
