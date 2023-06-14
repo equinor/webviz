@@ -1,6 +1,6 @@
 import React from "react";
 
-import { EnsembleParameterDescription, VectorDescription } from "@api";
+import { EnsembleParameterDescription_api, VectorDescription_api } from "@api";
 import { ModuleFCProps } from "@framework/Module";
 import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
 import { useSubscribedValue } from "@framework/WorkbenchServices";
@@ -180,7 +180,7 @@ function makeEnsembleOptionItems(ensemblesArr: Ensemble[] | null): DropdownOptio
     return itemArr;
 }
 
-function isValidVectorName(vectorName: string, vectorDescriptionsArr: VectorDescription[] | undefined): boolean {
+function isValidVectorName(vectorName: string, vectorDescriptionsArr: VectorDescription_api[] | undefined): boolean {
     if (!vectorName || !vectorDescriptionsArr || vectorDescriptionsArr.length === 0) {
         return false;
     }
@@ -192,7 +192,7 @@ function isValidVectorName(vectorName: string, vectorDescriptionsArr: VectorDesc
     return false;
 }
 
-function fixupVectorName(currVectorName: string, vectorDescriptionsArr: VectorDescription[] | undefined): string {
+function fixupVectorName(currVectorName: string, vectorDescriptionsArr: VectorDescription_api[] | undefined): string {
     if (!vectorDescriptionsArr || vectorDescriptionsArr.length === 0) {
         return "";
     }
@@ -204,7 +204,7 @@ function fixupVectorName(currVectorName: string, vectorDescriptionsArr: VectorDe
     return vectorDescriptionsArr[0].name;
 }
 
-function makeVectorOptionItems(vectorDescriptionsArr: VectorDescription[] | undefined): SelectOption[] {
+function makeVectorOptionItems(vectorDescriptionsArr: VectorDescription_api[] | undefined): SelectOption[] {
     const itemArr: SelectOption[] = [];
     if (vectorDescriptionsArr) {
         for (const vec of vectorDescriptionsArr) {
@@ -214,7 +214,7 @@ function makeVectorOptionItems(vectorDescriptionsArr: VectorDescription[] | unde
     return itemArr;
 }
 
-function makeParameterNamesOptionItems(parameters: EnsembleParameterDescription[] | undefined): SelectOption[] {
+function makeParameterNamesOptionItems(parameters: EnsembleParameterDescription_api[] | undefined): SelectOption[] {
     const itemArr: SelectOption[] = [];
     if (parameters) {
         for (const parameter of parameters) {

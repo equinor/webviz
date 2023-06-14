@@ -1,11 +1,11 @@
-import { InplaceVolumetricsCategoricalMetaData } from "@api";
+import { InplaceVolumetricsCategoricalMetaData_api } from "@api";
 import { Ensemble } from "@shared-types/ensemble";
 
 export interface State {
     ensemble: Ensemble | null;
     tableName: string | null;
     responseName: string | null;
-    categoricalOptions: InplaceVolumetricsCategoricalMetaData[] | null;
-    categoricalFilter: InplaceVolumetricsCategoricalMetaData[] | null;
+    categoricalOptions: InplaceVolumetricsCategoricalMetaData_api[] | null;
+    categoricalFilter: InplaceVolumetricsCategoricalMetaData_api[] | null;
     realizationsToInclude: number[] | null;
 }

@@ -3,7 +3,7 @@ import { ModuleFCProps } from "@framework/Module";
 import { useSubscribedValue } from "@framework/WorkbenchServices";
 import { ApiStateWrapper } from "@lib/components/ApiStateWrapper";
 
-import { PvtData } from "@api";
+import { PvtData_api } from "@api";
 import { usePvtDataQuery } from "./queryHooks";
 
 import { Checkbox } from "@lib/components/Checkbox";

@@ -1,4 +1,4 @@
-import { GridSurface, GridIntersection } from "@api";
+import { GridSurface_api, GridIntersection_api } from "@api";
 import { apiService } from "@framework/ApiService";
 import { QueryFunction, QueryKey, UseQueryResult, useQuery } from "@tanstack/react-query";
 
@@ -9,7 +9,7 @@ const CACHE_TIME = 60 * 1000;
 
 
 
-export function useGridIntersection(caseUuid: string | null, ensembleName: string | null, gridName: string | null, parameterName: string | null, realization: string | null, useStatistics: boolean): UseQueryResult<GridIntersection> {
+export function useGridIntersection(caseUuid: string | null, ensembleName: string | null, gridName: string | null, parameterName: string | null, realization: string | null, useStatistics: boolean): UseQueryResult<GridIntersection_api> {
     return useQuery({
         queryKey: ["gridParameterIntersection", caseUuid, ensembleName, gridName, parameterName, realization],
         queryFn: () => apiService.grid.gridParameterIntersection(caseUuid ?? "", ensembleName ?? "", gridName ?? "", parameterName ?? "", realization ?? ""),
@@ -18,7 +18,7 @@ export function useGridIntersection(caseUuid: string | null, ensembleName: strin
         enabled: caseUuid && ensembleName && gridName && parameterName && realization && !useStatistics ? true : false,
     });
 }
-export function useStatisticalGridIntersection(caseUuid: string | null, ensembleName: string | null, gridName: string | null, parameterName: string | null, realizations: string[] | null, useStatistics: boolean): UseQueryResult<GridIntersection> {
+export function useStatisticalGridIntersection(caseUuid: string | null, ensembleName: string | null, gridName: string | null, parameterName: string | null, realizations: string[] | null, useStatistics: boolean): UseQueryResult<GridIntersection_api> {
     return useQuery({
         queryKey: ["statisticalGridParameterIntersection", caseUuid, ensembleName, gridName, parameterName, realizations],
         queryFn: () => apiService.grid.statisticalGridParameterIntersection(caseUuid ?? "", ensembleName ?? "", gridName ?? "", parameterName ?? "", realizations ?? []),

@@ -1,6 +1,6 @@
 import React from "react";
 
-import { InplaceVolumetricsCategoricalMetaData, InplaceVolumetricsTableMetaData } from "@api";
+import { InplaceVolumetricsCategoricalMetaData_api, InplaceVolumetricsTableMetaData_api } from "@api";
 import { ModuleFCProps } from "@framework/Module";
 import { useSubscribedValue } from "@framework/WorkbenchServices";
 import { ApiStateWrapper } from "@lib/components/ApiStateWrapper/apiStateWrapper";
@@ -101,24 +101,24 @@ function getEnsembleNameOptions(ensembles: Ensemble[] | null): { value: string; 
     );
 }
 function getTableNameOptions(
-    tableDescriptionsQuery: UseQueryResult<InplaceVolumetricsTableMetaData[]>
+    tableDescriptionsQuery: UseQueryResult<InplaceVolumetricsTableMetaData_api[]>
 ): { value: string; label: string }[] {
     return (
-        tableDescriptionsQuery.data?.map((table: InplaceVolumetricsTableMetaData) => ({
+        tableDescriptionsQuery.data?.map((table: InplaceVolumetricsTableMetaData_api) => ({
             value: table.name,
             label: table.name,
         })) ?? []
     );
 }
 function getTableCategoricalOptions(
-    tableDescriptionsQuery: UseQueryResult<InplaceVolumetricsTableMetaData[]>,
+    tableDescriptionsQuery: UseQueryResult<InplaceVolumetricsTableMetaData_api[]>,
     tableName: string | null
-): InplaceVolumetricsCategoricalMetaData[] {
+): InplaceVolumetricsCategoricalMetaData_api[] {
     const tableDescription = tableDescriptionsQuery.data?.find((table) => table.name === tableName);
     return tableDescription?.categorical_column_metadata ?? [];
 }
 function getTableResponseOptions(
-    tableDescriptionsQuery: UseQueryResult<InplaceVolumetricsTableMetaData[]>,
+    tableDescriptionsQuery: UseQueryResult<InplaceVolumetricsTableMetaData_api[]>,
     tableName: string | null
 ): { value: string; label: string }[] {
     const tableDescription = tableDescriptionsQuery.data?.find((table) => table.name === tableName);

@@ -1,4 +1,4 @@
-import { SurfaceStatisticFunction } from "@api";
+import { SurfaceStatisticFunction_api } from "@api";
 
 export interface StaticSurfAddr {
     addressType: "static";
@@ -25,7 +25,7 @@ export interface StatisticalStaticSurfAddr {
     ensemble: string;
     name: string;
     attribute: string;
-    statisticFunction: SurfaceStatisticFunction;
+    statisticFunction: SurfaceStatisticFunction_api;
 }
 
 export interface StatisticalDynamicSurfAddr {
@@ -35,7 +35,7 @@ export interface StatisticalDynamicSurfAddr {
     name: string;
     attribute: string;
     timeOrInterval: string;
-    statisticFunction: SurfaceStatisticFunction;
+    statisticFunction: SurfaceStatisticFunction_api;
 }
 
 export type SurfAddr = StaticSurfAddr | DynamicSurfAddr | StatisticalDynamicSurfAddr | StatisticalStaticSurfAddr;
@@ -83,7 +83,7 @@ export class SurfAddrFactory {
     }
 
     createStatisticalDynamicAddr(
-        statFunction: SurfaceStatisticFunction,
+        statFunction: SurfaceStatisticFunction_api,
         timeOrInterval: string
     ): StatisticalDynamicSurfAddr {
         return {
@@ -97,7 +97,7 @@ export class SurfAddrFactory {
         };
     }
 
-    createStatisticalStaticAddr(statFunction: SurfaceStatisticFunction): StatisticalStaticSurfAddr {
+    createStatisticalStaticAddr(statFunction: SurfaceStatisticFunction_api): StatisticalStaticSurfAddr {
         return {
             addressType: "statistical-static",
             caseUuid: this._caseUuid,

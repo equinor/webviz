@@ -1,4 +1,4 @@
-import { Frequency } from "@api";
+import { Frequency_api } from "@api";
 
 export interface VectorSpec {
     caseUuid: string;
@@ -9,7 +9,7 @@ export interface VectorSpec {
 
 export interface State {
     vectorSpec: VectorSpec | null;
-    resamplingFrequency: Frequency | null;
+    resamplingFrequency: Frequency_api | null;
     showStatistics: boolean;
     realizationsToInclude: number[] | null;
 }

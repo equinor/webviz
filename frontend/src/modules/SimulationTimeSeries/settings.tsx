@@ -1,6 +1,6 @@
 import React from "react";
 
-import { Frequency, VectorDescription } from "@api";
+import { Frequency_api, VectorDescription_api } from "@api";
 import { ModuleFCProps } from "@framework/Module";
 import { SyncSettingsHelper, SyncSettingKey } from "@framework/SyncSettings";
 import { useSubscribedValue } from "@framework/WorkbenchServices";
@@ -97,9 +97,9 @@ export function settings({ moduleContext, workbenchServices }: ModuleFCProps<Sta
 
     function handleFrequencySelectionChange(newFreqStr: string) {
         console.debug(`handleFrequencySelectionChange()  newFreqStr=${newFreqStr}`);
-        let newFreq: Frequency | null = null;
+        let newFreq: Frequency_api | null = null;
         if (newFreqStr !== "RAW") {
-            newFreq = newFreqStr as Frequency;
+            newFreq = newFreqStr as Frequency_api;
         }
         console.debug(`handleFrequencySelectionChange()  newFreqStr=${newFreqStr}  newFreq=${newFreq}`);
         setResamplingFrequency(newFreq);
@@ -183,7 +183,7 @@ function fixupEnsemble(currEnsemble: Ensemble | null, availableEnsemblesArr: Ens
     return availableEnsemblesArr[0];
 }
 
-function fixupVectorName(currVectorName: string, vectorDescriptionsArr: VectorDescription[] | undefined): string {
+function fixupVectorName(currVectorName: string, vectorDescriptionsArr: VectorDescription_api[] | undefined): string {
     if (!vectorDescriptionsArr || vectorDescriptionsArr.length === 0) {
         return "";
     }
@@ -209,7 +209,7 @@ function makeEnsembleOptionItems(ensemblesArr: Ensemble[] | null): SelectOption[
     return itemArr;
 }
 
-function makeVectorOptionItems(vectorDescriptionsArr: VectorDescription[] | undefined): SelectOption[] {
+function makeVectorOptionItems(vectorDescriptionsArr: VectorDescription_api[] | undefined): SelectOption[] {
     const itemArr: SelectOption[] = [];
     if (vectorDescriptionsArr) {
         for (const vec of vectorDescriptionsArr) {
@@ -221,10 +221,10 @@ function makeVectorOptionItems(vectorDescriptionsArr: VectorDescription[] | unde
 
 function makeFrequencyOptionItems(): DropdownOption[] {
     const itemArr: DropdownOption[] = [
-        { value: Frequency.DAILY, label: "Daily" },
-        { value: Frequency.MONTHLY, label: "Monthly" },
-        { value: Frequency.QUARTERLY, label: "Quarterly" },
-        { value: Frequency.YEARLY, label: "Yearly" },
+        { value: Frequency_api.DAILY, label: "Daily" },
+        { value: Frequency_api.MONTHLY, label: "Monthly" },
+        { value: Frequency_api.QUARTERLY, label: "Quarterly" },
+        { value: Frequency_api.YEARLY, label: "Yearly" },
         { value: "RAW", label: "None (raw)" },
     ];
     return itemArr;

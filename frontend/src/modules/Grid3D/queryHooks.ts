@@ -1,4 +1,4 @@
-import { GridSurface } from "@api";
+import { GridSurface_api } from "@api";
 import { apiService } from "@framework/ApiService";
 import { QueryFunction, QueryKey, UseQueryResult, useQuery } from "@tanstack/react-query";
 
@@ -6,7 +6,7 @@ import { QueryFunction, QueryKey, UseQueryResult, useQuery } from "@tanstack/rea
 const STALE_TIME = 60 * 1000;
 const CACHE_TIME = 60 * 1000;
 
-export function useGridSurface(caseUuid: string | null, ensembleName: string | null, gridName: string | null, realization: string | null): UseQueryResult<GridSurface> {
+export function useGridSurface(caseUuid: string | null, ensembleName: string | null, gridName: string | null, realization: string | null): UseQueryResult<GridSurface_api> {
     return useQuery({
         queryKey: ["getGridSurface", caseUuid, ensembleName, gridName, realization],
         queryFn: () => apiService.grid.gridSurface(caseUuid ?? "", ensembleName ?? "", gridName ?? "", realization ?? ""),

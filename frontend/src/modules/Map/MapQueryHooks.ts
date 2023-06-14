@@ -1,4 +1,4 @@
-import { DynamicSurfaceDirectory, StaticSurfaceDirectory, SurfaceData } from "@api";
+import { DynamicSurfaceDirectory_api, StaticSurfaceDirectory_api, SurfaceData_api } from "@api";
 import { apiService } from "@framework/ApiService";
 import { QueryFunction, QueryKey, UseQueryResult, useQuery } from "@tanstack/react-query";
 
@@ -11,7 +11,7 @@ export function useDynamicSurfaceDirectoryQuery(
     caseUuid: string | undefined,
     ensembleName: string | undefined,
     allowEnable: boolean
-): UseQueryResult<DynamicSurfaceDirectory> {
+): UseQueryResult<DynamicSurfaceDirectory_api> {
     return useQuery({
         queryKey: ["getDynamicSurfaceDirectory", caseUuid, ensembleName],
         queryFn: () => apiService.surface.getDynamicSurfaceDirectory(caseUuid ?? "", ensembleName ?? ""),
@@ -25,7 +25,7 @@ export function useStaticSurfaceDirectoryQuery(
     caseUuid: string | undefined,
     ensembleName: string | undefined,
     allowEnable: boolean
-): UseQueryResult<StaticSurfaceDirectory> {
+): UseQueryResult<StaticSurfaceDirectory_api> {
     return useQuery({
         queryKey: ["getStaticSurfaceDirectory", caseUuid, ensembleName],
         queryFn: () => apiService.surface.getStaticSurfaceDirectory(caseUuid ?? "", ensembleName ?? ""),
@@ -35,8 +35,8 @@ export function useStaticSurfaceDirectoryQuery(
     });
 }
 
-export function useSurfaceDataQueryByAddress(surfAddr: SurfAddr | null): UseQueryResult<SurfaceData> {
-    function dummyApiCall(): Promise<SurfaceData> {
+export function useSurfaceDataQueryByAddress(surfAddr: SurfAddr | null): UseQueryResult<SurfaceData_api> {
+    function dummyApiCall(): Promise<SurfaceData_api> {
         return new Promise((_resolve, reject) => {
             reject(null);
         });
@@ -50,7 +50,7 @@ export function useSurfaceDataQueryByAddress(surfAddr: SurfAddr | null): UseQuer
         });
     }
 
-    let queryFn: QueryFunction<SurfaceData> | null = null;
+    let queryFn: QueryFunction<SurfaceData_api> | null = null;
     let queryKey: QueryKey | null = null;
 
     // Dynamic, per realization surface
