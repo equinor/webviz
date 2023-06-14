@@ -1,12 +1,14 @@
 import React from "react";
 import Plot from "react-plotly.js";
 
+import { BroadcastChannelMeta } from "@framework/Broadcaster";
 import { ModuleFCProps } from "@framework/Module";
 import { useSubscribedValue } from "@framework/WorkbenchServices";
 import { useElementSize } from "@lib/hooks/useElementSize";
 
-import { Layout, PlotData, PlotHoverEvent, PlotMouseEvent } from "plotly.js";
+import { Layout, PlotData, PlotHoverEvent } from "plotly.js";
 
+import { BroadcastChannelNames } from "./channelDefs";
 import { useStatisticalVectorDataQuery, useVectorDataQuery } from "./queryHooks";
 import { State } from "./state";
 
@@ -18,15 +20,12 @@ interface MyPlotData extends Partial<PlotData> {
 }
 
 export const view = ({ moduleContext, workbenchSession, workbenchServices }: ModuleFCProps<State>) => {
-    const ensembleSet = workbenchSession.getEnsembleSet();
-
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);
     const wrapperDivSize = useElementSize(wrapperDivRef);
     const vectorSpec = moduleContext.useStoreValue("vectorSpec");
     const resampleFrequency = moduleContext.useStoreValue("resamplingFrequency");
     const showStatistics = moduleContext.useStoreValue("showStatistics");
     const realizationsToInclude = moduleContext.useStoreValue("realizationsToInclude");
-    const [highlightRealization, setHighlightRealization] = React.useState(-1);
 
     const vectorQuery = useVectorDataQuery(
         vectorSpec?.ensembleIdent.getCaseUuid(),
@@ -43,6 +42,39 @@ export const view = ({ moduleContext, workbenchSession, workbenchServices }: Mod
         resampleFrequency,
         realizationsToInclude,
         showStatistics
+    );
+
+    const ensembleSet = workbenchSession.getEnsembleSet();
+    const ensemble = vectorSpec ? ensembleSet.findEnsemble(vectorSpec.ensembleIdent) : null;
+
+    React.useEffect(
+        function broadcast() {
+            if (!ensemble) {
+                return;
+            }
+
+            const dataGenerator = (): { key: number; value: number }[] => {
+                const data: { key: number; value: number }[] = [];
+                if (vectorQuery.data) {
+                    vectorQuery.data.forEach((vec) => {
+                        data.push({
+                            key: vec.realization,
+                            value: vec.values[0],
+                        });
+                    });
+                }
+                return data;
+            };
+
+            const channelMeta: BroadcastChannelMeta = {
+                ensembleIdent: ensemble.getIdent(),
+                description: `${ensemble.getDisplayName()} ${vectorSpec?.vectorName}`,
+                unit: vectorQuery.data?.at(0)?.unit || "",
+            };
+
+            moduleContext.getChannel(BroadcastChannelNames.Realization_Value).broadcast(channelMeta, dataGenerator);
+        },
+        [vectorQuery.data, ensemble, vectorSpec, moduleContext]
     );
 
     // React.useEffect(
@@ -129,8 +161,8 @@ export const view = ({ moduleContext, workbenchSession, workbenchServices }: Mod
 
     let title = "N/A";
     const hasGotAnyRequestedData = vectorQuery.data || (showStatistics && statisticsQuery.data);
-    if (vectorSpec && hasGotAnyRequestedData) {
-        const ensembleDisplayName = ensembleSet.findEnsemble(vectorSpec.ensembleIdent)?.getDisplayName();
+    if (ensemble && vectorSpec && hasGotAnyRequestedData) {
+        const ensembleDisplayName = ensemble.getDisplayName();
         title = `${vectorSpec.vectorName} [${unitString}] - ${ensembleDisplayName}`;
     }
 

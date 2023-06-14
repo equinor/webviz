@@ -1,7 +1,9 @@
+import { BroadcastChannel, BroadcastChannelsDef } from "./Broadcaster";
 import { ImportState, Module, ModuleFC } from "./Module";
 import { ModuleContext } from "./ModuleContext";
 import { StateBaseType, StateOptions, StateStore } from "./StateStore";
 import { SyncSettingKey } from "./SyncSettings";
+import { Workbench } from "./Workbench";
 
 export class ModuleInstance<StateType extends StateBaseType> {
     private id: string;
@@ -13,8 +15,14 @@ export class ModuleInstance<StateType extends StateBaseType> {
     private context: ModuleContext<StateType> | null;
     private importStateSubscribers: Set<() => void>;
     private syncedSettingsSubscribers: Set<(syncedSettings: SyncSettingKey[]) => void>;
+    private broadcastChannels: Record<string, BroadcastChannel>;
 
-    constructor(module: Module<StateType>, instanceNumber: number) {
+    constructor(
+        module: Module<StateType>,
+        instanceNumber: number,
+        broadcastChannelsDef: BroadcastChannelsDef,
+        workbench: Workbench
+    ) {
         this.id = `${module.getName()}-${instanceNumber}`;
         this.name = module.getName();
         this.stateStore = null;
@@ -24,6 +32,27 @@ export class ModuleInstance<StateType extends StateBaseType> {
         this.initialised = false;
         this.syncedSettingKeys = [];
         this.syncedSettingsSubscribers = new Set();
+
+        this.broadcastChannels = {} as Record<string, BroadcastChannel>;
+
+        const broadcastChannelNames = Object.keys(broadcastChannelsDef);
+
+        if (broadcastChannelNames) {
+            broadcastChannelNames.forEach((channelName) => {
+                const enrichedChannelName = `${this.id} - ${channelName as string}`;
+                this.broadcastChannels[channelName] = workbench
+                    .getBroadcaster()
+                    .registerChannel(enrichedChannelName, broadcastChannelsDef[channelName as string], this.id);
+            });
+        }
+    }
+
+    public getBroadcastChannel(channelName: string): BroadcastChannel {
+        if (!this.broadcastChannels[channelName]) {
+            throw new Error(`Channel '${channelName}' does not exist on module '${this.name}'`);
+        }
+
+        return this.broadcastChannels[channelName];
     }
 
     public setInitialState(initialState: StateType, options?: StateOptions<StateType>): void {

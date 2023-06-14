@@ -2,6 +2,7 @@ import React from "react";
 
 import { cloneDeep } from "lodash";
 
+import { BroadcastChannelsDef } from "./Broadcaster";
 import { ModuleContext } from "./ModuleContext";
 import { ModuleInstance } from "./ModuleInstance";
 import { StateBaseType, StateOptions } from "./StateStore";
@@ -36,8 +37,13 @@ export class Module<StateType extends StateBaseType> {
     private stateOptions: StateOptions<StateType> | undefined;
     private workbench: Workbench | null;
     private syncableSettingKeys: SyncSettingKey[];
+    private channelsDef: BroadcastChannelsDef;
 
-    constructor(name: string, syncableSettingKeys: SyncSettingKey[] = []) {
+    constructor(
+        name: string,
+        syncableSettingKeys: SyncSettingKey[] = [],
+        broadcastChannelsDef: BroadcastChannelsDef = {}
+    ) {
         this._name = name;
         this.numInstances = 0;
         this.viewFC = () => <div>Not defined</div>;
@@ -47,6 +53,7 @@ export class Module<StateType extends StateBaseType> {
         this.initialState = null;
         this.workbench = null;
         this.syncableSettingKeys = syncableSettingKeys;
+        this.channelsDef = broadcastChannelsDef;
     }
 
     public getImportState(): ImportState {
@@ -76,7 +83,11 @@ export class Module<StateType extends StateBaseType> {
     }
 
     public makeInstance(): ModuleInstance<StateType> {
-        const instance = new ModuleInstance<StateType>(this, this.numInstances++);
+        if (!this.workbench) {
+            throw new Error("Module must be added to a workbench before making an instance");
+        }
+
+        const instance = new ModuleInstance<StateType>(this, this.numInstances++, this.channelsDef, this.workbench);
         this.moduleInstances.push(instance);
         this.maybeImportSelf();
         return instance;
@@ -116,8 +127,8 @@ export class Module<StateType extends StateBaseType> {
                     }
                 });
             })
-            .catch((err) => {
-                console.warn(err);
+            .catch((e) => {
+                console.error(`Failed to import module ${this._name}`, e);
                 this.setImportState(ImportState.Failed);
             });
     }
