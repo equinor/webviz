@@ -2,10 +2,10 @@ import React from "react";
 
 import { InplaceVolumetricsCategoricalMetaData, InplaceVolumetricsTableMetaData } from "@api";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
-import { useEnsembleSet } from "@framework/WorkbenchSession";
-import { SingleEnsembleSelect } from "@framework/EnsembleSetUiComponents";
 import { fixupEnsembleIdent } from "@framework/EnsembleSetUiHelpers";
 import { ModuleFCProps } from "@framework/Module";
+import { useEnsembleSet } from "@framework/WorkbenchSession";
+import { SingleEnsembleSelect } from "@framework/components/SingleEnsembleSelect";
 import { ApiStateWrapper } from "@lib/components/ApiStateWrapper/apiStateWrapper";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { Dropdown } from "@lib/components/Dropdown";

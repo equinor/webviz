@@ -2,11 +2,11 @@ import React from "react";
 
 import { Frequency, VectorDescription } from "@api";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
-import { useEnsembleSet } from "@framework/WorkbenchSession";
-import { MultiEnsembleSelect } from "@framework/EnsembleSetUiComponents";
 import { fixupEnsembleIdent, maybeAssignFirstSyncedEnsemble } from "@framework/EnsembleSetUiHelpers";
 import { ModuleFCProps } from "@framework/Module";
 import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
+import { useEnsembleSet } from "@framework/WorkbenchSession";
+import { MultiEnsembleSelect } from "@framework/components/MultiEnsembleSelect";
 import { ApiStateWrapper } from "@lib/components/ApiStateWrapper";
 import { Checkbox } from "@lib/components/Checkbox";
 import { CircularProgress } from "@lib/components/CircularProgress";
