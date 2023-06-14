@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { useFirstEnsembleInEnsembleSet } from "@framework/EnsembleSetHooks";
+import { useFirstEnsembleInEnsembleSet } from "@framework/WorkbenchSession";
 import { ModuleFCProps } from "@framework/Module";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { usePvtDataQuery } from "./queryHooks";
@@ -12,12 +12,12 @@ import { set } from "lodash";
 //-----------------------------------------------------------------------------------------------------------
 
 
-export function view({ moduleContext, workbenchServices }: ModuleFCProps<state>) {
+export function view({ moduleContext, workbenchSession }: ModuleFCProps<state>) {
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);
     const wrapperDivSize = useElementSize(wrapperDivRef);
 
     //Just using the first ensemble for now
-    const firstEnsemble = useFirstEnsembleInEnsembleSet(workbenchServices);
+    const firstEnsemble = useFirstEnsembleInEnsembleSet(workbenchSession);
 
     const activeDataSet = moduleContext.useStoreValue("activeDataSet");
     const activeRealization = moduleContext.useStoreValue("realization");

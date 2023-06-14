@@ -17,8 +17,8 @@ interface MyPlotData extends Partial<PlotData> {
     legendrank?: number;
 }
 
-export const view = ({ moduleContext, workbenchServices }: ModuleFCProps<State>) => {
-    const ensembleSet = workbenchServices.getEnsembleSet();
+export const view = ({ moduleContext, workbenchSession, workbenchServices }: ModuleFCProps<State>) => {
+    const ensembleSet = workbenchSession.getEnsembleSet();
 
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);
     const wrapperDivSize = useElementSize(wrapperDivRef);

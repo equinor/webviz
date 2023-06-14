@@ -3,11 +3,11 @@ import React from "react";
 import { DynamicSurfaceDirectory, StaticSurfaceDirectory } from "@api";
 import { SurfaceStatisticFunction } from "@api";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
-import { useEnsembleSet } from "@framework/EnsembleSetHooks";
 import { SingleEnsembleSelect } from "@framework/EnsembleSetUiComponents";
 import { fixupEnsembleIdent, maybeAssignFirstSyncedEnsemble } from "@framework/EnsembleSetUiHelpers";
 import { ModuleFCProps } from "@framework/Module";
 import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
+import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { ApiStateWrapper } from "@lib/components/ApiStateWrapper";
 import { Checkbox } from "@lib/components/Checkbox";
 import { CircularProgress } from "@lib/components/CircularProgress";
@@ -25,7 +25,7 @@ export function MapSettings(props: ModuleFCProps<MapState>) {
     const myInstanceIdStr = props.moduleContext.getInstanceIdString();
     console.debug(`${myInstanceIdStr} -- render MapSettings`);
 
-    const ensembleSet = useEnsembleSet(props.workbenchServices);
+    const ensembleSet = useEnsembleSet(props.workbenchSession);
     const [selectedEnsembleIdent, setSelectedEnsembleIdent] = React.useState<EnsembleIdent | null>(null);
 
     const [surfaceType, setSurfaceType] = React.useState<"static" | "dynamic">("dynamic");

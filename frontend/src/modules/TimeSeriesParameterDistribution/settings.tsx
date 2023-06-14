@@ -2,11 +2,11 @@ import React from "react";
 
 import { EnsembleParameterDescription, VectorDescription } from "@api";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
-import { useEnsembleSet } from "@framework/EnsembleSetHooks";
 import { SingleEnsembleSelect } from "@framework/EnsembleSetUiComponents";
 import { fixupEnsembleIdent, maybeAssignFirstSyncedEnsemble } from "@framework/EnsembleSetUiHelpers";
 import { ModuleFCProps } from "@framework/Module";
 import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
+import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { ApiStateWrapper } from "@lib/components/ApiStateWrapper";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { Dropdown } from "@lib/components/Dropdown";
@@ -17,8 +17,8 @@ import { useGetParameterNamesQuery, useTimeStepsQuery, useVectorsQuery } from ".
 import { State } from "./state";
 
 //-----------------------------------------------------------------------------------------------------------
-export function settings({ moduleContext, workbenchServices }: ModuleFCProps<State>) {
-    const ensembleSet = useEnsembleSet(workbenchServices);
+export function settings({ moduleContext, workbenchSession, workbenchServices }: ModuleFCProps<State>) {
+    const ensembleSet = useEnsembleSet(workbenchSession);
     const [selectedEnsemble, setSelectedEnsemble] = React.useState<EnsembleIdent | null>(null);
 
     const [selectedVectorName, setSelectedVectorName] = React.useState<string>("");

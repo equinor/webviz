@@ -2,7 +2,6 @@ import React from "react";
 
 import { CaseInfo, EnsembleInfo, FieldInfo } from "@api";
 import { apiService } from "@framework/ApiService";
-import { useStoreState } from "@framework/StateStore";
 import { Workbench } from "@framework/Workbench";
 import { TrashIcon } from "@heroicons/react/20/solid";
 import { ApiStateWrapper } from "@lib/components/ApiStateWrapper";
@@ -92,11 +91,15 @@ export const EnsembleSelector: React.FC<EnsembleSelectorProps> = (props) => {
         }
     }
 
+    // Is this the best way to get hold of the QueryClient
+    // Revisit this when we refactor the ensemble selection dialog
     const queryClient = useQueryClient();
 
     React.useEffect(
-        function publishSelectionViaWorkbench() {
-            props.workbench.fetchMetadataAndSetupEnsembleSet(queryClient, selectedEnsembles);
+        // We should not be pushing the ensemble selection out to the workbench continuously,
+        // but rather wait until the OK button (in the containing dialog) is pushed.
+        function loadEnsembleSetViaWorkbench() {
+            props.workbench.loadAndSetupEnsembleSetInSession(queryClient, selectedEnsembles);
         },
         [selectedEnsembles]
     );

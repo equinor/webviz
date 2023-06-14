@@ -1,7 +1,7 @@
 import React, { useEffect } from "react";
 
 import { ModuleFCProps } from "@framework/Module";
-import { useFirstEnsembleInEnsembleSet } from "@framework/EnsembleSetHooks";
+import { useFirstEnsembleInEnsembleSet } from "@framework/WorkbenchSession";
 import { ApiStateWrapper } from "@lib/components/ApiStateWrapper";
 import { useGridModelNames, useGridParameterNames } from "./queryHooks";
 import { CircularProgress } from "@lib/components/CircularProgress";
@@ -11,9 +11,9 @@ import { Select, SelectOption } from "@lib/components/Select";
 
 import state from "./state";
 //-----------------------------------------------------------------------------------------------------------
-export function settings({ moduleContext, workbenchServices }: ModuleFCProps<state>) {
+export function settings({ moduleContext, workbenchSession }: ModuleFCProps<state>) {
     // From Workbench
-    const firstEnsemble = useFirstEnsembleInEnsembleSet(workbenchServices);
+    const firstEnsemble = useFirstEnsembleInEnsembleSet(workbenchSession);
 
     // State
     const [gridName, setGridName] = moduleContext.useStoreState("gridName");

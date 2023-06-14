@@ -2,7 +2,7 @@ import React from "react";
 
 import { Frequency, VectorDescription } from "@api";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
-import { useEnsembleSet } from "@framework/EnsembleSetHooks";
+import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { MultiEnsembleSelect } from "@framework/EnsembleSetUiComponents";
 import { fixupEnsembleIdent, maybeAssignFirstSyncedEnsemble } from "@framework/EnsembleSetUiHelpers";
 import { ModuleFCProps } from "@framework/Module";
@@ -21,11 +21,11 @@ import { useVectorsQuery } from "./queryHooks";
 import { State } from "./state";
 
 //-----------------------------------------------------------------------------------------------------------
-export function settings({ moduleContext, workbenchServices }: ModuleFCProps<State>) {
+export function settings({ moduleContext, workbenchSession, workbenchServices }: ModuleFCProps<State>) {
     const myInstanceIdStr = moduleContext.getInstanceIdString();
     console.debug(`${myInstanceIdStr} -- render SimulationTimeSeries settings`);
 
-    const ensembleSet = useEnsembleSet(workbenchServices);
+    const ensembleSet = useEnsembleSet(workbenchSession);
     const [selectedEnsembleIdent, setSelectedEnsembleIdent] = React.useState<EnsembleIdent | null>(null);
     const [selectedVectorName, setSelectedVectorName] = React.useState<string>("");
     const [resampleFrequency, setResamplingFrequency] = moduleContext.useStoreState("resamplingFrequency");

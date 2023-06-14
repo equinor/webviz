@@ -1,17 +1,17 @@
 import React from "react";
 
+import { EnsembleSet } from "@framework/EnsembleSet";
 import { ModuleFCProps } from "@framework/Module";
 import { AllTopicDefinitions, WorkbenchServices } from "@framework/WorkbenchServices";
 import { Button } from "@lib/components/Button";
-import { EnsembleSet } from "@framework/EnsembleSet";
 
 export type SharedState = {
     triggeredRefreshCounter: number;
 };
 
 //-----------------------------------------------------------------------------------------------------------
-export function WorkbenchSpySettings(props: ModuleFCProps<SharedState>) {
-    const setRefreshCounter = props.moduleContext.useSetStoreValue("triggeredRefreshCounter");
+export function WorkbenchSpySettings({ moduleContext }: ModuleFCProps<SharedState>) {
+    const setRefreshCounter = moduleContext.useSetStoreValue("triggeredRefreshCounter");
     return (
         <div>
             <Button onClick={() => setRefreshCounter((prev: number) => prev + 1)}>Trigger Refresh</Button>
@@ -20,11 +20,10 @@ export function WorkbenchSpySettings(props: ModuleFCProps<SharedState>) {
 }
 
 //-----------------------------------------------------------------------------------------------------------
-export function WorkbenchSpyView(props: ModuleFCProps<SharedState>) {
-    const [availableEnsembles, availableEnsembles_TS] = useServiceValueWithTS("navigator.ensembles", props.workbenchServices);
-    const [hoverRealization, hoverRealization_TS] = useServiceValueWithTS("global.hoverRealization", props.workbenchServices);
-    const [hoverTimestamp, hoverTimestamp_TS] = useServiceValueWithTS("global.hoverTimestamp", props.workbenchServices);
-    const triggeredRefreshCounter = props.moduleContext.useStoreValue("triggeredRefreshCounter");
+export function WorkbenchSpyView({ moduleContext, workbenchSession, workbenchServices }: ModuleFCProps<SharedState>) {
+    const [hoverRealization, hoverRealization_TS] = useServiceValueWithTS("global.hoverRealization", workbenchServices);
+    const [hoverTimestamp, hoverTimestamp_TS] = useServiceValueWithTS("global.hoverTimestamp", workbenchServices);
+    const triggeredRefreshCounter = moduleContext.useStoreValue("triggeredRefreshCounter");
 
     const componentRenderCount = React.useRef(0);
     React.useEffect(function incrementComponentRenderCount() {
@@ -33,24 +32,10 @@ export function WorkbenchSpyView(props: ModuleFCProps<SharedState>) {
 
     const componentLastRenderTS = getTimestampString();
 
-    let ensembleSpecAsString: string | undefined;
-    if (availableEnsembles) {
-        if (availableEnsembles.length > 0) {
-            ensembleSpecAsString = `${availableEnsembles[0].getEnsembleName()}  (${availableEnsembles[0].getCaseUuid()})`;
-        } else {
-            ensembleSpecAsString = "empty array";
-        }
-    }
-
     return (
         <code>
             EnsembleSet:
-            {makeEnsembleSetTable(props.workbenchServices.getEnsembleSet())}
-            <br />
-            Navigator topics:
-            <table>
-                <tbody>{makeTableRow("ensembles", ensembleSpecAsString, availableEnsembles_TS)}</tbody>
-            </table>
+            {makeEnsembleSetTable(workbenchSession.getEnsembleSet())}
             <br />
             Global topics:
             <table>
@@ -85,19 +70,19 @@ function makeTableRow(label: string, value: any, ts: string) {
 function makeEnsembleSetTable(ensembleSet: EnsembleSet) {
     const ensembleArr = ensembleSet.getEnsembleArr();
     return (
-       <table>
-           <tbody>
-               {ensembleArr.map((ens, index) => (
-                   <tr key={index}>
-                       <td> {ens.getEnsembleName()} </td>
-                       <td> ({ens.getCaseUuid()}) </td>
-                       <td> {ens.getRealizations().length} realizations</td>
-                       <td> {ens.hasSensitivities() ? "HasSens" : "noSense"}</td>
-                   </tr>
-               ))}
-           </tbody>
-       </table>
-   );
+        <table>
+            <tbody>
+                {ensembleArr.map((ens, index) => (
+                    <tr key={index}>
+                        <td> {ens.getEnsembleName()} </td>
+                        <td> ({ens.getCaseUuid()}) </td>
+                        <td> {ens.getRealizations().length} realizations</td>
+                        <td> {ens.hasSensitivities() ? "HasSens" : "noSense"}</td>
+                    </tr>
+                ))}
+            </tbody>
+        </table>
+    );
 }
 
 function getTimestampString() {

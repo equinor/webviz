@@ -2,7 +2,7 @@ import React from "react";
 
 import { ModuleFCProps } from "@framework/Module";
 import { SubsurfaceViewer } from "@webviz/subsurface-components";
-import { useFirstEnsembleInEnsembleSet } from "@framework/EnsembleSetHooks";
+import { useFirstEnsembleInEnsembleSet } from "@framework/WorkbenchSession";
 import { useGridSurface, useGridParameter, useStatisticalGridParameter } from "./queryHooks";
 import state from "./state";
 import { toArrayBuffer } from "@shared-utils/vtkUtils";
@@ -12,9 +12,9 @@ import { toArrayBuffer } from "@shared-utils/vtkUtils";
 
 
 //-----------------------------------------------------------------------------------------------------------
-export function view({ moduleContext, workbenchServices }: ModuleFCProps<state>) {
+export function view({ moduleContext, workbenchSession }: ModuleFCProps<state>) {
     // From Workbench
-    const firstEnsemble = useFirstEnsembleInEnsembleSet(workbenchServices);
+    const firstEnsemble = useFirstEnsembleInEnsembleSet(workbenchSession);
 
     // State
     const gridName = moduleContext.useStoreValue("gridName");

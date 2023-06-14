@@ -3,12 +3,9 @@ import React from "react";
 import { isEqual } from "lodash";
 
 import { EnsembleIdent } from "./EnsembleIdent";
-import { EnsembleSet } from "./EnsembleSet";
 import { Workbench } from "./Workbench";
 
-export type NavigatorTopicDefinitions = {
-    "navigator.ensembles": EnsembleIdent[];
-};
+export type NavigatorTopicDefinitions = {};
 
 export type GlobalTopicDefinitions = {
     "global.infoMessage": string;
@@ -81,10 +78,6 @@ export class WorkbenchServices {
         for (const callbackFn of subscribersSet) {
             callbackFn(value);
         }
-    }
-
-    getEnsembleSet(): EnsembleSet {
-        return this._workbench.getEnsembleSet();
     }
 }
 

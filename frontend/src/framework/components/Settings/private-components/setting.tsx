@@ -29,6 +29,7 @@ export const Setting: React.FC<SettingProps> = (props) => {
         >
             <Settings
                 moduleContext={props.moduleInstance.getContext()}
+                workbenchSession={props.workbench.getWorkbenchSession()}
                 workbenchServices={props.workbench.getWorkbenchServices()}
             />
         </div>

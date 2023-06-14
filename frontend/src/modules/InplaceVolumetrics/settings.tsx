@@ -2,7 +2,7 @@ import React from "react";
 
 import { InplaceVolumetricsCategoricalMetaData, InplaceVolumetricsTableMetaData } from "@api";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
-import { useEnsembleSet } from "@framework/EnsembleSetHooks";
+import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { SingleEnsembleSelect } from "@framework/EnsembleSetUiComponents";
 import { fixupEnsembleIdent } from "@framework/EnsembleSetUiHelpers";
 import { ModuleFCProps } from "@framework/Module";
@@ -96,8 +96,8 @@ function getTableResponseOptions(
     return responsesToSelectOptions(responses);
 }
 
-export function settings({ moduleContext, workbenchServices }: ModuleFCProps<State>) {
-    const ensembleSet = useEnsembleSet(workbenchServices);
+export function settings({ moduleContext, workbenchSession }: ModuleFCProps<State>) {
+    const ensembleSet = useEnsembleSet(workbenchSession);
     const [ensembleIdent, setEnsembleIdent] = moduleContext.useStoreState("ensembleIdent");
     const [tableName, setTableName] = moduleContext.useStoreState("tableName");
     const [categoricalFilter, setCategoricalFilter] = moduleContext.useStoreState("categoricalFilter");

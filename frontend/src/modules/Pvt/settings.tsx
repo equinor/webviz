@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 import { ModuleFCProps } from "@framework/Module";
-import { useFirstEnsembleInEnsembleSet } from "@framework/EnsembleSetHooks";
+import { useFirstEnsembleInEnsembleSet } from "@framework/WorkbenchSession";
 import { ApiStateWrapper } from "@lib/components/ApiStateWrapper";
 
 import { PvtData } from "@api";
@@ -28,9 +28,9 @@ const numberToOptions = (numbers: number[]): DropdownOption[] => {
     return numbers.map((number) => ({ label: number.toString(), value: number.toString() }));
 }
 
-export function settings({ moduleContext, workbenchServices }: ModuleFCProps<state>) {
+export function settings({ moduleContext, workbenchSession }: ModuleFCProps<state>) {
     //Just using the first ensemble for now
-    const firstEnsemble = useFirstEnsembleInEnsembleSet(workbenchServices);
+    const firstEnsemble = useFirstEnsembleInEnsembleSet(workbenchSession);
 
     // Settings state. Initialized/currently selected values
     const [activeRealization, setActiveRealization] = moduleContext.useStoreState("realization"); // Should be a query. not implemented

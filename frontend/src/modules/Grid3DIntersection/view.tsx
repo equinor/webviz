@@ -2,7 +2,7 @@ import React from "react";
 
 import { ModuleFCProps } from "@framework/Module";
 import { useElementSize } from "@lib/hooks/useElementSize";
-import { useFirstEnsembleInEnsembleSet } from "@framework/EnsembleSetHooks";
+import { useFirstEnsembleInEnsembleSet } from "@framework/WorkbenchSession";
 
 import { useGridIntersection, useStatisticalGridIntersection } from "./queryHooks";
 import state from "./state";
@@ -10,13 +10,13 @@ import PlotlyGridIntersection from "./plotlyGridIntersection";
 
 
 //-----------------------------------------------------------------------------------------------------------
-export function view({ moduleContext, workbenchServices }: ModuleFCProps<state>) {
+export function view({ moduleContext, workbenchSession }: ModuleFCProps<state>) {
     // Viewport size
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);
     const wrapperDivSize = useElementSize(wrapperDivRef);
 
     // From Workbench
-    const firstEnsemble = useFirstEnsembleInEnsembleSet(workbenchServices);
+    const firstEnsemble = useFirstEnsembleInEnsembleSet(workbenchSession);
 
     // State
     const gridName = moduleContext.useStoreValue("gridName");

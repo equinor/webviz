@@ -1,14 +1,15 @@
 import { QueryClient } from "@tanstack/react-query";
 
 import { EnsembleIdent } from "./EnsembleIdent";
-import { EnsembleSet } from "./EnsembleSet";
 import { ImportState } from "./Module";
 import { ModuleInstance } from "./ModuleInstance";
 import { ModuleRegistry } from "./ModuleRegistry";
 import { StateStore } from "./StateStore";
 import { WorkbenchServices } from "./WorkbenchServices";
+import { WorkbenchSession } from "./WorkbenchSession";
 import { loadEnsembleSetMetadataFromBackend } from "./internal/EnsembleSetLoader";
 import { PrivateWorkbenchServices } from "./internal/PrivateWorkbenchServices";
+import { WorkbenchSessionPrivate } from "./internal/WorkbenchSessionPrivate";
 
 export enum WorkbenchEvents {
     ActiveModuleChanged = "ActiveModuleChanged",
@@ -25,8 +26,6 @@ export type LayoutElement = {
     relWidth: number;
 };
 
-export type WorkbenchDataState = {};
-
 export type WorkbenchGuiState = {
     modulesListOpen: boolean;
     syncSettingsActive: boolean;
@@ -36,12 +35,10 @@ export class Workbench {
     private moduleInstances: ModuleInstance<any>[];
     private _activeModuleId: string;
     private guiStateStore: StateStore<WorkbenchGuiState>;
-    private dataStateStore: StateStore<WorkbenchDataState>;
+    private _workbenchSession: WorkbenchSessionPrivate;
     private _workbenchServices: PrivateWorkbenchServices;
     private _subscribersMap: { [key: string]: Set<() => void> };
     private layout: LayoutElement[];
-
-    private _ensembleSet: EnsembleSet;
 
     constructor() {
         this.moduleInstances = [];
@@ -50,14 +47,10 @@ export class Workbench {
             modulesListOpen: false,
             syncSettingsActive: false,
         });
-        this.dataStateStore = new StateStore<WorkbenchDataState>({
-            selectedEnsembles: [],
-        });
+        this._workbenchSession = new WorkbenchSessionPrivate(this);
         this._workbenchServices = new PrivateWorkbenchServices(this);
         this._subscribersMap = {};
         this.layout = [];
-
-        this._ensembleSet = new EnsembleSet([]);
     }
 
     public loadLayoutFromLocalStorage(): boolean {
@@ -73,12 +66,12 @@ export class Workbench {
         return this.guiStateStore;
     }
 
-    public getDataStateStore(): StateStore<WorkbenchDataState> {
-        return this.dataStateStore;
-    }
-
     public getLayout(): LayoutElement[] {
         return this.layout;
+    }
+
+    public getWorkbenchSession(): WorkbenchSession {
+        return this._workbenchSession;
     }
 
     public getWorkbenchServices(): WorkbenchServices {
@@ -193,7 +186,7 @@ export class Workbench {
         }
     }
 
-    public async fetchMetadataAndSetupEnsembleSet(
+    public async loadAndSetupEnsembleSetInSession(
         queryClient: QueryClient,
         specifiedEnsembles: { caseUuid: string; ensembleName: string }[]
     ): Promise<void> {
@@ -202,22 +195,11 @@ export class Workbench {
             ensembleIdentsToLoad.push(new EnsembleIdent(ensSpec.caseUuid, ensSpec.ensembleName));
         }
 
-        console.log("fetchMetadataAndSetupEnsembleSet --- starting");
+        console.log("loadAndSetupEnsembleSetInSession - starting load");
         const newEnsembleSet = await loadEnsembleSetMetadataFromBackend(queryClient, ensembleIdentsToLoad);
-        console.log("fetchMetadataAndSetupEnsembleSet --- done");
+        console.log("loadAndSetupEnsembleSetInSession - loading done");
 
-        const newEnsembleIdentArr: EnsembleIdent[] = [];
-        for (const ens of newEnsembleSet.getEnsembleArr()) {
-            newEnsembleIdentArr.push(ens.getIdent());
-        }
-
-        this._ensembleSet = newEnsembleSet;
-
-        console.log("fetchMetadataAndSetupEnsembleSet --- publishing");
-        this._workbenchServices.publishNavigatorData("navigator.ensembles", newEnsembleIdentArr);
-    }
-
-    public getEnsembleSet(): EnsembleSet {
-        return this._ensembleSet;
+        console.log("loadAndSetupEnsembleSetInSession - publishing");
+        return this._workbenchSession.setEnsembleSet(newEnsembleSet);
     }
 }
