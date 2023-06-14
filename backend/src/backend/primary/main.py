@@ -16,6 +16,7 @@ from .routers.timeseries.router import router as timeseries_router
 from .routers.parameters.router import router as parameters_router
 from .routers.correlations.router import router as correlations_router
 from .routers.grid.router import router as grid_router
+from .routers.pvt.router import router as pvt_router
 
 logging.basicConfig(
     level=logging.WARNING,
@@ -48,6 +49,7 @@ app.include_router(surface_router, prefix="/surface", tags=["surface"])
 app.include_router(parameters_router, prefix="/parameters", tags=["parameters"])
 app.include_router(correlations_router, prefix="/correlations", tags=["correlations"])
 app.include_router(grid_router, prefix="/grid", tags=["grid"])
+app.include_router(pvt_router, prefix="/pvt", tags=["pvt"])
 
 authHelper = AuthHelper()
 app.include_router(authHelper.router)

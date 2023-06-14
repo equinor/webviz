@@ -7,4 +7,7 @@ import "./Map/registerModule";
 import "./MyModule2/registerModule";
 import "./MyModule/registerModule";
 import "./SimulationTimeSeries/registerModule";
-import "./TimeSeriesParameterDistribution/registerModule";
+import "./TimeSeriesParameterDistribution/registerModule"
+import "./Grid3D/registerModule"
+import "./Grid3DIntersection/registerModule"
+import "./Pvt/registerModule"

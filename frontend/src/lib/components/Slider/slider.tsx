@@ -1,6 +1,6 @@
 import React from "react";
 
-import { SliderUnstyled, SliderUnstyledProps } from "@mui/base";
+import { Slider as SliderUnstyled, SliderProps as SliderUnstyledProps } from "@mui/base";
 
 import { Input } from "../Input";
 import { BaseComponent } from "../_BaseComponent";
