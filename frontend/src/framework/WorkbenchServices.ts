@@ -4,6 +4,7 @@ import { Ensemble } from "@shared-types/ensemble";
 
 import { isEqual } from "lodash";
 
+import { Broadcaster } from "./Broadcaster";
 import { Workbench } from "./Workbench";
 
 export type NavigatorTopicDefinitions = {
@@ -81,6 +82,10 @@ export class WorkbenchServices {
         for (const callbackFn of subscribersSet) {
             callbackFn(value);
         }
+    }
+
+    public getBroadcaster(): Broadcaster {
+        return this._workbench.getBroadcaster();
     }
 }
 

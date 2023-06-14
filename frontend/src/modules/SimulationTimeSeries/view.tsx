@@ -1,12 +1,14 @@
 import React from "react";
 import Plot from "react-plotly.js";
 
+import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { ModuleFCProps } from "@framework/Module";
 import { useSubscribedValue } from "@framework/WorkbenchServices";
 import { useElementSize } from "@lib/hooks/useElementSize";
 
-import { Layout, PlotData, PlotHoverEvent, PlotMouseEvent } from "plotly.js";
+import { Layout, PlotData, PlotHoverEvent } from "plotly.js";
 
+import { BroadcastChannelNames } from "./channelDefs";
 import { useStatisticalVectorDataQuery, useVectorDataQuery } from "./queryHooks";
 import { State } from "./state";
 
@@ -24,7 +26,6 @@ export const view = ({ moduleContext, workbenchServices }: ModuleFCProps<State>)
     const resampleFrequency = moduleContext.useStoreValue("resamplingFrequency");
     const showStatistics = moduleContext.useStoreValue("showStatistics");
     const realizationsToInclude = moduleContext.useStoreValue("realizationsToInclude");
-    const [highlightRealization, setHighlightRealization] = React.useState(-1);
 
     const vectorQuery = useVectorDataQuery(
         vectorSpec?.caseUuid,
@@ -41,6 +42,42 @@ export const view = ({ moduleContext, workbenchServices }: ModuleFCProps<State>)
         resampleFrequency,
         realizationsToInclude,
         showStatistics
+    );
+
+    React.useEffect(
+        function broadcast() {
+            if (!vectorSpec) {
+                return;
+            }
+
+            const dataGenerator = (): { key: number; value: number }[] => {
+                const data: { key: number; value: number }[] = [];
+                if (vectorQuery.data) {
+                    vectorQuery.data.forEach((vec) => {
+                        data.push({
+                            key: vec.realization,
+                            value: vec.values[0],
+                        });
+                    });
+                }
+                return data;
+            };
+
+            const dataDescription = `${vectorSpec.caseName} ${vectorSpec.ensembleName} ${vectorSpec.vectorName}`;
+
+            moduleContext.getChannel(BroadcastChannelNames.Realization_Value).broadcast(
+                {
+                    ensembleIdent: EnsembleIdent.fromCaseUuidAndEnsembleName(
+                        vectorSpec.caseUuid,
+                        vectorSpec.ensembleName
+                    ),
+                    description: dataDescription,
+                    unit: vectorQuery.data?.at(0)?.unit || "",
+                },
+                dataGenerator
+            );
+        },
+        [vectorQuery.data, vectorSpec, moduleContext]
     );
 
     // React.useEffect(
