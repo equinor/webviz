@@ -60,7 +60,12 @@ export const view = ({ moduleContext, workbenchServices }: ModuleFCProps<State>)
                 setMetaDataX(metaData);
             };
 
-            const unsubscribeFunc = channelX.subscribe(handleChannelXChanged);
+            const handleChannelXRemoved = () => {
+                setDataX(null);
+                setMetaDataX(null);
+            };
+
+            const unsubscribeFunc = channelX.subscribe(handleChannelXChanged, handleChannelXRemoved);
 
             return unsubscribeFunc;
         }
@@ -73,7 +78,12 @@ export const view = ({ moduleContext, workbenchServices }: ModuleFCProps<State>)
                 setMetaDataY(metaData);
             };
 
-            const unsubscribeFunc = channelY.subscribe(handleChannelYChanged);
+            const handleChannelYRemoved = () => {
+                setDataY(null);
+                setMetaDataY(null);
+            };
+
+            const unsubscribeFunc = channelY.subscribe(handleChannelYChanged, handleChannelYRemoved);
 
             return unsubscribeFunc;
         }
@@ -86,7 +96,12 @@ export const view = ({ moduleContext, workbenchServices }: ModuleFCProps<State>)
                 setMetaDataZ(metaData);
             };
 
-            const unsubscribeFunc = channelZ.subscribe(handleChannelZChanged);
+            const handleChannelZRemoved = () => {
+                setDataZ(null);
+                setMetaDataZ(null);
+            };
+
+            const unsubscribeFunc = channelZ.subscribe(handleChannelZChanged, handleChannelZRemoved);
 
             return unsubscribeFunc;
         }

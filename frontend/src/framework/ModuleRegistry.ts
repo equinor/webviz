@@ -3,52 +3,43 @@ import { Module } from "./Module";
 import { StateBaseType, StateOptions } from "./StateStore";
 import { SyncSettingKey } from "./SyncSettings";
 
-/*
-Extract<keyof typeof broadcastChannelsDef, string>,
-            BroadcastChannelConvert<typeof broadcastChannelsDef>
-            */
-
 export class ModuleRegistry {
-    private static _registeredModules: Record<string, Module<any, any>> = {};
+    private static _registeredModules: Record<string, Module<any>> = {};
     /* eslint-disable-next-line @typescript-eslint/no-empty-function */
     private constructor() {}
 
     public static registerModule<ModuleStateType extends StateBaseType>(
         moduleName: string,
         syncableSettingKeys: SyncSettingKey[] = [],
-        broadcastChannelsDef: BroadcastChannelsDef | never = {}
-    ): Module<ModuleStateType, typeof broadcastChannelsDef | never> {
-        const module = new Module<ModuleStateType, typeof broadcastChannelsDef | never>(
-            moduleName,
-            syncableSettingKeys,
-            broadcastChannelsDef
-        );
+        broadcastChannelsDef: BroadcastChannelsDef = {}
+    ): Module<ModuleStateType> {
+        const module = new Module<ModuleStateType>(moduleName, syncableSettingKeys, broadcastChannelsDef);
         this._registeredModules[moduleName] = module;
         return module;
     }
 
-    public static initModule<ModuleStateType extends StateBaseType, BCD extends BroadcastChannelsDef = never>(
+    public static initModule<ModuleStateType extends StateBaseType>(
         moduleName: string,
         initialState: ModuleStateType,
         options?: StateOptions<ModuleStateType>
-    ): Module<ModuleStateType, BCD> {
+    ): Module<ModuleStateType> {
         const module = this._registeredModules[moduleName];
         if (module) {
             module.setInitialState(initialState, options);
-            return module as Module<ModuleStateType, BCD>;
+            return module as Module<ModuleStateType>;
         }
         throw "Did you forget to register your module in 'src/modules/registerAllModules.ts'?";
     }
 
-    public static getModule(moduleName: string): Module<any, any> {
+    public static getModule(moduleName: string): Module<any> {
         const module = this._registeredModules[moduleName];
         if (module) {
-            return module as Module<any, any>;
+            return module as Module<any>;
         }
         throw "Did you forget to register your module in 'src/modules/registerAllModules.ts'?";
     }
 
-    public static getRegisteredModules(): Record<string, Module<any, any>> {
+    public static getRegisteredModules(): Record<string, Module<any>> {
         return this._registeredModules;
     }
 }

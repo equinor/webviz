@@ -4,19 +4,19 @@ import { ModuleContext } from "./ModuleContext";
 import { StateBaseType, StateOptions, StateStore } from "./StateStore";
 import { SyncSettingKey } from "./SyncSettings";
 
-export class ModuleInstance<StateType extends StateBaseType, BCD extends BroadcastChannelsDef = never> {
+export class ModuleInstance<StateType extends StateBaseType> {
     private id: string;
     private name: string;
     private initialised: boolean;
     private syncedSettingKeys: SyncSettingKey[];
     private stateStore: StateStore<StateType> | null;
-    private module: Module<StateType, BCD>;
-    private context: ModuleContext<StateType, BCD> | null;
+    private module: Module<StateType>;
+    private context: ModuleContext<StateType> | null;
     private importStateSubscribers: Set<() => void>;
     private syncedSettingsSubscribers: Set<(syncedSettings: SyncSettingKey[]) => void>;
-    private broadcastChannels: Record<keyof BCD, BroadcastChannel<any>>;
+    private broadcastChannels: Record<string, BroadcastChannel>;
 
-    constructor(module: Module<StateType, BCD>, instanceNumber: number, broadcastChannelsDef: BroadcastChannelsDef) {
+    constructor(module: Module<StateType>, instanceNumber: number, broadcastChannelsDef: BroadcastChannelsDef) {
         this.id = `${module.getName()}-${instanceNumber}`;
         this.name = module.getName();
         this.stateStore = null;
@@ -27,14 +27,14 @@ export class ModuleInstance<StateType extends StateBaseType, BCD extends Broadca
         this.syncedSettingKeys = [];
         this.syncedSettingsSubscribers = new Set();
 
-        this.broadcastChannels = {} as Record<keyof BCD, BroadcastChannel<any>>;
+        this.broadcastChannels = {} as Record<string, BroadcastChannel>;
 
-        const broadcastChannelNames = Object.keys(broadcastChannelsDef) as (keyof BCD)[];
+        const broadcastChannelNames = Object.keys(broadcastChannelsDef);
 
         if (broadcastChannelNames) {
             broadcastChannelNames.forEach((channelName) => {
                 const enrichedChannelName = `${this.id} - ${channelName as string}`;
-                this.broadcastChannels[channelName] = broadcaster.registerChannel<BCD[typeof channelName]>(
+                this.broadcastChannels[channelName] = broadcaster.registerChannel(
                     enrichedChannelName,
                     broadcastChannelsDef[channelName as string],
                     this.id
@@ -43,13 +43,17 @@ export class ModuleInstance<StateType extends StateBaseType, BCD extends Broadca
         }
     }
 
-    public getBroadcastChannel<Channel extends keyof BCD>(channelName: keyof BCD): BroadcastChannel<BCD[Channel]> {
+    public getBroadcastChannel(channelName: string): BroadcastChannel {
+        if (!this.broadcastChannels[channelName]) {
+            throw new Error(`Channel '${channelName}' does not exist on module '${this.name}'`);
+        }
+
         return this.broadcastChannels[channelName];
     }
 
     public setInitialState(initialState: StateType, options?: StateOptions<StateType>): void {
         this.stateStore = new StateStore<StateType>(initialState, options);
-        this.context = new ModuleContext<StateType, BCD>(this, this.stateStore);
+        this.context = new ModuleContext<StateType>(this, this.stateStore);
         this.initialised = true;
     }
 
@@ -86,11 +90,11 @@ export class ModuleInstance<StateType extends StateBaseType, BCD extends Broadca
         return this.initialised;
     }
 
-    public getViewFC(): ModuleFC<StateType, BCD> {
+    public getViewFC(): ModuleFC<StateType> {
         return this.module.viewFC;
     }
 
-    public getSettingsFC(): ModuleFC<StateType, BCD> {
+    public getSettingsFC(): ModuleFC<StateType> {
         return this.module.settingsFC;
     }
 
@@ -98,7 +102,7 @@ export class ModuleInstance<StateType extends StateBaseType, BCD extends Broadca
         return this.module.getImportState();
     }
 
-    public getContext(): ModuleContext<StateType, BCD> {
+    public getContext(): ModuleContext<StateType> {
         if (!this.context) {
             throw `Module context is not available yet. Did you forget to init the module '${this.name}.'?`;
         }
@@ -113,7 +117,7 @@ export class ModuleInstance<StateType extends StateBaseType, BCD extends Broadca
         return this.name;
     }
 
-    public getModule(): Module<StateType, BCD> {
+    public getModule(): Module<StateType> {
         return this.module;
     }
 

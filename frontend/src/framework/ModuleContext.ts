@@ -5,11 +5,11 @@ import { ModuleInstance } from "./ModuleInstance";
 import { StateBaseType, StateStore, useSetStoreValue, useStoreState, useStoreValue } from "./StateStore";
 import { SyncSettingKey } from "./SyncSettings";
 
-export class ModuleContext<S extends StateBaseType, BCD extends BroadcastChannelsDef = never> {
-    private _moduleInstance: ModuleInstance<S, BCD>;
+export class ModuleContext<S extends StateBaseType> {
+    private _moduleInstance: ModuleInstance<S>;
     private _stateStore: StateStore<S>;
 
-    constructor(moduleInstance: ModuleInstance<S, BCD>, stateStore: StateStore<S>) {
+    constructor(moduleInstance: ModuleInstance<S>, stateStore: StateStore<S>) {
         this._moduleInstance = moduleInstance;
         this._stateStore = stateStore;
     }
@@ -49,7 +49,7 @@ export class ModuleContext<S extends StateBaseType, BCD extends BroadcastChannel
         return keyArr;
     }
 
-    getChannel<Channel extends keyof BCD>(channelName: Channel): BroadcastChannel<BCD[Channel]> {
-        return this._moduleInstance.getBroadcastChannel<Channel>(channelName);
+    getChannel(channelName: string): BroadcastChannel {
+        return this._moduleInstance.getBroadcastChannel(channelName);
     }
 }

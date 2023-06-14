@@ -24,7 +24,7 @@ export const ChannelSelect: React.FC<ChannelSelectProps> = (props) => {
     const [channels, setChannels] = React.useState<string[]>([]);
 
     React.useEffect(() => {
-        const handleChannelsChanged = (channels: BroadcastChannel<any>[]) => {
+        const handleChannelsChanged = (channels: BroadcastChannel[]) => {
             setChannels(
                 channels
                     .filter(

@@ -1,6 +1,5 @@
 import { ModuleRegistry } from "@framework/ModuleRegistry";
 
-import { broadcastChannelsDef } from "./broadcastChannel";
 import { settings } from "./settings";
 import { State } from "./state";
 import { view } from "./view";
@@ -14,7 +13,7 @@ const initialState: State = {
     realizationsToInclude: null,
 };
 
-const module = ModuleRegistry.initModule<State, typeof broadcastChannelsDef>("InplaceVolumetrics", initialState);
+const module = ModuleRegistry.initModule<State>("InplaceVolumetrics", initialState);
 
 module.viewFC = view;
 module.settingsFC = settings;

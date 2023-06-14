@@ -6,7 +6,7 @@ import { Workbench } from "@framework/Workbench";
 import { useImportState } from "@framework/hooks/moduleHooks";
 
 type SettingProps = {
-    moduleInstance: ModuleInstance<any, any>;
+    moduleInstance: ModuleInstance<any>;
     activeModuleId: string;
     workbench: Workbench;
 };

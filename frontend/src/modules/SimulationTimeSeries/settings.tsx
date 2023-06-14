@@ -15,12 +15,11 @@ import { Ensemble } from "@shared-types/ensemble";
 
 import { sortBy, sortedUniq } from "lodash";
 
-import { broadcastChannelsDef } from "./broadcastChannel";
 import { useVectorsQuery } from "./queryHooks";
 import { State } from "./state";
 
 //-----------------------------------------------------------------------------------------------------------
-export function settings({ moduleContext, workbenchServices }: ModuleFCProps<State, typeof broadcastChannelsDef>) {
+export function settings({ moduleContext, workbenchServices }: ModuleFCProps<State>) {
     const myInstanceIdStr = moduleContext.getInstanceIdString();
     console.debug(`${myInstanceIdStr} -- render SimulationTimeSeries settings`);
 

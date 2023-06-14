@@ -11,7 +11,6 @@ import { Select } from "@lib/components/Select";
 import { Ensemble } from "@shared-types/ensemble";
 import { UseQueryResult } from "@tanstack/react-query";
 
-import { broadcastChannelsDef } from "./broadcastChannel";
 import { useEnsemblesQuery, useTableDescriptionsQuery } from "./queryHooks";
 import { State } from "./state";
 
@@ -131,7 +130,7 @@ function ensembleToString(ensemble: Ensemble): string {
     return `${ensemble.caseUuid}-${ensemble.ensembleName}`;
 }
 
-export function settings({ moduleContext, workbenchServices }: ModuleFCProps<State, typeof broadcastChannelsDef>) {
+export function settings({ moduleContext, workbenchServices }: ModuleFCProps<State>) {
     const selectedEnsembles = useSubscribedValue("navigator.ensembles", workbenchServices);
     const [ensemble, setEnsemble] = moduleContext.useStoreState("ensemble");
     const [tableName, setTableName] = moduleContext.useStoreState("tableName");

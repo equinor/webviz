@@ -10,13 +10,13 @@ import { SyncSettingKey } from "./SyncSettings";
 import { Workbench } from "./Workbench";
 import { WorkbenchServices } from "./WorkbenchServices";
 
-export type ModuleFCProps<S extends StateBaseType, BCD extends BroadcastChannelsDef = never> = {
-    moduleContext: ModuleContext<S, BCD>;
+export type ModuleFCProps<S extends StateBaseType> = {
+    moduleContext: ModuleContext<S>;
     workbenchServices: WorkbenchServices;
 };
 
-export type ModuleFC<S extends StateBaseType, BCD extends BroadcastChannelsDef = never> = React.FC<
-    ModuleFCProps<S, BCD>
+export type ModuleFC<S extends StateBaseType> = React.FC<
+    ModuleFCProps<S>
 >;
 
 export enum ImportState {
@@ -26,13 +26,13 @@ export enum ImportState {
     Failed = "Failed",
 }
 
-export class Module<StateType extends StateBaseType, BCD extends BroadcastChannelsDef = never> {
+export class Module<StateType extends StateBaseType> {
     private _name: string;
-    public viewFC: ModuleFC<StateType, BCD>;
-    public settingsFC: ModuleFC<StateType, BCD>;
+    public viewFC: ModuleFC<StateType>;
+    public settingsFC: ModuleFC<StateType>;
     private numInstances: number;
     private importState: ImportState;
-    private moduleInstances: ModuleInstance<StateType, BCD>[];
+    private moduleInstances: ModuleInstance<StateType>[];
     private initialState: StateType | null;
     private stateOptions: StateOptions<StateType> | undefined;
     private workbench: Workbench | null;
@@ -82,8 +82,8 @@ export class Module<StateType extends StateBaseType, BCD extends BroadcastChanne
         return this.syncableSettingKeys;
     }
 
-    public makeInstance(): ModuleInstance<StateType, BCD> {
-        const instance = new ModuleInstance<StateType, BCD>(this, this.numInstances++, this.channelsDef);
+    public makeInstance(): ModuleInstance<StateType> {
+        const instance = new ModuleInstance<StateType>(this, this.numInstances++, this.channelsDef);
         this.moduleInstances.push(instance);
         this.maybeImportSelf();
         return instance;

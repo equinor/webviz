@@ -1,5 +1,6 @@
 import { Ensemble } from "@shared-types/ensemble";
 
+import { broadcaster } from "./Broadcaster";
 import { ImportState } from "./Module";
 import { ModuleInstance } from "./ModuleInstance";
 import { ModuleRegistry } from "./ModuleRegistry";
@@ -32,7 +33,7 @@ export type WorkbenchGuiState = {
 };
 
 export class Workbench {
-    private moduleInstances: ModuleInstance<any, any>[];
+    private moduleInstances: ModuleInstance<any>[];
     private _activeModuleId: string;
     private guiStateStore: StateStore<WorkbenchGuiState>;
     private dataStateStore: StateStore<WorkbenchDataState>;
@@ -114,11 +115,11 @@ export class Workbench {
         };
     }
 
-    public getModuleInstances(): ModuleInstance<any, any>[] {
+    public getModuleInstances(): ModuleInstance<any>[] {
         return this.moduleInstances;
     }
 
-    public getModuleInstance(id: string): ModuleInstance<any, any> | undefined {
+    public getModuleInstance(id: string): ModuleInstance<any> | undefined {
         return this.moduleInstances.find((moduleInstance) => moduleInstance.getId() === id);
     }
 
@@ -139,7 +140,7 @@ export class Workbench {
         });
     }
 
-    public makeAndAddModuleInstance(moduleName: string, layout: LayoutElement): ModuleInstance<any, any> {
+    public makeAndAddModuleInstance(moduleName: string, layout: LayoutElement): ModuleInstance<any> {
         const module = ModuleRegistry.getModule(moduleName);
         if (!module) {
             throw new Error(`Module ${moduleName} not found`);
@@ -157,7 +158,9 @@ export class Workbench {
     }
 
     public removeModuleInstance(moduleInstanceId: string): void {
+        broadcaster.unregisterAllChannelsForModuleInstance(moduleInstanceId);
         this.moduleInstances = this.moduleInstances.filter((el) => el.getId() !== moduleInstanceId);
+
         const newLayout = this.layout.filter((el) => el.moduleInstanceId !== moduleInstanceId);
         this.setLayout(newLayout);
         if (this._activeModuleId === moduleInstanceId) {
