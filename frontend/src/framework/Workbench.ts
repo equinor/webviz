@@ -47,7 +47,7 @@ export class Workbench {
             modulesListOpen: false,
             syncSettingsActive: false,
         });
-        this._workbenchSession = new WorkbenchSessionPrivate(this);
+        this._workbenchSession = new WorkbenchSessionPrivate();
         this._workbenchServices = new PrivateWorkbenchServices(this);
         this._subscribersMap = {};
         this.layout = [];

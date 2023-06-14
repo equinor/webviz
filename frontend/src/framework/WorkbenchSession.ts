@@ -1,20 +1,17 @@
 import React from "react";
 
-import { EnsembleSet } from "./EnsembleSet";
 import { Ensemble } from "./Ensemble";
-import { Workbench } from "./Workbench";
+import { EnsembleSet } from "./EnsembleSet";
 
 export enum WorkbenchSessionEvent {
     EnsembleSetChanged = "EnsembleSetChanged",
 }
 
 export class WorkbenchSession {
-    private _workbench: Workbench;
     private _subscribersMap: { [eventKey: string]: Set<() => void> };
     protected _ensembleSet: EnsembleSet;
 
-    protected constructor(workbench: Workbench) {
-        this._workbench = workbench;
+    protected constructor() {
         this._subscribersMap = {};
         this._ensembleSet = new EnsembleSet([]);
     }
@@ -51,7 +48,10 @@ export function useEnsembleSet(workbenchSession: WorkbenchSession): EnsembleSet 
                 setStoredEnsembleSet(workbenchSession.getEnsembleSet());
             }
 
-            const unsubFunc = workbenchSession.subscribe(WorkbenchSessionEvent.EnsembleSetChanged, handleEnsembleSetChanged);
+            const unsubFunc = workbenchSession.subscribe(
+                WorkbenchSessionEvent.EnsembleSetChanged,
+                handleEnsembleSetChanged
+            );
             return unsubFunc;
         },
         [workbenchSession]

@@ -1,10 +1,9 @@
 import { EnsembleSet } from "../EnsembleSet";
-import { Workbench } from "../Workbench";
 import { WorkbenchSession, WorkbenchSessionEvent } from "../WorkbenchSession";
 
 export class WorkbenchSessionPrivate extends WorkbenchSession {
-    constructor(workbench: Workbench) {
-        super(workbench);
+    constructor() {
+        super();
     }
 
     setEnsembleSet(newEnsembleSet: EnsembleSet): void {
