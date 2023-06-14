@@ -38,7 +38,7 @@ export class Workbench {
     private guiStateStore: StateStore<WorkbenchGuiState>;
     private dataStateStore: StateStore<WorkbenchDataState>;
     private _workbenchServices: PrivateWorkbenchServices;
-    private _broadcaster = new Broadcaster();
+    private _broadcaster: Broadcaster;
     private _subscribersMap: { [key: string]: Set<() => void> };
     private layout: LayoutElement[];
 
@@ -53,6 +53,7 @@ export class Workbench {
             selectedEnsembles: [],
         });
         this._workbenchServices = new PrivateWorkbenchServices(this);
+        this._broadcaster = new Broadcaster();
         this._subscribersMap = {};
         this.layout = [];
     }
