@@ -1,9 +1,9 @@
 import React from "react";
 import Plot from "react-plotly.js";
 
+import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { ModuleFCProps } from "@framework/Module";
 import { useSubscribedValue } from "@framework/WorkbenchServices";
-import { EnsembleIdent } from "@framework/utils/ensembleIdent";
 import { useElementSize } from "@lib/hooks/useElementSize";
 
 import { Layout, PlotData, PlotHoverEvent } from "plotly.js";

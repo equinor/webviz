@@ -1,4 +1,4 @@
-import { EnsembleIdent } from "@framework/utils/ensembleIdent";
+import { EnsembleIdent } from "@framework/EnsembleIdent";
 
 export enum BroadcastChannelKeyCategory {
     TimestampMs = "timestampms",
