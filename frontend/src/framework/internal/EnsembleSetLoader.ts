@@ -10,7 +10,7 @@ export async function loadEnsembleSetMetadataFromBackend(
     queryClient: QueryClient,
     ensemblesToLoad: EnsembleIdent[]
 ): Promise<EnsembleSet> {
-    console.log("loadEnsembleSetMetadataFromBackend", ensemblesToLoad);
+    console.debug("loadEnsembleSetMetadataFromBackend", ensemblesToLoad);
 
     const STALE_TIME = 5 * 60 * 1000;
     const CACHE_TIME = 5 * 60 * 1000;
@@ -49,7 +49,7 @@ export async function loadEnsembleSetMetadataFromBackend(
         });
         parametersPromiseArr.push(parametersPromise);
 
-        console.log("Issued promises:", i);
+        console.debug("Issued promises:", i);
     }
 
     const outEnsembleArr: Ensemble[] = [];
@@ -60,7 +60,7 @@ export async function loadEnsembleSetMetadataFromBackend(
 
     for (let i = 0; i < sensitivityOutcomeArr.length; i++) {
         const ensembleDetailsOutcome = ensembleDetailsOutcomeArr[i];
-        console.log("ensembleDetailsOutcome:", i, ensembleDetailsOutcome.status);
+        console.debug("ensembleDetailsOutcome:", i, ensembleDetailsOutcome.status);
         if (ensembleDetailsOutcome.status === "rejected") {
             console.error("Error fetching ensemble details, dropping ensemble:", ensemblesToLoad[i].toString());
             continue;
@@ -76,18 +76,18 @@ export async function loadEnsembleSetMetadataFromBackend(
         }
 
         const sensitivityOutcome = sensitivityOutcomeArr[i];
-        console.log("sensitivityOutcome:", i, sensitivityOutcome.status);
+        console.debug("sensitivityOutcome:", i, sensitivityOutcome.status);
         let sensitivityArr: Sensitivity[] | null = null;
         if (sensitivityOutcome.status === "fulfilled") {
             sensitivityArr = buildSensitivityArrFromApiResponse(sensitivityOutcome.value);
         }
 
         const parametersOutcome = parametersOutcomeArr[i];
-        console.log("parametersOutcome:", i, parametersOutcome.status);
-        let parameterDescriptionArr: EnsembleParameterDescription[] | null = null;
-        if (sensitivityOutcome.status === "fulfilled") {
-            // Todo: Convert and store data in our data structures here
-        }
+        console.debug("parametersOutcome:", i, parametersOutcome.status);
+        // let parameterDescriptionArr: EnsembleParameterDescription[] | null = null;
+        // if (sensitivityOutcome.status === "fulfilled") {
+        //     // Todo: Convert and store data in our data structures here
+        // }
 
         outEnsembleArr.push(
             new Ensemble(

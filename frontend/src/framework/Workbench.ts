@@ -195,11 +195,11 @@ export class Workbench {
             ensembleIdentsToLoad.push(new EnsembleIdent(ensSpec.caseUuid, ensSpec.ensembleName));
         }
 
-        console.log("loadAndSetupEnsembleSetInSession - starting load");
+        console.debug("loadAndSetupEnsembleSetInSession - starting load");
         const newEnsembleSet = await loadEnsembleSetMetadataFromBackend(queryClient, ensembleIdentsToLoad);
-        console.log("loadAndSetupEnsembleSetInSession - loading done");
+        console.debug("loadAndSetupEnsembleSetInSession - loading done");
 
-        console.log("loadAndSetupEnsembleSetInSession - publishing");
+        console.debug("loadAndSetupEnsembleSetInSession - publishing");
         return this._workbenchSession.setEnsembleSet(newEnsembleSet);
     }
 }

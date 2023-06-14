@@ -5,7 +5,9 @@ import { isEqual } from "lodash";
 import { EnsembleIdent } from "./EnsembleIdent";
 import { Workbench } from "./Workbench";
 
-export type NavigatorTopicDefinitions = {};
+export type NavigatorTopicDefinitions = {
+    "navigator.dummyPlaceholder": string;
+};
 
 export type GlobalTopicDefinitions = {
     "global.infoMessage": string;
