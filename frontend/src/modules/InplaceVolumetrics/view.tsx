@@ -1,6 +1,7 @@
 import React from "react";
 import Plot from "react-plotly.js";
 
+import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { ModuleFCProps } from "@framework/Module";
 import { useSubscribedValue } from "@framework/WorkbenchServices";
 import { ApiStateWrapper } from "@lib/components/ApiStateWrapper";
@@ -9,6 +10,7 @@ import { useElementSize } from "@lib/hooks/useElementSize";
 
 import { Layout, PlotData, PlotHoverEvent } from "plotly.js";
 
+import { BroadcastChannelNames } from "./channelDefs";
 import { useRealizationsResponseQuery } from "./queryHooks";
 import { VolumetricResponseAbbreviations } from "./settings";
 import { State } from "./state";
@@ -66,6 +68,44 @@ export const view = (props: ModuleFCProps<State>) => {
     function handleUnHover() {
         props.workbenchServices.publishGlobalData("global.hoverRealization", { realization: -1 });
     }
+
+    React.useEffect(
+        function broadcast() {
+            if (!ensemble) {
+                return;
+            }
+
+            const dataGenerator = (): { key: number; value: number }[] => {
+                const data: { key: number; value: number }[] = [];
+                if (realizationsResponseQuery.data) {
+                    realizationsResponseQuery.data.realizations.forEach((realization, index) => {
+                        data.push({
+                            key: realization,
+                            value: realizationsResponseQuery.data.values[index],
+                        });
+                    });
+                }
+                return data;
+            };
+
+            const dataDescription = `${ensemble?.caseName || ""} ${ensemble?.ensembleName ?? ""} ${tableName ?? ""} ${
+                responseName ?? ""
+            }`;
+
+            props.moduleContext.getChannel(BroadcastChannelNames.Response).broadcast(
+                {
+                    ensembleIdent: EnsembleIdent.fromCaseUuidAndEnsembleName(
+                        ensemble?.caseUuid,
+                        ensemble?.ensembleName
+                    ),
+                    description: dataDescription,
+                    unit: "",
+                },
+                dataGenerator
+            );
+        },
+        [realizationsResponseQuery.data, ensemble, tableName, responseName]
+    );
 
     const layout: Partial<Layout> = {
         width: wrapperDivSize.width,

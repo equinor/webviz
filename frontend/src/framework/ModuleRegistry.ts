@@ -1,3 +1,4 @@
+import { BroadcastChannelsDef } from "./Broadcaster";
 import { Module } from "./Module";
 import { StateBaseType, StateOptions } from "./StateStore";
 import { SyncSettingKey } from "./SyncSettings";
@@ -9,9 +10,10 @@ export class ModuleRegistry {
 
     public static registerModule<ModuleStateType extends StateBaseType>(
         moduleName: string,
-        syncableSettingKeys: SyncSettingKey[] = []
+        syncableSettingKeys: SyncSettingKey[] = [],
+        broadcastChannelsDef: BroadcastChannelsDef = {}
     ): Module<ModuleStateType> {
-        const module = new Module<ModuleStateType>(moduleName, syncableSettingKeys);
+        const module = new Module<ModuleStateType>(moduleName, syncableSettingKeys, broadcastChannelsDef);
         this._registeredModules[moduleName] = module;
         return module;
     }
@@ -26,7 +28,7 @@ export class ModuleRegistry {
             module.setInitialState(initialState, options);
             return module as Module<ModuleStateType>;
         }
-        throw "Did you forget to register your module in 'src/modules/index.ts'?";
+        throw "Did you forget to register your module in 'src/modules/registerAllModules.ts'?";
     }
 
     public static getModule(moduleName: string): Module<any> {
@@ -34,7 +36,7 @@ export class ModuleRegistry {
         if (module) {
             return module as Module<any>;
         }
-        throw "Did you forget to register your module in 'src/modules/index.ts'?";
+        throw "Did you forget to register your module in 'src/modules/registerAllModules.ts'?";
     }
 
     public static getRegisteredModules(): Record<string, Module<any>> {

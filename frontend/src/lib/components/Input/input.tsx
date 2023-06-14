@@ -10,6 +10,7 @@ export type InputProps = InputUnstyledProps & {
 };
 
 export const Input = React.forwardRef((props: InputProps, ref: React.ForwardedRef<HTMLInputElement>) => {
+    // eslint-disable-next-line react/destructuring-assignment
     const { startAdornment, endAdornment, wrapperStyle, ...other } = props;
 
     const internalRef = React.useRef<HTMLInputElement>(null);
