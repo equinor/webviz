@@ -191,7 +191,7 @@ export class BroadcastChannel {
     }
 }
 
-class Broadcaster {
+export class Broadcaster {
     private _channels: BroadcastChannel[];
     private _subscribers: Set<(channels: BroadcastChannel[]) => void>;
 
@@ -243,5 +243,3 @@ class Broadcaster {
         }
     }
 }
-
-export const broadcaster = new Broadcaster();

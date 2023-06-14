@@ -53,7 +53,7 @@ const crossPlottingTypes = [
 ];
 
 //-----------------------------------------------------------------------------------------------------------
-export function settings({ moduleContext }: ModuleFCProps<State>) {
+export function settings({ moduleContext, workbenchServices }: ModuleFCProps<State>) {
     const [channelNameX, setChannelNameX] = moduleContext.useStoreState("channelNameX");
     const [channelNameY, setChannelNameY] = moduleContext.useStoreState("channelNameY");
     const [channelNameZ, setChannelNameZ] = moduleContext.useStoreState("channelNameZ");
@@ -103,6 +103,7 @@ export function settings({ moduleContext }: ModuleFCProps<State>) {
                     onChange={handleChannelXChanged}
                     channelKeyCategory={crossPlottingType}
                     initialChannel={channelNameX || undefined}
+                    broadcaster={workbenchServices.getBroadcaster()}
                 />
             </Label>,
         ];
@@ -114,6 +115,7 @@ export function settings({ moduleContext }: ModuleFCProps<State>) {
                         onChange={handleChannelYChanged}
                         channelKeyCategory={crossPlottingType}
                         initialChannel={channelNameY || undefined}
+                        broadcaster={workbenchServices.getBroadcaster()}
                     />
                 </Label>
             );
@@ -126,6 +128,7 @@ export function settings({ moduleContext }: ModuleFCProps<State>) {
                         onChange={handleChannelZChanged}
                         channelKeyCategory={crossPlottingType}
                         initialChannel={channelNameZ || undefined}
+                        broadcaster={workbenchServices.getBroadcaster()}
                     />
                 </Label>
             );

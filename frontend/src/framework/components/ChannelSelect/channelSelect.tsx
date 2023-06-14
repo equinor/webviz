@@ -3,7 +3,7 @@ import React from "react";
 import {
     BroadcastChannel,
     BroadcastChannelKeyCategory,
-    broadcaster,
+    Broadcaster,
     checkChannelCompatibility,
 } from "@framework/Broadcaster";
 import { Dropdown } from "@lib/components/Dropdown";
@@ -14,11 +14,12 @@ export type ChannelSelectProps = {
     channelKeyCategory?: BroadcastChannelKeyCategory;
     onChange?: (channel: string) => void;
     className?: string;
+    broadcaster: Broadcaster;
 } & BaseComponentProps;
 
 export const ChannelSelect: React.FC<ChannelSelectProps> = (props) => {
     // eslint-disable-next-line react/destructuring-assignment
-    const { channelKeyCategory, onChange, ...rest } = props;
+    const { channelKeyCategory, onChange, broadcaster, ...rest } = props;
     const [channel, setChannel] = React.useState<string>(props.initialChannel ?? "");
     const [channels, setChannels] = React.useState<string[]>([]);
 
@@ -45,7 +46,7 @@ export const ChannelSelect: React.FC<ChannelSelectProps> = (props) => {
         const unsubscribeFunc = broadcaster.subscribeToChannelsChanges(handleChannelsChanged);
 
         return unsubscribeFunc;
-    }, [channelKeyCategory, onChange]);
+    }, [channelKeyCategory, onChange, broadcaster]);
 
     const handleChannelsChanged = (channel: string) => {
         setChannel(channel);

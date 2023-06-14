@@ -1,6 +1,6 @@
 import React from "react";
 
-import { BroadcastChannelKeyCategory, BroadcastChannelMeta, broadcaster } from "@framework/Broadcaster";
+import { BroadcastChannelKeyCategory, BroadcastChannelMeta } from "@framework/Broadcaster";
 import { ModuleFCProps } from "@framework/Module";
 import { useElementSize } from "@lib/hooks/useElementSize";
 
@@ -46,9 +46,9 @@ export const view = ({ moduleContext, workbenchServices }: ModuleFCProps<State>)
     const [metaDataY, setMetaDataY] = React.useState<BroadcastChannelMeta | null>(null);
     const [metaDataZ, setMetaDataZ] = React.useState<BroadcastChannelMeta | null>(null);
 
-    const channelX = broadcaster.getChannel(channelNameX ?? "");
-    const channelY = broadcaster.getChannel(channelNameY ?? "");
-    const channelZ = broadcaster.getChannel(channelNameZ ?? "");
+    const channelX = workbenchServices.getBroadcaster().getChannel(channelNameX ?? "");
+    const channelY = workbenchServices.getBroadcaster().getChannel(channelNameY ?? "");
+    const channelZ = workbenchServices.getBroadcaster().getChannel(channelNameZ ?? "");
 
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);
     const wrapperDivSize = useElementSize(wrapperDivRef);

@@ -1,8 +1,9 @@
-import { BroadcastChannel, BroadcastChannelsDef, broadcaster } from "./Broadcaster";
+import { BroadcastChannel, BroadcastChannelsDef } from "./Broadcaster";
 import { ImportState, Module, ModuleFC } from "./Module";
 import { ModuleContext } from "./ModuleContext";
 import { StateBaseType, StateOptions, StateStore } from "./StateStore";
 import { SyncSettingKey } from "./SyncSettings";
+import { Workbench } from "./Workbench";
 
 export class ModuleInstance<StateType extends StateBaseType> {
     private id: string;
@@ -16,7 +17,12 @@ export class ModuleInstance<StateType extends StateBaseType> {
     private syncedSettingsSubscribers: Set<(syncedSettings: SyncSettingKey[]) => void>;
     private broadcastChannels: Record<string, BroadcastChannel>;
 
-    constructor(module: Module<StateType>, instanceNumber: number, broadcastChannelsDef: BroadcastChannelsDef) {
+    constructor(
+        module: Module<StateType>,
+        instanceNumber: number,
+        broadcastChannelsDef: BroadcastChannelsDef,
+        workbench: Workbench
+    ) {
         this.id = `${module.getName()}-${instanceNumber}`;
         this.name = module.getName();
         this.stateStore = null;
@@ -34,11 +40,9 @@ export class ModuleInstance<StateType extends StateBaseType> {
         if (broadcastChannelNames) {
             broadcastChannelNames.forEach((channelName) => {
                 const enrichedChannelName = `${this.id} - ${channelName as string}`;
-                this.broadcastChannels[channelName] = broadcaster.registerChannel(
-                    enrichedChannelName,
-                    broadcastChannelsDef[channelName as string],
-                    this.id
-                );
+                this.broadcastChannels[channelName] = workbench
+                    .getBroadcaster()
+                    .registerChannel(enrichedChannelName, broadcastChannelsDef[channelName as string], this.id);
             });
         }
     }

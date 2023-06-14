@@ -15,9 +15,7 @@ export type ModuleFCProps<S extends StateBaseType> = {
     workbenchServices: WorkbenchServices;
 };
 
-export type ModuleFC<S extends StateBaseType> = React.FC<
-    ModuleFCProps<S>
->;
+export type ModuleFC<S extends StateBaseType> = React.FC<ModuleFCProps<S>>;
 
 export enum ImportState {
     NotImported = "NotImported",
@@ -83,7 +81,11 @@ export class Module<StateType extends StateBaseType> {
     }
 
     public makeInstance(): ModuleInstance<StateType> {
-        const instance = new ModuleInstance<StateType>(this, this.numInstances++, this.channelsDef);
+        if (!this.workbench) {
+            throw new Error("Module must be added to a workbench before making an instance");
+        }
+
+        const instance = new ModuleInstance<StateType>(this, this.numInstances++, this.channelsDef, this.workbench);
         this.moduleInstances.push(instance);
         this.maybeImportSelf();
         return instance;
