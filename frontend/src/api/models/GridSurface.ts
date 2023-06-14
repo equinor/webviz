@@ -3,8 +3,8 @@
 /* eslint-disable */
 
 export type GridSurface = {
-    polys: any;
-    points: any;
+    polys: Record<string, any>;
+    points: Record<string, any>;
     xmin: number;
     xmax: number;
     ymin: number;
