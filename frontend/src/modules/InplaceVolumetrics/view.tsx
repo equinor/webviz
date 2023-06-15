@@ -1,7 +1,8 @@
 import React from "react";
 import Plot from "react-plotly.js";
 
-import { EnsembleIdent } from "@framework/EnsembleIdent";
+import { Body_get_realizations_response_api } from "@api";
+import { BroadcastChannelMeta } from "@framework/Broadcaster";
 import { ModuleFCProps } from "@framework/Module";
 import { useSubscribedValue } from "@framework/WorkbenchServices";
 import { ApiStateWrapper } from "@lib/components/ApiStateWrapper";
@@ -15,19 +16,17 @@ import { useRealizationsResponseQuery } from "./queryHooks";
 import { VolumetricResponseAbbreviations } from "./settings";
 import { State } from "./state";
 
-import { Body_get_realizations_response } from "../../api/models/Body_get_realizations_response";
-
 export const view = (props: ModuleFCProps<State>) => {
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);
     const wrapperDivSize = useElementSize(wrapperDivRef);
-    const ensemble = props.moduleContext.useStoreValue("ensemble");
+    const ensembleIdent = props.moduleContext.useStoreValue("ensembleIdent");
     const tableName = props.moduleContext.useStoreValue("tableName");
     const responseName = props.moduleContext.useStoreValue("responseName");
     const categoryFilter = props.moduleContext.useStoreValue("categoricalFilter");
-    const responseBody: Body_get_realizations_response = { categorical_filter: categoryFilter || undefined };
+    const responseBody: Body_get_realizations_response_api = { categorical_filter: categoryFilter || undefined };
     const realizationsResponseQuery = useRealizationsResponseQuery(
-        ensemble?.caseUuid ?? "",
-        ensemble?.ensembleName ?? "",
+        ensembleIdent?.getCaseUuid() ?? "",
+        ensembleIdent?.getEnsembleName() ?? "",
         tableName,
         responseName,
         responseBody,
@@ -69,6 +68,8 @@ export const view = (props: ModuleFCProps<State>) => {
         props.workbenchServices.publishGlobalData("global.hoverRealization", { realization: -1 });
     }
 
+    const ensemble = ensembleIdent ? props.workbenchSession.getEnsembleSet().findEnsemble(ensembleIdent) : null;
+
     React.useEffect(
         function broadcast() {
             if (!ensemble) {
@@ -88,21 +89,13 @@ export const view = (props: ModuleFCProps<State>) => {
                 return data;
             };
 
-            const dataDescription = `${ensemble?.caseName || ""} ${ensemble?.ensembleName ?? ""} ${tableName ?? ""} ${
-                responseName ?? ""
-            }`;
+            const channelMeta: BroadcastChannelMeta = {
+                ensembleIdent: ensemble.getIdent(),
+                description: `${ensemble.getDisplayName()} ${tableName ?? ""} ${responseName ?? ""}`,
+                unit: "",
+            };
 
-            props.moduleContext.getChannel(BroadcastChannelNames.Response).broadcast(
-                {
-                    ensembleIdent: EnsembleIdent.fromCaseUuidAndEnsembleName(
-                        ensemble?.caseUuid,
-                        ensemble?.ensembleName
-                    ),
-                    description: dataDescription,
-                    unit: "",
-                },
-                dataGenerator
-            );
+            props.moduleContext.getChannel(BroadcastChannelNames.Response).broadcast(channelMeta, dataGenerator);
         },
         [realizationsResponseQuery.data, ensemble, tableName, responseName]
     );

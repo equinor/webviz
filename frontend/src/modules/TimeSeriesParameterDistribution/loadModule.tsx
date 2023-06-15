@@ -1,6 +1,5 @@
 import { ModuleRegistry } from "@framework/ModuleRegistry";
 
-import { Frequency_api } from "@api";
 import { settings } from "./settings";
 import { State } from "./state";
 import { view } from "./view";

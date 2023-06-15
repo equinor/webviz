@@ -1,12 +1,16 @@
-import { Ensemble } from "@shared-types/ensemble";
+import { QueryClient } from "@tanstack/react-query";
 
 import { Broadcaster } from "./Broadcaster";
+import { EnsembleIdent } from "./EnsembleIdent";
 import { ImportState } from "./Module";
 import { ModuleInstance } from "./ModuleInstance";
 import { ModuleRegistry } from "./ModuleRegistry";
 import { StateStore } from "./StateStore";
 import { WorkbenchServices } from "./WorkbenchServices";
+import { WorkbenchSession } from "./WorkbenchSession";
+import { loadEnsembleSetMetadataFromBackend } from "./internal/EnsembleSetLoader";
 import { PrivateWorkbenchServices } from "./internal/PrivateWorkbenchServices";
+import { WorkbenchSessionPrivate } from "./internal/WorkbenchSessionPrivate";
 
 export enum WorkbenchEvents {
     ActiveModuleChanged = "ActiveModuleChanged",
@@ -23,10 +27,6 @@ export type LayoutElement = {
     relWidth: number;
 };
 
-export type WorkbenchDataState = {
-    selectedEnsembles: Ensemble[];
-};
-
 export type WorkbenchGuiState = {
     modulesListOpen: boolean;
     syncSettingsActive: boolean;
@@ -36,7 +36,7 @@ export class Workbench {
     private moduleInstances: ModuleInstance<any>[];
     private _activeModuleId: string;
     private guiStateStore: StateStore<WorkbenchGuiState>;
-    private dataStateStore: StateStore<WorkbenchDataState>;
+    private _workbenchSession: WorkbenchSessionPrivate;
     private _workbenchServices: PrivateWorkbenchServices;
     private _broadcaster: Broadcaster;
     private _subscribersMap: { [key: string]: Set<() => void> };
@@ -49,9 +49,7 @@ export class Workbench {
             modulesListOpen: false,
             syncSettingsActive: false,
         });
-        this.dataStateStore = new StateStore<WorkbenchDataState>({
-            selectedEnsembles: [],
-        });
+        this._workbenchSession = new WorkbenchSessionPrivate();
         this._workbenchServices = new PrivateWorkbenchServices(this);
         this._broadcaster = new Broadcaster();
         this._subscribersMap = {};
@@ -71,12 +69,12 @@ export class Workbench {
         return this.guiStateStore;
     }
 
-    public getDataStateStore(): StateStore<WorkbenchDataState> {
-        return this.dataStateStore;
-    }
-
     public getLayout(): LayoutElement[] {
         return this.layout;
+    }
+
+    public getWorkbenchSession(): WorkbenchSession {
+        return this._workbenchSession;
     }
 
     public getWorkbenchServices(): WorkbenchServices {
@@ -198,7 +196,20 @@ export class Workbench {
         }
     }
 
-    public setNavigatorEnsembles(ensemblesArr: { caseUuid: string; caseName: string; ensembleName: string }[]) {
-        this._workbenchServices.publishNavigatorData("navigator.ensembles", ensemblesArr);
+    public async loadAndSetupEnsembleSetInSession(
+        queryClient: QueryClient,
+        specifiedEnsembles: { caseUuid: string; ensembleName: string }[]
+    ): Promise<void> {
+        const ensembleIdentsToLoad: EnsembleIdent[] = [];
+        for (const ensSpec of specifiedEnsembles) {
+            ensembleIdentsToLoad.push(new EnsembleIdent(ensSpec.caseUuid, ensSpec.ensembleName));
+        }
+
+        console.debug("loadAndSetupEnsembleSetInSession - starting load");
+        const newEnsembleSet = await loadEnsembleSetMetadataFromBackend(queryClient, ensembleIdentsToLoad);
+        console.debug("loadAndSetupEnsembleSetInSession - loading done");
+
+        console.debug("loadAndSetupEnsembleSetInSession - publishing");
+        return this._workbenchSession.setEnsembleSet(newEnsembleSet);
     }
 }

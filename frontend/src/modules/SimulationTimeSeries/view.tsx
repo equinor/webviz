@@ -1,7 +1,7 @@
 import React from "react";
 import Plot from "react-plotly.js";
 
-import { EnsembleIdent } from "@framework/EnsembleIdent";
+import { BroadcastChannelMeta } from "@framework/Broadcaster";
 import { ModuleFCProps } from "@framework/Module";
 import { useSubscribedValue } from "@framework/WorkbenchServices";
 import { useElementSize } from "@lib/hooks/useElementSize";
@@ -19,7 +19,7 @@ interface MyPlotData extends Partial<PlotData> {
     legendrank?: number;
 }
 
-export const view = ({ moduleContext, workbenchServices }: ModuleFCProps<State>) => {
+export const view = ({ moduleContext, workbenchSession, workbenchServices }: ModuleFCProps<State>) => {
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);
     const wrapperDivSize = useElementSize(wrapperDivRef);
     const vectorSpec = moduleContext.useStoreValue("vectorSpec");
@@ -28,25 +28,28 @@ export const view = ({ moduleContext, workbenchServices }: ModuleFCProps<State>)
     const realizationsToInclude = moduleContext.useStoreValue("realizationsToInclude");
 
     const vectorQuery = useVectorDataQuery(
-        vectorSpec?.caseUuid,
-        vectorSpec?.ensembleName,
+        vectorSpec?.ensembleIdent.getCaseUuid(),
+        vectorSpec?.ensembleIdent.getEnsembleName(),
         vectorSpec?.vectorName,
         resampleFrequency,
         realizationsToInclude
     );
 
     const statisticsQuery = useStatisticalVectorDataQuery(
-        vectorSpec?.caseUuid,
-        vectorSpec?.ensembleName,
+        vectorSpec?.ensembleIdent.getCaseUuid(),
+        vectorSpec?.ensembleIdent.getEnsembleName(),
         vectorSpec?.vectorName,
         resampleFrequency,
         realizationsToInclude,
         showStatistics
     );
 
+    const ensembleSet = workbenchSession.getEnsembleSet();
+    const ensemble = vectorSpec ? ensembleSet.findEnsemble(vectorSpec.ensembleIdent) : null;
+
     React.useEffect(
         function broadcast() {
-            if (!vectorSpec) {
+            if (!ensemble) {
                 return;
             }
 
@@ -63,21 +66,15 @@ export const view = ({ moduleContext, workbenchServices }: ModuleFCProps<State>)
                 return data;
             };
 
-            const dataDescription = `${vectorSpec.caseName} ${vectorSpec.ensembleName} ${vectorSpec.vectorName}`;
+            const channelMeta: BroadcastChannelMeta = {
+                ensembleIdent: ensemble.getIdent(),
+                description: `${ensemble.getDisplayName()} ${vectorSpec?.vectorName}`,
+                unit: vectorQuery.data?.at(0)?.unit || "",
+            };
 
-            moduleContext.getChannel(BroadcastChannelNames.Realization_Value).broadcast(
-                {
-                    ensembleIdent: EnsembleIdent.fromCaseUuidAndEnsembleName(
-                        vectorSpec.caseUuid,
-                        vectorSpec.ensembleName
-                    ),
-                    description: dataDescription,
-                    unit: vectorQuery.data?.at(0)?.unit || "",
-                },
-                dataGenerator
-            );
+            moduleContext.getChannel(BroadcastChannelNames.Realization_Value).broadcast(channelMeta, dataGenerator);
         },
-        [vectorQuery.data, vectorSpec, moduleContext]
+        [vectorQuery.data, ensemble, vectorSpec, moduleContext]
     );
 
     // React.useEffect(
@@ -164,8 +161,9 @@ export const view = ({ moduleContext, workbenchServices }: ModuleFCProps<State>)
 
     let title = "N/A";
     const hasGotAnyRequestedData = vectorQuery.data || (showStatistics && statisticsQuery.data);
-    if (vectorSpec && hasGotAnyRequestedData) {
-        title = `${vectorSpec.vectorName} [${unitString}] - ${vectorSpec.ensembleName}, ${vectorSpec.caseName}`;
+    if (ensemble && vectorSpec && hasGotAnyRequestedData) {
+        const ensembleDisplayName = ensemble.getDisplayName();
+        title = `${vectorSpec.vectorName} [${unitString}] - ${ensembleDisplayName}`;
     }
 
     const layout: Partial<Layout> = {

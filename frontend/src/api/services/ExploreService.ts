@@ -1,9 +1,10 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-import type { Case } from '../models/Case';
-import type { Ensemble } from '../models/Ensemble';
-import type { Field } from '../models/Field';
+import type { CaseInfo } from '../models/CaseInfo';
+import type { EnsembleDetails } from '../models/EnsembleDetails';
+import type { EnsembleInfo } from '../models/EnsembleInfo';
+import type { FieldInfo } from '../models/FieldInfo';
 
 import type { CancelablePromise } from '../core/CancelablePromise';
 import type { BaseHttpRequest } from '../core/BaseHttpRequest';
@@ -15,10 +16,10 @@ export class ExploreService {
     /**
      * Get Fields
      * Get list of fields
-     * @returns Field Successful Response
+     * @returns FieldInfo Successful Response
      * @throws ApiError
      */
-    public getFields(): CancelablePromise<Array<Field>> {
+    public getFields(): CancelablePromise<Array<FieldInfo>> {
         return this.httpRequest.request({
             method: 'GET',
             url: '/fields',
@@ -29,12 +30,12 @@ export class ExploreService {
      * Get Cases
      * Get list of cases for specified field
      * @param fieldIdentifier Field identifier
-     * @returns Case Successful Response
+     * @returns CaseInfo Successful Response
      * @throws ApiError
      */
     public getCases(
         fieldIdentifier: string,
-    ): CancelablePromise<Array<Case>> {
+    ): CancelablePromise<Array<CaseInfo>> {
         return this.httpRequest.request({
             method: 'GET',
             url: '/cases',
@@ -51,12 +52,12 @@ export class ExploreService {
      * Get Ensembles
      * Get list of ensembles for a case
      * @param caseUuid Sumo case uuid
-     * @returns Ensemble Successful Response
+     * @returns EnsembleInfo Successful Response
      * @throws ApiError
      */
     public getEnsembles(
         caseUuid: string,
-    ): CancelablePromise<Array<Ensemble>> {
+    ): CancelablePromise<Array<EnsembleInfo>> {
         return this.httpRequest.request({
             method: 'GET',
             url: '/cases/{case_uuid}/ensembles',
@@ -70,20 +71,20 @@ export class ExploreService {
     }
 
     /**
-     * Get Realizations
-     * Get list of realizations for an ensemble
+     * Get Ensemble Details
+     * Get more detailed information for an ensemble
      * @param caseUuid Sumo case uuid
      * @param ensembleName Ensemble name
-     * @returns number Successful Response
+     * @returns EnsembleDetails Successful Response
      * @throws ApiError
      */
-    public getRealizations(
+    public getEnsembleDetails(
         caseUuid: string,
         ensembleName: string,
-    ): CancelablePromise<Array<number>> {
+    ): CancelablePromise<EnsembleDetails> {
         return this.httpRequest.request({
             method: 'GET',
-            url: '/cases/{case_uuid}/ensembles/{ensemble_name}/realizations',
+            url: '/cases/{case_uuid}/ensembles/{ensemble_name}',
             path: {
                 'case_uuid': caseUuid,
                 'ensemble_name': ensembleName,

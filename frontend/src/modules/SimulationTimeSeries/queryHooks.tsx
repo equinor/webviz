@@ -26,6 +26,7 @@ export function useVectorDataQuery(
     resampleFrequency: Frequency_api | null,
     realizationsToInclude: number[] | null
 ): UseQueryResult<Array<VectorRealizationData_api>> {
+    const allOrNonEmptyRealArr = realizationsToInclude === null || realizationsToInclude.length > 0 ? true : false;
     return useQuery({
         queryKey: [
             "getRealizationsVectorData",
@@ -45,7 +46,7 @@ export function useVectorDataQuery(
             ),
         staleTime: STALE_TIME,
         cacheTime: CACHE_TIME,
-        enabled: caseUuid && ensembleName && vectorName ? true : false,
+        enabled: caseUuid && ensembleName && vectorName && allOrNonEmptyRealArr ? true : false,
     });
 }
 
@@ -57,6 +58,7 @@ export function useStatisticalVectorDataQuery(
     realizationsToInclude: number[] | null,
     allowEnable: boolean
 ): UseQueryResult<VectorStatisticData_api> {
+    const allOrNonEmptyRealArr = realizationsToInclude === null || realizationsToInclude.length > 0 ? true : false;
     return useQuery({
         queryKey: [
             "getStatisticalVectorData",
@@ -77,6 +79,6 @@ export function useStatisticalVectorDataQuery(
             ),
         staleTime: STALE_TIME,
         cacheTime: CACHE_TIME,
-        enabled: allowEnable && caseUuid && ensembleName && vectorName && resampleFrequency ? true : false,
+        enabled: allowEnable && caseUuid && ensembleName && vectorName && resampleFrequency && allOrNonEmptyRealArr ? true : false,
     });
 }

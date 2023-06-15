@@ -9,9 +9,11 @@ import { StateBaseType, StateOptions } from "./StateStore";
 import { SyncSettingKey } from "./SyncSettings";
 import { Workbench } from "./Workbench";
 import { WorkbenchServices } from "./WorkbenchServices";
+import { WorkbenchSession } from "./WorkbenchSession";
 
 export type ModuleFCProps<S extends StateBaseType> = {
     moduleContext: ModuleContext<S>;
+    workbenchSession: WorkbenchSession;
     workbenchServices: WorkbenchServices;
 };
 

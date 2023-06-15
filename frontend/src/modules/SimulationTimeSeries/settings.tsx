@@ -1,9 +1,12 @@
 import React from "react";
 
 import { Frequency_api, VectorDescription_api } from "@api";
+import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { ModuleFCProps } from "@framework/Module";
 import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
-import { useSubscribedValue } from "@framework/WorkbenchServices";
+import { useEnsembleSet } from "@framework/WorkbenchSession";
+import { MultiEnsembleSelect } from "@framework/components/MultiEnsembleSelect";
+import { fixupEnsembleIdent, maybeAssignFirstSyncedEnsemble } from "@framework/utils/ensembleUiHelpers";
 import { ApiStateWrapper } from "@lib/components/ApiStateWrapper";
 import { Checkbox } from "@lib/components/Checkbox";
 import { CircularProgress } from "@lib/components/CircularProgress";
@@ -11,7 +14,6 @@ import { Dropdown, DropdownOption } from "@lib/components/Dropdown";
 import { Input } from "@lib/components/Input";
 import { Label } from "@lib/components/Label";
 import { Select, SelectOption } from "@lib/components/Select";
-import { Ensemble } from "@shared-types/ensemble";
 
 import { sortBy, sortedUniq } from "lodash";
 
@@ -19,12 +21,12 @@ import { useVectorsQuery } from "./queryHooks";
 import { State } from "./state";
 
 //-----------------------------------------------------------------------------------------------------------
-export function settings({ moduleContext, workbenchServices }: ModuleFCProps<State>) {
+export function settings({ moduleContext, workbenchSession, workbenchServices }: ModuleFCProps<State>) {
     const myInstanceIdStr = moduleContext.getInstanceIdString();
     console.debug(`${myInstanceIdStr} -- render SimulationTimeSeries settings`);
 
-    const availableEnsembles = useSubscribedValue("navigator.ensembles", workbenchServices);
-    const [selectedEnsemble, setSelectedEnsemble] = React.useState<Ensemble | null>(null);
+    const ensembleSet = useEnsembleSet(workbenchSession);
+    const [selectedEnsembleIdent, setSelectedEnsembleIdent] = React.useState<EnsembleIdent | null>(null);
     const [selectedVectorName, setSelectedVectorName] = React.useState<string>("");
     const [resampleFrequency, setResamplingFrequency] = moduleContext.useStoreState("resamplingFrequency");
     const [showStatistics, setShowStatistics] = moduleContext.useStoreState("showStatistics");
@@ -37,14 +39,13 @@ export function settings({ moduleContext, workbenchServices }: ModuleFCProps<Sta
     console.debug(`${myInstanceIdStr} -- syncedValueEnsembles=${JSON.stringify(syncedValueEnsembles)}`);
     console.debug(`${myInstanceIdStr} -- syncedValueSummaryVector=${JSON.stringify(syncedValueSummaryVector)}`);
 
-    let candidateEnsemble = selectedEnsemble;
-    if (syncedValueEnsembles?.length) {
-        console.debug(`${myInstanceIdStr} -- syncing ensemble to ${syncedValueEnsembles[0].ensembleName}`);
-        candidateEnsemble = syncedValueEnsembles[0];
-    }
-    const computedEnsemble = fixupEnsemble(candidateEnsemble, availableEnsembles);
+    const candidateEnsembleIdent = maybeAssignFirstSyncedEnsemble(selectedEnsembleIdent, syncedValueEnsembles);
+    const computedEnsembleIdent = fixupEnsembleIdent(candidateEnsembleIdent, ensembleSet);
 
-    const vectorsQuery = useVectorsQuery(computedEnsemble?.caseUuid, computedEnsemble?.ensembleName);
+    const vectorsQuery = useVectorsQuery(
+        computedEnsembleIdent?.getCaseUuid(),
+        computedEnsembleIdent?.getEnsembleName()
+    );
 
     let candidateVectorName = selectedVectorName;
     if (syncedValueSummaryVector?.vectorName) {
@@ -53,8 +54,8 @@ export function settings({ moduleContext, workbenchServices }: ModuleFCProps<Sta
     }
     const computedVectorName = fixupVectorName(candidateVectorName, vectorsQuery.data);
 
-    if (computedEnsemble && computedEnsemble !== selectedEnsemble) {
-        setSelectedEnsemble(computedEnsemble);
+    if (computedEnsembleIdent && !computedEnsembleIdent.equals(selectedEnsembleIdent)) {
+        setSelectedEnsembleIdent(computedEnsembleIdent);
     }
     if (computedVectorName && computedVectorName !== selectedVectorName) {
         setSelectedVectorName(computedVectorName);
@@ -62,27 +63,26 @@ export function settings({ moduleContext, workbenchServices }: ModuleFCProps<Sta
 
     React.useEffect(
         function propagateVectorSpecToView() {
-            if (computedEnsemble && computedVectorName) {
+            if (computedEnsembleIdent && computedVectorName) {
                 moduleContext.getStateStore().setValue("vectorSpec", {
-                    caseUuid: computedEnsemble.caseUuid,
-                    caseName: computedEnsemble.caseName,
-                    ensembleName: computedEnsemble.ensembleName,
+                    ensembleIdent: computedEnsembleIdent,
                     vectorName: computedVectorName,
                 });
             } else {
                 moduleContext.getStateStore().setValue("vectorSpec", null);
             }
         },
-        [computedEnsemble, computedVectorName]
+        [computedEnsembleIdent, computedVectorName]
     );
 
-    function handleEnsembleSelectionChange(selectedEnsembleIdStrArr: string[]) {
-        console.debug("handleEnsembleSelectionChange()");
-        const newIdStr = selectedEnsembleIdStrArr[0] ?? "";
-        const newEnsemble = availableEnsembles?.find((item) => encodeEnsembleAsIdStr(item) === newIdStr);
-        setSelectedEnsemble(newEnsemble ?? null);
-        if (newEnsemble) {
-            syncHelper.publishValue(SyncSettingKey.ENSEMBLE, "global.syncValue.ensembles", [newEnsemble]);
+    const computedEnsemble = computedEnsembleIdent ? ensembleSet.findEnsemble(computedEnsembleIdent) : null;
+
+    function handleEnsembleSelectionChange(ensembleIdentArr: EnsembleIdent[]) {
+        console.debug("handleEnsembleSelectionChange()", ensembleIdentArr);
+        const newEnsembleIdent = ensembleIdentArr[0] ?? null;
+        setSelectedEnsembleIdent(newEnsembleIdent);
+        if (newEnsembleIdent) {
+            syncHelper.publishValue(SyncSettingKey.ENSEMBLE, "global.syncValue.ensembles", [newEnsembleIdent]);
         }
     }
 
@@ -111,10 +111,14 @@ export function settings({ moduleContext, workbenchServices }: ModuleFCProps<Sta
     }
 
     function handleRealizationRangeTextChanged(event: React.ChangeEvent<HTMLInputElement>) {
-        console.debug("handleRealizationRangeTextChanged() " + event.target.value);
-        const rangeArr = parseRealizationRangeString(event.target.value, 200);
+        const realRangeStr = event.target.value;
+        console.debug("handleRealizationRangeTextChanged() " + realRangeStr);
+        let rangeArr: number[] | null = null;
+        if (realRangeStr) {
+            rangeArr = parseRealizationRangeString(realRangeStr, computedEnsemble?.getMaxRealizationNumber() ?? -1);
+        }
         console.debug(rangeArr);
-        moduleContext.getStateStore().setValue("realizationsToInclude", rangeArr.length > 0 ? rangeArr : null);
+        moduleContext.getStateStore().setValue("realizationsToInclude", rangeArr);
     }
 
     return (
@@ -123,9 +127,9 @@ export function settings({ moduleContext, workbenchServices }: ModuleFCProps<Sta
                 text="Ensemble"
                 labelClassName={syncHelper.isSynced(SyncSettingKey.ENSEMBLE) ? "bg-indigo-700 text-white" : ""}
             >
-                <Select
-                    options={makeEnsembleOptionItems(availableEnsembles)}
-                    value={computedEnsemble ? [encodeEnsembleAsIdStr(computedEnsemble)] : []}
+                <MultiEnsembleSelect
+                    ensembleSet={ensembleSet}
+                    value={computedEnsembleIdent ? [computedEnsembleIdent] : []}
                     onChange={handleEnsembleSelectionChange}
                     size={5}
                 />
@@ -156,7 +160,7 @@ export function settings({ moduleContext, workbenchServices }: ModuleFCProps<Sta
                 />
             </Label>
             <Checkbox label="Show statistics" checked={showStatistics} onChange={handleShowStatisticsCheckboxChange} />
-            <Label text="Realizations">
+            <Label text={`Realizations (maxReal=${computedEnsemble?.getMaxRealizationNumber() ?? -1})`}>
                 <Input onChange={handleRealizationRangeTextChanged} />
             </Label>
         </>
@@ -165,23 +169,6 @@ export function settings({ moduleContext, workbenchServices }: ModuleFCProps<Sta
 
 //-----------------------------------------------------------------------------------------------------------
 //-----------------------------------------------------------------------------------------------------------
-
-function fixupEnsemble(currEnsemble: Ensemble | null, availableEnsemblesArr: Ensemble[] | null): Ensemble | null {
-    if (!availableEnsemblesArr || availableEnsemblesArr.length === 0) {
-        return null;
-    }
-
-    if (currEnsemble) {
-        const foundItem = availableEnsemblesArr.find(
-            (item) => item.caseUuid === currEnsemble.caseUuid && item.ensembleName == currEnsemble.ensembleName
-        );
-        if (foundItem) {
-            return foundItem;
-        }
-    }
-
-    return availableEnsemblesArr[0];
-}
 
 function fixupVectorName(currVectorName: string, vectorDescriptionsArr: VectorDescription_api[] | undefined): string {
     if (!vectorDescriptionsArr || vectorDescriptionsArr.length === 0) {
@@ -193,20 +180,6 @@ function fixupVectorName(currVectorName: string, vectorDescriptionsArr: VectorDe
     }
 
     return vectorDescriptionsArr[0].name;
-}
-
-function encodeEnsembleAsIdStr(ensemble: Ensemble): string {
-    return `${ensemble.caseUuid}::${ensemble.ensembleName}`;
-}
-
-function makeEnsembleOptionItems(ensemblesArr: Ensemble[] | null): SelectOption[] {
-    const itemArr: SelectOption[] = [];
-    if (ensemblesArr) {
-        for (const ens of ensemblesArr) {
-            itemArr.push({ value: encodeEnsembleAsIdStr(ens), label: `${ens.ensembleName} (${ens.caseName})` });
-        }
-    }
-    return itemArr;
 }
 
 function makeVectorOptionItems(vectorDescriptionsArr: VectorDescription_api[] | undefined): SelectOption[] {
@@ -230,7 +203,7 @@ function makeFrequencyOptionItems(): DropdownOption[] {
     return itemArr;
 }
 
-// Parse page ranges into array of numbers
+// Parse realization ranges into array of numbers
 function parseRealizationRangeString(realRangeStr: string, maxLegalReal: number): number[] {
     const realArr: number[] = [];
 

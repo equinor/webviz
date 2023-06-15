@@ -5,7 +5,7 @@ import { State } from "./state";
 import { view } from "./view";
 
 const initialState: State = {
-    ensemble: null,
+    ensembleIdent: null,
     tableName: null,
     categoricalOptions: null,
     categoricalFilter: null,

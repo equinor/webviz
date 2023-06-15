@@ -64,6 +64,7 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
             return (
                 <View
                     moduleContext={props.moduleInstance.getContext()}
+                    workbenchSession={props.workbench.getWorkbenchSession()}
                     workbenchServices={props.workbench.getWorkbenchServices()}
                 />
             );

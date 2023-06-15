@@ -1,14 +1,13 @@
 import React from "react";
 
-import { Ensemble } from "@shared-types/ensemble";
-
 import { isEqual } from "lodash";
 
 import { Broadcaster } from "./Broadcaster";
+import { EnsembleIdent } from "./EnsembleIdent";
 import { Workbench } from "./Workbench";
 
 export type NavigatorTopicDefinitions = {
-    "navigator.ensembles": Ensemble[];
+    "navigator.dummyPlaceholder": string;
 };
 
 export type GlobalTopicDefinitions = {
@@ -16,7 +15,7 @@ export type GlobalTopicDefinitions = {
     "global.hoverRealization": { realization: number };
     "global.hoverTimestamp": { timestamp: number };
 
-    "global.syncValue.ensembles": Ensemble[];
+    "global.syncValue.ensembles": EnsembleIdent[];
     "global.syncValue.date": { timeOrInterval: string };
     "global.syncValue.timeSeries": { vectorName: string };
     "global.syncValue.surface": { name: string; attribute: string };
