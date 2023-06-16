@@ -7,7 +7,7 @@ import { useImportState } from "@framework/hooks/moduleHooks";
 
 type SettingProps = {
     moduleInstance: ModuleInstance<any>;
-    activeModuleId: string;
+    activeModuleInstanceId: string;
     workbench: Workbench;
 };
 
@@ -23,7 +23,7 @@ export const Setting: React.FC<SettingProps> = (props) => {
         <div
             key={props.moduleInstance.getId()}
             style={{
-                display: props.activeModuleId === props.moduleInstance.getId() ? "flex" : "none",
+                display: props.activeModuleInstanceId === props.moduleInstance.getId() ? "flex" : "none",
             }}
             className="flex-col gap-4"
         >

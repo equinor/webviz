@@ -1,7 +1,8 @@
 import React from "react";
 
-import { LayoutElement, Workbench } from "@framework/Workbench";
-import { useModuleInstances } from "@framework/hooks/workbenchHooks";
+import { LayoutElement } from "@framework/Layout";
+import { Workbench } from "@framework/Workbench";
+import { useActivePageUuid, useModuleInstances } from "@framework/hooks/workbenchHooks";
 import {
     MANHATTAN_LENGTH,
     Point,
@@ -76,7 +77,9 @@ export const Layout: React.FC<LayoutProps> = (props) => {
     const mainRef = React.useRef<HTMLDivElement>(null);
     const size = useElementSize(ref);
     const layoutBoxRef = React.useRef<LayoutBox | null>(null);
+
     const moduleInstances = useModuleInstances(props.workbench);
+    const activePageUuid = useActivePageUuid(props.workbench);
 
     const convertLayoutRectToRealRect = React.useCallback(
         (element: LayoutElement): Rect => {
@@ -99,9 +102,9 @@ export const Layout: React.FC<LayoutProps> = (props) => {
         let dragging = false;
         let moduleInstanceId: string | null = null;
         let moduleName: string | null = null;
-        setLayout(props.workbench.getLayout());
-        let originalLayout: LayoutElement[] = props.workbench.getLayout();
-        let currentLayout: LayoutElement[] = props.workbench.getLayout();
+        let originalLayout = props.workbench.getLayout().getActivePageLayout();
+        setLayout(originalLayout);
+        let currentLayout: LayoutElement[] = originalLayout;
         let originalLayoutBox = makeLayoutBoxes(originalLayout);
         let currentLayoutBox = originalLayoutBox;
         layoutBoxRef.current = currentLayoutBox;
@@ -156,7 +159,9 @@ export const Layout: React.FC<LayoutProps> = (props) => {
                 if (isNewModule && moduleName) {
                     const layoutElement = currentLayout.find((el) => el.moduleInstanceId === pointerDownElementId);
                     if (layoutElement) {
-                        const instance = props.workbench.makeAndAddModuleInstance(moduleName, layoutElement);
+                        const instance = props.workbench
+                            .getLayout()
+                            .makeAndAddModuleInstanceToActivePage(moduleName, layoutElement);
                         layoutElement.moduleInstanceId = instance.getId();
                         layoutElement.moduleName = instance.getName();
                     }
@@ -169,7 +174,7 @@ export const Layout: React.FC<LayoutProps> = (props) => {
                 originalLayoutBox = currentLayoutBox;
                 layoutBoxRef.current = currentLayoutBox;
                 setLayout(currentLayout);
-                props.workbench.setLayout(currentLayout);
+                props.workbench.getLayout().setActivePageLayout(currentLayout);
                 setPosition({ x: 0, y: 0 });
                 setPointer({ x: -1, y: -1 });
             }
@@ -271,7 +276,7 @@ export const Layout: React.FC<LayoutProps> = (props) => {
             setLayout(currentLayout);
             originalLayout = currentLayout;
             originalLayoutBox = currentLayoutBox;
-            props.workbench.setLayout(currentLayout);
+            props.workbench.getLayout().setActivePageLayout(currentLayout);
         };
 
         document.addEventListener(LayoutEventTypes.MODULE_INSTANCE_POINTER_DOWN, handleModuleInstancePointerDown);
@@ -293,7 +298,7 @@ export const Layout: React.FC<LayoutProps> = (props) => {
                 clearTimeout(delayTimer);
             }
         };
-    }, [size]);
+    }, [size, activePageUuid]);
 
     const makeTempViewWrapperPlaceholder = () => {
         if (!tempLayoutBoxId) {

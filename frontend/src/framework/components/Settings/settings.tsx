@@ -2,7 +2,7 @@ import React from "react";
 
 import { useStoreValue } from "@framework/StateStore";
 import { Workbench } from "@framework/Workbench";
-import { useActiveModuleId, useModuleInstances } from "@framework/hooks/workbenchHooks";
+import { useActiveModuleInstanceId, useModuleInstances } from "@framework/hooks/workbenchHooks";
 
 import { Setting } from "./private-components/setting";
 
@@ -12,7 +12,7 @@ type SettingsProps = {
 
 export const Settings: React.FC<SettingsProps> = (props) => {
     const moduleInstances = useModuleInstances(props.workbench);
-    const activeModuleId = useActiveModuleId(props.workbench);
+    const activeModuleInstanceId = useActiveModuleInstanceId(props.workbench);
 
     const syncSettingsActive = useStoreValue(props.workbench.getGuiStateStore(), "syncSettingsActive");
 
@@ -26,7 +26,7 @@ export const Settings: React.FC<SettingsProps> = (props) => {
                 <Setting
                     key={instance.getId()}
                     moduleInstance={instance}
-                    activeModuleId={activeModuleId}
+                    activeModuleInstanceId={activeModuleInstanceId ?? ""}
                     workbench={props.workbench}
                 />
             ))}

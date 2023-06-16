@@ -63,7 +63,7 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
     const handleModuleHeaderClick = React.useCallback(
         function handleModuleHeaderClick() {
             if (props.isActive) return;
-            props.workbench.setActiveModuleId(props.moduleInstance.getId());
+            props.workbench.getLayout().setActiveModuleInstanceId(props.moduleInstance.getId());
         },
         [props.moduleInstance, props.workbench, props.isActive]
     );

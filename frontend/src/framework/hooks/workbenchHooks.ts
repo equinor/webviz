@@ -1,26 +1,30 @@
 import React from "react";
 
+import { LayoutEvents } from "@framework/Layout";
+
 import { ModuleInstance } from "../ModuleInstance";
 import { Workbench, WorkbenchEvents } from "../Workbench";
 
-export function useActiveModuleId(workbench: Workbench): string {
-    const [activeModuleId, setActiveModuleId] = React.useState<string>("");
+export function useActiveModuleInstanceId(workbench: Workbench): string | null {
+    const [activeModuleInstanceId, setActiveModuleInstanceId] = React.useState<string | null>(null);
 
     React.useEffect(() => {
-        function handleActiveModuleChange() {
-            setActiveModuleId(workbench.getActiveModuleId());
+        function handleActiveModuleInstanceChange() {
+            setActiveModuleInstanceId(workbench.getLayout().getActiveModuleInstanceId());
         }
 
-        const unsubscribeFunc = workbench.subscribe(WorkbenchEvents.ActiveModuleChanged, handleActiveModuleChange);
+        const unsubscribeFunc = workbench
+            .getLayout()
+            .subscribe(LayoutEvents.ActiveModuleInstanceChanged, handleActiveModuleInstanceChange);
 
         return unsubscribeFunc;
     }, []);
 
-    return activeModuleId;
+    return activeModuleInstanceId;
 }
 
 export function useModuleInstances(workbench: Workbench): ModuleInstance<any>[] {
-    const [moduleInstances, setModuleInstances] = React.useState<ModuleInstance<any>[]>([]);
+    const [moduleInstances, setModuleInstances] = React.useState<ModuleInstance<any>[]>(workbench.getModuleInstances());
 
     React.useEffect(() => {
         function handleModuleInstancesChange() {
@@ -36,4 +40,24 @@ export function useModuleInstances(workbench: Workbench): ModuleInstance<any>[] 
     }, []);
 
     return moduleInstances;
+}
+
+export function useActivePageUuid(workbench: Workbench): string | null {
+    const [activePageUuid, setActivePageUuid] = React.useState<string | null>(
+        workbench.getLayout().getActivePageUuid()
+    );
+
+    React.useEffect(() => {
+        function handleActivePageUuidChange() {
+            setActivePageUuid(workbench.getLayout().getActivePageUuid());
+        }
+
+        const unsubscribeFunc = workbench
+            .getLayout()
+            .subscribe(LayoutEvents.ActivePageChanged, handleActivePageUuidChange);
+
+        return unsubscribeFunc;
+    }, []);
+
+    return activePageUuid;
 }

@@ -1,6 +1,6 @@
 import React from "react";
 
-import { LayoutElement } from "@framework/Workbench";
+import { LayoutElement } from "@framework/Layout";
 import {
     Point,
     Rect,

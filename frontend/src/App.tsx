@@ -1,6 +1,6 @@
 import React from "react";
 
-import { LayoutElement, Workbench } from "@framework/Workbench";
+import { Workbench } from "@framework/Workbench";
 import { Content } from "@framework/components/Content";
 import { Settings } from "@framework/components/Settings";
 import { TopNavBar } from "@framework/components/TopNavBar";
@@ -8,18 +8,10 @@ import { AuthProvider } from "@framework/providers/AuthProvider";
 import { CustomQueryClientProvider } from "@framework/providers/QueryClientProvider";
 import { ResizablePanels } from "@lib/components/ResizablePanels";
 
-import "./modules/registerAllModules.ts";
-
-const layout: LayoutElement[] = [];
+import "./modules/registerAllModules";
 
 function App() {
     const workbench = new Workbench();
-
-    React.useEffect(() => {
-        if (!workbench.loadLayoutFromLocalStorage()) {
-            workbench.makeLayout(layout);
-        }
-    }, []);
 
     return (
         <AuthProvider>

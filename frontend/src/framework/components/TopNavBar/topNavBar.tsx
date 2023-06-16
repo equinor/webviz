@@ -6,7 +6,8 @@ import { Workbench } from "@framework/Workbench";
 import { ShareIcon, WindowIcon } from "@heroicons/react/20/solid";
 import { Button } from "@lib/components/Button";
 import { Dialog } from "@lib/components/Dialog";
-import { IconButton } from "@lib/components/IconButton";
+
+import { PageTabs } from "./privateComponents/pageTabs";
 
 // import { useWorkbenchActiveModuleName } from "@framework/hooks/useWorkbenchActiveModuleName";
 import { EnsembleSelector } from "../EnsembleSelector";
@@ -17,7 +18,6 @@ type TopNavBarProps = {
 };
 
 export const TopNavBar: React.FC<TopNavBarProps> = (props) => {
-    const activeModuleName = ""; // useWorkbenchActiveModuleName();
     const [ensembleDialogOpen, setEnsembleDialogOpen] = React.useState<boolean>(false);
     const setModulesListOpen = useSetStoreValue(props.workbench.getGuiStateStore(), "modulesListOpen");
     const setSyncSettingsActive = useSetStoreValue(props.workbench.getGuiStateStore(), "syncSettingsActive");
@@ -44,9 +44,11 @@ export const TopNavBar: React.FC<TopNavBarProps> = (props) => {
     }
 
     return (
-        <div className="bg-slate-100 p-4 shadow z-50">
-            <div className="flex flex-row gap-4 items-center">
-                <h1 className="flex-grow">{activeModuleName}</h1>
+        <div className="bg-slate-100 shadow z-50 flex flex-row gap-4 items-end">
+            <div className="flex-grow">
+                <PageTabs workbench={props.workbench} />
+            </div>
+            <div className="p-4 flex flex-row gap-4 items-center">
                 <Button onClick={handleEnsembleClick} variant="contained">
                     {ensembleButtonText}
                 </Button>

@@ -3,7 +3,7 @@ import React from "react";
 import { useSetStoreValue, useStoreValue } from "@framework/StateStore";
 import { SyncSettingKey, SyncSettingsMeta } from "@framework/SyncSettings";
 import { Workbench } from "@framework/Workbench";
-import { useActiveModuleId } from "@framework/hooks/workbenchHooks";
+import { useActiveModuleInstanceId } from "@framework/hooks/workbenchHooks";
 import { XMarkIcon } from "@heroicons/react/20/solid";
 import { Checkbox } from "@lib/components/Checkbox";
 import { IconButton } from "@lib/components/IconButton";
@@ -15,10 +15,10 @@ type ModulesListProps = {
 
 export const GroupModules: React.FC<ModulesListProps> = (props) => {
     const visible = useStoreValue(props.workbench.getGuiStateStore(), "syncSettingsActive");
-    const activeModuleId = useActiveModuleId(props.workbench);
+    const activeModuleId = useActiveModuleInstanceId(props.workbench);
     const setSyncSettingsActive = useSetStoreValue(props.workbench.getGuiStateStore(), "syncSettingsActive");
 
-    const activeModuleInstance = props.workbench.getModuleInstance(activeModuleId);
+    const activeModuleInstance = props.workbench.getModuleInstance(activeModuleId ?? "");
 
     const handleSyncSettingChange = (setting: SyncSettingKey, value: boolean) => {
         if (activeModuleInstance === undefined) {
