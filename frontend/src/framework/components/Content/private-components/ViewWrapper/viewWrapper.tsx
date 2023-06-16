@@ -1,11 +1,11 @@
 import React from "react";
 
-import { ImportState } from "@framework/Module";
 import { ModuleInstance } from "@framework/ModuleInstance";
 import { Workbench } from "@framework/Workbench";
 import { Point, pointRelativeToDomRect, pointerEventToPoint } from "@framework/utils/geometry";
 
 import { Header } from "./private-components/header";
+import { ViewContent } from "./private-components/viewContent";
 
 import { pointDifference } from "../../../../utils/geometry";
 import { LayoutEventTypes } from "../layout";
@@ -24,52 +24,7 @@ type ViewWrapperProps = {
 };
 
 export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
-    const [importState, setImportState] = React.useState<ImportState>(ImportState.NotImported);
     const ref = React.useRef<HTMLDivElement>(null);
-
-    React.useEffect(() => {
-        setImportState(props.moduleInstance.getImportState());
-
-        function handleModuleInstanceImportStateChange() {
-            setImportState(props.moduleInstance.getImportState());
-        }
-
-        const unsubscribeFunc = props.moduleInstance.subscribeToImportStateChange(
-            handleModuleInstanceImportStateChange
-        );
-
-        return unsubscribeFunc;
-    }, []);
-
-    const createContent = React.useCallback(
-        function createContent(): React.ReactElement {
-            if (importState === ImportState.NotImported) {
-                return <div>Not imported</div>;
-            }
-
-            if (importState === ImportState.Importing || !props.moduleInstance.isInitialised()) {
-                return <div>Loading...</div>;
-            }
-
-            if (importState === ImportState.Failed) {
-                return (
-                    <div>
-                        Module could not be imported. Please check the spelling when registering and initialising the
-                        module.
-                    </div>
-                );
-            }
-
-            const View = props.moduleInstance.getViewFC();
-            return (
-                <View
-                    moduleContext={props.moduleInstance.getContext()}
-                    workbenchServices={props.workbench.getWorkbenchServices()}
-                />
-            );
-        },
-        [props.moduleInstance, props.workbench, importState]
-    );
 
     const handlePointerDown = React.useCallback(
         function handlePointerDown(e: React.PointerEvent<HTMLDivElement>) {
@@ -145,7 +100,9 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
                         onRemoveClick={handleRemoveClick}
                     />
                     <div className="flex-grow overflow-auto h-0">
-                        <div className="p-4 h-full w-full">{createContent()}</div>
+                        <div className="p-4 h-full w-full">
+                            <ViewContent workbench={props.workbench} moduleInstance={props.moduleInstance} />
+                        </div>
                     </div>
                 </div>
             </div>
