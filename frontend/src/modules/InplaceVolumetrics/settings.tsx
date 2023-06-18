@@ -108,7 +108,7 @@ export function settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
     React.useEffect(
         function selectDefaultEnsemble() {
             const fixedEnsembleIdent = fixupEnsembleIdent(ensembleIdent, ensembleSet);
-            if (!EnsembleIdent.isEqual(fixedEnsembleIdent, ensembleIdent)) {
+            if (fixedEnsembleIdent !== ensembleIdent) {
                 setEnsembleIdent(fixedEnsembleIdent);
             }
         },
