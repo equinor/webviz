@@ -16,7 +16,7 @@ export class WorkbenchSession {
         this._ensembleSet = new EnsembleSet([]);
     }
 
-    public getEnsembleSet(): EnsembleSet {
+    getEnsembleSet(): EnsembleSet {
         return this._ensembleSet;
     }
 
@@ -62,7 +62,7 @@ export function useEnsembleSet(workbenchSession: WorkbenchSession): EnsembleSet 
 
 export function useFirstEnsembleInEnsembleSet(workbenchSession: WorkbenchSession): Ensemble | null {
     const ensembleSet = useEnsembleSet(workbenchSession);
-    if (!ensembleSet.hasData()) {
+    if (!ensembleSet.hasAnyEnsembles()) {
         return null;
     }
 

@@ -35,7 +35,7 @@ export const TopNavBar: React.FC<TopNavBarProps> = (props) => {
     };
 
     let ensembleButtonText = "Select ensembles";
-    if (ensembleSet.hasData()) {
+    if (ensembleSet.hasAnyEnsembles()) {
         const ensArr = ensembleSet.getEnsembleArr();
         ensembleButtonText = ensArr[0].getDisplayName();
         if (ensArr.length > 1) {

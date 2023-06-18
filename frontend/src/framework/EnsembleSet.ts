@@ -11,27 +11,22 @@ export class EnsembleSet {
     /**
      * Returns true if there is at least one ensemble in the set.
      */
-    hasData(): boolean {
+    hasAnyEnsembles(): boolean {
         return this._ensembleArr.length > 0;
     }
 
     findEnsemble(ensembleIdent: EnsembleIdent): Ensemble | null {
-        for (const ens of this._ensembleArr) {
-            if (ens.getIdent().equals(ensembleIdent)) {
-                return ens;
-            }
-        }
-
-        return null;
+        return this._ensembleArr.find(ens => ens.getIdent().equals(ensembleIdent)) ?? null;
     }
 
     findEnsembleByIdentString(ensembleIdentString: string): Ensemble | null {
-        const lookupEnsembleIdent = ensembleIdentString ? EnsembleIdent.fromString(ensembleIdentString) : null;
-        if (!lookupEnsembleIdent) {
+        try {
+            const ensembleIdent = EnsembleIdent.fromString(ensembleIdentString);
+            return this.findEnsemble(ensembleIdent);
+        }
+        catch {
             return null;
         }
-
-        return this.findEnsemble(lookupEnsembleIdent);
     }
 
     getEnsembleArr(): readonly Ensemble[] {
@@ -40,12 +35,7 @@ export class EnsembleSet {
 
     // Temporary helper method
     findCaseName(ensembleIdent: EnsembleIdent): string {
-        for (const ens of this._ensembleArr) {
-            if (ens.getCaseUuid() === ensembleIdent.getCaseUuid()) {
-                return ens.getCaseName();
-            }
-        }
-
-        return "";
+        const foundEnsemble = this.findEnsemble(ensembleIdent);
+        return foundEnsemble?.getCaseName() ?? "";
     }
 }
