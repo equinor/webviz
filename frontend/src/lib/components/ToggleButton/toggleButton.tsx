@@ -10,7 +10,6 @@ export type ToggleButtonProps = ButtonUnstyledProps & {
 };
 
 export const ToggleButton = React.forwardRef((props: ToggleButtonProps, ref: React.ForwardedRef<HTMLButtonElement>) => {
-    // eslint-disable-next-line react/destructuring-assignment
     const { active, onToggle, ...other } = props;
     const [isActive, setIsActive] = React.useState<boolean>(active);
 
