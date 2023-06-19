@@ -2,7 +2,7 @@ import {
     Body_get_realizations_response_api,
     EnsembleInfo_api,
     EnsembleScalarResponse_api,
-    InplaceVolumetricsTableMetaData_api
+    InplaceVolumetricsTableMetaData_api,
 } from "@api";
 import { apiService } from "@framework/ApiService";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
