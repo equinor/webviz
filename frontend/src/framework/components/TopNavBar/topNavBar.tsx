@@ -5,11 +5,10 @@ import { Workbench } from "@framework/Workbench";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { ShareIcon, WindowIcon } from "@heroicons/react/20/solid";
 import { Button } from "@lib/components/Button";
-import { Dialog } from "@lib/components/Dialog";
 
-// import { useWorkbenchActiveModuleName } from "@framework/hooks/useWorkbenchActiveModuleName";
-import { EnsembleSelector } from "../EnsembleSelector";
 import { LoginButton } from "../LoginButton";
+// import { useWorkbenchActiveModuleName } from "@framework/hooks/useWorkbenchActiveModuleName";
+import { EnsembleSelector } from "../SelectEnsemblesDialog";
 
 type TopNavBarProps = {
     workbench: Workbench;
@@ -24,6 +23,10 @@ export const TopNavBar: React.FC<TopNavBarProps> = (props) => {
 
     const handleEnsembleClick = () => {
         setEnsembleDialogOpen(true);
+    };
+
+    const handleEnsembleSelectorClose = () => {
+        setEnsembleDialogOpen(false);
     };
 
     const handleModulesListClick = () => {
@@ -58,20 +61,11 @@ export const TopNavBar: React.FC<TopNavBarProps> = (props) => {
                 </Button>
                 <LoginButton />
             </div>
-            <Dialog
+            <EnsembleSelector
                 open={ensembleDialogOpen}
-                onClose={() => setEnsembleDialogOpen(false)}
-                title="Select ensembles"
-                modal
-                width={"75%"}
-                actions={
-                    <div className="flex gap-4">
-                        <Button onClick={() => setEnsembleDialogOpen(false)}>OK</Button>
-                    </div>
-                }
-            >
-                <EnsembleSelector workbench={props.workbench} />
-            </Dialog>
+                onClose={handleEnsembleSelectorClose}
+                workbench={props.workbench}
+            />
         </div>
     );
 };

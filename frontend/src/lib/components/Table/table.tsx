@@ -171,7 +171,7 @@ export const Table: React.FC<TableProps<TableHeading>> = (props) => {
                                                 color={
                                                     sortColumnAndDirection.col === col &&
                                                     sortColumnAndDirection.dir === SortDirection.Asc
-                                                        ? "text-red-600"
+                                                        ? "danger"
                                                         : undefined
                                                 }
                                             >
@@ -183,7 +183,7 @@ export const Table: React.FC<TableProps<TableHeading>> = (props) => {
                                                 color={
                                                     sortColumnAndDirection.col === col &&
                                                     sortColumnAndDirection.dir === SortDirection.Desc
-                                                        ? "text-red-600"
+                                                        ? "danger"
                                                         : undefined
                                                 }
                                             >
