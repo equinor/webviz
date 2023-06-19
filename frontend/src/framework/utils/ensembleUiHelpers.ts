@@ -17,11 +17,21 @@ export function maybeAssignFirstSyncedEnsemble(
     }
 }
 
+/**
+ * Validates the the EnsembleIdent specified in currIdent against the contents of the
+ * EnsembleSet and fixes the value if it isn't valid.
+ * 
+ * Returns null if an empty EnsembleSet is specified.
+ * 
+ * Note that if the specified EnsembleIdent is valid, this function will always return
+ * a reference to the exact same object that was passed in currIdent. This means that
+ * you can compare the references (fixedIdent !== currIdent) to detect any changes.
+ */
 export function fixupEnsembleIdent(
     currIdent: EnsembleIdent | null,
     ensembleSet: EnsembleSet | null
 ): EnsembleIdent | null {
-    if (!ensembleSet?.hasData()) {
+    if (!ensembleSet?.hasAnyEnsembles()) {
         return null;
     }
 

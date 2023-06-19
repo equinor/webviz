@@ -50,16 +50,4 @@ export class EnsembleIdent {
 
         return this._caseUuid === otherIdent._caseUuid && this._ensembleName === otherIdent._ensembleName;
     }
-
-    static isEqual(identA: EnsembleIdent | null, identB: EnsembleIdent | null): boolean {
-        if (identA === null || identB === null) {
-            if (identA === identB) {
-                return true;
-            } else {
-                return false;
-            }
-        }
-
-        return identA.equals(identB);
-    }
 }

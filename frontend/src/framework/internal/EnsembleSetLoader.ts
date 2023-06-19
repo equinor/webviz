@@ -8,22 +8,20 @@ import { EnsembleSet } from "../EnsembleSet";
 
 export async function loadEnsembleSetMetadataFromBackend(
     queryClient: QueryClient,
-    ensemblesToLoad: EnsembleIdent[]
+    ensembleIdentsToLoad: EnsembleIdent[]
 ): Promise<EnsembleSet> {
-    console.debug("loadEnsembleSetMetadataFromBackend", ensemblesToLoad);
+    console.debug("loadEnsembleSetMetadataFromBackend", ensembleIdentsToLoad);
 
     const STALE_TIME = 5 * 60 * 1000;
     const CACHE_TIME = 5 * 60 * 1000;
-    // const STALE_TIME = 0;
-    // const CACHE_TIME = 0;
 
     const ensembleDetailsPromiseArr: Promise<EnsembleDetails_api>[] = [];
     const sensitivityPromiseArr: Promise<EnsembleSensitivity_api[]>[] = [];
     const parametersPromiseArr: Promise<EnsembleParameterDescription_api[]>[] = [];
 
-    for (let i = 0; i < ensemblesToLoad.length; i++) {
-        const caseUuid = ensemblesToLoad[i].getCaseUuid();
-        const ensembleName = ensemblesToLoad[i].getEnsembleName();
+    for (const ensembleIdent of ensembleIdentsToLoad) {
+        const caseUuid = ensembleIdent.getCaseUuid();
+        const ensembleName = ensembleIdent.getEnsembleName();
 
         const ensembleDetailsPromise = queryClient.fetchQuery({
             queryKey: ["getEnsembleDetails", caseUuid, ensembleName],
@@ -48,9 +46,8 @@ export async function loadEnsembleSetMetadataFromBackend(
             cacheTime: CACHE_TIME,
         });
         parametersPromiseArr.push(parametersPromise);
-
-        console.debug("Issued promises:", i);
     }
+    console.debug(`Issued ${ensembleDetailsPromiseArr.length} promise(s)`);
 
     const outEnsembleArr: Ensemble[] = [];
 
@@ -60,30 +57,30 @@ export async function loadEnsembleSetMetadataFromBackend(
 
     for (let i = 0; i < sensitivityOutcomeArr.length; i++) {
         const ensembleDetailsOutcome = ensembleDetailsOutcomeArr[i];
-        console.debug("ensembleDetailsOutcome:", i, ensembleDetailsOutcome.status);
+        console.debug(`ensembleDetailsOutcome[${i}]:`, ensembleDetailsOutcome.status);
         if (ensembleDetailsOutcome.status === "rejected") {
-            console.error("Error fetching ensemble details, dropping ensemble:", ensemblesToLoad[i].toString());
+            console.error("Error fetching ensemble details, dropping ensemble:", ensembleIdentsToLoad[i].toString());
             continue;
         }
 
         const ensembleDetails: EnsembleDetails_api = ensembleDetailsOutcome.value;
         if (
-            ensembleDetails.case_uuid !== ensemblesToLoad[i].getCaseUuid() ||
-            ensembleDetails.name !== ensemblesToLoad[i].getEnsembleName()
+            ensembleDetails.case_uuid !== ensembleIdentsToLoad[i].getCaseUuid() ||
+            ensembleDetails.name !== ensembleIdentsToLoad[i].getEnsembleName()
         ) {
-            console.error("Got mismatched data from backend, dropping ensemble:", ensemblesToLoad[i].toString());
+            console.error("Got mismatched data from backend, dropping ensemble:", ensembleIdentsToLoad[i].toString());
             continue;
         }
 
         const sensitivityOutcome = sensitivityOutcomeArr[i];
-        console.debug("sensitivityOutcome:", i, sensitivityOutcome.status);
+        console.debug(`sensitivityOutcome[${i}]:`, sensitivityOutcome.status);
         let sensitivityArr: Sensitivity[] | null = null;
         if (sensitivityOutcome.status === "fulfilled") {
             sensitivityArr = buildSensitivityArrFromApiResponse(sensitivityOutcome.value);
         }
 
         const parametersOutcome = parametersOutcomeArr[i];
-        console.debug("parametersOutcome:", i, parametersOutcome.status);
+        console.debug(`parametersOutcome[${i}]:`, parametersOutcome.status);
         // let parameterDescriptionArr: EnsembleParameterDescription[] | null = null;
         // if (sensitivityOutcome.status === "fulfilled") {
         //     // Todo: Convert and store data in our data structures here
