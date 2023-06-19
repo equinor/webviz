@@ -308,7 +308,7 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                     modal
                     actions={
                         <div className="flex gap-4">
-                            <Button onClick={() => setConfirmCancel(false)}>No, don't cancel</Button>
+                            <Button onClick={() => setConfirmCancel(false)}>No, don&apos;t cancel</Button>
                             <Button onClick={handleClose} color="danger">
                                 Yes, cancel
                             </Button>
