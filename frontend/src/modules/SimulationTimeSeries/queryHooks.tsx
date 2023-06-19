@@ -1,5 +1,5 @@
-import { Frequency, VectorDescription } from "@api";
-import { VectorRealizationData, VectorStatisticData } from "@api";
+import { Frequency_api, VectorDescription_api } from "@api";
+import { VectorRealizationData_api, VectorStatisticData_api } from "@api";
 import { apiService } from "@framework/ApiService";
 import { UseQueryResult, useQuery } from "@tanstack/react-query";
 
@@ -9,7 +9,7 @@ const CACHE_TIME = 60 * 1000;
 export function useVectorsQuery(
     caseUuid: string | undefined,
     ensembleName: string | undefined
-): UseQueryResult<Array<VectorDescription>> {
+): UseQueryResult<Array<VectorDescription_api>> {
     return useQuery({
         queryKey: ["getVectorNamesAndDescriptions", caseUuid, ensembleName],
         queryFn: () => apiService.timeseries.getVectorNamesAndDescriptions(caseUuid ?? "", ensembleName ?? ""),
@@ -23,9 +23,9 @@ export function useVectorDataQuery(
     caseUuid: string | undefined,
     ensembleName: string | undefined,
     vectorName: string | undefined,
-    resampleFrequency: Frequency | null,
+    resampleFrequency: Frequency_api | null,
     realizationsToInclude: number[] | null
-): UseQueryResult<Array<VectorRealizationData>> {
+): UseQueryResult<Array<VectorRealizationData_api>> {
     const allOrNonEmptyRealArr = realizationsToInclude === null || realizationsToInclude.length > 0 ? true : false;
     return useQuery({
         queryKey: [
@@ -54,10 +54,10 @@ export function useStatisticalVectorDataQuery(
     caseUuid: string | undefined,
     ensembleName: string | undefined,
     vectorName: string | undefined,
-    resampleFrequency: Frequency | null,
+    resampleFrequency: Frequency_api | null,
     realizationsToInclude: number[] | null,
     allowEnable: boolean
-): UseQueryResult<VectorStatisticData> {
+): UseQueryResult<VectorStatisticData_api> {
     const allOrNonEmptyRealArr = realizationsToInclude === null || realizationsToInclude.length > 0 ? true : false;
     return useQuery({
         queryKey: [
@@ -73,7 +73,7 @@ export function useStatisticalVectorDataQuery(
                 caseUuid ?? "",
                 ensembleName ?? "",
                 vectorName ?? "",
-                resampleFrequency ?? Frequency.MONTHLY,
+                resampleFrequency ?? Frequency_api.MONTHLY,
                 undefined,
                 realizationsToInclude ?? undefined
             ),

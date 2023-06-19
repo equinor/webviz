@@ -1,24 +1,24 @@
-import { SurfaceStatisticFunction } from "@api";
+import { SurfaceStatisticFunction_api } from "@api";
 import { Dropdown, DropdownOption} from "@lib/components/Dropdown";
 import { Label } from "@lib/components/Label";
 
 //
 // Sub-component for aggregation/statistic selection
 type AggregationDropdownProps = {
-    selectedAggregation: SurfaceStatisticFunction | null;
-    onAggregationSelectionChange: (aggregation: SurfaceStatisticFunction | null) => void;
+    selectedAggregation: SurfaceStatisticFunction_api | null;
+    onAggregationSelectionChange: (aggregation: SurfaceStatisticFunction_api | null) => void;
 };
 
 export function AggregationDropdown(props: AggregationDropdownProps): JSX.Element {
     const itemArr: DropdownOption[] = [
         { value: "SINGLE_REAL", label: "Single realization" },
-        { value: SurfaceStatisticFunction.MEAN, label: "Mean" },
-        { value: SurfaceStatisticFunction.STD, label: "Std" },
-        { value: SurfaceStatisticFunction.MIN, label: "Min" },
-        { value: SurfaceStatisticFunction.MAX, label: "Max" },
-        { value: SurfaceStatisticFunction.P10, label: "P10" },
-        { value: SurfaceStatisticFunction.P90, label: "P90" },
-        { value: SurfaceStatisticFunction.P50, label: "P50" },
+        { value: SurfaceStatisticFunction_api.MEAN, label: "Mean" },
+        { value: SurfaceStatisticFunction_api.STD, label: "Std" },
+        { value: SurfaceStatisticFunction_api.MIN, label: "Min" },
+        { value: SurfaceStatisticFunction_api.MAX, label: "Max" },
+        { value: SurfaceStatisticFunction_api.P10, label: "P10" },
+        { value: SurfaceStatisticFunction_api.P90, label: "P90" },
+        { value: SurfaceStatisticFunction_api.P50, label: "P50" },
     ];
 
     return (
@@ -28,7 +28,7 @@ export function AggregationDropdown(props: AggregationDropdownProps): JSX.Elemen
                 value={props.selectedAggregation ?? "SINGLE_REAL"}
                 onChange={(newVal: string) =>
                     props.onAggregationSelectionChange(
-                        newVal != "SINGLE_REAL" ? (newVal as SurfaceStatisticFunction) : null
+                        newVal != "SINGLE_REAL" ? (newVal as SurfaceStatisticFunction_api) : null
                     )
                 }
             />

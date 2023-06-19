@@ -1,4 +1,4 @@
-import { EnsembleDetails, EnsembleParameterDescription, EnsembleSensitivity } from "@api";
+import { EnsembleDetails_api, EnsembleParameterDescription_api, EnsembleSensitivity_api } from "@api";
 import { apiService } from "@framework/ApiService";
 import { QueryClient } from "@tanstack/react-query";
 
@@ -15,9 +15,9 @@ export async function loadEnsembleSetMetadataFromBackend(
     const STALE_TIME = 5 * 60 * 1000;
     const CACHE_TIME = 5 * 60 * 1000;
 
-    const ensembleDetailsPromiseArr: Promise<EnsembleDetails>[] = [];
-    const sensitivityPromiseArr: Promise<EnsembleSensitivity[]>[] = [];
-    const parametersPromiseArr: Promise<EnsembleParameterDescription[]>[] = [];
+    const ensembleDetailsPromiseArr: Promise<EnsembleDetails_api>[] = [];
+    const sensitivityPromiseArr: Promise<EnsembleSensitivity_api[]>[] = [];
+    const parametersPromiseArr: Promise<EnsembleParameterDescription_api[]>[] = [];
 
     for (const ensembleIdent of ensembleIdentsToLoad) {
         const caseUuid = ensembleIdent.getCaseUuid();
@@ -63,7 +63,7 @@ export async function loadEnsembleSetMetadataFromBackend(
             continue;
         }
 
-        const ensembleDetails: EnsembleDetails = ensembleDetailsOutcome.value;
+        const ensembleDetails: EnsembleDetails_api = ensembleDetailsOutcome.value;
         if (
             ensembleDetails.case_uuid !== ensembleIdentsToLoad[i].getCaseUuid() ||
             ensembleDetails.name !== ensembleIdentsToLoad[i].getEnsembleName()
@@ -100,7 +100,7 @@ export async function loadEnsembleSetMetadataFromBackend(
     return new EnsembleSet(outEnsembleArr);
 }
 
-function buildSensitivityArrFromApiResponse(apiSensitivityArr: EnsembleSensitivity[]): Sensitivity[] {
+function buildSensitivityArrFromApiResponse(apiSensitivityArr: EnsembleSensitivity_api[]): Sensitivity[] {
     const retSensitivityArr: Sensitivity[] = [];
 
     for (const apiSens of apiSensitivityArr) {

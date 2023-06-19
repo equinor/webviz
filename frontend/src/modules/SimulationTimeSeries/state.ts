@@ -1,4 +1,4 @@
-import { Frequency } from "@api";
+import { Frequency_api } from "@api";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 
 export interface VectorSpec {
@@ -8,7 +8,7 @@ export interface VectorSpec {
 
 export interface State {
     vectorSpec: VectorSpec | null;
-    resamplingFrequency: Frequency | null;
+    resamplingFrequency: Frequency_api | null;
     showStatistics: boolean;
     realizationsToInclude: number[] | null;
 }

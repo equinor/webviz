@@ -1,4 +1,4 @@
-import { PvtData } from '@api'
+import { PvtData_api } from '@api'
 
 export type PlotDataType = {
     traces: TraceData[];
@@ -49,9 +49,9 @@ export const getAvailablePlotsForPhase = (phase: string): PlotOptionType[] => {
     }
 }
 export class PvtPlotAccessor {
-    private pvtData: PvtData;
+    private pvtData: PvtData_api;
 
-    constructor(pvtData: PvtData) {
+    constructor(pvtData: PvtData_api) {
         this.pvtData = pvtData;
     }
 

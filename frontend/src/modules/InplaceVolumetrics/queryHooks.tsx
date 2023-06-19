@@ -1,8 +1,8 @@
 import {
-    Body_get_realizations_response,
-    EnsembleInfo,
-    EnsembleScalarResponse,
-    InplaceVolumetricsTableMetaData,
+    Body_get_realizations_response_api,
+    EnsembleInfo_api,
+    EnsembleScalarResponse_api,
+    InplaceVolumetricsTableMetaData_api,
 } from "@api";
 import { apiService } from "@framework/ApiService";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
@@ -11,7 +11,7 @@ import { UseQueryResult, useQuery } from "@tanstack/react-query";
 const STALE_TIME = 60 * 1000;
 const CACHE_TIME = 60 * 1000;
 
-export function useEnsemblesQuery(caseUuid: string | null): UseQueryResult<Array<EnsembleInfo>> {
+export function useEnsemblesQuery(caseUuid: string | null): UseQueryResult<Array<EnsembleInfo_api>> {
     return useQuery({
         queryKey: ["getEnsembles", caseUuid],
         queryFn: () => apiService.explore.getEnsembles(caseUuid ?? ""),
@@ -24,7 +24,7 @@ export function useEnsemblesQuery(caseUuid: string | null): UseQueryResult<Array
 export function useTableDescriptionsQuery(
     ensemble: EnsembleIdent | null,
     allowEnable: boolean
-): UseQueryResult<Array<InplaceVolumetricsTableMetaData>> {
+): UseQueryResult<Array<InplaceVolumetricsTableMetaData_api>> {
     return useQuery({
         queryKey: ["getTableNamesAndDescriptions", ensemble],
         queryFn: () =>
@@ -43,9 +43,9 @@ export function useRealizationsResponseQuery(
     ensembleName: string | null,
     tableName: string | null,
     responseName: string | null,
-    requestBody: Body_get_realizations_response | null,
+    requestBody: Body_get_realizations_response_api | null,
     allowEnable: boolean
-): UseQueryResult<EnsembleScalarResponse> {
+): UseQueryResult<EnsembleScalarResponse_api> {
     return useQuery({
         queryKey: ["getRealizationResponse", caseUuid, ensembleName, tableName, responseName, requestBody],
         queryFn: () =>

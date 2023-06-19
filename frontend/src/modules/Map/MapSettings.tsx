@@ -1,7 +1,7 @@
 import React from "react";
 
-import { DynamicSurfaceDirectory, StaticSurfaceDirectory } from "@api";
-import { SurfaceStatisticFunction } from "@api";
+import { DynamicSurfaceDirectory_api, StaticSurfaceDirectory_api } from "@api";
+import { SurfaceStatisticFunction_api } from "@api";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { ModuleFCProps } from "@framework/Module";
 import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
@@ -33,7 +33,7 @@ export function MapSettings(props: ModuleFCProps<MapState>) {
     const [selectedSurfaceAttribute, setSelectedSurfaceAttribute] = React.useState<string | null>(null);
     const [realizationNum, setRealizationNum] = React.useState<number>(0);
     const [selectedTimeOrInterval, setSelectedTimeOrInterval] = React.useState<string | null>(null);
-    const [aggregation, setAggregation] = React.useState<SurfaceStatisticFunction | null>(null);
+    const [aggregation, setAggregation] = React.useState<SurfaceStatisticFunction_api | null>(null);
 
     const syncedSettingKeys = props.moduleContext.useSyncedSettingKeys();
     const syncHelper = new SyncSettingsHelper(syncedSettingKeys, props.workbenchServices);
@@ -202,7 +202,7 @@ export function MapSettings(props: ModuleFCProps<MapState>) {
         }
     }
 
-    function handleAggregationChanged(aggregation: SurfaceStatisticFunction | null) {
+    function handleAggregationChanged(aggregation: SurfaceStatisticFunction_api | null) {
         console.debug("handleAggregationChanged()");
         setAggregation(aggregation);
     }
@@ -319,7 +319,7 @@ export function MapSettings(props: ModuleFCProps<MapState>) {
 // Helpers
 // -------------------------------------------------------------------------------------
 
-function getValidAttributesForSurfName(surfName: string, surfDir: StaticSurfaceDirectory): string[] {
+function getValidAttributesForSurfName(surfName: string, surfDir: StaticSurfaceDirectory_api): string[] {
     const idxOfSurfName = surfDir.names.indexOf(surfName);
     if (idxOfSurfName == -1) {
         return [];
@@ -348,7 +348,7 @@ function fixupStringValueFromList(currValue: string | null, legalValues: string[
 function fixupStaticSurfAttribute(
     surfName: string | null,
     currAttribute: string | null,
-    surfDir: StaticSurfaceDirectory
+    surfDir: StaticSurfaceDirectory_api
 ): string | null {
     if (!surfName) {
         return null;
@@ -368,7 +368,7 @@ function fixupStaticSurfAttribute(
 function isValidStaticSurf(
     surfName: string | null,
     surfAttribute: string | null,
-    surfDir: StaticSurfaceDirectory
+    surfDir: StaticSurfaceDirectory_api
 ): boolean {
     if (!surfName || !surfAttribute) {
         return false;
@@ -389,7 +389,7 @@ function isValidStaticSurf(
 function isValidDynamicSurf(
     surfName: string | null,
     surfAttribute: string | null,
-    surfDir: DynamicSurfaceDirectory
+    surfDir: DynamicSurfaceDirectory_api
 ): boolean {
     if (!surfName || !surfAttribute) {
         return false;
@@ -405,7 +405,7 @@ function isValidDynamicSurf(
     return true;
 }
 
-function isValidDynamicSurfTimeOrInterval(timeOrInterval: string | null, surfDir: DynamicSurfaceDirectory): boolean {
+function isValidDynamicSurfTimeOrInterval(timeOrInterval: string | null, surfDir: DynamicSurfaceDirectory_api): boolean {
     if (!timeOrInterval || !surfDir) {
         return false;
     }

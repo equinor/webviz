@@ -1,4 +1,4 @@
-import { Frequency } from "@api";
+import { Frequency_api } from "@api";
 import { ModuleRegistry } from "@framework/ModuleRegistry";
 
 import { settings } from "./settings";
@@ -7,7 +7,7 @@ import { view } from "./view";
 
 const initialState: State = {
     vectorSpec: null,
-    resamplingFrequency: Frequency.MONTHLY,
+    resamplingFrequency: Frequency_api.MONTHLY,
     showStatistics: true,
     realizationsToInclude: null,
 };
