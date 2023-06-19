@@ -3,6 +3,7 @@ import React from "react";
 import { useStoreValue } from "@framework/StateStore";
 import { Workbench } from "@framework/Workbench";
 import { useActiveModuleId, useModuleInstances } from "@framework/hooks/workbenchHooks";
+import { resolveClassNames } from "@lib/components/_utils/resolveClassNames";
 
 import { Setting } from "./private-components/setting";
 
@@ -16,12 +17,8 @@ export const Settings: React.FC<SettingsProps> = (props) => {
 
     const syncSettingsActive = useStoreValue(props.workbench.getGuiStateStore(), "syncSettingsActive");
 
-    if (syncSettingsActive) {
-        return null;
-    }
-
     return (
-        <div className="bg-white p-4">
+        <div className={resolveClassNames("bg-white", "p-4", { hidden: syncSettingsActive })}>
             {moduleInstances.map((instance) => (
                 <Setting
                     key={instance.getId()}
