@@ -21,7 +21,6 @@ function keepValueInRange(value: number, min: number, max: number): number {
 }
 
 export const Slider = React.forwardRef((props: SliderProps, ref: React.ForwardedRef<HTMLDivElement>) => {
-    // eslint-disable-next-line react/destructuring-assignment
     const { displayValue, value: propsValue, ...rest } = props;
 
     const [value, setValue] = React.useState<number | number[]>(propsValue ?? 0);

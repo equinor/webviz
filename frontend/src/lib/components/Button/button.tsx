@@ -12,7 +12,6 @@ export type ButtonProps = {
 } & ButtonUnstyledProps;
 
 export const Button = React.forwardRef((props: ButtonProps, ref: React.ForwardedRef<HTMLButtonElement>) => {
-    // eslint-disable-next-line react/destructuring-assignment
     const { disabled, variant, children, startIcon, endIcon, ...rest } = props;
     const classNames = ["inline-flex", "items-center", "px-4", "py-2", "font-medium", "rounded-md"];
 

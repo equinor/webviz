@@ -13,7 +13,6 @@ export type IconButtonProps = {
 
 export const IconButton = React.forwardRef(
     (props: ButtonUnstyledProps & IconButtonProps, ref: React.ForwardedRef<HTMLButtonElement>) => {
-        // eslint-disable-next-line react/destructuring-assignment
         const { children, color, size, ...rest } = props;
         return (
             <BaseComponent disabled={rest.disabled}>
