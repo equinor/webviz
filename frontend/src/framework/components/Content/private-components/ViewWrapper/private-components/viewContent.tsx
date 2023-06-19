@@ -46,6 +46,7 @@ export const ViewContent = React.memo((props: ViewContentProps) => {
     return (
         <View
             moduleContext={props.moduleInstance.getContext()}
+            workbenchSession={props.workbench.getWorkbenchSession()}
             workbenchServices={props.workbench.getWorkbenchServices()}
         />
     );

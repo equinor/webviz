@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 import { ModuleFCProps } from "@framework/Module";
-import { useSubscribedValue } from "@framework/WorkbenchServices";
+import { useFirstEnsembleInEnsembleSet } from "@framework/WorkbenchSession";
 import { ApiStateWrapper } from "@lib/components/ApiStateWrapper";
 
 import { PvtData } from "@api";
@@ -28,12 +28,9 @@ const numberToOptions = (numbers: number[]): DropdownOption[] => {
     return numbers.map((number) => ({ label: number.toString(), value: number.toString() }));
 }
 
-export function settings({ moduleContext, workbenchServices }: ModuleFCProps<state>) {
-    // From Workbench
-    const workbenchEnsembles = useSubscribedValue("navigator.ensembles", workbenchServices);
-
+export function settings({ moduleContext, workbenchSession }: ModuleFCProps<state>) {
     //Just using the first ensemble for now
-    const selectedEnsemble = workbenchEnsembles?.[0] ?? { caseUuid: null, ensembleName: null };
+    const firstEnsemble = useFirstEnsembleInEnsembleSet(workbenchSession);
 
     // Settings state. Initialized/currently selected values
     const [activeRealization, setActiveRealization] = moduleContext.useStoreState("realization"); // Should be a query. not implemented
@@ -50,7 +47,7 @@ export function settings({ moduleContext, workbenchServices }: ModuleFCProps<sta
     const [availablePlots, setAvailablePlots] = React.useState<PlotOptionType[]>([]);
 
     // Queries
-    const pvtDataQuery = usePvtDataQuery(selectedEnsemble.caseUuid, selectedEnsemble.ensembleName, activeRealization);
+    const pvtDataQuery = usePvtDataQuery(firstEnsemble?.getCaseUuid() ?? null, firstEnsemble?.getEnsembleName() ?? null, activeRealization);
 
 
     // effect triggered by changing pvtName(phase). Updates available pvtNums, available plots and check if currently selected plots are still valid

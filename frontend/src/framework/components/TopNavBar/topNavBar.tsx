@@ -1,12 +1,11 @@
 import React from "react";
 
 import { useSetStoreValue } from "@framework/StateStore";
-import { useStoreValue } from "@framework/StateStore";
 import { Workbench } from "@framework/Workbench";
+import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { ShareIcon, WindowIcon } from "@heroicons/react/20/solid";
 import { Button } from "@lib/components/Button";
 import { Dialog } from "@lib/components/Dialog";
-import { IconButton } from "@lib/components/IconButton";
 
 // import { useWorkbenchActiveModuleName } from "@framework/hooks/useWorkbenchActiveModuleName";
 import { EnsembleSelector } from "../EnsembleSelector";
@@ -21,7 +20,7 @@ export const TopNavBar: React.FC<TopNavBarProps> = (props) => {
     const [ensembleDialogOpen, setEnsembleDialogOpen] = React.useState<boolean>(false);
     const setModulesListOpen = useSetStoreValue(props.workbench.getGuiStateStore(), "modulesListOpen");
     const setSyncSettingsActive = useSetStoreValue(props.workbench.getGuiStateStore(), "syncSettingsActive");
-    const selectedEnsembles = useStoreValue(props.workbench.getDataStateStore(), "selectedEnsembles");
+    const ensembleSet = useEnsembleSet(props.workbench.getWorkbenchSession());
 
     const handleEnsembleClick = () => {
         setEnsembleDialogOpen(true);
@@ -36,10 +35,11 @@ export const TopNavBar: React.FC<TopNavBarProps> = (props) => {
     };
 
     let ensembleButtonText = "Select ensembles";
-    if (selectedEnsembles.length > 0) {
-        ensembleButtonText = `${selectedEnsembles[0].caseName} - ${selectedEnsembles[0].ensembleName}`;
-        if (selectedEnsembles.length > 1) {
-            ensembleButtonText += ` and ${selectedEnsembles.length - 1} more`;
+    if (ensembleSet.hasAnyEnsembles()) {
+        const ensArr = ensembleSet.getEnsembleArr();
+        ensembleButtonText = ensArr[0].getDisplayName();
+        if (ensArr.length > 1) {
+            ensembleButtonText += ` and ${ensArr.length - 1} more`;
         }
     }
 

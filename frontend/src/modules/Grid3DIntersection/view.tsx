@@ -2,7 +2,7 @@ import React from "react";
 
 import { ModuleFCProps } from "@framework/Module";
 import { useElementSize } from "@lib/hooks/useElementSize";
-import { useSubscribedValue } from "@framework/WorkbenchServices";
+import { useFirstEnsembleInEnsembleSet } from "@framework/WorkbenchSession";
 
 import { useGridIntersection, useStatisticalGridIntersection } from "./queryHooks";
 import state from "./state";
@@ -10,14 +10,13 @@ import PlotlyGridIntersection from "./plotlyGridIntersection";
 
 
 //-----------------------------------------------------------------------------------------------------------
-export function view({ moduleContext, workbenchServices }: ModuleFCProps<state>) {
+export function view({ moduleContext, workbenchSession }: ModuleFCProps<state>) {
     // Viewport size
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);
     const wrapperDivSize = useElementSize(wrapperDivRef);
 
     // From Workbench
-    const selectedEnsembles = useSubscribedValue("navigator.ensembles", workbenchServices);
-    const selectedEnsemble = selectedEnsembles?.[0] ?? { caseUuid: null, ensembleName: null };
+    const firstEnsemble = useFirstEnsembleInEnsembleSet(workbenchSession);
 
     // State
     const gridName = moduleContext.useStoreValue("gridName");
@@ -26,8 +25,10 @@ export function view({ moduleContext, workbenchServices }: ModuleFCProps<state>)
     const useStatistics = moduleContext.useStoreValue("useStatistics");
 
     // Queries
-    const gridIntersectionQuery = useGridIntersection(selectedEnsemble.caseUuid, selectedEnsemble.ensembleName, gridName, parameterName, realizations ? realizations[0] : "0", useStatistics);
-    const statisticalGridIntersectionQuery = useStatisticalGridIntersection(selectedEnsemble.caseUuid, selectedEnsemble.ensembleName, gridName, parameterName, realizations, useStatistics);
+    const firstCaseUuid = firstEnsemble?.getCaseUuid() ?? null;
+    const firstEnsembleName = firstEnsemble?.getEnsembleName() ?? null;
+    const gridIntersectionQuery = useGridIntersection(firstCaseUuid, firstEnsembleName, gridName, parameterName, realizations ? realizations[0] : "0", useStatistics);
+    const statisticalGridIntersectionQuery = useStatisticalGridIntersection(firstCaseUuid,firstEnsembleName, gridName, parameterName, realizations, useStatistics);
 
 
 

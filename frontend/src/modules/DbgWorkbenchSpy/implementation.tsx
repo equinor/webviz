@@ -1,5 +1,7 @@
 import React from "react";
 
+import { EnsembleSet } from "@framework/EnsembleSet";
+import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { ModuleFCProps } from "@framework/Module";
 import { AllTopicDefinitions, WorkbenchServices } from "@framework/WorkbenchServices";
 import { Button } from "@lib/components/Button";
@@ -20,7 +22,7 @@ export function WorkbenchSpySettings(props: ModuleFCProps<SharedState>) {
 
 //-----------------------------------------------------------------------------------------------------------
 export function WorkbenchSpyView(props: ModuleFCProps<SharedState>) {
-    const [selectedEnsembles, selectedEnsembles_TS] = useServiceValueWithTS("navigator.ensembles", props.workbenchServices);
+    const ensembleSet = useEnsembleSet(props.workbenchSession);
     const [hoverRealization, hoverRealization_TS] = useServiceValueWithTS("global.hoverRealization", props.workbenchServices);
     const [hoverTimestamp, hoverTimestamp_TS] = useServiceValueWithTS("global.hoverTimestamp", props.workbenchServices);
     const triggeredRefreshCounter = props.moduleContext.useStoreValue("triggeredRefreshCounter");
@@ -32,21 +34,10 @@ export function WorkbenchSpyView(props: ModuleFCProps<SharedState>) {
 
     const componentLastRenderTS = getTimestampString();
 
-    let ensembleSpecAsString: string | undefined;
-    if (selectedEnsembles) {
-        if (selectedEnsembles.length > 0) {
-            ensembleSpecAsString = `${selectedEnsembles[0].ensembleName}  (${selectedEnsembles[0].caseUuid})`;
-        } else {
-            ensembleSpecAsString = "empty array";
-        }
-    }
-
     return (
         <code>
-            Navigator topics:
-            <table>
-                <tbody>{makeTableRow("ensembles", ensembleSpecAsString, selectedEnsembles_TS)}</tbody>
-            </table>
+            EnsembleSet:
+            {makeEnsembleSetTable(ensembleSet)}
             <br />
             Global topics:
             <table>
@@ -75,6 +66,24 @@ function makeTableRow(label: string, value: any, ts: string) {
             </td>
             <td>({ts})</td>
         </tr>
+    );
+}
+
+function makeEnsembleSetTable(ensembleSet: EnsembleSet) {
+    const ensembleArr = ensembleSet.getEnsembleArr();
+    return (
+        <table>
+            <tbody>
+                {ensembleArr.map((ens, index) => (
+                    <tr key={index}>
+                        <td> {ens.getEnsembleName()} </td>
+                        <td> ({ens.getCaseUuid()}) </td>
+                        <td> {ens.getRealizations().length} realizations</td>
+                        <td> {ens.hasSensitivities() ? "HasSens" : "noSense"}</td>
+                    </tr>
+                ))}
+            </tbody>
+        </table>
     );
 }
 

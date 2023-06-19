@@ -1,17 +1,19 @@
 import React from "react";
 
 import { InplaceVolumetricsCategoricalMetaData, InplaceVolumetricsTableMetaData } from "@api";
+import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { ModuleFCProps } from "@framework/Module";
-import { useSubscribedValue } from "@framework/WorkbenchServices";
+import { useEnsembleSet } from "@framework/WorkbenchSession";
+import { SingleEnsembleSelect } from "@framework/components/SingleEnsembleSelect";
+import { fixupEnsembleIdent } from "@framework/utils/ensembleUiHelpers";
 import { ApiStateWrapper } from "@lib/components/ApiStateWrapper/apiStateWrapper";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { Dropdown } from "@lib/components/Dropdown";
 import { Label } from "@lib/components/Label";
 import { Select } from "@lib/components/Select";
-import { Ensemble } from "@shared-types/ensemble";
 import { UseQueryResult } from "@tanstack/react-query";
 
-import { useEnsemblesQuery, useTableDescriptionsQuery } from "./queryHooks";
+import { useTableDescriptionsQuery } from "./queryHooks";
 import { State } from "./state";
 
 //-----------------------------------------------------------------------------------------------------------
@@ -68,38 +70,6 @@ function responsesToSelectOptions(responses: string[]): { value: string; label: 
         })) ?? []
     );
 }
-function fixupSelectedEnsembleName(currEnsemble: Ensemble | null, ensemblesArr: Ensemble[] | null): Ensemble | null {
-    if (!ensemblesArr) {
-        return null;
-    }
-
-    if (
-        currEnsemble &&
-        ensemblesArr &&
-        ensemblesArr.some(
-            (el) => el.caseUuid === currEnsemble.caseUuid && el.ensembleName === currEnsemble.ensembleName
-        )
-    ) {
-        return currEnsemble;
-    }
-
-    if (ensemblesArr.length > 0) {
-        return ensemblesArr[0];
-    }
-
-    return null;
-}
-function getEnsembleNameOptions(ensembles: Ensemble[] | null): { value: string; label: string }[] {
-    if (!ensembles) {
-        return [];
-    }
-    return (
-        ensembles.map((ensemble: Ensemble) => ({
-            value: `${ensemble.caseUuid}::${ensemble.ensembleName}`,
-            label: `${ensemble.caseName} - ${ensemble.ensembleName}`,
-        })) ?? []
-    );
-}
 function getTableNameOptions(
     tableDescriptionsQuery: UseQueryResult<InplaceVolumetricsTableMetaData[]>
 ): { value: string; label: string }[] {
@@ -126,30 +96,23 @@ function getTableResponseOptions(
     return responsesToSelectOptions(responses);
 }
 
-function ensembleToString(ensemble: Ensemble): string {
-    return `${ensemble.caseUuid}-${ensemble.ensembleName}`;
-}
-
-export function settings({ moduleContext, workbenchServices }: ModuleFCProps<State>) {
-    const selectedEnsembles = useSubscribedValue("navigator.ensembles", workbenchServices);
-    const [ensemble, setEnsemble] = moduleContext.useStoreState("ensemble");
+export function settings({ moduleContext, workbenchSession }: ModuleFCProps<State>) {
+    const ensembleSet = useEnsembleSet(workbenchSession);
+    const [ensembleIdent, setEnsembleIdent] = moduleContext.useStoreState("ensembleIdent");
     const [tableName, setTableName] = moduleContext.useStoreState("tableName");
     const [categoricalFilter, setCategoricalFilter] = moduleContext.useStoreState("categoricalFilter");
     const [responseName, setResponseName] = moduleContext.useStoreState("responseName");
-    const stashedEnsemble = React.useRef<Ensemble | null>(null);
 
-    const tableDescriptionsQuery = useTableDescriptionsQuery(ensemble, true);
+    const tableDescriptionsQuery = useTableDescriptionsQuery(ensembleIdent, true);
 
     React.useEffect(
         function selectDefaultEnsemble() {
-            if (selectedEnsembles) {
-                const candidate = selectedEnsembles.length > 0 ? selectedEnsembles[0] : stashedEnsemble.current;
-                setEnsemble(fixupSelectedEnsembleName(candidate, selectedEnsembles));
-            } else {
-                stashedEnsemble.current = ensemble ?? null;
+            const fixedEnsembleIdent = fixupEnsembleIdent(ensembleIdent, ensembleSet);
+            if (fixedEnsembleIdent !== ensembleIdent) {
+                setEnsembleIdent(fixedEnsembleIdent);
             }
         },
-        [selectedEnsembles, ensemble]
+        [ensembleSet, ensembleIdent]
     );
 
     React.useEffect(
@@ -167,13 +130,9 @@ export function settings({ moduleContext, workbenchServices }: ModuleFCProps<Sta
         [tableDescriptionsQuery.data]
     );
 
-    function handleEnsembleSelectionChange(ensembleString: string) {
+    function handleEnsembleSelectionChange(newEnsembleIdent: EnsembleIdent | null) {
         console.debug("handleEnsembleSelectionChange()");
-        const [caseUuid, ensembleName] = ensembleString.split("::");
-        const matchingEnsemble = selectedEnsembles?.find(
-            (el) => el.caseUuid === caseUuid && el.ensembleName === ensembleName
-        );
-        setEnsemble(matchingEnsemble ?? null);
+        setEnsembleIdent(newEnsembleIdent);
     }
     function handleTableChange(tableName: string) {
         console.debug("handleTableChange()");
@@ -202,7 +161,6 @@ export function settings({ moduleContext, workbenchServices }: ModuleFCProps<Sta
         setCategoricalFilter(currentCategoryFilter);
     }, []);
 
-    const ensembleOptions = getEnsembleNameOptions(selectedEnsembles);
     const tableNameOptions = getTableNameOptions(tableDescriptionsQuery);
     const tableCategoricalOptions = getTableCategoricalOptions(tableDescriptionsQuery, tableName);
     const responseOptions = getTableResponseOptions(tableDescriptionsQuery, tableName);
@@ -210,10 +168,10 @@ export function settings({ moduleContext, workbenchServices }: ModuleFCProps<Sta
     return (
         <>
             <Label text="Ensemble">
-                <Dropdown
-                    options={ensembleOptions}
-                    value={ensemble ? ensembleToString(ensemble) : ""}
-                    onChange={(ensembleName) => handleEnsembleSelectionChange(ensembleName)}
+                <SingleEnsembleSelect
+                    ensembleSet={ensembleSet}
+                    value={ensembleIdent}
+                    onChange={handleEnsembleSelectionChange}
                 />
             </Label>
             <ApiStateWrapper

@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { useSubscribedValue } from "@framework/WorkbenchServices";
+import { useFirstEnsembleInEnsembleSet } from "@framework/WorkbenchSession";
 import { ModuleFCProps } from "@framework/Module";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { usePvtDataQuery } from "./queryHooks";
@@ -8,24 +8,21 @@ import state from "./state";
 import { PvtQueryDataAccessor } from "./pvtQueryDataAccessor";
 import { PvtPlotAccessor, PlotDataType } from "./pvtPlotDataAccessor";
 import PlotlyPvtScatter from "./plotlyPvtScatter";
-import { set } from "lodash";
 //-----------------------------------------------------------------------------------------------------------
 
 
-export function view({ moduleContext, workbenchServices }: ModuleFCProps<state>) {
+export function view({ moduleContext, workbenchSession }: ModuleFCProps<state>) {
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);
     const wrapperDivSize = useElementSize(wrapperDivRef);
-    // From Workbench
-    const workbenchEnsembles = useSubscribedValue("navigator.ensembles", workbenchServices);
 
     //Just using the first ensemble for now
-    const selectedEnsemble = workbenchEnsembles?.[0] ?? { caseUuid: null, ensembleName: null };
+    const firstEnsemble = useFirstEnsembleInEnsembleSet(workbenchSession);
 
     const activeDataSet = moduleContext.useStoreValue("activeDataSet");
     const activeRealization = moduleContext.useStoreValue("realization");
 
     const [plotData, setPlotData] = React.useState<PlotDataType[]>([])
-    const pvtDataQuery = usePvtDataQuery(selectedEnsemble.caseUuid, selectedEnsemble.ensembleName, activeRealization);
+    const pvtDataQuery = usePvtDataQuery(firstEnsemble?.getCaseUuid() ?? null, firstEnsemble?.getEnsembleName() ?? null, activeRealization);
 
 
     useEffect(() => {
