@@ -2,8 +2,6 @@ import React from "react";
 
 import { CaseInfo, EnsembleInfo, FieldInfo } from "@api";
 import { apiService } from "@framework/ApiService";
-import { Workbench } from "@framework/Workbench";
-import { WorkbenchSessionEvent } from "@framework/WorkbenchSession";
 import { CheckIcon, PlusIcon, TrashIcon } from "@heroicons/react/20/solid";
 import { ApiStateWrapper } from "@lib/components/ApiStateWrapper";
 import { Button } from "@lib/components/Button";
@@ -13,7 +11,7 @@ import { Dropdown } from "@lib/components/Dropdown";
 import { IconButton } from "@lib/components/IconButton";
 import { Label } from "@lib/components/Label";
 import { Select } from "@lib/components/Select";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 
 import { isEqual } from "lodash";
 
@@ -24,22 +22,23 @@ export type EnsembleItem = {
 };
 
 export type SelectEnsemblesDialogProps = {
-    open: boolean;
-    onClose: () => void;
-    workbench: Workbench;
+    onClose: (selectedEnsembleIdents: EnsembleItem[] | null) => void;
+    selectedEnsembles: EnsembleItem[];
 };
+
+const STALE_TIME = 0;
+const CACHE_TIME = 5 * 60 * 1000;
 
 export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (props) => {
     const [confirmCancel, setConfirmCancel] = React.useState<boolean>(false);
     const [selectedField, setSelectedField] = React.useState<string>("");
     const [selectedCaseId, setSelectedCaseId] = React.useState<string>("");
     const [selectedEnsembleName, setSelectedEnsembleName] = React.useState<string>("");
-    const [originallySelectedEnsembles, setOriginallySelectedEnsembles] = React.useState<EnsembleItem[]>([]);
     const [newlySelectedEnsembles, setNewlySelectedEnsembles] = React.useState<EnsembleItem[]>([]);
 
-    // Is this the best way to get hold of the QueryClient
-    // Revisit this when we refactor the ensemble selection dialog
-    const queryClient = useQueryClient();
+    React.useLayoutEffect(() => {
+        setNewlySelectedEnsembles(props.selectedEnsembles);
+    }, [props.selectedEnsembles]);
 
     const fieldsQuery = useQuery({
         queryKey: ["getFields"],
@@ -59,6 +58,8 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
             return apiService.explore.getCases(computedFieldIdentifier);
         },
         enabled: fieldsQuery.isSuccess,
+        cacheTime: CACHE_TIME,
+        staleTime: STALE_TIME,
     });
 
     const computedCaseUuid = fixupCaseUuid(selectedCaseId, casesQuery.data);
@@ -72,28 +73,9 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
             return apiService.explore.getEnsembles(computedCaseUuid);
         },
         enabled: casesQuery.isSuccess,
+        cacheTime: CACHE_TIME,
+        staleTime: STALE_TIME,
     });
-
-    React.useEffect(() => {
-        const handleEnsemblesChanged = () => {
-            const ensArr = props.workbench.getWorkbenchSession().getEnsembleSet().getEnsembleArr();
-            const newSelection = ensArr.map((ens) => {
-                return {
-                    caseUuid: ens.getCaseUuid(),
-                    caseName: ens.getCaseName(),
-                    ensembleName: ens.getEnsembleName(),
-                };
-            });
-            setOriginallySelectedEnsembles(newSelection);
-            setNewlySelectedEnsembles(newSelection);
-        };
-
-        const unsubscribeFunc = props.workbench
-            .getWorkbenchSession()
-            .subscribe(WorkbenchSessionEvent.EnsembleSetChanged, handleEnsemblesChanged);
-
-        return unsubscribeFunc;
-    }, [props.workbench]);
 
     function handleFieldChanged(fieldIdentifier: string) {
         setSelectedField(fieldIdentifier);
@@ -138,12 +120,11 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
 
     function handleClose() {
         setConfirmCancel(false);
-        setNewlySelectedEnsembles(originallySelectedEnsembles);
-        props.onClose();
+        props.onClose(null);
     }
 
     function handleCancel() {
-        if (isEqual(originallySelectedEnsembles, newlySelectedEnsembles)) {
+        if (isEqual(props.selectedEnsembles, newlySelectedEnsembles)) {
             handleClose();
             return;
         }
@@ -151,9 +132,7 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
     }
 
     function handleApplyEnsembleSelection() {
-        props.workbench.loadAndSetupEnsembleSetInSession(queryClient, newlySelectedEnsembles);
-        props.onClose();
-        setOriginallySelectedEnsembles(newlySelectedEnsembles);
+        props.onClose(newlySelectedEnsembles);
     }
 
     const fieldOpts = fieldsQuery.data?.map((f) => ({ value: f.field_identifier, label: f.field_identifier })) ?? [];
@@ -166,14 +145,14 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
     return (
         <>
             <Dialog
-                open={props.open}
+                open={true}
                 onClose={handleCancel}
                 title="Select ensembles"
                 modal
                 width={"75%"}
                 actions={
                     <div className="flex gap-4">
-                        <Button onClick={handleCancel} color="danger">
+                        <Button onClick={handleClose} color="danger">
                             Discard changes
                         </Button>
                         <Button onClick={handleApplyEnsembleSelection}>Apply changes</Button>
@@ -261,7 +240,7 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                                     {newlySelectedEnsembles.map((item) => (
                                         <tr
                                             key={`${item.caseName}-${item.ensembleName}`}
-                                            className="hover:bg-slate-100"
+                                            className="hover:bg-slate-100 align-top odd:bg-slate-50"
                                         >
                                             <td className="p-2">
                                                 <div

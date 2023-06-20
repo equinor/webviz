@@ -1,1 +1,2 @@
-export { SelectEnsemblesDialog as EnsembleSelector } from "./selectEnsemblesDialog";
+export { SelectEnsemblesDialog } from "./selectEnsemblesDialog";
+export type { EnsembleItem } from "./selectEnsemblesDialog";
