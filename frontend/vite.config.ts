@@ -32,6 +32,7 @@ export default defineConfig(({ mode }) => {
                     app: paths.publicHtmlFile,
                 },
             },
+            sourcemap: true,
         },
         define: define,
         resolve: {

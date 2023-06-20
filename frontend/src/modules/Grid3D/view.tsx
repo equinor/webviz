@@ -1,7 +1,7 @@
 import React from "react";
 
 import { ModuleFCProps } from "@framework/Module";
-import { SubsurfaceViewer } from "@webviz/subsurface-components";
+import SubsurfaceViewer from "@webviz/subsurface-viewer";
 import { useFirstEnsembleInEnsembleSet } from "@framework/WorkbenchSession";
 import { useGridSurface, useGridParameter, useStatisticalGridParameter } from "./queryHooks";
 import state from "./state";
