@@ -1,13 +1,13 @@
-import { EnsembleSensitivity, EnsembleSensitivityCase } from "@api";
+import { EnsembleSensitivity_api, EnsembleSensitivityCase_api } from "@api";
 
 export class SensitivityAccessor {
-    private ensembleSensitivities: EnsembleSensitivity[];
+    private ensembleSensitivities: EnsembleSensitivity_api[];
 
-    constructor(ensembleSensitivities: EnsembleSensitivity[]) {
+    constructor(ensembleSensitivities: EnsembleSensitivity_api[]) {
         this.ensembleSensitivities = ensembleSensitivities;
     }
 
-    public getSensitivities(): EnsembleSensitivity[] {
+    public getSensitivities(): EnsembleSensitivity_api[] {
         // Return all sensitivities
         return this.ensembleSensitivities;
     }
@@ -16,7 +16,7 @@ export class SensitivityAccessor {
         return this.ensembleSensitivities.map((sensitivity) => sensitivity.name);
     }
 
-    public getSensitivityByName(sensitivityName: string): EnsembleSensitivity {
+    public getSensitivityByName(sensitivityName: string): EnsembleSensitivity_api {
         // Return sensitivity with given name
         const sensitivity = this.ensembleSensitivities.find((sensitivity) => sensitivity.name === sensitivityName);
         if (sensitivity === undefined) {
@@ -25,7 +25,7 @@ export class SensitivityAccessor {
         return sensitivity;
     }
 
-    public getCaseByName(sensitivityName: string, caseName: string): EnsembleSensitivityCase {
+    public getCaseByName(sensitivityName: string, caseName: string): EnsembleSensitivityCase_api {
         // Return case with given name from sensitivity with given name
         const sensitivity = this.getSensitivityByName(sensitivityName);
         const case_ = sensitivity.cases.find((case_) => case_.name === caseName);
