@@ -114,6 +114,7 @@ function buildSensitivityArrFromApiResponse(apiSensitivityArr: EnsembleSensitivi
 
         retSensitivityArr.push({
             name: apiSens.name,
+            // @ts-ignore 
             type: SensitivityType[apiSens.type as keyof typeof SensitivityType],
             cases: caseArr,
         });
