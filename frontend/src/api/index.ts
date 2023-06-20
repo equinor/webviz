@@ -29,6 +29,7 @@ export type { HTTPValidationError as HTTPValidationError_api } from './models/HT
 export type { InplaceVolumetricsCategoricalMetaData as InplaceVolumetricsCategoricalMetaData_api } from './models/InplaceVolumetricsCategoricalMetaData';
 export type { InplaceVolumetricsTableMetaData as InplaceVolumetricsTableMetaData_api } from './models/InplaceVolumetricsTableMetaData';
 export type { PvtData as PvtData_api } from './models/PvtData';
+export { SensitivityType as SensitivityType_api } from './models/SensitivityType';
 export type { StaticSurfaceDirectory as StaticSurfaceDirectory_api } from './models/StaticSurfaceDirectory';
 export { StatisticFunction as StatisticFunction_api } from './models/StatisticFunction';
 export type { StatisticValueObject as StatisticValueObject_api } from './models/StatisticValueObject';
