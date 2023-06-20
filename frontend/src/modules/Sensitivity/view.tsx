@@ -1,25 +1,20 @@
 import React from "react";
 
-import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { ModuleFCProps } from "@framework/Module";
-import { useSubscribedValue } from "@framework/WorkbenchServices";
-import { useEnsembleSet } from "@framework/WorkbenchSession";
-import { fixupEnsembleIdent } from "@framework/utils/ensembleUiHelpers";
+import { useFirstEnsembleInEnsembleSet } from "@framework/WorkbenchSession";
 import { AdjustmentsHorizontalIcon, ChartBarIcon, TableCellsIcon } from "@heroicons/react/20/solid";
 import { useElementSize } from "@lib/hooks/useElementSize";
 
-import { useGetSensitivities, useInplaceResponseQuery } from "./queryHooks";
-import { SensitivityAccessor } from "./sensitivityAccessor";
+import { useInplaceResponseQuery } from "./queryHooks";
 import SensitivityChart from "./sensitivityChart";
 import { SensitivityResponseCalculator } from "./sensitivityResponseCalculator";
 import SensitivityTable from "./sensitivityTable";
 import { PlotType, State } from "./state";
 
-export const view = ({ moduleContext, workbenchSession, workbenchServices }: ModuleFCProps<State>) => {
+export const view = ({ moduleContext, workbenchSession }: ModuleFCProps<State>) => {
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);
     const wrapperDivSize = useElementSize(wrapperDivRef);
-    const ensembleSet = useEnsembleSet(workbenchSession);
-    const [selectedEnsembleIdent, setSelectedEnsembleIdent] = React.useState<EnsembleIdent | null>(null);
+    const firstEnsemble = useFirstEnsembleInEnsembleSet(workbenchSession);
     const [plotType, setPlotType] = moduleContext.useStoreState("plotType");
     const [showLabels, setShowLabels] = React.useState(true);
     const [hideZeroY, setHideZeroY] = React.useState(false);
@@ -36,44 +31,31 @@ export const view = ({ moduleContext, workbenchSession, workbenchServices }: Mod
             setPlotType(PlotType.TORNADO);
         }
     };
-    React.useEffect(
-        function selectDefaultEnsemble() {
-            const fixedEnsembleIdent = fixupEnsembleIdent(selectedEnsembleIdent, ensembleSet);
-            if (fixedEnsembleIdent !== selectedEnsembleIdent) {
-                setSelectedEnsembleIdent(fixedEnsembleIdent);
-            }
-        },
-        [ensembleSet, selectedEnsembleIdent]
-    );
-    console.log(selectedEnsembleIdent);
+
+    console.log(firstEnsemble?.getDisplayName());
+
     //TEMPORARY QUERIES
     //This should be provided as a input slot
     const inplaceResponseQuery = useInplaceResponseQuery(
-        selectedEnsembleIdent?.getCaseUuid() || "",
-        selectedEnsembleIdent?.getEnsembleName() || "",
+        firstEnsemble?.getCaseUuid() || "",
+        firstEnsemble?.getEnsembleName() || "",
         "geogrid",
         "STOIIP_OIL"
     );
 
-    // This should be provided from workbench
-    const sensitivitiesQuery = useGetSensitivities(
-        selectedEnsembleIdent?.getCaseUuid() || "",
-        selectedEnsembleIdent?.getEnsembleName() || ""
-    );
-
     // Memoize the computation of sensitivity responses. Should we use useMemo?
+    const sensitivities = firstEnsemble?.getSensitivities();
     const computedSensitivityResponseDataset = React.useMemo(() => {
-        if (sensitivitiesQuery.data && inplaceResponseQuery.data) {
+        if (sensitivities && inplaceResponseQuery.data) {
             // TODO: Remove
             inplaceResponseQuery.data.unit = "Sm³";
             inplaceResponseQuery.data.name = "STOIIP_OIL";
-            const sensitivityAccessor = new SensitivityAccessor(sensitivitiesQuery.data);
             console.log("hello");
 
             // How to handle errors?
             try {
                 const sensitivityResponseCalculator = new SensitivityResponseCalculator(
-                    sensitivityAccessor,
+                    sensitivities,
                     inplaceResponseQuery.data
                 );
                 return sensitivityResponseCalculator.computeSensitivitiesForResponse();
@@ -83,7 +65,7 @@ export const view = ({ moduleContext, workbenchSession, workbenchServices }: Mod
             }
         }
         return null;
-    }, [sensitivitiesQuery.data, inplaceResponseQuery.data]);
+    }, [sensitivities, inplaceResponseQuery.data]);
 
     return (
         <div className="w-full h-full">

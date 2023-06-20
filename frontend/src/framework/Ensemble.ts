@@ -1,26 +1,11 @@
 import { EnsembleIdent } from "./EnsembleIdent";
-
-export enum SensitivityType {
-    MONTECARLO = "montecarlo",
-    SCENARIO = "scenario",
-}
-
-export type SensitivityCase = {
-    readonly name: string;
-    readonly realizations: number[];
-};
-
-export type Sensitivity = {
-    readonly name: string;
-    readonly type: SensitivityType;
-    readonly cases: SensitivityCase[];
-};
+import { EnsembleSensitivities, Sensitivity } from "./EnsembleSensitivities";
 
 export class Ensemble {
     private _ensembleIdent: EnsembleIdent;
     private _caseName: string;
     private _realizationsArr: number[];
-    private _sensitivityArr: Sensitivity[];
+    private _sensitivities: EnsembleSensitivities | null;
 
     constructor(
         caseUuid: string,
@@ -32,7 +17,11 @@ export class Ensemble {
         this._ensembleIdent = new EnsembleIdent(caseUuid, ensembleName);
         this._caseName = caseName;
         this._realizationsArr = Array.from(realizationsArr).sort((a, b) => a - b);
-        this._sensitivityArr = sensitivityArr ? sensitivityArr : [];
+
+        this._sensitivities = null;
+        if (sensitivityArr && sensitivityArr.length > 0) {
+            this._sensitivities = new EnsembleSensitivities(sensitivityArr);
+        }
     }
 
     getIdent(): EnsembleIdent {
@@ -71,11 +60,7 @@ export class Ensemble {
         return this._realizationsArr[this._realizationsArr.length - 1];
     }
 
-    hasSensitivities(): boolean {
-        return this._sensitivityArr && this._sensitivityArr.length > 0;
-    }
-
-    getSensitivities(): readonly Sensitivity[] {
-        return this._sensitivityArr;
+    getSensitivities(): EnsembleSensitivities | null {
+        return this._sensitivities;
     }
 }

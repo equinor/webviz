@@ -1,8 +1,6 @@
-import { EnsembleScalarResponse_api, EnsembleSensitivity_api, EnsembleSensitivityCase_api, SensitivityType_api } from "@api";
-
+import { EnsembleScalarResponse_api } from "@api";
+import { EnsembleSensitivities, Sensitivity, SensitivityCase, SensitivityType } from "@framework/EnsembleSensitivities";
 import { computeQuantile } from "@shared-utils/statistics";
-import { SensitivityAccessor } from "./sensitivityAccessor";
-
 
 export interface SensitivityResponse {
     sensitivityName: string;
@@ -34,22 +32,22 @@ enum SensitivityScale {
 const IGNORED_CASE = "ref";
 
 export class SensitivityResponseCalculator {
-    /** 
+    /**
      * Class for calculating sensitivities for a given Ensemble response
      */
     private ensembleResponse: EnsembleScalarResponse_api;
-    private sensitivityAccessor: SensitivityAccessor;
-    private referenceSensitivity: string
-    private referenceAverage: number
+    private sensitivities: EnsembleSensitivities;
+    private referenceSensitivity: string;
+    private referenceAverage: number;
 
     constructor(
-        sensitivityAccessor: SensitivityAccessor,
+        sensitivities: EnsembleSensitivities,
         ensembleResponse: EnsembleScalarResponse_api,
-        referenceSensitivity = "rms_seed") {
-
+        referenceSensitivity = "rms_seed"
+    ) {
         this.ensembleResponse = ensembleResponse;
-        this.sensitivityAccessor = sensitivityAccessor;
-        if (!this.sensitivityAccessor.hasSensitivityName(referenceSensitivity)) {
+        this.sensitivities = sensitivities;
+        if (!this.sensitivities.hasSensitivityName(referenceSensitivity)) {
             throw new Error(`SensitivityResponseCalculator: Reference sensitivity ${referenceSensitivity} not found in ensemble`);
         }
         this.referenceSensitivity = referenceSensitivity;
@@ -59,22 +57,23 @@ export class SensitivityResponseCalculator {
     public computeSensitivitiesForResponse(): SensitivityResponseDataset {
         // Compute sensitivity responses for all sensitivities
         const sensitivityResponses: SensitivityResponse[] = []
-        this.sensitivityAccessor.getSensitivities().forEach((sensitivity) => {
+        this.sensitivities.getSensitivityArr().forEach((sensitivity) => {
             //Skip if the sensitivity is the so called "ref" case. This is a special case that is not a sensitivity.
             if (sensitivity.name === IGNORED_CASE) {
                 // TODO: Add check for single realization
                 return;
             }
-            if (sensitivity.type === SensitivityType_api.SCENARIO) {
-                sensitivityResponses.push(this.computeScenarioSensitivityResponse(sensitivity))
+            if (sensitivity.type === SensitivityType.SCENARIO) {
+                sensitivityResponses.push(this.computeScenarioSensitivityResponse(sensitivity));
             }
-            else if (sensitivity.type === SensitivityType_api.MONTECARLO) {
-                sensitivityResponses.push(this.computeMonteCarloSensitivityResponse(sensitivity))
+            else if (sensitivity.type === SensitivityType.MONTECARLO) {
+                sensitivityResponses.push(this.computeMonteCarloSensitivityResponse(sensitivity));
             }
             else {
                 throw new Error(`SensitivityResponseCalculator: Sensitivity type ${sensitivity.type} not supported`);
             }
         })
+
         const sensitivityResponseDataset: SensitivityResponseDataset = {
             sensitivityResponses: this.sortSensitivityResponses(sensitivityResponses),
             referenceSensitivity: this.referenceSensitivity,
@@ -83,10 +82,8 @@ export class SensitivityResponseCalculator {
             responseName: this.ensembleResponse.name,
             responseUnit: this.ensembleResponse.unit,
         }
-        return sensitivityResponseDataset
+        return sensitivityResponseDataset;
     }
-
-
 
     private getResponseValuesForRealizations(realizations: number[]): number[] {
         //Find response values for given realizations
@@ -120,7 +117,7 @@ export class SensitivityResponseCalculator {
 
     private computeSensitivityAverage(sensitivityName: string): number {
         // Compute average of response values for given sensitivity
-        const sensitivity = this.sensitivityAccessor.getSensitivityByName(sensitivityName);
+        const sensitivity = this.sensitivities.getSensitivityByName(sensitivityName);
         const realizations: number[] = []
         sensitivity.cases.forEach((case_) => {
             case_.realizations.forEach((realization) => {
@@ -140,7 +137,7 @@ export class SensitivityResponseCalculator {
         return sortedSensitivityResponses
     }
 
-    private getSensitivityRealizationsLessOrEqualToReferenceAverage(sensitivity: EnsembleSensitivity_api): number[] {
+    private getSensitivityRealizationsLessOrEqualToReferenceAverage(sensitivity: Sensitivity): number[] {
         // Find realizations for which response is less than or equal to reference average
         const realizations: number[] = []
 
@@ -157,7 +154,7 @@ export class SensitivityResponseCalculator {
         return realizations;
     }
 
-    private getSensitivityRealizationsGreaterThanReferenceAverage(sensitivity: EnsembleSensitivity_api): number[] {
+    private getSensitivityRealizationsGreaterThanReferenceAverage(sensitivity: Sensitivity): number[] {
         // Find realizations for which response is greater than reference average
         const realizations: number[] = []
 
@@ -174,12 +171,12 @@ export class SensitivityResponseCalculator {
         return realizations;
     }
 
-    private computeMonteCarloSensitivityResponse(sensitivity: EnsembleSensitivity_api): SensitivityResponse {
+    private computeMonteCarloSensitivityResponse(sensitivity: Sensitivity): SensitivityResponse {
         // Compute sensitivity response for Monte Carlo sensitivity
         if (sensitivity.cases.length > 1) {
             throw new Error(`SensitivityResponseCalculator: Monte Carlo sensitivity ${sensitivity.name} has more than 1 case`);
         }
-        const sensitivityCase: EnsembleSensitivityCase_api = sensitivity.cases[0];
+        const sensitivityCase: SensitivityCase = sensitivity.cases[0];
         const sensitivityResponse: SensitivityResponse = {
             sensitivityName: sensitivity.name,
             lowCaseName: "P90",
@@ -194,7 +191,7 @@ export class SensitivityResponseCalculator {
         return sensitivityResponse;
     }
 
-    private computeScenarioSensitivityResponse(sensitivity: EnsembleSensitivity_api): SensitivityResponse {
+    private computeScenarioSensitivityResponse(sensitivity: Sensitivity): SensitivityResponse {
         // Compute sensitivity response for scenario sensitivity
         if (sensitivity.cases.length > 2) {
             throw new Error(`SensitivityResponseCalculator: Scenario sensitivity ${sensitivity.name} has more than 2 cases`);
@@ -202,7 +199,7 @@ export class SensitivityResponseCalculator {
         if (sensitivity.cases.length === 1) {
             // Only one case. I.e. low and high case are the same
             // TODO: Map to either low or high case dependent on diff to reference
-            const sensitivityCase: EnsembleSensitivityCase_api = sensitivity.cases[0];
+            const sensitivityCase: SensitivityCase = sensitivity.cases[0];
             return {
                 sensitivityName: sensitivity.name,
                 lowCaseName: sensitivityCase.name,

@@ -2,8 +2,9 @@ import { EnsembleDetails_api, EnsembleParameterDescription_api, EnsembleSensitiv
 import { apiService } from "@framework/ApiService";
 import { QueryClient } from "@tanstack/react-query";
 
-import { Ensemble, Sensitivity, SensitivityCase, SensitivityType } from "../Ensemble";
+import { Ensemble } from "../Ensemble";
 import { EnsembleIdent } from "../EnsembleIdent";
+import { Sensitivity, SensitivityCase } from "../EnsembleSensitivities";
 import { EnsembleSet } from "../EnsembleSet";
 
 export async function loadEnsembleSetMetadataFromBackend(
@@ -114,8 +115,7 @@ function buildSensitivityArrFromApiResponse(apiSensitivityArr: EnsembleSensitivi
 
         retSensitivityArr.push({
             name: apiSens.name,
-            // @ts-ignore 
-            type: SensitivityType[apiSens.type as keyof typeof SensitivityType],
+            type: apiSens.type,
             cases: caseArr,
         });
     }
