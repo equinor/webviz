@@ -13,6 +13,6 @@ export type EnsembleParameter = {
     group_name?: string;
     descriptive_name?: string;
     realizations: Array<number>;
-    values: Array<(string | number)>;
+    values: (Array<number> | Array<string>);
 };
 
