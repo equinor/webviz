@@ -1,6 +1,6 @@
 import React from "react";
 
-import { CaseInfo, EnsembleInfo, FieldInfo } from "@api";
+import { CaseInfo_api, EnsembleInfo_api, FieldInfo_api } from "@api";
 import { apiService } from "@framework/ApiService";
 import { CheckIcon, PlusIcon, TrashIcon } from "@heroicons/react/20/solid";
 import { ApiStateWrapper } from "@lib/components/ApiStateWrapper";
@@ -53,7 +53,7 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
         queryKey: ["getCases", computedFieldIdentifier],
         queryFn: () => {
             if (!computedFieldIdentifier) {
-                return Promise.resolve<CaseInfo[]>([]);
+                return Promise.resolve<CaseInfo_api[]>([]);
             }
             return apiService.explore.getCases(computedFieldIdentifier);
         },
@@ -68,7 +68,7 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
         queryKey: ["getEnsembles", computedCaseUuid],
         queryFn: () => {
             if (!computedCaseUuid) {
-                return Promise.resolve<EnsembleInfo[]>([]);
+                return Promise.resolve<EnsembleInfo_api[]>([]);
             }
             return apiService.explore.getEnsembles(computedCaseUuid);
         },
@@ -301,7 +301,7 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
     );
 };
 
-function fixupFieldIdentifier(currFieldIdentifier: string, fieldArr: FieldInfo[] | undefined): string {
+function fixupFieldIdentifier(currFieldIdentifier: string, fieldArr: FieldInfo_api[] | undefined): string {
     const fieldIdentifiers = fieldArr ? fieldArr.map((item) => item.field_identifier) : [];
     if (currFieldIdentifier && fieldIdentifiers.includes(currFieldIdentifier)) {
         return currFieldIdentifier;
@@ -314,7 +314,7 @@ function fixupFieldIdentifier(currFieldIdentifier: string, fieldArr: FieldInfo[]
     return "";
 }
 
-function fixupCaseUuid(currCaseUuid: string, caseArr: CaseInfo[] | undefined): string {
+function fixupCaseUuid(currCaseUuid: string, caseArr: CaseInfo_api[] | undefined): string {
     const caseIds = caseArr ? caseArr.map((item) => item.uuid) : [];
     if (currCaseUuid && caseIds.includes(currCaseUuid)) {
         return currCaseUuid;
@@ -327,7 +327,7 @@ function fixupCaseUuid(currCaseUuid: string, caseArr: CaseInfo[] | undefined): s
     return "";
 }
 
-function fixupEnsembleName(currEnsembleName: string, ensembleArr: EnsembleInfo[] | undefined): string {
+function fixupEnsembleName(currEnsembleName: string, ensembleArr: EnsembleInfo_api[] | undefined): string {
     const ensembleNames = ensembleArr ? ensembleArr.map((item) => item.name) : [];
     if (currEnsembleName && ensembleNames.includes(currEnsembleName)) {
         return currEnsembleName;

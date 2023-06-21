@@ -3,7 +3,6 @@ import { ModuleFCProps } from "@framework/Module";
 import { useFirstEnsembleInEnsembleSet } from "@framework/WorkbenchSession";
 import { ApiStateWrapper } from "@lib/components/ApiStateWrapper";
 
-import { PvtData } from "@api";
 import { usePvtDataQuery } from "./queryHooks";
 
 import { Checkbox } from "@lib/components/Checkbox";

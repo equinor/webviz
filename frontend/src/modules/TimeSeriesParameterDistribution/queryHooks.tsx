@@ -1,5 +1,5 @@
-import { Frequency, VectorDescription } from "@api";
-import { VectorRealizationData, EnsembleParameterDescription, EnsembleScalarResponse, EnsembleParameter } from "@api";
+import { Frequency_api, VectorDescription_api } from "@api";
+import { VectorRealizationData_api, EnsembleParameterDescription_api, EnsembleScalarResponse_api, EnsembleParameter_api } from "@api";
 import { apiService } from "@framework/ApiService";
 import { UseQueryResult, useQuery } from "@tanstack/react-query";
 
@@ -9,7 +9,7 @@ const CACHE_TIME = 60 * 1000;
 export function useVectorsQuery(
     caseUuid: string | undefined,
     ensembleName: string | undefined
-): UseQueryResult<Array<VectorDescription>> {
+): UseQueryResult<Array<VectorDescription_api>> {
     return useQuery({
         queryKey: ["getVectorNamesAndDescriptions", caseUuid, ensembleName],
         queryFn: () => apiService.timeseries.getVectorNamesAndDescriptions(caseUuid ?? "", ensembleName ?? ""),
@@ -35,9 +35,9 @@ export function useVectorDataQuery(
     caseUuid: string | undefined,
     ensembleName: string | undefined,
     vectorName: string | undefined,
-    resampleFrequency: Frequency | null,
+    resampleFrequency: Frequency_api | null,
     realizationsToInclude: number[] | null
-): UseQueryResult<Array<VectorRealizationData>> {
+): UseQueryResult<Array<VectorRealizationData_api>> {
     return useQuery({
         queryKey: [
             "getRealizationsVectorData",
@@ -65,7 +65,7 @@ export function useGetParameterNamesQuery(
     caseUuid: string | undefined,
     ensembleName: string | undefined,
 
-): UseQueryResult<EnsembleParameterDescription[]> {
+): UseQueryResult<EnsembleParameterDescription_api[]> {
     return useQuery({
         queryKey: [
             "getParameterNamesAndDescription",
@@ -90,7 +90,7 @@ export function useParameterQuery(
     parameterName: string | undefined,
 
 
-): UseQueryResult<EnsembleParameter> {
+): UseQueryResult<EnsembleParameter_api> {
     return useQuery({
         queryKey: [
             "getParameter",
@@ -118,7 +118,7 @@ export function useVectorAtTimestepQuery(
     timeStep: string | null
 
 
-): UseQueryResult<EnsembleScalarResponse> {
+): UseQueryResult<EnsembleScalarResponse_api> {
     return useQuery({
         queryKey: [
             "getRealizationVectorAtTimestep",

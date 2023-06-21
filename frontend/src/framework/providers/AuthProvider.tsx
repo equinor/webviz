@@ -1,6 +1,6 @@
 import React from "react";
 
-import { UserInfo } from "@api";
+import { UserInfo_api } from "@api";
 import { apiService } from "@framework/ApiService";
 
 import { createGenericContext } from "../utils/genericContext";
@@ -13,7 +13,7 @@ export enum AuthState {
 
 type Context = {
     authState: AuthState;
-    userInfo: UserInfo | null;
+    userInfo: UserInfo_api | null;
     setAuthState: React.Dispatch<React.SetStateAction<AuthState>>;
 };
 
@@ -21,7 +21,7 @@ const [useAuthContextProvider, AuthContextProvider] = createGenericContext<Conte
 
 export const AuthProvider: React.FC<{ children: React.ReactElement }> = (props) => {
     const [authState, setAuthState] = React.useState<AuthState>(AuthState.NotLoggedIn);
-    const [userInfo, setUserInfo] = React.useState<UserInfo | null>(null);
+    const [userInfo, setUserInfo] = React.useState<UserInfo_api | null>(null);
 
     React.useEffect(() => {
         if (!apiService) {

@@ -1,10 +1,10 @@
-import { PvtData } from '@api'
+import { PvtData_api } from '@api'
 
 export class PvtQueryDataAccessor {
-    private pvtQueryData: PvtData[];
+    private pvtQueryData: PvtData_api[];
 
 
-    constructor(pvtQueryData: PvtData[]) {
+    constructor(pvtQueryData: PvtData_api[]) {
         this.pvtQueryData = pvtQueryData;
     }
 
@@ -18,7 +18,7 @@ export class PvtQueryDataAccessor {
 
     }
 
-    getPvtData(pvtName: string, pvtNum: number): PvtData {
+    getPvtData(pvtName: string, pvtNum: number): PvtData_api {
         const data = this.pvtQueryData.filter((pvtData) => (pvtData.name == pvtName && pvtData.pvtnum == pvtNum));
         return data[0];
     }

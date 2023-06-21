@@ -1,7 +1,7 @@
 import React from "react";
 import Plot from "react-plotly.js";
 
-import { Body_get_realizations_response } from "@api";
+import { Body_get_realizations_response_api } from "@api";
 import { BroadcastChannelMeta } from "@framework/Broadcaster";
 import { ModuleFCProps } from "@framework/Module";
 import { useSubscribedValue } from "@framework/WorkbenchServices";
@@ -23,7 +23,7 @@ export const view = (props: ModuleFCProps<State>) => {
     const tableName = props.moduleContext.useStoreValue("tableName");
     const responseName = props.moduleContext.useStoreValue("responseName");
     const categoryFilter = props.moduleContext.useStoreValue("categoricalFilter");
-    const responseBody: Body_get_realizations_response = { categorical_filter: categoryFilter || undefined };
+    const responseBody: Body_get_realizations_response_api = { categorical_filter: categoryFilter || undefined };
     const realizationsResponseQuery = useRealizationsResponseQuery(
         ensembleIdent?.getCaseUuid() ?? "",
         ensembleIdent?.getEnsembleName() ?? "",

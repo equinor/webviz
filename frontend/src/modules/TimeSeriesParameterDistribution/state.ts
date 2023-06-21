@@ -1,5 +1,3 @@
-import { Frequency } from "@api";
-
 export interface VectorSpec {
     caseUuid: string;
     caseName: string;
