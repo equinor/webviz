@@ -28,6 +28,7 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
     const ensembleSet = useEnsembleSet(workbenchSession);
     const [selectedEnsembleIdent, setSelectedEnsembleIdent] = React.useState<EnsembleIdent | null>(null);
     const [selectedVectorName, setSelectedVectorName] = React.useState<string>("");
+    const [selectedSensitivity, setSelectedSensitivity] = moduleContext.useStoreState("selectedSensitivity");
     const [resampleFrequency, setResamplingFrequency] = moduleContext.useStoreState("resamplingFrequency");
     const [showStatistics, setShowStatistics] = moduleContext.useStoreState("showStatistics");
     const [showRealizations, setShowRealizations] = moduleContext.useStoreState("showRealizations");
@@ -74,6 +75,7 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
     );
 
     const computedEnsemble = computedEnsembleIdent ? ensembleSet.findEnsemble(computedEnsembleIdent) : null;
+    const sensitivities = computedEnsemble?.getSensitivities();
 
     function handleEnsembleSelectionChange(ensembleIdentArr: EnsembleIdent[]) {
         console.debug("handleEnsembleSelectionChange()", ensembleIdentArr);
@@ -101,6 +103,9 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
         }
         console.debug(`handleFrequencySelectionChange()  newFreqStr=${newFreqStr}  newFreq=${newFreq}`);
         setResamplingFrequency(newFreq);
+    }
+    if (!sensitivities?.getSensitivityArr()) {
+        return <div>This is not a sensitivity ensemble</div>;
     }
 
     return (
@@ -141,6 +146,20 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
                     onChange={handleFrequencySelectionChange}
                 />
             </Label>
+
+            <Label
+                text="Sensitivity"
+                labelClassName={syncHelper.isSynced(SyncSettingKey.TIME_SERIES) ? "bg-indigo-700 text-white" : ""}
+            >
+                <Select
+                    options={sensitivities.getSensitivityNames().map((name) => ({ value: name, label: name }))}
+                    value={selectedSensitivity ? [selectedSensitivity] : [sensitivities.getSensitivityNames()[0]]}
+                    onChange={(sensarr) => setSelectedSensitivity(sensarr[0])}
+                    filter={true}
+                    size={10}
+                />
+            </Label>
+
             <Checkbox
                 label="Show statistics"
                 checked={showStatistics}

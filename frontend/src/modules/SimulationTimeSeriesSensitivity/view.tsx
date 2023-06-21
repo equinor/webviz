@@ -1,17 +1,25 @@
 import React from "react";
 import Plot from "react-plotly.js";
 
+import { VectorRealizationData_api } from "@api";
 import { BroadcastChannelMeta } from "@framework/Broadcaster";
 import { ModuleFCProps } from "@framework/Module";
 import { useSubscribedValue } from "@framework/WorkbenchServices";
 import { useElementSize } from "@lib/hooks/useElementSize";
 
-import { Layout, PlotData, PlotHoverEvent } from "plotly.js";
+import { indexOf } from "lodash";
+import { Layout, PlotHoverEvent } from "plotly.js";
 
 import { BroadcastChannelNames } from "./channelDefs";
-import { useStatisticalVectorDataQuery, useVectorDataQuery } from "./queryHooks";
-import { TimeSeriesPlotData, createRealizationLineTraces } from "./simulationTimeSeriesChart/traces";
+import { useStatisticalVectorSensitivityDataQuery, useVectorDataQuery } from "./queryHooks";
+import {
+    TimeSeriesPlotData,
+    createRealizationLineTraces,
+    sensitivityStatisticsTrace,
+} from "./simulationTimeSeriesChart/traces";
 import { State } from "./state";
+
+import { StatisticFunction } from "../../api/models/StatisticFunction";
 
 export const view = ({ moduleContext, workbenchSession, workbenchServices }: ModuleFCProps<State>) => {
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);
@@ -20,25 +28,26 @@ export const view = ({ moduleContext, workbenchSession, workbenchServices }: Mod
     const resampleFrequency = moduleContext.useStoreValue("resamplingFrequency");
     const showStatistics = moduleContext.useStoreValue("showStatistics");
     const showRealizations = moduleContext.useStoreValue("showRealizations");
-    const realizationsToInclude = moduleContext.useStoreValue("realizationsToInclude");
+    const selectedSensitivity = moduleContext.useStoreValue("selectedSensitivity");
 
-    const vectorQuery = useVectorDataQuery(
+    const [hoveredTimestamp, setHoveredTimestamp] = React.useState<string | null>(null);
+    const [traceDataArr, setTraceDataArr] = React.useState<TimeSeriesPlotData[]>([]);
+
+    const realizationsQuery = useVectorDataQuery(
         vectorSpec?.ensembleIdent.getCaseUuid(),
         vectorSpec?.ensembleIdent.getEnsembleName(),
         vectorSpec?.vectorName,
         resampleFrequency,
-        realizationsToInclude
+        null
     );
 
-    const statisticsQuery = useStatisticalVectorDataQuery(
+    const statisticsQuery = useStatisticalVectorSensitivityDataQuery(
         vectorSpec?.ensembleIdent.getCaseUuid(),
         vectorSpec?.ensembleIdent.getEnsembleName(),
         vectorSpec?.vectorName,
         resampleFrequency,
-        realizationsToInclude,
         showStatistics
     );
-
     const ensembleSet = workbenchSession.getEnsembleSet();
     const ensemble = vectorSpec ? ensembleSet.findEnsemble(vectorSpec.ensembleIdent) : null;
 
@@ -50,13 +59,18 @@ export const view = ({ moduleContext, workbenchSession, workbenchServices }: Mod
 
             const dataGenerator = (): { key: number; value: number }[] => {
                 const data: { key: number; value: number }[] = [];
-                if (vectorQuery.data) {
-                    vectorQuery.data.forEach((vec) => {
+                if (realizationsQuery.data) {
+                    realizationsQuery.data.forEach((vec) => {
+                        const indexOfTimeStamp = indexOf(vec.timestamps, hoveredTimestamp);
                         data.push({
                             key: vec.realization,
-                            value: vec.values[0],
+                            value: indexOfTimeStamp === -1 ? 0 : vec.values[indexOfTimeStamp],
                         });
                     });
+                }
+                // hack
+                if (data.length === 0) {
+                    data.push({ key: 1, value: 1 });
                 }
                 return data;
             };
@@ -64,30 +78,87 @@ export const view = ({ moduleContext, workbenchSession, workbenchServices }: Mod
             const channelMeta: BroadcastChannelMeta = {
                 ensembleIdent: ensemble.getIdent(),
                 description: `${ensemble.getDisplayName()} ${vectorSpec?.vectorName}`,
-                unit: vectorQuery.data?.at(0)?.unit || "",
+                unit: realizationsQuery.data?.at(0)?.unit || "",
             };
 
             moduleContext.getChannel(BroadcastChannelNames.Realization_Value).broadcast(channelMeta, dataGenerator);
         },
-        [vectorQuery.data, ensemble, vectorSpec, moduleContext]
+        [realizationsQuery.data, ensemble, vectorSpec, hoveredTimestamp, moduleContext]
     );
 
-    // React.useEffect(
-    //     function subscribeToHoverRealizationTopic() {
-    //         const unsubscribeFunc = workbenchServices.subscribe("global.hoverRealization", ({ realization }) => {
-    //             setHighlightRealization(realization);
-    //         });
-    //         return unsubscribeFunc;
-    //     },
-    //     [workbenchServices]
-    // );
+    React.useEffect(() => {
+        const traceDataArr: TimeSeriesPlotData[] = [];
+
+        if (selectedSensitivity && vectorSpec) {
+            const ensemble = ensembleSet.findEnsemble(vectorSpec.ensembleIdent);
+            if (ensemble) {
+                const sensitivity = ensemble.getSensitivities()?.getSensitivityByName(selectedSensitivity);
+                if (sensitivity) {
+                    if (statisticsQuery.data) {
+                        const meanCase = statisticsQuery.data.filter((stat) => stat.sensitivity_name === "rms_seed")[0];
+                        const meanObj = meanCase.value_objects.filter(
+                            (statObj) => statObj.statistic_function === StatisticFunction.MEAN
+                        );
+                        traceDataArr.push(
+                            sensitivityStatisticsTrace(
+                                meanCase.timestamps,
+                                meanObj[0].values,
+                                `reference ${meanCase.sensitivity_name}`,
+                                "linear",
+                                "solid",
+                                "black"
+                            )
+                        );
+                        if (showStatistics) {
+                            const cases = statisticsQuery.data.filter(
+                                (stat) => stat.sensitivity_name === selectedSensitivity
+                            );
+                            if (cases) {
+                                for (const caseIdent of cases) {
+                                    const meanObj = caseIdent.value_objects.filter(
+                                        (statObj) => statObj.statistic_function === StatisticFunction.MEAN
+                                    );
+                                    traceDataArr.push(
+                                        sensitivityStatisticsTrace(
+                                            caseIdent.timestamps,
+                                            meanObj[0].values,
+                                            caseIdent.sensitivity_case,
+                                            "linear",
+                                            "dash"
+                                        )
+                                    );
+                                }
+                            }
+                        }
+                    }
+                    if (showRealizations && realizationsQuery.data) {
+                        for (const caseIdent of sensitivity.cases) {
+                            const realsToInclude = caseIdent.realizations;
+                            const realizationData: VectorRealizationData_api[] = realizationsQuery.data.filter((vec) =>
+                                realsToInclude.includes(vec.realization)
+                            );
+                            const traces = createRealizationLineTraces(realizationData);
+                            traceDataArr.push(...traces);
+                        }
+                    }
+                }
+            }
+        }
+        setTraceDataArr(traceDataArr);
+    }, [vectorSpec, showRealizations, showStatistics, selectedSensitivity]);
 
     const subscribedPlotlyTimeStamp = useSubscribedValue("global.hoverTimestamp", workbenchServices);
-    const subscribedPlotlyRealization = useSubscribedValue("global.hoverRealization", workbenchServices);
-    // const highlightedTrace
+
     const handleHover = (e: PlotHoverEvent) => {
         if (e.xvals.length > 0 && typeof e.xvals[0]) {
-            workbenchServices.publishGlobalData("global.hoverTimestamp", { timestamp: e.xvals[0] as number });
+            // workbenchServices.publishGlobalData("global.hoverTimestamp", { timestamp: e.xvals[0] as number });
+
+            // // Big hack
+            // console.log("DATE DATE DATE", e.points[0].x);
+            // console.log(e);
+            // const hoverDate = new Date(e.xvals[0] as number);
+            // const hoverDateString = hoverDate.toISOString().split(".")[0].split("T")[0] + "T00:00:00.000";
+            setHoveredTimestamp(e.points[0].x as string);
         }
         const curveData = e.points[0].data as TimeSeriesPlotData;
         if (typeof curveData.realizationNumber === "number") {
@@ -103,60 +174,10 @@ export const view = ({ moduleContext, workbenchSession, workbenchServices }: Mod
         workbenchServices.publishGlobalData("global.hoverRealization", { realization: -1 });
     }
 
-    const tracesDataArr: TimeSeriesPlotData[] = [];
     let unitString = "";
 
-    if (showRealizations && vectorQuery.data && vectorQuery.data.length > 0) {
-        tracesDataArr.push(...createRealizationLineTraces(vectorQuery.data, subscribedPlotlyRealization?.realization));
-        // let highlightedTrace: TimeSeriesPlotData | null = null;
-        // unitString = vectorQuery.data[0].unit;
-        // for (let i = 0; i < vectorQuery.data.length; i++) {
-        //     const vec = vectorQuery.data[i];
-        //     const isHighlighted = vec.realization === subscribedPlotlyRealization?.realization ? true : false;
-        //     const curveColor = vec.realization === subscribedPlotlyRealization?.realization ? "red" : "green";
-        //     const lineWidth = vec.realization === subscribedPlotlyRealization?.realization ? 3 : 1;
-        //     const lineShape = vec.is_rate ? "vh" : "linear";
-        //     const trace: TimeSeriesPlotData = {
-        //         x: vec.timestamps,
-        //         y: vec.values,
-        //         name: `real-${vec.realization}`,
-        //         realizationNumber: vec.realization,
-        //         legendrank: vec.realization,
-        //         type: "scatter",
-        //         mode: "lines",
-        //         line: { color: curveColor, width: lineWidth, shape: lineShape },
-        //     };
-
-        //     if (isHighlighted) {
-        //         highlightedTrace = trace;
-        //     } else {
-        //         tracesDataArr.push(trace);
-        //     }
-        // }
-
-        // if (highlightedTrace) {
-        //     tracesDataArr.push(highlightedTrace);
-        // }
-    }
-
-    if (showStatistics && statisticsQuery.data) {
-        const lineShape = statisticsQuery.data.is_rate ? "vh" : "linear";
-        for (const statValueObj of statisticsQuery.data.value_objects) {
-            const trace: TimeSeriesPlotData = {
-                x: statisticsQuery.data.timestamps,
-                y: statValueObj.values,
-                name: statValueObj.statistic_function,
-                legendrank: -1,
-                type: "scatter",
-                mode: "lines",
-                line: { color: "lightblue", width: 2, dash: "dot", shape: lineShape },
-            };
-            tracesDataArr.push(trace);
-        }
-    }
-
     let title = "N/A";
-    const hasGotAnyRequestedData = vectorQuery.data || (showStatistics && statisticsQuery.data);
+    const hasGotAnyRequestedData = realizationsQuery.data;
     if (ensemble && vectorSpec && hasGotAnyRequestedData) {
         const ensembleDisplayName = ensemble.getDisplayName();
         title = `${vectorSpec.vectorName} [${unitString}] - ${ensembleDisplayName}`;
@@ -166,6 +187,9 @@ export const view = ({ moduleContext, workbenchSession, workbenchServices }: Mod
         width: wrapperDivSize.width,
         height: wrapperDivSize.height,
         title: title,
+        xaxis: {
+            type: "category",
+        },
     };
 
     if (subscribedPlotlyTimeStamp) {
@@ -189,7 +213,7 @@ export const view = ({ moduleContext, workbenchSession, workbenchServices }: Mod
     return (
         <div className="w-full h-full" ref={wrapperDivRef}>
             <Plot
-                data={tracesDataArr}
+                data={traceDataArr}
                 layout={layout}
                 config={{ scrollZoom: true }}
                 onHover={handleHover}

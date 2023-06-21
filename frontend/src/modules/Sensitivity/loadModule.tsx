@@ -1,15 +1,14 @@
 import { ModuleRegistry } from "@framework/ModuleRegistry";
 
 import { settings } from "./settings";
-import { State, PlotType } from "./state";
+import { PlotType, State } from "./state";
 import { view } from "./view";
 
 const initialState: State = {
     plotType: PlotType.TORNADO,
-    selectedSensitivity: null
-
+    selectedSensitivity: null,
+    responseChannelName: null,
 };
-
 
 const module = ModuleRegistry.initModule<State>("Sensitivity", initialState);
 

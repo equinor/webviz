@@ -8,6 +8,7 @@ import { view } from "./view";
 const initialState: State = {
     vectorSpec: null,
     resamplingFrequency: Frequency_api.MONTHLY,
+    selectedSensitivity: null,
     showStatistics: true,
     showRealizations: false,
     realizationsToInclude: null,

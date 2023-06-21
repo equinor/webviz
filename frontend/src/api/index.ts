@@ -42,6 +42,7 @@ export type { VectorHistoricalData as VectorHistoricalData_api } from './models/
 export type { VectorMetadata as VectorMetadata_api } from './models/VectorMetadata';
 export type { VectorRealizationData as VectorRealizationData_api } from './models/VectorRealizationData';
 export type { VectorStatisticData as VectorStatisticData_api } from './models/VectorStatisticData';
+export type { VectorStatisticSensitivityData as VectorStatisticSensitivityData_api } from './models/VectorStatisticSensitivityData';
 
 export { CorrelationsService } from './services/CorrelationsService';
 export { DefaultService } from './services/DefaultService';

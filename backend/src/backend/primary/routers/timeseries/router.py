@@ -2,12 +2,16 @@ import datetime
 import logging
 from typing import List, Optional, Sequence, Union
 
+import pyarrow as pa
+import pyarrow.compute as pc
 from fastapi import APIRouter, Depends, HTTPException, Query
 
 from src.services.summary_vector_statistics import compute_vector_statistics
 from src.services.sumo_access.summary_access import Frequency, SummaryAccess
+from src.services.sumo_access.parameter_access import ParameterAccess
 from src.services.utils.authenticated_user import AuthenticatedUser
 from src.services.types.generic_types import EnsembleScalarResponse
+from src.services.types.parameter_types import EnsembleSensitivity
 from src.backend.auth.auth_helper import AuthHelper
 from . import converters
 from . import schemas
@@ -149,13 +153,63 @@ def get_statistical_vector_data(
         resampling_frequency=service_freq,
         realizations=realizations,
     )
-
+    print(vector_table)
     statistics = compute_vector_statistics(vector_table, vector_name, service_stat_funcs_to_compute)
     if not statistics:
         raise HTTPException(status_code=404, detail="Could not compute statistics")
 
     ret_data: schemas.VectorStatisticData = converters.to_api_vector_statistic_data(statistics, vector_metadata)
 
+    return ret_data
+
+
+@router.get("/statistical_vector_data_per_sensitivity/")
+def get_statistical_vector_data_per_sensitivity(
+    # fmt:off
+    authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
+    case_uuid: str = Query(description="Sumo case uuid"),
+    ensemble_name: str = Query(description="Ensemble name"),
+    vector_name: str = Query(description="Name of the vector"),
+    resampling_frequency: schemas.Frequency = Query(description="Resampling frequency"),
+    statistic_functions: Optional[Sequence[schemas.StatisticFunction]] = Query(None, description="Optional list of statistics to calculate. If not specified, all statistics will be calculated."),
+    
+    relative_to_timestamp: Optional[datetime.datetime] = Query(None, description="Calculate relative to timestamp"),
+    # fmt:on
+) -> List[schemas.VectorStatisticSensitivityData]:
+    """Get statistical vector data for an ensemble per sensitivity"""
+
+    summmary_access = SummaryAccess(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
+    parameter_access = ParameterAccess(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
+    sensitivities = parameter_access.get_parameters_and_sensitivities().sensitivities
+
+    service_freq = Frequency.from_string_value(resampling_frequency.value)
+    service_stat_funcs_to_compute = converters.to_service_statistic_functions(statistic_functions)
+    vector_table, vector_metadata = summmary_access.get_vector_table(
+        vector_name=vector_name, resampling_frequency=service_freq, realizations=None
+    )
+    ret_data: schemas.VectorStatisticSensitivityData = []
+    for sensitivity in sensitivities:
+        for case in sensitivity.cases:
+            mask = pc.is_in(vector_table["REAL"], value_set=pa.array(case.realizations))
+            table = vector_table.filter(mask)
+
+            statistics = compute_vector_statistics(table, vector_name, service_stat_funcs_to_compute)
+            if not statistics:
+                raise HTTPException(status_code=404, detail="Could not compute statistics")
+
+            statistic_data: schemas.VectorStatisticData = converters.to_api_vector_statistic_data(
+                statistics, vector_metadata
+            )
+            sensitivity_statistic_data = schemas.VectorStatisticSensitivityData(
+                sensitivity_name=sensitivity.name,
+                sensitivity_case=case.name,
+                realizations=statistic_data.realizations,
+                timestamps=statistic_data.timestamps,
+                value_objects=statistic_data.value_objects,
+                unit=statistic_data.unit,
+                is_rate=statistic_data.is_rate,
+            )
+            ret_data.append(sensitivity_statistic_data)
     return ret_data
 
 

@@ -1,26 +1,26 @@
 import React from "react";
 
-import { EnsembleScalarResponse_api } from "@api";
+import { BroadcastChannelKeyCategory } from "@framework/Broadcaster";
 import { ModuleFCProps } from "@framework/Module";
+import { ChannelSelect } from "@framework/components/ChannelSelect";
+import { Label } from "@lib/components/Label";
 
 import { State } from "./state";
 
-const ensembleResponse: EnsembleScalarResponse_api = {
-    realizations: [1, 2, 3],
-    values: [1, 2, 3],
-    name: "STOIIP_OIL",
-    unit: "Sm³",
-};
-export function settings({ moduleContext }: ModuleFCProps<State>) {
-    const selectedSensitivity = moduleContext.useStoreValue("selectedSensitivity");
+export function settings({ moduleContext, workbenchServices }: ModuleFCProps<State>) {
+    const [responseChannelName, setResponseChannelName] = moduleContext.useStoreState("responseChannelName");
+
     return (
         <>
-            <div className="flex flex-col gap-2">
-                INPUT SLOT: A scalar response for each realization
-                <pre>{JSON.stringify(ensembleResponse, null, 2)}</pre>
-                OUTPUT SLOT: The selected sensitivity
-                <pre>{JSON.stringify(selectedSensitivity, null, 2)}</pre>
-            </div>
+            <Label text="Data channel X axis" key="data-channel-x-axis">
+                <ChannelSelect
+                    onChange={setResponseChannelName}
+                    channelKeyCategory={BroadcastChannelKeyCategory.Realization}
+                    initialChannel={responseChannelName || undefined}
+                    broadcaster={workbenchServices.getBroadcaster()}
+                />
+            </Label>
+            ,
         </>
     );
 }

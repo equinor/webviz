@@ -1,21 +1,24 @@
 import React from "react";
 
+import { BroadcastChannelMeta } from "@framework/Broadcaster";
 import { ModuleFCProps } from "@framework/Module";
 import { useFirstEnsembleInEnsembleSet } from "@framework/WorkbenchSession";
 import { AdjustmentsHorizontalIcon, ChartBarIcon, TableCellsIcon } from "@heroicons/react/20/solid";
 import { useElementSize } from "@lib/hooks/useElementSize";
 
-import { useInplaceResponseQuery } from "./queryHooks";
 import SensitivityChart from "./sensitivityChart";
 import { SensitivityResponseCalculator } from "./sensitivityResponseCalculator";
 import SensitivityTable from "./sensitivityTable";
 import { PlotType, State } from "./state";
 
-export const view = ({ moduleContext, workbenchSession }: ModuleFCProps<State>) => {
+export const view = ({ moduleContext, workbenchSession, workbenchServices }: ModuleFCProps<State>) => {
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);
     const wrapperDivSize = useElementSize(wrapperDivRef);
     const firstEnsemble = useFirstEnsembleInEnsembleSet(workbenchSession);
     const [plotType, setPlotType] = moduleContext.useStoreState("plotType");
+    const responseChannelName = moduleContext.useStoreValue("responseChannelName");
+    const [responseData, setResponseData] = React.useState<any | null>(null);
+
     const [showLabels, setShowLabels] = React.useState(true);
     const [hideZeroY, setHideZeroY] = React.useState(false);
     const [showRealizationPoints, setShowRealizationPoints] = React.useState(false);
@@ -32,32 +35,41 @@ export const view = ({ moduleContext, workbenchSession }: ModuleFCProps<State>) 
         }
     };
 
-    console.log(firstEnsemble?.getDisplayName());
+    const responseChannel = workbenchServices.getBroadcaster().getChannel(responseChannelName ?? "");
+    React.useEffect(() => {
+        if (!responseChannel) {
+            setResponseData(null);
+            return;
+        }
 
-    //TEMPORARY QUERIES
-    //This should be provided as a input slot
-    const inplaceResponseQuery = useInplaceResponseQuery(
-        firstEnsemble?.getCaseUuid() || "",
-        firstEnsemble?.getEnsembleName() || "",
-        "geogrid",
-        "STOIIP_OIL"
-    );
+        const handleChannelXChanged = (data: any, metaData: BroadcastChannelMeta) => {
+            const realizations: number[] = [];
+            const values: number[] = [];
+            data.forEach((vec: any) => {
+                realizations.push(vec.key);
+                values.push(vec.value);
+            });
+
+            setResponseData({
+                realizations: realizations,
+                values: values,
+                name: metaData.description,
+                unit: metaData.unit,
+            });
+        };
+
+        const unsubscribeFunc = responseChannel.subscribe(handleChannelXChanged);
+
+        return unsubscribeFunc;
+    }, [responseChannel]);
 
     // Memoize the computation of sensitivity responses. Should we use useMemo?
     const sensitivities = firstEnsemble?.getSensitivities();
     const computedSensitivityResponseDataset = React.useMemo(() => {
-        if (sensitivities && inplaceResponseQuery.data) {
-            // TODO: Remove
-            inplaceResponseQuery.data.unit = "Sm³";
-            inplaceResponseQuery.data.name = "STOIIP_OIL";
-            console.log("hello");
-
+        if (sensitivities && responseData) {
             // How to handle errors?
             try {
-                const sensitivityResponseCalculator = new SensitivityResponseCalculator(
-                    sensitivities,
-                    inplaceResponseQuery.data
-                );
+                const sensitivityResponseCalculator = new SensitivityResponseCalculator(sensitivities, responseData);
                 return sensitivityResponseCalculator.computeSensitivitiesForResponse();
             } catch (e) {
                 console.warn(e);
@@ -65,7 +77,7 @@ export const view = ({ moduleContext, workbenchSession }: ModuleFCProps<State>) 
             }
         }
         return null;
-    }, [sensitivities, inplaceResponseQuery.data]);
+    }, [sensitivities, responseData]);
 
     return (
         <div className="w-full h-full">

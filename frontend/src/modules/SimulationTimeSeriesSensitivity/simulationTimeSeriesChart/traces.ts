@@ -50,12 +50,13 @@ const realizationLineTrace = (
     };
 };
 
-const sensitivityStatisticsTrace = (
+export const sensitivityStatisticsTrace = (
     timestamps: string[],
     values: number[],
     name: string,
     lineShape: "linear" | "spline",
-    lineDash: string,
+    lineDash: "dash" | "dot" | "dashdot" | "solid",
+    lineColor?: string | null,
     unit?: string | null
 ): TimeSeriesPlotData => {
     return {
@@ -65,6 +66,6 @@ const sensitivityStatisticsTrace = (
         legendrank: -1,
         type: "scatter",
         mode: "lines",
-        line: { color: "lightblue", width: 2, dash: "dot", shape: lineShape },
+        line: { color: lineColor || "lightblue", width: 4, dash: lineDash, shape: lineShape },
     };
 };

@@ -9,6 +9,7 @@ export interface VectorSpec {
 export interface State {
     vectorSpec: VectorSpec | null;
     resamplingFrequency: Frequency_api | null;
+    selectedSensitivity: string | null;
     showStatistics: boolean;
     showRealizations: boolean;
     realizationsToInclude: number[] | null;
