@@ -1,22 +1,9 @@
-import { EnsembleScalarResponse_api, EnsembleSensitivity_api } from "@api";
+import { EnsembleScalarResponse_api } from "@api";
 import { apiService } from "@framework/ApiService";
 import { UseQueryResult, useQuery } from "@tanstack/react-query";
 
 const STALE_TIME = 60 * 1000;
 const CACHE_TIME = 60 * 1000;
-
-export function useGetSensitivities(
-    caseUuid: string | undefined,
-    ensembleName: string | undefined
-): UseQueryResult<EnsembleSensitivity_api[]> {
-    return useQuery({
-        queryKey: ["sensitivityCorrelationForInplaceVolumes", caseUuid, ensembleName],
-        queryFn: () => apiService.parameters.getSensitivities(caseUuid ?? "", ensembleName ?? ""),
-        staleTime: STALE_TIME,
-        cacheTime: CACHE_TIME,
-        enabled: caseUuid && ensembleName ? true : false,
-    });
-}
 
 export function useInplaceResponseQuery(
     caseUuid: string | null,
