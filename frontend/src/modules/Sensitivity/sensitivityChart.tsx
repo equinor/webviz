@@ -15,6 +15,7 @@ export type sensitivityChartProps = {
     height?: number | 100;
     width?: number | 100;
 };
+
 const numFormat = (number: number): string => {
     return Intl.NumberFormat("en", { notation: "compact", minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(
         number
@@ -29,12 +30,60 @@ type SelectedBar = {
     index: number;
 };
 
+interface SensitivityChartTraceData extends Partial<PlotData> {
+    base: number[];
+    insidetextanchor: "middle" | "start" | "end";
+}
+const calculateLowBase = (low: number, high: number): number => {
+    if (low < 0) {
+        return Math.min(0, high);
+    }
+    return low;
+};
+const calculateHighBase = (low: number, high: number): number => {
+    if (high > 0) {
+        return Math.max(0, low);
+    }
+    return high;
+};
+const calculateHighX = (low: number, high: number): number => {
+    if (high > 0) {
+        return high - Math.max(0, low);
+    }
+    return 0.0;
+};
+const calculateLowX = (low: number, high: number): number => {
+    if (low < 0) {
+        return low - Math.min(0, high);
+    }
+    return 0.0;
+};
+const computeLowLabel = (sensitivity: SensitivityResponse): string => {
+    // Combine labels if they appear on the both side
+    if (sensitivity.lowCaseReferenceDifference > 0 || sensitivity.highCaseReferenceDifference < 0) {
+        return `${numFormat(sensitivity.lowCaseReferenceDifference)} <br> ${numFormat(
+            sensitivity.highCaseReferenceDifference
+        )}`;
+    }
+    return `${numFormat(sensitivity.lowCaseReferenceDifference)}`;
+};
+
+const computeHighLabel = (sensitivity: SensitivityResponse): string => {
+    // Combine labels if they appear on the both side
+    if (sensitivity.lowCaseReferenceDifference > 0 || sensitivity.highCaseReferenceDifference < 0) {
+        return `${numFormat(sensitivity.lowCaseReferenceDifference)} <br> ${numFormat(
+            sensitivity.highCaseReferenceDifference
+        )}`;
+    }
+    return `${numFormat(sensitivity.highCaseReferenceDifference)}`;
+};
+
 const lowTrace = (
     sensitivityResponses: SensitivityResponse[],
     showLabels: boolean,
     selectedBar: SelectedBar | null,
     barColor = "e53935"
-): Partial<PlotData> => {
+): Partial<SensitivityChartTraceData> => {
     // const label = showLabels
     //     ? sensitivityResponses.map(
     //           (s) =>
@@ -43,15 +92,19 @@ const lowTrace = (
     //               }<b>`
     //       )
     //     : [];
-    const label = showLabels
-        ? sensitivityResponses.map((s) => `<b>${numFormat(s.lowCaseReferenceDifference)}</b>`)
-        : [];
+    const label = showLabels ? sensitivityResponses.map((s) => computeLowLabel(s)) : [];
+
     return {
-        x: sensitivityResponses.map((s) => s.lowCaseReferenceDifference),
+        x: sensitivityResponses.map((s) => calculateLowX(s.lowCaseReferenceDifference, s.highCaseReferenceDifference)),
         y: sensitivityResponses.map((s) => s.sensitivityName),
         customdata: sensitivityResponses.map((s) => s.lowCaseName),
+        base: sensitivityResponses.map((s) =>
+            calculateLowBase(s.lowCaseReferenceDifference, s.highCaseReferenceDifference)
+        ),
         text: label,
         type: "bar",
+        textposition: "auto",
+        insidetextanchor: "middle",
         name: TraceGroup.LOW,
         orientation: "h",
         marker: {
@@ -74,7 +127,7 @@ const highTrace = (
     showLabels: boolean,
     selectedBar: SelectedBar | null,
     barColor = "#00897b"
-): Partial<PlotData> => {
+): Partial<SensitivityChartTraceData> => {
     // const label = showLabels
     //     ? sensitivityResponses.map(
     //           (s) =>
@@ -83,14 +136,18 @@ const highTrace = (
     //               }<b>`
     //       )
     //     : [];
-    const label = showLabels
-        ? sensitivityResponses.map((s) => `<b>${numFormat(s.highCaseReferenceDifference)}</b>`)
-        : [];
+    const label = showLabels ? sensitivityResponses.map((s) => computeHighLabel(s)) : [];
+
     return {
-        x: sensitivityResponses.map((s) => s.highCaseReferenceDifference),
+        x: sensitivityResponses.map((s) => calculateHighX(s.lowCaseReferenceDifference, s.highCaseReferenceDifference)),
         y: sensitivityResponses.map((s) => s.sensitivityName),
         customdata: sensitivityResponses.map((s) => s.highCaseName),
+        base: sensitivityResponses.map((s) =>
+            calculateHighBase(s.lowCaseReferenceDifference, s.highCaseReferenceDifference)
+        ),
         text: label,
+        textposition: "auto",
+        insidetextanchor: "middle",
         type: "bar",
         name: TraceGroup.HIGH,
         orientation: "h",
@@ -126,7 +183,7 @@ const sensitivityChart: React.FC<sensitivityChartProps> = (props) => {
 
         traces.push(lowTrace(filteredSensitivityResponses, showLabels, selectedBar));
         traces.push(highTrace(filteredSensitivityResponses, showLabels, selectedBar));
-
+        console.log(traces);
         // if (showRealizationPoints) {
         //     TODO: Add realization points
 

@@ -26,7 +26,7 @@ export interface SensitivityResponseDataset {
 enum SensitivityScale {
     RELATIVE = "relative",
     ABSOLUTE = "absolute",
-    RELATIVE_PERCENTAGE = "relative_percentage"
+    RELATIVE_PERCENTAGE = "relative_percentage",
 }
 
 const IGNORED_CASE = "ref";
@@ -48,15 +48,17 @@ export class SensitivityResponseCalculator {
         this.ensembleResponse = ensembleResponse;
         this.sensitivities = sensitivities;
         if (!this.sensitivities.hasSensitivityName(referenceSensitivity)) {
-            throw new Error(`SensitivityResponseCalculator: Reference sensitivity ${referenceSensitivity} not found in ensemble`);
+            throw new Error(
+                `SensitivityResponseCalculator: Reference sensitivity ${referenceSensitivity} not found in ensemble`
+            );
         }
         this.referenceSensitivity = referenceSensitivity;
-        this.referenceAverage = this.computeSensitivityAverage(this.referenceSensitivity)
+        this.referenceAverage = this.computeSensitivityAverage(this.referenceSensitivity);
     }
 
     public computeSensitivitiesForResponse(): SensitivityResponseDataset {
         // Compute sensitivity responses for all sensitivities
-        const sensitivityResponses: SensitivityResponse[] = []
+        const sensitivityResponses: SensitivityResponse[] = [];
         this.sensitivities.getSensitivityArr().forEach((sensitivity) => {
             //Skip if the sensitivity is the so called "ref" case. This is a special case that is not a sensitivity.
             if (sensitivity.name === IGNORED_CASE) {
@@ -65,14 +67,12 @@ export class SensitivityResponseCalculator {
             }
             if (sensitivity.type === SensitivityType.SCENARIO) {
                 sensitivityResponses.push(this.computeScenarioSensitivityResponse(sensitivity));
-            }
-            else if (sensitivity.type === SensitivityType.MONTECARLO) {
+            } else if (sensitivity.type === SensitivityType.MONTECARLO) {
                 sensitivityResponses.push(this.computeMonteCarloSensitivityResponse(sensitivity));
-            }
-            else {
+            } else {
                 throw new Error(`SensitivityResponseCalculator: Sensitivity type ${sensitivity.type} not supported`);
             }
-        })
+        });
 
         const sensitivityResponseDataset: SensitivityResponseDataset = {
             sensitivityResponses: this.sortSensitivityResponses(sensitivityResponses),
@@ -81,18 +81,18 @@ export class SensitivityResponseCalculator {
             scale: SensitivityScale.RELATIVE,
             responseName: this.ensembleResponse.name,
             responseUnit: this.ensembleResponse.unit,
-        }
+        };
         return sensitivityResponseDataset;
     }
 
     private getResponseValuesForRealizations(realizations: number[]): number[] {
         //Find response values for given realizations
-        const responseValues: number[] = []
+        const responseValues: number[] = [];
         this.ensembleResponse.realizations.forEach((value, index) => {
             if (realizations.includes(value)) {
                 responseValues.push(this.ensembleResponse.values[index]);
             }
-        })
+        });
         return responseValues;
     }
 
@@ -100,7 +100,7 @@ export class SensitivityResponseCalculator {
         //Compute average of response values for given realizations
         const responseValues: number[] = this.getResponseValuesForRealizations(realizations);
         const average = responseValues.reduce((a, b) => a + b, 0) / responseValues.length;
-        return average
+        return average;
     }
 
     private computeResponseOilP90(realizations: number[]): number {
@@ -118,28 +118,36 @@ export class SensitivityResponseCalculator {
     private computeSensitivityAverage(sensitivityName: string): number {
         // Compute average of response values for given sensitivity
         const sensitivity = this.sensitivities.getSensitivityByName(sensitivityName);
-        const realizations: number[] = []
+        const realizations: number[] = [];
         sensitivity.cases.forEach((case_) => {
             case_.realizations.forEach((realization) => {
                 realizations.push(realization);
-            })
-        })
+            });
+        });
         return this.computeResponseAverage(realizations);
     }
 
     private sortSensitivityResponses(sensitivityResponses: SensitivityResponse[]): SensitivityResponse[] {
         // Sort sensitivity responses in descending order of max difference from reference
-        const sortedSensitivityResponses = sensitivityResponses.sort((a: SensitivityResponse, b: SensitivityResponse) => {
-            const maxValueA = Math.max(Math.abs(a.lowCaseReferenceDifference), Math.abs(a.highCaseReferenceDifference));
-            const maxValueB = Math.max(Math.abs(b.lowCaseReferenceDifference), Math.abs(b.highCaseReferenceDifference));
-            return maxValueA - maxValueB;
-        });
-        return sortedSensitivityResponses
+        const sortedSensitivityResponses = sensitivityResponses.sort(
+            (a: SensitivityResponse, b: SensitivityResponse) => {
+                const maxValueA = Math.max(
+                    Math.abs(a.lowCaseReferenceDifference),
+                    Math.abs(a.highCaseReferenceDifference)
+                );
+                const maxValueB = Math.max(
+                    Math.abs(b.lowCaseReferenceDifference),
+                    Math.abs(b.highCaseReferenceDifference)
+                );
+                return maxValueA - maxValueB;
+            }
+        );
+        return sortedSensitivityResponses;
     }
 
     private getSensitivityRealizationsLessOrEqualToReferenceAverage(sensitivity: Sensitivity): number[] {
         // Find realizations for which response is less than or equal to reference average
-        const realizations: number[] = []
+        const realizations: number[] = [];
 
         sensitivity.cases.forEach((case_) => {
             case_.realizations.forEach((realization) => {
@@ -149,14 +157,14 @@ export class SensitivityResponseCalculator {
                         realizations.push(realization);
                     }
                 }
-            })
-        })
+            });
+        });
         return realizations;
     }
 
     private getSensitivityRealizationsGreaterThanReferenceAverage(sensitivity: Sensitivity): number[] {
         // Find realizations for which response is greater than reference average
-        const realizations: number[] = []
+        const realizations: number[] = [];
 
         sensitivity.cases.forEach((case_) => {
             case_.realizations.forEach((realization) => {
@@ -166,35 +174,41 @@ export class SensitivityResponseCalculator {
                         realizations.push(realization);
                     }
                 }
-            })
-        })
+            });
+        });
         return realizations;
     }
 
     private computeMonteCarloSensitivityResponse(sensitivity: Sensitivity): SensitivityResponse {
         // Compute sensitivity response for Monte Carlo sensitivity
         if (sensitivity.cases.length > 1) {
-            throw new Error(`SensitivityResponseCalculator: Monte Carlo sensitivity ${sensitivity.name} has more than 1 case`);
+            throw new Error(
+                `SensitivityResponseCalculator: Monte Carlo sensitivity ${sensitivity.name} has more than 1 case`
+            );
         }
         const sensitivityCase: SensitivityCase = sensitivity.cases[0];
         const sensitivityResponse: SensitivityResponse = {
             sensitivityName: sensitivity.name,
             lowCaseName: "P90",
             lowCaseAverage: this.computeResponseOilP90(sensitivityCase.realizations),
-            lowCaseReferenceDifference: this.computeResponseOilP90(sensitivityCase.realizations) - this.referenceAverage,
+            lowCaseReferenceDifference:
+                this.computeResponseOilP90(sensitivityCase.realizations) - this.referenceAverage,
             lowCaseRealizations: this.getSensitivityRealizationsLessOrEqualToReferenceAverage(sensitivity),
             highCaseName: "P10",
             highCaseAverage: this.computeResponseOilP10(sensitivityCase.realizations),
-            highCaseReferenceDifference: this.computeResponseOilP10(sensitivityCase.realizations) - this.referenceAverage,
+            highCaseReferenceDifference:
+                this.computeResponseOilP10(sensitivityCase.realizations) - this.referenceAverage,
             highCaseRealizations: this.getSensitivityRealizationsGreaterThanReferenceAverage(sensitivity),
-        }
+        };
         return sensitivityResponse;
     }
 
     private computeScenarioSensitivityResponse(sensitivity: Sensitivity): SensitivityResponse {
         // Compute sensitivity response for scenario sensitivity
         if (sensitivity.cases.length > 2) {
-            throw new Error(`SensitivityResponseCalculator: Scenario sensitivity ${sensitivity.name} has more than 2 cases`);
+            throw new Error(
+                `SensitivityResponseCalculator: Scenario sensitivity ${sensitivity.name} has more than 2 cases`
+            );
         }
         if (sensitivity.cases.length === 1) {
             // Only one case. I.e. low and high case are the same
@@ -204,17 +218,18 @@ export class SensitivityResponseCalculator {
                 sensitivityName: sensitivity.name,
                 lowCaseName: sensitivityCase.name,
                 lowCaseAverage: this.computeResponseAverage(sensitivityCase.realizations),
-                lowCaseReferenceDifference: this.computeResponseAverage(sensitivityCase.realizations) - this.referenceAverage,
+                lowCaseReferenceDifference:
+                    this.computeResponseAverage(sensitivityCase.realizations) - this.referenceAverage,
                 lowCaseRealizations: sensitivityCase.realizations,
-                highCaseName: sensitivityCase.name,
-                highCaseAverage: this.computeResponseAverage(sensitivityCase.realizations),
-                highCaseReferenceDifference: this.computeResponseAverage(sensitivityCase.realizations) - this.referenceAverage,
+                highCaseName: "",
+                highCaseAverage: this.referenceAverage,
+                highCaseReferenceDifference: 0,
                 highCaseRealizations: [],
-            }
+            };
         }
 
         // Two cases
-        const caseAverages: number[] = []
+        const caseAverages: number[] = [];
 
         for (const case_ of sensitivity.cases) {
             const caseAverage = this.computeResponseAverage(case_.realizations);
@@ -233,7 +248,7 @@ export class SensitivityResponseCalculator {
             highCaseAverage: caseAverages[highCaseIndex],
             highCaseReferenceDifference: caseAverages[highCaseIndex] - this.referenceAverage,
             highCaseRealizations: sensitivity.cases[highCaseIndex].realizations,
-        }
+        };
         return sensitivityResponse;
     }
 }
