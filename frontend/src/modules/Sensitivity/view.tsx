@@ -82,7 +82,7 @@ export const view = ({ moduleContext, workbenchSession, workbenchServices }: Mod
     return (
         <div className="w-full h-full">
             {/* // TODO: Remove */}
-            {!computedSensitivityResponseDataset && <div>Select case 01_drogon_design_webviz</div>}
+            {!computedSensitivityResponseDataset && <div>No channels selected</div>}
 
             <div>
                 <div>

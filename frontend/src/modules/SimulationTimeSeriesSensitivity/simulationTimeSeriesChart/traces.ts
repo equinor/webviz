@@ -2,7 +2,7 @@ import { VectorRealizationData_api, VectorStatisticData_api } from "@api";
 
 import { PlotData } from "plotly.js";
 
-export interface TimeSeriesPlotData extends Partial<PlotData> {
+export interface TimeSeriesPlotlyTrace extends Partial<PlotData> {
     realizationNumber?: number | null;
     legendrank?: number;
 }
@@ -12,8 +12,8 @@ export const createRealizationLineTraces = (
     highlightedRealization?: number | undefined,
     unit?: string | null
 ) => {
-    const traces: TimeSeriesPlotData[] = [];
-    let highlightedTrace: TimeSeriesPlotData | null = null;
+    const traces: TimeSeriesPlotlyTrace[] = [];
+    let highlightedTrace: TimeSeriesPlotlyTrace | null = null;
     realizationData.forEach((vec) => {
         const curveColor = highlightedRealization === vec.realization ? "red" : "grey";
         const lineWidth = highlightedRealization === vec.realization ? 2 : 1;
@@ -37,13 +37,14 @@ const realizationLineTrace = (
     curveColor: string,
     lineWidth: number,
     lineShape: "linear" | "spline"
-): TimeSeriesPlotData => {
+): TimeSeriesPlotlyTrace => {
     return {
         x: vec.timestamps,
         y: vec.values,
         name: `real-${vec.realization}`,
         realizationNumber: vec.realization,
-        legendrank: vec.realization,
+        // legendrank: vec.realization,
+        showlegend: false,
         type: "scatter",
         mode: "lines",
         line: { color: curveColor, width: lineWidth, shape: lineShape },
@@ -58,7 +59,7 @@ export const sensitivityStatisticsTrace = (
     lineDash: "dash" | "dot" | "dashdot" | "solid",
     lineColor?: string | null,
     unit?: string | null
-): TimeSeriesPlotData => {
+): TimeSeriesPlotlyTrace => {
     return {
         x: timestamps,
         y: values,
