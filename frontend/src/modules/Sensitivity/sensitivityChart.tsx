@@ -78,7 +78,7 @@ const computeHighLabel = (sensitivity: SensitivityResponse): string => {
     return `${numFormat(sensitivity.highCaseReferenceDifference)}`;
 };
 
-const calculateXaxisRange = (lowValues: number[], highValues: number[], referenceAverage: number): [number, number] => {
+const calculateXaxisRange = (lowValues: number[], highValues: number[]): [number, number] => {
     let maxVal: number = Number.MIN_VALUE;
 
     for (let i = 0; i < Math.max(lowValues.length, highValues.length); i++) {
@@ -208,8 +208,7 @@ const sensitivityChart: React.FC<sensitivityChartProps> = (props) => {
         setXAxisRange(
             calculateXaxisRange(
                 filteredSensitivityResponses.map((s) => s.lowCaseReferenceDifference),
-                filteredSensitivityResponses.map((s) => s.highCaseReferenceDifference),
-                sensitivityResponseDataset.referenceAverage
+                filteredSensitivityResponses.map((s) => s.highCaseReferenceDifference)
             )
         );
     }, [sensitivityResponseDataset, showLabels, hideZeroY, selectedBar]);
