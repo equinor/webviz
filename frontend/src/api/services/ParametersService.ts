@@ -72,6 +72,30 @@ export class ParametersService {
     }
 
     /**
+     * Get Parameters
+     * @param caseUuid Sumo case uuid
+     * @param ensembleName Ensemble name
+     * @returns EnsembleParameter Successful Response
+     * @throws ApiError
+     */
+    public getParameters(
+        caseUuid: string,
+        ensembleName: string,
+    ): CancelablePromise<Array<EnsembleParameter>> {
+        return this.httpRequest.request({
+            method: 'GET',
+            url: '/parameters/parameters/',
+            query: {
+                'case_uuid': caseUuid,
+                'ensemble_name': ensembleName,
+            },
+            errors: {
+                422: `Validation Error`,
+            },
+        });
+    }
+
+    /**
      * Is Sensitivity Run
      * Check if a given Sumo ensemble is a sensitivity run
      * @param caseUuid Sumo case uuid

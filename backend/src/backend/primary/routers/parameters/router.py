@@ -67,6 +67,17 @@ def get_parameter(
     return None
 
 
+@router.get("/parameters/")
+def get_parameters(
+    authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
+    case_uuid: str = Query(description="Sumo case uuid"),
+    ensemble_name: str = Query(description="Ensemble name"),
+) -> List[EnsembleParameter]:
+    access = ParameterAccess(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
+    parameters = access.get_parameters_and_sensitivities().parameters
+    return [parameter for parameter in parameters]
+
+
 @router.get("/is_sensitivity_run/")
 def is_sensitivity_run(
     # fmt:off

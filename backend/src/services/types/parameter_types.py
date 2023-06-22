@@ -14,7 +14,7 @@ class EnsembleParameter(BaseModel):
     group_name: Optional[str]
     descriptive_name: Optional[str]
     realizations: List[int]
-    values: List[Union[str, int, float]]
+    values: Union[List[float], List[int], List[str]]
 
 
 class SensitivityType(str, Enum):

@@ -1,10 +1,12 @@
 import { EnsembleIdent } from "./EnsembleIdent";
 import { EnsembleSensitivities, Sensitivity } from "./EnsembleSensitivities";
+import { EnsembleParameters, Parameter } from "./EnsembleParameters";
 
 export class Ensemble {
     private _ensembleIdent: EnsembleIdent;
     private _caseName: string;
     private _realizationsArr: number[];
+    private _parameters: EnsembleParameters;
     private _sensitivities: EnsembleSensitivities | null;
 
     constructor(
@@ -12,11 +14,13 @@ export class Ensemble {
         caseName: string,
         ensembleName: string,
         realizationsArr: number[],
+        parameterArr: Parameter[],
         sensitivityArr: Sensitivity[] | null
     ) {
         this._ensembleIdent = new EnsembleIdent(caseUuid, ensembleName);
         this._caseName = caseName;
         this._realizationsArr = Array.from(realizationsArr).sort((a, b) => a - b);
+        this._parameters = new EnsembleParameters(parameterArr);
 
         this._sensitivities = null;
         if (sensitivityArr && sensitivityArr.length > 0) {
@@ -58,6 +62,10 @@ export class Ensemble {
         }
 
         return this._realizationsArr[this._realizationsArr.length - 1];
+    }
+
+    getParameters(): EnsembleParameters {
+        return this._parameters;
     }
 
     getSensitivities(): EnsembleSensitivities | null {
