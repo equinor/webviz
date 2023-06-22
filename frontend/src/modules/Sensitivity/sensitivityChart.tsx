@@ -78,6 +78,22 @@ const computeHighLabel = (sensitivity: SensitivityResponse): string => {
     return `${numFormat(sensitivity.highCaseReferenceDifference)}`;
 };
 
+const calculateXaxisRange = (lowValues: number[], highValues: number[], referenceAverage: number): [number, number] => {
+    let maxVal: number = Number.MIN_VALUE;
+
+    for (let i = 0; i < Math.max(lowValues.length, highValues.length); i++) {
+        if (lowValues[i] !== undefined && Math.abs(lowValues[i]) > maxVal) {
+            maxVal = Math.abs(lowValues[i]) * 1.1;
+        }
+
+        if (highValues[i] !== undefined && Math.abs(highValues[i]) > maxVal) {
+            maxVal = Math.abs(highValues[i]) * 1.1;
+        }
+    }
+
+    return [-maxVal, maxVal];
+};
+
 const lowTrace = (
     sensitivityResponses: SensitivityResponse[],
     showLabels: boolean,
@@ -169,6 +185,7 @@ const highTrace = (
 
 const sensitivityChart: React.FC<sensitivityChartProps> = (props) => {
     const [traceDataArr, setTraceDataArr] = useState<Partial<PlotData>[]>([]);
+    const [xAxisRange, setXAxisRange] = useState<[number, number]>([0, 0]);
     const [selectedBar, setSelectedBar] = useState<SelectedBar | null>(null);
     const { showLabels, hideZeroY, showRealizationPoints, sensitivityResponseDataset, height, width } = props;
 
@@ -188,6 +205,13 @@ const sensitivityChart: React.FC<sensitivityChartProps> = (props) => {
         //     TODO: Add realization points
 
         setTraceDataArr(traces);
+        setXAxisRange(
+            calculateXaxisRange(
+                filteredSensitivityResponses.map((s) => s.lowCaseReferenceDifference),
+                filteredSensitivityResponses.map((s) => s.highCaseReferenceDifference),
+                sensitivityResponseDataset.referenceAverage
+            )
+        );
     }, [sensitivityResponseDataset, showLabels, hideZeroY, selectedBar]);
 
     const handleClick = (event: PlotMouseEvent) => {
@@ -222,8 +246,8 @@ const sensitivityChart: React.FC<sensitivityChartProps> = (props) => {
                 text: props.sensitivityResponseDataset.scale,
                 standoff: 40,
             },
-            //"range": x_range,  TODO
-            //"autorange": TODO
+            range: xAxisRange,
+            autorange: false,
             gridwidth: 1,
             gridcolor: "whitesmoke",
             showgrid: true,
