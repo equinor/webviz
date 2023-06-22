@@ -187,7 +187,9 @@ def get_statistical_vector_data_per_sensitivity(
     vector_table, vector_metadata = summmary_access.get_vector_table(
         vector_name=vector_name, resampling_frequency=service_freq, realizations=None
     )
-    ret_data: schemas.VectorStatisticSensitivityData = []
+    ret_data: List[schemas.VectorStatisticSensitivityData] = []
+    if not sensitivities:
+        return ret_data
     for sensitivity in sensitivities:
         for case in sensitivity.cases:
             mask = pc.is_in(vector_table["REAL"], value_set=pa.array(case.realizations))

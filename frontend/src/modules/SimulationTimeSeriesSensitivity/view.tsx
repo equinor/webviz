@@ -83,17 +83,12 @@ export const view = ({ moduleContext, workbenchSession }: ModuleFCProps<State>) 
     // Update the Plotly trace data
     React.useEffect(() => {
         const traceDataArr: TimeSeriesPlotlyTrace[] = [];
-        console.log("It is triggered", selectedSensitivity, vectorSpec);
         if (selectedSensitivity && vectorSpec) {
-            console.log(2);
             const ensemble = ensembleSet.findEnsemble(vectorSpec.ensembleIdent);
             if (ensemble) {
-                console.log(3);
                 const sensitivity = ensemble.getSensitivities()?.getSensitivityByName(selectedSensitivity);
                 if (sensitivity) {
-                    console.log(4);
                     if (statisticsQuery.data) {
-                        console.log(5);
                         const meanCase = statisticsQuery.data.filter((stat) => stat.sensitivity_name === "rms_seed")[0];
                         const meanObj = meanCase.value_objects.filter(
                             (statObj) => statObj.statistic_function === StatisticFunction.MEAN
