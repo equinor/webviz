@@ -100,9 +100,7 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
                         onRemoveClick={handleRemoveClick}
                     />
                     <div className="flex-grow overflow-auto h-0">
-                        <div className="p-4 h-full w-full">
-                            <ViewContent workbench={props.workbench} moduleInstance={props.moduleInstance} />
-                        </div>
+                        <ViewContent workbench={props.workbench} moduleInstance={props.moduleInstance} />
                     </div>
                 </div>
             </div>

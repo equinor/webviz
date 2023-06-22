@@ -1,3 +1,7 @@
+import { ErrorInfo } from "react";
+
+import { cloneDeep } from "lodash";
+
 import { BroadcastChannel, BroadcastChannelsDef } from "./Broadcaster";
 import { ImportState, Module, ModuleFC } from "./Module";
 import { ModuleContext } from "./ModuleContext";
@@ -5,17 +9,32 @@ import { StateBaseType, StateOptions, StateStore } from "./StateStore";
 import { SyncSettingKey } from "./SyncSettings";
 import { Workbench } from "./Workbench";
 
+export enum ModuleInstanceState {
+    INITIALIZING,
+    OK,
+    ERROR,
+    RESETTING,
+}
+
 export class ModuleInstance<StateType extends StateBaseType> {
     private id: string;
     private name: string;
     private initialised: boolean;
+    private moduleInstanceState: ModuleInstanceState;
+    private fatalError: {
+        err: Error;
+        errInfo: ErrorInfo;
+    } | null;
     private syncedSettingKeys: SyncSettingKey[];
     private stateStore: StateStore<StateType> | null;
     private module: Module<StateType>;
     private context: ModuleContext<StateType> | null;
     private importStateSubscribers: Set<() => void>;
+    private moduleInstanceStateSubscribers: Set<(moduleInstanceState: ModuleInstanceState) => void>;
     private syncedSettingsSubscribers: Set<(syncedSettings: SyncSettingKey[]) => void>;
     private broadcastChannels: Record<string, BroadcastChannel>;
+    private cachedInitialState: StateType | null;
+    private cachedStateStoreOptions?: StateOptions<StateType>;
 
     constructor(
         module: Module<StateType>,
@@ -32,6 +51,10 @@ export class ModuleInstance<StateType extends StateBaseType> {
         this.initialised = false;
         this.syncedSettingKeys = [];
         this.syncedSettingsSubscribers = new Set();
+        this.moduleInstanceStateSubscribers = new Set();
+        this.moduleInstanceState = ModuleInstanceState.INITIALIZING;
+        this.fatalError = null;
+        this.cachedInitialState = null;
 
         this.broadcastChannels = {} as Record<string, BroadcastChannel>;
 
@@ -56,9 +79,15 @@ export class ModuleInstance<StateType extends StateBaseType> {
     }
 
     public setInitialState(initialState: StateType, options?: StateOptions<StateType>): void {
-        this.stateStore = new StateStore<StateType>(initialState, options);
+        if (this.cachedInitialState === null) {
+            this.cachedInitialState = initialState;
+            this.cachedStateStoreOptions = options;
+        }
+
+        this.stateStore = new StateStore<StateType>(cloneDeep(initialState), options);
         this.context = new ModuleContext<StateType>(this, this.stateStore);
         this.initialised = true;
+        this.setModuleInstanceState(ModuleInstanceState.OK);
     }
 
     public addSyncedSetting(settingKey: SyncSettingKey): void {
@@ -141,6 +170,52 @@ export class ModuleInstance<StateType extends StateBaseType> {
     public notifySubscribersAboutSyncedSettingKeysChange(): void {
         this.syncedSettingsSubscribers.forEach((subscriber) => {
             subscriber(this.syncedSettingKeys);
+        });
+    }
+
+    public subscribeToModuleInstanceStateChange(cb: () => void): () => void {
+        this.moduleInstanceStateSubscribers.add(cb);
+        return () => {
+            this.moduleInstanceStateSubscribers.delete(cb);
+        };
+    }
+
+    public notifySubscribersAboutModuleInstanceStateChange(): void {
+        this.moduleInstanceStateSubscribers.forEach((subscriber) => {
+            subscriber(this.moduleInstanceState);
+        });
+    }
+
+    private setModuleInstanceState(moduleInstanceState: ModuleInstanceState): void {
+        this.moduleInstanceState = moduleInstanceState;
+        this.notifySubscribersAboutModuleInstanceStateChange();
+    }
+
+    public getModuleInstanceState(): ModuleInstanceState {
+        return this.moduleInstanceState;
+    }
+
+    public setFatalError(err: Error, errInfo: ErrorInfo): void {
+        this.setModuleInstanceState(ModuleInstanceState.ERROR);
+        this.fatalError = {
+            err,
+            errInfo,
+        };
+    }
+
+    public getFatalError(): {
+        err: Error;
+        errInfo: ErrorInfo;
+    } | null {
+        return this.fatalError;
+    }
+
+    public reset(): Promise<void> {
+        this.setModuleInstanceState(ModuleInstanceState.RESETTING);
+
+        return new Promise((resolve) => {
+            this.setInitialState(this.cachedInitialState as StateType, this.cachedStateStoreOptions);
+            resolve();
         });
     }
 }
