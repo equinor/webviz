@@ -200,7 +200,6 @@ const sensitivityChart: React.FC<sensitivityChartProps> = (props) => {
 
         traces.push(lowTrace(filteredSensitivityResponses, showLabels, selectedBar));
         traces.push(highTrace(filteredSensitivityResponses, showLabels, selectedBar));
-        console.log(traces);
         // if (showRealizationPoints) {
         //     TODO: Add realization points
 

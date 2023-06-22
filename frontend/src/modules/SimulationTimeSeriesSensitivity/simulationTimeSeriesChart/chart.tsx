@@ -62,6 +62,20 @@ export const TimeSeriesChart: React.FC<timeSeriesChartProps> = (props) => {
                 },
             },
         ];
+        // This breaks hover...
+        // layout["annotations"] = [
+        //     {
+        //         bgcolor: "white",
+        //         showarrow: false,
+        //         text: activeTimestamp,
+        //         x: activeTimestamp,
+        //         y: 1,
+
+        //         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        //         //@ts-ignore
+        //         yref: "y domain",
+        //     },
+        // ];
     }
     return (
         <Plot
