@@ -79,7 +79,7 @@ function makeEnsembleSetTable(ensembleSet: EnsembleSet) {
                         <td> {ens.getEnsembleName()} </td>
                         <td> ({ens.getCaseUuid()}) </td>
                         <td> {ens.getRealizations().length} realizations</td>
-                        <td> {ens.hasSensitivities() ? "HasSens" : "noSense"}</td>
+                        <td> {ens.getSensitivities() ? "HasSens" : "noSense"}</td>
                     </tr>
                 ))}
             </tbody>

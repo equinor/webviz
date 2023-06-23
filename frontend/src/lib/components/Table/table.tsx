@@ -33,6 +33,7 @@ export type TableProps<T extends TableHeading> = {
     width?: number | string;
     height?: number | string;
     onHover?: (row: TableRow<T>) => void;
+    onClick?: (row: TableRow<T>) => void;
     highlightFilter?: (row: TableRow<T>) => boolean;
 } & BaseComponentProps;
 
@@ -134,6 +135,12 @@ export const Table: React.FC<TableProps<TableHeading>> = (props) => {
         }
     };
 
+    const handlePointerDown = (row: TableRow<any>) => {
+        if (props.onClick) {
+            props.onClick(row);
+        }
+    };
+
     const handleFilterChange = (col: string, value: string) => {
         setFilterValues({ ...filterValues, [col]: value });
     };
@@ -170,7 +177,7 @@ export const Table: React.FC<TableProps<TableHeading>> = (props) => {
                                                 onClick={() => handleSortDirectionChange(col, SortDirection.Asc)}
                                                 color={
                                                     sortColumnAndDirection.col === col &&
-                                                    sortColumnAndDirection.dir === SortDirection.Asc
+                                                        sortColumnAndDirection.dir === SortDirection.Asc
                                                         ? "text-red-600"
                                                         : undefined
                                                 }
@@ -182,7 +189,7 @@ export const Table: React.FC<TableProps<TableHeading>> = (props) => {
                                                 onClick={() => handleSortDirectionChange(col, SortDirection.Desc)}
                                                 color={
                                                     sortColumnAndDirection.col === col &&
-                                                    sortColumnAndDirection.dir === SortDirection.Desc
+                                                        sortColumnAndDirection.dir === SortDirection.Desc
                                                         ? "text-red-600"
                                                         : undefined
                                                 }
@@ -219,12 +226,12 @@ export const Table: React.FC<TableProps<TableHeading>> = (props) => {
                                 return (
                                     <tr
                                         key={item.id}
-                                        className={`${
-                                            props.highlightFilter && props.highlightFilter(item.values)
-                                                ? "bg-blue-50 "
-                                                : ""
-                                        } hover:bg-blue-100`}
+                                        className={`${props.highlightFilter && props.highlightFilter(item.values)
+                                            ? "bg-blue-50 "
+                                            : ""
+                                            } hover:bg-blue-100`}
                                         onPointerOver={() => handlePointerOver(item.values)}
+                                        onPointerDown={() => handlePointerDown(item.values)}
                                         style={{ height: 30 }}
                                     >
                                         {Object.keys(item.values).map((col) => {

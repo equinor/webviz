@@ -9,6 +9,7 @@ import type { VectorHistoricalData } from '../models/VectorHistoricalData';
 import type { VectorMetadata } from '../models/VectorMetadata';
 import type { VectorRealizationData } from '../models/VectorRealizationData';
 import type { VectorStatisticData } from '../models/VectorStatisticData';
+import type { VectorStatisticSensitivityData } from '../models/VectorStatisticSensitivityData';
 
 import type { CancelablePromise } from '../core/CancelablePromise';
 import type { BaseHttpRequest } from '../core/BaseHttpRequest';
@@ -209,6 +210,43 @@ export class TimeseriesService {
                 'resampling_frequency': resamplingFrequency,
                 'statistic_functions': statisticFunctions,
                 'realizations': realizations,
+                'relative_to_timestamp': relativeToTimestamp,
+            },
+            errors: {
+                422: `Validation Error`,
+            },
+        });
+    }
+
+    /**
+     * Get Statistical Vector Data Per Sensitivity
+     * Get statistical vector data for an ensemble per sensitivity
+     * @param caseUuid Sumo case uuid
+     * @param ensembleName Ensemble name
+     * @param vectorName Name of the vector
+     * @param resamplingFrequency Resampling frequency
+     * @param statisticFunctions Optional list of statistics to calculate. If not specified, all statistics will be calculated.
+     * @param relativeToTimestamp Calculate relative to timestamp
+     * @returns VectorStatisticSensitivityData Successful Response
+     * @throws ApiError
+     */
+    public getStatisticalVectorDataPerSensitivity(
+        caseUuid: string,
+        ensembleName: string,
+        vectorName: string,
+        resamplingFrequency: Frequency,
+        statisticFunctions?: Array<StatisticFunction>,
+        relativeToTimestamp?: string,
+    ): CancelablePromise<Array<VectorStatisticSensitivityData>> {
+        return this.httpRequest.request({
+            method: 'GET',
+            url: '/timeseries/statistical_vector_data_per_sensitivity/',
+            query: {
+                'case_uuid': caseUuid,
+                'ensemble_name': ensembleName,
+                'vector_name': vectorName,
+                'resampling_frequency': resamplingFrequency,
+                'statistic_functions': statisticFunctions,
                 'relative_to_timestamp': relativeToTimestamp,
             },
             errors: {

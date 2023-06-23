@@ -3,9 +3,9 @@ import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { EnsembleSet } from "@framework/EnsembleSet";
 
 const ensembleArr = [
-    new Ensemble("11111111-aaaa-4444-aaaa-aaaaaaaaaaaa", "case1", "ens1", [], null),
-    new Ensemble("11111111-aaaa-4444-aaaa-aaaaaaaaaaaa", "case1", "ens2", [], null),
-    new Ensemble("22222222-aaaa-4444-aaaa-aaaaaaaaaaaa", "case2", "ens1", [], null),
+    new Ensemble("11111111-aaaa-4444-aaaa-aaaaaaaaaaaa", "case1", "ens1", [], [], null),
+    new Ensemble("11111111-aaaa-4444-aaaa-aaaaaaaaaaaa", "case1", "ens2", [], [], null),
+    new Ensemble("22222222-aaaa-4444-aaaa-aaaaaaaaaaaa", "case2", "ens1", [], [], null),
 ];
 
 

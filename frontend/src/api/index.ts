@@ -29,6 +29,7 @@ export type { HTTPValidationError as HTTPValidationError_api } from './models/HT
 export type { InplaceVolumetricsCategoricalMetaData as InplaceVolumetricsCategoricalMetaData_api } from './models/InplaceVolumetricsCategoricalMetaData';
 export type { InplaceVolumetricsTableMetaData as InplaceVolumetricsTableMetaData_api } from './models/InplaceVolumetricsTableMetaData';
 export type { PvtData as PvtData_api } from './models/PvtData';
+export { SensitivityType as SensitivityType_api } from './models/SensitivityType';
 export type { StaticSurfaceDirectory as StaticSurfaceDirectory_api } from './models/StaticSurfaceDirectory';
 export { StatisticFunction as StatisticFunction_api } from './models/StatisticFunction';
 export type { StatisticValueObject as StatisticValueObject_api } from './models/StatisticValueObject';
@@ -41,6 +42,7 @@ export type { VectorHistoricalData as VectorHistoricalData_api } from './models/
 export type { VectorMetadata as VectorMetadata_api } from './models/VectorMetadata';
 export type { VectorRealizationData as VectorRealizationData_api } from './models/VectorRealizationData';
 export type { VectorStatisticData as VectorStatisticData_api } from './models/VectorStatisticData';
+export type { VectorStatisticSensitivityData as VectorStatisticSensitivityData_api } from './models/VectorStatisticSensitivityData';
 
 export { CorrelationsService } from './services/CorrelationsService';
 export { DefaultService } from './services/DefaultService';
