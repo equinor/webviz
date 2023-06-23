@@ -2,7 +2,7 @@ import React from "react";
 
 import { ModuleFCProps } from "@framework/Module";
 import { useElementSize } from "@lib/hooks/useElementSize";
-import { SubsurfaceViewer } from "@webviz/subsurface-components";
+import SubsurfaceViewer from "@webviz/subsurface-viewer";
 
 import { useSurfaceDataQueryByAddress } from "./MapQueryHooks";
 import { MapState } from "./MapState";
