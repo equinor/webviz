@@ -6,6 +6,7 @@ import { Button } from "../../../../../../lib/components/Button";
 import { Dialog } from "../../../../../../lib/components/Dialog";
 
 export type FormattedErrorProps = {
+    moduleName: string;
     error: Error;
     errorInfo: React.ErrorInfo;
     onReload?: () => void;
@@ -61,7 +62,7 @@ export const CrashView: React.FC<FormattedErrorProps> = (props) => {
     };
 
     const handleReportError = () => {
-        const title = encodeURIComponent(`[USER REPORTED ERROR] ${props.error.message}`);
+        const title = encodeURIComponent(`[USER REPORTED ERROR] (${props.moduleName}) ${props.error.message}`);
         const body = encodeURIComponent(
             `<!-- ⚠️ DO NOT INCLUDE DATA/SCREENSHOTS THAT CAN'T BE PUBLICLY AVAILABLE.-->\n\n\
 **How to reproduce**\nPlease describe what you were doing when the error occurred.\n\n\
