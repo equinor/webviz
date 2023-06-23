@@ -21,6 +21,7 @@ import { useVectorsQuery } from "./queryHooks";
 import { State } from "./state";
 
 //-----------------------------------------------------------------------------------------------------------
+
 export function settings({ moduleContext, workbenchSession, workbenchServices }: ModuleFCProps<State>) {
     const myInstanceIdStr = moduleContext.getInstanceIdString();
     console.debug(`${myInstanceIdStr} -- render SimulationTimeSeries settings`);
@@ -59,6 +60,17 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
     if (computedVectorName && computedVectorName !== selectedVectorName) {
         setSelectedVectorName(computedVectorName);
     }
+    const computedEnsemble = computedEnsembleIdent ? ensembleSet.findEnsemble(computedEnsembleIdent) : null;
+    const sensitivities = computedEnsemble?.getSensitivities();
+
+    React.useEffect(() => {
+        const sensitivityNames = computedEnsemble?.getSensitivities()?.getSensitivityNames();
+        if (sensitivityNames && sensitivityNames.length > 0) {
+            if (!selectedSensitivity || !sensitivityNames.includes(selectedSensitivity)) {
+                setSelectedSensitivity(sensitivityNames[0]);
+            }
+        }
+    }, [computedEnsemble]);
 
     React.useEffect(
         function propagateVectorSpecToView() {
@@ -73,9 +85,6 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
         },
         [computedEnsembleIdent, computedVectorName]
     );
-
-    const computedEnsemble = computedEnsembleIdent ? ensembleSet.findEnsemble(computedEnsembleIdent) : null;
-    const sensitivities = computedEnsemble?.getSensitivities();
 
     function handleEnsembleSelectionChange(ensembleIdentArr: EnsembleIdent[]) {
         console.debug("handleEnsembleSelectionChange()", ensembleIdentArr);
@@ -153,7 +162,7 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
             >
                 <Select
                     options={sensitivities.getSensitivityNames().map((name) => ({ value: name, label: name }))}
-                    value={selectedSensitivity ? [selectedSensitivity] : [sensitivities.getSensitivityNames()[0]]}
+                    value={[selectedSensitivity || ""]}
                     onChange={(sensarr) => setSelectedSensitivity(sensarr[0])}
                     filter={true}
                     size={10}

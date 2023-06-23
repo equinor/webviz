@@ -71,7 +71,7 @@ export const view = ({ moduleContext, workbenchSession }: ModuleFCProps<State>) 
 
             const channelMeta: BroadcastChannelMeta = {
                 ensembleIdent: ensemble.getIdent(),
-                description: `${ensemble.getDisplayName()} ${vectorSpec?.vectorName}`,
+                description: `${ensemble.getDisplayName()} ${vectorSpec?.vectorName} ${hoveredTimestamp}`,
                 unit: realizationsQuery.data?.at(0)?.unit || "",
             };
 
