@@ -3,11 +3,10 @@ import React from "react";
 import { ImportState } from "@framework/Module";
 import { ModuleInstance, ModuleInstanceState } from "@framework/ModuleInstance";
 import { Workbench } from "@framework/Workbench";
+import { ErrorBoundary } from "@framework/components/ErrorBoundary";
 import { CircularProgress } from "@lib/components/CircularProgress";
 
-import { FormattedError } from "./formattedError";
-
-import { ErrorBoundary } from "../../../../ErrorBoundary";
+import { CrashView } from "./crashView";
 
 type ViewContentProps = {
     moduleInstance: ModuleInstance<any>;
@@ -92,7 +91,7 @@ export const ViewContent = React.memo((props: ViewContentProps) => {
         const errorObject = props.moduleInstance.getFatalError();
         if (errorObject) {
             return (
-                <FormattedError
+                <CrashView
                     error={errorObject.err}
                     errorInfo={errorObject.errInfo}
                     onReload={handleModuleInstanceReload}

@@ -1,6 +1,6 @@
 import React from "react";
 
-import { FaceFrownIcon } from "@heroicons/react/20/solid";
+import { ArrowPathIcon, DocumentMagnifyingGlassIcon, FaceFrownIcon, MegaphoneIcon } from "@heroicons/react/20/solid";
 
 import { Button } from "../../../../../../lib/components/Button";
 import { Dialog } from "../../../../../../lib/components/Dialog";
@@ -45,7 +45,7 @@ function formatStack(stack: string): React.ReactNode {
     );
 }
 
-export const FormattedError: React.FC<FormattedErrorProps> = (props) => {
+export const CrashView: React.FC<FormattedErrorProps> = (props) => {
     const [showDetails, setShowDetails] = React.useState<boolean>(false);
 
     const handleReload = () => {
@@ -60,20 +60,45 @@ export const FormattedError: React.FC<FormattedErrorProps> = (props) => {
         setShowDetails(true);
     };
 
+    const handleReportError = () => {
+        const title = encodeURIComponent(`[USER REPORTED ERROR] ${props.error.message}`);
+        const body = encodeURIComponent(
+            `<!-- ⚠️ DO NOT INCLUDE DATA/SCREENSHOTS THAT CAN'T BE PUBLICLY AVAILABLE.-->\n\n\
+**How to reproduce**\nPlease describe what you were doing when the error occurred.\n\n\
+**Screenshots**\nIf applicable, add screenshots to help explain your problem.\n\n\
+**Error stack**\n\`\`\`\n${props.error.stack}\n\`\`\`\n\n\
+**Component stack**\n\`\`\`${props.errorInfo.componentStack}\n\`\`\``
+        );
+        const label = encodeURIComponent("user reported error");
+        window.open(
+            `https://github.com/equinor/webviz/issues/new?title=${title}&body=${body}&labels=${label}`,
+            "_blank"
+        );
+    };
+
     return (
         <div className="flex flex-col h-full w-full">
             <div className="bg-red-400 flex flex-col justify-center items-center h-[50%] text-white gap-4">
                 <FaceFrownIcon className="h-16 w-16" />
                 <div className="font-bold">{props.error.message}</div>
             </div>
-            <div className="flex flex-col justify-center items-center h-[50%] gap-6 p-4">
+            <div className="flex flex-col items-center h-[50%] gap-6 p-8">
                 The above error made your module instance crash. Unfortunately, this means that its state is lost. You
-                can reset the instance to its initial state in order to start over.
-                <div className="flex gap-2">
-                    <Button onClick={handleReload} variant="contained">
+                can try to reset the instance to its initial state in order to start over.
+                <div className="flex gap-4">
+                    <Button
+                        onClick={handleReload}
+                        variant="contained"
+                        startIcon={<ArrowPathIcon className="w-4 h-4" />}
+                    >
                         Reset to initial state
                     </Button>
-                    <Button onClick={handleShowDetails}>Show error details</Button>
+                    <Button onClick={handleShowDetails} startIcon={<DocumentMagnifyingGlassIcon className="w-4 h-4" />}>
+                        Show error details
+                    </Button>
+                    <Button onClick={handleReportError} startIcon={<MegaphoneIcon className="w-4 h-4" />}>
+                        Report error
+                    </Button>
                 </div>
             </div>
             {showDetails && (
@@ -96,4 +121,4 @@ export const FormattedError: React.FC<FormattedErrorProps> = (props) => {
     );
 };
 
-FormattedError.displayName = "FormattedError";
+CrashView.displayName = "CrashView";
