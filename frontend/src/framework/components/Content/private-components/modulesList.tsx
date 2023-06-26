@@ -20,6 +20,7 @@ import { LayoutEventTypes } from "./layout";
 
 type ModulesListItemProps = {
     moduleName: string;
+    moduleDisplayName: string;
     relContainer: HTMLDivElement | null;
 };
 
@@ -132,8 +133,8 @@ const ModulesListItem: React.FC<ModulesListItemProps> = (props) => {
                 className="mb-4 border box-border border-slate-600 border-solid text-sm text-gray-700 w-full h-40 select-none"
                 style={makeStyle(isDragged, dragSize, dragPosition)}
             >
-                <div ref={ref} className="bg-slate-100 p-4 cursor-move">
-                    {props.moduleName}
+                <div ref={ref} className="bg-slate-100 p-2 cursor-move flex items-center text-sm font-bold">
+                    {props.moduleDisplayName}
                 </div>
                 <div className="p-4">Preview</div>
             </div>
@@ -173,10 +174,15 @@ export const ModulesList: React.FC<ModulesListProps> = (props) => {
                 onChange={handleSearchQueryChange}
             />
             <div className="mt-4 flex-grow min-h-0 overflow-y-auto max-h-full h-0">
-                {Object.keys(ModuleRegistry.getRegisteredModules())
-                    .filter((module) => module.toLowerCase().includes(searchQuery.toLowerCase()))
-                    .map((moduleName) => (
-                        <ModulesListItem relContainer={props.relContainer} key={moduleName} moduleName={moduleName} />
+                {Object.values(ModuleRegistry.getRegisteredModules())
+                    .filter((mod) => mod.getTitle().toLowerCase().includes(searchQuery.toLowerCase()))
+                    .map((mod) => (
+                        <ModulesListItem
+                            relContainer={props.relContainer}
+                            key={mod.getName()}
+                            moduleName={mod.getName()}
+                            moduleDisplayName={mod.getTitle()}
+                        />
                     ))}
             </div>
         </div>

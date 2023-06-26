@@ -10,10 +10,11 @@ export class ModuleRegistry {
 
     public static registerModule<ModuleStateType extends StateBaseType>(
         moduleName: string,
+        displayName: string,
         syncableSettingKeys: SyncSettingKey[] = [],
         broadcastChannelsDef: BroadcastChannelsDef = {}
     ): Module<ModuleStateType> {
-        const module = new Module<ModuleStateType>(moduleName, syncableSettingKeys, broadcastChannelsDef);
+        const module = new Module<ModuleStateType>(moduleName, displayName, syncableSettingKeys, broadcastChannelsDef);
         this._registeredModules[moduleName] = module;
         return module;
     }

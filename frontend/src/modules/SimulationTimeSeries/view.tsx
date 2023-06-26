@@ -163,13 +163,12 @@ export const view = ({ moduleContext, workbenchSession, workbenchServices }: Mod
     const hasGotAnyRequestedData = vectorQuery.data || (showStatistics && statisticsQuery.data);
     if (ensemble && vectorSpec && hasGotAnyRequestedData) {
         const ensembleDisplayName = ensemble.getDisplayName();
-        title = `${vectorSpec.vectorName} [${unitString}] - ${ensembleDisplayName}`;
+        moduleContext.setInstanceTitle(`${ensembleDisplayName} - ${vectorSpec.vectorName}`);
     }
 
     const layout: Partial<Layout> = {
         width: wrapperDivSize.width,
         height: wrapperDivSize.height,
-        title: title,
     };
 
     if (subscribedPlotlyTimeStamp) {
@@ -199,7 +198,6 @@ export const view = ({ moduleContext, workbenchSession, workbenchServices }: Mod
                 onHover={handleHover}
                 onUnhover={handleUnHover}
             />
-            <div className="absolute bottom-5 right-5 italic text-pink-400">{moduleContext.getInstanceIdString()}</div>
         </div>
     );
 };

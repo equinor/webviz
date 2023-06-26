@@ -3,4 +3,4 @@ import { ModuleRegistry } from "@framework/ModuleRegistry";
 import { broadcastChannelsDef } from "./channelDefs";
 import { State } from "./state";
 
-ModuleRegistry.registerModule<State>("InplaceVolumetrics", [], broadcastChannelsDef);
+ModuleRegistry.registerModule<State>("InplaceVolumetrics", "Inplace volumetrics", [], broadcastChannelsDef);
