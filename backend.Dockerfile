@@ -9,7 +9,7 @@ WORKDIR /home/appuser/backend
 
 ENV PATH="${PATH}:/home/appuser/.local/bin"
 RUN pip install poetry \
-    && poetry export --without-hashes -f requirements.txt -o requirements.txt \
+    && poetry export -f requirements.txt -o requirements.txt \
     && pip install -r requirements.txt
 
 CMD exec uvicorn --proxy-headers --host=0.0.0.0 $UVICORN_ENTRYPOINT
