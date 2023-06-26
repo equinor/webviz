@@ -14,6 +14,7 @@ import { ParametersService } from './services/ParametersService';
 import { PvtService } from './services/PvtService';
 import { SurfaceService } from './services/SurfaceService';
 import { TimeseriesService } from './services/TimeseriesService';
+import { WellCompletionService } from './services/WellCompletionService';
 
 type HttpRequestConstructor = new (config: OpenAPIConfig) => BaseHttpRequest;
 
@@ -28,6 +29,7 @@ export class ApiService {
     public readonly pvt: PvtService;
     public readonly surface: SurfaceService;
     public readonly timeseries: TimeseriesService;
+    public readonly wellCompletion: WellCompletionService;
 
     public readonly request: BaseHttpRequest;
 
@@ -53,6 +55,7 @@ export class ApiService {
         this.pvt = new PvtService(this.request);
         this.surface = new SurfaceService(this.request);
         this.timeseries = new TimeseriesService(this.request);
+        this.wellCompletion = new WellCompletionService(this.request);
     }
 }
 
