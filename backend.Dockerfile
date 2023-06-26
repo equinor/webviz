@@ -1,8 +1,6 @@
 FROM python:3.10-slim@sha256:79aa96a96eeccf6e13a240f24c8630dc1069efd20f8c289c8f90914dcae83c11
 
-# For now we need git since SUMO Python packages are not deployed to PyPI
-RUN apt-get update && apt-get install -y git  \
-    && useradd --create-home --uid 1234 appuser  # Changing to non-root user early
+RUN useradd --create-home --uid 1234 appuser  # Changing to non-root user early
 
 USER 1234
 
