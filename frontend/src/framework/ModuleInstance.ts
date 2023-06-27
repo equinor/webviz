@@ -44,7 +44,7 @@ export class ModuleInstance<StateType extends StateBaseType> {
         workbench: Workbench
     ) {
         this.id = `${module.getName()}-${instanceNumber}`;
-        this.title = module.getTitle();
+        this.title = module.getDefaultTitle();
         this.stateStore = null;
         this.module = module;
         this.importStateSubscribers = new Set();

@@ -175,13 +175,13 @@ export const ModulesList: React.FC<ModulesListProps> = (props) => {
             />
             <div className="mt-4 flex-grow min-h-0 overflow-y-auto max-h-full h-0">
                 {Object.values(ModuleRegistry.getRegisteredModules())
-                    .filter((mod) => mod.getTitle().toLowerCase().includes(searchQuery.toLowerCase()))
+                    .filter((mod) => mod.getDefaultTitle().toLowerCase().includes(searchQuery.toLowerCase()))
                     .map((mod) => (
                         <ModulesListItem
                             relContainer={props.relContainer}
                             key={mod.getName()}
                             moduleName={mod.getName()}
-                            moduleDisplayName={mod.getTitle()}
+                            moduleDisplayName={mod.getDefaultTitle()}
                         />
                     ))}
             </div>

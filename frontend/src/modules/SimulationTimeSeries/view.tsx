@@ -109,11 +109,9 @@ export const view = ({ moduleContext, workbenchSession, workbenchServices }: Mod
     }
 
     const tracesDataArr: MyPlotData[] = [];
-    let unitString = "";
 
     if (vectorQuery.data && vectorQuery.data.length > 0) {
         let highlightedTrace: MyPlotData | null = null;
-        unitString = vectorQuery.data[0].unit;
         for (let i = 0; i < vectorQuery.data.length; i++) {
             const vec = vectorQuery.data[i];
             const isHighlighted = vec.realization === subscribedPlotlyRealization?.realization ? true : false;
@@ -159,7 +157,6 @@ export const view = ({ moduleContext, workbenchSession, workbenchServices }: Mod
         }
     }
 
-    let title = "N/A";
     const hasGotAnyRequestedData = vectorQuery.data || (showStatistics && statisticsQuery.data);
     if (ensemble && vectorSpec && hasGotAnyRequestedData) {
         const ensembleDisplayName = ensemble.getDisplayName();
@@ -169,6 +166,7 @@ export const view = ({ moduleContext, workbenchSession, workbenchServices }: Mod
     const layout: Partial<Layout> = {
         width: wrapperDivSize.width,
         height: wrapperDivSize.height,
+        margin: { t: 0, r: 0, l: 40, b: 40 },
     };
 
     if (subscribedPlotlyTimeStamp) {
