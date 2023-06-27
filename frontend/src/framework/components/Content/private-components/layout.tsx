@@ -19,6 +19,7 @@ import { ViewWrapper } from "./ViewWrapper";
 import { LayoutBox, LayoutBoxComponents, makeLayoutBoxes } from "./layoutBox";
 import { ModulesList } from "./modulesList";
 import { GroupModules } from "./syncSettings";
+import { TemplatesList } from "./templatesList";
 import { ViewWrapperPlaceholder } from "./viewWrapperPlaceholder";
 
 import { addMarginToRect, rectContainsPoint } from "../../../utils/geometry";
@@ -293,7 +294,7 @@ export const Layout: React.FC<LayoutProps> = (props) => {
                 clearTimeout(delayTimer);
             }
         };
-    }, [size]);
+    }, [size, moduleInstances]);
 
     const makeTempViewWrapperPlaceholder = () => {
         if (!tempLayoutBoxId) {
@@ -352,6 +353,7 @@ export const Layout: React.FC<LayoutProps> = (props) => {
                 {makeTempViewWrapperPlaceholder()}
             </div>
             <ModulesList relContainer={mainRef.current} workbench={props.workbench} />
+            <TemplatesList relContainer={mainRef.current} workbench={props.workbench} />
             <GroupModules relContainer={mainRef.current} workbench={props.workbench} />
         </div>
     );

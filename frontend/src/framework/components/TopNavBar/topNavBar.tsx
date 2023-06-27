@@ -3,7 +3,7 @@ import React from "react";
 import { useSetStoreValue } from "@framework/StateStore";
 import { Workbench } from "@framework/Workbench";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
-import { ShareIcon, WindowIcon } from "@heroicons/react/20/solid";
+import { ShareIcon, Squares2X2Icon, WindowIcon } from "@heroicons/react/20/solid";
 import { Button } from "@lib/components/Button";
 import { Dialog } from "@lib/components/Dialog";
 
@@ -19,6 +19,7 @@ export const TopNavBar: React.FC<TopNavBarProps> = (props) => {
     const activeModuleName = ""; // useWorkbenchActiveModuleName();
     const [ensembleDialogOpen, setEnsembleDialogOpen] = React.useState<boolean>(false);
     const setModulesListOpen = useSetStoreValue(props.workbench.getGuiStateStore(), "modulesListOpen");
+    const setTemplatesListOpen = useSetStoreValue(props.workbench.getGuiStateStore(), "templatesListOpen");
     const setSyncSettingsActive = useSetStoreValue(props.workbench.getGuiStateStore(), "syncSettingsActive");
     const ensembleSet = useEnsembleSet(props.workbench.getWorkbenchSession());
 
@@ -28,6 +29,10 @@ export const TopNavBar: React.FC<TopNavBarProps> = (props) => {
 
     const handleModulesListClick = () => {
         setModulesListOpen(true);
+    };
+
+    const handleTemplatesListClick = () => {
+        setTemplatesListOpen(true);
     };
 
     const handleSyncSettingsClick = () => {
@@ -53,8 +58,11 @@ export const TopNavBar: React.FC<TopNavBarProps> = (props) => {
                 <Button onClick={handleModulesListClick} startIcon={<WindowIcon className="w-5 h-5" />}>
                     Modules
                 </Button>
-                <Button onClick={handleSyncSettingsClick}>
-                    <ShareIcon className="w-5 h-5" /> Sync settings
+                <Button onClick={handleTemplatesListClick} startIcon={<Squares2X2Icon className="w-5 h-5" />}>
+                    Templates
+                </Button>
+                <Button onClick={handleSyncSettingsClick} startIcon={<ShareIcon className="w-5 h-5" />}>
+                    Sync settings
                 </Button>
                 <LoginButton />
             </div>

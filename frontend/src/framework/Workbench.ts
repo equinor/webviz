@@ -6,6 +6,7 @@ import { ImportState } from "./Module";
 import { ModuleInstance } from "./ModuleInstance";
 import { ModuleRegistry } from "./ModuleRegistry";
 import { StateStore } from "./StateStore";
+import { Template } from "./TemplateRegistry";
 import { WorkbenchServices } from "./WorkbenchServices";
 import { WorkbenchSession } from "./WorkbenchSession";
 import { loadEnsembleSetMetadataFromBackend } from "./internal/EnsembleSetLoader";
@@ -29,6 +30,7 @@ export type LayoutElement = {
 
 export type WorkbenchGuiState = {
     modulesListOpen: boolean;
+    templatesListOpen: boolean;
     syncSettingsActive: boolean;
 };
 
@@ -47,6 +49,7 @@ export class Workbench {
         this._activeModuleId = "";
         this.guiStateStore = new StateStore<WorkbenchGuiState>({
             modulesListOpen: false,
+            templatesListOpen: false,
             syncSettingsActive: false,
         });
         this._workbenchSession = new WorkbenchSessionPrivate();
@@ -212,5 +215,47 @@ export class Workbench {
 
         console.debug("loadAndSetupEnsembleSetInSession - publishing");
         return this._workbenchSession.setEnsembleSet(newEnsembleSet);
+    }
+
+    public applyTemplate(template: Template): void {
+        const newLayout = template.layout.map((el) => {
+            return { ...el, moduleInstanceId: undefined };
+        });
+        this.makeLayout(newLayout);
+        for (let i = 0; i < this.moduleInstances.length; i++) {
+            const moduleInstance = this.moduleInstances[i];
+            const layoutElement = template.layout[i];
+            if (layoutElement.syncedSettings) {
+                for (const syncSettingKey of layoutElement.syncedSettings) {
+                    moduleInstance.addSyncedSetting(syncSettingKey);
+                }
+            }
+
+            const presetProps: Record<string, unknown> = layoutElement.presetProps || {};
+
+            if (layoutElement.dataChannelToPresetPropsMapping) {
+                for (const propName of Object.keys(layoutElement.dataChannelToPresetPropsMapping)) {
+                    const dataChannel = layoutElement.dataChannelToPresetPropsMapping[propName];
+
+                    const moduleInstanceIndex = template.layout.findIndex(
+                        (el) => el.templateElementId === dataChannel.listensToTemplateId
+                    );
+                    if (moduleInstanceIndex === -1) {
+                        throw new Error("Could not find module instance for data channel");
+                    }
+
+                    const listensToModuleInstance = this.moduleInstances[moduleInstanceIndex];
+                    const channel = listensToModuleInstance.getContext().getChannel(dataChannel.channelName);
+                    if (!channel) {
+                        throw new Error("Could not find channel");
+                    }
+
+                    presetProps[propName] = channel.getName();
+                }
+            }
+
+            moduleInstance.getContext().setPresetProps(presetProps);
+        }
+        this.notifySubscribers(WorkbenchEvents.ModuleInstancesChanged);
     }
 }
