@@ -54,11 +54,14 @@ export const view = (props: ModuleFCProps<State>) => {
             },
         };
         tracesDataArr.push(trace);
+    }
 
+    React.useEffect(() => {
         props.moduleContext.setInstanceTitle(
             VolumetricResponseAbbreviations[responseName as keyof typeof VolumetricResponseAbbreviations] || ""
         );
-    }
+    }, [props.moduleContext, responseName]);
+
     const handleHover = (e: PlotHoverEvent) => {
         const realization = e.points[0].x;
         if (typeof realization === "number") {

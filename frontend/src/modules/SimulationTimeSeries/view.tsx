@@ -157,11 +157,16 @@ export const view = ({ moduleContext, workbenchSession, workbenchServices }: Mod
         }
     }
 
-    const hasGotAnyRequestedData = vectorQuery.data || (showStatistics && statisticsQuery.data);
-    if (ensemble && vectorSpec && hasGotAnyRequestedData) {
-        const ensembleDisplayName = ensemble.getDisplayName();
-        moduleContext.setInstanceTitle(`${ensembleDisplayName} - ${vectorSpec.vectorName}`);
-    }
+    React.useEffect(
+        function updateInstanceTitle() {
+            const hasGotAnyRequestedData = vectorQuery.data || (showStatistics && statisticsQuery.data);
+            if (ensemble && vectorSpec && hasGotAnyRequestedData) {
+                const ensembleDisplayName = ensemble.getDisplayName();
+                moduleContext.setInstanceTitle(`${ensembleDisplayName} - ${vectorSpec.vectorName}`);
+            }
+        },
+        [ensemble, vectorSpec, vectorQuery.data, showStatistics, statisticsQuery.data, moduleContext]
+    );
 
     const layout: Partial<Layout> = {
         width: wrapperDivSize.width,
