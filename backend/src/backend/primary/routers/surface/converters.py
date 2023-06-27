@@ -2,6 +2,7 @@ import orjson
 import xtgeo
 
 from src.services.utils.surface_to_float32 import surface_to_float32_array
+from src.services.sumo_access.types import SumoContent
 from . import schemas
 
 
