@@ -18,7 +18,7 @@ export enum ModuleInstanceState {
 
 export class ModuleInstance<StateType extends StateBaseType> {
     private id: string;
-    private name: string;
+    private title: string;
     private initialised: boolean;
     private moduleInstanceState: ModuleInstanceState;
     private fatalError: {
@@ -32,6 +32,7 @@ export class ModuleInstance<StateType extends StateBaseType> {
     private importStateSubscribers: Set<() => void>;
     private moduleInstanceStateSubscribers: Set<(moduleInstanceState: ModuleInstanceState) => void>;
     private syncedSettingsSubscribers: Set<(syncedSettings: SyncSettingKey[]) => void>;
+    private titleChangeSubscribers: Set<(title: string) => void>;
     private broadcastChannels: Record<string, BroadcastChannel>;
     private cachedInitialState: StateType | null;
     private cachedStateStoreOptions?: StateOptions<StateType>;
@@ -43,7 +44,7 @@ export class ModuleInstance<StateType extends StateBaseType> {
         workbench: Workbench
     ) {
         this.id = `${module.getName()}-${instanceNumber}`;
-        this.name = module.getName();
+        this.title = module.getDefaultTitle();
         this.stateStore = null;
         this.module = module;
         this.importStateSubscribers = new Set();
@@ -52,6 +53,7 @@ export class ModuleInstance<StateType extends StateBaseType> {
         this.syncedSettingKeys = [];
         this.syncedSettingsSubscribers = new Set();
         this.moduleInstanceStateSubscribers = new Set();
+        this.titleChangeSubscribers = new Set();
         this.moduleInstanceState = ModuleInstanceState.INITIALIZING;
         this.fatalError = null;
         this.cachedInitialState = null;
@@ -72,7 +74,7 @@ export class ModuleInstance<StateType extends StateBaseType> {
 
     public getBroadcastChannel(channelName: string): BroadcastChannel {
         if (!this.broadcastChannels[channelName]) {
-            throw new Error(`Channel '${channelName}' does not exist on module '${this.name}'`);
+            throw new Error(`Channel '${channelName}' does not exist on module '${this.title}'`);
         }
 
         return this.broadcastChannels[channelName];
@@ -137,7 +139,7 @@ export class ModuleInstance<StateType extends StateBaseType> {
 
     public getContext(): ModuleContext<StateType> {
         if (!this.context) {
-            throw `Module context is not available yet. Did you forget to init the module '${this.name}.'?`;
+            throw `Module context is not available yet. Did you forget to init the module '${this.title}.'?`;
         }
         return this.context;
     }
@@ -147,7 +149,29 @@ export class ModuleInstance<StateType extends StateBaseType> {
     }
 
     public getName(): string {
-        return this.name;
+        return this.module.getName();
+    }
+
+    public getTitle(): string {
+        return this.title;
+    }
+
+    public setTitle(title: string): void {
+        this.title = title;
+        this.notifySubscribersAboutTitleChange();
+    }
+
+    public subscribeToTitleChange(cb: (title: string) => void): () => void {
+        this.titleChangeSubscribers.add(cb);
+        return () => {
+            this.titleChangeSubscribers.delete(cb);
+        };
+    }
+
+    public notifySubscribersAboutTitleChange(): void {
+        this.titleChangeSubscribers.forEach((subscriber) => {
+            subscriber(this.title);
+        });
     }
 
     public getModule(): Module<StateType> {

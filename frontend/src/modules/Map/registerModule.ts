@@ -3,4 +3,8 @@ import { SyncSettingKey } from "@framework/SyncSettings";
 
 import { MapState } from "./MapState";
 
-ModuleRegistry.registerModule<MapState>("Map", [SyncSettingKey.ENSEMBLE, SyncSettingKey.SURFACE, SyncSettingKey.DATE]);
+ModuleRegistry.registerModule<MapState>("Map", "Map", [
+    SyncSettingKey.ENSEMBLE,
+    SyncSettingKey.SURFACE,
+    SyncSettingKey.DATE,
+]);

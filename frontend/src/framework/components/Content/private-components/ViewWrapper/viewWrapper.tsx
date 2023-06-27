@@ -75,7 +75,7 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
             )}
             <div
                 ref={ref}
-                className="absolute box-border p-2"
+                className="absolute box-border p-1"
                 style={{
                     width: props.width,
                     height: props.height,
