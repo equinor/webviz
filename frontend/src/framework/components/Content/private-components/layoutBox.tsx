@@ -913,7 +913,7 @@ export const LayoutBoxComponents: React.FC<{
         const hovered = rectContainsPoint(rect, props.pointer);
         return (
             <div
-                className="bg-transparent absolute pointer-events-none flex justify-center items-center"
+                className="bg-transparent absolute pointer-events-none flex justify-center items-center text-white"
                 key={flatBoxes[0].toString()}
                 style={{
                     left: rect.x,

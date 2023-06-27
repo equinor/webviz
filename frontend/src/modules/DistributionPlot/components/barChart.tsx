@@ -61,6 +61,7 @@ export const BarChart: React.FC<BarChartProps> = (props) => {
         height: props.height,
         xaxis: { zeroline: false, title: props.xAxisTitle },
         yaxis: { zeroline: false, title: props.yAxisTitle },
+        margin: { t: 0, r: 0, l: 40, b: 40 },
     };
     return (
         <Plot data={dataArray} layout={layout} onClick={handleClick} onHover={handleHover} onUnhover={handleUnhover} />

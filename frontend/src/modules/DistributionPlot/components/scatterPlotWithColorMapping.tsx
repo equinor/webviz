@@ -82,6 +82,7 @@ export const ScatterPlotWithColorMapping: React.FC<ScatterPlotWithColorMappingPr
         height: props.height,
         xaxis: { zeroline: false, title: props.xAxisTitle },
         yaxis: { zeroline: false, title: props.yAxisTitle },
+        margin: { t: 0, r: 0, l: 50, b: 40 },
     };
 
     return (

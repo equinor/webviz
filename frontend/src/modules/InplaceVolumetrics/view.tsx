@@ -55,6 +55,13 @@ export const view = (props: ModuleFCProps<State>) => {
         };
         tracesDataArr.push(trace);
     }
+
+    React.useEffect(() => {
+        props.moduleContext.setInstanceTitle(
+            VolumetricResponseAbbreviations[responseName as keyof typeof VolumetricResponseAbbreviations] || ""
+        );
+    }, [props.moduleContext, responseName]);
+
     const handleHover = (e: PlotHoverEvent) => {
         const realization = e.points[0].x;
         if (typeof realization === "number") {
@@ -103,7 +110,7 @@ export const view = (props: ModuleFCProps<State>) => {
     const layout: Partial<Layout> = {
         width: wrapperDivSize.width,
         height: wrapperDivSize.height,
-        title: VolumetricResponseAbbreviations[responseName as keyof typeof VolumetricResponseAbbreviations] || "",
+        margin: { t: 0, r: 0, l: 40, b: 40 },
         xaxis: { title: "Realization" },
     };
     return (
