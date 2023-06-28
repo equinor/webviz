@@ -33,15 +33,16 @@ class EnsembleDetails(BaseModel):
 
 
 @router.get("/fields")
-def get_fields() -> List[FieldInfo]:
+def get_fields(
+    authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
+) -> List[FieldInfo]:
     """
     Get list of fields
     """
-    ret_arr = [
-        FieldInfo(field_identifier="DROGON"),
-        FieldInfo(field_identifier="JOHAN SVERDRUP"),
-        FieldInfo(field_identifier="DUMMY_FIELD"),
-    ]
+    sumo_discovery = SumoExplore(authenticated_user.get_sumo_access_token())
+    field_ident_arr = sumo_discovery.get_fields()
+    ret_arr = [FieldInfo(field_identifier=field_ident.identifier) for field_ident in field_ident_arr]
+
     return ret_arr
 
 
@@ -51,7 +52,6 @@ def get_cases(
     field_identifier: str = Query(description="Field identifier"),
 ) -> List[CaseInfo]:
     """Get list of cases for specified field"""
-    print(authenticated_user.get_sumo_access_token())
     sumo_discovery = SumoExplore(authenticated_user.get_sumo_access_token())
     case_info_arr = sumo_discovery.get_cases(field_identifier=field_identifier)
 
