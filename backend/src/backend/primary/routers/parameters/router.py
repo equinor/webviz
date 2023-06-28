@@ -105,4 +105,5 @@ def get_sensitivities(
 
     access = ParameterAccess(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
 
-    return access.get_parameters_and_sensitivities().sensitivities
+    sensitivities = access.get_parameters_and_sensitivities().sensitivities
+    return sensitivities if sensitivities else []
