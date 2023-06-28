@@ -21,7 +21,6 @@ def get_dynamic_surface_directory(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     case_uuid: str = Query(description="Sumo case uuid"),
     ensemble_name: str = Query(description="Ensemble name"),
-    surface_types: List[schemas.SurfaceType] = Query(None, description="Surface types to include"),
 ) -> schemas.DynamicSurfaceDirectory:
     """
     Get a directory of surface names, attributes and time/interval strings for simulated dynamic surfaces.
@@ -43,15 +42,13 @@ def get_static_surface_directory(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     case_uuid: str = Query(description="Sumo case uuid"),
     ensemble_name: str = Query(description="Ensemble name"),
-    surface_types: List[schemas.SurfaceType] = Query(None, description="Surface types to include"),
 ) -> schemas.StaticSurfaceDirectory:
     """
     Get a directory of surface names and attributes for static surfaces.
     These are the non-observed surfaces that do NOT have time stamps
     """
     access = SurfaceAccess(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
-    surface_types = [schemas.SurfaceType.DEPTH]
-    surf_dir = access.get_static_surf_dir(content_filter=surface_types)
+    surf_dir = access.get_static_surf_dir()
 
     ret_dir = schemas.StaticSurfaceDirectory(
         names=surf_dir.names,

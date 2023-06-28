@@ -14,12 +14,6 @@ class SurfaceStatisticFunction(str, Enum):
     P50 = "P50"
 
 
-class SurfaceType(str, Enum):
-    DEPTH = "depth"
-    TIME = "time"
-    PROPERTY = "property"
-
-
 class DynamicSurfaceDirectory(BaseModel):
     names: List[str]
     attributes: List[str]
