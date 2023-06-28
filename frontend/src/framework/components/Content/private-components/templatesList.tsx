@@ -1,24 +1,26 @@
 import React from "react";
 
+import { ModuleRegistry } from "@framework/ModuleRegistry";
 import { useStoreState } from "@framework/StateStore";
 import { Template, TemplateRegistry } from "@framework/TemplateRegistry";
-import { Workbench } from "@framework/Workbench";
-import { MagnifyingGlassIcon, XMarkIcon } from "@heroicons/react/20/solid";
-import { IconButton } from "@lib/components/IconButton";
-import { Input } from "@lib/components/Input";
+import { DrawerContent, Workbench } from "@framework/Workbench";
+
+import { Drawer } from "./drawer";
 
 function drawTemplatePreview(template: Template, width: number, height: number): React.ReactNode {
     return (
         <svg width={width} height={height} viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" version="1.1">
-            {template.layout.map((module, index) => {
-                const w = module.relWidth * width;
-                const h = module.relHeight * height;
-                const x = module.relX * width;
-                const y = module.relY * height;
+            {template.layout.map((element) => {
+                const w = element.relWidth * width;
+                const h = element.relHeight * height;
+                const x = element.relX * width;
+                const y = element.relY * height;
                 const strokeWidth = 2;
                 const headerHeight = 10;
+                const module = ModuleRegistry.getModule(element.moduleName);
+                const drawFunc = module.getDrawPreviewFunc();
                 return (
-                    <g key={module.moduleName}>
+                    <g key={element.moduleName}>
                         <rect x={x} y={y} width={w} height={h} fill="white" stroke="#aaa" strokeWidth={strokeWidth} />
                         <rect
                             x={x + strokeWidth / 2}
@@ -36,8 +38,11 @@ function drawTemplatePreview(template: Template, width: number, height: number):
                             fontSize="3"
                             fill="#000"
                         >
-                            {module.moduleName}
+                            {element.moduleName}
                         </text>
+                        <g transform={`translate(${x + 2 * strokeWidth}, ${y + headerHeight + 2 * strokeWidth})`}>
+                            {drawFunc && drawFunc(w - 4 * strokeWidth, h - headerHeight - 4 * strokeWidth)}
+                        </g>
                     </g>
                 );
             })}
@@ -69,7 +74,9 @@ const TemplatesListItem: React.FC<TemplatesListItemProps> = (props) => {
                 </div>
                 <div className="ml-4">
                     <div className="font-bold">{props.templateName}</div>
-                    {template?.description}
+                    <div className="line-clamp-3" title={template?.description}>
+                        {template?.description}
+                    </div>
                 </div>
             </div>
         </>
@@ -87,7 +94,7 @@ type TemplatesListProps = {
     I will skip it for now and come back to it when it becomes a problem.
 */
 export const TemplatesList: React.FC<TemplatesListProps> = (props) => {
-    const [visible, setVisible] = useStoreState(props.workbench.getGuiStateStore(), "templatesListOpen");
+    const [drawerContent, setDrawerContent] = useStoreState(props.workbench.getGuiStateStore(), "drawerContent");
     const [searchQuery, setSearchQuery] = React.useState("");
 
     const handleSearchQueryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -102,30 +109,28 @@ export const TemplatesList: React.FC<TemplatesListProps> = (props) => {
         props.workbench.applyTemplate(template);
     };
 
+    const handleDrawerClose = () => {
+        setDrawerContent(DrawerContent.None);
+    };
+
     return (
-        <div className={`flex flex-col shadow bg-white p-4 w-96 min-h-0 h-full${visible ? "" : " hidden"}`}>
-            <div className="flex justify-center items-center mb-4">
-                <span className="text-lg flex-grow p-0">Select a template</span>
-                <IconButton onClick={() => setVisible(false)} title="Close templates list">
-                    <XMarkIcon className="w-5 h-5" />
-                </IconButton>
-            </div>
-            <Input
-                placeholder="Filter templates..."
-                startAdornment={<MagnifyingGlassIcon className="w-4 h-4" />}
-                onChange={handleSearchQueryChange}
-            />
-            <div className="mt-4 flex-grow min-h-0 overflow-y-auto max-h-full h-0">
-                {Object.keys(TemplateRegistry.getRegisteredTemplates())
-                    .filter((templName) => templName.toLowerCase().includes(searchQuery.toLowerCase()))
-                    .map((templName) => (
-                        <TemplatesListItem
-                            onClick={() => handleTemplateClick(templName)}
-                            key={templName}
-                            templateName={templName}
-                        />
-                    ))}
-            </div>
-        </div>
+        <Drawer
+            showFilter
+            onFilterChange={handleSearchQueryChange}
+            filterPlaceholder="Filter templates..."
+            title="Select a template"
+            visible={drawerContent === DrawerContent.TemplatesList}
+            onClose={handleDrawerClose}
+        >
+            {Object.keys(TemplateRegistry.getRegisteredTemplates())
+                .filter((templName) => templName.toLowerCase().includes(searchQuery.toLowerCase()))
+                .map((templName) => (
+                    <TemplatesListItem
+                        onClick={() => handleTemplateClick(templName)}
+                        key={templName}
+                        templateName={templName}
+                    />
+                ))}
+        </Drawer>
     );
 };

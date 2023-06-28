@@ -7,21 +7,16 @@ import { Label } from "@lib/components/Label";
 
 import { State } from "./state";
 
-export function settings({ moduleContext, workbenchServices }: ModuleFCProps<State>) {
+export function settings({ moduleContext, workbenchServices, presetProps }: ModuleFCProps<State>) {
     const [responseChannelName, setResponseChannelName] = moduleContext.useStoreState("responseChannelName");
 
     React.useEffect(() => {
-        const presetProps = {
-            responseChannelName: moduleContext.getPresetProp<string>("responseChannelName", "string"),
-        };
-        if (presetProps.responseChannelName) {
-            setResponseChannelName(presetProps.responseChannelName as string);
-        }
-    }, [moduleContext]);
+        const presetResponseChannelName = presetProps?.get<string>("responseChannelName", "string");
 
-    if (moduleContext.propPresetAs("responseChannelName", "string")) {
-        return null;
-    }
+        if (presetResponseChannelName) {
+            setResponseChannelName(presetResponseChannelName);
+        }
+    }, [presetProps]);
 
     return (
         <>

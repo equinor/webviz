@@ -5,6 +5,7 @@ import { EnsembleIdent } from "./EnsembleIdent";
 import { ImportState } from "./Module";
 import { ModuleInstance } from "./ModuleInstance";
 import { ModuleRegistry } from "./ModuleRegistry";
+import { PresetProps } from "./PresetProps";
 import { StateStore } from "./StateStore";
 import { Template } from "./TemplateRegistry";
 import { WorkbenchServices } from "./WorkbenchServices";
@@ -19,6 +20,13 @@ export enum WorkbenchEvents {
     FullModuleRerenderRequested = "FullModuleRerenderRequested",
 }
 
+export enum DrawerContent {
+    None = "None",
+    ModulesList = "ModulesList",
+    TemplatesList = "TemplatesList",
+    SyncSettings = "SyncSettings",
+}
+
 export type LayoutElement = {
     moduleInstanceId?: string;
     moduleName: string;
@@ -29,9 +37,7 @@ export type LayoutElement = {
 };
 
 export type WorkbenchGuiState = {
-    modulesListOpen: boolean;
-    templatesListOpen: boolean;
-    syncSettingsActive: boolean;
+    drawerContent: DrawerContent;
 };
 
 export class Workbench {
@@ -48,9 +54,7 @@ export class Workbench {
         this.moduleInstances = [];
         this._activeModuleId = "";
         this.guiStateStore = new StateStore<WorkbenchGuiState>({
-            modulesListOpen: false,
-            templatesListOpen: false,
-            syncSettingsActive: false,
+            drawerContent: DrawerContent.None,
         });
         this._workbenchSession = new WorkbenchSessionPrivate();
         this._workbenchServices = new PrivateWorkbenchServices(this);
@@ -148,6 +152,14 @@ export class Workbench {
         });
     }
 
+    private clearLayout(): void {
+        for (const moduleInstance of this.moduleInstances) {
+            this._broadcaster.unregisterAllChannelsForModuleInstance(moduleInstance.getId());
+        }
+        this.moduleInstances = [];
+        this.setLayout([]);
+    }
+
     public makeAndAddModuleInstance(moduleName: string, layout: LayoutElement): ModuleInstance<any> {
         const module = ModuleRegistry.getModule(moduleName);
         if (!module) {
@@ -217,11 +229,15 @@ export class Workbench {
         return this._workbenchSession.setEnsembleSet(newEnsembleSet);
     }
 
-    public applyTemplate(template: Template): void {
+    applyTemplate(template: Template): void {
+        this.clearLayout();
+
         const newLayout = template.layout.map((el) => {
             return { ...el, moduleInstanceId: undefined };
         });
+
         this.makeLayout(newLayout);
+
         for (let i = 0; i < this.moduleInstances.length; i++) {
             const moduleInstance = this.moduleInstances[i];
             const layoutElement = template.layout[i];
@@ -254,8 +270,14 @@ export class Workbench {
                 }
             }
 
-            moduleInstance.getContext().setPresetProps(presetProps);
+            moduleInstance.setPresetProps(new PresetProps(presetProps));
+
+            if (i === 0) {
+                this._activeModuleId = moduleInstance.getId();
+                this.notifySubscribers(WorkbenchEvents.ActiveModuleChanged);
+            }
         }
+
         this.notifySubscribers(WorkbenchEvents.ModuleInstancesChanged);
     }
 }

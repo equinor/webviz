@@ -5,6 +5,7 @@ import { cloneDeep } from "lodash";
 import { BroadcastChannel, BroadcastChannelsDef } from "./Broadcaster";
 import { ImportState, Module, ModuleFC } from "./Module";
 import { ModuleContext } from "./ModuleContext";
+import { PresetProps } from "./PresetProps";
 import { StateBaseType, StateOptions, StateStore } from "./StateStore";
 import { SyncSettingKey } from "./SyncSettings";
 import { Workbench } from "./Workbench";
@@ -36,6 +37,7 @@ export class ModuleInstance<StateType extends StateBaseType> {
     private broadcastChannels: Record<string, BroadcastChannel>;
     private cachedInitialState: StateType | null;
     private cachedStateStoreOptions?: StateOptions<StateType>;
+    private _presetProps: PresetProps | null;
 
     constructor(
         module: Module<StateType>,
@@ -57,6 +59,7 @@ export class ModuleInstance<StateType extends StateBaseType> {
         this.moduleInstanceState = ModuleInstanceState.INITIALIZING;
         this.fatalError = null;
         this.cachedInitialState = null;
+        this._presetProps = null;
 
         this.broadcastChannels = {} as Record<string, BroadcastChannel>;
 
@@ -241,5 +244,13 @@ export class ModuleInstance<StateType extends StateBaseType> {
             this.setInitialState(this.cachedInitialState as StateType, this.cachedStateStoreOptions);
             resolve();
         });
+    }
+
+    setPresetProps(presetProps: PresetProps): void {
+        this._presetProps = presetProps;
+    }
+
+    getPresetProps(): PresetProps | null {
+        return this._presetProps;
     }
 }

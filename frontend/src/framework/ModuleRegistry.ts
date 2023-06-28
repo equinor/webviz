@@ -1,5 +1,6 @@
 import { BroadcastChannelsDef } from "./Broadcaster";
 import { Module } from "./Module";
+import { DrawPreviewFunc } from "./Preview";
 import { StateBaseType, StateOptions } from "./StateStore";
 import { SyncSettingKey } from "./SyncSettings";
 
@@ -12,9 +13,16 @@ export class ModuleRegistry {
         moduleName: string,
         defaultTitle: string,
         syncableSettingKeys: SyncSettingKey[] = [],
-        broadcastChannelsDef: BroadcastChannelsDef = {}
+        broadcastChannelsDef: BroadcastChannelsDef = {},
+        drawPreviewFunc: DrawPreviewFunc | null = null
     ): Module<ModuleStateType> {
-        const module = new Module<ModuleStateType>(moduleName, defaultTitle, syncableSettingKeys, broadcastChannelsDef);
+        const module = new Module<ModuleStateType>(
+            moduleName,
+            defaultTitle,
+            syncableSettingKeys,
+            broadcastChannelsDef,
+            drawPreviewFunc
+        );
         this._registeredModules[moduleName] = module;
         return module;
     }

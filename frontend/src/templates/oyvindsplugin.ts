@@ -5,7 +5,8 @@ import { PlotType } from "@modules/DistributionPlot/state";
 import { BroadcastChannelNames } from "@modules/SimulationTimeSeries/channelDefs";
 
 const template: Template = {
-    description: "Combination of simulation time series, sensitivity and distribution plot.",
+    description:
+        "Combination of simulation time series, sensitivity and distribution plot. All are synced to the same ensemble. Data is shared for realizations.",
     layout: [
         {
             templateElementId: "SimulationTimeSeries",
@@ -55,4 +56,4 @@ const template: Template = {
     ],
 };
 
-TemplateRegistry.registerTemplate("Øyvinds Plugin", template);
+TemplateRegistry.registerTemplate("Øyvind's plugin", template);

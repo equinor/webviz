@@ -53,54 +53,56 @@ const crossPlottingTypes = [
 ];
 
 //-----------------------------------------------------------------------------------------------------------
-export function settings({ moduleContext, workbenchServices }: ModuleFCProps<State>) {
+export function settings({ moduleContext, workbenchServices, presetProps }: ModuleFCProps<State>) {
     const [channelNameX, setChannelNameX] = moduleContext.useStoreState("channelNameX");
     const [channelNameY, setChannelNameY] = moduleContext.useStoreState("channelNameY");
     const [channelNameZ, setChannelNameZ] = moduleContext.useStoreState("channelNameZ");
     const [plotType, setPlotType] = moduleContext.useStoreState("plotType");
     const [numBins, setNumBins] = moduleContext.useStoreState("numBins");
     const [orientation, setOrientation] = moduleContext.useStoreState("orientation");
-    const [crossPlottingType, setCrossPlottingType] = React.useState<BroadcastChannelKeyCategory | null>(null);
+    const [crossPlottingType, setCrossPlottingType] = React.useState<BroadcastChannelKeyCategory | null>(
+        presetProps?.get<BroadcastChannelKeyCategory>("crossPlottingType", "string") || null
+    );
 
     React.useEffect(() => {
-        const presetProps = {
-            channelNameX: moduleContext.getPresetProp<string>("channelNameX", "string"),
-            channelNameY: moduleContext.getPresetProp<string>("channelNameY", "string"),
-            channelNameZ: moduleContext.getPresetProp<string>("channelNameZ", "string"),
-            plotType: moduleContext.getPresetProp<PlotType>("plotType", "string"),
-            numBins: moduleContext.getPresetProp<number>("numBins", "number"),
-            orientation: moduleContext.getPresetProp<"h" | "v">("orientation", "string"),
-            crossPlottingType: moduleContext.getPresetProp<BroadcastChannelKeyCategory>("crossPlottingType", "string"),
+        const presetPropsObj = {
+            channelNameX: presetProps?.get<string>("channelNameX", "string"),
+            channelNameY: presetProps?.get<string>("channelNameY", "string"),
+            channelNameZ: presetProps?.get<string>("channelNameZ", "string"),
+            plotType: presetProps?.get<PlotType>("plotType", "string"),
+            numBins: presetProps?.get<number>("numBins", "number"),
+            orientation: presetProps?.get<"h" | "v">("orientation", "string"),
+            crossPlottingType: presetProps?.get<BroadcastChannelKeyCategory>("crossPlottingType", "string"),
         };
 
-        if (presetProps.channelNameX) {
-            setChannelNameX(presetProps.channelNameX);
+        if (presetPropsObj.channelNameX) {
+            setChannelNameX(presetPropsObj.channelNameX);
         }
 
-        if (presetProps.channelNameY) {
-            setChannelNameY(presetProps.channelNameY);
+        if (presetPropsObj.channelNameY) {
+            setChannelNameY(presetPropsObj.channelNameY);
         }
 
-        if (presetProps.channelNameZ) {
-            setChannelNameZ(presetProps.channelNameZ);
+        if (presetPropsObj.channelNameZ) {
+            setChannelNameZ(presetPropsObj.channelNameZ);
         }
 
-        if (presetProps.plotType) {
-            setPlotType(presetProps.plotType);
+        if (presetPropsObj.plotType) {
+            setPlotType(presetPropsObj.plotType);
         }
 
-        if (presetProps.numBins) {
-            setNumBins(presetProps.numBins as number);
+        if (presetPropsObj.numBins) {
+            setNumBins(presetPropsObj.numBins as number);
         }
 
-        if (presetProps.orientation) {
-            setOrientation(presetProps.orientation as "h" | "v");
+        if (presetPropsObj.orientation) {
+            setOrientation(presetPropsObj.orientation as "h" | "v");
         }
 
-        if (presetProps.crossPlottingType) {
-            setCrossPlottingType(presetProps.crossPlottingType as BroadcastChannelKeyCategory);
+        if (presetPropsObj.crossPlottingType) {
+            setCrossPlottingType(presetPropsObj.crossPlottingType as BroadcastChannelKeyCategory);
         }
-    }, [moduleContext]);
+    }, [presetProps]);
 
     const handleChannelXChanged = (channelName: string) => {
         setChannelNameX(channelName);
@@ -139,23 +141,18 @@ export function settings({ moduleContext, workbenchServices }: ModuleFCProps<Sta
         }
         const content: React.ReactNode[] = [];
 
-        if (!moduleContext.propPresetAs("channelNameX", "string")) {
-            content.push(
-                <Label text="Data channel X axis" key="data-channel-x-axis">
-                    <ChannelSelect
-                        onChange={handleChannelXChanged}
-                        channelKeyCategory={crossPlottingType}
-                        initialChannel={channelNameX || undefined}
-                        broadcaster={workbenchServices.getBroadcaster()}
-                    />
-                </Label>
-            );
-        }
+        content.push(
+            <Label text="Data channel X axis" key="data-channel-x-axis">
+                <ChannelSelect
+                    onChange={handleChannelXChanged}
+                    channelKeyCategory={crossPlottingType}
+                    initialChannel={channelNameX || undefined}
+                    broadcaster={workbenchServices.getBroadcaster()}
+                />
+            </Label>
+        );
 
-        if (
-            (!moduleContext.propPresetAs("channelNameY", "string") && plotType === PlotType.Scatter) ||
-            plotType === PlotType.ScatterWithColorMapping
-        ) {
+        if (plotType === PlotType.Scatter || plotType === PlotType.ScatterWithColorMapping) {
             content.push(
                 <Label text="Data channel Y axis" key="data-channel-y-axis">
                     <ChannelSelect
@@ -168,7 +165,7 @@ export function settings({ moduleContext, workbenchServices }: ModuleFCProps<Sta
             );
         }
 
-        if (!moduleContext.propPresetAs("channelNameZ", "string") && plotType === PlotType.ScatterWithColorMapping) {
+        if (plotType === PlotType.ScatterWithColorMapping) {
             content.push(
                 <Label text="Data channel color mapping" key="data-channel-color-mapping">
                     <ChannelSelect
@@ -181,7 +178,7 @@ export function settings({ moduleContext, workbenchServices }: ModuleFCProps<Sta
             );
         }
 
-        if (!moduleContext.propPresetAs("numBins", "number") && plotType === PlotType.Histogram) {
+        if (plotType === PlotType.Histogram) {
             content.push(
                 <Label text="Number of bins" key="number-of-bins">
                     <Slider value={numBins} onChange={handleNumBinsChanged} min={1} max={30} displayValue />
@@ -189,7 +186,7 @@ export function settings({ moduleContext, workbenchServices }: ModuleFCProps<Sta
             );
         }
 
-        if (!moduleContext.propPresetAs("orientation", "string") && plotType === PlotType.BarChart) {
+        if (plotType === PlotType.BarChart) {
             content.push(
                 <Label text="Orientation" key="orientation">
                     <RadioGroup
@@ -215,16 +212,12 @@ export function settings({ moduleContext, workbenchServices }: ModuleFCProps<Sta
 
     return (
         <>
-            {!moduleContext.propPresetAs("plotType", "string") && (
-                <Label text="Plot type">
-                    <Dropdown options={plotTypes} onChange={handlePlotTypeChanged} />
-                </Label>
-            )}
-            {moduleContext.propPresetAs("crossPlottingType", "string") && (
-                <Label text="Cross plotting">
-                    <Dropdown options={crossPlottingTypes} onChange={handleCrossPlottingTypeChanged} />
-                </Label>
-            )}
+            <Label text="Plot type">
+                <Dropdown options={plotTypes} onChange={handlePlotTypeChanged} />
+            </Label>
+            <Label text="Cross plotting">
+                <Dropdown options={crossPlottingTypes} onChange={handleCrossPlottingTypeChanged} />
+            </Label>
             {makeContent()}
         </>
     );
