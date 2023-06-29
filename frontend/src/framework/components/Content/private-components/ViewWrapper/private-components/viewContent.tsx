@@ -2,6 +2,7 @@ import React from "react";
 
 import { ImportState } from "@framework/Module";
 import { ModuleInstance, ModuleInstanceState } from "@framework/ModuleInstance";
+import { useStoreValue } from "@framework/StateStore";
 import { Workbench } from "@framework/Workbench";
 import { ErrorBoundary } from "@framework/components/ErrorBoundary";
 import { Point } from "@framework/utils/geometry";
@@ -28,6 +29,8 @@ export const ViewContent = React.memo((props: ViewContentProps) => {
     const [channelSelectorCenterPoint, setChannelSelectorCenterPoint] = React.useState<Point | null>(null);
     const [selectableChannels, setSelectableChannels] = React.useState<string[]>([]);
     const ref = React.useRef<HTMLDivElement>(null);
+
+    const showDataChannelConnections = useStoreValue(props.workbench.getGuiStateStore(), "showDataChannelConnections");
 
     React.useEffect(() => {
         setImportState(props.moduleInstance.getImportState());
@@ -159,7 +162,7 @@ export const ViewContent = React.memo((props: ViewContentProps) => {
                     workbenchSession={props.workbench.getWorkbenchSession()}
                     workbenchServices={props.workbench.getWorkbenchServices()}
                 />
-                <ChannelConnectorWrapper forwardedRef={ref}>
+                <ChannelConnectorWrapper forwardedRef={ref} visible={showDataChannelConnections}>
                     {props.moduleInstance.getInputChannelDefs().map((channelDef) => {
                         return (
                             <ChannelConnector

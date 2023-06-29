@@ -1,9 +1,11 @@
 import React from "react";
 
 import { ModuleInstance } from "@framework/ModuleInstance";
+import { useSetStoreValue } from "@framework/StateStore";
 import { Workbench } from "@framework/Workbench";
 import { Point, pointRelativeToDomRect, pointerEventToPoint } from "@framework/utils/geometry";
 
+import { Footer } from "./private-components/footer";
 import { Header } from "./private-components/header";
 import { ViewContent } from "./private-components/viewContent";
 
@@ -25,6 +27,40 @@ type ViewWrapperProps = {
 
 export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
     const ref = React.useRef<HTMLDivElement>(null);
+    const timeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+
+    const [inputChannels, setInputChannels] = React.useState<
+        {
+            name: string;
+            displayName: string;
+        }[]
+    >([]);
+
+    React.useEffect(() => {
+        function handleInputChannelsChange() {
+            setInputChannels(
+                Object.entries(props.moduleInstance.getInputChannels()).map(([name, channel]) => ({
+                    name,
+                    displayName:
+                        props.moduleInstance.getInputChannelDefs().find((c) => c.name === name)?.displayName || "",
+                }))
+            );
+        }
+
+        const unsubscribeFunc = props.moduleInstance.subscribeToInputChannelsChange(handleInputChannelsChange);
+
+        return unsubscribeFunc;
+    }, [props.moduleInstance]);
+
+    const setHighlightedDataChannelConnection = useSetStoreValue(
+        props.workbench.getGuiStateStore(),
+        "highlightedDataChannelConnection"
+    );
+
+    const setShowDataChannelConnections = useSetStoreValue(
+        props.workbench.getGuiStateStore(),
+        "showDataChannelConnections"
+    );
 
     const handlePointerDown = React.useCallback(
         function handlePointerDown(e: React.PointerEvent<HTMLDivElement>) {
@@ -68,6 +104,33 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
         [props.moduleInstance, props.workbench, props.isActive]
     );
 
+    function handleDataChannelMouseEnter(channelName: string): void {
+        setHighlightedDataChannelConnection({
+            listenerId: props.moduleInstance.getId(),
+            channelName: channelName,
+        });
+
+        setShowDataChannelConnections(true);
+
+        if (timeoutRef.current) {
+            clearTimeout(timeoutRef.current);
+            timeoutRef.current = null;
+        }
+    }
+
+    function handleDataChannelMouseLeave(): void {
+        setHighlightedDataChannelConnection(null);
+
+        timeoutRef.current = setTimeout(() => {
+            setShowDataChannelConnections(false);
+        }, 500);
+    }
+
+    function handleChannelRemove(channelName: string): void {
+        props.moduleInstance.removeInputChannel(channelName);
+        handleDataChannelMouseLeave();
+    }
+
     return (
         <>
             {props.isDragged && (
@@ -102,6 +165,12 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
                     <div className="flex-grow overflow-auto h-0">
                         <ViewContent workbench={props.workbench} moduleInstance={props.moduleInstance} />
                     </div>
+                    <Footer
+                        inputChannels={inputChannels}
+                        onMouseEnterDataChannel={handleDataChannelMouseEnter}
+                        onMouseLeaveDataChannel={handleDataChannelMouseLeave}
+                        onChannelRemoveClick={handleChannelRemove}
+                    />
                 </div>
             </div>
         </>

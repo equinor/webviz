@@ -33,6 +33,7 @@ export class ModuleInstance<StateType extends StateBaseType> {
     private moduleInstanceStateSubscribers: Set<(moduleInstanceState: ModuleInstanceState) => void>;
     private syncedSettingsSubscribers: Set<(syncedSettings: SyncSettingKey[]) => void>;
     private inputChannelSubscribers: Record<string, Set<(channel: BroadcastChannel | null) => void>>;
+    private inputChannelsSubscribers: Set<() => void>;
     private titleChangeSubscribers: Set<(title: string) => void>;
     private broadcastChannels: Record<string, BroadcastChannel>;
     private cachedInitialState: StateType | null;
@@ -60,6 +61,7 @@ export class ModuleInstance<StateType extends StateBaseType> {
         this.moduleInstanceStateSubscribers = new Set();
         this.titleChangeSubscribers = new Set();
         this.inputChannelSubscribers = {};
+        this.inputChannelsSubscribers = new Set();
         this.moduleInstanceState = ModuleInstanceState.INITIALIZING;
         this.fatalError = null;
         this.cachedInitialState = null;
@@ -92,6 +94,13 @@ export class ModuleInstance<StateType extends StateBaseType> {
         }
         this.channelInputs[inputName] = channel;
         this.notifySubscribersAboutInputChannelChange(inputName);
+        this.notifySubscribersAboutInputChannelsChange();
+    }
+
+    removeInputChannel(inputName: string): void {
+        delete this.channelInputs[inputName];
+        this.notifySubscribersAboutInputChannelChange(inputName);
+        this.notifySubscribersAboutInputChannelsChange();
     }
 
     getInputChannel(inputName: string): BroadcastChannel | null {
@@ -159,6 +168,17 @@ export class ModuleInstance<StateType extends StateBaseType> {
 
         return () => {
             this.syncedSettingsSubscribers.delete(cb);
+        };
+    }
+
+    public subscribeToInputChannelsChange(cb: () => void): () => void {
+        this.inputChannelsSubscribers.add(cb);
+
+        // Trigger callback immediately with our current set of keys
+        cb();
+
+        return () => {
+            this.inputChannelsSubscribers.delete(cb);
         };
     }
 
@@ -261,6 +281,12 @@ export class ModuleInstance<StateType extends StateBaseType> {
         }
         this.inputChannelSubscribers[inputName].forEach((subscriber) => {
             subscriber(this.getInputChannel(inputName));
+        });
+    }
+
+    public notifySubscribersAboutInputChannelsChange(): void {
+        this.inputChannelsSubscribers.forEach((subscriber) => {
+            subscriber();
         });
     }
 

@@ -1,6 +1,7 @@
 import React from "react";
 
 import { BroadcastChannelKeyCategory } from "@framework/Broadcaster";
+import { useStoreValue } from "@framework/StateStore";
 import { Workbench } from "@framework/Workbench";
 import { Point, pointerEventToPoint, rectContainsPoint } from "@framework/utils/geometry";
 import { resolveClassNames } from "@lib/components/_utils/resolveClassNames";
@@ -20,6 +21,8 @@ export const ChannelConnector: React.FC<ChannelConnectorProps> = (props) => {
     const ref = React.useRef<HTMLDivElement>(null);
     const [visible, setVisible] = React.useState<boolean>(false);
     const [hovered, setHovered] = React.useState<boolean>(false);
+
+    const showDataChannelConnections = useStoreValue(props.workbench.getGuiStateStore(), "showDataChannelConnections");
 
     React.useEffect(() => {
         let isHovered = false;
@@ -76,6 +79,7 @@ export const ChannelConnector: React.FC<ChannelConnectorProps> = (props) => {
         function handlePointerUp(e: PointerEvent) {
             if (isHovered) {
                 props.onChannelConnected(props.inputName, moduleInstanceId, pointerEventToPoint(e));
+                setHovered(false);
             }
         }
 
@@ -137,9 +141,10 @@ export const ChannelConnector: React.FC<ChannelConnectorProps> = (props) => {
                 "border",
                 "p-4",
                 "m-4",
+                "text-sm",
                 "bg-slate-100",
                 {
-                    invisible: !visible,
+                    invisible: !visible && !showDataChannelConnections,
                     "border-blue-500": hovered,
                 }
             )}

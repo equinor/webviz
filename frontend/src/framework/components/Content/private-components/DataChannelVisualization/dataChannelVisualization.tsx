@@ -1,6 +1,6 @@
 import React from "react";
 
-import { useSetStoreValue } from "@framework/StateStore";
+import { useStoreState, useStoreValue } from "@framework/StateStore";
 import { Workbench } from "@framework/Workbench";
 import { Point } from "@framework/utils/geometry";
 import { resolveClassNames } from "@lib/components/_utils/resolveClassNames";
@@ -46,17 +46,22 @@ type DataChannelPath = {
     destination: Point;
     description: string;
     descriptionCenterPoint: Point;
+    highlighted: boolean;
 };
 
 export const DataChannelVisualization: React.FC<DataChannelVisualizationProps> = (props) => {
     const [visible, setVisible] = React.useState<boolean>(false);
     const [originPoint, setOriginPoint] = React.useState<Point>({ x: 0, y: 0 });
-    const [originModuleInstanceId, setOriginModuleInstanceId] = React.useState<string>("");
     const [currentPointerPosition, setCurrentPointerPosition] = React.useState<Point>({ x: 0, y: 0 });
 
-    const setDataChannelConnectionMode = useSetStoreValue(
+    const [showDataChannelConnections, setShowDataChannelConnections] = useStoreState(
         props.workbench.getGuiStateStore(),
-        "dataChannelConnectionMode"
+        "showDataChannelConnections"
+    );
+
+    const highlightedDataChannelConnection = useStoreValue(
+        props.workbench.getGuiStateStore(),
+        "highlightedDataChannelConnection"
     );
 
     React.useEffect(() => {
@@ -65,9 +70,7 @@ export const DataChannelVisualization: React.FC<DataChannelVisualizationProps> =
         function handleDataChannelOriginPointerDown(e: CustomEvent<{ moduleInstanceId: string; pointerPoint: Point }>) {
             setVisible(true);
             setOriginPoint(e.detail.pointerPoint);
-            setOriginModuleInstanceId(e.detail.moduleInstanceId);
             document.body.classList.add("cursor-crosshair");
-            setDataChannelConnectionMode(true);
             mousePressed = true;
             setCurrentPointerPosition(e.detail.pointerPoint);
         }
@@ -75,7 +78,6 @@ export const DataChannelVisualization: React.FC<DataChannelVisualizationProps> =
         function handleDataChannelDone() {
             setVisible(false);
             document.body.classList.remove("cursor-crosshair");
-            setDataChannelConnectionMode(false);
         }
 
         function handlePointerUp() {
@@ -171,6 +173,10 @@ export const DataChannelVisualization: React.FC<DataChannelVisualizationProps> =
                     y: (originPoint.y + destinationPoint.y) / 2,
                 };
 
+                const highlighted =
+                    highlightedDataChannelConnection?.channelName === inputChannelName &&
+                    highlightedDataChannelConnection?.listenerId === moduleInstance.getId();
+
                 dataChannelPaths.push({
                     key: `${originModuleInstanceId}-${moduleInstance.getId()}-${inputChannelName}`,
                     origin: originPoint,
@@ -179,6 +185,7 @@ export const DataChannelVisualization: React.FC<DataChannelVisualizationProps> =
                     destination: destinationPoint,
                     description: `${inputChannel.getName()}`,
                     descriptionCenterPoint: descriptionCenterPoint,
+                    highlighted: highlighted,
                 });
             }
         }
@@ -191,29 +198,33 @@ export const DataChannelVisualization: React.FC<DataChannelVisualizationProps> =
         <svg
             className={resolveClassNames(
                 "absolute",
+                "bg-slate-50",
                 "left-0",
                 "top-0",
                 "h-full",
                 "w-full",
                 "z-50",
-                "bg-slate-50",
                 "bg-opacity-70",
                 {
-                    invisible: !visible,
+                    invisible: !visible && !showDataChannelConnections,
+                    "pointer-events-none": showDataChannelConnections,
                 }
             )}
         >
-            <path
-                d={`M ${originPoint.x} ${originPoint.y} C ${midPoint1.x} ${midPoint1.y} ${midPoint2.x} ${midPoint2.y} ${currentPointerPosition.x} ${currentPointerPosition.y}`}
-                stroke="black"
-                fill="transparent"
-            />
+            {visible && (
+                <path
+                    d={`M ${originPoint.x} ${originPoint.y} C ${midPoint1.x} ${midPoint1.y} ${midPoint2.x} ${midPoint2.y} ${currentPointerPosition.x} ${currentPointerPosition.y}`}
+                    stroke="black"
+                    fill="transparent"
+                    className={resolveClassNames({ invisible: !visible })}
+                />
+            )}
             {dataChannelPaths.map((dataChannelPath) => (
                 <g key={dataChannelPath.key}>
                     <path
                         id={dataChannelPath.key}
                         d={`M ${dataChannelPath.origin.x} ${dataChannelPath.origin.y} C ${dataChannelPath.midPoint1.x} ${dataChannelPath.midPoint1.y} ${dataChannelPath.midPoint2.x} ${dataChannelPath.midPoint2.y} ${dataChannelPath.destination.x} ${dataChannelPath.destination.y}`}
-                        stroke="#aaa"
+                        stroke={dataChannelPath.highlighted ? "red" : "#aaa"}
                         fill="transparent"
                     />
                     <text>

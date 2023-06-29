@@ -8,6 +8,7 @@ import { DataChannelEventTypes } from "../../DataChannelVisualization/dataChanne
 export type ChannelConnectorWrapperProps = {
     children: React.ReactNode;
     forwardedRef: React.RefObject<HTMLDivElement>;
+    visible: boolean;
 };
 
 export const ChannelConnectorWrapper: React.FC<ChannelConnectorWrapperProps> = (props) => {
@@ -55,7 +56,7 @@ export const ChannelConnectorWrapper: React.FC<ChannelConnectorWrapperProps> = (
     return createPortal(
         <div
             className={resolveClassNames("absolute", "flex", "items-center", "justify-center", "z-50", {
-                invisible: !visible,
+                invisible: !visible && !props.visible,
             })}
             style={{
                 left: refLeft,
