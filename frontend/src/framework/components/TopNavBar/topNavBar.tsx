@@ -3,7 +3,7 @@ import React from "react";
 import { useSetStoreValue } from "@framework/StateStore";
 import { Workbench } from "@framework/Workbench";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
-import { ShareIcon, WindowIcon } from "@heroicons/react/20/solid";
+import { LinkIcon, WindowIcon } from "@heroicons/react/20/solid";
 import { Button } from "@lib/components/Button";
 import { Dialog } from "@lib/components/Dialog";
 
@@ -54,7 +54,7 @@ export const TopNavBar: React.FC<TopNavBarProps> = (props) => {
                     Modules
                 </Button>
                 <Button onClick={handleSyncSettingsClick}>
-                    <ShareIcon className="w-5 h-5" /> Sync settings
+                    <LinkIcon className="w-5 h-5" /> Sync settings
                 </Button>
                 <LoginButton />
             </div>

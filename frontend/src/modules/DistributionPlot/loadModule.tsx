@@ -1,14 +1,11 @@
 import { ModuleRegistry } from "@framework/ModuleRegistry";
 
 import { settings } from "./settings";
-import { State } from "./state";
+import { PlotType, State } from "./state";
 import { view } from "./view";
 
 const initialState: State = {
-    channelNameX: null,
-    channelNameY: null,
-    channelNameZ: null,
-    plotType: null,
+    plotType: PlotType.Histogram,
     numBins: 10,
     orientation: "h",
 };

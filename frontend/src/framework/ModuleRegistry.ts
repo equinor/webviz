@@ -1,4 +1,4 @@
-import { BroadcastChannelsDef } from "./Broadcaster";
+import { BroadcastChannelInputDef, BroadcastChannelKeyCategory, BroadcastChannelsDef } from "./Broadcaster";
 import { Module } from "./Module";
 import { StateBaseType, StateOptions } from "./StateStore";
 import { SyncSettingKey } from "./SyncSettings";
@@ -12,9 +12,16 @@ export class ModuleRegistry {
         moduleName: string,
         defaultTitle: string,
         syncableSettingKeys: SyncSettingKey[] = [],
-        broadcastChannelsDef: BroadcastChannelsDef = {}
+        broadcastChannelsDef: BroadcastChannelsDef = {},
+        channelInputDefs: BroadcastChannelInputDef[] = []
     ): Module<ModuleStateType> {
-        const module = new Module<ModuleStateType>(moduleName, defaultTitle, syncableSettingKeys, broadcastChannelsDef);
+        const module = new Module<ModuleStateType>(
+            moduleName,
+            defaultTitle,
+            syncableSettingKeys,
+            broadcastChannelsDef,
+            channelInputDefs
+        );
         this._registeredModules[moduleName] = module;
         return module;
     }

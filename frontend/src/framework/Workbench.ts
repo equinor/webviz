@@ -30,6 +30,7 @@ export type LayoutElement = {
 export type WorkbenchGuiState = {
     modulesListOpen: boolean;
     syncSettingsActive: boolean;
+    dataChannelConnectionMode: boolean;
 };
 
 export class Workbench {
@@ -48,6 +49,7 @@ export class Workbench {
         this.guiStateStore = new StateStore<WorkbenchGuiState>({
             modulesListOpen: false,
             syncSettingsActive: false,
+            dataChannelConnectionMode: false,
         });
         this._workbenchSession = new WorkbenchSessionPrivate();
         this._workbenchServices = new PrivateWorkbenchServices(this);

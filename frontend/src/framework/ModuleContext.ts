@@ -1,6 +1,6 @@
 import React from "react";
 
-import { BroadcastChannel, BroadcastChannelsDef } from "./Broadcaster";
+import { BroadcastChannel } from "./Broadcaster";
 import { ModuleInstance } from "./ModuleInstance";
 import { StateBaseType, StateStore, useSetStoreValue, useStoreState, useStoreValue } from "./StateStore";
 import { SyncSettingKey } from "./SyncSettings";
@@ -12,6 +12,10 @@ export class ModuleContext<S extends StateBaseType> {
     constructor(moduleInstance: ModuleInstance<S>, stateStore: StateStore<S>) {
         this._moduleInstance = moduleInstance;
         this._stateStore = stateStore;
+    }
+
+    getInputChannel(name: string): BroadcastChannel | null {
+        return this._moduleInstance.getInputChannel(name);
     }
 
     getInstanceIdString(): string {
@@ -55,5 +59,20 @@ export class ModuleContext<S extends StateBaseType> {
 
     setInstanceTitle(title: string): void {
         this._moduleInstance.setTitle(title);
+    }
+
+    useInputChannel(name: string): BroadcastChannel | null {
+        const [channel, setChannel] = React.useState<BroadcastChannel | null>(null);
+
+        React.useEffect(() => {
+            function handleNewChannel(newChannel: BroadcastChannel | null) {
+                setChannel(newChannel);
+            }
+
+            const unsubscribeFunc = this._moduleInstance.subscribeToInputChannelChange(name, handleNewChannel);
+            return unsubscribeFunc;
+        }, [name]);
+
+        return channel;
     }
 }

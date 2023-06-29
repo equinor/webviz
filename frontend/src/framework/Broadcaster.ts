@@ -76,6 +76,12 @@ export type BroadcastChannelData = {
     value: number | string;
 };
 
+export type BroadcastChannelInputDef = {
+    name: string;
+    displayName: string;
+    keyCategories?: BroadcastChannelKeyCategory[];
+};
+
 export function checkChannelCompatibility(
     channelDef1: BroadcastChannelDef,
     channelKeyCategory: BroadcastChannelKeyCategory

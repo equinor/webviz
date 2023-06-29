@@ -3,7 +3,10 @@ import React from "react";
 import { ModuleInstance } from "@framework/ModuleInstance";
 import { SyncSettingKey, SyncSettingsMeta } from "@framework/SyncSettings";
 import { isDevMode } from "@framework/utils/devMode";
-import { XMarkIcon } from "@heroicons/react/20/solid";
+import { pointerEventToPoint } from "@framework/utils/geometry";
+import { ShareIcon, XMarkIcon } from "@heroicons/react/20/solid";
+
+import { DataChannelEventTypes } from "../../DataChannelVisualization/dataChannelVisualization";
 
 export type HeaderProps = {
     moduleInstance: ModuleInstance<any>;
@@ -38,6 +41,19 @@ export const Header: React.FC<HeaderProps> = (props) => {
         return unsubscribeFunc;
     }, []);
 
+    function handleDataChannelOriginPointerDown(e: React.PointerEvent<HTMLDivElement>) {
+        document.dispatchEvent(
+            new CustomEvent(DataChannelEventTypes.DATA_CHANNEL_ORIGIN_POINTER_DOWN, {
+                detail: {
+                    moduleInstanceId: props.moduleInstance.getId(),
+                    pointerPoint: pointerEventToPoint(e.nativeEvent),
+                },
+            })
+        );
+        e.stopPropagation();
+        e.preventDefault();
+    }
+
     return (
         <div
             className={`bg-slate-100 p-2 pl-4 pr-4 flex items-center select-none ${
@@ -65,7 +81,16 @@ export const Header: React.FC<HeaderProps> = (props) => {
                     ))}
                 </>
             </div>
-
+            {props.moduleInstance.hasBroadcastChannels() && (
+                <div
+                    id={`moduleinstance-${props.moduleInstance.getId()}-data-channel-origin`}
+                    className="hover:text-slate-500 cursor-grab mr-2"
+                    title="Connect data channels"
+                    onPointerDown={handleDataChannelOriginPointerDown}
+                >
+                    <ShareIcon className="w-4 h-4" />
+                </div>
+            )}
             <div
                 className="hover:text-slate-500 cursor-pointer"
                 onPointerDown={props.onRemoveClick}
