@@ -80,6 +80,7 @@ export const Setting: React.FC<SettingProps> = (props) => {
                     moduleContext={props.moduleInstance.getContext()}
                     workbenchSession={props.workbench.getWorkbenchSession()}
                     workbenchServices={props.workbench.getWorkbenchServices()}
+                    presetProps={props.moduleInstance.getPresetProps() || undefined}
                 />
             </ErrorBoundary>
         </div>

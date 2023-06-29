@@ -27,14 +27,26 @@ export const TopNavBar: React.FC<TopNavBarProps> = (props) => {
     };
 
     const handleModulesListClick = () => {
+        if (drawerContent === DrawerContent.ModulesList) {
+            setDrawerContent(DrawerContent.None);
+            return;
+        }
         setDrawerContent(DrawerContent.ModulesList);
     };
 
     const handleTemplatesListClick = () => {
+        if (drawerContent === DrawerContent.TemplatesList) {
+            setDrawerContent(DrawerContent.None);
+            return;
+        }
         setDrawerContent(DrawerContent.TemplatesList);
     };
 
     const handleSyncSettingsClick = () => {
+        if (drawerContent === DrawerContent.SyncSettings) {
+            setDrawerContent(DrawerContent.None);
+            return;
+        }
         setDrawerContent(DrawerContent.SyncSettings);
     };
 

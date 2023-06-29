@@ -249,9 +249,9 @@ export class Workbench {
 
             const presetProps: Record<string, unknown> = layoutElement.presetProps || {};
 
-            if (layoutElement.dataChannelToPresetPropsMapping) {
-                for (const propName of Object.keys(layoutElement.dataChannelToPresetPropsMapping)) {
-                    const dataChannel = layoutElement.dataChannelToPresetPropsMapping[propName];
+            if (layoutElement.dataChannelsToPresetPropsMapping) {
+                for (const propName of Object.keys(layoutElement.dataChannelsToPresetPropsMapping)) {
+                    const dataChannel = layoutElement.dataChannelsToPresetPropsMapping[propName];
 
                     const moduleInstanceIndex = template.layout.findIndex(
                         (el) => el.templateElementId === dataChannel.listensToTemplateId

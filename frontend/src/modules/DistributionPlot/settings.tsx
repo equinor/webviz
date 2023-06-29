@@ -92,15 +92,15 @@ export function settings({ moduleContext, workbenchServices, presetProps }: Modu
         }
 
         if (presetPropsObj.numBins) {
-            setNumBins(presetPropsObj.numBins as number);
+            setNumBins(presetPropsObj.numBins);
         }
 
         if (presetPropsObj.orientation) {
-            setOrientation(presetPropsObj.orientation as "h" | "v");
+            setOrientation(presetPropsObj.orientation);
         }
 
         if (presetPropsObj.crossPlottingType) {
-            setCrossPlottingType(presetPropsObj.crossPlottingType as BroadcastChannelKeyCategory);
+            setCrossPlottingType(presetPropsObj.crossPlottingType);
         }
     }, [presetProps]);
 
@@ -213,10 +213,14 @@ export function settings({ moduleContext, workbenchServices, presetProps }: Modu
     return (
         <>
             <Label text="Plot type">
-                <Dropdown options={plotTypes} onChange={handlePlotTypeChanged} />
+                <Dropdown value={plotType as string} options={plotTypes} onChange={handlePlotTypeChanged} />
             </Label>
             <Label text="Cross plotting">
-                <Dropdown options={crossPlottingTypes} onChange={handleCrossPlottingTypeChanged} />
+                <Dropdown
+                    value={crossPlottingType as string}
+                    options={crossPlottingTypes}
+                    onChange={handleCrossPlottingTypeChanged}
+                />
             </Label>
             {makeContent()}
         </>

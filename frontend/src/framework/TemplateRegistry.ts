@@ -11,7 +11,7 @@ export type DataChannelTemplate = {
 export type ExtendedLayoutElement = LayoutElement & {
     templateElementId: string;
     syncedSettings?: SyncSettingKey[];
-    dataChannelToPresetPropsMapping?: Record<string, DataChannelTemplate>;
+    dataChannelsToPresetPropsMapping?: Record<string, DataChannelTemplate>;
     presetProps?: Record<string, unknown>;
 };
 
@@ -27,9 +27,6 @@ export class TemplateRegistry {
     private constructor() {}
 
     static registerTemplate(name: string, template: Template): void {
-        if (this._registeredTemplates[name]) {
-            throw new Error(`Template with name ${name} already registered.`);
-        }
         this._registeredTemplates[name] = template;
     }
 

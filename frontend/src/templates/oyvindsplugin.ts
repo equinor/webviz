@@ -25,7 +25,7 @@ const template: Template = {
             relX: 0.5,
             relY: 0,
             syncedSettings: [SyncSettingKey.ENSEMBLE],
-            dataChannelToPresetPropsMapping: {
+            dataChannelsToPresetPropsMapping: {
                 responseChannelName: {
                     listensToTemplateId: "SimulationTimeSeries",
                     keyCategory: BroadcastChannelKeyCategory.Realization,
@@ -41,7 +41,7 @@ const template: Template = {
             relX: 0,
             relY: 0.5,
             syncedSettings: [SyncSettingKey.ENSEMBLE],
-            dataChannelToPresetPropsMapping: {
+            dataChannelsToPresetPropsMapping: {
                 channelNameX: {
                     listensToTemplateId: "SimulationTimeSeries",
                     keyCategory: BroadcastChannelKeyCategory.Realization,
