@@ -1,14 +1,15 @@
 import React from "react";
 
+import { BroadcastChannelKeyCategory } from "@framework/Broadcaster";
 import { ModuleInstance } from "@framework/ModuleInstance";
 import { useSetStoreValue, useStoreValue } from "@framework/StateStore";
 import { Workbench } from "@framework/Workbench";
 import { Point, pointRelativeToDomRect, pointerEventToPoint } from "@framework/utils/geometry";
 
-import { ChannelConnector } from "./private-components/channelConnector";
 import { ChannelConnectorWrapper } from "./private-components/channelConnectorWrapper";
 import { ChannelSelector } from "./private-components/channelSelector";
 import { Header } from "./private-components/header";
+import { InputChannelNode } from "./private-components/inputChannelNode";
 import { ViewContent } from "./private-components/viewContent";
 
 import { pointDifference } from "../../../../utils/geometry";
@@ -101,15 +102,35 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
     }
 
     function handleChannelConnected(inputName: string, moduleInstanceId: string, destinationPoint: Point) {
-        const moduleInstance = props.workbench.getModuleInstance(moduleInstanceId);
+        const originModuleInstance = props.workbench.getModuleInstance(moduleInstanceId);
 
-        if (!moduleInstance) {
+        if (!originModuleInstance) {
+            document.dispatchEvent(new CustomEvent(DataChannelEventTypes.DATA_CHANNEL_DONE));
             return;
         }
 
-        const channels = moduleInstance.getBroadcastChannels();
+        const acceptedKeys = props.moduleInstance
+            .getInputChannelDefs()
+            .find((channelDef) => channelDef.name === inputName)?.keyCategories;
 
-        if (Object.keys(channels).length > 1) {
+        const channels = Object.values(originModuleInstance.getBroadcastChannels()).filter((channel) => {
+            if (!acceptedKeys || acceptedKeys.some((key) => channel.getDataDef().key === key)) {
+                return Object.values(props.moduleInstance.getInputChannels()).every((inputChannel) => {
+                    if (inputChannel.getDataDef().key === channel.getDataDef().key) {
+                        return true;
+                    }
+                    return false;
+                });
+            }
+            return false;
+        });
+
+        if (channels.length === 0) {
+            document.dispatchEvent(new CustomEvent(DataChannelEventTypes.DATA_CHANNEL_DONE));
+            return;
+        }
+
+        if (channels.length > 1) {
             setChannelSelectorCenterPoint(destinationPoint);
             setSelectableChannels(Object.values(channels).map((channel) => channel.getName()));
             setCurrentInputName(inputName);
@@ -186,7 +207,7 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
                         <ChannelConnectorWrapper forwardedRef={ref} visible={channelConnectorWrapperVisible}>
                             {props.moduleInstance.getInputChannelDefs().map((channelDef) => {
                                 return (
-                                    <ChannelConnector
+                                    <InputChannelNode
                                         key={channelDef.name}
                                         moduleInstanceId={props.moduleInstance.getId()}
                                         inputName={channelDef.name}

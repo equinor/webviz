@@ -78,7 +78,12 @@ export class ModuleInstance<StateType extends StateBaseType> {
                 const enrichedChannelName = `${this.id} - ${channelName as string}`;
                 this.broadcastChannels[channelName] = workbench
                     .getBroadcaster()
-                    .registerChannel(enrichedChannelName, broadcastChannelsDef[channelName as string], this.id);
+                    .registerChannel(
+                        enrichedChannelName,
+                        channelName,
+                        broadcastChannelsDef[channelName as string],
+                        this.id
+                    );
             });
         }
     }

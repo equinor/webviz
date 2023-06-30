@@ -1,4 +1,4 @@
-import { BroadcastChannelInputDef, BroadcastChannelKeyCategory, BroadcastChannelsDef } from "./Broadcaster";
+import { BroadcastChannelInputDef, BroadcastChannelsDef } from "./Broadcaster";
 import { Module } from "./Module";
 import { StateBaseType, StateOptions } from "./StateStore";
 import { SyncSettingKey } from "./SyncSettings";

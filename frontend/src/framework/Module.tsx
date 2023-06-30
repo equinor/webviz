@@ -2,7 +2,7 @@ import React from "react";
 
 import { cloneDeep } from "lodash";
 
-import { BroadcastChannelInputDef, BroadcastChannelKeyCategory, BroadcastChannelsDef } from "./Broadcaster";
+import { BroadcastChannelInputDef, BroadcastChannelsDef } from "./Broadcaster";
 import { ModuleContext } from "./ModuleContext";
 import { ModuleInstance } from "./ModuleInstance";
 import { StateBaseType, StateOptions } from "./StateStore";

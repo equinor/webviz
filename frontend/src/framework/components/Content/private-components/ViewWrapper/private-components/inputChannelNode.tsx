@@ -10,7 +10,7 @@ import { resolveClassNames } from "@lib/components/_utils/resolveClassNames";
 
 import { DataChannelEventTypes } from "../../DataChannelVisualization/dataChannelVisualization";
 
-export type ChannelConnectorProps = {
+export type InputChannelNodeProps = {
     inputName: string;
     displayName: string;
     channelKeyCategories?: BroadcastChannelKeyCategory[];
@@ -20,7 +20,7 @@ export type ChannelConnectorProps = {
     workbench: Workbench;
 };
 
-export const ChannelConnector: React.FC<ChannelConnectorProps> = (props) => {
+export const InputChannelNode: React.FC<InputChannelNodeProps> = (props) => {
     const ref = React.useRef<HTMLDivElement>(null);
     const [visible, setVisible] = React.useState<boolean>(false);
     const [hovered, setHovered] = React.useState<boolean>(false);
@@ -193,10 +193,12 @@ export const ChannelConnector: React.FC<ChannelConnectorProps> = (props) => {
                 "p-4",
                 "m-2",
                 "text-sm",
-                "bg-slate-100",
+                "hover:border-red-500",
                 {
                     invisible: !visible && !showDataChannelConnections,
-                    "border-blue-500": hovered,
+                    "bg-red-500": hovered,
+                    "bg-slate-100": !hovered,
+                    "text-white": hovered,
                 }
             )}
             onPointerEnter={handlePointerEnter}

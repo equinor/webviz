@@ -55,6 +55,7 @@ export const DataChannelVisualization: React.FC<DataChannelVisualizationProps> =
     const [visible, setVisible] = React.useState<boolean>(false);
     const [originPoint, setOriginPoint] = React.useState<Point>({ x: 0, y: 0 });
     const [currentPointerPosition, setCurrentPointerPosition] = React.useState<Point>({ x: 0, y: 0 });
+    const [currentChannelName, setCurrentChannelName] = React.useState<string | null>(null);
     const [_, forceRerender] = React.useReducer((x) => x + 1, 0);
 
     const [showDataChannelConnections, setShowDataChannelConnections] = useStoreState(
@@ -72,13 +73,27 @@ export const DataChannelVisualization: React.FC<DataChannelVisualizationProps> =
 
     React.useEffect(() => {
         let mousePressed = false;
+        let currentOriginPoint: Point = { x: 0, y: 0 };
 
         function handleDataChannelOriginPointerDown(e: CustomEvent<{ moduleInstanceId: string; pointerPoint: Point }>) {
             setVisible(true);
             setOriginPoint(e.detail.pointerPoint);
+            currentOriginPoint = e.detail.pointerPoint;
             document.body.classList.add("cursor-crosshair");
             mousePressed = true;
             setCurrentPointerPosition(e.detail.pointerPoint);
+            setCurrentChannelName(null);
+
+            const moduleInstance = props.workbench.getModuleInstance(e.detail.moduleInstanceId);
+            if (!moduleInstance) {
+                return;
+            }
+
+            const availableChannels = moduleInstance.getBroadcastChannels();
+            if (Object.keys(availableChannels).length === 1) {
+                setCurrentChannelName(Object.values(availableChannels)[0].getDisplayName());
+                return;
+            }
         }
 
         function handleDataChannelDone() {
@@ -92,6 +107,19 @@ export const DataChannelVisualization: React.FC<DataChannelVisualizationProps> =
 
         function handlePointerMove(e: PointerEvent) {
             if (!mousePressed) {
+                return;
+            }
+            const hoveredElement = document.elementFromPoint(e.clientX, e.clientY);
+            if (
+                hoveredElement &&
+                hoveredElement instanceof HTMLElement &&
+                hoveredElement.hasAttribute("data-channelconnector")
+            ) {
+                const boundingRect = hoveredElement.getBoundingClientRect();
+                setCurrentPointerPosition({
+                    x: boundingRect.left + boundingRect.width / 2,
+                    y: currentOriginPoint.y > boundingRect.top ? boundingRect.bottom : boundingRect.top,
+                });
                 return;
             }
             setCurrentPointerPosition({ x: e.clientX, y: e.clientY });
@@ -193,7 +221,7 @@ export const DataChannelVisualization: React.FC<DataChannelVisualizationProps> =
 
                 const destinationPoint: Point = {
                     x: destinationRect.left + destinationRect.width / 2,
-                    y: destinationRect.top + destinationRect.height / 2,
+                    y: destinationRect.top < originPoint.y ? destinationRect.bottom + 20 : destinationRect.top - 20,
                 };
 
                 const midPoint1: Point = {
@@ -221,7 +249,7 @@ export const DataChannelVisualization: React.FC<DataChannelVisualizationProps> =
                     midPoint1: midPoint1,
                     midPoint2: midPoint2,
                     destination: destinationPoint,
-                    description: `${inputChannel.getName()}`,
+                    description: `${inputChannel.getDisplayName()}`,
                     descriptionCenterPoint: descriptionCenterPoint,
                     highlighted: highlighted,
                 });
@@ -248,22 +276,83 @@ export const DataChannelVisualization: React.FC<DataChannelVisualizationProps> =
                 }
             )}
         >
+            <defs>
+                <marker id="arrowhead-right" markerWidth="20" markerHeight="14" refX="0" refY="7" orient="auto">
+                    <polygon points="0 0, 20 7, 0 14" />
+                </marker>
+                <marker
+                    id="arrowhead-right-active"
+                    fill="red"
+                    markerWidth="20"
+                    markerHeight="14"
+                    refX="0"
+                    refY="7"
+                    orient="auto"
+                >
+                    <polygon points="0 0, 20 7, 0 14" />
+                </marker>
+                <marker id="arrowhead-left" markerWidth="20" markerHeight="14" refX="20" refY="7" orient="auto">
+                    <polygon points="20 0, 0 7, 20 14" />
+                </marker>
+                <marker
+                    id="arrowhead-left-active"
+                    fill="red"
+                    markerWidth="20"
+                    markerHeight="14"
+                    refX="20"
+                    refY="7"
+                    orient="auto"
+                >
+                    <polygon points="20 0, 0 7, 20 14" />
+                </marker>
+            </defs>
             {visible && (
-                <path
-                    d={`M ${originPoint.x} ${originPoint.y} C ${midPoint1.x} ${midPoint1.y} ${midPoint2.x} ${midPoint2.y} ${currentPointerPosition.x} ${currentPointerPosition.y}`}
-                    stroke="black"
-                    fill="transparent"
-                    className={resolveClassNames({ invisible: !visible })}
-                />
+                <g>
+                    <path
+                        id="current-data-channel-path"
+                        d={`M ${originPoint.x} ${originPoint.y} C ${midPoint1.x} ${midPoint1.y} ${midPoint2.x} ${
+                            midPoint2.y
+                        } ${currentPointerPosition.x} ${
+                            currentPointerPosition.y + (currentPointerPosition.y > originPoint.y ? -20 : 20)
+                        }`}
+                        stroke="black"
+                        fill="transparent"
+                        className={resolveClassNames({ invisible: !visible })}
+                        markerEnd="url(#arrowhead-right)"
+                    />
+                    {currentChannelName && (
+                        <text>
+                            <textPath
+                                href={`#current-data-channel-path`}
+                                startOffset="50%"
+                                textAnchor="middle"
+                                alignmentBaseline="after-edge"
+                            >
+                                {currentChannelName}
+                            </textPath>
+                        </text>
+                    )}
+                </g>
             )}
             {dataChannelPaths.map((dataChannelPath) => (
                 <g key={dataChannelPath.key}>
-                    <path
-                        id={dataChannelPath.key}
-                        d={`M ${dataChannelPath.origin.x} ${dataChannelPath.origin.y} C ${dataChannelPath.midPoint1.x} ${dataChannelPath.midPoint1.y} ${dataChannelPath.midPoint2.x} ${dataChannelPath.midPoint2.y} ${dataChannelPath.destination.x} ${dataChannelPath.destination.y}`}
-                        stroke={dataChannelPath.highlighted ? "red" : "#aaa"}
-                        fill="transparent"
-                    />
+                    {dataChannelPath.origin.x < dataChannelPath.destination.x ? (
+                        <path
+                            id={dataChannelPath.key}
+                            d={`M ${dataChannelPath.origin.x} ${dataChannelPath.origin.y} C ${dataChannelPath.midPoint1.x} ${dataChannelPath.midPoint1.y} ${dataChannelPath.midPoint2.x} ${dataChannelPath.midPoint2.y} ${dataChannelPath.destination.x} ${dataChannelPath.destination.y}`}
+                            stroke={dataChannelPath.highlighted ? "red" : "#aaa"}
+                            fill="transparent"
+                            markerEnd={`url(#arrowhead-right${dataChannelPath.highlighted ? "-active" : ""})`}
+                        />
+                    ) : (
+                        <path
+                            id={dataChannelPath.key}
+                            d={`M ${dataChannelPath.destination.x} ${dataChannelPath.destination.y} C ${dataChannelPath.midPoint2.x} ${dataChannelPath.midPoint2.y} ${dataChannelPath.midPoint1.x} ${dataChannelPath.midPoint1.y} ${dataChannelPath.origin.x} ${dataChannelPath.origin.y}`}
+                            stroke={dataChannelPath.highlighted ? "red" : "#aaa"}
+                            fill="transparent"
+                            markerStart={`url(#arrowhead-left${dataChannelPath.highlighted ? "-active" : ""})`}
+                        />
+                    )}
                     <text>
                         <textPath
                             href={`#${dataChannelPath.key}`}

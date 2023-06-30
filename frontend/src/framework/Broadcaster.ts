@@ -95,6 +95,7 @@ export function checkChannelCompatibility(
 
 export class BroadcastChannel {
     private _name: string;
+    private _displayName: string;
     private _metaData: BroadcastChannelMeta | null;
     private _moduleInstanceId: string;
     private _subscribers: Set<(data: BroadcastChannelData[], metaData: BroadcastChannelMeta) => void>;
@@ -102,8 +103,9 @@ export class BroadcastChannel {
     private _dataDef: BroadcastChannelDef;
     private _dataGenerator: (() => BroadcastChannelData[]) | null;
 
-    constructor(name: string, def: BroadcastChannelDef, moduleInstanceId: string) {
+    constructor(name: string, displayName: string, def: BroadcastChannelDef, moduleInstanceId: string) {
         this._name = name;
+        this._displayName = displayName;
         this._subscribers = new Set();
         this._cachedData = null;
         this._dataDef = def;
@@ -146,6 +148,10 @@ export class BroadcastChannel {
 
     public getName(): string {
         return this._name;
+    }
+
+    public getDisplayName(): string {
+        return this._displayName;
     }
 
     public getDataDef(): BroadcastChannelDef {
@@ -208,10 +214,11 @@ export class Broadcaster {
 
     public registerChannel(
         channelName: string,
+        displayName: string,
         channelDef: BroadcastChannelDef,
         moduleInstanceId: string
     ): BroadcastChannel {
-        const channel = new BroadcastChannel(channelName, channelDef, moduleInstanceId);
+        const channel = new BroadcastChannel(channelName, displayName, channelDef, moduleInstanceId);
         this._channels.push(channel);
         this.notifySubscribersAboutChannelsChanges();
         return channel;

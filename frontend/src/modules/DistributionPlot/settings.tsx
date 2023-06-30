@@ -49,7 +49,7 @@ export function settings({ moduleContext }: ModuleFCProps<State>) {
         const content: React.ReactNode[] = [];
         if (channelX && !channelY && !channelColor) {
             content.push(
-                <Label text="Plot type">
+                <Label key="plot-type" text="Plot type">
                     <Dropdown value={plotType as PlotType} options={plotTypes} onChange={handlePlotTypeChanged} />
                 </Label>
             );
