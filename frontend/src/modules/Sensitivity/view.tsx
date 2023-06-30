@@ -11,12 +11,11 @@ import { SensitivityResponseCalculator } from "./sensitivityResponseCalculator";
 import SensitivityTable from "./sensitivityTable";
 import { PlotType, State } from "./state";
 
-export const view = ({ moduleContext, workbenchSession, workbenchServices }: ModuleFCProps<State>) => {
+export const view = ({ moduleContext, workbenchSession }: ModuleFCProps<State>) => {
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);
     const wrapperDivSize = useElementSize(wrapperDivRef);
     const firstEnsemble = useFirstEnsembleInEnsembleSet(workbenchSession);
     const [plotType, setPlotType] = moduleContext.useStoreState("plotType");
-    const responseChannelName = moduleContext.useStoreValue("responseChannelName");
     const [responseData, setResponseData] = React.useState<any | null>(null);
 
     const [showLabels, setShowLabels] = React.useState(true);
@@ -35,7 +34,8 @@ export const view = ({ moduleContext, workbenchSession, workbenchServices }: Mod
         }
     };
 
-    const responseChannel = workbenchServices.getBroadcaster().getChannel(responseChannelName ?? "");
+    const responseChannel = moduleContext.getInputChannel("response");
+
     React.useEffect(() => {
         if (!responseChannel) {
             setResponseData(null);

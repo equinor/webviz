@@ -1,9 +1,11 @@
 import React from "react";
 
 import { BroadcastChannelKeyCategory } from "@framework/Broadcaster";
-import { useStoreValue } from "@framework/StateStore";
+import { useSetStoreValue, useStoreValue } from "@framework/StateStore";
 import { Workbench } from "@framework/Workbench";
 import { Point, pointerEventToPoint, rectContainsPoint } from "@framework/utils/geometry";
+import { XMarkIcon } from "@heroicons/react/20/solid";
+import { IconButton } from "@lib/components/IconButton";
 import { resolveClassNames } from "@lib/components/_utils/resolveClassNames";
 
 import { DataChannelEventTypes } from "../../DataChannelVisualization/dataChannelVisualization";
@@ -14,6 +16,7 @@ export type ChannelConnectorProps = {
     channelKeyCategories?: BroadcastChannelKeyCategory[];
     moduleInstanceId: string;
     onChannelConnected: (inputName: string, moduleInstanceId: string, destinationPoint: Point) => void;
+    onChannelConnectionRemoved: (inputName: string) => void;
     workbench: Workbench;
 };
 
@@ -21,8 +24,40 @@ export const ChannelConnector: React.FC<ChannelConnectorProps> = (props) => {
     const ref = React.useRef<HTMLDivElement>(null);
     const [visible, setVisible] = React.useState<boolean>(false);
     const [hovered, setHovered] = React.useState<boolean>(false);
+    const [hasConnection, setHasConnection] = React.useState<boolean>(false);
+
+    React.useEffect(() => {
+        function checkIfConnection() {
+            const moduleInstance = props.workbench.getModuleInstance(props.moduleInstanceId);
+            if (!moduleInstance) {
+                return;
+            }
+
+            const inputChannels = moduleInstance.getInputChannels();
+            const hasConnection = props.inputName in inputChannels;
+            setHasConnection(hasConnection);
+        }
+
+        const moduleInstance = props.workbench.getModuleInstance(props.moduleInstanceId);
+        if (!moduleInstance) {
+            return;
+        }
+        const unsubscribeFunc = moduleInstance.subscribeToInputChannelsChange(checkIfConnection);
+
+        return () => {
+            unsubscribeFunc();
+        };
+    }, [props.moduleInstanceId, props.inputName, props.workbench]);
 
     const showDataChannelConnections = useStoreValue(props.workbench.getGuiStateStore(), "showDataChannelConnections");
+    const editDataChannelConnections = useStoreValue(
+        props.workbench.getGuiStateStore(),
+        "editDataChannelConnectionsForModuleInstanceId"
+    );
+    const setHighlightedDataChannelConnection = useSetStoreValue(
+        props.workbench.getGuiStateStore(),
+        "highlightedDataChannelConnection"
+    );
 
     React.useEffect(() => {
         let isHovered = false;
@@ -128,6 +163,22 @@ export const ChannelConnector: React.FC<ChannelConnectorProps> = (props) => {
         props.channelKeyCategories,
     ]);
 
+    function handleChannelConnectionRemoveClick(e: React.PointerEvent<HTMLButtonElement>) {
+        e.stopPropagation();
+        props.onChannelConnectionRemoved(props.inputName);
+    }
+
+    function handlePointerEnter() {
+        setHighlightedDataChannelConnection({
+            listenerId: props.moduleInstanceId,
+            channelName: props.inputName,
+        });
+    }
+
+    function handlePointerLeave() {
+        setHighlightedDataChannelConnection(null);
+    }
+
     return (
         <div
             id={`channel-connector-${props.moduleInstanceId}-${props.inputName}`}
@@ -140,7 +191,7 @@ export const ChannelConnector: React.FC<ChannelConnectorProps> = (props) => {
                 "rounded",
                 "border",
                 "p-4",
-                "m-4",
+                "m-2",
                 "text-sm",
                 "bg-slate-100",
                 {
@@ -148,8 +199,19 @@ export const ChannelConnector: React.FC<ChannelConnectorProps> = (props) => {
                     "border-blue-500": hovered,
                 }
             )}
+            onPointerEnter={handlePointerEnter}
+            onPointerLeave={handlePointerLeave}
         >
             {props.displayName}
+            {editDataChannelConnections && hasConnection && (
+                <IconButton
+                    onPointerUp={handleChannelConnectionRemoveClick}
+                    className="ml-2 m-0"
+                    title="Remove data channel connection"
+                >
+                    <XMarkIcon className="w-4 h-4" />
+                </IconButton>
+            )}
         </div>
     );
 };

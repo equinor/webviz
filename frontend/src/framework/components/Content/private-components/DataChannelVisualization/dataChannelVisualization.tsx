@@ -8,6 +8,7 @@ import { resolveClassNames } from "@lib/components/_utils/resolveClassNames";
 export enum DataChannelEventTypes {
     DATA_CHANNEL_ORIGIN_POINTER_DOWN = "data-channel-origin-pointer-down",
     DATA_CHANNEL_DONE = "data-channel-done",
+    DATA_CHANNEL_CONNECTIONS_CHANGED = "data-channel-connections-changed",
 }
 
 export interface DataChannelEvents {
@@ -16,6 +17,7 @@ export interface DataChannelEvents {
         pointerPoint: Point;
     }>;
     [DataChannelEventTypes.DATA_CHANNEL_DONE]: CustomEvent;
+    [DataChannelEventTypes.DATA_CHANNEL_CONNECTIONS_CHANGED]: CustomEvent;
 }
 
 declare global {
@@ -53,11 +55,15 @@ export const DataChannelVisualization: React.FC<DataChannelVisualizationProps> =
     const [visible, setVisible] = React.useState<boolean>(false);
     const [originPoint, setOriginPoint] = React.useState<Point>({ x: 0, y: 0 });
     const [currentPointerPosition, setCurrentPointerPosition] = React.useState<Point>({ x: 0, y: 0 });
+    const [_, forceRerender] = React.useReducer((x) => x + 1, 0);
 
     const [showDataChannelConnections, setShowDataChannelConnections] = useStoreState(
         props.workbench.getGuiStateStore(),
         "showDataChannelConnections"
     );
+
+    const [editDataChannelConnectionsForModuleInstanceId, setEditDataChannelConnectionsForModuleInstanceId] =
+        useStoreState(props.workbench.getGuiStateStore(), "editDataChannelConnectionsForModuleInstanceId");
 
     const highlightedDataChannelConnection = useStoreValue(
         props.workbench.getGuiStateStore(),
@@ -91,12 +97,17 @@ export const DataChannelVisualization: React.FC<DataChannelVisualizationProps> =
             setCurrentPointerPosition({ x: e.clientX, y: e.clientY });
         }
 
+        function handleConnectionChange() {
+            forceRerender();
+        }
+
         document.addEventListener(
             DataChannelEventTypes.DATA_CHANNEL_ORIGIN_POINTER_DOWN,
             handleDataChannelOriginPointerDown
         );
         document.addEventListener("pointerup", handlePointerUp);
         document.addEventListener(DataChannelEventTypes.DATA_CHANNEL_DONE, handleDataChannelDone);
+        document.addEventListener(DataChannelEventTypes.DATA_CHANNEL_CONNECTIONS_CHANGED, handleConnectionChange);
         document.addEventListener("pointermove", handlePointerMove);
 
         return () => {
@@ -105,9 +116,30 @@ export const DataChannelVisualization: React.FC<DataChannelVisualizationProps> =
                 handleDataChannelOriginPointerDown
             );
             document.removeEventListener(DataChannelEventTypes.DATA_CHANNEL_DONE, handleDataChannelDone);
+            document.removeEventListener(
+                DataChannelEventTypes.DATA_CHANNEL_CONNECTIONS_CHANGED,
+                handleConnectionChange
+            );
             document.removeEventListener("pointermove", handlePointerMove);
         };
     }, []);
+
+    React.useEffect(() => {
+        function handlePointerUp() {
+            if (!editDataChannelConnectionsForModuleInstanceId) {
+                return;
+            }
+            setShowDataChannelConnections(false);
+            setEditDataChannelConnectionsForModuleInstanceId(null);
+            document.dispatchEvent(new CustomEvent(DataChannelEventTypes.DATA_CHANNEL_DONE));
+        }
+
+        document.addEventListener("pointerup", handlePointerUp);
+
+        return () => {
+            document.removeEventListener("pointerup", handlePointerUp);
+        };
+    }, [editDataChannelConnectionsForModuleInstanceId]);
 
     const midPoint1: Point = {
         x: originPoint.x,
@@ -122,6 +154,12 @@ export const DataChannelVisualization: React.FC<DataChannelVisualizationProps> =
     function makeDataChannelPaths() {
         const dataChannelPaths: DataChannelPath[] = [];
         for (const moduleInstance of props.workbench.getModuleInstances()) {
+            if (
+                editDataChannelConnectionsForModuleInstanceId &&
+                moduleInstance.getId() !== editDataChannelConnectionsForModuleInstanceId
+            ) {
+                continue;
+            }
             const inputChannels = moduleInstance.getInputChannels();
             if (!inputChannels) {
                 continue;
@@ -207,7 +245,6 @@ export const DataChannelVisualization: React.FC<DataChannelVisualizationProps> =
                 "bg-opacity-70",
                 {
                     invisible: !visible && !showDataChannelConnections,
-                    "pointer-events-none": showDataChannelConnections,
                 }
             )}
         >

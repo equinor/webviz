@@ -2,18 +2,11 @@ import React from "react";
 
 import { ImportState } from "@framework/Module";
 import { ModuleInstance, ModuleInstanceState } from "@framework/ModuleInstance";
-import { useStoreValue } from "@framework/StateStore";
 import { Workbench } from "@framework/Workbench";
 import { ErrorBoundary } from "@framework/components/ErrorBoundary";
-import { Point } from "@framework/utils/geometry";
 import { CircularProgress } from "@lib/components/CircularProgress";
 
-import { ChannelConnector } from "./channelConnector";
-import { ChannelConnectorWrapper } from "./channelConnectorWrapper";
-import { ChannelSelector } from "./channelSelector";
 import { CrashView } from "./crashView";
-
-import { DataChannelEventTypes } from "../../DataChannelVisualization/dataChannelVisualization";
 
 type ViewContentProps = {
     moduleInstance: ModuleInstance<any>;
@@ -25,12 +18,6 @@ export const ViewContent = React.memo((props: ViewContentProps) => {
     const [moduleInstanceState, setModuleInstanceState] = React.useState<ModuleInstanceState>(
         ModuleInstanceState.INITIALIZING
     );
-    const [currentInputName, setCurrentInputName] = React.useState<string | null>(null);
-    const [channelSelectorCenterPoint, setChannelSelectorCenterPoint] = React.useState<Point | null>(null);
-    const [selectableChannels, setSelectableChannels] = React.useState<string[]>([]);
-    const ref = React.useRef<HTMLDivElement>(null);
-
-    const showDataChannelConnections = useStoreValue(props.workbench.getGuiStateStore(), "showDataChannelConnections");
 
     React.useEffect(() => {
         setImportState(props.moduleInstance.getImportState());
@@ -114,77 +101,15 @@ export const ViewContent = React.memo((props: ViewContentProps) => {
         }
     }
 
-    function handleChannelConnected(inputName: string, moduleInstanceId: string, destinationPoint: Point) {
-        const moduleInstance = props.workbench.getModuleInstance(moduleInstanceId);
-
-        if (!moduleInstance) {
-            return;
-        }
-
-        const channels = moduleInstance.getBroadcastChannels();
-
-        if (Object.keys(channels).length > 1) {
-            setChannelSelectorCenterPoint(destinationPoint);
-            setSelectableChannels(Object.values(channels).map((channel) => channel.getName()));
-            setCurrentInputName(inputName);
-            return;
-        }
-
-        const channelName = Object.values(channels)[0].getName();
-
-        props.moduleInstance.setInputChannel(inputName, channelName);
-        document.dispatchEvent(new CustomEvent(DataChannelEventTypes.DATA_CHANNEL_DONE));
-    }
-
-    function handleCancelChannelSelection() {
-        setChannelSelectorCenterPoint(null);
-        setSelectableChannels([]);
-        document.dispatchEvent(new CustomEvent(DataChannelEventTypes.DATA_CHANNEL_DONE));
-    }
-
-    function handleChannelSelection(channelName: string) {
-        if (!currentInputName) {
-            return;
-        }
-        setChannelSelectorCenterPoint(null);
-        setSelectableChannels([]);
-
-        props.moduleInstance.setInputChannel(currentInputName, channelName);
-        document.dispatchEvent(new CustomEvent(DataChannelEventTypes.DATA_CHANNEL_DONE));
-    }
-
     const View = props.moduleInstance.getViewFC();
     return (
         <ErrorBoundary moduleInstance={props.moduleInstance}>
-            <div className="p-4 h-full w-full" ref={ref}>
+            <div className="p-4 h-full w-full">
                 <View
                     moduleContext={props.moduleInstance.getContext()}
                     workbenchSession={props.workbench.getWorkbenchSession()}
                     workbenchServices={props.workbench.getWorkbenchServices()}
                 />
-                <ChannelConnectorWrapper forwardedRef={ref} visible={showDataChannelConnections}>
-                    {props.moduleInstance.getInputChannelDefs().map((channelDef) => {
-                        return (
-                            <ChannelConnector
-                                key={channelDef.name}
-                                moduleInstanceId={props.moduleInstance.getId()}
-                                inputName={channelDef.name}
-                                displayName={channelDef.displayName}
-                                channelKeyCategories={channelDef.keyCategories}
-                                workbench={props.workbench}
-                                onChannelConnected={handleChannelConnected}
-                            />
-                        );
-                    })}
-                </ChannelConnectorWrapper>
-                {channelSelectorCenterPoint && (
-                    <ChannelSelector
-                        position={channelSelectorCenterPoint}
-                        channelNames={selectableChannels}
-                        onCancel={handleCancelChannelSelection}
-                        onSelectChannel={handleChannelSelection}
-                    />
-                )}
             </div>
         </ErrorBoundary>
     );

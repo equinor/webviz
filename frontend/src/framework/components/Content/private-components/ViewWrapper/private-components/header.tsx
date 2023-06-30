@@ -4,7 +4,7 @@ import { ModuleInstance } from "@framework/ModuleInstance";
 import { SyncSettingKey, SyncSettingsMeta } from "@framework/SyncSettings";
 import { isDevMode } from "@framework/utils/devMode";
 import { pointerEventToPoint } from "@framework/utils/geometry";
-import { ShareIcon, XMarkIcon } from "@heroicons/react/20/solid";
+import { ArrowDownTrayIcon, ArrowUpTrayIcon, XMarkIcon } from "@heroicons/react/20/solid";
 
 import { DataChannelEventTypes } from "../../DataChannelVisualization/dataChannelVisualization";
 
@@ -13,6 +13,7 @@ export type HeaderProps = {
     isDragged: boolean;
     onPointerDown: (event: React.PointerEvent<HTMLDivElement>) => void;
     onRemoveClick: (event: React.PointerEvent<HTMLDivElement>) => void;
+    onInputChannelsClick: (event: React.PointerEvent<HTMLDivElement>) => void;
 };
 
 export const Header: React.FC<HeaderProps> = (props) => {
@@ -54,6 +55,15 @@ export const Header: React.FC<HeaderProps> = (props) => {
         e.preventDefault();
     }
 
+    function handleInputChannelsPointerUp(e: React.PointerEvent<HTMLDivElement>) {
+        props.onInputChannelsClick(e);
+    }
+
+    function handleInputChannelsPointerDown(e: React.PointerEvent<HTMLDivElement>) {
+        e.stopPropagation();
+        document.dispatchEvent(new CustomEvent(DataChannelEventTypes.DATA_CHANNEL_CONNECTIONS_CHANGED));
+    }
+
     return (
         <div
             className={`bg-slate-100 p-2 pl-4 pr-4 flex items-center select-none ${
@@ -85,10 +95,20 @@ export const Header: React.FC<HeaderProps> = (props) => {
                 <div
                     id={`moduleinstance-${props.moduleInstance.getId()}-data-channel-origin`}
                     className="hover:text-slate-500 cursor-grab mr-2"
-                    title="Connect data channels"
+                    title="Connect data channels to other module instances"
                     onPointerDown={handleDataChannelOriginPointerDown}
                 >
-                    <ShareIcon className="w-4 h-4" />
+                    <ArrowUpTrayIcon className="w-4 h-4" />
+                </div>
+            )}
+            {props.moduleInstance.getInputChannelDefs().length > 0 && (
+                <div
+                    className="hover:text-slate-500 cursor-pointer mr-2"
+                    title="Edit input data channels"
+                    onPointerUp={handleInputChannelsPointerUp}
+                    onPointerDown={handleInputChannelsPointerDown}
+                >
+                    <ArrowDownTrayIcon className="w-4 h-4" />
                 </div>
             )}
             <div

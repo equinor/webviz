@@ -31,6 +31,7 @@ export type WorkbenchGuiState = {
     modulesListOpen: boolean;
     syncSettingsActive: boolean;
     showDataChannelConnections: boolean;
+    editDataChannelConnectionsForModuleInstanceId: string | null;
     highlightedDataChannelConnection: {
         channelName: string;
         listenerId: string;
@@ -54,6 +55,7 @@ export class Workbench {
             modulesListOpen: false,
             syncSettingsActive: false,
             showDataChannelConnections: false,
+            editDataChannelConnectionsForModuleInstanceId: null,
             highlightedDataChannelConnection: null,
         });
         this._workbenchSession = new WorkbenchSessionPrivate();

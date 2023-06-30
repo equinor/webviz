@@ -24,7 +24,10 @@ export const ChannelConnectorWrapper: React.FC<ChannelConnectorWrapperProps> = (
         }
 
         function handlePointerUp(e: PointerEvent) {
-            if (!e.target || !(e.target as Element).hasAttribute("data-channelconnector")) {
+            if (
+                (!e.target || !(e.target as Element).hasAttribute("data-channelconnector")) &&
+                !(e.target as Element).closest("#channel-selector-header")
+            ) {
                 document.dispatchEvent(new CustomEvent(DataChannelEventTypes.DATA_CHANNEL_DONE));
             }
         }

@@ -3,7 +3,6 @@ import { createPortal } from "react-dom";
 
 import { Point } from "@framework/utils/geometry";
 import { XMarkIcon } from "@heroicons/react/20/solid";
-import { IconButton } from "@lib/components/IconButton";
 
 export type ChannelSelectorProps = {
     channelNames: string[];
@@ -14,18 +13,24 @@ export type ChannelSelectorProps = {
 
 export const ChannelSelector: React.FC<ChannelSelectorProps> = (props) => {
     React.useEffect(() => {
-        const handleClickOutside = (e: MouseEvent) => {
+        const handleClickOutside = (e: PointerEvent) => {
             const target = e.target as HTMLElement;
+            if (target.closest("#channel-selector-header")) {
+                e.preventDefault();
+                e.stopPropagation();
+                return;
+            }
+
             if (target.closest("#channel-selector")) {
                 return;
             }
             props.onCancel();
         };
 
-        document.addEventListener("mousedown", handleClickOutside);
+        document.addEventListener("pointerdown", handleClickOutside);
 
         return () => {
-            document.removeEventListener("mousedown", handleClickOutside);
+            document.removeEventListener("pointerdown", handleClickOutside);
         };
     }, [props.onCancel]);
 
@@ -40,7 +45,7 @@ export const ChannelSelector: React.FC<ChannelSelectorProps> = (props) => {
                 bottom: props.position.y > window.innerHeight / 2 ? window.innerHeight - props.position.y : undefined,
             }}
         >
-            <div className="p-2 bg-slate-200 font-bold text-xs flex">
+            <div id="channel-selector-header" className="p-2 bg-slate-200 font-bold text-xs flex">
                 <div className="flex-grow">Select a channel</div>
                 <div className="hover:text-slate-500 cursor-pointer" onClick={props.onCancel}>
                     <XMarkIcon className="w-4 h-4" />

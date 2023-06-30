@@ -1,15 +1,18 @@
 import React from "react";
 
 import { ModuleInstance } from "@framework/ModuleInstance";
-import { useSetStoreValue } from "@framework/StateStore";
+import { useSetStoreValue, useStoreValue } from "@framework/StateStore";
 import { Workbench } from "@framework/Workbench";
 import { Point, pointRelativeToDomRect, pointerEventToPoint } from "@framework/utils/geometry";
 
-import { Footer } from "./private-components/footer";
+import { ChannelConnector } from "./private-components/channelConnector";
+import { ChannelConnectorWrapper } from "./private-components/channelConnectorWrapper";
+import { ChannelSelector } from "./private-components/channelSelector";
 import { Header } from "./private-components/header";
 import { ViewContent } from "./private-components/viewContent";
 
 import { pointDifference } from "../../../../utils/geometry";
+import { DataChannelEventTypes } from "../DataChannelVisualization/dataChannelVisualization";
 import { LayoutEventTypes } from "../layout";
 import { ViewWrapperPlaceholder } from "../viewWrapperPlaceholder";
 
@@ -27,39 +30,25 @@ type ViewWrapperProps = {
 
 export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
     const ref = React.useRef<HTMLDivElement>(null);
-    const timeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
-    const [inputChannels, setInputChannels] = React.useState<
-        {
-            name: string;
-            displayName: string;
-        }[]
-    >([]);
+    const [currentInputName, setCurrentInputName] = React.useState<string | null>(null);
+    const [channelSelectorCenterPoint, setChannelSelectorCenterPoint] = React.useState<Point | null>(null);
+    const [selectableChannels, setSelectableChannels] = React.useState<string[]>([]);
 
-    React.useEffect(() => {
-        function handleInputChannelsChange() {
-            setInputChannels(
-                Object.entries(props.moduleInstance.getInputChannels()).map(([name, channel]) => ({
-                    name,
-                    displayName:
-                        props.moduleInstance.getInputChannelDefs().find((c) => c.name === name)?.displayName || "",
-                }))
-            );
-        }
-
-        const unsubscribeFunc = props.moduleInstance.subscribeToInputChannelsChange(handleInputChannelsChange);
-
-        return unsubscribeFunc;
-    }, [props.moduleInstance]);
-
-    const setHighlightedDataChannelConnection = useSetStoreValue(
+    const showDataChannelConnections = useStoreValue(props.workbench.getGuiStateStore(), "showDataChannelConnections");
+    const editDataChannelConnectionsModuleInstanceId = useStoreValue(
         props.workbench.getGuiStateStore(),
-        "highlightedDataChannelConnection"
+        "editDataChannelConnectionsForModuleInstanceId"
     );
 
     const setShowDataChannelConnections = useSetStoreValue(
         props.workbench.getGuiStateStore(),
         "showDataChannelConnections"
+    );
+
+    const setEditDataChannelConnectionsModuleInstanceId = useSetStoreValue(
+        props.workbench.getGuiStateStore(),
+        "editDataChannelConnectionsForModuleInstanceId"
     );
 
     const handlePointerDown = React.useCallback(
@@ -104,32 +93,61 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
         [props.moduleInstance, props.workbench, props.isActive]
     );
 
-    function handleDataChannelMouseEnter(channelName: string): void {
-        setHighlightedDataChannelConnection({
-            listenerId: props.moduleInstance.getId(),
-            channelName: channelName,
-        });
-
+    function handleInputChannelsClick(e: React.PointerEvent<HTMLDivElement>): void {
         setShowDataChannelConnections(true);
+        setEditDataChannelConnectionsModuleInstanceId(props.moduleInstance.getId());
+        e.nativeEvent.stopPropagation();
+        e.nativeEvent.stopImmediatePropagation();
+    }
 
-        if (timeoutRef.current) {
-            clearTimeout(timeoutRef.current);
-            timeoutRef.current = null;
+    function handleChannelConnected(inputName: string, moduleInstanceId: string, destinationPoint: Point) {
+        const moduleInstance = props.workbench.getModuleInstance(moduleInstanceId);
+
+        if (!moduleInstance) {
+            return;
         }
+
+        const channels = moduleInstance.getBroadcastChannels();
+
+        if (Object.keys(channels).length > 1) {
+            setChannelSelectorCenterPoint(destinationPoint);
+            setSelectableChannels(Object.values(channels).map((channel) => channel.getName()));
+            setCurrentInputName(inputName);
+            return;
+        }
+
+        const channelName = Object.values(channels)[0].getName();
+
+        props.moduleInstance.setInputChannel(inputName, channelName);
+        document.dispatchEvent(new CustomEvent(DataChannelEventTypes.DATA_CHANNEL_DONE));
     }
 
-    function handleDataChannelMouseLeave(): void {
-        setHighlightedDataChannelConnection(null);
-
-        timeoutRef.current = setTimeout(() => {
-            setShowDataChannelConnections(false);
-        }, 500);
+    function handleChannelConnectionRemoved(inputName: string) {
+        props.moduleInstance.removeInputChannel(inputName);
+        document.dispatchEvent(new CustomEvent(DataChannelEventTypes.DATA_CHANNEL_CONNECTIONS_CHANGED));
     }
 
-    function handleChannelRemove(channelName: string): void {
-        props.moduleInstance.removeInputChannel(channelName);
-        handleDataChannelMouseLeave();
+    function handleCancelChannelSelection() {
+        setChannelSelectorCenterPoint(null);
+        setSelectableChannels([]);
+        document.dispatchEvent(new CustomEvent(DataChannelEventTypes.DATA_CHANNEL_DONE));
     }
+
+    function handleChannelSelection(channelName: string) {
+        if (!currentInputName) {
+            return;
+        }
+        setChannelSelectorCenterPoint(null);
+        setSelectableChannels([]);
+
+        props.moduleInstance.setInputChannel(currentInputName, channelName);
+        document.dispatchEvent(new CustomEvent(DataChannelEventTypes.DATA_CHANNEL_DONE));
+    }
+
+    const channelConnectorWrapperVisible =
+        showDataChannelConnections &&
+        (editDataChannelConnectionsModuleInstanceId === null ||
+            editDataChannelConnectionsModuleInstanceId === props.moduleInstance.getId());
 
     return (
         <>
@@ -161,16 +179,35 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
                         isDragged={props.isDragged}
                         onPointerDown={handlePointerDown}
                         onRemoveClick={handleRemoveClick}
+                        onInputChannelsClick={handleInputChannelsClick}
                     />
                     <div className="flex-grow overflow-auto h-0">
                         <ViewContent workbench={props.workbench} moduleInstance={props.moduleInstance} />
+                        <ChannelConnectorWrapper forwardedRef={ref} visible={channelConnectorWrapperVisible}>
+                            {props.moduleInstance.getInputChannelDefs().map((channelDef) => {
+                                return (
+                                    <ChannelConnector
+                                        key={channelDef.name}
+                                        moduleInstanceId={props.moduleInstance.getId()}
+                                        inputName={channelDef.name}
+                                        displayName={channelDef.displayName}
+                                        channelKeyCategories={channelDef.keyCategories}
+                                        workbench={props.workbench}
+                                        onChannelConnected={handleChannelConnected}
+                                        onChannelConnectionRemoved={handleChannelConnectionRemoved}
+                                    />
+                                );
+                            })}
+                        </ChannelConnectorWrapper>
+                        {channelSelectorCenterPoint && (
+                            <ChannelSelector
+                                position={channelSelectorCenterPoint}
+                                channelNames={selectableChannels}
+                                onCancel={handleCancelChannelSelection}
+                                onSelectChannel={handleChannelSelection}
+                            />
+                        )}
                     </div>
-                    <Footer
-                        inputChannels={inputChannels}
-                        onMouseEnterDataChannel={handleDataChannelMouseEnter}
-                        onMouseLeaveDataChannel={handleDataChannelMouseLeave}
-                        onChannelRemoveClick={handleChannelRemove}
-                    />
                 </div>
             </div>
         </>
