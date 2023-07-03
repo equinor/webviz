@@ -3,7 +3,6 @@ import { SyncSettingKey } from "@framework/SyncSettings";
 
 import { State } from "./state";
 
-ModuleRegistry.registerModule<State>("TimeSeriesParameterDistribution", "Time series parameter distribution", [
-    SyncSettingKey.ENSEMBLE,
-    SyncSettingKey.TIME_SERIES,
-]);
+ModuleRegistry.registerModule<State>("TimeSeriesParameterDistribution", "Time series parameter distribution", {
+    syncableSettingKeys: [SyncSettingKey.ENSEMBLE, SyncSettingKey.TIME_SERIES],
+});

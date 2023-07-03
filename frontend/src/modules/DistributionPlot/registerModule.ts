@@ -1,10 +1,10 @@
-import { BroadcastChannelInputDef, BroadcastChannelKeyCategory } from "@framework/Broadcaster";
+import { BroadcastChannelKeyCategory, InputBroadcastChannelDef } from "@framework/Broadcaster";
 import { ModuleRegistry } from "@framework/ModuleRegistry";
 import { SyncSettingKey } from "@framework/SyncSettings";
 
 import { State } from "./state";
 
-const channelInputs: BroadcastChannelInputDef[] = [
+const inputChannelDefs: InputBroadcastChannelDef[] = [
     {
         name: "channelX",
         displayName: "X axis",
@@ -22,10 +22,7 @@ const channelInputs: BroadcastChannelInputDef[] = [
     },
 ];
 
-ModuleRegistry.registerModule<State>(
-    "DistributionPlot",
-    "Distribution plot",
-    [SyncSettingKey.ENSEMBLE, SyncSettingKey.TIME_SERIES],
-    undefined,
-    channelInputs
-);
+ModuleRegistry.registerModule<State>("DistributionPlot", "Distribution plot", {
+    syncableSettingKeys: [SyncSettingKey.ENSEMBLE, SyncSettingKey.TIME_SERIES],
+    inputChannelDefs,
+});

@@ -2,7 +2,7 @@ import React from "react";
 
 import { cloneDeep } from "lodash";
 
-import { BroadcastChannelInputDef, BroadcastChannelsDef } from "./Broadcaster";
+import { BroadcastChannelsDef, InputBroadcastChannelDef } from "./Broadcaster";
 import { ModuleContext } from "./ModuleContext";
 import { ModuleInstance } from "./ModuleInstance";
 import { StateBaseType, StateOptions } from "./StateStore";
@@ -39,14 +39,14 @@ export class Module<StateType extends StateBaseType> {
     private workbench: Workbench | null;
     private syncableSettingKeys: SyncSettingKey[];
     private channelsDef: BroadcastChannelsDef;
-    private inputChannelDefs: BroadcastChannelInputDef[];
+    private inputChannelDefs: InputBroadcastChannelDef[];
 
     constructor(
         name: string,
         defaultTitle: string,
         syncableSettingKeys: SyncSettingKey[] = [],
         broadcastChannelsDef: BroadcastChannelsDef = {},
-        inputChannelDefs: BroadcastChannelInputDef[] = []
+        inputChannelDefs: InputBroadcastChannelDef[] = []
     ) {
         this._name = name;
         this._defaultTitle = defaultTitle;

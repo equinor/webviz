@@ -61,7 +61,6 @@ export const Header: React.FC<HeaderProps> = (props) => {
 
     function handleInputChannelsPointerDown(e: React.PointerEvent<HTMLDivElement>) {
         e.stopPropagation();
-        document.dispatchEvent(new CustomEvent(DataChannelEventTypes.DATA_CHANNEL_CONNECTIONS_CHANGED));
     }
 
     return (

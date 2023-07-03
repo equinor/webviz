@@ -1,6 +1,6 @@
 import React from "react";
 
-export function useElementBoundingRect(ref: React.RefObject<HTMLElement>): DOMRect {
+export function useElementBoundingRect(ref: React.RefObject<HTMLElement | SVGSVGElement>): DOMRect {
     const [rect, setRect] = React.useState<DOMRect>(new DOMRect(0, 0, 0, 0));
 
     React.useLayoutEffect(() => {

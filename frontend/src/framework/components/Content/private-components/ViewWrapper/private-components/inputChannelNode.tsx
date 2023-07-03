@@ -7,6 +7,7 @@ import { Point, pointerEventToPoint, rectContainsPoint } from "@framework/utils/
 import { XMarkIcon } from "@heroicons/react/20/solid";
 import { IconButton } from "@lib/components/IconButton";
 import { resolveClassNames } from "@lib/components/_utils/resolveClassNames";
+import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
 
 import { DataChannelEventTypes } from "../../DataChannelVisualization/dataChannelVisualization";
 
@@ -15,8 +16,8 @@ export type InputChannelNodeProps = {
     displayName: string;
     channelKeyCategories?: BroadcastChannelKeyCategory[];
     moduleInstanceId: string;
-    onChannelConnected: (inputName: string, moduleInstanceId: string, destinationPoint: Point) => void;
-    onChannelConnectionRemoved: (inputName: string) => void;
+    onChannelConnect: (inputName: string, moduleInstanceId: string, destinationPoint: Point) => void;
+    onChannelConnectionDisconnect: (inputName: string) => void;
     workbench: Workbench;
 };
 
@@ -26,7 +27,27 @@ export const InputChannelNode: React.FC<InputChannelNodeProps> = (props) => {
     const [hovered, setHovered] = React.useState<boolean>(false);
     const [hasConnection, setHasConnection] = React.useState<boolean>(false);
 
+    const boundingRect = useElementBoundingRect(ref);
+
+    const editDataChannelConnections = useStoreValue(
+        props.workbench.getGuiStateStore(),
+        "editDataChannelConnectionsForModuleInstanceId"
+    );
+    const setHighlightedDataChannelConnection = useSetStoreValue(
+        props.workbench.getGuiStateStore(),
+        "highlightedDataChannelConnection"
+    );
+
     React.useEffect(() => {
+        document.dispatchEvent(new CustomEvent(DataChannelEventTypes.DATA_CHANNEL_CONNECTIONS_CHANGED));
+    }, [boundingRect]);
+
+    React.useEffect(() => {
+        const moduleInstance = props.workbench.getModuleInstance(props.moduleInstanceId);
+        if (!moduleInstance) {
+            return;
+        }
+
         function checkIfConnection() {
             const moduleInstance = props.workbench.getModuleInstance(props.moduleInstanceId);
             if (!moduleInstance) {
@@ -38,26 +59,12 @@ export const InputChannelNode: React.FC<InputChannelNodeProps> = (props) => {
             setHasConnection(hasConnection);
         }
 
-        const moduleInstance = props.workbench.getModuleInstance(props.moduleInstanceId);
-        if (!moduleInstance) {
-            return;
-        }
         const unsubscribeFunc = moduleInstance.subscribeToInputChannelsChange(checkIfConnection);
 
         return () => {
             unsubscribeFunc();
         };
     }, [props.moduleInstanceId, props.inputName, props.workbench]);
-
-    const showDataChannelConnections = useStoreValue(props.workbench.getGuiStateStore(), "showDataChannelConnections");
-    const editDataChannelConnections = useStoreValue(
-        props.workbench.getGuiStateStore(),
-        "editDataChannelConnectionsForModuleInstanceId"
-    );
-    const setHighlightedDataChannelConnection = useSetStoreValue(
-        props.workbench.getGuiStateStore(),
-        "highlightedDataChannelConnection"
-    );
 
     React.useEffect(() => {
         let isHovered = false;
@@ -113,7 +120,7 @@ export const InputChannelNode: React.FC<InputChannelNodeProps> = (props) => {
 
         function handlePointerUp(e: PointerEvent) {
             if (isHovered) {
-                props.onChannelConnected(props.inputName, moduleInstanceId, pointerEventToPoint(e));
+                props.onChannelConnect(props.inputName, moduleInstanceId, pointerEventToPoint(e));
                 setHovered(false);
             }
         }
@@ -155,17 +162,11 @@ export const InputChannelNode: React.FC<InputChannelNodeProps> = (props) => {
             document.removeEventListener("pointerup", handlePointerUp);
             document.removeEventListener("pointermove", handlePointerMove);
         };
-    }, [
-        props.onChannelConnected,
-        props.workbench,
-        props.moduleInstanceId,
-        props.inputName,
-        props.channelKeyCategories,
-    ]);
+    }, [props.onChannelConnect, props.workbench, props.moduleInstanceId, props.inputName, props.channelKeyCategories]);
 
     function handleChannelConnectionRemoveClick(e: React.PointerEvent<HTMLButtonElement>) {
         e.stopPropagation();
-        props.onChannelConnectionRemoved(props.inputName);
+        props.onChannelConnectionDisconnect(props.inputName);
     }
 
     function handlePointerEnter() {
@@ -195,7 +196,7 @@ export const InputChannelNode: React.FC<InputChannelNodeProps> = (props) => {
                 "text-sm",
                 "hover:border-red-500",
                 {
-                    invisible: !visible && !showDataChannelConnections,
+                    invisible: !visible && !editDataChannelConnections,
                     "bg-red-500": hovered,
                     "bg-slate-100": !hovered,
                     "text-white": hovered,

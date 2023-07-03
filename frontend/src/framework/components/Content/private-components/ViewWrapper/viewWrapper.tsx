@@ -6,10 +6,10 @@ import { useSetStoreValue, useStoreValue } from "@framework/StateStore";
 import { Workbench } from "@framework/Workbench";
 import { Point, pointRelativeToDomRect, pointerEventToPoint } from "@framework/utils/geometry";
 
-import { ChannelConnectorWrapper } from "./private-components/channelConnectorWrapper";
 import { ChannelSelector } from "./private-components/channelSelector";
 import { Header } from "./private-components/header";
 import { InputChannelNode } from "./private-components/inputChannelNode";
+import { InputChannelNodeWrapper } from "./private-components/inputChannelNodeWrapper";
 import { ViewContent } from "./private-components/viewContent";
 
 import { pointDifference } from "../../../../utils/geometry";
@@ -52,7 +52,7 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
         "editDataChannelConnectionsForModuleInstanceId"
     );
 
-    const handlePointerDown = React.useCallback(
+    const handleHeaderPointerDown = React.useCallback(
         function handlePointerDown(e: React.PointerEvent<HTMLDivElement>) {
             if (ref.current) {
                 const point = pointerEventToPoint(e.nativeEvent);
@@ -71,7 +71,7 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
         [props.moduleInstance]
     );
 
-    const handleRemoveClick = React.useCallback(
+    const handleModuleInstanceRemoveClick = React.useCallback(
         function handleRemoveClick(e: React.PointerEvent<HTMLDivElement>) {
             document.dispatchEvent(
                 new CustomEvent(LayoutEventTypes.REMOVE_MODULE_INSTANCE_REQUEST, {
@@ -97,11 +97,10 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
     function handleInputChannelsClick(e: React.PointerEvent<HTMLDivElement>): void {
         setShowDataChannelConnections(true);
         setEditDataChannelConnectionsModuleInstanceId(props.moduleInstance.getId());
-        e.nativeEvent.stopPropagation();
-        e.nativeEvent.stopImmediatePropagation();
+        e.stopPropagation();
     }
 
-    function handleChannelConnected(inputName: string, moduleInstanceId: string, destinationPoint: Point) {
+    function handleChannelConnect(inputName: string, moduleInstanceId: string, destinationPoint: Point) {
         const originModuleInstance = props.workbench.getModuleInstance(moduleInstanceId);
 
         if (!originModuleInstance) {
@@ -143,7 +142,7 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
         document.dispatchEvent(new CustomEvent(DataChannelEventTypes.DATA_CHANNEL_DONE));
     }
 
-    function handleChannelConnectionRemoved(inputName: string) {
+    function handleChannelDisconnect(inputName: string) {
         props.moduleInstance.removeInputChannel(inputName);
         document.dispatchEvent(new CustomEvent(DataChannelEventTypes.DATA_CHANNEL_CONNECTIONS_CHANGED));
     }
@@ -198,13 +197,13 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
                     <Header
                         moduleInstance={props.moduleInstance}
                         isDragged={props.isDragged}
-                        onPointerDown={handlePointerDown}
-                        onRemoveClick={handleRemoveClick}
+                        onPointerDown={handleHeaderPointerDown}
+                        onRemoveClick={handleModuleInstanceRemoveClick}
                         onInputChannelsClick={handleInputChannelsClick}
                     />
                     <div className="flex-grow overflow-auto h-0">
                         <ViewContent workbench={props.workbench} moduleInstance={props.moduleInstance} />
-                        <ChannelConnectorWrapper forwardedRef={ref} visible={channelConnectorWrapperVisible}>
+                        <InputChannelNodeWrapper forwardedRef={ref} visible={channelConnectorWrapperVisible}>
                             {props.moduleInstance.getInputChannelDefs().map((channelDef) => {
                                 return (
                                     <InputChannelNode
@@ -214,12 +213,12 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
                                         displayName={channelDef.displayName}
                                         channelKeyCategories={channelDef.keyCategories}
                                         workbench={props.workbench}
-                                        onChannelConnected={handleChannelConnected}
-                                        onChannelConnectionRemoved={handleChannelConnectionRemoved}
+                                        onChannelConnect={handleChannelConnect}
+                                        onChannelConnectionDisconnect={handleChannelDisconnect}
                                     />
                                 );
                             })}
-                        </ChannelConnectorWrapper>
+                        </InputChannelNodeWrapper>
                         {channelSelectorCenterPoint && (
                             <ChannelSelector
                                 position={channelSelectorCenterPoint}

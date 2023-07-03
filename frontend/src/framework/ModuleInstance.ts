@@ -2,7 +2,7 @@ import { ErrorInfo } from "react";
 
 import { cloneDeep } from "lodash";
 
-import { BroadcastChannel, BroadcastChannelInputDef, BroadcastChannelsDef } from "./Broadcaster";
+import { BroadcastChannel, BroadcastChannelsDef, InputBroadcastChannelDef } from "./Broadcaster";
 import { ImportState, Module, ModuleFC } from "./Module";
 import { ModuleContext } from "./ModuleContext";
 import { StateBaseType, StateOptions, StateStore } from "./StateStore";
@@ -38,8 +38,8 @@ export class ModuleInstance<StateType extends StateBaseType> {
     private broadcastChannels: Record<string, BroadcastChannel>;
     private cachedInitialState: StateType | null;
     private cachedStateStoreOptions?: StateOptions<StateType>;
-    private channelInputDefs: BroadcastChannelInputDef[];
-    private channelInputs: Record<string, BroadcastChannel> = {};
+    private inputChannelDefs: InputBroadcastChannelDef[];
+    private inputChannels: Record<string, BroadcastChannel> = {};
     private workbench: Workbench;
 
     constructor(
@@ -47,7 +47,7 @@ export class ModuleInstance<StateType extends StateBaseType> {
         instanceNumber: number,
         broadcastChannelsDef: BroadcastChannelsDef,
         workbench: Workbench,
-        channelInputDefs: BroadcastChannelInputDef[]
+        inputChannelDefs: InputBroadcastChannelDef[]
     ) {
         this.id = `${module.getName()}-${instanceNumber}`;
         this.title = module.getDefaultTitle();
@@ -65,8 +65,8 @@ export class ModuleInstance<StateType extends StateBaseType> {
         this.moduleInstanceState = ModuleInstanceState.INITIALIZING;
         this.fatalError = null;
         this.cachedInitialState = null;
-        this.channelInputDefs = channelInputDefs;
-        this.channelInputs = {};
+        this.inputChannelDefs = inputChannelDefs;
+        this.inputChannels = {};
         this.workbench = workbench;
 
         this.broadcastChannels = {} as Record<string, BroadcastChannel>;
@@ -88,8 +88,8 @@ export class ModuleInstance<StateType extends StateBaseType> {
         }
     }
 
-    getInputChannelDefs(): BroadcastChannelInputDef[] {
-        return this.channelInputDefs;
+    getInputChannelDefs(): InputBroadcastChannelDef[] {
+        return this.inputChannelDefs;
     }
 
     setInputChannel(inputName: string, channelName: string): void {
@@ -97,26 +97,26 @@ export class ModuleInstance<StateType extends StateBaseType> {
         if (!channel) {
             throw new Error(`Channel '${channelName}' does not exist on module '${this.title}'`);
         }
-        this.channelInputs[inputName] = channel;
+        this.inputChannels[inputName] = channel;
         this.notifySubscribersAboutInputChannelChange(inputName);
         this.notifySubscribersAboutInputChannelsChange();
     }
 
     removeInputChannel(inputName: string): void {
-        delete this.channelInputs[inputName];
+        delete this.inputChannels[inputName];
         this.notifySubscribersAboutInputChannelChange(inputName);
         this.notifySubscribersAboutInputChannelsChange();
     }
 
     getInputChannel(inputName: string): BroadcastChannel | null {
-        if (!this.channelInputs[inputName]) {
+        if (!this.inputChannels[inputName]) {
             return null;
         }
-        return this.channelInputs[inputName];
+        return this.inputChannels[inputName];
     }
 
     getInputChannels(): Record<string, BroadcastChannel> {
-        return this.channelInputs;
+        return this.inputChannels;
     }
 
     public getBroadcastChannel(channelName: string): BroadcastChannel {

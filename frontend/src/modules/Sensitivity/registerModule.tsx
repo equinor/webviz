@@ -1,10 +1,10 @@
-import { BroadcastChannelInputDef, BroadcastChannelKeyCategory } from "@framework/Broadcaster";
+import { BroadcastChannelKeyCategory, InputBroadcastChannelDef } from "@framework/Broadcaster";
 import { ModuleRegistry } from "@framework/ModuleRegistry";
 import { SyncSettingKey } from "@framework/SyncSettings";
 
 import { State } from "./state";
 
-const inputChannels: BroadcastChannelInputDef[] = [
+const inputChannelDefs: InputBroadcastChannelDef[] = [
     {
         name: "response",
         displayName: "Realization response",
@@ -12,10 +12,7 @@ const inputChannels: BroadcastChannelInputDef[] = [
     },
 ];
 
-ModuleRegistry.registerModule<State>(
-    "Sensitivity",
-    "Sensitivity",
-    [SyncSettingKey.ENSEMBLE, SyncSettingKey.TIME_SERIES],
-    undefined,
-    inputChannels
-);
+ModuleRegistry.registerModule<State>("Sensitivity", "Sensitivity", {
+    syncableSettingKeys: [SyncSettingKey.ENSEMBLE, SyncSettingKey.TIME_SERIES],
+    inputChannelDefs,
+});

@@ -4,6 +4,7 @@ import { useStoreState, useStoreValue } from "@framework/StateStore";
 import { Workbench } from "@framework/Workbench";
 import { Point } from "@framework/utils/geometry";
 import { resolveClassNames } from "@lib/components/_utils/resolveClassNames";
+import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
 
 export enum DataChannelEventTypes {
     DATA_CHANNEL_ORIGIN_POINTER_DOWN = "data-channel-origin-pointer-down",
@@ -52,11 +53,14 @@ type DataChannelPath = {
 };
 
 export const DataChannelVisualization: React.FC<DataChannelVisualizationProps> = (props) => {
+    const ref = React.useRef<SVGSVGElement>(null);
     const [visible, setVisible] = React.useState<boolean>(false);
     const [originPoint, setOriginPoint] = React.useState<Point>({ x: 0, y: 0 });
     const [currentPointerPosition, setCurrentPointerPosition] = React.useState<Point>({ x: 0, y: 0 });
     const [currentChannelName, setCurrentChannelName] = React.useState<string | null>(null);
     const [_, forceRerender] = React.useReducer((x) => x + 1, 0);
+
+    const boundingRect = useElementBoundingRect(ref);
 
     const [showDataChannelConnections, setShowDataChannelConnections] = useStoreState(
         props.workbench.getGuiStateStore(),
@@ -70,6 +74,10 @@ export const DataChannelVisualization: React.FC<DataChannelVisualizationProps> =
         props.workbench.getGuiStateStore(),
         "highlightedDataChannelConnection"
     );
+
+    React.useEffect(() => {
+        forceRerender();
+    }, [boundingRect]);
 
     React.useEffect(() => {
         let mousePressed = false;
@@ -262,6 +270,7 @@ export const DataChannelVisualization: React.FC<DataChannelVisualizationProps> =
 
     return (
         <svg
+            ref={ref}
             className={resolveClassNames(
                 "absolute",
                 "bg-slate-50",

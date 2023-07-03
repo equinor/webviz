@@ -76,7 +76,7 @@ export type BroadcastChannelData = {
     value: number | string;
 };
 
-export type BroadcastChannelInputDef = {
+export type InputBroadcastChannelDef = {
     name: string;
     displayName: string;
     keyCategories?: BroadcastChannelKeyCategory[];

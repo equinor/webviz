@@ -5,13 +5,13 @@ import { resolveClassNames } from "@lib/components/_utils/resolveClassNames";
 
 import { DataChannelEventTypes } from "../../DataChannelVisualization/dataChannelVisualization";
 
-export type ChannelConnectorWrapperProps = {
+export type InputChannelNodeWrapperProps = {
     children: React.ReactNode;
     forwardedRef: React.RefObject<HTMLDivElement>;
     visible: boolean;
 };
 
-export const ChannelConnectorWrapper: React.FC<ChannelConnectorWrapperProps> = (props) => {
+export const InputChannelNodeWrapper: React.FC<InputChannelNodeWrapperProps> = (props) => {
     const [visible, setVisible] = React.useState<boolean>(false);
 
     React.useEffect(() => {
