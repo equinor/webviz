@@ -9,8 +9,8 @@ const template: Template = {
         "Combination of simulation time series, sensitivity and distribution plot. All are synced to the same ensemble. Data is shared for realizations.",
     layout: [
         {
-            templateElementId: "SimulationTimeSeries",
-            moduleName: "SimulationTimeSeries",
+            templateElementId: "SimulationTimeSeriesSensitivity",
+            moduleName: "SimulationTimeSeriesSensitivity",
             relHeight: 0.5,
             relWidth: 0.5,
             relX: 0,
@@ -27,7 +27,7 @@ const template: Template = {
             syncedSettings: [SyncSettingKey.ENSEMBLE],
             dataChannelsToPresetPropsMapping: {
                 responseChannelName: {
-                    listensToTemplateId: "SimulationTimeSeries",
+                    listensToTemplateId: "SimulationTimeSeriesSensitivity",
                     keyCategory: BroadcastChannelKeyCategory.Realization,
                     channelName: BroadcastChannelNames.Realization_Value,
                 },
@@ -43,7 +43,7 @@ const template: Template = {
             syncedSettings: [SyncSettingKey.ENSEMBLE],
             dataChannelsToPresetPropsMapping: {
                 channelNameX: {
-                    listensToTemplateId: "SimulationTimeSeries",
+                    listensToTemplateId: "SimulationTimeSeriesSensitivity",
                     keyCategory: BroadcastChannelKeyCategory.Realization,
                     channelName: BroadcastChannelNames.Realization_Value,
                 },
