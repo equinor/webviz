@@ -1,5 +1,6 @@
 import React from "react";
 
+import { useGuiSelector } from "@framework/GuiState";
 import { useStoreState, useStoreValue } from "@framework/StateStore";
 import { Workbench } from "@framework/Workbench";
 import { Point } from "@framework/utils/geometry";
@@ -15,7 +16,7 @@ export enum DataChannelEventTypes {
 export interface DataChannelEvents {
     [DataChannelEventTypes.DATA_CHANNEL_ORIGIN_POINTER_DOWN]: CustomEvent<{
         moduleInstanceId: string;
-        pointerPoint: Point;
+        originElement: HTMLElement;
     }>;
     [DataChannelEventTypes.DATA_CHANNEL_DONE]: CustomEvent;
     [DataChannelEventTypes.DATA_CHANNEL_CONNECTIONS_CHANGED]: CustomEvent;
@@ -60,6 +61,10 @@ export const DataChannelVisualization: React.FC<DataChannelVisualizationProps> =
     const [currentChannelName, setCurrentChannelName] = React.useState<string | null>(null);
     const [_, forceRerender] = React.useReducer((x) => x + 1, 0);
 
+    const guiState = useGuiSelector((state) => state.draggedNewModule);
+
+    const timeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+
     const boundingRect = useElementBoundingRect(ref);
 
     const [showDataChannelConnections, setShowDataChannelConnections] = useStoreState(
@@ -83,13 +88,19 @@ export const DataChannelVisualization: React.FC<DataChannelVisualizationProps> =
         let mousePressed = false;
         let currentOriginPoint: Point = { x: 0, y: 0 };
 
-        function handleDataChannelOriginPointerDown(e: CustomEvent<{ moduleInstanceId: string; pointerPoint: Point }>) {
+        function handleDataChannelOriginPointerDown(
+            e: CustomEvent<{ moduleInstanceId: string; originElement: HTMLElement }>
+        ) {
+            const clientRect = e.detail.originElement.getBoundingClientRect();
+            currentOriginPoint = {
+                x: clientRect.left + clientRect.width / 2,
+                y: clientRect.top + clientRect.height / 2,
+            };
             setVisible(true);
-            setOriginPoint(e.detail.pointerPoint);
-            currentOriginPoint = e.detail.pointerPoint;
+            setOriginPoint(currentOriginPoint);
             document.body.classList.add("cursor-crosshair");
             mousePressed = true;
-            setCurrentPointerPosition(e.detail.pointerPoint);
+            setCurrentPointerPosition(currentOriginPoint);
             setCurrentChannelName(null);
 
             const moduleInstance = props.workbench.getModuleInstance(e.detail.moduleInstanceId);
@@ -134,7 +145,12 @@ export const DataChannelVisualization: React.FC<DataChannelVisualizationProps> =
         }
 
         function handleConnectionChange() {
-            forceRerender();
+            if (timeoutRef.current) {
+                clearTimeout(timeoutRef.current);
+            }
+            timeoutRef.current = setTimeout(() => {
+                forceRerender();
+            }, 100);
         }
 
         document.addEventListener(
@@ -145,6 +161,7 @@ export const DataChannelVisualization: React.FC<DataChannelVisualizationProps> =
         document.addEventListener(DataChannelEventTypes.DATA_CHANNEL_DONE, handleDataChannelDone);
         document.addEventListener(DataChannelEventTypes.DATA_CHANNEL_CONNECTIONS_CHANGED, handleConnectionChange);
         document.addEventListener("pointermove", handlePointerMove);
+        document.addEventListener("resize", handleConnectionChange);
 
         return () => {
             document.removeEventListener(
@@ -157,6 +174,7 @@ export const DataChannelVisualization: React.FC<DataChannelVisualizationProps> =
                 handleConnectionChange
             );
             document.removeEventListener("pointermove", handlePointerMove);
+            document.removeEventListener("resize", handleConnectionChange);
         };
     }, []);
 

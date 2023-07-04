@@ -9,7 +9,7 @@ import { IconButton } from "@lib/components/IconButton";
 import { resolveClassNames } from "@lib/components/_utils/resolveClassNames";
 import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
 
-import { DataChannelEventTypes } from "../../DataChannelVisualization/dataChannelVisualization";
+import { DataChannelEventTypes } from "../../DataChannelVisualization";
 
 export type InputChannelNodeProps = {
     inputName: string;
@@ -73,7 +73,9 @@ export const InputChannelNode: React.FC<InputChannelNodeProps> = (props) => {
 
         const moduleInstance = props.workbench.getModuleInstance(props.moduleInstanceId);
 
-        function handleDataChannelOriginPointerDown(e: CustomEvent<{ moduleInstanceId: string; pointerPoint: Point }>) {
+        function handleDataChannelOriginPointerDown(
+            e: CustomEvent<{ moduleInstanceId: string; originElement: HTMLElement }>
+        ) {
             const originModuleInstance = props.workbench.getModuleInstance(e.detail.moduleInstanceId);
             if (!originModuleInstance) {
                 return;

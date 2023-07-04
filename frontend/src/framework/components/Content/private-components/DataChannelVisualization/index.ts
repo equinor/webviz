@@ -1,1 +1,1 @@
-export { DataChannelVisualization } from "./dataChannelVisualization";
+export { DataChannelVisualization, DataChannelEventTypes } from "./dataChannelVisualization";

@@ -17,6 +17,7 @@ export type HeaderProps = {
 };
 
 export const Header: React.FC<HeaderProps> = (props) => {
+    const dataChannelOriginRef = React.useRef<HTMLDivElement>(null);
     const [syncedSettings, setSyncedSettings] = React.useState<SyncSettingKey[]>(
         props.moduleInstance.getSyncedSettingKeys()
     );
@@ -47,7 +48,7 @@ export const Header: React.FC<HeaderProps> = (props) => {
             new CustomEvent(DataChannelEventTypes.DATA_CHANNEL_ORIGIN_POINTER_DOWN, {
                 detail: {
                     moduleInstanceId: props.moduleInstance.getId(),
-                    pointerPoint: pointerEventToPoint(e.nativeEvent),
+                    originElement: dataChannelOriginRef.current,
                 },
             })
         );
@@ -93,6 +94,7 @@ export const Header: React.FC<HeaderProps> = (props) => {
             {props.moduleInstance.hasBroadcastChannels() && (
                 <div
                     id={`moduleinstance-${props.moduleInstance.getId()}-data-channel-origin`}
+                    ref={dataChannelOriginRef}
                     className="hover:text-slate-500 cursor-grab mr-2"
                     title="Connect data channels to other module instances"
                     onPointerDown={handleDataChannelOriginPointerDown}
