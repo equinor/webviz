@@ -1,7 +1,14 @@
-from typing import List, Dict
+from typing import List, Dict, Optional, Union
 from sumo.wrapper import SumoClient
+from pydantic import BaseModel
 
-from ..types import SumoEnsembleParameter
+
+class SumoEnsembleParameter(BaseModel):
+    name: str
+    groupname: Optional[str]
+    values: Union[List[float], List[int], List[str]]
+    realizations: List[int]
+
 
 
 def get_parameters_for_iteration(sumo_client: SumoClient, case_id: str, iteration: str) -> List[SumoEnsembleParameter]:

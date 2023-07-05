@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 from fmu.sumo.explorer.explorer import CaseCollection, SumoClient
 
-from .queries.parameters import get_parameters_for_iteration
+from .queries.parameters import get_parameters_for_iteration, SumoEnsembleParameter
 from ._helpers import create_sumo_client_instance
 from ..types.parameter_types import (
     EnsembleParameters,
@@ -14,7 +14,6 @@ from ..types.parameter_types import (
     EnsembleSensitivityCase,
     SensitivityType,
 )
-from .types import SumoEnsembleParameter
 
 LOGGER = logging.getLogger(__name__)
 
