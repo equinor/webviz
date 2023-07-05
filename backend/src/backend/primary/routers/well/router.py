@@ -8,7 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 
 from src.services import mocked_drogon_access
 from src.services.smda_access.well_access import WellAccess
-from src.services.sumo_access.case_access import CaseAccess
+from src.services.sumo_access.case_inspector import CaseInspector
 from src.services.smda_access.stratigraphy_access import StratigraphyAccess
 from src.services.utils.authenticated_user import AuthenticatedUser
 from src.backend.auth.auth_helper import AuthHelper
@@ -30,8 +30,8 @@ def get_well_headers(
 ) -> List[WellBoreHeader]:
     """Get well headers for all wells in the field"""
 
-    sumo_case_access = CaseAccess(authenticated_user.get_sumo_access_token(), case_uuid)
-    field_identifier = sumo_case_access.get_field_identifiers()[0]
+    case_inspector = CaseInspector(authenticated_user.get_sumo_access_token(), case_uuid)
+    field_identifier = case_inspector.get_field_identifiers()[0]
     well_access: Union[WellAccess, mocked_drogon_access.WellAccess]
     if field_identifier == "DROGON":
         # Handle DROGON
@@ -51,8 +51,8 @@ def get_field_well_trajectories(
     # fmt:on
 ) -> List[WellBoreTrajectory]:
     """Get well trajectories for field"""
-    sumo_case_access = CaseAccess(authenticated_user.get_sumo_access_token(), case_uuid)
-    field_identifier = sumo_case_access.get_field_identifiers()[0]
+    case_inspector = CaseInspector(authenticated_user.get_sumo_access_token(), case_uuid)
+    field_identifier = case_inspector.get_field_identifiers()[0]
     well_access: Union[WellAccess, mocked_drogon_access.WellAccess]
     if field_identifier == "DROGON":
         # Handle DROGON
