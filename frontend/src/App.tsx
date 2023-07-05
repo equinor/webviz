@@ -1,6 +1,5 @@
 import React from "react";
 
-import { GuiStateProvider } from "@framework/GuiState";
 import { LayoutElement, Workbench } from "@framework/Workbench";
 import { Content } from "@framework/components/Content";
 import { Settings } from "@framework/components/Settings";
@@ -25,22 +24,20 @@ function App() {
     return (
         <AuthProvider>
             <CustomQueryClientProvider>
-                <GuiStateProvider>
-                    <div className="h-screen flex flex-row">
-                        <ResizablePanels
-                            id="settings-content"
-                            direction="horizontal"
-                            minSizes={[300, 0]}
-                            initialSizesPercent={[25, 75]}
-                        >
-                            <Settings workbench={workbench} />
-                            <div className="flex flex-col flex-grow h-full">
-                                <TopNavBar workbench={workbench} />
-                                <Content workbench={workbench} />
-                            </div>
-                        </ResizablePanels>
-                    </div>
-                </GuiStateProvider>
+                <div className="h-screen flex flex-row">
+                    <ResizablePanels
+                        id="settings-content"
+                        direction="horizontal"
+                        minSizes={[300, 0]}
+                        initialSizesPercent={[25, 75]}
+                    >
+                        <Settings workbench={workbench} />
+                        <div className="flex flex-col flex-grow h-full">
+                            <TopNavBar workbench={workbench} />
+                            <Content workbench={workbench} />
+                        </div>
+                    </ResizablePanels>
+                </div>
             </CustomQueryClientProvider>
         </AuthProvider>
     );

@@ -61,8 +61,6 @@ export const DataChannelVisualization: React.FC<DataChannelVisualizationProps> =
     const [currentChannelName, setCurrentChannelName] = React.useState<string | null>(null);
     const [_, forceRerender] = React.useReducer((x) => x + 1, 0);
 
-    const guiState = useGuiSelector((state) => state.draggedNewModule);
-
     const timeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
     const boundingRect = useElementBoundingRect(ref);
@@ -282,6 +280,10 @@ export const DataChannelVisualization: React.FC<DataChannelVisualizationProps> =
             }
         }
         return dataChannelPaths;
+    }
+
+    if (!visible && !showDataChannelConnections) {
+        return null;
     }
 
     const dataChannelPaths = makeDataChannelPaths();

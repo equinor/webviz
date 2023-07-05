@@ -15,15 +15,21 @@ export const InputChannelNodeWrapper: React.FC<InputChannelNodeWrapperProps> = (
     const [visible, setVisible] = React.useState<boolean>(false);
 
     React.useEffect(() => {
+        let isVisible = false;
         function handleDataChannelOriginPointerDown() {
             setVisible(true);
+            isVisible = true;
         }
 
         function handleDataChannelDone() {
             setVisible(false);
+            isVisible = false;
         }
 
         function handlePointerUp(e: PointerEvent) {
+            if (!isVisible) {
+                return;
+            }
             if (
                 (!e.target || !(e.target as Element).hasAttribute("data-channelconnector")) &&
                 !(e.target as Element).closest("#channel-selector-header")

@@ -1,6 +1,6 @@
 import React from "react";
 
-import { GuiActions, useGuiState } from "@framework/GuiState";
+import { openModulesDrawer, openSyncSettingsDrawer, useGuiDispatch } from "@framework/GuiState";
 import { Workbench } from "@framework/Workbench";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { LinkIcon, WindowIcon } from "@heroicons/react/20/solid";
@@ -20,18 +20,18 @@ export const TopNavBar: React.FC<TopNavBarProps> = (props) => {
     const [ensembleDialogOpen, setEnsembleDialogOpen] = React.useState<boolean>(false);
     const ensembleSet = useEnsembleSet(props.workbench.getWorkbenchSession());
 
-    const guiState = useGuiState();
+    const dispatch = useGuiDispatch();
 
     const handleEnsembleClick = () => {
         setEnsembleDialogOpen(true);
     };
 
     const handleModulesListClick = () => {
-        guiState.dispatch({ type: GuiActions.OPEN_MODULES_DRAWER });
+        dispatch(openModulesDrawer());
     };
 
     const handleSyncSettingsClick = () => {
-        guiState.dispatch({ type: GuiActions.OPEN_SYNC_SETTINGS_DRAWER });
+        dispatch(openSyncSettingsDrawer());
     };
 
     let ensembleButtonText = "Select ensembles";

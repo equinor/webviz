@@ -39,6 +39,9 @@ export const InputChannelNode: React.FC<InputChannelNodeProps> = (props) => {
     );
 
     React.useEffect(() => {
+        if (!visible) {
+            return;
+        }
         document.dispatchEvent(new CustomEvent(DataChannelEventTypes.DATA_CHANNEL_CONNECTIONS_CHANGED));
     }, [boundingRect]);
 
