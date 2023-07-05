@@ -1,9 +1,10 @@
 import os
 from typing import List
-import requests
 
+import requests
 from dotenv import load_dotenv
 
+from src.backend import config
 from src.services.utils.perf_timer import PerfTimer
 
 load_dotenv()
@@ -21,7 +22,7 @@ def get(access_token: str, endpoint: str, params: dict) -> List[dict]:
     headers = {
         "Content-Type": "application/json",
         "authorization": f"Bearer {access_token}",
-        "Ocp-Apim-Subscription-Key": os.environ.get("WEBVIZ_SMDA_SUBSCRIPTION_KEY", ""),
+        "Ocp-Apim-Subscription-Key": config.SMDA_SUBSCRIPTION_KEY,
     }
     timer = PerfTimer()
     response = requests.get(urlstring, params=params, headers=headers, timeout=60)
