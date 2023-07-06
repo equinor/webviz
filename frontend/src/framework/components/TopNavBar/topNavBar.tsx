@@ -1,7 +1,7 @@
 import React from "react";
 
 import { EnsembleIdent } from "@framework/EnsembleIdent";
-import { useSetStoreValue } from "@framework/StateStore";
+import { GuiActions, useGuiState } from "@framework/GuiState";
 import { Workbench } from "@framework/Workbench";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { ShareIcon, WindowIcon } from "@heroicons/react/20/solid";
@@ -20,22 +20,21 @@ type TopNavBarProps = {
 export const TopNavBar: React.FC<TopNavBarProps> = (props) => {
     const activeModuleName = ""; // useWorkbenchActiveModuleName();
     const [ensembleDialogOpen, setEnsembleDialogOpen] = React.useState<boolean>(false);
-    const setModulesListOpen = useSetStoreValue(props.workbench.getGuiStateStore(), "modulesListOpen");
-    const setSyncSettingsActive = useSetStoreValue(props.workbench.getGuiStateStore(), "syncSettingsActive");
     const ensembleSet = useEnsembleSet(props.workbench.getWorkbenchSession());
 
     const queryClient = useQueryClient();
+    const guiState = useGuiState();
 
     const handleEnsembleClick = () => {
         setEnsembleDialogOpen(true);
     };
 
     const handleModulesListClick = () => {
-        setModulesListOpen(true);
+        guiState.dispatch({ type: GuiActions.OPEN_MODULES_DRAWER });
     };
 
     const handleSyncSettingsClick = () => {
-        setSyncSettingsActive(true);
+        guiState.dispatch({ type: GuiActions.OPEN_SYNC_SETTINGS_DRAWER });
     };
 
     const handleEnsembleDialogClose = (selectedEnsembles: EnsembleItem[] | null) => {

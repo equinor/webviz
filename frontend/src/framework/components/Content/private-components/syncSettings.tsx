@@ -1,6 +1,6 @@
 import React from "react";
 
-import { useSetStoreValue, useStoreValue } from "@framework/StateStore";
+import { Drawer, GuiActions, useGuiDispatch, useGuiSelector } from "@framework/GuiState";
 import { SyncSettingKey, SyncSettingsMeta } from "@framework/SyncSettings";
 import { Workbench } from "@framework/Workbench";
 import { useActiveModuleId } from "@framework/hooks/workbenchHooks";
@@ -14,13 +14,13 @@ type ModulesListProps = {
 };
 
 export const GroupModules: React.FC<ModulesListProps> = (props) => {
-    const visible = useStoreValue(props.workbench.getGuiStateStore(), "syncSettingsActive");
     const activeModuleId = useActiveModuleId(props.workbench);
-    const setSyncSettingsActive = useSetStoreValue(props.workbench.getGuiStateStore(), "syncSettingsActive");
 
     const activeModuleInstance = props.workbench.getModuleInstance(activeModuleId);
 
-    const handleSyncSettingChange = (setting: SyncSettingKey, value: boolean) => {
+    const visible = useGuiSelector((state) => state.openedDrawer === Drawer.SYNC_SETTINGS);
+
+    function handleSyncSettingChange(setting: SyncSettingKey, value: boolean) {
         if (activeModuleInstance === undefined) {
             return;
         }
@@ -30,14 +30,18 @@ export const GroupModules: React.FC<ModulesListProps> = (props) => {
         } else {
             activeModuleInstance.removeSyncedSetting(setting);
         }
-    };
+    }
+
+    function handleClose() {
+        useGuiDispatch({ type: GuiActions.CLOSE_DRAWER });
+    }
 
     return (
         <div className={`flex flex-col shadow bg-white p-4 w-96 min-h-0 h-full${visible ? "" : " hidden"}`}>
             <div className="flex-grow min-h-0 overflow-y-auto max-h-full h-0">
                 <div className="flex justify-center items-center mb-4">
                     <span className="text-lg flex-grow p-0">Synced settings</span>
-                    <IconButton onClick={() => setSyncSettingsActive(false)} title="Close sync settings">
+                    <IconButton onClick={handleClose} title="Close sync settings">
                         <XMarkIcon className="w-5 h-5" />
                     </IconButton>
                 </div>

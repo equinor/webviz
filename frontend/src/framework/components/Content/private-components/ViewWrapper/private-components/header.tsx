@@ -13,6 +13,7 @@ export type HeaderProps = {
 };
 
 export const Header: React.FC<HeaderProps> = (props) => {
+    const dataChannelOriginRef = React.useRef<HTMLDivElement>(null);
     const [syncedSettings, setSyncedSettings] = React.useState<SyncSettingKey[]>(
         props.moduleInstance.getSyncedSettingKeys()
     );
