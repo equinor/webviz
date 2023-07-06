@@ -5,7 +5,6 @@ import { EnsembleIdent } from "./EnsembleIdent";
 import { ImportState } from "./Module";
 import { ModuleInstance } from "./ModuleInstance";
 import { ModuleRegistry } from "./ModuleRegistry";
-import { StateStore } from "./StateStore";
 import { WorkbenchServices } from "./WorkbenchServices";
 import { WorkbenchSession } from "./WorkbenchSession";
 import { loadEnsembleSetMetadataFromBackend } from "./internal/EnsembleSetLoader";
@@ -27,15 +26,9 @@ export type LayoutElement = {
     relWidth: number;
 };
 
-export type WorkbenchGuiState = {
-    modulesListOpen: boolean;
-    syncSettingsActive: boolean;
-};
-
 export class Workbench {
     private moduleInstances: ModuleInstance<any>[];
     private _activeModuleId: string;
-    private guiStateStore: StateStore<WorkbenchGuiState>;
     private _workbenchSession: WorkbenchSessionPrivate;
     private _workbenchServices: PrivateWorkbenchServices;
     private _broadcaster: Broadcaster;
@@ -45,10 +38,6 @@ export class Workbench {
     constructor() {
         this.moduleInstances = [];
         this._activeModuleId = "";
-        this.guiStateStore = new StateStore<WorkbenchGuiState>({
-            modulesListOpen: false,
-            syncSettingsActive: false,
-        });
         this._workbenchSession = new WorkbenchSessionPrivate();
         this._workbenchServices = new PrivateWorkbenchServices(this);
         this._broadcaster = new Broadcaster();
@@ -63,10 +52,6 @@ export class Workbench {
         const layout = JSON.parse(layoutString) as LayoutElement[];
         this.makeLayout(layout);
         return true;
-    }
-
-    public getGuiStateStore(): StateStore<WorkbenchGuiState> {
-        return this.guiStateStore;
     }
 
     public getLayout(): LayoutElement[] {
