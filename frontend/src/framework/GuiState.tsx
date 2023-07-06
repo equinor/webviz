@@ -21,12 +21,12 @@ type PayloadAction<P = void, T extends string = string, M = never, E = never> = 
     payload: P;
     type: T;
 } & ([M] extends [never]
-    ? {} // @ts-ignore
+    ? object
     : {
           meta: M;
       }) &
     ([E] extends [never]
-        ? {} // @ts-ignore
+        ? object
         : {
               error: E;
           });
