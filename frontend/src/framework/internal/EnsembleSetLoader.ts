@@ -1,9 +1,11 @@
-import { EnsembleDetails_api, EnsembleParameterDescription_api, EnsembleSensitivity_api } from "@api";
+import { EnsembleDetails_api, EnsembleParameter_api, EnsembleSensitivity_api } from "@api";
 import { apiService } from "@framework/ApiService";
 import { QueryClient } from "@tanstack/react-query";
 
-import { Ensemble, Sensitivity, SensitivityCase, SensitivityType } from "../Ensemble";
+import { Ensemble } from "../Ensemble";
 import { EnsembleIdent } from "../EnsembleIdent";
+import { Parameter } from "../EnsembleParameters";
+import { Sensitivity, SensitivityCase } from "../EnsembleSensitivities";
 import { EnsembleSet } from "../EnsembleSet";
 
 export async function loadEnsembleSetMetadataFromBackend(
@@ -16,8 +18,8 @@ export async function loadEnsembleSetMetadataFromBackend(
     const CACHE_TIME = 5 * 60 * 1000;
 
     const ensembleDetailsPromiseArr: Promise<EnsembleDetails_api>[] = [];
-    const sensitivityPromiseArr: Promise<EnsembleSensitivity_api[]>[] = [];
-    const parametersPromiseArr: Promise<EnsembleParameterDescription_api[]>[] = [];
+    const parametersPromiseArr: Promise<EnsembleParameter_api[]>[] = [];
+    const sensitivitiesPromiseArr: Promise<EnsembleSensitivity_api[]>[] = [];
 
     for (const ensembleIdent of ensembleIdentsToLoad) {
         const caseUuid = ensembleIdent.getCaseUuid();
@@ -31,31 +33,31 @@ export async function loadEnsembleSetMetadataFromBackend(
         });
         ensembleDetailsPromiseArr.push(ensembleDetailsPromise);
 
-        const sensitivityPromise = queryClient.fetchQuery({
+        const parametersPromise = queryClient.fetchQuery({
+            queryKey: ["getParameters", caseUuid, ensembleName],
+            queryFn: () => apiService.parameters.getParameters(caseUuid, ensembleName),
+            staleTime: STALE_TIME,
+            cacheTime: CACHE_TIME,
+        });
+        parametersPromiseArr.push(parametersPromise);
+
+        const sensitivitiesPromise = queryClient.fetchQuery({
             queryKey: ["getSensitivities", caseUuid, ensembleName],
             queryFn: () => apiService.parameters.getSensitivities(caseUuid, ensembleName),
             staleTime: STALE_TIME,
             cacheTime: CACHE_TIME,
         });
-        sensitivityPromiseArr.push(sensitivityPromise);
-
-        const parametersPromise = queryClient.fetchQuery({
-            queryKey: ["getParameterNamesAndDescription", caseUuid, ensembleName],
-            queryFn: () => apiService.parameters.getParameterNamesAndDescription(caseUuid, ensembleName),
-            staleTime: STALE_TIME,
-            cacheTime: CACHE_TIME,
-        });
-        parametersPromiseArr.push(parametersPromise);
+        sensitivitiesPromiseArr.push(sensitivitiesPromise);
     }
     console.debug(`Issued ${ensembleDetailsPromiseArr.length} promise(s)`);
 
     const outEnsembleArr: Ensemble[] = [];
 
     const ensembleDetailsOutcomeArr = await Promise.allSettled(ensembleDetailsPromiseArr);
-    const sensitivityOutcomeArr = await Promise.allSettled(sensitivityPromiseArr);
     const parametersOutcomeArr = await Promise.allSettled(parametersPromiseArr);
+    const sensitivitiesOutcomeArr = await Promise.allSettled(sensitivitiesPromiseArr);
 
-    for (let i = 0; i < sensitivityOutcomeArr.length; i++) {
+    for (let i = 0; i < ensembleDetailsOutcomeArr.length; i++) {
         const ensembleDetailsOutcome = ensembleDetailsOutcomeArr[i];
         console.debug(`ensembleDetailsOutcome[${i}]:`, ensembleDetailsOutcome.status);
         if (ensembleDetailsOutcome.status === "rejected") {
@@ -72,19 +74,19 @@ export async function loadEnsembleSetMetadataFromBackend(
             continue;
         }
 
-        const sensitivityOutcome = sensitivityOutcomeArr[i];
-        console.debug(`sensitivityOutcome[${i}]:`, sensitivityOutcome.status);
-        let sensitivityArr: Sensitivity[] | null = null;
-        if (sensitivityOutcome.status === "fulfilled") {
-            sensitivityArr = buildSensitivityArrFromApiResponse(sensitivityOutcome.value);
-        }
-
         const parametersOutcome = parametersOutcomeArr[i];
         console.debug(`parametersOutcome[${i}]:`, parametersOutcome.status);
-        // let parameterDescriptionArr: EnsembleParameterDescription[] | null = null;
-        // if (sensitivityOutcome.status === "fulfilled") {
-        //     // Todo: Convert and store data in our data structures here
-        // }
+        let parameterArr: Parameter[] = [];
+        if (parametersOutcome.status === "fulfilled") {
+            parameterArr = buildParameterArrFromApiResponse(parametersOutcome.value);
+        }
+
+        const sensitivitiesOutcome = sensitivitiesOutcomeArr[i];
+        console.debug(`sensitivitiesOutcome[${i}]:`, sensitivitiesOutcome.status);
+        let sensitivityArr: Sensitivity[] | null = null;
+        if (sensitivitiesOutcome.status === "fulfilled") {
+            sensitivityArr = buildSensitivityArrFromApiResponse(sensitivitiesOutcome.value);
+        }
 
         outEnsembleArr.push(
             new Ensemble(
@@ -92,6 +94,7 @@ export async function loadEnsembleSetMetadataFromBackend(
                 ensembleDetails.case_name,
                 ensembleDetails.name,
                 ensembleDetails.realizations,
+                parameterArr,
                 sensitivityArr
             )
         );
@@ -114,10 +117,29 @@ function buildSensitivityArrFromApiResponse(apiSensitivityArr: EnsembleSensitivi
 
         retSensitivityArr.push({
             name: apiSens.name,
-            type: SensitivityType[apiSens.type as keyof typeof SensitivityType],
+            type: apiSens.type,
             cases: caseArr,
         });
     }
 
     return retSensitivityArr;
+}
+
+function buildParameterArrFromApiResponse(apiParameterArr: EnsembleParameter_api[]): Parameter[] {
+    const retParameterArr: Parameter[] = [];
+
+    for (const apiPar of apiParameterArr) {
+        retParameterArr.push({
+            name: apiPar.name,
+            isLogarithmic: apiPar.is_logarithmic,
+            isNumerical: apiPar.is_numerical,
+            isConstant: apiPar.is_constant,
+            groupName: apiPar.group_name,
+            descriptiveName: apiPar.descriptive_name,
+            realizations: apiPar.realizations,
+            values: apiPar.values,
+        });
+    }
+
+    return retParameterArr;
 }

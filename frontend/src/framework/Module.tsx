@@ -28,6 +28,7 @@ export enum ImportState {
 
 export class Module<StateType extends StateBaseType> {
     private _name: string;
+    private _defaultTitle: string;
     public viewFC: ModuleFC<StateType>;
     public settingsFC: ModuleFC<StateType>;
     private numInstances: number;
@@ -41,10 +42,12 @@ export class Module<StateType extends StateBaseType> {
 
     constructor(
         name: string,
+        defaultTitle: string,
         syncableSettingKeys: SyncSettingKey[] = [],
         broadcastChannelsDef: BroadcastChannelsDef = {}
     ) {
         this._name = name;
+        this._defaultTitle = defaultTitle;
         this.numInstances = 0;
         this.viewFC = () => <div>Not defined</div>;
         this.settingsFC = () => <div>Not defined</div>;
@@ -62,6 +65,10 @@ export class Module<StateType extends StateBaseType> {
 
     public getName() {
         return this._name;
+    }
+
+    public getDefaultTitle() {
+        return this._defaultTitle;
     }
 
     public setWorkbench(workbench: Workbench): void {

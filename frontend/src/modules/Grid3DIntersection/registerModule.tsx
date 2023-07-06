@@ -3,4 +3,4 @@ import { SyncSettingKey } from "@framework/SyncSettings";
 
 import state from "./state";
 
-ModuleRegistry.registerModule<state>("Grid3DIntersection");
+ModuleRegistry.registerModule<state>("Grid3DIntersection", "3D grid intersection");

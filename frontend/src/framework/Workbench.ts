@@ -91,8 +91,9 @@ export class Workbench {
 
     public getActiveModuleName(): string {
         return (
-            this.moduleInstances.find((moduleInstance) => moduleInstance.getId() === this._activeModuleId)?.getName() ||
-            ""
+            this.moduleInstances
+                .find((moduleInstance) => moduleInstance.getId() === this._activeModuleId)
+                ?.getTitle() || ""
         );
     }
 

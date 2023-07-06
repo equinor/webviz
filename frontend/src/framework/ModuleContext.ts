@@ -52,4 +52,8 @@ export class ModuleContext<S extends StateBaseType> {
     getChannel(channelName: string): BroadcastChannel {
         return this._moduleInstance.getBroadcastChannel(channelName);
     }
+
+    setInstanceTitle(title: string): void {
+        this._moduleInstance.setTitle(title);
+    }
 }

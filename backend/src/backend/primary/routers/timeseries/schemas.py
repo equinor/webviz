@@ -70,6 +70,16 @@ class VectorStatisticData(BaseModel):
     is_rate: bool
 
 
+class VectorStatisticSensitivityData(BaseModel):
+    realizations: List[int]
+    timestamps: List[datetime.datetime]
+    value_objects: List[StatisticValueObject]
+    unit: str
+    is_rate: bool
+    sensitivity_name: str
+    sensitivity_case: str
+
+
 class VectorExpressionInfo(BaseModel):
     """
 
