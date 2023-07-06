@@ -6,7 +6,7 @@ import pyarrow as pa
 import pyarrow.compute as pc
 from fastapi import APIRouter, Depends, HTTPException, Query
 
-from src.services import mocked_drogon_access
+from src.services.smda_access import mocked_drogon_smda_access
 from src.services.smda_access.well_access import WellAccess
 from src.services.sumo_access.case_inspector import CaseInspector
 from src.services.smda_access.stratigraphy_access import StratigraphyAccess
@@ -32,10 +32,10 @@ def get_well_headers(
 
     case_inspector = CaseInspector(authenticated_user.get_sumo_access_token(), case_uuid)
     field_identifier = case_inspector.get_field_identifiers()[0]
-    well_access: Union[WellAccess, mocked_drogon_access.WellAccess]
+    well_access: Union[WellAccess, mocked_drogon_smda_access.WellAccess]
     if field_identifier == "DROGON":
         # Handle DROGON
-        well_access = mocked_drogon_access.WellAccess(authenticated_user.get_smda_access_token())
+        well_access = mocked_drogon_smda_access.WellAccess(authenticated_user.get_smda_access_token())
     else:
         well_access = WellAccess(authenticated_user.get_smda_access_token())
 
@@ -53,10 +53,10 @@ def get_field_well_trajectories(
     """Get well trajectories for field"""
     case_inspector = CaseInspector(authenticated_user.get_sumo_access_token(), case_uuid)
     field_identifier = case_inspector.get_field_identifiers()[0]
-    well_access: Union[WellAccess, mocked_drogon_access.WellAccess]
+    well_access: Union[WellAccess, mocked_drogon_smda_access.WellAccess]
     if field_identifier == "DROGON":
         # Handle DROGON
-        well_access = mocked_drogon_access.WellAccess(authenticated_user.get_smda_access_token())
+        well_access = mocked_drogon_smda_access.WellAccess(authenticated_user.get_smda_access_token())
     else:
         well_access = WellAccess(authenticated_user.get_smda_access_token())
 
@@ -71,10 +71,10 @@ def get_well_trajectory(
     # fmt:on
 ) -> WellBoreTrajectory:
     """Get well trajectory"""
-    well_access: Union[WellAccess, mocked_drogon_access.WellAccess]
+    well_access: Union[WellAccess, mocked_drogon_smda_access.WellAccess]
     if wellbore_uuid in ["drogon_horizontal", "drogon_vertical"]:
         # Handle DROGON
-        well_access = mocked_drogon_access.WellAccess(authenticated_user.get_smda_access_token())
+        well_access = mocked_drogon_smda_access.WellAccess(authenticated_user.get_smda_access_token())
     else:
         well_access = WellAccess(authenticated_user.get_smda_access_token())
 

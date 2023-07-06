@@ -1,6 +1,6 @@
 from typing import List, Optional
 
-from ..smda_access.types import WellBorePick, WellBoreTrajectory, WellBoreHeader
+from ..types import WellBorePick, WellBoreTrajectory, WellBoreHeader
 
 
 class WellAccess:
