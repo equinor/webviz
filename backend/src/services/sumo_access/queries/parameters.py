@@ -10,7 +10,6 @@ class SumoEnsembleParameter(BaseModel):
     realizations: List[int]
 
 
-
 def get_parameters_for_iteration(sumo_client: SumoClient, case_id: str, iteration: str) -> List[SumoEnsembleParameter]:
     """Get parameters for a case and iteration
     Temporary until handled by the explorer
