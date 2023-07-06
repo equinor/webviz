@@ -199,11 +199,11 @@ export class Workbench {
 
     public async loadAndSetupEnsembleSetInSession(
         queryClient: QueryClient,
-        specifiedEnsembles: { caseUuid: string; ensembleName: string }[]
+        specifiedEnsembleIdents: EnsembleIdent[]
     ): Promise<void> {
         const ensembleIdentsToLoad: EnsembleIdent[] = [];
-        for (const ensSpec of specifiedEnsembles) {
-            ensembleIdentsToLoad.push(new EnsembleIdent(ensSpec.caseUuid, ensSpec.ensembleName));
+        for (const ensSpec of specifiedEnsembleIdents) {
+            ensembleIdentsToLoad.push(new EnsembleIdent(ensSpec.getCaseUuid(), ensSpec.getEnsembleName()));
         }
 
         console.debug("loadAndSetupEnsembleSetInSession - starting load");
