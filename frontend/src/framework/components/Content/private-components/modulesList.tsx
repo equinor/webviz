@@ -1,6 +1,6 @@
 import React from "react";
 
-import { Drawer, closeDrawer, openModulesDrawer, useGuiDispatch, useGuiSelector } from "@framework/GuiState";
+import { Drawer, closeDrawer, useGuiDispatch, useGuiSelector } from "@framework/GuiState";
 import { ModuleRegistry } from "@framework/ModuleRegistry";
 import { Workbench } from "@framework/Workbench";
 import {

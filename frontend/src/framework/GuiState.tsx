@@ -17,21 +17,16 @@ type GuiStateType = {
     openedDrawer: Drawer | null;
 };
 
-const initialState: GuiStateType = {
-    draggedNewModule: null,
-    openedDrawer: null,
-};
-
 type PayloadAction<P = void, T extends string = string, M = never, E = never> = {
     payload: P;
     type: T;
 } & ([M] extends [never]
-    ? {}
+    ? Record<string, never>
     : {
           meta: M;
       }) &
     ([E] extends [never]
-        ? {}
+        ? Record<string, never>
         : {
               error: E;
           });
@@ -52,8 +47,6 @@ const reducers = {
 };
 
 type Reducer = (typeof reducers)[keyof typeof reducers];
-
-type OmitStateArg<F> = F extends (state: GuiStateType, ...args: infer P) => infer R ? (...args: P) => R : never;
 
 class GuiState {
     private _state: GuiStateType;
@@ -91,6 +84,11 @@ class GuiState {
         }
     }
 }
+
+const initialState: GuiStateType = {
+    draggedNewModule: null,
+    openedDrawer: null,
+};
 
 const guiState = new GuiState(initialState);
 
