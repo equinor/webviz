@@ -3,6 +3,8 @@ import { SyncSettingKey } from "@framework/SyncSettings";
 
 import { MapState } from "./MapState";
 
-ModuleRegistry.registerModule<MapState>("Map", "Map", {
+ModuleRegistry.registerModule<MapState>({
+    moduleName: "Map",
+    defaultTitle: "Map",
     syncableSettingKeys: [SyncSettingKey.ENSEMBLE, SyncSettingKey.SURFACE, SyncSettingKey.DATE],
 });

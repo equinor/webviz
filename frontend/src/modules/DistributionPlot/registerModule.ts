@@ -3,6 +3,8 @@ import { SyncSettingKey } from "@framework/SyncSettings";
 
 import { State } from "./state";
 
-ModuleRegistry.registerModule<State>("DistributionPlot", "Distribution plot", {
+ModuleRegistry.registerModule<State>({
+    moduleName: "DistributionPlot",
+    defaultTitle: "Distribution plot",
     syncableSettingKeys: [SyncSettingKey.ENSEMBLE, SyncSettingKey.TIME_SERIES],
 });
