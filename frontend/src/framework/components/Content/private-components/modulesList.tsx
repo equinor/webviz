@@ -1,6 +1,6 @@
 import React from "react";
 
-import { Drawer, GuiActions, useGuiDispatch, useGuiState } from "@framework/GuiState";
+import { Drawer, closeDrawer, openModulesDrawer, useGuiDispatch, useGuiSelector } from "@framework/GuiState";
 import { ModuleRegistry } from "@framework/ModuleRegistry";
 import { Workbench } from "@framework/Workbench";
 import {
@@ -155,11 +155,11 @@ type ModulesListProps = {
 export const ModulesList: React.FC<ModulesListProps> = (props) => {
     const [searchQuery, setSearchQuery] = React.useState("");
 
-    const guiState = useGuiState();
-    const visible = guiState.state.openedDrawer === Drawer.ADD_MODULE;
+    const dispatch = useGuiDispatch();
+    const visible = useGuiSelector((state) => state.openedDrawer === Drawer.ADD_MODULE);
 
     function handleClose() {
-        useGuiDispatch({ type: GuiActions.CLOSE_DRAWER });
+        dispatch(closeDrawer());
     }
 
     const handleSearchQueryChange = (e: React.ChangeEvent<HTMLInputElement>) => {

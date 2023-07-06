@@ -1,6 +1,6 @@
 import React from "react";
 
-import { Drawer, GuiActions, useGuiDispatch, useGuiSelector } from "@framework/GuiState";
+import { Drawer, closeDrawer, useGuiDispatch, useGuiSelector } from "@framework/GuiState";
 import { SyncSettingKey, SyncSettingsMeta } from "@framework/SyncSettings";
 import { Workbench } from "@framework/Workbench";
 import { useActiveModuleId } from "@framework/hooks/workbenchHooks";
@@ -15,6 +15,7 @@ type ModulesListProps = {
 
 export const GroupModules: React.FC<ModulesListProps> = (props) => {
     const activeModuleId = useActiveModuleId(props.workbench);
+    const dispatch = useGuiDispatch();
 
     const activeModuleInstance = props.workbench.getModuleInstance(activeModuleId);
 
@@ -33,7 +34,7 @@ export const GroupModules: React.FC<ModulesListProps> = (props) => {
     }
 
     function handleClose() {
-        useGuiDispatch({ type: GuiActions.CLOSE_DRAWER });
+        dispatch(closeDrawer());
     }
 
     return (

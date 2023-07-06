@@ -1,10 +1,8 @@
 import React from "react";
 
-import { Point } from "./utils/geometry";
+import { cloneDeep } from "lodash";
 
-type ActionMap<M extends { [key: string]: boolean | undefined }> = {
-    [key in keyof M]: M[key] extends undefined ? { type: key } : { type: key; payload: M[key] };
-};
+import { Point } from "./utils/geometry";
 
 export enum Drawer {
     ADD_MODULE = "ADD_MODULE",
@@ -19,66 +17,49 @@ type GuiStateType = {
     openedDrawer: Drawer | null;
 };
 
-export enum GuiActions {
-    OPEN_MODULES_DRAWER = "OPEN_MODULES_DRAWER",
-    OPEN_SYNC_SETTINGS_DRAWER = "OPEN_SYNC_SETTINGS_DRAWER",
-    CLOSE_DRAWER = "CLOSE_DRAWER",
-}
-
-type Payload = {
-    [GuiActions.OPEN_MODULES_DRAWER]: undefined;
-    [GuiActions.OPEN_SYNC_SETTINGS_DRAWER]: undefined;
-    [GuiActions.CLOSE_DRAWER]: undefined;
-};
-
-export type Actions = ActionMap<Payload>[keyof ActionMap<Payload>];
-
 const initialState: GuiStateType = {
     draggedNewModule: null,
     openedDrawer: null,
 };
 
-export const GuiStateReducer = (
-    state: GuiStateType,
-    action: ActionMap<Payload>[keyof ActionMap<Payload>]
-): GuiStateType => {
-    switch (action.type) {
-        case GuiActions.OPEN_MODULES_DRAWER:
-            return {
-                ...state,
-                openedDrawer: Drawer.ADD_MODULE,
-            };
-        case GuiActions.OPEN_SYNC_SETTINGS_DRAWER:
-            return {
-                ...state,
-                openedDrawer: Drawer.SYNC_SETTINGS,
-            };
-        case GuiActions.CLOSE_DRAWER:
-            return {
-                ...state,
-                openedDrawer: null,
-            };
-        default:
-            return state;
-    }
+type PayloadAction<P = void, T extends string = string, M = never, E = never> = {
+    payload: P;
+    type: T;
+} & ([M] extends [never]
+    ? {}
+    : {
+          meta: M;
+      }) &
+    ([E] extends [never]
+        ? {}
+        : {
+              error: E;
+          });
+
+const reducers = {
+    openModulesDrawer: (state: GuiStateType): void => {
+        state.openedDrawer = Drawer.ADD_MODULE;
+    },
+    openSyncSettingsDrawer: (state: GuiStateType): void => {
+        state.openedDrawer = Drawer.SYNC_SETTINGS;
+    },
+    closeDrawer: (state: GuiStateType): void => {
+        state.openedDrawer = null;
+    },
+    startDraggingNewModule: (state: GuiStateType, action: PayloadAction<{ name: string; origin: Point }>): void => {
+        state.draggedNewModule = action.payload;
+    },
 };
 
-type GuiStateContextType = {
-    state: GuiStateType;
-    dispatch: React.Dispatch<ActionMap<Payload>[keyof ActionMap<Payload>]>;
-};
+type Reducer = (typeof reducers)[keyof typeof reducers];
 
-export const GuiStateContext = React.createContext<GuiStateContextType | null>(null);
-
-type GuiStateProviderProps = {
-    children: React.ReactNode;
-};
+type OmitStateArg<F> = F extends (state: GuiStateType, ...args: infer P) => infer R ? (...args: P) => R : never;
 
 class GuiState {
     private _state: GuiStateType;
     private _subscribers: Set<{
-        selector: <TSelected>(state: GuiStateType) => TSelected;
-        callback: <TSelected>(value: TSelected) => void;
+        selector: (state: GuiStateType) => unknown;
+        callback: (state: GuiStateType) => void;
     }>;
 
     constructor(initialState: GuiStateType) {
@@ -86,10 +67,7 @@ class GuiState {
         this._subscribers = new Set();
     }
 
-    subscribe(
-        selector: <TSelected>(state: GuiStateType) => TSelected,
-        callback: <TSelected>(value: TSelected) => void
-    ): () => void {
+    subscribe(selector: (state: GuiStateType) => unknown, callback: (state: GuiStateType) => void): () => void {
         const subscriber = { selector, callback };
         this._subscribers.add(subscriber);
 
@@ -98,48 +76,63 @@ class GuiState {
         };
     }
 
-    setState(newState: GuiStateType): void {
-        for (const subscriber of this._subscribers) {
-            if (subscriber.selector(newState) !== subscriber.selector(this._state)) {
-                subscriber.callback(subscriber.selector(newState));
-            }
-        }
-
-        this._state = newState;
-    }
-
     getState(): GuiStateType {
         return this._state;
+    }
+
+    modify(reducerName: string, action: PayloadAction<any>): void {
+        const oldState = cloneDeep(this._state);
+        const reducer = reducers[reducerName as keyof typeof reducers] as Reducer;
+        reducer(this._state, action);
+        for (const subscriber of this._subscribers) {
+            if (subscriber.selector(this._state) !== subscriber.selector(oldState)) {
+                subscriber.callback(this._state);
+            }
+        }
     }
 }
 
 const guiState = new GuiState(initialState);
 
-export const GuiStateProvider: React.FC<GuiStateProviderProps> = ({ children }) => {
-    const [state, dispatch] = React.useReducer(GuiStateReducer, guiState);
+const actions: {
+    [key in keyof typeof reducers]: (
+        payload?: Parameters<(typeof reducers)[key]>[1] extends PayloadAction<any>
+            ? Pick<Parameters<(typeof reducers)[key]>[1], "payload">
+            : undefined
+    ) => PayloadAction<typeof payload extends undefined ? undefined : typeof payload>;
+} = Object.fromEntries(
+    Object.entries(reducers).map(([key, reducer]) => {
+        return [
+            key,
+            (payload?: Parameters<typeof reducer>[1]): PayloadAction<typeof payload> => ({
+                payload,
+                type: key,
+            }),
+        ];
+    })
+) as any;
 
-    return <GuiStateContext.Provider value={{ state, dispatch }}>{children}</GuiStateContext.Provider>;
-};
-
-export const useGuiSelector = <TSelected,>(selector: <TSelected>(state: GuiStateType) => TSelected): TSelected => {
-    const [stateSelection, setStateSelection] = React.useState<TSelected>(selector(guiState.getState()));
+export function useGuiSelector<TSelected>(selector: (state: GuiStateType) => TSelected): TSelected {
+    const [stateSelection, setStateSelection] = React.useState<ReturnType<typeof selector>>(
+        selector(guiState.getState())
+    );
 
     React.useEffect(() => {
-        function handleStateChange<T extends TSelected>(state: T): void {
-            setStateSelection(state);
+        function handleStateChange(state: GuiStateType): void {
+            setStateSelection(selector(state));
         }
         const unsubscribeFunc = guiState.subscribe(selector, handleStateChange);
 
         return unsubscribeFunc;
-    }, [selector]);
+    }, []);
 
     return stateSelection;
-};
+}
 
-export const useGuiDispatch = (action: ActionMap<Payload>[keyof ActionMap<Payload>]): void => {
-    const guiContext = useGuiState();
-    return guiContext.dispatch(action);
-};
+export function useGuiDispatch(): (result: ReturnType<(typeof actions)[keyof typeof actions]>) => void {
+    return (result: ReturnType<(typeof actions)[keyof typeof actions]>): void => {
+        guiState.modify(result.type, result);
+    };
+}
 
-export const useGuiState = (): GuiStateContextType =>
-    React.useContext<GuiStateContextType>(GuiStateContext as React.Context<GuiStateContextType>);
+export const { openModulesDrawer, closeDrawer, openSyncSettingsDrawer, startDraggingNewModule } = actions;
