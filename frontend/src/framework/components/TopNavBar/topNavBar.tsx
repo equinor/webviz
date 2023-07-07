@@ -1,11 +1,12 @@
 import React from "react";
 
 import { EnsembleIdent } from "@framework/EnsembleIdent";
-import { useSetStoreValue, useStoreState } from "@framework/StateStore";
+import { useStoreState } from "@framework/StateStore";
 import { DrawerContent, Workbench } from "@framework/Workbench";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { ShareIcon, Squares2X2Icon, WindowIcon } from "@heroicons/react/20/solid";
 import { Button } from "@lib/components/Button";
+import { resolveClassNames } from "@lib/components/_utils/resolveClassNames";
 import { useQueryClient } from "@tanstack/react-query";
 
 import { LoginButton } from "../LoginButton";

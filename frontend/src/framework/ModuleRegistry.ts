@@ -9,6 +9,7 @@ export type RegisterModuleOptions = {
     defaultTitle: string;
     syncableSettingKeys?: SyncSettingKey[];
     broadcastChannelsDef?: BroadcastChannelsDef;
+    preview?: DrawPreviewFunc;
 };
 
 export class ModuleRegistry {
@@ -18,15 +19,13 @@ export class ModuleRegistry {
 
     public static registerModule<ModuleStateType extends StateBaseType>(
         options: RegisterModuleOptions
-        broadcastChannelsDef: BroadcastChannelsDef = {},
-        drawPreviewFunc: DrawPreviewFunc | null = null
     ): Module<ModuleStateType> {
         const module = new Module<ModuleStateType>(
             options.moduleName,
             options.defaultTitle,
             options.syncableSettingKeys,
-            options.broadcastChannelsDef
-            drawPreviewFunc
+            options.broadcastChannelsDef,
+            options.preview || null
         );
         this._registeredModules[options.moduleName] = module;
         return module;
