@@ -1,5 +1,6 @@
 import React from "react";
-import Plot from "react-plotly.js";
+
+import { Plot } from "@lib/components/Plot";
 
 import { Layout, PlotData, PlotHoverEvent } from "plotly.js";
 
@@ -59,8 +60,8 @@ export const BarChart: React.FC<BarChartProps> = (props) => {
     const layout: Partial<Layout> = {
         width: props.width,
         height: props.height,
-        xaxis: { zeroline: false, title: props.xAxisTitle },
-        yaxis: { zeroline: false, title: props.yAxisTitle },
+        xaxis: { zeroline: false, title: { text: props.xAxisTitle } },
+        yaxis: { zeroline: false, title: { text: props.yAxisTitle } },
         margin: { t: 0, r: 0, l: 40, b: 40 },
     };
     return (

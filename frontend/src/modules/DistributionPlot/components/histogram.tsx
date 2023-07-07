@@ -1,5 +1,6 @@
 import React from "react";
-import Plot from "react-plotly.js";
+
+import { Plot } from "@lib/components/Plot";
 
 import { Layout, PlotData, PlotHoverEvent } from "plotly.js";
 
