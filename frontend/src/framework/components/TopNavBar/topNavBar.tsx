@@ -1,16 +1,17 @@
 import React from "react";
 
+import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { useSetStoreValue, useStoreState } from "@framework/StateStore";
 import { DrawerContent, Workbench } from "@framework/Workbench";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { ShareIcon, Squares2X2Icon, WindowIcon } from "@heroicons/react/20/solid";
 import { Button } from "@lib/components/Button";
-import { Dialog } from "@lib/components/Dialog";
-import { resolveClassNames } from "@lib/components/_utils/resolveClassNames";
+import { useQueryClient } from "@tanstack/react-query";
 
-// import { useWorkbenchActiveModuleName } from "@framework/hooks/useWorkbenchActiveModuleName";
-import { EnsembleSelector } from "../EnsembleSelector";
 import { LoginButton } from "../LoginButton";
+// import { useWorkbenchActiveModuleName } from "@framework/hooks/useWorkbenchActiveModuleName";
+import { SelectEnsemblesDialog } from "../SelectEnsemblesDialog";
+import { EnsembleItem } from "../SelectEnsemblesDialog/selectEnsemblesDialog";
 
 type TopNavBarProps = {
     workbench: Workbench;
@@ -21,6 +22,8 @@ export const TopNavBar: React.FC<TopNavBarProps> = (props) => {
     const [ensembleDialogOpen, setEnsembleDialogOpen] = React.useState<boolean>(false);
     const [drawerContent, setDrawerContent] = useStoreState(props.workbench.getGuiStateStore(), "drawerContent");
     const ensembleSet = useEnsembleSet(props.workbench.getWorkbenchSession());
+
+    const queryClient = useQueryClient();
 
     const handleEnsembleClick = () => {
         setEnsembleDialogOpen(true);
@@ -50,6 +53,16 @@ export const TopNavBar: React.FC<TopNavBarProps> = (props) => {
         setDrawerContent(DrawerContent.SyncSettings);
     };
 
+    const handleEnsembleDialogClose = (selectedEnsembles: EnsembleItem[] | null) => {
+        setEnsembleDialogOpen(false);
+        if (selectedEnsembles !== null) {
+            const selectedEnsembleIdents = selectedEnsembles.map(
+                (ens) => new EnsembleIdent(ens.caseUuid, ens.ensembleName)
+            );
+            props.workbench.loadAndSetupEnsembleSetInSession(queryClient, selectedEnsembleIdents);
+        }
+    };
+
     let ensembleButtonText = "Select ensembles";
     if (ensembleSet.hasAnyEnsembles()) {
         const ensArr = ensembleSet.getEnsembleArr();
@@ -58,6 +71,12 @@ export const TopNavBar: React.FC<TopNavBarProps> = (props) => {
             ensembleButtonText += ` and ${ensArr.length - 1} more`;
         }
     }
+
+    const selectedEnsembles = ensembleSet.getEnsembleArr().map((ens) => ({
+        caseUuid: ens.getCaseUuid(),
+        caseName: ens.getCaseName(),
+        ensembleName: ens.getEnsembleName(),
+    }));
 
     return (
         <div className="bg-slate-100 p-2 shadow z-50">
@@ -89,20 +108,9 @@ export const TopNavBar: React.FC<TopNavBarProps> = (props) => {
                 </Button>
                 <LoginButton />
             </div>
-            <Dialog
-                open={ensembleDialogOpen}
-                onClose={() => setEnsembleDialogOpen(false)}
-                title="Select ensembles"
-                modal
-                width={"75%"}
-                actions={
-                    <div className="flex gap-4">
-                        <Button onClick={() => setEnsembleDialogOpen(false)}>OK</Button>
-                    </div>
-                }
-            >
-                <EnsembleSelector workbench={props.workbench} />
-            </Dialog>
+            {ensembleDialogOpen && (
+                <SelectEnsemblesDialog selectedEnsembles={selectedEnsembles} onClose={handleEnsembleDialogClose} />
+            )}
         </div>
     );
 };

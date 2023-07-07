@@ -4,26 +4,31 @@ import { DrawPreviewFunc } from "./Preview";
 import { StateBaseType, StateOptions } from "./StateStore";
 import { SyncSettingKey } from "./SyncSettings";
 
+export type RegisterModuleOptions = {
+    moduleName: string;
+    defaultTitle: string;
+    syncableSettingKeys?: SyncSettingKey[];
+    broadcastChannelsDef?: BroadcastChannelsDef;
+};
+
 export class ModuleRegistry {
     private static _registeredModules: Record<string, Module<any>> = {};
     /* eslint-disable-next-line @typescript-eslint/no-empty-function */
     private constructor() {}
 
     public static registerModule<ModuleStateType extends StateBaseType>(
-        moduleName: string,
-        defaultTitle: string,
-        syncableSettingKeys: SyncSettingKey[] = [],
+        options: RegisterModuleOptions
         broadcastChannelsDef: BroadcastChannelsDef = {},
         drawPreviewFunc: DrawPreviewFunc | null = null
     ): Module<ModuleStateType> {
         const module = new Module<ModuleStateType>(
-            moduleName,
-            defaultTitle,
-            syncableSettingKeys,
-            broadcastChannelsDef,
+            options.moduleName,
+            options.defaultTitle,
+            options.syncableSettingKeys,
+            options.broadcastChannelsDef
             drawPreviewFunc
         );
-        this._registeredModules[moduleName] = module;
+        this._registeredModules[options.moduleName] = module;
         return module;
     }
 
