@@ -213,7 +213,7 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                                 variant="contained"
                                 onClick={handleAddEnsemble}
                                 color={ensembleAlreadySelected ? "success" : "primary"}
-                                disabled={ensembleAlreadySelected}
+                                disabled={ensembleAlreadySelected || ensembleOpts.length === 0}
                                 startIcon={
                                     ensembleAlreadySelected ? (
                                         <CheckIcon className="w-5 h-5" />
