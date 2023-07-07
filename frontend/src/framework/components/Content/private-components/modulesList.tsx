@@ -2,7 +2,6 @@ import React from "react";
 
 import { Drawer, closeDrawer, useGuiDispatch, useGuiSelector } from "@framework/GuiState";
 import { ModuleRegistry } from "@framework/ModuleRegistry";
-import { Workbench } from "@framework/Workbench";
 import {
     MANHATTAN_LENGTH,
     Point,
@@ -143,7 +142,6 @@ const ModulesListItem: React.FC<ModulesListItemProps> = (props) => {
 };
 
 type ModulesListProps = {
-    workbench: Workbench;
     relContainer: HTMLDivElement | null;
 };
 

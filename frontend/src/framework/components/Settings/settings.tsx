@@ -1,6 +1,6 @@
 import React from "react";
 
-import { useStoreValue } from "@framework/StateStore";
+import { Drawer, useGuiSelector } from "@framework/GuiState";
 import { Workbench } from "@framework/Workbench";
 import { useActiveModuleId, useModuleInstances } from "@framework/hooks/workbenchHooks";
 import { resolveClassNames } from "@lib/components/_utils/resolveClassNames";
@@ -15,7 +15,7 @@ export const Settings: React.FC<SettingsProps> = (props) => {
     const moduleInstances = useModuleInstances(props.workbench);
     const activeModuleId = useActiveModuleId(props.workbench);
 
-    const syncSettingsActive = useStoreValue(props.workbench.getGuiStateStore(), "syncSettingsActive");
+    const syncSettingsActive = useGuiSelector((state) => state.openedDrawer === Drawer.SYNC_SETTINGS);
 
     return (
         <div className={resolveClassNames("bg-white", "p-4", { hidden: syncSettingsActive })}>

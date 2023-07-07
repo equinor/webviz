@@ -351,7 +351,7 @@ export const Layout: React.FC<LayoutProps> = (props) => {
                 })}
                 {makeTempViewWrapperPlaceholder()}
             </div>
-            <ModulesList relContainer={mainRef.current} workbench={props.workbench} />
+            <ModulesList relContainer={mainRef.current} />
             <GroupModules relContainer={mainRef.current} workbench={props.workbench} />
         </div>
     );
