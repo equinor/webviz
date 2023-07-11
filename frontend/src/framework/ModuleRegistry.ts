@@ -30,12 +30,12 @@ export class ModuleRegistry {
 
     public static initModule<ModuleStateType extends StateBaseType>(
         moduleName: string,
-        initialState: ModuleStateType,
+        defaultState: ModuleStateType,
         options?: StateOptions<ModuleStateType>
     ): Module<ModuleStateType> {
         const module = this._registeredModules[moduleName];
         if (module) {
-            module.setInitialState(initialState, options);
+            module.setDefaultState(defaultState, options);
             return module as Module<ModuleStateType>;
         }
         throw "Did you forget to register your module in 'src/modules/registerAllModules.ts'?";

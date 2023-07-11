@@ -34,7 +34,7 @@ export class Module<StateType extends StateBaseType> {
     private numInstances: number;
     private importState: ImportState;
     private moduleInstances: ModuleInstance<StateType>[];
-    private initialState: StateType | null;
+    private defaultState: StateType | null;
     private stateOptions: StateOptions<StateType> | undefined;
     private workbench: Workbench | null;
     private syncableSettingKeys: SyncSettingKey[];
@@ -53,7 +53,7 @@ export class Module<StateType extends StateBaseType> {
         this.settingsFC = () => <div>Not defined</div>;
         this.importState = ImportState.NotImported;
         this.moduleInstances = [];
-        this.initialState = null;
+        this.defaultState = null;
         this.workbench = null;
         this.syncableSettingKeys = syncableSettingKeys;
         this.channelsDef = broadcastChannelsDef;
@@ -75,12 +75,12 @@ export class Module<StateType extends StateBaseType> {
         this.workbench = workbench;
     }
 
-    public setInitialState(initialState: StateType, options?: StateOptions<StateType>): void {
-        this.initialState = initialState;
+    public setDefaultState(defaultState: StateType, options?: StateOptions<StateType>): void {
+        this.defaultState = defaultState;
         this.stateOptions = options;
         this.moduleInstances.forEach((instance) => {
-            if (this.initialState && !instance.isInitialised()) {
-                instance.setInitialState(cloneDeep(this.initialState), cloneDeep(this.stateOptions));
+            if (this.defaultState && !instance.isInitialised()) {
+                instance.setDefaultState(cloneDeep(this.defaultState), cloneDeep(this.stateOptions));
             }
         });
     }
@@ -113,10 +113,10 @@ export class Module<StateType extends StateBaseType> {
 
     private maybeImportSelf(): void {
         if (this.importState !== ImportState.NotImported) {
-            if (this.initialState && this.importState === ImportState.Imported) {
+            if (this.defaultState && this.importState === ImportState.Imported) {
                 this.moduleInstances.forEach((instance) => {
-                    if (this.initialState && !instance.isInitialised()) {
-                        instance.setInitialState(cloneDeep(this.initialState), cloneDeep(this.stateOptions));
+                    if (this.defaultState && !instance.isInitialised()) {
+                        instance.setDefaultState(cloneDeep(this.defaultState), cloneDeep(this.stateOptions));
                     }
                 });
             }
@@ -129,8 +129,8 @@ export class Module<StateType extends StateBaseType> {
             .then(() => {
                 this.setImportState(ImportState.Imported);
                 this.moduleInstances.forEach((instance) => {
-                    if (this.initialState && !instance.isInitialised()) {
-                        instance.setInitialState(cloneDeep(this.initialState), cloneDeep(this.stateOptions));
+                    if (this.defaultState && !instance.isInitialised()) {
+                        instance.setDefaultState(cloneDeep(this.defaultState), cloneDeep(this.stateOptions));
                     }
                 });
             })
