@@ -1,9 +1,9 @@
 import React from "react";
-import Plot from "react-plotly.js";
 
 import { BroadcastChannelMeta } from "@framework/Broadcaster";
 import { ModuleFCProps } from "@framework/Module";
 import { useSubscribedValue } from "@framework/WorkbenchServices";
+import { Plot } from "@lib/components/Plot";
 import { useElementSize } from "@lib/hooks/useElementSize";
 
 import { Layout, PlotData, PlotHoverEvent } from "plotly.js";

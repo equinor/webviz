@@ -4,44 +4,67 @@ import PlotlyPlot, { Figure, PlotParams } from "react-plotly.js";
 import { isEqual } from "lodash";
 
 export const Plot: React.FC<PlotParams> = (props) => {
-    const { data, layout, frames, ...rest } = props;
-    const [state, setState] = React.useState<Figure>({
-        data,
-        layout,
-        frames: frames || null,
-    });
+    const { data: propsData, layout: propsLayout, frames: propsFrames, ...rest } = props;
 
-    const [prevLayout, setPrevLayout] = React.useState<Partial<Figure["layout"]>>(layout);
+    const [data, setData] = React.useState<Plotly.Data[]>(propsData);
+    const [layout, setLayout] = React.useState<Partial<Plotly.Layout>>(propsLayout);
+    const [frames, setFrames] = React.useState<Plotly.Frame[] | null>(propsFrames || null);
 
     React.useEffect(() => {
-        setState((prev) => ({ ...prev, data }));
-    }, [data]);
+        setData((prev) => {
+            if (isEqual(prev, propsData)) return prev;
+
+            console.debug("Plot: propsData changed, setting data");
+            return propsData;
+        });
+    }, [propsData]);
 
     React.useEffect(() => {
-        if (isEqual(layout, prevLayout)) return;
+        setLayout((prev) => {
+            if (isEqual(prev, propsLayout)) return prev;
 
-        setState((prev) => ({ ...prev, layout }));
-        setPrevLayout(layout);
-    }, [layout, prevLayout]);
+            console.debug("Plot: propsLayout changed, setting layout");
+            return propsLayout;
+        });
+    }, [propsLayout]);
 
     React.useEffect(() => {
-        setState((prev) => ({ ...prev, frames: frames || null }));
-    }, [frames]);
+        setFrames((prev) => {
+            if (isEqual(prev, propsFrames)) return prev;
+
+            console.debug("Plot: propsData changed, setting data");
+            return propsFrames || null;
+        });
+    }, [propsFrames]);
 
     const handleInitialized = (figure: Figure) => {
-        setState(figure);
+        console.debug("Plot: handleInitialized", figure);
+        setLayout(figure.layout);
+        setData(figure.data);
+        setFrames(figure.frames || null);
     };
 
     const handleUpdate = (figure: Figure) => {
-        setState(figure);
+        console.debug("Plot: handleUpdate", figure);
+        if (!isEqual(layout, figure.layout)) {
+            setLayout(figure.layout);
+        }
+
+        if (!isEqual(data, figure.data)) {
+            setData(figure.data);
+        }
+
+        if (!isEqual(frames, figure.frames)) {
+            setFrames(figure.frames || null);
+        }
     };
 
     return (
         <PlotlyPlot
             {...rest}
-            data={state.data}
-            layout={state.layout}
-            frames={state.frames || undefined}
+            data={data}
+            layout={layout}
+            frames={frames || undefined}
             onInitialized={handleInitialized}
             onUpdate={handleUpdate}
         />

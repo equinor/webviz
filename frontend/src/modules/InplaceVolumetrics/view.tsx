@@ -1,5 +1,4 @@
 import React from "react";
-import Plot from "react-plotly.js";
 
 import { Body_get_realizations_response_api } from "@api";
 import { BroadcastChannelMeta } from "@framework/Broadcaster";
@@ -7,6 +6,7 @@ import { ModuleFCProps } from "@framework/Module";
 import { useSubscribedValue } from "@framework/WorkbenchServices";
 import { ApiStateWrapper } from "@lib/components/ApiStateWrapper";
 import { CircularProgress } from "@lib/components/CircularProgress";
+import { Plot } from "@lib/components/Plot";
 import { useElementSize } from "@lib/hooks/useElementSize";
 
 import { Layout, PlotData, PlotHoverEvent } from "plotly.js";
