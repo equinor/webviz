@@ -2,10 +2,10 @@ import { QueryClient } from "@tanstack/react-query";
 
 import { Broadcaster } from "./Broadcaster";
 import { EnsembleIdent } from "./EnsembleIdent";
+import { InitialSettings } from "./InitialSettings";
 import { ImportState } from "./Module";
 import { ModuleInstance } from "./ModuleInstance";
 import { ModuleRegistry } from "./ModuleRegistry";
-import { PresetProps } from "./PresetProps";
 import { StateStore } from "./StateStore";
 import { Template } from "./TemplateRegistry";
 import { WorkbenchServices } from "./WorkbenchServices";
@@ -232,29 +232,29 @@ export class Workbench {
     applyTemplate(template: Template): void {
         this.clearLayout();
 
-        const newLayout = template.layout.map((el) => {
-            return { ...el, moduleInstanceId: undefined };
+        const newLayout = template.moduleInstances.map((el) => {
+            return { ...el.layout, moduleName: el.moduleName };
         });
 
         this.makeLayout(newLayout);
 
         for (let i = 0; i < this.moduleInstances.length; i++) {
             const moduleInstance = this.moduleInstances[i];
-            const layoutElement = template.layout[i];
-            if (layoutElement.syncedSettings) {
-                for (const syncSettingKey of layoutElement.syncedSettings) {
+            const templateModule = template.moduleInstances[i];
+            if (templateModule.syncedSettings) {
+                for (const syncSettingKey of templateModule.syncedSettings) {
                     moduleInstance.addSyncedSetting(syncSettingKey);
                 }
             }
 
-            const presetProps: Record<string, unknown> = layoutElement.presetProps || {};
+            const initialSettings: Record<string, unknown> = templateModule.initialSettings || {};
 
-            if (layoutElement.dataChannelsToPresetPropsMapping) {
-                for (const propName of Object.keys(layoutElement.dataChannelsToPresetPropsMapping)) {
-                    const dataChannel = layoutElement.dataChannelsToPresetPropsMapping[propName];
+            if (templateModule.dataChannelsToInitialSettingsMapping) {
+                for (const propName of Object.keys(templateModule.dataChannelsToInitialSettingsMapping)) {
+                    const dataChannel = templateModule.dataChannelsToInitialSettingsMapping[propName];
 
-                    const moduleInstanceIndex = template.layout.findIndex(
-                        (el) => el.templateElementId === dataChannel.listensToTemplateId
+                    const moduleInstanceIndex = template.moduleInstances.findIndex(
+                        (el) => el.instanceRef === dataChannel.listensToInstanceRef
                     );
                     if (moduleInstanceIndex === -1) {
                         throw new Error("Could not find module instance for data channel");
@@ -266,11 +266,11 @@ export class Workbench {
                         throw new Error("Could not find channel");
                     }
 
-                    presetProps[propName] = channel.getName();
+                    initialSettings[propName] = channel.getName();
                 }
             }
 
-            moduleInstance.setPresetProps(new PresetProps(presetProps));
+            moduleInstance.setPresetProps(new InitialSettings(initialSettings));
 
             if (i === 0) {
                 this._activeModuleId = moduleInstance.getId();

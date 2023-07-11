@@ -3,9 +3,9 @@ import React from "react";
 import { cloneDeep } from "lodash";
 
 import { BroadcastChannelsDef } from "./Broadcaster";
+import { InitialSettings } from "./InitialSettings";
 import { ModuleContext } from "./ModuleContext";
 import { ModuleInstance } from "./ModuleInstance";
-import { PresetProps } from "./PresetProps";
 import { DrawPreviewFunc } from "./Preview";
 import { StateBaseType, StateOptions } from "./StateStore";
 import { SyncSettingKey } from "./SyncSettings";
@@ -17,7 +17,7 @@ export type ModuleFCProps<S extends StateBaseType> = {
     moduleContext: ModuleContext<S>;
     workbenchSession: WorkbenchSession;
     workbenchServices: WorkbenchServices;
-    presetProps?: PresetProps;
+    initialSettings?: InitialSettings;
 };
 
 export type ModuleFC<S extends StateBaseType> = React.FC<ModuleFCProps<S>>;

@@ -7,48 +7,54 @@ import { BroadcastChannelNames } from "@modules/SimulationTimeSeries/channelDefs
 const template: Template = {
     description:
         "Combination of simulation time series, sensitivity and distribution plot. All are synced to the same ensemble. Data is shared for realizations.",
-    layout: [
+    moduleInstances: [
         {
-            templateElementId: "SimulationTimeSeriesSensitivity",
+            instanceRef: "MyFirstModule",
             moduleName: "SimulationTimeSeriesSensitivity",
-            relHeight: 0.5,
-            relWidth: 0.5,
-            relX: 0,
-            relY: 0,
+            layout: {
+                relHeight: 0.5,
+                relWidth: 0.5,
+                relX: 0,
+                relY: 0,
+            },
             syncedSettings: [SyncSettingKey.ENSEMBLE],
         },
         {
-            templateElementId: "Sensitivity",
+            instanceRef: "Sensitivity",
             moduleName: "Sensitivity",
-            relHeight: 0.5,
-            relWidth: 0.5,
-            relX: 0.5,
-            relY: 0,
+            layout: {
+                relHeight: 0.5,
+                relWidth: 0.5,
+                relX: 0.5,
+                relY: 0,
+            },
             syncedSettings: [SyncSettingKey.ENSEMBLE],
-            dataChannelsToPresetPropsMapping: {
+            dataChannelsToInitialSettingsMapping: {
                 responseChannelName: {
-                    listensToTemplateId: "SimulationTimeSeriesSensitivity",
+                    listensToInstanceRef: "MyFirstModule",
                     keyCategory: BroadcastChannelKeyCategory.Realization,
                     channelName: BroadcastChannelNames.Realization_Value,
                 },
             },
         },
         {
-            templateElementId: "DistributionPlot",
+            instanceRef: "DistributionPlot",
             moduleName: "DistributionPlot",
-            relHeight: 0.5,
-            relWidth: 1,
-            relX: 0,
-            relY: 0.5,
+            layout: {
+                relHeight: 0.5,
+                relWidth: 1,
+                relX: 0,
+                relY: 0.5,
+            },
             syncedSettings: [SyncSettingKey.ENSEMBLE],
-            dataChannelsToPresetPropsMapping: {
+            dataChannelsToInitialSettingsMapping: {
                 channelNameX: {
-                    listensToTemplateId: "SimulationTimeSeriesSensitivity",
+                    listensToInstanceRef: "MyFirstModule",
                     keyCategory: BroadcastChannelKeyCategory.Realization,
                     channelName: BroadcastChannelNames.Realization_Value,
                 },
             },
-            presetProps: {
+            initialSettings: {
                 plotType: PlotType.Histogram,
                 crossPlottingType: BroadcastChannelKeyCategory.Realization,
             },

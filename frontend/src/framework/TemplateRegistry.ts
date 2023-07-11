@@ -3,21 +3,23 @@ import { SyncSettingKey } from "./SyncSettings";
 import { LayoutElement } from "./Workbench";
 
 export type DataChannelTemplate = {
-    listensToTemplateId: string;
+    listensToInstanceRef: string;
     keyCategory: BroadcastChannelKeyCategory;
     channelName: string;
 };
 
-export type ExtendedLayoutElement = LayoutElement & {
-    templateElementId: string;
-    syncedSettings?: SyncSettingKey[];
-    dataChannelsToPresetPropsMapping?: Record<string, DataChannelTemplate>;
-    presetProps?: Record<string, unknown>;
-};
+export type TemplateLayoutElement = Omit<LayoutElement, "moduleInstanceId" | "moduleName">;
 
 export type Template = {
     description: string;
-    layout: ExtendedLayoutElement[];
+    moduleInstances: {
+        instanceRef?: string;
+        moduleName: string;
+        layout: TemplateLayoutElement;
+        syncedSettings?: SyncSettingKey[];
+        dataChannelsToInitialSettingsMapping?: Record<string, DataChannelTemplate>;
+        initialSettings?: Record<string, unknown>;
+    }[];
 };
 
 export class TemplateRegistry {

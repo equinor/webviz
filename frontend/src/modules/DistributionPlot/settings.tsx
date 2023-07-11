@@ -53,56 +53,22 @@ const crossPlottingTypes = [
 ];
 
 //-----------------------------------------------------------------------------------------------------------
-export function settings({ moduleContext, workbenchServices, presetProps }: ModuleFCProps<State>) {
+export function settings({ moduleContext, workbenchServices, initialSettings }: ModuleFCProps<State>) {
     const [channelNameX, setChannelNameX] = moduleContext.useStoreState("channelNameX");
     const [channelNameY, setChannelNameY] = moduleContext.useStoreState("channelNameY");
     const [channelNameZ, setChannelNameZ] = moduleContext.useStoreState("channelNameZ");
     const [plotType, setPlotType] = moduleContext.useStoreState("plotType");
     const [numBins, setNumBins] = moduleContext.useStoreState("numBins");
     const [orientation, setOrientation] = moduleContext.useStoreState("orientation");
-    const [crossPlottingType, setCrossPlottingType] = React.useState<BroadcastChannelKeyCategory | null>(
-        presetProps?.get<BroadcastChannelKeyCategory>("crossPlottingType", "string") || null
-    );
+    const [crossPlottingType, setCrossPlottingType] = React.useState<BroadcastChannelKeyCategory | null>(null);
 
-    React.useEffect(() => {
-        const presetPropsObj = {
-            channelNameX: presetProps?.get<string>("channelNameX", "string"),
-            channelNameY: presetProps?.get<string>("channelNameY", "string"),
-            channelNameZ: presetProps?.get<string>("channelNameZ", "string"),
-            plotType: presetProps?.get<PlotType>("plotType", "string"),
-            numBins: presetProps?.get<number>("numBins", "number"),
-            orientation: presetProps?.get<"h" | "v">("orientation", "string"),
-            crossPlottingType: presetProps?.get<BroadcastChannelKeyCategory>("crossPlottingType", "string"),
-        };
-
-        if (presetPropsObj.channelNameX) {
-            setChannelNameX(presetPropsObj.channelNameX);
-        }
-
-        if (presetPropsObj.channelNameY) {
-            setChannelNameY(presetPropsObj.channelNameY);
-        }
-
-        if (presetPropsObj.channelNameZ) {
-            setChannelNameZ(presetPropsObj.channelNameZ);
-        }
-
-        if (presetPropsObj.plotType) {
-            setPlotType(presetPropsObj.plotType);
-        }
-
-        if (presetPropsObj.numBins) {
-            setNumBins(presetPropsObj.numBins);
-        }
-
-        if (presetPropsObj.orientation) {
-            setOrientation(presetPropsObj.orientation);
-        }
-
-        if (presetPropsObj.crossPlottingType) {
-            setCrossPlottingType(presetPropsObj.crossPlottingType);
-        }
-    }, [presetProps]);
+    initialSettings?.applyToState("channelNameX", "string", setChannelNameX);
+    initialSettings?.applyToState("channelNameY", "string", setChannelNameY);
+    initialSettings?.applyToState("channelNameZ", "string", setChannelNameZ);
+    initialSettings?.applyToState("plotType", "string", setPlotType);
+    initialSettings?.applyToState("numBins", "number", setNumBins);
+    initialSettings?.applyToState("orientation", "string", setOrientation);
+    initialSettings?.applyToState("crossPlottingType", "string", setCrossPlottingType);
 
     const handleChannelXChanged = (channelName: string) => {
         setChannelNameX(channelName);

@@ -10,11 +10,11 @@ import { Drawer } from "./drawer";
 function drawTemplatePreview(template: Template, width: number, height: number): React.ReactNode {
     return (
         <svg width={width} height={height} viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" version="1.1">
-            {template.layout.map((element) => {
-                const w = element.relWidth * width;
-                const h = element.relHeight * height;
-                const x = element.relX * width;
-                const y = element.relY * height;
+            {template.moduleInstances.map((element) => {
+                const w = element.layout.relWidth * width;
+                const h = element.layout.relHeight * height;
+                const x = element.layout.relX * width;
+                const y = element.layout.relY * height;
                 const strokeWidth = 2;
                 const headerHeight = 10;
                 const module = ModuleRegistry.getModule(element.moduleName);

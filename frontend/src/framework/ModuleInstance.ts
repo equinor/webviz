@@ -3,9 +3,9 @@ import { ErrorInfo } from "react";
 import { cloneDeep } from "lodash";
 
 import { BroadcastChannel, BroadcastChannelsDef } from "./Broadcaster";
+import { InitialSettings } from "./InitialSettings";
 import { ImportState, Module, ModuleFC } from "./Module";
 import { ModuleContext } from "./ModuleContext";
-import { PresetProps } from "./PresetProps";
 import { StateBaseType, StateOptions, StateStore } from "./StateStore";
 import { SyncSettingKey } from "./SyncSettings";
 import { Workbench } from "./Workbench";
@@ -37,7 +37,7 @@ export class ModuleInstance<StateType extends StateBaseType> {
     private broadcastChannels: Record<string, BroadcastChannel>;
     private cachedInitialState: StateType | null;
     private cachedStateStoreOptions?: StateOptions<StateType>;
-    private _presetProps: PresetProps | null;
+    private _presetProps: InitialSettings | null;
 
     constructor(
         module: Module<StateType>,
@@ -246,11 +246,11 @@ export class ModuleInstance<StateType extends StateBaseType> {
         });
     }
 
-    setPresetProps(presetProps: PresetProps): void {
+    setPresetProps(presetProps: InitialSettings): void {
         this._presetProps = presetProps;
     }
 
-    getPresetProps(): PresetProps | null {
+    getPresetProps(): InitialSettings | null {
         return this._presetProps;
     }
 }

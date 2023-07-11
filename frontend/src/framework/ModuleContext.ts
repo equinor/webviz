@@ -1,23 +1,9 @@
 import React from "react";
 
-import { cloneDeep } from "lodash";
-
 import { BroadcastChannel } from "./Broadcaster";
 import { ModuleInstance } from "./ModuleInstance";
 import { StateBaseType, StateStore, useSetStoreValue, useStoreState, useStoreValue } from "./StateStore";
 import { SyncSettingKey } from "./SyncSettings";
-
-type StringTypeToRealType<T> = T extends "string"
-    ? string
-    : T extends "number"
-    ? number
-    : T extends "boolean"
-    ? boolean
-    : T extends "object"
-    ? object
-    : T extends "array"
-    ? any[]
-    : never;
 
 export class ModuleContext<S extends StateBaseType> {
     private _moduleInstance: ModuleInstance<S>;
