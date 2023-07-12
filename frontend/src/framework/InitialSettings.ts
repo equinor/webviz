@@ -59,11 +59,15 @@ export class InitialSettings {
         return this.get(settingName, type) !== undefined;
     }
 
-    applyToState(settingName: string, type: keyof InitialSettingsSupportedTypes, setter: (value: any) => void): void {
+    applyToStateAtMount(
+        settingName: string,
+        type: keyof InitialSettingsSupportedTypes,
+        stateSetter: (value: any) => void
+    ): void {
         React.useEffect(() => {
             const setting = this.get(settingName, type);
             if (setting !== undefined) {
-                setter(setting);
+                stateSetter(setting);
             }
         }, []);
     }
