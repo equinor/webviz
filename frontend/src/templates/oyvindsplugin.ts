@@ -9,7 +9,7 @@ const template: Template = {
         "Combination of simulation time series, sensitivity and distribution plot. All are synced to the same ensemble. Data is shared for realizations.",
     moduleInstances: [
         {
-            instanceRef: "MyFirstModule",
+            instanceRef: "MainTimeSeriesSensitivityInstance",
             moduleName: "SimulationTimeSeriesSensitivity",
             layout: {
                 relHeight: 0.5,
@@ -20,7 +20,7 @@ const template: Template = {
             syncedSettings: [SyncSettingKey.ENSEMBLE],
         },
         {
-            instanceRef: "Sensitivity",
+            instanceRef: "MySensitivityInstance",
             moduleName: "Sensitivity",
             layout: {
                 relHeight: 0.5,
@@ -31,14 +31,14 @@ const template: Template = {
             syncedSettings: [SyncSettingKey.ENSEMBLE],
             dataChannelsToInitialSettingsMapping: {
                 responseChannelName: {
-                    listensToInstanceRef: "MyFirstModule",
+                    listensToInstanceRef: "MainTimeSeriesSensitivityInstance",
                     keyCategory: BroadcastChannelKeyCategory.Realization,
                     channelName: BroadcastChannelNames.Realization_Value,
                 },
             },
         },
         {
-            instanceRef: "DistributionPlot",
+            instanceRef: "MyDistributionPlotInstance",
             moduleName: "DistributionPlot",
             layout: {
                 relHeight: 0.5,
@@ -49,7 +49,7 @@ const template: Template = {
             syncedSettings: [SyncSettingKey.ENSEMBLE],
             dataChannelsToInitialSettingsMapping: {
                 channelNameX: {
-                    listensToInstanceRef: "MyFirstModule",
+                    listensToInstanceRef: "MainTimeSeriesSensitivityInstance",
                     keyCategory: BroadcastChannelKeyCategory.Realization,
                     channelName: BroadcastChannelNames.Realization_Value,
                 },
