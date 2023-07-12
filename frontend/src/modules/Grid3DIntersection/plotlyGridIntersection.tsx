@@ -1,14 +1,14 @@
-import React from 'react';
-import Plot from 'react-plotly.js';
-import { GridIntersection } from '../../api/models/GridIntersection';
+import React from "react";
+import Plot from "react-plotly.js";
 
-import { Layout, PlotData, PlotHoverEvent } from "plotly.js";
+import { GridIntersection_api } from "@api";
 
+import { Layout, PlotData } from "plotly.js";
 
 export interface PlotlyGridIntersectionProps {
-    data: GridIntersection;
-    width?: number | 100
-    height?: number | 100
+    data: GridIntersection_api;
+    width?: number | 100;
+    height?: number | 100;
 }
 interface TraceData extends Partial<PlotData> {
     realizationNumber?: number | null;

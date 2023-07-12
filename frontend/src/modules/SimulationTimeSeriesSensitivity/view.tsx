@@ -147,8 +147,12 @@ export const view = ({ moduleContext, workbenchSession }: ModuleFCProps<State>) 
 
     return (
         <div className="w-full h-full" ref={wrapperDivRef}>
-            <TimeSeriesChart traceDataArr={traceDataArr} onHover={handleHover} />
-            <div className="absolute bottom-5 right-5 italic text-pink-400">{moduleContext.getInstanceIdString()}</div>
+            <TimeSeriesChart
+                traceDataArr={traceDataArr}
+                onHover={handleHover}
+                height={wrapperDivSize.height}
+                width={wrapperDivSize.width}
+            />
         </div>
     );
 };
