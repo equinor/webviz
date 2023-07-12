@@ -11,11 +11,8 @@ import { ApiStateWrapper } from "@lib/components/ApiStateWrapper";
 import { Checkbox } from "@lib/components/Checkbox";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { Dropdown, DropdownOption } from "@lib/components/Dropdown";
-import { Input } from "@lib/components/Input";
 import { Label } from "@lib/components/Label";
 import { Select, SelectOption } from "@lib/components/Select";
-
-import { sortBy, sortedUniq } from "lodash";
 
 import { useVectorsQuery } from "./queryHooks";
 import { State } from "./state";

@@ -1,4 +1,4 @@
-import { VectorRealizationData_api, VectorStatisticData_api } from "@api";
+import { VectorRealizationData_api } from "@api";
 
 import { PlotData } from "plotly.js";
 
@@ -9,8 +9,7 @@ export interface TimeSeriesPlotlyTrace extends Partial<PlotData> {
 
 export const createRealizationLineTraces = (
     realizationData: VectorRealizationData_api[],
-    highlightedRealization?: number | undefined,
-    unit?: string | null
+    highlightedRealization?: number | undefined
 ) => {
     const traces: TimeSeriesPlotlyTrace[] = [];
     let highlightedTrace: TimeSeriesPlotlyTrace | null = null;
@@ -57,8 +56,7 @@ export const sensitivityStatisticsTrace = (
     name: string,
     lineShape: "linear" | "spline",
     lineDash: "dash" | "dot" | "dashdot" | "solid",
-    lineColor?: string | null,
-    unit?: string | null
+    lineColor?: string | null
 ): TimeSeriesPlotlyTrace => {
     return {
         x: timestamps,
