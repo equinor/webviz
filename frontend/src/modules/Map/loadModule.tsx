@@ -4,11 +4,11 @@ import { MapSettings } from "./MapSettings";
 import { MapState } from "./MapState";
 import { MapView } from "./MapView";
 
-const initialState: MapState = {
+const defaultState: MapState = {
     surfaceAddress: null,
 };
 
-const module = ModuleRegistry.initModule<MapState>("Map", initialState, {
+const module = ModuleRegistry.initModule<MapState>("Map", defaultState, {
     surfaceAddress: { deepCompare: true },
 });
 

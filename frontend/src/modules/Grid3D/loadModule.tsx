@@ -4,7 +4,7 @@ import { settings } from "./settings";
 import state from "./state";
 import { view } from "./view";
 
-const initialState: state = {
+const defaultState: state = {
     gridName: "Simgrid",
     parameterName: "PORO",
     realizations: ["1"],
@@ -12,7 +12,7 @@ const initialState: state = {
 
 };
 
-const module = ModuleRegistry.initModule<state>("Grid3D", initialState, {
+const module = ModuleRegistry.initModule<state>("Grid3D", defaultState, {
 
 });
 
