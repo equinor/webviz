@@ -34,15 +34,15 @@ export class Module<StateType extends StateBaseType> {
     private _defaultTitle: string;
     public viewFC: ModuleFC<StateType>;
     public settingsFC: ModuleFC<StateType>;
-    private numInstances: number;
-    private importState: ImportState;
-    private moduleInstances: ModuleInstance<StateType>[];
-    private defaultState: StateType | null;
-    private stateOptions: StateOptions<StateType> | undefined;
-    private workbench: Workbench | null;
-    private syncableSettingKeys: SyncSettingKey[];
-    private channelsDef: BroadcastChannelsDef;
-    private drawPreviewFunc: DrawPreviewFunc | null;
+    private _numInstances: number;
+    private _importState: ImportState;
+    private _moduleInstances: ModuleInstance<StateType>[];
+    private _defaultState: StateType | null;
+    private _stateOptions: StateOptions<StateType> | undefined;
+    private _workbench: Workbench | null;
+    private _syncableSettingKeys: SyncSettingKey[];
+    private _channelsDef: BroadcastChannelsDef;
+    private _drawPreviewFunc: DrawPreviewFunc | null;
 
     constructor(
         name: string,
@@ -53,24 +53,24 @@ export class Module<StateType extends StateBaseType> {
     ) {
         this._name = name;
         this._defaultTitle = defaultTitle;
-        this.numInstances = 0;
+        this._numInstances = 0;
         this.viewFC = () => <div>Not defined</div>;
         this.settingsFC = () => <div>Not defined</div>;
-        this.importState = ImportState.NotImported;
-        this.moduleInstances = [];
-        this.defaultState = null;
-        this.workbench = null;
-        this.syncableSettingKeys = syncableSettingKeys;
-        this.channelsDef = broadcastChannelsDef;
-        this.drawPreviewFunc = drawPreviewFunc;
+        this._importState = ImportState.NotImported;
+        this._moduleInstances = [];
+        this._defaultState = null;
+        this._workbench = null;
+        this._syncableSettingKeys = syncableSettingKeys;
+        this._channelsDef = broadcastChannelsDef;
+        this._drawPreviewFunc = drawPreviewFunc;
     }
 
     getDrawPreviewFunc(): DrawPreviewFunc | null {
-        return this.drawPreviewFunc;
+        return this._drawPreviewFunc;
     }
 
     getImportState(): ImportState {
-        return this.importState;
+        return this._importState;
     }
 
     getName() {
@@ -82,51 +82,51 @@ export class Module<StateType extends StateBaseType> {
     }
 
     setWorkbench(workbench: Workbench): void {
-        this.workbench = workbench;
+        this._workbench = workbench;
     }
 
     setDefaultState(defaultState: StateType, options?: StateOptions<StateType>): void {
-        this.defaultState = defaultState;
-        this.stateOptions = options;
-        this.moduleInstances.forEach((instance) => {
-            if (this.defaultState && !instance.isInitialised()) {
-                instance.setDefaultState(cloneDeep(this.defaultState), cloneDeep(this.stateOptions));
+        this._defaultState = defaultState;
+        this._stateOptions = options;
+        this._moduleInstances.forEach((instance) => {
+            if (this._defaultState && !instance.isInitialised()) {
+                instance.setDefaultState(cloneDeep(this._defaultState), cloneDeep(this._stateOptions));
             }
         });
     }
 
     getSyncableSettingKeys(): SyncSettingKey[] {
-        return this.syncableSettingKeys;
+        return this._syncableSettingKeys;
     }
 
     makeInstance(): ModuleInstance<StateType> {
-        if (!this.workbench) {
+        if (!this._workbench) {
             throw new Error("Module must be added to a workbench before making an instance");
         }
 
-        const instance = new ModuleInstance<StateType>(this, this.numInstances++, this.channelsDef, this.workbench);
-        this.moduleInstances.push(instance);
+        const instance = new ModuleInstance<StateType>(this, this._numInstances++, this._channelsDef, this._workbench);
+        this._moduleInstances.push(instance);
         this.maybeImportSelf();
         return instance;
     }
 
     private setImportState(state: ImportState): void {
-        this.importState = state;
-        this.moduleInstances.forEach((instance) => {
+        this._importState = state;
+        this._moduleInstances.forEach((instance) => {
             instance.notifySubscribersAboutImportStateChange();
         });
 
-        if (this.workbench && state === ImportState.Imported) {
-            this.workbench.maybeMakeFirstModuleInstanceActive();
+        if (this._workbench && state === ImportState.Imported) {
+            this._workbench.maybeMakeFirstModuleInstanceActive();
         }
     }
 
     private maybeImportSelf(): void {
-        if (this.importState !== ImportState.NotImported) {
-            if (this.defaultState && this.importState === ImportState.Imported) {
-                this.moduleInstances.forEach((instance) => {
-                    if (this.defaultState && !instance.isInitialised()) {
-                        instance.setDefaultState(cloneDeep(this.defaultState), cloneDeep(this.stateOptions));
+        if (this._importState !== ImportState.NotImported) {
+            if (this._defaultState && this._importState === ImportState.Imported) {
+                this._moduleInstances.forEach((instance) => {
+                    if (this._defaultState && !instance.isInitialised()) {
+                        instance.setDefaultState(cloneDeep(this._defaultState), cloneDeep(this._stateOptions));
                     }
                 });
             }
@@ -138,9 +138,9 @@ export class Module<StateType extends StateBaseType> {
         import(`@modules/${this._name}/loadModule.tsx`)
             .then(() => {
                 this.setImportState(ImportState.Imported);
-                this.moduleInstances.forEach((instance) => {
-                    if (this.defaultState && !instance.isInitialised()) {
-                        instance.setDefaultState(cloneDeep(this.defaultState), cloneDeep(this.stateOptions));
+                this._moduleInstances.forEach((instance) => {
+                    if (this._defaultState && !instance.isInitialised()) {
+                        instance.setDefaultState(cloneDeep(this._defaultState), cloneDeep(this._stateOptions));
                     }
                 });
             })
