@@ -4,15 +4,15 @@ import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { useStoreState } from "@framework/StateStore";
 import { DrawerContent, Workbench } from "@framework/Workbench";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
+import { LoginButton } from "@framework/internal/components/LoginButton";
+import { SelectEnsemblesDialog } from "@framework/internal/components/SelectEnsemblesDialog";
+import { EnsembleItem } from "@framework/internal/components/SelectEnsemblesDialog/selectEnsemblesDialog";
 import { ShareIcon, Squares2X2Icon, WindowIcon } from "@heroicons/react/20/solid";
 import { Button } from "@lib/components/Button";
 import { resolveClassNames } from "@lib/components/_utils/resolveClassNames";
 import { useQueryClient } from "@tanstack/react-query";
 
-import { LoginButton } from "../LoginButton";
 // import { useWorkbenchActiveModuleName } from "@framework/hooks/useWorkbenchActiveModuleName";
-import { SelectEnsemblesDialog } from "../SelectEnsemblesDialog";
-import { EnsembleItem } from "../SelectEnsemblesDialog/selectEnsemblesDialog";
 
 type TopNavBarProps = {
     workbench: Workbench;

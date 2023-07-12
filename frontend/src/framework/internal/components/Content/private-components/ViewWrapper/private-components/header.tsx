@@ -2,8 +2,8 @@ import React from "react";
 
 import { ModuleInstance } from "@framework/ModuleInstance";
 import { SyncSettingKey, SyncSettingsMeta } from "@framework/SyncSettings";
-import { isDevMode } from "@framework/utils/devMode";
 import { XMarkIcon } from "@heroicons/react/20/solid";
+import { isDevMode } from "@lib/utils/devMode";
 
 export type HeaderProps = {
     moduleInstance: ModuleInstance<any>;

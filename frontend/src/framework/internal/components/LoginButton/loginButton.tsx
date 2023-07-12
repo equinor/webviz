@@ -1,6 +1,6 @@
 import React from "react";
 
-import { useAuthProvider } from "@framework/providers/AuthProvider";
+import { useAuthProvider } from "@framework/internal/providers/AuthProvider";
 import { UserIcon } from "@heroicons/react/20/solid";
 import { Button } from "@lib/components/Button";
 

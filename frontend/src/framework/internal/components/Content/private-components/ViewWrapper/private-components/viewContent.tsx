@@ -3,7 +3,7 @@ import React from "react";
 import { ImportState } from "@framework/Module";
 import { ModuleInstance, ModuleInstanceState } from "@framework/ModuleInstance";
 import { Workbench } from "@framework/Workbench";
-import { ErrorBoundary } from "@framework/components/ErrorBoundary";
+import { ErrorBoundary } from "@framework/internal/components/ErrorBoundary";
 import { CircularProgress } from "@lib/components/CircularProgress";
 
 import { CrashView } from "./crashView";

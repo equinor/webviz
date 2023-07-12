@@ -1,14 +1,7 @@
 import React from "react";
 
 import { LayoutElement } from "@framework/Workbench";
-import {
-    Point,
-    Rect,
-    Size,
-    outerRectContainsInnerRect,
-    rectContainsPoint,
-    rectsAreEqual,
-} from "@framework/utils/geometry";
+import { Point, Rect, Size, outerRectContainsInnerRect, rectContainsPoint, rectsAreEqual } from "@lib/utils/geometry";
 
 function layoutElementToRect(layoutElement: LayoutElement): Rect {
     return {

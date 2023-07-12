@@ -2,12 +2,11 @@ import React from "react";
 
 import { ModuleInstance } from "@framework/ModuleInstance";
 import { Workbench } from "@framework/Workbench";
-import { Point, pointRelativeToDomRect, pointerEventToPoint } from "@framework/utils/geometry";
+import { Point, pointDifference, pointRelativeToDomRect, pointerEventToPoint } from "@lib/utils/geometry";
 
 import { Header } from "./private-components/header";
 import { ViewContent } from "./private-components/viewContent";
 
-import { pointDifference } from "../../../../utils/geometry";
 import { LayoutEventTypes } from "../layout";
 import { ViewWrapperPlaceholder } from "../viewWrapperPlaceholder";
 

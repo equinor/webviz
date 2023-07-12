@@ -2,8 +2,8 @@ import React from "react";
 
 import { ArrowPathIcon, DocumentMagnifyingGlassIcon, FaceFrownIcon, MegaphoneIcon } from "@heroicons/react/20/solid";
 
-import { Button } from "../../../../../../lib/components/Button";
-import { Dialog } from "../../../../../../lib/components/Dialog";
+import { Button } from "@lib/components/Button";
+import { Dialog } from "@lib/components/Dialog";
 
 export type FormattedErrorProps = {
     moduleName: string;

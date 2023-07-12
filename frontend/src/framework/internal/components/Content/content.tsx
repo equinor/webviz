@@ -1,7 +1,7 @@
 import React from "react";
 
 import { Workbench } from "@framework/Workbench";
-import { useActiveModuleId } from "@framework/hooks/workbenchHooks";
+import { useActiveModuleId } from "@framework/internal/hooks/workbenchHooks";
 
 import { Layout } from "./private-components/layout";
 

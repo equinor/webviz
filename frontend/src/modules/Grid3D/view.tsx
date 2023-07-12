@@ -1,15 +1,12 @@
 import React from "react";
 
 import { ModuleFCProps } from "@framework/Module";
-import SubsurfaceViewer from "@webviz/subsurface-viewer";
 import { useFirstEnsembleInEnsembleSet } from "@framework/WorkbenchSession";
-import { useGridSurface, useGridParameter, useStatisticalGridParameter } from "./queryHooks";
+import { toArrayBuffer } from "@modules_shared/vtkUtils";
+import SubsurfaceViewer from "@webviz/subsurface-viewer";
+
+import { useGridParameter, useGridSurface, useStatisticalGridParameter } from "./queryHooks";
 import state from "./state";
-import { toArrayBuffer } from "@shared-utils/vtkUtils";
-
-
-
-
 
 //-----------------------------------------------------------------------------------------------------------
 export function view({ moduleContext, workbenchSession }: ModuleFCProps<state>) {
@@ -55,8 +52,8 @@ export function view({ moduleContext, workbenchSession }: ModuleFCProps<state>) 
                 bounds={[bounds[0], bounds[1], bounds[3], bounds[4]]}
                 colorTables={[
                     {
-                        "name": "viridis (Seq)",
-                        "colors": [
+                        name: "viridis (Seq)",
+                        colors: [
                             [0.0, 68, 1, 84],
                             [0.05263157894736842, 71, 20, 102],
                             [0.10526315789473684, 71, 37, 117],

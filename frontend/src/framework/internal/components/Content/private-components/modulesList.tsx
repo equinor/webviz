@@ -4,6 +4,7 @@ import { ModuleRegistry } from "@framework/ModuleRegistry";
 import { DrawPreviewFunc } from "@framework/Preview";
 import { useStoreState } from "@framework/StateStore";
 import { DrawerContent, Workbench } from "@framework/Workbench";
+import { useElementSize } from "@lib/hooks/useElementSize";
 import {
     MANHATTAN_LENGTH,
     Point,
@@ -12,8 +13,7 @@ import {
     pointDistance,
     pointRelativeToDomRect,
     pointerEventToPoint,
-} from "@framework/utils/geometry";
-import { useElementSize } from "@lib/hooks/useElementSize";
+} from "@lib/utils/geometry";
 
 import { Drawer } from "./drawer";
 import { LayoutEventTypes } from "./layout";

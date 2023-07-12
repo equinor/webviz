@@ -13,11 +13,8 @@
             "@modules/*": [
                 "./src/modules/*"
             ],
-            "@shared-types/*": [
-                "./src/shared-types/*"
-            ],
-            "@shared-utils/*": [
-                "./src/shared-utils/*"
+            "@modules_shared/*": [
+                "./src/modules/_shared/*"
             ]
         }
     }
