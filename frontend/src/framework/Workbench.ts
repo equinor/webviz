@@ -270,7 +270,7 @@ export class Workbench {
                 }
             }
 
-            moduleInstance.setPresetProps(new InitialSettings(initialSettings));
+            moduleInstance.setInitialSettings(new InitialSettings(initialSettings));
 
             if (i === 0) {
                 this._activeModuleId = moduleInstance.getId();

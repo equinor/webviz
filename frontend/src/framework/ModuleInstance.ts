@@ -37,7 +37,7 @@ export class ModuleInstance<StateType extends StateBaseType> {
     private broadcastChannels: Record<string, BroadcastChannel>;
     private cachedDefaultState: StateType | null;
     private cachedStateStoreOptions?: StateOptions<StateType>;
-    private _presetProps: InitialSettings | null;
+    private _initialSettings: InitialSettings | null;
 
     constructor(
         module: Module<StateType>,
@@ -59,7 +59,7 @@ export class ModuleInstance<StateType extends StateBaseType> {
         this.moduleInstanceState = ModuleInstanceState.INITIALIZING;
         this.fatalError = null;
         this.cachedDefaultState = null;
-        this._presetProps = null;
+        this._initialSettings = null;
 
         this.broadcastChannels = {} as Record<string, BroadcastChannel>;
 
@@ -246,11 +246,11 @@ export class ModuleInstance<StateType extends StateBaseType> {
         });
     }
 
-    setPresetProps(presetProps: InitialSettings): void {
-        this._presetProps = presetProps;
+    setInitialSettings(initialSettings: InitialSettings): void {
+        this._initialSettings = initialSettings;
     }
 
-    getPresetProps(): InitialSettings | null {
-        return this._presetProps;
+    getInitialSettings(): InitialSettings | null {
+        return this._initialSettings;
     }
 }
