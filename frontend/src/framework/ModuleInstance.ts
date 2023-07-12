@@ -75,7 +75,7 @@ export class ModuleInstance<StateType extends StateBaseType> {
         }
     }
 
-    public getBroadcastChannel(channelName: string): BroadcastChannel {
+    getBroadcastChannel(channelName: string): BroadcastChannel {
         if (!this.broadcastChannels[channelName]) {
             throw new Error(`Channel '${channelName}' does not exist on module '${this.title}'`);
         }
@@ -83,7 +83,7 @@ export class ModuleInstance<StateType extends StateBaseType> {
         return this.broadcastChannels[channelName];
     }
 
-    public setDefaultState(defaultState: StateType, options?: StateOptions<StateType>): void {
+    setDefaultState(defaultState: StateType, options?: StateOptions<StateType>): void {
         if (this.cachedDefaultState === null) {
             this.cachedDefaultState = defaultState;
             this.cachedStateStoreOptions = options;
@@ -95,25 +95,25 @@ export class ModuleInstance<StateType extends StateBaseType> {
         this.setModuleInstanceState(ModuleInstanceState.OK);
     }
 
-    public addSyncedSetting(settingKey: SyncSettingKey): void {
+    addSyncedSetting(settingKey: SyncSettingKey): void {
         this.syncedSettingKeys.push(settingKey);
         this.notifySubscribersAboutSyncedSettingKeysChange();
     }
 
-    public getSyncedSettingKeys(): SyncSettingKey[] {
+    getSyncedSettingKeys(): SyncSettingKey[] {
         return this.syncedSettingKeys;
     }
 
-    public isSyncedSetting(settingKey: SyncSettingKey): boolean {
+    isSyncedSetting(settingKey: SyncSettingKey): boolean {
         return this.syncedSettingKeys.includes(settingKey);
     }
 
-    public removeSyncedSetting(settingKey: SyncSettingKey): void {
+    removeSyncedSetting(settingKey: SyncSettingKey): void {
         this.syncedSettingKeys = this.syncedSettingKeys.filter((a) => a !== settingKey);
         this.notifySubscribersAboutSyncedSettingKeysChange();
     }
 
-    public subscribeToSyncedSettingKeysChange(cb: (syncedSettings: SyncSettingKey[]) => void): () => void {
+    subscribeToSyncedSettingKeysChange(cb: (syncedSettings: SyncSettingKey[]) => void): () => void {
         this.syncedSettingsSubscribers.add(cb);
 
         // Trigger callback immediately with our current set of keys
@@ -124,90 +124,90 @@ export class ModuleInstance<StateType extends StateBaseType> {
         };
     }
 
-    public isInitialised(): boolean {
+    isInitialised(): boolean {
         return this.initialised;
     }
 
-    public getViewFC(): ModuleFC<StateType> {
+    getViewFC(): ModuleFC<StateType> {
         return this.module.viewFC;
     }
 
-    public getSettingsFC(): ModuleFC<StateType> {
+    getSettingsFC(): ModuleFC<StateType> {
         return this.module.settingsFC;
     }
 
-    public getImportState(): ImportState {
+    getImportState(): ImportState {
         return this.module.getImportState();
     }
 
-    public getContext(): ModuleContext<StateType> {
+    getContext(): ModuleContext<StateType> {
         if (!this.context) {
             throw `Module context is not available yet. Did you forget to init the module '${this.title}.'?`;
         }
         return this.context;
     }
 
-    public getId(): string {
+    getId(): string {
         return this.id;
     }
 
-    public getName(): string {
+    getName(): string {
         return this.module.getName();
     }
 
-    public getTitle(): string {
+    getTitle(): string {
         return this.title;
     }
 
-    public setTitle(title: string): void {
+    setTitle(title: string): void {
         this.title = title;
         this.notifySubscribersAboutTitleChange();
     }
 
-    public subscribeToTitleChange(cb: (title: string) => void): () => void {
+    subscribeToTitleChange(cb: (title: string) => void): () => void {
         this.titleChangeSubscribers.add(cb);
         return () => {
             this.titleChangeSubscribers.delete(cb);
         };
     }
 
-    public notifySubscribersAboutTitleChange(): void {
+    notifySubscribersAboutTitleChange(): void {
         this.titleChangeSubscribers.forEach((subscriber) => {
             subscriber(this.title);
         });
     }
 
-    public getModule(): Module<StateType> {
+    getModule(): Module<StateType> {
         return this.module;
     }
 
-    public subscribeToImportStateChange(cb: () => void): () => void {
+    subscribeToImportStateChange(cb: () => void): () => void {
         this.importStateSubscribers.add(cb);
         return () => {
             this.importStateSubscribers.delete(cb);
         };
     }
 
-    public notifySubscribersAboutImportStateChange(): void {
+    notifySubscribersAboutImportStateChange(): void {
         this.importStateSubscribers.forEach((subscriber) => {
             subscriber();
         });
     }
 
-    public notifySubscribersAboutSyncedSettingKeysChange(): void {
+    notifySubscribersAboutSyncedSettingKeysChange(): void {
         this.syncedSettingsSubscribers.forEach((subscriber) => {
             subscriber(this.syncedSettingKeys);
         });
     }
 
-    public subscribeToModuleInstanceStateChange(cb: () => void): () => void {
+    subscribeToModuleInstanceStateChange(cb: () => void): () => void {
         this.moduleInstanceStateSubscribers.add(cb);
         return () => {
             this.moduleInstanceStateSubscribers.delete(cb);
         };
     }
 
-    public notifySubscribersAboutModuleInstanceStateChange(): void {
+    notifySubscribersAboutModuleInstanceStateChange(): void {
         this.moduleInstanceStateSubscribers.forEach((subscriber) => {
             subscriber(this.moduleInstanceState);
         });
@@ -218,11 +218,11 @@ export class ModuleInstance<StateType extends StateBaseType> {
         this.notifySubscribersAboutModuleInstanceStateChange();
     }
 
-    public getModuleInstanceState(): ModuleInstanceState {
+    getModuleInstanceState(): ModuleInstanceState {
         return this.moduleInstanceState;
     }
 
-    public setFatalError(err: Error, errInfo: ErrorInfo): void {
+    setFatalError(err: Error, errInfo: ErrorInfo): void {
         this.setModuleInstanceState(ModuleInstanceState.ERROR);
         this.fatalError = {
             err,
@@ -230,14 +230,14 @@ export class ModuleInstance<StateType extends StateBaseType> {
         };
     }
 
-    public getFatalError(): {
+    getFatalError(): {
         err: Error;
         errInfo: ErrorInfo;
     } | null {
         return this.fatalError;
     }
 
-    public reset(): Promise<void> {
+    reset(): Promise<void> {
         this.setModuleInstanceState(ModuleInstanceState.RESETTING);
 
         return new Promise((resolve) => {

@@ -14,10 +14,11 @@ export type RegisterModuleOptions = {
 
 export class ModuleRegistry {
     private static _registeredModules: Record<string, Module<any>> = {};
+
     /* eslint-disable-next-line @typescript-eslint/no-empty-function */
     private constructor() {}
 
-    public static registerModule<ModuleStateType extends StateBaseType>(
+    static registerModule<ModuleStateType extends StateBaseType>(
         options: RegisterModuleOptions
     ): Module<ModuleStateType> {
         const module = new Module<ModuleStateType>(
@@ -31,7 +32,7 @@ export class ModuleRegistry {
         return module;
     }
 
-    public static initModule<ModuleStateType extends StateBaseType>(
+    static initModule<ModuleStateType extends StateBaseType>(
         moduleName: string,
         defaultState: ModuleStateType,
         options?: StateOptions<ModuleStateType>
@@ -44,7 +45,7 @@ export class ModuleRegistry {
         throw "Did you forget to register your module in 'src/modules/registerAllModules.ts'?";
     }
 
-    public static getModule(moduleName: string): Module<any> {
+    static getModule(moduleName: string): Module<any> {
         const module = this._registeredModules[moduleName];
         if (module) {
             return module as Module<any>;
@@ -52,7 +53,7 @@ export class ModuleRegistry {
         throw "Did you forget to register your module in 'src/modules/registerAllModules.ts'?";
     }
 
-    public static getRegisteredModules(): Record<string, Module<any>> {
+    static getRegisteredModules(): Record<string, Module<any>> {
         return this._registeredModules;
     }
 }

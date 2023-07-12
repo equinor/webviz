@@ -12,19 +12,19 @@ interface State {
 }
 
 export class ErrorBoundary extends React.Component<Props, State> {
-    public state: State = {
+    state: State = {
         error: null,
     };
 
-    public static getDerivedStateFromError(err: Error): State {
+    static getDerivedStateFromError(err: Error): State {
         return { error: err };
     }
 
-    public componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
         this.props.moduleInstance.setFatalError(error, errorInfo);
     }
 
-    public render() {
+    render() {
         if (this.state.error) {
             return null;
         }

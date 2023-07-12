@@ -56,7 +56,7 @@ export class SensitivityResponseCalculator {
         this.referenceAverage = this.computeSensitivityAverage(this.referenceSensitivity);
     }
 
-    public computeSensitivitiesForResponse(): SensitivityResponseDataset {
+    computeSensitivitiesForResponse(): SensitivityResponseDataset {
         // Compute sensitivity responses for all sensitivities
         const sensitivityResponses: SensitivityResponse[] = [];
         this.sensitivities.getSensitivityArr().forEach((sensitivity) => {

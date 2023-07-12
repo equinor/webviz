@@ -65,27 +65,27 @@ export class Module<StateType extends StateBaseType> {
         this.drawPreviewFunc = drawPreviewFunc;
     }
 
-    public getDrawPreviewFunc(): DrawPreviewFunc | null {
+    getDrawPreviewFunc(): DrawPreviewFunc | null {
         return this.drawPreviewFunc;
     }
 
-    public getImportState(): ImportState {
+    getImportState(): ImportState {
         return this.importState;
     }
 
-    public getName() {
+    getName() {
         return this._name;
     }
 
-    public getDefaultTitle() {
+    getDefaultTitle() {
         return this._defaultTitle;
     }
 
-    public setWorkbench(workbench: Workbench): void {
+    setWorkbench(workbench: Workbench): void {
         this.workbench = workbench;
     }
 
-    public setDefaultState(defaultState: StateType, options?: StateOptions<StateType>): void {
+    setDefaultState(defaultState: StateType, options?: StateOptions<StateType>): void {
         this.defaultState = defaultState;
         this.stateOptions = options;
         this.moduleInstances.forEach((instance) => {
@@ -95,11 +95,11 @@ export class Module<StateType extends StateBaseType> {
         });
     }
 
-    public getSyncableSettingKeys(): SyncSettingKey[] {
+    getSyncableSettingKeys(): SyncSettingKey[] {
         return this.syncableSettingKeys;
     }
 
-    public makeInstance(): ModuleInstance<StateType> {
+    makeInstance(): ModuleInstance<StateType> {
         if (!this.workbench) {
             throw new Error("Module must be added to a workbench before making an instance");
         }

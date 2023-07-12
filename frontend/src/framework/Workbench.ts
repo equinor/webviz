@@ -63,7 +63,7 @@ export class Workbench {
         this.layout = [];
     }
 
-    public loadLayoutFromLocalStorage(): boolean {
+    loadLayoutFromLocalStorage(): boolean {
         const layoutString = localStorage.getItem("layout");
         if (!layoutString) return false;
 
@@ -72,31 +72,31 @@ export class Workbench {
         return true;
     }
 
-    public getGuiStateStore(): StateStore<WorkbenchGuiState> {
+    getGuiStateStore(): StateStore<WorkbenchGuiState> {
         return this.guiStateStore;
     }
 
-    public getLayout(): LayoutElement[] {
+    getLayout(): LayoutElement[] {
         return this.layout;
     }
 
-    public getWorkbenchSession(): WorkbenchSession {
+    getWorkbenchSession(): WorkbenchSession {
         return this._workbenchSession;
     }
 
-    public getWorkbenchServices(): WorkbenchServices {
+    getWorkbenchServices(): WorkbenchServices {
         return this._workbenchServices;
     }
 
-    public getBroadcaster(): Broadcaster {
+    getBroadcaster(): Broadcaster {
         return this._broadcaster;
     }
 
-    public getActiveModuleId(): string {
+    getActiveModuleId(): string {
         return this._activeModuleId;
     }
 
-    public getActiveModuleName(): string {
+    getActiveModuleName(): string {
         return (
             this.moduleInstances
                 .find((moduleInstance) => moduleInstance.getId() === this._activeModuleId)
@@ -104,7 +104,7 @@ export class Workbench {
         );
     }
 
-    public setActiveModuleId(id: string) {
+    setActiveModuleId(id: string) {
         this._activeModuleId = id;
         this.notifySubscribers(WorkbenchEvents.ActiveModuleChanged);
     }
@@ -127,15 +127,15 @@ export class Workbench {
         };
     }
 
-    public getModuleInstances(): ModuleInstance<any>[] {
+    getModuleInstances(): ModuleInstance<any>[] {
         return this.moduleInstances;
     }
 
-    public getModuleInstance(id: string): ModuleInstance<any> | undefined {
+    getModuleInstance(id: string): ModuleInstance<any> | undefined {
         return this.moduleInstances.find((moduleInstance) => moduleInstance.getId() === id);
     }
 
-    public makeLayout(layout: LayoutElement[]): void {
+    makeLayout(layout: LayoutElement[]): void {
         this.moduleInstances = [];
         this.setLayout(layout);
         layout.forEach((element, index: number) => {
@@ -160,7 +160,7 @@ export class Workbench {
         this.setLayout([]);
     }
 
-    public makeAndAddModuleInstance(moduleName: string, layout: LayoutElement): ModuleInstance<any> {
+    makeAndAddModuleInstance(moduleName: string, layout: LayoutElement): ModuleInstance<any> {
         const module = ModuleRegistry.getModule(moduleName);
         if (!module) {
             throw new Error(`Module ${moduleName} not found`);
@@ -178,7 +178,7 @@ export class Workbench {
         return moduleInstance;
     }
 
-    public removeModuleInstance(moduleInstanceId: string): void {
+    removeModuleInstance(moduleInstanceId: string): void {
         this._broadcaster.unregisterAllChannelsForModuleInstance(moduleInstanceId);
         this.moduleInstances = this.moduleInstances.filter((el) => el.getId() !== moduleInstanceId);
 
@@ -191,7 +191,7 @@ export class Workbench {
         this.notifySubscribers(WorkbenchEvents.ModuleInstancesChanged);
     }
 
-    public setLayout(layout: LayoutElement[]): void {
+    setLayout(layout: LayoutElement[]): void {
         this.layout = layout;
         this.notifySubscribers(WorkbenchEvents.FullModuleRerenderRequested);
 
@@ -201,7 +201,7 @@ export class Workbench {
         localStorage.setItem("layout", JSON.stringify(modifiedLayout));
     }
 
-    public maybeMakeFirstModuleInstanceActive(): void {
+    maybeMakeFirstModuleInstanceActive(): void {
         if (!this.moduleInstances.some((el) => el.getId() === this._activeModuleId)) {
             this._activeModuleId =
                 this.moduleInstances
@@ -212,7 +212,7 @@ export class Workbench {
         }
     }
 
-    public async loadAndSetupEnsembleSetInSession(
+    async loadAndSetupEnsembleSetInSession(
         queryClient: QueryClient,
         specifiedEnsembleIdents: EnsembleIdent[]
     ): Promise<void> {
