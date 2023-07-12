@@ -8,7 +8,7 @@ import { State } from "./state";
 export function settings({ moduleContext, workbenchServices, initialSettings }: ModuleFCProps<State>) {
     const [responseChannelName, setResponseChannelName] = moduleContext.useStoreState("responseChannelName");
 
-    initialSettings?.applyToStateAtMount("responseChannelName", "string", setResponseChannelName);
+    initialSettings?.applyToStateOnMount("responseChannelName", "string", setResponseChannelName);
 
     return (
         <>

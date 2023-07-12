@@ -59,7 +59,7 @@ export class InitialSettings {
         return this.get(settingName, type) !== undefined;
     }
 
-    applyToStateAtMount(
+    applyToStateOnMount(
         settingName: string,
         type: keyof InitialSettingsSupportedTypes,
         stateSetter: (value: any) => void

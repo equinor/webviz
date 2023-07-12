@@ -62,13 +62,13 @@ export function settings({ moduleContext, workbenchServices, initialSettings }: 
     const [orientation, setOrientation] = moduleContext.useStoreState("orientation");
     const [crossPlottingType, setCrossPlottingType] = React.useState<BroadcastChannelKeyCategory | null>(null);
 
-    initialSettings?.applyToStateAtMount("channelNameX", "string", setChannelNameX);
-    initialSettings?.applyToStateAtMount("channelNameY", "string", setChannelNameY);
-    initialSettings?.applyToStateAtMount("channelNameZ", "string", setChannelNameZ);
-    initialSettings?.applyToStateAtMount("plotType", "string", setPlotType);
-    initialSettings?.applyToStateAtMount("numBins", "number", setNumBins);
-    initialSettings?.applyToStateAtMount("orientation", "string", setOrientation);
-    initialSettings?.applyToStateAtMount("crossPlottingType", "string", setCrossPlottingType);
+    initialSettings?.applyToStateOnMount("channelNameX", "string", setChannelNameX);
+    initialSettings?.applyToStateOnMount("channelNameY", "string", setChannelNameY);
+    initialSettings?.applyToStateOnMount("channelNameZ", "string", setChannelNameZ);
+    initialSettings?.applyToStateOnMount("plotType", "string", setPlotType);
+    initialSettings?.applyToStateOnMount("numBins", "number", setNumBins);
+    initialSettings?.applyToStateOnMount("orientation", "string", setOrientation);
+    initialSettings?.applyToStateOnMount("crossPlottingType", "string", setCrossPlottingType);
 
     const handleChannelXChanged = (channelName: string) => {
         setChannelNameX(channelName);
