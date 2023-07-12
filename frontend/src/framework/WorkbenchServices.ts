@@ -83,7 +83,7 @@ export class WorkbenchServices {
         }
     }
 
-    public getBroadcaster(): Broadcaster {
+    getBroadcaster(): Broadcaster {
         return this._workbench.getBroadcaster();
     }
 }

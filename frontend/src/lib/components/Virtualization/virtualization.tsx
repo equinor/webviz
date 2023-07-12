@@ -1,6 +1,7 @@
 import React from "react";
 
-import { useElementSize } from "../../hooks/useElementSize";
+import { useElementSize } from "@lib/hooks/useElementSize";
+
 import { withDefaults } from "../_utils/components";
 
 export type VirtualizationProps<T = any> = {
