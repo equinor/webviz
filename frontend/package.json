@@ -9,7 +9,7 @@
         "preview": "vite preview",
         "generate-api": "openapi --input http://localhost:5000/openapi.json --output ./src/api --client axios --name ApiService --postfixModels _api",
         "typecheck": "tsc --noEmit",
-        "lint": "eslint 'src/**/*.+(ts|tsx|js|jsx|json)' 'tests/**/*.+(ts|tsx|js|jsx|json)'",
+        "lint": "eslint 'src/**/*.+(ts|tsx|js|jsx|json)' 'tests/**/*.+(ts|tsx|js|jsx|json)' --max-warnings=0",
         "validate": "npm run typecheck && npm run lint",
         "test": "jest"
     },
