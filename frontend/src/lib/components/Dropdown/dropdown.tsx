@@ -1,10 +1,10 @@
 import React from "react";
 import ReactDOM from "react-dom";
 
-import { getTextWidth } from "@framework/utils/textSize";
 import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/20/solid";
+import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
+import { getTextWidth } from "@lib/utils/textSize";
 
-import { useElementBoundingRect } from "../../hooks/useElementBoundingRect";
 import { IconButton } from "../IconButton";
 import { Input } from "../Input";
 import { Virtualization } from "../Virtualization";

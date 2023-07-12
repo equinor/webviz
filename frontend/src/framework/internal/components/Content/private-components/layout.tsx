@@ -2,6 +2,7 @@ import React from "react";
 
 import { LayoutElement, Workbench } from "@framework/Workbench";
 import { useModuleInstances } from "@framework/internal/hooks/workbenchHooks";
+import { useElementSize } from "@lib/hooks/useElementSize";
 import {
     MANHATTAN_LENGTH,
     Point,
@@ -12,8 +13,7 @@ import {
     pointRelativeToDomRect,
     pointerEventToPoint,
     rectContainsPoint,
-} from "@framework/utils/geometry";
-import { useElementSize } from "@lib/hooks/useElementSize";
+} from "@lib/utils/geometry";
 
 import { v4 } from "uuid";
 
