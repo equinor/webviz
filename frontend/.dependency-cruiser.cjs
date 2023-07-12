@@ -37,6 +37,18 @@ module.exports = {
                 path: "^(src/modules/_shared)",
             },
         },
+        {
+            name: "access-to-api-not-via-main-index-file",
+            comment:
+                "Models, types, objects and functions of the API should only be accessed through the main index file (import {...} from '@api').",
+            severity: "error",
+            from: {
+                pathNot: "^(src/api)",
+            },
+            to: {
+                path: "^(src/api/(?!index.ts))",
+            },
+        },
     ],
     options: {
         /* conditions specifying which files not to follow further when encountered:
