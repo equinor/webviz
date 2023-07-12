@@ -70,15 +70,15 @@ export class LayoutBox {
         this._layoutDirection = direction;
     }
 
-    public getRect(): Rect {
+    getRect(): Rect {
         return this._rectRelativeToParent;
     }
 
-    public getModuleInstanceId(): string | undefined {
+    getModuleInstanceId(): string | undefined {
         return this._moduleInstanceId;
     }
 
-    public getRectWithMargin(realSizeFactor: Size): Rect {
+    getRectWithMargin(realSizeFactor: Size): Rect {
         const absoluteRect = this.getAbsoluteRect();
         if (this._parent === null) {
             return {
@@ -104,7 +104,7 @@ export class LayoutBox {
         };
     }
 
-    public toString(): string {
+    toString(): string {
         let text = `LayoutBox(${this._rectRelativeToParent.x}, ${this._rectRelativeToParent.y}, ${this._rectRelativeToParent.width}, ${this._rectRelativeToParent.height})`;
         let currentParent = this._parent;
         while (currentParent) {
@@ -114,7 +114,7 @@ export class LayoutBox {
         return text;
     }
 
-    public log(): string {
+    log(): string {
         let text = "";
         for (let i = 0; i < this._level; i++) {
             text += " ";
@@ -126,7 +126,7 @@ export class LayoutBox {
         return text;
     }
 
-    public transformRectToRelative(rect: Rect): Rect {
+    transformRectToRelative(rect: Rect): Rect {
         let newRect = {
             x: (rect.x - this._rectRelativeToParent.x) / this._rectRelativeToParent.width,
             y: (rect.y - this._rectRelativeToParent.y) / this._rectRelativeToParent.height,
@@ -148,7 +148,7 @@ export class LayoutBox {
         return this._parent.transformRectToAbsolute(this._rectRelativeToParent);
     }
 
-    public transformRectToAbsolute(rect: Rect): Rect {
+    transformRectToAbsolute(rect: Rect): Rect {
         let newRect = {
             x: rect.x * this._rectRelativeToParent.width + this._rectRelativeToParent.x,
             y: rect.y * this._rectRelativeToParent.height + this._rectRelativeToParent.y,
@@ -334,22 +334,22 @@ export class LayoutBox {
         }
     }
 
-    public prependChild(child: LayoutBox) {
+    prependChild(child: LayoutBox) {
         this._children.unshift(child);
         this.reorderChildren();
     }
 
-    public appendChild(child: LayoutBox) {
+    appendChild(child: LayoutBox) {
         this._children.push(child);
         this.reorderChildren();
     }
 
-    public insertChildAt(child: LayoutBox, index: number) {
+    insertChildAt(child: LayoutBox, index: number) {
         this._children.splice(index, 0, child);
         this.reorderChildren();
     }
 
-    public removeChild(child: LayoutBox) {
+    removeChild(child: LayoutBox) {
         this._children = this._children.filter((c) => c !== child);
         if (this._children.length > 0) {
             this.reorderChildren();
@@ -361,15 +361,15 @@ export class LayoutBox {
         }
     }
 
-    public setChildren(children: LayoutBox[]): void {
+    setChildren(children: LayoutBox[]): void {
         this._children = children;
     }
 
-    public getChildren(): LayoutBox[] {
+    getChildren(): LayoutBox[] {
         return this._children;
     }
 
-    public findBoxContainingPoint(point: Point, realSize: Size): LayoutBox | null {
+    findBoxContainingPoint(point: Point, realSize: Size): LayoutBox | null {
         if (!rectContainsPoint(this.getRectWithMargin(realSize), point)) {
             return null;
         }
@@ -386,7 +386,7 @@ export class LayoutBox {
         return found || this;
     }
 
-    public findBoxContainingModuleInstance(moduleInstanceId: string): LayoutBox | null {
+    findBoxContainingModuleInstance(moduleInstanceId: string): LayoutBox | null {
         if (this._moduleInstanceId === moduleInstanceId) {
             return this;
         }
@@ -403,7 +403,7 @@ export class LayoutBox {
         return found;
     }
 
-    public getEdgeRects(realSize: Size): LayoutBoxEdge[] {
+    getEdgeRects(realSize: Size): LayoutBoxEdge[] {
         const rect = this.getRectWithMargin(realSize);
         const edges: LayoutBoxEdge[] = [];
 
@@ -519,7 +519,7 @@ export class LayoutBox {
         return edges;
     }
 
-    public findEdgeContainingPoint(
+    findEdgeContainingPoint(
         point: Point,
         realSize: Size,
         draggedModuleInstanceId: string
@@ -588,7 +588,7 @@ export class LayoutBox {
         return clone;
     }
 
-    public previewLayout(
+    previewLayout(
         pointerPoint: Point,
         realSize: Size,
         draggedModuleInstanceId: string,
@@ -703,7 +703,7 @@ export class LayoutBox {
         return position;
     }
 
-    public moveLayoutElement(source: LayoutBox, destination: LayoutBox, edge: LayoutBoxEdge): void {
+    moveLayoutElement(source: LayoutBox, destination: LayoutBox, edge: LayoutBoxEdge): void {
         if (source === destination) {
             return;
         }
@@ -759,7 +759,7 @@ export class LayoutBox {
         }
     }
 
-    public addLayoutElement(newBox: LayoutBox, destination: LayoutBox, edge: LayoutBoxEdge): void {
+    addLayoutElement(newBox: LayoutBox, destination: LayoutBox, edge: LayoutBoxEdge): void {
         if (edge.edge === LayoutBoxEdgeType.LEFT || edge.edge === LayoutBoxEdgeType.TOP) {
             if (destination._layoutDirection === LayoutDirection.SINGLE) {
                 const layoutType =
@@ -790,7 +790,7 @@ export class LayoutBox {
         }
     }
 
-    public removeLayoutElement(moduleInstanceId: string): void {
+    removeLayoutElement(moduleInstanceId: string): void {
         if (this._isWrapper) {
             this._children.forEach((child) => child.removeLayoutElement(moduleInstanceId));
         } else if (this._moduleInstanceId === moduleInstanceId) {
@@ -800,7 +800,7 @@ export class LayoutBox {
         }
     }
 
-    public toLayout(): LayoutElement[] {
+    toLayout(): LayoutElement[] {
         const layout: LayoutElement[] = [];
 
         if (this._isWrapper) {

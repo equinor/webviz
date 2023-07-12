@@ -1,6 +1,7 @@
 import React from "react";
 
 import { VectorRealizationData_api } from "@api";
+import { StatisticFunction_api } from "@api";
 import { BroadcastChannelMeta } from "@framework/Broadcaster";
 import { ModuleFCProps } from "@framework/Module";
 import { useElementSize } from "@lib/hooks/useElementSize";
@@ -16,8 +17,6 @@ import {
     sensitivityStatisticsTrace,
 } from "./simulationTimeSeriesChart/traces";
 import { State } from "./state";
-
-import { StatisticFunction } from "../../api/models/StatisticFunction";
 
 export const view = ({ moduleContext, workbenchSession }: ModuleFCProps<State>) => {
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);
@@ -91,7 +90,7 @@ export const view = ({ moduleContext, workbenchSession }: ModuleFCProps<State>) 
                     if (statisticsQuery.data) {
                         const meanCase = statisticsQuery.data.filter((stat) => stat.sensitivity_name === "rms_seed")[0];
                         const meanObj = meanCase.value_objects.filter(
-                            (statObj) => statObj.statistic_function === StatisticFunction.MEAN
+                            (statObj) => statObj.statistic_function === StatisticFunction_api.MEAN
                         );
                         traceDataArr.push(
                             sensitivityStatisticsTrace(
@@ -110,7 +109,7 @@ export const view = ({ moduleContext, workbenchSession }: ModuleFCProps<State>) 
                             if (cases) {
                                 for (const caseIdent of cases) {
                                     const meanObj = caseIdent.value_objects.filter(
-                                        (statObj) => statObj.statistic_function === StatisticFunction.MEAN
+                                        (statObj) => statObj.statistic_function === StatisticFunction_api.MEAN
                                     );
                                     traceDataArr.push(
                                         sensitivityStatisticsTrace(

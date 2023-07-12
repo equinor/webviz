@@ -41,29 +41,29 @@ export type WorkbenchGuiState = {
 };
 
 export class Workbench {
-    private moduleInstances: ModuleInstance<any>[];
+    private _moduleInstances: ModuleInstance<any>[];
     private _activeModuleId: string;
-    private guiStateStore: StateStore<WorkbenchGuiState>;
+    private _guiStateStore: StateStore<WorkbenchGuiState>;
     private _workbenchSession: WorkbenchSessionPrivate;
     private _workbenchServices: PrivateWorkbenchServices;
     private _broadcaster: Broadcaster;
     private _subscribersMap: { [key: string]: Set<() => void> };
-    private layout: LayoutElement[];
+    private _layout: LayoutElement[];
 
     constructor() {
-        this.moduleInstances = [];
+        this._moduleInstances = [];
         this._activeModuleId = "";
-        this.guiStateStore = new StateStore<WorkbenchGuiState>({
+        this._guiStateStore = new StateStore<WorkbenchGuiState>({
             drawerContent: DrawerContent.None,
         });
         this._workbenchSession = new WorkbenchSessionPrivate();
         this._workbenchServices = new PrivateWorkbenchServices(this);
         this._broadcaster = new Broadcaster();
         this._subscribersMap = {};
-        this.layout = [];
+        this._layout = [];
     }
 
-    public loadLayoutFromLocalStorage(): boolean {
+    loadLayoutFromLocalStorage(): boolean {
         const layoutString = localStorage.getItem("layout");
         if (!layoutString) return false;
 
@@ -72,39 +72,39 @@ export class Workbench {
         return true;
     }
 
-    public getGuiStateStore(): StateStore<WorkbenchGuiState> {
-        return this.guiStateStore;
+    getGuiStateStore(): StateStore<WorkbenchGuiState> {
+        return this._guiStateStore;
     }
 
-    public getLayout(): LayoutElement[] {
-        return this.layout;
+    getLayout(): LayoutElement[] {
+        return this._layout;
     }
 
-    public getWorkbenchSession(): WorkbenchSession {
+    getWorkbenchSession(): WorkbenchSession {
         return this._workbenchSession;
     }
 
-    public getWorkbenchServices(): WorkbenchServices {
+    getWorkbenchServices(): WorkbenchServices {
         return this._workbenchServices;
     }
 
-    public getBroadcaster(): Broadcaster {
+    getBroadcaster(): Broadcaster {
         return this._broadcaster;
     }
 
-    public getActiveModuleId(): string {
+    getActiveModuleId(): string {
         return this._activeModuleId;
     }
 
-    public getActiveModuleName(): string {
+    getActiveModuleName(): string {
         return (
-            this.moduleInstances
+            this._moduleInstances
                 .find((moduleInstance) => moduleInstance.getId() === this._activeModuleId)
                 ?.getTitle() || ""
         );
     }
 
-    public setActiveModuleId(id: string) {
+    setActiveModuleId(id: string) {
         this._activeModuleId = id;
         this.notifySubscribers(WorkbenchEvents.ActiveModuleChanged);
     }
@@ -127,16 +127,16 @@ export class Workbench {
         };
     }
 
-    public getModuleInstances(): ModuleInstance<any>[] {
-        return this.moduleInstances;
+    getModuleInstances(): ModuleInstance<any>[] {
+        return this._moduleInstances;
     }
 
-    public getModuleInstance(id: string): ModuleInstance<any> | undefined {
-        return this.moduleInstances.find((moduleInstance) => moduleInstance.getId() === id);
+    getModuleInstance(id: string): ModuleInstance<any> | undefined {
+        return this._moduleInstances.find((moduleInstance) => moduleInstance.getId() === id);
     }
 
-    public makeLayout(layout: LayoutElement[]): void {
-        this.moduleInstances = [];
+    makeLayout(layout: LayoutElement[]): void {
+        this._moduleInstances = [];
         this.setLayout(layout);
         layout.forEach((element, index: number) => {
             const module = ModuleRegistry.getModule(element.moduleName);
@@ -146,21 +146,21 @@ export class Workbench {
 
             module.setWorkbench(this);
             const moduleInstance = module.makeInstance();
-            this.moduleInstances.push(moduleInstance);
-            this.layout[index] = { ...this.layout[index], moduleInstanceId: moduleInstance.getId() };
+            this._moduleInstances.push(moduleInstance);
+            this._layout[index] = { ...this._layout[index], moduleInstanceId: moduleInstance.getId() };
             this.notifySubscribers(WorkbenchEvents.ModuleInstancesChanged);
         });
     }
 
     private clearLayout(): void {
-        for (const moduleInstance of this.moduleInstances) {
+        for (const moduleInstance of this._moduleInstances) {
             this._broadcaster.unregisterAllChannelsForModuleInstance(moduleInstance.getId());
         }
-        this.moduleInstances = [];
+        this._moduleInstances = [];
         this.setLayout([]);
     }
 
-    public makeAndAddModuleInstance(moduleName: string, layout: LayoutElement): ModuleInstance<any> {
+    makeAndAddModuleInstance(moduleName: string, layout: LayoutElement): ModuleInstance<any> {
         const module = ModuleRegistry.getModule(moduleName);
         if (!module) {
             throw new Error(`Module ${moduleName} not found`);
@@ -169,20 +169,20 @@ export class Workbench {
         module.setWorkbench(this);
 
         const moduleInstance = module.makeInstance();
-        this.moduleInstances.push(moduleInstance);
+        this._moduleInstances.push(moduleInstance);
 
-        this.layout.push({ ...layout, moduleInstanceId: moduleInstance.getId() });
+        this._layout.push({ ...layout, moduleInstanceId: moduleInstance.getId() });
         this.notifySubscribers(WorkbenchEvents.ModuleInstancesChanged);
         this._activeModuleId = moduleInstance.getId();
         this.notifySubscribers(WorkbenchEvents.ActiveModuleChanged);
         return moduleInstance;
     }
 
-    public removeModuleInstance(moduleInstanceId: string): void {
+    removeModuleInstance(moduleInstanceId: string): void {
         this._broadcaster.unregisterAllChannelsForModuleInstance(moduleInstanceId);
-        this.moduleInstances = this.moduleInstances.filter((el) => el.getId() !== moduleInstanceId);
+        this._moduleInstances = this._moduleInstances.filter((el) => el.getId() !== moduleInstanceId);
 
-        const newLayout = this.layout.filter((el) => el.moduleInstanceId !== moduleInstanceId);
+        const newLayout = this._layout.filter((el) => el.moduleInstanceId !== moduleInstanceId);
         this.setLayout(newLayout);
         if (this._activeModuleId === moduleInstanceId) {
             this._activeModuleId = "";
@@ -191,8 +191,8 @@ export class Workbench {
         this.notifySubscribers(WorkbenchEvents.ModuleInstancesChanged);
     }
 
-    public setLayout(layout: LayoutElement[]): void {
-        this.layout = layout;
+    setLayout(layout: LayoutElement[]): void {
+        this._layout = layout;
         this.notifySubscribers(WorkbenchEvents.FullModuleRerenderRequested);
 
         const modifiedLayout = layout.map((el) => {
@@ -201,10 +201,10 @@ export class Workbench {
         localStorage.setItem("layout", JSON.stringify(modifiedLayout));
     }
 
-    public maybeMakeFirstModuleInstanceActive(): void {
-        if (!this.moduleInstances.some((el) => el.getId() === this._activeModuleId)) {
+    maybeMakeFirstModuleInstanceActive(): void {
+        if (!this._moduleInstances.some((el) => el.getId() === this._activeModuleId)) {
             this._activeModuleId =
-                this.moduleInstances
+                this._moduleInstances
                     .filter((el) => el.getImportState() === ImportState.Imported)
                     .at(0)
                     ?.getId() || "";
@@ -212,7 +212,7 @@ export class Workbench {
         }
     }
 
-    public async loadAndSetupEnsembleSetInSession(
+    async loadAndSetupEnsembleSetInSession(
         queryClient: QueryClient,
         specifiedEnsembleIdents: EnsembleIdent[]
     ): Promise<void> {
@@ -238,8 +238,8 @@ export class Workbench {
 
         this.makeLayout(newLayout);
 
-        for (let i = 0; i < this.moduleInstances.length; i++) {
-            const moduleInstance = this.moduleInstances[i];
+        for (let i = 0; i < this._moduleInstances.length; i++) {
+            const moduleInstance = this._moduleInstances[i];
             const templateModule = template.moduleInstances[i];
             if (templateModule.syncedSettings) {
                 for (const syncSettingKey of templateModule.syncedSettings) {
@@ -260,7 +260,7 @@ export class Workbench {
                         throw new Error("Could not find module instance for data channel");
                     }
 
-                    const listensToModuleInstance = this.moduleInstances[moduleInstanceIndex];
+                    const listensToModuleInstance = this._moduleInstances[moduleInstanceIndex];
                     const channel = listensToModuleInstance.getContext().getChannel(dataChannel.channelName);
                     if (!channel) {
                         throw new Error("Could not find channel");

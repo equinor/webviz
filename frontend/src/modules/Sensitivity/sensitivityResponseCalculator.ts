@@ -35,31 +35,31 @@ export class SensitivityResponseCalculator {
     /**
      * Class for calculating sensitivities for a given Ensemble response
      */
-    private ensembleResponse: EnsembleScalarResponse_api;
-    private sensitivities: EnsembleSensitivities;
-    private referenceSensitivity: string;
-    private referenceAverage: number;
+    private _ensembleResponse: EnsembleScalarResponse_api;
+    private _sensitivities: EnsembleSensitivities;
+    private _referenceSensitivity: string;
+    private _referenceAverage: number;
 
     constructor(
         sensitivities: EnsembleSensitivities,
         ensembleResponse: EnsembleScalarResponse_api,
         referenceSensitivity = "rms_seed"
     ) {
-        this.ensembleResponse = ensembleResponse;
-        this.sensitivities = sensitivities;
-        if (!this.sensitivities.hasSensitivityName(referenceSensitivity)) {
+        this._ensembleResponse = ensembleResponse;
+        this._sensitivities = sensitivities;
+        if (!this._sensitivities.hasSensitivityName(referenceSensitivity)) {
             throw new Error(
                 `SensitivityResponseCalculator: Reference sensitivity ${referenceSensitivity} not found in ensemble`
             );
         }
-        this.referenceSensitivity = referenceSensitivity;
-        this.referenceAverage = this.computeSensitivityAverage(this.referenceSensitivity);
+        this._referenceSensitivity = referenceSensitivity;
+        this._referenceAverage = this.computeSensitivityAverage(this._referenceSensitivity);
     }
 
-    public computeSensitivitiesForResponse(): SensitivityResponseDataset {
+    computeSensitivitiesForResponse(): SensitivityResponseDataset {
         // Compute sensitivity responses for all sensitivities
         const sensitivityResponses: SensitivityResponse[] = [];
-        this.sensitivities.getSensitivityArr().forEach((sensitivity) => {
+        this._sensitivities.getSensitivityArr().forEach((sensitivity) => {
             //Skip if the sensitivity is the so called "ref" case. This is a special case that is not a sensitivity.
             if (sensitivity.name === IGNORED_CASE) {
                 // TODO: Add check for single realization
@@ -76,11 +76,11 @@ export class SensitivityResponseCalculator {
 
         const sensitivityResponseDataset: SensitivityResponseDataset = {
             sensitivityResponses: this.sortSensitivityResponses(sensitivityResponses),
-            referenceSensitivity: this.referenceSensitivity,
-            referenceAverage: this.referenceAverage,
+            referenceSensitivity: this._referenceSensitivity,
+            referenceAverage: this._referenceAverage,
             scale: SensitivityScale.RELATIVE,
-            responseName: this.ensembleResponse.name,
-            responseUnit: this.ensembleResponse.unit,
+            responseName: this._ensembleResponse.name,
+            responseUnit: this._ensembleResponse.unit,
         };
         return sensitivityResponseDataset;
     }
@@ -88,9 +88,9 @@ export class SensitivityResponseCalculator {
     private getResponseValuesForRealizations(realizations: number[]): number[] {
         //Find response values for given realizations
         const responseValues: number[] = [];
-        this.ensembleResponse.realizations.forEach((value, index) => {
+        this._ensembleResponse.realizations.forEach((value, index) => {
             if (realizations.includes(value)) {
-                responseValues.push(this.ensembleResponse.values[index]);
+                responseValues.push(this._ensembleResponse.values[index]);
             }
         });
         return responseValues;
@@ -117,7 +117,7 @@ export class SensitivityResponseCalculator {
 
     private computeSensitivityAverage(sensitivityName: string): number {
         // Compute average of response values for given sensitivity
-        const sensitivity = this.sensitivities.getSensitivityByName(sensitivityName);
+        const sensitivity = this._sensitivities.getSensitivityByName(sensitivityName);
         const realizations: number[] = [];
         sensitivity.cases.forEach((case_) => {
             case_.realizations.forEach((realization) => {
@@ -151,9 +151,9 @@ export class SensitivityResponseCalculator {
 
         sensitivity.cases.forEach((case_) => {
             case_.realizations.forEach((realization) => {
-                if (this.ensembleResponse.realizations.includes(realization)) {
-                    const index = this.ensembleResponse.realizations.indexOf(realization);
-                    if (this.ensembleResponse.values[index] <= this.referenceAverage) {
+                if (this._ensembleResponse.realizations.includes(realization)) {
+                    const index = this._ensembleResponse.realizations.indexOf(realization);
+                    if (this._ensembleResponse.values[index] <= this._referenceAverage) {
                         realizations.push(realization);
                     }
                 }
@@ -168,9 +168,9 @@ export class SensitivityResponseCalculator {
 
         sensitivity.cases.forEach((case_) => {
             case_.realizations.forEach((realization) => {
-                if (this.ensembleResponse.realizations.includes(realization)) {
-                    const index = this.ensembleResponse.realizations.indexOf(realization);
-                    if (this.ensembleResponse.values[index] > this.referenceAverage) {
+                if (this._ensembleResponse.realizations.includes(realization)) {
+                    const index = this._ensembleResponse.realizations.indexOf(realization);
+                    if (this._ensembleResponse.values[index] > this._referenceAverage) {
                         realizations.push(realization);
                     }
                 }
@@ -192,12 +192,12 @@ export class SensitivityResponseCalculator {
             lowCaseName: "P90",
             lowCaseAverage: this.computeResponseOilP90(sensitivityCase.realizations),
             lowCaseReferenceDifference:
-                this.computeResponseOilP90(sensitivityCase.realizations) - this.referenceAverage,
+                this.computeResponseOilP90(sensitivityCase.realizations) - this._referenceAverage,
             lowCaseRealizations: this.getSensitivityRealizationsLessOrEqualToReferenceAverage(sensitivity),
             highCaseName: "P10",
             highCaseAverage: this.computeResponseOilP10(sensitivityCase.realizations),
             highCaseReferenceDifference:
-                this.computeResponseOilP10(sensitivityCase.realizations) - this.referenceAverage,
+                this.computeResponseOilP10(sensitivityCase.realizations) - this._referenceAverage,
             highCaseRealizations: this.getSensitivityRealizationsGreaterThanReferenceAverage(sensitivity),
         };
         return sensitivityResponse;
@@ -219,10 +219,10 @@ export class SensitivityResponseCalculator {
                 lowCaseName: sensitivityCase.name,
                 lowCaseAverage: this.computeResponseAverage(sensitivityCase.realizations),
                 lowCaseReferenceDifference:
-                    this.computeResponseAverage(sensitivityCase.realizations) - this.referenceAverage,
+                    this.computeResponseAverage(sensitivityCase.realizations) - this._referenceAverage,
                 lowCaseRealizations: sensitivityCase.realizations,
                 highCaseName: "",
-                highCaseAverage: this.referenceAverage,
+                highCaseAverage: this._referenceAverage,
                 highCaseReferenceDifference: 0,
                 highCaseRealizations: [],
             };
@@ -242,11 +242,11 @@ export class SensitivityResponseCalculator {
             sensitivityName: sensitivity.name,
             lowCaseName: sensitivity.cases[lowCaseIndex].name,
             lowCaseAverage: caseAverages[lowCaseIndex],
-            lowCaseReferenceDifference: caseAverages[lowCaseIndex] - this.referenceAverage,
+            lowCaseReferenceDifference: caseAverages[lowCaseIndex] - this._referenceAverage,
             lowCaseRealizations: sensitivity.cases[lowCaseIndex].realizations,
             highCaseName: sensitivity.cases[highCaseIndex].name,
             highCaseAverage: caseAverages[highCaseIndex],
-            highCaseReferenceDifference: caseAverages[highCaseIndex] - this.referenceAverage,
+            highCaseReferenceDifference: caseAverages[highCaseIndex] - this._referenceAverage,
             highCaseRealizations: sensitivity.cases[highCaseIndex].realizations,
         };
         return sensitivityResponse;
