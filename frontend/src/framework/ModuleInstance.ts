@@ -35,7 +35,7 @@ export class ModuleInstance<StateType extends StateBaseType> {
     private syncedSettingsSubscribers: Set<(syncedSettings: SyncSettingKey[]) => void>;
     private titleChangeSubscribers: Set<(title: string) => void>;
     private broadcastChannels: Record<string, BroadcastChannel>;
-    private cachedInitialState: StateType | null;
+    private cachedDefaultState: StateType | null;
     private cachedStateStoreOptions?: StateOptions<StateType>;
     private _presetProps: InitialSettings | null;
 
@@ -58,7 +58,7 @@ export class ModuleInstance<StateType extends StateBaseType> {
         this.titleChangeSubscribers = new Set();
         this.moduleInstanceState = ModuleInstanceState.INITIALIZING;
         this.fatalError = null;
-        this.cachedInitialState = null;
+        this.cachedDefaultState = null;
         this._presetProps = null;
 
         this.broadcastChannels = {} as Record<string, BroadcastChannel>;
@@ -83,13 +83,13 @@ export class ModuleInstance<StateType extends StateBaseType> {
         return this.broadcastChannels[channelName];
     }
 
-    public setInitialState(initialState: StateType, options?: StateOptions<StateType>): void {
-        if (this.cachedInitialState === null) {
-            this.cachedInitialState = initialState;
+    public setDefaultState(defaultState: StateType, options?: StateOptions<StateType>): void {
+        if (this.cachedDefaultState === null) {
+            this.cachedDefaultState = defaultState;
             this.cachedStateStoreOptions = options;
         }
 
-        this.stateStore = new StateStore<StateType>(cloneDeep(initialState), options);
+        this.stateStore = new StateStore<StateType>(cloneDeep(defaultState), options);
         this.context = new ModuleContext<StateType>(this, this.stateStore);
         this.initialised = true;
         this.setModuleInstanceState(ModuleInstanceState.OK);
@@ -241,7 +241,7 @@ export class ModuleInstance<StateType extends StateBaseType> {
         this.setModuleInstanceState(ModuleInstanceState.RESETTING);
 
         return new Promise((resolve) => {
-            this.setInitialState(this.cachedInitialState as StateType, this.cachedStateStoreOptions);
+            this.setDefaultState(this.cachedDefaultState as StateType, this.cachedStateStoreOptions);
             resolve();
         });
     }

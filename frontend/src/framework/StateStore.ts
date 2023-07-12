@@ -16,8 +16,8 @@ export class StateStore<StateType extends StateBaseType> {
     private _options?: StateOptions<StateType>;
     private _subscribersMap: Partial<Record<keyof StateType, Set<any>>>;
 
-    constructor(initialState: StateType, options?: StateOptions<StateType>) {
-        this._state = initialState;
+    constructor(defaultState: StateType, options?: StateOptions<StateType>) {
+        this._state = defaultState;
         this._subscribersMap = {};
         this._options = options;
     }
