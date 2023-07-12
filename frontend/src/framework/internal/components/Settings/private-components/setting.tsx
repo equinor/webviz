@@ -4,7 +4,7 @@ import { ImportState } from "@framework/Module";
 import { ModuleInstance, ModuleInstanceState } from "@framework/ModuleInstance";
 import { Workbench } from "@framework/Workbench";
 import { ErrorBoundary } from "@framework/internal/components/ErrorBoundary";
-import { useImportState } from "@framework/hooks/moduleHooks";
+import { useImportState } from "@framework/internal/hooks/moduleHooks";
 import { CircularProgress } from "@lib/components/CircularProgress";
 
 type SettingProps = {

@@ -1,7 +1,7 @@
 import React from "react";
 
 import { LayoutElement, Workbench } from "@framework/Workbench";
-import { Content } from "@framework/components/Content";
+import { Content } from "@framework/internal/components/Content";
 import { Settings } from "@framework/internal/components/Settings";
 import { TopNavBar } from "@framework/internal/components/TopNavBar";
 import { AuthProvider } from "@framework/providers/AuthProvider";

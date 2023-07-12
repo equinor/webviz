@@ -1,15 +1,17 @@
 import React from "react";
 
 import { LayoutElement, Workbench } from "@framework/Workbench";
-import { useModuleInstances } from "@framework/hooks/workbenchHooks";
+import { useModuleInstances } from "@framework/internal/hooks/workbenchHooks";
 import {
     MANHATTAN_LENGTH,
     Point,
     Rect,
+    addMarginToRect,
     pointDifference,
     pointDistance,
     pointRelativeToDomRect,
     pointerEventToPoint,
+    rectContainsPoint,
 } from "@framework/utils/geometry";
 import { useElementSize } from "@lib/hooks/useElementSize";
 
@@ -21,8 +23,6 @@ import { ModulesList } from "./modulesList";
 import { GroupModules } from "./syncSettings";
 import { TemplatesList } from "./templatesList";
 import { ViewWrapperPlaceholder } from "./viewWrapperPlaceholder";
-
-import { addMarginToRect, rectContainsPoint } from "../../../utils/geometry";
 
 type LayoutProps = {
     workbench: Workbench;

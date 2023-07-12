@@ -3,7 +3,7 @@ import React from "react";
 import { useStoreState } from "@framework/StateStore";
 import { SyncSettingKey, SyncSettingsMeta } from "@framework/SyncSettings";
 import { DrawerContent, Workbench } from "@framework/Workbench";
-import { useActiveModuleId } from "@framework/hooks/workbenchHooks";
+import { useActiveModuleId } from "@framework/internal/hooks/workbenchHooks";
 import { Checkbox } from "@lib/components/Checkbox";
 
 import { Drawer } from "./drawer";

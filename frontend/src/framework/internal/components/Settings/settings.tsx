@@ -2,7 +2,7 @@ import React from "react";
 
 import { useStoreValue } from "@framework/StateStore";
 import { DrawerContent, Workbench } from "@framework/Workbench";
-import { useActiveModuleId, useModuleInstances } from "@framework/hooks/workbenchHooks";
+import { useActiveModuleId, useModuleInstances } from "@framework/internal/hooks/workbenchHooks";
 import { resolveClassNames } from "@lib/components/_utils/resolveClassNames";
 
 import { Setting } from "./private-components/setting";
