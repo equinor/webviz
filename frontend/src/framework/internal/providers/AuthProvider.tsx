@@ -2,7 +2,6 @@ import React from "react";
 
 import { UserInfo_api } from "@api";
 import { apiService } from "@framework/ApiService";
-import { createGenericContext } from "@framework/utils/genericContext";
 
 export enum AuthState {
     LoggedIn = "LoggedIn",
@@ -14,6 +13,22 @@ type Context = {
     authState: AuthState;
     userInfo: UserInfo_api | null;
     setAuthState: React.Dispatch<React.SetStateAction<AuthState>>;
+};
+
+const createGenericContext = <T extends object>() => {
+    // Create a context with a generic parameter or undefined
+    const genericContext = React.createContext<T | undefined>(undefined);
+
+    // Check if the value provided to the context is defined or throw an error
+    const useGenericContext = () => {
+        const contextIsDefined = React.useContext(genericContext);
+        if (!contextIsDefined) {
+            throw new Error("useGenericContext must be used within a Provider");
+        }
+        return contextIsDefined;
+    };
+
+    return [useGenericContext, genericContext.Provider] as const;
 };
 
 const [useAuthContextProvider, AuthContextProvider] = createGenericContext<Context>();
