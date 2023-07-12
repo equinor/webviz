@@ -1,6 +1,6 @@
 import { EnsembleScalarResponse_api } from "@api";
 import { EnsembleSensitivities, Sensitivity, SensitivityCase, SensitivityType } from "@framework/EnsembleSensitivities";
-import { computeQuantile } from "@shared-utils/statistics";
+import { computeQuantile } from "@modules_shared/statistics";
 
 export interface SensitivityResponse {
     sensitivityName: string;
