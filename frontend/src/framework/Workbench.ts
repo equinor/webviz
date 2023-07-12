@@ -2,10 +2,12 @@ import { QueryClient } from "@tanstack/react-query";
 
 import { Broadcaster } from "./Broadcaster";
 import { EnsembleIdent } from "./EnsembleIdent";
+import { InitialSettings } from "./InitialSettings";
 import { ImportState } from "./Module";
 import { ModuleInstance } from "./ModuleInstance";
 import { ModuleRegistry } from "./ModuleRegistry";
 import { StateStore } from "./StateStore";
+import { Template } from "./TemplateRegistry";
 import { WorkbenchServices } from "./WorkbenchServices";
 import { WorkbenchSession } from "./WorkbenchSession";
 import { loadEnsembleSetMetadataFromBackend } from "./internal/EnsembleSetLoader";
@@ -18,6 +20,13 @@ export enum WorkbenchEvents {
     FullModuleRerenderRequested = "FullModuleRerenderRequested",
 }
 
+export enum DrawerContent {
+    None = "None",
+    ModulesList = "ModulesList",
+    TemplatesList = "TemplatesList",
+    SyncSettings = "SyncSettings",
+}
+
 export type LayoutElement = {
     moduleInstanceId?: string;
     moduleName: string;
@@ -28,8 +37,7 @@ export type LayoutElement = {
 };
 
 export type WorkbenchGuiState = {
-    modulesListOpen: boolean;
-    syncSettingsActive: boolean;
+    drawerContent: DrawerContent;
 };
 
 export class Workbench {
@@ -46,8 +54,7 @@ export class Workbench {
         this.moduleInstances = [];
         this._activeModuleId = "";
         this.guiStateStore = new StateStore<WorkbenchGuiState>({
-            modulesListOpen: false,
-            syncSettingsActive: false,
+            drawerContent: DrawerContent.None,
         });
         this._workbenchSession = new WorkbenchSessionPrivate();
         this._workbenchServices = new PrivateWorkbenchServices(this);
@@ -145,6 +152,14 @@ export class Workbench {
         });
     }
 
+    private clearLayout(): void {
+        for (const moduleInstance of this.moduleInstances) {
+            this._broadcaster.unregisterAllChannelsForModuleInstance(moduleInstance.getId());
+        }
+        this.moduleInstances = [];
+        this.setLayout([]);
+    }
+
     public makeAndAddModuleInstance(moduleName: string, layout: LayoutElement): ModuleInstance<any> {
         const module = ModuleRegistry.getModule(moduleName);
         if (!module) {
@@ -212,5 +227,57 @@ export class Workbench {
 
         console.debug("loadAndSetupEnsembleSetInSession - publishing");
         return this._workbenchSession.setEnsembleSet(newEnsembleSet);
+    }
+
+    applyTemplate(template: Template): void {
+        this.clearLayout();
+
+        const newLayout = template.moduleInstances.map((el) => {
+            return { ...el.layout, moduleName: el.moduleName };
+        });
+
+        this.makeLayout(newLayout);
+
+        for (let i = 0; i < this.moduleInstances.length; i++) {
+            const moduleInstance = this.moduleInstances[i];
+            const templateModule = template.moduleInstances[i];
+            if (templateModule.syncedSettings) {
+                for (const syncSettingKey of templateModule.syncedSettings) {
+                    moduleInstance.addSyncedSetting(syncSettingKey);
+                }
+            }
+
+            const initialSettings: Record<string, unknown> = templateModule.initialSettings || {};
+
+            if (templateModule.dataChannelsToInitialSettingsMapping) {
+                for (const propName of Object.keys(templateModule.dataChannelsToInitialSettingsMapping)) {
+                    const dataChannel = templateModule.dataChannelsToInitialSettingsMapping[propName];
+
+                    const moduleInstanceIndex = template.moduleInstances.findIndex(
+                        (el) => el.instanceRef === dataChannel.listensToInstanceRef
+                    );
+                    if (moduleInstanceIndex === -1) {
+                        throw new Error("Could not find module instance for data channel");
+                    }
+
+                    const listensToModuleInstance = this.moduleInstances[moduleInstanceIndex];
+                    const channel = listensToModuleInstance.getContext().getChannel(dataChannel.channelName);
+                    if (!channel) {
+                        throw new Error("Could not find channel");
+                    }
+
+                    initialSettings[propName] = channel.getName();
+                }
+            }
+
+            moduleInstance.setInitialSettings(new InitialSettings(initialSettings));
+
+            if (i === 0) {
+                this._activeModuleId = moduleInstance.getId();
+                this.notifySubscribers(WorkbenchEvents.ActiveModuleChanged);
+            }
+        }
+
+        this.notifySubscribers(WorkbenchEvents.ModuleInstancesChanged);
     }
 }

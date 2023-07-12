@@ -59,7 +59,10 @@ export const Header: React.FC<HeaderProps> = (props) => {
                 )}
                 <>
                     {syncedSettings.map((setting) => (
-                        <span key={setting} className="flex rounded p-2 bg-indigo-700 text-white ml-2 text-xs">
+                        <span
+                            key={setting}
+                            className="flex items-center justify-center rounded p-1 bg-indigo-700 text-white ml-2 text-xs mr-2"
+                        >
                             {SyncSettingsMeta[setting].abbreviation}
                         </span>
                     ))}

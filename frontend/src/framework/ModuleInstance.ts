@@ -3,6 +3,7 @@ import { ErrorInfo } from "react";
 import { cloneDeep } from "lodash";
 
 import { BroadcastChannel, BroadcastChannelsDef } from "./Broadcaster";
+import { InitialSettings } from "./InitialSettings";
 import { ImportState, Module, ModuleFC } from "./Module";
 import { ModuleContext } from "./ModuleContext";
 import { StateBaseType, StateOptions, StateStore } from "./StateStore";
@@ -36,6 +37,7 @@ export class ModuleInstance<StateType extends StateBaseType> {
     private broadcastChannels: Record<string, BroadcastChannel>;
     private cachedDefaultState: StateType | null;
     private cachedStateStoreOptions?: StateOptions<StateType>;
+    private _initialSettings: InitialSettings | null;
 
     constructor(
         module: Module<StateType>,
@@ -57,6 +59,7 @@ export class ModuleInstance<StateType extends StateBaseType> {
         this.moduleInstanceState = ModuleInstanceState.INITIALIZING;
         this.fatalError = null;
         this.cachedDefaultState = null;
+        this._initialSettings = null;
 
         this.broadcastChannels = {} as Record<string, BroadcastChannel>;
 
@@ -241,5 +244,13 @@ export class ModuleInstance<StateType extends StateBaseType> {
             this.setDefaultState(this.cachedDefaultState as StateType, this.cachedStateStoreOptions);
             resolve();
         });
+    }
+
+    setInitialSettings(initialSettings: InitialSettings): void {
+        this._initialSettings = initialSettings;
+    }
+
+    getInitialSettings(): InitialSettings | null {
+        return this._initialSettings;
     }
 }

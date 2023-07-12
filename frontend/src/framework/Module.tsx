@@ -3,8 +3,10 @@ import React from "react";
 import { cloneDeep } from "lodash";
 
 import { BroadcastChannelsDef } from "./Broadcaster";
+import { InitialSettings } from "./InitialSettings";
 import { ModuleContext } from "./ModuleContext";
 import { ModuleInstance } from "./ModuleInstance";
+import { DrawPreviewFunc } from "./Preview";
 import { StateBaseType, StateOptions } from "./StateStore";
 import { SyncSettingKey } from "./SyncSettings";
 import { Workbench } from "./Workbench";
@@ -15,6 +17,7 @@ export type ModuleFCProps<S extends StateBaseType> = {
     moduleContext: ModuleContext<S>;
     workbenchSession: WorkbenchSession;
     workbenchServices: WorkbenchServices;
+    initialSettings?: InitialSettings;
 };
 
 export type ModuleFC<S extends StateBaseType> = React.FC<ModuleFCProps<S>>;
@@ -39,12 +42,14 @@ export class Module<StateType extends StateBaseType> {
     private workbench: Workbench | null;
     private syncableSettingKeys: SyncSettingKey[];
     private channelsDef: BroadcastChannelsDef;
+    private drawPreviewFunc: DrawPreviewFunc | null;
 
     constructor(
         name: string,
         defaultTitle: string,
         syncableSettingKeys: SyncSettingKey[] = [],
-        broadcastChannelsDef: BroadcastChannelsDef = {}
+        broadcastChannelsDef: BroadcastChannelsDef = {},
+        drawPreviewFunc: DrawPreviewFunc | null = null
     ) {
         this._name = name;
         this._defaultTitle = defaultTitle;
@@ -57,6 +62,11 @@ export class Module<StateType extends StateBaseType> {
         this.workbench = null;
         this.syncableSettingKeys = syncableSettingKeys;
         this.channelsDef = broadcastChannelsDef;
+        this.drawPreviewFunc = drawPreviewFunc;
+    }
+
+    public getDrawPreviewFunc(): DrawPreviewFunc | null {
+        return this.drawPreviewFunc;
     }
 
     public getImportState(): ImportState {

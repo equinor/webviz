@@ -8,7 +8,8 @@ import { AuthProvider } from "@framework/providers/AuthProvider";
 import { CustomQueryClientProvider } from "@framework/providers/QueryClientProvider";
 import { ResizablePanels } from "@lib/components/ResizablePanels";
 
-import "./modules/registerAllModules.ts";
+import "./modules/registerAllModules";
+import "./templates/registerAllTemplates";
 
 const layout: LayoutElement[] = [];
 

@@ -1,11 +1,12 @@
 import React from "react";
 
 import { EnsembleIdent } from "@framework/EnsembleIdent";
-import { useSetStoreValue } from "@framework/StateStore";
-import { Workbench } from "@framework/Workbench";
+import { useStoreState } from "@framework/StateStore";
+import { DrawerContent, Workbench } from "@framework/Workbench";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
-import { ShareIcon, WindowIcon } from "@heroicons/react/20/solid";
+import { ShareIcon, Squares2X2Icon, WindowIcon } from "@heroicons/react/20/solid";
 import { Button } from "@lib/components/Button";
+import { resolveClassNames } from "@lib/components/_utils/resolveClassNames";
 import { useQueryClient } from "@tanstack/react-query";
 
 import { LoginButton } from "../LoginButton";
@@ -20,8 +21,7 @@ type TopNavBarProps = {
 export const TopNavBar: React.FC<TopNavBarProps> = (props) => {
     const activeModuleName = ""; // useWorkbenchActiveModuleName();
     const [ensembleDialogOpen, setEnsembleDialogOpen] = React.useState<boolean>(false);
-    const setModulesListOpen = useSetStoreValue(props.workbench.getGuiStateStore(), "modulesListOpen");
-    const setSyncSettingsActive = useSetStoreValue(props.workbench.getGuiStateStore(), "syncSettingsActive");
+    const [drawerContent, setDrawerContent] = useStoreState(props.workbench.getGuiStateStore(), "drawerContent");
     const ensembleSet = useEnsembleSet(props.workbench.getWorkbenchSession());
 
     const queryClient = useQueryClient();
@@ -31,11 +31,27 @@ export const TopNavBar: React.FC<TopNavBarProps> = (props) => {
     };
 
     const handleModulesListClick = () => {
-        setModulesListOpen(true);
+        if (drawerContent === DrawerContent.ModulesList) {
+            setDrawerContent(DrawerContent.None);
+            return;
+        }
+        setDrawerContent(DrawerContent.ModulesList);
+    };
+
+    const handleTemplatesListClick = () => {
+        if (drawerContent === DrawerContent.TemplatesList) {
+            setDrawerContent(DrawerContent.None);
+            return;
+        }
+        setDrawerContent(DrawerContent.TemplatesList);
     };
 
     const handleSyncSettingsClick = () => {
-        setSyncSettingsActive(true);
+        if (drawerContent === DrawerContent.SyncSettings) {
+            setDrawerContent(DrawerContent.None);
+            return;
+        }
+        setDrawerContent(DrawerContent.SyncSettings);
     };
 
     const handleEnsembleDialogClose = (selectedEnsembles: EnsembleItem[] | null) => {
@@ -64,17 +80,32 @@ export const TopNavBar: React.FC<TopNavBarProps> = (props) => {
     }));
 
     return (
-        <div className="bg-slate-100 p-4 shadow z-50">
+        <div className="bg-slate-100 p-2 shadow z-50">
             <div className="flex flex-row gap-4 items-center">
                 <h1 className="flex-grow">{activeModuleName}</h1>
                 <Button onClick={handleEnsembleClick} variant="contained">
                     {ensembleButtonText}
                 </Button>
-                <Button onClick={handleModulesListClick} startIcon={<WindowIcon className="w-5 h-5" />}>
+                <Button
+                    onClick={handleModulesListClick}
+                    startIcon={<WindowIcon className="w-5 h-5" />}
+                    className={resolveClassNames({ "text-red-600": drawerContent === DrawerContent.ModulesList })}
+                >
                     Modules
                 </Button>
-                <Button onClick={handleSyncSettingsClick}>
-                    <ShareIcon className="w-5 h-5" /> Sync settings
+                <Button
+                    onClick={handleTemplatesListClick}
+                    startIcon={<Squares2X2Icon className="w-5 h-5" />}
+                    className={resolveClassNames({ "text-red-600": drawerContent === DrawerContent.TemplatesList })}
+                >
+                    Templates
+                </Button>
+                <Button
+                    onClick={handleSyncSettingsClick}
+                    startIcon={<ShareIcon className="w-5 h-5" />}
+                    className={resolveClassNames({ "text-red-600": drawerContent === DrawerContent.SyncSettings })}
+                >
+                    Sync settings
                 </Button>
                 <LoginButton />
             </div>

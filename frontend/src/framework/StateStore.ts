@@ -2,6 +2,8 @@ import React from "react";
 
 import { isEqual } from "lodash";
 
+import { InitialSettings, InitialSettingsSupportedTypes } from "./InitialSettings";
+
 export type StateBaseType = object;
 export type StateOptions<T extends StateBaseType> = {
     [K in keyof T]?: {
