@@ -2,8 +2,7 @@ import React from "react";
 
 import { UserInfo_api } from "@api";
 import { apiService } from "@framework/ApiService";
-
-import { createGenericContext } from "../utils/genericContext";
+import { createGenericContext } from "@framework/utils/genericContext";
 
 export enum AuthState {
     LoggedIn = "LoggedIn",
@@ -39,7 +38,7 @@ export const AuthProvider: React.FC<{ children: React.ReactElement }> = (props) 
                 }
             })
             .catch((err) => {
-                console.warn(err)
+                console.warn(err);
                 setAuthState(AuthState.NotLoggedIn);
             });
     }, []);
