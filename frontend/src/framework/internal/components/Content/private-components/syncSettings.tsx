@@ -10,7 +10,6 @@ import { Drawer } from "./drawer";
 
 type ModulesListProps = {
     workbench: Workbench;
-    relContainer: HTMLDivElement | null;
 };
 
 export const GroupModules: React.FC<ModulesListProps> = (props) => {

@@ -85,7 +85,6 @@ const TemplatesListItem: React.FC<TemplatesListItemProps> = (props) => {
 
 type TemplatesListProps = {
     workbench: Workbench;
-    relContainer: HTMLDivElement | null;
 };
 
 /*

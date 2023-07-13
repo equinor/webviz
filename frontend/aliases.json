@@ -1,21 +1,12 @@
 {
     "compilerOptions": {
         "paths": {
-            "@api": [
-                "./src/api"
-            ],
-            "@framework/*": [
-                "./src/framework/*"
-            ],
-            "@lib/*": [
-                "./src/lib/*"
-            ],
-            "@modules/*": [
-                "./src/modules/*"
-            ],
-            "@modules_shared/*": [
-                "./src/modules/_shared/*"
-            ]
+            "@api": ["./src/api"],
+            "@assets/*": ["./src/assets/*"],
+            "@framework/*": ["./src/framework/*"],
+            "@lib/*": ["./src/lib/*"],
+            "@modules/*": ["./src/modules/*"],
+            "@modules_shared/*": ["./src/modules/_shared/*"]
         }
     }
 }

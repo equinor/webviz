@@ -1,7 +1,8 @@
 import React from "react";
 
 import { ModuleInstance } from "@framework/ModuleInstance";
-import { Workbench } from "@framework/Workbench";
+import { useSetStoreValue } from "@framework/StateStore";
+import { DrawerContent, Workbench } from "@framework/Workbench";
 import { Point, pointDifference, pointRelativeToDomRect, pointerEventToPoint } from "@lib/utils/geometry";
 
 import { Header } from "./private-components/header";
@@ -24,6 +25,7 @@ type ViewWrapperProps = {
 
 export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
     const ref = React.useRef<HTMLDivElement>(null);
+    const setDrawerContent = useSetStoreValue(props.workbench.getGuiStateStore(), "drawerContent");
 
     const handlePointerDown = React.useCallback(
         function handlePointerDown(e: React.PointerEvent<HTMLDivElement>) {
@@ -67,6 +69,13 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
         [props.moduleInstance, props.workbench, props.isActive]
     );
 
+    const handleModuleHeaderDoubleClick = React.useCallback(
+        function handleModuleHeaderClick() {
+            setDrawerContent(DrawerContent.None);
+        },
+        [props.moduleInstance, props.workbench, props.isActive]
+    );
+
     return (
         <>
             {props.isDragged && (
@@ -74,7 +83,7 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
             )}
             <div
                 ref={ref}
-                className="absolute box-border p-1"
+                className="absolute box-border p-0.5"
                 style={{
                     width: props.width,
                     height: props.height,
@@ -91,6 +100,7 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
                         props.isDragged ? "cursor-grabbing select-none" : "cursor-grab"
                     }}`}
                     onClick={handleModuleHeaderClick}
+                    onDoubleClick={handleModuleHeaderDoubleClick}
                 >
                     <Header
                         moduleInstance={props.moduleInstance}
