@@ -80,15 +80,6 @@ export const NavBar: React.FC<NavBarProps> = (props) => {
         setExpanded(!expanded);
     }
 
-    let ensembleButtonText = "Select ensembles";
-    if (ensembleSet.hasAnyEnsembles()) {
-        const ensArr = ensembleSet.getEnsembleArr();
-        ensembleButtonText = ensArr[0].getDisplayName();
-        if (ensArr.length > 1) {
-            ensembleButtonText += ` and ${ensArr.length - 1} more`;
-        }
-    }
-
     const selectedEnsembles = ensembleSet.getEnsembleArr().map((ens) => ({
         caseUuid: ens.getCaseUuid(),
         caseName: ens.getCaseName(),

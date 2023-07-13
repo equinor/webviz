@@ -2,9 +2,6 @@ import React from "react";
 
 import { LayoutElement, Workbench } from "@framework/Workbench";
 import { Content } from "@framework/internal/components/Content";
-import { ModulesList } from "@framework/internal/components/Content/private-components/modulesList";
-import { GroupModules } from "@framework/internal/components/Content/private-components/syncSettings";
-import { TemplatesList } from "@framework/internal/components/Content/private-components/templatesList";
 import { NavBar } from "@framework/internal/components/NavBar";
 import { Settings } from "@framework/internal/components/Settings";
 import { AuthProvider } from "@framework/internal/providers/AuthProvider";
