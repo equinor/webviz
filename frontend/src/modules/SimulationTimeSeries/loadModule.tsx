@@ -5,14 +5,14 @@ import { settings } from "./settings";
 import { State } from "./state";
 import { view } from "./view";
 
-const initialState: State = {
+const defaultState: State = {
     vectorSpec: null,
     resamplingFrequency: Frequency_api.MONTHLY,
     showStatistics: true,
     realizationsToInclude: null,
 };
 
-const module = ModuleRegistry.initModule<State>("SimulationTimeSeries", initialState);
+const module = ModuleRegistry.initModule<State>("SimulationTimeSeries", defaultState);
 
 module.viewFC = view;
 module.settingsFC = settings;

@@ -1,7 +1,6 @@
 import React from "react";
 
 import { ModuleFCProps } from "@framework/Module";
-import { useElementSize } from "@lib/hooks/useElementSize";
 import SubsurfaceViewer from "@webviz/subsurface-viewer";
 
 import { useSurfaceDataQueryByAddress } from "./MapQueryHooks";
@@ -10,8 +9,6 @@ import { makeSurfAddrString } from "./SurfAddr";
 
 //-----------------------------------------------------------------------------------------------------------
 export function MapView(props: ModuleFCProps<MapState>) {
-    const wrapperDivRef = React.useRef<HTMLDivElement>(null);
-    const wrapperDivSize = useElementSize(wrapperDivRef);
     const surfAddr = props.moduleContext.useStoreValue("surfaceAddress");
 
     const renderCount = React.useRef(0);

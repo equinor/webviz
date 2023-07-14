@@ -4,7 +4,7 @@ import { settings } from "./settings";
 import { State } from "./state";
 import { view } from "./view";
 
-const initialState: State = {
+const defaultState: State = {
     channelNameX: null,
     channelNameY: null,
     channelNameZ: null,
@@ -13,7 +13,7 @@ const initialState: State = {
     orientation: "h",
 };
 
-const module = ModuleRegistry.initModule<State>("DistributionPlot", initialState);
+const module = ModuleRegistry.initModule<State>("DistributionPlot", defaultState);
 
 module.viewFC = view;
 module.settingsFC = settings;

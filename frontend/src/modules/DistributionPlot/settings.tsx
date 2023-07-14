@@ -53,7 +53,7 @@ const crossPlottingTypes = [
 ];
 
 //-----------------------------------------------------------------------------------------------------------
-export function settings({ moduleContext, workbenchServices }: ModuleFCProps<State>) {
+export function settings({ moduleContext, workbenchServices, initialSettings }: ModuleFCProps<State>) {
     const [channelNameX, setChannelNameX] = moduleContext.useStoreState("channelNameX");
     const [channelNameY, setChannelNameY] = moduleContext.useStoreState("channelNameY");
     const [channelNameZ, setChannelNameZ] = moduleContext.useStoreState("channelNameZ");
@@ -61,6 +61,14 @@ export function settings({ moduleContext, workbenchServices }: ModuleFCProps<Sta
     const [numBins, setNumBins] = moduleContext.useStoreState("numBins");
     const [orientation, setOrientation] = moduleContext.useStoreState("orientation");
     const [crossPlottingType, setCrossPlottingType] = React.useState<BroadcastChannelKeyCategory | null>(null);
+
+    initialSettings?.applyToStateOnMount("channelNameX", "string", setChannelNameX);
+    initialSettings?.applyToStateOnMount("channelNameY", "string", setChannelNameY);
+    initialSettings?.applyToStateOnMount("channelNameZ", "string", setChannelNameZ);
+    initialSettings?.applyToStateOnMount("plotType", "string", setPlotType);
+    initialSettings?.applyToStateOnMount("numBins", "number", setNumBins);
+    initialSettings?.applyToStateOnMount("orientation", "string", setOrientation);
+    initialSettings?.applyToStateOnMount("crossPlottingType", "string", setCrossPlottingType);
 
     const handleChannelXChanged = (channelName: string) => {
         setChannelNameX(channelName);
@@ -97,7 +105,9 @@ export function settings({ moduleContext, workbenchServices }: ModuleFCProps<Sta
         if (plotType === null || crossPlottingType === null) {
             return null;
         }
-        const content: React.ReactNode[] = [
+        const content: React.ReactNode[] = [];
+
+        content.push(
             <Label text="Data channel X axis" key="data-channel-x-axis">
                 <ChannelSelect
                     onChange={handleChannelXChanged}
@@ -105,8 +115,8 @@ export function settings({ moduleContext, workbenchServices }: ModuleFCProps<Sta
                     initialChannel={channelNameX || undefined}
                     broadcaster={workbenchServices.getBroadcaster()}
                 />
-            </Label>,
-        ];
+            </Label>
+        );
 
         if (plotType === PlotType.Scatter || plotType === PlotType.ScatterWithColorMapping) {
             content.push(
@@ -169,10 +179,14 @@ export function settings({ moduleContext, workbenchServices }: ModuleFCProps<Sta
     return (
         <>
             <Label text="Plot type">
-                <Dropdown options={plotTypes} onChange={handlePlotTypeChanged} />
+                <Dropdown value={plotType as string} options={plotTypes} onChange={handlePlotTypeChanged} />
             </Label>
             <Label text="Cross plotting">
-                <Dropdown options={crossPlottingTypes} onChange={handleCrossPlottingTypeChanged} />
+                <Dropdown
+                    value={crossPlottingType as string}
+                    options={crossPlottingTypes}
+                    onChange={handleCrossPlottingTypeChanged}
+                />
             </Label>
             {makeContent()}
         </>

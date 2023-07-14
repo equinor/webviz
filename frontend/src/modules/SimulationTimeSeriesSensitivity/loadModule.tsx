@@ -5,7 +5,7 @@ import { settings } from "./settings";
 import { State } from "./state";
 import { view } from "./view";
 
-const initialState: State = {
+const defaultState: State = {
     vectorSpec: null,
     resamplingFrequency: Frequency_api.MONTHLY,
     selectedSensitivity: null,
@@ -14,7 +14,7 @@ const initialState: State = {
     realizationsToInclude: null,
 };
 
-const module = ModuleRegistry.initModule<State>("SimulationTimeSeriesSensitivity", initialState);
+const module = ModuleRegistry.initModule<State>("SimulationTimeSeriesSensitivity", defaultState);
 
 module.viewFC = view;
 module.settingsFC = settings;

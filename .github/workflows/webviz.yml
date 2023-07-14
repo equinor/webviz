@@ -44,7 +44,7 @@ jobs:
           export NODE_OPTIONS="--max_old_space_size=4096"
           npm run build
 
-      - name: 🕵️ Check code style & linting
+      - name: 🕵️ Check code style, linting & dependencies
         working-directory: ./frontend
         run: |
           npm run validate

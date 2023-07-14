@@ -3,11 +3,11 @@ import { Input } from "@lib/components/Input";
 
 import { State } from "./state";
 
-const initialState: State = {
+const defaultState: State = {
     text: "Hello World",
 };
 
-const module = ModuleRegistry.initModule<State>("MyModule2", initialState);
+const module = ModuleRegistry.initModule<State>("MyModule2", defaultState);
 
 module.viewFC = (props) => {
     const text = props.moduleContext.useStoreValue("text");

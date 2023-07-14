@@ -1,6 +1,6 @@
 import React from "react";
 
-import { BroadcastChannel, BroadcastChannelsDef } from "./Broadcaster";
+import { BroadcastChannel } from "./Broadcaster";
 import { ModuleInstance } from "./ModuleInstance";
 import { StateBaseType, StateStore, useSetStoreValue, useStoreState, useStoreValue } from "./StateStore";
 import { SyncSettingKey } from "./SyncSettings";
