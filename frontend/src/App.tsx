@@ -2,6 +2,7 @@ import React from "react";
 
 import { LayoutElement, Workbench } from "@framework/Workbench";
 import { Content } from "@framework/internal/components/Content";
+import { LoginDialog } from "@framework/internal/components/LoginDialog";
 import { Settings } from "@framework/internal/components/Settings";
 import { TopNavBar } from "@framework/internal/components/TopNavBar";
 import { AuthProvider } from "@framework/internal/providers/AuthProvider";
@@ -25,20 +26,23 @@ function App() {
     return (
         <AuthProvider>
             <CustomQueryClientProvider>
-                <div className="h-screen flex flex-row">
-                    <ResizablePanels
-                        id="settings-content"
-                        direction="horizontal"
-                        minSizes={[300, 0]}
-                        initialSizesPercent={[25, 75]}
-                    >
-                        <Settings workbench={workbench} />
-                        <div className="flex flex-col flex-grow h-full">
-                            <TopNavBar workbench={workbench} />
-                            <Content workbench={workbench} />
-                        </div>
-                    </ResizablePanels>
-                </div>
+                <>
+                    <LoginDialog />
+                    <div className="h-screen flex flex-row">
+                        <ResizablePanels
+                            id="settings-content"
+                            direction="horizontal"
+                            minSizes={[300, 0]}
+                            initialSizesPercent={[25, 75]}
+                        >
+                            <Settings workbench={workbench} />
+                            <div className="flex flex-col flex-grow h-full">
+                                <TopNavBar workbench={workbench} />
+                                <Content workbench={workbench} />
+                            </div>
+                        </ResizablePanels>
+                    </div>
+                </>
             </CustomQueryClientProvider>
         </AuthProvider>
     );
