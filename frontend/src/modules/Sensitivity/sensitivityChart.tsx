@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import Plot from "react-plotly.js";
 
-import { Layout, PlotData, PlotMouseEvent, Shape, YAxisName } from "plotly.js";
+import { Layout, PlotData, PlotMouseEvent } from "plotly.js";
 
 import { SensitivityResponse, SensitivityResponseDataset } from "./sensitivityResponseCalculator";
 import { SelectedSensitivity } from "./state";
@@ -187,7 +187,7 @@ const sensitivityChart: React.FC<sensitivityChartProps> = (props) => {
     const [traceDataArr, setTraceDataArr] = useState<Partial<PlotData>[]>([]);
     const [xAxisRange, setXAxisRange] = useState<[number, number]>([0, 0]);
     const [selectedBar, setSelectedBar] = useState<SelectedBar | null>(null);
-    const { showLabels, hideZeroY, showRealizationPoints, sensitivityResponseDataset, height, width } = props;
+    const { showLabels, hideZeroY, sensitivityResponseDataset, height, width } = props;
 
     useEffect(() => {
         const traces: Partial<PlotData>[] = [];

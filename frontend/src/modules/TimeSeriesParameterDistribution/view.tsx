@@ -1,5 +1,4 @@
 import React from "react";
-import Plot from "react-plotly.js";
 
 import { ModuleFCProps } from "@framework/Module";
 import { useElementSize } from "@lib/hooks/useElementSize";

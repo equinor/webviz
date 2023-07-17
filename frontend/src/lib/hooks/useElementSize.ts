@@ -1,6 +1,6 @@
 import React from "react";
 
-import { Size } from "@framework/utils/geometry";
+import { Size } from "@lib/utils/geometry";
 
 export function useElementSize(ref: React.RefObject<HTMLElement>): Size {
     const [size, setSize] = React.useState<Size>({ width: 0, height: 0 });
