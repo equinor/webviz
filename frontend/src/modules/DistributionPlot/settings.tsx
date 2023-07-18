@@ -21,7 +21,10 @@ const plotTypes = [
 ];
 
 //-----------------------------------------------------------------------------------------------------------
-export function settings({ moduleContext }: ModuleFCProps<State>) {
+export function settings({ moduleContext, workbenchServices, initialSettings }: ModuleFCProps<State>) {
+    const [channelNameX, setChannelNameX] = moduleContext.useStoreState("channelNameX");
+    const [channelNameY, setChannelNameY] = moduleContext.useStoreState("channelNameY");
+    const [channelNameZ, setChannelNameZ] = moduleContext.useStoreState("channelNameZ");
     const [plotType, setPlotType] = moduleContext.useStoreState("plotType");
     const [numBins, setNumBins] = moduleContext.useStoreState("numBins");
     const [orientation, setOrientation] = moduleContext.useStoreState("orientation");
@@ -29,6 +32,17 @@ export function settings({ moduleContext }: ModuleFCProps<State>) {
     const channelX = moduleContext.useInputChannel("channelX");
     const channelY = moduleContext.useInputChannel("channelY");
     const channelColor = moduleContext.useInputChannel("channelColor");
+    initialSettings?.applyToStateOnMount("channelNameX", "string", setChannelNameX);
+    initialSettings?.applyToStateOnMount("channelNameY", "string", setChannelNameY);
+    initialSettings?.applyToStateOnMount("channelNameZ", "string", setChannelNameZ);
+    initialSettings?.applyToStateOnMount("plotType", "string", setPlotType);
+    initialSettings?.applyToStateOnMount("numBins", "number", setNumBins);
+    initialSettings?.applyToStateOnMount("orientation", "string", setOrientation);
+    initialSettings?.applyToStateOnMount("crossPlottingType", "string", setCrossPlottingType);
+
+    const handleChannelXChanged = (channelName: string) => {
+        setChannelNameX(channelName);
+    };
 
     const handlePlotTypeChanged = (value: string) => {
         setPlotType(value as PlotType);
@@ -48,6 +62,23 @@ export function settings({ moduleContext }: ModuleFCProps<State>) {
     const makeContent = (): React.ReactNode => {
         const content: React.ReactNode[] = [];
         if (channelX && !channelY && !channelColor) {
+        if (plotType === null || crossPlottingType === null) {
+            return null;
+        }
+        const content: React.ReactNode[] = [];
+
+        content.push(
+            <Label text="Data channel X axis" key="data-channel-x-axis">
+                <ChannelSelect
+                    onChange={handleChannelXChanged}
+                    channelKeyCategory={crossPlottingType}
+                    initialChannel={channelNameX || undefined}
+                    broadcaster={workbenchServices.getBroadcaster()}
+                />
+            </Label>
+        );
+
+        if (plotType === PlotType.Scatter || plotType === PlotType.ScatterWithColorMapping) {
             content.push(
                 <Label key="plot-type" text="Plot type">
                     <Dropdown value={plotType as PlotType} options={plotTypes} onChange={handlePlotTypeChanged} />
@@ -87,5 +118,19 @@ export function settings({ moduleContext }: ModuleFCProps<State>) {
         return content;
     };
 
-    return <>{makeContent()}</>;
+    return (
+        <>
+            <Label text="Plot type">
+                <Dropdown value={plotType as string} options={plotTypes} onChange={handlePlotTypeChanged} />
+            </Label>
+            <Label text="Cross plotting">
+                <Dropdown
+                    value={crossPlottingType as string}
+                    options={crossPlottingTypes}
+                    onChange={handleCrossPlottingTypeChanged}
+                />
+            </Label>
+            {makeContent()}
+        </>
+    );
 }

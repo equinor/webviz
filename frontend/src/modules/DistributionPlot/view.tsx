@@ -2,6 +2,7 @@ import React from "react";
 
 import { BroadcastChannelKeyCategory, BroadcastChannelMeta } from "@framework/Broadcaster";
 import { ModuleFCProps } from "@framework/Module";
+import { Tag } from "@lib/components/Tag";
 import { useElementSize } from "@lib/hooks/useElementSize";
 
 import { BarChart } from "./components/barChart";
@@ -121,6 +122,110 @@ export const view = ({ moduleContext, workbenchServices }: ModuleFCProps<State>)
 
     const makeContent = (): React.ReactNode => {
         if (dataX && dataY && dataColor) {
+    function makeContent(): React.ReactNode {
+        if (plotType === null) {
+            return "Please select a plot type.";
+        }
+
+        if (plotType === PlotType.Histogram) {
+            if (channelNameX === "" || channelNameX === null) {
+                return "Please select a channel for the x-axis.";
+            }
+            if (dataX === null) {
+                return (
+                    <>
+                        No data on channel <Tag label={channelNameX} /> yet.
+                    </>
+                );
+            }
+
+            const xValues = dataX.map((el: any) => el.value);
+            const xMin = Math.min(...xValues);
+            const xMax = Math.max(...xValues);
+            const binSize = (xMax - xMin) / numBins;
+            const bins: { from: number; to: number }[] = Array.from({ length: numBins }, (_, i) => ({
+                from: xMin + i * binSize,
+                to: xMin + (i + 1) * binSize,
+            }));
+            bins[bins.length - 1].to = xMax + 1e-6; // make sure the last bin includes the max value
+            const binValues: number[] = bins.map(
+                (range) => xValues.filter((el) => el >= range.from && el < range.to).length
+            );
+
+            const binStrings = bins.map((range) => `${nFormatter(range.from, 2)}-${nFormatter(range.to, 2)}`);
+
+            return (
+                <Histogram
+                    key="histogram"
+                    x={binStrings}
+                    y={binValues}
+                    xAxisTitle={`${metaDataX?.description ?? ""} [${metaDataX?.unit ?? ""}]`}
+                    yAxisTitle={channelX?.getDataDef().key ?? ""}
+                    width={wrapperDivSize.width}
+                    height={wrapperDivSize.height}
+                />
+            );
+        }
+
+        if (plotType === PlotType.BarChart) {
+            if (channelNameX === "" || channelNameX === null) {
+                return "Please select a channel for the x-axis.";
+            }
+            if (dataX === null) {
+                return (
+                    <>
+                        No data on channel <Tag label={channelNameX} /> yet.
+                    </>
+                );
+            }
+
+            const keyData = dataX.map((el: any) => el.key);
+            const valueData = dataX.map((el: any) => el.value);
+
+            const keyTitle = channelX?.getDataDef().key ?? "";
+            const valueTitle = `${metaDataX?.description ?? ""} [${metaDataX?.unit ?? ""}]`;
+
+            return (
+                <BarChart
+                    key="barchart"
+                    x={orientation === "h" ? valueData : keyData}
+                    y={orientation === "h" ? keyData : valueData}
+                    xAxisTitle={orientation === "h" ? valueTitle : keyTitle}
+                    yAxisTitle={orientation === "h" ? keyTitle : valueTitle}
+                    width={wrapperDivSize.width}
+                    height={wrapperDivSize.height}
+                    orientation={orientation}
+                    onHoverData={handleHoverChanged}
+                    keyData={keyData}
+                    highlightedKey={highlightedKey ?? undefined}
+                />
+            );
+        }
+
+        if (plotType === PlotType.Scatter) {
+            if (channelNameX === "" || channelNameX === null) {
+                return "Please select a channel for the x-axis.";
+            }
+
+            if (channelNameY === "" || channelNameY === null) {
+                return "Please select a channel for the y-axis.";
+            }
+
+            if (dataX === null) {
+                return (
+                    <>
+                        No data on channel <Tag label={channelNameX} /> yet.
+                    </>
+                );
+            }
+            if (dataY === null) {
+                return (
+                    <>
+                        No data on channel <Tag label={channelNameY} /> yet.
+                    </>
+                );
+            }
+
             const xValues: number[] = [];
             const yValues: number[] = [];
             const zValues: number[] = [];
@@ -162,7 +267,41 @@ export const view = ({ moduleContext, workbenchServices }: ModuleFCProps<State>)
             );
         }
 
-        if (dataX && dataY) {
+        if (plotType === PlotType.ScatterWithColorMapping) {
+            if (channelNameX === "" || channelNameX === null) {
+                return "Please select a channel for the x-axis.";
+            }
+
+            if (channelNameY === "" || channelNameY === null) {
+                return "Please select a channel for the y-axis.";
+            }
+
+            if (channelNameZ === "" || channelNameZ === null) {
+                return "Please select a channel for the z-axis.";
+            }
+
+            if (dataX === null) {
+                return (
+                    <>
+                        No data on channel <Tag label={channelNameX} /> yet.
+                    </>
+                );
+            }
+            if (dataY === null) {
+                return (
+                    <>
+                        No data on channel <Tag label={channelNameY} /> yet.
+                    </>
+                );
+            }
+            if (dataZ === null) {
+                return (
+                    <>
+                        No data on channel <Tag label={channelNameZ} /> yet.
+                    </>
+                );
+            }
+
             const xValues: number[] = [];
             const yValues: number[] = [];
 

@@ -4,12 +4,12 @@ import { settings } from "./settings";
 import { PlotType, State } from "./state";
 import { view } from "./view";
 
-const initialState: State = {
+const defaultState: State = {
     plotType: PlotType.TORNADO,
     selectedSensitivity: null,
 };
 
-const module = ModuleRegistry.initModule<State>("Sensitivity", initialState);
+const module = ModuleRegistry.initModule<State>("Sensitivity", defaultState);
 
 module.viewFC = view;
 module.settingsFC = settings;

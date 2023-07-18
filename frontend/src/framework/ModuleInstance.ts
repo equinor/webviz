@@ -3,6 +3,7 @@ import { ErrorInfo } from "react";
 import { cloneDeep } from "lodash";
 
 import { BroadcastChannel, BroadcastChannelsDef, InputBroadcastChannelDef } from "./Broadcaster";
+import { InitialSettings } from "./InitialSettings";
 import { ImportState, Module, ModuleFC } from "./Module";
 import { ModuleContext } from "./ModuleContext";
 import { StateBaseType, StateOptions, StateStore } from "./StateStore";
@@ -17,27 +18,23 @@ export enum ModuleInstanceState {
 }
 
 export class ModuleInstance<StateType extends StateBaseType> {
-    private id: string;
-    private title: string;
-    private initialised: boolean;
-    private moduleInstanceState: ModuleInstanceState;
-    private fatalError: {
-        err: Error;
-        errInfo: ErrorInfo;
-    } | null;
-    private syncedSettingKeys: SyncSettingKey[];
-    private stateStore: StateStore<StateType> | null;
-    private module: Module<StateType>;
-    private context: ModuleContext<StateType> | null;
-    private importStateSubscribers: Set<() => void>;
-    private moduleInstanceStateSubscribers: Set<(moduleInstanceState: ModuleInstanceState) => void>;
-    private syncedSettingsSubscribers: Set<(syncedSettings: SyncSettingKey[]) => void>;
-    private inputChannelSubscribers: Record<string, Set<(channel: BroadcastChannel | null) => void>>;
-    private inputChannelsSubscribers: Set<() => void>;
-    private titleChangeSubscribers: Set<(title: string) => void>;
-    private broadcastChannels: Record<string, BroadcastChannel>;
-    private cachedInitialState: StateType | null;
-    private cachedStateStoreOptions?: StateOptions<StateType>;
+    private _id: string;
+    private _title: string;
+    private _initialised: boolean;
+    private _moduleInstanceState: ModuleInstanceState;
+    private _fatalError: { err: Error; errInfo: ErrorInfo } | null;
+    private _syncedSettingKeys: SyncSettingKey[];
+    private _stateStore: StateStore<StateType> | null;
+    private _module: Module<StateType>;
+    private _context: ModuleContext<StateType> | null;
+    private _importStateSubscribers: Set<() => void>;
+    private _moduleInstanceStateSubscribers: Set<(moduleInstanceState: ModuleInstanceState) => void>;
+    private _syncedSettingsSubscribers: Set<(syncedSettings: SyncSettingKey[]) => void>;
+    private _titleChangeSubscribers: Set<(title: string) => void>;
+    private _broadcastChannels: Record<string, BroadcastChannel>;
+    private _cachedDefaultState: StateType | null;
+    private _cachedStateStoreOptions?: StateOptions<StateType>;
+    private _initialSettings: InitialSettings | null;
     private inputChannelDefs: InputBroadcastChannelDef[];
     private inputChannels: Record<string, BroadcastChannel> = {};
     private workbench: Workbench;
@@ -49,34 +46,33 @@ export class ModuleInstance<StateType extends StateBaseType> {
         workbench: Workbench,
         inputChannelDefs: InputBroadcastChannelDef[]
     ) {
-        this.id = `${module.getName()}-${instanceNumber}`;
-        this.title = module.getDefaultTitle();
-        this.stateStore = null;
-        this.module = module;
-        this.importStateSubscribers = new Set();
-        this.context = null;
-        this.initialised = false;
-        this.syncedSettingKeys = [];
-        this.syncedSettingsSubscribers = new Set();
-        this.moduleInstanceStateSubscribers = new Set();
-        this.titleChangeSubscribers = new Set();
-        this.inputChannelSubscribers = {};
-        this.inputChannelsSubscribers = new Set();
-        this.moduleInstanceState = ModuleInstanceState.INITIALIZING;
-        this.fatalError = null;
-        this.cachedInitialState = null;
+        this._id = `${module.getName()}-${instanceNumber}`;
+        this._title = module.getDefaultTitle();
+        this._stateStore = null;
+        this._module = module;
+        this._importStateSubscribers = new Set();
+        this._context = null;
+        this._initialised = false;
+        this._syncedSettingKeys = [];
+        this._syncedSettingsSubscribers = new Set();
+        this._moduleInstanceStateSubscribers = new Set();
+        this._titleChangeSubscribers = new Set();
+        this._moduleInstanceState = ModuleInstanceState.INITIALIZING;
+        this._fatalError = null;
+        this._cachedDefaultState = null;
+        this._initialSettings = null;
         this.inputChannelDefs = inputChannelDefs;
         this.inputChannels = {};
         this.workbench = workbench;
 
-        this.broadcastChannels = {} as Record<string, BroadcastChannel>;
+        this._broadcastChannels = {} as Record<string, BroadcastChannel>;
 
         const broadcastChannelNames = Object.keys(broadcastChannelsDef);
 
         if (broadcastChannelNames) {
             broadcastChannelNames.forEach((channelName) => {
-                const enrichedChannelName = `${this.id} - ${channelName as string}`;
-                this.broadcastChannels[channelName] = workbench
+                const enrichedChannelName = `${this._id} - ${channelName as string}`;
+                this._broadcastChannels[channelName] = workbench
                     .getBroadcaster()
                     .registerChannel(
                         enrichedChannelName,
@@ -124,7 +120,7 @@ export class ModuleInstance<StateType extends StateBaseType> {
             throw new Error(`Channel '${channelName}' does not exist on module '${this.title}'`);
         }
 
-        return this.broadcastChannels[channelName];
+        return this._broadcastChannels[channelName];
     }
 
     public getBroadcastChannels(): Record<string, BroadcastChannel> {
@@ -135,44 +131,44 @@ export class ModuleInstance<StateType extends StateBaseType> {
         return Object.keys(this.broadcastChannels).length > 0;
     }
 
-    public setInitialState(initialState: StateType, options?: StateOptions<StateType>): void {
-        if (this.cachedInitialState === null) {
-            this.cachedInitialState = initialState;
-            this.cachedStateStoreOptions = options;
+    setDefaultState(defaultState: StateType, options?: StateOptions<StateType>): void {
+        if (this._cachedDefaultState === null) {
+            this._cachedDefaultState = defaultState;
+            this._cachedStateStoreOptions = options;
         }
 
-        this.stateStore = new StateStore<StateType>(cloneDeep(initialState), options);
-        this.context = new ModuleContext<StateType>(this, this.stateStore);
-        this.initialised = true;
+        this._stateStore = new StateStore<StateType>(cloneDeep(defaultState), options);
+        this._context = new ModuleContext<StateType>(this, this._stateStore);
+        this._initialised = true;
         this.setModuleInstanceState(ModuleInstanceState.OK);
     }
 
-    public addSyncedSetting(settingKey: SyncSettingKey): void {
-        this.syncedSettingKeys.push(settingKey);
+    addSyncedSetting(settingKey: SyncSettingKey): void {
+        this._syncedSettingKeys.push(settingKey);
         this.notifySubscribersAboutSyncedSettingKeysChange();
     }
 
-    public getSyncedSettingKeys(): SyncSettingKey[] {
-        return this.syncedSettingKeys;
+    getSyncedSettingKeys(): SyncSettingKey[] {
+        return this._syncedSettingKeys;
     }
 
-    public isSyncedSetting(settingKey: SyncSettingKey): boolean {
-        return this.syncedSettingKeys.includes(settingKey);
+    isSyncedSetting(settingKey: SyncSettingKey): boolean {
+        return this._syncedSettingKeys.includes(settingKey);
     }
 
-    public removeSyncedSetting(settingKey: SyncSettingKey): void {
-        this.syncedSettingKeys = this.syncedSettingKeys.filter((a) => a !== settingKey);
+    removeSyncedSetting(settingKey: SyncSettingKey): void {
+        this._syncedSettingKeys = this._syncedSettingKeys.filter((a) => a !== settingKey);
         this.notifySubscribersAboutSyncedSettingKeysChange();
     }
 
-    public subscribeToSyncedSettingKeysChange(cb: (syncedSettings: SyncSettingKey[]) => void): () => void {
-        this.syncedSettingsSubscribers.add(cb);
+    subscribeToSyncedSettingKeysChange(cb: (syncedSettings: SyncSettingKey[]) => void): () => void {
+        this._syncedSettingsSubscribers.add(cb);
 
         // Trigger callback immediately with our current set of keys
-        cb(this.syncedSettingKeys);
+        cb(this._syncedSettingKeys);
 
         return () => {
-            this.syncedSettingsSubscribers.delete(cb);
+            this._syncedSettingsSubscribers.delete(cb);
         };
     }
 
@@ -208,75 +204,75 @@ export class ModuleInstance<StateType extends StateBaseType> {
         return this.initialised;
     }
 
-    public getViewFC(): ModuleFC<StateType> {
-        return this.module.viewFC;
+    getViewFC(): ModuleFC<StateType> {
+        return this._module.viewFC;
     }
 
-    public getSettingsFC(): ModuleFC<StateType> {
-        return this.module.settingsFC;
+    getSettingsFC(): ModuleFC<StateType> {
+        return this._module.settingsFC;
     }
 
-    public getImportState(): ImportState {
-        return this.module.getImportState();
+    getImportState(): ImportState {
+        return this._module.getImportState();
     }
 
-    public getContext(): ModuleContext<StateType> {
-        if (!this.context) {
-            throw `Module context is not available yet. Did you forget to init the module '${this.title}.'?`;
+    getContext(): ModuleContext<StateType> {
+        if (!this._context) {
+            throw `Module context is not available yet. Did you forget to init the module '${this._title}.'?`;
         }
-        return this.context;
+        return this._context;
     }
 
-    public getId(): string {
-        return this.id;
+    getId(): string {
+        return this._id;
     }
 
-    public getName(): string {
-        return this.module.getName();
+    getName(): string {
+        return this._module.getName();
     }
 
-    public getTitle(): string {
-        return this.title;
+    getTitle(): string {
+        return this._title;
     }
 
-    public setTitle(title: string): void {
-        this.title = title;
+    setTitle(title: string): void {
+        this._title = title;
         this.notifySubscribersAboutTitleChange();
     }
 
-    public subscribeToTitleChange(cb: (title: string) => void): () => void {
-        this.titleChangeSubscribers.add(cb);
+    subscribeToTitleChange(cb: (title: string) => void): () => void {
+        this._titleChangeSubscribers.add(cb);
         return () => {
-            this.titleChangeSubscribers.delete(cb);
+            this._titleChangeSubscribers.delete(cb);
         };
     }
 
-    public notifySubscribersAboutTitleChange(): void {
-        this.titleChangeSubscribers.forEach((subscriber) => {
-            subscriber(this.title);
+    notifySubscribersAboutTitleChange(): void {
+        this._titleChangeSubscribers.forEach((subscriber) => {
+            subscriber(this._title);
         });
     }
 
-    public getModule(): Module<StateType> {
-        return this.module;
+    getModule(): Module<StateType> {
+        return this._module;
     }
 
-    public subscribeToImportStateChange(cb: () => void): () => void {
-        this.importStateSubscribers.add(cb);
+    subscribeToImportStateChange(cb: () => void): () => void {
+        this._importStateSubscribers.add(cb);
         return () => {
-            this.importStateSubscribers.delete(cb);
+            this._importStateSubscribers.delete(cb);
         };
     }
 
-    public notifySubscribersAboutImportStateChange(): void {
-        this.importStateSubscribers.forEach((subscriber) => {
+    notifySubscribersAboutImportStateChange(): void {
+        this._importStateSubscribers.forEach((subscriber) => {
             subscriber();
         });
     }
 
-    public notifySubscribersAboutSyncedSettingKeysChange(): void {
-        this.syncedSettingsSubscribers.forEach((subscriber) => {
-            subscriber(this.syncedSettingKeys);
+    notifySubscribersAboutSyncedSettingKeysChange(): void {
+        this._syncedSettingsSubscribers.forEach((subscriber) => {
+            subscriber(this._syncedSettingKeys);
         });
     }
 
@@ -298,46 +294,54 @@ export class ModuleInstance<StateType extends StateBaseType> {
     public subscribeToModuleInstanceStateChange(cb: () => void): () => void {
         this.moduleInstanceStateSubscribers.add(cb);
         return () => {
-            this.moduleInstanceStateSubscribers.delete(cb);
+            this._moduleInstanceStateSubscribers.delete(cb);
         };
     }
 
-    public notifySubscribersAboutModuleInstanceStateChange(): void {
-        this.moduleInstanceStateSubscribers.forEach((subscriber) => {
-            subscriber(this.moduleInstanceState);
+    notifySubscribersAboutModuleInstanceStateChange(): void {
+        this._moduleInstanceStateSubscribers.forEach((subscriber) => {
+            subscriber(this._moduleInstanceState);
         });
     }
 
     private setModuleInstanceState(moduleInstanceState: ModuleInstanceState): void {
-        this.moduleInstanceState = moduleInstanceState;
+        this._moduleInstanceState = moduleInstanceState;
         this.notifySubscribersAboutModuleInstanceStateChange();
     }
 
-    public getModuleInstanceState(): ModuleInstanceState {
-        return this.moduleInstanceState;
+    getModuleInstanceState(): ModuleInstanceState {
+        return this._moduleInstanceState;
     }
 
-    public setFatalError(err: Error, errInfo: ErrorInfo): void {
+    setFatalError(err: Error, errInfo: ErrorInfo): void {
         this.setModuleInstanceState(ModuleInstanceState.ERROR);
-        this.fatalError = {
+        this._fatalError = {
             err,
             errInfo,
         };
     }
 
-    public getFatalError(): {
+    getFatalError(): {
         err: Error;
         errInfo: ErrorInfo;
     } | null {
-        return this.fatalError;
+        return this._fatalError;
     }
 
-    public reset(): Promise<void> {
+    reset(): Promise<void> {
         this.setModuleInstanceState(ModuleInstanceState.RESETTING);
 
         return new Promise((resolve) => {
-            this.setInitialState(this.cachedInitialState as StateType, this.cachedStateStoreOptions);
+            this.setDefaultState(this._cachedDefaultState as StateType, this._cachedStateStoreOptions);
             resolve();
         });
+    }
+
+    setInitialSettings(initialSettings: InitialSettings): void {
+        this._initialSettings = initialSettings;
+    }
+
+    getInitialSettings(): InitialSettings | null {
+        return this._initialSettings;
     }
 }

@@ -146,7 +146,7 @@ export class BroadcastChannel {
         return generatedData;
     }
 
-    public getName(): string {
+    getName(): string {
         return this._name;
     }
 
@@ -158,18 +158,18 @@ export class BroadcastChannel {
         return this._dataDef;
     }
 
-    public getMetaData(): BroadcastChannelMeta {
+    getMetaData(): BroadcastChannelMeta {
         if (!this._metaData) {
             throw new Error("No meta data");
         }
         return this._metaData;
     }
 
-    public getModuleInstanceId(): string {
+    getModuleInstanceId(): string {
         return this._moduleInstanceId;
     }
 
-    public broadcast(metaData: BroadcastChannelMeta, dataGenerator: () => BroadcastChannelData[]): void {
+    broadcast(metaData: BroadcastChannelMeta, dataGenerator: () => BroadcastChannelData[]): void {
         this._dataGenerator = dataGenerator;
         this._metaData = metaData;
 
@@ -184,7 +184,7 @@ export class BroadcastChannel {
         }
     }
 
-    public subscribe(
+    subscribe(
         callbackChannelDataChanged: (data: BroadcastChannelData[], metaData: BroadcastChannelMeta) => void
     ): () => void {
         this._subscribers.add(callbackChannelDataChanged);
@@ -212,7 +212,7 @@ export class Broadcaster {
         this._subscribers = new Set();
     }
 
-    public registerChannel(
+    registerChannel(
         channelName: string,
         displayName: string,
         channelDef: BroadcastChannelDef,
@@ -224,12 +224,12 @@ export class Broadcaster {
         return channel;
     }
 
-    public unregisterAllChannelsForModuleInstance(moduleInstanceId: string): void {
+    unregisterAllChannelsForModuleInstance(moduleInstanceId: string): void {
         this._channels = this._channels.filter((c) => c.getModuleInstanceId() !== moduleInstanceId);
         this.notifySubscribersAboutChannelsChanges();
     }
 
-    public getChannel(channelName: string): BroadcastChannel | null {
+    getChannel(channelName: string): BroadcastChannel | null {
         const channel = this._channels.find((c) => c.getName() === channelName);
         if (!channel) {
             return null;
@@ -238,11 +238,11 @@ export class Broadcaster {
         return channel as BroadcastChannel;
     }
 
-    public getChannelNames(): string[] {
+    getChannelNames(): string[] {
         return this._channels.map((c) => c.getName());
     }
 
-    public subscribeToChannelsChanges(cb: (channels: BroadcastChannel[]) => void): () => void {
+    subscribeToChannelsChanges(cb: (channels: BroadcastChannel[]) => void): () => void {
         this._subscribers.add(cb);
         cb(this._channels);
         return () => {

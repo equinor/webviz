@@ -8,3 +8,9 @@ ModuleRegistry.registerModule<State>("SimulationTimeSeriesSensitivity", "Simulat
     syncableSettingKeys: [SyncSettingKey.ENSEMBLE, SyncSettingKey.TIME_SERIES],
     broadcastChannelsDef,
 });
+ModuleRegistry.registerModule<State>({
+    moduleName: "SimulationTimeSeriesSensitivity",
+    defaultTitle: "Simulation time series sensitivity",
+    syncableSettingKeys: [SyncSettingKey.ENSEMBLE, SyncSettingKey.TIME_SERIES],
+    broadcastChannelsDef,
+});

@@ -36,7 +36,7 @@ export function settings({ moduleContext, workbenchSession }: ModuleFCProps<stat
     const [activePvtName, setActivePvtName] = moduleContext.useStoreState("pvtName");
     const [activePvtPlots, setActivePvtPlots] = moduleContext.useStoreState("pvtVisualizations");
     const [activePvtNum, setActivePvtNum] = moduleContext.useStoreState("pvtNum");
-    const [groupBy, setGroupBy] = moduleContext.useStoreState("groupBy"); // not implemented
+    //const [groupBy, setGroupBy] = moduleContext.useStoreState("groupBy"); // not implemented
 
     // Plot data state for view
     const setPvtPlotDataSet = moduleContext.useSetStoreValue("activeDataSet");

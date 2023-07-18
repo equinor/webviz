@@ -2,6 +2,7 @@ import { BroadcastChannelKeyCategory, InputBroadcastChannelDef } from "@framewor
 import { ModuleRegistry } from "@framework/ModuleRegistry";
 import { SyncSettingKey } from "@framework/SyncSettings";
 
+import { preview } from "./preview";
 import { State } from "./state";
 
 const inputChannelDefs: InputBroadcastChannelDef[] = [
@@ -11,6 +12,12 @@ const inputChannelDefs: InputBroadcastChannelDef[] = [
         keyCategories: [BroadcastChannelKeyCategory.Realization],
     },
 ];
+ModuleRegistry.registerModule<State>({
+    moduleName: "Sensitivity",
+    defaultTitle: "Sensitivity",
+    syncableSettingKeys: [SyncSettingKey.ENSEMBLE, SyncSettingKey.TIME_SERIES],
+    preview
+});
 
 ModuleRegistry.registerModule<State>("Sensitivity", "Sensitivity", {
     syncableSettingKeys: [SyncSettingKey.ENSEMBLE, SyncSettingKey.TIME_SERIES],

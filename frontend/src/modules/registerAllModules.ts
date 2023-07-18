@@ -1,15 +1,20 @@
-import "./DbgWorkbenchSpy/registerModule";
+import { isDevMode } from "@lib/utils/devMode";
+
 import "./DistributionPlot/registerModule";
 import "./Grid3D/registerModule";
+import "./Grid3D/registerModule";
+import "./Grid3DIntersection/registerModule";
 import "./Grid3DIntersection/registerModule";
 import "./InplaceVolumetrics/registerModule";
 import "./Map/registerModule";
-import "./MyModule2/registerModule";
-import "./MyModule/registerModule";
+import "./Pvt/registerModule";
+import "./Sensitivity/registerModule";
 import "./SimulationTimeSeries/registerModule";
-import "./TimeSeriesParameterDistribution/registerModule"
-import "./Grid3D/registerModule"
-import "./Grid3DIntersection/registerModule"
-import "./Pvt/registerModule"
-import "./Sensitivity/registerModule"
-import "./SimulationTimeSeriesSensitivity/registerModule"
+import "./SimulationTimeSeriesSensitivity/registerModule";
+import "./TimeSeriesParameterDistribution/registerModule";
+
+if (isDevMode()) {
+    import("./MyModule2/registerModule");
+    import("./MyModule/registerModule");
+    import("./DbgWorkbenchSpy/registerModule");
+}
