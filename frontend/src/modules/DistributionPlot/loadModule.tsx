@@ -4,7 +4,7 @@ import { settings } from "./settings";
 import { PlotType, State } from "./state";
 import { view } from "./view";
 
-const initialState: State = {
+const defaultState: State = {
     plotType: PlotType.Histogram,
     numBins: 10,
     orientation: "h",

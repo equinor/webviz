@@ -150,11 +150,11 @@ export class BroadcastChannel {
         return this._name;
     }
 
-    public getDisplayName(): string {
+    getDisplayName(): string {
         return this._displayName;
     }
 
-    public getDataDef(): BroadcastChannelDef {
+    getDataDef(): BroadcastChannelDef {
         return this._dataDef;
     }
 
@@ -185,7 +185,7 @@ export class BroadcastChannel {
     }
 
     subscribe(
-        callbackChannelDataChanged: (data: BroadcastChannelData[], metaData: BroadcastChannelMeta) => void
+        callbackChannelDataChanged: (data: BroadcastChannelData[] | null, metaData: BroadcastChannelMeta | null) => void
     ): () => void {
         this._subscribers.add(callbackChannelDataChanged);
 
@@ -193,9 +193,7 @@ export class BroadcastChannel {
             this._cachedData = this.generateAndVerifyData(this._dataGenerator);
         }
 
-        if (this._cachedData && this._metaData) {
-            callbackChannelDataChanged(this._cachedData, this._metaData);
-        }
+        callbackChannelDataChanged(this._cachedData ?? null, this._metaData ?? null);
 
         return () => {
             this._subscribers.delete(callbackChannelDataChanged);

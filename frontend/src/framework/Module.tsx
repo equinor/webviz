@@ -43,14 +43,14 @@ export class Module<StateType extends StateBaseType> {
     private _syncableSettingKeys: SyncSettingKey[];
     private _channelsDef: BroadcastChannelsDef;
     private _drawPreviewFunc: DrawPreviewFunc | null;
-    private inputChannelDefs: InputBroadcastChannelDef[];
+    private _inputChannelDefs: InputBroadcastChannelDef[];
 
     constructor(
         name: string,
         defaultTitle: string,
         syncableSettingKeys: SyncSettingKey[] = [],
         broadcastChannelsDef: BroadcastChannelsDef = {},
-        inputChannelDefs: InputBroadcastChannelDef[] = []
+        inputChannelDefs: InputBroadcastChannelDef[] = [],
         drawPreviewFunc: DrawPreviewFunc | null = null
     ) {
         this._name = name;
@@ -64,7 +64,7 @@ export class Module<StateType extends StateBaseType> {
         this._workbench = null;
         this._syncableSettingKeys = syncableSettingKeys;
         this._channelsDef = broadcastChannelsDef;
-        this.inputChannelDefs = inputChannelDefs;
+        this._inputChannelDefs = inputChannelDefs;
         this._drawPreviewFunc = drawPreviewFunc;
     }
 
@@ -109,12 +109,12 @@ export class Module<StateType extends StateBaseType> {
 
         const instance = new ModuleInstance<StateType>(
             this,
-            this.numInstances++,
-            this.channelsDef,
-            this.workbench,
-            this.inputChannelDefs
+            this._numInstances++,
+            this._channelsDef,
+            this._workbench,
+            this._inputChannelDefs
         );
-        this.moduleInstances.push(instance);
+        this._moduleInstances.push(instance);
         this.maybeImportSelf();
         return instance;
     }

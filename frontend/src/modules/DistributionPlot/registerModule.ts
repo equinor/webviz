@@ -26,10 +26,6 @@ ModuleRegistry.registerModule<State>({
     moduleName: "DistributionPlot",
     defaultTitle: "Distribution plot",
     syncableSettingKeys: [SyncSettingKey.ENSEMBLE, SyncSettingKey.TIME_SERIES],
-    preview
-});
-
-ModuleRegistry.registerModule<State>("DistributionPlot", "Distribution plot", {
-    syncableSettingKeys: [SyncSettingKey.ENSEMBLE, SyncSettingKey.TIME_SERIES],
     inputChannelDefs,
+    preview,
 });

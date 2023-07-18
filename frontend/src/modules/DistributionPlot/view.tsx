@@ -32,7 +32,7 @@ function nFormatter(num: number, digits: number): string {
 }
 
 export const view = ({ moduleContext, workbenchServices }: ModuleFCProps<State>) => {
-    const plotType = moduleContext.useStoreValue("plotType");
+    const [plotType, setPlotType] = moduleContext.useStoreState("plotType");
     const numBins = moduleContext.useStoreValue("numBins");
     const orientation = moduleContext.useStoreValue("orientation");
 
@@ -58,7 +58,7 @@ export const view = ({ moduleContext, workbenchServices }: ModuleFCProps<State>)
             return;
         }
 
-        const handleChannelXChanged = (data: any, metaData: BroadcastChannelMeta) => {
+        const handleChannelXChanged = (data: any | null, metaData: BroadcastChannelMeta | null) => {
             setDataX(data);
             setMetaDataX(metaData);
         };
@@ -75,7 +75,11 @@ export const view = ({ moduleContext, workbenchServices }: ModuleFCProps<State>)
             return;
         }
 
-        const handleChannelYChanged = (data: any, metaData: BroadcastChannelMeta) => {
+        if (plotType !== PlotType.ScatterWithColorMapping && plotType !== PlotType.Scatter) {
+            setPlotType(PlotType.Scatter);
+        }
+
+        const handleChannelYChanged = (data: any | null, metaData: BroadcastChannelMeta | null) => {
             setDataY(data);
             setMetaDataY(metaData);
         };
@@ -92,7 +96,7 @@ export const view = ({ moduleContext, workbenchServices }: ModuleFCProps<State>)
             return;
         }
 
-        const handleChannelColorChanged = (data: any, metaData: BroadcastChannelMeta) => {
+        const handleChannelColorChanged = (data: any | null, metaData: BroadcastChannelMeta | null) => {
             setDataColor(data);
             setMetaDataColor(metaData);
         };
@@ -120,21 +124,19 @@ export const view = ({ moduleContext, workbenchServices }: ModuleFCProps<State>)
         }
     };
 
-    const makeContent = (): React.ReactNode => {
-        if (dataX && dataY && dataColor) {
     function makeContent(): React.ReactNode {
         if (plotType === null) {
             return "Please select a plot type.";
         }
 
         if (plotType === PlotType.Histogram) {
-            if (channelNameX === "" || channelNameX === null) {
+            if (!channelX) {
                 return "Please select a channel for the x-axis.";
             }
             if (dataX === null) {
                 return (
                     <>
-                        No data on channel <Tag label={channelNameX} /> yet.
+                        No data on channel <Tag label={channelX.getDisplayName()} /> yet.
                     </>
                 );
             }
@@ -168,13 +170,13 @@ export const view = ({ moduleContext, workbenchServices }: ModuleFCProps<State>)
         }
 
         if (plotType === PlotType.BarChart) {
-            if (channelNameX === "" || channelNameX === null) {
+            if (!channelX) {
                 return "Please select a channel for the x-axis.";
             }
             if (dataX === null) {
                 return (
                     <>
-                        No data on channel <Tag label={channelNameX} /> yet.
+                        No data on channel <Tag label={channelX.getName()} /> yet.
                     </>
                 );
             }
@@ -203,25 +205,90 @@ export const view = ({ moduleContext, workbenchServices }: ModuleFCProps<State>)
         }
 
         if (plotType === PlotType.Scatter) {
-            if (channelNameX === "" || channelNameX === null) {
+            if (!channelX) {
                 return "Please select a channel for the x-axis.";
             }
 
-            if (channelNameY === "" || channelNameY === null) {
+            if (!channelY) {
                 return "Please select a channel for the y-axis.";
             }
 
             if (dataX === null) {
                 return (
                     <>
-                        No data on channel <Tag label={channelNameX} /> yet.
+                        No data on channel <Tag label={channelX.getName()} /> yet.
                     </>
                 );
             }
             if (dataY === null) {
                 return (
                     <>
-                        No data on channel <Tag label={channelNameY} /> yet.
+                        No data on channel <Tag label={channelY.getName()} /> yet.
+                    </>
+                );
+            }
+
+            const xValues: number[] = [];
+            const yValues: number[] = [];
+
+            const keysX = dataX.map((el: any) => el.key);
+            const keysY = dataY.map((el: any) => el.key);
+            if (keysX.length === keysY.length && !keysX.some((el, index) => el !== keysY[index])) {
+                keysX.forEach((key) => {
+                    const dataPointX = dataX.find((el: any) => el.key === key);
+                    const dataPointY = dataY.find((el: any) => el.key === key);
+                    xValues.push(dataPointX.value);
+                    yValues.push(dataPointY.value);
+                });
+            }
+
+            return (
+                <ScatterPlot
+                    key="scatter"
+                    x={xValues}
+                    y={yValues}
+                    xAxisTitle={`${metaDataX?.description ?? ""} [${metaDataX?.unit ?? ""}]`}
+                    yAxisTitle={`${metaDataY?.description ?? ""} [${metaDataY?.unit ?? ""}]`}
+                    keyData={keysX}
+                    width={wrapperDivSize.width}
+                    height={wrapperDivSize.height}
+                    onHoverData={handleHoverChanged}
+                    highlightedKey={highlightedKey ?? undefined}
+                />
+            );
+        }
+
+        if (plotType === PlotType.ScatterWithColorMapping) {
+            if (!channelX) {
+                return "Please select a channel for the x-axis.";
+            }
+
+            if (!channelY) {
+                return "Please select a channel for the y-axis.";
+            }
+
+            if (!channelColor) {
+                return "Please select a channel for the color mapping.";
+            }
+
+            if (dataX === null) {
+                return (
+                    <>
+                        No data on channel <Tag label={channelX.getName()} /> yet.
+                    </>
+                );
+            }
+            if (dataY === null) {
+                return (
+                    <>
+                        No data on channel <Tag label={channelY.getName()} /> yet.
+                    </>
+                );
+            }
+            if (dataColor === null) {
+                return (
+                    <>
+                        No data on channel <Tag label={channelColor.getName()} /> yet.
                     </>
                 );
             }
@@ -263,71 +330,6 @@ export const view = ({ moduleContext, workbenchServices }: ModuleFCProps<State>)
                     width={wrapperDivSize.width}
                     onHoverData={handleHoverChanged}
                     height={wrapperDivSize.height}
-                />
-            );
-        }
-
-        if (plotType === PlotType.ScatterWithColorMapping) {
-            if (channelNameX === "" || channelNameX === null) {
-                return "Please select a channel for the x-axis.";
-            }
-
-            if (channelNameY === "" || channelNameY === null) {
-                return "Please select a channel for the y-axis.";
-            }
-
-            if (channelNameZ === "" || channelNameZ === null) {
-                return "Please select a channel for the z-axis.";
-            }
-
-            if (dataX === null) {
-                return (
-                    <>
-                        No data on channel <Tag label={channelNameX} /> yet.
-                    </>
-                );
-            }
-            if (dataY === null) {
-                return (
-                    <>
-                        No data on channel <Tag label={channelNameY} /> yet.
-                    </>
-                );
-            }
-            if (dataZ === null) {
-                return (
-                    <>
-                        No data on channel <Tag label={channelNameZ} /> yet.
-                    </>
-                );
-            }
-
-            const xValues: number[] = [];
-            const yValues: number[] = [];
-
-            const keysX = dataX.map((el: any) => el.key);
-            const keysY = dataY.map((el: any) => el.key);
-            if (keysX.length === keysY.length && !keysX.some((el, index) => el !== keysY[index])) {
-                keysX.forEach((key) => {
-                    const dataPointX = dataX.find((el: any) => el.key === key);
-                    const dataPointY = dataY.find((el: any) => el.key === key);
-                    xValues.push(dataPointX.value);
-                    yValues.push(dataPointY.value);
-                });
-            }
-
-            return (
-                <ScatterPlot
-                    key="scatter"
-                    x={xValues}
-                    y={yValues}
-                    xAxisTitle={`${metaDataX?.description ?? ""} [${metaDataX?.unit ?? ""}]`}
-                    yAxisTitle={`${metaDataY?.description ?? ""} [${metaDataY?.unit ?? ""}]`}
-                    keyData={keysX}
-                    width={wrapperDivSize.width}
-                    height={wrapperDivSize.height}
-                    onHoverData={handleHoverChanged}
-                    highlightedKey={highlightedKey ?? undefined}
                 />
             );
         }
@@ -386,7 +388,7 @@ export const view = ({ moduleContext, workbenchServices }: ModuleFCProps<State>)
                 );
             }
         }
-    };
+    }
 
     return (
         <div className="w-full h-full" ref={wrapperDivRef}>

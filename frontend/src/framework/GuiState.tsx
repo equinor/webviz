@@ -1,8 +1,8 @@
 import React from "react";
 
-import { cloneDeep } from "lodash";
+import { Point } from "@lib/utils/geometry";
 
-import { Point } from "./utils/geometry";
+import { cloneDeep } from "lodash";
 
 export enum Drawer {
     ADD_MODULE = "ADD_MODULE",

@@ -2,17 +2,21 @@ import React from "react";
 
 import { ModuleInstance } from "@framework/ModuleInstance";
 import { SyncSettingKey, SyncSettingsMeta } from "@framework/SyncSettings";
-import { XMarkIcon } from "@heroicons/react/20/solid";
+import { ArrowDownTrayIcon, ArrowUpTrayIcon, XMarkIcon } from "@heroicons/react/20/solid";
 import { isDevMode } from "@lib/utils/devMode";
+
+import { DataChannelEventTypes } from "../../DataChannelVisualization";
 
 export type HeaderProps = {
     moduleInstance: ModuleInstance<any>;
     isDragged: boolean;
     onPointerDown: (event: React.PointerEvent<HTMLDivElement>) => void;
     onRemoveClick: (event: React.PointerEvent<HTMLDivElement>) => void;
+    onInputChannelsClick: (event: React.PointerEvent<HTMLDivElement>) => void;
 };
 
 export const Header: React.FC<HeaderProps> = (props) => {
+    const dataChannelOriginRef = React.useRef<HTMLDivElement>(null);
     const [syncedSettings, setSyncedSettings] = React.useState<SyncSettingKey[]>(
         props.moduleInstance.getSyncedSettingKeys()
     );
@@ -37,6 +41,27 @@ export const Header: React.FC<HeaderProps> = (props) => {
 
         return unsubscribeFunc;
     }, []);
+
+    function handleDataChannelOriginPointerDown(e: React.PointerEvent<HTMLDivElement>) {
+        document.dispatchEvent(
+            new CustomEvent(DataChannelEventTypes.DATA_CHANNEL_ORIGIN_POINTER_DOWN, {
+                detail: {
+                    moduleInstanceId: props.moduleInstance.getId(),
+                    originElement: dataChannelOriginRef.current,
+                },
+            })
+        );
+        e.stopPropagation();
+        e.preventDefault();
+    }
+
+    function handleInputChannelsPointerUp(e: React.PointerEvent<HTMLDivElement>) {
+        props.onInputChannelsClick(e);
+    }
+
+    function handleInputChannelsPointerDown(e: React.PointerEvent<HTMLDivElement>) {
+        e.stopPropagation();
+    }
 
     return (
         <div
@@ -68,7 +93,27 @@ export const Header: React.FC<HeaderProps> = (props) => {
                     ))}
                 </>
             </div>
-
+            {props.moduleInstance.hasBroadcastChannels() && (
+                <div
+                    id={`moduleinstance-${props.moduleInstance.getId()}-data-channel-origin`}
+                    ref={dataChannelOriginRef}
+                    className="hover:text-slate-500 cursor-grab mr-2"
+                    title="Connect data channels to other module instances"
+                    onPointerDown={handleDataChannelOriginPointerDown}
+                >
+                    <ArrowUpTrayIcon className="w-4 h-4" />
+                </div>
+            )}
+            {props.moduleInstance.getInputChannelDefs().length > 0 && (
+                <div
+                    className="hover:text-slate-500 cursor-pointer mr-2"
+                    title="Edit input data channels"
+                    onPointerUp={handleInputChannelsPointerUp}
+                    onPointerDown={handleInputChannelsPointerDown}
+                >
+                    <ArrowDownTrayIcon className="w-4 h-4" />
+                </div>
+            )}
             <div
                 className="hover:text-slate-500 cursor-pointer"
                 onPointerDown={props.onRemoveClick}

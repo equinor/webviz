@@ -16,10 +16,6 @@ ModuleRegistry.registerModule<State>({
     moduleName: "Sensitivity",
     defaultTitle: "Sensitivity",
     syncableSettingKeys: [SyncSettingKey.ENSEMBLE, SyncSettingKey.TIME_SERIES],
-    preview
-});
-
-ModuleRegistry.registerModule<State>("Sensitivity", "Sensitivity", {
-    syncableSettingKeys: [SyncSettingKey.ENSEMBLE, SyncSettingKey.TIME_SERIES],
+    preview,
     inputChannelDefs,
 });

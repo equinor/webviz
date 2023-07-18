@@ -42,7 +42,7 @@ export const view = ({ moduleContext, workbenchSession }: ModuleFCProps<State>) 
             return;
         }
 
-        const handleChannelXChanged = (data: any, metaData: BroadcastChannelMeta) => {
+        const handleResponseChanged = (data: any | null, metaData: BroadcastChannelMeta | null) => {
             const realizations: number[] = [];
             const values: number[] = [];
             data.forEach((vec: any) => {
@@ -50,15 +50,19 @@ export const view = ({ moduleContext, workbenchSession }: ModuleFCProps<State>) 
                 values.push(vec.value);
             });
 
-            setResponseData({
-                realizations: realizations,
-                values: values,
-                name: metaData.description,
-                unit: metaData.unit,
-            });
+            if (data && metaData) {
+                setResponseData({
+                    realizations: realizations,
+                    values: values,
+                    name: metaData.description,
+                    unit: metaData.unit,
+                });
+            } else {
+                setResponseData(null);
+            }
         };
 
-        const unsubscribeFunc = responseChannel.subscribe(handleChannelXChanged);
+        const unsubscribeFunc = responseChannel.subscribe(handleResponseChanged);
 
         return unsubscribeFunc;
     }, [responseChannel]);

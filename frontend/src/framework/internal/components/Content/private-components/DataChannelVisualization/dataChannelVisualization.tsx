@@ -3,9 +3,9 @@ import React from "react";
 import { useGuiSelector } from "@framework/GuiState";
 import { useStoreState, useStoreValue } from "@framework/StateStore";
 import { Workbench } from "@framework/Workbench";
-import { Point } from "@framework/utils/geometry";
 import { resolveClassNames } from "@lib/components/_utils/resolveClassNames";
 import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
+import { Point } from "@lib/utils/geometry";
 
 export enum DataChannelEventTypes {
     DATA_CHANNEL_ORIGIN_POINTER_DOWN = "data-channel-origin-pointer-down",
@@ -337,18 +337,33 @@ export const DataChannelVisualization: React.FC<DataChannelVisualizationProps> =
             </defs>
             {visible && (
                 <g>
-                    <path
-                        id="current-data-channel-path"
-                        d={`M ${originPoint.x} ${originPoint.y} C ${midPoint1.x} ${midPoint1.y} ${midPoint2.x} ${
-                            midPoint2.y
-                        } ${currentPointerPosition.x} ${
-                            currentPointerPosition.y + (currentPointerPosition.y > originPoint.y ? -20 : 20)
-                        }`}
-                        stroke="black"
-                        fill="transparent"
-                        className={resolveClassNames({ invisible: !visible })}
-                        markerEnd="url(#arrowhead-right)"
-                    />
+                    {originPoint.x < currentPointerPosition.x ? (
+                        <path
+                            id="current-data-channel-path"
+                            d={`M ${originPoint.x} ${originPoint.y} C ${midPoint1.x} ${midPoint1.y} ${midPoint2.x} ${
+                                midPoint2.y
+                            } ${currentPointerPosition.x} ${
+                                currentPointerPosition.y + (currentPointerPosition.y > originPoint.y ? -20 : 20)
+                            }`}
+                            stroke="black"
+                            fill="transparent"
+                            className={resolveClassNames({ invisible: !visible })}
+                            markerEnd="url(#arrowhead-right)"
+                        />
+                    ) : (
+                        <path
+                            id="current-data-channel-path"
+                            d={`M ${currentPointerPosition.x} ${
+                                currentPointerPosition.y + (currentPointerPosition.y > originPoint.y ? -20 : 20)
+                            } C ${midPoint2.x} ${midPoint2.y} ${midPoint1.x} ${midPoint1.y} ${originPoint.x} ${
+                                originPoint.y
+                            }`}
+                            stroke="black"
+                            fill="transparent"
+                            className={resolveClassNames({ invisible: !visible })}
+                            markerStart="url(#arrowhead-left)"
+                        />
+                    )}
                     {currentChannelName && (
                         <text>
                             <textPath

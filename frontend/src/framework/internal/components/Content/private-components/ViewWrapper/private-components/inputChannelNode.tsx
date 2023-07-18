@@ -3,11 +3,11 @@ import React from "react";
 import { BroadcastChannelKeyCategory } from "@framework/Broadcaster";
 import { useSetStoreValue, useStoreValue } from "@framework/StateStore";
 import { Workbench } from "@framework/Workbench";
-import { Point, pointerEventToPoint, rectContainsPoint } from "@framework/utils/geometry";
 import { XMarkIcon } from "@heroicons/react/20/solid";
 import { IconButton } from "@lib/components/IconButton";
 import { resolveClassNames } from "@lib/components/_utils/resolveClassNames";
 import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
+import { Point, pointerEventToPoint, rectContainsPoint } from "@lib/utils/geometry";
 
 import { DataChannelEventTypes } from "../../DataChannelVisualization";
 

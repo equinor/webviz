@@ -1,8 +1,8 @@
 import React from "react";
 import { createPortal } from "react-dom";
 
-import { Point } from "@framework/utils/geometry";
 import { XMarkIcon } from "@heroicons/react/20/solid";
+import { Point } from "@lib/utils/geometry";
 
 export type ChannelSelectorProps = {
     channelNames: string[];

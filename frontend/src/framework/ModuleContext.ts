@@ -1,6 +1,7 @@
 import React from "react";
 
-import { BroadcastChannel } from "./Broadcaster";
+import { BroadcastChannel, InputBroadcastChannelDef } from "./Broadcaster";
+import { InitialSettings } from "./InitialSettings";
 import { ModuleInstance } from "./ModuleInstance";
 import { StateBaseType, StateStore, useSetStoreValue, useStoreState, useStoreValue } from "./StateStore";
 import { SyncSettingKey } from "./SyncSettings";
@@ -16,6 +17,14 @@ export class ModuleContext<S extends StateBaseType> {
 
     getInputChannel(name: string): BroadcastChannel | null {
         return this._moduleInstance.getInputChannel(name);
+    }
+
+    setInputChannel(inputName: string, channelName: string): void {
+        this._moduleInstance.setInputChannel(inputName, channelName);
+    }
+
+    getInputChannelDef(name: string): InputBroadcastChannelDef | undefined {
+        return this._moduleInstance.getInputChannelDefs().find((channelDef) => channelDef.name === name);
     }
 
     getInstanceIdString(): string {
@@ -61,8 +70,10 @@ export class ModuleContext<S extends StateBaseType> {
         this._moduleInstance.setTitle(title);
     }
 
-    useInputChannel(name: string): BroadcastChannel | null {
+    useInputChannel(name: string, initialSettings?: InitialSettings): BroadcastChannel | null {
         const [channel, setChannel] = React.useState<BroadcastChannel | null>(null);
+
+        initialSettings?.applyToStateOnMount(name, "string", setChannel);
 
         React.useEffect(() => {
             function handleNewChannel(newChannel: BroadcastChannel | null) {

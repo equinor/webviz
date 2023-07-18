@@ -38,8 +38,6 @@ export type LayoutElement = {
 
 export type WorkbenchGuiState = {
     drawerContent: DrawerContent;
-    modulesListOpen: boolean;
-    syncSettingsActive: boolean;
     showDataChannelConnections: boolean;
     editDataChannelConnectionsForModuleInstanceId: string | null;
     highlightedDataChannelConnection: {
@@ -63,9 +61,6 @@ export class Workbench {
         this._activeModuleId = "";
         this._guiStateStore = new StateStore<WorkbenchGuiState>({
             drawerContent: DrawerContent.None,
-        this.guiStateStore = new StateStore<WorkbenchGuiState>({
-            modulesListOpen: false,
-            syncSettingsActive: false,
             showDataChannelConnections: false,
             editDataChannelConnectionsForModuleInstanceId: null,
             highlightedDataChannelConnection: null,

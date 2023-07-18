@@ -9,6 +9,7 @@ export type RegisterModuleOptions = {
     defaultTitle: string;
     syncableSettingKeys?: SyncSettingKey[];
     broadcastChannelsDef?: BroadcastChannelsDef;
+    inputChannelDefs?: InputBroadcastChannelDef[];
     preview?: DrawPreviewFunc;
 };
 
@@ -20,31 +21,16 @@ export class ModuleRegistry {
 
     static registerModule<ModuleStateType extends StateBaseType>(
         options: RegisterModuleOptions
-    public static registerModule<ModuleStateType extends StateBaseType>(
-        moduleName: string,
-        defaultTitle: string,
-        advancedSettings?: {
-            syncableSettingKeys?: SyncSettingKey[];
-            broadcastChannelsDef?: BroadcastChannelsDef;
-            inputChannelDefs?: InputBroadcastChannelDef[];
-        }
     ): Module<ModuleStateType> {
         const module = new Module<ModuleStateType>(
             options.moduleName,
             options.defaultTitle,
             options.syncableSettingKeys,
             options.broadcastChannelsDef,
+            options.inputChannelDefs,
             options.preview || null
         );
         this._registeredModules[options.moduleName] = module;
-        const module = new Module<ModuleStateType>(
-            moduleName,
-            defaultTitle,
-            advancedSettings?.syncableSettingKeys,
-            advancedSettings?.broadcastChannelsDef,
-            advancedSettings?.inputChannelDefs
-        );
-        this._registeredModules[moduleName] = module;
         return module;
     }
 
