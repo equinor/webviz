@@ -246,7 +246,7 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                                     {newlySelectedEnsembles.map((item) => (
                                         <tr
                                             key={`${item.caseName}-${item.ensembleName}`}
-                                            className="hover:bg-slate-100 align-top odd:bg-slate-50"
+                                            className="hover:bg-slate-100 odd:bg-slate-50 align-center"
                                         >
                                             <td className="p-2">
                                                 <div
