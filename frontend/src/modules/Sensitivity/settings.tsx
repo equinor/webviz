@@ -4,10 +4,10 @@ import { Label } from "@lib/components/Label";
 
 import { State } from "./state";
 
-export function settings({ moduleContext, workbenchServices, initialSettings }: ModuleFCProps<State>) {
+export function settings({ moduleContext, workbenchServices }: ModuleFCProps<State>) {
     return (
         <>
-            <Label text="Data channel X axis" key="data-channel-x-axis">
+            <Label text="Data channel response" key="data-channel-response">
                 <ChannelSelect
                     moduleContext={moduleContext}
                     channelName="response"

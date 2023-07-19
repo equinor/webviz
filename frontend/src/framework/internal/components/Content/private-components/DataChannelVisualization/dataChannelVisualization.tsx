@@ -1,6 +1,5 @@
 import React from "react";
 
-import { useGuiSelector } from "@framework/GuiState";
 import { useStoreState, useStoreValue } from "@framework/StateStore";
 import { Workbench } from "@framework/Workbench";
 import { resolveClassNames } from "@lib/components/_utils/resolveClassNames";
@@ -9,6 +8,8 @@ import { Point } from "@lib/utils/geometry";
 
 export enum DataChannelEventTypes {
     DATA_CHANNEL_ORIGIN_POINTER_DOWN = "data-channel-origin-pointer-down",
+    DATA_CHANNEL_NODE_HOVER = "data-channel-node-hover",
+    DATA_CHANNEL_NODE_UNHOVER = "data-channel-node-unhover",
     DATA_CHANNEL_DONE = "data-channel-done",
     DATA_CHANNEL_CONNECTIONS_CHANGED = "data-channel-connections-changed",
 }
@@ -18,6 +19,10 @@ export interface DataChannelEvents {
         moduleInstanceId: string;
         originElement: HTMLElement;
     }>;
+    [DataChannelEventTypes.DATA_CHANNEL_NODE_HOVER]: CustomEvent<{
+        allowed: boolean;
+    }>;
+    [DataChannelEventTypes.DATA_CHANNEL_NODE_UNHOVER]: CustomEvent;
     [DataChannelEventTypes.DATA_CHANNEL_DONE]: CustomEvent;
     [DataChannelEventTypes.DATA_CHANNEL_CONNECTIONS_CHANGED]: CustomEvent;
 }
@@ -59,7 +64,7 @@ export const DataChannelVisualization: React.FC<DataChannelVisualizationProps> =
     const [originPoint, setOriginPoint] = React.useState<Point>({ x: 0, y: 0 });
     const [currentPointerPosition, setCurrentPointerPosition] = React.useState<Point>({ x: 0, y: 0 });
     const [currentChannelName, setCurrentChannelName] = React.useState<string | null>(null);
-    const [_, forceRerender] = React.useReducer((x) => x + 1, 0);
+    const forceRerender = React.useReducer((x) => x + 1, 0)[1];
 
     const timeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -151,6 +156,21 @@ export const DataChannelVisualization: React.FC<DataChannelVisualizationProps> =
             }, 100);
         }
 
+        function handleNodeHover(e: CustomEvent<{ allowed: boolean }>) {
+            document.body.classList.remove("cursor-crosshair");
+            if (e.detail.allowed) {
+                document.body.classList.add("cursor-copy");
+            } else {
+                document.body.classList.add("cursor-not-allowed");
+            }
+        }
+
+        function handleNodeUnhover() {
+            document.body.classList.remove("cursor-copy");
+            document.body.classList.remove("cursor-not-allowed");
+            document.body.classList.add("cursor-crosshair");
+        }
+
         document.addEventListener(
             DataChannelEventTypes.DATA_CHANNEL_ORIGIN_POINTER_DOWN,
             handleDataChannelOriginPointerDown
@@ -160,6 +180,8 @@ export const DataChannelVisualization: React.FC<DataChannelVisualizationProps> =
         document.addEventListener(DataChannelEventTypes.DATA_CHANNEL_CONNECTIONS_CHANGED, handleConnectionChange);
         document.addEventListener("pointermove", handlePointerMove);
         document.addEventListener("resize", handleConnectionChange);
+        document.addEventListener(DataChannelEventTypes.DATA_CHANNEL_NODE_HOVER, handleNodeHover);
+        document.addEventListener(DataChannelEventTypes.DATA_CHANNEL_NODE_UNHOVER, handleNodeUnhover);
 
         return () => {
             document.removeEventListener(
@@ -268,12 +290,14 @@ export const DataChannelVisualization: React.FC<DataChannelVisualizationProps> =
                     highlightedDataChannelConnection?.listenerId === moduleInstance.getId();
 
                 dataChannelPaths.push({
-                    key: `${originModuleInstanceId}-${moduleInstance.getId()}-${inputChannelName}`,
+                    key: `${originModuleInstanceId}-${moduleInstance.getId()}-${inputChannelName}-${JSON.stringify(
+                        boundingRect
+                    )}`,
                     origin: originPoint,
                     midPoint1: midPoint1,
                     midPoint2: midPoint2,
                     destination: destinationPoint,
-                    description: `${inputChannel.getDisplayName()}`,
+                    description: inputChannel.getDisplayName(),
                     descriptionCenterPoint: descriptionCenterPoint,
                     highlighted: highlighted,
                 });

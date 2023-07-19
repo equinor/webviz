@@ -73,7 +73,14 @@ export class ModuleContext<S extends StateBaseType> {
     useInputChannel(name: string, initialSettings?: InitialSettings): BroadcastChannel | null {
         const [channel, setChannel] = React.useState<BroadcastChannel | null>(null);
 
-        initialSettings?.applyToStateOnMount(name, "string", setChannel);
+        React.useEffect(() => {
+            if (initialSettings) {
+                const setting = initialSettings.get(name, "string");
+                if (setting) {
+                    this._moduleInstance.setInputChannel(name, setting);
+                }
+            }
+        }, []);
 
         React.useEffect(() => {
             function handleNewChannel(newChannel: BroadcastChannel | null) {

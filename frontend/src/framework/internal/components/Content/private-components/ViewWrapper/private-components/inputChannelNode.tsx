@@ -23,7 +23,7 @@ export type InputChannelNodeProps = {
 
 export const InputChannelNode: React.FC<InputChannelNodeProps> = (props) => {
     const ref = React.useRef<HTMLDivElement>(null);
-    const [visible, setVisible] = React.useState<boolean>(false);
+    const [connectable, setConnectable] = React.useState<boolean>(false);
     const [hovered, setHovered] = React.useState<boolean>(false);
     const [hasConnection, setHasConnection] = React.useState<boolean>(false);
 
@@ -38,12 +38,9 @@ export const InputChannelNode: React.FC<InputChannelNodeProps> = (props) => {
         "highlightedDataChannelConnection"
     );
 
-    React.useEffect(() => {
-        if (!visible) {
-            return;
-        }
+    React.useLayoutEffect(() => {
         document.dispatchEvent(new CustomEvent(DataChannelEventTypes.DATA_CHANNEL_CONNECTIONS_CHANGED));
-    }, [boundingRect]);
+    }, [boundingRect, connectable]);
 
     React.useEffect(() => {
         const moduleInstance = props.workbench.getModuleInstance(props.moduleInstanceId);
@@ -71,7 +68,7 @@ export const InputChannelNode: React.FC<InputChannelNodeProps> = (props) => {
 
     React.useEffect(() => {
         let isHovered = false;
-        let visible = false;
+        let isConnectable = false;
         let moduleInstanceId = "";
 
         const moduleInstance = props.workbench.getModuleInstance(props.moduleInstanceId);
@@ -118,27 +115,29 @@ export const InputChannelNode: React.FC<InputChannelNodeProps> = (props) => {
                 return;
             }
 
-            setVisible(true);
-            visible = true;
+            setConnectable(true);
+            isConnectable = true;
             moduleInstanceId = e.detail.moduleInstanceId;
         }
 
         function handlePointerUp(e: PointerEvent) {
             if (isHovered) {
-                props.onChannelConnect(props.inputName, moduleInstanceId, pointerEventToPoint(e));
+                if (isConnectable) {
+                    props.onChannelConnect(props.inputName, moduleInstanceId, pointerEventToPoint(e));
+                } else {
+                    document.dispatchEvent(new CustomEvent(DataChannelEventTypes.DATA_CHANNEL_DONE));
+                }
                 setHovered(false);
+                isHovered = false;
             }
         }
 
         function handleDataChannelDone() {
-            setVisible(false);
-            visible = false;
+            setConnectable(false);
+            isConnectable = false;
         }
 
         function handlePointerMove(e: PointerEvent) {
-            if (!visible) {
-                return;
-            }
             const boundingRect = ref.current?.getBoundingClientRect();
             if (boundingRect && rectContainsPoint(boundingRect, pointerEventToPoint(e))) {
                 setHovered(true);
@@ -179,10 +178,14 @@ export const InputChannelNode: React.FC<InputChannelNodeProps> = (props) => {
             listenerId: props.moduleInstanceId,
             channelName: props.inputName,
         });
+        document.dispatchEvent(
+            new CustomEvent(DataChannelEventTypes.DATA_CHANNEL_NODE_HOVER, { detail: { allowed: connectable } })
+        );
     }
 
     function handlePointerLeave() {
         setHighlightedDataChannelConnection(null);
+        document.dispatchEvent(new CustomEvent(DataChannelEventTypes.DATA_CHANNEL_NODE_UNHOVER));
     }
 
     return (
@@ -198,11 +201,13 @@ export const InputChannelNode: React.FC<InputChannelNodeProps> = (props) => {
                 "border",
                 "p-4",
                 "m-2",
+                "h-16",
                 "text-sm",
-                "hover:border-red-500",
                 {
-                    invisible: !visible && !editDataChannelConnections,
-                    "bg-red-500": hovered,
+                    "hover:border-red-600": !connectable,
+                    "hover:border-green-600": connectable,
+                    "bg-green-600": hovered && connectable,
+                    "bg-red-600": hovered && !connectable,
                     "bg-slate-100": !hovered,
                     "text-white": hovered,
                 }

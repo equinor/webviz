@@ -31,7 +31,7 @@ function nFormatter(num: number, digits: number): string {
     return item ? (num / item.value).toFixed(digits).replace(rx, "$1") + item.symbol : "0";
 }
 
-export const view = ({ moduleContext, workbenchServices }: ModuleFCProps<State>) => {
+export const view = ({ moduleContext, workbenchServices, initialSettings }: ModuleFCProps<State>) => {
     const [plotType, setPlotType] = moduleContext.useStoreState("plotType");
     const numBins = moduleContext.useStoreValue("numBins");
     const orientation = moduleContext.useStoreValue("orientation");
@@ -44,9 +44,9 @@ export const view = ({ moduleContext, workbenchServices }: ModuleFCProps<State>)
     const [metaDataY, setMetaDataY] = React.useState<BroadcastChannelMeta | null>(null);
     const [metaDataColor, setMetaDataColor] = React.useState<BroadcastChannelMeta | null>(null);
 
-    const channelX = moduleContext.useInputChannel("channelX");
-    const channelY = moduleContext.useInputChannel("channelY");
-    const channelColor = moduleContext.useInputChannel("channelColor");
+    const channelX = moduleContext.useInputChannel("channelX", initialSettings);
+    const channelY = moduleContext.useInputChannel("channelY", initialSettings);
+    const channelColor = moduleContext.useInputChannel("channelColor", initialSettings);
 
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);
     const wrapperDivSize = useElementSize(wrapperDivRef);

@@ -9,7 +9,7 @@ const inputChannelDefs: InputBroadcastChannelDef[] = [
     {
         name: "channelX",
         displayName: "X axis",
-        keyCategories: [BroadcastChannelKeyCategory.Realization],
+        keyCategories: [BroadcastChannelKeyCategory.Realization, BroadcastChannelKeyCategory.TimestampMs],
     },
     {
         name: "channelY",
