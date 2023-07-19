@@ -10,21 +10,12 @@ export type SliderProps = {
     displayValue?: boolean;
 } & SliderUnstyledProps;
 
-function keepValueInRange(value: number, min: number, max: number): number {
-    if (value < min) {
-        return min;
-    }
-    if (value > max) {
-        return max;
-    }
-    return value;
-}
-
 export const Slider = React.forwardRef((props: SliderProps, ref: React.ForwardedRef<HTMLDivElement>) => {
-    const { displayValue, value: propsValue, ...rest } = props;
+    const { displayValue, value: propsValue, max, ...rest } = props;
 
     const [value, setValue] = React.useState<number | number[]>(propsValue ?? 0);
     const [prevValue, setPrevValue] = React.useState<number | number[]>(propsValue ?? 0);
+    const [valueLabelVisible, setValueLabelVisible] = React.useState<boolean>(false);
 
     if (propsValue !== undefined && propsValue !== prevValue) {
         setValue(propsValue);
@@ -36,43 +27,15 @@ export const Slider = React.forwardRef((props: SliderProps, ref: React.Forwarded
         props.onChange?.(event, value, activeThumb);
     };
 
-    const handleStartInputValueChanged = (event: React.ChangeEvent<HTMLInputElement>) => {
-        if (Array.isArray(value)) {
-            const newValue = [keepValueInRange(Number(event.target.value), props.min ?? 0, props.max ?? 100), value[1]];
-            setValue(newValue);
-            props.onChange?.(event.nativeEvent, newValue, 0);
-        }
-    };
-
-    const handleEndInputValueChanged = (event: React.ChangeEvent<HTMLInputElement>) => {
-        if (Array.isArray(value)) {
-            const newValue = [value[0], keepValueInRange(Number(event.target.value), props.min ?? 0, props.max ?? 100)];
-            setValue(newValue);
-            props.onChange?.(event.nativeEvent, newValue, 1);
-            return;
-        }
-        const newValue = keepValueInRange(Number(event.target.value), props.min ?? 0, props.max ?? 100);
-        setValue(newValue);
-        props.onChange?.(event.nativeEvent, newValue, 0);
-    };
-
     return (
         <BaseComponent disabled={props.disabled}>
-            <div className="flex flex-row gap-4 items-center">
-                {props.displayValue && Array.isArray(value) && (
-                    <Input
-                        type="number"
-                        style={{
-                            width: Math.floor(Math.log10((props.max ?? 100) / 10)) + 2 + "rem",
-                        }}
-                        value={value[0]}
-                        className="w-8"
-                        onChange={handleStartInputValueChanged}
-                    />
-                )}
+            <div className="relative">
                 <SliderUnstyled
                     {...rest}
+                    max={max}
                     onChange={handleValueChanged}
+                    onPointerEnter={() => setValueLabelVisible(true)}
+                    onPointerLeave={() => setValueLabelVisible(false)}
                     value={value}
                     ref={ref}
                     slotProps={{
@@ -85,10 +48,10 @@ export const Slider = React.forwardRef((props: SliderProps, ref: React.Forwarded
                                 "touch-action-none",
                                 "inline-block",
                                 "relative",
-                                "hover:opacity-100"
+                                "hover:opacity-100",
+                                "relative"
                             ),
                         },
-
                         rail: {
                             className: resolveClassNames(
                                 "block",
@@ -136,14 +99,30 @@ export const Slider = React.forwardRef((props: SliderProps, ref: React.Forwarded
                     }}
                 />
                 {displayValue && (
-                    <Input
-                        type="number"
-                        value={Array.isArray(value) ? value[1] : value}
-                        style={{
-                            width: Math.floor(Math.log10((props.max ?? 100) / 10)) + 2 + "rem",
-                        }}
-                        onChange={handleEndInputValueChanged}
-                    />
+                    <div
+                        className={resolveClassNames(
+                            "absolute",
+                            "rounded",
+                            "bg-blue-600",
+                            "text-white",
+                            "p-2",
+                            "text-xs",
+                            "font-bold",
+                            "leading-none",
+                            "transform",
+                            "-translate-x-1/2",
+                            "-translate-y-full",
+                            "transition-opacity",
+                            "pointer-events-none",
+                            "top-0",
+                            {
+                                hidden: !valueLabelVisible,
+                            }
+                        )}
+                        style={{ left: `${((value as number) / (max ?? 100)) * 100}%` }}
+                    >
+                        {value}
+                    </div>
                 )}
             </div>
         </BaseComponent>
