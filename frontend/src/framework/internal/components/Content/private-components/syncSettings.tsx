@@ -36,7 +36,7 @@ export const GroupModules: React.FC<ModulesListProps> = (props) => {
 
     return (
         <Drawer
-            title="Synced settings"
+            title="Sync settings"
             visible={drawerContent === DrawerContent.SyncSettings}
             onClose={handleDrawerClose}
         >

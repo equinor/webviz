@@ -11,6 +11,7 @@ import { EnsembleItem } from "@framework/internal/components/SelectEnsemblesDial
 import {
     ChevronLeftIcon,
     ChevronRightIcon,
+    LinkIcon,
     QueueListIcon,
     ShareIcon,
     Squares2X2Icon,
@@ -24,6 +25,10 @@ import { useQueryClient } from "@tanstack/react-query";
 
 type NavBarProps = {
     workbench: Workbench;
+};
+
+const NavBarDivider: React.FC = () => {
+    return <div className="bg-slate-200 h-[1px] w-full mt-4 mb-4" />;
 };
 
 export const NavBar: React.FC<NavBarProps> = (props) => {
@@ -89,11 +94,11 @@ export const NavBar: React.FC<NavBarProps> = (props) => {
     return (
         <div
             className={resolveClassNames(
-                "bg-white p-2 border-r-2 border-slate-200 z-50 shadow-lg",
+                "bg-white p-2 border-r-2 border-slate-200 z-50 shadow-lg flex flex-col",
                 expanded ? "w-60" : "w-[4.5rem]"
             )}
         >
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-2 flex-grow">
                 <div className="w-full flex justify-center mb-2 mt-1 p-2">
                     <img src={WebvizLogo} alt="Webviz logo" className="w-20 h-20" />
                 </div>
@@ -106,7 +111,7 @@ export const NavBar: React.FC<NavBarProps> = (props) => {
                         {expanded ? <ChevronLeftIcon className="w-5 h-5" /> : <ChevronRightIcon className="w-5 h-5" />}
                     </Button>
                 </div>
-                <div className="bg-slate-200 h-[1px] w-full mt-4 mb-4" />
+                <NavBarDivider />
                 <Button
                     title="Open ensemble selection dialog"
                     onClick={handleEnsembleClick}
@@ -133,7 +138,7 @@ export const NavBar: React.FC<NavBarProps> = (props) => {
                 >
                     {expanded ? "Ensembles" : ""}
                 </Button>
-                <div className="bg-slate-200 h-[1px] w-full mt-4 mb-4" />
+                <NavBarDivider />
                 <Button
                     title="Open modules list"
                     onClick={handleModulesListClick}
@@ -161,7 +166,7 @@ export const NavBar: React.FC<NavBarProps> = (props) => {
                 <Button
                     title="Open sync settings"
                     onClick={handleSyncSettingsClick}
-                    startIcon={<ShareIcon className="w-5 h-5 mr-2" />}
+                    startIcon={<LinkIcon className="w-5 h-5 mr-2" />}
                     className={resolveClassNames(
                         "w-full",
                         "h-10",
@@ -170,8 +175,18 @@ export const NavBar: React.FC<NavBarProps> = (props) => {
                 >
                     {expanded ? "Sync settings" : ""}
                 </Button>
-                <div className="bg-slate-200 h-[1px] w-full mt-4 mb-4" />
+                <NavBarDivider />
                 <LoginButton className="w-full !text-slate-800 h-10" showText={expanded} />
+                <div className="flex-grow h-5" />
+                <NavBarDivider />
+                <Button
+                    title="Visit project on GitHub"
+                    onClick={() => window.open("https://github.com/equinor/webviz", "_blank")}
+                    className="w-full !text-slate-300 hover:!text-slate-800 h-10"
+                    startIcon={<ShareIcon className="w-5 h-5" />}
+                >
+                    {expanded ? "Webviz on GitHub" : ""}
+                </Button>
             </div>
             {ensembleDialogOpen && (
                 <SelectEnsemblesDialog selectedEnsembles={selectedEnsembles} onClose={handleEnsembleDialogClose} />
