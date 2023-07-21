@@ -9,6 +9,8 @@ export type LabelProps = {
     children: React.ReactElement;
     wrapperClassName?: string;
     labelClassName?: string;
+    startComponent?: React.ReactElement;
+    endComponent?: React.ReactElement;
 };
 
 export const Label: React.FC<LabelProps> = (props) => {
@@ -17,10 +19,19 @@ export const Label: React.FC<LabelProps> = (props) => {
     return (
         <div className={props.wrapperClassName}>
             <label
-                className={resolveClassNames("text-sm", "text-gray-500", props.labelClassName ?? "")}
+                className={resolveClassNames(
+                    "text-sm",
+                    "text-gray-500",
+                    props.labelClassName ?? "",
+                    "flex",
+                    "gap-2",
+                    "items-center"
+                )}
                 htmlFor={props.children.props.id ?? id.current}
             >
+                {props.startComponent}
                 {props.text}
+                {props.endComponent}
             </label>
             {props.children.props.id ? props.children : React.cloneElement(props.children, { id: id.current })}
         </div>
