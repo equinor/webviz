@@ -1,6 +1,5 @@
 import React, { ChangeEvent } from "react";
 
-import { BroadcastChannelKeyCategory } from "@framework/Broadcaster";
 import { ModuleFCProps } from "@framework/Module";
 import { ChannelSelect } from "@framework/components/ChannelSelect";
 import { Dropdown } from "@lib/components/Dropdown";
