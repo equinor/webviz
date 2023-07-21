@@ -4,7 +4,6 @@ import ReactDOM from "react-dom";
 import { Point } from "@lib/utils/geometry";
 import { Slider as SliderUnstyled, SliderProps as SliderUnstyledProps } from "@mui/base";
 
-import { Input } from "../Input";
 import { BaseComponent } from "../_BaseComponent";
 import { resolveClassNames } from "../_utils/resolveClassNames";
 
@@ -28,7 +27,7 @@ export const Slider = React.forwardRef((props: SliderProps, ref: React.Forwarded
         setPrevValue(propsValue);
     }
 
-    React.useEffect(() => {
+    React.useEffect(function handleMount() {
         let pointerPressed = false;
         let hovered = false;
         if (divRef.current) {
@@ -36,7 +35,7 @@ export const Slider = React.forwardRef((props: SliderProps, ref: React.Forwarded
             if (elements.length === 1) {
                 const thumb = elements[0];
 
-                function handlePointerOver() {
+                const handlePointerOver = () => {
                     setValueLabelVisible(true);
                     hovered = true;
                     if (divRef.current) {
@@ -49,27 +48,27 @@ export const Slider = React.forwardRef((props: SliderProps, ref: React.Forwarded
                             });
                         }
                     }
-                }
+                };
 
-                function handlePointerOut() {
+                const handlePointerOut = () => {
                     hovered = false;
                     if (pointerPressed) {
                         return;
                     }
                     setValueLabelVisible(false);
-                }
+                };
 
-                function handlePointerDown() {
+                const handlePointerDown = () => {
                     pointerPressed = true;
-                }
+                };
 
-                function handlePointerUp() {
+                const handlePointerUp = () => {
                     pointerPressed = false;
                     if (hovered) {
                         return;
                     }
                     setValueLabelVisible(false);
-                }
+                };
 
                 thumb.addEventListener("pointerover", handlePointerOver);
                 thumb.addEventListener("pointerout", handlePointerOut);
