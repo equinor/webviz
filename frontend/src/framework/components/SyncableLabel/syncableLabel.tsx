@@ -39,7 +39,7 @@ export const SyncableLabel: React.FC<SyncableLabelProps> = (props) => {
                             "w-4 h-4 -mt-1 cursor-pointer",
                             moduleContext.isSyncedSetting(syncSettingKey) ? "text-blue-600" : "text-slate-600"
                         )}
-                        onClick={(e) =>
+                        onClick={() =>
                             handleSyncSettingChange(syncSettingKey, !moduleContext.isSyncedSetting(syncSettingKey))
                         }
                     />
