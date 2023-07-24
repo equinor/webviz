@@ -5,7 +5,7 @@ import { useStoreState } from "@framework/StateStore";
 import { Template, TemplateRegistry } from "@framework/TemplateRegistry";
 import { DrawerContent, Workbench } from "@framework/Workbench";
 
-import { Drawer } from "./drawer";
+import { Drawer } from "../Drawer/drawer";
 
 function drawTemplatePreview(template: Template, width: number, height: number): React.ReactNode {
     return (

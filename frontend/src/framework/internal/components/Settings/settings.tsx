@@ -7,9 +7,10 @@ import { resolveClassNames } from "@lib/components/_utils/resolveClassNames";
 
 import { Setting } from "./private-components/setting";
 
-import { ModulesList } from "../Content/private-components/modulesList";
-import { GroupModules } from "../Content/private-components/syncSettings";
-import { TemplatesList } from "../Content/private-components/templatesList";
+import { ColorPaletteSettings } from "../ColorPaletteSettings";
+import { ModulesList } from "../ModulesList";
+import { SyncSettings } from "../SyncSettings";
+import { TemplatesList } from "../TemplatesList";
 
 type SettingsProps = {
     workbench: Workbench;
@@ -31,7 +32,8 @@ export const Settings: React.FC<SettingsProps> = (props) => {
         >
             <ModulesList relContainer={mainRef.current} workbench={props.workbench} />
             <TemplatesList workbench={props.workbench} />
-            <GroupModules workbench={props.workbench} />
+            <SyncSettings workbench={props.workbench} />
+            <ColorPaletteSettings workbench={props.workbench} />
             <div
                 className={resolveClassNames(
                     drawerContent === DrawerContent.None ? "visible" : "invisible",

@@ -6,13 +6,13 @@ import { DrawerContent, Workbench } from "@framework/Workbench";
 import { useActiveModuleId } from "@framework/internal/hooks/workbenchHooks";
 import { Checkbox } from "@lib/components/Checkbox";
 
-import { Drawer } from "./drawer";
+import { Drawer } from "../Drawer/drawer";
 
-type ModulesListProps = {
+type SyncSettingsProps = {
     workbench: Workbench;
 };
 
-export const GroupModules: React.FC<ModulesListProps> = (props) => {
+export const SyncSettings: React.FC<SyncSettingsProps> = (props) => {
     const [drawerContent, setDrawerContent] = useStoreState(props.workbench.getGuiStateStore(), "drawerContent");
     const activeModuleId = useActiveModuleId(props.workbench);
 

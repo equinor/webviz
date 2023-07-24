@@ -15,6 +15,7 @@ import {
     QueueListIcon,
     ShareIcon,
     Squares2X2Icon,
+    SwatchIcon,
     WindowIcon,
 } from "@heroicons/react/20/solid";
 import { Badge } from "@lib/components/Badge";
@@ -80,6 +81,14 @@ export const NavBar: React.FC<NavBarProps> = (props) => {
             });
         }
     };
+
+    function handleColorPaletteSettingsClick() {
+        if (drawerContent === DrawerContent.ColorPaletteSettings) {
+            setDrawerContent(DrawerContent.None);
+            return;
+        }
+        setDrawerContent(DrawerContent.ColorPaletteSettings);
+    }
 
     function handleCollapseOrExpand() {
         setExpanded(!expanded);
@@ -174,6 +183,18 @@ export const NavBar: React.FC<NavBarProps> = (props) => {
                     )}
                 >
                     {expanded ? "Sync settings" : ""}
+                </Button>
+                <Button
+                    title="Open color palette settings"
+                    onClick={handleColorPaletteSettingsClick}
+                    startIcon={<SwatchIcon className="w-5 h-5 mr-2" />}
+                    className={resolveClassNames(
+                        "w-full",
+                        "h-10",
+                        drawerContent === DrawerContent.ColorPaletteSettings ? "text-red-600" : "!text-slate-800"
+                    )}
+                >
+                    {expanded ? "Color settings" : ""}
                 </Button>
                 <NavBarDivider />
                 <LoginButton className="w-full !text-slate-800 h-10" showText={expanded} />

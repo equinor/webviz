@@ -1,3 +1,4 @@
+import { ColorPalette } from "@lib/utils/ColorPalette";
 import { QueryClient } from "@tanstack/react-query";
 
 import { Broadcaster } from "./Broadcaster";
@@ -25,6 +26,7 @@ export enum DrawerContent {
     ModulesList = "ModulesList",
     TemplatesList = "TemplatesList",
     SyncSettings = "SyncSettings",
+    ColorPaletteSettings = "ColorPaletteSettings",
 }
 
 export type LayoutElement = {
@@ -40,6 +42,35 @@ export type WorkbenchGuiState = {
     drawerContent: DrawerContent;
 };
 
+export enum ColorPaletteType {
+    Categorical = "categorical",
+    Continuous = "continuous",
+}
+
+const defaultCategoricalColorPalette = new ColorPalette([
+    "#ea5545",
+    "#f46a9b",
+    "#ef9b20",
+    "#edbf33",
+    "#ede15b",
+    "#bdcf32",
+    "#87bc45",
+    "#27aeef",
+    "#b33dc6",
+]);
+
+const defaultContinuousColorPalette = new ColorPalette([
+    "#115f9a",
+    "#1984c5",
+    "#22a7f0",
+    "#48b5c4",
+    "#76c68f",
+    "#a6d75b",
+    "#c9e52f",
+    "#d0ee11",
+    "#d0f400",
+]);
+
 export class Workbench {
     private _moduleInstances: ModuleInstance<any>[];
     private _activeModuleId: string;
@@ -49,6 +80,7 @@ export class Workbench {
     private _broadcaster: Broadcaster;
     private _subscribersMap: { [key: string]: Set<() => void> };
     private _layout: LayoutElement[];
+    private _colorPalettes: { [key: string]: ColorPalette[] };
 
     constructor() {
         this._moduleInstances = [];
@@ -61,6 +93,18 @@ export class Workbench {
         this._broadcaster = new Broadcaster();
         this._subscribersMap = {};
         this._layout = [];
+        this._colorPalettes = {
+            [ColorPaletteType.Categorical]: [defaultCategoricalColorPalette],
+            [ColorPaletteType.Continuous]: [defaultContinuousColorPalette],
+        };
+    }
+
+    addColorPalette(colorPalette: ColorPalette, type: ColorPaletteType): void {
+        this._colorPalettes[type].push(colorPalette);
+    }
+
+    getColorPalettes(): { [key: string]: ColorPalette[] } {
+        return this._colorPalettes;
     }
 
     loadLayoutFromLocalStorage(): boolean {
