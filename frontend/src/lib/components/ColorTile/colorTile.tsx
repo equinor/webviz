@@ -12,10 +12,11 @@ export type ColorTileProps = {
 export const ColorTile: React.FC<ColorTileProps> = (props) => {
     return (
         <div
-            className={resolveClassNames(
-                "w-5 h-5 cursor-pointer hover:brightness-110 box-border hover:outline hover:outline-1 hover:border-white",
-                !props.grouped ? "rounded" : ""
-            )}
+            className={resolveClassNames("w-5 h-5 box-border", {
+                rounded: !props.grouped,
+                "hover:outline hover:outline-1 hover:border-white hover:brightness-110 cursor-pointer":
+                    props.interactive,
+            })}
             style={{ backgroundColor: props.color }}
         ></div>
     );

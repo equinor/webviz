@@ -1,7 +1,9 @@
 import React from "react";
 
+import { ChevronDownIcon } from "@heroicons/react/20/solid";
 import { ColorGradient } from "@lib/components/ColorGradient";
 import { ColorTileGroup } from "@lib/components/ColorTileGroup";
+import { IconButton } from "@lib/components/IconButton";
 import { ColorPalette } from "@lib/utils/ColorPalette";
 
 export type ColorPaletteSelectorProps = {
@@ -18,16 +20,21 @@ export const ColorPaletteSelector: React.FC<ColorPaletteSelectorProps> = (props)
     }
 
     if (!selectedColorPalette) {
-        return <div className="bg-slate-200 rounded p-2" />;
+        return <div className="bg-slate-100 rounded p-2" />;
     }
 
     return (
-        <div className="bg-slate-200 rounded p-2">
-            {props.continuous ? (
-                <ColorGradient colorPalette={selectedColorPalette} />
-            ) : (
-                <ColorTileGroup colorPalette={selectedColorPalette} />
-            )}
+        <div className="bg-slate-100 rounded p-2 flex items-center gap-4">
+            <div className="flex-grow">
+                {props.continuous ? (
+                    <ColorGradient colorPalette={selectedColorPalette} />
+                ) : (
+                    <ColorTileGroup colorPalette={selectedColorPalette} />
+                )}
+            </div>
+            <IconButton>
+                <ChevronDownIcon className="flex-grow-0 w-4 h-4" />
+            </IconButton>
         </div>
     );
 };
