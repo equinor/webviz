@@ -26,12 +26,14 @@ export const ColorPaletteSettings: React.FC<ColorPaletteSettingsProps> = (props)
             visible={drawerContent === DrawerContent.ColorPaletteSettings}
             onClose={handleDrawerClose}
         >
-            <Label text="Categorical colors">
-                <ColorPaletteSelector colorPalettes={colorPalettes[ColorPaletteType.Categorical]} />
-            </Label>
-            <Label text="Continuous colors">
-                <ColorPaletteSelector colorPalettes={colorPalettes[ColorPaletteType.Continuous]} />
-            </Label>
+            <div className="flex flex-col gap-2">
+                <Label text="Categorical colors">
+                    <ColorPaletteSelector colorPalettes={colorPalettes[ColorPaletteType.Categorical]} />
+                </Label>
+                <Label text="Continuous colors">
+                    <ColorPaletteSelector colorPalettes={colorPalettes[ColorPaletteType.Continuous]} continuous />
+                </Label>
+            </div>
         </Drawer>
     );
 };

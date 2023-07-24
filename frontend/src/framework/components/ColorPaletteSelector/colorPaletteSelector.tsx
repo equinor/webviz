@@ -1,5 +1,6 @@
 import React from "react";
 
+import { ColorGradient } from "@lib/components/ColorGradient";
 import { ColorTileGroup } from "@lib/components/ColorTileGroup";
 import { ColorPalette } from "@lib/utils/ColorPalette";
 
@@ -7,6 +8,7 @@ export type ColorPaletteSelectorProps = {
     selectedPaletteUuid?: string;
     onSelectPalette?: (uuid: string) => void;
     colorPalettes?: ColorPalette[];
+    continuous?: boolean;
 };
 
 export const ColorPaletteSelector: React.FC<ColorPaletteSelectorProps> = (props) => {
@@ -15,9 +17,17 @@ export const ColorPaletteSelector: React.FC<ColorPaletteSelectorProps> = (props)
         selectedColorPalette = props.colorPalettes[0];
     }
 
+    if (!selectedColorPalette) {
+        return <div className="bg-slate-200 rounded p-2" />;
+    }
+
     return (
         <div className="bg-slate-200 rounded p-2">
-            {selectedColorPalette && <ColorTileGroup colorPalette={selectedColorPalette} />}
+            {props.continuous ? (
+                <ColorGradient colorPalette={selectedColorPalette} />
+            ) : (
+                <ColorTileGroup colorPalette={selectedColorPalette} />
+            )}
         </div>
     );
 };
