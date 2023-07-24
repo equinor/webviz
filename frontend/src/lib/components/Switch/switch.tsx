@@ -7,6 +7,7 @@ import { resolveClassNames } from "../_utils/resolveClassNames";
 
 export type SwitchProps = UseSwitchParameters & {
     condensed?: boolean;
+    title?: string;
 };
 
 export const Switch = React.forwardRef((props: SwitchProps, ref: React.ForwardedRef<HTMLInputElement>) => {
@@ -16,6 +17,7 @@ export const Switch = React.forwardRef((props: SwitchProps, ref: React.Forwarded
         <BaseComponent disabled={disabled}>
             <SwitchUnstyled
                 {...getInputProps()}
+                title={props.title}
                 ref={ref}
                 slotProps={{
                     root: {

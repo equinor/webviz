@@ -33,6 +33,11 @@ export const SyncableLabel: React.FC<SyncableLabelProps> = (props) => {
                         condensed
                         checked={moduleContext.isSyncedSetting(syncSettingKey)}
                         onChange={(e) => handleSyncSettingChange(syncSettingKey, e.target.checked)}
+                        title={
+                            moduleContext.isSyncedSetting(syncSettingKey)
+                                ? `Unsync "${props.text}"`
+                                : `Sync "${props.text}"`
+                        }
                     />
                     <LinkIcon
                         className={resolveClassNames(
@@ -41,6 +46,11 @@ export const SyncableLabel: React.FC<SyncableLabelProps> = (props) => {
                         )}
                         onClick={() =>
                             handleSyncSettingChange(syncSettingKey, !moduleContext.isSyncedSetting(syncSettingKey))
+                        }
+                        title={
+                            moduleContext.isSyncedSetting(syncSettingKey)
+                                ? `Unsync "${props.text}"`
+                                : `Sync "${props.text}"`
                         }
                     />
                 </>

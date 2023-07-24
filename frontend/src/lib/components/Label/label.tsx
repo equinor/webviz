@@ -6,6 +6,7 @@ import { resolveClassNames } from "../_utils/resolveClassNames";
 
 export type LabelProps = {
     text: string;
+    title?: string;
     children: React.ReactElement;
     wrapperClassName?: string;
     labelClassName?: string;
@@ -27,6 +28,7 @@ export const Label: React.FC<LabelProps> = (props) => {
                     "gap-2",
                     "items-center"
                 )}
+                title={props.title}
                 htmlFor={props.children.props.id ?? id.current}
             >
                 {props.startComponent}
