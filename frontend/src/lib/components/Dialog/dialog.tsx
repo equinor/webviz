@@ -11,7 +11,7 @@ export type DialogProps = {
     children?: React.ReactNode;
     modal?: boolean;
     open?: boolean;
-    onClose?: () => void;
+    onClose?: (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => void;
     width?: string | number;
     height?: string | number;
     minWidth?: string | number;
@@ -25,15 +25,15 @@ export const Dialog: React.FC<DialogProps> = (props) => {
 
     const dialogSize = useElementSize(dialogRef);
 
-    const handleClose = () => {
-        props.onClose?.();
+    const handleClose = (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
+        props.onClose?.(e);
     };
 
     const handleBackgroundClick = (e: React.MouseEvent<HTMLDivElement>) => {
         if (e.target !== wrapperRef.current) {
             return;
         }
-        handleClose();
+        handleClose(e);
     };
 
     return ReactDOM.createPortal(

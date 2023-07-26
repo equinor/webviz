@@ -107,6 +107,10 @@ export class Workbench {
         return this._colorPalettes;
     }
 
+    setColorPalettes(colorPalettes: ColorPalette[], type: ColorPaletteType): void {
+        this._colorPalettes[type] = colorPalettes;
+    }
+
     loadLayoutFromLocalStorage(): boolean {
         const layoutString = localStorage.getItem("layout");
         if (!layoutString) return false;
