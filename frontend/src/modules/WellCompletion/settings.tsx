@@ -10,6 +10,7 @@ import { fixupEnsembleIdent, maybeAssignFirstSyncedEnsemble } from "@framework/u
 import { Dropdown, DropdownOption } from "@lib/components/Dropdown";
 import { Label } from "@lib/components/Label";
 import { RadioGroup } from "@lib/components/RadioGroup";
+import { Slider } from "@lib/components/Slider";
 
 import { RealizationSelection, State } from "./state";
 
@@ -85,6 +86,15 @@ export const settings = ({ moduleContext, workbenchSession, workbenchServices }:
                     />
                 </Label>
             )}
+            {/* {/* <Slider value={[2, 5]} min={1} max={30} displayValue={true}></Slider> */
+            /*Make it possible to have timesteps/strings as input for Slider?*/}
+
+            <Label text="Start timestep">
+                <Dropdown options={[]} />
+            </Label>
+            <Label text="End timestep">
+                <Dropdown options={[]} />
+            </Label>
         </>
     );
 };
@@ -97,5 +107,15 @@ function makeRealizationOptionItems(ensemble: Ensemble): DropdownOption[] {
     ensemble.getRealizations().map((realization: number) => {
         optionItems.push({ label: realization.toString(), value: realization.toString() });
     });
+    return optionItems;
+}
+
+function makeTimeStepOptionItems(timeSteps: string[]): DropdownOption[] {
+    const optionItems: DropdownOption[] = [];
+    // TODO: Fill time steps
+
+    // ensemble.getRealizations().map((realization: number) => {
+    //     optionItems.push({ label: realization.toString(), value: realization.toString() });
+    // });
     return optionItems;
 }

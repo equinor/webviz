@@ -21,6 +21,7 @@
         "@tanstack/react-query-devtools": "^4.24.12",
         "@webviz/subsurface-components": "^0.4.16",
         "@webviz/subsurface-viewer": "^0.0.2-alpha.3",
+        "@webviz/well-completions-plot": "file:webviz-well-completions-plot-0.0.0.tgz",
         "axios": "^1.3.0",
         "lodash": "^4.17.21",
         "react": "^17.0.2",
