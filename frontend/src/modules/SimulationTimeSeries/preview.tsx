@@ -23,7 +23,7 @@ export const preview: DrawPreviewFunc = function (width: number, height: number)
                 return (
                     <path
                         key={index}
-                        d={`M ${path.x1} ${path.y1} Q ${path.xc} ${path.yc} ${path.x2} ${path.y2} T ${path.x3} ${path.y3}}`}
+                        d={`M ${path.x1} ${path.y1} Q ${path.xc} ${path.yc} ${path.x2} ${path.y2} T ${path.x3} ${path.y3}`}
                         fill="none"
                         stroke="green"
                         strokeWidth={1}
