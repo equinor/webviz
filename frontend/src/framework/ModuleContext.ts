@@ -1,6 +1,6 @@
 import React from "react";
 
-import { BroadcastChannel, BroadcastChannelsDef } from "./Broadcaster";
+import { BroadcastChannel } from "./Broadcaster";
 import { ModuleInstance } from "./ModuleInstance";
 import { StateBaseType, StateStore, useSetStoreValue, useStoreState, useStoreValue } from "./StateStore";
 import { SyncSettingKey } from "./SyncSettings";
@@ -51,5 +51,9 @@ export class ModuleContext<S extends StateBaseType> {
 
     getChannel(channelName: string): BroadcastChannel {
         return this._moduleInstance.getBroadcastChannel(channelName);
+    }
+
+    setInstanceTitle(title: string): void {
+        this._moduleInstance.setTitle(title);
     }
 }

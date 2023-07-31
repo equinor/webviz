@@ -49,22 +49,22 @@ export const getAvailablePlotsForPhase = (phase: string): PlotOptionType[] => {
     }
 }
 export class PvtPlotAccessor {
-    private pvtData: PvtData_api;
+    private _pvtData: PvtData_api;
 
     constructor(pvtData: PvtData_api) {
-        this.pvtData = pvtData;
+        this._pvtData = pvtData;
     }
 
 
     getPlotLabel(dataValue: string): string {
 
-        if (this.pvtData.phase === "Oil") {
+        if (this._pvtData.phase === "Oil") {
             return OilPlotOptions.filter((plot) => plot.value === dataValue)[0].label
         }
-        else if (this.pvtData.phase === "Gas") {
+        else if (this._pvtData.phase === "Gas") {
             return GasPlotOptions.filter((plot) => plot.value === dataValue)[0].label
         }
-        else if (this.pvtData.phase === "Water") {
+        else if (this._pvtData.phase === "Water") {
             return WaterPlotOptions.filter((plot) => plot.value === dataValue)[0]?.label || ""
         }
         else {
@@ -72,9 +72,9 @@ export class PvtPlotAccessor {
         }
     }
     getPlotData(dataValue: string): PlotDataType {
-        const title = this.getPlotLabel(dataValue) + "(" + this.pvtData.phase + ")"
-        const pvtNum = this.pvtData.pvtnum
-        const phaseType = this.pvtData.phase
+        const title = this.getPlotLabel(dataValue) + "(" + this._pvtData.phase + ")"
+        const pvtNum = this._pvtData.pvtnum
+        const phaseType = this._pvtData.phase
 
         let traces: TraceData[] = []
         if (phaseType === "Oil" || phaseType === "Water") {
@@ -148,30 +148,30 @@ export class PvtPlotAccessor {
     }
     private getDataSeries(dataValue: string): number[] {
         if (dataValue === "volumefactor") {
-            return this.pvtData.volumefactor
+            return this._pvtData.volumefactor
         } else if (dataValue === "viscosity") {
-            return this.pvtData.viscosity
+            return this._pvtData.viscosity
         } else if (dataValue === "density") {
-            return this.pvtData.density
+            return this._pvtData.density
         } else if (dataValue === "ratio") {
-            return this.pvtData.ratio
+            return this._pvtData.ratio
         } else if (dataValue === "pressure") {
-            return this.pvtData.pressure
+            return this._pvtData.pressure
         } else {
             return []
         }
     }
     private getDataUnit(dataValue: string): string {
         if (dataValue === "volumefactor") {
-            return this.pvtData.volumefactor_unit
+            return this._pvtData.volumefactor_unit
         } else if (dataValue === "viscosity") {
-            return this.pvtData.viscosity_unit
+            return this._pvtData.viscosity_unit
         } else if (dataValue === "density") {
-            return this.pvtData.density_unit
+            return this._pvtData.density_unit
         } else if (dataValue === "ratio") {
-            return this.pvtData.ratio_unit
+            return this._pvtData.ratio_unit
         } else if (dataValue === "pressure") {
-            return this.pvtData.pressure_unit
+            return this._pvtData.pressure_unit
         } else {
             return ""
         }

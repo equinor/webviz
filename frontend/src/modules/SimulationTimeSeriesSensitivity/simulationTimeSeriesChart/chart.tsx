@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import Plot from "react-plotly.js";
 
-import { Layout, PlotHoverEvent, PlotMouseEvent } from "plotly.js";
+import { Layout, PlotHoverEvent } from "plotly.js";
 
 import { TimeSeriesPlotlyTrace } from "./traces";
 

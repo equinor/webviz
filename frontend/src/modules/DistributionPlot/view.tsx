@@ -2,6 +2,7 @@ import React from "react";
 
 import { BroadcastChannelKeyCategory, BroadcastChannelMeta } from "@framework/Broadcaster";
 import { ModuleFCProps } from "@framework/Module";
+import { Tag } from "@lib/components/Tag";
 import { useElementSize } from "@lib/hooks/useElementSize";
 
 import { BarChart } from "./components/barChart";
@@ -122,14 +123,21 @@ export const view = ({ moduleContext, workbenchServices }: ModuleFCProps<State>)
         }
     };
 
-    const makeContent = (): React.ReactNode => {
+    function makeContent(): React.ReactNode {
         if (plotType === null) {
             return "Please select a plot type.";
         }
 
         if (plotType === PlotType.Histogram) {
-            if (dataX === null) {
+            if (channelNameX === "" || channelNameX === null) {
                 return "Please select a channel for the x-axis.";
+            }
+            if (dataX === null) {
+                return (
+                    <>
+                        No data on channel <Tag label={channelNameX} /> yet.
+                    </>
+                );
             }
 
             const xValues = dataX.map((el: any) => el.value);
@@ -161,8 +169,15 @@ export const view = ({ moduleContext, workbenchServices }: ModuleFCProps<State>)
         }
 
         if (plotType === PlotType.BarChart) {
-            if (dataX === null) {
+            if (channelNameX === "" || channelNameX === null) {
                 return "Please select a channel for the x-axis.";
+            }
+            if (dataX === null) {
+                return (
+                    <>
+                        No data on channel <Tag label={channelNameX} /> yet.
+                    </>
+                );
             }
 
             const keyData = dataX.map((el: any) => el.key);
@@ -189,8 +204,27 @@ export const view = ({ moduleContext, workbenchServices }: ModuleFCProps<State>)
         }
 
         if (plotType === PlotType.Scatter) {
-            if (!dataX || !dataY) {
-                return "Please select a channel for the x-axis and the y-axis.";
+            if (channelNameX === "" || channelNameX === null) {
+                return "Please select a channel for the x-axis.";
+            }
+
+            if (channelNameY === "" || channelNameY === null) {
+                return "Please select a channel for the y-axis.";
+            }
+
+            if (dataX === null) {
+                return (
+                    <>
+                        No data on channel <Tag label={channelNameX} /> yet.
+                    </>
+                );
+            }
+            if (dataY === null) {
+                return (
+                    <>
+                        No data on channel <Tag label={channelNameY} /> yet.
+                    </>
+                );
             }
 
             const xValues: number[] = [];
@@ -224,8 +258,38 @@ export const view = ({ moduleContext, workbenchServices }: ModuleFCProps<State>)
         }
 
         if (plotType === PlotType.ScatterWithColorMapping) {
-            if (!dataX || !dataY || !dataZ) {
-                return "Please select a channel for the x-axis, the y-axis and the color mapping.";
+            if (channelNameX === "" || channelNameX === null) {
+                return "Please select a channel for the x-axis.";
+            }
+
+            if (channelNameY === "" || channelNameY === null) {
+                return "Please select a channel for the y-axis.";
+            }
+
+            if (channelNameZ === "" || channelNameZ === null) {
+                return "Please select a channel for the z-axis.";
+            }
+
+            if (dataX === null) {
+                return (
+                    <>
+                        No data on channel <Tag label={channelNameX} /> yet.
+                    </>
+                );
+            }
+            if (dataY === null) {
+                return (
+                    <>
+                        No data on channel <Tag label={channelNameY} /> yet.
+                    </>
+                );
+            }
+            if (dataZ === null) {
+                return (
+                    <>
+                        No data on channel <Tag label={channelNameZ} /> yet.
+                    </>
+                );
             }
 
             const xValues: number[] = [];
@@ -268,7 +332,7 @@ export const view = ({ moduleContext, workbenchServices }: ModuleFCProps<State>)
                 />
             );
         }
-    };
+    }
 
     return (
         <div className="w-full h-full" ref={wrapperDivRef}>

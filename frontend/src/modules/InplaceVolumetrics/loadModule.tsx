@@ -4,7 +4,7 @@ import { settings } from "./settings";
 import { State } from "./state";
 import { view } from "./view";
 
-const initialState: State = {
+const defaultState: State = {
     ensembleIdent: null,
     tableName: null,
     categoricalOptions: null,
@@ -13,7 +13,7 @@ const initialState: State = {
     realizationsToInclude: null,
 };
 
-const module = ModuleRegistry.initModule<State>("InplaceVolumetrics", initialState);
+const module = ModuleRegistry.initModule<State>("InplaceVolumetrics", defaultState);
 
 module.viewFC = view;
 module.settingsFC = settings;

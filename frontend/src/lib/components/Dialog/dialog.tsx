@@ -20,19 +20,12 @@ export type DialogProps = {
 };
 
 export const Dialog: React.FC<DialogProps> = (props) => {
-    const [open, setOpen] = React.useState(props.open ?? false);
-
     const wrapperRef = React.useRef<HTMLDivElement>(null);
     const dialogRef = React.useRef<HTMLDivElement>(null);
 
     const dialogSize = useElementSize(dialogRef);
 
-    React.useEffect(() => {
-        setOpen(props.open ?? false);
-    }, [props.open]);
-
     const handleClose = () => {
-        setOpen(false);
         props.onClose?.();
     };
 
@@ -50,7 +43,7 @@ export const Dialog: React.FC<DialogProps> = (props) => {
                 "pointer-events-none": !props.modal,
                 "bg-slate-600": props.modal,
                 "bg-opacity-50": props.modal,
-                hidden: !open,
+                hidden: !props.open,
             })}
             onClick={handleBackgroundClick}
         >

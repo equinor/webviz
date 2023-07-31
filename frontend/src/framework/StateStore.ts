@@ -14,21 +14,21 @@ export class StateStore<StateType extends StateBaseType> {
     private _options?: StateOptions<StateType>;
     private _subscribersMap: Partial<Record<keyof StateType, Set<any>>>;
 
-    constructor(initialState: StateType, options?: StateOptions<StateType>) {
-        this._state = initialState;
+    constructor(defaultState: StateType, options?: StateOptions<StateType>) {
+        this._state = defaultState;
         this._subscribersMap = {};
         this._options = options;
     }
 
-    public hasKey(key: keyof StateType): boolean {
+    hasKey(key: keyof StateType): boolean {
         return key in this._state;
     }
 
-    public getValue<K extends keyof StateType>(key: K): StateType[K] {
+    getValue<K extends keyof StateType>(key: K): StateType[K] {
         return this._state[key];
     }
 
-    public setValue<K extends keyof StateType>(key: K, value: StateType[K]) {
+    setValue<K extends keyof StateType>(key: K, value: StateType[K]) {
         if (this._state[key] === value) {
             return;
         }
@@ -46,7 +46,7 @@ export class StateStore<StateType extends StateBaseType> {
         }
     }
 
-    public subscribe<K extends keyof StateType>(key: K, cb: (value: StateType[K]) => void) {
+    subscribe<K extends keyof StateType>(key: K, cb: (value: StateType[K]) => void) {
         const subscribersSet = this._subscribersMap[key] || new Set();
         subscribersSet.add(cb);
         this._subscribersMap[key] = subscribersSet;

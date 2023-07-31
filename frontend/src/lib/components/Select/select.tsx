@@ -1,6 +1,6 @@
 import React, { Key } from "react";
 
-import { getTextWidth } from "@framework/utils/textSize";
+import { getTextWidth } from "@lib/utils/textSize";
 
 import { Input } from "../Input";
 import { Virtualization } from "../Virtualization";

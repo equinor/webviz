@@ -7,8 +7,8 @@ import { resolveClassNames } from "../_utils/resolveClassNames";
 
 export type IconButtonProps = {
     children: React.ReactNode;
-    color?: string;
     size?: "small" | "medium" | "large";
+    color?: "primary" | "danger" | "success";
 };
 
 export const IconButton = React.forwardRef(
@@ -22,8 +22,12 @@ export const IconButton = React.forwardRef(
                     slotProps={{
                         root: {
                             className: resolveClassNames(
-                                color || "text-gray-600",
-                                "hover:bg-gray-200",
+                                {
+                                    "text-indigo-600": color === "primary" || !color,
+                                    "text-red-600": color === "danger",
+                                    "text-green-600": color === "success",
+                                },
+                                "hover:bg-gray-300",
                                 "inline-flex",
                                 "items-center",
                                 "justify-center",
