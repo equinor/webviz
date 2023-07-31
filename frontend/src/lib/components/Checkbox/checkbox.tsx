@@ -40,13 +40,14 @@ export const Checkbox: React.FC<CheckboxProps> = (props) => {
                     "text-blue-600",
                     "border-gray-300",
                     "rounded",
-                    "focus:ring-blue-500"
+                    "focus:ring-blue-500",
+                    "cursor-pointer"
                 )}
             />
             {props.label && (
                 <label
                     htmlFor={props.id ?? id.current}
-                    className={resolveClassNames("block", "text-sm", "text-gray-900")}
+                    className={resolveClassNames("block", "text-sm", "text-gray-900", "cursor-pointer")}
                 >
                     {props.label}
                 </label>
