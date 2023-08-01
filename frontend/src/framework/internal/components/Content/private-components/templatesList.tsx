@@ -1,9 +1,10 @@
 import React from "react";
 
 import { ModuleRegistry } from "@framework/ModuleRegistry";
-import { useStoreState } from "@framework/StateStore";
+import { useStoreValue } from "@framework/StateStore";
 import { Template, TemplateRegistry } from "@framework/TemplateRegistry";
 import { DrawerContent, Workbench } from "@framework/Workbench";
+import { Squares2X2Icon } from "@heroicons/react/20/solid";
 
 import { Drawer } from "./drawer";
 
@@ -93,7 +94,7 @@ type TemplatesListProps = {
     I will skip it for now and come back to it when it becomes a problem.
 */
 export const TemplatesList: React.FC<TemplatesListProps> = (props) => {
-    const [drawerContent, setDrawerContent] = useStoreState(props.workbench.getGuiStateStore(), "drawerContent");
+    const drawerContent = useStoreValue(props.workbench.getGuiStateStore(), "drawerContent");
     const [searchQuery, setSearchQuery] = React.useState("");
 
     const handleSearchQueryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -108,18 +109,14 @@ export const TemplatesList: React.FC<TemplatesListProps> = (props) => {
         props.workbench.applyTemplate(template);
     };
 
-    const handleDrawerClose = () => {
-        setDrawerContent(DrawerContent.None);
-    };
-
     return (
         <Drawer
             showFilter
             onFilterChange={handleSearchQueryChange}
             filterPlaceholder="Filter templates..."
             title="Select a template"
+            icon={<Squares2X2Icon />}
             visible={drawerContent === DrawerContent.TemplatesList}
-            onClose={handleDrawerClose}
         >
             {Object.keys(TemplateRegistry.getRegisteredTemplates())
                 .filter((templName) => templName.toLowerCase().includes(searchQuery.toLowerCase()))

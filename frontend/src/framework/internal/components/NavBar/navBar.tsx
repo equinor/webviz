@@ -11,16 +11,18 @@ import { EnsembleItem } from "@framework/internal/components/SelectEnsemblesDial
 import {
     ChevronLeftIcon,
     ChevronRightIcon,
+    Cog6ToothIcon,
     LinkIcon,
     QueueListIcon,
-    ShareIcon,
     Squares2X2Icon,
+    StarIcon,
     WindowIcon,
 } from "@heroicons/react/20/solid";
 import { Badge } from "@lib/components/Badge";
 import { Button } from "@lib/components/Button";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { resolveClassNames } from "@lib/components/_utils/resolveClassNames";
+import { isDevMode } from "@lib/utils/devMode";
 import { useQueryClient } from "@tanstack/react-query";
 
 type NavBarProps = {
@@ -36,39 +38,45 @@ export const NavBar: React.FC<NavBarProps> = (props) => {
     const [expanded, setExpanded] = React.useState<boolean>(false);
     const [loadingEnsembles, setLoadingEnsembles] = React.useState<boolean>(false);
     const [drawerContent, setDrawerContent] = useStoreState(props.workbench.getGuiStateStore(), "drawerContent");
+    const [settingsPanelWidth, setSettingsPanelWidth] = useStoreState(
+        props.workbench.getGuiStateStore(),
+        "settingsPanelWidthInPercent"
+    );
     const ensembleSet = useEnsembleSet(props.workbench.getWorkbenchSession());
 
     const queryClient = useQueryClient();
 
-    const handleEnsembleClick = () => {
+    function ensureSettingsPanelIsVisible() {
+        if (settingsPanelWidth <= 5) {
+            setSettingsPanelWidth(20);
+        }
+    }
+
+    function handleEnsembleClick() {
         setEnsembleDialogOpen(true);
-    };
+    }
 
-    const handleModulesListClick = () => {
-        if (drawerContent === DrawerContent.ModulesList) {
-            setDrawerContent(DrawerContent.None);
-            return;
-        }
+    function handleModuleSettingsClick() {
+        ensureSettingsPanelIsVisible();
+        setDrawerContent(DrawerContent.ModuleSettings);
+    }
+
+    function handleModulesListClick() {
+        ensureSettingsPanelIsVisible();
         setDrawerContent(DrawerContent.ModulesList);
-    };
+    }
 
-    const handleTemplatesListClick = () => {
-        if (drawerContent === DrawerContent.TemplatesList) {
-            setDrawerContent(DrawerContent.None);
-            return;
-        }
+    function handleTemplatesListClick() {
+        ensureSettingsPanelIsVisible();
         setDrawerContent(DrawerContent.TemplatesList);
-    };
+    }
 
-    const handleSyncSettingsClick = () => {
-        if (drawerContent === DrawerContent.SyncSettings) {
-            setDrawerContent(DrawerContent.None);
-            return;
-        }
+    function handleSyncSettingsClick() {
+        ensureSettingsPanelIsVisible();
         setDrawerContent(DrawerContent.SyncSettings);
-    };
+    }
 
-    const handleEnsembleDialogClose = (selectedEnsembles: EnsembleItem[] | null) => {
+    function handleEnsembleDialogClose(selectedEnsembles: EnsembleItem[] | null) {
         setEnsembleDialogOpen(false);
         if (selectedEnsembles !== null) {
             const selectedEnsembleIdents = selectedEnsembles.map(
@@ -79,7 +87,7 @@ export const NavBar: React.FC<NavBarProps> = (props) => {
                 setLoadingEnsembles(false);
             });
         }
-    };
+    }
 
     function handleCollapseOrExpand() {
         setExpanded(!expanded);
@@ -118,7 +126,7 @@ export const NavBar: React.FC<NavBarProps> = (props) => {
                     className="w-full !text-slate-800 h-10"
                     startIcon={
                         selectedEnsembles.length === 0 && !loadingEnsembles ? (
-                            <QueueListIcon className="w-5 h-5" />
+                            <QueueListIcon className="w-5 h-5 mr-2" />
                         ) : (
                             <Badge
                                 className="mr-2"
@@ -140,7 +148,19 @@ export const NavBar: React.FC<NavBarProps> = (props) => {
                 </Button>
                 <NavBarDivider />
                 <Button
-                    title="Open modules list"
+                    title="Show module settings"
+                    onClick={handleModuleSettingsClick}
+                    startIcon={<Cog6ToothIcon className="w-5 h-5 mr-2" />}
+                    className={resolveClassNames(
+                        "w-full",
+                        "h-10",
+                        drawerContent === DrawerContent.ModuleSettings ? "text-red-600" : "!text-slate-800"
+                    )}
+                >
+                    {expanded ? "Module settings" : ""}
+                </Button>
+                <Button
+                    title="Show modules list"
                     onClick={handleModulesListClick}
                     startIcon={<WindowIcon className="w-5 h-5 mr-2" />}
                     className={resolveClassNames(
@@ -149,10 +169,10 @@ export const NavBar: React.FC<NavBarProps> = (props) => {
                         drawerContent === DrawerContent.ModulesList ? "text-red-600" : "!text-slate-800"
                     )}
                 >
-                    {expanded ? "Modules" : ""}
+                    {expanded ? "Add modules" : ""}
                 </Button>
                 <Button
-                    title="Open templates list"
+                    title="Show templates list"
                     onClick={handleTemplatesListClick}
                     startIcon={<Squares2X2Icon className="w-5 h-5 mr-2" />}
                     className={resolveClassNames(
@@ -161,10 +181,10 @@ export const NavBar: React.FC<NavBarProps> = (props) => {
                         drawerContent === DrawerContent.TemplatesList ? "text-red-600" : "!text-slate-800"
                     )}
                 >
-                    {expanded ? "Templates" : ""}
+                    {expanded ? "Use templates" : ""}
                 </Button>
                 <Button
-                    title="Open sync settings"
+                    title="Show sync settings"
                     onClick={handleSyncSettingsClick}
                     startIcon={<LinkIcon className="w-5 h-5 mr-2" />}
                     className={resolveClassNames(
@@ -182,8 +202,10 @@ export const NavBar: React.FC<NavBarProps> = (props) => {
                 <Button
                     title="Visit project on GitHub"
                     onClick={() => window.open("https://github.com/equinor/webviz", "_blank")}
-                    className="w-full !text-slate-300 hover:!text-slate-800 h-10"
-                    startIcon={<ShareIcon className="w-5 h-5" />}
+                    className={resolveClassNames("w-full !text-slate-500 hover:!text-slate-800 h-10", {
+                        "mb-16": isDevMode(),
+                    })}
+                    startIcon={<StarIcon className="w-5 h-5" />}
                 >
                     {expanded ? "Webviz on GitHub" : ""}
                 </Button>

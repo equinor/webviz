@@ -1,12 +1,10 @@
 import React from "react";
 
 import { LayoutElement, Workbench } from "@framework/Workbench";
-import { Content } from "@framework/internal/components/Content";
 import { NavBar } from "@framework/internal/components/NavBar";
-import { Settings } from "@framework/internal/components/Settings";
+import { SettingsContentPanels } from "@framework/internal/components/SettingsContentPanels";
 import { AuthProvider } from "@framework/internal/providers/AuthProvider";
 import { CustomQueryClientProvider } from "@framework/internal/providers/QueryClientProvider";
-import { ResizablePanels } from "@lib/components/ResizablePanels";
 
 import "./modules/registerAllModules";
 import "./templates/registerAllTemplates";
@@ -27,17 +25,7 @@ function App() {
             <CustomQueryClientProvider>
                 <div className="h-screen flex flex-row">
                     <NavBar workbench={workbench} />
-                    <ResizablePanels
-                        id="settings-content"
-                        direction="horizontal"
-                        minSizes={[300, 0]}
-                        initialSizesPercent={[25, 75]}
-                    >
-                        <Settings workbench={workbench} />
-                        <div className="flex flex-col flex-grow h-full">
-                            <Content workbench={workbench} />
-                        </div>
-                    </ResizablePanels>
+                    <SettingsContentPanels workbench={workbench} />
                 </div>
             </CustomQueryClientProvider>
         </AuthProvider>

@@ -34,7 +34,7 @@ export const Settings: React.FC<SettingsProps> = (props) => {
             <GroupModules workbench={props.workbench} />
             <div
                 className={resolveClassNames(
-                    drawerContent === DrawerContent.None ? "visible" : "invisible",
+                    drawerContent === DrawerContent.ModuleSettings ? "visible" : "invisible",
                     "h-full",
                     "w-full"
                 )}

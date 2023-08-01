@@ -1,9 +1,10 @@
 import React from "react";
 
-import { useStoreState } from "@framework/StateStore";
+import { useStoreValue } from "@framework/StateStore";
 import { SyncSettingKey, SyncSettingsMeta } from "@framework/SyncSettings";
 import { DrawerContent, Workbench } from "@framework/Workbench";
 import { useActiveModuleId } from "@framework/internal/hooks/workbenchHooks";
+import { LinkIcon } from "@heroicons/react/20/solid";
 import { Checkbox } from "@lib/components/Checkbox";
 
 import { Drawer } from "./drawer";
@@ -13,7 +14,7 @@ type ModulesListProps = {
 };
 
 export const GroupModules: React.FC<ModulesListProps> = (props) => {
-    const [drawerContent, setDrawerContent] = useStoreState(props.workbench.getGuiStateStore(), "drawerContent");
+    const drawerContent = useStoreValue(props.workbench.getGuiStateStore(), "drawerContent");
     const activeModuleId = useActiveModuleId(props.workbench);
 
     const activeModuleInstance = props.workbench.getModuleInstance(activeModuleId);
@@ -30,16 +31,8 @@ export const GroupModules: React.FC<ModulesListProps> = (props) => {
         }
     };
 
-    const handleDrawerClose = () => {
-        setDrawerContent(DrawerContent.None);
-    };
-
     return (
-        <Drawer
-            title="Sync settings"
-            visible={drawerContent === DrawerContent.SyncSettings}
-            onClose={handleDrawerClose}
-        >
+        <Drawer title="Sync settings" icon={<LinkIcon />} visible={drawerContent === DrawerContent.SyncSettings}>
             {activeModuleId === "" || activeModuleInstance === undefined ? (
                 <div className="text-gray-500">No module selected</div>
             ) : (
