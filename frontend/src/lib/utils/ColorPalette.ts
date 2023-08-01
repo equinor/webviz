@@ -1,12 +1,19 @@
 import { v4 } from "uuid";
 
+export enum ColorPaletteType {
+    Categorical = "Categorical",
+    Continuous = "Continuous",
+}
+
 export class ColorPalette {
     private _uuid: string;
     private _colors: string[];
+    private _type: ColorPaletteType;
 
-    constructor(hexColors: string[]) {
+    constructor(hexColors: string[], type: ColorPaletteType = ColorPaletteType.Categorical) {
         this._uuid = v4();
         this._colors = [];
+        this._type = type;
 
         for (const color of hexColors) {
             this.addColor(color);
@@ -47,7 +54,7 @@ export class ColorPalette {
     }
 
     clone(): ColorPalette {
-        const clone = new ColorPalette(this._colors);
+        const clone = new ColorPalette(this._colors, this._type);
         clone._uuid = this._uuid;
         return clone;
     }

@@ -3,7 +3,14 @@ import ReactDOM from "react-dom";
 
 import { useStoreState } from "@framework/StateStore";
 import { ColorPaletteType, DrawerContent, Workbench } from "@framework/Workbench";
-import { CheckIcon, ChevronDownIcon, PencilSquareIcon, PlusIcon, TrashIcon } from "@heroicons/react/20/solid";
+import {
+    CheckIcon,
+    ChevronDownIcon,
+    DocumentDuplicateIcon,
+    PencilSquareIcon,
+    PlusIcon,
+    TrashIcon,
+} from "@heroicons/react/20/solid";
 import { Button } from "@lib/components/Button";
 import { ColorGradient } from "@lib/components/ColorGradient";
 import { ColorTileGroup } from "@lib/components/ColorTileGroup";
@@ -46,12 +53,11 @@ const DragIcon: React.FC<DragIconProps> = (props) => {
 
 type ColorPaletteEditorProps = {
     colorPalette: ColorPalette;
-    continuous?: boolean;
     onChange?: (colorPalette: ColorPalette) => void;
     onClose?: (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => void;
 };
 
-const ColorPaletteEditor: React.FC<ColorPaletteEditorProps> = (props) => {
+const CategoricalColorPaletteEditor: React.FC<ColorPaletteEditorProps> = (props) => {
     const [colorPalette, setColorPalette] = React.useState<ColorPalette>(props.colorPalette);
     const [draggedElementIndex, setDraggedElementIndex] = React.useState<number | null>(null);
     const [hoveredElementIndex, setHoveredElementIndex] = React.useState<number | null>(null);
@@ -288,10 +294,39 @@ const ColorPaletteEditor: React.FC<ColorPaletteEditorProps> = (props) => {
     );
 };
 
+const ContinuousColorPaletteEditor: React.FC<ColorPaletteEditorProps> = (props) => {
+    const [colorPalette, setColorPalette] = React.useState<ColorPalette>(props.colorPalette);
+
+    function handleSaveClick() {
+        if (!props.onChange) {
+            return;
+        }
+
+        props.onChange(colorPalette);
+    }
+
+    return (
+        <Dialog
+            title="Edit color palette"
+            open
+            onClose={props.onClose}
+            width={"25%"}
+            actions={
+                <Button startIcon={<CheckIcon className="w-4 h-4" />} onClick={handleSaveClick}>
+                    Save
+                </Button>
+            }
+        >
+            <div className="w-full flex flex-col select-none"></div>
+        </Dialog>
+    );
+};
+
 type ColoPaletteItemProps = {
     colorPalette: ColorPalette;
     continuous?: boolean;
     onRemove?: (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => void;
+    onClone?: (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => void;
     onEdit?: () => void;
     onClick?: () => void;
     removable?: boolean;
@@ -325,6 +360,14 @@ const ColorPaletteItem: React.FC<ColoPaletteItemProps> = (props) => {
         props.onClick();
     }
 
+    function handleCloneClick(e: React.MouseEvent<HTMLButtonElement, MouseEvent>) {
+        if (!props.onClone) {
+            return;
+        }
+
+        props.onClone(e);
+    }
+
     return (
         <div
             className={resolveClassNames("p-2 flex items-center gap-1 hover:bg-blue-100 cursor-pointer h-12", {
@@ -339,15 +382,14 @@ const ColorPaletteItem: React.FC<ColoPaletteItemProps> = (props) => {
                     <ColorTileGroup colorPalette={props.colorPalette} />
                 )}
             </div>
-            <IconButton onClick={handleEditClick} title="Edit this color palette" className="flex-grow-0 min-w-0">
+            <IconButton onClick={handleEditClick} title="Edit this color palette">
                 <PencilSquareIcon className="w-4 h-4" />
             </IconButton>
+            <IconButton onClick={handleCloneClick} title="Clone this color palette">
+                <DocumentDuplicateIcon className="w-4 h-4" />
+            </IconButton>
             {props.removable && (
-                <IconButton
-                    onClick={handleRemoveClick}
-                    title="Remove this color palette"
-                    className="flex-grow-0 min-w-0"
-                >
+                <IconButton onClick={handleRemoveClick} title="Remove this color palette">
                     <TrashIcon className="w-4 h-4" />
                 </IconButton>
             )}
@@ -357,6 +399,7 @@ const ColorPaletteItem: React.FC<ColoPaletteItemProps> = (props) => {
 
 type ColorPaletteSelectorProps = {
     colorPalettes: ColorPalette[];
+    selectedColorPalette: ColorPalette;
     continuous?: boolean;
     onChange?: (colorPalette: ColorPalette) => void;
     onEdited?: (colorPalettes: ColorPalette[]) => void;
@@ -399,6 +442,28 @@ const ColorPaletteSelector: React.FC<ColorPaletteSelectorProps> = (props) => {
         setEditColorPalette(colorPalette);
     }
 
+    function handleCloneColorPaletteClick(colorPalette: ColorPalette) {
+        const newColorPalette = new ColorPalette(colorPalette.getColors());
+        const newColorPalettes = [...props.colorPalettes, newColorPalette];
+
+        if (!props.onEdited) {
+            return;
+        }
+
+        props.onEdited(newColorPalettes);
+    }
+
+    function handleColorPaletteSelected(colorPalette: ColorPalette) {
+        setSelectedColorPalette(colorPalette);
+        setOpen(false);
+
+        if (!props.onChange) {
+            return;
+        }
+
+        props.onChange(colorPalette);
+    }
+
     function renderColorPalettes() {
         return props.colorPalettes.map((colorPalette) => (
             <ColorPaletteItem
@@ -409,9 +474,12 @@ const ColorPaletteSelector: React.FC<ColorPaletteSelectorProps> = (props) => {
                     handleRemoveColorPaletteClick(colorPalette);
                     e.stopPropagation();
                 }}
+                onClone={(e) => {
+                    handleCloneColorPaletteClick(colorPalette);
+                    e.stopPropagation();
+                }}
                 onClick={() => {
-                    setSelectedColorPalette(colorPalette);
-                    setOpen(false);
+                    handleColorPaletteSelected(colorPalette);
                 }}
                 removable={props.colorPalettes.length > 1}
                 onEdit={() => handleEditorColorClick(colorPalette)}
@@ -511,13 +579,20 @@ const ColorPaletteSelector: React.FC<ColorPaletteSelectorProps> = (props) => {
                     </>,
                     document.body
                 )}
-            {editColorPalette && (
-                <ColorPaletteEditor
-                    colorPalette={editColorPalette}
-                    onChange={handleColorPaletteEdited}
-                    onClose={handleEditorClose}
-                />
-            )}
+            {editColorPalette &&
+                (props.continuous ? (
+                    <ContinuousColorPaletteEditor
+                        colorPalette={editColorPalette}
+                        onChange={handleColorPaletteEdited}
+                        onClose={handleEditorClose}
+                    />
+                ) : (
+                    <CategoricalColorPaletteEditor
+                        colorPalette={editColorPalette}
+                        onChange={handleColorPaletteEdited}
+                        onClose={handleEditorClose}
+                    />
+                ))}
         </div>
     );
 };
@@ -531,6 +606,10 @@ export const ColorPaletteSettings: React.FC<ColorPaletteSettingsProps> = (props)
     const [colorPalettes, setColorPalettes] = React.useState<Record<string, ColorPalette[]>>(
         props.workbench.getColorPalettes()
     );
+    const [selectedColorPalette, setSelectedColorPalette] = React.useState<Record<string, ColorPalette>>({
+        [ColorPaletteType.Categorical]: props.workbench.getSelectedColorPalette(ColorPaletteType.Categorical),
+        [ColorPaletteType.Continuous]: props.workbench.getSelectedColorPalette(ColorPaletteType.Continuous),
+    });
 
     const handleDrawerClose = () => {
         setDrawerContent(DrawerContent.None);
@@ -539,6 +618,14 @@ export const ColorPaletteSettings: React.FC<ColorPaletteSettingsProps> = (props)
     function handleColorPaletteEdited(colorPalettes: ColorPalette[], type: ColorPaletteType) {
         props.workbench.setColorPalettes(colorPalettes, type);
         setColorPalettes({ ...props.workbench.getColorPalettes() });
+    }
+
+    function handleColorPaletteSelected(colorPalette: ColorPalette, type: ColorPaletteType) {
+        props.workbench.setSelectedColorPalette(colorPalette, type);
+        setSelectedColorPalette({
+            ...selectedColorPalette,
+            [type]: colorPalette,
+        });
     }
 
     return (
@@ -550,15 +637,19 @@ export const ColorPaletteSettings: React.FC<ColorPaletteSettingsProps> = (props)
             <div className="flex flex-col gap-2">
                 <Label text="Categorical colors">
                     <ColorPaletteSelector
+                        selectedColorPalette={selectedColorPalette[ColorPaletteType.Categorical]}
                         colorPalettes={colorPalettes[ColorPaletteType.Categorical]}
                         onEdited={(palette) => handleColorPaletteEdited(palette, ColorPaletteType.Categorical)}
+                        onChange={(palette) => handleColorPaletteSelected(palette, ColorPaletteType.Categorical)}
                     />
                 </Label>
                 <Label text="Continuous colors">
                     <ColorPaletteSelector
+                        selectedColorPalette={selectedColorPalette[ColorPaletteType.Continuous]}
                         colorPalettes={colorPalettes[ColorPaletteType.Continuous]}
                         continuous
                         onEdited={(palette) => handleColorPaletteEdited(palette, ColorPaletteType.Continuous)}
+                        onChange={(palette) => handleColorPaletteSelected(palette, ColorPaletteType.Categorical)}
                     />
                 </Label>
             </div>

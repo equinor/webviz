@@ -11,7 +11,7 @@ export type ColorPaletteProps = {
 export const ColorTileGroup: React.FC<ColorPaletteProps> = (props) => {
     return (
         <div className="flex">
-            <div className="flex rounded border border-slate-600">
+            <div className="flex rounded border border-slate-600 w-full">
                 {props.colorPalette.getColors().map((color) => (
                     <ColorTile key={color} color={color} grouped />
                 ))}

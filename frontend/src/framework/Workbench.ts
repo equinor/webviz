@@ -81,6 +81,7 @@ export class Workbench {
     private _subscribersMap: { [key: string]: Set<() => void> };
     private _layout: LayoutElement[];
     private _colorPalettes: { [key: string]: ColorPalette[] };
+    private _selectedColorPalettes: Record<ColorPaletteType, ColorPalette>;
 
     constructor() {
         this._moduleInstances = [];
@@ -97,6 +98,10 @@ export class Workbench {
             [ColorPaletteType.Categorical]: [defaultCategoricalColorPalette],
             [ColorPaletteType.Continuous]: [defaultContinuousColorPalette],
         };
+        this._selectedColorPalettes = {
+            [ColorPaletteType.Categorical]: defaultCategoricalColorPalette,
+            [ColorPaletteType.Continuous]: defaultContinuousColorPalette,
+        };
     }
 
     addColorPalette(colorPalette: ColorPalette, type: ColorPaletteType): void {
@@ -109,6 +114,14 @@ export class Workbench {
 
     setColorPalettes(colorPalettes: ColorPalette[], type: ColorPaletteType): void {
         this._colorPalettes[type] = colorPalettes;
+    }
+
+    setSelectedColorPalette(colorPalette: ColorPalette, type: ColorPaletteType): void {
+        this._selectedColorPalettes[type] = colorPalette;
+    }
+
+    getSelectedColorPalette(type: ColorPaletteType): ColorPalette {
+        return this._selectedColorPalettes[type];
     }
 
     loadLayoutFromLocalStorage(): boolean {
