@@ -4,7 +4,7 @@ import { OptionalValues, withDefaults } from "../_utils/components";
 import { resolveClassNames } from "../_utils/resolveClassNames";
 
 export type CircularProgressProps = {
-    size?: "extra-small" | "small" | "medium" | "large";
+    size?: "extra-small" | "small" | "medium-small" | "medium" | "large";
     color?: string;
     variant?: "determinate" | "indeterminate";
     value?: number;
@@ -22,6 +22,7 @@ export const CircularProgress = withDefaults<CircularProgressProps>()(defaultPro
                 {
                     "w-3": props.size === "extra-small",
                     "w-4": props.size === "small",
+                    "w-5": props.size === "medium-small",
                     "w-8": props.size === "medium",
                     "w-12": props.size === "large",
                     "h-3": props.size === "extra-small",

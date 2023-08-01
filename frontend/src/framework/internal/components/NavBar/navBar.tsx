@@ -35,7 +35,7 @@ const NavBarDivider: React.FC = () => {
 
 export const NavBar: React.FC<NavBarProps> = (props) => {
     const [ensembleDialogOpen, setEnsembleDialogOpen] = React.useState<boolean>(false);
-    const [expanded, setExpanded] = React.useState<boolean>(false);
+    const [expanded, setExpanded] = React.useState<boolean>(localStorage.getItem("navBarExpanded") === "true");
     const [loadingEnsembles, setLoadingEnsembles] = React.useState<boolean>(false);
     const [drawerContent, setDrawerContent] = useStoreState(props.workbench.getGuiStateStore(), "drawerContent");
     const [settingsPanelWidth, setSettingsPanelWidth] = useStoreState(
@@ -91,6 +91,7 @@ export const NavBar: React.FC<NavBarProps> = (props) => {
 
     function handleCollapseOrExpand() {
         setExpanded(!expanded);
+        localStorage.setItem("navBarExpanded", (!expanded).toString());
     }
 
     const selectedEnsembles = ensembleSet.getEnsembleArr().map((ens) => ({
@@ -103,7 +104,7 @@ export const NavBar: React.FC<NavBarProps> = (props) => {
         <div
             className={resolveClassNames(
                 "bg-white p-2 border-r-2 border-slate-200 z-50 shadow-lg flex flex-col",
-                expanded ? "w-60" : "w-[4.5rem]"
+                expanded ? "w-64" : "w-[4.5rem]"
             )}
         >
             <div className="flex flex-col gap-2 flex-grow">

@@ -19,3 +19,5 @@ export const Menu: React.FC<MenuProps> = (props) => {
         />
     );
 };
+
+Menu.displayName = "Menu";
