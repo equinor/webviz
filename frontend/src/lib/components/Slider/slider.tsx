@@ -1,6 +1,7 @@
 import React from "react";
 import ReactDOM from "react-dom";
 
+import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
 import { Point } from "@lib/utils/geometry";
 import { Slider as SliderUnstyled, SliderProps as SliderUnstyledProps } from "@mui/base";
 
@@ -9,20 +10,22 @@ import { resolveClassNames } from "../_utils/resolveClassNames";
 
 export type SliderProps = {
     valueLabelDisplay?: "on" | "auto" | "off";
-} & SliderUnstyledProps;
+    valueLabelFormat?: string | ((value: number) => React.ReactNode);
+} & Omit<SliderUnstyledProps, "valueLabelFormat">;
 
 export const Slider = React.forwardRef((props: SliderProps, ref: React.ForwardedRef<HTMLDivElement>) => {
-    const { valueLabelDisplay, value: propsValue, max, valueLabelFormat, orientation, ...rest } = props;
+    const { valueLabelDisplay, value: propsValue, max, min, valueLabelFormat, orientation, track, ...rest } = props;
 
     const [value, setValue] = React.useState<number | number[]>(propsValue ?? 0);
     const [currentlyActiveThumb, setCurrentlyActiveThumb] = React.useState<number>(0);
-    const [index, setIndex] = React.useState<number>(0);
     const [prevValue, setPrevValue] = React.useState<number | number[]>(propsValue ?? 0);
     const [valueLabelVisible, setValueLabelVisible] = React.useState<boolean>(false);
     const [valueLabelPosition, setValueLabelPosition] = React.useState<Point>({ x: 0, y: 0 });
 
     const divRef = React.useRef<HTMLDivElement>(null);
     const valueLabelRef = React.useRef<HTMLDivElement>(null);
+
+    const sliderRect = useElementBoundingRect(divRef);
 
     if (propsValue !== undefined && propsValue !== prevValue) {
         setValue(propsValue);
@@ -70,8 +73,33 @@ export const Slider = React.forwardRef((props: SliderProps, ref: React.Forwarded
             setValueLabelVisible(false);
         };
 
-        const handlePointerDown = () => {
+        const handlePointerDown = (e: PointerEvent) => {
             pointerPressed = true;
+
+            if (divRef.current) {
+                const elements = divRef.current.getElementsByClassName("MuiSlider-thumb");
+                if (elements.length >= 1) {
+                    const activeThumb = Array.from(elements).findIndex(
+                        (element) =>
+                            element ===
+                                document
+                                    .elementsFromPoint(e.clientX, e.clientY)
+                                    .filter((el) => el.classList.contains("MuiSlider-thumb"))[0] ??
+                            elements[0] ??
+                            elements.item(0)
+                    );
+                    if (activeThumb >= 0) {
+                        setCurrentlyActiveThumb(activeThumb);
+                    }
+                    const thumb = elements[activeThumb];
+                    if (thumb) {
+                        setValueLabelPosition({
+                            x: thumb.getBoundingClientRect().left + thumb.getBoundingClientRect().width / 2 + 1,
+                            y: thumb.getBoundingClientRect().top + thumb.getBoundingClientRect().height / 2 + 1,
+                        });
+                    }
+                }
+            }
         };
 
         const handlePointerUp = () => {
@@ -101,65 +129,88 @@ export const Slider = React.forwardRef((props: SliderProps, ref: React.Forwarded
     function handleValueChanged(event: Event, value: number | number[], activeThumb: number) {
         setValue(value);
         setCurrentlyActiveThumb(activeThumb);
-        props.onChange?.(event, value, activeThumb);
 
-        if (divRef.current) {
-            const elements = divRef.current.getElementsByClassName("MuiSlider-thumb");
-            if (elements.length >= 1) {
-                const thumb = elements[activeThumb];
-                if (thumb) {
-                    setValueLabelPosition({
-                        x: thumb.getBoundingClientRect().left + thumb.getBoundingClientRect().width / 2 + 1,
-                        y: thumb.getBoundingClientRect().top + thumb.getBoundingClientRect().height / 2 + 1,
-                    });
-                }
+        const activeThumbValue = Array.isArray(value) ? value[activeThumb] : value;
+        const range = (max ?? 100) - (min ?? 0);
+        setValueLabelPosition({
+            x:
+                (orientation === "vertical"
+                    ? sliderRect.width / 2
+                    : ((activeThumbValue - (min ?? 0)) / range) * sliderRect.width) +
+                sliderRect.left +
+                3,
+            y:
+                (orientation === "vertical"
+                    ? sliderRect.height * (1 - (activeThumbValue - (min ?? 0)) / range) - 4
+                    : sliderRect.height / 2) +
+                sliderRect.top +
+                1,
+        });
+        props.onChange?.(event, value, activeThumb);
+    }
+
+    function makeLabel(): React.ReactNode {
+        const currentValue = Array.isArray(value) ? value[currentlyActiveThumb] : value;
+        const adjustedValue = props.scale ? props.scale(currentValue) : currentValue;
+
+        if (valueLabelFormat) {
+            if (typeof valueLabelFormat === "function") {
+                return valueLabelFormat(adjustedValue);
             }
+            return valueLabelFormat;
         }
+
+        return adjustedValue;
     }
 
     return (
         <BaseComponent disabled={props.disabled}>
-            <div ref={divRef} className="mt-2 mb-2 w-full h-full">
+            <div ref={divRef} className="mt-2 mb-2 flex justify-center">
                 <SliderUnstyled
                     {...rest}
+                    scale={props.scale}
                     orientation={orientation ?? "horizontal"}
                     max={max}
+                    min={min}
                     onChange={handleValueChanged}
                     value={value}
                     ref={ref}
                     slotProps={{
                         root: {
                             className: resolveClassNames(
-                                orientation === "horizontal" ? "w-full" : "w-3",
-                                orientation === "horizontal" ? "h-3" : "h-full",
+                                orientation === "vertical" ? "w-3" : "w-full",
+                                orientation === "vertical" ? "h-full" : "h-3",
                                 "cursor-pointer",
                                 "touch-action-none",
                                 "inline-block",
                                 "relative",
-                                "hover:opacity-100",
-                                "relative",
-                                "px-4"
+                                orientation === "vertical" ? "px-4" : ""
                             ),
                         },
                         rail: {
                             className: resolveClassNames(
                                 "block",
-                                orientation === "horizontal" ? "w-full" : "w-1",
-                                orientation === "horizontal" ? "h-1" : "h-full",
-                                "bg-gray-300",
+                                orientation === "vertical" ? "w-1" : "w-full",
+                                orientation === "vertical" ? "h-full" : "h-1",
+                                track === "inverted" ? "bg-blue-600" : "bg-blue-200",
                                 "rounded",
-                                "opacity-40",
-                                orientation === "horizontal" ? "left-0" : "top-0"
+                                orientation === "vertical" ? "top-0" : "left-0",
+                                "transform",
+                                orientation === "vertical" ? "-translate-y-1" : "translate-y-1"
                             ),
                         },
                         track: {
                             className: resolveClassNames(
                                 "block",
-                                orientation === "horizontal" ? "h-1" : "w-1",
-                                "bg-blue-600",
+                                orientation === "vertical" ? "w-1" : "h-1",
+                                track !== "inverted" ? "bg-blue-600" : "bg-blue-200",
                                 "rounded",
                                 "absolute",
-                                orientation === "horizontal" ? "top-0" : "left-0"
+                                "transform",
+                                orientation === "vertical" ? "translate-x-1/2" : "",
+                                orientation === "vertical" ? "-translate-y-1" : "",
+                                orientation === "vertical" ? "-ml-0.5" : "",
+                                track === false ? "hidden" : ""
                             ),
                         },
                         thumb: {
@@ -170,14 +221,14 @@ export const Slider = React.forwardRef((props: SliderProps, ref: React.Forwarded
                                 "h-5",
                                 "block",
                                 "bg-blue-600",
+                                "z-50",
                                 "shadow-sm",
                                 "rounded-full",
                                 "transform",
-                                "ml-0.5",
-                                "mt-0.5",
-                                "-translate-x-1/2",
-                                "translate-y-1/2",
-                                orientation === "horizontal" ? "top-0" : "left-0",
+                                orientation === "vertical" ? "translate-x-1/2" : "-translate-x-1/2",
+                                orientation === "vertical" ? "translate-y-1.5" : "-translate-y-1",
+                                orientation === "vertical" ? "left-0" : "top-0",
+                                orientation === "vertical" ? "-ml-0.5" : "ml-0.5",
                                 "cursor-pointer",
                                 "outline-none",
                                 "focus:outline-none",
@@ -185,9 +236,6 @@ export const Slider = React.forwardRef((props: SliderProps, ref: React.Forwarded
                                 "active:shadow-lg",
                                 "after:absolute",
                                 "after:rounded-full",
-                                "after:bg-transparent",
-                                "after:opacity-30",
-                                "after:shadow-sm",
                                 "after:w-7",
                                 "after:h-7",
                                 "after:inset-0",
@@ -211,21 +259,21 @@ export const Slider = React.forwardRef((props: SliderProps, ref: React.Forwarded
                                 "after:active:h-8"
                             ),
                         },
-                        mark: (args) => {
-                            return {
-                                className: resolveClassNames(
-                                    "absolute",
-                                    "w-1",
-                                    "h-1",
-                                    "rounded-full",
-                                    "bg-slate-600",
-                                    "opacity-40",
-                                    orientation === "horizontal" ? "top-0.5" : "",
-                                    "transform",
-                                    "-translate-y-1/2",
-                                    "active:bg-white"
-                                ),
-                            };
+                        mark: {
+                            className: resolveClassNames(
+                                "absolute",
+                                "w-2",
+                                "h-2",
+                                "-ml-0.5",
+                                "-mt-0.5",
+                                "bg-blue-600",
+                                "border-2",
+                                "opacity-80",
+                                "border-white",
+                                "transform",
+                                orientation === "vertical" ? "-translate-y-0" : "",
+                                "z-40"
+                            ),
                         },
                     }}
                 />
@@ -268,16 +316,7 @@ export const Slider = React.forwardRef((props: SliderProps, ref: React.Forwarded
                                 }
                             )}
                         >
-                            {valueLabelFormat
-                                ? typeof valueLabelFormat === "function"
-                                    ? valueLabelFormat(
-                                          Array.isArray(value) ? value[currentlyActiveThumb] : value,
-                                          index
-                                      )
-                                    : valueLabelFormat
-                                : Array.isArray(value)
-                                ? value[currentlyActiveThumb]
-                                : value}
+                            {makeLabel()}
                         </div>
                     </div>,
                     document.body
