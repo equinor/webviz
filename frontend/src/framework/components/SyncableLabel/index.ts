@@ -1,0 +1,1 @@
+export { SyncableLabel } from "./syncableLabel";

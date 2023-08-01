@@ -56,4 +56,16 @@ export class ModuleContext<S extends StateBaseType> {
     setInstanceTitle(title: string): void {
         this._moduleInstance.setTitle(title);
     }
+
+    addSyncedSetting(key: SyncSettingKey): void {
+        this._moduleInstance.addSyncedSetting(key);
+    }
+
+    removeSyncedSetting(key: SyncSettingKey): void {
+        this._moduleInstance.removeSyncedSetting(key);
+    }
+
+    isSyncedSetting(key: SyncSettingKey): boolean {
+        return this._moduleInstance.isSyncedSetting(key);
+    }
 }

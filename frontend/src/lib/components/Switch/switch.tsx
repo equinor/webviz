@@ -5,21 +5,27 @@ import { Switch as SwitchUnstyled, UseSwitchParameters, useSwitch } from "@mui/b
 import { BaseComponent } from "../_BaseComponent";
 import { resolveClassNames } from "../_utils/resolveClassNames";
 
-export const Switch = React.forwardRef((props: UseSwitchParameters, ref: React.ForwardedRef<HTMLInputElement>) => {
+export type SwitchProps = UseSwitchParameters & {
+    condensed?: boolean;
+    title?: string;
+};
+
+export const Switch = React.forwardRef((props: SwitchProps, ref: React.ForwardedRef<HTMLInputElement>) => {
     const { getInputProps, checked, disabled } = useSwitch(props);
 
     return (
         <BaseComponent disabled={disabled}>
             <SwitchUnstyled
                 {...getInputProps()}
+                title={props.title}
                 ref={ref}
                 slotProps={{
                     root: {
                         className: resolveClassNames(
                             "relative",
                             "inline-block",
-                            "w-10",
-                            "h-6",
+                            props.condensed ? "w-6" : "w-10",
+                            props.condensed ? "h-4" : "h-6",
                             "cursor-pointer",
                             "rounded-full",
                             checked ? "bg-blue-500" : "bg-gray-400",
@@ -46,10 +52,10 @@ export const Switch = React.forwardRef((props: UseSwitchParameters, ref: React.F
                     thumb: {
                         className: resolveClassNames(
                             "block",
-                            "w-4",
-                            "h-4",
+                            props.condensed ? "w-2" : "w-4",
+                            props.condensed ? "h-2" : "h-4",
                             "top-1",
-                            checked ? "left-5" : "left-1",
+                            checked ? (props.condensed ? "left-3" : "left-5") : "left-1",
                             "rounded-full",
                             "bg-white",
                             "relative",
