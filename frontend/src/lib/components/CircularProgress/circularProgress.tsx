@@ -8,6 +8,7 @@ export type CircularProgressProps = {
     color?: string;
     variant?: "determinate" | "indeterminate";
     value?: number;
+    className?: string;
 };
 
 const defaultProps: OptionalValues<CircularProgressProps> = {
@@ -30,7 +31,8 @@ export const CircularProgress = withDefaults<CircularProgressProps>()(defaultPro
                     "h-8": props.size === "medium",
                     "h-12": props.size === "large",
                 },
-                "relative"
+                "relative",
+                props.className ?? ""
             )}
         >
             <svg

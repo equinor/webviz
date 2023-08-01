@@ -54,7 +54,7 @@ export const LoginButton: React.FC<LoginButtonProps> = (props) => {
         } else if (authState === AuthState.NotLoggedIn) {
             return <ArrowLeftOnRectangleIcon className="w-5 h-5 mr-1" />;
         } else {
-            return <CircularProgress size="medium-small" />;
+            return <CircularProgress size="medium-small" className="mr-1" />;
         }
     }
 
