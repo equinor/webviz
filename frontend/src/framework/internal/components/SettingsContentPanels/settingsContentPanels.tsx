@@ -19,6 +19,7 @@ export const SettingsContentPanels: React.FC<SettingsContentPanelsProps> = (prop
 
     function handleSettingsPanelResize(sizes: number[]) {
         setSettingsPanelWidth(sizes[0]);
+        localStorage.setItem("settingsPanelWidthInPercent", sizes[0].toString());
     }
 
     return (
@@ -27,7 +28,6 @@ export const SettingsContentPanels: React.FC<SettingsContentPanelsProps> = (prop
             direction="horizontal"
             sizesInPercent={[settingsPanelWidth, 100 - settingsPanelWidth]}
             minSizes={[300, 0]}
-            initialSizesPercent={[25, 75]}
             onSizesChange={handleSettingsPanelResize}
         >
             <Settings workbench={props.workbench} />

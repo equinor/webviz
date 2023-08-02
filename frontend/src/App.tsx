@@ -1,6 +1,6 @@
 import React from "react";
 
-import { LayoutElement, Workbench } from "@framework/Workbench";
+import { DrawerContent, LayoutElement, Workbench } from "@framework/Workbench";
 import { NavBar } from "@framework/internal/components/NavBar";
 import { SettingsContentPanels } from "@framework/internal/components/SettingsContentPanels";
 import { AuthProvider } from "@framework/internal/providers/AuthProvider";
@@ -17,6 +17,9 @@ function App() {
     React.useEffect(() => {
         if (!workbench.loadLayoutFromLocalStorage()) {
             workbench.makeLayout(layout);
+        }
+        if (workbench.getLayout().length === 0) {
+            workbench.getGuiStateStore().setValue("drawerContent", DrawerContent.ModulesList);
         }
     }, []);
 

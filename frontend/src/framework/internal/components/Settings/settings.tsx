@@ -3,6 +3,7 @@ import React from "react";
 import { useStoreValue } from "@framework/StateStore";
 import { DrawerContent, Workbench } from "@framework/Workbench";
 import { useActiveModuleId, useModuleInstances } from "@framework/internal/hooks/workbenchHooks";
+import { Cog6ToothIcon } from "@heroicons/react/20/solid";
 import { resolveClassNames } from "@lib/components/_utils/resolveClassNames";
 
 import { Setting } from "./private-components/setting";
@@ -47,6 +48,11 @@ export const Settings: React.FC<SettingsProps> = (props) => {
                         workbench={props.workbench}
                     />
                 ))}
+                {moduleInstances.length === 0 && (
+                    <div className="flex flex-col items-center justify-center h-full">
+                        <Cog6ToothIcon className="w-20 h-20 text-slate-200" />
+                    </div>
+                )}
             </div>
         </div>
     );

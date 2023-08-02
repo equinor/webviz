@@ -12,7 +12,7 @@ type ContentProps = {
 export const Content: React.FC<ContentProps> = (props) => {
     const activeModuleId = useActiveModuleId(props.workbench);
     return (
-        <div className="bg-slate-400 flex-grow">
+        <div className="bg-slate-600 flex-grow">
             <Layout workbench={props.workbench} activeModuleId={activeModuleId} />
         </div>
     );

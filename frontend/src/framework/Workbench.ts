@@ -56,7 +56,7 @@ export class Workbench {
         this._activeModuleId = "";
         this._guiStateStore = new StateStore<WorkbenchGuiState>({
             drawerContent: DrawerContent.ModuleSettings,
-            settingsPanelWidthInPercent: 20,
+            settingsPanelWidthInPercent: parseFloat(localStorage.getItem("settingsPanelWidthInPercent") || "20"),
         });
         this._workbenchSession = new WorkbenchSessionPrivate();
         this._workbenchServices = new PrivateWorkbenchServices(this);
