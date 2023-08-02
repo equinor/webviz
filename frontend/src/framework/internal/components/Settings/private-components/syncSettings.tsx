@@ -13,7 +13,7 @@ type ModulesListProps = {
     workbench: Workbench;
 };
 
-export const GroupModules: React.FC<ModulesListProps> = (props) => {
+export const SyncSettings: React.FC<ModulesListProps> = (props) => {
     const drawerContent = useStoreValue(props.workbench.getGuiStateStore(), "drawerContent");
     const activeModuleId = useActiveModuleId(props.workbench);
 

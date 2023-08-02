@@ -6,11 +6,10 @@ import { useActiveModuleId, useModuleInstances } from "@framework/internal/hooks
 import { Cog6ToothIcon } from "@heroicons/react/20/solid";
 import { resolveClassNames } from "@lib/components/_utils/resolveClassNames";
 
+import { ModulesList } from "./private-components/modulesList";
 import { Setting } from "./private-components/setting";
-
-import { ModulesList } from "../Content/private-components/modulesList";
-import { GroupModules } from "../Content/private-components/syncSettings";
-import { TemplatesList } from "../Content/private-components/templatesList";
+import { SyncSettings } from "./private-components/syncSettings";
+import { TemplatesList } from "./private-components/templatesList";
 
 type SettingsProps = {
     workbench: Workbench;
@@ -32,7 +31,7 @@ export const Settings: React.FC<SettingsProps> = (props) => {
         >
             <ModulesList relContainer={mainRef.current} workbench={props.workbench} />
             <TemplatesList workbench={props.workbench} />
-            <GroupModules workbench={props.workbench} />
+            <SyncSettings workbench={props.workbench} />
             <div
                 className={resolveClassNames(
                     drawerContent === DrawerContent.ModuleSettings ? "visible" : "invisible",

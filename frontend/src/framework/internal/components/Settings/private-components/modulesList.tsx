@@ -17,7 +17,8 @@ import {
 } from "@lib/utils/geometry";
 
 import { Drawer } from "./drawer";
-import { LayoutEventTypes } from "./layout";
+
+import { LayoutEventTypes } from "../../Content/private-components/layout";
 
 type ModulesListItemProps = {
     moduleName: string;
@@ -131,16 +132,16 @@ const ModulesListItem: React.FC<ModulesListItemProps> = (props) => {
 
     return (
         <>
-            {isDragged && <div ref={mainRef} className="bg-red-500 w-full h-40 mb-4" />}
+            {isDragged && <div ref={mainRef} className="bg-red-300 w-full h-40 mb-4" />}
             <div
                 ref={isDragged ? undefined : mainRef}
-                className="mb-4 flex flex-col border box-border border-slate-300 border-solid text-sm text-gray-700 w-full h-40 select-none"
+                className="mb-4 flex flex-col border box-border border-slate-300 border-solid text-sm text-gray-700 w-full h-40 select-none hover:shadow-md"
                 style={makeStyle(isDragged, dragSize, dragPosition)}
             >
-                <div ref={ref} className="bg-slate-100 p-2 cursor-move flex items-center text-xs font-bold">
+                <div ref={ref} className="bg-slate-100 p-2 cursor-move flex items-center text-xs font-bold shadow">
                     {props.moduleDisplayName}
                 </div>
-                <div className="p-4 flex flex-grow items-center justify-center">
+                <div className="p-4 flex flex-grow items-center justify-center ">
                     {props.moduleDrawPreviewFunc
                         ? props.moduleDrawPreviewFunc(
                               Math.max(0, itemSize.width - 40),
