@@ -1,11 +1,11 @@
 import React from "react";
 
-import { ColorPalette } from "@lib/utils/ColorPalette";
+import { CategoricalColorPalette } from "@lib/utils/ColorPalette";
 
 import { ColorTile } from "../ColorTile";
 
 export type ColorPaletteProps = {
-    colorPalette: ColorPalette;
+    colorPalette: CategoricalColorPalette;
 };
 
 export const ColorTileGroup: React.FC<ColorPaletteProps> = (props) => {
@@ -13,7 +13,7 @@ export const ColorTileGroup: React.FC<ColorPaletteProps> = (props) => {
         <div className="flex">
             <div className="flex rounded border border-slate-600 w-full">
                 {props.colorPalette.getColors().map((color) => (
-                    <ColorTile key={color} color={color} grouped />
+                    <ColorTile key={color.id} color={color.hexColor} grouped />
                 ))}
             </div>
             <div className="flex-grow" />

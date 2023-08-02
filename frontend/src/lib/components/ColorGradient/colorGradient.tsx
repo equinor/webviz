@@ -1,9 +1,9 @@
 import React from "react";
 
-import { ColorPalette } from "@lib/utils/ColorPalette";
+import { ContinuousColorPalette } from "@lib/utils/ColorPalette";
 
 export type ColorGradientProps = {
-    colorPalette: ColorPalette;
+    colorPalette: ContinuousColorPalette;
 };
 
 export const ColorGradient: React.FC<ColorGradientProps> = (props) => {
@@ -11,7 +11,7 @@ export const ColorGradient: React.FC<ColorGradientProps> = (props) => {
         <div
             className="rounded border border-slate-600 h-5 w-full"
             style={{
-                backgroundImage: `linear-gradient(to right, ${props.colorPalette.getColors().join(", ")})`,
+                backgroundImage: props.colorPalette.getGradient(),
             }}
         ></div>
     );

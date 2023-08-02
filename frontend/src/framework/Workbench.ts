@@ -1,4 +1,4 @@
-import { ColorPalette } from "@lib/utils/ColorPalette";
+import { CategoricalColorPalette, ColorPalette, ContinuousColorPalette } from "@lib/utils/ColorPalette";
 import { QueryClient } from "@tanstack/react-query";
 
 import { Broadcaster } from "./Broadcaster";
@@ -47,7 +47,7 @@ export enum ColorPaletteType {
     Continuous = "continuous",
 }
 
-const defaultCategoricalColorPalette = new ColorPalette([
+const defaultCategoricalColorPalette = new CategoricalColorPalette([
     "#ea5545",
     "#f46a9b",
     "#ef9b20",
@@ -59,16 +59,52 @@ const defaultCategoricalColorPalette = new ColorPalette([
     "#b33dc6",
 ]);
 
-const defaultContinuousColorPalette = new ColorPalette([
-    "#115f9a",
-    "#1984c5",
-    "#22a7f0",
-    "#48b5c4",
-    "#76c68f",
-    "#a6d75b",
-    "#c9e52f",
-    "#d0ee11",
-    "#d0f400",
+const defaultContinuousColorPalette = new ContinuousColorPalette([
+    {
+        hexColor: "#115f9a",
+        position: 0,
+        midPointPosition: 0.5,
+    },
+    {
+        hexColor: "#1984c5",
+        position: 0.125,
+        midPointPosition: 0.5,
+    },
+    {
+        hexColor: "#22a7f0",
+        position: 0.25,
+        midPointPosition: 0.5,
+    },
+    {
+        hexColor: "#48b5c4",
+        position: 0.375,
+        midPointPosition: 0.5,
+    },
+    {
+        hexColor: "#76c68f",
+        position: 0.5,
+        midPointPosition: 0.5,
+    },
+    {
+        hexColor: "#a6d75b",
+        position: 0.625,
+        midPointPosition: 0.5,
+    },
+    {
+        hexColor: "#c9e52f",
+        position: 0.75,
+        midPointPosition: 0.5,
+    },
+    {
+        hexColor: "#d0ee11",
+        position: 0.875,
+        midPointPosition: 0.5,
+    },
+    {
+        hexColor: "#d0f400",
+        position: 1,
+        midPointPosition: 0.5,
+    },
 ]);
 
 export class Workbench {

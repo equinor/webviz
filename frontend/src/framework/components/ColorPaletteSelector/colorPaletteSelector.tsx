@@ -4,7 +4,7 @@ import { ChevronDownIcon } from "@heroicons/react/20/solid";
 import { ColorGradient } from "@lib/components/ColorGradient";
 import { ColorTileGroup } from "@lib/components/ColorTileGroup";
 import { IconButton } from "@lib/components/IconButton";
-import { ColorPalette } from "@lib/utils/ColorPalette";
+import { CategoricalColorPalette, ColorPalette, ContinuousColorPalette } from "@lib/utils/ColorPalette";
 
 export type ColorPaletteSelectorProps = {
     selectedPaletteUuid?: string;
@@ -27,9 +27,9 @@ export const ColorPaletteSelector: React.FC<ColorPaletteSelectorProps> = (props)
         <div className="bg-slate-100 rounded p-2 flex items-center gap-4">
             <div className="flex-grow">
                 {props.continuous ? (
-                    <ColorGradient colorPalette={selectedColorPalette} />
+                    <ColorGradient colorPalette={selectedColorPalette as ContinuousColorPalette} />
                 ) : (
-                    <ColorTileGroup colorPalette={selectedColorPalette} />
+                    <ColorTileGroup colorPalette={selectedColorPalette as CategoricalColorPalette} />
                 )}
             </div>
             <IconButton>
