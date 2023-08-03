@@ -306,7 +306,7 @@ const ColorPaletteSelector: React.FC<ColorPaletteSelectorProps> = (props) => {
                     />
                 ) : (
                     <CategoricalColorPaletteEditor
-                        colorPalette={editColorPalette}
+                        colorPalette={editColorPalette as CategoricalColorPalette}
                         onChange={handleColorPaletteEdited}
                         onClose={handleEditorClose}
                     />

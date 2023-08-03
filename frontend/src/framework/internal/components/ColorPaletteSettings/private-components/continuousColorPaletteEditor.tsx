@@ -1,11 +1,11 @@
 import React from "react";
 
-import { CheckIcon } from "@heroicons/react/20/solid";
+import { CheckIcon, MinusIcon, PlusIcon, TrashIcon } from "@heroicons/react/20/solid";
 import { Button } from "@lib/components/Button";
 import { Dialog } from "@lib/components/Dialog";
 import { Label } from "@lib/components/Label";
 import { ColorPalette, ColorStop, ContinuousColorPalette } from "@lib/utils/ColorPalette";
-import { Point } from "@lib/utils/geometry";
+import { Point, rectContainsPoint } from "@lib/utils/geometry";
 
 import { isEqual } from "lodash";
 
@@ -17,6 +17,7 @@ type ColorStopMidPointHandleProps = {
     value: number;
     min: number;
     max: number;
+    selected: boolean;
     onChange?: (colorStopId: string, value: number) => void;
     onSelect?: () => void;
 };
@@ -41,126 +42,6 @@ const ColorStopMidPointHandle: React.FC<ColorStopMidPointHandleProps> = (props) 
         [props.colorStopId, value, props.onChange]
     );
 
-    React.useEffect(function handleMount() {
-        let mouseDownPosition: Point | null = null;
-
-        function handlePointerDown(e: PointerEvent) {
-            mouseDownPosition = { x: e.clientX, y: e.clientY };
-            setGrabbed(true);
-            document.body.classList.add("cursor-grabbing");
-            document.body.classList.add("select-none");
-
-            if (props.onSelect) {
-                props.onSelect();
-            }
-        }
-
-        function handlePointerMove(e: PointerEvent) {
-            if (!mouseDownPosition) {
-                return;
-            }
-
-            if (!props.parentRef.current) {
-                return;
-            }
-
-            const parentRect = props.parentRef.current.getBoundingClientRect();
-
-            const relPos = Math.min(
-                props.max,
-                Math.max(props.min, Math.round(((e.clientX - parentRect.left) / parentRect.width) * 100) / 100)
-            );
-
-            setValue(relPos);
-        }
-
-        function handlePointerUp() {
-            mouseDownPosition = null;
-            setGrabbed(false);
-            document.body.classList.remove("cursor-grabbing");
-            document.body.classList.remove("select-none");
-        }
-
-        function handleBlur() {
-            mouseDownPosition = null;
-            setGrabbed(false);
-            document.body.classList.remove("cursor-grabbing");
-            document.body.classList.remove("select-none");
-        }
-
-        if (ref.current) {
-            ref.current.addEventListener("pointerdown", handlePointerDown);
-            window.addEventListener("pointermove", handlePointerMove);
-            window.addEventListener("pointerup", handlePointerUp);
-            window.addEventListener("blur", handleBlur);
-        }
-
-        return function handleUnmount() {
-            if (ref.current) {
-                ref.current.removeEventListener("pointerdown", handlePointerDown);
-                window.removeEventListener("pointermove", handlePointerMove);
-                window.removeEventListener("pointerup", handlePointerUp);
-                window.removeEventListener("blur", handleBlur);
-            }
-        };
-    }, []);
-
-    return (
-        <div
-            ref={ref}
-            className={resolveClassNames(
-                "absolute w-2 h-2 -translate-x-1/2 transform rotate-45 border shadow border-slate-800 -bottom-1",
-                {
-                    "bg-black": grabbed,
-                    "bg-white": !grabbed,
-                    "z-50": grabbed,
-                    "cursor-grab": !grabbed,
-                    "cursor-grabbing": grabbed,
-                }
-            )}
-            style={{
-                left: value * 100 + "%",
-            }}
-        />
-    );
-};
-
-enum MidPoint {
-    Start,
-    End,
-}
-
-type ColorStopHandleProps = {
-    parentRef: React.MutableRefObject<HTMLDivElement | null>;
-    colorStop: ColorStop;
-    min: number;
-    max: number;
-    selected: boolean;
-    onSelect?: (colorStop: ColorStop) => void;
-    onChange?: (colorStop: ColorStop) => void;
-    onDelete?: (colorStop: ColorStop) => void;
-};
-
-const ColorStopHandle: React.FC<ColorStopHandleProps> = (props) => {
-    const [colorStop, setColorStop] = React.useState<ColorStop>(props.colorStop);
-    const [prevColorStop, setPrevColorStop] = React.useState<ColorStop>(props.colorStop);
-    const [grabbed, setGrabbed] = React.useState<boolean>(false);
-    const ref = React.useRef<HTMLDivElement>(null);
-
-    if (!isEqual(props.colorStop, prevColorStop)) {
-        setColorStop(props.colorStop);
-        setPrevColorStop(props.colorStop);
-    }
-
-    React.useEffect(
-        function handleColorStopChange() {
-            if (props.onChange) {
-                props.onChange(colorStop);
-            }
-        },
-        [colorStop, props.onChange]
-    );
-
     React.useEffect(
         function handleMount() {
             let mouseDownPosition: Point | null = null;
@@ -172,8 +53,10 @@ const ColorStopHandle: React.FC<ColorStopHandleProps> = (props) => {
                 document.body.classList.add("select-none");
 
                 if (props.onSelect) {
-                    props.onSelect(colorStop);
+                    props.onSelect();
                 }
+
+                e.stopPropagation();
             }
 
             function handlePointerMove(e: PointerEvent) {
@@ -185,15 +68,6 @@ const ColorStopHandle: React.FC<ColorStopHandleProps> = (props) => {
                     return;
                 }
 
-                if (mouseDownPosition && props.onDelete && Math.abs(mouseDownPosition.y - e.clientY) > 50) {
-                    mouseDownPosition = null;
-                    setGrabbed(false);
-                    document.body.classList.remove("cursor-grabbing");
-                    document.body.classList.remove("select-none");
-                    props.onDelete(colorStop);
-                    return;
-                }
-
                 const parentRect = props.parentRef.current.getBoundingClientRect();
 
                 const relPos = Math.min(
@@ -201,10 +75,9 @@ const ColorStopHandle: React.FC<ColorStopHandleProps> = (props) => {
                     Math.max(props.min, Math.round(((e.clientX - parentRect.left) / parentRect.width) * 100) / 100)
                 );
 
-                setColorStop((prev) => ({
-                    ...prev,
-                    position: Math.max(0, Math.min(1, relPos)),
-                }));
+                setValue(relPos);
+
+                e.stopPropagation();
             }
 
             function handlePointerUp() {
@@ -237,34 +110,285 @@ const ColorStopHandle: React.FC<ColorStopHandleProps> = (props) => {
                 }
             };
         },
-        [props.onDelete]
+        [props.max, props.min, props.parentRef]
+    );
+
+    return (
+        <div
+            data-color-stop-id={props.colorStopId}
+            ref={ref}
+            onClick={(e) => {
+                e.stopPropagation();
+            }}
+            className={resolveClassNames(
+                "absolute w-2 h-2 -translate-x-1/2 transform rotate-45 border shadow border-slate-800 -bottom-1",
+                {
+                    "bg-black": grabbed || props.selected,
+                    "bg-white": !grabbed && !props.selected,
+                    "z-50": grabbed,
+                    "cursor-pointer": !grabbed,
+                    "cursor-grabbing": grabbed,
+                }
+            )}
+            style={{
+                left: value * 100 + "%",
+            }}
+        />
+    );
+};
+
+enum MidPoint {
+    Start,
+    End,
+}
+
+type ColorStopHandleProps = {
+    parentRef: React.MutableRefObject<HTMLDivElement | null>;
+    colorStop: ColorStop;
+    min: number;
+    max: number;
+    selected: boolean;
+    onSelect?: (colorStop: ColorStop) => void;
+    onChange?: (colorStop: ColorStop) => void;
+    onDelete?: (colorStop: ColorStop) => void;
+};
+
+const ColorStopHandle: React.FC<ColorStopHandleProps> = (props) => {
+    const [colorStop, setColorStop] = React.useState<ColorStop>(props.colorStop);
+    const [prevColorStop, setPrevColorStop] = React.useState<ColorStop>(props.colorStop);
+    const [grabbed, setGrabbed] = React.useState<boolean>(false);
+    const [aboutToBeDeleted, setAboutToBeDeleted] = React.useState<boolean>(false);
+    const ref = React.useRef<HTMLDivElement>(null);
+
+    if (!isEqual(props.colorStop, prevColorStop)) {
+        setColorStop(props.colorStop);
+        setPrevColorStop(props.colorStop);
+    }
+
+    React.useEffect(
+        function handleColorStopChange() {
+            if (props.onChange) {
+                props.onChange(colorStop);
+            }
+        },
+        [colorStop, props.onChange]
+    );
+
+    React.useEffect(
+        function handleMount() {
+            let mouseDownPosition: Point | null = null;
+            let aboutToDelete = false;
+
+            function handlePointerDown(e: PointerEvent) {
+                mouseDownPosition = { x: e.clientX, y: e.clientY };
+                setGrabbed(true);
+                document.body.classList.add("cursor-grabbing");
+                document.body.classList.add("select-none");
+
+                if (props.onSelect) {
+                    props.onSelect(colorStop);
+                }
+            }
+
+            function handlePointerMove(e: PointerEvent) {
+                if (!mouseDownPosition) {
+                    return;
+                }
+
+                if (!props.parentRef.current) {
+                    return;
+                }
+
+                if (mouseDownPosition && props.onDelete && mouseDownPosition.y - e.clientY > 20) {
+                    aboutToDelete = true;
+                    setAboutToBeDeleted(true);
+                } else {
+                    aboutToDelete = false;
+                    setAboutToBeDeleted(false);
+                }
+
+                const parentRect = props.parentRef.current.getBoundingClientRect();
+
+                const relPos = Math.min(
+                    props.max,
+                    Math.max(props.min, Math.round(((e.clientX - parentRect.left) / parentRect.width) * 100) / 100)
+                );
+
+                setColorStop((prev) => ({
+                    ...prev,
+                    position: Math.max(0, Math.min(1, relPos)),
+                }));
+
+                e.stopPropagation();
+            }
+
+            function handlePointerUp() {
+                mouseDownPosition = null;
+                setGrabbed(false);
+                document.body.classList.remove("cursor-grabbing");
+                document.body.classList.remove("select-none");
+
+                if (aboutToDelete && props.onDelete) {
+                    props.onDelete(colorStop);
+                }
+            }
+
+            function handleBlur() {
+                mouseDownPosition = null;
+                setGrabbed(false);
+                document.body.classList.remove("cursor-grabbing");
+                document.body.classList.remove("select-none");
+            }
+
+            if (ref.current) {
+                ref.current.addEventListener("pointerdown", handlePointerDown);
+                window.addEventListener("pointermove", handlePointerMove);
+                window.addEventListener("pointerup", handlePointerUp);
+                window.addEventListener("blur", handleBlur);
+            }
+
+            return function handleUnmount() {
+                if (ref.current) {
+                    ref.current.removeEventListener("pointerdown", handlePointerDown);
+                    window.removeEventListener("pointermove", handlePointerMove);
+                    window.removeEventListener("pointerup", handlePointerUp);
+                    window.removeEventListener("blur", handleBlur);
+                }
+            };
+        },
+        [props.onDelete, props.min, props.max]
     );
 
     return (
         <>
             <div
+                data-color-stop-id={colorStop.id}
                 ref={ref}
                 className={resolveClassNames("absolute w-4 h-4 -translate-x-1/2 top-0 shadow", {
-                    "cursor-grab": !grabbed,
+                    "cursor-pointer": !grabbed,
                     "cursor-grabbing": grabbed,
                     "z-50": grabbed,
+                    "top-0": !aboutToBeDeleted,
+                    "-top-1": aboutToBeDeleted,
+                    "opacity-30": aboutToBeDeleted,
                 })}
                 style={{
                     left: colorStop.position * 100 + "%",
                 }}
+                onClick={(e) => {
+                    e.stopPropagation();
+                }}
             >
                 <div
-                    className="absolute w-4 h-4 z-20 border border-slate-600"
+                    className={resolveClassNames("absolute w-4 h-4 z-20 border border-slate-600")}
                     style={{
                         backgroundColor: colorStop.hexColor,
                     }}
-                />
+                ></div>
                 <div
+                    data-color-stop-id={colorStop.id}
                     className={resolveClassNames(
                         "absolute z-10 -bottom-1.5 w-[0.71rem] h-[0.71rem] left-[0.15rem] border border-slate-600 transform rotate-45 border-t-0 shadow",
                         { "bg-white": !props.selected, "bg-black": props.selected }
                     )}
                 />
+                <div
+                    data-color-stop-id={colorStop.id}
+                    className={resolveClassNames(
+                        "absolute z-20 -top-2.5 h-5 w-5 rounded-full bg-red-600 flex items-center justify-center -right-2.5",
+                        { hidden: !aboutToBeDeleted }
+                    )}
+                >
+                    <MinusIcon className="w-4 h-4 text-white" />
+                </div>
+            </div>
+        </>
+    );
+};
+
+export type AddColorStopIndicatorProps = {
+    parentRef: React.MutableRefObject<HTMLDivElement | null>;
+};
+
+const AddColorStopIndicator: React.FC<AddColorStopIndicatorProps> = (props) => {
+    const [position, setPosition] = React.useState<number>(0);
+    const [visible, setVisible] = React.useState<boolean>(false);
+
+    React.useEffect(function handleMount() {
+        let hoverable = true;
+
+        function handlePointerDown() {
+            hoverable = false;
+            setVisible(false);
+        }
+
+        function handlePointerUp() {
+            hoverable = true;
+        }
+
+        function handlePointerMove(e: PointerEvent) {
+            if (!props.parentRef.current) {
+                return;
+            }
+
+            if (!rectContainsPoint(props.parentRef.current.getBoundingClientRect(), { x: e.clientX, y: e.clientY })) {
+                setVisible(false);
+                return;
+            }
+
+            if (!hoverable) {
+                return;
+            }
+
+            const hoveredElements = document.elementsFromPoint(e.clientX, e.clientY);
+            for (const element of hoveredElements) {
+                if (element instanceof HTMLElement && element.dataset.colorStopId) {
+                    setVisible(false);
+                    return;
+                }
+            }
+
+            const parentRect = props.parentRef.current.getBoundingClientRect();
+
+            const relPos = Math.min(
+                1,
+                Math.max(0, Math.round(((e.clientX - parentRect.left) / parentRect.width) * 100) / 100)
+            );
+
+            setVisible(true);
+            setPosition(relPos);
+        }
+
+        document.addEventListener("pointerdown", handlePointerDown);
+        document.addEventListener("pointerup", handlePointerUp);
+        document.addEventListener("pointermove", handlePointerMove);
+
+        return function handleUnmount() {
+            document.removeEventListener("pointerdown", handlePointerDown);
+            document.removeEventListener("pointerup", handlePointerUp);
+            document.removeEventListener("pointermove", handlePointerMove);
+        };
+    }, []);
+
+    return (
+        <>
+            <div
+                className={resolveClassNames("absolute w-4 h-4 -translate-x-1/2 top-0 shadow z-50 opacity-50", {
+                    hidden: !visible,
+                })}
+                style={{
+                    left: position * 100 + "%",
+                }}
+            >
+                <div className="absolute w-4 h-4 z-20 border border-blue-600 bg-blue-600 flex items-center justify-center">
+                    <PlusIcon className="w-4 h-4 text-white" />
+                </div>
+                <div
+                    className={resolveClassNames(
+                        "absolute z-10 -bottom-1.5 w-[0.71rem] h-[0.71rem] left-[0.15rem] border border-blue-600 transform rotate-45 border-t-0 shadow bg-blue-600"
+                    )}
+                />
+                <div className="absolute z-10 -bottom-14 h-12 w-1 bg-black border border-white left-2 -ml-0.5" />
             </div>
         </>
     );
@@ -277,7 +401,7 @@ export type ContinuousColorPaletteEditorProps = {
 };
 
 export const ContinuousColorPaletteEditor: React.FC<ContinuousColorPaletteEditorProps> = (props) => {
-    const colorPalette = React.useRef<ContinuousColorPalette>(props.colorPalette);
+    const colorPalette = React.useRef<ContinuousColorPalette>(props.colorPalette.clone());
     const [selectedColorStopId, setSelectedColorStopId] = React.useState<string | null>(null);
     const [selectedMidPoint, setSelectedMidPoint] = React.useState<MidPoint | null>(null);
     const [_, forceRerender] = React.useReducer((x) => x + 1, 0);
@@ -295,8 +419,19 @@ export const ContinuousColorPaletteEditor: React.FC<ContinuousColorPaletteEditor
             return;
         }
         colorPalette.current.removeColorStop(colorStop.id);
+        setSelectedColorStopId(null);
+        setSelectedMidPoint(null);
         forceRerender();
     }, []);
+
+    function handleSelectedColorStopRemove() {
+        if (selectedColorStopId) {
+            colorPalette.current.removeColorStop(selectedColorStopId);
+            setSelectedColorStopId(null);
+            setSelectedMidPoint(null);
+            forceRerender();
+        }
+    }
 
     const handleColorStopPositionChange = React.useCallback(function handleColorStopPositionChange(
         colorStop: ColorStop
@@ -325,7 +460,72 @@ export const ContinuousColorPaletteEditor: React.FC<ContinuousColorPaletteEditor
 
     const handleColorStopSelected = React.useCallback(function handleColorStopSelected(colorStop: ColorStop) {
         setSelectedColorStopId(colorStop.id);
+        setSelectedMidPoint(null);
     }, []);
+
+    const handleLocationChange = React.useCallback(
+        function handleLocationChange(e: React.ChangeEvent<HTMLInputElement>) {
+            if (selectedColorStopId) {
+                if (selectedMidPoint === null) {
+                    colorPalette.current.changeColorStopPosition(selectedColorStopId, Number(e.target.value) / 100);
+                } else if (selectedMidPoint === MidPoint.Start) {
+                    const prev = colorPalette.current.getPreviousColorStop(selectedColorStopId);
+                    if (prev) {
+                        colorPalette.current.changeColorStopMidPointPosition(prev.id, Number(e.target.value) / 100);
+                    }
+                } else if (selectedMidPoint === MidPoint.End) {
+                    colorPalette.current.changeColorStopMidPointPosition(
+                        selectedColorStopId,
+                        Number(e.target.value) / 100
+                    );
+                }
+                forceRerender();
+            }
+        },
+        [selectedColorStopId, selectedMidPoint]
+    );
+
+    function makeLocationValue() {
+        if (selectedColorStopId !== null) {
+            if (selectedMidPoint === null) {
+                return Math.round((colorPalette.current.getColorStop(selectedColorStopId)?.position || 0) * 100);
+            } else if (selectedMidPoint === MidPoint.Start) {
+                return Math.round(
+                    (colorPalette.current.getPreviousColorStop(selectedColorStopId)?.midPointPosition || 0) * 100
+                );
+            } else if (selectedMidPoint === MidPoint.End) {
+                return Math.round(
+                    (colorPalette.current.getColorStop(selectedColorStopId)?.midPointPosition || 0) * 100
+                );
+            }
+        }
+        return 0;
+    }
+
+    function handleAddColorStop(e: React.PointerEvent<HTMLDivElement>) {
+        if (!colorStopRef.current) {
+            return;
+        }
+
+        const parentRect = colorStopRef.current.getBoundingClientRect();
+
+        const relPos = Math.min(
+            1,
+            Math.max(0, Math.round(((e.clientX - parentRect.left) / parentRect.width) * 100) / 100)
+        );
+
+        const interpolatedColor = colorPalette.current.getColorAtPosition(relPos);
+
+        const id = colorPalette.current.addColorStop({
+            position: relPos,
+            hexColor: interpolatedColor,
+            midPointPosition: 0.5,
+        });
+
+        setSelectedColorStopId(id);
+
+        forceRerender();
+    }
 
     return (
         <Dialog
@@ -333,6 +533,7 @@ export const ContinuousColorPaletteEditor: React.FC<ContinuousColorPaletteEditor
             open
             onClose={props.onClose}
             width={"25%"}
+            minWidth={480}
             actions={
                 <Button startIcon={<CheckIcon className="w-4 h-4" />} onClick={handleSaveClick}>
                     Save
@@ -341,7 +542,12 @@ export const ContinuousColorPaletteEditor: React.FC<ContinuousColorPaletteEditor
         >
             <div className="flex flex-col">
                 <div className="flex-grow">
-                    <div ref={colorStopRef} className="relative h-6 w-full z-[1]">
+                    <div
+                        ref={colorStopRef}
+                        className="relative h-6 w-full z-[1] cursor-copy"
+                        onClick={handleAddColorStop}
+                    >
+                        <AddColorStopIndicator parentRef={colorStopRef} />
                         {colorPalette.current.getColorStops().map((stop) => {
                             const prev = colorPalette.current.getPreviousColorStop(stop.id);
                             const next = colorPalette.current.getNextColorStop(stop.id);
@@ -351,7 +557,7 @@ export const ContinuousColorPaletteEditor: React.FC<ContinuousColorPaletteEditor
                                         colorStop={stop}
                                         min={prev?.position || 0}
                                         max={next?.position || 1}
-                                        selected={selectedColorStopId === stop.id}
+                                        selected={selectedColorStopId === stop.id && selectedMidPoint === null}
                                         parentRef={colorStopRef}
                                         onChange={handleColorStopPositionChange}
                                         onDelete={handleColorStopRemove}
@@ -363,6 +569,7 @@ export const ContinuousColorPaletteEditor: React.FC<ContinuousColorPaletteEditor
                                                 <ColorStopMidPointHandle
                                                     colorStopId={prev.id}
                                                     parentRef={colorStopRef}
+                                                    selected={selectedMidPoint === MidPoint.Start}
                                                     value={
                                                         prev.position +
                                                         (stop.position - prev.position) * prev.midPointPosition
@@ -377,6 +584,7 @@ export const ContinuousColorPaletteEditor: React.FC<ContinuousColorPaletteEditor
                                             )}
                                             {next && next.position !== stop.position && (
                                                 <ColorStopMidPointHandle
+                                                    selected={selectedMidPoint === MidPoint.End}
                                                     colorStopId={stop.id}
                                                     parentRef={colorStopRef}
                                                     value={
@@ -398,12 +606,15 @@ export const ContinuousColorPaletteEditor: React.FC<ContinuousColorPaletteEditor
                         })}
                     </div>
                     <div className="h-12 w-full" style={{ backgroundImage: colorPalette.current.getGradient() }}></div>
-                    <div className={resolveClassNames("flex", { "opacity-40": !selectedColorStopId })}>
+                    <div className={resolveClassNames("flex items-end", { "opacity-40": !selectedColorStopId })}>
                         <div className="p-4">
                             <Label text="Color">
                                 <input
                                     type="color"
-                                    value={colorPalette.current.getColorStop(selectedColorStopId || "")?.hexColor}
+                                    value={
+                                        colorPalette.current.getColorStop(selectedColorStopId || "")?.hexColor ||
+                                        "#000000"
+                                    }
                                     onChange={(e) => {
                                         if (selectedColorStopId) {
                                             colorPalette.current.changeColorStopColor(
@@ -413,8 +624,14 @@ export const ContinuousColorPaletteEditor: React.FC<ContinuousColorPaletteEditor
                                             forceRerender();
                                         }
                                     }}
-                                    className="rounded border border-slate-400 outline-none p-1 h-8 cursor-pointer"
-                                    disabled={!selectedColorStopId}
+                                    className={resolveClassNames(
+                                        "rounded border border-slate-400 outline-none p-1 h-8",
+                                        {
+                                            "cursor-pointer": selectedColorStopId !== null && selectedMidPoint === null,
+                                            "opacity-40": selectedColorStopId === null || selectedMidPoint !== null,
+                                        }
+                                    )}
+                                    disabled={!selectedColorStopId || selectedMidPoint !== null}
                                 />
                             </Label>
                         </div>
@@ -426,25 +643,22 @@ export const ContinuousColorPaletteEditor: React.FC<ContinuousColorPaletteEditor
                                         min={0}
                                         max={100}
                                         step={1}
-                                        value={Math.round(
-                                            (colorPalette.current.getColorStop(selectedColorStopId || "")?.position ||
-                                                0) * 100
-                                        )}
-                                        onChange={(e) => {
-                                            if (selectedColorStopId) {
-                                                colorPalette.current.changeColorStopPosition(
-                                                    selectedColorStopId,
-                                                    Number(e.target.value) / 100
-                                                );
-                                                forceRerender();
-                                            }
-                                        }}
+                                        value={makeLocationValue()}
+                                        onChange={handleLocationChange}
                                         className="rounded border border-slate-400 outline-none p-1 h-8 w-full"
                                         disabled={!selectedColorStopId}
                                     />
                                     %
                                 </div>
                             </Label>
+                        </div>
+                        <div className="p-4">
+                            <Button
+                                startIcon={<TrashIcon className="w-4 h-4" />}
+                                onClick={handleSelectedColorStopRemove}
+                            >
+                                Remove
+                            </Button>
                         </div>
                     </div>
                 </div>
