@@ -14,14 +14,14 @@ export class WellCompletionService {
      * Get Well Completion Data
      * @param caseUuid Sumo case uuid
      * @param ensembleName Ensemble name
-     * @param realization Realization number
+     * @param realization Optional realization to include. If not specified, all realizations will be returned.
      * @returns WellCompletionData Successful Response
      * @throws ApiError
      */
     public getWellCompletionData(
         caseUuid: string,
         ensembleName: string,
-        realization: number,
+        realization?: number,
     ): CancelablePromise<WellCompletionData> {
         return this.httpRequest.request({
             method: 'GET',

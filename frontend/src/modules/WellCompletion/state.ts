@@ -1,32 +1,18 @@
 import { EnsembleIdent } from "@framework/EnsembleIdent";
+import { PlotData } from "@webviz/well-completions-plot/dist/types/dataTypes";
 
 export enum RealizationSelection {
     Aggregated = "Aggregated",
     Single = "Single",
 }
 
-export type QueryParams = {
-    ensembleIdent: EnsembleIdent | null;
-    realizationSelection: RealizationSelection;
-    realizationToInclude: number | null;
-};
-
-export type SettingsParams = {
-    timeStep: number;
-};
-
 export type State = {
-    // queryParams: QueryParams;
+    // Query parameters
     ensembleIdent: EnsembleIdent | null;
     realizationSelection: RealizationSelection;
-    realizationToInclude: number | null;
+    realizationToInclude: number | undefined;
 
-    // settingsParams: SettingsParams;
-    timeStep: string | null;
+    // Plot data state
+    plotData: PlotData | null;
+    availableTimeSteps: string[] | null;
 };
-
-// export type State = {
-//     ensembleIdent: EnsembleIdent | null;
-//     realizationSelection: RealizationSelection;
-//     realizationToInclude: number | null;
-// };

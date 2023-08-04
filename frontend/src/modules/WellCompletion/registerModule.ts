@@ -2,4 +2,4 @@ import { ModuleRegistry } from "@framework/ModuleRegistry";
 
 import { State } from "./state";
 
-ModuleRegistry.registerModule<State>("WellCompletion");
+ModuleRegistry.registerModule<State>({ moduleName: "WellCompletion", defaultTitle: "Well Completion" });

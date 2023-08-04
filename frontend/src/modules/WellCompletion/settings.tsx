@@ -12,14 +12,21 @@ import { Label } from "@lib/components/Label";
 import { RadioGroup } from "@lib/components/RadioGroup";
 import { Slider } from "@lib/components/Slider";
 
+import { useWellCompletionQuery } from "./queryHooks";
 import { RealizationSelection, State } from "./state";
+import { TimeAggregations, WellCompletionsDataAccessor } from "./wellCompletionsDataAccessor";
 
+// TODO:  Add usage of new DiscreteSlider component
 export const settings = ({ moduleContext, workbenchSession, workbenchServices }: ModuleFCProps<State>) => {
     const ensembleSet = useEnsembleSet(workbenchSession);
     const [selectedEnsembleIdent, setSelectedEnsembleIdent] = moduleContext.useStoreState("ensembleIdent");
     const [selectedRealizationNumber, setSelectedRealizationNumber] =
         moduleContext.useStoreState("realizationToInclude");
     const [realizationSelection, setRealizationSelection] = moduleContext.useStoreState("realizationSelection");
+    const [availableTimeSteps, setAvailableTimeSteps] = moduleContext.useStoreState("availableTimeSteps");
+    const setPlotData = moduleContext.useSetStoreValue("plotData");
+
+    const [selectedTimeStep, setSelectedTimeStep] = React.useState<string | null>(null);
 
     const syncedSettingKeys = moduleContext.useSyncedSettingKeys();
     const syncHelper = new SyncSettingsHelper(syncedSettingKeys, workbenchServices);
@@ -27,6 +34,43 @@ export const settings = ({ moduleContext, workbenchSession, workbenchServices }:
 
     const candidateEnsembleIdent = maybeAssignFirstSyncedEnsemble(selectedEnsembleIdent, syncedValueEnsembles);
     const computedEnsembleIdent = fixupEnsembleIdent(candidateEnsembleIdent, ensembleSet);
+
+    const wellCompletionQuery = useWellCompletionQuery(
+        selectedEnsembleIdent?.getCaseUuid(),
+        selectedEnsembleIdent?.getEnsembleName(),
+        selectedRealizationNumber
+    );
+
+    const wellCompletionsDataAccessor = React.useRef<WellCompletionsDataAccessor | null>(null);
+
+    React.useEffect(() => {
+        if (wellCompletionQuery.data) {
+            if (!wellCompletionsDataAccessor.current) {
+                wellCompletionsDataAccessor.current = new WellCompletionsDataAccessor();
+            }
+
+            wellCompletionsDataAccessor.current.parseWellCompletionsData(wellCompletionQuery.data);
+
+            let timeStep = selectedTimeStep;
+
+            if (!timeStep || !wellCompletionsDataAccessor.current.getTimeSteps().includes(timeStep)) {
+                timeStep = wellCompletionsDataAccessor.current.getTimeSteps().length
+                    ? wellCompletionsDataAccessor.current.getTimeSteps()[0]
+                    : null;
+            }
+            if (availableTimeSteps != wellCompletionsDataAccessor.current.getTimeSteps()) {
+                setAvailableTimeSteps(wellCompletionsDataAccessor.current.getTimeSteps());
+            }
+
+            setSelectedTimeStep(timeStep);
+            if (timeStep) {
+                const plotData = wellCompletionsDataAccessor.current.createPlotData(timeStep, "None");
+                if (plotData) {
+                    setPlotData(wellCompletionsDataAccessor.current.createPlotData(timeStep, "None"));
+                }
+            }
+        }
+    }, [wellCompletionQuery.data, selectedTimeStep]);
 
     React.useEffect(
         function selectDefaultEnsemble() {
@@ -38,6 +82,10 @@ export const settings = ({ moduleContext, workbenchSession, workbenchServices }:
         [ensembleSet, selectedEnsembleIdent]
     );
 
+    function handleSelectedTimeStepChange(newTimeStep: string) {
+        setSelectedTimeStep(newTimeStep);
+    }
+
     function handleEnsembleSelectionChange(newEnsembleIdent: EnsembleIdent | null) {
         setSelectedEnsembleIdent(newEnsembleIdent);
         if (newEnsembleIdent) {
@@ -46,7 +94,11 @@ export const settings = ({ moduleContext, workbenchSession, workbenchServices }:
     }
 
     function handleRealizationSelectionChange(_: React.ChangeEvent<HTMLInputElement>, value: string | number) {
-        setRealizationSelection(value as RealizationSelection.Aggregated | RealizationSelection.Single);
+        const selection = value as RealizationSelection.Aggregated | RealizationSelection.Single;
+        setRealizationSelection(selection);
+        if (selection === RealizationSelection.Aggregated) {
+            setSelectedRealizationNumber(undefined);
+        }
     }
 
     function handleSelectedRealizationNumberChange(realizationNumber: string) {
@@ -88,13 +140,23 @@ export const settings = ({ moduleContext, workbenchSession, workbenchServices }:
             )}
             {/* {/* <Slider value={[2, 5]} min={1} max={30} displayValue={true}></Slider> */
             /*Make it possible to have timesteps/strings as input for Slider?*/}
-
-            <Label text="Start timestep">
+            <Label text="Time Step">
+                <Dropdown
+                    options={
+                        wellCompletionsDataAccessor.current
+                            ? makeTimeStepOptionItems(wellCompletionsDataAccessor.current.getTimeSteps())
+                            : []
+                    }
+                    value={selectedTimeStep ? selectedTimeStep : undefined}
+                    onChange={handleSelectedTimeStepChange}
+                />
+            </Label>
+            {/* <Label text="Start timestep">
                 <Dropdown options={[]} />
             </Label>
             <Label text="End timestep">
                 <Dropdown options={[]} />
-            </Label>
+            </Label> */}
         </>
     );
 };
@@ -114,8 +176,8 @@ function makeTimeStepOptionItems(timeSteps: string[]): DropdownOption[] {
     const optionItems: DropdownOption[] = [];
     // TODO: Fill time steps
 
-    // ensemble.getRealizations().map((realization: number) => {
-    //     optionItems.push({ label: realization.toString(), value: realization.toString() });
-    // });
+    timeSteps.map((timeStep: string) => {
+        optionItems.push({ label: timeStep, value: timeStep });
+    });
     return optionItems;
 }

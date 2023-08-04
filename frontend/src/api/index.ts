@@ -12,6 +12,7 @@ export type { OpenAPIConfig } from './core/OpenAPI';
 export type { B64EncodedNumpyArray as B64EncodedNumpyArray_api } from './models/B64EncodedNumpyArray';
 export type { Body_get_realizations_response as Body_get_realizations_response_api } from './models/Body_get_realizations_response';
 export type { CaseInfo as CaseInfo_api } from './models/CaseInfo';
+export type { Completions as Completions_api } from './models/Completions';
 export type { DynamicSurfaceDirectory as DynamicSurfaceDirectory_api } from './models/DynamicSurfaceDirectory';
 export type { EnsembleCorrelations as EnsembleCorrelations_api } from './models/EnsembleCorrelations';
 export type { EnsembleDetails as EnsembleDetails_api } from './models/EnsembleDetails';
@@ -35,6 +36,8 @@ export { StatisticFunction as StatisticFunction_api } from './models/StatisticFu
 export type { StatisticValueObject as StatisticValueObject_api } from './models/StatisticValueObject';
 export type { SurfaceData as SurfaceData_api } from './models/SurfaceData';
 export { SurfaceStatisticFunction as SurfaceStatisticFunction_api } from './models/SurfaceStatisticFunction';
+export type { UnitInfo as UnitInfo_api } from './models/UnitInfo';
+export type { Units as Units_api } from './models/Units';
 export type { UserInfo as UserInfo_api } from './models/UserInfo';
 export type { ValidationError as ValidationError_api } from './models/ValidationError';
 export type { VectorDescription as VectorDescription_api } from './models/VectorDescription';
@@ -43,7 +46,10 @@ export type { VectorMetadata as VectorMetadata_api } from './models/VectorMetada
 export type { VectorRealizationData as VectorRealizationData_api } from './models/VectorRealizationData';
 export type { VectorStatisticData as VectorStatisticData_api } from './models/VectorStatisticData';
 export type { VectorStatisticSensitivityData as VectorStatisticSensitivityData_api } from './models/VectorStatisticSensitivityData';
+export type { Well as Well_api } from './models/Well';
 export type { WellCompletionData as WellCompletionData_api } from './models/WellCompletionData';
+export type { WellCompletionDataSet as WellCompletionDataSet_api } from './models/WellCompletionDataSet';
+export type { Zone as Zone_api } from './models/Zone';
 
 export { CorrelationsService } from './services/CorrelationsService';
 export { DefaultService } from './services/DefaultService';

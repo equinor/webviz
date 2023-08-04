@@ -3,55 +3,52 @@ import React from "react";
 import { ModuleFCProps } from "@framework/Module";
 import { ApiStateWrapper } from "@lib/components/ApiStateWrapper";
 import { CircularProgress } from "@lib/components/CircularProgress";
-// import { WellCompletions } from "@webviz/subsurface-components";
+import { useElementSize } from "@lib/hooks/useElementSize";
 import { WellCompletionsPlot } from "@webviz/well-completions-plot";
-import { PlotData, Units, WellPlotData, Zone } from "@webviz/well-completions-plot/src/types/dataTypes";
 
 // TODO: Export this from the well-completions-plot package?
-import { useWellCompletionQuery } from "./queryHooks";
 import { State } from "./state";
 
 export const view = ({ moduleContext }: ModuleFCProps<State>) => {
-    const ensembleIdent = moduleContext.useStoreValue("ensembleIdent");
-    const realizationNumber = moduleContext.useStoreValue("realizationToInclude");
+    const plotData = moduleContext.useStoreValue("plotData");
+    const availableTimeSteps = moduleContext.useStoreValue("availableTimeSteps");
 
-    const wellCompletionQuery = useWellCompletionQuery(
-        ensembleIdent?.getCaseUuid(),
-        ensembleIdent?.getEnsembleName(),
-        realizationNumber
-    );
+    const ref = React.useRef<HTMLDivElement>(null);
+    const moduleSize = useElementSize(ref);
 
-    const wellCompletionQueryData = wellCompletionQuery.data?.json_data || null;
+    // NOTE: Move this to settings and set "filtered" plotData to state and use here!
 
     // Filter well completions query data based on settings and provide to WellCompletionsPlot
     // Add settings to store
 
     // return (
-    //     <div className="w-full h-full">
+    //     <div className="w-full h-full" ref={ref}>
     //         <ApiStateWrapper
     //             apiResult={wellCompletionQuery}
     //             errorComponent={<div className="text-red-500">Error loading ensembles</div>}
     //             loadingComponent={<CircularProgress />}
     //         >
-    //             {wellCompletionQueryData && <WellCompletions id="test_id" data={wellCompletionQueryData} />}
+    //             {wellCompletionQueryData && (
+    //                 <div style={{ height: moduleSize.height }}>
+    //                     <WellCompletions id="test_id" data={wellCompletionQueryData} />
+    //                 </div>
+    //             )}
     //         </ApiStateWrapper>
     //     </div>
     // );
-    const plotData: PlotData = {
-        stratigraphy: [],
-        wells: [],
-        units: { kh: { unit: "mDm", decimalPlaces: 2 } },
-    };
 
     return (
         <div className="w-full h-full">
-            <ApiStateWrapper
+            {/* <ApiStateWrapper
                 apiResult={wellCompletionQuery}
-                errorComponent={<div className="text-red-500">Error loading ensembles</div>}
+                errorComponent={<div className="text-red-500">Error loading well completions data</div>}
                 loadingComponent={<CircularProgress />}
             >
-                {wellCompletionQueryData && <WellCompletionsPlot id="test_id" timeSteps={[]} plotData={plotData} />}
-            </ApiStateWrapper>
+                {plotData && (
+                    <WellCompletionsPlot id="test_id" timeSteps={availableTimeSteps || []} plotData={plotData} />
+                )}
+            </ApiStateWrapper> */}
+            {plotData && <WellCompletionsPlot id="test_id" timeSteps={availableTimeSteps || []} plotData={plotData} />}
         </div>
     );
 };
