@@ -147,7 +147,7 @@ export function settings({ moduleContext, workbenchServices, initialSettings }: 
         if (plotType === PlotType.Histogram) {
             content.push(
                 <Label text="Number of bins" key="number-of-bins">
-                    <Slider value={numBins} onChange={handleNumBinsChanged} min={1} max={30} displayValue />
+                    <Slider value={numBins} onChange={handleNumBinsChanged} min={1} max={30} valueLabelDisplay="auto" />
                 </Label>
             );
         }

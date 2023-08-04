@@ -9,7 +9,7 @@ export type ButtonProps = {
     variant?: "text" | "outlined" | "contained";
     startIcon?: React.ReactNode;
     endIcon?: React.ReactNode;
-    color?: "primary" | "danger" | "success";
+    color?: "primary" | "danger" | "success" | string;
 } & ButtonUnstyledProps;
 
 export const Button = React.forwardRef((props: ButtonProps, ref: React.ForwardedRef<HTMLButtonElement>) => {
@@ -44,6 +44,8 @@ export const Button = React.forwardRef((props: ButtonProps, ref: React.Forwarded
             classNames.push("text-green-600", "hover:bg-green-100");
         }
     }
+
+    classNames.push(props.className ?? "");
 
     const adjustedChildren = (
         <div className="flex items-center gap-2">

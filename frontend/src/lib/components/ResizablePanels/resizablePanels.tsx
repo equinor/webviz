@@ -10,6 +10,8 @@ type ResizablePanelsProps = {
     children: React.ReactNode[];
     initialSizesPercent?: number[];
     minSizes?: number[];
+    sizesInPercent?: number[];
+    onSizesChange?: (sizesInPercent: number[]) => void;
     visible?: boolean[];
 };
 
@@ -37,7 +39,8 @@ export const ResizablePanels: React.FC<ResizablePanelsProps> = (props) => {
     const [isDragging, setIsDragging] = React.useState<boolean>();
     const [currentIndex, setCurrentIndex] = React.useState<number>(0);
     const [sizes, setSizes] = React.useState<number[]>(
-        loadConfigurationFromLocalStorage(props.id) ||
+        props.sizesInPercent ||
+            loadConfigurationFromLocalStorage(props.id) ||
             props.initialSizesPercent ||
             Array(props.children.length).fill(1.0 / props.children.length)
     );
@@ -46,6 +49,12 @@ export const ResizablePanels: React.FC<ResizablePanelsProps> = (props) => {
     const resizablePanelRefs = React.useRef<(HTMLDivElement | null)[]>([]);
 
     const { width: totalWidth, height: totalHeight } = useElementSize(resizablePanelsRef);
+
+    React.useEffect(() => {
+        if (props.sizesInPercent) {
+            setSizes(props.sizesInPercent);
+        }
+    }, [props.sizesInPercent]);
 
     React.useEffect(() => {
         resizablePanelRefs.current = resizablePanelRefs.current.slice(0, props.children.length);
@@ -83,6 +92,9 @@ export const ResizablePanels: React.FC<ResizablePanelsProps> = (props) => {
                         return size;
                     }) as number[];
                     setSizes(newSizes);
+                    if (props.onSizesChange) {
+                        props.onSizesChange(newSizes);
+                    }
                 }
             };
         } else if (props.direction === "vertical") {
@@ -106,6 +118,9 @@ export const ResizablePanels: React.FC<ResizablePanelsProps> = (props) => {
                         return size;
                     }) as number[];
                     setSizes(newSizes);
+                    if (props.onSizesChange) {
+                        props.onSizesChange(newSizes);
+                    }
                 }
             };
         }
@@ -130,7 +145,7 @@ export const ResizablePanels: React.FC<ResizablePanelsProps> = (props) => {
             }
             document.removeEventListener("pointerup", stopResize);
         };
-    }, [isDragging, setIsDragging, sizes, setSizes, props.direction, currentIndex, props.id]);
+    }, [isDragging, setIsDragging, sizes, setSizes, props.direction, currentIndex, props.id, props.onSizesChange]);
 
     const minSizesToggleVisibilityValue = 100 * (props.direction === "horizontal" ? 50 / totalWidth : 50 / totalHeight);
 

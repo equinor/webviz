@@ -40,7 +40,7 @@ export const Header: React.FC<HeaderProps> = (props) => {
 
     return (
         <div
-            className={`bg-slate-100 p-2 pl-4 pr-4 flex items-center select-none ${
+            className={`bg-slate-100 p-2 pl-4 pr-4 flex items-center select-none shadow ${
                 props.isDragged ? "cursor-grabbing" : "cursor-move"
             }`}
             onPointerDown={props.onPointerDown}
@@ -61,7 +61,8 @@ export const Header: React.FC<HeaderProps> = (props) => {
                     {syncedSettings.map((setting) => (
                         <span
                             key={setting}
-                            className="flex items-center justify-center rounded p-1 bg-indigo-700 text-white ml-2 text-xs mr-2"
+                            className="flex items-center justify-center rounded p-1 leading-none bg-indigo-700 text-white ml-2 text-xs mr-2 cursor-help"
+                            title={`This module syncs its "${SyncSettingsMeta[setting].name}" setting on the current page.`}
                         >
                             {SyncSettingsMeta[setting].abbreviation}
                         </span>

@@ -19,9 +19,6 @@ import { v4 } from "uuid";
 
 import { ViewWrapper } from "./ViewWrapper";
 import { LayoutBox, LayoutBoxComponents, makeLayoutBoxes } from "./layoutBox";
-import { ModulesList } from "./modulesList";
-import { GroupModules } from "./syncSettings";
-import { TemplatesList } from "./templatesList";
 import { ViewWrapperPlaceholder } from "./viewWrapperPlaceholder";
 
 type LayoutProps = {
@@ -145,7 +142,7 @@ export const Layout: React.FC<LayoutProps> = (props) => {
             moduleName = e.detail.name;
         };
 
-        const handlePointerUp = () => {
+        const handlePointerUp = (e: PointerEvent) => {
             if (!pointerDownPoint) {
                 return;
             }
@@ -173,6 +170,8 @@ export const Layout: React.FC<LayoutProps> = (props) => {
                 props.workbench.setLayout(currentLayout);
                 setPosition({ x: 0, y: 0 });
                 setPointer({ x: -1, y: -1 });
+                e.stopPropagation();
+                e.preventDefault();
             }
             pointerDownPoint = null;
             pointerDownElementPosition = null;
@@ -352,9 +351,6 @@ export const Layout: React.FC<LayoutProps> = (props) => {
                 })}
                 {makeTempViewWrapperPlaceholder()}
             </div>
-            <ModulesList relContainer={mainRef.current} workbench={props.workbench} />
-            <TemplatesList relContainer={mainRef.current} workbench={props.workbench} />
-            <GroupModules relContainer={mainRef.current} workbench={props.workbench} />
         </div>
     );
 };

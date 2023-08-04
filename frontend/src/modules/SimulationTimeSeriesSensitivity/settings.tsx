@@ -116,10 +116,7 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
 
     return (
         <>
-            <Label
-                text="Ensemble"
-                labelClassName={syncHelper.isSynced(SyncSettingKey.ENSEMBLE) ? "bg-indigo-700 text-white" : ""}
-            >
+            <Label text="Ensemble" synced={syncHelper.isSynced(SyncSettingKey.ENSEMBLE)}>
                 <MultiEnsembleSelect
                     ensembleSet={ensembleSet}
                     value={computedEnsembleIdent ? [computedEnsembleIdent] : []}
