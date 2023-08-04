@@ -2,8 +2,9 @@ import React from "react";
 
 import { ModuleRegistry } from "@framework/ModuleRegistry";
 import { DrawPreviewFunc } from "@framework/Preview";
-import { useStoreState } from "@framework/StateStore";
+import { useStoreValue } from "@framework/StateStore";
 import { DrawerContent, Workbench } from "@framework/Workbench";
+import { WindowIcon } from "@heroicons/react/20/solid";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import {
     MANHATTAN_LENGTH,
@@ -15,8 +16,9 @@ import {
     pointerEventToPoint,
 } from "@lib/utils/geometry";
 
-import { LayoutEventTypes } from "../Content/private-components/layout";
-import { Drawer } from "../Drawer";
+import { Drawer } from "./drawer";
+
+import { LayoutEventTypes } from "../../Content/private-components/layout";
 
 type ModulesListItemProps = {
     moduleName: string;
@@ -130,16 +132,16 @@ const ModulesListItem: React.FC<ModulesListItemProps> = (props) => {
 
     return (
         <>
-            {isDragged && <div ref={mainRef} className="bg-red-500 w-full h-40 mb-4" />}
+            {isDragged && <div ref={mainRef} className="bg-red-300 w-full h-40 mb-4" />}
             <div
                 ref={isDragged ? undefined : mainRef}
-                className="mb-4 flex flex-col border box-border border-slate-300 border-solid text-sm text-gray-700 w-full h-40 select-none"
+                className="mb-4 flex flex-col border box-border border-slate-300 border-solid text-sm text-gray-700 w-full h-40 select-none hover:shadow-md"
                 style={makeStyle(isDragged, dragSize, dragPosition)}
             >
-                <div ref={ref} className="bg-slate-100 p-2 cursor-move flex items-center text-xs font-bold">
+                <div ref={ref} className="bg-slate-100 p-2 cursor-move flex items-center text-xs font-bold shadow">
                     {props.moduleDisplayName}
                 </div>
-                <div className="p-4 flex flex-grow items-center justify-center">
+                <div className="p-4 flex flex-grow items-center justify-center ">
                     {props.moduleDrawPreviewFunc
                         ? props.moduleDrawPreviewFunc(
                               Math.max(0, itemSize.width - 40),
@@ -163,22 +165,18 @@ type ModulesListProps = {
     I will skip it for now and come back to it when it becomes a problem.
 */
 export const ModulesList: React.FC<ModulesListProps> = (props) => {
-    const [drawerContent, setDrawerContent] = useStoreState(props.workbench.getGuiStateStore(), "drawerContent");
+    const drawerContent = useStoreValue(props.workbench.getGuiStateStore(), "drawerContent");
     const [searchQuery, setSearchQuery] = React.useState("");
 
     const handleSearchQueryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setSearchQuery(e.target.value);
     };
 
-    const handleDrawerClose = () => {
-        setDrawerContent(DrawerContent.None);
-    };
-
     return (
         <Drawer
             visible={drawerContent === DrawerContent.ModulesList}
-            onClose={handleDrawerClose}
             title="Add modules"
+            icon={<WindowIcon />}
             showFilter
             filterPlaceholder="Filter modules..."
             onFilterChange={handleSearchQueryChange}
