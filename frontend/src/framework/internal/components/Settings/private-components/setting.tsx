@@ -5,6 +5,7 @@ import { ModuleInstance, ModuleInstanceState } from "@framework/ModuleInstance";
 import { Workbench } from "@framework/Workbench";
 import { ErrorBoundary } from "@framework/internal/components/ErrorBoundary";
 import { useImportState } from "@framework/internal/hooks/moduleHooks";
+import { Cog6ToothIcon } from "@heroicons/react/20/solid";
 import { CircularProgress } from "@lib/components/CircularProgress";
 
 type SettingProps = {
@@ -73,15 +74,26 @@ export const Setting: React.FC<SettingProps> = (props) => {
             style={{
                 display: props.activeModuleId === props.moduleInstance.getId() ? "flex" : "none",
             }}
-            className="flex-col gap-4"
+            className="flex-col"
         >
             <ErrorBoundary moduleInstance={props.moduleInstance}>
-                <Settings
-                    moduleContext={props.moduleInstance.getContext()}
-                    workbenchSession={props.workbench.getWorkbenchSession()}
-                    workbenchServices={props.workbench.getWorkbenchServices()}
-                    initialSettings={props.moduleInstance.getInitialSettings() || undefined}
-                />
+                <div className="flex justify-center items-center p-2 bg-slate-100 h-10">
+                    <Cog6ToothIcon className="w-4 h-4 mr-2" />{" "}
+                    <span
+                        title={props.moduleInstance.getTitle()}
+                        className="font-bold flex-grow p-0 text-ellipsis whitespace-nowrap overflow-hidden text-sm"
+                    >
+                        {props.moduleInstance.getTitle()}
+                    </span>
+                </div>
+                <div className="p-2 flex flex-col gap-4">
+                    <Settings
+                        moduleContext={props.moduleInstance.getContext()}
+                        workbenchSession={props.workbench.getWorkbenchSession()}
+                        workbenchServices={props.workbench.getWorkbenchServices()}
+                        initialSettings={props.moduleInstance.getInitialSettings() || undefined}
+                    />
+                </div>
             </ErrorBoundary>
         </div>
     );
