@@ -1,1 +1,0 @@
-export { SyncSettings } from "./syncSettings";

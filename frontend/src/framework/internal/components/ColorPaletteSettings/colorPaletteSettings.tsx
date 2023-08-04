@@ -1,11 +1,12 @@
 import React from "react";
 import ReactDOM from "react-dom";
 
-import { useStoreState } from "@framework/StateStore";
-import { ColorPaletteType, DrawerContent, Workbench } from "@framework/Workbench";
+import { useStoreValue } from "@framework/StateStore";
+import { ColorType, DrawerContent, Workbench } from "@framework/Workbench";
 import {
     ChevronDownIcon,
     DocumentDuplicateIcon,
+    EllipsisVerticalIcon,
     PencilSquareIcon,
     PlusIcon,
     TrashIcon,
@@ -15,6 +16,8 @@ import { ColorGradient } from "@lib/components/ColorGradient";
 import { ColorTileGroup } from "@lib/components/ColorTileGroup";
 import { IconButton } from "@lib/components/IconButton";
 import { Label } from "@lib/components/Label";
+import { Menu } from "@lib/components/Menu";
+import { MenuItem } from "@lib/components/MenuItem";
 import { Overlay } from "@lib/components/Overlay";
 import { resolveClassNames } from "@lib/components/_utils/resolveClassNames";
 import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
@@ -26,24 +29,50 @@ import { ContinuousColorPaletteEditor } from "./private-components/continuousCol
 
 import { Drawer } from "../Drawer";
 
+enum ColorPaletteType {
+    Set = "set",
+    Categorical = "categorical",
+    Continuous = "continuous",
+}
+
 type ColorPaletteItemProps = {
     colorPalette: ColorPalette;
-    continuous?: boolean;
+    type: ColorPaletteType;
     onRemove?: (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => void;
     onClone?: (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => void;
     onEdit?: () => void;
     onClick?: () => void;
     removable?: boolean;
     selected?: boolean;
+    onMenuOpenChange?: (open: boolean) => void;
 };
 
 const ColorPaletteItem: React.FC<ColorPaletteItemProps> = (props) => {
+    const anchorRef = React.useRef<HTMLButtonElement>(null);
+    const [menuOpen, setMenuOpen] = React.useState<boolean>(false);
+
+    function handleOpenMenu(e: React.MouseEvent<HTMLButtonElement, MouseEvent>) {
+        setMenuOpen(true);
+        e.stopPropagation();
+        if (props.onMenuOpenChange) {
+            props.onMenuOpenChange(true);
+        }
+    }
+
+    function handleCloseMenu() {
+        setMenuOpen(false);
+        if (props.onMenuOpenChange) {
+            props.onMenuOpenChange(false);
+        }
+    }
+
     function handleRemoveClick(e: React.MouseEvent<HTMLButtonElement, MouseEvent>) {
         if (!props.onRemove) {
             return;
         }
 
         props.onRemove(e);
+        handleCloseMenu();
     }
 
     function handleEditClick(e: React.MouseEvent<HTMLButtonElement, MouseEvent>) {
@@ -54,6 +83,7 @@ const ColorPaletteItem: React.FC<ColorPaletteItemProps> = (props) => {
         e.stopPropagation();
 
         props.onEdit();
+        handleCloseMenu();
     }
 
     function handleItemClick() {
@@ -70,49 +100,68 @@ const ColorPaletteItem: React.FC<ColorPaletteItemProps> = (props) => {
         }
 
         props.onClone(e);
+        handleCloseMenu();
+    }
+
+    function makeColorPalettePreview(): React.ReactNode {
+        switch (props.type) {
+            case ColorPaletteType.Continuous:
+                return <ColorGradient colorPalette={props.colorPalette as ContinuousColorPalette} />;
+            case ColorPaletteType.Categorical:
+                return <ColorTileGroup colorPalette={props.colorPalette as CategoricalColorPalette} />;
+            case ColorPaletteType.Set:
+                return <ColorTileGroup gap colorPalette={props.colorPalette as CategoricalColorPalette} />;
+        }
+        return null;
     }
 
     return (
         <div
-            className={resolveClassNames("p-2 flex items-center gap-1 hover:bg-blue-100 cursor-pointer h-12", {
+            className={resolveClassNames("p-2 flex items-center gap-2 hover:bg-blue-100 cursor-pointer h-12", {
                 "bg-blue-50": props.selected,
             })}
             onClick={handleItemClick}
         >
-            <div className="flex-grow">
-                {props.continuous ? (
-                    <ColorGradient colorPalette={props.colorPalette as ContinuousColorPalette} />
-                ) : (
-                    <ColorTileGroup colorPalette={props.colorPalette as CategoricalColorPalette} />
+            <span className="text-sm leading-none">{props.colorPalette.getName()}</span>
+            <div className="flex-grow">{makeColorPalettePreview()}</div>
+            <IconButton onClick={handleOpenMenu} ref={anchorRef} title="More options">
+                <EllipsisVerticalIcon className="flex-grow-0 w-4 h-4" />
+            </IconButton>
+            <Menu open={menuOpen} anchorEl={anchorRef.current} onOpenChange={handleCloseMenu} className="z-[70]">
+                <MenuItem onClick={handleEditClick}>
+                    <PencilSquareIcon className="w-4 h-4 mr-2" />
+                    Edit
+                </MenuItem>
+                <MenuItem onClick={handleCloneClick}>
+                    <DocumentDuplicateIcon className="w-4 h-4 mr-2" />
+                    Clone
+                </MenuItem>
+                {props.removable && (
+                    <MenuItem onClick={handleRemoveClick}>
+                        <TrashIcon className="w-4 h-4 mr-2" />
+                        Remove
+                    </MenuItem>
                 )}
-            </div>
-            <IconButton onClick={handleEditClick} title="Edit this color palette">
-                <PencilSquareIcon className="w-4 h-4" />
-            </IconButton>
-            <IconButton onClick={handleCloneClick} title="Clone this color palette">
-                <DocumentDuplicateIcon className="w-4 h-4" />
-            </IconButton>
-            {props.removable && (
-                <IconButton onClick={handleRemoveClick} title="Remove this color palette">
-                    <TrashIcon className="w-4 h-4" />
-                </IconButton>
-            )}
+            </Menu>
         </div>
     );
 };
 
 type ColorPaletteSelectorProps = {
     colorPalettes: ColorPalette[];
-    selectedColorPalette: ColorPalette;
-    continuous?: boolean;
+    selectedColorPaletteUuid: string;
+    type: ColorPaletteType;
     onChange?: (colorPalette: ColorPalette) => void;
     onEdited?: (colorPalettes: ColorPalette[]) => void;
 };
 
 const ColorPaletteSelector: React.FC<ColorPaletteSelectorProps> = (props) => {
     const [open, setOpen] = React.useState<boolean>(false);
+    const [menuOpen, setMenuOpen] = React.useState<boolean>(false);
     const [editColorPalette, setEditColorPalette] = React.useState<ColorPalette | null>(null);
-    const [selectedColorPalette, setSelectedColorPalette] = React.useState<ColorPalette>(props.colorPalettes[0]);
+    const [selectedColorPalette, setSelectedColorPalette] = React.useState<ColorPalette>(
+        props.colorPalettes.find((el) => el.getUuid() === props.selectedColorPaletteUuid) || props.colorPalettes[0]
+    );
 
     const ref = React.useRef<HTMLDivElement>(null);
     const dropdownContentRef = React.useRef<HTMLDivElement>(null);
@@ -122,7 +171,7 @@ const ColorPaletteSelector: React.FC<ColorPaletteSelectorProps> = (props) => {
     React.useEffect(
         function addPointerEvents() {
             function handlePointerDown(event: PointerEvent) {
-                if (dropdownContentRef.current?.contains(event.target as Node) || editColorPalette) {
+                if (dropdownContentRef.current?.contains(event.target as Node) || editColorPalette || menuOpen) {
                     return;
                 }
 
@@ -135,11 +184,15 @@ const ColorPaletteSelector: React.FC<ColorPaletteSelectorProps> = (props) => {
                 window.removeEventListener("pointerdown", handlePointerDown);
             };
         },
-        [editColorPalette]
+        [editColorPalette, menuOpen]
     );
 
     function handleChevronClick() {
         setOpen(!open);
+    }
+
+    function handleMenuOpenChange(open: boolean) {
+        setMenuOpen(open);
     }
 
     function handleEditorColorClick(colorPalette: ColorPalette) {
@@ -173,7 +226,7 @@ const ColorPaletteSelector: React.FC<ColorPaletteSelectorProps> = (props) => {
             <ColorPaletteItem
                 key={colorPalette.getUuid()}
                 colorPalette={colorPalette}
-                continuous={props.continuous}
+                type={props.type}
                 onRemove={(e) => {
                     handleRemoveColorPaletteClick(colorPalette);
                     e.stopPropagation();
@@ -188,11 +241,12 @@ const ColorPaletteSelector: React.FC<ColorPaletteSelectorProps> = (props) => {
                 removable={props.colorPalettes.length > 1}
                 onEdit={() => handleEditorColorClick(colorPalette)}
                 selected={selectedColorPalette.getUuid() === colorPalette.getUuid()}
+                onMenuOpenChange={handleMenuOpenChange}
             />
         ));
     }
 
-    function handleEditorClose(e: React.MouseEvent<HTMLDivElement, MouseEvent>) {
+    function handleEditorClose(e: React.MouseEvent<HTMLDivElement | HTMLButtonElement, MouseEvent>) {
         setEditColorPalette(null);
         e.stopPropagation();
     }
@@ -219,20 +273,21 @@ const ColorPaletteSelector: React.FC<ColorPaletteSelectorProps> = (props) => {
     }
 
     function handleAddColorPaletteClick() {
-        const newColorPalette = props.continuous
-            ? new ContinuousColorPalette([
-                  {
-                      hexColor: "#000000",
-                      position: 0,
-                      midPointPosition: 0.5,
-                  },
-                  {
-                      hexColor: "#ffffff",
-                      position: 1,
-                      midPointPosition: 0.5,
-                  },
-              ])
-            : new CategoricalColorPalette(["#000000", "#ffffff"]);
+        const newColorPalette =
+            props.type === ColorPaletteType.Continuous
+                ? new ContinuousColorPalette("New color palette", [
+                      {
+                          hexColor: "#000000",
+                          position: 0,
+                          midPointPosition: 0.5,
+                      },
+                      {
+                          hexColor: "#ffffff",
+                          position: 1,
+                          midPointPosition: 0.5,
+                      },
+                  ])
+                : new CategoricalColorPalette("New color palette", ["#000000", "#ffffff"]);
 
         const newColorPalettes = [...props.colorPalettes, newColorPalette];
 
@@ -255,17 +310,23 @@ const ColorPaletteSelector: React.FC<ColorPaletteSelectorProps> = (props) => {
         }
     }
 
+    function makeColorPalettePreview(): React.ReactNode {
+        switch (props.type) {
+            case ColorPaletteType.Continuous:
+                return <ColorGradient colorPalette={selectedColorPalette as ContinuousColorPalette} />;
+            case ColorPaletteType.Categorical:
+                return <ColorTileGroup colorPalette={selectedColorPalette as CategoricalColorPalette} />;
+            case ColorPaletteType.Set:
+                return <ColorTileGroup gap colorPalette={selectedColorPalette as CategoricalColorPalette} />;
+        }
+        return null;
+    }
+
     const marginTop = Math.max(-boundingRect.top, convertRemToPixels((-props.colorPalettes.length * 3) / 2));
 
     return (
         <div className="bg-slate-100 rounded p-2 flex items-center gap-4" ref={ref}>
-            <div className="flex-grow">
-                {props.continuous ? (
-                    <ColorGradient colorPalette={selectedColorPalette as ContinuousColorPalette} />
-                ) : (
-                    <ColorTileGroup colorPalette={selectedColorPalette as CategoricalColorPalette} />
-                )}
-            </div>
+            <div className="flex-grow">{makeColorPalettePreview()}</div>
             <IconButton onClick={handleChevronClick}>
                 <ChevronDownIcon className="flex-grow-0 w-4 h-4" />
             </IconButton>
@@ -275,7 +336,9 @@ const ColorPaletteSelector: React.FC<ColorPaletteSelectorProps> = (props) => {
                         <Overlay visible={true} />
                         <div
                             ref={dropdownContentRef}
-                            className="absolute z-[60] shadow bg-white rounded overflow-hidden"
+                            className={resolveClassNames("absolute z-[60] shadow bg-white rounded overflow-hidden", {
+                                "pointer-events-none mix-blend-lighten": editColorPalette !== null,
+                            })}
                             style={{
                                 left: boundingRect.left,
                                 top: boundingRect.top,
@@ -298,7 +361,7 @@ const ColorPaletteSelector: React.FC<ColorPaletteSelectorProps> = (props) => {
                     document.body
                 )}
             {editColorPalette &&
-                (props.continuous ? (
+                (props.type === ColorPaletteType.Continuous ? (
                     <ContinuousColorPaletteEditor
                         colorPalette={editColorPalette as ContinuousColorPalette}
                         onChange={handleColorPaletteEdited}
@@ -320,54 +383,58 @@ export type ColorPaletteSettingsProps = {
 };
 
 export const ColorPaletteSettings: React.FC<ColorPaletteSettingsProps> = (props) => {
-    const [drawerContent, setDrawerContent] = useStoreState(props.workbench.getGuiStateStore(), "drawerContent");
+    const drawerContent = useStoreValue(props.workbench.getGuiStateStore(), "drawerContent");
     const [colorPalettes, setColorPalettes] = React.useState<Record<string, ColorPalette[]>>(
         props.workbench.getColorPalettes()
     );
-    const [selectedColorPalette, setSelectedColorPalette] = React.useState<Record<string, ColorPalette>>({
-        [ColorPaletteType.Categorical]: props.workbench.getSelectedColorPalette(ColorPaletteType.Categorical),
-        [ColorPaletteType.Continuous]: props.workbench.getSelectedColorPalette(ColorPaletteType.Continuous),
+    const [selectedColorPaletteUuids, setSelectedColorPaletteUuids] = React.useState<Record<ColorType, string>>({
+        [ColorType.Set]: props.workbench.getSelectedColorPaletteUuid(ColorType.Set),
+        [ColorType.Categorical]: props.workbench.getSelectedColorPaletteUuid(ColorType.Categorical),
+        [ColorType.Sequential]: props.workbench.getSelectedColorPaletteUuid(ColorType.Sequential),
+        [ColorType.Diverging]: props.workbench.getSelectedColorPaletteUuid(ColorType.Diverging),
     });
 
-    const handleDrawerClose = () => {
-        setDrawerContent(DrawerContent.None);
-    };
-
-    function handleColorPaletteEdited(colorPalettes: ColorPalette[], type: ColorPaletteType) {
+    function handleColorPaletteEdited(colorPalettes: ColorPalette[], type: ColorType) {
         props.workbench.setColorPalettes(colorPalettes, type);
         setColorPalettes({ ...props.workbench.getColorPalettes() });
     }
 
-    function handleColorPaletteSelected(colorPalette: ColorPalette, type: ColorPaletteType) {
-        props.workbench.setSelectedColorPalette(colorPalette, type);
-        setSelectedColorPalette({
-            ...selectedColorPalette,
-            [type]: colorPalette,
+    function handleColorPaletteSelected(colorPalette: ColorPalette, type: ColorType) {
+        props.workbench.setSelectedColorPalette(colorPalette.getUuid(), type);
+        setSelectedColorPaletteUuids({
+            ...selectedColorPaletteUuids,
+            [type]: colorPalette.getUuid(),
         });
     }
 
     return (
-        <Drawer
-            title="Color palette settings"
-            visible={drawerContent === DrawerContent.ColorPaletteSettings}
-            onClose={handleDrawerClose}
-        >
+        <Drawer title="Color palette settings" visible={drawerContent === DrawerContent.ColorPaletteSettings}>
             <div className="flex flex-col gap-2">
                 <Label text="Categorical colors">
                     <ColorPaletteSelector
-                        selectedColorPalette={selectedColorPalette[ColorPaletteType.Categorical]}
+                        selectedColorPaletteUuid={selectedColorPaletteUuids[ColorPaletteType.Categorical]}
                         colorPalettes={colorPalettes[ColorPaletteType.Categorical]}
-                        onEdited={(palette) => handleColorPaletteEdited(palette, ColorPaletteType.Categorical)}
-                        onChange={(palette) => handleColorPaletteSelected(palette, ColorPaletteType.Categorical)}
+                        type={ColorPaletteType.Categorical}
+                        onEdited={(palette) => handleColorPaletteEdited(palette, ColorType.Categorical)}
+                        onChange={(palette) => handleColorPaletteSelected(palette, ColorType.Categorical)}
                     />
                 </Label>
-                <Label text="Continuous colors">
+                <Label text="Sequential colors">
                     <ColorPaletteSelector
-                        selectedColorPalette={selectedColorPalette[ColorPaletteType.Continuous]}
-                        colorPalettes={colorPalettes[ColorPaletteType.Continuous]}
-                        continuous
-                        onEdited={(palette) => handleColorPaletteEdited(palette, ColorPaletteType.Continuous)}
-                        onChange={(palette) => handleColorPaletteSelected(palette, ColorPaletteType.Categorical)}
+                        selectedColorPaletteUuid={selectedColorPaletteUuids[ColorType.Sequential]}
+                        colorPalettes={colorPalettes[ColorType.Sequential]}
+                        type={ColorPaletteType.Continuous}
+                        onEdited={(palette) => handleColorPaletteEdited(palette, ColorType.Sequential)}
+                        onChange={(palette) => handleColorPaletteSelected(palette, ColorType.Sequential)}
+                    />
+                </Label>
+                <Label text="Diverging colors">
+                    <ColorPaletteSelector
+                        selectedColorPaletteUuid={selectedColorPaletteUuids[ColorType.Diverging]}
+                        colorPalettes={colorPalettes[ColorType.Diverging]}
+                        type={ColorPaletteType.Continuous}
+                        onEdited={(palette) => handleColorPaletteEdited(palette, ColorType.Diverging)}
+                        onChange={(palette) => handleColorPaletteSelected(palette, ColorType.Diverging)}
                     />
                 </Label>
             </div>

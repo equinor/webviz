@@ -6,7 +6,7 @@ import { Template, TemplateRegistry } from "@framework/TemplateRegistry";
 import { DrawerContent, Workbench } from "@framework/Workbench";
 import { Squares2X2Icon } from "@heroicons/react/20/solid";
 
-import { Drawer } from "./drawer";
+import { Drawer } from "../../Drawer";
 
 function drawTemplatePreview(template: Template, width: number, height: number): React.ReactNode {
     return (

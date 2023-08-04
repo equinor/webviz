@@ -16,9 +16,8 @@ import {
     pointerEventToPoint,
 } from "@lib/utils/geometry";
 
-import { Drawer } from "./drawer";
-
 import { LayoutEventTypes } from "../../Content/private-components/layout";
+import { Drawer } from "../../Drawer";
 
 type ModulesListItemProps = {
     moduleName: string;

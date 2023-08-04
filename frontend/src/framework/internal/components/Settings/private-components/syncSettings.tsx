@@ -7,7 +7,7 @@ import { useActiveModuleId } from "@framework/internal/hooks/workbenchHooks";
 import { LinkIcon } from "@heroicons/react/20/solid";
 import { Checkbox } from "@lib/components/Checkbox";
 
-import { Drawer } from "./drawer";
+import { Drawer } from "../../Drawer";
 
 type ModulesListProps = {
     workbench: Workbench;

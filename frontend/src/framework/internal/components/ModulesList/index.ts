@@ -1,1 +1,0 @@
-export { ModulesList } from "./modulesList";

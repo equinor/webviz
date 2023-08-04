@@ -1,13 +1,14 @@
 import React from "react";
 
-import { CheckIcon, PlusIcon, TrashIcon } from "@heroicons/react/20/solid";
+import { CheckIcon, MinusIcon, PlusIcon } from "@heroicons/react/20/solid";
 import { Button } from "@lib/components/Button";
 import { Dialog } from "@lib/components/Dialog";
+import { Input } from "@lib/components/Input";
+import { Label } from "@lib/components/Label";
 import { resolveClassNames } from "@lib/components/_utils/resolveClassNames";
+import { extrapolateHex } from "@lib/utils/ColorPalette";
 import { CategoricalColor, CategoricalColorPalette } from "@lib/utils/ColorPalette";
 import { MANHATTAN_LENGTH, Point, pointDifference, pointDistance } from "@lib/utils/geometry";
-
-import { extrapolateHex } from "../../../../../lib/utils/ColorPalette";
 
 enum Side {
     Left = "left",
@@ -18,8 +19,8 @@ type EditableColorTileProps = {
     parentRef: React.RefObject<HTMLDivElement>;
     categoricalColor: CategoricalColor;
     onChange?: (categoricalColor: CategoricalColor) => void;
-    onMove?: (categoricalColorId: string, otherCategoricalColorId: string) => void;
-    onMovePreview?: (hexColor: string | null, otherCategoricalColorId: string | null, side: Side) => void;
+    onMove?: (categoricalColorId: string, otherCategoricalColorId: string, toSide: Side) => void;
+    onMovePreview?: (hexColor: string | null, otherCategoricalColorId: string | null, toSide: Side) => void;
     onRemove?: (categoricalColorId: string) => void;
 };
 
@@ -155,7 +156,7 @@ const EditableColorTile: React.FC<EditableColorTileProps> = (props) => {
             deleteColor = false;
 
             if (props.onMove && hoveredColorId) {
-                props.onMove(props.categoricalColor.id, hoveredColorId);
+                props.onMove(props.categoricalColor.id, hoveredColorId, hoveredSide);
             } else if (props.onMovePreview) {
                 props.onMovePreview(null, null, Side.Left);
             }
@@ -183,6 +184,9 @@ const EditableColorTile: React.FC<EditableColorTileProps> = (props) => {
         }
 
         return function handleUnmount() {
+            if (timeoutRef.current) {
+                clearTimeout(timeoutRef.current);
+            }
             if (ref.current) {
                 ref.current.removeEventListener("pointerdown", handlePointerDown);
                 document.removeEventListener("pointermove", handlePointerMove);
@@ -209,17 +213,21 @@ const EditableColorTile: React.FC<EditableColorTileProps> = (props) => {
         <>
             <div
                 data-color-id={props.categoricalColor.id}
-                className={resolveClassNames(
-                    "w-6 h-6 flex items-center justify-center cursor-pointer border border-slate-600 relative",
-                    {
-                        hidden: hidden && !aboutToBeDeleted,
-                        "opacity-50": aboutToBeDeleted,
-                    }
-                )}
-                style={{ backgroundColor: props.categoricalColor.hexColor }}
+                className={resolveClassNames("w-6 h-6 flex items-center justify-center cursor-pointer relative", {
+                    hidden: hidden && !aboutToBeDeleted,
+                })}
                 ref={ref}
                 onClick={handleClick}
             >
+                <div
+                    className={resolveClassNames(
+                        "w-6 h-6 flex items-center justify-center cursor-pointer border border-slate-600 relative",
+                        {
+                            "opacity-50": aboutToBeDeleted,
+                        }
+                    )}
+                    style={{ backgroundColor: props.categoricalColor.hexColor }}
+                />
                 <input
                     ref={inputRef}
                     type="color"
@@ -227,7 +235,11 @@ const EditableColorTile: React.FC<EditableColorTileProps> = (props) => {
                     onChange={handleColorChange}
                     className="w-[0px] h-[0px] opacity-0 absolute cursor-pointer"
                 />
-                {aboutToBeDeleted && <TrashIcon className="w-4 h-4 text-black" />}
+                {aboutToBeDeleted && (
+                    <div className="absolute rounded-full bg-red-600 w-5 h-5 flex items-center justify-center">
+                        <MinusIcon className="w-4 h-4 text-white" />
+                    </div>
+                )}
             </div>
             <div
                 className={resolveClassNames(
@@ -245,11 +257,11 @@ const EditableColorTile: React.FC<EditableColorTileProps> = (props) => {
 export type CategoricalColorPaletteEditorProps = {
     colorPalette: CategoricalColorPalette;
     onChange?: (colorPalette: CategoricalColorPalette) => void;
-    onClose?: (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => void;
+    onClose?: (e: React.MouseEvent<HTMLDivElement | HTMLButtonElement, MouseEvent>) => void;
 };
 
 export const CategoricalColorPaletteEditor: React.FC<CategoricalColorPaletteEditorProps> = (props) => {
-    const [_, forceRerender] = React.useReducer((x) => x + 1, 0);
+    const forceRerender = React.useReducer((x) => x + 1, 0)[1];
     const [previewIndex, setPreviewIndex] = React.useState<number | null>(null);
     const [previewColor, setPreviewColor] = React.useState<string | null>(null);
     const [previewSide, setPreviewSide] = React.useState<Side | null>(null);
@@ -273,12 +285,21 @@ export const CategoricalColorPaletteEditor: React.FC<CategoricalColorPaletteEdit
         forceRerender();
     }
 
-    const handleMoveColor = React.useCallback(function handleMoveColor(colorId: string, otherColorId: string) {
-        const otherIndex = colorPalette.current.getIndex(otherColorId) + 1;
+    const handleMoveColor = React.useCallback(function handleMoveColor(
+        colorId: string,
+        otherColorId: string,
+        toSide: Side
+    ) {
+        let otherIndex = colorPalette.current.getIndex(otherColorId);
         if (otherIndex === -1) {
             forceRerender();
             return;
         }
+
+        if (toSide === Side.Right) {
+            otherIndex++;
+        }
+
         colorPalette.current.moveColor(colorId, otherIndex);
 
         setPreviewIndex(null);
@@ -286,7 +307,8 @@ export const CategoricalColorPaletteEditor: React.FC<CategoricalColorPaletteEdit
         setPreviewSide(null);
 
         forceRerender();
-    }, []);
+    },
+    []);
 
     const handlePreviewColor = React.useCallback(function handlePreviewColor(
         hexColor: string | null,
@@ -320,52 +342,68 @@ export const CategoricalColorPaletteEditor: React.FC<CategoricalColorPaletteEdit
         forceRerender();
     }, []);
 
+    const handleNameChange = React.useCallback(function handleNameChange(e: React.ChangeEvent<HTMLInputElement>) {
+        colorPalette.current.setName(e.target.value);
+        forceRerender();
+    }, []);
+
     return (
         <Dialog
             title="Edit color palette"
             open
             onClose={props.onClose}
             width={"25%"}
+            minWidth={480}
             actions={
-                <Button startIcon={<CheckIcon className="w-4 h-4" />} onClick={handleSaveClick}>
-                    Save
-                </Button>
+                <>
+                    <Button onClick={props.onClose} color="danger">
+                        Discard changes
+                    </Button>
+                    <Button onClick={handleSaveClick}>Apply changes</Button>
+                </>
             }
         >
-            <div className="relative flex gap-1 flex-wrap" ref={colorPaletteRef}>
-                {colorPalette.current.getColors().map((color, index) => {
-                    return (
-                        <React.Fragment key={color.id}>
-                            {previewIndex === index && previewColor && previewSide === Side.Left && (
-                                <div
-                                    className="opacity-30 shadow w-6 h-6 border border-slate-600"
-                                    style={{ backgroundColor: previewColor }}
-                                />
-                            )}
-                            <EditableColorTile
-                                key={color.id}
-                                categoricalColor={color}
-                                parentRef={colorPaletteRef}
-                                onMove={handleMoveColor}
-                                onMovePreview={handlePreviewColor}
-                                onRemove={handleRemoveColor}
-                            />
-                            {previewIndex === index && previewColor && previewSide === Side.Right && (
-                                <div
-                                    className="opacity-30 shadow w-6 h-6 border border-slate-600"
-                                    style={{ backgroundColor: previewColor }}
-                                />
-                            )}
-                        </React.Fragment>
-                    );
-                })}
-                <div
-                    className="flex items-center justify-center w-6 h-6 cursor-pointer hover:bg-slate-200"
-                    title="Add color"
-                    onClick={handleAddColorClick}
-                >
-                    <PlusIcon className="w-4 h-4" />
-                </div>
+            <div className="flex flex-col gap-4">
+                <Label text="Name">
+                    <Input defaultValue={colorPalette.current.getName()} onChange={handleNameChange} />
+                </Label>
+                <Label text="Colors">
+                    <div className="relative flex gap-1 flex-wrap" ref={colorPaletteRef}>
+                        {colorPalette.current.getColors().map((color, index) => {
+                            return (
+                                <React.Fragment key={color.id}>
+                                    {previewIndex === index && previewColor && previewSide === Side.Left && (
+                                        <div
+                                            className="opacity-30 shadow w-6 h-6 border border-slate-600"
+                                            style={{ backgroundColor: previewColor }}
+                                        />
+                                    )}
+                                    <EditableColorTile
+                                        key={color.id}
+                                        categoricalColor={color}
+                                        parentRef={colorPaletteRef}
+                                        onMove={handleMoveColor}
+                                        onMovePreview={handlePreviewColor}
+                                        onRemove={handleRemoveColor}
+                                    />
+                                    {previewIndex === index && previewColor && previewSide === Side.Right && (
+                                        <div
+                                            className="opacity-30 shadow w-6 h-6 border border-slate-600"
+                                            style={{ backgroundColor: previewColor }}
+                                        />
+                                    )}
+                                </React.Fragment>
+                            );
+                        })}
+                        <div
+                            className="flex items-center justify-center w-6 h-6 cursor-pointer hover:bg-slate-200"
+                            title="Add color"
+                            onClick={handleAddColorClick}
+                        >
+                            <PlusIcon className="w-4 h-4" />
+                        </div>
+                    </div>
+                </Label>
             </div>
         </Dialog>
     );

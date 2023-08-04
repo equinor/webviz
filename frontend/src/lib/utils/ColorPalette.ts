@@ -186,9 +186,11 @@ export enum ColorPaletteType {
 
 export class ColorPalette {
     protected _uuid: string;
+    protected _name: string;
 
-    constructor() {
+    constructor(name: string) {
         this._uuid = v4();
+        this._name = name;
     }
 
     protected assertHexColor(hexColor: string): void {
@@ -202,6 +204,14 @@ export class ColorPalette {
         return this._uuid;
     }
 
+    getName(): string {
+        return this._name;
+    }
+
+    setName(name: string): void {
+        this._name = name;
+    }
+
     clone(): ColorPalette {
         throw new Error("Not implemented");
     }
@@ -209,7 +219,17 @@ export class ColorPalette {
     makeCopy(): ColorPalette {
         const copy = this.clone();
         copy._uuid = v4();
+        copy._name = `${this._name} (copy)`;
         return copy;
+    }
+
+    toJson(): string {
+        throw new Error("Not implemented");
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    static fromJson(json: string): ColorPalette {
+        throw new Error("Not implemented");
     }
 }
 
@@ -221,8 +241,8 @@ export type CategoricalColor = {
 export class CategoricalColorPalette extends ColorPalette {
     private _colors: CategoricalColor[];
 
-    constructor(hexColors: string[]) {
-        super();
+    constructor(name: string, hexColors: string[]) {
+        super(name);
         this._colors = [];
 
         for (const color of hexColors) {
@@ -262,14 +282,43 @@ export class CategoricalColorPalette extends ColorPalette {
     }
 
     moveColor(id: string, newIndex: number) {
-        const oldIndex = this._colors.findIndex((color) => color.id === id);
-        this._colors.splice(Math.max(newIndex - 1, 0), 0, this._colors.splice(oldIndex, 1)[0]);
+        const oldIndex = this.getIndex(id);
+        const oldColor = this._colors[oldIndex];
+        this._colors.splice(Math.max(0, newIndex), 0, oldColor);
+
+        if (oldIndex > newIndex) {
+            this._colors.splice(oldIndex + 1, 1);
+            return;
+        }
+
+        this._colors.splice(oldIndex, 1);
     }
 
     clone(): CategoricalColorPalette {
-        const clone = new CategoricalColorPalette(this._colors.map((color) => color.hexColor));
+        const clone = new CategoricalColorPalette(
+            this._name,
+            this._colors.map((color) => color.hexColor)
+        );
         clone._uuid = this._uuid;
         return clone;
+    }
+
+    toJson(): string {
+        return JSON.stringify({
+            uuid: this._uuid,
+            name: this._name,
+            colors: this._colors,
+        });
+    }
+
+    static fromJson(json: string): CategoricalColorPalette {
+        const { uuid, name, colors } = JSON.parse(json);
+        const colorPalette = new CategoricalColorPalette(
+            name,
+            colors.map((color: CategoricalColor) => color.hexColor)
+        );
+        colorPalette._uuid = uuid;
+        return colorPalette;
     }
 }
 
@@ -283,8 +332,8 @@ export type ColorStop = {
 export class ContinuousColorPalette extends ColorPalette {
     private _colorStops: ColorStop[];
 
-    constructor(colorStops: Omit<ColorStop, "id">[]) {
-        super();
+    constructor(name: string, colorStops: Omit<ColorStop, "id">[]) {
+        super(name);
         this._colorStops = [];
 
         for (const colorStop of colorStops) {
@@ -388,11 +437,19 @@ export class ContinuousColorPalette extends ColorPalette {
         const { smaller, greater } = this.getClosestColorStops(position);
 
         if (smaller && greater) {
+            if (smaller.position === position) {
+                return smaller.hexColor;
+            } else if (greater.position === position) {
+                return greater.hexColor;
+            }
             const positionQuotient = (position - smaller.position) / (greater.position - smaller.position);
             const interpolatedHexColor = interpolateHex(smaller.hexColor, greater.hexColor, positionQuotient);
 
             return interpolatedHexColor;
         } else if (!smaller && greater) {
+            if (greater.position === position) {
+                return greater.hexColor;
+            }
             const nextColorStop = this.getNextColorStop(greater.id);
             if (nextColorStop) {
                 const positionQuotient = (position - greater.position) / (nextColorStop.position - greater.position);
@@ -401,6 +458,9 @@ export class ContinuousColorPalette extends ColorPalette {
                 return extrapolatedHexColor;
             }
         } else if (smaller && !greater) {
+            if (smaller.position === position) {
+                return smaller.hexColor;
+            }
             const previousColorStop = this.getPreviousColorStop(smaller.id);
             if (previousColorStop) {
                 const positionQuotient =
@@ -466,8 +526,23 @@ export class ContinuousColorPalette extends ColorPalette {
     }
 
     clone(): ContinuousColorPalette {
-        const clone = new ContinuousColorPalette(this._colorStops);
+        const clone = new ContinuousColorPalette(this._name, this._colorStops);
         clone._uuid = this._uuid;
         return clone;
+    }
+
+    toJson(): string {
+        return JSON.stringify({
+            uuid: this._uuid,
+            name: this._name,
+            colorStops: this._colorStops,
+        });
+    }
+
+    static fromJson(json: string): ContinuousColorPalette {
+        const { uuid, name, colorStops } = JSON.parse(json);
+        const colorPalette = new ContinuousColorPalette(name, colorStops);
+        colorPalette._uuid = uuid;
+        return colorPalette;
     }
 }

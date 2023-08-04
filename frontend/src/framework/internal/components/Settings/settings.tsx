@@ -12,9 +12,6 @@ import { SyncSettings } from "./private-components/syncSettings";
 import { TemplatesList } from "./private-components/templatesList";
 
 import { ColorPaletteSettings } from "../ColorPaletteSettings";
-import { ModulesList } from "../ModulesList";
-import { SyncSettings } from "../SyncSettings";
-import { TemplatesList } from "../TemplatesList";
 
 type SettingsProps = {
     workbench: Workbench;

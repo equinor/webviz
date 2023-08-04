@@ -109,6 +109,7 @@ export const ViewContent = React.memo((props: ViewContentProps) => {
                     moduleContext={props.moduleInstance.getContext()}
                     workbenchSession={props.workbench.getWorkbenchSession()}
                     workbenchServices={props.workbench.getWorkbenchServices()}
+                    workbenchSettings={props.workbench.getWorkbenchSettings()}
                     initialSettings={props.moduleInstance.getInitialSettings() || undefined}
                 />
             </div>

@@ -3,6 +3,7 @@ import React from "react";
 import { CheckIcon, MinusIcon, PlusIcon, TrashIcon } from "@heroicons/react/20/solid";
 import { Button } from "@lib/components/Button";
 import { Dialog } from "@lib/components/Dialog";
+import { Input } from "@lib/components/Input";
 import { Label } from "@lib/components/Label";
 import { ColorPalette, ColorStop, ContinuousColorPalette } from "@lib/utils/ColorPalette";
 import { Point, rectContainsPoint } from "@lib/utils/geometry";
@@ -19,7 +20,9 @@ type ColorStopMidPointHandleProps = {
     max: number;
     selected: boolean;
     onChange?: (colorStopId: string, value: number) => void;
-    onSelect?: () => void;
+    onSelect?: (midPointType: MidPoint) => void;
+    onGrabChange?: (grabbed: boolean) => void;
+    midPointType: MidPoint;
 };
 
 const ColorStopMidPointHandle: React.FC<ColorStopMidPointHandleProps> = (props) => {
@@ -53,7 +56,11 @@ const ColorStopMidPointHandle: React.FC<ColorStopMidPointHandleProps> = (props) 
                 document.body.classList.add("select-none");
 
                 if (props.onSelect) {
-                    props.onSelect();
+                    props.onSelect(props.midPointType);
+                }
+
+                if (props.onGrabChange) {
+                    props.onGrabChange(true);
                 }
 
                 e.stopPropagation();
@@ -83,6 +90,9 @@ const ColorStopMidPointHandle: React.FC<ColorStopMidPointHandleProps> = (props) 
             function handlePointerUp() {
                 mouseDownPosition = null;
                 setGrabbed(false);
+                if (props.onGrabChange) {
+                    props.onGrabChange(false);
+                }
                 document.body.classList.remove("cursor-grabbing");
                 document.body.classList.remove("select-none");
             }
@@ -110,7 +120,7 @@ const ColorStopMidPointHandle: React.FC<ColorStopMidPointHandleProps> = (props) 
                 }
             };
         },
-        [props.max, props.min, props.parentRef]
+        [props.max, props.min, props.parentRef, props.onGrabChange, props.onSelect, props.midPointType]
     );
 
     return (
@@ -121,13 +131,12 @@ const ColorStopMidPointHandle: React.FC<ColorStopMidPointHandleProps> = (props) 
                 e.stopPropagation();
             }}
             className={resolveClassNames(
-                "absolute w-2 h-2 -translate-x-1/2 transform rotate-45 border shadow border-slate-800 -bottom-1",
+                "absolute w-2 h-2 -translate-x-1/2 transform rotate-45 border shadow border-slate-800 -bottom-1 hover:scale-125",
                 {
                     "bg-black": grabbed || props.selected,
                     "bg-white": !grabbed && !props.selected,
-                    "z-50": grabbed,
+                    "z-50 scale-125 cursor-grabbing": grabbed,
                     "cursor-pointer": !grabbed,
-                    "cursor-grabbing": grabbed,
                 }
             )}
             style={{
@@ -264,13 +273,11 @@ const ColorStopHandle: React.FC<ColorStopHandleProps> = (props) => {
             <div
                 data-color-stop-id={colorStop.id}
                 ref={ref}
-                className={resolveClassNames("absolute w-4 h-4 -translate-x-1/2 top-0 shadow", {
+                className={resolveClassNames("absolute w-4 h-4 -translate-x-1/2 top-0 shadow hover:scale-110", {
                     "cursor-pointer": !grabbed,
-                    "cursor-grabbing": grabbed,
-                    "z-50": grabbed,
+                    "cursor-grabbing scale-110 z-50": grabbed,
                     "top-0": !aboutToBeDeleted,
-                    "-top-1": aboutToBeDeleted,
-                    "opacity-30": aboutToBeDeleted,
+                    "-top-1 opacity-30": aboutToBeDeleted,
                 })}
                 style={{
                     left: colorStop.position * 100 + "%",
@@ -308,67 +315,73 @@ const ColorStopHandle: React.FC<ColorStopHandleProps> = (props) => {
 
 export type AddColorStopIndicatorProps = {
     parentRef: React.MutableRefObject<HTMLDivElement | null>;
+    visible: boolean;
 };
 
 const AddColorStopIndicator: React.FC<AddColorStopIndicatorProps> = (props) => {
     const [position, setPosition] = React.useState<number>(0);
     const [visible, setVisible] = React.useState<boolean>(false);
 
-    React.useEffect(function handleMount() {
-        let hoverable = true;
+    React.useEffect(
+        function handleMount() {
+            let hoverable = true;
 
-        function handlePointerDown() {
-            hoverable = false;
-            setVisible(false);
-        }
-
-        function handlePointerUp() {
-            hoverable = true;
-        }
-
-        function handlePointerMove(e: PointerEvent) {
-            if (!props.parentRef.current) {
-                return;
-            }
-
-            if (!rectContainsPoint(props.parentRef.current.getBoundingClientRect(), { x: e.clientX, y: e.clientY })) {
+            function handlePointerDown() {
+                hoverable = false;
                 setVisible(false);
-                return;
             }
 
-            if (!hoverable) {
-                return;
+            function handlePointerUp() {
+                hoverable = true;
             }
 
-            const hoveredElements = document.elementsFromPoint(e.clientX, e.clientY);
-            for (const element of hoveredElements) {
-                if (element instanceof HTMLElement && element.dataset.colorStopId) {
+            function handlePointerMove(e: PointerEvent) {
+                if (!props.parentRef.current) {
+                    return;
+                }
+
+                if (
+                    !rectContainsPoint(props.parentRef.current.getBoundingClientRect(), { x: e.clientX, y: e.clientY })
+                ) {
                     setVisible(false);
                     return;
                 }
+
+                if (!hoverable || !props.visible) {
+                    return;
+                }
+
+                const hoveredElements = document.elementsFromPoint(e.clientX, e.clientY);
+                for (const element of hoveredElements) {
+                    if (element instanceof HTMLElement && element.dataset.colorStopId) {
+                        setVisible(false);
+                        return;
+                    }
+                }
+
+                const parentRect = props.parentRef.current.getBoundingClientRect();
+
+                const relPos = Math.min(
+                    1,
+                    Math.max(0, Math.round(((e.clientX - parentRect.left) / parentRect.width) * 100) / 100)
+                );
+
+                setVisible(true);
+                setPosition(relPos);
             }
 
-            const parentRect = props.parentRef.current.getBoundingClientRect();
+            document.addEventListener("pointerdown", handlePointerDown);
+            document.addEventListener("pointerup", handlePointerUp);
+            document.addEventListener("pointermove", handlePointerMove);
 
-            const relPos = Math.min(
-                1,
-                Math.max(0, Math.round(((e.clientX - parentRect.left) / parentRect.width) * 100) / 100)
-            );
-
-            setVisible(true);
-            setPosition(relPos);
-        }
-
-        document.addEventListener("pointerdown", handlePointerDown);
-        document.addEventListener("pointerup", handlePointerUp);
-        document.addEventListener("pointermove", handlePointerMove);
-
-        return function handleUnmount() {
-            document.removeEventListener("pointerdown", handlePointerDown);
-            document.removeEventListener("pointerup", handlePointerUp);
-            document.removeEventListener("pointermove", handlePointerMove);
-        };
-    }, []);
+            return function handleUnmount() {
+                document.removeEventListener("pointerdown", handlePointerDown);
+                document.removeEventListener("pointerup", handlePointerUp);
+                document.removeEventListener("pointermove", handlePointerMove);
+            };
+        },
+        [props.visible]
+    );
 
     return (
         <>
@@ -397,14 +410,15 @@ const AddColorStopIndicator: React.FC<AddColorStopIndicatorProps> = (props) => {
 export type ContinuousColorPaletteEditorProps = {
     colorPalette: ContinuousColorPalette;
     onChange?: (colorPalette: ColorPalette) => void;
-    onClose?: (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => void;
+    onClose?: (e: React.MouseEvent<HTMLDivElement | HTMLButtonElement, MouseEvent>) => void;
 };
 
 export const ContinuousColorPaletteEditor: React.FC<ContinuousColorPaletteEditorProps> = (props) => {
     const colorPalette = React.useRef<ContinuousColorPalette>(props.colorPalette.clone());
     const [selectedColorStopId, setSelectedColorStopId] = React.useState<string | null>(null);
     const [selectedMidPoint, setSelectedMidPoint] = React.useState<MidPoint | null>(null);
-    const [_, forceRerender] = React.useReducer((x) => x + 1, 0);
+    const [midPointGrabbed, setMidPointGrabbed] = React.useState<boolean>(false);
+    const forceRerender = React.useReducer((x) => x + 1, 0)[1];
 
     const colorStopRef = React.useRef<HTMLDivElement>(null);
 
@@ -413,6 +427,10 @@ export const ContinuousColorPaletteEditor: React.FC<ContinuousColorPaletteEditor
             props.onChange(colorPalette.current);
         }
     }
+
+    const handleMidPointGrabChange = React.useCallback(function handleMidPointGrabChange(grabbed: boolean) {
+        setMidPointGrabbed(grabbed);
+    }, []);
 
     const handleColorStopRemove = React.useCallback(function handleColorStopRemove(colorStop: ColorStop) {
         if (colorPalette.current.getColorStops().length <= 2) {
@@ -527,6 +545,11 @@ export const ContinuousColorPaletteEditor: React.FC<ContinuousColorPaletteEditor
         forceRerender();
     }
 
+    const handleNameChange = React.useCallback(function handleNameChange(e: React.ChangeEvent<HTMLInputElement>) {
+        colorPalette.current.setName(e.target.value);
+        forceRerender();
+    }, []);
+
     return (
         <Dialog
             title="Edit color palette"
@@ -535,133 +558,154 @@ export const ContinuousColorPaletteEditor: React.FC<ContinuousColorPaletteEditor
             width={"25%"}
             minWidth={480}
             actions={
-                <Button startIcon={<CheckIcon className="w-4 h-4" />} onClick={handleSaveClick}>
-                    Save
-                </Button>
+                <>
+                    <Button onClick={props.onClose} color="danger">
+                        Discard changes
+                    </Button>
+                    <Button onClick={handleSaveClick}>Apply changes</Button>
+                </>
             }
         >
-            <div className="flex flex-col">
-                <div className="flex-grow">
-                    <div
-                        ref={colorStopRef}
-                        className="relative h-6 w-full z-[1] cursor-copy"
-                        onClick={handleAddColorStop}
-                    >
-                        <AddColorStopIndicator parentRef={colorStopRef} />
-                        {colorPalette.current.getColorStops().map((stop) => {
-                            const prev = colorPalette.current.getPreviousColorStop(stop.id);
-                            const next = colorPalette.current.getNextColorStop(stop.id);
-                            return (
-                                <React.Fragment key={stop.id}>
-                                    <ColorStopHandle
-                                        colorStop={stop}
-                                        min={prev?.position || 0}
-                                        max={next?.position || 1}
-                                        selected={selectedColorStopId === stop.id && selectedMidPoint === null}
-                                        parentRef={colorStopRef}
-                                        onChange={handleColorStopPositionChange}
-                                        onDelete={handleColorStopRemove}
-                                        onSelect={handleColorStopSelected}
-                                    />
-                                    {selectedColorStopId === stop.id && (
-                                        <>
-                                            {prev && prev.position !== stop.position && (
-                                                <ColorStopMidPointHandle
-                                                    colorStopId={prev.id}
-                                                    parentRef={colorStopRef}
-                                                    selected={selectedMidPoint === MidPoint.Start}
-                                                    value={
-                                                        prev.position +
-                                                        (stop.position - prev.position) * prev.midPointPosition
-                                                    }
-                                                    min={prev.position}
-                                                    max={stop.position}
-                                                    onChange={handleColorStopMidPointPositionChange}
-                                                    onSelect={() => {
-                                                        setSelectedMidPoint(MidPoint.Start);
-                                                    }}
-                                                />
-                                            )}
-                                            {next && next.position !== stop.position && (
-                                                <ColorStopMidPointHandle
-                                                    selected={selectedMidPoint === MidPoint.End}
-                                                    colorStopId={stop.id}
-                                                    parentRef={colorStopRef}
-                                                    value={
-                                                        stop.position +
-                                                        (next.position - stop.position) * stop.midPointPosition
-                                                    }
-                                                    min={stop.position}
-                                                    max={next.position}
-                                                    onChange={handleColorStopMidPointPositionChange}
-                                                    onSelect={() => {
-                                                        setSelectedMidPoint(MidPoint.End);
-                                                    }}
-                                                />
-                                            )}
-                                        </>
-                                    )}
-                                </React.Fragment>
-                            );
-                        })}
-                    </div>
-                    <div className="h-12 w-full" style={{ backgroundImage: colorPalette.current.getGradient() }}></div>
-                    <div className={resolveClassNames("flex items-end", { "opacity-40": !selectedColorStopId })}>
-                        <div className="p-4">
-                            <Label text="Color">
-                                <input
-                                    type="color"
-                                    value={
-                                        colorPalette.current.getColorStop(selectedColorStopId || "")?.hexColor ||
-                                        "#000000"
-                                    }
-                                    onChange={(e) => {
-                                        if (selectedColorStopId) {
-                                            colorPalette.current.changeColorStopColor(
-                                                selectedColorStopId,
-                                                e.target.value
-                                            );
-                                            forceRerender();
-                                        }
-                                    }}
-                                    className={resolveClassNames(
-                                        "rounded border border-slate-400 outline-none p-1 h-8",
-                                        {
-                                            "cursor-pointer": selectedColorStopId !== null && selectedMidPoint === null,
-                                            "opacity-40": selectedColorStopId === null || selectedMidPoint !== null,
-                                        }
-                                    )}
-                                    disabled={!selectedColorStopId || selectedMidPoint !== null}
-                                />
-                            </Label>
-                        </div>
-                        <div className="p-4 flex-grow">
-                            <Label text="Location">
-                                <div className="flex items-center gap-2">
-                                    <input
-                                        type="number"
-                                        min={0}
-                                        max={100}
-                                        step={1}
-                                        value={makeLocationValue()}
-                                        onChange={handleLocationChange}
-                                        className="rounded border border-slate-400 outline-none p-1 h-8 w-full"
-                                        disabled={!selectedColorStopId}
-                                    />
-                                    %
-                                </div>
-                            </Label>
-                        </div>
-                        <div className="p-4">
-                            <Button
-                                startIcon={<TrashIcon className="w-4 h-4" />}
-                                onClick={handleSelectedColorStopRemove}
+            <div className="flex flex-col gap-4">
+                <Label text="Name">
+                    <Input defaultValue={colorPalette.current.getName()} onChange={handleNameChange} />
+                </Label>
+                <Label text="Colors">
+                    <div className="flex flex-col">
+                        <div className="flex-grow px-2">
+                            <div
+                                ref={colorStopRef}
+                                className={resolveClassNames("relative h-6 w-full z-[1]", {
+                                    "cursor-copy": !midPointGrabbed,
+                                })}
+                                onClick={handleAddColorStop}
                             >
-                                Remove
-                            </Button>
+                                <AddColorStopIndicator parentRef={colorStopRef} visible={!midPointGrabbed} />
+                                {colorPalette.current.getColorStops().map((stop) => {
+                                    const prev = colorPalette.current.getPreviousColorStop(stop.id);
+                                    const next = colorPalette.current.getNextColorStop(stop.id);
+                                    return (
+                                        <React.Fragment key={stop.id}>
+                                            <ColorStopHandle
+                                                colorStop={stop}
+                                                min={prev?.position || 0}
+                                                max={next?.position || 1}
+                                                selected={selectedColorStopId === stop.id && selectedMidPoint === null}
+                                                parentRef={colorStopRef}
+                                                onChange={handleColorStopPositionChange}
+                                                onDelete={handleColorStopRemove}
+                                                onSelect={handleColorStopSelected}
+                                            />
+                                            {selectedColorStopId === stop.id && (
+                                                <>
+                                                    {prev && prev.position !== stop.position && (
+                                                        <ColorStopMidPointHandle
+                                                            colorStopId={prev.id}
+                                                            midPointType={MidPoint.Start}
+                                                            parentRef={colorStopRef}
+                                                            selected={selectedMidPoint === MidPoint.Start}
+                                                            value={
+                                                                prev.position +
+                                                                (stop.position - prev.position) * prev.midPointPosition
+                                                            }
+                                                            min={prev.position}
+                                                            max={stop.position}
+                                                            onChange={handleColorStopMidPointPositionChange}
+                                                            onSelect={setSelectedMidPoint}
+                                                            onGrabChange={handleMidPointGrabChange}
+                                                        />
+                                                    )}
+                                                    {next && next.position !== stop.position && (
+                                                        <ColorStopMidPointHandle
+                                                            selected={selectedMidPoint === MidPoint.End}
+                                                            colorStopId={stop.id}
+                                                            midPointType={MidPoint.End}
+                                                            parentRef={colorStopRef}
+                                                            value={
+                                                                stop.position +
+                                                                (next.position - stop.position) * stop.midPointPosition
+                                                            }
+                                                            min={stop.position}
+                                                            max={next.position}
+                                                            onChange={handleColorStopMidPointPositionChange}
+                                                            onSelect={setSelectedMidPoint}
+                                                            onGrabChange={handleMidPointGrabChange}
+                                                        />
+                                                    )}
+                                                </>
+                                            )}
+                                        </React.Fragment>
+                                    );
+                                })}
+                            </div>
+                            <div
+                                className="h-12 w-full border border-slate-400 rounded-b"
+                                style={{ backgroundImage: colorPalette.current.getGradient() }}
+                            ></div>
+                            <div
+                                className={resolveClassNames("flex items-end gap-4 py-4", {
+                                    "opacity-40": !selectedColorStopId,
+                                })}
+                            >
+                                <div>
+                                    <Label text="Color">
+                                        <input
+                                            type="color"
+                                            value={
+                                                colorPalette.current.getColorStop(selectedColorStopId || "")
+                                                    ?.hexColor || "#000000"
+                                            }
+                                            onChange={(e) => {
+                                                if (selectedColorStopId) {
+                                                    colorPalette.current.changeColorStopColor(
+                                                        selectedColorStopId,
+                                                        e.target.value
+                                                    );
+                                                    forceRerender();
+                                                }
+                                            }}
+                                            className={resolveClassNames(
+                                                "rounded border border-slate-400 outline-none p-1 h-8",
+                                                {
+                                                    "cursor-pointer":
+                                                        selectedColorStopId !== null && selectedMidPoint === null,
+                                                    "opacity-40":
+                                                        selectedColorStopId === null || selectedMidPoint !== null,
+                                                }
+                                            )}
+                                            disabled={!selectedColorStopId || selectedMidPoint !== null}
+                                        />
+                                    </Label>
+                                </div>
+                                <div className="flex-grow">
+                                    <Label text="Location">
+                                        <div className="flex items-center gap-2">
+                                            <input
+                                                type="number"
+                                                min={0}
+                                                max={100}
+                                                step={1}
+                                                value={makeLocationValue()}
+                                                onChange={handleLocationChange}
+                                                className="rounded border border-slate-400 outline-none p-1 h-8 w-full"
+                                                disabled={!selectedColorStopId}
+                                            />
+                                            %
+                                        </div>
+                                    </Label>
+                                </div>
+                                <div>
+                                    <Button
+                                        startIcon={<TrashIcon className="w-4 h-4" />}
+                                        onClick={handleSelectedColorStopRemove}
+                                    >
+                                        Remove
+                                    </Button>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                </div>
+                </Label>
             </div>
         </Dialog>
     );
