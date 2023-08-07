@@ -3,10 +3,11 @@ from typing import List, Sequence
 from fastapi import APIRouter, Depends, Path, Query
 from pydantic import BaseModel
 
-from src.services.sumo_access.sumo_explore import SumoExplore
-from src.services.sumo_access.iteration_inspector import IterationInspector
-from src.services.utils.authenticated_user import AuthenticatedUser
 from src.backend.auth.auth_helper import AuthHelper
+from src.services.sumo_access.case_inspector import CaseInspector
+from src.services.sumo_access.iteration_inspector import IterationInspector
+from src.services.sumo_access.sumo_explore import SumoExplore
+from src.services.utils.authenticated_user import AuthenticatedUser
 
 router = APIRouter()
 
@@ -94,8 +95,10 @@ def get_ensemble_details(
     ensemble_name: str = Path(description="Ensemble name"),
 ) -> EnsembleDetails:
     """Get more detailed information for an ensemble"""
-    iteration_inspector = IterationInspector(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
-    case_name = iteration_inspector.get_case_name()
+    case_inspector = CaseInspector(authenticated_user.get_sumo_access_token(), case_uuid)
+    case_name = case_inspector.get_case_name()
+
+    iteration_inspector: IterationInspector = case_inspector.create_iteration_inspector(ensemble_name)
     realizations = iteration_inspector.get_realizations()
 
     return EnsembleDetails(name=ensemble_name, case_name=case_name, case_uuid=case_uuid, realizations=realizations)
