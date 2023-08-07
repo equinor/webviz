@@ -87,6 +87,22 @@ export class ColorScale {
         return color;
     }
 
+    sampleColors(numSamples: number): string[] {
+        const colors: string[] = [];
+        for (let i = 0; i < numSamples; i++) {
+            colors.push(this.getColorForValue((this._max - this._min) * (i / (numSamples - 1)) + this._min));
+        }
+        return colors;
+    }
+
+    getMin(): number {
+        return this._min;
+    }
+
+    getMax(): number {
+        return this._max;
+    }
+
     setMin(value: number) {
         this._min = value;
     }

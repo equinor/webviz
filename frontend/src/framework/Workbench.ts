@@ -197,7 +197,10 @@ export class Workbench {
 
     private loadColorPalettesFromLocalStorage(): void {
         const colorPalettesString = localStorage.getItem("colorPalettes");
-        if (!colorPalettesString) return;
+        if (!colorPalettesString) {
+            this.storeColorPalettesToLocalStorage();
+            return;
+        }
 
         const colorPalettes = JSON.parse(colorPalettesString);
         if (!colorPalettes) return;
@@ -230,7 +233,10 @@ export class Workbench {
 
     private loadSelectedColorPalettesUUidsFromLocalStorage(): void {
         const selectedColorPalettesString = localStorage.getItem("selectedColorPalettes");
-        if (!selectedColorPalettesString) return;
+        if (!selectedColorPalettesString) {
+            this.storeSelectedColorPalettesUUidsToLocalStorage();
+            return;
+        }
 
         const selectedColorPalettes = JSON.parse(selectedColorPalettesString);
         if (!selectedColorPalettes) return;

@@ -178,10 +178,10 @@ const EditableColorTile: React.FC<EditableColorTileProps> = (props) => {
 
         if (ref.current) {
             ref.current.addEventListener("pointerdown", handlePointerDown);
-            document.addEventListener("pointermove", handlePointerMove);
-            document.addEventListener("pointerup", handlePointerUp);
-            document.addEventListener("blur", handleBlur);
         }
+        document.addEventListener("pointermove", handlePointerMove);
+        document.addEventListener("pointerup", handlePointerUp);
+        document.addEventListener("blur", handleBlur);
 
         return function handleUnmount() {
             if (timeoutRef.current) {
@@ -189,10 +189,10 @@ const EditableColorTile: React.FC<EditableColorTileProps> = (props) => {
             }
             if (ref.current) {
                 ref.current.removeEventListener("pointerdown", handlePointerDown);
-                document.removeEventListener("pointermove", handlePointerMove);
-                document.removeEventListener("pointerup", handlePointerUp);
-                document.removeEventListener("blur", handleBlur);
             }
+            document.removeEventListener("pointermove", handlePointerMove);
+            document.removeEventListener("pointerup", handlePointerUp);
+            document.removeEventListener("blur", handleBlur);
         };
     }, []);
 

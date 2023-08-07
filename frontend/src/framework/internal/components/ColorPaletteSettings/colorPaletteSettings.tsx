@@ -122,7 +122,12 @@ const ColorPaletteItem: React.FC<ColorPaletteItemProps> = (props) => {
             })}
             onClick={handleItemClick}
         >
-            <span className="text-sm leading-none">{props.colorPalette.getName()}</span>
+            <span
+                className="text-sm leading-none min-w-0 w-20 whitespace-nowrap text-ellipsis overflow-hidden"
+                title={props.colorPalette.getName()}
+            >
+                {props.colorPalette.getName()}
+            </span>
             <div className="flex-grow">{makeColorPalettePreview()}</div>
             <IconButton onClick={handleOpenMenu} ref={anchorRef} title="More options">
                 <EllipsisVerticalIcon className="flex-grow-0 w-4 h-4" />

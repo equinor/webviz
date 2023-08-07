@@ -106,18 +106,18 @@ const ColorStopMidPointHandle: React.FC<ColorStopMidPointHandleProps> = (props) 
 
             if (ref.current) {
                 ref.current.addEventListener("pointerdown", handlePointerDown);
-                window.addEventListener("pointermove", handlePointerMove);
-                window.addEventListener("pointerup", handlePointerUp);
-                window.addEventListener("blur", handleBlur);
             }
+            document.addEventListener("pointermove", handlePointerMove);
+            document.addEventListener("pointerup", handlePointerUp);
+            document.addEventListener("blur", handleBlur);
 
             return function handleUnmount() {
                 if (ref.current) {
                     ref.current.removeEventListener("pointerdown", handlePointerDown);
-                    window.removeEventListener("pointermove", handlePointerMove);
-                    window.removeEventListener("pointerup", handlePointerUp);
-                    window.removeEventListener("blur", handleBlur);
                 }
+                document.removeEventListener("pointermove", handlePointerMove);
+                document.removeEventListener("pointerup", handlePointerUp);
+                document.removeEventListener("blur", handleBlur);
             };
         },
         [props.max, props.min, props.parentRef, props.onGrabChange, props.onSelect, props.midPointType]
@@ -251,18 +251,18 @@ const ColorStopHandle: React.FC<ColorStopHandleProps> = (props) => {
 
             if (ref.current) {
                 ref.current.addEventListener("pointerdown", handlePointerDown);
-                window.addEventListener("pointermove", handlePointerMove);
-                window.addEventListener("pointerup", handlePointerUp);
-                window.addEventListener("blur", handleBlur);
             }
+            document.addEventListener("pointermove", handlePointerMove);
+            document.addEventListener("pointerup", handlePointerUp);
+            document.addEventListener("blur", handleBlur);
 
             return function handleUnmount() {
                 if (ref.current) {
                     ref.current.removeEventListener("pointerdown", handlePointerDown);
-                    window.removeEventListener("pointermove", handlePointerMove);
-                    window.removeEventListener("pointerup", handlePointerUp);
-                    window.removeEventListener("blur", handleBlur);
                 }
+                document.removeEventListener("pointermove", handlePointerMove);
+                document.removeEventListener("pointerup", handlePointerUp);
+                document.removeEventListener("blur", handleBlur);
             };
         },
         [props.onDelete, props.min, props.max]
