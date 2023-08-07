@@ -1,7 +1,6 @@
 import React from "react";
 
 import { ArrowPathIcon, DocumentMagnifyingGlassIcon, FaceFrownIcon, MegaphoneIcon } from "@heroicons/react/20/solid";
-
 import { Button } from "@lib/components/Button";
 import { Dialog } from "@lib/components/Dialog";
 
@@ -81,7 +80,7 @@ export const CrashView: React.FC<FormattedErrorProps> = (props) => {
         <div className="flex flex-col h-full w-full">
             <div className="bg-red-400 flex flex-col justify-center items-center h-[50%] text-white gap-4">
                 <FaceFrownIcon className="h-16 w-16" />
-                <div className="font-bold">{props.error.message}</div>
+                <div className="font-bold text-center">{props.error.message}</div>
             </div>
             <div className="flex flex-col items-center h-[50%] gap-6 p-8">
                 The above error made your module instance crash. Unfortunately, this means that its state is lost. You
