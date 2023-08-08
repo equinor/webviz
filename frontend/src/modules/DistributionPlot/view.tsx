@@ -52,6 +52,7 @@ export const view = ({ moduleContext, workbenchServices, workbenchSettings }: Mo
     const channelZ = workbenchServices.getBroadcaster().getChannel(channelNameZ ?? "");
 
     const colorSet = workbenchSettings.useColorSet();
+    const seqColorScale = workbenchSettings.useSequentialColorScale();
 
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);
     const wrapperDivSize = useElementSize(wrapperDivRef);
@@ -166,6 +167,7 @@ export const view = ({ moduleContext, workbenchServices, workbenchSettings }: Mo
                     yAxisTitle={channelX?.getDataDef().key ?? ""}
                     width={wrapperDivSize.width}
                     height={wrapperDivSize.height}
+                    colorSet={colorSet}
                 />
             );
         }
@@ -332,6 +334,7 @@ export const view = ({ moduleContext, workbenchServices, workbenchSettings }: Mo
                     width={wrapperDivSize.width}
                     onHoverData={handleHoverChanged}
                     height={wrapperDivSize.height}
+                    colorScale={seqColorScale}
                 />
             );
         }

@@ -19,7 +19,7 @@ export const settings = (props: ModuleFCProps<State>) => {
                 value={props.moduleContext.useStoreValue("count")}
                 onChange={handleSliderChange}
                 min={0}
-                max={100}
+                max={99}
                 valueLabelDisplay="auto"
             />
         </div>

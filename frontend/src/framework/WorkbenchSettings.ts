@@ -1,6 +1,13 @@
 import React from "react";
 
-import { CategoricalColor, CategoricalColorPalette, ContinuousColorPalette } from "@lib/utils/ColorPalette";
+import {
+    CategoricalColor,
+    CategoricalColorPalette,
+    ContinuousColorPalette,
+    convertHexToHsv,
+    convertHsvToHex,
+    interpolateHsv,
+} from "@lib/utils/ColorPalette";
 
 import { ColorType, Workbench, WorkbenchEvents } from "./Workbench";
 
@@ -38,6 +45,10 @@ export class ColorScale {
     }
 
     getColorForValue(value: number): string {
+        if (value < this._min || value > this._max) {
+            return this.getColorOutOfScope(value);
+        }
+
         let normalizedValue = 0;
         if (this._type === ColorScaleType.Sequential) {
             switch (this._scaleType) {
@@ -115,12 +126,77 @@ export class ColorScale {
         this._scaleType = scaleType;
     }
 
+    getScaleType(): ColorScaleScaleType {
+        return this._scaleType;
+    }
+
+    setDivMidPoint(value: number) {
+        this._divMidPoint = value;
+    }
+
+    getDivMidPoint(): number {
+        return this._divMidPoint;
+    }
+
+    getAsPlotlyColorScale(): Array<[number, string]> {
+        const colors = this.sampleColors(100);
+        const plotlyColorScale: Array<[number, string]> = [];
+        for (let i = 0; i < colors.length; i++) {
+            plotlyColorScale.push([i / (colors.length - 1), colors[i]]);
+        }
+        return plotlyColorScale;
+    }
+
     cloneWithNewPalette(colorPalette: ContinuousColorPalette): ColorScale {
         const newScale = new ColorScale(colorPalette, this._type, this._scaleType);
         newScale._min = this._min;
         newScale._max = this._max;
         newScale._divMidPoint = this._divMidPoint;
         return newScale;
+    }
+
+    private getColorOutOfScope(value: number): string {
+        const minColor = this._colorPalette.getColorAtPosition(0);
+        const maxColor = this._colorPalette.getColorAtPosition(1);
+        const midColor = this._colorPalette.getColorAtPosition(0.5);
+
+        const minHsv = convertHexToHsv(minColor);
+        const maxHsv = convertHexToHsv(maxColor);
+        const midHsv = convertHexToHsv(midColor);
+
+        const hueDiff = Math.abs(maxHsv.h - minHsv.h);
+        const deltaHue = hueDiff / 2;
+
+        let newMinHue = minHsv.h;
+        let newMaxHue = maxHsv.h;
+
+        if (minHsv.h < midHsv.h) {
+            newMinHue = minHsv.h - deltaHue;
+        } else {
+            newMinHue = minHsv.h + deltaHue;
+        }
+
+        if (maxHsv.h > midHsv.h) {
+            newMaxHue = maxHsv.h + deltaHue;
+        } else {
+            newMaxHue = maxHsv.h - deltaHue;
+        }
+
+        console.info("newMinColor: " + convertHsvToHex({ h: newMinHue, s: minHsv.s, v: minHsv.v }));
+        console.info("newMaxColor: " + convertHsvToHex({ h: newMaxHue, s: maxHsv.s, v: maxHsv.v }));
+
+        const newExpMin = this._min - Math.abs(this._max - this._min) ** 2;
+        const newExpMax = this._max + Math.abs(this._max - this._min) ** 2;
+
+        if (value < this._min) {
+            const quotient = Math.log10(value - this._min) / Math.log10(newExpMin - this._min);
+            const newHsv = interpolateHsv({ h: newMinHue, s: minHsv.s, v: minHsv.v }, minHsv, quotient);
+            return convertHsvToHex(newHsv);
+        } else {
+            const quotient = Math.log10(value - this._max) / Math.log10(newExpMax - this._max);
+            const newHsv = interpolateHsv(maxHsv, { h: newMaxHue, s: maxHsv.s, v: maxHsv.v }, quotient);
+            return convertHsvToHex(newHsv);
+        }
     }
 }
 
