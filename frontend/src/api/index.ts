@@ -36,8 +36,6 @@ export { StatisticFunction as StatisticFunction_api } from './models/StatisticFu
 export type { StatisticValueObject as StatisticValueObject_api } from './models/StatisticValueObject';
 export type { SurfaceData as SurfaceData_api } from './models/SurfaceData';
 export { SurfaceStatisticFunction as SurfaceStatisticFunction_api } from './models/SurfaceStatisticFunction';
-export type { UnitInfo as UnitInfo_api } from './models/UnitInfo';
-export type { Units as Units_api } from './models/Units';
 export type { UserInfo as UserInfo_api } from './models/UserInfo';
 export type { ValidationError as ValidationError_api } from './models/ValidationError';
 export type { VectorDescription as VectorDescription_api } from './models/VectorDescription';
@@ -46,10 +44,12 @@ export type { VectorMetadata as VectorMetadata_api } from './models/VectorMetada
 export type { VectorRealizationData as VectorRealizationData_api } from './models/VectorRealizationData';
 export type { VectorStatisticData as VectorStatisticData_api } from './models/VectorStatisticData';
 export type { VectorStatisticSensitivityData as VectorStatisticSensitivityData_api } from './models/VectorStatisticSensitivityData';
-export type { Well as Well_api } from './models/Well';
 export type { WellCompletionData as WellCompletionData_api } from './models/WellCompletionData';
 export type { WellCompletionDataSet as WellCompletionDataSet_api } from './models/WellCompletionDataSet';
-export type { Zone as Zone_api } from './models/Zone';
+export type { WellCompletionUnitInfo as WellCompletionUnitInfo_api } from './models/WellCompletionUnitInfo';
+export type { WellCompletionUnits as WellCompletionUnits_api } from './models/WellCompletionUnits';
+export type { WellCompletionWell as WellCompletionWell_api } from './models/WellCompletionWell';
+export type { WellCompletionZone as WellCompletionZone_api } from './models/WellCompletionZone';
 
 export { CorrelationsService } from './services/CorrelationsService';
 export { DefaultService } from './services/DefaultService';

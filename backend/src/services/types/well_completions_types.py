@@ -2,7 +2,7 @@ from pydantic import BaseModel
 from typing import Dict, List, Optional, Union
 
 
-AttributeType = Union[str, int, bool, None]
+WellCompletionAttributeType = Union[str, int, bool, None]
 
 
 class Completions(BaseModel):
@@ -14,35 +14,35 @@ class Completions(BaseModel):
     khMax: List[float]
 
 
-class WellInfo(BaseModel):
+class WellCompletionWellInfo(BaseModel):
     name: str
-    attributes: Dict[str, AttributeType]
+    attributes: Dict[str, WellCompletionAttributeType]
 
 
-class Well(WellInfo):
+class WellCompletionWell(WellCompletionWellInfo):
     completions: Dict[str, Completions]
 
 
-class Zone(BaseModel):
+class WellCompletionZone(BaseModel):
     name: str
     color: str
-    subzones: Optional[List["Zone"]] = None
+    subzones: Optional[List["WellCompletionZone"]] = None
 
 
-class UnitInfo(BaseModel):
+class WellCompletionUnitInfo(BaseModel):
     unit: str
     decimalPlaces: int
 
 
-class Units(BaseModel):
-    kh: UnitInfo
+class WellCompletionUnits(BaseModel):
+    kh: WellCompletionUnitInfo
 
 
 class WellCompletionDataSet(BaseModel):
     """Type definition for well completion data set"""
 
     version: str
-    units: Units
-    stratigraphy: List[Zone]
+    units: WellCompletionUnits
+    stratigraphy: List[WellCompletionZone]
     timeSteps: List[str]
-    wells: List[Well]
+    wells: List[WellCompletionWell]

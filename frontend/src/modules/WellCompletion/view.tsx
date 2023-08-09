@@ -18,25 +18,6 @@ export const view = ({ moduleContext }: ModuleFCProps<State>) => {
 
     // NOTE: Move this to settings and set "filtered" plotData to state and use here!
 
-    // Filter well completions query data based on settings and provide to WellCompletionsPlot
-    // Add settings to store
-
-    // return (
-    //     <div className="w-full h-full" ref={ref}>
-    //         <ApiStateWrapper
-    //             apiResult={wellCompletionQuery}
-    //             errorComponent={<div className="text-red-500">Error loading ensembles</div>}
-    //             loadingComponent={<CircularProgress />}
-    //         >
-    //             {wellCompletionQueryData && (
-    //                 <div style={{ height: moduleSize.height }}>
-    //                     <WellCompletions id="test_id" data={wellCompletionQueryData} />
-    //                 </div>
-    //             )}
-    //         </ApiStateWrapper>
-    //     </div>
-    // );
-
     return (
         <div className="w-full h-full">
             {/* <ApiStateWrapper

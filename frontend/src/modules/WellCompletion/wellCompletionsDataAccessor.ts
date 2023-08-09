@@ -1,5 +1,13 @@
-import { Units_api, WellCompletionDataSet_api, WellCompletionData_api, Well_api, Zone_api } from "@api";
-import { CompletionPlotData, PlotData, WellPlotData } from "@webviz/well-completions-plot/dist/types/dataTypes";
+import {
+    WellCompletionDataSet_api,
+    WellCompletionData_api,
+    WellCompletionUnits_api,
+    WellCompletionWell_api,
+    WellCompletionZone_api,
+} from "@api";
+import { CompletionPlotData, PlotData, WellPlotData } from "@webviz/well-completions-plot";
+
+import { getRegexPredicate } from "./utils/stringUtils";
 
 /**
  * Util methods for providing data result based on selected time aggregation
@@ -22,13 +30,17 @@ export class WellCompletionsDataAccessor {
      * WellCompletions-component of webviz-subsurface-components package, and modified to fit.
      */
     private _dataSet: WellCompletionDataSet_api | undefined;
-    private _subzones: Zone_api[];
-    private _wells: Well_api[];
+    private _subzones: WellCompletionZone_api[];
+    private _wells: WellCompletionWell_api[];
+    private _searchWellText: string;
+    private _hideZeroCompletions: boolean;
 
     constructor() {
         this._dataSet = undefined;
         this._subzones = [];
         this._wells = [];
+        this._searchWellText = "";
+        this._hideZeroCompletions = false;
     }
 
     parseWellCompletionsData(data: WellCompletionData_api): void {
@@ -50,30 +62,57 @@ export class WellCompletionsDataAccessor {
         return;
     }
 
+    setSearchWellText(searchWell: string): void {
+        this._searchWellText = searchWell;
+    }
+
+    setHideZeroCompletions(hideZeroCompletions: boolean): void {
+        this._hideZeroCompletions = hideZeroCompletions;
+    }
+
     getTimeSteps(): string[] {
         if (this._dataSet === undefined) return [];
         return this._dataSet.timeSteps;
     }
 
-    createPlotData(timeStep: string, timeAggregation: TimeAggregation): PlotData | null {
+    createPlotData(timeStepSelection: string | [string, string], timeAggregation: TimeAggregation): PlotData | null {
+        // TODO: Consider removing function arguments, and use setter-methods for each argument and set to an attribute.
+        //       This would make it easier to modify/adjust single attributes and call "createPlotData" again.
         if (!this._dataSet) return null;
 
-        const timeStepIndex = this._dataSet ? this._dataSet.timeSteps.indexOf(timeStep) : 0;
-        const timeStepIndexRange: [number, number] = [timeStepIndex, timeStepIndex];
+        let timeStepIndexRange: [number, number] | null = null;
+        if (typeof timeStepSelection === "string") {
+            const timeStepIndex = this._dataSet ? this._dataSet.timeSteps.indexOf(timeStepSelection) : 0;
+            timeStepIndexRange = [timeStepIndex, timeStepIndex];
+        } else {
+            timeStepIndexRange = [
+                this._dataSet.timeSteps.indexOf(timeStepSelection[0]),
+                this._dataSet.timeSteps.indexOf(timeStepSelection[1]),
+            ];
+        }
+        if (!timeStepIndexRange) return null;
 
-        const hideZeroCompletions = false;
+        // Filter wells based on search text
+        // TODO: Add filtering of attributes as well
+        const wellNameRegex = getRegexPredicate(this._searchWellText);
+        const filteredWells = this._searchWellText
+            ? Array.from(this._wells as WellCompletionWell_api[]).filter((well) => wellNameRegex(well.name))
+            : this._wells;
 
         return this.computePlotData(
             this._subzones,
-            this._wells,
+            filteredWells,
             timeStepIndexRange,
             timeAggregation,
-            hideZeroCompletions,
+            this._hideZeroCompletions,
             this._dataSet?.units
         );
     }
 
-    private findEarliestCompletionDateIndices(well: Well_api, subzones: Zone_api[]): number {
+    private findEarliestCompletionDateIndices(
+        well: WellCompletionWell_api,
+        subzones: WellCompletionZone_api[]
+    ): number {
         //The earliest completion date for the given well
         let earliestCompDateIndex = Number.POSITIVE_INFINITY;
         subzones.forEach((zone) => {
@@ -98,12 +137,12 @@ export class WellCompletionsDataAccessor {
      * @returns
      */
     private computePlotData(
-        subzones: Zone_api[],
-        wells: Well_api[],
+        subzones: WellCompletionZone_api[],
+        wells: WellCompletionWell_api[],
         range: [number, number],
         timeAggregation: TimeAggregation,
         hideZeroCompletions: boolean,
-        units: Units_api
+        units: WellCompletionUnits_api
     ): PlotData {
         const wellPlotData: WellPlotData[] = [];
         wells.forEach((well) => {
@@ -189,7 +228,7 @@ export class WellCompletionsDataAccessor {
      * @param result
      * @returns
      */
-    private findSubzones = (zone: Zone_api, result: Zone_api[]): void => {
+    private findSubzones = (zone: WellCompletionZone_api, result: WellCompletionZone_api[]): void => {
         if (zone === undefined) return;
         if (!zone.subzones || zone.subzones.length === 0) result.push(zone);
         else zone.subzones.forEach((zoneName) => this.findSubzones(zoneName, result));

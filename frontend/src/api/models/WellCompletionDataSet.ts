@@ -2,18 +2,18 @@
 /* tslint:disable */
 /* eslint-disable */
 
-import type { Units } from './Units';
-import type { Well } from './Well';
-import type { Zone } from './Zone';
+import type { WellCompletionUnits } from './WellCompletionUnits';
+import type { WellCompletionWell } from './WellCompletionWell';
+import type { WellCompletionZone } from './WellCompletionZone';
 
 /**
  * Type definition for well completion data set
  */
 export type WellCompletionDataSet = {
     version: string;
-    units: Units;
-    stratigraphy: Array<Zone>;
+    units: WellCompletionUnits;
+    stratigraphy: Array<WellCompletionZone>;
     timeSteps: Array<string>;
-    wells: Array<Well>;
+    wells: Array<WellCompletionWell>;
 };
 

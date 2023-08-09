@@ -7,16 +7,17 @@ import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { SingleEnsembleSelect } from "@framework/components/SingleEnsembleSelect";
 import { fixupEnsembleIdent, maybeAssignFirstSyncedEnsemble } from "@framework/utils/ensembleUiHelpers";
+import { DiscreteSlider } from "@lib/components/DiscreteSlider";
 import { Dropdown, DropdownOption } from "@lib/components/Dropdown";
+import { Input } from "@lib/components/Input";
 import { Label } from "@lib/components/Label";
 import { RadioGroup } from "@lib/components/RadioGroup";
-import { Slider } from "@lib/components/Slider";
+import { Switch } from "@lib/components/Switch";
 
 import { useWellCompletionQuery } from "./queryHooks";
 import { RealizationSelection, State } from "./state";
-import { TimeAggregations, WellCompletionsDataAccessor } from "./wellCompletionsDataAccessor";
+import { TimeAggregation, TimeAggregations, WellCompletionsDataAccessor } from "./wellCompletionsDataAccessor";
 
-// TODO:  Add usage of new DiscreteSlider component
 export const settings = ({ moduleContext, workbenchSession, workbenchServices }: ModuleFCProps<State>) => {
     const ensembleSet = useEnsembleSet(workbenchSession);
     const [selectedEnsembleIdent, setSelectedEnsembleIdent] = moduleContext.useStoreState("ensembleIdent");
@@ -26,7 +27,14 @@ export const settings = ({ moduleContext, workbenchSession, workbenchServices }:
     const [availableTimeSteps, setAvailableTimeSteps] = moduleContext.useStoreState("availableTimeSteps");
     const setPlotData = moduleContext.useSetStoreValue("plotData");
 
-    const [selectedTimeStep, setSelectedTimeStep] = React.useState<string | null>(null);
+    const [searchWellText, setSearchWellText] = React.useState<string>("");
+    const [hideZeroCompletions, setHideZeroCompletions] = React.useState<boolean>(false);
+    const [selectedTimeStepOptions, setSelectedTimeStepOptions] = React.useState<{
+        timeStepIndex: number | [number, number] | null;
+        timeAggregation: TimeAggregation;
+    }>({ timeStepIndex: 0, timeAggregation: "None" });
+
+    const timeAggregationOptions = makeTimeAggregationOptionItems();
 
     const syncedSettingKeys = moduleContext.useSyncedSettingKeys();
     const syncHelper = new SyncSettingsHelper(syncedSettingKeys, workbenchServices);
@@ -43,35 +51,6 @@ export const settings = ({ moduleContext, workbenchSession, workbenchServices }:
 
     const wellCompletionsDataAccessor = React.useRef<WellCompletionsDataAccessor | null>(null);
 
-    React.useEffect(() => {
-        if (wellCompletionQuery.data) {
-            if (!wellCompletionsDataAccessor.current) {
-                wellCompletionsDataAccessor.current = new WellCompletionsDataAccessor();
-            }
-
-            wellCompletionsDataAccessor.current.parseWellCompletionsData(wellCompletionQuery.data);
-
-            let timeStep = selectedTimeStep;
-
-            if (!timeStep || !wellCompletionsDataAccessor.current.getTimeSteps().includes(timeStep)) {
-                timeStep = wellCompletionsDataAccessor.current.getTimeSteps().length
-                    ? wellCompletionsDataAccessor.current.getTimeSteps()[0]
-                    : null;
-            }
-            if (availableTimeSteps != wellCompletionsDataAccessor.current.getTimeSteps()) {
-                setAvailableTimeSteps(wellCompletionsDataAccessor.current.getTimeSteps());
-            }
-
-            setSelectedTimeStep(timeStep);
-            if (timeStep) {
-                const plotData = wellCompletionsDataAccessor.current.createPlotData(timeStep, "None");
-                if (plotData) {
-                    setPlotData(wellCompletionsDataAccessor.current.createPlotData(timeStep, "None"));
-                }
-            }
-        }
-    }, [wellCompletionQuery.data, selectedTimeStep]);
-
     React.useEffect(
         function selectDefaultEnsemble() {
             const fixedEnsembleIdent = fixupEnsembleIdent(selectedEnsembleIdent, ensembleSet);
@@ -82,8 +61,118 @@ export const settings = ({ moduleContext, workbenchSession, workbenchServices }:
         [ensembleSet, selectedEnsembleIdent]
     );
 
-    function handleSelectedTimeStepChange(newTimeStep: string) {
-        setSelectedTimeStep(newTimeStep);
+    React.useEffect(() => {
+        // Update plot when new query data from Sumo is retrieved
+        if (wellCompletionQuery.data) {
+            if (!wellCompletionsDataAccessor.current) {
+                wellCompletionsDataAccessor.current = new WellCompletionsDataAccessor();
+            }
+
+            wellCompletionsDataAccessor.current.parseWellCompletionsData(wellCompletionQuery.data);
+
+            wellCompletionsDataAccessor.current.setSearchWellText(searchWellText);
+            wellCompletionsDataAccessor.current.setHideZeroCompletions(hideZeroCompletions);
+
+            // Update available time steps
+            const allTimeSteps = wellCompletionsDataAccessor.current.getTimeSteps();
+            if (availableTimeSteps != allTimeSteps) {
+                setAvailableTimeSteps(allTimeSteps);
+            }
+
+            // Update selected time step indices if not among available time steps
+            let timeStepIndex = selectedTimeStepOptions.timeStepIndex;
+            if (typeof timeStepIndex === "number" && allTimeSteps.length < timeStepIndex) {
+                timeStepIndex = 0;
+            }
+            if (Array.isArray(timeStepIndex)) {
+                let [startIndex, endIndex] = timeStepIndex;
+                if (startIndex > allTimeSteps.length) {
+                    startIndex = allTimeSteps.length - 1;
+                }
+                if (endIndex > allTimeSteps.length) {
+                    endIndex = allTimeSteps.length - 1;
+                }
+                timeStepIndex = [startIndex, endIndex];
+            }
+            if (timeStepIndex !== selectedTimeStepOptions.timeStepIndex) {
+                setSelectedTimeStepOptions((prev) => ({
+                    timeStepIndex,
+                    timeAggregation: prev.timeAggregation,
+                }));
+            }
+
+            if (!allTimeSteps || timeStepIndex === null || !selectedTimeStepOptions.timeAggregation) {
+                setPlotData(null);
+                return;
+            }
+            createAndSetPlotData(allTimeSteps, timeStepIndex, selectedTimeStepOptions.timeAggregation);
+        }
+    }, [wellCompletionQuery.data]);
+
+    React.useEffect(() => {
+        // Update plot when settings are adjusted, but no new query data is retrieved
+        if (
+            !wellCompletionsDataAccessor.current ||
+            !availableTimeSteps ||
+            selectedTimeStepOptions.timeStepIndex === null ||
+            !selectedTimeStepOptions.timeAggregation
+        ) {
+            return;
+        }
+
+        createAndSetPlotData(
+            availableTimeSteps,
+            selectedTimeStepOptions.timeStepIndex,
+            selectedTimeStepOptions.timeAggregation
+        );
+    }, [selectedTimeStepOptions, searchWellText, hideZeroCompletions]);
+
+    const createAndSetPlotData = React.useCallback(
+        function createAndSetPlotData(
+            availableTimeSteps: string[],
+            timeStepIndex: number | [number, number],
+            timeAggregation: TimeAggregation
+        ): void {
+            if (!wellCompletionsDataAccessor.current) {
+                setPlotData(null);
+                return;
+            }
+            if (typeof timeStepIndex === "number" && availableTimeSteps.length < timeStepIndex) {
+                setPlotData(null);
+                return;
+            }
+            if (
+                typeof timeStepIndex !== "number" &&
+                (availableTimeSteps.length < timeStepIndex[0] || availableTimeSteps.length < timeStepIndex[1])
+            ) {
+                setPlotData(null);
+                return;
+            }
+
+            const timeStepSelection: string | [string, string] =
+                typeof timeStepIndex === "number"
+                    ? availableTimeSteps[timeStepIndex]
+                    : [availableTimeSteps[timeStepIndex[0]], availableTimeSteps[timeStepIndex[1]]];
+            setPlotData(wellCompletionsDataAccessor.current.createPlotData(timeStepSelection, timeAggregation));
+        },
+        [wellCompletionsDataAccessor.current]
+    );
+
+    function handleSelectedTimeStepIndexChange(e: Event, newTimeStepIndex: number | number[]) {
+        // Check type of newTimeStepIndex
+        if (typeof newTimeStepIndex === "number") {
+            setSelectedTimeStepOptions((prev) => ({
+                timeStepIndex: newTimeStepIndex,
+                timeAggregation: prev.timeAggregation,
+            }));
+            return;
+        }
+        if (newTimeStepIndex.length >= 2) {
+            setSelectedTimeStepOptions((prev) => ({
+                timeStepIndex: [newTimeStepIndex[0], newTimeStepIndex[1]],
+                timeAggregation: prev.timeAggregation,
+            }));
+        }
     }
 
     function handleEnsembleSelectionChange(newEnsembleIdent: EnsembleIdent | null) {
@@ -99,11 +188,72 @@ export const settings = ({ moduleContext, workbenchSession, workbenchServices }:
         if (selection === RealizationSelection.Aggregated) {
             setSelectedRealizationNumber(undefined);
         }
+        if (selection === RealizationSelection.Single && computedEnsemble?.getRealizations()) {
+            const realization = computedEnsemble.getRealizations()?.[0];
+            setSelectedRealizationNumber(realization);
+        }
     }
 
     function handleSelectedRealizationNumberChange(realizationNumber: string) {
         setSelectedRealizationNumber(parseInt(realizationNumber));
     }
+
+    function handleTimeAggregationChange(_: React.ChangeEvent<HTMLInputElement>, value: string | number) {
+        const newTimeAggregation = value as TimeAggregation;
+        if (!availableTimeSteps) {
+            setSelectedTimeStepOptions({ timeStepIndex: 0, timeAggregation: newTimeAggregation });
+            return;
+        }
+
+        if (newTimeAggregation === "Max" || newTimeAggregation === "Average") {
+            setSelectedTimeStepOptions((prev) => ({
+                timeStepIndex:
+                    typeof prev.timeStepIndex === "number" ? [0, availableTimeSteps.length - 1] : prev.timeStepIndex,
+                timeAggregation: newTimeAggregation,
+            }));
+            return;
+        }
+
+        if (newTimeAggregation === "None") {
+            setSelectedTimeStepOptions((prev) => ({
+                timeStepIndex:
+                    typeof prev.timeStepIndex === "number"
+                        ? prev.timeStepIndex
+                        : prev.timeStepIndex
+                        ? prev.timeStepIndex[0] < availableTimeSteps.length
+                            ? prev.timeStepIndex[0]
+                            : 0
+                        : 0,
+                timeAggregation: newTimeAggregation,
+            }));
+        }
+    }
+
+    function handleSearchWellChange(e: React.ChangeEvent<HTMLInputElement>) {
+        const value = e.target.value;
+        setSearchWellText(value);
+        wellCompletionsDataAccessor.current?.setSearchWellText(value);
+    }
+
+    function handleHideZeroCompletionsChange(e: React.ChangeEvent<HTMLInputElement>) {
+        const checked = e.target.checked;
+        setHideZeroCompletions(checked);
+        wellCompletionsDataAccessor.current?.setHideZeroCompletions(checked);
+    }
+
+    const createValueLabelFormat = React.useCallback(
+        function createValueLabelFormat(value: number): string {
+            if (!availableTimeSteps || !availableTimeSteps.length) {
+                return "";
+            }
+
+            const timeStep = availableTimeSteps.find((_, index) => {
+                if (index === value) return true;
+            });
+            return timeStep ?? "";
+        },
+        [availableTimeSteps]
+    );
 
     const computedEnsemble = computedEnsembleIdent ? ensembleSet.findEnsemble(computedEnsembleIdent) : null;
 
@@ -138,25 +288,49 @@ export const settings = ({ moduleContext, workbenchSession, workbenchServices }:
                     />
                 </Label>
             )}
-            {/* {/* <Slider value={[2, 5]} min={1} max={30} displayValue={true}></Slider> */
-            /*Make it possible to have timesteps/strings as input for Slider?*/}
-            <Label text="Time Step">
-                <Dropdown
-                    options={
-                        wellCompletionsDataAccessor.current
-                            ? makeTimeStepOptionItems(wellCompletionsDataAccessor.current.getTimeSteps())
-                            : []
-                    }
-                    value={selectedTimeStep ? selectedTimeStep : undefined}
-                    onChange={handleSelectedTimeStepChange}
+            <Label text="Time Aggregation">
+                <RadioGroup
+                    options={timeAggregationOptions}
+                    direction={"horizontal"}
+                    value={selectedTimeStepOptions.timeAggregation?.toString()}
+                    onChange={handleTimeAggregationChange}
                 />
             </Label>
-            {/* <Label text="Start timestep">
-                <Dropdown options={[]} />
+            <Label
+                text={
+                    selectedTimeStepOptions.timeStepIndex === null || !availableTimeSteps
+                        ? "Time Step"
+                        : typeof selectedTimeStepOptions.timeStepIndex === "number"
+                        ? `Time Step: (${availableTimeSteps[selectedTimeStepOptions.timeStepIndex]})`
+                        : `Time Steps: (${availableTimeSteps[selectedTimeStepOptions.timeStepIndex[0]]}, ${
+                              availableTimeSteps[selectedTimeStepOptions.timeStepIndex[1]]
+                          })`
+                }
+            >
+                <DiscreteSlider
+                    valueLabelDisplay="auto"
+                    value={
+                        selectedTimeStepOptions.timeStepIndex !== null
+                            ? selectedTimeStepOptions.timeStepIndex
+                            : undefined
+                    }
+                    values={
+                        availableTimeSteps
+                            ? availableTimeSteps.map((t, index) => {
+                                  return index;
+                              })
+                            : []
+                    }
+                    valueLabelFormat={createValueLabelFormat}
+                    onChange={handleSelectedTimeStepIndexChange}
+                />
             </Label>
-            <Label text="End timestep">
-                <Dropdown options={[]} />
-            </Label> */}
+            <Label text="Search well names">
+                <Input value={searchWellText} onChange={handleSearchWellChange} placeholder={"..."} />
+            </Label>
+            <Label text="Filter by completions">
+                <Switch checked={hideZeroCompletions} onChange={handleHideZeroCompletionsChange} />
+            </Label>
         </>
     );
 };
@@ -172,12 +346,12 @@ function makeRealizationOptionItems(ensemble: Ensemble): DropdownOption[] {
     return optionItems;
 }
 
-function makeTimeStepOptionItems(timeSteps: string[]): DropdownOption[] {
+function makeTimeAggregationOptionItems(): DropdownOption[] {
     const optionItems: DropdownOption[] = [];
-    // TODO: Fill time steps
 
-    timeSteps.map((timeStep: string) => {
-        optionItems.push({ label: timeStep, value: timeStep });
+    Object.keys(TimeAggregations).forEach((key: string) => {
+        optionItems.push({ label: key, value: key });
     });
+
     return optionItems;
 }

@@ -3,7 +3,12 @@ from typing import Any, Dict, Iterator, List, Optional, Tuple
 
 import pandas as pd
 
-from src.services.types.well_completions_types import Completions, Well, WellCompletionDataSet, Zone
+from src.services.types.well_completions_types import (
+    Completions,
+    WellCompletionWell,
+    WellCompletionDataSet,
+    WellCompletionZone,
+)
 
 
 class WellCompletionDataModel:
@@ -38,18 +43,18 @@ class WellCompletionDataModel:
         self._well_attributes = {}
         self._theme_colors = ["#6EA35A", "#EDAF4C", "#CA413D"]  # Hard coded
 
-    def _DUMMY_stratigraphy(self) -> List[Zone]:
+    def _DUMMY_stratigraphy(self) -> List[WellCompletionZone]:
         """
         Returns a default stratigraphy for TESTING, should be provided by Sumo
         """
         return [
-            Zone(
+            WellCompletionZone(
                 name="TopVolantis_BaseVolantis",
                 color="#6EA35A",
                 subzones=[
-                    Zone(name="Valysar", color="#6EA35A"),
-                    Zone(name="Therys", color="#EDAF4C"),
-                    Zone(name="Volon", color="#CA413D"),
+                    WellCompletionZone(name="Valysar", color="#6EA35A"),
+                    WellCompletionZone(name="Therys", color="#EDAF4C"),
+                    WellCompletionZone(name="Volon", color="#CA413D"),
                 ],
             ),
         ]
@@ -65,7 +70,7 @@ class WellCompletionDataModel:
             wells=self._extract_wells(),
         )
 
-    def _extract_wells(self) -> List[Well]:
+    def _extract_wells(self) -> List[WellCompletionWell]:
         """Generates the wells part of the input to the WellCompletions component."""
         well_list = []
         no_real = self._well_completion_df["REAL"].nunique()
@@ -75,9 +80,9 @@ class WellCompletionDataModel:
             well_list.append(well_data)
         return well_list
 
-    def _extract_well(self, well_group: pd.DataFrame, well_name: str, no_real: int) -> Well:
+    def _extract_well(self, well_group: pd.DataFrame, well_name: str, no_real: int) -> WellCompletionWell:
         """Extract completion events and kh values for a single well"""
-        well: Well = Well(name=well_name, attributes={}, completions={})
+        well: WellCompletionWell = WellCompletionWell(name=well_name, attributes={}, completions={})
 
         completions: Dict[str, Completions] = {}
         for (zone, timestep), group_df in well_group.groupby(["ZONE", "TIMESTEP"]):
@@ -96,7 +101,9 @@ class WellCompletionDataModel:
         well.completions = completions
         return well
 
-    def _extract_stratigraphy(self, stratigraphy: Optional[List[Zone]], zones: List[str]) -> List[Zone]:
+    def _extract_stratigraphy(
+        self, stratigraphy: Optional[List[WellCompletionZone]], zones: List[str]
+    ) -> List[WellCompletionZone]:
         """Returns the stratigraphy part of the input to the WellCompletions component."""
         color_iterator = itertools.cycle(self._theme_colors)
 
@@ -104,7 +111,7 @@ class WellCompletionDataModel:
         # created from the unique zones in the wellcompletiondata input.
         # They will then probably not come in the correct order.
         if stratigraphy is None:
-            return [Zone(name=zone, color=next(color_iterator)) for zone in zones]
+            return [WellCompletionZone(name=zone, color=next(color_iterator)) for zone in zones]
 
         # If stratigraphy is not None the following is done:
         stratigraphy, remaining_valid_zones = self._filter_valid_nodes(stratigraphy, zones)
@@ -119,10 +126,10 @@ class WellCompletionDataModel:
 
     def _add_colors_to_stratigraphy(
         self,
-        stratigraphy: List[Zone],
+        stratigraphy: List[WellCompletionZone],
         color_iterator: Iterator,
         zone_color_mapping: Optional[Dict[str, str]] = None,
-    ) -> List[Zone]:
+    ) -> List[WellCompletionZone]:
         """Add colors to the stratigraphy tree. The function will recursively parse the tree.
 
         There are tree sources of color:
@@ -132,7 +139,7 @@ class WellCompletionDataModel:
         the leaves. For other levels, a dummy color grey is used
         """
         for zone in stratigraphy:
-            if zone.color is "":
+            if zone.color == "":
                 if zone_color_mapping is not None and zone.name in zone_color_mapping:
                     zone.color = zone_color_mapping[zone.name]
                 elif zone.subzones is None:
@@ -148,8 +155,8 @@ class WellCompletionDataModel:
         return stratigraphy
 
     def _filter_valid_nodes(
-        self, stratigraphy: List[Zone], valid_zone_names: List[str]
-    ) -> Tuple[List[Zone], List[str]]:
+        self, stratigraphy: List[WellCompletionZone], valid_zone_names: List[str]
+    ) -> Tuple[List[WellCompletionZone], List[str]]:
         """Returns the stratigraphy tree with only valid nodes.
         A node is considered valid if it self or one of it's subzones are in the
         valid zone names list (passed from the lyr file)

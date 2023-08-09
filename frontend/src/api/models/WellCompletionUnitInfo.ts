@@ -2,7 +2,7 @@
 /* tslint:disable */
 /* eslint-disable */
 
-export type UnitInfo = {
+export type WellCompletionUnitInfo = {
     unit: string;
     decimalPlaces: number;
 };
