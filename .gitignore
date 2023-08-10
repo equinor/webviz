@@ -109,5 +109,4 @@ dist
 
 # .vscode
 .vscode/
-frontend/.vscode/
-backend/.vscode/
+!.vscode/tasks.json
