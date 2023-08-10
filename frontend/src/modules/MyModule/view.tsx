@@ -1,4 +1,5 @@
 import { ModuleFCProps } from "@framework/Module";
+import { ColorScaleInterpolationType } from "@framework/WorkbenchSettings";
 
 import { State } from "./state";
 
@@ -17,10 +18,12 @@ for (let i = 0; i < 100; i++) {
 export const view = (props: ModuleFCProps<State>) => {
     const count = props.moduleContext.useStoreValue("count");
 
-    const divScale = props.workbenchSettings.useSequentialColorScale();
+    const divScale = props.workbenchSettings.useSequentialColorScale({
+        interpolation: ColorScaleInterpolationType.Median,
+    });
 
     divScale.setMin(0);
-    divScale.setMax(20);
+    divScale.setMax(100);
 
     const maxValue = Math.max(...data[count].flat());
 
