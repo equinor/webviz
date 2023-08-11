@@ -10,7 +10,7 @@ import { resolveClassNames } from "../_utils/resolveClassNames";
 export type RadioGroupProps<T = string | number> = {
     name?: string;
     options: {
-        label: string;
+        labelElement: React.ReactNode;
         value: T;
         disabled?: boolean;
     }[];
@@ -25,7 +25,7 @@ const defaultProps: OptionalValues<RadioGroupProps> = {
 
 type RadioProps = {
     name: string;
-    label: string;
+    labelElement: React.ReactNode;
     value: string | number;
     checked: boolean;
     onChange?: (event: React.ChangeEvent<HTMLInputElement>, value: string | number) => void;
@@ -68,7 +68,7 @@ const Radio: React.FC<RadioProps> = (props) => {
                         disabled={props.disabled}
                     />
                 </span>
-                {props.label}
+                {props.labelElement}
             </label>
         </BaseComponent>
     );
@@ -93,7 +93,7 @@ export const RadioGroup = withDefaults<RadioGroupProps>()(defaultProps, (props) 
                         <Radio
                             key={option.value}
                             name={name.current}
-                            label={option.label}
+                            labelElement={option.labelElement}
                             value={option.value}
                             checked={option.value === props.value}
                             onChange={props.onChange}

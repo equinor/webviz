@@ -6,14 +6,15 @@ import {
     ContinuousColorPalette,
     convertHexToHsv,
     convertHsvToHex,
-    interpolateHex,
     interpolateHsv,
 } from "@lib/utils/ColorPalette";
+
+import { isEqual } from "lodash";
 
 import { ColorType, Workbench, WorkbenchEvents } from "./Workbench";
 
 export enum ColorScaleType {
-    Steps,
+    Discrete,
     Continuous,
 }
 
@@ -28,28 +29,36 @@ export enum ColorScaleScaleType {
     Exponential,
 }
 
-export enum ColorScaleInterpolationType {
+export enum ColorScaleContinuousInterpolationType {
     Linear = "linear",
-    RoundedValues = "rounded values",
-    Quantile = "quantile",
-    NaturalBreaks = "natural breaks",
+    NaturalBreaks = "natural",
     Median = "median",
     Quartiles = "quartiles",
     Quintiles = "quintiles",
     Deciles = "deciles",
-    Natural = "natural",
 }
 
-export const ColorScaleInterpolationTypeOptions = {
-    [ColorScaleInterpolationType.Linear]: "Linear",
-    [ColorScaleInterpolationType.RoundedValues]: "Rounded values",
-    [ColorScaleInterpolationType.Quantile]: "Quantile (equal count)",
-    [ColorScaleInterpolationType.NaturalBreaks]: "Natural Breaks (Jenks)",
-    [ColorScaleInterpolationType.Median]: "Median",
-    [ColorScaleInterpolationType.Quartiles]: "Quartiles",
-    [ColorScaleInterpolationType.Quintiles]: "Quintiles",
-    [ColorScaleInterpolationType.Deciles]: "Deciles",
-    [ColorScaleInterpolationType.Natural]: "Natural",
+export enum ColorScaleDiscreteInterpolationType {
+    Linear = "linear",
+    RoundedValues = "rounded values",
+    Quantile = "quantile",
+    NaturalBreaks = "natural breaks",
+}
+
+export const ColorScaleContinuousInterpolationTypeOptions = {
+    [ColorScaleContinuousInterpolationType.Linear]: "Linear",
+    [ColorScaleContinuousInterpolationType.NaturalBreaks]: "Natural Breaks (Jenks)",
+    [ColorScaleContinuousInterpolationType.Median]: "Median",
+    [ColorScaleContinuousInterpolationType.Quartiles]: "Quartiles",
+    [ColorScaleContinuousInterpolationType.Quintiles]: "Quintiles",
+    [ColorScaleContinuousInterpolationType.Deciles]: "Deciles",
+};
+
+export const ColorScaleDiscreteInterpolationTypeOptions = {
+    [ColorScaleDiscreteInterpolationType.Linear]: "Linear",
+    [ColorScaleDiscreteInterpolationType.RoundedValues]: "Rounded values",
+    [ColorScaleDiscreteInterpolationType.Quantile]: "Quantile (equal count)",
+    [ColorScaleDiscreteInterpolationType.NaturalBreaks]: "Natural Breaks (Jenks)",
 };
 
 export type ColorScaleOptions = {
@@ -67,14 +76,14 @@ export type ColorScaleOptions = {
 ) &
     (
         | ({
-              type: ColorScaleType.Steps;
+              type: ColorScaleType.Discrete;
               steps: number;
           } & {
               interpolation:
-                  | ColorScaleInterpolationType.Linear
-                  | ColorScaleInterpolationType.RoundedValues
-                  | ColorScaleInterpolationType.Quantile
-                  | ColorScaleInterpolationType.NaturalBreaks;
+                  | ColorScaleDiscreteInterpolationType.Linear
+                  | ColorScaleDiscreteInterpolationType.RoundedValues
+                  | ColorScaleDiscreteInterpolationType.Quantile
+                  | ColorScaleDiscreteInterpolationType.NaturalBreaks;
               data?: number[];
           })
         | ({
@@ -82,12 +91,12 @@ export type ColorScaleOptions = {
               steps?: never;
           } & {
               interpolation:
-                  | ColorScaleInterpolationType.Linear
-                  | ColorScaleInterpolationType.Median
-                  | ColorScaleInterpolationType.Quartiles
-                  | ColorScaleInterpolationType.Quintiles
-                  | ColorScaleInterpolationType.Deciles
-                  | ColorScaleInterpolationType.Natural;
+                  | ColorScaleContinuousInterpolationType.Linear
+                  | ColorScaleContinuousInterpolationType.Median
+                  | ColorScaleContinuousInterpolationType.Quartiles
+                  | ColorScaleContinuousInterpolationType.Quintiles
+                  | ColorScaleContinuousInterpolationType.Deciles
+                  | ColorScaleContinuousInterpolationType.NaturalBreaks;
               data?: number[];
           })
     );
@@ -100,9 +109,9 @@ export class ColorScale {
     private _gradientType: ColorScaleGradientType;
     private _scaleType: ColorScaleScaleType;
     private _divMidPoint: number;
-    private _interpolationType: ColorScaleInterpolationType;
+    private _interpolationType: ColorScaleContinuousInterpolationType | ColorScaleDiscreteInterpolationType;
     private _data: number[] | null;
-    private _valueColorsMap: Record<number, string> | null;
+    private _valueColorsMap: [number, string][] | null;
     private _valueGradientPositionMap: number[][] | null;
     private _steps: number | null;
 
@@ -120,31 +129,56 @@ export class ColorScale {
         this._valueGradientPositionMap = null;
         this._steps = options.steps || null;
 
-        if (this._interpolationType !== ColorScaleInterpolationType.Linear) {
+        if (this._interpolationType !== ColorScaleContinuousInterpolationType.Linear) {
             this.sortData();
         }
 
-        if (this._data && this._data.length > 0 && this._steps) {
+        if (this._data && this._data.length > 0) {
+            this._min = Math.min(...this._data);
+            this._max = Math.max(...this._data);
+        }
+
+        if (this._data && this._data.length > 0) {
             switch (this._interpolationType) {
-                case ColorScaleInterpolationType.Quantile:
+                case ColorScaleDiscreteInterpolationType.Quantile:
+                    if (!this._steps) {
+                        throw new Error("Quantile interpolation requires steps to be set");
+                    }
                     this._valueColorsMap = this.calcPercentileColors(this._data, this._steps);
                     break;
-                case ColorScaleInterpolationType.Quartiles:
+                case ColorScaleContinuousInterpolationType.Quartiles:
                     this._valueGradientPositionMap = this.calcPercentileGradientPositions(this._data, 4);
                     break;
-                case ColorScaleInterpolationType.Quintiles:
+                case ColorScaleContinuousInterpolationType.Quintiles:
                     this._valueGradientPositionMap = this.calcPercentileGradientPositions(this._data, 5);
                     break;
-                case ColorScaleInterpolationType.Deciles:
+                case ColorScaleContinuousInterpolationType.Deciles:
                     this._valueGradientPositionMap = this.calcPercentileGradientPositions(this._data, 10);
                     break;
-                case ColorScaleInterpolationType.NaturalBreaks:
-                    this._valueColorsMap = this.calcNaturalBreaks(this._data, this._steps);
+                case ColorScaleContinuousInterpolationType.NaturalBreaks:
+                    this._valueGradientPositionMap = this.calcNaturalBreaksGradientPositions(this._data, 5);
                     break;
-                case ColorScaleInterpolationType.Median:
+                case ColorScaleDiscreteInterpolationType.NaturalBreaks:
+                    if (!this._steps) {
+                        throw new Error("Natural breaks interpolation requires steps to be set");
+                    } else {
+                        this._valueColorsMap = this.calcNaturalBreakColors(this._data, this._steps);
+                    }
+                    break;
+                case ColorScaleContinuousInterpolationType.Median:
                     this._valueGradientPositionMap = this.calcPercentileGradientPositions(this._data, 2);
                     break;
             }
+        }
+
+        if (
+            this._type === ColorScaleType.Discrete &&
+            this._interpolationType === ColorScaleDiscreteInterpolationType.Linear
+        ) {
+            if (!this._steps) {
+                throw new Error("Quantile interpolation requires steps to be set");
+            }
+            this._valueColorsMap = this.calcLinearColors(this._steps);
         }
     }
 
@@ -154,33 +188,66 @@ export class ColorScale {
         }
     }
 
-    private calcPercentileGradientPositions(data: number[], numPercentiles: number): number[][] {
-        const values: number[][] = [];
+    private calcLinearColors(steps: number): [number, string][] {
+        const values: [number, string][] = [];
+        const colors = this.sampleColors(steps);
 
-        for (let i = 0; i < numPercentiles; i++) {
-            const index = Math.floor((data.length * i) / numPercentiles);
-            values.push([data[index], (numPercentiles - 1) / i]);
+        for (let i = 1; i <= steps; i++) {
+            const value = this._min + ((this._max - this._min) / steps) * i;
+            values.push([value, colors[i - 1]]);
         }
 
         return values;
     }
 
-    private calcPercentileColors(data: number[], numPercentiles: number): Record<number, string> {
+    private calcPercentileGradientPositions(data: number[], numPercentiles: number): number[][] {
+        const values: number[][] = [];
+
+        for (let i = 1; i <= numPercentiles; i++) {
+            const index = Math.floor((data.length * i) / numPercentiles - 1);
+            values.push([data[index], (1 / numPercentiles) * i]);
+        }
+
+        return values;
+    }
+
+    private calcNaturalBreaksGradientPositions(data: number[], numBreaks: number): number[][] {
+        const values: number[][] = [];
+        const breaks = this.calcNaturalBreaks(data, numBreaks);
+
+        for (let i = 0; i < breaks.length; i++) {
+            values.push([breaks[i], (1 / numBreaks) * i]);
+        }
+
+        return values;
+    }
+
+    private calcNaturalBreakColors(data: number[], numBreaks: number): [number, string][] {
+        const values: [number, string][] = [];
+        const colors = this.sampleColors(numBreaks);
+
+        const breaks = this.calcNaturalBreaks(data, numBreaks);
+
+        for (let i = 1; i < breaks.length; i++) {
+            values.push([breaks[i], colors[i - 1]]);
+        }
+
+        return values;
+    }
+
+    private calcPercentileColors(data: number[], numPercentiles: number): [number, string][] {
         const colors = this.sampleColors(numPercentiles);
-        const valueColorsMap: Record<number, string> = {};
+        const valueColorsMap: [number, string][] = [];
 
         for (let i = 0; i < numPercentiles; i++) {
-            const index = Math.floor((data.length * i) / numPercentiles);
-            valueColorsMap[data[index]] = colors[i];
+            const index = Math.floor(((data.length - 1) * (i + 1)) / numPercentiles);
+            valueColorsMap.push([data[index], colors[i]]);
         }
 
         return valueColorsMap;
     }
 
-    private calcNaturalBreaks(data: number[], numBreaks: number): Record<number, string> {
-        const colors = this.sampleColors(numBreaks);
-        const valueColorsMap: Record<number, string> = {};
-
+    private calcNaturalBreaks(data: number[], numBreaks: number): number[] {
         /*
          * Implementation of Jenks natural breaks algorithm in JavaScript,
          * ported from Tom MacWright's Gist:
@@ -215,7 +282,7 @@ export class ColorScale {
                 varianceCombinations[1][i] = 0;
 
                 for (let j = 2; j < data.length + 1; j++) {
-                    varianceCombinations[j][i] = Number.MAX_VALUE;
+                    varianceCombinations[j][i] = Infinity;
                 }
             }
 
@@ -262,7 +329,7 @@ export class ColorScale {
             kClass[numBreaks] = data[k];
             kClass[0] = data[0];
 
-            for (let i = numBreaks; i > 0; i--) {
+            for (let i = numBreaks; i > 1; i--) {
                 kClass[i - 1] = data[lowerClassLimits[k][i] - 2];
                 k = lowerClassLimits[k][i] - 1;
             }
@@ -278,12 +345,7 @@ export class ColorScale {
         const lowerClassLimits = matrices.lowerClassLimits;
 
         const breaksArray = breaks(data, lowerClassLimits, numBreaks);
-
-        for (let i = 0; i < numBreaks; i++) {
-            valueColorsMap[breaksArray[i]] = colors[i];
-        }
-
-        return valueColorsMap;
+        return breaksArray;
     }
 
     private calcNormalizedValue(value: number, min: number, max: number): number {
@@ -338,8 +400,15 @@ export class ColorScale {
 
         let color = "";
 
-        if (this._type === ColorScaleType.Steps) {
-            return color;
+        if (this._type === ColorScaleType.Discrete) {
+            if (this._valueColorsMap) {
+                for (let i = 0; i < this._valueColorsMap.length; i++) {
+                    if (value <= this._valueColorsMap[i][0]) {
+                        color = this._valueColorsMap[i][1];
+                        break;
+                    }
+                }
+            }
         } else {
             if (!this._valueGradientPositionMap) {
                 const normalizedValue = this.calcNormalizedValue(value, this._min, this._max);
@@ -347,12 +416,15 @@ export class ColorScale {
             } else {
                 for (let i = 0; i <= this._valueGradientPositionMap.length; i++) {
                     if (value <= this._valueGradientPositionMap[i][0]) {
-                        const normalizedValue = this.calcNormalizedValue(
-                            value,
-                            this._valueGradientPositionMap.at(i - 1)?.at(0) ?? this._min,
-                            this._valueGradientPositionMap.at(i)?.at(0) ?? this._max
+                        const minValue =
+                            i > 0 ? this._valueGradientPositionMap.at(i - 1)?.at(0) ?? this._min : this._min;
+                        const maxValue = this._valueGradientPositionMap.at(i)?.at(0) ?? this._max;
+                        const minPosition = i > 0 ? this._valueGradientPositionMap.at(i - 1)?.at(1) ?? 0 : 0;
+                        const maxPosition = this._valueGradientPositionMap.at(i)?.at(1) ?? 1;
+                        const normalizedValue = this.calcNormalizedValue(value, minValue, maxValue);
+                        color = this._colorPalette.getColorAtPosition(
+                            minPosition + normalizedValue * (maxPosition - minPosition)
                         );
-                        color = this._colorPalette.getColorAtPosition(normalizedValue);
                         break;
                     }
                 }
@@ -365,7 +437,9 @@ export class ColorScale {
     sampleColors(numSamples: number): string[] {
         const colors: string[] = [];
         for (let i = 0; i < numSamples; i++) {
-            colors.push(this.getColorForValue((this._max - this._min) * (i / (numSamples - 1)) + this._min));
+            const startPos = i / numSamples;
+            const endPos = (i + 1) / numSamples;
+            colors.push(this._colorPalette.getColorAtPosition(startPos + (endPos - startPos) / 2));
         }
         return colors;
     }
@@ -403,10 +477,9 @@ export class ColorScale {
     }
 
     getAsPlotlyColorScale(): Array<[number, string]> {
-        const colors = this.sampleColors(100);
         const plotlyColorScale: Array<[number, string]> = [];
-        for (let i = 0; i < colors.length; i++) {
-            plotlyColorScale.push([i / (colors.length - 1), colors[i]]);
+        for (let i = 0; i <= 100; i++) {
+            plotlyColorScale.push([i / 100, this.getColorForValue(this._min + (this._max - this._min) * (i / 100))]);
         }
         return plotlyColorScale;
     }
@@ -539,27 +612,33 @@ export class WorkbenchSettings {
         return colorSet;
     }
 
-    useSequentialColorScale(options?: {
+    useDiscreteSequentialColorScale(options?: {
+        steps: number;
         scaleType?: ColorScaleScaleType;
         interpolation?:
-            | ColorScaleInterpolationType.Linear
-            | ColorScaleInterpolationType.Median
-            | ColorScaleInterpolationType.Quartiles
-            | ColorScaleInterpolationType.Quintiles
-            | ColorScaleInterpolationType.Deciles
-            | ColorScaleInterpolationType.Natural;
+            | ColorScaleDiscreteInterpolationType.Linear
+            | ColorScaleDiscreteInterpolationType.RoundedValues
+            | ColorScaleDiscreteInterpolationType.Quantile
+            | ColorScaleDiscreteInterpolationType.NaturalBreaks;
         data?: number[];
     }): ColorScale {
-        const adjustedOptions: ColorScaleOptions = {
-            type: ColorScaleType.Continuous,
+        const optionsWithDefaults: ColorScaleOptions = {
+            type: ColorScaleType.Discrete,
+            steps: options?.steps ?? 5,
             colorPalette: this._workbench.getSelectedColorPalette(ColorType.Sequential) as ContinuousColorPalette,
             gradientType: ColorScaleGradientType.Sequential,
             scaleType: options?.scaleType ?? ColorScaleScaleType.Linear,
-            interpolation: options?.interpolation ?? ColorScaleInterpolationType.Linear,
+            interpolation: options?.interpolation ?? ColorScaleDiscreteInterpolationType.Linear,
             data: options?.data,
         };
 
-        const [colorScale, setColorScale] = React.useState<ColorScale>(new ColorScale(adjustedOptions));
+        const [adjustedOptions, setAdjustedOptions] = React.useState<ColorScaleOptions>(optionsWithDefaults);
+
+        const [colorScale, setColorScale] = React.useState<ColorScale>(new ColorScale(optionsWithDefaults));
+
+        if (!isEqual(optionsWithDefaults, adjustedOptions)) {
+            setAdjustedOptions({ ...optionsWithDefaults });
+        }
 
         React.useEffect(() => {
             // Explicitly using arrow function to preserve the "this" context
@@ -578,37 +657,100 @@ export class WorkbenchSettings {
                 handleColorPalettesChanged
             );
 
+            handleColorPalettesChanged();
+
             return () => {
                 unsubscribeFunc();
             };
-        }, [colorScale]);
+        }, [adjustedOptions]);
 
         return colorScale;
     }
 
-    useDivergingColorScale(options?: {
+    useDiscreteDivergingColorScale(options?: {
+        steps: number;
         scaleType?: ColorScaleScaleType;
         interpolation?:
-            | ColorScaleInterpolationType.Linear
-            | ColorScaleInterpolationType.Median
-            | ColorScaleInterpolationType.Quartiles
-            | ColorScaleInterpolationType.Quintiles
-            | ColorScaleInterpolationType.Deciles
-            | ColorScaleInterpolationType.Natural;
+            | ColorScaleDiscreteInterpolationType.Linear
+            | ColorScaleDiscreteInterpolationType.RoundedValues
+            | ColorScaleDiscreteInterpolationType.Quantile
+            | ColorScaleDiscreteInterpolationType.NaturalBreaks;
         data?: number[];
         divMidPoint?: number;
     }): ColorScale {
-        const adjustedOptions: ColorScaleOptions = {
-            type: ColorScaleType.Continuous,
-            colorPalette: this._workbench.getSelectedColorPalette(ColorType.Sequential) as ContinuousColorPalette,
+        const optionsWithDefaults: ColorScaleOptions = {
+            type: ColorScaleType.Discrete,
+            steps: options?.steps ?? 5,
+            colorPalette: this._workbench.getSelectedColorPalette(ColorType.Diverging) as ContinuousColorPalette,
             gradientType: ColorScaleGradientType.Diverging,
             scaleType: options?.scaleType ?? ColorScaleScaleType.Linear,
-            interpolation: options?.interpolation ?? ColorScaleInterpolationType.Linear,
+            interpolation: options?.interpolation ?? ColorScaleDiscreteInterpolationType.Linear,
             data: options?.data,
             divMidPoint: options?.divMidPoint,
         };
 
-        const [colorScale, setColorScale] = React.useState<ColorScale>(new ColorScale(adjustedOptions));
+        const [adjustedOptions, setAdjustedOptions] = React.useState<ColorScaleOptions>(optionsWithDefaults);
+
+        const [colorScale, setColorScale] = React.useState<ColorScale>(new ColorScale(optionsWithDefaults));
+
+        if (!isEqual(optionsWithDefaults, adjustedOptions)) {
+            setAdjustedOptions({ ...optionsWithDefaults });
+        }
+
+        React.useEffect(() => {
+            // Explicitly using arrow function to preserve the "this" context
+            const handleColorPalettesChanged = () => {
+                const newColorScale = new ColorScale({
+                    ...adjustedOptions,
+                    colorPalette: this._workbench.getSelectedColorPalette(
+                        ColorType.Diverging
+                    ) as ContinuousColorPalette,
+                });
+                setColorScale(newColorScale);
+            };
+
+            handleColorPalettesChanged();
+
+            const unsubscribeFunc = this._workbench.subscribe(
+                WorkbenchEvents.ColorPalettesChanged,
+                handleColorPalettesChanged
+            );
+
+            return () => {
+                unsubscribeFunc();
+            };
+        }, [adjustedOptions]);
+
+        return colorScale;
+    }
+
+    useContinuousSequentialColorScale(options?: {
+        scaleType?: ColorScaleScaleType;
+        interpolation?:
+            | ColorScaleContinuousInterpolationType.Linear
+            | ColorScaleContinuousInterpolationType.Median
+            | ColorScaleContinuousInterpolationType.Quartiles
+            | ColorScaleContinuousInterpolationType.Quintiles
+            | ColorScaleContinuousInterpolationType.Deciles
+            | ColorScaleContinuousInterpolationType.NaturalBreaks;
+        data?: number[];
+    }): ColorScale {
+        const optionsWithDefaults: ColorScaleOptions = {
+            type: ColorScaleType.Continuous,
+            colorPalette: this._workbench.getSelectedColorPalette(ColorType.Sequential) as ContinuousColorPalette,
+            gradientType: ColorScaleGradientType.Sequential,
+            scaleType: options?.scaleType ?? ColorScaleScaleType.Linear,
+            interpolation: options?.interpolation ?? ColorScaleContinuousInterpolationType.Linear,
+            data: options?.data,
+        };
+
+        const [adjustedOptions, setAdjustedOptions] = React.useState<ColorScaleOptions>(optionsWithDefaults);
+
+        const [colorScale, setColorScale] = React.useState<ColorScale>(new ColorScale(optionsWithDefaults));
+
+        if (!isEqual(optionsWithDefaults, adjustedOptions)) {
+            setAdjustedOptions({ ...optionsWithDefaults });
+        }
 
         React.useEffect(() => {
             // Explicitly using arrow function to preserve the "this" context
@@ -622,6 +764,8 @@ export class WorkbenchSettings {
                 setColorScale(newColorScale);
             };
 
+            handleColorPalettesChanged();
+
             const unsubscribeFunc = this._workbench.subscribe(
                 WorkbenchEvents.ColorPalettesChanged,
                 handleColorPalettesChanged
@@ -630,7 +774,64 @@ export class WorkbenchSettings {
             return () => {
                 unsubscribeFunc();
             };
-        }, [colorScale]);
+        }, [adjustedOptions]);
+
+        return colorScale;
+    }
+
+    useContinuousDivergingColorScale(options?: {
+        scaleType?: ColorScaleScaleType;
+        interpolation?:
+            | ColorScaleContinuousInterpolationType.Linear
+            | ColorScaleContinuousInterpolationType.Median
+            | ColorScaleContinuousInterpolationType.Quartiles
+            | ColorScaleContinuousInterpolationType.Quintiles
+            | ColorScaleContinuousInterpolationType.Deciles
+            | ColorScaleContinuousInterpolationType.NaturalBreaks;
+        data?: number[];
+        divMidPoint?: number;
+    }): ColorScale {
+        const optionsWithDefaults: ColorScaleOptions = {
+            type: ColorScaleType.Continuous,
+            colorPalette: this._workbench.getSelectedColorPalette(ColorType.Diverging) as ContinuousColorPalette,
+            gradientType: ColorScaleGradientType.Diverging,
+            scaleType: options?.scaleType ?? ColorScaleScaleType.Linear,
+            interpolation: options?.interpolation ?? ColorScaleContinuousInterpolationType.Linear,
+            data: options?.data,
+            divMidPoint: options?.divMidPoint,
+        };
+
+        const [adjustedOptions, setAdjustedOptions] = React.useState<ColorScaleOptions>(optionsWithDefaults);
+
+        const [colorScale, setColorScale] = React.useState<ColorScale>(new ColorScale(optionsWithDefaults));
+
+        if (!isEqual(optionsWithDefaults, adjustedOptions)) {
+            setAdjustedOptions({ ...optionsWithDefaults });
+        }
+
+        React.useEffect(() => {
+            // Explicitly using arrow function to preserve the "this" context
+            const handleColorPalettesChanged = () => {
+                const newColorScale = new ColorScale({
+                    ...adjustedOptions,
+                    colorPalette: this._workbench.getSelectedColorPalette(
+                        ColorType.Diverging
+                    ) as ContinuousColorPalette,
+                });
+                setColorScale(newColorScale);
+            };
+
+            handleColorPalettesChanged();
+
+            const unsubscribeFunc = this._workbench.subscribe(
+                WorkbenchEvents.ColorPalettesChanged,
+                handleColorPalettesChanged
+            );
+
+            return () => {
+                unsubscribeFunc();
+            };
+        }, [adjustedOptions]);
 
         return colorScale;
     }

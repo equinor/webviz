@@ -52,7 +52,7 @@ export const view = ({ moduleContext, workbenchServices, workbenchSettings }: Mo
     const channelZ = workbenchServices.getBroadcaster().getChannel(channelNameZ ?? "");
 
     const colorSet = workbenchSettings.useColorSet();
-    const seqColorScale = workbenchSettings.useSequentialColorScale();
+    const seqColorScale = workbenchSettings.useContinuousSequentialColorScale();
 
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);
     const wrapperDivSize = useElementSize(wrapperDivRef);
