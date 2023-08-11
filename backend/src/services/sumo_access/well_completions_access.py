@@ -50,6 +50,7 @@ class WellCompletionsAccess:
         if len(well_completion_tables) < 2:
             return {}
 
+        # TODO: Ensure that tables contain correct columns? "OPEN/SHUT" and "KH"
         well_completion_df = well_completion_tables[0].to_pandas
         kh_df = well_completion_tables[1].to_pandas
         well_completion_df["KH"] = kh_df["KH"]

@@ -1,4 +1,8 @@
 /**
+ * NOTE: This file is a copy from the WellCompletion-component in webviz-subsurface-components/packages/dash-components
+ */
+
+/**
  * Characters to be prepended by "." unless it's already there or it matches {@link SPECIAL_ESCAPE}
  */
 const SPECIAL_CHARACTERS = "?*";
