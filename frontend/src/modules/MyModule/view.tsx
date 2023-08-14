@@ -1,3 +1,4 @@
+import React from "react";
 import Plot from "react-plotly.js";
 
 import { ModuleFCProps } from "@framework/Module";
@@ -7,6 +8,7 @@ import {
     ColorScaleGradientType,
     ColorScaleType,
 } from "@framework/WorkbenchSettings";
+import { useElementSize } from "@lib/hooks/useElementSize";
 
 import { PlotData } from "plotly.js";
 
@@ -423,6 +425,10 @@ export const view = (props: ModuleFCProps<State>) => {
     const continuousInterpolation = props.moduleContext.useStoreValue("continuousInterpolation");
     const discreteInterpolation = props.moduleContext.useStoreValue("discreteInterpolation");
 
+    const ref = React.useRef<HTMLDivElement>(null);
+
+    const size = useElementSize(ref);
+
     const colorScale =
         type === ColorScaleType.Continuous
             ? gradientType === ColorScaleGradientType.Sequential
@@ -456,13 +462,13 @@ export const view = (props: ModuleFCProps<State>) => {
 
     const layout = {
         mapbox: { style: "dark", center: { lon: -110, lat: 50 }, zoom: 0.8 },
-        width: 600,
-        height: 400,
+        width: size.width,
+        height: size.height,
         margin: { t: 0, b: 0 },
     };
 
     return (
-        <div>
+        <div ref={ref} className="w-full h-full">
             <Plot data={[data]} layout={layout} />
         </div>
     );
