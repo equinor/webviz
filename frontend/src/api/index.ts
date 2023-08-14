@@ -33,6 +33,7 @@ export { SensitivityType as SensitivityType_api } from './models/SensitivityType
 export type { StaticSurfaceDirectory as StaticSurfaceDirectory_api } from './models/StaticSurfaceDirectory';
 export { StatisticFunction as StatisticFunction_api } from './models/StatisticFunction';
 export type { StatisticValueObject as StatisticValueObject_api } from './models/StatisticValueObject';
+export { SumoContent as SumoContent_api } from './models/SumoContent';
 export type { SurfaceData as SurfaceData_api } from './models/SurfaceData';
 export { SurfaceStatisticFunction as SurfaceStatisticFunction_api } from './models/SurfaceStatisticFunction';
 export type { UserInfo as UserInfo_api } from './models/UserInfo';

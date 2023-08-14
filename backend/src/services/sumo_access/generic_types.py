@@ -1,4 +1,5 @@
 from typing import List, Optional
+from enum import Enum
 
 from pydantic import BaseModel
 
@@ -56,3 +57,39 @@ class SumoTableSchema(BaseModel):
     column_names: List[str]
     # context?
     # stage? (realization, iteration, collection)
+
+
+class SumoContent(str, Enum):
+    """Enum for the different values of the `content` metadata key in a Sumo object."""
+
+    DEPTH = "depth"
+    TIME = "time"
+    PROPERTY = "property"
+    WELLPICKS = "wellpicks"
+
+    @classmethod
+    def values(self):
+        return [_.value for _ in list(self)]
+
+    @classmethod
+    def has(self, value):
+        return value in self.values()
+
+
+class SumoClass(str, Enum):
+    """Enum for the different values of the `class` metadata key in a Sumo object."""
+
+    SURFACE = "surface"
+    GRID = "grid"
+    CUBE = "cube"
+    TABLE = "table"
+    POLYGONS = "polygons"
+    POINTS = "points"
+
+    @classmethod
+    def values(self):
+        return [_.value for _ in list(self)]
+
+    @classmethod
+    def has(self, value):
+        return value in self.values()

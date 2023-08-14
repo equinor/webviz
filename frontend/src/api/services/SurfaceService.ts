@@ -3,6 +3,7 @@
 /* eslint-disable */
 import type { DynamicSurfaceDirectory } from '../models/DynamicSurfaceDirectory';
 import type { StaticSurfaceDirectory } from '../models/StaticSurfaceDirectory';
+import type { SumoContent } from '../models/SumoContent';
 import type { SurfaceData } from '../models/SurfaceData';
 import type { SurfaceStatisticFunction } from '../models/SurfaceStatisticFunction';
 
@@ -44,12 +45,14 @@ export class SurfaceService {
      * These are the non-observed surfaces that do NOT have time stamps
      * @param caseUuid Sumo case uuid
      * @param ensembleName Ensemble name
+     * @param sumoContentFilter Optional filter by Sumo content type
      * @returns StaticSurfaceDirectory Successful Response
      * @throws ApiError
      */
     public getStaticSurfaceDirectory(
         caseUuid: string,
         ensembleName: string,
+        sumoContentFilter?: Array<SumoContent>,
     ): CancelablePromise<StaticSurfaceDirectory> {
         return this.httpRequest.request({
             method: 'GET',
@@ -57,6 +60,7 @@ export class SurfaceService {
             query: {
                 'case_uuid': caseUuid,
                 'ensemble_name': ensembleName,
+                'sumo_content_filter': sumoContentFilter,
             },
             errors: {
                 422: `Validation Error`,

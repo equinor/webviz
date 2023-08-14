@@ -10,6 +10,7 @@ from src.services.utils.perf_timer import PerfTimer
 from src.backend.auth.auth_helper import AuthHelper
 from . import converters
 from . import schemas
+from src.services.sumo_access.generic_types import SumoContent
 
 LOGGER = logging.getLogger(__name__)
 
@@ -42,13 +43,14 @@ def get_static_surface_directory(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     case_uuid: str = Query(description="Sumo case uuid"),
     ensemble_name: str = Query(description="Ensemble name"),
+    sumo_content_filter: List[SumoContent] = Query(default=None, description="Optional filter by Sumo content type"),
 ) -> schemas.StaticSurfaceDirectory:
     """
     Get a directory of surface names and attributes for static surfaces.
     These are the non-observed surfaces that do NOT have time stamps
     """
     access = SurfaceAccess(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
-    surf_dir = access.get_static_surf_dir()
+    surf_dir = access.get_static_surf_dir(content_filter=sumo_content_filter)
 
     ret_dir = schemas.StaticSurfaceDirectory(
         names=surf_dir.names,
