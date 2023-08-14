@@ -1,6 +1,6 @@
 from sumo.wrapper import SumoClient
 
-# SUMO_ENV="prod"
+
 SUMO_ENV = "dev"
 
 

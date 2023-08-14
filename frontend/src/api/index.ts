@@ -43,6 +43,8 @@ export type { VectorMetadata as VectorMetadata_api } from './models/VectorMetada
 export type { VectorRealizationData as VectorRealizationData_api } from './models/VectorRealizationData';
 export type { VectorStatisticData as VectorStatisticData_api } from './models/VectorStatisticData';
 export type { VectorStatisticSensitivityData as VectorStatisticSensitivityData_api } from './models/VectorStatisticSensitivityData';
+export type { WellBoreHeader as WellBoreHeader_api } from './models/WellBoreHeader';
+export type { WellBoreTrajectory as WellBoreTrajectory_api } from './models/WellBoreTrajectory';
 
 export { CorrelationsService } from './services/CorrelationsService';
 export { DefaultService } from './services/DefaultService';
@@ -53,3 +55,4 @@ export { ParametersService } from './services/ParametersService';
 export { PvtService } from './services/PvtService';
 export { SurfaceService } from './services/SurfaceService';
 export { TimeseriesService } from './services/TimeseriesService';
+export { WellService } from './services/WellService';
