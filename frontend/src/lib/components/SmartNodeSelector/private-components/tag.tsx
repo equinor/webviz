@@ -135,7 +135,7 @@ export class Tag extends React.Component<TagProps> {
             return (
                 <span
                     key={"TagMatchesCounter_" + index}
-                    className="items-center bg-blue-700 text-white rounded-full h-5 justify-center mr-2 pl-1.5 pr-1.5 min-w-[5] flex outline-none relative text-center text-sm"
+                    className="items-center bg-blue-700 text-white rounded-full h-5 justify-center mr-2 pl-1.5 pr-1.5 min-w-[5] flex outline-none relative text-center text-xs leading-none"
                     title={"This expression matches " + matches + " options."}
                 >
                     {matches}
