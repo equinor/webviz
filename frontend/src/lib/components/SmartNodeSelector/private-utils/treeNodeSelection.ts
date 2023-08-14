@@ -1,9 +1,9 @@
 import React from "react";
 
-import TreeData, { MatchType } from "./treeData";
+import { MatchType, TreeData } from "./treeData";
 import { TreeDataNodeMetaData } from "./treeDataNodeTypes";
 
-export default class TreeNodeSelection {
+export class TreeNodeSelection {
     private focussedLevel: number;
     private nodePath: Array<string>;
     private ref: React.RefObject<HTMLInputElement>;

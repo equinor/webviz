@@ -4,7 +4,7 @@ import ReactDOM from "react-dom";
 import { resolveClassNames } from "@lib/components/_utils/resolveClassNames";
 
 import { TreeDataNodeMetaData } from "../private-utils/treeDataNodeTypes";
-import TreeNodeSelection from "../private-utils/treeNodeSelection";
+import { TreeNodeSelection } from "../private-utils/treeNodeSelection";
 
 type SuggestionsProps = {
     suggestionsRef: React.RefObject<HTMLDivElement>;

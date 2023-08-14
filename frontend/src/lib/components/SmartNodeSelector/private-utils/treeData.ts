@@ -6,7 +6,7 @@ export enum MatchType {
     partialMatch,
 }
 
-export default class TreeData {
+export class TreeData {
     private treeData: TreeDataNode[];
     private delimiter: string;
     private stringifiedData: string;

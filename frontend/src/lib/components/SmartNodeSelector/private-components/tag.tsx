@@ -12,7 +12,7 @@ import { resolveClassNames } from "@lib/components/_utils/resolveClassNames";
 
 import "animate.css";
 
-import TreeNodeSelection from "../private-utils/treeNodeSelection";
+import { TreeNodeSelection } from "../private-utils/treeNodeSelection";
 
 type TagProps = {
     key: string;
@@ -38,7 +38,7 @@ type TagProps = {
 /**
  * A component for displaying and interacting with a tag.
  */
-export default class Tag extends React.Component<TagProps> {
+export class Tag extends React.Component<TagProps> {
     public props: TagProps;
     public static propTypes: Record<string, unknown>;
     public static defaultProps: Partial<TagProps> = {};

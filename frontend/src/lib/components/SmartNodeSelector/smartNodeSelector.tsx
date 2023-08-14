@@ -5,10 +5,10 @@ import { XMarkIcon } from "@heroicons/react/20/solid";
 import _ from "lodash";
 
 import { Suggestions } from "./private-components/suggestions";
-import Tag from "./private-components/tag";
-import TreeData from "./private-utils/treeData";
+import { Tag } from "./private-components/tag";
+import { TreeData } from "./private-utils/treeData";
 import { TreeDataNode } from "./private-utils/treeDataNodeTypes";
-import TreeNodeSelection from "./private-utils/treeNodeSelection";
+import { TreeNodeSelection } from "./private-utils/treeNodeSelection";
 
 import { resolveClassNames } from "../_utils/resolveClassNames";
 
@@ -45,7 +45,7 @@ export type SmartNodeSelectorProps = {
     useBetaFeatures?: boolean;
 };
 
-type SmartNodeSelectorComponentProps = { [K in keyof SmartNodeSelectorProps]-?: SmartNodeSelectorProps[K] };
+export type SmartNodeSelectorComponentProps = { [K in keyof SmartNodeSelectorProps]-?: SmartNodeSelectorProps[K] };
 
 type SmartNodeSelectorStateType = {
     nodeSelections: TreeNodeSelection[];
@@ -75,7 +75,7 @@ type SmartNodeSelectorUpdateStateType = {
     forceUpdate?: boolean;
 };
 
-class SmartNodeSelectorComponent extends React.Component<SmartNodeSelectorComponentProps> {
+export class SmartNodeSelectorComponent extends React.Component<SmartNodeSelectorComponentProps> {
     protected suggestionTimer: ReturnType<typeof setTimeout> | undefined;
     protected shakingTimer: ReturnType<typeof setTimeout> | undefined;
     protected ref: React.RefObject<HTMLDivElement>;
