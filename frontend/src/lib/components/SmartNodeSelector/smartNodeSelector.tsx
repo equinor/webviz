@@ -1,5 +1,7 @@
 import React from "react";
 
+import { XMarkIcon } from "@heroicons/react/20/solid";
+
 import _ from "lodash";
 
 import { Suggestions } from "./private-components/suggestions";
@@ -20,7 +22,7 @@ export enum KeyEventType {
     KeyDown,
 }
 
-export type ChangeInfoType = {
+export type SmartNodeSelectorSelection = {
     selectedTags: string[];
     selectedNodes: string[];
     selectedIds: string[];
@@ -34,7 +36,7 @@ export type SmartNodeSelectorProps = {
     data: TreeDataNode[];
     label?: string;
     showSuggestions?: boolean;
-    onChange?: (props: ChangeInfoType) => void;
+    onChange?: (selection: SmartNodeSelectorSelection) => void;
     selectedTags?: string[];
     placeholder?: string;
     numSecondsUntilSuggestionsAreShown?: number;
@@ -1630,7 +1632,7 @@ class SmartNodeSelectorComponent extends React.Component<SmartNodeSelectorCompon
                         "border rounded p-2 pl-4 pr-12 flex flex-wrap cursor-text relative my-2 min-h-12 min-w-48",
                         {
                             "border-0 p-0 pr-10": frameless,
-                            "SmartNodeSelector--SuggestionsActive": suggestionsVisible,
+                            "!rounded-b-none": suggestionsVisible,
                             "border-red-600":
                                 maxNumSelectedNodes > 0 && this.countValidSelections() > maxNumSelectedNodes,
                         }
@@ -1639,9 +1641,11 @@ class SmartNodeSelectorComponent extends React.Component<SmartNodeSelectorCompon
                     onMouseDown={this.handleMouseDown}
                 >
                     <ul
-                        className={resolveClassNames({ "inline-flex flex-wrap": !lineBreakAfterTag })}
+                        className={resolveClassNames({
+                            "inline-flex flex-wrap": !lineBreakAfterTag,
+                            "w-full": frameless,
+                        })}
                         ref={this.tagFieldRef}
-                        style={frameless ? { width: "100%" } : {}}
                     >
                         {nodeSelections.map((selection, index) => (
                             <Tag
@@ -1670,14 +1674,16 @@ class SmartNodeSelectorComponent extends React.Component<SmartNodeSelectorCompon
                             />
                         ))}
                     </ul>
-                    <div className="absolute right-2 top-1/2 -mt-4">
+                    <div className="absolute right-2 top-1/2 -mt-3">
                         <button
-                            className="appearance-none "
+                            className="appearance-none bg-cyan-600 rounded-full w-6 h-6 flex items-center justify-center hover:bg-cyan-500 text-white cursor-pointer"
                             type="button"
                             title="Clear all"
                             onClick={this.clearAllTags}
                             disabled={this.countTags() <= 1 && this.hasLastEmptyTag()}
-                        />
+                        >
+                            <XMarkIcon className="w-4 h-4" />
+                        </button>
                     </div>
                     {showSuggestions && (
                         <Suggestions
@@ -1694,9 +1700,8 @@ class SmartNodeSelectorComponent extends React.Component<SmartNodeSelectorCompon
                 </div>
                 {maxNumSelectedNodes > 1 && (
                     <div
-                        className={resolveClassNames({
-                            SmartNodeSelector__NumberOfTags: true,
-                            SmartNodeSelector__Error: this.countValidSelections() > maxNumSelectedNodes,
+                        className={resolveClassNames("text-right relative w-full mt-2 text-slate-600 text-sm", {
+                            "!text-red-600": this.countValidSelections() > maxNumSelectedNodes,
                         })}
                         ref={this.refNumberOfTags}
                     >
@@ -1712,7 +1717,11 @@ export const SmartNodeSelector: React.FC<SmartNodeSelectorProps> = (props) => {
     const adjustedProps: SmartNodeSelectorComponentProps = {
         id: props.id ?? "",
         data: props.data,
-        onChange: props.onChange ?? (() => {}),
+        onChange:
+            props.onChange ??
+            (() => {
+                return;
+            }),
         label: props.label ?? "",
         maxNumSelectedNodes: props.maxNumSelectedNodes ?? -1,
         delimiter: props.delimiter ?? ":",

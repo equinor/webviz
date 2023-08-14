@@ -214,9 +214,12 @@ export class Suggestions extends React.Component<SuggestionsProps> {
         const newSelectedSuggestion = this.currentlySelectedSuggestion();
         const selectedSuggestions = document.getElementsByClassName("Suggestions__Suggestion--Selected");
         for (let i = 0; i < selectedSuggestions.length; i++) {
-            selectedSuggestions[i].classList.remove("Suggestions__Suggestion--Selected");
+            const el = selectedSuggestions[i];
+            el.classList.remove("Suggestions__Suggestion--Selected");
+            el.classList.remove("bg-blue-100");
         }
         newSelectedSuggestion.classList.add("Suggestions__Suggestion--Selected");
+        newSelectedSuggestion.classList.add("bg-blue-100");
     }
 
     private scrollSuggestionsToMakeSelectedElementVisible(): void {
@@ -302,10 +305,11 @@ export class Suggestions extends React.Component<SuggestionsProps> {
                             data-use={option.nodeName}
                             data-index={i}
                             className={resolveClassNames(
-                                "p-2 cursor-pointer box-border h-8 leading-6 whitespace-nowrap overflow-hidden text-ellipsis bg-no-repeat",
+                                "Suggestions__Suggestion p-2 cursor-pointer box-border h-8 leading-6 whitespace-nowrap overflow-hidden text-ellipsis bg-no-repeat text-sm",
                                 {
                                     "bg-[20px 20px] pl-8": option.metaData.icon !== undefined,
-                                    "bg-blue-100": i == this.currentlySelectedSuggestionIndex - this.state.fromIndex,
+                                    "bg-blue-100 Suggestions__Suggestion--Selected":
+                                        i === this.currentlySelectedSuggestionIndex - this.state.fromIndex,
                                 }
                             )}
                             style={{

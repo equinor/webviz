@@ -5,6 +5,7 @@ import {
     ChevronUpIcon,
     ExclamationCircleIcon,
     ExclamationTriangleIcon,
+    QuestionMarkCircleIcon,
     XMarkIcon,
 } from "@heroicons/react/20/solid";
 import { resolveClassNames } from "@lib/components/_utils/resolveClassNames";
@@ -66,13 +67,12 @@ export default class Tag extends React.Component<TagProps> {
     private innerTagClasses(invalid = false, duplicate = false): string {
         const { treeNodeSelection } = this.props;
         let ret = {
-            "text-sm flex flex-wrap rounded justify-left items-center min-w-0 relative mr-2 mt-1 mb-1 text-slate-600 border-2 border-transparent whitespace-pre-wrap z-10":
+            "bg-slate-50 text-sm flex flex-wrap rounded justify-left items-center min-w-0 m-0.5 text-slate-600 border-2 border-transparent whitespace-pre-wrap z-10 bg-no-repeat":
                 true,
         };
         if (this.addAdditionalClasses(invalid)) {
             const icons = treeNodeSelection.icons();
             ret = Object.assign({}, ret, {
-                SmartNodeSelector__Icon: icons.length > 0 || invalid || duplicate,
                 [invalid
                     ? "bg-red-200"
                     : duplicate
@@ -83,7 +83,7 @@ export default class Tag extends React.Component<TagProps> {
             });
         } else {
             ret = Object.assign({}, ret, {
-                SmartNodeSelector__Valid: true,
+                "bg-slate-50": true,
             });
         }
         return resolveClassNames(ret);
@@ -91,17 +91,18 @@ export default class Tag extends React.Component<TagProps> {
 
     private outerTagClasses(invalid: boolean, duplicate: boolean, frameless: boolean): string {
         return resolveClassNames(
-            "flex flex-wrap rounded justify-left items-center, min-w-0 relative mr-2 mt-1 mb-1 text-slate-600 border-2 border-transparent whitespace-pre-wrap z-10",
+            "flex flex-wrap rounded justify-left items-center min-w-0 relative mr-2 mt-1 mb-1 text-slate-600 border-2 whitespace-pre-wrap z-10",
             {
-                "border-slate-600 bg-slate-50": this.displayAsTag() || frameless,
+                "border-slate-400 bg-slate-50 SmartNodeSelector__Border": this.displayAsTag() || frameless,
+                "border-transparent bg-transparent": !this.displayAsTag() && !frameless,
                 animate__animated: this.props.shake,
                 animate__headShake: this.props.shake,
                 [!this.addAdditionalClasses(invalid)
                     ? ""
                     : invalid
-                    ? "border-red-600 bg-red-200"
+                    ? "!border-red-600 !bg-red-200"
                     : duplicate
-                    ? "border-yellow-600 bg-yellow-200"
+                    ? "!border-yellow-600 !bg-yellow-200"
                     : ""]: true,
             }
         );
@@ -113,13 +114,12 @@ export default class Tag extends React.Component<TagProps> {
         if (text === undefined) {
             text = "";
         }
-        span.classList.add("SmartNodeSelector__Ruler");
         const input = (treeNodeSelection.getRef() as React.RefObject<HTMLInputElement>).current as HTMLInputElement;
         if (input) {
             const fontSize = window.getComputedStyle(input).fontSize;
             span.style.fontSize = fontSize;
         } else {
-            span.style.fontSize = "13.3333px";
+            span.style.fontSize = "0.875rem";
         }
         const textNode = document.createTextNode(text.replace(/ /g, "\u00A0"));
         span.appendChild(textNode);
@@ -161,10 +161,10 @@ export default class Tag extends React.Component<TagProps> {
                 position = 0;
             }
             return (
-                <div key={"TagBrowseButton_" + index} className="w-5 bg-cyan-600">
+                <div key={"TagBrowseButton_" + index} className="w-4 mr-1 relative h-full">
                     <button
                         key={"TagPreviousButton_" + index}
-                        className="appearance-none bg-cyan-600 border-0 cursor-pointer mr-2 w-5 inline-block outline-none p-0 h-1/2 absolute"
+                        className="appearance-none bg-cyan-600 border-0 cursor-pointer inline-block outline-none p-0 h-1/2 absolute w-4 disabled:opacity-30 disabled:cursor-default hover:bg-cyan-500"
                         disabled={position === 0}
                         title="Previous option"
                         onMouseDown={(e): void => this.shiftOption(e, nodeSelection, false)}
@@ -181,7 +181,7 @@ export default class Tag extends React.Component<TagProps> {
                     </button>
                     <button
                         key={"TagNextButton_" + index}
-                        className="appearance-none bg-cyan-600 border-0 cursor-pointer mr-2 w-5 inline-block outline-none p-0 h-1/2 absolute top-1/2"
+                        className="appearance-none bg-cyan-600 border-0 cursor-pointer inline-block outline-none p-0 h-1/2 absolute top-1/2 w-4 disabled:opacity-30 disabled:cursor-default hover:bg-cyan-500"
                         disabled={position == subgroups.length - 1}
                         title="Next option"
                         onMouseDown={(e): void => this.shiftOption(e, nodeSelection, true)}
@@ -223,6 +223,7 @@ export default class Tag extends React.Component<TagProps> {
             }
         });
         updateSelectedTagsAndNodes();
+        this.forceUpdate();
     }
 
     private tagTitle(nodeSelection: TreeNodeSelection, index: number): string {
@@ -381,11 +382,11 @@ export default class Tag extends React.Component<TagProps> {
                     <button
                         type="button"
                         key={"TagRemoveButton_" + index}
-                        className="absolute -right-3 -top-3 z-10 bg-cyan-700 border border-white rounded-full cursor-pointer w-6 h-6 p-0 flex items-center justify-center"
+                        className="absolute -right-2 -top-2 bg-cyan-600 border border-white rounded-full cursor-pointer w-4 h-4 p-0 flex items-center justify-center hover:bg-cyan-500 z-20"
                         title="Remove"
                         onClick={(e): void => removeTag(e, index)}
                     >
-                        <XMarkIcon className="w-4 h-4 text-white" />
+                        <XMarkIcon className="w-3 h-3 text-white" />
                     </button>
                 )}
                 {this.createBrowseButtons(treeNodeSelection, index)}
@@ -393,9 +394,13 @@ export default class Tag extends React.Component<TagProps> {
                     key={"InnerTag_" + index}
                     className={this.innerTagClasses(!valid && !currentTag, duplicate)}
                     style={
-                        treeNodeSelection.icons().length == 1 && !duplicate && (valid || currentTag)
+                        (valid || currentTag) && !duplicate && treeNodeSelection.icons().length === 1
                             ? {
                                   backgroundImage: "url(" + treeNodeSelection.icons()[0] + ")",
+                                  backgroundRepeat: "no-repeat",
+                                  backgroundPosition: "left center",
+                                  backgroundSize: "16px 16px",
+                                  paddingLeft: 24,
                               }
                             : {}
                     }
@@ -403,13 +408,17 @@ export default class Tag extends React.Component<TagProps> {
                     {this.addAdditionalClasses(!valid) && !valid && !currentTag && (
                         <ExclamationCircleIcon className="w-4 h-4 mr-2" />
                     )}
-                    {this.addAdditionalClasses(!valid) && duplicate && (
+                    {this.addAdditionalClasses(!valid) && valid && duplicate && (
                         <ExclamationTriangleIcon className="w-4 h-4 mr-2" />
                     )}
+                    {this.addAdditionalClasses(!valid) &&
+                        (valid || currentTag) &&
+                        !duplicate &&
+                        treeNodeSelection.icons().length > 1 && <QuestionMarkCircleIcon className="w-4 h-4 mr-2" />}
                     {this.createMatchesCounter(treeNodeSelection, index)}
                     <div className="flex whitespace-nowrap relative">
                         <input
-                            className="border-0 bg-transparent outline-none p-0 w-12 inline-block bg-slate-400"
+                            className="border-0 bg-transparent outline-none p-0 w-12 inline-block bg-slate-400 text-sm"
                             spellCheck="false"
                             key={"TagInput_" + index}
                             type="text"
@@ -441,7 +450,7 @@ export default class Tag extends React.Component<TagProps> {
                     {treeNodeSelection.isSelected() && (
                         <div
                             key={"TagSelected_" + index}
-                            className="bg-blue-100 opacity-50 absolute l-0 t-0 w-full h-full block z-10"
+                            className="bg-blue-500 opacity-30 absolute left-0 top-0 w-full h-full block z-10 rounded"
                         ></div>
                     )}
                 </div>
