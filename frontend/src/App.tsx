@@ -1,9 +1,9 @@
 import React from "react";
 
 import { DrawerContent, LayoutElement, Workbench } from "@framework/Workbench";
+import { LoginDialog } from "@framework/internal/components/LoginDialog";
 import { NavBar } from "@framework/internal/components/NavBar";
 import { SettingsContentPanels } from "@framework/internal/components/SettingsContentPanels";
-import { LoginDialog } from "@framework/internal/components/LoginDialog";
 import { AuthProvider } from "@framework/internal/providers/AuthProvider";
 import { CustomQueryClientProvider } from "@framework/internal/providers/QueryClientProvider";
 
@@ -30,8 +30,8 @@ function App() {
                 <>
                     <LoginDialog />
                     <div className="h-screen flex flex-row">
-                    <NavBar workbench={workbench} />
-                    <SettingsContentPanels workbench={workbench} />
+                        <NavBar workbench={workbench} />
+                        <SettingsContentPanels workbench={workbench} />
                     </div>
                 </>
             </CustomQueryClientProvider>
