@@ -36,7 +36,7 @@ export type VectorSelectorProps = SmartNodeSelectorProps & {
 export type VectorSelectorComponentProps = { [K in keyof VectorSelectorProps]-?: VectorSelectorProps[K] };
 
 export class VectorSelectorComponent extends SmartNodeSelectorComponent {
-    public props: VectorSelectorComponentProps;
+    props: VectorSelectorComponentProps;
     protected vectorDefinitions: VectorDefinitionsType;
 
     constructor(props: VectorSelectorComponentProps) {
@@ -164,7 +164,7 @@ export class VectorSelectorComponent extends SmartNodeSelectorComponent {
         }
     }
 
-    createNewNodeSelection(nodePath: string[] = [""]): VectorSelection {
+    protected createNewNodeSelection(nodePath: string[] = [""]): VectorSelection {
         return new VectorSelection({
             focussedLevel: nodePath.length - 1,
             nodePath: nodePath,
@@ -177,7 +177,7 @@ export class VectorSelectorComponent extends SmartNodeSelectorComponent {
         });
     }
 
-    modifyTreeData(
+    private modifyTreeData(
         treeData: TreeDataNode[],
         numMetaNodes: number,
         vectorDefinitions: VectorDefinitionsType
@@ -241,7 +241,7 @@ export class VectorSelectorComponent extends SmartNodeSelectorComponent {
         return populateData(treeData, 0);
     }
 
-    handleArrowLeftKeyEvent(e: React.KeyboardEvent<HTMLInputElement>, eventType: KeyEventType): void {
+    protected handleArrowLeftKeyEvent(e: React.KeyboardEvent<HTMLInputElement>, eventType: KeyEventType): void {
         const eventTarget = e.target as HTMLInputElement;
         if (!eventTarget) {
             return;
@@ -273,7 +273,7 @@ export class VectorSelectorComponent extends SmartNodeSelectorComponent {
         return;
     }
 
-    handleInputChange(e: React.ChangeEvent<HTMLInputElement>): void {
+    protected handleInputChange(e: React.ChangeEvent<HTMLInputElement>): void {
         super.handleInputChange(e);
         this.noUserInputSelect = true;
     }

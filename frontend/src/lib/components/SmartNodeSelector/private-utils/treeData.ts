@@ -7,11 +7,11 @@ export enum MatchType {
 }
 
 export class TreeData {
-    private treeData: TreeDataNode[];
-    private delimiter: string;
-    private stringifiedData: string;
-    private nodeData: TreeDataNodeMetaData[];
-    private allowOrOperator: boolean;
+    private _treeData: TreeDataNode[];
+    private _delimiter: string;
+    private _stringifiedData: string;
+    private _nodeData: TreeDataNodeMetaData[];
+    private _allowOrOperator: boolean;
 
     constructor({
         treeData,
@@ -22,11 +22,11 @@ export class TreeData {
         delimiter: string;
         allowOrOperator: boolean;
     }) {
-        this.treeData = treeData;
-        this.delimiter = delimiter;
-        this.nodeData = [];
-        this.stringifiedData = "";
-        this.allowOrOperator = allowOrOperator;
+        this._treeData = treeData;
+        this._delimiter = delimiter;
+        this._nodeData = [];
+        this._stringifiedData = "";
+        this._allowOrOperator = allowOrOperator;
 
         this.populateNodes();
     }
@@ -35,12 +35,12 @@ export class TreeData {
         let indexCount = 0;
         let stringifiedData = "";
         const nodeData: TreeDataNodeMetaData[] = [];
-        const delimiter = this.delimiter;
+        const delimiter = this._delimiter;
         const populateNode = (indices: number[] = [], nodePath: string): void => {
             if (indices.length == 0) {
                 throw "Indices array must at least have one element";
             }
-            let node: TreeDataNode = this.treeData[indices[0]];
+            let node: TreeDataNode = this._treeData[indices[0]];
             for (let i = 1; i < indices.length; i++) {
                 if (node.children) node = node.children[indices[i]];
                 else throw "Implementation error";
@@ -71,11 +71,11 @@ export class TreeData {
                 stringifiedData += `"${nodePath}${nodePath !== "" ? delimiter : ""}{${index}}${node.name}" `;
             }
         };
-        for (let i = 0; i < this.treeData.length; i++) {
+        for (let i = 0; i < this._treeData.length; i++) {
             populateNode([i], "");
         }
-        this.stringifiedData = stringifiedData;
-        this.nodeData = nodeData;
+        this._stringifiedData = stringifiedData;
+        this._nodeData = nodeData;
         if (nodeData.length != indexCount) {
             throw "implementation error";
         }
@@ -85,17 +85,17 @@ export class TreeData {
         let nodePathString = "";
         const lastNode = this.adjustNodeName(nodePath[nodePath.length - 1]);
         for (let i = 0; i < nodePath.length - 1; i++) {
-            nodePathString += `\\{(\\d+)\\}${this.adjustNodeName(nodePath[i])}${this.delimiter}`;
+            nodePathString += `\\{(\\d+)\\}${this.adjustNodeName(nodePath[i])}${this._delimiter}`;
         }
 
         const re = exactMatch
             ? RegExp(`"${nodePathString}\\{(\\d+)\\}${lastNode}"`, "g")
-            : RegExp(`"${nodePathString}\\{(\\d+)\\}${lastNode}([^${this.delimiter}"]*)"`, "g");
+            : RegExp(`"${nodePathString}\\{(\\d+)\\}${lastNode}([^${this._delimiter}"]*)"`, "g");
         let count = 0;
 
         // Can be replaced with matchAll as soon as ECMAScript 2021 is declared standard in this project.
         // see: https://tc39.es/ecma262/#sec-string.prototype.matchall
-        while (re.exec(this.stringifiedData) !== null) {
+        while (re.exec(this._stringifiedData) !== null) {
             count++;
         }
         return count;
@@ -111,8 +111,8 @@ export class TreeData {
     }
 
     private activateOrStatements(nodeName: string): string {
-        if (this.allowOrOperator) {
-            const reg = RegExp(`^(([^${this.delimiter}\\|]+\\|)+([^${this.delimiter}\\|]+){1})$`);
+        if (this._allowOrOperator) {
+            const reg = RegExp(`^(([^${this._delimiter}\\|]+\\|)+([^${this._delimiter}\\|]+){1})$`);
             const match = nodeName.match(reg);
             if (match) {
                 if (match[1] !== "") {
@@ -138,18 +138,18 @@ export class TreeData {
         let nodePathString = "";
         for (let i = 0; i < nodePath.length; i++) {
             if (i > 0) {
-                nodePathString += this.delimiter;
+                nodePathString += this._delimiter;
             }
             nodePathString += `\\{(\\d+)\\}${this.adjustNodeName(nodePath[i])}`;
         }
         const re = RegExp(`"${nodePathString}${completeNodePath ? `"` : ``}`);
-        const match = this.stringifiedData.match(re);
+        const match = this._stringifiedData.match(re);
         if (match === null) {
             return null;
         }
         const result: TreeDataNodeMetaData[] = [];
         for (let i = 1; i < match.length; i++) {
-            result.push(this.nodeData[parseInt(match[i])]);
+            result.push(this._nodeData[parseInt(match[i])]);
         }
         return result;
     }
@@ -167,10 +167,10 @@ export class TreeData {
         const searchTerm = nodePath[nodePath.length - 1];
         let nodePathString = "";
         for (let i = 0; i < nodePath.length - 1; i++) {
-            nodePathString += `\\{(\\d+)\\}${this.adjustNodeName(nodePath[i])}${this.delimiter}`;
+            nodePathString += `\\{(\\d+)\\}${this.adjustNodeName(nodePath[i])}${this._delimiter}`;
         }
 
-        const re = RegExp(`"${nodePathString}\\{(\\d+)\\}([^${this.delimiter}"]*)`, "g");
+        const re = RegExp(`"${nodePathString}\\{(\\d+)\\}([^${this._delimiter}"]*)`, "g");
 
         const suggestions: {
             nodeName: string;
@@ -181,8 +181,8 @@ export class TreeData {
         // Can be replaced with matchAll as soon as ECMAScript 2021 is declared standard in this project.
         // see: https://tc39.es/ecma262/#sec-string.prototype.matchall
         let match: RegExpExecArray | null;
-        while ((match = re.exec(this.stringifiedData)) !== null) {
-            const metaData = this.nodeData[parseInt(match[match.length - 2])];
+        while ((match = re.exec(this._stringifiedData)) !== null) {
+            const metaData = this._nodeData[parseInt(match[match.length - 2])];
             const searchTermRe = RegExp(`.*?(${this.adjustNodeName(searchTerm)}).*?`, "i");
             if (
                 searchTermRe.test(match[match.length - 1]) ||
@@ -196,7 +196,7 @@ export class TreeData {
 
                 suggestions.push({
                     nodeName: match[match.length - 1],
-                    metaData: this.nodeData[parseInt(match[match.length - 2])],
+                    metaData: this._nodeData[parseInt(match[match.length - 2])],
                 });
             }
         }
@@ -207,10 +207,10 @@ export class TreeData {
     findChildNodes(nodePath: string[]): { nodeName: string; metaData: TreeDataNodeMetaData }[] {
         let nodePathString = "";
         for (let i = 0; i < nodePath.length; i++) {
-            nodePathString += `\\{(\\d+)\\}${this.adjustNodeName(nodePath[i])}${this.delimiter}`;
+            nodePathString += `\\{(\\d+)\\}${this.adjustNodeName(nodePath[i])}${this._delimiter}`;
         }
 
-        const re = RegExp(`"${nodePathString}\\{(\\d+)\\}([^${this.delimiter}"]*)`, "g");
+        const re = RegExp(`"${nodePathString}\\{(\\d+)\\}([^${this._delimiter}"]*)`, "g");
 
         const childNodes: {
             nodeName: string;
@@ -221,7 +221,7 @@ export class TreeData {
         // Can be replaced with matchAll as soon as ECMAScript 2021 is declared standard in this project.
         // see: https://tc39.es/ecma262/#sec-string.prototype.matchall
         let match: RegExpExecArray | null;
-        while ((match = re.exec(this.stringifiedData)) !== null) {
+        while ((match = re.exec(this._stringifiedData)) !== null) {
             const count = nodeNames.size;
             nodeNames.add(match[nodePath.length + 1]);
             if (count == nodeNames.size) {
@@ -230,7 +230,7 @@ export class TreeData {
 
             childNodes.push({
                 nodeName: match[nodePath.length + 2],
-                metaData: this.nodeData[parseInt(match[nodePath.length + 1])],
+                metaData: this._nodeData[parseInt(match[nodePath.length + 1])],
             });
         }
         return childNodes;
@@ -244,16 +244,16 @@ export class TreeData {
         const lastNode = this.adjustNodeName(nodePath[nodePath.length - 1]);
         let nodePathString = "";
         for (let i = 0; i < nodePath.length - 1; i++) {
-            nodePathString += `\\{(\\d+)\\}${this.adjustNodeName(nodePath[i])}${this.delimiter}`;
+            nodePathString += `\\{(\\d+)\\}${this.adjustNodeName(nodePath[i])}${this._delimiter}`;
         }
 
         const re = RegExp(
-            `"${nodePathString}\\{(\\d+)\\}(${this.makeExpressionCaseInsensitive(lastNode)})("|${this.delimiter})`
+            `"${nodePathString}\\{(\\d+)\\}(${this.makeExpressionCaseInsensitive(lastNode)})("|${this._delimiter})`
         );
 
         // Can be replaced with matchAll as soon as ECMAScript 2021 is declared standard in this project.
         // see: https://tc39.es/ecma262/#sec-string.prototype.matchall
-        const match = re.exec(this.stringifiedData);
+        const match = re.exec(this._stringifiedData);
         if (match) {
             return match[match.length - 2];
         }
@@ -281,7 +281,7 @@ export class TreeData {
         let nodePathString = "";
         for (let i = 0; i < nodePath.length; i++) {
             if (i > 0) {
-                nodePathString += this.delimiter;
+                nodePathString += this._delimiter;
             }
             nodePathString += `\\{(\\d+)\\}${this.adjustNodeName(nodePath[i])}`;
         }
@@ -290,8 +290,8 @@ export class TreeData {
                 ? RegExp(`"(${nodePathString})"`, "g")
                 : matchType === MatchType.partialMatch
                 ? RegExp(
-                      `"(${nodePathString})[^"${this.escapeRegExp(this.delimiter)}]*["${this.escapeRegExp(
-                          this.delimiter
+                      `"(${nodePathString})[^"${this.escapeRegExp(this._delimiter)}]*["${this.escapeRegExp(
+                          this._delimiter
                       )}]{1}`,
                       "g"
                   )
@@ -304,11 +304,11 @@ export class TreeData {
         // Can be replaced with matchAll as soon as ECMAScript 2021 is declared standard in this project.
         // see: https://tc39.es/ecma262/#sec-string.prototype.matchall
         let match: RegExpExecArray | null;
-        while ((match = re.exec(this.stringifiedData)) !== null) {
+        while ((match = re.exec(this._stringifiedData)) !== null) {
             const nodesInPath: TreeDataNodeMetaData[] = [];
             for (let i = 0; i < idGroupIndices.length; i++) {
                 const index = idGroupIndices[i] + 2;
-                nodesInPath.push(this.nodeData[parseInt(match[index])]);
+                nodesInPath.push(this._nodeData[parseInt(match[index])]);
             }
             metaData.push(nodesInPath);
             nodePaths.push(this.cleanNodeName(match[1]));

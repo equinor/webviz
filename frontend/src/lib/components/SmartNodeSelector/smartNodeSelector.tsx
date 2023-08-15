@@ -102,9 +102,8 @@ export class SmartNodeSelectorComponent extends React.Component<SmartNodeSelecto
     protected updateFromWithin: boolean;
     protected tabbedInFromOutside: boolean;
 
-    public state: SmartNodeSelectorStateType;
-    public static propTypes: Record<string, unknown>;
-    public static defaultProps: Partial<SmartNodeSelectorProps> = {
+    state: SmartNodeSelectorStateType;
+    static defaultProps: Partial<SmartNodeSelectorProps> = {
         maxNumSelectedNodes: -1,
         delimiter: ":",
         numMetaNodes: 0,
@@ -301,7 +300,7 @@ export class SmartNodeSelectorComponent extends React.Component<SmartNodeSelecto
         this.justUpdated = true;
     }
 
-    createNewNodeSelection(nodePath: string[] = [""]): TreeNodeSelection {
+    protected createNewNodeSelection(nodePath: string[] = [""]): TreeNodeSelection {
         return new TreeNodeSelection({
             focussedLevel: nodePath.length - 1,
             nodePath: nodePath,
@@ -314,15 +313,15 @@ export class SmartNodeSelectorComponent extends React.Component<SmartNodeSelecto
         });
     }
 
-    lastNodeSelection(): TreeNodeSelection {
+    protected lastNodeSelection(): TreeNodeSelection {
         return this.state.nodeSelections[this.countTags() - 1];
     }
 
-    currentNodeSelection(): TreeNodeSelection {
+    protected currentNodeSelection(): TreeNodeSelection {
         return this.state.nodeSelections[this.currentTagIndex()];
     }
 
-    selectLastInput(e: React.MouseEvent<HTMLDivElement, globalThis.MouseEvent>): void {
+    protected selectLastInput(e: React.MouseEvent<HTMLDivElement, globalThis.MouseEvent>): void {
         if (!this.selectionHasStarted && this.countSelectedTags() === 0) {
             this.setFocusOnTagInput(this.countTags() - 1);
             e.preventDefault();
@@ -330,7 +329,7 @@ export class SmartNodeSelectorComponent extends React.Component<SmartNodeSelecto
         this.selectionHasStarted = false;
     }
 
-    setFocusOnTagInput(index: number, setSelection: Direction | undefined = undefined): void {
+    protected setFocusOnTagInput(index: number, setSelection: Direction | undefined = undefined): void {
         if (index >= 0 && index < this.countTags()) {
             if (this.state.nodeSelections.length > index && index >= 0) {
                 const inputField = (this.state.nodeSelections[index]?.getRef() as React.RefObject<HTMLInputElement>)
@@ -349,16 +348,16 @@ export class SmartNodeSelectorComponent extends React.Component<SmartNodeSelecto
         }
     }
 
-    currentTagIndex(): number {
+    protected currentTagIndex(): number {
         return this.state.currentTagIndex;
     }
 
-    hasLastEmptyTag(): boolean {
+    protected hasLastEmptyTag(): boolean {
         const lastTag = this.state.nodeSelections[this.state.nodeSelections.length - 1];
         return !(lastTag.displayAsTag() || lastTag.isValid());
     }
 
-    incrementCurrentTagIndex(
+    protected incrementCurrentTagIndex(
         callback: () => void = () => {
             return undefined;
         }
@@ -373,7 +372,7 @@ export class SmartNodeSelectorComponent extends React.Component<SmartNodeSelecto
         return false;
     }
 
-    decrementCurrentTagIndex(
+    protected decrementCurrentTagIndex(
         callback: () => void = () => {
             return undefined;
         }
@@ -388,15 +387,15 @@ export class SmartNodeSelectorComponent extends React.Component<SmartNodeSelecto
         return false;
     }
 
-    nodeSelection(index: number): TreeNodeSelection {
+    protected nodeSelection(index: number): TreeNodeSelection {
         return this.state.nodeSelections[index];
     }
 
-    countTags(): number {
+    protected countTags(): number {
         return this.state.nodeSelections.length;
     }
 
-    countValidSelections(): number {
+    protected countValidSelections(): number {
         let count = 0;
         let i = 0;
         for (const nodeSelection of this.state.nodeSelections) {
@@ -408,11 +407,11 @@ export class SmartNodeSelectorComponent extends React.Component<SmartNodeSelecto
         return count;
     }
 
-    focusCurrentTag(setSelection: Direction | undefined = undefined): void {
+    protected focusCurrentTag(setSelection: Direction | undefined = undefined): void {
         this.setFocusOnTagInput(this.currentTagIndex(), setSelection);
     }
 
-    doesStateChange({
+    protected doesStateChange({
         nodeSelections,
         currentTagIndex,
         suggestionsVisible,
@@ -430,7 +429,7 @@ export class SmartNodeSelectorComponent extends React.Component<SmartNodeSelecto
         return check;
     }
 
-    updateState({
+    protected updateState({
         nodeSelections = undefined,
         currentTagIndex = undefined,
         suggestionsVisible = undefined,
@@ -497,7 +496,7 @@ export class SmartNodeSelectorComponent extends React.Component<SmartNodeSelecto
         }
     }
 
-    maybeShowSuggestions(showAll = false): void {
+    protected maybeShowSuggestions(showAll = false): void {
         const { numSecondsUntilSuggestionsAreShown } = this.props;
         if (this.suggestionTimer) clearTimeout(this.suggestionTimer);
         if ((this.currentNodeSelection() !== undefined && !this.currentNodeSelection().isValid()) || showAll) {
@@ -508,7 +507,7 @@ export class SmartNodeSelectorComponent extends React.Component<SmartNodeSelecto
         }
     }
 
-    showSuggestions(showAll = false): void {
+    protected showSuggestions(showAll = false): void {
         if (!document.activeElement || this.currentTagIndex() < 0) return;
         if (this.state.suggestionsVisible && !showAll) {
             return;
@@ -524,7 +523,7 @@ export class SmartNodeSelectorComponent extends React.Component<SmartNodeSelecto
         }
     }
 
-    hideSuggestions({
+    protected hideSuggestions({
         callback = undefined,
         forceUpdate = undefined,
     }: {
@@ -540,7 +539,7 @@ export class SmartNodeSelectorComponent extends React.Component<SmartNodeSelecto
         });
     }
 
-    useSuggestion(e: globalThis.KeyboardEvent | React.MouseEvent<HTMLDivElement>, suggestion: string): void {
+    protected useSuggestion(e: globalThis.KeyboardEvent | React.MouseEvent<HTMLDivElement>, suggestion: string): void {
         const nodeSelection = this.currentNodeSelection();
         this.noUserInputSelect = true;
 
@@ -569,16 +568,16 @@ export class SmartNodeSelectorComponent extends React.Component<SmartNodeSelecto
         e.stopPropagation();
     }
 
-    letMaxNumValuesBlink(): void {
+    protected letMaxNumValuesBlink(): void {
         if (this.props.maxNumSelectedNodes !== 1) {
             let numBlinks = 0;
             const numberOfTagsDiv = (this.refNumberOfTags as React.RefObject<HTMLDivElement>).current as HTMLDivElement;
             const blinkTimer = setInterval(() => {
                 numBlinks++;
                 if (numBlinks % 2 === 0) {
-                    numberOfTagsDiv.classList.add("SmartNodeSelector__Warning");
+                    numberOfTagsDiv.classList.add("!text-orange-500");
                 } else {
-                    numberOfTagsDiv.classList.remove("SmartNodeSelector__Warning");
+                    numberOfTagsDiv.classList.remove("!text-orange-500");
                 }
                 if (numBlinks === 7) {
                     clearInterval(blinkTimer);
@@ -587,27 +586,27 @@ export class SmartNodeSelectorComponent extends React.Component<SmartNodeSelecto
         }
     }
 
-    containsActiveElement(): boolean {
+    protected containsActiveElement(): boolean {
         if (document.activeElement && document.activeElement instanceof HTMLElement && this.ref.current) {
             return this.ref.current.contains(document.activeElement as HTMLElement);
         }
         return false;
     }
 
-    checkIfSelectionIsDuplicate(nodeSelection: TreeNodeSelection, index: number): boolean {
+    protected checkIfSelectionIsDuplicate(nodeSelection: TreeNodeSelection, index: number): boolean {
         const duplicateSelections = this.state.nodeSelections.filter(
             (entry, i) => i < index && entry.containsOrIsContainedBy(nodeSelection)
         );
         return duplicateSelections.length > 0;
     }
 
-    blurActiveElement(): void {
+    protected blurActiveElement(): void {
         if (document.activeElement && document.activeElement instanceof HTMLElement) {
             (document.activeElement as HTMLElement).blur();
         }
     }
 
-    handleClickOutside(event: globalThis.MouseEvent): void {
+    protected handleClickOutside(event: globalThis.MouseEvent): void {
         if (this.state.hasError) {
             return;
         }
@@ -630,7 +629,7 @@ export class SmartNodeSelectorComponent extends React.Component<SmartNodeSelecto
         }
     }
 
-    handleGlobalKeyDown(e: globalThis.KeyboardEvent): void {
+    protected handleGlobalKeyDown(e: globalThis.KeyboardEvent): void {
         if (this.state.hasError) {
             return;
         }
@@ -646,7 +645,7 @@ export class SmartNodeSelectorComponent extends React.Component<SmartNodeSelecto
         }
     }
 
-    handleMouseUp(e: globalThis.MouseEvent): void {
+    protected handleMouseUp(e: globalThis.MouseEvent): void {
         this.mouseButtonDown = false;
         document.body.classList.remove("user-select-none");
         if (this.countSelectedTags() > 0) {
@@ -657,7 +656,7 @@ export class SmartNodeSelectorComponent extends React.Component<SmartNodeSelecto
         }
     }
 
-    handleMouseDown(e: React.MouseEvent<HTMLDivElement, globalThis.MouseEvent>): void {
+    protected handleMouseDown(e: React.MouseEvent<HTMLDivElement, globalThis.MouseEvent>): void {
         if (this.state.hasError) {
             return;
         }
@@ -672,7 +671,7 @@ export class SmartNodeSelectorComponent extends React.Component<SmartNodeSelecto
         }
     }
 
-    handleMouseMove(e: globalThis.MouseEvent): void {
+    protected handleMouseMove(e: globalThis.MouseEvent): void {
         if (!this.mouseButtonDown) return;
 
         const manhattanLength =
@@ -708,7 +707,7 @@ export class SmartNodeSelectorComponent extends React.Component<SmartNodeSelecto
         let firstSelectedIndex = 99999999999;
         let lastSelectedIndex = -1;
 
-        const tags = domNode.getElementsByClassName("SmartNodeSelector__Border");
+        const tags = domNode.getElementsByClassName("SmartNodeSelector__Tag");
 
         if (top <= inputFieldBoundingRect.top) {
             firstSelectedIndex = 0;
@@ -739,15 +738,15 @@ export class SmartNodeSelectorComponent extends React.Component<SmartNodeSelecto
         this.markTagsAsSelected(firstSelectedIndex, lastSelectedIndex);
     }
 
-    selectedTags(): TreeNodeSelection[] {
+    protected selectedTags(): TreeNodeSelection[] {
         return this.state.nodeSelections.filter((el) => el.isSelected());
     }
 
-    countSelectedTags(): number {
+    protected countSelectedTags(): number {
         return this.selectedTags().length;
     }
 
-    selectTag(index: number): void {
+    protected selectTag(index: number): void {
         this.blurActiveElement();
         if (this.nodeSelection(index).isEmpty()) index--;
 
@@ -761,7 +760,7 @@ export class SmartNodeSelectorComponent extends React.Component<SmartNodeSelecto
         this.hideSuggestions({ forceUpdate: true });
     }
 
-    markTagsAsSelected(startIndex: number, endIndex: number): void {
+    protected markTagsAsSelected(startIndex: number, endIndex: number): void {
         if (this.props.maxNumSelectedNodes !== 1) {
             this.state.nodeSelections.map((nodeSelection, index) => {
                 if (index >= startIndex && index <= endIndex) {
@@ -774,7 +773,7 @@ export class SmartNodeSelectorComponent extends React.Component<SmartNodeSelecto
         }
     }
 
-    unselectAllTags({
+    protected unselectAllTags({
         newCurrentTagIndex = undefined,
         showSuggestions = false,
         focusInput = false,
@@ -793,7 +792,7 @@ export class SmartNodeSelectorComponent extends React.Component<SmartNodeSelecto
         });
     }
 
-    removeSelectedTags(): void {
+    protected removeSelectedTags(): void {
         let newSelections = this.state.nodeSelections.filter((tag) => !tag.isSelected());
         const numRemovedTags = this.countTags() - newSelections.length;
         let newTagIndex = this.currentTagIndex();
@@ -816,7 +815,7 @@ export class SmartNodeSelectorComponent extends React.Component<SmartNodeSelecto
         });
     }
 
-    removeTag(
+    protected removeTag(
         index: number,
         setNewFocus: boolean,
         e?: React.MouseEvent<HTMLButtonElement, globalThis.MouseEvent>
@@ -846,7 +845,7 @@ export class SmartNodeSelectorComponent extends React.Component<SmartNodeSelecto
         }
     }
 
-    clearAllTags(e: React.MouseEvent<HTMLButtonElement, globalThis.MouseEvent>): void {
+    protected clearAllTags(e: React.MouseEvent<HTMLButtonElement, globalThis.MouseEvent>): void {
         this.updateState({
             nodeSelections: [this.createNewNodeSelection()],
             currentTagIndex: 0,
@@ -863,7 +862,7 @@ export class SmartNodeSelectorComponent extends React.Component<SmartNodeSelecto
         e.preventDefault();
     }
 
-    handleTagSelection(e: globalThis.KeyboardEvent): void {
+    protected handleTagSelection(e: globalThis.KeyboardEvent): void {
         if (e.shiftKey) {
             if (this.countSelectedTags() > 0) {
                 let selectionChanged = false;
@@ -912,12 +911,12 @@ export class SmartNodeSelectorComponent extends React.Component<SmartNodeSelecto
         }
     }
 
-    copyAllSelectedTags(): void {
+    protected copyAllSelectedTags(): void {
         const selectedTags = this.selectedTags();
         this.clipboardData = selectedTags;
     }
 
-    pasteTags(e: React.KeyboardEvent<HTMLInputElement>): void {
+    protected pasteTags(e: React.KeyboardEvent<HTMLInputElement>): void {
         if (this.clipboardData === null) return;
         const selections = this.clipboardData;
         if (selections && selections.length > 0) {
@@ -946,7 +945,7 @@ export class SmartNodeSelectorComponent extends React.Component<SmartNodeSelecto
         e.preventDefault();
     }
 
-    canAddSelection(): boolean {
+    protected canAddSelection(): boolean {
         return (
             ((this.countValidSelections() < this.props.maxNumSelectedNodes &&
                 this.countTags() < this.props.maxNumSelectedNodes) ||
@@ -955,7 +954,7 @@ export class SmartNodeSelectorComponent extends React.Component<SmartNodeSelecto
         );
     }
 
-    updateSelectedTagsAndNodes(initialUpdate = false): void {
+    protected updateSelectedTagsAndNodes(initialUpdate = false): void {
         const { onChange, maxNumSelectedNodes } = this.props;
         const selectedTags: string[] = [];
         const selectedNodes: string[] = [];
@@ -994,7 +993,7 @@ export class SmartNodeSelectorComponent extends React.Component<SmartNodeSelecto
         this.numValidSelections = this.countValidSelections();
     }
 
-    debugOutput(): React.ReactNode | null {
+    protected debugOutput(): React.ReactNode | null {
         if (this.currentNodeSelection()) {
             return (
                 <div>
@@ -1014,7 +1013,7 @@ export class SmartNodeSelectorComponent extends React.Component<SmartNodeSelecto
         }
     }
 
-    handleInputSelect(e: React.SyntheticEvent<HTMLInputElement, Event>, index: number): void {
+    protected handleInputSelect(e: React.SyntheticEvent<HTMLInputElement, Event>, index: number): void {
         if (this.noUserInputSelect) {
             this.noUserInputSelect = false;
             return;
@@ -1061,7 +1060,7 @@ export class SmartNodeSelectorComponent extends React.Component<SmartNodeSelecto
         e.stopPropagation();
     }
 
-    handleEnterKeyEvent(e: React.KeyboardEvent<HTMLInputElement>, eventType: KeyEventType): void {
+    protected handleEnterKeyEvent(e: React.KeyboardEvent<HTMLInputElement>, eventType: KeyEventType): void {
         const eventTarget = e.target as HTMLInputElement;
         if (!eventTarget) {
             return;
@@ -1092,7 +1091,7 @@ export class SmartNodeSelectorComponent extends React.Component<SmartNodeSelecto
         }
     }
 
-    handleArrowRightKeyEvent(e: React.KeyboardEvent<HTMLInputElement>, eventType: KeyEventType): void {
+    protected handleArrowRightKeyEvent(e: React.KeyboardEvent<HTMLInputElement>, eventType: KeyEventType): void {
         const eventTarget = e.target as HTMLInputElement;
         if (!eventTarget) {
             return;
@@ -1152,7 +1151,7 @@ export class SmartNodeSelectorComponent extends React.Component<SmartNodeSelecto
         }
     }
 
-    handleArrowLeftKeyEvent(e: React.KeyboardEvent<HTMLInputElement>, eventType: KeyEventType): void {
+    protected handleArrowLeftKeyEvent(e: React.KeyboardEvent<HTMLInputElement>, eventType: KeyEventType): void {
         const eventTarget = e.target as HTMLInputElement;
         if (!eventTarget) {
             return;
@@ -1198,7 +1197,7 @@ export class SmartNodeSelectorComponent extends React.Component<SmartNodeSelecto
         }
     }
 
-    handleBackspaceKeyEvent(e: React.KeyboardEvent<HTMLInputElement>, eventType: KeyEventType): void {
+    protected handleBackspaceKeyEvent(e: React.KeyboardEvent<HTMLInputElement>, eventType: KeyEventType): void {
         const eventTarget = e.target as HTMLInputElement;
         if (!eventTarget) {
             return;
@@ -1235,7 +1234,7 @@ export class SmartNodeSelectorComponent extends React.Component<SmartNodeSelecto
         }
     }
 
-    handleDeleteKeyEvent(e: React.KeyboardEvent<HTMLInputElement>, eventType: KeyEventType): void {
+    protected handleDeleteKeyEvent(e: React.KeyboardEvent<HTMLInputElement>, eventType: KeyEventType): void {
         const eventTarget = e.target as HTMLInputElement;
         if (!eventTarget) {
             return;
@@ -1259,13 +1258,13 @@ export class SmartNodeSelectorComponent extends React.Component<SmartNodeSelecto
         }
     }
 
-    handleVKeyEvent(e: React.KeyboardEvent<HTMLInputElement>, eventType: KeyEventType): void {
+    protected handleVKeyEvent(e: React.KeyboardEvent<HTMLInputElement>, eventType: KeyEventType): void {
         if (eventType === KeyEventType.KeyDown && e.ctrlKey && this.currentTagIndex() === this.countTags() - 1) {
             this.pasteTags(e);
         }
     }
 
-    letCurrentTagShake(): void {
+    protected letCurrentTagShake(): void {
         this.updateState({
             currentTagShaking: true,
             callback: () => {
@@ -1281,7 +1280,7 @@ export class SmartNodeSelectorComponent extends React.Component<SmartNodeSelecto
         });
     }
 
-    handleDelimiterKeyEvent(e: React.KeyboardEvent<HTMLInputElement>, eventType: KeyEventType): void {
+    protected handleDelimiterKeyEvent(e: React.KeyboardEvent<HTMLInputElement>, eventType: KeyEventType): void {
         const eventTarget = e.target as HTMLInputElement;
         if (!eventTarget) {
             return;
@@ -1321,7 +1320,7 @@ export class SmartNodeSelectorComponent extends React.Component<SmartNodeSelecto
         }
     }
 
-    handleTabKeyEvent(e: React.KeyboardEvent<HTMLInputElement>, eventType: KeyEventType): void {
+    protected handleTabKeyEvent(e: React.KeyboardEvent<HTMLInputElement>, eventType: KeyEventType): void {
         if (eventType === KeyEventType.KeyDown) {
             if (this.containsActiveElement()) {
                 if (e.shiftKey && this.currentTagIndex() === 0) {
@@ -1374,7 +1373,7 @@ export class SmartNodeSelectorComponent extends React.Component<SmartNodeSelecto
         e.preventDefault();
     }
 
-    handleHomeKeyEvent(e: React.KeyboardEvent<HTMLInputElement>, eventType: KeyEventType): void {
+    protected handleHomeKeyEvent(e: React.KeyboardEvent<HTMLInputElement>, eventType: KeyEventType): void {
         const eventTarget = e.target as HTMLInputElement;
         if (!eventTarget) {
             return;
@@ -1413,7 +1412,7 @@ export class SmartNodeSelectorComponent extends React.Component<SmartNodeSelecto
         }
     }
 
-    handleEndKeyEvent(e: React.KeyboardEvent<HTMLInputElement>, eventType: KeyEventType): void {
+    protected handleEndKeyEvent(e: React.KeyboardEvent<HTMLInputElement>, eventType: KeyEventType): void {
         const eventTarget = e.target as HTMLInputElement;
         if (!eventTarget) {
             return;
@@ -1447,7 +1446,7 @@ export class SmartNodeSelectorComponent extends React.Component<SmartNodeSelecto
         }
     }
 
-    handleInputKeyDown(e: React.KeyboardEvent<HTMLInputElement>): void {
+    protected handleInputKeyDown(e: React.KeyboardEvent<HTMLInputElement>): void {
         this.keyPressed = true;
         switch (e.key) {
             case "Enter":
@@ -1491,7 +1490,7 @@ export class SmartNodeSelectorComponent extends React.Component<SmartNodeSelecto
         }
     }
 
-    handleInputKeyUp(e: React.KeyboardEvent<HTMLInputElement>): void {
+    protected handleInputKeyUp(e: React.KeyboardEvent<HTMLInputElement>): void {
         if (e.key === this.props.delimiter && this.justUpdated) {
             this.justUpdated = false;
             e.preventDefault();
@@ -1528,7 +1527,7 @@ export class SmartNodeSelectorComponent extends React.Component<SmartNodeSelecto
         }
     }
 
-    getSelectedInputNode(value: string, selectionStart: number | null): string {
+    protected getSelectedInputNode(value: string, selectionStart: number | null): string {
         const split = value.split(this.props.delimiter);
         if (selectionStart !== null) {
             let index = 0;
@@ -1546,7 +1545,7 @@ export class SmartNodeSelectorComponent extends React.Component<SmartNodeSelecto
         }
     }
 
-    handleInputChange(e: React.ChangeEvent<HTMLInputElement>): void {
+    protected handleInputChange(e: React.ChangeEvent<HTMLInputElement>): void {
         if (!e.target) {
             return;
         }
@@ -1584,7 +1583,7 @@ export class SmartNodeSelectorComponent extends React.Component<SmartNodeSelecto
         this.maybeShowSuggestions();
     }
 
-    handleInputBlur(index: number): void {
+    protected handleInputBlur(index: number): void {
         if (!this.blurEnabled) {
             return;
         }
@@ -1595,11 +1594,11 @@ export class SmartNodeSelectorComponent extends React.Component<SmartNodeSelecto
         }
     }
 
-    enableBlur(): void {
+    protected enableBlur(): void {
         this.blurEnabled = true;
     }
 
-    disableBlur(): void {
+    protected disableBlur(): void {
         this.blurEnabled = false;
     }
 
@@ -1669,8 +1668,6 @@ export class SmartNodeSelectorComponent extends React.Component<SmartNodeSelecto
                                 }
                                 updateSelectedTagsAndNodes={this.updateSelectedTagsAndNodes}
                                 shake={this.state.currentTagShaking && index === this.currentTagIndex()}
-                                enableInputBlur={this.enableBlur}
-                                disableInputBlur={this.disableBlur}
                             />
                         ))}
                     </ul>

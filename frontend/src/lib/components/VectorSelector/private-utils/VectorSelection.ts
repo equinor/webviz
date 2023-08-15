@@ -1,7 +1,7 @@
 import { MatchType, TreeData, TreeNodeSelection } from "../../SmartNodeSelector";
 
 export class VectorSelection extends TreeNodeSelection {
-    private myTreeData: TreeData;
+    private _myTreeData: TreeData;
 
     constructor(argumentObject: {
         focussedLevel: number;
@@ -14,7 +14,7 @@ export class VectorSelection extends TreeNodeSelection {
         allowOrOperator: boolean;
     }) {
         super(argumentObject);
-        this.myTreeData = argumentObject.treeData;
+        this._myTreeData = argumentObject.treeData;
     }
 
     setNodeName(data: string, index?: number): void {
@@ -131,7 +131,7 @@ export class VectorSelection extends TreeNodeSelection {
     }
 
     exactlyMatchedNodePaths(): Array<string> {
-        const selections = this.myTreeData.findNodes(super.getNodePath(), MatchType.fullMatch).nodePaths;
+        const selections = this._myTreeData.findNodes(super.getNodePath(), MatchType.fullMatch).nodePaths;
         const nodePaths: string[] = [];
         for (const selection of selections) {
             const split = selection.split(super.getDelimiter());
@@ -148,7 +148,7 @@ export class VectorSelection extends TreeNodeSelection {
             selected: false,
             delimiter: super.getDelimiter(),
             numMetaNodes: super.getNumMetaNodes(),
-            treeData: this.myTreeData,
+            treeData: this._myTreeData,
             caseInsensitiveMatching: super.caseInsensitiveMatching,
             allowOrOperator: super.allowOrOperator,
         });

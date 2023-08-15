@@ -39,10 +39,8 @@ type TagProps = {
  * A component for displaying and interacting with a tag.
  */
 export class Tag extends React.Component<TagProps> {
-    public props: TagProps;
-    public static propTypes: Record<string, unknown>;
-    public static defaultProps: Partial<TagProps> = {};
-    public state: { hovered: boolean };
+    props: TagProps;
+    state: { hovered: boolean };
 
     constructor(props: TagProps) {
         super(props);
@@ -67,7 +65,7 @@ export class Tag extends React.Component<TagProps> {
     private innerTagClasses(invalid = false, duplicate = false): string {
         const { treeNodeSelection } = this.props;
         let ret = {
-            "bg-slate-50 text-sm flex flex-wrap rounded justify-left items-center min-w-0 m-0.5 text-slate-600 border-2 border-transparent whitespace-pre-wrap z-10 bg-no-repeat":
+            "text-sm flex flex-wrap rounded justify-left items-center min-w-0 m-0.5 text-slate-600 border-2 border-transparent whitespace-pre-wrap z-10 bg-no-repeat":
                 true,
         };
         if (this.addAdditionalClasses(invalid)) {
@@ -78,12 +76,8 @@ export class Tag extends React.Component<TagProps> {
                     : duplicate
                     ? "bg-yellow-200"
                     : icons.length > 1
-                    ? "border-transparent"
-                    : "border-transparent"]: true,
-            });
-        } else {
-            ret = Object.assign({}, ret, {
-                "bg-slate-50": true,
+                    ? "border-transparent bg-slate-50"
+                    : "border-transparent bg-slate-50"]: true,
             });
         }
         return resolveClassNames(ret);
@@ -93,7 +87,7 @@ export class Tag extends React.Component<TagProps> {
         return resolveClassNames(
             "flex flex-wrap rounded justify-left items-center min-w-0 relative mr-2 mt-1 mb-1 text-slate-600 border-2 whitespace-pre-wrap z-10",
             {
-                "border-slate-400 bg-slate-50 SmartNodeSelector__Border": this.displayAsTag() || frameless,
+                "border-slate-400 bg-slate-50 SmartNodeSelector__Tag": this.displayAsTag() || frameless,
                 "border-transparent bg-transparent": !this.displayAsTag() && !frameless,
                 animate__animated: this.props.shake,
                 animate__headShake: this.props.shake,
@@ -418,7 +412,7 @@ export class Tag extends React.Component<TagProps> {
                     {this.createMatchesCounter(treeNodeSelection, index)}
                     <div className="flex whitespace-nowrap relative">
                         <input
-                            className="border-0 bg-transparent outline-none p-0 w-12 inline-block bg-slate-400 text-sm"
+                            className="border-0 bg-transparent outline-none p-0 w-12 inline-block text-sm"
                             spellCheck="false"
                             key={"TagInput_" + index}
                             type="text"

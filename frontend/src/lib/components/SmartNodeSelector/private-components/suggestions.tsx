@@ -24,46 +24,44 @@ type SuggestionsState = {
 type Option = { nodeName: string; metaData: TreeDataNodeMetaData };
 
 export class Suggestions extends React.Component<SuggestionsProps> {
-    public props: SuggestionsProps;
-    public state: SuggestionsState;
-    public static propTypes: Record<string, unknown>;
-    public static defaultProps: Partial<SuggestionsProps> = {};
+    props: SuggestionsProps;
+    state: SuggestionsState;
 
-    private mouseMoved: boolean;
-    private currentlySelectedSuggestionIndex: number;
-    private rowHeight: number;
-    private upperSpacerHeight: number;
-    private allOptions: Option[];
-    private currentNodeLevel: number;
-    private currentNodeName: string;
-    private lastNodeSelection?: TreeNodeSelection;
-    private positionRef: React.RefObject<HTMLDivElement>;
-    private popup: HTMLDivElement | null;
-    private showingAllSuggestions: boolean;
+    private _mouseMoved: boolean;
+    private _currentlySelectedSuggestionIndex: number;
+    private _rowHeight: number;
+    private _upperSpacerHeight: number;
+    private _allOptions: Option[];
+    private _currentNodeLevel: number;
+    private _currentNodeName: string;
+    private _lastNodeSelection?: TreeNodeSelection;
+    private _positionRef: React.RefObject<HTMLDivElement>;
+    private _popup: HTMLDivElement | null;
+    private _showingAllSuggestions: boolean;
 
     constructor(props: SuggestionsProps) {
         super(props);
 
         this.props = props;
-        this.mouseMoved = false;
-        this.currentlySelectedSuggestionIndex = 0;
-        this.rowHeight = 34;
-        this.upperSpacerHeight = 0;
-        this.currentNodeLevel = -1;
-        this.currentNodeName = "";
-        this.lastNodeSelection = props.treeNodeSelection;
-        this.allOptions = [];
-        this.positionRef = React.createRef();
-        this.popup = null;
-        this.showingAllSuggestions = false;
+        this._mouseMoved = false;
+        this._currentlySelectedSuggestionIndex = 0;
+        this._rowHeight = 34;
+        this._upperSpacerHeight = 0;
+        this._currentNodeLevel = -1;
+        this._currentNodeName = "";
+        this._lastNodeSelection = props.treeNodeSelection;
+        this._allOptions = [];
+        this._positionRef = React.createRef();
+        this._popup = null;
+        this._showingAllSuggestions = false;
 
         this.state = {
             fromIndex: 0,
         };
 
         if (this.props.treeNodeSelection) {
-            this.allOptions = this.props.treeNodeSelection.getSuggestions();
-            this.currentNodeLevel = this.props.treeNodeSelection.getFocussedLevel();
+            this._allOptions = this.props.treeNodeSelection.getSuggestions();
+            this._currentNodeLevel = this.props.treeNodeSelection.getFocussedLevel();
         }
 
         this.renderPopup = this.renderPopup.bind(this);
@@ -80,8 +78,8 @@ export class Suggestions extends React.Component<SuggestionsProps> {
         window.addEventListener("resize", this.renderPopup);
         window.addEventListener("scroll", this.renderPopup, true);
 
-        this.popup = document.createElement("div");
-        document.body.appendChild(this.popup);
+        this._popup = document.createElement("div");
+        document.body.appendChild(this._popup);
     }
 
     componentWillUnmount(): void {
@@ -90,30 +88,30 @@ export class Suggestions extends React.Component<SuggestionsProps> {
         window.removeEventListener("resize", this.renderPopup);
         window.removeEventListener("scroll", this.renderPopup, true);
 
-        if (this.popup) {
-            document.body.removeChild(this.popup);
+        if (this._popup) {
+            document.body.removeChild(this._popup);
         }
     }
 
     componentDidUpdate(previousProps: SuggestionsProps): void {
         const { visible, treeNodeSelection, suggestionsRef } = this.props;
         if (previousProps.visible != visible || previousProps.treeNodeSelection != treeNodeSelection) {
-            this.upperSpacerHeight = 0;
+            this._upperSpacerHeight = 0;
             if (suggestionsRef.current) {
                 (suggestionsRef.current as HTMLDivElement).scrollTop = 0;
             }
-            this.currentlySelectedSuggestionIndex = 0;
+            this._currentlySelectedSuggestionIndex = 0;
             this.setState({ fromIndex: 0 });
         }
 
-        if (this.popup) {
+        if (this._popup) {
             this.renderPopup();
         }
     }
 
     private currentlySelectedSuggestion(): Element {
         return document.getElementsByClassName("Suggestions__Suggestion")[
-            this.currentlySelectedSuggestionIndex - this.state.fromIndex
+            this._currentlySelectedSuggestionIndex - this.state.fromIndex
         ];
     }
 
@@ -121,17 +119,17 @@ export class Suggestions extends React.Component<SuggestionsProps> {
         const { treeNodeSelection, suggestionsRef, showAllSuggestions } = this.props;
         if (
             treeNodeSelection !== undefined &&
-            (treeNodeSelection.getFocussedLevel() !== this.currentNodeLevel ||
-                treeNodeSelection.getFocussedNodeName() !== this.currentNodeName ||
-                this.lastNodeSelection === undefined ||
-                !treeNodeSelection.objectEquals(this.lastNodeSelection) ||
-                this.props.showAllSuggestions !== this.showingAllSuggestions)
+            (treeNodeSelection.getFocussedLevel() !== this._currentNodeLevel ||
+                treeNodeSelection.getFocussedNodeName() !== this._currentNodeName ||
+                this._lastNodeSelection === undefined ||
+                !treeNodeSelection.objectEquals(this._lastNodeSelection) ||
+                this.props.showAllSuggestions !== this._showingAllSuggestions)
         ) {
-            this.showingAllSuggestions = this.props.showAllSuggestions;
-            this.allOptions = treeNodeSelection.getSuggestions(showAllSuggestions);
-            this.currentNodeLevel = treeNodeSelection.getFocussedLevel();
-            this.lastNodeSelection = treeNodeSelection;
-            this.currentNodeName = treeNodeSelection.getFocussedNodeName();
+            this._showingAllSuggestions = this.props.showAllSuggestions;
+            this._allOptions = treeNodeSelection.getSuggestions(showAllSuggestions);
+            this._currentNodeLevel = treeNodeSelection.getFocussedLevel();
+            this._lastNodeSelection = treeNodeSelection;
+            this._currentNodeName = treeNodeSelection.getFocussedNodeName();
             if (suggestionsRef.current) {
                 (suggestionsRef.current as HTMLDivElement).scrollTo(0, 0);
             }
@@ -139,17 +137,17 @@ export class Suggestions extends React.Component<SuggestionsProps> {
     }
 
     private handleMouseMove(): void {
-        this.mouseMoved = true;
+        this._mouseMoved = true;
     }
 
     private handleGlobalKeyDown(e: globalThis.KeyboardEvent): void {
         const { visible } = this.props;
         if (visible) {
             if (e.key === "ArrowUp") {
-                this.markSuggestionAsHoveredAndMakeVisible(Math.max(0, this.currentlySelectedSuggestionIndex - 1));
+                this.markSuggestionAsHoveredAndMakeVisible(Math.max(0, this._currentlySelectedSuggestionIndex - 1));
             } else if (e.key === "ArrowDown") {
                 this.markSuggestionAsHoveredAndMakeVisible(
-                    Math.min(this.allOptions.length - 1, this.currentlySelectedSuggestionIndex + 1)
+                    Math.min(this._allOptions.length - 1, this._currentlySelectedSuggestionIndex + 1)
                 );
             }
             if (e.key == "Enter" && this.currentlySelectedSuggestion() !== undefined) {
@@ -163,18 +161,18 @@ export class Suggestions extends React.Component<SuggestionsProps> {
         const maxHeight =
             window.innerHeight -
             (tagInputFieldRef.current ? tagInputFieldRef.current.getBoundingClientRect().bottom + 10 : 200);
-        const height = Math.min(maxHeight, this.allOptions.length * this.rowHeight);
+        const height = Math.min(maxHeight, this._allOptions.length * this._rowHeight);
         const index = Math.min(
-            Math.floor((suggestionsRef.current as HTMLDivElement).scrollTop / this.rowHeight),
-            this.allOptions.length - Math.floor(height / this.rowHeight)
+            Math.floor((suggestionsRef.current as HTMLDivElement).scrollTop / this._rowHeight),
+            this._allOptions.length - Math.floor(height / this._rowHeight)
         );
-        const remainder = (suggestionsRef.current as HTMLDivElement).scrollTop - index * this.rowHeight;
-        this.upperSpacerHeight = (suggestionsRef.current as HTMLDivElement).scrollTop - remainder;
+        const remainder = (suggestionsRef.current as HTMLDivElement).scrollTop - index * this._rowHeight;
+        this._upperSpacerHeight = (suggestionsRef.current as HTMLDivElement).scrollTop - remainder;
         this.setState({ fromIndex: index });
     }
 
     private maybeMarkSuggestionAsHovered(index: number): void {
-        if (this.mouseMoved) {
+        if (this._mouseMoved) {
             this.markSuggestionAsHovered(index);
         }
     }
@@ -190,8 +188,8 @@ export class Suggestions extends React.Component<SuggestionsProps> {
             (tagInputFieldRef.current ? tagInputFieldRef.current.getBoundingClientRect().bottom + 10 : 200);
 
         const maxNumSuggestions = Math.min(
-            Math.floor(maxHeight / this.rowHeight),
-            this.allOptions.length - this.state.fromIndex
+            Math.floor(maxHeight / this._rowHeight),
+            this._allOptions.length - this.state.fromIndex
         );
 
         const currentRangeStart = this.state.fromIndex;
@@ -201,16 +199,16 @@ export class Suggestions extends React.Component<SuggestionsProps> {
             this.markSuggestionAsHovered(index);
             this.scrollSuggestionsToMakeSelectedElementVisible();
         } else if (index < currentRangeStart) {
-            this.currentlySelectedSuggestionIndex = index;
-            suggestions.scroll(0, this.currentlySelectedSuggestionIndex * this.rowHeight);
+            this._currentlySelectedSuggestionIndex = index;
+            suggestions.scroll(0, this._currentlySelectedSuggestionIndex * this._rowHeight);
         } else if (index > currentRangeEnd) {
-            this.currentlySelectedSuggestionIndex = index;
-            suggestions.scroll(0, (this.currentlySelectedSuggestionIndex + 1) * this.rowHeight - maxHeight);
+            this._currentlySelectedSuggestionIndex = index;
+            suggestions.scroll(0, (this._currentlySelectedSuggestionIndex + 1) * this._rowHeight - maxHeight);
         }
     }
 
     private markSuggestionAsHovered(index: number): void {
-        this.currentlySelectedSuggestionIndex = index;
+        this._currentlySelectedSuggestionIndex = index;
         const newSelectedSuggestion = this.currentlySelectedSuggestion();
         const selectedSuggestions = document.getElementsByClassName("Suggestions__Suggestion--Selected");
         for (let i = 0; i < selectedSuggestions.length; i++) {
@@ -224,7 +222,7 @@ export class Suggestions extends React.Component<SuggestionsProps> {
 
     private scrollSuggestionsToMakeSelectedElementVisible(): void {
         const { suggestionsRef } = this.props;
-        this.mouseMoved = false;
+        this._mouseMoved = false;
         const element = this.currentlySelectedSuggestion();
         const suggestions = suggestionsRef.current;
         if (!suggestions) return;
@@ -240,7 +238,7 @@ export class Suggestions extends React.Component<SuggestionsProps> {
     }
 
     private useSuggestion(e: globalThis.KeyboardEvent | React.MouseEvent<HTMLDivElement>, suggestion: string): void {
-        this.currentlySelectedSuggestionIndex = 0;
+        this._currentlySelectedSuggestionIndex = 0;
         this.props.useSuggestion(e, suggestion);
     }
 
@@ -292,9 +290,9 @@ export class Suggestions extends React.Component<SuggestionsProps> {
         const { treeNodeSelection, enableInputBlur, disableInputBlur } = this.props;
         if (treeNodeSelection === undefined) return "";
         if (!treeNodeSelection.focussedNodeNameContainsWildcard()) {
-            const options = this.allOptions.slice(
+            const options = this._allOptions.slice(
                 this.state.fromIndex,
-                this.state.fromIndex + Math.ceil(maxHeight / this.rowHeight)
+                this.state.fromIndex + Math.ceil(maxHeight / this._rowHeight)
             );
             return (
                 <>
@@ -309,14 +307,14 @@ export class Suggestions extends React.Component<SuggestionsProps> {
                                 {
                                     "bg-[20px 20px] pl-8": option.metaData.icon !== undefined,
                                     "bg-blue-100 Suggestions__Suggestion--Selected":
-                                        i === this.currentlySelectedSuggestionIndex - this.state.fromIndex,
+                                        i === this._currentlySelectedSuggestionIndex - this.state.fromIndex,
                                 }
                             )}
                             style={{
                                 color: option.metaData.color !== undefined ? option.metaData.color : "inherit",
                                 backgroundImage:
                                     option.metaData.icon !== undefined ? "url(" + option.metaData.icon + ")" : "none",
-                                height: this.rowHeight + "px",
+                                height: this._rowHeight + "px",
                                 backgroundPosition: option.metaData.icon !== undefined ? "5px center" : undefined,
                                 backgroundSize: option.metaData.icon !== undefined ? "20px 20px" : undefined,
                             }}
@@ -345,23 +343,23 @@ export class Suggestions extends React.Component<SuggestionsProps> {
         const maxHeight =
             window.innerHeight -
             (tagInputFieldRef.current ? tagInputFieldRef.current.getBoundingClientRect().bottom + 10 : 200);
-        const height = Math.min(maxHeight, this.allOptions.length * this.rowHeight);
+        const height = Math.min(maxHeight, this._allOptions.length * this._rowHeight);
         let lowerSpacerHeight =
-            this.allOptions.length * this.rowHeight -
-            this.upperSpacerHeight -
-            Math.floor(height / this.rowHeight) * this.rowHeight;
-        if (Math.ceil(height / this.rowHeight) == this.allOptions.length - this.state.fromIndex) {
+            this._allOptions.length * this._rowHeight -
+            this._upperSpacerHeight -
+            Math.floor(height / this._rowHeight) * this._rowHeight;
+        if (Math.ceil(height / this._rowHeight) == this._allOptions.length - this.state.fromIndex) {
             lowerSpacerHeight = 0;
         }
 
-        const boundingRect = this.positionRef.current
+        const boundingRect = this._positionRef.current
             ? {
-                  top: this.positionRef.current.getBoundingClientRect().top + window.scrollY,
-                  left: this.positionRef.current.getBoundingClientRect().left + window.scrollX,
-                  bottom: this.positionRef.current.getBoundingClientRect().bottom + window.scrollY,
-                  right: this.positionRef.current.getBoundingClientRect().right + window.scrollX,
-                  width: this.positionRef.current.getBoundingClientRect().width,
-                  height: this.positionRef.current.getBoundingClientRect().height,
+                  top: this._positionRef.current.getBoundingClientRect().top + window.scrollY,
+                  left: this._positionRef.current.getBoundingClientRect().left + window.scrollX,
+                  bottom: this._positionRef.current.getBoundingClientRect().bottom + window.scrollY,
+                  right: this._positionRef.current.getBoundingClientRect().right + window.scrollX,
+                  width: this._positionRef.current.getBoundingClientRect().width,
+                  height: this._positionRef.current.getBoundingClientRect().height,
               }
             : {
                   top: 0,
@@ -375,7 +373,7 @@ export class Suggestions extends React.Component<SuggestionsProps> {
         ReactDOM.render(
             <div
                 ref={suggestionsRef}
-                className="box-border absolute top-full -left-[1] -right-[1] border bg-white rounded-b shadow z-50 overflow-y-auto"
+                className="box-border absolute top-full left-0 w-full border bg-white rounded-b shadow z-50 overflow-y-auto"
                 onScroll={this.handleScroll}
                 style={{
                     maxHeight: maxHeight,
@@ -386,28 +384,26 @@ export class Suggestions extends React.Component<SuggestionsProps> {
                 }}
             >
                 <div
-                    className="Suggestions__Spacer"
                     style={{
-                        height: this.upperSpacerHeight + "px",
+                        height: this._upperSpacerHeight + "px",
                     }}
                 ></div>
                 {this.createSuggestionsForCurrentTag(maxHeight)}
                 <div
-                    className="Suggestions__Spacer"
                     style={{
                         height: lowerSpacerHeight + "px",
                     }}
                 ></div>
             </div>,
-            this.popup
+            this._popup
         );
     }
 
     render(): React.ReactNode {
         return (
             <div
-                ref={this.positionRef}
-                className="w-full box-border absolute top-full -left-[1px] -right-[1px] border bg-white rounded-b shadow-lg z-50 overflow-y-auto invisible"
+                ref={this._positionRef}
+                className="w-full box-border absolute top-full left-0 border bg-white rounded-b shadow-lg z-50 overflow-y-auto invisible"
             ></div>
         );
     }

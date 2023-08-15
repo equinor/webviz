@@ -4,14 +4,14 @@ import { MatchType, TreeData } from "./treeData";
 import { TreeDataNodeMetaData } from "./treeDataNodeTypes";
 
 export class TreeNodeSelection {
-    private focussedLevel: number;
-    private nodePath: Array<string>;
-    private ref: React.RefObject<HTMLInputElement>;
-    private selected: boolean;
+    private _focussedLevel: number;
+    private _nodePath: Array<string>;
+    private _ref: React.RefObject<HTMLInputElement>;
+    private _selected: boolean;
     protected delimiter: string;
-    private treeData: TreeData;
-    private numMetaNodes: number;
-    private objectIdentifier: number;
+    private _treeData: TreeData;
+    private _numMetaNodes: number;
+    private _objectIdentifier: number;
     protected caseInsensitiveMatching: boolean;
     protected allowOrOperator: boolean;
     protected orOperator: string;
@@ -35,21 +35,21 @@ export class TreeNodeSelection {
         caseInsensitiveMatching: boolean;
         allowOrOperator: boolean;
     }) {
-        this.focussedLevel = focussedLevel;
-        this.nodePath = nodePath;
-        this.selected = selected;
-        this.ref = React.createRef<HTMLInputElement>();
-        this.treeData = treeData;
+        this._focussedLevel = focussedLevel;
+        this._nodePath = nodePath;
+        this._selected = selected;
+        this._ref = React.createRef<HTMLInputElement>();
+        this._treeData = treeData;
         this.delimiter = delimiter;
-        this.numMetaNodes = numMetaNodes;
-        this.objectIdentifier = Date.now();
+        this._numMetaNodes = numMetaNodes;
+        this._objectIdentifier = Date.now();
         this.caseInsensitiveMatching = caseInsensitiveMatching;
         this.allowOrOperator = allowOrOperator;
         this.orOperator = "|";
     }
 
     objectEquals(other: TreeNodeSelection): boolean {
-        return other.objectIdentifier == this.objectIdentifier;
+        return other._objectIdentifier == this._objectIdentifier;
     }
 
     getDelimiter(): string {
@@ -58,12 +58,12 @@ export class TreeNodeSelection {
 
     getNodePath(untilLevel?: number): Array<string> {
         if (untilLevel === undefined) {
-            return this.nodePath;
+            return this._nodePath;
         }
         if (untilLevel >= 0 && untilLevel < this.countLevel()) {
             const nodePath: string[] = [];
             for (let i = 0; i <= untilLevel; i++) {
-                nodePath.push(this.nodePath[i]);
+                nodePath.push(this._nodePath[i]);
             }
             return nodePath;
         }
@@ -71,17 +71,17 @@ export class TreeNodeSelection {
     }
 
     getFocussedNodeName(): string {
-        return this.nodePath[this.focussedLevel];
+        return this._nodePath[this._focussedLevel];
     }
 
     getNodeName(level: number): string | null {
-        if (level >= 0 && level < this.countLevel()) return this.nodePath[level];
+        if (level >= 0 && level < this.countLevel()) return this._nodePath[level];
         else return null;
     }
 
     setNodeName(data: string, index?: number): void {
-        const adjustedIndex = index || this.focussedLevel;
-        this.nodePath[adjustedIndex] = data;
+        const adjustedIndex = index || this._focussedLevel;
+        this._nodePath[adjustedIndex] = data;
     }
 
     getId(): string | undefined {
@@ -93,7 +93,7 @@ export class TreeNodeSelection {
     }
 
     getNodeMetaData(nodePath: Array<string>): TreeDataNodeMetaData | null {
-        const nodes = this.treeData.findFirstNode(nodePath);
+        const nodes = this._treeData.findFirstNode(nodePath);
         if (nodes === null) {
             return null;
         }
@@ -101,76 +101,76 @@ export class TreeNodeSelection {
     }
 
     setNodePath(nodePath: Array<string>): void {
-        this.nodePath = nodePath;
+        this._nodePath = nodePath;
     }
 
     getRef(): React.Ref<HTMLInputElement> {
-        return this.ref;
+        return this._ref;
     }
 
     getFocussedLevel(): number {
-        return this.focussedLevel;
+        return this._focussedLevel;
     }
 
     getNumMetaNodes(): number {
-        return this.numMetaNodes;
+        return this._numMetaNodes;
     }
 
     setFocussedLevel(index: number, includeMetaData = true): void {
-        if (!includeMetaData && this.focussedLevel >= this.numMetaNodes) {
-            this.focussedLevel = index + this.numMetaNodes;
+        if (!includeMetaData && this._focussedLevel >= this._numMetaNodes) {
+            this._focussedLevel = index + this._numMetaNodes;
         } else {
-            this.focussedLevel = index;
+            this._focussedLevel = index;
         }
         this.tidy();
     }
 
     incrementFocussedLevel(): boolean {
         if (this.caseInsensitiveMatching) {
-            this.nodePath[this.focussedLevel] = this.treeData.findNode(this.getNodePath(this.focussedLevel));
+            this._nodePath[this._focussedLevel] = this._treeData.findNode(this.getNodePath(this._focussedLevel));
         }
-        if (this.focussedLevel < this.countLevel() - 1) {
-            this.focussedLevel++;
+        if (this._focussedLevel < this.countLevel() - 1) {
+            this._focussedLevel++;
             return true;
         } else if (this.hasAvailableChildNodesOnNextLevel()) {
-            this.focussedLevel++;
-            this.nodePath[this.focussedLevel] = "";
+            this._focussedLevel++;
+            this._nodePath[this._focussedLevel] = "";
             return true;
-        } else if (this.containsWildcard() && this.treeData.findChildNodes(this.nodePath).length > 0) {
-            this.focussedLevel++;
-            this.nodePath[this.focussedLevel] = "";
+        } else if (this.containsWildcard() && this._treeData.findChildNodes(this._nodePath).length > 0) {
+            this._focussedLevel++;
+            this._nodePath[this._focussedLevel] = "";
             return true;
         }
         return false;
     }
 
     decrementFocussedLevel(): void {
-        this.focussedLevel--;
+        this._focussedLevel--;
         this.tidy();
     }
 
     isSelected(): boolean {
-        return this.selected;
+        return this._selected;
     }
 
     setSelected(select: boolean): void {
-        this.selected = select;
+        this._selected = select;
     }
 
     countLevel(): number {
-        return this.nodePath.length;
+        return this._nodePath.length;
     }
 
     colors(): Array<string> {
         const colors: string[] = [];
-        if (this.focussedLevel == 0) {
+        if (this._focussedLevel == 0) {
             return [];
         }
         const level = this.countLevel() - 1;
-        const allMetaData = this.treeData.findNodes(this.getNodePath(level), MatchType.partialMatch).metaData;
+        const allMetaData = this._treeData.findNodes(this.getNodePath(level), MatchType.partialMatch).metaData;
         for (const metaData of allMetaData) {
             for (let i = 0; i < metaData.length; i++) {
-                if (i >= this.numMetaNodes) {
+                if (i >= this._numMetaNodes) {
                     break;
                 }
                 const color = metaData[i].color;
@@ -184,14 +184,14 @@ export class TreeNodeSelection {
 
     icons(): Array<string> {
         const icons: string[] = [];
-        if (this.focussedLevel === 0) {
+        if (this._focussedLevel === 0) {
             return [];
         }
         const level = this.countLevel() - 1;
-        const allMetaData = this.treeData.findNodes(this.getNodePath(level), MatchType.partialMatch).metaData;
+        const allMetaData = this._treeData.findNodes(this.getNodePath(level), MatchType.partialMatch).metaData;
         for (const metaData of allMetaData) {
             for (let i = 0; i < metaData.length; i++) {
-                if (i >= this.numMetaNodes) {
+                if (i >= this._numMetaNodes) {
                     break;
                 }
                 const icon = metaData[i].icon;
@@ -209,8 +209,8 @@ export class TreeNodeSelection {
 
     trulyEquals(other: TreeNodeSelection): boolean {
         let check = this.equals(other);
-        check = check && this.selected == other.isSelected();
-        check = check && this.focussedLevel == other.getFocussedLevel();
+        check = check && this._selected == other.isSelected();
+        check = check && this._focussedLevel == other.getFocussedLevel();
         return check;
     }
 
@@ -228,22 +228,22 @@ export class TreeNodeSelection {
     }
 
     isFocusOnMetaData(): boolean {
-        return this.focussedLevel < this.numMetaNodes;
+        return this._focussedLevel < this._numMetaNodes;
     }
 
     displayText(): string {
-        if (this.getFocussedLevel() < this.numMetaNodes) {
+        if (this.getFocussedLevel() < this._numMetaNodes) {
             return this.getFocussedNodeName();
         } else {
             let text = "";
             for (let i = 0; i < this.countLevel(); i++) {
                 const el = this.getNodeName(i);
-                if (this.getFocussedLevel() === i && i < this.numMetaNodes && typeof el === "string") {
+                if (this.getFocussedLevel() === i && i < this._numMetaNodes && typeof el === "string") {
                     text = el;
                     break;
-                } else if (i >= this.numMetaNodes) {
+                } else if (i >= this._numMetaNodes) {
                     if (el === "" && this.getFocussedLevel() < i) break;
-                    text += i <= this.numMetaNodes ? el : this.delimiter + el;
+                    text += i <= this._numMetaNodes ? el : this.delimiter + el;
                 }
             }
             return text;
@@ -259,7 +259,7 @@ export class TreeNodeSelection {
     }
 
     displayAsTag(): boolean {
-        return this.getFocussedLevel() > 0 || (this.numMetaNodes == 0 && this.countLevel() > 1);
+        return this.getFocussedLevel() > 0 || (this._numMetaNodes == 0 && this.countLevel() > 1);
     }
 
     isEmpty(): boolean {
@@ -268,8 +268,8 @@ export class TreeNodeSelection {
 
     isValidUpToFocussedNode(): boolean {
         return (
-            this.getNodeName(this.focussedLevel) !== "" &&
-            this.treeData.findFirstNode(this.getNodePath(this.focussedLevel), false) !== null
+            this.getNodeName(this._focussedLevel) !== "" &&
+            this._treeData.findFirstNode(this.getNodePath(this._focussedLevel), false) !== null
         );
     }
 
@@ -285,22 +285,22 @@ export class TreeNodeSelection {
     }
 
     isValid(): boolean {
-        if (this.nodePath.length === 0) {
+        if (this._nodePath.length === 0) {
             return false;
         }
-        return this.treeData.findFirstNode(this.nodePath) !== null;
+        return this._treeData.findFirstNode(this._nodePath) !== null;
     }
 
     numberOfPossiblyMatchedNodes(): number {
-        return this.treeData.countMatchedNodes(this.nodePath);
+        return this._treeData.countMatchedNodes(this._nodePath);
     }
 
     numberOfExactlyMatchedNodes(): number {
-        return this.treeData.countMatchedNodes(this.nodePath, true);
+        return this._treeData.countMatchedNodes(this._nodePath, true);
     }
 
     exactlyMatchedNodePaths(): Array<string> {
-        return this.treeData.findNodes(this.nodePath, MatchType.fullMatch).nodePaths;
+        return this._treeData.findNodes(this._nodePath, MatchType.fullMatch).nodePaths;
     }
 
     countExactlyMatchedNodePaths(): number {
@@ -308,13 +308,13 @@ export class TreeNodeSelection {
     }
 
     hasAvailableChildNodesOnNextLevel(): boolean {
-        const adjustedNodePath = this.getNodePath(this.focussedLevel);
+        const adjustedNodePath = this.getNodePath(this._focussedLevel);
         adjustedNodePath.push("");
-        return this.treeData.findSuggestions(adjustedNodePath).length > 0;
+        return this._treeData.findSuggestions(adjustedNodePath).length > 0;
     }
 
     hasAvailableChildNodes(): boolean {
-        return this.treeData.findSuggestions(this.getNodePath(this.focussedLevel)).length > 0;
+        return this._treeData.findSuggestions(this.getNodePath(this._focussedLevel)).length > 0;
     }
 
     countAvailableChildNodes(level?: number): number {
@@ -322,17 +322,17 @@ export class TreeNodeSelection {
         if (level !== undefined) {
             nodePath = level >= 0 ? [...this.getNodePath(level), ""] : [""];
         } else {
-            nodePath = [...this.getNodePath(this.focussedLevel), ""];
+            nodePath = [...this.getNodePath(this._focussedLevel), ""];
         }
-        return this.treeData.findSuggestions(nodePath).length;
+        return this._treeData.findSuggestions(nodePath).length;
     }
 
     getSuggestions(showAll = false): { nodeName: string; metaData: TreeDataNodeMetaData }[] {
-        const nodePath = this.getNodePath(this.focussedLevel);
+        const nodePath = this.getNodePath(this._focussedLevel);
         if (showAll) {
             nodePath[nodePath.length - 1] = "";
         }
-        return this.treeData.findSuggestions(nodePath);
+        return this._treeData.findSuggestions(nodePath);
     }
 
     containsWildcard(): boolean {
@@ -350,9 +350,9 @@ export class TreeNodeSelection {
         if (level !== undefined) {
             nodePath = level >= 0 ? this.getNodePath(level) : [];
         } else {
-            nodePath = this.getNodePath(this.focussedLevel);
+            nodePath = this.getNodePath(this._focussedLevel);
         }
-        return this.treeData.findChildNodes(nodePath);
+        return this._treeData.findChildNodes(nodePath);
     }
 
     focussedNodeNameContainsWildcard(): boolean {
@@ -365,8 +365,8 @@ export class TreeNodeSelection {
             nodePath: this.getNodePath().map((x) => x) as Array<string>,
             selected: false,
             delimiter: this.delimiter,
-            numMetaNodes: this.numMetaNodes,
-            treeData: this.treeData,
+            numMetaNodes: this._numMetaNodes,
+            treeData: this._treeData,
             caseInsensitiveMatching: this.caseInsensitiveMatching,
             allowOrOperator: this.allowOrOperator,
         });
