@@ -1,7 +1,7 @@
 import React from "react";
 import Plot from "react-plotly.js";
 
-import { ColorScale } from "@framework/WorkbenchSettings";
+import { ColorScale } from "@lib/utils/ColorScale";
 
 import { Layout, PlotData, PlotHoverEvent } from "plotly.js";
 

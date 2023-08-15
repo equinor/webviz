@@ -1,5 +1,8 @@
 import React from "react";
 
+import { ColorScale, ColorScaleGradientType } from "@lib/utils/ColorScale";
+import { ColorSet } from "@lib/utils/ColorSet";
+
 import { cloneDeep } from "lodash";
 
 import { BroadcastChannelsDef } from "./Broadcaster";
@@ -12,13 +15,18 @@ import { SyncSettingKey } from "./SyncSettings";
 import { Workbench } from "./Workbench";
 import { WorkbenchServices } from "./WorkbenchServices";
 import { WorkbenchSession } from "./WorkbenchSession";
-import { WorkbenchSettings } from "./WorkbenchSettings";
+
+interface IWorkbenchSettings {
+    useColorSet: () => ColorSet;
+    useDiscreteColorScale(options: { gradientType: ColorScaleGradientType }): ColorScale;
+    useContinuousColorScale(options: { gradientType: ColorScaleGradientType }): ColorScale;
+}
 
 export type ModuleFCProps<S extends StateBaseType> = {
     moduleContext: ModuleContext<S>;
     workbenchSession: WorkbenchSession;
     workbenchServices: WorkbenchServices;
-    workbenchSettings: WorkbenchSettings;
+    workbenchSettings: IWorkbenchSettings;
     initialSettings?: InitialSettings;
 };
 

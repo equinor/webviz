@@ -4,6 +4,7 @@ import { BroadcastChannelKeyCategory, BroadcastChannelMeta } from "@framework/Br
 import { ModuleFCProps } from "@framework/Module";
 import { Tag } from "@lib/components/Tag";
 import { useElementSize } from "@lib/hooks/useElementSize";
+import { ColorScaleGradientType } from "@lib/utils/ColorScale";
 
 import { BarChart } from "./components/barChart";
 import { Histogram } from "./components/histogram";
@@ -52,7 +53,9 @@ export const view = ({ moduleContext, workbenchServices, workbenchSettings }: Mo
     const channelZ = workbenchServices.getBroadcaster().getChannel(channelNameZ ?? "");
 
     const colorSet = workbenchSettings.useColorSet();
-    const seqColorScale = workbenchSettings.useContinuousSequentialColorScale();
+    const seqColorScale = workbenchSettings.useContinuousColorScale({
+        gradientType: ColorScaleGradientType.Sequential,
+    });
 
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);
     const wrapperDivSize = useElementSize(wrapperDivRef);

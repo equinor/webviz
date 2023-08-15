@@ -1,73 +1,34 @@
 import React from "react";
 
 import { ModuleFCProps } from "@framework/Module";
-import {
-    ColorScaleContinuousInterpolationType,
-    ColorScaleContinuousInterpolationTypeOptions,
-    ColorScaleDiscreteInterpolationType,
-    ColorScaleGradientType,
-    ColorScaleType,
-} from "@framework/WorkbenchSettings";
-import { Button } from "@lib/components/Button";
-import { Dropdown } from "@lib/components/Dropdown";
-import { Input } from "@lib/components/Input";
 import { Label } from "@lib/components/Label";
 import { RadioGroup } from "@lib/components/RadioGroup";
-import { Slider } from "@lib/components/Slider";
+import { ColorScaleGradientType, ColorScaleType } from "@lib/utils/ColorScale";
 
 import { State } from "./state";
 
-import { ColorScaleDiscreteInterpolationTypeOptions } from "../../framework/WorkbenchSettings";
-
 export const settings = (props: ModuleFCProps<State>) => {
     const [type, setType] = props.moduleContext.useStoreState("type");
-    const [steps, setSteps] = props.moduleContext.useStoreState("steps");
     const [gradientType, setGradientType] = props.moduleContext.useStoreState("gradientType");
-    const [continuousInterpolation, setContinuousInterpolation] =
-        props.moduleContext.useStoreState("continuousInterpolation");
-    const [discreteInterpolation, setDiscreteInterpolation] =
-        props.moduleContext.useStoreState("discreteInterpolation");
 
     function handleTypeChange(e: React.ChangeEvent<HTMLInputElement>) {
         setType(parseInt(e.target.value) as unknown as ColorScaleType);
-    }
-
-    function handleStepsChange(e: React.ChangeEvent<HTMLInputElement>) {
-        setSteps(parseInt(e.target.value));
-    }
-
-    function handleContinuousInterpolationChange(value: string) {
-        setContinuousInterpolation(value as unknown as ColorScaleContinuousInterpolationType);
-    }
-
-    function handleDiscreteInterpolationChange(value: string) {
-        setDiscreteInterpolation(value as unknown as ColorScaleDiscreteInterpolationType);
     }
 
     function handleGradientTypeChange(e: React.ChangeEvent<HTMLInputElement>) {
         setGradientType(parseInt(e.target.value) as unknown as ColorScaleGradientType);
     }
 
-    const colors = (
-        gradientType === ColorScaleGradientType.Sequential
-            ? props.workbenchSettings.useDiscreteSequentialColorScale({
-                  interpolation: discreteInterpolation,
-                  steps,
-              })
-            : props.workbenchSettings.useDiscreteDivergingColorScale({
-                  interpolation: discreteInterpolation,
-                  steps,
-              })
-    ).sampleColors(steps);
-
     const colorScale =
-        gradientType === ColorScaleGradientType.Sequential
-            ? props.workbenchSettings.useContinuousSequentialColorScale({
-                  interpolation: continuousInterpolation,
+        type === ColorScaleType.Continuous
+            ? props.workbenchSettings.useContinuousColorScale({
+                  gradientType,
               })
-            : props.workbenchSettings.useContinuousDivergingColorScale({
-                  interpolation: continuousInterpolation,
+            : props.workbenchSettings.useDiscreteColorScale({
+                  gradientType,
               });
+
+    const colors = colorScale.sampleColors(10);
 
     function makeScale(): React.ReactNode {
         const nodes: React.ReactNode[] = [];
@@ -140,37 +101,6 @@ export const settings = (props: ModuleFCProps<State>) => {
                     direction="horizontal"
                 />
             </Label>
-            {type === ColorScaleType.Discrete && (
-                <>
-                    <Label text="Steps">
-                        <Input type="number" value={steps} onChange={handleStepsChange} />
-                    </Label>
-                    <Label text="Interpolation">
-                        <Dropdown
-                            value={`${discreteInterpolation}`}
-                            onChange={handleDiscreteInterpolationChange}
-                            options={Object.entries(ColorScaleDiscreteInterpolationTypeOptions).map((el) => ({
-                                value: el[0],
-                                label: el[1],
-                            }))}
-                        />
-                    </Label>
-                </>
-            )}
-            {type === ColorScaleType.Continuous && (
-                <>
-                    <Label text="Interpolation">
-                        <Dropdown
-                            value={`${continuousInterpolation}`}
-                            onChange={handleContinuousInterpolationChange}
-                            options={Object.entries(ColorScaleContinuousInterpolationTypeOptions).map((el) => ({
-                                value: el[0],
-                                label: el[1],
-                            }))}
-                        />
-                    </Label>
-                </>
-            )}
         </div>
     );
 };

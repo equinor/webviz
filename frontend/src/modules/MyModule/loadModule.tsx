@@ -1,19 +1,11 @@
 import { ModuleRegistry } from "@framework/ModuleRegistry";
-import {
-    ColorScaleContinuousInterpolationType,
-    ColorScaleDiscreteInterpolationType,
-    ColorScaleGradientType,
-    ColorScaleType,
-} from "@framework/WorkbenchSettings";
+import { ColorScaleGradientType, ColorScaleType } from "@lib/utils/ColorScale";
 
 import { settings } from "./settings";
 import { State } from "./state";
 import { view } from "./view";
 
 const defaultState: State = {
-    continuousInterpolation: ColorScaleContinuousInterpolationType.Linear,
-    discreteInterpolation: ColorScaleDiscreteInterpolationType.Linear,
-    steps: 10,
     type: ColorScaleType.Discrete,
     gradientType: ColorScaleGradientType.Sequential,
 };

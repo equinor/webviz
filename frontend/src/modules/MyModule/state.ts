@@ -1,14 +1,6 @@
-import {
-    ColorScaleContinuousInterpolationType,
-    ColorScaleDiscreteInterpolationType,
-    ColorScaleGradientType,
-    ColorScaleType,
-} from "@framework/WorkbenchSettings";
+import { ColorScaleGradientType, ColorScaleType } from "@lib/utils/ColorScale";
 
 export type State = {
     type: ColorScaleType;
     gradientType: ColorScaleGradientType;
-    steps: number;
-    continuousInterpolation: ColorScaleContinuousInterpolationType;
-    discreteInterpolation: ColorScaleDiscreteInterpolationType;
 };

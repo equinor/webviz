@@ -2,13 +2,8 @@ import React from "react";
 import Plot from "react-plotly.js";
 
 import { ModuleFCProps } from "@framework/Module";
-import {
-    ColorScaleContinuousInterpolationType,
-    ColorScaleDiscreteInterpolationType,
-    ColorScaleGradientType,
-    ColorScaleType,
-} from "@framework/WorkbenchSettings";
 import { useElementSize } from "@lib/hooks/useElementSize";
+import { ColorScaleGradientType, ColorScaleType } from "@lib/utils/ColorScale";
 
 import { PlotData } from "plotly.js";
 
@@ -416,14 +411,9 @@ for (let i = 0; i < countryData.length; i += 2) {
     alcConsumption.push(countryData[i + 1] as number);
 }
 
-const dataFlat = alcConsumption.flat();
-
 export const view = (props: ModuleFCProps<State>) => {
     const type = props.moduleContext.useStoreValue("type");
-    const steps = props.moduleContext.useStoreValue("steps");
     const gradientType = props.moduleContext.useStoreValue("gradientType");
-    const continuousInterpolation = props.moduleContext.useStoreValue("continuousInterpolation");
-    const discreteInterpolation = props.moduleContext.useStoreValue("discreteInterpolation");
 
     const ref = React.useRef<HTMLDivElement>(null);
 
@@ -431,25 +421,11 @@ export const view = (props: ModuleFCProps<State>) => {
 
     const colorScale =
         type === ColorScaleType.Continuous
-            ? gradientType === ColorScaleGradientType.Sequential
-                ? props.workbenchSettings.useContinuousSequentialColorScale({
-                      interpolation: continuousInterpolation,
-                      data: dataFlat,
-                  })
-                : props.workbenchSettings.useContinuousDivergingColorScale({
-                      interpolation: continuousInterpolation,
-                      data: dataFlat,
-                  })
-            : gradientType === ColorScaleGradientType.Sequential
-            ? props.workbenchSettings.useDiscreteSequentialColorScale({
-                  interpolation: discreteInterpolation,
-                  steps: steps,
-                  data: dataFlat,
+            ? props.workbenchSettings.useContinuousColorScale({
+                  gradientType,
               })
-            : props.workbenchSettings.useDiscreteDivergingColorScale({
-                  interpolation: discreteInterpolation,
-                  steps: steps,
-                  data: dataFlat,
+            : props.workbenchSettings.useDiscreteColorScale({
+                  gradientType,
               });
 
     const data: Partial<PlotData> = {
