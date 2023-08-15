@@ -1,6 +1,7 @@
 import React from "react";
 
 import { DrawerContent, LayoutElement, Workbench } from "@framework/Workbench";
+import { LoginDialog } from "@framework/internal/components/LoginDialog";
 import { NavBar } from "@framework/internal/components/NavBar";
 import { SettingsContentPanels } from "@framework/internal/components/SettingsContentPanels";
 import { AuthProvider } from "@framework/internal/providers/AuthProvider";
@@ -26,10 +27,13 @@ function App() {
     return (
         <AuthProvider>
             <CustomQueryClientProvider>
-                <div className="h-screen flex flex-row">
-                    <NavBar workbench={workbench} />
-                    <SettingsContentPanels workbench={workbench} />
-                </div>
+                <>
+                    <LoginDialog />
+                    <div className="h-screen flex flex-row">
+                        <NavBar workbench={workbench} />
+                        <SettingsContentPanels workbench={workbench} />
+                    </div>
+                </>
             </CustomQueryClientProvider>
         </AuthProvider>
     );
