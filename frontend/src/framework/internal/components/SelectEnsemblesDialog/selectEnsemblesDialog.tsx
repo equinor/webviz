@@ -135,6 +135,10 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
         props.onClose(newlySelectedEnsembles);
     }
 
+    function checkIfAnyChanges(): boolean {
+        return !isEqual(props.selectedEnsembles, newlySelectedEnsembles);
+    }
+
     const fieldOpts = fieldsQuery.data?.map((f) => ({ value: f.field_identifier, label: f.field_identifier })) ?? [];
     const caseOpts = casesQuery.data?.map((c) => ({ value: c.uuid, label: c.name })) ?? [];
     const ensembleOpts =
@@ -152,10 +156,12 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                 width={"75%"}
                 actions={
                     <div className="flex gap-4">
-                        <Button onClick={handleClose} color="danger">
+                        <Button onClick={handleClose} color="danger" disabled={!checkIfAnyChanges()}>
                             Discard changes
                         </Button>
-                        <Button onClick={handleApplyEnsembleSelection}>Apply changes</Button>
+                        <Button onClick={handleApplyEnsembleSelection} disabled={!checkIfAnyChanges()}>
+                            Apply changes
+                        </Button>
                     </div>
                 }
             >
@@ -240,7 +246,7 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                                     {newlySelectedEnsembles.map((item) => (
                                         <tr
                                             key={`${item.caseName}-${item.ensembleName}`}
-                                            className="hover:bg-slate-100 align-top odd:bg-slate-50"
+                                            className="hover:bg-slate-100 odd:bg-slate-50 align-center"
                                         >
                                             <td className="p-2">
                                                 <div

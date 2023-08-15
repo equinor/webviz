@@ -13,9 +13,8 @@ from fmu.sumo.explorer.explorer import CaseCollection, SumoClient
 from fmu.sumo.explorer.objects import TableCollection
 from pydantic import BaseModel
 
-from src.services.types.generic_types import EnsembleScalarResponse
-
 from ._helpers import create_sumo_client_instance
+from .generic_types import EnsembleScalarResponse
 
 # from fmu.sumo.explorer.objects.table import AggregatedTable
 

@@ -10,18 +10,14 @@ import pyarrow.parquet as pq
 from fmu.sumo.explorer.objects import CaseCollection
 from sumo.wrapper import SumoClient
 
-from src.services.types.generic_types import EnsembleScalarResponse
-from src.services.types.summary_types import (
-    Frequency,
-    RealizationVector,
-    VectorMetadata,
-)
 from src.services.utils.arrow_helpers import sort_table_on_real_then_date
-from src.services.utils.field_metadata import create_vector_metadata_from_field_meta
 from src.services.utils.perf_timer import PerfTimer
-from src.services.utils.resampling import resample_segmented_multi_real_table
 
+from ._field_metadata import create_vector_metadata_from_field_meta
 from ._helpers import create_sumo_client_instance
+from ._resampling import resample_segmented_multi_real_table
+from .generic_types import EnsembleScalarResponse
+from .summary_types import Frequency, RealizationVector, VectorMetadata
 
 LOGGER = logging.getLogger(__name__)
 
