@@ -6,15 +6,14 @@ import pyarrow as pa
 import pyarrow.compute as pc
 from fastapi import APIRouter, Depends, HTTPException, Query
 
-from src.services.summary_vector_statistics import compute_vector_statistics
-from src.services.sumo_access.summary_access import Frequency, SummaryAccess
-from src.services.sumo_access.parameter_access import ParameterAccess
-from src.services.utils.authenticated_user import AuthenticatedUser
-from src.services.types.generic_types import EnsembleScalarResponse
-from src.services.types.parameter_types import EnsembleSensitivity
 from src.backend.auth.auth_helper import AuthHelper
-from . import converters
-from . import schemas
+from src.services.summary_vector_statistics import compute_vector_statistics
+from src.services.sumo_access.generic_types import EnsembleScalarResponse
+from src.services.sumo_access.parameter_access import ParameterAccess
+from src.services.sumo_access.summary_access import Frequency, SummaryAccess
+from src.services.utils.authenticated_user import AuthenticatedUser
+
+from . import converters, schemas
 
 LOGGER = logging.getLogger(__name__)
 

@@ -5,9 +5,8 @@ import pyarrow as pa
 from fmu.sumo.explorer.objects import CaseCollection
 from sumo.wrapper import SumoClient
 
-from src.services.types.generic_types import SumoTableSchema
-
 from ._helpers import create_sumo_client_instance
+from .generic_types import SumoTableSchema
 
 LOGGER = logging.getLogger(__name__)
 

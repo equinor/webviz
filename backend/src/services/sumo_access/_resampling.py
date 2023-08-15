@@ -4,8 +4,8 @@ from typing import Dict
 import numpy as np
 import pyarrow as pa
 
-from src.services.utils.field_metadata import is_rate_from_field_meta
-from src.services.types.summary_types import Frequency
+from ._field_metadata import is_rate_from_field_meta
+from .summary_types import Frequency
 
 
 def _truncate_day_to_monday(datetime_day: np.datetime64) -> np.datetime64:

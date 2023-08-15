@@ -15,3 +15,9 @@ import "./Sensitivity/registerModule";
 import "./SimulationTimeSeries/registerModule";
 import "./SimulationTimeSeriesSensitivity/registerModule";
 import "./TimeSeriesParameterDistribution/registerModule";
+
+if (isDevMode()) {
+    await import("./MyModule/registerModule");
+    await import("./MyModule2/registerModule");
+    await import("./DbgWorkbenchSpy/registerModule");
+}
