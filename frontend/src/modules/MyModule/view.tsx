@@ -428,12 +428,14 @@ export const view = (props: ModuleFCProps<State>) => {
                   gradientType,
               });
 
-    const data: Partial<PlotData> = {
+    colorScale.setRangeAndMidPoint(0, 18, 9);
+
+    const data: Partial<PlotData & { zmid: number }> = {
+        ...colorScale.getAsPlotlyColorScaleMapObject(),
         type: "choropleth",
         locationmode: "country names",
         locations: countries,
         z: alcConsumption,
-        colorscale: colorScale.getAsPlotlyColorScale(),
     };
 
     const layout = {

@@ -1,6 +1,5 @@
+import { Oklab, formatHex, interpolate, oklab } from "culori";
 import { v4 } from "uuid";
-
-import { extrapolateHex, interpolateHex } from "./colors";
 
 export enum ColorPaletteType {
     Categorical = "Categorical",
@@ -148,41 +147,67 @@ export class CategoricalColorPalette extends ColorPalette {
 export type ColorStop = {
     id: string;
     hexColor: string;
+    oklabColor: Oklab;
     position: number;
-    midPointPosition: number;
+};
+
+export type ContinuousColorPaletteOptions = {
+    name: string;
+    colorStops?: Omit<ColorStop, "id" | "oklabColor">[];
+    colors?: string[];
+    id?: string;
 };
 
 export class ContinuousColorPalette extends ColorPalette {
     private _colorStops: ColorStop[];
 
-    constructor(name: string, colorStops: Omit<ColorStop, "id">[], id?: string) {
-        super(name, id);
-        this._colorStops = [];
+    constructor(options: ContinuousColorPaletteOptions) {
+        super(options.name, options.id);
 
-        for (const colorStop of colorStops) {
-            this.addColorStop(colorStop);
+        if (options.colorStops) {
+            this._colorStops = [];
+
+            for (const colorStop of options.colorStops) {
+                this.addColorStop(colorStop);
+            }
+        } else if (options.colors) {
+            this._colorStops = [];
+
+            let position = 0;
+            let index = 0;
+
+            for (const hexColor of options.colors) {
+                this.addColorStop({ hexColor, position: index < options.colors.length - 1 ? position : 1 });
+                position += 1 / (options.colors.length - 1);
+                index++;
+            }
+        } else {
+            throw new Error("Invalid options. You must either definer colorStops or colorsList");
         }
     }
 
-    private assertValidPositions(positions: { position?: number; midPointPosition?: number }): void {
+    private assertValidPositions(positions: { position?: number }): void {
         if (positions.position && (positions.position < 0 || positions.position > 1)) {
             throw new Error("Invalid position");
         }
-
-        if (positions.midPointPosition && (positions.midPointPosition < 0 || positions.midPointPosition > 1)) {
-            throw new Error("Invalid mid point position");
-        }
     }
 
-    addColorStop(colorStop: Omit<ColorStop, "id">): string {
+    addColorStop(colorStop: Omit<ColorStop, "id" | "oklabColor">): string {
         this.assertHexColor(colorStop.hexColor);
-        this.assertValidPositions({ position: colorStop.position, midPointPosition: colorStop.midPointPosition });
+        this.assertValidPositions({ position: colorStop.position });
 
         const id = v4();
+
+        const oklabColor = oklab(colorStop.hexColor);
+
+        if (!oklabColor) {
+            throw new Error("Invalid hex color");
+        }
 
         this._colorStops.push({
             ...colorStop,
             id,
+            oklabColor: oklabColor,
         });
 
         return id;
@@ -191,8 +216,10 @@ export class ContinuousColorPalette extends ColorPalette {
     changeColorStopColor(id: string, hexColor: string): void {
         this.assertHexColor(hexColor);
         const colorStop = this._colorStops.find((colorStop) => colorStop.id === id);
-        if (colorStop) {
+        const oklabColor = oklab(hexColor);
+        if (colorStop && oklabColor) {
             colorStop.hexColor = hexColor;
+            colorStop.oklabColor = oklabColor;
         }
     }
 
@@ -211,28 +238,17 @@ export class ContinuousColorPalette extends ColorPalette {
         });
     }
 
-    changeColorStopMidPointPosition(id: string, midPointPosition: number): void {
-        this.assertValidPositions({ midPointPosition });
-
-        this._colorStops = this._colorStops.map((colorStop) => {
-            if (colorStop.id === id) {
-                return {
-                    ...colorStop,
-                    midPointPosition,
-                };
-            } else {
-                return colorStop;
-            }
-        });
-    }
-
     getClosestColorStops(position: number): { smaller?: ColorStop; greater?: ColorStop } {
         const sortedColorStops = this._colorStops.sort((a, b) => a.position - b.position);
         const closestColorStops: { smaller?: ColorStop; greater?: ColorStop } = {};
 
         for (const colorStop of sortedColorStops) {
-            if (colorStop.position <= position) {
+            if (colorStop.position < position) {
                 closestColorStops.smaller = colorStop;
+            } else if (colorStop.position === position) {
+                closestColorStops.smaller = colorStop;
+                closestColorStops.greater = colorStop;
+                break;
             } else {
                 closestColorStops.greater = colorStop;
                 break;
@@ -251,8 +267,9 @@ export class ContinuousColorPalette extends ColorPalette {
 
         const relativePosition = (position - smaller.position) / (greater.position - smaller.position);
 
-        const interpolatedHexColor = interpolateHex(smaller.hexColor, greater.hexColor, relativePosition);
+        const interpolator = interpolate([smaller.oklabColor, greater.oklabColor], "oklab");
 
+        const interpolatedHexColor = formatHex(interpolator(relativePosition));
         return interpolatedHexColor;
     }
 
@@ -266,39 +283,14 @@ export class ContinuousColorPalette extends ColorPalette {
                 return greater.hexColor;
             }
             const positionQuotient = (position - smaller.position) / (greater.position - smaller.position);
-            const interpolatedHexColor = interpolateHex(smaller.hexColor, greater.hexColor, positionQuotient);
+            const interpolator = interpolate([smaller.oklabColor, greater.oklabColor], "oklab");
+
+            const interpolatedHexColor = formatHex(interpolator(positionQuotient));
 
             return interpolatedHexColor;
-        } else if (!smaller && greater) {
-            if (greater.position === position) {
-                return greater.hexColor;
-            }
-            const nextColorStop = this.getNextColorStop(greater.id);
-            if (nextColorStop) {
-                const positionQuotient = (position - greater.position) / (nextColorStop.position - greater.position);
-                const extrapolatedHexColor = extrapolateHex(greater.hexColor, nextColorStop.hexColor, positionQuotient);
-
-                return extrapolatedHexColor;
-            }
-        } else if (smaller && !greater) {
-            if (smaller.position === position) {
-                return smaller.hexColor;
-            }
-            const previousColorStop = this.getPreviousColorStop(smaller.id);
-            if (previousColorStop) {
-                const positionQuotient =
-                    (position - previousColorStop.position) / (smaller.position - previousColorStop.position);
-                const extrapolatedHexColor = extrapolateHex(
-                    previousColorStop.hexColor,
-                    smaller.hexColor,
-                    positionQuotient
-                );
-
-                return extrapolatedHexColor;
-            }
         }
 
-        throw new Error("Invalid position");
+        throw new Error(`Invalid position: ${position}`);
     }
 
     getNextColorStop(id: string): ColorStop | undefined {
@@ -336,11 +328,6 @@ export class ContinuousColorPalette extends ColorPalette {
         const sortedColorStops = this._colorStops.sort((a, b) => a.position - b.position);
         const gradient = `linear-gradient(to right, ${sortedColorStops
             .map((colorStop) => {
-                const prev = this.getPreviousColorStop(colorStop.id);
-                if (prev) {
-                    const midPoint = prev.position + prev.midPointPosition * (colorStop.position - prev.position);
-                    return `${midPoint * 100}%, ${colorStop.hexColor} ${colorStop.position * 100}%`;
-                }
                 return `${colorStop.hexColor} ${colorStop.position * 100}%`;
             })
             .join(", ")})`;
@@ -349,7 +336,7 @@ export class ContinuousColorPalette extends ColorPalette {
     }
 
     clone(): ContinuousColorPalette {
-        const clone = new ContinuousColorPalette(this._name, this._colorStops);
+        const clone = new ContinuousColorPalette({ name: this._name, colorStops: this._colorStops });
         clone._id = this._id;
         return clone;
     }
@@ -364,7 +351,7 @@ export class ContinuousColorPalette extends ColorPalette {
 
     static fromJson(json: string): ContinuousColorPalette {
         const { uuid, name, colorStops } = JSON.parse(json);
-        const colorPalette = new ContinuousColorPalette(name, colorStops);
+        const colorPalette = new ContinuousColorPalette({ name, colorStops });
         colorPalette._id = uuid;
         return colorPalette;
     }

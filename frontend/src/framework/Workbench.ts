@@ -19,7 +19,6 @@ export enum WorkbenchEvents {
     ActiveModuleChanged = "ActiveModuleChanged",
     ModuleInstancesChanged = "ModuleInstancesChanged",
     FullModuleRerenderRequested = "FullModuleRerenderRequested",
-    ColorPalettesChanged = "ColorPalettesChanged",
 }
 
 export enum DrawerContent {
@@ -64,7 +63,7 @@ export class Workbench {
         });
         this._workbenchSession = new WorkbenchSessionPrivate();
         this._workbenchServices = new PrivateWorkbenchServices(this);
-        this._workbenchSettings = new WorkbenchSettings(this);
+        this._workbenchSettings = new WorkbenchSettings();
         this._broadcaster = new Broadcaster();
         this._subscribersMap = {};
         this._layout = [];

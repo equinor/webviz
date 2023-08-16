@@ -3,7 +3,7 @@ import ReactDOM from "react-dom";
 
 import { useStoreValue } from "@framework/StateStore";
 import { DrawerContent, Workbench } from "@framework/Workbench";
-import { ColorType } from "@framework/WorkbenchSettings";
+import { ColorPaletteType, ColorScaleDiscreteSteps } from "@framework/WorkbenchSettings";
 import { ChevronDownIcon } from "@heroicons/react/20/solid";
 import { ColorGradient } from "@lib/components/ColorGradient";
 import { ColorTileGroup } from "@lib/components/ColorTileGroup";
@@ -18,7 +18,7 @@ import { convertRemToPixels } from "@lib/utils/screenUnitConversions";
 
 import { Drawer } from "../Drawer";
 
-enum ColorPaletteType {
+enum ColorPaletteSelectorType {
     Categorical = "categorical",
     Continuous = "continuous",
     Discrete = "discrete",
@@ -28,7 +28,7 @@ type ColorPaletteItemProps = {
     colorPalette: ColorPalette;
     onClick?: () => void;
     selected?: boolean;
-    type: ColorPaletteType;
+    type: ColorPaletteSelectorType;
     steps?: number;
 };
 
@@ -43,11 +43,11 @@ const ColorPaletteItem: React.FC<ColorPaletteItemProps> = (props) => {
 
     function makeColorPalettePreview(): React.ReactNode {
         switch (props.type) {
-            case ColorPaletteType.Continuous:
+            case ColorPaletteSelectorType.Continuous:
                 return <ColorGradient colorPalette={props.colorPalette as ContinuousColorPalette} />;
-            case ColorPaletteType.Categorical:
+            case ColorPaletteSelectorType.Categorical:
                 return <ColorTileGroup colorPalette={props.colorPalette as CategoricalColorPalette} />;
-            case ColorPaletteType.Discrete:
+            case ColorPaletteSelectorType.Discrete:
                 return (
                     <ColorGradient colorPalette={props.colorPalette as ContinuousColorPalette} steps={props.steps} />
                 );
@@ -77,7 +77,7 @@ type ColorPaletteSelectorProps = {
     selectedColorPaletteId: string;
     onChange?: (colorPalette: ColorPalette) => void;
     onEdited?: (colorPalettes: ColorPalette[]) => void;
-    type: ColorPaletteType;
+    type: ColorPaletteSelectorType;
     steps?: number;
 };
 
@@ -140,16 +140,15 @@ const ColorPaletteSelector: React.FC<ColorPaletteSelectorProps> = (props) => {
 
     function makeColorPalettePreview(): React.ReactNode {
         switch (props.type) {
-            case ColorPaletteType.Continuous:
+            case ColorPaletteSelectorType.Continuous:
                 return <ColorGradient colorPalette={selectedColorPalette as ContinuousColorPalette} />;
-            case ColorPaletteType.Categorical:
+            case ColorPaletteSelectorType.Categorical:
                 return <ColorTileGroup colorPalette={selectedColorPalette as CategoricalColorPalette} />;
-            case ColorPaletteType.Discrete:
+            case ColorPaletteSelectorType.Discrete:
                 return (
                     <ColorGradient colorPalette={selectedColorPalette as ContinuousColorPalette} steps={props.steps} />
                 );
         }
-        return null;
     }
 
     const marginTop = Math.max(-boundingRect.top, convertRemToPixels((-(props.colorPalettes.length - 1) * 3) / 2));
@@ -191,14 +190,14 @@ export type ColorPaletteSettingsProps = {
 export const ColorPaletteSettings: React.FC<ColorPaletteSettingsProps> = (props) => {
     const colorPalettes = props.workbench.getWorkbenchSettings().getColorPalettes();
     const drawerContent = useStoreValue(props.workbench.getGuiStateStore(), "drawerContent");
-    const [selectedColorPaletteIds, setSelectedColorPaletteIds] = React.useState<Record<ColorType, string>>(
+    const [selectedColorPaletteIds, setSelectedColorPaletteIds] = React.useState<Record<ColorPaletteType, string>>(
         props.workbench.getWorkbenchSettings().getSelectedColorPaletteIds()
     );
     const [steps, setSteps] = React.useState<
-        Record<ColorType.DiscreteDiverging | ColorType.DiscreteSequential, number>
+        Record<ColorScaleDiscreteSteps.Diverging | ColorScaleDiscreteSteps.Sequential, number>
     >(props.workbench.getWorkbenchSettings().getSteps());
 
-    function handleColorPaletteSelected(colorPalette: ColorPalette, type: ColorType) {
+    function handleColorPaletteSelected(colorPalette: ColorPalette, type: ColorPaletteType) {
         props.workbench.getWorkbenchSettings().setSelectedColorPaletteId(type, colorPalette.getId());
         setSelectedColorPaletteIds({
             ...selectedColorPaletteIds,
@@ -208,7 +207,7 @@ export const ColorPaletteSettings: React.FC<ColorPaletteSettingsProps> = (props)
 
     function handleColorPaletteStepsChanged(
         newSteps: number,
-        type: ColorType.DiscreteDiverging | ColorType.DiscreteSequential
+        type: ColorScaleDiscreteSteps.Diverging | ColorScaleDiscreteSteps.Sequential
     ) {
         props.workbench.getWorkbenchSettings().setStepsForType(type, newSteps);
         setSteps({
@@ -222,67 +221,80 @@ export const ColorPaletteSettings: React.FC<ColorPaletteSettingsProps> = (props)
             <div className="flex flex-col gap-2">
                 <Label text="Categorical colors">
                     <ColorPaletteSelector
-                        selectedColorPaletteId={selectedColorPaletteIds[ColorPaletteType.Categorical]}
-                        colorPalettes={colorPalettes[ColorPaletteType.Categorical]}
-                        type={ColorPaletteType.Categorical}
-                        onChange={(palette) => handleColorPaletteSelected(palette, ColorType.Categorical)}
+                        selectedColorPaletteId={selectedColorPaletteIds[ColorPaletteSelectorType.Categorical]}
+                        colorPalettes={colorPalettes[ColorPaletteSelectorType.Categorical]}
+                        type={ColorPaletteSelectorType.Categorical}
+                        onChange={(palette) => handleColorPaletteSelected(palette, ColorPaletteType.Categorical)}
                     />
                 </Label>
-                <Label text="Discrete sequential colors">
-                    <>
+                <Label text="Sequential colors" wrapperClassName="mb-4 mt-4">
+                    <div className="flex flex-col gap-4">
                         <ColorPaletteSelector
-                            selectedColorPaletteId={selectedColorPaletteIds[ColorType.DiscreteSequential]}
-                            colorPalettes={colorPalettes[ColorType.ContinuousSequential]}
-                            type={ColorPaletteType.Discrete}
-                            onChange={(palette) => handleColorPaletteSelected(palette, ColorType.DiscreteSequential)}
-                            steps={steps[ColorType.DiscreteSequential]}
-                        />
-                        <Input
-                            type="number"
-                            min={2}
-                            max={100}
-                            defaultValue={steps[ColorType.DiscreteSequential]}
-                            onChange={(e) =>
-                                handleColorPaletteStepsChanged(parseInt(e.target.value), ColorType.DiscreteSequential)
+                            selectedColorPaletteId={selectedColorPaletteIds[ColorPaletteType.ContinuousSequential]}
+                            colorPalettes={colorPalettes[ColorPaletteType.ContinuousSequential]}
+                            type={ColorPaletteSelectorType.Continuous}
+                            onChange={(palette) =>
+                                handleColorPaletteSelected(palette, ColorPaletteType.ContinuousSequential)
                             }
                         />
-                    </>
-                </Label>
-                <Label text="Continuous sequential colors">
-                    <ColorPaletteSelector
-                        selectedColorPaletteId={selectedColorPaletteIds[ColorType.ContinuousSequential]}
-                        colorPalettes={colorPalettes[ColorType.ContinuousSequential]}
-                        type={ColorPaletteType.Continuous}
-                        onChange={(palette) => handleColorPaletteSelected(palette, ColorType.ContinuousSequential)}
-                    />
-                </Label>
-                <Label text="Discrete diverging colors">
-                    <>
-                        <ColorPaletteSelector
-                            selectedColorPaletteId={selectedColorPaletteIds[ColorType.DiscreteDiverging]}
-                            colorPalettes={colorPalettes[ColorType.ContinuousDiverging]}
-                            type={ColorPaletteType.Discrete}
-                            onChange={(palette) => handleColorPaletteSelected(palette, ColorType.ContinuousDiverging)}
-                            steps={steps[ColorType.DiscreteDiverging]}
+                        <ColorGradient
+                            colorPalette={
+                                (colorPalettes[ColorPaletteType.ContinuousSequential].find(
+                                    (el) =>
+                                        el.getId() === selectedColorPaletteIds[ColorPaletteType.ContinuousSequential]
+                                ) || colorPalettes[ColorPaletteType.ContinuousSequential][0]) as ContinuousColorPalette
+                            }
+                            steps={steps[ColorScaleDiscreteSteps.Sequential]}
                         />
-                        <Input
-                            type="number"
-                            min={2}
-                            max={100}
-                            defaultValue={steps[ColorType.DiscreteDiverging]}
-                            onChange={(e) =>
-                                handleColorPaletteStepsChanged(parseInt(e.target.value), ColorType.DiscreteDiverging)
+                        <Label text="Discrete steps" position="left">
+                            <Input
+                                type="number"
+                                min={2}
+                                max={100}
+                                defaultValue={steps[ColorScaleDiscreteSteps.Sequential]}
+                                onChange={(e) =>
+                                    handleColorPaletteStepsChanged(
+                                        parseInt(e.target.value),
+                                        ColorScaleDiscreteSteps.Sequential
+                                    )
+                                }
+                            />
+                        </Label>
+                    </div>
+                </Label>
+                <Label text="Diverging colors" wrapperClassName="mb-4 mt-4">
+                    <div className="flex flex-col gap-4">
+                        <ColorPaletteSelector
+                            selectedColorPaletteId={selectedColorPaletteIds[ColorPaletteType.ContinuousDiverging]}
+                            colorPalettes={colorPalettes[ColorPaletteType.ContinuousDiverging]}
+                            type={ColorPaletteSelectorType.Continuous}
+                            onChange={(palette) =>
+                                handleColorPaletteSelected(palette, ColorPaletteType.ContinuousDiverging)
                             }
                         />
-                    </>
-                </Label>
-                <Label text="Continuous diverging colors">
-                    <ColorPaletteSelector
-                        selectedColorPaletteId={selectedColorPaletteIds[ColorType.ContinuousDiverging]}
-                        colorPalettes={colorPalettes[ColorType.ContinuousDiverging]}
-                        type={ColorPaletteType.Continuous}
-                        onChange={(palette) => handleColorPaletteSelected(palette, ColorType.ContinuousDiverging)}
-                    />
+                        <ColorGradient
+                            colorPalette={
+                                (colorPalettes[ColorPaletteType.ContinuousDiverging].find(
+                                    (el) => el.getId() === selectedColorPaletteIds[ColorPaletteType.ContinuousDiverging]
+                                ) || colorPalettes[ColorPaletteType.ContinuousDiverging][0]) as ContinuousColorPalette
+                            }
+                            steps={steps[ColorScaleDiscreteSteps.Diverging]}
+                        />
+                        <Label text="Discrete steps" position="left">
+                            <Input
+                                type="number"
+                                min={2}
+                                max={100}
+                                defaultValue={steps[ColorScaleDiscreteSteps.Diverging]}
+                                onChange={(e) =>
+                                    handleColorPaletteStepsChanged(
+                                        parseInt(e.target.value),
+                                        ColorScaleDiscreteSteps.Diverging
+                                    )
+                                }
+                            />
+                        </Label>
+                    </div>
                 </Label>
             </div>
         </Drawer>

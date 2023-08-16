@@ -47,10 +47,10 @@ export const ScatterPlotWithColorMapping: React.FC<ScatterPlotWithColorMappingPr
             type: "scatter",
             mode: "markers",
             marker: {
+                ...props.colorScale.getAsPlotlyColorScaleMarkerObject(),
                 color: props.z,
                 opacity: opacities,
                 size: 20,
-                colorscale: props.colorScale.getAsPlotlyColorScale(),
                 colorbar: {
                     title: props.zAxisTitle,
                     titleside: "right",

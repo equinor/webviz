@@ -1,14 +1,37 @@
 import { ContinuousColorPalette } from "@lib/utils/ColorPalette";
 
 export enum ColorScaleType {
-    Discrete,
-    Continuous,
+    Discrete = "discrete",
+    Continuous = "continuous",
 }
 
 export enum ColorScaleGradientType {
-    Sequential,
-    Diverging,
+    Sequential = "sequential",
+    Diverging = "diverging",
 }
+
+export enum ColorScalePlotlyType {
+    Marker = "marker",
+    Map = "map",
+}
+
+export type PlotlyMarkerColorScaleObject = {
+    colorscale: Array<[number, string]>;
+    cmin: number;
+    cmax: number;
+    cmid?: number;
+};
+
+export type PlotlyMapColorScaleObject = {
+    colorscale: Array<[number, string]>;
+    zmin: number;
+    zmax: number;
+    zmid?: number;
+    colorbar?: {
+        tickmode: "array";
+        tickvals: number[];
+    };
+};
 
 export type ColorScaleOptions = {
     type: ColorScaleType;
@@ -51,13 +74,17 @@ export class ColorScale {
         return normalizedValue;
     }
 
+    getColorPalette(): ContinuousColorPalette {
+        return this._colorPalette;
+    }
+
     getColorForValue(value: number): string {
         let color = "";
 
         if (this._type === ColorScaleType.Discrete) {
             const colors = this.sampleColors(this._steps);
             const normalizedValue = this.calcNormalizedValue(value, this._min, this._max);
-            const colorIndex = Math.floor(normalizedValue * this._steps);
+            const colorIndex = Math.min(Math.floor(normalizedValue * this._steps), colors.length - 1);
             color = colors[colorIndex];
         } else {
             const normalizedValue = this.calcNormalizedValue(value, this._min, this._max);
@@ -100,11 +127,42 @@ export class ColorScale {
         return this._divMidPoint;
     }
 
-    getAsPlotlyColorScale(): Array<[number, string]> {
-        const plotlyColorScale: Array<[number, string]> = [];
+    getPlotlyColorScale(): [number, string][] {
+        const plotlyColorScale: [number, string][] = [];
         for (let i = 0; i <= 100; i++) {
             plotlyColorScale.push([i / 100, this.getColorForValue(this._min + (this._max - this._min) * (i / 100))]);
         }
         return plotlyColorScale;
+    }
+
+    getAsPlotlyColorScaleMarkerObject(): PlotlyMarkerColorScaleObject {
+        return {
+            colorscale: this.getPlotlyColorScale(),
+            cmin: this._min,
+            cmax: this._max,
+            cmid: this._gradientType === ColorScaleGradientType.Diverging ? this._divMidPoint : undefined,
+        };
+    }
+
+    getAsPlotlyColorScaleMapObject(): PlotlyMapColorScaleObject {
+        const tickValsArray: number[] = [];
+        if (this._gradientType === ColorScaleGradientType.Diverging) {
+            for (let i = 0; i <= this._steps; i++) {
+                tickValsArray.push(this._min + (this._max - this._min) * (i / this._steps));
+            }
+        }
+        return {
+            colorscale: this.getPlotlyColorScale(),
+            zmin: this._min,
+            zmax: this._max,
+            zmid: this._gradientType === ColorScaleGradientType.Diverging ? this._divMidPoint : undefined,
+            colorbar:
+                this._gradientType === ColorScaleGradientType.Diverging
+                    ? {
+                          tickmode: "array",
+                          tickvals: tickValsArray,
+                      }
+                    : undefined,
+        };
     }
 }
