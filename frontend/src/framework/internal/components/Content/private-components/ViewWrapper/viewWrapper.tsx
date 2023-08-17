@@ -1,7 +1,7 @@
 import React from "react";
 
 import { ModuleInstance } from "@framework/ModuleInstance";
-import { useSetStoreValue, useStoreState } from "@framework/StateStore";
+import { useSetStoreValue, useStoreState, useStoreValue } from "@framework/StateStore";
 import { DrawerContent, Workbench } from "@framework/Workbench";
 import { Point, pointDifference, pointRelativeToDomRect, pointerEventToPoint } from "@lib/utils/geometry";
 

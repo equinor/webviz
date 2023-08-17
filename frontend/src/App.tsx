@@ -1,6 +1,7 @@
 import React from "react";
 
 import { DrawerContent, LayoutElement, Workbench } from "@framework/Workbench";
+import { DataChannelVisualization } from "@framework/internal/components/Content/private-components/DataChannelVisualization";
 import { LoginDialog } from "@framework/internal/components/LoginDialog";
 import { NavBar } from "@framework/internal/components/NavBar";
 import { SettingsContentPanels } from "@framework/internal/components/SettingsContentPanels";
@@ -30,6 +31,7 @@ function App() {
                 <>
                     <LoginDialog />
                     <div className="h-screen flex flex-row">
+                        <DataChannelVisualization workbench={workbench} />
                         <NavBar workbench={workbench} />
                         <SettingsContentPanels workbench={workbench} />
                     </div>
