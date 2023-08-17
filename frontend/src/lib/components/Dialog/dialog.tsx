@@ -17,6 +17,7 @@ export type DialogProps = {
     minWidth?: string | number;
     minHeight?: string | number;
     actions?: React.ReactNode;
+    showCloseCross?: boolean;
 };
 
 export const Dialog: React.FC<DialogProps> = (props) => {
@@ -72,13 +73,15 @@ export const Dialog: React.FC<DialogProps> = (props) => {
             >
                 <div className="flex justify-between p-4 border-b shadow-inner">
                     <h2 className="text-slate-800 font-bold text-lg">{props.title}</h2>
-                    <div
-                        className="hover:text-slate-500 cursor-pointer ml-4"
-                        onPointerDown={handleClose}
-                        title="Close dialog"
-                    >
-                        <XMarkIcon width={24} />
-                    </div>
+                    {props.showCloseCross && (
+                        <div
+                            className="hover:text-slate-500 cursor-pointer ml-4"
+                            onPointerDown={handleClose}
+                            title="Close dialog"
+                        >
+                            <XMarkIcon width={24} />
+                        </div>
+                    )}
                 </div>
                 <div className="p-4">{props.children}</div>
                 {props.actions && <div className="flex justify-end mt-4 bg-slate-100 p-4">{props.actions}</div>}
