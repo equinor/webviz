@@ -1,6 +1,12 @@
-import { StaticSurfaceDirectory_api, SumoContent_api, SurfaceData_api } from "@api";
+import {
+    StaticSurfaceDirectory_api,
+    SumoContent_api,
+    SurfaceData_api,
+    WellBoreHeader_api,
+    WellBoreTrajectory_api,
+} from "@api";
 import { apiService } from "@framework/ApiService";
-import { QueryFunction, QueryKey, UseQueryResult, useQuery } from "@tanstack/react-query";
+import { QueryFunction, QueryKey, UseQueryResult, useQueries, useQuery } from "@tanstack/react-query";
 
 import { SurfAddr } from "./SurfAddr";
 
@@ -21,6 +27,34 @@ export function useSurfaceDirectory(
     });
 }
 
+export function useGetWellHeaders(caseUuid: string | undefined): UseQueryResult<WellBoreHeader_api[]> {
+    return useQuery({
+        queryKey: ["getWellHeaders", caseUuid],
+        queryFn: () => apiService.well.getWellHeaders(caseUuid ?? ""),
+        staleTime: STALE_TIME,
+        cacheTime: STALE_TIME,
+        enabled: caseUuid ? true : false,
+    });
+}
+
+export function useGetWellTrajectories(wellUuids: string[] | undefined): UseQueryResult<WellBoreTrajectory_api[]> {
+    return useQuery({
+        queryKey: ["getWellTrajectories", wellUuids],
+        queryFn: () => apiService.well.getWellTrajectories(wellUuids ?? []),
+        staleTime: STALE_TIME,
+        cacheTime: CACHE_TIME,
+        enabled: wellUuids ? true : false,
+    });
+}
+export function useGetFieldWellsTrajectories(caseUuid: string | undefined): UseQueryResult<WellBoreTrajectory_api[]> {
+    return useQuery({
+        queryKey: ["getFieldWellsTrajectories", caseUuid],
+        queryFn: () => apiService.well.getFieldWellTrajectories(caseUuid ?? ""),
+        staleTime: STALE_TIME,
+        cacheTime: CACHE_TIME,
+        enabled: caseUuid ? true : false,
+    });
+}
 export function useSurfaceDataQueryByAddress(surfAddr: SurfAddr | null): UseQueryResult<SurfaceData_api> {
     function dummyApiCall(): Promise<SurfaceData_api> {
         return new Promise((_resolve, reject) => {

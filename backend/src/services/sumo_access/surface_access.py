@@ -89,13 +89,12 @@ class SurfaceAccess:
             surfaces_with_filtered_content = [
                 surf for surf in surface_collection if surf["data"]["content"] in content_filter
             ]
-            print(content_filter, "hei")
             for surf in surface_collection:
                 if surf["data"]["content"] in content_filter:
                     print(surf["data"]["content"])
             names = sorted(list(set([surf.name for surf in surfaces_with_filtered_content])))
             attributes = sorted(list(set([surf.tagname for surf in surfaces_with_filtered_content])))
-            print(attributes)
+
         else:
             names = sorted(surface_collection.names)
             attributes = sorted(surface_collection.tagnames)

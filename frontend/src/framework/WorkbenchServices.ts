@@ -19,6 +19,13 @@ export type GlobalTopicDefinitions = {
     "global.syncValue.date": { timeOrInterval: string };
     "global.syncValue.timeSeries": { vectorName: string };
     "global.syncValue.surface": { name: string; attribute: string };
+    "global.syncValue.cameraPositionMap": {
+        target: number[];
+        zoom: number;
+        rotationX: number;
+        rotationOrbit: number;
+        minZoom?: number;
+        maxZoom?: number;}
 };
 
 export type AllTopicDefinitions = NavigatorTopicDefinitions & GlobalTopicDefinitions;

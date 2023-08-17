@@ -6,6 +6,8 @@ import { view } from "./view";
 
 const defaultState: state = {
     surfaceAddress: null,
+    selectedWellUuids: [],
+    surfaceSettings: undefined,
 };
 
 const module = ModuleRegistry.initModule<state>("TopographicMap", defaultState, {
