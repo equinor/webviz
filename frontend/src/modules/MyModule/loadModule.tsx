@@ -8,6 +8,9 @@ import { view } from "./view";
 const defaultState: State = {
     type: ColorScaleType.Discrete,
     gradientType: ColorScaleGradientType.Sequential,
+    min: 0,
+    max: 18,
+    divMidPoint: 9,
 };
 
 const module = ModuleRegistry.initModule<State>("MyModule", defaultState);

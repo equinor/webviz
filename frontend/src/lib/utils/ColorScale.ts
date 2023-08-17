@@ -94,22 +94,16 @@ export class ColorScale {
         return color;
     }
 
-    sampleColors(numSamples: number): string[] {
-        const colors: string[] = [];
-        for (let i = 0; i < numSamples; i++) {
-            const startPos = i / numSamples;
-            const endPos = (i + 1) / numSamples;
-            colors.push(this._colorPalette.getColorAtPosition(startPos + (endPos - startPos) / 2));
-        }
-        return colors;
-    }
-
     getMin(): number {
         return this._min;
     }
 
     getMax(): number {
         return this._max;
+    }
+
+    getDivMidPoint(): number {
+        return this._divMidPoint;
     }
 
     setRange(min: number, max: number) {
@@ -123,13 +117,25 @@ export class ColorScale {
         this._divMidPoint = divMidPoint;
     }
 
-    getDivMidPoint(): number {
-        return this._divMidPoint;
+    sampleColors(numSamples: number): string[] {
+        const colors: string[] = [];
+        for (let i = 0; i < numSamples; i++) {
+            const startPos = i / numSamples;
+            const endPos = (i + 1) / numSamples;
+            colors.push(this._colorPalette.getColorAtPosition(startPos + (endPos - startPos) / 2));
+        }
+        return colors;
     }
 
     getPlotlyColorScale(): [number, string][] {
         const plotlyColorScale: [number, string][] = [];
         for (let i = 0; i <= 100; i++) {
+            if (i > 0) {
+                plotlyColorScale.push([
+                    i / 100 - 0.000001,
+                    this.getColorForValue(this._min + (this._max - this._min) * ((i - 1) / 100)),
+                ]);
+            }
             plotlyColorScale.push([i / 100, this.getColorForValue(this._min + (this._max - this._min) * (i / 100))]);
         }
         return plotlyColorScale;
@@ -146,18 +152,29 @@ export class ColorScale {
 
     getAsPlotlyColorScaleMapObject(): PlotlyMapColorScaleObject {
         const tickValsArray: number[] = [];
-        if (this._gradientType === ColorScaleGradientType.Diverging) {
+        if (this._type === ColorScaleType.Discrete) {
             for (let i = 0; i <= this._steps; i++) {
-                tickValsArray.push(this._min + (this._max - this._min) * (i / this._steps));
+                let value = this._min + (this._max - this._min) * (i / this._steps);
+                if (this._gradientType === ColorScaleGradientType.Diverging) {
+                    if (i <= this._steps / 2) {
+                        value = this._min + (this._divMidPoint - this._min) * (i / (this._steps / 2));
+                    } else {
+                        value =
+                            this._divMidPoint +
+                            (this._max - this._divMidPoint) * ((i - this._steps / 2) / (this._steps / 2));
+                    }
+                }
+                tickValsArray.push(value);
             }
         }
+
         return {
             colorscale: this.getPlotlyColorScale(),
             zmin: this._min,
             zmax: this._max,
             zmid: this._gradientType === ColorScaleGradientType.Diverging ? this._divMidPoint : undefined,
             colorbar:
-                this._gradientType === ColorScaleGradientType.Diverging
+                this._type === ColorScaleType.Discrete
                     ? {
                           tickmode: "array",
                           tickvals: tickValsArray,

@@ -3,20 +3,11 @@ import Plot from "react-plotly.js";
 
 import { ModuleFCProps } from "@framework/Module";
 import { useElementSize } from "@lib/hooks/useElementSize";
-import { ColorScaleGradientType, ColorScaleType } from "@lib/utils/ColorScale";
+import { ColorScaleType } from "@lib/utils/ColorScale";
 
 import { PlotData } from "plotly.js";
 
 import { State } from "./state";
-
-const data: number[][] = [];
-
-for (let j = 0; j < 10; j++) {
-    data.push([]);
-    for (let k = 0; k < 10; k++) {
-        data[j].push(j * k);
-    }
-}
 
 const countryData = [
     "Belarus",
@@ -414,6 +405,9 @@ for (let i = 0; i < countryData.length; i += 2) {
 export const view = (props: ModuleFCProps<State>) => {
     const type = props.moduleContext.useStoreValue("type");
     const gradientType = props.moduleContext.useStoreValue("gradientType");
+    const min = props.moduleContext.useStoreValue("min");
+    const max = props.moduleContext.useStoreValue("max");
+    const divMidPoint = props.moduleContext.useStoreValue("divMidPoint");
 
     const ref = React.useRef<HTMLDivElement>(null);
 
@@ -428,7 +422,7 @@ export const view = (props: ModuleFCProps<State>) => {
                   gradientType,
               });
 
-    colorScale.setRangeAndMidPoint(0, 18, 9);
+    colorScale.setRangeAndMidPoint(min, max, divMidPoint);
 
     const data: Partial<PlotData & { zmid: number }> = {
         ...colorScale.getAsPlotlyColorScaleMapObject(),

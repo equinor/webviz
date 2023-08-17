@@ -18,14 +18,14 @@ export enum ColorScaleDiscreteSteps {
 }
 
 const defaultCategoricalColorPalettes = [
-    new CategoricalColorPalette(
-        "Retro Metro",
-        ["#ea5545", "#f46a9b", "#ef9b20", "#edbf33", "#ede15b", "#bdcf32", "#87bc45", "#27aeef", "#b33dc6"],
-        "retro-metro"
-    ),
-    new CategoricalColorPalette(
-        "ResInsight",
-        [
+    new CategoricalColorPalette({
+        name: "Retro Metro",
+        hexColors: ["#ea5545", "#f46a9b", "#ef9b20", "#edbf33", "#ede15b", "#bdcf32", "#87bc45", "#27aeef", "#b33dc6"],
+        id: "retro-metro",
+    }),
+    new CategoricalColorPalette({
+        name: "ResInsight",
+        hexColors: [
             "#803E75",
             "#D41C84",
             "#F6768E",
@@ -47,8 +47,8 @@ const defaultCategoricalColorPalettes = [
             "#A6BDD7",
             "#2E4CE0",
         ],
-        "resinsight"
-    ),
+        id: "resinsight",
+    }),
 ];
 
 const defaultContinuousSequentialColorPalettes = [

@@ -2,6 +2,7 @@ import React from "react";
 
 import { ModuleFCProps } from "@framework/Module";
 import { ColorGradient } from "@lib/components/ColorGradient/colorGradient";
+import { Input } from "@lib/components/Input";
 import { Label } from "@lib/components/Label";
 import { RadioGroup } from "@lib/components/RadioGroup";
 import { ColorScaleGradientType, ColorScaleType } from "@lib/utils/ColorScale";
@@ -11,6 +12,9 @@ import { State } from "./state";
 export const settings = (props: ModuleFCProps<State>) => {
     const [type, setType] = props.moduleContext.useStoreState("type");
     const [gradientType, setGradientType] = props.moduleContext.useStoreState("gradientType");
+    const [min, setMin] = props.moduleContext.useStoreState("min");
+    const [max, setMax] = props.moduleContext.useStoreState("max");
+    const [divMidPoint, setDivMidPoint] = props.moduleContext.useStoreState("divMidPoint");
 
     function handleTypeChange(e: React.ChangeEvent<HTMLInputElement>) {
         setType(e.target.value as ColorScaleType);
@@ -78,6 +82,23 @@ export const settings = (props: ModuleFCProps<State>) => {
                     direction="horizontal"
                 />
             </Label>
+            <Label text="Min">
+                <Input type="number" value={min} onChange={(e) => setMin(e.target.valueAsNumber)} />
+            </Label>
+            <Label text="Max">
+                <Input type="number" value={max} onChange={(e) => setMax(e.target.valueAsNumber)} />
+            </Label>
+            {gradientType === ColorScaleGradientType.Diverging && (
+                <Label text="Midpoint">
+                    <Input
+                        type="number"
+                        value={divMidPoint}
+                        onChange={(e) => setDivMidPoint(e.target.valueAsNumber)}
+                        min={0}
+                        max={max}
+                    />
+                </Label>
+            )}
         </div>
     );
 };
