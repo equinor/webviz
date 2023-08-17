@@ -9,7 +9,7 @@ import { BaseComponent } from "../_BaseComponent";
 import { resolveClassNames } from "../_utils/resolveClassNames";
 
 export type SliderProps = {
-    valueLabelDisplay?: "auto" | "off";
+    valueLabelDisplay?: "on" | "auto" | "off";
     valueLabelFormat?: string | ((value: number) => React.ReactNode);
 } & Omit<SliderUnstyledProps, "valueLabelFormat">;
 
@@ -278,8 +278,7 @@ export const Slider = React.forwardRef((props: SliderProps, ref: React.Forwarded
                     }}
                 />
             </div>
-            {valueLabelDisplay !== undefined &&
-                valueLabelDisplay !== "off" &&
+            {valueLabelDisplay !== "off" &&
                 ReactDOM.createPortal(
                     <div
                         className="absolute flex justify-center w-40 -ml-20 h-4 -mt-5 pointer-events-none z-50"

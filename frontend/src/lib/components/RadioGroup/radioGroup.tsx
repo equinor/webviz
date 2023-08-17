@@ -25,7 +25,7 @@ const defaultProps: OptionalValues<RadioGroupProps> = {
 
 type RadioProps = {
     name: string;
-    labelElement: React.ReactNode;
+    label: React.ReactNode;
     value: string | number;
     checked: boolean;
     onChange?: (event: React.ChangeEvent<HTMLInputElement>, value: string | number) => void;
@@ -68,7 +68,7 @@ const Radio: React.FC<RadioProps> = (props) => {
                         disabled={props.disabled}
                     />
                 </span>
-                {props.labelElement}
+                {props.label}
             </label>
         </BaseComponent>
     );
@@ -93,7 +93,7 @@ export const RadioGroup = withDefaults<RadioGroupProps>()(defaultProps, (props) 
                         <Radio
                             key={option.value}
                             name={name.current}
-                            labelElement={option.labelElement}
+                            label={option.labelElement}
                             value={option.value}
                             checked={option.value === props.value}
                             onChange={props.onChange}
