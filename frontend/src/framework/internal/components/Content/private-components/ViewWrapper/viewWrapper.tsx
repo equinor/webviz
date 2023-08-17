@@ -1,8 +1,8 @@
 import React from "react";
 
 import { ModuleInstance } from "@framework/ModuleInstance";
-import { useSetStoreValue, useStoreValue } from "@framework/StateStore";
-import { Workbench } from "@framework/Workbench";
+import { useSetStoreValue, useStoreState } from "@framework/StateStore";
+import { DrawerContent, Workbench } from "@framework/Workbench";
 import { Point, pointDifference, pointRelativeToDomRect, pointerEventToPoint } from "@lib/utils/geometry";
 
 import { ChannelSelector } from "./private-components/channelSelector";
@@ -29,6 +29,11 @@ type ViewWrapperProps = {
 
 export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
     const ref = React.useRef<HTMLDivElement>(null);
+    const setDrawerContent = useSetStoreValue(props.workbench.getGuiStateStore(), "drawerContent");
+    const [settingsPanelWidth, setSettingsPanelWidth] = useStoreState(
+        props.workbench.getGuiStateStore(),
+        "settingsPanelWidthInPercent"
+    );
 
     const [currentInputName, setCurrentInputName] = React.useState<string | null>(null);
     const [channelSelectorCenterPoint, setChannelSelectorCenterPoint] = React.useState<Point | null>(null);
@@ -84,13 +89,17 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
         [props.moduleInstance]
     );
 
-    const handleModuleHeaderClick = React.useCallback(
-        function handleModuleHeaderClick() {
-            if (props.isActive) return;
-            props.workbench.setActiveModuleId(props.moduleInstance.getId());
-        },
-        [props.moduleInstance, props.workbench, props.isActive]
-    );
+    function handleModuleHeaderClick() {
+        if (props.isActive) return;
+        props.workbench.setActiveModuleId(props.moduleInstance.getId());
+    }
+
+    function handleModuleHeaderDoubleClick() {
+        if (settingsPanelWidth <= 5) {
+            setSettingsPanelWidth(20);
+        }
+        setDrawerContent(DrawerContent.ModuleSettings);
+    }
 
     function handleInputChannelsClick(e: React.PointerEvent<HTMLDivElement>): void {
         setShowDataChannelConnections(true);
@@ -174,7 +183,7 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
             )}
             <div
                 ref={ref}
-                className="absolute box-border p-1"
+                className="absolute box-border p-0.5"
                 style={{
                     width: props.width,
                     height: props.height,
@@ -191,6 +200,7 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
                         props.isDragged ? "cursor-grabbing select-none" : "cursor-grab"
                     }}`}
                     onClick={handleModuleHeaderClick}
+                    onDoubleClick={handleModuleHeaderDoubleClick}
                 >
                     <Header
                         moduleInstance={props.moduleInstance}

@@ -1,12 +1,11 @@
 import React from "react";
 
-import { LayoutElement, Workbench } from "@framework/Workbench";
-import { Content } from "@framework/internal/components/Content";
-import { Settings } from "@framework/internal/components/Settings";
-import { TopNavBar } from "@framework/internal/components/TopNavBar";
+import { DrawerContent, LayoutElement, Workbench } from "@framework/Workbench";
+import { LoginDialog } from "@framework/internal/components/LoginDialog";
+import { NavBar } from "@framework/internal/components/NavBar";
+import { SettingsContentPanels } from "@framework/internal/components/SettingsContentPanels";
 import { AuthProvider } from "@framework/internal/providers/AuthProvider";
 import { CustomQueryClientProvider } from "@framework/internal/providers/QueryClientProvider";
-import { ResizablePanels } from "@lib/components/ResizablePanels";
 
 import "./modules/registerAllModules";
 import "./templates/registerAllTemplates";
@@ -20,25 +19,21 @@ function App() {
         if (!workbench.loadLayoutFromLocalStorage()) {
             workbench.makeLayout(layout);
         }
+        if (workbench.getLayout().length === 0) {
+            workbench.getGuiStateStore().setValue("drawerContent", DrawerContent.ModulesList);
+        }
     }, []);
 
     return (
         <AuthProvider>
             <CustomQueryClientProvider>
-                <div className="h-screen flex flex-row">
-                    <ResizablePanels
-                        id="settings-content"
-                        direction="horizontal"
-                        minSizes={[300, 0]}
-                        initialSizesPercent={[25, 75]}
-                    >
-                        <Settings workbench={workbench} />
-                        <div className="flex flex-col flex-grow h-full">
-                            <TopNavBar workbench={workbench} />
-                            <Content workbench={workbench} />
-                        </div>
-                    </ResizablePanels>
-                </div>
+                <>
+                    <LoginDialog />
+                    <div className="h-screen flex flex-row">
+                        <NavBar workbench={workbench} />
+                        <SettingsContentPanels workbench={workbench} />
+                    </div>
+                </>
             </CustomQueryClientProvider>
         </AuthProvider>
     );

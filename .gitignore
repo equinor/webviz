@@ -107,4 +107,6 @@ dist
 # TernJS port file
 .tern-port
 
-frontend/.vscode
+# .vscode
+.vscode/
+!.vscode/tasks.json

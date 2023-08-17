@@ -21,7 +21,7 @@ export enum WorkbenchEvents {
 }
 
 export enum DrawerContent {
-    None = "None",
+    ModuleSettings = "ModuleSettings",
     ModulesList = "ModulesList",
     TemplatesList = "TemplatesList",
     SyncSettings = "SyncSettings",
@@ -38,6 +38,7 @@ export type LayoutElement = {
 
 export type WorkbenchGuiState = {
     drawerContent: DrawerContent;
+    settingsPanelWidthInPercent: number;
     showDataChannelConnections: boolean;
     editDataChannelConnectionsForModuleInstanceId: string | null;
     highlightedDataChannelConnection: {
@@ -60,7 +61,8 @@ export class Workbench {
         this._moduleInstances = [];
         this._activeModuleId = "";
         this._guiStateStore = new StateStore<WorkbenchGuiState>({
-            drawerContent: DrawerContent.None,
+            drawerContent: DrawerContent.ModuleSettings,
+            settingsPanelWidthInPercent: parseFloat(localStorage.getItem("settingsPanelWidthInPercent") || "20"),
             showDataChannelConnections: false,
             editDataChannelConnectionsForModuleInstanceId: null,
             highlightedDataChannelConnection: null,
