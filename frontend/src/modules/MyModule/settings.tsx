@@ -42,7 +42,7 @@ export const settings = (props: ModuleFCProps<State>) => {
                     options={[
                         {
                             value: ColorScaleType.Discrete,
-                            labelElement: (
+                            label: (
                                 <div className="flex gap-4 items-center">
                                     <div className="flex-grow w-24">
                                         <ColorGradient colorPalette={colorScale.getColorPalette()} steps={10} />
@@ -53,7 +53,7 @@ export const settings = (props: ModuleFCProps<State>) => {
                         },
                         {
                             value: ColorScaleType.Continuous,
-                            labelElement: (
+                            label: (
                                 <div className="flex gap-4 items-center h-4">
                                     <div className="flex-grow w-24">
                                         <ColorGradient colorPalette={colorScale.getColorPalette()} />
@@ -72,11 +72,11 @@ export const settings = (props: ModuleFCProps<State>) => {
                     options={[
                         {
                             value: ColorScaleGradientType.Sequential,
-                            labelElement: "Sequential",
+                            label: "Sequential",
                         },
                         {
                             value: ColorScaleGradientType.Diverging,
-                            labelElement: "Diverging",
+                            label: "Diverging",
                         },
                     ]}
                     direction="horizontal"

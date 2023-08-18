@@ -93,7 +93,7 @@ export const RadioGroup = withDefaults<RadioGroupProps>()(defaultProps, (props) 
                         <Radio
                             key={option.value}
                             name={name.current}
-                            label={option.labelElement}
+                            label={option.label}
                             value={option.value}
                             checked={option.value === props.value}
                             onChange={props.onChange}

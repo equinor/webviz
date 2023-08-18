@@ -158,11 +158,11 @@ export function settings({ moduleContext, workbenchServices, initialSettings }: 
                     <RadioGroup
                         options={[
                             {
-                                labelElement: "Horizontal",
+                                label: "Horizontal",
                                 value: "h",
                             },
                             {
-                                labelElement: "Vertical",
+                                label: "Vertical",
                                 value: "v",
                             },
                         ]}
