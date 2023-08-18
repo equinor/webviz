@@ -29,11 +29,11 @@ def get_vector_list(
     """Get list of all vectors in a given Sumo ensemble, excluding any historical vectors"""
 
     access = SummaryAccess(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
-    vector_names = access.get_vector_names()
+    vector_info_arr = access.get_available_vectors()
 
     ret_arr: List[schemas.VectorDescription] = [
-        schemas.VectorDescription(name=vector_name, descriptive_name=vector_name, has_historical=False)
-        for vector_name in vector_names
+        schemas.VectorDescription(name=vi.name, descriptive_name=vi.name, has_historical=vi.has_historical)
+        for vi in vector_info_arr
     ]
 
     return ret_arr
@@ -107,7 +107,22 @@ def get_historical_vector_data(
     resampling_frequency: Optional[schemas.Frequency] = Query(None, description="Resampling frequency"),
     # relative_to_timestamp: Optional[datetime.datetime] = Query(None, description="Calculate relative to timestamp"),
 ) -> schemas.VectorHistoricalData:
-    ...
+    access = SummaryAccess(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
+
+    sumo_freq = Frequency.from_string_value(resampling_frequency.value if resampling_frequency else "dummy")
+    sumo_hist_vec = access.get_matching_historical_vector(
+        non_historical_vector_name=non_historical_vector_name, resampling_frequency=sumo_freq
+    )
+
+    if not sumo_hist_vec:
+        raise HTTPException(status_code=404, detail="Could not get historical vector")
+
+    return schemas.VectorHistoricalData(
+        timestamps=sumo_hist_vec.timestamps,
+        values=sumo_hist_vec.values,
+        unit=sumo_hist_vec.metadata.unit,
+        is_rate=sumo_hist_vec.metadata.is_rate,
+    )
 
 
 @router.get("/statistical_vector_data/")

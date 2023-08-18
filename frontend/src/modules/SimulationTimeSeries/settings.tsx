@@ -186,7 +186,7 @@ function makeVectorOptionItems(vectorDescriptionsArr: VectorDescription_api[] | 
     const itemArr: SelectOption[] = [];
     if (vectorDescriptionsArr) {
         for (const vec of vectorDescriptionsArr) {
-            itemArr.push({ value: vec.name, label: vec.descriptive_name });
+            itemArr.push({ value: vec.name, label: vec.descriptive_name + (vec.has_historical ? " (hasHist)" : "") });
         }
     }
     return itemArr;
