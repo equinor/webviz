@@ -5,6 +5,19 @@ from src.services.utils.surface_to_float32 import surface_to_float32_array
 from . import schemas
 
 
+def resample_property_surface_to_mesh_surface(
+    mesh_surface: xtgeo.RegularSurface, property_surface: xtgeo.RegularSurface
+) -> xtgeo.RegularSurface:
+    """
+    Regrid property surface to mesh surface if topology is different
+    """
+    if mesh_surface.compare_topology(property_surface):
+        return property_surface
+
+    mesh_surface.resample(property_surface)
+    return mesh_surface
+
+
 def to_api_surface_data(xtgeo_surf: xtgeo.RegularSurface) -> schemas.SurfaceData:
     """
     Create API SurfaceData from xtgeo regular surface

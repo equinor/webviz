@@ -102,6 +102,48 @@ export class SurfaceService {
     }
 
     /**
+     * Get Property Surface Resampled To Static Surface
+     * @param caseUuid Sumo case uuid
+     * @param ensembleName Ensemble name
+     * @param realizationNumMesh Realization number
+     * @param nameMesh Surface name
+     * @param attributeMesh Surface attribute
+     * @param realizationNumProperty Realization number
+     * @param nameProperty Surface name
+     * @param attributeProperty Surface attribute
+     * @returns SurfaceData Successful Response
+     * @throws ApiError
+     */
+    public getPropertySurfaceResampledToStaticSurface(
+        caseUuid: string,
+        ensembleName: string,
+        realizationNumMesh: number,
+        nameMesh: string,
+        attributeMesh: string,
+        realizationNumProperty: number,
+        nameProperty: string,
+        attributeProperty: string,
+    ): CancelablePromise<SurfaceData> {
+        return this.httpRequest.request({
+            method: 'GET',
+            url: '/surface/property_surface_resampled_to_static_surface/',
+            query: {
+                'case_uuid': caseUuid,
+                'ensemble_name': ensembleName,
+                'realization_num_mesh': realizationNumMesh,
+                'name_mesh': nameMesh,
+                'attribute_mesh': attributeMesh,
+                'realization_num_property': realizationNumProperty,
+                'name_property': nameProperty,
+                'attribute_property': attributeProperty,
+            },
+            errors: {
+                422: `Validation Error`,
+            },
+        });
+    }
+
+    /**
      * Get Dynamic Surface Data
      * @param caseUuid Sumo case uuid
      * @param ensembleName Ensemble name

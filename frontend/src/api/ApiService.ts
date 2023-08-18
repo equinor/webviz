@@ -13,6 +13,7 @@ import { InplaceVolumetricsService } from './services/InplaceVolumetricsService'
 import { ParametersService } from './services/ParametersService';
 import { PvtService } from './services/PvtService';
 import { SurfaceService } from './services/SurfaceService';
+import { SurfacePolygonsService } from './services/SurfacePolygonsService';
 import { TimeseriesService } from './services/TimeseriesService';
 import { WellService } from './services/WellService';
 
@@ -28,6 +29,7 @@ export class ApiService {
     public readonly parameters: ParametersService;
     public readonly pvt: PvtService;
     public readonly surface: SurfaceService;
+    public readonly surfacePolygons: SurfacePolygonsService;
     public readonly timeseries: TimeseriesService;
     public readonly well: WellService;
 
@@ -54,6 +56,7 @@ export class ApiService {
         this.parameters = new ParametersService(this.request);
         this.pvt = new PvtService(this.request);
         this.surface = new SurfaceService(this.request);
+        this.surfacePolygons = new SurfacePolygonsService(this.request);
         this.timeseries = new TimeseriesService(this.request);
         this.well = new WellService(this.request);
     }

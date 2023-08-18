@@ -1,2 +1,9 @@
-export { createSurfaceMeshLayer, createWellboreTrajectoryLayer} from "./subsurfaceMap";
+export {
+    createSurfaceMeshLayer,
+    createWellboreTrajectoryLayer,
+    createSurfacePolygonsLayer,
+    createNorthArrowLayer,
+    createAxesLayer,
+    createWellBoreHeaderLayer,
+} from "./subsurfaceMap";
 export type { SurfaceMeta, SurfaceMeshLayerSettings } from "./subsurfaceMap";

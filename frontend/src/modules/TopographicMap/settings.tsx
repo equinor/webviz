@@ -15,20 +15,24 @@ import { CircularProgress } from "@lib/components/CircularProgress";
 import { Input } from "@lib/components/Input";
 import { Label } from "@lib/components/Label";
 import { Select, SelectOption } from "@lib/components/Select";
+import { resolveClassNames } from "@lib/components/_utils/resolveClassNames";
 
-import { SurfAddr, SurfAddrFactory } from "./SurfAddr";
+import { SurfAddr, SurfAddrFactory } from "./SurfaceAddress";
+import { SurfacePolygonsAddress } from "./SurfacePolygonsAddress";
 import { AggregationSelector } from "./components/AggregationSelector";
-import { useGetWellHeaders, useSurfaceDirectory } from "./queryHooks";
+import { PolygonDirectoryProvider } from "./polygonsDirectoryProvider";
+import { useGetWellHeaders, usePolygonDirectoryQuery, useSurfaceDirectoryQuery } from "./queryHooks";
 import { state } from "./state";
+import { SurfaceDirectoryProvider } from "./surfaceDirectoryProvider";
 
 //-----------------------------------------------------------------------------------------------------------
-type LabelledSwitchProps = {
+type LabelledCheckboxProps = {
     label: string;
     checked: boolean;
     onChange: any;
 };
 
-function LabelledSwitch(props: LabelledSwitchProps): JSX.Element {
+function LabelledCheckbox(props: LabelledCheckboxProps): JSX.Element {
     return (
         <Label wrapperClassName=" text-xs flow-root" labelClassName="float-left text-xs" text={props.label}>
             <div className=" float-right">
@@ -37,6 +41,9 @@ function LabelledSwitch(props: LabelledSwitchProps): JSX.Element {
         </Label>
     );
 }
+function Header(props: { text: string }): JSX.Element {
+    return <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mt-4 mb-2">{props.text}</label>;
+}
 
 export function settings({ moduleContext, workbenchSession, workbenchServices }: ModuleFCProps<state>) {
     const myInstanceIdStr = moduleContext.getInstanceIdString();
@@ -44,8 +51,14 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
 
     const ensembleSet = useEnsembleSet(workbenchSession);
     const [selectedEnsembleIdent, setSelectedEnsembleIdent] = React.useState<EnsembleIdent | null>(null);
-    const [selectedSurfaceName, setSelectedSurfaceName] = React.useState<string | null>(null);
-    const [selectedSurfaceAttribute, setSelectedSurfaceAttribute] = React.useState<string | null>(null);
+    const [selectedMeshSurfaceName, setSelectedMeshSurfaceName] = React.useState<string | null>(null);
+    const [selectedMeshSurfaceAttribute, setSelectedMeshSurfaceAttribute] = React.useState<string | null>(null);
+    const [usePropertySurface, setUsePropertySurface] = React.useState<boolean>(false);
+    const [selectedPropertySurfaceName, setSelectedPropertySurfaceName] = React.useState<string | null>(null);
+    const [selectedPropertySurfaceAttribute, setSelectedPropertySurfaceAttribute] = React.useState<string | null>(null);
+    const [selectedPolygonName, setSelectedPolygonName] = React.useState<string | null>(null);
+    const [selectedPolygonAttribute, setSelectedPolygonAttribute] = React.useState<string | null>(null);
+    const [linkPolygonNameToSurfaceName, setLinkPolygonNameToSurfaceName] = React.useState<boolean>(true);
     const [selectedWellUuids, setSelectedWellUuids] = moduleContext.useStoreState("selectedWellUuids");
 
     const [realizationNum, setRealizationNum] = React.useState<number>(0);
@@ -63,41 +76,96 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
     if (computedEnsembleIdent && !computedEnsembleIdent.equals(selectedEnsembleIdent)) {
         setSelectedEnsembleIdent(computedEnsembleIdent);
     }
-
-    const surfDirQuery = useSurfaceDirectory(
+    // Mesh surface
+    const meshSurfDirQuery = useSurfaceDirectoryQuery(
         computedEnsembleIdent?.getCaseUuid(),
         computedEnsembleIdent?.getEnsembleName(),
         [SumoContent_api.DEPTH]
     );
+    const meshSurfDirProvider = new SurfaceDirectoryProvider(meshSurfDirQuery, "tops");
+    const computedMeshSurfaceName = meshSurfDirProvider.validateOrResetSurfaceName(selectedMeshSurfaceName);
+    const computedMeshSurfaceAttribute = meshSurfDirProvider.validateOrResetSurfaceAttribute(
+        computedMeshSurfaceName,
+        selectedMeshSurfaceAttribute
+    );
 
-    let computedSurfaceName: string | null = null;
-    let computedSurfaceAttribute: string | null = null;
-
-    if (surfDirQuery.data) {
-        computedSurfaceName = fixupStringValueFromList(selectedSurfaceName, surfDirQuery.data.names);
-        computedSurfaceAttribute = fixupStaticSurfAttribute(
-            computedSurfaceName,
-            selectedSurfaceAttribute,
-            surfDirQuery.data
-        );
+    if (computedMeshSurfaceName && computedMeshSurfaceName !== selectedMeshSurfaceName) {
+        setSelectedMeshSurfaceName(computedMeshSurfaceName);
+    }
+    if (computedMeshSurfaceAttribute && computedMeshSurfaceAttribute !== selectedMeshSurfaceAttribute) {
+        setSelectedMeshSurfaceAttribute(computedMeshSurfaceAttribute);
     }
 
-    if (computedSurfaceName && computedSurfaceName !== selectedSurfaceName) {
-        setSelectedSurfaceName(computedSurfaceName);
+    let meshSurfNameOptions: SelectOption[] = [];
+    let meshSurfAttributeOptions: SelectOption[] = [];
+    meshSurfNameOptions = meshSurfDirProvider.surfaceNames().map((name) => ({ value: name, label: name }));
+    meshSurfAttributeOptions = meshSurfDirProvider
+        .attributesForSurfaceName(computedMeshSurfaceName)
+        .map((attr) => ({ value: attr, label: attr }));
+
+    // Property surface
+    const propertySurfDirQuery = useSurfaceDirectoryQuery(
+        computedEnsembleIdent?.getCaseUuid(),
+        computedEnsembleIdent?.getEnsembleName(),
+        [SumoContent_api.DEPTH] // Should be SumoContent_api.PROPERTY
+    );
+    const propertySurfDirProvider = new SurfaceDirectoryProvider(propertySurfDirQuery, "formations");
+    const computedPropertySurfaceName = propertySurfDirProvider.validateOrResetSurfaceName(selectedPropertySurfaceName);
+    const computedPropertySurfaceAttribute = propertySurfDirProvider.validateOrResetSurfaceAttribute(
+        computedPropertySurfaceName,
+        selectedPropertySurfaceAttribute
+    );
+    if (computedPropertySurfaceName && computedPropertySurfaceName !== selectedPropertySurfaceName) {
+        setSelectedPropertySurfaceName(computedPropertySurfaceName);
     }
-    if (computedSurfaceAttribute && computedSurfaceAttribute !== selectedSurfaceAttribute) {
-        setSelectedSurfaceAttribute(computedSurfaceAttribute);
+    if (computedPropertySurfaceAttribute && computedPropertySurfaceAttribute !== selectedPropertySurfaceAttribute) {
+        setSelectedPropertySurfaceAttribute(computedPropertySurfaceAttribute);
     }
+    let propertySurfNameOptions: SelectOption[] = [];
+    let propertySurfAttributeOptions: SelectOption[] = [];
+    propertySurfNameOptions = propertySurfDirProvider.surfaceNames().map((name) => ({ value: name, label: name }));
+    propertySurfAttributeOptions = propertySurfDirProvider
+        .attributesForSurfaceName(computedPropertySurfaceName)
+        .map((attr) => ({ value: attr, label: attr }));
+
+    // Polygon
+    const polygonDirQuery = usePolygonDirectoryQuery(
+        computedEnsembleIdent?.getCaseUuid(),
+        computedEnsembleIdent?.getEnsembleName()
+    );
+    const polygonDirProvider = new PolygonDirectoryProvider(polygonDirQuery);
+
+    const computedPolygonName = linkPolygonNameToSurfaceName
+        ? polygonDirProvider.validateOrResetPolygonNameFromSurfaceName(computedMeshSurfaceName)
+        : polygonDirProvider.validateOrResetPolygonName(selectedPolygonName);
+    const computedPolygonAttribute = polygonDirProvider.validateOrResetPolygonAttribute(
+        computedPolygonName,
+        selectedPolygonAttribute
+    );
+
+    if (computedPolygonName && computedPolygonName !== selectedPolygonName) {
+        setSelectedPolygonName(computedPolygonName);
+    }
+    if (computedPolygonAttribute && computedPolygonAttribute !== selectedPolygonAttribute) {
+        setSelectedPolygonAttribute(computedPolygonAttribute);
+    }
+    let polyNameOptions: SelectOption[] = [];
+    let polyAttributesOptions: SelectOption[] = [];
+    polyNameOptions = polygonDirProvider.polygonNames().map((name) => ({ value: name, label: name }));
+    polyAttributesOptions = polygonDirProvider
+        .attributesForPolygonName(computedPolygonName)
+        .map((attr) => ({ value: attr, label: attr }));
 
     React.useEffect(
-        function propagateSurfaceSelectionToView() {
+        function propagateMeshSurfaceSelectionToView() {
             let surfAddr: SurfAddr | null = null;
-            if (computedEnsembleIdent && computedSurfaceName && computedSurfaceAttribute) {
+
+            if (computedEnsembleIdent && computedMeshSurfaceName && computedMeshSurfaceAttribute) {
                 const addrFactory = new SurfAddrFactory(
                     computedEnsembleIdent.getCaseUuid(),
                     computedEnsembleIdent.getEnsembleName(),
-                    computedSurfaceName,
-                    computedSurfaceAttribute
+                    computedMeshSurfaceName,
+                    computedMeshSurfaceAttribute
                 );
 
                 if (aggregation === null) {
@@ -108,11 +176,69 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
             }
 
             console.debug(`propagateSurfaceSelectionToView() => ${surfAddr ? "valid surfAddr" : "NULL surfAddr"}`);
-            moduleContext.getStateStore().setValue("surfaceAddress", surfAddr);
+            moduleContext.getStateStore().setValue("meshSurfaceAddress", surfAddr);
         },
-        [selectedEnsembleIdent, selectedSurfaceName, selectedSurfaceAttribute, aggregation, realizationNum]
+        [selectedEnsembleIdent, selectedMeshSurfaceName, selectedMeshSurfaceAttribute, aggregation, realizationNum]
     );
+    React.useEffect(
+        function propagatePropertySurfaceSelectionToView() {
+            let surfAddr: SurfAddr | null = null;
+            if (!usePropertySurface) {
+                moduleContext.getStateStore().setValue("propertySurfaceAddress", surfAddr);
+                return;
+            }
+            if (computedEnsembleIdent && computedPropertySurfaceName && computedPropertySurfaceAttribute) {
+                const addrFactory = new SurfAddrFactory(
+                    computedEnsembleIdent.getCaseUuid(),
+                    computedEnsembleIdent.getEnsembleName(),
+                    computedPropertySurfaceName,
+                    computedPropertySurfaceAttribute
+                );
 
+                if (aggregation === null) {
+                    surfAddr = addrFactory.createStaticAddr(realizationNum);
+                } else {
+                    surfAddr = addrFactory.createStatisticalStaticAddr(aggregation);
+                }
+            }
+
+            console.debug(`propagateSurfaceSelectionToView() => ${surfAddr ? "valid surfAddr" : "NULL surfAddr"}`);
+            moduleContext.getStateStore().setValue("propertySurfaceAddress", surfAddr);
+        },
+        [
+            selectedEnsembleIdent,
+            selectedPropertySurfaceName,
+            selectedPropertySurfaceAttribute,
+            aggregation,
+            realizationNum,
+            usePropertySurface,
+        ]
+    );
+    React.useEffect(
+        function propogatePolygonsSelectionToView() {
+            let polygonAddr: SurfacePolygonsAddress | null = null;
+            if (computedEnsembleIdent && computedPolygonName && computedPolygonAttribute) {
+                polygonAddr = {
+                    caseUuid: computedEnsembleIdent.getCaseUuid(),
+                    ensemble: computedEnsembleIdent.getEnsembleName(),
+                    name: computedPolygonName,
+                    attribute: computedPolygonAttribute,
+                    realizationNum: realizationNum,
+                };
+            }
+
+            moduleContext.getStateStore().setValue("polygonsAddress", polygonAddr);
+        },
+        [
+            selectedEnsembleIdent,
+            selectedMeshSurfaceName,
+            selectedPolygonName,
+            selectedPolygonAttribute,
+            linkPolygonNameToSurfaceName,
+            aggregation,
+            realizationNum,
+        ]
+    );
     React.useEffect(
         function propogateSurfaceSettingsToView() {
             moduleContext.getStateStore().setValue("surfaceSettings", {
@@ -135,12 +261,9 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
     }
 
     function handleWellsChange(selectedWellUuids: string[], allWellUuidsOptions: SelectOption[]) {
-        console.log(selectedWellUuids);
-        console.log(allWellUuidsOptions);
         let newSelectedWellUuids = selectedWellUuids.filter((wellUuid) =>
             allWellUuidsOptions.some((wellHeader) => wellHeader.value === wellUuid)
         );
-        console.log(newSelectedWellUuids);
         setSelectedWellUuids(newSelectedWellUuids);
     }
 
@@ -160,58 +283,42 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
 
         return legalValues[0];
     }
-    function fixupStaticSurfAttribute(
-        surfName: string | null,
-        currAttribute: string | null,
-        surfDir: StaticSurfaceDirectory_api
-    ): string | null {
-        if (!surfName) {
-            return null;
-        }
-        const validAttrNames = getValidAttributesForSurfName(surfName, surfDir);
-        if (validAttrNames.length == 0) {
-            return null;
-        }
 
-        if (currAttribute && validAttrNames.includes(currAttribute)) {
-            return currAttribute;
-        }
-
-        return validAttrNames[0];
-    }
-    function getValidAttributesForSurfName(surfName: string, surfDir: StaticSurfaceDirectory_api): string[] {
-        const idxOfSurfName = surfDir.names.indexOf(surfName);
-        if (idxOfSurfName == -1) {
-            return [];
-        }
-
-        const attrIndices = surfDir.valid_attributes_for_name[idxOfSurfName];
-        const attrNames: string[] = [];
-        for (const idx of attrIndices) {
-            attrNames.push(surfDir.attributes[idx]);
-        }
-
-        return attrNames;
-    }
-    function handleSurfNameSelectionChange(selectedSurfNames: string[]) {
+    function handleMeshSurfNameSelectionChange(selectedSurfNames: string[]) {
         const newName = selectedSurfNames[0] ?? null;
-        setSelectedSurfaceName(newName);
-        if (newName && computedSurfaceAttribute) {
+        setSelectedMeshSurfaceName(newName);
+        if (newName && computedMeshSurfaceAttribute) {
             syncHelper.publishValue(SyncSettingKey.SURFACE, "global.syncValue.surface", {
                 name: newName,
-                attribute: computedSurfaceAttribute,
+                attribute: computedMeshSurfaceAttribute,
             });
         }
     }
-    function handleSurfAttributeSelectionChange(selectedSurfAttributes: string[]) {
+    function handleMeshSurfAttributeSelectionChange(selectedSurfAttributes: string[]) {
         const newAttr = selectedSurfAttributes[0] ?? null;
-        setSelectedSurfaceAttribute(newAttr);
-        if (newAttr && computedSurfaceName) {
+        setSelectedMeshSurfaceAttribute(newAttr);
+        if (newAttr && computedMeshSurfaceName) {
             syncHelper.publishValue(SyncSettingKey.SURFACE, "global.syncValue.surface", {
-                name: computedSurfaceName,
+                name: computedMeshSurfaceName,
                 attribute: newAttr,
             });
         }
+    }
+    function handlePropertySurfNameSelectionChange(selectedSurfNames: string[]) {
+        const newName = selectedSurfNames[0] ?? null;
+        setSelectedPropertySurfaceName(newName);
+    }
+    function handlePropertySurfAttributeSelectionChange(selectedSurfAttributes: string[]) {
+        const newAttr = selectedSurfAttributes[0] ?? null;
+        setSelectedPropertySurfaceAttribute(newAttr);
+    }
+    function handlePolyNameSelectionChange(selectedPolyNames: string[]) {
+        const newName = selectedPolyNames[0] ?? null;
+        setSelectedPolygonName(newName);
+    }
+    function handlePolyAttributeSelectionChange(selectedPolyAttributes: string[]) {
+        const newAttr = selectedPolyAttributes[0] ?? null;
+        setSelectedPolygonAttribute(newAttr);
     }
     function handleAggregationChanged(aggregation: SurfaceStatisticFunction_api | null) {
         setAggregation(aggregation);
@@ -224,51 +331,15 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
         }
     }
 
-    let surfNameOptions: SelectOption[] = [];
-    let surfAttributeOptions: SelectOption[] = [];
-
-    let validAttrNames: string[] = [];
-
-    if (surfDirQuery.data) {
-        validAttrNames = getValidAttributesForSurfName(computedSurfaceName ?? "", surfDirQuery.data);
-        surfNameOptions = surfDirQuery.data.names.map((name) => ({ value: name, label: name }));
-    }
-
-    surfAttributeOptions = validAttrNames.map((attr) => ({ value: attr, label: attr }));
     return (
         <div>
-            <Label text="Ensemble" synced={syncHelper.isSynced(SyncSettingKey.ENSEMBLE)}>
-                <SingleEnsembleSelect
-                    ensembleSet={ensembleSet}
-                    value={computedEnsembleIdent ? computedEnsembleIdent : null}
-                    onChange={handleEnsembleSelectionChange}
-                />
-            </Label>
-            <ApiStateWrapper
-                apiResult={surfDirQuery}
-                errorComponent={"Error loading surface directory"}
-                loadingComponent={<CircularProgress />}
-            >
-                <Label
-                    text="Stratigraphic unit top/base"
-                    labelClassName={syncHelper.isSynced(SyncSettingKey.SURFACE) ? "bg-indigo-700 text-white" : ""}
-                >
-                    <Select
-                        options={surfNameOptions}
-                        value={computedSurfaceName ? [computedSurfaceName] : []}
-                        onChange={handleSurfNameSelectionChange}
-                        size={5}
-                    />
-                </Label>
-                <Label
-                    text="Surface attribute:"
-                    labelClassName={syncHelper.isSynced(SyncSettingKey.SURFACE) ? "bg-indigo-700 text-white" : ""}
-                >
-                    <Select
-                        options={surfAttributeOptions}
-                        value={computedSurfaceAttribute ? [computedSurfaceAttribute] : []}
-                        onChange={handleSurfAttributeSelectionChange}
-                        size={5}
+            <div className="overflow-y-auto">
+                <Header text="Ensemble and realization" />
+                <Label text="Ensemble" synced={syncHelper.isSynced(SyncSettingKey.ENSEMBLE)}>
+                    <SingleEnsembleSelect
+                        ensembleSet={ensembleSet}
+                        value={computedEnsembleIdent ? computedEnsembleIdent : null}
+                        onChange={handleEnsembleSelectionChange}
                     />
                 </Label>
                 <AggregationSelector
@@ -280,46 +351,172 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
                         <Input type={"number"} value={realizationNum} onChange={handleRealizationTextChanged} />
                     </Label>
                 )}
-            </ApiStateWrapper>
-            <ApiStateWrapper
-                apiResult={wellHeadersQuery}
-                errorComponent={"Error loading wells"}
-                loadingComponent={<CircularProgress />}
-            >
-                <Label text="Official Wells">
-                    <Select
-                        options={wellHeaderOptions}
-                        value={selectedWellUuids}
-                        onChange={(selectedWellUuids: string[]) =>
-                            handleWellsChange(selectedWellUuids, wellHeaderOptions)
-                        }
-                        size={20}
-                        multiple={true}
-                    />
-                </Label>
-            </ApiStateWrapper>
-            <div>
-                <div className="p-2">
-                    <LabelledSwitch
-                        label="Contours"
-                        checked={showContour}
-                        onChange={(e: any) => setShowContour(e.target.checked)}
-                    />
-                    <LabelledSwitch
-                        label="Grid lines"
-                        checked={showGrid}
-                        onChange={(e: any) => setShowGrid(e.target.checked)}
-                    />
-                    <LabelledSwitch
-                        label="Smooth shading"
-                        checked={showSmoothShading}
-                        onChange={(e: any) => setShowSmoothShading(e.target.checked)}
-                    />
-                    <LabelledSwitch
-                        label="Material"
-                        checked={showMaterial}
-                        onChange={(e: any) => setShowMaterial(e.target.checked)}
-                    />
+                <Header text="Depth / time surface" />
+                <ApiStateWrapper
+                    apiResult={meshSurfDirQuery}
+                    errorComponent={"Error loading surface directory"}
+                    loadingComponent={<CircularProgress />}
+                >
+                    <Label
+                        text="Stratigraphic name"
+                        labelClassName={syncHelper.isSynced(SyncSettingKey.SURFACE) ? "bg-indigo-700 text-white" : ""}
+                    >
+                        <Select
+                            options={meshSurfNameOptions}
+                            value={computedMeshSurfaceName ? [computedMeshSurfaceName] : []}
+                            onChange={handleMeshSurfNameSelectionChange}
+                            size={5}
+                        />
+                    </Label>
+                    <Label
+                        text="Attribute"
+                        labelClassName={syncHelper.isSynced(SyncSettingKey.SURFACE) ? "bg-indigo-700 text-white" : ""}
+                    >
+                        <Select
+                            options={meshSurfAttributeOptions}
+                            value={computedMeshSurfaceAttribute ? [computedMeshSurfaceAttribute] : []}
+                            onChange={handleMeshSurfAttributeSelectionChange}
+                            size={5}
+                        />
+                    </Label>
+                </ApiStateWrapper>
+
+                <>
+                    <Label
+                        wrapperClassName=" flow-root mt-4 mb-2"
+                        labelClassName="float-left block text-sm font-medium text-gray-700 dark:text-gray-200"
+                        text={"Color by other attribute"}
+                    >
+                        <div className=" float-right">
+                            <Checkbox
+                                onChange={(e: any) => setUsePropertySurface(e.target.checked)}
+                                checked={usePropertySurface}
+                            />
+                        </div>
+                    </Label>
+                    {usePropertySurface && (
+                        <ApiStateWrapper
+                            apiResult={propertySurfDirQuery}
+                            errorComponent={"Error loading surface directory"}
+                            loadingComponent={<CircularProgress />}
+                        >
+                            <Label
+                                text="Stratigraphic name"
+                                labelClassName={
+                                    syncHelper.isSynced(SyncSettingKey.SURFACE) ? "bg-indigo-700 text-white" : ""
+                                }
+                            >
+                                <Select
+                                    options={propertySurfNameOptions}
+                                    value={computedPropertySurfaceName ? [computedPropertySurfaceName] : []}
+                                    onChange={handlePropertySurfNameSelectionChange}
+                                    size={5}
+                                />
+                            </Label>
+                            <Label
+                                text="Attribute"
+                                labelClassName={
+                                    syncHelper.isSynced(SyncSettingKey.SURFACE) ? "bg-indigo-700 text-white" : ""
+                                }
+                            >
+                                <Select
+                                    options={propertySurfAttributeOptions}
+                                    value={computedPropertySurfaceAttribute ? [computedPropertySurfaceAttribute] : []}
+                                    onChange={handlePropertySurfAttributeSelectionChange}
+                                    size={5}
+                                />
+                            </Label>
+                        </ApiStateWrapper>
+                    )}
+                </>
+
+                <Header text="Polygon data" />
+                <ApiStateWrapper
+                    apiResult={polygonDirQuery}
+                    errorComponent={"Error loading polygons directory"}
+                    loadingComponent={<CircularProgress />}
+                >
+                    <Label text="Stratigraphic name (polygon)">
+                        <>
+                            <Label
+                                wrapperClassName=" flow-root"
+                                labelClassName="float-left"
+                                text={"Use surface stratigraphy"}
+                            >
+                                <div className=" float-right">
+                                    <Checkbox
+                                        onChange={(e: any) => setLinkPolygonNameToSurfaceName(e.target.checked)}
+                                        checked={linkPolygonNameToSurfaceName}
+                                    />
+                                </div>
+                            </Label>
+                            <Select
+                                options={polyNameOptions}
+                                value={computedPolygonName ? [computedPolygonName] : []}
+                                onChange={handlePolyNameSelectionChange}
+                                size={5}
+                                disabled={linkPolygonNameToSurfaceName}
+                            />
+                        </>
+                    </Label>
+
+                    <Label text="Attribute (polygon)">
+                        <Select
+                            options={polyAttributesOptions}
+                            value={computedPolygonAttribute ? [computedPolygonAttribute] : []}
+                            placeholder={
+                                linkPolygonNameToSurfaceName
+                                    ? `No attributes found for ${computedMeshSurfaceName}`
+                                    : `No attributes found for ${computedPolygonName}`
+                            }
+                            onChange={handlePolyAttributeSelectionChange}
+                            size={5}
+                        />
+                    </Label>
+                </ApiStateWrapper>
+
+                <Header text="Well data" />
+                <ApiStateWrapper
+                    apiResult={wellHeadersQuery}
+                    errorComponent={"Error loading wells"}
+                    loadingComponent={<CircularProgress />}
+                >
+                    <Label text="Official Wells">
+                        <Select
+                            options={wellHeaderOptions}
+                            value={selectedWellUuids}
+                            onChange={(selectedWellUuids: string[]) =>
+                                handleWellsChange(selectedWellUuids, wellHeaderOptions)
+                            }
+                            size={10}
+                            multiple={true}
+                        />
+                    </Label>
+                </ApiStateWrapper>
+                <div>
+                    <div className="p-2">
+                        <Header text="Surface visuals" />
+                        <LabelledCheckbox
+                            label="Contours"
+                            checked={showContour}
+                            onChange={(e: any) => setShowContour(e.target.checked)}
+                        />
+                        <LabelledCheckbox
+                            label="Grid lines"
+                            checked={showGrid}
+                            onChange={(e: any) => setShowGrid(e.target.checked)}
+                        />
+                        <LabelledCheckbox
+                            label="Smooth shading"
+                            checked={showSmoothShading}
+                            onChange={(e: any) => setShowSmoothShading(e.target.checked)}
+                        />
+                        <LabelledCheckbox
+                            label="Material"
+                            checked={showMaterial}
+                            onChange={(e: any) => setShowMaterial(e.target.checked)}
+                        />
+                    </div>
                 </div>
             </div>
         </div>

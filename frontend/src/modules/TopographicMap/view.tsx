@@ -1,14 +1,27 @@
 import React from "react";
 
-import { WellBoreTrajectory_api } from "@api";
+import { PolygonData_api, WellBoreTrajectory_api } from "@api";
 import { ModuleFCProps } from "@framework/Module";
 import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
 import { Button } from "@lib/components/Button";
 import SubsurfaceViewer from "@webviz/subsurface-viewer";
 import { ViewStateType } from "@webviz/subsurface-viewer/dist/components/Map";
 
-import { useGetFieldWellsTrajectories, useSurfaceDataQueryByAddress } from "././queryHooks";
-import { SurfaceMeta, createSurfaceMeshLayer, createWellboreTrajectoryLayer } from "./_utils";
+import {
+    useGetFieldWellsTrajectories,
+    usePolygonsDataQueryByAddress,
+    usePropertySurfaceDataByQueryAddress,
+    useSurfaceDataQueryByAddress,
+} from "././queryHooks";
+import {
+    SurfaceMeta,
+    createAxesLayer,
+    createNorthArrowLayer,
+    createSurfaceMeshLayer,
+    createSurfacePolygonsLayer,
+    createWellBoreHeaderLayer,
+    createWellboreTrajectoryLayer,
+} from "./_utils";
 import { state } from "./state";
 
 //-----------------------------------------------------------------------------------------------------------
@@ -16,55 +29,96 @@ export function view({ moduleContext, workbenchServices }: ModuleFCProps<state>)
     const myInstanceIdStr = moduleContext.getInstanceIdString();
     console.debug(`${myInstanceIdStr} -- render TopographicMap view`);
 
-    const surfAddr = moduleContext.useStoreValue("surfaceAddress");
+    const meshSurfAddr = moduleContext.useStoreValue("meshSurfaceAddress");
+    const propertySurfAddr = moduleContext.useStoreValue("propertySurfaceAddress");
+    const polygonsAddr = moduleContext.useStoreValue("polygonsAddress");
     const selectedWellUuids = moduleContext.useStoreValue("selectedWellUuids");
     const surfaceSettings = moduleContext.useStoreValue("surfaceSettings");
     const [resetBounds, toggleResetBounds] = React.useState<boolean>(false);
     const [layers, SetLayers] = React.useState<Record<string, unknown>[]>([]);
     const [viewportBounds, setviewPortBounds] = React.useState<[number, number, number, number] | undefined>(undefined);
-
     const syncedSettingKeys = moduleContext.useSyncedSettingKeys();
     const syncHelper = new SyncSettingsHelper(syncedSettingKeys, workbenchServices);
 
-    const surfDataQuery = useSurfaceDataQueryByAddress(surfAddr);
-    const wellTrajectoriesQuery = useGetFieldWellsTrajectories(surfAddr?.caseUuid);
+    const meshSurfDataQuery = useSurfaceDataQueryByAddress(meshSurfAddr, true);
 
-    React.useEffect(
-        function layersHaveChanged() {
-            let newLayers: Record<string, unknown>[] = [];
-            if (surfDataQuery.data) {
-                const newMeshData = JSON.parse(surfDataQuery.data.mesh_data);
-                const newSurfaceMetaData: SurfaceMeta = { ...surfDataQuery.data };
-                const surfaceLayer: Record<string, unknown> = createSurfaceMeshLayer(
-                    newSurfaceMetaData,
-                    newMeshData,
-                    surfaceSettings
-                );
-                newLayers.push(surfaceLayer);
-                if (!viewportBounds || resetBounds) {
-                    setviewPortBounds([
-                        newSurfaceMetaData.x_min,
-                        newSurfaceMetaData.y_min,
-                        newSurfaceMetaData.x_max,
-                        newSurfaceMetaData.y_max,
-                    ]);
-                    toggleResetBounds(false);
-                }
+    const hasMeshSurfData = meshSurfDataQuery?.data ? true : false;
+    const propertySurfDataQuery = usePropertySurfaceDataByQueryAddress(meshSurfAddr, propertySurfAddr, hasMeshSurfData);
+
+    const wellTrajectoriesQuery = useGetFieldWellsTrajectories(meshSurfAddr?.caseUuid);
+    const polygonsQuery = usePolygonsDataQueryByAddress(polygonsAddr);
+
+    let newLayers: Record<string, unknown>[] = [createNorthArrowLayer()];
+    let surfaceLayer: Record<string, unknown> | undefined = undefined;
+
+    // Mesh data query should only trigger update if the property surface address is not set or if the property surface data is loaded
+    if (meshSurfDataQuery.data && !propertySurfAddr) {
+        const newMeshData = JSON.parse(meshSurfDataQuery.data.mesh_data);
+
+        const newSurfaceMetaData: SurfaceMeta = { ...meshSurfDataQuery.data };
+        const surfaceLayer: Record<string, unknown> = createSurfaceMeshLayer(
+            newSurfaceMetaData,
+            newMeshData,
+            surfaceSettings
+        );
+        newLayers.push(surfaceLayer);
+    } else if (meshSurfDataQuery.data && propertySurfDataQuery.data) {
+        if (meshSurfDataQuery.data && !propertySurfDataQuery.isLoading) {
+            const newMeshData = JSON.parse(meshSurfDataQuery.data.mesh_data);
+            let newPropertyData: string | undefined = undefined;
+            if (propertySurfDataQuery.data) {
+                newPropertyData = JSON.parse(propertySurfDataQuery.data.mesh_data);
             }
 
-            if (wellTrajectoriesQuery.data) {
-                const wellTrajectories: WellBoreTrajectory_api[] = wellTrajectoriesQuery.data.filter((well) =>
-                    selectedWellUuids.includes(well.wellbore_uuid)
-                );
-                const wellTrajectoryLayer: Record<string, unknown> = createWellboreTrajectoryLayer(wellTrajectories);
-                console.log(wellTrajectories);
-                newLayers.push(wellTrajectoryLayer);
-            }
+            const newSurfaceMetaData: SurfaceMeta = { ...meshSurfDataQuery.data };
+            const surfaceLayer: Record<string, unknown> = createSurfaceMeshLayer(
+                newSurfaceMetaData,
+                newMeshData,
+                surfaceSettings,
+                newPropertyData
+            );
+            newLayers.push(surfaceLayer);
+        }
+    }
 
-            SetLayers(newLayers);
-        },
-        [surfDataQuery.data, selectedWellUuids, surfaceSettings, resetBounds]
-    );
+    // Calculate viewport bounds and axes layer from the surface bounds.
+    // TODO: Should be done automatically by the component while considering all layers, with an option to lock the bounds
+    if ((meshSurfDataQuery.data && !propertySurfAddr) || (meshSurfDataQuery.data && propertySurfDataQuery.data)) {
+        const newSurfaceMetaData: SurfaceMeta = { ...meshSurfDataQuery.data };
+        if (!viewportBounds || resetBounds) {
+            setviewPortBounds([
+                newSurfaceMetaData.x_min,
+                newSurfaceMetaData.y_min,
+                newSurfaceMetaData.x_max,
+                newSurfaceMetaData.y_max,
+            ]);
+            toggleResetBounds(false);
+        }
+        const axesLayer: Record<string, unknown> = createAxesLayer([
+            newSurfaceMetaData.x_min,
+            newSurfaceMetaData.y_min,
+            0,
+            newSurfaceMetaData.x_max,
+            newSurfaceMetaData.y_max,
+            3500,
+        ]);
+        newLayers.push(axesLayer);
+    }
+
+    if (polygonsQuery.data) {
+        const polygonsData: PolygonData_api[] = polygonsQuery.data;
+        const polygonsLayer: Record<string, unknown> = createSurfacePolygonsLayer(polygonsData);
+        newLayers.push(polygonsLayer);
+    }
+    if (wellTrajectoriesQuery.data) {
+        const wellTrajectories: WellBoreTrajectory_api[] = wellTrajectoriesQuery.data.filter((well) =>
+            selectedWellUuids.includes(well.wellbore_uuid)
+        );
+        const wellTrajectoryLayer: Record<string, unknown> = createWellboreTrajectoryLayer(wellTrajectories);
+        const wellBoreHeaderLayer: Record<string, unknown> = createWellBoreHeaderLayer(wellTrajectories);
+        newLayers.push(wellTrajectoryLayer);
+        newLayers.push(wellBoreHeaderLayer);
+    }
 
     function onCameraChange(viewport: ViewStateType) {
         syncHelper.publishValue(SyncSettingKey.CAMERA_POSITION_MAP, "global.syncValue.cameraPositionMap", {
@@ -88,7 +142,7 @@ export function view({ moduleContext, workbenchServices }: ModuleFCProps<state>)
                 <SubsurfaceViewer
                     id="deckgl"
                     bounds={viewportBounds}
-                    layers={layers}
+                    layers={newLayers}
                     toolbar={{ visible: true }}
                     views={{
                         layout: [1, 1],
@@ -98,7 +152,7 @@ export function view({ moduleContext, workbenchServices }: ModuleFCProps<state>)
                                 id: "view_1",
                                 isSync: true,
                                 show3D: true,
-                                layerIds: ["axes-layer", "wells-layer", "mesh-layer"],
+                                layerIds: layers.map((layer) => layer.id) as string[],
                             },
                         ],
                     }}

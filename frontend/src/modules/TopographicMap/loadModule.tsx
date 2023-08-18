@@ -5,13 +5,18 @@ import { state } from "./state";
 import { view } from "./view";
 
 const defaultState: state = {
-    surfaceAddress: null,
+    meshSurfaceAddress: null,
+    propertySurfaceAddress: null,
+    polygonsAddress: null,
     selectedWellUuids: [],
     surfaceSettings: undefined,
 };
 
 const module = ModuleRegistry.initModule<state>("TopographicMap", defaultState, {
-    surfaceAddress: { deepCompare: true },
+    meshSurfaceAddress: { deepCompare: true },
+    propertySurfaceAddress: { deepCompare: true },
+    polygonsAddress: { deepCompare: true },
+    surfaceSettings: { deepCompare: true },
 });
 
 module.viewFC = view;

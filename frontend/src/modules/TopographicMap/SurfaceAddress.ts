@@ -22,11 +22,6 @@ export interface StatisticalStaticSurfAddr {
 
 export type SurfAddr = StaticSurfAddr | StatisticalStaticSurfAddr;
 
-export function makeSurfAddrString(addr: SurfAddr): string {
-    const valueArr = Object.values(addr);
-    const str = valueArr.join("--");
-    return str;
-}
 
 export class SurfAddrFactory {
     private _caseUuid: string;
