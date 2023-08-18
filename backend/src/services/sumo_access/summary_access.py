@@ -301,8 +301,8 @@ def _is_historical_vector_name(vector_name: str) -> bool:
     parts = vector_name.split(":", 1)
     if parts[0].endswith("H") and parts[0].startswith(("F", "G", "W")):
         return True
-    else:
-        return False
+
+    return False
 
 
 def _construct_historical_vector_name(non_historical_vector_name: str) -> Optional[str]:
@@ -311,5 +311,5 @@ def _construct_historical_vector_name(non_historical_vector_name: str) -> Option
     hist_vec = ":".join(parts)
     if _is_historical_vector_name(hist_vec):
         return hist_vec
-    else:
-        return None
+
+    return None
