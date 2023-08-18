@@ -1,6 +1,6 @@
 import React from "react";
 
-import { CaseInfo_api, EnsembleInfo_api, FieldInfo_api } from "@api";
+import { CaseInfo_api, EnsembleInfo_api } from "@api";
 import { apiService } from "@framework/ApiService";
 import { CheckIcon, PlusIcon, TrashIcon } from "@heroicons/react/20/solid";
 import { ApiStateWrapper } from "@lib/components/ApiStateWrapper";
