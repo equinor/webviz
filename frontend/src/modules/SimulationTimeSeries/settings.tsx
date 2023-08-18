@@ -30,6 +30,8 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
     const [selectedVectorName, setSelectedVectorName] = React.useState<string>("");
     const [resampleFrequency, setResamplingFrequency] = moduleContext.useStoreState("resamplingFrequency");
     const [showStatistics, setShowStatistics] = moduleContext.useStoreState("showStatistics");
+    const [showRealizations, setShowRealizations] = moduleContext.useStoreState("showRealizations");
+    const [showHistorical, setShowHistorical] = moduleContext.useStoreState("showHistorical");
 
     const syncedSettingKeys = moduleContext.useSyncedSettingKeys();
     const syncHelper = new SyncSettingsHelper(syncedSettingKeys, workbenchServices);
@@ -61,18 +63,21 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
         setSelectedVectorName(computedVectorName);
     }
 
+    const computedVectorNameHasHistoricalData = hasHistoricalVector(computedVectorName, vectorListQuery.data);
+
     React.useEffect(
         function propagateVectorSpecToView() {
             if (computedEnsembleIdent && computedVectorName) {
                 moduleContext.getStateStore().setValue("vectorSpec", {
                     ensembleIdent: computedEnsembleIdent,
                     vectorName: computedVectorName,
+                    hasHistoricalVector: computedVectorNameHasHistoricalData,
                 });
             } else {
                 moduleContext.getStateStore().setValue("vectorSpec", null);
             }
         },
-        [computedEnsembleIdent, computedVectorName]
+        [computedEnsembleIdent, computedVectorName, computedVectorNameHasHistoricalData]
     );
 
     const computedEnsemble = computedEnsembleIdent ? ensembleSet.findEnsemble(computedEnsembleIdent) : null;
@@ -106,8 +111,15 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
     }
 
     function handleShowStatisticsCheckboxChange(event: React.ChangeEvent<HTMLInputElement>) {
-        console.debug("handleShowStatisticsCheckboxChange() " + event.target.checked);
         setShowStatistics(event.target.checked);
+    }
+
+    function handleShowRealizations(event: React.ChangeEvent<HTMLInputElement>) {
+        setShowRealizations(event.target.checked);
+    }
+
+    function handleShowHistorical(event: React.ChangeEvent<HTMLInputElement>) {
+        setShowHistorical(event.target.checked);
     }
 
     function handleRealizationRangeTextChanged(event: React.ChangeEvent<HTMLInputElement>) {
@@ -160,6 +172,13 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
                 />
             </Label>
             <Checkbox label="Show statistics" checked={showStatistics} onChange={handleShowStatisticsCheckboxChange} />
+            <Checkbox label="Show realizations" checked={showRealizations} onChange={handleShowRealizations} />
+            <Checkbox
+                label="Show historical"
+                checked={showHistorical}
+                disabled={!computedVectorNameHasHistoricalData}
+                onChange={handleShowHistorical}
+            />
             <Label text={`Realizations (maxReal=${computedEnsemble?.getMaxRealizationNumber() ?? -1})`}>
                 <Input onChange={handleRealizationRangeTextChanged} />
             </Label>
@@ -182,11 +201,28 @@ function fixupVectorName(currVectorName: string, vectorDescriptionsArr: VectorDe
     return vectorDescriptionsArr[0].name;
 }
 
+function hasHistoricalVector(
+    nonHistoricalVectorName: string,
+    vectorDescriptionsArr: VectorDescription_api[] | undefined
+): boolean {
+    if (!vectorDescriptionsArr || vectorDescriptionsArr.length === 0) {
+        return false;
+    }
+
+    const foundItem = vectorDescriptionsArr.find((item) => item.name === nonHistoricalVectorName);
+    if (foundItem) {
+        return foundItem.has_historical;
+    }
+
+    return false;
+}
+
 function makeVectorOptionItems(vectorDescriptionsArr: VectorDescription_api[] | undefined): SelectOption[] {
     const itemArr: SelectOption[] = [];
     if (vectorDescriptionsArr) {
         for (const vec of vectorDescriptionsArr) {
-            itemArr.push({ value: vec.name, label: vec.descriptive_name + (vec.has_historical ? " (hasHist)" : "") });
+            itemArr.push({ value: vec.name, label: vec.descriptive_name });
+            //itemArr.push({ value: vec.name, label: vec.descriptive_name + (vec.has_historical ? " (hasHist)" : "") });
         }
     }
     return itemArr;
