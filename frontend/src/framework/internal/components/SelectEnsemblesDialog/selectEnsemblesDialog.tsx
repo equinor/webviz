@@ -11,6 +11,7 @@ import { Dropdown } from "@lib/components/Dropdown";
 import { IconButton } from "@lib/components/IconButton";
 import { Label } from "@lib/components/Label";
 import { Select } from "@lib/components/Select";
+import { useValidState } from "@lib/hooks/useValidState";
 import { useQuery } from "@tanstack/react-query";
 
 import { isEqual } from "lodash";
@@ -31,9 +32,6 @@ const CACHE_TIME = 5 * 60 * 1000;
 
 export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (props) => {
     const [confirmCancel, setConfirmCancel] = React.useState<boolean>(false);
-    const [selectedField, setSelectedField] = React.useState<string>("");
-    const [selectedCaseId, setSelectedCaseId] = React.useState<string>("");
-    const [selectedEnsembleName, setSelectedEnsembleName] = React.useState<string>("");
     const [newlySelectedEnsembles, setNewlySelectedEnsembles] = React.useState<EnsembleItem[]>([]);
 
     React.useLayoutEffect(() => {
@@ -47,35 +45,49 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
         },
     });
 
-    const computedFieldIdentifier = fixupFieldIdentifier(selectedField, fieldsQuery.data);
+    const [selectedField, setSelectedField] = useValidState<string>(
+        "",
+        fieldsQuery.data ? fieldsQuery.data.map((item) => item.field_identifier) : [],
+        true
+    );
 
     const casesQuery = useQuery({
-        queryKey: ["getCases", computedFieldIdentifier],
+        queryKey: ["getCases", selectedField],
         queryFn: () => {
-            if (!computedFieldIdentifier) {
+            if (!selectedField) {
                 return Promise.resolve<CaseInfo_api[]>([]);
             }
-            return apiService.explore.getCases(computedFieldIdentifier);
+            return apiService.explore.getCases(selectedField);
         },
         enabled: fieldsQuery.isSuccess,
         cacheTime: CACHE_TIME,
         staleTime: STALE_TIME,
     });
 
-    const computedCaseUuid = fixupCaseUuid(selectedCaseId, casesQuery.data);
+    const [selectedCaseId, setSelectedCaseId] = useValidState<string>(
+        "",
+        casesQuery.data ? casesQuery.data.map((item) => item.uuid) : [],
+        true
+    );
 
     const ensemblesQuery = useQuery({
-        queryKey: ["getEnsembles", computedCaseUuid],
+        queryKey: ["getEnsembles", selectedCaseId],
         queryFn: () => {
-            if (!computedCaseUuid) {
+            if (!selectedCaseId) {
                 return Promise.resolve<EnsembleInfo_api[]>([]);
             }
-            return apiService.explore.getEnsembles(computedCaseUuid);
+            return apiService.explore.getEnsembles(selectedCaseId);
         },
         enabled: casesQuery.isSuccess,
         cacheTime: CACHE_TIME,
         staleTime: STALE_TIME,
     });
+
+    const [selectedEnsembleName, setSelectedEnsembleName] = useValidState<string>(
+        "",
+        ensemblesQuery.data ? ensemblesQuery.data.map((item) => item.name) : [],
+        true
+    );
 
     function handleFieldChanged(fieldIdentifier: string) {
         setSelectedField(fieldIdentifier);
@@ -89,13 +101,11 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
         setSelectedEnsembleName(ensembleNames[0]);
     }
 
-    const computedEnsembleName = fixupEnsembleName(selectedEnsembleName, ensemblesQuery.data);
-
     function checkIfEnsembleAlreadySelected(): boolean {
-        if (computedCaseUuid && computedEnsembleName) {
+        if (selectedCaseId && selectedEnsembleName) {
             if (
                 newlySelectedEnsembles.some(
-                    (e) => e.caseUuid === computedCaseUuid && e.ensembleName === computedEnsembleName
+                    (e) => e.caseUuid === selectedCaseId && e.ensembleName === selectedEnsembleName
                 )
             ) {
                 return true;
@@ -106,8 +116,8 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
 
     function handleAddEnsemble() {
         if (!checkIfEnsembleAlreadySelected()) {
-            const caseName = casesQuery.data?.find((c) => c.uuid === computedCaseUuid)?.name ?? "UNKNOWN";
-            const ensArr = [{ caseUuid: computedCaseUuid, caseName: caseName, ensembleName: computedEnsembleName }];
+            const caseName = casesQuery.data?.find((c) => c.uuid === selectedCaseId)?.name ?? "UNKNOWN";
+            const ensArr = [{ caseUuid: selectedCaseId, caseName: caseName, ensembleName: selectedEnsembleName }];
             setNewlySelectedEnsembles((prev) => [...prev, ...ensArr]);
         }
     }
@@ -175,7 +185,7 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                             >
                                 <Dropdown
                                     options={fieldOpts}
-                                    value={computedFieldIdentifier}
+                                    value={selectedField}
                                     onChange={handleFieldChanged}
                                     disabled={fieldOpts.length === 0}
                                 />
@@ -189,7 +199,7 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                             >
                                 <Select
                                     options={caseOpts}
-                                    value={[computedCaseUuid]}
+                                    value={[selectedCaseId]}
                                     onChange={handleCaseChanged}
                                     disabled={caseOpts.length === 0}
                                     size={5}
@@ -206,7 +216,7 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                             >
                                 <Select
                                     options={ensembleOpts}
-                                    value={[computedEnsembleName]}
+                                    value={[selectedEnsembleName]}
                                     onChange={handleEnsembleChanged}
                                     disabled={caseOpts.length === 0}
                                     size={5}
