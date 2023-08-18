@@ -6,13 +6,13 @@ import { UseQueryResult, useQuery } from "@tanstack/react-query";
 const STALE_TIME = 60 * 1000;
 const CACHE_TIME = 60 * 1000;
 
-export function useVectorsQuery(
+export function useVectorListQuery(
     caseUuid: string | undefined,
     ensembleName: string | undefined
 ): UseQueryResult<Array<VectorDescription_api>> {
     return useQuery({
-        queryKey: ["getVectorNamesAndDescriptions", caseUuid, ensembleName],
-        queryFn: () => apiService.timeseries.getVectorNamesAndDescriptions(caseUuid ?? "", ensembleName ?? ""),
+        queryKey: ["getVectorList", caseUuid, ensembleName],
+        queryFn: () => apiService.timeseries.getVectorList(caseUuid ?? "", ensembleName ?? ""),
         staleTime: STALE_TIME,
         cacheTime: CACHE_TIME,
         enabled: caseUuid && ensembleName ? true : false,

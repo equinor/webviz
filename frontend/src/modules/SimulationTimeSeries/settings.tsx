@@ -17,7 +17,7 @@ import { Select, SelectOption } from "@lib/components/Select";
 
 import { sortBy, sortedUniq } from "lodash";
 
-import { useVectorsQuery } from "./queryHooks";
+import { useVectorListQuery } from "./queryHooks";
 import { State } from "./state";
 
 //-----------------------------------------------------------------------------------------------------------
@@ -42,7 +42,7 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
     const candidateEnsembleIdent = maybeAssignFirstSyncedEnsemble(selectedEnsembleIdent, syncedValueEnsembles);
     const computedEnsembleIdent = fixupEnsembleIdent(candidateEnsembleIdent, ensembleSet);
 
-    const vectorsQuery = useVectorsQuery(
+    const vectorListQuery = useVectorListQuery(
         computedEnsembleIdent?.getCaseUuid(),
         computedEnsembleIdent?.getEnsembleName()
     );
@@ -52,7 +52,7 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
         console.debug(`${myInstanceIdStr} -- syncing timeSeries to ${syncedValueSummaryVector.vectorName}`);
         candidateVectorName = syncedValueSummaryVector.vectorName;
     }
-    const computedVectorName = fixupVectorName(candidateVectorName, vectorsQuery.data);
+    const computedVectorName = fixupVectorName(candidateVectorName, vectorListQuery.data);
 
     if (computedEnsembleIdent && !computedEnsembleIdent.equals(selectedEnsembleIdent)) {
         setSelectedEnsembleIdent(computedEnsembleIdent);
@@ -135,7 +135,7 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
                 />
             </Label>
             <ApiStateWrapper
-                apiResult={vectorsQuery}
+                apiResult={vectorListQuery}
                 errorComponent={"Error loading vector names"}
                 loadingComponent={<CircularProgress />}
             >
@@ -144,7 +144,7 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
                     labelClassName={syncHelper.isSynced(SyncSettingKey.TIME_SERIES) ? "bg-indigo-700 text-white" : ""}
                 >
                     <Select
-                        options={makeVectorOptionItems(vectorsQuery.data)}
+                        options={makeVectorOptionItems(vectorListQuery.data)}
                         value={computedVectorName ? [computedVectorName] : []}
                         onChange={handleVectorSelectionChange}
                         filter={true}
