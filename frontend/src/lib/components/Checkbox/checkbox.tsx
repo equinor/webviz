@@ -8,6 +8,7 @@ export type CheckboxProps = {
     id?: string;
     label?: string;
     checked?: boolean;
+    disabled?: boolean;
     onChange?: (event: React.ChangeEvent<HTMLInputElement>, checked: boolean) => void;
 };
 
@@ -34,6 +35,7 @@ export const Checkbox: React.FC<CheckboxProps> = (props) => {
                 type="checkbox"
                 checked={checked}
                 onChange={handleChange}
+                disabled={props.disabled ?? false}
                 className={resolveClassNames(
                     "w-4",
                     "h-4",
