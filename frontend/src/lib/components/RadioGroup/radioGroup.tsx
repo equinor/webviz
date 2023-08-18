@@ -10,7 +10,7 @@ import { resolveClassNames } from "../_utils/resolveClassNames";
 export type RadioGroupProps<T = string | number> = {
     name?: string;
     options: {
-        labelElement: React.ReactNode;
+        label: React.ReactNode;
         value: T;
         disabled?: boolean;
     }[];
