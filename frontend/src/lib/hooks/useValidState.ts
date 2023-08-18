@@ -1,19 +1,19 @@
 import React from "react";
 
 export function useValidState<T>(
-    defaultValue: T,
-    validValues: T[],
+    initialState: T,
+    validStates: T[],
     keepStateWhenInvalid = false
 ): [T, (value: T) => void] {
-    const [value, setValue] = React.useState<T>(defaultValue);
+    const [value, setValue] = React.useState<T>(initialState);
 
     let adjustedValue = value;
 
-    if (!validValues.includes(value)) {
-        if (validValues.length > 0) {
-            adjustedValue = validValues[0];
+    if (!validStates.includes(value)) {
+        if (validStates.length > 0) {
+            adjustedValue = validStates[0];
         } else {
-            adjustedValue = defaultValue;
+            adjustedValue = initialState;
         }
         if (!keepStateWhenInvalid) {
             setValue(adjustedValue);
