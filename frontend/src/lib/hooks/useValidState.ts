@@ -3,7 +3,7 @@ import React from "react";
 export function useValidState<T>(
     initialState: T,
     validStates: T[],
-    keepStateWhenInvalid = false
+    keepStateWhenInvalid = true
 ): [T, (value: T) => void] {
     const [value, setValue] = React.useState<T>(initialState);
 
