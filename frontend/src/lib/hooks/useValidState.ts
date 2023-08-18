@@ -5,20 +5,20 @@ export function useValidState<T>(
     validStates: T[],
     keepStateWhenInvalid = true
 ): [T, (value: T) => void] {
-    const [value, setValue] = React.useState<T>(initialState);
+    const [state, setState] = React.useState<T>(initialState);
 
-    let adjustedValue = value;
+    let adjustedState = state;
 
-    if (!validStates.includes(value)) {
+    if (!validStates.includes(state)) {
         if (validStates.length > 0) {
-            adjustedValue = validStates[0];
+            adjustedState = validStates[0];
         } else {
-            adjustedValue = initialState;
+            adjustedState = initialState;
         }
         if (!keepStateWhenInvalid) {
-            setValue(adjustedValue);
+            setState(adjustedState);
         }
     }
 
-    return [adjustedValue, setValue];
+    return [adjustedState, setState];
 }
