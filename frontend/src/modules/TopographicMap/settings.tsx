@@ -69,6 +69,7 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
     const [showGrid, setShowGrid] = React.useState(false);
     const [showSmoothShading, setShowSmoothShading] = React.useState(false);
     const [showMaterial, setShowMaterial] = React.useState(false);
+    const [show3D, setShow3D] = React.useState(true);
     const syncedSettingKeys = moduleContext.useSyncedSettingKeys();
     const syncHelper = new SyncSettingsHelper(syncedSettingKeys, workbenchServices);
     const syncedValueEnsembles = syncHelper.useValue(SyncSettingKey.ENSEMBLE, "global.syncValue.ensembles");
@@ -251,6 +252,15 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
         },
         [showContour, contourStartValue, contourIncValue, showGrid, showSmoothShading, showMaterial]
     );
+    React.useEffect(
+        function propogateSubsurfaceMapViewSettingsToView() {
+            moduleContext.getStateStore().setValue("viewSettings", {
+                show3d: show3D,
+            });
+        },
+        [show3D]
+    );
+
     const wellHeadersQuery = useGetWellHeaders(computedEnsembleIdent?.getCaseUuid());
     let wellHeaderOptions: SelectOption[] = [];
 
@@ -260,6 +270,7 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
             value: header.wellbore_uuid,
         }));
     }
+    console.log(wellHeaderOptions);
 
     function handleWellsChange(selectedWellUuids: string[], allWellUuidsOptions: SelectOption[]) {
         let newSelectedWellUuids = selectedWellUuids.filter((wellUuid) =>
@@ -555,6 +566,14 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
                             label="Material"
                             checked={showMaterial}
                             onChange={(e: any) => setShowMaterial(e.target.checked)}
+                        />
+                    </div>
+                    <div className="p-2">
+                        <Header text="View visuals" />
+                        <LabelledCheckbox
+                            label="Show 3D"
+                            checked={show3D}
+                            onChange={(e: any) => setShow3D(e.target.checked)}
                         />
                     </div>
                 </div>

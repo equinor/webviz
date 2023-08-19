@@ -113,18 +113,28 @@ class SurfacePolygonsAccess:
             LOGGER.warning(
                 f"Multiple ({surface_polygons_count}) polygons set found in Sumo for: {addr_str}. Returning first polygons set."
             )
-            # HACK HACK HACK Some fields has multiple polygons sets for some reason... Unknown which one works
+            # TODO: Some fields has multiple polygons set. There should only be one.
             for poly in polygons_collection:
                 byte_stream: BytesIO = poly.blob
                 poly_df = pd.read_csv(byte_stream)
-                is_valid = set(["X_UTME", "Y_UTMN", "Z_TVDSS", "POLY_ID"]) == set(poly_df.columns)
-                if is_valid:
+                if set(["X_UTME", "Y_UTMN", "Z_TVDSS", "POLY_ID"]) == set(poly_df.columns):
+                    is_valid = True
+                    break
+                if set(["X", "Y", "Z", "ID"]) == set(poly_df.columns):
+                    poly_df = poly_df.rename(columns={"X": "X_UTME", "Y": "Y_UTMN", "Z": "Z_TVDSS", "ID": "POLY_ID"})
+                    is_valid = True
                     break
         else:
             sumo_polys = polygons_collection[0]
             byte_stream: BytesIO = sumo_polys.blob
             poly_df = pd.read_csv(byte_stream)
-            is_valid = set(["X_UTME", "Y_UTMN", "Z_TVDSS", "POLY_ID"]) == set(poly_df.columns)
+            if set(["X_UTME", "Y_UTMN", "Z_TVDSS", "POLY_ID"]) == set(poly_df.columns):
+                is_valid = True
+
+            if set(["X", "Y", "Z", "ID"]) == set(poly_df.columns):
+                poly_df = poly_df.rename(columns={"X": "X_UTME", "Y": "Y_UTMN", "Z": "Z_TVDSS", "ID": "POLY_ID"})
+                is_valid = True
+
         if not is_valid:
             LOGGER.warning(f"Invalid surface polygons found in Sumo for {addr_str}")
             return None

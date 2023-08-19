@@ -6,4 +6,4 @@ export {
     createAxesLayer,
     createWellBoreHeaderLayer,
 } from "./subsurfaceMap";
-export type { SurfaceMeta, SurfaceMeshLayerSettings } from "./subsurfaceMap";
+export type { SurfaceMeta, SurfaceMeshLayerSettings, ViewSettings } from "./subsurfaceMap";

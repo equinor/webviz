@@ -1,6 +1,6 @@
 import { SurfAddr } from "./SurfaceAddress";
 import { SurfacePolygonsAddress } from "./SurfacePolygonsAddress";
-import { SurfaceMeshLayerSettings } from "./_utils/";
+import { SurfaceMeshLayerSettings, ViewSettings } from "./_utils/";
 
 export interface state {
     meshSurfaceAddress: SurfAddr | null;
@@ -8,4 +8,5 @@ export interface state {
     polygonsAddress: SurfacePolygonsAddress | null;
     selectedWellUuids: string[];
     surfaceSettings: SurfaceMeshLayerSettings | undefined;
+    viewSettings: ViewSettings | undefined;
 }

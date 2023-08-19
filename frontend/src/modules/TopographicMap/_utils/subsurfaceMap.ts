@@ -9,6 +9,9 @@ export type SurfaceMeshLayerSettings = {
     material?: boolean;
 };
 
+export type ViewSettings = {
+    show3d: boolean;
+};
 export type SurfaceMeta = {
     x_ori: number;
     y_ori: number;

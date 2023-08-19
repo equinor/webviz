@@ -10,6 +10,7 @@ const defaultState: state = {
     polygonsAddress: null,
     selectedWellUuids: [],
     surfaceSettings: undefined,
+    viewSettings: undefined,
 };
 
 const module = ModuleRegistry.initModule<state>("TopographicMap", defaultState, {

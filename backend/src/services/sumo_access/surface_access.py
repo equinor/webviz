@@ -46,6 +46,9 @@ class SurfaceAccess:
         attributes = sorted(surface_collection.tagnames)
         timestamps: List[str] = surface_collection.timestamps
         intervals: List[Tuple[str, str]] = surface_collection.intervals
+        available_contents = list(set([surf["data"]["content"] for surf in surface_collection]))
+
+        LOGGER.debug(f"available surface contents: {available_contents}")
 
         # ISO 8601 recommends '/' as separator, alternatively '--'
         # https://en.wikipedia.org/wiki/ISO_8601#Time_intervals
@@ -82,6 +85,9 @@ class SurfaceAccess:
 
         names = sorted(surface_collection.names)
         attributes = sorted(surface_collection.tagnames)
+        available_contents = list(set([surf["data"]["content"] for surf in surface_collection]))
+
+        LOGGER.debug(f"available surface contents: {available_contents}")
 
         if content_filter is not None:
             if not any([SumoContent.has(content) for content in content_filter]):
@@ -89,9 +95,7 @@ class SurfaceAccess:
             surfaces_with_filtered_content = [
                 surf for surf in surface_collection if surf["data"]["content"] in content_filter
             ]
-            for surf in surface_collection:
-                if surf["data"]["content"] in content_filter:
-                    print(surf["data"]["content"])
+
             names = sorted(list(set([surf.name for surf in surfaces_with_filtered_content])))
             attributes = sorted(list(set([surf.tagname for surf in surfaces_with_filtered_content])))
 

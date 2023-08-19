@@ -117,6 +117,46 @@ def get_property_surface_resampled_to_static_surface(
     return surf_data_response
 
 
+@router.get("/property_surface_resampled_to_statistical_static_surface/")
+def get_property_surface_resampled_to_statistical_static_surface(
+    authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
+    case_uuid: str = Query(description="Sumo case uuid"),
+    ensemble_name: str = Query(description="Ensemble name"),
+    statistic_function: schemas.SurfaceStatisticFunction = Query(description="Statistics to calculate"),
+    name_mesh: str = Query(description="Surface name"),
+    attribute_mesh: str = Query(description="Surface attribute"),
+    # statistic_function_property: schemas.SurfaceStatisticFunction = Query(description="Statistics to calculate"),
+    name_property: str = Query(description="Surface name"),
+    attribute_property: str = Query(description="Surface attribute"),
+) -> schemas.SurfaceData:
+    timer = PerfTimer()
+
+    access = SurfaceAccess(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
+    service_stat_func_to_compute = StatisticFunction.from_string_value(statistic_function)
+    if service_stat_func_to_compute is not None:
+        xtgeo_surf_mesh = access.get_statistical_static_surf(
+            statistic_function=service_stat_func_to_compute,
+            name=name_mesh,
+            attribute=attribute_mesh,
+        )
+        xtgeo_surf_property = access.get_statistical_static_surf(
+            statistic_function=service_stat_func_to_compute,
+            name=name_property,
+            attribute=attribute_property,
+        )
+
+    if not xtgeo_surf_mesh or not xtgeo_surf_property:
+        raise HTTPException(status_code=404, detail="Surface not found")
+
+    resampled_surface = converters.resample_property_surface_to_mesh_surface(xtgeo_surf_mesh, xtgeo_surf_property)
+
+    surf_data_response = converters.to_api_surface_data(resampled_surface)
+
+    LOGGER.debug(f"Loaded property surface and created image, total time: {timer.elapsed_ms()}ms")
+
+    return surf_data_response
+
+
 @router.get("/dynamic_surface_data/")
 def get_dynamic_surface_data(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
