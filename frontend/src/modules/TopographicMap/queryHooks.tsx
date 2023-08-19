@@ -19,14 +19,14 @@ const CACHE_TIME = 60 * 1000;
 export function useSurfaceDirectoryQuery(
     caseUuid: string | undefined,
     ensembleName: string | undefined,
-    contentFilter: SumoContent_api[]
+    contentFilter?: SumoContent_api[]
 ): UseQueryResult<StaticSurfaceDirectory_api> {
     return useQuery({
         queryKey: ["getStaticSurfaceDirectory", caseUuid, ensembleName, contentFilter],
         queryFn: () => apiService.surface.getStaticSurfaceDirectory(caseUuid ?? "", ensembleName ?? "", contentFilter),
         staleTime: STALE_TIME,
         cacheTime: STALE_TIME,
-        enabled: caseUuid && ensembleName && contentFilter ? true : false,
+        enabled: caseUuid && ensembleName ? true : false,
     });
 }
 
@@ -186,6 +186,32 @@ export function usePropertySurfaceDataByQueryAddress(
                 meshSurfAddr.name,
                 meshSurfAddr.attribute,
                 propertySurfAddr.realizationNum,
+                propertySurfAddr.name,
+                propertySurfAddr.attribute
+            );
+    } else if (
+        meshSurfAddr.addressType === "statistical-static" &&
+        propertySurfAddr.addressType === "statistical-static"
+    ) {
+        queryKey = [
+            "getPropertySurfaceResampledToStaticSurface",
+            meshSurfAddr.caseUuid,
+            meshSurfAddr.ensemble,
+            meshSurfAddr.statisticFunction,
+            meshSurfAddr.name,
+            meshSurfAddr.attribute,
+            // propertySurfAddr.statisticFunction,
+            propertySurfAddr.name,
+            propertySurfAddr.attribute,
+        ];
+        queryFn = () =>
+            apiService.surface.getPropertySurfaceResampledToStatisticalStaticSurface(
+                meshSurfAddr.caseUuid,
+                meshSurfAddr.ensemble,
+                meshSurfAddr.statisticFunction,
+                meshSurfAddr.name,
+                meshSurfAddr.attribute,
+                // propertySurfAddr.statisticFunction,
                 propertySurfAddr.name,
                 propertySurfAddr.attribute
             );

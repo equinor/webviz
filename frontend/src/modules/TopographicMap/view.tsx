@@ -3,6 +3,7 @@ import React from "react";
 import { PolygonData_api, WellBoreTrajectory_api } from "@api";
 import { ModuleFCProps } from "@framework/Module";
 import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
+import { Wellbore } from "@framework/Wellbore";
 import { Button } from "@lib/components/Button";
 import SubsurfaceViewer from "@webviz/subsurface-viewer";
 import { ViewStateType } from "@webviz/subsurface-viewer/dist/components/Map";
@@ -24,6 +25,10 @@ import {
 } from "./_utils";
 import { state } from "./state";
 
+const JsonParseWithUndefined = (arrString: string): number[] => {
+    const arr = JSON.parse(arrString);
+    return arr.map((value: number) => (value === null ? undefined : value));
+};
 //-----------------------------------------------------------------------------------------------------------
 export function view({ moduleContext, workbenchServices }: ModuleFCProps<state>) {
     const myInstanceIdStr = moduleContext.getInstanceIdString();
@@ -53,7 +58,7 @@ export function view({ moduleContext, workbenchServices }: ModuleFCProps<state>)
 
     // Mesh data query should only trigger update if the property surface address is not set or if the property surface data is loaded
     if (meshSurfDataQuery.data && !propertySurfAddr) {
-        const newMeshData = JSON.parse(meshSurfDataQuery.data.mesh_data);
+        let newMeshData = JsonParseWithUndefined(meshSurfDataQuery.data.mesh_data);
 
         const newSurfaceMetaData: SurfaceMeta = { ...meshSurfDataQuery.data };
         const surfaceLayer: Record<string, unknown> = createSurfaceMeshLayer(
@@ -63,22 +68,17 @@ export function view({ moduleContext, workbenchServices }: ModuleFCProps<state>)
         );
         newLayers.push(surfaceLayer);
     } else if (meshSurfDataQuery.data && propertySurfDataQuery.data) {
-        if (meshSurfDataQuery.data && !propertySurfDataQuery.isLoading) {
-            const newMeshData = JSON.parse(meshSurfDataQuery.data.mesh_data);
-            let newPropertyData: string | undefined = undefined;
-            if (propertySurfDataQuery.data) {
-                newPropertyData = JSON.parse(propertySurfDataQuery.data.mesh_data);
-            }
+        const newMeshData = JsonParseWithUndefined(meshSurfDataQuery.data.mesh_data);
+        const newPropertyData = JsonParseWithUndefined(propertySurfDataQuery.data.mesh_data);
 
-            const newSurfaceMetaData: SurfaceMeta = { ...meshSurfDataQuery.data };
-            const surfaceLayer: Record<string, unknown> = createSurfaceMeshLayer(
-                newSurfaceMetaData,
-                newMeshData,
-                surfaceSettings,
-                newPropertyData
-            );
-            newLayers.push(surfaceLayer);
-        }
+        const newSurfaceMetaData: SurfaceMeta = { ...meshSurfDataQuery.data };
+        const surfaceLayer: Record<string, unknown> = createSurfaceMeshLayer(
+            newSurfaceMetaData,
+            newMeshData,
+            surfaceSettings,
+            newPropertyData
+        );
+        newLayers.push(surfaceLayer);
     }
 
     // Calculate viewport bounds and axes layer from the surface bounds.
@@ -126,11 +126,35 @@ export function view({ moduleContext, workbenchServices }: ModuleFCProps<state>)
             zoom: viewport.zoom as number,
             rotationX: viewport.rotationX,
             rotationOrbit: viewport.rotationOrbit,
-            minZoom: viewport.minZoom,
-            maxZoom: viewport.maxZoom,
         });
     }
-
+    function onMouseEvent(event: any) {
+        let clickedUWIs: Wellbore[] = [];
+        if (event.type === "click") {
+            if (syncHelper.isSynced(SyncSettingKey.WELLBORE)) {
+                event.infos.forEach((info: any) => {
+                    if (info.layer.id === "wells-layer") {
+                        clickedUWIs.push({
+                            type: "smda",
+                            uwi: info.object.properties.uwi,
+                            uuid: info.object.properties.uuid,
+                        });
+                    }
+                    if (info.layer.id === "well-header-layer") {
+                        clickedUWIs.push({
+                            type: "smda",
+                            uwi: info.object.uwi,
+                            uuid: info.object.uuid,
+                        });
+                    }
+                });
+                if (clickedUWIs.length > 0) {
+                    // Publish the first selected well bore
+                    syncHelper.publishValue(SyncSettingKey.WELLBORE, "global.syncValue.wellBore", clickedUWIs[0]);
+                }
+            }
+        }
+    }
     return (
         <div className="relative w-full h-full flex flex-col">
             <div className="absolute top-0 right-0 z-10">
@@ -161,6 +185,7 @@ export function view({ moduleContext, workbenchServices }: ModuleFCProps<state>)
                         syncHelper.useValue(SyncSettingKey.CAMERA_POSITION_MAP, "global.syncValue.cameraPositionMap") ||
                         undefined
                     }
+                    onMouseEvent={onMouseEvent}
                 />
             </div>
         </div>

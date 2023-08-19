@@ -144,6 +144,45 @@ export class SurfaceService {
     }
 
     /**
+     * Get Property Surface Resampled To Statistical Static Surface
+     * @param caseUuid Sumo case uuid
+     * @param ensembleName Ensemble name
+     * @param statisticFunction Statistics to calculate
+     * @param nameMesh Surface name
+     * @param attributeMesh Surface attribute
+     * @param nameProperty Surface name
+     * @param attributeProperty Surface attribute
+     * @returns SurfaceData Successful Response
+     * @throws ApiError
+     */
+    public getPropertySurfaceResampledToStatisticalStaticSurface(
+        caseUuid: string,
+        ensembleName: string,
+        statisticFunction: SurfaceStatisticFunction,
+        nameMesh: string,
+        attributeMesh: string,
+        nameProperty: string,
+        attributeProperty: string,
+    ): CancelablePromise<SurfaceData> {
+        return this.httpRequest.request({
+            method: 'GET',
+            url: '/surface/property_surface_resampled_to_statistical_static_surface/',
+            query: {
+                'case_uuid': caseUuid,
+                'ensemble_name': ensembleName,
+                'statistic_function': statisticFunction,
+                'name_mesh': nameMesh,
+                'attribute_mesh': attributeMesh,
+                'name_property': nameProperty,
+                'attribute_property': attributeProperty,
+            },
+            errors: {
+                422: `Validation Error`,
+            },
+        });
+    }
+
+    /**
      * Get Dynamic Surface Data
      * @param caseUuid Sumo case uuid
      * @param ensembleName Ensemble name

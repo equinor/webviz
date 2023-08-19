@@ -4,6 +4,7 @@ import { isEqual } from "lodash";
 
 import { Broadcaster } from "./Broadcaster";
 import { EnsembleIdent } from "./EnsembleIdent";
+import { Wellbore } from "./Wellbore";
 import { Workbench } from "./Workbench";
 
 export type NavigatorTopicDefinitions = {
@@ -24,8 +25,8 @@ export type GlobalTopicDefinitions = {
         zoom: number;
         rotationX: number;
         rotationOrbit: number;
-        minZoom?: number;
-        maxZoom?: number;}
+    };
+    "global.syncValue.wellBore": Wellbore;
 };
 
 export type AllTopicDefinitions = NavigatorTopicDefinitions & GlobalTopicDefinitions;

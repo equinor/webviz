@@ -51,12 +51,12 @@ export function createAxesLayer(
 }
 export function createSurfaceMeshLayer(
     surfaceMeta: SurfaceMeta,
-    mesh_data: string,
+    mesh_data: number[],
     surfaceSettings?: SurfaceMeshLayerSettings,
-    property_data?: string
+    property_data?: number[]
 ): Record<string, unknown> {
     surfaceSettings = surfaceSettings || defaultSurfaceSettings;
-
+    console.log(surfaceSettings.contours);
     return {
         "@@type": "MapLayer",
         id: "mesh-layer",
@@ -69,8 +69,8 @@ export function createSurfaceMeshLayer(
             rotDeg: surfaceMeta.rot_deg,
         },
 
-        contours: surfaceSettings.contours ? [0, 100] : false,
-        isContoursDepth: surfaceSettings.contours,
+        contours: surfaceSettings.contours || false,
+        isContoursDepth: true,
         gridLines: surfaceSettings.gridLines,
         material: surfaceSettings.material,
         smoothShading: surfaceSettings.smoothShading,
@@ -94,6 +94,7 @@ export function createSurfacePolygonsLayer(surfacePolygons: PolygonData_api[]): 
         parameters: {
             depthTest: false,
         },
+        pickable: true,
     };
 }
 function surfacePolygonsToGeojson(surfacePolygon: PolygonData_api): Record<string, unknown> {
@@ -123,6 +124,7 @@ export function createWellboreTrajectoryLayer(wellTrajectories: WellBoreTrajecto
         refine: false,
         lineStyle: { width: 2 },
         wellHeadStyle: { size: 1 },
+        pickable: true,
     };
 }
 function wellTrajectoryToGeojson(wellTrajectory: WellBoreTrajectory_api): Record<string, unknown> {
@@ -141,7 +143,10 @@ function wellTrajectoryToGeojson(wellTrajectory: WellBoreTrajectory_api): Record
             geometries: [point, coordinates],
         },
         properties: {
+            uuid: wellTrajectory.wellbore_uuid,
             name: wellTrajectory.unique_wellbore_identifier,
+            uwi: wellTrajectory.unique_wellbore_identifier,
+
             color: [0, 0, 0, 100],
             md: [wellTrajectory.md_arr],
         },
@@ -154,23 +159,36 @@ export function createWellBoreHeaderLayer(wellTrajectories: WellBoreTrajectory_a
         let x: number = wellTrajectory.easting_arr[0];
         let y: number = wellTrajectory.northing_arr[0];
         let z: number = -wellTrajectory.tvd_msl_arr[0];
-        return wellHeaderMarkerToGeojson(x, y, z, wellTrajectory.unique_wellbore_identifier);
+        return wellHeaderMarkerToGeojson(
+            x,
+            y,
+            z,
+            wellTrajectory.unique_wellbore_identifier,
+            wellTrajectory.wellbore_uuid
+        );
     });
 
     return {
         "@@type": "TextLayer",
-        id: "well-marker-layer",
+        id: "well-header-layer",
         data: data,
-        getText: (d: Record<string, Record<string, string>>) => d.name,
+        getText: (d: Record<string, Record<string, string>>) => d.uwi,
         getPosition: (d: Record<string, number[]>) => d.coordinates,
         getSize: 12,
         getAngle: 0,
         getTextAnchor: "middle",
         getAlignmentBaseline: "center",
+        pickable: true,
     };
 }
 
-function wellHeaderMarkerToGeojson(x: number, y: number, z: number, label: string): Record<string, unknown> {
+function wellHeaderMarkerToGeojson(
+    x: number,
+    y: number,
+    z: number,
+    uwi: string,
+    uuid: string
+): Record<string, unknown> {
     // let data: Record<string, unknown> = {
     //     type: "Feature",
     //     geometry: {
@@ -180,8 +198,9 @@ function wellHeaderMarkerToGeojson(x: number, y: number, z: number, label: strin
     //     properties: { name: label },
     // };
     let data: Record<string, unknown> = {
-        name: label,
         coordinates: [x, y, z],
+        uuid: uuid,
+        uwi: uwi,
     };
     return data;
 }

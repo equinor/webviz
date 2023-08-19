@@ -64,6 +64,8 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
     const [realizationNum, setRealizationNum] = React.useState<number>(0);
     const [aggregation, setAggregation] = React.useState<SurfaceStatisticFunction_api | null>(null);
     const [showContour, setShowContour] = React.useState(false);
+    const [contourStartValue, setContourStartValue] = React.useState<number>(0);
+    const [contourIncValue, setContourIncValue] = React.useState<number>(100);
     const [showGrid, setShowGrid] = React.useState(false);
     const [showSmoothShading, setShowSmoothShading] = React.useState(false);
     const [showMaterial, setShowMaterial] = React.useState(false);
@@ -106,8 +108,7 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
     // Property surface
     const propertySurfDirQuery = useSurfaceDirectoryQuery(
         computedEnsembleIdent?.getCaseUuid(),
-        computedEnsembleIdent?.getEnsembleName(),
-        [SumoContent_api.DEPTH] // Should be SumoContent_api.PROPERTY
+        computedEnsembleIdent?.getEnsembleName() // Should be SumoContent_api.PROPERTY
     );
     const propertySurfDirProvider = new SurfaceDirectoryProvider(propertySurfDirQuery, "formations");
     const computedPropertySurfaceName = propertySurfDirProvider.validateOrResetSurfaceName(selectedPropertySurfaceName);
@@ -242,13 +243,13 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
     React.useEffect(
         function propogateSurfaceSettingsToView() {
             moduleContext.getStateStore().setValue("surfaceSettings", {
-                contours: showContour,
+                contours: showContour ? [contourStartValue, contourIncValue] : false,
                 gridLines: showGrid,
                 smoothShading: showSmoothShading,
                 material: showMaterial,
             });
         },
-        [showContour, showGrid, showSmoothShading, showMaterial]
+        [showContour, contourStartValue, contourIncValue, showGrid, showSmoothShading, showMaterial]
     );
     const wellHeadersQuery = useGetWellHeaders(computedEnsembleIdent?.getCaseUuid());
     let wellHeaderOptions: SelectOption[] = [];
@@ -330,7 +331,18 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
             setRealizationNum(realNum);
         }
     }
-
+    function handleContourStartChange(event: React.ChangeEvent<HTMLInputElement>) {
+        const contourStart = parseInt(event.target.value, 10);
+        if (contourStart >= 0) {
+            setContourStartValue(contourStart);
+        }
+    }
+    function handleContourIncChange(event: React.ChangeEvent<HTMLInputElement>) {
+        const contourInc = parseInt(event.target.value, 10);
+        if (contourInc > 0) {
+            setContourIncValue(contourInc);
+        }
+    }
     return (
         <div>
             <div className="overflow-y-auto">
@@ -501,6 +513,34 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
                             checked={showContour}
                             onChange={(e: any) => setShowContour(e.target.checked)}
                         />
+                        {showContour && (
+                            <>
+                                <Label
+                                    wrapperClassName="  flex flex-row"
+                                    labelClassName="text-xs"
+                                    text={"Contour start/increment"}
+                                >
+                                    <>
+                                        <div className=" float-right">
+                                            <Input
+                                                className="text-xs"
+                                                type={"number"}
+                                                value={contourStartValue}
+                                                onChange={handleContourStartChange}
+                                            />
+                                        </div>
+                                        <div className=" float-right">
+                                            <Input
+                                                className="text-xs"
+                                                type={"number"}
+                                                value={contourIncValue}
+                                                onChange={handleContourIncChange}
+                                            />
+                                        </div>
+                                    </>
+                                </Label>
+                            </>
+                        )}
                         <LabelledCheckbox
                             label="Grid lines"
                             checked={showGrid}

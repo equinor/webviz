@@ -8,6 +8,7 @@ export enum SyncSettingKey {
     TIME_SERIES = "TIME_SERIES",
     SURFACE = "SURFACE",
     CAMERA_POSITION_MAP = "SUBSURFACE_MAP_CAMERA_POSITION",
+    WELLBORE = "WELLBORE",
 }
 
 export const SyncSettingsMeta = {
@@ -16,6 +17,7 @@ export const SyncSettingsMeta = {
     [SyncSettingKey.TIME_SERIES]: { name: "Time series", abbreviation: "TS" },
     [SyncSettingKey.SURFACE]: { name: "Surface", abbreviation: "SURF" },
     [SyncSettingKey.CAMERA_POSITION_MAP]: { name: "Camera Position Map", abbreviation: "CAM_POS_MAP" },
+    [SyncSettingKey.WELLBORE]: { name: "Wellbore", abbreviation: "WELLBORE" },
 };
 
 export class SyncSettingsHelper {
