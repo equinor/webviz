@@ -18,6 +18,7 @@ from .routers.correlations.router import router as correlations_router
 from .routers.grid.router import router as grid_router
 from .routers.pvt.router import router as pvt_router
 from .routers.well_completion.router import router as well_completion_router
+from .routers.well.router import router as well_router
 
 logging.basicConfig(
     level=logging.WARNING,
@@ -52,6 +53,7 @@ app.include_router(correlations_router, prefix="/correlations", tags=["correlati
 app.include_router(grid_router, prefix="/grid", tags=["grid"])
 app.include_router(pvt_router, prefix="/pvt", tags=["pvt"])
 app.include_router(well_completion_router, prefix="/well_completion", tags=["well_completion"])
+app.include_router(well_router, prefix="/well", tags=["well"])
 
 authHelper = AuthHelper()
 app.include_router(authHelper.router)

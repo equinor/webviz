@@ -10,7 +10,7 @@ import { resolveClassNames } from "../_utils/resolveClassNames";
 export type RadioGroupProps<T = string | number> = {
     name?: string;
     options: {
-        label: string;
+        label: React.ReactNode;
         value: T;
         disabled?: boolean;
     }[];
@@ -25,7 +25,7 @@ const defaultProps: OptionalValues<RadioGroupProps> = {
 
 type RadioProps = {
     name: string;
-    label: string;
+    label: React.ReactNode;
     value: string | number;
     checked: boolean;
     onChange?: (event: React.ChangeEvent<HTMLInputElement>, value: string | number) => void;

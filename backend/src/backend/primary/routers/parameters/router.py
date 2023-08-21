@@ -3,13 +3,10 @@ from typing import List, Optional, Literal
 
 from fastapi import APIRouter, Depends, Query
 
-from src.services.types.parameter_types import (
-    EnsembleParameter,
-    EnsembleSensitivity,
-)
-from src.services.sumo_access.parameter_access import ParameterAccess
-from src.services.utils.authenticated_user import AuthenticatedUser
 from src.backend.auth.auth_helper import AuthHelper
+from src.services.sumo_access.parameter_access import ParameterAccess
+from src.services.sumo_access.parameter_types import EnsembleParameter, EnsembleSensitivity
+from src.services.utils.authenticated_user import AuthenticatedUser
 
 from . import schemas
 

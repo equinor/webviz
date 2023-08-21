@@ -23,6 +23,7 @@ services:
       - UVICORN_ENTRYPOINT=src.backend.user_session.main:app
       - WEBVIZ_CLIENT_SECRET
       - WEBVIZ_SMDA_RESOURCE_SCOPE
+      - WEBVIZ_SMDA_SUBSCRIPTION_KEY
 
   backend-user-session:
     build:
@@ -35,6 +36,7 @@ services:
       - UVICORN_ENTRYPOINT=src.backend.user_session.main:app
       - WEBVIZ_CLIENT_SECRET
       - WEBVIZ_SMDA_RESOURCE_SCOPE
+      - WEBVIZ_SMDA_SUBSCRIPTION_KEY
     volumes:
       - ./backend/src:/home/appuser/backend/src
 

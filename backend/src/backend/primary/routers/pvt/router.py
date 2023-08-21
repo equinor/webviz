@@ -6,7 +6,6 @@ from fastapi.responses import ORJSONResponse
 
 from src.backend.auth.auth_helper import AuthHelper
 from src.services.sumo_access.table_access import TableAccess
-from src.services.types.generic_types import SumoTableSchema
 from src.services.utils.authenticated_user import AuthenticatedUser
 
 from .converters import pvt_dataframe_to_api_data

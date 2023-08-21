@@ -44,6 +44,8 @@ export type { VectorMetadata as VectorMetadata_api } from './models/VectorMetada
 export type { VectorRealizationData as VectorRealizationData_api } from './models/VectorRealizationData';
 export type { VectorStatisticData as VectorStatisticData_api } from './models/VectorStatisticData';
 export type { VectorStatisticSensitivityData as VectorStatisticSensitivityData_api } from './models/VectorStatisticSensitivityData';
+export type { WellBoreHeader as WellBoreHeader_api } from './models/WellBoreHeader';
+export type { WellBoreTrajectory as WellBoreTrajectory_api } from './models/WellBoreTrajectory';
 export type { WellCompletionData as WellCompletionData_api } from './models/WellCompletionData';
 export type { WellCompletionDataSet as WellCompletionDataSet_api } from './models/WellCompletionDataSet';
 export type { WellCompletionUnitInfo as WellCompletionUnitInfo_api } from './models/WellCompletionUnitInfo';
@@ -61,3 +63,4 @@ export { PvtService } from './services/PvtService';
 export { SurfaceService } from './services/SurfaceService';
 export { TimeseriesService } from './services/TimeseriesService';
 export { WellCompletionService } from './services/WellCompletionService';
+export { WellService } from './services/WellService';
