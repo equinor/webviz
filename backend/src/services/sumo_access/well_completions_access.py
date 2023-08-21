@@ -22,7 +22,7 @@ class WellCompletionsAccess:
 
         self._case: Case = case_collection[0]
         self._iteration_name: str = iteration_name
-        self._tagname = "wellcompletiondata"  # TODO: Should tagname be hard coded?
+        self._tagname = "wellcompletiondata"  # Should tagname be hard coded?
 
     def get_well_completion_data(self, realization: Optional[int]) -> pd.DataFrame:
         """Get well completion data for case and iteration"""
@@ -46,11 +46,11 @@ class WellCompletionsAccess:
             tagname=self._tagname, aggregation="collection", iteration=self._iteration_name
         )
 
-        # TODO: Improve code (iterate over tables and concatenate) - concat gives issue? See jupyter-notebook
+        # Improve code (iterate over tables and concatenate) - concat gives issue? See jupyter-notebook
         if len(well_completion_tables) < 2:
             return {}
 
-        # TODO: Ensure that tables contain correct columns? "OPEN/SHUT" and "KH"
+        # Ensure that tables contain correct columns? "OPEN/SHUT" and "KH"
         well_completion_df = well_completion_tables[0].to_pandas
         kh_df = well_completion_tables[1].to_pandas
         well_completion_df["KH"] = kh_df["KH"]

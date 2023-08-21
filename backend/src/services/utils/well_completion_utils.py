@@ -1,10 +1,11 @@
 import itertools
-from typing import Any, Dict, Iterator, List, Optional, Tuple
+from typing import Dict, Iterator, List, Optional, Tuple
 
 import pandas as pd
 
 from src.services.types.well_completions_types import (
     Completions,
+    WellCompletionAttributeType,
     WellCompletionWell,
     WellCompletionDataSet,
     WellCompletionZone,
@@ -33,17 +34,19 @@ class WellCompletionDataModel:
         self._kh_unit = "mDm"  # NOTE: How to find metadata?
         self._kh_decimal_places = 2
         self._datemap = {dte: i for i, dte in enumerate(sorted(self._well_completion_df["DATE"].unique()))}
-        self._zones = [zone for zone in sorted(self._well_completion_df["ZONE"].unique())]
+        self._zones = list(sorted(self._well_completion_df["ZONE"].unique()))
 
         self._well_completion_df["TIMESTEP"] = self._well_completion_df["DATE"].map(self._datemap)
 
         # NOTE:
         # - How to handle well attributes? Should be provided by Sumo?
         # - How to handle theme colors?
-        self._well_attributes = {}
+        self._well_attributes: Dict[
+            str, Dict[str, WellCompletionAttributeType]
+        ] = {}  # Each well has dict of attributes
         self._theme_colors = ["#6EA35A", "#EDAF4C", "#CA413D"]  # Hard coded
 
-    def _DUMMY_stratigraphy(self) -> List[WellCompletionZone]:
+    def _dummy_stratigraphy(self) -> List[WellCompletionZone]:
         """
         Returns a default stratigraphy for TESTING, should be provided by Sumo
         """
@@ -65,7 +68,7 @@ class WellCompletionDataModel:
         return WellCompletionDataSet(
             version="1.1.0",
             units={"kh": {"unit": self._kh_unit, "decimalPlaces": self._kh_decimal_places}},
-            stratigraphy=self._extract_stratigraphy(self._DUMMY_stratigraphy(), self._zones),
+            stratigraphy=self._extract_stratigraphy(self._dummy_stratigraphy(), self._zones),
             timeSteps=[pd.to_datetime(str(dte)).strftime("%Y-%m-%d") for dte in self._datemap.keys()],
             wells=self._extract_wells(),
         )
