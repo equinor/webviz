@@ -62,5 +62,5 @@ export { ParametersService } from './services/ParametersService';
 export { PvtService } from './services/PvtService';
 export { SurfaceService } from './services/SurfaceService';
 export { TimeseriesService } from './services/TimeseriesService';
-export { WellCompletionService } from './services/WellCompletionService';
 export { WellService } from './services/WellService';
+export { WellCompletionService } from './services/WellCompletionService';
