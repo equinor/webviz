@@ -43,7 +43,7 @@ export const CollapsibleGroup: React.FC<CollapsibleGroupProps> = (props) => {
                     {expanded ? <ChevronUpIcon className="w-4 h-4" /> : <ChevronDownIcon className="w-4 h-4" />}
                 </div>
                 <div
-                    className={resolveClassNames("p-2 transition-[height] duration-500 ease-in-out", {
+                    className={resolveClassNames("p-2", {
                         hidden: !expanded,
                     })}
                 >
