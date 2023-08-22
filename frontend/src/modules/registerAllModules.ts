@@ -10,6 +10,7 @@ import "./Map/registerModule";
 import "./Pvt/registerModule";
 import "./Sensitivity/registerModule";
 import "./SimulationTimeSeries/registerModule";
+import "./SimulationTimeSeriesNew/registerModule";
 import "./WellCompletion/registerModule"
 import "./SimulationTimeSeriesSensitivity/registerModule";
 import "./TimeSeriesParameterDistribution/registerModule";
