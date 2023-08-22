@@ -42,6 +42,7 @@ const updateViewPortBounds = (
     const updatedBounds: Bounds = [surfaceMeta.x_min, surfaceMeta.y_min, surfaceMeta.x_max, surfaceMeta.y_max];
 
     if (!existingViewPortBounds || resetBounds) {
+        console.debug("updateViewPortBounds: no existing bounds, returning updated bounds");
         return updatedBounds;
     }
 
@@ -52,6 +53,7 @@ const updateViewPortBounds = (
         existingViewPortBounds[3] < updatedBounds[1] || // existing bottom edge is above updated top edge
         existingViewPortBounds[1] > updatedBounds[3] // existing top edge is below updated bottom edge
     ) {
+        console.debug("updateViewPortBounds: bounds don't overlap, returning updated bounds");
         return updatedBounds; // Return updated bounds since they don't overlap
     }
 
@@ -76,7 +78,7 @@ export function view({ moduleContext, workbenchServices }: ModuleFCProps<state>)
     const surfaceSettings = moduleContext.useStoreValue("surfaceSettings");
     const viewSettings = moduleContext.useStoreValue("viewSettings");
     const [resetBounds, toggleResetBounds] = React.useState<boolean>(false);
-
+    const [axesLayer, setAxesLayer] = React.useState<Record<string, unknown> | undefined>(undefined);
     const [viewportBounds, setviewPortBounds] = React.useState<[number, number, number, number] | undefined>(undefined);
     const syncedSettingKeys = moduleContext.useSyncedSettingKeys();
     const syncHelper = new SyncSettingsHelper(syncedSettingKeys, workbenchServices);
@@ -140,9 +142,11 @@ export function view({ moduleContext, workbenchServices }: ModuleFCProps<state>)
                 newSurfaceMetaData.y_max,
                 3500,
             ]);
-            newLayers.push(axesLayer);
+            setAxesLayer(axesLayer);
         }
     }, [meshSurfDataQuery.data, propertySurfDataQuery.data, resetBounds, viewportBounds]);
+
+    axesLayer && newLayers.push(axesLayer);
 
     if (polygonsQuery.data) {
         const polygonsData: PolygonData_api[] = polygonsQuery.data;
