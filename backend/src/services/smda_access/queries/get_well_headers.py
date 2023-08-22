@@ -19,7 +19,7 @@ def get_well_headers(
         "total_depth_driller_tvd",
         "total_depth_driller_md",
         "drill_start_date",
-        "drill_end_date",
+        # "drill_end_date",
         "wellbore_purpose",
         "parent_wellbore",
     ]
