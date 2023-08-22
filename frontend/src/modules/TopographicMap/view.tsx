@@ -1,14 +1,12 @@
 import React from "react";
 
 import { PolygonData_api, WellBoreTrajectory_api } from "@api";
-import { ContinuousLegend, DiscreteColorLegend } from "@emerson-eps/color-tables";
+import { ContinuousLegend } from "@emerson-eps/color-tables";
 import { ModuleFCProps } from "@framework/Module";
 import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
 import { Wellbore } from "@framework/Wellbore";
-import { ApiStateWrapper } from "@lib/components/ApiStateWrapper";
 import { Button } from "@lib/components/Button";
 import { CircularProgress } from "@lib/components/CircularProgress";
-import { resolveClassNames } from "@lib/components/_utils/resolveClassNames";
 import SubsurfaceViewer from "@webviz/subsurface-viewer";
 import { ViewStateType } from "@webviz/subsurface-viewer/dist/components/Map";
 import { ViewAnnotation } from "@webviz/subsurface-viewer/dist/components/ViewAnnotation";
@@ -41,7 +39,7 @@ const updateViewPortBounds = (
     resetBounds: boolean,
     surfaceMeta: SurfaceMeta
 ): Bounds => {
-    let updatedBounds: Bounds = [surfaceMeta.x_min, surfaceMeta.y_min, surfaceMeta.x_max, surfaceMeta.y_max];
+    const updatedBounds: Bounds = [surfaceMeta.x_min, surfaceMeta.y_min, surfaceMeta.x_max, surfaceMeta.y_max];
 
     if (!existingViewPortBounds || resetBounds) {
         return updatedBounds;
@@ -93,13 +91,13 @@ export function view({ moduleContext, workbenchServices }: ModuleFCProps<state>)
     const wellTrajectoriesQuery = useGetFieldWellsTrajectories(meshSurfAddr?.caseUuid);
     const polygonsQuery = usePolygonsDataQueryByAddress(polygonsAddr);
 
-    let newLayers: Record<string, unknown>[] = [createNorthArrowLayer()];
+    const newLayers: Record<string, unknown>[] = [createNorthArrowLayer()];
 
     let colorRange: [number, number] | undefined = undefined;
 
     // Mesh data query should only trigger update if the property surface address is not set or if the property surface data is loaded
     if (meshSurfDataQuery.data && !propertySurfAddr) {
-        let newMeshData = JsonParseWithUndefined(meshSurfDataQuery.data.mesh_data);
+        const newMeshData = JsonParseWithUndefined(meshSurfDataQuery.data.mesh_data);
 
         const newSurfaceMetaData: SurfaceMeta = { ...meshSurfDataQuery.data };
         const surfaceLayer: Record<string, unknown> = createSurfaceMeshLayer(
@@ -170,7 +168,7 @@ export function view({ moduleContext, workbenchServices }: ModuleFCProps<state>)
         });
     }
     function onMouseEvent(event: any) {
-        let clickedUWIs: Wellbore[] = [];
+        const clickedUWIs: Wellbore[] = [];
         if (event.type === "click") {
             if (syncHelper.isSynced(SyncSettingKey.WELLBORE)) {
                 event.infos.forEach((info: any) => {

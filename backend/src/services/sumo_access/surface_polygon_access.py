@@ -42,7 +42,7 @@ class SurfacePolygonsAccess:
         attributes = sorted(polygons_collection.tagnames)
 
         if content_filter is not None:
-            if not any([SumoContent.has(content) for content in content_filter]):
+            if not any(SumoContent.has(content) for content in content_filter):
                 raise ValueError(f"Invalid content filter: {content_filter}")
             polygons_with_filtered_content = [
                 surf for surf in polygons_collection if surf["data"]["content"] in content_filter

@@ -1,7 +1,5 @@
 import { PolygonData_api, WellBoreTrajectory_api } from "@api";
 
-import internal from "stream";
-
 export type SurfaceMeshLayerSettings = {
     contours?: boolean | number[];
     gridLines?: boolean;
@@ -80,10 +78,10 @@ export function createSurfaceMeshLayer(
     };
 }
 export function createSurfacePolygonsLayer(surfacePolygons: PolygonData_api[]): Record<string, unknown> {
-    let features: Record<string, unknown>[] = surfacePolygons.map((polygon) => {
+    const features: Record<string, unknown>[] = surfacePolygons.map((polygon) => {
         return surfacePolygonsToGeojson(polygon);
     });
-    let data: Record<string, unknown> = {
+    const data: Record<string, unknown> = {
         type: "FeatureCollection",
         unit: "m",
         features: features,
@@ -100,7 +98,7 @@ export function createSurfacePolygonsLayer(surfacePolygons: PolygonData_api[]): 
     };
 }
 function surfacePolygonsToGeojson(surfacePolygon: PolygonData_api): Record<string, unknown> {
-    let data: Record<string, unknown> = {
+    const data: Record<string, unknown> = {
         type: "Feature",
         geometry: {
             type: "Polygon",
@@ -111,10 +109,10 @@ function surfacePolygonsToGeojson(surfacePolygon: PolygonData_api): Record<strin
     return data;
 }
 export function createWellboreTrajectoryLayer(wellTrajectories: WellBoreTrajectory_api[]): Record<string, unknown> {
-    let features: Record<string, unknown>[] = wellTrajectories.map((wellTrajectory) => {
+    const features: Record<string, unknown>[] = wellTrajectories.map((wellTrajectory) => {
         return wellTrajectoryToGeojson(wellTrajectory);
     });
-    let data: Record<string, unknown> = {
+    const data: Record<string, unknown> = {
         type: "FeatureCollection",
         unit: "m",
         features: features,
@@ -130,15 +128,15 @@ export function createWellboreTrajectoryLayer(wellTrajectories: WellBoreTrajecto
     };
 }
 function wellTrajectoryToGeojson(wellTrajectory: WellBoreTrajectory_api): Record<string, unknown> {
-    let point: Record<string, unknown> = {
+    const point: Record<string, unknown> = {
         type: "Point",
         coordinates: [wellTrajectory.easting_arr[0], wellTrajectory.northing_arr[0], -wellTrajectory.tvd_msl_arr[0]],
     };
-    let coordinates: Record<string, unknown> = {
+    const coordinates: Record<string, unknown> = {
         type: "LineString",
         coordinates: zipCoords(wellTrajectory.easting_arr, wellTrajectory.northing_arr, wellTrajectory.tvd_msl_arr),
     };
-    let geometryCollection: Record<string, unknown> = {
+    const geometryCollection: Record<string, unknown> = {
         type: "Feature",
         geometry: {
             type: "GeometryCollection",
@@ -158,13 +156,10 @@ function wellTrajectoryToGeojson(wellTrajectory: WellBoreTrajectory_api): Record
 }
 export function createWellBoreHeaderLayer(wellTrajectories: WellBoreTrajectory_api[]): Record<string, unknown> {
     let data: Record<string, unknown>[] = wellTrajectories.map((wellTrajectory) => {
-        let x: number = wellTrajectory.easting_arr[0];
-        let y: number = wellTrajectory.northing_arr[0];
-        let z: number = -wellTrajectory.tvd_msl_arr[0];
         return wellHeaderMarkerToGeojson(
-            x,
-            y,
-            z,
+            wellTrajectory.easting_arr[0],
+            wellTrajectory.northing_arr[0],
+            -wellTrajectory.tvd_msl_arr[0],
             wellTrajectory.unique_wellbore_identifier,
             wellTrajectory.wellbore_uuid
         );
@@ -199,7 +194,7 @@ function wellHeaderMarkerToGeojson(
     //     },
     //     properties: { name: label },
     // };
-    let data: Record<string, unknown> = {
+    const data: Record<string, unknown> = {
         coordinates: [x, y, z],
         uuid: uuid,
         uwi: uwi,
@@ -208,7 +203,7 @@ function wellHeaderMarkerToGeojson(
 }
 
 function zipCoords(x_arr: number[], y_arr: number[], z_arr: number[]): number[][] {
-    let coords: number[][] = [];
+    const coords: number[][] = [];
     for (let i = 0; i < x_arr.length; i++) {
         coords.push([x_arr[i], y_arr[i], -z_arr[i]]);
     }

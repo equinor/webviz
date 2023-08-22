@@ -7,7 +7,6 @@ export class SurfaceDirectoryProvider {
     private _valid_attributes_for_name: number[][];
 
     constructor(surfaceDirectoryQuery: UseQueryResult<StaticSurfaceDirectory_api>, badDataHack: "tops" | "formations") {
-        let _availableNames: string[];
         if (surfaceDirectoryQuery.data) {
             const filteredNames: string[] = [];
             const filteredValidAttributesForName: number[][] = [];

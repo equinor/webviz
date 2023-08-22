@@ -1,6 +1,5 @@
 import React from "react";
 
-import { DynamicSurfaceDirectory_api, StaticSurfaceDirectory_api } from "@api";
 import { SurfaceStatisticFunction_api } from "@api";
 import { SumoContent_api } from "@api";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
@@ -15,7 +14,6 @@ import { CircularProgress } from "@lib/components/CircularProgress";
 import { Input } from "@lib/components/Input";
 import { Label } from "@lib/components/Label";
 import { Select, SelectOption } from "@lib/components/Select";
-import { resolveClassNames } from "@lib/components/_utils/resolveClassNames";
 
 import { SurfAddr, SurfAddrFactory } from "./SurfaceAddress";
 import { SurfacePolygonsAddress } from "./SurfacePolygonsAddress";
@@ -272,7 +270,7 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
     }
 
     function handleWellsChange(selectedWellUuids: string[], allWellUuidsOptions: SelectOption[]) {
-        let newSelectedWellUuids = selectedWellUuids.filter((wellUuid) =>
+        const newSelectedWellUuids = selectedWellUuids.filter((wellUuid) =>
             allWellUuidsOptions.some((wellHeader) => wellHeader.value === wellUuid)
         );
         setSelectedWellUuids(newSelectedWellUuids);
@@ -283,16 +281,6 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
         if (newEnsembleIdent) {
             syncHelper.publishValue(SyncSettingKey.ENSEMBLE, "global.syncValue.ensembles", [newEnsembleIdent]);
         }
-    }
-    function fixupStringValueFromList(currValue: string | null, legalValues: string[] | null): string | null {
-        if (!legalValues || legalValues.length == 0) {
-            return null;
-        }
-        if (currValue && legalValues.includes(currValue)) {
-            return currValue;
-        }
-
-        return legalValues[0];
     }
 
     function handleMeshSurfNameSelectionChange(selectedSurfNames: string[]) {
