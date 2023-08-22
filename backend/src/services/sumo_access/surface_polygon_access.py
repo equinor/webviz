@@ -1,15 +1,13 @@
 import logging
 from io import BytesIO
-from typing import List, Optional, Tuple
+from typing import List, Optional
 
 import pandas as pd
 import xtgeo
-from fmu.sumo.explorer import TimeFilter, TimeType
-from fmu.sumo.explorer.objects import Case, CaseCollection, SurfaceCollection, PolygonsCollection
+from fmu.sumo.explorer.objects import Case, CaseCollection, PolygonsCollection
 from sumo.wrapper import SumoClient
 
 from src.services.utils.perf_timer import PerfTimer
-from src.services.utils.statistic_function import StatisticFunction
 
 from ._helpers import create_sumo_client_instance
 from .surface_polygon_types import SurfacePolygonsDirectory
@@ -52,8 +50,8 @@ class SurfacePolygonsAccess:
             for surf in polygons_collection:
                 if surf["data"]["content"] in content_filter:
                     print(surf["data"]["content"])
-            names = sorted(list(set([surf.name for surf in polygons_with_filtered_content])))
-            attributes = sorted(list(set([surf.tagname for surf in polygons_with_filtered_content])))
+            names = sorted(list(set(surf.name for surf in polygons_with_filtered_content)))
+            attributes = sorted(list(set(surf.tagname for surf in polygons_with_filtered_content)))
 
         else:
             names = sorted(polygons_collection.names)
@@ -113,7 +111,7 @@ class SurfacePolygonsAccess:
             LOGGER.warning(
                 f"Multiple ({surface_polygons_count}) polygons set found in Sumo for: {addr_str}. Returning first polygons set."
             )
-            # TODO: Some fields has multiple polygons set. There should only be one.
+            # Some fields has multiple polygons set. There should only be one.
             for poly in polygons_collection:
                 byte_stream: BytesIO = poly.blob
                 poly_df = pd.read_csv(byte_stream)
