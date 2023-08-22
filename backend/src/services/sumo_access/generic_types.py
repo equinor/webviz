@@ -72,7 +72,7 @@ class SumoContent(str, Enum):
         return [_.value for _ in list(cls)]
 
     @classmethod
-    def has(cls, value) -> bool:
+    def has(cls, value: str) -> bool:
         return value in cls.values()
 
 
@@ -91,5 +91,5 @@ class SumoClass(str, Enum):
         return [_.value for _ in list(cls)]
 
     @classmethod
-    def has(cls, value) -> bool:
+    def has(cls, value: str) -> bool:
         return value in cls.values()
