@@ -18,7 +18,7 @@ export function useValidState<T, K = any>(
     }
 
     if (!adjustedValidStates.includes(state)) {
-        if (validStates.length > 0) {
+        if (adjustedValidStates.length > 0) {
             validState = adjustedValidStates[0];
         } else {
             validState = computedInitialState;
