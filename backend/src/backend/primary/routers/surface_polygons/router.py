@@ -4,12 +4,10 @@ from typing import List
 from fastapi import APIRouter, Depends, HTTPException, Query
 
 from src.services.sumo_access.surface_polygon_access import SurfacePolygonsAccess
-from src.services.utils.statistic_function import StatisticFunction
 from src.services.utils.authenticated_user import AuthenticatedUser
 from src.services.utils.perf_timer import PerfTimer
 from src.backend.auth.auth_helper import AuthHelper
 
-from src.services.sumo_access.generic_types import SumoContent
 
 from . import schemas
 from . import converters
@@ -31,7 +29,11 @@ def get_surface_polygons_directory(
     access = SurfacePolygonsAccess(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
     polygons_dir = access.get_surface_polygons_dir()
 
-    return polygons_dir
+    return schemas.SurfacePolygonDirectory(
+        names=polygons_dir.names,
+        attributes=polygons_dir.attributes,
+        valid_attributes_for_name=polygons_dir.valid_attributes_for_name,
+    )
 
 
 @router.get("/surface_polygons_data/")

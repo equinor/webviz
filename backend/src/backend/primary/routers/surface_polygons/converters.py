@@ -1,8 +1,6 @@
 from typing import List
-import orjson
 import xtgeo
 
-from src.services.utils.surface_to_float32 import surface_to_float32_array
 from . import schemas
 
 

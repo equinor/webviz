@@ -107,13 +107,14 @@ class SurfacePolygonsAccess:
             return None
 
         is_valid = False
+        byte_stream: BytesIO
         if surface_polygons_count > 1:
             LOGGER.warning(
                 f"Multiple ({surface_polygons_count}) polygons set found in Sumo for: {addr_str}. Returning first polygons set."
             )
             # Some fields has multiple polygons set. There should only be one.
             for poly in polygons_collection:
-                byte_stream: BytesIO = poly.blob
+                byte_stream = poly.blob
                 poly_df = pd.read_csv(byte_stream)
                 if set(["X_UTME", "Y_UTMN", "Z_TVDSS", "POLY_ID"]) == set(poly_df.columns):
                     is_valid = True
@@ -124,7 +125,7 @@ class SurfacePolygonsAccess:
                     break
         else:
             sumo_polys = polygons_collection[0]
-            byte_stream: BytesIO = sumo_polys.blob
+            byte_stream = sumo_polys.blob
             poly_df = pd.read_csv(byte_stream)
             if set(["X_UTME", "Y_UTMN", "Z_TVDSS", "POLY_ID"]) == set(poly_df.columns):
                 is_valid = True

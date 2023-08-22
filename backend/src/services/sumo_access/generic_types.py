@@ -68,11 +68,11 @@ class SumoContent(str, Enum):
     WELLPICKS = "wellpicks"
 
     @classmethod
-    def values(cls):
+    def values(cls) -> List[str]:
         return [_.value for _ in list(cls)]
 
     @classmethod
-    def has(cls, value):
+    def has(cls, value) -> bool:
         return value in cls.values()
 
 
@@ -87,9 +87,9 @@ class SumoClass(str, Enum):
     POINTS = "points"
 
     @classmethod
-    def values(cls):
+    def values(cls) -> List[str]:
         return [_.value for _ in list(cls)]
 
     @classmethod
-    def has(cls, value):
+    def has(cls, value) -> bool:
         return value in cls.values()
