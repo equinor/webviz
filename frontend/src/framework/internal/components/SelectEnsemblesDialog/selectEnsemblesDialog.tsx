@@ -47,7 +47,7 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
 
     const [selectedField, setSelectedField] = useValidState<string>(
         "",
-        fieldsQuery.data ? fieldsQuery.data.map((item) => item.field_identifier) : [],
+        [fieldsQuery.data ?? [], (item) => item.field_identifier],
         true
     );
 
@@ -66,7 +66,7 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
 
     const [selectedCaseId, setSelectedCaseId] = useValidState<string>(
         "",
-        casesQuery.data ? casesQuery.data.map((item) => item.uuid) : [],
+        [casesQuery.data ?? [], (item) => item.uuid],
         true
     );
 
@@ -85,7 +85,7 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
 
     const [selectedEnsembleName, setSelectedEnsembleName] = useValidState<string>(
         "",
-        ensemblesQuery.data ? ensemblesQuery.data.map((item) => item.name) : [],
+        [ensemblesQuery.data ?? [], (el) => el.name],
         true
     );
 
