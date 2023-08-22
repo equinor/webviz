@@ -11,6 +11,7 @@ import { fixupEnsembleIdent, maybeAssignFirstSyncedEnsemble } from "@framework/u
 import { ApiStateWrapper } from "@lib/components/ApiStateWrapper";
 import { Checkbox } from "@lib/components/Checkbox";
 import { CircularProgress } from "@lib/components/CircularProgress";
+import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { Input } from "@lib/components/Input";
 import { Label } from "@lib/components/Label";
 import { Select, SelectOption } from "@lib/components/Select";
@@ -40,7 +41,7 @@ function LabelledCheckbox(props: LabelledCheckboxProps): JSX.Element {
     );
 }
 function Header(props: { text: string }): JSX.Element {
-    return <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mt-4 mb-2">{props.text}</label>;
+    return <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mt-2">{props.text}</label>;
 }
 
 export function settings({ moduleContext, workbenchSession, workbenchServices }: ModuleFCProps<state>) {
@@ -344,226 +345,237 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
     return (
         <div>
             <div className="overflow-y-auto">
-                <Header text="Ensemble and realization" />
-                <Label text="Ensemble" synced={syncHelper.isSynced(SyncSettingKey.ENSEMBLE)}>
-                    <SingleEnsembleSelect
-                        ensembleSet={ensembleSet}
-                        value={computedEnsembleIdent ? computedEnsembleIdent : null}
-                        onChange={handleEnsembleSelectionChange}
+                <CollapsibleGroup expanded={true} title="Ensemble and realization">
+                    <Label text="Ensemble" synced={syncHelper.isSynced(SyncSettingKey.ENSEMBLE)}>
+                        <SingleEnsembleSelect
+                            ensembleSet={ensembleSet}
+                            value={computedEnsembleIdent ? computedEnsembleIdent : null}
+                            onChange={handleEnsembleSelectionChange}
+                        />
+                    </Label>
+                    <AggregationSelector
+                        selectedAggregation={aggregation}
+                        onAggregationSelectorChange={handleAggregationChanged}
                     />
-                </Label>
-                <AggregationSelector
-                    selectedAggregation={aggregation}
-                    onAggregationSelectorChange={handleAggregationChanged}
-                />
-                {aggregation === null && (
-                    <Label text="Realization:">
-                        <Input type={"number"} value={realizationNum} onChange={handleRealizationTextChanged} />
-                    </Label>
-                )}
-                <Header text="Depth / time surface" />
-                <ApiStateWrapper
-                    apiResult={meshSurfDirQuery}
-                    errorComponent={"Error loading surface directory"}
-                    loadingComponent={<CircularProgress />}
-                >
-                    <Label
-                        text="Stratigraphic name"
-                        labelClassName={syncHelper.isSynced(SyncSettingKey.SURFACE) ? "bg-indigo-700 text-white" : ""}
-                    >
-                        <Select
-                            options={meshSurfNameOptions}
-                            value={computedMeshSurfaceName ? [computedMeshSurfaceName] : []}
-                            onChange={handleMeshSurfNameSelectionChange}
-                            size={5}
-                        />
-                    </Label>
-                    <Label
-                        text="Attribute"
-                        labelClassName={syncHelper.isSynced(SyncSettingKey.SURFACE) ? "bg-indigo-700 text-white" : ""}
-                    >
-                        <Select
-                            options={meshSurfAttributeOptions}
-                            value={computedMeshSurfaceAttribute ? [computedMeshSurfaceAttribute] : []}
-                            onChange={handleMeshSurfAttributeSelectionChange}
-                            size={5}
-                        />
-                    </Label>
-                </ApiStateWrapper>
-
-                <>
-                    <Label
-                        wrapperClassName=" flow-root mt-4 mb-2"
-                        labelClassName="float-left block text-sm font-medium text-gray-700 dark:text-gray-200"
-                        text={"Color by other attribute"}
-                    >
-                        <div className=" float-right">
-                            <Checkbox
-                                onChange={(e: any) => setUsePropertySurface(e.target.checked)}
-                                checked={usePropertySurface}
-                            />
-                        </div>
-                    </Label>
-                    {usePropertySurface && (
-                        <ApiStateWrapper
-                            apiResult={propertySurfDirQuery}
-                            errorComponent={"Error loading surface directory"}
-                            loadingComponent={<CircularProgress />}
-                        >
-                            <Label
-                                text="Stratigraphic name"
-                                labelClassName={
-                                    syncHelper.isSynced(SyncSettingKey.SURFACE) ? "bg-indigo-700 text-white" : ""
-                                }
-                            >
-                                <Select
-                                    options={propertySurfNameOptions}
-                                    value={computedPropertySurfaceName ? [computedPropertySurfaceName] : []}
-                                    onChange={handlePropertySurfNameSelectionChange}
-                                    size={5}
-                                />
-                            </Label>
-                            <Label
-                                text="Attribute"
-                                labelClassName={
-                                    syncHelper.isSynced(SyncSettingKey.SURFACE) ? "bg-indigo-700 text-white" : ""
-                                }
-                            >
-                                <Select
-                                    options={propertySurfAttributeOptions}
-                                    value={computedPropertySurfaceAttribute ? [computedPropertySurfaceAttribute] : []}
-                                    onChange={handlePropertySurfAttributeSelectionChange}
-                                    size={5}
-                                />
-                            </Label>
-                        </ApiStateWrapper>
+                    {aggregation === null && (
+                        <Label text="Realization:">
+                            <Input type={"number"} value={realizationNum} onChange={handleRealizationTextChanged} />
+                        </Label>
                     )}
-                </>
-
-                <Header text="Polygon data" />
-                <ApiStateWrapper
-                    apiResult={polygonDirQuery}
-                    errorComponent={"Error loading polygons directory"}
-                    loadingComponent={<CircularProgress />}
-                >
-                    <Label text="Stratigraphic name (polygon)">
-                        <>
-                            <Label
-                                wrapperClassName=" flow-root"
-                                labelClassName="float-left"
-                                text={"Use surface stratigraphy"}
-                            >
-                                <div className=" float-right">
-                                    <Checkbox
-                                        onChange={(e: any) => setLinkPolygonNameToSurfaceName(e.target.checked)}
-                                        checked={linkPolygonNameToSurfaceName}
-                                    />
-                                </div>
-                            </Label>
+                </CollapsibleGroup>
+                <CollapsibleGroup expanded={true} title="Depth surface">
+                    <ApiStateWrapper
+                        apiResult={meshSurfDirQuery}
+                        errorComponent={"Error loading surface directory"}
+                        loadingComponent={<CircularProgress />}
+                    >
+                        <Label
+                            text="Stratigraphic name"
+                            labelClassName={
+                                syncHelper.isSynced(SyncSettingKey.SURFACE) ? "bg-indigo-700 text-white" : ""
+                            }
+                        >
                             <Select
-                                options={polyNameOptions}
-                                value={computedPolygonName ? [computedPolygonName] : []}
-                                onChange={handlePolyNameSelectionChange}
+                                options={meshSurfNameOptions}
+                                value={computedMeshSurfaceName ? [computedMeshSurfaceName] : []}
+                                onChange={handleMeshSurfNameSelectionChange}
                                 size={5}
-                                disabled={linkPolygonNameToSurfaceName}
                             />
-                        </>
-                    </Label>
-
-                    <Label text="Attribute (polygon)">
-                        <Select
-                            options={polyAttributesOptions}
-                            value={computedPolygonAttribute ? [computedPolygonAttribute] : []}
-                            placeholder={
-                                linkPolygonNameToSurfaceName
-                                    ? `No attributes found for ${computedMeshSurfaceName}`
-                                    : `No attributes found for ${computedPolygonName}`
+                        </Label>
+                        <Label
+                            text="Attribute"
+                            labelClassName={
+                                syncHelper.isSynced(SyncSettingKey.SURFACE) ? "bg-indigo-700 text-white" : ""
                             }
-                            onChange={handlePolyAttributeSelectionChange}
-                            size={5}
-                        />
-                    </Label>
-                </ApiStateWrapper>
-
-                <Header text="Well data" />
-                <ApiStateWrapper
-                    apiResult={wellHeadersQuery}
-                    errorComponent={"Error loading wells"}
-                    loadingComponent={<CircularProgress />}
-                >
-                    <Label text="Official Wells">
-                        <Select
-                            options={wellHeaderOptions}
-                            value={selectedWellUuids}
-                            onChange={(selectedWellUuids: string[]) =>
-                                handleWellsChange(selectedWellUuids, wellHeaderOptions)
-                            }
-                            size={10}
-                            multiple={true}
-                        />
-                    </Label>
-                </ApiStateWrapper>
-                <div>
-                    <div className="p-2">
-                        <Header text="Surface visuals" />
-                        <LabelledCheckbox
-                            label="Contours"
-                            checked={showContour}
-                            onChange={(e: any) => setShowContour(e.target.checked)}
-                        />
-                        {showContour && (
+                        >
+                            <Select
+                                options={meshSurfAttributeOptions}
+                                value={computedMeshSurfaceAttribute ? [computedMeshSurfaceAttribute] : []}
+                                onChange={handleMeshSurfAttributeSelectionChange}
+                                size={5}
+                            />
+                        </Label>
+                    </ApiStateWrapper>
+                </CollapsibleGroup>
+                <CollapsibleGroup expanded={false} title="Property surface (color)">
+                    <>
+                        <Label
+                            wrapperClassName=" flow-root mt-4 mb-2"
+                            labelClassName="float-left block text-sm font-medium text-gray-700 dark:text-gray-200"
+                            text={"Enable"}
+                        >
+                            <div className=" float-right">
+                                <Checkbox
+                                    onChange={(e: any) => setUsePropertySurface(e.target.checked)}
+                                    checked={usePropertySurface}
+                                />
+                            </div>
+                        </Label>
+                        {usePropertySurface && (
+                            <ApiStateWrapper
+                                apiResult={propertySurfDirQuery}
+                                errorComponent={"Error loading surface directory"}
+                                loadingComponent={<CircularProgress />}
+                            >
+                                <Label
+                                    text="Stratigraphic name"
+                                    labelClassName={
+                                        syncHelper.isSynced(SyncSettingKey.SURFACE) ? "bg-indigo-700 text-white" : ""
+                                    }
+                                >
+                                    <Select
+                                        options={propertySurfNameOptions}
+                                        value={computedPropertySurfaceName ? [computedPropertySurfaceName] : []}
+                                        onChange={handlePropertySurfNameSelectionChange}
+                                        size={5}
+                                    />
+                                </Label>
+                                <Label
+                                    text="Attribute"
+                                    labelClassName={
+                                        syncHelper.isSynced(SyncSettingKey.SURFACE) ? "bg-indigo-700 text-white" : ""
+                                    }
+                                >
+                                    <Select
+                                        options={propertySurfAttributeOptions}
+                                        value={
+                                            computedPropertySurfaceAttribute ? [computedPropertySurfaceAttribute] : []
+                                        }
+                                        onChange={handlePropertySurfAttributeSelectionChange}
+                                        size={5}
+                                    />
+                                </Label>
+                            </ApiStateWrapper>
+                        )}
+                    </>
+                </CollapsibleGroup>
+                <CollapsibleGroup expanded={false} title="Fault polygons">
+                    <ApiStateWrapper
+                        apiResult={polygonDirQuery}
+                        errorComponent={"Error loading polygons directory"}
+                        loadingComponent={<CircularProgress />}
+                    >
+                        <Label text="Stratigraphic name (polygon)">
                             <>
                                 <Label
-                                    wrapperClassName="  flex flex-row"
-                                    labelClassName="text-xs"
-                                    text={"Contour start/increment"}
+                                    wrapperClassName=" flow-root"
+                                    labelClassName="float-left"
+                                    text={"Use surface stratigraphy"}
                                 >
-                                    <>
-                                        <div className=" float-right">
-                                            <Input
-                                                className="text-xs"
-                                                type={"number"}
-                                                value={contourStartValue}
-                                                onChange={handleContourStartChange}
-                                            />
-                                        </div>
-                                        <div className=" float-right">
-                                            <Input
-                                                className="text-xs"
-                                                type={"number"}
-                                                value={contourIncValue}
-                                                onChange={handleContourIncChange}
-                                            />
-                                        </div>
-                                    </>
+                                    <div className=" float-right">
+                                        <Checkbox
+                                            onChange={(e: any) => setLinkPolygonNameToSurfaceName(e.target.checked)}
+                                            checked={linkPolygonNameToSurfaceName}
+                                        />
+                                    </div>
                                 </Label>
+                                <Select
+                                    options={polyNameOptions}
+                                    value={computedPolygonName ? [computedPolygonName] : []}
+                                    onChange={handlePolyNameSelectionChange}
+                                    size={5}
+                                    disabled={linkPolygonNameToSurfaceName}
+                                />
                             </>
-                        )}
-                        <LabelledCheckbox
-                            label="Grid lines"
-                            checked={showGrid}
-                            onChange={(e: any) => setShowGrid(e.target.checked)}
-                        />
-                        <LabelledCheckbox
-                            label="Smooth shading"
-                            checked={showSmoothShading}
-                            onChange={(e: any) => setShowSmoothShading(e.target.checked)}
-                        />
-                        <LabelledCheckbox
-                            label="Material"
-                            checked={showMaterial}
-                            onChange={(e: any) => setShowMaterial(e.target.checked)}
-                        />
+                        </Label>
+
+                        <Label text="Attribute (polygon)">
+                            <Select
+                                options={polyAttributesOptions}
+                                value={computedPolygonAttribute ? [computedPolygonAttribute] : []}
+                                placeholder={
+                                    linkPolygonNameToSurfaceName
+                                        ? `No attributes found for ${computedMeshSurfaceName}`
+                                        : `No attributes found for ${computedPolygonName}`
+                                }
+                                onChange={handlePolyAttributeSelectionChange}
+                                size={5}
+                            />
+                        </Label>
+                    </ApiStateWrapper>
+                </CollapsibleGroup>
+                <CollapsibleGroup expanded={false} title="Well data">
+                    <ApiStateWrapper
+                        apiResult={wellHeadersQuery}
+                        errorComponent={"Error loading wells"}
+                        loadingComponent={<CircularProgress />}
+                    >
+                        <Label text="Official Wells">
+                            <Select
+                                options={wellHeaderOptions}
+                                value={selectedWellUuids}
+                                onChange={(selectedWellUuids: string[]) =>
+                                    handleWellsChange(selectedWellUuids, wellHeaderOptions)
+                                }
+                                size={10}
+                                multiple={true}
+                            />
+                        </Label>
+                    </ApiStateWrapper>
+                </CollapsibleGroup>
+                <CollapsibleGroup expanded={false} title="View settings">
+                    <div>
+                        <div className="p-2">
+                            <Header text="Surface" />
+                            <LabelledCheckbox
+                                label="Contours"
+                                checked={showContour}
+                                onChange={(e: any) => setShowContour(e.target.checked)}
+                            />
+                            {showContour && (
+                                <>
+                                    <Label
+                                        wrapperClassName="  flex flex-row"
+                                        labelClassName="text-xs"
+                                        text={"Contour start/increment"}
+                                    >
+                                        <>
+                                            <div className=" float-right">
+                                                <Input
+                                                    className="text-xs"
+                                                    type={"number"}
+                                                    value={contourStartValue}
+                                                    onChange={handleContourStartChange}
+                                                />
+                                            </div>
+                                            <div className=" float-right">
+                                                <Input
+                                                    className="text-xs"
+                                                    type={"number"}
+                                                    value={contourIncValue}
+                                                    onChange={handleContourIncChange}
+                                                />
+                                            </div>
+                                        </>
+                                    </Label>
+                                </>
+                            )}
+                            <LabelledCheckbox
+                                label="Grid lines"
+                                checked={showGrid}
+                                onChange={(e: any) => setShowGrid(e.target.checked)}
+                            />
+                            <LabelledCheckbox
+                                label="Smooth shading"
+                                checked={showSmoothShading}
+                                onChange={(e: any) => setShowSmoothShading(e.target.checked)}
+                            />
+                            <LabelledCheckbox
+                                label="Material"
+                                checked={showMaterial}
+                                onChange={(e: any) => setShowMaterial(e.target.checked)}
+                            />
+                        </div>
+                        <div className="p-2">
+                            <Header text="View" />
+                            <LabelledCheckbox
+                                label="Show 3D"
+                                checked={show3D}
+                                onChange={(e: any) => setShow3D(e.target.checked)}
+                            />
+                        </div>
                     </div>
-                    <div className="p-2">
-                        <Header text="View visuals" />
-                        <LabelledCheckbox
-                            label="Show 3D"
-                            checked={show3D}
-                            onChange={(e: any) => setShow3D(e.target.checked)}
-                        />
-                    </div>
-                </div>
+                </CollapsibleGroup>
             </div>
         </div>
     );
