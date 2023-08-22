@@ -11,8 +11,8 @@ export function useVectorsQuery(
     ensembleName: string | undefined
 ): UseQueryResult<Array<VectorDescription_api>> {
     return useQuery({
-        queryKey: ["getVectorNamesAndDescriptions", caseUuid, ensembleName],
-        queryFn: () => apiService.timeseries.getVectorNamesAndDescriptions(caseUuid ?? "", ensembleName ?? ""),
+        queryKey: ["getVectorList", caseUuid, ensembleName],
+        queryFn: () => apiService.timeseries.getVectorList(caseUuid ?? "", ensembleName ?? ""),
         staleTime: STALE_TIME,
         cacheTime: CACHE_TIME,
         enabled: caseUuid && ensembleName ? true : false,
