@@ -9,6 +9,7 @@ import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { SingleEnsembleSelect } from "@framework/components/SingleEnsembleSelect";
 import { fixupEnsembleIdent, maybeAssignFirstSyncedEnsemble } from "@framework/utils/ensembleUiHelpers";
 import { ApiStateWrapper } from "@lib/components/ApiStateWrapper";
+import { Button } from "@lib/components/Button";
 import { Checkbox } from "@lib/components/Checkbox";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
@@ -59,7 +60,7 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
     const [selectedPolygonAttribute, setSelectedPolygonAttribute] = React.useState<string | null>(null);
     const [linkPolygonNameToSurfaceName, setLinkPolygonNameToSurfaceName] = React.useState<boolean>(true);
     const [selectedWellUuids, setSelectedWellUuids] = moduleContext.useStoreState("selectedWellUuids");
-
+    const [showPolygon, setShowPolygon] = React.useState<boolean>(true);
     const [realizationNum, setRealizationNum] = React.useState<number>(0);
     const [aggregation, setAggregation] = React.useState<SurfaceStatisticFunction_api | null>(null);
     const [showContour, setShowContour] = React.useState(false);
@@ -69,6 +70,7 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
     const [showSmoothShading, setShowSmoothShading] = React.useState(false);
     const [showMaterial, setShowMaterial] = React.useState(false);
     const [show3D, setShow3D] = React.useState(true);
+
     const syncedSettingKeys = moduleContext.useSyncedSettingKeys();
     const syncHelper = new SyncSettingsHelper(syncedSettingKeys, workbenchServices);
     const syncedValueEnsembles = syncHelper.useValue(SyncSettingKey.ENSEMBLE, "global.syncValue.ensembles");
@@ -218,7 +220,7 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
     React.useEffect(
         function propogatePolygonsSelectionToView() {
             let polygonAddr: SurfacePolygonsAddress | null = null;
-            if (computedEnsembleIdent && computedPolygonName && computedPolygonAttribute) {
+            if (computedEnsembleIdent && computedPolygonName && computedPolygonAttribute && showPolygon) {
                 polygonAddr = {
                     caseUuid: computedEnsembleIdent.getCaseUuid(),
                     ensemble: computedEnsembleIdent.getEnsembleName(),
@@ -236,6 +238,7 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
             selectedPolygonName,
             selectedPolygonAttribute,
             linkPolygonNameToSurfaceName,
+            showPolygon,
             aggregation,
             realizationNum,
         ]
@@ -276,7 +279,14 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
         );
         setSelectedWellUuids(newSelectedWellUuids);
     }
+    function showAllWells(allWellUuidsOptions: SelectOption[]) {
+        const newSelectedWellUuids = allWellUuidsOptions.map((wellHeader) => wellHeader.value);
 
+        setSelectedWellUuids(newSelectedWellUuids);
+    }
+    function hideAllWells() {
+        setSelectedWellUuids([]);
+    }
     function handleEnsembleSelectionChange(newEnsembleIdent: EnsembleIdent | null) {
         setSelectedEnsembleIdent(newEnsembleIdent);
         if (newEnsembleIdent) {
@@ -450,49 +460,60 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
                     </>
                 </CollapsibleGroup>
                 <CollapsibleGroup expanded={false} title="Fault polygons">
-                    <ApiStateWrapper
-                        apiResult={polygonDirQuery}
-                        errorComponent={"Error loading polygons directory"}
-                        loadingComponent={<CircularProgress />}
+                    <Label
+                        wrapperClassName=" flow-root mt-4 mb-2"
+                        labelClassName="float-left block text-sm font-medium text-gray-700 dark:text-gray-200"
+                        text={"Enable"}
                     >
-                        <Label text="Stratigraphic name (polygon)">
-                            <>
-                                <Label
-                                    wrapperClassName=" flow-root"
-                                    labelClassName="float-left"
-                                    text={"Use surface stratigraphy"}
-                                >
-                                    <div className=" float-right">
-                                        <Checkbox
-                                            onChange={(e: any) => setLinkPolygonNameToSurfaceName(e.target.checked)}
-                                            checked={linkPolygonNameToSurfaceName}
-                                        />
-                                    </div>
-                                </Label>
-                                <Select
-                                    options={polyNameOptions}
-                                    value={computedPolygonName ? [computedPolygonName] : []}
-                                    onChange={handlePolyNameSelectionChange}
-                                    size={5}
-                                    disabled={linkPolygonNameToSurfaceName}
-                                />
-                            </>
-                        </Label>
+                        <div className=" float-right">
+                            <Checkbox onChange={(e: any) => setShowPolygon(e.target.checked)} checked={showPolygon} />
+                        </div>
+                    </Label>
+                    {showPolygon && (
+                        <ApiStateWrapper
+                            apiResult={polygonDirQuery}
+                            errorComponent={"Error loading polygons directory"}
+                            loadingComponent={<CircularProgress />}
+                        >
+                            <Label text="Stratigraphic name">
+                                <>
+                                    <Label
+                                        wrapperClassName=" flow-root"
+                                        labelClassName="float-left"
+                                        text={"Use surface stratigraphy"}
+                                    >
+                                        <div className=" float-right">
+                                            <Checkbox
+                                                onChange={(e: any) => setLinkPolygonNameToSurfaceName(e.target.checked)}
+                                                checked={linkPolygonNameToSurfaceName}
+                                            />
+                                        </div>
+                                    </Label>
+                                    <Select
+                                        options={polyNameOptions}
+                                        value={computedPolygonName ? [computedPolygonName] : []}
+                                        onChange={handlePolyNameSelectionChange}
+                                        size={5}
+                                        disabled={linkPolygonNameToSurfaceName}
+                                    />
+                                </>
+                            </Label>
 
-                        <Label text="Attribute (polygon)">
-                            <Select
-                                options={polyAttributesOptions}
-                                value={computedPolygonAttribute ? [computedPolygonAttribute] : []}
-                                placeholder={
-                                    linkPolygonNameToSurfaceName
-                                        ? `No attributes found for ${computedMeshSurfaceName}`
-                                        : `No attributes found for ${computedPolygonName}`
-                                }
-                                onChange={handlePolyAttributeSelectionChange}
-                                size={5}
-                            />
-                        </Label>
-                    </ApiStateWrapper>
+                            <Label text="Attribute">
+                                <Select
+                                    options={polyAttributesOptions}
+                                    value={computedPolygonAttribute ? [computedPolygonAttribute] : []}
+                                    placeholder={
+                                        linkPolygonNameToSurfaceName
+                                            ? `No attributes found for ${computedMeshSurfaceName}`
+                                            : `No attributes found for ${computedPolygonName}`
+                                    }
+                                    onChange={handlePolyAttributeSelectionChange}
+                                    size={5}
+                                />
+                            </Label>
+                        </ApiStateWrapper>
+                    )}
                 </CollapsibleGroup>
                 <CollapsibleGroup expanded={false} title="Well data">
                     <ApiStateWrapper
@@ -501,15 +522,29 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
                         loadingComponent={<CircularProgress />}
                     >
                         <Label text="Official Wells">
-                            <Select
-                                options={wellHeaderOptions}
-                                value={selectedWellUuids}
-                                onChange={(selectedWellUuids: string[]) =>
-                                    handleWellsChange(selectedWellUuids, wellHeaderOptions)
-                                }
-                                size={10}
-                                multiple={true}
-                            />
+                            <>
+                                <div>
+                                    <Button
+                                        className="float-left m-2 text-xs py-0"
+                                        variant="outlined"
+                                        onClick={() => showAllWells(wellHeaderOptions)}
+                                    >
+                                        Select all
+                                    </Button>
+                                    <Button className="m-2 text-xs py-0" variant="outlined" onClick={hideAllWells}>
+                                        Select none
+                                    </Button>
+                                </div>
+                                <Select
+                                    options={wellHeaderOptions}
+                                    value={selectedWellUuids}
+                                    onChange={(selectedWellUuids: string[]) =>
+                                        handleWellsChange(selectedWellUuids, wellHeaderOptions)
+                                    }
+                                    size={10}
+                                    multiple={true}
+                                />
+                            </>
                         </Label>
                     </ApiStateWrapper>
                 </CollapsibleGroup>
