@@ -5,7 +5,10 @@ import { ContinuousLegend, DiscreteColorLegend } from "@emerson-eps/color-tables
 import { ModuleFCProps } from "@framework/Module";
 import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
 import { Wellbore } from "@framework/Wellbore";
+import { ApiStateWrapper } from "@lib/components/ApiStateWrapper";
 import { Button } from "@lib/components/Button";
+import { CircularProgress } from "@lib/components/CircularProgress";
+import { resolveClassNames } from "@lib/components/_utils/resolveClassNames";
 import SubsurfaceViewer from "@webviz/subsurface-viewer";
 import { ViewStateType } from "@webviz/subsurface-viewer/dist/components/Map";
 import { ViewAnnotation } from "@webviz/subsurface-viewer/dist/components/ViewAnnotation";
@@ -30,6 +33,32 @@ import { state } from "./state";
 const JsonParseWithUndefined = (arrString: string): number[] => {
     const arr = JSON.parse(arrString);
     return arr.map((value: number) => (value === null ? undefined : value));
+};
+type Bounds = [number, number, number, number];
+
+const updateViewPortBounds = (
+    existingViewPortBounds: Bounds | undefined,
+    resetBounds: boolean,
+    surfaceMeta: SurfaceMeta
+): Bounds => {
+    let updatedBounds: Bounds = [surfaceMeta.x_min, surfaceMeta.y_min, surfaceMeta.x_max, surfaceMeta.y_max];
+
+    if (!existingViewPortBounds || resetBounds) {
+        return updatedBounds;
+    }
+
+    // Check if bounds overlap
+    if (
+        existingViewPortBounds[2] < updatedBounds[0] || // existing right edge is to the left of updated left edge
+        existingViewPortBounds[0] > updatedBounds[2] || // existing left edge is to the right of updated right edge
+        existingViewPortBounds[3] < updatedBounds[1] || // existing bottom edge is above updated top edge
+        existingViewPortBounds[1] > updatedBounds[3] // existing top edge is below updated bottom edge
+    ) {
+        return updatedBounds; // Return updated bounds since they don't overlap
+    }
+
+    // Otherwise, return the existing bounds
+    return existingViewPortBounds;
 };
 //-----------------------------------------------------------------------------------------------------------
 export function view({ moduleContext, workbenchServices }: ModuleFCProps<state>) {
@@ -65,8 +94,9 @@ export function view({ moduleContext, workbenchServices }: ModuleFCProps<state>)
     const polygonsQuery = usePolygonsDataQueryByAddress(polygonsAddr);
 
     let newLayers: Record<string, unknown>[] = [createNorthArrowLayer()];
-    let surfaceLayer: Record<string, unknown> | undefined = undefined;
+
     let colorRange: [number, number] | undefined = undefined;
+
     // Mesh data query should only trigger update if the property surface address is not set or if the property surface data is loaded
     if (meshSurfDataQuery.data && !propertySurfAddr) {
         let newMeshData = JsonParseWithUndefined(meshSurfDataQuery.data.mesh_data);
@@ -96,27 +126,25 @@ export function view({ moduleContext, workbenchServices }: ModuleFCProps<state>)
 
     // Calculate viewport bounds and axes layer from the surface bounds.
     // TODO: Should be done automatically by the component while considering all layers, with an option to lock the bounds
-    if ((meshSurfDataQuery.data && !propertySurfAddr) || (meshSurfDataQuery.data && propertySurfDataQuery.data)) {
-        const newSurfaceMetaData: SurfaceMeta = { ...meshSurfDataQuery.data };
-        if (!viewportBounds || resetBounds) {
-            setviewPortBounds([
+
+    React.useEffect(() => {
+        if (meshSurfDataQuery.data) {
+            const newSurfaceMetaData: SurfaceMeta = { ...meshSurfDataQuery.data };
+
+            setviewPortBounds(updateViewPortBounds(viewportBounds, resetBounds, newSurfaceMetaData));
+            toggleResetBounds(false);
+
+            const axesLayer: Record<string, unknown> = createAxesLayer([
                 newSurfaceMetaData.x_min,
                 newSurfaceMetaData.y_min,
+                0,
                 newSurfaceMetaData.x_max,
                 newSurfaceMetaData.y_max,
+                3500,
             ]);
-            toggleResetBounds(false);
+            newLayers.push(axesLayer);
         }
-        const axesLayer: Record<string, unknown> = createAxesLayer([
-            newSurfaceMetaData.x_min,
-            newSurfaceMetaData.y_min,
-            0,
-            newSurfaceMetaData.x_max,
-            newSurfaceMetaData.y_max,
-            3500,
-        ]);
-        newLayers.push(axesLayer);
-    }
+    }, [meshSurfDataQuery.data, propertySurfDataQuery.data, resetBounds, viewportBounds]);
 
     if (polygonsQuery.data) {
         const polygonsData: PolygonData_api[] = polygonsQuery.data;
@@ -170,9 +198,31 @@ export function view({ moduleContext, workbenchServices }: ModuleFCProps<state>)
     }
     const cameraPosition3D =
         syncHelper.useValue(SyncSettingKey.CAMERA_POSITION_MAP, "global.syncValue.cameraPositionMap") || undefined;
-
+    const isLoading =
+        meshSurfDataQuery.isFetching ||
+        propertySurfDataQuery.isFetching ||
+        polygonsQuery.isFetching ||
+        wellTrajectoriesQuery.isFetching;
+    const isError =
+        meshSurfDataQuery.isError ||
+        propertySurfDataQuery.isError ||
+        polygonsQuery.isError ||
+        wellTrajectoriesQuery.isError;
     return (
         <div className="relative w-full h-full flex flex-col">
+            <div>
+                {isLoading && (
+                    <div className="absolute left-0 right-0 w-full h-full bg-white bg-opacity-80 flex items-center justify-center z-10">
+                        <CircularProgress />
+                    </div>
+                )}
+                {isError && (
+                    <div className="absolute left-0 right-0 w-full h-full bg-white bg-opacity-80 flex items-center justify-center z-10">
+                        {"Error loading data"}
+                    </div>
+                )}
+            </div>
+
             <div className="absolute top-0 right-0 z-10">
                 <Button variant="contained" onClick={() => toggleResetBounds(!resetBounds)}>
                     Reset viewport bounds

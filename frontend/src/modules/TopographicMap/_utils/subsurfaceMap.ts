@@ -59,7 +59,6 @@ export function createSurfaceMeshLayer(
     property_data?: number[]
 ): Record<string, unknown> {
     surfaceSettings = surfaceSettings || defaultSurfaceSettings;
-    console.log(surfaceSettings.contours);
     return {
         "@@type": "MapLayer",
         id: "mesh-layer",

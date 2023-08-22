@@ -9,7 +9,6 @@ export interface StaticSurfAddr {
     realizationNum: number;
 }
 
-
 export interface StatisticalStaticSurfAddr {
     addressType: "statistical-static";
     caseUuid: string;
@@ -19,9 +18,7 @@ export interface StatisticalStaticSurfAddr {
     statisticFunction: SurfaceStatisticFunction_api;
 }
 
-
 export type SurfAddr = StaticSurfAddr | StatisticalStaticSurfAddr;
-
 
 export class SurfAddrFactory {
     private _caseUuid: string;
@@ -36,7 +33,6 @@ export class SurfAddrFactory {
         this._attribute = attribute;
     }
 
-
     createStaticAddr(realizationNum: number): StaticSurfAddr {
         return {
             addressType: "static",
@@ -47,7 +43,6 @@ export class SurfAddrFactory {
             realizationNum: realizationNum,
         };
     }
-
 
     createStatisticalStaticAddr(statFunction: SurfaceStatisticFunction_api): StatisticalStaticSurfAddr {
         return {

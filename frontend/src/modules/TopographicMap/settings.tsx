@@ -270,7 +270,6 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
             value: header.wellbore_uuid,
         }));
     }
-    console.log(wellHeaderOptions);
 
     function handleWellsChange(selectedWellUuids: string[], allWellUuidsOptions: SelectOption[]) {
         let newSelectedWellUuids = selectedWellUuids.filter((wellUuid) =>
