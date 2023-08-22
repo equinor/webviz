@@ -1,5 +1,6 @@
 import React from "react";
 
+import { VectorHistoricalData_api, VectorRealizationData_api, VectorStatisticData_api } from "@api";
 import { BroadcastChannelMeta } from "@framework/Broadcaster";
 import { ModuleFCProps } from "@framework/Module";
 import { useSubscribedValue } from "@framework/WorkbenchServices";
@@ -9,7 +10,7 @@ import { useElementSize } from "@lib/hooks/useElementSize";
 import { Layout, PlotData, PlotHoverEvent } from "plotly.js";
 
 import { BroadcastChannelNames } from "./channelDefs";
-import { useStatisticalVectorDataQuery, useVectorDataQuery } from "./queryHooks";
+import { useHistoricalVectorDataQuery, useStatisticalVectorDataQuery, useVectorDataQuery } from "./queryHooks";
 import { State } from "./state";
 
 interface MyPlotData extends Partial<PlotData> {
@@ -25,6 +26,8 @@ export const view = ({ moduleContext, workbenchSession, workbenchServices }: Mod
     const vectorSpec = moduleContext.useStoreValue("vectorSpec");
     const resampleFrequency = moduleContext.useStoreValue("resamplingFrequency");
     const showStatistics = moduleContext.useStoreValue("showStatistics");
+    const showRealizations = moduleContext.useStoreValue("showRealizations");
+    const showHistorical = moduleContext.useStoreValue("showHistorical");
     const realizationsToInclude = moduleContext.useStoreValue("realizationsToInclude");
 
     const vectorQuery = useVectorDataQuery(
@@ -32,7 +35,8 @@ export const view = ({ moduleContext, workbenchSession, workbenchServices }: Mod
         vectorSpec?.ensembleIdent.getEnsembleName(),
         vectorSpec?.vectorName,
         resampleFrequency,
-        realizationsToInclude
+        realizationsToInclude,
+        showRealizations
     );
 
     const statisticsQuery = useStatisticalVectorDataQuery(
@@ -42,6 +46,14 @@ export const view = ({ moduleContext, workbenchSession, workbenchServices }: Mod
         resampleFrequency,
         realizationsToInclude,
         showStatistics
+    );
+
+    const historicalQuery = useHistoricalVectorDataQuery(
+        vectorSpec?.ensembleIdent.getCaseUuid(),
+        vectorSpec?.ensembleIdent.getEnsembleName(),
+        vectorSpec?.vectorName,
+        resampleFrequency,
+        showHistorical && vectorSpec?.hasHistoricalVector ? true : false
     );
 
     const ensembleSet = workbenchSession.getEnsembleSet();
@@ -110,7 +122,7 @@ export const view = ({ moduleContext, workbenchSession, workbenchServices }: Mod
 
     const tracesDataArr: MyPlotData[] = [];
 
-    if (vectorQuery.data && vectorQuery.data.length > 0) {
+    if (showRealizations && vectorQuery.data && vectorQuery.data.length > 0) {
         let highlightedTrace: MyPlotData | null = null;
         for (let i = 0; i < vectorQuery.data.length; i++) {
             const vec = vectorQuery.data[i];
@@ -157,21 +169,47 @@ export const view = ({ moduleContext, workbenchSession, workbenchServices }: Mod
         }
     }
 
+    if (showHistorical && historicalQuery.data) {
+        const lineShape = historicalQuery.data.is_rate ? "vh" : "linear";
+        const trace: MyPlotData = {
+            x: historicalQuery.data.timestamps,
+            y: historicalQuery.data.values,
+            name: "History",
+            legendrank: -1,
+            type: "scatter",
+            mode: "lines",
+            line: { color: "black", width: 2, shape: lineShape },
+        };
+        tracesDataArr.push(trace);
+    }
+
+    const hasGotAnyRequestedData = !!(
+        (showRealizations && vectorQuery.data) ||
+        (showStatistics && statisticsQuery.data) ||
+        (showHistorical && historicalQuery.data)
+    );
+
+    let plotTitle = "N/A";
+    if (vectorSpec && hasGotAnyRequestedData) {
+        const unitString = determineUnitString(vectorQuery.data, statisticsQuery.data, historicalQuery.data);
+        plotTitle = `${vectorSpec.vectorName} [${unitString}]`;
+    }
+
     React.useEffect(
         function updateInstanceTitle() {
-            const hasGotAnyRequestedData = vectorQuery.data || (showStatistics && statisticsQuery.data);
             if (ensemble && vectorSpec && hasGotAnyRequestedData) {
                 const ensembleDisplayName = ensemble.getDisplayName();
                 moduleContext.setInstanceTitle(`${ensembleDisplayName} - ${vectorSpec.vectorName}`);
             }
         },
-        [ensemble, vectorSpec, vectorQuery.data, showStatistics, statisticsQuery.data, moduleContext]
+        [hasGotAnyRequestedData, ensemble, vectorSpec, moduleContext]
     );
 
     const layout: Partial<Layout> = {
         width: wrapperDivSize.width,
         height: wrapperDivSize.height,
-        margin: { t: 0, r: 0, l: 40, b: 40 },
+        title: plotTitle,
+        margin: { t: 30, r: 0, l: 40, b: 40 },
     };
 
     if (subscribedPlotlyTimeStamp) {
@@ -204,3 +242,23 @@ export const view = ({ moduleContext, workbenchSession, workbenchServices }: Mod
         </div>
     );
 };
+
+function determineUnitString(
+    realizationDataArr: VectorRealizationData_api[] | undefined,
+    statisticData: VectorStatisticData_api | undefined,
+    historicalData: VectorHistoricalData_api | undefined
+): string {
+    if (statisticData) {
+        return statisticData.unit;
+    }
+
+    if (historicalData) {
+        return historicalData.unit;
+    }
+
+    if (realizationDataArr && realizationDataArr.length > 0) {
+        return realizationDataArr[0].unit;
+    }
+
+    return "";
+}

@@ -16,7 +16,7 @@ from .sumo_explore import SumoExplore
 
 
 def test_summary_access(summary_access: SummaryAccess) -> None:
-    vector_names = summary_access.get_vector_names()
+    vector_names = summary_access.get_available_vectors()
     print("\n\n")
     print(vector_names)
 
