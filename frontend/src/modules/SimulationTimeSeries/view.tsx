@@ -123,10 +123,8 @@ export const view = ({ moduleContext, workbenchSession, workbenchServices }: Mod
     const tracesDataArr: MyPlotData[] = [];
 
     if (showRealizations && vectorQuery.data && vectorQuery.data.length > 0) {
-        let highlightedTrace: MyPlotData | null = null;
         for (let i = 0; i < vectorQuery.data.length; i++) {
             const vec = vectorQuery.data[i];
-            const isHighlighted = vec.realization === subscribedPlotlyRealization?.realization ? true : false;
             const curveColor = vec.realization === subscribedPlotlyRealization?.realization ? "red" : "green";
             const lineWidth = vec.realization === subscribedPlotlyRealization?.realization ? 3 : 1;
             const lineShape = vec.is_rate ? "vh" : "linear";
@@ -140,16 +138,7 @@ export const view = ({ moduleContext, workbenchSession, workbenchServices }: Mod
                 mode: "lines",
                 line: { color: curveColor, width: lineWidth, shape: lineShape },
             };
-
-            if (isHighlighted) {
-                highlightedTrace = trace;
-            } else {
-                tracesDataArr.push(trace);
-            }
-        }
-
-        if (highlightedTrace) {
-            tracesDataArr.push(highlightedTrace);
+            tracesDataArr.push(trace);
         }
     }
 

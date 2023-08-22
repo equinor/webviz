@@ -3,11 +3,10 @@ import PlotlyPlot, { Figure, PlotParams } from "react-plotly.js";
 
 import { cloneDeep, isEqual } from "lodash";
 import Plotly from "plotly.js";
+import { v4 } from "uuid";
 
 export const Plot: React.FC<PlotParams> = (props) => {
     const { data: propsData, layout: propsLayout, frames: propsFrames, onHover: propsOnHover, ...rest } = props;
-
-    const hoverTimeout = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
     const [data, setData] = React.useState<Plotly.Data[]>(propsData);
     const [layout, setLayout] = React.useState<Partial<Plotly.Layout>>(propsLayout);
@@ -15,11 +14,35 @@ export const Plot: React.FC<PlotParams> = (props) => {
     const [prevData, setPrevData] = React.useState<Plotly.Data[]>(propsData);
     const [prevLayout, setPrevLayout] = React.useState<Partial<Plotly.Layout>>(propsLayout);
     const [prevFrames, setPrevFrames] = React.useState<Plotly.Frame[] | null>(propsFrames || null);
+    const id = React.useRef<string>(`plot-${v4()}`);
+
+    const timeout = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+    const eventsDisabled = React.useRef(false);
 
     React.useEffect(() => {
+        function handleWheel() {
+            console.debug("wheel");
+            if (timeout.current) {
+                clearTimeout(timeout.current);
+            }
+            eventsDisabled.current = true;
+            timeout.current = setTimeout(() => {
+                eventsDisabled.current = false;
+            }, 500);
+        }
+
+        const element = document.getElementById(id.current);
+        if (element) {
+            element.addEventListener("wheel", handleWheel);
+        }
+
         return () => {
-            if (hoverTimeout.current) {
-                clearTimeout(hoverTimeout.current);
+            if (element) {
+                element.removeEventListener("wheel", handleWheel);
+            }
+
+            if (timeout.current) {
+                clearTimeout(timeout.current);
             }
         };
     }, []);
@@ -30,8 +53,13 @@ export const Plot: React.FC<PlotParams> = (props) => {
     }
 
     if (!isEqual(prevLayout, propsLayout)) {
-        setLayout({ ...layout, ...cloneDeep(propsLayout) });
+        const clone = cloneDeep(propsLayout);
+        setLayout({
+            ...layout,
+            ...clone,
+        });
         setPrevLayout(cloneDeep(propsLayout));
+        console.debug("layout changed");
     }
 
     if (!isEqual(prevFrames, propsFrames || null)) {
@@ -39,25 +67,20 @@ export const Plot: React.FC<PlotParams> = (props) => {
         setPrevFrames(cloneDeep(propsFrames || null));
     }
 
-    function handleInitialized(figure: Figure) {
+    const handleInitialized = React.useCallback(function handleInitialized(figure: Figure) {
+        console.debug("initialized");
         setLayout(figure.layout);
         setData(figure.data);
         setFrames(figure.frames || null);
-    }
+    }, []);
 
-    function handleUpdate(figure: Figure) {
-        if (!isEqual(layout, figure.layout)) {
-            setLayout(figure.layout);
-        }
-        if (!isEqual(data, figure.data)) {
-            setData(figure.data);
-        }
-        if (!isEqual(frames, figure.frames)) {
-            setFrames(figure.frames || null);
-        }
-    }
+    // The problem that occurs is that handleRelayout is only called when the zoom ends, not during the zoom.
+    // When hovering a trace and the data/layout gets updated on the outside, the ranges have not been stored yet and, hence, the plot jumps back to the original range.
 
-    function handleRelayout(e: Plotly.PlotRelayoutEvent) {
+    // Possible solutions:
+
+    const handleRelayout = React.useCallback(function handleRelayout(e: Plotly.PlotRelayoutEvent) {
+        console.debug("relayout");
         setLayout({
             ...layout,
             xaxis: {
@@ -71,24 +94,26 @@ export const Plot: React.FC<PlotParams> = (props) => {
                 autorange: e["yaxis.autorange"],
             },
         });
-    }
+    }, []);
 
     function handleHover(event: Readonly<Plotly.PlotHoverEvent>) {
-        if (propsOnHover) {
-            if (hoverTimeout.current) {
-                clearTimeout(hoverTimeout.current);
-            }
-            hoverTimeout.current = setTimeout(() => {
-                if (propsOnHover) {
-                    propsOnHover(event);
-                }
-            }, 180);
+        if (propsOnHover && !eventsDisabled.current) {
+            propsOnHover(event);
         }
+    }
+
+    function handleRedraw() {
+        console.debug("redraw");
+    }
+
+    function handleRestyle() {
+        console.debug("restyle");
     }
 
     return (
         <PlotlyPlot
             {...rest}
+            divId={id.current}
             config={{
                 modeBarButtons: [["pan2d", "autoScale2d", "zoomIn2d", "zoomOut2d", "toImage"]],
                 displaylogo: false,
@@ -98,9 +123,10 @@ export const Plot: React.FC<PlotParams> = (props) => {
             layout={layout}
             frames={frames || undefined}
             onInitialized={handleInitialized}
-            onUpdate={handleUpdate}
             onRelayout={handleRelayout}
             onHover={handleHover}
+            onRedraw={handleRedraw}
+            onRestyle={handleRestyle}
         />
     );
 };
