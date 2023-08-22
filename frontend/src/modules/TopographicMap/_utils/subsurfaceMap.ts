@@ -155,7 +155,7 @@ function wellTrajectoryToGeojson(wellTrajectory: WellBoreTrajectory_api): Record
     return geometryCollection;
 }
 export function createWellBoreHeaderLayer(wellTrajectories: WellBoreTrajectory_api[]): Record<string, unknown> {
-    let data: Record<string, unknown>[] = wellTrajectories.map((wellTrajectory) => {
+    const data: Record<string, unknown>[] = wellTrajectories.map((wellTrajectory) => {
         return wellHeaderMarkerToGeojson(
             wellTrajectory.easting_arr[0],
             wellTrajectory.northing_arr[0],
