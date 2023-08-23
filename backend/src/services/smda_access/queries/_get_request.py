@@ -40,7 +40,7 @@ def get(access_token: str, endpoint: str, params: dict) -> List[dict]:
         print(f"{str(response.status_code) } {endpoint} either does not exists or can not be found")
     else:
         print(
-            f"[WARNING:] Can not fetch data from endpont {endpoint}  ({ str(response.status_code)})-{response.reason} - {response.text} - {response.content} "
+            f"[WARNING:] Can not fetch data from endpont {endpoint}  ({ str(response.status_code)})-{response.reason} "
         )
     print(f"TIME SMDA fetch {endpoint} took {timer.lap_s():.2f} seconds")
     return results
