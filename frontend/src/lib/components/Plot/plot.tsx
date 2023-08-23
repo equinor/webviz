@@ -6,7 +6,14 @@ import Plotly from "plotly.js";
 import { v4 } from "uuid";
 
 export const Plot: React.FC<PlotParams> = (props) => {
-    const { data: propsData, layout: propsLayout, frames: propsFrames, onHover: propsOnHover, ...rest } = props;
+    const {
+        data: propsData,
+        layout: propsLayout,
+        frames: propsFrames,
+        onHover: propsOnHover,
+        onUnhover: propsOnUnhover,
+        ...rest
+    } = props;
 
     const [data, setData] = React.useState<Plotly.Data[]>(propsData);
     const [layout, setLayout] = React.useState<Partial<Plotly.Layout>>(propsLayout);
@@ -20,8 +27,10 @@ export const Plot: React.FC<PlotParams> = (props) => {
     const eventsDisabled = React.useRef(false);
 
     React.useEffect(() => {
+        // When zooming in, the relayout function is only called once there hasn't been a wheel event in a certain time.
+        // However, the hover event would still be sent and might update the data, causing a layout change and, hence,
+        // a jump in the plot's zoom. To prevent this, we disable the hover event for a certain time after a wheel event.
         function handleWheel() {
-            console.debug("wheel");
             if (timeout.current) {
                 clearTimeout(timeout.current);
             }
@@ -31,14 +40,22 @@ export const Plot: React.FC<PlotParams> = (props) => {
             }, 500);
         }
 
+        function handleTouchZoom(e: TouchEvent) {
+            if (e.touches.length === 2) {
+                handleWheel();
+            }
+        }
+
         const element = document.getElementById(id.current);
         if (element) {
             element.addEventListener("wheel", handleWheel);
+            element.addEventListener("touchmove", handleTouchZoom);
         }
 
         return () => {
             if (element) {
                 element.removeEventListener("wheel", handleWheel);
+                element.removeEventListener("touchmove", handleTouchZoom);
             }
 
             if (timeout.current) {
@@ -59,7 +76,6 @@ export const Plot: React.FC<PlotParams> = (props) => {
             ...clone,
         });
         setPrevLayout(cloneDeep(propsLayout));
-        console.debug("layout changed");
     }
 
     if (!isEqual(prevFrames, propsFrames || null)) {
@@ -74,13 +90,7 @@ export const Plot: React.FC<PlotParams> = (props) => {
         setFrames(figure.frames || null);
     }, []);
 
-    // The problem that occurs is that handleRelayout is only called when the zoom ends, not during the zoom.
-    // When hovering a trace and the data/layout gets updated on the outside, the ranges have not been stored yet and, hence, the plot jumps back to the original range.
-
-    // Possible solutions:
-
     const handleRelayout = React.useCallback(function handleRelayout(e: Plotly.PlotRelayoutEvent) {
-        console.debug("relayout");
         setLayout({
             ...layout,
             xaxis: {
@@ -100,14 +110,18 @@ export const Plot: React.FC<PlotParams> = (props) => {
         if (propsOnHover && !eventsDisabled.current) {
             propsOnHover(event);
         }
+        return;
     }
 
-    function handleRedraw() {
-        console.debug("redraw");
+    function handleUnhover(event: Readonly<Plotly.PlotMouseEvent>) {
+        if (propsOnUnhover && !eventsDisabled.current) {
+            propsOnUnhover(event);
+        }
+        return;
     }
 
-    function handleRestyle() {
-        console.debug("restyle");
+    function handleUpdate(figure: Readonly<Figure>, graphDiv: Readonly<HTMLElement>) {
+        console.debug("update");
     }
 
     return (
@@ -125,8 +139,8 @@ export const Plot: React.FC<PlotParams> = (props) => {
             onInitialized={handleInitialized}
             onRelayout={handleRelayout}
             onHover={handleHover}
-            onRedraw={handleRedraw}
-            onRestyle={handleRestyle}
+            onUnhover={handleUnhover}
+            onUpdate={handleUpdate}
         />
     );
 };
