@@ -47,7 +47,7 @@ export const Select = withDefaults<SelectProps>()(defaultProps, (props) => {
     const [minWidth, setMinWidth] = React.useState<number>(0);
 
     const ref = React.useRef<HTMLDivElement>(null);
-    const noOptionsText = props.placeholder || "No options";
+    const noOptionsText = props.placeholder ?? "No options";
     const filteredOptions = React.useMemo(() => {
         if (!props.filter) {
             return props.options;
@@ -72,7 +72,7 @@ export const Select = withDefaults<SelectProps>()(defaultProps, (props) => {
             }
         }
         setMinWidth(longestOptionWidth + 40);
-    }, [props.options, props.placeholder, filter]);
+    }, [props.options, noOptionsText, filter]);
 
     const toggleValue = React.useCallback(
         (option: SelectOption, index: number) => {
