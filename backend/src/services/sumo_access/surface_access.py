@@ -12,6 +12,7 @@ from src.services.utils.statistic_function import StatisticFunction
 
 from ._helpers import create_sumo_client_instance
 from .surface_types import DynamicSurfaceDirectory, StaticSurfaceDirectory
+from .generic_types import SumoContent
 
 LOGGER = logging.getLogger(__name__)
 
@@ -45,6 +46,9 @@ class SurfaceAccess:
         attributes = sorted(surface_collection.tagnames)
         timestamps: List[str] = surface_collection.timestamps
         intervals: List[Tuple[str, str]] = surface_collection.intervals
+        available_contents = list(set(surf["data"]["content"] for surf in surface_collection))
+
+        LOGGER.debug(f"available surface contents: {available_contents}")
 
         # ISO 8601 recommends '/' as separator, alternatively '--'
         # https://en.wikipedia.org/wiki/ISO_8601#Time_intervals
@@ -60,7 +64,7 @@ class SurfaceAccess:
 
         return surf_dir
 
-    def get_static_surf_dir(self) -> StaticSurfaceDirectory:
+    def get_static_surf_dir(self, content_filter: Optional[List[SumoContent]] = None) -> StaticSurfaceDirectory:
         """
         Get a directory of surface names and attributes for static surfaces.
         These are the non-observed surfaces that do NOT have time stamps
@@ -81,6 +85,23 @@ class SurfaceAccess:
 
         names = sorted(surface_collection.names)
         attributes = sorted(surface_collection.tagnames)
+        available_contents = list(set(surf["data"]["content"] for surf in surface_collection))
+
+        LOGGER.debug(f"available surface contents: {available_contents}")
+
+        if content_filter is not None:
+            if not any(SumoContent.has(content) for content in content_filter):
+                raise ValueError(f"Invalid content filter: {content_filter}")
+            surfaces_with_filtered_content = [
+                surf for surf in surface_collection if surf["data"]["content"] in content_filter
+            ]
+
+            names = sorted(list(set(surf.name for surf in surfaces_with_filtered_content)))
+            attributes = sorted(list(set(surf.tagname for surf in surfaces_with_filtered_content)))
+
+        else:
+            names = sorted(surface_collection.names)
+            attributes = sorted(surface_collection.tagnames)
 
         LOGGER.debug(
             f"Build valid name/attribute combinations for static surface directory "
@@ -91,7 +112,7 @@ class SurfaceAccess:
 
         for name in names:
             filtered_coll = surface_collection.filter(name=name)
-            filtered_attributes = filtered_coll.tagnames
+            filtered_attributes = [tagname for tagname in filtered_coll.tagnames if tagname in attributes]
             attribute_indices: List[int] = []
             for attr in filtered_attributes:
                 attr_idx = attributes.index(attr)

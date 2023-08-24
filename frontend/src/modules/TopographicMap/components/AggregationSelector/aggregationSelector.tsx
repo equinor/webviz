@@ -4,12 +4,12 @@ import { Label } from "@lib/components/Label";
 
 //
 // Sub-component for aggregation/statistic selection
-type AggregationDropdownProps = {
+export type AggregationSelectorProps = {
     selectedAggregation: SurfaceStatisticFunction_api | null;
-    onAggregationSelectionChange: (aggregation: SurfaceStatisticFunction_api | null) => void;
+    onAggregationSelectorChange: (aggregation: SurfaceStatisticFunction_api | null) => void;
 };
 
-export function AggregationDropdown(props: AggregationDropdownProps): JSX.Element {
+export function AggregationSelector(props: AggregationSelectorProps): JSX.Element {
     const itemArr: DropdownOption[] = [
         { value: "SINGLE_REAL", label: "Single realization" },
         { value: SurfaceStatisticFunction_api.MEAN, label: "Mean" },
@@ -27,7 +27,7 @@ export function AggregationDropdown(props: AggregationDropdownProps): JSX.Elemen
                 options={itemArr}
                 value={props.selectedAggregation ?? "SINGLE_REAL"}
                 onChange={(newVal: string) =>
-                    props.onAggregationSelectionChange(
+                    props.onAggregationSelectorChange(
                         newVal != "SINGLE_REAL" ? (newVal as SurfaceStatisticFunction_api) : null
                     )
                 }
