@@ -1,17 +1,17 @@
 import React from "react";
 
-import { ContinuousColorPalette } from "@lib/utils/ColorPalette";
+import { ColorPalette } from "@lib/utils/ColorPalette";
 
 export type ColorGradientProps = {
-    colorPalette: ContinuousColorPalette;
+    colorPalette: ColorPalette;
     steps?: number;
 };
 
-function makeColorSamples(steps: number, colorPalette: ContinuousColorPalette) {
+function makeColorSamples(steps: number, colorPalette: ColorPalette) {
     const samples = [];
 
     for (let i = 0; i < steps; i++) {
-        const color = colorPalette.getColorAtPosition(i / (steps - 1));
+        const color = colorPalette.getInterpolatedColor(i / (steps - 1));
         samples.push(
             <div
                 key={color}

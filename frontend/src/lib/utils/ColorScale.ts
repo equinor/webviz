@@ -1,4 +1,4 @@
-import { ContinuousColorPalette } from "@lib/utils/ColorPalette";
+import { ColorPalette } from "@lib/utils/ColorPalette";
 
 export enum ColorScaleType {
     Discrete = "discrete",
@@ -35,13 +35,13 @@ export type PlotlyMapColorScaleObject = {
 
 export type ColorScaleOptions = {
     type: ColorScaleType;
-    colorPalette: ContinuousColorPalette;
+    colorPalette: ColorPalette;
     gradientType: ColorScaleGradientType;
     steps: number;
 };
 
 export class ColorScale {
-    private _colorPalette: ContinuousColorPalette;
+    private _colorPalette: ColorPalette;
     private _min: number;
     private _max: number;
     private _type: ColorScaleType;
@@ -74,7 +74,7 @@ export class ColorScale {
         return normalizedValue;
     }
 
-    getColorPalette(): ContinuousColorPalette {
+    getColorPalette(): ColorPalette {
         return this._colorPalette;
     }
 
@@ -88,7 +88,7 @@ export class ColorScale {
             color = colors[colorIndex];
         } else {
             const normalizedValue = this.calcNormalizedValue(value, this._min, this._max);
-            color = this._colorPalette.getColorAtPosition(normalizedValue);
+            color = this._colorPalette.getInterpolatedColor(normalizedValue);
         }
 
         return color;
@@ -122,7 +122,7 @@ export class ColorScale {
         for (let i = 0; i < numSamples; i++) {
             const startPos = i / numSamples;
             const endPos = (i + 1) / numSamples;
-            colors.push(this._colorPalette.getColorAtPosition(startPos + (endPos - startPos) / 2));
+            colors.push(this._colorPalette.getInterpolatedColor(startPos + (endPos - startPos) / 2));
         }
         return colors;
     }

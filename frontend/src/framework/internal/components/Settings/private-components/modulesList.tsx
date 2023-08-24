@@ -4,6 +4,8 @@ import { ModuleRegistry } from "@framework/ModuleRegistry";
 import { DrawPreviewFunc } from "@framework/Preview";
 import { useStoreValue } from "@framework/StateStore";
 import { DrawerContent, Workbench } from "@framework/Workbench";
+import { LayoutEventTypes } from "@framework/internal/components/Content/private-components/layout";
+import { Drawer } from "@framework/internal/components/Drawer";
 import { WindowIcon } from "@heroicons/react/20/solid";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import {
@@ -15,9 +17,6 @@ import {
     pointRelativeToDomRect,
     pointerEventToPoint,
 } from "@lib/utils/geometry";
-
-import { LayoutEventTypes } from "../../Content/private-components/layout";
-import { Drawer } from "../../Drawer";
 
 type ModulesListItemProps = {
     moduleName: string;

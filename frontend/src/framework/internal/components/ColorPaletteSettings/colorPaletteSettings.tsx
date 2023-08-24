@@ -4,6 +4,7 @@ import ReactDOM from "react-dom";
 import { useStoreValue } from "@framework/StateStore";
 import { DrawerContent, Workbench } from "@framework/Workbench";
 import { ColorPaletteType, ColorScaleDiscreteSteps } from "@framework/WorkbenchSettings";
+import { Drawer } from "@framework/internal/components/Drawer";
 import { ChevronDownIcon } from "@heroicons/react/20/solid";
 import { ColorGradient } from "@lib/components/ColorGradient";
 import { ColorTileGroup } from "@lib/components/ColorTileGroup";
@@ -13,15 +14,28 @@ import { Label } from "@lib/components/Label";
 import { Overlay } from "@lib/components/Overlay";
 import { resolveClassNames } from "@lib/components/_utils/resolveClassNames";
 import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
-import { CategoricalColorPalette, ColorPalette, ContinuousColorPalette } from "@lib/utils/ColorPalette";
+import { ColorPalette } from "@lib/utils/ColorPalette";
 import { convertRemToPixels } from "@lib/utils/screenUnitConversions";
-
-import { Drawer } from "../Drawer";
 
 enum ColorPaletteSelectorType {
     Categorical = "categorical",
     Continuous = "continuous",
     Discrete = "discrete",
+}
+
+function makeColorPalettePreview(
+    colorPalette: ColorPalette,
+    type: ColorPaletteSelectorType,
+    steps?: number
+): React.ReactNode {
+    switch (type) {
+        case ColorPaletteSelectorType.Continuous:
+            return <ColorGradient colorPalette={colorPalette} />;
+        case ColorPaletteSelectorType.Categorical:
+            return <ColorTileGroup colorPalette={colorPalette} />;
+        case ColorPaletteSelectorType.Discrete:
+            return <ColorGradient colorPalette={colorPalette} steps={steps} />;
+    }
 }
 
 type ColorPaletteItemProps = {
@@ -41,19 +55,6 @@ const ColorPaletteItem: React.FC<ColorPaletteItemProps> = (props) => {
         props.onClick();
     }
 
-    function makeColorPalettePreview(): React.ReactNode {
-        switch (props.type) {
-            case ColorPaletteSelectorType.Continuous:
-                return <ColorGradient colorPalette={props.colorPalette as ContinuousColorPalette} />;
-            case ColorPaletteSelectorType.Categorical:
-                return <ColorTileGroup colorPalette={props.colorPalette as CategoricalColorPalette} />;
-            case ColorPaletteSelectorType.Discrete:
-                return (
-                    <ColorGradient colorPalette={props.colorPalette as ContinuousColorPalette} steps={props.steps} />
-                );
-        }
-    }
-
     return (
         <div
             className={resolveClassNames("p-2 flex items-center gap-2 hover:bg-blue-100 cursor-pointer h-12", {
@@ -67,7 +68,7 @@ const ColorPaletteItem: React.FC<ColorPaletteItemProps> = (props) => {
             >
                 {props.colorPalette.getName()}
             </span>
-            <div className="flex-grow">{makeColorPalettePreview()}</div>
+            <div className="flex-grow">{makeColorPalettePreview(props.colorPalette, props.type, props.steps)}</div>
         </div>
     );
 };
@@ -76,7 +77,6 @@ type ColorPaletteSelectorProps = {
     colorPalettes: ColorPalette[];
     selectedColorPaletteId: string;
     onChange?: (colorPalette: ColorPalette) => void;
-    onEdited?: (colorPalettes: ColorPalette[]) => void;
     type: ColorPaletteSelectorType;
     steps?: number;
 };
@@ -138,24 +138,11 @@ const ColorPaletteSelector: React.FC<ColorPaletteSelectorProps> = (props) => {
         ));
     }
 
-    function makeColorPalettePreview(): React.ReactNode {
-        switch (props.type) {
-            case ColorPaletteSelectorType.Continuous:
-                return <ColorGradient colorPalette={selectedColorPalette as ContinuousColorPalette} />;
-            case ColorPaletteSelectorType.Categorical:
-                return <ColorTileGroup colorPalette={selectedColorPalette as CategoricalColorPalette} />;
-            case ColorPaletteSelectorType.Discrete:
-                return (
-                    <ColorGradient colorPalette={selectedColorPalette as ContinuousColorPalette} steps={props.steps} />
-                );
-        }
-    }
-
     const marginTop = Math.max(-boundingRect.top, convertRemToPixels((-(props.colorPalettes.length - 1) * 3) / 2));
 
     return (
         <div className="bg-slate-100 rounded p-2 flex items-center gap-4" ref={ref}>
-            <div className="flex-grow">{makeColorPalettePreview()}</div>
+            <div className="flex-grow">{makeColorPalettePreview(selectedColorPalette, props.type, props.steps)}</div>
             <IconButton onClick={handleChevronClick}>
                 <ChevronDownIcon className="flex-grow-0 w-4 h-4" />
             </IconButton>
@@ -188,28 +175,25 @@ export type ColorPaletteSettingsProps = {
 };
 
 export const ColorPaletteSettings: React.FC<ColorPaletteSettingsProps> = (props) => {
-    const colorPalettes = props.workbench.getWorkbenchSettings().getColorPalettes();
+    const colorPalettes = props.workbench.getPrivateWorkbenchSettings().getColorPalettes();
     const drawerContent = useStoreValue(props.workbench.getGuiStateStore(), "drawerContent");
     const [selectedColorPaletteIds, setSelectedColorPaletteIds] = React.useState<Record<ColorPaletteType, string>>(
-        props.workbench.getWorkbenchSettings().getSelectedColorPaletteIds()
+        props.workbench.getPrivateWorkbenchSettings().getSelectedColorPaletteIds()
     );
-    const [steps, setSteps] = React.useState<
-        Record<ColorScaleDiscreteSteps.Diverging | ColorScaleDiscreteSteps.Sequential, number>
-    >(props.workbench.getWorkbenchSettings().getSteps());
+    const [steps, setSteps] = React.useState<Record<ColorScaleDiscreteSteps, number>>(
+        props.workbench.getPrivateWorkbenchSettings().getSteps()
+    );
 
     function handleColorPaletteSelected(colorPalette: ColorPalette, type: ColorPaletteType) {
-        props.workbench.getWorkbenchSettings().setSelectedColorPaletteId(type, colorPalette.getId());
+        props.workbench.getPrivateWorkbenchSettings().setSelectedColorPaletteId(type, colorPalette.getId());
         setSelectedColorPaletteIds({
             ...selectedColorPaletteIds,
             [type]: colorPalette.getId(),
         });
     }
 
-    function handleColorPaletteStepsChanged(
-        newSteps: number,
-        type: ColorScaleDiscreteSteps.Diverging | ColorScaleDiscreteSteps.Sequential
-    ) {
-        props.workbench.getWorkbenchSettings().setStepsForType(type, newSteps);
+    function handleColorPaletteStepsChanged(newSteps: number, type: ColorScaleDiscreteSteps) {
+        props.workbench.getPrivateWorkbenchSettings().setStepsForType(type, newSteps);
         setSteps({
             ...steps,
             [type]: newSteps,
@@ -239,10 +223,10 @@ export const ColorPaletteSettings: React.FC<ColorPaletteSettingsProps> = (props)
                         />
                         <ColorGradient
                             colorPalette={
-                                (colorPalettes[ColorPaletteType.ContinuousSequential].find(
+                                colorPalettes[ColorPaletteType.ContinuousSequential].find(
                                     (el) =>
                                         el.getId() === selectedColorPaletteIds[ColorPaletteType.ContinuousSequential]
-                                ) || colorPalettes[ColorPaletteType.ContinuousSequential][0]) as ContinuousColorPalette
+                                ) || colorPalettes[ColorPaletteType.ContinuousSequential][0]
                             }
                             steps={steps[ColorScaleDiscreteSteps.Sequential]}
                         />
@@ -274,9 +258,9 @@ export const ColorPaletteSettings: React.FC<ColorPaletteSettingsProps> = (props)
                         />
                         <ColorGradient
                             colorPalette={
-                                (colorPalettes[ColorPaletteType.ContinuousDiverging].find(
+                                colorPalettes[ColorPaletteType.ContinuousDiverging].find(
                                     (el) => el.getId() === selectedColorPaletteIds[ColorPaletteType.ContinuousDiverging]
-                                ) || colorPalettes[ColorPaletteType.ContinuousDiverging][0]) as ContinuousColorPalette
+                                ) || colorPalettes[ColorPaletteType.ContinuousDiverging][0]
                             }
                             steps={steps[ColorScaleDiscreteSteps.Diverging]}
                         />

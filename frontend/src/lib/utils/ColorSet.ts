@@ -1,23 +1,23 @@
-import { CategoricalColor, CategoricalColorPalette } from "@lib/utils/ColorPalette";
+import { ColorPalette } from "@lib/utils/ColorPalette";
 
 export class ColorSet {
-    private _colorPalette: CategoricalColorPalette;
+    private _colorPalette: ColorPalette;
     private _runningIndex: number;
 
-    constructor(colorPalette: CategoricalColorPalette) {
+    constructor(colorPalette: ColorPalette) {
         this._colorPalette = colorPalette;
         this._runningIndex = 0;
     }
 
     getColorArray(): string[] {
-        return this._colorPalette.getColors().map((color: CategoricalColor) => color.hexColor);
+        return this._colorPalette.getColors();
     }
 
     getColor(index: number): string {
         if (index < 0 || index >= this._colorPalette.getColors().length) {
             throw new Error(`Color index ${index} is out of bounds`);
         }
-        return this._colorPalette.getColors()[index].hexColor;
+        return this._colorPalette.getColors()[index];
     }
 
     /**
@@ -26,7 +26,7 @@ export class ColorSet {
      */
     getFirstColor(): string {
         this._runningIndex = Math.min(1, this._colorPalette.getColors().length - 1);
-        return this._colorPalette.getColors()[0].hexColor;
+        return this._colorPalette.getColors()[0];
     }
 
     /**
@@ -42,7 +42,7 @@ export class ColorSet {
         if (this._colorPalette.getColors().length === 0) {
             return "#000000";
         }
-        const color = this._colorPalette.getColors()[this._runningIndex].hexColor;
+        const color = this._colorPalette.getColors()[this._runningIndex];
         this._runningIndex = (this._runningIndex + 1) % this._colorPalette.getColors().length;
         return color;
     }

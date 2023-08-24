@@ -1,12 +1,12 @@
 import React from "react";
 
-import { CategoricalColorPalette } from "@lib/utils/ColorPalette";
+import { ColorTile } from "@lib/components/ColorTile";
+import { ColorPalette } from "@lib/utils/ColorPalette";
 
-import { ColorTile } from "../ColorTile";
 import { resolveClassNames } from "../_utils/resolveClassNames";
 
 export type ColorPaletteProps = {
-    colorPalette: CategoricalColorPalette;
+    colorPalette: ColorPalette;
     gap?: boolean;
 };
 
@@ -20,7 +20,7 @@ export const ColorTileGroup: React.FC<ColorPaletteProps> = (props) => {
                 })}
             >
                 {props.colorPalette.getColors().map((color) => (
-                    <ColorTile key={color.id} color={color.hexColor} grouped />
+                    <ColorTile key={color} color={color} grouped />
                 ))}
             </div>
             <div className="flex-grow" />

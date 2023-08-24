@@ -13,6 +13,7 @@ import { WorkbenchSession } from "./WorkbenchSession";
 import { WorkbenchSettings } from "./WorkbenchSettings";
 import { loadEnsembleSetMetadataFromBackend } from "./internal/EnsembleSetLoader";
 import { PrivateWorkbenchServices } from "./internal/PrivateWorkbenchServices";
+import { PrivateWorkbenchSettings } from "./internal/PrivateWorkbenchSettings";
 import { WorkbenchSessionPrivate } from "./internal/WorkbenchSessionPrivate";
 
 export enum WorkbenchEvents {
@@ -49,7 +50,7 @@ export class Workbench {
     private _guiStateStore: StateStore<WorkbenchGuiState>;
     private _workbenchSession: WorkbenchSessionPrivate;
     private _workbenchServices: PrivateWorkbenchServices;
-    private _workbenchSettings: WorkbenchSettings;
+    private _workbenchSettings: PrivateWorkbenchSettings;
     private _broadcaster: Broadcaster;
     private _subscribersMap: { [key: string]: Set<() => void> };
     private _layout: LayoutElement[];
@@ -63,7 +64,7 @@ export class Workbench {
         });
         this._workbenchSession = new WorkbenchSessionPrivate();
         this._workbenchServices = new PrivateWorkbenchServices(this);
-        this._workbenchSettings = new WorkbenchSettings();
+        this._workbenchSettings = new PrivateWorkbenchSettings();
         this._broadcaster = new Broadcaster();
         this._subscribersMap = {};
         this._layout = [];
@@ -95,6 +96,10 @@ export class Workbench {
     }
 
     getWorkbenchSettings(): WorkbenchSettings {
+        return this._workbenchSettings;
+    }
+
+    getPrivateWorkbenchSettings(): PrivateWorkbenchSettings {
         return this._workbenchSettings;
     }
 
