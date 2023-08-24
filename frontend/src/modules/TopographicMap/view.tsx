@@ -7,8 +7,6 @@ import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
 import { Wellbore } from "@framework/Wellbore";
 import { Button } from "@lib/components/Button";
 import { CircularProgress } from "@lib/components/CircularProgress";
-import SubsurfaceViewer from "@webviz/subsurface-viewer";
-import { ViewStateType } from "@webviz/subsurface-viewer/dist/components/Map";
 import { ViewAnnotation } from "@webviz/subsurface-viewer/dist/components/ViewAnnotation";
 
 import {
@@ -26,6 +24,7 @@ import {
     createWellBoreHeaderLayer,
     createWellboreTrajectoryLayer,
 } from "./_utils";
+import { SyncedSubsurfaceViewer } from "./components/SyncedSubsurfaceViewer";
 import { state } from "./state";
 
 const JsonParseWithUndefined = (arrString: string): number[] => {
@@ -163,14 +162,6 @@ export function view({ moduleContext, workbenchServices }: ModuleFCProps<state>)
         newLayers.push(wellBoreHeaderLayer);
     }
 
-    function onCameraChange(viewport: ViewStateType) {
-        syncHelper.publishValue(SyncSettingKey.CAMERA_POSITION_MAP, "global.syncValue.cameraPositionMap", {
-            target: viewport.target,
-            zoom: viewport.zoom as number,
-            rotationX: viewport.rotationX,
-            rotationOrbit: viewport.rotationOrbit,
-        });
-    }
     function onMouseEvent(event: any) {
         const clickedUWIs: Wellbore[] = [];
         if (event.type === "click") {
@@ -198,8 +189,7 @@ export function view({ moduleContext, workbenchServices }: ModuleFCProps<state>)
             }
         }
     }
-    const cameraPosition3D =
-        syncHelper.useValue(SyncSettingKey.CAMERA_POSITION_MAP, "global.syncValue.cameraPositionMap") || undefined;
+
     const isLoading =
         meshSurfDataQuery.isFetching ||
         propertySurfDataQuery.isFetching ||
@@ -232,7 +222,9 @@ export function view({ moduleContext, workbenchServices }: ModuleFCProps<state>)
             </div>
             <div className="z-1">
                 {show3D ? (
-                    <SubsurfaceViewer
+                    <SyncedSubsurfaceViewer
+                        moduleContext={moduleContext}
+                        workbenchServices={workbenchServices}
                         id={viewIds.view3D}
                         bounds={viewportBounds}
                         layers={newLayers}
@@ -249,8 +241,6 @@ export function view({ moduleContext, workbenchServices }: ModuleFCProps<state>)
                                 },
                             ],
                         }}
-                        getCameraPosition={onCameraChange}
-                        cameraPosition={cameraPosition3D}
                         onMouseEvent={onMouseEvent}
                     >
                         <ViewAnnotation id={viewIds.annotation3D}>
@@ -260,9 +250,11 @@ export function view({ moduleContext, workbenchServices }: ModuleFCProps<state>)
                                 cssLegendStyles={{ bottom: "0", right: "0" }}
                             />
                         </ViewAnnotation>
-                    </SubsurfaceViewer>
+                    </SyncedSubsurfaceViewer>
                 ) : (
-                    <SubsurfaceViewer
+                    <SyncedSubsurfaceViewer
+                        moduleContext={moduleContext}
+                        workbenchServices={workbenchServices}
                         id={viewIds.view2D}
                         bounds={viewportBounds}
                         layers={newLayers}
@@ -288,7 +280,7 @@ export function view({ moduleContext, workbenchServices }: ModuleFCProps<state>)
                                 cssLegendStyles={{ bottom: "0", right: "0" }}
                             />
                         </ViewAnnotation>
-                    </SubsurfaceViewer>
+                    </SyncedSubsurfaceViewer>
                 )}
             </div>
         </div>
