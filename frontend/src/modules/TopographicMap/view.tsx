@@ -27,7 +27,7 @@ import {
 import { SyncedSubsurfaceViewer } from "./components/SyncedSubsurfaceViewer";
 import { state } from "./state";
 
-const JsonParseWithUndefined = (arrString: string): number[] => {
+const jsonParseWithUndefined = (arrString: string): number[] => {
     const arr = JSON.parse(arrString);
     return arr.map((value: number) => (value === null ? undefined : value));
 };
@@ -77,7 +77,7 @@ export function view({ moduleContext, workbenchServices }: ModuleFCProps<state>)
     const surfaceSettings = moduleContext.useStoreValue("surfaceSettings");
     const viewSettings = moduleContext.useStoreValue("viewSettings");
     const [resetBounds, toggleResetBounds] = React.useState<boolean>(false);
-    const [axesLayer, setAxesLayer] = React.useState<Record<string, unknown> | undefined>(undefined);
+    const [axesLayer, setAxesLayer] = React.useState<Record<string, unknown> | null>(null);
     const [viewportBounds, setviewPortBounds] = React.useState<[number, number, number, number] | undefined>(undefined);
     const syncedSettingKeys = moduleContext.useSyncedSettingKeys();
     const syncHelper = new SyncSettingsHelper(syncedSettingKeys, workbenchServices);
@@ -94,11 +94,11 @@ export function view({ moduleContext, workbenchServices }: ModuleFCProps<state>)
 
     const newLayers: Record<string, unknown>[] = [createNorthArrowLayer()];
 
-    let colorRange: [number, number] | undefined = undefined;
+    let colorRange: [number, number] | null = null;
 
     // Mesh data query should only trigger update if the property surface address is not set or if the property surface data is loaded
     if (meshSurfDataQuery.data && !propertySurfAddr) {
-        const newMeshData = JsonParseWithUndefined(meshSurfDataQuery.data.mesh_data);
+        const newMeshData = jsonParseWithUndefined(meshSurfDataQuery.data.mesh_data);
 
         const newSurfaceMetaData: SurfaceMeta = { ...meshSurfDataQuery.data };
         const surfaceLayer: Record<string, unknown> = createSurfaceMeshLayer(
@@ -109,8 +109,8 @@ export function view({ moduleContext, workbenchServices }: ModuleFCProps<state>)
         newLayers.push(surfaceLayer);
         colorRange = [meshSurfDataQuery.data.val_min, meshSurfDataQuery.data.val_max];
     } else if (meshSurfDataQuery.data && propertySurfDataQuery.data) {
-        const newMeshData = JsonParseWithUndefined(meshSurfDataQuery.data.mesh_data);
-        const newPropertyData = JsonParseWithUndefined(propertySurfDataQuery.data.mesh_data);
+        const newMeshData = jsonParseWithUndefined(meshSurfDataQuery.data.mesh_data);
+        const newPropertyData = jsonParseWithUndefined(propertySurfDataQuery.data.mesh_data);
 
         const newSurfaceMetaData: SurfaceMeta = { ...meshSurfDataQuery.data };
         const surfaceLayer: Record<string, unknown> = createSurfaceMeshLayer(

@@ -53,8 +53,8 @@ export function createAxesLayer(
 export function createSurfaceMeshLayer(
     surfaceMeta: SurfaceMeta,
     mesh_data: number[],
-    surfaceSettings?: SurfaceMeshLayerSettings,
-    property_data?: number[]
+    surfaceSettings?: SurfaceMeshLayerSettings | null,
+    property_data?: number[] | null
 ): Record<string, unknown> {
     surfaceSettings = surfaceSettings || defaultSurfaceSettings;
     return {

@@ -7,6 +7,6 @@ export interface state {
     propertySurfaceAddress: SurfAddr | null;
     polygonsAddress: SurfacePolygonsAddress | null;
     selectedWellUuids: string[];
-    surfaceSettings: SurfaceMeshLayerSettings | undefined;
-    viewSettings: ViewSettings | undefined;
+    surfaceSettings: SurfaceMeshLayerSettings | null;
+    viewSettings: ViewSettings | null;
 }
