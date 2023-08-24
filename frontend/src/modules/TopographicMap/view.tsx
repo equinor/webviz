@@ -7,6 +7,7 @@ import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
 import { Wellbore } from "@framework/Wellbore";
 import { Button } from "@lib/components/Button";
 import { CircularProgress } from "@lib/components/CircularProgress";
+import { ColorScaleGradientType } from "@lib/utils/ColorScale";
 import { ViewAnnotation } from "@webviz/subsurface-viewer/dist/components/ViewAnnotation";
 
 import {
@@ -17,6 +18,7 @@ import {
 } from "././queryHooks";
 import {
     SurfaceMeta,
+    colorScaleToSubsurfaceMapColorScale,
     createAxesLayer,
     createNorthArrowLayer,
     createSurfaceMeshLayer,
@@ -60,7 +62,7 @@ const updateViewPortBounds = (
     return existingViewPortBounds;
 };
 //-----------------------------------------------------------------------------------------------------------
-export function view({ moduleContext, workbenchServices }: ModuleFCProps<state>) {
+export function view({ moduleContext, workbenchServices, workbenchSettings }: ModuleFCProps<state>) {
     const myInstanceIdStr = moduleContext.getInstanceIdString();
     console.debug(`${myInstanceIdStr} -- render TopographicMap view`);
     const viewIds = {
@@ -95,6 +97,10 @@ export function view({ moduleContext, workbenchServices }: ModuleFCProps<state>)
     const newLayers: Record<string, unknown>[] = [createNorthArrowLayer()];
 
     let colorRange: [number, number] | null = null;
+    const surfaceColorScale = workbenchSettings.useContinuousColorScale({
+        gradientType: ColorScaleGradientType.Sequential,
+    });
+    const colorTables = colorScaleToSubsurfaceMapColorScale(surfaceColorScale);
 
     // Mesh data query should only trigger update if the property surface address is not set or if the property surface data is loaded
     if (meshSurfDataQuery.data && !propertySurfAddr) {
@@ -227,6 +233,7 @@ export function view({ moduleContext, workbenchServices }: ModuleFCProps<state>)
                         workbenchServices={workbenchServices}
                         id={viewIds.view3D}
                         bounds={viewportBounds}
+                        colorTables={colorTables}
                         layers={newLayers}
                         toolbar={{ visible: true }}
                         views={{
@@ -245,6 +252,8 @@ export function view({ moduleContext, workbenchServices }: ModuleFCProps<state>)
                     >
                         <ViewAnnotation id={viewIds.annotation3D}>
                             <ContinuousLegend
+                                colorTables={colorTables}
+                                colorName="Continuous"
                                 min={colorRange ? colorRange[0] : undefined}
                                 max={colorRange ? colorRange[1] : undefined}
                                 cssLegendStyles={{ bottom: "0", right: "0" }}
@@ -257,6 +266,7 @@ export function view({ moduleContext, workbenchServices }: ModuleFCProps<state>)
                         workbenchServices={workbenchServices}
                         id={viewIds.view2D}
                         bounds={viewportBounds}
+                        colorTables={colorTables}
                         layers={newLayers}
                         toolbar={{ visible: true }}
                         views={{
@@ -275,6 +285,8 @@ export function view({ moduleContext, workbenchServices }: ModuleFCProps<state>)
                     >
                         <ViewAnnotation id={viewIds.annotation2D}>
                             <ContinuousLegend
+                                colorTables={colorTables}
+                                colorName="Continuous"
                                 min={colorRange ? colorRange[0] : undefined}
                                 max={colorRange ? colorRange[1] : undefined}
                                 cssLegendStyles={{ bottom: "0", right: "0" }}

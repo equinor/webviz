@@ -1,6 +1,7 @@
 from typing import List, Optional
 
 from ..types import WellBorePick, WellBoreTrajectory, WellBoreHeader
+from .picks import picks
 
 
 class WellAccess:
@@ -9,9 +10,14 @@ class WellAccess:
 
     # type: ignore
     # pylint: disable=unused-argument
-    def get_wellbore_picks(self, field_identifier: str, pick_identifier: str) -> List[WellBorePick]:
+    def get_wellbore_picks_for_wellbore(self, wellbore_uuid: str, obs_no: int = None) -> List[WellBorePick]:
         """Get Drogon picks"""
-        return []
+        well_picks = []
+        if wellbore_uuid == "drogon_horizontal":
+            well_picks = [pick for pick in picks if pick["unique_wellbore_identifier"] == "55/33-A-4"]
+        elif wellbore_uuid == "drogon_vertical":
+            well_picks = [pick for pick in picks if pick["unique_wellbore_identifier"] == "55/33-1"]
+        return well_picks
 
     # type: ignore
     # pylint: disable=unused-argument

@@ -1,1 +1,2 @@
 from ._mocked_well_access import WellAccess
+from ._mocked_stratigraphy_access import StratigraphyAccess

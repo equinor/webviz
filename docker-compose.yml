@@ -31,6 +31,7 @@ services:
       - WEBVIZ_SMDA_RESOURCE_SCOPE
       - WEBVIZ_SMDA_SUBSCRIPTION_KEY
       - WEBVIZ_SUMO_ENV
+      - VDS_HOST_ADDRESS
     volumes:
       - ./backend/src:/home/appuser/backend/src
 
@@ -48,6 +49,7 @@ services:
       - WEBVIZ_SMDA_RESOURCE_SCOPE
       - WEBVIZ_SMDA_SUBSCRIPTION_KEY
       - WEBVIZ_SUMO_ENV
+      - VDS_HOST_ADDRESS
     volumes:
       - ./backend/src:/home/appuser/backend/src
 

@@ -1,7 +1,9 @@
 from fastapi import APIRouter, Depends
 from starlette.requests import Request
 from typing import Any, List
-
+import orjson as json
+import numpy as np
+import xtgeo
 from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from src.services.utils.authenticated_user import AuthenticatedUser
 from src.backend.auth.auth_helper import AuthHelper
@@ -9,6 +11,7 @@ from src.backend.primary.user_session_proxy import proxy_to_user_session
 
 from src.services.sumo_access.grid_access import GridAccess
 from .schemas import GridSurface, B64EncodedNumpyArray, GridIntersection
+
 
 router = APIRouter()
 

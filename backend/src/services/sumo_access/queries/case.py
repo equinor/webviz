@@ -11,6 +11,7 @@ def get_stratigraphic_column_identifier(sumo_client: SumoClient, case_id: str) -
         size=1,
         select="masterdata.smda.stratigraphic_column.identifier",
     )["hits"]["hits"]
+    print(hits[0]["_source"]["masterdata"]["smda"]["stratigraphic_column"])
     return hits[0]["_source"]["masterdata"]["smda"]["stratigraphic_column"]["identifier"]
 
 

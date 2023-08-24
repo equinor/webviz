@@ -2,6 +2,7 @@
 /* tslint:disable */
 /* eslint-disable */
 import type { WellBoreHeader } from '../models/WellBoreHeader';
+import type { WellBorePicksAndStratUnits } from '../models/WellBorePicksAndStratUnits';
 import type { WellBoreTrajectory } from '../models/WellBoreTrajectory';
 
 import type { CancelablePromise } from '../core/CancelablePromise';
@@ -73,6 +74,31 @@ export class WellService {
             url: '/well/well_trajectories/',
             query: {
                 'wellbore_uuids': wellboreUuids,
+            },
+            errors: {
+                422: `Validation Error`,
+            },
+        });
+    }
+
+    /**
+     * Get Wellbore Picks For Wellbore
+     * Get well bore picks for a single well bore
+     * @param caseUuid Sumo case uuid
+     * @param wellboreUuid Wellbore uuid
+     * @returns WellBorePicksAndStratUnits Successful Response
+     * @throws ApiError
+     */
+    public getWellborePicksForWellbore(
+        caseUuid: string,
+        wellboreUuid: string,
+    ): CancelablePromise<WellBorePicksAndStratUnits> {
+        return this.httpRequest.request({
+            method: 'GET',
+            url: '/well/wellbore_picks_for_wellbore/',
+            query: {
+                'case_uuid': caseUuid,
+                'wellbore_uuid': wellboreUuid,
             },
             errors: {
                 422: `Validation Error`,

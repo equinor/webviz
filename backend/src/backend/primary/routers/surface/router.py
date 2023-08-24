@@ -1,9 +1,12 @@
 import logging
 from typing import List
-
-from fastapi import APIRouter, Depends, HTTPException, Query
+import numpy as np
+from fastapi import APIRouter, Depends, HTTPException, Query, Body
+import json
 
 from src.services.sumo_access.surface_access import SurfaceAccess
+from src.services.sumo_access.iteration_inspector import IterationInspector
+from src.services.sumo_access.case_inspector import CaseInspector
 from src.services.utils.statistic_function import StatisticFunction
 from src.services.utils.authenticated_user import AuthenticatedUser
 from src.services.utils.perf_timer import PerfTimer
@@ -12,6 +15,7 @@ from src.services.sumo_access.generic_types import SumoContent
 
 from . import converters
 from . import schemas
+from src.services.sumo_access.generic_types import SumoContent
 
 LOGGER = logging.getLogger(__name__)
 

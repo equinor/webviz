@@ -6,6 +6,7 @@ from fastapi.routing import APIRoute
 from fastapi.responses import ORJSONResponse
 from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
 
+
 from src.backend.shared_middleware import add_shared_middlewares
 from src.backend.auth.auth_helper import AuthHelper
 from .routers.explore import router as explore_router
@@ -20,6 +21,8 @@ from .routers.pvt.router import router as pvt_router
 from .routers.well_completion.router import router as well_completion_router
 from .routers.well.router import router as well_router
 from .routers.surface_polygons.router import router as surface_polygons_router
+from .routers.seismic.router import router as seismic_router
+from .routers.intersection.router import router as intersection_router
 
 logging.basicConfig(
     level=logging.WARNING,
@@ -56,6 +59,8 @@ app.include_router(pvt_router, prefix="/pvt", tags=["pvt"])
 app.include_router(well_completion_router, prefix="/well_completion", tags=["well_completion"])
 app.include_router(well_router, prefix="/well", tags=["well"])
 app.include_router(surface_polygons_router, prefix="/surface_polygons", tags=["surface_polygons"])
+app.include_router(seismic_router, prefix="/seismic", tags=["seismic"])
+app.include_router(intersection_router, prefix="/intersection", tags=["intersection"])
 
 authHelper = AuthHelper()
 app.include_router(authHelper.router)

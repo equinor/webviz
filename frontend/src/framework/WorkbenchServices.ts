@@ -3,6 +3,7 @@ import React from "react";
 import { isEqual } from "lodash";
 
 import { Broadcaster } from "./Broadcaster";
+import { CameraPosition } from "./CameraPosition";
 import { EnsembleIdent } from "./EnsembleIdent";
 import { Wellbore } from "./Wellbore";
 import { Workbench } from "./Workbench";
@@ -20,12 +21,7 @@ export type GlobalTopicDefinitions = {
     "global.syncValue.date": { timeOrInterval: string };
     "global.syncValue.timeSeries": { vectorName: string };
     "global.syncValue.surface": { name: string; attribute: string };
-    "global.syncValue.cameraPositionMap": {
-        target: number[];
-        zoom: number;
-        rotationX: number;
-        rotationOrbit: number;
-    };
+    "global.syncValue.cameraPositionMap": CameraPosition;
     "global.syncValue.wellBore": Wellbore;
 };
 

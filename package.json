@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "@equinor/esv-intersection": "^3.0.10"
+  }
+}
