@@ -19,7 +19,7 @@ def get_field_wellbore_trajectories(
         "field_identifier": field_identifier,
     }
     if unique_wellbore_identifiers:
-        params["unique_wellbore_identifier"] = ", ".join(unique_wellbore_identifiers)
+        params["unique_wellbore_identifiers"] = ", ".join(unique_wellbore_identifiers)
     timer = PerfTimer()
     result = get(access_token=access_token, endpoint=endpoint, params=params)
     print(f"TIME SMDA fetch wellbore trajectories took {timer.lap_s():.2f} seconds")
