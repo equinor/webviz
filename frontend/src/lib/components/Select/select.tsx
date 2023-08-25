@@ -20,6 +20,7 @@ export type SelectProps = {
     options: SelectOption[];
     value?: string[];
     onChange?: (values: string[]) => void;
+    placeholder?: string;
     filter?: boolean;
     size?: number;
     multiple?: boolean;
@@ -34,7 +35,6 @@ const defaultProps = {
 };
 
 const noMatchingOptionsText = "No matching options";
-const noOptionsText = "No options";
 
 export const Select = withDefaults<SelectProps>()(defaultProps, (props) => {
     const [filter, setFilter] = React.useState<string>("");
@@ -47,7 +47,7 @@ export const Select = withDefaults<SelectProps>()(defaultProps, (props) => {
     const [minWidth, setMinWidth] = React.useState<number>(0);
 
     const ref = React.useRef<HTMLDivElement>(null);
-
+    const noOptionsText = props.placeholder ?? "No options";
     const filteredOptions = React.useMemo(() => {
         if (!props.filter) {
             return props.options;
@@ -72,7 +72,7 @@ export const Select = withDefaults<SelectProps>()(defaultProps, (props) => {
             }
         }
         setMinWidth(longestOptionWidth + 40);
-    }, [props.options, filter]);
+    }, [props.options, noOptionsText, filter]);
 
     const toggleValue = React.useCallback(
         (option: SelectOption, index: number) => {
