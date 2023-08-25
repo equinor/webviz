@@ -12,6 +12,7 @@ import "./Sensitivity/registerModule";
 import "./SimulationTimeSeries/registerModule";
 import "./SimulationTimeSeriesSensitivity/registerModule";
 import "./TimeSeriesParameterDistribution/registerModule";
+import "./TopographicMap/registerModule";
 
 if (isDevMode()) {
     await import("./MyModule/registerModule");

@@ -20,6 +20,11 @@ class Frequency(Enum):
             return None
 
 
+class VectorInfo(BaseModel):
+    name: str
+    has_historical: bool
+
+
 class VectorMetadata(BaseModel):
     unit: str
     is_rate: bool
