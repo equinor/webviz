@@ -12,6 +12,7 @@ import { WorkbenchServices } from "./WorkbenchServices";
 import { WorkbenchSession } from "./WorkbenchSession";
 import { loadEnsembleSetMetadataFromBackend } from "./internal/EnsembleSetLoader";
 import { PrivateWorkbenchServices } from "./internal/PrivateWorkbenchServices";
+import { PrivateWorkbenchSettings } from "./internal/PrivateWorkbenchSettings";
 import { WorkbenchSessionPrivate } from "./internal/WorkbenchSessionPrivate";
 
 export enum WorkbenchEvents {
@@ -25,6 +26,7 @@ export enum DrawerContent {
     ModulesList = "ModulesList",
     TemplatesList = "TemplatesList",
     SyncSettings = "SyncSettings",
+    ColorPaletteSettings = "ColorPaletteSettings",
 }
 
 export type LayoutElement = {
@@ -47,6 +49,7 @@ export class Workbench {
     private _guiStateStore: StateStore<WorkbenchGuiState>;
     private _workbenchSession: WorkbenchSessionPrivate;
     private _workbenchServices: PrivateWorkbenchServices;
+    private _workbenchSettings: PrivateWorkbenchSettings;
     private _broadcaster: Broadcaster;
     private _subscribersMap: { [key: string]: Set<() => void> };
     private _layout: LayoutElement[];
@@ -60,6 +63,7 @@ export class Workbench {
         });
         this._workbenchSession = new WorkbenchSessionPrivate();
         this._workbenchServices = new PrivateWorkbenchServices(this);
+        this._workbenchSettings = new PrivateWorkbenchSettings();
         this._broadcaster = new Broadcaster();
         this._subscribersMap = {};
         this._layout = [];
@@ -88,6 +92,10 @@ export class Workbench {
 
     getWorkbenchServices(): WorkbenchServices {
         return this._workbenchServices;
+    }
+
+    getWorkbenchSettings(): PrivateWorkbenchSettings {
+        return this._workbenchSettings;
     }
 
     getBroadcaster(): Broadcaster {
