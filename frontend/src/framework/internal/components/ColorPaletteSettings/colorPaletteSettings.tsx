@@ -175,17 +175,17 @@ export type ColorPaletteSettingsProps = {
 };
 
 export const ColorPaletteSettings: React.FC<ColorPaletteSettingsProps> = (props) => {
-    const colorPalettes = props.workbench.getPrivateWorkbenchSettings().getColorPalettes();
+    const colorPalettes = props.workbench.getWorkbenchSettings().getColorPalettes();
     const drawerContent = useStoreValue(props.workbench.getGuiStateStore(), "drawerContent");
     const [selectedColorPaletteIds, setSelectedColorPaletteIds] = React.useState<Record<ColorPaletteType, string>>(
-        props.workbench.getPrivateWorkbenchSettings().getSelectedColorPaletteIds()
+        props.workbench.getWorkbenchSettings().getSelectedColorPaletteIds()
     );
     const [steps, setSteps] = React.useState<Record<ColorScaleDiscreteSteps, number>>(
-        props.workbench.getPrivateWorkbenchSettings().getSteps()
+        props.workbench.getWorkbenchSettings().getSteps()
     );
 
     function handleColorPaletteSelected(colorPalette: ColorPalette, type: ColorPaletteType) {
-        props.workbench.getPrivateWorkbenchSettings().setSelectedColorPaletteId(type, colorPalette.getId());
+        props.workbench.getWorkbenchSettings().setSelectedColorPaletteId(type, colorPalette.getId());
         setSelectedColorPaletteIds({
             ...selectedColorPaletteIds,
             [type]: colorPalette.getId(),
@@ -193,7 +193,7 @@ export const ColorPaletteSettings: React.FC<ColorPaletteSettingsProps> = (props)
     }
 
     function handleColorPaletteStepsChanged(newSteps: number, type: ColorScaleDiscreteSteps) {
-        props.workbench.getPrivateWorkbenchSettings().setStepsForType(type, newSteps);
+        props.workbench.getWorkbenchSettings().setStepsForType(type, newSteps);
         setSteps({
             ...steps,
             [type]: newSteps,

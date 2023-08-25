@@ -10,7 +10,6 @@ import { StateStore } from "./StateStore";
 import { Template } from "./TemplateRegistry";
 import { WorkbenchServices } from "./WorkbenchServices";
 import { WorkbenchSession } from "./WorkbenchSession";
-import { WorkbenchSettings } from "./WorkbenchSettings";
 import { loadEnsembleSetMetadataFromBackend } from "./internal/EnsembleSetLoader";
 import { PrivateWorkbenchServices } from "./internal/PrivateWorkbenchServices";
 import { PrivateWorkbenchSettings } from "./internal/PrivateWorkbenchSettings";
@@ -95,11 +94,7 @@ export class Workbench {
         return this._workbenchServices;
     }
 
-    getWorkbenchSettings(): WorkbenchSettings {
-        return this._workbenchSettings;
-    }
-
-    getPrivateWorkbenchSettings(): PrivateWorkbenchSettings {
+    getWorkbenchSettings(): PrivateWorkbenchSettings {
         return this._workbenchSettings;
     }
 
