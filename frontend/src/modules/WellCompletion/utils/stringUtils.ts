@@ -15,7 +15,7 @@ const ESCAPE_CHAR = "+";
  */
 const SPECIAL_ESCAPE = "\\.)]";
 
-export const getRegexPredicate = (pattern: string): ((item: string) => boolean) => {
+export function getRegexPredicate(pattern: string): (item: string) => boolean {
     const processed: string[] = [];
     for (let index = 0; index < pattern.length; index++) {
         const character = pattern.charAt(index);
@@ -42,6 +42,6 @@ export const getRegexPredicate = (pattern: string): ((item: string) => boolean) 
 
     return (item: string): boolean => {
         if (pattern.length === 0) return true;
-        return rgx ? rgx.test(item.toLowerCase()) : false;
+        return rgx?.test(item.toLowerCase()) ?? false;
     };
-};
+}

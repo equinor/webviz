@@ -6,8 +6,8 @@ export type Completions = {
     't': Array<number>;
     open: Array<number>;
     shut: Array<number>;
-    khMean: Array<number>;
-    khMin: Array<number>;
-    khMax: Array<number>;
+    kh_mean: Array<number>;
+    kh_min: Array<number>;
+    kh_max: Array<number>;
 };
 

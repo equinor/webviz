@@ -1,5 +1,3 @@
-import React from "react";
-
 import { ModuleFCProps } from "@framework/Module";
 import { WellCompletionsPlot } from "@webviz/well-completions-plot";
 

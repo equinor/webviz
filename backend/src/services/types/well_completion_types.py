@@ -9,9 +9,9 @@ class Completions(BaseModel):
     t: List[int]
     open: List[float]
     shut: List[float]
-    khMean: List[float]
-    khMin: List[float]
-    khMax: List[float]
+    kh_mean: List[float]
+    kh_min: List[float]
+    kh_max: List[float]
 
 
 class WellCompletionWellInfo(BaseModel):

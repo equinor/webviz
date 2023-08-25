@@ -7,17 +7,22 @@ import {
 } from "@api";
 import { CompletionPlotData, PlotData, WellPlotData } from "@webviz/well-completions-plot";
 
-import { getRegexPredicate } from "./utils/stringUtils";
+import { getRegexPredicate } from "./stringUtils";
 
 /**
  * Util methods for providing data result based on selected time aggregation
  */
-export const TimeAggregations = {
-    None: (arr: number[]): number => arr[arr.length - 1],
-    Max: (arr: number[]): number => Math.max(...arr),
-    Average: (arr: number[]): number => arr.reduce((a, b) => a + b) / arr.length,
+export enum TimeAggregationType {
+    None = "None",
+    Max = "Max",
+    Average = "Average",
+}
+
+export const TimeAggregationTypeFunction = {
+    [TimeAggregationType.None]: (arr: number[]): number => arr[arr.length - 1],
+    [TimeAggregationType.Max]: (arr: number[]): number => Math.max(...arr),
+    [TimeAggregationType.Average]: (arr: number[]): number => arr.reduce((a, b) => a + b) / arr.length,
 };
-export type TimeAggregation = keyof typeof TimeAggregations;
 
 export class WellCompletionsDataAccessor {
     /**
@@ -29,18 +34,26 @@ export class WellCompletionsDataAccessor {
      * The data is parsed from the WellCompletionData_api object and methods are taken from the
      * WellCompletions-component of webviz-subsurface-components package, and modified to fit.
      */
-    private _dataSet: WellCompletionDataSet_api | undefined;
+    private _dataSet: WellCompletionDataSet_api | null;
     private _subzones: WellCompletionZone_api[];
     private _wells: WellCompletionWell_api[];
     private _searchWellText: string;
     private _hideZeroCompletions: boolean;
 
     constructor() {
-        this._dataSet = undefined;
+        this._dataSet = null;
         this._subzones = [];
         this._wells = [];
         this._searchWellText = "";
         this._hideZeroCompletions = false;
+    }
+
+    clearWellCompletionsData(): void {
+        // Do not clear search text and hide zero completions
+
+        this._dataSet = null;
+        this._subzones = [];
+        this._wells = [];
     }
 
     parseWellCompletionsData(data: WellCompletionData_api): void {
@@ -56,12 +69,6 @@ export class WellCompletionsDataAccessor {
         this._dataSet.stratigraphy.forEach((zone) => this.findSubzones(zone, this._subzones));
     }
 
-    setNumberOfWellsToShow(numberOfWellsToShow: number): void {
-        // TODO: Add functionality for pagination or similar to control number of wells to include in plotData.
-        void numberOfWellsToShow;
-        return;
-    }
-
     setSearchWellText(searchWell: string): void {
         this._searchWellText = searchWell;
     }
@@ -71,18 +78,21 @@ export class WellCompletionsDataAccessor {
     }
 
     getTimeSteps(): string[] {
-        if (this._dataSet === undefined) return [];
+        if (!this._dataSet) return [];
         return this._dataSet.timeSteps;
     }
 
-    createPlotData(timeStepSelection: string | [string, string], timeAggregation: TimeAggregation): PlotData | null {
+    createPlotData(
+        timeStepSelection: string | [string, string],
+        timeAggregation: TimeAggregationType
+    ): PlotData | null {
         // TODO: Consider removing function arguments, and use setter-methods for each argument and set to an attribute.
         //       This would make it easier to modify/adjust single attributes and call "createPlotData" again.
         if (!this._dataSet) return null;
 
         let timeStepIndexRange: [number, number] | null = null;
         if (typeof timeStepSelection === "string") {
-            const timeStepIndex = this._dataSet ? this._dataSet.timeSteps.indexOf(timeStepSelection) : 0;
+            const timeStepIndex = this._dataSet.timeSteps.indexOf(timeStepSelection);
             timeStepIndexRange = [timeStepIndex, timeStepIndex];
         } else {
             timeStepIndexRange = [
@@ -90,7 +100,7 @@ export class WellCompletionsDataAccessor {
                 this._dataSet.timeSteps.indexOf(timeStepSelection[1]),
             ];
         }
-        if (!timeStepIndexRange) return null;
+        if (timeStepIndexRange[0] === -1 || timeStepIndexRange[1] === -1) return null;
 
         // Filter wells based on search text
         // TODO: Add filtering of attributes as well
@@ -113,7 +123,6 @@ export class WellCompletionsDataAccessor {
         well: WellCompletionWell_api,
         subzones: WellCompletionZone_api[]
     ): number {
-        //The earliest completion date for the given well
         let earliestCompDateIndex = Number.POSITIVE_INFINITY;
         subzones.forEach((zone) => {
             if (zone.name in well.completions) {
@@ -127,20 +136,11 @@ export class WellCompletionsDataAccessor {
         return earliestCompDateIndex;
     }
 
-    /**
-     * Util method to prepare stratigraphy and well data from the given time step range and other settings for plotting
-     * @param subzones
-     * @param wells
-     * @param range
-     * @param timeAggregation
-     * @param hideZeroCompletions
-     * @returns
-     */
     private computePlotData(
         subzones: WellCompletionZone_api[],
         wells: WellCompletionWell_api[],
         range: [number, number],
-        timeAggregation: TimeAggregation,
+        timeAggregation: TimeAggregationType,
         hideZeroCompletions: boolean,
         units: WellCompletionUnits_api
     ): PlotData {
@@ -170,9 +170,9 @@ export class WellCompletionsDataAccessor {
                         while (timeStep >= completion.t[index]) {
                             currentOpenValue = completion.open[index];
                             currentShutValue = completion.shut[index];
-                            currentkhMeanValue = completion.khMean[index];
-                            currentkhMinValue = completion.khMin[index];
-                            currentkhMaxValue = completion.khMax[index];
+                            currentkhMeanValue = completion.kh_mean[index];
+                            currentkhMinValue = completion.kh_min[index];
+                            currentkhMaxValue = completion.kh_max[index];
                             index++;
                         }
                         openValues[rangeI] = currentOpenValue;
@@ -182,7 +182,7 @@ export class WellCompletionsDataAccessor {
                         khMaxValues[rangeI] = currentkhMaxValue;
                     }
                 }
-                const dFunction = TimeAggregations[timeAggregation];
+                const dFunction = TimeAggregationTypeFunction[timeAggregation];
                 const newCompletion = {
                     zoneIndex,
                     open: dFunction(openValues),
@@ -221,14 +221,8 @@ export class WellCompletionsDataAccessor {
         completion1.khMin === completion2.khMin &&
         completion1.khMax === completion2.khMax;
 
-    /**
-     * Depth-first search to find all leaf nodes
-     * @param zone
-     *
-     * @param result
-     * @returns
-     */
     private findSubzones = (zone: WellCompletionZone_api, result: WellCompletionZone_api[]): void => {
+        // Depth-first search to find all leaf nodes
         if (zone === undefined) return;
         if (!zone.subzones || zone.subzones.length === 0) result.push(zone);
         else zone.subzones.forEach((zoneName) => this.findSubzones(zoneName, result));

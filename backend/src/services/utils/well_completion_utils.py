@@ -3,7 +3,7 @@ from typing import Dict, Iterator, List, Optional, Tuple
 
 import pandas as pd
 
-from src.services.types.well_completions_types import (
+from src.services.types.well_completion_types import (
     Completions,
     WellCompletionAttributeType,
     WellCompletionWell,
@@ -62,8 +62,8 @@ class WellCompletionDataModel:
             ),
         ]
 
-    def create_well_completions_dataset(self) -> WellCompletionDataSet:
-        """Creates well completions dataset for front-end"""
+    def create_well_completion_dataset(self) -> WellCompletionDataSet:
+        """Creates well completion dataset for front-end"""
 
         return WellCompletionDataSet(
             version="1.1.0",
@@ -74,7 +74,7 @@ class WellCompletionDataModel:
         )
 
     def _extract_wells(self) -> List[WellCompletionWell]:
-        """Generates the wells part of the input to the WellCompletions component."""
+        """Generates the wells part of the dataset to front-end"""
         well_list = []
         no_real = self._well_completion_df["REAL"].nunique()
         for well_name, well_group in self._well_completion_df.groupby("WELL"):
@@ -91,15 +91,15 @@ class WellCompletionDataModel:
         for (zone, timestep), group_df in well_group.groupby(["ZONE", "TIMESTEP"]):
             data = group_df["OP/SH"].value_counts()
             if zone not in completions:
-                completions[zone] = Completions(t=[], open=[], shut=[], khMean=[], khMin=[], khMax=[])
+                completions[zone] = Completions(t=[], open=[], shut=[], kh_mean=[], kh_min=[], kh_max=[])
 
             zone_completions = completions[zone]
             zone_completions.t.append(int(timestep))
             zone_completions.open.append(float(data["OPEN"] / no_real if "OPEN" in data else 0))
             zone_completions.shut.append(float(data["SHUT"] / no_real if "SHUT" in data else 0))
-            zone_completions.khMean.append(round(float(group_df["KH"].mean()), 2))
-            zone_completions.khMin.append(round(float(group_df["KH"].min()), 2))
-            zone_completions.khMax.append(round(float(group_df["KH"].max()), 2))
+            zone_completions.kh_mean.append(round(float(group_df["KH"].mean()), 2))
+            zone_completions.kh_min.append(round(float(group_df["KH"].min()), 2))
+            zone_completions.kh_max.append(round(float(group_df["KH"].max()), 2))
 
         well.completions = completions
         return well
@@ -107,7 +107,7 @@ class WellCompletionDataModel:
     def _extract_stratigraphy(
         self, stratigraphy: Optional[List[WellCompletionZone]], zones: List[str]
     ) -> List[WellCompletionZone]:
-        """Returns the stratigraphy part of the input to the WellCompletions component."""
+        """Returns the stratigraphy part of the dataset to front-end"""
         color_iterator = itertools.cycle(self._theme_colors)
 
         # If no stratigraphy file is found then the stratigraphy is
