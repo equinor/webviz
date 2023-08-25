@@ -1,6 +1,6 @@
 import React from "react";
 
-import { CaseInfo_api, EnsembleInfo_api, FieldInfo_api } from "@api";
+import { CaseInfo_api, EnsembleInfo_api } from "@api";
 import { apiService } from "@framework/ApiService";
 import { CheckIcon, PlusIcon, TrashIcon } from "@heroicons/react/20/solid";
 import { ApiStateWrapper } from "@lib/components/ApiStateWrapper";
@@ -11,6 +11,7 @@ import { Dropdown } from "@lib/components/Dropdown";
 import { IconButton } from "@lib/components/IconButton";
 import { Label } from "@lib/components/Label";
 import { Select } from "@lib/components/Select";
+import { useValidState } from "@lib/hooks/useValidState";
 import { useQuery } from "@tanstack/react-query";
 
 import { isEqual } from "lodash";
@@ -31,9 +32,6 @@ const CACHE_TIME = 5 * 60 * 1000;
 
 export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (props) => {
     const [confirmCancel, setConfirmCancel] = React.useState<boolean>(false);
-    const [selectedField, setSelectedField] = React.useState<string>("");
-    const [selectedCaseId, setSelectedCaseId] = React.useState<string>("");
-    const [selectedEnsembleName, setSelectedEnsembleName] = React.useState<string>("");
     const [newlySelectedEnsembles, setNewlySelectedEnsembles] = React.useState<EnsembleItem[]>([]);
 
     React.useLayoutEffect(() => {
@@ -47,35 +45,49 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
         },
     });
 
-    const computedFieldIdentifier = fixupFieldIdentifier(selectedField, fieldsQuery.data);
+    const [selectedField, setSelectedField] = useValidState<string>(
+        "",
+        [fieldsQuery.data ?? [], (item) => item.field_identifier],
+        true
+    );
 
     const casesQuery = useQuery({
-        queryKey: ["getCases", computedFieldIdentifier],
+        queryKey: ["getCases", selectedField],
         queryFn: () => {
-            if (!computedFieldIdentifier) {
+            if (!selectedField) {
                 return Promise.resolve<CaseInfo_api[]>([]);
             }
-            return apiService.explore.getCases(computedFieldIdentifier);
+            return apiService.explore.getCases(selectedField);
         },
         enabled: fieldsQuery.isSuccess,
         cacheTime: CACHE_TIME,
         staleTime: STALE_TIME,
     });
 
-    const computedCaseUuid = fixupCaseUuid(selectedCaseId, casesQuery.data);
+    const [selectedCaseId, setSelectedCaseId] = useValidState<string>(
+        "",
+        [casesQuery.data ?? [], (item) => item.uuid],
+        true
+    );
 
     const ensemblesQuery = useQuery({
-        queryKey: ["getEnsembles", computedCaseUuid],
+        queryKey: ["getEnsembles", selectedCaseId],
         queryFn: () => {
-            if (!computedCaseUuid) {
+            if (!selectedCaseId) {
                 return Promise.resolve<EnsembleInfo_api[]>([]);
             }
-            return apiService.explore.getEnsembles(computedCaseUuid);
+            return apiService.explore.getEnsembles(selectedCaseId);
         },
         enabled: casesQuery.isSuccess,
         cacheTime: CACHE_TIME,
         staleTime: STALE_TIME,
     });
+
+    const [selectedEnsembleName, setSelectedEnsembleName] = useValidState<string>(
+        "",
+        [ensemblesQuery.data ?? [], (el) => el.name],
+        true
+    );
 
     function handleFieldChanged(fieldIdentifier: string) {
         setSelectedField(fieldIdentifier);
@@ -89,13 +101,11 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
         setSelectedEnsembleName(ensembleNames[0]);
     }
 
-    const computedEnsembleName = fixupEnsembleName(selectedEnsembleName, ensemblesQuery.data);
-
     function checkIfEnsembleAlreadySelected(): boolean {
-        if (computedCaseUuid && computedEnsembleName) {
+        if (selectedCaseId && selectedEnsembleName) {
             if (
                 newlySelectedEnsembles.some(
-                    (e) => e.caseUuid === computedCaseUuid && e.ensembleName === computedEnsembleName
+                    (e) => e.caseUuid === selectedCaseId && e.ensembleName === selectedEnsembleName
                 )
             ) {
                 return true;
@@ -106,8 +116,8 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
 
     function handleAddEnsemble() {
         if (!checkIfEnsembleAlreadySelected()) {
-            const caseName = casesQuery.data?.find((c) => c.uuid === computedCaseUuid)?.name ?? "UNKNOWN";
-            const ensArr = [{ caseUuid: computedCaseUuid, caseName: caseName, ensembleName: computedEnsembleName }];
+            const caseName = casesQuery.data?.find((c) => c.uuid === selectedCaseId)?.name ?? "UNKNOWN";
+            const ensArr = [{ caseUuid: selectedCaseId, caseName: caseName, ensembleName: selectedEnsembleName }];
             setNewlySelectedEnsembles((prev) => [...prev, ...ensArr]);
         }
     }
@@ -135,6 +145,10 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
         props.onClose(newlySelectedEnsembles);
     }
 
+    function checkIfAnyChanges(): boolean {
+        return !isEqual(props.selectedEnsembles, newlySelectedEnsembles);
+    }
+
     const fieldOpts = fieldsQuery.data?.map((f) => ({ value: f.field_identifier, label: f.field_identifier })) ?? [];
     const caseOpts = casesQuery.data?.map((c) => ({ value: c.uuid, label: c.name })) ?? [];
     const ensembleOpts =
@@ -152,10 +166,12 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                 width={"75%"}
                 actions={
                     <div className="flex gap-4">
-                        <Button onClick={handleClose} color="danger">
+                        <Button onClick={handleClose} color="danger" disabled={!checkIfAnyChanges()}>
                             Discard changes
                         </Button>
-                        <Button onClick={handleApplyEnsembleSelection}>Apply changes</Button>
+                        <Button onClick={handleApplyEnsembleSelection} disabled={!checkIfAnyChanges()}>
+                            Apply changes
+                        </Button>
                     </div>
                 }
             >
@@ -169,7 +185,7 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                             >
                                 <Dropdown
                                     options={fieldOpts}
-                                    value={computedFieldIdentifier}
+                                    value={selectedField}
                                     onChange={handleFieldChanged}
                                     disabled={fieldOpts.length === 0}
                                 />
@@ -183,7 +199,7 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                             >
                                 <Select
                                     options={caseOpts}
-                                    value={[computedCaseUuid]}
+                                    value={[selectedCaseId]}
                                     onChange={handleCaseChanged}
                                     disabled={caseOpts.length === 0}
                                     size={5}
@@ -200,7 +216,7 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                             >
                                 <Select
                                     options={ensembleOpts}
-                                    value={[computedEnsembleName]}
+                                    value={[selectedEnsembleName]}
                                     onChange={handleEnsembleChanged}
                                     disabled={caseOpts.length === 0}
                                     size={5}
@@ -240,7 +256,7 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                                     {newlySelectedEnsembles.map((item) => (
                                         <tr
                                             key={`${item.caseName}-${item.ensembleName}`}
-                                            className="hover:bg-slate-100 align-top odd:bg-slate-50"
+                                            className="hover:bg-slate-100 odd:bg-slate-50 align-center"
                                         >
                                             <td className="p-2">
                                                 <div
@@ -300,42 +316,3 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
         </>
     );
 };
-
-function fixupFieldIdentifier(currFieldIdentifier: string, fieldArr: FieldInfo_api[] | undefined): string {
-    const fieldIdentifiers = fieldArr ? fieldArr.map((item) => item.field_identifier) : [];
-    if (currFieldIdentifier && fieldIdentifiers.includes(currFieldIdentifier)) {
-        return currFieldIdentifier;
-    }
-
-    if (fieldIdentifiers.length > 0) {
-        return fieldIdentifiers[0];
-    }
-
-    return "";
-}
-
-function fixupCaseUuid(currCaseUuid: string, caseArr: CaseInfo_api[] | undefined): string {
-    const caseIds = caseArr ? caseArr.map((item) => item.uuid) : [];
-    if (currCaseUuid && caseIds.includes(currCaseUuid)) {
-        return currCaseUuid;
-    }
-
-    if (caseIds.length > 0) {
-        return caseIds[0];
-    }
-
-    return "";
-}
-
-function fixupEnsembleName(currEnsembleName: string, ensembleArr: EnsembleInfo_api[] | undefined): string {
-    const ensembleNames = ensembleArr ? ensembleArr.map((item) => item.name) : [];
-    if (currEnsembleName && ensembleNames.includes(currEnsembleName)) {
-        return currEnsembleName;
-    }
-
-    if (ensembleNames.length > 0) {
-        return ensembleNames[0];
-    }
-
-    return "";
-}

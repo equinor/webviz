@@ -3,10 +3,7 @@ from typing import List
 import pandas as pd
 
 from src.services.sumo_access.parameter_access import EnsembleParameter
-from src.services.types.generic_types import (
-    EnsembleScalarResponse,
-    EnsembleCorrelations,
-)
+from src.services.sumo_access.generic_types import EnsembleScalarResponse, EnsembleCorrelations
 
 
 def correlate_parameters_with_response(

@@ -34,7 +34,7 @@ const createGenericContext = <T extends object>() => {
 const [useAuthContextProvider, AuthContextProvider] = createGenericContext<Context>();
 
 export const AuthProvider: React.FC<{ children: React.ReactElement }> = (props) => {
-    const [authState, setAuthState] = React.useState<AuthState>(AuthState.NotLoggedIn);
+    const [authState, setAuthState] = React.useState<AuthState>(AuthState.Loading);
     const [userInfo, setUserInfo] = React.useState<UserInfo_api | null>(null);
 
     React.useEffect(() => {

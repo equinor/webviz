@@ -1,0 +1,1 @@
+export { SettingsContentPanels } from "./settingsContentPanels";
