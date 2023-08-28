@@ -92,7 +92,6 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
 
     const handlePointerDown = React.useCallback(
         function handlePointerDown(e: React.PointerEvent<HTMLDivElement>) {
-            console.log("handlePointerDown");
             if (ref.current) {
                 const point = pointerEventToPoint(e.nativeEvent);
                 const rect = ref.current.getBoundingClientRect();
