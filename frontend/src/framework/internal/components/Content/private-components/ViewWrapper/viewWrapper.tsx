@@ -1,8 +1,10 @@
 import React from "react";
 
 import { ModuleInstance } from "@framework/ModuleInstance";
-import { useSetStoreValue, useStoreState } from "@framework/StateStore";
+import { useStoreState } from "@framework/StateStore";
 import { DrawerContent, Workbench } from "@framework/Workbench";
+import { Button } from "@lib/components/Button";
+import { Dialog } from "@lib/components/Dialog";
 import { Point, pointDifference, pointRelativeToDomRect, pointerEventToPoint } from "@lib/utils/geometry";
 
 import { Header } from "./private-components/header";
@@ -25,7 +27,8 @@ type ViewWrapperProps = {
 
 export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
     const ref = React.useRef<HTMLDivElement>(null);
-    const setDrawerContent = useSetStoreValue(props.workbench.getGuiStateStore(), "drawerContent");
+    const [confirmDialogVisible, setConfirmDialogVisible] = React.useState<boolean>(false);
+    const [drawerContent, setDrawerContent] = useStoreState(props.workbench.getGuiStateStore(), "drawerContent");
     const [settingsPanelWidth, setSettingsPanelWidth] = useStoreState(
         props.workbench.getGuiStateStore(),
         "settingsPanelWidthInPercent"
@@ -66,8 +69,23 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
     );
 
     function handleModuleHeaderClick() {
+        if (drawerContent !== DrawerContent.ModulesList) {
+            setDrawerContent(DrawerContent.ModuleSettings);
+        } else {
+            setConfirmDialogVisible(true);
+        }
+
         if (props.isActive) return;
         props.workbench.setActiveModuleId(props.moduleInstance.getId());
+    }
+
+    function handleConfirmationDialogConfirm() {
+        setConfirmDialogVisible(false);
+        setDrawerContent(DrawerContent.ModuleSettings);
+    }
+
+    function handleConfirmationDialogCancel() {
+        setConfirmDialogVisible(false);
     }
 
     function handleModuleHeaderDoubleClick() {
@@ -79,6 +97,20 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
 
     return (
         <>
+            <Dialog
+                modal
+                open={confirmDialogVisible}
+                onClose={handleConfirmationDialogCancel}
+                title="Confirm"
+                actions={
+                    <>
+                        <Button onClick={handleConfirmationDialogCancel}>Cancel</Button>
+                        <Button onClick={handleConfirmationDialogConfirm}>Show module settings</Button>
+                    </>
+                }
+            >
+                Close modules list and show settings?
+            </Dialog>
             {props.isDragged && (
                 <ViewWrapperPlaceholder width={props.width} height={props.height} x={props.x} y={props.y} />
             )}
