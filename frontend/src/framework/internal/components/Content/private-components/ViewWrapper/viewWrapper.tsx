@@ -5,7 +5,14 @@ import { useStoreState } from "@framework/StateStore";
 import { DrawerContent, Workbench } from "@framework/Workbench";
 import { Button } from "@lib/components/Button";
 import { Dialog } from "@lib/components/Dialog";
-import { Point, pointDifference, pointRelativeToDomRect, pointerEventToPoint } from "@lib/utils/geometry";
+import {
+    MANHATTAN_LENGTH,
+    Point,
+    pointDifference,
+    pointDistance,
+    pointRelativeToDomRect,
+    pointerEventToPoint,
+} from "@lib/utils/geometry";
 
 import { Header } from "./private-components/header";
 import { ViewContent } from "./private-components/viewContent";
@@ -34,8 +41,58 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
         "settingsPanelWidthInPercent"
     );
 
+    React.useEffect(() => {
+        let clickedOnHeader = false;
+        let pointerMoved = false;
+        let pointerDownPosition: Point = { x: 0, y: 0 };
+
+        function handleModuleInstancePointerDown(e: CustomEvent) {
+            if (clickedOnHeader || e.detail.id !== props.moduleInstance.getId()) {
+                return;
+            }
+
+            clickedOnHeader = true;
+            pointerMoved = false;
+            pointerDownPosition = e.detail.pointerPoint;
+        }
+
+        function handlePointerMove(e: PointerEvent) {
+            if (clickedOnHeader && pointDistance(pointerDownPosition, pointerEventToPoint(e)) > MANHATTAN_LENGTH) {
+                pointerMoved = true;
+            }
+        }
+
+        function handlePointerUp() {
+            if (!clickedOnHeader) {
+                return;
+            }
+            clickedOnHeader = false;
+            if (!pointerMoved) {
+                if (drawerContent !== DrawerContent.ModulesList) {
+                    setDrawerContent(DrawerContent.ModuleSettings);
+                } else {
+                    setConfirmDialogVisible(true);
+                }
+            }
+        }
+
+        document.addEventListener(LayoutEventTypes.MODULE_INSTANCE_POINTER_DOWN, handleModuleInstancePointerDown);
+        document.addEventListener("pointermove", handlePointerMove);
+        document.addEventListener("pointerup", handlePointerUp);
+
+        return () => {
+            document.removeEventListener(
+                LayoutEventTypes.MODULE_INSTANCE_POINTER_DOWN,
+                handleModuleInstancePointerDown
+            );
+            document.removeEventListener("pointermove", handlePointerMove);
+            document.removeEventListener("pointerup", handlePointerUp);
+        };
+    }, [drawerContent, props.moduleInstance]);
+
     const handlePointerDown = React.useCallback(
         function handlePointerDown(e: React.PointerEvent<HTMLDivElement>) {
+            console.log("handlePointerDown");
             if (ref.current) {
                 const point = pointerEventToPoint(e.nativeEvent);
                 const rect = ref.current.getBoundingClientRect();
@@ -68,13 +125,7 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
         [props.moduleInstance]
     );
 
-    function handleModuleHeaderClick() {
-        if (drawerContent !== DrawerContent.ModulesList) {
-            setDrawerContent(DrawerContent.ModuleSettings);
-        } else {
-            setConfirmDialogVisible(true);
-        }
-
+    function handleModuleClick() {
         if (props.isActive) return;
         props.workbench.setActiveModuleId(props.moduleInstance.getId());
     }
@@ -88,7 +139,7 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
         setConfirmDialogVisible(false);
     }
 
-    function handleModuleHeaderDoubleClick() {
+    function handleModuleDoubleClick() {
         if (settingsPanelWidth <= 5) {
             setSettingsPanelWidth(20);
         }
@@ -132,8 +183,8 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
                     } border-solid border-2 box-border shadow ${
                         props.isDragged ? "cursor-grabbing select-none" : "cursor-grab"
                     }}`}
-                    onClick={handleModuleHeaderClick}
-                    onDoubleClick={handleModuleHeaderDoubleClick}
+                    onClick={handleModuleClick}
+                    onDoubleClick={handleModuleDoubleClick}
                 >
                     <Header
                         moduleInstance={props.moduleInstance}
