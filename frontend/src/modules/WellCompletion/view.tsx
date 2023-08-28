@@ -11,7 +11,11 @@ export const view = ({ moduleContext }: ModuleFCProps<State>) => {
         <div className="w-full h-full">
             {/* NOTE: Use ApiStateWrapper or similar to have "loading" state?
              Note that the query is not handled here in the view, but in settings. Thus the loading state perhaps has to be set in the state? */}
-            {plotData && <WellCompletionsPlot id="test_id" timeSteps={availableTimeSteps || []} plotData={plotData} />}
+            {!plotData ? (
+                <div className="w-full h-full flex justify-center items-center">No data for selected ensemble</div>
+            ) : (
+                <WellCompletionsPlot id="test_id" timeSteps={availableTimeSteps || []} plotData={plotData} />
+            )}
         </div>
     );
 };
