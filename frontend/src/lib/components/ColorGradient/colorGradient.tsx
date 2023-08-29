@@ -14,7 +14,7 @@ function makeColorSamples(steps: number, colorPalette: ColorPalette) {
         const color = colorPalette.getInterpolatedColor(i / (steps - 1));
         samples.push(
             <div
-                key={color}
+                key={`${color}-${i}`}
                 className="border border-slate-600 h-5 w-full"
                 style={{
                     backgroundColor: color,
