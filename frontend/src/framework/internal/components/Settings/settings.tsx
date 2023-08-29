@@ -11,6 +11,8 @@ import { Setting } from "./private-components/setting";
 import { SyncSettings } from "./private-components/syncSettings";
 import { TemplatesList } from "./private-components/templatesList";
 
+import { ColorPaletteSettings } from "../ColorPaletteSettings";
+
 type SettingsProps = {
     workbench: Workbench;
 };
@@ -32,6 +34,7 @@ export const Settings: React.FC<SettingsProps> = (props) => {
             <ModulesList relContainer={mainRef.current} workbench={props.workbench} />
             <TemplatesList workbench={props.workbench} />
             <SyncSettings workbench={props.workbench} />
+            <ColorPaletteSettings workbench={props.workbench} />
             <div
                 className={resolveClassNames(
                     drawerContent === DrawerContent.ModuleSettings ? "visible" : "invisible",

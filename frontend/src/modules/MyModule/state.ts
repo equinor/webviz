@@ -1,3 +1,9 @@
+import { ColorScaleGradientType, ColorScaleType } from "@lib/utils/ColorScale";
+
 export type State = {
-    count: number;
+    type: ColorScaleType;
+    gradientType: ColorScaleGradientType;
+    min: number;
+    max: number;
+    divMidPoint: number;
 };
