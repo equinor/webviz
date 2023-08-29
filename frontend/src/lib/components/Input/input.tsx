@@ -40,7 +40,7 @@ export const Input = React.forwardRef((props: InputProps, ref: React.ForwardedRe
     const handleInputChange = React.useCallback(
         (event: React.ChangeEvent<HTMLInputElement>) => {
             if (props.type === "number") {
-                let newValue = parseFloat(event.target.value);
+                let newValue = parseFloat(event.target.value || "0");
                 if (props.min !== undefined) {
                     newValue = Math.max(props.min, newValue);
                 }
