@@ -30,7 +30,7 @@ spec:
                 envVar: WEBVIZ_CLIENT_SECRET
               - name: WEBVIZ-SMDA-RESOURCE-SCOPE
                 envVar: WEBVIZ_SMDA_RESOURCE_SCOPE
-              - name: WEBVIZ-SMDA-SUBSCRIPTION_KEY
+              - name: WEBVIZ-SMDA-SUBSCRIPTION-KEY
                 envVar: WEBVIZ_SMDA_SUBSCRIPTION_KEY
       variables:
         UVICORN_PORT: 5000
@@ -57,7 +57,7 @@ spec:
                 envVar: WEBVIZ_CLIENT_SECRET
               - name: WEBVIZ-SMDA-RESOURCE-SCOPE
                 envVar: WEBVIZ_SMDA_RESOURCE_SCOPE
-              - name: WEBVIZ-SMDA-SUBSCRIPTION_KEY
+              - name: WEBVIZ-SMDA-SUBSCRIPTION-KEY
                 envVar: WEBVIZ_SMDA_SUBSCRIPTION_KEY
       variables:
         UVICORN_PORT: 8000
