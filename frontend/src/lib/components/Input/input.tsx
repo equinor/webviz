@@ -2,8 +2,8 @@ import React from "react";
 
 import { Input as InputUnstyled, InputProps as InputUnstyledProps } from "@mui/base";
 
-import { BaseComponent } from "../_BaseComponent";
-import { resolveClassNames } from "../_utils/resolveClassNames";
+import { resolveClassNames } from "../../utils/resolveClassNames";
+import { BaseComponent } from "../BaseComponent";
 
 export type InputProps = InputUnstyledProps & {
     wrapperStyle?: React.CSSProperties;

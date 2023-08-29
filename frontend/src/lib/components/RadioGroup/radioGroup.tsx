@@ -2,10 +2,10 @@ import React from "react";
 
 import { v4 } from "uuid";
 
-import { BaseComponent } from "../_BaseComponent";
-import { BaseComponentProps } from "../_BaseComponent/baseComponent";
+import { resolveClassNames } from "../../utils/resolveClassNames";
+import { BaseComponent } from "../BaseComponent";
+import { BaseComponentProps } from "../BaseComponent/baseComponent";
 import { OptionalValues, withDefaults } from "../_utils/components";
-import { resolveClassNames } from "../_utils/resolveClassNames";
 
 export type RadioGroupProps<T = string | number> = {
     name?: string;

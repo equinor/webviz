@@ -4,7 +4,7 @@ import { useStoreValue } from "@framework/StateStore";
 import { DrawerContent, Workbench } from "@framework/Workbench";
 import { useActiveModuleId, useModuleInstances } from "@framework/internal/hooks/workbenchHooks";
 import { Cog6ToothIcon } from "@heroicons/react/20/solid";
-import { resolveClassNames } from "@lib/components/_utils/resolveClassNames";
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import { ModulesList } from "./private-components/modulesList";
 import { Setting } from "./private-components/setting";

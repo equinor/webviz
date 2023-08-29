@@ -2,8 +2,8 @@ import React from "react";
 
 import { v4 } from "uuid";
 
-import { BaseComponent, BaseComponentProps } from "../_BaseComponent";
-import { resolveClassNames } from "../_utils/resolveClassNames";
+import { resolveClassNames } from "../../utils/resolveClassNames";
+import { BaseComponent, BaseComponentProps } from "../BaseComponent";
 
 export type CheckboxProps = {
     id?: string;

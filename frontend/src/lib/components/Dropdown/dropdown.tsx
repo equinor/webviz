@@ -5,12 +5,12 @@ import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/20/solid";
 import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
 import { getTextWidth } from "@lib/utils/textSize";
 
+import { resolveClassNames } from "../../utils/resolveClassNames";
+import { BaseComponent, BaseComponentProps } from "../BaseComponent";
 import { IconButton } from "../IconButton";
 import { Input } from "../Input";
 import { Virtualization } from "../Virtualization";
-import { BaseComponent, BaseComponentProps } from "../_BaseComponent";
 import { withDefaults } from "../_utils/components";
-import { resolveClassNames } from "../_utils/resolveClassNames";
 
 export type DropdownOption = {
     value: string;

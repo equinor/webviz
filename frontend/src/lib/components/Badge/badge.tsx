@@ -2,7 +2,7 @@ import React from "react";
 
 import { Badge as MuiBadge, BadgeProps as MuiBadgeProps } from "@mui/base";
 
-import { resolveClassNames } from "../_utils/resolveClassNames";
+import { resolveClassNames } from "../../utils/resolveClassNames";
 
 export type BadgeProps = MuiBadgeProps;
 

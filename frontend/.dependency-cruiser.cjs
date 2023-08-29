@@ -15,8 +15,7 @@ module.exports = {
         },
         {
             name: "lib-has-dependencies-in-src-tree",
-            comment:
-                "Files in the 'lib' folder are not allowed to import from project files from outside the 'lib' folder.",
+            comment: "Files in the 'lib' folder must not be imported from project files from outside the 'lib' folder.",
             severity: "error",
             from: {
                 path: "^(src/lib)",
@@ -28,7 +27,7 @@ module.exports = {
         {
             name: "shared-used-outside-modules",
             comment:
-                "Files in the 'modules/_shared' folder are not allowed to be imported from files outside the 'modules' folder.",
+                "Files in the 'modules/_shared' folder must not be imported from files outside the 'modules' folder.",
             severity: "error",
             from: {
                 pathNot: "^(src/modules)",
@@ -47,6 +46,17 @@ module.exports = {
             },
             to: {
                 path: "^(src/api/(?!index.ts))",
+            },
+        },
+        {
+            name: "private-folder-accessed-from-outside",
+            comment: "Files in private folders (e.g. '_utils/') must not be imported from files on the outside.",
+            severity: "error",
+            from: {
+                path: "^src/(api|framework|lib|modules)",
+            },
+            to: {
+                path: "^src/(?!$1/).*(/_[^/]+/)",
             },
         },
     ],

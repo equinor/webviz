@@ -4,7 +4,7 @@ import { LinkIcon } from "@heroicons/react/20/solid";
 
 import { v4 } from "uuid";
 
-import { resolveClassNames } from "../_utils/resolveClassNames";
+import { resolveClassNames } from "../../utils/resolveClassNames";
 
 export type LabelProps = {
     text: string;

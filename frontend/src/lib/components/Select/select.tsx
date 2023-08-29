@@ -2,11 +2,11 @@ import React, { Key } from "react";
 
 import { getTextWidth } from "@lib/utils/textSize";
 
+import { resolveClassNames } from "../../utils/resolveClassNames";
+import { BaseComponent, BaseComponentProps } from "../BaseComponent/baseComponent";
 import { Input } from "../Input";
 import { Virtualization } from "../Virtualization";
-import { BaseComponent, BaseComponentProps } from "../_BaseComponent/baseComponent";
 import { withDefaults } from "../_utils/components";
-import { resolveClassNames } from "../_utils/resolveClassNames";
 
 export type SelectOption = {
     value: string;
