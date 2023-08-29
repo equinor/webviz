@@ -60,7 +60,7 @@ export const Input = React.forwardRef((props: InputProps, ref: React.ForwardedRe
                 onChange(event);
             }
         },
-        [props.min, props.max, onChange, props.type]
+        [props.min, props.max, onChange, props.type, prevValue]
     );
 
     return (
