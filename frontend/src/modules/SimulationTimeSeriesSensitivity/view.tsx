@@ -6,7 +6,7 @@ import { BroadcastChannelMeta } from "@framework/Broadcaster";
 import { Ensemble } from "@framework/Ensemble";
 import { ModuleFCProps } from "@framework/Module";
 import { useSubscribedValue } from "@framework/WorkbenchServices";
-import { timestampUtcMsToCompactIsoString } from "@framework/utils/TimestampUtils";
+import { timestampUtcMsToCompactIsoString } from "@framework/utils/timestampUtils";
 import { useElementSize } from "@lib/hooks/useElementSize";
 
 import { indexOf } from "lodash";

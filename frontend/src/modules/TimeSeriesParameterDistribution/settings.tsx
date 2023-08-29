@@ -1,6 +1,6 @@
 import React from "react";
 
-import { timestampUtcMsToCompactIsoString } from "@framework/utils/TimestampUtils";
+import { timestampUtcMsToCompactIsoString } from "@framework/utils/timestampUtils";
 import { EnsembleParameterDescription_api, VectorDescription_api } from "@api";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { ModuleFCProps } from "@framework/Module";

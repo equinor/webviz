@@ -4,7 +4,7 @@ import { EnsembleSet } from "@framework/EnsembleSet";
 import { ModuleFCProps } from "@framework/Module";
 import { AllTopicDefinitions, WorkbenchServices } from "@framework/WorkbenchServices";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
-import { timestampUtcMsToIsoString } from "@framework/utils/TimestampUtils";
+import { timestampUtcMsToIsoString } from "@framework/utils/timestampUtils";
 import { Button } from "@lib/components/Button";
 
 export type SharedState = {

@@ -22,19 +22,6 @@ export function isoStringToTimestampUtcMs(isoDateTimeString: string): number {
     return Date.parse(isoDateTimeString);
 }
 
-// export function isoStringArrayToTimestampUtcMs(isoDateTimeStringArray: string[]): Float64Array {
-//     const retArr = new Float64Array(isoDateTimeStringArray.length);
-//     for (let i = 0; i < isoDateTimeStringArray.length; i++) {
-//         retArr[i] = isoStringToTimestampUtcMs(isoDateTimeStringArray[i]);
-//     }
-
-//     return retArr;
-// }
-
-export function isoStringArrayToTimestampUtcMs(isoDateTimeStringArray: string[]): number[] {
-    return isoDateTimeStringArray.map(isoStringToTimestampUtcMs);
-}
-
 // Convert timestamp in milliseconds UTC to ISO 8601 string
 // The returned string will always be on the format YYYY-MM-DDTHH:mm:ss.sssZ
 export function timestampUtcMsToIsoString(timestampUtcMs: number): string {

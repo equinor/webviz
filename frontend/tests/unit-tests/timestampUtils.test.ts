@@ -1,4 +1,4 @@
-import { hasTime, hasTimezone, isoStringToTimestampUtcMs, timestampUtcMsToIsoString } from "@framework/utils/TimestampUtils";
+import { hasTime, hasTimezone, isoStringToTimestampUtcMs, timestampUtcMsToCompactIsoString, timestampUtcMsToIsoString } from "@framework/utils/timestampUtils";
 
 
 describe("TimestampUtils tests", () => {
@@ -37,5 +37,13 @@ describe("TimestampUtils tests", () => {
         expect(timestampUtcMsToIsoString(1514764800000)).toBe("2018-01-01T00:00:00.000Z");
         expect(timestampUtcMsToIsoString(1514764800001)).toBe("2018-01-01T00:00:00.001Z");
         expect(timestampUtcMsToIsoString(1514764799999)).toBe("2017-12-31T23:59:59.999Z");
+    });
+
+    test("Convert timestamp to compact ISO string", () => {
+        // Test data generated with: https://www.timestamp-converter.com/
+        expect(timestampUtcMsToCompactIsoString(1514764799999)).toBe("2017-12-31T23:59:59.999Z");
+        expect(timestampUtcMsToCompactIsoString(1514764800001)).toBe("2018-01-01T00:00:00.001Z");
+        expect(timestampUtcMsToCompactIsoString(1514764801000)).toBe("2018-01-01T00:00:01Z");
+        expect(timestampUtcMsToCompactIsoString(1514764800000)).toBe("2018-01-01");
     });
 });
