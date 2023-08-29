@@ -5,7 +5,6 @@ import type { BaseHttpRequest } from './core/BaseHttpRequest';
 import type { OpenAPIConfig } from './core/OpenAPI';
 import { AxiosHttpRequest } from './core/AxiosHttpRequest';
 
-import { CorrelationsService } from './services/CorrelationsService';
 import { DefaultService } from './services/DefaultService';
 import { ExploreService } from './services/ExploreService';
 import { GridService } from './services/GridService';
@@ -20,7 +19,6 @@ type HttpRequestConstructor = new (config: OpenAPIConfig) => BaseHttpRequest;
 
 export class ApiService {
 
-    public readonly correlations: CorrelationsService;
     public readonly default: DefaultService;
     public readonly explore: ExploreService;
     public readonly grid: GridService;
@@ -46,7 +44,6 @@ export class ApiService {
             ENCODE_PATH: config?.ENCODE_PATH,
         });
 
-        this.correlations = new CorrelationsService(this.request);
         this.default = new DefaultService(this.request);
         this.explore = new ExploreService(this.request);
         this.grid = new GridService(this.request);

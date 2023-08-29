@@ -13,7 +13,6 @@ export type { B64EncodedNumpyArray as B64EncodedNumpyArray_api } from './models/
 export type { Body_get_realizations_response as Body_get_realizations_response_api } from './models/Body_get_realizations_response';
 export type { CaseInfo as CaseInfo_api } from './models/CaseInfo';
 export type { DynamicSurfaceDirectory as DynamicSurfaceDirectory_api } from './models/DynamicSurfaceDirectory';
-export type { EnsembleCorrelations as EnsembleCorrelations_api } from './models/EnsembleCorrelations';
 export type { EnsembleDetails as EnsembleDetails_api } from './models/EnsembleDetails';
 export type { EnsembleInfo as EnsembleInfo_api } from './models/EnsembleInfo';
 export type { EnsembleParameter as EnsembleParameter_api } from './models/EnsembleParameter';
@@ -45,7 +44,6 @@ export type { VectorStatisticSensitivityData as VectorStatisticSensitivityData_a
 export type { WellBoreHeader as WellBoreHeader_api } from './models/WellBoreHeader';
 export type { WellBoreTrajectory as WellBoreTrajectory_api } from './models/WellBoreTrajectory';
 
-export { CorrelationsService } from './services/CorrelationsService';
 export { DefaultService } from './services/DefaultService';
 export { ExploreService } from './services/ExploreService';
 export { GridService } from './services/GridService';
