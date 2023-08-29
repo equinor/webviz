@@ -41,55 +41,6 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
         "settingsPanelWidthInPercent"
     );
 
-    React.useEffect(() => {
-        let clickedOnHeader = false;
-        let pointerMoved = false;
-        let pointerDownPosition: Point = { x: 0, y: 0 };
-
-        function handleModuleInstancePointerDown(e: CustomEvent) {
-            if (clickedOnHeader || e.detail.id !== props.moduleInstance.getId()) {
-                return;
-            }
-
-            clickedOnHeader = true;
-            pointerMoved = false;
-            pointerDownPosition = e.detail.pointerPoint;
-        }
-
-        function handlePointerMove(e: PointerEvent) {
-            if (clickedOnHeader && pointDistance(pointerDownPosition, pointerEventToPoint(e)) > MANHATTAN_LENGTH) {
-                pointerMoved = true;
-            }
-        }
-
-        function handlePointerUp() {
-            if (!clickedOnHeader) {
-                return;
-            }
-            clickedOnHeader = false;
-            if (!pointerMoved) {
-                if (drawerContent !== DrawerContent.ModulesList) {
-                    setDrawerContent(DrawerContent.ModuleSettings);
-                } else {
-                    setConfirmDialogVisible(true);
-                }
-            }
-        }
-
-        document.addEventListener(LayoutEventTypes.MODULE_INSTANCE_POINTER_DOWN, handleModuleInstancePointerDown);
-        document.addEventListener("pointermove", handlePointerMove);
-        document.addEventListener("pointerup", handlePointerUp);
-
-        return () => {
-            document.removeEventListener(
-                LayoutEventTypes.MODULE_INSTANCE_POINTER_DOWN,
-                handleModuleInstancePointerDown
-            );
-            document.removeEventListener("pointermove", handlePointerMove);
-            document.removeEventListener("pointerup", handlePointerUp);
-        };
-    }, [drawerContent, props.moduleInstance]);
-
     const handlePointerDown = React.useCallback(
         function handlePointerDown(e: React.PointerEvent<HTMLDivElement>) {
             if (ref.current) {
@@ -125,17 +76,14 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
     );
 
     function handleModuleClick() {
+        if (drawerContent === DrawerContent.ModulesList) {
+            return;
+        }
+        if (drawerContent !== DrawerContent.SyncSettings) {
+            setDrawerContent(DrawerContent.ModuleSettings);
+        }
         if (props.isActive) return;
         props.workbench.setActiveModuleId(props.moduleInstance.getId());
-    }
-
-    function handleConfirmationDialogConfirm() {
-        setConfirmDialogVisible(false);
-        setDrawerContent(DrawerContent.ModuleSettings);
-    }
-
-    function handleConfirmationDialogCancel() {
-        setConfirmDialogVisible(false);
     }
 
     function handleModuleDoubleClick() {
@@ -145,22 +93,10 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
         setDrawerContent(DrawerContent.ModuleSettings);
     }
 
+    const allowSelection = [DrawerContent.ModuleSettings, DrawerContent.SyncSettings].includes(drawerContent);
+
     return (
         <>
-            <Dialog
-                modal
-                open={confirmDialogVisible}
-                onClose={handleConfirmationDialogCancel}
-                title="Confirm"
-                actions={
-                    <>
-                        <Button onClick={handleConfirmationDialogCancel}>Cancel</Button>
-                        <Button onClick={handleConfirmationDialogConfirm}>Show module settings</Button>
-                    </>
-                }
-            >
-                Close modules list and show settings?
-            </Dialog>
             {props.isDragged && (
                 <ViewWrapperPlaceholder width={props.width} height={props.height} x={props.x} y={props.y} />
             )}
@@ -178,7 +114,7 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
             >
                 <div
                     className={`bg-white h-full w-full flex flex-col ${
-                        props.isActive ? "border-blue-500" : ""
+                        props.isActive && allowSelection ? "border-blue-500" : ""
                     } border-solid border-2 box-border shadow ${
                         props.isDragged ? "cursor-grabbing select-none" : "cursor-grab"
                     }}`}

@@ -1,11 +1,12 @@
 import React from "react";
 
 import { ModuleRegistry } from "@framework/ModuleRegistry";
-import { useStoreValue } from "@framework/StateStore";
+import { useStoreState, useStoreValue } from "@framework/StateStore";
 import { Template, TemplateRegistry } from "@framework/TemplateRegistry";
 import { DrawerContent, Workbench } from "@framework/Workbench";
 import { Drawer } from "@framework/internal/components/Drawer";
-import { Squares2X2Icon } from "@heroicons/react/20/solid";
+import { Squares2X2Icon, XMarkIcon } from "@heroicons/react/20/solid";
+import { IconButton } from "@lib/components/IconButton";
 
 function drawTemplatePreview(template: Template, width: number, height: number): React.ReactNode {
     return (
@@ -93,7 +94,7 @@ type TemplatesListProps = {
     I will skip it for now and come back to it when it becomes a problem.
 */
 export const TemplatesList: React.FC<TemplatesListProps> = (props) => {
-    const drawerContent = useStoreValue(props.workbench.getGuiStateStore(), "drawerContent");
+    const [drawerContent, setDrawerContent] = useStoreState(props.workbench.getGuiStateStore(), "drawerContent");
     const [searchQuery, setSearchQuery] = React.useState("");
 
     const handleSearchQueryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -106,7 +107,12 @@ export const TemplatesList: React.FC<TemplatesListProps> = (props) => {
             return;
         }
         props.workbench.applyTemplate(template);
+        setDrawerContent(DrawerContent.ModuleSettings);
     };
+
+    function handleCloseClick() {
+        setDrawerContent(DrawerContent.ModuleSettings);
+    }
 
     return (
         <Drawer
@@ -116,6 +122,11 @@ export const TemplatesList: React.FC<TemplatesListProps> = (props) => {
             title="Select a template"
             icon={<Squares2X2Icon />}
             visible={drawerContent === DrawerContent.TemplatesList}
+            actions={
+                <IconButton onClick={handleCloseClick} title="Close templates list and return to module settings">
+                    <XMarkIcon className="w-4 h-4" />
+                </IconButton>
+            }
         >
             {Object.keys(TemplateRegistry.getRegisteredTemplates())
                 .filter((templName) => templName.toLowerCase().includes(searchQuery.toLowerCase()))

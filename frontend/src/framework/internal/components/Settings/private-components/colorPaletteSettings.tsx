@@ -1,11 +1,11 @@
 import React from "react";
 import ReactDOM from "react-dom";
 
-import { useStoreValue } from "@framework/StateStore";
+import { useStoreState } from "@framework/StateStore";
 import { DrawerContent, Workbench } from "@framework/Workbench";
 import { ColorPaletteType, ColorScaleDiscreteSteps } from "@framework/WorkbenchSettings";
 import { Drawer } from "@framework/internal/components/Drawer";
-import { ChevronDownIcon } from "@heroicons/react/20/solid";
+import { ChevronDownIcon, XMarkIcon } from "@heroicons/react/20/solid";
 import { ColorGradient } from "@lib/components/ColorGradient";
 import { ColorTileGroup } from "@lib/components/ColorTileGroup";
 import { IconButton } from "@lib/components/IconButton";
@@ -176,7 +176,7 @@ export type ColorPaletteSettingsProps = {
 
 export const ColorPaletteSettings: React.FC<ColorPaletteSettingsProps> = (props) => {
     const colorPalettes = props.workbench.getWorkbenchSettings().getColorPalettes();
-    const drawerContent = useStoreValue(props.workbench.getGuiStateStore(), "drawerContent");
+    const [drawerContent, setDrawerContent] = useStoreState(props.workbench.getGuiStateStore(), "drawerContent");
     const [selectedColorPaletteIds, setSelectedColorPaletteIds] = React.useState<Record<ColorPaletteType, string>>(
         props.workbench.getWorkbenchSettings().getSelectedColorPaletteIds()
     );
@@ -200,8 +200,20 @@ export const ColorPaletteSettings: React.FC<ColorPaletteSettingsProps> = (props)
         });
     }
 
+    function handleCloseClick() {
+        setDrawerContent(DrawerContent.ModuleSettings);
+    }
+
     return (
-        <Drawer title="Color palette settings" visible={drawerContent === DrawerContent.ColorPaletteSettings}>
+        <Drawer
+            title="Color palette settings"
+            visible={drawerContent === DrawerContent.ColorPaletteSettings}
+            actions={
+                <IconButton onClick={handleCloseClick} title="Close color settings and return to module settings">
+                    <XMarkIcon className="w-4 h-4" />
+                </IconButton>
+            }
+        >
             <div className="flex flex-col gap-2">
                 <Label text="Categorical colors">
                     <ColorPaletteSelector

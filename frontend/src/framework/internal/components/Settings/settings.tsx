@@ -6,12 +6,11 @@ import { useActiveModuleId, useModuleInstances } from "@framework/internal/hooks
 import { Cog6ToothIcon } from "@heroicons/react/20/solid";
 import { resolveClassNames } from "@lib/components/_utils/resolveClassNames";
 
+import { ColorPaletteSettings } from "./private-components/colorPaletteSettings";
 import { ModulesList } from "./private-components/modulesList";
 import { Setting } from "./private-components/setting";
 import { SyncSettings } from "./private-components/syncSettings";
 import { TemplatesList } from "./private-components/templatesList";
-
-import { ColorPaletteSettings } from "../ColorPaletteSettings";
 
 type SettingsProps = {
     workbench: Workbench;
