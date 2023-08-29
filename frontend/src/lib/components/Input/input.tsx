@@ -50,8 +50,8 @@ export const Input = React.forwardRef((props: InputProps, ref: React.ForwardedRe
                 }
 
                 if (newValue !== prevValue) {
-                    setValue(value);
-                    setPrevValue(value);
+                    setValue(newValue);
+                    setPrevValue(newValue);
                 }
 
                 event.target.value = newValue.toString();
