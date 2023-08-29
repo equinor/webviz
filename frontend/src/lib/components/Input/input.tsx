@@ -39,27 +39,28 @@ export const Input = React.forwardRef((props: InputProps, ref: React.ForwardedRe
 
     const handleInputChange = React.useCallback(
         (event: React.ChangeEvent<HTMLInputElement>) => {
-            let value = parseFloat(event.target.value);
-            if (props.min !== undefined) {
-                value = Math.max(props.min, value);
+            if (props.type === "number") {
+                let newValue = parseFloat(event.target.value || "0");
+                if (props.min !== undefined) {
+                    newValue = Math.max(props.min, newValue);
+                }
+
+                if (props.max !== undefined) {
+                    newValue = Math.min(props.max, newValue);
+                }
+
+                if (newValue !== prevValue) {
+                    setValue(newValue);
+                    setPrevValue(newValue);
+                }
+
+                event.target.value = newValue.toString();
             }
-
-            if (props.max !== undefined) {
-                value = Math.min(props.max, value);
-            }
-
-            if (value !== prevValue) {
-                setValue(value);
-                setPrevValue(value);
-            }
-
-            event.target.value = value.toString();
-
             if (onChange) {
                 onChange(event);
             }
         },
-        [props.min, props.max, onChange]
+        [props.min, props.max, onChange, props.type, prevValue]
     );
 
     return (
