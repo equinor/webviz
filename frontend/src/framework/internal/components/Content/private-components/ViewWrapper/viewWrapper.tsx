@@ -3,16 +3,7 @@ import React from "react";
 import { ModuleInstance } from "@framework/ModuleInstance";
 import { useStoreState } from "@framework/StateStore";
 import { DrawerContent, Workbench } from "@framework/Workbench";
-import { Button } from "@lib/components/Button";
-import { Dialog } from "@lib/components/Dialog";
-import {
-    MANHATTAN_LENGTH,
-    Point,
-    pointDifference,
-    pointDistance,
-    pointRelativeToDomRect,
-    pointerEventToPoint,
-} from "@lib/utils/geometry";
+import { Point, pointDifference, pointRelativeToDomRect, pointerEventToPoint } from "@lib/utils/geometry";
 
 import { Header } from "./private-components/header";
 import { ViewContent } from "./private-components/viewContent";
@@ -34,7 +25,6 @@ type ViewWrapperProps = {
 
 export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
     const ref = React.useRef<HTMLDivElement>(null);
-    const [confirmDialogVisible, setConfirmDialogVisible] = React.useState<boolean>(false);
     const [drawerContent, setDrawerContent] = useStoreState(props.workbench.getGuiStateStore(), "drawerContent");
     const [settingsPanelWidth, setSettingsPanelWidth] = useStoreState(
         props.workbench.getGuiStateStore(),

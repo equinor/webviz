@@ -1,7 +1,7 @@
 import React from "react";
 
 import { ModuleRegistry } from "@framework/ModuleRegistry";
-import { useStoreState, useStoreValue } from "@framework/StateStore";
+import { useStoreState } from "@framework/StateStore";
 import { Template, TemplateRegistry } from "@framework/TemplateRegistry";
 import { DrawerContent, Workbench } from "@framework/Workbench";
 import { Drawer } from "@framework/internal/components/Drawer";
