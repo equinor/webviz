@@ -29,6 +29,7 @@ enum RealizationSelection {
 export const settings = ({ moduleContext, workbenchSession, workbenchServices }: ModuleFCProps<State>) => {
     const ensembleSet = useEnsembleSet(workbenchSession);
     const [availableTimeSteps, setAvailableTimeSteps] = moduleContext.useStoreState("availableTimeSteps");
+    const setDataLoadingStatus = moduleContext.useSetStoreValue("dataLoadingStatus");
     const setPlotData = moduleContext.useSetStoreValue("plotData");
 
     const [realizationSelection, setRealizationSelection] = React.useState<RealizationSelection>(
@@ -120,6 +121,19 @@ export const settings = ({ moduleContext, workbenchSession, workbenchServices }:
             createAndSetPlotData(allTimeSteps, timeStepIndex, selectedTimeStepOptions.timeAggregationType);
         },
         [wellCompletionQuery.data, selectedTimeStepOptions]
+    );
+
+    React.useEffect(
+        function handleQueryStateChange() {
+            if (wellCompletionQuery.status === "loading" && wellCompletionQuery.fetchStatus === "fetching") {
+                setDataLoadingStatus("loading");
+            } else if (wellCompletionQuery.status === "error") {
+                setDataLoadingStatus("error");
+            } else if (wellCompletionQuery.status === "success") {
+                setDataLoadingStatus("idle");
+            }
+        },
+        [wellCompletionQuery.status, wellCompletionQuery.fetchStatus]
     );
 
     function createAndSetPlotData(
@@ -261,11 +275,18 @@ export const settings = ({ moduleContext, workbenchSession, workbenchServices }:
                 text="Ensemble:"
                 labelClassName={syncHelper.isSynced(SyncSettingKey.ENSEMBLE) ? "bg-indigo-700 text-white" : ""}
             >
-                <SingleEnsembleSelect
-                    ensembleSet={ensembleSet}
-                    value={computedEnsembleIdent}
-                    onChange={handleEnsembleSelectionChange}
-                />
+                <>
+                    <SingleEnsembleSelect
+                        ensembleSet={ensembleSet}
+                        value={computedEnsembleIdent}
+                        onChange={handleEnsembleSelectionChange}
+                    />
+                    {wellCompletionQuery.isError && (
+                        <div className="text-red-500 text-sm">
+                            Current ensemble does not contain well completions data
+                        </div>
+                    )}
+                </>
             </Label>
             <Label text="Realization selection">
                 <RadioGroup

@@ -5,6 +5,7 @@ import { State } from "./state";
 import { view } from "./view";
 
 const initialState: State = {
+    dataLoadingStatus: "idle",
     availableTimeSteps: null,
     plotData: null,
 };
