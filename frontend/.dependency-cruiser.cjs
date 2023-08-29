@@ -25,18 +25,6 @@ module.exports = {
             },
         },
         {
-            name: "shared-used-outside-modules",
-            comment:
-                "Files in the 'modules/_shared' folder must not be imported from files outside the 'modules' folder.",
-            severity: "error",
-            from: {
-                pathNot: "^(src/modules)",
-            },
-            to: {
-                path: "^(src/modules/_shared)",
-            },
-        },
-        {
             name: "access-to-api-not-via-main-index-file",
             comment:
                 "Models, types, objects and functions of the API should only be accessed through the main index file (import {...} from '@api').",

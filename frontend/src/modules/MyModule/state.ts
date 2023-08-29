@@ -1,4 +1,3 @@
-import { withDefaults } from "@lib/components/_utils/components";
 import { ColorScaleGradientType, ColorScaleType } from "@lib/utils/ColorScale";
 
 export type State = {
