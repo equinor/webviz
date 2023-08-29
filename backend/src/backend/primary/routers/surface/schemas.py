@@ -33,6 +33,10 @@ class SurfaceData(BaseModel):
     y_count: int
     x_inc: float
     y_inc: float
+    x_min: float
+    x_max: float
+    y_min: float
+    y_max: float
     val_min: float
     val_max: float
     rot_deg: float

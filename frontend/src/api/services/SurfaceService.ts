@@ -3,6 +3,7 @@
 /* eslint-disable */
 import type { DynamicSurfaceDirectory } from '../models/DynamicSurfaceDirectory';
 import type { StaticSurfaceDirectory } from '../models/StaticSurfaceDirectory';
+import type { SumoContent } from '../models/SumoContent';
 import type { SurfaceData } from '../models/SurfaceData';
 import type { SurfaceStatisticFunction } from '../models/SurfaceStatisticFunction';
 
@@ -44,12 +45,14 @@ export class SurfaceService {
      * These are the non-observed surfaces that do NOT have time stamps
      * @param caseUuid Sumo case uuid
      * @param ensembleName Ensemble name
+     * @param sumoContentFilter Optional filter by Sumo content type
      * @returns StaticSurfaceDirectory Successful Response
      * @throws ApiError
      */
     public getStaticSurfaceDirectory(
         caseUuid: string,
         ensembleName: string,
+        sumoContentFilter?: Array<SumoContent>,
     ): CancelablePromise<StaticSurfaceDirectory> {
         return this.httpRequest.request({
             method: 'GET',
@@ -57,6 +60,7 @@ export class SurfaceService {
             query: {
                 'case_uuid': caseUuid,
                 'ensemble_name': ensembleName,
+                'sumo_content_filter': sumoContentFilter,
             },
             errors: {
                 422: `Validation Error`,
@@ -90,6 +94,87 @@ export class SurfaceService {
                 'realization_num': realizationNum,
                 'name': name,
                 'attribute': attribute,
+            },
+            errors: {
+                422: `Validation Error`,
+            },
+        });
+    }
+
+    /**
+     * Get Property Surface Resampled To Static Surface
+     * @param caseUuid Sumo case uuid
+     * @param ensembleName Ensemble name
+     * @param realizationNumMesh Realization number
+     * @param nameMesh Surface name
+     * @param attributeMesh Surface attribute
+     * @param realizationNumProperty Realization number
+     * @param nameProperty Surface name
+     * @param attributeProperty Surface attribute
+     * @returns SurfaceData Successful Response
+     * @throws ApiError
+     */
+    public getPropertySurfaceResampledToStaticSurface(
+        caseUuid: string,
+        ensembleName: string,
+        realizationNumMesh: number,
+        nameMesh: string,
+        attributeMesh: string,
+        realizationNumProperty: number,
+        nameProperty: string,
+        attributeProperty: string,
+    ): CancelablePromise<SurfaceData> {
+        return this.httpRequest.request({
+            method: 'GET',
+            url: '/surface/property_surface_resampled_to_static_surface/',
+            query: {
+                'case_uuid': caseUuid,
+                'ensemble_name': ensembleName,
+                'realization_num_mesh': realizationNumMesh,
+                'name_mesh': nameMesh,
+                'attribute_mesh': attributeMesh,
+                'realization_num_property': realizationNumProperty,
+                'name_property': nameProperty,
+                'attribute_property': attributeProperty,
+            },
+            errors: {
+                422: `Validation Error`,
+            },
+        });
+    }
+
+    /**
+     * Get Property Surface Resampled To Statistical Static Surface
+     * @param caseUuid Sumo case uuid
+     * @param ensembleName Ensemble name
+     * @param statisticFunction Statistics to calculate
+     * @param nameMesh Surface name
+     * @param attributeMesh Surface attribute
+     * @param nameProperty Surface name
+     * @param attributeProperty Surface attribute
+     * @returns SurfaceData Successful Response
+     * @throws ApiError
+     */
+    public getPropertySurfaceResampledToStatisticalStaticSurface(
+        caseUuid: string,
+        ensembleName: string,
+        statisticFunction: SurfaceStatisticFunction,
+        nameMesh: string,
+        attributeMesh: string,
+        nameProperty: string,
+        attributeProperty: string,
+    ): CancelablePromise<SurfaceData> {
+        return this.httpRequest.request({
+            method: 'GET',
+            url: '/surface/property_surface_resampled_to_statistical_static_surface/',
+            query: {
+                'case_uuid': caseUuid,
+                'ensemble_name': ensembleName,
+                'statistic_function': statisticFunction,
+                'name_mesh': nameMesh,
+                'attribute_mesh': attributeMesh,
+                'name_property': nameProperty,
+                'attribute_property': attributeProperty,
             },
             errors: {
                 422: `Validation Error`,

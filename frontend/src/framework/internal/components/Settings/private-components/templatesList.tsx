@@ -4,9 +4,8 @@ import { ModuleRegistry } from "@framework/ModuleRegistry";
 import { useStoreValue } from "@framework/StateStore";
 import { Template, TemplateRegistry } from "@framework/TemplateRegistry";
 import { DrawerContent, Workbench } from "@framework/Workbench";
+import { Drawer } from "@framework/internal/components/Drawer";
 import { Squares2X2Icon } from "@heroicons/react/20/solid";
-
-import { Drawer } from "./drawer";
 
 function drawTemplatePreview(template: Template, width: number, height: number): React.ReactNode {
     return (

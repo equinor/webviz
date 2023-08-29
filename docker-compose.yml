@@ -30,6 +30,7 @@ services:
       - WEBVIZ_CLIENT_SECRET
       - WEBVIZ_SMDA_RESOURCE_SCOPE
       - WEBVIZ_SMDA_SUBSCRIPTION_KEY
+      - WEBVIZ_SUMO_ENV
     volumes:
       - ./backend/src:/home/appuser/backend/src
 
@@ -46,6 +47,7 @@ services:
       - WEBVIZ_CLIENT_SECRET
       - WEBVIZ_SMDA_RESOURCE_SCOPE
       - WEBVIZ_SMDA_SUBSCRIPTION_KEY
+      - WEBVIZ_SUMO_ENV
     volumes:
       - ./backend/src:/home/appuser/backend/src
 

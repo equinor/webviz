@@ -30,11 +30,11 @@ def get(access_token: str, endpoint: str, params: dict) -> List[dict]:
         results = response.json()["data"]["results"]
         next_request = response.json()["data"]["next"]
         while next_request is not None:
-            params["next"] = next_request
+            params["_next"] = next_request
             response = requests.get(urlstring, params=params, headers=headers, timeout=60)
             result = response.json()["data"]["results"]
             if result:
-                results.append(response.json()["data"]["results"])
+                results.extend(response.json()["data"]["results"])
             next_request = response.json()["data"]["next"]
     elif response.status_code == 404:
         print(f"{str(response.status_code) } {endpoint} either does not exists or can not be found")

@@ -3,11 +3,10 @@ import React from "react";
 import { useStoreValue } from "@framework/StateStore";
 import { SyncSettingKey, SyncSettingsMeta } from "@framework/SyncSettings";
 import { DrawerContent, Workbench } from "@framework/Workbench";
+import { Drawer } from "@framework/internal/components/Drawer";
 import { useActiveModuleId } from "@framework/internal/hooks/workbenchHooks";
 import { LinkIcon } from "@heroicons/react/20/solid";
 import { Checkbox } from "@lib/components/Checkbox";
-
-import { Drawer } from "./drawer";
 
 type ModulesListProps = {
     workbench: Workbench;
