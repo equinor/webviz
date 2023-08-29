@@ -108,7 +108,7 @@ export const view = ({ moduleContext, workbenchServices }: ModuleFCProps<State>)
     React.useEffect(() => {
         if (channelX?.getDataDef().key === BroadcastChannelKeyCategory.Realization) {
             workbenchServices.subscribe("global.hoverRealization", (data) => {
-                if (data.realization !== undefined) {
+                if (data?.realization !== undefined) {
                     setHighlightedKey(data.realization);
                 }
             });

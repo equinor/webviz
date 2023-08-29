@@ -5,7 +5,7 @@ import { useElementSize } from "@lib/hooks/useElementSize";
 
 import PlotlyScatter from "./plotlyScatterChart";
 
-import { useVectorAtTimestepQuery, useParameterQuery } from "./queryHooks";
+import { useVectorAtTimestampQuery, useParameterQuery } from "./queryHooks";
 import { State } from "./state";
 
 
@@ -15,13 +15,13 @@ export const view = ({ moduleContext }: ModuleFCProps<State>) => {
     const vectorSpec = moduleContext.useStoreValue("vectorSpec");
     const [highlightedRealization, setHighlightedRealization] = React.useState(-1)
     const parameterName = moduleContext.useStoreValue("parameterName");
-    const timeStep = moduleContext.useStoreValue("timeStep");
+    const timestampUtcMs = moduleContext.useStoreValue("timestampUtcMs");
 
-    const vectorAtTimestepQuery = useVectorAtTimestepQuery(
+    const vectorAtTimestepQuery = useVectorAtTimestampQuery(
         vectorSpec?.caseUuid,
         vectorSpec?.ensembleName,
         vectorSpec?.vectorName,
-        timeStep
+        timestampUtcMs
     );
 
     const parameterQuery = useParameterQuery(

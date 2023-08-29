@@ -4,7 +4,7 @@ import { EnsembleSet } from "@framework/EnsembleSet";
 import { ModuleFCProps } from "@framework/Module";
 import { AllTopicDefinitions, WorkbenchServices } from "@framework/WorkbenchServices";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
-import { timestampUtcMsToIsoStringNoTz } from "@framework/utils/TimestampUtils";
+import { timestampUtcMsToIsoString } from "@framework/utils/TimestampUtils";
 import { Button } from "@lib/components/Button";
 
 export type SharedState = {
@@ -47,8 +47,8 @@ export function WorkbenchSpyView(props: ModuleFCProps<SharedState>) {
             <table>
                 <tbody>
                     {makeTableRow("hoverRealization", hoverRealization?.realization, hoverRealization_TS)}
-                    {makeTableRow("hoverTimestamp", hoverTimestamp?.timestamp, hoverTimestamp_TS)}
-                    {makeTableRow("hoverTimestamp isoStr", hoverTimestamp ? timestampUtcMsToIsoStringNoTz(hoverTimestamp.timestamp) : "UNDEF")}
+                    {makeTableRow("hoverTimestamp", hoverTimestamp?.timestampUtcMs, hoverTimestamp_TS)}
+                    {makeTableRow("hoverTimestamp isoStr", hoverTimestamp ? timestampUtcMsToIsoString(hoverTimestamp.timestampUtcMs) : "UNDEF")}
                 </tbody>
             </table>
             <br />
@@ -110,7 +110,7 @@ function useServiceValueWithTS<T extends keyof AllTopicDefinitions>(
 
     React.useEffect(
         function subscribeToServiceTopic() {
-            function handleNewValue(newValue: AllTopicDefinitions[T]) {
+            function handleNewValue(newValue: AllTopicDefinitions[T] | null) {
                 setLatestValue(newValue);
                 setLastUpdatedTS(getTimestampString());
             }

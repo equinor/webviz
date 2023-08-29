@@ -1,4 +1,3 @@
-import datetime
 import logging
 from io import BytesIO
 from typing import List, Optional, Sequence, Tuple, Set
@@ -143,7 +142,7 @@ class SummaryAccess:
             ret_arr.append(
                 RealizationVector(
                     realization=real,
-                    timestamps=date_np_arr.astype(datetime.datetime).tolist(),
+                    timestamps_utc_ms=date_np_arr.astype(int).tolist(),
                     values=value_np_arr.tolist(),
                     metadata=vector_metadata,
                 )
@@ -199,15 +198,15 @@ class SummaryAccess:
         )
 
         return HistoricalVector(
-            timestamps=date_np_arr.astype(datetime.datetime).tolist(),
+            timestamps_utc_ms=date_np_arr.astype(int).tolist(),
             values=value_np_arr.tolist(),
             metadata=vector_metadata,
         )
 
-    def get_vector_values_at_timestep(
+    def get_vector_values_at_timestamp(
         self,
         vector_name: str,
-        timestep: datetime.datetime,
+        timestamp_utc_ms: int,
         realizations: Optional[Sequence[int]] = None,
     ) -> EnsembleScalarResponse:
         table, _ = self.get_vector_table(vector_name, resampling_frequency=None, realizations=realizations)
@@ -215,7 +214,7 @@ class SummaryAccess:
         if realizations is not None:
             mask = pc.is_in(table["REAL"], value_set=pa.array(realizations))
             table = table.filter(mask)
-        mask = pc.is_in(table["DATE"], value_set=pa.array([timestep]))
+        mask = pc.is_in(table["DATE"], value_set=pa.array([timestamp_utc_ms]))
         table = table.filter(mask)
 
         return EnsembleScalarResponse(
@@ -223,17 +222,20 @@ class SummaryAccess:
             values=table[vector_name].to_pylist(),
         )
 
-    def get_timesteps(
+    def get_timestamps(
         self,
         resampling_frequency: Optional[Frequency] = None,
-    ) -> List[datetime.datetime]:
+    ) -> List[int]:
+        """
+        Get list of available timestamps in ms UTC
+        """
         table, _ = self.get_vector_table(
             self.get_available_vectors()[0].name,
             resampling_frequency=resampling_frequency,
             realizations=None,
         )
 
-        return pc.unique(table.column("DATE")).to_pylist()
+        return pc.unique(table.column("DATE")).to_numpy().astype(int).tolist()
 
 
 def _load_arrow_table_for_from_sumo(case: Case, iteration_name: str, vector_name: str) -> Optional[pa.Table]:

@@ -1,5 +1,6 @@
 import React from "react";
 
+import { timestampUtcMsToCompactIsoString } from "@framework/utils/TimestampUtils";
 import { EnsembleParameterDescription_api, VectorDescription_api } from "@api";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { ModuleFCProps } from "@framework/Module";
@@ -13,7 +14,7 @@ import { Dropdown } from "@lib/components/Dropdown";
 import { Label } from "@lib/components/Label";
 import { Select, SelectOption } from "@lib/components/Select";
 
-import { useGetParameterNamesQuery, useTimeStepsQuery, useVectorsQuery } from "./queryHooks";
+import { useGetParameterNamesQuery, useTimestampsListQuery, useVectorsQuery } from "./queryHooks";
 import { State } from "./state";
 
 //-----------------------------------------------------------------------------------------------------------
@@ -22,7 +23,7 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
     const [selectedEnsemble, setSelectedEnsemble] = React.useState<EnsembleIdent | null>(null);
 
     const [selectedVectorName, setSelectedVectorName] = React.useState<string>("");
-    const [timeStep, setTimeStep] = moduleContext.useStoreState("timeStep");
+    const [timestampUctMs, setTimestampUtcMs] = moduleContext.useStoreState("timestampUtcMs");
     const [parameterName, setParameterName] = moduleContext.useStoreState("parameterName");
 
     const syncedSettingKeys = moduleContext.useSyncedSettingKeys();
@@ -34,7 +35,7 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
     const computedEnsemble = fixupEnsembleIdent(candidateEnsemble, ensembleSet);
 
     const vectorsQuery = useVectorsQuery(computedEnsemble?.getCaseUuid(), computedEnsemble?.getEnsembleName());
-    const timeStepsQuery = useTimeStepsQuery(computedEnsemble?.getCaseUuid(), computedEnsemble?.getEnsembleName());
+    const timeStepsQuery = useTimestampsListQuery(computedEnsemble?.getCaseUuid(), computedEnsemble?.getEnsembleName());
     const parameterNamesQuery = useGetParameterNamesQuery(
         computedEnsemble?.getCaseUuid(),
         computedEnsemble?.getEnsembleName()
@@ -123,8 +124,8 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
                 <Label text="Timestep">
                     <Dropdown
                         options={makeTimeStepsOptions(timeStepsQuery.data)}
-                        value={timeStep ? timeStep : undefined}
-                        onChange={setTimeStep}
+                        value={timestampUctMs?.toString()}
+                        onChange={tsValAsString => setTimestampUtcMs(Number(tsValAsString))}
                     />
                 </Label>
             </ApiStateWrapper>
@@ -192,11 +193,11 @@ function makeParameterNamesOptionItems(parameters: EnsembleParameterDescription_
     return itemArr;
 }
 
-function makeTimeStepsOptions(timesteps: string[] | undefined): SelectOption[] {
+function makeTimeStepsOptions(timestampsUtcMs: number[] | undefined): SelectOption[] {
     const itemArr: SelectOption[] = [];
-    if (timesteps) {
-        for (const timestep of timesteps) {
-            itemArr.push({ value: timestep, label: timestep });
+    if (timestampsUtcMs) {
+        for (const ts of timestampsUtcMs) {
+            itemArr.push({ value: `${ts}`, label: timestampUtcMsToCompactIsoString(ts) });
         }
     }
     return itemArr;
