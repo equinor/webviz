@@ -13,6 +13,7 @@ import { Input } from "@lib/components/Input";
 import { Label } from "@lib/components/Label";
 import { RadioGroup } from "@lib/components/RadioGroup";
 import { Switch } from "@lib/components/Switch";
+import { resolveClassNames } from "@lib/components/_utils/resolveClassNames";
 import { useValidState } from "@lib/hooks/useValidState";
 
 import { isEqual } from "lodash";
@@ -281,75 +282,79 @@ export const settings = ({ moduleContext, workbenchSession, workbenchServices }:
                         value={computedEnsembleIdent}
                         onChange={handleEnsembleSelectionChange}
                     />
-                    {wellCompletionQuery.isError && (
-                        <div className="text-red-500 text-sm">
-                            Current ensemble does not contain well completions data
+                    {
+                        <div className="text-red-500 text-sm h-4">
+                            {wellCompletionQuery.isError
+                                ? "Current ensemble does not contain well completions data"
+                                : ""}
                         </div>
-                    )}
+                    }
                 </>
             </Label>
-            <Label text="Realization selection">
-                <RadioGroup
-                    options={[
-                        { label: RealizationSelection.Aggregated, value: RealizationSelection.Aggregated },
-                        { label: RealizationSelection.Single, value: RealizationSelection.Single },
-                    ]}
-                    value={realizationSelection}
-                    onChange={handleRealizationSelectionChange}
-                />
-            </Label>
-            {realizationSelection === RealizationSelection.Single && (
-                <Label text="Realization">
-                    <Dropdown
-                        options={computedEnsemble === null ? [] : makeRealizationOptionItems(computedEnsemble)}
-                        value={selectedRealizationNumber?.toString() ?? undefined}
-                        onChange={handleSelectedRealizationNumberChange}
+            <div className={resolveClassNames({ "pointer-events-none opacity-40": wellCompletionQuery.isError })}>
+                <Label text="Realization selection">
+                    <RadioGroup
+                        options={[
+                            { label: RealizationSelection.Aggregated, value: RealizationSelection.Aggregated },
+                            { label: RealizationSelection.Single, value: RealizationSelection.Single },
+                        ]}
+                        value={realizationSelection}
+                        onChange={handleRealizationSelectionChange}
                     />
                 </Label>
-            )}
-            <Label text="Time Aggregation">
-                <RadioGroup
-                    options={timeAggregationOptions}
-                    direction={"horizontal"}
-                    value={selectedTimeStepOptions.timeAggregationType}
-                    onChange={handleTimeAggregationChange}
-                />
-            </Label>
-            <Label
-                text={
-                    selectedTimeStepOptions.timeStepIndex === null || !availableTimeSteps
-                        ? "Time Step"
-                        : typeof selectedTimeStepOptions.timeStepIndex === "number"
-                        ? `Time Step: (${availableTimeSteps[selectedTimeStepOptions.timeStepIndex]})`
-                        : `Time Steps: (${availableTimeSteps[selectedTimeStepOptions.timeStepIndex[0]]}, ${
-                              availableTimeSteps[selectedTimeStepOptions.timeStepIndex[1]]
-                          })`
-                }
-            >
-                <DiscreteSlider
-                    valueLabelDisplay="auto"
-                    value={
-                        selectedTimeStepOptions.timeStepIndex !== null
-                            ? selectedTimeStepOptions.timeStepIndex
-                            : undefined
+                {realizationSelection === RealizationSelection.Single && (
+                    <Label text="Realization">
+                        <Dropdown
+                            options={computedEnsemble === null ? [] : makeRealizationOptionItems(computedEnsemble)}
+                            value={selectedRealizationNumber?.toString() ?? undefined}
+                            onChange={handleSelectedRealizationNumberChange}
+                        />
+                    </Label>
+                )}
+                <Label text="Time Aggregation">
+                    <RadioGroup
+                        options={timeAggregationOptions}
+                        direction={"horizontal"}
+                        value={selectedTimeStepOptions.timeAggregationType}
+                        onChange={handleTimeAggregationChange}
+                    />
+                </Label>
+                <Label
+                    text={
+                        selectedTimeStepOptions.timeStepIndex === null || !availableTimeSteps
+                            ? "Time Step"
+                            : typeof selectedTimeStepOptions.timeStepIndex === "number"
+                            ? `Time Step: (${availableTimeSteps[selectedTimeStepOptions.timeStepIndex]})`
+                            : `Time Steps: (${availableTimeSteps[selectedTimeStepOptions.timeStepIndex[0]]}, ${
+                                  availableTimeSteps[selectedTimeStepOptions.timeStepIndex[1]]
+                              })`
                     }
-                    values={
-                        availableTimeSteps
-                            ? availableTimeSteps.map((t, index) => {
-                                  return index;
-                              })
-                            : []
-                    }
-                    valueLabelFormat={createValueLabelFormat}
-                    onChange={handleSelectedTimeStepIndexChange}
-                />
-            </Label>
-            <Label text="Search well names">
-                <Input onChange={handleSearchWellChange} placeholder={"..."} />
-            </Label>
-            <Label text="Filter by completions">
-                <Switch defaultChecked={false} onChange={handleHideZeroCompletionsChange} />
-            </Label>
+                >
+                    <DiscreteSlider
+                        valueLabelDisplay="auto"
+                        value={
+                            selectedTimeStepOptions.timeStepIndex !== null
+                                ? selectedTimeStepOptions.timeStepIndex
+                                : undefined
+                        }
+                        values={
+                            availableTimeSteps
+                                ? availableTimeSteps.map((t, index) => {
+                                      return index;
+                                  })
+                                : []
+                        }
+                        valueLabelFormat={createValueLabelFormat}
+                        onChange={handleSelectedTimeStepIndexChange}
+                    />
+                </Label>
+                <Label text="Search well names">
+                    <Input onChange={handleSearchWellChange} placeholder={"..."} />
+                </Label>
+                <Label text="Filter by completions">
+                    <Switch defaultChecked={false} onChange={handleHideZeroCompletionsChange} />
+                </Label>
+            </div>
         </>
     );
 };
