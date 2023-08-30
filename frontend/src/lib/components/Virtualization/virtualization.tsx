@@ -2,7 +2,7 @@ import React from "react";
 
 import { useElementSize } from "@lib/hooks/useElementSize";
 
-import { withDefaults } from "../_utils/components";
+import { withDefaults } from "../_component-utils/components";
 
 export type VirtualizationProps<T = any> = {
     placeholderComponent?: string;

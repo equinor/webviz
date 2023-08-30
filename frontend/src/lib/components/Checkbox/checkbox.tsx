@@ -1,9 +1,10 @@
 import React from "react";
 
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
+
 import { v4 } from "uuid";
 
-import { BaseComponent, BaseComponentProps } from "../_BaseComponent";
-import { resolveClassNames } from "../_utils/resolveClassNames";
+import { BaseComponent, BaseComponentProps } from "../BaseComponent";
 
 export type CheckboxProps = {
     id?: string;

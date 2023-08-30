@@ -22,8 +22,8 @@ import {
 import { Badge } from "@lib/components/Badge";
 import { Button } from "@lib/components/Button";
 import { CircularProgress } from "@lib/components/CircularProgress";
-import { resolveClassNames } from "@lib/components/_utils/resolveClassNames";
 import { isDevMode } from "@lib/utils/devMode";
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { useQueryClient } from "@tanstack/react-query";
 
 type NavBarProps = {

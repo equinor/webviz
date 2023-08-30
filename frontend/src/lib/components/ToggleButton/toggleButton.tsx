@@ -2,7 +2,7 @@ import React from "react";
 
 import { Button as ButtonUnstyled, ButtonProps as ButtonUnstyledProps } from "@mui/base";
 
-import { BaseComponent } from "../_BaseComponent/baseComponent";
+import { BaseComponent } from "../BaseComponent";
 
 export type ToggleButtonProps = ButtonUnstyledProps & {
     active: boolean;

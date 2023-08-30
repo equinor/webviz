@@ -8,7 +8,7 @@ import {
     QuestionMarkCircleIcon,
     XMarkIcon,
 } from "@heroicons/react/20/solid";
-import { resolveClassNames } from "@lib/components/_utils/resolveClassNames";
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import "animate.css";
 
