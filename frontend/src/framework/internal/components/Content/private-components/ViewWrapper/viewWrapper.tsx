@@ -124,7 +124,7 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
                         onPointerDown={handleHeaderPointerDown}
                         onRemoveClick={handleRemoveClick}
                     />
-                    <div className="flex-grow overflow-auto h-0">
+                    <div className="flex-grow overflow-auto h-0" onClick={handleModuleClick}>
                         <ViewContent workbench={props.workbench} moduleInstance={props.moduleInstance} />
                     </div>
                 </div>
