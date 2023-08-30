@@ -2,8 +2,7 @@ import React from "react";
 
 import { ColorTile } from "@lib/components/ColorTile";
 import { ColorPalette } from "@lib/utils/ColorPalette";
-
-import { resolveClassNames } from "../_utils/resolveClassNames";
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 export type ColorPaletteProps = {
     colorPalette: ColorPalette;
