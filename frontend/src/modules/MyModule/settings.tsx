@@ -36,7 +36,6 @@ export const settings = (props: ModuleFCProps<State>) => {
 
     return (
         <div className="flex flex-col gap-4">
-            <SmartNodeSelector data={[]} />
             <Label text="Type">
                 <RadioGroup
                     value={type}

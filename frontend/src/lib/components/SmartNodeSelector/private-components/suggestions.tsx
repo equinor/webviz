@@ -91,10 +91,6 @@ export class Suggestions extends React.Component<SuggestionsProps> {
         window.removeEventListener("resize", this.renderPopup);
         window.removeEventListener("scroll", this.renderPopup, true);
 
-        if (this._popupRoot) {
-            this._popupRoot.unmount();
-        }
-
         if (this._popup) {
             document.body.removeChild(this._popup);
         }

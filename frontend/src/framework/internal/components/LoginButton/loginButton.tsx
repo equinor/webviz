@@ -2,10 +2,10 @@ import React from "react";
 
 import { AuthState, useAuthProvider } from "@framework/internal/providers/AuthProvider";
 import { ArrowLeftOnRectangleIcon, ArrowRightOnRectangleIcon, UserIcon } from "@heroicons/react/20/solid";
-import { Button } from "@lib/components/Button";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { Menu } from "@lib/components/Menu";
 import { MenuItem } from "@lib/components/MenuItem";
+import { resolveClassNames } from "@lib/components/_utils/resolveClassNames";
 import { getTextWidth } from "@lib/utils/textSize";
 import { Dropdown, MenuButton } from "@mui/base";
 
@@ -63,18 +63,21 @@ export const LoginButton: React.FC<LoginButtonProps> = (props) => {
 
     return (
         <Dropdown>
-            <MenuButton>
-                <Button className={props.className}>
-                    <span
-                        className="flex items-center gap-2 min-w-0"
-                        title={authState === AuthState.LoggedIn ? `Signed in as ${userInfo?.username}` : "Sign in"}
-                    >
-                        {makeIcon()}
-                        <span className="overflow-hidden text-ellipsis min-w-0 whitespace-nowrap" ref={textRef}>
-                            {props.showText && text}
-                        </span>
+            <MenuButton
+                className={resolveClassNames(
+                    props.className ?? "",
+                    "w-full inline-flex items-center min-w-0 px-4 py-2 font-medium rounded-md hover:bg-indigo-100"
+                )}
+            >
+                <span
+                    className="flex items-center gap-2"
+                    title={authState === AuthState.LoggedIn ? `Signed in as ${userInfo?.username}` : "Sign in"}
+                >
+                    {makeIcon()}
+                    <span className="overflow-hidden text-ellipsis min-w-0 whitespace-nowrap" ref={textRef}>
+                        {props.showText && text}
                     </span>
-                </Button>
+                </span>
             </MenuButton>
             <Menu anchorOrigin="bottom-start">
                 <MenuItem onClick={handleLogout}>
