@@ -1,8 +1,7 @@
 import React from "react";
 
 import { useElementSize } from "@lib/hooks/useElementSize";
-
-import { resolveClassNames } from "../../utils/resolveClassNames";
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 type ResizablePanelsProps = {
     id: string;

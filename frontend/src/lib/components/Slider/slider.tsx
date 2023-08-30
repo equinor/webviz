@@ -3,9 +3,9 @@ import ReactDOM from "react-dom";
 
 import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
 import { Point } from "@lib/utils/geometry";
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { Slider as SliderUnstyled, SliderProps as SliderUnstyledProps } from "@mui/base";
 
-import { resolveClassNames } from "../../utils/resolveClassNames";
 import { BaseComponent } from "../BaseComponent";
 
 export type SliderProps = {

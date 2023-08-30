@@ -3,14 +3,14 @@ import ReactDOM from "react-dom";
 
 import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/20/solid";
 import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { getTextWidth } from "@lib/utils/textSize";
 
-import { resolveClassNames } from "../../utils/resolveClassNames";
 import { BaseComponent, BaseComponentProps } from "../BaseComponent";
 import { IconButton } from "../IconButton";
 import { Input } from "../Input";
 import { Virtualization } from "../Virtualization";
-import { withDefaults } from "../_utils/components";
+import { withDefaults } from "../_component-utils/components";
 
 export type DropdownOption = {
     value: string;

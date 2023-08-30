@@ -1,8 +1,8 @@
 import React from "react";
 
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { Button as ButtonUnstyled, ButtonProps as ButtonUnstyledProps } from "@mui/base";
 
-import { resolveClassNames } from "../../utils/resolveClassNames";
 import { BaseComponent } from "../BaseComponent";
 
 export type IconButtonProps = {

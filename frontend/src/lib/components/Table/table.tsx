@@ -4,7 +4,7 @@ import { ChevronDownIcon, ChevronUpIcon, XMarkIcon } from "@heroicons/react/20/s
 
 import { v4 } from "uuid";
 
-import { BaseComponent, BaseComponentProps } from "../BaseComponent/baseComponent";
+import { BaseComponent, BaseComponentProps } from "../BaseComponent";
 import { IconButton } from "../IconButton";
 import { Input } from "../Input";
 import { Virtualization } from "../Virtualization";

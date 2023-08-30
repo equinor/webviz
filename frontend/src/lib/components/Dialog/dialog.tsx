@@ -3,8 +3,7 @@ import ReactDOM from "react-dom";
 
 import { XMarkIcon } from "@heroicons/react/20/solid";
 import { useElementSize } from "@lib/hooks/useElementSize";
-
-import { resolveClassNames } from "../../utils/resolveClassNames";
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 export type DialogProps = {
     title?: string;

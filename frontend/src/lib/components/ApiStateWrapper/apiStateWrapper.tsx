@@ -1,8 +1,7 @@
 import React from "react";
 
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { QueryObserverResult } from "@tanstack/react-query";
-
-import { resolveClassNames } from "../../utils/resolveClassNames";
 
 export type ApiStateWrapperProps = {
     apiResult: QueryObserverResult;
