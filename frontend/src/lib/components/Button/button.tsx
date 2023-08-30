@@ -1,9 +1,9 @@
 import React from "react";
 
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { Button as ButtonUnstyled, ButtonProps as ButtonUnstyledProps } from "@mui/base";
 
-import { BaseComponent } from "../_BaseComponent";
-import { resolveClassNames } from "../_utils/resolveClassNames";
+import { BaseComponent } from "../BaseComponent";
 
 export type ButtonProps = {
     variant?: "text" | "outlined" | "contained";
