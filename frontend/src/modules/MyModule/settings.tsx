@@ -5,6 +5,7 @@ import { ColorGradient } from "@lib/components/ColorGradient/colorGradient";
 import { Input } from "@lib/components/Input";
 import { Label } from "@lib/components/Label";
 import { RadioGroup } from "@lib/components/RadioGroup";
+import { SmartNodeSelector } from "@lib/components/SmartNodeSelector";
 import { ColorScaleGradientType, ColorScaleType } from "@lib/utils/ColorScale";
 
 import { State } from "./state";
@@ -35,6 +36,7 @@ export const settings = (props: ModuleFCProps<State>) => {
 
     return (
         <div className="flex flex-col gap-4">
+            <SmartNodeSelector data={[]} />
             <Label text="Type">
                 <RadioGroup
                     value={type}
@@ -83,17 +85,17 @@ export const settings = (props: ModuleFCProps<State>) => {
                 />
             </Label>
             <Label text="Min">
-                <Input type="number" value={min} onChange={(e) => setMin(e.target.valueAsNumber)} />
+                <Input type="number" value={min} onChange={(e) => setMin(parseFloat(e.target.value))} />
             </Label>
             <Label text="Max">
-                <Input type="number" value={max} onChange={(e) => setMax(e.target.valueAsNumber)} />
+                <Input type="number" value={max} onChange={(e) => setMax(parseFloat(e.target.value))} />
             </Label>
             {gradientType === ColorScaleGradientType.Diverging && (
                 <Label text="Midpoint">
                     <Input
                         type="number"
                         value={divMidPoint}
-                        onChange={(e) => setDivMidPoint(e.target.valueAsNumber)}
+                        onChange={(e) => setDivMidPoint(parseFloat(e.target.value))}
                         min={0}
                         max={max}
                     />

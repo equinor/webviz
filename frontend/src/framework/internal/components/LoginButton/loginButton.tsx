@@ -7,6 +7,7 @@ import { CircularProgress } from "@lib/components/CircularProgress";
 import { Menu } from "@lib/components/Menu";
 import { MenuItem } from "@lib/components/MenuItem";
 import { getTextWidth } from "@lib/utils/textSize";
+import { Dropdown, MenuButton } from "@mui/base";
 
 export type LoginButtonProps = {
     className?: string;
@@ -15,8 +16,6 @@ export type LoginButtonProps = {
 };
 
 export const LoginButton: React.FC<LoginButtonProps> = (props) => {
-    const [menuOpen, setMenuOpen] = React.useState<boolean>(false);
-    const [menuAnchor, setMenuAnchor] = React.useState<HTMLElement | null>(null);
     const textRef = React.useRef<HTMLSpanElement>(null);
 
     const { authState, userInfo } = useAuthProvider();
@@ -26,26 +25,6 @@ export const LoginButton: React.FC<LoginButtonProps> = (props) => {
         /*
         window.location.href = "/api/logout";
         */
-    }
-
-    function handleMenuOpen(e: React.MouseEvent<HTMLElement>) {
-        setMenuAnchor(e.currentTarget);
-        setMenuOpen(true);
-    }
-
-    function handleButtonClick(e: React.MouseEvent<HTMLElement>) {
-        if (authState === "LoggedIn") {
-            handleMenuOpen(e);
-        } else {
-            window.location.href = `/api/login?redirect_url_after_login=${btoa("/")}`;
-        }
-    }
-
-    function handleMenuClose(open: boolean) {
-        if (!open) {
-            setMenuOpen(false);
-            setMenuAnchor(null);
-        }
     }
 
     function makeIcon() {
@@ -83,25 +62,26 @@ export const LoginButton: React.FC<LoginButtonProps> = (props) => {
     }
 
     return (
-        <>
-            <Button
-                onClick={handleButtonClick}
-                className={props.className}
-                title={authState === AuthState.LoggedIn ? `Signed in as ${userInfo?.username}` : "Sign in"}
-            >
-                <span className="flex items-center gap-2 min-w-0">
-                    {makeIcon()}
-                    <span className="overflow-hidden text-ellipsis min-w-0 whitespace-nowrap" ref={textRef}>
-                        {props.showText && text}
+        <Dropdown>
+            <MenuButton>
+                <Button className={props.className}>
+                    <span
+                        className="flex items-center gap-2 min-w-0"
+                        title={authState === AuthState.LoggedIn ? `Signed in as ${userInfo?.username}` : "Sign in"}
+                    >
+                        {makeIcon()}
+                        <span className="overflow-hidden text-ellipsis min-w-0 whitespace-nowrap" ref={textRef}>
+                            {props.showText && text}
+                        </span>
                     </span>
-                </span>
-            </Button>
-            <Menu open={menuOpen} onOpenChange={handleMenuClose} anchorEl={menuAnchor} anchorOrigin="bottom-start">
+                </Button>
+            </MenuButton>
+            <Menu anchorOrigin="bottom-start">
                 <MenuItem onClick={handleLogout}>
                     <ArrowRightOnRectangleIcon className="w-4 h-4 mr-2" />
                     Sign out
                 </MenuItem>
             </Menu>
-        </>
+        </Dropdown>
     );
 };
