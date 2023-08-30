@@ -13,13 +13,13 @@ import { Input } from "@lib/components/Input";
 import { Label } from "@lib/components/Label";
 import { RadioGroup } from "@lib/components/RadioGroup";
 import { Switch } from "@lib/components/Switch";
-import { resolveClassNames } from "@lib/components/_utils/resolveClassNames";
 import { useValidState } from "@lib/hooks/useValidState";
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import { isEqual } from "lodash";
 
 import { useWellCompletionQuery } from "./queryHooks";
-import { State } from "./state";
+import { DataLoadingStatus, State } from "./state";
 import { TimeAggregationType, WellCompletionsDataAccessor } from "./utils/wellCompletionsDataAccessor";
 
 enum RealizationSelection {
@@ -36,19 +36,14 @@ export const settings = ({ moduleContext, workbenchSession, workbenchServices }:
     const [realizationSelection, setRealizationSelection] = React.useState<RealizationSelection>(
         RealizationSelection.Aggregated
     );
-    const [selectedEnsembleIdent, setSelectedEnsembleIdent] = useValidState<EnsembleIdent | null>(
-        null,
-        [ensembleSet.getEnsembleArr(), (item: Ensemble) => item.getIdent()],
-        true
-    );
-    const [selectedRealizationNumber, setSelectedRealizationNumber] = useValidState<number>(
-        0,
-        [
-            (selectedEnsembleIdent && ensembleSet.findEnsemble(selectedEnsembleIdent)?.getRealizations()) ?? [],
-            (item: number) => item,
-        ],
-        true
-    );
+    const [selectedEnsembleIdent, setSelectedEnsembleIdent] = useValidState<EnsembleIdent | null>(null, [
+        ensembleSet.getEnsembleArr(),
+        (item: Ensemble) => item.getIdent(),
+    ]);
+    const [selectedRealizationNumber, setSelectedRealizationNumber] = useValidState<number>(0, [
+        (selectedEnsembleIdent && ensembleSet.findEnsemble(selectedEnsembleIdent)?.getRealizations()) ?? [],
+        (item: number) => item,
+    ]);
 
     const [selectedTimeStepOptions, setSelectedTimeStepOptions] = React.useState<{
         timeStepIndex: number | [number, number] | null;
@@ -127,11 +122,11 @@ export const settings = ({ moduleContext, workbenchSession, workbenchServices }:
     React.useEffect(
         function handleQueryStateChange() {
             if (wellCompletionQuery.status === "loading" && wellCompletionQuery.fetchStatus === "fetching") {
-                setDataLoadingStatus("loading");
+                setDataLoadingStatus(DataLoadingStatus.Loading);
             } else if (wellCompletionQuery.status === "error") {
-                setDataLoadingStatus("error");
+                setDataLoadingStatus(DataLoadingStatus.Error);
             } else if (wellCompletionQuery.status === "success") {
-                setDataLoadingStatus("idle");
+                setDataLoadingStatus(DataLoadingStatus.Idle);
             }
         },
         [wellCompletionQuery.status, wellCompletionQuery.fetchStatus]
@@ -199,14 +194,14 @@ export const settings = ({ moduleContext, workbenchSession, workbenchServices }:
                 timeAggregationType: newTimeAggregation,
             });
         } else if (newTimeAggregation === TimeAggregationType.None) {
-            newTimeStepIndex =
-                typeof selectedTimeStepOptions.timeStepIndex === "number"
-                    ? selectedTimeStepOptions.timeStepIndex
-                    : selectedTimeStepOptions.timeStepIndex
-                    ? selectedTimeStepOptions.timeStepIndex[0] < availableTimeSteps.length
-                        ? selectedTimeStepOptions.timeStepIndex[0]
-                        : 0
-                    : 0;
+            if (selectedTimeStepOptions.timeStepIndex === null) {
+                newTimeStepIndex = 0;
+            } else if (typeof selectedTimeStepOptions.timeStepIndex === "number") {
+                newTimeStepIndex = selectedTimeStepOptions.timeStepIndex;
+            } else {
+                const firstRangeIndex = selectedTimeStepOptions.timeStepIndex[0];
+                newTimeStepIndex = firstRangeIndex < availableTimeSteps.length ? firstRangeIndex : 0;
+            }
             setSelectedTimeStepOptions({
                 timeStepIndex: newTimeStepIndex,
                 timeAggregationType: newTimeAggregation,
@@ -216,20 +211,20 @@ export const settings = ({ moduleContext, workbenchSession, workbenchServices }:
         createAndSetPlotData(availableTimeSteps, newTimeStepIndex, newTimeAggregation);
     }
 
-    function handleSelectedTimeStepIndexChange(e: Event, newTimeStepIndex: number | number[]) {
-        let _timeStepIndex: number | [number, number] = 0;
-        if (typeof newTimeStepIndex === "number") {
-            _timeStepIndex = newTimeStepIndex;
-            setSelectedTimeStepOptions((prev) => ({ ...prev, timeStepIndex: _timeStepIndex }));
-        } else if (newTimeStepIndex.length >= 2) {
-            _timeStepIndex = [newTimeStepIndex[0], newTimeStepIndex[1]];
+    function handleSelectedTimeStepIndexChange(e: Event, newIndex: number | number[]) {
+        let newTimeStepIndex: number | [number, number] = 0;
+        if (typeof newIndex === "number") {
+            newTimeStepIndex = newIndex;
+            setSelectedTimeStepOptions((prev) => ({ ...prev, timeStepIndex: newTimeStepIndex }));
+        } else if (newIndex.length >= 2) {
+            newTimeStepIndex = [newIndex[0], newIndex[1]];
             setSelectedTimeStepOptions((prev) => ({
                 ...prev,
-                timeStepIndex: _timeStepIndex,
+                timeStepIndex: newTimeStepIndex,
             }));
         }
 
-        createAndSetPlotData(availableTimeSteps, _timeStepIndex, selectedTimeStepOptions.timeAggregationType);
+        createAndSetPlotData(availableTimeSteps, newTimeStepIndex, selectedTimeStepOptions.timeAggregationType);
     }
 
     function handleSearchWellChange(e: React.ChangeEvent<HTMLInputElement>) {

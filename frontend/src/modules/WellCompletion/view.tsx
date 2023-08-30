@@ -2,7 +2,7 @@ import { ModuleFCProps } from "@framework/Module";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { WellCompletionsPlot } from "@webviz/well-completions-plot";
 
-import { State } from "./state";
+import { DataLoadingStatus, State } from "./state";
 
 export const view = ({ moduleContext }: ModuleFCProps<State>) => {
     const plotData = moduleContext.useStoreValue("plotData");
@@ -12,11 +12,11 @@ export const view = ({ moduleContext }: ModuleFCProps<State>) => {
     return (
         <div className="w-full h-full">
             {!plotData ? (
-                dataLoadingStatus === "error" ? (
+                dataLoadingStatus === DataLoadingStatus.Error ? (
                     <div className="w-full h-full flex justify-center items-center text-red-500">
                         Error loading well completion data for selected Ensemble and realization
                     </div>
-                ) : dataLoadingStatus === "loading" ? (
+                ) : dataLoadingStatus === DataLoadingStatus.Loading ? (
                     <div className="absolute left-0 right-0 w-full h-full bg-white bg-opacity-80 flex items-center justify-center z-10">
                         <CircularProgress />
                     </div>

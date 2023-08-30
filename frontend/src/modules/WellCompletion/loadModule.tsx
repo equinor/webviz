@@ -1,11 +1,11 @@
 import { ModuleRegistry } from "@framework/ModuleRegistry";
 
 import { settings } from "./settings";
-import { State } from "./state";
+import { DataLoadingStatus, State } from "./state";
 import { view } from "./view";
 
 const initialState: State = {
-    dataLoadingStatus: "idle",
+    dataLoadingStatus: DataLoadingStatus.Idle,
     availableTimeSteps: null,
     plotData: null,
 };
