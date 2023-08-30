@@ -9,7 +9,6 @@ export type DrawerProps = {
     visible: boolean;
     showFilter?: boolean;
     filterPlaceholder?: string;
-    actions?: React.ReactNode;
     onFilterChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
     children: React.ReactNode;
 };
@@ -20,7 +19,6 @@ export const Drawer: React.FC<DrawerProps> = (props) => {
             <div className="flex justify-center items-center p-2 bg-slate-100 h-10">
                 {props.icon && React.cloneElement(props.icon, { className: "w-5 h-5 mr-2" })}
                 <span className="font-bold flex-grow p-0 text-sm">{props.title}</span>
-                <div>{props.actions}</div>
             </div>
             <div className="flex-grow flex flex-col">
                 {props.showFilter && (

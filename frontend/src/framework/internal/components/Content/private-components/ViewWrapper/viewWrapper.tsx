@@ -31,7 +31,9 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
         "settingsPanelWidthInPercent"
     );
 
-    const handlePointerDown = React.useCallback(
+    const timeRef = React.useRef<number | null>(null);
+
+    const handleHeaderPointerDown = React.useCallback(
         function handlePointerDown(e: React.PointerEvent<HTMLDivElement>) {
             if (ref.current) {
                 const point = pointerEventToPoint(e.nativeEvent);
@@ -66,8 +68,8 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
     );
 
     function handleModuleClick() {
-        if (drawerContent === DrawerContent.ModulesList) {
-            return;
+        if (settingsPanelWidth <= 5) {
+            setSettingsPanelWidth(20);
         }
         if (drawerContent !== DrawerContent.SyncSettings) {
             setDrawerContent(DrawerContent.ModuleSettings);
@@ -76,14 +78,19 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
         props.workbench.setActiveModuleId(props.moduleInstance.getId());
     }
 
-    function handleModuleDoubleClick() {
-        if (settingsPanelWidth <= 5) {
-            setSettingsPanelWidth(20);
-        }
-        setDrawerContent(DrawerContent.ModuleSettings);
+    function handlePointerDown() {
+        timeRef.current = Date.now();
     }
 
-    const allowSelection = [DrawerContent.ModuleSettings, DrawerContent.SyncSettings].includes(drawerContent);
+    function handlePointerUp() {
+        if (drawerContent === DrawerContent.ModulesList) {
+            if (!timeRef.current || Date.now() - timeRef.current < 800) {
+                handleModuleClick();
+            }
+            return;
+        }
+        handleModuleClick();
+    }
 
     return (
         <>
@@ -104,17 +111,17 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
             >
                 <div
                     className={`bg-white h-full w-full flex flex-col ${
-                        props.isActive && allowSelection ? "border-blue-500" : ""
+                        props.isActive ? "border-blue-500" : ""
                     } border-solid border-2 box-border shadow ${
                         props.isDragged ? "cursor-grabbing select-none" : "cursor-grab"
                     }}`}
-                    onClick={handleModuleClick}
-                    onDoubleClick={handleModuleDoubleClick}
+                    onPointerDown={handlePointerDown}
+                    onPointerUp={handlePointerUp}
                 >
                     <Header
                         moduleInstance={props.moduleInstance}
                         isDragged={props.isDragged}
-                        onPointerDown={handlePointerDown}
+                        onPointerDown={handleHeaderPointerDown}
                         onRemoveClick={handleRemoveClick}
                     />
                     <div className="flex-grow overflow-auto h-0">

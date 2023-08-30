@@ -5,8 +5,7 @@ import { useStoreState } from "@framework/StateStore";
 import { Template, TemplateRegistry } from "@framework/TemplateRegistry";
 import { DrawerContent, Workbench } from "@framework/Workbench";
 import { Drawer } from "@framework/internal/components/Drawer";
-import { Squares2X2Icon, XMarkIcon } from "@heroicons/react/20/solid";
-import { IconButton } from "@lib/components/IconButton";
+import { Squares2X2Icon } from "@heroicons/react/20/solid";
 
 function drawTemplatePreview(template: Template, width: number, height: number): React.ReactNode {
     return (
@@ -110,10 +109,6 @@ export const TemplatesList: React.FC<TemplatesListProps> = (props) => {
         setDrawerContent(DrawerContent.ModuleSettings);
     };
 
-    function handleCloseClick() {
-        setDrawerContent(DrawerContent.ModuleSettings);
-    }
-
     return (
         <Drawer
             showFilter
@@ -122,11 +117,6 @@ export const TemplatesList: React.FC<TemplatesListProps> = (props) => {
             title="Select a template"
             icon={<Squares2X2Icon />}
             visible={drawerContent === DrawerContent.TemplatesList}
-            actions={
-                <IconButton onClick={handleCloseClick} title="Close templates list and return to module settings">
-                    <XMarkIcon className="w-4 h-4" />
-                </IconButton>
-            }
         >
             {Object.keys(TemplateRegistry.getRegisteredTemplates())
                 .filter((templName) => templName.toLowerCase().includes(searchQuery.toLowerCase()))

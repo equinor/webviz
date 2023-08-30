@@ -2,12 +2,11 @@ import React from "react";
 
 import { ModuleRegistry } from "@framework/ModuleRegistry";
 import { DrawPreviewFunc } from "@framework/Preview";
-import { useStoreState } from "@framework/StateStore";
+import { useStoreValue } from "@framework/StateStore";
 import { DrawerContent, Workbench } from "@framework/Workbench";
 import { LayoutEventTypes } from "@framework/internal/components/Content/private-components/layout";
 import { Drawer } from "@framework/internal/components/Drawer";
-import { WindowIcon, XMarkIcon } from "@heroicons/react/20/solid";
-import { IconButton } from "@lib/components/IconButton";
+import { WindowIcon } from "@heroicons/react/20/solid";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import {
     MANHATTAN_LENGTH,
@@ -164,16 +163,12 @@ type ModulesListProps = {
     I will skip it for now and come back to it when it becomes a problem.
 */
 export const ModulesList: React.FC<ModulesListProps> = (props) => {
-    const [drawerContent, setDrawerContent] = useStoreState(props.workbench.getGuiStateStore(), "drawerContent");
+    const drawerContent = useStoreValue(props.workbench.getGuiStateStore(), "drawerContent");
     const [searchQuery, setSearchQuery] = React.useState("");
 
     const handleSearchQueryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setSearchQuery(e.target.value);
     };
-
-    function handleCloseClick() {
-        setDrawerContent(DrawerContent.ModuleSettings);
-    }
 
     return (
         <Drawer
@@ -182,11 +177,6 @@ export const ModulesList: React.FC<ModulesListProps> = (props) => {
             icon={<WindowIcon />}
             showFilter
             filterPlaceholder="Filter modules..."
-            actions={
-                <IconButton onClick={handleCloseClick} title="Close modules list and return to module settings">
-                    <XMarkIcon className="w-4 h-4" />
-                </IconButton>
-            }
             onFilterChange={handleSearchQueryChange}
         >
             {Object.values(ModuleRegistry.getRegisteredModules())
