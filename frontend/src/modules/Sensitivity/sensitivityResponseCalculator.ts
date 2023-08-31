@@ -1,6 +1,12 @@
-import { EnsembleScalarResponse_api } from "@api";
 import { EnsembleSensitivities, Sensitivity, SensitivityCase, SensitivityType } from "@framework/EnsembleSensitivities";
 import { computeQuantile } from "@modules_shared/statistics";
+
+export type EnsembleScalarResponse = {
+    realizations: number[];
+    values: number[];
+    name?: string;
+    unit?: string;
+};
 
 export interface SensitivityResponse {
     sensitivityName: string;
@@ -35,14 +41,14 @@ export class SensitivityResponseCalculator {
     /**
      * Class for calculating sensitivities for a given Ensemble response
      */
-    private _ensembleResponse: EnsembleScalarResponse_api;
+    private _ensembleResponse: EnsembleScalarResponse;
     private _sensitivities: EnsembleSensitivities;
     private _referenceSensitivity: string;
     private _referenceAverage: number;
 
     constructor(
         sensitivities: EnsembleSensitivities,
-        ensembleResponse: EnsembleScalarResponse_api,
+        ensembleResponse: EnsembleScalarResponse,
         referenceSensitivity = "rms_seed"
     ) {
         this._ensembleResponse = ensembleResponse;

@@ -56,6 +56,23 @@ export const view = ({ moduleContext, workbenchSession, workbenchServices }: Mod
     // Broadcast the data to the realization data channel
     React.useEffect(
         function broadcast() {
+            // Should use this code instead, but temporarily use old code to better expose
+            // the issues over in the sensitivity Module.
+            // if (!ensemble || !realizationsQuery.data || activeTimestampUtcMs === null) {
+            //     return;
+            // }
+            // const dataGenerator = (): { key: number; value: number }[] => {
+            //     const data: { key: number; value: number }[] = [];
+            //     realizationsQuery.data.forEach((vec) => {
+            //         const indexOfTimeStamp = indexOf(vec.timestamps_utc_ms, activeTimestampUtcMs);
+            //         data.push({
+            //             key: vec.realization,
+            //             value: indexOfTimeStamp === -1 ? 0 : vec.values[indexOfTimeStamp],
+            //         });
+            //     });
+            //     return data;
+            // };
+
             if (!ensemble || activeTimestampUtcMs === null) {
                 return;
             }
@@ -82,7 +99,7 @@ export const view = ({ moduleContext, workbenchSession, workbenchServices }: Mod
 
             moduleContext.getChannel(BroadcastChannelNames.Realization_Value).broadcast(channelMeta, dataGenerator);
         },
-        [realizationsQuery.data, ensemble, vectorSpec, activeTimestampUtcMs, moduleContext]
+        [ensemble, vectorSpec, realizationsQuery.data, activeTimestampUtcMs, moduleContext]
     );
 
     const traceDataArr = React.useMemo(() => {
@@ -158,38 +175,36 @@ function buildTraceDataArr(
     const traceDataArr: TimeSeriesPlotlyTrace[] = [];
 
     if (perSensitivityStatisticData) {
-        const meanCase = perSensitivityStatisticData.filter((stat) => stat.sensitivity_name === "rms_seed")[0];
-        const meanObj = meanCase.value_objects.filter(
-            (statObj) => statObj.statistic_function === StatisticFunction_api.MEAN
-        );
-        traceDataArr.push(
-            createSensitivityStatisticsTrace(
-                meanCase.timestamps_utc_ms,
-                meanObj[0].values,
-                `reference ${meanCase.sensitivity_name}`,
-                "linear",
-                "solid",
-                "black"
-            )
-        );
+        const refCase = perSensitivityStatisticData.find((stat) => stat.sensitivity_name === "rms_seed");
+        const meanObj = refCase?.value_objects.find((obj) => obj.statistic_function === StatisticFunction_api.MEAN);
+        if (refCase && meanObj) {
+            traceDataArr.push(
+                createSensitivityStatisticsTrace(
+                    refCase.timestamps_utc_ms,
+                    meanObj.values,
+                    `reference ${refCase.sensitivity_name}`,
+                    "linear",
+                    "solid",
+                    "black"
+                )
+            );
+        }
+    }
 
-        if (showStatistics) {
-            const sensCases = perSensitivityStatisticData.filter((stat) => stat.sensitivity_name === sensitivityName);
-            if (sensCases) {
-                for (const caseEntry of sensCases) {
-                    const meanObj = caseEntry.value_objects.filter(
-                        (statObj) => statObj.statistic_function === StatisticFunction_api.MEAN
-                    );
-                    traceDataArr.push(
-                        createSensitivityStatisticsTrace(
-                            caseEntry.timestamps_utc_ms,
-                            meanObj[0].values,
-                            caseEntry.sensitivity_case,
-                            "linear",
-                            "dash"
-                        )
-                    );
-                }
+    if (showStatistics && perSensitivityStatisticData) {
+        const matchingCases = perSensitivityStatisticData.filter((stat) => stat.sensitivity_name === sensitivityName);
+        for (const aCase of matchingCases) {
+            const meanObj = aCase.value_objects.find((obj) => obj.statistic_function === StatisticFunction_api.MEAN);
+            if (meanObj) {
+                traceDataArr.push(
+                    createSensitivityStatisticsTrace(
+                        aCase.timestamps_utc_ms,
+                        meanObj.values,
+                        aCase.sensitivity_case,
+                        "linear",
+                        "dash"
+                    )
+                );
             }
         }
     }
