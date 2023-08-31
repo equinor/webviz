@@ -69,8 +69,6 @@ export const SyncSettings: React.FC<ModulesListProps> = (props) => {
         return true;
     }
 
-    console.debug("rerender");
-
     return (
         <Drawer title="Sync settings" icon={<LinkIcon />} visible={drawerContent === DrawerContent.SyncSettings}>
             {activeModuleId === "" || activeModuleInstance === undefined ? (
