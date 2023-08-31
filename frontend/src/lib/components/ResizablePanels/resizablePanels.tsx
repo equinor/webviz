@@ -4,6 +4,7 @@ import { useElementSize } from "@lib/hooks/useElementSize";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import { isEqual } from "lodash";
+
 type ResizablePanelsProps = {
     id: string;
     direction: "horizontal" | "vertical";
@@ -119,9 +120,10 @@ export const ResizablePanels: React.FC<ResizablePanelsProps> = (props) => {
         }
 
         function handlePointerUp() {
-            if (dragging) {
-                storeConfigurationInLocalStorage(props.id, sizes);
+            if (!dragging) {
+                return;
             }
+            storeConfigurationInLocalStorage(props.id, sizes);
             dragging = false;
             setIsDragging(false);
             if (props.onSizesChange) {
