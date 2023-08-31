@@ -36,7 +36,6 @@ export class Module<StateType extends StateBaseType> {
     private _defaultTitle: string;
     public viewFC: ModuleFC<StateType>;
     public settingsFC: ModuleFC<StateType>;
-    private _numInstances: number;
     private _importState: ImportState;
     private _moduleInstances: ModuleInstance<StateType>[];
     private _defaultState: StateType | null;
@@ -55,7 +54,6 @@ export class Module<StateType extends StateBaseType> {
     ) {
         this._name = name;
         this._defaultTitle = defaultTitle;
-        this._numInstances = 0;
         this.viewFC = () => <div>Not defined</div>;
         this.settingsFC = () => <div>Not defined</div>;
         this._importState = ImportState.NotImported;
@@ -101,12 +99,12 @@ export class Module<StateType extends StateBaseType> {
         return this._syncableSettingKeys;
     }
 
-    makeInstance(): ModuleInstance<StateType> {
+    makeInstance(instanceNumber: number): ModuleInstance<StateType> {
         if (!this._workbench) {
             throw new Error("Module must be added to a workbench before making an instance");
         }
 
-        const instance = new ModuleInstance<StateType>(this, this._numInstances++, this._channelsDef, this._workbench);
+        const instance = new ModuleInstance<StateType>(this, instanceNumber, this._channelsDef, this._workbench);
         this._moduleInstances.push(instance);
         this.maybeImportSelf();
         return instance;
