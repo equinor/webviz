@@ -50,6 +50,10 @@ export class StateStore<StateType extends StateBaseType> {
         const subscribersSet = this._subscribersMap[key] || new Set();
         subscribersSet.add(cb);
         this._subscribersMap[key] = subscribersSet;
+
+        // Trigger the callback immediately in case we have some late subscribers
+        cb(this._state[key]);
+
         return () => {
             subscribersSet.delete(cb);
         };
@@ -68,9 +72,8 @@ export function useStoreState<T extends keyof S, S extends StateBaseType>(
         };
 
         const unsubscribeFunc = stateStore.subscribe(key, handleStateChange);
-
         return unsubscribeFunc;
-    }, [key]);
+    }, [key, stateStore]);
 
     function setter(valueOrFunc: S[T] | ((prev: S[T]) => S[T])): void {
         if (valueOrFunc instanceof Function) {
