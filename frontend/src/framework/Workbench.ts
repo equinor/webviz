@@ -1,7 +1,5 @@
 import { QueryClient } from "@tanstack/react-query";
 
-import { v4 } from "uuid";
-
 import { Broadcaster } from "./Broadcaster";
 import { EnsembleIdent } from "./EnsembleIdent";
 import { InitialSettings } from "./InitialSettings";
