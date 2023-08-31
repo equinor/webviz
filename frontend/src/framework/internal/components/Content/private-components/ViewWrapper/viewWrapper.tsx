@@ -1,7 +1,7 @@
 import React from "react";
 
 import { ModuleInstance } from "@framework/ModuleInstance";
-import { useSetStoreValue, useStoreState } from "@framework/StateStore";
+import { useStoreState } from "@framework/StateStore";
 import { DrawerContent, Workbench } from "@framework/Workbench";
 import { Point, pointDifference, pointRelativeToDomRect, pointerEventToPoint } from "@lib/utils/geometry";
 
@@ -25,13 +25,15 @@ type ViewWrapperProps = {
 
 export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
     const ref = React.useRef<HTMLDivElement>(null);
-    const setDrawerContent = useSetStoreValue(props.workbench.getGuiStateStore(), "drawerContent");
+    const [drawerContent, setDrawerContent] = useStoreState(props.workbench.getGuiStateStore(), "drawerContent");
     const [settingsPanelWidth, setSettingsPanelWidth] = useStoreState(
         props.workbench.getGuiStateStore(),
         "settingsPanelWidthInPercent"
     );
 
-    const handlePointerDown = React.useCallback(
+    const timeRef = React.useRef<number | null>(null);
+
+    const handleHeaderPointerDown = React.useCallback(
         function handlePointerDown(e: React.PointerEvent<HTMLDivElement>) {
             if (ref.current) {
                 const point = pointerEventToPoint(e.nativeEvent);
@@ -65,16 +67,29 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
         [props.moduleInstance]
     );
 
-    function handleModuleHeaderClick() {
+    function handleModuleClick() {
+        if (settingsPanelWidth <= 5) {
+            setSettingsPanelWidth(20);
+        }
+        if (drawerContent !== DrawerContent.SyncSettings) {
+            setDrawerContent(DrawerContent.ModuleSettings);
+        }
         if (props.isActive) return;
         props.workbench.setActiveModuleId(props.moduleInstance.getId());
     }
 
-    function handleModuleHeaderDoubleClick() {
-        if (settingsPanelWidth <= 5) {
-            setSettingsPanelWidth(20);
+    function handlePointerDown() {
+        timeRef.current = Date.now();
+    }
+
+    function handlePointerUp() {
+        if (drawerContent === DrawerContent.ModulesList) {
+            if (!timeRef.current || Date.now() - timeRef.current < 800) {
+                handleModuleClick();
+            }
+            return;
         }
-        setDrawerContent(DrawerContent.ModuleSettings);
+        handleModuleClick();
     }
 
     return (
@@ -100,16 +115,16 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
                     } border-solid border-2 box-border shadow ${
                         props.isDragged ? "cursor-grabbing select-none" : "cursor-grab"
                     }}`}
-                    onClick={handleModuleHeaderClick}
-                    onDoubleClick={handleModuleHeaderDoubleClick}
+                    onPointerDown={handlePointerDown}
+                    onPointerUp={handlePointerUp}
                 >
                     <Header
                         moduleInstance={props.moduleInstance}
                         isDragged={props.isDragged}
-                        onPointerDown={handlePointerDown}
+                        onPointerDown={handleHeaderPointerDown}
                         onRemoveClick={handleRemoveClick}
                     />
-                    <div className="flex-grow overflow-auto h-0">
+                    <div className="flex-grow overflow-auto h-0" onClick={handleModuleClick}>
                         <ViewContent workbench={props.workbench} moduleInstance={props.moduleInstance} />
                     </div>
                 </div>

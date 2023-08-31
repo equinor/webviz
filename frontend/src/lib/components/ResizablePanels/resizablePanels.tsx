@@ -1,11 +1,9 @@
 import React from "react";
 
 import { useElementSize } from "@lib/hooks/useElementSize";
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import { isEqual } from "lodash";
-
-import { resolveClassNames } from "../_utils/resolveClassNames";
-
 type ResizablePanelsProps = {
     id: string;
     direction: "horizontal" | "vertical";

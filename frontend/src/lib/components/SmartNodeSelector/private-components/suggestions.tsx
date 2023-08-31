@@ -1,7 +1,7 @@
 import React from "react";
-import ReactDOM from "react-dom";
+import { Root, createRoot } from "react-dom/client";
 
-import { resolveClassNames } from "@lib/components/_utils/resolveClassNames";
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import { TreeDataNodeMetaData } from "../private-utils/treeDataNodeTypes";
 import { TreeNodeSelection } from "../private-utils/treeNodeSelection";
@@ -37,6 +37,7 @@ export class Suggestions extends React.Component<SuggestionsProps> {
     private _lastNodeSelection?: TreeNodeSelection;
     private _positionRef: React.RefObject<HTMLDivElement>;
     private _popup: HTMLDivElement | null;
+    private _popupRoot: Root | null;
     private _showingAllSuggestions: boolean;
 
     constructor(props: SuggestionsProps) {
@@ -53,6 +54,7 @@ export class Suggestions extends React.Component<SuggestionsProps> {
         this._allOptions = [];
         this._positionRef = React.createRef();
         this._popup = null;
+        this._popupRoot = null;
         this._showingAllSuggestions = false;
 
         this.state = {
@@ -80,6 +82,7 @@ export class Suggestions extends React.Component<SuggestionsProps> {
 
         this._popup = document.createElement("div");
         document.body.appendChild(this._popup);
+        this._popupRoot = createRoot(this._popup);
     }
 
     componentWillUnmount(): void {
@@ -370,7 +373,9 @@ export class Suggestions extends React.Component<SuggestionsProps> {
                   height: 0,
               };
 
-        ReactDOM.render(
+        if (!this._popupRoot) return;
+
+        this._popupRoot.render(
             <div
                 ref={suggestionsRef}
                 className="box-border absolute top-full left-0 w-full border bg-white rounded-b shadow z-50 overflow-y-auto"
@@ -394,8 +399,7 @@ export class Suggestions extends React.Component<SuggestionsProps> {
                         height: lowerSpacerHeight + "px",
                     }}
                 ></div>
-            </div>,
-            this._popup
+            </div>
         );
     }
 
