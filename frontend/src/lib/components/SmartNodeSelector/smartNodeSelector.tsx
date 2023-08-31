@@ -1,6 +1,7 @@
 import React from "react";
 
 import { XMarkIcon } from "@heroicons/react/20/solid";
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import _ from "lodash";
 
@@ -9,8 +10,6 @@ import { Tag } from "./private-components/tag";
 import { TreeData } from "./private-utils/treeData";
 import { TreeDataNode } from "./private-utils/treeDataNodeTypes";
 import { TreeNodeSelection } from "./private-utils/treeNodeSelection";
-
-import { resolveClassNames } from "../_utils/resolveClassNames";
 
 export enum Direction {
     Left = 0,
