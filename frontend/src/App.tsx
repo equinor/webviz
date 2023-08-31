@@ -22,6 +22,10 @@ function App() {
         if (workbench.getLayout().length === 0) {
             workbench.getGuiStateStore().setValue("drawerContent", DrawerContent.ModulesList);
         }
+
+        return function () {
+            workbench.clearLayout();
+        };
     }, []);
 
     return (
