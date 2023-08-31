@@ -36,7 +36,7 @@ function App() {
         }
 
         return function () {
-            workbench.clearLayout();
+            workbench.current.clearLayout();
         };
     }, []);
 
