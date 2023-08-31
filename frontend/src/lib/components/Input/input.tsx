@@ -24,10 +24,10 @@ export const Input = React.forwardRef((props: InputProps, ref: React.ForwardedRe
 
     const internalRef = React.useRef<HTMLInputElement>(null);
 
-    React.useImperativeHandle<HTMLInputElement | null, HTMLInputElement | null>(
-        props.inputRef,
-        () => internalRef.current
-    );
+    React.useImperativeHandle<
+        HTMLInputElement | HTMLTextAreaElement | null,
+        HTMLInputElement | HTMLTextAreaElement | null
+    >(props.inputRef, () => internalRef.current);
 
     const handleAdornmentClick = React.useCallback((event: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
         if (internalRef.current) {
