@@ -17,7 +17,7 @@ export const view = ({ moduleContext }: ModuleFCProps<State>) => {
     const parameterName = moduleContext.useStoreValue("parameterName");
     const timestampUtcMs = moduleContext.useStoreValue("timestampUtcMs");
 
-    const vectorAtTimestepQuery = useVectorAtTimestampQuery(
+    const vectorAtTimestampQuery = useVectorAtTimestampQuery(
         vectorSpec?.caseUuid,
         vectorSpec?.ensembleName,
         vectorSpec?.vectorName,
@@ -37,10 +37,10 @@ export const view = ({ moduleContext }: ModuleFCProps<State>) => {
 
     return (
         <div className="w-full h-full" ref={wrapperDivRef}>
-            {parameterQuery.data && vectorAtTimestepQuery.data &&
+            {parameterQuery.data && vectorAtTimestampQuery.data &&
                 <PlotlyScatter
                     x={parameterQuery.data.values as number[]}
-                    y={vectorAtTimestepQuery.data.values as number[]}
+                    y={vectorAtTimestampQuery.data.values as number[]}
                     realizations={parameterQuery.data.realizations as number[]}
                     highlightedRealization={highlightedRealization}
                     onHoverData={handleHoveredRealization}

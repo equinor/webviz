@@ -1,6 +1,5 @@
 import React from "react";
 
-import { timestampUtcMsToCompactIsoString } from "@framework/utils/timestampUtils";
 import { EnsembleParameterDescription_api, VectorDescription_api } from "@api";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { ModuleFCProps } from "@framework/Module";
@@ -8,6 +7,7 @@ import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { SingleEnsembleSelect } from "@framework/components/SingleEnsembleSelect";
 import { fixupEnsembleIdent, maybeAssignFirstSyncedEnsemble } from "@framework/utils/ensembleUiHelpers";
+import { timestampUtcMsToCompactIsoString } from "@framework/utils/timestampUtils";
 import { ApiStateWrapper } from "@lib/components/ApiStateWrapper";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { Dropdown } from "@lib/components/Dropdown";
@@ -35,7 +35,7 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
     const computedEnsemble = fixupEnsembleIdent(candidateEnsemble, ensembleSet);
 
     const vectorsQuery = useVectorsQuery(computedEnsemble?.getCaseUuid(), computedEnsemble?.getEnsembleName());
-    const timeStepsQuery = useTimestampsListQuery(computedEnsemble?.getCaseUuid(), computedEnsemble?.getEnsembleName());
+    const timestampsQuery = useTimestampsListQuery(computedEnsemble?.getCaseUuid(), computedEnsemble?.getEnsembleName());
     const parameterNamesQuery = useGetParameterNamesQuery(
         computedEnsemble?.getCaseUuid(),
         computedEnsemble?.getEnsembleName()
@@ -117,15 +117,15 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
                 </Label>
             </ApiStateWrapper>
             <ApiStateWrapper
-                apiResult={timeStepsQuery}
-                errorComponent={"Error loading vector names"}
+                apiResult={timestampsQuery}
+                errorComponent={"Error loading timestamps"}
                 loadingComponent={<CircularProgress />}
             >
                 <Label text="Timestep">
                     <Dropdown
-                        options={makeTimeStepsOptions(timeStepsQuery.data)}
+                        options={makeTimeStepsOptions(timestampsQuery.data)}
                         value={timestampUctMs?.toString()}
-                        onChange={tsValAsString => setTimestampUtcMs(Number(tsValAsString))}
+                        onChange={(tsValAsString) => setTimestampUtcMs(Number(tsValAsString))}
                     />
                 </Label>
             </ApiStateWrapper>
