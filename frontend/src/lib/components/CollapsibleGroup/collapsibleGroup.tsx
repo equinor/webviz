@@ -1,9 +1,9 @@
 import React from "react";
 
 import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/20/solid";
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
-import { BaseComponent, BaseComponentProps } from "../_BaseComponent";
-import { resolveClassNames } from "../_utils/resolveClassNames";
+import { BaseComponent, BaseComponentProps } from "../BaseComponent";
 
 export type CollapsibleGroupProps = {
     icon?: React.ReactElement;

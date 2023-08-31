@@ -12,9 +12,9 @@ import { IconButton } from "@lib/components/IconButton";
 import { Input } from "@lib/components/Input";
 import { Label } from "@lib/components/Label";
 import { Overlay } from "@lib/components/Overlay";
-import { resolveClassNames } from "@lib/components/_utils/resolveClassNames";
 import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
 import { ColorPalette } from "@lib/utils/ColorPalette";
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { convertRemToPixels } from "@lib/utils/screenUnitConversions";
 
 enum ColorPaletteSelectorType {

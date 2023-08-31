@@ -1,7 +1,7 @@
 import React from "react";
 import { Root, createRoot } from "react-dom/client";
 
-import { resolveClassNames } from "@lib/components/_utils/resolveClassNames";
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import { TreeDataNodeMetaData } from "../private-utils/treeDataNodeTypes";
 import { TreeNodeSelection } from "../private-utils/treeNodeSelection";

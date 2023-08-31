@@ -1,6 +1,6 @@
 import React from "react";
 
-import { resolveClassNames } from "../_utils/resolveClassNames";
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 export type BaseComponentProps = {
     disabled?: boolean;

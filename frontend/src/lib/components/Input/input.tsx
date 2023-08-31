@@ -1,9 +1,9 @@
 import React from "react";
 
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { Input as InputUnstyled, InputProps as InputUnstyledProps } from "@mui/base";
 
-import { BaseComponent } from "../_BaseComponent";
-import { resolveClassNames } from "../_utils/resolveClassNames";
+import { BaseComponent } from "../BaseComponent";
 
 export type InputProps = InputUnstyledProps & {
     wrapperStyle?: React.CSSProperties;

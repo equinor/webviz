@@ -22,8 +22,8 @@ import {
 import { Badge } from "@lib/components/Badge";
 import { Button } from "@lib/components/Button";
 import { CircularProgress } from "@lib/components/CircularProgress";
-import { resolveClassNames } from "@lib/components/_utils/resolveClassNames";
 import { isDevMode } from "@lib/utils/devMode";
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { useQueryClient } from "@tanstack/react-query";
 
 type NavBarProps = {
@@ -167,6 +167,19 @@ export const NavBar: React.FC<NavBarProps> = (props) => {
                     {expanded ? "Module settings" : ""}
                 </Button>
                 <Button
+                    title="Show sync settings"
+                    onClick={handleSyncSettingsClick}
+                    startIcon={<LinkIcon className="w-5 h-5 mr-2" />}
+                    className={resolveClassNames(
+                        "w-full",
+                        "h-10",
+                        drawerContent === DrawerContent.SyncSettings ? "text-red-600" : "!text-slate-800"
+                    )}
+                >
+                    {expanded ? "Sync settings" : ""}
+                </Button>
+                <NavBarDivider />
+                <Button
                     title="Show modules list"
                     onClick={handleModulesListClick}
                     startIcon={<WindowIcon className="w-5 h-5 mr-2" />}
@@ -190,18 +203,7 @@ export const NavBar: React.FC<NavBarProps> = (props) => {
                 >
                     {expanded ? "Use templates" : ""}
                 </Button>
-                <Button
-                    title="Show sync settings"
-                    onClick={handleSyncSettingsClick}
-                    startIcon={<LinkIcon className="w-5 h-5 mr-2" />}
-                    className={resolveClassNames(
-                        "w-full",
-                        "h-10",
-                        drawerContent === DrawerContent.SyncSettings ? "text-red-600" : "!text-slate-800"
-                    )}
-                >
-                    {expanded ? "Sync settings" : ""}
-                </Button>
+                <NavBarDivider />
                 <Button
                     title="Show color settings"
                     onClick={handleColorPaletteSettingsClick}
