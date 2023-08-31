@@ -101,6 +101,10 @@ export class Module<StateType extends StateBaseType> {
         return this._syncableSettingKeys;
     }
 
+    hasSyncableSettingKey(key: SyncSettingKey): boolean {
+        return this._syncableSettingKeys.includes(key);
+    }
+
     makeInstance(): ModuleInstance<StateType> {
         if (!this._workbench) {
             throw new Error("Module must be added to a workbench before making an instance");
