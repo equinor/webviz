@@ -1,5 +1,4 @@
 import React from "react";
-import { unstable_batchedUpdates } from "react-dom";
 import Plot from "react-plotly.js";
 
 import { VectorHistoricalData_api, VectorRealizationData_api, VectorStatisticData_api } from "@api";
@@ -101,27 +100,23 @@ export const view = ({ moduleContext, workbenchSession, workbenchServices }: Mod
     const handleHover = (e: PlotHoverEvent) => {
         const plotDatum: PlotDatum = e.points[0];
 
-        unstable_batchedUpdates(() => {
-            if (plotDatum.pointIndex >= 0 && plotDatum.pointIndex < plotDatum.data.x.length) {
-                const timestampUtcMs = plotDatum.data.x[plotDatum.pointIndex];
-                if (typeof timestampUtcMs === "number")
-                    workbenchServices.publishGlobalData("global.hoverTimestamp", { timestampUtcMs: timestampUtcMs });
-            }
+        if (plotDatum.pointIndex >= 0 && plotDatum.pointIndex < plotDatum.data.x.length) {
+            const timestampUtcMs = plotDatum.data.x[plotDatum.pointIndex];
+            if (typeof timestampUtcMs === "number")
+                workbenchServices.publishGlobalData("global.hoverTimestamp", { timestampUtcMs: timestampUtcMs });
+        }
 
-            const curveData = plotDatum.data as MyPlotData;
-            if (typeof curveData.realizationNumber === "number") {
-                workbenchServices.publishGlobalData("global.hoverRealization", {
-                    realization: curveData.realizationNumber,
-                });
-            }
-        });
+        const curveData = plotDatum.data as MyPlotData;
+        if (typeof curveData.realizationNumber === "number") {
+            workbenchServices.publishGlobalData("global.hoverRealization", {
+                realization: curveData.realizationNumber,
+            });
+        }
     };
 
     function handleUnHover() {
-        unstable_batchedUpdates(() => {
-            workbenchServices.publishGlobalData("global.hoverRealization", null);
-            workbenchServices.publishGlobalData("global.hoverTimestamp", null);
-        });
+        workbenchServices.publishGlobalData("global.hoverRealization", null);
+        workbenchServices.publishGlobalData("global.hoverTimestamp", null);
     }
 
     const tracesDataArr: MyPlotData[] = [];

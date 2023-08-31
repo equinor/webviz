@@ -1,5 +1,4 @@
 import React from "react";
-import { unstable_batchedUpdates } from "react-dom";
 
 import { StatisticFunction_api, VectorRealizationData_api, VectorStatisticSensitivityData_api } from "@api";
 import { BroadcastChannelMeta } from "@framework/Broadcaster";
@@ -117,26 +116,24 @@ export const view = ({ moduleContext, workbenchSession, workbenchServices }: Mod
     }, [ensemble, selectedSensitivity, showStatistics, showRealizations, statisticsQuery.data, realizationsQuery.data]);
 
     function handleHoverInChart(hoverInfo?: HoverInfo) {
-        unstable_batchedUpdates(() => {
-            if (hoverInfo) {
-                if (hoverInfo.shiftKeyIsDown) {
-                    setActiveTimestampUtcMs(hoverInfo.timestampUtcMs);
-                }
-
-                workbenchServices.publishGlobalData("global.hoverTimestamp", {
-                    timestampUtcMs: hoverInfo.timestampUtcMs,
-                });
-
-                // if (typeof hoverInfo.realization === "number") {
-                //     workbenchServices.publishGlobalData("global.hoverRealization", {
-                //         realization: hoverInfo.realization,
-                //     });
-                // }
-            } else {
-                workbenchServices.publishGlobalData("global.hoverTimestamp", null);
-                workbenchServices.publishGlobalData("global.hoverRealization", null);
+        if (hoverInfo) {
+            if (hoverInfo.shiftKeyIsDown) {
+                setActiveTimestampUtcMs(hoverInfo.timestampUtcMs);
             }
-        });
+
+            workbenchServices.publishGlobalData("global.hoverTimestamp", {
+                timestampUtcMs: hoverInfo.timestampUtcMs,
+            });
+
+            if (typeof hoverInfo.realization === "number") {
+                workbenchServices.publishGlobalData("global.hoverRealization", {
+                    realization: hoverInfo.realization,
+                });
+            }
+        } else {
+            workbenchServices.publishGlobalData("global.hoverTimestamp", null);
+            workbenchServices.publishGlobalData("global.hoverRealization", null);
+        }
     }
 
     function handleClickInChart(timestampUtcMs: number) {

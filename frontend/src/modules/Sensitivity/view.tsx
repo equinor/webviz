@@ -3,7 +3,6 @@ import React from "react";
 import { BroadcastChannelData, BroadcastChannelMeta } from "@framework/Broadcaster";
 import { Ensemble } from "@framework/Ensemble";
 import { ModuleFCProps } from "@framework/Module";
-import { useFirstEnsembleInEnsembleSet } from "@framework/WorkbenchSession";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { AdjustmentsHorizontalIcon, ChartBarIcon, TableCellsIcon } from "@heroicons/react/20/solid";
 import { useElementSize } from "@lib/hooks/useElementSize";
@@ -14,6 +13,11 @@ import SensitivityTable from "./sensitivityTable";
 import { PlotType, State } from "./state";
 
 export const view = ({ moduleContext, workbenchSession, workbenchServices }: ModuleFCProps<State>) => {
+    const renderCount = React.useRef(0);
+    React.useEffect(function incrementRenderCount() {
+        renderCount.current = renderCount.current + 1;
+    });
+
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);
     const wrapperDivSize = useElementSize(wrapperDivRef);
     const ensembleSet = useEnsembleSet(workbenchSession);
@@ -189,6 +193,7 @@ export const view = ({ moduleContext, workbenchSession, workbenchServices }: Mod
                     </div>
                 )}
             </div>
+            <div className="absolute top-10 left-5 italic text-pink-400">(rc={renderCount.current})</div>
         </div>
     );
 };
