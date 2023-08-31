@@ -5,7 +5,7 @@ import { ArrowLeftOnRectangleIcon, ArrowRightOnRectangleIcon, UserIcon } from "@
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { Menu } from "@lib/components/Menu";
 import { MenuItem } from "@lib/components/MenuItem";
-import { resolveClassNames } from "@lib/components/_utils/resolveClassNames";
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { getTextWidth } from "@lib/utils/textSize";
 import { Dropdown, MenuButton } from "@mui/base";
 
