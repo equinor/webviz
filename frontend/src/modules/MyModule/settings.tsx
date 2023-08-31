@@ -5,7 +5,6 @@ import { ColorGradient } from "@lib/components/ColorGradient/colorGradient";
 import { Input } from "@lib/components/Input";
 import { Label } from "@lib/components/Label";
 import { RadioGroup } from "@lib/components/RadioGroup";
-import { SmartNodeSelector } from "@lib/components/SmartNodeSelector";
 import { ColorScaleGradientType, ColorScaleType } from "@lib/utils/ColorScale";
 
 import { State } from "./state";
