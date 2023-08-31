@@ -16,6 +16,7 @@ import { SurfaceService } from './services/SurfaceService';
 import { SurfacePolygonsService } from './services/SurfacePolygonsService';
 import { TimeseriesService } from './services/TimeseriesService';
 import { WellService } from './services/WellService';
+import { WellCompletionService } from './services/WellCompletionService';
 
 type HttpRequestConstructor = new (config: OpenAPIConfig) => BaseHttpRequest;
 
@@ -32,6 +33,7 @@ export class ApiService {
     public readonly surfacePolygons: SurfacePolygonsService;
     public readonly timeseries: TimeseriesService;
     public readonly well: WellService;
+    public readonly wellCompletion: WellCompletionService;
 
     public readonly request: BaseHttpRequest;
 
@@ -59,6 +61,7 @@ export class ApiService {
         this.surfacePolygons = new SurfacePolygonsService(this.request);
         this.timeseries = new TimeseriesService(this.request);
         this.well = new WellService(this.request);
+        this.wellCompletion = new WellCompletionService(this.request);
     }
 }
 

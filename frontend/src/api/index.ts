@@ -12,6 +12,7 @@ export type { OpenAPIConfig } from './core/OpenAPI';
 export type { B64EncodedNumpyArray as B64EncodedNumpyArray_api } from './models/B64EncodedNumpyArray';
 export type { Body_get_realizations_response as Body_get_realizations_response_api } from './models/Body_get_realizations_response';
 export type { CaseInfo as CaseInfo_api } from './models/CaseInfo';
+export type { Completions as Completions_api } from './models/Completions';
 export type { DynamicSurfaceDirectory as DynamicSurfaceDirectory_api } from './models/DynamicSurfaceDirectory';
 export type { EnsembleCorrelations as EnsembleCorrelations_api } from './models/EnsembleCorrelations';
 export type { EnsembleDetails as EnsembleDetails_api } from './models/EnsembleDetails';
@@ -47,6 +48,12 @@ export type { VectorStatisticData as VectorStatisticData_api } from './models/Ve
 export type { VectorStatisticSensitivityData as VectorStatisticSensitivityData_api } from './models/VectorStatisticSensitivityData';
 export type { WellBoreHeader as WellBoreHeader_api } from './models/WellBoreHeader';
 export type { WellBoreTrajectory as WellBoreTrajectory_api } from './models/WellBoreTrajectory';
+export type { WellCompletionData as WellCompletionData_api } from './models/WellCompletionData';
+export type { WellCompletionDataSet as WellCompletionDataSet_api } from './models/WellCompletionDataSet';
+export type { WellCompletionUnitInfo as WellCompletionUnitInfo_api } from './models/WellCompletionUnitInfo';
+export type { WellCompletionUnits as WellCompletionUnits_api } from './models/WellCompletionUnits';
+export type { WellCompletionWell as WellCompletionWell_api } from './models/WellCompletionWell';
+export type { WellCompletionZone as WellCompletionZone_api } from './models/WellCompletionZone';
 
 export { CorrelationsService } from './services/CorrelationsService';
 export { DefaultService } from './services/DefaultService';
@@ -59,3 +66,4 @@ export { SurfaceService } from './services/SurfaceService';
 export { SurfacePolygonsService } from './services/SurfacePolygonsService';
 export { TimeseriesService } from './services/TimeseriesService';
 export { WellService } from './services/WellService';
+export { WellCompletionService } from './services/WellCompletionService';
