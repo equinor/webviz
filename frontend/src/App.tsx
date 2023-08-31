@@ -14,14 +14,20 @@ const layout: LayoutElement[] = [];
 
 function App() {
     const workbench = new Workbench();
+    console.debug("render app");
 
     React.useEffect(() => {
+        console.debug("app useEffect");
         if (!workbench.loadLayoutFromLocalStorage()) {
             workbench.makeLayout(layout);
         }
         if (workbench.getLayout().length === 0) {
             workbench.getGuiStateStore().setValue("drawerContent", DrawerContent.ModulesList);
         }
+
+        return function () {
+            workbench.clearLayout();
+        };
     }, []);
 
     return (

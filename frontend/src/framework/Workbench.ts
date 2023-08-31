@@ -1,5 +1,7 @@
 import { QueryClient } from "@tanstack/react-query";
 
+import { v4 } from "uuid";
+
 import { Broadcaster } from "./Broadcaster";
 import { EnsembleIdent } from "./EnsembleIdent";
 import { InitialSettings } from "./InitialSettings";
@@ -53,6 +55,7 @@ export class Workbench {
     private _broadcaster: Broadcaster;
     private _subscribersMap: { [key: string]: Set<() => void> };
     private _layout: LayoutElement[];
+    private _perModuleRunningInstanceNumber: Record<string, number>;
 
     constructor() {
         this._moduleInstances = [];
@@ -67,6 +70,7 @@ export class Workbench {
         this._broadcaster = new Broadcaster();
         this._subscribersMap = {};
         this._layout = [];
+        this._perModuleRunningInstanceNumber = {};
     }
 
     loadLayoutFromLocalStorage(): boolean {
@@ -145,6 +149,15 @@ export class Workbench {
         return this._moduleInstances.find((moduleInstance) => moduleInstance.getId() === id);
     }
 
+    private getNextModuleInstanceNumber(moduleName: string): number {
+        if (moduleName in this._perModuleRunningInstanceNumber) {
+            this._perModuleRunningInstanceNumber[moduleName] += 1;
+        } else {
+            this._perModuleRunningInstanceNumber[moduleName] = 1;
+        }
+        return this._perModuleRunningInstanceNumber[moduleName];
+    }
+
     makeLayout(layout: LayoutElement[]): void {
         this._moduleInstances = [];
         this.setLayout(layout);
@@ -155,19 +168,21 @@ export class Workbench {
             }
 
             module.setWorkbench(this);
-            const moduleInstance = module.makeInstance();
+            const moduleInstance = module.makeInstance(this.getNextModuleInstanceNumber(module.getName()));
             this._moduleInstances.push(moduleInstance);
             this._layout[index] = { ...this._layout[index], moduleInstanceId: moduleInstance.getId() };
             this.notifySubscribers(WorkbenchEvents.ModuleInstancesChanged);
         });
     }
 
-    private clearLayout(): void {
+    clearLayout(): void {
         for (const moduleInstance of this._moduleInstances) {
             this._broadcaster.unregisterAllChannelsForModuleInstance(moduleInstance.getId());
         }
         this._moduleInstances = [];
-        this.setLayout([]);
+        this._perModuleRunningInstanceNumber = {};
+        this._layout = [];
+        this.notifySubscribers(WorkbenchEvents.FullModuleRerenderRequested);
     }
 
     makeAndAddModuleInstance(moduleName: string, layout: LayoutElement): ModuleInstance<any> {
@@ -178,7 +193,7 @@ export class Workbench {
 
         module.setWorkbench(this);
 
-        const moduleInstance = module.makeInstance();
+        const moduleInstance = module.makeInstance(this.getNextModuleInstanceNumber(module.getName()));
         this._moduleInstances.push(moduleInstance);
 
         this._layout.push({ ...layout, moduleInstanceId: moduleInstance.getId() });
