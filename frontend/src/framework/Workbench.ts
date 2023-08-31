@@ -159,7 +159,6 @@ export class Workbench {
     }
 
     makeLayout(layout: LayoutElement[]): void {
-        this.clearLayout();
         this._moduleInstances = [];
         this.setLayout(layout);
         layout.forEach((element, index: number) => {
