@@ -14,10 +14,8 @@ const layout: LayoutElement[] = [];
 
 function App() {
     const workbench = new Workbench();
-    console.debug("render app");
 
     React.useEffect(() => {
-        console.debug("app useEffect");
         if (!workbench.loadLayoutFromLocalStorage()) {
             workbench.makeLayout(layout);
         }
