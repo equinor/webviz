@@ -37,7 +37,10 @@ const NavBarDivider: React.FC = () => {
 export const NavBar: React.FC<NavBarProps> = (props) => {
     const [ensembleDialogOpen, setEnsembleDialogOpen] = React.useState<boolean>(false);
     const [expanded, setExpanded] = React.useState<boolean>(localStorage.getItem("navBarExpanded") === "true");
-    const [loadingEnsembles, setLoadingEnsembles] = React.useState<boolean>(false);
+    const [loadingEnsembleSet, setLoadingEnsembleSet] = useStoreState(
+        props.workbench.getGuiStateStore(),
+        "loadingEnsembleSet"
+    );
     const [drawerContent, setDrawerContent] = useStoreState(props.workbench.getGuiStateStore(), "drawerContent");
     const [settingsPanelWidth, setSettingsPanelWidth] = useStoreState(
         props.workbench.getGuiStateStore(),
@@ -88,9 +91,9 @@ export const NavBar: React.FC<NavBarProps> = (props) => {
             const selectedEnsembleIdents = selectedEnsembles.map(
                 (ens) => new EnsembleIdent(ens.caseUuid, ens.ensembleName)
             );
-            setLoadingEnsembles(true);
+            setLoadingEnsembleSet(true);
             props.workbench.loadAndSetupEnsembleSetInSession(queryClient, selectedEnsembleIdents).then(() => {
-                setLoadingEnsembles(false);
+                setLoadingEnsembleSet(false);
             });
         }
     }
@@ -132,14 +135,14 @@ export const NavBar: React.FC<NavBarProps> = (props) => {
                     onClick={handleEnsembleClick}
                     className="w-full !text-slate-800 h-10"
                     startIcon={
-                        selectedEnsembles.length === 0 && !loadingEnsembles ? (
+                        selectedEnsembles.length === 0 && !loadingEnsembleSet ? (
                             <QueueListIcon className="w-5 h-5 mr-2" />
                         ) : (
                             <Badge
                                 className="mr-2"
                                 color="bg-blue-500"
                                 badgeContent={
-                                    loadingEnsembles ? (
+                                    loadingEnsembleSet ? (
                                         <CircularProgress size="extra-small" color="inherit" />
                                     ) : (
                                         selectedEnsembles.length
