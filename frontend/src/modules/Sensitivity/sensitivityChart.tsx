@@ -79,7 +79,7 @@ const computeHighLabel = (sensitivity: SensitivityResponse): string => {
 };
 
 const calculateXaxisRange = (lowValues: number[], highValues: number[]): [number, number] => {
-    let maxVal: number = 0;
+    let maxVal = 0;
 
     for (let i = 0; i < Math.max(lowValues.length, highValues.length); i++) {
         if (lowValues[i] !== undefined && Math.abs(lowValues[i]) > maxVal) {
