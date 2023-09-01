@@ -6,7 +6,7 @@ import type { StatisticValueObject } from './StatisticValueObject';
 
 export type VectorStatisticSensitivityData = {
     realizations: Array<number>;
-    timestamps: Array<string>;
+    timestamps_utc_ms: Array<number>;
     value_objects: Array<StatisticValueObject>;
     unit: string;
     is_rate: boolean;

@@ -14,7 +14,6 @@ export type { Body_get_realizations_response as Body_get_realizations_response_a
 export type { CaseInfo as CaseInfo_api } from './models/CaseInfo';
 export type { Completions as Completions_api } from './models/Completions';
 export type { DynamicSurfaceDirectory as DynamicSurfaceDirectory_api } from './models/DynamicSurfaceDirectory';
-export type { EnsembleCorrelations as EnsembleCorrelations_api } from './models/EnsembleCorrelations';
 export type { EnsembleDetails as EnsembleDetails_api } from './models/EnsembleDetails';
 export type { EnsembleInfo as EnsembleInfo_api } from './models/EnsembleInfo';
 export type { EnsembleParameter as EnsembleParameter_api } from './models/EnsembleParameter';
@@ -55,7 +54,6 @@ export type { WellCompletionUnits as WellCompletionUnits_api } from './models/We
 export type { WellCompletionWell as WellCompletionWell_api } from './models/WellCompletionWell';
 export type { WellCompletionZone as WellCompletionZone_api } from './models/WellCompletionZone';
 
-export { CorrelationsService } from './services/CorrelationsService';
 export { DefaultService } from './services/DefaultService';
 export { ExploreService } from './services/ExploreService';
 export { GridService } from './services/GridService';

@@ -29,7 +29,7 @@ class VectorDescription(BaseModel):
 
 
 class VectorHistoricalData(BaseModel):
-    timestamps: List[datetime.datetime]
+    timestamps_utc_ms: List[int]
     values: List[float]
     unit: str
     is_rate: bool
@@ -37,7 +37,7 @@ class VectorHistoricalData(BaseModel):
 
 class VectorRealizationData(BaseModel):
     realization: int
-    timestamps: List[datetime.datetime]
+    timestamps_utc_ms: List[int]
     values: List[float]
     unit: str
     is_rate: bool
@@ -50,7 +50,7 @@ class StatisticValueObject(BaseModel):
 
 class VectorStatisticData(BaseModel):
     realizations: List[int]
-    timestamps: List[datetime.datetime]
+    timestamps_utc_ms: List[int]
     value_objects: List[StatisticValueObject]
     unit: str
     is_rate: bool
@@ -58,7 +58,7 @@ class VectorStatisticData(BaseModel):
 
 class VectorStatisticSensitivityData(BaseModel):
     realizations: List[int]
-    timestamps: List[datetime.datetime]
+    timestamps_utc_ms: List[int]
     value_objects: List[StatisticValueObject]
     unit: str
     is_rate: bool
