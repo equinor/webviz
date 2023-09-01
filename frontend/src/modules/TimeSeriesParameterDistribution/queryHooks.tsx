@@ -75,6 +75,6 @@ export function useVectorAtTimestampQuery(
             ),
         staleTime: STALE_TIME,
         cacheTime: CACHE_TIME,
-        enabled: !!(caseUuid && ensembleName && vectorName && timestampUtcMs != undefined),
+        enabled: !!(caseUuid && ensembleName && vectorName && timestampUtcMs != null),
     });
 }
