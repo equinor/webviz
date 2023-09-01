@@ -66,7 +66,7 @@ export function fixupEnsembleIdents(
         return [ensembleSet.getEnsembleArr()[0].getIdent()];
     }
 
-    let ensembleIndents: EnsembleIdent[] = [];
+    const ensembleIndents: EnsembleIdent[] = [];
     currIdents.map((currIdent) => {
         if (ensembleSet.findEnsemble(currIdent)) {
             ensembleIndents.push(currIdent);
