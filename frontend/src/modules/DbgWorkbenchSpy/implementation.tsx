@@ -69,7 +69,7 @@ function makeTableRow(label: string, value: any, updatedTS?: string) {
             <td>
                 <b>{value || "N/A"}</b>
             </td>
-            { updatedTS ? <td>({updatedTS})</td> : null }
+            <td>{updatedTS ? `(${updatedTS})` : null}</td>
         </tr>
     );
 }
