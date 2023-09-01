@@ -1,6 +1,9 @@
 import React from "react";
 import { createRoot } from "react-dom/client";
 
+import { AuthProvider } from "@framework/internal/providers/AuthProvider";
+import { CustomQueryClientProvider } from "@framework/internal/providers/QueryClientProvider";
+
 import App from "./App";
 
 const container = document.getElementById("root");
@@ -13,6 +16,10 @@ const root = createRoot(container);
 
 root.render(
     <React.StrictMode>
-        <App />
+        <AuthProvider>
+            <CustomQueryClientProvider>
+                <App />
+            </CustomQueryClientProvider>
+        </AuthProvider>
     </React.StrictMode>
 );
