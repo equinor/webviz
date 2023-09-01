@@ -2,13 +2,13 @@
 // According to spec, only the hour part of time is mandatory
 export function hasTime(isoDateTimeString: string): boolean {
     // Regular expression to match time portion in ISO 8601 format
-    const regex = /^(.*T.*)\d{2}/;
+    const regex = /T\d{2}/;
     return regex.test(isoDateTimeString);
 }
 
 // Check if specified date-time string contains timezone information
 export function hasTimezone(isoDateTimeString: string): boolean {
-    const regex = /^(.*T.*)(Z|[+-]\d{2})/;
+    const regex = /T.*(Z|[+-]\d{2})/
     return regex.test(isoDateTimeString);
 }
 
