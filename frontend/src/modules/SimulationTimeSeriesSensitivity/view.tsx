@@ -1,7 +1,7 @@
 import React from "react";
 
 import { StatisticFunction_api, VectorRealizationData_api, VectorStatisticSensitivityData_api } from "@api";
-import { BroadcastChannelMeta } from "@framework/Broadcaster";
+import { BroadcastChannelMeta, BroadcastChannelData } from "@framework/Broadcaster";
 import { Ensemble } from "@framework/Ensemble";
 import { ModuleFCProps } from "@framework/Module";
 import { useSubscribedValue } from "@framework/WorkbenchServices";
@@ -18,6 +18,7 @@ import { createRealizationLineTraces, createSensitivityStatisticsTrace } from ".
 import { State } from "./state";
 
 export const view = ({ moduleContext, workbenchSession, workbenchServices }: ModuleFCProps<State>) => {
+    // Leave this in until we get a feeling for React18/Plotly
     const renderCount = React.useRef(0);
     React.useEffect(function incrementRenderCount() {
         renderCount.current = renderCount.current + 1;
@@ -55,37 +56,18 @@ export const view = ({ moduleContext, workbenchSession, workbenchServices }: Mod
     // Broadcast the data to the realization data channel
     React.useEffect(
         function broadcast() {
-            // Should use this code instead, but temporarily use old code to better expose
-            // the issues over in the sensitivity Module.
-            // if (!ensemble || !realizationsQuery.data || activeTimestampUtcMs === null) {
-            //     return;
-            // }
-            // const dataGenerator = (): { key: number; value: number }[] => {
-            //     const data: { key: number; value: number }[] = [];
-            //     realizationsQuery.data.forEach((vec) => {
-            //         const indexOfTimeStamp = indexOf(vec.timestamps_utc_ms, activeTimestampUtcMs);
-            //         data.push({
-            //             key: vec.realization,
-            //             value: indexOfTimeStamp === -1 ? 0 : vec.values[indexOfTimeStamp],
-            //         });
-            //     });
-            //     return data;
-            // };
-
-            if (!ensemble || activeTimestampUtcMs === null) {
+            if (!ensemble || !realizationsQuery.data || activeTimestampUtcMs === null) {
                 return;
             }
-            const dataGenerator = (): { key: number; value: number }[] => {
-                const data: { key: number; value: number }[] = [];
-                if (realizationsQuery.data) {
-                    realizationsQuery.data.forEach((vec) => {
-                        const indexOfTimeStamp = indexOf(vec.timestamps_utc_ms, activeTimestampUtcMs);
-                        data.push({
-                            key: vec.realization,
-                            value: indexOfTimeStamp === -1 ? 0 : vec.values[indexOfTimeStamp],
-                        });
+            const dataGenerator = (): BroadcastChannelData[] => {
+                const data: BroadcastChannelData[] = [];
+                realizationsQuery.data.forEach((vec) => {
+                    const indexOfTimeStamp = indexOf(vec.timestamps_utc_ms, activeTimestampUtcMs);
+                    data.push({
+                        key: vec.realization,
+                        value: indexOfTimeStamp === -1 ? 0 : vec.values[indexOfTimeStamp],
                     });
-                }
+                });
                 return data;
             };
 

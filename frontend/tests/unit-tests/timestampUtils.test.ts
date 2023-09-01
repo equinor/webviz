@@ -1,5 +1,6 @@
-import { hasTime, hasTimezone, isoStringToTimestampUtcMs, timestampUtcMsToCompactIsoString, timestampUtcMsToIsoString } from "@framework/utils/timestampUtils";
-
+import { hasTime, hasTimezone } from "@framework/utils/timestampUtils";
+import { isoStringToTimestampUtcMs } from "@framework/utils/timestampUtils";
+import { timestampUtcMsToCompactIsoString, timestampUtcMsToIsoString } from "@framework/utils/timestampUtils";
 
 describe("TimestampUtils tests", () => {
     test("Check if ISO 8601 string contains time", () => {
@@ -26,9 +27,9 @@ describe("TimestampUtils tests", () => {
 
         expect(isoStringToTimestampUtcMs("2018-01-01")).toBe(1514764800000);
 
-        expect(isoStringToTimestampUtcMs("2018-01-01T00:00:00.001")) .toBe(1514764800001);
+        expect(isoStringToTimestampUtcMs("2018-01-01T00:00:00.001")).toBe(1514764800001);
         expect(isoStringToTimestampUtcMs("2018-01-01T00:00:00.001Z")).toBe(1514764800001);
-        expect(isoStringToTimestampUtcMs("2017-12-31T23:59:59.999")) .toBe(1514764799999);
+        expect(isoStringToTimestampUtcMs("2017-12-31T23:59:59.999")).toBe(1514764799999);
         expect(isoStringToTimestampUtcMs("2017-12-31T23:59:59.999Z")).toBe(1514764799999);
     });
 

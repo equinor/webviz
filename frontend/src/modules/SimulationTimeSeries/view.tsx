@@ -21,6 +21,7 @@ interface MyPlotData extends Partial<PlotData> {
 }
 
 export const view = ({ moduleContext, workbenchSession, workbenchServices }: ModuleFCProps<State>) => {
+    // Leave this in until we get a feeling for React18/Plotly
     const renderCount = React.useRef(0);
     React.useEffect(function incrementRenderCount() {
         renderCount.current = renderCount.current + 1;
@@ -97,7 +98,7 @@ export const view = ({ moduleContext, workbenchSession, workbenchServices }: Mod
     const subscribedHoverTimestamp = useSubscribedValue("global.hoverTimestamp", workbenchServices);
     const subscribedHoverRealization = useSubscribedValue("global.hoverRealization", workbenchServices);
 
-    const handleHover = (e: PlotHoverEvent) => {
+    function handleHover(e: PlotHoverEvent) {
         const plotDatum: PlotDatum = e.points[0];
 
         if (plotDatum.pointIndex >= 0 && plotDatum.pointIndex < plotDatum.data.x.length) {
@@ -112,7 +113,7 @@ export const view = ({ moduleContext, workbenchSession, workbenchServices }: Mod
                 realization: curveData.realizationNumber,
             });
         }
-    };
+    }
 
     function handleUnHover() {
         workbenchServices.publishGlobalData("global.hoverRealization", null);
