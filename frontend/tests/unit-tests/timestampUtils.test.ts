@@ -11,13 +11,27 @@ describe("TimestampUtils tests", () => {
         expect(hasTime("2018-01-01T00:00:00")).toBe(true);
         expect(hasTime("2018-01-01T00:00:00Z")).toBe(true);
         expect(hasTime("2018-01-01T00:00:00+01:00")).toBe(true);
+
+        // We're currently not using this format, but just for good measure
+        expect(hasTime("2018-01-01T01")).toBe(true);
+        expect(hasTime("2018-01-01T0102")).toBe(true);
+        expect(hasTime("2018-01-01T010203")).toBe(true);
     });
 
     test("Check if ISO 8601 string has timezone information", () => {
+        expect(hasTimezone("2018-01-01")).toBe(false);
         expect(hasTimezone("2018-01-01T00:00:00")).toBe(false);
+
         expect(hasTimezone("2018-01-01T00:00:00Z")).toBe(true);
         expect(hasTimezone("2018-01-01T00:00:00+01:00")).toBe(true);
         expect(hasTimezone("2018-01-01T00:00:00-02:00")).toBe(true);
+        expect(hasTimezone("2018-01-01T00:00:00+03")).toBe(true);
+        expect(hasTimezone("2018-01-01T00:00:00-04")).toBe(true);
+
+        // We're currently not using this format, but just for good measure
+        expect(hasTime("2018-01-01T010203Z")).toBe(true);
+        expect(hasTime("2018-01-01T010203+01")).toBe(true);
+        expect(hasTime("2018-01-01T010203+01:00")).toBe(true);
     });
 
     test("Convert ISO string to timestamp", () => {
