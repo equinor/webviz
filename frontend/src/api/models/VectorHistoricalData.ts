@@ -3,7 +3,7 @@
 /* eslint-disable */
 
 export type VectorHistoricalData = {
-    timestamps: Array<string>;
+    timestamps_utc_ms: Array<number>;
     values: Array<number>;
     unit: string;
     is_rate: boolean;

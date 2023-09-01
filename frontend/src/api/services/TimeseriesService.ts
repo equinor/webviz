@@ -77,8 +77,8 @@ export class TimeseriesService {
     }
 
     /**
-     * Get Timesteps
-     * Get the intersection of available timesteps.
+     * Get Timestamps List
+     * Get the intersection of available timestamps.
      * Note that when resampling_frequency is None, the pure intersection of the
      * stored raw dates will be returned. Thus the returned list of dates will not include
      * dates from long running realizations.
@@ -87,17 +87,17 @@ export class TimeseriesService {
      * @param caseUuid Sumo case uuid
      * @param ensembleName Ensemble name
      * @param resamplingFrequency Resampling frequency
-     * @returns string Successful Response
+     * @returns number Successful Response
      * @throws ApiError
      */
-    public getTimesteps(
+    public getTimestampsList(
         caseUuid: string,
         ensembleName: string,
         resamplingFrequency?: Frequency,
-    ): CancelablePromise<Array<string>> {
+    ): CancelablePromise<Array<number>> {
         return this.httpRequest.request({
             method: 'GET',
-            url: '/timeseries/timesteps/',
+            url: '/timeseries/timestamps_list/',
             query: {
                 'case_uuid': caseUuid,
                 'ensemble_name': ensembleName,
@@ -211,29 +211,28 @@ export class TimeseriesService {
     }
 
     /**
-     * Get Realization Vector At Timestep
-     * Get parameter correlations for a timeseries at a given timestep
+     * Get Realization Vector At Timestamp
      * @param caseUuid Sumo case uuid
      * @param ensembleName Ensemble name
      * @param vectorName Name of the vector
-     * @param timestep Timestep
+     * @param timestampUtcMs Timestamp in ms UTC to query vectors at
      * @returns EnsembleScalarResponse Successful Response
      * @throws ApiError
      */
-    public getRealizationVectorAtTimestep(
+    public getRealizationVectorAtTimestamp(
         caseUuid: string,
         ensembleName: string,
         vectorName: string,
-        timestep: string,
+        timestampUtcMs: number,
     ): CancelablePromise<EnsembleScalarResponse> {
         return this.httpRequest.request({
             method: 'GET',
-            url: '/timeseries/realization_vector_at_timestep/',
+            url: '/timeseries/realization_vector_at_timestamp/',
             query: {
                 'case_uuid': caseUuid,
                 'ensemble_name': ensembleName,
                 'vector_name': vectorName,
-                'timestep': timestep,
+                'timestamp_utc_ms': timestampUtcMs,
             },
             errors: {
                 422: `Validation Error`,

@@ -1,23 +1,31 @@
 import React from "react";
 
-import { BroadcastChannelMeta } from "@framework/Broadcaster";
+import { BroadcastChannelData, BroadcastChannelMeta } from "@framework/Broadcaster";
+import { Ensemble } from "@framework/Ensemble";
 import { ModuleFCProps } from "@framework/Module";
-import { useFirstEnsembleInEnsembleSet } from "@framework/WorkbenchSession";
+import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { AdjustmentsHorizontalIcon, ChartBarIcon, TableCellsIcon } from "@heroicons/react/20/solid";
 import { useElementSize } from "@lib/hooks/useElementSize";
 
 import SensitivityChart from "./sensitivityChart";
-import { SensitivityResponseCalculator } from "./sensitivityResponseCalculator";
+import { EnsembleScalarResponse, SensitivityResponseCalculator } from "./sensitivityResponseCalculator";
 import SensitivityTable from "./sensitivityTable";
 import { PlotType, State } from "./state";
 
 export const view = ({ moduleContext, workbenchSession, workbenchServices }: ModuleFCProps<State>) => {
+    // Leave this in until we get a feeling for React18/Plotly
+    const renderCount = React.useRef(0);
+    React.useEffect(function incrementRenderCount() {
+        renderCount.current = renderCount.current + 1;
+    });
+
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);
     const wrapperDivSize = useElementSize(wrapperDivRef);
-    const firstEnsemble = useFirstEnsembleInEnsembleSet(workbenchSession);
+    const ensembleSet = useEnsembleSet(workbenchSession);
     const [plotType, setPlotType] = moduleContext.useStoreState("plotType");
     const responseChannelName = moduleContext.useStoreValue("responseChannelName");
-    const [responseData, setResponseData] = React.useState<any | null>(null);
+    const [channelEnsemble, setChannelEnsemble] = React.useState<Ensemble | null>(null);
+    const [channelResponseData, setChannelResponseData] = React.useState<EnsembleScalarResponse | null>(null);
 
     const [showLabels, setShowLabels] = React.useState(true);
     const [hideZeroY, setHideZeroY] = React.useState(false);
@@ -38,38 +46,48 @@ export const view = ({ moduleContext, workbenchSession, workbenchServices }: Mod
     const responseChannel = workbenchServices.getBroadcaster().getChannel(responseChannelName ?? "");
     React.useEffect(() => {
         if (!responseChannel) {
-            setResponseData(null);
+            setChannelEnsemble(null);
+            setChannelResponseData(null);
             return;
         }
 
-        const handleChannelXChanged = (data: any, metaData: BroadcastChannelMeta) => {
+        function handleChannelDataChanged(data: BroadcastChannelData[], metaData: BroadcastChannelMeta) {
+            if (data.length === 0) {
+                setChannelEnsemble(null);
+                setChannelResponseData(null);
+                return;
+            }
+
             const realizations: number[] = [];
             const values: number[] = [];
-            data.forEach((vec: any) => {
-                realizations.push(vec.key);
-                values.push(vec.value);
+            data.forEach((el) => {
+                realizations.push(el.key as number);
+                values.push(el.value as number);
             });
 
-            setResponseData({
+            setChannelEnsemble(ensembleSet.findEnsemble(metaData.ensembleIdent));
+            setChannelResponseData({
                 realizations: realizations,
                 values: values,
                 name: metaData.description,
                 unit: metaData.unit,
             });
-        };
+        }
 
-        const unsubscribeFunc = responseChannel.subscribe(handleChannelXChanged);
-
+        const unsubscribeFunc = responseChannel.subscribe(handleChannelDataChanged);
         return unsubscribeFunc;
-    }, [responseChannel]);
+    }, [responseChannel, ensembleSet]);
 
     // Memoize the computation of sensitivity responses. Should we use useMemo?
-    const sensitivities = firstEnsemble?.getSensitivities();
+    const sensitivities = channelEnsemble?.getSensitivities();
     const computedSensitivityResponseDataset = React.useMemo(() => {
-        if (sensitivities && responseData) {
+        if (sensitivities && channelResponseData) {
             // How to handle errors?
             try {
-                const sensitivityResponseCalculator = new SensitivityResponseCalculator(sensitivities, responseData);
+                const sensitivityResponseCalculator = new SensitivityResponseCalculator(
+                    sensitivities,
+                    channelResponseData
+                );
                 return sensitivityResponseCalculator.computeSensitivitiesForResponse();
             } catch (e) {
                 console.warn(e);
@@ -77,12 +95,21 @@ export const view = ({ moduleContext, workbenchSession, workbenchServices }: Mod
             }
         }
         return null;
-    }, [sensitivities, responseData]);
+    }, [sensitivities, channelResponseData]);
+
+    let errMessage = "";
+    if (!computedSensitivityResponseDataset) {
+        if (!responseChannel) {
+            errMessage = "No channel selected";
+        } else {
+            errMessage = "No valid data to plot";
+        }
+    }
 
     return (
         <div className="w-full h-full">
             {/* // TODO: Remove */}
-            {!computedSensitivityResponseDataset && <div>No channels selected</div>}
+            {!computedSensitivityResponseDataset && <div>{errMessage}</div>}
 
             <div>
                 <div>
@@ -167,6 +194,7 @@ export const view = ({ moduleContext, workbenchSession, workbenchServices }: Mod
                     </div>
                 )}
             </div>
+            <div className="absolute top-10 left-5 italic text-pink-400">(rc={renderCount.current})</div>
         </div>
     );
 };

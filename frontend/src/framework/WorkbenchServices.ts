@@ -13,8 +13,8 @@ export type NavigatorTopicDefinitions = {
 
 export type GlobalTopicDefinitions = {
     "global.infoMessage": string;
-    "global.hoverRealization": { realization: number };
-    "global.hoverTimestamp": { timestamp: number };
+    "global.hoverRealization": { realization: number } | null;
+    "global.hoverTimestamp": { timestampUtcMs: number } | null;
 
     "global.syncValue.ensembles": EnsembleIdent[];
     "global.syncValue.date": { timeOrInterval: string };
@@ -37,7 +37,7 @@ export type TopicDefinitionsType<T extends keyof AllTopicDefinitions> = T extend
     ? NavigatorTopicDefinitions[T]
     : never;
 
-export type CallbackFunction<T extends keyof AllTopicDefinitions> = (value: AllTopicDefinitions[T]) => void;
+export type CallbackFunction<T extends keyof AllTopicDefinitions> = (value: AllTopicDefinitions[T] | null) => void;
 
 export class WorkbenchServices {
     protected _workbench: Workbench;
@@ -104,7 +104,7 @@ export function useSubscribedValue<T extends keyof AllTopicDefinitions>(
 
     React.useEffect(
         function subscribeToServiceTopic() {
-            function handleNewValue(newValue: AllTopicDefinitions[T]) {
+            function handleNewValue(newValue: AllTopicDefinitions[T] | null) {
                 setLatestValue(newValue);
             }
             const unsubscribeFunc = workbenchServices.subscribe(topic, handleNewValue);
@@ -130,7 +130,7 @@ export function useSubscribedValueConditionally<T extends keyof AllTopicDefiniti
                 return;
             }
 
-            function handleNewValue(newValue: AllTopicDefinitions[T]) {
+            function handleNewValue(newValue: AllTopicDefinitions[T] | null) {
                 setLatestValue(newValue);
             }
 

@@ -67,7 +67,7 @@ def get_realizations_vector_data(
         ret_arr.append(
             schemas.VectorRealizationData(
                 realization=vec.realization,
-                timestamps=vec.timestamps,
+                timestamps_utc_ms=vec.timestamps_utc_ms,
                 values=vec.values,
                 unit=vec.metadata.unit,
                 is_rate=vec.metadata.is_rate,
@@ -77,15 +77,15 @@ def get_realizations_vector_data(
     return ret_arr
 
 
-@router.get("/timesteps/")
-def get_timesteps(
+@router.get("/timestamps_list/")
+def get_timestamps_list(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     case_uuid: str = Query(description="Sumo case uuid"),
     ensemble_name: str = Query(description="Ensemble name"),
     resampling_frequency: Optional[schemas.Frequency] = Query(None, description="Resampling frequency"),
     # realizations: Union[Sequence[int], None] = Query(None, description="Optional list of realizations to include"),
-) -> List[datetime.datetime]:
-    """Get the intersection of available timesteps.
+) -> List[int]:
+    """Get the intersection of available timestamps.
         Note that when resampling_frequency is None, the pure intersection of the
     stored raw dates will be returned. Thus the returned list of dates will not include
     dates from long running realizations.
@@ -94,7 +94,7 @@ def get_timesteps(
     """
     access = SummaryAccess(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
     sumo_freq = Frequency.from_string_value(resampling_frequency.value if resampling_frequency else "dummy")
-    return access.get_timesteps(resampling_frequency=sumo_freq)
+    return access.get_timestamps(resampling_frequency=sumo_freq)
 
 
 @router.get("/historical_vector_data/")
@@ -118,7 +118,7 @@ def get_historical_vector_data(
         raise HTTPException(status_code=404, detail="Could not get historical vector")
 
     return schemas.VectorHistoricalData(
-        timestamps=sumo_hist_vec.timestamps,
+        timestamps_utc_ms=sumo_hist_vec.timestamps_utc_ms,
         values=sumo_hist_vec.values,
         unit=sumo_hist_vec.metadata.unit,
         is_rate=sumo_hist_vec.metadata.is_rate,
@@ -202,7 +202,7 @@ def get_statistical_vector_data_per_sensitivity(
                 sensitivity_name=sensitivity.name,
                 sensitivity_case=case.name,
                 realizations=statistic_data.realizations,
-                timestamps=statistic_data.timestamps,
+                timestamps_utc_ms=statistic_data.timestamps_utc_ms,
                 value_objects=statistic_data.value_objects,
                 unit=statistic_data.unit,
                 is_rate=statistic_data.is_rate,
@@ -211,22 +211,20 @@ def get_statistical_vector_data_per_sensitivity(
     return ret_data
 
 
-@router.get("/realization_vector_at_timestep/")
-def get_realization_vector_at_timestep(
+@router.get("/realization_vector_at_timestamp/")
+def get_realization_vector_at_timestamp(
     # fmt:off
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     case_uuid: str = Query(description="Sumo case uuid"),
     ensemble_name: str = Query(description="Ensemble name"),
     vector_name: str = Query(description="Name of the vector"),
-    timestep: datetime.datetime = Query(description= "Timestep"),
+    timestamp_utc_ms: int = Query(description= "Timestamp in ms UTC to query vectors at"),
     # realizations: Optional[Sequence[int]] = Query(None, description="Optional list of realizations to include. If not specified, all realizations will be returned."),
     # fmt:on
 ) -> EnsembleScalarResponse:
-    """Get parameter correlations for a timeseries at a given timestep"""
-
     summary_access = SummaryAccess(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
-    ensemble_response = summary_access.get_vector_values_at_timestep(
-        vector_name=vector_name, timestep=timestep, realizations=None
+    ensemble_response = summary_access.get_vector_values_at_timestamp(
+        vector_name=vector_name, timestamp_utc_ms=timestamp_utc_ms, realizations=None
     )
     return ensemble_response
 

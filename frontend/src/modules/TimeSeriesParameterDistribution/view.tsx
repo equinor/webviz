@@ -5,7 +5,7 @@ import { useElementSize } from "@lib/hooks/useElementSize";
 
 import PlotlyScatter from "./plotlyScatterChart";
 
-import { useVectorAtTimestepQuery, useParameterQuery } from "./queryHooks";
+import { useVectorAtTimestampQuery, useParameterQuery } from "./queryHooks";
 import { State } from "./state";
 
 
@@ -15,13 +15,13 @@ export const view = ({ moduleContext }: ModuleFCProps<State>) => {
     const vectorSpec = moduleContext.useStoreValue("vectorSpec");
     const [highlightedRealization, setHighlightedRealization] = React.useState(-1)
     const parameterName = moduleContext.useStoreValue("parameterName");
-    const timeStep = moduleContext.useStoreValue("timeStep");
+    const timestampUtcMs = moduleContext.useStoreValue("timestampUtcMs");
 
-    const vectorAtTimestepQuery = useVectorAtTimestepQuery(
+    const vectorAtTimestampQuery = useVectorAtTimestampQuery(
         vectorSpec?.caseUuid,
         vectorSpec?.ensembleName,
         vectorSpec?.vectorName,
-        timeStep
+        timestampUtcMs
     );
 
     const parameterQuery = useParameterQuery(
@@ -37,10 +37,10 @@ export const view = ({ moduleContext }: ModuleFCProps<State>) => {
 
     return (
         <div className="w-full h-full" ref={wrapperDivRef}>
-            {parameterQuery.data && vectorAtTimestepQuery.data &&
+            {parameterQuery.data && vectorAtTimestampQuery.data &&
                 <PlotlyScatter
                     x={parameterQuery.data.values as number[]}
-                    y={vectorAtTimestepQuery.data.values as number[]}
+                    y={vectorAtTimestampQuery.data.values as number[]}
                     realizations={parameterQuery.data.realizations as number[]}
                     highlightedRealization={highlightedRealization}
                     onHoverData={handleHoveredRealization}

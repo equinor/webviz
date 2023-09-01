@@ -1,89 +1,114 @@
-import React, { useState } from "react";
+import React from "react";
 import Plot from "react-plotly.js";
 
-import { Layout, PlotHoverEvent } from "plotly.js";
+import { Layout, PlotDatum, PlotHoverEvent, PlotMouseEvent } from "plotly.js";
 
 import { TimeSeriesPlotlyTrace } from "./traces";
 
-export type timeSeriesChartProps = {
-    traceDataArr: TimeSeriesPlotlyTrace[];
-    onHover?: (date: string) => void;
+export type HoverInfo = {
+    timestampUtcMs: number;
+    realization?: number;
+    shiftKeyIsDown?: boolean;
+};
 
+export type TimeSeriesChartProps = {
+    traceDataArr: TimeSeriesPlotlyTrace[];
+    activeTimestampUtcMs?: number;
+    hoveredTimestampUtcMs?: number;
+    onHover?: (hoverData: HoverInfo | null) => void;
+    onClick?: (timestampUtcMs: number) => void;
     height?: number | 100;
     width?: number | 100;
 };
 
-export const TimeSeriesChart: React.FC<timeSeriesChartProps> = (props) => {
-    const { height, width, traceDataArr } = props;
-    const [activeTimestamp, setActiveTimestamp] = useState<string | null>(null);
-    const [hoverActive, setHoverActive] = useState<boolean>(true);
-    const handleClick = () => {
-        setHoverActive(!hoverActive);
-    };
-    const handleHover = (e: PlotHoverEvent) => {
-        if (hoverActive && e.xvals.length > 0 && typeof e.xvals[0]) {
-            // workbenchServices.publishGlobalData("global.hoverTimestamp", { timestamp: e.xvals[0] as number });
-            setActiveTimestamp(e.xvals[0] as string);
-            if (props.onHover) {
-                props.onHover(e.points[0].x as string);
+export const TimeSeriesChart: React.FC<TimeSeriesChartProps> = (props) => {
+    function handleClick(e: PlotMouseEvent) {
+        const clickedPoint: PlotDatum = e.points[0];
+        if (!clickedPoint || !props.onClick) {
+            return;
+        }
+
+        if (clickedPoint.pointIndex >= 0 && clickedPoint.pointIndex < clickedPoint.data.x.length) {
+            const timestampUtcMs = clickedPoint.data.x[clickedPoint.pointIndex];
+            if (typeof timestampUtcMs === "number") {
+                props.onClick(timestampUtcMs);
             }
         }
-        const curveData = e.points[0].data as TimeSeriesPlotlyTrace;
-        if (typeof curveData.realizationNumber === "number") {
-            // setHighlightRealization(curveData.realizationNumber);
-            // workbenchServices.publishGlobalData("global.hoverRealization", {
-            //     realization: curveData.realizationNumber,
-            // });
-        }
-    };
-    const layout: Partial<Layout> = {
-        width: width,
-        height: height,
+    }
 
-        xaxis: {
-            type: "category",
-        },
+    function handleHover(e: PlotHoverEvent) {
+        const hoveredPoint: PlotDatum = e.points[0];
+        if (!hoveredPoint || !props.onHover) {
+            return;
+        }
+
+        if (hoveredPoint.pointIndex >= 0 && hoveredPoint.pointIndex < hoveredPoint.data.x.length) {
+            const timestampUtcMs = hoveredPoint.data.x[hoveredPoint.pointIndex];
+            if (typeof timestampUtcMs === "number") {
+                let maybeRealizationNumber: number | undefined;
+                const traceData = hoveredPoint.data as TimeSeriesPlotlyTrace;
+                if (typeof traceData.realizationNumber === "number") {
+                    maybeRealizationNumber = traceData.realizationNumber;
+                }
+
+                const hoverInfo: HoverInfo = {
+                    timestampUtcMs: timestampUtcMs,
+                    realization: maybeRealizationNumber,
+                    shiftKeyIsDown: e.event.shiftKey,
+                };
+                props.onHover(hoverInfo);
+            }
+        }
+    }
+
+    function handleUnHover() {
+        if (props.onHover) {
+            props.onHover(null);
+        }
+    }
+
+    const layout: Partial<Layout> = {
+        width: props.width,
+        height: props.height,
+        xaxis: { type: "date" },
         legend: { orientation: "h", yanchor: "bottom", y: 1.02, xanchor: "right", x: 1 },
         margin: { t: 0, b: 100, r: 0 },
+        shapes: [],
     };
-    if (activeTimestamp) {
-        layout["shapes"] = [
-            {
-                type: "line",
-                xref: "x",
-                yref: "paper",
-                x0: activeTimestamp,
-                y0: 0,
-                x1: activeTimestamp,
-                y1: 1,
-                line: {
-                    color: "#ccc",
-                    width: 2,
-                },
-            },
-        ];
-        // This breaks hover...
-        // layout["annotations"] = [
-        //     {
-        //         bgcolor: "white",
-        //         showarrow: false,
-        //         text: activeTimestamp,
-        //         x: activeTimestamp,
-        //         y: 1,
 
-        //         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        //         //@ts-ignore
-        //         yref: "y domain",
-        //     },
-        // ];
+    if (props.activeTimestampUtcMs !== undefined) {
+        layout.shapes?.push({
+            type: "line",
+            xref: "x",
+            yref: "paper",
+            x0: props.activeTimestampUtcMs,
+            y0: 0,
+            x1: props.activeTimestampUtcMs,
+            y1: 1,
+            line: { color: "#ccc", width: 2 },
+        });
     }
+    if (props.hoveredTimestampUtcMs !== undefined) {
+        layout.shapes?.push({
+            type: "line",
+            xref: "x",
+            yref: "paper",
+            x0: props.hoveredTimestampUtcMs,
+            y0: 0,
+            x1: props.hoveredTimestampUtcMs,
+            y1: 1,
+            line: { color: "red", width: 1, dash: "dot" },
+        });
+    }
+
     return (
         <Plot
-            data={traceDataArr}
+            data={props.traceDataArr}
             layout={layout}
             config={{ displayModeBar: false, responsive: true }}
             onClick={handleClick}
             onHover={handleHover}
+            onUnhover={handleUnHover}
         />
     );
 };

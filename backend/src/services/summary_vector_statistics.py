@@ -1,4 +1,3 @@
-import datetime
 from typing import Dict, List, Optional, Sequence
 
 import numpy as np
@@ -15,7 +14,7 @@ from .utils.statistic_function import StatisticFunction
 
 class VectorStatistics(BaseModel):
     realizations: List[int]
-    timestamps: List[datetime.datetime]
+    timestamps_utc_ms: List[int]
     values_dict: Dict[StatisticFunction, List[float]]
 
 
@@ -106,7 +105,7 @@ def compute_vector_statistics(
 
     ret_data = VectorStatistics(
         realizations=unique_realizations,
-        timestamps=statistics_table["DATE"].to_numpy().astype(datetime.datetime).tolist(),
+        timestamps_utc_ms=statistics_table["DATE"].to_numpy().astype(int).tolist(),
         values_dict=values_dict,
     )
 
