@@ -15,7 +15,7 @@ export type TimeSeriesChartProps = {
     traceDataArr: TimeSeriesPlotlyTrace[];
     activeTimestampUtcMs?: number;
     hoveredTimestampUtcMs?: number;
-    onHover?: (hoverData?: HoverInfo) => void;
+    onHover?: (hoverData: HoverInfo | null) => void;
     onClick?: (timestampUtcMs: number) => void;
     height?: number | 100;
     width?: number | 100;
@@ -63,7 +63,7 @@ export const TimeSeriesChart: React.FC<TimeSeriesChartProps> = (props) => {
 
     function handleUnHover() {
         if (props.onHover) {
-            props.onHover(undefined);
+            props.onHover(null);
         }
     }
 

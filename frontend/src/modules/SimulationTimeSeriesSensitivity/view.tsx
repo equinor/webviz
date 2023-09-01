@@ -97,7 +97,7 @@ export const view = ({ moduleContext, workbenchSession, workbenchServices }: Mod
         );
     }, [ensemble, selectedSensitivity, showStatistics, showRealizations, statisticsQuery.data, realizationsQuery.data]);
 
-    function handleHoverInChart(hoverInfo?: HoverInfo) {
+    function handleHoverInChart(hoverInfo: HoverInfo | null) {
         if (hoverInfo) {
             if (hoverInfo.shiftKeyIsDown) {
                 setActiveTimestampUtcMs(hoverInfo.timestampUtcMs);
