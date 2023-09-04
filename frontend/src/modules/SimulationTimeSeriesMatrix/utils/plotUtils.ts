@@ -20,7 +20,13 @@ export function createLoadedVectorSpecificationAndDataArray<T>(
     queryResults: UseQueryResult<T>[]
 ): { vectorSpecification: VectorSpec; data: T }[] {
     if (vectorSpecifications.length !== queryResults.length) {
-        throw new Error("Number of vector specifications and query results must be equal");
+        throw new Error(
+            "Number of vector specifications and query results must be equal. Got vector specifications: " +
+                vectorSpecifications.length +
+                " and query results: " +
+                queryResults.length +
+                "."
+        );
     }
 
     const output: { vectorSpecification: VectorSpec; data: T }[] = [];

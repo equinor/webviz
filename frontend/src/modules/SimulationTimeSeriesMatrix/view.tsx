@@ -6,8 +6,9 @@ import { useElementSize } from "@lib/hooks/useElementSize";
 
 import { useHistoricalVectorDataQueries, useStatisticalVectorDataQueries, useVectorDataQueries } from "./queryHooks";
 import { GroupBy, State, VisualizationMode } from "./state";
-import { EnsembleSubplotBuilder } from "./utils/PlotFigureBuilder/ensembleSubplotBuilder";
-import { VectorSubplotBuilder } from "./utils/PlotFigureBuilder/vectorSubplotBuilder";
+// import { EnsembleSubplotBuilder } from "./utils/PlotFigureBuilder/ensembleSubplotBuilder";
+import { SubplotBuilder, SubplotOwner } from "./utils/PlotFigureBuilder/subplotBuilder";
+// import { VectorSubplotBuilder } from "./utils/PlotFigureBuilder/vectorSubplotBuilder";
 import {
     createLoadedVectorSpecificationAndDataArray,
     filterVectorSpecificationAndFanchartStatisticsDataArray,
@@ -44,10 +45,12 @@ export const view = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
             visualizationMode === VisualizationMode.STATISTICAL_LINES ||
             visualizationMode === VisualizationMode.STATISTICS_AND_REALIZATIONS
     );
+
+    const vectorSpecificationsWithHistoricalData = vectorSpecifications?.filter((vec) => vec.hasHistoricalVector);
     const historicalVectorDataQueries = useHistoricalVectorDataQueries(
-        vectorSpecifications?.filter((vec) => vec.hasHistoricalVector) ?? null,
+        vectorSpecificationsWithHistoricalData ?? null,
         resampleFrequency,
-        vectorSpecifications?.some((vec) => vec.hasHistoricalVector) ?? false
+        vectorSpecificationsWithHistoricalData?.some((vec) => vec.hasHistoricalVector) ?? false
     );
 
     // Map vector specifications and queries with data
@@ -57,8 +60,11 @@ export const view = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
     const loadedVectorSpecificationsAndStatisticsData = vectorSpecifications
         ? createLoadedVectorSpecificationAndDataArray(vectorSpecifications, vectorStatisticsQueries)
         : [];
-    const loadedVectorSpecificationsAndHistoricalData = vectorSpecifications
-        ? createLoadedVectorSpecificationAndDataArray(vectorSpecifications, historicalVectorDataQueries)
+    const loadedVectorSpecificationsAndHistoricalData = vectorSpecificationsWithHistoricalData
+        ? createLoadedVectorSpecificationAndDataArray(
+              vectorSpecificationsWithHistoricalData,
+              historicalVectorDataQueries
+          )
         : [];
 
     // TODO:
@@ -78,20 +84,14 @@ export const view = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
 
     // Plot builder
     // NOTE: useRef?
-    const subplotBuilder =
-        groupBy === GroupBy.TIME_SERIES
-            ? new VectorSubplotBuilder(
-                  vectorSpecifications ?? [],
-                  colorSet,
-                  wrapperDivSize.width,
-                  wrapperDivSize.height
-              )
-            : new EnsembleSubplotBuilder(
-                  vectorSpecifications ?? [],
-                  colorSet,
-                  wrapperDivSize.width,
-                  wrapperDivSize.height
-              );
+    const subplotOwner = groupBy === GroupBy.TIME_SERIES ? SubplotOwner.VECTOR : SubplotOwner.ENSEMBLE;
+    const subplotBuilder = new SubplotBuilder(
+        subplotOwner,
+        vectorSpecifications ?? [],
+        colorSet,
+        wrapperDivSize.width,
+        wrapperDivSize.height
+    );
 
     if (visualizationMode === VisualizationMode.INDIVIDUAL_REALIZATIONS) {
         const useIncreasedBrightness = false;
