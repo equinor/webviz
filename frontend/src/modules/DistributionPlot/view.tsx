@@ -114,9 +114,7 @@ export const view = ({ moduleContext, workbenchServices, workbenchSettings }: Mo
     React.useEffect(() => {
         if (channelX?.getDataDef().key === BroadcastChannelKeyCategory.Realization) {
             workbenchServices.subscribe("global.hoverRealization", (data) => {
-                if (data.realization !== undefined) {
-                    setHighlightedKey(data.realization);
-                }
+                setHighlightedKey(data ? data.realization : null);
             });
         }
     }, [channelX, workbenchServices]);

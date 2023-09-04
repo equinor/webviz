@@ -5,7 +5,6 @@ import type { BaseHttpRequest } from './core/BaseHttpRequest';
 import type { OpenAPIConfig } from './core/OpenAPI';
 import { AxiosHttpRequest } from './core/AxiosHttpRequest';
 
-import { CorrelationsService } from './services/CorrelationsService';
 import { DefaultService } from './services/DefaultService';
 import { ExploreService } from './services/ExploreService';
 import { GridService } from './services/GridService';
@@ -16,12 +15,12 @@ import { SurfaceService } from './services/SurfaceService';
 import { SurfacePolygonsService } from './services/SurfacePolygonsService';
 import { TimeseriesService } from './services/TimeseriesService';
 import { WellService } from './services/WellService';
+import { WellCompletionService } from './services/WellCompletionService';
 
 type HttpRequestConstructor = new (config: OpenAPIConfig) => BaseHttpRequest;
 
 export class ApiService {
 
-    public readonly correlations: CorrelationsService;
     public readonly default: DefaultService;
     public readonly explore: ExploreService;
     public readonly grid: GridService;
@@ -32,6 +31,7 @@ export class ApiService {
     public readonly surfacePolygons: SurfacePolygonsService;
     public readonly timeseries: TimeseriesService;
     public readonly well: WellService;
+    public readonly wellCompletion: WellCompletionService;
 
     public readonly request: BaseHttpRequest;
 
@@ -48,7 +48,6 @@ export class ApiService {
             ENCODE_PATH: config?.ENCODE_PATH,
         });
 
-        this.correlations = new CorrelationsService(this.request);
         this.default = new DefaultService(this.request);
         this.explore = new ExploreService(this.request);
         this.grid = new GridService(this.request);
@@ -59,6 +58,7 @@ export class ApiService {
         this.surfacePolygons = new SurfacePolygonsService(this.request);
         this.timeseries = new TimeseriesService(this.request);
         this.well = new WellService(this.request);
+        this.wellCompletion = new WellCompletionService(this.request);
     }
 }
 

@@ -41,6 +41,7 @@ export type LayoutElement = {
 export type WorkbenchGuiState = {
     drawerContent: DrawerContent;
     settingsPanelWidthInPercent: number;
+    loadingEnsembleSet: boolean;
 };
 
 export class Workbench {
@@ -53,6 +54,7 @@ export class Workbench {
     private _broadcaster: Broadcaster;
     private _subscribersMap: { [key: string]: Set<() => void> };
     private _layout: LayoutElement[];
+    private _perModuleRunningInstanceNumber: Record<string, number>;
 
     constructor() {
         this._moduleInstances = [];
@@ -60,6 +62,7 @@ export class Workbench {
         this._guiStateStore = new StateStore<WorkbenchGuiState>({
             drawerContent: DrawerContent.ModuleSettings,
             settingsPanelWidthInPercent: parseFloat(localStorage.getItem("settingsPanelWidthInPercent") || "20"),
+            loadingEnsembleSet: false,
         });
         this._workbenchSession = new WorkbenchSessionPrivate();
         this._workbenchServices = new PrivateWorkbenchServices(this);
@@ -67,6 +70,7 @@ export class Workbench {
         this._broadcaster = new Broadcaster();
         this._subscribersMap = {};
         this._layout = [];
+        this._perModuleRunningInstanceNumber = {};
     }
 
     loadLayoutFromLocalStorage(): boolean {
@@ -145,6 +149,15 @@ export class Workbench {
         return this._moduleInstances.find((moduleInstance) => moduleInstance.getId() === id);
     }
 
+    private getNextModuleInstanceNumber(moduleName: string): number {
+        if (moduleName in this._perModuleRunningInstanceNumber) {
+            this._perModuleRunningInstanceNumber[moduleName] += 1;
+        } else {
+            this._perModuleRunningInstanceNumber[moduleName] = 1;
+        }
+        return this._perModuleRunningInstanceNumber[moduleName];
+    }
+
     makeLayout(layout: LayoutElement[]): void {
         this._moduleInstances = [];
         this.setLayout(layout);
@@ -155,19 +168,21 @@ export class Workbench {
             }
 
             module.setWorkbench(this);
-            const moduleInstance = module.makeInstance();
+            const moduleInstance = module.makeInstance(this.getNextModuleInstanceNumber(module.getName()));
             this._moduleInstances.push(moduleInstance);
             this._layout[index] = { ...this._layout[index], moduleInstanceId: moduleInstance.getId() };
             this.notifySubscribers(WorkbenchEvents.ModuleInstancesChanged);
         });
     }
 
-    private clearLayout(): void {
+    clearLayout(): void {
         for (const moduleInstance of this._moduleInstances) {
             this._broadcaster.unregisterAllChannelsForModuleInstance(moduleInstance.getId());
         }
         this._moduleInstances = [];
-        this.setLayout([]);
+        this._perModuleRunningInstanceNumber = {};
+        this._layout = [];
+        this.notifySubscribers(WorkbenchEvents.FullModuleRerenderRequested);
     }
 
     makeAndAddModuleInstance(moduleName: string, layout: LayoutElement): ModuleInstance<any> {
@@ -178,7 +193,7 @@ export class Workbench {
 
         module.setWorkbench(this);
 
-        const moduleInstance = module.makeInstance();
+        const moduleInstance = module.makeInstance(this.getNextModuleInstanceNumber(module.getName()));
         this._moduleInstances.push(moduleInstance);
 
         this._layout.push({ ...layout, moduleInstanceId: moduleInstance.getId() });
@@ -226,6 +241,8 @@ export class Workbench {
         queryClient: QueryClient,
         specifiedEnsembleIdents: EnsembleIdent[]
     ): Promise<void> {
+        this.storeEnsembleSetInLocalStorage(specifiedEnsembleIdents);
+
         const ensembleIdentsToLoad: EnsembleIdent[] = [];
         for (const ensSpec of specifiedEnsembleIdents) {
             ensembleIdentsToLoad.push(new EnsembleIdent(ensSpec.getCaseUuid(), ensSpec.getEnsembleName()));
@@ -237,6 +254,21 @@ export class Workbench {
 
         console.debug("loadAndSetupEnsembleSetInSession - publishing");
         return this._workbenchSession.setEnsembleSet(newEnsembleSet);
+    }
+
+    private storeEnsembleSetInLocalStorage(specifiedEnsembleIdents: EnsembleIdent[]): void {
+        const ensembleIdentsToStore = specifiedEnsembleIdents.map((el) => el.toString());
+        localStorage.setItem("ensembleIdents", JSON.stringify(ensembleIdentsToStore));
+    }
+
+    maybeLoadEnsembleSetFromLocalStorage(): EnsembleIdent[] | null {
+        const ensembleIdentsString = localStorage.getItem("ensembleIdents");
+        if (!ensembleIdentsString) return null;
+
+        const ensembleIdents = JSON.parse(ensembleIdentsString) as string[];
+        const ensembleIdentsParsed = ensembleIdents.map((el) => EnsembleIdent.fromString(el));
+
+        return ensembleIdentsParsed;
     }
 
     applyTemplate(template: Template): void {

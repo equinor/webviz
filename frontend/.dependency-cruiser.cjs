@@ -7,7 +7,7 @@ module.exports = {
                 "You are trying to import from a file that is supposed to be an internal implementation detail of the framework from outside the framework folder. This is not allowed.",
             severity: "error",
             from: {
-                pathNot: "^((src/framework)|(src/App.tsx))",
+                pathNot: "^((src/framework)|(src/(App|main).tsx))",
             },
             to: {
                 path: "^(src/framework/internal)",

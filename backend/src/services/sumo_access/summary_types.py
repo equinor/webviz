@@ -1,4 +1,3 @@
-import datetime
 from enum import Enum
 from typing import List, Optional
 
@@ -36,12 +35,12 @@ class VectorMetadata(BaseModel):
 
 class RealizationVector(BaseModel):
     realization: int
-    timestamps: List[datetime.datetime]
+    timestamps_utc_ms: List[int]
     values: List[float]
     metadata: VectorMetadata
 
 
 class HistoricalVector(BaseModel):
-    timestamps: List[datetime.datetime]
+    timestamps_utc_ms: List[int]
     values: List[float]
     metadata: VectorMetadata

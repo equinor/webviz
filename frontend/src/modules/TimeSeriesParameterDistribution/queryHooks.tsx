@@ -1,5 +1,5 @@
-import { Frequency_api, VectorDescription_api } from "@api";
-import { VectorRealizationData_api, EnsembleParameterDescription_api, EnsembleScalarResponse_api, EnsembleParameter_api } from "@api";
+import { EnsembleScalarResponse_api, VectorDescription_api } from "@api";
+import { EnsembleParameterDescription_api, EnsembleParameter_api } from "@api";
 import { apiService } from "@framework/ApiService";
 import { UseQueryResult, useQuery } from "@tanstack/react-query";
 
@@ -19,125 +19,62 @@ export function useVectorsQuery(
     });
 }
 
-export function useTimeStepsQuery(
+export function useTimestampsListQuery(
     caseUuid: string | undefined,
     ensembleName: string | undefined
-): UseQueryResult<Array<string>> {
+): UseQueryResult<Array<number>> {
     return useQuery({
-        queryKey: ["getTimesteps", caseUuid, ensembleName],
-        queryFn: () => apiService.timeseries.getTimesteps(caseUuid ?? "", ensembleName ?? ""),
+        queryKey: ["getTimestampsList", caseUuid, ensembleName],
+        queryFn: () => apiService.timeseries.getTimestampsList(caseUuid ?? "", ensembleName ?? ""),
         staleTime: STALE_TIME,
         cacheTime: CACHE_TIME,
         enabled: caseUuid && ensembleName ? true : false,
-    });
-}
-export function useVectorDataQuery(
-    caseUuid: string | undefined,
-    ensembleName: string | undefined,
-    vectorName: string | undefined,
-    resampleFrequency: Frequency_api | null,
-    realizationsToInclude: number[] | null
-): UseQueryResult<Array<VectorRealizationData_api>> {
-    return useQuery({
-        queryKey: [
-            "getRealizationsVectorData",
-            caseUuid,
-            ensembleName,
-            vectorName,
-            resampleFrequency,
-            realizationsToInclude,
-        ],
-        queryFn: () =>
-            apiService.timeseries.getRealizationsVectorData(
-                caseUuid ?? "",
-                ensembleName ?? "",
-                vectorName ?? "",
-                resampleFrequency ?? undefined,
-                realizationsToInclude ?? undefined
-            ),
-        staleTime: STALE_TIME,
-        cacheTime: CACHE_TIME,
-        enabled: caseUuid && ensembleName && vectorName ? true : false,
     });
 }
 
 export function useGetParameterNamesQuery(
     caseUuid: string | undefined,
-    ensembleName: string | undefined,
-
+    ensembleName: string | undefined
 ): UseQueryResult<EnsembleParameterDescription_api[]> {
     return useQuery({
-        queryKey: [
-            "getParameterNamesAndDescription",
-            caseUuid,
-            ensembleName,
-        ],
-        queryFn: () =>
-            apiService.parameters.getParameterNamesAndDescription(
-                caseUuid ?? "",
-                ensembleName ?? "",
-            ),
+        queryKey: ["getParameterNamesAndDescription", caseUuid, ensembleName],
+        queryFn: () => apiService.parameters.getParameterNamesAndDescription(caseUuid ?? "", ensembleName ?? ""),
         staleTime: STALE_TIME,
         cacheTime: CACHE_TIME,
         enabled: caseUuid && ensembleName ? true : false,
     });
 }
 
-
 export function useParameterQuery(
     caseUuid: string | undefined,
     ensembleName: string | undefined,
-    parameterName: string | undefined,
-
-
+    parameterName: string | undefined
 ): UseQueryResult<EnsembleParameter_api> {
     return useQuery({
-        queryKey: [
-            "getParameter",
-            caseUuid,
-            ensembleName,
-            parameterName,
-
-
-        ],
-        queryFn: () =>
-            apiService.parameters.getParameter(
-                caseUuid ?? "",
-                ensembleName ?? "",
-                parameterName ?? "",
-            ),
+        queryKey: ["getParameter", caseUuid, ensembleName, parameterName],
+        queryFn: () => apiService.parameters.getParameter(caseUuid ?? "", ensembleName ?? "", parameterName ?? ""),
         staleTime: STALE_TIME,
         cacheTime: CACHE_TIME,
         enabled: caseUuid && ensembleName && parameterName ? true : false,
     });
 }
-export function useVectorAtTimestepQuery(
+export function useVectorAtTimestampQuery(
     caseUuid: string | undefined,
     ensembleName: string | undefined,
     vectorName: string | undefined,
-    timeStep: string | null
-
-
+    timestampUtcMs: number | null
 ): UseQueryResult<EnsembleScalarResponse_api> {
     return useQuery({
-        queryKey: [
-            "getRealizationVectorAtTimestep",
-            caseUuid,
-            ensembleName,
-            vectorName,
-            timeStep
-
-
-        ],
+        queryKey: ["getRealizationVectorAtTimestep", caseUuid, ensembleName, vectorName, timestampUtcMs],
         queryFn: () =>
-            apiService.timeseries.getRealizationVectorAtTimestep(
+            apiService.timeseries.getRealizationVectorAtTimestamp(
                 caseUuid ?? "",
                 ensembleName ?? "",
                 vectorName ?? "",
-                timeStep ?? ""
+                timestampUtcMs ?? 0
             ),
         staleTime: STALE_TIME,
         cacheTime: CACHE_TIME,
-        enabled: caseUuid && ensembleName && vectorName && timeStep ? true : false,
+        enabled: !!(caseUuid && ensembleName && vectorName && timestampUtcMs != null),
     });
 }

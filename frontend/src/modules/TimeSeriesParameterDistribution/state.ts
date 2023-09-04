@@ -7,6 +7,6 @@ export interface VectorSpec {
 
 export interface State {
     vectorSpec: VectorSpec | null;
-    timeStep: string | null;
+    timestampUtcMs: number | null;
     parameterName: string | undefined;
 }
