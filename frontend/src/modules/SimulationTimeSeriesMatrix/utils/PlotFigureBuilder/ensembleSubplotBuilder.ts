@@ -106,7 +106,7 @@ export class EnsembleSubplotBuilder extends PlotFigureBuilderBase {
 
         // Add legend for each vector on top
         this._addedVectors.forEach((vectorName) => {
-            const ensembleLegendTrace: Partial<TimeSeriesPlotData> = {
+            const vectorLegendTrace: Partial<TimeSeriesPlotData> = {
                 name: vectorName,
                 x: [null],
                 y: [null],
@@ -119,7 +119,7 @@ export class EnsembleSubplotBuilder extends PlotFigureBuilderBase {
                 yaxis: `y1`,
             };
 
-            this._plotData.push(ensembleLegendTrace);
+            this._plotData.push(vectorLegendTrace);
         });
 
         // Add legend for history trace with legendrank after vectors

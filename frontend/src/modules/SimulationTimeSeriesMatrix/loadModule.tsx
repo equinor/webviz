@@ -19,7 +19,7 @@ const defaultState: State = {
     realizationsToInclude: null,
 };
 
-const module = ModuleRegistry.initModule<State>("SimulationTimeSeriesNew", defaultState);
+const module = ModuleRegistry.initModule<State>("SimulationTimeSeriesMatrix", defaultState);
 
 module.viewFC = view;
 module.settingsFC = settings;
