@@ -1,4 +1,4 @@
-import { Frequency_api, StatisticFunction_api, VectorDescription_api } from "@api";
+import { Frequency_api, VectorDescription_api } from "@api";
 import { VectorHistoricalData_api, VectorRealizationData_api, VectorStatisticData_api } from "@api";
 import { apiService } from "@framework/ApiService";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
@@ -68,7 +68,6 @@ export function useVectorDataQueries(
 
 export function useStatisticalVectorDataQueries(
     vectorSpecifications: VectorSpec[] | null,
-    statisticFunctions: StatisticFunction_api[] | null,
     resampleFrequency: Frequency_api | null,
     realizationsToInclude: number[] | null,
     allowEnable: boolean
@@ -83,7 +82,6 @@ export function useStatisticalVectorDataQueries(
                     item.vectorName,
                     resampleFrequency,
                     realizationsToInclude,
-                    statisticFunctions,
                 ],
                 queryFn: () =>
                     apiService.timeseries.getStatisticalVectorData(
@@ -91,7 +89,7 @@ export function useStatisticalVectorDataQueries(
                         item.ensembleIdent.getEnsembleName() ?? "",
                         item.vectorName ?? "",
                         resampleFrequency ?? Frequency_api.MONTHLY,
-                        statisticFunctions ?? undefined,
+                        undefined,
                         realizationsToInclude ?? undefined
                     ),
                 staleTime: STALE_TIME,

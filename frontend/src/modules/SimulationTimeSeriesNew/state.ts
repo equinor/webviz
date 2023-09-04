@@ -8,38 +8,50 @@ export interface VectorSpec {
 }
 
 export enum VisualizationMode {
-    IndividualRealizations = "IndividualRealizations",
-    StatisticalLines = "StatisticalLines",
-    StatisticalFanchart = "StatisticalFanchart",
-    StatisticsAndRealizations = "StatisticsAndRealizations",
+    INDIVIDUAL_REALIZATIONS = "IndividualRealizations",
+    STATISTICAL_LINES = "StatisticalLines",
+    STATISTICAL_FANCHART = "StatisticalFanchart",
+    STATISTICS_AND_REALIZATIONS = "StatisticsAndRealizations",
 }
 
 export const VisualizationModeEnumToStringMapping = {
-    [VisualizationMode.IndividualRealizations]: "Individual realizations",
-    [VisualizationMode.StatisticalLines]: "Statistical lines",
-    [VisualizationMode.StatisticalFanchart]: "Statistical fanchart",
-    [VisualizationMode.StatisticsAndRealizations]: "Statistics + Realizations",
+    [VisualizationMode.INDIVIDUAL_REALIZATIONS]: "Individual realizations",
+    [VisualizationMode.STATISTICAL_LINES]: "Statistical lines",
+    [VisualizationMode.STATISTICAL_FANCHART]: "Statistical fanchart",
+    [VisualizationMode.STATISTICS_AND_REALIZATIONS]: "Statistics + Realizations",
 };
 
 export enum GroupBy {
-    Ensemble = "ensemble",
-    TimeSeries = "timeSeries",
+    ENSEMBLE = "ensemble",
+    TIME_SERIES = "timeSeries",
     // None = "none",
 }
 
 export const GroupByEnumToStringMapping = {
-    [GroupBy.Ensemble]: "Ensemble",
-    [GroupBy.TimeSeries]: "Time Series",
+    [GroupBy.ENSEMBLE]: "Ensemble",
+    [GroupBy.TIME_SERIES]: "Time Series",
     // [GroupBy.None]: "None",
 };
 
-export const StatisticFunctionsEnumToStringMapping = {
+export const StatisticFunctionEnumToStringMapping = {
     [StatisticFunction_api.MEAN]: "Mean",
     [StatisticFunction_api.MIN]: "Min",
     [StatisticFunction_api.MAX]: "Max",
     [StatisticFunction_api.P10]: "P10",
     [StatisticFunction_api.P50]: "P50",
     [StatisticFunction_api.P90]: "P90",
+};
+
+export enum FanchartStatisticOption {
+    MEAN = "mean",
+    MIN_MAX = "minMax",
+    P10_P90 = "p10p90",
+}
+
+export const FanchartStatisticOptionEnumToStringMapping = {
+    [FanchartStatisticOption.MEAN]: "Mean",
+    [FanchartStatisticOption.MIN_MAX]: "Min/Max",
+    [FanchartStatisticOption.P10_P90]: "P10/P90",
 };
 
 export interface State {
@@ -49,6 +61,9 @@ export interface State {
     resamplingFrequency: Frequency_api | null;
     showHistorical: boolean;
     showObservations: boolean;
-    statisticsToInclude: StatisticFunction_api[] | null;
+    statisticsSelection: {
+        IndividualStatisticsSelection: StatisticFunction_api[];
+        FanchartStatisticsSelection: FanchartStatisticOption[];
+    };
     realizationsToInclude: number[] | null;
 }

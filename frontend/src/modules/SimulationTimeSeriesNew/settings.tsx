@@ -20,10 +20,12 @@ import { isEqual } from "lodash";
 
 import { useVectorListQueries } from "./queryHooks";
 import {
+    FanchartStatisticOption,
+    FanchartStatisticOptionEnumToStringMapping,
     GroupBy,
     GroupByEnumToStringMapping,
     State,
-    StatisticFunctionsEnumToStringMapping,
+    StatisticFunctionEnumToStringMapping,
     VectorSpec,
     VisualizationMode,
     VisualizationModeEnumToStringMapping,
@@ -38,12 +40,17 @@ export function settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
     const [visualizationMode, setVisualizationMode] = moduleContext.useStoreState("visualizationMode");
     const [showHistorical, setShowHistorical] = moduleContext.useStoreState("showHistorical");
     const [showObservations, setShowObservations] = moduleContext.useStoreState("showObservations");
-    const [statisticsToInclude, setStatisticsToInclude] = moduleContext.useStoreState("statisticsToInclude");
+    const [statisticsSelection, setStatisticsSelection] = moduleContext.useStoreState("statisticsSelection");
     const setVectorSpecifications = moduleContext.useSetStoreValue("vectorSpecifications");
 
     const [previousEnsembleSet, setPreviousEnsembleSet] = React.useState<EnsembleSet>(ensembleSet);
     const [selectedEnsembleIdents, setSelectedEnsembleIdents] = React.useState<EnsembleIdent[]>([]);
     const [selectedVectorNames, setSelectedVectorNames] = React.useState<string[]>([]);
+
+    const [prevVisualizationMode, setPrevVisualizationMode] = React.useState<VisualizationMode>(visualizationMode);
+    if (prevVisualizationMode !== visualizationMode) {
+        setPrevVisualizationMode(visualizationMode);
+    }
 
     const vectorListQueries = useVectorListQueries(selectedEnsembleIdents);
     const ensembleVectorListsHelper = new EnsembleVectorListsHelper(selectedEnsembleIdents, vectorListQueries);
@@ -123,15 +130,48 @@ export function settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
         setVisualizationMode(event.target.value as VisualizationMode);
     }
 
-    function handleStatisticsToIncludeChange(
+    function handleFanchartStatisticsSelectionChange(
+        event: React.ChangeEvent<HTMLInputElement>,
+        statistic: FanchartStatisticOption
+    ) {
+        setStatisticsSelection((prev) => {
+            if (event.target.checked) {
+                return {
+                    IndividualStatisticsSelection: prev.IndividualStatisticsSelection,
+                    FanchartStatisticsSelection: prev.FanchartStatisticsSelection
+                        ? [...prev.FanchartStatisticsSelection, statistic]
+                        : [statistic],
+                };
+            } else {
+                return {
+                    IndividualStatisticsSelection: prev.IndividualStatisticsSelection,
+                    FanchartStatisticsSelection: prev.FanchartStatisticsSelection
+                        ? prev.FanchartStatisticsSelection.filter((item) => item !== statistic)
+                        : [],
+                };
+            }
+        });
+    }
+
+    function handleIndividualStatisticsSelectionChange(
         event: React.ChangeEvent<HTMLInputElement>,
         statistic: StatisticFunction_api
     ) {
-        setStatisticsToInclude((prev) => {
+        setStatisticsSelection((prev) => {
             if (event.target.checked) {
-                return prev ? [...prev, statistic] : [statistic];
+                return {
+                    IndividualStatisticsSelection: prev.IndividualStatisticsSelection
+                        ? [...prev.IndividualStatisticsSelection, statistic]
+                        : [statistic],
+                    FanchartStatisticsSelection: prev.FanchartStatisticsSelection,
+                };
             } else {
-                return prev ? prev.filter((item) => item !== statistic) : [];
+                return {
+                    IndividualStatisticsSelection: prev.IndividualStatisticsSelection
+                        ? prev.IndividualStatisticsSelection.filter((item) => item !== statistic)
+                        : [],
+                    FanchartStatisticsSelection: prev.FanchartStatisticsSelection,
+                };
             }
         });
     }
@@ -170,7 +210,7 @@ export function settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
                     onChange={handleShowHistorical}
                 />
                 <Checkbox
-                    label="Show observations"
+                    label="Show observations - NEED DATA IN SUMO"
                     checked={showObservations}
                     disabled={true}
                     onChange={handleShowObservations}
@@ -198,22 +238,40 @@ export function settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
                         <div
                             className={resolveClassNames({
                                 "pointer-events-none opacity-40":
-                                    visualizationMode === VisualizationMode.IndividualRealizations,
+                                    visualizationMode === VisualizationMode.INDIVIDUAL_REALIZATIONS,
                             })}
                         >
-                            {Object.values(StatisticFunction_api).map((val: StatisticFunction_api) => {
-                                const description = StatisticFunctionsEnumToStringMapping[val];
-                                return (
-                                    <Checkbox
-                                        key={val}
-                                        label={description}
-                                        checked={statisticsToInclude?.includes(val)}
-                                        onChange={(event) => {
-                                            handleStatisticsToIncludeChange(event, val);
-                                        }}
-                                    />
-                                );
-                            })}
+                            {visualizationMode === VisualizationMode.STATISTICAL_FANCHART ||
+                            (visualizationMode === VisualizationMode.INDIVIDUAL_REALIZATIONS &&
+                                prevVisualizationMode === VisualizationMode.STATISTICAL_FANCHART)
+                                ? Object.values(FanchartStatisticOption).map((value: FanchartStatisticOption) => {
+                                      return (
+                                          <Checkbox
+                                              key={value}
+                                              label={FanchartStatisticOptionEnumToStringMapping[value]}
+                                              checked={statisticsSelection?.FanchartStatisticsSelection?.includes(
+                                                  value
+                                              )}
+                                              onChange={(event) => {
+                                                  handleFanchartStatisticsSelectionChange(event, value);
+                                              }}
+                                          />
+                                      );
+                                  })
+                                : Object.values(StatisticFunction_api).map((value: StatisticFunction_api) => {
+                                      return (
+                                          <Checkbox
+                                              key={value}
+                                              label={StatisticFunctionEnumToStringMapping[value]}
+                                              checked={statisticsSelection?.IndividualStatisticsSelection.includes(
+                                                  value
+                                              )}
+                                              onChange={(event) => {
+                                                  handleIndividualStatisticsSelectionChange(event, value);
+                                              }}
+                                          />
+                                      );
+                                  })}
                         </div>
                     </Label>
                 </div>

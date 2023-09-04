@@ -7,8 +7,12 @@ import { useElementSize } from "@lib/hooks/useElementSize";
 import { useHistoricalVectorDataQueries, useStatisticalVectorDataQueries, useVectorDataQueries } from "./queryHooks";
 import { GroupBy, State, VisualizationMode } from "./state";
 import { EnsembleSubplotBuilder } from "./utils/PlotFigureBuilder/ensembleSubplotBuilder";
-import { EnsembleHexColors, VectorSubplotBuilder } from "./utils/PlotFigureBuilder/vectorSubplotBuilder";
-import { createLoadedVectorSpecificationAndDataArray } from "./utils/plotUtils";
+import { VectorSubplotBuilder } from "./utils/PlotFigureBuilder/vectorSubplotBuilder";
+import {
+    createLoadedVectorSpecificationAndDataArray,
+    filterVectorSpecificationAndFanchartStatisticsDataArray,
+    filterVectorSpecificationAndIndividualStatisticsDataArray,
+} from "./utils/plotUtils";
 
 export const view = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>) => {
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);
@@ -21,9 +25,9 @@ export const view = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
     const groupBy = moduleContext.useStoreValue("groupBy");
     const resampleFrequency = moduleContext.useStoreValue("resamplingFrequency");
     const realizationsToInclude = moduleContext.useStoreValue("realizationsToInclude");
-    const statisticsToInclude = moduleContext.useStoreValue("statisticsToInclude");
     const visualizationMode = moduleContext.useStoreValue("visualizationMode");
     const showHistorical = moduleContext.useStoreValue("showHistorical");
+    const statisticsSelection = moduleContext.useStoreValue("statisticsSelection");
 
     // Queries
     const vectorDataQueries = useVectorDataQueries(
@@ -34,12 +38,11 @@ export const view = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
     );
     const vectorStatisticsQueries = useStatisticalVectorDataQueries(
         vectorSpecifications,
-        statisticsToInclude,
         resampleFrequency,
         realizationsToInclude,
-        visualizationMode === VisualizationMode.StatisticalFanchart ||
-            visualizationMode === VisualizationMode.StatisticalLines ||
-            visualizationMode === VisualizationMode.StatisticsAndRealizations
+        visualizationMode === VisualizationMode.STATISTICAL_FANCHART ||
+            visualizationMode === VisualizationMode.STATISTICAL_LINES ||
+            visualizationMode === VisualizationMode.STATISTICS_AND_REALIZATIONS
     );
     const historicalVectorDataQueries = useHistoricalVectorDataQueries(
         vectorSpecifications?.filter((vec) => vec.hasHistoricalVector) ?? null,
@@ -76,7 +79,7 @@ export const view = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
     // Plot builder
     // NOTE: useRef?
     const subplotBuilder =
-        groupBy === GroupBy.TimeSeries
+        groupBy === GroupBy.TIME_SERIES
             ? new VectorSubplotBuilder(
                   vectorSpecifications ?? [],
                   colorSet,
@@ -90,22 +93,34 @@ export const view = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
                   wrapperDivSize.height
               );
 
-    if (visualizationMode === VisualizationMode.IndividualRealizations) {
+    if (visualizationMode === VisualizationMode.INDIVIDUAL_REALIZATIONS) {
         const useIncreasedBrightness = false;
         subplotBuilder.addRealizationsTraces(loadedVectorSpecificationsAndRealizationData, useIncreasedBrightness);
     }
-    if (visualizationMode === VisualizationMode.StatisticalFanchart) {
-        subplotBuilder.addFanchartTraces(loadedVectorSpecificationsAndStatisticsData);
+    if (visualizationMode === VisualizationMode.STATISTICAL_FANCHART) {
+        const selectedVectorsFanchartStatisticData = filterVectorSpecificationAndFanchartStatisticsDataArray(
+            loadedVectorSpecificationsAndStatisticsData,
+            statisticsSelection.FanchartStatisticsSelection
+        );
+        subplotBuilder.addFanchartTraces(selectedVectorsFanchartStatisticData);
     }
-    if (visualizationMode === VisualizationMode.StatisticalLines) {
+    if (visualizationMode === VisualizationMode.STATISTICAL_LINES) {
         const highlightStatistics = false;
-        subplotBuilder.addStatisticsTraces(loadedVectorSpecificationsAndStatisticsData, highlightStatistics);
+        const selectedVectorsIndividualStatisticData = filterVectorSpecificationAndIndividualStatisticsDataArray(
+            loadedVectorSpecificationsAndStatisticsData,
+            statisticsSelection.IndividualStatisticsSelection
+        );
+        subplotBuilder.addStatisticsTraces(selectedVectorsIndividualStatisticData, highlightStatistics);
     }
-    if (visualizationMode === VisualizationMode.StatisticsAndRealizations) {
+    if (visualizationMode === VisualizationMode.STATISTICS_AND_REALIZATIONS) {
         const useIncreasedBrightness = true;
         const highlightStatistics = true;
+        const selectedVectorsIndividualStatisticData = filterVectorSpecificationAndIndividualStatisticsDataArray(
+            loadedVectorSpecificationsAndStatisticsData,
+            statisticsSelection.IndividualStatisticsSelection
+        );
         subplotBuilder.addRealizationsTraces(loadedVectorSpecificationsAndRealizationData, useIncreasedBrightness);
-        subplotBuilder.addStatisticsTraces(loadedVectorSpecificationsAndStatisticsData, highlightStatistics);
+        subplotBuilder.addStatisticsTraces(selectedVectorsIndividualStatisticData, highlightStatistics);
     }
     if (showHistorical) {
         subplotBuilder.addHistoryTraces(loadedVectorSpecificationsAndHistoricalData);
