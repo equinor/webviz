@@ -33,5 +33,7 @@ export function MultiEnsembleSelect(props: MultiEnsembleSelectProps): JSX.Elemen
         selectedArr.push(ident.toString());
     }
 
-    return <Select options={optionsArr} value={selectedArr} onChange={handleSelectionChanged} {...rest} />;
+    return (
+        <Select options={optionsArr} value={selectedArr} onChange={handleSelectionChanged} multiple={true} {...rest} />
+    );
 }
