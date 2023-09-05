@@ -1,7 +1,7 @@
+import { formatRgb, modeRgb, useMode } from "culori";
 import { ScatterLine } from "plotly.js";
 
-import { hexToRgbaStr } from "../ColorUtils/colors";
-import { TimeSeriesPlotData } from "../plotUtils";
+import { TimeSeriesPlotData } from "../timeSeriesPlotData";
 
 /**
     Definition of statistics data for free line trace in fanchart
@@ -79,7 +79,7 @@ function validateFanchartData(data: FanchartData): void {
     }
 
     if (data.freeLine !== undefined && samplesLength !== data.freeLine.data.length) {
-        throw new Error("Invalid fanchart mean value data length. data.samples.length !== free_line.data.length");
+        throw new Error("Invalid fanchart mean value data length. data.samples.length !== freeLine.data.length");
     }
 
     if (data.minimumMaximum !== undefined && samplesLength !== data.minimumMaximum.minimum.length) {
@@ -181,12 +181,15 @@ export function createFanchartTraces({
 
     validateFanchartData(data);
 
-    // TODO: Get hex to rgba string using "culori"
-    const fillColorLight = hexToRgbaStr(hexColor, 0.3);
-    const fillColorDark = hexToRgbaStr(hexColor, 0.6);
-    const lineColor = hexToRgbaStr(hexColor, 1.0);
+    const convertRgb = useMode(modeRgb);
+    const rgb = convertRgb(hexColor);
+    if (rgb === undefined) {
+        throw new Error("Invalid conversion of hex color string: " + hexColor + " to rgb.");
+    }
+    const fillColorLight = formatRgb({ ...rgb, alpha: 0.3 });
+    const fillColorDark = formatRgb({ ...rgb, alpha: 0.6 });
+    const lineColor = formatRgb({ ...rgb, alpha: 1.0 });
 
-    // const getDefaultTrace=(statisticsName: string, values: number[]): Partial<TimeSeriesPlotData> =>{
     function getDefaultTrace(statisticsName: string, values: number[]): Partial<TimeSeriesPlotData> {
         const trace: Partial<TimeSeriesPlotData> = {
             name: legendName ?? legendGroup,
@@ -195,6 +198,7 @@ export function createFanchartTraces({
             xaxis: xaxis,
             yaxis: yaxis,
             mode: "lines",
+            type: "scatter",
             line: { width: 0, color: lineColor, shape: lineShape },
             legendgroup: legendGroup,
             showlegend: false,

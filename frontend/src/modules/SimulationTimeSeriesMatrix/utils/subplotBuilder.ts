@@ -4,15 +4,16 @@ import { ColorSet } from "@lib/utils/ColorSet";
 // import { filterBrightness, formatHex, parseHex } from "culori";
 import { Annotations, Layout } from "plotly.js";
 
-import { VectorSpec } from "../../state";
-import { scaleHexColorLightness } from "../ColorUtils/colors";
 import {
     createHistoricalVectorTrace,
     createVectorFanchartTraces,
     createVectorRealizationTraces,
     createVectorStatisticsTraces,
-} from "../PlotlyTraceUtils/createVectorTracesUtils";
-import { TimeSeriesPlotData } from "../plotUtils";
+} from "./PlotlyTraceUtils/createVectorTracesUtils";
+import { scaleHexColorLightness } from "./colorUtils";
+import { TimeSeriesPlotData } from "./timeSeriesPlotData";
+
+import { VectorSpec } from "../state";
 
 export type HexColorMap = { [name: string]: string };
 
@@ -100,7 +101,7 @@ export class SubplotBuilder {
         return {
             width: this._width,
             height: this._height,
-            margin: { t: 0, r: 0, l: 40, b: 40 },
+            margin: { t: 30, r: 0, l: 40, b: 40 },
             xaxis: { type: "date" },
             grid: { rows: this._numberOfSubplots, columns: 1, pattern: "coupled" },
             annotations: this.subplotTitles(),
@@ -245,7 +246,7 @@ export class SubplotBuilder {
 
             const vectorRealizationTraces = createVectorRealizationTraces(
                 elm.data,
-                elm.vectorSpecification.ensembleIdent,
+                elm.vectorSpecification.ensembleIdent.getEnsembleName(),
                 color,
                 legendGroup,
                 hoverTemplate,

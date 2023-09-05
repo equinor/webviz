@@ -1,6 +1,6 @@
 import { ScatterLine } from "plotly.js";
 
-import { TimeSeriesPlotData } from "../plotUtils";
+import { TimeSeriesPlotData } from "../timeSeriesPlotData";
 
 /**
     Definition of line trace data for statistics plot
@@ -18,7 +18,7 @@ export type LineData = {
 
     `Attributes:`
     * `samples` - Common sample point list for each following value list. Can be list of strings or numbers
-    * `free_line` - LineData with name and value data for free line trace in statistics plot
+    * `freeLine` - LineData with name and value data for free line trace in statistics plot
      (e.g. mean, median, etc.)
     * `minimum` - Optional list of minimum value data for statistics plot
     * `maximum` - Optional list of maximum value data for statistics plot
@@ -88,7 +88,7 @@ function validateStatisticsData(data: StatisticsData): void {
 }
 
 /**
-    Definition of options for createing statistical plot trace
+    Definition of options for creating statistical plot trace
 
     To be used as input to createStatisticsTraces function with default values for optional arguments.
  */
@@ -156,6 +156,7 @@ export function createStatisticsTraces({
             xaxis: xaxis,
             yaxis: yaxis,
             mode: "lines",
+            type: "scatter",
             line: { color: color, width: lineWidth, shape: lineShape },
             legendgroup: legendGroup,
             showlegend: false,
@@ -220,6 +221,12 @@ export function createStatisticsTraces({
             maximumTrace.line.dash = "longdash";
         }
         traces.push(maximumTrace);
+    }
+
+    // Free line
+    if (data.freeLine !== undefined) {
+        const freeLineTrace = getDefaultTrace(data.freeLine.name, data.freeLine.data);
+        traces.push(freeLineTrace);
     }
 
     // Set legend for last trace in list

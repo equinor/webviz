@@ -22,6 +22,7 @@ import { useVectorListQueries } from "./queryHooks";
 import {
     FanchartStatisticOption,
     FanchartStatisticOptionEnumToStringMapping,
+    FrequencyEnumToStringMapping,
     GroupBy,
     GroupByEnumToStringMapping,
     State,
@@ -30,7 +31,6 @@ import {
     VisualizationMode,
     VisualizationModeEnumToStringMapping,
 } from "./state";
-import { makeFrequencyDropdownOptions } from "./utils/elementOptionsUtils";
 import { EnsembleVectorListsHelper } from "./utils/ensemblesVectorListHelper";
 
 export function settings({ moduleContext, workbenchSession }: ModuleFCProps<State>) {
@@ -114,8 +114,9 @@ export function settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
         setSelectedVectorNames(selection.selectedTags);
     }
 
-    function handleFrequencySelectionChange(frequency: string) {
-        setResamplingFrequency(frequency as Frequency_api);
+    function handleFrequencySelectionChange(newFrequencyStr: string) {
+        const newFreq = newFrequencyStr !== "RAW" ? (newFrequencyStr as Frequency_api) : null;
+        setResamplingFrequency(newFreq);
     }
 
     function handleShowHistorical(event: React.ChangeEvent<HTMLInputElement>) {
@@ -189,8 +190,13 @@ export function settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
             </CollapsibleGroup>
             <CollapsibleGroup expanded={true} title="Resampling frequency">
                 <Dropdown
-                    options={makeFrequencyDropdownOptions()}
-                    value={resampleFrequency ?? makeFrequencyDropdownOptions()[0].value}
+                    options={[
+                        { value: "RAW", label: "None (raw)" },
+                        ...Object.values(Frequency_api).map((val: Frequency_api) => {
+                            return { value: val, label: FrequencyEnumToStringMapping[val] };
+                        }),
+                    ]}
+                    value={resampleFrequency ?? Frequency_api.MONTHLY}
                     onChange={handleFrequencySelectionChange}
                 />
             </CollapsibleGroup>

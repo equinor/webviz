@@ -4,20 +4,27 @@ import {
     VectorRealizationData_api,
     VectorStatisticData_api,
 } from "@api";
-import { EnsembleIdent } from "@framework/EnsembleIdent";
 
 import { FanchartData, FreeLineData, LowHighData, MinMaxData } from "./fanchartPlotting";
 import { createFanchartTraces } from "./fanchartPlotting";
 import { LineData, StatisticsData, createStatisticsTraces } from "./statisticsPlotting";
-import { TimeSeriesPlotData } from "./timeSeriesPlotData";
 
+import { TimeSeriesPlotData } from "../timeSeriesPlotData";
+
+/**
+    Get line shape - "vh" for rate data, "linear" for non-rate data
+ */
 export function getLineShape(isRate: boolean): "linear" | "vh" {
     return isRate ? "vh" : "linear";
 }
 
+/**
+    Utility function for creating vector realization traces for an array of vector realization data
+    for given vector.
+ */
 export function createVectorRealizationTraces(
     vectorRealizationsData: VectorRealizationData_api[],
-    ensembleIdent: EnsembleIdent,
+    ensembleName: string,
     color: string,
     legendGroup: string,
     // lineShape: "linear" | "spline" | "hv" | "vh" | "hvh" | "vhv",
@@ -27,9 +34,11 @@ export function createVectorRealizationTraces(
     xaxis = "x"
 ): Partial<TimeSeriesPlotData>[] {
     // TODO:
+    // - type: "scattergl" or "scatter"?
     // - vector name?
     // - realization number?
-    // - lineShape?
+    // - lineShape - Each VectorRealizationData_api element has its own `is_rate` property. Should we
+    //               use that to determine the line shape or provide a lineShape argument?
 
     return vectorRealizationsData.map((realization) => {
         return {
@@ -37,9 +46,8 @@ export function createVectorRealizationTraces(
             y: realization.values,
             line: { width: 1, color: color, shape: getLineShape(realization.is_rate) },
             mode: "lines",
-            hovertemplate: `${hoverTemplate}Realization: ${
-                realization.realization
-            }, Ensemble: ${ensembleIdent.getEnsembleName()}`,
+            type: "scattergl",
+            hovertemplate: `${hoverTemplate}Realization: ${realization.realization}, Ensemble: ${ensembleName}`,
             // realizationNumber: realization.realization,
             name: legendGroup,
             legendgroup: legendGroup,
@@ -50,6 +58,9 @@ export function createVectorRealizationTraces(
     });
 }
 
+/**
+    Utility function for creating trace for historical vector data
+ */
 export function createHistoricalVectorTrace(
     vectorHistoricalData: VectorHistoricalData_api,
     color = "black",
@@ -60,13 +71,11 @@ export function createHistoricalVectorTrace(
     vectorName?: string,
     legendRank?: number
 ): Partial<TimeSeriesPlotData> {
-    // TODO:
-    // - legendrank?
     const hoverText = vectorName ? `History: ${vectorName}` : "History";
-
     return {
         line: { shape: getLineShape(vectorHistoricalData.is_rate), color: color },
         mode: "lines",
+        type: "scatter",
         x: vectorHistoricalData.timestamps_utc_ms,
         y: vectorHistoricalData.values,
         hovertext: hoverText,
@@ -80,6 +89,16 @@ export function createHistoricalVectorTrace(
     };
 }
 
+/**
+    Utility function for creating traces representing statistical fanchart for given statistics data.
+
+    The function creates filled transparent area between P10 and P90, and between MIN and MAX, and a free line 
+    for MEAN.
+
+    NOTE: P10 and P90, and MIN and MAX are considered to work in pairs, therefore the pairs are neglected if
+    only one of the statistics in each pair is present in the data. I.e. P10/P90 is neglected if only P10 or P90
+    is presented in the data. Similarly, MIN/MAX is neglected if only MIN or MAX is presented in the data.
+ */
 export function createVectorFanchartTraces(
     vectorStatisticData: VectorStatisticData_api,
     hexColor: string,
@@ -90,9 +109,6 @@ export function createVectorFanchartTraces(
     showLegend = false,
     legendRank?: number
 ): Partial<TimeSeriesPlotData>[] {
-    // NOTE:
-    // - provide selected statistics? and plot the selected pairs, or rely on the query result and use returned pairs?
-
     const lowData = vectorStatisticData.value_objects.find((v) => v.statistic_function === StatisticFunction_api.P90);
     const highData = vectorStatisticData.value_objects.find((v) => v.statistic_function === StatisticFunction_api.P10);
     let lowHighData: LowHighData | undefined = undefined;
@@ -143,6 +159,12 @@ export function createVectorFanchartTraces(
     });
 }
 
+/**
+    Utility function for creating traces for statistical lines for given statistics data.
+
+    The function creates lines for P10, P50, P90, MIN, MAX, and MEAN. Solid line for MEAN, various
+    dashed lines for the remaining statistics.
+ */
 export function createVectorStatisticsTraces(
     vectorStatisticData: VectorStatisticData_api,
     color: string,

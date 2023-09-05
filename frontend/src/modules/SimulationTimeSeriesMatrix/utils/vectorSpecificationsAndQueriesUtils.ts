@@ -1,19 +1,13 @@
 import { StatisticFunction_api, VectorStatisticData_api } from "@api";
 import { UseQueryResult } from "@tanstack/react-query";
 
-import { PlotData } from "plotly.js";
-
 import { FanchartStatisticOption, VectorSpec } from "../state";
-
-export interface TimeSeriesPlotData extends Partial<PlotData> {
-    realizationNumber?: number | null;
-
-    // Did they forget to expose this one
-    legendrank?: number;
-}
 
 /**
     Helper function to create an array with pair of vector specification and loaded query data
+
+    If query data is not valid, the vector specification and corresponding query data will not
+    be included in the output array
  */
 export function createLoadedVectorSpecificationAndDataArray<T>(
     vectorSpecifications: VectorSpec[],

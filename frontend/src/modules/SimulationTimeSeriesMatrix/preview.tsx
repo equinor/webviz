@@ -1,9 +1,18 @@
 import { DrawPreviewFunc } from "@framework/Preview";
 
 export const preview: DrawPreviewFunc = function (width: number, height: number) {
-    const paths: { x1: number; y1: number; x2: number; y2: number; x3: number; y3: number; xc: number; yc: number }[] =
-        [];
-    const numPaths = 10;
+    const paths: {
+        x1: number;
+        y1: number;
+        x2: number;
+        y2: number;
+        x3: number;
+        y3: number;
+        xc: number;
+        yc: number;
+        color: string;
+    }[] = [];
+    const numPaths = 9;
     for (let i = 0; i < numPaths; i++) {
         const x1 = 0;
         const y1 = height - (i / numPaths) * height;
@@ -13,7 +22,11 @@ export const preview: DrawPreviewFunc = function (width: number, height: number)
         const y3 = height - (((i - 1) / numPaths) * height) / 1.2;
         const xc = width / 4;
         const yc = height - (i / numPaths) * height - height / 12;
-        paths.push({ x1, y1, x2, y2, x3, y3, xc, yc });
+
+        // Assign colors based on position
+        const color = i < 3 ? "green" : i < 6 ? "red" : "blue";
+
+        paths.push({ x1, y1, x2, y2, x3, y3, xc, yc, color });
     }
     return (
         <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`}>
@@ -25,7 +38,7 @@ export const preview: DrawPreviewFunc = function (width: number, height: number)
                         key={index}
                         d={`M ${path.x1} ${path.y1} Q ${path.xc} ${path.yc} ${path.x2} ${path.y2} T ${path.x3} ${path.y3}`}
                         fill="none"
-                        stroke="green"
+                        stroke={path.color} // Set stroke color
                         strokeWidth={1}
                     />
                 );

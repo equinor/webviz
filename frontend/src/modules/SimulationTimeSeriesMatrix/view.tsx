@@ -3,19 +3,25 @@ import Plot from "react-plotly.js";
 
 import { ModuleFCProps } from "@framework/Module";
 import { useElementSize } from "@lib/hooks/useElementSize";
+// Note: Have for debug render count info
+import { isDevMode } from "@lib/utils/devMode";
 
 import { useHistoricalVectorDataQueries, useStatisticalVectorDataQueries, useVectorDataQueries } from "./queryHooks";
 import { GroupBy, State, VisualizationMode } from "./state";
-// import { EnsembleSubplotBuilder } from "./utils/PlotFigureBuilder/ensembleSubplotBuilder";
-import { SubplotBuilder, SubplotOwner } from "./utils/PlotFigureBuilder/subplotBuilder";
-// import { VectorSubplotBuilder } from "./utils/PlotFigureBuilder/vectorSubplotBuilder";
+import { SubplotBuilder, SubplotOwner } from "./utils/subplotBuilder";
 import {
     createLoadedVectorSpecificationAndDataArray,
     filterVectorSpecificationAndFanchartStatisticsDataArray,
     filterVectorSpecificationAndIndividualStatisticsDataArray,
-} from "./utils/plotUtils";
+} from "./utils/vectorSpecificationsAndQueriesUtils";
 
 export const view = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>) => {
+    // Leave this in until we get a feeling for React18/Plotly
+    const renderCount = React.useRef(0);
+    React.useEffect(function incrementRenderCount() {
+        renderCount.current = renderCount.current + 1;
+    });
+
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);
     const wrapperDivSize = useElementSize(wrapperDivRef);
 
@@ -145,6 +151,9 @@ export const view = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
                 onHover={handleHover}
                 onUnhover={handleUnHover}
             />
+            {isDevMode() && (
+                <div className="absolute top-10 left-5 italic text-pink-400">(rc={renderCount.current})</div>
+            )}
         </div>
     );
 };

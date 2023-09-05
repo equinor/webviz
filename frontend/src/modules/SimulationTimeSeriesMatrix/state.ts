@@ -21,16 +21,16 @@ export const VisualizationModeEnumToStringMapping = {
     [VisualizationMode.STATISTICS_AND_REALIZATIONS]: "Statistics + Realizations",
 };
 
+// NOTE: Add None as option?
 export enum GroupBy {
     ENSEMBLE = "ensemble",
     TIME_SERIES = "timeSeries",
-    // None = "none",
 }
 
+// NOTE: Add None as option?
 export const GroupByEnumToStringMapping = {
     [GroupBy.ENSEMBLE]: "Ensemble",
     [GroupBy.TIME_SERIES]: "Time Series",
-    // [GroupBy.None]: "None",
 };
 
 export const StatisticFunctionEnumToStringMapping = {
@@ -52,6 +52,14 @@ export const FanchartStatisticOptionEnumToStringMapping = {
     [FanchartStatisticOption.MEAN]: "Mean",
     [FanchartStatisticOption.MIN_MAX]: "Min/Max",
     [FanchartStatisticOption.P10_P90]: "P10/P90",
+};
+
+export const FrequencyEnumToStringMapping = {
+    [Frequency_api.DAILY]: "Daily",
+    [Frequency_api.WEEKLY]: "Weekly",
+    [Frequency_api.MONTHLY]: "Monthly",
+    [Frequency_api.QUARTERLY]: "Quarterly",
+    [Frequency_api.YEARLY]: "Yearly",
 };
 
 export interface State {
