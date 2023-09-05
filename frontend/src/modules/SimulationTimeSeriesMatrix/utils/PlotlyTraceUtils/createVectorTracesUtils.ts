@@ -29,12 +29,11 @@ export function createVectorRealizationTraces(
     // TODO:
     // - vector name?
     // - realization number?
-    // - hovertemplate?
     // - lineShape?
 
     return vectorRealizationsData.map((realization) => {
         return {
-            x: realization.timestamps,
+            x: realization.timestamps_utc_ms,
             y: realization.values,
             line: { width: 1, color: color, shape: getLineShape(realization.is_rate) },
             mode: "lines",
@@ -68,7 +67,7 @@ export function createHistoricalVectorTrace(
     return {
         line: { shape: getLineShape(vectorHistoricalData.is_rate), color: color },
         mode: "lines",
-        x: vectorHistoricalData.timestamps,
+        x: vectorHistoricalData.timestamps_utc_ms,
         y: vectorHistoricalData.values,
         hovertext: hoverText,
         hoverinfo: "y+x+text",
@@ -126,7 +125,7 @@ export function createVectorFanchartTraces(
     }
 
     const fanchartData: FanchartData = {
-        samples: vectorStatisticData.timestamps,
+        samples: vectorStatisticData.timestamps_utc_ms,
         lowHigh: lowHighData,
         minimumMaximum: minMaxData,
         freeLine: meanFreeLineData,
@@ -188,7 +187,7 @@ export function createVectorStatisticsTraces(
         : undefined;
 
     const statisticsData: StatisticsData = {
-        samples: vectorStatisticData.timestamps,
+        samples: vectorStatisticData.timestamps_utc_ms,
         freeLine: meanData,
         minimum: minValueObject ? minValueObject.values : undefined,
         maximum: maxValueObject ? maxValueObject.values : undefined,

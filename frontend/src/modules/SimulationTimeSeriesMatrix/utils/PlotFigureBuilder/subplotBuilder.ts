@@ -85,6 +85,7 @@ export class SubplotBuilder {
         // TODO:
         // - Handle keep uirevision?
         // - Assign same color to vector independent of order in vector list?
+        // - Determine which color brightness method to utilize
     }
 
     createPlotData(): Partial<TimeSeriesPlotData>[] {
@@ -93,12 +94,16 @@ export class SubplotBuilder {
     }
 
     createPlotLayout(): Partial<Layout> {
+        // NOTE:
+        // - Should one add xaxis: { type: "date" }, xaxis2: { type: "date" }, etc.? One for each xaxis? Seems to work with only xaxis: { type: "date" }
+        // - Annotations only way to create subplot titles?
         return {
             width: this._width,
             height: this._height,
             margin: { t: 0, r: 0, l: 40, b: 40 },
+            xaxis: { type: "date" },
             grid: { rows: this._numberOfSubplots, columns: 1, pattern: "coupled" },
-            annotations: this.subplotTitles(), // NOTE: Annotations only way to create subplot titles?
+            annotations: this.subplotTitles(),
             // uirevision: "true", // NOTE: Only works if vector data is cached, as Plot might receive empty data on rerender
         };
     }

@@ -17,7 +17,7 @@ export type LineData = {
     Definition of statistics data utilized in creation of statistical plot traces
 
     `Attributes:`
-    * `samples` - Common sample point list for each following value list.
+    * `samples` - Common sample point list for each following value list. Can be list of strings or numbers
     * `free_line` - LineData with name and value data for free line trace in statistics plot
      (e.g. mean, median, etc.)
     * `minimum` - Optional list of minimum value data for statistics plot
@@ -27,7 +27,7 @@ export type LineData = {
     * `highPercentile` - Optional high percentile, name and data values for statistics plot
  */
 export type StatisticsData = {
-    samples: string[]; // NOTE: What datatype to use here? only time stamps/strings or more?
+    samples: string[] | number[];
     freeLine?: LineData;
     minimum?: number[];
     maximum?: number[];

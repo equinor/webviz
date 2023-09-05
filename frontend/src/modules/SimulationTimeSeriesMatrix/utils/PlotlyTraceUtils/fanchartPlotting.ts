@@ -43,14 +43,14 @@ export type MinMaxData = {
 /**
     Type defining fanchart data utilized in creation of statistical fanchart traces
 
-    * `samples` - Common sample point list for each following value list.
+    * `samples` - Common sample point list for each following value list. Can be list of strings or numbers
     * `freeLine` - Optional statistics with name and value data for free line trace in fanchart (e.g.
      mean, median, etc.)
     * `minimumMaximum` - Paired optional minimum and maximum data for fanchart plotting
     * `lowHigh` - Paired optional low and high percentile names and data for fanchart plotting
  */
 export type FanchartData = {
-    samples: string[]; // NOTE: What datatype to use here? only time stamps/strings or more?
+    samples: string[] | number[];
     freeLine?: FreeLineData;
     minimumMaximum?: MinMaxData;
     lowHigh?: LowHighData;
