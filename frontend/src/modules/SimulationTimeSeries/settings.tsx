@@ -5,7 +5,7 @@ import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { ModuleFCProps } from "@framework/Module";
 import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
-import { MultiEnsembleSelect } from "@framework/components/MultiEnsembleSelect";
+import { SingleEnsembleSelect } from "@framework/components/SingleEnsembleSelect";
 import { fixupEnsembleIdent, maybeAssignFirstSyncedEnsemble } from "@framework/utils/ensembleUiHelpers";
 import { ApiStateWrapper } from "@lib/components/ApiStateWrapper";
 import { Checkbox } from "@lib/components/Checkbox";
@@ -82,9 +82,8 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
 
     const computedEnsemble = computedEnsembleIdent ? ensembleSet.findEnsemble(computedEnsembleIdent) : null;
 
-    function handleEnsembleSelectionChange(ensembleIdentArr: EnsembleIdent[]) {
-        console.debug("handleEnsembleSelectionChange()", ensembleIdentArr);
-        const newEnsembleIdent = ensembleIdentArr[0] ?? null;
+    function handleEnsembleSelectionChange(newEnsembleIdent: EnsembleIdent | null) {
+        console.debug("handleEnsembleSelectionChange()", newEnsembleIdent);
         setSelectedEnsembleIdent(newEnsembleIdent);
         if (newEnsembleIdent) {
             syncHelper.publishValue(SyncSettingKey.ENSEMBLE, "global.syncValue.ensembles", [newEnsembleIdent]);
@@ -139,11 +138,10 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
                 text="Ensemble"
                 labelClassName={syncHelper.isSynced(SyncSettingKey.ENSEMBLE) ? "bg-indigo-700 text-white" : ""}
             >
-                <MultiEnsembleSelect
+                <SingleEnsembleSelect
                     ensembleSet={ensembleSet}
-                    value={computedEnsembleIdent ? [computedEnsembleIdent] : []}
+                    value={computedEnsembleIdent}
                     onChange={handleEnsembleSelectionChange}
-                    size={5}
                 />
             </Label>
             <ApiStateWrapper
