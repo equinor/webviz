@@ -103,6 +103,7 @@ export function view({ moduleContext, workbenchServices, workbenchSettings }: Mo
     const colorTables = colorScaleToSubsurfaceMapColorScale(surfaceColorScale);
 
     // Mesh data query should only trigger update if the property surface address is not set or if the property surface data is loaded
+
     if (meshSurfDataQuery.data && !propertySurfAddr) {
         const newMeshData = jsonParseWithUndefined(meshSurfDataQuery.data.mesh_data);
 
@@ -158,11 +159,16 @@ export function view({ moduleContext, workbenchServices, workbenchSettings }: Mo
         const polygonsLayer: Record<string, unknown> = createSurfacePolygonsLayer(polygonsData);
         newLayers.push(polygonsLayer);
     }
+    const clickedWellbore = syncHelper.useValue(SyncSettingKey.WELLBORE, "global.syncValue.wellBore");
     if (wellTrajectoriesQuery.data) {
         const wellTrajectories: WellBoreTrajectory_api[] = wellTrajectoriesQuery.data.filter((well) =>
             selectedWellUuids.includes(well.wellbore_uuid)
         );
-        const wellTrajectoryLayer: Record<string, unknown> = createWellboreTrajectoryLayer(wellTrajectories);
+
+        const wellTrajectoryLayer: Record<string, unknown> = createWellboreTrajectoryLayer(
+            wellTrajectories,
+            clickedWellbore
+        );
         const wellBoreHeaderLayer: Record<string, unknown> = createWellBoreHeaderLayer(wellTrajectories);
         newLayers.push(wellTrajectoryLayer);
         newLayers.push(wellBoreHeaderLayer);
@@ -188,6 +194,7 @@ export function view({ moduleContext, workbenchServices, workbenchSettings }: Mo
                         });
                     }
                 });
+
                 if (clickedUWIs.length > 0) {
                     // Publish the first selected well bore
                     syncHelper.publishValue(SyncSettingKey.WELLBORE, "global.syncValue.wellBore", clickedUWIs[0]);

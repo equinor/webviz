@@ -1,5 +1,6 @@
 import { PolygonData_api, WellBoreTrajectory_api } from "@api";
 import { colorTablesObj } from "@emerson-eps/color-tables";
+import { Wellbore } from "@framework/Wellbore";
 import { ColorScale } from "@lib/utils/ColorScale";
 
 import { formatRgb } from "culori";
@@ -132,26 +133,34 @@ function surfacePolygonsToGeojson(surfacePolygon: PolygonData_api): Record<strin
     };
     return data;
 }
-export function createWellboreTrajectoryLayer(wellTrajectories: WellBoreTrajectory_api[]): Record<string, unknown> {
+export function createWellboreTrajectoryLayer(
+    wellTrajectories: WellBoreTrajectory_api[],
+    selectedWellBore: Wellbore | null
+): Record<string, unknown> {
     const features: Record<string, unknown>[] = wellTrajectories.map((wellTrajectory) => {
-        return wellTrajectoryToGeojson(wellTrajectory);
+        return wellTrajectoryToGeojson(wellTrajectory, selectedWellBore);
     });
     const data: Record<string, unknown> = {
         type: "FeatureCollection",
         unit: "m",
         features: features,
     };
+    console.log(data);
     return {
         "@@type": "WellsLayer",
         id: "wells-layer",
         data: data,
         refine: false,
-        lineStyle: { width: 2 },
+        outline: false,
+        lineStyle: { width: 4 },
         wellHeadStyle: { size: 1 },
         pickable: true,
     };
 }
-function wellTrajectoryToGeojson(wellTrajectory: WellBoreTrajectory_api): Record<string, unknown> {
+function wellTrajectoryToGeojson(
+    wellTrajectory: WellBoreTrajectory_api,
+    selectedWellBore: Wellbore | null
+): Record<string, unknown> {
     const point: Record<string, unknown> = {
         type: "Point",
         coordinates: [wellTrajectory.easting_arr[0], wellTrajectory.northing_arr[0], -wellTrajectory.tvd_msl_arr[0]],
@@ -160,6 +169,8 @@ function wellTrajectoryToGeojson(wellTrajectory: WellBoreTrajectory_api): Record
         type: "LineString",
         coordinates: zipCoords(wellTrajectory.easting_arr, wellTrajectory.northing_arr, wellTrajectory.tvd_msl_arr),
     };
+    const selectedUuid = selectedWellBore?.uuid;
+    console.log(selectedUuid, wellTrajectory.wellbore_uuid === selectedUuid);
     const geometryCollection: Record<string, unknown> = {
         type: "Feature",
         geometry: {
@@ -171,7 +182,7 @@ function wellTrajectoryToGeojson(wellTrajectory: WellBoreTrajectory_api): Record
             name: wellTrajectory.unique_wellbore_identifier,
             uwi: wellTrajectory.unique_wellbore_identifier,
 
-            color: [0, 0, 0, 100],
+            color: wellTrajectory.wellbore_uuid === selectedUuid ? [255, 0, 0, 255] : [0, 0, 0, 255],
             md: [wellTrajectory.md_arr],
         },
     };

@@ -117,6 +117,9 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
     const computedSurfaceAttribute = fixupStringValueFromList(selectedSurfaceAttribute, availableSurfaceAttributes);
     const computedSurfaceNames: string[] = fixupCompareTwoLists(selectedSurfaceNames, surfaceDirProvider.getNames());
     console.log(computedSurfaceNames);
+    if (computedSurfaceNames?.length == 0 && selectedSurfaceNames && selectedSurfaceNames?.length > 0) {
+        setSelectedSurfaceNames(computedSurfaceNames);
+    }
     if (computedSurfaceNames && computedSurfaceNames.length > 0) {
         if (!selectedSurfaceNames || !selectedSurfaceNames.every((name) => computedSurfaceNames.includes(name))) {
             console.log(selectedSurfaceNames);
@@ -286,6 +289,8 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
         return legalValues[0];
     }
     function fixupCompareTwoLists(currValues: string[] | null, legalValues: string[] | null): string[] {
+        console.log(legalValues, "legal");
+        console.log(currValues, "curr");
         if (!legalValues || legalValues.length == 0) {
             return [];
         }
