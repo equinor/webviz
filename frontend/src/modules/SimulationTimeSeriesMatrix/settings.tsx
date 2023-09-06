@@ -6,12 +6,15 @@ import { EnsembleSet } from "@framework/EnsembleSet";
 import { ModuleFCProps } from "@framework/Module";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { MultiEnsembleSelect } from "@framework/components/MultiEnsembleSelect";
+import { fixupEnsembleIdents } from "@framework/utils/ensembleUiHelpers";
+import { ApiStatesWrapper } from "@lib/components/ApiStatesWrapper";
 import { Checkbox } from "@lib/components/Checkbox";
+import { CircularProgress } from "@lib/components/CircularProgress";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { Dropdown } from "@lib/components/Dropdown";
 import { Label } from "@lib/components/Label";
 import { RadioGroup } from "@lib/components/RadioGroup";
-import { SmartNodeSelectorSelection } from "@lib/components/SmartNodeSelector";
+import { SmartNodeSelectorSelection, TreeDataNode } from "@lib/components/SmartNodeSelector";
 import { VectorSelector } from "@lib/components/VectorSelector";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { createVectorSelectorDataFromVectors } from "@lib/utils/vectorSelectorUtils";
@@ -46,6 +49,7 @@ export function settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
     const [previousEnsembleSet, setPreviousEnsembleSet] = React.useState<EnsembleSet>(ensembleSet);
     const [selectedEnsembleIdents, setSelectedEnsembleIdents] = React.useState<EnsembleIdent[]>([]);
     const [selectedVectorNames, setSelectedVectorNames] = React.useState<string[]>([]);
+    const [vectorSelectorData, setVectorSelectorData] = React.useState<TreeDataNode[]>([]);
 
     const [prevVisualizationMode, setPrevVisualizationMode] = React.useState<VisualizationMode>(visualizationMode);
     if (prevVisualizationMode !== visualizationMode) {
@@ -56,27 +60,24 @@ export function settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
     const ensembleVectorListsHelper = new EnsembleVectorListsHelper(selectedEnsembleIdents, vectorListQueries);
     const vectorsUnion: VectorDescription_api[] = ensembleVectorListsHelper.vectorsUnion();
 
-    const vectorSelectorData = createVectorSelectorDataFromVectors(vectorsUnion.map((vector) => vector.name));
+    const selectedVectorNamesHasHistorical = ensembleVectorListsHelper.hasAnyHistoricalVector(selectedVectorNames);
+    const currentVectorSelectorData = createVectorSelectorDataFromVectors(vectorsUnion.map((vector) => vector.name));
 
-    const newSelectedVectorNames = [];
-    for (const vector of selectedVectorNames) {
-        if (
-            vectorsUnion.some((item) => {
-                return item.name === vector;
-            })
-        ) {
-            newSelectedVectorNames.push(vector);
-        }
+    // Only update if all vector lists are retrieved before updating vectorSelectorData has changed
+    const hasVectorListQueriesErrorOrLoading = vectorListQueries.some((query) => query.isLoading || query.isError);
+    if (!hasVectorListQueriesErrorOrLoading && !isEqual(currentVectorSelectorData, vectorSelectorData)) {
+        setVectorSelectorData(currentVectorSelectorData);
     }
-    if (!isEqual(selectedVectorNames, newSelectedVectorNames)) {
-        setSelectedVectorNames(newSelectedVectorNames);
-    }
-
-    const selectedVectorNamesHasHistorical = ensembleVectorListsHelper.hasAnyHistoricalVector(newSelectedVectorNames);
 
     if (!isEqual(ensembleSet, previousEnsembleSet)) {
-        // TODO:
-        // Handle change of ensembleSet-> validity of ensemble selection and vector selection
+        const newSelectedEnsembleIdents = selectedEnsembleIdents.filter(
+            (ensemble) => ensembleSet.findEnsemble(ensemble) !== null
+        );
+        const validatedEnsembleIdents = fixupEnsembleIdents(newSelectedEnsembleIdents, ensembleSet) ?? [];
+        if (!isEqual(selectedEnsembleIdents, validatedEnsembleIdents)) {
+            setSelectedEnsembleIdents(validatedEnsembleIdents);
+        }
+
         setPreviousEnsembleSet(ensembleSet);
     }
 
@@ -86,7 +87,7 @@ export function settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
             for (const ensemble of selectedEnsembleIdents) {
                 for (const vector of selectedVectorNames) {
                     if (!ensembleVectorListsHelper.isVectorInEnsemble(ensemble, vector)) {
-                        return;
+                        continue;
                     }
 
                     newVectorSpecifications.push({
@@ -221,15 +222,27 @@ export function settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
                     disabled={true}
                     onChange={handleShowObservations}
                 />
-                <VectorSelector
-                    data={vectorSelectorData}
-                    selectedTags={selectedVectorNames}
-                    placeholder="Add new vector..."
-                    maxNumSelectedNodes={50}
-                    numSecondsUntilSuggestionsAreShown={0.5}
-                    lineBreakAfterTag={true}
-                    onChange={handleVectorSelectChange}
-                />
+                <div
+                    className={resolveClassNames({
+                        "pointer-events-none opacity-80": vectorListQueries.some((query) => query.isLoading),
+                    })}
+                >
+                    <ApiStatesWrapper
+                        apiResults={vectorListQueries}
+                        loadingComponent={<CircularProgress />}
+                        errorComponent={"Could not load the vectors for selected ensembles"}
+                    >
+                        <VectorSelector
+                            data={vectorSelectorData}
+                            selectedTags={selectedVectorNames}
+                            placeholder="Add new vector..."
+                            maxNumSelectedNodes={50}
+                            numSecondsUntilSuggestionsAreShown={0.5}
+                            lineBreakAfterTag={true}
+                            onChange={handleVectorSelectChange}
+                        />
+                    </ApiStatesWrapper>
+                </div>
             </CollapsibleGroup>
             <CollapsibleGroup expanded={true} title="Visualization">
                 <RadioGroup

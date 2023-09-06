@@ -141,18 +141,23 @@ export const view = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
         return;
     }
 
+    const plotData = subplotBuilder.createPlotData();
     // TODO: Keep uirevision?
     return (
         <div className="w-full h-full" ref={wrapperDivRef}>
             <Plot
-                data={subplotBuilder.createPlotData()}
+                key={plotData.length} // Note: To trigger re-render and remove legends when plotData is empty
+                data={plotData}
                 layout={subplotBuilder.createPlotLayout()}
                 config={{ scrollZoom: true }}
                 onHover={handleHover}
                 onUnhover={handleUnHover}
             />
             {isDevMode() && (
-                <div className="absolute top-10 left-5 italic text-pink-400">(rc={renderCount.current})</div>
+                <>
+                    <div className="absolute top-10 left-5 italic text-pink-400">(rc={renderCount.current})</div>
+                    <div className="absolute top-10 left-20 italic text-pink-400"> Traces: {plotData.length}</div>
+                </>
             )}
         </div>
     );
