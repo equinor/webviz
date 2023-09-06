@@ -50,6 +50,27 @@ const defaultColorPalettes = [
         ],
         id: "resinsight",
     }),
+    new ColorPalette({
+        name: "Time Series",
+        colors: [
+            "#1F77B4",
+            "#FF7F0E",
+            "#2CA02C",
+            "#D62728",
+            "#9467BD",
+            "#8C564B",
+            "#E377C2",
+            "#7F7F7F",
+            "#BCBD22",
+            "#17BECF",
+        ],
+        id: "time-series",
+    }),
+    new ColorPalette({
+        name: "Dutch Field",
+        colors: ["#e60049", "#0bb4ff", "#50e991", "#e6d800", "#9b19f5", "#ffa300", "#dc0ab4", "#b3d4ff", "#00bfa0"],
+        id: "dutch-field",
+    }),
 ];
 
 const defaultContinuousSequentialColorPalettes = [
