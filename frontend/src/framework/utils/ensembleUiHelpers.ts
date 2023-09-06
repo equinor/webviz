@@ -62,15 +62,9 @@ export function fixupEnsembleIdents(
         return null;
     }
 
-    if (!currIdents) {
+    if (currIdents === null || currIdents.length === 0) {
         return [ensembleSet.getEnsembleArr()[0].getIdent()];
     }
 
-    const ensembleIndents: EnsembleIdent[] = [];
-    currIdents.map((currIdent) => {
-        if (ensembleSet.findEnsemble(currIdent)) {
-            ensembleIndents.push(currIdent);
-        }
-    });
-    return ensembleIndents;
+    return currIdents.filter((currIdent) => ensembleSet.findEnsemble(currIdent));
 }
