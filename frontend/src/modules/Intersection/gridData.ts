@@ -1,3 +1,4 @@
+// Modified from https://github.com/equinor/esv-intersection/blob/master/src/datautils/seismicimage.ts
 import { SeismicCanvasDataOptions, findIndexOfSample } from "@equinor/esv-intersection";
 import { clamp } from "@equinor/videx-math";
 

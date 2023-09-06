@@ -16,14 +16,13 @@ import {
     Trajectory,
     WellborepathLayer,
     generateSeismicSliceImage,
-    getPicksData,
     getSeismicInfo,
     getSeismicOptions,
-    transformFormationData,
 } from "@equinor/esv-intersection";
 import { UseQueryResult, useQuery } from "@tanstack/react-query";
 
 import { generateGridSliceImage } from "./gridData";
+import { getPicksData, transformFormationData } from "./picks";
 
 export class ControllerHandler {
     public controller: Controller;
