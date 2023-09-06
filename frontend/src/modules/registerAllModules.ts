@@ -7,18 +7,18 @@ import "./Grid3DIntersection/registerModule";
 import "./Grid3DIntersection/registerModule";
 import "./InplaceVolumetrics/registerModule";
 import "./Intersection/registerModule";
-import "./Map/registerModule";
 import "./Pvt/registerModule";
 import "./Sensitivity/registerModule";
-import "./SimulationTimeSeries/registerModule";
 import "./SimulationTimeSeriesMatrix/registerModule";
 import "./SimulationTimeSeriesSensitivity/registerModule";
-import "./TimeSeriesParameterDistribution/registerModule";
-import "./TopographicMap/registerModule";
+import "./SubsurfaceMap/registerModule";
 import "./WellCompletion/registerModule";
 
 if (isDevMode()) {
     await import("./MyModule/registerModule");
     await import("./MyModule2/registerModule");
     await import("./DbgWorkbenchSpy/registerModule");
+    await import("./Map/registerModule");
+    await import("./TimeSeriesParameterDistribution/registerModule");
+    await import("./SimulationTimeSeries/registerModule");
 }

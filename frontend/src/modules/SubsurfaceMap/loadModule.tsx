@@ -13,7 +13,7 @@ const defaultState: state = {
     viewSettings: null,
 };
 
-const module = ModuleRegistry.initModule<state>("TopographicMap", defaultState, {
+const module = ModuleRegistry.initModule<state>("SubsurfaceMap", defaultState, {
     meshSurfaceAddress: { deepCompare: true },
     propertySurfaceAddress: { deepCompare: true },
     polygonsAddress: { deepCompare: true },
