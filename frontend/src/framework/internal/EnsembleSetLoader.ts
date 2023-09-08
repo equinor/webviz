@@ -4,7 +4,7 @@ import { QueryClient } from "@tanstack/react-query";
 
 import { Ensemble } from "../Ensemble";
 import { EnsembleIdent } from "../EnsembleIdent";
-import { Parameter } from "../EnsembleParameters";
+import { Parameter, ParameterType, ContinuousParameter, DiscreteParameter } from "../EnsembleParameters";
 import { Sensitivity, SensitivityCase } from "../EnsembleSensitivities";
 import { EnsembleSet } from "../EnsembleSet";
 
@@ -129,16 +129,31 @@ function buildParameterArrFromApiResponse(apiParameterArr: EnsembleParameter_api
     const retParameterArr: Parameter[] = [];
 
     for (const apiPar of apiParameterArr) {
-        retParameterArr.push({
-            name: apiPar.name,
-            isLogarithmic: apiPar.is_logarithmic,
-            isNumerical: apiPar.is_numerical,
-            isConstant: apiPar.is_constant,
-            groupName: apiPar.group_name,
-            descriptiveName: apiPar.descriptive_name,
-            realizations: apiPar.realizations,
-            values: apiPar.values,
-        });
+        if (apiPar.is_numerical) {
+            const retPar: ContinuousParameter = {
+                type: ParameterType.CONTINUOUS,
+                name: apiPar.name,
+                groupName: apiPar.group_name ?? null,
+                description: apiPar.descriptive_name,
+                isConstant: apiPar.is_constant,
+                isLogarithmic: apiPar.is_logarithmic,
+                realizations: apiPar.realizations,
+                values: apiPar.values as number[],
+            };
+            retParameterArr.push(retPar);
+        }
+        else {
+            const retPar: DiscreteParameter = {
+                type: ParameterType.DISCRETE,
+                name: apiPar.name,
+                groupName: apiPar.group_name ?? null,
+                description: apiPar.descriptive_name,
+                isConstant: apiPar.is_constant,
+                realizations: apiPar.realizations,
+                values: apiPar.values,
+            };
+            retParameterArr.push(retPar);
+        }
     }
 
     return retParameterArr;
