@@ -102,7 +102,7 @@ def create_ensemble_sensitivities(
     return sensitivities if sensitivities else None
 
 
-def find_sensitivity_type(sens_case_names: List[str]) -> str:
+def find_sensitivity_type(sens_case_names: List[str]) -> SensitivityType:
     """Find the sensitivity type based on the sensitivity case names"""
     if len(sens_case_names) == 1 and sens_case_names[0] == "p10_p90":
         return SensitivityType.MONTECARLO
