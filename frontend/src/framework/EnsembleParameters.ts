@@ -59,6 +59,17 @@ export class ParameterIdent {
             return this.name;
         }
     }
+
+    equals(otherIdent: ParameterIdent | null): boolean {
+        if (!otherIdent) {
+            return false;
+        }
+        if (otherIdent === this) {
+            return true;
+        }
+
+        return this.name === otherIdent.name && this.groupName === otherIdent.groupName;
+    }
 }
 
 export class EnsembleParameters {
@@ -72,7 +83,7 @@ export class EnsembleParameters {
         const identArr: ParameterIdent[] = [];
         for (const par of this._parameterArr) {
             if (requiredParamType == null || par.type === requiredParamType) {
-                identArr.push({ name: par.name, groupName: par.groupName });
+                identArr.push(new ParameterIdent(par.name, par.groupName));
             }
         }
 

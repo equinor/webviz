@@ -97,3 +97,22 @@ describe("EnsembleParameters tests", () => {
         }
     });
 });
+
+
+describe("ParameterIdent tests", () => {
+    test("Conversion to/from string", () => {
+        const ident = ParameterIdent.fromNameAndGroup("aName", "aGroup");
+        const identStr = ident.toString();
+        expect(ParameterIdent.fromString(identStr)).toEqual(ident);
+    });
+
+    test("Check for equality", () => {
+        const identA = new ParameterIdent("aName", "aGroup");
+        const identB = new ParameterIdent("aName", "aGroup");
+        const identC = new ParameterIdent("anotherName", "anotherGroup");
+        expect(identA.equals(identA)).toBe(true);
+        expect(identA.equals(identB)).toBe(true);
+        expect(identA.equals(identC)).toBe(false);
+        expect(identA.equals(null)).toBe(false);
+    });
+});
