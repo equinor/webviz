@@ -69,54 +69,59 @@ export const SyncSettings: React.FC<ModulesListProps> = (props) => {
         return true;
     }
 
+    function makeContent() {
+        const syncableSettingKeys = activeModuleInstance?.getModule().getSyncableSettingKeys() ?? [];
+
+        if (activeModuleId === "" || activeModuleInstance === undefined) {
+            return <div className="text-gray-500">No module selected</div>;
+        }
+
+        if (syncableSettingKeys.length === 0) {
+            return <div className="text-gray-500">No syncable settings</div>;
+        }
+
+        return (
+            <table className="w-full">
+                <thead>
+                    <tr className="border-b">
+                        <th className="border-r p-2 w-6">
+                            <GlobeAltIcon className="w-4 h-4" title="Sync for all module instances" />
+                        </th>
+                        <th className="border-r p-2 w-6">
+                            <MapPinIcon className="w-4 h-4" title="Sync for active module instance" />
+                        </th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {syncableSettingKeys.map((setting) => {
+                        const globallySynced = isGlobalSyncSetting(setting);
+                        return (
+                            <tr key={setting} className="hover:bg-blue-50">
+                                <td className="border-r p-2">
+                                    <Checkbox
+                                        checked={globallySynced}
+                                        onChange={(e) => handleGlobalSyncSettingChange(setting, e.target.checked)}
+                                    />
+                                </td>
+                                <td className="border-r p-2">
+                                    <Checkbox
+                                        checked={globallySynced || activeModuleInstance.isSyncedSetting(setting)}
+                                        onChange={(e) => handleSyncSettingChange(setting, e.target.checked)}
+                                    />
+                                </td>
+                                <td className="p-2">{SyncSettingsMeta[setting].name}</td>
+                            </tr>
+                        );
+                    })}
+                </tbody>
+            </table>
+        );
+    }
+
     return (
         <Drawer title="Sync settings" icon={<LinkIcon />} visible={drawerContent === DrawerContent.SyncSettings}>
-            {activeModuleId === "" || activeModuleInstance === undefined ? (
-                <div className="text-gray-500">No module selected</div>
-            ) : (
-                <table className="w-full">
-                    <thead>
-                        <tr className="border-b">
-                            <th className="border-r p-2 w-6">
-                                <GlobeAltIcon className="w-4 h-4" title="Sync for all module instances" />
-                            </th>
-                            <th className="border-r p-2 w-6">
-                                <MapPinIcon className="w-4 h-4" title="Sync for active module instance" />
-                            </th>
-                            <th></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {activeModuleInstance
-                            .getModule()
-                            .getSyncableSettingKeys()
-                            .map((setting) => {
-                                const globallySynced = isGlobalSyncSetting(setting);
-                                return (
-                                    <tr key={setting} className="hover:bg-blue-50">
-                                        <td className="border-r p-2">
-                                            <Checkbox
-                                                checked={globallySynced}
-                                                onChange={(e) =>
-                                                    handleGlobalSyncSettingChange(setting, e.target.checked)
-                                                }
-                                            />
-                                        </td>
-                                        <td className="border-r p-2">
-                                            <Checkbox
-                                                checked={
-                                                    globallySynced || activeModuleInstance.isSyncedSetting(setting)
-                                                }
-                                                onChange={(e) => handleSyncSettingChange(setting, e.target.checked)}
-                                            />
-                                        </td>
-                                        <td className="p-2">{SyncSettingsMeta[setting].name}</td>
-                                    </tr>
-                                );
-                            })}
-                    </tbody>
-                </table>
-            )}
+            {makeContent()}
         </Drawer>
     );
 };

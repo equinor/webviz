@@ -50,7 +50,7 @@ export const Checkbox: React.FC<CheckboxProps> = (props) => {
                 {props.label && (
                     <label
                         htmlFor={props.id ?? id.current}
-                        className={resolveClassNames("block", "text-sm", "text-gray-900", "cursor-pointer")}
+                        className={resolveClassNames("block", "text-gray-900", "cursor-pointer")}
                     >
                         {props.label}
                     </label>

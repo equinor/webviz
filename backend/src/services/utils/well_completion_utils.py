@@ -9,6 +9,8 @@ from src.services.types.well_completion_types import (
     WellCompletionWell,
     WellCompletionDataSet,
     WellCompletionZone,
+    WellCompletionUnitInfo,
+    WellCompletionUnits,
 )
 
 
@@ -67,7 +69,9 @@ class WellCompletionDataModel:
 
         return WellCompletionDataSet(
             version="1.1.0",
-            units={"kh": {"unit": self._kh_unit, "decimalPlaces": self._kh_decimal_places}},
+            units=WellCompletionUnits(
+                kh=WellCompletionUnitInfo(unit=self._kh_unit, decimalPlaces=self._kh_decimal_places)
+            ),
             stratigraphy=self._extract_stratigraphy(self._dummy_stratigraphy(), self._zones),
             timeSteps=[pd.to_datetime(str(dte)).strftime("%Y-%m-%d") for dte in self._datemap.keys()],
             wells=self._extract_wells(),
