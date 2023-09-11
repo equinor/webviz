@@ -7,6 +7,7 @@ import { ErrorBoundary } from "@framework/internal/components/ErrorBoundary";
 import { useImportState } from "@framework/internal/hooks/moduleHooks";
 import { Cog6ToothIcon } from "@heroicons/react/20/solid";
 import { CircularProgress } from "@lib/components/CircularProgress";
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 type SettingProps = {
     moduleInstance: ModuleInstance<any>;
@@ -71,10 +72,10 @@ export const Setting: React.FC<SettingProps> = (props) => {
     return (
         <div
             key={props.moduleInstance.getId()}
-            style={{
-                display: props.activeModuleId === props.moduleInstance.getId() ? "flex" : "none",
-            }}
-            className="flex-col"
+            className={resolveClassNames(
+                props.activeModuleId === props.moduleInstance.getId() ? "flex" : "hidden",
+                "flex-col h-full w-full"
+            )}
         >
             <ErrorBoundary moduleInstance={props.moduleInstance}>
                 <div className="flex justify-center items-center p-2 bg-slate-100 h-10">
@@ -86,14 +87,16 @@ export const Setting: React.FC<SettingProps> = (props) => {
                         {props.moduleInstance.getTitle()}
                     </span>
                 </div>
-                <div className="p-2 flex flex-col gap-4">
-                    <Settings
-                        moduleContext={props.moduleInstance.getContext()}
-                        workbenchSession={props.workbench.getWorkbenchSession()}
-                        workbenchServices={props.workbench.getWorkbenchServices()}
-                        workbenchSettings={props.workbench.getWorkbenchSettings()}
-                        initialSettings={props.moduleInstance.getInitialSettings() || undefined}
-                    />
+                <div className="flex flex-col gap-4 overflow-auto">
+                    <div className="p-2">
+                        <Settings
+                            moduleContext={props.moduleInstance.getContext()}
+                            workbenchSession={props.workbench.getWorkbenchSession()}
+                            workbenchServices={props.workbench.getWorkbenchServices()}
+                            workbenchSettings={props.workbench.getWorkbenchSettings()}
+                            initialSettings={props.moduleInstance.getInitialSettings() || undefined}
+                        />
+                    </div>
                 </div>
             </ErrorBoundary>
         </div>

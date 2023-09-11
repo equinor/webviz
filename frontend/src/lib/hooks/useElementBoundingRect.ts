@@ -13,6 +13,7 @@ export function useElementBoundingRect(ref: React.RefObject<HTMLElement>): DOMRe
 
         const resizeObserver = new ResizeObserver(handleResize);
         window.addEventListener("resize", handleResize);
+        window.addEventListener("scroll", handleResize, true);
 
         if (ref.current) {
             handleResize();
@@ -22,6 +23,7 @@ export function useElementBoundingRect(ref: React.RefObject<HTMLElement>): DOMRe
         return () => {
             resizeObserver.disconnect();
             window.removeEventListener("resize", handleResize);
+            window.removeEventListener("scroll", handleResize, true);
         };
     }, [ref]);
 

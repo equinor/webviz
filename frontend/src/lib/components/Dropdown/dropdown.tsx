@@ -166,14 +166,7 @@ export const Dropdown = withDefaults<DropdownProps>()(defaultProps, (props) => {
                 setOptionIndexWithFocusToCurrentSelection();
             }
         }
-    }, [
-        inputBoundingRect,
-        dropdownVisible,
-        filteredOptions,
-        selection,
-        setOptionIndexWithFocusToCurrentSelection,
-        setStartIndex,
-    ]);
+    }, [inputBoundingRect, dropdownVisible, filteredOptions, selection]);
 
     const handleOptionClick = React.useCallback(
         (value: string) => {
