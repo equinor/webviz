@@ -155,10 +155,13 @@ export class Tag extends React.Component<TagProps> {
                 position = 0;
             }
             return (
-                <div key={"TagBrowseButton_" + index} className="w-4 mr-1 relative h-full">
+                <div key={"TagBrowseButton_" + index} className="w-4 mr-1 h-full flex flex-col">
                     <button
                         key={"TagPreviousButton_" + index}
-                        className="appearance-none bg-cyan-600 border-0 cursor-pointer inline-block outline-none p-0 h-1/2 absolute w-4 disabled:opacity-30 disabled:cursor-default hover:bg-cyan-500"
+                        className={resolveClassNames(
+                            "appearance-none bg-cyan-600 border-0 cursor-pointer inline-block outline-none p-0 m-0 h-1/2 w-4 disabled:opacity-30 disabled:cursor-default",
+                            { "hover:bg-cyan-500": position !== 0 }
+                        )}
                         disabled={position === 0}
                         title="Previous option"
                         onMouseDown={(e): void => this.shiftOption(e, nodeSelection, false)}
@@ -175,8 +178,11 @@ export class Tag extends React.Component<TagProps> {
                     </button>
                     <button
                         key={"TagNextButton_" + index}
-                        className="appearance-none bg-cyan-600 border-0 cursor-pointer inline-block outline-none p-0 h-1/2 absolute top-1/2 w-4 disabled:opacity-30 disabled:cursor-default hover:bg-cyan-500"
-                        disabled={position == subgroups.length - 1}
+                        className={resolveClassNames(
+                            "appearance-none bg-cyan-600 border-0 cursor-pointer inline-block outline-none p-0 m-0 h-1/2 w-4 disabled:opacity-30 disabled:cursor-default",
+                            { "hover:bg-cyan-500": position !== subgroups.length - 1 }
+                        )}
+                        disabled={position === subgroups.length - 1}
                         title="Next option"
                         onMouseDown={(e): void => this.shiftOption(e, nodeSelection, true)}
                         onMouseUp={(e): void => {
