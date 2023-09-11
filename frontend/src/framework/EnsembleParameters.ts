@@ -45,11 +45,12 @@ export class ParameterIdent {
         const parts = paramIdentString.split("~@@~");
         if (parts.length === 1) {
             return new ParameterIdent(parts[0], null);
-        } else if (parts.length === 2) {
-            return new ParameterIdent(parts[0], parts[1]);
-        } else {
-            throw new Error(`Invalid parameter ident string: ${paramIdentString}`);
         }
+        if (parts.length === 2) {
+            return new ParameterIdent(parts[0], parts[1]);
+        } 
+
+        throw new Error(`Invalid parameter ident string: ${paramIdentString}`);
     }
 
     toString(): string {
@@ -91,7 +92,7 @@ export class EnsembleParameters {
     }
 
     hasParameter(paramIdent: ParameterIdent): boolean {
-        return this.findParameter(paramIdent) != null;
+        return this.findParameter(paramIdent) !== null;
     }
 
     getParameter(paramIdent: ParameterIdent): Parameter {
