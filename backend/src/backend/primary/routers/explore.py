@@ -30,7 +30,7 @@ class EnsembleDetails(BaseModel):
     name: str
     case_name: str
     case_uuid: str
-    realizations: List[int]
+    realizations: Sequence[int]
 
 
 @router.get("/fields")

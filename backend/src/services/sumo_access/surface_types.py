@@ -22,4 +22,4 @@ class StaticSurfaceDirectory(BaseModel):
 
     @classmethod
     def create_empty(cls) -> StaticSurfaceDirectory:
-        return cls(attributes=[], names=[])
+        return cls(attributes=[], names=[], valid_attributes_for_name=[])

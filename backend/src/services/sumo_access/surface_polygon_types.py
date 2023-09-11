@@ -12,4 +12,4 @@ class SurfacePolygonsDirectory(BaseModel):
 
     @classmethod
     def create_empty(cls) -> SurfacePolygonsDirectory:
-        return cls(attributes=[], names=[])
+        return cls(attributes=[], names=[], valid_attributes_for_name=[])

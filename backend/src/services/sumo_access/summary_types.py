@@ -26,6 +26,7 @@ class VectorInfo(BaseModel):
 
 class VectorMetadata(BaseModel):
     unit: str
+    is_total: bool
     is_rate: bool
     is_historical: bool
     keyword: str
