@@ -101,9 +101,18 @@ describe("EnsembleParameters tests", () => {
 
 describe("ParameterIdent tests", () => {
     test("Conversion to/from string", () => {
-        const ident = ParameterIdent.fromNameAndGroup("aName", "aGroup");
-        const identStr = ident.toString();
-        expect(ParameterIdent.fromString(identStr)).toEqual(ident);
+        {
+            const identStr = ParameterIdent.fromNameAndGroup("aName", "aGroup").toString();
+            const ident = ParameterIdent.fromString(identStr);
+            expect(ident.name).toEqual("aName");
+            expect(ident.groupName).toEqual("aGroup");
+        }
+        {
+            const identStr = ParameterIdent.fromNameAndGroup("aName", null).toString();
+            const ident = ParameterIdent.fromString(identStr);
+            expect(ident.name).toEqual("aName");
+            expect(ident.groupName).toEqual(null);
+        }
     });
 
     test("Check for equality", () => {
