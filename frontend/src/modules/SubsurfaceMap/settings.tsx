@@ -1,7 +1,6 @@
 import React from "react";
 
-import { SurfaceStatisticFunction_api } from "@api";
-import { SumoContent_api } from "@api";
+import { SurfaceAttributeType_api, SurfaceStatisticFunction_api } from "@api";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { ModuleFCProps } from "@framework/Module";
 import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
@@ -15,15 +14,21 @@ import { CircularProgress } from "@lib/components/CircularProgress";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { Input } from "@lib/components/Input";
 import { Label } from "@lib/components/Label";
+import { RadioGroup } from "@lib/components/RadioGroup";
 import { Select, SelectOption } from "@lib/components/Select";
+import {
+    SurfaceAddress,
+    SurfaceAddressFactory,
+    SurfaceDirectory,
+    TimeType,
+    useSurfaceDirectoryQuery,
+} from "@modules/_shared/Surface";
 
-import { SurfAddr, SurfAddrFactory } from "./SurfaceAddress";
 import { SurfacePolygonsAddress } from "./SurfacePolygonsAddress";
 import { AggregationSelector } from "./components/AggregationSelector";
 import { PolygonDirectoryProvider } from "./polygonsDirectoryProvider";
-import { useGetWellHeaders, usePolygonDirectoryQuery, useSurfaceDirectoryQuery } from "./queryHooks";
+import { useGetWellHeaders, usePolygonDirectoryQuery } from "./queryHooks";
 import { state } from "./state";
-import { SurfaceDirectoryProvider } from "./surfaceDirectoryProvider";
 
 //-----------------------------------------------------------------------------------------------------------
 type LabelledCheckboxProps = {
@@ -44,7 +49,11 @@ function LabelledCheckbox(props: LabelledCheckboxProps): JSX.Element {
 function Header(props: { text: string }): JSX.Element {
     return <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mt-2">{props.text}</label>;
 }
-
+const TimeTypeEnumToStringMapping = {
+    [TimeType.None]: "Static",
+    [TimeType.TimePoint]: "Time point",
+    [TimeType.Interval]: "Time interval",
+};
 export function settings({ moduleContext, workbenchSession, workbenchServices }: ModuleFCProps<state>) {
     const myInstanceIdStr = moduleContext.getInstanceIdString();
     console.debug(`${myInstanceIdStr} -- render TopographicMap settings`);
@@ -56,6 +65,8 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
     const [usePropertySurface, setUsePropertySurface] = React.useState<boolean>(false);
     const [selectedPropertySurfaceName, setSelectedPropertySurfaceName] = React.useState<string | null>(null);
     const [selectedPropertySurfaceAttribute, setSelectedPropertySurfaceAttribute] = React.useState<string | null>(null);
+    const [selectedPropertyTimeOrInterval, setSelectedPropertyTimeOrInterval] = React.useState<string | null>(null);
+    const [timeType, setTimeType] = React.useState<TimeType>(TimeType.None);
     const [selectedPolygonName, setSelectedPolygonName] = React.useState<string | null>(null);
     const [selectedPolygonAttribute, setSelectedPolygonAttribute] = React.useState<string | null>(null);
     const [linkPolygonNameToSurfaceName, setLinkPolygonNameToSurfaceName] = React.useState<boolean>(true);
@@ -74,7 +85,7 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
     const syncedSettingKeys = moduleContext.useSyncedSettingKeys();
     const syncHelper = new SyncSettingsHelper(syncedSettingKeys, workbenchServices);
     const syncedValueEnsembles = syncHelper.useValue(SyncSettingKey.ENSEMBLE, "global.syncValue.ensembles");
-
+    const syncedValueSurface = syncHelper.useValue(SyncSettingKey.SURFACE, "global.syncValue.surface");
     const candidateEnsembleIdent = maybeAssignFirstSyncedEnsemble(selectedEnsembleIdent, syncedValueEnsembles);
     const computedEnsembleIdent = fixupEnsembleIdent(candidateEnsembleIdent, ensembleSet);
     if (computedEnsembleIdent && !computedEnsembleIdent.equals(selectedEnsembleIdent)) {
@@ -83,15 +94,33 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
     // Mesh surface
     const meshSurfDirQuery = useSurfaceDirectoryQuery(
         computedEnsembleIdent?.getCaseUuid(),
-        computedEnsembleIdent?.getEnsembleName(),
-        [SumoContent_api.DEPTH]
+        computedEnsembleIdent?.getEnsembleName()
     );
-    const meshSurfDirProvider = new SurfaceDirectoryProvider(meshSurfDirQuery, "tops");
-    const computedMeshSurfaceName = meshSurfDirProvider.validateOrResetSurfaceName(selectedMeshSurfaceName);
-    const computedMeshSurfaceAttribute = meshSurfDirProvider.validateOrResetSurfaceAttribute(
-        computedMeshSurfaceName,
-        selectedMeshSurfaceAttribute
+    const meshSurfaceDirectory = new SurfaceDirectory(
+        meshSurfDirQuery.data
+            ? {
+                  surfaceMetas: meshSurfDirQuery.data,
+                  timeType: TimeType.None,
+                  includeAttributeTypes: [SurfaceAttributeType_api.DEPTH],
+              }
+            : null
     );
+
+    const fixedMeshSurfSpec = fixupSurface(
+        meshSurfaceDirectory,
+        {
+            surfaceName: selectedMeshSurfaceName,
+            surfaceAttribute: selectedMeshSurfaceAttribute,
+            timeOrInterval: null,
+        },
+        {
+            surfaceName: syncedValueSurface?.name || null,
+            surfaceAttribute: syncedValueSurface?.attribute || null,
+            timeOrInterval: null,
+        }
+    );
+    const computedMeshSurfaceName = fixedMeshSurfSpec.surfaceName;
+    const computedMeshSurfaceAttribute = fixedMeshSurfSpec.surfaceAttribute;
 
     if (computedMeshSurfaceName && computedMeshSurfaceName !== selectedMeshSurfaceName) {
         setSelectedMeshSurfaceName(computedMeshSurfaceName);
@@ -102,34 +131,75 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
 
     let meshSurfNameOptions: SelectOption[] = [];
     let meshSurfAttributeOptions: SelectOption[] = [];
-    meshSurfNameOptions = meshSurfDirProvider.surfaceNames().map((name) => ({ value: name, label: name }));
-    meshSurfAttributeOptions = meshSurfDirProvider
-        .attributesForSurfaceName(computedMeshSurfaceName)
+    meshSurfNameOptions = meshSurfaceDirectory.getSurfaceNames(null).map((name) => ({ value: name, label: name }));
+    meshSurfAttributeOptions = meshSurfaceDirectory
+        .getAttributeNames(computedMeshSurfaceName)
         .map((attr) => ({ value: attr, label: attr }));
 
     // Property surface
+    // TODO add timestamp and time interval surfaces
     const propertySurfDirQuery = useSurfaceDirectoryQuery(
         computedEnsembleIdent?.getCaseUuid(),
-        computedEnsembleIdent?.getEnsembleName() // Should be SumoContent_api.PROPERTY
+        computedEnsembleIdent?.getEnsembleName()
     );
-    const propertySurfDirProvider = new SurfaceDirectoryProvider(propertySurfDirQuery, "formations");
-    const computedPropertySurfaceName = propertySurfDirProvider.validateOrResetSurfaceName(selectedPropertySurfaceName);
-    const computedPropertySurfaceAttribute = propertySurfDirProvider.validateOrResetSurfaceAttribute(
-        computedPropertySurfaceName,
-        selectedPropertySurfaceAttribute
+
+    const propertySurfaceDirectory = new SurfaceDirectory(
+        propertySurfDirQuery.data
+            ? {
+                  surfaceMetas: propertySurfDirQuery.data,
+                  timeType: timeType,
+                  excludeAttributeTypes: [SurfaceAttributeType_api.DEPTH],
+              }
+            : null
     );
+
+    const fixedPropertySurfSpec = fixupSurface(
+        propertySurfaceDirectory,
+        {
+            surfaceName: selectedPropertySurfaceName,
+            surfaceAttribute: selectedPropertySurfaceAttribute,
+            timeOrInterval: selectedPropertyTimeOrInterval,
+        },
+        {
+            surfaceName: null,
+            surfaceAttribute: null,
+            timeOrInterval: null,
+        }
+    );
+    const computedPropertySurfaceName = fixedPropertySurfSpec.surfaceName;
+    const computedPropertySurfaceAttribute = fixedPropertySurfSpec.surfaceAttribute;
+    const computedPropertyTimeOrInterval = fixedPropertySurfSpec.timeOrInterval;
+
     if (computedPropertySurfaceName && computedPropertySurfaceName !== selectedPropertySurfaceName) {
         setSelectedPropertySurfaceName(computedPropertySurfaceName);
     }
     if (computedPropertySurfaceAttribute && computedPropertySurfaceAttribute !== selectedPropertySurfaceAttribute) {
         setSelectedPropertySurfaceAttribute(computedPropertySurfaceAttribute);
     }
+    if (computedPropertyTimeOrInterval && computedPropertyTimeOrInterval !== computedPropertyTimeOrInterval) {
+        setSelectedPropertyTimeOrInterval(computedPropertyTimeOrInterval);
+    }
     let propertySurfNameOptions: SelectOption[] = [];
     let propertySurfAttributeOptions: SelectOption[] = [];
-    propertySurfNameOptions = propertySurfDirProvider.surfaceNames().map((name) => ({ value: name, label: name }));
-    propertySurfAttributeOptions = propertySurfDirProvider
-        .attributesForSurfaceName(computedPropertySurfaceName)
+    let propertySurfTimeOrIntervalOptions: SelectOption[] = [];
+
+    propertySurfNameOptions = propertySurfaceDirectory
+        .getSurfaceNames(null)
+        .map((name) => ({ value: name, label: name }));
+    propertySurfAttributeOptions = propertySurfaceDirectory
+        .getAttributeNames(computedPropertySurfaceName)
         .map((attr) => ({ value: attr, label: attr }));
+    if (timeType === TimeType.Interval || timeType === TimeType.TimePoint) {
+        propertySurfTimeOrIntervalOptions = propertySurfaceDirectory
+            .getTimeOrIntervalStrings(computedPropertySurfaceName, computedPropertySurfaceAttribute)
+            .map((interval) => ({
+                value: interval,
+                label:
+                    timeType === TimeType.TimePoint
+                        ? isoStringToDateLabel(interval)
+                        : isoIntervalStringToDateLabel(interval),
+            }));
+    }
 
     // Polygon
     const polygonDirQuery = usePolygonDirectoryQuery(
@@ -161,20 +231,21 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
 
     React.useEffect(
         function propagateMeshSurfaceSelectionToView() {
-            let surfAddr: SurfAddr | null = null;
+            let surfAddr: SurfaceAddress | null = null;
 
             if (computedEnsembleIdent && computedMeshSurfaceName && computedMeshSurfaceAttribute) {
-                const addrFactory = new SurfAddrFactory(
+                const addrFactory = new SurfaceAddressFactory(
                     computedEnsembleIdent.getCaseUuid(),
                     computedEnsembleIdent.getEnsembleName(),
                     computedMeshSurfaceName,
-                    computedMeshSurfaceAttribute
+                    computedMeshSurfaceAttribute,
+                    null
                 );
 
                 if (aggregation === null) {
-                    surfAddr = addrFactory.createStaticAddr(realizationNum);
+                    surfAddr = addrFactory.createRealizationAddress(realizationNum);
                 } else {
-                    surfAddr = addrFactory.createStatisticalStaticAddr(aggregation);
+                    surfAddr = addrFactory.createStatisticalAddress(aggregation);
                 }
             }
 
@@ -185,23 +256,24 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
     );
     React.useEffect(
         function propagatePropertySurfaceSelectionToView() {
-            let surfAddr: SurfAddr | null = null;
+            let surfAddr: SurfaceAddress | null = null;
             if (!usePropertySurface) {
                 moduleContext.getStateStore().setValue("propertySurfaceAddress", surfAddr);
                 return;
             }
             if (computedEnsembleIdent && computedPropertySurfaceName && computedPropertySurfaceAttribute) {
-                const addrFactory = new SurfAddrFactory(
+                const addrFactory = new SurfaceAddressFactory(
                     computedEnsembleIdent.getCaseUuid(),
                     computedEnsembleIdent.getEnsembleName(),
                     computedPropertySurfaceName,
-                    computedPropertySurfaceAttribute
+                    computedPropertySurfaceAttribute,
+                    computedPropertyTimeOrInterval
                 );
 
                 if (aggregation === null) {
-                    surfAddr = addrFactory.createStaticAddr(realizationNum);
+                    surfAddr = addrFactory.createRealizationAddress(realizationNum);
                 } else {
-                    surfAddr = addrFactory.createStatisticalStaticAddr(aggregation);
+                    surfAddr = addrFactory.createStatisticalAddress(aggregation);
                 }
             }
 
@@ -212,6 +284,7 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
             selectedEnsembleIdent,
             selectedPropertySurfaceName,
             selectedPropertySurfaceAttribute,
+            selectedPropertyTimeOrInterval,
             aggregation,
             realizationNum,
             usePropertySurface,
@@ -352,6 +425,19 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
             setContourIncValue(contourInc);
         }
     }
+    function handleTimeOrIntervalSelectionChange(selectedSurfTimeIntervals: string[]) {
+        console.debug("handleTimeOrIntervalSelectionChange()");
+        const newTimeOrInterval = selectedSurfTimeIntervals[0] ?? null;
+        setSelectedPropertyTimeOrInterval(newTimeOrInterval);
+        if (newTimeOrInterval) {
+            syncHelper.publishValue(SyncSettingKey.DATE, "global.syncValue.date", {
+                timeOrInterval: newTimeOrInterval,
+            });
+        }
+    }
+    function handleTimeModeChange(event: React.ChangeEvent<HTMLInputElement>) {
+        setTimeType(event.target.value as TimeType);
+    }
     return (
         <div className="flex flex-col gap-2 overflow-y-auto">
             <CollapsibleGroup expanded={true} title="Ensemble and realization">
@@ -422,6 +508,15 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
                             errorComponent={"Error loading surface directory"}
                             loadingComponent={<CircularProgress />}
                         >
+                            {" "}
+                            <RadioGroup
+                                value={timeType}
+                                direction="horizontal"
+                                options={Object.values(TimeType).map((val: TimeType) => {
+                                    return { value: val, label: TimeTypeEnumToStringMapping[val] };
+                                })}
+                                onChange={handleTimeModeChange}
+                            />
                             <Label
                                 text="Stratigraphic name"
                                 labelClassName={
@@ -448,6 +543,16 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
                                     size={5}
                                 />
                             </Label>
+                            {timeType !== TimeType.None && (
+                                <Label text={timeType === TimeType.TimePoint ? "Time Point" : "Time Interval"}>
+                                    <Select
+                                        options={propertySurfTimeOrIntervalOptions}
+                                        value={computedPropertyTimeOrInterval ? [computedPropertyTimeOrInterval] : []}
+                                        onChange={handleTimeOrIntervalSelectionChange}
+                                        size={5}
+                                    />
+                                </Label>
+                            )}
                         </ApiStateWrapper>
                     )}
                 </>
@@ -606,4 +711,78 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
             </CollapsibleGroup>
         </div>
     );
+}
+
+type PartialSurfSpec = {
+    surfaceName: string | null;
+    surfaceAttribute: string | null;
+    timeOrInterval: string | null;
+};
+
+function fixupSurface(
+    surfaceDirectory: SurfaceDirectory,
+    selectedSurface: PartialSurfSpec,
+    syncedSurface: PartialSurfSpec
+): PartialSurfSpec {
+    const surfaceNames = surfaceDirectory.getSurfaceNames(null);
+    const finalSurfaceName = fixupSyncedOrSelectedOrFirstValue(
+        syncedSurface.surfaceName,
+        selectedSurface.surfaceName,
+        surfaceNames
+    );
+    let finalSurfaceAttribute: string | null = null;
+    let finalTimeOrInterval: string | null = null;
+    if (finalSurfaceName) {
+        const surfaceAttributes = surfaceDirectory.getAttributeNames(finalSurfaceName);
+        finalSurfaceAttribute = fixupSyncedOrSelectedOrFirstValue(
+            syncedSurface.surfaceAttribute,
+            selectedSurface.surfaceAttribute,
+            surfaceAttributes
+        );
+    }
+    if (finalSurfaceName && finalSurfaceAttribute) {
+        const selectedTimeOrIntervals = surfaceDirectory.getTimeOrIntervalStrings(
+            finalSurfaceName,
+            finalSurfaceAttribute
+        );
+        finalTimeOrInterval = fixupSyncedOrSelectedOrFirstValue(
+            syncedSurface.timeOrInterval,
+            selectedSurface.timeOrInterval,
+            selectedTimeOrIntervals
+        );
+    }
+    return {
+        surfaceName: finalSurfaceName,
+        surfaceAttribute: finalSurfaceAttribute,
+        timeOrInterval: finalTimeOrInterval,
+    };
+}
+
+function fixupSyncedOrSelectedOrFirstValue(
+    syncedValue: string | null,
+    selectedValue: string | null,
+    values: string[]
+): string | null {
+    if (syncedValue && values.includes(syncedValue)) {
+        return syncedValue;
+    }
+    if (selectedValue && values.includes(selectedValue)) {
+        return selectedValue;
+    }
+    if (values.length) {
+        return values[0];
+    }
+    return null;
+}
+
+function isoStringToDateLabel(input: string): string {
+    const date = input.split("T")[0];
+    return `${date}`;
+}
+
+function isoIntervalStringToDateLabel(input: string): string {
+    const [start, end] = input.split("/");
+    const startDate = start.split("T")[0];
+    const endDate = end.split("T")[0];
+    return `${startDate}/${endDate}`;
 }
