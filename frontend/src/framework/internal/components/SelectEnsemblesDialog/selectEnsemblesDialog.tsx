@@ -174,6 +174,7 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                         </Button>
                     </div>
                 }
+                showCloseCross
             >
                 <div className="flex gap-4 max-w-full">
                     <div className="flex flex-col gap-4 p-4 border-r bg-slate-100 h-full">
