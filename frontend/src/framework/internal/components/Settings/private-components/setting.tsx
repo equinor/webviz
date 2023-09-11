@@ -87,7 +87,7 @@ export const Setting: React.FC<SettingProps> = (props) => {
                         {props.moduleInstance.getTitle()}
                     </span>
                 </div>
-                <div className="flex flex-col gap-4" style={{ overflow: "overlay" }}>
+                <div className="flex flex-col gap-4 overflow-auto">
                     <div className="p-2">
                         <Settings
                             moduleContext={props.moduleInstance.getContext()}
