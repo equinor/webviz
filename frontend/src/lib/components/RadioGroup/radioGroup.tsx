@@ -35,32 +35,32 @@ type RadioProps = {
 const Radio: React.FC<RadioProps> = (props) => {
     return (
         <BaseComponent disabled={props.disabled}>
-            <label className={resolveClassNames("relative", "cursor-pointer", "inline-flex", "align-middle", "gap-2")}>
+            <label className="relative inline-flex align-middle gap-2 items-center group">
                 <span
                     className={resolveClassNames(
                         "rounded-full",
-                        "w-5",
-                        "h-5",
+                        "w-4 max-w-4 min-w-[1rem]",
+                        "h-4 max-h-4 min-h-[1rem]",
                         "border-2",
                         "border-solid",
                         "flex",
                         "items-center",
                         "justify-center",
-                        props.checked ? "border-blue-500" : "border-gray-400"
+                        props.checked ? "border-blue-500" : "border-gray-400 group-hover:border-blue-500"
                     )}
                 >
                     <span
                         className={resolveClassNames(
                             "rounded-full",
-                            props.checked ? "w-3" : "w-0",
-                            props.checked ? "h-3" : "h-0",
+                            props.checked ? "w-2" : "w-0",
+                            props.checked ? "h-2" : "h-0",
                             "bg-blue-500",
                             "block",
                             "transition-all"
                         )}
                     />
                     <input
-                        className="opacity-0 absolute w-full h-full cursor-inherit top-0 left-0 m-0 p-0 z-1"
+                        className="opacity-0 absolute w-full h-full cursor-inherit top-0 left-0 m-0 p-0 z-1 cursor-pointer"
                         type="radio"
                         name={props.name}
                         value={props.value}
@@ -86,7 +86,7 @@ export const RadioGroup = withDefaults<RadioGroupProps>()(defaultProps, (props) 
             >
                 <span>{props.name}</span>
                 <div
-                    className={resolveClassNames("flex", "radio-group", "gap-4", "m-1", {
+                    className={resolveClassNames("flex", "radio-group", "gap-1", {
                         "flex-col": props.direction === "vertical",
                     })}
                 >
