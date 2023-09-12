@@ -2,7 +2,6 @@ import { VectorRealizationData_api, VectorStatisticSensitivityData_api } from "@
 import { StatisticFunction_api } from "@api";
 import { Sensitivity } from "@framework/EnsembleSensitivities";
 
-import { StringIterator } from "lodash";
 import { PlotData } from "plotly.js";
 
 export interface TimeSeriesPlotlyTrace extends Partial<PlotData> {
@@ -97,43 +96,5 @@ export function createLineTrace(data: LineTraceData): TimeSeriesPlotlyTrace {
         type: "scatter",
         mode: "lines",
         line: { color: data.lineColor, width: data.lineWidth, dash: data.lineDash, shape: data.lineShape },
-    };
-}
-
-function createSingleRealizationLineTrace(
-    vec: VectorRealizationData_api,
-    curveColor: string,
-    lineWidth: number,
-    lineShape: "linear" | "spline"
-): TimeSeriesPlotlyTrace {
-    return {
-        x: vec.timestamps_utc_ms,
-        y: vec.values,
-        name: `real-${vec.realization}`,
-        realizationNumber: vec.realization,
-        // legendrank: vec.realization,
-        showlegend: false,
-        type: "scatter",
-        mode: "lines",
-        line: { color: curveColor, width: lineWidth, shape: lineShape },
-    };
-}
-
-export function createSensitivityStatisticsTrace(
-    timestampsMsUtc: number[],
-    values: number[],
-    name: string,
-    lineShape: "linear" | "spline",
-    lineDash: "dash" | "dot" | "dashdot" | "solid",
-    lineColor?: string | null
-): TimeSeriesPlotlyTrace {
-    return {
-        x: timestampsMsUtc,
-        y: values,
-        name: name,
-        showlegend: false,
-        type: "scatter",
-        mode: "lines",
-        line: { color: lineColor || "lightblue", width: 4, dash: lineDash, shape: lineShape },
     };
 }

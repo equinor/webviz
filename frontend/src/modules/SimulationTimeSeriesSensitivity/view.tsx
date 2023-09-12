@@ -1,13 +1,7 @@
 import React from "react";
 
-import {
-    StatisticFunction_api,
-    VectorHistoricalData_api,
-    VectorRealizationData_api,
-    VectorStatisticSensitivityData_api,
-} from "@api";
+import { VectorRealizationData_api, VectorStatisticSensitivityData_api } from "@api";
 import { BroadcastChannelData, BroadcastChannelMeta } from "@framework/Broadcaster";
-import { Ensemble } from "@framework/Ensemble";
 import { ModuleFCProps } from "@framework/Module";
 import { useSubscribedValue } from "@framework/WorkbenchServices";
 import { timestampUtcMsToCompactIsoString } from "@framework/utils/timestampUtils";
@@ -23,12 +17,7 @@ import {
 } from "./queryHooks";
 import { HoverInfo, TimeSeriesChart } from "./simulationTimeSeriesChart/chart";
 import { TimeSeriesPlotlyTrace, createStatisticalLineTraces } from "./simulationTimeSeriesChart/traces";
-import {
-    LineTraceData,
-    createLineTrace,
-    createRealizationLineTraces,
-    createSensitivityStatisticsTrace,
-} from "./simulationTimeSeriesChart/traces";
+import { createLineTrace, createRealizationLineTraces } from "./simulationTimeSeriesChart/traces";
 import { State } from "./state";
 
 export const view = ({

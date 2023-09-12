@@ -1,6 +1,6 @@
 import React from "react";
 
-import { Frequency_api, VectorDescription_api } from "@api";
+import { Frequency_api } from "@api";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { ModuleFCProps } from "@framework/Module";
 import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
@@ -200,16 +200,6 @@ function fixupVectorName(currVectorName: string | null, availableVectorNames: st
     }
 
     return availableVectorNames[0];
-}
-
-function makeVectorOptionItems(vectorDescriptionsArr: VectorDescription_api[] | undefined): SelectOption[] {
-    const itemArr: SelectOption[] = [];
-    if (vectorDescriptionsArr) {
-        for (const vec of vectorDescriptionsArr) {
-            itemArr.push({ value: vec.name, label: vec.descriptive_name });
-        }
-    }
-    return itemArr;
 }
 
 function makeFrequencyOptionItems(): DropdownOption[] {

@@ -6,7 +6,7 @@ import { BroadcastChannelNames } from "@modules/SimulationTimeSeries/channelDefs
 
 const template: Template = {
     description:
-        "Combination of simulation time series, sensitivity and distribution plot. All are synced to the same ensemble. Data is shared for realizations.",
+        "Dashboard for one-at-a-Time (OAT) sensitivity analysis of time series. Includes a time series chart, a tornado chart for the time series response per sensitivity for a given date, and a distribution chart.",
     moduleInstances: [
         {
             instanceRef: "MainTimeSeriesSensitivityInstance",
@@ -20,8 +20,8 @@ const template: Template = {
             syncedSettings: [SyncSettingKey.ENSEMBLE],
         },
         {
-            instanceRef: "MySensitivityInstance",
-            moduleName: "Sensitivity",
+            instanceRef: "TorandoChartInstance",
+            moduleName: "TornadoChart",
             layout: {
                 relHeight: 0.5,
                 relWidth: 0.5,
@@ -62,4 +62,4 @@ const template: Template = {
     ],
 };
 
-TemplateRegistry.registerTemplate("Øyvind's plugin", template);
+TemplateRegistry.registerTemplate("Sensitivity Analysis of Time Series", template);
