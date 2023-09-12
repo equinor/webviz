@@ -6,8 +6,13 @@ import { Layout, PlotData, PlotMouseEvent } from "plotly.js";
 import { SensitivityResponse, SensitivityResponseDataset } from "./sensitivityResponseCalculator";
 import { SelectedSensitivity } from "./state";
 
+export type SensitivityColors = {
+    sensitivityName: string;
+    color: string;
+};
 export type sensitivityChartProps = {
     sensitivityResponseDataset: SensitivityResponseDataset;
+    sensitivityColors: SensitivityColors[];
     showLabels: boolean;
     hideZeroY: boolean;
     showRealizationPoints: boolean;
@@ -102,16 +107,8 @@ const lowTrace = (
     sensitivityResponses: SensitivityResponse[],
     showLabels: boolean,
     selectedBar: SelectedBar | null,
-    barColor = "e53935"
+    colors: string[]
 ): Partial<SensitivityChartTraceData> => {
-    // const label = showLabels
-    //     ? sensitivityResponses.map(
-    //           (s) =>
-    //               `<b>${numFormat(s.lowCaseReferenceDifference)}</b> ${numFormat(s.lowCaseAverage)}<br> Case: <b>${
-    //                   s.lowCaseName
-    //               }<b>`
-    //       )
-    //     : [];
     const label = showLabels ? sensitivityResponses.map((s) => computeLowLabel(s)) : [];
 
     return {
@@ -128,7 +125,7 @@ const lowTrace = (
         name: TraceGroup.LOW,
         orientation: "h",
         marker: {
-            color: barColor,
+            color: colors,
             line: {
                 width: 3,
                 color: sensitivityResponses.map((s, idx) =>
@@ -146,7 +143,7 @@ const highTrace = (
     sensitivityResponses: SensitivityResponse[],
     showLabels: boolean,
     selectedBar: SelectedBar | null,
-    barColor = "#00897b"
+    colors: string[]
 ): Partial<SensitivityChartTraceData> => {
     // const label = showLabels
     //     ? sensitivityResponses.map(
@@ -172,7 +169,7 @@ const highTrace = (
         name: TraceGroup.HIGH,
         orientation: "h",
         marker: {
-            color: barColor,
+            color: colors,
             line: {
                 width: 3,
                 color: sensitivityResponses.map((s, idx) =>
@@ -201,9 +198,11 @@ const sensitivityChart: React.FC<sensitivityChartProps> = (props) => {
                 (s) => s.lowCaseReferenceDifference !== 0 || s.highCaseReferenceDifference !== 0
             );
         }
-
-        traces.push(lowTrace(filteredSensitivityResponses, showLabels, selectedBar));
-        traces.push(highTrace(filteredSensitivityResponses, showLabels, selectedBar));
+        const colors: string[] = filteredSensitivityResponses.map(
+            (s) => props.sensitivityColors.find((sc) => sc.sensitivityName === s.sensitivityName)?.color ?? "black"
+        );
+        traces.push(lowTrace(filteredSensitivityResponses, showLabels, selectedBar, colors));
+        traces.push(highTrace(filteredSensitivityResponses, showLabels, selectedBar, colors));
         // if (showRealizationPoints) {
         //     TODO: Add realization points
 

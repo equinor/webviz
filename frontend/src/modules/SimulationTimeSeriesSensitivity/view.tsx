@@ -1,7 +1,12 @@
 import React from "react";
 
-import { StatisticFunction_api, VectorRealizationData_api, VectorStatisticSensitivityData_api } from "@api";
-import { BroadcastChannelMeta, BroadcastChannelData } from "@framework/Broadcaster";
+import {
+    StatisticFunction_api,
+    VectorHistoricalData_api,
+    VectorRealizationData_api,
+    VectorStatisticSensitivityData_api,
+} from "@api";
+import { BroadcastChannelData, BroadcastChannelMeta } from "@framework/Broadcaster";
 import { Ensemble } from "@framework/Ensemble";
 import { ModuleFCProps } from "@framework/Module";
 import { useSubscribedValue } from "@framework/WorkbenchServices";
@@ -11,13 +16,27 @@ import { useElementSize } from "@lib/hooks/useElementSize";
 import { indexOf } from "lodash";
 
 import { BroadcastChannelNames } from "./channelDefs";
-import { useStatisticalVectorSensitivityDataQuery, useVectorDataQuery } from "./queryHooks";
+import {
+    useHistoricalVectorDataQuery,
+    useStatisticalVectorSensitivityDataQuery,
+    useVectorDataQuery,
+} from "./queryHooks";
 import { HoverInfo, TimeSeriesChart } from "./simulationTimeSeriesChart/chart";
-import { TimeSeriesPlotlyTrace } from "./simulationTimeSeriesChart/traces";
-import { createRealizationLineTraces, createSensitivityStatisticsTrace } from "./simulationTimeSeriesChart/traces";
+import { TimeSeriesPlotlyTrace, createStatisticalLineTraces } from "./simulationTimeSeriesChart/traces";
+import {
+    LineTraceData,
+    createLineTrace,
+    createRealizationLineTraces,
+    createSensitivityStatisticsTrace,
+} from "./simulationTimeSeriesChart/traces";
 import { State } from "./state";
 
-export const view = ({ moduleContext, workbenchSession, workbenchServices }: ModuleFCProps<State>) => {
+export const view = ({
+    moduleContext,
+    workbenchSession,
+    workbenchSettings,
+    workbenchServices,
+}: ModuleFCProps<State>) => {
     // Leave this in until we get a feeling for React18/Plotly
     const renderCount = React.useRef(0);
     React.useEffect(function incrementRenderCount() {
@@ -30,7 +49,7 @@ export const view = ({ moduleContext, workbenchSession, workbenchServices }: Mod
     const resampleFrequency = moduleContext.useStoreValue("resamplingFrequency");
     const showStatistics = moduleContext.useStoreValue("showStatistics");
     const showRealizations = moduleContext.useStoreValue("showRealizations");
-    const selectedSensitivity = moduleContext.useStoreValue("selectedSensitivity");
+    const selectedSensitivities = moduleContext.useStoreValue("selectedSensitivities");
 
     const [activeTimestampUtcMs, setActiveTimestampUtcMs] = React.useState<number | null>(null);
     const subscribedHoverTimestampUtcMs = useSubscribedValue("global.hoverTimestamp", workbenchServices);
@@ -49,6 +68,13 @@ export const view = ({ moduleContext, workbenchSession, workbenchServices }: Mod
         vectorSpec?.vectorName,
         resampleFrequency,
         showStatistics
+    );
+    const historicalQuery = useHistoricalVectorDataQuery(
+        vectorSpec?.ensembleIdent.getCaseUuid(),
+        vectorSpec?.ensembleIdent.getEnsembleName(),
+        vectorSpec?.vectorName,
+        resampleFrequency,
+        vectorSpec?.hasHistorical || false
     );
     const ensembleSet = workbenchSession.getEnsembleSet();
     const ensemble = vectorSpec ? ensembleSet.findEnsemble(vectorSpec.ensembleIdent) : null;
@@ -82,20 +108,56 @@ export const view = ({ moduleContext, workbenchSession, workbenchServices }: Mod
         },
         [ensemble, vectorSpec, realizationsQuery.data, activeTimestampUtcMs, moduleContext]
     );
+    const colorSet = workbenchSettings.useColorSet();
 
-    const traceDataArr = React.useMemo(() => {
-        if (!ensemble || !selectedSensitivity) {
-            return [];
+    const allSensitivityNamesInEnsemble = ensemble?.getSensitivities()?.getSensitivityNames().sort() ?? [];
+    const traceDataArr: TimeSeriesPlotlyTrace[] = [];
+    if (ensemble && selectedSensitivities && selectedSensitivities.length > 0) {
+        // Loop through all available sensitivities to get correct color
+        allSensitivityNamesInEnsemble.forEach((sensitivityName, index) => {
+            const color = index === 0 ? colorSet.getFirstColor() : colorSet.getNextColor();
+
+            // Work on selected sensitivities only
+            if (selectedSensitivities.includes(sensitivityName)) {
+                // Add statistics traces
+                if (showStatistics && statisticsQuery.data) {
+                    const matchingCases: VectorStatisticSensitivityData_api[] = statisticsQuery.data.filter(
+                        (stat) => stat.sensitivity_name === sensitivityName
+                    );
+                    const traces = createStatisticalLineTraces(matchingCases, color);
+                    traceDataArr.push(...traces);
+                }
+
+                // Add realization traces
+                const sensitivity = ensemble.getSensitivities()?.getSensitivityByName(sensitivityName);
+                if (showRealizations && realizationsQuery.data && sensitivity) {
+                    for (const sensCase of sensitivity.cases) {
+                        const realsToInclude = sensCase.realizations;
+                        const realizationData: VectorRealizationData_api[] = realizationsQuery.data.filter((vec) =>
+                            realsToInclude.includes(vec.realization)
+                        );
+                        const traces = createRealizationLineTraces(realizationData, sensitivity, color);
+                        traceDataArr.push(...traces);
+                    }
+                }
+            }
+        });
+        // Add history
+        if (historicalQuery?.data) {
+            traceDataArr.push(
+                createLineTrace({
+                    timestampsMsUtc: historicalQuery.data.timestamps_utc_ms,
+                    values: historicalQuery.data.values,
+                    name: "history",
+                    lineShape: "linear",
+                    lineDash: "solid",
+                    showLegend: true,
+                    lineColor: "black",
+                    lineWidth: 2,
+                })
+            );
         }
-        return buildTraceDataArr(
-            ensemble,
-            selectedSensitivity,
-            showStatistics,
-            showRealizations,
-            statisticsQuery.data,
-            realizationsQuery.data
-        );
-    }, [ensemble, selectedSensitivity, showStatistics, showRealizations, statisticsQuery.data, realizationsQuery.data]);
+    }
 
     function handleHoverInChart(hoverInfo: HoverInfo | null) {
         if (hoverInfo) {
@@ -126,6 +188,7 @@ export const view = ({ moduleContext, workbenchSession, workbenchServices }: Mod
         <div className="w-full h-full" ref={wrapperDivRef}>
             <TimeSeriesChart
                 traceDataArr={traceDataArr}
+                uirevision={vectorSpec?.vectorName}
                 activeTimestampUtcMs={activeTimestampUtcMs ?? undefined}
                 hoveredTimestampUtcMs={subscribedHoverTimestampUtcMs?.timestampUtcMs ?? undefined}
                 onClick={handleClickInChart}
@@ -137,67 +200,3 @@ export const view = ({ moduleContext, workbenchSession, workbenchServices }: Mod
         </div>
     );
 };
-
-function buildTraceDataArr(
-    ensemble: Ensemble,
-    sensitivityName: string,
-    showStatistics: boolean,
-    showRealizations: boolean,
-    perSensitivityStatisticData?: VectorStatisticSensitivityData_api[],
-    perRealizationData?: VectorRealizationData_api[]
-): TimeSeriesPlotlyTrace[] {
-    const sensitivity = ensemble.getSensitivities()?.getSensitivityByName(sensitivityName);
-    if (!sensitivity) {
-        return [];
-    }
-
-    const traceDataArr: TimeSeriesPlotlyTrace[] = [];
-
-    if (perSensitivityStatisticData) {
-        const refCase = perSensitivityStatisticData.find((stat) => stat.sensitivity_name === "rms_seed");
-        const meanObj = refCase?.value_objects.find((obj) => obj.statistic_function === StatisticFunction_api.MEAN);
-        if (refCase && meanObj) {
-            traceDataArr.push(
-                createSensitivityStatisticsTrace(
-                    refCase.timestamps_utc_ms,
-                    meanObj.values,
-                    `reference ${refCase.sensitivity_name}`,
-                    "linear",
-                    "solid",
-                    "black"
-                )
-            );
-        }
-    }
-
-    if (showStatistics && perSensitivityStatisticData) {
-        const matchingCases = perSensitivityStatisticData.filter((stat) => stat.sensitivity_name === sensitivityName);
-        for (const aCase of matchingCases) {
-            const meanObj = aCase.value_objects.find((obj) => obj.statistic_function === StatisticFunction_api.MEAN);
-            if (meanObj) {
-                traceDataArr.push(
-                    createSensitivityStatisticsTrace(
-                        aCase.timestamps_utc_ms,
-                        meanObj.values,
-                        aCase.sensitivity_case,
-                        "linear",
-                        "dash"
-                    )
-                );
-            }
-        }
-    }
-
-    if (showRealizations && perRealizationData) {
-        for (const sensCase of sensitivity.cases) {
-            const realsToInclude = sensCase.realizations;
-            const realizationData: VectorRealizationData_api[] = perRealizationData.filter((vec) =>
-                realsToInclude.includes(vec.realization)
-            );
-            const traces = createRealizationLineTraces(realizationData);
-            traceDataArr.push(...traces);
-        }
-    }
-
-    return traceDataArr;
-}

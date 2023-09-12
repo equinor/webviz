@@ -10,11 +10,15 @@ import { fixupEnsembleIdent, maybeAssignFirstSyncedEnsemble } from "@framework/u
 import { ApiStateWrapper } from "@lib/components/ApiStateWrapper";
 import { Checkbox } from "@lib/components/Checkbox";
 import { CircularProgress } from "@lib/components/CircularProgress";
+import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { Dropdown, DropdownOption } from "@lib/components/Dropdown";
 import { Label } from "@lib/components/Label";
 import { Select, SelectOption } from "@lib/components/Select";
+import { SmartNodeSelectorSelection, TreeDataNode } from "@lib/components/SmartNodeSelector";
+import { VectorSelector } from "@lib/components/VectorSelector";
+import { createVectorSelectorDataFromVectors } from "@lib/utils/vectorSelectorUtils";
 
-import { useVectorsQuery } from "./queryHooks";
+import { useVectorListQuery } from "./queryHooks";
 import { State } from "./state";
 
 //-----------------------------------------------------------------------------------------------------------
@@ -25,12 +29,12 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
 
     const ensembleSet = useEnsembleSet(workbenchSession);
     const [selectedEnsembleIdent, setSelectedEnsembleIdent] = React.useState<EnsembleIdent | null>(null);
-    const [selectedVectorName, setSelectedVectorName] = React.useState<string>("");
-    const [selectedSensitivity, setSelectedSensitivity] = moduleContext.useStoreState("selectedSensitivity");
+    const [selectedVectorName, setSelectedVectorName] = React.useState<string | null>(null);
+    const [selectedSensitivities, setSelectedSensitivities] = moduleContext.useStoreState("selectedSensitivities");
     const [resampleFrequency, setResamplingFrequency] = moduleContext.useStoreState("resamplingFrequency");
     const [showStatistics, setShowStatistics] = moduleContext.useStoreState("showStatistics");
     const [showRealizations, setShowRealizations] = moduleContext.useStoreState("showRealizations");
-
+    const [showHistorical, setShowHistorical] = moduleContext.useStoreState("showHistorical");
     const syncedSettingKeys = moduleContext.useSyncedSettingKeys();
     const syncHelper = new SyncSettingsHelper(syncedSettingKeys, workbenchServices);
     const syncedValueEnsembles = syncHelper.useValue(SyncSettingKey.ENSEMBLE, "global.syncValue.ensembles");
@@ -39,35 +43,46 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
     const candidateEnsembleIdent = maybeAssignFirstSyncedEnsemble(selectedEnsembleIdent, syncedValueEnsembles);
     const computedEnsembleIdent = fixupEnsembleIdent(candidateEnsembleIdent, ensembleSet);
 
-    const vectorsQuery = useVectorsQuery(
+    const vectorsListQuery = useVectorListQuery(
         computedEnsembleIdent?.getCaseUuid(),
         computedEnsembleIdent?.getEnsembleName()
     );
+
+    const vectorNames = vectorsListQuery.data?.map((vec) => vec.name) ?? [];
+    const vectorSelectorData: TreeDataNode[] = createVectorSelectorDataFromVectors(vectorNames);
 
     let candidateVectorName = selectedVectorName;
     if (syncedValueSummaryVector?.vectorName) {
         console.debug(`${myInstanceIdStr} -- syncing timeSeries to ${syncedValueSummaryVector.vectorName}`);
         candidateVectorName = syncedValueSummaryVector.vectorName;
     }
-    const computedVectorName = fixupVectorName(candidateVectorName, vectorsQuery.data);
+    const computedVectorName = fixupVectorName(candidateVectorName, vectorNames);
+
+    if (computedVectorName && computedVectorName !== selectedVectorName) {
+        setSelectedVectorName(computedVectorName);
+    }
+    const hasHistorical =
+        vectorsListQuery.data?.some((vec) => vec.name === computedVectorName && vec.has_historical) ?? false;
 
     if (computedEnsembleIdent && !computedEnsembleIdent.equals(selectedEnsembleIdent)) {
         setSelectedEnsembleIdent(computedEnsembleIdent);
     }
-    if (computedVectorName && computedVectorName !== selectedVectorName) {
-        setSelectedVectorName(computedVectorName);
-    }
-    const computedEnsemble = computedEnsembleIdent ? ensembleSet.findEnsemble(computedEnsembleIdent) : null;
-    const sensitivities = computedEnsemble?.getSensitivities();
 
-    React.useEffect(() => {
-        const sensitivityNames = computedEnsemble?.getSensitivities()?.getSensitivityNames();
-        if (sensitivityNames && sensitivityNames.length > 0) {
-            if (!selectedSensitivity || !sensitivityNames.includes(selectedSensitivity)) {
-                setSelectedSensitivity(sensitivityNames[0]);
+    const computedEnsemble = computedEnsembleIdent ? ensembleSet.findEnsemble(computedEnsembleIdent) : null;
+    const sensitivityNames = computedEnsemble?.getSensitivities()?.getSensitivityNames() ?? [];
+    React.useEffect(
+        function setInitialSensitivities() {
+            if (!selectedSensitivities && sensitivityNames.length > 0) {
+                setSelectedSensitivities(sensitivityNames);
             }
-        }
-    }, [computedEnsemble]);
+        },
+        [selectedEnsembleIdent]
+    );
+    const sensitivityOptions: SelectOption[] =
+        sensitivityNames.map((name) => ({
+            value: name,
+            label: name,
+        })) ?? [];
 
     React.useEffect(
         function propagateVectorSpecToView() {
@@ -75,6 +90,7 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
                 moduleContext.getStateStore().setValue("vectorSpec", {
                     ensembleIdent: computedEnsembleIdent,
                     vectorName: computedVectorName,
+                    hasHistorical,
                 });
             } else {
                 moduleContext.getStateStore().setValue("vectorSpec", null);
@@ -91,15 +107,6 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
         }
     }
 
-    function handleVectorSelectionChange(selectedVecNames: string[]) {
-        console.debug("handleVectorSelectionChange()");
-        const newName = selectedVecNames[0] ?? "";
-        setSelectedVectorName(newName);
-        if (newName) {
-            syncHelper.publishValue(SyncSettingKey.TIME_SERIES, "global.syncValue.timeSeries", { vectorName: newName });
-        }
-    }
-
     function handleFrequencySelectionChange(newFreqStr: string) {
         console.debug(`handleFrequencySelectionChange()  newFreqStr=${newFreqStr}`);
         let newFreq: Frequency_api | null = null;
@@ -109,68 +116,73 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
         console.debug(`handleFrequencySelectionChange()  newFreqStr=${newFreqStr}  newFreq=${newFreq}`);
         setResamplingFrequency(newFreq);
     }
-    if (!sensitivities?.getSensitivityArr()) {
-        return <div>This is not a sensitivity ensemble</div>;
+    function handleVectorSelectChange(selection: SmartNodeSelectorSelection) {
+        setSelectedVectorName(selection.selectedTags[0]);
     }
-
+    function handleShowHistorical(event: React.ChangeEvent<HTMLInputElement>) {
+        setShowHistorical(event.target.checked);
+    }
     return (
         <>
-            <Label text="Ensemble" synced={syncHelper.isSynced(SyncSettingKey.ENSEMBLE)}>
+            <CollapsibleGroup expanded={false} title="Ensemble">
                 <SingleEnsembleSelect
                     ensembleSet={ensembleSet}
                     value={computedEnsembleIdent}
                     onChange={handleEnsembleSelectionChange}
                 />
-            </Label>
+            </CollapsibleGroup>
             <ApiStateWrapper
-                apiResult={vectorsQuery}
-                errorComponent={"Error loading vector names"}
+                apiResult={vectorsListQuery}
                 loadingComponent={<CircularProgress />}
+                errorComponent={"Could not load the vectors for selected ensembles"}
             >
-                <Label
-                    text="Vector"
-                    labelClassName={syncHelper.isSynced(SyncSettingKey.TIME_SERIES) ? "bg-indigo-700 text-white" : ""}
-                >
-                    <Select
-                        options={makeVectorOptionItems(vectorsQuery.data)}
-                        value={computedVectorName ? [computedVectorName] : []}
-                        onChange={handleVectorSelectionChange}
-                        filter={true}
-                        size={5}
-                    />
-                </Label>
+                <CollapsibleGroup expanded={true} title="Time Series">
+                    <Label text="Vector">
+                        <VectorSelector
+                            data={vectorSelectorData}
+                            selectedTags={selectedVectorName ? [selectedVectorName] : []}
+                            placeholder="Add new vector..."
+                            maxNumSelectedNodes={1}
+                            numSecondsUntilSuggestionsAreShown={0.5}
+                            lineBreakAfterTag={true}
+                            onChange={handleVectorSelectChange}
+                        />
+                    </Label>
+                    <Label text="Frequency">
+                        <div className="ml-4">
+                            <Dropdown
+                                width="50%"
+                                options={makeFrequencyOptionItems()}
+                                value={resampleFrequency ?? "RAW"}
+                                onChange={handleFrequencySelectionChange}
+                            />
+                        </div>
+                    </Label>
+                </CollapsibleGroup>
             </ApiStateWrapper>
-            <Label text="Frequency">
-                <Dropdown
-                    options={makeFrequencyOptionItems()}
-                    value={resampleFrequency ?? "RAW"}
-                    onChange={handleFrequencySelectionChange}
+            <CollapsibleGroup expanded={false} title="Visualization">
+                <Checkbox
+                    label="Mean over realizations"
+                    checked={showStatistics}
+                    onChange={(e) => setShowStatistics(e.target.checked)}
                 />
-            </Label>
-
-            <Label
-                text="Sensitivity"
-                labelClassName={syncHelper.isSynced(SyncSettingKey.TIME_SERIES) ? "bg-indigo-700 text-white" : ""}
-            >
+                <Checkbox
+                    label="Individual realizations"
+                    checked={showRealizations}
+                    onChange={(e) => setShowRealizations(e.target.checked)}
+                />{" "}
+                <Checkbox label="Show historical" checked={showHistorical} onChange={handleShowHistorical} />
+            </CollapsibleGroup>
+            <CollapsibleGroup expanded={true} title="Sensitivity filter">
                 <Select
-                    options={sensitivities.getSensitivityNames().map((name) => ({ value: name, label: name }))}
-                    value={[selectedSensitivity || ""]}
-                    onChange={(sensarr) => setSelectedSensitivity(sensarr[0])}
+                    options={sensitivityOptions}
+                    value={selectedSensitivities ?? []}
+                    onChange={setSelectedSensitivities}
                     filter={true}
                     size={10}
+                    multiple={true}
                 />
-            </Label>
-
-            <Checkbox
-                label="Show statistics"
-                checked={showStatistics}
-                onChange={(e) => setShowStatistics(e.target.checked)}
-            />
-            <Checkbox
-                label="Show realizations"
-                checked={showRealizations}
-                onChange={(e) => setShowRealizations(e.target.checked)}
-            />
+            </CollapsibleGroup>
         </>
     );
 }
@@ -178,16 +190,16 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
 //-----------------------------------------------------------------------------------------------------------
 //-----------------------------------------------------------------------------------------------------------
 
-function fixupVectorName(currVectorName: string, vectorDescriptionsArr: VectorDescription_api[] | undefined): string {
-    if (!vectorDescriptionsArr || vectorDescriptionsArr.length === 0) {
+function fixupVectorName(currVectorName: string | null, availableVectorNames: string[] | undefined): string {
+    if (!availableVectorNames || availableVectorNames.length === 0) {
         return "";
     }
 
-    if (vectorDescriptionsArr.find((item) => item.name === currVectorName)) {
+    if (availableVectorNames.find((name) => name === currVectorName) && currVectorName) {
         return currVectorName;
     }
 
-    return vectorDescriptionsArr[0].name;
+    return availableVectorNames[0];
 }
 
 function makeVectorOptionItems(vectorDescriptionsArr: VectorDescription_api[] | undefined): SelectOption[] {
