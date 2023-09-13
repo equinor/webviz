@@ -123,6 +123,7 @@ const lowTrace = (
         textposition: "auto",
         insidetextanchor: "middle",
         name: TraceGroup.LOW,
+        showlegend: false,
         orientation: "h",
         marker: {
             color: colors,
@@ -167,6 +168,7 @@ const highTrace = (
         insidetextanchor: "middle",
         type: "bar",
         name: TraceGroup.HIGH,
+        showlegend: false,
         orientation: "h",
         marker: {
             color: colors,
