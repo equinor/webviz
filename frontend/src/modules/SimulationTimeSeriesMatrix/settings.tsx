@@ -112,7 +112,7 @@ export function settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
     }
 
     function handleVectorSelectChange(selection: SmartNodeSelectorSelection) {
-        setSelectedVectorNames(selection.selectedTags);
+        setSelectedVectorNames(selection.selectedNodes);
     }
 
     function handleFrequencySelectionChange(newFrequencyStr: string) {
