@@ -36,7 +36,7 @@ export class Module<StateType extends StateBaseType> {
     private _defaultTitle: string;
     public viewFC: ModuleFC<StateType>;
     public settingsFC: ModuleFC<StateType>;
-    private _importState: ImportState;
+    protected _importState: ImportState;
     private _moduleInstances: ModuleInstance<StateType>[];
     private _defaultState: StateType | null;
     private _stateOptions: StateOptions<StateType> | undefined;
@@ -99,14 +99,11 @@ export class Module<StateType extends StateBaseType> {
         return this._syncableSettingKeys;
     }
 
-
     hasSyncableSettingKey(key: SyncSettingKey): boolean {
         return this._syncableSettingKeys.includes(key);
     }
 
-
     makeInstance(instanceNumber: number): ModuleInstance<StateType> {
-
         if (!this._workbench) {
             throw new Error("Module must be added to a workbench before making an instance");
         }
