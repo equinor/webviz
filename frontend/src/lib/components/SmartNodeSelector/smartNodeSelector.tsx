@@ -160,6 +160,7 @@ export class SmartNodeSelectorComponent extends React.Component<SmartNodeSelecto
                 treeData: props.data,
                 delimiter: props.delimiter,
                 allowOrOperator: props.useBetaFeatures || false,
+                allowWildcards: props.maxNumSelectedNodes !== 1,
             });
         } catch (e) {
             this.treeData = null;
@@ -250,6 +251,7 @@ export class SmartNodeSelectorComponent extends React.Component<SmartNodeSelecto
                     treeData: this.props.data,
                     delimiter: this.props.delimiter,
                     allowOrOperator: this.props.useBetaFeatures || false,
+                    allowWildcards: this.props.maxNumSelectedNodes !== 1,
                 });
             } catch (e) {
                 this.treeData = null;

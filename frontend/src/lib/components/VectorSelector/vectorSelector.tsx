@@ -58,6 +58,7 @@ export class VectorSelectorComponent extends SmartNodeSelectorComponent {
                 treeData: this.modifyTreeData(props.data, props.numMetaNodes, this.vectorDefinitions),
                 delimiter: props.delimiter,
                 allowOrOperator: props.useBetaFeatures || false,
+                allowWildcards: this.props.maxNumSelectedNodes !== 1,
             });
         } catch (e) {
             this.treeData = null;
@@ -116,6 +117,7 @@ export class VectorSelectorComponent extends SmartNodeSelectorComponent {
                     treeData: this.modifyTreeData(this.props.data, this.props.numMetaNodes, this.vectorDefinitions),
                     delimiter: this.props.delimiter,
                     allowOrOperator: this.props.useBetaFeatures || false,
+                    allowWildcards: this.props.maxNumSelectedNodes !== 1,
                 });
             } catch (e) {
                 this.treeData = null;
