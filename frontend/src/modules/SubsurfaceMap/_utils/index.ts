@@ -7,3 +7,4 @@ export {
     createWellBoreHeaderLayer,
 } from "./subsurfaceMap";
 export type { SurfaceMeta, SurfaceMeshLayerSettings, ViewSettings } from "./subsurfaceMap";
+export { createContinuousColorScaleForMap } from "./color";
