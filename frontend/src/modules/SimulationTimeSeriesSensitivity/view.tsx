@@ -39,7 +39,7 @@ export const view = ({
     const showStatistics = moduleContext.useStoreValue("showStatistics");
     const showRealizations = moduleContext.useStoreValue("showRealizations");
     const selectedSensitivities = moduleContext.useStoreValue("selectedSensitivities");
-
+    const showHistorical = moduleContext.useStoreValue("showHistorical");
     const [activeTimestampUtcMs, setActiveTimestampUtcMs] = React.useState<number | null>(null);
     const subscribedHoverTimestampUtcMs = useSubscribedValue("global.hoverTimestamp", workbenchServices);
 
@@ -132,7 +132,7 @@ export const view = ({
             }
         });
         // Add history
-        if (historicalQuery?.data) {
+        if (historicalQuery?.data && showHistorical) {
             traceDataArr.push(
                 createLineTrace({
                     timestampsMsUtc: historicalQuery.data.timestamps_utc_ms,
