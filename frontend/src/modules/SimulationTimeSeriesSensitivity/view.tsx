@@ -58,12 +58,13 @@ export const view = ({
         resampleFrequency,
         showStatistics
     );
+
     const historicalQuery = useHistoricalVectorDataQuery(
         vectorSpec?.ensembleIdent.getCaseUuid(),
         vectorSpec?.ensembleIdent.getEnsembleName(),
         vectorSpec?.vectorName,
         resampleFrequency,
-        vectorSpec?.hasHistorical || false
+        vectorSpec?.hasHistorical ? showHistorical : false
     );
     const ensembleSet = workbenchSession.getEnsembleSet();
     const ensemble = vectorSpec ? ensembleSet.findEnsemble(vectorSpec.ensembleIdent) : null;
