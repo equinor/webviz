@@ -111,9 +111,9 @@ export const view = ({
     let errMessage = "";
     if (!computedSensitivityResponseDataset) {
         if (!responseChannel) {
-            errMessage = "No channel selected";
+            errMessage = "Select a data channel to plot";
         } else {
-            errMessage = "No valid data to plot";
+            errMessage = `No data received on channel ${responseChannel.getName()}`;
         }
     }
 

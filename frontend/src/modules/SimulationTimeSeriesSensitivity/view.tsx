@@ -68,6 +68,12 @@ export const view = ({
     const ensembleSet = workbenchSession.getEnsembleSet();
     const ensemble = vectorSpec ? ensembleSet.findEnsemble(vectorSpec.ensembleIdent) : null;
 
+    // Set the active timestamp to the last timestamp in the data if it is not already set
+    const lastTimestampUtcMs = statisticsQuery.data?.at(0)?.timestamps_utc_ms.slice(-1)[0] ?? null;
+    if (lastTimestampUtcMs !== null && activeTimestampUtcMs === null) {
+        setActiveTimestampUtcMs(lastTimestampUtcMs);
+    }
+
     // Broadcast the data to the realization data channel
     React.useEffect(
         function broadcast() {

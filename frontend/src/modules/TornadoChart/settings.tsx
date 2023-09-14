@@ -12,7 +12,7 @@ export function settings({ moduleContext, workbenchServices, initialSettings }: 
 
     return (
         <>
-            <Label text="Data channel X axis" key="data-channel-x-axis">
+            <Label text="Data channel" key="data-channel-x-axis">
                 <ChannelSelect
                     onChange={setResponseChannelName}
                     channelKeyCategory={BroadcastChannelKeyCategory.Realization}
