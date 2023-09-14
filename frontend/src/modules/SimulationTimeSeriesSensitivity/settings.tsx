@@ -117,11 +117,12 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
         setResamplingFrequency(newFreq);
     }
     function handleVectorSelectChange(selection: SmartNodeSelectorSelection) {
-        setSelectedVectorName(selection.selectedTags[0]);
+        setSelectedVectorName(selection.selectedNodes[0]);
     }
     function handleShowHistorical(event: React.ChangeEvent<HTMLInputElement>) {
         setShowHistorical(event.target.checked);
     }
+
     return (
         <>
             <CollapsibleGroup expanded={false} title="Ensemble">
