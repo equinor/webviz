@@ -183,6 +183,7 @@ export const view = ({
         <div className="w-full h-full" ref={wrapperDivRef}>
             <TimeSeriesChart
                 traceDataArr={traceDataArr}
+                title={vectorSpec?.vectorName ?? ""}
                 uirevision={vectorSpec?.vectorName}
                 activeTimestampUtcMs={activeTimestampUtcMs ?? undefined}
                 hoveredTimestampUtcMs={subscribedHoverTimestampUtcMs?.timestampUtcMs ?? undefined}

@@ -15,6 +15,7 @@ export type HoverInfo = {
 
 export type TimeSeriesChartProps = {
     traceDataArr: TimeSeriesPlotlyTrace[];
+    title: string;
     activeTimestampUtcMs?: number;
     hoveredTimestampUtcMs?: number;
     uirevision?: string;
@@ -74,8 +75,9 @@ export const TimeSeriesChart: React.FC<TimeSeriesChartProps> = (props) => {
         width: props.width,
         height: props.height,
         xaxis: { type: "date" },
-        legend: { orientation: "h", yanchor: "bottom", y: 1.02, xanchor: "right", x: 1 },
-        margin: { t: 0, b: 100, r: 0 },
+        title: props.title,
+        legend: { orientation: "h", valign: "bottom" },
+        margin: { t: 50, b: 100, r: 0 },
         shapes: [],
         annotations: [],
         uirevision: props.uirevision,
