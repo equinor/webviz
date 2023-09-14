@@ -57,11 +57,20 @@ export const ViewContent = React.memo((props: ViewContentProps) => {
         return <div className="h-full w-full flex justify-center items-center">Not imported</div>;
     }
 
-    if (importState === ImportState.Importing || !props.moduleInstance.isInitialised()) {
+    if (importState === ImportState.Importing) {
         return (
             <div className="h-full w-full flex flex-col justify-center items-center">
                 <CircularProgress />
                 <div className="mt-4">Importing...</div>
+            </div>
+        );
+    }
+
+    if (!props.moduleInstance.isInitialised()) {
+        return (
+            <div className="h-full w-full flex flex-col justify-center items-center">
+                <CircularProgress />
+                <div className="mt-4">Initialising...</div>
             </div>
         );
     }
