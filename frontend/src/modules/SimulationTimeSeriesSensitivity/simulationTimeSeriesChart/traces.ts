@@ -38,7 +38,7 @@ export function createStatisticalLineTraces(
 
 export function createRealizationLineTraces(
     realizationData: VectorRealizationData_api[],
-    sensitivity: Sensitivity,
+    sensitivityName: string,
     color: string,
     highlightedRealization?: number | undefined
 ): TimeSeriesPlotlyTrace[] {
@@ -59,7 +59,7 @@ export function createRealizationLineTraces(
             showLegend: false,
             lineColor: curveColor,
             lineWidth: lineWidth,
-            hoverTemplate: `Sensitivity:<b>${sensitivity.name}</b>  <br> Value: %{y} <br> Date: %{x}<extra></extra>`,
+            hoverTemplate: `Sensitivity:<b>${sensitivityName}</b>  <br> Value: %{y} <br> Date: %{x}<extra></extra>`,
         });
 
         if (isHighlighted) {

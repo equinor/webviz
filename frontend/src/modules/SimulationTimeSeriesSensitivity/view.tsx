@@ -132,7 +132,7 @@ export const view = ({
                         const realizationData: VectorRealizationData_api[] = realizationsQuery.data.filter((vec) =>
                             realsToInclude.includes(vec.realization)
                         );
-                        const traces = createRealizationLineTraces(realizationData, sensitivity, color);
+                        const traces = createRealizationLineTraces(realizationData, sensitivity.name, color);
                         traceDataArr.push(...traces);
                     }
                 }
