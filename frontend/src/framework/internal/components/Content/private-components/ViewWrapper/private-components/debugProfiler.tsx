@@ -15,6 +15,8 @@ const DebugProfilerRenderInfo: React.FC<DebugProfilerRenderInfoProps> = (props) 
     );
 };
 
+DebugProfilerRenderInfo.displayName = "DebugProfilerRenderInfo";
+
 type DebugProfilerWrapperProps = {
     id: string;
     children: React.ReactNode;
@@ -28,6 +30,8 @@ const DebugProfilerWrapper = React.memo((props: DebugProfilerWrapperProps) => {
         </React.Profiler>
     );
 });
+
+DebugProfilerWrapper.displayName = "DebugProfilerWrapper";
 
 export type DebugProfilerProps = {
     id: string;
