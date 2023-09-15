@@ -33,6 +33,7 @@ type TagProps = {
     removeTag: (e: React.MouseEvent<HTMLButtonElement, MouseEvent>, index: number) => void;
     updateSelectedTagsAndNodes: () => void;
     shake: boolean;
+    maxNumSelectedNodes: number;
 };
 
 /**
@@ -126,13 +127,29 @@ export class Tag extends React.Component<TagProps> {
     private createMatchesCounter(nodeSelection: TreeNodeSelection, index: number): JSX.Element | null {
         if (nodeSelection.containsWildcard() && nodeSelection.countExactlyMatchedNodePaths() > 0) {
             const matches = nodeSelection.countExactlyMatchedNodePaths();
+            let fromMax = "";
+            let title = "This expression matches " + matches + " options.";
+            if (this.props.maxNumSelectedNodes !== -1 && matches > this.props.maxNumSelectedNodes) {
+                fromMax = " / " + this.props.maxNumSelectedNodes;
+                title = `This expression matches ${matches} node${matches !== 1 && "s"}, but only ${
+                    this.props.maxNumSelectedNodes
+                } can be selected.`;
+            }
+
             return (
                 <span
                     key={"TagMatchesCounter_" + index}
-                    className="items-center bg-blue-700 text-white rounded-full h-5 justify-center mr-2 pl-1.5 pr-1.5 min-w-[5] flex outline-none relative text-center text-xs leading-none"
-                    title={"This expression matches " + matches + " options."}
+                    className={resolveClassNames(
+                        "items-center text-white rounded-full h-5 justify-center mr-2 pl-1.5 pr-1.5 min-w-[5] flex outline-none relative text-center text-xs leading-none",
+                        {
+                            "bg-blue-700": matches <= this.props.maxNumSelectedNodes,
+                            "bg-amber-600": matches > this.props.maxNumSelectedNodes,
+                        }
+                    )}
+                    title={title}
                 >
                     {matches}
+                    {fromMax}
                 </span>
             );
         }
@@ -227,8 +244,13 @@ export class Tag extends React.Component<TagProps> {
     }
 
     private tagTitle(nodeSelection: TreeNodeSelection, index: number): string {
-        const { countTags, checkIfDuplicate } = this.props;
-        if (index === countTags - 1 && !nodeSelection.displayAsTag()) {
+        const { countTags, checkIfDuplicate, maxNumSelectedNodes } = this.props;
+        if (
+            index === countTags - 1 &&
+            !nodeSelection.displayAsTag() &&
+            nodeSelection.displayText() === "" &&
+            maxNumSelectedNodes !== 1
+        ) {
             return "Enter a new name";
         } else if (!nodeSelection.isValid()) {
             return "Invalid";
@@ -237,7 +259,15 @@ export class Tag extends React.Component<TagProps> {
         } else if (!nodeSelection.isComplete()) {
             return "Incomplete";
         } else {
-            return nodeSelection.exactlyMatchedNodePaths().join("\n");
+            const exactlyMatchedNodePaths = nodeSelection.exactlyMatchedNodePaths();
+            if (exactlyMatchedNodePaths.length === -1 || exactlyMatchedNodePaths.length <= maxNumSelectedNodes) {
+                return exactlyMatchedNodePaths.join("\n");
+            }
+            return `Matched ${exactlyMatchedNodePaths.length} node${
+                exactlyMatchedNodePaths.length !== 1 && "s"
+            } but only ${maxNumSelectedNodes} ${
+                maxNumSelectedNodes === 1 ? "is" : "are"
+            } allowed.\n\nSelected nodes:\n${exactlyMatchedNodePaths.slice(0, maxNumSelectedNodes).join("\n")}`;
         }
     }
 
