@@ -1,7 +1,8 @@
 import React from "react";
 
-import { Frequency_api, StatisticFunction_api, VectorDescription_api } from "@api";
+import { Frequency_api, StatisticFunction_api } from "@api";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
+import { ParameterIdent, ParameterType } from "@framework/EnsembleParameters";
 import { EnsembleSet } from "@framework/EnsembleSet";
 import { ModuleFCProps } from "@framework/Module";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
@@ -38,30 +39,52 @@ import { EnsembleVectorListsHelper } from "./utils/ensemblesVectorListHelper";
 
 export function settings({ moduleContext, workbenchSession }: ModuleFCProps<State>) {
     const ensembleSet = useEnsembleSet(workbenchSession);
+
+    // Store state/values
     const [resampleFrequency, setResamplingFrequency] = moduleContext.useStoreState("resamplingFrequency");
     const [groupBy, setGroupBy] = moduleContext.useStoreState("groupBy");
+    const [colorRealizationsByParameter, setColorRealizationsByParameter] =
+        moduleContext.useStoreState("colorRealizationsByParameter");
+    const [parameterIdent, setParameterIdent] = moduleContext.useStoreState("parameterIdent");
     const [visualizationMode, setVisualizationMode] = moduleContext.useStoreState("visualizationMode");
     const [showHistorical, setShowHistorical] = moduleContext.useStoreState("showHistorical");
     const [showObservations, setShowObservations] = moduleContext.useStoreState("showObservations");
     const [statisticsSelection, setStatisticsSelection] = moduleContext.useStoreState("statisticsSelection");
     const setVectorSpecifications = moduleContext.useSetStoreValue("vectorSpecifications");
 
+    // States
     const [previousEnsembleSet, setPreviousEnsembleSet] = React.useState<EnsembleSet>(ensembleSet);
     const [selectedEnsembleIdents, setSelectedEnsembleIdents] = React.useState<EnsembleIdent[]>([]);
     const [selectedVectorNames, setSelectedVectorNames] = React.useState<string[]>([]);
     const [vectorSelectorData, setVectorSelectorData] = React.useState<TreeDataNode[]>([]);
-
     const [prevVisualizationMode, setPrevVisualizationMode] = React.useState<VisualizationMode>(visualizationMode);
+
     if (prevVisualizationMode !== visualizationMode) {
         setPrevVisualizationMode(visualizationMode);
     }
 
+    // Queries
     const vectorListQueries = useVectorListQueries(selectedEnsembleIdents);
     const ensembleVectorListsHelper = new EnsembleVectorListsHelper(selectedEnsembleIdents, vectorListQueries);
-    const vectorsUnion: VectorDescription_api[] = ensembleVectorListsHelper.vectorsUnion();
-
+    const vectorsUnion = ensembleVectorListsHelper.vectorsUnion();
     const selectedVectorNamesHasHistorical = ensembleVectorListsHelper.hasAnyHistoricalVector(selectedVectorNames);
-    const currentVectorSelectorData = createVectorSelectorDataFromVectors(vectorsUnion.map((vector) => vector.name));
+    const currentVectorSelectorData = createVectorSelectorDataFromVectors(vectorsUnion);
+
+    // Get union of continuous parameters for selected ensembles
+    const continuousParametersUnion: ParameterIdent[] = [];
+    for (const ensembleIdent of selectedEnsembleIdents) {
+        const ensemble = ensembleSet.findEnsemble(ensembleIdent);
+        if (ensemble === null) continue;
+
+        for (const parameter of ensemble.getParameters().getParameterIdents(ParameterType.CONTINUOUS)) {
+            if (continuousParametersUnion.some((param) => param.equals(parameter))) continue;
+
+            // TODO: Check if parameter is constant?
+            if (ensemble.getParameters().getParameter(parameter).isConstant) continue;
+
+            continuousParametersUnion.push(parameter);
+        }
+    }
 
     // Only update if all vector lists are retrieved before updating vectorSelectorData has changed
     const hasVectorListQueriesErrorOrLoading = vectorListQueries.some((query) => query.isLoading || query.isError);
@@ -105,6 +128,12 @@ export function settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
 
     function handleGroupByChange(event: React.ChangeEvent<HTMLInputElement>) {
         setGroupBy(event.target.value as GroupBy);
+    }
+
+    function handleColorByParameterChange(parameterIdentStr: string) {
+        const parameterIdent = ParameterIdent.fromString(parameterIdentStr);
+        const newParameterIdent = continuousParametersUnion.find((elm) => elm.equals(parameterIdent)) ?? null;
+        setParameterIdent(newParameterIdent);
     }
 
     function handleEnsembleSelectChange(ensembleIdentArr: EnsembleIdent[]) {
@@ -242,6 +271,32 @@ export function settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
                             onChange={handleVectorSelectChange}
                         />
                     </ApiStatesWrapper>
+                </div>
+            </CollapsibleGroup>
+            <CollapsibleGroup expanded={true} title="Color selection">
+                <Checkbox
+                    label="Color realizations by continuous parameter"
+                    checked={colorRealizationsByParameter}
+                    disabled={visualizationMode !== VisualizationMode.INDIVIDUAL_REALIZATIONS}
+                    onChange={(event) => {
+                        setColorRealizationsByParameter(event.target.checked);
+                    }}
+                />
+                <div
+                    className={resolveClassNames(
+                        "mt-4 ml-6 mb-4",
+                        colorRealizationsByParameter && visualizationMode === VisualizationMode.INDIVIDUAL_REALIZATIONS
+                            ? ""
+                            : "pointer-events-none opacity-70"
+                    )}
+                >
+                    <Dropdown
+                        options={continuousParametersUnion.map((elm) => {
+                            return { value: elm.toString(), label: elm.toString() };
+                        })}
+                        value={parameterIdent?.toString() ?? undefined}
+                        onChange={handleColorByParameterChange}
+                    />
                 </div>
             </CollapsibleGroup>
             <CollapsibleGroup expanded={true} title="Visualization">

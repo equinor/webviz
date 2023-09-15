@@ -5,6 +5,8 @@ import {
     VectorStatisticData_api,
 } from "@api";
 
+import { type } from "os";
+
 import { FanchartData, FreeLineData, LowHighData, MinMaxData } from "./fanchartPlotting";
 import { createFanchartTraces } from "./fanchartPlotting";
 import { LineData, StatisticsData, createStatisticsTraces } from "./statisticsPlotting";
@@ -19,63 +21,128 @@ export function getLineShape(isRate: boolean): "linear" | "vh" {
 }
 
 /**
-    Utility function for creating vector realization traces for an array of vector realization data
+    Definition of base options for creating vector realization trace for a vector realization data.
+ */
+type CreateRealizationTraceBaseOptions = {
+    ensembleName: string;
+    color: string;
+    legendGroup: string;
+    hoverTemplate?: string;
+    // lineShape?: "linear" | "spline" | "hv" | "vh" | "hvh" | "vhv";
+    showLegend?: boolean;
+    yaxis?: string;
+    xaxis?: string;
+    type?: "scatter" | "scattergl";
+};
+
+/**
+    Utility function for creating vector realization trace for a vector realization data object
     for given vector.
  */
-export function createVectorRealizationTraces(
-    vectorRealizationsData: VectorRealizationData_api[],
-    ensembleName: string,
-    color: string,
-    legendGroup: string,
-    // lineShape: "linear" | "spline" | "hv" | "vh" | "hvh" | "vhv",
-    hoverTemplate: string,
+export type CreateVectorRealizationTraceOptions = CreateRealizationTraceBaseOptions & {
+    vectorRealizationData: VectorRealizationData_api;
+};
+export function createVectorRealizationTrace({
+    vectorRealizationData,
+    ensembleName,
+    color,
+    legendGroup,
+    hoverTemplate = "",
     showLegend = false,
     yaxis = "y",
-    xaxis = "x"
-): Partial<TimeSeriesPlotData>[] {
+    xaxis = "x",
+    type = "scatter",
+}: CreateVectorRealizationTraceOptions): Partial<TimeSeriesPlotData> {
     // TODO:
-    // - type: "scattergl" or "scatter"?
+    // - type: "scattergl" or "scatter"? Maximum 8 WebGL contexts in Chrome gives issues?
+    //         "scattergl" hides traces when zooming and panning for Ruben on work computer.
     // - vector name?
     // - realization number?
     // - lineShape - Each VectorRealizationData_api element has its own `is_rate` property. Should we
     //               use that to determine the line shape or provide a lineShape argument?
 
+    return {
+        x: vectorRealizationData.timestamps_utc_ms,
+        y: vectorRealizationData.values,
+        line: { width: 1, color: color, shape: getLineShape(vectorRealizationData.is_rate) },
+        mode: "lines",
+        type: type,
+        hovertemplate: `${hoverTemplate}Realization: ${vectorRealizationData.realization}, Ensemble: ${ensembleName}`,
+        // realizationNumber: realization.realization,
+        name: legendGroup,
+        legendgroup: legendGroup,
+        showlegend: vectorRealizationData.realization === 0 && showLegend ? true : false,
+        yaxis: yaxis,
+        xaxis: xaxis,
+    } as Partial<TimeSeriesPlotData>;
+}
+
+/**
+    Utility function for creating vector realization traces for an array of vector realization data
+    for given vector.
+ */
+export type CreateVectorRealizationTracesOptions = CreateRealizationTraceBaseOptions & {
+    vectorRealizationsData: VectorRealizationData_api[];
+};
+export function createVectorRealizationTraces({
+    vectorRealizationsData,
+    ensembleName,
+    color,
+    legendGroup,
+    hoverTemplate = "",
+    showLegend = false,
+    yaxis = "y",
+    xaxis = "x",
+    type = "scatter",
+}: CreateVectorRealizationTracesOptions): Partial<TimeSeriesPlotData>[] {
+    // TODO:
+    // - lineShape - Each VectorRealizationData_api element has its own `is_rate` property. Should we
+    //               use that to determine the line shape or provide a lineShape argument?
+
     return vectorRealizationsData.map((realization) => {
-        return {
-            x: realization.timestamps_utc_ms,
-            y: realization.values,
-            line: { width: 1, color: color, shape: getLineShape(realization.is_rate) },
-            mode: "lines",
-            type: "scattergl",
-            hovertemplate: `${hoverTemplate}Realization: ${realization.realization}, Ensemble: ${ensembleName}`,
-            // realizationNumber: realization.realization,
-            name: legendGroup,
-            legendgroup: legendGroup,
-            showlegend: realization.realization === 0 && showLegend ? true : false,
-            yaxis: yaxis,
-            xaxis: xaxis,
-        } as Partial<TimeSeriesPlotData>;
+        return createVectorRealizationTrace({
+            vectorRealizationData: realization,
+            ensembleName,
+            color,
+            legendGroup,
+            hoverTemplate,
+            showLegend,
+            yaxis,
+            xaxis,
+            type,
+        });
     });
 }
 
 /**
     Utility function for creating trace for historical vector data
  */
-export function createHistoricalVectorTrace(
-    vectorHistoricalData: VectorHistoricalData_api,
+export type CreateHistoricalVectorTraceOptions = {
+    vectorHistoricalData: VectorHistoricalData_api;
+    color?: string;
+    yaxis?: string;
+    xaxis?: string;
+    showLegend?: boolean;
+    type?: "scatter" | "scattergl";
+    // lineShape?: "linear" | "spline" | "hv" | "vh" | "hvh" | "vhv";
+    vectorName?: string;
+    legendRank?: number;
+};
+export function createHistoricalVectorTrace({
+    vectorHistoricalData,
     color = "black",
     yaxis = "y",
     xaxis = "x",
     showLegend = false,
-    // lineShape: "linear" | "spline" | "hv" | "vh" | "hvh" | "vhv",
-    vectorName?: string,
-    legendRank?: number
-): Partial<TimeSeriesPlotData> {
+    type = "scatter",
+    vectorName,
+    legendRank,
+}: CreateHistoricalVectorTraceOptions): Partial<TimeSeriesPlotData> {
     const hoverText = vectorName ? `History: ${vectorName}` : "History";
     return {
         line: { shape: getLineShape(vectorHistoricalData.is_rate), color: color },
         mode: "lines",
-        type: "scatter",
+        type: type,
         x: vectorHistoricalData.timestamps_utc_ms,
         y: vectorHistoricalData.values,
         hovertext: hoverText,
@@ -99,16 +166,27 @@ export function createHistoricalVectorTrace(
     only one of the statistics in each pair is present in the data. I.e. P10/P90 is neglected if only P10 or P90
     is presented in the data. Similarly, MIN/MAX is neglected if only MIN or MAX is presented in the data.
  */
-export function createVectorFanchartTraces(
-    vectorStatisticData: VectorStatisticData_api,
-    hexColor: string,
-    legendGroup: string,
+export type CreateVectorFanchartTracesOptions = {
+    vectorStatisticData: VectorStatisticData_api;
+    hexColor: string;
+    legendGroup: string;
+    yaxis?: string;
+    // lineShape?: "vh" | "linear" | "spline" | "hv" | "hvh" | "vhv";
+    hoverTemplate?: string;
+    showLegend?: boolean;
+    legendRank?: number;
+    type?: "scatter" | "scattergl";
+};
+export function createVectorFanchartTraces({
+    vectorStatisticData,
+    hexColor,
+    legendGroup,
     yaxis = "y",
-    // lineShape: "vh" | "linear" | "spline" | "hv" | "hvh" | "vhv" = "linear",
     hoverTemplate = "(%{x}, %{y})<br>",
     showLegend = false,
-    legendRank?: number
-): Partial<TimeSeriesPlotData>[] {
+    type = "scatter",
+    legendRank,
+}: CreateVectorFanchartTracesOptions): Partial<TimeSeriesPlotData>[] {
     const lowData = vectorStatisticData.value_objects.find((v) => v.statistic_function === StatisticFunction_api.P90);
     const highData = vectorStatisticData.value_objects.find((v) => v.statistic_function === StatisticFunction_api.P10);
     let lowHighData: LowHighData | undefined = undefined;
@@ -156,6 +234,7 @@ export function createVectorFanchartTraces(
         hoverTemplate: hoverTemplate,
         legendRank: legendRank,
         yaxis: yaxis,
+        type: type,
     });
 }
 
@@ -165,17 +244,29 @@ export function createVectorFanchartTraces(
     The function creates lines for P10, P50, P90, MIN, MAX, and MEAN. Solid line for MEAN, various
     dashed lines for the remaining statistics.
  */
-export function createVectorStatisticsTraces(
-    vectorStatisticData: VectorStatisticData_api,
-    color: string,
-    legendGroup: string,
+export type CreateVectorStatisticsTracesOptions = {
+    vectorStatisticData: VectorStatisticData_api;
+    hexColor: string;
+    legendGroup: string;
+    yaxis?: string;
+    // lineShape?: "vh" | "linear" | "spline" | "hv" | "hvh" | "vhv";
+    lineWidth?: number;
+    hoverTemplate?: string;
+    showLegend?: boolean;
+    legendRank?: number;
+    type?: "scatter" | "scattergl";
+};
+export function createVectorStatisticsTraces({
+    vectorStatisticData,
+    hexColor,
+    legendGroup,
     yaxis = "y",
-    // lineShape: "vh" | "linear" | "spline" | "hv" | "hvh" | "vhv" = "linear",
     lineWidth = 2,
     hoverTemplate = "(%{x}, %{y})<br>",
     showLegend = false,
-    legendRank?: number
-): Partial<TimeSeriesPlotData>[] {
+    type = "scatter",
+    legendRank,
+}: CreateVectorStatisticsTracesOptions): Partial<TimeSeriesPlotData>[] {
     const lowValueObject = vectorStatisticData.value_objects.find(
         (v) => v.statistic_function === StatisticFunction_api.P90
     );
@@ -220,7 +311,7 @@ export function createVectorStatisticsTraces(
 
     return createStatisticsTraces({
         data: statisticsData,
-        color: color,
+        color: hexColor,
         legendGroup: legendGroup,
         lineShape: getLineShape(vectorStatisticData.is_rate),
         lineWidth: lineWidth,
@@ -228,5 +319,6 @@ export function createVectorStatisticsTraces(
         hoverTemplate: hoverTemplate,
         legendRank: legendRank,
         yaxis: yaxis,
+        type: type,
     });
 }

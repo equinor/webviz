@@ -1,13 +1,19 @@
 import React from "react";
 import Plot from "react-plotly.js";
 
+import { Ensemble } from "@framework/Ensemble";
+import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { ModuleFCProps } from "@framework/Module";
+import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { useElementSize } from "@lib/hooks/useElementSize";
+import { ColorScaleGradientType } from "@lib/utils/ColorScale";
+import { ColorScale } from "@lib/utils/ColorScale";
 // Note: Have for debug render count info
 import { isDevMode } from "@lib/utils/devMode";
 
 import { useHistoricalVectorDataQueries, useStatisticalVectorDataQueries, useVectorDataQueries } from "./queryHooks";
 import { GroupBy, State, VisualizationMode } from "./state";
+import { ParameterColorScaleHelper } from "./utils/parameterColoringUtils";
 import { SubplotBuilder, SubplotOwner } from "./utils/subplotBuilder";
 import {
     createLoadedVectorSpecificationAndDataArray,
@@ -15,7 +21,7 @@ import {
     filterVectorSpecificationAndIndividualStatisticsDataArray,
 } from "./utils/vectorSpecificationsAndQueriesUtils";
 
-export const view = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>) => {
+export const view = ({ moduleContext, workbenchSession, workbenchSettings }: ModuleFCProps<State>) => {
     // Leave this in until we get a feeling for React18/Plotly
     const renderCount = React.useRef(0);
     React.useEffect(function incrementRenderCount() {
@@ -25,9 +31,9 @@ export const view = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);
     const wrapperDivSize = useElementSize(wrapperDivRef);
 
-    const colorSet = workbenchSettings.useColorSet();
+    const ensembleSet = useEnsembleSet(workbenchSession);
 
-    // State
+    // Store values
     const vectorSpecifications = moduleContext.useStoreValue("vectorSpecifications");
     const groupBy = moduleContext.useStoreValue("groupBy");
     const resampleFrequency = moduleContext.useStoreValue("resamplingFrequency");
@@ -35,6 +41,37 @@ export const view = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
     const visualizationMode = moduleContext.useStoreValue("visualizationMode");
     const showHistorical = moduleContext.useStoreValue("showHistorical");
     const statisticsSelection = moduleContext.useStoreValue("statisticsSelection");
+    const parameterIdent = moduleContext.useStoreValue("parameterIdent");
+    const colorRealizationsByParameter = moduleContext.useStoreValue("colorRealizationsByParameter");
+
+    // Color palettes
+    const colorSet = workbenchSettings.useColorSet();
+    const parameterColorScale = workbenchSettings.useContinuousColorScale({
+        gradientType: ColorScaleGradientType.Diverging,
+    });
+
+    // Get range for color scale
+    const uniqueEnsembleIdents: EnsembleIdent[] = [];
+    vectorSpecifications?.forEach((specification) => {
+        if (uniqueEnsembleIdents.some((ensembleIdent) => ensembleIdent.equals(specification.ensembleIdent))) return;
+
+        uniqueEnsembleIdents.push(specification.ensembleIdent);
+    });
+
+    // Get ensemble objects from ensemble set
+    const selectedEnsembles: Ensemble[] = [];
+    for (const ensembleIdent of uniqueEnsembleIdents) {
+        const ensemble = ensembleSet.findEnsemble(ensembleIdent);
+        if (ensemble === null) continue;
+
+        selectedEnsembles.push(ensemble);
+    }
+
+    // Create parameter color scale helper
+    const doColorByParameter = colorRealizationsByParameter && parameterIdent !== null && selectedEnsembles.length > 0;
+    const parameterColorScaleHelper = doColorByParameter
+        ? new ParameterColorScaleHelper(parameterIdent, selectedEnsembles, parameterColorScale)
+        : null;
 
     // Queries
     const vectorDataQueries = useVectorDataQueries(
@@ -96,12 +133,17 @@ export const view = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
         vectorSpecifications ?? [],
         colorSet,
         wrapperDivSize.width,
-        wrapperDivSize.height
+        wrapperDivSize.height,
+        parameterColorScaleHelper ?? undefined
     );
 
     if (visualizationMode === VisualizationMode.INDIVIDUAL_REALIZATIONS) {
-        const useIncreasedBrightness = false;
-        subplotBuilder.addRealizationsTraces(loadedVectorSpecificationsAndRealizationData, useIncreasedBrightness);
+        if (doColorByParameter) {
+            subplotBuilder.addRealizationTracesColoredByParameter(loadedVectorSpecificationsAndRealizationData);
+        } else {
+            const useIncreasedBrightness = false;
+            subplotBuilder.addRealizationsTraces(loadedVectorSpecificationsAndRealizationData, useIncreasedBrightness);
+        }
     }
     if (visualizationMode === VisualizationMode.STATISTICAL_FANCHART) {
         const selectedVectorsFanchartStatisticData = filterVectorSpecificationAndFanchartStatisticsDataArray(
