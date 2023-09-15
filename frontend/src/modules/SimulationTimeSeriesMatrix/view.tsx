@@ -7,13 +7,12 @@ import { ModuleFCProps } from "@framework/Module";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { ColorScaleGradientType } from "@lib/utils/ColorScale";
-import { ColorScale } from "@lib/utils/ColorScale";
 // Note: Have for debug render count info
 import { isDevMode } from "@lib/utils/devMode";
 
 import { useHistoricalVectorDataQueries, useStatisticalVectorDataQueries, useVectorDataQueries } from "./queryHooks";
 import { GroupBy, State, VisualizationMode } from "./state";
-import { ParameterColorScaleHelper } from "./utils/parameterColoringUtils";
+import { ContinuousParameterColorScaleHelper } from "./utils/parameterColoringUtils";
 import { SubplotBuilder, SubplotOwner } from "./utils/subplotBuilder";
 import {
     createLoadedVectorSpecificationAndDataArray,
@@ -70,7 +69,7 @@ export const view = ({ moduleContext, workbenchSession, workbenchSettings }: Mod
     // Create parameter color scale helper
     const doColorByParameter = colorRealizationsByParameter && parameterIdent !== null && selectedEnsembles.length > 0;
     const parameterColorScaleHelper = doColorByParameter
-        ? new ParameterColorScaleHelper(parameterIdent, selectedEnsembles, parameterColorScale)
+        ? new ContinuousParameterColorScaleHelper(parameterIdent, selectedEnsembles, parameterColorScale)
         : null;
 
     // Queries

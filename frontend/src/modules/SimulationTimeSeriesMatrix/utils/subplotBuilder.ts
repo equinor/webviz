@@ -14,7 +14,7 @@ import {
     createVectorStatisticsTraces,
 } from "./PlotlyTraceUtils/createVectorTracesUtils";
 import { scaleHexColorLightness } from "./colorUtils";
-import { ParameterColorScaleHelper } from "./parameterColoringUtils";
+import { ContinuousParameterColorScaleHelper } from "./parameterColoringUtils";
 import { TimeSeriesPlotData } from "./timeSeriesPlotData";
 
 import { VectorSpec } from "../state";
@@ -47,8 +47,11 @@ export class SubplotBuilder {
     private _vectorHexColors: HexColorMap = {};
     // private _brighten = filterBrightness(1.3, "rgb");
 
+    private _hasRealizationsTraces = false;
+    private _hasRealizationsTracesColoredByParameter = false;
     private _hasHistoryTraces = false;
     private _hasObservationTraces = false;
+
     private _historyVectorColor = "black";
     private _observationColor = "black";
 
@@ -57,7 +60,7 @@ export class SubplotBuilder {
 
     private _defaultScatterType = "scatter";
 
-    private _parameterColorScaleHelper: ParameterColorScaleHelper | null = null;
+    private _parameterColorScaleHelper: ContinuousParameterColorScaleHelper | null = null;
     private _parameterFallbackColor = "#808080";
 
     constructor(
@@ -66,7 +69,7 @@ export class SubplotBuilder {
         colorSet: ColorSet,
         width: number,
         height: number,
-        parameterColorScaleHelper?: ParameterColorScaleHelper
+        parameterColorScaleHelper?: ContinuousParameterColorScaleHelper
     ) {
         this._selectedVectorSpecifications = selectedVectorSpecifications;
         this._width = width;
@@ -158,7 +161,7 @@ export class SubplotBuilder {
         let currentLegendRank = 1;
 
         // Add legend for each vector/ensemble when not coloring by parameter
-        if (this._parameterColorScaleHelper === null) {
+        if (this._hasRealizationsTraces) {
             // Helper function to create legend trace
             const subplotDataLegendTrace = (name: string, hexColor: string): Partial<TimeSeriesPlotData> => {
                 return {
@@ -185,24 +188,6 @@ export class SubplotBuilder {
                     this._plotData.push(subplotDataLegendTrace(ensembleName, this._ensembleHexColors[ensembleName]));
                 });
             }
-        } else {
-            // Add color scale for color by parameter
-            // const colorScaleMarker: Partial<PlotMarker> = {
-            //     ...this._parameterColorScaleHelper.getColorScale().getAsPlotlyColorScaleMarkerObject(),
-            //     colorbar: {
-            //         title: "Parameter range",
-            //         titleside: "right",
-            //         ticks: "outside",
-            //         len: 0.75,
-            //     },
-            // };
-            // const parameterColorLegendTrace: Partial<TimeSeriesPlotData> = {
-            //     x: [null],
-            //     y: [null],
-            //     marker: colorScaleMarker,
-            //     showlegend: false,
-            // };
-            // this._plotData.push(parameterColorLegendTrace);
         }
 
         // Add legend for history trace with legendrank after vectors/ensembles
@@ -241,6 +226,26 @@ export class SubplotBuilder {
 
             this._plotData.push(observationLegendTrace);
         }
+
+        // Add color scale for color by parameter
+        if (this._hasRealizationsTracesColoredByParameter && this._parameterColorScaleHelper !== null) {
+            const colorScaleMarker: Partial<PlotMarker> = {
+                ...this._parameterColorScaleHelper.getColorScale().getAsPlotlyColorScaleMarkerObject(),
+                colorbar: {
+                    title: "Parameter range",
+                    titleside: "right",
+                    ticks: "outside",
+                    len: 0.75,
+                },
+            };
+            const parameterColorLegendTrace: Partial<TimeSeriesPlotData> = {
+                x: [null],
+                y: [null],
+                marker: colorScaleMarker,
+                showlegend: false,
+            };
+            this._plotData.push(parameterColorLegendTrace);
+        }
     }
 
     addRealizationTracesColoredByParameter(
@@ -273,7 +278,7 @@ export class SubplotBuilder {
                 let parameterColor = this._parameterFallbackColor;
                 const ensembleName = elm.vectorSpecification.ensembleIdent.getEnsembleName();
                 if (
-                    this._parameterColorScaleHelper.hasParameterRealizationValue(
+                    this._parameterColorScaleHelper.hasParameterRealizationNumericalValue(
                         ensembleName,
                         realizationData.realization
                     )
@@ -295,6 +300,7 @@ export class SubplotBuilder {
                     yaxis: `y${subplotIndex + 1}`,
                 });
                 this._plotData.push(vectorRealizationTrace);
+                this._hasRealizationsTracesColoredByParameter = true;
             }
         }
     }
@@ -346,6 +352,7 @@ export class SubplotBuilder {
             });
 
             this._plotData.push(...vectorRealizationTraces);
+            this._hasRealizationsTraces = true;
         });
     }
 
