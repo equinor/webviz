@@ -1,3 +1,4 @@
+from typing import List, Dict, Union
 import pytest
 
 import pandas as pd
@@ -49,7 +50,7 @@ from services.sumo_access.queries.parameters import SumoEnsembleParameter
         ),
     ],
 )
-def test_create_ensemble_parameter(sumo_param_input, expected_output):
+def test_create_ensemble_parameter(sumo_param_input: SumoEnsembleParameter, expected_output: EnsembleParameter) -> None:
     ensemble_param = create_ensemble_parameter(sumo_param_input)
     assert ensemble_param == expected_output
 
@@ -84,7 +85,9 @@ def test_create_ensemble_parameter(sumo_param_input, expected_output):
         ),
     ],
 )
-def test_create_ensemble_sensitivities(sumo_param_input, expected_output):
+def test_create_ensemble_sensitivities(
+    sumo_param_input: SumoEnsembleParameter, expected_output: EnsembleParameter
+) -> None:
     sensitivities = create_ensemble_sensitivities(sumo_param_input)
 
     assert sensitivities == expected_output
@@ -97,7 +100,7 @@ def test_create_ensemble_sensitivities(sumo_param_input, expected_output):
         (["case1", "case2"], SensitivityType.SCENARIO),
     ],
 )
-def test_find_sensitivity_type(sens_case_names, expected_output):
+def test_find_sensitivity_type(sens_case_names: List[str], expected_output: SensitivityType) -> None:
     assert find_sensitivity_type(sens_case_names) == expected_output
 
 
@@ -113,7 +116,9 @@ def test_find_sensitivity_type(sens_case_names, expected_output):
         ),
     ],
 )
-def test_create_ensemble_sensitivity_cases(sens_case_input, expected_output):
+def test_create_ensemble_sensitivity_cases(
+    sens_case_input: Dict[str, list[Union[str, float]]], expected_output: List[EnsembleSensitivityCase]
+) -> None:
     df = pd.DataFrame(sens_case_input)
     cases = create_ensemble_sensitivity_cases(df)
 
