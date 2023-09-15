@@ -1,6 +1,5 @@
 import { VectorRealizationData_api, VectorStatisticSensitivityData_api } from "@api";
 import { StatisticFunction_api } from "@api";
-import { Sensitivity } from "@framework/EnsembleSensitivities";
 
 import { PlotData } from "plotly.js";
 
