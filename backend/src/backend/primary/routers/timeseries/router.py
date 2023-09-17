@@ -218,7 +218,7 @@ def get_realization_vector_at_timestamp(
     ensemble_name:  Annotated[str, Query(description="Ensemble name")],
     vector_name: Annotated[str, Query(description="Name of the vector")],
     timestamp_utc_ms: Annotated[int, Query(description= "Timestamp in ms UTC to query vectors at")],
-    realizations: Annotated[list[int] | None, Query(description="Optional list of realizations to include. If not specified, all realizations will be returned.")] = None,
+    # realizations: Annotated[list[int] | None, Query(description="Optional list of realizations to include. If not specified, all realizations will be returned.")] = None,
     # fmt:on
 ) -> EnsembleScalarResponse:
     summary_access = SummaryAccess(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
