@@ -133,7 +133,7 @@ function buildParameterArrFromApiResponse(apiParameterArr: EnsembleParameter_api
             const retPar: ContinuousParameter = {
                 type: ParameterType.CONTINUOUS,
                 name: apiPar.name,
-                groupName: apiPar.group_name ?? null,
+                groupName: apiPar.group_name,
                 description: apiPar.descriptive_name,
                 isConstant: apiPar.is_constant,
                 isLogarithmic: apiPar.is_logarithmic,
@@ -146,7 +146,7 @@ function buildParameterArrFromApiResponse(apiParameterArr: EnsembleParameter_api
             const retPar: DiscreteParameter = {
                 type: ParameterType.DISCRETE,
                 name: apiPar.name,
-                groupName: apiPar.group_name ?? null,
+                groupName: apiPar.group_name,
                 description: apiPar.descriptive_name,
                 isConstant: apiPar.is_constant,
                 realizations: apiPar.realizations,
