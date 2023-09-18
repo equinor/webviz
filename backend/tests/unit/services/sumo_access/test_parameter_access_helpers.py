@@ -2,17 +2,18 @@ from typing import List, Dict, Union
 import pytest
 
 import pandas as pd
-from services.utils.parameter_utils import (
+from services.sumo_access.parameter_access import (
     create_ensemble_parameter,
     create_ensemble_sensitivities,
     find_sensitivity_type,
     create_ensemble_sensitivity_cases,
+)
+from services.sumo_access.parameter_types import (
     EnsembleParameter,
     EnsembleSensitivity,
     EnsembleSensitivityCase,
     SensitivityType,
 )
-
 
 from services.sumo_access.queries.parameters import SumoEnsembleParameter
 
