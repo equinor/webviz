@@ -22,7 +22,7 @@ def get_parameter_names_and_description(
     case_uuid: str = Query(description="Sumo case uuid"),
     ensemble_name: str = Query(description="Ensemble name"),
     exclude_all_values_constant: bool = Query(True, description="Exclude all parameters where all values are the same value"),
-    sort_order: Optional[Literal[None,"alphabetically", "standard_deviation"]] = Query("alphabetically", description="Sort order"),
+    sort_order: Literal["alphabetically", "standard_deviation"] = Query("alphabetically", description="Sort order"),
     # fmt:on
 ) -> List[schemas.EnsembleParameterDescription]:
     """Retrieve parameter names and description for an ensemble"""
@@ -47,12 +47,10 @@ def get_parameter_names_and_description(
 
 @router.get("/parameter/")
 def get_parameter(
-    # fmt:off
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     case_uuid: str = Query(description="Sumo case uuid"),
     ensemble_name: str = Query(description="Ensemble name"),
     parameter_name: str = Query(description="Parameter name"),
-    # fmt:on
 ) -> Optional[EnsembleParameter]:
     """Get a parameter in a given Sumo ensemble"""
 
@@ -77,11 +75,9 @@ def get_parameters(
 
 @router.get("/is_sensitivity_run/")
 def is_sensitivity_run(
-    # fmt:off
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     case_uuid: str = Query(description="Sumo case uuid"),
     ensemble_name: str = Query(description="Ensemble name"),
-    # fmt:on
 ) -> bool:
     """Check if a given Sumo ensemble is a sensitivity run"""
 
@@ -92,12 +88,10 @@ def is_sensitivity_run(
 
 @router.get("/sensitivities/")
 def get_sensitivities(
-    # fmt:off
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     case_uuid: str = Query(description="Sumo case uuid"),
     ensemble_name: str = Query(description="Ensemble name"),
-    # fmt:on
-) -> Optional[List[EnsembleSensitivity]]:
+) -> List[EnsembleSensitivity]:
     """Get sensitivities in a given Sumo ensemble"""
 
     access = ParameterAccess(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
