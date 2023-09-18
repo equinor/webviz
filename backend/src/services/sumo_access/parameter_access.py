@@ -5,7 +5,8 @@ import numpy as np
 import pandas as pd
 from fmu.sumo.explorer.explorer import CaseCollection, SumoClient
 
-from .queries.parameters import SumoEnsembleParameter, get_parameters_for_iteration
+from .queries.parameters import get_parameters_for_iteration, SumoEnsembleParameter
+from ._helpers import create_sumo_client_instance
 from .parameter_types import (
     EnsembleParameter,
     EnsembleParameters,
@@ -13,9 +14,6 @@ from .parameter_types import (
     EnsembleSensitivityCase,
     SensitivityType,
 )
-
-
-from ._helpers import create_sumo_client_instance
 
 LOGGER = logging.getLogger(__name__)
 
@@ -49,11 +47,6 @@ class ParameterAccess:
         """Retrieve a single parameter for an ensemble"""
         parameters = self.get_parameters_and_sensitivities()
         return next(parameter for parameter in parameters.parameters if parameter.name == parameter_name)
-
-
-def is_array_numeric(array: np.ndarray) -> bool:
-    """Check if an array is numeric"""
-    return np.issubdtype(array.dtype, np.number)
 
 
 def create_ensemble_parameter(
@@ -129,3 +122,8 @@ def create_ensemble_sensitivity_cases(
             )
         )
     return cases
+
+
+def is_array_numeric(array: np.ndarray) -> bool:
+    """Check if an array is numeric"""
+    return np.issubdtype(array.dtype, np.number)
