@@ -66,7 +66,7 @@ export class Tag extends React.Component<TagProps> {
     private innerTagClasses(invalid = false, duplicate = false): string {
         const { treeNodeSelection } = this.props;
         let ret = {
-            "text-sm flex flex-wrap rounded justify-left items-center min-w-0 m-0.5 text-slate-600 border-2 border-transparent whitespace-pre-wrap z-10 bg-no-repeat":
+            "text-sm flex flex-wrap rounded justify-left items-center min-w-0 m-0.5 text-slate-600 border-2 border-transparent whitespace-pre-wrap z-5 bg-no-repeat":
                 true,
         };
         if (this.addAdditionalClasses(invalid)) {
@@ -86,7 +86,7 @@ export class Tag extends React.Component<TagProps> {
 
     private outerTagClasses(invalid: boolean, duplicate: boolean, frameless: boolean): string {
         return resolveClassNames(
-            "flex flex-wrap rounded justify-left items-center min-w-0 relative mr-2 mt-1 mb-1 text-slate-600 border-2 whitespace-pre-wrap z-10",
+            "flex flex-wrap rounded justify-left items-center min-w-0 relative mr-2 mt-1 mb-1 text-slate-600 border-2 whitespace-pre-wrap z-5",
             {
                 "border-slate-400 bg-slate-50 SmartNodeSelector__Tag": this.displayAsTag() || frameless,
                 "border-transparent bg-transparent": !this.displayAsTag() && !frameless,
@@ -414,7 +414,7 @@ export class Tag extends React.Component<TagProps> {
                     <button
                         type="button"
                         key={"TagRemoveButton_" + index}
-                        className="absolute -right-2 -top-2 bg-cyan-600 border border-white rounded-full cursor-pointer w-4 h-4 p-0 flex items-center justify-center hover:bg-cyan-500 z-20"
+                        className="absolute -right-2 -top-2 bg-cyan-600 border border-white rounded-full cursor-pointer w-4 h-4 p-0 flex items-center justify-center hover:bg-cyan-500 z-8"
                         title="Remove"
                         onClick={(e): void => removeTag(e, index)}
                     >
