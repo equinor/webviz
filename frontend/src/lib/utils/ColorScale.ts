@@ -60,18 +60,28 @@ export class ColorScale {
     }
 
     private calcNormalizedValue(value: number, min: number, max: number): number {
-        let normalizedValue = 0;
         if (this._gradientType === ColorScaleGradientType.Sequential) {
-            normalizedValue = (value - min) / (max - min);
-        } else if (this._gradientType === ColorScaleGradientType.Diverging) {
-            if (value < this._divMidPoint) {
-                normalizedValue = ((value - min) / (this._divMidPoint - min)) * 0.5;
-            } else {
-                normalizedValue = 0.5 * (1 + (value - this._divMidPoint) / (max - this._divMidPoint));
+            if (max === min) {
+                return 1;
             }
+            return (value - min) / (max - min);
         }
-
-        return normalizedValue;
+        if (this._gradientType === ColorScaleGradientType.Diverging) {
+            if (max === min) {
+                return 0.5;
+            }
+            if (value < this._divMidPoint) {
+                if (this._divMidPoint === min) {
+                    return 0.5;
+                }
+                return ((value - min) / (this._divMidPoint - min)) * 0.5;
+            }
+            if (this._divMidPoint === max) {
+                return 0.5;
+            }
+            return 0.5 * (1 + (value - this._divMidPoint) / (max - this._divMidPoint));
+        }
+        return 0;
     }
 
     getColorPalette(): ColorPalette {
@@ -128,6 +138,12 @@ export class ColorScale {
     }
 
     getPlotlyColorScale(): [number, string][] {
+        if (this._min === this._max) {
+            return [
+                [0, this.getColorForValue(this._min)],
+                [1, this.getColorForValue(this._max)],
+            ];
+        }
         const plotlyColorScale: [number, string][] = [];
         for (let i = 0; i <= 100; i++) {
             if (i > 0) {
