@@ -49,14 +49,15 @@ class VdsAccess:
         response = self._query(endpoint, params)
 
         parts = MultipartDecoder.from_response(response).parts
-        meta = json.loads(parts[0].content)  # pylint: disable=maybe-no-member
-        shape = (meta["y"]["samples"], meta["x"]["samples"])
-        values = parts[1].content
-        values = np.ndarray(shape, "f4", values)
-        values = values.tolist()
-        return VdsSliceResponse(values=values, **meta)
+        metadata = json.loads(parts[0].content)  # pylint: disable=maybe-no-member
+        shape = (metadata["y"]["samples"], metadata["x"]["samples"])
+        byte_array = parts[1].content
+        values_np = bytes_to_ndarray(byte_array, list(shape), metadata["format"])
+        values = values_np.tolist()
+        return VdsSliceResponse(values=values, **metadata)
 
-    def get_fence(self, coordinates: List[List[float]], coordinate_system: str) -> VdsFenceResponse:
+    def get_fence(self, coordinates: List[List[float]], coordinate_system: str = "cdp") -> VdsFenceResponse:
+        """Gets traces along an arbitrary path of x,y coordinates."""
         endpoint = "fence"
 
         params = {
@@ -71,12 +72,13 @@ class VdsAccess:
 
         parts = MultipartDecoder.from_response(response).parts
         metadata = json.loads(parts[0].content)  # pylint: disable=maybe-no-member
-        values = parts[1].content
-        values = np.ndarray(metadata["shape"], metadata["format"], values)
-        values = values.tolist()
+        byte_array = parts[1].content
+        values_np = bytes_to_ndarray(byte_array, list(metadata["shape"]), metadata["format"])
+        values = values_np.tolist()
         return VdsFenceResponse(values=values, shape=metadata["shape"])
 
     def get_metadata(self) -> VdsMetaData:
+        """Gets metadata from the cube"""
         endpoint = "metadata"
 
         params = {
@@ -115,3 +117,8 @@ class VdsAccess:
     #     seismic_values = np.ndarray(array_shape, "f4", parts[1].content)
     #     seismic_values = np.ma.masked_equal(seismic_values, fill_value)
     #     return seismic_values
+
+
+def bytes_to_ndarray(bytes_data: bytes, shape: List[int], dtype: str) -> np.ndarray:
+    """Convert bytes to numpy ndarray"""
+    return np.ndarray(shape, dtype, bytes_data)
