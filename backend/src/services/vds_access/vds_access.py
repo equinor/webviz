@@ -66,7 +66,7 @@ class VdsAccess:
             "vds": self.vds_url,
             "sas": self.sas,
             "interpolation": "linear",
-            "fillValue": 10,
+            "fillValue": -999,  # Assumption is that this will fill out-of-bounds values, but it doesn't seem to work
         }
         response = self._query(endpoint, params)
 
