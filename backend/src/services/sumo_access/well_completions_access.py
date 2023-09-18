@@ -1,5 +1,5 @@
 import itertools
-from typing import Dict, Iterator, List, Optional, Tuple
+from typing import Dict, Iterator, List, Optional, Set, Tuple
 
 import pandas as pd
 
@@ -37,7 +37,7 @@ class WellCompletionsAccess:
     def get_well_completions_data(self, realization: Optional[int]) -> Optional[WellCompletionsData]:
         """Get well completions data for case and iteration"""
 
-        # With single realization, return the table including additional column REAL
+        # With single realization, filter on realization
         if realization is not None:
             well_completions_tables = self._case.tables.filter(
                 tagname=self._tagname, realization=realization, iteration=self._iteration_name
@@ -46,39 +46,51 @@ class WellCompletionsAccess:
             if well_completions_df is None:
                 return None
 
-            well_completions_df["REAL"] = realization
             return WellCompletionDataConverter(well_completions_df).create_data()
 
-        # With multiple realizations, retrieve each column and concatenate
-        # Expect one table with aggregated OP/SH and one with aggregate KH data
+        # With multiple realizations, expect one table with aggregated OP/SH and one with aggregate KH data
         well_completions_tables = self._case.tables.filter(
             tagname=self._tagname, aggregation="collection", iteration=self._iteration_name
         )
 
-        # Improve code (iterate over tables and concatenate) - concat gives issue? See jupyter-notebook
+        # As of now, two tables are expected - one with OP/SH and one with KH
         if len(well_completions_tables) < 2:
             return None
 
+        expected_common_columns = set(["WELL", "DATE", "ZONE", "REAL"])
         first_df = well_completions_tables[0].to_pandas
         second_df = well_completions_tables[1].to_pandas
 
-        expected_columns = set(["WELL", "DATE", "ZONE", "REAL"])
-        if not set(first_df.columns).issuperset(expected_columns) or not set(second_df.columns).issuperset(
-            expected_columns
-        ):
-            raise ValueError(
-                f"Expected df columns to be superset of columns: {expected_columns} - got: {first_df.columns} and {second_df.columns}"
-            )
+        # Validate columns and ensure equal column content in both tables
+        self._validate_common_dataframe_columns(expected_common_columns, first_df, second_df)
 
+        # Assign "KH" column to the dataframe with missing column
         if "OP/SH" in first_df.columns and "KH" in second_df.columns:
             first_df["KH"] = second_df["KH"]
             return WellCompletionDataConverter(first_df).create_data()
-
         if "OP/SH" in second_df.columns and "KH" in first_df.columns:
             second_df["KH"] = first_df["KH"]
             return WellCompletionDataConverter(second_df).create_data()
 
         raise ValueError('Expected columns "OP/SH" and "KH" not found in tables')
+
+    def _validate_common_dataframe_columns(
+        self, common_column_names: Set[str], first_df: pd.DataFrame, second_df: pd.DataFrame
+    ) -> None:
+        """
+        Validates that the two dataframes contains same common columns and that the columns have the same content,
+        raises value error if not matching.
+        """
+        # Ensure expected columns are present
+        if not common_column_names.issubset(first_df.columns):
+            raise ValueError(f"Expected columns of first table: {common_column_names} - got: {first_df.columns}")
+        if not common_column_names.issubset(second_df.columns):
+            raise ValueError(f"Expected columns of second table: {common_column_names} - got: {second_df.columns}")
+
+        # Verify equal columns in both tables
+        for column_name in common_column_names:
+            if not (first_df[column_name] == second_df[column_name]).all():
+                raise ValueError(f'Expected equal column content, "{column_name}", in first and second dataframe')
 
 
 class WellCompletionDataConverter:
@@ -95,8 +107,10 @@ class WellCompletionDataConverter:
         # - Verify dtype of columns?
         # - Verify dimension of columns - only 2D df?
 
-        expected_columns = set(["WELL", "DATE", "ZONE", "REAL", "OP/SH", "KH"])
-        if expected_columns != set(well_completions_df.columns):
+        # Based on realization filtering in Accessor, the "REAL" column is optional - not expected
+        expected_columns = set(["WELL", "DATE", "ZONE", "OP/SH", "KH"])
+
+        if not expected_columns.issubset(well_completions_df.columns):
             raise ValueError(f"Expected columns: {expected_columns} - got: {well_completions_df.columns}")
 
         self._well_completions_df = well_completions_df
@@ -153,8 +167,10 @@ class WellCompletionDataConverter:
 
     def _extract_wells(self) -> List[WellCompletionsWell]:
         """Generates the wells part of the dataset to front-end"""
+        # Optional "REAL" column, i.e. no column implies only one realization
+        no_real = self._well_completions_df["REAL"].nunique() if "REAL" in self._well_completions_df.columns else 1
+
         well_list = []
-        no_real = self._well_completions_df["REAL"].nunique()
         for well_name, well_group in self._well_completions_df.groupby("WELL"):
             well_data = self._extract_well(well_group, well_name, no_real)
             well_data.attributes = self._well_attributes[well_name] if well_name in self._well_attributes else {}
