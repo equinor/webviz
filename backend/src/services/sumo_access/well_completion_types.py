@@ -1,5 +1,5 @@
-from pydantic import BaseModel
 from typing import Dict, List, Optional, Union
+from pydantic import BaseModel
 
 
 WellCompletionAttributeType = Union[str, int, bool]
@@ -14,12 +14,9 @@ class Completions(BaseModel):
     kh_max: List[float]
 
 
-class WellCompletionWellInfo(BaseModel):
+class WellCompletionWell(BaseModel):
     name: str
     attributes: Dict[str, WellCompletionAttributeType]
-
-
-class WellCompletionWell(WellCompletionWellInfo):
     completions: Dict[str, Completions]
 
 
@@ -38,8 +35,8 @@ class WellCompletionUnits(BaseModel):
     kh: WellCompletionUnitInfo
 
 
-class WellCompletionDataSet(BaseModel):
-    """Type definition for well completion data set"""
+class WellCompletionData(BaseModel):
+    """Type definition for well completion data"""
 
     version: str
     units: WellCompletionUnits

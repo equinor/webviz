@@ -48,7 +48,6 @@ export type { VectorStatisticSensitivityData as VectorStatisticSensitivityData_a
 export type { WellBoreHeader as WellBoreHeader_api } from './models/WellBoreHeader';
 export type { WellBoreTrajectory as WellBoreTrajectory_api } from './models/WellBoreTrajectory';
 export type { WellCompletionData as WellCompletionData_api } from './models/WellCompletionData';
-export type { WellCompletionDataSet as WellCompletionDataSet_api } from './models/WellCompletionDataSet';
 export type { WellCompletionUnitInfo as WellCompletionUnitInfo_api } from './models/WellCompletionUnitInfo';
 export type { WellCompletionUnits as WellCompletionUnits_api } from './models/WellCompletionUnits';
 export type { WellCompletionWell as WellCompletionWell_api } from './models/WellCompletionWell';

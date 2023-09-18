@@ -1,14 +1,12 @@
 from typing import Optional
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 
 from src.backend.auth.auth_helper import AuthHelper
 from src.services.utils.authenticated_user import AuthenticatedUser
 
 from src.services.sumo_access.well_completion_access import WellCompletionAccess
-from src.services.utils.well_completion_utils import WellCompletionDataModel
-
-from . import schemas
+from src.services.sumo_access.well_completion_types import WellCompletionData
 
 router = APIRouter()
 
@@ -21,10 +19,11 @@ def get_well_completion_data(
     ensemble_name: str = Query(description="Ensemble name"),
     realization: Optional[int] = Query(None, description="Optional realization to include. If not specified, all realizations will be returned."),
     # fmt:on
-) -> schemas.WellCompletionData:
+) -> WellCompletionData:
     access = WellCompletionAccess(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
+    well_completion_data = access.get_well_completion_data(realization=realization)
 
-    well_completion_df = access.get_well_completion_data(realization=realization)
-    well_completion_data_model = WellCompletionDataModel(well_completion_df)
+    if not well_completion_data:
+        raise HTTPException(status_code=404, detail="Well completion data not found")
 
-    return schemas.WellCompletionData(json_data=well_completion_data_model.create_well_completion_dataset())
+    return well_completion_data

@@ -1,10 +1,4 @@
-import {
-    WellCompletionDataSet_api,
-    WellCompletionData_api,
-    WellCompletionUnits_api,
-    WellCompletionWell_api,
-    WellCompletionZone_api,
-} from "@api";
+import { WellCompletionData_api, WellCompletionUnits_api, WellCompletionWell_api, WellCompletionZone_api } from "@api";
 import { CompletionPlotData, PlotData, WellPlotData, Zone } from "@webviz/well-completions-plot";
 
 import { getRegexPredicate } from "./stringUtils";
@@ -34,14 +28,14 @@ export class WellCompletionsDataAccessor {
      * The data is parsed from the WellCompletionData_api object and methods are taken from the
      * WellCompletions-component of webviz-subsurface-components package, and modified to fit.
      */
-    private _dataSet: WellCompletionDataSet_api | null;
+    private _data: WellCompletionData_api | null;
     private _subzones: Zone[];
     private _wells: WellCompletionWell_api[];
     private _searchWellText: string;
     private _hideZeroCompletions: boolean;
 
     constructor() {
-        this._dataSet = null;
+        this._data = null;
         this._subzones = [];
         this._wells = [];
         this._searchWellText = "";
@@ -51,7 +45,7 @@ export class WellCompletionsDataAccessor {
     clearWellCompletionsData(): void {
         // Do not clear search text and hide zero completions
 
-        this._dataSet = null;
+        this._data = null;
         this._subzones = [];
         this._wells = [];
     }
@@ -61,12 +55,12 @@ export class WellCompletionsDataAccessor {
         // - Filter wells when filter functionality is in place
         // - Filter subzones when filter functionality is in place
 
-        this._dataSet = data.json_data;
-        this._wells = this._dataSet.wells;
+        this._data = data;
+        this._wells = this._data.wells;
 
         // Exctract all subzones
         this._subzones = [];
-        this._dataSet.stratigraphy.forEach((zone) => WellCompletionsDataAccessor.findSubzones(zone, this._subzones));
+        this._data.stratigraphy.forEach((zone) => WellCompletionsDataAccessor.findSubzones(zone, this._subzones));
     }
 
     setSearchWellText(searchWell: string): void {
@@ -78,8 +72,8 @@ export class WellCompletionsDataAccessor {
     }
 
     getTimeSteps(): string[] {
-        if (!this._dataSet) return [];
-        return this._dataSet.timeSteps;
+        if (!this._data) return [];
+        return this._data.timeSteps;
     }
 
     createPlotData(
@@ -88,16 +82,16 @@ export class WellCompletionsDataAccessor {
     ): PlotData | null {
         // TODO: Consider removing function arguments, and use setter-methods for each argument and set to an attribute.
         //       This would make it easier to modify/adjust single attributes and call "createPlotData" again.
-        if (!this._dataSet) return null;
+        if (!this._data) return null;
 
         let timeStepIndexRange: [number, number] | null = null;
         if (typeof timeStepSelection === "string") {
-            const timeStepIndex = this._dataSet.timeSteps.indexOf(timeStepSelection);
+            const timeStepIndex = this._data.timeSteps.indexOf(timeStepSelection);
             timeStepIndexRange = [timeStepIndex, timeStepIndex];
         } else {
             timeStepIndexRange = [
-                this._dataSet.timeSteps.indexOf(timeStepSelection[0]),
-                this._dataSet.timeSteps.indexOf(timeStepSelection[1]),
+                this._data.timeSteps.indexOf(timeStepSelection[0]),
+                this._data.timeSteps.indexOf(timeStepSelection[1]),
             ];
         }
         if (timeStepIndexRange[0] === -1 || timeStepIndexRange[1] === -1) return null;
@@ -115,7 +109,7 @@ export class WellCompletionsDataAccessor {
             timeStepIndexRange,
             timeAggregation,
             this._hideZeroCompletions,
-            this._dataSet?.units
+            this._data?.units
         );
     }
 
