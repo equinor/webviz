@@ -5,7 +5,7 @@ import {
     WellCompletionWell_api,
     WellCompletionZone_api,
 } from "@api";
-import { CompletionPlotData, PlotData, WellPlotData } from "@webviz/well-completions-plot";
+import { CompletionPlotData, PlotData, WellPlotData, Zone } from "@webviz/well-completions-plot";
 
 import { getRegexPredicate } from "./stringUtils";
 
@@ -35,7 +35,7 @@ export class WellCompletionsDataAccessor {
      * WellCompletions-component of webviz-subsurface-components package, and modified to fit.
      */
     private _dataSet: WellCompletionDataSet_api | null;
-    private _subzones: WellCompletionZone_api[];
+    private _subzones: Zone[];
     private _wells: WellCompletionWell_api[];
     private _searchWellText: string;
     private _hideZeroCompletions: boolean;
@@ -66,7 +66,7 @@ export class WellCompletionsDataAccessor {
 
         // Exctract all subzones
         this._subzones = [];
-        this._dataSet.stratigraphy.forEach((zone) => this.findSubzones(zone, this._subzones));
+        this._dataSet.stratigraphy.forEach((zone) => WellCompletionsDataAccessor.findSubzones(zone, this._subzones));
     }
 
     setSearchWellText(searchWell: string): void {
@@ -109,7 +109,7 @@ export class WellCompletionsDataAccessor {
             ? Array.from(this._wells as WellCompletionWell_api[]).filter((well) => wellNameRegex(well.name))
             : this._wells;
 
-        return this.computePlotData(
+        return WellCompletionsDataAccessor.computePlotData(
             this._subzones,
             filteredWells,
             timeStepIndexRange,
@@ -119,10 +119,7 @@ export class WellCompletionsDataAccessor {
         );
     }
 
-    private findEarliestCompletionDateIndices(
-        well: WellCompletionWell_api,
-        subzones: WellCompletionZone_api[]
-    ): number {
+    private static findEarliestCompletionDateIndices(well: WellCompletionWell_api, subzones: Zone[]): number {
         let earliestCompDateIndex = Number.POSITIVE_INFINITY;
         subzones.forEach((zone) => {
             if (zone.name in well.completions) {
@@ -136,8 +133,8 @@ export class WellCompletionsDataAccessor {
         return earliestCompDateIndex;
     }
 
-    private computePlotData(
-        subzones: WellCompletionZone_api[],
+    private static computePlotData(
+        subzones: Zone[],
         wells: WellCompletionWell_api[],
         range: [number, number],
         timeAggregation: TimeAggregationType,
@@ -149,15 +146,15 @@ export class WellCompletionsDataAccessor {
             const completionsPlotData: CompletionPlotData[] = [];
             const earliestCompDateIndex = this.findEarliestCompletionDateIndices(well, subzones);
             let hasData = false;
-            subzones.forEach((zoneName, zoneIndex) => {
+            subzones.forEach((zone, zoneIndex) => {
                 const length = range[1] - range[0] + 1;
                 const openValues = Array(length).fill(0);
                 const shutValues = Array(length).fill(0);
                 const khMeanValues = Array(length).fill(0);
                 const khMinValues = Array(length).fill(0);
                 const khMaxValues = Array(length).fill(0);
-                if (zoneName.name in well.completions) {
-                    const completion = well.completions[zoneName.name];
+                if (zone.name in well.completions) {
+                    const completion = well.completions[zone.name];
                     //Find values in the time range
                     let index = 0;
                     let currentOpenValue = 0;
@@ -200,12 +197,13 @@ export class WellCompletionsDataAccessor {
                     completionsPlotData.push(newCompletion);
                 }
             });
-            if (!hideZeroCompletions || hasData)
+            if (!hideZeroCompletions || hasData) {
                 wellPlotData.push({
                     ...well,
                     completions: completionsPlotData,
                     earliestCompDateIndex: earliestCompDateIndex,
                 });
+            }
         });
         return {
             stratigraphy: subzones,
@@ -214,17 +212,22 @@ export class WellCompletionsDataAccessor {
         };
     }
 
-    private isCompletionValuesEqual = (completion1: CompletionPlotData, completion2: CompletionPlotData) =>
-        completion1.open === completion2.open &&
-        completion1.shut === completion2.shut &&
-        completion1.khMean === completion2.khMean &&
-        completion1.khMin === completion2.khMin &&
-        completion1.khMax === completion2.khMax;
+    private static isCompletionValuesEqual(completion1: CompletionPlotData, completion2: CompletionPlotData) {
+        return (
+            completion1.open === completion2.open &&
+            completion1.shut === completion2.shut &&
+            completion1.khMean === completion2.khMean &&
+            completion1.khMin === completion2.khMin &&
+            completion1.khMax === completion2.khMax
+        );
+    }
 
-    private findSubzones = (zone: WellCompletionZone_api, result: WellCompletionZone_api[]): void => {
+    private static findSubzones(apiZone: WellCompletionZone_api, result: Zone[]): void {
         // Depth-first search to find all leaf nodes
-        if (zone === undefined) return;
-        if (!zone.subzones || zone.subzones.length === 0) result.push(zone);
-        else zone.subzones.forEach((zoneName) => this.findSubzones(zoneName, result));
-    };
+        if (!apiZone.subzones || apiZone.subzones.length === 0) {
+            result.push({ name: apiZone.name, color: apiZone.color });
+        } else {
+            apiZone.subzones.forEach((apiSubZone) => WellCompletionsDataAccessor.findSubzones(apiSubZone, result));
+        }
+    }
 }

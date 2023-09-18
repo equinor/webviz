@@ -2,7 +2,7 @@ from pydantic import BaseModel
 from typing import Dict, List, Optional, Union
 
 
-WellCompletionAttributeType = Union[str, int, bool, None]
+WellCompletionAttributeType = Union[str, int, bool]
 
 
 class Completions(BaseModel):
