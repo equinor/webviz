@@ -9,7 +9,7 @@ from requests_toolbelt.multipart.decoder import MultipartDecoder
 
 from .types import VdsFenceResponse, VdsHandle, VdsMetaData, VdsSliceResponse
 
-VDS_HOST_ADDRESS = os.getenv("VDS_HOST_ADDRESS")
+VDS_HOST_ADDRESS = os.getenv("WEBVIZ_VDS_HOST_ADDRESS")
 
 LOGGER = logging.getLogger(__name__)
 
