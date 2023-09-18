@@ -47,11 +47,11 @@ export type { VectorStatisticData as VectorStatisticData_api } from './models/Ve
 export type { VectorStatisticSensitivityData as VectorStatisticSensitivityData_api } from './models/VectorStatisticSensitivityData';
 export type { WellBoreHeader as WellBoreHeader_api } from './models/WellBoreHeader';
 export type { WellBoreTrajectory as WellBoreTrajectory_api } from './models/WellBoreTrajectory';
-export type { WellCompletionData as WellCompletionData_api } from './models/WellCompletionData';
-export type { WellCompletionUnitInfo as WellCompletionUnitInfo_api } from './models/WellCompletionUnitInfo';
-export type { WellCompletionUnits as WellCompletionUnits_api } from './models/WellCompletionUnits';
-export type { WellCompletionWell as WellCompletionWell_api } from './models/WellCompletionWell';
-export type { WellCompletionZone as WellCompletionZone_api } from './models/WellCompletionZone';
+export type { WellCompletionsData as WellCompletionsData_api } from './models/WellCompletionsData';
+export type { WellCompletionsUnitInfo as WellCompletionsUnitInfo_api } from './models/WellCompletionsUnitInfo';
+export type { WellCompletionsUnits as WellCompletionsUnits_api } from './models/WellCompletionsUnits';
+export type { WellCompletionsWell as WellCompletionsWell_api } from './models/WellCompletionsWell';
+export type { WellCompletionsZone as WellCompletionsZone_api } from './models/WellCompletionsZone';
 
 export { DefaultService } from './services/DefaultService';
 export { ExploreService } from './services/ExploreService';
@@ -63,4 +63,4 @@ export { SurfaceService } from './services/SurfaceService';
 export { SurfacePolygonsService } from './services/SurfacePolygonsService';
 export { TimeseriesService } from './services/TimeseriesService';
 export { WellService } from './services/WellService';
-export { WellCompletionService } from './services/WellCompletionService';
+export { WellCompletionsService } from './services/WellCompletionsService';

@@ -1,4 +1,9 @@
-import { WellCompletionData_api, WellCompletionUnits_api, WellCompletionWell_api, WellCompletionZone_api } from "@api";
+import {
+    WellCompletionsData_api,
+    WellCompletionsUnits_api,
+    WellCompletionsWell_api,
+    WellCompletionsZone_api,
+} from "@api";
 import { CompletionPlotData, PlotData, WellPlotData, Zone } from "@webviz/well-completions-plot";
 
 import { getRegexPredicate } from "./stringUtils";
@@ -28,9 +33,9 @@ export class WellCompletionsDataAccessor {
      * The data is parsed from the WellCompletionData_api object and methods are taken from the
      * WellCompletions-component of webviz-subsurface-components package, and modified to fit.
      */
-    private _data: WellCompletionData_api | null;
+    private _data: WellCompletionsData_api | null;
     private _subzones: Zone[];
-    private _wells: WellCompletionWell_api[];
+    private _wells: WellCompletionsWell_api[];
     private _searchWellText: string;
     private _hideZeroCompletions: boolean;
 
@@ -50,7 +55,7 @@ export class WellCompletionsDataAccessor {
         this._wells = [];
     }
 
-    parseWellCompletionsData(data: WellCompletionData_api): void {
+    parseWellCompletionsData(data: WellCompletionsData_api): void {
         // TODO:
         // - Filter wells when filter functionality is in place
         // - Filter subzones when filter functionality is in place
@@ -100,7 +105,7 @@ export class WellCompletionsDataAccessor {
         // TODO: Add filtering of attributes as well
         const wellNameRegex = getRegexPredicate(this._searchWellText);
         const filteredWells = this._searchWellText
-            ? Array.from(this._wells as WellCompletionWell_api[]).filter((well) => wellNameRegex(well.name))
+            ? Array.from(this._wells as WellCompletionsWell_api[]).filter((well) => wellNameRegex(well.name))
             : this._wells;
 
         return WellCompletionsDataAccessor.computePlotData(
@@ -113,7 +118,7 @@ export class WellCompletionsDataAccessor {
         );
     }
 
-    private static findEarliestCompletionDateIndices(well: WellCompletionWell_api, subzones: Zone[]): number {
+    private static findEarliestCompletionDateIndices(well: WellCompletionsWell_api, subzones: Zone[]): number {
         let earliestCompDateIndex = Number.POSITIVE_INFINITY;
         subzones.forEach((zone) => {
             if (zone.name in well.completions) {
@@ -129,11 +134,11 @@ export class WellCompletionsDataAccessor {
 
     private static computePlotData(
         subzones: Zone[],
-        wells: WellCompletionWell_api[],
+        wells: WellCompletionsWell_api[],
         range: [number, number],
         timeAggregation: TimeAggregationType,
         hideZeroCompletions: boolean,
-        units: WellCompletionUnits_api
+        units: WellCompletionsUnits_api
     ): PlotData {
         const wellPlotData: WellPlotData[] = [];
         wells.forEach((well) => {
@@ -216,7 +221,7 @@ export class WellCompletionsDataAccessor {
         );
     }
 
-    private static findSubzones(apiZone: WellCompletionZone_api, result: Zone[]): void {
+    private static findSubzones(apiZone: WellCompletionsZone_api, result: Zone[]): void {
         // Depth-first search to find all leaf nodes
         if (!apiZone.subzones || apiZone.subzones.length === 0) {
             result.push({ name: apiZone.name, color: apiZone.color });

@@ -2,9 +2,9 @@
 /* tslint:disable */
 /* eslint-disable */
 
-export type WellCompletionZone = {
+export type WellCompletionsZone = {
     name: string;
     color: string;
-    subzones: (Array<WellCompletionZone> | null);
+    subzones?: Array<WellCompletionsZone>;
 };
 

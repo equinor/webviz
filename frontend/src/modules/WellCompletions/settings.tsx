@@ -18,7 +18,7 @@ import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import { isEqual } from "lodash";
 
-import { useWellCompletionQuery } from "./queryHooks";
+import { useWellCompletionsQuery } from "./queryHooks";
 import { DataLoadingStatus, State } from "./state";
 import { TimeAggregationType, WellCompletionsDataAccessor } from "./utils/wellCompletionsDataAccessor";
 
@@ -62,7 +62,7 @@ export const settings = ({ moduleContext, workbenchSession, workbenchServices }:
         setSelectedEnsembleIdent(computedEnsembleIdent, acceptInvalidState);
     }
 
-    const wellCompletionQuery = useWellCompletionQuery(
+    const wellCompletionsQuery = useWellCompletionsQuery(
         selectedEnsembleIdent?.getCaseUuid(),
         selectedEnsembleIdent?.getEnsembleName(),
         realizationSelection === RealizationSelection.Single ? selectedRealizationNumber : undefined
@@ -73,14 +73,14 @@ export const settings = ({ moduleContext, workbenchSession, workbenchServices }:
 
     React.useEffect(
         function handleNewQueryData() {
-            if (!wellCompletionQuery.data) {
+            if (!wellCompletionsQuery.data) {
                 wellCompletionsDataAccessor.current.clearWellCompletionsData();
                 setAvailableTimeSteps(null);
                 setPlotData(null);
                 return;
             }
 
-            wellCompletionsDataAccessor.current.parseWellCompletionsData(wellCompletionQuery.data);
+            wellCompletionsDataAccessor.current.parseWellCompletionsData(wellCompletionsQuery.data);
 
             // Update available time steps
             const allTimeSteps = wellCompletionsDataAccessor.current.getTimeSteps();
@@ -116,20 +116,20 @@ export const settings = ({ moduleContext, workbenchSession, workbenchServices }:
             }
             createAndSetPlotData(allTimeSteps, timeStepIndex, selectedTimeStepOptions.timeAggregationType);
         },
-        [wellCompletionQuery.data, selectedTimeStepOptions]
+        [wellCompletionsQuery.data, selectedTimeStepOptions]
     );
 
     React.useEffect(
         function handleQueryStateChange() {
-            if (wellCompletionQuery.status === "loading" && wellCompletionQuery.fetchStatus === "fetching") {
+            if (wellCompletionsQuery.status === "loading" && wellCompletionsQuery.fetchStatus === "fetching") {
                 setDataLoadingStatus(DataLoadingStatus.Loading);
-            } else if (wellCompletionQuery.status === "error") {
+            } else if (wellCompletionsQuery.status === "error") {
                 setDataLoadingStatus(DataLoadingStatus.Error);
-            } else if (wellCompletionQuery.status === "success") {
+            } else if (wellCompletionsQuery.status === "success") {
                 setDataLoadingStatus(DataLoadingStatus.Idle);
             }
         },
-        [wellCompletionQuery.status, wellCompletionQuery.fetchStatus]
+        [wellCompletionsQuery.status, wellCompletionsQuery.fetchStatus]
     );
 
     function createAndSetPlotData(
@@ -279,14 +279,14 @@ export const settings = ({ moduleContext, workbenchSession, workbenchServices }:
                     />
                     {
                         <div className="text-red-500 text-sm h-4">
-                            {wellCompletionQuery.isError
+                            {wellCompletionsQuery.isError
                                 ? "Current ensemble does not contain well completions data"
                                 : ""}
                         </div>
                     }
                 </>
             </Label>
-            <div className={resolveClassNames({ "pointer-events-none opacity-40": wellCompletionQuery.isError })}>
+            <div className={resolveClassNames({ "pointer-events-none opacity-40": wellCompletionsQuery.isError })}>
                 <Label text="Realization selection">
                     <RadioGroup
                         options={[
