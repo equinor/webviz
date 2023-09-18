@@ -142,8 +142,10 @@ export class Tag extends React.Component<TagProps> {
                     className={resolveClassNames(
                         "items-center text-white rounded-full h-5 justify-center mr-2 pl-1.5 pr-1.5 min-w-[5] flex outline-none relative text-center text-xs leading-none",
                         {
-                            "bg-blue-700": matches <= this.props.maxNumSelectedNodes,
-                            "bg-amber-600": matches > this.props.maxNumSelectedNodes,
+                            "bg-blue-700":
+                                matches <= this.props.maxNumSelectedNodes || this.props.maxNumSelectedNodes === -1,
+                            "bg-amber-600":
+                                matches > this.props.maxNumSelectedNodes && this.props.maxNumSelectedNodes !== -1,
                         }
                     )}
                     title={title}
