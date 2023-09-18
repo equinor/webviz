@@ -21,7 +21,7 @@ export class WellCompletionsService {
     public getWellCompletionsData(
         caseUuid: string,
         ensembleName: string,
-        realization?: number,
+        realization?: (number | null),
     ): CancelablePromise<WellCompletionsData> {
         return this.httpRequest.request({
             method: 'GET',
