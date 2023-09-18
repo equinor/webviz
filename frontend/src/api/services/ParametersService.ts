@@ -49,14 +49,14 @@ export class ParametersService {
      * @param caseUuid Sumo case uuid
      * @param ensembleName Ensemble name
      * @param parameterName Parameter name
-     * @returns EnsembleParameter Successful Response
+     * @returns any Successful Response
      * @throws ApiError
      */
     public getParameter(
         caseUuid: string,
         ensembleName: string,
         parameterName: string,
-    ): CancelablePromise<EnsembleParameter> {
+    ): CancelablePromise<(EnsembleParameter | null)> {
         return this.httpRequest.request({
             method: 'GET',
             url: '/parameters/parameter/',
