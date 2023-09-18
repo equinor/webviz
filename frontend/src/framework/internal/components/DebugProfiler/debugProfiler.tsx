@@ -3,7 +3,7 @@ import React from "react";
 import { isDevMode } from "@lib/utils/devMode";
 
 type DebugProfilerRenderInfoProps = {
-    children: React.ReactNode;
+    children: React.ReactNode | React.ReactNode[];
     title: string;
 };
 
@@ -88,15 +88,13 @@ export const DebugProfiler: React.FC<DebugProfilerProps> = (props) => {
                 <DebugProfilerWrapper id={props.id} onRender={handleRender}>
                     {props.children}
                 </DebugProfilerWrapper>
-                <div className="absolute bottom-1 w-full flex gap-2">
+                <div className="absolute bottom-1 w-full flex gap-2 flex-wrap">
                     {renderInfo && (
                         <>
                             <DebugProfilerRenderInfo title="Render count">
-                                <>RC: {renderInfo.renderCount}</>
+                                RC: {renderInfo.renderCount}
                             </DebugProfilerRenderInfo>
-                            <DebugProfilerRenderInfo title="Phase">
-                                <>P: {renderInfo.phase}</>
-                            </DebugProfilerRenderInfo>
+                            <DebugProfilerRenderInfo title="Phase">P: {renderInfo.phase}</DebugProfilerRenderInfo>
                             <DebugProfilerRenderInfo
                                 title={
                                     "Actual duration: The number of milliseconds spent rendering the module and its descendants for the current update. " +
@@ -105,7 +103,7 @@ export const DebugProfiler: React.FC<DebugProfilerProps> = (props) => {
                                     "need to re-render if their specific props change."
                                 }
                             >
-                                <>AD: {renderInfo.actualDuration.toFixed(2)}ms</>
+                                AD: {renderInfo.actualDuration.toFixed(2)}ms
                             </DebugProfilerRenderInfo>
                             <DebugProfilerRenderInfo
                                 title={
@@ -115,16 +113,16 @@ export const DebugProfiler: React.FC<DebugProfilerProps> = (props) => {
                                     "Compare actualDuration against it to see if memoization is working."
                                 }
                             >
-                                <>BD: {renderInfo.baseDuration.toFixed(2)}ms</>
+                                BD: {renderInfo.baseDuration.toFixed(2)}ms
                             </DebugProfilerRenderInfo>
                             <DebugProfilerRenderInfo title="The number of milliseconds of the fastest render duration.">
-                                <>MIN: {renderInfo.minTime.toFixed(2)}ms</>
+                                MIN: {renderInfo.minTime.toFixed(2)}ms
                             </DebugProfilerRenderInfo>
                             <DebugProfilerRenderInfo title="The number of milliseconds of the slowest render duration.">
-                                <>MAX: {renderInfo.maxTime.toFixed(2)}ms</>
+                                MAX: {renderInfo.maxTime.toFixed(2)}ms
                             </DebugProfilerRenderInfo>
                             <DebugProfilerRenderInfo title="The number of milliseconds of the average render duration.">
-                                <>AVG: {renderInfo.avgTime.toFixed(2)}ms</>
+                                AVG: {renderInfo.avgTime.toFixed(2)}ms
                             </DebugProfilerRenderInfo>
                         </>
                     )}
