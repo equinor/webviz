@@ -9,7 +9,7 @@ export type ContinuousParameter = {
     readonly type: ParameterType.CONTINUOUS;
     readonly name: string;
     readonly groupName: string | null;
-    readonly description?: string;
+    readonly description: string | null;
     readonly isConstant: boolean;
     readonly isLogarithmic: boolean;
     readonly realizations: number[]; // The two arrays, realizations and values, must always be same length
@@ -20,7 +20,7 @@ export type DiscreteParameter = {
     readonly type: ParameterType.DISCRETE;
     readonly name: string;
     readonly groupName: string | null;
-    readonly description?: string;
+    readonly description: string | null;
     readonly isConstant: boolean;
     readonly realizations: number[]; // The two arrays, realizations and values, must always be same length
     readonly values: number[] | string[]; // Array items can be string or int. Should maybe utilize Int32Array or string[] instead?

@@ -93,10 +93,10 @@ jobs:
           bandit --recursive src/
           mypy src/ tests/
 
-      # - name: 🤖 Run tests
-      #   working-directory: ./backend
-      #   run: |
-      #     pytest ./tests
+      - name: 🤖 Run tests
+        working-directory: ./backend
+        run: |
+          pytest ./tests/unit
 
   build_docker_images:
     runs-on: ubuntu-latest
