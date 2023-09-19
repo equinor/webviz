@@ -57,8 +57,8 @@ export class TimeseriesService {
         caseUuid: string,
         ensembleName: string,
         vectorName: string,
-        resamplingFrequency?: Frequency,
-        realizations?: Array<number>,
+        resamplingFrequency?: (Frequency | null),
+        realizations?: (Array<number> | null),
     ): CancelablePromise<Array<VectorRealizationData>> {
         return this.httpRequest.request({
             method: 'GET',
@@ -93,7 +93,7 @@ export class TimeseriesService {
     public getTimestampsList(
         caseUuid: string,
         ensembleName: string,
-        resamplingFrequency?: Frequency,
+        resamplingFrequency?: (Frequency | null),
     ): CancelablePromise<Array<number>> {
         return this.httpRequest.request({
             method: 'GET',
@@ -122,7 +122,7 @@ export class TimeseriesService {
         caseUuid: string,
         ensembleName: string,
         nonHistoricalVectorName: string,
-        resamplingFrequency?: Frequency,
+        resamplingFrequency?: (Frequency | null),
     ): CancelablePromise<VectorHistoricalData> {
         return this.httpRequest.request({
             method: 'GET',
@@ -156,8 +156,8 @@ export class TimeseriesService {
         ensembleName: string,
         vectorName: string,
         resamplingFrequency: Frequency,
-        statisticFunctions?: Array<StatisticFunction>,
-        realizations?: Array<number>,
+        statisticFunctions?: (Array<StatisticFunction> | null),
+        realizations?: (Array<number> | null),
     ): CancelablePromise<VectorStatisticData> {
         return this.httpRequest.request({
             method: 'GET',
@@ -192,7 +192,7 @@ export class TimeseriesService {
         ensembleName: string,
         vectorName: string,
         resamplingFrequency: Frequency,
-        statisticFunctions?: Array<StatisticFunction>,
+        statisticFunctions?: (Array<StatisticFunction> | null),
     ): CancelablePromise<Array<VectorStatisticSensitivityData>> {
         return this.httpRequest.request({
             method: 'GET',

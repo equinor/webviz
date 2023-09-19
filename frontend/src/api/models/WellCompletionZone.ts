@@ -5,6 +5,6 @@
 export type WellCompletionZone = {
     name: string;
     color: string;
-    subzones?: Array<WellCompletionZone>;
+    subzones: (Array<WellCompletionZone> | null);
 };
 

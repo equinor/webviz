@@ -17,7 +17,7 @@ export class DefaultService {
      * @throws ApiError
      */
     public loginRoute(
-        redirectUrlAfterLogin?: string,
+        redirectUrlAfterLogin?: (string | null),
     ): CancelablePromise<any> {
         return this.httpRequest.request({
             method: 'GET',
