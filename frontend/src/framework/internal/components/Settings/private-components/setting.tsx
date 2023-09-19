@@ -9,6 +9,8 @@ import { Cog6ToothIcon } from "@heroicons/react/20/solid";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
+import { DebugProfiler } from "../../DebugProfiler";
+
 type SettingProps = {
     moduleInstance: ModuleInstance<any>;
     activeModuleId: string;
@@ -74,7 +76,7 @@ export const Setting: React.FC<SettingProps> = (props) => {
             key={props.moduleInstance.getId()}
             className={resolveClassNames(
                 props.activeModuleId === props.moduleInstance.getId() ? "flex" : "hidden",
-                "flex-col h-full w-full"
+                "flex-col h-full w-full relative"
             )}
         >
             <ErrorBoundary moduleInstance={props.moduleInstance}>
@@ -89,13 +91,15 @@ export const Setting: React.FC<SettingProps> = (props) => {
                 </div>
                 <div className="flex flex-col gap-4 overflow-auto">
                     <div className="p-2">
-                        <Settings
-                            moduleContext={props.moduleInstance.getContext()}
-                            workbenchSession={props.workbench.getWorkbenchSession()}
-                            workbenchServices={props.workbench.getWorkbenchServices()}
-                            workbenchSettings={props.workbench.getWorkbenchSettings()}
-                            initialSettings={props.moduleInstance.getInitialSettings() || undefined}
-                        />
+                        <DebugProfiler id={`${props.moduleInstance.getId()}-settings`}>
+                            <Settings
+                                moduleContext={props.moduleInstance.getContext()}
+                                workbenchSession={props.workbench.getWorkbenchSession()}
+                                workbenchServices={props.workbench.getWorkbenchServices()}
+                                workbenchSettings={props.workbench.getWorkbenchSettings()}
+                                initialSettings={props.moduleInstance.getInitialSettings() || undefined}
+                            />
+                        </DebugProfiler>
                     </div>
                 </div>
             </ErrorBoundary>
