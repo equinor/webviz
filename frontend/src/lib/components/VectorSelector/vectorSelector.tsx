@@ -88,11 +88,6 @@ export class VectorSelectorComponent extends SmartNodeSelectorComponent {
     }
 
     componentDidUpdate(prevProps: VectorSelectorProps): void {
-        if (this.updateFromWithin) {
-            this.updateFromWithin = false;
-            return;
-        }
-
         if (
             this.props.customVectorDefinitions &&
             JSON.stringify(this.props.customVectorDefinitions) !== JSON.stringify(prevProps.customVectorDefinitions)

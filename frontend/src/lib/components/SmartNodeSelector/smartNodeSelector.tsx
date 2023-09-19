@@ -236,10 +236,6 @@ export class SmartNodeSelectorComponent extends React.Component<SmartNodeSelecto
     }
 
     componentDidUpdate(prevProps: SmartNodeSelectorProps): void {
-        if (this.updateFromWithin) {
-            this.updateFromWithin = false;
-            return;
-        }
         if (
             (this.props.data && JSON.stringify(this.props.data) !== JSON.stringify(prevProps.data)) ||
             (this.props.delimiter && this.props.delimiter !== prevProps.delimiter)
@@ -612,12 +608,15 @@ export class SmartNodeSelectorComponent extends React.Component<SmartNodeSelecto
         const domNode = (this.tagFieldRef as React.RefObject<HTMLUListElement>).current as HTMLUListElement;
         const suggestions = (this.suggestionsRef as React.RefObject<HTMLDivElement>).current as HTMLDivElement;
         const eventTarget = event.target as Element;
+        if (domNode && domNode.getBoundingClientRect().width === 0) {
+            return;
+        }
         if ((!domNode || !domNode.contains(eventTarget)) && (!suggestions || !suggestions.contains(eventTarget))) {
+            this.noUserInputSelect = false;
             this.hideSuggestions({
                 callback: () => {
                     if (!this.selectionHasStarted) {
                         this.unselectAllTags({});
-
                         this.updateState({ currentTagIndex: -1 });
                     }
                     this.selectionHasStarted = false;
