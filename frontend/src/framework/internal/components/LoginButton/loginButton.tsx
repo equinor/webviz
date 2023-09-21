@@ -49,7 +49,7 @@ export const LoginButton: React.FC<LoginButtonProps> = (props) => {
 
     function makeText() {
         if (authState === AuthState.LoggedIn) {
-            return userInfo?.username || "Unknown user";
+            return userInfo?.display_name || userInfo?.username || "Unknown user";
         } else if (authState === AuthState.NotLoggedIn) {
             return "Sign in";
         } else {
