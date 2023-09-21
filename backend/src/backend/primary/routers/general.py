@@ -1,5 +1,6 @@
 import datetime
 import logging
+import json
 
 import starsessions
 from starlette.responses import StreamingResponse
@@ -17,12 +18,10 @@ LOGGER = logging.getLogger(__name__)
 
 class UserInfo(BaseModel):
     username: str
+    display_name: str | None
     avatar_b64str: str | None
     has_sumo_access: bool
     has_smda_access: bool
-
-class UserAvatar(BaseModel):
-    avatar: bytes
 
 router = APIRouter()
 
@@ -54,6 +53,7 @@ async def logged_in_user(request: Request, includeAvatar: bool = Query(False, de
     user_info = UserInfo(
         username=authenticated_user.get_username(),
         avatar_b64str=None,
+        display_name=None,
         has_sumo_access=authenticated_user.has_sumo_access_token(),
         has_smda_access=authenticated_user.has_smda_access_token(),
     )
@@ -64,6 +64,11 @@ async def logged_in_user(request: Request, includeAvatar: bool = Query(False, de
             result = await client.get("https://graph.microsoft.com/v1.0/me/photo/$value", headers=headers)
             if result.status_code == 200:
                 user_info.avatar_b64str = base64.b64encode(result.content)
+        
+        async with httpx.AsyncClient() as client:
+            result = await client.get("https://graph.microsoft.com/v1.0/me", headers=headers)
+            if result.status_code == 200:
+                user_info.display_name = json.loads(result.content.decode("utf-8")).get("displayName", None)
 
     return user_info
 
