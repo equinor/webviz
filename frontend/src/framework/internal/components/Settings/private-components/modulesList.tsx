@@ -6,7 +6,7 @@ import { useStoreValue } from "@framework/StateStore";
 import { DrawerContent, Workbench } from "@framework/Workbench";
 import { LayoutEventTypes } from "@framework/internal/components/Content/private-components/layout";
 import { Drawer } from "@framework/internal/components/Drawer";
-import { WindowIcon } from "@heroicons/react/20/solid";
+import { Dialog } from "@lib/components/Dialog";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import {
     MANHATTAN_LENGTH,
@@ -17,12 +17,15 @@ import {
     pointRelativeToDomRect,
     pointerEventToPoint,
 } from "@lib/utils/geometry";
+import { Help, WebAsset } from "@mui/icons-material";
 
 type ModulesListItemProps = {
-    moduleName: string;
-    moduleDisplayName: string;
-    moduleDrawPreviewFunc: DrawPreviewFunc | null;
+    name: string;
+    displayName: string;
+    description: string | null;
+    drawPreviewFunc: DrawPreviewFunc | null;
     relContainer: HTMLDivElement | null;
+    onInfoClick: (displayName: string, description: string | null, drawPreviewFunc: DrawPreviewFunc | null) => void;
 };
 
 const makeStyle = (isDragged: boolean, dragSize: Size, dragPosition: Point): React.CSSProperties => {
@@ -49,6 +52,7 @@ const ModulesListItem: React.FC<ModulesListItemProps> = (props) => {
     const [isDragged, setIsDragged] = React.useState<boolean>(false);
     const [dragPosition, setDragPosition] = React.useState<Point>({ x: 0, y: 0 });
     const [dragSize, setDragSize] = React.useState<Size>({ width: 0, height: 0 });
+    const [infoDialogOpen, setInfoDialogOpen] = React.useState<boolean>(false);
 
     const itemSize = useElementSize(mainRef);
 
@@ -66,7 +70,7 @@ const ModulesListItem: React.FC<ModulesListItemProps> = (props) => {
                 document.dispatchEvent(
                     new CustomEvent(LayoutEventTypes.NEW_MODULE_POINTER_DOWN, {
                         detail: {
-                            name: props.moduleName,
+                            name: props.name,
                             elementPosition: pointDifference(point, pointRelativeToDomRect(point, rect)),
                             pointerPoint: point,
                         },
@@ -128,6 +132,10 @@ const ModulesListItem: React.FC<ModulesListItemProps> = (props) => {
         };
     }, [props.relContainer]);
 
+    function openModuleInfoDialog() {
+        props.onInfoClick(props.displayName, props.description, props.drawPreviewFunc);
+    }
+
     return (
         <>
             {isDragged && <div ref={mainRef} className="bg-red-300 w-full h-40 mb-4" />}
@@ -137,14 +145,20 @@ const ModulesListItem: React.FC<ModulesListItemProps> = (props) => {
                 style={makeStyle(isDragged, dragSize, dragPosition)}
             >
                 <div ref={ref} className="bg-slate-100 p-2 cursor-move flex items-center text-xs font-bold shadow">
-                    {props.moduleDisplayName}
+                    <span className="flex-grow">{props.displayName}</span>
+                    {props.description && (
+                        <span
+                            onClick={openModuleInfoDialog}
+                            title={props.description ?? ""}
+                            className="cursor-help text-slate-500 hover:text-slate-900"
+                        >
+                            <Help fontSize="small" />
+                        </span>
+                    )}
                 </div>
                 <div className="p-4 flex flex-grow items-center justify-center ">
-                    {props.moduleDrawPreviewFunc
-                        ? props.moduleDrawPreviewFunc(
-                              Math.max(0, itemSize.width - 40),
-                              Math.max(0, itemSize.height - 60)
-                          )
+                    {props.drawPreviewFunc
+                        ? props.drawPreviewFunc(Math.max(0, itemSize.width - 40), Math.max(0, itemSize.height - 60))
                         : "No preview available"}
                 </div>
             </div>
@@ -165,31 +179,66 @@ type ModulesListProps = {
 export const ModulesList: React.FC<ModulesListProps> = (props) => {
     const drawerContent = useStoreValue(props.workbench.getGuiStateStore(), "drawerContent");
     const [searchQuery, setSearchQuery] = React.useState("");
+    const [infoDialogOpen, setInfoDialogOpen] = React.useState<boolean>(false);
+    const [infoDialogState, setInfoDialogState] = React.useState<{
+        displayName: string;
+        description: string | null;
+        drawPreviewFunc: DrawPreviewFunc | null;
+    }>({ displayName: "", description: null, drawPreviewFunc: null });
 
     const handleSearchQueryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setSearchQuery(e.target.value);
     };
 
+    function handleOpenModuleInfoDialog(
+        displayName: string,
+        description: string | null,
+        drawPreviewFunc: DrawPreviewFunc | null
+    ) {
+        setInfoDialogState({ displayName, description, drawPreviewFunc });
+        setInfoDialogOpen(true);
+    }
+
+    function handleCloseModuleInfoDialog() {
+        setInfoDialogOpen(false);
+    }
+
     return (
-        <Drawer
-            visible={drawerContent === DrawerContent.ModulesList}
-            title="Add modules"
-            icon={<WindowIcon />}
-            showFilter
-            filterPlaceholder="Filter modules..."
-            onFilterChange={handleSearchQueryChange}
-        >
-            {Object.values(ModuleRegistry.getRegisteredModules())
-                .filter((mod) => mod.getDefaultTitle().toLowerCase().includes(searchQuery.toLowerCase()))
-                .map((mod) => (
-                    <ModulesListItem
-                        relContainer={props.relContainer}
-                        key={mod.getName()}
-                        moduleName={mod.getName()}
-                        moduleDisplayName={mod.getDefaultTitle()}
-                        moduleDrawPreviewFunc={mod.getDrawPreviewFunc()}
-                    />
-                ))}
-        </Drawer>
+        <>
+            <Dialog
+                open={infoDialogOpen}
+                onClose={handleCloseModuleInfoDialog}
+                title={infoDialogState.displayName}
+                showCloseCross
+                modal
+            >
+                <div className="flex flex-col gap-4">
+                    {infoDialogState.drawPreviewFunc && infoDialogState.drawPreviewFunc(300, 150)}
+                    {infoDialogState.description}
+                </div>
+            </Dialog>
+            <Drawer
+                visible={drawerContent === DrawerContent.ModulesList}
+                title="Add modules"
+                icon={<WebAsset />}
+                showFilter
+                filterPlaceholder="Filter modules..."
+                onFilterChange={handleSearchQueryChange}
+            >
+                {Object.values(ModuleRegistry.getRegisteredModules())
+                    .filter((mod) => mod.getDefaultTitle().toLowerCase().includes(searchQuery.toLowerCase()))
+                    .map((mod) => (
+                        <ModulesListItem
+                            relContainer={props.relContainer}
+                            key={mod.getName()}
+                            name={mod.getName()}
+                            displayName={mod.getDefaultTitle()}
+                            description={mod.getDescription()}
+                            drawPreviewFunc={mod.getDrawPreviewFunc()}
+                            onInfoClick={handleOpenModuleInfoDialog}
+                        />
+                    ))}
+            </Drawer>
+        </>
     );
 };
