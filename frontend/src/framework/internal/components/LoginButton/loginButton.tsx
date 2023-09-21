@@ -29,6 +29,16 @@ export const LoginButton: React.FC<LoginButtonProps> = (props) => {
 
     function makeIcon() {
         if (authState === AuthState.LoggedIn) {
+            if (userInfo?.avatar_b64str) {
+                return (
+                    <img
+                        src={`data:image/png;base64,${userInfo.avatar_b64str}`}
+                        alt="Avatar"
+                        className="w-4 h-4 rounded-full"
+                    />
+                );
+            }
+
             return <UserIcon className="w-5 h-5 mr-1" />;
         } else if (authState === AuthState.NotLoggedIn) {
             return <ArrowLeftOnRectangleIcon className="w-5 h-5 mr-1" />;

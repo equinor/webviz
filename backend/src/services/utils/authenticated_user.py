@@ -8,6 +8,7 @@ class AuthenticatedUser:
         self,
         user_id: str,
         username: str,
+        graph_access_token: Optional[str],
         sumo_access_token: Optional[str],
         smda_access_token: Optional[str],
         pdm_access_token: Optional[str],
@@ -15,6 +16,7 @@ class AuthenticatedUser:
     ) -> None:
         self._user_id = user_id
         self._username = username
+        self._graph_access_token = graph_access_token
         self._sumo_access_token = sumo_access_token
         self._smda_access_token = smda_access_token
         self._pdm_access_token = pdm_access_token
@@ -28,6 +30,19 @@ class AuthenticatedUser:
 
     def get_username(self) -> str:
         return self._username
+    
+    def get_graph_access_token(self) -> str:
+        if isinstance(self._graph_access_token, str) and len(self._graph_access_token) > 0:
+            return self._graph_access_token
+
+        raise ValueError("User has no graph access token")
+    
+    def has_graph_access_token(self) -> bool:
+        try:
+            self.get_graph_access_token()
+            return True
+        except:
+            return False
 
     def get_sumo_access_token(self) -> str:
         if isinstance(self._sumo_access_token, str) and len(self._sumo_access_token) > 0:

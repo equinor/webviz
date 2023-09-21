@@ -173,6 +173,9 @@ class AuthHelper:
             # print("-------------------------------------------------")
             smda_token = token_dict.get("access_token") if token_dict else None
 
+        token_dict = cca.acquire_token_silent(scopes=config.GRAPH_SCOPES, account=accounts[0])
+        graph_token = token_dict.get("access_token") if token_dict else None
+
         # print(f"  get tokens {timer.lap_ms():.1f}ms")
 
         _save_token_cache_in_session(request_with_session, token_cache)
@@ -187,6 +190,7 @@ class AuthHelper:
         authenticated_user = AuthenticatedUser(
             user_id=user_id,
             username=user_name,
+            graph_access_token=graph_token,
             sumo_access_token=sumo_token,
             smda_access_token=smda_token,
             pdm_access_token=None,

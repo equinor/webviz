@@ -69,13 +69,22 @@ export class DefaultService {
 
     /**
      * Logged In User
+     * @param includeAvatar Set to true to include user avatar from Microsoft GRAPH Api
      * @returns UserInfo Successful Response
      * @throws ApiError
      */
-    public loggedInUser(): CancelablePromise<UserInfo> {
+    public loggedInUser(
+        includeAvatar: boolean = false,
+    ): CancelablePromise<UserInfo> {
         return this.httpRequest.request({
             method: 'GET',
             url: '/logged_in_user',
+            query: {
+                'includeAvatar': includeAvatar,
+            },
+            errors: {
+                422: `Validation Error`,
+            },
         });
     }
 
