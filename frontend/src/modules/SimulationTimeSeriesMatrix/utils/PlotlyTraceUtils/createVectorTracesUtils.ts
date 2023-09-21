@@ -5,8 +5,6 @@ import {
     VectorStatisticData_api,
 } from "@api";
 
-import { type } from "os";
-
 import { FanchartData, FreeLineData, LowHighData, MinMaxData } from "./fanchartPlotting";
 import { createFanchartTraces } from "./fanchartPlotting";
 import { LineData, StatisticsData, createStatisticsTraces } from "./statisticsPlotting";

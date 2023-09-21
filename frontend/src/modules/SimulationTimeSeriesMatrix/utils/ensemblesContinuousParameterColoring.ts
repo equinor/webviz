@@ -3,16 +3,22 @@ import { ContinuousParameter, ParameterIdent, ParameterType } from "@framework/E
 import { ColorScale } from "@lib/utils/ColorScale";
 import { MinMax } from "@lib/utils/MinMax";
 
-export class ContinuousParameterColorScaleHelper {
+export class EnsemblesContinuousParameterColoring {
+    /**
+     * Helper class working with coloring according to selected continuous parameter across multiple ensembles
+     *
+     * Retrieves min/max parameter value across all ensembles and provides interface for retrieving parameter
+     * value within the min/max range for specific realization in ensemble.
+     */
+
     private _parameterIdent: ParameterIdent;
     private _ensembleContinuousParameterSet: { [ensembleName: string]: ContinuousParameter };
-    private _minMax: MinMax;
     private _colorScale: ColorScale;
 
-    constructor(parameterIdent: ParameterIdent, selectedEnsembles: Ensemble[], colorScale: ColorScale) {
+    constructor(selectedEnsembles: Ensemble[], parameterIdent: ParameterIdent, colorScale: ColorScale) {
         this._parameterIdent = parameterIdent;
         this._ensembleContinuousParameterSet = {};
-        this._minMax = MinMax.createInvalid();
+        let minMax = MinMax.createInvalid();
         for (const ensemble of selectedEnsembles) {
             const parameters = ensemble.getParameters();
             if (!parameters.hasParameter(parameterIdent)) continue;
@@ -20,26 +26,18 @@ export class ContinuousParameterColorScaleHelper {
             const parameter = parameters.getParameter(parameterIdent);
             if (parameter.type === ParameterType.CONTINUOUS) {
                 this._ensembleContinuousParameterSet[ensemble.getEnsembleName()] = parameter;
-                this._minMax = this._minMax.extendedBy(parameters.getContinuousParameterMinMax(parameterIdent));
+                minMax = minMax.extendedBy(parameters.getContinuousParameterMinMax(parameterIdent));
             }
         }
 
-        // TODO: Set Range [0,0] if parameterMinMax is invalid?
+        // Consider: Set Range [0,0] if parameterMinMax is invalid?
         this._colorScale = colorScale;
-        const midValue = this._minMax.min + (this._minMax.max - this._minMax.min) / 2;
-        this._colorScale.setRangeAndMidPoint(this._minMax.min, this._minMax.max, midValue);
+        const midValue = minMax.min + (minMax.max - minMax.min) / 2;
+        this._colorScale.setRangeAndMidPoint(minMax.min, minMax.max, midValue);
     }
 
     getColorScale(): ColorScale {
         return this._colorScale;
-    }
-
-    getMinMax(): MinMax {
-        return this._minMax;
-    }
-
-    getParameterIdent(): ParameterIdent {
-        return this._parameterIdent;
     }
 
     hasEnsembleName(ensembleName: string): boolean {

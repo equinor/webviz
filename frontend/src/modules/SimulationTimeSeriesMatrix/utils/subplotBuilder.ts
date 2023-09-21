@@ -1,5 +1,4 @@
 import { VectorHistoricalData_api, VectorRealizationData_api, VectorStatisticData_api } from "@api";
-import { ColorScale } from "@lib/utils/ColorScale";
 import { ColorSet } from "@lib/utils/ColorSet";
 
 import { PlotMarker } from "plotly.js";
@@ -14,7 +13,7 @@ import {
     createVectorStatisticsTraces,
 } from "./PlotlyTraceUtils/createVectorTracesUtils";
 import { scaleHexColorLightness } from "./colorUtils";
-import { ContinuousParameterColorScaleHelper } from "./parameterColoringUtils";
+import { EnsemblesContinuousParameterColoring } from "./ensemblesContinuousParameterColoring";
 import { TimeSeriesPlotData } from "./timeSeriesPlotData";
 
 import { VectorSpec } from "../state";
@@ -58,9 +57,9 @@ export class SubplotBuilder {
     private _width = 0;
     private _height = 0;
 
-    private _defaultScatterType = "scatter";
+    private _scatterType: "scatter" | "scattergl";
 
-    private _parameterColorScaleHelper: ContinuousParameterColorScaleHelper | null = null;
+    private _ensemblesParameterColoring: EnsemblesContinuousParameterColoring | null = null;
     private _parameterFallbackColor = "#808080";
 
     constructor(
@@ -69,7 +68,8 @@ export class SubplotBuilder {
         colorSet: ColorSet,
         width: number,
         height: number,
-        parameterColorScaleHelper?: ContinuousParameterColorScaleHelper
+        ensemblesParameterColoring?: EnsemblesContinuousParameterColoring,
+        scatterType: "scatter" | "scattergl" = "scatter"
     ) {
         this._selectedVectorSpecifications = selectedVectorSpecifications;
         this._width = width;
@@ -96,7 +96,8 @@ export class SubplotBuilder {
                 ? this._uniqueVectorNames.length
                 : this._uniqueEnsembleNames.length;
 
-        this._parameterColorScaleHelper = parameterColorScaleHelper ?? null;
+        this._ensemblesParameterColoring = ensemblesParameterColoring ?? null;
+        this._scatterType = scatterType;
 
         // TODO:
         // - Handle keep uirevision?
@@ -227,15 +228,15 @@ export class SubplotBuilder {
             this._plotData.push(observationLegendTrace);
         }
 
-        // Add color scale for color by parameter
-        if (this._hasRealizationsTracesColoredByParameter && this._parameterColorScaleHelper !== null) {
+        // Add color scale for color by parameter below the legends
+        if (this._hasRealizationsTracesColoredByParameter && this._ensemblesParameterColoring !== null) {
             const colorScaleMarker: Partial<PlotMarker> = {
-                ...this._parameterColorScaleHelper.getColorScale().getAsPlotlyColorScaleMarkerObject(),
+                ...this._ensemblesParameterColoring.getColorScale().getAsPlotlyColorScaleMarkerObject(),
                 colorbar: {
                     title: "Parameter range",
                     titleside: "right",
                     ticks: "outside",
-                    len: 0.75,
+                    len: 0.75, // Note: If too many legends are added, this len might have to be reduced?
                 },
             };
             const parameterColorLegendTrace: Partial<TimeSeriesPlotData> = {
@@ -251,9 +252,7 @@ export class SubplotBuilder {
     addRealizationTracesColoredByParameter(
         vectorsRealizationData: { vectorSpecification: VectorSpec; data: VectorRealizationData_api[] }[]
     ): void {
-        if (this._parameterColorScaleHelper === null) return;
-
-        this._defaultScatterType = "scattergl";
+        if (this._ensemblesParameterColoring === null) return;
 
         // Only allow selected vectors
         const selectedVectorsRealizationData = vectorsRealizationData.filter((vec) =>
@@ -268,7 +267,7 @@ export class SubplotBuilder {
         // Create traces for each vector
         for (const elm of selectedVectorsRealizationData) {
             const subplotIndex = this.getSubplotIndex(elm.vectorSpecification);
-            if (subplotIndex === -1) return;
+            if (subplotIndex === -1) continue;
 
             // Get legend group and color
             const legendGroup = this.getLegendGroupAndUpdateTracker(elm.vectorSpecification);
@@ -278,16 +277,16 @@ export class SubplotBuilder {
                 let parameterColor = this._parameterFallbackColor;
                 const ensembleName = elm.vectorSpecification.ensembleIdent.getEnsembleName();
                 if (
-                    this._parameterColorScaleHelper.hasParameterRealizationNumericalValue(
+                    this._ensemblesParameterColoring.hasParameterRealizationNumericalValue(
                         ensembleName,
                         realizationData.realization
                     )
                 ) {
-                    const value = this._parameterColorScaleHelper.getParameterRealizationValue(
+                    const value = this._ensemblesParameterColoring.getParameterRealizationValue(
                         ensembleName,
                         realizationData.realization
                     );
-                    parameterColor = this._parameterColorScaleHelper.getColorScale().getColorForValue(value);
+                    parameterColor = this._ensemblesParameterColoring.getColorScale().getColorForValue(value);
                 }
 
                 const vectorRealizationTrace = createVectorRealizationTrace({
@@ -298,6 +297,7 @@ export class SubplotBuilder {
                     hoverTemplate: hoverTemplate,
                     showLegend: addLegendForTraces,
                     yaxis: `y${subplotIndex + 1}`,
+                    type: this._scatterType,
                 });
                 this._plotData.push(vectorRealizationTrace);
                 this._hasRealizationsTracesColoredByParameter = true;
@@ -309,8 +309,6 @@ export class SubplotBuilder {
         vectorsRealizationData: { vectorSpecification: VectorSpec; data: VectorRealizationData_api[] }[],
         useIncreasedBrightness: boolean
     ): void {
-        this._defaultScatterType = "scattergl";
-
         // Only allow selected vectors
         const selectedVectorsRealizationData = vectorsRealizationData.filter((vec) =>
             this._selectedVectorSpecifications.some(
@@ -322,9 +320,9 @@ export class SubplotBuilder {
         const hoverTemplate = ""; // No template yet
 
         // Create traces for each vector
-        selectedVectorsRealizationData.forEach((elm) => {
+        for (const elm of selectedVectorsRealizationData) {
             const subplotIndex = this.getSubplotIndex(elm.vectorSpecification);
-            if (subplotIndex === -1) return;
+            if (subplotIndex === -1) continue;
 
             // Get legend group and color
             const legendGroup = this.getLegendGroupAndUpdateTracker(elm.vectorSpecification);
@@ -349,11 +347,12 @@ export class SubplotBuilder {
                 hoverTemplate: hoverTemplate,
                 showLegend: addLegendForTraces,
                 yaxis: `y${subplotIndex + 1}`,
+                type: this._scatterType,
             });
 
             this._plotData.push(...vectorRealizationTraces);
             this._hasRealizationsTraces = true;
-        });
+        }
     }
 
     addFanchartTraces(
@@ -367,9 +366,9 @@ export class SubplotBuilder {
         );
 
         // Create traces for each vector
-        selectedVectorsStatisticData.forEach((elm) => {
+        for (const elm of selectedVectorsStatisticData) {
             const subplotIndex = this.getSubplotIndex(elm.vectorSpecification);
-            if (subplotIndex === -1) return;
+            if (subplotIndex === -1) continue;
 
             // Get legend group and color
             const legendGroup = this.getLegendGroupAndUpdateTracker(elm.vectorSpecification);
@@ -380,10 +379,11 @@ export class SubplotBuilder {
                 hexColor: color,
                 legendGroup: legendGroup,
                 yaxis: `y${subplotIndex + 1}`,
+                type: this._scatterType,
             });
 
             this._plotData.push(...vectorFanchartTraces);
-        });
+        }
     }
 
     addStatisticsTraces(
@@ -400,9 +400,9 @@ export class SubplotBuilder {
         const lineWidth = highlightStatisticTraces ? 3 : 2;
 
         // Create traces for each vector
-        selectedVectorsStatisticData.forEach((elm) => {
+        for (const elm of selectedVectorsStatisticData) {
             const subplotIndex = this.getSubplotIndex(elm.vectorSpecification);
-            if (subplotIndex === -1) return;
+            if (subplotIndex === -1) continue;
 
             // Get legend group and color
             const legendGroup = this.getLegendGroupAndUpdateTracker(elm.vectorSpecification);
@@ -414,10 +414,11 @@ export class SubplotBuilder {
                 legendGroup: legendGroup,
                 yaxis: `y${subplotIndex + 1}`,
                 lineWidth: lineWidth,
+                type: this._scatterType,
             });
 
             this._plotData.push(...vectorStatisticsTraces);
-        });
+        }
     }
 
     addHistoryTraces(
@@ -434,18 +435,19 @@ export class SubplotBuilder {
         );
 
         // Create traces for each vector
-        selectedVectorsHistoricalData.forEach((elm) => {
+        for (const elm of selectedVectorsHistoricalData) {
             const subplotIndex = this.getSubplotIndex(elm.vectorSpecification);
-            if (subplotIndex === -1) return;
+            if (subplotIndex === -1) continue;
 
             this._hasHistoryTraces = true;
             const vectorHistoryTrace = createHistoricalVectorTrace({
                 vectorHistoricalData: elm.data,
                 color: this._historyVectorColor,
                 yaxis: `y${subplotIndex + 1}`,
+                type: this._scatterType,
             });
             this._plotData.push(vectorHistoryTrace);
-        });
+        }
     }
 
     addVectorObservations(): void {

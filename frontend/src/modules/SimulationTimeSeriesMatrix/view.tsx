@@ -2,17 +2,14 @@ import React from "react";
 import Plot from "react-plotly.js";
 
 import { Ensemble } from "@framework/Ensemble";
-import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { ModuleFCProps } from "@framework/Module";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { ColorScaleGradientType } from "@lib/utils/ColorScale";
-// Note: Have for debug render count info
-import { isDevMode } from "@lib/utils/devMode";
 
 import { useHistoricalVectorDataQueries, useStatisticalVectorDataQueries, useVectorDataQueries } from "./queryHooks";
 import { GroupBy, State, VisualizationMode } from "./state";
-import { ContinuousParameterColorScaleHelper } from "./utils/parameterColoringUtils";
+import { EnsemblesContinuousParameterColoring } from "./utils/ensemblesContinuousParameterColoring";
 import { SubplotBuilder, SubplotOwner } from "./utils/subplotBuilder";
 import {
     createLoadedVectorSpecificationAndDataArray,
@@ -21,12 +18,6 @@ import {
 } from "./utils/vectorSpecificationsAndQueriesUtils";
 
 export const view = ({ moduleContext, workbenchSession, workbenchSettings }: ModuleFCProps<State>) => {
-    // Leave this in until we get a feeling for React18/Plotly
-    const renderCount = React.useRef(0);
-    React.useEffect(function incrementRenderCount() {
-        renderCount.current = renderCount.current + 1;
-    });
-
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);
     const wrapperDivSize = useElementSize(wrapperDivRef);
 
@@ -48,29 +39,6 @@ export const view = ({ moduleContext, workbenchSession, workbenchSettings }: Mod
     const parameterColorScale = workbenchSettings.useContinuousColorScale({
         gradientType: ColorScaleGradientType.Diverging,
     });
-
-    // Get range for color scale
-    const uniqueEnsembleIdents: EnsembleIdent[] = [];
-    vectorSpecifications?.forEach((specification) => {
-        if (uniqueEnsembleIdents.some((ensembleIdent) => ensembleIdent.equals(specification.ensembleIdent))) return;
-
-        uniqueEnsembleIdents.push(specification.ensembleIdent);
-    });
-
-    // Get ensemble objects from ensemble set
-    const selectedEnsembles: Ensemble[] = [];
-    for (const ensembleIdent of uniqueEnsembleIdents) {
-        const ensemble = ensembleSet.findEnsemble(ensembleIdent);
-        if (ensemble === null) continue;
-
-        selectedEnsembles.push(ensemble);
-    }
-
-    // Create parameter color scale helper
-    const doColorByParameter = colorRealizationsByParameter && parameterIdent !== null && selectedEnsembles.length > 0;
-    const parameterColorScaleHelper = doColorByParameter
-        ? new ContinuousParameterColorScaleHelper(parameterIdent, selectedEnsembles, parameterColorScale)
-        : null;
 
     // Queries
     const vectorDataQueries = useVectorDataQueries(
@@ -96,6 +64,9 @@ export const view = ({ moduleContext, workbenchSession, workbenchSettings }: Mod
     );
 
     // Map vector specifications and queries with data
+    // TODO:
+    // - Add loading state if 1 or more queries are loading?
+    // - Can check for equal length of useQueries arrays and the loadedVectorSpecificationsAndData arrays?
     const loadedVectorSpecificationsAndRealizationData = vectorSpecifications
         ? createLoadedVectorSpecificationAndDataArray(vectorSpecifications, vectorDataQueries)
         : [];
@@ -109,40 +80,52 @@ export const view = ({ moduleContext, workbenchSession, workbenchSettings }: Mod
           )
         : [];
 
-    // TODO:
-    // - Add loading state if 1 or more queries are loading?
-    // - Can check for equal length of useQueries arrays and the loadedVectorSpecificationsAndData arrays?
+    // Retrieve selected ensembles from vector specifications
+    const selectedEnsembles: Ensemble[] = [];
+    vectorSpecifications?.forEach((vectorSpecification) => {
+        if (selectedEnsembles.some((ensemble) => ensemble.getIdent().equals(vectorSpecification.ensembleIdent))) {
+            return;
+        }
 
-    // Iterate over unique ensemble names and assign color from color palette
-    if (vectorSpecifications) {
-        const uniqueEnsembleNames: string[] = [];
-        vectorSpecifications.forEach((vectorSpec) => {
-            const ensembleName = vectorSpec.ensembleIdent.getEnsembleName();
-            if (!uniqueEnsembleNames.includes(ensembleName)) {
-                uniqueEnsembleNames.push(vectorSpec.ensembleIdent.getEnsembleName());
-            }
-        });
-    }
+        const ensemble = ensembleSet.findEnsemble(vectorSpecification.ensembleIdent);
+        if (ensemble === null) return;
 
-    // Plot builder
-    // NOTE: useRef?
+        selectedEnsembles.push(ensemble);
+    });
+
+    // Create parameter color scale helper
+    const doColorByParameter =
+        colorRealizationsByParameter &&
+        parameterIdent !== null &&
+        selectedEnsembles.some((ensemble) => ensemble.getParameters().findParameter(parameterIdent));
+    const ensemblesParameterColoring = doColorByParameter
+        ? new EnsemblesContinuousParameterColoring(selectedEnsembles, parameterIdent, parameterColorScale)
+        : null;
+
+    // Create Plot Builder
     const subplotOwner = groupBy === GroupBy.TIME_SERIES ? SubplotOwner.VECTOR : SubplotOwner.ENSEMBLE;
+    const scatterType =
+        visualizationMode === VisualizationMode.INDIVIDUAL_REALIZATIONS ||
+        visualizationMode === VisualizationMode.STATISTICS_AND_REALIZATIONS
+            ? "scattergl"
+            : "scatter";
     const subplotBuilder = new SubplotBuilder(
         subplotOwner,
         vectorSpecifications ?? [],
         colorSet,
         wrapperDivSize.width,
         wrapperDivSize.height,
-        parameterColorScaleHelper ?? undefined
+        ensemblesParameterColoring ?? undefined,
+        scatterType
     );
 
-    if (visualizationMode === VisualizationMode.INDIVIDUAL_REALIZATIONS) {
-        if (doColorByParameter) {
-            subplotBuilder.addRealizationTracesColoredByParameter(loadedVectorSpecificationsAndRealizationData);
-        } else {
-            const useIncreasedBrightness = false;
-            subplotBuilder.addRealizationsTraces(loadedVectorSpecificationsAndRealizationData, useIncreasedBrightness);
-        }
+    // Add traces based on visualization mode
+    if (doColorByParameter && visualizationMode === VisualizationMode.INDIVIDUAL_REALIZATIONS) {
+        subplotBuilder.addRealizationTracesColoredByParameter(loadedVectorSpecificationsAndRealizationData);
+    }
+    if (!doColorByParameter && visualizationMode === VisualizationMode.INDIVIDUAL_REALIZATIONS) {
+        const useIncreasedBrightness = false;
+        subplotBuilder.addRealizationsTraces(loadedVectorSpecificationsAndRealizationData, useIncreasedBrightness);
     }
     if (visualizationMode === VisualizationMode.STATISTICAL_FANCHART) {
         const selectedVectorsFanchartStatisticData = filterVectorSpecificationAndFanchartStatisticsDataArray(
@@ -194,12 +177,6 @@ export const view = ({ moduleContext, workbenchSession, workbenchSettings }: Mod
                 onHover={handleHover}
                 onUnhover={handleUnHover}
             />
-            {isDevMode() && (
-                <>
-                    <div className="absolute top-10 left-5 italic text-pink-400">(rc={renderCount.current})</div>
-                    <div className="absolute top-10 left-20 italic text-pink-400"> Traces: {plotData.length}</div>
-                </>
-            )}
         </div>
     );
 };
