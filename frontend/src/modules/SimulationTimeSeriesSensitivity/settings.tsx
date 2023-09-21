@@ -61,8 +61,6 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
     if (computedVectorName && computedVectorName !== selectedVectorName) {
         setSelectedVectorName(computedVectorName);
     }
-    const hasHistorical =
-        vectorsListQuery.data?.some((vec) => vec.name === computedVectorName && vec.has_historical) ?? false;
 
     if (computedEnsembleIdent && !computedEnsembleIdent.equals(selectedEnsembleIdent)) {
         setSelectedEnsembleIdent(computedEnsembleIdent);
@@ -78,11 +76,10 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
         },
         [selectedEnsembleIdent]
     );
-    const sensitivityOptions: SelectOption[] =
-        sensitivityNames.map((name) => ({
-            value: name,
-            label: name,
-        })) ?? [];
+    const sensitivityOptions: SelectOption[] = sensitivityNames.map((name) => ({
+        value: name,
+        label: name,
+    }));
 
     React.useEffect(
         function propagateVectorSpecToView() {
@@ -90,13 +87,15 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
                 moduleContext.getStateStore().setValue("vectorSpec", {
                     ensembleIdent: computedEnsembleIdent,
                     vectorName: computedVectorName,
-                    hasHistorical,
+                    hasHistorical:
+                        vectorsListQuery.data?.some((vec) => vec.name === computedVectorName && vec.has_historical) ??
+                        false,
                 });
             } else {
                 moduleContext.getStateStore().setValue("vectorSpec", null);
             }
         },
-        [computedEnsembleIdent, computedVectorName, hasHistorical]
+        [computedEnsembleIdent, computedVectorName]
     );
 
     function handleEnsembleSelectionChange(newEnsembleIdent: EnsembleIdent | null) {

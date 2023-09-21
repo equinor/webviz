@@ -16,6 +16,8 @@ import {
 import SensitivityTable from "./sensitivityTable";
 import { PlotType, State } from "./state";
 
+import { createSensitivityColorMap } from "../_shared/sensitivityColors";
+
 export const view = ({
     moduleContext,
     workbenchSession,
@@ -89,14 +91,11 @@ export const view = ({
 
     const sensitivities = channelEnsemble?.getSensitivities();
     const colorSet = workbenchSettings.useColorSet();
-    const sensitivityColors: SensitivityColors[] =
-        sensitivities
-            ?.getSensitivityNames()
-            .map((sensitivityName, index) =>
-                index === 0
-                    ? { sensitivityName, color: colorSet.getFirstColor() }
-                    : { sensitivityName, color: colorSet.getNextColor() }
-            ) ?? [];
+    const sensitivitiesColorMap = createSensitivityColorMap(
+        sensitivities?.getSensitivityNames().sort() ?? [],
+        colorSet
+    );
+
     let computedSensitivityResponseDataset: SensitivityResponseDataset | null = null;
     if (sensitivities && channelResponseData) {
         // How to handle errors?
@@ -187,7 +186,7 @@ export const view = ({
                 {computedSensitivityResponseDataset && plotType === PlotType.TORNADO && (
                     <SensitivityChart
                         sensitivityResponseDataset={computedSensitivityResponseDataset}
-                        sensitivityColors={sensitivityColors}
+                        sensitivityColorMap={sensitivitiesColorMap}
                         width={wrapperDivSize.width}
                         height={wrapperDivSize.height}
                         showLabels={showLabels}

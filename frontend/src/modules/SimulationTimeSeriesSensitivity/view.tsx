@@ -1,11 +1,12 @@
 import React from "react";
 
-import { VectorRealizationData_api, VectorStatisticSensitivityData_api } from "@api";
+import { StatisticFunction_api, VectorRealizationData_api, VectorStatisticSensitivityData_api } from "@api";
 import { BroadcastChannelData, BroadcastChannelMeta } from "@framework/Broadcaster";
 import { ModuleFCProps } from "@framework/Module";
 import { useSubscribedValue } from "@framework/WorkbenchServices";
 import { timestampUtcMsToCompactIsoString } from "@framework/utils/timestampUtils";
 import { useElementSize } from "@lib/hooks/useElementSize";
+import { createSensitivityColorMap } from "@modules/_shared/sensitivityColors";
 
 import { indexOf } from "lodash";
 
@@ -107,34 +108,32 @@ export const view = ({
     const colorSet = workbenchSettings.useColorSet();
 
     const allSensitivityNamesInEnsemble = ensemble?.getSensitivities()?.getSensitivityNames().sort() ?? [];
+
     const traceDataArr: TimeSeriesPlotlyTrace[] = [];
     if (ensemble && selectedSensitivities && selectedSensitivities.length > 0) {
-        // Loop through all available sensitivities to get correct color
-        allSensitivityNamesInEnsemble.forEach((sensitivityName, index) => {
-            const color = index === 0 ? colorSet.getFirstColor() : colorSet.getNextColor();
+        const sensitivitiesColorMap = createSensitivityColorMap(allSensitivityNamesInEnsemble, colorSet);
+        selectedSensitivities.forEach((sensitivityName, index) => {
+            const color = sensitivitiesColorMap[sensitivityName];
 
-            // Work on selected sensitivities only
-            if (selectedSensitivities.includes(sensitivityName)) {
-                // Add statistics traces
-                if (showStatistics && statisticsQuery.data) {
-                    const matchingCases: VectorStatisticSensitivityData_api[] = statisticsQuery.data.filter(
-                        (stat) => stat.sensitivity_name === sensitivityName
+            // Add statistics traces
+            if (showStatistics && statisticsQuery.data) {
+                const matchingCases: VectorStatisticSensitivityData_api[] = statisticsQuery.data.filter(
+                    (stat) => stat.sensitivity_name === sensitivityName
+                );
+                const traces = createStatisticalLineTraces(matchingCases, StatisticFunction_api.MEAN, color);
+                traceDataArr.push(...traces);
+            }
+
+            // Add realization traces
+            const sensitivity = ensemble.getSensitivities()?.getSensitivityByName(sensitivityName);
+            if (showRealizations && realizationsQuery.data && sensitivity) {
+                for (const sensCase of sensitivity.cases) {
+                    const realsToInclude = sensCase.realizations;
+                    const realizationData: VectorRealizationData_api[] = realizationsQuery.data.filter((vec) =>
+                        realsToInclude.includes(vec.realization)
                     );
-                    const traces = createStatisticalLineTraces(matchingCases, color);
+                    const traces = createRealizationLineTraces(realizationData, sensitivity.name, color);
                     traceDataArr.push(...traces);
-                }
-
-                // Add realization traces
-                const sensitivity = ensemble.getSensitivities()?.getSensitivityByName(sensitivityName);
-                if (showRealizations && realizationsQuery.data && sensitivity) {
-                    for (const sensCase of sensitivity.cases) {
-                        const realsToInclude = sensCase.realizations;
-                        const realizationData: VectorRealizationData_api[] = realizationsQuery.data.filter((vec) =>
-                            realsToInclude.includes(vec.realization)
-                        );
-                        const traces = createRealizationLineTraces(realizationData, sensitivity.name, color);
-                        traceDataArr.push(...traces);
-                    }
                 }
             }
         });

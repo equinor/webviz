@@ -10,16 +10,17 @@ export interface TimeSeriesPlotlyTrace extends Partial<PlotData> {
 
 export function createStatisticalLineTraces(
     sensitivityData: VectorStatisticSensitivityData_api[],
+    statisticsFunction: StatisticFunction_api,
     color: string
 ): TimeSeriesPlotlyTrace[] {
     const traces: TimeSeriesPlotlyTrace[] = [];
     sensitivityData.forEach((aCase, index) => {
-        const meanObj = aCase.value_objects.find((obj) => obj.statistic_function === StatisticFunction_api.MEAN);
-        if (meanObj) {
+        const statisticObj = aCase.value_objects.find((obj) => obj.statistic_function === statisticsFunction);
+        if (statisticObj) {
             traces.push(
                 createLineTrace({
                     timestampsMsUtc: aCase.timestamps_utc_ms,
-                    values: meanObj.values,
+                    values: statisticObj.values,
                     name: `${aCase.sensitivity_name}`,
                     legendGroup: `${aCase.sensitivity_name}`,
                     lineShape: "linear",
