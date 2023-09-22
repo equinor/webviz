@@ -25,7 +25,6 @@ type ModulesListItemProps = {
     description: string | null;
     drawPreviewFunc: DrawPreviewFunc | null;
     relContainer: HTMLDivElement | null;
-    onInfoClick: (displayName: string, description: string | null, drawPreviewFunc: DrawPreviewFunc | null) => void;
 };
 
 const makeStyle = (isDragged: boolean, dragSize: Size, dragPosition: Point): React.CSSProperties => {
@@ -52,7 +51,6 @@ const ModulesListItem: React.FC<ModulesListItemProps> = (props) => {
     const [isDragged, setIsDragged] = React.useState<boolean>(false);
     const [dragPosition, setDragPosition] = React.useState<Point>({ x: 0, y: 0 });
     const [dragSize, setDragSize] = React.useState<Size>({ width: 0, height: 0 });
-    const [infoDialogOpen, setInfoDialogOpen] = React.useState<boolean>(false);
 
     const itemSize = useElementSize(mainRef);
 
@@ -132,10 +130,6 @@ const ModulesListItem: React.FC<ModulesListItemProps> = (props) => {
         };
     }, [props.relContainer]);
 
-    function openModuleInfoDialog() {
-        props.onInfoClick(props.displayName, props.description, props.drawPreviewFunc);
-    }
-
     return (
         <>
             {isDragged && <div ref={mainRef} className="bg-red-300 w-full h-40 mb-4" />}
@@ -148,7 +142,6 @@ const ModulesListItem: React.FC<ModulesListItemProps> = (props) => {
                     <span className="flex-grow">{props.displayName}</span>
                     {props.description && (
                         <span
-                            onClick={openModuleInfoDialog}
                             title={props.description ?? ""}
                             className="cursor-help text-slate-500 hover:text-slate-900"
                         >
@@ -179,44 +172,13 @@ type ModulesListProps = {
 export const ModulesList: React.FC<ModulesListProps> = (props) => {
     const drawerContent = useStoreValue(props.workbench.getGuiStateStore(), "drawerContent");
     const [searchQuery, setSearchQuery] = React.useState("");
-    const [infoDialogOpen, setInfoDialogOpen] = React.useState<boolean>(false);
-    const [infoDialogState, setInfoDialogState] = React.useState<{
-        displayName: string;
-        description: string | null;
-        drawPreviewFunc: DrawPreviewFunc | null;
-    }>({ displayName: "", description: null, drawPreviewFunc: null });
 
     const handleSearchQueryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setSearchQuery(e.target.value);
     };
 
-    function handleOpenModuleInfoDialog(
-        displayName: string,
-        description: string | null,
-        drawPreviewFunc: DrawPreviewFunc | null
-    ) {
-        setInfoDialogState({ displayName, description, drawPreviewFunc });
-        setInfoDialogOpen(true);
-    }
-
-    function handleCloseModuleInfoDialog() {
-        setInfoDialogOpen(false);
-    }
-
     return (
         <>
-            <Dialog
-                open={infoDialogOpen}
-                onClose={handleCloseModuleInfoDialog}
-                title={infoDialogState.displayName}
-                showCloseCross
-                modal
-            >
-                <div className="flex flex-col gap-4">
-                    {infoDialogState.drawPreviewFunc && infoDialogState.drawPreviewFunc(300, 150)}
-                    {infoDialogState.description}
-                </div>
-            </Dialog>
             <Drawer
                 visible={drawerContent === DrawerContent.ModulesList}
                 title="Add modules"
@@ -235,7 +197,6 @@ export const ModulesList: React.FC<ModulesListProps> = (props) => {
                             displayName={mod.getDefaultTitle()}
                             description={mod.getDescription()}
                             drawPreviewFunc={mod.getDrawPreviewFunc()}
-                            onInfoClick={handleOpenModuleInfoDialog}
                         />
                     ))}
             </Drawer>
