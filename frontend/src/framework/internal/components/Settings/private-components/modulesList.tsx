@@ -6,7 +6,6 @@ import { useStoreValue } from "@framework/StateStore";
 import { DrawerContent, Workbench } from "@framework/Workbench";
 import { LayoutEventTypes } from "@framework/internal/components/Content/private-components/layout";
 import { Drawer } from "@framework/internal/components/Drawer";
-import { Dialog } from "@lib/components/Dialog";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import {
     MANHATTAN_LENGTH,
