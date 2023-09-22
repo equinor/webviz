@@ -9,6 +9,19 @@ import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { getTextWidth } from "@lib/utils/textSize";
 import { Dropdown, MenuButton } from "@mui/base";
 
+function makeInitials(name: string): string | null {
+    const regExp = new RegExp(/([^()]+)(\([\w ]+\))/);
+    const match = regExp.exec(name);
+
+    if (match) {
+        const names = match[1].trim().split(" ");
+        if (names.length > 1) {
+            return names[0].charAt(0) + names[names.length - 1].charAt(0);
+        }
+    }
+    return null;
+}
+
 export type LoginButtonProps = {
     className?: string;
     showText?: boolean;
@@ -34,12 +47,22 @@ export const LoginButton: React.FC<LoginButtonProps> = (props) => {
                     <img
                         src={`data:image/png;base64,${userInfo.avatar_b64str}`}
                         alt="Avatar"
-                        className="w-4 h-4 rounded-full"
+                        className="w-5 h-5 rounded-full mr-1"
                     />
                 );
             }
-
+            if (userInfo?.display_name) {
+                const initials = makeInitials(userInfo.display_name);
+                if (initials) {
+                    return (
+                        <div className="w-5 h-5 rounded-full bg-slate-300 text-[0.6em] flex items-center justify-center mr-1">
+                            {initials}
+                        </div>
+                    );
+                }
+            }
             return <UserIcon className="w-5 h-5 mr-1" />;
+
         } else if (authState === AuthState.NotLoggedIn) {
             return <ArrowLeftOnRectangleIcon className="w-5 h-5 mr-1" />;
         } else {
@@ -81,7 +104,7 @@ export const LoginButton: React.FC<LoginButtonProps> = (props) => {
             >
                 <span
                     className="flex items-center gap-2"
-                    title={authState === AuthState.LoggedIn ? `Signed in as ${userInfo?.username}` : "Sign in"}
+                    title={makeText()}
                 >
                     {makeIcon()}
                     <span className="overflow-hidden text-ellipsis min-w-0 whitespace-nowrap" ref={textRef}>

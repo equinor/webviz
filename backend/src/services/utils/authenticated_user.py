@@ -30,18 +30,18 @@ class AuthenticatedUser:
 
     def get_username(self) -> str:
         return self._username
-    
+
     def get_graph_access_token(self) -> str:
-        if isinstance(self._graph_access_token, str) and len(self._graph_access_token) > 0:
+        if isinstance(self._graph_access_token, str) and self._graph_access_token:
             return self._graph_access_token
 
         raise ValueError("User has no graph access token")
-    
+
     def has_graph_access_token(self) -> bool:
         try:
             self.get_graph_access_token()
             return True
-        except:
+        except ValueError:
             return False
 
     def get_sumo_access_token(self) -> str:

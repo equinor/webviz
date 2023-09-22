@@ -1,17 +1,15 @@
+import asyncio
 import datetime
 import logging
-import json
 
 import starsessions
 from starlette.responses import StreamingResponse
 from fastapi import APIRouter, HTTPException, Request, status, Depends, Query
 from pydantic import BaseModel
-# Using the same http client as sumo
-import httpx
-import base64
 
 from src.backend.auth.auth_helper import AuthHelper, AuthenticatedUser
 from src.backend.primary.user_session_proxy import proxy_to_user_session
+from src.services.graph_access.graph_access import GraphApiAccess
 
 LOGGER = logging.getLogger(__name__)
 
@@ -22,6 +20,7 @@ class UserInfo(BaseModel):
     avatar_b64str: str | None
     has_sumo_access: bool
     has_smda_access: bool
+
 
 router = APIRouter()
 
@@ -39,7 +38,12 @@ def alive_protected() -> str:
 
 
 @router.get("/logged_in_user", response_model=UserInfo)
-async def logged_in_user(request: Request, includeAvatar: bool = Query(False, description="Set to true to include user avatar from Microsoft GRAPH Api")) -> UserInfo:
+async def logged_in_user(
+    request: Request,
+    includeGraphApiInfo: bool = Query(
+        False, description="Set to true to include user avatar and display name from Microsoft Graph API"
+    ),
+) -> UserInfo:
     print("entering logged_in_user route")
 
     await starsessions.load_session(request)
@@ -58,19 +62,23 @@ async def logged_in_user(request: Request, includeAvatar: bool = Query(False, de
         has_smda_access=authenticated_user.has_smda_access_token(),
     )
 
-    if includeAvatar:
-        headers = { "Authorization": f"Bearer {authenticated_user.get_graph_access_token()}" }
-        async with httpx.AsyncClient() as client:
-            result = await client.get("https://graph.microsoft.com/v1.0/me/photo/$value", headers=headers)
-            if result.status_code == 200:
-                user_info.avatar_b64str = base64.b64encode(result.content)
-        
-        async with httpx.AsyncClient() as client:
-            result = await client.get("https://graph.microsoft.com/v1.0/me", headers=headers)
-            if result.status_code == 200:
-                user_info.display_name = json.loads(result.content.decode("utf-8")).get("displayName", None)
+    if authenticated_user.has_graph_access_token() and includeGraphApiInfo:
+        graph_api_access = GraphApiAccess(authenticated_user.get_graph_access_token())
+        try:
+            avatar_b64str_future = asyncio.create_task(graph_api_access.get_user_profile_photo())
+            graph_user_info_future = asyncio.create_task(graph_api_access.get_user_info())
+
+            avatar_b64str = await avatar_b64str_future
+            graph_user_info = await graph_user_info_future
+
+            user_info.avatar_b64str = avatar_b64str
+            if graph_user_info is not None:
+                user_info.display_name = graph_user_info.get("displayName", None)
+        except Exception as e:
+            print("Error while fetching user avatar and info from Microsoft Graph API:\n", e)
 
     return user_info
+
 
 @router.get("/user_session_container")
 async def user_session_container(
