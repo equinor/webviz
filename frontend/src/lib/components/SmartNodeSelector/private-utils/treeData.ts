@@ -12,21 +12,25 @@ export class TreeData {
     private _stringifiedData: string;
     private _nodeData: TreeDataNodeMetaData[];
     private _allowOrOperator: boolean;
+    private _allowWildcards: boolean;
 
     constructor({
         treeData,
         delimiter,
         allowOrOperator,
+        allowWildcards,
     }: {
         treeData: TreeDataNode[];
         delimiter: string;
         allowOrOperator: boolean;
+        allowWildcards: boolean;
     }) {
         this._treeData = treeData;
         this._delimiter = delimiter;
         this._nodeData = [];
         this._stringifiedData = "";
         this._allowOrOperator = allowOrOperator;
+        this._allowWildcards = allowWildcards;
 
         this.populateNodes();
     }
@@ -125,6 +129,13 @@ export class TreeData {
     }
 
     private adjustNodeName(nodeName: string): string {
+        if (!this._allowWildcards) {
+            return this.replaceAll(
+                this.replaceAll(this.replaceAll(this.escapeRegExp(nodeName), ":", ""), "*", "\\*"),
+                "?",
+                "\\."
+            );
+        }
         return this.activateOrStatements(
             this.replaceAll(
                 this.replaceAll(this.replaceAll(this.escapeRegExp(nodeName), ":", ""), "*", '[^:"]*'),

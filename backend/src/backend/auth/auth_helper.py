@@ -36,7 +36,7 @@ class AuthHelper:
         cca = _create_msal_confidential_client_app(token_cache=None)
         flow_dict = cca.initiate_auth_code_flow(
             scopes=all_scopes_list,
-            redirect_uri=request.url_for("_authorized_callback_route"),
+            redirect_uri=str(request.url_for("_authorized_callback_route")),
         )
 
         request.session["flow"] = flow_dict

@@ -3,6 +3,7 @@ import React from "react";
 import { ImportState } from "@framework/Module";
 import { ModuleInstance, ModuleInstanceState } from "@framework/ModuleInstance";
 import { Workbench } from "@framework/Workbench";
+import { DebugProfiler } from "@framework/internal/components/DebugProfiler";
 import { ErrorBoundary } from "@framework/internal/components/ErrorBoundary";
 import { CircularProgress } from "@lib/components/CircularProgress";
 
@@ -57,11 +58,20 @@ export const ViewContent = React.memo((props: ViewContentProps) => {
         return <div className="h-full w-full flex justify-center items-center">Not imported</div>;
     }
 
-    if (importState === ImportState.Importing || !props.moduleInstance.isInitialised()) {
+    if (importState === ImportState.Importing) {
         return (
             <div className="h-full w-full flex flex-col justify-center items-center">
                 <CircularProgress />
                 <div className="mt-4">Importing...</div>
+            </div>
+        );
+    }
+
+    if (!props.moduleInstance.isInitialised()) {
+        return (
+            <div className="h-full w-full flex flex-col justify-center items-center">
+                <CircularProgress />
+                <div className="mt-4">Initialising...</div>
             </div>
         );
     }
@@ -105,13 +115,15 @@ export const ViewContent = React.memo((props: ViewContentProps) => {
     return (
         <ErrorBoundary moduleInstance={props.moduleInstance}>
             <div className="p-4 h-full w-full">
-                <View
-                    moduleContext={props.moduleInstance.getContext()}
-                    workbenchSession={props.workbench.getWorkbenchSession()}
-                    workbenchServices={props.workbench.getWorkbenchServices()}
-                    workbenchSettings={props.workbench.getWorkbenchSettings()}
-                    initialSettings={props.moduleInstance.getInitialSettings() || undefined}
-                />
+                <DebugProfiler id={`${props.moduleInstance.getId()}-view`}>
+                    <View
+                        moduleContext={props.moduleInstance.getContext()}
+                        workbenchSession={props.workbench.getWorkbenchSession()}
+                        workbenchServices={props.workbench.getWorkbenchServices()}
+                        workbenchSettings={props.workbench.getWorkbenchSettings()}
+                        initialSettings={props.moduleInstance.getInitialSettings() || undefined}
+                    />
+                </DebugProfiler>
             </div>
         </ErrorBoundary>
     );
