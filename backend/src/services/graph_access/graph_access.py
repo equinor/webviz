@@ -25,7 +25,7 @@ class GraphApiAccess:
         response = await self._request("https://graph.microsoft.com/v1.0/me/photo/$value")
 
         if response.status_code == 200:
-            return base64.b64encode(response.content)
+            return base64.b64encode(response.content).decode("utf-8")
         else:
             return None
 
