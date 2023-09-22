@@ -38,11 +38,14 @@ class SummaryAccess:
 
         smry_table_collection = self._case.tables.filter(
             aggregation="collection",
-            name="summary",
-            tagname="eclipse",
+            # name="summary", # New name is field-specific? e.g. DROGON, SNORRE. Not sure how to handle.
+            tagname="summary",
             iteration=self._iteration_name,
         )
-
+        if len(smry_table_collection.names) > 1:
+            raise ValueError(
+                f"Multiple summary table collections found. ({smry_table_collection.names}). Not sure what to do"
+            )
         column_names = smry_table_collection.columns
 
         ret_info_arr: List[VectorInfo] = []
@@ -98,7 +101,12 @@ class SummaryAccess:
         # For now, fail hard if metadata is not present. This test could be refined, but should suffice now.
         vector_metadata = create_vector_metadata_from_field_meta(table.schema.field(vector_name))
         if not vector_metadata:
-            raise ValueError(f"Did not find valid metadata for vector {vector_name}")
+            ### TEMPORARY FIX SUMO
+            vector_metadata = VectorMetadata(
+                unit="m", is_total=False, is_rate=False, is_historical=False, keyword=vector_name, wgname="", get_num=0
+            )
+            LOGGER.warning(f"Did not find valid metadata for vector {vector_name}")
+            # raise ValueError(f"Did not find valid metadata for vector {vector_name}")
 
         # Do the actual resampling
         timer.lap_ms()
@@ -115,7 +123,6 @@ class SummaryAccess:
             f"resampling={et_resampling_ms}ms) "
             f"{vector_name=} {resampling_frequency=} {table.shape=}"
         )
-
         return table, vector_metadata
 
     def get_vector(
@@ -155,7 +162,6 @@ class SummaryAccess:
         non_historical_vector_name: str,
         resampling_frequency: Optional[Frequency],
     ) -> Optional[HistoricalVector]:
-
         timer = PerfTimer()
 
         hist_vec_name = _construct_historical_vector_name(non_historical_vector_name)
@@ -179,7 +185,12 @@ class SummaryAccess:
         # Need metadata both for resampling and return value
         vector_metadata = create_vector_metadata_from_field_meta(table.schema.field(hist_vec_name))
         if not vector_metadata:
-            raise ValueError(f"Did not find valid metadata for vector {hist_vec_name}")
+            ### TEMPORARY FIX SUMO
+            vector_metadata = VectorMetadata(
+                unit="m", is_total=True, is_rate=False, is_historical=True, keyword=hist_vec_name, wgname="", get_num=0
+            )
+            LOGGER.warning(f"Did not find valid metadata for vector {hist_vec_name}")
+            # raise ValueError(f"Did not find valid metadata for vector {hist_vec_name}")
 
         # Do the actual resampling
         if resampling_frequency is not None:
@@ -243,8 +254,8 @@ def _load_arrow_table_for_from_sumo(case: Case, iteration_name: str, vector_name
 
     smry_table_collection = case.tables.filter(
         aggregation="collection",
-        name="summary",
-        tagname="eclipse",
+        # name="summary", # New name is field-specific? e.g. DROGON, SNORRE. Not sure how to handle.
+        tagname="summary",
         iteration=iteration_name,
         column=vector_name,
     )
@@ -264,6 +275,7 @@ def _load_arrow_table_for_from_sumo(case: Case, iteration_name: str, vector_name
     # For now, just read the parquet data into an arrow table
     byte_stream: BytesIO = sumo_table.blob
     table = pq.read_table(byte_stream)
+
     et_download_arrow_table_ms = timer.lap_ms()
 
     # Verify that we got the expected columns
@@ -282,6 +294,36 @@ def _load_arrow_table_for_from_sumo(case: Case, iteration_name: str, vector_name
 
     # Verify that the column datatypes are as we expect
     schema = table.schema
+
+    ### TEMPORARY FIX SUMO
+    print(f"Received table for {vector_name=}: {table=}")
+    if schema.field("DATE").type == pa.timestamp("us"):
+        LOGGER.warning("Sumo bug: DATE column is in microseconds. Casting to milliseconds")
+        table = table.cast(
+            pa.schema(
+                [
+                    pa.field("DATE", pa.timestamp("ms")),
+                    pa.field("REAL", pa.int16()),
+                    pa.field(vector_name, schema.field(vector_name).type),
+                ]
+            )
+        )
+        schema = table.schema
+    if schema.field(vector_name).type == pa.float64():
+        LOGGER.warning("Sumo bug: vector column is in float64. Casting to float32")
+        table = table.cast(
+            pa.schema(
+                [
+                    pa.field("DATE", schema.field("DATE").type),
+                    pa.field("REAL", pa.int16()),
+                    pa.field(vector_name, pa.float32()),
+                ]
+            )
+        )
+        schema = table.schema
+
+    ###
+
     if schema.field("DATE").type != pa.timestamp("ms"):
         raise ValueError(f"Unexpected type for DATE column {schema.field('DATE').type=}")
     if schema.field("REAL").type != pa.int16():
