@@ -1,6 +1,14 @@
 # pylint: disable=bare-except
 
-from typing import Any, Optional
+from typing import Any, Optional, TypedDict
+
+
+class AccessTokens(TypedDict):
+    graph_access_token: Optional[str]
+    sumo_access_token: Optional[str]
+    smda_access_token: Optional[str]
+    pdm_access_token: Optional[str]
+    ssdl_access_token: Optional[str]
 
 
 class AuthenticatedUser:
@@ -8,19 +16,15 @@ class AuthenticatedUser:
         self,
         user_id: str,
         username: str,
-        graph_access_token: Optional[str],
-        sumo_access_token: Optional[str],
-        smda_access_token: Optional[str],
-        pdm_access_token: Optional[str],
-        ssdl_access_token: Optional[str],
+        access_tokens: AccessTokens,
     ) -> None:
         self._user_id = user_id
         self._username = username
-        self._graph_access_token = graph_access_token
-        self._sumo_access_token = sumo_access_token
-        self._smda_access_token = smda_access_token
-        self._pdm_access_token = pdm_access_token
-        self._ssdl_access_token = ssdl_access_token
+        self._graph_access_token = access_tokens.get("graph_access_token", None)
+        self._sumo_access_token = access_tokens.get("sumo_access_token", None)
+        self._smda_access_token = access_tokens.get("smda_access_token", None)
+        self._pdm_access_token = access_tokens.get("pdm_access_token", None)
+        self._ssdl_access_token = access_tokens.get("ssdl_access_token", None)
 
     def __hash__(self) -> int:
         return hash(self._user_id)

@@ -101,7 +101,6 @@ class AuthHelper:
     def get_authenticated_user(
         request_with_session: Request,
     ) -> Optional[AuthenticatedUser]:
-
         timer = PerfTimer()
 
         # We may already have created and stored the AuthenticatedUser object on the request
@@ -190,11 +189,13 @@ class AuthHelper:
         authenticated_user = AuthenticatedUser(
             user_id=user_id,
             username=user_name,
-            graph_access_token=graph_token,
-            sumo_access_token=sumo_token,
-            smda_access_token=smda_token,
-            pdm_access_token=None,
-            ssdl_access_token=None,
+            access_tokens={
+                "graph_access_token": graph_token,
+                "sumo_access_token": sumo_token,
+                "smda_access_token": smda_token,
+                "pdm_access_token": None,
+                "ssdl_access_token": None,
+            },
         )
 
         request_with_session.state.authenticated_user_obj = authenticated_user
@@ -207,7 +208,6 @@ class AuthHelper:
 def _create_msal_confidential_client_app(
     token_cache: msal.TokenCache,
 ) -> msal.ConfidentialClientApplication:
-
     authority = f"https://login.microsoftonline.com/{config.TENANT_ID}"
     return msal.ConfidentialClientApplication(
         client_id=config.CLIENT_ID,
@@ -221,7 +221,6 @@ def _create_msal_confidential_client_app(
 # Note that this function will NOT return the token itself, but rather a dict
 # that typically has an "access_token" key
 def _get_token_dict_from_session_token_cache(request_with_session: Request, scopes: List[str]) -> Optional[dict]:
-
     token_cache = _load_token_cache_from_session(request_with_session)
     cca = _create_msal_confidential_client_app(token_cache)
 
