@@ -5,9 +5,9 @@ import { ModuleInstance, ModuleInstanceState } from "@framework/ModuleInstance";
 import { Workbench } from "@framework/Workbench";
 import { ErrorBoundary } from "@framework/internal/components/ErrorBoundary";
 import { useImportState } from "@framework/internal/hooks/moduleHooks";
-import { Cog6ToothIcon } from "@heroicons/react/20/solid";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
+import { Settings as SettingsIcon } from "@mui/icons-material";
 
 import { DebugProfiler } from "../../DebugProfiler";
 
@@ -81,7 +81,7 @@ export const Setting: React.FC<SettingProps> = (props) => {
         >
             <ErrorBoundary moduleInstance={props.moduleInstance}>
                 <div className="flex justify-center items-center p-2 bg-slate-100 h-10">
-                    <Cog6ToothIcon className="w-4 h-4 mr-2" />{" "}
+                    <SettingsIcon fontSize="small" className="mr-2" />{" "}
                     <span
                         title={props.moduleInstance.getTitle()}
                         className="font-bold flex-grow p-0 text-ellipsis whitespace-nowrap overflow-hidden text-sm"
