@@ -2,8 +2,8 @@ import React from "react";
 
 import { ModuleInstance } from "@framework/ModuleInstance";
 import { SyncSettingKey, SyncSettingsMeta } from "@framework/SyncSettings";
-import { XMarkIcon } from "@heroicons/react/20/solid";
 import { isDevMode } from "@lib/utils/devMode";
+import { Close } from "@mui/icons-material";
 
 export type HeaderProps = {
     moduleInstance: ModuleInstance<any>;
@@ -75,7 +75,7 @@ export const Header: React.FC<HeaderProps> = (props) => {
                 onPointerDown={props.onRemoveClick}
                 title="Remove this module"
             >
-                <XMarkIcon className="w-4 h-4" />
+                <Close className="w-4 h-4" />
             </div>
         </div>
     );

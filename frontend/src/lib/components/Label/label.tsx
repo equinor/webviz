@@ -1,7 +1,7 @@
 import React from "react";
 
-import { LinkIcon } from "@heroicons/react/20/solid";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
+import { Link } from "@mui/icons-material";
 
 import { v4 } from "uuid";
 
@@ -41,7 +41,7 @@ export const Label: React.FC<LabelProps> = (props) => {
                         className="bg-indigo-700 w-5 h-5 flex justify-center items-center rounded mr-2"
                         title={`"${props.text}" is synced on the current page`}
                     >
-                        <LinkIcon className="w-4 h-4 text-white" />
+                        <Link fontSize="small" className="text-white" />
                     </span>
                 )}
                 {props.text}

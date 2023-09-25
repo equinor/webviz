@@ -1,13 +1,13 @@
 import React from "react";
 
 import { AuthState, useAuthProvider } from "@framework/internal/providers/AuthProvider";
-import { ArrowLeftOnRectangleIcon, ArrowRightOnRectangleIcon, UserIcon } from "@heroicons/react/20/solid";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { Menu } from "@lib/components/Menu";
 import { MenuItem } from "@lib/components/MenuItem";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { getTextWidth } from "@lib/utils/textSize";
 import { Dropdown, MenuButton } from "@mui/base";
+import { AccountCircle, Login, Logout } from "@mui/icons-material";
 
 function makeInitials(name: string): string | null {
     const regExp = new RegExp(/([^()]+)(\([\w ]+\))/);
@@ -64,7 +64,7 @@ export const LoginButton: React.FC<LoginButtonProps> = (props) => {
             return <UserIcon className="w-5 h-5 mr-1" />;
 
         } else if (authState === AuthState.NotLoggedIn) {
-            return <ArrowLeftOnRectangleIcon className="w-5 h-5 mr-1" />;
+            return <Login fontSize="small" className=" mr-1" />;
         } else {
             return <CircularProgress size="medium-small" className="mr-1" />;
         }
@@ -114,7 +114,7 @@ export const LoginButton: React.FC<LoginButtonProps> = (props) => {
             </MenuButton>
             <Menu anchorOrigin="bottom-start">
                 <MenuItem onClick={handleLogout}>
-                    <ArrowRightOnRectangleIcon className="w-4 h-4 mr-2" />
+                    <Logout fontSize="small" className="mr-2" />
                     Sign out
                 </MenuItem>
             </Menu>

@@ -2,7 +2,6 @@ import React from "react";
 
 import { CaseInfo_api, EnsembleInfo_api } from "@api";
 import { apiService } from "@framework/ApiService";
-import { CheckIcon, PlusIcon, TrashIcon } from "@heroicons/react/20/solid";
 import { ApiStateWrapper } from "@lib/components/ApiStateWrapper";
 import { Button } from "@lib/components/Button";
 import { CircularProgress } from "@lib/components/CircularProgress";
@@ -12,6 +11,7 @@ import { IconButton } from "@lib/components/IconButton";
 import { Label } from "@lib/components/Label";
 import { Select } from "@lib/components/Select";
 import { useValidState } from "@lib/hooks/useValidState";
+import { Add, Check, Remove } from "@mui/icons-material";
 import { useQuery } from "@tanstack/react-query";
 
 import { isEqual } from "lodash";
@@ -232,11 +232,7 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                                 color={ensembleAlreadySelected ? "success" : "primary"}
                                 disabled={ensembleAlreadySelected || ensembleOpts.length === 0}
                                 startIcon={
-                                    ensembleAlreadySelected ? (
-                                        <CheckIcon className="w-5 h-5" />
-                                    ) : (
-                                        <PlusIcon className="w-5 h-5" />
-                                    )
+                                    ensembleAlreadySelected ? <Check fontSize="small" /> : <Add fontSize="small" />
                                 }
                             >
                                 {ensembleAlreadySelected ? "Ensemble already selected" : "Add Ensemble"}
@@ -282,7 +278,7 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                                                     }
                                                     color="danger"
                                                 >
-                                                    <TrashIcon className="w-5 h-5" />
+                                                    <Remove fontSize="small" />
                                                 </IconButton>{" "}
                                             </td>
                                         </tr>

@@ -1,6 +1,6 @@
 import React from "react";
 
-import { ChevronDownIcon, ChevronUpIcon, XMarkIcon } from "@heroicons/react/20/solid";
+import { Close, ExpandLess, ExpandMore } from "@mui/icons-material";
 
 import { v4 } from "uuid";
 
@@ -182,7 +182,7 @@ export const Table: React.FC<TableProps<TableHeading>> = (props) => {
                                                         : undefined
                                                 }
                                             >
-                                                <ChevronUpIcon />
+                                                <ExpandLess />
                                             </IconButton>
                                             <IconButton
                                                 size="small"
@@ -194,7 +194,7 @@ export const Table: React.FC<TableProps<TableHeading>> = (props) => {
                                                         : undefined
                                                 }
                                             >
-                                                <ChevronDownIcon />
+                                                <ExpandMore />
                                             </IconButton>
                                         </div>
                                     </div>
@@ -206,7 +206,7 @@ export const Table: React.FC<TableProps<TableHeading>> = (props) => {
                                             onChange={(e) => handleFilterChange(col, e.target.value)}
                                             endAdornment={
                                                 <IconButton size="small" onClick={() => handleFilterChange(col, "")}>
-                                                    <XMarkIcon />
+                                                    <Close />
                                                 </IconButton>
                                             }
                                         />

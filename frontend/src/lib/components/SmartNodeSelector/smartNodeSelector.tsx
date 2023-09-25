@@ -1,7 +1,7 @@
 import React from "react";
 
-import { XMarkIcon } from "@heroicons/react/20/solid";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
+import { Close } from "@mui/icons-material";
 
 import _ from "lodash";
 
@@ -1680,7 +1680,7 @@ export class SmartNodeSelectorComponent extends React.Component<SmartNodeSelecto
                             onClick={this.clearAllTags}
                             disabled={this.countTags() <= 1 && this.hasLastEmptyTag()}
                         >
-                            <XMarkIcon className="w-4 h-4" />
+                            <Close fontSize="small" />
                         </button>
                     </div>
                     {showSuggestions && (
