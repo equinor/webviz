@@ -5,7 +5,7 @@ import { useStoreState } from "@framework/StateStore";
 import { Template, TemplateRegistry } from "@framework/TemplateRegistry";
 import { DrawerContent, Workbench } from "@framework/Workbench";
 import { Drawer } from "@framework/internal/components/Drawer";
-import { Squares2X2Icon } from "@heroicons/react/20/solid";
+import { GridView } from "@mui/icons-material";
 
 function drawTemplatePreview(template: Template, width: number, height: number): React.ReactNode {
     return (
@@ -115,7 +115,7 @@ export const TemplatesList: React.FC<TemplatesListProps> = (props) => {
             onFilterChange={handleSearchQueryChange}
             filterPlaceholder="Filter templates..."
             title="Select a template"
-            icon={<Squares2X2Icon />}
+            icon={<GridView />}
             visible={drawerContent === DrawerContent.TemplatesList}
         >
             {Object.keys(TemplateRegistry.getRegisteredTemplates())

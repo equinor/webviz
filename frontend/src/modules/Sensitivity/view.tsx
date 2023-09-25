@@ -4,8 +4,8 @@ import { BroadcastChannelData, BroadcastChannelMeta } from "@framework/Broadcast
 import { Ensemble } from "@framework/Ensemble";
 import { ModuleFCProps } from "@framework/Module";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
-import { AdjustmentsHorizontalIcon, ChartBarIcon, TableCellsIcon } from "@heroicons/react/20/solid";
 import { useElementSize } from "@lib/hooks/useElementSize";
+import { BarChart, TableChart, Tune } from "@mui/icons-material";
 
 import SensitivityChart from "./sensitivityChart";
 import { EnsembleScalarResponse, SensitivityResponseCalculator } from "./sensitivityResponseCalculator";
@@ -114,18 +114,23 @@ export const view = ({ moduleContext, workbenchSession, workbenchServices }: Mod
             <div>
                 <div>
                     <div className="flex justify-end space-x-2">
-                        <button onClick={togglePlotType} className="p-2 bg-indigo-600 text-white rounded-md">
+                        <button
+                            onClick={togglePlotType}
+                            className="p-2 bg-indigo-600 text-white rounded-md"
+                            title={plotType == PlotType.TORNADO ? "Show table" : "Show tornado"}
+                        >
                             {plotType == PlotType.TORNADO ? (
-                                <TableCellsIcon title="Show table" className="h-5 w-5" />
+                                <TableChart fontSize="small" />
                             ) : (
-                                <ChartBarIcon title="Show tornado" className="h-5 w-5" />
+                                <BarChart fontSize="small" />
                             )}
                         </button>
                         <button
                             className="p-2 bg-indigo-600 text-white rounded-md"
                             onClick={() => setSettingsIsOpen(!settingsIsOpen)}
+                            title="Show no impact sensitivities"
                         >
-                            <AdjustmentsHorizontalIcon title="Show no impact sensitivities" className="h-5 w-5" />
+                            <Tune fontSize="small" />
                         </button>
                     </div>
 

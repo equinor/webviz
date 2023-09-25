@@ -1,9 +1,9 @@
 import React from "react";
 
-import { BugAntIcon, Square2StackIcon } from "@heroicons/react/20/solid";
 import { Button } from "@lib/components/Button";
 import { IconButton } from "@lib/components/IconButton";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
+import { BugReport, ContentCopy } from "@mui/icons-material";
 
 type Props = {
     children?: React.ReactNode;
@@ -68,7 +68,7 @@ export class GlobalErrorBoundary extends React.Component<Props, State> {
                                         {freshStartUrl.toString()}
                                     </a>
                                     <IconButton onClick={copyToClipboard} title="Copy URL to clipboard">
-                                        <Square2StackIcon className="w-4 h-4" />
+                                        <ContentCopy fontSize="small" />
                                     </IconButton>
                                 </div>
                                 <div
@@ -91,7 +91,7 @@ export class GlobalErrorBoundary extends React.Component<Props, State> {
                                         this.state.error?.stack ?? ""
                                     )
                                 }
-                                startIcon={<BugAntIcon className="w-4 h-4" />}
+                                startIcon={<BugReport fontSize="small" />}
                             >
                                 Report issue
                             </Button>

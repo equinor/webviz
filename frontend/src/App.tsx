@@ -1,7 +1,6 @@
 import React from "react";
 
 import { DrawerContent, LayoutElement, Workbench } from "@framework/Workbench";
-import { LoginDialog } from "@framework/internal/components/LoginDialog";
 import { NavBar } from "@framework/internal/components/NavBar";
 import { SettingsContentPanels } from "@framework/internal/components/SettingsContentPanels";
 import { useQueryClient } from "@tanstack/react-query";
@@ -41,13 +40,10 @@ function App() {
     }, []);
 
     return (
-        <>
-            <LoginDialog />
-            <div className="h-screen flex flex-row">
-                <NavBar workbench={workbench.current} />
-                <SettingsContentPanels workbench={workbench.current} />
-            </div>
-        </>
+        <div className="h-screen flex flex-row">
+            <NavBar workbench={workbench.current} />
+            <SettingsContentPanels workbench={workbench.current} />
+        </div>
     );
 }
 

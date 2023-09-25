@@ -5,7 +5,6 @@ import { useStoreValue } from "@framework/StateStore";
 import { DrawerContent, Workbench } from "@framework/Workbench";
 import { ColorPaletteType, ColorScaleDiscreteSteps } from "@framework/WorkbenchSettings";
 import { Drawer } from "@framework/internal/components/Drawer";
-import { ChevronDownIcon } from "@heroicons/react/20/solid";
 import { ColorGradient } from "@lib/components/ColorGradient";
 import { ColorTileGroup } from "@lib/components/ColorTileGroup";
 import { IconButton } from "@lib/components/IconButton";
@@ -16,6 +15,7 @@ import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
 import { ColorPalette } from "@lib/utils/ColorPalette";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { convertRemToPixels } from "@lib/utils/screenUnitConversions";
+import { ExpandMore, Palette } from "@mui/icons-material";
 
 enum ColorPaletteSelectorType {
     Categorical = "categorical",
@@ -144,7 +144,7 @@ const ColorPaletteSelector: React.FC<ColorPaletteSelectorProps> = (props) => {
         <div className="bg-slate-100 rounded p-2 flex items-center gap-4" ref={ref}>
             <div className="flex-grow">{makeColorPalettePreview(selectedColorPalette, props.type, props.steps)}</div>
             <IconButton onClick={handleChevronClick}>
-                <ChevronDownIcon className="flex-grow-0 w-4 h-4" />
+                <ExpandMore fontSize="small" className="flex-grow-0" />
             </IconButton>
             {open &&
                 ReactDOM.createPortal(
@@ -201,7 +201,11 @@ export const ColorPaletteSettings: React.FC<ColorPaletteSettingsProps> = (props)
     }
 
     return (
-        <Drawer title="Color palette settings" visible={drawerContent === DrawerContent.ColorPaletteSettings}>
+        <Drawer
+            title="Color palette settings"
+            icon={<Palette />}
+            visible={drawerContent === DrawerContent.ColorPaletteSettings}
+        >
             <div className="flex flex-col gap-2">
                 <Label text="Categorical colors">
                     <ColorPaletteSelector

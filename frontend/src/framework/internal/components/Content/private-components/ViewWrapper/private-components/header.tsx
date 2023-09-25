@@ -2,8 +2,8 @@ import React from "react";
 
 import { ModuleInstance } from "@framework/ModuleInstance";
 import { SyncSettingKey, SyncSettingsMeta } from "@framework/SyncSettings";
-import { XMarkIcon } from "@heroicons/react/20/solid";
 import { isDevMode } from "@lib/utils/devMode";
+import { Close } from "@mui/icons-material";
 
 export type HeaderProps = {
     moduleInstance: ModuleInstance<any>;
@@ -37,6 +37,10 @@ export const Header: React.FC<HeaderProps> = (props) => {
 
         return unsubscribeFunc;
     }, []);
+
+    function handlePointerUp(e: React.PointerEvent<HTMLDivElement>) {
+        e.stopPropagation();
+    }
 
     return (
         <div
@@ -73,9 +77,10 @@ export const Header: React.FC<HeaderProps> = (props) => {
             <div
                 className="hover:text-slate-500 cursor-pointer"
                 onPointerDown={props.onRemoveClick}
+                onPointerUp={handlePointerUp}
                 title="Remove this module"
             >
-                <XMarkIcon className="w-4 h-4" />
+                <Close className="w-4 h-4" />
             </div>
         </div>
     );
