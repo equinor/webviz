@@ -61,7 +61,7 @@ export const LoginButton: React.FC<LoginButtonProps> = (props) => {
                     );
                 }
             }
-            return <UserIcon className="w-5 h-5 mr-1" />;
+            return <AccountCircle className="w-5 h-5 mr-1" />;
 
         } else if (authState === AuthState.NotLoggedIn) {
             return <Login fontSize="small" className=" mr-1" />;
