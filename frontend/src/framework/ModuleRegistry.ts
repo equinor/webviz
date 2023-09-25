@@ -3,6 +3,7 @@ import { Module } from "./Module";
 import { DrawPreviewFunc } from "./Preview";
 import { StateBaseType, StateOptions } from "./StateStore";
 import { SyncSettingKey } from "./SyncSettings";
+import { ModuleNotFoundPlaceholder } from "./internal/ModuleNotFoundPlaceholder";
 
 export type RegisterModuleOptions = {
     moduleName: string;
@@ -13,8 +14,19 @@ export type RegisterModuleOptions = {
     description?: string;
 };
 
+export class ModuleNotFoundError extends Error {
+    readonly moduleName: string;
+    constructor(moduleName: string) {
+        super(
+            `Module '${moduleName}' not found. Did you forget to register your module in 'src/modules/registerAllModules.ts'?`
+        );
+        this.moduleName = moduleName;
+    }
+}
+
 export class ModuleRegistry {
     private static _registeredModules: Record<string, Module<any>> = {};
+    private static _moduleNotFoundPlaceholders: Record<string, Module<any>> = {};
 
     /* eslint-disable-next-line @typescript-eslint/no-empty-function */
     private constructor() {}
@@ -44,7 +56,7 @@ export class ModuleRegistry {
             module.setDefaultState(defaultState, options);
             return module as Module<ModuleStateType>;
         }
-        throw "Did you forget to register your module in 'src/modules/registerAllModules.ts'?";
+        throw new ModuleNotFoundError(moduleName);
     }
 
     static getModule(moduleName: string): Module<any> {
@@ -52,7 +64,12 @@ export class ModuleRegistry {
         if (module) {
             return module as Module<any>;
         }
-        throw "Did you forget to register your module in 'src/modules/registerAllModules.ts'?";
+        const placeholder = this._moduleNotFoundPlaceholders[moduleName];
+        if (placeholder) {
+            return placeholder as Module<any>;
+        }
+        this._moduleNotFoundPlaceholders[moduleName] = new ModuleNotFoundPlaceholder(moduleName);
+        return this._moduleNotFoundPlaceholders[moduleName] as Module<any>;
     }
 
     static getRegisteredModules(): Record<string, Module<any>> {
