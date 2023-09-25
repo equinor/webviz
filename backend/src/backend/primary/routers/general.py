@@ -2,6 +2,7 @@ import asyncio
 import datetime
 import logging
 
+import httpx
 import starsessions
 from starlette.responses import StreamingResponse
 from fastapi import APIRouter, HTTPException, Request, status, Depends, Query
@@ -74,8 +75,10 @@ async def logged_in_user(
             user_info.avatar_b64str = avatar_b64str
             if graph_user_info is not None:
                 user_info.display_name = graph_user_info.get("displayName", None)
-        except Exception as e:
-            print("Error while fetching user avatar and info from Microsoft Graph API:\n", e)
+        except httpx.HTTPError as e:
+            print("Error while fetching user avatar and info from Microsoft Graph API (HTTP error):\n", e)
+        except httpx.InvalidURL as e:
+            print("Error while fetching user avatar and info from Microsoft Graph API (Invalid URL):\n", e)
 
     return user_info
 

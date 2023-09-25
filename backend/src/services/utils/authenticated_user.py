@@ -20,11 +20,11 @@ class AuthenticatedUser:
     ) -> None:
         self._user_id = user_id
         self._username = username
-        self._graph_access_token = access_tokens.get("graph_access_token", None)
-        self._sumo_access_token = access_tokens.get("sumo_access_token", None)
-        self._smda_access_token = access_tokens.get("smda_access_token", None)
-        self._pdm_access_token = access_tokens.get("pdm_access_token", None)
-        self._ssdl_access_token = access_tokens.get("ssdl_access_token", None)
+        self._graph_access_token = access_tokens.get("graph_access_token")
+        self._sumo_access_token = access_tokens.get("sumo_access_token")
+        self._smda_access_token = access_tokens.get("smda_access_token")
+        self._pdm_access_token = access_tokens.get("pdm_access_token")
+        self._ssdl_access_token = access_tokens.get("ssdl_access_token")
 
     def __hash__(self) -> int:
         return hash(self._user_id)
