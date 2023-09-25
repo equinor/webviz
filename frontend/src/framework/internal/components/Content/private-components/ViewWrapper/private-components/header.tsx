@@ -38,6 +38,10 @@ export const Header: React.FC<HeaderProps> = (props) => {
         return unsubscribeFunc;
     }, []);
 
+    function handlePointerUp(e: React.PointerEvent<HTMLDivElement>) {
+        e.stopPropagation();
+    }
+
     return (
         <div
             className={`bg-slate-100 p-2 pl-4 pr-4 flex items-center select-none shadow ${
@@ -73,6 +77,7 @@ export const Header: React.FC<HeaderProps> = (props) => {
             <div
                 className="hover:text-slate-500 cursor-pointer"
                 onPointerDown={props.onRemoveClick}
+                onPointerUp={handlePointerUp}
                 title="Remove this module"
             >
                 <Close className="w-4 h-4" />

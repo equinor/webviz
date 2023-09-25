@@ -286,6 +286,11 @@ export const Layout: React.FC<LayoutProps> = (props) => {
                 LayoutEventTypes.MODULE_INSTANCE_POINTER_DOWN,
                 handleModuleInstancePointerDown
             );
+            document.removeEventListener(LayoutEventTypes.NEW_MODULE_POINTER_DOWN, handleNewModulePointerDown);
+            document.removeEventListener(
+                LayoutEventTypes.REMOVE_MODULE_INSTANCE_REQUEST,
+                handleRemoveModuleInstanceRequest
+            );
             document.removeEventListener("pointerup", handlePointerUp);
             document.removeEventListener("pointermove", handlePointerMove);
             document.removeEventListener("keydown", handleButtonClick);
