@@ -4,7 +4,7 @@
 
 import type { Completions } from './Completions';
 
-export type WellCompletionWell = {
+export type WellCompletionsWell = {
     name: string;
     attributes: Record<string, (string | number | boolean)>;
     completions: Record<string, Completions>;

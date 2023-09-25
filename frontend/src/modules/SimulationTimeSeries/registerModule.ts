@@ -10,5 +10,6 @@ ModuleRegistry.registerModule<State>({
     defaultTitle: "Simulation time series",
     syncableSettingKeys: [SyncSettingKey.ENSEMBLE, SyncSettingKey.TIME_SERIES],
     broadcastChannelsDef,
-    preview
+    preview,
+    description: "Time series of simulation results",
 });

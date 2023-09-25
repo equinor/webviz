@@ -1,14 +1,7 @@
 import React from "react";
 
-import {
-    ChevronDownIcon,
-    ChevronUpIcon,
-    ExclamationCircleIcon,
-    ExclamationTriangleIcon,
-    QuestionMarkCircleIcon,
-    XMarkIcon,
-} from "@heroicons/react/20/solid";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
+import { Close, Error, ExpandLess, ExpandMore, Help, Warning } from "@mui/icons-material";
 
 import "animate.css";
 
@@ -193,7 +186,7 @@ export class Tag extends React.Component<TagProps> {
                             e.stopPropagation();
                         }}
                     >
-                        <ChevronUpIcon className="w-4 h-4 text-white" />
+                        <ExpandLess fontSize="small" className="text-white" />
                     </button>
                     <button
                         key={"TagNextButton_" + index}
@@ -213,7 +206,7 @@ export class Tag extends React.Component<TagProps> {
                             e.stopPropagation();
                         }}
                     >
-                        <ChevronDownIcon className="w-4 h-4 text-white" />
+                        <ExpandMore fontSize="small" className="text-white" />
                     </button>
                 </div>
             );
@@ -418,7 +411,7 @@ export class Tag extends React.Component<TagProps> {
                         title="Remove"
                         onClick={(e): void => removeTag(e, index)}
                     >
-                        <XMarkIcon className="w-3 h-3 text-white" />
+                        <Close fontSize="small" className="text-white" />
                     </button>
                 )}
                 {this.createBrowseButtons(treeNodeSelection, index)}
@@ -438,15 +431,15 @@ export class Tag extends React.Component<TagProps> {
                     }
                 >
                     {this.addAdditionalClasses(!valid) && !valid && !currentTag && (
-                        <ExclamationCircleIcon className="w-4 h-4 mr-2" />
+                        <Error fontSize="small" className="mr-2" />
                     )}
                     {this.addAdditionalClasses(!valid) && valid && duplicate && (
-                        <ExclamationTriangleIcon className="w-4 h-4 mr-2" />
+                        <Warning fontSize="small" className="mr-2" />
                     )}
                     {this.addAdditionalClasses(!valid) &&
                         (valid || currentTag) &&
                         !duplicate &&
-                        treeNodeSelection.icons().length > 1 && <QuestionMarkCircleIcon className="w-4 h-4 mr-2" />}
+                        treeNodeSelection.icons().length > 1 && <Help fontSize="small" className="mr-2" />}
                     {this.createMatchesCounter(treeNodeSelection, index)}
                     <div className="flex whitespace-nowrap relative">
                         <input

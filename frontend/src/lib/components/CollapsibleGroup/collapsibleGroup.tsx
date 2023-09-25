@@ -1,7 +1,7 @@
 import React from "react";
 
-import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/20/solid";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
+import { ExpandLess, ExpandMore } from "@mui/icons-material";
 
 import { BaseComponent, BaseComponentProps } from "../BaseComponent";
 
@@ -40,7 +40,7 @@ export const CollapsibleGroup: React.FC<CollapsibleGroupProps> = (props) => {
                 >
                     {props.icon && React.cloneElement(props.icon, { className: "w-4 h-4" })}
                     <h3 className="text-sm font-semibold flex-grow leading-none">{props.title}</h3>
-                    {expanded ? <ChevronUpIcon className="w-4 h-4" /> : <ChevronDownIcon className="w-4 h-4" />}
+                    {expanded ? <ExpandLess fontSize="small" /> : <ExpandMore fontSize="small" />}
                 </div>
                 <div
                     className={resolveClassNames("p-2", {

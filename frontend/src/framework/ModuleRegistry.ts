@@ -10,6 +10,7 @@ export type RegisterModuleOptions = {
     syncableSettingKeys?: SyncSettingKey[];
     broadcastChannelsDef?: BroadcastChannelsDef;
     preview?: DrawPreviewFunc;
+    description?: string;
 };
 
 export class ModuleRegistry {
@@ -26,7 +27,8 @@ export class ModuleRegistry {
             options.defaultTitle,
             options.syncableSettingKeys,
             options.broadcastChannelsDef,
-            options.preview || null
+            options.preview ?? null,
+            options.description ?? null
         );
         this._registeredModules[options.moduleName] = module;
         return module;

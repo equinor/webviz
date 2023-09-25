@@ -3,8 +3,8 @@ import React from "react";
 import { useStoreValue } from "@framework/StateStore";
 import { DrawerContent, Workbench } from "@framework/Workbench";
 import { useActiveModuleId, useModuleInstances } from "@framework/internal/hooks/workbenchHooks";
-import { Cog6ToothIcon } from "@heroicons/react/20/solid";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
+import { Settings as SettingsIcon } from "@mui/icons-material";
 
 import { ColorPaletteSettings } from "./private-components/colorPaletteSettings";
 import { ModulesList } from "./private-components/modulesList";
@@ -51,7 +51,7 @@ export const Settings: React.FC<SettingsProps> = (props) => {
                 ))}
                 {moduleInstances.length === 0 && (
                     <div className="flex flex-col items-center justify-center h-full">
-                        <Cog6ToothIcon className="w-20 h-20 text-slate-200" />
+                        <SettingsIcon fontSize="large" className="text-slate-200" />
                     </div>
                 )}
             </div>

@@ -1,9 +1,9 @@
 import React from "react";
 import ReactDOM from "react-dom";
 
-import { XMarkIcon } from "@heroicons/react/20/solid";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
+import { Close } from "@mui/icons-material";
 
 export type DialogProps = {
     title?: string;
@@ -78,7 +78,7 @@ export const Dialog: React.FC<DialogProps> = (props) => {
                             onPointerDown={handleClose}
                             title="Close dialog"
                         >
-                            <XMarkIcon width={24} />
+                            <Close width={24} />
                         </div>
                     )}
                 </div>
