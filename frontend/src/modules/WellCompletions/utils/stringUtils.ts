@@ -1,5 +1,5 @@
 /**
- * NOTE: This file is a copy from the WellCompletion-component in webviz-subsurface-components/packages/dash-components
+ * NOTE: This file is a copy from the WellCompletions-component in webviz-subsurface-components/packages/dash-components
  */
 
 /**
