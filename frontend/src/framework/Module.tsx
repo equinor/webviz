@@ -36,7 +36,7 @@ export class Module<StateType extends StateBaseType> {
     private _defaultTitle: string;
     public viewFC: ModuleFC<StateType>;
     public settingsFC: ModuleFC<StateType>;
-    private _importState: ImportState;
+    protected _importState: ImportState;
     private _moduleInstances: ModuleInstance<StateType>[];
     private _defaultState: StateType | null;
     private _stateOptions: StateOptions<StateType> | undefined;
