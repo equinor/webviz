@@ -1,10 +1,10 @@
 import React from "react";
 import ReactDOM from "react-dom";
 
-import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/20/solid";
 import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { getTextWidth } from "@lib/utils/textSize";
+import { ExpandLess, ExpandMore } from "@mui/icons-material";
 
 import { BaseComponent, BaseComponentProps } from "../BaseComponent";
 import { IconButton } from "../IconButton";
@@ -273,7 +273,7 @@ export const Dropdown = withDefaults<DropdownProps>()(defaultProps, (props) => {
                     onClick={() => handleInputClick()}
                     endAdornment={
                         <IconButton size="small" onClick={() => setDropdownVisible((prev) => !prev)}>
-                            {dropdownVisible ? <ChevronUpIcon /> : <ChevronDownIcon />}
+                            {dropdownVisible ? <ExpandLess /> : <ExpandMore />}
                         </IconButton>
                     }
                     onChange={handleInputChange}

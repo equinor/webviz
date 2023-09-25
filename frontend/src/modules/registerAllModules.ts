@@ -13,8 +13,7 @@ import "./SimulationTimeSeriesMatrix/registerModule";
 import "./SimulationTimeSeriesSensitivity/registerModule";
 import "./TimeSeriesParameterDistribution/registerModule";
 import "./TopographicMap/registerModule";
-import "./TornadoChart/registerModule";
-import "./WellCompletion/registerModule";
+import "./WellCompletions/registerModule";
 
 if (isDevMode()) {
     await import("./MyModule/registerModule");

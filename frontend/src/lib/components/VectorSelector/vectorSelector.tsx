@@ -58,7 +58,6 @@ export class VectorSelectorComponent extends SmartNodeSelectorComponent {
                 treeData: this.modifyTreeData(props.data, props.numMetaNodes, this.vectorDefinitions),
                 delimiter: props.delimiter,
                 allowOrOperator: props.useBetaFeatures || false,
-                allowWildcards: this.props.maxNumSelectedNodes !== 1,
             });
         } catch (e) {
             this.treeData = null;
@@ -89,11 +88,6 @@ export class VectorSelectorComponent extends SmartNodeSelectorComponent {
     }
 
     componentDidUpdate(prevProps: VectorSelectorProps): void {
-        if (this.updateFromWithin) {
-            this.updateFromWithin = false;
-            return;
-        }
-
         if (
             this.props.customVectorDefinitions &&
             JSON.stringify(this.props.customVectorDefinitions) !== JSON.stringify(prevProps.customVectorDefinitions)
@@ -117,7 +111,6 @@ export class VectorSelectorComponent extends SmartNodeSelectorComponent {
                     treeData: this.modifyTreeData(this.props.data, this.props.numMetaNodes, this.vectorDefinitions),
                     delimiter: this.props.delimiter,
                     allowOrOperator: this.props.useBetaFeatures || false,
-                    allowWildcards: this.props.maxNumSelectedNodes !== 1,
                 });
             } catch (e) {
                 this.treeData = null;

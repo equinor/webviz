@@ -1,19 +1,19 @@
-import { WellCompletionData_api } from "@api";
+import { WellCompletionsData_api } from "@api";
 import { apiService } from "@framework/ApiService";
 import { UseQueryResult, useQuery } from "@tanstack/react-query";
 
 const STALE_TIME = 60 * 1000;
 const CACHE_TIME = 60 * 1000;
 
-export function useWellCompletionQuery(
+export function useWellCompletionsQuery(
     caseUuid: string | undefined,
     ensembleName: string | undefined,
     realizationNumber: number | undefined
-): UseQueryResult<WellCompletionData_api> {
+): UseQueryResult<WellCompletionsData_api> {
     return useQuery({
-        queryKey: ["getWellCompletion", caseUuid, ensembleName, realizationNumber],
+        queryKey: ["getWellCompletions", caseUuid, ensembleName, realizationNumber],
         queryFn: () =>
-            apiService.wellCompletion.getWellCompletionData(caseUuid ?? "", ensembleName ?? "", realizationNumber),
+            apiService.wellCompletions.getWellCompletionsData(caseUuid ?? "", ensembleName ?? "", realizationNumber),
         staleTime: STALE_TIME,
         cacheTime: CACHE_TIME,
         enabled: caseUuid && ensembleName ? true : false,

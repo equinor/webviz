@@ -36,7 +36,7 @@ export class Module<StateType extends StateBaseType> {
     private _defaultTitle: string;
     public viewFC: ModuleFC<StateType>;
     public settingsFC: ModuleFC<StateType>;
-    private _importState: ImportState;
+    protected _importState: ImportState;
     private _moduleInstances: ModuleInstance<StateType>[];
     private _defaultState: StateType | null;
     private _stateOptions: StateOptions<StateType> | undefined;
@@ -44,13 +44,15 @@ export class Module<StateType extends StateBaseType> {
     private _syncableSettingKeys: SyncSettingKey[];
     private _channelsDef: BroadcastChannelsDef;
     private _drawPreviewFunc: DrawPreviewFunc | null;
+    private _description: string | null;
 
     constructor(
         name: string,
         defaultTitle: string,
         syncableSettingKeys: SyncSettingKey[] = [],
         broadcastChannelsDef: BroadcastChannelsDef = {},
-        drawPreviewFunc: DrawPreviewFunc | null = null
+        drawPreviewFunc: DrawPreviewFunc | null = null,
+        description: string | null = null
     ) {
         this._name = name;
         this._defaultTitle = defaultTitle;
@@ -63,6 +65,7 @@ export class Module<StateType extends StateBaseType> {
         this._syncableSettingKeys = syncableSettingKeys;
         this._channelsDef = broadcastChannelsDef;
         this._drawPreviewFunc = drawPreviewFunc;
+        this._description = description;
     }
 
     getDrawPreviewFunc(): DrawPreviewFunc | null {
@@ -73,12 +76,16 @@ export class Module<StateType extends StateBaseType> {
         return this._importState;
     }
 
-    getName() {
+    getName(): string {
         return this._name;
     }
 
-    getDefaultTitle() {
+    getDefaultTitle(): string {
         return this._defaultTitle;
+    }
+
+    getDescription(): string | null {
+        return this._description;
     }
 
     setWorkbench(workbench: Workbench): void {
@@ -99,14 +106,11 @@ export class Module<StateType extends StateBaseType> {
         return this._syncableSettingKeys;
     }
 
-
     hasSyncableSettingKey(key: SyncSettingKey): boolean {
         return this._syncableSettingKeys.includes(key);
     }
 
-
     makeInstance(instanceNumber: number): ModuleInstance<StateType> {
-
         if (!this._workbench) {
             throw new Error("Module must be added to a workbench before making an instance");
         }

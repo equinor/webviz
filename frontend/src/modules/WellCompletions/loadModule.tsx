@@ -10,7 +10,7 @@ const initialState: State = {
     plotData: null,
 };
 
-const module = ModuleRegistry.initModule<State>("WellCompletion", initialState);
+const module = ModuleRegistry.initModule<State>("WellCompletions", initialState);
 
 module.viewFC = view;
 module.settingsFC = settings;

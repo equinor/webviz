@@ -1,7 +1,7 @@
 import React from "react";
 
-import { XMarkIcon } from "@heroicons/react/20/solid";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
+import { Close } from "@mui/icons-material";
 
 import _ from "lodash";
 
@@ -160,7 +160,6 @@ export class SmartNodeSelectorComponent extends React.Component<SmartNodeSelecto
                 treeData: props.data,
                 delimiter: props.delimiter,
                 allowOrOperator: props.useBetaFeatures || false,
-                allowWildcards: props.maxNumSelectedNodes !== 1,
             });
         } catch (e) {
             this.treeData = null;
@@ -237,10 +236,6 @@ export class SmartNodeSelectorComponent extends React.Component<SmartNodeSelecto
     }
 
     componentDidUpdate(prevProps: SmartNodeSelectorProps): void {
-        if (this.updateFromWithin) {
-            this.updateFromWithin = false;
-            return;
-        }
         if (
             (this.props.data && JSON.stringify(this.props.data) !== JSON.stringify(prevProps.data)) ||
             (this.props.delimiter && this.props.delimiter !== prevProps.delimiter)
@@ -251,7 +246,6 @@ export class SmartNodeSelectorComponent extends React.Component<SmartNodeSelecto
                     treeData: this.props.data,
                     delimiter: this.props.delimiter,
                     allowOrOperator: this.props.useBetaFeatures || false,
-                    allowWildcards: this.props.maxNumSelectedNodes !== 1,
                 });
             } catch (e) {
                 this.treeData = null;
@@ -614,12 +608,15 @@ export class SmartNodeSelectorComponent extends React.Component<SmartNodeSelecto
         const domNode = (this.tagFieldRef as React.RefObject<HTMLUListElement>).current as HTMLUListElement;
         const suggestions = (this.suggestionsRef as React.RefObject<HTMLDivElement>).current as HTMLDivElement;
         const eventTarget = event.target as Element;
+        if (domNode && domNode.getBoundingClientRect().width === 0) {
+            return;
+        }
         if ((!domNode || !domNode.contains(eventTarget)) && (!suggestions || !suggestions.contains(eventTarget))) {
+            this.noUserInputSelect = false;
             this.hideSuggestions({
                 callback: () => {
                     if (!this.selectionHasStarted) {
                         this.unselectAllTags({});
-
                         this.updateState({ currentTagIndex: -1 });
                     }
                     this.selectionHasStarted = false;
@@ -785,7 +782,7 @@ export class SmartNodeSelectorComponent extends React.Component<SmartNodeSelecto
     }): void {
         this.state.nodeSelections.forEach((selection) => selection.setSelected(false));
         this.updateState({
-            currentTagIndex: newCurrentTagIndex === undefined ? this.countTags() - 1 : newCurrentTagIndex,
+            currentTagIndex: newCurrentTagIndex === undefined ? -1 : newCurrentTagIndex,
             callback: () => {
                 if (showSuggestions) this.maybeShowSuggestions();
                 if (focusInput) this.focusCurrentTag();
@@ -1623,6 +1620,7 @@ export class SmartNodeSelectorComponent extends React.Component<SmartNodeSelecto
         }
 
         const frameless = maxNumSelectedNodes === 1;
+        let numSelectedNodes = maxNumSelectedNodes;
 
         return (
             <div id={id} ref={this.ref}>
@@ -1647,30 +1645,35 @@ export class SmartNodeSelectorComponent extends React.Component<SmartNodeSelecto
                         })}
                         ref={this.tagFieldRef}
                     >
-                        {nodeSelections.map((selection, index) => (
-                            <Tag
-                                key={`${index}`}
-                                index={index}
-                                frameless={frameless}
-                                active={index === this.currentTagIndex()}
-                                placeholder={placeholder ? placeholder : "Add new tag"}
-                                treeNodeSelection={selection}
-                                countTags={this.countTags()}
-                                currentTag={index === this.currentTagIndex()}
-                                checkIfDuplicate={this.checkIfSelectionIsDuplicate}
-                                inputKeyDown={this.handleInputKeyDown}
-                                inputKeyUp={this.handleInputKeyUp}
-                                inputChange={this.handleInputChange}
-                                inputSelect={this.handleInputSelect}
-                                inputBlur={this.handleInputBlur}
-                                hideSuggestions={(cb?: () => void) => this.hideSuggestions({ callback: cb })}
-                                removeTag={(e: React.MouseEvent<HTMLButtonElement, MouseEvent>, index: number) =>
-                                    this.removeTag(index, true, e)
-                                }
-                                updateSelectedTagsAndNodes={this.updateSelectedTagsAndNodes}
-                                shake={this.state.currentTagShaking && index === this.currentTagIndex()}
-                            />
-                        ))}
+                        {nodeSelections.map((selection, index) => {
+                            const tag = (
+                                <Tag
+                                    key={`${index}`}
+                                    index={index}
+                                    frameless={frameless}
+                                    active={index === this.currentTagIndex()}
+                                    placeholder={placeholder ? placeholder : "Add new tag"}
+                                    treeNodeSelection={selection}
+                                    countTags={this.countTags()}
+                                    currentTag={index === this.currentTagIndex()}
+                                    checkIfDuplicate={this.checkIfSelectionIsDuplicate}
+                                    inputKeyDown={this.handleInputKeyDown}
+                                    inputKeyUp={this.handleInputKeyUp}
+                                    inputChange={this.handleInputChange}
+                                    inputSelect={this.handleInputSelect}
+                                    inputBlur={this.handleInputBlur}
+                                    hideSuggestions={(cb?: () => void) => this.hideSuggestions({ callback: cb })}
+                                    removeTag={(e: React.MouseEvent<HTMLButtonElement, MouseEvent>, index: number) =>
+                                        this.removeTag(index, true, e)
+                                    }
+                                    updateSelectedTagsAndNodes={this.updateSelectedTagsAndNodes}
+                                    shake={this.state.currentTagShaking && index === this.currentTagIndex()}
+                                    maxNumSelectedNodes={numSelectedNodes === -1 ? -1 : numSelectedNodes}
+                                />
+                            );
+                            numSelectedNodes -= selection.numberOfExactlyMatchedNodes();
+                            return tag;
+                        })}
                     </ul>
                     <div className="absolute right-2 top-1/2 -mt-3">
                         <button
@@ -1680,7 +1683,7 @@ export class SmartNodeSelectorComponent extends React.Component<SmartNodeSelecto
                             onClick={this.clearAllTags}
                             disabled={this.countTags() <= 1 && this.hasLastEmptyTag()}
                         >
-                            <XMarkIcon className="w-4 h-4" />
+                            <Close fontSize="small" />
                         </button>
                     </div>
                     {showSuggestions && (

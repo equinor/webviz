@@ -14,7 +14,7 @@ export const view = ({ moduleContext }: ModuleFCProps<State>) => {
             {!plotData ? (
                 dataLoadingStatus === DataLoadingStatus.Error ? (
                     <div className="w-full h-full flex justify-center items-center text-red-500">
-                        Error loading well completion data for selected Ensemble and realization
+                        Error loading well completions data for selected Ensemble and realization
                     </div>
                 ) : dataLoadingStatus === DataLoadingStatus.Loading ? (
                     <div className="absolute left-0 right-0 w-full h-full bg-white bg-opacity-80 flex items-center justify-center z-10">

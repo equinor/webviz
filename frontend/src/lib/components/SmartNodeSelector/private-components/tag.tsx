@@ -1,14 +1,7 @@
 import React from "react";
 
-import {
-    ChevronDownIcon,
-    ChevronUpIcon,
-    ExclamationCircleIcon,
-    ExclamationTriangleIcon,
-    QuestionMarkCircleIcon,
-    XMarkIcon,
-} from "@heroicons/react/20/solid";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
+import { Close, Error, ExpandLess, ExpandMore, Help, Warning } from "@mui/icons-material";
 
 import "animate.css";
 
@@ -33,6 +26,7 @@ type TagProps = {
     removeTag: (e: React.MouseEvent<HTMLButtonElement, MouseEvent>, index: number) => void;
     updateSelectedTagsAndNodes: () => void;
     shake: boolean;
+    maxNumSelectedNodes: number;
 };
 
 /**
@@ -65,7 +59,7 @@ export class Tag extends React.Component<TagProps> {
     private innerTagClasses(invalid = false, duplicate = false): string {
         const { treeNodeSelection } = this.props;
         let ret = {
-            "text-sm flex flex-wrap rounded justify-left items-center min-w-0 m-0.5 text-slate-600 border-2 border-transparent whitespace-pre-wrap z-10 bg-no-repeat":
+            "text-sm flex flex-wrap rounded justify-left items-center min-w-0 m-0.5 text-slate-600 border-2 border-transparent whitespace-pre-wrap z-5 bg-no-repeat":
                 true,
         };
         if (this.addAdditionalClasses(invalid)) {
@@ -85,7 +79,7 @@ export class Tag extends React.Component<TagProps> {
 
     private outerTagClasses(invalid: boolean, duplicate: boolean, frameless: boolean): string {
         return resolveClassNames(
-            "flex flex-wrap rounded justify-left items-center min-w-0 relative mr-2 mt-1 mb-1 text-slate-600 border-2 whitespace-pre-wrap z-10",
+            "flex flex-wrap rounded justify-left items-center min-w-0 relative mr-2 mt-1 mb-1 text-slate-600 border-2 whitespace-pre-wrap z-5",
             {
                 "border-slate-400 bg-slate-50 SmartNodeSelector__Tag": this.displayAsTag() || frameless,
                 "border-transparent bg-transparent": !this.displayAsTag() && !frameless,
@@ -126,13 +120,31 @@ export class Tag extends React.Component<TagProps> {
     private createMatchesCounter(nodeSelection: TreeNodeSelection, index: number): JSX.Element | null {
         if (nodeSelection.containsWildcard() && nodeSelection.countExactlyMatchedNodePaths() > 0) {
             const matches = nodeSelection.countExactlyMatchedNodePaths();
+            let fromMax = "";
+            let title = "This expression matches " + matches + " options.";
+            if (this.props.maxNumSelectedNodes !== -1 && matches > this.props.maxNumSelectedNodes) {
+                fromMax = " / " + this.props.maxNumSelectedNodes;
+                title = `This expression matches ${matches} node${matches !== 1 && "s"}, but only ${
+                    this.props.maxNumSelectedNodes
+                } can be selected.`;
+            }
+
             return (
                 <span
                     key={"TagMatchesCounter_" + index}
-                    className="items-center bg-blue-700 text-white rounded-full h-5 justify-center mr-2 pl-1.5 pr-1.5 min-w-[5] flex outline-none relative text-center text-xs leading-none"
-                    title={"This expression matches " + matches + " options."}
+                    className={resolveClassNames(
+                        "items-center text-white rounded-full h-5 justify-center mr-2 pl-1.5 pr-1.5 min-w-[5] flex outline-none relative text-center text-xs leading-none",
+                        {
+                            "bg-blue-700":
+                                matches <= this.props.maxNumSelectedNodes || this.props.maxNumSelectedNodes === -1,
+                            "bg-amber-600":
+                                matches > this.props.maxNumSelectedNodes && this.props.maxNumSelectedNodes !== -1,
+                        }
+                    )}
+                    title={title}
                 >
                     {matches}
+                    {fromMax}
                 </span>
             );
         }
@@ -174,7 +186,7 @@ export class Tag extends React.Component<TagProps> {
                             e.stopPropagation();
                         }}
                     >
-                        <ChevronUpIcon className="w-4 h-4 text-white" />
+                        <ExpandLess fontSize="small" className="text-white" />
                     </button>
                     <button
                         key={"TagNextButton_" + index}
@@ -194,7 +206,7 @@ export class Tag extends React.Component<TagProps> {
                             e.stopPropagation();
                         }}
                     >
-                        <ChevronDownIcon className="w-4 h-4 text-white" />
+                        <ExpandMore fontSize="small" className="text-white" />
                     </button>
                 </div>
             );
@@ -227,8 +239,13 @@ export class Tag extends React.Component<TagProps> {
     }
 
     private tagTitle(nodeSelection: TreeNodeSelection, index: number): string {
-        const { countTags, checkIfDuplicate } = this.props;
-        if (index === countTags - 1 && !nodeSelection.displayAsTag()) {
+        const { countTags, checkIfDuplicate, maxNumSelectedNodes } = this.props;
+        if (
+            index === countTags - 1 &&
+            !nodeSelection.displayAsTag() &&
+            nodeSelection.displayText() === "" &&
+            maxNumSelectedNodes !== 1
+        ) {
             return "Enter a new name";
         } else if (!nodeSelection.isValid()) {
             return "Invalid";
@@ -237,7 +254,15 @@ export class Tag extends React.Component<TagProps> {
         } else if (!nodeSelection.isComplete()) {
             return "Incomplete";
         } else {
-            return nodeSelection.exactlyMatchedNodePaths().join("\n");
+            const exactlyMatchedNodePaths = nodeSelection.exactlyMatchedNodePaths();
+            if (exactlyMatchedNodePaths.length === -1 || exactlyMatchedNodePaths.length <= maxNumSelectedNodes) {
+                return exactlyMatchedNodePaths.join("\n");
+            }
+            return `Matched ${exactlyMatchedNodePaths.length} node${
+                exactlyMatchedNodePaths.length !== 1 && "s"
+            } but only ${maxNumSelectedNodes} ${
+                maxNumSelectedNodes === 1 ? "is" : "are"
+            } allowed.\n\nSelected nodes:\n${exactlyMatchedNodePaths.slice(0, maxNumSelectedNodes).join("\n")}`;
         }
     }
 
@@ -382,11 +407,11 @@ export class Tag extends React.Component<TagProps> {
                     <button
                         type="button"
                         key={"TagRemoveButton_" + index}
-                        className="absolute -right-2 -top-2 bg-cyan-600 border border-white rounded-full cursor-pointer w-4 h-4 p-0 flex items-center justify-center hover:bg-cyan-500 z-20"
+                        className="absolute -right-2 -top-2 bg-cyan-600 border border-white rounded-full cursor-pointer w-4 h-4 p-0 flex items-center justify-center hover:bg-cyan-500 z-8"
                         title="Remove"
                         onClick={(e): void => removeTag(e, index)}
                     >
-                        <XMarkIcon className="w-3 h-3 text-white" />
+                        <Close fontSize="small" className="text-white" />
                     </button>
                 )}
                 {this.createBrowseButtons(treeNodeSelection, index)}
@@ -406,15 +431,15 @@ export class Tag extends React.Component<TagProps> {
                     }
                 >
                     {this.addAdditionalClasses(!valid) && !valid && !currentTag && (
-                        <ExclamationCircleIcon className="w-4 h-4 mr-2" />
+                        <Error fontSize="small" className="mr-2" />
                     )}
                     {this.addAdditionalClasses(!valid) && valid && duplicate && (
-                        <ExclamationTriangleIcon className="w-4 h-4 mr-2" />
+                        <Warning fontSize="small" className="mr-2" />
                     )}
                     {this.addAdditionalClasses(!valid) &&
                         (valid || currentTag) &&
                         !duplicate &&
-                        treeNodeSelection.icons().length > 1 && <QuestionMarkCircleIcon className="w-4 h-4 mr-2" />}
+                        treeNodeSelection.icons().length > 1 && <Help fontSize="small" className="mr-2" />}
                     {this.createMatchesCounter(treeNodeSelection, index)}
                     <div className="flex whitespace-nowrap relative">
                         <input

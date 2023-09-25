@@ -92,6 +92,8 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
         handleModuleClick();
     }
 
+    const showAsActive = props.isActive && [DrawerContent.ModuleSettings, DrawerContent.SyncSettings].includes(drawerContent);
+
     return (
         <>
             {props.isDragged && (
@@ -111,7 +113,7 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
             >
                 <div
                     className={`bg-white h-full w-full flex flex-col ${
-                        props.isActive ? "border-blue-500" : ""
+                        showAsActive && drawerContent ? "border-blue-500" : ""
                     } border-solid border-2 box-border shadow ${
                         props.isDragged ? "cursor-grabbing select-none" : "cursor-grab"
                     }}`}

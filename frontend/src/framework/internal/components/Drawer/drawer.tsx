@@ -1,7 +1,7 @@
 import React from "react";
 
-import { MagnifyingGlassIcon } from "@heroicons/react/20/solid";
 import { Input } from "@lib/components/Input";
+import { Search } from "@mui/icons-material";
 
 export type DrawerProps = {
     title: string;
@@ -17,7 +17,7 @@ export const Drawer: React.FC<DrawerProps> = (props) => {
     return (
         <div className={`flex flex-col bg-white min-h-0 h-full${props.visible ? "" : " hidden"}`}>
             <div className="flex justify-center items-center p-2 bg-slate-100 h-10">
-                {props.icon && React.cloneElement(props.icon, { className: "w-5 h-5 mr-2" })}
+                {props.icon && React.cloneElement(props.icon, { fontSize: "small", className: "mr-2" })}
                 <span className="font-bold flex-grow p-0 text-sm">{props.title}</span>
             </div>
             <div className="flex-grow flex flex-col">
@@ -25,7 +25,7 @@ export const Drawer: React.FC<DrawerProps> = (props) => {
                     <div className="p-2 bg-slate-50">
                         <Input
                             placeholder={props.filterPlaceholder}
-                            startAdornment={<MagnifyingGlassIcon className="w-4 h-4" />}
+                            startAdornment={<Search fontSize="small" />}
                             onChange={props.onFilterChange}
                         />
                     </div>

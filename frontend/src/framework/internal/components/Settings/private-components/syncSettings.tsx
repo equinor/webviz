@@ -5,8 +5,8 @@ import { SyncSettingKey, SyncSettingsMeta } from "@framework/SyncSettings";
 import { DrawerContent, Workbench } from "@framework/Workbench";
 import { Drawer } from "@framework/internal/components/Drawer";
 import { useActiveModuleId } from "@framework/internal/hooks/workbenchHooks";
-import { GlobeAltIcon, LinkIcon, MapPinIcon } from "@heroicons/react/20/solid";
 import { Checkbox } from "@lib/components/Checkbox";
+import { Link, PinDrop, Public } from "@mui/icons-material";
 
 type ModulesListProps = {
     workbench: Workbench;
@@ -84,11 +84,11 @@ export const SyncSettings: React.FC<ModulesListProps> = (props) => {
             <table className="w-full">
                 <thead>
                     <tr className="border-b">
-                        <th className="border-r p-2 w-6">
-                            <GlobeAltIcon className="w-4 h-4" title="Sync for all module instances" />
+                        <th className="border-r p-2 w-6" title="Sync for all module instances">
+                            <Public fontSize="small" />
                         </th>
-                        <th className="border-r p-2 w-6">
-                            <MapPinIcon className="w-4 h-4" title="Sync for active module instance" />
+                        <th className="border-r p-2 w-6" title="Sync for active module instance">
+                            <PinDrop fontSize="small" />
                         </th>
                         <th></th>
                     </tr>
@@ -120,7 +120,7 @@ export const SyncSettings: React.FC<ModulesListProps> = (props) => {
     }
 
     return (
-        <Drawer title="Sync settings" icon={<LinkIcon />} visible={drawerContent === DrawerContent.SyncSettings}>
+        <Drawer title="Sync settings" icon={<Link />} visible={drawerContent === DrawerContent.SyncSettings}>
             {makeContent()}
         </Drawer>
     );
