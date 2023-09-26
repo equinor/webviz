@@ -12,8 +12,8 @@ import "./Sensitivity/registerModule";
 import "./SimulationTimeSeries/registerModule";
 import "./SimulationTimeSeriesMatrix/registerModule";
 import "./SimulationTimeSeriesSensitivity/registerModule";
+import "./SubsurfaceMap/registerModule";
 import "./TimeSeriesParameterDistribution/registerModule";
-import "./TopographicMap/registerModule";
 import "./WellCompletions/registerModule";
 
 if (isDevMode()) {
