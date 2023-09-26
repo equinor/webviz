@@ -76,7 +76,6 @@ export function settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
         setPreviousEnsembleSet(ensembleSet);
     }
 
-    // Queries
     const vectorListQueries = useVectorListQueries(selectedEnsembleIdents);
     const ensembleVectorListsHelper = new EnsembleVectorListsHelper(selectedEnsembleIdents, vectorListQueries);
     const selectedVectorNamesHasHistorical = ensembleVectorListsHelper.hasAnyHistoricalVector(selectedVectorNames);
@@ -101,8 +100,8 @@ export function settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
     ]);
 
     // Await update of vectorSelectorData until all vector lists are retrieved
-    const hasVectorListQueriesErrorOrLoading = vectorListQueries.some((query) => query.isLoading || query.isError);
-    if (!hasVectorListQueriesErrorOrLoading && !isEqual(currentVectorSelectorData, vectorSelectorData)) {
+    const hasVectorListQueriesErrorOrFetching = vectorListQueries.some((query) => query.isFetching || query.isError);
+    if (!hasVectorListQueriesErrorOrFetching && !isEqual(currentVectorSelectorData, vectorSelectorData)) {
         setVectorSelectorData(currentVectorSelectorData);
     }
 
@@ -134,11 +133,17 @@ export function settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
                 return;
             }
 
+            // Try/catch as ParameterIdent.fromString() can throw
             try {
                 const newParameterIdent = ParameterIdent.fromString(selectedParameterIdentStr);
-                continuousAndNonConstantParametersUnion.some((parameter) => parameter.equals(newParameterIdent))
-                    ? setParameterIdent(newParameterIdent)
-                    : setParameterIdent(null);
+                const isParameterInUnion = continuousAndNonConstantParametersUnion.some((parameter) =>
+                    parameter.equals(newParameterIdent)
+                );
+                if (isParameterInUnion) {
+                    setParameterIdent(newParameterIdent);
+                } else {
+                    setParameterIdent(null);
+                }
             } catch {
                 setParameterIdent(null);
             }
@@ -300,12 +305,11 @@ export function settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
                     }}
                 />
                 <div
-                    className={resolveClassNames(
-                        "mt-4 ml-6 mb-4",
-                        colorRealizationsByParameter && visualizationMode === VisualizationMode.INDIVIDUAL_REALIZATIONS
-                            ? ""
-                            : "pointer-events-none opacity-70"
-                    )}
+                    className={resolveClassNames("mt-4 ml-6 mb-4", {
+                        ["pointer-events-none opacity-70"]:
+                            !colorRealizationsByParameter ||
+                            visualizationMode !== VisualizationMode.INDIVIDUAL_REALIZATIONS,
+                    })}
                 >
                     <Dropdown
                         options={continuousAndNonConstantParametersUnion.map((elm) => {

@@ -37,9 +37,9 @@ export class EnsembleVectorListsHelper {
 
             // Add vector if name is not already in vectorUnion
             for (const vector of query.data) {
-                if (!vectorUnion.some((v) => v === vector.name)) {
-                    vectorUnion.push(vector.name);
-                }
+                if (vectorUnion.includes(vector.name)) continue;
+
+                vectorUnion.push(vector.name);
             }
         }
         return vectorUnion;
