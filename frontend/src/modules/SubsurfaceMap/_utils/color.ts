@@ -9,7 +9,7 @@ export function createContinuousColorScaleForMap(colorScale: ColorScale): colorT
     hexColors.forEach((hexColor) => {
         const color: Color | undefined = parse(hexColor[1]); // Returns object with r, g, b items for hex strings
 
-        if (color && color.hasOwnProperty("r") && color.hasOwnProperty("g") && color.hasOwnProperty("b")) {
+        if (color && "r" in color && "g" in color && "b" in color) {
             const rgbColor = color as Rgb;
             rgbArr.push([hexColor[0], rgbColor.r * 255, rgbColor.g * 255, rgbColor.b * 255]);
         }
