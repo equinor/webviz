@@ -7,7 +7,7 @@ import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { BarChart, TableChart, Tune } from "@mui/icons-material";
 
-import SensitivityChart, { SensitivityColors } from "./sensitivityChart";
+import SensitivityChart from "./sensitivityChart";
 import {
     EnsembleScalarResponse,
     SensitivityResponseCalculator,

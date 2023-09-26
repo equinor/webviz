@@ -18,6 +18,8 @@ import { SmartNodeSelectorSelection, TreeDataNode } from "@lib/components/SmartN
 import { VectorSelector } from "@lib/components/VectorSelector";
 import { createVectorSelectorDataFromVectors } from "@lib/utils/vectorSelectorUtils";
 
+import { isEqual } from "lodash";
+
 import { useVectorListQuery } from "./queryHooks";
 import { State } from "./state";
 
@@ -28,8 +30,13 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
     console.debug(`${myInstanceIdStr} -- render SimulationTimeSeries settings`);
 
     const ensembleSet = useEnsembleSet(workbenchSession);
+
     const [selectedEnsembleIdent, setSelectedEnsembleIdent] = React.useState<EnsembleIdent | null>(null);
     const [selectedVectorName, setSelectedVectorName] = React.useState<string | null>(null);
+    const [selectedVectorTag, setSelectedVectorTag] = React.useState<string | null>(null);
+    const [vectorSelectorData, setVectorSelectorData] = React.useState<TreeDataNode[]>([]);
+    const [selectInitialVector, setSelectInitialVector] = React.useState<boolean>(true);
+
     const [selectedSensitivities, setSelectedSensitivities] = moduleContext.useStoreState("selectedSensitivities");
     const [resampleFrequency, setResamplingFrequency] = moduleContext.useStoreState("resamplingFrequency");
     const [showStatistics, setShowStatistics] = moduleContext.useStoreState("showStatistics");
@@ -48,23 +55,39 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
         computedEnsembleIdent?.getEnsembleName()
     );
 
+    const hasQueryData = vectorsListQuery.data !== undefined;
     const vectorNames = vectorsListQuery.data?.map((vec) => vec.name) ?? [];
-    const vectorSelectorData: TreeDataNode[] = createVectorSelectorDataFromVectors(vectorNames);
 
+    // Get vector selector data
+    let candidateVectorSelectorData = vectorSelectorData;
     let candidateVectorName = selectedVectorName;
+    let candidateVectorTag = selectedVectorTag;
+    if (hasQueryData) {
+        candidateVectorSelectorData = createVectorSelectorDataFromVectors(vectorNames);
+        if (!isEqual(vectorSelectorData, candidateVectorSelectorData)) {
+            setVectorSelectorData(candidateVectorSelectorData);
+
+            if (selectInitialVector) {
+                setSelectInitialVector(false);
+                const fixedUpVectorName = fixupVectorName(selectedVectorName, vectorNames);
+                if (fixedUpVectorName !== selectedVectorName) {
+                    setSelectedVectorName(fixedUpVectorName);
+                    setSelectedVectorTag(fixedUpVectorName);
+                    candidateVectorName = fixedUpVectorName;
+                    candidateVectorTag = fixedUpVectorName;
+                }
+            }
+        }
+    }
+    // Override candidates if synced
     if (syncedValueSummaryVector?.vectorName) {
         console.debug(`${myInstanceIdStr} -- syncing timeSeries to ${syncedValueSummaryVector.vectorName}`);
         candidateVectorName = syncedValueSummaryVector.vectorName;
+        candidateVectorTag = syncedValueSummaryVector.vectorName;
     }
-    const computedVectorName = fixupVectorName(candidateVectorName, vectorNames);
-
-    if (computedVectorName && computedVectorName !== selectedVectorName) {
-        setSelectedVectorName(computedVectorName);
-    }
-
-    if (computedEnsembleIdent && !computedEnsembleIdent.equals(selectedEnsembleIdent)) {
-        setSelectedEnsembleIdent(computedEnsembleIdent);
-    }
+    const computedVectorSelectorData = candidateVectorSelectorData;
+    const computedVectorName = candidateVectorName;
+    const computedVectorTag = candidateVectorTag;
 
     const computedEnsemble = computedEnsembleIdent ? ensembleSet.findEnsemble(computedEnsembleIdent) : null;
     const sensitivityNames = computedEnsemble?.getSensitivities()?.getSensitivityNames() ?? [];
@@ -81,21 +104,22 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
         label: name,
     }));
 
+    const hasComputedVectorName = vectorsListQuery.data?.some((vec) => vec.name === computedVectorName) ?? false;
+    const hasHistoricalVector =
+        vectorsListQuery.data?.some((vec) => vec.name === computedVectorName && vec.has_historical) ?? false;
     React.useEffect(
         function propagateVectorSpecToView() {
-            if (computedEnsembleIdent && computedVectorName) {
+            if (hasComputedVectorName && computedEnsembleIdent && computedVectorName) {
                 moduleContext.getStateStore().setValue("vectorSpec", {
                     ensembleIdent: computedEnsembleIdent,
                     vectorName: computedVectorName,
-                    hasHistorical:
-                        vectorsListQuery.data?.some((vec) => vec.name === computedVectorName && vec.has_historical) ??
-                        false,
+                    hasHistorical: hasHistoricalVector,
                 });
             } else {
                 moduleContext.getStateStore().setValue("vectorSpec", null);
             }
         },
-        [computedEnsembleIdent, computedVectorName]
+        [computedEnsembleIdent, computedVectorName, hasComputedVectorName, hasHistoricalVector]
     );
 
     function handleEnsembleSelectionChange(newEnsembleIdent: EnsembleIdent | null) {
@@ -116,7 +140,8 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
         setResamplingFrequency(newFreq);
     }
     function handleVectorSelectChange(selection: SmartNodeSelectorSelection) {
-        setSelectedVectorName(selection.selectedNodes[0]);
+        setSelectedVectorName(selection.selectedNodes[0] ?? null);
+        setSelectedVectorTag(selection.selectedTags[0] ?? null);
     }
     function handleShowHistorical(event: React.ChangeEvent<HTMLInputElement>) {
         setShowHistorical(event.target.checked);
@@ -139,8 +164,8 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
                 <CollapsibleGroup expanded={true} title="Time Series">
                     <Label text="Vector">
                         <VectorSelector
-                            data={vectorSelectorData}
-                            selectedTags={selectedVectorName ? [selectedVectorName] : []}
+                            data={computedVectorSelectorData}
+                            selectedTags={computedVectorTag ? [computedVectorTag] : []}
                             placeholder="Add new vector..."
                             maxNumSelectedNodes={1}
                             numSecondsUntilSuggestionsAreShown={0.5}

@@ -112,7 +112,7 @@ export const view = ({
     const traceDataArr: TimeSeriesPlotlyTrace[] = [];
     if (ensemble && selectedSensitivities && selectedSensitivities.length > 0) {
         const sensitivitiesColorMap = createSensitivityColorMap(allSensitivityNamesInEnsemble, colorSet);
-        selectedSensitivities.forEach((sensitivityName, index) => {
+        selectedSensitivities.forEach((sensitivityName) => {
             const color = sensitivitiesColorMap[sensitivityName];
 
             // Add statistics traces
