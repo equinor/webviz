@@ -1,5 +1,6 @@
 import { Frequency_api, StatisticFunction_api } from "@api";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
+import { ParameterIdent } from "@framework/EnsembleParameters";
 
 export interface VectorSpec {
     ensembleIdent: EnsembleIdent;
@@ -21,18 +22,15 @@ export const VisualizationModeEnumToStringMapping = {
     [VisualizationMode.STATISTICS_AND_REALIZATIONS]: "Statistics + Realizations",
 };
 
-// NOTE: Add None as option?
 export enum GroupBy {
     ENSEMBLE = "ensemble",
     TIME_SERIES = "timeSeries",
 }
 
-// NOTE: Add None as option?
 export const GroupByEnumToStringMapping = {
     [GroupBy.ENSEMBLE]: "Ensemble",
     [GroupBy.TIME_SERIES]: "Time Series",
 };
-
 export const StatisticFunctionEnumToStringMapping = {
     [StatisticFunction_api.MEAN]: "Mean",
     [StatisticFunction_api.MIN]: "Min",
@@ -64,6 +62,8 @@ export const FrequencyEnumToStringMapping = {
 
 export interface State {
     groupBy: GroupBy;
+    colorRealizationsByParameter: boolean;
+    parameterIdent: ParameterIdent | null;
     visualizationMode: VisualizationMode;
     vectorSpecifications: VectorSpec[] | null;
     resamplingFrequency: Frequency_api | null;

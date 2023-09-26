@@ -1,16 +1,19 @@
 import { VectorHistoricalData_api, VectorRealizationData_api, VectorStatisticData_api } from "@api";
 import { ColorSet } from "@lib/utils/ColorSet";
 
+import { PlotMarker } from "plotly.js";
 // import { filterBrightness, formatHex, parseHex } from "culori";
 import { Annotations, Layout } from "plotly.js";
 
 import {
     createHistoricalVectorTrace,
     createVectorFanchartTraces,
+    createVectorRealizationTrace,
     createVectorRealizationTraces,
     createVectorStatisticsTraces,
 } from "./PlotlyTraceUtils/createVectorTracesUtils";
 import { scaleHexColorLightness } from "./colorUtils";
+import { EnsemblesContinuousParameterColoring } from "./ensemblesContinuousParameterColoring";
 import { TimeSeriesPlotData } from "./timeSeriesPlotData";
 
 import { VectorSpec } from "../state";
@@ -43,20 +46,30 @@ export class SubplotBuilder {
     private _vectorHexColors: HexColorMap = {};
     // private _brighten = filterBrightness(1.3, "rgb");
 
+    private _hasRealizationsTraces = false;
+    private _hasRealizationsTracesColoredByParameter = false;
     private _hasHistoryTraces = false;
     private _hasObservationTraces = false;
+
     private _historyVectorColor = "black";
     private _observationColor = "black";
 
     private _width = 0;
     private _height = 0;
 
+    private _scatterType: "scatter" | "scattergl";
+
+    private _ensemblesParameterColoring: EnsemblesContinuousParameterColoring | null = null;
+    private _parameterFallbackColor = "#808080";
+
     constructor(
         subplotOwner: SubplotOwner,
         selectedVectorSpecifications: VectorSpec[],
         colorSet: ColorSet,
         width: number,
-        height: number
+        height: number,
+        ensemblesParameterColoring?: EnsemblesContinuousParameterColoring,
+        scatterType: "scatter" | "scattergl" = "scatter"
     ) {
         this._selectedVectorSpecifications = selectedVectorSpecifications;
         this._width = width;
@@ -82,6 +95,9 @@ export class SubplotBuilder {
             this._subplotOwner === SubplotOwner.VECTOR
                 ? this._uniqueVectorNames.length
                 : this._uniqueEnsembleNames.length;
+
+        this._ensemblesParameterColoring = ensemblesParameterColoring ?? null;
+        this._scatterType = scatterType;
 
         // TODO:
         // - Handle keep uirevision?
@@ -145,31 +161,34 @@ export class SubplotBuilder {
     createGraphLegends(): void {
         let currentLegendRank = 1;
 
-        // Helper function to create legend trace
-        const subplotDataLegendTrace = (name: string, hexColor: string): Partial<TimeSeriesPlotData> => {
-            return {
-                name: name,
-                x: [null],
-                y: [null],
-                legendgroup: name,
-                showlegend: true,
-                visible: true,
-                mode: "lines",
-                line: { color: hexColor },
-                legendrank: currentLegendRank++,
-                yaxis: `y1`,
+        // Add legend for each vector/ensemble when not coloring by parameter
+        if (this._hasRealizationsTraces) {
+            // Helper function to create legend trace
+            const subplotDataLegendTrace = (name: string, hexColor: string): Partial<TimeSeriesPlotData> => {
+                return {
+                    name: name,
+                    x: [null],
+                    y: [null],
+                    legendgroup: name,
+                    showlegend: true,
+                    visible: true,
+                    mode: "lines",
+                    line: { color: hexColor },
+                    legendrank: currentLegendRank++,
+                    yaxis: `y1`,
+                };
             };
-        };
 
-        // Add legend for each vector/ensemble on top
-        if (this._subplotOwner === SubplotOwner.ENSEMBLE) {
-            this._addedVectorsLegendTracker.forEach((vectorName) => {
-                this._plotData.push(subplotDataLegendTrace(vectorName, this._vectorHexColors[vectorName]));
-            });
-        } else if (this._subplotOwner === SubplotOwner.VECTOR) {
-            this._addedEnsemblesLegendTracker.forEach((ensembleName) => {
-                this._plotData.push(subplotDataLegendTrace(ensembleName, this._ensembleHexColors[ensembleName]));
-            });
+            // Add legend for each vector/ensemble on top
+            if (this._subplotOwner === SubplotOwner.ENSEMBLE) {
+                this._addedVectorsLegendTracker.forEach((vectorName) => {
+                    this._plotData.push(subplotDataLegendTrace(vectorName, this._vectorHexColors[vectorName]));
+                });
+            } else if (this._subplotOwner === SubplotOwner.VECTOR) {
+                this._addedEnsemblesLegendTracker.forEach((ensembleName) => {
+                    this._plotData.push(subplotDataLegendTrace(ensembleName, this._ensembleHexColors[ensembleName]));
+                });
+            }
         }
 
         // Add legend for history trace with legendrank after vectors/ensembles
@@ -208,6 +227,82 @@ export class SubplotBuilder {
 
             this._plotData.push(observationLegendTrace);
         }
+
+        // Add color scale for color by parameter below the legends
+        if (this._hasRealizationsTracesColoredByParameter && this._ensemblesParameterColoring !== null) {
+            const colorScaleMarker: Partial<PlotMarker> = {
+                ...this._ensemblesParameterColoring.getColorScale().getAsPlotlyColorScaleMarkerObject(),
+                colorbar: {
+                    title: "Parameter range",
+                    titleside: "right",
+                    ticks: "outside",
+                    len: 0.75, // Note: If too many legends are added, this len might have to be reduced?
+                },
+            };
+            const parameterColorLegendTrace: Partial<TimeSeriesPlotData> = {
+                x: [null],
+                y: [null],
+                marker: colorScaleMarker,
+                showlegend: false,
+            };
+            this._plotData.push(parameterColorLegendTrace);
+        }
+    }
+
+    addRealizationTracesColoredByParameter(
+        vectorsRealizationData: { vectorSpecification: VectorSpec; data: VectorRealizationData_api[] }[]
+    ): void {
+        if (this._ensemblesParameterColoring === null) return;
+
+        // Only allow selected vectors
+        const selectedVectorsRealizationData = vectorsRealizationData.filter((vec) =>
+            this._selectedVectorSpecifications.some(
+                (selectedVec) => selectedVec.vectorName === vec.vectorSpecification.vectorName
+            )
+        );
+
+        const addLegendForTraces = false;
+        const hoverTemplate = ""; // No template yet
+
+        // Create traces for each vector
+        for (const elm of selectedVectorsRealizationData) {
+            const subplotIndex = this.getSubplotIndex(elm.vectorSpecification);
+            if (subplotIndex === -1) continue;
+
+            // Get legend group and color
+            const legendGroup = this.getLegendGroupAndUpdateTracker(elm.vectorSpecification);
+
+            // Add traces for each realization with color based on parameter value
+            for (const realizationData of elm.data) {
+                let parameterColor = this._parameterFallbackColor;
+                const ensembleName = elm.vectorSpecification.ensembleIdent.getEnsembleName();
+                if (
+                    this._ensemblesParameterColoring.hasParameterRealizationNumericalValue(
+                        ensembleName,
+                        realizationData.realization
+                    )
+                ) {
+                    const value = this._ensemblesParameterColoring.getParameterRealizationValue(
+                        ensembleName,
+                        realizationData.realization
+                    );
+                    parameterColor = this._ensemblesParameterColoring.getColorScale().getColorForValue(value);
+                }
+
+                const vectorRealizationTrace = createVectorRealizationTrace({
+                    vectorRealizationData: realizationData,
+                    ensembleName: elm.vectorSpecification.ensembleIdent.getEnsembleName(),
+                    color: parameterColor,
+                    legendGroup: legendGroup,
+                    hoverTemplate: hoverTemplate,
+                    showLegend: addLegendForTraces,
+                    yaxis: `y${subplotIndex + 1}`,
+                    type: this._scatterType,
+                });
+                this._plotData.push(vectorRealizationTrace);
+                this._hasRealizationsTracesColoredByParameter = true;
+            }
+        }
     }
 
     addRealizationsTraces(
@@ -225,9 +320,9 @@ export class SubplotBuilder {
         const hoverTemplate = ""; // No template yet
 
         // Create traces for each vector
-        selectedVectorsRealizationData.forEach((elm) => {
+        for (const elm of selectedVectorsRealizationData) {
             const subplotIndex = this.getSubplotIndex(elm.vectorSpecification);
-            if (subplotIndex === -1) return;
+            if (subplotIndex === -1) continue;
 
             // Get legend group and color
             const legendGroup = this.getLegendGroupAndUpdateTracker(elm.vectorSpecification);
@@ -244,18 +339,20 @@ export class SubplotBuilder {
                 color = scaleHexColorLightness(color, 1.3) ?? color;
             }
 
-            const vectorRealizationTraces = createVectorRealizationTraces(
-                elm.data,
-                elm.vectorSpecification.ensembleIdent.getEnsembleName(),
-                color,
-                legendGroup,
-                hoverTemplate,
-                addLegendForTraces,
-                `y${subplotIndex + 1}`
-            );
+            const vectorRealizationTraces = createVectorRealizationTraces({
+                vectorRealizationsData: elm.data,
+                ensembleName: elm.vectorSpecification.ensembleIdent.getEnsembleName(),
+                color: color,
+                legendGroup: legendGroup,
+                hoverTemplate: hoverTemplate,
+                showLegend: addLegendForTraces,
+                yaxis: `y${subplotIndex + 1}`,
+                type: this._scatterType,
+            });
 
             this._plotData.push(...vectorRealizationTraces);
-        });
+            this._hasRealizationsTraces = true;
+        }
     }
 
     addFanchartTraces(
@@ -269,23 +366,24 @@ export class SubplotBuilder {
         );
 
         // Create traces for each vector
-        selectedVectorsStatisticData.forEach((elm) => {
+        for (const elm of selectedVectorsStatisticData) {
             const subplotIndex = this.getSubplotIndex(elm.vectorSpecification);
-            if (subplotIndex === -1) return;
+            if (subplotIndex === -1) continue;
 
             // Get legend group and color
             const legendGroup = this.getLegendGroupAndUpdateTracker(elm.vectorSpecification);
             const color = this.getHexColor(elm.vectorSpecification);
 
-            const vectorFanchartTraces = createVectorFanchartTraces(
-                elm.data,
-                color,
-                legendGroup,
-                `y${subplotIndex + 1}`
-            );
+            const vectorFanchartTraces = createVectorFanchartTraces({
+                vectorStatisticData: elm.data,
+                hexColor: color,
+                legendGroup: legendGroup,
+                yaxis: `y${subplotIndex + 1}`,
+                type: this._scatterType,
+            });
 
             this._plotData.push(...vectorFanchartTraces);
-        });
+        }
     }
 
     addStatisticsTraces(
@@ -302,24 +400,25 @@ export class SubplotBuilder {
         const lineWidth = highlightStatisticTraces ? 3 : 2;
 
         // Create traces for each vector
-        selectedVectorsStatisticData.forEach((elm) => {
+        for (const elm of selectedVectorsStatisticData) {
             const subplotIndex = this.getSubplotIndex(elm.vectorSpecification);
-            if (subplotIndex === -1) return;
+            if (subplotIndex === -1) continue;
 
             // Get legend group and color
             const legendGroup = this.getLegendGroupAndUpdateTracker(elm.vectorSpecification);
             const color = this.getHexColor(elm.vectorSpecification);
 
-            const vectorStatisticsTraces = createVectorStatisticsTraces(
-                elm.data,
-                color,
-                legendGroup,
-                `y${subplotIndex + 1}`,
-                lineWidth
-            );
+            const vectorStatisticsTraces = createVectorStatisticsTraces({
+                vectorStatisticData: elm.data,
+                hexColor: color,
+                legendGroup: legendGroup,
+                yaxis: `y${subplotIndex + 1}`,
+                lineWidth: lineWidth,
+                type: this._scatterType,
+            });
 
             this._plotData.push(...vectorStatisticsTraces);
-        });
+        }
     }
 
     addHistoryTraces(
@@ -336,18 +435,19 @@ export class SubplotBuilder {
         );
 
         // Create traces for each vector
-        selectedVectorsHistoricalData.forEach((elm) => {
+        for (const elm of selectedVectorsHistoricalData) {
             const subplotIndex = this.getSubplotIndex(elm.vectorSpecification);
-            if (subplotIndex === -1) return;
+            if (subplotIndex === -1) continue;
 
             this._hasHistoryTraces = true;
-            const vectorHistoryTrace = createHistoricalVectorTrace(
-                elm.data,
-                this._historyVectorColor,
-                `y${subplotIndex + 1}`
-            );
+            const vectorHistoryTrace = createHistoricalVectorTrace({
+                vectorHistoricalData: elm.data,
+                color: this._historyVectorColor,
+                yaxis: `y${subplotIndex + 1}`,
+                type: this._scatterType,
+            });
             this._plotData.push(vectorHistoryTrace);
-        });
+        }
     }
 
     addVectorObservations(): void {

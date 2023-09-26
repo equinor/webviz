@@ -7,6 +7,8 @@ import { view } from "./view";
 
 const defaultState: State = {
     groupBy: GroupBy.TIME_SERIES,
+    colorRealizationsByParameter: false,
+    parameterIdent: null,
     visualizationMode: VisualizationMode.INDIVIDUAL_REALIZATIONS,
     vectorSpecifications: [],
     resamplingFrequency: Frequency_api.MONTHLY,
