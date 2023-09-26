@@ -46,9 +46,9 @@ line-length = 120
 disable = ["missing-docstring", "line-too-long", "logging-fstring-interpolation", "duplicate-code"]
 extension-pkg-whitelist = "pydantic"
 ignored-modules = "pyarrow.compute"
-good-names = ["i", "x", "df"]
+good-names = ["i", "x", "df", "xy"]
 min-public-methods = 0
-max-args = 7
+max-args = 9
 max-locals = 19
 max-branches = 14
 
