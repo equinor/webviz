@@ -32,6 +32,7 @@ const defaultSurfaceSettings: SurfaceMeshLayerSettings = {
     smoothShading: false,
     material: false,
 };
+
 export function createNorthArrowLayer(visible?: boolean): Record<string, unknown> {
     return {
         "@@type": "NorthArrow3DLayer",
@@ -74,7 +75,7 @@ export function createSurfaceMeshLayer(
         gridLines: surfaceSettings.gridLines,
         material: surfaceSettings.material,
         smoothShading: surfaceSettings.smoothShading,
-        colorMapName: "Physics",
+        colorMapName: "Continuous",
     };
 }
 export function createSurfacePolygonsLayer(surfacePolygons: PolygonData_api[]): Record<string, unknown> {

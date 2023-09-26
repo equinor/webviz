@@ -1,6 +1,6 @@
 import { SurfAddr } from "./SurfaceAddress";
 import { SurfacePolygonsAddress } from "./SurfacePolygonsAddress";
-import { SurfaceMeshLayerSettings, ViewSettings } from "./_utils/";
+import { SurfaceMeshLayerSettings, ViewSettings } from "./_utils";
 
 export interface state {
     meshSurfaceAddress: SurfAddr | null;
