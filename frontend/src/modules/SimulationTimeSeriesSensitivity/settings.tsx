@@ -92,9 +92,14 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
     const computedEnsemble = computedEnsembleIdent ? ensembleSet.findEnsemble(computedEnsembleIdent) : null;
     const sensitivityNames = computedEnsemble?.getSensitivities()?.getSensitivityNames() ?? [];
     React.useEffect(
-        function setInitialSensitivities() {
-            if (!selectedSensitivities && sensitivityNames.length > 0) {
-                setSelectedSensitivities(sensitivityNames);
+        function setSensitivitiesOnEnsembleChange() {
+            if (sensitivityNames.length > 0) {
+                if (!selectedSensitivities) {
+                    setSelectedSensitivities(sensitivityNames);
+                }
+                if (selectedSensitivities && selectedSensitivities.some((s) => !sensitivityNames.includes(s))) {
+                    setSelectedSensitivities(sensitivityNames);
+                }
             }
         },
         [selectedEnsembleIdent]
