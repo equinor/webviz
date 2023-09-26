@@ -41,7 +41,7 @@ def alive_protected() -> str:
 @router.get("/logged_in_user", response_model=UserInfo)
 async def logged_in_user(
     request: Request,
-    includeGraphApiInfo: bool = Query(
+    includeGraphApiInfo: bool = Query(  # pylint: disable=invalid-name
         False, description="Set to true to include user avatar and display name from Microsoft Graph API"
     ),
 ) -> UserInfo:
@@ -75,10 +75,10 @@ async def logged_in_user(
             user_info.avatar_b64str = avatar_b64str
             if graph_user_info is not None:
                 user_info.display_name = graph_user_info.get("displayName", None)
-        except httpx.HTTPError as e:
-            print("Error while fetching user avatar and info from Microsoft Graph API (HTTP error):\n", e)
-        except httpx.InvalidURL as e:
-            print("Error while fetching user avatar and info from Microsoft Graph API (Invalid URL):\n", e)
+        except httpx.HTTPError as exc:
+            print("Error while fetching user avatar and info from Microsoft Graph API (HTTP error):\n", exc)
+        except httpx.InvalidURL as exc:
+            print("Error while fetching user avatar and info from Microsoft Graph API (Invalid URL):\n", exc)
 
     return user_info
 

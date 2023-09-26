@@ -1,15 +1,11 @@
-import datetime
 import logging
-from typing import List, Optional, Sequence, Union
+from typing import List, Union
 
-import pyarrow as pa
-import pyarrow.compute as pc
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, Query
 
 from src.services.smda_access import mocked_drogon_smda_access
 from src.services.smda_access.well_access import WellAccess
 from src.services.sumo_access.case_inspector import CaseInspector
-from src.services.smda_access.stratigraphy_access import StratigraphyAccess
 from src.services.utils.authenticated_user import AuthenticatedUser
 from src.backend.auth.auth_helper import AuthHelper
 

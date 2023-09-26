@@ -20,7 +20,7 @@ class RadixJobScheduler:
         self._name = name
         self._port = port
 
-        # TODO: This should be moved to Redis
+        # This should be moved to Redis - https://github.com/equinor/webviz/issues/357
         # key: user_id, value: name of Radix job instance
         self._existing_job_names: Dict[str, str] = {}
 
@@ -30,13 +30,13 @@ class RadixJobScheduler:
         existing_job_name = self._existing_job_names.get(user_id)
         if not existing_job_name:
             return False
-        elif LOCALHOST_DEVELOPMENT:
+        if LOCALHOST_DEVELOPMENT:
             return True
 
         async with httpx.AsyncClient() as client:
-            r = await client.get(f"http://{self._name}:{self._port}/api/v1/jobs/{existing_job_name}")
+            res = await client.get(f"http://{self._name}:{self._port}/api/v1/jobs/{existing_job_name}")
 
-        job = r.json()
+        job = res.json()
 
         if job.get("status") != "Running" or not job.get("started"):
             return False
@@ -58,7 +58,7 @@ class RadixJobScheduler:
             self._existing_job_names[user_id] = self._name
         else:
             async with httpx.AsyncClient() as client:
-                r = await client.post(
+                res = await client.post(
                     f"http://{self._name}:{self._port}/api/v1/jobs",
                     # Maximum limits in "resources" for a Radix job is as of May 2023
                     # the specs of a single Standard_E16as_v4 node, i.e.:
@@ -75,7 +75,7 @@ class RadixJobScheduler:
                         }
                     },
                 )
-            self._existing_job_names[user_id] = r.json()["name"]
+            self._existing_job_names[user_id] = res.json()["name"]
 
             while not await self._active_running_job(user_id):
                 # It takes a couple of seconds before Radix job uvicorn process has
@@ -101,7 +101,9 @@ async def proxy_to_user_session(request: Request, authenticated_user: Authentica
     # Ideally this function should probably be a starlette/FastAPI middleware, but it appears that
     # it is not yet possible to put middleware on single routes through decorator like in express.js.
 
-    base_url = await RADIX_JOB_SCHEDULER_INSTANCE.get_base_url(authenticated_user._user_id)
+    base_url = await RADIX_JOB_SCHEDULER_INSTANCE.get_base_url(
+        authenticated_user._user_id  # pylint: disable=protected-access
+    )
 
     # See https://github.com/tiangolo/fastapi/discussions/7382:
 
