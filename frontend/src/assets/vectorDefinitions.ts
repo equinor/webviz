@@ -1,4 +1,8 @@
-export const vectorDefinitions = {
+export type VectorDefinitionsType = {
+    [key: string]: { type: string; description: string };
+};
+
+export const vectorDefinitions: VectorDefinitionsType = {
     FWIP: {
         type: "field",
         description: "Water In Place",

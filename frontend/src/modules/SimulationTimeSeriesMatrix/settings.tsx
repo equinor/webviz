@@ -7,6 +7,7 @@ import { EnsembleSet } from "@framework/EnsembleSet";
 import { ModuleFCProps } from "@framework/Module";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { MultiEnsembleSelect } from "@framework/components/MultiEnsembleSelect";
+import { VectorSelector, createVectorSelectorDataFromVectors } from "@framework/components/VectorSelector";
 import { fixupEnsembleIdents } from "@framework/utils/ensembleUiHelpers";
 import { ApiStatesWrapper } from "@lib/components/ApiStatesWrapper";
 import { Checkbox } from "@lib/components/Checkbox";
@@ -16,10 +17,8 @@ import { Dropdown } from "@lib/components/Dropdown";
 import { Label } from "@lib/components/Label";
 import { RadioGroup } from "@lib/components/RadioGroup";
 import { SmartNodeSelectorSelection, TreeDataNode } from "@lib/components/SmartNodeSelector";
-import { VectorSelector } from "@lib/components/VectorSelector";
 import { useValidState } from "@lib/hooks/useValidState";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-import { createVectorSelectorDataFromVectors } from "@lib/utils/vectorSelectorUtils";
 
 import { isEqual } from "lodash";
 
