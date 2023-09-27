@@ -1,7 +1,9 @@
 from enum import Enum
 from typing import Optional
-from src.services.smda_access.types import StratigraphicFeature
+
 from pydantic import BaseModel
+
+from src.services.smda_access.types import StratigraphicFeature
 
 
 class SurfaceStatisticFunction(str, Enum):

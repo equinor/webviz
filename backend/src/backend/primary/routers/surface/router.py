@@ -1,8 +1,8 @@
 import logging
 from typing import List, Union, Optional
-import numpy as np
-from fastapi import APIRouter, Depends, HTTPException, Query, Body
-import json
+
+from fastapi import APIRouter, Depends, HTTPException, Query
+
 
 from src.services.sumo_access.surface_access import SurfaceAccess
 from src.services.sumo_access.case_inspector import CaseInspector
@@ -110,6 +110,7 @@ def get_statistical_surface_data(
     return surf_data_response
 
 
+# pylint: disable=too-many-arguments
 @router.get("/property_surface_resampled_to_static_surface/")
 def get_property_surface_resampled_to_static_surface(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
