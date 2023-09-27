@@ -2,11 +2,10 @@
 /* tslint:disable */
 /* eslint-disable */
 
-export type SeismicMeta = {
+export type SeismicCubeMeta = {
     seismic_attribute: string;
-    iso_date_or_interval: (string | null);
+    iso_date_or_interval: string;
     is_observation: boolean;
-    zmin: (number | null);
-    zmax: (number | null);
+    is_depth: boolean;
 };
 

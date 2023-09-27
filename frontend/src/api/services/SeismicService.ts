@@ -1,7 +1,7 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-import type { SeismicMeta } from '../models/SeismicMeta';
+import type { SeismicCubeMeta } from '../models/SeismicCubeMeta';
 
 import type { CancelablePromise } from '../core/CancelablePromise';
 import type { BaseHttpRequest } from '../core/BaseHttpRequest';
@@ -15,13 +15,13 @@ export class SeismicService {
      * Get a directory of seismic cubes.
      * @param caseUuid Sumo case uuid
      * @param ensembleName Ensemble name
-     * @returns SeismicMeta Successful Response
+     * @returns SeismicCubeMeta Successful Response
      * @throws ApiError
      */
     public getSeismicDirectory(
         caseUuid: string,
         ensembleName: string,
-    ): CancelablePromise<Array<SeismicMeta>> {
+    ): CancelablePromise<Array<SeismicCubeMeta>> {
         return this.httpRequest.request({
             method: 'GET',
             url: '/seismic/seismic_directory/',

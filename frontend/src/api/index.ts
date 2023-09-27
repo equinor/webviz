@@ -29,7 +29,7 @@ export type { InplaceVolumetricsCategoricalMetaData as InplaceVolumetricsCategor
 export type { InplaceVolumetricsTableMetaData as InplaceVolumetricsTableMetaData_api } from './models/InplaceVolumetricsTableMetaData';
 export type { PolygonData as PolygonData_api } from './models/PolygonData';
 export type { PvtData as PvtData_api } from './models/PvtData';
-export type { SeismicMeta as SeismicMeta_api } from './models/SeismicMeta';
+export type { SeismicCubeMeta as SeismicCubeMeta_api } from './models/SeismicCubeMeta';
 export { SensitivityType as SensitivityType_api } from './models/SensitivityType';
 export { StatisticFunction as StatisticFunction_api } from './models/StatisticFunction';
 export type { StatisticValueObject as StatisticValueObject_api } from './models/StatisticValueObject';
