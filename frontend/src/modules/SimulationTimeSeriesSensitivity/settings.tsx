@@ -93,13 +93,8 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
     const sensitivityNames = computedEnsemble?.getSensitivities()?.getSensitivityNames() ?? [];
     React.useEffect(
         function setSensitivitiesOnEnsembleChange() {
-            if (sensitivityNames.length > 0) {
-                if (!selectedSensitivities) {
-                    setSelectedSensitivities(sensitivityNames);
-                }
-                if (selectedSensitivities && selectedSensitivities.some((s) => !sensitivityNames.includes(s))) {
-                    setSelectedSensitivities(sensitivityNames);
-                }
+            if (!isEqual(selectedSensitivities, sensitivityNames)) {
+                setSelectedSensitivities(sensitivityNames);
             }
         },
         [sensitivityNames]
