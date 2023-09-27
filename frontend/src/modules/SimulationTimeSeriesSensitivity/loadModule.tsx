@@ -8,10 +8,11 @@ import { view } from "./view";
 const defaultState: State = {
     vectorSpec: null,
     resamplingFrequency: Frequency_api.MONTHLY,
-    selectedSensitivity: null,
+    selectedSensitivities: null,
     showStatistics: true,
     showRealizations: false,
     realizationsToInclude: null,
+    showHistorical: true,
 };
 
 const module = ModuleRegistry.initModule<State>("SimulationTimeSeriesSensitivity", defaultState);

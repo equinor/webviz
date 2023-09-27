@@ -1,1 +1,1 @@
-import "./oyvindsplugin";
+import "./oatTimeSeries";

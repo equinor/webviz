@@ -8,11 +8,22 @@ import { useElementSize } from "@lib/hooks/useElementSize";
 import { BarChart, TableChart, Tune } from "@mui/icons-material";
 
 import SensitivityChart from "./sensitivityChart";
-import { EnsembleScalarResponse, SensitivityResponseCalculator } from "./sensitivityResponseCalculator";
+import {
+    EnsembleScalarResponse,
+    SensitivityResponseCalculator,
+    SensitivityResponseDataset,
+} from "./sensitivityResponseCalculator";
 import SensitivityTable from "./sensitivityTable";
 import { PlotType, State } from "./state";
 
-export const view = ({ moduleContext, workbenchSession, workbenchServices }: ModuleFCProps<State>) => {
+import { createSensitivityColorMap } from "../_shared/sensitivityColors";
+
+export const view = ({
+    moduleContext,
+    workbenchSession,
+    workbenchSettings,
+    workbenchServices,
+}: ModuleFCProps<State>) => {
     // Leave this in until we get a feeling for React18/Plotly
     const renderCount = React.useRef(0);
     React.useEffect(function incrementRenderCount() {
@@ -78,31 +89,30 @@ export const view = ({ moduleContext, workbenchSession, workbenchServices }: Mod
         return unsubscribeFunc;
     }, [responseChannel, ensembleSet]);
 
-    // Memoize the computation of sensitivity responses. Should we use useMemo?
     const sensitivities = channelEnsemble?.getSensitivities();
-    const computedSensitivityResponseDataset = React.useMemo(() => {
-        if (sensitivities && channelResponseData) {
-            // How to handle errors?
-            try {
-                const sensitivityResponseCalculator = new SensitivityResponseCalculator(
-                    sensitivities,
-                    channelResponseData
-                );
-                return sensitivityResponseCalculator.computeSensitivitiesForResponse();
-            } catch (e) {
-                console.warn(e);
-                return null;
-            }
+    const colorSet = workbenchSettings.useColorSet();
+    const sensitivitiesColorMap = createSensitivityColorMap(
+        sensitivities?.getSensitivityNames().sort() ?? [],
+        colorSet
+    );
+
+    let computedSensitivityResponseDataset: SensitivityResponseDataset | null = null;
+    if (sensitivities && channelResponseData) {
+        // How to handle errors?
+        try {
+            const sensitivityResponseCalculator = new SensitivityResponseCalculator(sensitivities, channelResponseData);
+            computedSensitivityResponseDataset = sensitivityResponseCalculator.computeSensitivitiesForResponse();
+        } catch (e) {
+            console.warn(e);
         }
-        return null;
-    }, [sensitivities, channelResponseData]);
+    }
 
     let errMessage = "";
     if (!computedSensitivityResponseDataset) {
         if (!responseChannel) {
-            errMessage = "No channel selected";
+            errMessage = "Select a data channel to plot";
         } else {
-            errMessage = "No valid data to plot";
+            errMessage = `No data received on channel ${responseChannel.getName()}`;
         }
     }
 
@@ -181,6 +191,7 @@ export const view = ({ moduleContext, workbenchSession, workbenchServices }: Mod
                 {computedSensitivityResponseDataset && plotType === PlotType.TORNADO && (
                     <SensitivityChart
                         sensitivityResponseDataset={computedSensitivityResponseDataset}
+                        sensitivityColorMap={sensitivitiesColorMap}
                         width={wrapperDivSize.width}
                         height={wrapperDivSize.height}
                         showLabels={showLabels}

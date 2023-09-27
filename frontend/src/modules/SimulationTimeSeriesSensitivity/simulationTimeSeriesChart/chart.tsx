@@ -1,6 +1,8 @@
 import React from "react";
 import Plot from "react-plotly.js";
 
+import { timestampUtcMsToCompactIsoString } from "@framework/utils/timestampUtils";
+
 import { Layout, PlotDatum, PlotHoverEvent, PlotMouseEvent } from "plotly.js";
 
 import { TimeSeriesPlotlyTrace } from "./traces";
@@ -13,8 +15,10 @@ export type HoverInfo = {
 
 export type TimeSeriesChartProps = {
     traceDataArr: TimeSeriesPlotlyTrace[];
+    title: string;
     activeTimestampUtcMs?: number;
     hoveredTimestampUtcMs?: number;
+    uirevision?: string;
     onHover?: (hoverData: HoverInfo | null) => void;
     onClick?: (timestampUtcMs: number) => void;
     height?: number | 100;
@@ -71,9 +75,12 @@ export const TimeSeriesChart: React.FC<TimeSeriesChartProps> = (props) => {
         width: props.width,
         height: props.height,
         xaxis: { type: "date" },
-        legend: { orientation: "h", yanchor: "bottom", y: 1.02, xanchor: "right", x: 1 },
-        margin: { t: 0, b: 100, r: 0 },
+        title: props.title,
+        legend: { orientation: "h", valign: "bottom" },
+        margin: { t: 50, b: 100, r: 0 },
         shapes: [],
+        annotations: [],
+        uirevision: props.uirevision,
     };
 
     if (props.activeTimestampUtcMs !== undefined) {
@@ -84,10 +91,19 @@ export const TimeSeriesChart: React.FC<TimeSeriesChartProps> = (props) => {
             x0: props.activeTimestampUtcMs,
             y0: 0,
             x1: props.activeTimestampUtcMs,
-            y1: 1,
-            line: { color: "#ccc", width: 2 },
+            y1: 0.99,
+            line: { color: "black", width: 2, dash: "dot" },
+        });
+        layout.annotations?.push({
+            bgcolor: "white",
+            showarrow: false,
+            text: timestampUtcMsToCompactIsoString(props.activeTimestampUtcMs),
+            x: props.activeTimestampUtcMs,
+            y: 1,
+            yref: "paper",
         });
     }
+
     if (props.hoveredTimestampUtcMs !== undefined) {
         layout.shapes?.push({
             type: "line",
@@ -96,7 +112,7 @@ export const TimeSeriesChart: React.FC<TimeSeriesChartProps> = (props) => {
             x0: props.hoveredTimestampUtcMs,
             y0: 0,
             x1: props.hoveredTimestampUtcMs,
-            y1: 1,
+            y1: 0.99,
             line: { color: "red", width: 1, dash: "dot" },
         });
     }
