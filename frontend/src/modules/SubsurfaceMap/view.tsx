@@ -8,8 +8,14 @@ import { Wellbore } from "@framework/Wellbore";
 import { Button } from "@lib/components/Button";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { ColorScaleGradientType } from "@lib/utils/ColorScale";
+import { useSurfaceDataQueryByAddress } from "@modules/_shared/Surface";
 import { ViewAnnotation } from "@webviz/subsurface-viewer/dist/components/ViewAnnotation";
 
+import {
+    useGetFieldWellsTrajectories,
+    usePolygonsDataQueryByAddress,
+    usePropertySurfaceDataByQueryAddress,
+} from "././queryHooks";
 import {
     SurfaceMeta,
     createAxesLayer,
@@ -21,12 +27,6 @@ import {
     createWellboreTrajectoryLayer,
 } from "./_utils";
 import { SyncedSubsurfaceViewer } from "./components/SyncedSubsurfaceViewer";
-import {
-    useGetFieldWellsTrajectories,
-    usePolygonsDataQueryByAddress,
-    usePropertySurfaceDataByQueryAddress,
-    useSurfaceDataQueryByAddress,
-} from "./queryHooks";
 import { state } from "./state";
 
 const jsonParseWithUndefined = (arrString: string): number[] => {
@@ -89,7 +89,7 @@ export function view({ moduleContext, workbenchSettings, workbenchServices }: Mo
     const colorTables = createContinuousColorScaleForMap(surfaceColorScale);
     const show3D: boolean = viewSettings?.show3d ?? true;
 
-    const meshSurfDataQuery = useSurfaceDataQueryByAddress(meshSurfAddr, true);
+    const meshSurfDataQuery = useSurfaceDataQueryByAddress(meshSurfAddr);
 
     const hasMeshSurfData = meshSurfDataQuery?.data ? true : false;
     const propertySurfDataQuery = usePropertySurfaceDataByQueryAddress(meshSurfAddr, propertySurfAddr, hasMeshSurfData);

@@ -11,7 +11,7 @@ def get_stratigraphic_units(access_token: str, stratigraphic_column_identifier: 
     params = {
         "strat_column_identifier": stratigraphic_column_identifier,
         "_sort": "top_age",
-        "_projection": "top,base,identifier",
+        "_projection": "top,base,identifier,strat_unit_level,strat_unit_level,strat_unit_type,strat_unit_parent,top_age,color_r,color_g,color_b",
     }
     results = get(access_token=access_token, endpoint=endpoint, params=params)
     timer = PerfTimer()
