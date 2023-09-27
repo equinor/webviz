@@ -1,13 +1,11 @@
 import logging
 
-from typing import List, Optional, Tuple
+from typing import List, Optional
 
 from fmu.sumo.explorer import TimeFilter, TimeType
 from fmu.sumo.explorer.objects import Case, CaseCollection
 from fmu.sumo.explorer.objects.cube_collection import CubeCollection
 from sumo.wrapper import SumoClient
-
-# from ..oneseismic_access.vds_types import VdsHandle
 
 from ._helpers import create_sumo_client_instance
 from .seismic_types import SeismicMeta, VdsHandle
