@@ -8,7 +8,7 @@ from src.backend.auth.auth_helper import AuthHelper
 from src.backend.primary.user_session_proxy import proxy_to_user_session
 
 from src.services.sumo_access.grid_access import GridAccess
-from .schemas import GridSurface, B64EncodedNumpyArray, GridIntersection
+from .schemas import GridSurface, GridIntersection
 
 router = APIRouter()
 
@@ -84,7 +84,7 @@ async def grid_parameter(
     parameter_name: str = Query(description="Grid parameter"),
     realization: str = Query(description="Realization"),
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
-) -> B64EncodedNumpyArray:
+) -> List[float]:
     """Get a grid parameter"""
 
     query_params = {
@@ -192,7 +192,7 @@ async def statistical_grid_parameter(
     parameter_name: str = Query(description="Grid parameter"),
     realizations: List[str] = Query(description="Realizations"),
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
-) -> B64EncodedNumpyArray:
+) -> List[float]:
     """Get a grid parameter"""
 
     query_params = {
