@@ -1,17 +1,6 @@
-import datetime
 import logging
-from typing import List
 
-from fastapi import APIRouter, Depends, Query
-
-from src.services.sumo_access.parameter_access import ParameterAccess
-from src.services.sumo_access.generic_types import EnsembleCorrelations
-from src.services.parameter_correlations import correlate_parameters_with_response
-from src.services.sumo_access.summary_access import SummaryAccess
-from src.services.sumo_access.inplace_volumetrics_access import InplaceVolumetricsAccess
-from src.services.utils.authenticated_user import AuthenticatedUser
-from src.backend.auth.auth_helper import AuthHelper
-
+from fastapi import APIRouter
 
 LOGGER = logging.getLogger(__name__)
 

@@ -1,11 +1,13 @@
 import React from "react";
 
-import { Frequency_api, StatisticFunction_api, VectorDescription_api } from "@api";
+import { Frequency_api, StatisticFunction_api } from "@api";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
+import { ParameterIdent, ParameterType } from "@framework/EnsembleParameters";
 import { EnsembleSet } from "@framework/EnsembleSet";
 import { ModuleFCProps } from "@framework/Module";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { MultiEnsembleSelect } from "@framework/components/MultiEnsembleSelect";
+import { VectorSelector, createVectorSelectorDataFromVectors } from "@framework/components/VectorSelector";
 import { fixupEnsembleIdents } from "@framework/utils/ensembleUiHelpers";
 import { ApiStatesWrapper } from "@lib/components/ApiStatesWrapper";
 import { Checkbox } from "@lib/components/Checkbox";
@@ -15,9 +17,8 @@ import { Dropdown } from "@lib/components/Dropdown";
 import { Label } from "@lib/components/Label";
 import { RadioGroup } from "@lib/components/RadioGroup";
 import { SmartNodeSelectorSelection, TreeDataNode } from "@lib/components/SmartNodeSelector";
-import { VectorSelector } from "@lib/components/VectorSelector";
+import { useValidState } from "@lib/hooks/useValidState";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-import { createVectorSelectorDataFromVectors } from "@lib/utils/vectorSelectorUtils";
 
 import { isEqual } from "lodash";
 
@@ -38,35 +39,28 @@ import { EnsembleVectorListsHelper } from "./utils/ensemblesVectorListHelper";
 
 export function settings({ moduleContext, workbenchSession }: ModuleFCProps<State>) {
     const ensembleSet = useEnsembleSet(workbenchSession);
+
+    // Store state/values
     const [resampleFrequency, setResamplingFrequency] = moduleContext.useStoreState("resamplingFrequency");
     const [groupBy, setGroupBy] = moduleContext.useStoreState("groupBy");
+    const [colorRealizationsByParameter, setColorRealizationsByParameter] =
+        moduleContext.useStoreState("colorRealizationsByParameter");
     const [visualizationMode, setVisualizationMode] = moduleContext.useStoreState("visualizationMode");
     const [showHistorical, setShowHistorical] = moduleContext.useStoreState("showHistorical");
     const [showObservations, setShowObservations] = moduleContext.useStoreState("showObservations");
     const [statisticsSelection, setStatisticsSelection] = moduleContext.useStoreState("statisticsSelection");
+    const setParameterIdent = moduleContext.useSetStoreValue("parameterIdent");
     const setVectorSpecifications = moduleContext.useSetStoreValue("vectorSpecifications");
 
+    // States
     const [previousEnsembleSet, setPreviousEnsembleSet] = React.useState<EnsembleSet>(ensembleSet);
     const [selectedEnsembleIdents, setSelectedEnsembleIdents] = React.useState<EnsembleIdent[]>([]);
     const [selectedVectorNames, setSelectedVectorNames] = React.useState<string[]>([]);
     const [vectorSelectorData, setVectorSelectorData] = React.useState<TreeDataNode[]>([]);
-
     const [prevVisualizationMode, setPrevVisualizationMode] = React.useState<VisualizationMode>(visualizationMode);
-    if (prevVisualizationMode !== visualizationMode) {
+
+    if (visualizationMode !== prevVisualizationMode) {
         setPrevVisualizationMode(visualizationMode);
-    }
-
-    const vectorListQueries = useVectorListQueries(selectedEnsembleIdents);
-    const ensembleVectorListsHelper = new EnsembleVectorListsHelper(selectedEnsembleIdents, vectorListQueries);
-    const vectorsUnion: VectorDescription_api[] = ensembleVectorListsHelper.vectorsUnion();
-
-    const selectedVectorNamesHasHistorical = ensembleVectorListsHelper.hasAnyHistoricalVector(selectedVectorNames);
-    const currentVectorSelectorData = createVectorSelectorDataFromVectors(vectorsUnion.map((vector) => vector.name));
-
-    // Only update if all vector lists are retrieved before updating vectorSelectorData has changed
-    const hasVectorListQueriesErrorOrLoading = vectorListQueries.some((query) => query.isLoading || query.isError);
-    if (!hasVectorListQueriesErrorOrLoading && !isEqual(currentVectorSelectorData, vectorSelectorData)) {
-        setVectorSelectorData(currentVectorSelectorData);
     }
 
     if (!isEqual(ensembleSet, previousEnsembleSet)) {
@@ -79,6 +73,35 @@ export function settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
         }
 
         setPreviousEnsembleSet(ensembleSet);
+    }
+
+    const vectorListQueries = useVectorListQueries(selectedEnsembleIdents);
+    const ensembleVectorListsHelper = new EnsembleVectorListsHelper(selectedEnsembleIdents, vectorListQueries);
+    const selectedVectorNamesHasHistorical = ensembleVectorListsHelper.hasAnyHistoricalVector(selectedVectorNames);
+    const currentVectorSelectorData = createVectorSelectorDataFromVectors(ensembleVectorListsHelper.vectorsUnion());
+
+    // Get union of continuous and non-constant parameters for selected ensembles and set valid parameter ident str
+    const continuousAndNonConstantParametersUnion: ParameterIdent[] = [];
+    for (const ensembleIdent of selectedEnsembleIdents) {
+        const ensemble = ensembleSet.findEnsemble(ensembleIdent);
+        if (ensemble === null) continue;
+
+        for (const parameter of ensemble.getParameters().getParameterIdents(ParameterType.CONTINUOUS)) {
+            if (continuousAndNonConstantParametersUnion.some((param) => param.equals(parameter))) continue;
+            if (ensemble.getParameters().getParameter(parameter).isConstant) continue;
+
+            continuousAndNonConstantParametersUnion.push(parameter);
+        }
+    }
+    const [selectedParameterIdentStr, setSelectedParameterIdentStr] = useValidState<string | null>(null, [
+        continuousAndNonConstantParametersUnion,
+        (item: ParameterIdent) => item.toString(),
+    ]);
+
+    // Await update of vectorSelectorData until all vector lists are retrieved
+    const hasVectorListQueriesErrorOrFetching = vectorListQueries.some((query) => query.isFetching || query.isError);
+    if (!hasVectorListQueriesErrorOrFetching && !isEqual(currentVectorSelectorData, vectorSelectorData)) {
+        setVectorSelectorData(currentVectorSelectorData);
     }
 
     React.useEffect(
@@ -97,14 +120,42 @@ export function settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
                     });
                 }
             }
-
             setVectorSpecifications(newVectorSpecifications);
         },
         [selectedEnsembleIdents, selectedVectorNames, ensembleVectorListsHelper.numberOfQueriesWithData()]
     );
 
+    React.useEffect(
+        function propagateParameterIdentToView() {
+            if (selectedParameterIdentStr === null) {
+                setParameterIdent(null);
+                return;
+            }
+
+            // Try/catch as ParameterIdent.fromString() can throw
+            try {
+                const newParameterIdent = ParameterIdent.fromString(selectedParameterIdentStr);
+                const isParameterInUnion = continuousAndNonConstantParametersUnion.some((parameter) =>
+                    parameter.equals(newParameterIdent)
+                );
+                if (isParameterInUnion) {
+                    setParameterIdent(newParameterIdent);
+                } else {
+                    setParameterIdent(null);
+                }
+            } catch {
+                setParameterIdent(null);
+            }
+        },
+        [selectedParameterIdentStr]
+    );
+
     function handleGroupByChange(event: React.ChangeEvent<HTMLInputElement>) {
         setGroupBy(event.target.value as GroupBy);
+    }
+
+    function handleColorByParameterChange(parameterIdentStr: string) {
+        setSelectedParameterIdentStr(parameterIdentStr);
     }
 
     function handleEnsembleSelectChange(ensembleIdentArr: EnsembleIdent[]) {
@@ -234,7 +285,6 @@ export function settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
                     >
                         <VectorSelector
                             data={vectorSelectorData}
-                            selectedTags={selectedVectorNames}
                             placeholder="Add new vector..."
                             maxNumSelectedNodes={50}
                             numSecondsUntilSuggestionsAreShown={0.5}
@@ -242,6 +292,34 @@ export function settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
                             onChange={handleVectorSelectChange}
                         />
                     </ApiStatesWrapper>
+                </div>
+            </CollapsibleGroup>
+            <CollapsibleGroup expanded={true} title="Color realization by parameter">
+                <Checkbox
+                    label="Enable"
+                    checked={colorRealizationsByParameter}
+                    disabled={visualizationMode !== VisualizationMode.INDIVIDUAL_REALIZATIONS}
+                    onChange={(event) => {
+                        setColorRealizationsByParameter(event.target.checked);
+                    }}
+                />
+                <div
+                    className={resolveClassNames("mt-4 ml-6 mb-4", {
+                        ["pointer-events-none opacity-70"]:
+                            !colorRealizationsByParameter ||
+                            visualizationMode !== VisualizationMode.INDIVIDUAL_REALIZATIONS,
+                    })}
+                >
+                    <Dropdown
+                        options={continuousAndNonConstantParametersUnion.map((elm) => {
+                            return {
+                                value: elm.toString(),
+                                label: elm.groupName ? `${elm.groupName}:${elm.name}` : elm.name,
+                            };
+                        })}
+                        value={selectedParameterIdentStr?.toString() ?? undefined}
+                        onChange={handleColorByParameterChange}
+                    />
                 </div>
             </CollapsibleGroup>
             <CollapsibleGroup expanded={true} title="Visualization">

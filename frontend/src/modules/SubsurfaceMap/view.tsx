@@ -7,17 +7,19 @@ import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
 import { Wellbore } from "@framework/Wellbore";
 import { Button } from "@lib/components/Button";
 import { CircularProgress } from "@lib/components/CircularProgress";
+import { ColorScaleGradientType } from "@lib/utils/ColorScale";
+import { useSurfaceDataQueryByAddress } from "@modules/_shared/Surface";
 import { ViewAnnotation } from "@webviz/subsurface-viewer/dist/components/ViewAnnotation";
 
 import {
     useGetFieldWellsTrajectories,
     usePolygonsDataQueryByAddress,
     usePropertySurfaceDataByQueryAddress,
-    useSurfaceDataQueryByAddress,
 } from "././queryHooks";
 import {
     SurfaceMeta,
     createAxesLayer,
+    createContinuousColorScaleForMap,
     createNorthArrowLayer,
     createSurfaceMeshLayer,
     createSurfacePolygonsLayer,
@@ -60,7 +62,7 @@ const updateViewPortBounds = (
     return existingViewPortBounds;
 };
 //-----------------------------------------------------------------------------------------------------------
-export function view({ moduleContext, workbenchServices }: ModuleFCProps<state>) {
+export function view({ moduleContext, workbenchSettings, workbenchServices }: ModuleFCProps<state>) {
     const myInstanceIdStr = moduleContext.getInstanceIdString();
     console.debug(`${myInstanceIdStr} -- render TopographicMap view`);
     const viewIds = {
@@ -81,10 +83,13 @@ export function view({ moduleContext, workbenchServices }: ModuleFCProps<state>)
     const [viewportBounds, setviewPortBounds] = React.useState<[number, number, number, number] | undefined>(undefined);
     const syncedSettingKeys = moduleContext.useSyncedSettingKeys();
     const syncHelper = new SyncSettingsHelper(syncedSettingKeys, workbenchServices);
-
+    const surfaceColorScale = workbenchSettings.useContinuousColorScale({
+        gradientType: ColorScaleGradientType.Sequential,
+    });
+    const colorTables = createContinuousColorScaleForMap(surfaceColorScale);
     const show3D: boolean = viewSettings?.show3d ?? true;
 
-    const meshSurfDataQuery = useSurfaceDataQueryByAddress(meshSurfAddr, true);
+    const meshSurfDataQuery = useSurfaceDataQueryByAddress(meshSurfAddr);
 
     const hasMeshSurfData = meshSurfDataQuery?.data ? true : false;
     const propertySurfDataQuery = usePropertySurfaceDataByQueryAddress(meshSurfAddr, propertySurfAddr, hasMeshSurfData);
@@ -228,6 +233,7 @@ export function view({ moduleContext, workbenchServices }: ModuleFCProps<state>)
                         id={viewIds.view3D}
                         bounds={viewportBounds}
                         layers={newLayers}
+                        colorTables={colorTables}
                         toolbar={{ visible: true }}
                         views={{
                             layout: [1, 1],
@@ -245,6 +251,8 @@ export function view({ moduleContext, workbenchServices }: ModuleFCProps<state>)
                     >
                         <ViewAnnotation id={viewIds.annotation3D}>
                             <ContinuousLegend
+                                colorTables={colorTables}
+                                colorName="Continuous"
                                 min={colorRange ? colorRange[0] : undefined}
                                 max={colorRange ? colorRange[1] : undefined}
                                 cssLegendStyles={{ bottom: "0", right: "0" }}
@@ -258,6 +266,7 @@ export function view({ moduleContext, workbenchServices }: ModuleFCProps<state>)
                         id={viewIds.view2D}
                         bounds={viewportBounds}
                         layers={newLayers}
+                        colorTables={colorTables}
                         toolbar={{ visible: true }}
                         views={{
                             layout: [1, 1],
@@ -275,6 +284,8 @@ export function view({ moduleContext, workbenchServices }: ModuleFCProps<state>)
                     >
                         <ViewAnnotation id={viewIds.annotation2D}>
                             <ContinuousLegend
+                                colorTables={colorTables}
+                                colorName="Continuous"
                                 min={colorRange ? colorRange[0] : undefined}
                                 max={colorRange ? colorRange[1] : undefined}
                                 cssLegendStyles={{ bottom: "0", right: "0" }}

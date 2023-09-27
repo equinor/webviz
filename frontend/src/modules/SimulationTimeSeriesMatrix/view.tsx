@@ -1,13 +1,15 @@
 import React from "react";
 import Plot from "react-plotly.js";
 
+import { Ensemble } from "@framework/Ensemble";
 import { ModuleFCProps } from "@framework/Module";
+import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { useElementSize } from "@lib/hooks/useElementSize";
-// Note: Have for debug render count info
-import { isDevMode } from "@lib/utils/devMode";
+import { ColorScaleGradientType } from "@lib/utils/ColorScale";
 
 import { useHistoricalVectorDataQueries, useStatisticalVectorDataQueries, useVectorDataQueries } from "./queryHooks";
 import { GroupBy, State, VisualizationMode } from "./state";
+import { EnsemblesContinuousParameterColoring } from "./utils/ensemblesContinuousParameterColoring";
 import { SubplotBuilder, SubplotOwner } from "./utils/subplotBuilder";
 import {
     createLoadedVectorSpecificationAndDataArray,
@@ -15,19 +17,13 @@ import {
     filterVectorSpecificationAndIndividualStatisticsDataArray,
 } from "./utils/vectorSpecificationsAndQueriesUtils";
 
-export const view = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>) => {
-    // Leave this in until we get a feeling for React18/Plotly
-    const renderCount = React.useRef(0);
-    React.useEffect(function incrementRenderCount() {
-        renderCount.current = renderCount.current + 1;
-    });
-
+export const view = ({ moduleContext, workbenchSession, workbenchSettings }: ModuleFCProps<State>) => {
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);
     const wrapperDivSize = useElementSize(wrapperDivRef);
 
-    const colorSet = workbenchSettings.useColorSet();
+    const ensembleSet = useEnsembleSet(workbenchSession);
 
-    // State
+    // Store values
     const vectorSpecifications = moduleContext.useStoreValue("vectorSpecifications");
     const groupBy = moduleContext.useStoreValue("groupBy");
     const resampleFrequency = moduleContext.useStoreValue("resamplingFrequency");
@@ -35,6 +31,14 @@ export const view = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
     const visualizationMode = moduleContext.useStoreValue("visualizationMode");
     const showHistorical = moduleContext.useStoreValue("showHistorical");
     const statisticsSelection = moduleContext.useStoreValue("statisticsSelection");
+    const parameterIdent = moduleContext.useStoreValue("parameterIdent");
+    const colorRealizationsByParameter = moduleContext.useStoreValue("colorRealizationsByParameter");
+
+    // Color palettes
+    const colorSet = workbenchSettings.useColorSet();
+    const parameterColorScale = workbenchSettings.useContinuousColorScale({
+        gradientType: ColorScaleGradientType.Diverging,
+    });
 
     // Queries
     const vectorDataQueries = useVectorDataQueries(
@@ -60,6 +64,9 @@ export const view = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
     );
 
     // Map vector specifications and queries with data
+    // TODO:
+    // - Add loading state if 1 or more queries are loading?
+    // - Can check for equal length of useQueries arrays and the loadedVectorSpecificationsAndData arrays?
     const loadedVectorSpecificationsAndRealizationData = vectorSpecifications
         ? createLoadedVectorSpecificationAndDataArray(vectorSpecifications, vectorDataQueries)
         : [];
@@ -73,33 +80,50 @@ export const view = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
           )
         : [];
 
-    // TODO:
-    // - Add loading state if 1 or more queries are loading?
-    // - Can check for equal length of useQueries arrays and the loadedVectorSpecificationsAndData arrays?
+    // Retrieve selected ensembles from vector specifications
+    const selectedEnsembles: Ensemble[] = [];
+    vectorSpecifications?.forEach((vectorSpecification) => {
+        if (selectedEnsembles.some((ensemble) => ensemble.getIdent().equals(vectorSpecification.ensembleIdent))) {
+            return;
+        }
 
-    // Iterate over unique ensemble names and assign color from color palette
-    if (vectorSpecifications) {
-        const uniqueEnsembleNames: string[] = [];
-        vectorSpecifications.forEach((vectorSpec) => {
-            const ensembleName = vectorSpec.ensembleIdent.getEnsembleName();
-            if (!uniqueEnsembleNames.includes(ensembleName)) {
-                uniqueEnsembleNames.push(vectorSpec.ensembleIdent.getEnsembleName());
-            }
-        });
-    }
+        const ensemble = ensembleSet.findEnsemble(vectorSpecification.ensembleIdent);
+        if (ensemble === null) return;
 
-    // Plot builder
-    // NOTE: useRef?
+        selectedEnsembles.push(ensemble);
+    });
+
+    // Create parameter color scale helper
+    const doColorByParameter =
+        colorRealizationsByParameter &&
+        parameterIdent !== null &&
+        selectedEnsembles.some((ensemble) => ensemble.getParameters().findParameter(parameterIdent));
+    const ensemblesParameterColoring = doColorByParameter
+        ? new EnsemblesContinuousParameterColoring(selectedEnsembles, parameterIdent, parameterColorScale)
+        : null;
+
+    // Create Plot Builder
     const subplotOwner = groupBy === GroupBy.TIME_SERIES ? SubplotOwner.VECTOR : SubplotOwner.ENSEMBLE;
+    const scatterType =
+        visualizationMode === VisualizationMode.INDIVIDUAL_REALIZATIONS ||
+        visualizationMode === VisualizationMode.STATISTICS_AND_REALIZATIONS
+            ? "scattergl"
+            : "scatter";
     const subplotBuilder = new SubplotBuilder(
         subplotOwner,
         vectorSpecifications ?? [],
         colorSet,
         wrapperDivSize.width,
-        wrapperDivSize.height
+        wrapperDivSize.height,
+        ensemblesParameterColoring ?? undefined,
+        scatterType
     );
 
-    if (visualizationMode === VisualizationMode.INDIVIDUAL_REALIZATIONS) {
+    // Add traces based on visualization mode
+    if (doColorByParameter && visualizationMode === VisualizationMode.INDIVIDUAL_REALIZATIONS) {
+        subplotBuilder.addRealizationTracesColoredByParameter(loadedVectorSpecificationsAndRealizationData);
+    }
+    if (!doColorByParameter && visualizationMode === VisualizationMode.INDIVIDUAL_REALIZATIONS) {
         const useIncreasedBrightness = false;
         subplotBuilder.addRealizationsTraces(loadedVectorSpecificationsAndRealizationData, useIncreasedBrightness);
     }
@@ -153,12 +177,6 @@ export const view = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
                 onHover={handleHover}
                 onUnhover={handleUnHover}
             />
-            {isDevMode() && (
-                <>
-                    <div className="absolute top-10 left-5 italic text-pink-400">(rc={renderCount.current})</div>
-                    <div className="absolute top-10 left-20 italic text-pink-400"> Traces: {plotData.length}</div>
-                </>
-            )}
         </div>
     );
 };

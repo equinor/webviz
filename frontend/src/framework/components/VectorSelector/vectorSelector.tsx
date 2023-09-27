@@ -1,21 +1,6 @@
 import React from "react";
 
-import aquifer from "./private-assets/images/aquifer.svg";
-import block from "./private-assets/images/block.svg";
-import calculated from "./private-assets/images/calculated.svg";
-import field from "./private-assets/images/field.svg";
-import group from "./private-assets/images/group.svg";
-import misc from "./private-assets/images/misc.svg";
-import network from "./private-assets/images/network.svg";
-import others from "./private-assets/images/others.svg";
-import region_region from "./private-assets/images/region-region.svg";
-import region from "./private-assets/images/region.svg";
-import segment from "./private-assets/images/segment.svg";
-import well_completion from "./private-assets/images/well-completion.svg";
-import well from "./private-assets/images/well.svg";
-import { vectorDefinitions } from "./private-assets/vectorDefinitions";
-import { VectorSelection } from "./private-utils/VectorSelection";
-
+import { VectorDefinitionsType, vectorDefinitions } from "@assets/vectorDefinitions";
 import {
     Direction,
     KeyEventType,
@@ -23,11 +8,22 @@ import {
     SmartNodeSelectorProps,
     TreeData,
     TreeDataNode,
-} from "../SmartNodeSelector";
+} from "@lib/components/SmartNodeSelector";
 
-type VectorDefinitionsType = {
-    [key: string]: { type: string; description: string };
-};
+import aquifer from "./private-assets/aquifer.svg";
+import block from "./private-assets/block.svg";
+import calculated from "./private-assets/calculated.svg";
+import field from "./private-assets/field.svg";
+import group from "./private-assets/group.svg";
+import misc from "./private-assets/misc.svg";
+import network from "./private-assets/network.svg";
+import others from "./private-assets/others.svg";
+import region_region from "./private-assets/region-region.svg";
+import region from "./private-assets/region.svg";
+import segment from "./private-assets/segment.svg";
+import well_completion from "./private-assets/well-completion.svg";
+import well from "./private-assets/well.svg";
+import { VectorSelection } from "./private-utils/VectorSelection";
 
 export type VectorSelectorProps = SmartNodeSelectorProps & {
     customVectorDefinitions?: VectorDefinitionsType;
@@ -46,9 +42,7 @@ export class VectorSelectorComponent extends SmartNodeSelectorComponent {
         this.vectorDefinitions = vectorDefinitions;
         if (props.customVectorDefinitions) {
             Object.keys(props.customVectorDefinitions).forEach((vectorName: string) => {
-                this.vectorDefinitions[vectorName] = (props.customVectorDefinitions as VectorDefinitionsType)[
-                    vectorName
-                ];
+                this.vectorDefinitions[vectorName] = props.customVectorDefinitions[vectorName];
             });
         }
 
@@ -299,3 +293,48 @@ export const VectorSelector: React.FC<VectorSelectorProps> = (props) => {
 
     return <VectorSelectorComponent {...adjustedProps} />;
 };
+
+export function addVectorToVectorSelectorData(
+    vectorSelectorData: TreeDataNode[],
+    vector: string,
+    description?: string,
+    descriptionAtLastNode = false
+): void {
+    const nodes = vector.split(":");
+    let currentChildList = vectorSelectorData;
+
+    nodes.forEach((node, index) => {
+        let foundNode = false;
+        for (const child of currentChildList) {
+            if (child.name === node) {
+                foundNode = true;
+                currentChildList = child.children ?? [];
+                break;
+            }
+        }
+        if (!foundNode) {
+            const doAddDescription =
+                description !== undefined &&
+                ((descriptionAtLastNode && index === nodes.length - 1) || (!descriptionAtLastNode && index === 0));
+
+            const nodeData: TreeDataNode = {
+                name: node,
+                children: index < nodes.length - 1 ? [] : undefined,
+                description: doAddDescription ? description : undefined,
+            };
+
+            currentChildList.push(nodeData);
+            currentChildList = nodeData.children ?? [];
+        }
+    });
+}
+
+export function createVectorSelectorDataFromVectors(vectors: string[]): TreeDataNode[] {
+    const vectorSelectorData: TreeDataNode[] = [];
+
+    for (const vector of vectors) {
+        addVectorToVectorSelectorData(vectorSelectorData, vector);
+    }
+
+    return vectorSelectorData;
+}

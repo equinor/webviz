@@ -1,8 +1,7 @@
 import logging
-from typing import List, Optional, Sequence, Union
+from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from fastapi.responses import ORJSONResponse
 
 from src.backend.auth.auth_helper import AuthHelper
 from src.services.sumo_access.table_access import TableAccess

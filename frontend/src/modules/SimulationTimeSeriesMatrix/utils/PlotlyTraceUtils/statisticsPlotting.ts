@@ -106,6 +106,7 @@ export type CreateStatisticsTracesOptions = {
     showHoverInfo?: boolean;
     hoverText?: string;
     legendName?: string;
+    type?: "scatter" | "scattergl";
     // hovermode?: string,
 };
 
@@ -142,6 +143,7 @@ export function createStatisticsTraces({
     hoverText = "",
     hoverTemplate = undefined,
     legendRank = undefined,
+    type = "scatter",
 }: CreateStatisticsTracesOptions): Partial<TimeSeriesPlotData>[] {
     // NOTE:
     // - hovermode? not exposed?
@@ -156,7 +158,7 @@ export function createStatisticsTraces({
             xaxis: xaxis,
             yaxis: yaxis,
             mode: "lines",
-            type: "scatter",
+            type: type,
             line: { color: color, width: lineWidth, shape: lineShape },
             legendgroup: legendGroup,
             showlegend: false,

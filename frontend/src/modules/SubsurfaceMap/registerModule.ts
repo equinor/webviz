@@ -4,8 +4,8 @@ import { SyncSettingKey } from "@framework/SyncSettings";
 import { state } from "./state";
 
 ModuleRegistry.registerModule<state>({
-    moduleName: "TopographicMap",
-    defaultTitle: "Topographic Map",
+    moduleName: "SubsurfaceMap",
+    defaultTitle: "Subsurface Map",
     syncableSettingKeys: [
         SyncSettingKey.ENSEMBLE,
         SyncSettingKey.SURFACE,

@@ -1,24 +1,21 @@
 import React from "react";
 
 import { ModuleFCProps } from "@framework/Module";
+import { useSurfaceDataQueryByAddress } from "@modules/_shared/Surface";
 import SubsurfaceViewer from "@webviz/subsurface-viewer";
 
-import { useSurfaceDataQueryByAddress } from "./MapQueryHooks";
 import { MapState } from "./MapState";
-import { makeSurfAddrString } from "./SurfAddr";
 
 //-----------------------------------------------------------------------------------------------------------
 export function MapView(props: ModuleFCProps<MapState>) {
-    const surfAddr = props.moduleContext.useStoreValue("surfaceAddress");
+    const surfaceAddress = props.moduleContext.useStoreValue("surfaceAddress");
 
     const renderCount = React.useRef(0);
     React.useEffect(function incrementRenderCount() {
         renderCount.current = renderCount.current + 1;
     });
 
-    console.debug(`render MapView, surfAddr=${surfAddr ? makeSurfAddrString(surfAddr) : "null"}`);
-
-    const surfDataQuery = useSurfaceDataQueryByAddress(surfAddr);
+    const surfDataQuery = useSurfaceDataQueryByAddress(surfaceAddress);
     if (!surfDataQuery.data) {
         return <div>No data</div>;
     }
@@ -49,7 +46,9 @@ export function MapView(props: ModuleFCProps<MapState>) {
                     },
                 ]}
             />
-            <div className="absolute bottom-5 right-5 italic text-pink-400">{props.moduleContext.getInstanceIdString()}</div>
+            <div className="absolute bottom-5 right-5 italic text-pink-400">
+                {props.moduleContext.getInstanceIdString()}
+            </div>
         </div>
     );
 }

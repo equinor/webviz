@@ -126,6 +126,7 @@ export type CreateFanchartTracesOptions = {
     showHoverInfo?: boolean;
     hoverText?: string;
     legendName?: string;
+    type?: "scatter" | "scattergl";
     // hovermode?: string,
 };
 
@@ -173,6 +174,7 @@ export function createFanchartTraces({
     showHoverInfo = true,
     hoverText = "",
     legendName = undefined,
+    type = "scatter",
 }: CreateFanchartTracesOptions): Partial<TimeSeriesPlotData>[] {
     // NOTE:
     // - hovermode? not exposed?
@@ -198,7 +200,7 @@ export function createFanchartTraces({
             xaxis: xaxis,
             yaxis: yaxis,
             mode: "lines",
-            type: "scatter",
+            type: type,
             line: { width: 0, color: lineColor, shape: lineShape },
             legendgroup: legendGroup,
             showlegend: false,

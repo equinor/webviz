@@ -1,8 +1,8 @@
-from fastapi import APIRouter, Depends
-from starlette.requests import Request
-from typing import Any, List
+from typing import List
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Response
+from fastapi import APIRouter, Depends, Query
+from starlette.requests import Request
+
 from src.services.utils.authenticated_user import AuthenticatedUser
 from src.backend.auth.auth_helper import AuthHelper
 from src.backend.primary.user_session_proxy import proxy_to_user_session
@@ -68,7 +68,7 @@ async def grid_surface(
             "query_string": request.url.include_query_params(**query_params).query.encode("utf-8"),
             "headers": request.headers.raw,
         },
-        receive=request._receive,
+        receive=request._receive,  # pylint: disable=protected-access
     )
 
     response = await proxy_to_user_session(updated_request, authenticated_user)
@@ -104,7 +104,7 @@ async def grid_parameter(
             "query_string": request.url.include_query_params(**query_params).query.encode("utf-8"),
             "headers": request.headers.raw,
         },
-        receive=request._receive,
+        receive=request._receive,  # pylint: disable=protected-access
     )
 
     response = await proxy_to_user_session(updated_request, authenticated_user)
@@ -140,7 +140,7 @@ async def grid_parameter_intersection(
             "query_string": request.url.include_query_params(**query_params).query.encode("utf-8"),
             "headers": request.headers.raw,
         },
-        receive=request._receive,
+        receive=request._receive,  # pylint: disable=protected-access
     )
 
     response = await proxy_to_user_session(updated_request, authenticated_user)
@@ -176,7 +176,7 @@ async def statistical_grid_parameter_intersection(
             "query_string": request.url.include_query_params(**query_params).query.encode("utf-8"),
             "headers": request.headers.raw,
         },
-        receive=request._receive,
+        receive=request._receive,  # pylint: disable=protected-access
     )
 
     response = await proxy_to_user_session(updated_request, authenticated_user)
@@ -211,7 +211,7 @@ async def statistical_grid_parameter(
             "query_string": request.url.include_query_params(**query_params).query.encode("utf-8"),
             "headers": request.headers.raw,
         },
-        receive=request._receive,
+        receive=request._receive,  # pylint: disable=protected-access
     )
 
     response = await proxy_to_user_session(updated_request, authenticated_user)
