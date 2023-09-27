@@ -19,6 +19,7 @@ from .routers.grid.router import router as grid_router
 from .routers.pvt.router import router as pvt_router
 from .routers.well_completions.router import router as well_completions_router
 from .routers.well.router import router as well_router
+from .routers.seismic.router import router as seismic_router
 from .routers.surface_polygons.router import router as surface_polygons_router
 
 logging.basicConfig(
@@ -55,6 +56,7 @@ app.include_router(grid_router, prefix="/grid", tags=["grid"])
 app.include_router(pvt_router, prefix="/pvt", tags=["pvt"])
 app.include_router(well_completions_router, prefix="/well_completions", tags=["well_completions"])
 app.include_router(well_router, prefix="/well", tags=["well"])
+app.include_router(seismic_router, prefix="/seismic", tags=["seismic"])
 app.include_router(surface_polygons_router, prefix="/surface_polygons", tags=["surface_polygons"])
 
 authHelper = AuthHelper()
