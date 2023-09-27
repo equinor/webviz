@@ -8,7 +8,6 @@ from src.services.utils.authenticated_user import AuthenticatedUser
 from src.backend.auth.auth_helper import AuthHelper
 
 from . import schemas
-from .converters import to_api_seismic_directory
 
 LOGGER = logging.getLogger(__name__)
 
@@ -20,13 +19,13 @@ def get_seismic_directory(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     case_uuid: str = Query(description="Sumo case uuid"),
     ensemble_name: str = Query(description="Ensemble name"),
-) -> List[schemas.SeismicMeta]:
+) -> List[schemas.SeismicCubeMeta]:
     """
     Get a directory of seismic cubes.
     """
     access = SeismicAccess(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
+    seismic_cube_metas = access.get_seismic_directory()
     try:
-        seismic_dir = access.get_seismic_directory()
-        return to_api_seismic_directory(seismic_dir)
+        return [schemas.SeismicCubeMeta(**meta.__dict__) for meta in seismic_cube_metas]
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc

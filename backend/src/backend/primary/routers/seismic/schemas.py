@@ -1,16 +1,11 @@
-from __future__ import annotations
-
-from typing import Optional
-
 from pydantic import BaseModel
 
 
-class SeismicMeta(BaseModel):
+class SeismicCubeMeta(BaseModel):
     seismic_attribute: str
-    iso_date_or_interval: Optional[str]
+    iso_date_or_interval: str
     is_observation: bool
-    zmin: Optional[float]
-    zmax: Optional[float]
+    is_depth: bool
 
 
 class VdsHandle(BaseModel):

@@ -8,7 +8,7 @@ from fmu.sumo.explorer.objects.cube_collection import CubeCollection
 from sumo.wrapper import SumoClient
 
 from ._helpers import create_sumo_client_instance
-from .seismic_types import SeismicMeta, VdsHandle
+from .seismic_types import SeismicCubeMeta, VdsHandle
 
 LOGGER = logging.getLogger(__name__)
 
@@ -34,31 +34,32 @@ class SeismicAccess:
 
         return self._sumo_case_obj
 
-    def get_seismic_directory(self) -> List[SeismicMeta]:
+    def get_seismic_directory(self) -> List[SeismicCubeMeta]:
         case = self._get_sumo_case()
 
-        seismic_collection: CubeCollection = case.cubes.filter(iteration=self._iteration_name, realization=0)
-        seismic_metas: List[SeismicMeta] = []
-        for surf in seismic_collection:
-            iso_string_or_time_interval = None
-            t_start = surf["data"].get("time", {}).get("t0", {}).get("value", None)
-            t_end = surf["data"].get("time", {}).get("t1", {}).get("value", None)
+        seismic_cube_collection: CubeCollection = case.cubes.filter(iteration=self._iteration_name, realization=0)
+        seismic_cube_metas: List[SeismicCubeMeta] = []
+        for cube in seismic_cube_collection:
+            t_start = cube["data"].get("time", {}).get("t0", {}).get("value", None)
+            t_end = cube["data"].get("time", {}).get("t1", {}).get("value", None)
+
             if not t_start and not t_end:
-                raise ValueError(f"Cube {surf['data']['tagname']} has no time information")
+                raise ValueError(f"Cube {cube['data']['tagname']} has no time information")
+
             if t_start and not t_end:
                 iso_string_or_time_interval = t_start
-            if t_start and t_end:
+
+            else:
                 iso_string_or_time_interval = f"{t_start}/{t_end}"
 
-            seismic_meta = SeismicMeta(
-                seismic_attribute=surf["data"].get("tagname"),
+            seismic_meta = SeismicCubeMeta(
+                seismic_attribute=cube["data"].get("tagname"),
                 iso_date_or_interval=iso_string_or_time_interval,
-                is_observation=surf["data"]["is_observation"],
-                zmin=surf["data"]["bbox"]["zmin"],
-                zmax=surf["data"]["bbox"]["zmax"],
+                is_observation=cube["data"]["is_observation"],
+                is_depth=cube["data"]["vertical_domain"] == "depth",
             )
-            seismic_metas.append(seismic_meta)
-        return seismic_metas
+            seismic_cube_metas.append(seismic_meta)
+        return seismic_cube_metas
 
     def get_vds_handle(
         self,
