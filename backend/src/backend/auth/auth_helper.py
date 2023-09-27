@@ -1,3 +1,4 @@
+import os
 import base64
 import time
 from typing import List, Optional
@@ -33,11 +34,15 @@ class AuthHelper:
         for value in config.RESOURCE_SCOPES_DICT.values():
             all_scopes_list.extend(value)
 
+        if "CODESPACE_NAME" in os.environ:
+            # Developer is using GitHub codespace, so we use the GitHub codespace port forward URL
+            redirect_uri = f"https://{os.environ['CODESPACE_NAME']}-8080.app.github.dev/api/auth-callback"
+            print(f"You are using GitHub codespace. Remember to allow app registration redirect URI {redirect_uri}")
+        else:
+            redirect_uri = str(request.url_for("_authorized_callback_route"))
+
         cca = _create_msal_confidential_client_app(token_cache=None)
-        flow_dict = cca.initiate_auth_code_flow(
-            scopes=all_scopes_list,
-            redirect_uri=str(request.url_for("_authorized_callback_route")),
-        )
+        flow_dict = cca.initiate_auth_code_flow(scopes=all_scopes_list, redirect_uri=redirect_uri)
 
         request.session["flow"] = flow_dict
 
