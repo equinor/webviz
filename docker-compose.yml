@@ -16,6 +16,7 @@ services:
       - ./frontend/src:/usr/src/app/frontend/src
       - ./frontend/theme:/usr/src/app/frontend/theme
       - ./frontend/index.html:/usr/src/app/frontend/index.html
+      - ./frontend/vite.config.ts:/usr/src/app/frontend/vite.config.ts
 
   backend-primary:
     build:

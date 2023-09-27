@@ -11,6 +11,18 @@ import "./templates/registerAllTemplates";
 
 const layout: LayoutElement[] = [];
 
+const getFullWebsocketUrl = (rootPath: string) => {
+    // Need a utility while waiting on https://github.com/whatwg/websockets/pull/45
+    const protocol = window.location.protocol === "https:" ? "wss:" : "ws:"
+    return `${protocol}//${window.location.host}${rootPath}`
+}
+
+const ws = new WebSocket(getFullWebsocketUrl("/user-session-log"));
+
+ws.onmessage = function(event) {
+    console.log(JSON.parse(event.data))
+};
+
 function App() {
     const workbench = React.useRef<Workbench>(new Workbench());
     const queryClient = useQueryClient();

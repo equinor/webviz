@@ -54,6 +54,10 @@ export default defineConfig(({ mode }) => {
                     target: "http://backend-primary:5000",
                     rewrite: (path) => path.replace(/^\/api/, ""),
                 },
+                "/user-session-log": {
+                    target: 'ws://backend-primary:5000',
+                    ws: true,
+                },
             },
         },
     };

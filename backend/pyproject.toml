@@ -25,6 +25,7 @@ psutil = "^5.9.5"
 vtk = "^9.2.6"
 fmu-sumo = "^0.3.10"
 sumo-wrapper-python = "^0.3.4"
+websockets = "10.4"
 
 
 [tool.poetry.group.dev.dependencies]

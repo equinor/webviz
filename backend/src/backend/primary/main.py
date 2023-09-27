@@ -1,7 +1,8 @@
 import datetime
 import logging
 
-from fastapi import FastAPI
+import websockets
+from fastapi import FastAPI, WebSocket
 from fastapi.routing import APIRoute
 from fastapi.responses import ORJSONResponse
 from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
@@ -69,3 +70,17 @@ app.add_middleware(ProxyHeadersMiddleware, trusted_hosts="*")
 @app.get("/")
 async def root() -> str:
     return f"Backend is alive at this time: {datetime.datetime.now()}"
+
+@app.websocket("/user-session-log")
+async def user_session_log(websocket: WebSocket):
+    await websocket.accept()
+    
+    # TODO: This should be the actual user session container target
+    user_session_ws = "ws://backend-user-session:8000/user-session-log"
+
+    async with websockets.connect(user_session_ws) as user_session_client:
+        while True:
+            data = await user_session_client.recv()
+            await websocket.send_text(data)
+
+    await websocket.close()
