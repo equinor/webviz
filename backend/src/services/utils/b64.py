@@ -92,4 +92,3 @@ def b64_encode_uint_array_as_smallest_size(
 def _base64_encode_numpy_arr_to_str(np_arr: NDArray) -> str:
     base64_bytes: bytes = base64.b64encode(np_arr.ravel(order="C").data)
     return base64_bytes.decode("ascii")
-
