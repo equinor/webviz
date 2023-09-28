@@ -66,13 +66,19 @@ def get_realization_surface_data(
     xtgeo_surf = access.get_realization_surface_data(
         real_num=realization_num, name=name, attribute=attribute, time_or_interval_str=time_or_interval
     )
+    et_get_surf_ms = timer.lap_ms()
 
     if not xtgeo_surf:
         raise HTTPException(status_code=404, detail="Surface not found")
 
     surf_data_response = converters.to_api_surface_data(xtgeo_surf)
+    et_convert_ms = timer.lap_ms()
 
-    LOGGER.debug(f"Loaded static surface and created image, total time: {timer.elapsed_ms()}ms")
+    LOGGER.debug(
+        f"Loaded realization surface in: {timer.elapsed_ms()}ms ("
+        f"get_surf={et_get_surf_ms}ms, "
+        f"convert={et_convert_ms}ms)"
+    )
 
     return surf_data_response
 
@@ -89,23 +95,30 @@ def get_statistical_surface_data(
 ) -> schemas.SurfaceData:
     timer = PerfTimer()
 
-    access = SurfaceAccess(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
-
     service_stat_func_to_compute = StatisticFunction.from_string_value(statistic_function)
-    if service_stat_func_to_compute is not None:
-        xtgeo_surf = access.get_statistical_surface_data(
-            statistic_function=service_stat_func_to_compute,
-            name=name,
-            attribute=attribute,
-            time_or_interval_str=time_or_interval,
-        )
+    if service_stat_func_to_compute is None:
+        raise HTTPException(status_code=404, detail="Invalid statistic requested")
+
+    access = SurfaceAccess(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
+    xtgeo_surf = access.get_statistical_surface_data(
+        statistic_function=service_stat_func_to_compute,
+        name=name,
+        attribute=attribute,
+        time_or_interval_str=time_or_interval,
+    )
+    et_calc_ms = timer.lap_ms()
 
     if not xtgeo_surf:
         raise HTTPException(status_code=404, detail="Could not find or compute surface")
 
     surf_data_response: schemas.SurfaceData = converters.to_api_surface_data(xtgeo_surf)
+    et_convert_ms = timer.lap_ms()
 
-    LOGGER.debug(f"Calculated statistical dynamic surface and created image, total time: {timer.elapsed_ms()}ms")
+    LOGGER.debug(
+        f"Calculated statistical surface in: {timer.elapsed_ms()}ms ("
+        f"calc={et_calc_ms}ms, "
+        f"convert={et_convert_ms}ms)"
+    )
 
     return surf_data_response
 
