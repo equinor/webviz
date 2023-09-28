@@ -1,11 +1,11 @@
 import React from "react";
 
 import { ModuleFCProps } from "@framework/Module";
-import { useSurfaceDataQueryByAddress } from "@modules/_shared/Surface";
+import { useSurfaceDataQueryByAddress } from "@modules_shared/Surface";
 import SubsurfaceViewer from "@webviz/subsurface-viewer";
 
 import { MapState } from "./MapState";
-import { makeSurfaceAddressString } from "@modules/_shared/Surface/surfaceAddress";
+import { makeSurfaceAddressString } from "@modules_shared/Surface/surfaceAddress";
 
 //-----------------------------------------------------------------------------------------------------------
 export function MapView(props: ModuleFCProps<MapState>) {
@@ -16,7 +16,7 @@ export function MapView(props: ModuleFCProps<MapState>) {
         renderCount.current = renderCount.current + 1;
     });
 
-    console.debug(`render MapView, surfAddr=${surfaceAddress ? makeSurfaceAddressString(surfaceAddress) : "null"}`);
+    console.debug(`render MapView start [${surfaceAddress ? makeSurfaceAddressString(surfaceAddress) : "null"}]`);
 
     const surfDataQuery = useSurfaceDataQueryByAddress(surfaceAddress);
     console.debug(`surfDataQuery.status=${surfDataQuery.status}`);
@@ -25,7 +25,7 @@ export function MapView(props: ModuleFCProps<MapState>) {
         return <div>No data</div>;
     }
 
-    console.debug(`done render MapView, surfAddr=${surfaceAddress ? makeSurfaceAddressString(surfaceAddress) : "null"}`);
+    console.debug(`render MapView done  [${surfaceAddress ? makeSurfaceAddressString(surfaceAddress) : "null"}]`);
 
     const surfData = surfDataQuery.data;
     return (

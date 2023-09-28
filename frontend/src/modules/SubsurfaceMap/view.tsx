@@ -8,7 +8,7 @@ import { Wellbore } from "@framework/Wellbore";
 import { Button } from "@lib/components/Button";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { ColorScaleGradientType } from "@lib/utils/ColorScale";
-import { useSurfaceDataQueryByAddress } from "@modules/_shared/Surface";
+import { useSurfaceDataQueryByAddress } from "@modules_shared/Surface";
 import { ViewAnnotation } from "@webviz/subsurface-viewer/dist/components/ViewAnnotation";
 
 import {

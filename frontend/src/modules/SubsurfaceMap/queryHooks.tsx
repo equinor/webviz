@@ -6,8 +6,8 @@ import {
     WellBoreTrajectory_api,
 } from "@api";
 import { apiService } from "@framework/ApiService";
-import { SurfaceAddress } from "@modules/_shared/Surface";
-import { SurfaceData_trans, transformSurfaceData } from "@modules/_shared/Surface/queryDataTransforms";
+import { SurfaceAddress } from "@modules_shared/Surface";
+import { SurfaceData_trans, transformSurfaceData } from "@modules_shared/Surface/queryDataTransforms";
 import { QueryFunction, QueryKey, UseQueryResult, useQuery } from "@tanstack/react-query";
 
 import { SurfacePolygonsAddress } from "./SurfacePolygonsAddress";
