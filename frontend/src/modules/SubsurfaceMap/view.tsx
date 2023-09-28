@@ -29,10 +29,6 @@ import {
 import { SyncedSubsurfaceViewer } from "./components/SyncedSubsurfaceViewer";
 import { state } from "./state";
 
-const jsonParseWithUndefined = (arrString: string): number[] => {
-    const arr = JSON.parse(arrString);
-    return arr.map((value: number) => (value === null ? undefined : value));
-};
 type Bounds = [number, number, number, number];
 
 const updateViewPortBounds = (
