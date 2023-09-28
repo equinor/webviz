@@ -8,20 +8,16 @@ export class EnsembleDisplayNameGenerator {
         this._ensembleSet = ensembleSet;
     }
 
-    hasEnsemble(ensembleIdent: EnsembleIdent): boolean {
-        return this._ensembleSet.findEnsemble(ensembleIdent) !== null;
-    }
-
     getEnsembleDisplayName(ensembleIdent: EnsembleIdent): string {
-        const numEnsembleWithSameName = this._ensembleSet
+        const ensembleNameCount = this._ensembleSet
             .getEnsembleArr()
             .filter((ensemble) => ensemble.getEnsembleName() === ensembleIdent.getEnsembleName()).length;
-        if (numEnsembleWithSameName === 1) {
+        if (ensembleNameCount === 1) {
             return ensembleIdent.getEnsembleName();
         }
 
         const ensemble = this._ensembleSet.findEnsemble(ensembleIdent);
-        if (ensemble === null) {
+        if (!ensemble) {
             return ensembleIdent.getEnsembleName();
         }
 

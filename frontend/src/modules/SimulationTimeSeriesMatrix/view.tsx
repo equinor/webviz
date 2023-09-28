@@ -96,7 +96,7 @@ export const view = ({ moduleContext, workbenchSession, workbenchSettings }: Mod
         }
 
         const ensemble = ensembleSet.findEnsemble(vectorSpecification.ensembleIdent);
-        if (ensemble === null) return;
+        if (!ensemble) return;
 
         selectedEnsembles.push(ensemble);
     });

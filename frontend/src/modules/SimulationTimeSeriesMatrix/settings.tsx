@@ -65,8 +65,8 @@ export function settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
     const [statisticsType, setStatisticsType] = React.useState<StatisticsType>(StatisticsType.INDIVIDUAL);
 
     if (!isEqual(ensembleSet, previousEnsembleSet)) {
-        const newSelectedEnsembleIdents = selectedEnsembleIdents.filter(
-            (ensemble) => ensembleSet.findEnsemble(ensemble) !== null
+        const newSelectedEnsembleIdents = selectedEnsembleIdents.filter((ensemble) =>
+            ensembleSet.hasEnsemble(ensemble)
         );
         const validatedEnsembleIdents = fixupEnsembleIdents(newSelectedEnsembleIdents, ensembleSet) ?? [];
         if (!isEqual(selectedEnsembleIdents, validatedEnsembleIdents)) {
@@ -85,7 +85,7 @@ export function settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
     const continuousAndNonConstantParametersUnion: ParameterIdent[] = [];
     for (const ensembleIdent of selectedEnsembleIdents) {
         const ensemble = ensembleSet.findEnsemble(ensembleIdent);
-        if (ensemble === null) continue;
+        if (!ensemble) continue;
 
         for (const parameter of ensemble.getParameters().getParameterIdents(ParameterType.CONTINUOUS)) {
             if (continuousAndNonConstantParametersUnion.some((param) => param.equals(parameter))) continue;
