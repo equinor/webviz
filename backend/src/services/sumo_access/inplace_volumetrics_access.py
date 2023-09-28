@@ -9,11 +9,10 @@ import pandas as pd
 import pyarrow as pa
 import pyarrow.compute as pc
 import pyarrow.parquet as pq
-from fmu.sumo.explorer.explorer import CaseCollection, SumoClient
 from fmu.sumo.explorer.objects import TableCollection
 from pydantic import BaseModel
 
-from ._helpers import create_sumo_client_instance
+from ._helpers import SumoEnsemble
 from .generic_types import EnsembleScalarResponse
 
 # from fmu.sumo.explorer.objects.table import AggregatedTable
@@ -72,24 +71,15 @@ class InplaceVolumetricsTableMetaData(BaseModel):
         orm_mode = True
 
 
-class InplaceVolumetricsAccess:
-    def __init__(self, access_token: str, case_uuid: str, iteration_name: str):
-        self._sumo_client: SumoClient = create_sumo_client_instance(access_token)
-        self._case_uuid = case_uuid
-        self._iteration_name = iteration_name
-        self.case_collection = CaseCollection(self._sumo_client).filter(uuid=self._case_uuid)
-        if len(self.case_collection) != 1:
-            raise ValueError(f"None or multiple sumo cases found {self._case_uuid=}")
-
-    def get_table_names_and_metadata(self) -> List[InplaceVolumetricsTableMetaData]:
+class InplaceVolumetricsAccess(SumoEnsemble):
+    async def get_table_names_and_metadata(self) -> List[InplaceVolumetricsTableMetaData]:
         """Retrieve the available volumetric tables names and corresponding metadata for the case"""
-        case = self.case_collection[0]
-        vol_table_collections: TableCollection = case.tables.filter(
+        vol_table_collections: TableCollection = self._case.tables.filter(
             aggregation="collection", tagname="vol", iteration=self._iteration_name
         )
         vol_tables_metadata = []
-        for vol_table_name in vol_table_collections.names:
-            vol_table_collection: TableCollection = case.tables.filter(
+        async for vol_table_name in vol_table_collections.names:
+            vol_table_collection: TableCollection = self._case.tables.filter(
                 aggregation="collection",
                 name=vol_table_name,
                 tagname="vol",
@@ -119,8 +109,7 @@ class InplaceVolumetricsAccess:
         return vol_tables_metadata
 
     def get_table(self, table_name: str, column_name: str) -> pa.Table:
-        case = self.case_collection[0]
-        vol_table_collection: TableCollection = case.tables.filter(
+        vol_table_collection: TableCollection = self._case.tables.filter(
             aggregation="collection",
             name=table_name,
             tagname="vol",
@@ -143,8 +132,7 @@ class InplaceVolumetricsAccess:
     def temporary_aggregate_from_realization_tables(self, table_name: str) -> pa.Table:
         """Temporary function to aggregate from realization tables when no aggregated table is available
         Assume Sumo will handle this in the future"""
-        case = self.case_collection[0]
-        vol_table_collection: TableCollection = case.tables.filter(
+        vol_table_collection: TableCollection = self._case.tables.filter(
             stage="realization",
             name=table_name,
             tagname="vol",

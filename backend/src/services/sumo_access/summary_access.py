@@ -6,14 +6,13 @@ import numpy as np
 import pyarrow as pa
 import pyarrow.compute as pc
 import pyarrow.parquet as pq
-from fmu.sumo.explorer.objects import CaseCollection, Case
-from sumo.wrapper import SumoClient
+from fmu.sumo.explorer.objects import Case
 
 from src.services.utils.arrow_helpers import sort_table_on_real_then_date
 from src.services.utils.perf_timer import PerfTimer
 
 from ._field_metadata import create_vector_metadata_from_field_meta
-from ._helpers import create_sumo_client_instance
+from ._helpers import SumoEnsemble
 from ._resampling import resample_segmented_multi_real_table
 from .generic_types import EnsembleScalarResponse
 from .summary_types import Frequency, VectorInfo, RealizationVector, HistoricalVector, VectorMetadata
@@ -21,19 +20,8 @@ from .summary_types import Frequency, VectorInfo, RealizationVector, HistoricalV
 LOGGER = logging.getLogger(__name__)
 
 
-class SummaryAccess:
-    def __init__(self, access_token: str, case_uuid: str, iteration_name: str):
-        sumo_client: SumoClient = create_sumo_client_instance(access_token)
-        case_collection = CaseCollection(sumo_client).filter(uuid=case_uuid)
-        if len(case_collection) == 0:
-            raise ValueError(f"Could not find sumo cases {case_uuid=}")
-        if len(case_collection) > 1:
-            raise ValueError(f"Multiple sumo cases found {case_uuid=}")
-
-        self._case: Case = case_collection[0]
-        self._iteration_name: str = iteration_name
-
-    def get_available_vectors(self) -> List[VectorInfo]:
+class SummaryAccess(SumoEnsemble):
+    async def get_available_vectors(self) -> List[VectorInfo]:
         timer = PerfTimer()
 
         smry_table_collection = self._case.tables.filter(
@@ -43,7 +31,7 @@ class SummaryAccess:
             iteration=self._iteration_name,
         )
 
-        column_names = smry_table_collection.columns
+        column_names = await smry_table_collection.columns_async
 
         ret_info_arr: List[VectorInfo] = []
         hist_vectors: Set[str] = set()
@@ -64,7 +52,7 @@ class SummaryAccess:
 
         return ret_info_arr
 
-    def get_vector_table(
+    async def get_vector_table(
         self,
         vector_name: str,
         resampling_frequency: Optional[Frequency],
@@ -79,7 +67,7 @@ class SummaryAccess:
         """
         timer = PerfTimer()
 
-        table = _load_arrow_table_for_from_sumo(self._case, self._iteration_name, vector_name)
+        table = await _load_arrow_table_for_from_sumo(self._case, self._iteration_name, vector_name)
         if table is None:
             raise ValueError(f"No table found for vector {vector_name=}")
         et_loading_ms = timer.lap_ms()
@@ -118,13 +106,13 @@ class SummaryAccess:
 
         return table, vector_metadata
 
-    def get_vector(
+    async def get_vector(
         self,
         vector_name: str,
         resampling_frequency: Optional[Frequency],
         realizations: Optional[Sequence[int]],
     ) -> List[RealizationVector]:
-        table, vector_metadata = self.get_vector_table(vector_name, resampling_frequency, realizations)
+        table, vector_metadata = await self.get_vector_table(vector_name, resampling_frequency, realizations)
 
         real_arr_np = table.column("REAL").to_numpy()
         unique_reals, first_occurrence_idx, real_counts = np.unique(real_arr_np, return_index=True, return_counts=True)
@@ -150,19 +138,18 @@ class SummaryAccess:
 
         return ret_arr
 
-    def get_matching_historical_vector(
+    async def get_matching_historical_vector(
         self,
         non_historical_vector_name: str,
         resampling_frequency: Optional[Frequency],
     ) -> Optional[HistoricalVector]:
-
         timer = PerfTimer()
 
         hist_vec_name = _construct_historical_vector_name(non_historical_vector_name)
         if not hist_vec_name:
             return None
 
-        table = _load_arrow_table_for_from_sumo(self._case, self._iteration_name, hist_vec_name)
+        table = await _load_arrow_table_for_from_sumo(self._case, self._iteration_name, hist_vec_name)
         if table is None:
             return None
         et_load_table_ms = timer.lap_ms()
@@ -203,13 +190,13 @@ class SummaryAccess:
             metadata=vector_metadata,
         )
 
-    def get_vector_values_at_timestamp(
+    async def get_vector_values_at_timestamp(
         self,
         vector_name: str,
         timestamp_utc_ms: int,
         realizations: Optional[Sequence[int]] = None,
     ) -> EnsembleScalarResponse:
-        table, _ = self.get_vector_table(vector_name, resampling_frequency=None, realizations=realizations)
+        table, _ = await self.get_vector_table(vector_name, resampling_frequency=None, realizations=realizations)
 
         if realizations is not None:
             mask = pc.is_in(table["REAL"], value_set=pa.array(realizations))
@@ -222,15 +209,15 @@ class SummaryAccess:
             values=table[vector_name].to_pylist(),
         )
 
-    def get_timestamps(
+    async def get_timestamps(
         self,
         resampling_frequency: Optional[Frequency] = None,
     ) -> List[int]:
         """
         Get list of available timestamps in ms UTC
         """
-        table, _ = self.get_vector_table(
-            self.get_available_vectors()[0].name,
+        table, _ = await self.get_vector_table(
+            (await self.get_available_vectors())[0].name,
             resampling_frequency=resampling_frequency,
             realizations=None,
         )
@@ -238,7 +225,7 @@ class SummaryAccess:
         return pc.unique(table.column("DATE")).to_numpy().astype(int).tolist()
 
 
-def _load_arrow_table_for_from_sumo(case: Case, iteration_name: str, vector_name: str) -> Optional[pa.Table]:
+async def _load_arrow_table_for_from_sumo(case: Case, iteration_name: str, vector_name: str) -> Optional[pa.Table]:
     timer = PerfTimer()
 
     smry_table_collection = case.tables.filter(
@@ -248,9 +235,9 @@ def _load_arrow_table_for_from_sumo(case: Case, iteration_name: str, vector_name
         iteration=iteration_name,
         column=vector_name,
     )
-    if len(smry_table_collection) == 0:
+    if await smry_table_collection.length_async() == 0:
         return None
-    if len(smry_table_collection) > 1:
+    if await smry_table_collection.length_async() > 1:
         raise ValueError(f"Multiple tables found for vector {vector_name=}")
 
     sumo_table = smry_table_collection[0]

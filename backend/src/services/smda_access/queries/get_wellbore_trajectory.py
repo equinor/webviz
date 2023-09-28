@@ -7,7 +7,7 @@ from ..types import WellBoreTrajectory
 from ._get_request import get
 
 
-def get_wellbore_trajectories(access_token: str, wellbore_uuids: List[str]) -> List[WellBoreTrajectory]:
+async def get_wellbore_trajectories(access_token: str, wellbore_uuids: List[str]) -> List[WellBoreTrajectory]:
     endpoint = "wellbore-survey-samples"
     params = {
         "_projection": "wellbore_uuid, unique_wellbore_identifier,easting,northing,tvd_msl,md",
@@ -16,7 +16,7 @@ def get_wellbore_trajectories(access_token: str, wellbore_uuids: List[str]) -> L
     }
 
     timer = PerfTimer()
-    result = get(access_token=access_token, endpoint=endpoint, params=params)
+    result = await get(access_token=access_token, endpoint=endpoint, params=params)
     print(f"TIME SMDA fetch wellbore trajectories took {timer.lap_s():.2f} seconds")
     resultdf = pd.DataFrame.from_dict(result)
     print(f"TIME SMDA wellbore trajectories to dataframe{timer.lap_s():.2f} seconds")

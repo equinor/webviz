@@ -8,6 +8,6 @@ class StratigraphyAccess:
     def __init__(self, access_token: str):
         self._smda_token = access_token
 
-    def get_stratigraphic_units(self, stratigraphic_column_identifier: str) -> List[StratigraphicUnit]:
+    async def get_stratigraphic_units(self, stratigraphic_column_identifier: str) -> List[StratigraphicUnit]:
         """Get stratigraphic units for a given stratigraphic column"""
-        return get_stratigraphic_units(self._smda_token, stratigraphic_column_identifier)
+        return await get_stratigraphic_units(self._smda_token, stratigraphic_column_identifier)

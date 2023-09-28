@@ -26,6 +26,6 @@ RUN apt-get update -y \
     && find "${HOME_DIR}" -type d | xargs -n 1 chmod g+s \
     && add-apt-repository ppa:deadsnakes/ppa -y \
     && apt-get update -y \
-    && apt-get install python3.11 -y
+    && apt-get install python3.11-venv -y
 
 CMD [ "sleep", "infinity" ]

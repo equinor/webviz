@@ -12,27 +12,29 @@ class WellAccess:
     def __init__(self, access_token: str):
         self._smda_token = access_token
 
-    def get_wellbore_picks(self, field_identifier: str, pick_identifier: str) -> List[WellBorePick]:
-        wellbore_picks = get_wellbore_picks_for_field(
+    async def get_wellbore_picks(self, field_identifier: str, pick_identifier: str) -> List[WellBorePick]:
+        wellbore_picks = await get_wellbore_picks_for_field(
             access_token=self._smda_token,
             field_identifier=field_identifier,
             pick_identifier=pick_identifier,
         )
         return wellbore_picks
 
-    def get_field_wellbore_trajectories(
+    async def get_field_wellbore_trajectories(
         self, field_identifier: str, unique_wellbore_identifiers: Optional[List[str]] = None
     ) -> List[WellBoreTrajectory]:
-        wellbore_trajectories = get_field_wellbore_trajectories(
+        wellbore_trajectories = await get_field_wellbore_trajectories(
             access_token=self._smda_token,
             field_identifier=field_identifier,
             unique_wellbore_identifiers=unique_wellbore_identifiers,
         )
         return wellbore_trajectories
 
-    def get_wellbore_trajectories(self, wellbore_uuids: List[str]) -> List[WellBoreTrajectory]:
-        wellbore_trajectories = get_wellbore_trajectories(access_token=self._smda_token, wellbore_uuids=wellbore_uuids)
+    async def get_wellbore_trajectories(self, wellbore_uuids: List[str]) -> List[WellBoreTrajectory]:
+        wellbore_trajectories = await get_wellbore_trajectories(
+            access_token=self._smda_token, wellbore_uuids=wellbore_uuids
+        )
         return wellbore_trajectories
 
-    def get_well_headers(self, field_identifier: str) -> List[WellBoreHeader]:
-        return get_well_headers(access_token=self._smda_token, field_identifier=field_identifier)
+    async def get_well_headers(self, field_identifier: str) -> List[WellBoreHeader]:
+        return await get_well_headers(access_token=self._smda_token, field_identifier=field_identifier)

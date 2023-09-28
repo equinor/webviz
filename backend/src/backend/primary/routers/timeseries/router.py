@@ -20,15 +20,15 @@ router = APIRouter()
 
 
 @router.get("/vector_list/")
-def get_vector_list(
+async def get_vector_list(
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
     case_uuid: Annotated[str, Query(description="Sumo case uuid")],
     ensemble_name: Annotated[str, Query(description="Ensemble name")],
 ) -> list[schemas.VectorDescription]:
     """Get list of all vectors in a given Sumo ensemble, excluding any historical vectors"""
 
-    access = SummaryAccess(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
-    vector_info_arr = access.get_available_vectors()
+    access = await SummaryAccess.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
+    vector_info_arr = await access.get_available_vectors()
 
     ret_arr: list[schemas.VectorDescription] = [
         schemas.VectorDescription(name=vi.name, descriptive_name=vi.name, has_historical=vi.has_historical)
@@ -39,7 +39,7 @@ def get_vector_list(
 
 
 @router.get("/realizations_vector_data/")
-def get_realizations_vector_data(
+async def get_realizations_vector_data(
     # fmt:off
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
     case_uuid: Annotated[str, Query(description="Sumo case uuid")],
@@ -52,10 +52,10 @@ def get_realizations_vector_data(
 ) -> list[schemas.VectorRealizationData]:
     """Get vector data per realization"""
 
-    access = SummaryAccess(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
+    access = await SummaryAccess.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
 
     sumo_freq = Frequency.from_string_value(resampling_frequency.value if resampling_frequency else "dummy")
-    sumo_vec_arr = access.get_vector(
+    sumo_vec_arr = await access.get_vector(
         vector_name=vector_name,
         resampling_frequency=sumo_freq,
         realizations=realizations,
@@ -77,7 +77,7 @@ def get_realizations_vector_data(
 
 
 @router.get("/timestamps_list/")
-def get_timestamps_list(
+async def get_timestamps_list(
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
     case_uuid: Annotated[str, Query(description="Sumo case uuid")],
     ensemble_name: Annotated[str, Query(description="Ensemble name")],
@@ -91,14 +91,14 @@ def get_timestamps_list(
     For other resampling frequencies, the date range will be expanded to cover the entire
     time range of all the requested realizations before computing the resampled dates.
     """
-    access = SummaryAccess(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
+    access = await SummaryAccess.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
     sumo_freq = Frequency.from_string_value(resampling_frequency.value if resampling_frequency else "dummy")
-    return access.get_timestamps(resampling_frequency=sumo_freq)
+    return await access.get_timestamps(resampling_frequency=sumo_freq)
 
 
 @router.get("/historical_vector_data/")
 # type: ignore [empty-body]
-def get_historical_vector_data(
+async def get_historical_vector_data(
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
     case_uuid: Annotated[str, Query(description="Sumo case uuid")],
     ensemble_name: Annotated[str, Query(description="Ensemble name")],
@@ -106,10 +106,10 @@ def get_historical_vector_data(
     resampling_frequency: Annotated[schemas.Frequency | None, Query(description="Resampling frequency")] = None,
     # relative_to_timestamp: Annotated[datetime.datetime | None, Query(description="Calculate relative to timestamp")] = None,
 ) -> schemas.VectorHistoricalData:
-    access = SummaryAccess(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
+    access = await SummaryAccess.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
 
     sumo_freq = Frequency.from_string_value(resampling_frequency.value if resampling_frequency else "dummy")
-    sumo_hist_vec = access.get_matching_historical_vector(
+    sumo_hist_vec = await access.get_matching_historical_vector(
         non_historical_vector_name=non_historical_vector_name, resampling_frequency=sumo_freq
     )
 
@@ -125,7 +125,7 @@ def get_historical_vector_data(
 
 
 @router.get("/statistical_vector_data/")
-def get_statistical_vector_data(
+async def get_statistical_vector_data(
     # fmt:off
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
     case_uuid: Annotated[str, Query(description="Sumo case uuid")],
@@ -139,12 +139,12 @@ def get_statistical_vector_data(
 ) -> schemas.VectorStatisticData:
     """Get statistical vector data for an ensemble"""
 
-    access = SummaryAccess(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
+    access = await SummaryAccess.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
 
     service_freq = Frequency.from_string_value(resampling_frequency.value)
     service_stat_funcs_to_compute = converters.to_service_statistic_functions(statistic_functions)
 
-    vector_table, vector_metadata = access.get_vector_table(
+    vector_table, vector_metadata = await access.get_vector_table(
         vector_name=vector_name,
         resampling_frequency=service_freq,
         realizations=realizations,
@@ -160,7 +160,7 @@ def get_statistical_vector_data(
 
 
 @router.get("/statistical_vector_data_per_sensitivity/")
-def get_statistical_vector_data_per_sensitivity(
+async def get_statistical_vector_data_per_sensitivity(
     # fmt:off
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
     case_uuid: Annotated[str, Query(description="Sumo case uuid")],
@@ -173,13 +173,17 @@ def get_statistical_vector_data_per_sensitivity(
 ) -> list[schemas.VectorStatisticSensitivityData]:
     """Get statistical vector data for an ensemble per sensitivity"""
 
-    summmary_access = SummaryAccess(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
-    parameter_access = ParameterAccess(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
-    sensitivities = parameter_access.get_parameters_and_sensitivities().sensitivities
+    summmary_access = await SummaryAccess.from_case_uuid(
+        authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
+    )
+    parameter_access = await ParameterAccess.from_case_uuid(
+        authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
+    )
+    sensitivities = (await parameter_access.get_parameters_and_sensitivities()).sensitivities
 
     service_freq = Frequency.from_string_value(resampling_frequency.value)
     service_stat_funcs_to_compute = converters.to_service_statistic_functions(statistic_functions)
-    vector_table, vector_metadata = summmary_access.get_vector_table(
+    vector_table, vector_metadata = await summmary_access.get_vector_table(
         vector_name=vector_name, resampling_frequency=service_freq, realizations=None
     )
     ret_data: list[schemas.VectorStatisticSensitivityData] = []
@@ -211,7 +215,7 @@ def get_statistical_vector_data_per_sensitivity(
 
 
 @router.get("/realization_vector_at_timestamp/")
-def get_realization_vector_at_timestamp(
+async def get_realization_vector_at_timestamp(
     # fmt:off
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
     case_uuid: Annotated[str, Query(description="Sumo case uuid")],
@@ -221,8 +225,10 @@ def get_realization_vector_at_timestamp(
     # realizations: Annotated[list[int] | None, Query(description="Optional list of realizations to include. If not specified, all realizations will be returned.")] = None,
     # fmt:on
 ) -> EnsembleScalarResponse:
-    summary_access = SummaryAccess(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
-    ensemble_response = summary_access.get_vector_values_at_timestamp(
+    summary_access = await SummaryAccess.from_case_uuid(
+        authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
+    )
+    ensemble_response = await summary_access.get_vector_values_at_timestamp(
         vector_name=vector_name, timestamp_utc_ms=timestamp_utc_ms, realizations=None
     )
     return ensemble_response
