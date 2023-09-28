@@ -22,7 +22,7 @@ export function getLineShape(isRate: boolean): "linear" | "vh" {
     Definition of base options for creating vector realization trace for a vector realization data.
  */
 type CreateRealizationTraceBaseOptions = {
-    ensembleName: string;
+    name?: string;
     color: string;
     legendGroup: string;
     hoverTemplate?: string;
@@ -42,7 +42,7 @@ export type CreateVectorRealizationTraceOptions = CreateRealizationTraceBaseOpti
 };
 export function createVectorRealizationTrace({
     vectorRealizationData,
-    ensembleName,
+    name,
     color,
     legendGroup,
     hoverTemplate = "",
@@ -54,8 +54,6 @@ export function createVectorRealizationTrace({
     // TODO:
     // - type: "scattergl" or "scatter"? Maximum 8 WebGL contexts in Chrome gives issues?
     //         "scattergl" hides traces when zooming and panning for Ruben on work computer.
-    // - vector name?
-    // - realization number?
     // - lineShape - Each VectorRealizationData_api element has its own `is_rate` property. Should we
     //               use that to determine the line shape or provide a lineShape argument?
 
@@ -65,9 +63,8 @@ export function createVectorRealizationTrace({
         line: { width: 1, color: color, shape: getLineShape(vectorRealizationData.is_rate) },
         mode: "lines",
         type: type,
-        hovertemplate: `${hoverTemplate}Realization: ${vectorRealizationData.realization}, Ensemble: ${ensembleName}`,
-        // realizationNumber: realization.realization,
-        name: legendGroup,
+        hovertemplate: `${hoverTemplate}Realization: ${vectorRealizationData.realization}`,
+        name: name,
         legendgroup: legendGroup,
         showlegend: vectorRealizationData.realization === 0 && showLegend ? true : false,
         yaxis: yaxis,
@@ -84,7 +81,7 @@ export type CreateVectorRealizationTracesOptions = CreateRealizationTraceBaseOpt
 };
 export function createVectorRealizationTraces({
     vectorRealizationsData,
-    ensembleName,
+    name,
     color,
     legendGroup,
     hoverTemplate = "",
@@ -100,7 +97,7 @@ export function createVectorRealizationTraces({
     return vectorRealizationsData.map((realization) => {
         return createVectorRealizationTrace({
             vectorRealizationData: realization,
-            ensembleName,
+            name,
             color,
             legendGroup,
             hoverTemplate,
@@ -123,7 +120,7 @@ export type CreateHistoricalVectorTraceOptions = {
     showLegend?: boolean;
     type?: "scatter" | "scattergl";
     // lineShape?: "linear" | "spline" | "hv" | "vh" | "hvh" | "vhv";
-    vectorName?: string;
+    name?: string;
     legendRank?: number;
 };
 export function createHistoricalVectorTrace({
@@ -133,10 +130,10 @@ export function createHistoricalVectorTrace({
     xaxis = "x",
     showLegend = false,
     type = "scatter",
-    vectorName,
+    name: name,
     legendRank,
 }: CreateHistoricalVectorTraceOptions): Partial<TimeSeriesPlotData> {
-    const hoverText = vectorName ? `History: ${vectorName}` : "History";
+    const hoverText = name ? `History: ${name}` : "History";
     return {
         line: { shape: getLineShape(vectorHistoricalData.is_rate), color: color },
         mode: "lines",
@@ -145,7 +142,7 @@ export function createHistoricalVectorTrace({
         y: vectorHistoricalData.values,
         hovertext: hoverText,
         hoverinfo: "y+x+text",
-        name: "History",
+        name: "History", // TODO: Remove?
         showlegend: showLegend,
         legendgroup: "History",
         legendrank: legendRank,
@@ -168,6 +165,7 @@ export type CreateVectorFanchartTracesOptions = {
     vectorStatisticData: VectorStatisticData_api;
     hexColor: string;
     legendGroup: string;
+    name?: string;
     yaxis?: string;
     // lineShape?: "vh" | "linear" | "spline" | "hv" | "hvh" | "vhv";
     hoverTemplate?: string;
@@ -179,6 +177,7 @@ export function createVectorFanchartTraces({
     vectorStatisticData,
     hexColor,
     legendGroup,
+    name = undefined,
     yaxis = "y",
     hoverTemplate = "(%{x}, %{y})<br>",
     showLegend = false,
@@ -227,6 +226,7 @@ export function createVectorFanchartTraces({
         data: fanchartData,
         hexColor: hexColor,
         legendGroup: legendGroup,
+        name: name,
         lineShape: getLineShape(vectorStatisticData.is_rate),
         showLegend: showLegend,
         hoverTemplate: hoverTemplate,
@@ -246,6 +246,7 @@ export type CreateVectorStatisticsTracesOptions = {
     vectorStatisticData: VectorStatisticData_api;
     hexColor: string;
     legendGroup: string;
+    name?: string;
     yaxis?: string;
     // lineShape?: "vh" | "linear" | "spline" | "hv" | "hvh" | "vhv";
     lineWidth?: number;
@@ -258,6 +259,7 @@ export function createVectorStatisticsTraces({
     vectorStatisticData,
     hexColor,
     legendGroup,
+    name = undefined,
     yaxis = "y",
     lineWidth = 2,
     hoverTemplate = "(%{x}, %{y})<br>",
@@ -311,6 +313,7 @@ export function createVectorStatisticsTraces({
         data: statisticsData,
         color: hexColor,
         legendGroup: legendGroup,
+        name: name,
         lineShape: getLineShape(vectorStatisticData.is_rate),
         lineWidth: lineWidth,
         showLegend: showLegend,

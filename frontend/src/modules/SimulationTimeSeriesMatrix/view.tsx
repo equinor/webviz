@@ -2,6 +2,7 @@ import React from "react";
 import Plot from "react-plotly.js";
 
 import { Ensemble } from "@framework/Ensemble";
+import { EnsembleSet } from "@framework/EnsembleSet";
 import { ModuleFCProps } from "@framework/Module";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { useElementSize } from "@lib/hooks/useElementSize";
@@ -9,6 +10,7 @@ import { ColorScaleGradientType } from "@lib/utils/ColorScale";
 
 import { useHistoricalVectorDataQueries, useStatisticalVectorDataQueries, useVectorDataQueries } from "./queryHooks";
 import { GroupBy, State, VisualizationMode } from "./state";
+import { EnsembleDisplayNameGenerator } from "./utils/ensembleDisplayName";
 import { EnsemblesContinuousParameterColoring } from "./utils/ensemblesContinuousParameterColoring";
 import { SubplotBuilder, SubplotOwner } from "./utils/subplotBuilder";
 import {
@@ -63,10 +65,16 @@ export const view = ({ moduleContext, workbenchSession, workbenchSettings }: Mod
         vectorSpecificationsWithHistoricalData?.some((vec) => vec.hasHistoricalVector) ?? false
     );
 
+    const hasQueryError = [
+        ...vectorDataQueries.filter((query) => query.isError),
+        ...vectorStatisticsQueries.filter((query) => query.isError),
+        ...historicalVectorDataQueries.filter((query) => query.isError),
+    ];
+    if (hasQueryError.length > 0) {
+        return <div>One or more query has error state</div>;
+    }
+
     // Map vector specifications and queries with data
-    // TODO:
-    // - Add loading state if 1 or more queries are loading?
-    // - Can check for equal length of useQueries arrays and the loadedVectorSpecificationsAndData arrays?
     const loadedVectorSpecificationsAndRealizationData = vectorSpecifications
         ? createLoadedVectorSpecificationAndDataArray(vectorSpecifications, vectorDataQueries)
         : [];
@@ -103,15 +111,19 @@ export const view = ({ moduleContext, workbenchSession, workbenchSettings }: Mod
         : null;
 
     // Create Plot Builder
+    const selectedEnsembleSet = new EnsembleSet(selectedEnsembles);
+    const ensembleDisplayNameGenerator = new EnsembleDisplayNameGenerator(selectedEnsembleSet);
     const subplotOwner = groupBy === GroupBy.TIME_SERIES ? SubplotOwner.VECTOR : SubplotOwner.ENSEMBLE;
     const scatterType =
         visualizationMode === VisualizationMode.INDIVIDUAL_REALIZATIONS ||
         visualizationMode === VisualizationMode.STATISTICS_AND_REALIZATIONS
             ? "scattergl"
             : "scatter";
+
     const subplotBuilder = new SubplotBuilder(
         subplotOwner,
         vectorSpecifications ?? [],
+        ensembleDisplayNameGenerator,
         colorSet,
         wrapperDivSize.width,
         wrapperDivSize.height,
@@ -156,17 +168,8 @@ export const view = ({ moduleContext, workbenchSession, workbenchSettings }: Mod
         subplotBuilder.addHistoryTraces(loadedVectorSpecificationsAndHistoricalData);
     }
 
-    // Handler methods
-    function handleHover() {
-        return;
-    }
-
-    function handleUnHover() {
-        return;
-    }
-
-    const plotData = subplotBuilder.createPlotData();
     // TODO: Keep uirevision?
+    const plotData = subplotBuilder.createPlotData();
     return (
         <div className="w-full h-full" ref={wrapperDivRef}>
             <Plot
@@ -174,8 +177,6 @@ export const view = ({ moduleContext, workbenchSession, workbenchSettings }: Mod
                 data={plotData}
                 layout={subplotBuilder.createPlotLayout()}
                 config={{ scrollZoom: true }}
-                onHover={handleHover}
-                onUnhover={handleUnHover}
             />
         </div>
     );

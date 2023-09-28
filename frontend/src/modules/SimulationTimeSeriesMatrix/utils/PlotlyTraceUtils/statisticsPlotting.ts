@@ -105,7 +105,7 @@ export type CreateStatisticsTracesOptions = {
     lineWidth?: number;
     showHoverInfo?: boolean;
     hoverText?: string;
-    legendName?: string;
+    name?: string;
     type?: "scatter" | "scattergl";
     // hovermode?: string,
 };
@@ -133,7 +133,7 @@ export function createStatisticsTraces({
     data,
     color,
     legendGroup,
-    legendName = undefined,
+    name = undefined,
     lineShape = "linear",
     lineWidth = 2,
     xaxis = "x",
@@ -152,7 +152,7 @@ export function createStatisticsTraces({
 
     function getDefaultTrace(statisticsName: string, values: number[]): Partial<TimeSeriesPlotData> {
         const trace: Partial<TimeSeriesPlotData> = {
-            name: legendName ?? legendGroup,
+            name: name ?? legendGroup,
             x: data.samples,
             y: values,
             xaxis: xaxis,

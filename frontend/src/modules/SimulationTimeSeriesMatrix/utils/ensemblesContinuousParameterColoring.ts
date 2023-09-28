@@ -1,4 +1,5 @@
 import { Ensemble } from "@framework/Ensemble";
+import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { ContinuousParameter, ParameterIdent, ParameterType } from "@framework/EnsembleParameters";
 import { ColorScale } from "@lib/utils/ColorScale";
 import { MinMax } from "@lib/utils/MinMax";
@@ -12,12 +13,12 @@ export class EnsemblesContinuousParameterColoring {
      */
 
     private _parameterIdent: ParameterIdent;
-    private _ensembleContinuousParameterSet: { [ensembleName: string]: ContinuousParameter };
+    private _ensembleContinuousParameterSet: Map<EnsembleIdent, ContinuousParameter>;
     private _colorScale: ColorScale;
 
     constructor(selectedEnsembles: Ensemble[], parameterIdent: ParameterIdent, colorScale: ColorScale) {
         this._parameterIdent = parameterIdent;
-        this._ensembleContinuousParameterSet = {};
+        this._ensembleContinuousParameterSet = new Map<EnsembleIdent, ContinuousParameter>();
         let minMax = MinMax.createInvalid();
         for (const ensemble of selectedEnsembles) {
             const parameters = ensemble.getParameters();
@@ -25,7 +26,7 @@ export class EnsemblesContinuousParameterColoring {
 
             const parameter = parameters.getParameter(parameterIdent);
             if (parameter.type === ParameterType.CONTINUOUS) {
-                this._ensembleContinuousParameterSet[ensemble.getEnsembleName()] = parameter;
+                this._ensembleContinuousParameterSet.set(ensemble.getIdent(), parameter);
                 minMax = minMax.extendedBy(parameters.getContinuousParameterMinMax(parameterIdent));
             }
         }
@@ -36,29 +37,39 @@ export class EnsemblesContinuousParameterColoring {
         this._colorScale.setRangeAndMidPoint(minMax.min, minMax.max, midValue);
     }
 
+    getParameterDisplayName(): string {
+        if (!this._parameterIdent.groupName) return this._parameterIdent.name;
+
+        return `${this._parameterIdent.groupName}:${this._parameterIdent.name}`;
+    }
+
     getColorScale(): ColorScale {
         return this._colorScale;
     }
 
-    hasEnsembleName(ensembleName: string): boolean {
-        return ensembleName in this._ensembleContinuousParameterSet;
+    hasParameterForEnsemble(ensembleIdent: EnsembleIdent): boolean {
+        return this._ensembleContinuousParameterSet.has(ensembleIdent);
     }
 
-    hasParameterRealizationNumericalValue(ensembleName: string, realization: number): boolean {
-        if (!this.hasEnsembleName(ensembleName)) return false;
+    hasParameterRealizationValue(ensembleIdent: EnsembleIdent, realization: number): boolean {
+        const parameter = this._ensembleContinuousParameterSet.get(ensembleIdent);
+        if (parameter === undefined) return false;
 
-        const parameter = this._ensembleContinuousParameterSet[ensembleName];
         return parameter.realizations.indexOf(realization) !== -1;
     }
 
-    getParameterRealizationValue(ensembleName: string, realization: number): number {
-        if (!this.hasParameterRealizationNumericalValue(ensembleName, realization)) {
+    getParameterRealizationValue(ensembleIdent: EnsembleIdent, realization: number): number {
+        if (!this.hasParameterRealizationValue(ensembleIdent, realization)) {
             throw new Error(
-                `Parameter ${this._parameterIdent.toString()} has no numerical value for realization ${realization} in ensemble ${ensembleName}`
+                `Parameter ${this.getParameterDisplayName()} has no numerical value for realization ${realization} in ensemble ${ensembleIdent.toString()}`
             );
         }
-
-        const parameter = this._ensembleContinuousParameterSet[ensembleName];
+        const parameter = this._ensembleContinuousParameterSet.get(ensembleIdent);
+        if (parameter === undefined) {
+            throw new Error(
+                `Parameter ${this.getParameterDisplayName()} not found in ensemble ${ensembleIdent.toString()}`
+            );
+        }
         const realizationIndex = parameter.realizations.indexOf(realization);
         return parameter.values[realizationIndex];
     }
