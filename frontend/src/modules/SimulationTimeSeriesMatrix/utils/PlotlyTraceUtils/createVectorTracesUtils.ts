@@ -142,7 +142,6 @@ export function createHistoricalVectorTrace({
         y: vectorHistoricalData.values,
         hovertext: hoverText,
         hoverinfo: "y+x+text",
-        name: "History", // TODO: Remove?
         showlegend: showLegend,
         legendgroup: "History",
         legendrank: legendRank,
