@@ -5,6 +5,7 @@ import { useSurfaceDataQueryByAddress } from "@modules/_shared/Surface";
 import SubsurfaceViewer from "@webviz/subsurface-viewer";
 
 import { MapState } from "./MapState";
+import { makeSurfaceAddressString } from "@modules/_shared/Surface/surfaceAddress";
 
 //-----------------------------------------------------------------------------------------------------------
 export function MapView(props: ModuleFCProps<MapState>) {
@@ -15,10 +16,16 @@ export function MapView(props: ModuleFCProps<MapState>) {
         renderCount.current = renderCount.current + 1;
     });
 
+    console.debug(`render MapView, surfAddr=${surfaceAddress ? makeSurfaceAddressString(surfaceAddress) : "null"}`);
+
     const surfDataQuery = useSurfaceDataQueryByAddress(surfaceAddress);
+    console.log(`surfDataQuery.status=${surfDataQuery.status}`);
+
     if (!surfDataQuery.data) {
         return <div>No data</div>;
     }
+
+    console.debug(`done render MapView, surfAddr=${surfaceAddress ? makeSurfaceAddressString(surfaceAddress) : "null"}`);
 
     const surfData = surfDataQuery.data;
     return (
@@ -29,7 +36,8 @@ export function MapView(props: ModuleFCProps<MapState>) {
                     {
                         "@@type": "MapLayer",
                         id: "mesh-layer",
-                        meshData: JSON.parse(surfData.mesh_data),
+                        // Drop conversion as soon as SubsurfaceViewer accepts typed arrays
+                        meshData: Array.from(surfData.valuesFloat32Arr), 
                         frame: {
                             origin: [surfData.x_ori, surfData.y_ori],
                             count: [surfData.x_count, surfData.y_count],

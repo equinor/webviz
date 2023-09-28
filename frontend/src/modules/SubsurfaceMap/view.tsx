@@ -103,7 +103,8 @@ export function view({ moduleContext, workbenchSettings, workbenchServices }: Mo
 
     // Mesh data query should only trigger update if the property surface address is not set or if the property surface data is loaded
     if (meshSurfDataQuery.data && !propertySurfAddr) {
-        const newMeshData = jsonParseWithUndefined(meshSurfDataQuery.data.mesh_data);
+        // Drop conversion as soon as SubsurfaceViewer accepts typed arrays
+        const newMeshData = Array.from(meshSurfDataQuery.data.valuesFloat32Arr);
 
         const newSurfaceMetaData: SurfaceMeta = { ...meshSurfDataQuery.data };
         const surfaceLayer: Record<string, unknown> = createSurfaceMeshLayer(
@@ -114,8 +115,9 @@ export function view({ moduleContext, workbenchSettings, workbenchServices }: Mo
         newLayers.push(surfaceLayer);
         colorRange = [meshSurfDataQuery.data.val_min, meshSurfDataQuery.data.val_max];
     } else if (meshSurfDataQuery.data && propertySurfDataQuery.data) {
-        const newMeshData = jsonParseWithUndefined(meshSurfDataQuery.data.mesh_data);
-        const newPropertyData = jsonParseWithUndefined(propertySurfDataQuery.data.mesh_data);
+        // Drop conversion as soon as SubsurfaceViewer accepts typed arrays
+        const newMeshData = Array.from(meshSurfDataQuery.data.valuesFloat32Arr);
+        const newPropertyData = Array.from(propertySurfDataQuery.data.valuesFloat32Arr);
 
         const newSurfaceMetaData: SurfaceMeta = { ...meshSurfDataQuery.data };
         const surfaceLayer: Record<string, unknown> = createSurfaceMeshLayer(

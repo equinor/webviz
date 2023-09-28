@@ -1,10 +1,15 @@
 from typing import List
 
-import orjson
+import numpy as np
 import xtgeo
-from src.services.sumo_access.surface_types import SurfaceMeta as SumoSurfaceMeta
+from numpy.typing import NDArray
+
 from src.services.smda_access.types import StratigraphicSurface
-from src.services.utils.surface_to_float32 import surface_to_float32_array
+from src.services.sumo_access.surface_types import SurfaceMeta as SumoSurfaceMeta
+from src.services.utils.b64 import b64_encode_float_array_as_float32
+from src.services.utils.perf_timer import PerfTimer
+from src.services.utils.surface_to_float32 import surface_to_float32_numpy_array
+
 from . import schemas
 
 
@@ -25,7 +30,13 @@ def to_api_surface_data(xtgeo_surf: xtgeo.RegularSurface) -> schemas.SurfaceData
     """
     Create API SurfaceData from xtgeo regular surface
     """
-    float32values = surface_to_float32_array(xtgeo_surf)
+
+    timer = PerfTimer()
+    
+    float32_np_arr: NDArray[np.float32] = surface_to_float32_numpy_array(xtgeo_surf)
+    values_b64arr = b64_encode_float_array_as_float32(float32_np_arr)
+
+    print(f"xxxxxxxxxx - conversion/encoding {timer.lap_ms():.1f}ms")
 
     return schemas.SurfaceData(
         x_ori=xtgeo_surf.xori,
@@ -41,7 +52,7 @@ def to_api_surface_data(xtgeo_surf: xtgeo.RegularSurface) -> schemas.SurfaceData
         val_min=xtgeo_surf.values.min(),
         val_max=xtgeo_surf.values.max(),
         rot_deg=xtgeo_surf.rotation,
-        mesh_data=orjson.dumps(float32values).decode(),  # pylint: disable=maybe-no-member
+        values_b64arr=values_b64arr,
     )
 
 

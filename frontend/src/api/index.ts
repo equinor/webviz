@@ -9,6 +9,8 @@ export { CancelablePromise, CancelError } from './core/CancelablePromise';
 export { OpenAPI } from './core/OpenAPI';
 export type { OpenAPIConfig } from './core/OpenAPI';
 
+export { B64FloatArray as B64FloatArray_api } from './models/B64FloatArray';
+export { B64UintArray as B64UintArray_api } from './models/B64UintArray';
 export type { Body_get_realizations_response as Body_get_realizations_response_api } from './models/Body_get_realizations_response';
 export type { CaseInfo as CaseInfo_api } from './models/CaseInfo';
 export type { Completions as Completions_api } from './models/Completions';

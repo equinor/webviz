@@ -4,6 +4,7 @@ from typing import Optional
 from pydantic import BaseModel
 
 from src.services.smda_access.types import StratigraphicFeature
+from src.services.utils.b64 import B64FloatArray
 
 
 class SurfaceStatisticFunction(str, Enum):
@@ -66,4 +67,4 @@ class SurfaceData(BaseModel):
     val_min: float
     val_max: float
     rot_deg: float
-    mesh_data: str
+    values_b64arr: B64FloatArray

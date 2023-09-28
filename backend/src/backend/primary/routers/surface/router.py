@@ -103,7 +103,7 @@ def get_statistical_surface_data(
     if not xtgeo_surf:
         raise HTTPException(status_code=404, detail="Could not find or compute surface")
 
-    surf_data_response = converters.to_api_surface_data(xtgeo_surf)
+    surf_data_response: schemas.SurfaceData = converters.to_api_surface_data(xtgeo_surf)
 
     LOGGER.debug(f"Calculated statistical dynamic surface and created image, total time: {timer.elapsed_ms()}ms")
 
@@ -142,7 +142,7 @@ def get_property_surface_resampled_to_static_surface(
 
     resampled_surface = converters.resample_property_surface_to_mesh_surface(xtgeo_surf_mesh, xtgeo_surf_property)
 
-    surf_data_response = converters.to_api_surface_data(resampled_surface)
+    surf_data_response: schemas.SurfaceData = converters.to_api_surface_data(resampled_surface)
 
     LOGGER.debug(f"Loaded property surface and created image, total time: {timer.elapsed_ms()}ms")
 
