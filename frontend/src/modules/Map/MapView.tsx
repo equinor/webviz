@@ -19,7 +19,7 @@ export function MapView(props: ModuleFCProps<MapState>) {
     console.debug(`render MapView, surfAddr=${surfaceAddress ? makeSurfaceAddressString(surfaceAddress) : "null"}`);
 
     const surfDataQuery = useSurfaceDataQueryByAddress(surfaceAddress);
-    console.log(`surfDataQuery.status=${surfDataQuery.status}`);
+    console.debug(`surfDataQuery.status=${surfDataQuery.status}`);
 
     if (!surfDataQuery.data) {
         return <div>No data</div>;

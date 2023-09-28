@@ -12,9 +12,9 @@ export function transformSurfaceData(apiData: SurfaceData_api): SurfaceData_tran
     const startTS = performance.now();
 
     const { values_b64arr, ...untransformedData } = apiData;
-    const dataFloat32Arr = b64DecodeFloatArrayToFloat32(apiData.values_b64arr);
+    const dataFloat32Arr = b64DecodeFloatArrayToFloat32(values_b64arr);
 
-    console.log(`transformSurfaceData elapsed: ${(performance.now() - startTS).toFixed(1)}ms`);
+    console.debug(`transformSurfaceData elapsed: ${(performance.now() - startTS).toFixed(1)}ms`);
 
     return {
         ...untransformedData,
