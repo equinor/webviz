@@ -3,12 +3,6 @@ from typing import List
 from pydantic import BaseModel
 
 
-class B64EncodedNumpyArray(BaseModel):
-    bvals: str
-    dtype: str
-    shape: List[int]
-
-
 class GridSurface(BaseModel):
     polys: dict
     points: dict

@@ -1,7 +1,6 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-import type { B64EncodedNumpyArray } from '../models/B64EncodedNumpyArray';
 import type { GridIntersection } from '../models/GridIntersection';
 import type { GridSurface } from '../models/GridSurface';
 
@@ -104,7 +103,7 @@ export class GridService {
      * @param gridName Grid name
      * @param parameterName Grid parameter
      * @param realization Realization
-     * @returns B64EncodedNumpyArray Successful Response
+     * @returns number Successful Response
      * @throws ApiError
      */
     public gridParameter(
@@ -113,7 +112,7 @@ export class GridService {
         gridName: string,
         parameterName: string,
         realization: string,
-    ): CancelablePromise<B64EncodedNumpyArray> {
+    ): CancelablePromise<Array<number>> {
         return this.httpRequest.request({
             method: 'GET',
             url: '/grid/grid_parameter',
@@ -206,7 +205,7 @@ export class GridService {
      * @param gridName Grid name
      * @param parameterName Grid parameter
      * @param realizations Realizations
-     * @returns B64EncodedNumpyArray Successful Response
+     * @returns number Successful Response
      * @throws ApiError
      */
     public statisticalGridParameter(
@@ -215,7 +214,7 @@ export class GridService {
         gridName: string,
         parameterName: string,
         realizations: Array<string>,
-    ): CancelablePromise<B64EncodedNumpyArray> {
+    ): CancelablePromise<Array<number>> {
         return this.httpRequest.request({
             method: 'GET',
             url: '/grid/statistical_grid_parameter',
