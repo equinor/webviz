@@ -7,6 +7,8 @@ import orjson as json
 import requests
 from requests_toolbelt.multipart.decoder import MultipartDecoder
 
+import httpx
+
 from .types import VdsFenceResponse, VdsHandle, VdsMetaData, VdsSliceResponse
 
 VDS_HOST_ADDRESS = os.getenv("WEBVIZ_VDS_HOST_ADDRESS")
@@ -22,21 +24,24 @@ class VdsAccess:
         self.sas: str = sumo_seismic_vds_handle.sas_token
         self.vds_url: str = sumo_seismic_vds_handle.vds_url
 
-    def _query(self, endpoint: str, params: dict) -> requests.Response:
-        """Query the VDS service"""
-        params.update({"vds": self.vds_url, "sas": self.sas})
-        response = requests.post(
-            f"{VDS_HOST_ADDRESS}/{endpoint}",
-            headers={"Content-Type": "application/json"},
-            data=json.dumps(params),  # pylint: disable=maybe-no-member
-            timeout=60,
-        )
+    async def _query(self, endpoint: str, params: dict) -> httpx.Response:
+        """Query the service"""
+        params.update({"url": self.vds_url, "sas": self.sas})
 
-        if not response.ok:
-            raise RuntimeError(f"({str(response.status_code)})-{response.reason}-{response.text} ")
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                f"{VDS_HOST_ADDRESS}/{endpoint}",
+                headers={"Content-Type": "application/json"},
+                content=json.dumps(params),
+                timeout=60,
+            )
+
+        if response.is_error:
+            raise RuntimeError(f"({str(response.status_code)})-{response.reason_phrase}-{response.text}")
+
         return response
 
-    def get_slice(self, direction: str, lineno: int) -> VdsSliceResponse:
+    async def get_slice(self, direction: str, lineno: int) -> VdsSliceResponse:
         """Gets a slice in i,j,k direction from the VDS service"""
 
         endpoint = "slice"
@@ -46,17 +51,20 @@ class VdsAccess:
             "vds": self.vds_url,
             "sas": self.sas,
         }
-        response = self._query(endpoint, params)
+        response = await self._query(endpoint, params)
 
-        parts = MultipartDecoder.from_response(response).parts
+        # Use MultipartDecoder with httpx's Response content and headers
+        decoder = MultipartDecoder(content=response.content, content_type=response.headers["Content-Type"])
+        parts = decoder.parts
+
         metadata = json.loads(parts[0].content)  # pylint: disable=maybe-no-member
         shape = (metadata["y"]["samples"], metadata["x"]["samples"])
         byte_array = parts[1].content
         values_np = bytes_to_ndarray(byte_array, list(shape), metadata["format"])
-        values = values_np.tolist()
+        values = values_np.T.tolist()
         return VdsSliceResponse(values=values, **metadata)
 
-    def get_fence(self, coordinates: List[List[float]], coordinate_system: str = "cdp") -> VdsFenceResponse:
+    async def get_fence(self, coordinates: List[List[float]], coordinate_system: str = "cdp") -> VdsFenceResponse:
         """Gets traces along an arbitrary path of x,y coordinates."""
         endpoint = "fence"
 
@@ -66,18 +74,22 @@ class VdsAccess:
             "vds": self.vds_url,
             "sas": self.sas,
             "interpolation": "linear",
-            "fillValue": -999,  # Assumption is that this will fill out-of-bounds values, but it doesn't seem to work
+            "fillValue": np.nan,
         }
-        response = self._query(endpoint, params)
+        response = await self._query(endpoint, params)
 
-        parts = MultipartDecoder.from_response(response).parts
+        # Use MultipartDecoder with httpx's Response content and headers
+        decoder = MultipartDecoder(content=response.content, content_type=response.headers["Content-Type"])
+        parts = decoder.parts
+
         metadata = json.loads(parts[0].content)  # pylint: disable=maybe-no-member
         byte_array = parts[1].content
         values_np = bytes_to_ndarray(byte_array, list(metadata["shape"]), metadata["format"])
         values = values_np.tolist()
+        print(metadata)
         return VdsFenceResponse(values=values, shape=metadata["shape"])
 
-    def get_metadata(self) -> VdsMetaData:
+    async def get_metadata(self) -> VdsMetaData:
         """Gets metadata from the cube"""
         endpoint = "metadata"
 
@@ -85,9 +97,7 @@ class VdsAccess:
             "vds": self.vds_url,
             "sas": self.sas,
         }
-        response = self._query(endpoint, params)
-        if not response.ok:
-            raise RuntimeError(response.text)
+        response = await self._query(endpoint, params)
         metadata = response.json()
         return VdsMetaData(**metadata)
 
