@@ -31,6 +31,7 @@ export type { InplaceVolumetricsTableMetaData as InplaceVolumetricsTableMetaData
 export type { PolygonData as PolygonData_api } from './models/PolygonData';
 export type { PvtData as PvtData_api } from './models/PvtData';
 export type { SeismicCubeMeta as SeismicCubeMeta_api } from './models/SeismicCubeMeta';
+export type { SeismicIntersectionData as SeismicIntersectionData_api } from './models/SeismicIntersectionData';
 export { SensitivityType as SensitivityType_api } from './models/SensitivityType';
 export { StatisticFunction as StatisticFunction_api } from './models/StatisticFunction';
 export type { StatisticValueObject as StatisticValueObject_api } from './models/StatisticValueObject';
