@@ -1,12 +1,10 @@
 import logging
 import os
 from typing import List
+import json
 
 import numpy as np
-import orjson as json
-import requests
 from requests_toolbelt.multipart.decoder import MultipartDecoder
-
 import httpx
 
 from .types import VdsFenceResponse, VdsHandle, VdsMetaData, VdsSliceResponse
@@ -61,7 +59,7 @@ class VdsAccess:
         decoder = MultipartDecoder(content=response.content, content_type=response.headers["Content-Type"])
         parts = decoder.parts
 
-        metadata = json.loads(parts[0].content)  # pylint: disable=maybe-no-member
+        metadata = json.loads(parts[0].content)
         shape = (metadata["y"]["samples"], metadata["x"]["samples"])
         byte_array = parts[1].content
         values_np = bytes_to_ndarray(byte_array, list(shape), metadata["format"])
@@ -86,7 +84,7 @@ class VdsAccess:
         decoder = MultipartDecoder(content=response.content, content_type=response.headers["Content-Type"])
         parts = decoder.parts
 
-        metadata = json.loads(parts[0].content)  # pylint: disable=maybe-no-member
+        metadata = json.loads(parts[0].content)
         byte_array = parts[1].content
         values_np = bytes_to_ndarray(byte_array, list(metadata["shape"]), metadata["format"])
         values = values_np.tolist()
