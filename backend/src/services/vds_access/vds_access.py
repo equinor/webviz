@@ -7,7 +7,8 @@ import numpy as np
 from requests_toolbelt.multipart.decoder import MultipartDecoder
 import httpx
 
-from .types import VdsFenceResponse, VdsHandle, VdsMetaData, VdsSliceResponse
+from ..sumo_access.seismic_types import VdsHandle
+from .types import VdsFenceResponse, VdsMetaData, VdsSliceResponse
 
 VDS_HOST_ADDRESS = os.getenv("WEBVIZ_VDS_HOST_ADDRESS")
 

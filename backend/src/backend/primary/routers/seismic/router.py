@@ -3,7 +3,7 @@ from typing import List
 import orjson as json
 
 import numpy as np
-from fastapi import APIRouter, Depends, HTTPException, Query, Body
+from fastapi import APIRouter, Depends, HTTPException, Query  # , Body
 
 from src.services.sumo_access.seismic_access import SeismicAccess
 from src.services.vds_access.vds_access import VdsAccess
@@ -87,6 +87,6 @@ async def get_fence(
 
     z_arr = np.linspace(z_axis_meta.min, z_axis_meta.max, z_axis_meta.samples)
     return schemas.SeismicIntersectionData(
-        values_arr_str=json.dumps(vals.values),  # pylint: disable=no-member
-        z_arr_str=json.dumps(z_arr.tolist()),  # pylint: disable=no-member
+        values_arr_str=json.dumps(vals.values).decode(),  # pylint: disable=no-member
+        z_arr_str=json.dumps(z_arr.tolist()).decode(),  # pylint: disable=no-member
     )
