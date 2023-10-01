@@ -45,6 +45,7 @@ async def get_fence(
     observed: bool = Query(description="Observed or simulated"),
     # cutting_plane: schemas.CuttingPlane = Body(alias="cuttingPlane", embed=True),
 ) -> schemas.SeismicIntersectionData:
+    """Get a fence of seismic data from a set of coordinates."""
     seismic_access = SeismicAccess(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
 
     try:

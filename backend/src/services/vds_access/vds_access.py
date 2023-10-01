@@ -18,7 +18,11 @@ LOGGER = logging.getLogger(__name__)
 
 class VdsAccess:
     """Access to the service hosting vds-slice.
-    https://github.com/equinor/vds-slice"""
+    https://github.com/equinor/vds-slice
+
+    This access class is used to query the service for slices and fences of seismic data stored in Sumo in vds format.
+    Note that we are not providing the service with the actual vds file, but rather a SAS token and an URL to the vds file.
+    """
 
     def __init__(self, sumo_seismic_vds_handle: VdsHandle) -> None:
         self.sas: str = sumo_seismic_vds_handle.sas_token
