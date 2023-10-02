@@ -1,5 +1,3 @@
-import os
-
 from sumo.wrapper import SumoClient
 
 from src.backend import config
