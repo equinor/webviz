@@ -6,7 +6,8 @@ import {
     WellBoreTrajectory_api,
 } from "@api";
 import { apiService } from "@framework/ApiService";
-import { SurfaceAddress } from "@modules/_shared/Surface";
+import { SurfaceAddress } from "@modules_shared/Surface";
+import { SurfaceData_trans, transformSurfaceData } from "@modules_shared/Surface/queryDataTransforms";
 import { QueryFunction, QueryKey, UseQueryResult, useQuery } from "@tanstack/react-query";
 
 import { SurfacePolygonsAddress } from "./SurfacePolygonsAddress";
@@ -60,8 +61,8 @@ export function usePropertySurfaceDataByQueryAddress(
     meshSurfAddr: SurfaceAddress | null,
     propertySurfAddr: SurfaceAddress | null,
     enabled: boolean
-): UseQueryResult<SurfaceData_api> {
-    function dummyApiCall(): Promise<SurfaceData_api> {
+): UseQueryResult<SurfaceData_trans> {
+    function dummyApiCall(): Promise<SurfaceData_trans> {
         return new Promise((_resolve, reject) => {
             reject(null);
         });
@@ -136,6 +137,7 @@ export function usePropertySurfaceDataByQueryAddress(
     return useQuery({
         queryKey: queryKey,
         queryFn: queryFn,
+        select: transformSurfaceData,
         staleTime: STALE_TIME,
         cacheTime: CACHE_TIME,
         enabled: enabled,

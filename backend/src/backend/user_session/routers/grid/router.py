@@ -20,7 +20,7 @@ from src.backend.primary.routers.grid.schemas import (
     GridIntersection,
 )
 from src.services.sumo_access.grid_access import GridAccess
-from src.services.utils.b64 import b64_encode_numpy
+from src.services.utils.b64 import b64_encode_float_array_as_float32, b64_encode_uint_array_as_smallest_size
 from src.services.utils.vtk_utils import (
     VtkGridSurface,
     get_scalar_values,
@@ -72,8 +72,8 @@ async def grid_surface(
     points_np = np.around(points_np, decimals=2)
 
     grid_surface_payload = GridSurface(
-        points=b64_encode_numpy(points_np),
-        polys=b64_encode_numpy(polys_np),
+        points_b64arr=b64_encode_float_array_as_float32(points_np),
+        polys_b64arr=b64_encode_uint_array_as_smallest_size(polys_np),
         **grid_geometrics,
     )
     return ORJSONResponse(grid_surface_payload.dict())

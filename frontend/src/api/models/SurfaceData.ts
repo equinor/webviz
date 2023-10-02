@@ -2,6 +2,8 @@
 /* tslint:disable */
 /* eslint-disable */
 
+import type { B64FloatArray } from './B64FloatArray';
+
 export type SurfaceData = {
     x_ori: number;
     y_ori: number;
@@ -16,6 +18,6 @@ export type SurfaceData = {
     val_min: number;
     val_max: number;
     rot_deg: number;
-    mesh_data: string;
+    values_b64arr: B64FloatArray;
 };
 
