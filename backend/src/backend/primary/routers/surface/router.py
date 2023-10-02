@@ -60,7 +60,7 @@ def get_realization_surface_data(
     attribute: str = Query(description="Surface attribute"),
     time_or_interval: Optional[str] = Query(None, description="Time point or time interval string"),
 ) -> schemas.SurfaceData:
-    perf_metrics = PerfMetrics("response")
+    perf_metrics = PerfMetrics(response)
 
     access = SurfaceAccess(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
     xtgeo_surf = access.get_realization_surface_data(
