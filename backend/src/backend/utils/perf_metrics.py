@@ -15,26 +15,26 @@ class PerfMetrics:
         if target_response_for_metrics is not None:
             self._headers = target_response_for_metrics.headers
 
-    def set_metric(self, metric_name: str, duration_ms: int):
+    def set_metric(self, metric_name: str, duration_ms: int) -> None:
         int_duration_ms = int(duration_ms)
         self._metrics_dict[metric_name] = int(int_duration_ms)
 
         if self._headers is not None:
             self._headers.append("Server-Timing", f"{metric_name}; dur={int_duration_ms}")
 
-    def record_lap(self, metric_name: str):
+    def record_lap(self, metric_name: str) -> None:
         """Records metric with a duration since the last lap"""
         self.set_metric(metric_name, self._perf_timer.lap_ms())
 
-    def record_elapsed(self, metric_name: str):
+    def record_elapsed(self, metric_name: str) -> None:
         """Records metric with a duration since the start"""
         self.set_metric(metric_name, self._perf_timer.elapsed_ms())
 
-    def reset_lap_timer(self):
+    def reset_lap_timer(self) -> None:
         """Resets the internal lap timer"""
         self._perf_timer.lap_ms()
 
-    def get_elapsed_ms(self):
+    def get_elapsed_ms(self) -> int:
         """Will return the elapsed time up until now"""
         return self._perf_timer.elapsed_ms()
 

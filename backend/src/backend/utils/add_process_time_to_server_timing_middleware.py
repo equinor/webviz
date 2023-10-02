@@ -3,7 +3,7 @@ import time
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 from starlette.requests import Request
 from starlette.responses import Response
-
+from starlette.types import ASGIApp
 
 class AddProcessTimeToServerTimingMiddleware(BaseHTTPMiddleware):
     """
@@ -11,7 +11,7 @@ class AddProcessTimeToServerTimingMiddleware(BaseHTTPMiddleware):
     that it took to process the request and generate a response
     """
 
-    def __init__(self, app, metric_name: str):
+    def __init__(self, app: ASGIApp, metric_name: str):
         super().__init__(app)
         self._metric_name = metric_name
 
