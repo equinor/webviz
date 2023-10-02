@@ -1,10 +1,9 @@
 import React from "react";
 
-import { useStoreValue } from "@framework/StateStore";
+import { DrawerContent, GuiState, useGuiValue } from "@framework/GuiMessageBroker";
 import { SyncSettingKey, SyncSettingsMeta } from "@framework/SyncSettings";
-import { DrawerContent, Workbench } from "@framework/Workbench";
+import { Workbench } from "@framework/Workbench";
 import { Drawer } from "@framework/internal/components/Drawer";
-import { useActiveModuleId } from "@framework/internal/hooks/workbenchHooks";
 import { Checkbox } from "@lib/components/Checkbox";
 import { Link, PinDrop, Public } from "@mui/icons-material";
 
@@ -14,10 +13,10 @@ type ModulesListProps = {
 
 export const SyncSettings: React.FC<ModulesListProps> = (props) => {
     const forceRerender = React.useReducer((x) => x + 1, 0)[1];
-    const drawerContent = useStoreValue(props.workbench.getGuiStateStore(), "drawerContent");
-    const activeModuleId = useActiveModuleId(props.workbench);
+    const drawerContent = useGuiValue(props.workbench.getGuiMessageBroker(), GuiState.DrawerContent);
+    const activeModuleInstanceId = useGuiValue(props.workbench.getGuiMessageBroker(), GuiState.ActiveModuleInstanceId);
 
-    const activeModuleInstance = props.workbench.getModuleInstance(activeModuleId);
+    const activeModuleInstance = props.workbench.getModuleInstance(activeModuleInstanceId);
 
     function handleSyncSettingChange(setting: SyncSettingKey, value: boolean) {
         if (activeModuleInstance === undefined) {
@@ -72,7 +71,7 @@ export const SyncSettings: React.FC<ModulesListProps> = (props) => {
     function makeContent() {
         const syncableSettingKeys = activeModuleInstance?.getModule().getSyncableSettingKeys() ?? [];
 
-        if (activeModuleId === "" || activeModuleInstance === undefined) {
+        if (activeModuleInstanceId === "" || activeModuleInstance === undefined) {
             return <div className="text-gray-500">No module selected</div>;
         }
 
