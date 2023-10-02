@@ -5,6 +5,7 @@ from starlette.requests import Request
 from starlette.responses import Response
 from starlette.types import ASGIApp
 
+
 class AddProcessTimeToServerTimingMiddleware(BaseHTTPMiddleware):
     """
     Adds a metric entry to the Server-Timing header containing the time in ms
