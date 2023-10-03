@@ -55,3 +55,9 @@ max-branches = 14
 [tool.mypy]
 ignore_missing_imports = true
 disallow_untyped_defs = true
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+filterwarnings = "ignore::DeprecationWarning:pkg_resources"
+
+
