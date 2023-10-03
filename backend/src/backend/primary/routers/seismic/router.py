@@ -1,8 +1,5 @@
 import logging
 from typing import List
-import orjson as json
-
-import numpy as np
 
 from fastapi import APIRouter, Depends, HTTPException, Query  # , Body
 

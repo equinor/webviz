@@ -43,6 +43,7 @@ export type { SurfacePolygonDirectory as SurfacePolygonDirectory_api } from './m
 export { SurfaceStatisticFunction as SurfaceStatisticFunction_api } from './models/SurfaceStatisticFunction';
 export type { UserInfo as UserInfo_api } from './models/UserInfo';
 export type { ValidationError as ValidationError_api } from './models/ValidationError';
+export type { VdsAxis as VdsAxis_api } from './models/VdsAxis';
 export type { VectorDescription as VectorDescription_api } from './models/VectorDescription';
 export type { VectorHistoricalData as VectorHistoricalData_api } from './models/VectorHistoricalData';
 export type { VectorRealizationData as VectorRealizationData_api } from './models/VectorRealizationData';
