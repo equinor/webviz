@@ -2,10 +2,11 @@ import React from "react";
 
 import { Frequency_api, StatisticFunction_api } from "@api";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
-import { ParameterIdent, ParameterType } from "@framework/EnsembleParameters";
+import { EnsembleParameters, ParameterIdent, ParameterType } from "@framework/EnsembleParameters";
 import { EnsembleSet } from "@framework/EnsembleSet";
 import { ModuleFCProps } from "@framework/Module";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
+import { EnsembleParameterFilter } from "@framework/components/EnsembleParameterFilter";
 import { MultiEnsembleSelect } from "@framework/components/MultiEnsembleSelect";
 import { VectorSelector, createVectorSelectorDataFromVectors } from "@framework/components/VectorSelector";
 import { fixupEnsembleIdents } from "@framework/utils/ensembleUiHelpers";
@@ -16,6 +17,7 @@ import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { Dropdown } from "@lib/components/Dropdown";
 import { Label } from "@lib/components/Label";
 import { RadioGroup } from "@lib/components/RadioGroup";
+import { Select } from "@lib/components/Select";
 import { SmartNodeSelectorSelection, TreeDataNode } from "@lib/components/SmartNodeSelector";
 import { useValidState } from "@lib/hooks/useValidState";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
@@ -75,6 +77,18 @@ export function settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
         setPreviousEnsembleSet(ensembleSet);
     }
 
+    // NOTE: ONLY FOR TESTING
+    const [filteredEnsembleParameters, setFilteredEnsembleParameters] = React.useState<ParameterIdent[]>([]);
+    const ensembleParametersArr = [];
+    for (const ensemble of selectedEnsembleIdents) {
+        const ensembleObj = ensembleSet.findEnsemble(ensemble);
+        if (ensembleObj === null) continue;
+
+        const parameters = ensembleObj.getParameters().getParameterArr();
+        ensembleParametersArr.push(...parameters);
+    }
+    const ensembleParameters = new EnsembleParameters(ensembleParametersArr);
+
     const vectorListQueries = useVectorListQueries(selectedEnsembleIdents);
     const ensembleVectorListsHelper = new EnsembleVectorListsHelper(selectedEnsembleIdents, vectorListQueries);
     const selectedVectorNamesHasHistorical = ensembleVectorListsHelper.hasAnyHistoricalVector(selectedVectorNames);
@@ -94,7 +108,7 @@ export function settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
         }
     }
     const [selectedParameterIdentStr, setSelectedParameterIdentStr] = useValidState<string | null>(null, [
-        continuousAndNonConstantParametersUnion,
+        filteredEnsembleParameters,
         (item: ParameterIdent) => item.toString(),
     ]);
 
@@ -154,8 +168,12 @@ export function settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
         setGroupBy(event.target.value as GroupBy);
     }
 
-    function handleColorByParameterChange(parameterIdentStr: string) {
-        setSelectedParameterIdentStr(parameterIdentStr);
+    function handleColorByParameterChange(parameterIdentStrings: string[]) {
+        if (parameterIdentStrings.length !== 0) {
+            setSelectedParameterIdentStr(parameterIdentStrings[0]);
+            return;
+        }
+        setSelectedParameterIdentStr(null);
     }
 
     function handleEnsembleSelectChange(ensembleIdentArr: EnsembleIdent[]) {
@@ -204,6 +222,12 @@ export function settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
                 };
             }
         });
+    }
+
+    function handleEnsembleParameterChange(ensembleParameters: EnsembleParameters) {
+        // Ensure continuous parameter for module
+        const filteredParamIdents = ensembleParameters.getParameterIdents(ParameterType.CONTINUOUS);
+        setFilteredEnsembleParameters(filteredParamIdents);
     }
 
     function handleIndividualStatisticsSelectionChange(
@@ -303,6 +327,10 @@ export function settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
                         setColorRealizationsByParameter(event.target.checked);
                     }}
                 />
+                <EnsembleParameterFilter
+                    ensembleParameters={ensembleParameters}
+                    onChange={handleEnsembleParameterChange}
+                />
                 <div
                     className={resolveClassNames("mt-4 ml-6 mb-4", {
                         ["pointer-events-none opacity-70"]:
@@ -310,14 +338,15 @@ export function settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
                             visualizationMode !== VisualizationMode.INDIVIDUAL_REALIZATIONS,
                     })}
                 >
-                    <Dropdown
-                        options={continuousAndNonConstantParametersUnion.map((elm) => {
+                    <Select
+                        options={filteredEnsembleParameters.map((elm) => {
                             return {
                                 value: elm.toString(),
                                 label: elm.groupName ? `${elm.groupName}:${elm.name}` : elm.name,
                             };
                         })}
-                        value={selectedParameterIdentStr?.toString() ?? undefined}
+                        size={4}
+                        value={selectedParameterIdentStr ? [selectedParameterIdentStr.toString()] : undefined}
                         onChange={handleColorByParameterChange}
                     />
                 </div>
