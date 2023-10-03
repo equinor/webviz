@@ -1,5 +1,8 @@
 from pydantic import BaseModel
 
+from src.services.vds_access.types import VdsAxis
+from src.services.utils.b64 import B64FloatArray
+
 
 class SeismicCubeMeta(BaseModel):
     seismic_attribute: str
@@ -14,5 +17,5 @@ class VdsHandle(BaseModel):
 
 
 class SeismicIntersectionData(BaseModel):
-    values_arr_str: str
-    z_arr_str: str
+    values_base64arr: B64FloatArray
+    z_axis: VdsAxis

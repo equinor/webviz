@@ -3,6 +3,7 @@ from typing import List
 import orjson as json
 
 import numpy as np
+
 from fastapi import APIRouter, Depends, HTTPException, Query  # , Body
 
 from src.services.sumo_access.seismic_access import SeismicAccess
@@ -11,6 +12,7 @@ from src.services.utils.authenticated_user import AuthenticatedUser
 from src.backend.auth.auth_helper import AuthHelper
 
 from . import schemas
+from .converters import to_api_seismic_fence_data
 
 LOGGER = logging.getLogger(__name__)
 
@@ -84,9 +86,4 @@ async def get_fence(
     )
     meta = await vdsaccess.get_metadata()
     z_axis_meta = meta.axis[2]
-
-    z_arr = np.linspace(z_axis_meta.min, z_axis_meta.max, z_axis_meta.samples)
-    return schemas.SeismicIntersectionData(
-        values_arr_str=json.dumps(vals.values).decode(),  # pylint: disable=no-member
-        z_arr_str=json.dumps(z_arr.tolist()).decode(),  # pylint: disable=no-member
-    )
+    return to_api_seismic_fence_data(vals, z_axis_meta)

@@ -21,16 +21,3 @@ class VdsMetaData(BaseModel):
     axis: List[VdsAxis]
     boundingBox: VdsBoundingBox
     crs: str
-
-
-class VdsSliceResponse(BaseModel):
-    values: List[List[float]]
-    geospatial: List[List[float]]
-    shape: List[int]
-    x: VdsAxis
-    y: VdsAxis
-
-
-class VdsFenceResponse(BaseModel):
-    values: List[List[float]]
-    shape: List[int]

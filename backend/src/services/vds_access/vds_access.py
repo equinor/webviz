@@ -4,11 +4,12 @@ from typing import List
 import json
 
 import numpy as np
+from numpy.typing import NDArray
 from requests_toolbelt.multipart.decoder import MultipartDecoder
 import httpx
 
 from ..sumo_access.seismic_types import VdsHandle
-from .types import VdsFenceResponse, VdsMetaData, VdsSliceResponse
+from .types import VdsMetaData
 
 VDS_HOST_ADDRESS = os.getenv("WEBVIZ_VDS_HOST_ADDRESS")
 
@@ -44,7 +45,7 @@ class VdsAccess:
 
         return response
 
-    async def get_slice(self, direction: str, lineno: int) -> VdsSliceResponse:
+    async def get_slice(self, direction: str, lineno: int) -> NDArray[np.float32]:
         """Gets a slice in i,j,k direction from the VDS service"""
 
         endpoint = "slice"
@@ -62,12 +63,13 @@ class VdsAccess:
 
         metadata = json.loads(parts[0].content)
         shape = (metadata["y"]["samples"], metadata["x"]["samples"])
+        if metadata["format"] != "<f4":
+            raise ValueError(f"Expected float32, got {metadata['format']}")
         byte_array = parts[1].content
-        values_np = bytes_to_ndarray(byte_array, list(shape), metadata["format"])
-        values = values_np.T.tolist()
-        return VdsSliceResponse(values=values, **metadata)
+        values_np = bytes_to_ndarray_float22(byte_array, list(shape))
+        return values_np
 
-    async def get_fence(self, coordinates: List[List[float]], coordinate_system: str = "cdp") -> VdsFenceResponse:
+    async def get_fence(self, coordinates: List[List[float]], coordinate_system: str = "cdp") -> NDArray[np.float32]:
         """Gets traces along an arbitrary path of x,y coordinates."""
         endpoint = "fence"
 
@@ -77,8 +79,9 @@ class VdsAccess:
             "vds": self.vds_url,
             "sas": self.sas,
             "interpolation": "linear",
-            "fillValue": np.nan,
+            "fillValue": -999,
         }
+
         response = await self._query(endpoint, params)
 
         # Use MultipartDecoder with httpx's Response content and headers
@@ -87,10 +90,10 @@ class VdsAccess:
 
         metadata = json.loads(parts[0].content)
         byte_array = parts[1].content
-        values_np = bytes_to_ndarray(byte_array, list(metadata["shape"]), metadata["format"])
-        values = values_np.tolist()
-        print(metadata)
-        return VdsFenceResponse(values=values, shape=metadata["shape"])
+        if metadata["format"] != "<f4":
+            raise ValueError(f"Expected float32, got {metadata['format']}")
+        values_np = bytes_to_ndarray_float22(byte_array, list(metadata["shape"]))
+        return values_np
 
     async def get_metadata(self) -> VdsMetaData:
         """Gets metadata from the cube"""
@@ -104,34 +107,7 @@ class VdsAccess:
         metadata = response.json()
         return VdsMetaData(**metadata)
 
-    # def get_surface_values(
-    #     self,
-    #     xtgeo_surf: RegularSurface,
-    #     above: float,
-    #     below: float,
-    #     attribute: str,
-    #     fill_value: float = -999.25,
-    # ) -> np.ndarray:
-    #     surface_values = xtgeo_surf.values.filled(fill_value)
-    #     array_shape = surface_values.shape
-    #     endpoint = "attributes/surface/along"
 
-    #     timer = PerfTimer()
-
-    #     params = {
-    #         "surface": surface_values.tolist(),
-    #         "above": above,
-    #         "below": below,
-    #         "attributes": [attribute],
-    #     }
-    #     response = self._query(endpoint, params)
-    #     print(f"Got attribute surface from VDS in: {timer.elapsed_ms()}ms ({attribute})")
-    #     parts = MultipartDecoder.from_response(response).parts
-    #     seismic_values = np.ndarray(array_shape, "f4", parts[1].content)
-    #     seismic_values = np.ma.masked_equal(seismic_values, fill_value)
-    #     return seismic_values
-
-
-def bytes_to_ndarray(bytes_data: bytes, shape: List[int], dtype: str) -> np.ndarray:
+def bytes_to_ndarray_float22(bytes_data: bytes, shape: List[int]) -> NDArray[np.float32]:
     """Convert bytes to numpy ndarray"""
-    return np.ndarray(shape, dtype, bytes_data)
+    return np.ndarray(shape, "<f4", bytes_data)
