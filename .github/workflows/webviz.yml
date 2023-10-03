@@ -96,6 +96,9 @@ jobs:
       - name: 🤖 Run tests
         working-directory: ./backend
         run: |
+          export WEBVIZ_CLIENT_SECRET="DUMMY_SECRET"
+          export WEBVIZ_SMDA_SUBSCRIPTION_KEY="DUMMY_SUBSCRIPTION_KEY"
+          export WEBVIZ_SMDA_RESOURCE_SCOPE="DUMMY_RESOURCE_SCOPE"
           pytest ./tests/unit
 
   build_docker_images:
