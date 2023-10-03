@@ -1,4 +1,4 @@
-FROM python:3.10-slim@sha256:79aa96a96eeccf6e13a240f24c8630dc1069efd20f8c289c8f90914dcae83c11
+FROM python:3.11-slim@sha256:ad2c4e5884418404c5289acad4a471dde8500e24ba57ad574cdcae46523e507a
 
 RUN useradd --create-home --uid 1234 appuser  # Changing to non-root user early
 
