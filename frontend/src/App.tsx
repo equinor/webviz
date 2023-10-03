@@ -19,11 +19,11 @@ function App() {
     const setLoadingEnsembleSet = useSetGuiValue(workbench.current.getGuiMessageBroker(), GuiState.LoadingEnsembleSet);
 
     React.useEffect(() => {
-        if (!workbench.current.getLayoutService().loadLayoutFromLocalStorage()) {
-            workbench.current.getLayoutService().makeLayout(layout);
+        if (!workbench.current.getModuleInstanceManager().loadLayoutFromLocalStorage()) {
+            workbench.current.getModuleInstanceManager().makeLayout(layout);
         }
 
-        if (workbench.current.getLayoutService().getLayout().length === 0) {
+        if (workbench.current.getModuleInstanceManager().getLayout().length === 0) {
             workbench.current.getGuiMessageBroker().setState(GuiState.DrawerContent, DrawerContent.ModulesList);
         }
 
@@ -36,7 +36,7 @@ function App() {
         }
 
         return function () {
-            workbench.current.getLayoutService().clearLayout();
+            workbench.current.getModuleInstanceManager().clearLayout();
         };
     }, []);
 

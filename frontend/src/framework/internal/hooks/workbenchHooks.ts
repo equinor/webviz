@@ -1,9 +1,9 @@
 import React from "react";
 
-import { LayoutEvents, LayoutService } from "@framework/LayoutService";
+import { ModuleInstanceEvents, ModuleInstanceManager } from "@framework/LayoutService";
 import { ModuleInstance } from "@framework/ModuleInstance";
 
-export function useModuleInstances(layoutService: LayoutService): ModuleInstance<any>[] {
+export function useModuleInstances(layoutService: ModuleInstanceManager): ModuleInstance<any>[] {
     const [moduleInstances, setModuleInstances] = React.useState<ModuleInstance<any>[]>([]);
 
     React.useEffect(() => {
@@ -12,7 +12,7 @@ export function useModuleInstances(layoutService: LayoutService): ModuleInstance
         }
 
         const unsubscribeFunc = layoutService.subscribe(
-            LayoutEvents.ModuleInstancesChanged,
+            ModuleInstanceEvents.ModuleInstancesChanged,
             handleModuleInstancesChange
         );
 

@@ -17,7 +17,7 @@ type SettingsProps = {
 };
 
 export const Settings: React.FC<SettingsProps> = (props) => {
-    const moduleInstances = useModuleInstances(props.workbench.getLayoutService());
+    const moduleInstances = useModuleInstances(props.workbench.getModuleInstanceManager());
     const activeModuleInstanceId = useGuiValue(props.workbench.getGuiMessageBroker(), GuiState.ActiveModuleInstanceId);
 
     const drawerContent = useGuiValue(props.workbench.getGuiMessageBroker(), GuiState.DrawerContent);

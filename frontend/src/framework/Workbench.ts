@@ -3,7 +3,7 @@ import { QueryClient } from "@tanstack/react-query";
 import { Broadcaster } from "./Broadcaster";
 import { EnsembleIdent } from "./EnsembleIdent";
 import { GuiMessageBroker } from "./GuiMessageBroker";
-import { LayoutService } from "./LayoutService";
+import { ModuleInstanceManager } from "./LayoutService";
 import { WorkbenchServices } from "./WorkbenchServices";
 import { WorkbenchSession } from "./WorkbenchSession";
 import { loadEnsembleSetMetadataFromBackend } from "./internal/EnsembleSetLoader";
@@ -17,7 +17,7 @@ export class Workbench {
     private _workbenchSettings: PrivateWorkbenchSettings;
     private _broadcaster: Broadcaster;
     private _guiMessageBroker: GuiMessageBroker;
-    private _layout: LayoutService;
+    private _moduleInstanceManager: ModuleInstanceManager;
 
     constructor() {
         this._workbenchSession = new WorkbenchSessionPrivate();
@@ -25,7 +25,7 @@ export class Workbench {
         this._workbenchSettings = new PrivateWorkbenchSettings();
         this._broadcaster = new Broadcaster();
         this._guiMessageBroker = new GuiMessageBroker();
-        this._layout = new LayoutService(this);
+        this._moduleInstanceManager = new ModuleInstanceManager(this);
     }
 
     getWorkbenchSession(): WorkbenchSession {
@@ -48,8 +48,8 @@ export class Workbench {
         return this._guiMessageBroker;
     }
 
-    getLayoutService(): LayoutService {
-        return this._layout;
+    getModuleInstanceManager(): ModuleInstanceManager {
+        return this._moduleInstanceManager;
     }
 
     async loadAndSetupEnsembleSetInSession(

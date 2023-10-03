@@ -15,12 +15,12 @@ export type LayoutElement = {
     relWidth: number;
 };
 
-export enum LayoutEvents {
+export enum ModuleInstanceEvents {
     ModuleInstancesChanged = "ModuleInstancesChanged",
     FullModuleRerenderRequested = "FullModuleRerenderRequested",
 }
 
-export class LayoutService {
+export class ModuleInstanceManager {
     private _workbench: Workbench;
     private _moduleInstances: ModuleInstance<any>[];
     private _layout: LayoutElement[];
@@ -61,7 +61,7 @@ export class LayoutService {
             const moduleInstance = module.makeInstance(this.getNextModuleInstanceNumber(module.getName()));
             this._moduleInstances.push(moduleInstance);
             this._layout[index] = { ...this._layout[index], moduleInstanceId: moduleInstance.getId() };
-            this.notifySubscribers(LayoutEvents.ModuleInstancesChanged);
+            this.notifySubscribers(ModuleInstanceEvents.ModuleInstancesChanged);
         });
     }
 
@@ -72,12 +72,12 @@ export class LayoutService {
         this._moduleInstances = [];
         this._perModuleRunningInstanceNumber = {};
         this._layout = [];
-        this.notifySubscribers(LayoutEvents.FullModuleRerenderRequested);
+        this.notifySubscribers(ModuleInstanceEvents.FullModuleRerenderRequested);
     }
 
     setLayout(layout: LayoutElement[]): void {
         this._layout = layout;
-        this.notifySubscribers(LayoutEvents.FullModuleRerenderRequested);
+        this.notifySubscribers(ModuleInstanceEvents.FullModuleRerenderRequested);
 
         const modifiedLayout = layout.map((el) => {
             return { ...el, moduleInstanceId: undefined };
@@ -85,7 +85,7 @@ export class LayoutService {
         localStorage.setItem("layout", JSON.stringify(modifiedLayout));
     }
 
-    private notifySubscribers(event: LayoutEvents): void {
+    private notifySubscribers(event: ModuleInstanceEvents): void {
         const subscribers = this._subscribersMap[event];
         if (!subscribers) return;
 
@@ -94,7 +94,7 @@ export class LayoutService {
         });
     }
 
-    subscribe(event: LayoutEvents, cb: () => void) {
+    subscribe(event: ModuleInstanceEvents, cb: () => void) {
         const subscribersSet = this._subscribersMap[event] || new Set();
         subscribersSet.add(cb);
         this._subscribersMap[event] = subscribersSet;
@@ -132,7 +132,7 @@ export class LayoutService {
         this._moduleInstances.push(moduleInstance);
 
         this._layout.push({ ...layout, moduleInstanceId: moduleInstance.getId() });
-        this.notifySubscribers(LayoutEvents.ModuleInstancesChanged);
+        this.notifySubscribers(ModuleInstanceEvents.ModuleInstancesChanged);
         this._workbench.getGuiMessageBroker().setState(GuiState.ActiveModuleInstanceId, moduleInstance.getId());
         return moduleInstance;
     }
@@ -147,7 +147,7 @@ export class LayoutService {
         if (activeModuleInstanceId === moduleInstanceId) {
             this._workbench.getGuiMessageBroker().setState(GuiState.ActiveModuleInstanceId, "");
         }
-        this.notifySubscribers(LayoutEvents.ModuleInstancesChanged);
+        this.notifySubscribers(ModuleInstanceEvents.ModuleInstancesChanged);
     }
 
     maybeMakeFirstModuleInstanceActive(): void {
@@ -210,6 +210,6 @@ export class LayoutService {
             }
         }
 
-        this.notifySubscribers(LayoutEvents.ModuleInstancesChanged);
+        this.notifySubscribers(ModuleInstanceEvents.ModuleInstancesChanged);
     }
 }

@@ -38,9 +38,9 @@ export const Layout: React.FC<LayoutProps> = (props) => {
     const mainRef = React.useRef<HTMLDivElement>(null);
     const size = useElementSize(ref);
     const layoutBoxRef = React.useRef<LayoutBox | null>(null);
-    const moduleInstances = useModuleInstances(props.workbench.getLayoutService());
+    const moduleInstances = useModuleInstances(props.workbench.getModuleInstanceManager());
     const guiMessageBroker = props.workbench.getGuiMessageBroker();
-    const layoutService = props.workbench.getLayoutService();
+    const layoutService = props.workbench.getModuleInstanceManager();
 
     const convertLayoutRectToRealRect = React.useCallback(
         (element: LayoutElement): Rect => {
