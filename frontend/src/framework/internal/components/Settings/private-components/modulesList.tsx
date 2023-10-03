@@ -114,15 +114,15 @@ const ModulesListItem: React.FC<ModulesListItemProps> = (props) => {
             }
         };
 
-        if (ref.current) {
-            ref.current.addEventListener("pointerdown", handlePointerDown);
+        if (mainRef.current) {
+            mainRef.current.addEventListener("pointerdown", handlePointerDown);
             document.addEventListener("pointerup", handlePointerUp);
             document.addEventListener("pointermove", handlePointerMove);
         }
 
         return () => {
-            if (ref.current) {
-                ref.current.removeEventListener("pointerdown", handlePointerDown);
+            if (mainRef.current) {
+                mainRef.current.removeEventListener("pointerdown", handlePointerDown);
             }
             document.removeEventListener("pointerup", handlePointerUp);
             document.removeEventListener("pointermove", handlePointerMove);
@@ -134,10 +134,10 @@ const ModulesListItem: React.FC<ModulesListItemProps> = (props) => {
             {isDragged && <div ref={mainRef} className="bg-red-300 w-full h-40 mb-4" />}
             <div
                 ref={isDragged ? undefined : mainRef}
-                className="mb-4 flex flex-col border box-border border-slate-300 border-solid text-sm text-gray-700 w-full h-40 select-none hover:shadow-md"
+                className="mb-4 cursor-move flex flex-col border box-border border-slate-300 border-solid text-sm text-gray-700 w-full h-40 select-none hover:shadow-md"
                 style={makeStyle(isDragged, dragSize, dragPosition)}
             >
-                <div ref={ref} className="bg-slate-100 p-2 cursor-move flex items-center text-xs font-bold shadow">
+                <div ref={ref} className="bg-slate-100 p-2 flex items-center text-xs font-bold shadow">
                     <span className="flex-grow">{props.displayName}</span>
                     {props.description && (
                         <span
