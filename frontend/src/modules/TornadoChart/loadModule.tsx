@@ -10,7 +10,7 @@ const defaultState: State = {
     responseChannelName: null,
 };
 
-const module = ModuleRegistry.initModule<State>("Sensitivity", defaultState);
+const module = ModuleRegistry.initModule<State>("TornadoChart", defaultState);
 
 module.viewFC = view;
 module.settingsFC = settings;

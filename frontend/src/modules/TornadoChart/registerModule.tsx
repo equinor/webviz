@@ -5,8 +5,8 @@ import { preview } from "./preview";
 import { State } from "./state";
 
 ModuleRegistry.registerModule<State>({
-    moduleName: "Sensitivity",
-    defaultTitle: "Sensitivity",
+    moduleName: "TornadoChart",
+    defaultTitle: "Tornado Chart",
     syncableSettingKeys: [SyncSettingKey.ENSEMBLE, SyncSettingKey.TIME_SERIES],
-    preview
+    preview,
 });
