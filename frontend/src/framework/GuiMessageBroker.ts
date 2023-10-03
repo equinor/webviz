@@ -84,40 +84,36 @@ export class GuiMessageBroker {
         }
     }
 
-    addEventListener<K extends GuiEvent>(event: K, listener: (event: GuiEventPayloads[K]) => void) {
+    subscribeToEvent<K extends GuiEvent>(event: K, callback: (event: GuiEventPayloads[K]) => void) {
         const eventListeners = this._eventListeners.get(event) || new Set();
-        eventListeners.add(listener);
+        eventListeners.add(callback);
         this._eventListeners.set(event, eventListeners);
-    }
-
-    removeEventListener<K extends GuiEvent>(event: K, listener: (event: GuiEventPayloads[K]) => void) {
-        const eventListeners = this._eventListeners.get(event);
-        if (eventListeners) {
-            eventListeners.delete(listener);
-        }
-    }
-
-    dispatchEvent<K extends GuiEvent>(event: K, details: GuiEventPayloads[K]) {
-        console.debug("dispatching event", event, details);
-        const eventListeners = this._eventListeners.get(event);
-        if (eventListeners) {
-            eventListeners.forEach((listener) => listener({ ...details }));
-        }
-    }
-
-    addStateSubscriber<K extends GuiState>(state: K, subscriber: (state: GuiStateTypes[K]) => void): () => void {
-        const stateSubscribers = this._stateSubscribers.get(state) || new Set();
-        stateSubscribers.add(subscriber);
-
-        this._stateSubscribers.set(state, stateSubscribers);
-
-        if (this._storedValues.has(state)) {
-            subscriber(this._storedValues.get(state));
-        }
 
         return () => {
-            stateSubscribers.delete(subscriber);
+            eventListeners.delete(callback);
         };
+    }
+
+    publishEvent<K extends GuiEvent>(event: K, details: GuiEventPayloads[K]) {
+        const eventListeners = this._eventListeners.get(event);
+        if (eventListeners) {
+            eventListeners.forEach((callback) => callback({ ...details }));
+        }
+    }
+
+    makeStateSubscriberFunction<K extends GuiState>(state: K): (onStoreChangeCallback: () => void) => () => void {
+        // Using arrow function in order to keep "this" in context
+        const stateSubscriber = (onStoreChangeCallback: () => void): (() => void) => {
+            const stateSubscribers = this._stateSubscribers.get(state) || new Set();
+            stateSubscribers.add(onStoreChangeCallback);
+            this._stateSubscribers.set(state, stateSubscribers);
+
+            return () => {
+                stateSubscribers.delete(onStoreChangeCallback);
+            };
+        };
+
+        return stateSubscriber;
     }
 
     setState<K extends GuiState>(state: K, value: GuiStateTypes[K]) {
@@ -133,22 +129,30 @@ export class GuiMessageBroker {
     getState<K extends GuiState>(state: K): GuiStateTypes[K] {
         return this._storedValues.get(state);
     }
+
+    /*
+        It is really important that the snapshot returned by "stateSnapshotGetter"
+        returns the same value as long as the state has not been changed.
+
+    */
+    makeStateSnapshotGetter<K extends GuiState>(state: K): () => GuiStateTypes[K] {
+        // Using arrow function in order to keep "this" in context
+        const stateSnapshotGetter = (): GuiStateTypes[K] => {
+            return this._storedValues.get(state);
+        };
+
+        return stateSnapshotGetter;
+    }
 }
 
 export function useGuiState<T extends GuiState>(
     guiMessageBroker: GuiMessageBroker,
     key: T
 ): [GuiStateTypes[T], (value: GuiStateTypes[T] | ((prev: GuiStateTypes[T]) => GuiStateTypes[T])) => void] {
-    const [state, setState] = React.useState<GuiStateTypes[T]>(guiMessageBroker.getState(key));
-
-    React.useEffect(() => {
-        const handleStateChange = (value: GuiStateTypes[T]) => {
-            setState(value);
-        };
-
-        const unsubscribeFunc = guiMessageBroker.addStateSubscriber(key, handleStateChange);
-        return unsubscribeFunc;
-    }, [key, guiMessageBroker]);
+    const state = React.useSyncExternalStore<GuiStateTypes[T]>(
+        guiMessageBroker.makeStateSubscriberFunction(key),
+        guiMessageBroker.makeStateSnapshotGetter(key)
+    );
 
     function setter(valueOrFunc: GuiStateTypes[T] | ((prev: GuiStateTypes[T]) => GuiStateTypes[T])): void {
         if (valueOrFunc instanceof Function) {

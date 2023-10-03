@@ -237,21 +237,28 @@ export const Layout: React.FC<LayoutProps> = (props) => {
             props.workbench.setLayout(currentLayout);
         };
 
-        guiMessageBroker.addEventListener(GuiEvent.ModuleHeaderPointerDown, handleModuleHeaderPointerDown);
-        guiMessageBroker.addEventListener(GuiEvent.NewModulePointerDown, handleNewModulePointerDown);
-        guiMessageBroker.addEventListener(GuiEvent.RemoveModuleInstanceRequest, handleRemoveModuleInstanceRequest);
+        const removeModuleHeaderPointerDownSubscriber = guiMessageBroker.subscribeToEvent(
+            GuiEvent.ModuleHeaderPointerDown,
+            handleModuleHeaderPointerDown
+        );
+        const removeNewModulePointerDownSubscriber = guiMessageBroker.subscribeToEvent(
+            GuiEvent.NewModulePointerDown,
+            handleNewModulePointerDown
+        );
+        const removeRemoveModuleInstanceRequestSubscriber = guiMessageBroker.subscribeToEvent(
+            GuiEvent.RemoveModuleInstanceRequest,
+            handleRemoveModuleInstanceRequest
+        );
 
         document.addEventListener("pointerup", handlePointerUp);
         document.addEventListener("pointermove", handlePointerMove);
         document.addEventListener("keydown", handleButtonClick);
 
         return () => {
-            guiMessageBroker.removeEventListener(GuiEvent.ModuleHeaderPointerDown, handleModuleHeaderPointerDown);
-            guiMessageBroker.removeEventListener(GuiEvent.NewModulePointerDown, handleNewModulePointerDown);
-            guiMessageBroker.removeEventListener(
-                GuiEvent.RemoveModuleInstanceRequest,
-                handleRemoveModuleInstanceRequest
-            );
+            removeModuleHeaderPointerDownSubscriber();
+            removeNewModulePointerDownSubscriber();
+            removeRemoveModuleInstanceRequestSubscriber();
+
             document.removeEventListener("pointerup", handlePointerUp);
             document.removeEventListener("pointermove", handlePointerMove);
             document.removeEventListener("keydown", handleButtonClick);

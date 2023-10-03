@@ -64,7 +64,7 @@ const ModulesListItem: React.FC<ModulesListItemProps> = (props) => {
                 const point = pointerEventToPoint(e);
                 const rect = ref.current.getBoundingClientRect();
                 pointerDownElementPosition = pointDifference(point, pointRelativeToDomRect(point, rect));
-                props.guiMessageBroker.dispatchEvent(GuiEvent.NewModulePointerDown, {
+                props.guiMessageBroker.publishEvent(GuiEvent.NewModulePointerDown, {
                     moduleName: props.name,
                     elementPosition: pointDifference(point, pointRelativeToDomRect(point, rect)),
                     pointerPosition: point,

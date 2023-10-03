@@ -47,7 +47,7 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
             if (ref.current) {
                 const point = pointerEventToPoint(e.nativeEvent);
                 const rect = ref.current.getBoundingClientRect();
-                guiMessageBroker.dispatchEvent(GuiEvent.ModuleHeaderPointerDown, {
+                guiMessageBroker.publishEvent(GuiEvent.ModuleHeaderPointerDown, {
                     moduleInstanceId: props.moduleInstance.getId(),
                     elementPosition: pointDifference(point, pointRelativeToDomRect(point, rect)),
                     pointerPosition: point,
@@ -59,7 +59,7 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
 
     const handleRemoveClick = React.useCallback(
         function handleRemoveClick(e: React.PointerEvent<HTMLDivElement>) {
-            guiMessageBroker.dispatchEvent(GuiEvent.RemoveModuleInstanceRequest, {
+            guiMessageBroker.publishEvent(GuiEvent.RemoveModuleInstanceRequest, {
                 moduleInstanceId: props.moduleInstance.getId(),
             });
             e.preventDefault();
