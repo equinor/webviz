@@ -1,8 +1,6 @@
-import os
-
 from sumo.wrapper import SumoClient
 
-from src.backend import config
+from src import config
 
 
 def create_sumo_client_instance(access_token: str) -> SumoClient:
