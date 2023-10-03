@@ -1,6 +1,6 @@
 import React from "react";
 
-import { LayoutElement } from "@framework/Workbench";
+import { LayoutElement } from "@framework/LayoutService";
 import { Point, Rect, Size, outerRectContainsInnerRect, rectContainsPoint, rectsAreEqual } from "@lib/utils/geometry";
 
 function layoutElementToRect(layoutElement: LayoutElement): Rect {
@@ -519,11 +519,7 @@ export class LayoutBox {
         return edges;
     }
 
-    findEdgeContainingPoint(
-        point: Point,
-        realSize: Size,
-        draggedModuleInstanceId: string
-    ): LayoutBoxEdge | null {
+    findEdgeContainingPoint(point: Point, realSize: Size, draggedModuleInstanceId: string): LayoutBoxEdge | null {
         const edgeRects = this.getEdgeRects(realSize);
         const edge = edgeRects.find((edgeRect) => rectContainsPoint(edgeRect.rect, point));
         if (!edge) {

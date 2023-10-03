@@ -16,7 +16,7 @@ export const SyncSettings: React.FC<ModulesListProps> = (props) => {
     const drawerContent = useGuiValue(props.workbench.getGuiMessageBroker(), GuiState.DrawerContent);
     const activeModuleInstanceId = useGuiValue(props.workbench.getGuiMessageBroker(), GuiState.ActiveModuleInstanceId);
 
-    const activeModuleInstance = props.workbench.getModuleInstance(activeModuleInstanceId);
+    const activeModuleInstance = props.workbench.getLayoutService().getModuleInstance(activeModuleInstanceId);
 
     function handleSyncSettingChange(setting: SyncSettingKey, value: boolean) {
         if (activeModuleInstance === undefined) {
@@ -35,7 +35,7 @@ export const SyncSettings: React.FC<ModulesListProps> = (props) => {
     }
 
     function handleGlobalSyncSettingChange(setting: SyncSettingKey, value: boolean) {
-        const moduleInstances = props.workbench.getModuleInstances();
+        const moduleInstances = props.workbench.getLayoutService().getModuleInstances();
 
         // @rmt: This has to be changed as soon as we support multiple pages
         for (const moduleInstance of moduleInstances) {
@@ -54,7 +54,7 @@ export const SyncSettings: React.FC<ModulesListProps> = (props) => {
     }
 
     function isGlobalSyncSetting(setting: SyncSettingKey): boolean {
-        const moduleInstances = props.workbench.getModuleInstances();
+        const moduleInstances = props.workbench.getLayoutService().getModuleInstances();
 
         // @rmt: This has to be changed as soon as we support multiple pages
         for (const moduleInstance of moduleInstances) {

@@ -108,7 +108,7 @@ export const TemplatesList: React.FC<TemplatesListProps> = (props) => {
         if (!template) {
             return;
         }
-        props.workbench.applyTemplate(template);
+        props.workbench.getLayoutService().applyTemplate(template);
         setDrawerContent(DrawerContent.ModuleSettings);
     };
 

@@ -1,6 +1,6 @@
 import { BroadcastChannelKeyCategory } from "./Broadcaster";
+import { LayoutElement } from "./LayoutService";
 import { SyncSettingKey } from "./SyncSettings";
-import { LayoutElement } from "./Workbench";
 
 export type DataChannelTemplate = {
     listensToInstanceRef: string;

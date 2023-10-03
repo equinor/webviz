@@ -3,7 +3,8 @@ import React from "react";
 import WebvizLogo from "@assets/webviz.svg";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { DrawerContent, GuiState, useGuiState } from "@framework/GuiMessageBroker";
-import { Workbench, WorkbenchEvents } from "@framework/Workbench";
+import { LayoutEvents } from "@framework/LayoutService";
+import { Workbench } from "@framework/Workbench";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { LoginButton } from "@framework/internal/components/LoginButton";
 import { SelectEnsemblesDialog } from "@framework/internal/components/SelectEnsemblesDialog";
@@ -36,7 +37,9 @@ const NavBarDivider: React.FC = () => {
 
 export const NavBar: React.FC<NavBarProps> = (props) => {
     const [ensembleDialogOpen, setEnsembleDialogOpen] = React.useState<boolean>(false);
-    const [layoutEmpty, setLayoutEmpty] = React.useState<boolean>(props.workbench.getLayout().length === 0);
+    const [layoutEmpty, setLayoutEmpty] = React.useState<boolean>(
+        props.workbench.getLayoutService().getLayout().length === 0
+    );
     const [expanded, setExpanded] = React.useState<boolean>(localStorage.getItem("navBarExpanded") === "true");
     const [loadingEnsembleSet, setLoadingEnsembleSet] = useGuiState(
         props.workbench.getGuiMessageBroker(),
@@ -58,15 +61,17 @@ export const NavBar: React.FC<NavBarProps> = (props) => {
         function reactToModuleInstancesChanged() {
             function listener() {
                 if (
-                    props.workbench.getLayout().length === 0 &&
+                    props.workbench.getLayoutService().getLayout().length === 0 &&
                     [DrawerContent.ModuleSettings, DrawerContent.SyncSettings].includes(drawerContent)
                 ) {
                     setDrawerContent(DrawerContent.ModulesList);
                 }
-                setLayoutEmpty(props.workbench.getLayout().length === 0);
+                setLayoutEmpty(props.workbench.getLayoutService().getLayout().length === 0);
             }
 
-            const unsubscribeFunc = props.workbench.subscribe(WorkbenchEvents.ModuleInstancesChanged, listener);
+            const unsubscribeFunc = props.workbench
+                .getLayoutService()
+                .subscribe(LayoutEvents.ModuleInstancesChanged, listener);
 
             return () => {
                 unsubscribeFunc();

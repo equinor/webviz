@@ -128,7 +128,7 @@ export class Module<StateType extends StateBaseType> {
         });
 
         if (this._workbench && state === ImportState.Imported) {
-            this._workbench.maybeMakeFirstModuleInstanceActive();
+            this._workbench.getLayoutService().maybeMakeFirstModuleInstanceActive();
         }
     }
 
