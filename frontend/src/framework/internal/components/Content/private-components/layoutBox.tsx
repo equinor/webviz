@@ -1,6 +1,6 @@
 import React from "react";
 
-import { LayoutElement } from "@framework/LayoutService";
+import { LayoutElement } from "@framework/ModuleInstanceManager";
 import { Point, Rect, Size, outerRectContainsInnerRect, rectContainsPoint, rectsAreEqual } from "@lib/utils/geometry";
 
 function layoutElementToRect(layoutElement: LayoutElement): Rect {

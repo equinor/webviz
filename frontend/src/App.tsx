@@ -1,7 +1,8 @@
 import React from "react";
 
 import { DrawerContent, GuiState } from "@framework/GuiMessageBroker";
-import { LayoutElement, Workbench } from "@framework/Workbench";
+import { LayoutElement } from "@framework/ModuleInstanceManager";
+import { Workbench } from "@framework/Workbench";
 import { NavBar } from "@framework/internal/components/NavBar";
 import { SettingsContentPanels } from "@framework/internal/components/SettingsContentPanels";
 import { useQueryClient } from "@tanstack/react-query";
@@ -20,7 +21,7 @@ function App() {
             workbench.current.getModuleInstanceManager().makeLayout(layout);
         }
 
-        if (workbench.current.getLayout().length === 0) {
+        if (workbench.current.getModuleInstanceManager().getLayout().length === 0) {
             workbench.current.getGuiMessageBroker().setState(GuiState.DrawerContent, DrawerContent.ModulesList);
         }
 

@@ -1,17 +1,17 @@
 import React from "react";
 
-import { ModuleInstanceEvents, ModuleInstanceManager } from "@framework/LayoutService";
 import { ModuleInstance } from "@framework/ModuleInstance";
+import { ModuleInstanceEvents, ModuleInstanceManager } from "@framework/ModuleInstanceManager";
 
-export function useModuleInstances(layoutService: ModuleInstanceManager): ModuleInstance<any>[] {
+export function useModuleInstances(moduleInstanceManager: ModuleInstanceManager): ModuleInstance<any>[] {
     const [moduleInstances, setModuleInstances] = React.useState<ModuleInstance<any>[]>([]);
 
     React.useEffect(() => {
         function handleModuleInstancesChange() {
-            setModuleInstances(layoutService.getModuleInstances());
+            setModuleInstances(moduleInstanceManager.getModuleInstances());
         }
 
-        const unsubscribeFunc = layoutService.subscribe(
+        const unsubscribeFunc = moduleInstanceManager.subscribe(
             ModuleInstanceEvents.ModuleInstancesChanged,
             handleModuleInstancesChange
         );

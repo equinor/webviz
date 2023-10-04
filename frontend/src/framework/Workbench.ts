@@ -3,7 +3,7 @@ import { QueryClient } from "@tanstack/react-query";
 import { Broadcaster } from "./Broadcaster";
 import { EnsembleIdent } from "./EnsembleIdent";
 import { GuiMessageBroker } from "./GuiMessageBroker";
-import { ModuleInstanceManager } from "./LayoutService";
+import { ModuleInstanceManager } from "./ModuleInstanceManager";
 import { WorkbenchServices } from "./WorkbenchServices";
 import { WorkbenchSession } from "./WorkbenchSession";
 import { loadEnsembleSetMetadataFromBackend } from "./internal/EnsembleSetLoader";

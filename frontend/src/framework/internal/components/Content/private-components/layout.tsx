@@ -1,7 +1,8 @@
 import React from "react";
 
 import { GuiEvent, GuiEventPayloads } from "@framework/GuiMessageBroker";
-import { LayoutElement, Workbench } from "@framework/Workbench";
+import { LayoutElement } from "@framework/ModuleInstanceManager";
+import { Workbench } from "@framework/Workbench";
 import { useModuleInstances } from "@framework/internal/hooks/workbenchHooks";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import {
@@ -37,8 +38,10 @@ export const Layout: React.FC<LayoutProps> = (props) => {
     const mainRef = React.useRef<HTMLDivElement>(null);
     const size = useElementSize(ref);
     const layoutBoxRef = React.useRef<LayoutBox | null>(null);
-    const moduleInstances = useModuleInstances(props.workbench);
+    const moduleInstanceManager = props.workbench.getModuleInstanceManager();
     const guiMessageBroker = props.workbench.getGuiMessageBroker();
+
+    const moduleInstances = useModuleInstances(moduleInstanceManager);
 
     const convertLayoutRectToRealRect = React.useCallback(
         (element: LayoutElement): Rect => {
@@ -61,9 +64,9 @@ export const Layout: React.FC<LayoutProps> = (props) => {
         let dragging = false;
         let moduleInstanceId: string | null = null;
         let moduleName: string | null = null;
-        setLayout(layoutService.getLayout());
-        let originalLayout: LayoutElement[] = layoutService.getLayout();
-        let currentLayout: LayoutElement[] = layoutService.getLayout();
+        setLayout(moduleInstanceManager.getLayout());
+        let originalLayout: LayoutElement[] = moduleInstanceManager.getLayout();
+        let currentLayout: LayoutElement[] = moduleInstanceManager.getLayout();
         let originalLayoutBox = makeLayoutBoxes(originalLayout);
         let currentLayoutBox = originalLayoutBox;
         layoutBoxRef.current = currentLayoutBox;
@@ -119,7 +122,7 @@ export const Layout: React.FC<LayoutProps> = (props) => {
                 if (isNewModule && moduleName) {
                     const layoutElement = currentLayout.find((el) => el.moduleInstanceId === pointerDownElementId);
                     if (layoutElement) {
-                        const instance = layoutService.makeAndAddModuleInstance(moduleName, layoutElement);
+                        const instance = moduleInstanceManager.makeAndAddModuleInstance(moduleName, layoutElement);
                         layoutElement.moduleInstanceId = instance.getId();
                         layoutElement.moduleName = instance.getName();
                     }
@@ -132,7 +135,7 @@ export const Layout: React.FC<LayoutProps> = (props) => {
                 originalLayoutBox = currentLayoutBox;
                 layoutBoxRef.current = currentLayoutBox;
                 setLayout(currentLayout);
-                layoutService.setLayout(currentLayout);
+                moduleInstanceManager.setLayout(currentLayout);
                 setPosition({ x: 0, y: 0 });
                 setPointer({ x: -1, y: -1 });
                 e.stopPropagation();
@@ -228,13 +231,13 @@ export const Layout: React.FC<LayoutProps> = (props) => {
             if (dragging) {
                 return;
             }
-            layoutService.removeModuleInstance(e.moduleInstanceId);
-            currentLayoutBox.removeLayoutElement(e.moduleInstanceId);
+            moduleInstanceManager.removeModuleInstance(payload.moduleInstanceId);
+            currentLayoutBox.removeLayoutElement(payload.moduleInstanceId);
             currentLayout = currentLayoutBox.toLayout();
             setLayout(currentLayout);
             originalLayout = currentLayout;
             originalLayoutBox = currentLayoutBox;
-            layoutService.setLayout(currentLayout);
+            moduleInstanceManager.setLayout(currentLayout);
         };
 
         const removeModuleHeaderPointerDownSubscriber = guiMessageBroker.subscribeToEvent(

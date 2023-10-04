@@ -3,7 +3,7 @@ import React from "react";
 import WebvizLogo from "@assets/webviz.svg";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { DrawerContent, GuiState, useGuiState } from "@framework/GuiMessageBroker";
-import { ModuleInstanceEvents } from "@framework/LayoutService";
+import { ModuleInstanceEvents } from "@framework/ModuleInstanceManager";
 import { Workbench } from "@framework/Workbench";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { LoginButton } from "@framework/internal/components/LoginButton";

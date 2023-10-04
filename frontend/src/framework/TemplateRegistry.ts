@@ -1,5 +1,5 @@
 import { BroadcastChannelKeyCategory } from "./Broadcaster";
-import { LayoutElement } from "./LayoutService";
+import { LayoutElement } from "./ModuleInstanceManager";
 import { SyncSettingKey } from "./SyncSettings";
 
 export type DataChannelTemplate = {
