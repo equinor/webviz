@@ -337,13 +337,18 @@ export function settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
                             visualizationMode !== VisualizationMode.INDIVIDUAL_REALIZATIONS,
                     })}
                 >
-                    <CollapsibleGroup expanded={false} title="Parameter list filter">
-                        <ParameterListFilter
-                            parameters={selectedEnsemblesParameters}
-                            showTitle={true}
-                            onChange={handleParameterListFilterChange}
-                        />
-                    </CollapsibleGroup>
+                    <div className="mt-4 mb-4">
+                        <CollapsibleGroup
+                            expanded={false}
+                            title="Parameter list filter"
+                            icon={<FilterAlt fontSize="small" />}
+                        >
+                            <ParameterListFilter
+                                parameters={selectedEnsemblesParameters}
+                                onChange={handleParameterListFilterChange}
+                            />
+                        </CollapsibleGroup>
+                    </div>
                     <Select
                         options={filteredEnsembleParameters.map((elm) => {
                             return {
