@@ -1,0 +1,26 @@
+{
+    "build": {
+      "dockerfile": "./Dockerfile",
+      "context": "."
+    },
+    "features": {
+      "ghcr.io/devcontainers/features/docker-in-docker:2": {}
+    },
+    "remoteUser": "codespace",
+    "containerUser": "codespace",
+    "otherPortsAttributes": {
+      "onAutoForward": "silent"
+    },
+    "customizations": {
+      "vscode": {
+        "settings": {
+          "workbench.colorTheme": "Default Dark+"
+        }
+      }
+    },
+    "portsAttributes": {
+      "8080": {
+        "label": "Development server"
+      }
+    }
+  }
