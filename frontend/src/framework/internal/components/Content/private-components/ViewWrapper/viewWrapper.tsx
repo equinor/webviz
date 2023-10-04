@@ -1,6 +1,6 @@
 import React from "react";
 
-import { DrawerContent, GuiEvent, GuiState, useGuiState, useSetGuiValue } from "@framework/GuiMessageBroker";
+import { DrawerContent, GuiEvent, GuiState, useGuiState } from "@framework/GuiMessageBroker";
 import { ModuleInstance } from "@framework/ModuleInstance";
 import { Workbench } from "@framework/Workbench";
 import { Point, pointDifference, pointRelativeToDomRect, pointerEventToPoint } from "@lib/utils/geometry";
@@ -31,11 +31,6 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
     const [settingsPanelWidth, setSettingsPanelWidth] = useGuiState(
         props.workbench.getGuiMessageBroker(),
         GuiState.SettingsPanelWidthInPercent
-    );
-
-    const setActiveModuleInstanceId = useSetGuiValue(
-        props.workbench.getGuiMessageBroker(),
-        GuiState.ActiveModuleInstanceId
     );
 
     const guiMessageBroker = props.workbench.getGuiMessageBroker();
@@ -76,7 +71,7 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
             setDrawerContent(DrawerContent.ModuleSettings);
         }
         if (props.isActive) return;
-        setActiveModuleInstanceId(props.moduleInstance.getId());
+        props.workbench.getGuiMessageBroker().setState(GuiState.ActiveModuleInstanceId, props.moduleInstance.getId());
     }
 
     function handlePointerDown() {

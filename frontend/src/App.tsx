@@ -1,6 +1,6 @@
 import React from "react";
 
-import { DrawerContent, GuiState, useSetGuiValue } from "@framework/GuiMessageBroker";
+import { DrawerContent, GuiState } from "@framework/GuiMessageBroker";
 import { LayoutElement, Workbench } from "@framework/Workbench";
 import { NavBar } from "@framework/internal/components/NavBar";
 import { SettingsContentPanels } from "@framework/internal/components/SettingsContentPanels";
@@ -15,8 +15,6 @@ function App() {
     const workbench = React.useRef<Workbench>(new Workbench());
     const queryClient = useQueryClient();
 
-    const setLoadingEnsembleSet = useSetGuiValue(workbench.current.getGuiMessageBroker(), GuiState.LoadingEnsembleSet);
-
     React.useEffect(() => {
         if (!workbench.current.loadLayoutFromLocalStorage()) {
             workbench.current.makeLayout(layout);
@@ -30,7 +28,7 @@ function App() {
         if (storedEnsembleIdents) {
             workbench.current.getGuiMessageBroker().setState(GuiState.LoadingEnsembleSet, true);
             workbench.current.loadAndSetupEnsembleSetInSession(queryClient, storedEnsembleIdents).then(() => {
-                setLoadingEnsembleSet(false);
+                workbench.current.getGuiMessageBroker().setState(GuiState.LoadingEnsembleSet, false);
             });
         }
 

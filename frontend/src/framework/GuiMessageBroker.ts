@@ -169,11 +169,3 @@ export function useGuiValue<T extends GuiState>(guiMessageBroker: GuiMessageBrok
     const [state] = useGuiState(guiMessageBroker, key);
     return state;
 }
-
-export function useSetGuiValue<T extends GuiState>(
-    guiMessageBroker: GuiMessageBroker,
-    key: T
-): (value: GuiStateTypes[T] | ((prev: GuiStateTypes[T]) => GuiStateTypes[T])) => void {
-    const [, setter] = useGuiState(guiMessageBroker, key);
-    return setter;
-}
