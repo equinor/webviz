@@ -12,11 +12,13 @@ import { SyncSettingKey } from "./SyncSettings";
 import { Workbench } from "./Workbench";
 import { WorkbenchServices } from "./WorkbenchServices";
 import { WorkbenchSession } from "./WorkbenchSession";
+import { WorkbenchSettings } from "./WorkbenchSettings";
 
 export type ModuleFCProps<S extends StateBaseType> = {
     moduleContext: ModuleContext<S>;
     workbenchSession: WorkbenchSession;
     workbenchServices: WorkbenchServices;
+    workbenchSettings: WorkbenchSettings;
     initialSettings?: InitialSettings;
 };
 
@@ -34,8 +36,7 @@ export class Module<StateType extends StateBaseType> {
     private _defaultTitle: string;
     public viewFC: ModuleFC<StateType>;
     public settingsFC: ModuleFC<StateType>;
-    private _numInstances: number;
-    private _importState: ImportState;
+    protected _importState: ImportState;
     private _moduleInstances: ModuleInstance<StateType>[];
     private _defaultState: StateType | null;
     private _stateOptions: StateOptions<StateType> | undefined;
@@ -43,6 +44,7 @@ export class Module<StateType extends StateBaseType> {
     private _syncableSettingKeys: SyncSettingKey[];
     private _channelsDef: BroadcastChannelsDef;
     private _drawPreviewFunc: DrawPreviewFunc | null;
+    private _description: string | null;
     private _inputChannelDefs: InputBroadcastChannelDef[];
 
     constructor(
@@ -52,10 +54,10 @@ export class Module<StateType extends StateBaseType> {
         broadcastChannelsDef: BroadcastChannelsDef = {},
         inputChannelDefs: InputBroadcastChannelDef[] = [],
         drawPreviewFunc: DrawPreviewFunc | null = null
+        description: string | null = null
     ) {
         this._name = name;
         this._defaultTitle = defaultTitle;
-        this._numInstances = 0;
         this.viewFC = () => <div>Not defined</div>;
         this.settingsFC = () => <div>Not defined</div>;
         this._importState = ImportState.NotImported;
@@ -66,6 +68,7 @@ export class Module<StateType extends StateBaseType> {
         this._channelsDef = broadcastChannelsDef;
         this._inputChannelDefs = inputChannelDefs;
         this._drawPreviewFunc = drawPreviewFunc;
+        this._description = description;
     }
 
     getDrawPreviewFunc(): DrawPreviewFunc | null {
@@ -76,12 +79,16 @@ export class Module<StateType extends StateBaseType> {
         return this._importState;
     }
 
-    getName() {
+    getName(): string {
         return this._name;
     }
 
-    getDefaultTitle() {
+    getDefaultTitle(): string {
         return this._defaultTitle;
+    }
+
+    getDescription(): string | null {
+        return this._description;
     }
 
     setWorkbench(workbench: Workbench): void {
@@ -102,11 +109,16 @@ export class Module<StateType extends StateBaseType> {
         return this._syncableSettingKeys;
     }
 
-    makeInstance(): ModuleInstance<StateType> {
+    hasSyncableSettingKey(key: SyncSettingKey): boolean {
+        return this._syncableSettingKeys.includes(key);
+    }
+
+    makeInstance(instanceNumber: number): ModuleInstance<StateType> {
         if (!this._workbench) {
             throw new Error("Module must be added to a workbench before making an instance");
         }
 
+        const instance = new ModuleInstance<StateType>(this, instanceNumber, this._channelsDef, this._workbench);
         const instance = new ModuleInstance<StateType>(
             this,
             this._numInstances++,

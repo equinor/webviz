@@ -24,7 +24,7 @@ class PHASES(str, Enum):
 
 def pvt_dataframe_to_api_data(data_frame: pd.DataFrame) -> List[PvtData]:
     """Converts the PVT table from Sumo/Ecl2Df to a list of PvtData objects"""
-    """Dataframe manipulation is copied from webviz-subsurface"""
+    # Dataframe manipulation is copied from webviz-subsurface
 
     data_frame = data_frame.rename(str.upper, axis="columns").rename(
         columns={
@@ -51,13 +51,13 @@ def pvt_dataframe_to_api_data(data_frame: pd.DataFrame) -> List[PvtData]:
     list_of_pvtdata: List[PvtData] = []
 
     for keyword, df_grouped_on_keyword in data_frame.groupby("KEYWORD"):
-        if keyword in OIL_KEYWORDS.keys():
+        if keyword in OIL_KEYWORDS:
             phase = PHASES.OIL.value
             name = OIL_KEYWORDS[keyword]
-        elif keyword in GAS_KEYWORDS.keys():
+        elif keyword in GAS_KEYWORDS:
             phase = PHASES.GAS.value
             name = GAS_KEYWORDS[keyword]
-        elif keyword in WATER_KEYWORDS.keys():
+        elif keyword in WATER_KEYWORDS:
             phase = PHASES.WATER.value
             name = WATER_KEYWORDS[keyword]
         else:

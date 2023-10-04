@@ -1,8 +1,8 @@
 import React from "react";
 
+import { DrawerContent, GuiEvent, GuiState, useGuiState } from "@framework/GuiMessageBroker";
 import { ModuleInstance } from "@framework/ModuleInstance";
-import { useSetStoreValue, useStoreState, useStoreValue } from "@framework/StateStore";
-import { DrawerContent, Workbench } from "@framework/Workbench";
+import { Workbench } from "@framework/Workbench";
 import { Point, pointDifference, pointRelativeToDomRect, pointerEventToPoint } from "@lib/utils/geometry";
 
 import { ChannelSelector } from "./private-components/channelSelector";
@@ -29,12 +29,20 @@ type ViewWrapperProps = {
 
 export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
     const ref = React.useRef<HTMLDivElement>(null);
-    const setDrawerContent = useSetStoreValue(props.workbench.getGuiStateStore(), "drawerContent");
-    const [settingsPanelWidth, setSettingsPanelWidth] = useStoreState(
-        props.workbench.getGuiStateStore(),
-        "settingsPanelWidthInPercent"
+    const [drawerContent, setDrawerContent] = useGuiState(
+        props.workbench.getGuiMessageBroker(),
+        GuiState.DrawerContent
+    );
+    const [settingsPanelWidth, setSettingsPanelWidth] = useGuiState(
+        props.workbench.getGuiMessageBroker(),
+        GuiState.SettingsPanelWidthInPercent
     );
 
+    const guiMessageBroker = props.workbench.getGuiMessageBroker();
+
+    const timeRef = React.useRef<number | null>(null);
+
+    const handleHeaderPointerDown = React.useCallback(
     const [currentInputName, setCurrentInputName] = React.useState<string | null>(null);
     const [channelSelectorCenterPoint, setChannelSelectorCenterPoint] = React.useState<Point | null>(null);
     const [selectableChannels, setSelectableChannels] = React.useState<string[]>([]);
@@ -60,15 +68,11 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
             if (ref.current) {
                 const point = pointerEventToPoint(e.nativeEvent);
                 const rect = ref.current.getBoundingClientRect();
-                document.dispatchEvent(
-                    new CustomEvent(LayoutEventTypes.MODULE_INSTANCE_POINTER_DOWN, {
-                        detail: {
-                            id: props.moduleInstance.getId(),
-                            elementPosition: pointDifference(point, pointRelativeToDomRect(point, rect)),
-                            pointerPoint: point,
-                        },
-                    })
-                );
+                guiMessageBroker.publishEvent(GuiEvent.ModuleHeaderPointerDown, {
+                    moduleInstanceId: props.moduleInstance.getId(),
+                    elementPosition: pointDifference(point, pointRelativeToDomRect(point, rect)),
+                    pointerPosition: point,
+                });
             }
         },
         [props.moduleInstance]
@@ -76,29 +80,38 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
 
     const handleModuleInstanceRemoveClick = React.useCallback(
         function handleRemoveClick(e: React.PointerEvent<HTMLDivElement>) {
-            document.dispatchEvent(
-                new CustomEvent(LayoutEventTypes.REMOVE_MODULE_INSTANCE_REQUEST, {
-                    detail: {
-                        id: props.moduleInstance.getId(),
-                    },
-                })
-            );
+            guiMessageBroker.publishEvent(GuiEvent.RemoveModuleInstanceRequest, {
+                moduleInstanceId: props.moduleInstance.getId(),
+            });
             e.preventDefault();
             e.stopPropagation();
         },
         [props.moduleInstance]
     );
 
-    function handleModuleHeaderClick() {
-        if (props.isActive) return;
-        props.workbench.setActiveModuleId(props.moduleInstance.getId());
-    }
-
-    function handleModuleHeaderDoubleClick() {
+    function handleModuleClick() {
         if (settingsPanelWidth <= 5) {
             setSettingsPanelWidth(20);
         }
-        setDrawerContent(DrawerContent.ModuleSettings);
+        if (drawerContent !== DrawerContent.SyncSettings) {
+            setDrawerContent(DrawerContent.ModuleSettings);
+        }
+        if (props.isActive) return;
+        props.workbench.getGuiMessageBroker().setState(GuiState.ActiveModuleInstanceId, props.moduleInstance.getId());
+    }
+
+    function handlePointerDown() {
+        timeRef.current = Date.now();
+    }
+
+    function handlePointerUp() {
+        if (drawerContent === DrawerContent.ModulesList) {
+            if (!timeRef.current || Date.now() - timeRef.current < 800) {
+                handleModuleClick();
+            }
+            return;
+        }
+        handleModuleClick();
     }
 
     function handleInputChannelsClick(e: React.PointerEvent<HTMLDivElement>): void {
@@ -176,6 +189,9 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
         (editDataChannelConnectionsModuleInstanceId === null ||
             editDataChannelConnectionsModuleInstanceId === props.moduleInstance.getId());
 
+    const showAsActive =
+        props.isActive && [DrawerContent.ModuleSettings, DrawerContent.SyncSettings].includes(drawerContent);
+
     return (
         <>
             {props.isDragged && (
@@ -195,21 +211,21 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
             >
                 <div
                     className={`bg-white h-full w-full flex flex-col ${
-                        props.isActive ? "border-blue-500" : ""
+                        showAsActive && drawerContent ? "border-blue-500" : ""
                     } border-solid border-2 box-border shadow ${
                         props.isDragged ? "cursor-grabbing select-none" : "cursor-grab"
                     }}`}
-                    onClick={handleModuleHeaderClick}
-                    onDoubleClick={handleModuleHeaderDoubleClick}
+                    onPointerDown={handlePointerDown}
+                    onPointerUp={handlePointerUp}
                 >
                     <Header
                         moduleInstance={props.moduleInstance}
                         isDragged={props.isDragged}
                         onPointerDown={handleHeaderPointerDown}
-                        onRemoveClick={handleModuleInstanceRemoveClick}
+                        onRemoveClick={handleRemoveClick}
                         onInputChannelsClick={handleInputChannelsClick}
                     />
-                    <div className="flex-grow overflow-auto h-0">
+                    <div className="flex-grow overflow-auto h-0" onClick={handleModuleClick}>
                         <ViewContent workbench={props.workbench} moduleInstance={props.moduleInstance} />
                         <InputChannelNodeWrapper forwardedRef={ref} visible={channelConnectorWrapperVisible}>
                             {props.moduleInstance.getInputChannelDefs().map((channelDef) => {

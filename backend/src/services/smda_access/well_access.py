@@ -5,7 +5,7 @@ from .types import WellBorePick, WellBoreTrajectory, WellBoreHeader
 from .queries.get_well_headers import get_well_headers
 from .queries.get_wellbore_picks_for_field import get_wellbore_picks_for_field
 from .queries.get_field_wellbore_trajectories import get_field_wellbore_trajectories
-from .queries.get_wellbore_trajectory import get_wellbore_trajectory
+from .queries.get_wellbore_trajectory import get_wellbore_trajectories
 
 
 class WellAccess:
@@ -30,8 +30,8 @@ class WellAccess:
         )
         return wellbore_trajectories
 
-    def get_wellbore_trajectory(self, wellbore_uuid: str) -> WellBoreTrajectory:
-        wellbore_trajectories = get_wellbore_trajectory(access_token=self._smda_token, wellbore_uuid=wellbore_uuid)
+    def get_wellbore_trajectories(self, wellbore_uuids: List[str]) -> List[WellBoreTrajectory]:
+        wellbore_trajectories = get_wellbore_trajectories(access_token=self._smda_token, wellbore_uuids=wellbore_uuids)
         return wellbore_trajectories
 
     def get_well_headers(self, field_identifier: str) -> List[WellBoreHeader]:

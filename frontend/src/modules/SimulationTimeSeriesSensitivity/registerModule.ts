@@ -6,7 +6,7 @@ import { State } from "./state";
 
 ModuleRegistry.registerModule<State>({
     moduleName: "SimulationTimeSeriesSensitivity",
-    defaultTitle: "Simulation time series sensitivity",
+    defaultTitle: "Simulation time series per sensitivity",
     syncableSettingKeys: [SyncSettingKey.ENSEMBLE, SyncSettingKey.TIME_SERIES],
     broadcastChannelsDef,
 });

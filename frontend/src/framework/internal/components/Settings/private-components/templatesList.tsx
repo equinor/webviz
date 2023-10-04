@@ -1,12 +1,11 @@
 import React from "react";
 
+import { DrawerContent, GuiState, useGuiState } from "@framework/GuiMessageBroker";
 import { ModuleRegistry } from "@framework/ModuleRegistry";
-import { useStoreValue } from "@framework/StateStore";
 import { Template, TemplateRegistry } from "@framework/TemplateRegistry";
-import { DrawerContent, Workbench } from "@framework/Workbench";
-import { Squares2X2Icon } from "@heroicons/react/20/solid";
-
-import { Drawer } from "./drawer";
+import { Workbench } from "@framework/Workbench";
+import { Drawer } from "@framework/internal/components/Drawer";
+import { GridView } from "@mui/icons-material";
 
 function drawTemplatePreview(template: Template, width: number, height: number): React.ReactNode {
     return (
@@ -94,7 +93,10 @@ type TemplatesListProps = {
     I will skip it for now and come back to it when it becomes a problem.
 */
 export const TemplatesList: React.FC<TemplatesListProps> = (props) => {
-    const drawerContent = useStoreValue(props.workbench.getGuiStateStore(), "drawerContent");
+    const [drawerContent, setDrawerContent] = useGuiState(
+        props.workbench.getGuiMessageBroker(),
+        GuiState.DrawerContent
+    );
     const [searchQuery, setSearchQuery] = React.useState("");
 
     const handleSearchQueryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -107,6 +109,7 @@ export const TemplatesList: React.FC<TemplatesListProps> = (props) => {
             return;
         }
         props.workbench.applyTemplate(template);
+        setDrawerContent(DrawerContent.ModuleSettings);
     };
 
     return (
@@ -115,7 +118,7 @@ export const TemplatesList: React.FC<TemplatesListProps> = (props) => {
             onFilterChange={handleSearchQueryChange}
             filterPlaceholder="Filter templates..."
             title="Select a template"
-            icon={<Squares2X2Icon />}
+            icon={<GridView />}
             visible={drawerContent === DrawerContent.TemplatesList}
         >
             {Object.keys(TemplateRegistry.getRegisteredTemplates())

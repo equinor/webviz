@@ -43,7 +43,7 @@ export const AuthProvider: React.FC<{ children: React.ReactElement }> = (props) 
         }
 
         apiService.default
-            .loggedInUser()
+            .loggedInUser(true)
             .then((user) => {
                 if (user) {
                     setAuthState(AuthState.LoggedIn);

@@ -1,15 +1,11 @@
-import datetime
 import logging
-from typing import List, Optional, Sequence, Union
+from typing import List, Union
 
-import pyarrow as pa
-import pyarrow.compute as pc
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, Query
 
 from src.services.smda_access import mocked_drogon_smda_access
 from src.services.smda_access.well_access import WellAccess
 from src.services.sumo_access.case_inspector import CaseInspector
-from src.services.smda_access.stratigraphy_access import StratigraphyAccess
 from src.services.utils.authenticated_user import AuthenticatedUser
 from src.backend.auth.auth_helper import AuthHelper
 
@@ -46,8 +42,8 @@ def get_well_headers(
 def get_field_well_trajectories(
     # fmt:off
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
-    case_uuid: str = Query(description="Sumo case uuid"),
-    # Should be field identifier
+    case_uuid: str = Query(description="Sumo case uuid"), # Should be field identifier?
+    unique_wellbore_identifiers:List[str] =  Query(None, description="Optional subset of well names")
     # fmt:on
 ) -> List[WellBoreTrajectory]:
     """Get well trajectories for field"""
@@ -60,22 +56,25 @@ def get_field_well_trajectories(
     else:
         well_access = WellAccess(authenticated_user.get_smda_access_token())
 
-    return well_access.get_field_wellbore_trajectories(field_identifier=field_identifier)
+    return well_access.get_field_wellbore_trajectories(
+        field_identifier=field_identifier, unique_wellbore_identifiers=unique_wellbore_identifiers
+    )
 
 
-@router.get("/well_trajectory/")
-def get_well_trajectory(
+@router.get("/well_trajectories/")
+def get_well_trajectories(
     # fmt:off
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
-    wellbore_uuid: str = Query(description="Wellbore uuid"),
+    wellbore_uuids: List[str] = Query(description="Wellbore uuids"),
     # fmt:on
-) -> WellBoreTrajectory:
-    """Get well trajectory"""
+) -> List[WellBoreTrajectory]:
+    """Get well trajectories"""
     well_access: Union[WellAccess, mocked_drogon_smda_access.WellAccess]
-    if wellbore_uuid in ["drogon_horizontal", "drogon_vertical"]:
-        # Handle DROGON
+
+    # Handle DROGON
+    if all(x in ["drogon_horizontal", "drogon_vertical"] for x in wellbore_uuids):
         well_access = mocked_drogon_smda_access.WellAccess(authenticated_user.get_smda_access_token())
     else:
         well_access = WellAccess(authenticated_user.get_smda_access_token())
 
-    return well_access.get_wellbore_trajectory(wellbore_uuid=wellbore_uuid)
+    return well_access.get_wellbore_trajectories(wellbore_uuids=wellbore_uuids)

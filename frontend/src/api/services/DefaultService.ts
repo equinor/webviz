@@ -17,7 +17,7 @@ export class DefaultService {
      * @throws ApiError
      */
     public loginRoute(
-        redirectUrlAfterLogin?: string,
+        redirectUrlAfterLogin?: (string | null),
     ): CancelablePromise<any> {
         return this.httpRequest.request({
             method: 'GET',
@@ -69,13 +69,22 @@ export class DefaultService {
 
     /**
      * Logged In User
+     * @param includeGraphApiInfo Set to true to include user avatar and display name from Microsoft Graph API
      * @returns UserInfo Successful Response
      * @throws ApiError
      */
-    public loggedInUser(): CancelablePromise<UserInfo> {
+    public loggedInUser(
+        includeGraphApiInfo: boolean = false,
+    ): CancelablePromise<UserInfo> {
         return this.httpRequest.request({
             method: 'GET',
             url: '/logged_in_user',
+            query: {
+                'includeGraphApiInfo': includeGraphApiInfo,
+            },
+            errors: {
+                422: `Validation Error`,
+            },
         });
     }
 

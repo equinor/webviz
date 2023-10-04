@@ -3,13 +3,13 @@ import ReactDOM from "react-dom";
 
 import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
 import { Point } from "@lib/utils/geometry";
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { Slider as SliderUnstyled, SliderProps as SliderUnstyledProps } from "@mui/base";
 
-import { BaseComponent } from "../_BaseComponent";
-import { resolveClassNames } from "../_utils/resolveClassNames";
+import { BaseComponent } from "../BaseComponent";
 
 export type SliderProps = {
-    valueLabelDisplay?: "on" | "auto" | "off";
+    valueLabelDisplay?: "auto" | "off";
     valueLabelFormat?: string | ((value: number) => React.ReactNode);
 } & Omit<SliderUnstyledProps, "valueLabelFormat">;
 
@@ -278,7 +278,8 @@ export const Slider = React.forwardRef((props: SliderProps, ref: React.Forwarded
                     }}
                 />
             </div>
-            {valueLabelDisplay !== "off" &&
+            {valueLabelDisplay !== undefined &&
+                valueLabelDisplay !== "off" &&
                 ReactDOM.createPortal(
                     <div
                         className="absolute flex justify-center w-40 -ml-20 h-4 -mt-5 pointer-events-none z-50"

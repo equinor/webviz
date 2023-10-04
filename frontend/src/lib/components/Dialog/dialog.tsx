@@ -1,17 +1,16 @@
 import React from "react";
 import ReactDOM from "react-dom";
 
-import { XMarkIcon } from "@heroicons/react/20/solid";
 import { useElementSize } from "@lib/hooks/useElementSize";
-
-import { resolveClassNames } from "../_utils/resolveClassNames";
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
+import { Close } from "@mui/icons-material";
 
 export type DialogProps = {
     title?: string;
     children?: React.ReactNode;
     modal?: boolean;
     open?: boolean;
-    onClose?: () => void;
+    onClose?: (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => void;
     width?: string | number;
     height?: string | number;
     minWidth?: string | number;
@@ -26,15 +25,15 @@ export const Dialog: React.FC<DialogProps> = (props) => {
 
     const dialogSize = useElementSize(dialogRef);
 
-    const handleClose = () => {
-        props.onClose?.();
+    const handleClose = (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
+        props.onClose?.(e);
     };
 
     const handleBackgroundClick = (e: React.MouseEvent<HTMLDivElement>) => {
         if (e.target !== wrapperRef.current) {
             return;
         }
-        handleClose();
+        handleClose(e);
     };
 
     return ReactDOM.createPortal(
@@ -79,7 +78,7 @@ export const Dialog: React.FC<DialogProps> = (props) => {
                             onPointerDown={handleClose}
                             title="Close dialog"
                         >
-                            <XMarkIcon width={24} />
+                            <Close width={24} />
                         </div>
                     )}
                 </div>

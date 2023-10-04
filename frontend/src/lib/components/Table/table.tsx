@@ -1,13 +1,13 @@
 import React from "react";
 
-import { ChevronDownIcon, ChevronUpIcon, XMarkIcon } from "@heroicons/react/20/solid";
+import { Close, ExpandLess, ExpandMore } from "@mui/icons-material";
 
 import { v4 } from "uuid";
 
+import { BaseComponent, BaseComponentProps } from "../BaseComponent";
 import { IconButton } from "../IconButton";
 import { Input } from "../Input";
 import { Virtualization } from "../Virtualization";
-import { BaseComponent, BaseComponentProps } from "../_BaseComponent/baseComponent";
 
 export type TableHeading = {
     [key: string]: {
@@ -182,7 +182,7 @@ export const Table: React.FC<TableProps<TableHeading>> = (props) => {
                                                         : undefined
                                                 }
                                             >
-                                                <ChevronUpIcon />
+                                                <ExpandLess />
                                             </IconButton>
                                             <IconButton
                                                 size="small"
@@ -194,7 +194,7 @@ export const Table: React.FC<TableProps<TableHeading>> = (props) => {
                                                         : undefined
                                                 }
                                             >
-                                                <ChevronDownIcon />
+                                                <ExpandMore />
                                             </IconButton>
                                         </div>
                                     </div>
@@ -206,7 +206,7 @@ export const Table: React.FC<TableProps<TableHeading>> = (props) => {
                                             onChange={(e) => handleFilterChange(col, e.target.value)}
                                             endAdornment={
                                                 <IconButton size="small" onClick={() => handleFilterChange(col, "")}>
-                                                    <XMarkIcon />
+                                                    <Close />
                                                 </IconButton>
                                             }
                                         />
@@ -226,10 +226,11 @@ export const Table: React.FC<TableProps<TableHeading>> = (props) => {
                                 return (
                                     <tr
                                         key={item.id}
-                                        className={`${props.highlightFilter && props.highlightFilter(item.values)
-                                            ? "bg-blue-50 "
-                                            : ""
-                                            } hover:bg-blue-100`}
+                                        className={`${
+                                            props.highlightFilter && props.highlightFilter(item.values)
+                                                ? "bg-blue-50 "
+                                                : ""
+                                        } hover:bg-blue-100`}
                                         onPointerOver={() => handlePointerOver(item.values)}
                                         onPointerDown={() => handlePointerDown(item.values)}
                                         style={{ height: 30 }}

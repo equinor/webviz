@@ -1,6 +1,5 @@
-import datetime
 import logging
-from typing import List, Optional, Sequence, Union
+from typing import Annotated
 
 import pyarrow as pa
 import pyarrow.compute as pc
@@ -20,24 +19,20 @@ LOGGER = logging.getLogger(__name__)
 router = APIRouter()
 
 
-@router.get("/vector_names_and_description/")
-def get_vector_names_and_descriptions(
-    # fmt:off
-    authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
-    case_uuid: str = Query(description="Sumo case uuid"),
-    ensemble_name: str = Query(description="Ensemble name"),
-    exclude_all_values_zero: bool = Query(False, description="Exclude all vectors where all values are zero"),
-    exclude_all_values_constant: bool = Query(False, description="Exclude all vectors where all values are the same value"),
-    # fmt:on
-) -> List[schemas.VectorDescription]:
-    """Get all vector names and descriptive names in a given Sumo ensemble"""
+@router.get("/vector_list/")
+def get_vector_list(
+    authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
+    case_uuid: Annotated[str, Query(description="Sumo case uuid")],
+    ensemble_name: Annotated[str, Query(description="Ensemble name")],
+) -> list[schemas.VectorDescription]:
+    """Get list of all vectors in a given Sumo ensemble, excluding any historical vectors"""
 
     access = SummaryAccess(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
-    vector_names = access.get_vector_names()
+    vector_info_arr = access.get_available_vectors()
 
-    ret_arr: List[schemas.VectorDescription] = [
-        schemas.VectorDescription(name=vector_name, descriptive_name=vector_name, has_historical=False)
-        for vector_name in vector_names
+    ret_arr: list[schemas.VectorDescription] = [
+        schemas.VectorDescription(name=vi.name, descriptive_name=vi.name, has_historical=vi.has_historical)
+        for vi in vector_info_arr
     ]
 
     return ret_arr
@@ -46,15 +41,15 @@ def get_vector_names_and_descriptions(
 @router.get("/realizations_vector_data/")
 def get_realizations_vector_data(
     # fmt:off
-    authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
-    case_uuid: str = Query(description="Sumo case uuid"),
-    ensemble_name: str = Query(description="Ensemble name"),
-    vector_name: str = Query(description="Name of the vector"),
-    resampling_frequency: Optional[schemas.Frequency] = Query(None, description="Resampling frequency. If not specified, raw data without resampling wil be returned."),
-    realizations: Optional[Sequence[int]] = Query(None, description="Optional list of realizations to include. If not specified, all realizations will be returned."),
-    relative_to_timestamp: Optional[datetime.datetime] = Query(None, description="Calculate relative to timestamp"),
+    authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
+    case_uuid: Annotated[str, Query(description="Sumo case uuid")],
+    ensemble_name:  Annotated[str, Query(description="Ensemble name")],
+    vector_name:  Annotated[str, Query(description="Name of the vector")],
+    resampling_frequency: Annotated[schemas.Frequency | None, Query(description="Resampling frequency. If not specified, raw data without resampling wil be returned.")] = None,
+    realizations: Annotated[list[int] | None, Query(description="Optional list of realizations to include. If not specified, all realizations will be returned.")] = None,
+    # relative_to_timestamp: Annotated[datetime.datetime | None, Query(description="Calculate relative to timestamp")] = None,
     # fmt:on
-) -> List[schemas.VectorRealizationData]:
+) -> list[schemas.VectorRealizationData]:
     """Get vector data per realization"""
 
     access = SummaryAccess(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
@@ -66,12 +61,12 @@ def get_realizations_vector_data(
         realizations=realizations,
     )
 
-    ret_arr: List[schemas.VectorRealizationData] = []
+    ret_arr: list[schemas.VectorRealizationData] = []
     for vec in sumo_vec_arr:
         ret_arr.append(
             schemas.VectorRealizationData(
                 realization=vec.realization,
-                timestamps=vec.timestamps,
+                timestamps_utc_ms=vec.timestamps_utc_ms,
                 values=vec.values,
                 unit=vec.metadata.unit,
                 is_rate=vec.metadata.is_rate,
@@ -81,29 +76,15 @@ def get_realizations_vector_data(
     return ret_arr
 
 
-@router.get("/vector_metadata/")
-# type: ignore [empty-body]
-def get_vector_metadata(
-    authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
-    case_uuid: str = Query(description="Sumo case uuid"),
-    ensemble_name: str = Query(description="Ensemble name"),
-    vector_name: str = Query(description="Name of the vector"),
-) -> schemas.VectorMetadata:
-    """Get metadata for the specified vector. Returns None if no metadata
-    exists or if any of the non-optional properties of `VectorMetadata` are missing."""
-
-    ...
-
-
-@router.get("/timesteps/")
-def get_timesteps(
-    authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
-    case_uuid: str = Query(description="Sumo case uuid"),
-    ensemble_name: str = Query(description="Ensemble name"),
-    resampling_frequency: Optional[schemas.Frequency] = Query(None, description="Resampling frequency"),
-    # realizations: Union[Sequence[int], None] = Query(None, description="Optional list of realizations to include"),
-) -> List[datetime.datetime]:
-    """Get the intersection of available timesteps.
+@router.get("/timestamps_list/")
+def get_timestamps_list(
+    authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
+    case_uuid: Annotated[str, Query(description="Sumo case uuid")],
+    ensemble_name: Annotated[str, Query(description="Ensemble name")],
+    resampling_frequency: Annotated[schemas.Frequency | None, Query(description="Resampling frequency")] = None,
+    # realizations: Annotated[list[int] | None, Query(description="Optional list of realizations to include")] = None,
+) -> list[int]:
+    """Get the intersection of available timestamps.
         Note that when resampling_frequency is None, the pure intersection of the
     stored raw dates will be returned. Thus the returned list of dates will not include
     dates from long running realizations.
@@ -112,32 +93,48 @@ def get_timesteps(
     """
     access = SummaryAccess(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
     sumo_freq = Frequency.from_string_value(resampling_frequency.value if resampling_frequency else "dummy")
-    return access.get_timesteps(resampling_frequency=sumo_freq)
+    return access.get_timestamps(resampling_frequency=sumo_freq)
 
 
 @router.get("/historical_vector_data/")
 # type: ignore [empty-body]
 def get_historical_vector_data(
-    authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
-    case_uuid: str = Query(description="Sumo case uuid"),
-    non_historical_vector_name: str = Query(description="Name of the non-historical vector"),
-    resampling_frequency: Optional[schemas.Frequency] = Query(None, description="Resampling frequency"),
-    relative_to_timestamp: Optional[datetime.datetime] = Query(None, description="Calculate relative to timestamp"),
+    authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
+    case_uuid: Annotated[str, Query(description="Sumo case uuid")],
+    ensemble_name: Annotated[str, Query(description="Ensemble name")],
+    non_historical_vector_name: Annotated[str, Query(description="Name of the non-historical vector")],
+    resampling_frequency: Annotated[schemas.Frequency | None, Query(description="Resampling frequency")] = None,
+    # relative_to_timestamp: Annotated[datetime.datetime | None, Query(description="Calculate relative to timestamp")] = None,
 ) -> schemas.VectorHistoricalData:
-    ...
+    access = SummaryAccess(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
+
+    sumo_freq = Frequency.from_string_value(resampling_frequency.value if resampling_frequency else "dummy")
+    sumo_hist_vec = access.get_matching_historical_vector(
+        non_historical_vector_name=non_historical_vector_name, resampling_frequency=sumo_freq
+    )
+
+    if not sumo_hist_vec:
+        raise HTTPException(status_code=404, detail="Could not get historical vector")
+
+    return schemas.VectorHistoricalData(
+        timestamps_utc_ms=sumo_hist_vec.timestamps_utc_ms,
+        values=sumo_hist_vec.values,
+        unit=sumo_hist_vec.metadata.unit,
+        is_rate=sumo_hist_vec.metadata.is_rate,
+    )
 
 
 @router.get("/statistical_vector_data/")
 def get_statistical_vector_data(
     # fmt:off
-    authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
-    case_uuid: str = Query(description="Sumo case uuid"),
-    ensemble_name: str = Query(description="Ensemble name"),
-    vector_name: str = Query(description="Name of the vector"),
-    resampling_frequency: schemas.Frequency = Query(description="Resampling frequency"),
-    statistic_functions: Optional[Sequence[schemas.StatisticFunction]] = Query(None, description="Optional list of statistics to calculate. If not specified, all statistics will be calculated."),
-    realizations: Optional[Sequence[int]] = Query(None, description="Optional list of realizations to include. If not specified, all realizations will be included."),
-    relative_to_timestamp: Optional[datetime.datetime] = Query(None, description="Calculate relative to timestamp"),
+    authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
+    case_uuid: Annotated[str, Query(description="Sumo case uuid")],
+    ensemble_name:  Annotated[str, Query(description="Ensemble name")],
+    vector_name: Annotated[str, Query(description="Name of the vector")],
+    resampling_frequency: Annotated[schemas.Frequency, Query(description="Resampling frequency")],
+    statistic_functions: Annotated[list[schemas.StatisticFunction] | None, Query(description="Optional list of statistics to calculate. If not specified, all statistics will be calculated.")] = None,
+    realizations: Annotated[list[int] | None, Query(description="Optional list of realizations to include. If not specified, all realizations will be included.")] = None,
+    # relative_to_timestamp: Annotated[datetime.datetime | None, Query(description="Calculate relative to timestamp")] = None,
     # fmt:on
 ) -> schemas.VectorStatisticData:
     """Get statistical vector data for an ensemble"""
@@ -165,16 +162,15 @@ def get_statistical_vector_data(
 @router.get("/statistical_vector_data_per_sensitivity/")
 def get_statistical_vector_data_per_sensitivity(
     # fmt:off
-    authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
-    case_uuid: str = Query(description="Sumo case uuid"),
-    ensemble_name: str = Query(description="Ensemble name"),
-    vector_name: str = Query(description="Name of the vector"),
-    resampling_frequency: schemas.Frequency = Query(description="Resampling frequency"),
-    statistic_functions: Optional[Sequence[schemas.StatisticFunction]] = Query(None, description="Optional list of statistics to calculate. If not specified, all statistics will be calculated."),
-    
-    relative_to_timestamp: Optional[datetime.datetime] = Query(None, description="Calculate relative to timestamp"),
+    authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
+    case_uuid: Annotated[str, Query(description="Sumo case uuid")],
+    ensemble_name:  Annotated[str, Query(description="Ensemble name")],
+    vector_name: Annotated[str, Query(description="Name of the vector")],
+    resampling_frequency: Annotated[schemas.Frequency, Query(description="Resampling frequency")],
+    statistic_functions: Annotated[list[schemas.StatisticFunction] | None, Query(description="Optional list of statistics to calculate. If not specified, all statistics will be calculated.")] = None,
+    # relative_to_timestamp: Annotated[datetime.datetime | None, Query(description="Calculate relative to timestamp")] = None,
     # fmt:on
-) -> List[schemas.VectorStatisticSensitivityData]:
+) -> list[schemas.VectorStatisticSensitivityData]:
     """Get statistical vector data for an ensemble per sensitivity"""
 
     summmary_access = SummaryAccess(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
@@ -186,7 +182,7 @@ def get_statistical_vector_data_per_sensitivity(
     vector_table, vector_metadata = summmary_access.get_vector_table(
         vector_name=vector_name, resampling_frequency=service_freq, realizations=None
     )
-    ret_data: List[schemas.VectorStatisticSensitivityData] = []
+    ret_data: list[schemas.VectorStatisticSensitivityData] = []
     if not sensitivities:
         return ret_data
     for sensitivity in sensitivities:
@@ -205,7 +201,7 @@ def get_statistical_vector_data_per_sensitivity(
                 sensitivity_name=sensitivity.name,
                 sensitivity_case=case.name,
                 realizations=statistic_data.realizations,
-                timestamps=statistic_data.timestamps,
+                timestamps_utc_ms=statistic_data.timestamps_utc_ms,
                 value_objects=statistic_data.value_objects,
                 unit=statistic_data.unit,
                 is_rate=statistic_data.is_rate,
@@ -214,54 +210,34 @@ def get_statistical_vector_data_per_sensitivity(
     return ret_data
 
 
-@router.get("/realizations_calculated_vector_data/")
-def get_realizations_calculated_vector_data(
-    authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
-    case_uuid: str = Query(description="Sumo case uuid"),
-    ensemble_name: str = Query(description="Ensemble name"),
-    expression: schemas.VectorExpressionInfo = Depends(),
-    resampling_frequency: Optional[schemas.Frequency] = Query(None, description="Resampling frequency"),
-    relative_to_timestamp: Optional[datetime.datetime] = Query(None, description="Calculate relative to timestamp"),
-) -> str:
-    """Get calculated vector data per realization"""
-    print(expression)
-    print(type(expression))
-    return "hei"
-
-
-@router.get("/realization_vector_at_timestep/")
-def get_realization_vector_at_timestep(
+@router.get("/realization_vector_at_timestamp/")
+def get_realization_vector_at_timestamp(
     # fmt:off
-    authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
-    case_uuid: str = Query(description="Sumo case uuid"),
-    ensemble_name: str = Query(description="Ensemble name"),
-    vector_name: str = Query(description="Name of the vector"),
-    timestep: datetime.datetime = Query(description= "Timestep"),
-    # realizations: Optional[Sequence[int]] = Query(None, description="Optional list of realizations to include. If not specified, all realizations will be returned."),
+    authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
+    case_uuid: Annotated[str, Query(description="Sumo case uuid")],
+    ensemble_name:  Annotated[str, Query(description="Ensemble name")],
+    vector_name: Annotated[str, Query(description="Name of the vector")],
+    timestamp_utc_ms: Annotated[int, Query(description= "Timestamp in ms UTC to query vectors at")],
+    # realizations: Annotated[list[int] | None, Query(description="Optional list of realizations to include. If not specified, all realizations will be returned.")] = None,
     # fmt:on
 ) -> EnsembleScalarResponse:
-    """Get parameter correlations for a timeseries at a given timestep"""
-
     summary_access = SummaryAccess(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
-    ensemble_response = summary_access.get_vector_values_at_timestep(
-        vector_name=vector_name, timestep=timestep, realizations=None
+    ensemble_response = summary_access.get_vector_values_at_timestamp(
+        vector_name=vector_name, timestamp_utc_ms=timestamp_utc_ms, realizations=None
     )
     return ensemble_response
 
 
-# @router.get("/statistical_calculated_vector_data/")
-# def get_statistical_calculated_vector_data(
-#     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
-#     sumo_case_id: str = Query(None, description="Sumo case id"),
-#     sumo_iteration_id: str = Query(None, description="Sumo iteration id"),
-#     statistic: List[schemas.timeseries.StatisticsOptions] = Query(
-#         None, description="Statistical calculations to apply"
-#     ),
-#     vector_name: str = Query(None, description="Name of the vector"),
-#     resampling_frequency: Optional[schemas.timeseries.Frequency] = Query(None, description="Resampling frequency"),
-#     realizations: Union[Sequence[int], None] = Query(None, description="Optional list of realizations to include"),
-#     relative_to_timestamp: Optional[datetime.datetime] = Query(None, description="Calculate relative to timestamp"),
-#     expressions: Optional[List[schemas.timeseries.VectorExpressionInfo]] = None,
-# ) -> List[schemas.timeseries.VectorRealizationData]:
-#     """Get calculated vector data for an ensemble"""
-#     ...
+# @router.get("/realizations_calculated_vector_data/")
+# def get_realizations_calculated_vector_data(
+#     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
+#     case_uuid: Annotated[str, Query(description="Sumo case uuid")],
+#     ensemble_name: Annotated[str, Query(description="Ensemble name")],
+#     expression: Annotated[schemas.VectorExpressionInfo, Depends()],
+#     resampling_frequency: Annotated[schemas.Frequency, Query(description="Resampling frequency")],
+#     relative_to_timestamp: Annotated[datetime.datetime | None, Query(description="Calculate relative to timestamp")] = None,
+# ) -> str:
+#     """Get calculated vector data per realization"""
+#     print(expression)
+#     print(type(expression))
+#     return "hei"

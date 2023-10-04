@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg version="1.1" viewBox="0 0 558.19 214.16" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg" xmlns:cc="http://creativecommons.org/ns#">
+  <g transform="translate(224.25 7.5948)">
+    <g transform="matrix(1.3314 0 0 1 73.914 0)" fill="none">
+      <g transform="matrix(1.2372 0 0 .9994 53.084 .059752)" stroke="#0700b8" stroke-width="2">
+        <path d="m-218.06 68.08c20.225 2.9354 39.971 9.1443 58.236 18.312 11.421 5.732 22.231 12.592 33.141 19.243 15.608 9.5154 31.461 18.629 47.574 27.261 39.369 21.093 80.442 39.369 123.48 51.316 22.809 6.3318 46.116 10.869 69.634 13.556" vector-effect="non-scaling-stroke" />
+        <path d="m-199.46 71.768c62.294-13.816 125.1-25.344 188.24-34.554 14.008-2.0432 28.034-3.9724 42.095-5.6127 27.849-3.2488 55.831-5.3629 83.852-6.3354" vector-effect="non-scaling-stroke" />
+        <path d="m-161.41 85.576c59.267-16.973 119.93-29.051 181.18-36.068 31.556-3.6154 63.265-5.8899 95.014-6.8154" vector-effect="non-scaling-stroke" />
+        <path d="m-133.84 101.1c61.217-16.499 123.72-28.219 186.76-35.018 20.532-2.2146 41.121-3.908 61.739-5.0781" vector-effect="non-scaling-stroke" />
+        <path d="m-106.16 117.26c38.16-9.1986 76.691-16.858 115.47-22.953 34.856-5.4787 69.91-9.6936 105.07-12.634" vector-effect="non-scaling-stroke" />
+        <path d="m-74.129 135.18c31.519-8.0279 63.464-14.38 95.656-19.022 30.834-4.4458 61.895-7.3219 93.021-8.6135" vector-effect="non-scaling-stroke" />
+        <path d="m-39.348 152.44c25.493-6.4134 51.332-11.446 77.369-15.069 25.315-3.5225 50.815-5.7121 76.359-6.5568" vector-effect="non-scaling-stroke" />
+        <path d="m-2.3364 168.82c20.933-6.4045 42.438-10.936 64.175-13.524 17.561-2.0905 35.274-2.9131 52.953-2.4592" vector-effect="non-scaling-stroke" />
+        <path d="m48.48 185.24c11.349-4.0832 23.049-7.1892 34.928-9.2725 10.408-1.8252 20.954-2.8656 31.518-3.1097" vector-effect="non-scaling-stroke" />
+      </g>
+      <path d="m-222.86-7.5948v213.07h418.09" stroke="black" stroke-width="1" vector-effect="non-scaling-stroke" />
+    </g>
+  </g>
+</svg>

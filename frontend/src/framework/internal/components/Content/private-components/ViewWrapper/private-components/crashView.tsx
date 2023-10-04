@@ -1,8 +1,8 @@
 import React from "react";
 
-import { ArrowPathIcon, DocumentMagnifyingGlassIcon, FaceFrownIcon, MegaphoneIcon } from "@heroicons/react/20/solid";
 import { Button } from "@lib/components/Button";
 import { Dialog } from "@lib/components/Dialog";
+import { BugReport, Info, MoodBad, Refresh } from "@mui/icons-material";
 
 export type FormattedErrorProps = {
     moduleName: string;
@@ -79,24 +79,20 @@ export const CrashView: React.FC<FormattedErrorProps> = (props) => {
     return (
         <div className="flex flex-col h-full w-full">
             <div className="bg-red-400 flex flex-col justify-center items-center h-[50%] text-white gap-4">
-                <FaceFrownIcon className="h-16 w-16" />
+                <MoodBad fontSize="small" />
                 <div className="font-bold text-center">{props.error.message}</div>
             </div>
             <div className="flex flex-col items-center h-[50%] gap-6 p-8">
                 The above error made your module instance crash. Unfortunately, this means that its state is lost. You
                 can try to reset the instance to its initial state in order to start over.
                 <div className="flex gap-4">
-                    <Button
-                        onClick={handleReload}
-                        variant="contained"
-                        startIcon={<ArrowPathIcon className="w-4 h-4" />}
-                    >
+                    <Button onClick={handleReload} variant="contained" startIcon={<Refresh fontSize="small" />}>
                         Reset to initial state
                     </Button>
-                    <Button onClick={handleShowDetails} startIcon={<DocumentMagnifyingGlassIcon className="w-4 h-4" />}>
+                    <Button onClick={handleShowDetails} startIcon={<Info fontSize="small" />}>
                         Show error details
                     </Button>
-                    <Button onClick={handleReportError} startIcon={<MegaphoneIcon className="w-4 h-4" />}>
+                    <Button onClick={handleReportError} startIcon={<BugReport fontSize="small" />}>
                         Report error
                     </Button>
                 </div>

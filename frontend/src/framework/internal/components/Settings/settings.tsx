@@ -1,11 +1,12 @@
 import React from "react";
 
-import { useStoreValue } from "@framework/StateStore";
-import { DrawerContent, Workbench } from "@framework/Workbench";
-import { useActiveModuleId, useModuleInstances } from "@framework/internal/hooks/workbenchHooks";
-import { Cog6ToothIcon } from "@heroicons/react/20/solid";
-import { resolveClassNames } from "@lib/components/_utils/resolveClassNames";
+import { DrawerContent, GuiState, useGuiValue } from "@framework/GuiMessageBroker";
+import { Workbench } from "@framework/Workbench";
+import { useModuleInstances } from "@framework/internal/hooks/workbenchHooks";
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
+import { Settings as SettingsIcon } from "@mui/icons-material";
 
+import { ColorPaletteSettings } from "./private-components/colorPaletteSettings";
 import { ModulesList } from "./private-components/modulesList";
 import { Setting } from "./private-components/setting";
 import { SyncSettings } from "./private-components/syncSettings";
@@ -17,9 +18,9 @@ type SettingsProps = {
 
 export const Settings: React.FC<SettingsProps> = (props) => {
     const moduleInstances = useModuleInstances(props.workbench);
-    const activeModuleId = useActiveModuleId(props.workbench);
+    const activeModuleInstanceId = useGuiValue(props.workbench.getGuiMessageBroker(), GuiState.ActiveModuleInstanceId);
 
-    const drawerContent = useStoreValue(props.workbench.getGuiStateStore(), "drawerContent");
+    const drawerContent = useGuiValue(props.workbench.getGuiMessageBroker(), GuiState.DrawerContent);
 
     const mainRef = React.useRef<HTMLDivElement>(null);
 
@@ -32,6 +33,7 @@ export const Settings: React.FC<SettingsProps> = (props) => {
             <ModulesList relContainer={mainRef.current} workbench={props.workbench} />
             <TemplatesList workbench={props.workbench} />
             <SyncSettings workbench={props.workbench} />
+            <ColorPaletteSettings workbench={props.workbench} />
             <div
                 className={resolveClassNames(
                     drawerContent === DrawerContent.ModuleSettings ? "visible" : "invisible",
@@ -43,13 +45,13 @@ export const Settings: React.FC<SettingsProps> = (props) => {
                     <Setting
                         key={instance.getId()}
                         moduleInstance={instance}
-                        activeModuleId={activeModuleId}
+                        activeModuleInstanceId={activeModuleInstanceId}
                         workbench={props.workbench}
                     />
                 ))}
                 {moduleInstances.length === 0 && (
                     <div className="flex flex-col items-center justify-center h-full">
-                        <Cog6ToothIcon className="w-20 h-20 text-slate-200" />
+                        <SettingsIcon fontSize="large" className="text-slate-200" />
                     </div>
                 )}
             </div>

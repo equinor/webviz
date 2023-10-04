@@ -1,7 +1,7 @@
 import React from "react";
-import ReactDOM from "react-dom";
+import { Root, createRoot } from "react-dom/client";
 
-import { resolveClassNames } from "@lib/components/_utils/resolveClassNames";
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import { TreeDataNodeMetaData } from "../private-utils/treeDataNodeTypes";
 import { TreeNodeSelection } from "../private-utils/treeNodeSelection";
@@ -37,6 +37,7 @@ export class Suggestions extends React.Component<SuggestionsProps> {
     private _lastNodeSelection?: TreeNodeSelection;
     private _positionRef: React.RefObject<HTMLDivElement>;
     private _popup: HTMLDivElement | null;
+    private _popupRoot: Root | null;
     private _showingAllSuggestions: boolean;
 
     constructor(props: SuggestionsProps) {
@@ -53,6 +54,7 @@ export class Suggestions extends React.Component<SuggestionsProps> {
         this._allOptions = [];
         this._positionRef = React.createRef();
         this._popup = null;
+        this._popupRoot = null;
         this._showingAllSuggestions = false;
 
         this.state = {
@@ -80,6 +82,7 @@ export class Suggestions extends React.Component<SuggestionsProps> {
 
         this._popup = document.createElement("div");
         document.body.appendChild(this._popup);
+        this._popupRoot = createRoot(this._popup);
     }
 
     componentWillUnmount(): void {
@@ -95,7 +98,12 @@ export class Suggestions extends React.Component<SuggestionsProps> {
 
     componentDidUpdate(previousProps: SuggestionsProps): void {
         const { visible, treeNodeSelection, suggestionsRef } = this.props;
-        if (previousProps.visible != visible || previousProps.treeNodeSelection != treeNodeSelection) {
+        if (previousProps.visible !== visible || previousProps.treeNodeSelection !== treeNodeSelection) {
+            if (this.props.treeNodeSelection) {
+                this._allOptions = this.props.treeNodeSelection.getSuggestions();
+                this._currentNodeLevel = this.props.treeNodeSelection.getFocussedLevel();
+            }
+
             this._upperSpacerHeight = 0;
             if (suggestionsRef.current) {
                 (suggestionsRef.current as HTMLDivElement).scrollTop = 0;
@@ -141,7 +149,7 @@ export class Suggestions extends React.Component<SuggestionsProps> {
     }
 
     private handleGlobalKeyDown(e: globalThis.KeyboardEvent): void {
-        const { visible } = this.props;
+        const { visible, treeNodeSelection } = this.props;
         if (visible) {
             if (e.key === "ArrowUp") {
                 this.markSuggestionAsHoveredAndMakeVisible(Math.max(0, this._currentlySelectedSuggestionIndex - 1));
@@ -150,7 +158,7 @@ export class Suggestions extends React.Component<SuggestionsProps> {
                     Math.min(this._allOptions.length - 1, this._currentlySelectedSuggestionIndex + 1)
                 );
             }
-            if (e.key == "Enter" && this.currentlySelectedSuggestion() !== undefined) {
+            if (e.key == "Enter" && this.currentlySelectedSuggestion() !== undefined && this._allOptions.length > 0 &&  !treeNodeSelection?.focussedNodeNameContainsWildcard()) {
                 this.useSuggestion(e, this.currentlySelectedSuggestion().getAttribute("data-use") as string);
             }
         }
@@ -370,7 +378,9 @@ export class Suggestions extends React.Component<SuggestionsProps> {
                   height: 0,
               };
 
-        ReactDOM.render(
+        if (!this._popupRoot) return;
+
+        this._popupRoot.render(
             <div
                 ref={suggestionsRef}
                 className="box-border absolute top-full left-0 w-full border bg-white rounded-b shadow z-50 overflow-y-auto"
@@ -394,8 +404,7 @@ export class Suggestions extends React.Component<SuggestionsProps> {
                         height: lowerSpacerHeight + "px",
                     }}
                 ></div>
-            </div>,
-            this._popup
+            </div>
         );
     }
 

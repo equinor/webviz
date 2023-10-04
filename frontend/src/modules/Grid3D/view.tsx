@@ -1,8 +1,5 @@
-import React from "react";
-
 import { ModuleFCProps } from "@framework/Module";
 import { useFirstEnsembleInEnsembleSet } from "@framework/WorkbenchSession";
-import { toArrayBuffer } from "@modules_shared/vtkUtils";
 import SubsurfaceViewer from "@webviz/subsurface-viewer";
 
 import { useGridParameter, useGridSurface, useStatisticalGridParameter } from "./queryHooks";
@@ -30,9 +27,6 @@ export function view({ moduleContext, workbenchSession }: ModuleFCProps<state>) 
     const bounds = gridSurfaceQuery?.data ? [gridSurfaceQuery.data.xmin, gridSurfaceQuery.data.ymin, -gridSurfaceQuery.data.zmax, gridSurfaceQuery.data.xmax, gridSurfaceQuery.data.ymax, -gridSurfaceQuery.data.zmin] : [0, 0, 0, 100, 100, 100];
 
     if (!gridSurfaceQuery.data) { return (<div>no grid geometry</div>) }
-    const pointsArray = gridSurfaceQuery?.data ? toArrayBuffer(gridSurfaceQuery.data.points as any) : []
-    const polysArray = gridSurfaceQuery?.data ? toArrayBuffer(gridSurfaceQuery.data.polys as any) : []
-
 
     let propertiesArray: number[] = []
     if (!useStatistics && gridParameterQuery?.data) {
@@ -41,8 +35,9 @@ export function view({ moduleContext, workbenchSession }: ModuleFCProps<state>) 
     else if (useStatistics && statisticalGridParameterQuery?.data) {
         propertiesArray = Array.from(statisticalGridParameterQuery.data)
     }
-    const points: Float32Array = new Float32Array(pointsArray as number[])
-    const polys: Uint32Array = new Uint32Array(polysArray as number[])
+
+    const points: Float32Array = gridSurfaceQuery.data.pointsFloat32Arr;
+    const polys: Uint32Array = gridSurfaceQuery.data.polysUint32Arr;
 
     return (
         <div className="relative w-full h-full flex flex-col">

@@ -4,6 +4,7 @@ import { BroadcastChannelKeyCategory, BroadcastChannelMeta } from "@framework/Br
 import { ModuleFCProps } from "@framework/Module";
 import { Tag } from "@lib/components/Tag";
 import { useElementSize } from "@lib/hooks/useElementSize";
+import { ColorScaleGradientType } from "@lib/utils/ColorScale";
 
 import { BarChart } from "./components/barChart";
 import { Histogram } from "./components/histogram";
@@ -33,6 +34,9 @@ function nFormatter(num: number, digits: number): string {
 
 export const view = ({ moduleContext, workbenchServices, initialSettings }: ModuleFCProps<State>) => {
     const [plotType, setPlotType] = moduleContext.useStoreState("plotType");
+    const channelNameX = moduleContext.useStoreValue("channelNameX");
+    const channelNameY = moduleContext.useStoreValue("channelNameY");
+    const channelNameZ = moduleContext.useStoreValue("channelNameZ");
     const numBins = moduleContext.useStoreValue("numBins");
     const orientation = moduleContext.useStoreValue("orientation");
 
@@ -47,6 +51,11 @@ export const view = ({ moduleContext, workbenchServices, initialSettings }: Modu
     const channelX = moduleContext.useInputChannel("channelX", initialSettings);
     const channelY = moduleContext.useInputChannel("channelY", initialSettings);
     const channelColor = moduleContext.useInputChannel("channelColor", initialSettings);
+
+    const colorSet = workbenchSettings.useColorSet();
+    const seqColorScale = workbenchSettings.useContinuousColorScale({
+        gradientType: ColorScaleGradientType.Sequential,
+    });
 
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);
     const wrapperDivSize = useElementSize(wrapperDivRef);
@@ -109,9 +118,7 @@ export const view = ({ moduleContext, workbenchServices, initialSettings }: Modu
     React.useEffect(() => {
         if (channelX?.getDataDef().key === BroadcastChannelKeyCategory.Realization) {
             workbenchServices.subscribe("global.hoverRealization", (data) => {
-                if (data.realization !== undefined) {
-                    setHighlightedKey(data.realization);
-                }
+                setHighlightedKey(data ? data.realization : null);
             });
         }
     }, [channelX, workbenchServices]);
@@ -165,6 +172,7 @@ export const view = ({ moduleContext, workbenchServices, initialSettings }: Modu
                     yAxisTitle={channelX?.getDataDef().key ?? ""}
                     width={wrapperDivSize.width}
                     height={wrapperDivSize.height}
+                    colorSet={colorSet}
                 />
             );
         }
@@ -200,6 +208,7 @@ export const view = ({ moduleContext, workbenchServices, initialSettings }: Modu
                     onHoverData={handleHoverChanged}
                     keyData={keyData}
                     highlightedKey={highlightedKey ?? undefined}
+                    colorSet={colorSet}
                 />
             );
         }
@@ -330,6 +339,7 @@ export const view = ({ moduleContext, workbenchServices, initialSettings }: Modu
                     width={wrapperDivSize.width}
                     onHoverData={handleHoverChanged}
                     height={wrapperDivSize.height}
+                    colorScale={seqColorScale}
                 />
             );
         }

@@ -1,6 +1,6 @@
 import { EnsembleIdent } from "./EnsembleIdent";
-import { EnsembleSensitivities, Sensitivity } from "./EnsembleSensitivities";
 import { EnsembleParameters, Parameter } from "./EnsembleParameters";
+import { EnsembleSensitivities, Sensitivity } from "./EnsembleSensitivities";
 
 export class Ensemble {
     private _ensembleIdent: EnsembleIdent;

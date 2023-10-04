@@ -1,16 +1,16 @@
 import React from "react";
 import ReactDOM from "react-dom";
 
-import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/20/solid";
 import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { getTextWidth } from "@lib/utils/textSize";
+import { ExpandLess, ExpandMore } from "@mui/icons-material";
 
+import { BaseComponent, BaseComponentProps } from "../BaseComponent";
 import { IconButton } from "../IconButton";
 import { Input } from "../Input";
 import { Virtualization } from "../Virtualization";
-import { BaseComponent, BaseComponentProps } from "../_BaseComponent";
-import { withDefaults } from "../_utils/components";
-import { resolveClassNames } from "../_utils/resolveClassNames";
+import { withDefaults } from "../_component-utils/components";
 
 export type DropdownOption = {
     value: string;
@@ -166,14 +166,7 @@ export const Dropdown = withDefaults<DropdownProps>()(defaultProps, (props) => {
                 setOptionIndexWithFocusToCurrentSelection();
             }
         }
-    }, [
-        inputBoundingRect,
-        dropdownVisible,
-        filteredOptions,
-        selection,
-        setOptionIndexWithFocusToCurrentSelection,
-        setStartIndex,
-    ]);
+    }, [inputBoundingRect, dropdownVisible, filteredOptions, selection]);
 
     const handleOptionClick = React.useCallback(
         (value: string) => {
@@ -280,7 +273,7 @@ export const Dropdown = withDefaults<DropdownProps>()(defaultProps, (props) => {
                     onClick={() => handleInputClick()}
                     endAdornment={
                         <IconButton size="small" onClick={() => setDropdownVisible((prev) => !prev)}>
-                            {dropdownVisible ? <ChevronUpIcon /> : <ChevronDownIcon />}
+                            {dropdownVisible ? <ExpandLess /> : <ExpandMore />}
                         </IconButton>
                     }
                     onChange={handleInputChange}

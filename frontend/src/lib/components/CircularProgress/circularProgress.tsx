@@ -1,7 +1,8 @@
 import React from "react";
 
-import { OptionalValues, withDefaults } from "../_utils/components";
-import { resolveClassNames } from "../_utils/resolveClassNames";
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
+
+import { OptionalValues, withDefaults } from "../_component-utils/components";
 
 export type CircularProgressProps = {
     size?: "extra-small" | "small" | "medium-small" | "medium" | "large";

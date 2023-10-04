@@ -1,4 +1,9 @@
-import { Frequency_api, VectorDescription_api, VectorStatisticSensitivityData_api } from "@api";
+import {
+    Frequency_api,
+    VectorDescription_api,
+    VectorHistoricalData_api,
+    VectorStatisticSensitivityData_api,
+} from "@api";
 import { VectorRealizationData_api } from "@api";
 import { apiService } from "@framework/ApiService";
 import { UseQueryResult, useQuery } from "@tanstack/react-query";
@@ -6,16 +11,16 @@ import { UseQueryResult, useQuery } from "@tanstack/react-query";
 const STALE_TIME = 60 * 1000;
 const CACHE_TIME = 60 * 1000;
 
-export function useVectorsQuery(
+export function useVectorListQuery(
     caseUuid: string | undefined,
     ensembleName: string | undefined
 ): UseQueryResult<Array<VectorDescription_api>> {
     return useQuery({
-        queryKey: ["getVectorNamesAndDescriptions", caseUuid, ensembleName],
-        queryFn: () => apiService.timeseries.getVectorNamesAndDescriptions(caseUuid ?? "", ensembleName ?? ""),
+        queryKey: ["getVectorList", caseUuid, ensembleName],
+        queryFn: () => apiService.timeseries.getVectorList(caseUuid ?? "", ensembleName ?? ""),
         staleTime: STALE_TIME,
         cacheTime: CACHE_TIME,
-        enabled: caseUuid && ensembleName ? true : false,
+        enabled: !!(caseUuid && ensembleName),
     });
 }
 
@@ -46,7 +51,7 @@ export function useVectorDataQuery(
             ),
         staleTime: STALE_TIME,
         cacheTime: CACHE_TIME,
-        enabled: caseUuid && ensembleName && vectorName && allOrNonEmptyRealArr ? true : false,
+        enabled: !!(caseUuid && ensembleName && vectorName && allOrNonEmptyRealArr),
     });
 }
 
@@ -69,6 +74,28 @@ export function useStatisticalVectorSensitivityDataQuery(
             ),
         staleTime: STALE_TIME,
         cacheTime: CACHE_TIME,
-        enabled: allowEnable && caseUuid && ensembleName && vectorName && resampleFrequency ? true : false,
+        enabled: !!(allowEnable && caseUuid && ensembleName && vectorName && resampleFrequency),
+    });
+}
+
+export function useHistoricalVectorDataQuery(
+    caseUuid: string | undefined,
+    ensembleName: string | undefined,
+    vectorName: string | undefined,
+    resampleFrequency: Frequency_api | null,
+    allowEnable: boolean
+): UseQueryResult<VectorHistoricalData_api> {
+    return useQuery({
+        queryKey: ["getHistoricalVectorData", caseUuid, ensembleName, vectorName, resampleFrequency],
+        queryFn: () =>
+            apiService.timeseries.getHistoricalVectorData(
+                caseUuid ?? "",
+                ensembleName ?? "",
+                vectorName ?? "",
+                resampleFrequency ?? Frequency_api.MONTHLY
+            ),
+        staleTime: STALE_TIME,
+        cacheTime: CACHE_TIME,
+        enabled: !!(allowEnable && caseUuid && ensembleName && vectorName && resampleFrequency),
     });
 }

@@ -4,6 +4,7 @@ import { ModuleInstance } from "@framework/ModuleInstance";
 import { SyncSettingKey, SyncSettingsMeta } from "@framework/SyncSettings";
 import { ArrowDownTrayIcon, ArrowUpTrayIcon, XMarkIcon } from "@heroicons/react/20/solid";
 import { isDevMode } from "@lib/utils/devMode";
+import { Close } from "@mui/icons-material";
 
 import { DataChannelEventTypes } from "../../DataChannelVisualization";
 
@@ -63,6 +64,10 @@ export const Header: React.FC<HeaderProps> = (props) => {
         e.stopPropagation();
     }
 
+    function handlePointerUp(e: React.PointerEvent<HTMLDivElement>) {
+        e.stopPropagation();
+    }
+
     return (
         <div
             className={`bg-slate-100 p-2 pl-4 pr-4 flex items-center select-none shadow ${
@@ -118,9 +123,10 @@ export const Header: React.FC<HeaderProps> = (props) => {
             <div
                 className="hover:text-slate-500 cursor-pointer"
                 onPointerDown={props.onRemoveClick}
+                onPointerUp={handlePointerUp}
                 title="Remove this module"
             >
-                <XMarkIcon className="w-4 h-4" />
+                <Close className="w-4 h-4" />
             </div>
         </div>
     );

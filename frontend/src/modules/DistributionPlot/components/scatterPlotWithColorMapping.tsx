@@ -1,6 +1,8 @@
 import React from "react";
 import Plot from "react-plotly.js";
 
+import { ColorScale } from "@lib/utils/ColorScale";
+
 import { Layout, PlotData, PlotHoverEvent } from "plotly.js";
 
 export type ScatterPlotWithColorMappingProps = {
@@ -16,6 +18,7 @@ export type ScatterPlotWithColorMappingProps = {
     highlightedKey?: number;
     height?: number | 100;
     width?: number | 100;
+    colorScale: ColorScale;
 };
 
 interface TraceData extends Partial<PlotData> {
@@ -44,10 +47,10 @@ export const ScatterPlotWithColorMapping: React.FC<ScatterPlotWithColorMappingPr
             type: "scatter",
             mode: "markers",
             marker: {
+                colorscale: props.colorScale.getPlotlyColorScale(),
                 color: props.z,
                 opacity: opacities,
                 size: 20,
-                colorscale: "Portland",
                 colorbar: {
                     title: props.zAxisTitle,
                     titleside: "right",

@@ -9,6 +9,8 @@ const defaultState: State = {
     vectorSpec: null,
     resamplingFrequency: Frequency_api.MONTHLY,
     showStatistics: true,
+    showRealizations: false,
+    showHistorical: true,
     realizationsToInclude: null,
 };
 

@@ -1,5 +1,6 @@
 import React from "react";
 
+import { GuiEvent, GuiEventPayloads } from "@framework/GuiMessageBroker";
 import { LayoutElement, Workbench } from "@framework/Workbench";
 import { useModuleInstances } from "@framework/internal/hooks/workbenchHooks";
 import { useElementSize } from "@lib/hooks/useElementSize";
@@ -23,46 +24,8 @@ import { ViewWrapperPlaceholder } from "./viewWrapperPlaceholder";
 
 type LayoutProps = {
     workbench: Workbench;
-    activeModuleId: string | null;
+    activeModuleInstanceId: string | null;
 };
-
-export enum LayoutEventTypes {
-    MODULE_INSTANCE_POINTER_DOWN = "MODULE_INSTANCE_POINTER_DOWN",
-    NEW_MODULE_POINTER_DOWN = "NEW_MODULE_POINTER_DOWN",
-    REMOVE_MODULE_INSTANCE_REQUEST = "REMOVE_MODULE_INSTANCE_REQUEST",
-}
-
-export interface LayoutEvents {
-    [LayoutEventTypes.MODULE_INSTANCE_POINTER_DOWN]: CustomEvent<{
-        id: string;
-        elementPosition: Point;
-        pointerPoint: Point;
-    }>;
-    [LayoutEventTypes.NEW_MODULE_POINTER_DOWN]: CustomEvent<{
-        name: string;
-        elementPosition: Point;
-        pointerPoint: Point;
-    }>;
-    [LayoutEventTypes.REMOVE_MODULE_INSTANCE_REQUEST]: CustomEvent<{
-        id: string;
-    }>;
-}
-
-declare global {
-    interface Document {
-        addEventListener<K extends keyof LayoutEvents>(
-            type: K,
-            listener: (ev: LayoutEvents[K]) => any,
-            options?: boolean | AddEventListenerOptions
-        ): void;
-        removeEventListener<K extends keyof LayoutEvents>(
-            type: K,
-            listener: (ev: LayoutEvents[K]) => any,
-            options?: boolean | EventListenerOptions
-        ): void;
-        dispatchEvent<K extends keyof LayoutEvents>(event: LayoutEvents[K]): void;
-    }
-}
 
 export const Layout: React.FC<LayoutProps> = (props) => {
     const [draggedModuleInstanceId, setDraggedModuleInstanceId] = React.useState<string | null>(null);
@@ -75,6 +38,7 @@ export const Layout: React.FC<LayoutProps> = (props) => {
     const size = useElementSize(ref);
     const layoutBoxRef = React.useRef<LayoutBox | null>(null);
     const moduleInstances = useModuleInstances(props.workbench);
+    const guiMessageBroker = props.workbench.getGuiMessageBroker();
 
     const convertLayoutRectToRealRect = React.useCallback(
         (element: LayoutElement): Rect => {
@@ -126,20 +90,21 @@ export const Layout: React.FC<LayoutProps> = (props) => {
             delayTimer = null;
         };
 
-        const handleModuleInstancePointerDown = (e: LayoutEvents[LayoutEventTypes.MODULE_INSTANCE_POINTER_DOWN]) => {
-            pointerDownPoint = e.detail.pointerPoint;
-            pointerDownElementPosition = e.detail.elementPosition;
-            pointerDownElementId = e.detail.id;
+        const handleModuleHeaderPointerDown = (payload: GuiEventPayloads[GuiEvent.ModuleHeaderPointerDown]) => {
+            console.debug("handleModuleHeaderPointerDown", payload);
+            pointerDownPoint = payload.pointerPosition;
+            pointerDownElementPosition = payload.elementPosition;
+            pointerDownElementId = payload.moduleInstanceId;
             isNewModule = false;
         };
 
-        const handleNewModulePointerDown = (e: LayoutEvents[LayoutEventTypes.NEW_MODULE_POINTER_DOWN]) => {
-            pointerDownPoint = e.detail.pointerPoint;
-            pointerDownElementPosition = e.detail.elementPosition;
+        const handleNewModulePointerDown = (payload: GuiEventPayloads[GuiEvent.NewModulePointerDown]) => {
+            pointerDownPoint = payload.pointerPosition;
+            pointerDownElementPosition = payload.elementPosition;
             pointerDownElementId = v4();
             setTempLayoutBoxId(pointerDownElementId);
             isNewModule = true;
-            moduleName = e.detail.name;
+            moduleName = payload.moduleName;
         };
 
         const handlePointerUp = (e: PointerEvent) => {
@@ -256,17 +221,15 @@ export const Layout: React.FC<LayoutProps> = (props) => {
             }
         };
 
-        const handleRemoveModuleInstanceRequest = (
-            e: LayoutEvents[LayoutEventTypes.REMOVE_MODULE_INSTANCE_REQUEST]
-        ) => {
+        const handleRemoveModuleInstanceRequest = (payload: GuiEventPayloads[GuiEvent.RemoveModuleInstanceRequest]) => {
             if (delayTimer) {
                 clearTimeout(delayTimer);
             }
             if (dragging) {
                 return;
             }
-            props.workbench.removeModuleInstance(e.detail.id);
-            currentLayoutBox.removeLayoutElement(e.detail.id);
+            props.workbench.removeModuleInstance(payload.moduleInstanceId);
+            currentLayoutBox.removeLayoutElement(payload.moduleInstanceId);
             currentLayout = currentLayoutBox.toLayout();
             setLayout(currentLayout);
             originalLayout = currentLayout;
@@ -274,18 +237,28 @@ export const Layout: React.FC<LayoutProps> = (props) => {
             props.workbench.setLayout(currentLayout);
         };
 
-        document.addEventListener(LayoutEventTypes.MODULE_INSTANCE_POINTER_DOWN, handleModuleInstancePointerDown);
-        document.addEventListener(LayoutEventTypes.NEW_MODULE_POINTER_DOWN, handleNewModulePointerDown);
-        document.addEventListener(LayoutEventTypes.REMOVE_MODULE_INSTANCE_REQUEST, handleRemoveModuleInstanceRequest);
+        const removeModuleHeaderPointerDownSubscriber = guiMessageBroker.subscribeToEvent(
+            GuiEvent.ModuleHeaderPointerDown,
+            handleModuleHeaderPointerDown
+        );
+        const removeNewModulePointerDownSubscriber = guiMessageBroker.subscribeToEvent(
+            GuiEvent.NewModulePointerDown,
+            handleNewModulePointerDown
+        );
+        const removeRemoveModuleInstanceRequestSubscriber = guiMessageBroker.subscribeToEvent(
+            GuiEvent.RemoveModuleInstanceRequest,
+            handleRemoveModuleInstanceRequest
+        );
+
         document.addEventListener("pointerup", handlePointerUp);
         document.addEventListener("pointermove", handlePointerMove);
         document.addEventListener("keydown", handleButtonClick);
 
         return () => {
-            document.removeEventListener(
-                LayoutEventTypes.MODULE_INSTANCE_POINTER_DOWN,
-                handleModuleInstancePointerDown
-            );
+            removeModuleHeaderPointerDownSubscriber();
+            removeNewModulePointerDownSubscriber();
+            removeRemoveModuleInstanceRequestSubscriber();
+
             document.removeEventListener("pointerup", handlePointerUp);
             document.removeEventListener("pointermove", handlePointerMove);
             document.removeEventListener("keydown", handleButtonClick);
@@ -339,7 +312,7 @@ export const Layout: React.FC<LayoutProps> = (props) => {
                             key={instance.getId()}
                             moduleInstance={instance}
                             workbench={props.workbench}
-                            isActive={props.activeModuleId === instance.getId()}
+                            isActive={props.activeModuleInstanceId === instance.getId()}
                             width={rect.width}
                             height={rect.height}
                             x={rect.x}

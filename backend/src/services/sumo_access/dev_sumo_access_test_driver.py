@@ -11,12 +11,12 @@ from src.services.summary_vector_statistics import (
     compute_vector_statistics,
 )
 from .summary_access import SummaryAccess, RealizationVector, Frequency
-from .surface_access import SurfaceAccess
+
 from .sumo_explore import SumoExplore
 
 
 def test_summary_access(summary_access: SummaryAccess) -> None:
-    vector_names = summary_access.get_vector_names()
+    vector_names = summary_access.get_available_vectors()
     print("\n\n")
     print(vector_names)
 
@@ -72,30 +72,6 @@ def test_summary_access(summary_access: SummaryAccess) -> None:
     print(vec_stats)
 
 
-def test_surface_access(surf_access: SurfaceAccess) -> None:
-    dynamic_surf_dir = surf_access.get_dynamic_surf_dir()
-    print(f"{dynamic_surf_dir=}")
-
-    static_surf_dir = surf_access.get_static_surf_dir()
-    print(f"{static_surf_dir=}")
-
-    name_idx = 0
-    valid_attr_indices = static_surf_dir.valid_attributes_for_name[name_idx]
-    surf_name = static_surf_dir.names[name_idx]
-    surf_attr = static_surf_dir.attributes[valid_attr_indices[0]]
-    surf = surf_access.get_static_surf(real_num=0, name=surf_name, attribute=surf_attr)
-    print(f"{type(surf)=}")
-
-    # surf = surf_access.get_static_surf(real_num=0, name=static_surf_dir.names[0], attribute=static_surf_dir.attributes[2])
-    # print(f"{type(surf)=}")
-
-    # dyn_surf = surf_access.get_dynamic_surf(real_num=0, name=dynamic_surf_dir.names[0], attribute=dynamic_surf_dir.attributes[0], time_or_interval_str=dynamic_surf_dir.date_strings[0])
-    # print(f"{type(dyn_surf)=}")
-
-    # dyn_surf = surf_access.get_statistical_dynamic_surf(statistic_function=StatisticFunction.MEAN, name=dynamic_surf_dir.names[0], attribute=dynamic_surf_dir.attributes[0], time_or_interval_str=dynamic_surf_dir.date_strings[0])
-    # print(f"{type(dyn_surf)=}")
-
-
 def main() -> None:
     print("## Running dev_sumo_access_test_driver")
     print("## =================================================")
@@ -130,13 +106,10 @@ def main() -> None:
     print("\n\n")
     print(iterations)
 
-    iteration_name = iterations[0].name
+    # iteration_name = iterations[0].name
 
     # summary_access = SummaryAccess(access_token=access_token, case_uuid=sumo_case_id, iteration_name=iteration_name)
     # test_summary_access(summary_access)
-
-    surface_access = SurfaceAccess(access_token=access_token, case_uuid=sumo_case_id, iteration_name=iteration_name)
-    test_surface_access(surface_access)
 
 
 # Running:

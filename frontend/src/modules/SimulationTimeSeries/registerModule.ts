@@ -11,4 +11,5 @@ ModuleRegistry.registerModule<State>({
     syncableSettingKeys: [SyncSettingKey.ENSEMBLE, SyncSettingKey.TIME_SERIES],
     broadcastChannelsDef,
     preview,
+    description: "Time series of simulation results",
 });

@@ -1,4 +1,3 @@
-import datetime
 from enum import Enum
 from typing import List, Optional
 
@@ -20,8 +19,14 @@ class Frequency(Enum):
             return None
 
 
+class VectorInfo(BaseModel):
+    name: str
+    has_historical: bool
+
+
 class VectorMetadata(BaseModel):
     unit: str
+    is_total: bool
     is_rate: bool
     is_historical: bool
     keyword: str
@@ -31,12 +36,12 @@ class VectorMetadata(BaseModel):
 
 class RealizationVector(BaseModel):
     realization: int
-    timestamps: List[datetime.datetime]
+    timestamps_utc_ms: List[int]
     values: List[float]
     metadata: VectorMetadata
 
 
 class HistoricalVector(BaseModel):
-    timestamps: List[datetime.datetime]
+    timestamps_utc_ms: List[int]
     values: List[float]
     metadata: VectorMetadata

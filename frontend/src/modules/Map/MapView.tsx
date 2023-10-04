@@ -1,27 +1,31 @@
 import React from "react";
 
 import { ModuleFCProps } from "@framework/Module";
+import { useSurfaceDataQueryByAddress } from "@modules_shared/Surface";
 import SubsurfaceViewer from "@webviz/subsurface-viewer";
 
-import { useSurfaceDataQueryByAddress } from "./MapQueryHooks";
 import { MapState } from "./MapState";
-import { makeSurfAddrString } from "./SurfAddr";
+import { makeSurfaceAddressString } from "@modules_shared/Surface/surfaceAddress";
 
 //-----------------------------------------------------------------------------------------------------------
 export function MapView(props: ModuleFCProps<MapState>) {
-    const surfAddr = props.moduleContext.useStoreValue("surfaceAddress");
+    const surfaceAddress = props.moduleContext.useStoreValue("surfaceAddress");
 
     const renderCount = React.useRef(0);
     React.useEffect(function incrementRenderCount() {
         renderCount.current = renderCount.current + 1;
     });
 
-    console.debug(`render MapView, surfAddr=${surfAddr ? makeSurfAddrString(surfAddr) : "null"}`);
+    console.debug(`render MapView start [${surfaceAddress ? makeSurfaceAddressString(surfaceAddress) : "null"}]`);
 
-    const surfDataQuery = useSurfaceDataQueryByAddress(surfAddr);
+    const surfDataQuery = useSurfaceDataQueryByAddress(surfaceAddress);
+    console.debug(`surfDataQuery.status=${surfDataQuery.status}`);
+
     if (!surfDataQuery.data) {
         return <div>No data</div>;
     }
+
+    console.debug(`render MapView done  [${surfaceAddress ? makeSurfaceAddressString(surfaceAddress) : "null"}]`);
 
     const surfData = surfDataQuery.data;
     return (
@@ -32,7 +36,8 @@ export function MapView(props: ModuleFCProps<MapState>) {
                     {
                         "@@type": "MapLayer",
                         id: "mesh-layer",
-                        meshData: JSON.parse(surfData.mesh_data),
+                        // Drop conversion as soon as SubsurfaceViewer accepts typed arrays
+                        meshData: Array.from(surfData.valuesFloat32Arr), 
                         frame: {
                             origin: [surfData.x_ori, surfData.y_ori],
                             count: [surfData.x_count, surfData.y_count],
@@ -49,7 +54,9 @@ export function MapView(props: ModuleFCProps<MapState>) {
                     },
                 ]}
             />
-            <div className="absolute bottom-5 right-5 italic text-pink-400">{props.moduleContext.getInstanceIdString()}</div>
+            <div className="absolute bottom-5 right-5 italic text-pink-400">
+                {props.moduleContext.getInstanceIdString()}
+            </div>
         </div>
     );
 }

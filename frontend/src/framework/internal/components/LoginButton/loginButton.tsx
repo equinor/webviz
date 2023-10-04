@@ -1,12 +1,26 @@
 import React from "react";
 
 import { AuthState, useAuthProvider } from "@framework/internal/providers/AuthProvider";
-import { ArrowLeftOnRectangleIcon, ArrowRightOnRectangleIcon, UserIcon } from "@heroicons/react/20/solid";
-import { Button } from "@lib/components/Button";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { Menu } from "@lib/components/Menu";
 import { MenuItem } from "@lib/components/MenuItem";
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { getTextWidth } from "@lib/utils/textSize";
+import { Dropdown, MenuButton } from "@mui/base";
+import { AccountCircle, Login, Logout } from "@mui/icons-material";
+
+function makeInitials(name: string): string | null {
+    const regExp = new RegExp(/([^()]+)(\([\w ]+\))/);
+    const match = regExp.exec(name);
+
+    if (match) {
+        const names = match[1].trim().split(" ");
+        if (names.length > 1) {
+            return names[0].charAt(0) + names[names.length - 1].charAt(0);
+        }
+    }
+    return null;
+}
 
 export type LoginButtonProps = {
     className?: string;
@@ -15,8 +29,6 @@ export type LoginButtonProps = {
 };
 
 export const LoginButton: React.FC<LoginButtonProps> = (props) => {
-    const [menuOpen, setMenuOpen] = React.useState<boolean>(false);
-    const [menuAnchor, setMenuAnchor] = React.useState<HTMLElement | null>(null);
     const textRef = React.useRef<HTMLSpanElement>(null);
 
     const { authState, userInfo } = useAuthProvider();
@@ -28,31 +40,31 @@ export const LoginButton: React.FC<LoginButtonProps> = (props) => {
         */
     }
 
-    function handleMenuOpen(e: React.MouseEvent<HTMLElement>) {
-        setMenuAnchor(e.currentTarget);
-        setMenuOpen(true);
-    }
-
-    function handleButtonClick(e: React.MouseEvent<HTMLElement>) {
-        if (authState === "LoggedIn") {
-            handleMenuOpen(e);
-        } else {
-            window.location.href = `/api/login?redirect_url_after_login=${btoa("/")}`;
-        }
-    }
-
-    function handleMenuClose(open: boolean) {
-        if (!open) {
-            setMenuOpen(false);
-            setMenuAnchor(null);
-        }
-    }
-
     function makeIcon() {
         if (authState === AuthState.LoggedIn) {
-            return <UserIcon className="w-5 h-5 mr-1" />;
+            if (userInfo?.avatar_b64str) {
+                return (
+                    <img
+                        src={`data:image/png;base64,${userInfo.avatar_b64str}`}
+                        alt="Avatar"
+                        className="w-5 h-5 rounded-full mr-1"
+                    />
+                );
+            }
+            if (userInfo?.display_name) {
+                const initials = makeInitials(userInfo.display_name);
+                if (initials) {
+                    return (
+                        <div className="w-5 h-5 rounded-full bg-slate-300 text-[0.6em] flex items-center justify-center mr-1">
+                            {initials}
+                        </div>
+                    );
+                }
+            }
+            return <AccountCircle className="w-5 h-5 mr-1" />;
+
         } else if (authState === AuthState.NotLoggedIn) {
-            return <ArrowLeftOnRectangleIcon className="w-5 h-5 mr-1" />;
+            return <Login fontSize="small" className=" mr-1" />;
         } else {
             return <CircularProgress size="medium-small" className="mr-1" />;
         }
@@ -60,7 +72,7 @@ export const LoginButton: React.FC<LoginButtonProps> = (props) => {
 
     function makeText() {
         if (authState === AuthState.LoggedIn) {
-            return userInfo?.username || "Unknown user";
+            return userInfo?.display_name || userInfo?.username || "Unknown user";
         } else if (authState === AuthState.NotLoggedIn) {
             return "Sign in";
         } else {
@@ -83,25 +95,29 @@ export const LoginButton: React.FC<LoginButtonProps> = (props) => {
     }
 
     return (
-        <>
-            <Button
-                onClick={handleButtonClick}
-                className={props.className}
-                title={authState === AuthState.LoggedIn ? `Signed in as ${userInfo?.username}` : "Sign in"}
+        <Dropdown>
+            <MenuButton
+                className={resolveClassNames(
+                    props.className ?? "",
+                    "w-full inline-flex items-center min-w-0 px-4 py-2 font-medium rounded-md hover:bg-indigo-100"
+                )}
             >
-                <span className="flex items-center gap-2 min-w-0">
+                <span
+                    className="flex items-center gap-2"
+                    title={makeText()}
+                >
                     {makeIcon()}
                     <span className="overflow-hidden text-ellipsis min-w-0 whitespace-nowrap" ref={textRef}>
                         {props.showText && text}
                     </span>
                 </span>
-            </Button>
-            <Menu open={menuOpen} onOpenChange={handleMenuClose} anchorEl={menuAnchor} anchorOrigin="bottom-start">
+            </MenuButton>
+            <Menu anchorOrigin="bottom-start">
                 <MenuItem onClick={handleLogout}>
-                    <ArrowRightOnRectangleIcon className="w-4 h-4 mr-2" />
+                    <Logout fontSize="small" className="mr-2" />
                     Sign out
                 </MenuItem>
             </Menu>
-        </>
+        </Dropdown>
     );
 };

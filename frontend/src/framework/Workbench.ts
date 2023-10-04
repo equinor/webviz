@@ -2,29 +2,22 @@ import { QueryClient } from "@tanstack/react-query";
 
 import { Broadcaster } from "./Broadcaster";
 import { EnsembleIdent } from "./EnsembleIdent";
+import { GuiMessageBroker, GuiState } from "./GuiMessageBroker";
 import { InitialSettings } from "./InitialSettings";
 import { ImportState } from "./Module";
 import { ModuleInstance } from "./ModuleInstance";
 import { ModuleRegistry } from "./ModuleRegistry";
-import { StateStore } from "./StateStore";
 import { Template } from "./TemplateRegistry";
 import { WorkbenchServices } from "./WorkbenchServices";
 import { WorkbenchSession } from "./WorkbenchSession";
 import { loadEnsembleSetMetadataFromBackend } from "./internal/EnsembleSetLoader";
 import { PrivateWorkbenchServices } from "./internal/PrivateWorkbenchServices";
+import { PrivateWorkbenchSettings } from "./internal/PrivateWorkbenchSettings";
 import { WorkbenchSessionPrivate } from "./internal/WorkbenchSessionPrivate";
 
 export enum WorkbenchEvents {
-    ActiveModuleChanged = "ActiveModuleChanged",
     ModuleInstancesChanged = "ModuleInstancesChanged",
     FullModuleRerenderRequested = "FullModuleRerenderRequested",
-}
-
-export enum DrawerContent {
-    ModuleSettings = "ModuleSettings",
-    ModulesList = "ModulesList",
-    TemplatesList = "TemplatesList",
-    SyncSettings = "SyncSettings",
 }
 
 export type LayoutElement = {
@@ -49,29 +42,25 @@ export type WorkbenchGuiState = {
 
 export class Workbench {
     private _moduleInstances: ModuleInstance<any>[];
-    private _activeModuleId: string;
-    private _guiStateStore: StateStore<WorkbenchGuiState>;
     private _workbenchSession: WorkbenchSessionPrivate;
     private _workbenchServices: PrivateWorkbenchServices;
+    private _workbenchSettings: PrivateWorkbenchSettings;
     private _broadcaster: Broadcaster;
+    private _guiMessageBroker: GuiMessageBroker;
     private _subscribersMap: { [key: string]: Set<() => void> };
     private _layout: LayoutElement[];
+    private _perModuleRunningInstanceNumber: Record<string, number>;
 
     constructor() {
         this._moduleInstances = [];
-        this._activeModuleId = "";
-        this._guiStateStore = new StateStore<WorkbenchGuiState>({
-            drawerContent: DrawerContent.ModuleSettings,
-            settingsPanelWidthInPercent: parseFloat(localStorage.getItem("settingsPanelWidthInPercent") || "20"),
-            showDataChannelConnections: false,
-            editDataChannelConnectionsForModuleInstanceId: null,
-            highlightedDataChannelConnection: null,
-        });
         this._workbenchSession = new WorkbenchSessionPrivate();
         this._workbenchServices = new PrivateWorkbenchServices(this);
+        this._workbenchSettings = new PrivateWorkbenchSettings();
         this._broadcaster = new Broadcaster();
+        this._guiMessageBroker = new GuiMessageBroker();
         this._subscribersMap = {};
         this._layout = [];
+        this._perModuleRunningInstanceNumber = {};
     }
 
     loadLayoutFromLocalStorage(): boolean {
@@ -81,10 +70,6 @@ export class Workbench {
         const layout = JSON.parse(layoutString) as LayoutElement[];
         this.makeLayout(layout);
         return true;
-    }
-
-    getGuiStateStore(): StateStore<WorkbenchGuiState> {
-        return this._guiStateStore;
     }
 
     getLayout(): LayoutElement[] {
@@ -99,25 +84,16 @@ export class Workbench {
         return this._workbenchServices;
     }
 
+    getWorkbenchSettings(): PrivateWorkbenchSettings {
+        return this._workbenchSettings;
+    }
+
     getBroadcaster(): Broadcaster {
         return this._broadcaster;
     }
 
-    getActiveModuleId(): string {
-        return this._activeModuleId;
-    }
-
-    getActiveModuleName(): string {
-        return (
-            this._moduleInstances
-                .find((moduleInstance) => moduleInstance.getId() === this._activeModuleId)
-                ?.getTitle() || ""
-        );
-    }
-
-    setActiveModuleId(id: string) {
-        this._activeModuleId = id;
-        this.notifySubscribers(WorkbenchEvents.ActiveModuleChanged);
+    getGuiMessageBroker(): GuiMessageBroker {
+        return this._guiMessageBroker;
     }
 
     private notifySubscribers(event: WorkbenchEvents): void {
@@ -146,6 +122,15 @@ export class Workbench {
         return this._moduleInstances.find((moduleInstance) => moduleInstance.getId() === id);
     }
 
+    private getNextModuleInstanceNumber(moduleName: string): number {
+        if (moduleName in this._perModuleRunningInstanceNumber) {
+            this._perModuleRunningInstanceNumber[moduleName] += 1;
+        } else {
+            this._perModuleRunningInstanceNumber[moduleName] = 1;
+        }
+        return this._perModuleRunningInstanceNumber[moduleName];
+    }
+
     makeLayout(layout: LayoutElement[]): void {
         this._moduleInstances = [];
         this.setLayout(layout);
@@ -156,19 +141,21 @@ export class Workbench {
             }
 
             module.setWorkbench(this);
-            const moduleInstance = module.makeInstance();
+            const moduleInstance = module.makeInstance(this.getNextModuleInstanceNumber(module.getName()));
             this._moduleInstances.push(moduleInstance);
             this._layout[index] = { ...this._layout[index], moduleInstanceId: moduleInstance.getId() };
             this.notifySubscribers(WorkbenchEvents.ModuleInstancesChanged);
         });
     }
 
-    private clearLayout(): void {
+    clearLayout(): void {
         for (const moduleInstance of this._moduleInstances) {
             this._broadcaster.unregisterAllChannelsForModuleInstance(moduleInstance.getId());
         }
         this._moduleInstances = [];
-        this.setLayout([]);
+        this._perModuleRunningInstanceNumber = {};
+        this._layout = [];
+        this.notifySubscribers(WorkbenchEvents.FullModuleRerenderRequested);
     }
 
     makeAndAddModuleInstance(moduleName: string, layout: LayoutElement): ModuleInstance<any> {
@@ -179,13 +166,12 @@ export class Workbench {
 
         module.setWorkbench(this);
 
-        const moduleInstance = module.makeInstance();
+        const moduleInstance = module.makeInstance(this.getNextModuleInstanceNumber(module.getName()));
         this._moduleInstances.push(moduleInstance);
 
         this._layout.push({ ...layout, moduleInstanceId: moduleInstance.getId() });
         this.notifySubscribers(WorkbenchEvents.ModuleInstancesChanged);
-        this._activeModuleId = moduleInstance.getId();
-        this.notifySubscribers(WorkbenchEvents.ActiveModuleChanged);
+        this.getGuiMessageBroker().setState(GuiState.ActiveModuleInstanceId, moduleInstance.getId());
         return moduleInstance;
     }
 
@@ -195,9 +181,9 @@ export class Workbench {
 
         const newLayout = this._layout.filter((el) => el.moduleInstanceId !== moduleInstanceId);
         this.setLayout(newLayout);
-        if (this._activeModuleId === moduleInstanceId) {
-            this._activeModuleId = "";
-            this.notifySubscribers(WorkbenchEvents.ActiveModuleChanged);
+        const activeModuleInstanceId = this.getGuiMessageBroker().getState(GuiState.ActiveModuleInstanceId);
+        if (activeModuleInstanceId === moduleInstanceId) {
+            this.getGuiMessageBroker().setState(GuiState.ActiveModuleInstanceId, "");
         }
         this.notifySubscribers(WorkbenchEvents.ModuleInstancesChanged);
     }
@@ -213,13 +199,14 @@ export class Workbench {
     }
 
     maybeMakeFirstModuleInstanceActive(): void {
-        if (!this._moduleInstances.some((el) => el.getId() === this._activeModuleId)) {
-            this._activeModuleId =
+        const activeModuleInstanceId = this.getGuiMessageBroker().getState(GuiState.ActiveModuleInstanceId);
+        if (!this._moduleInstances.some((el) => el.getId() === activeModuleInstanceId)) {
+            const newActiveModuleInstanceId =
                 this._moduleInstances
                     .filter((el) => el.getImportState() === ImportState.Imported)
                     .at(0)
                     ?.getId() || "";
-            this.notifySubscribers(WorkbenchEvents.ActiveModuleChanged);
+            this.getGuiMessageBroker().setState(GuiState.ActiveModuleInstanceId, newActiveModuleInstanceId);
         }
     }
 
@@ -227,6 +214,8 @@ export class Workbench {
         queryClient: QueryClient,
         specifiedEnsembleIdents: EnsembleIdent[]
     ): Promise<void> {
+        this.storeEnsembleSetInLocalStorage(specifiedEnsembleIdents);
+
         const ensembleIdentsToLoad: EnsembleIdent[] = [];
         for (const ensSpec of specifiedEnsembleIdents) {
             ensembleIdentsToLoad.push(new EnsembleIdent(ensSpec.getCaseUuid(), ensSpec.getEnsembleName()));
@@ -238,6 +227,21 @@ export class Workbench {
 
         console.debug("loadAndSetupEnsembleSetInSession - publishing");
         return this._workbenchSession.setEnsembleSet(newEnsembleSet);
+    }
+
+    private storeEnsembleSetInLocalStorage(specifiedEnsembleIdents: EnsembleIdent[]): void {
+        const ensembleIdentsToStore = specifiedEnsembleIdents.map((el) => el.toString());
+        localStorage.setItem("ensembleIdents", JSON.stringify(ensembleIdentsToStore));
+    }
+
+    maybeLoadEnsembleSetFromLocalStorage(): EnsembleIdent[] | null {
+        const ensembleIdentsString = localStorage.getItem("ensembleIdents");
+        if (!ensembleIdentsString) return null;
+
+        const ensembleIdents = JSON.parse(ensembleIdentsString) as string[];
+        const ensembleIdentsParsed = ensembleIdents.map((el) => EnsembleIdent.fromString(el));
+
+        return ensembleIdentsParsed;
     }
 
     applyTemplate(template: Template): void {
@@ -284,8 +288,7 @@ export class Workbench {
             moduleInstance.setInitialSettings(new InitialSettings(initialSettings));
 
             if (i === 0) {
-                this._activeModuleId = moduleInstance.getId();
-                this.notifySubscribers(WorkbenchEvents.ActiveModuleChanged);
+                this.getGuiMessageBroker().setState(GuiState.ActiveModuleInstanceId, moduleInstance.getId());
             }
         }
 

@@ -3,22 +3,24 @@
 from functools import cache
 from typing import List, Tuple
 import logging
-import os, psutil
+import os
+from concurrent.futures import ThreadPoolExecutor
 
+import psutil
 import numpy as np
 import orjson
 import xtgeo
 from vtkmodules.util.numpy_support import vtk_to_numpy
-from fastapi import APIRouter, Depends, Request, Response
+from fastapi import APIRouter, Depends, Request
 from fastapi.responses import ORJSONResponse
+
 from src.backend.auth.auth_helper import AuthenticatedUser, AuthHelper
 from src.backend.primary.routers.grid.schemas import (
-    B64EncodedNumpyArray,
     GridSurface,
     GridIntersection,
 )
 from src.services.sumo_access.grid_access import GridAccess
-from src.services.utils.b64 import b64_encode_numpy
+from src.services.utils.b64 import b64_encode_float_array_as_float32, b64_encode_uint_array_as_smallest_size
 from src.services.utils.vtk_utils import (
     VtkGridSurface,
     get_scalar_values,
@@ -42,7 +44,6 @@ async def grid_surface(
     request: Request,
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
 ):
-    """ """
     case_uuid = request.query_params.get("case_uuid")
     ensemble_name = request.query_params.get("ensemble_name")
     grid_name = request.query_params.get("grid_name")
@@ -61,18 +62,18 @@ async def grid_surface(
     grid_geometrics = xtgeo_grid.get_geometrics(allcells=True, return_dict=True)
 
     # Get grid surface (visible cells)
-    grid_surface = get_grid_surface(grid_geometry=xtgeo_grid)
+    grid_surface_instance = get_grid_surface(grid_geometry=xtgeo_grid)
 
     # Extract points and polygons from surface
-    points_np = vtk_to_numpy(grid_surface.polydata.GetPoints().GetData()).ravel().astype(np.float32)
-    polys_np = vtk_to_numpy(grid_surface.polydata.GetPolys().GetData()).astype(np.int64)
+    points_np = vtk_to_numpy(grid_surface_instance.polydata.GetPoints().GetData()).ravel().astype(np.float32)
+    polys_np = vtk_to_numpy(grid_surface_instance.polydata.GetPolys().GetData()).astype(np.int64)
 
     # Reduce precision of points to 2 decimals
     points_np = np.around(points_np, decimals=2)
 
     grid_surface_payload = GridSurface(
-        points=b64_encode_numpy(points_np),
-        polys=b64_encode_numpy(polys_np),
+        points_b64arr=b64_encode_float_array_as_float32(points_np),
+        polys_b64arr=b64_encode_uint_array_as_smallest_size(polys_np),
         **grid_geometrics,
     )
     return ORJSONResponse(grid_surface_payload.dict())
@@ -86,7 +87,6 @@ async def grid_parameter(
     request: Request,
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
 ):
-    """ """
     case_uuid = request.query_params.get("case_uuid")
     ensemble_name = request.query_params.get("ensemble_name")
     grid_name = request.query_params.get("grid_name")
@@ -129,11 +129,10 @@ async def grid_parameter(
     "/grid_parameter_intersection", response_model=List[float]
 )  # stating response_model here instead of return type apparently disables pydantic validation of the response (https://stackoverflow.com/a/65715205)
 # type: ignore
-async def grid_parameter(
+async def grid_parameter_intersection(  # pylint: disable=too-many-locals
     request: Request,
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
 ):
-    """ """
     case_uuid = request.query_params.get("case_uuid")
     ensemble_name = request.query_params.get("ensemble_name")
     grid_name = request.query_params.get("grid_name")
@@ -230,7 +229,7 @@ async def grid_parameter(
 
     # Create the intersection data object
     intersection_data = GridIntersection(
-        image="data:image/png;base64,{}".format(image_data),
+        image=f"data:image/png;base64,{image_data}",
         polyline_x=polyline_x.tolist(),
         polyline_y=polyline_y.tolist(),
         x_min=float(x_min),
@@ -245,11 +244,10 @@ async def grid_parameter(
     "/statistical_grid_parameter_intersection", response_model=List[float]
 )  # stating response_model here instead of return type apparently disables pydantic validation of the response (https://stackoverflow.com/a/65715205)
 # type: ignore
-async def grid_parameter(
+async def statistical_grid_parameter_intersection(  # pylint: disable=too-many-locals
     request: Request,
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
 ):
-    """ """
     timer = PerfTimer()
     print("#" * 80, flush=True)
     print("ENTERING STATISTICAL GRID PARAMETER INTERSECTION", flush=True)
@@ -264,7 +262,7 @@ async def grid_parameter(
     grid_name = request.query_params.get("grid_name")
     parameter_name = request.query_params.get("parameter_name")
     # convert json string of realizations into list
-    realizations = orjson.loads(request.query_params.get("realizations"))
+    realizations = orjson.loads(request.query_params.get("realizations"))  # pylint: disable=maybe-no-member
 
     grid_access = GridAccess(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
 
@@ -293,8 +291,6 @@ async def grid_parameter(
     print("GETTING GRID PARAMETERS", flush=True)
 
     ### Using ThreadPoolExecutor to parallelize the download of the grid parameters
-    from concurrent.futures import ThreadPoolExecutor
-
     def worker(real):
         return get_grid_parameter(
             authenticated_user=authenticated_user,
@@ -342,7 +338,7 @@ async def grid_parameter(
     ]
 
     # Calculate the mean scalar value for each cell
-    values = np.nanmean([scalar_values for scalar_values in all_scalar_values], axis=0)
+    values = np.nanmean(all_scalar_values, axis=0)
 
     # Handle xtgeo undefined values and truncate
     values[values < np.nanmin(values)] = np.nanmin(values)
@@ -382,7 +378,7 @@ async def grid_parameter(
 
     # Create the intersection data object
     intersection_data = GridIntersection(
-        image="data:image/png;base64,{}".format(image_data),
+        image=f"data:image/png;base64,{image_data}",
         polyline_x=polyline_x.tolist(),
         polyline_y=polyline_y.tolist(),
         x_min=float(x_min),
@@ -410,13 +406,12 @@ async def statistical_grid_parameter(
     request: Request,
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
 ):
-    """ """
     case_uuid = request.query_params.get("case_uuid")
     ensemble_name = request.query_params.get("ensemble_name")
     grid_name = request.query_params.get("grid_name")
     parameter_name = request.query_params.get("parameter_name")
     # convert json string of realizations into list
-    realizations = orjson.loads(request.query_params.get("realizations"))
+    realizations = orjson.loads(request.query_params.get("realizations"))  # pylint: disable=maybe-no-member
 
     grid_access = GridAccess(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
 
@@ -456,7 +451,7 @@ async def statistical_grid_parameter(
     ]
 
     # Calculate the mean scalar values for each cell
-    mean_scalar_values = np.nanmean([scalar_values for scalar_values in all_scalar_values], axis=0)
+    mean_scalar_values = np.nanmean(all_scalar_values, axis=0)
 
     # Handle xtgeo undefined values and truncate
     mean_scalar_values[mean_scalar_values == -999.0] = np.nan
@@ -484,9 +479,7 @@ def get_grid_geometry(
 
 @cache
 def get_grid_surface(grid_geometry: xtgeo.Grid) -> VtkGridSurface:
-    grid_surface = get_surface(grid_geometry)
-
-    return grid_surface
+    return get_surface(grid_geometry)
 
 
 @cache
@@ -501,9 +494,7 @@ def get_grid_parameter(
     token = authenticated_user.get_sumo_access_token()
     grid_access = GridAccess(token, case_uuid, ensemble_name)
 
-    grid_parameter = grid_access.get_grid_parameter(grid_name, parameter_name, int(realization))
-
-    return grid_parameter
+    return grid_access.get_grid_parameter(grid_name, parameter_name, int(realization))
 
 
 @cache

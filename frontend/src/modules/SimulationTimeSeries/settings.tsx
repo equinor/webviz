@@ -5,7 +5,7 @@ import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { ModuleFCProps } from "@framework/Module";
 import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
-import { MultiEnsembleSelect } from "@framework/components/MultiEnsembleSelect";
+import { SingleEnsembleSelect } from "@framework/components/SingleEnsembleSelect";
 import { fixupEnsembleIdent, maybeAssignFirstSyncedEnsemble } from "@framework/utils/ensembleUiHelpers";
 import { ApiStateWrapper } from "@lib/components/ApiStateWrapper";
 import { Checkbox } from "@lib/components/Checkbox";
@@ -17,7 +17,7 @@ import { Select, SelectOption } from "@lib/components/Select";
 
 import { sortBy, sortedUniq } from "lodash";
 
-import { useVectorsQuery } from "./queryHooks";
+import { useVectorListQuery } from "./queryHooks";
 import { State } from "./state";
 
 //-----------------------------------------------------------------------------------------------------------
@@ -30,6 +30,8 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
     const [selectedVectorName, setSelectedVectorName] = React.useState<string>("");
     const [resampleFrequency, setResamplingFrequency] = moduleContext.useStoreState("resamplingFrequency");
     const [showStatistics, setShowStatistics] = moduleContext.useStoreState("showStatistics");
+    const [showRealizations, setShowRealizations] = moduleContext.useStoreState("showRealizations");
+    const [showHistorical, setShowHistorical] = moduleContext.useStoreState("showHistorical");
 
     const syncedSettingKeys = moduleContext.useSyncedSettingKeys();
     const syncHelper = new SyncSettingsHelper(syncedSettingKeys, workbenchServices);
@@ -42,7 +44,7 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
     const candidateEnsembleIdent = maybeAssignFirstSyncedEnsemble(selectedEnsembleIdent, syncedValueEnsembles);
     const computedEnsembleIdent = fixupEnsembleIdent(candidateEnsembleIdent, ensembleSet);
 
-    const vectorsQuery = useVectorsQuery(
+    const vectorListQuery = useVectorListQuery(
         computedEnsembleIdent?.getCaseUuid(),
         computedEnsembleIdent?.getEnsembleName()
     );
@@ -52,7 +54,7 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
         console.debug(`${myInstanceIdStr} -- syncing timeSeries to ${syncedValueSummaryVector.vectorName}`);
         candidateVectorName = syncedValueSummaryVector.vectorName;
     }
-    const computedVectorName = fixupVectorName(candidateVectorName, vectorsQuery.data);
+    const computedVectorName = fixupVectorName(candidateVectorName, vectorListQuery.data);
 
     if (computedEnsembleIdent && !computedEnsembleIdent.equals(selectedEnsembleIdent)) {
         setSelectedEnsembleIdent(computedEnsembleIdent);
@@ -61,25 +63,27 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
         setSelectedVectorName(computedVectorName);
     }
 
+    const computedVectorNameHasHistoricalData = hasHistoricalVector(computedVectorName, vectorListQuery.data);
+
     React.useEffect(
         function propagateVectorSpecToView() {
             if (computedEnsembleIdent && computedVectorName) {
                 moduleContext.getStateStore().setValue("vectorSpec", {
                     ensembleIdent: computedEnsembleIdent,
                     vectorName: computedVectorName,
+                    hasHistoricalVector: computedVectorNameHasHistoricalData,
                 });
             } else {
                 moduleContext.getStateStore().setValue("vectorSpec", null);
             }
         },
-        [computedEnsembleIdent, computedVectorName]
+        [computedEnsembleIdent, computedVectorName, computedVectorNameHasHistoricalData]
     );
 
     const computedEnsemble = computedEnsembleIdent ? ensembleSet.findEnsemble(computedEnsembleIdent) : null;
 
-    function handleEnsembleSelectionChange(ensembleIdentArr: EnsembleIdent[]) {
-        console.debug("handleEnsembleSelectionChange()", ensembleIdentArr);
-        const newEnsembleIdent = ensembleIdentArr[0] ?? null;
+    function handleEnsembleSelectionChange(newEnsembleIdent: EnsembleIdent | null) {
+        console.debug("handleEnsembleSelectionChange()", newEnsembleIdent);
         setSelectedEnsembleIdent(newEnsembleIdent);
         if (newEnsembleIdent) {
             syncHelper.publishValue(SyncSettingKey.ENSEMBLE, "global.syncValue.ensembles", [newEnsembleIdent]);
@@ -106,8 +110,15 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
     }
 
     function handleShowStatisticsCheckboxChange(event: React.ChangeEvent<HTMLInputElement>) {
-        console.debug("handleShowStatisticsCheckboxChange() " + event.target.checked);
         setShowStatistics(event.target.checked);
+    }
+
+    function handleShowRealizations(event: React.ChangeEvent<HTMLInputElement>) {
+        setShowRealizations(event.target.checked);
+    }
+
+    function handleShowHistorical(event: React.ChangeEvent<HTMLInputElement>) {
+        setShowHistorical(event.target.checked);
     }
 
     function handleRealizationRangeTextChanged(event: React.ChangeEvent<HTMLInputElement>) {
@@ -127,15 +138,14 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
                 text="Ensemble"
                 labelClassName={syncHelper.isSynced(SyncSettingKey.ENSEMBLE) ? "bg-indigo-700 text-white" : ""}
             >
-                <MultiEnsembleSelect
+                <SingleEnsembleSelect
                     ensembleSet={ensembleSet}
-                    value={computedEnsembleIdent ? [computedEnsembleIdent] : []}
+                    value={computedEnsembleIdent}
                     onChange={handleEnsembleSelectionChange}
-                    size={5}
                 />
             </Label>
             <ApiStateWrapper
-                apiResult={vectorsQuery}
+                apiResult={vectorListQuery}
                 errorComponent={"Error loading vector names"}
                 loadingComponent={<CircularProgress />}
             >
@@ -144,7 +154,7 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
                     labelClassName={syncHelper.isSynced(SyncSettingKey.TIME_SERIES) ? "bg-indigo-700 text-white" : ""}
                 >
                     <Select
-                        options={makeVectorOptionItems(vectorsQuery.data)}
+                        options={makeVectorOptionItems(vectorListQuery.data)}
                         value={computedVectorName ? [computedVectorName] : []}
                         onChange={handleVectorSelectionChange}
                         filter={true}
@@ -160,6 +170,13 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
                 />
             </Label>
             <Checkbox label="Show statistics" checked={showStatistics} onChange={handleShowStatisticsCheckboxChange} />
+            <Checkbox label="Show realizations" checked={showRealizations} onChange={handleShowRealizations} />
+            <Checkbox
+                label="Show historical"
+                checked={showHistorical}
+                disabled={!computedVectorNameHasHistoricalData}
+                onChange={handleShowHistorical}
+            />
             <Label text={`Realizations (maxReal=${computedEnsemble?.getMaxRealizationNumber() ?? -1})`}>
                 <Input onChange={handleRealizationRangeTextChanged} />
             </Label>
@@ -182,11 +199,28 @@ function fixupVectorName(currVectorName: string, vectorDescriptionsArr: VectorDe
     return vectorDescriptionsArr[0].name;
 }
 
+function hasHistoricalVector(
+    nonHistoricalVectorName: string,
+    vectorDescriptionsArr: VectorDescription_api[] | undefined
+): boolean {
+    if (!vectorDescriptionsArr || vectorDescriptionsArr.length === 0) {
+        return false;
+    }
+
+    const foundItem = vectorDescriptionsArr.find((item) => item.name === nonHistoricalVectorName);
+    if (foundItem) {
+        return foundItem.has_historical;
+    }
+
+    return false;
+}
+
 function makeVectorOptionItems(vectorDescriptionsArr: VectorDescription_api[] | undefined): SelectOption[] {
     const itemArr: SelectOption[] = [];
     if (vectorDescriptionsArr) {
         for (const vec of vectorDescriptionsArr) {
             itemArr.push({ value: vec.name, label: vec.descriptive_name });
+            //itemArr.push({ value: vec.name, label: vec.descriptive_name + (vec.has_historical ? " (hasHist)" : "") });
         }
     }
     return itemArr;

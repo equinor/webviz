@@ -41,7 +41,7 @@ def to_api_vector_statistic_data(
 
     ret_data = schemas.VectorStatisticData(
         realizations=vector_statistics.realizations,
-        timestamps=vector_statistics.timestamps,
+        timestamps_utc_ms=vector_statistics.timestamps_utc_ms,
         value_objects=value_objects,
         unit=vector_metadata.unit,
         is_rate=vector_metadata.is_rate,

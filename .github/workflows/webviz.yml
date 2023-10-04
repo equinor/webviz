@@ -73,7 +73,7 @@ jobs:
       - name: 🐍 Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: "3.10"
+          python-version: "3.11"
           cache: pip
 
       - name: 📦 Install poetry and dependencies
@@ -93,10 +93,10 @@ jobs:
           bandit --recursive src/
           mypy src/ tests/
 
-      # - name: 🤖 Run tests
-      #   working-directory: ./backend
-      #   run: |
-      #     pytest ./tests
+      - name: 🤖 Run tests
+        working-directory: ./backend
+        run: |
+          pytest ./tests/unit
 
   build_docker_images:
     runs-on: ubuntu-latest

@@ -1,6 +1,6 @@
 import datetime
 from enum import Enum
-from typing import List, Optional
+from typing import List
 
 from pydantic import BaseModel
 
@@ -26,32 +26,18 @@ class VectorDescription(BaseModel):
     name: str
     descriptive_name: str
     has_historical: bool
-    """ Ytelse vs plassering av business logikk
-    group: str
-    subgroup: str
-    unit:str
-    is_rate:bool
-"""
-
-
-class VectorMetadata(BaseModel):
-    unit: str
-    is_total: bool
-    is_rate: bool
-    _historical: bool
-    keyword: str
-    wgname: Optional[str]
-    get_num: Optional[int]
 
 
 class VectorHistoricalData(BaseModel):
-    timestamps: List[datetime.datetime]
+    timestamps_utc_ms: List[int]
     values: List[float]
+    unit: str
+    is_rate: bool
 
 
 class VectorRealizationData(BaseModel):
     realization: int
-    timestamps: List[datetime.datetime]
+    timestamps_utc_ms: List[int]
     values: List[float]
     unit: str
     is_rate: bool
@@ -64,7 +50,7 @@ class StatisticValueObject(BaseModel):
 
 class VectorStatisticData(BaseModel):
     realizations: List[int]
-    timestamps: List[datetime.datetime]
+    timestamps_utc_ms: List[int]
     value_objects: List[StatisticValueObject]
     unit: str
     is_rate: bool
@@ -72,7 +58,7 @@ class VectorStatisticData(BaseModel):
 
 class VectorStatisticSensitivityData(BaseModel):
     realizations: List[int]
-    timestamps: List[datetime.datetime]
+    timestamps_utc_ms: List[int]
     value_objects: List[StatisticValueObject]
     unit: str
     is_rate: bool
@@ -82,33 +68,13 @@ class VectorStatisticSensitivityData(BaseModel):
 
 class VectorExpressionInfo(BaseModel):
     """
-
     `Description`:
     Dictionary with all required items for an expression
-    `Required keys`:
 
+    `Required keys`:
     expression: str, mathematical expression
     variable_names: List[str], list of variable names
     vector_names: List[str], list of vector names
-
-    """
-
-    expression: str
-    variable_names: str
-    vector_names: str
-
-
-class VectorExpressionInfo2(BaseModel):
-    """
-
-    `Description`:
-    Dictionary with all required items for an expression
-    `Required keys`:
-
-    expression: str, mathematical expression
-    variable_names: List[str], list of variable names
-    vector_names: List[str], list of vector names
-
     """
 
     expression: str

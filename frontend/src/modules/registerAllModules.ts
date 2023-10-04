@@ -8,10 +8,13 @@ import "./Grid3DIntersection/registerModule";
 import "./InplaceVolumetrics/registerModule";
 import "./Map/registerModule";
 import "./Pvt/registerModule";
-import "./Sensitivity/registerModule";
 import "./SimulationTimeSeries/registerModule";
+import "./SimulationTimeSeriesMatrix/registerModule";
 import "./SimulationTimeSeriesSensitivity/registerModule";
+import "./SubsurfaceMap/registerModule";
 import "./TimeSeriesParameterDistribution/registerModule";
+import "./TornadoChart/registerModule";
+import "./WellCompletions/registerModule";
 
 if (isDevMode()) {
     await import("./MyModule/registerModule");

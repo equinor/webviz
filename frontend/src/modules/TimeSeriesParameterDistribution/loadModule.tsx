@@ -6,7 +6,7 @@ import { view } from "./view";
 
 const defaultState: State = {
     vectorSpec: null,
-    timeStep: null,
+    timestampUtcMs: null,
     parameterName: undefined
 };
 

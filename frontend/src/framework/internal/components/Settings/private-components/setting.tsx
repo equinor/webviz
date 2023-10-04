@@ -5,12 +5,15 @@ import { ModuleInstance, ModuleInstanceState } from "@framework/ModuleInstance";
 import { Workbench } from "@framework/Workbench";
 import { ErrorBoundary } from "@framework/internal/components/ErrorBoundary";
 import { useImportState } from "@framework/internal/hooks/moduleHooks";
-import { Cog6ToothIcon } from "@heroicons/react/20/solid";
 import { CircularProgress } from "@lib/components/CircularProgress";
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
+import { Settings as SettingsIcon } from "@mui/icons-material";
+
+import { DebugProfiler } from "../../DebugProfiler";
 
 type SettingProps = {
     moduleInstance: ModuleInstance<any>;
-    activeModuleId: string;
+    activeModuleInstanceId: string;
     workbench: Workbench;
 };
 
@@ -58,7 +61,7 @@ export const Setting: React.FC<SettingProps> = (props) => {
                 <div
                     className="text-red-600"
                     style={{
-                        display: props.activeModuleId === props.moduleInstance.getId() ? "flex" : "none",
+                        display: props.activeModuleInstanceId === props.moduleInstance.getId() ? "flex" : "none",
                     }}
                 >
                     This module instance has encountered an error. Please see its view for more details.
@@ -71,14 +74,14 @@ export const Setting: React.FC<SettingProps> = (props) => {
     return (
         <div
             key={props.moduleInstance.getId()}
-            style={{
-                display: props.activeModuleId === props.moduleInstance.getId() ? "flex" : "none",
-            }}
-            className="flex-col"
+            className={resolveClassNames(
+                props.activeModuleInstanceId === props.moduleInstance.getId() ? "flex" : "hidden",
+                "flex-col h-full w-full relative"
+            )}
         >
             <ErrorBoundary moduleInstance={props.moduleInstance}>
                 <div className="flex justify-center items-center p-2 bg-slate-100 h-10">
-                    <Cog6ToothIcon className="w-4 h-4 mr-2" />{" "}
+                    <SettingsIcon fontSize="small" className="mr-2" />{" "}
                     <span
                         title={props.moduleInstance.getTitle()}
                         className="font-bold flex-grow p-0 text-ellipsis whitespace-nowrap overflow-hidden text-sm"
@@ -86,13 +89,18 @@ export const Setting: React.FC<SettingProps> = (props) => {
                         {props.moduleInstance.getTitle()}
                     </span>
                 </div>
-                <div className="p-2 flex flex-col gap-4">
-                    <Settings
-                        moduleContext={props.moduleInstance.getContext()}
-                        workbenchSession={props.workbench.getWorkbenchSession()}
-                        workbenchServices={props.workbench.getWorkbenchServices()}
-                        initialSettings={props.moduleInstance.getInitialSettings() || undefined}
-                    />
+                <div className="flex flex-col gap-4 overflow-auto">
+                    <div className="p-2">
+                        <DebugProfiler id={`${props.moduleInstance.getId()}-settings`}>
+                            <Settings
+                                moduleContext={props.moduleInstance.getContext()}
+                                workbenchSession={props.workbench.getWorkbenchSession()}
+                                workbenchServices={props.workbench.getWorkbenchServices()}
+                                workbenchSettings={props.workbench.getWorkbenchSettings()}
+                                initialSettings={props.moduleInstance.getInitialSettings() || undefined}
+                            />
+                        </DebugProfiler>
+                    </div>
                 </div>
             </ErrorBoundary>
         </div>

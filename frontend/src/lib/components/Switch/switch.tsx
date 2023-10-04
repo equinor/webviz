@@ -1,9 +1,9 @@
 import React from "react";
 
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { Switch as SwitchUnstyled, UseSwitchParameters, useSwitch } from "@mui/base";
 
-import { BaseComponent } from "../_BaseComponent";
-import { resolveClassNames } from "../_utils/resolveClassNames";
+import { BaseComponent } from "../BaseComponent";
 
 export const Switch = React.forwardRef((props: UseSwitchParameters, ref: React.ForwardedRef<HTMLInputElement>) => {
     const { getInputProps, checked, disabled } = useSwitch(props);

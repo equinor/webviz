@@ -1,0 +1,1 @@
+export { ColorGradient } from "./colorGradient";

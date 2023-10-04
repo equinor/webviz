@@ -3,7 +3,7 @@ from typing import List
 
 from fmu.sumo.explorer.explorer import CaseCollection, Case, SumoClient
 
-from .queries.case import get_stratigraphic_column, get_field_identifiers
+from .queries.case import get_stratigraphic_column_identifier, get_field_identifiers
 from ._helpers import create_sumo_client_instance
 from .iteration_inspector import IterationInspector
 
@@ -25,11 +25,11 @@ class CaseInspector:
         """Get name of the case"""
         return self._case.name
 
-    def get_stratigraphic_column(self) -> str:
-        """Retrieve the stratigraphic column for a case"""
+    def get_stratigraphic_column_identifier(self) -> str:
+        """Retrieve the stratigraphic column identifier for a case"""
 
-        strat_column = get_stratigraphic_column(self._sumo_client, self._case_uuid)
-        return strat_column
+        stratigraphic_column_identifier = get_stratigraphic_column_identifier(self._sumo_client, self._case_uuid)
+        return stratigraphic_column_identifier
 
     def get_field_identifiers(self) -> List[str]:
         """Retrieve the field identifiers for a case"""

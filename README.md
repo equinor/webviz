@@ -63,3 +63,19 @@ git push upstream <featurebranchname>:review --force
 The `main` branch only accepts commits through pull requests.
 
 NB: Note that Radix will always use the `radixconfig.yml` as it is in `main` branch (unless changed in Radix UI).
+
+### Usage in GitHub codespaces
+
+Using the standard GitHub codespace image, you can easily start up the application by running
+the same command as locally:
+```
+docker-compose up
+```
+in the terminal. When using GitHub codespaces you do not have to create the `.env` file since
+environment variables are automatically set up for you at startup through repository settings.
+Note that you need to have at least "collaborator" role in the repository in order to have
+environment variables automatically set up.
+
+When you start up the docker containers, GitHub codespace will automatically make a link where
+you can access the application in development mode (i.e. changes you do the code will automatically
+be reflected in the application).
