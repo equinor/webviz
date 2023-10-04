@@ -2,12 +2,12 @@ import React from "react";
 
 import { Frequency_api, StatisticFunction_api } from "@api";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
-import { EnsembleParameters, ParameterIdent, ParameterType } from "@framework/EnsembleParameters";
+import { Parameter, ParameterIdent, ParameterType } from "@framework/EnsembleParameters";
 import { EnsembleSet } from "@framework/EnsembleSet";
 import { ModuleFCProps } from "@framework/Module";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
-import { EnsembleParameterFilter } from "@framework/components/EnsembleParameterFilter";
 import { MultiEnsembleSelect } from "@framework/components/MultiEnsembleSelect";
+import { ParameterListFilter } from "@framework/components/ParameterListFilter";
 import { VectorSelector, createVectorSelectorDataFromVectors } from "@framework/components/VectorSelector";
 import { fixupEnsembleIdents } from "@framework/utils/ensembleUiHelpers";
 import { ApiStatesWrapper } from "@lib/components/ApiStatesWrapper";
@@ -21,6 +21,7 @@ import { Select } from "@lib/components/Select";
 import { SmartNodeSelectorSelection, TreeDataNode } from "@lib/components/SmartNodeSelector";
 import { useValidState } from "@lib/hooks/useValidState";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
+import { FilterAlt } from "@mui/icons-material";
 
 import { isEqual } from "lodash";
 
@@ -79,15 +80,14 @@ export function settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
 
     // NOTE: ONLY FOR TESTING
     const [filteredEnsembleParameters, setFilteredEnsembleParameters] = React.useState<ParameterIdent[]>([]);
-    const ensembleParametersArr = [];
+    const selectedEnsemblesParameters: Parameter[] = [];
     for (const ensemble of selectedEnsembleIdents) {
         const ensembleObj = ensembleSet.findEnsemble(ensemble);
         if (ensembleObj === null) continue;
 
         const parameters = ensembleObj.getParameters().getParameterArr();
-        ensembleParametersArr.push(...parameters);
+        selectedEnsemblesParameters.push(...parameters);
     }
-    const ensembleParameters = new EnsembleParameters(ensembleParametersArr);
 
     const vectorListQueries = useVectorListQueries(selectedEnsembleIdents);
     const ensembleVectorListsHelper = new EnsembleVectorListsHelper(selectedEnsembleIdents, vectorListQueries);
@@ -224,9 +224,12 @@ export function settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
         });
     }
 
-    function handleEnsembleParameterChange(ensembleParameters: EnsembleParameters) {
+    function handleParameterListFilterChange(filteredParameters: Parameter[]) {
         // Ensure continuous parameter for module
-        const filteredParamIdents = ensembleParameters.getParameterIdents(ParameterType.CONTINUOUS);
+        const filteredParamIdents = filteredParameters
+            .filter((elm) => elm.type === ParameterType.CONTINUOUS)
+            .map((elm) => ParameterIdent.fromNameAndGroup(elm.name, elm.groupName));
+
         setFilteredEnsembleParameters(filteredParamIdents);
     }
 
@@ -327,17 +330,20 @@ export function settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
                         setColorRealizationsByParameter(event.target.checked);
                     }}
                 />
-                <EnsembleParameterFilter
-                    ensembleParameters={ensembleParameters}
-                    onChange={handleEnsembleParameterChange}
-                />
                 <div
-                    className={resolveClassNames("mt-4 ml-6 mb-4", {
+                    className={resolveClassNames({
                         ["pointer-events-none opacity-70"]:
                             !colorRealizationsByParameter ||
                             visualizationMode !== VisualizationMode.INDIVIDUAL_REALIZATIONS,
                     })}
                 >
+                    <CollapsibleGroup expanded={false} title="Parameter list filter">
+                        <ParameterListFilter
+                            parameters={selectedEnsemblesParameters}
+                            showTitle={true}
+                            onChange={handleParameterListFilterChange}
+                        />
+                    </CollapsibleGroup>
                     <Select
                         options={filteredEnsembleParameters.map((elm) => {
                             return {
