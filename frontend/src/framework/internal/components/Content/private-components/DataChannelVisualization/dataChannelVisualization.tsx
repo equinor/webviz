@@ -2,9 +2,9 @@ import React from "react";
 
 import { useStoreState, useStoreValue } from "@framework/StateStore";
 import { Workbench } from "@framework/Workbench";
-import { resolveClassNames } from "@lib/components/_utils/resolveClassNames";
 import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
 import { Point } from "@lib/utils/geometry";
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 export enum DataChannelEventTypes {
     DATA_CHANNEL_ORIGIN_POINTER_DOWN = "data-channel-origin-pointer-down",
@@ -64,24 +64,18 @@ export const DataChannelVisualization: React.FC<DataChannelVisualizationProps> =
     const [originPoint, setOriginPoint] = React.useState<Point>({ x: 0, y: 0 });
     const [currentPointerPosition, setCurrentPointerPosition] = React.useState<Point>({ x: 0, y: 0 });
     const [currentChannelName, setCurrentChannelName] = React.useState<string | null>(null);
+    const [showDataChannelConnections, setShowDataChannelConnections] = React.useState<boolean>(false);
+    const [highlightedDataChannelConnection, setHighlightedDataChannelConnection] = React.useState<{
+        moduleInstanceId: string;
+        dataChannelName: string;
+    } | null>(null);
+    const [editDataChannelConnectionsForModuleInstanceId, setEditDataChannelConnectionsForModuleInstanceId] =
+        React.useState<string | null>(null);
     const forceRerender = React.useReducer((x) => x + 1, 0)[1];
 
     const timeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
     const boundingRect = useElementBoundingRect(ref);
-
-    const [showDataChannelConnections, setShowDataChannelConnections] = useStoreState(
-        props.workbench.getGuiStateStore(),
-        "showDataChannelConnections"
-    );
-
-    const [editDataChannelConnectionsForModuleInstanceId, setEditDataChannelConnectionsForModuleInstanceId] =
-        useStoreState(props.workbench.getGuiStateStore(), "editDataChannelConnectionsForModuleInstanceId");
-
-    const highlightedDataChannelConnection = useStoreValue(
-        props.workbench.getGuiStateStore(),
-        "highlightedDataChannelConnection"
-    );
 
     React.useEffect(() => {
         forceRerender();
@@ -286,8 +280,8 @@ export const DataChannelVisualization: React.FC<DataChannelVisualizationProps> =
                 };
 
                 const highlighted =
-                    highlightedDataChannelConnection?.channelName === inputChannelName &&
-                    highlightedDataChannelConnection?.listenerId === moduleInstance.getId();
+                    highlightedDataChannelConnection?.dataChannelName === inputChannelName &&
+                    highlightedDataChannelConnection?.moduleInstanceId === moduleInstance.getId();
 
                 dataChannelPaths.push({
                     key: `${originModuleInstanceId}-${moduleInstance.getId()}-${inputChannelName}-${JSON.stringify(

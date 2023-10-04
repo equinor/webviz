@@ -1,13 +1,14 @@
 import React from "react";
 
 import { BroadcastChannelKeyCategory } from "@framework/Broadcaster";
+import { GuiEvent } from "@framework/GuiMessageBroker";
 import { useSetStoreValue, useStoreValue } from "@framework/StateStore";
 import { Workbench } from "@framework/Workbench";
-import { XMarkIcon } from "@heroicons/react/20/solid";
 import { IconButton } from "@lib/components/IconButton";
-import { resolveClassNames } from "@lib/components/_utils/resolveClassNames";
 import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
 import { Point, pointerEventToPoint, rectContainsPoint } from "@lib/utils/geometry";
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
+import { Close } from "@mui/icons-material";
 
 import { DataChannelEventTypes } from "../../DataChannelVisualization";
 
@@ -26,17 +27,11 @@ export const InputChannelNode: React.FC<InputChannelNodeProps> = (props) => {
     const [connectable, setConnectable] = React.useState<boolean>(false);
     const [hovered, setHovered] = React.useState<boolean>(false);
     const [hasConnection, setHasConnection] = React.useState<boolean>(false);
+    const [editDataChannelConnections, setEditDataChannelConnections] = React.useState<boolean>(false);
+
+    const guiMessageBroker = props.workbench.getGuiMessageBroker();
 
     const boundingRect = useElementBoundingRect(ref);
-
-    const editDataChannelConnections = useStoreValue(
-        props.workbench.getGuiStateStore(),
-        "editDataChannelConnectionsForModuleInstanceId"
-    );
-    const setHighlightedDataChannelConnection = useSetStoreValue(
-        props.workbench.getGuiStateStore(),
-        "highlightedDataChannelConnection"
-    );
 
     React.useLayoutEffect(() => {
         document.dispatchEvent(new CustomEvent(DataChannelEventTypes.DATA_CHANNEL_CONNECTIONS_CHANGED));
@@ -174,18 +169,18 @@ export const InputChannelNode: React.FC<InputChannelNodeProps> = (props) => {
     }
 
     function handlePointerEnter() {
-        setHighlightedDataChannelConnection({
-            listenerId: props.moduleInstanceId,
-            channelName: props.inputName,
+        guiMessageBroker.publishEvent(GuiEvent.HighlightDataChannelConnectionRequest, {
+            moduleInstanceId: props.moduleInstanceId,
+            dataChannelName: props.inputName,
         });
+
         document.dispatchEvent(
             new CustomEvent(DataChannelEventTypes.DATA_CHANNEL_NODE_HOVER, { detail: { allowed: connectable } })
         );
     }
 
     function handlePointerLeave() {
-        setHighlightedDataChannelConnection(null);
-        document.dispatchEvent(new CustomEvent(DataChannelEventTypes.DATA_CHANNEL_NODE_UNHOVER));
+        guiMessageBroker.publishEvent(GuiEvent.UnhighlightDataChannelConnectionRequest, {});
     }
 
     return (
@@ -222,7 +217,7 @@ export const InputChannelNode: React.FC<InputChannelNodeProps> = (props) => {
                     className="ml-2 m-0"
                     title="Remove data channel connection"
                 >
-                    <XMarkIcon className="w-4 h-4" />
+                    <Close fontSize="small" />
                 </IconButton>
             )}
         </div>

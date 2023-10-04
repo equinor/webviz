@@ -53,7 +53,7 @@ export class Module<StateType extends StateBaseType> {
         syncableSettingKeys: SyncSettingKey[] = [],
         broadcastChannelsDef: BroadcastChannelsDef = {},
         inputChannelDefs: InputBroadcastChannelDef[] = [],
-        drawPreviewFunc: DrawPreviewFunc | null = null
+        drawPreviewFunc: DrawPreviewFunc | null = null,
         description: string | null = null
     ) {
         this._name = name;
@@ -118,10 +118,9 @@ export class Module<StateType extends StateBaseType> {
             throw new Error("Module must be added to a workbench before making an instance");
         }
 
-        const instance = new ModuleInstance<StateType>(this, instanceNumber, this._channelsDef, this._workbench);
         const instance = new ModuleInstance<StateType>(
             this,
-            this._numInstances++,
+            instanceNumber,
             this._channelsDef,
             this._workbench,
             this._inputChannelDefs

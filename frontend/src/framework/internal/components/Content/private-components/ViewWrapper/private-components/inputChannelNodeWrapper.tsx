@@ -1,15 +1,16 @@
 import React from "react";
 import { createPortal } from "react-dom";
 
-import { resolveClassNames } from "@lib/components/_utils/resolveClassNames";
+import { GuiEvent, GuiMessageBroker } from "@framework/GuiMessageBroker";
 import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import { DataChannelEventTypes } from "../../DataChannelVisualization/dataChannelVisualization";
 
 export type InputChannelNodeWrapperProps = {
     children: React.ReactNode;
     forwardedRef: React.RefObject<HTMLDivElement>;
-    visible: boolean;
+    guiMessageBroker: GuiMessageBroker;
 };
 
 export const InputChannelNodeWrapper: React.FC<InputChannelNodeWrapperProps> = (props) => {
@@ -45,15 +46,19 @@ export const InputChannelNodeWrapper: React.FC<InputChannelNodeWrapperProps> = (
             handleDataChannelOriginPointerDown
         );
 
-        document.addEventListener(DataChannelEventTypes.DATA_CHANNEL_DONE, handleDataChannelDone);
+        const removeHandleDataChannelDone = props.guiMessageBroker.subscribeToEvent(
+            GuiEvent.HideDataChannelConnectionsRequest,
+            handleDataChannelDone
+        );
+
         document.addEventListener("pointerup", handlePointerUp);
 
         return () => {
+            removeHandleDataChannelDone();
             document.removeEventListener(
                 DataChannelEventTypes.DATA_CHANNEL_ORIGIN_POINTER_DOWN,
                 handleDataChannelOriginPointerDown
             );
-            document.removeEventListener(DataChannelEventTypes.DATA_CHANNEL_DONE, handleDataChannelDone);
             document.removeEventListener("pointerup", handlePointerUp);
         };
     }, []);
@@ -61,7 +66,7 @@ export const InputChannelNodeWrapper: React.FC<InputChannelNodeWrapperProps> = (
     return createPortal(
         <div
             className={resolveClassNames("absolute", "flex", "items-center", "justify-center", "z-50", {
-                invisible: !visible && !props.visible,
+                invisible: !visible,
             })}
             style={{
                 left: elementRect.x,

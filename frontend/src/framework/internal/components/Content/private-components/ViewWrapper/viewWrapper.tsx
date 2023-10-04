@@ -12,7 +12,6 @@ import { InputChannelNodeWrapper } from "./private-components/inputChannelNodeWr
 import { ViewContent } from "./private-components/viewContent";
 
 import { DataChannelEventTypes } from "../DataChannelVisualization";
-import { LayoutEventTypes } from "../layout";
 import { ViewWrapperPlaceholder } from "../viewWrapperPlaceholder";
 
 type ViewWrapperProps = {
@@ -42,26 +41,9 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
 
     const timeRef = React.useRef<number | null>(null);
 
-    const handleHeaderPointerDown = React.useCallback(
     const [currentInputName, setCurrentInputName] = React.useState<string | null>(null);
     const [channelSelectorCenterPoint, setChannelSelectorCenterPoint] = React.useState<Point | null>(null);
     const [selectableChannels, setSelectableChannels] = React.useState<string[]>([]);
-
-    const showDataChannelConnections = useStoreValue(props.workbench.getGuiStateStore(), "showDataChannelConnections");
-    const editDataChannelConnectionsModuleInstanceId = useStoreValue(
-        props.workbench.getGuiStateStore(),
-        "editDataChannelConnectionsForModuleInstanceId"
-    );
-
-    const setShowDataChannelConnections = useSetStoreValue(
-        props.workbench.getGuiStateStore(),
-        "showDataChannelConnections"
-    );
-
-    const setEditDataChannelConnectionsModuleInstanceId = useSetStoreValue(
-        props.workbench.getGuiStateStore(),
-        "editDataChannelConnectionsForModuleInstanceId"
-    );
 
     const handleHeaderPointerDown = React.useCallback(
         function handlePointerDown(e: React.PointerEvent<HTMLDivElement>) {
@@ -78,7 +60,7 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
         [props.moduleInstance]
     );
 
-    const handleModuleInstanceRemoveClick = React.useCallback(
+    const handleRemoveClick = React.useCallback(
         function handleRemoveClick(e: React.PointerEvent<HTMLDivElement>) {
             guiMessageBroker.publishEvent(GuiEvent.RemoveModuleInstanceRequest, {
                 moduleInstanceId: props.moduleInstance.getId(),
@@ -115,8 +97,9 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
     }
 
     function handleInputChannelsClick(e: React.PointerEvent<HTMLDivElement>): void {
-        setShowDataChannelConnections(true);
-        setEditDataChannelConnectionsModuleInstanceId(props.moduleInstance.getId());
+        guiMessageBroker.publishEvent(GuiEvent.EditDataChannelConnectionsForModuleInstanceRequest, {
+            moduleInstanceId: props.moduleInstance.getId(),
+        });
         e.stopPropagation();
     }
 
@@ -184,11 +167,6 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
         document.dispatchEvent(new CustomEvent(DataChannelEventTypes.DATA_CHANNEL_DONE));
     }
 
-    const channelConnectorWrapperVisible =
-        showDataChannelConnections &&
-        (editDataChannelConnectionsModuleInstanceId === null ||
-            editDataChannelConnectionsModuleInstanceId === props.moduleInstance.getId());
-
     const showAsActive =
         props.isActive && [DrawerContent.ModuleSettings, DrawerContent.SyncSettings].includes(drawerContent);
 
@@ -227,7 +205,7 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
                     />
                     <div className="flex-grow overflow-auto h-0" onClick={handleModuleClick}>
                         <ViewContent workbench={props.workbench} moduleInstance={props.moduleInstance} />
-                        <InputChannelNodeWrapper forwardedRef={ref} visible={channelConnectorWrapperVisible}>
+                        <InputChannelNodeWrapper forwardedRef={ref} guiMessageBroker={guiMessageBroker}>
                             {props.moduleInstance.getInputChannelDefs().map((channelDef) => {
                                 return (
                                     <InputChannelNode

@@ -29,17 +29,6 @@ export type LayoutElement = {
     relWidth: number;
 };
 
-export type WorkbenchGuiState = {
-    drawerContent: DrawerContent;
-    settingsPanelWidthInPercent: number;
-    showDataChannelConnections: boolean;
-    editDataChannelConnectionsForModuleInstanceId: string | null;
-    highlightedDataChannelConnection: {
-        channelName: string;
-        listenerId: string;
-    } | null;
-};
-
 export class Workbench {
     private _moduleInstances: ModuleInstance<any>[];
     private _workbenchSession: WorkbenchSessionPrivate;

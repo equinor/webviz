@@ -21,6 +21,12 @@ export enum GuiEvent {
     ModuleHeaderPointerDown = "moduleHeaderPointerDown",
     NewModulePointerDown = "newModulePointerDown",
     RemoveModuleInstanceRequest = "removeModuleInstanceRequest",
+    EditDataChannelConnectionsForModuleInstanceRequest = "editDataChannelConnectionsForModuleInstanceRequest",
+    ShowDataChannelConnectionsRequest = "showDataChannelConnectionsRequest",
+    HideDataChannelConnectionsRequest = "hideDataChannelConnectionsRequest",
+    HighlightDataChannelConnectionRequest = "highlightDataChannelConnectionRequest",
+    UnhighlightDataChannelConnectionRequest = "unhighlightDataChannelConnectionRequest",
+    DataChannelOriginPointerDown = "dataChannelOriginPointerDown",
 }
 
 export type GuiEventPayloads = {
@@ -36,6 +42,20 @@ export type GuiEventPayloads = {
     };
     [GuiEvent.RemoveModuleInstanceRequest]: {
         moduleInstanceId: string;
+    };
+    [GuiEvent.EditDataChannelConnectionsForModuleInstanceRequest]: {
+        moduleInstanceId: string;
+    };
+    [GuiEvent.ShowDataChannelConnectionsRequest]: {};
+    [GuiEvent.HideDataChannelConnectionsRequest]: {};
+    [GuiEvent.HighlightDataChannelConnectionRequest]: {
+        moduleInstanceId: string;
+        dataChannelName: string;
+    };
+    [GuiEvent.UnhighlightDataChannelConnectionRequest]: {};
+    [GuiEvent.DataChannelOriginPointerDown]: {
+        moduleInstanceId: string;
+        originElement: HTMLElement;
     };
 };
 

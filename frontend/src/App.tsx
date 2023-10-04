@@ -2,6 +2,7 @@ import React from "react";
 
 import { DrawerContent, GuiState } from "@framework/GuiMessageBroker";
 import { LayoutElement, Workbench } from "@framework/Workbench";
+import { DataChannelVisualization } from "@framework/internal/components/Content/private-components/DataChannelVisualization";
 import { NavBar } from "@framework/internal/components/NavBar";
 import { SettingsContentPanels } from "@framework/internal/components/SettingsContentPanels";
 import { useQueryClient } from "@tanstack/react-query";
@@ -39,7 +40,7 @@ function App() {
 
     return (
         <div className="h-screen flex flex-row">
-                        <DataChannelVisualization workbench={workbench} />
+            <DataChannelVisualization workbench={workbench.current} />
             <NavBar workbench={workbench.current} />
             <SettingsContentPanels workbench={workbench.current} />
         </div>
