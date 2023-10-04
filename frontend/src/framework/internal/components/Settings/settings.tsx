@@ -1,8 +1,8 @@
 import React from "react";
 
-import { useStoreValue } from "@framework/StateStore";
-import { DrawerContent, Workbench } from "@framework/Workbench";
-import { useActiveModuleId, useModuleInstances } from "@framework/internal/hooks/workbenchHooks";
+import { DrawerContent, GuiState, useGuiValue } from "@framework/GuiMessageBroker";
+import { Workbench } from "@framework/Workbench";
+import { useModuleInstances } from "@framework/internal/hooks/workbenchHooks";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { Settings as SettingsIcon } from "@mui/icons-material";
 
@@ -18,9 +18,9 @@ type SettingsProps = {
 
 export const Settings: React.FC<SettingsProps> = (props) => {
     const moduleInstances = useModuleInstances(props.workbench);
-    const activeModuleId = useActiveModuleId(props.workbench);
+    const activeModuleInstanceId = useGuiValue(props.workbench.getGuiMessageBroker(), GuiState.ActiveModuleInstanceId);
 
-    const drawerContent = useStoreValue(props.workbench.getGuiStateStore(), "drawerContent");
+    const drawerContent = useGuiValue(props.workbench.getGuiMessageBroker(), GuiState.DrawerContent);
 
     const mainRef = React.useRef<HTMLDivElement>(null);
 
@@ -45,7 +45,7 @@ export const Settings: React.FC<SettingsProps> = (props) => {
                     <Setting
                         key={instance.getId()}
                         moduleInstance={instance}
-                        activeModuleId={activeModuleId}
+                        activeModuleInstanceId={activeModuleInstanceId}
                         workbench={props.workbench}
                     />
                 ))}
