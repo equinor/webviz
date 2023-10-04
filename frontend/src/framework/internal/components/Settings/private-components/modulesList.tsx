@@ -1,10 +1,9 @@
 import React from "react";
 
+import { DrawerContent, GuiEvent, GuiMessageBroker, GuiState, useGuiValue } from "@framework/GuiMessageBroker";
 import { ModuleRegistry } from "@framework/ModuleRegistry";
 import { DrawPreviewFunc } from "@framework/Preview";
-import { useStoreValue } from "@framework/StateStore";
-import { DrawerContent, Workbench } from "@framework/Workbench";
-import { LayoutEventTypes } from "@framework/internal/components/Content/private-components/layout";
+import { Workbench } from "@framework/Workbench";
 import { Drawer } from "@framework/internal/components/Drawer";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import {
@@ -24,6 +23,7 @@ type ModulesListItemProps = {
     description: string | null;
     drawPreviewFunc: DrawPreviewFunc | null;
     relContainer: HTMLDivElement | null;
+    guiMessageBroker: GuiMessageBroker;
 };
 
 const makeStyle = (isDragged: boolean, dragSize: Size, dragPosition: Point): React.CSSProperties => {
@@ -63,15 +63,11 @@ const ModulesListItem: React.FC<ModulesListItemProps> = (props) => {
                 const point = pointerEventToPoint(e);
                 const rect = ref.current.getBoundingClientRect();
                 pointerDownElementPosition = pointDifference(point, pointRelativeToDomRect(point, rect));
-                document.dispatchEvent(
-                    new CustomEvent(LayoutEventTypes.NEW_MODULE_POINTER_DOWN, {
-                        detail: {
-                            name: props.name,
-                            elementPosition: pointDifference(point, pointRelativeToDomRect(point, rect)),
-                            pointerPoint: point,
-                        },
-                    })
-                );
+                props.guiMessageBroker.publishEvent(GuiEvent.NewModulePointerDown, {
+                    moduleName: props.name,
+                    elementPosition: pointDifference(point, pointRelativeToDomRect(point, rect)),
+                    pointerPosition: point,
+                });
                 pointerDownPoint = point;
             }
         };
@@ -168,7 +164,7 @@ type ModulesListProps = {
     I will skip it for now and come back to it when it becomes a problem.
 */
 export const ModulesList: React.FC<ModulesListProps> = (props) => {
-    const drawerContent = useStoreValue(props.workbench.getGuiStateStore(), "drawerContent");
+    const drawerContent = useGuiValue(props.workbench.getGuiMessageBroker(), GuiState.DrawerContent);
     const [searchQuery, setSearchQuery] = React.useState("");
 
     const handleSearchQueryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -195,6 +191,7 @@ export const ModulesList: React.FC<ModulesListProps> = (props) => {
                             displayName={mod.getDefaultTitle()}
                             description={mod.getDescription()}
                             drawPreviewFunc={mod.getDrawPreviewFunc()}
+                            guiMessageBroker={props.workbench.getGuiMessageBroker()}
                         />
                     ))}
             </Drawer>

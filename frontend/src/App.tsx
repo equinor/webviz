@@ -1,11 +1,11 @@
 import React from "react";
 
-import { DrawerContent, LayoutElement, Workbench } from "@framework/Workbench";
+import { DrawerContent, GuiState } from "@framework/GuiMessageBroker";
+import { LayoutElement, Workbench } from "@framework/Workbench";
 import { NavBar } from "@framework/internal/components/NavBar";
 import { SettingsContentPanels } from "@framework/internal/components/SettingsContentPanels";
 import { useQueryClient } from "@tanstack/react-query";
 
-import { useSetStoreValue } from "./framework/StateStore";
 import "./modules/registerAllModules";
 import "./templates/registerAllTemplates";
 
@@ -15,22 +15,20 @@ function App() {
     const workbench = React.useRef<Workbench>(new Workbench());
     const queryClient = useQueryClient();
 
-    const setLoadingEnsembleSet = useSetStoreValue(workbench.current.getGuiStateStore(), "loadingEnsembleSet");
-
     React.useEffect(() => {
         if (!workbench.current.loadLayoutFromLocalStorage()) {
             workbench.current.makeLayout(layout);
         }
 
         if (workbench.current.getLayout().length === 0) {
-            workbench.current.getGuiStateStore().setValue("drawerContent", DrawerContent.ModulesList);
+            workbench.current.getGuiMessageBroker().setState(GuiState.DrawerContent, DrawerContent.ModulesList);
         }
 
         const storedEnsembleIdents = workbench.current.maybeLoadEnsembleSetFromLocalStorage();
         if (storedEnsembleIdents) {
-            workbench.current.getGuiStateStore().setValue("loadingEnsembleSet", true);
+            workbench.current.getGuiMessageBroker().setState(GuiState.LoadingEnsembleSet, true);
             workbench.current.loadAndSetupEnsembleSetInSession(queryClient, storedEnsembleIdents).then(() => {
-                setLoadingEnsembleSet(false);
+                workbench.current.getGuiMessageBroker().setState(GuiState.LoadingEnsembleSet, false);
             });
         }
 

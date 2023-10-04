@@ -1,8 +1,8 @@
 import React from "react";
 import ReactDOM from "react-dom";
 
-import { useStoreValue } from "@framework/StateStore";
-import { DrawerContent, Workbench } from "@framework/Workbench";
+import { DrawerContent, GuiState, useGuiValue } from "@framework/GuiMessageBroker";
+import { Workbench } from "@framework/Workbench";
 import { ColorPaletteType, ColorScaleDiscreteSteps } from "@framework/WorkbenchSettings";
 import { Drawer } from "@framework/internal/components/Drawer";
 import { ColorGradient } from "@lib/components/ColorGradient";
@@ -176,7 +176,7 @@ export type ColorPaletteSettingsProps = {
 
 export const ColorPaletteSettings: React.FC<ColorPaletteSettingsProps> = (props) => {
     const colorPalettes = props.workbench.getWorkbenchSettings().getColorPalettes();
-    const drawerContent = useStoreValue(props.workbench.getGuiStateStore(), "drawerContent");
+    const drawerContent = useGuiValue(props.workbench.getGuiMessageBroker(), GuiState.DrawerContent);
     const [selectedColorPaletteIds, setSelectedColorPaletteIds] = React.useState<Record<ColorPaletteType, string>>(
         props.workbench.getWorkbenchSettings().getSelectedColorPaletteIds()
     );

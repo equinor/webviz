@@ -1,6 +1,6 @@
 import React from "react";
 
-import { useStoreState } from "@framework/StateStore";
+import { GuiState, useGuiState } from "@framework/GuiMessageBroker";
 import { Workbench } from "@framework/Workbench";
 import { ResizablePanels } from "@lib/components/ResizablePanels";
 
@@ -12,9 +12,9 @@ export type SettingsContentPanelsProps = {
 };
 
 export const SettingsContentPanels: React.FC<SettingsContentPanelsProps> = (props) => {
-    const [settingsPanelWidth, setSettingsPanelWidth] = useStoreState(
-        props.workbench.getGuiStateStore(),
-        "settingsPanelWidthInPercent"
+    const [settingsPanelWidth, setSettingsPanelWidth] = useGuiState(
+        props.workbench.getGuiMessageBroker(),
+        GuiState.SettingsPanelWidthInPercent
     );
 
     function handleSettingsPanelResize(sizes: number[]) {
