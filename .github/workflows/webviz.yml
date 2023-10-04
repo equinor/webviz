@@ -95,6 +95,10 @@ jobs:
 
       - name: 🤖 Run tests
         working-directory: ./backend
+        env:
+          WEBVIZ_CLIENT_SECRET: 0
+          WEBVIZ_SMDA_SUBSCRIPTION_KEY: 0
+          WEBVIZ_SMDA_RESOURCE_SCOPE: 0
         run: |
           pytest ./tests/unit
 
