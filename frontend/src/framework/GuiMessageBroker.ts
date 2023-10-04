@@ -39,7 +39,7 @@ export type GuiEventPayloads = {
     };
 };
 
-type GuiStateTypes = {
+type GuiStateValueTypes = {
     [GuiState.DrawerContent]: DrawerContent;
     [GuiState.SettingsPanelWidthInPercent]: number;
     [GuiState.LoadingEnsembleSet]: boolean;
@@ -84,7 +84,7 @@ export class GuiMessageBroker {
         }
     }
 
-    subscribeToEvent<K extends GuiEvent>(event: K, callback: (event: GuiEventPayloads[K]) => void) {
+    subscribeToEvent<T extends GuiEvent>(event: T, callback: (payload: GuiEventPayloads[T]) => void) {
         const eventListeners = this._eventListeners.get(event) || new Set();
         eventListeners.add(callback);
         this._eventListeners.set(event, eventListeners);
@@ -94,14 +94,14 @@ export class GuiMessageBroker {
         };
     }
 
-    publishEvent<K extends GuiEvent>(event: K, details: GuiEventPayloads[K]) {
+    publishEvent<T extends GuiEvent>(event: T, payload: GuiEventPayloads[T]) {
         const eventListeners = this._eventListeners.get(event);
         if (eventListeners) {
-            eventListeners.forEach((callback) => callback({ ...details }));
+            eventListeners.forEach((callback) => callback({ ...payload }));
         }
     }
 
-    makeStateSubscriberFunction<K extends GuiState>(state: K): (onStoreChangeCallback: () => void) => () => void {
+    makeStateSubscriberFunction<T extends GuiState>(state: T): (onStoreChangeCallback: () => void) => () => void {
         // Using arrow function in order to keep "this" in context
         const stateSubscriber = (onStoreChangeCallback: () => void): (() => void) => {
             const stateSubscribers = this._stateSubscribers.get(state) || new Set();
@@ -116,7 +116,7 @@ export class GuiMessageBroker {
         return stateSubscriber;
     }
 
-    setState<K extends GuiState>(state: K, value: GuiStateTypes[K]) {
+    setState<T extends GuiState>(state: T, value: GuiStateValueTypes[T]) {
         this._storedValues.set(state, value);
         this.maybeSavePersistentState(state);
 
@@ -126,7 +126,7 @@ export class GuiMessageBroker {
         }
     }
 
-    getState<K extends GuiState>(state: K): GuiStateTypes[K] {
+    getState<T extends GuiState>(state: T): GuiStateValueTypes[T] {
         return this._storedValues.get(state);
     }
 
@@ -135,9 +135,9 @@ export class GuiMessageBroker {
         returns the same value as long as the state has not been changed.
 
     */
-    makeStateSnapshotGetter<K extends GuiState>(state: K): () => GuiStateTypes[K] {
+    makeStateSnapshotGetter<T extends GuiState>(state: T): () => GuiStateValueTypes[T] {
         // Using arrow function in order to keep "this" in context
-        const stateSnapshotGetter = (): GuiStateTypes[K] => {
+        const stateSnapshotGetter = (): GuiStateValueTypes[T] => {
             return this._storedValues.get(state);
         };
 
@@ -147,25 +147,30 @@ export class GuiMessageBroker {
 
 export function useGuiState<T extends GuiState>(
     guiMessageBroker: GuiMessageBroker,
-    key: T
-): [GuiStateTypes[T], (value: GuiStateTypes[T] | ((prev: GuiStateTypes[T]) => GuiStateTypes[T])) => void] {
-    const state = React.useSyncExternalStore<GuiStateTypes[T]>(
-        guiMessageBroker.makeStateSubscriberFunction(key),
-        guiMessageBroker.makeStateSnapshotGetter(key)
+    state: T
+): [
+    GuiStateValueTypes[T],
+    (value: GuiStateValueTypes[T] | ((prev: GuiStateValueTypes[T]) => GuiStateValueTypes[T])) => void
+] {
+    const stateValue = React.useSyncExternalStore<GuiStateValueTypes[T]>(
+        guiMessageBroker.makeStateSubscriberFunction(state),
+        guiMessageBroker.makeStateSnapshotGetter(state)
     );
 
-    function setter(valueOrFunc: GuiStateTypes[T] | ((prev: GuiStateTypes[T]) => GuiStateTypes[T])): void {
+    function stateSetter(
+        valueOrFunc: GuiStateValueTypes[T] | ((prev: GuiStateValueTypes[T]) => GuiStateValueTypes[T])
+    ): void {
         if (valueOrFunc instanceof Function) {
-            guiMessageBroker.setState(key, valueOrFunc(state));
+            guiMessageBroker.setState(state, valueOrFunc(stateValue));
             return;
         }
-        guiMessageBroker.setState(key, valueOrFunc);
+        guiMessageBroker.setState(state, valueOrFunc);
     }
 
-    return [state, setter];
+    return [stateValue, stateSetter];
 }
 
-export function useGuiValue<T extends GuiState>(guiMessageBroker: GuiMessageBroker, key: T): GuiStateTypes[T] {
-    const [state] = useGuiState(guiMessageBroker, key);
-    return state;
+export function useGuiValue<T extends GuiState>(guiMessageBroker: GuiMessageBroker, state: T): GuiStateValueTypes[T] {
+    const [stateValue] = useGuiState(guiMessageBroker, state);
+    return stateValue;
 }

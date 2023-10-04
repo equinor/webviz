@@ -90,21 +90,21 @@ export const Layout: React.FC<LayoutProps> = (props) => {
             delayTimer = null;
         };
 
-        const handleModuleHeaderPointerDown = (e: GuiEventPayloads[GuiEvent.ModuleHeaderPointerDown]) => {
-            console.debug("handleModuleHeaderPointerDown", e);
-            pointerDownPoint = e.pointerPosition;
-            pointerDownElementPosition = e.elementPosition;
-            pointerDownElementId = e.moduleInstanceId;
+        const handleModuleHeaderPointerDown = (payload: GuiEventPayloads[GuiEvent.ModuleHeaderPointerDown]) => {
+            console.debug("handleModuleHeaderPointerDown", payload);
+            pointerDownPoint = payload.pointerPosition;
+            pointerDownElementPosition = payload.elementPosition;
+            pointerDownElementId = payload.moduleInstanceId;
             isNewModule = false;
         };
 
-        const handleNewModulePointerDown = (e: GuiEventPayloads[GuiEvent.NewModulePointerDown]) => {
-            pointerDownPoint = e.pointerPosition;
-            pointerDownElementPosition = e.elementPosition;
+        const handleNewModulePointerDown = (payload: GuiEventPayloads[GuiEvent.NewModulePointerDown]) => {
+            pointerDownPoint = payload.pointerPosition;
+            pointerDownElementPosition = payload.elementPosition;
             pointerDownElementId = v4();
             setTempLayoutBoxId(pointerDownElementId);
             isNewModule = true;
-            moduleName = e.moduleName;
+            moduleName = payload.moduleName;
         };
 
         const handlePointerUp = (e: PointerEvent) => {
@@ -221,15 +221,15 @@ export const Layout: React.FC<LayoutProps> = (props) => {
             }
         };
 
-        const handleRemoveModuleInstanceRequest = (e: GuiEventPayloads[GuiEvent.RemoveModuleInstanceRequest]) => {
+        const handleRemoveModuleInstanceRequest = (payload: GuiEventPayloads[GuiEvent.RemoveModuleInstanceRequest]) => {
             if (delayTimer) {
                 clearTimeout(delayTimer);
             }
             if (dragging) {
                 return;
             }
-            props.workbench.removeModuleInstance(e.moduleInstanceId);
-            currentLayoutBox.removeLayoutElement(e.moduleInstanceId);
+            props.workbench.removeModuleInstance(payload.moduleInstanceId);
+            currentLayoutBox.removeLayoutElement(payload.moduleInstanceId);
             currentLayout = currentLayoutBox.toLayout();
             setLayout(currentLayout);
             originalLayout = currentLayout;
