@@ -13,7 +13,7 @@ import { DebugProfiler } from "../../DebugProfiler";
 
 type SettingProps = {
     moduleInstance: ModuleInstance<any>;
-    activeModuleId: string;
+    activeModuleInstanceId: string;
     workbench: Workbench;
 };
 
@@ -61,7 +61,7 @@ export const Setting: React.FC<SettingProps> = (props) => {
                 <div
                     className="text-red-600"
                     style={{
-                        display: props.activeModuleId === props.moduleInstance.getId() ? "flex" : "none",
+                        display: props.activeModuleInstanceId === props.moduleInstance.getId() ? "flex" : "none",
                     }}
                 >
                     This module instance has encountered an error. Please see its view for more details.
@@ -75,7 +75,7 @@ export const Setting: React.FC<SettingProps> = (props) => {
         <div
             key={props.moduleInstance.getId()}
             className={resolveClassNames(
-                props.activeModuleId === props.moduleInstance.getId() ? "flex" : "hidden",
+                props.activeModuleInstanceId === props.moduleInstance.getId() ? "flex" : "hidden",
                 "flex-col h-full w-full relative"
             )}
         >

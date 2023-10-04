@@ -2,8 +2,8 @@ import React from "react";
 
 import WebvizLogo from "@assets/webviz.svg";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
-import { useStoreState } from "@framework/StateStore";
-import { DrawerContent, Workbench, WorkbenchEvents } from "@framework/Workbench";
+import { DrawerContent, GuiState, useGuiState } from "@framework/GuiMessageBroker";
+import { Workbench, WorkbenchEvents } from "@framework/Workbench";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { LoginButton } from "@framework/internal/components/LoginButton";
 import { SelectEnsemblesDialog } from "@framework/internal/components/SelectEnsemblesDialog";
@@ -38,14 +38,17 @@ export const NavBar: React.FC<NavBarProps> = (props) => {
     const [ensembleDialogOpen, setEnsembleDialogOpen] = React.useState<boolean>(false);
     const [layoutEmpty, setLayoutEmpty] = React.useState<boolean>(props.workbench.getLayout().length === 0);
     const [expanded, setExpanded] = React.useState<boolean>(localStorage.getItem("navBarExpanded") === "true");
-    const [loadingEnsembleSet, setLoadingEnsembleSet] = useStoreState(
-        props.workbench.getGuiStateStore(),
-        "loadingEnsembleSet"
+    const [loadingEnsembleSet, setLoadingEnsembleSet] = useGuiState(
+        props.workbench.getGuiMessageBroker(),
+        GuiState.LoadingEnsembleSet
     );
-    const [drawerContent, setDrawerContent] = useStoreState(props.workbench.getGuiStateStore(), "drawerContent");
-    const [settingsPanelWidth, setSettingsPanelWidth] = useStoreState(
-        props.workbench.getGuiStateStore(),
-        "settingsPanelWidthInPercent"
+    const [drawerContent, setDrawerContent] = useGuiState(
+        props.workbench.getGuiMessageBroker(),
+        GuiState.DrawerContent
+    );
+    const [settingsPanelWidth, setSettingsPanelWidth] = useGuiState(
+        props.workbench.getGuiMessageBroker(),
+        GuiState.SettingsPanelWidthInPercent
     );
     const ensembleSet = useEnsembleSet(props.workbench.getWorkbenchSession());
 

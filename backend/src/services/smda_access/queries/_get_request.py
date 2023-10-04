@@ -3,7 +3,7 @@ from typing import List
 import requests
 from dotenv import load_dotenv
 
-from src.backend import config
+from src import config
 from src.services.utils.perf_timer import PerfTimer
 
 load_dotenv()

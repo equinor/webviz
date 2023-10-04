@@ -1,7 +1,7 @@
 import React from "react";
 
+import { GuiState, useGuiValue } from "@framework/GuiMessageBroker";
 import { Workbench } from "@framework/Workbench";
-import { useActiveModuleId } from "@framework/internal/hooks/workbenchHooks";
 
 import { Layout } from "./private-components/layout";
 
@@ -10,10 +10,10 @@ type ContentProps = {
 };
 
 export const Content: React.FC<ContentProps> = (props) => {
-    const activeModuleId = useActiveModuleId(props.workbench);
+    const activeModuleInstanceId = useGuiValue(props.workbench.getGuiMessageBroker(), GuiState.ActiveModuleInstanceId);
     return (
         <div className="bg-slate-600 flex-grow">
-            <Layout workbench={props.workbench} activeModuleId={activeModuleId} />
+            <Layout workbench={props.workbench} activeModuleInstanceId={activeModuleInstanceId} />
         </div>
     );
 };

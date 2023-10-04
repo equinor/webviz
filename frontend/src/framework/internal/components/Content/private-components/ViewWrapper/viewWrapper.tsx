@@ -1,14 +1,13 @@
 import React from "react";
 
+import { DrawerContent, GuiEvent, GuiState, useGuiState } from "@framework/GuiMessageBroker";
 import { ModuleInstance } from "@framework/ModuleInstance";
-import { useStoreState } from "@framework/StateStore";
-import { DrawerContent, Workbench } from "@framework/Workbench";
+import { Workbench } from "@framework/Workbench";
 import { Point, pointDifference, pointRelativeToDomRect, pointerEventToPoint } from "@lib/utils/geometry";
 
 import { Header } from "./private-components/header";
 import { ViewContent } from "./private-components/viewContent";
 
-import { LayoutEventTypes } from "../layout";
 import { ViewWrapperPlaceholder } from "../viewWrapperPlaceholder";
 
 type ViewWrapperProps = {
@@ -25,11 +24,16 @@ type ViewWrapperProps = {
 
 export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
     const ref = React.useRef<HTMLDivElement>(null);
-    const [drawerContent, setDrawerContent] = useStoreState(props.workbench.getGuiStateStore(), "drawerContent");
-    const [settingsPanelWidth, setSettingsPanelWidth] = useStoreState(
-        props.workbench.getGuiStateStore(),
-        "settingsPanelWidthInPercent"
+    const [drawerContent, setDrawerContent] = useGuiState(
+        props.workbench.getGuiMessageBroker(),
+        GuiState.DrawerContent
     );
+    const [settingsPanelWidth, setSettingsPanelWidth] = useGuiState(
+        props.workbench.getGuiMessageBroker(),
+        GuiState.SettingsPanelWidthInPercent
+    );
+
+    const guiMessageBroker = props.workbench.getGuiMessageBroker();
 
     const timeRef = React.useRef<number | null>(null);
 
@@ -38,15 +42,11 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
             if (ref.current) {
                 const point = pointerEventToPoint(e.nativeEvent);
                 const rect = ref.current.getBoundingClientRect();
-                document.dispatchEvent(
-                    new CustomEvent(LayoutEventTypes.MODULE_INSTANCE_POINTER_DOWN, {
-                        detail: {
-                            id: props.moduleInstance.getId(),
-                            elementPosition: pointDifference(point, pointRelativeToDomRect(point, rect)),
-                            pointerPoint: point,
-                        },
-                    })
-                );
+                guiMessageBroker.publishEvent(GuiEvent.ModuleHeaderPointerDown, {
+                    moduleInstanceId: props.moduleInstance.getId(),
+                    elementPosition: pointDifference(point, pointRelativeToDomRect(point, rect)),
+                    pointerPosition: point,
+                });
             }
         },
         [props.moduleInstance]
@@ -54,13 +54,9 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
 
     const handleRemoveClick = React.useCallback(
         function handleRemoveClick(e: React.PointerEvent<HTMLDivElement>) {
-            document.dispatchEvent(
-                new CustomEvent(LayoutEventTypes.REMOVE_MODULE_INSTANCE_REQUEST, {
-                    detail: {
-                        id: props.moduleInstance.getId(),
-                    },
-                })
-            );
+            guiMessageBroker.publishEvent(GuiEvent.RemoveModuleInstanceRequest, {
+                moduleInstanceId: props.moduleInstance.getId(),
+            });
             e.preventDefault();
             e.stopPropagation();
         },
@@ -75,7 +71,7 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
             setDrawerContent(DrawerContent.ModuleSettings);
         }
         if (props.isActive) return;
-        props.workbench.setActiveModuleId(props.moduleInstance.getId());
+        props.workbench.getGuiMessageBroker().setState(GuiState.ActiveModuleInstanceId, props.moduleInstance.getId());
     }
 
     function handlePointerDown() {
@@ -92,7 +88,8 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
         handleModuleClick();
     }
 
-    const showAsActive = props.isActive && [DrawerContent.ModuleSettings, DrawerContent.SyncSettings].includes(drawerContent);
+    const showAsActive =
+        props.isActive && [DrawerContent.ModuleSettings, DrawerContent.SyncSettings].includes(drawerContent);
 
     return (
         <>
