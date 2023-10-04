@@ -74,7 +74,7 @@ def get_realization_surface_data(
     surf_data_response = converters.to_api_surface_data(xtgeo_surf)
     perf_metrics.record_lap("convert")
 
-    LOGGER.debug(f"Loaded realization surface in: {perf_metrics.get_elapsed_ms()}ms ({perf_metrics.get_as_string()})")
+    LOGGER.debug(f"Loaded realization surface in: {perf_metrics.to_string()}")
 
     return surf_data_response
 
@@ -111,9 +111,7 @@ def get_statistical_surface_data(
     surf_data_response: schemas.SurfaceData = converters.to_api_surface_data(xtgeo_surf)
     perf_metrics.record_lap("convert")
 
-    LOGGER.debug(
-        f"Calculated statistical surface in: {perf_metrics.get_elapsed_ms()}ms ({perf_metrics.get_as_string()})"
-    )
+    LOGGER.debug(f"Calculated statistical surface in: {perf_metrics.to_string()}")
 
     return surf_data_response
 
@@ -158,7 +156,7 @@ def get_property_surface_resampled_to_static_surface(
     surf_data_response: schemas.SurfaceData = converters.to_api_surface_data(resampled_surface)
     perf_metrics.record_lap("convert")
 
-    LOGGER.debug(f"Loaded property surface in: {perf_metrics.get_elapsed_ms()}ms ({perf_metrics.get_as_string()})")
+    LOGGER.debug(f"Loaded property surface in: {perf_metrics.to_string()}")
 
     return surf_data_response
 
