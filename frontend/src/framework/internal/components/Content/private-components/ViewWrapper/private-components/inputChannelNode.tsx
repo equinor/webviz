@@ -1,16 +1,13 @@
 import React from "react";
 
 import { BroadcastChannelKeyCategory } from "@framework/Broadcaster";
-import { GuiEvent } from "@framework/GuiMessageBroker";
-import { useSetStoreValue, useStoreValue } from "@framework/StateStore";
+import { GuiEvent, GuiEventPayloads } from "@framework/GuiMessageBroker";
 import { Workbench } from "@framework/Workbench";
 import { IconButton } from "@lib/components/IconButton";
 import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
 import { Point, pointerEventToPoint, rectContainsPoint } from "@lib/utils/geometry";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { Close } from "@mui/icons-material";
-
-import { DataChannelEventTypes } from "../../DataChannelVisualization";
 
 export type InputChannelNodeProps = {
     inputName: string;
@@ -34,7 +31,7 @@ export const InputChannelNode: React.FC<InputChannelNodeProps> = (props) => {
     const boundingRect = useElementBoundingRect(ref);
 
     React.useLayoutEffect(() => {
-        document.dispatchEvent(new CustomEvent(DataChannelEventTypes.DATA_CHANNEL_CONNECTIONS_CHANGED));
+        guiMessageBroker.publishEvent(GuiEvent.DataChannelConnectionsChange, {});
     }, [boundingRect, connectable]);
 
     React.useEffect(() => {
@@ -68,10 +65,8 @@ export const InputChannelNode: React.FC<InputChannelNodeProps> = (props) => {
 
         const moduleInstance = props.workbench.getModuleInstance(props.moduleInstanceId);
 
-        function handleDataChannelOriginPointerDown(
-            e: CustomEvent<{ moduleInstanceId: string; originElement: HTMLElement }>
-        ) {
-            const originModuleInstance = props.workbench.getModuleInstance(e.detail.moduleInstanceId);
+        function handleDataChannelOriginPointerDown(payload: GuiEventPayloads[GuiEvent.DataChannelOriginPointerDown]) {
+            const originModuleInstance = props.workbench.getModuleInstance(payload.moduleInstanceId);
             if (!originModuleInstance) {
                 return;
             }
@@ -112,7 +107,7 @@ export const InputChannelNode: React.FC<InputChannelNodeProps> = (props) => {
 
             setConnectable(true);
             isConnectable = true;
-            moduleInstanceId = e.detail.moduleInstanceId;
+            moduleInstanceId = payload.moduleInstanceId;
         }
 
         function handlePointerUp(e: PointerEvent) {
@@ -120,16 +115,21 @@ export const InputChannelNode: React.FC<InputChannelNodeProps> = (props) => {
                 if (isConnectable) {
                     props.onChannelConnect(props.inputName, moduleInstanceId, pointerEventToPoint(e));
                 } else {
-                    document.dispatchEvent(new CustomEvent(DataChannelEventTypes.DATA_CHANNEL_DONE));
+                    guiMessageBroker.publishEvent(GuiEvent.HideDataChannelConnectionsRequest, {});
                 }
                 setHovered(false);
                 isHovered = false;
             }
         }
 
+        function handleEditDataChannelConnectionsRequest() {
+            setEditDataChannelConnections(true);
+        }
+
         function handleDataChannelDone() {
             setConnectable(false);
             isConnectable = false;
+            setEditDataChannelConnections(false);
         }
 
         function handlePointerMove(e: PointerEvent) {
@@ -143,21 +143,28 @@ export const InputChannelNode: React.FC<InputChannelNodeProps> = (props) => {
             isHovered = false;
         }
 
-        document.addEventListener(
-            DataChannelEventTypes.DATA_CHANNEL_ORIGIN_POINTER_DOWN,
+        const removeDataChannelOriginPointerDownHandler = guiMessageBroker.subscribeToEvent(
+            GuiEvent.DataChannelOriginPointerDown,
             handleDataChannelOriginPointerDown
         );
-        document.addEventListener(DataChannelEventTypes.DATA_CHANNEL_DONE, handleDataChannelDone);
+        const removeDataChannelDoneHandler = guiMessageBroker.subscribeToEvent(
+            GuiEvent.HideDataChannelConnectionsRequest,
+            handleDataChannelDone
+        );
+
+        const removeShowDataChannelConnectionsRequestHandler = guiMessageBroker.subscribeToEvent(
+            GuiEvent.EditDataChannelConnectionsForModuleInstanceRequest,
+            handleEditDataChannelConnectionsRequest
+        );
 
         document.addEventListener("pointerup", handlePointerUp);
         document.addEventListener("pointermove", handlePointerMove);
 
         return () => {
-            document.removeEventListener(
-                DataChannelEventTypes.DATA_CHANNEL_ORIGIN_POINTER_DOWN,
-                handleDataChannelOriginPointerDown
-            );
-            document.removeEventListener(DataChannelEventTypes.DATA_CHANNEL_DONE, handleDataChannelDone);
+            removeDataChannelDoneHandler();
+            removeDataChannelOriginPointerDownHandler();
+            removeShowDataChannelConnectionsRequestHandler();
+
             document.removeEventListener("pointerup", handlePointerUp);
             document.removeEventListener("pointermove", handlePointerMove);
         };
@@ -174,9 +181,9 @@ export const InputChannelNode: React.FC<InputChannelNodeProps> = (props) => {
             dataChannelName: props.inputName,
         });
 
-        document.dispatchEvent(
-            new CustomEvent(DataChannelEventTypes.DATA_CHANNEL_NODE_HOVER, { detail: { allowed: connectable } })
-        );
+        guiMessageBroker.publishEvent(GuiEvent.DataChannelNodeHover, {
+            connectionAllowed: connectable,
+        });
     }
 
     function handlePointerLeave() {
@@ -214,7 +221,7 @@ export const InputChannelNode: React.FC<InputChannelNodeProps> = (props) => {
             {editDataChannelConnections && hasConnection && (
                 <IconButton
                     onPointerUp={handleChannelConnectionRemoveClick}
-                    className="ml-2 m-0"
+                    className="ml-2 m-0 text-white"
                     title="Remove data channel connection"
                 >
                     <Close fontSize="small" />

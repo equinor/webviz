@@ -7,7 +7,9 @@ export type SelectedSensitivity = {
     selectedSensitivity: string;
     selectedSensitivityCase: string | null;
 };
+
 export interface State {
     plotType: PlotType;
     selectedSensitivity: SelectedSensitivity | null;
+    responseChannelName: string | null;
 }

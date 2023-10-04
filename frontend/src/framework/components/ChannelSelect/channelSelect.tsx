@@ -6,6 +6,7 @@ import {
     Broadcaster,
     checkChannelCompatibility,
 } from "@framework/Broadcaster";
+import { ModuleContext } from "@framework/ModuleContext";
 import { BaseComponentProps } from "@lib/components/BaseComponent";
 import { Dropdown } from "@lib/components/Dropdown";
 

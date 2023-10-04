@@ -32,11 +32,13 @@ function nFormatter(num: number, digits: number): string {
     return item ? (num / item.value).toFixed(digits).replace(rx, "$1") + item.symbol : "0";
 }
 
-export const view = ({ moduleContext, workbenchServices, initialSettings }: ModuleFCProps<State>) => {
+export const view = ({
+    moduleContext,
+    workbenchServices,
+    initialSettings,
+    workbenchSettings,
+}: ModuleFCProps<State>) => {
     const [plotType, setPlotType] = moduleContext.useStoreState("plotType");
-    const channelNameX = moduleContext.useStoreValue("channelNameX");
-    const channelNameY = moduleContext.useStoreValue("channelNameY");
-    const channelNameZ = moduleContext.useStoreValue("channelNameZ");
     const numBins = moduleContext.useStoreValue("numBins");
     const orientation = moduleContext.useStoreValue("orientation");
 
@@ -370,6 +372,7 @@ export const view = ({ moduleContext, workbenchServices, initialSettings }: Modu
                         yAxisTitle={channelX?.getDataDef().key ?? ""}
                         width={wrapperDivSize.width}
                         height={wrapperDivSize.height}
+                        colorSet={colorSet}
                     />
                 );
             }
@@ -394,6 +397,7 @@ export const view = ({ moduleContext, workbenchServices, initialSettings }: Modu
                         onHoverData={handleHoverChanged}
                         keyData={keyData}
                         highlightedKey={highlightedKey ?? undefined}
+                        colorSet={colorSet}
                     />
                 );
             }

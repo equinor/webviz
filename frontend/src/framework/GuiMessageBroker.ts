@@ -27,6 +27,9 @@ export enum GuiEvent {
     HighlightDataChannelConnectionRequest = "highlightDataChannelConnectionRequest",
     UnhighlightDataChannelConnectionRequest = "unhighlightDataChannelConnectionRequest",
     DataChannelOriginPointerDown = "dataChannelOriginPointerDown",
+    DataChannelConnectionsChange = "dataChannelConnectionsChange",
+    DataChannelNodeHover = "dataChannelNodeHover",
+    DataChannelNodeUnhover = "dataChannelNodeUnhover",
 }
 
 export type GuiEventPayloads = {
@@ -53,10 +56,15 @@ export type GuiEventPayloads = {
         dataChannelName: string;
     };
     [GuiEvent.UnhighlightDataChannelConnectionRequest]: {};
+    [GuiEvent.DataChannelConnectionsChange]: {};
     [GuiEvent.DataChannelOriginPointerDown]: {
         moduleInstanceId: string;
         originElement: HTMLElement;
     };
+    [GuiEvent.DataChannelNodeHover]: {
+        connectionAllowed: boolean;
+    };
+    [GuiEvent.DataChannelNodeUnhover]: {};
 };
 
 type GuiStateValueTypes = {

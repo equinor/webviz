@@ -7,6 +7,7 @@ import { view } from "./view";
 const defaultState: State = {
     plotType: PlotType.TORNADO,
     selectedSensitivity: null,
+    responseChannelName: null,
 };
 
 const module = ModuleRegistry.initModule<State>("TornadoChart", defaultState);

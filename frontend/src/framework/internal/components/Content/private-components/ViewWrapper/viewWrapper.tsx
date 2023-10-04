@@ -11,7 +11,6 @@ import { InputChannelNode } from "./private-components/inputChannelNode";
 import { InputChannelNodeWrapper } from "./private-components/inputChannelNodeWrapper";
 import { ViewContent } from "./private-components/viewContent";
 
-import { DataChannelEventTypes } from "../DataChannelVisualization";
 import { ViewWrapperPlaceholder } from "../viewWrapperPlaceholder";
 
 type ViewWrapperProps = {
@@ -107,7 +106,7 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
         const originModuleInstance = props.workbench.getModuleInstance(moduleInstanceId);
 
         if (!originModuleInstance) {
-            document.dispatchEvent(new CustomEvent(DataChannelEventTypes.DATA_CHANNEL_DONE));
+            guiMessageBroker.publishEvent(GuiEvent.HideDataChannelConnectionsRequest, {});
             return;
         }
 
@@ -128,7 +127,7 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
         });
 
         if (channels.length === 0) {
-            document.dispatchEvent(new CustomEvent(DataChannelEventTypes.DATA_CHANNEL_DONE));
+            guiMessageBroker.publishEvent(GuiEvent.HideDataChannelConnectionsRequest, {});
             return;
         }
 
@@ -142,18 +141,18 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
         const channelName = Object.values(channels)[0].getName();
 
         props.moduleInstance.setInputChannel(inputName, channelName);
-        document.dispatchEvent(new CustomEvent(DataChannelEventTypes.DATA_CHANNEL_DONE));
+        guiMessageBroker.publishEvent(GuiEvent.HideDataChannelConnectionsRequest, {});
     }
 
     function handleChannelDisconnect(inputName: string) {
         props.moduleInstance.removeInputChannel(inputName);
-        document.dispatchEvent(new CustomEvent(DataChannelEventTypes.DATA_CHANNEL_CONNECTIONS_CHANGED));
+        guiMessageBroker.publishEvent(GuiEvent.DataChannelConnectionsChange, {});
     }
 
     function handleCancelChannelSelection() {
         setChannelSelectorCenterPoint(null);
         setSelectableChannels([]);
-        document.dispatchEvent(new CustomEvent(DataChannelEventTypes.DATA_CHANNEL_DONE));
+        guiMessageBroker.publishEvent(GuiEvent.HideDataChannelConnectionsRequest, {});
     }
 
     function handleChannelSelection(channelName: string) {
@@ -164,7 +163,7 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
         setSelectableChannels([]);
 
         props.moduleInstance.setInputChannel(currentInputName, channelName);
-        document.dispatchEvent(new CustomEvent(DataChannelEventTypes.DATA_CHANNEL_DONE));
+        guiMessageBroker.publishEvent(GuiEvent.HideDataChannelConnectionsRequest, {});
     }
 
     const showAsActive =
@@ -202,10 +201,15 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
                         onPointerDown={handleHeaderPointerDown}
                         onRemoveClick={handleRemoveClick}
                         onInputChannelsClick={handleInputChannelsClick}
+                        guiMessageBroker={guiMessageBroker}
                     />
                     <div className="flex-grow overflow-auto h-0" onClick={handleModuleClick}>
                         <ViewContent workbench={props.workbench} moduleInstance={props.moduleInstance} />
-                        <InputChannelNodeWrapper forwardedRef={ref} guiMessageBroker={guiMessageBroker}>
+                        <InputChannelNodeWrapper
+                            forwardedRef={ref}
+                            guiMessageBroker={guiMessageBroker}
+                            moduleInstanceId={props.moduleInstance.getId()}
+                        >
                             {props.moduleInstance.getInputChannelDefs().map((channelDef) => {
                                 return (
                                     <InputChannelNode

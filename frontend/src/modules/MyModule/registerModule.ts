@@ -1,4 +1,3 @@
-import { BroadcastChannelKeyCategory, BroadcastChannelValueType, BroadcastChannelsDef } from "@framework/Broadcaster";
 import { ModuleRegistry } from "@framework/ModuleRegistry";
 
 import { State } from "./state";
@@ -9,4 +8,4 @@ ModuleRegistry.registerModule<State>({
     description: "My module description",
 });
 
-ModuleRegistry.registerModule<State>({ moduleName: "MyModule", defaultTitle: "My Module", broadcastChannelsDef });
+ModuleRegistry.registerModule<State>({ moduleName: "MyModule", defaultTitle: "My Module" });

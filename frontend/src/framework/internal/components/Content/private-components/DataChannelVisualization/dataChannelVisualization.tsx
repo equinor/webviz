@@ -1,47 +1,10 @@
 import React from "react";
 
-import { useStoreState, useStoreValue } from "@framework/StateStore";
+import { GuiEvent, GuiEventPayloads } from "@framework/GuiMessageBroker";
 import { Workbench } from "@framework/Workbench";
 import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
 import { Point } from "@lib/utils/geometry";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-
-export enum DataChannelEventTypes {
-    DATA_CHANNEL_ORIGIN_POINTER_DOWN = "data-channel-origin-pointer-down",
-    DATA_CHANNEL_NODE_HOVER = "data-channel-node-hover",
-    DATA_CHANNEL_NODE_UNHOVER = "data-channel-node-unhover",
-    DATA_CHANNEL_DONE = "data-channel-done",
-    DATA_CHANNEL_CONNECTIONS_CHANGED = "data-channel-connections-changed",
-}
-
-export interface DataChannelEvents {
-    [DataChannelEventTypes.DATA_CHANNEL_ORIGIN_POINTER_DOWN]: CustomEvent<{
-        moduleInstanceId: string;
-        originElement: HTMLElement;
-    }>;
-    [DataChannelEventTypes.DATA_CHANNEL_NODE_HOVER]: CustomEvent<{
-        allowed: boolean;
-    }>;
-    [DataChannelEventTypes.DATA_CHANNEL_NODE_UNHOVER]: CustomEvent;
-    [DataChannelEventTypes.DATA_CHANNEL_DONE]: CustomEvent;
-    [DataChannelEventTypes.DATA_CHANNEL_CONNECTIONS_CHANGED]: CustomEvent;
-}
-
-declare global {
-    interface Document {
-        addEventListener<K extends keyof DataChannelEvents>(
-            type: K,
-            listener: (ev: DataChannelEvents[K]) => any,
-            options?: boolean | AddEventListenerOptions
-        ): void;
-        removeEventListener<K extends keyof DataChannelEvents>(
-            type: K,
-            listener: (ev: DataChannelEvents[K]) => any,
-            options?: boolean | EventListenerOptions
-        ): void;
-        dispatchEvent<K extends keyof DataChannelEvents>(event: DataChannelEvents[K]): void;
-    }
-}
 
 export type DataChannelVisualizationProps = {
     workbench: Workbench;
@@ -77,6 +40,8 @@ export const DataChannelVisualization: React.FC<DataChannelVisualizationProps> =
 
     const boundingRect = useElementBoundingRect(ref);
 
+    const guiMessageBroker = props.workbench.getGuiMessageBroker();
+
     React.useEffect(() => {
         forceRerender();
     }, [boundingRect]);
@@ -85,10 +50,8 @@ export const DataChannelVisualization: React.FC<DataChannelVisualizationProps> =
         let mousePressed = false;
         let currentOriginPoint: Point = { x: 0, y: 0 };
 
-        function handleDataChannelOriginPointerDown(
-            e: CustomEvent<{ moduleInstanceId: string; originElement: HTMLElement }>
-        ) {
-            const clientRect = e.detail.originElement.getBoundingClientRect();
+        function handleDataChannelOriginPointerDown(payload: GuiEventPayloads[GuiEvent.DataChannelOriginPointerDown]) {
+            const clientRect = payload.originElement.getBoundingClientRect();
             currentOriginPoint = {
                 x: clientRect.left + clientRect.width / 2,
                 y: clientRect.top + clientRect.height / 2,
@@ -100,7 +63,7 @@ export const DataChannelVisualization: React.FC<DataChannelVisualizationProps> =
             setCurrentPointerPosition(currentOriginPoint);
             setCurrentChannelName(null);
 
-            const moduleInstance = props.workbench.getModuleInstance(e.detail.moduleInstanceId);
+            const moduleInstance = props.workbench.getModuleInstance(payload.moduleInstanceId);
             if (!moduleInstance) {
                 return;
             }
@@ -114,7 +77,11 @@ export const DataChannelVisualization: React.FC<DataChannelVisualizationProps> =
 
         function handleDataChannelDone() {
             setVisible(false);
+            setEditDataChannelConnectionsForModuleInstanceId(null);
+            setShowDataChannelConnections(false);
             document.body.classList.remove("cursor-crosshair");
+            document.body.classList.remove("cursor-not-allowed");
+            document.body.classList.remove("cursor-copy");
         }
 
         function handlePointerUp() {
@@ -150,9 +117,9 @@ export const DataChannelVisualization: React.FC<DataChannelVisualizationProps> =
             }, 100);
         }
 
-        function handleNodeHover(e: CustomEvent<{ allowed: boolean }>) {
+        function handleNodeHover(payload: GuiEventPayloads[GuiEvent.DataChannelNodeHover]) {
             document.body.classList.remove("cursor-crosshair");
-            if (e.detail.allowed) {
+            if (payload.connectionAllowed) {
                 document.body.classList.add("cursor-copy");
             } else {
                 document.body.classList.add("cursor-not-allowed");
@@ -165,28 +132,77 @@ export const DataChannelVisualization: React.FC<DataChannelVisualizationProps> =
             document.body.classList.add("cursor-crosshair");
         }
 
-        document.addEventListener(
-            DataChannelEventTypes.DATA_CHANNEL_ORIGIN_POINTER_DOWN,
+        function handleEditDataChannelConnectionsRequest(
+            payload: GuiEventPayloads[GuiEvent.EditDataChannelConnectionsForModuleInstanceRequest]
+        ) {
+            setEditDataChannelConnectionsForModuleInstanceId(payload.moduleInstanceId);
+            setShowDataChannelConnections(true);
+        }
+
+        function handleHighlightDataChannelConnectionRequest(
+            payload: GuiEventPayloads[GuiEvent.HighlightDataChannelConnectionRequest]
+        ) {
+            setHighlightedDataChannelConnection({
+                moduleInstanceId: payload.moduleInstanceId,
+                dataChannelName: payload.dataChannelName,
+            });
+        }
+
+        function handleUnhighlightDataChannelConnectionRequest() {
+            setHighlightedDataChannelConnection(null);
+        }
+
+        const removeHighlightDataChannelConnectionRequestHandler = guiMessageBroker.subscribeToEvent(
+            GuiEvent.HighlightDataChannelConnectionRequest,
+            handleHighlightDataChannelConnectionRequest
+        );
+
+        const removeUnhighlightDataChannelConnectionRequestHandler = guiMessageBroker.subscribeToEvent(
+            GuiEvent.UnhighlightDataChannelConnectionRequest,
+            handleUnhighlightDataChannelConnectionRequest
+        );
+
+        const removeEditDataChannelConnectionsRequestHandler = guiMessageBroker.subscribeToEvent(
+            GuiEvent.EditDataChannelConnectionsForModuleInstanceRequest,
+            handleEditDataChannelConnectionsRequest
+        );
+
+        const removeDataChannelOriginPointerDownHandler = guiMessageBroker.subscribeToEvent(
+            GuiEvent.DataChannelOriginPointerDown,
             handleDataChannelOriginPointerDown
         );
+        const removeDataChannelDoneHandler = guiMessageBroker.subscribeToEvent(
+            GuiEvent.HideDataChannelConnectionsRequest,
+            handleDataChannelDone
+        );
+        const removeConnectionChangeHandler = guiMessageBroker.subscribeToEvent(
+            GuiEvent.DataChannelConnectionsChange,
+            handleConnectionChange
+        );
+        const removeNodeHoverHandler = guiMessageBroker.subscribeToEvent(
+            GuiEvent.DataChannelNodeHover,
+            handleNodeHover
+        );
+        const removeNodeUnhoverHandler = guiMessageBroker.subscribeToEvent(
+            GuiEvent.DataChannelNodeUnhover,
+            handleNodeUnhover
+        );
+
         document.addEventListener("pointerup", handlePointerUp);
-        document.addEventListener(DataChannelEventTypes.DATA_CHANNEL_DONE, handleDataChannelDone);
-        document.addEventListener(DataChannelEventTypes.DATA_CHANNEL_CONNECTIONS_CHANGED, handleConnectionChange);
         document.addEventListener("pointermove", handlePointerMove);
         document.addEventListener("resize", handleConnectionChange);
-        document.addEventListener(DataChannelEventTypes.DATA_CHANNEL_NODE_HOVER, handleNodeHover);
-        document.addEventListener(DataChannelEventTypes.DATA_CHANNEL_NODE_UNHOVER, handleNodeUnhover);
 
         return () => {
-            document.removeEventListener(
-                DataChannelEventTypes.DATA_CHANNEL_ORIGIN_POINTER_DOWN,
-                handleDataChannelOriginPointerDown
-            );
-            document.removeEventListener(DataChannelEventTypes.DATA_CHANNEL_DONE, handleDataChannelDone);
-            document.removeEventListener(
-                DataChannelEventTypes.DATA_CHANNEL_CONNECTIONS_CHANGED,
-                handleConnectionChange
-            );
+            removeEditDataChannelConnectionsRequestHandler();
+            removeHighlightDataChannelConnectionRequestHandler();
+            removeUnhighlightDataChannelConnectionRequestHandler();
+            removeDataChannelOriginPointerDownHandler();
+            removeDataChannelDoneHandler();
+            removeConnectionChangeHandler();
+            removeNodeHoverHandler();
+            removeNodeUnhoverHandler();
+
+            document.removeEventListener("pointerup", handlePointerUp);
             document.removeEventListener("pointermove", handlePointerMove);
             document.removeEventListener("resize", handleConnectionChange);
         };
@@ -199,7 +215,7 @@ export const DataChannelVisualization: React.FC<DataChannelVisualizationProps> =
             }
             setShowDataChannelConnections(false);
             setEditDataChannelConnectionsForModuleInstanceId(null);
-            document.dispatchEvent(new CustomEvent(DataChannelEventTypes.DATA_CHANNEL_DONE));
+            guiMessageBroker.publishEvent(GuiEvent.HideDataChannelConnectionsRequest, {});
         }
 
         document.addEventListener("pointerup", handlePointerUp);

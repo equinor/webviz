@@ -1,15 +1,14 @@
 import React from "react";
 import { createPortal } from "react-dom";
 
-import { GuiEvent, GuiMessageBroker } from "@framework/GuiMessageBroker";
+import { GuiEvent, GuiEventPayloads, GuiMessageBroker } from "@framework/GuiMessageBroker";
 import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-
-import { DataChannelEventTypes } from "../../DataChannelVisualization/dataChannelVisualization";
 
 export type InputChannelNodeWrapperProps = {
     children: React.ReactNode;
     forwardedRef: React.RefObject<HTMLDivElement>;
+    moduleInstanceId: string;
     guiMessageBroker: GuiMessageBroker;
 };
 
@@ -37,16 +36,32 @@ export const InputChannelNodeWrapper: React.FC<InputChannelNodeWrapperProps> = (
                 (!e.target || !(e.target as Element).hasAttribute("data-channelconnector")) &&
                 !(e.target as Element).closest("#channel-selector-header")
             ) {
-                document.dispatchEvent(new CustomEvent(DataChannelEventTypes.DATA_CHANNEL_DONE));
+                props.guiMessageBroker.publishEvent(GuiEvent.HideDataChannelConnectionsRequest, {});
+                setVisible(false);
             }
         }
 
-        document.addEventListener(
-            DataChannelEventTypes.DATA_CHANNEL_ORIGIN_POINTER_DOWN,
+        function handleEditDataChannelConnectionsRequest(
+            payload: GuiEventPayloads[GuiEvent.EditDataChannelConnectionsForModuleInstanceRequest]
+        ) {
+            if (payload.moduleInstanceId !== props.moduleInstanceId) {
+                return;
+            }
+            setVisible(true);
+            isVisible = true;
+        }
+
+        const removeEditDataChannelConnectionsRequestHandler = props.guiMessageBroker.subscribeToEvent(
+            GuiEvent.EditDataChannelConnectionsForModuleInstanceRequest,
+            handleEditDataChannelConnectionsRequest
+        );
+
+        const removeDataChannelOriginPointerDownHandler = props.guiMessageBroker.subscribeToEvent(
+            GuiEvent.DataChannelOriginPointerDown,
             handleDataChannelOriginPointerDown
         );
 
-        const removeHandleDataChannelDone = props.guiMessageBroker.subscribeToEvent(
+        const removeDataChannelDoneHandler = props.guiMessageBroker.subscribeToEvent(
             GuiEvent.HideDataChannelConnectionsRequest,
             handleDataChannelDone
         );
@@ -54,14 +69,12 @@ export const InputChannelNodeWrapper: React.FC<InputChannelNodeWrapperProps> = (
         document.addEventListener("pointerup", handlePointerUp);
 
         return () => {
-            removeHandleDataChannelDone();
-            document.removeEventListener(
-                DataChannelEventTypes.DATA_CHANNEL_ORIGIN_POINTER_DOWN,
-                handleDataChannelOriginPointerDown
-            );
+            removeEditDataChannelConnectionsRequestHandler();
+            removeDataChannelDoneHandler();
+            removeDataChannelOriginPointerDownHandler();
             document.removeEventListener("pointerup", handlePointerUp);
         };
-    }, []);
+    }, [props.moduleInstanceId, props.guiMessageBroker]);
 
     return createPortal(
         <div

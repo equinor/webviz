@@ -1,12 +1,10 @@
 import React from "react";
 
+import { GuiEvent, GuiMessageBroker } from "@framework/GuiMessageBroker";
 import { ModuleInstance } from "@framework/ModuleInstance";
 import { SyncSettingKey, SyncSettingsMeta } from "@framework/SyncSettings";
-import { ArrowDownTrayIcon, ArrowUpTrayIcon, XMarkIcon } from "@heroicons/react/20/solid";
 import { isDevMode } from "@lib/utils/devMode";
-import { Close } from "@mui/icons-material";
-
-import { DataChannelEventTypes } from "../../DataChannelVisualization";
+import { ArrowDownward, ArrowUpward, Close } from "@mui/icons-material";
 
 export type HeaderProps = {
     moduleInstance: ModuleInstance<any>;
@@ -14,6 +12,7 @@ export type HeaderProps = {
     onPointerDown: (event: React.PointerEvent<HTMLDivElement>) => void;
     onRemoveClick: (event: React.PointerEvent<HTMLDivElement>) => void;
     onInputChannelsClick: (event: React.PointerEvent<HTMLDivElement>) => void;
+    guiMessageBroker: GuiMessageBroker;
 };
 
 export const Header: React.FC<HeaderProps> = (props) => {
@@ -44,14 +43,13 @@ export const Header: React.FC<HeaderProps> = (props) => {
     }, []);
 
     function handleDataChannelOriginPointerDown(e: React.PointerEvent<HTMLDivElement>) {
-        document.dispatchEvent(
-            new CustomEvent(DataChannelEventTypes.DATA_CHANNEL_ORIGIN_POINTER_DOWN, {
-                detail: {
-                    moduleInstanceId: props.moduleInstance.getId(),
-                    originElement: dataChannelOriginRef.current,
-                },
-            })
-        );
+        if (!dataChannelOriginRef.current) {
+            return;
+        }
+        props.guiMessageBroker.publishEvent(GuiEvent.DataChannelOriginPointerDown, {
+            moduleInstanceId: props.moduleInstance.getId(),
+            originElement: dataChannelOriginRef.current,
+        });
         e.stopPropagation();
         e.preventDefault();
     }
@@ -107,7 +105,7 @@ export const Header: React.FC<HeaderProps> = (props) => {
                     title="Connect data channels to other module instances"
                     onPointerDown={handleDataChannelOriginPointerDown}
                 >
-                    <ArrowUpTrayIcon className="w-4 h-4" />
+                    <ArrowUpward fontSize="small" />
                 </div>
             )}
             {props.moduleInstance.getInputChannelDefs().length > 0 && (
@@ -117,7 +115,7 @@ export const Header: React.FC<HeaderProps> = (props) => {
                     onPointerUp={handleInputChannelsPointerUp}
                     onPointerDown={handleInputChannelsPointerDown}
                 >
-                    <ArrowDownTrayIcon className="w-4 h-4" />
+                    <ArrowDownward fontSize="small" />
                 </div>
             )}
             <div

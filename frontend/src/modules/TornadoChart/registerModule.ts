@@ -7,25 +7,15 @@ import { State } from "./state";
 
 const inputChannelDefs: InputBroadcastChannelDef[] = [
     {
-        name: "channelX",
-        displayName: "X axis",
-        keyCategories: [BroadcastChannelKeyCategory.Realization],
-    },
-    {
-        name: "channelY",
-        displayName: "Y axis",
-        keyCategories: [BroadcastChannelKeyCategory.Realization],
-    },
-    {
-        name: "channelColor",
-        displayName: "Color mapping",
+        name: "responseChannel",
+        displayName: "Response",
         keyCategories: [BroadcastChannelKeyCategory.Realization],
     },
 ];
 
 ModuleRegistry.registerModule<State>({
-    moduleName: "DistributionPlot",
-    defaultTitle: "Distribution plot",
+    moduleName: "TornadoChart",
+    defaultTitle: "Tornado Chart",
     syncableSettingKeys: [SyncSettingKey.ENSEMBLE, SyncSettingKey.TIME_SERIES],
     inputChannelDefs,
     preview,
