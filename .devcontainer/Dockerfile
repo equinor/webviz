@@ -7,7 +7,7 @@ ENV SHELL=/bin/bash \
     DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update -y \
-    && apt-get install -y --no-install-recommends sudo curl gnupg ca-certificates \
+    && apt-get install -y --no-install-recommends sudo curl gnupg ca-certificates software-properties-common \
     && mkdir -p /etc/apt/keyrings \
     && curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | sudo gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg \
     && NODE_MAJOR=20 \
