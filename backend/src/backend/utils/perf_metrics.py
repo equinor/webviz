@@ -52,6 +52,6 @@ class PerfMetrics:
         metrics_str = ", ".join([f"{key}={value}ms" for key, value in self._metrics_dict.items()])
         
         if include_total_elapsed:
-            return f"{self.get_elapsed_ms()}ms, ({metrics_str})"
+            return f"{self.get_elapsed_ms()}ms ({metrics_str})"
 
         return metrics_str
