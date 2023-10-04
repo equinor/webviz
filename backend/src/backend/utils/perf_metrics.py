@@ -41,7 +41,7 @@ class PerfMetrics:
     def to_string(self, include_total_elapsed: bool = True) -> str:
         """
         Returns a string representation of the metrics suitable for logging.
-        
+
         When include_total_elapsed is True, the total elapsed time will be included in the string as well and
         the string will be formatted as:
             '300ms (metric1=100ms, metric2=200ms)'
@@ -50,7 +50,7 @@ class PerfMetrics:
             'metric1=100ms, metric2=200ms'
         """
         metrics_str = ", ".join([f"{key}={value}ms" for key, value in self._metrics_dict.items()])
-        
+
         if include_total_elapsed:
             return f"{self.get_elapsed_ms()}ms ({metrics_str})"
 
