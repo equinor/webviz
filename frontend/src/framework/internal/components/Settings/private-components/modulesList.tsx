@@ -147,7 +147,8 @@ const ModulesListItem: React.FC<ModulesListItemProps> = (props) => {
                         </span>
                     )}
                 </div>
-                <div className="p-4 flex flex-grow items-center justify-center ">
+                <div className="p-4 flex flex-grow items-center justify-center relative">
+                    <div className="absolute w-full h-full z-10 select-none bg-transparent" />
                     {props.drawPreviewFunc
                         ? props.drawPreviewFunc(Math.max(0, itemSize.width - 40), Math.max(0, itemSize.height - 60))
                         : "No preview available"}
