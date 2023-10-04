@@ -1,8 +1,7 @@
 import logging
 from typing import List, Union, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query
-
+from fastapi import APIRouter, Depends, HTTPException, Query, Response
 
 from src.services.sumo_access.surface_access import SurfaceAccess
 from src.services.sumo_access.case_inspector import CaseInspector
@@ -13,7 +12,7 @@ from src.services.utils.statistic_function import StatisticFunction
 from src.services.utils.authenticated_user import AuthenticatedUser
 from src.services.utils.perf_timer import PerfTimer
 from src.backend.auth.auth_helper import AuthHelper
-
+from src.backend.utils.perf_metrics import PerfMetrics
 
 from . import converters
 from . import schemas
@@ -52,6 +51,7 @@ def get_surface_directory(
 
 @router.get("/realization_surface_data/")
 def get_realization_surface_data(
+    response: Response,
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     case_uuid: str = Query(description="Sumo case uuid"),
     ensemble_name: str = Query(description="Ensemble name"),
@@ -60,31 +60,28 @@ def get_realization_surface_data(
     attribute: str = Query(description="Surface attribute"),
     time_or_interval: Optional[str] = Query(None, description="Time point or time interval string"),
 ) -> schemas.SurfaceData:
-    timer = PerfTimer()
+    perf_metrics = PerfMetrics(response)
 
     access = SurfaceAccess(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
     xtgeo_surf = access.get_realization_surface_data(
         real_num=realization_num, name=name, attribute=attribute, time_or_interval_str=time_or_interval
     )
-    et_get_surf_ms = timer.lap_ms()
+    perf_metrics.record_lap("get-surf")
 
     if not xtgeo_surf:
         raise HTTPException(status_code=404, detail="Surface not found")
 
     surf_data_response = converters.to_api_surface_data(xtgeo_surf)
-    et_convert_ms = timer.lap_ms()
+    perf_metrics.record_lap("convert")
 
-    LOGGER.debug(
-        f"Loaded realization surface in: {timer.elapsed_ms()}ms ("
-        f"get_surf={et_get_surf_ms}ms, "
-        f"convert={et_convert_ms}ms)"
-    )
+    LOGGER.debug(f"Loaded realization surface in: {perf_metrics.to_string()}")
 
     return surf_data_response
 
 
 @router.get("/statistical_surface_data/")
 def get_statistical_surface_data(
+    response: Response,
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     case_uuid: str = Query(description="Sumo case uuid"),
     ensemble_name: str = Query(description="Ensemble name"),
@@ -93,7 +90,7 @@ def get_statistical_surface_data(
     attribute: str = Query(description="Surface attribute"),
     time_or_interval: Optional[str] = Query(None, description="Time point or time interval string"),
 ) -> schemas.SurfaceData:
-    timer = PerfTimer()
+    perf_metrics = PerfMetrics(response)
 
     service_stat_func_to_compute = StatisticFunction.from_string_value(statistic_function)
     if service_stat_func_to_compute is None:
@@ -106,19 +103,15 @@ def get_statistical_surface_data(
         attribute=attribute,
         time_or_interval_str=time_or_interval,
     )
-    et_calc_ms = timer.lap_ms()
+    perf_metrics.record_lap("sumo-calc")
 
     if not xtgeo_surf:
         raise HTTPException(status_code=404, detail="Could not find or compute surface")
 
     surf_data_response: schemas.SurfaceData = converters.to_api_surface_data(xtgeo_surf)
-    et_convert_ms = timer.lap_ms()
+    perf_metrics.record_lap("convert")
 
-    LOGGER.debug(
-        f"Calculated statistical surface in: {timer.elapsed_ms()}ms ("
-        f"calc={et_calc_ms}ms, "
-        f"convert={et_convert_ms}ms)"
-    )
+    LOGGER.debug(f"Calculated statistical surface in: {perf_metrics.to_string()}")
 
     return surf_data_response
 
@@ -126,6 +119,7 @@ def get_statistical_surface_data(
 # pylint: disable=too-many-arguments
 @router.get("/property_surface_resampled_to_static_surface/")
 def get_property_surface_resampled_to_static_surface(
+    response: Response,
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     case_uuid: str = Query(description="Sumo case uuid"),
     ensemble_name: str = Query(description="Ensemble name"),
@@ -137,27 +131,32 @@ def get_property_surface_resampled_to_static_surface(
     attribute_property: str = Query(description="Surface attribute"),
     time_or_interval_property: Optional[str] = Query(None, description="Time point or time interval string"),
 ) -> schemas.SurfaceData:
-    timer = PerfTimer()
+    perf_metrics = PerfMetrics(response)
 
     access = SurfaceAccess(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
     xtgeo_surf_mesh = access.get_realization_surface_data(
         real_num=realization_num_mesh, name=name_mesh, attribute=attribute_mesh
     )
+    perf_metrics.record_lap("mesh-surf")
+
     xtgeo_surf_property = access.get_realization_surface_data(
         real_num=realization_num_property,
         name=name_property,
         attribute=attribute_property,
         time_or_interval_str=time_or_interval_property,
     )
+    perf_metrics.record_lap("prop-surf")
 
     if not xtgeo_surf_mesh or not xtgeo_surf_property:
         raise HTTPException(status_code=404, detail="Surface not found")
 
     resampled_surface = converters.resample_property_surface_to_mesh_surface(xtgeo_surf_mesh, xtgeo_surf_property)
+    perf_metrics.record_lap("resample")
 
     surf_data_response: schemas.SurfaceData = converters.to_api_surface_data(resampled_surface)
+    perf_metrics.record_lap("convert")
 
-    LOGGER.debug(f"Loaded property surface and created image, total time: {timer.elapsed_ms()}ms")
+    LOGGER.debug(f"Loaded property surface in: {perf_metrics.to_string()}")
 
     return surf_data_response
 
