@@ -46,12 +46,11 @@ const makeStyle = (isDragged: boolean, dragSize: Size, dragPosition: Point): Rea
 
 const ModulesListItem: React.FC<ModulesListItemProps> = (props) => {
     const ref = React.useRef<HTMLDivElement>(null);
-    const mainRef = React.useRef<HTMLDivElement>(null);
     const [isDragged, setIsDragged] = React.useState<boolean>(false);
     const [dragPosition, setDragPosition] = React.useState<Point>({ x: 0, y: 0 });
     const [dragSize, setDragSize] = React.useState<Size>({ width: 0, height: 0 });
 
-    const itemSize = useElementSize(mainRef);
+    const itemSize = useElementSize(ref);
 
     React.useEffect(() => {
         let pointerDownPoint: Point | null = null;
@@ -92,8 +91,8 @@ const ModulesListItem: React.FC<ModulesListItemProps> = (props) => {
             ) {
                 dragging = true;
                 setIsDragged(true);
-                if (mainRef.current) {
-                    const rect = mainRef.current.getBoundingClientRect();
+                if (ref.current) {
+                    const rect = ref.current.getBoundingClientRect();
                     setDragSize({ width: rect.width, height: rect.height });
                 }
                 pointerToElementDiff = pointDifference(pointerDownPoint, pointerDownElementPosition);
@@ -127,13 +126,13 @@ const ModulesListItem: React.FC<ModulesListItemProps> = (props) => {
 
     return (
         <>
-            {isDragged && <div ref={mainRef} className="bg-red-300 w-full h-40 mb-4" />}
+            {isDragged && <div ref={ref} className="bg-red-300 w-full h-40 mb-4" />}
             <div
-                ref={isDragged ? undefined : mainRef}
-                className="mb-4 flex flex-col border box-border border-slate-300 border-solid text-sm text-gray-700 w-full h-40 select-none hover:shadow-md"
+                ref={isDragged ? undefined : ref}
+                className="mb-4 cursor-move flex flex-col border box-border border-slate-300 border-solid text-sm text-gray-700 w-full h-40 select-none hover:shadow-md"
                 style={makeStyle(isDragged, dragSize, dragPosition)}
             >
-                <div ref={ref} className="bg-slate-100 p-2 cursor-move flex items-center text-xs font-bold shadow">
+                <div ref={ref} className="bg-slate-100 p-2 flex items-center text-xs font-bold shadow">
                     <span className="flex-grow">{props.displayName}</span>
                     {props.description && (
                         <span

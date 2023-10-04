@@ -1,8 +1,7 @@
 import React from "react";
 
 import { GuiEvent, GuiEventPayloads } from "@framework/GuiMessageBroker";
-import { LayoutElement } from "@framework/LayoutService";
-import { Workbench } from "@framework/Workbench";
+import { LayoutElement, Workbench } from "@framework/Workbench";
 import { useModuleInstances } from "@framework/internal/hooks/workbenchHooks";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import {
@@ -38,9 +37,8 @@ export const Layout: React.FC<LayoutProps> = (props) => {
     const mainRef = React.useRef<HTMLDivElement>(null);
     const size = useElementSize(ref);
     const layoutBoxRef = React.useRef<LayoutBox | null>(null);
-    const moduleInstances = useModuleInstances(props.workbench.getModuleInstanceManager());
+    const moduleInstances = useModuleInstances(props.workbench);
     const guiMessageBroker = props.workbench.getGuiMessageBroker();
-    const layoutService = props.workbench.getModuleInstanceManager();
 
     const convertLayoutRectToRealRect = React.useCallback(
         (element: LayoutElement): Rect => {
@@ -92,21 +90,21 @@ export const Layout: React.FC<LayoutProps> = (props) => {
             delayTimer = null;
         };
 
-        const handleModuleHeaderPointerDown = (e: GuiEventPayloads[GuiEvent.ModuleHeaderPointerDown]) => {
-            console.debug("handleModuleHeaderPointerDown", e);
-            pointerDownPoint = e.pointerPosition;
-            pointerDownElementPosition = e.elementPosition;
-            pointerDownElementId = e.moduleInstanceId;
+        const handleModuleHeaderPointerDown = (payload: GuiEventPayloads[GuiEvent.ModuleHeaderPointerDown]) => {
+            console.debug("handleModuleHeaderPointerDown", payload);
+            pointerDownPoint = payload.pointerPosition;
+            pointerDownElementPosition = payload.elementPosition;
+            pointerDownElementId = payload.moduleInstanceId;
             isNewModule = false;
         };
 
-        const handleNewModulePointerDown = (e: GuiEventPayloads[GuiEvent.NewModulePointerDown]) => {
-            pointerDownPoint = e.pointerPosition;
-            pointerDownElementPosition = e.elementPosition;
+        const handleNewModulePointerDown = (payload: GuiEventPayloads[GuiEvent.NewModulePointerDown]) => {
+            pointerDownPoint = payload.pointerPosition;
+            pointerDownElementPosition = payload.elementPosition;
             pointerDownElementId = v4();
             setTempLayoutBoxId(pointerDownElementId);
             isNewModule = true;
-            moduleName = e.moduleName;
+            moduleName = payload.moduleName;
         };
 
         const handlePointerUp = (e: PointerEvent) => {
@@ -223,7 +221,7 @@ export const Layout: React.FC<LayoutProps> = (props) => {
             }
         };
 
-        const handleRemoveModuleInstanceRequest = (e: GuiEventPayloads[GuiEvent.RemoveModuleInstanceRequest]) => {
+        const handleRemoveModuleInstanceRequest = (payload: GuiEventPayloads[GuiEvent.RemoveModuleInstanceRequest]) => {
             if (delayTimer) {
                 clearTimeout(delayTimer);
             }
