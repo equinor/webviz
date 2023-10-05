@@ -1,9 +1,6 @@
 import { Parameter, ParameterIdent, ParameterType } from "@framework/EnsembleParameters";
 import { TreeDataNode } from "@lib/components/SmartNodeSelector";
 
-import checkIcon from "../private-assets/check.svg";
-import segmentIcon from "../private-assets/segment.svg";
-
 export const ParameterParentNodeNames = {
     NAME: "Name",
     GROUP: "Group",
@@ -25,13 +22,13 @@ export function fromParameterTypeToNodeName(type: ParameterType): string {
     throw new Error(`Parameter type ${type} not supported`);
 }
 
-function createAndAddNode(treeNodeDataList: TreeDataNode[], nodeName: string, icon?: string): TreeDataNode {
+export function createAndAddNode(treeNodeDataList: TreeDataNode[], nodeName: string, icon?: string): TreeDataNode {
     const newNode: TreeDataNode = { name: nodeName, description: "", icon: icon };
     treeNodeDataList.push(newNode);
     return newNode;
 }
 
-function findOrCreateNode(treeNodeDataList: TreeDataNode[], nodeName: string, icon?: string): TreeDataNode {
+export function findOrCreateNode(treeNodeDataList: TreeDataNode[], nodeName: string, icon?: string): TreeDataNode {
     const existingNode = treeNodeDataList.find((node) => node.name === nodeName);
     if (existingNode) {
         return existingNode;
@@ -40,9 +37,13 @@ function findOrCreateNode(treeNodeDataList: TreeDataNode[], nodeName: string, ic
     return createAndAddNode(treeNodeDataList, nodeName, icon);
 }
 
-function addParameterNameAndGroupToTreeDataNodeList(treeNodeDataList: TreeDataNode[], parameter: Parameter): void {
+export function addParameterNameAndGroupToTreeDataNodeList(
+    treeNodeDataList: TreeDataNode[],
+    parameter: Parameter,
+    icon?: string
+): void {
     // Parameter Name
-    const nameParentNode = findOrCreateNode(treeNodeDataList, ParameterParentNodeNames.NAME, segmentIcon);
+    const nameParentNode = findOrCreateNode(treeNodeDataList, ParameterParentNodeNames.NAME, icon);
     if (!nameParentNode.children) {
         nameParentNode.children = [];
     }
@@ -50,7 +51,7 @@ function addParameterNameAndGroupToTreeDataNodeList(treeNodeDataList: TreeDataNo
 
     // Parameter Group
     if (parameter.groupName) {
-        const groupParentNode = findOrCreateNode(treeNodeDataList, ParameterParentNodeNames.GROUP, segmentIcon);
+        const groupParentNode = findOrCreateNode(treeNodeDataList, ParameterParentNodeNames.GROUP, icon);
         if (!groupParentNode.children) {
             groupParentNode.children = [];
         }
@@ -58,7 +59,11 @@ function addParameterNameAndGroupToTreeDataNodeList(treeNodeDataList: TreeDataNo
     }
 }
 
-export function createTreeDataNodeListFromParameters(parameters: Parameter[]): TreeDataNode[] {
+export function createTreeDataNodeListFromParameters(
+    parameters: Parameter[],
+    checkIcon?: string,
+    parentIcon?: string
+): TreeDataNode[] {
     if (parameters.length === 0) {
         return [];
     }
@@ -78,7 +83,7 @@ export function createTreeDataNodeListFromParameters(parameters: Parameter[]): T
 
     // Add name and group for parameters
     for (const parameter of parameters) {
-        addParameterNameAndGroupToTreeDataNodeList(treeDataNodeList, parameter);
+        addParameterNameAndGroupToTreeDataNodeList(treeDataNodeList, parameter, parentIcon);
     }
 
     return treeDataNodeList;
@@ -97,9 +102,6 @@ export function getParametersMatchingSelectedNodes(parameters: Parameter[], sele
             .map((node) => node.split(delimiter, 2)[1]);
     };
 
-    // Get parameter property filters
-    const selectedParameterNames = findSelectedParameterPropertiesFromName(ParameterParentNodeNames.NAME);
-    const selectedParameterGroups = findSelectedParameterPropertiesFromName(ParameterParentNodeNames.GROUP);
     const isContinuousSelected = selectedNodes.includes(ParameterParentNodeNames.CONTINUOUS);
     const isDiscreteSelected = selectedNodes.includes(ParameterParentNodeNames.DISCRETE);
     const isConstantSelected = selectedNodes.includes(ParameterParentNodeNames.IS_CONSTANT);
@@ -107,14 +109,32 @@ export function getParametersMatchingSelectedNodes(parameters: Parameter[], sele
     const isLogarithmicSelected = selectedNodes.includes(ParameterParentNodeNames.IS_LOGARITHMIC);
     const isLinearSelected = selectedNodes.includes(ParameterParentNodeNames.IS_LINEAR);
 
+    // Intersection filtering, i.e. parameter cannot be both continuous and discrete, constant and non-constant, logarithmic and linear
     if (isContinuousSelected && isDiscreteSelected) return [];
     if (isConstantSelected && isNonConstantSelected) return [];
     if (isLogarithmicSelected && isLinearSelected) return [];
 
+    const selectedParameterNames = findSelectedParameterPropertiesFromName(ParameterParentNodeNames.NAME);
+    const selectedParameterGroups = findSelectedParameterPropertiesFromName(ParameterParentNodeNames.GROUP);
+
+    // Prevent invalid nodes
+    if (
+        !isContinuousSelected &&
+        !isDiscreteSelected &&
+        !isConstantSelected &&
+        !isNonConstantSelected &&
+        !isLogarithmicSelected &&
+        !isLinearSelected &&
+        selectedParameterNames.length === 0 &&
+        selectedParameterGroups.length === 0
+    ) {
+        return [];
+    }
+
     const selectedEnsembleParameters: Parameter[] = [];
     for (const parameter of parameters) {
         // Filter by parameter name
-        if (selectedParameterNames.length > 0 && !selectedParameterNames.includes(parameter.name)) {
+        if (selectedParameterNames.length !== 0 && !selectedParameterNames.includes(parameter.name)) {
             continue;
         }
 
@@ -138,7 +158,7 @@ export function getParametersMatchingSelectedNodes(parameters: Parameter[], sele
         if (isConstantSelected && !parameter.isConstant) continue;
         if (isNonConstantSelected && parameter.isConstant) continue;
 
-        // Filter by parameter is logarithmic/linear
+        // Filter by parameter is logarithmic/linear (only for continuous parameters)
         if (isLogarithmicSelected && parameter.type === ParameterType.CONTINUOUS && !parameter.isLogarithmic) continue;
         if (isLinearSelected && parameter.type === ParameterType.CONTINUOUS && parameter.isLogarithmic) continue;
 

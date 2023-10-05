@@ -7,6 +7,9 @@ import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import { isEqual } from "lodash";
 
+// Icons placed here due to limitation of jest for testing utils (cannot import svg)
+import checkIcon from "./private-assets/check.svg";
+import segmentIcon from "./private-assets/segment.svg";
 import {
     ParameterParentNodeNames,
     createTreeDataNodeListFromParameters,
@@ -29,7 +32,7 @@ export const ParameterListFilter: React.FC<ParameterListFilterProps> = (props: P
 
     let candidateTreeDataNodeList = treeDataNodeList;
     if (parameters === null || !isEqual(props.parameters, parameters)) {
-        candidateTreeDataNodeList = createTreeDataNodeListFromParameters([...props.parameters]);
+        candidateTreeDataNodeList = createTreeDataNodeListFromParameters([...props.parameters], checkIcon, segmentIcon);
         setParameters(props.parameters);
         setTreeDataNodeList(candidateTreeDataNodeList);
     }
