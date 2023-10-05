@@ -25,5 +25,5 @@ RESOURCE_SCOPES_DICT = {
 
 print(f"{RESOURCE_SCOPES_DICT=}")
 
-REDIS_URL = "redis://redis:6379"
+REDIS_URL = "redis://redis-login-state:6379"
 SESSION_STORAGE = "redis"
