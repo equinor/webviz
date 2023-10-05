@@ -25,18 +25,22 @@ export function fromParameterTypeToNodeName(type: ParameterType): string {
     throw new Error(`Parameter type ${type} not supported`);
 }
 
-function addParameterToTreeDataNodeList(treeNodeDataList: TreeDataNode[], parameter: Parameter): void {
-    const findOrCreateNode = (treeNodeDataList: TreeDataNode[], nodeName: string, icon?: string): TreeDataNode => {
-        const existingNode = treeNodeDataList.find((node) => node.name === nodeName);
-        if (existingNode) {
-            return existingNode;
-        }
+function createAndAddNode(treeNodeDataList: TreeDataNode[], nodeName: string, icon?: string): TreeDataNode {
+    const newNode: TreeDataNode = { name: nodeName, description: "", icon: icon };
+    treeNodeDataList.push(newNode);
+    return newNode;
+}
 
-        const newNode: TreeDataNode = { name: nodeName, description: "", icon: icon };
-        treeNodeDataList.push(newNode);
-        return newNode;
-    };
+function findOrCreateNode(treeNodeDataList: TreeDataNode[], nodeName: string, icon?: string): TreeDataNode {
+    const existingNode = treeNodeDataList.find((node) => node.name === nodeName);
+    if (existingNode) {
+        return existingNode;
+    }
 
+    return createAndAddNode(treeNodeDataList, nodeName, icon);
+}
+
+function addParameterNameAndGroupToTreeDataNodeList(treeNodeDataList: TreeDataNode[], parameter: Parameter): void {
     // Parameter Name
     const nameParentNode = findOrCreateNode(treeNodeDataList, ParameterParentNodeNames.NAME, segmentIcon);
     if (!nameParentNode.children) {
@@ -52,79 +56,32 @@ function addParameterToTreeDataNodeList(treeNodeDataList: TreeDataNode[], parame
         }
         findOrCreateNode(groupParentNode.children, parameter.groupName);
     }
-
-    // Parameter is Continuous or Discrete
-    const parameterTypeNodeName = fromParameterTypeToNodeName(parameter.type);
-    findOrCreateNode(treeNodeDataList, parameterTypeNodeName, checkIcon);
-
-    // Parameter is constant/nonconstant
-    findOrCreateNode(treeNodeDataList, ParameterParentNodeNames.IS_CONSTANT, checkIcon);
-    findOrCreateNode(treeNodeDataList, ParameterParentNodeNames.IS_NONCONSTANT, checkIcon);
-
-    // Parameter is logarithmic/linear
-    if (parameter.type === ParameterType.CONTINUOUS) {
-        findOrCreateNode(treeNodeDataList, ParameterParentNodeNames.IS_LOGARITHMIC, checkIcon);
-        findOrCreateNode(treeNodeDataList, ParameterParentNodeNames.IS_LINEAR, checkIcon);
-    }
 }
 
 export function createTreeDataNodeListFromParameters(parameters: Parameter[]): TreeDataNode[] {
+    if (parameters.length === 0) {
+        return [];
+    }
+
     const treeDataNodeList: TreeDataNode[] = [];
-    parameters.forEach((parameter) => {
-        addParameterToTreeDataNodeList(treeDataNodeList, parameter);
-    });
 
-    const spliceNodeIndexAndAddElementToNewList = (nodeIndex: number, newNodeList: TreeDataNode[]): void => {
-        const nodeElement = treeDataNodeList.splice(nodeIndex, 1).at(0);
-        if (nodeElement) {
-            newNodeList.push(nodeElement);
-        }
-    };
+    const hasContinuousParameter = parameters.some((parameter) => parameter.type === ParameterType.CONTINUOUS);
 
-    // Post-processing: Set order of parent nodes
-    const sortedParentNodeList: TreeDataNode[] = [];
-    const continuousNodeIndex = treeDataNodeList.findIndex((node) => node.name === ParameterParentNodeNames.CONTINUOUS);
-    if (continuousNodeIndex !== -1) {
-        spliceNodeIndexAndAddElementToNewList(continuousNodeIndex, sortedParentNodeList);
-    }
-    const discreteNodeIndex = treeDataNodeList.findIndex((node) => node.name === ParameterParentNodeNames.DISCRETE);
-    if (discreteNodeIndex !== -1) {
-        spliceNodeIndexAndAddElementToNewList(discreteNodeIndex, sortedParentNodeList);
-    }
-    const isConstantNodeIndex = treeDataNodeList.findIndex(
-        (node) => node.name === ParameterParentNodeNames.IS_CONSTANT
-    );
-    if (isConstantNodeIndex !== -1) {
-        spliceNodeIndexAndAddElementToNewList(isConstantNodeIndex, sortedParentNodeList);
-    }
-    const isNonConstantNodeIndex = treeDataNodeList.findIndex(
-        (node) => node.name === ParameterParentNodeNames.IS_NONCONSTANT
-    );
-    if (isNonConstantNodeIndex !== -1) {
-        spliceNodeIndexAndAddElementToNewList(isNonConstantNodeIndex, sortedParentNodeList);
-    }
-    const isLogarithmicNodeIndex = treeDataNodeList.findIndex(
-        (node) => node.name === ParameterParentNodeNames.IS_LOGARITHMIC
-    );
-    if (isLogarithmicNodeIndex !== -1) {
-        spliceNodeIndexAndAddElementToNewList(isLogarithmicNodeIndex, sortedParentNodeList);
-    }
-    const isLinearNodeIndex = treeDataNodeList.findIndex((node) => node.name === ParameterParentNodeNames.IS_LINEAR);
-    if (isLinearNodeIndex !== -1) {
-        spliceNodeIndexAndAddElementToNewList(isLinearNodeIndex, sortedParentNodeList);
-    }
-    const nameNodeIndex = treeDataNodeList.findIndex((node) => node.name === ParameterParentNodeNames.NAME);
-    if (nameNodeIndex !== -1) {
-        spliceNodeIndexAndAddElementToNewList(nameNodeIndex, sortedParentNodeList);
-    }
-    const groupNodeIndex = treeDataNodeList.findIndex((node) => node.name === ParameterParentNodeNames.GROUP);
-    if (groupNodeIndex !== -1) {
-        spliceNodeIndexAndAddElementToNewList(groupNodeIndex, sortedParentNodeList);
+    createAndAddNode(treeDataNodeList, ParameterParentNodeNames.CONTINUOUS, checkIcon);
+    createAndAddNode(treeDataNodeList, ParameterParentNodeNames.DISCRETE, checkIcon);
+    createAndAddNode(treeDataNodeList, ParameterParentNodeNames.IS_CONSTANT, checkIcon);
+    createAndAddNode(treeDataNodeList, ParameterParentNodeNames.IS_NONCONSTANT, checkIcon);
+    if (hasContinuousParameter) {
+        createAndAddNode(treeDataNodeList, ParameterParentNodeNames.IS_LOGARITHMIC, checkIcon);
+        createAndAddNode(treeDataNodeList, ParameterParentNodeNames.IS_LINEAR, checkIcon);
     }
 
-    // Add remaining elements after splice
-    sortedParentNodeList.push(...treeDataNodeList);
-    return sortedParentNodeList;
+    // Add name and group for parameters
+    for (const parameter of parameters) {
+        addParameterNameAndGroupToTreeDataNodeList(treeDataNodeList, parameter);
+    }
+
+    return treeDataNodeList;
 }
 
 export function getParametersMatchingSelectedNodes(parameters: Parameter[], selectedNodes: string[]): Parameter[] {
@@ -150,6 +107,10 @@ export function getParametersMatchingSelectedNodes(parameters: Parameter[], sele
     const isLogarithmicSelected = selectedNodes.includes(ParameterParentNodeNames.IS_LOGARITHMIC);
     const isLinearSelected = selectedNodes.includes(ParameterParentNodeNames.IS_LINEAR);
 
+    if (isContinuousSelected && isDiscreteSelected) return [];
+    if (isConstantSelected && isNonConstantSelected) return [];
+    if (isLogarithmicSelected && isLinearSelected) return [];
+
     const selectedEnsembleParameters: Parameter[] = [];
     for (const parameter of parameters) {
         // Filter by parameter name
@@ -170,17 +131,14 @@ export function getParametersMatchingSelectedNodes(parameters: Parameter[], sele
         }
 
         // Intersection filter by parameter type (continuous/discrete)
-        if (isContinuousSelected && isDiscreteSelected) continue;
         if (isContinuousSelected && parameter.type !== ParameterType.CONTINUOUS) continue;
         if (isDiscreteSelected && parameter.type !== ParameterType.DISCRETE) continue;
 
         // Intersection filter by parameter is constant/non-constant
-        if (isConstantSelected && isNonConstantSelected) continue;
         if (isConstantSelected && !parameter.isConstant) continue;
         if (isNonConstantSelected && parameter.isConstant) continue;
 
         // Filter by parameter is logarithmic/linear
-        if (isLogarithmicSelected && isLinearSelected) continue;
         if (isLogarithmicSelected && parameter.type === ParameterType.CONTINUOUS && !parameter.isLogarithmic) continue;
         if (isLinearSelected && parameter.type === ParameterType.CONTINUOUS && parameter.isLogarithmic) continue;
 
