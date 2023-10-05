@@ -59,6 +59,7 @@ export const InputChannelNode: React.FC<InputChannelNodeProps> = (props) => {
     }, [props.moduleInstanceId, props.inputName, props.workbench]);
 
     React.useEffect(() => {
+        console.debug("effect");
         let isHovered = false;
         let isConnectable = false;
         let moduleInstanceId = "";
@@ -111,6 +112,7 @@ export const InputChannelNode: React.FC<InputChannelNodeProps> = (props) => {
         }
 
         function handlePointerUp(e: PointerEvent) {
+            console.debug("pointer up", isHovered, isConnectable);
             if (isHovered) {
                 if (isConnectable) {
                     props.onChannelConnect(props.inputName, moduleInstanceId, pointerEventToPoint(e));
@@ -130,6 +132,7 @@ export const InputChannelNode: React.FC<InputChannelNodeProps> = (props) => {
             setConnectable(false);
             isConnectable = false;
             setEditDataChannelConnections(false);
+            console.debug("done");
         }
 
         function handlePointerMove(e: PointerEvent) {
@@ -137,10 +140,14 @@ export const InputChannelNode: React.FC<InputChannelNodeProps> = (props) => {
             if (boundingRect && rectContainsPoint(boundingRect, pointerEventToPoint(e))) {
                 setHovered(true);
                 isHovered = true;
+                console.debug("hovered");
                 return;
             }
-            setHovered(false);
-            isHovered = false;
+            if (isHovered) {
+                setHovered(false);
+                isHovered = false;
+                console.debug("unhovered");
+            }
         }
 
         const removeDataChannelOriginPointerDownHandler = guiMessageBroker.subscribeToEvent(

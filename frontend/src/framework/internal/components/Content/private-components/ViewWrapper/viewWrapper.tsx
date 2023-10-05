@@ -1,6 +1,6 @@
 import React from "react";
 
-import { DrawerContent, GuiEvent, GuiState, useGuiState } from "@framework/GuiMessageBroker";
+import { DrawerContent, GuiEvent, GuiState, useGuiState, useGuiValue } from "@framework/GuiMessageBroker";
 import { ModuleInstance } from "@framework/ModuleInstance";
 import { Workbench } from "@framework/Workbench";
 import { Point, pointDifference, pointRelativeToDomRect, pointerEventToPoint } from "@lib/utils/geometry";
@@ -37,6 +37,11 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
     );
 
     const guiMessageBroker = props.workbench.getGuiMessageBroker();
+
+    const dataChannelConnectionsLayerVisible = useGuiValue(
+        guiMessageBroker,
+        GuiState.DataChannelConnectionLayerVisible
+    );
 
     const timeRef = React.useRef<number | null>(null);
 
@@ -86,6 +91,9 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
     }
 
     function handlePointerUp() {
+        if (dataChannelConnectionsLayerVisible) {
+            return;
+        }
         if (drawerContent === DrawerContent.ModulesList) {
             if (!timeRef.current || Date.now() - timeRef.current < 800) {
                 handleModuleClick();

@@ -1,7 +1,8 @@
 import React from "react";
 
-import { GuiEvent, GuiEventPayloads } from "@framework/GuiMessageBroker";
+import { GuiEvent, GuiEventPayloads, GuiState, useGuiState } from "@framework/GuiMessageBroker";
 import { Workbench } from "@framework/Workbench";
+import { GlobalCursorType } from "@framework/internal/GlobalCursor";
 import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
 import { Point } from "@lib/utils/geometry";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
@@ -27,7 +28,10 @@ export const DataChannelVisualization: React.FC<DataChannelVisualizationProps> =
     const [originPoint, setOriginPoint] = React.useState<Point>({ x: 0, y: 0 });
     const [currentPointerPosition, setCurrentPointerPosition] = React.useState<Point>({ x: 0, y: 0 });
     const [currentChannelName, setCurrentChannelName] = React.useState<string | null>(null);
-    const [showDataChannelConnections, setShowDataChannelConnections] = React.useState<boolean>(false);
+    const [showDataChannelConnections, setShowDataChannelConnections] = useGuiState(
+        props.workbench.getGuiMessageBroker(),
+        GuiState.DataChannelConnectionLayerVisible
+    );
     const [highlightedDataChannelConnection, setHighlightedDataChannelConnection] = React.useState<{
         moduleInstanceId: string;
         dataChannelName: string;
@@ -58,7 +62,7 @@ export const DataChannelVisualization: React.FC<DataChannelVisualizationProps> =
             };
             setVisible(true);
             setOriginPoint(currentOriginPoint);
-            document.body.classList.add("cursor-crosshair");
+            props.workbench.getGlobalCursor().setOverrideCursor(GlobalCursorType.Crosshair);
             mousePressed = true;
             setCurrentPointerPosition(currentOriginPoint);
             setCurrentChannelName(null);
@@ -79,9 +83,7 @@ export const DataChannelVisualization: React.FC<DataChannelVisualizationProps> =
             setVisible(false);
             setEditDataChannelConnectionsForModuleInstanceId(null);
             setShowDataChannelConnections(false);
-            document.body.classList.remove("cursor-crosshair");
-            document.body.classList.remove("cursor-not-allowed");
-            document.body.classList.remove("cursor-copy");
+            props.workbench.getGlobalCursor().restoreOverrideCursor();
         }
 
         function handlePointerUp() {
@@ -118,18 +120,15 @@ export const DataChannelVisualization: React.FC<DataChannelVisualizationProps> =
         }
 
         function handleNodeHover(payload: GuiEventPayloads[GuiEvent.DataChannelNodeHover]) {
-            document.body.classList.remove("cursor-crosshair");
             if (payload.connectionAllowed) {
-                document.body.classList.add("cursor-copy");
+                props.workbench.getGlobalCursor().setOverrideCursor(GlobalCursorType.Copy);
             } else {
-                document.body.classList.add("cursor-not-allowed");
+                props.workbench.getGlobalCursor().setOverrideCursor(GlobalCursorType.NotAllowed);
             }
         }
 
         function handleNodeUnhover() {
-            document.body.classList.remove("cursor-copy");
-            document.body.classList.remove("cursor-not-allowed");
-            document.body.classList.add("cursor-crosshair");
+            props.workbench.getGlobalCursor().restoreOverrideCursor();
         }
 
         function handleEditDataChannelConnectionsRequest(

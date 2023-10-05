@@ -1,6 +1,6 @@
 import React from "react";
 
-import { DrawerContent, GuiState } from "@framework/GuiMessageBroker";
+import { DrawerContent, GuiState, useGuiValue } from "@framework/GuiMessageBroker";
 import { LayoutElement, Workbench } from "@framework/Workbench";
 import { DataChannelVisualization } from "@framework/internal/components/Content/private-components/DataChannelVisualization";
 import { NavBar } from "@framework/internal/components/NavBar";
