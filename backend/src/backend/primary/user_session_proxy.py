@@ -1,8 +1,9 @@
 import os
 import asyncio
-from typing import Dict, Any
+from typing import Any
 
 import httpx
+import redis
 from starlette.requests import Request
 from starlette.responses import StreamingResponse
 from starlette.background import BackgroundTask
@@ -19,10 +20,7 @@ class RadixJobScheduler:
     def __init__(self, name: str, port: int) -> None:
         self._name = name
         self._port = port
-
-        # This should be moved to Redis - https://github.com/equinor/webviz/issues/357
-        # key: user_id, value: name of Radix job instance
-        self._existing_job_names: Dict[str, str] = {}
+        self._existing_job_names = redis.Redis(host="redis-user-session-state", port=6380, decode_responses=True)
 
     async def _active_running_job(self, user_id: str) -> bool:
         """Returns true if there already is a running job for logged in user."""
@@ -44,7 +42,7 @@ class RadixJobScheduler:
         try:
             httpx.get(f"http://{existing_job_name}:{self._port}/")
         except (ConnectionRefusedError, httpx.ConnectError, httpx.ConnectTimeout):
-            print("User container server not yet up")
+            print(f"User session container for user {user_id} not yet up.")
             return False
 
         return True
@@ -55,8 +53,9 @@ class RadixJobScheduler:
         same name."""
 
         if LOCALHOST_DEVELOPMENT:
-            self._existing_job_names[user_id] = self._name
+            self._existing_job_names.set(user_id, self._name)
         else:
+            print(f"Requesting new user session container for user {user_id}.")
             async with httpx.AsyncClient() as client:
                 res = await client.post(
                     f"http://{self._name}:{self._port}/api/v1/jobs",
@@ -75,7 +74,7 @@ class RadixJobScheduler:
                         }
                     },
                 )
-            self._existing_job_names[user_id] = res.json()["name"]
+            self._existing_job_names.set(user_id, res.json()["name"])
 
             while not await self._active_running_job(user_id):
                 # It takes a couple of seconds before Radix job uvicorn process has
@@ -88,7 +87,7 @@ class RadixJobScheduler:
         if not await self._active_running_job(user_id):
             await self._create_new_job(user_id)
 
-        job_name = self._existing_job_names[user_id]
+        job_name = self._existing_job_names.get(user_id)
 
         return f"http://{job_name}:{self._port}"
 
