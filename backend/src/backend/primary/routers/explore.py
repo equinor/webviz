@@ -4,10 +4,9 @@ from fastapi import APIRouter, Depends, Path, Query
 from pydantic import BaseModel
 
 from src.backend.auth.auth_helper import AuthHelper
-from src.services.sumo_access.case_inspector import CaseInspector
-from src.services.sumo_access.iteration_inspector import IterationInspector
 from src.services.sumo_access.sumo_explore import SumoExplore
 from src.services.utils.authenticated_user import AuthenticatedUser
+from src.services.sumo_access._helpers import SumoEnsemble
 
 router = APIRouter()
 
@@ -34,27 +33,27 @@ class EnsembleDetails(BaseModel):
 
 
 @router.get("/fields")
-def get_fields(
+async def get_fields(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
 ) -> List[FieldInfo]:
     """
     Get list of fields
     """
     sumo_discovery = SumoExplore(authenticated_user.get_sumo_access_token())
-    field_ident_arr = sumo_discovery.get_fields()
+    field_ident_arr = await sumo_discovery.get_fields()
     ret_arr = [FieldInfo(field_identifier=field_ident.identifier) for field_ident in field_ident_arr]
 
     return ret_arr
 
 
 @router.get("/cases")
-def get_cases(
+async def get_cases(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     field_identifier: str = Query(description="Field identifier"),
 ) -> List[CaseInfo]:
     """Get list of cases for specified field"""
     sumo_discovery = SumoExplore(authenticated_user.get_sumo_access_token())
-    case_info_arr = sumo_discovery.get_cases(field_identifier=field_identifier)
+    case_info_arr = await sumo_discovery.get_cases(field_identifier=field_identifier)
 
     print(case_info_arr)
 
@@ -75,13 +74,13 @@ def get_cases(
 
 
 @router.get("/cases/{case_uuid}/ensembles")
-def get_ensembles(
+async def get_ensembles(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     case_uuid: str = Path(description="Sumo case uuid"),
 ) -> List[EnsembleInfo]:
     """Get list of ensembles for a case"""
     sumo_discovery = SumoExplore(authenticated_user.get_sumo_access_token())
-    iteration_info_arr = sumo_discovery.get_iterations(case_uuid=case_uuid)
+    iteration_info_arr = await sumo_discovery.get_iterations(case_uuid=case_uuid)
 
     print(iteration_info_arr)
 
@@ -89,16 +88,15 @@ def get_ensembles(
 
 
 @router.get("/cases/{case_uuid}/ensembles/{ensemble_name}")
-def get_ensemble_details(
+async def get_ensemble_details(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     case_uuid: str = Path(description="Sumo case uuid"),
     ensemble_name: str = Path(description="Ensemble name"),
 ) -> EnsembleDetails:
     """Get more detailed information for an ensemble"""
-    case_inspector = CaseInspector(authenticated_user.get_sumo_access_token(), case_uuid)
-    case_name = case_inspector.get_case_name()
 
-    iteration_inspector: IterationInspector = case_inspector.create_iteration_inspector(ensemble_name)
-    realizations = iteration_inspector.get_realizations()
+    iteration = await SumoEnsemble.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
+    case_name = iteration.get_case_name()
+    realizations = iteration.get_realizations()
 
     return EnsembleDetails(name=ensemble_name, case_name=case_name, case_uuid=case_uuid, realizations=realizations)

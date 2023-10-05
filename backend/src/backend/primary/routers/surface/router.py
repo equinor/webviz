@@ -4,7 +4,6 @@ from typing import List, Union, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query, Response
 
 from src.services.sumo_access.surface_access import SurfaceAccess
-from src.services.sumo_access.case_inspector import CaseInspector
 from src.services.smda_access.stratigraphy_access import StratigraphyAccess
 from src.services.smda_access.stratigraphy_utils import sort_stratigraphic_names_by_hierarchy
 from src.services.smda_access.mocked_drogon_smda_access import _mocked_stratigraphy_access
@@ -13,6 +12,8 @@ from src.services.utils.authenticated_user import AuthenticatedUser
 from src.services.utils.perf_timer import PerfTimer
 from src.backend.auth.auth_helper import AuthHelper
 from src.backend.utils.perf_metrics import PerfMetrics
+from src.services.sumo_access._helpers import SumoCase
+
 
 from . import converters
 from . import schemas
@@ -24,7 +25,7 @@ router = APIRouter()
 
 
 @router.get("/surface_directory/")
-def get_surface_directory(
+async def get_surface_directory(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     case_uuid: str = Query(description="Sumo case uuid"),
     ensemble_name: str = Query(description="Ensemble name"),
@@ -32,25 +33,27 @@ def get_surface_directory(
     """
     Get a directory of surfaces in a Sumo ensemble
     """
-    surface_access = SurfaceAccess(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
-    sumo_surf_dir = surface_access.get_surface_directory()
+    surface_access = await SurfaceAccess.from_case_uuid(
+        authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
+    )
+    sumo_surf_dir = await surface_access.get_surface_directory()
 
-    case_inspector = CaseInspector(authenticated_user.get_sumo_access_token(), case_uuid)
-    strat_column_identifier = case_inspector.get_stratigraphic_column_identifier()
+    case_inspector = await SumoCase.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid)
+    strat_column_identifier = await case_inspector.get_stratigraphic_column_identifier()
     strat_access: Union[StratigraphyAccess, _mocked_stratigraphy_access.StratigraphyAccess]
 
     if strat_column_identifier == "DROGON_HAS_NO_STRATCOLUMN":
         strat_access = _mocked_stratigraphy_access.StratigraphyAccess(authenticated_user.get_smda_access_token())
     else:
         strat_access = StratigraphyAccess(authenticated_user.get_smda_access_token())
-    strat_units = strat_access.get_stratigraphic_units(strat_column_identifier)
+    strat_units = await strat_access.get_stratigraphic_units(strat_column_identifier)
     sorted_stratigraphic_surfaces = sort_stratigraphic_names_by_hierarchy(strat_units)
 
     return converters.to_api_surface_directory(sumo_surf_dir, sorted_stratigraphic_surfaces)
 
 
 @router.get("/realization_surface_data/")
-def get_realization_surface_data(
+async def get_realization_surface_data(
     response: Response,
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     case_uuid: str = Query(description="Sumo case uuid"),
@@ -62,7 +65,7 @@ def get_realization_surface_data(
 ) -> schemas.SurfaceData:
     perf_metrics = PerfMetrics(response)
 
-    access = SurfaceAccess(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
+    access = await SurfaceAccess.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
     xtgeo_surf = access.get_realization_surface_data(
         real_num=realization_num, name=name, attribute=attribute, time_or_interval_str=time_or_interval
     )
@@ -80,7 +83,7 @@ def get_realization_surface_data(
 
 
 @router.get("/statistical_surface_data/")
-def get_statistical_surface_data(
+async def get_statistical_surface_data(
     response: Response,
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     case_uuid: str = Query(description="Sumo case uuid"),
@@ -92,11 +95,12 @@ def get_statistical_surface_data(
 ) -> schemas.SurfaceData:
     perf_metrics = PerfMetrics(response)
 
+    access = await SurfaceAccess.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
+
     service_stat_func_to_compute = StatisticFunction.from_string_value(statistic_function)
     if service_stat_func_to_compute is None:
         raise HTTPException(status_code=404, detail="Invalid statistic requested")
 
-    access = SurfaceAccess(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
     xtgeo_surf = access.get_statistical_surface_data(
         statistic_function=service_stat_func_to_compute,
         name=name,
@@ -118,7 +122,7 @@ def get_statistical_surface_data(
 
 # pylint: disable=too-many-arguments
 @router.get("/property_surface_resampled_to_static_surface/")
-def get_property_surface_resampled_to_static_surface(
+async def get_property_surface_resampled_to_static_surface(
     response: Response,
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     case_uuid: str = Query(description="Sumo case uuid"),
@@ -133,7 +137,7 @@ def get_property_surface_resampled_to_static_surface(
 ) -> schemas.SurfaceData:
     perf_metrics = PerfMetrics(response)
 
-    access = SurfaceAccess(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
+    access = await SurfaceAccess.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
     xtgeo_surf_mesh = access.get_realization_surface_data(
         real_num=realization_num_mesh, name=name_mesh, attribute=attribute_mesh
     )
@@ -162,7 +166,7 @@ def get_property_surface_resampled_to_static_surface(
 
 
 @router.get("/property_surface_resampled_to_statistical_static_surface/")
-def get_property_surface_resampled_to_statistical_static_surface(
+async def get_property_surface_resampled_to_statistical_static_surface(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     case_uuid: str = Query(description="Sumo case uuid"),
     ensemble_name: str = Query(description="Ensemble name"),
@@ -176,7 +180,7 @@ def get_property_surface_resampled_to_statistical_static_surface(
 ) -> schemas.SurfaceData:
     timer = PerfTimer()
 
-    access = SurfaceAccess(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
+    access = await SurfaceAccess.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
     service_stat_func_to_compute = StatisticFunction.from_string_value(statistic_function)
     if service_stat_func_to_compute is not None:
         xtgeo_surf_mesh = access.get_statistical_surface_data(

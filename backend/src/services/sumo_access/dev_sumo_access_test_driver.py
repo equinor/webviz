@@ -1,6 +1,7 @@
 import sys
 from typing import List
 import logging
+import asyncio
 
 import pyarrow as pa
 
@@ -15,24 +16,24 @@ from .summary_access import SummaryAccess, RealizationVector, Frequency
 from .sumo_explore import SumoExplore
 
 
-def test_summary_access(summary_access: SummaryAccess) -> None:
-    vector_names = summary_access.get_available_vectors()
+async def test_summary_access(summary_access: SummaryAccess) -> None:
+    vector_names = await summary_access.get_available_vectors()
     print("\n\n")
     print(vector_names)
 
-    vector_table, _vector_meta = summary_access.get_vector_table(
+    vector_table, _vector_meta = await summary_access.get_vector_table(
         vector_name="FOPT", resampling_frequency=None, realizations=None
     )
     print("\n\nRAW")
     print(vector_table.shape)
 
-    vector_table, _vector_meta = summary_access.get_vector_table(
+    vector_table, _vector_meta = await summary_access.get_vector_table(
         vector_name="FOPT", resampling_frequency=Frequency.DAILY, realizations=None
     )
     print("\n\nDAILY")
     print(vector_table.shape)
 
-    vector_table, _vector_meta = summary_access.get_vector_table(
+    vector_table, _vector_meta = await summary_access.get_vector_table(
         vector_name="FOPT", resampling_frequency=Frequency.YEARLY, realizations=None
     )
     print("\n\nYEARLY")
@@ -40,14 +41,14 @@ def test_summary_access(summary_access: SummaryAccess) -> None:
     print(vector_table.shape)
 
     print("\n\nYEARLY - only real 0")
-    vector_table, _vector_meta = summary_access.get_vector_table(
+    vector_table, _vector_meta = await summary_access.get_vector_table(
         vector_name="FOPT", resampling_frequency=Frequency.YEARLY, realizations=[0]
     )
     vector_table = vector_table.filter(pa.compute.equal(vector_table["REAL"], 0))
     print(vector_table)
     print(vector_table.shape)
 
-    vector_arr: List[RealizationVector] = summary_access.get_vector(
+    vector_arr: List[RealizationVector] = await summary_access.get_vector(
         "FOPT", resampling_frequency=Frequency.YEARLY, realizations=None
     )
     print("\n\n")
@@ -55,7 +56,7 @@ def test_summary_access(summary_access: SummaryAccess) -> None:
     print(vector_arr[0])
 
     print("\n\nYEARLY")
-    vector_table, _vector_meta = summary_access.get_vector_table(
+    vector_table, _vector_meta = await summary_access.get_vector_table(
         vector_name="FOPT", resampling_frequency=Frequency.YEARLY, realizations=None
     )
     print(vector_table)
@@ -72,7 +73,7 @@ def test_summary_access(summary_access: SummaryAccess) -> None:
     print(vec_stats)
 
 
-def main() -> None:
+async def main() -> None:
     print("## Running dev_sumo_access_test_driver")
     print("## =================================================")
 
@@ -88,7 +89,7 @@ def main() -> None:
     access_token = dummy_sumo_client._retrieve_token()  # pylint: disable=protected-access
 
     explore = SumoExplore(access_token=access_token)
-    cases = explore.get_cases(field_identifier="DROGON")
+    cases = await explore.get_cases(field_identifier="DROGON")
     print(cases)
 
     # sumo_case_id = "0db5f2dd-aa62-407f-9ac4-0dbbe30371a2"
@@ -113,7 +114,7 @@ def main() -> None:
 
 
 # Running:
-#   python -m src.services.sumo_access.dev_sumo_access_test_driver
+#   python -m asyncio src.services.sumo_access.dev_sumo_access_test_driver
 # -------------------------------------------------------------------------
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())
