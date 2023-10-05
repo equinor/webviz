@@ -12,8 +12,10 @@ export type { OpenAPIConfig } from './core/OpenAPI';
 export { B64FloatArray as B64FloatArray_api } from './models/B64FloatArray';
 export { B64UintArray as B64UintArray_api } from './models/B64UintArray';
 export type { Body_get_realizations_response as Body_get_realizations_response_api } from './models/Body_get_realizations_response';
+export type { Body_get_surface_intersections as Body_get_surface_intersections_api } from './models/Body_get_surface_intersections';
 export type { CaseInfo as CaseInfo_api } from './models/CaseInfo';
 export type { Completions as Completions_api } from './models/Completions';
+export type { CuttingPlane as CuttingPlane_api } from './models/CuttingPlane';
 export type { EnsembleDetails as EnsembleDetails_api } from './models/EnsembleDetails';
 export type { EnsembleInfo as EnsembleInfo_api } from './models/EnsembleInfo';
 export type { EnsembleParameter as EnsembleParameter_api } from './models/EnsembleParameter';
@@ -37,6 +39,7 @@ export type { StatisticValueObject as StatisticValueObject_api } from './models/
 export { StratigraphicFeature as StratigraphicFeature_api } from './models/StratigraphicFeature';
 export { SurfaceAttributeType as SurfaceAttributeType_api } from './models/SurfaceAttributeType';
 export type { SurfaceData as SurfaceData_api } from './models/SurfaceData';
+export type { SurfaceIntersectionData as SurfaceIntersectionData_api } from './models/SurfaceIntersectionData';
 export type { SurfaceMeta as SurfaceMeta_api } from './models/SurfaceMeta';
 export type { SurfacePolygonDirectory as SurfacePolygonDirectory_api } from './models/SurfacePolygonDirectory';
 export { SurfaceStatisticFunction as SurfaceStatisticFunction_api } from './models/SurfaceStatisticFunction';

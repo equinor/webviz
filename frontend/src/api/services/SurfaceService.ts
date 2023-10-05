@@ -1,7 +1,9 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
+import type { Body_get_surface_intersections } from '../models/Body_get_surface_intersections';
 import type { SurfaceData } from '../models/SurfaceData';
+import type { SurfaceIntersectionData } from '../models/SurfaceIntersectionData';
 import type { SurfaceMeta } from '../models/SurfaceMeta';
 import type { SurfaceStatisticFunction } from '../models/SurfaceStatisticFunction';
 
@@ -190,6 +192,40 @@ export class SurfaceService {
                 'attribute_property': attributeProperty,
                 'time_or_interval_property': timeOrIntervalProperty,
             },
+            errors: {
+                422: `Validation Error`,
+            },
+        });
+    }
+
+    /**
+     * Get Surface Intersections
+     * @param caseUuid Sumo case uuid
+     * @param ensembleName Ensemble name
+     * @param name Surface names
+     * @param attribute Surface attribute
+     * @param requestBody
+     * @returns SurfaceIntersectionData Successful Response
+     * @throws ApiError
+     */
+    public getSurfaceIntersections(
+        caseUuid: string,
+        ensembleName: string,
+        name: string,
+        attribute: string,
+        requestBody: Body_get_surface_intersections,
+    ): CancelablePromise<Array<SurfaceIntersectionData>> {
+        return this.httpRequest.request({
+            method: 'POST',
+            url: '/surface/surface_intersections/',
+            query: {
+                'case_uuid': caseUuid,
+                'ensemble_name': ensembleName,
+                'name': name,
+                'attribute': attribute,
+            },
+            body: requestBody,
+            mediaType: 'application/json',
             errors: {
                 422: `Validation Error`,
             },

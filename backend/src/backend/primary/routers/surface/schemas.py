@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Optional
+from typing import Optional, List
 
 from pydantic import BaseModel
 
@@ -68,3 +68,19 @@ class SurfaceData(BaseModel):
     val_max: float
     rot_deg: float
     values_b64arr: B64FloatArray
+
+
+class SurfaceIntersectionData(BaseModel):
+    name: str
+    z_arr: List[float]
+    hlen_arr: List[float]
+    unit: str = "m"
+    depthReference: str = "MSL"
+    context: str = "depth"
+    stratigraphicalInterval: bool = True
+
+
+class CuttingPlane(BaseModel):
+    x_arr: List[float]
+    y_arr: List[float]
+    length_arr: List[float]

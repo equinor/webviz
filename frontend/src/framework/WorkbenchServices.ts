@@ -27,6 +27,7 @@ export type GlobalTopicDefinitions = {
         rotationOrbit: number;
     };
     "global.syncValue.wellBore": Wellbore;
+    "global.syncValue.cameraPositionIntersection": {};
 };
 
 export type AllTopicDefinitions = NavigatorTopicDefinitions & GlobalTopicDefinitions;

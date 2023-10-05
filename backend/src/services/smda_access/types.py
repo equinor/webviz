@@ -12,6 +12,9 @@ class WellBorePick(BaseModel):
     md_msl: float
     unique_wellbore_identifier: str
     pick_identifier: str
+    confidence: Optional[str] = None
+    depth_reference_point: str
+    md_unit: str
 
 
 class WellBoreTrajectory(BaseModel):
@@ -42,8 +45,9 @@ class StratigraphicUnit(BaseModel):
     base: str
     strat_unit_level: int
     strat_unit_type: str
-    top_age: Optional[int | float]
-    strat_unit_parent: Optional[str]
+    top_age: Optional[int] | Optional[float] = None
+    base_age: Optional[int] | Optional[float] = None
+    strat_unit_parent: Optional[str] = None
     color_r: int
     color_g: int
     color_b: int

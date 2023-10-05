@@ -1,11 +1,13 @@
 import logging
 from typing import List, Union, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+import numpy as np
+from fastapi import APIRouter, Depends, HTTPException, Query, Body
 
 
 from src.services.sumo_access.surface_access import SurfaceAccess
 from src.services.sumo_access.case_inspector import CaseInspector
+from src.services.sumo_access.iteration_inspector import IterationInspector
 from src.services.smda_access.stratigraphy_access import StratigraphyAccess
 from src.services.smda_access.stratigraphy_utils import sort_stratigraphic_names_by_hierarchy
 from src.services.smda_access.mocked_drogon_smda_access import _mocked_stratigraphy_access
@@ -202,3 +204,37 @@ def get_property_surface_resampled_to_statistical_static_surface(
     LOGGER.debug(f"Loaded property surface and created image, total time: {timer.elapsed_ms()}ms")
 
     return surf_data_response
+
+
+@router.post("/surface_intersections/")
+def get_surface_intersections(
+    authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
+    case_uuid: str = Query(description="Sumo case uuid"),
+    ensemble_name: str = Query(description="Ensemble name"),
+    name: str = Query(description="Surface names"),
+    attribute: str = Query(description="Surface attribute"),
+    cutting_plane: schemas.CuttingPlane = Body(embed=True),
+) -> List[schemas.SurfaceIntersectionData]:
+    access = SurfaceAccess(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
+    intersections = []
+    fence_arr = np.array(
+        [cutting_plane.x_arr, cutting_plane.y_arr, np.zeros(len(cutting_plane.y_arr)), cutting_plane.length_arr]
+    ).T
+
+    iteration_inspector = IterationInspector.from_case_uuid(
+        authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
+    )
+    # reals = iteration_inspector.get_realizations()
+    reals = range(0, 10)
+    for real in reals:
+        try:
+            print(f"Getting surface {name} with attribute {attribute}-{real}")
+            xtgeo_surf = access.get_realization_surface_data(real_num=real, name=name, attribute=attribute)
+            line = xtgeo_surf.get_randomline(fence_arr)
+            intersections.append(
+                schemas.SurfaceIntersectionData(name=f"{name}", hlen_arr=line[:, 0].tolist(), z_arr=line[:, 1].tolist())
+            )
+        except AttributeError:
+            print(f"Could not find surface {name} with attribute {attribute}-{real}")
+
+    return intersections
