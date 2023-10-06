@@ -9,9 +9,9 @@ from .generic_types import SumoContent
 class SurfaceMeta(BaseModel):
     name: str
     tagname: str
-    iso_date_or_interval: Optional[str]
+    iso_date_or_interval: Optional[str] = None
     content: SumoContent
     is_observation: bool
     is_stratigraphic: bool
-    zmin: Optional[float]
-    zmax: Optional[float]
+    zmin: Optional[float] = None
+    zmax: Optional[float] = None

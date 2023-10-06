@@ -10,7 +10,7 @@ import pyarrow as pa
 import pyarrow.compute as pc
 import pyarrow.parquet as pq
 from fmu.sumo.explorer.objects import TableCollection
-from pydantic import BaseModel
+from pydantic import ConfigDict, BaseModel
 
 from ._helpers import SumoEnsemble
 from .generic_types import EnsembleScalarResponse
@@ -57,18 +57,14 @@ class PossibleInplaceVolumetricsNumericalColumnNames(str, Enum):
 class InplaceVolumetricsCategoricalMetaData(BaseModel):
     name: str
     unique_values: List[Union[str, int, float]]
-
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class InplaceVolumetricsTableMetaData(BaseModel):
     name: str
     categorical_column_metadata: List[InplaceVolumetricsCategoricalMetaData]
     numerical_column_names: List[str]
-
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class InplaceVolumetricsAccess(SumoEnsemble):

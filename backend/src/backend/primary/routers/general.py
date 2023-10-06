@@ -17,8 +17,8 @@ LOGGER = logging.getLogger(__name__)
 
 class UserInfo(BaseModel):
     username: str
-    display_name: str | None
-    avatar_b64str: str | None
+    display_name: str | None = None
+    avatar_b64str: str | None = None
     has_sumo_access: bool
     has_smda_access: bool
 
