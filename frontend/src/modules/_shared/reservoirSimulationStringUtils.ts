@@ -1,5 +1,6 @@
-import { reservoirSimulationUnitTerminology } from "@assets/reservoirSimulationUnitTerminology";
 import { VectorDefinitionType, vectorDefinitions } from "@assets/vectorDefinitions";
+
+import { reservoirSimulationUnitTerminology } from "./reservoirSimulationUnitTerminology";
 
 /**
  * Returns a more human friendly description of the input unit if possible, otherwise returns the input unit as is.
