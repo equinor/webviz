@@ -1,8 +1,9 @@
 import React from "react";
 import { createPortal } from "react-dom";
 
-import { XMarkIcon } from "@heroicons/react/20/solid";
+import { Overlay } from "@lib/components/Overlay";
 import { Point } from "@lib/utils/geometry";
+import { Close } from "@mui/icons-material";
 
 export type ChannelSelectorProps = {
     channelNames: string[];
@@ -35,34 +36,38 @@ export const ChannelSelector: React.FC<ChannelSelectorProps> = (props) => {
     }, [props.onCancel]);
 
     return createPortal(
-        <div
-            id="channel-selector"
-            className="absolute bg-white max-h-52 border rounded overflow-auto z-50 shadow"
-            style={{
-                left: props.position.x < window.innerWidth / 2 ? props.position.x : undefined,
-                top: props.position.y < window.innerHeight / 2 ? props.position.y : undefined,
-                right: props.position.x > window.innerWidth / 2 ? window.innerWidth - props.position.x : undefined,
-                bottom: props.position.y > window.innerHeight / 2 ? window.innerHeight - props.position.y : undefined,
-            }}
-        >
-            <div id="channel-selector-header" className="p-2 bg-slate-200 font-bold text-xs flex">
-                <div className="flex-grow">Select a channel</div>
-                <div className="hover:text-slate-500 cursor-pointer" onClick={props.onCancel}>
-                    <XMarkIcon className="w-4 h-4" />
-                </div>
-            </div>
-            {props.channelNames.map((channelName) => {
-                return (
-                    <div
-                        key={channelName}
-                        className="p-2 hover:bg-blue-50 cursor-pointer text-xs"
-                        onClick={() => props.onSelectChannel(channelName)}
-                    >
-                        {channelName}
+        <>
+            <Overlay visible />
+            <div
+                id="channel-selector"
+                className="absolute bg-white max-h-52 border rounded overflow-auto z-50 shadow"
+                style={{
+                    left: props.position.x < window.innerWidth / 2 ? props.position.x : undefined,
+                    top: props.position.y < window.innerHeight / 2 ? props.position.y : undefined,
+                    right: props.position.x > window.innerWidth / 2 ? window.innerWidth - props.position.x : undefined,
+                    bottom:
+                        props.position.y > window.innerHeight / 2 ? window.innerHeight - props.position.y : undefined,
+                }}
+            >
+                <div id="channel-selector-header" className="p-2 bg-slate-200 font-bold text-xs flex">
+                    <div className="flex-grow">Select a channel</div>
+                    <div className="hover:text-slate-500 cursor-pointer" onClick={props.onCancel}>
+                        <Close fontSize="small" />
                     </div>
-                );
-            })}
-        </div>,
+                </div>
+                {props.channelNames.map((channelName) => {
+                    return (
+                        <div
+                            key={channelName}
+                            className="p-2 hover:bg-blue-50 cursor-pointer text-xs"
+                            onClick={() => props.onSelectChannel(channelName)}
+                        >
+                            {channelName}
+                        </div>
+                    );
+                })}
+            </div>
+        </>,
         document.body
     );
 };

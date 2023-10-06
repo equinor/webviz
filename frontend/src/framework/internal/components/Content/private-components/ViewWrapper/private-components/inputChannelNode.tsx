@@ -7,7 +7,7 @@ import { IconButton } from "@lib/components/IconButton";
 import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
 import { Point, pointerEventToPoint, rectContainsPoint } from "@lib/utils/geometry";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-import { Close } from "@mui/icons-material";
+import { Remove } from "@mui/icons-material";
 
 export type InputChannelNodeProps = {
     inputName: string;
@@ -21,6 +21,7 @@ export type InputChannelNodeProps = {
 
 export const InputChannelNode: React.FC<InputChannelNodeProps> = (props) => {
     const ref = React.useRef<HTMLDivElement>(null);
+    const removeButtonRef = React.useRef<HTMLButtonElement>(null);
     const [connectable, setConnectable] = React.useState<boolean>(false);
     const [hovered, setHovered] = React.useState<boolean>(false);
     const [hasConnection, setHasConnection] = React.useState<boolean>(false);
@@ -112,16 +113,19 @@ export const InputChannelNode: React.FC<InputChannelNodeProps> = (props) => {
         }
 
         function handlePointerUp(e: PointerEvent) {
-            console.debug("pointer up", isHovered, isConnectable);
             if (isHovered) {
-                if (isConnectable) {
+                if (removeButtonRef.current && removeButtonRef.current.contains(e.target as Node)) {
+                    props.onChannelConnectionDisconnect(props.inputName);
+                    setHovered(false);
+                    isHovered = false;
+                } else if (isConnectable) {
                     props.onChannelConnect(props.inputName, moduleInstanceId, pointerEventToPoint(e));
-                } else {
-                    guiMessageBroker.publishEvent(GuiEvent.HideDataChannelConnectionsRequest, {});
+                    setHovered(false);
+                    isHovered = false;
                 }
-                setHovered(false);
-                isHovered = false;
             }
+            guiMessageBroker.publishEvent(GuiEvent.DataChannelPointerUp, {});
+            e.stopPropagation();
         }
 
         function handleEditDataChannelConnectionsRequest() {
@@ -129,10 +133,11 @@ export const InputChannelNode: React.FC<InputChannelNodeProps> = (props) => {
         }
 
         function handleDataChannelDone() {
-            setConnectable(false);
             isConnectable = false;
+            setConnectable(false);
+            setHovered(false);
+            isHovered = false;
             setEditDataChannelConnections(false);
-            console.debug("done");
         }
 
         function handlePointerMove(e: PointerEvent) {
@@ -140,13 +145,11 @@ export const InputChannelNode: React.FC<InputChannelNodeProps> = (props) => {
             if (boundingRect && rectContainsPoint(boundingRect, pointerEventToPoint(e))) {
                 setHovered(true);
                 isHovered = true;
-                console.debug("hovered");
                 return;
             }
             if (isHovered) {
                 setHovered(false);
                 isHovered = false;
-                console.debug("unhovered");
             }
         }
 
@@ -164,7 +167,7 @@ export const InputChannelNode: React.FC<InputChannelNodeProps> = (props) => {
             handleEditDataChannelConnectionsRequest
         );
 
-        document.addEventListener("pointerup", handlePointerUp);
+        ref.current?.addEventListener("pointerup", handlePointerUp, true);
         document.addEventListener("pointermove", handlePointerMove);
 
         return () => {
@@ -172,15 +175,10 @@ export const InputChannelNode: React.FC<InputChannelNodeProps> = (props) => {
             removeDataChannelOriginPointerDownHandler();
             removeShowDataChannelConnectionsRequestHandler();
 
-            document.removeEventListener("pointerup", handlePointerUp);
+            ref.current?.removeEventListener("pointerup", handlePointerUp);
             document.removeEventListener("pointermove", handlePointerMove);
         };
     }, [props.onChannelConnect, props.workbench, props.moduleInstanceId, props.inputName, props.channelKeyCategories]);
-
-    function handleChannelConnectionRemoveClick(e: React.PointerEvent<HTMLButtonElement>) {
-        e.stopPropagation();
-        props.onChannelConnectionDisconnect(props.inputName);
-    }
 
     function handlePointerEnter() {
         guiMessageBroker.publishEvent(GuiEvent.HighlightDataChannelConnectionRequest, {
@@ -195,6 +193,7 @@ export const InputChannelNode: React.FC<InputChannelNodeProps> = (props) => {
 
     function handlePointerLeave() {
         guiMessageBroker.publishEvent(GuiEvent.UnhighlightDataChannelConnectionRequest, {});
+        guiMessageBroker.publishEvent(GuiEvent.DataChannelNodeUnhover, {});
     }
 
     return (
@@ -204,36 +203,39 @@ export const InputChannelNode: React.FC<InputChannelNodeProps> = (props) => {
             data-channelconnector
             className={resolveClassNames(
                 "flex",
+                "flex-col",
                 "items-center",
                 "justify-center",
                 "rounded",
                 "border",
                 "p-4",
+                "h-20",
                 "m-2",
-                "h-16",
+                "gap-2",
                 "text-sm",
                 {
-                    "hover:border-red-600": !connectable,
-                    "hover:border-green-600": connectable,
-                    "bg-green-600": hovered && connectable,
-                    "bg-red-600": hovered && !connectable,
+                    "bg-green-600 border-green-600": hovered && connectable,
+                    "bg-blue-600 border-blue-600": hovered && !connectable,
                     "bg-slate-100": !hovered,
                     "text-white": hovered,
+                    "shadow-md": hasConnection,
                 }
             )}
             onPointerEnter={handlePointerEnter}
             onPointerLeave={handlePointerLeave}
         >
             {props.displayName}
-            {editDataChannelConnections && hasConnection && (
-                <IconButton
-                    onPointerUp={handleChannelConnectionRemoveClick}
-                    className="ml-2 m-0 text-white"
-                    title="Remove data channel connection"
-                >
-                    <Close fontSize="small" />
-                </IconButton>
-            )}
+            <IconButton
+                ref={removeButtonRef}
+                className={resolveClassNames("m-0 hover:bg-white hover:text-red-600", {
+                    "text-white": hovered,
+                    "text-red-600": !hovered,
+                    hidden: !editDataChannelConnections || !hasConnection,
+                })}
+                title="Remove data channel connection"
+            >
+                <Remove fontSize="small" />
+            </IconButton>
         </div>
     );
 };

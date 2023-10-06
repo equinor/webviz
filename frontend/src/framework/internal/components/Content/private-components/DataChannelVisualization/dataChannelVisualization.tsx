@@ -46,6 +46,11 @@ export const DataChannelVisualization: React.FC<DataChannelVisualizationProps> =
 
     const guiMessageBroker = props.workbench.getGuiMessageBroker();
 
+    const [dataChannelConnectionsLayerVisible, setDataChannelConnectionsLayerVisible] = useGuiState(
+        guiMessageBroker,
+        GuiState.DataChannelConnectionLayerVisible
+    );
+
     React.useEffect(() => {
         forceRerender();
     }, [boundingRect]);
@@ -66,6 +71,7 @@ export const DataChannelVisualization: React.FC<DataChannelVisualizationProps> =
             mousePressed = true;
             setCurrentPointerPosition(currentOriginPoint);
             setCurrentChannelName(null);
+            setDataChannelConnectionsLayerVisible(true);
 
             const moduleInstance = props.workbench.getModuleInstance(payload.moduleInstanceId);
             if (!moduleInstance) {
@@ -84,6 +90,7 @@ export const DataChannelVisualization: React.FC<DataChannelVisualizationProps> =
             setEditDataChannelConnectionsForModuleInstanceId(null);
             setShowDataChannelConnections(false);
             props.workbench.getGlobalCursor().restoreOverrideCursor();
+            setDataChannelConnectionsLayerVisible(false);
         }
 
         function handlePointerUp() {
@@ -121,9 +128,9 @@ export const DataChannelVisualization: React.FC<DataChannelVisualizationProps> =
 
         function handleNodeHover(payload: GuiEventPayloads[GuiEvent.DataChannelNodeHover]) {
             if (payload.connectionAllowed) {
-                props.workbench.getGlobalCursor().setOverrideCursor(GlobalCursorType.Copy);
+                props.workbench.getGlobalCursor().changeOverrideCursor(GlobalCursorType.Copy);
             } else {
-                props.workbench.getGlobalCursor().setOverrideCursor(GlobalCursorType.NotAllowed);
+                props.workbench.getGlobalCursor().changeOverrideCursor(GlobalCursorType.NotAllowed);
             }
         }
 
@@ -170,6 +177,10 @@ export const DataChannelVisualization: React.FC<DataChannelVisualizationProps> =
             GuiEvent.DataChannelOriginPointerDown,
             handleDataChannelOriginPointerDown
         );
+        const removeDataChannelPointerUpHandler = guiMessageBroker.subscribeToEvent(
+            GuiEvent.DataChannelPointerUp,
+            handlePointerUp
+        );
         const removeDataChannelDoneHandler = guiMessageBroker.subscribeToEvent(
             GuiEvent.HideDataChannelConnectionsRequest,
             handleDataChannelDone
@@ -196,6 +207,7 @@ export const DataChannelVisualization: React.FC<DataChannelVisualizationProps> =
             removeHighlightDataChannelConnectionRequestHandler();
             removeUnhighlightDataChannelConnectionRequestHandler();
             removeDataChannelOriginPointerDownHandler();
+            removeDataChannelPointerUpHandler();
             removeDataChannelDoneHandler();
             removeConnectionChangeHandler();
             removeNodeHoverHandler();
@@ -209,7 +221,7 @@ export const DataChannelVisualization: React.FC<DataChannelVisualizationProps> =
 
     React.useEffect(() => {
         function handlePointerUp() {
-            if (!editDataChannelConnectionsForModuleInstanceId) {
+            if (!editDataChannelConnectionsForModuleInstanceId || dataChannelConnectionsLayerVisible) {
                 return;
             }
             setShowDataChannelConnections(false);
@@ -222,16 +234,24 @@ export const DataChannelVisualization: React.FC<DataChannelVisualizationProps> =
         return () => {
             document.removeEventListener("pointerup", handlePointerUp);
         };
-    }, [editDataChannelConnectionsForModuleInstanceId]);
+    }, [editDataChannelConnectionsForModuleInstanceId, dataChannelConnectionsLayerVisible]);
+
+    let midPointY = (originPoint.y + currentPointerPosition.y) / 2;
+
+    if (currentPointerPosition.y < originPoint.y + 40 && currentPointerPosition.y > originPoint.y) {
+        midPointY = originPoint.y - 20;
+    } else if (currentPointerPosition.y > originPoint.y - 40 && currentPointerPosition.y < originPoint.y) {
+        midPointY = originPoint.y + 20;
+    }
 
     const midPoint1: Point = {
         x: originPoint.x,
-        y: (originPoint.y + currentPointerPosition.y) / 2,
+        y: midPointY,
     };
 
     const midPoint2: Point = {
         x: currentPointerPosition.x,
-        y: (originPoint.y + currentPointerPosition.y) / 2,
+        y: midPointY,
     };
 
     function makeDataChannelPaths() {
@@ -344,7 +364,7 @@ export const DataChannelVisualization: React.FC<DataChannelVisualizationProps> =
                 </marker>
                 <marker
                     id="arrowhead-right-active"
-                    fill="red"
+                    fill="blue"
                     markerWidth="20"
                     markerHeight="14"
                     refX="0"
@@ -358,7 +378,7 @@ export const DataChannelVisualization: React.FC<DataChannelVisualizationProps> =
                 </marker>
                 <marker
                     id="arrowhead-left-active"
-                    fill="red"
+                    fill="blue"
                     markerWidth="20"
                     markerHeight="14"
                     refX="20"
@@ -417,7 +437,7 @@ export const DataChannelVisualization: React.FC<DataChannelVisualizationProps> =
                         <path
                             id={dataChannelPath.key}
                             d={`M ${dataChannelPath.origin.x} ${dataChannelPath.origin.y} C ${dataChannelPath.midPoint1.x} ${dataChannelPath.midPoint1.y} ${dataChannelPath.midPoint2.x} ${dataChannelPath.midPoint2.y} ${dataChannelPath.destination.x} ${dataChannelPath.destination.y}`}
-                            stroke={dataChannelPath.highlighted ? "red" : "#aaa"}
+                            stroke={dataChannelPath.highlighted ? "blue" : "#aaa"}
                             fill="transparent"
                             markerEnd={`url(#arrowhead-right${dataChannelPath.highlighted ? "-active" : ""})`}
                         />
@@ -425,7 +445,7 @@ export const DataChannelVisualization: React.FC<DataChannelVisualizationProps> =
                         <path
                             id={dataChannelPath.key}
                             d={`M ${dataChannelPath.destination.x} ${dataChannelPath.destination.y} C ${dataChannelPath.midPoint2.x} ${dataChannelPath.midPoint2.y} ${dataChannelPath.midPoint1.x} ${dataChannelPath.midPoint1.y} ${dataChannelPath.origin.x} ${dataChannelPath.origin.y}`}
-                            stroke={dataChannelPath.highlighted ? "red" : "#aaa"}
+                            stroke={dataChannelPath.highlighted ? "blue" : "#aaa"}
                             fill="transparent"
                             markerStart={`url(#arrowhead-left${dataChannelPath.highlighted ? "-active" : ""})`}
                         />

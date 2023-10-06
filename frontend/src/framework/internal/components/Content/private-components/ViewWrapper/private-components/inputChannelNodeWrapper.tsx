@@ -39,6 +39,7 @@ export const InputChannelNodeWrapper: React.FC<InputChannelNodeWrapperProps> = (
                 props.guiMessageBroker.publishEvent(GuiEvent.HideDataChannelConnectionsRequest, {});
                 setVisible(false);
             }
+            e.stopPropagation();
         }
 
         function handleEditDataChannelConnectionsRequest(
@@ -78,7 +79,7 @@ export const InputChannelNodeWrapper: React.FC<InputChannelNodeWrapperProps> = (
 
     return createPortal(
         <div
-            className={resolveClassNames("absolute", "flex", "items-center", "justify-center", "z-50", {
+            className={resolveClassNames("absolute flex items-center justify-center z-50", {
                 invisible: !visible,
             })}
             style={{

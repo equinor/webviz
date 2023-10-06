@@ -76,6 +76,9 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
     );
 
     function handleModuleClick() {
+        if (dataChannelConnectionsLayerVisible) {
+            return;
+        }
         if (settingsPanelWidth <= 5) {
             setSettingsPanelWidth(20);
         }
@@ -91,9 +94,6 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
     }
 
     function handlePointerUp() {
-        if (dataChannelConnectionsLayerVisible) {
-            return;
-        }
         if (drawerContent === DrawerContent.ModulesList) {
             if (!timeRef.current || Date.now() - timeRef.current < 800) {
                 handleModuleClick();
@@ -110,52 +110,58 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
         e.stopPropagation();
     }
 
-    function handleChannelConnect(inputName: string, moduleInstanceId: string, destinationPoint: Point) {
-        const originModuleInstance = props.workbench.getModuleInstance(moduleInstanceId);
+    const handleChannelConnect = React.useCallback(
+        function handleChannelConnect(inputName: string, moduleInstanceId: string, destinationPoint: Point) {
+            const originModuleInstance = props.workbench.getModuleInstance(moduleInstanceId);
 
-        if (!originModuleInstance) {
-            guiMessageBroker.publishEvent(GuiEvent.HideDataChannelConnectionsRequest, {});
-            return;
-        }
-
-        const acceptedKeys = props.moduleInstance
-            .getInputChannelDefs()
-            .find((channelDef) => channelDef.name === inputName)?.keyCategories;
-
-        const channels = Object.values(originModuleInstance.getBroadcastChannels()).filter((channel) => {
-            if (!acceptedKeys || acceptedKeys.some((key) => channel.getDataDef().key === key)) {
-                return Object.values(props.moduleInstance.getInputChannels()).every((inputChannel) => {
-                    if (inputChannel.getDataDef().key === channel.getDataDef().key) {
-                        return true;
-                    }
-                    return false;
-                });
+            if (!originModuleInstance) {
+                guiMessageBroker.publishEvent(GuiEvent.HideDataChannelConnectionsRequest, {});
+                return;
             }
-            return false;
-        });
 
-        if (channels.length === 0) {
+            const acceptedKeys = props.moduleInstance
+                .getInputChannelDefs()
+                .find((channelDef) => channelDef.name === inputName)?.keyCategories;
+
+            const channels = Object.values(originModuleInstance.getBroadcastChannels()).filter((channel) => {
+                if (!acceptedKeys || acceptedKeys.some((key) => channel.getDataDef().key === key)) {
+                    return Object.values(props.moduleInstance.getInputChannels()).every((inputChannel) => {
+                        if (inputChannel.getDataDef().key === channel.getDataDef().key) {
+                            return true;
+                        }
+                        return false;
+                    });
+                }
+                return false;
+            });
+
+            if (channels.length === 0) {
+                guiMessageBroker.publishEvent(GuiEvent.HideDataChannelConnectionsRequest, {});
+                return;
+            }
+
+            if (channels.length > 1) {
+                setChannelSelectorCenterPoint(destinationPoint);
+                setSelectableChannels(Object.values(channels).map((channel) => channel.getName()));
+                setCurrentInputName(inputName);
+                return;
+            }
+
+            const channelName = Object.values(channels)[0].getName();
+
+            props.moduleInstance.setInputChannel(inputName, channelName);
             guiMessageBroker.publishEvent(GuiEvent.HideDataChannelConnectionsRequest, {});
-            return;
-        }
+        },
+        [props.moduleInstance, props.workbench]
+    );
 
-        if (channels.length > 1) {
-            setChannelSelectorCenterPoint(destinationPoint);
-            setSelectableChannels(Object.values(channels).map((channel) => channel.getName()));
-            setCurrentInputName(inputName);
-            return;
-        }
-
-        const channelName = Object.values(channels)[0].getName();
-
-        props.moduleInstance.setInputChannel(inputName, channelName);
-        guiMessageBroker.publishEvent(GuiEvent.HideDataChannelConnectionsRequest, {});
-    }
-
-    function handleChannelDisconnect(inputName: string) {
-        props.moduleInstance.removeInputChannel(inputName);
-        guiMessageBroker.publishEvent(GuiEvent.DataChannelConnectionsChange, {});
-    }
+    const handleChannelDisconnect = React.useCallback(
+        function handleChannelDisconnect(inputName: string) {
+            props.moduleInstance.removeInputChannel(inputName);
+            guiMessageBroker.publishEvent(GuiEvent.DataChannelConnectionsChange, {});
+        },
+        [props.moduleInstance]
+    );
 
     function handleCancelChannelSelection() {
         setChannelSelectorCenterPoint(null);
@@ -164,6 +170,8 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
     }
 
     function handleChannelSelection(channelName: string) {
+        guiMessageBroker.publishEvent(GuiEvent.HideDataChannelConnectionsRequest, {});
+
         if (!currentInputName) {
             return;
         }
@@ -171,7 +179,6 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
         setSelectableChannels([]);
 
         props.moduleInstance.setInputChannel(currentInputName, channelName);
-        guiMessageBroker.publishEvent(GuiEvent.HideDataChannelConnectionsRequest, {});
     }
 
     const showAsActive =

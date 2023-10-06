@@ -27,6 +27,7 @@ export enum GuiEvent {
     HideDataChannelConnectionsRequest = "hideDataChannelConnectionsRequest",
     HighlightDataChannelConnectionRequest = "highlightDataChannelConnectionRequest",
     UnhighlightDataChannelConnectionRequest = "unhighlightDataChannelConnectionRequest",
+    DataChannelPointerUp = "dataChannelPointerUp",
     DataChannelOriginPointerDown = "dataChannelOriginPointerDown",
     DataChannelConnectionsChange = "dataChannelConnectionsChange",
     DataChannelNodeHover = "dataChannelNodeHover",
@@ -62,6 +63,7 @@ export type GuiEventPayloads = {
         moduleInstanceId: string;
         originElement: HTMLElement;
     };
+    [GuiEvent.DataChannelPointerUp]: {};
     [GuiEvent.DataChannelNodeHover]: {
         connectionAllowed: boolean;
     };

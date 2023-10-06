@@ -107,6 +107,10 @@ export const view = ({
             return;
         }
 
+        if (plotType !== PlotType.ScatterWithColorMapping) {
+            setPlotType(PlotType.ScatterWithColorMapping);
+        }
+
         const handleChannelColorChanged = (data: any | null, metaData: BroadcastChannelMeta | null) => {
             setDataColor(data);
             setMetaDataColor(metaData);
