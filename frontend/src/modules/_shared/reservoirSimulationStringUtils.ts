@@ -1,4 +1,4 @@
-import { VectorDefinitionType, vectorDefinitions } from "@assets/vectorDefinitions";
+import { VectorDefinition, vectorDefinitions } from "@assets/vectorDefinitions";
 
 import { reservoirSimulationUnitTerminology } from "./reservoirSimulationUnitTerminology";
 
@@ -34,7 +34,7 @@ export function simulationVectorDescription(vector: string): string {
         [vectorName, node] = vector.split(":", 2);
     }
 
-    function getVectorDefinition(vector: string): VectorDefinitionType | null {
+    function getVectorDefinition(vector: string): VectorDefinition | null {
         if (vector in vectorDefinitions) {
             return vectorDefinitions[vector];
         }
