@@ -16,7 +16,7 @@ RUN apt-get update -y \
     && apt-get install -y --no-install-recommends nodejs \
     && add-apt-repository ppa:deadsnakes/ppa -y \
     && apt-get update -y \
-    && apt-get install python3.11-venv -y
+    && apt-get install python3.11-venv -y \
     && apt-get -y clean \
     && rm -rf /var/lib/apt/lists/* \
     && groupadd --gid $USER_GID $USERNAME \
