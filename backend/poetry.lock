@@ -727,13 +727,13 @@ tests = ["black (>=20.8b0)", "flake8", "fmu-config", "isort", "pytest", "pytest-
 
 [[package]]
 name = "fmu-sumo"
-version = "0.5.3"
+version = "0.5.4"
 description = "Python package for interacting with Sumo in an FMU setting"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "fmu-sumo-0.5.3.tar.gz", hash = "sha256:a717e341365d85ee0a6dfb165943cd85e15ed9d02bd9017bdbfe0bbc5fcfe59d"},
-    {file = "fmu_sumo-0.5.3-py3-none-any.whl", hash = "sha256:e9dc85819f82431bbc8782eddc38ef05fded0453f7a85b4c6f0c52117b0c5154"},
+    {file = "fmu-sumo-0.5.4.tar.gz", hash = "sha256:6ac51683264e5ac4dfcf95db98b1fd54f059e31449fc73fd532ebb35025cdbff"},
+    {file = "fmu_sumo-0.5.4-py3-none-any.whl", hash = "sha256:1e23ed38263831723134a58560d82dc42b79a0284c7e242175cedcaf6bb004ff"},
 ]
 
 [package.dependencies]
