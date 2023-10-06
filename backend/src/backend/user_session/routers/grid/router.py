@@ -20,7 +20,7 @@ from src.backend.primary.routers.grid.schemas import (
     GridIntersection,
 )
 from src.services.sumo_access.grid_access import GridAccess
-from src.services.utils.b64 import b64_encode_numpy
+from src.services.utils.b64 import b64_encode_float_array_as_float32, b64_encode_uint_array_as_smallest_size
 from src.services.utils.vtk_utils import (
     VtkGridSurface,
     get_scalar_values,
@@ -50,7 +50,7 @@ async def grid_surface(
     realization = request.query_params.get("realization")
 
     # Get Xtgeo grid
-    xtgeo_grid = get_grid_geometry(
+    xtgeo_grid = await get_grid_geometry(
         authenticated_user=authenticated_user,
         case_uuid=case_uuid,
         ensemble_name=ensemble_name,
@@ -72,8 +72,8 @@ async def grid_surface(
     points_np = np.around(points_np, decimals=2)
 
     grid_surface_payload = GridSurface(
-        points=b64_encode_numpy(points_np),
-        polys=b64_encode_numpy(polys_np),
+        points_b64arr=b64_encode_float_array_as_float32(points_np),
+        polys_b64arr=b64_encode_uint_array_as_smallest_size(polys_np),
         **grid_geometrics,
     )
     return ORJSONResponse(grid_surface_payload.dict())
@@ -94,7 +94,7 @@ async def grid_parameter(
     realization = request.query_params.get("realization")
 
     # Get Xtgeo grid
-    xtgeo_grid = get_grid_geometry(
+    xtgeo_grid = await get_grid_geometry(
         authenticated_user=authenticated_user,
         case_uuid=case_uuid,
         ensemble_name=ensemble_name,
@@ -105,7 +105,7 @@ async def grid_parameter(
     grid_polydata = get_grid_surface(grid_geometry=xtgeo_grid)
 
     # Get Xtgeo parameter
-    xtgeo_parameter = get_grid_parameter(
+    xtgeo_parameter = await get_grid_parameter(
         authenticated_user=authenticated_user,
         case_uuid=case_uuid,
         ensemble_name=ensemble_name,
@@ -141,7 +141,7 @@ async def grid_parameter_intersection(  # pylint: disable=too-many-locals
 
     timer = PerfTimer()
     # Get Xtgeo grid
-    xtgeo_grid = get_grid_geometry(
+    xtgeo_grid = await get_grid_geometry(
         authenticated_user=authenticated_user,
         case_uuid=case_uuid,
         ensemble_name=ensemble_name,
@@ -155,7 +155,7 @@ async def grid_parameter_intersection(  # pylint: disable=too-many-locals
         flush=True,
     )
     # Get xtgeo parameter
-    xtgeo_parameter = get_grid_parameter(
+    xtgeo_parameter = await get_grid_parameter(
         authenticated_user=authenticated_user,
         case_uuid=case_uuid,
         ensemble_name=ensemble_name,
@@ -264,15 +264,15 @@ async def statistical_grid_parameter_intersection(  # pylint: disable=too-many-l
     # convert json string of realizations into list
     realizations = orjson.loads(request.query_params.get("realizations"))  # pylint: disable=maybe-no-member
 
-    grid_access = GridAccess(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
+    grid_access = await GridAccess.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
 
     # Check that all grids have equal nx, ny, nz
     # Should raise a http exception instead of a value error
-    if not grid_access.grids_have_equal_nxnynz(grid_name=grid_name):
+    if not await grid_access.grids_have_equal_nxnynz(grid_name=grid_name):
         raise ValueError("Grids must have equal nx, ny, nz")
 
     # Get Xtgeo grid
-    xtgeo_grid = get_grid_geometry(
+    xtgeo_grid = await get_grid_geometry(
         authenticated_user=authenticated_user,
         case_uuid=case_uuid,
         ensemble_name=ensemble_name,
@@ -291,8 +291,8 @@ async def statistical_grid_parameter_intersection(  # pylint: disable=too-many-l
     print("GETTING GRID PARAMETERS", flush=True)
 
     ### Using ThreadPoolExecutor to parallelize the download of the grid parameters
-    def worker(real):
-        return get_grid_parameter(
+    async def worker(real):
+        return await get_grid_parameter(
             authenticated_user=authenticated_user,
             case_uuid=case_uuid,
             ensemble_name=ensemble_name,
@@ -413,14 +413,14 @@ async def statistical_grid_parameter(
     # convert json string of realizations into list
     realizations = orjson.loads(request.query_params.get("realizations"))  # pylint: disable=maybe-no-member
 
-    grid_access = GridAccess(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
+    grid_access = await GridAccess.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
 
     # Check that all grids have equal nx, ny, nz
     # Should riase a http exception instead of a value error
     if not grid_access.grids_have_equal_nxnynz(grid_name=grid_name):
         raise ValueError("Grids must have equal nx, ny, nz")
 
-    xtgeo_grid = get_grid_geometry(
+    xtgeo_grid = await get_grid_geometry(
         authenticated_user=authenticated_user,
         case_uuid=case_uuid,
         ensemble_name=ensemble_name,
@@ -433,7 +433,7 @@ async def statistical_grid_parameter(
 
     # Get the xtgeo grid parameters for each realization
     xtgeo_parameters = [
-        get_grid_parameter(
+        await get_grid_parameter(
             authenticated_user=authenticated_user,
             case_uuid=case_uuid,
             ensemble_name=ensemble_name,
@@ -461,8 +461,8 @@ async def statistical_grid_parameter(
     return ORJSONResponse(mean_scalar_values.tolist())
 
 
-@cache
-def get_grid_geometry(
+# @cache
+async def get_grid_geometry(
     authenticated_user: AuthenticatedUser,
     case_uuid: str,
     ensemble_name: str,
@@ -471,8 +471,8 @@ def get_grid_geometry(
 ) -> xtgeo.Grid:
     """Get the xtgeo grid geometry for a given realization"""
     token = authenticated_user.get_sumo_access_token()
-    grid_access = GridAccess(token, case_uuid, ensemble_name)
-    grid_geometry = grid_access.get_grid_geometry(grid_name, int(realization))
+    grid_access = await GridAccess.from_case_uuid(token, case_uuid, ensemble_name)
+    grid_geometry = await grid_access.get_grid_geometry(grid_name, int(realization))
 
     return grid_geometry
 
@@ -482,8 +482,8 @@ def get_grid_surface(grid_geometry: xtgeo.Grid) -> VtkGridSurface:
     return get_surface(grid_geometry)
 
 
-@cache
-def get_grid_parameter(
+# @cache
+async def get_grid_parameter(
     authenticated_user: AuthenticatedUser,
     case_uuid: str,
     ensemble_name: str,
@@ -492,9 +492,9 @@ def get_grid_parameter(
     realization: int,
 ) -> xtgeo.GridProperty:
     token = authenticated_user.get_sumo_access_token()
-    grid_access = GridAccess(token, case_uuid, ensemble_name)
+    grid_access = await GridAccess.from_case_uuid(token, case_uuid, ensemble_name)
 
-    return grid_access.get_grid_parameter(grid_name, parameter_name, int(realization))
+    return await grid_access.get_grid_parameter(grid_name, parameter_name, int(realization))
 
 
 @cache

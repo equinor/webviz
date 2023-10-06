@@ -6,6 +6,7 @@ from fastapi.routing import APIRoute
 from fastapi.responses import ORJSONResponse
 from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
 
+from src.backend.utils.add_process_time_to_server_timing_middleware import AddProcessTimeToServerTimingMiddleware
 from src.backend.shared_middleware import add_shared_middlewares
 from src.backend.auth.auth_helper import AuthHelper
 from .routers.explore import router as explore_router
@@ -28,6 +29,7 @@ logging.basicConfig(
     datefmt="%H:%M:%S",
 )
 logging.getLogger("src.services.sumo_access").setLevel(level=logging.DEBUG)
+logging.getLogger("src.backend.primary.routers.surface").setLevel(level=logging.DEBUG)
 
 
 def custom_generate_unique_id(route: APIRoute) -> str:
@@ -63,9 +65,15 @@ authHelper = AuthHelper()
 app.include_router(authHelper.router)
 app.include_router(general_router)
 
+# This middleware instance approximately measures execution time of the route handler itself
+app.add_middleware(AddProcessTimeToServerTimingMiddleware, metric_name="total-exec-route")
+
 add_shared_middlewares(app)
 
 app.add_middleware(ProxyHeadersMiddleware, trusted_hosts="*")
+
+# This middleware instance measures execution time of the endpoints, including the cost of other middleware
+app.add_middleware(AddProcessTimeToServerTimingMiddleware, metric_name="total")
 
 
 @app.get("/")

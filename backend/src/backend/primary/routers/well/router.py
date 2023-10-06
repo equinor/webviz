@@ -5,10 +5,9 @@ from fastapi import APIRouter, Depends, Query
 
 from src.services.smda_access import mocked_drogon_smda_access
 from src.services.smda_access.well_access import WellAccess
-from src.services.sumo_access.case_inspector import CaseInspector
 from src.services.utils.authenticated_user import AuthenticatedUser
 from src.backend.auth.auth_helper import AuthHelper
-
+from src.services.sumo_access._helpers import SumoCase
 from src.services.smda_access.types import WellBoreHeader, WellBoreTrajectory
 
 LOGGER = logging.getLogger(__name__)
@@ -17,7 +16,7 @@ router = APIRouter()
 
 
 @router.get("/well_headers/")
-def get_well_headers(
+async def get_well_headers(
     # fmt:off
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     case_uuid: str = Query(description="Sumo case uuid"),
@@ -26,8 +25,8 @@ def get_well_headers(
 ) -> List[WellBoreHeader]:
     """Get well headers for all wells in the field"""
 
-    case_inspector = CaseInspector(authenticated_user.get_sumo_access_token(), case_uuid)
-    field_identifier = case_inspector.get_field_identifiers()[0]
+    case_inspector = await SumoCase.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid)
+    field_identifier = (await case_inspector.get_field_identifiers())[0]
     well_access: Union[WellAccess, mocked_drogon_smda_access.WellAccess]
     if field_identifier == "DROGON":
         # Handle DROGON
@@ -35,11 +34,11 @@ def get_well_headers(
     else:
         well_access = WellAccess(authenticated_user.get_smda_access_token())
 
-    return well_access.get_well_headers(field_identifier=field_identifier)
+    return await well_access.get_well_headers(field_identifier=field_identifier)
 
 
 @router.get("/field_well_trajectories/")
-def get_field_well_trajectories(
+async def get_field_well_trajectories(
     # fmt:off
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     case_uuid: str = Query(description="Sumo case uuid"), # Should be field identifier?
@@ -47,8 +46,8 @@ def get_field_well_trajectories(
     # fmt:on
 ) -> List[WellBoreTrajectory]:
     """Get well trajectories for field"""
-    case_inspector = CaseInspector(authenticated_user.get_sumo_access_token(), case_uuid)
-    field_identifier = case_inspector.get_field_identifiers()[0]
+    case_inspector = await SumoCase.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid)
+    field_identifier = (await case_inspector.get_field_identifiers())[0]
     well_access: Union[WellAccess, mocked_drogon_smda_access.WellAccess]
     if field_identifier == "DROGON":
         # Handle DROGON
@@ -56,13 +55,13 @@ def get_field_well_trajectories(
     else:
         well_access = WellAccess(authenticated_user.get_smda_access_token())
 
-    return well_access.get_field_wellbore_trajectories(
+    return await well_access.get_field_wellbore_trajectories(
         field_identifier=field_identifier, unique_wellbore_identifiers=unique_wellbore_identifiers
     )
 
 
 @router.get("/well_trajectories/")
-def get_well_trajectories(
+async def get_well_trajectories(
     # fmt:off
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     wellbore_uuids: List[str] = Query(description="Wellbore uuids"),
@@ -77,4 +76,4 @@ def get_well_trajectories(
     else:
         well_access = WellAccess(authenticated_user.get_smda_access_token())
 
-    return well_access.get_wellbore_trajectories(wellbore_uuids=wellbore_uuids)
+    return await well_access.get_wellbore_trajectories(wellbore_uuids=wellbore_uuids)

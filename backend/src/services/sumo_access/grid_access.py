@@ -1,14 +1,12 @@
 import logging
 from io import BytesIO
-from typing import List, Optional
+from typing import List
 
 import xtgeo
-from fmu.sumo.explorer.objects import Case
-from sumo.wrapper import SumoClient
 
 from src.services.utils.perf_timer import PerfTimer
 
-from ._helpers import create_sumo_client_instance
+from ._helpers import SumoEnsemble
 from .queries.cpgrid import (
     get_grid_geometry_blob_id,
     get_grid_names,
@@ -20,24 +18,20 @@ from .queries.cpgrid import (
 LOGGER = logging.getLogger(__name__)
 
 
-class GridAccess:
-    def __init__(self, access_token: str, case_uuid: str, iteration_name: str):
-        self._sumo_client: SumoClient = create_sumo_client_instance(access_token)
-        self._case_uuid = case_uuid
-        self._iteration_name = iteration_name.strip("iter-")  # ...
-        self._sumo_case_obj: Optional[Case] = None
-
-    def grid_model_names(self) -> List[str]:
+class GridAccess(SumoEnsemble):
+    async def grid_model_names(self) -> List[str]:
         """Get a list of grid model names"""
-        return get_grid_names(self._sumo_client, self._case_uuid, self._iteration_name)
+        return await get_grid_names(self._sumo_client, self._case_uuid, self._iteration_name)
 
-    def static_parameter_names(self, grid_name: str) -> List[str]:
+    async def static_parameter_names(self, grid_name: str) -> List[str]:
         """Get a list of grid parameter names"""
-        return get_static_grid_parameter_names(self._sumo_client, self._case_uuid, self._iteration_name, grid_name)
+        return await get_static_grid_parameter_names(
+            self._sumo_client, self._case_uuid, self._iteration_name, grid_name
+        )
 
-    def get_grid_geometry(self, grid_name: str, realization: int) -> xtgeo.Grid:
+    async def get_grid_geometry(self, grid_name: str, realization: int) -> xtgeo.Grid:
         timer = PerfTimer()
-        geometry_blob_id = get_grid_geometry_blob_id(
+        geometry_blob_id = await get_grid_geometry_blob_id(
             self._sumo_client,
             self._case_uuid,
             self._iteration_name,
@@ -50,9 +44,11 @@ class GridAccess:
 
         return grid_geom
 
-    def get_grid_parameter(self, grid_name: str, grid_parameter_name: str, realization: int) -> xtgeo.GridProperty:
+    async def get_grid_parameter(
+        self, grid_name: str, grid_parameter_name: str, realization: int
+    ) -> xtgeo.GridProperty:
         timer = PerfTimer()
-        parameter_blob_id = get_grid_parameter_blob_id(
+        parameter_blob_id = await get_grid_parameter_blob_id(
             self._sumo_client,
             self._case_uuid,
             self._iteration_name,
@@ -65,9 +61,9 @@ class GridAccess:
         grid_param = xtgeo.gridproperty_from_file(BytesIO(stream))
         return grid_param
 
-    def grids_have_equal_nxnynz(self, grid_name: str) -> bool:
+    async def grids_have_equal_nxnynz(self, grid_name: str) -> bool:
         """Check nx ny nz equality for all realizations of a grid model in a case and iteration"""
-        nx_ny_nz_arr = get_nx_ny_nz_for_ensemble_grids(
+        nx_ny_nz_arr = await get_nx_ny_nz_for_ensemble_grids(
             self._sumo_client, self._case_uuid, self._iteration_name, grid_name
         )
         return all(nx_ny_nz_arr[0] == nx_ny_nz_arr[i] for i in range(1, len(nx_ny_nz_arr)))

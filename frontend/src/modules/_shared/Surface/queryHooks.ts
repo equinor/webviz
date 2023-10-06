@@ -2,6 +2,7 @@ import { SurfaceData_api, SurfaceMeta_api } from "@api";
 import { apiService } from "@framework/ApiService";
 import { QueryFunction, QueryKey, UseQueryResult, useQuery } from "@tanstack/react-query";
 
+import { SurfaceData_trans, transformSurfaceData } from "./queryDataTransforms";
 import { SurfaceAddress } from "./surfaceAddress";
 
 const STALE_TIME = 60 * 1000;
@@ -20,8 +21,8 @@ export function useSurfaceDirectoryQuery(
     });
 }
 
-export function useSurfaceDataQueryByAddress(surfAddr: SurfaceAddress | null): UseQueryResult<SurfaceData_api> {
-    function dummyApiCall(): Promise<SurfaceData_api> {
+export function useSurfaceDataQueryByAddress(surfAddr: SurfaceAddress | null): UseQueryResult<SurfaceData_trans> {
+    function dummyApiCall(): Promise<SurfaceData_trans> {
         return new Promise((_resolve, reject) => {
             reject(null);
         });
@@ -87,6 +88,7 @@ export function useSurfaceDataQueryByAddress(surfAddr: SurfaceAddress | null): U
     return useQuery({
         queryKey: queryKey,
         queryFn: queryFn,
+        select: transformSurfaceData,
         staleTime: STALE_TIME,
         cacheTime: CACHE_TIME,
     });

@@ -17,3 +17,5 @@ add_shared_middlewares(app)
 # We shut down the user session container after some
 # minutes without receiving any new requests:
 InactivityShutdown(app, inactivity_limit_minutes=30)
+
+print("Succesfully completed user session server initialization.")

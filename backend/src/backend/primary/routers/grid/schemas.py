@@ -2,10 +2,12 @@ from typing import List
 
 from pydantic import BaseModel
 
+from src.services.utils.b64 import B64FloatArray, B64UintArray
+
 
 class GridSurface(BaseModel):
-    polys: dict
-    points: dict
+    polys_b64arr: B64UintArray
+    points_b64arr: B64FloatArray
     xmin: float
     xmax: float
     ymin: float

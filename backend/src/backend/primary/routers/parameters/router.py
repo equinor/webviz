@@ -16,7 +16,7 @@ router = APIRouter()
 
 
 @router.get("/parameter_names_and_description/")
-def get_parameter_names_and_description(
+async def get_parameter_names_and_description(
     # fmt:off
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     case_uuid: str = Query(description="Sumo case uuid"),
@@ -26,8 +26,8 @@ def get_parameter_names_and_description(
     # fmt:on
 ) -> List[schemas.EnsembleParameterDescription]:
     """Retrieve parameter names and description for an ensemble"""
-    access = ParameterAccess(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
-    parameters = access.get_parameters_and_sensitivities().parameters
+    access = await ParameterAccess.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
+    parameters = (await access.get_parameters_and_sensitivities()).parameters
     if exclude_all_values_constant:
         parameters = [p for p in parameters if not p.is_constant]
     if sort_order == "alphabetically":
@@ -46,7 +46,7 @@ def get_parameter_names_and_description(
 
 
 @router.get("/parameter/")
-def get_parameter(
+async def get_parameter(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     case_uuid: str = Query(description="Sumo case uuid"),
     ensemble_name: str = Query(description="Ensemble name"),
@@ -54,8 +54,8 @@ def get_parameter(
 ) -> Optional[EnsembleParameter]:
     """Get a parameter in a given Sumo ensemble"""
 
-    access = ParameterAccess(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
-    parameters = access.get_parameters_and_sensitivities().parameters
+    access = await ParameterAccess.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
+    parameters = (await access.get_parameters_and_sensitivities()).parameters
     for parameter in parameters:
         if parameter.name == parameter_name:
             return parameter
@@ -63,38 +63,38 @@ def get_parameter(
 
 
 @router.get("/parameters/")
-def get_parameters(
+async def get_parameters(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     case_uuid: str = Query(description="Sumo case uuid"),
     ensemble_name: str = Query(description="Ensemble name"),
 ) -> List[EnsembleParameter]:
-    access = ParameterAccess(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
-    parameters = access.get_parameters_and_sensitivities().parameters
+    access = await ParameterAccess.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
+    parameters = (await access.get_parameters_and_sensitivities()).parameters
     return [parameter for parameter in parameters]
 
 
 @router.get("/is_sensitivity_run/")
-def is_sensitivity_run(
+async def is_sensitivity_run(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     case_uuid: str = Query(description="Sumo case uuid"),
     ensemble_name: str = Query(description="Ensemble name"),
 ) -> bool:
     """Check if a given Sumo ensemble is a sensitivity run"""
 
-    access = ParameterAccess(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
-    parameters = access.get_parameters_and_sensitivities()
+    access = await ParameterAccess.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
+    parameters = await access.get_parameters_and_sensitivities()
     return parameters.sensitivities is not None
 
 
 @router.get("/sensitivities/")
-def get_sensitivities(
+async def get_sensitivities(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     case_uuid: str = Query(description="Sumo case uuid"),
     ensemble_name: str = Query(description="Ensemble name"),
 ) -> List[EnsembleSensitivity]:
     """Get sensitivities in a given Sumo ensemble"""
 
-    access = ParameterAccess(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
+    access = await ParameterAccess.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
 
-    sensitivities = access.get_parameters_and_sensitivities().sensitivities
+    sensitivities = (await access.get_parameters_and_sensitivities()).sensitivities
     return sensitivities if sensitivities else []

@@ -42,8 +42,8 @@ class StratigraphicUnit(BaseModel):
     base: str
     strat_unit_level: int
     strat_unit_type: str
-    top_age: Optional[int | float]
-    strat_unit_parent: Optional[str]
+    top_age: Optional[int | float] = None
+    strat_unit_parent: Optional[str] = None
     color_r: int
     color_g: int
     color_b: int
