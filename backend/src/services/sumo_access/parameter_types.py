@@ -11,8 +11,8 @@ class EnsembleParameter(BaseModel):
     is_logarithmic: bool
     is_numerical: bool
     is_constant: bool  # all values are equal
-    group_name: Optional[str]
-    descriptive_name: Optional[str]
+    group_name: Optional[str] = None
+    descriptive_name: Optional[str] = None
     realizations: List[int]
     values: Union[List[float], List[int], List[str]]
 
@@ -43,4 +43,4 @@ class EnsembleParameters(BaseModel):  # Find a better name
     """
 
     parameters: List[EnsembleParameter]
-    sensitivities: Optional[List[EnsembleSensitivity]]
+    sensitivities: Optional[List[EnsembleSensitivity]] = None
