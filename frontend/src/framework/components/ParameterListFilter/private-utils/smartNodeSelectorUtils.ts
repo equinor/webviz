@@ -72,6 +72,7 @@ export function createTreeDataNodeListFromParameters(
 
     const hasContinuousParameter = parameters.some((parameter) => parameter.type === ParameterType.CONTINUOUS);
 
+    // Node for boolean/state properties on top level
     createAndAddNode(treeDataNodeList, ParameterParentNodeNames.CONTINUOUS, checkIcon);
     createAndAddNode(treeDataNodeList, ParameterParentNodeNames.DISCRETE, checkIcon);
     createAndAddNode(treeDataNodeList, ParameterParentNodeNames.IS_CONSTANT, checkIcon);
@@ -117,8 +118,7 @@ export function getParametersMatchingSelectedNodes(parameters: Parameter[], sele
     const selectedParameterNames = findSelectedParameterPropertiesFromName(ParameterParentNodeNames.NAME);
     const selectedParameterGroups = findSelectedParameterPropertiesFromName(ParameterParentNodeNames.GROUP);
 
-    // Prevent invalid nodes
-    if (
+    const isNoParameterPropertyAmongSelectedNodes =
         !isContinuousSelected &&
         !isDiscreteSelected &&
         !isConstantSelected &&
@@ -126,8 +126,8 @@ export function getParametersMatchingSelectedNodes(parameters: Parameter[], sele
         !isLogarithmicSelected &&
         !isLinearSelected &&
         selectedParameterNames.length === 0 &&
-        selectedParameterGroups.length === 0
-    ) {
+        selectedParameterGroups.length === 0;
+    if (isNoParameterPropertyAmongSelectedNodes) {
         return [];
     }
 

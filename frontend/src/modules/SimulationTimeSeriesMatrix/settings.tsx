@@ -61,6 +61,7 @@ export function settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
     const [selectedVectorNames, setSelectedVectorNames] = React.useState<string[]>([]);
     const [vectorSelectorData, setVectorSelectorData] = React.useState<TreeDataNode[]>([]);
     const [prevVisualizationMode, setPrevVisualizationMode] = React.useState<VisualizationMode>(visualizationMode);
+    const [filteredParameterIdentList, setFilteredParameterIdentList] = React.useState<ParameterIdent[]>([]);
 
     if (visualizationMode !== prevVisualizationMode) {
         setPrevVisualizationMode(visualizationMode);
@@ -78,15 +79,27 @@ export function settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
         setPreviousEnsembleSet(ensembleSet);
     }
 
-    // NOTE: ONLY FOR TESTING
-    const [filteredEnsembleParameters, setFilteredEnsembleParameters] = React.useState<ParameterIdent[]>([]);
-    const selectedEnsemblesParameters: Parameter[] = [];
-    for (const ensemble of selectedEnsembleIdents) {
-        const ensembleObj = ensembleSet.findEnsemble(ensemble);
-        if (ensembleObj === null) continue;
+    // Get list of continuous parameters from selected ensembles
+    const continuousAndNonConstantParametersUnion: Parameter[] = [];
+    for (const ensembleIdent of selectedEnsembleIdents) {
+        const ensemble = ensembleSet.findEnsemble(ensembleIdent);
+        if (ensemble === null) continue;
 
-        const parameters = ensembleObj.getParameters().getParameterArr();
-        selectedEnsemblesParameters.push(...parameters);
+        const continuousAndNonConstantParameters = ensemble
+            .getParameters()
+            .getParameterArr()
+            .filter((parameter) => parameter.type === ParameterType.CONTINUOUS && !parameter.isConstant);
+
+        // Add non-duplicate parameters to list - verified by ParameterIdent
+        for (const parameter of continuousAndNonConstantParameters) {
+            const parameterIdent = ParameterIdent.fromNameAndGroup(parameter.name, parameter.groupName);
+            const isParameterInUnion = continuousAndNonConstantParametersUnion.some((elm) =>
+                parameterIdent.equals(ParameterIdent.fromNameAndGroup(elm.name, elm.groupName))
+            );
+
+            if (isParameterInUnion) continue;
+            continuousAndNonConstantParametersUnion.push(parameter);
+        }
     }
 
     const vectorListQueries = useVectorListQueries(selectedEnsembleIdents);
@@ -94,21 +107,8 @@ export function settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
     const selectedVectorNamesHasHistorical = ensembleVectorListsHelper.hasAnyHistoricalVector(selectedVectorNames);
     const currentVectorSelectorData = createVectorSelectorDataFromVectors(ensembleVectorListsHelper.vectorsUnion());
 
-    // Get union of continuous and non-constant parameters for selected ensembles and set valid parameter ident str
-    const continuousAndNonConstantParametersUnion: ParameterIdent[] = [];
-    for (const ensembleIdent of selectedEnsembleIdents) {
-        const ensemble = ensembleSet.findEnsemble(ensembleIdent);
-        if (ensemble === null) continue;
-
-        for (const parameter of ensemble.getParameters().getParameterIdents(ParameterType.CONTINUOUS)) {
-            if (continuousAndNonConstantParametersUnion.some((param) => param.equals(parameter))) continue;
-            if (ensemble.getParameters().getParameter(parameter).isConstant) continue;
-
-            continuousAndNonConstantParametersUnion.push(parameter);
-        }
-    }
     const [selectedParameterIdentStr, setSelectedParameterIdentStr] = useValidState<string | null>(null, [
-        filteredEnsembleParameters,
+        filteredParameterIdentList,
         (item: ParameterIdent) => item.toString(),
     ]);
 
@@ -149,10 +149,10 @@ export function settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
             // Try/catch as ParameterIdent.fromString() can throw
             try {
                 const newParameterIdent = ParameterIdent.fromString(selectedParameterIdentStr);
-                const isParameterInUnion = continuousAndNonConstantParametersUnion.some((parameter) =>
+                const isParameterAmongFiltered = filteredParameterIdentList.some((parameter) =>
                     parameter.equals(newParameterIdent)
                 );
-                if (isParameterInUnion) {
+                if (isParameterAmongFiltered) {
                     setParameterIdent(newParameterIdent);
                 } else {
                     setParameterIdent(null);
@@ -161,7 +161,7 @@ export function settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
                 setParameterIdent(null);
             }
         },
-        [selectedParameterIdentStr]
+        [selectedParameterIdentStr, filteredParameterIdentList]
     );
 
     function handleGroupByChange(event: React.ChangeEvent<HTMLInputElement>) {
@@ -225,12 +225,11 @@ export function settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
     }
 
     function handleParameterListFilterChange(filteredParameters: Parameter[]) {
-        // Ensure continuous parameter for module
-        const filteredParamIdents = filteredParameters
-            .filter((elm) => elm.type === ParameterType.CONTINUOUS)
-            .map((elm) => ParameterIdent.fromNameAndGroup(elm.name, elm.groupName));
+        const filteredParamIdents = filteredParameters.map((elm) =>
+            ParameterIdent.fromNameAndGroup(elm.name, elm.groupName)
+        );
 
-        setFilteredEnsembleParameters(filteredParamIdents);
+        setFilteredParameterIdentList(filteredParamIdents);
     }
 
     function handleIndividualStatisticsSelectionChange(
@@ -344,13 +343,13 @@ export function settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
                             icon={<FilterAlt fontSize="small" />}
                         >
                             <ParameterListFilter
-                                parameters={selectedEnsemblesParameters}
+                                parameters={continuousAndNonConstantParametersUnion}
                                 onChange={handleParameterListFilterChange}
                             />
                         </CollapsibleGroup>
                     </div>
                     <Select
-                        options={filteredEnsembleParameters.map((elm) => {
+                        options={filteredParameterIdentList.map((elm) => {
                             return {
                                 value: elm.toString(),
                                 label: elm.groupName ? `${elm.groupName}:${elm.name}` : elm.name,
