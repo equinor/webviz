@@ -13,19 +13,19 @@ export class EnsemblesContinuousParameterColoring {
      */
 
     private _parameterIdent: ParameterIdent;
-    private _ensembleContinuousParameterSet: Map<EnsembleIdent, ContinuousParameter>;
+    private _ensembleContinuousParameterMap: Map<EnsembleIdent, ContinuousParameter>;
     private _colorScale: ColorScale;
 
     constructor(selectedEnsembles: Ensemble[], parameterIdent: ParameterIdent, colorScale: ColorScale) {
         this._parameterIdent = parameterIdent;
-        this._ensembleContinuousParameterSet = new Map<EnsembleIdent, ContinuousParameter>();
+        this._ensembleContinuousParameterMap = new Map<EnsembleIdent, ContinuousParameter>();
         let minMax = MinMax.createInvalid();
         for (const ensemble of selectedEnsembles) {
             const ensembleParameters = ensemble.getParameters();
             const parameter = ensembleParameters.findParameter(parameterIdent);
             if (!parameter || parameter.type !== ParameterType.CONTINUOUS) continue;
 
-            this._ensembleContinuousParameterSet.set(ensemble.getIdent(), parameter);
+            this._ensembleContinuousParameterMap.set(ensemble.getIdent(), parameter);
             minMax = minMax.extendedBy(ensembleParameters.getContinuousParameterMinMax(parameterIdent));
         }
 
@@ -46,11 +46,11 @@ export class EnsemblesContinuousParameterColoring {
     }
 
     hasParameterForEnsemble(ensembleIdent: EnsembleIdent): boolean {
-        return this._ensembleContinuousParameterSet.has(ensembleIdent);
+        return this._ensembleContinuousParameterMap.has(ensembleIdent);
     }
 
     hasParameterRealizationValue(ensembleIdent: EnsembleIdent, realization: number): boolean {
-        const parameter = this._ensembleContinuousParameterSet.get(ensembleIdent);
+        const parameter = this._ensembleContinuousParameterMap.get(ensembleIdent);
         if (parameter === undefined) return false;
 
         return parameter.realizations.indexOf(realization) !== -1;
@@ -62,7 +62,7 @@ export class EnsemblesContinuousParameterColoring {
                 `Parameter ${this.getParameterDisplayName()} has no numerical value for realization ${realization} in ensemble ${ensembleIdent.toString()}`
             );
         }
-        const parameter = this._ensembleContinuousParameterSet.get(ensembleIdent);
+        const parameter = this._ensembleContinuousParameterMap.get(ensembleIdent);
         if (parameter === undefined) {
             throw new Error(
                 `Parameter ${this.getParameterDisplayName()} not found in ensemble ${ensembleIdent.toString()}`
