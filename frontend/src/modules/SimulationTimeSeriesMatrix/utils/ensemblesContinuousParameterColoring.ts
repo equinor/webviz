@@ -21,14 +21,12 @@ export class EnsemblesContinuousParameterColoring {
         this._ensembleContinuousParameterSet = new Map<EnsembleIdent, ContinuousParameter>();
         let minMax = MinMax.createInvalid();
         for (const ensemble of selectedEnsembles) {
-            const parameters = ensemble.getParameters();
-            if (!parameters.hasParameter(parameterIdent)) continue;
+            const ensembleParameters = ensemble.getParameters();
+            const parameter = ensembleParameters.findParameter(parameterIdent);
+            if (!parameter || parameter.type !== ParameterType.CONTINUOUS) continue;
 
-            const parameter = parameters.getParameter(parameterIdent);
-            if (parameter.type === ParameterType.CONTINUOUS) {
-                this._ensembleContinuousParameterSet.set(ensemble.getIdent(), parameter);
-                minMax = minMax.extendedBy(parameters.getContinuousParameterMinMax(parameterIdent));
-            }
+            this._ensembleContinuousParameterSet.set(ensemble.getIdent(), parameter);
+            minMax = minMax.extendedBy(ensembleParameters.getContinuousParameterMinMax(parameterIdent));
         }
 
         // Consider: Set Range [0,0] if parameterMinMax is invalid?
