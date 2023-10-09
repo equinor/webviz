@@ -30,30 +30,6 @@ export const InputChannelNode: React.FC<InputChannelNodeProps> = (props) => {
     const guiMessageBroker = props.workbench.getGuiMessageBroker();
 
     React.useEffect(() => {
-        const moduleInstance = props.workbench.getModuleInstance(props.moduleInstanceId);
-        if (!moduleInstance) {
-            return;
-        }
-
-        function checkIfConnection() {
-            const moduleInstance = props.workbench.getModuleInstance(props.moduleInstanceId);
-            if (!moduleInstance) {
-                return;
-            }
-
-            const inputChannels = moduleInstance.getInputChannels();
-            const hasConnection = props.inputName in inputChannels;
-            setHasConnection(hasConnection);
-        }
-
-        const unsubscribeFunc = moduleInstance.subscribeToInputChannelsChange(checkIfConnection);
-
-        return () => {
-            unsubscribeFunc();
-        };
-    }, [props.moduleInstanceId, props.inputName, props.workbench]);
-
-    React.useEffect(() => {
         let isHovered = false;
         let isConnectable = false;
         let moduleInstanceId = "";
@@ -151,6 +127,17 @@ export const InputChannelNode: React.FC<InputChannelNodeProps> = (props) => {
             guiMessageBroker.publishEvent(GuiEvent.DataChannelConnectionsChange, {});
         }
 
+        function checkIfConnection() {
+            const moduleInstance = props.workbench.getModuleInstance(props.moduleInstanceId);
+            if (!moduleInstance) {
+                return;
+            }
+
+            const inputChannels = moduleInstance.getInputChannels();
+            const hasConnection = props.inputName in inputChannels;
+            setHasConnection(hasConnection);
+        }
+
         const removeDataChannelOriginPointerDownHandler = guiMessageBroker.subscribeToEvent(
             GuiEvent.DataChannelOriginPointerDown,
             handleDataChannelOriginPointerDown
@@ -166,7 +153,6 @@ export const InputChannelNode: React.FC<InputChannelNodeProps> = (props) => {
         );
 
         ref.current?.addEventListener("pointerup", handlePointerUp, true);
-
         document.addEventListener("pointermove", handlePointerMove);
         window.addEventListener("resize", handleResize);
 
@@ -177,6 +163,8 @@ export const InputChannelNode: React.FC<InputChannelNodeProps> = (props) => {
             resizeObserver.observe(ref.current);
         }
 
+        const unsubscribeFunc = moduleInstance?.subscribeToInputChannelsChange(checkIfConnection);
+
         return () => {
             removeDataChannelDoneHandler();
             removeDataChannelOriginPointerDownHandler();
@@ -185,7 +173,12 @@ export const InputChannelNode: React.FC<InputChannelNodeProps> = (props) => {
             ref.current?.removeEventListener("pointerup", handlePointerUp);
             document.removeEventListener("pointermove", handlePointerMove);
             window.removeEventListener("resize", handleResize);
+
             resizeObserver.disconnect();
+
+            if (unsubscribeFunc) {
+                unsubscribeFunc();
+            }
         };
     }, [props.onChannelConnect, props.workbench, props.moduleInstanceId, props.inputName, props.channelKeyCategories]);
 
@@ -211,17 +204,7 @@ export const InputChannelNode: React.FC<InputChannelNodeProps> = (props) => {
             ref={ref}
             data-channelconnector
             className={resolveClassNames(
-                "flex",
-                "flex-col",
-                "items-center",
-                "justify-center",
-                "rounded",
-                "border",
-                "p-4",
-                "h-20",
-                "m-2",
-                "gap-2",
-                "text-sm",
+                "flex flex-col items-center justify-center rounded border p-4 h-20 m-2 gap-2 text-sm",
                 {
                     "bg-green-600 border-green-600": hovered && connectable,
                     "bg-blue-600 border-blue-600": hovered && !connectable,

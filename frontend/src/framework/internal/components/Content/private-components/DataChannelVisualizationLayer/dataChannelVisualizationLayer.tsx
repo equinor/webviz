@@ -334,19 +334,9 @@ export const DataChannelVisualizationLayer: React.FC<DataChannelVisualizationPro
     return ReactDOM.createPortal(
         <svg
             ref={ref}
-            className={resolveClassNames(
-                "absolute",
-                "bg-slate-50",
-                "left-0",
-                "top-0",
-                "h-full",
-                "w-full",
-                "z-40",
-                "bg-opacity-70",
-                {
-                    invisible: !visible && !showDataChannelConnections,
-                }
-            )}
+            className={resolveClassNames("absolute bg-slate-50 left-0 top-0 h-full w-full z-40 bg-opacity-70", {
+                invisible: !visible && !showDataChannelConnections,
+            })}
         >
             <defs>
                 <marker id="arrowhead-right" markerWidth="20" markerHeight="14" refX="0" refY="7" orient="auto">

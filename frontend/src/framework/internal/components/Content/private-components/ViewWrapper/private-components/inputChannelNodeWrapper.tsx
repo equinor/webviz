@@ -18,6 +18,7 @@ export const InputChannelNodeWrapper: React.FC<InputChannelNodeWrapperProps> = (
 
     React.useEffect(() => {
         let isVisible = false;
+
         function handleDataChannelOriginPointerDown() {
             setVisible(true);
             isVisible = true;
