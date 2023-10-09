@@ -29,12 +29,6 @@ export const InputChannelNode: React.FC<InputChannelNodeProps> = (props) => {
 
     const guiMessageBroker = props.workbench.getGuiMessageBroker();
 
-    const boundingRect = useElementBoundingRect(ref);
-
-    React.useLayoutEffect(() => {
-        guiMessageBroker.publishEvent(GuiEvent.DataChannelConnectionsChange, {});
-    }, [boundingRect, connectable]);
-
     React.useEffect(() => {
         const moduleInstance = props.workbench.getModuleInstance(props.moduleInstanceId);
         if (!moduleInstance) {
@@ -60,7 +54,6 @@ export const InputChannelNode: React.FC<InputChannelNodeProps> = (props) => {
     }, [props.moduleInstanceId, props.inputName, props.workbench]);
 
     React.useEffect(() => {
-        console.debug("effect");
         let isHovered = false;
         let isConnectable = false;
         let moduleInstanceId = "";
@@ -110,6 +103,7 @@ export const InputChannelNode: React.FC<InputChannelNodeProps> = (props) => {
             setConnectable(true);
             isConnectable = true;
             moduleInstanceId = payload.moduleInstanceId;
+            guiMessageBroker.publishEvent(GuiEvent.DataChannelConnectionsChange, {});
         }
 
         function handlePointerUp(e: PointerEvent) {
@@ -153,6 +147,10 @@ export const InputChannelNode: React.FC<InputChannelNodeProps> = (props) => {
             }
         }
 
+        function handleResize() {
+            guiMessageBroker.publishEvent(GuiEvent.DataChannelConnectionsChange, {});
+        }
+
         const removeDataChannelOriginPointerDownHandler = guiMessageBroker.subscribeToEvent(
             GuiEvent.DataChannelOriginPointerDown,
             handleDataChannelOriginPointerDown
@@ -168,7 +166,16 @@ export const InputChannelNode: React.FC<InputChannelNodeProps> = (props) => {
         );
 
         ref.current?.addEventListener("pointerup", handlePointerUp, true);
+
         document.addEventListener("pointermove", handlePointerMove);
+        window.addEventListener("resize", handleResize);
+
+        const resizeObserver = new ResizeObserver(handleResize);
+
+        if (ref.current) {
+            handleResize();
+            resizeObserver.observe(ref.current);
+        }
 
         return () => {
             removeDataChannelDoneHandler();
@@ -177,6 +184,8 @@ export const InputChannelNode: React.FC<InputChannelNodeProps> = (props) => {
 
             ref.current?.removeEventListener("pointerup", handlePointerUp);
             document.removeEventListener("pointermove", handlePointerMove);
+            window.removeEventListener("resize", handleResize);
+            resizeObserver.disconnect();
         };
     }, [props.onChannelConnect, props.workbench, props.moduleInstanceId, props.inputName, props.channelKeyCategories]);
 
