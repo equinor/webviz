@@ -1,7 +1,5 @@
 import { VectorHistoricalData_api, VectorRealizationData_api, VectorStatisticData_api } from "@api";
-import { Ensemble } from "@framework/Ensemble";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
-import { EnsembleSet } from "@framework/EnsembleSet";
 import { ColorSet } from "@lib/utils/ColorSet";
 import { simulationUnitReformat, simulationVectorDescription } from "@modules/_shared/reservoirSimulationStringUtils";
 
@@ -20,36 +18,6 @@ import { EnsemblesContinuousParameterColoring } from "./ensemblesContinuousParam
 import { TimeSeriesPlotData } from "./timeSeriesPlotData";
 
 import { VectorSpec } from "../state";
-
-/**
- * This class is a temporary helper class for generating display names for ensembles without the need of passing
- * a list of `Ensemble` objects into the subplot builder.
- *
- * The goal is to get a "global" helper to generate display friendly names for ensembles.
- */
-export class EnsembleDisplayNameGenerator {
-    private _ensembleSet: EnsembleSet;
-
-    constructor(ensembles: Ensemble[]) {
-        this._ensembleSet = new EnsembleSet(ensembles);
-    }
-
-    makeEnsembleDisplayName(ensembleIdent: EnsembleIdent): string {
-        const ensembleNameCount = this._ensembleSet
-            .getEnsembleArr()
-            .filter((ensemble) => ensemble.getEnsembleName() === ensembleIdent.getEnsembleName()).length;
-        if (ensembleNameCount === 1) {
-            return ensembleIdent.getEnsembleName();
-        }
-
-        const ensemble = this._ensembleSet.findEnsemble(ensembleIdent);
-        if (!ensemble) {
-            return ensembleIdent.getEnsembleName();
-        }
-
-        return ensemble.getDisplayName();
-    }
-}
 
 type VectorNameUnitMap = { [vectorName: string]: string };
 type HexColorMap = { [key: string]: string };
@@ -78,7 +46,7 @@ export class SubplotBuilder {
     private _ensembleIdentHexColors = new Map<EnsembleIdent, string>();
     private _vectorHexColors: HexColorMap = {};
 
-    private _ensembleDisplayNameGenerator: EnsembleDisplayNameGenerator;
+    private _makeEnsembleDisplayName: (ensembleIdent: EnsembleIdent) => string;
 
     private _hasRealizationsTracesColoredByParameter = false;
     private _hasHistoryTraces = false;
@@ -103,7 +71,7 @@ export class SubplotBuilder {
     constructor(
         subplotOwner: SubplotOwner,
         selectedVectorSpecifications: VectorSpec[],
-        ensembleDisplayNameGenerator: EnsembleDisplayNameGenerator,
+        makeEnsembleDisplayName: (ensembleIdent: EnsembleIdent) => string,
         colorSet: ColorSet,
         width: number,
         height: number,
@@ -113,7 +81,7 @@ export class SubplotBuilder {
         this._selectedVectorSpecifications = selectedVectorSpecifications;
         this._width = width;
         this._height = height;
-        this._ensembleDisplayNameGenerator = ensembleDisplayNameGenerator;
+        this._makeEnsembleDisplayName = makeEnsembleDisplayName;
 
         this._uniqueVectorNames = [...new Set(selectedVectorSpecifications.map((vec) => vec.vectorName))];
         this._uniqueEnsembleIdents = [];
@@ -195,9 +163,7 @@ export class SubplotBuilder {
         } else if (this._subplotOwner === SubplotOwner.ENSEMBLE) {
             this._uniqueEnsembleIdents.forEach((ensembleIdent, index) => {
                 const yPosition = 1 - index / this._numberOfSubplots - 0.01;
-                const ensembleTitle = `Ensemble: ${this._ensembleDisplayNameGenerator.makeEnsembleDisplayName(
-                    ensembleIdent
-                )}`;
+                const ensembleTitle = `Ensemble: ${this._makeEnsembleDisplayName(ensembleIdent)}`;
                 titles.push(titleAnnotation(ensembleTitle, yPosition));
             });
         }
@@ -242,7 +208,7 @@ export class SubplotBuilder {
             } else if (this._subplotOwner === SubplotOwner.VECTOR) {
                 this._addedEnsemblesLegendTracker.forEach((ensembleIdent) => {
                     const legendGroup = ensembleIdent.toString();
-                    const legendName = this._ensembleDisplayNameGenerator.makeEnsembleDisplayName(ensembleIdent);
+                    const legendName = this._makeEnsembleDisplayName(ensembleIdent);
                     const legendColor = this._ensembleIdentHexColors.get(ensembleIdent) ?? this._traceFallbackColor;
                     this._plotData.push(
                         this.createLegendTrace(legendName, legendGroup, legendColor, currentLegendRank++)
@@ -338,9 +304,7 @@ export class SubplotBuilder {
                     vectorRealizationData: realizationData,
                     name: name,
                     color: parameterColor,
-                    legendGroup: this._ensembleDisplayNameGenerator.makeEnsembleDisplayName(
-                        elm.vectorSpecification.ensembleIdent
-                    ),
+                    legendGroup: this._makeEnsembleDisplayName(elm.vectorSpecification.ensembleIdent),
                     hoverTemplate: this._defaultHoverTemplate,
                     showLegend: addLegendForTraces,
                     yaxis: `y${subplotIndex + 1}`,
@@ -561,6 +525,6 @@ export class SubplotBuilder {
     private makeTraceNameFromVectorSpecification(vectorSpecification: VectorSpec): string {
         return this._subplotOwner === SubplotOwner.ENSEMBLE
             ? vectorSpecification.vectorName
-            : this._ensembleDisplayNameGenerator.makeEnsembleDisplayName(vectorSpecification.ensembleIdent);
+            : this._makeEnsembleDisplayName(vectorSpecification.ensembleIdent);
     }
 }

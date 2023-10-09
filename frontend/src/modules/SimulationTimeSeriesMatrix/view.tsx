@@ -2,6 +2,7 @@ import React from "react";
 import Plot from "react-plotly.js";
 
 import { Ensemble } from "@framework/Ensemble";
+import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { ModuleFCProps } from "@framework/Module";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { useElementSize } from "@lib/hooks/useElementSize";
@@ -10,7 +11,7 @@ import { ColorScaleGradientType } from "@lib/utils/ColorScale";
 import { useHistoricalVectorDataQueries, useStatisticalVectorDataQueries, useVectorDataQueries } from "./queryHooks";
 import { GroupBy, State, VisualizationMode } from "./state";
 import { EnsemblesContinuousParameterColoring } from "./utils/ensemblesContinuousParameterColoring";
-import { EnsembleDisplayNameGenerator, SubplotBuilder, SubplotOwner } from "./utils/subplotBuilder";
+import { SubplotBuilder, SubplotOwner } from "./utils/subplotBuilder";
 import {
     createLoadedVectorSpecificationAndDataArray,
     filterVectorSpecificationAndFanchartStatisticsDataArray,
@@ -108,8 +109,24 @@ export const view = ({ moduleContext, workbenchSession, workbenchSettings }: Mod
         ? new EnsemblesContinuousParameterColoring(selectedEnsembles, parameterIdent, parameterColorScale)
         : null;
 
+    // Callback function for ensemble display name
+    function makeEnsembleDisplayName(ensembleIdent: EnsembleIdent): string {
+        const ensembleNameCount = selectedEnsembles.filter(
+            (ensemble) => ensemble.getEnsembleName() === ensembleIdent.getEnsembleName()
+        ).length;
+        if (ensembleNameCount === 1) {
+            return ensembleIdent.getEnsembleName();
+        }
+
+        const ensemble = ensembleSet.findEnsemble(ensembleIdent);
+        if (!ensemble) {
+            return ensembleIdent.getEnsembleName();
+        }
+
+        return ensemble.getDisplayName();
+    }
+
     // Create Plot Builder
-    const ensembleDisplayNameGenerator = new EnsembleDisplayNameGenerator(selectedEnsembles);
     const subplotOwner = groupBy === GroupBy.TIME_SERIES ? SubplotOwner.VECTOR : SubplotOwner.ENSEMBLE;
     const scatterType =
         visualizationMode === VisualizationMode.INDIVIDUAL_REALIZATIONS ||
@@ -120,7 +137,7 @@ export const view = ({ moduleContext, workbenchSession, workbenchSettings }: Mod
     const subplotBuilder = new SubplotBuilder(
         subplotOwner,
         vectorSpecifications ?? [],
-        ensembleDisplayNameGenerator,
+        makeEnsembleDisplayName,
         colorSet,
         wrapperDivSize.width,
         wrapperDivSize.height,
