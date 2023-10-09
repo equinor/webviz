@@ -97,7 +97,7 @@ export const view = ({ moduleContext, workbenchSession, workbenchSettings }: Mod
     const doColorByParameter =
         colorRealizationsByParameter &&
         parameterIdent !== null &&
-        selectedEnsembles.some((ensemble) => ensemble.getParameters().findParameter(parameterIdent));
+        selectedEnsembles.some((ensemble) => ensemble.getParameterSet().findParameter(parameterIdent));
     const ensemblesParameterColoring = doColorByParameter
         ? new EnsemblesContinuousParameterColoring(selectedEnsembles, parameterIdent, parameterColorScale)
         : null;

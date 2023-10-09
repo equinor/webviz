@@ -1,6 +1,6 @@
 import { Frequency_api, StatisticFunction_api } from "@api";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
-import { ParameterIdent } from "@framework/EnsembleParameters";
+import { ParameterIdent } from "@framework/ParameterIdent";
 
 export interface VectorSpec {
     ensembleIdent: EnsembleIdent;

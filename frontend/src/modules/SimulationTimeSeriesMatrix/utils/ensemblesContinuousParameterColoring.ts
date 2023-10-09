@@ -1,5 +1,6 @@
 import { Ensemble } from "@framework/Ensemble";
-import { ContinuousParameter, ParameterIdent, ParameterType } from "@framework/EnsembleParameters";
+import { ContinuousParameter, ParameterType } from "@framework/EnsembleParameterSet";
+import { ParameterIdent } from "@framework/ParameterIdent";
 import { ColorScale } from "@lib/utils/ColorScale";
 import { MinMax } from "@lib/utils/MinMax";
 
@@ -20,7 +21,7 @@ export class EnsemblesContinuousParameterColoring {
         this._ensembleContinuousParameterSet = {};
         let minMax = MinMax.createInvalid();
         for (const ensemble of selectedEnsembles) {
-            const parameters = ensemble.getParameters();
+            const parameters = ensemble.getParameterSet();
             if (!parameters.hasParameter(parameterIdent)) continue;
 
             const parameter = parameters.getParameter(parameterIdent);

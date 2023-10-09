@@ -2,9 +2,10 @@ import React from "react";
 
 import { Frequency_api, StatisticFunction_api } from "@api";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
-import { ParameterIdent, ParameterType } from "@framework/EnsembleParameters";
+import { ParameterType } from "@framework/EnsembleParameterSet";
 import { EnsembleSet } from "@framework/EnsembleSet";
 import { ModuleFCProps } from "@framework/Module";
+import { ParameterIdent } from "@framework/ParameterIdent";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { MultiEnsembleSelect } from "@framework/components/MultiEnsembleSelect";
 import { VectorSelector, createVectorSelectorDataFromVectors } from "@framework/components/VectorSelector";
@@ -86,9 +87,9 @@ export function settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
         const ensemble = ensembleSet.findEnsemble(ensembleIdent);
         if (ensemble === null) continue;
 
-        for (const parameter of ensemble.getParameters().getParameterIdents(ParameterType.CONTINUOUS)) {
+        for (const parameter of ensemble.getParameterSet().getParameterIdents(ParameterType.CONTINUOUS)) {
             if (continuousAndNonConstantParametersUnion.some((param) => param.equals(parameter))) continue;
-            if (ensemble.getParameters().getParameter(parameter).isConstant) continue;
+            if (ensemble.getParameterSet().getParameter(parameter).isConstant) continue;
 
             continuousAndNonConstantParametersUnion.push(parameter);
         }

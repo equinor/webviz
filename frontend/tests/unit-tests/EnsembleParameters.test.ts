@@ -1,4 +1,5 @@
-import { EnsembleParameterSet, Parameter, ParameterIdent, ParameterType } from "@framework/EnsembleParameters";
+import { EnsembleParameterSet, Parameter, ParameterType } from "@framework/EnsembleParameterSet";
+import { ParameterIdent } from "@framework/ParameterIdent";
 import { MinMax } from "@lib/utils/MinMax";
 
 // prettier-ignore
