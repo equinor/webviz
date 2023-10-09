@@ -1,10 +1,9 @@
 import { ContinuousParameter, DiscreteParameter, ParameterType } from "@framework/EnsembleParameters";
 import {
-    addParameterNameAndGroupToTreeDataNodeList,
     createAndAddNode,
     createTreeDataNodeListFromParameters,
     findOrCreateNode,
-    fromParameterTypeToNodeName,
+    getChildNodeNamesFromParentNodeName,
     getParametersMatchingSelectedNodes,
 } from "@framework/components/ParameterListFilter/private-utils/smartNodeSelectorUtils";
 import { TreeDataNode } from "@lib/components/SmartNodeSelector";
@@ -42,11 +41,6 @@ const DISCRETE_PARAMETER: DiscreteParameter = {
 };
 
 describe("Test of utility functions for ParameterListFilter", () => {
-    test("Check from parameter type to node name conversion", () => {
-        expect(fromParameterTypeToNodeName(ParameterType.CONTINUOUS)).toBe("Continuous");
-        expect(fromParameterTypeToNodeName(ParameterType.DISCRETE)).toBe("Discrete");
-    });
-
     test("Test create and add node", () => {
         const myTestList: TreeDataNode[] = [];
         const newNode = createAndAddNode(myTestList, "my node");
@@ -67,29 +61,6 @@ describe("Test of utility functions for ParameterListFilter", () => {
         const createdNode = findOrCreateNode(testNodes, "my node");
         expect(createdNode.name).toBe("my node");
         expect(testNodes.length).toBe(1);
-    });
-
-    test("Add parameter name and group to tree data node list", () => {
-        const testNodes: TreeDataNode[] = [];
-        addParameterNameAndGroupToTreeDataNodeList(testNodes, CONTINUOUS_PARAMETER);
-        expect(testNodes.length).toBe(2);
-        expect(testNodes[0].name).toBe("Name");
-        expect(testNodes[0].children?.length).toBe(1);
-        expect(testNodes[0].children?.[0].name).toBe("continuous parameter");
-        expect(testNodes[1].name).toBe("Group");
-        expect(testNodes[1].children?.length).toBe(1);
-        expect(testNodes[1].children?.[0].name).toBe("group1");
-
-        addParameterNameAndGroupToTreeDataNodeList(testNodes, DISCRETE_PARAMETER);
-        expect(testNodes.length).toBe(2);
-        expect(testNodes[0].name).toBe("Name");
-        expect(testNodes[0].children?.length).toBe(2);
-        expect(testNodes[0].children?.[0].name).toBe("continuous parameter");
-        expect(testNodes[0].children?.[1].name).toBe("discrete parameter");
-        expect(testNodes[1].name).toBe("Group");
-        expect(testNodes[1].children?.length).toBe(2);
-        expect(testNodes[1].children?.[0].name).toBe("group1");
-        expect(testNodes[1].children?.[1].name).toBe("group2");
     });
 
     test("Create tree data node list from parameters", () => {
@@ -137,6 +108,18 @@ describe("Test of utility functions for ParameterListFilter", () => {
         ]);
     });
 
+    test("Get parameters matching selected nodes - non-default delimiter", () => {
+        const parameterList = [CONTINUOUS_PARAMETER, DISCRETE_PARAMETER];
+        const nonDefaultDelimiter = "/";
+
+        expect(getParametersMatchingSelectedNodes(parameterList, ["Group/group1"], nonDefaultDelimiter)).toEqual([
+            CONTINUOUS_PARAMETER,
+        ]);
+        expect(
+            getParametersMatchingSelectedNodes(parameterList, ["Name/discrete parameter"], nonDefaultDelimiter)
+        ).toEqual([DISCRETE_PARAMETER]);
+    });
+
     test("Get parameters matching selected nodes - multiple matches", () => {
         const parameterList = [CONTINUOUS_PARAMETER, SECOND_CONTINUOUS_PARAMETER, DISCRETE_PARAMETER];
 
@@ -159,5 +142,25 @@ describe("Test of utility functions for ParameterListFilter", () => {
         expect(getParametersMatchingSelectedNodes(parameterList, ["Invalid Node", "Discrete"])).toEqual([
             DISCRETE_PARAMETER,
         ]);
+    });
+
+    test("Get child node names from parent node name", () => {
+        const testNodes = ["Name:name1", "Name:name2", "Group:group1", "Group:group2"];
+
+        expect(getChildNodeNamesFromParentNodeName(testNodes, "Name")).toEqual(["name1", "name2"]);
+        expect(getChildNodeNamesFromParentNodeName(testNodes, "Group")).toEqual(["group1", "group2"]);
+        expect(getChildNodeNamesFromParentNodeName(testNodes, "Invalid Node")).toEqual([]);
+    });
+
+    test("Get child node names from parent node name - non-default delimiter", () => {
+        const testNodes = ["Name@name1", "Name@name2", "Group@group1", "Group@group2"];
+        const nonDefaultDelimiter = "@";
+
+        expect(getChildNodeNamesFromParentNodeName(testNodes, "Name", nonDefaultDelimiter)).toEqual(["name1", "name2"]);
+        expect(getChildNodeNamesFromParentNodeName(testNodes, "Group", nonDefaultDelimiter)).toEqual([
+            "group1",
+            "group2",
+        ]);
+        expect(getChildNodeNamesFromParentNodeName(testNodes, "Invalid Node", nonDefaultDelimiter)).toEqual([]);
     });
 });

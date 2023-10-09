@@ -29,16 +29,19 @@ export const ParameterListFilter: React.FC<ParameterListFilterProps> = (props: P
     const [numberOfMatchingParameters, setNumberOfMatchingParameters] = React.useState<number>(0);
     const [parameters, setParameters] = React.useState<Parameter[] | null>(null);
     const [treeDataNodeList, setTreeDataNodeList] = React.useState<TreeDataNode[]>([]);
+    const smartNodeSelectorDelimiter = ":";
 
-    let candidateTreeDataNodeList = treeDataNodeList;
-    if (parameters === null || !isEqual(props.parameters, parameters)) {
-        candidateTreeDataNodeList = createTreeDataNodeListFromParameters([...props.parameters], checkIcon, segmentIcon);
+    function computeTreeDataNodeListAndUpdateStates(): TreeDataNode[] {
+        if (parameters !== null && isEqual(props.parameters, parameters)) return treeDataNodeList;
+
+        const newTreeDataNodeList = createTreeDataNodeListFromParameters([...props.parameters], checkIcon, segmentIcon);
         setParameters(props.parameters);
-        setTreeDataNodeList(candidateTreeDataNodeList);
+        setTreeDataNodeList(newTreeDataNodeList);
+        return newTreeDataNodeList;
     }
-    const computedTreeDataNodeList = candidateTreeDataNodeList;
+    const computedTreeDataNodeList = computeTreeDataNodeListAndUpdateStates();
 
-    // Utilizing useEffect to prevent re-render of parent component during rendering
+    // Utilizing useEffect to prevent re-render of parent component during rendering of this component
     React.useEffect(
         function createFilterParameters() {
             if (parameters === null || parameters.length === 0) {
@@ -49,13 +52,17 @@ export const ParameterListFilter: React.FC<ParameterListFilterProps> = (props: P
                 return;
             }
 
-            const filteredParameters = getParametersMatchingSelectedNodes(parameters, selectedNodes);
+            const filteredParameters = getParametersMatchingSelectedNodes(
+                parameters,
+                selectedNodes,
+                smartNodeSelectorDelimiter
+            );
             setNumberOfMatchingParameters(filteredParameters.length);
             if (props.onChange) {
                 props.onChange(filteredParameters);
             }
         },
-        [selectedNodes, parameters]
+        [selectedNodes, parameters, props.onChange]
     );
 
     function handleSmartNodeSelectorChange(selection: SmartNodeSelectorSelection) {
@@ -68,6 +75,7 @@ export const ParameterListFilter: React.FC<ParameterListFilterProps> = (props: P
             <>
                 <SmartNodeSelector
                     id={smartNodeSelectorId}
+                    delimiter={smartNodeSelectorDelimiter}
                     data={computedTreeDataNodeList}
                     selectedTags={selectedTags}
                     label={props.showTitle ? "Parameter filtering" : undefined}

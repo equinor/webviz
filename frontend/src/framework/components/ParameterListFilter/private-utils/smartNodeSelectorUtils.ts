@@ -12,16 +12,6 @@ export const ParameterParentNodeNames = {
     IS_LINEAR: "Linear", // For Parameter.isLogarithmic === false
 };
 
-export function fromParameterTypeToNodeName(type: ParameterType): string {
-    if (type === ParameterType.CONTINUOUS) {
-        return ParameterParentNodeNames.CONTINUOUS;
-    }
-    if (type === ParameterType.DISCRETE) {
-        return ParameterParentNodeNames.DISCRETE;
-    }
-    throw new Error(`Parameter type ${type} not supported`);
-}
-
 export function createAndAddNode(treeNodeDataList: TreeDataNode[], nodeName: string, icon?: string): TreeDataNode {
     const newNode: TreeDataNode = { name: nodeName, description: "", icon: icon };
     treeNodeDataList.push(newNode);
@@ -35,28 +25,6 @@ export function findOrCreateNode(treeNodeDataList: TreeDataNode[], nodeName: str
     }
 
     return createAndAddNode(treeNodeDataList, nodeName, icon);
-}
-
-export function addParameterNameAndGroupToTreeDataNodeList(
-    treeNodeDataList: TreeDataNode[],
-    parameter: Parameter,
-    icon?: string
-): void {
-    // Parameter Name
-    const nameParentNode = findOrCreateNode(treeNodeDataList, ParameterParentNodeNames.NAME, icon);
-    if (!nameParentNode.children) {
-        nameParentNode.children = [];
-    }
-    findOrCreateNode(nameParentNode.children, parameter.name);
-
-    // Parameter Group
-    if (parameter.groupName) {
-        const groupParentNode = findOrCreateNode(treeNodeDataList, ParameterParentNodeNames.GROUP, icon);
-        if (!groupParentNode.children) {
-            groupParentNode.children = [];
-        }
-        findOrCreateNode(groupParentNode.children, parameter.groupName);
-    }
 }
 
 export function createTreeDataNodeListFromParameters(
@@ -82,26 +50,57 @@ export function createTreeDataNodeListFromParameters(
         createAndAddNode(treeDataNodeList, ParameterParentNodeNames.IS_LINEAR, checkIcon);
     }
 
-    // Add name and group for parameters
+    // Add name parameters and check for group name
+    const parameterNameSet = new Set<string>();
+    const groupNameSet = new Set<string>();
     for (const parameter of parameters) {
-        addParameterNameAndGroupToTreeDataNodeList(treeDataNodeList, parameter, parentIcon);
+        parameterNameSet.add(parameter.name);
+
+        if (parameter.groupName) {
+            groupNameSet.add(parameter.groupName);
+        }
+    }
+
+    // Add parameter names
+    if (parameterNameSet.size !== 0) {
+        const nameParentNode = createAndAddNode(treeDataNodeList, ParameterParentNodeNames.NAME, parentIcon);
+        nameParentNode.children = [];
+        for (const parameterName of parameterNameSet) {
+            createAndAddNode(nameParentNode.children, parameterName);
+        }
+    }
+
+    // Add parameter groups
+    if (groupNameSet.size !== 0) {
+        const groupParentNode = createAndAddNode(treeDataNodeList, ParameterParentNodeNames.GROUP, parentIcon);
+        groupParentNode.children = [];
+        for (const groupName of groupNameSet) {
+            createAndAddNode(groupParentNode.children, groupName);
+        }
     }
 
     return treeDataNodeList;
 }
 
-export function getParametersMatchingSelectedNodes(parameters: Parameter[], selectedNodes: string[]): Parameter[] {
+export function getChildNodeNamesFromParentNodeName(
+    nodes: string[],
+    parentNodeName: string,
+    delimiter = ":"
+): string[] {
+    return nodes
+        .filter((node) => node.split(delimiter, 1)[0] === parentNodeName)
+        .map((node) => node.split(delimiter, 2)[1]);
+}
+
+export function getParametersMatchingSelectedNodes(
+    parameters: Parameter[],
+    selectedNodes: string[],
+    delimiter = ":"
+): Parameter[] {
     // No selection implies no filtering
     if (selectedNodes.length === 0) {
         return parameters;
     }
-
-    const delimiter = ":";
-    const findSelectedParameterPropertiesFromName = (propertyName: string): string[] => {
-        return selectedNodes
-            .filter((node) => node.split(delimiter, 1)[0] === propertyName)
-            .map((node) => node.split(delimiter, 2)[1]);
-    };
 
     const isContinuousSelected = selectedNodes.includes(ParameterParentNodeNames.CONTINUOUS);
     const isDiscreteSelected = selectedNodes.includes(ParameterParentNodeNames.DISCRETE);
@@ -115,8 +114,16 @@ export function getParametersMatchingSelectedNodes(parameters: Parameter[], sele
     if (isConstantSelected && isNonConstantSelected) return [];
     if (isLogarithmicSelected && isLinearSelected) return [];
 
-    const selectedParameterNames = findSelectedParameterPropertiesFromName(ParameterParentNodeNames.NAME);
-    const selectedParameterGroups = findSelectedParameterPropertiesFromName(ParameterParentNodeNames.GROUP);
+    const selectedParameterNames = getChildNodeNamesFromParentNodeName(
+        selectedNodes,
+        ParameterParentNodeNames.NAME,
+        delimiter
+    );
+    const selectedParameterGroups = getChildNodeNamesFromParentNodeName(
+        selectedNodes,
+        ParameterParentNodeNames.GROUP,
+        delimiter
+    );
 
     const isNoParameterPropertyAmongSelectedNodes =
         !isContinuousSelected &&

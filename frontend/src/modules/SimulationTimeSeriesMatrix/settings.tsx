@@ -224,13 +224,16 @@ export function settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
         });
     }
 
-    function handleParameterListFilterChange(filteredParameters: Parameter[]) {
-        const filteredParamIdents = filteredParameters.map((elm) =>
-            ParameterIdent.fromNameAndGroup(elm.name, elm.groupName)
-        );
+    const handleParameterListFilterChange = React.useCallback(
+        function handleParameterListFilterChange(filteredParameters: Parameter[]) {
+            const filteredParamIdents = filteredParameters.map((elm) =>
+                ParameterIdent.fromNameAndGroup(elm.name, elm.groupName)
+            );
 
-        setFilteredParameterIdentList(filteredParamIdents);
-    }
+            setFilteredParameterIdentList(filteredParamIdents);
+        },
+        [setFilteredParameterIdentList]
+    );
 
     function handleIndividualStatisticsSelectionChange(
         event: React.ChangeEvent<HTMLInputElement>,
