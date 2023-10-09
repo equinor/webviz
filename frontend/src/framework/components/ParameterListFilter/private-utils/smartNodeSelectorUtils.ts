@@ -18,15 +18,6 @@ export function createAndAddNode(treeNodeDataList: TreeDataNode[], nodeName: str
     return newNode;
 }
 
-export function findOrCreateNode(treeNodeDataList: TreeDataNode[], nodeName: string, icon?: string): TreeDataNode {
-    const existingNode = treeNodeDataList.find((node) => node.name === nodeName);
-    if (existingNode) {
-        return existingNode;
-    }
-
-    return createAndAddNode(treeNodeDataList, nodeName, icon);
-}
-
 export function createTreeDataNodeListFromParameters(
     parameters: Parameter[],
     checkIcon?: string,
@@ -50,7 +41,7 @@ export function createTreeDataNodeListFromParameters(
         createAndAddNode(treeDataNodeList, ParameterParentNodeNames.IS_LINEAR, checkIcon);
     }
 
-    // Add name parameters and check for group name
+    // Add parameter name and check for group name
     const parameterNameSet = new Set<string>();
     const groupNameSet = new Set<string>();
     for (const parameter of parameters) {

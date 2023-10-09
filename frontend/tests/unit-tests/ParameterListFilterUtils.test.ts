@@ -2,7 +2,6 @@ import { ContinuousParameter, DiscreteParameter, ParameterType } from "@framewor
 import {
     createAndAddNode,
     createTreeDataNodeListFromParameters,
-    findOrCreateNode,
     getChildNodeNamesFromParentNodeName,
     getParametersMatchingSelectedNodes,
 } from "@framework/components/ParameterListFilter/private-utils/smartNodeSelectorUtils";
@@ -46,21 +45,6 @@ describe("Test of utility functions for ParameterListFilter", () => {
         const newNode = createAndAddNode(myTestList, "my node");
         expect(newNode.name).toBe("my node");
         expect(newNode.name).toBe(myTestList[0].name);
-    });
-
-    test("Test find node", () => {
-        const testNode = { name: "my node", description: "", icon: undefined };
-        const testNodes: TreeDataNode[] = [testNode];
-        const foundNode = findOrCreateNode(testNodes, "my node");
-        expect(foundNode.name).toBe("my node");
-        expect(testNodes.length).toBe(1);
-    });
-
-    test("Test create node", () => {
-        const testNodes: TreeDataNode[] = [];
-        const createdNode = findOrCreateNode(testNodes, "my node");
-        expect(createdNode.name).toBe("my node");
-        expect(testNodes.length).toBe(1);
     });
 
     test("Create tree data node list from parameters", () => {
