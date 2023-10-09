@@ -2,7 +2,6 @@ import React from "react";
 import Plot from "react-plotly.js";
 
 import { Ensemble } from "@framework/Ensemble";
-import { EnsembleSet } from "@framework/EnsembleSet";
 import { ModuleFCProps } from "@framework/Module";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { useElementSize } from "@lib/hooks/useElementSize";
@@ -10,9 +9,8 @@ import { ColorScaleGradientType } from "@lib/utils/ColorScale";
 
 import { useHistoricalVectorDataQueries, useStatisticalVectorDataQueries, useVectorDataQueries } from "./queryHooks";
 import { GroupBy, State, VisualizationMode } from "./state";
-import { EnsembleDisplayNameGenerator } from "./utils/ensembleDisplayName";
 import { EnsemblesContinuousParameterColoring } from "./utils/ensemblesContinuousParameterColoring";
-import { SubplotBuilder, SubplotOwner } from "./utils/subplotBuilder";
+import { EnsembleDisplayNameGenerator, SubplotBuilder, SubplotOwner } from "./utils/subplotBuilder";
 import {
     createLoadedVectorSpecificationAndDataArray,
     filterVectorSpecificationAndFanchartStatisticsDataArray,
@@ -105,14 +103,13 @@ export const view = ({ moduleContext, workbenchSession, workbenchSettings }: Mod
     const doColorByParameter =
         colorRealizationsByParameter &&
         parameterIdent !== null &&
-        selectedEnsembles.some((ensemble) => ensemble.getParameters().findParameter(parameterIdent));
+        selectedEnsembles.some((ensemble) => ensemble.getParameters().hasParameter(parameterIdent));
     const ensemblesParameterColoring = doColorByParameter
         ? new EnsemblesContinuousParameterColoring(selectedEnsembles, parameterIdent, parameterColorScale)
         : null;
 
     // Create Plot Builder
-    const selectedEnsembleSet = new EnsembleSet(selectedEnsembles);
-    const ensembleDisplayNameGenerator = new EnsembleDisplayNameGenerator(selectedEnsembleSet);
+    const ensembleDisplayNameGenerator = new EnsembleDisplayNameGenerator(selectedEnsembles);
     const subplotOwner = groupBy === GroupBy.TIME_SERIES ? SubplotOwner.VECTOR : SubplotOwner.ENSEMBLE;
     const scatterType =
         visualizationMode === VisualizationMode.INDIVIDUAL_REALIZATIONS ||

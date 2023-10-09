@@ -5,8 +5,18 @@ import { reservoirSimulationUnitTerminology } from "./reservoirSimulationUnitTer
 /**
  * Returns a more human friendly description of the input unit if possible, otherwise returns the input unit as is.
  */
-export function simulationUnitReformat(eclUnit: string, unitSet = "METRIC"): string {
-    return reservoirSimulationUnitTerminology[unitSet]?.[eclUnit] ?? eclUnit;
+export function simulationUnitReformat(eclUnit: string, unitSystem = "METRIC"): string {
+    return reservoirSimulationUnitTerminology[unitSystem]?.[eclUnit] ?? eclUnit;
+}
+
+/**
+ * Returns vector definition for vector if it exists, otherwise returns null.
+ */
+function getVectorDefinition(vector: string): VectorDefinition | null {
+    if (vector in vectorDefinitions) {
+        return vectorDefinitions[vector];
+    }
+    return null;
 }
 
 /**
@@ -32,13 +42,6 @@ export function simulationVectorDescription(vector: string): string {
     let node: string | null = null;
     if (vector.includes(":")) {
         [vectorName, node] = vector.split(":", 2);
-    }
-
-    function getVectorDefinition(vector: string): VectorDefinition | null {
-        if (vector in vectorDefinitions) {
-            return vectorDefinitions[vector];
-        }
-        return null;
     }
 
     // Handle regions and completions

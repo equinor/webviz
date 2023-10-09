@@ -1,5 +1,7 @@
 import { VectorHistoricalData_api, VectorRealizationData_api, VectorStatisticData_api } from "@api";
+import { Ensemble } from "@framework/Ensemble";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
+import { EnsembleSet } from "@framework/EnsembleSet";
 import { ColorSet } from "@lib/utils/ColorSet";
 import { simulationUnitReformat, simulationVectorDescription } from "@modules/_shared/reservoirSimulationStringUtils";
 
@@ -14,15 +16,43 @@ import {
     createVectorStatisticsTraces,
 } from "./PlotlyTraceUtils/createVectorTracesUtils";
 import { scaleHexColorLightness } from "./colorUtils";
-import { EnsembleDisplayNameGenerator } from "./ensembleDisplayName";
 import { EnsemblesContinuousParameterColoring } from "./ensemblesContinuousParameterColoring";
 import { TimeSeriesPlotData } from "./timeSeriesPlotData";
 
 import { VectorSpec } from "../state";
 
-type VectorNameUnitMap = { [vectorName: string]: string };
+/**
+ * This class is a temporary helper class for generating display names for ensembles without the need of passing
+ * a list of `Ensemble` objects into the subplot builder.
+ *
+ * The goal is to get a "global" helper to generate display friendly names for ensembles.
+ */
+export class EnsembleDisplayNameGenerator {
+    private _ensembleSet: EnsembleSet;
 
-export type HexColorMap = { [key: string]: string };
+    constructor(ensembles: Ensemble[]) {
+        this._ensembleSet = new EnsembleSet(ensembles);
+    }
+
+    makeEnsembleDisplayName(ensembleIdent: EnsembleIdent): string {
+        const ensembleNameCount = this._ensembleSet
+            .getEnsembleArr()
+            .filter((ensemble) => ensemble.getEnsembleName() === ensembleIdent.getEnsembleName()).length;
+        if (ensembleNameCount === 1) {
+            return ensembleIdent.getEnsembleName();
+        }
+
+        const ensemble = this._ensembleSet.findEnsemble(ensembleIdent);
+        if (!ensemble) {
+            return ensembleIdent.getEnsembleName();
+        }
+
+        return ensemble.getDisplayName();
+    }
+}
+
+type VectorNameUnitMap = { [vectorName: string]: string };
+type HexColorMap = { [key: string]: string };
 export enum SubplotOwner {
     VECTOR = "Vector",
     ENSEMBLE = "Ensemble",
@@ -132,13 +162,13 @@ export class SubplotBuilder {
             margin: { t: 30, r: 0, l: 40, b: 40 },
             xaxis: { type: "date" },
             grid: { rows: this._numberOfSubplots, columns: 1, pattern: "coupled" },
-            annotations: this.subplotTitles(),
-            title: this.subplotTitles().length === 0 ? "Select a vector to visualize" : undefined,
+            annotations: this.createSubplotTitles(),
+            title: this.createSubplotTitles().length === 0 ? "Select a vector to visualize" : undefined,
             // uirevision: "true", // NOTE: Only works if vector data is cached, as Plot might receive empty data on rerender
         };
     }
 
-    subplotTitles(): Partial<Annotations>[] {
+    private createSubplotTitles(): Partial<Annotations>[] {
         // NOTE: Annotations only way to create subplot titles?
         // See: https://github.com/plotly/plotly.js/issues/2746
         const titles: Partial<Annotations>[] = [];
@@ -165,7 +195,7 @@ export class SubplotBuilder {
         } else if (this._subplotOwner === SubplotOwner.ENSEMBLE) {
             this._uniqueEnsembleIdents.forEach((ensembleIdent, index) => {
                 const yPosition = 1 - index / this._numberOfSubplots - 0.01;
-                const ensembleTitle = `Ensemble: ${this._ensembleDisplayNameGenerator.getEnsembleDisplayName(
+                const ensembleTitle = `Ensemble: ${this._ensembleDisplayNameGenerator.makeEnsembleDisplayName(
                     ensembleIdent
                 )}`;
                 titles.push(titleAnnotation(ensembleTitle, yPosition));
@@ -174,84 +204,74 @@ export class SubplotBuilder {
         return titles;
     }
 
+    // Helper function to create legend trace
+    private createLegendTrace(
+        legendName: string,
+        legendGroup: string,
+        hexColor: string,
+        legendRank: number,
+        includeMarkers = false
+    ): Partial<TimeSeriesPlotData> {
+        return {
+            name: legendName,
+            x: [null],
+            y: [null],
+            legendgroup: legendGroup,
+            showlegend: true,
+            visible: true,
+            mode: includeMarkers ? "lines+markers" : "lines",
+            line: { color: hexColor },
+            marker: { color: hexColor },
+            legendrank: legendRank,
+            yaxis: `y1`,
+        };
+    }
+
     // Create legends
     createGraphLegends(): void {
         let currentLegendRank = 1;
 
         // Add legend for each vector/ensemble not colored by parameter
         if (this._addedEnsemblesLegendTracker.length !== 0 || this._addedVectorsLegendTracker.length !== 0) {
-            // Helper function to create legend trace
-            const subplotDataLegendTrace = (
-                legendName: string,
-                legendGroup: string,
-                hexColor: string
-            ): Partial<TimeSeriesPlotData> => {
-                return {
-                    name: legendName,
-                    x: [null],
-                    y: [null],
-                    legendgroup: legendGroup,
-                    showlegend: true,
-                    visible: true,
-                    mode: "lines",
-                    line: { color: hexColor },
-                    legendrank: currentLegendRank++,
-                    yaxis: `y1`,
-                };
-            };
-
             // Add legend for each vector/ensemble on top
             if (this._subplotOwner === SubplotOwner.ENSEMBLE) {
                 this._addedVectorsLegendTracker.forEach((vectorName) => {
-                    this._plotData.push(
-                        subplotDataLegendTrace(vectorName, vectorName, this._vectorHexColors[vectorName])
-                    );
+                    const hexColor = this._vectorHexColors[vectorName] ?? this._traceFallbackColor;
+                    this._plotData.push(this.createLegendTrace(vectorName, vectorName, hexColor, currentLegendRank++));
                 });
             } else if (this._subplotOwner === SubplotOwner.VECTOR) {
                 this._addedEnsemblesLegendTracker.forEach((ensembleIdent) => {
-                    const legendGroup = this.legendGroupFromEnsembleIdent(ensembleIdent);
-                    const legendName = this._ensembleDisplayNameGenerator.getEnsembleDisplayName(ensembleIdent);
+                    const legendGroup = ensembleIdent.toString();
+                    const legendName = this._ensembleDisplayNameGenerator.makeEnsembleDisplayName(ensembleIdent);
                     const legendColor = this._ensembleIdentHexColors.get(ensembleIdent) ?? this._traceFallbackColor;
-                    this._plotData.push(subplotDataLegendTrace(legendName, legendGroup, legendColor));
+                    this._plotData.push(
+                        this.createLegendTrace(legendName, legendGroup, legendColor, currentLegendRank++)
+                    );
                 });
             }
         }
 
         // Add legend for history trace with legendrank after vectors/ensembles
         if (this._hasHistoryTraces) {
-            const historyLegendTrace: Partial<TimeSeriesPlotData> = {
-                name: "History",
-                x: [null],
-                y: [null],
-                legendgroup: "History",
-                showlegend: true,
-                visible: true,
-                mode: "lines",
-                line: { color: this._historyVectorColor },
-                legendrank: currentLegendRank++,
-                yaxis: `y1`,
-            };
-
-            this._plotData.push(historyLegendTrace);
+            const historyName = "History";
+            this._plotData.push(
+                this.createLegendTrace(historyName, historyName, this._historyVectorColor, currentLegendRank++)
+            );
         }
 
         // Add legend for observation trace with legendrank after vectors/ensembles and history
         if (this._hasObservationTraces) {
-            const observationLegendTrace: Partial<TimeSeriesPlotData> = {
-                name: "Observation",
-                x: [null],
-                y: [null],
-                legendgroup: "Observation",
-                showlegend: true,
-                visible: true,
-                mode: "lines+markers",
-                marker: { color: this._observationColor },
-                line: { color: this._observationColor },
-                legendrank: currentLegendRank++,
-                yaxis: `y1`,
-            };
-
-            this._plotData.push(observationLegendTrace);
+            const observationName = "Observation";
+            const includeMarkers = true;
+            this._plotData.push(
+                this.createLegendTrace(
+                    observationName,
+                    observationName,
+                    this._observationColor,
+                    currentLegendRank++,
+                    includeMarkers
+                )
+            );
         }
 
         // Add color scale for color by parameter below the legends
@@ -313,12 +333,12 @@ export class SubplotBuilder {
                     parameterColor = this._ensemblesParameterColoring.getColorScale().getColorForValue(value);
                 }
 
-                const name = this.getTraceNameFromVectorSpecification(elm.vectorSpecification);
+                const name = this.makeTraceNameFromVectorSpecification(elm.vectorSpecification);
                 const vectorRealizationTrace = createVectorRealizationTrace({
                     vectorRealizationData: realizationData,
                     name: name,
                     color: parameterColor,
-                    legendGroup: this._ensembleDisplayNameGenerator.getEnsembleDisplayName(
+                    legendGroup: this._ensembleDisplayNameGenerator.makeEnsembleDisplayName(
                         elm.vectorSpecification.ensembleIdent
                     ),
                     hoverTemplate: this._defaultHoverTemplate,
@@ -328,7 +348,7 @@ export class SubplotBuilder {
                 });
                 this._plotData.push(vectorRealizationTrace);
                 this._hasRealizationsTracesColoredByParameter = true;
-                this.insertToVectorNameUnitMap(elm.vectorSpecification.vectorName, realizationData.unit);
+                this.insertIntoVectorNameUnitMap(elm.vectorSpecification.vectorName, realizationData.unit);
             }
         }
     }
@@ -358,7 +378,7 @@ export class SubplotBuilder {
                 color = scaleHexColorLightness(color, 1.3) ?? color;
             }
 
-            const name = this.getTraceNameFromVectorSpecification(elm.vectorSpecification);
+            const name = this.makeTraceNameFromVectorSpecification(elm.vectorSpecification);
             const vectorRealizationTraces = createVectorRealizationTraces({
                 vectorRealizationsData: elm.data,
                 name: name,
@@ -373,7 +393,7 @@ export class SubplotBuilder {
             this._plotData.push(...vectorRealizationTraces);
 
             if (elm.data.length !== 0) {
-                this.insertToVectorNameUnitMap(elm.vectorSpecification.vectorName, elm.data[0].unit);
+                this.insertIntoVectorNameUnitMap(elm.vectorSpecification.vectorName, elm.data[0].unit);
             }
         }
     }
@@ -397,7 +417,7 @@ export class SubplotBuilder {
             const legendGroup = this.getLegendGroupAndUpdateTracker(elm.vectorSpecification);
             const color = this.getHexColor(elm.vectorSpecification);
 
-            const name = this.getTraceNameFromVectorSpecification(elm.vectorSpecification);
+            const name = this.makeTraceNameFromVectorSpecification(elm.vectorSpecification);
             const vectorFanchartTraces = createVectorFanchartTraces({
                 vectorStatisticData: elm.data,
                 hexColor: color,
@@ -408,7 +428,7 @@ export class SubplotBuilder {
             });
 
             this._plotData.push(...vectorFanchartTraces);
-            this.insertToVectorNameUnitMap(elm.vectorSpecification.vectorName, elm.data.unit);
+            this.insertIntoVectorNameUnitMap(elm.vectorSpecification.vectorName, elm.data.unit);
         }
     }
 
@@ -434,7 +454,7 @@ export class SubplotBuilder {
             const legendGroup = this.getLegendGroupAndUpdateTracker(elm.vectorSpecification);
             const color = this.getHexColor(elm.vectorSpecification);
 
-            const name = this.getTraceNameFromVectorSpecification(elm.vectorSpecification);
+            const name = this.makeTraceNameFromVectorSpecification(elm.vectorSpecification);
             const vectorStatisticsTraces = createVectorStatisticsTraces({
                 vectorStatisticData: elm.data,
                 hexColor: color,
@@ -446,7 +466,7 @@ export class SubplotBuilder {
             });
 
             this._plotData.push(...vectorStatisticsTraces);
-            this.insertToVectorNameUnitMap(elm.vectorSpecification.vectorName, elm.data.unit);
+            this.insertIntoVectorNameUnitMap(elm.vectorSpecification.vectorName, elm.data.unit);
         }
     }
 
@@ -468,7 +488,7 @@ export class SubplotBuilder {
             const subplotIndex = this.getSubplotIndex(elm.vectorSpecification);
             if (subplotIndex === -1) continue;
 
-            const name = this.getTraceNameFromVectorSpecification(elm.vectorSpecification);
+            const name = this.makeTraceNameFromVectorSpecification(elm.vectorSpecification);
             const vectorHistoryTrace = createHistoricalVectorTrace({
                 vectorHistoricalData: elm.data,
                 name: name,
@@ -478,7 +498,7 @@ export class SubplotBuilder {
             });
             this._plotData.push(vectorHistoryTrace);
             this._hasHistoryTraces = true;
-            this.insertToVectorNameUnitMap(elm.vectorSpecification.vectorName, elm.data.unit);
+            this.insertIntoVectorNameUnitMap(elm.vectorSpecification.vectorName, elm.data.unit);
         }
     }
 
@@ -503,7 +523,7 @@ export class SubplotBuilder {
             if (!this._addedEnsemblesLegendTracker.some((elm) => elm.equals(ensembleIdent))) {
                 this._addedEnsemblesLegendTracker.push(ensembleIdent);
             }
-            return this.legendGroupFromEnsembleIdent(ensembleIdent);
+            return ensembleIdent.toString();
         } else if (this._subplotOwner === SubplotOwner.ENSEMBLE) {
             const vectorName = vectorSpecification.vectorName;
             if (!this._addedVectorsLegendTracker.includes(vectorName)) {
@@ -524,7 +544,7 @@ export class SubplotBuilder {
         return this._traceFallbackColor;
     }
 
-    private insertToVectorNameUnitMap(vectorName: string, unit: string): void {
+    private insertIntoVectorNameUnitMap(vectorName: string, unit: string): void {
         if (vectorName in this._vectorNameUnitMap) return;
 
         this._vectorNameUnitMap[vectorName] = unit;
@@ -538,13 +558,9 @@ export class SubplotBuilder {
         return `${vectorDescription} [${simulationUnitReformat(unit)}]`;
     }
 
-    private getTraceNameFromVectorSpecification(vectorSpecification: VectorSpec): string {
+    private makeTraceNameFromVectorSpecification(vectorSpecification: VectorSpec): string {
         return this._subplotOwner === SubplotOwner.ENSEMBLE
             ? vectorSpecification.vectorName
-            : this._ensembleDisplayNameGenerator.getEnsembleDisplayName(vectorSpecification.ensembleIdent);
-    }
-
-    private legendGroupFromEnsembleIdent(ensembleIdent: EnsembleIdent): string {
-        return ensembleIdent.toString();
+            : this._ensembleDisplayNameGenerator.makeEnsembleDisplayName(vectorSpecification.ensembleIdent);
     }
 }

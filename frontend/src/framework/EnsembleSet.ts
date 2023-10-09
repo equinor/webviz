@@ -19,14 +19,6 @@ export class EnsembleSet {
         return this.findEnsemble(ensembleIdent) !== null;
     }
 
-    getEnsemble(ensembleIdent: EnsembleIdent): Ensemble {
-        const ensemble = this.findEnsemble(ensembleIdent);
-        if (!ensemble) {
-            throw new Error(`Ensemble ${ensembleIdent.toString()} not found`);
-        }
-        return ensemble;
-    }
-
     findEnsemble(ensembleIdent: EnsembleIdent): Ensemble | null {
         return this._ensembleArr.find((ens) => ens.getIdent().equals(ensembleIdent)) ?? null;
     }

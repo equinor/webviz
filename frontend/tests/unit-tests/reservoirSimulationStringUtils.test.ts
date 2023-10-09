@@ -10,21 +10,21 @@ describe("Reservoir Simulation string utils tests", () => {
         expect(simulationVectorDescription("WOPRL__2:A2")).toEqual("Oil Flow Rate, well A2 completion 2");
     });
 
-    test("Test default unit set reformat", () => {
+    test("Test default unit system reformat", () => {
         expect(simulationUnitReformat("INVALID_UNIT")).toEqual("INVALID_UNIT");
         expect(simulationUnitReformat("M3")).toEqual("m³");
         expect(simulationUnitReformat("SM3/DAY")).toEqual("Sm³/day");
     });
 
-    test("Test metric unit set reformat", () => {
+    test("Test metric unit system reformat", () => {
         expect(simulationUnitReformat("INVALID_UNIT", "METRIC")).toEqual("INVALID_UNIT");
         expect(simulationUnitReformat("M3", "METRIC")).toEqual("m³");
         expect(simulationUnitReformat("SM3/DAY", "METRIC")).toEqual("Sm³/day");
     });
 
-    test("Test invalid unit set reformat", () => {
-        expect(simulationUnitReformat("INVALID_UNIT", "INVALID_UNIT_SET")).toEqual("INVALID_UNIT");
-        expect(simulationUnitReformat("M3", "INVALID_UNIT_SET")).toEqual("M3");
-        expect(simulationUnitReformat("SM3/DAY", "INVALID_UNIT_SET")).toEqual("SM3/DAY");
+    test("Test invalid unit system reformat", () => {
+        expect(simulationUnitReformat("INVALID_UNIT", "INVALID_UNIT_SYSTEM")).toEqual("INVALID_UNIT");
+        expect(simulationUnitReformat("M3", "INVALID_UNIT_SYSTEM")).toEqual("M3");
+        expect(simulationUnitReformat("SM3/DAY", "INVALID_UNIT_SYSTEM")).toEqual("SM3/DAY");
     });
 });

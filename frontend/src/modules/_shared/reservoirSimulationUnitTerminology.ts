@@ -3,7 +3,7 @@ export type UnitSet = {
 };
 
 export type ReservoirSimulationUnitTerminologyType = {
-    [unitSet: string]: UnitSet;
+    [unitSystem: string]: UnitSet;
 };
 
 /**

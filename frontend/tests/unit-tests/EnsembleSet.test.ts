@@ -24,20 +24,6 @@ describe("EnsembleSet tests", () => {
         expect(ensSet.hasEnsemble(new EnsembleIdent("99999999-aaaa-4444-aaaa-aaaaaaaaaaaa", "ens1"))).toBe(false);
     });
 
-    test("get by EnsembleIdent", () => {
-        const ensSet = new EnsembleSet(ensembleArr);
-        expect(ensSet.hasAnyEnsembles()).toBe(true);
-        expect(ensSet.getEnsemble(new EnsembleIdent("11111111-aaaa-4444-aaaa-aaaaaaaaaaaa", "ens1"))).toBeInstanceOf(
-            Ensemble
-        );
-        expect(() => {
-            ensSet.getEnsemble(new EnsembleIdent("11111111-aaaa-4444-aaaa-aaaaaaaaaaaa", "ens99"));
-        }).toThrow();
-        expect(() => {
-            ensSet.getEnsemble(new EnsembleIdent("99999999-aaaa-4444-aaaa-aaaaaaaaaaaa", "ens1"));
-        }).toThrow();
-    });
-
     test("find by EnsembleIdent", () => {
         const ensSet = new EnsembleSet(ensembleArr);
         expect(ensSet.hasAnyEnsembles()).toBe(true);

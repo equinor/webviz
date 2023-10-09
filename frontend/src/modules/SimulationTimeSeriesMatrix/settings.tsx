@@ -105,6 +105,12 @@ export function settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
         setVectorSelectorData(currentVectorSelectorData);
     }
 
+    // Set statistics type for checkbox rendering
+    const computedStatisticsType = computeStatisticsType(statisticsType, visualizationMode);
+    if (statisticsType !== computedStatisticsType) {
+        setStatisticsType(computedStatisticsType);
+    }
+
     React.useEffect(
         function propagateVectorSpecsToView() {
             const newVectorSpecifications: VectorSpec[] = [];
@@ -230,24 +236,8 @@ export function settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
         });
     }
 
-    // Set active statistics for checkboxes
-    let candidateStatisticsVisualization = statisticsType;
-    if (statisticsType !== StatisticsType.FANCHART && visualizationMode === VisualizationMode.STATISTICAL_FANCHART) {
-        candidateStatisticsVisualization = StatisticsType.FANCHART;
-    }
-    if (
-        statisticsType !== StatisticsType.INDIVIDUAL &&
-        [VisualizationMode.STATISTICAL_LINES, VisualizationMode.STATISTICS_AND_REALIZATIONS].includes(visualizationMode)
-    ) {
-        candidateStatisticsVisualization = StatisticsType.INDIVIDUAL;
-    }
-    if (statisticsType !== candidateStatisticsVisualization) {
-        setStatisticsType(candidateStatisticsVisualization);
-    }
-    const computedStatisticsVisualization = candidateStatisticsVisualization;
-
     function makeStatisticCheckboxes() {
-        if (computedStatisticsVisualization === StatisticsType.FANCHART) {
+        if (computedStatisticsType === StatisticsType.FANCHART) {
             return Object.values(FanchartStatisticOption).map((value: FanchartStatisticOption) => {
                 return (
                     <Checkbox
@@ -261,7 +251,7 @@ export function settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
                 );
             });
         }
-        if (computedStatisticsVisualization === StatisticsType.INDIVIDUAL) {
+        if (computedStatisticsType === StatisticsType.INDIVIDUAL) {
             return Object.values(StatisticFunction_api).map((value: StatisticFunction_api) => {
                 return (
                     <Checkbox
@@ -395,4 +385,25 @@ export function settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
             </CollapsibleGroup>
         </div>
     );
+}
+
+function computeStatisticsType(
+    previousStatisticsType: StatisticsType,
+    visualizationMode: VisualizationMode
+): StatisticsType {
+    if (
+        previousStatisticsType !== StatisticsType.FANCHART &&
+        visualizationMode === VisualizationMode.STATISTICAL_FANCHART
+    ) {
+        return StatisticsType.FANCHART;
+    }
+
+    if (
+        previousStatisticsType !== StatisticsType.INDIVIDUAL &&
+        [VisualizationMode.STATISTICAL_LINES, VisualizationMode.STATISTICS_AND_REALIZATIONS].includes(visualizationMode)
+    ) {
+        return StatisticsType.INDIVIDUAL;
+    }
+
+    return previousStatisticsType;
 }
