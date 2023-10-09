@@ -1,9 +1,16 @@
 import React from "react";
 
 import { BroadcastChannel } from "./Broadcaster";
-import { ModuleInstance } from "./ModuleInstance";
+import { ModuleInstance, ModuleInstanceLogEntryType } from "./ModuleInstance";
 import { StateBaseType, StateStore, useSetStoreValue, useStoreState, useStoreValue } from "./StateStore";
 import { SyncSettingKey } from "./SyncSettings";
+
+export enum ModuleInstanceState {
+    LOADING,
+    READY,
+    ERROR,
+    WARNING,
+}
 
 export class ModuleContext<S extends StateBaseType> {
     private _moduleInstance: ModuleInstance<S>;
@@ -55,5 +62,17 @@ export class ModuleContext<S extends StateBaseType> {
 
     setInstanceTitle(title: string): void {
         this._moduleInstance.setTitle(title);
+    }
+
+    setLoading(isLoading: boolean): void {
+        this._moduleInstance.setLoading(isLoading);
+    }
+
+    log(message: string, type: ModuleInstanceLogEntryType = ModuleInstanceLogEntryType.INFO): void {
+        this._moduleInstance.log(message, type);
+    }
+
+    clearLog(): void {
+        this._moduleInstance.clearLog();
     }
 }

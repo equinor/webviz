@@ -40,6 +40,8 @@ export const view = ({ moduleContext, workbenchServices, workbenchSettings }: Mo
     const numBins = moduleContext.useStoreValue("numBins");
     const orientation = moduleContext.useStoreValue("orientation");
 
+    moduleContext.setLoading(true);
+
     const [highlightedKey, setHighlightedKey] = React.useState<number | null>(null);
     const [dataX, setDataX] = React.useState<any[] | null>(null);
     const [dataY, setDataY] = React.useState<any[] | null>(null);

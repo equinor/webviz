@@ -17,6 +17,18 @@ export enum ModuleInstanceState {
     RESETTING,
 }
 
+export enum ModuleInstanceLogEntryType {
+    INFO,
+    WARNING,
+    ERROR,
+}
+
+export type ModuleInstanceLogEntry = {
+    message: string;
+    timestamp: number;
+    type: ModuleInstanceLogEntryType;
+};
+
 export class ModuleInstance<StateType extends StateBaseType> {
     private _id: string;
     private _title: string;
@@ -35,6 +47,8 @@ export class ModuleInstance<StateType extends StateBaseType> {
     private _cachedDefaultState: StateType | null;
     private _cachedStateStoreOptions?: StateOptions<StateType>;
     private _initialSettings: InitialSettings | null;
+    private _contentIsLoading: boolean;
+    private _logEntries: ModuleInstanceLogEntry[];
 
     constructor(
         module: Module<StateType>,
@@ -57,6 +71,8 @@ export class ModuleInstance<StateType extends StateBaseType> {
         this._fatalError = null;
         this._cachedDefaultState = null;
         this._initialSettings = null;
+        this._contentIsLoading = false;
+        this._logEntries = [];
 
         this._broadcastChannels = {} as Record<string, BroadcastChannel>;
 
@@ -159,6 +175,38 @@ export class ModuleInstance<StateType extends StateBaseType> {
     setTitle(title: string): void {
         this._title = title;
         this.notifySubscribersAboutTitleChange();
+    }
+
+    setLoading(isLoading: boolean): void {
+        this._contentIsLoading = isLoading;
+    }
+
+    isLoading(): boolean {
+        return this._contentIsLoading;
+    }
+
+    log(message: string, type: ModuleInstanceLogEntryType = ModuleInstanceLogEntryType.INFO): void {
+        this._logEntries.push({
+            message,
+            timestamp: Date.now(),
+            type,
+        });
+    }
+
+    getLogEntries(): ModuleInstanceLogEntry[] {
+        return this._logEntries;
+    }
+
+    clearLog(): void {
+        this._logEntries = [];
+    }
+
+    hasLoggedErrors(): boolean {
+        return this._logEntries.some((entry) => entry.type === ModuleInstanceLogEntryType.ERROR);
+    }
+
+    hasLoggedWarnings(): boolean {
+        return this._logEntries.some((entry) => entry.type === ModuleInstanceLogEntryType.WARNING);
     }
 
     subscribeToTitleChange(cb: (title: string) => void): () => void {
