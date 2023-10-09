@@ -1,4 +1,4 @@
-import { EnsembleParameters, Parameter, ParameterIdent, ParameterType } from "@framework/EnsembleParameters";
+import { EnsembleParameterSet, Parameter, ParameterIdent, ParameterType } from "@framework/EnsembleParameters";
 import { MinMax } from "@lib/utils/MinMax";
 
 // prettier-ignore
@@ -12,10 +12,9 @@ const PARAM_ARR: Parameter[] = [
     {type: ParameterType.DISCRETE, name: "dparam_B", groupName: null, description: "descB", isConstant: false, realizations: [1,2,3], values: ["A", "B", "C"]},
 ];
 
-
 describe("EnsembleParameters tests", () => {
     test("Get list of parameter idents", () => {
-        const ensParams = new EnsembleParameters(PARAM_ARR);
+        const ensParams = new EnsembleParameterSet(PARAM_ARR);
         {
             const allIdents = ensParams.getParameterIdents(null);
             expect(allIdents.length).toEqual(6);
@@ -43,7 +42,7 @@ describe("EnsembleParameters tests", () => {
     });
 
     test("Check for parameter existence", () => {
-        const ensParams = new EnsembleParameters(PARAM_ARR);
+        const ensParams = new EnsembleParameterSet(PARAM_ARR);
 
         expect(ensParams.hasParameter(ParameterIdent.fromNameAndGroup("cparam_10", null))).toBe(true);
         expect(ensParams.hasParameter(ParameterIdent.fromNameAndGroup("cparam_50", "grp1"))).toBe(true);
@@ -56,7 +55,7 @@ describe("EnsembleParameters tests", () => {
     });
 
     test("Get parameters", () => {
-        const ensParams = new EnsembleParameters(PARAM_ARR);
+        const ensParams = new EnsembleParameterSet(PARAM_ARR);
         {
             const par = ensParams.getParameter(ParameterIdent.fromNameAndGroup("cparam_10", null));
             expect(par.type).toEqual(ParameterType.CONTINUOUS);
@@ -81,12 +80,12 @@ describe("EnsembleParameters tests", () => {
     });
 
     test("Check that getting non-existing parameter throws", () => {
-        const ensParams = new EnsembleParameters(PARAM_ARR);
+        const ensParams = new EnsembleParameterSet(PARAM_ARR);
         expect(() => ensParams.getParameter(ParameterIdent.fromNameAndGroup("someBogusName", null))).toThrow();
     });
 
     test("Test getting min/max values for continuous parameter", () => {
-        const ensParams = new EnsembleParameters(PARAM_ARR);
+        const ensParams = new EnsembleParameterSet(PARAM_ARR);
         {
             const minMax = ensParams.getContinuousParameterMinMax(ParameterIdent.fromNameAndGroup("cparam_10", null));
             expect(minMax).toEqual(new MinMax(11, 19));
@@ -97,7 +96,6 @@ describe("EnsembleParameters tests", () => {
         }
     });
 });
-
 
 describe("ParameterIdent tests", () => {
     test("Conversion to/from string", () => {
