@@ -16,7 +16,6 @@ import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import {
     ChevronLeft,
     ChevronRight,
-    GitHub,
     GridView,
     Link,
     List,
@@ -25,6 +24,8 @@ import {
     WebAsset,
 } from "@mui/icons-material";
 import { useQueryClient } from "@tanstack/react-query";
+
+import { UserSessionState } from "./private-components/UserSessionState";
 
 type NavBarProps = {
     workbench: Workbench;
@@ -249,17 +250,10 @@ export const NavBar: React.FC<NavBarProps> = (props) => {
                 <NavBarDivider />
                 <LoginButton className="w-full !text-slate-800 h-10" showText={expanded} />
                 <div className="flex-grow h-5" />
-                <NavBarDivider />
-                <Button
-                    title="Visit project on GitHub"
-                    onClick={() => window.open("https://github.com/equinor/webviz", "_blank")}
-                    className={resolveClassNames("w-full !text-slate-500 hover:!text-slate-800 h-10", {
-                        "mb-16": isDevMode(),
-                    })}
-                    startIcon={<GitHub fontSize="small" />}
-                >
-                    {expanded ? "Webviz on GitHub" : ""}
-                </Button>
+                <div className={isDevMode() ? "mb-16" : ""}>
+                    <NavBarDivider />
+                    <UserSessionState expanded={expanded} />
+                </div>
             </div>
             {ensembleDialogOpen && (
                 <SelectEnsemblesDialog selectedEnsembles={selectedEnsembles} onClose={handleEnsembleDialogClose} />
