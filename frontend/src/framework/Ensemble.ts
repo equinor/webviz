@@ -1,13 +1,13 @@
 import { EnsembleIdent } from "./EnsembleIdent";
-import { EnsembleParameters, Parameter } from "./EnsembleParameters";
-import { EnsembleSensitivities, Sensitivity } from "./EnsembleSensitivities";
+import { EnsembleParameterSet, Parameter } from "./EnsembleParameterSet";
+import { EnsembleSensitivitySet, Sensitivity } from "./EnsembleSensitivities";
 
 export class Ensemble {
     private _ensembleIdent: EnsembleIdent;
     private _caseName: string;
     private _realizationsArr: number[];
-    private _parameters: EnsembleParameters;
-    private _sensitivities: EnsembleSensitivities | null;
+    private _parameterSet: EnsembleParameterSet;
+    private _sensitivities: EnsembleSensitivitySet | null;
 
     constructor(
         caseUuid: string,
@@ -20,11 +20,11 @@ export class Ensemble {
         this._ensembleIdent = new EnsembleIdent(caseUuid, ensembleName);
         this._caseName = caseName;
         this._realizationsArr = Array.from(realizationsArr).sort((a, b) => a - b);
-        this._parameters = new EnsembleParameters(parameterArr);
+        this._parameterSet = new EnsembleParameterSet(parameterArr);
 
         this._sensitivities = null;
         if (sensitivityArr && sensitivityArr.length > 0) {
-            this._sensitivities = new EnsembleSensitivities(sensitivityArr);
+            this._sensitivities = new EnsembleSensitivitySet(sensitivityArr);
         }
     }
 
@@ -64,11 +64,11 @@ export class Ensemble {
         return this._realizationsArr[this._realizationsArr.length - 1];
     }
 
-    getParameters(): EnsembleParameters {
-        return this._parameters;
+    getParameterSet(): EnsembleParameterSet {
+        return this._parameterSet;
     }
 
-    getSensitivities(): EnsembleSensitivities | null {
+    getSensitivitySet(): EnsembleSensitivitySet | null {
         return this._sensitivities;
     }
 }

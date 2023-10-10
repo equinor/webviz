@@ -89,7 +89,7 @@ export const view = ({
         return unsubscribeFunc;
     }, [responseChannel, ensembleSet]);
 
-    const sensitivities = channelEnsemble?.getSensitivities();
+    const sensitivities = channelEnsemble?.getSensitivitySet();
     const colorSet = workbenchSettings.useColorSet();
     const sensitivitiesColorMap = createSensitivityColorMap(
         sensitivities?.getSensitivityNames().sort() ?? [],

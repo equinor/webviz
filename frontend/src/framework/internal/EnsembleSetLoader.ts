@@ -4,7 +4,7 @@ import { QueryClient } from "@tanstack/react-query";
 
 import { Ensemble } from "../Ensemble";
 import { EnsembleIdent } from "../EnsembleIdent";
-import { Parameter, ParameterType, ContinuousParameter, DiscreteParameter } from "../EnsembleParameters";
+import { ContinuousParameter, DiscreteParameter, Parameter, ParameterType } from "../EnsembleParameterSet";
 import { Sensitivity, SensitivityCase } from "../EnsembleSensitivities";
 import { EnsembleSet } from "../EnsembleSet";
 
@@ -141,8 +141,7 @@ function buildParameterArrFromApiResponse(apiParameterArr: EnsembleParameter_api
                 values: apiPar.values as number[],
             };
             retParameterArr.push(retPar);
-        }
-        else {
+        } else {
             const retPar: DiscreteParameter = {
                 type: ParameterType.DISCRETE,
                 name: apiPar.name,

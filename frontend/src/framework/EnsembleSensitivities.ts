@@ -14,7 +14,7 @@ export type Sensitivity = {
     readonly cases: SensitivityCase[];
 };
 
-export class EnsembleSensitivities {
+export class EnsembleSensitivitySet {
     private _sensitivityArr: Sensitivity[];
 
     constructor(sensitivityArr: Sensitivity[]) {

@@ -107,7 +107,7 @@ export const view = ({
     );
     const colorSet = workbenchSettings.useColorSet();
 
-    const allSensitivityNamesInEnsemble = ensemble?.getSensitivities()?.getSensitivityNames().sort() ?? [];
+    const allSensitivityNamesInEnsemble = ensemble?.getSensitivitySet()?.getSensitivityNames().sort() ?? [];
 
     const traceDataArr: TimeSeriesPlotlyTrace[] = [];
     if (ensemble && selectedSensitivities && selectedSensitivities.length > 0) {
@@ -125,7 +125,7 @@ export const view = ({
             }
 
             // Add realization traces
-            const sensitivity = ensemble.getSensitivities()?.getSensitivityByName(sensitivityName);
+            const sensitivity = ensemble.getSensitivitySet()?.getSensitivityByName(sensitivityName);
             if (showRealizations && realizationsQuery.data && sensitivity) {
                 for (const sensCase of sensitivity.cases) {
                     const realsToInclude = sensCase.realizations;

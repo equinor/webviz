@@ -48,7 +48,10 @@ export function WorkbenchSpyView(props: ModuleFCProps<SharedState>) {
                 <tbody>
                     {makeTableRow("hoverRealization", hoverRealization?.realization, hoverRealization_TS)}
                     {makeTableRow("hoverTimestamp", hoverTimestamp?.timestampUtcMs, hoverTimestamp_TS)}
-                    {makeTableRow("hoverTimestamp isoStr", hoverTimestamp ? timestampUtcMsToIsoString(hoverTimestamp.timestampUtcMs) : "UNDEF")}
+                    {makeTableRow(
+                        "hoverTimestamp isoStr",
+                        hoverTimestamp ? timestampUtcMsToIsoString(hoverTimestamp.timestampUtcMs) : "UNDEF"
+                    )}
                 </tbody>
             </table>
             <br />
@@ -84,7 +87,7 @@ function makeEnsembleSetTable(ensembleSet: EnsembleSet) {
                         <td> {ens.getEnsembleName()} </td>
                         <td> ({ens.getCaseUuid()}) </td>
                         <td> {ens.getRealizations().length} realizations</td>
-                        <td> {ens.getSensitivities() ? "HasSens" : "noSense"}</td>
+                        <td> {ens.getSensitivitySet() ? "HasSens" : "noSense"}</td>
                     </tr>
                 ))}
             </tbody>
