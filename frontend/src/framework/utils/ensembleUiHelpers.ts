@@ -36,7 +36,7 @@ export function fixupEnsembleIdent(
     }
 
     if (currIdent) {
-        if (ensembleSet.findEnsemble(currIdent)) {
+        if (ensembleSet.hasEnsemble(currIdent)) {
             return currIdent;
         }
     }
@@ -66,5 +66,5 @@ export function fixupEnsembleIdents(
         return [ensembleSet.getEnsembleArr()[0].getIdent()];
     }
 
-    return currIdents.filter((currIdent) => ensembleSet.findEnsemble(currIdent));
+    return currIdents.filter((currIdent) => ensembleSet.hasEnsemble(currIdent));
 }

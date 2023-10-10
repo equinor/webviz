@@ -8,7 +8,6 @@ const ensembleArr = [
     new Ensemble("22222222-aaaa-4444-aaaa-aaaaaaaaaaaa", "case2", "ens1", [], [], null),
 ];
 
-
 describe("EnsembleSet tests", () => {
     test("access empty EnsembleSet", () => {
         const ensSet = new EnsembleSet([]);
@@ -17,10 +16,20 @@ describe("EnsembleSet tests", () => {
         expect(ensSet.findEnsemble(new EnsembleIdent("11111111-aaaa-4444-aaaa-aaaaaaaaaaaa", "ens1"))).toBeNull();
     });
 
+    test("has by EnsembleIdent", () => {
+        const ensSet = new EnsembleSet(ensembleArr);
+        expect(ensSet.hasAnyEnsembles()).toBe(true);
+        expect(ensSet.hasEnsemble(new EnsembleIdent("11111111-aaaa-4444-aaaa-aaaaaaaaaaaa", "ens1"))).toBe(true);
+        expect(ensSet.hasEnsemble(new EnsembleIdent("11111111-aaaa-4444-aaaa-aaaaaaaaaaaa", "ens99"))).toBe(false);
+        expect(ensSet.hasEnsemble(new EnsembleIdent("99999999-aaaa-4444-aaaa-aaaaaaaaaaaa", "ens1"))).toBe(false);
+    });
+
     test("find by EnsembleIdent", () => {
         const ensSet = new EnsembleSet(ensembleArr);
         expect(ensSet.hasAnyEnsembles()).toBe(true);
-        expect(ensSet.findEnsemble(new EnsembleIdent("11111111-aaaa-4444-aaaa-aaaaaaaaaaaa", "ens1"))).toBeInstanceOf(Ensemble);
+        expect(ensSet.findEnsemble(new EnsembleIdent("11111111-aaaa-4444-aaaa-aaaaaaaaaaaa", "ens1"))).toBeInstanceOf(
+            Ensemble
+        );
         expect(ensSet.findEnsemble(new EnsembleIdent("11111111-aaaa-4444-aaaa-aaaaaaaaaaaa", "ens99"))).toBeNull();
         expect(ensSet.findEnsemble(new EnsembleIdent("99999999-aaaa-4444-aaaa-aaaaaaaaaaaa", "ens1"))).toBeNull();
     });

@@ -62,10 +62,10 @@ class StratigraphyAccess:
 
     # type: ignore
     # pylint: disable=unused-argument
-    def get_stratigraphic_units(self, stratigraphic_column_identifier: str) -> List[StratigraphicUnit]:
+    async def get_stratigraphic_units(self, stratigraphic_column_identifier: str) -> List[StratigraphicUnit]:
         return sort_stratigraphic_units_by_hierarchy(DROGON_STRAT_UNITS)
 
     # type: ignore
     # pylint: disable=unused-argument
-    def get_stratigraphic_surfaces(self, stratigraphic_column_identifier: str) -> List[StratigraphicSurface]:
+    async def get_stratigraphic_surfaces(self, stratigraphic_column_identifier: str) -> List[StratigraphicSurface]:
         return sort_stratigraphic_names_by_hierarchy(DROGON_STRAT_UNITS)

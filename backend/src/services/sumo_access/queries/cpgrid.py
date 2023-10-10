@@ -3,7 +3,7 @@ from typing import List
 from sumo.wrapper import SumoClient
 
 
-def get_grid_names(sumo_client: SumoClient, case_id: str, iteration: str) -> List[str]:
+async def get_grid_names(sumo_client: SumoClient, case_id: str, iteration: str) -> List[str]:
     """Get a list of grid names for a case and iteration"""
     query = {
         "size": 0,
@@ -12,7 +12,7 @@ def get_grid_names(sumo_client: SumoClient, case_id: str, iteration: str) -> Lis
                 "must": [
                     {"match": {"_sumo.parent_object.keyword": case_id}},
                     {"match": {"class": "cpgrid"}},
-                    {"match": {"fmu.iteration.id": iteration}},
+                    {"match": {"fmu.iteration.name": iteration}},
                 ]
             }
         },
@@ -25,7 +25,7 @@ def get_grid_names(sumo_client: SumoClient, case_id: str, iteration: str) -> Lis
             }
         },
     }
-    response = sumo_client.post("/search", json=query)
+    response = await sumo_client.post_async("/search", json=query)
 
     result = response.json()
     grid_names = result.get("aggregations").get("grid_names").get("buckets")
@@ -34,7 +34,9 @@ def get_grid_names(sumo_client: SumoClient, case_id: str, iteration: str) -> Lis
 
 
 # Cant be used for equality on roff
-def get_grid_geometry_checksums(sumo_client: SumoClient, case_id: str, iteration: str, grid_name: str) -> List[str]:
+async def get_grid_geometry_checksums(
+    sumo_client: SumoClient, case_id: str, iteration: str, grid_name: str
+) -> List[str]:
     """Get a list of checksums for a grid geometry in a case and iteration"""
     query = {
         "size": 0,
@@ -43,7 +45,7 @@ def get_grid_geometry_checksums(sumo_client: SumoClient, case_id: str, iteration
                 "must": [
                     {"match": {"_sumo.parent_object.keyword": case_id}},
                     {"match": {"class": "cpgrid"}},
-                    {"match": {"fmu.iteration.id": iteration}},
+                    {"match": {"fmu.iteration.name": iteration}},
                     {"match": {"data.name.keyword": grid_name}},
                 ]
             }
@@ -57,7 +59,7 @@ def get_grid_geometry_checksums(sumo_client: SumoClient, case_id: str, iteration
             }
         },
     }
-    response = sumo_client.post("/search", json=query)
+    response = sumo_client.post_async("/search", json=query)
 
     result = response.json()
     checksums = result.get("aggregations").get("checksums").get("buckets")
@@ -65,7 +67,7 @@ def get_grid_geometry_checksums(sumo_client: SumoClient, case_id: str, iteration
     return [gp["key"] for gp in checksums]
 
 
-def get_grid_geometry_blob_id(
+async def get_grid_geometry_blob_id(
     sumo_client: SumoClient,
     case_id: str,
     iteration: str,
@@ -73,22 +75,24 @@ def get_grid_geometry_blob_id(
     grid_name: str,
 ) -> str:
     """Get the blob id for a given grid geometry in a case, iteration and realization"""
-    hits = sumo_client.get(
+    response = await sumo_client.get_async(
         "/search",
         query=f"_sumo.parent_object:{case_id} AND \
             class.keyword:cpgrid AND \
-            fmu.iteration.id:{iteration} AND \
+            fmu.iteration.name:{iteration} AND \
             fmu.realization.id:{realization} AND \
             data.name.keyword:{grid_name}",
         size=1000,
         select="_id",
-    )["hits"]["hits"]
+    )
+
+    hits = response["hits"]["hits"]
     if len(hits) != 1:
         raise ValueError(f"Expected 1 hit, got {len(hits)}")
     return [hit["_id"] for hit in hits][0]
 
 
-def get_grid_parameter_blob_id(
+async def get_grid_parameter_blob_id(
     sumo_client: SumoClient,
     case_id: str,
     iteration: str,
@@ -97,23 +101,28 @@ def get_grid_parameter_blob_id(
     parameter_name: str,
 ) -> str:
     """Get the blob id for a given grid parameter in a case, iteration and realization""" ""
-    hits = sumo_client.get(
+    response = await sumo_client.get_async(
         "/search",
         query=f"_sumo.parent_object:{case_id} AND \
             class.keyword:cpgrid_property AND \
-            fmu.iteration.id:{iteration} AND \
+            fmu.iteration.name:{iteration} AND \
             fmu.realization.id:{realization} AND \
             data.name.keyword:{parameter_name} AND \
             data.tagname.keyword:{grid_name}",
         size=1000,
         select="_id",
-    )["hits"]["hits"]
+    )
+
+    hits = response["hits"]["hits"]
+
     if len(hits) != 1:
         raise ValueError(f"Expected 1 hit, got {len(hits)}")
     return [hit["_id"] for hit in hits][0]
 
 
-def get_static_grid_parameter_names(sumo_client: SumoClient, case_id: str, iteration: str, grid_name: str) -> List[str]:
+async def get_static_grid_parameter_names(
+    sumo_client: SumoClient, case_id: str, iteration: str, grid_name: str
+) -> List[str]:
     """Get a list of static grid parameter names for a case, iteration and grid name"""
     query = {
         "size": 0,
@@ -122,7 +131,7 @@ def get_static_grid_parameter_names(sumo_client: SumoClient, case_id: str, itera
                 "must": [
                     {"match": {"_sumo.parent_object.keyword": case_id}},
                     {"match": {"class": "cpgrid_property"}},
-                    {"match": {"fmu.iteration.id": iteration}},
+                    {"match": {"fmu.iteration.name": iteration}},
                     {"match": {"fmu.realization.id": 0}},
                     {"match": {"data.tagname.keyword": grid_name}},
                     # filter on static
@@ -138,27 +147,29 @@ def get_static_grid_parameter_names(sumo_client: SumoClient, case_id: str, itera
             }
         },
     }
-    response = sumo_client.post("/search", json=query)
+    response = await sumo_client.post_async("/search", json=query)
 
     result = response.json()
     names = result.get("aggregations").get("name").get("buckets")
     return [name["key"] for name in names]
 
 
-def get_nx_ny_nz_for_ensemble_grids(
+async def get_nx_ny_nz_for_ensemble_grids(
     sumo_client: SumoClient, case_uuid: str, iteration: str, grid_name: str
 ) -> List[List[int]]:
     """Get a list of nxnynz for all realizations of a grid model in a case and iteration"""
 
-    hits = sumo_client.get(
+    response = await sumo_client.get_async(
         "/search",
         query=f"_sumo.parent_object:{case_uuid} AND \
                 class.keyword:cpgrid AND \
-                fmu.iteration.id:{iteration} AND \
+                fmu.iteration.name:{iteration} AND \
                 data.name.keyword:{grid_name}",
         size=1000,
         select="data",
-    )["hits"]["hits"]
+    )
+
+    hits = response["hits"]["hits"]
 
     nxnynz = []
     for hit in hits:

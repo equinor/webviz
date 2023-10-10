@@ -1,45 +1,21 @@
 import logging
 
-from typing import List, Optional
+from typing import List
 
 from fmu.sumo.explorer import TimeFilter, TimeType
-from fmu.sumo.explorer.objects import Case, CaseCollection
 from fmu.sumo.explorer.objects.cube_collection import CubeCollection
-from sumo.wrapper import SumoClient
 
-from ._helpers import create_sumo_client_instance
+from ._helpers import SumoEnsemble
 from .seismic_types import SeismicCubeMeta, VdsHandle
 
 LOGGER = logging.getLogger(__name__)
 
 
-class SeismicAccess:
-    def __init__(self, access_token: str, case_uuid: str, iteration_name: str):
-        self._sumo_client: SumoClient = create_sumo_client_instance(access_token)
-        self._case_uuid = case_uuid
-        self._iteration_name = iteration_name
-        self._sumo_case_obj: Optional[Case] = None
-
-    def _get_sumo_case(self) -> Case:
-        """
-        Get the Sumo case that we should be working on.
-        Raises exception if case isn't found
-        """
-        if self._sumo_case_obj is None:
-            case_collection = CaseCollection(self._sumo_client).filter(uuid=self._case_uuid)
-            if len(case_collection) != 1:
-                raise ValueError(f"None or multiple sumo cases found {self._case_uuid=}")
-
-            self._sumo_case_obj = case_collection[0]
-
-        return self._sumo_case_obj
-
-    def get_seismic_directory(self) -> List[SeismicCubeMeta]:
-        case = self._get_sumo_case()
-
-        seismic_cube_collection: CubeCollection = case.cubes.filter(iteration=self._iteration_name, realization=0)
+class SeismicAccess(SumoEnsemble):
+    async def get_seismic_directory(self) -> List[SeismicCubeMeta]:
+        seismic_cube_collection: CubeCollection = self._case.cubes.filter(iteration=self._iteration_name, realization=0)
         seismic_cube_metas: List[SeismicCubeMeta] = []
-        for cube in seismic_cube_collection:
+        async for cube in seismic_cube_collection:
             t_start = cube["data"].get("time", {}).get("t0", {}).get("value", None)
             t_end = cube["data"].get("time", {}).get("t1", {}).get("value", None)
 
@@ -61,7 +37,7 @@ class SeismicAccess:
             seismic_cube_metas.append(seismic_meta)
         return seismic_cube_metas
 
-    def get_vds_handle(
+    async def get_vds_handle(
         self,
         seismic_attribute: str,
         realization: int,
@@ -69,7 +45,6 @@ class SeismicAccess:
         observed: bool = False,
     ) -> VdsHandle:
         """Get the vds handle for a given cube"""
-        case = self._get_sumo_case()
         timestamp_arr = time_or_interval_str.split("/", 1)
         if len(timestamp_arr) == 0 or len(timestamp_arr) > 2:
             raise ValueError("time_or_interval_str must contain a single timestamp or interval")
@@ -88,7 +63,7 @@ class SeismicAccess:
                 exact=True,
             )
 
-        cube_collection: CubeCollection = case.cubes.filter(
+        cube_collection: CubeCollection = self._case.cubes.filter(
             tagname=seismic_attribute,
             realization=realization,
             iteration=self._iteration_name,
@@ -98,7 +73,7 @@ class SeismicAccess:
 
         # Filter on observed
         cubes = []
-        for cube in cube_collection:
+        async for cube in cube_collection:
             if cube["data"]["is_observation"] == observed:
                 cubes.append(cube)
                 break

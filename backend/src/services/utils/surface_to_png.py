@@ -5,7 +5,6 @@ import xtgeo
 
 
 def surface_to_png_bytes_optimized(surface: xtgeo.RegularSurface) -> bytes:
-
     # Note that returned values array is a 2d masked array
     surf_values_ma: np.ma.MaskedArray = surface.values
 

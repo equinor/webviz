@@ -5,7 +5,7 @@ from ..types import WellBorePick
 from ._get_request import get
 
 
-def get_wellbore_picks_for_field(
+async def get_wellbore_picks_for_field(
     access_token: str,
     field_identifier: str,
     pick_identifier: str,
@@ -26,7 +26,7 @@ def get_wellbore_picks_for_field(
     if obs_no:
         params["obs_no"] = str(obs_no)
 
-    results = get(access_token=access_token, endpoint=endpoint, params=params)
+    results = await get(access_token=access_token, endpoint=endpoint, params=params)
     timer = PerfTimer()
     picks = [WellBorePick(**result) for result in results]
     print(f"TIME SMDA validate wellbore picks took {timer.lap_s():.2f} seconds")

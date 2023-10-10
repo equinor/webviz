@@ -4,26 +4,21 @@ from typing import List, Optional
 
 import pandas as pd
 import xtgeo
-from fmu.sumo.explorer.objects import Case, CaseCollection, PolygonsCollection
-from sumo.wrapper import SumoClient
+from fmu.sumo.explorer.objects import PolygonsCollection
 
 from src.services.utils.perf_timer import PerfTimer
 
-from ._helpers import create_sumo_client_instance
+from ._helpers import SumoEnsemble
 from .surface_polygon_types import SurfacePolygonsDirectory
 from .generic_types import SumoContent
 
 LOGGER = logging.getLogger(__name__)
 
 
-class SurfacePolygonsAccess:
-    def __init__(self, access_token: str, case_uuid: str, iteration_name: str):
-        self._sumo_client: SumoClient = create_sumo_client_instance(access_token)
-        self._case_uuid = case_uuid
-        self._iteration_name = iteration_name
-        self._sumo_case_obj: Optional[Case] = None
-
-    def get_surface_polygons_dir(self, content_filter: Optional[List[SumoContent]] = None) -> SurfacePolygonsDirectory:
+class SurfacePolygonsAccess(SumoEnsemble):
+    async def get_surface_polygons_dir(
+        self, content_filter: Optional[List[SumoContent]] = None
+    ) -> SurfacePolygonsDirectory:
         """
         Get a directory of surface polygon names and attributes.
         """
@@ -31,9 +26,7 @@ class SurfacePolygonsAccess:
 
         LOGGER.debug("Getting data for surface polygon directory...")
 
-        case = self._get_my_sumo_case_obj()
-
-        polygons_collection: PolygonsCollection = case.polygons.filter(
+        polygons_collection: PolygonsCollection = self._case.polygons.filter(
             iteration=self._iteration_name,
             realization=0,
         )
@@ -85,16 +78,14 @@ class SurfacePolygonsAccess:
 
         return polygon_dir
 
-    def get_surface_polygons(self, real_num: int, name: str, attribute: str) -> Optional[xtgeo.Polygons]:
+    async def get_surface_polygons(self, real_num: int, name: str, attribute: str) -> Optional[xtgeo.Polygons]:
         """
         Get polygons data
         """
         timer = PerfTimer()
         addr_str = self._make_addr_str(real_num, name, attribute, None)
 
-        case = self._get_my_sumo_case_obj()
-
-        polygons_collection: PolygonsCollection = case.polygons.filter(
+        polygons_collection: PolygonsCollection = self._case.polygons.filter(
             iteration=self._iteration_name,
             realization=real_num,
             name=name,
@@ -142,20 +133,6 @@ class SurfacePolygonsAccess:
         LOGGER.debug(f"Got surface polygons from Sumo in: {timer.elapsed_ms()}ms ({addr_str})")
 
         return xtgeo_polygons
-
-    def _get_my_sumo_case_obj(self) -> Case:
-        """
-        Get the Sumo case that we should be working on.
-        Raises exception if case isn't found
-        """
-        if self._sumo_case_obj is None:
-            case_collection = CaseCollection(self._sumo_client).filter(uuid=self._case_uuid)
-            if len(case_collection) != 1:
-                raise ValueError(f"None or multiple sumo cases found {self._case_uuid=}")
-
-            self._sumo_case_obj = case_collection[0]
-
-        return self._sumo_case_obj
 
     def _make_addr_str(self, real_num: int, name: str, attribute: str, date_str: Optional[str]) -> str:
         addr_str = f"R:{real_num}__N:{name}__A:{attribute}__D:{date_str}__I:{self._iteration_name}__C:{self._case_uuid}"

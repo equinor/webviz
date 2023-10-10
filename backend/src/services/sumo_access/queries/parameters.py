@@ -10,7 +10,9 @@ class SumoEnsembleParameter(BaseModel):
     realizations: List[int]
 
 
-def get_parameters_for_iteration(sumo_client: SumoClient, case_id: str, iteration: str) -> List[SumoEnsembleParameter]:
+async def get_parameters_for_iteration(
+    sumo_client: SumoClient, case_id: str, iteration: str
+) -> List[SumoEnsembleParameter]:
     """Get parameters for a case and iteration
     Temporary until handled by the explorer
     The format of the parameter response should be discussed. The current nested structure with parameter groups is confusing.
@@ -64,7 +66,7 @@ def get_parameters_for_iteration(sumo_client: SumoClient, case_id: str, iteratio
             },
         },
     }
-    response = sumo_client.post("/search", json=query)
+    response = await sumo_client.post_async("/search", json=query)
 
     result = response.json()
     parameter_ensemble_records: Dict = {}

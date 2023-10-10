@@ -40,6 +40,11 @@ import {
 } from "./state";
 import { EnsembleVectorListsHelper } from "./utils/ensemblesVectorListHelper";
 
+enum StatisticsType {
+    INDIVIDUAL = "Individual",
+    FANCHART = "Fanchart",
+}
+
 export function settings({ moduleContext, workbenchSession }: ModuleFCProps<State>) {
     const ensembleSet = useEnsembleSet(workbenchSession);
 
@@ -60,16 +65,12 @@ export function settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
     const [selectedEnsembleIdents, setSelectedEnsembleIdents] = React.useState<EnsembleIdent[]>([]);
     const [selectedVectorNames, setSelectedVectorNames] = React.useState<string[]>([]);
     const [vectorSelectorData, setVectorSelectorData] = React.useState<TreeDataNode[]>([]);
-    const [prevVisualizationMode, setPrevVisualizationMode] = React.useState<VisualizationMode>(visualizationMode);
+    const [statisticsType, setStatisticsType] = React.useState<StatisticsType>(StatisticsType.INDIVIDUAL);
     const [filteredParameterIdentList, setFilteredParameterIdentList] = React.useState<ParameterIdent[]>([]);
 
-    if (visualizationMode !== prevVisualizationMode) {
-        setPrevVisualizationMode(visualizationMode);
-    }
-
     if (!isEqual(ensembleSet, previousEnsembleSet)) {
-        const newSelectedEnsembleIdents = selectedEnsembleIdents.filter(
-            (ensemble) => ensembleSet.findEnsemble(ensemble) !== null
+        const newSelectedEnsembleIdents = selectedEnsembleIdents.filter((ensemble) =>
+            ensembleSet.hasEnsemble(ensemble)
         );
         const validatedEnsembleIdents = fixupEnsembleIdents(newSelectedEnsembleIdents, ensembleSet) ?? [];
         if (!isEqual(selectedEnsembleIdents, validatedEnsembleIdents)) {
@@ -83,7 +84,7 @@ export function settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
     const continuousAndNonConstantParametersUnion: Parameter[] = [];
     for (const ensembleIdent of selectedEnsembleIdents) {
         const ensemble = ensembleSet.findEnsemble(ensembleIdent);
-        if (ensemble === null) continue;
+        if (!ensemble) continue;
 
         const continuousAndNonConstantParameters = ensemble
             .getParameters()
@@ -116,6 +117,12 @@ export function settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
     const hasVectorListQueriesErrorOrFetching = vectorListQueries.some((query) => query.isFetching || query.isError);
     if (!hasVectorListQueriesErrorOrFetching && !isEqual(currentVectorSelectorData, vectorSelectorData)) {
         setVectorSelectorData(currentVectorSelectorData);
+    }
+
+    // Set statistics type for checkbox rendering
+    const computedStatisticsType = computeStatisticsType(statisticsType, visualizationMode);
+    if (statisticsType !== computedStatisticsType) {
+        setStatisticsType(computedStatisticsType);
     }
 
     React.useEffect(
@@ -258,9 +265,42 @@ export function settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
         });
     }
 
+    function makeStatisticCheckboxes() {
+        if (computedStatisticsType === StatisticsType.FANCHART) {
+            return Object.values(FanchartStatisticOption).map((value: FanchartStatisticOption) => {
+                return (
+                    <Checkbox
+                        key={value}
+                        label={FanchartStatisticOptionEnumToStringMapping[value]}
+                        checked={statisticsSelection?.FanchartStatisticsSelection?.includes(value)}
+                        onChange={(event) => {
+                            handleFanchartStatisticsSelectionChange(event, value);
+                        }}
+                    />
+                );
+            });
+        }
+        if (computedStatisticsType === StatisticsType.INDIVIDUAL) {
+            return Object.values(StatisticFunction_api).map((value: StatisticFunction_api) => {
+                return (
+                    <Checkbox
+                        key={value}
+                        label={StatisticFunctionEnumToStringMapping[value]}
+                        checked={statisticsSelection?.IndividualStatisticsSelection.includes(value)}
+                        onChange={(event) => {
+                            handleIndividualStatisticsSelectionChange(event, value);
+                        }}
+                    />
+                );
+            });
+        }
+
+        return [];
+    }
+
     return (
         <div className="flex flex-col gap-2 overflow-y-auto">
-            <CollapsibleGroup expanded={true} title="Group by">
+            <CollapsibleGroup expanded={false} title="Group by">
                 <RadioGroup
                     value={groupBy}
                     options={Object.values(GroupBy).map((val: GroupBy) => {
@@ -269,7 +309,7 @@ export function settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
                     onChange={handleGroupByChange}
                 />
             </CollapsibleGroup>
-            <CollapsibleGroup expanded={true} title="Resampling frequency">
+            <CollapsibleGroup expanded={false} title="Resampling frequency">
                 <Dropdown
                     options={[
                         { value: "RAW", label: "None (raw)" },
@@ -323,7 +363,7 @@ export function settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
                     </ApiStatesWrapper>
                 </div>
             </CollapsibleGroup>
-            <CollapsibleGroup expanded={true} title="Color realization by parameter">
+            <CollapsibleGroup expanded={false} title="Color realization by parameter">
                 <Checkbox
                     label="Enable"
                     checked={colorRealizationsByParameter}
@@ -364,7 +404,7 @@ export function settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
                     />
                 </div>
             </CollapsibleGroup>
-            <CollapsibleGroup expanded={true} title="Visualization">
+            <CollapsibleGroup expanded={false} title="Visualization">
                 <RadioGroup
                     value={visualizationMode}
                     options={Object.values(VisualizationMode).map((val: VisualizationMode) => {
@@ -380,41 +420,32 @@ export function settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
                                     visualizationMode === VisualizationMode.INDIVIDUAL_REALIZATIONS,
                             })}
                         >
-                            {visualizationMode === VisualizationMode.STATISTICAL_FANCHART ||
-                            (visualizationMode === VisualizationMode.INDIVIDUAL_REALIZATIONS &&
-                                prevVisualizationMode === VisualizationMode.STATISTICAL_FANCHART)
-                                ? Object.values(FanchartStatisticOption).map((value: FanchartStatisticOption) => {
-                                      return (
-                                          <Checkbox
-                                              key={value}
-                                              label={FanchartStatisticOptionEnumToStringMapping[value]}
-                                              checked={statisticsSelection?.FanchartStatisticsSelection?.includes(
-                                                  value
-                                              )}
-                                              onChange={(event) => {
-                                                  handleFanchartStatisticsSelectionChange(event, value);
-                                              }}
-                                          />
-                                      );
-                                  })
-                                : Object.values(StatisticFunction_api).map((value: StatisticFunction_api) => {
-                                      return (
-                                          <Checkbox
-                                              key={value}
-                                              label={StatisticFunctionEnumToStringMapping[value]}
-                                              checked={statisticsSelection?.IndividualStatisticsSelection.includes(
-                                                  value
-                                              )}
-                                              onChange={(event) => {
-                                                  handleIndividualStatisticsSelectionChange(event, value);
-                                              }}
-                                          />
-                                      );
-                                  })}
+                            {makeStatisticCheckboxes()}
                         </div>
                     </Label>
                 </div>
             </CollapsibleGroup>
         </div>
     );
+}
+
+function computeStatisticsType(
+    previousStatisticsType: StatisticsType,
+    visualizationMode: VisualizationMode
+): StatisticsType {
+    if (
+        previousStatisticsType !== StatisticsType.FANCHART &&
+        visualizationMode === VisualizationMode.STATISTICAL_FANCHART
+    ) {
+        return StatisticsType.FANCHART;
+    }
+
+    if (
+        previousStatisticsType !== StatisticsType.INDIVIDUAL &&
+        [VisualizationMode.STATISTICAL_LINES, VisualizationMode.STATISTICS_AND_REALIZATIONS].includes(visualizationMode)
+    ) {
+        return StatisticsType.INDIVIDUAL;
+    }
+
+    return previousStatisticsType;
 }

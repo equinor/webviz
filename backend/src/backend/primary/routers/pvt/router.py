@@ -16,7 +16,7 @@ router = APIRouter()
 
 
 @router.get("/table_data/")
-def table_data(
+async def table_data(
     # fmt:off
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     case_uuid: str = Query(description="Sumo case uuid"),
@@ -26,10 +26,12 @@ def table_data(
 ) -> List[PvtData]:
     """Get pvt table data for a given Sumo ensemble and realization"""
 
-    access = TableAccess(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
+    access = await TableAccess.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
 
     # Get all table schemas for a given realization and find the pvt table
-    table_schemas = access.get_table_schemas_single_realization(realization=realization)
+    table_schemas = await access.get_table_schemas_single_realization(realization=realization)
+
+    table_schema = None
     for schema in table_schemas:
         if schema.tagname == "pvt":
             table_schema = schema
@@ -37,7 +39,7 @@ def table_data(
     if table_schema is None:
         raise HTTPException(status_code=404, detail="PVT table not found")
 
-    sumo_table_data = access.get_realization_table(table_schema, realization=realization)
+    sumo_table_data = await access.get_realization_table(table_schema, realization=realization)
 
     pvt_data = pvt_dataframe_to_api_data(sumo_table_data.to_pandas())
 
@@ -46,7 +48,7 @@ def table_data(
 
 # DOES NOT CURRENTLY WORK
 @router.get("/realizations_tables_are_equal/")
-def realizations_tables_are_equal(
+async def realizations_tables_are_equal(
     # fmt:off
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     case_uuid: str = Query(description="Sumo case uuid"),
@@ -55,10 +57,10 @@ def realizations_tables_are_equal(
 ) -> bool:
     """Check if all realizations has the same pvt table"""
 
-    access = TableAccess(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
+    access = await TableAccess.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
 
     # Get all table schemas for a given realization and find the pvt table
-    table_schemas = access.get_table_schemas_single_realization(realization=0)
+    table_schemas = await access.get_table_schemas_single_realization(realization=0)
     for schema in table_schemas:
         if schema.tagname == "pvt":
             # Check if all realizations of this table are equal

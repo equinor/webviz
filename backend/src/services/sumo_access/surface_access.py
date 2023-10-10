@@ -4,36 +4,28 @@ from typing import List, Optional
 
 import xtgeo
 from fmu.sumo.explorer import TimeFilter, TimeType
-from fmu.sumo.explorer.objects import Case, CaseCollection, SurfaceCollection
-from sumo.wrapper import SumoClient
+from fmu.sumo.explorer.objects import SurfaceCollection
 
 from src.services.utils.perf_timer import PerfTimer
 from src.services.utils.statistic_function import StatisticFunction
 
-from ._helpers import create_sumo_client_instance
+from ._helpers import SumoEnsemble
 from .surface_types import SurfaceMeta
 from .generic_types import SumoContent
 
 LOGGER = logging.getLogger(__name__)
 
 
-class SurfaceAccess:
-    def __init__(self, access_token: str, case_uuid: str, iteration_name: str):
-        self._sumo_client: SumoClient = create_sumo_client_instance(access_token)
-        self._case_uuid = case_uuid
-        self._iteration_name = iteration_name
-        self._sumo_case_obj: Optional[Case] = None
-
-    def get_surface_directory(self) -> List[SurfaceMeta]:
-        case = self._get_my_sumo_case_obj()
-        surface_collection: SurfaceCollection = case.surfaces.filter(
+class SurfaceAccess(SumoEnsemble):
+    async def get_surface_directory(self) -> List[SurfaceMeta]:
+        surface_collection: SurfaceCollection = self._case.surfaces.filter(
             iteration=self._iteration_name,
             aggregation=False,
             realization=0,
         )
 
         surfs: List[SurfaceMeta] = []
-        for surf in surface_collection:
+        async for surf in surface_collection:
             iso_string_or_time_interval = None
 
             t_start = surf["data"].get("time", {}).get("t0", {}).get("value", None)
@@ -89,9 +81,7 @@ class SurfaceAccess:
                     exact=True,
                 )
 
-        case = self._get_my_sumo_case_obj()
-
-        surface_collection = case.surfaces.filter(
+        surface_collection = self._case.surfaces.filter(
             iteration=self._iteration_name,
             aggregation=False,
             realization=real_num,
@@ -149,10 +139,9 @@ class SurfaceAccess:
                     end=timestamp_arr[1],
                     exact=True,
                 )
-        case = self._get_my_sumo_case_obj()
         et_get_case_ms = timer.lap_ms()
 
-        surface_collection = case.surfaces.filter(
+        surface_collection = self._case.surfaces.filter(
             iteration=self._iteration_name,
             aggregation=False,
             name=name,
@@ -184,20 +173,6 @@ class SurfaceAccess:
         )
 
         return xtgeo_surf
-
-    def _get_my_sumo_case_obj(self) -> Case:
-        """
-        Get the Sumo case that we should be working on.
-        Raises exception if case isn't found
-        """
-        if self._sumo_case_obj is None:
-            case_collection = CaseCollection(self._sumo_client).filter(uuid=self._case_uuid)
-            if len(case_collection) != 1:
-                raise ValueError(f"None or multiple sumo cases found {self._case_uuid=}")
-
-            self._sumo_case_obj = case_collection[0]
-
-        return self._sumo_case_obj
 
     def _make_addr_str(self, real_num: int, name: str, attribute: str, date_str: Optional[str]) -> str:
         addr_str = f"R:{real_num}__N:{name}__A:{attribute}__D:{date_str}__I:{self._iteration_name}__C:{self._case_uuid}"
