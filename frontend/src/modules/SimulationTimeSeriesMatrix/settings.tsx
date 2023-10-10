@@ -387,6 +387,7 @@ export function settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
                         >
                             <ParameterListFilter
                                 parameters={continuousAndNonConstantParametersUnion}
+                                initialFilters={["Continuous", "Nonconstant"]}
                                 onChange={handleParameterListFilterChange}
                             />
                         </CollapsibleGroup>

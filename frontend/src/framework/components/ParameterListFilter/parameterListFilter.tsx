@@ -16,15 +16,23 @@ import {
     getParametersMatchingSelectedNodes,
 } from "./private-utils/smartNodeSelectorUtils";
 
+export type InitialParameterFilter = Extract<
+    (typeof ParameterParentNodeNames)[keyof typeof ParameterParentNodeNames],
+    "Continuous" | "Discrete" | "Constant" | "Nonconstant"
+>;
+
 export type ParameterListFilterProps = {
     parameters: Parameter[];
+    initialFilters?: InitialParameterFilter[];
     showTitle?: boolean;
     onChange?: (filteredParameters: Parameter[]) => void;
 };
 
 export const ParameterListFilter: React.FC<ParameterListFilterProps> = (props: ParameterListFilterProps) => {
     const smartNodeSelectorId = React.useId();
-    const [selectedTags, setSelectedTags] = React.useState<string[]>([ParameterParentNodeNames.IS_NONCONSTANT]);
+    const [selectedTags, setSelectedTags] = React.useState<string[]>(
+        props.initialFilters ?? [ParameterParentNodeNames.IS_NONCONSTANT]
+    );
     const [selectedNodes, setSelectedNodes] = React.useState<string[]>([]);
     const [numberOfMatchingParameters, setNumberOfMatchingParameters] = React.useState<number>(0);
     const [parameters, setParameters] = React.useState<Parameter[] | null>(null);

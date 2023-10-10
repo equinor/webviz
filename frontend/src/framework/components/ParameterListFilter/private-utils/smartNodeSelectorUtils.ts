@@ -10,7 +10,7 @@ export const ParameterParentNodeNames = {
     IS_NONCONSTANT: "Nonconstant", // For Parameter.isConstant === false
     IS_LOGARITHMIC: "Logarithmic", // For Parameter.isLogarithmic === true
     IS_LINEAR: "Linear", // For Parameter.isLogarithmic === false
-};
+} as const;
 
 export function createAndAddNode(treeNodeDataList: TreeDataNode[], nodeName: string, icon?: string): TreeDataNode {
     const newNode: TreeDataNode = { name: nodeName, description: "", icon: icon };
