@@ -2,6 +2,8 @@ import React from "react";
 import Plot from "react-plotly.js";
 
 import { ModuleFCProps } from "@framework/Module";
+import { ModuleInstanceStatusControllerLogEntryType } from "@framework/ModuleInstanceStatusController";
+import { StatusWriter } from "@framework/StatusWriter";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { ColorScaleType } from "@lib/utils/ColorScale";
 
@@ -410,6 +412,24 @@ export const view = (props: ModuleFCProps<State>) => {
     const divMidPoint = props.moduleContext.useStoreValue("divMidPoint");
 
     const ref = React.useRef<HTMLDivElement>(null);
+
+    const statusWriter = new StatusWriter(props.moduleContext);
+
+    statusWriter.setLoading(true);
+
+    if (type === ColorScaleType.Continuous) {
+        statusWriter.addWarning("Continuous selected");
+    }
+
+    if (gradientType === "diverging") {
+        statusWriter.addWarning("Diverging selected");
+    }
+
+    React.useEffect(() => {
+        setTimeout(() => {
+            statusWriter.setLoading(false);
+        }, 5000);
+    }, [type, gradientType]);
 
     const size = useElementSize(ref);
 

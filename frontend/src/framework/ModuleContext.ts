@@ -1,7 +1,8 @@
 import React from "react";
 
 import { BroadcastChannel } from "./Broadcaster";
-import { ModuleInstance, ModuleInstanceLogEntryType } from "./ModuleInstance";
+import { ModuleInstance } from "./ModuleInstance";
+import { ModuleInstanceStatusController } from "./ModuleInstanceStatusController";
 import { StateBaseType, StateStore, useSetStoreValue, useStoreState, useStoreValue } from "./StateStore";
 import { SyncSettingKey } from "./SyncSettings";
 
@@ -64,15 +65,7 @@ export class ModuleContext<S extends StateBaseType> {
         this._moduleInstance.setTitle(title);
     }
 
-    setLoading(isLoading: boolean): void {
-        this._moduleInstance.setLoading(isLoading);
-    }
-
-    log(message: string, type: ModuleInstanceLogEntryType = ModuleInstanceLogEntryType.INFO): void {
-        this._moduleInstance.log(message, type);
-    }
-
-    clearLog(): void {
-        this._moduleInstance.clearLog();
+    getModuleInstanceStatusController(): ModuleInstanceStatusController {
+        return this._moduleInstance.getStatusController();
     }
 }
