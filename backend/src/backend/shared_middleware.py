@@ -17,5 +17,5 @@ def add_shared_middlewares(app: FastAPI) -> None:
         paths_redirected_to_login=paths_redirected_to_login,
     )
 
-    session_store = RedisStore(config.REDIS_URL)
+    session_store = RedisStore(config.REDIS_URL, prefix="user-auth-")
     app.add_middleware(SessionMiddleware, store=session_store)
