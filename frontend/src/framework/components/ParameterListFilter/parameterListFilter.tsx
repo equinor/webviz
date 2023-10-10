@@ -28,18 +28,16 @@ export const ParameterListFilter: React.FC<ParameterListFilterProps> = (props: P
     const [selectedNodes, setSelectedNodes] = React.useState<string[]>([]);
     const [numberOfMatchingParameters, setNumberOfMatchingParameters] = React.useState<number>(0);
     const [parameters, setParameters] = React.useState<Parameter[] | null>(null);
-    const [treeDataNodeList, setTreeDataNodeList] = React.useState<TreeDataNode[]>([]);
+    const [previousTreeDataNodeList, setPreviousTreeDataNodeList] = React.useState<TreeDataNode[]>([]);
     const smartNodeSelectorDelimiter = ":";
 
-    function computeTreeDataNodeListAndUpdateStates(): TreeDataNode[] {
-        if (parameters !== null && isEqual(props.parameters, parameters)) return treeDataNodeList;
-
-        const newTreeDataNodeList = createTreeDataNodeListFromParameters([...props.parameters], checkIcon, segmentIcon);
+    let newTreeDataNodeList: TreeDataNode[] | null = null;
+    if (parameters === null || !isEqual(props.parameters, parameters)) {
+        newTreeDataNodeList = createTreeDataNodeListFromParameters(props.parameters, checkIcon, segmentIcon);
         setParameters(props.parameters);
-        setTreeDataNodeList(newTreeDataNodeList);
-        return newTreeDataNodeList;
+        setPreviousTreeDataNodeList(newTreeDataNodeList);
     }
-    const computedTreeDataNodeList = computeTreeDataNodeListAndUpdateStates();
+    const treeDataNodeList = newTreeDataNodeList ? newTreeDataNodeList : previousTreeDataNodeList;
 
     // Utilizing useEffect to prevent re-render of parent component during rendering of this component
     React.useEffect(
@@ -76,7 +74,7 @@ export const ParameterListFilter: React.FC<ParameterListFilterProps> = (props: P
                 <SmartNodeSelector
                     id={smartNodeSelectorId}
                     delimiter={smartNodeSelectorDelimiter}
-                    data={computedTreeDataNodeList}
+                    data={treeDataNodeList}
                     selectedTags={selectedTags}
                     label={props.showTitle ? "Parameter filtering" : undefined}
                     onChange={handleSmartNodeSelectorChange}
