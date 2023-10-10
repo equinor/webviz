@@ -10,11 +10,8 @@ router = APIRouter()
 START_TIME_CONTAINER = datetime.datetime.now()
 
 
-def _convert_psutil_object(psutil_object: NamedTuple) -> Dict[str, Union[str, Dict[str, str]]]:
-    return {
-        key: getattr(psutil_object, key) if key == "percent" else getattr(psutil_object, key)
-        for key in psutil_object._fields
-    }
+def _convert_psutil_object_to_dict(psutil_object: NamedTuple) -> Dict[str, Union[str, Dict[str, str]]]:
+    return {key: getattr(psutil_object, key) for key in psutil_object._fields}
 
 
 @router.get("/user_session_container")
@@ -33,8 +30,8 @@ async def user_session_container(
     return {
         "username": authenticated_user.get_username(),
         "startTimeContainer": START_TIME_CONTAINER,
-        "rootDiskSystem": _convert_psutil_object(psutil.disk_usage("/")),
-        "memorySystem": _convert_psutil_object(psutil.virtual_memory()),
-        "memoryPythonProcess": _convert_psutil_object(psutil.Process().memory_info()),
+        "rootDiskSystem": _convert_psutil_object_to_dict(psutil.disk_usage("/")),
+        "memorySystem": _convert_psutil_object_to_dict(psutil.virtual_memory()),
+        "memoryPythonProcess": _convert_psutil_object_to_dict(psutil.Process().memory_info()),
         "cpuPercent": psutil.cpu_percent(),
     }
