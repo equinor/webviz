@@ -48,7 +48,7 @@ export class ParameterIdent {
         }
         if (parts.length === 2) {
             return new ParameterIdent(parts[0], parts[1]);
-        } 
+        }
 
         throw new Error(`Invalid parameter ident string: ${paramIdentString}`);
     }
