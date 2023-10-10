@@ -1,6 +1,6 @@
 import os
 import asyncio
-from typing import Any
+from typing import Any, Optional
 
 import httpx
 import redis
@@ -17,19 +17,17 @@ class RadixJobScheduler:
     """Utility class to help with spawning Radix jobs on demand,
     and provide correct URL to communicate with running Radix jobs"""
 
-
     def __init__(self, name: str, port: int) -> None:
         self._name = name
         self._port = port
 
-        # redis.Redis does not yet have namespace support - https://github.com/redis/redis-py/issues/12
-        # Need to prefix manually.
+        # redis.Redis does not yet have namespace support - https://github.com/redis/redis-py/issues/12 - need to prefix manually.
         self._redis_client = redis.Redis(host="redis-user-session", port=6379, decode_responses=True)
 
     def _get_job_name(self, user_id: str) -> Optional[str]:
-        return self._redis_client..get("users-session-" + user_id)
+        return self._redis_client.get("users-session-" + user_id)
 
-    def _set_job_name(self, user_id: str, job_name: str) -> None
+    def _set_job_name(self, user_id: str, job_name: str) -> None:
         self._redis_client.set("users-session-" + user_id, job_name)
 
     async def _active_running_job(self, user_id: str) -> bool:
