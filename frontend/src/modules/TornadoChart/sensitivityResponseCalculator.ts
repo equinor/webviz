@@ -1,4 +1,9 @@
-import { EnsembleSensitivities, Sensitivity, SensitivityCase, SensitivityType } from "@framework/EnsembleSensitivities";
+import {
+    EnsembleSensitivitySet,
+    Sensitivity,
+    SensitivityCase,
+    SensitivityType,
+} from "@framework/EnsembleSensitivities";
 import { computeQuantile } from "@modules_shared/statistics";
 
 export type EnsembleScalarResponse = {
@@ -42,12 +47,12 @@ export class SensitivityResponseCalculator {
      * Class for calculating sensitivities for a given Ensemble response
      */
     private _ensembleResponse: EnsembleScalarResponse;
-    private _sensitivities: EnsembleSensitivities;
+    private _sensitivities: EnsembleSensitivitySet;
     private _referenceSensitivity: string;
     private _referenceAverage: number;
 
     constructor(
-        sensitivities: EnsembleSensitivities,
+        sensitivities: EnsembleSensitivitySet,
         ensembleResponse: EnsembleScalarResponse,
         referenceSensitivity = "rms_seed"
     ) {

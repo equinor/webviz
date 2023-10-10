@@ -89,7 +89,7 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
     const computedVectorTag = candidateVectorTag;
 
     const computedEnsemble = computedEnsembleIdent ? ensembleSet.findEnsemble(computedEnsembleIdent) : null;
-    const sensitivityNames = computedEnsemble?.getSensitivities()?.getSensitivityNames() ?? [];
+    const sensitivityNames = computedEnsemble?.getSensitivitySet()?.getSensitivityNames() ?? [];
     React.useEffect(
         function setSensitivitiesOnEnsembleChange() {
             if (!isEqual(selectedSensitivities, sensitivityNames)) {
