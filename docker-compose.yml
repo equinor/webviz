@@ -31,6 +31,7 @@ services:
       - WEBVIZ_SMDA_RESOURCE_SCOPE
       - WEBVIZ_SMDA_SUBSCRIPTION_KEY
       - WEBVIZ_SUMO_ENV
+      - WEBVIZ_VDS_HOST_ADDRESS
       - CODESPACE_NAME  # Automatically set env. variable by GitHub codespace
     volumes:
       - ./backend/src:/home/appuser/backend/src

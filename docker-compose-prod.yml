@@ -25,6 +25,7 @@ services:
       - WEBVIZ_SMDA_RESOURCE_SCOPE
       - WEBVIZ_SMDA_SUBSCRIPTION_KEY
       - WEBVIZ_SUMO_ENV
+      - WEBVIZ_VDS_HOST_ADDRESS
 
   backend-user-session:
     build:
