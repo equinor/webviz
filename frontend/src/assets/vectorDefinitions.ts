@@ -1,5 +1,10 @@
+export type VectorDefinition = {
+    type: string;
+    description: string;
+};
+
 export type VectorDefinitionsType = {
-    [key: string]: { type: string; description: string };
+    [key: string]: VectorDefinition;
 };
 
 export const vectorDefinitions: VectorDefinitionsType = {
