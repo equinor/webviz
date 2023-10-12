@@ -142,7 +142,6 @@ export class Workbench {
             this._broadcaster.unregisterAllChannelsForModuleInstance(moduleInstance.getId());
         }
         this._moduleInstances = [];
-        this._perModuleRunningInstanceNumber = {};
         this._layout = [];
         this.notifySubscribers(WorkbenchEvents.FullModuleRerenderRequested);
     }

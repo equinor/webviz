@@ -69,6 +69,10 @@ export function settings({ moduleContext, workbenchServices, initialSettings }: 
     initialSettings?.applyToStateOnMount("numBins", "number", setNumBins);
     initialSettings?.applyToStateOnMount("orientation", "string", setOrientation);
     initialSettings?.applyToStateOnMount("crossPlottingType", "string", setCrossPlottingType);
+    applyToStateOnMount("plotType", "string", setPlotType);
+    applyToStateOnMount("numBins", "number", setNumBins);
+    applyToStateOnMount("orientation", "string", setOrientation);
+    applyToStateOnMount("crossPlottingType", "string", setCrossPlottingType);
 
     const handleChannelXChanged = (channelName: string) => {
         setChannelNameX(channelName);

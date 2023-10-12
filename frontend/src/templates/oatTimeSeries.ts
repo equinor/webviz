@@ -20,7 +20,7 @@ const template: Template = {
             syncedSettings: [SyncSettingKey.ENSEMBLE],
         },
         {
-            instanceRef: "TorandoChartInstance",
+            instanceRef: "TornadoChartInstance",
             moduleName: "TornadoChart",
             layout: {
                 relHeight: 0.5,

@@ -58,17 +58,20 @@ export class InitialSettings {
     isSet(settingName: string, type: keyof InitialSettingsSupportedTypes): boolean {
         return this.get(settingName, type) !== undefined;
     }
+}
 
-    applyToStateOnMount(
-        settingName: string,
-        type: keyof InitialSettingsSupportedTypes,
-        stateSetter: (value: any) => void
-    ): void {
-        React.useEffect(() => {
-            const setting = this.get(settingName, type);
+export function applyToStateOnMount(
+    settingName: string,
+    type: keyof InitialSettingsSupportedTypes,
+    stateSetter: (value: any) => void,
+    initialSettings?: InitialSettings
+): void {
+    React.useEffect(() => {
+        if (initialSettings) {
+            const setting = initialSettings.get(settingName, type);
             if (setting !== undefined) {
                 stateSetter(setting);
             }
-        }, []);
-    }
+        }
+    }, [initialSettings]);
 }
