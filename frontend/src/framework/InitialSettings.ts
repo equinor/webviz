@@ -61,10 +61,10 @@ export class InitialSettings {
 }
 
 export function applyToStateOnMount(
+    initialSettings: InitialSettings | undefined,
     settingName: string,
     type: keyof InitialSettingsSupportedTypes,
-    stateSetter: (value: any) => void,
-    initialSettings: InitialSettings | undefined
+    stateSetter: (value: any) => void
 ): void {
     React.useEffect(() => {
         if (initialSettings) {

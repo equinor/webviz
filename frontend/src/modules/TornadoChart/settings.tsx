@@ -9,7 +9,7 @@ import { State } from "./state";
 export function settings({ moduleContext, workbenchServices, initialSettings }: ModuleFCProps<State>) {
     const [responseChannelName, setResponseChannelName] = moduleContext.useStoreState("responseChannelName");
 
-    applyToStateOnMount("responseChannelName", "string", setResponseChannelName, initialSettings);
+    applyToStateOnMount(initialSettings, "responseChannelName", "string", setResponseChannelName);
 
     function handleResponseChannelNameChange(channelName: string) {
         setResponseChannelName(channelName);
