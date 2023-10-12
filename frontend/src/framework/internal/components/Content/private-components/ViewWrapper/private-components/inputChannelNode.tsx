@@ -4,7 +4,6 @@ import { BroadcastChannelKeyCategory } from "@framework/Broadcaster";
 import { GuiEvent, GuiEventPayloads } from "@framework/GuiMessageBroker";
 import { Workbench } from "@framework/Workbench";
 import { IconButton } from "@lib/components/IconButton";
-import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
 import { Point, pointerEventToPoint, rectContainsPoint } from "@lib/utils/geometry";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { Remove } from "@mui/icons-material";
@@ -30,13 +29,18 @@ export const InputChannelNode: React.FC<InputChannelNodeProps> = (props) => {
     const guiMessageBroker = props.workbench.getGuiMessageBroker();
 
     React.useEffect(() => {
-        let isHovered = false;
-        let isConnectable = false;
-        let moduleInstanceId = "";
+        let localHovered = false;
+        let localConnectable = false;
+        let localModuleInstanceId = "";
+        let localEditDataChannelConnections = false;
 
         const moduleInstance = props.workbench.getModuleInstance(props.moduleInstanceId);
 
         function handleDataChannelOriginPointerDown(payload: GuiEventPayloads[GuiEvent.DataChannelOriginPointerDown]) {
+            localConnectable = false;
+            setConnectable(false);
+            localModuleInstanceId = "";
+
             const originModuleInstance = props.workbench.getModuleInstance(payload.moduleInstanceId);
             if (!originModuleInstance) {
                 return;
@@ -77,54 +81,60 @@ export const InputChannelNode: React.FC<InputChannelNodeProps> = (props) => {
             }
 
             setConnectable(true);
-            isConnectable = true;
-            moduleInstanceId = payload.moduleInstanceId;
-            guiMessageBroker.publishEvent(GuiEvent.DataChannelConnectionsChange, {});
+            localConnectable = true;
+            localModuleInstanceId = payload.moduleInstanceId;
+            guiMessageBroker.publishEvent(GuiEvent.DataChannelConnectionsChange);
         }
 
         function handlePointerUp(e: PointerEvent) {
-            if (isHovered) {
+            if (localHovered) {
                 if (removeButtonRef.current && removeButtonRef.current.contains(e.target as Node)) {
                     props.onChannelConnectionDisconnect(props.inputName);
                     setHovered(false);
-                    isHovered = false;
-                } else if (isConnectable) {
-                    props.onChannelConnect(props.inputName, moduleInstanceId, pointerEventToPoint(e));
+                    localHovered = false;
+                } else if (localConnectable) {
+                    props.onChannelConnect(props.inputName, localModuleInstanceId, pointerEventToPoint(e));
                     setHovered(false);
-                    isHovered = false;
+                    localHovered = false;
+                } else if (!localConnectable && !localEditDataChannelConnections) {
+                    setHovered(false);
+                    localHovered = false;
+                    guiMessageBroker.publishEvent(GuiEvent.HideDataChannelConnectionsRequest);
                 }
             }
-            guiMessageBroker.publishEvent(GuiEvent.DataChannelPointerUp, {});
+            guiMessageBroker.publishEvent(GuiEvent.DataChannelPointerUp);
             e.stopPropagation();
         }
 
         function handleEditDataChannelConnectionsRequest() {
             setEditDataChannelConnections(true);
+            localEditDataChannelConnections = true;
         }
 
         function handleDataChannelDone() {
-            isConnectable = false;
+            localConnectable = false;
             setConnectable(false);
             setHovered(false);
-            isHovered = false;
+            localHovered = false;
             setEditDataChannelConnections(false);
+            localEditDataChannelConnections = false;
         }
 
         function handlePointerMove(e: PointerEvent) {
             const boundingRect = ref.current?.getBoundingClientRect();
             if (boundingRect && rectContainsPoint(boundingRect, pointerEventToPoint(e))) {
                 setHovered(true);
-                isHovered = true;
+                localHovered = true;
                 return;
             }
-            if (isHovered) {
+            if (localHovered) {
                 setHovered(false);
-                isHovered = false;
+                localHovered = false;
             }
         }
 
         function handleResize() {
-            guiMessageBroker.publishEvent(GuiEvent.DataChannelConnectionsChange, {});
+            guiMessageBroker.publishEvent(GuiEvent.DataChannelConnectionsChange);
         }
 
         function checkIfConnection() {
@@ -194,8 +204,8 @@ export const InputChannelNode: React.FC<InputChannelNodeProps> = (props) => {
     }
 
     function handlePointerLeave() {
-        guiMessageBroker.publishEvent(GuiEvent.UnhighlightDataChannelConnectionRequest, {});
-        guiMessageBroker.publishEvent(GuiEvent.DataChannelNodeUnhover, {});
+        guiMessageBroker.publishEvent(GuiEvent.UnhighlightDataChannelConnectionRequest);
+        guiMessageBroker.publishEvent(GuiEvent.DataChannelNodeUnhover);
     }
 
     return (
@@ -207,7 +217,9 @@ export const InputChannelNode: React.FC<InputChannelNodeProps> = (props) => {
                 "flex flex-col items-center justify-center rounded border p-4 h-20 m-2 gap-2 text-sm",
                 {
                     "bg-green-600 border-green-600": hovered && connectable,
-                    "bg-blue-600 border-blue-600": hovered && !connectable,
+                    "bg-red-600 border-red-600": hovered && !connectable && !editDataChannelConnections,
+                    "bg-blue-600 border-blue-600": hovered && !connectable && editDataChannelConnections,
+                    "opacity-50": !connectable && !editDataChannelConnections,
                     "bg-slate-100": !hovered,
                     "text-white": hovered,
                     "shadow-md": hasConnection,

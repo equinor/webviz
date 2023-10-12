@@ -5,10 +5,8 @@ import { ModuleInstance } from "@framework/ModuleInstance";
 import { Workbench } from "@framework/Workbench";
 import { Point, pointDifference, pointRelativeToDomRect, pointerEventToPoint } from "@lib/utils/geometry";
 
-import { ChannelSelector } from "./private-components/channelSelector";
 import { Header } from "./private-components/header";
-import { InputChannelNode } from "./private-components/inputChannelNode";
-import { InputChannelNodeWrapper } from "./private-components/inputChannelNodeWrapper";
+import { InputChannelNodes } from "./private-components/inputChannelNodeWrapper";
 import { ViewContent } from "./private-components/viewContent";
 
 import { ViewWrapperPlaceholder } from "../viewWrapperPlaceholder";
@@ -44,10 +42,6 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
     );
 
     const timeRef = React.useRef<number | null>(null);
-
-    const [currentInputName, setCurrentInputName] = React.useState<string | null>(null);
-    const [channelSelectorCenterPoint, setChannelSelectorCenterPoint] = React.useState<Point | null>(null);
-    const [selectableChannels, setSelectableChannels] = React.useState<string[]>([]);
 
     const handleHeaderPointerDown = React.useCallback(
         function handlePointerDown(e: React.PointerEvent<HTMLDivElement>) {
@@ -110,77 +104,6 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
         e.stopPropagation();
     }
 
-    const handleChannelConnect = React.useCallback(
-        function handleChannelConnect(inputName: string, moduleInstanceId: string, destinationPoint: Point) {
-            const originModuleInstance = props.workbench.getModuleInstance(moduleInstanceId);
-
-            if (!originModuleInstance) {
-                guiMessageBroker.publishEvent(GuiEvent.HideDataChannelConnectionsRequest, {});
-                return;
-            }
-
-            const acceptedKeys = props.moduleInstance
-                .getInputChannelDefs()
-                .find((channelDef) => channelDef.name === inputName)?.keyCategories;
-
-            const channels = Object.values(originModuleInstance.getBroadcastChannels()).filter((channel) => {
-                if (!acceptedKeys || acceptedKeys.some((key) => channel.getDataDef().key === key)) {
-                    return Object.values(props.moduleInstance.getInputChannels()).every((inputChannel) => {
-                        if (inputChannel.getDataDef().key === channel.getDataDef().key) {
-                            return true;
-                        }
-                        return false;
-                    });
-                }
-                return false;
-            });
-
-            if (channels.length === 0) {
-                guiMessageBroker.publishEvent(GuiEvent.HideDataChannelConnectionsRequest, {});
-                return;
-            }
-
-            if (channels.length > 1) {
-                setChannelSelectorCenterPoint(destinationPoint);
-                setSelectableChannels(Object.values(channels).map((channel) => channel.getName()));
-                setCurrentInputName(inputName);
-                return;
-            }
-
-            const channelName = Object.values(channels)[0].getName();
-
-            props.moduleInstance.setInputChannel(inputName, channelName);
-            guiMessageBroker.publishEvent(GuiEvent.HideDataChannelConnectionsRequest, {});
-        },
-        [props.moduleInstance, props.workbench]
-    );
-
-    const handleChannelDisconnect = React.useCallback(
-        function handleChannelDisconnect(inputName: string) {
-            props.moduleInstance.removeInputChannel(inputName);
-            guiMessageBroker.publishEvent(GuiEvent.DataChannelConnectionsChange, {});
-        },
-        [props.moduleInstance]
-    );
-
-    function handleCancelChannelSelection() {
-        setChannelSelectorCenterPoint(null);
-        setSelectableChannels([]);
-        guiMessageBroker.publishEvent(GuiEvent.HideDataChannelConnectionsRequest, {});
-    }
-
-    function handleChannelSelection(channelName: string) {
-        guiMessageBroker.publishEvent(GuiEvent.HideDataChannelConnectionsRequest, {});
-
-        if (!currentInputName) {
-            return;
-        }
-        setChannelSelectorCenterPoint(null);
-        setSelectableChannels([]);
-
-        props.moduleInstance.setInputChannel(currentInputName, channelName);
-    }
-
     const showAsActive =
         props.isActive && [DrawerContent.ModuleSettings, DrawerContent.SyncSettings].includes(drawerContent);
 
@@ -220,34 +143,11 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
                     />
                     <div className="flex-grow overflow-auto h-0" onClick={handleModuleClick}>
                         <ViewContent workbench={props.workbench} moduleInstance={props.moduleInstance} />
-                        <InputChannelNodeWrapper
+                        <InputChannelNodes
                             forwardedRef={ref}
-                            guiMessageBroker={guiMessageBroker}
-                            moduleInstanceId={props.moduleInstance.getId()}
-                        >
-                            {props.moduleInstance.getInputChannelDefs().map((channelDef) => {
-                                return (
-                                    <InputChannelNode
-                                        key={channelDef.name}
-                                        moduleInstanceId={props.moduleInstance.getId()}
-                                        inputName={channelDef.name}
-                                        displayName={channelDef.displayName}
-                                        channelKeyCategories={channelDef.keyCategories}
-                                        workbench={props.workbench}
-                                        onChannelConnect={handleChannelConnect}
-                                        onChannelConnectionDisconnect={handleChannelDisconnect}
-                                    />
-                                );
-                            })}
-                        </InputChannelNodeWrapper>
-                        {channelSelectorCenterPoint && (
-                            <ChannelSelector
-                                position={channelSelectorCenterPoint}
-                                channelNames={selectableChannels}
-                                onCancel={handleCancelChannelSelection}
-                                onSelectChannel={handleChannelSelection}
-                            />
-                        )}
+                            moduleInstance={props.moduleInstance}
+                            workbench={props.workbench}
+                        />
                     </div>
                 </div>
             </div>

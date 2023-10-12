@@ -1,6 +1,7 @@
 import React, { ChangeEvent } from "react";
 
 import { BroadcastChannelKeyCategory } from "@framework/Broadcaster";
+import { applyToStateOnMount } from "@framework/InitialSettings";
 import { ModuleFCProps } from "@framework/Module";
 import { ChannelSelect } from "@framework/components/ChannelSelect";
 import { Dropdown } from "@lib/components/Dropdown";
@@ -68,9 +69,9 @@ export function settings({ moduleContext, workbenchServices, initialSettings }: 
     initialSettings?.applyToStateOnMount("orientation", "string", setOrientation);
     initialSettings?.applyToStateOnMount("crossPlottingType", "string", setCrossPlottingType);
 
-    const channelX = moduleContext.useInputChannel("channelX");
-    const channelY = moduleContext.useInputChannel("channelY");
-    const channelColor = moduleContext.useInputChannel("channelColor");
+    const channelX = moduleContext.useInputChannel("channelX", initialSettings);
+    const channelY = moduleContext.useInputChannel("channelY", initialSettings);
+    const channelColor = moduleContext.useInputChannel("channelColor", initialSettings);
 
     if (channelX && channelX.getName() !== prevChannelXName && crossPlottingType === null) {
         setPrevChannelXName(channelX?.getName() ?? null);

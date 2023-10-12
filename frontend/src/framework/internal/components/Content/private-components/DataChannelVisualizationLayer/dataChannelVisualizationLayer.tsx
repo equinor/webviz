@@ -55,21 +55,21 @@ export const DataChannelVisualizationLayer: React.FC<DataChannelVisualizationPro
     );
 
     React.useEffect(() => {
-        let mousePressed = false;
-        let currentOriginPoint: Point = { x: 0, y: 0 };
-        let editDataChannelConnections: boolean = false;
+        let localMousePressed = false;
+        let localCurrentOriginPoint: Point = { x: 0, y: 0 };
+        let localEditDataChannelConnections: boolean = false;
 
         function handleDataChannelOriginPointerDown(payload: GuiEventPayloads[GuiEvent.DataChannelOriginPointerDown]) {
             const clientRect = payload.originElement.getBoundingClientRect();
-            currentOriginPoint = {
+            localCurrentOriginPoint = {
                 x: clientRect.left + clientRect.width / 2,
                 y: clientRect.top + clientRect.height / 2,
             };
             setVisible(true);
-            setOriginPoint(currentOriginPoint);
+            setOriginPoint(localCurrentOriginPoint);
             props.workbench.getGlobalCursor().setOverrideCursor(GlobalCursorType.Crosshair);
-            mousePressed = true;
-            setCurrentPointerPosition(currentOriginPoint);
+            localMousePressed = true;
+            setCurrentPointerPosition(localCurrentOriginPoint);
             setCurrentChannelName(null);
             setDataChannelConnectionsLayerVisible(true);
 
@@ -86,17 +86,17 @@ export const DataChannelVisualizationLayer: React.FC<DataChannelVisualizationPro
         }
 
         function handlePointerUp() {
-            mousePressed = false;
+            localMousePressed = false;
 
-            if (editDataChannelConnections) {
+            if (localEditDataChannelConnections) {
                 return;
             }
             setShowDataChannelConnections(false);
             setEditDataChannelConnectionsForModuleInstanceId(null);
-            guiMessageBroker.publishEvent(GuiEvent.HideDataChannelConnectionsRequest, {});
         }
 
         function handleDataChannelDone() {
+            localEditDataChannelConnections = false;
             setVisible(false);
             setEditDataChannelConnectionsForModuleInstanceId(null);
             setShowDataChannelConnections(false);
@@ -105,7 +105,7 @@ export const DataChannelVisualizationLayer: React.FC<DataChannelVisualizationPro
         }
 
         function handlePointerMove(e: PointerEvent) {
-            if (!mousePressed) {
+            if (!localMousePressed) {
                 return;
             }
             const hoveredElement = document.elementFromPoint(e.clientX, e.clientY);
@@ -117,7 +117,7 @@ export const DataChannelVisualizationLayer: React.FC<DataChannelVisualizationPro
                 const boundingRect = hoveredElement.getBoundingClientRect();
                 setCurrentPointerPosition({
                     x: boundingRect.left + boundingRect.width / 2,
-                    y: currentOriginPoint.y > boundingRect.top ? boundingRect.bottom : boundingRect.top,
+                    y: localCurrentOriginPoint.y > boundingRect.top ? boundingRect.bottom : boundingRect.top,
                 });
                 return;
             }
@@ -134,10 +134,12 @@ export const DataChannelVisualizationLayer: React.FC<DataChannelVisualizationPro
         }
 
         function handleNodeHover(payload: GuiEventPayloads[GuiEvent.DataChannelNodeHover]) {
-            if (payload.connectionAllowed) {
-                props.workbench.getGlobalCursor().changeOverrideCursor(GlobalCursorType.Copy);
-            } else {
-                props.workbench.getGlobalCursor().changeOverrideCursor(GlobalCursorType.NotAllowed);
+            if (!localEditDataChannelConnections) {
+                if (payload.connectionAllowed) {
+                    props.workbench.getGlobalCursor().changeOverrideCursor(GlobalCursorType.Copy);
+                } else {
+                    props.workbench.getGlobalCursor().changeOverrideCursor(GlobalCursorType.NotAllowed);
+                }
             }
         }
 
@@ -148,7 +150,7 @@ export const DataChannelVisualizationLayer: React.FC<DataChannelVisualizationPro
         function handleEditDataChannelConnectionsRequest(
             payload: GuiEventPayloads[GuiEvent.EditDataChannelConnectionsForModuleInstanceRequest]
         ) {
-            editDataChannelConnections = true;
+            localEditDataChannelConnections = true;
             setEditDataChannelConnectionsForModuleInstanceId(payload.moduleInstanceId);
             setShowDataChannelConnections(true);
         }

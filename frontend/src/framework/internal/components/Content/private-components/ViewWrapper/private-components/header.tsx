@@ -4,7 +4,7 @@ import { GuiEvent, GuiMessageBroker } from "@framework/GuiMessageBroker";
 import { ModuleInstance } from "@framework/ModuleInstance";
 import { SyncSettingKey, SyncSettingsMeta } from "@framework/SyncSettings";
 import { isDevMode } from "@lib/utils/devMode";
-import { CellTower, Close, TapAndPlay } from "@mui/icons-material";
+import { Close, Input, Output } from "@mui/icons-material";
 
 export type HeaderProps = {
     moduleInstance: ModuleInstance<any>;
@@ -105,7 +105,7 @@ export const Header: React.FC<HeaderProps> = (props) => {
                     title="Connect data channels to other module instances"
                     onPointerDown={handleDataChannelOriginPointerDown}
                 >
-                    <CellTower fontSize="small" />
+                    <Output fontSize="small" />
                 </div>
             )}
             {props.moduleInstance.getInputChannelDefs().length > 0 && (
@@ -115,7 +115,7 @@ export const Header: React.FC<HeaderProps> = (props) => {
                     onPointerUp={handleInputChannelsPointerUp}
                     onPointerDown={handleInputChannelsPointerDown}
                 >
-                    <TapAndPlay fontSize="small" />
+                    <Input fontSize="small" />
                 </div>
             )}
             <div

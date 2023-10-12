@@ -12,16 +12,21 @@ export function useElementBoundingRect(ref: React.RefObject<HTMLElement | SVGSVG
         };
 
         const resizeObserver = new ResizeObserver(handleResize);
+        const mutationObserver = new MutationObserver(handleResize);
         window.addEventListener("resize", handleResize);
         window.addEventListener("scroll", handleResize, true);
 
         if (ref.current) {
             handleResize();
             resizeObserver.observe(ref.current);
+            if (ref.current.parentElement) {
+                mutationObserver.observe(ref.current.parentElement, { childList: true, subtree: true });
+            }
         }
 
         return () => {
             resizeObserver.disconnect();
+            mutationObserver.disconnect();
             window.removeEventListener("resize", handleResize);
             window.removeEventListener("scroll", handleResize, true);
         };

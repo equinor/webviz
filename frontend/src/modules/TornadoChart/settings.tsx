@@ -1,4 +1,3 @@
-import { BroadcastChannelKeyCategory } from "@framework/Broadcaster";
 import { ModuleFCProps } from "@framework/Module";
 import { ChannelSelect } from "@framework/components/ChannelSelect";
 import { Label } from "@lib/components/Label";
@@ -11,7 +10,7 @@ export function settings({ moduleContext, workbenchServices }: ModuleFCProps<Sta
             <Label text="Data channel" key="data-channel-x-axis">
                 <ChannelSelect
                     moduleContext={moduleContext}
-                    channelName="responseChannel"
+                    channelName="response"
                     broadcaster={workbenchServices.getBroadcaster()}
                 />
             </Label>

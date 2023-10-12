@@ -80,7 +80,7 @@ export class ModuleContext<S extends StateBaseType> {
                     this._moduleInstance.setInputChannel(name, setting);
                 }
             }
-        }, []);
+        }, [initialSettings]);
 
         React.useEffect(() => {
             function handleNewChannel(newChannel: BroadcastChannel | null) {

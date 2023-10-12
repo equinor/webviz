@@ -51,23 +51,17 @@ export type GuiEventPayloads = {
     [GuiEvent.EditDataChannelConnectionsForModuleInstanceRequest]: {
         moduleInstanceId: string;
     };
-    [GuiEvent.ShowDataChannelConnectionsRequest]: {};
-    [GuiEvent.HideDataChannelConnectionsRequest]: {};
     [GuiEvent.HighlightDataChannelConnectionRequest]: {
         moduleInstanceId: string;
         dataChannelName: string;
     };
-    [GuiEvent.UnhighlightDataChannelConnectionRequest]: {};
-    [GuiEvent.DataChannelConnectionsChange]: {};
     [GuiEvent.DataChannelOriginPointerDown]: {
         moduleInstanceId: string;
         originElement: HTMLElement;
     };
-    [GuiEvent.DataChannelPointerUp]: {};
     [GuiEvent.DataChannelNodeHover]: {
         connectionAllowed: boolean;
     };
-    [GuiEvent.DataChannelNodeUnhover]: {};
 };
 
 type GuiStateValueTypes = {
@@ -116,7 +110,12 @@ export class GuiMessageBroker {
         }
     }
 
-    subscribeToEvent<T extends GuiEvent>(event: T, callback: (payload: GuiEventPayloads[T]) => void) {
+    subscribeToEvent<T extends Exclude<GuiEvent, keyof GuiEventPayloads>>(event: T, callback: () => void): () => void;
+    subscribeToEvent<T extends keyof GuiEventPayloads>(
+        event: T,
+        callback: (payload: GuiEventPayloads[T]) => void
+    ): () => void;
+    subscribeToEvent<T extends GuiEvent>(event: T, callback: (payload?: any) => void): () => void {
         const eventListeners = this._eventListeners.get(event) || new Set();
         eventListeners.add(callback);
         this._eventListeners.set(event, eventListeners);
@@ -126,7 +125,9 @@ export class GuiMessageBroker {
         };
     }
 
-    publishEvent<T extends GuiEvent>(event: T, payload: GuiEventPayloads[T]) {
+    publishEvent<T extends Exclude<GuiEvent, keyof GuiEventPayloads>>(event: T): void;
+    publishEvent<T extends keyof GuiEventPayloads>(event: T, payload: GuiEventPayloads[T]): void;
+    publishEvent<T extends GuiEvent>(event: T, payload?: any): void {
         const eventListeners = this._eventListeners.get(event);
         if (eventListeners) {
             eventListeners.forEach((callback) => callback({ ...payload }));

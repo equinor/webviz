@@ -1,11 +1,6 @@
 import React from "react";
 
-import {
-    BroadcastChannel,
-    BroadcastChannelKeyCategory,
-    Broadcaster,
-    checkChannelCompatibility,
-} from "@framework/Broadcaster";
+import { BroadcastChannel, Broadcaster } from "@framework/Broadcaster";
 import { ModuleContext } from "@framework/ModuleContext";
 import { BaseComponentProps } from "@lib/components/BaseComponent";
 import { Dropdown } from "@lib/components/Dropdown";

@@ -1,43 +1,54 @@
 import React from "react";
 import { createPortal } from "react-dom";
 
-import { GuiEvent, GuiEventPayloads, GuiMessageBroker } from "@framework/GuiMessageBroker";
+import { GuiEvent, GuiEventPayloads } from "@framework/GuiMessageBroker";
+import { ModuleInstance } from "@framework/ModuleInstance";
+import { Workbench } from "@framework/Workbench";
 import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
+import { Point } from "@lib/utils/geometry";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
-export type InputChannelNodeWrapperProps = {
-    children: React.ReactNode;
+import { ChannelSelector } from "./channelSelector";
+import { InputChannelNode } from "./inputChannelNode";
+
+export type InputChannelNodesProps = {
     forwardedRef: React.RefObject<HTMLDivElement>;
-    moduleInstanceId: string;
-    guiMessageBroker: GuiMessageBroker;
+    moduleInstance: ModuleInstance<any>;
+    workbench: Workbench;
 };
 
-export const InputChannelNodeWrapper: React.FC<InputChannelNodeWrapperProps> = (props) => {
+export const InputChannelNodes: React.FC<InputChannelNodesProps> = (props) => {
     const [visible, setVisible] = React.useState<boolean>(false);
+    const [currentInputName, setCurrentInputName] = React.useState<string | null>(null);
+    const [channelSelectorCenterPoint, setChannelSelectorCenterPoint] = React.useState<Point | null>(null);
+    const [selectableChannels, setSelectableChannels] = React.useState<string[]>([]);
+
     const elementRect = useElementBoundingRect(props.forwardedRef);
 
+    const guiMessageBroker = props.workbench.getGuiMessageBroker();
+
     React.useEffect(() => {
-        let isVisible = false;
+        let localVisible = false;
 
         function handleDataChannelOriginPointerDown() {
             setVisible(true);
-            isVisible = true;
+            localVisible = true;
         }
 
         function handleDataChannelDone() {
             setVisible(false);
-            isVisible = false;
+            localVisible = false;
         }
 
         function handlePointerUp(e: PointerEvent) {
-            if (!isVisible) {
+            if (!localVisible) {
                 return;
             }
             if (
                 (!e.target || !(e.target as Element).hasAttribute("data-channelconnector")) &&
                 !(e.target as Element).closest("#channel-selector-header")
             ) {
-                props.guiMessageBroker.publishEvent(GuiEvent.HideDataChannelConnectionsRequest, {});
+                guiMessageBroker.publishEvent(GuiEvent.HideDataChannelConnectionsRequest);
                 setVisible(false);
             }
             e.stopPropagation();
@@ -46,24 +57,24 @@ export const InputChannelNodeWrapper: React.FC<InputChannelNodeWrapperProps> = (
         function handleEditDataChannelConnectionsRequest(
             payload: GuiEventPayloads[GuiEvent.EditDataChannelConnectionsForModuleInstanceRequest]
         ) {
-            if (payload.moduleInstanceId !== props.moduleInstanceId) {
+            if (payload.moduleInstanceId !== props.moduleInstance.getId()) {
                 return;
             }
             setVisible(true);
-            isVisible = true;
+            localVisible = true;
         }
 
-        const removeEditDataChannelConnectionsRequestHandler = props.guiMessageBroker.subscribeToEvent(
+        const removeEditDataChannelConnectionsRequestHandler = guiMessageBroker.subscribeToEvent(
             GuiEvent.EditDataChannelConnectionsForModuleInstanceRequest,
             handleEditDataChannelConnectionsRequest
         );
 
-        const removeDataChannelOriginPointerDownHandler = props.guiMessageBroker.subscribeToEvent(
+        const removeDataChannelOriginPointerDownHandler = guiMessageBroker.subscribeToEvent(
             GuiEvent.DataChannelOriginPointerDown,
             handleDataChannelOriginPointerDown
         );
 
-        const removeDataChannelDoneHandler = props.guiMessageBroker.subscribeToEvent(
+        const removeDataChannelDoneHandler = guiMessageBroker.subscribeToEvent(
             GuiEvent.HideDataChannelConnectionsRequest,
             handleDataChannelDone
         );
@@ -76,7 +87,78 @@ export const InputChannelNodeWrapper: React.FC<InputChannelNodeWrapperProps> = (
             removeDataChannelOriginPointerDownHandler();
             document.removeEventListener("pointerup", handlePointerUp);
         };
-    }, [props.moduleInstanceId, props.guiMessageBroker]);
+    }, [props.moduleInstance, guiMessageBroker]);
+
+    const handleChannelConnect = React.useCallback(
+        function handleChannelConnect(inputName: string, moduleInstanceId: string, destinationPoint: Point) {
+            const originModuleInstance = props.workbench.getModuleInstance(moduleInstanceId);
+
+            if (!originModuleInstance) {
+                guiMessageBroker.publishEvent(GuiEvent.HideDataChannelConnectionsRequest);
+                return;
+            }
+
+            const acceptedKeys = props.moduleInstance
+                .getInputChannelDefs()
+                .find((channelDef) => channelDef.name === inputName)?.keyCategories;
+
+            const channels = Object.values(originModuleInstance.getBroadcastChannels()).filter((channel) => {
+                if (!acceptedKeys || acceptedKeys.some((key) => channel.getDataDef().key === key)) {
+                    return Object.values(props.moduleInstance.getInputChannels()).every((inputChannel) => {
+                        if (inputChannel.getDataDef().key === channel.getDataDef().key) {
+                            return true;
+                        }
+                        return false;
+                    });
+                }
+                return false;
+            });
+
+            if (channels.length === 0) {
+                guiMessageBroker.publishEvent(GuiEvent.HideDataChannelConnectionsRequest);
+                return;
+            }
+
+            if (channels.length > 1) {
+                setChannelSelectorCenterPoint(destinationPoint);
+                setSelectableChannels(Object.values(channels).map((channel) => channel.getName()));
+                setCurrentInputName(inputName);
+                return;
+            }
+
+            const channelName = Object.values(channels)[0].getName();
+
+            props.moduleInstance.setInputChannel(inputName, channelName);
+            guiMessageBroker.publishEvent(GuiEvent.HideDataChannelConnectionsRequest);
+        },
+        [props.moduleInstance, props.workbench]
+    );
+
+    const handleChannelDisconnect = React.useCallback(
+        function handleChannelDisconnect(inputName: string) {
+            props.moduleInstance.removeInputChannel(inputName);
+            guiMessageBroker.publishEvent(GuiEvent.DataChannelConnectionsChange);
+        },
+        [props.moduleInstance]
+    );
+
+    function handleCancelChannelSelection() {
+        setChannelSelectorCenterPoint(null);
+        setSelectableChannels([]);
+        guiMessageBroker.publishEvent(GuiEvent.HideDataChannelConnectionsRequest);
+    }
+
+    function handleChannelSelection(channelName: string) {
+        guiMessageBroker.publishEvent(GuiEvent.HideDataChannelConnectionsRequest);
+
+        if (!currentInputName) {
+            return;
+        }
+        setChannelSelectorCenterPoint(null);
+        setSelectableChannels([]);
+
+        props.moduleInstance.setInputChannel(currentInputName, channelName);
+    }
 
     return createPortal(
         <div
@@ -90,7 +172,28 @@ export const InputChannelNodeWrapper: React.FC<InputChannelNodeWrapperProps> = (
                 height: elementRect.height,
             }}
         >
-            {props.children}
+            {props.moduleInstance.getInputChannelDefs().map((channelDef) => {
+                return (
+                    <InputChannelNode
+                        key={channelDef.name}
+                        moduleInstanceId={props.moduleInstance.getId()}
+                        inputName={channelDef.name}
+                        displayName={channelDef.displayName}
+                        channelKeyCategories={channelDef.keyCategories}
+                        workbench={props.workbench}
+                        onChannelConnect={handleChannelConnect}
+                        onChannelConnectionDisconnect={handleChannelDisconnect}
+                    />
+                );
+            })}
+            {channelSelectorCenterPoint && (
+                <ChannelSelector
+                    position={channelSelectorCenterPoint}
+                    channelNames={selectableChannels}
+                    onCancel={handleCancelChannelSelection}
+                    onSelectChannel={handleChannelSelection}
+                />
+            )}
         </div>,
         document.body
     );

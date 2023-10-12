@@ -18,13 +18,7 @@ import { PlotType, State } from "./state";
 
 import { createSensitivityColorMap } from "../_shared/sensitivityColors";
 
-export const view = ({
-    moduleContext,
-    workbenchSession,
-    workbenchSettings,
-    workbenchServices,
-    initialSettings,
-}: ModuleFCProps<State>) => {
+export const view = ({ moduleContext, workbenchSession, workbenchSettings, initialSettings }: ModuleFCProps<State>) => {
     // Leave this in until we get a feeling for React18/Plotly
     const renderCount = React.useRef(0);
     React.useEffect(function incrementRenderCount() {
@@ -38,7 +32,7 @@ export const view = ({
     const [channelEnsemble, setChannelEnsemble] = React.useState<Ensemble | null>(null);
     const [channelResponseData, setChannelResponseData] = React.useState<EnsembleScalarResponse | null>(null);
 
-    const responseChannel = moduleContext.useInputChannel("responseChannel", initialSettings);
+    const responseChannel = moduleContext.useInputChannel("response", initialSettings);
 
     const [showLabels, setShowLabels] = React.useState(true);
     const [hideZeroY, setHideZeroY] = React.useState(false);
