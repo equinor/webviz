@@ -12,7 +12,6 @@ export function settings({ moduleContext, workbenchServices, initialSettings }: 
     applyToStateOnMount("responseChannelName", "string", setResponseChannelName, initialSettings);
 
     function handleResponseChannelNameChange(channelName: string) {
-        console.debug("handleResponseChannelNameChange", responseChannelName, channelName);
         setResponseChannelName(channelName);
     }
 
