@@ -1,7 +1,7 @@
 import React, { ChangeEvent } from "react";
 
 import { BroadcastChannelKeyCategory } from "@framework/Broadcaster";
-import { applyToStateOnMount } from "@framework/InitialSettings";
+import { applyInitialSettingsToState } from "@framework/InitialSettings";
 import { ModuleFCProps } from "@framework/Module";
 import { ChannelSelect } from "@framework/components/ChannelSelect";
 import { Dropdown } from "@lib/components/Dropdown";
@@ -63,13 +63,13 @@ export function settings({ moduleContext, workbenchServices, initialSettings }: 
     const [orientation, setOrientation] = moduleContext.useStoreState("orientation");
     const [crossPlottingType, setCrossPlottingType] = React.useState<BroadcastChannelKeyCategory | null>(null);
 
-    applyToStateOnMount(initialSettings, "channelNameX", "string", setChannelNameX);
-    applyToStateOnMount(initialSettings, "channelNameY", "string", setChannelNameY);
-    applyToStateOnMount(initialSettings, "channelNameZ", "string", setChannelNameZ);
-    applyToStateOnMount(initialSettings, "plotType", "string", setPlotType);
-    applyToStateOnMount(initialSettings, "numBins", "number", setNumBins);
-    applyToStateOnMount(initialSettings, "orientation", "string", setOrientation);
-    applyToStateOnMount(initialSettings, "crossPlottingType", "string", setCrossPlottingType);
+    applyInitialSettingsToState(initialSettings, "channelNameX", "string", setChannelNameX);
+    applyInitialSettingsToState(initialSettings, "channelNameY", "string", setChannelNameY);
+    applyInitialSettingsToState(initialSettings, "channelNameZ", "string", setChannelNameZ);
+    applyInitialSettingsToState(initialSettings, "plotType", "string", setPlotType);
+    applyInitialSettingsToState(initialSettings, "numBins", "number", setNumBins);
+    applyInitialSettingsToState(initialSettings, "orientation", "string", setOrientation);
+    applyInitialSettingsToState(initialSettings, "crossPlottingType", "string", setCrossPlottingType);
 
     const handleChannelXChanged = (channelName: string) => {
         setChannelNameX(channelName);
