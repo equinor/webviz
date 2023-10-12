@@ -1,5 +1,10 @@
 import React from "react";
 
+import { StatusSource } from "@framework/ModuleInstanceStatusController";
+import {
+    ModuleInstanceStatusControllerPrivate,
+    useStatusControllerValue,
+} from "@framework/internal/ModuleInstanceStatusControllerPrivate";
 import { isDevMode } from "@lib/utils/devMode";
 
 type DebugProfilerRenderInfoProps = {
@@ -36,6 +41,8 @@ DebugProfilerWrapper.displayName = "DebugProfilerWrapper";
 export type DebugProfilerProps = {
     id: string;
     children: React.ReactNode;
+    statusController: ModuleInstanceStatusControllerPrivate;
+    source: StatusSource;
 };
 
 type RenderInfo = {
@@ -54,6 +61,14 @@ type RenderInfo = {
 
 export const DebugProfiler: React.FC<DebugProfilerProps> = (props) => {
     const [renderInfo, setRenderInfo] = React.useState<RenderInfo | null>(null);
+    const reportedRenderCount = useStatusControllerValue(
+        props.statusController,
+        props.source === StatusSource.View ? "viewRenderCount" : "settingsRenderCount"
+    );
+    const customDebugMessage = useStatusControllerValue(
+        props.statusController,
+        props.source === StatusSource.View ? "viewDebugMessage" : "settingsDebugMessage"
+    );
 
     const handleRender = React.useCallback(
         (
@@ -91,8 +106,18 @@ export const DebugProfiler: React.FC<DebugProfilerProps> = (props) => {
                 <div className="absolute bottom-1 w-full flex gap-2 flex-wrap">
                     {renderInfo && (
                         <>
-                            <DebugProfilerRenderInfo title="Render count">
-                                RC: {renderInfo.renderCount}
+                            {reportedRenderCount !== null && (
+                                <DebugProfilerRenderInfo title="Reported component render count">
+                                    Component RC: {reportedRenderCount}
+                                </DebugProfilerRenderInfo>
+                            )}
+                            {customDebugMessage && (
+                                <DebugProfilerRenderInfo title="Custom debug message">
+                                    Message: {customDebugMessage}
+                                </DebugProfilerRenderInfo>
+                            )}
+                            <DebugProfilerRenderInfo title="Tree render count">
+                                Tree RC: {renderInfo.renderCount}
                             </DebugProfilerRenderInfo>
                             <DebugProfilerRenderInfo title="Phase">P: {renderInfo.phase}</DebugProfilerRenderInfo>
                             <DebugProfilerRenderInfo

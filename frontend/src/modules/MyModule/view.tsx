@@ -2,8 +2,7 @@ import React from "react";
 import Plot from "react-plotly.js";
 
 import { ModuleFCProps } from "@framework/Module";
-import { ModuleInstanceStatusControllerLogEntryType } from "@framework/ModuleInstanceStatusController";
-import { StatusWriter } from "@framework/StatusWriter";
+import { ViewStatusWriter, useViewStatusWriter } from "@framework/StatusWriter";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { ColorScaleType } from "@lib/utils/ColorScale";
 
@@ -405,31 +404,24 @@ for (let i = 0; i < countryData.length; i += 2) {
 }
 
 export const view = (props: ModuleFCProps<State>) => {
+    console.debug("rendering mymodule");
     const type = props.moduleContext.useStoreValue("type");
     const gradientType = props.moduleContext.useStoreValue("gradientType");
     const min = props.moduleContext.useStoreValue("min");
     const max = props.moduleContext.useStoreValue("max");
     const divMidPoint = props.moduleContext.useStoreValue("divMidPoint");
 
+    const statusWriter = useViewStatusWriter(props.moduleContext);
+
     const ref = React.useRef<HTMLDivElement>(null);
 
-    const statusWriter = new StatusWriter(props.moduleContext);
-
-    statusWriter.setLoading(true);
-
     if (type === ColorScaleType.Continuous) {
-        statusWriter.addWarning("Continuous selected");
+        statusWriter.addError("Continuous selected");
     }
 
     if (gradientType === "diverging") {
         statusWriter.addWarning("Diverging selected");
     }
-
-    React.useEffect(() => {
-        setTimeout(() => {
-            statusWriter.setLoading(false);
-        }, 5000);
-    }, [type, gradientType]);
 
     const size = useElementSize(ref);
 

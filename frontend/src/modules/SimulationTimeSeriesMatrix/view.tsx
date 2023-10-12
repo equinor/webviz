@@ -4,9 +4,11 @@ import Plot from "react-plotly.js";
 import { Ensemble } from "@framework/Ensemble";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { ModuleFCProps } from "@framework/Module";
+import { ViewStatusWriter, useViewStatusWriter } from "@framework/StatusWriter";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { ColorScaleGradientType } from "@lib/utils/ColorScale";
+import { ContentError } from "@modules/_shared/components/MessageContent/messageContent";
 
 import { useHistoricalVectorDataQueries, useStatisticalVectorDataQueries, useVectorDataQueries } from "./queryHooks";
 import { GroupBy, State, VisualizationMode } from "./state";
@@ -23,6 +25,8 @@ export const view = ({ moduleContext, workbenchSession, workbenchSettings }: Mod
     const wrapperDivSize = useElementSize(wrapperDivRef);
 
     const ensembleSet = useEnsembleSet(workbenchSession);
+
+    const statusWriter = useViewStatusWriter(moduleContext);
 
     // Store values
     const vectorSpecifications = moduleContext.useStoreValue("vectorSpecifications");
@@ -64,13 +68,24 @@ export const view = ({ moduleContext, workbenchSession, workbenchSettings }: Mod
         vectorSpecificationsWithHistoricalData?.some((vec) => vec.hasHistoricalVector) ?? false
     );
 
+    const isQueryFetching = [
+        ...vectorDataQueries.filter((query) => query.isFetching),
+        ...vectorStatisticsQueries.filter((query) => query.isFetching),
+        ...historicalVectorDataQueries.filter((query) => query.isFetching),
+    ];
+
+    statusWriter.setLoading(isQueryFetching.length > 0);
+
+    statusWriter.setDebugMessage("bla");
+
     const hasQueryError = [
         ...vectorDataQueries.filter((query) => query.isError),
         ...vectorStatisticsQueries.filter((query) => query.isError),
         ...historicalVectorDataQueries.filter((query) => query.isError),
     ];
     if (hasQueryError.length > 0) {
-        return <div>One or more query has error state</div>;
+        statusWriter.addError("One or more queries have an error state.");
+        return <ContentError>One or more queries have an error state.</ContentError>;
     }
 
     // Map vector specifications and queries with data

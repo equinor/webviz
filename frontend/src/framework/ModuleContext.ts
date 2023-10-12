@@ -68,4 +68,8 @@ export class ModuleContext<S extends StateBaseType> {
     getModuleInstanceStatusController(): ModuleInstanceStatusController {
         return this._moduleInstance.getStatusController();
     }
+
+    getSource(): string {
+        throw Error("Not implemented");
+    }
 }

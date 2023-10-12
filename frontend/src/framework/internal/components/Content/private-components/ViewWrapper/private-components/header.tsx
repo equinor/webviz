@@ -2,12 +2,9 @@ import React from "react";
 import ReactDOM from "react-dom";
 
 import { ModuleInstance } from "@framework/ModuleInstance";
-import {
-    ModuleInstanceStatusControllerLogEntry,
-    ModuleInstanceStatusControllerLogEntryType,
-} from "@framework/ModuleInstanceStatusController";
+import { StatusMessageType } from "@framework/ModuleInstanceStatusController";
 import { SyncSettingKey, SyncSettingsMeta } from "@framework/SyncSettings";
-import { ModuleInstaceStatusControllerTopics } from "@framework/internal/ModuleInstanceStatusControllerPrivate";
+import { useStatusControllerValue } from "@framework/internal/ModuleInstanceStatusControllerPrivate";
 import { Badge } from "@lib/components/Badge";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
@@ -27,9 +24,9 @@ export const Header: React.FC<HeaderProps> = (props) => {
         props.moduleInstance.getSyncedSettingKeys()
     );
     const [title, setTitle] = React.useState<string>(props.moduleInstance.getTitle());
-    const [isLoading, setIsLoading] = React.useState<boolean>(props.moduleInstance.getStatusController().isLoading());
-    const [logEntries, setLogEntries] = React.useState<ModuleInstanceStatusControllerLogEntry[]>([]);
-    const [logVisible, setLogVisible] = React.useState<boolean>(false);
+    const isLoading = useStatusControllerValue(props.moduleInstance.getStatusController(), "loading");
+    const statusMessages = useStatusControllerValue(props.moduleInstance.getStatusController(), "messages");
+    const [statusMessagesVisible, setStatusMessagesVisible] = React.useState<boolean>(false);
 
     const ref = React.useRef<HTMLDivElement>(null);
     const boundingRect = useElementBoundingRect(ref);
@@ -43,35 +40,19 @@ export const Header: React.FC<HeaderProps> = (props) => {
             setTitle(newTitle);
         }
 
-        function handleLoadingChange() {
-            setIsLoading(props.moduleInstance.getStatusController().isLoading());
-        }
-
-        function handleLogEntriesChanges() {
-            setLogEntries([...props.moduleInstance.getStatusController().getLogEntries()]);
-        }
-
         const unsubscribeFromSyncSettingsChange =
             props.moduleInstance.subscribeToSyncedSettingKeysChange(handleSyncedSettingsChange);
         const unsubscribeFromTitleChange = props.moduleInstance.subscribeToTitleChange(handleTitleChange);
-        const unsubscribeFromLoadingChange = props.moduleInstance
-            .getStatusController()
-            .subscribeToTopic(ModuleInstaceStatusControllerTopics.LoadingStateChange, handleLoadingChange);
-        const unsubscribeFromLogEntriesChange = props.moduleInstance
-            .getStatusController()
-            .subscribeToTopic(ModuleInstaceStatusControllerTopics.LogChange, handleLogEntriesChanges);
 
         return function handleUnmount() {
             unsubscribeFromSyncSettingsChange();
             unsubscribeFromTitleChange();
-            unsubscribeFromLoadingChange();
-            unsubscribeFromLogEntriesChange();
         };
     }, []);
 
     function handlePointerDown(e: React.PointerEvent<HTMLDivElement>) {
         props.onPointerDown(e);
-        setLogVisible(false);
+        setStatusMessagesVisible(false);
     }
 
     function handlePointerUp(e: React.PointerEvent<HTMLDivElement>) {
@@ -79,7 +60,7 @@ export const Header: React.FC<HeaderProps> = (props) => {
     }
 
     function handleStatusPointerDown(e: React.PointerEvent<HTMLDivElement>) {
-        setLogVisible(!logVisible);
+        setStatusMessagesVisible(!statusMessagesVisible);
         e.stopPropagation();
     }
 
@@ -89,6 +70,7 @@ export const Header: React.FC<HeaderProps> = (props) => {
         if (isLoading) {
             stateIndicators.push(
                 <div
+                    key="header-loading"
                     className="flex items-center justify-center h-full p-1 cursor-help"
                     title="This module is currently loading new content."
                 >
@@ -96,19 +78,16 @@ export const Header: React.FC<HeaderProps> = (props) => {
                 </div>
             );
         }
-        const numErrors = logEntries.filter(
-            (entry) => entry.type === ModuleInstanceStatusControllerLogEntryType.Error
-        ).length;
-        const numWarnings = logEntries.filter(
-            (entry) => entry.type === ModuleInstanceStatusControllerLogEntryType.Warning
-        ).length;
+        const numErrors = statusMessages.filter((message) => message.type === StatusMessageType.Error).length;
+        const numWarnings = statusMessages.filter((message) => message.type === StatusMessageType.Warning).length;
 
         if (numErrors > 0 || numWarnings > 0) {
             stateIndicators.push(
                 <div
+                    key="header-status-messages"
                     className={resolveClassNames(
                         "flex items-center justify-center cursor-pointer h-full p-1 hover:bg-blue-100",
-                        { "bg-blue-300 hover:bg-blue-400": logVisible }
+                        { "bg-blue-300 hover:bg-blue-400": statusMessagesVisible }
                     )}
                     onPointerDown={handleStatusPointerDown}
                 >
@@ -137,23 +116,20 @@ export const Header: React.FC<HeaderProps> = (props) => {
 
         return (
             <div className="h-full flex items-center justify-center">
+                <span className="bg-slate-300 w-[1px] h-3/4 mr-2" />
                 {stateIndicators}
                 <span className="bg-slate-300 w-[1px] h-3/4 ml-2" />
             </div>
         );
     }
 
-    function makeLogEntries(): React.ReactNode {
+    function makeStatusMessages(): React.ReactNode {
         return (
             <div className="flex flex-col p-2 gap-2">
-                {logEntries.map((entry, i) => (
-                    <div key={entry.message} className="flex items-center gap-2">
-                        {entry.type === ModuleInstanceStatusControllerLogEntryType.Error && (
-                            <Error fontSize="small" color="error" />
-                        )}
-                        {entry.type === ModuleInstanceStatusControllerLogEntryType.Warning && (
-                            <Warning fontSize="small" color="warning" />
-                        )}
+                {statusMessages.map((entry, i) => (
+                    <div key={`${entry.message}-${i}`} className="flex items-center gap-2">
+                        {entry.type === StatusMessageType.Error && <Error fontSize="small" color="error" />}
+                        {entry.type === StatusMessageType.Warning && <Warning fontSize="small" color="warning" />}
                         <span
                             className="ml-2 overflow-hidden text-ellipsis min-w-0 whitespace-nowrap"
                             title={entry.message}
@@ -166,15 +142,26 @@ export const Header: React.FC<HeaderProps> = (props) => {
         );
     }
 
+    const hasErrors = statusMessages.some((entry) => entry.type === StatusMessageType.Error);
+
     return (
         <div
-            className={`bg-slate-100 flex items-center select-none shadow ${
-                props.isDragged ? "cursor-grabbing" : "cursor-move"
-            }`}
+            className={resolveClassNames("flex items-center select-none shadow relative", {
+                "cursor-grabbing": props.isDragged,
+                "cursor-move": !props.isDragged,
+                "bg-red-100": hasErrors,
+                "bg-slate-100": !hasErrors,
+            })}
             onPointerDown={handlePointerDown}
             ref={ref}
         >
-            {makeStatusIndicator()}
+            <div
+                className={resolveClassNames("absolute -bottom-0.5 left-0 w-full overflow-hidden", {
+                    hidden: !isLoading,
+                })}
+            >
+                <div className="bg-blue-600 animate-linear-indefinite h-0.5 w-full rounded" />
+            </div>
             <div className="flex-grow flex items-center text-sm font-bold min-w-0 p-2">
                 <span title={title} className="flex-grow text-ellipsis whitespace-nowrap overflow-hidden min-w-0">
                     {title}
@@ -198,22 +185,27 @@ export const Header: React.FC<HeaderProps> = (props) => {
                         </span>
                     ))}
                 </>
-                <div
-                    className="hover:text-slate-500 cursor-pointer"
-                    onPointerDown={props.onRemoveClick}
-                    onPointerUp={handlePointerUp}
-                    title="Remove this module"
-                >
-                    <Close className="w-4 h-4" />
-                </div>
             </div>
-            {logVisible &&
+            {makeStatusIndicator()}
+            <div
+                className="hover:text-slate-500 cursor-pointer p-2"
+                onPointerDown={props.onRemoveClick}
+                onPointerUp={handlePointerUp}
+                title="Remove this module"
+            >
+                <Close className="w-4 h-4" />
+            </div>
+            {statusMessagesVisible &&
                 ReactDOM.createPortal(
                     <div
                         className={"absolute shadow min-w-[200px] z-40 bg-white overflow-hidden"}
-                        style={{ top: boundingRect.bottom, left: boundingRect.left, maxWidth: boundingRect.width }}
+                        style={{
+                            top: boundingRect.bottom,
+                            right: window.innerWidth - boundingRect.right,
+                            maxWidth: boundingRect.width,
+                        }}
                     >
-                        {makeLogEntries()}
+                        {makeStatusMessages()}
                     </div>,
                     document.body
                 )}

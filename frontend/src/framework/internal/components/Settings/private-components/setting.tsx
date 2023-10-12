@@ -2,6 +2,7 @@ import React from "react";
 
 import { ImportState } from "@framework/Module";
 import { ModuleInstance, ModuleInstanceState } from "@framework/ModuleInstance";
+import { StatusSource } from "@framework/ModuleInstanceStatusController";
 import { Workbench } from "@framework/Workbench";
 import { ErrorBoundary } from "@framework/internal/components/ErrorBoundary";
 import { useImportState } from "@framework/internal/hooks/moduleHooks";
@@ -91,7 +92,11 @@ export const Setting: React.FC<SettingProps> = (props) => {
                 </div>
                 <div className="flex flex-col gap-4 overflow-auto">
                     <div className="p-2">
-                        <DebugProfiler id={`${props.moduleInstance.getId()}-settings`}>
+                        <DebugProfiler
+                            id={`${props.moduleInstance.getId()}-settings`}
+                            source={StatusSource.Settings}
+                            statusController={props.moduleInstance.getStatusController()}
+                        >
                             <Settings
                                 moduleContext={props.moduleInstance.getContext()}
                                 workbenchSession={props.workbench.getWorkbenchSession()}
