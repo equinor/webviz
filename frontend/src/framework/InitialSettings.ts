@@ -64,7 +64,7 @@ export function applyToStateOnMount(
     settingName: string,
     type: keyof InitialSettingsSupportedTypes,
     stateSetter: (value: any) => void,
-    initialSettings?: InitialSettings
+    initialSettings: InitialSettings | undefined
 ): void {
     React.useEffect(() => {
         if (initialSettings) {

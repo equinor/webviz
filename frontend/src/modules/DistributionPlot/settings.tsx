@@ -1,6 +1,7 @@
 import React, { ChangeEvent } from "react";
 
 import { BroadcastChannelKeyCategory } from "@framework/Broadcaster";
+import { applyToStateOnMount } from "@framework/InitialSettings";
 import { ModuleFCProps } from "@framework/Module";
 import { ChannelSelect } from "@framework/components/ChannelSelect";
 import { Dropdown } from "@lib/components/Dropdown";
@@ -62,17 +63,13 @@ export function settings({ moduleContext, workbenchServices, initialSettings }: 
     const [orientation, setOrientation] = moduleContext.useStoreState("orientation");
     const [crossPlottingType, setCrossPlottingType] = React.useState<BroadcastChannelKeyCategory | null>(null);
 
-    initialSettings?.applyToStateOnMount("channelNameX", "string", setChannelNameX);
-    initialSettings?.applyToStateOnMount("channelNameY", "string", setChannelNameY);
-    initialSettings?.applyToStateOnMount("channelNameZ", "string", setChannelNameZ);
-    initialSettings?.applyToStateOnMount("plotType", "string", setPlotType);
-    initialSettings?.applyToStateOnMount("numBins", "number", setNumBins);
-    initialSettings?.applyToStateOnMount("orientation", "string", setOrientation);
-    initialSettings?.applyToStateOnMount("crossPlottingType", "string", setCrossPlottingType);
-    applyToStateOnMount("plotType", "string", setPlotType);
-    applyToStateOnMount("numBins", "number", setNumBins);
-    applyToStateOnMount("orientation", "string", setOrientation);
-    applyToStateOnMount("crossPlottingType", "string", setCrossPlottingType);
+    applyToStateOnMount("channelNameX", "string", setChannelNameX, initialSettings);
+    applyToStateOnMount("channelNameY", "string", setChannelNameY, initialSettings);
+    applyToStateOnMount("channelNameZ", "string", setChannelNameZ, initialSettings);
+    applyToStateOnMount("plotType", "string", setPlotType, initialSettings);
+    applyToStateOnMount("numBins", "number", setNumBins, initialSettings);
+    applyToStateOnMount("orientation", "string", setOrientation, initialSettings);
+    applyToStateOnMount("crossPlottingType", "string", setCrossPlottingType, initialSettings);
 
     const handleChannelXChanged = (channelName: string) => {
         setChannelNameX(channelName);

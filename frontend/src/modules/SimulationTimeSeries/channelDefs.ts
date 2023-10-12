@@ -9,12 +9,4 @@ export const broadcastChannelsDef = {
         key: BroadcastChannelKeyCategory.Realization,
         value: BroadcastChannelValueType.Numeric,
     },
-    [BroadcastChannelNames.Realization_Value_TEST]: {
-        key: BroadcastChannelKeyCategory.Realization,
-        value: BroadcastChannelValueType.Numeric,
-    },
-    [BroadcastChannelNames.Time_Value]: {
-        key: BroadcastChannelKeyCategory.TimestampMs,
-        value: BroadcastChannelValueType.Numeric,
-    },
 };
