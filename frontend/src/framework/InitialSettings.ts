@@ -60,7 +60,7 @@ export class InitialSettings {
     }
 }
 
-export function applyToStateOnMount(
+export function applyInitialSettingsToState(
     initialSettings: InitialSettings | undefined,
     settingName: string,
     type: keyof InitialSettingsSupportedTypes,
