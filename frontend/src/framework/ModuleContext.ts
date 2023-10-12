@@ -6,13 +6,6 @@ import { ModuleInstanceStatusController } from "./ModuleInstanceStatusController
 import { StateBaseType, StateStore, useSetStoreValue, useStoreState, useStoreValue } from "./StateStore";
 import { SyncSettingKey } from "./SyncSettings";
 
-export enum ModuleInstanceState {
-    LOADING,
-    READY,
-    ERROR,
-    WARNING,
-}
-
 export class ModuleContext<S extends StateBaseType> {
     private _moduleInstance: ModuleInstance<S>;
     private _stateStore: StateStore<S>;
@@ -67,9 +60,5 @@ export class ModuleContext<S extends StateBaseType> {
 
     getModuleInstanceStatusController(): ModuleInstanceStatusController {
         return this._moduleInstance.getStatusController();
-    }
-
-    getSource(): string {
-        throw Error("Not implemented");
     }
 }

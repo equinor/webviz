@@ -67,7 +67,7 @@ export class ModuleInstanceStatusControllerPrivate extends ModuleInstanceStatusC
     }
 }
 
-export function useStatusControllerValue<T extends keyof StatusControllerState>(
+export function useStatusControllerStateValue<T extends keyof StatusControllerState>(
     statusController: ModuleInstanceStatusControllerPrivate,
     stateKey: T
 ): StatusControllerState[T] {

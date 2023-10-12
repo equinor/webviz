@@ -3,7 +3,7 @@ import React from "react";
 import { StatusSource } from "@framework/ModuleInstanceStatusController";
 import {
     ModuleInstanceStatusControllerPrivate,
-    useStatusControllerValue,
+    useStatusControllerStateValue,
 } from "@framework/internal/ModuleInstanceStatusControllerPrivate";
 import { isDevMode } from "@lib/utils/devMode";
 
@@ -61,11 +61,11 @@ type RenderInfo = {
 
 export const DebugProfiler: React.FC<DebugProfilerProps> = (props) => {
     const [renderInfo, setRenderInfo] = React.useState<RenderInfo | null>(null);
-    const reportedRenderCount = useStatusControllerValue(
+    const reportedRenderCount = useStatusControllerStateValue(
         props.statusController,
         props.source === StatusSource.View ? "viewRenderCount" : "settingsRenderCount"
     );
-    const customDebugMessage = useStatusControllerValue(
+    const customDebugMessage = useStatusControllerStateValue(
         props.statusController,
         props.source === StatusSource.View ? "viewDebugMessage" : "settingsDebugMessage"
     );

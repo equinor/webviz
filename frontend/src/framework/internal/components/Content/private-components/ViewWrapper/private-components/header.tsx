@@ -4,7 +4,7 @@ import ReactDOM from "react-dom";
 import { ModuleInstance } from "@framework/ModuleInstance";
 import { StatusMessageType } from "@framework/ModuleInstanceStatusController";
 import { SyncSettingKey, SyncSettingsMeta } from "@framework/SyncSettings";
-import { useStatusControllerValue } from "@framework/internal/ModuleInstanceStatusControllerPrivate";
+import { useStatusControllerStateValue } from "@framework/internal/ModuleInstanceStatusControllerPrivate";
 import { Badge } from "@lib/components/Badge";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
@@ -24,8 +24,8 @@ export const Header: React.FC<HeaderProps> = (props) => {
         props.moduleInstance.getSyncedSettingKeys()
     );
     const [title, setTitle] = React.useState<string>(props.moduleInstance.getTitle());
-    const isLoading = useStatusControllerValue(props.moduleInstance.getStatusController(), "loading");
-    const statusMessages = useStatusControllerValue(props.moduleInstance.getStatusController(), "messages");
+    const isLoading = useStatusControllerStateValue(props.moduleInstance.getStatusController(), "loading");
+    const statusMessages = useStatusControllerStateValue(props.moduleInstance.getStatusController(), "messages");
     const [statusMessagesVisible, setStatusMessagesVisible] = React.useState<boolean>(false);
 
     const ref = React.useRef<HTMLDivElement>(null);
