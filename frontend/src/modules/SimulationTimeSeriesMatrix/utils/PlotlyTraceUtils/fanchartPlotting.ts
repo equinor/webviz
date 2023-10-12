@@ -125,7 +125,7 @@ export type CreateFanchartTracesOptions = {
     direction?: TraceDirection;
     showHoverInfo?: boolean;
     hoverText?: string;
-    legendName?: string;
+    name?: string;
     type?: "scatter" | "scattergl";
     // hovermode?: string,
 };
@@ -173,7 +173,7 @@ export function createFanchartTraces({
     direction = TraceDirection.HORIZONTAL,
     showHoverInfo = true,
     hoverText = "",
-    legendName = undefined,
+    name = undefined,
     type = "scatter",
 }: CreateFanchartTracesOptions): Partial<TimeSeriesPlotData>[] {
     // NOTE:
@@ -194,7 +194,7 @@ export function createFanchartTraces({
 
     function getDefaultTrace(statisticsName: string, values: number[]): Partial<TimeSeriesPlotData> {
         const trace: Partial<TimeSeriesPlotData> = {
-            name: legendName ?? legendGroup,
+            name: name ?? legendGroup,
             x: direction === TraceDirection.HORIZONTAL ? data.samples : values,
             y: direction === TraceDirection.HORIZONTAL ? values : data.samples,
             xaxis: xaxis,

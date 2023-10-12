@@ -19,13 +19,11 @@ SUMO_ENV = os.getenv("WEBVIZ_SUMO_ENV", "dev")
 GRAPH_SCOPES = ["User.Read"]
 
 RESOURCE_SCOPES_DICT = {
-    # "sumo": [f"api://{sumo_app_reg['prod']['RESOURCE_ID']}/access_as_user"],
-    # Note that when switching back to prod, SUMO env in create_sumo_client_instance() must also be changed
     "sumo": [f"api://{sumo_app_reg[SUMO_ENV]['RESOURCE_ID']}/access_as_user"],
     "smda": [SMDA_RESOURCE_SCOPE],
 }
 
 print(f"{RESOURCE_SCOPES_DICT=}")
 
-REDIS_URL = "redis://redis:6379"
+REDIS_URL = "redis://redis-login-state:6379"
 SESSION_STORAGE = "redis"

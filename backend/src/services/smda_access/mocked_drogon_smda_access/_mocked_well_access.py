@@ -9,13 +9,13 @@ class WellAccess:
 
     # type: ignore
     # pylint: disable=unused-argument
-    def get_wellbore_picks(self, field_identifier: str, pick_identifier: str) -> List[WellBorePick]:
+    async def get_wellbore_picks(self, field_identifier: str, pick_identifier: str) -> List[WellBorePick]:
         """Get Drogon picks"""
         return []
 
     # type: ignore
     # pylint: disable=unused-argument
-    def get_field_wellbore_trajectories(
+    async def get_field_wellbore_trajectories(
         self, field_identifier: str, unique_wellbore_identifiers: Optional[List[str]] = None
     ) -> List[WellBoreTrajectory]:
         """Get all Drogon trajectories"""
@@ -38,7 +38,7 @@ class WellAccess:
             ),
         ]
 
-    def get_wellbore_trajectories(self, wellbore_uuids: List[str]) -> List[WellBoreTrajectory]:
+    async def get_wellbore_trajectories(self, wellbore_uuids: List[str]) -> List[WellBoreTrajectory]:
         """Get Drogon trajectory"""
         trajs: List[WellBoreTrajectory] = []
         if "drogon_horizontal" in wellbore_uuids:
@@ -67,7 +67,7 @@ class WellAccess:
 
     # type: ignore
     # pylint: disable=unused-argument
-    def get_well_headers(self, field_identifier: str) -> List[WellBoreHeader]:
+    async def get_well_headers(self, field_identifier: str) -> List[WellBoreHeader]:
         """Get Drogon well headers"""
         return [
             WellBoreHeader(

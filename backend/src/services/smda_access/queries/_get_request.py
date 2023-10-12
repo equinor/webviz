@@ -1,15 +1,15 @@
 from typing import List
 
-import requests
+import httpx
 from dotenv import load_dotenv
 
-from src.backend import config
+from src import config
 from src.services.utils.perf_timer import PerfTimer
 
 load_dotenv()
 
 
-def get(access_token: str, endpoint: str, params: dict) -> List[dict]:
+async def get(access_token: str, endpoint: str, params: dict) -> List[dict]:
     """
     Generic GET request to SMDA API.
     Uses `next` pagination to get all results.
@@ -24,23 +24,24 @@ def get(access_token: str, endpoint: str, params: dict) -> List[dict]:
         "Ocp-Apim-Subscription-Key": config.SMDA_SUBSCRIPTION_KEY,
     }
     timer = PerfTimer()
-    response = requests.get(urlstring, params=params, headers=headers, timeout=60)
-    results = []
-    if response.status_code == 200:
-        results = response.json()["data"]["results"]
-        next_request = response.json()["data"]["next"]
-        while next_request is not None:
-            params["_next"] = next_request
-            response = requests.get(urlstring, params=params, headers=headers, timeout=60)
-            result = response.json()["data"]["results"]
-            if result:
-                results.extend(response.json()["data"]["results"])
+
+    async with httpx.AsyncClient() as client:
+        response = await client.get(urlstring, params=params, headers=headers, timeout=60)
+        results = []
+        if response.status_code == 200:
+            results = response.json()["data"]["results"]
             next_request = response.json()["data"]["next"]
-    elif response.status_code == 404:
-        print(f"{str(response.status_code) } {endpoint} either does not exists or can not be found")
-    else:
-        print(
-            f"[WARNING:] Can not fetch data from endpont {endpoint}  ({ str(response.status_code)})-{response.reason} "
-        )
-    print(f"TIME SMDA fetch {endpoint} took {timer.lap_s():.2f} seconds")
+            while next_request is not None:
+                params["_next"] = next_request
+                response = await client.get(urlstring, params=params, headers=headers, timeout=60)
+                result = response.json()["data"]["results"]
+                if result:
+                    results.extend(response.json()["data"]["results"])
+                next_request = response.json()["data"]["next"]
+        elif response.status_code == 404:
+            print(f"{str(response.status_code) } {endpoint} either does not exists or can not be found")
+        else:
+            print(f"[WARNING:] Can not fetch data from endpont {endpoint}  ({ str(response.status_code)})")
+        print(f"TIME SMDA fetch {endpoint} took {timer.lap_s():.2f} seconds")
+
     return results

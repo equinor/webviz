@@ -30,8 +30,8 @@ class VectorMetadata(BaseModel):
     is_rate: bool
     is_historical: bool
     keyword: str
-    wgname: Optional[str]
-    get_num: Optional[int]
+    wgname: Optional[str] = None
+    get_num: Optional[int] = None
 
 
 class RealizationVector(BaseModel):

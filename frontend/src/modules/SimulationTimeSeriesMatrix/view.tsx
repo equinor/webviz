@@ -2,6 +2,7 @@ import React from "react";
 import Plot from "react-plotly.js";
 
 import { Ensemble } from "@framework/Ensemble";
+import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { ModuleFCProps } from "@framework/Module";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { useElementSize } from "@lib/hooks/useElementSize";
@@ -63,10 +64,16 @@ export const view = ({ moduleContext, workbenchSession, workbenchSettings }: Mod
         vectorSpecificationsWithHistoricalData?.some((vec) => vec.hasHistoricalVector) ?? false
     );
 
+    const hasQueryError = [
+        ...vectorDataQueries.filter((query) => query.isError),
+        ...vectorStatisticsQueries.filter((query) => query.isError),
+        ...historicalVectorDataQueries.filter((query) => query.isError),
+    ];
+    if (hasQueryError.length > 0) {
+        return <div>One or more query has error state</div>;
+    }
+
     // Map vector specifications and queries with data
-    // TODO:
-    // - Add loading state if 1 or more queries are loading?
-    // - Can check for equal length of useQueries arrays and the loadedVectorSpecificationsAndData arrays?
     const loadedVectorSpecificationsAndRealizationData = vectorSpecifications
         ? createLoadedVectorSpecificationAndDataArray(vectorSpecifications, vectorDataQueries)
         : [];
@@ -88,7 +95,7 @@ export const view = ({ moduleContext, workbenchSession, workbenchSettings }: Mod
         }
 
         const ensemble = ensembleSet.findEnsemble(vectorSpecification.ensembleIdent);
-        if (ensemble === null) return;
+        if (!ensemble) return;
 
         selectedEnsembles.push(ensemble);
     });
@@ -97,10 +104,27 @@ export const view = ({ moduleContext, workbenchSession, workbenchSettings }: Mod
     const doColorByParameter =
         colorRealizationsByParameter &&
         parameterIdent !== null &&
-        selectedEnsembles.some((ensemble) => ensemble.getParameters().findParameter(parameterIdent));
+        selectedEnsembles.some((ensemble) => ensemble.getParameters().hasParameter(parameterIdent));
     const ensemblesParameterColoring = doColorByParameter
         ? new EnsemblesContinuousParameterColoring(selectedEnsembles, parameterIdent, parameterColorScale)
         : null;
+
+    // Callback function for ensemble display name
+    function makeEnsembleDisplayName(ensembleIdent: EnsembleIdent): string {
+        const ensembleNameCount = selectedEnsembles.filter(
+            (ensemble) => ensemble.getEnsembleName() === ensembleIdent.getEnsembleName()
+        ).length;
+        if (ensembleNameCount === 1) {
+            return ensembleIdent.getEnsembleName();
+        }
+
+        const ensemble = ensembleSet.findEnsemble(ensembleIdent);
+        if (!ensemble) {
+            return ensembleIdent.getEnsembleName();
+        }
+
+        return ensemble.getDisplayName();
+    }
 
     // Create Plot Builder
     const subplotOwner = groupBy === GroupBy.TIME_SERIES ? SubplotOwner.VECTOR : SubplotOwner.ENSEMBLE;
@@ -109,9 +133,11 @@ export const view = ({ moduleContext, workbenchSession, workbenchSettings }: Mod
         visualizationMode === VisualizationMode.STATISTICS_AND_REALIZATIONS
             ? "scattergl"
             : "scatter";
+
     const subplotBuilder = new SubplotBuilder(
         subplotOwner,
         vectorSpecifications ?? [],
+        makeEnsembleDisplayName,
         colorSet,
         wrapperDivSize.width,
         wrapperDivSize.height,
@@ -156,17 +182,8 @@ export const view = ({ moduleContext, workbenchSession, workbenchSettings }: Mod
         subplotBuilder.addHistoryTraces(loadedVectorSpecificationsAndHistoricalData);
     }
 
-    // Handler methods
-    function handleHover() {
-        return;
-    }
-
-    function handleUnHover() {
-        return;
-    }
-
-    const plotData = subplotBuilder.createPlotData();
     // TODO: Keep uirevision?
+    const plotData = subplotBuilder.createPlotData();
     return (
         <div className="w-full h-full" ref={wrapperDivRef}>
             <Plot
@@ -174,8 +191,6 @@ export const view = ({ moduleContext, workbenchSession, workbenchSettings }: Mod
                 data={plotData}
                 layout={subplotBuilder.createPlotLayout()}
                 config={{ scrollZoom: true }}
-                onHover={handleHover}
-                onUnhover={handleUnHover}
             />
         </div>
     );

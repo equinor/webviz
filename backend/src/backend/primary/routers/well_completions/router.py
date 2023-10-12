@@ -12,7 +12,7 @@ router = APIRouter()
 
 
 @router.get("/well_completions_data/")
-def get_well_completions_data(
+async def get_well_completions_data(
     # fmt:off
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     case_uuid: str = Query(description="Sumo case uuid"),
@@ -20,7 +20,9 @@ def get_well_completions_data(
     realization: Optional[int] = Query(None, description="Optional realization to include. If not specified, all realizations will be returned."),
     # fmt:on
 ) -> WellCompletionsData:
-    access = WellCompletionsAccess(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
+    access = await WellCompletionsAccess.from_case_uuid(
+        authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
+    )
     well_completions_data = access.get_well_completions_data(realization=realization)
 
     if not well_completions_data:

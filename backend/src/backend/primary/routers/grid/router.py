@@ -14,7 +14,7 @@ router = APIRouter()
 
 
 @router.get("/grid_model_names/")
-def get_grid_model_names(
+async def get_grid_model_names(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     case_uuid: str = Query(description="Sumo case uuid"),
     ensemble_name: str = Query(description="Ensemble name"),
@@ -22,12 +22,12 @@ def get_grid_model_names(
     """
     Get a list of grid model names
     """
-    access = GridAccess(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
-    return access.grid_model_names()
+    access = await GridAccess.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
+    return await access.grid_model_names()
 
 
 @router.get("/parameter_names/")
-def get_parameter_names(
+async def get_parameter_names(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     case_uuid: str = Query(description="Sumo case uuid"),
     ensemble_name: str = Query(description="Ensemble name"),
@@ -36,8 +36,8 @@ def get_parameter_names(
     """
     Get a list of grid parameter names
     """
-    access = GridAccess(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
-    return access.static_parameter_names(grid_name)
+    access = await GridAccess.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
+    return await access.static_parameter_names(grid_name)
 
 
 # Primary backend

@@ -39,10 +39,7 @@ jobs:
 
       - name: 🏗️ Build JavaScript bundle
         working-directory: ./frontend
-        run: |
-          # Building wsc requires increasing memory allocated to Node
-          export NODE_OPTIONS="--max_old_space_size=4096"
-          npm run build
+        run: npm run build
 
       - name: 🕵️ Check code style, linting & dependencies
         working-directory: ./frontend
@@ -95,6 +92,10 @@ jobs:
 
       - name: 🤖 Run tests
         working-directory: ./backend
+        env:
+          WEBVIZ_CLIENT_SECRET: 0
+          WEBVIZ_SMDA_SUBSCRIPTION_KEY: 0
+          WEBVIZ_SMDA_RESOURCE_SCOPE: 0
         run: |
           pytest ./tests/unit
 

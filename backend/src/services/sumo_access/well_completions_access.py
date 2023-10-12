@@ -3,8 +3,7 @@ from typing import Dict, Iterator, List, Optional, Set, Tuple
 
 import pandas as pd
 
-from fmu.sumo.explorer.explorer import CaseCollection, Case, SumoClient
-from ._helpers import create_sumo_client_instance
+from ._helpers import SumoEnsemble
 
 from .well_completions_types import (
     Completions,
@@ -17,22 +16,12 @@ from .well_completions_types import (
 )
 
 
-class WellCompletionsAccess:
+class WellCompletionsAccess(SumoEnsemble):
     """
     Class for accessing and retrieving well completions data
     """
 
-    def __init__(self, access_token: str, case_uuid: str, iteration_name: str) -> None:
-        sumo_client: SumoClient = create_sumo_client_instance(access_token)
-        case_collection = CaseCollection(sumo_client).filter(uuid=case_uuid)
-        if len(case_collection) > 1:
-            raise ValueError(f"Multiple sumo cases found {case_uuid=}")
-        if len(case_collection) < 1:
-            raise ValueError(f"No sumo cases found {case_uuid=}")
-
-        self._case: Case = case_collection[0]
-        self._iteration_name = iteration_name
-        self._tagname = str("wellcompletiondata")  # Should tagname be hard coded?
+    TAGNAME = "wellcompletiondata"
 
     def get_well_completions_data(self, realization: Optional[int]) -> Optional[WellCompletionsData]:
         """Get well completions data for case and iteration"""
@@ -40,7 +29,7 @@ class WellCompletionsAccess:
         # With single realization, filter on realization
         if realization is not None:
             well_completions_tables = self._case.tables.filter(
-                tagname=self._tagname, realization=realization, iteration=self._iteration_name
+                tagname=WellCompletionsAccess.TAGNAME, realization=realization, iteration=self._iteration_name
             )
             well_completions_df = well_completions_tables[0].to_pandas if len(well_completions_tables) > 0 else None
             if well_completions_df is None:
@@ -50,7 +39,7 @@ class WellCompletionsAccess:
 
         # With multiple realizations, expect one table with aggregated OP/SH and one with aggregate KH data
         well_completions_tables = self._case.tables.filter(
-            tagname=self._tagname, aggregation="collection", iteration=self._iteration_name
+            tagname=WellCompletionsAccess.TAGNAME, aggregation="collection", iteration=self._iteration_name
         )
 
         # As of now, two tables are expected - one with OP/SH and one with KH

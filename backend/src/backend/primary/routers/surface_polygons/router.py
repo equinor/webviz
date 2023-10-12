@@ -18,7 +18,7 @@ router = APIRouter()
 
 
 @router.get("/surface_polygons_directory/")
-def get_surface_polygons_directory(
+async def get_surface_polygons_directory(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     case_uuid: str = Query(description="Sumo case uuid"),
     ensemble_name: str = Query(description="Ensemble name"),
@@ -26,8 +26,10 @@ def get_surface_polygons_directory(
     """
     Get a directory of surface polygon names and attributes
     """
-    access = SurfacePolygonsAccess(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
-    polygons_dir = access.get_surface_polygons_dir()
+    access = await SurfacePolygonsAccess.from_case_uuid(
+        authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
+    )
+    polygons_dir = await access.get_surface_polygons_dir()
 
     return schemas.SurfacePolygonDirectory(
         names=polygons_dir.names,
@@ -37,7 +39,7 @@ def get_surface_polygons_directory(
 
 
 @router.get("/surface_polygons_data/")
-def get_surface_polygons_data(
+async def get_surface_polygons_data(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     case_uuid: str = Query(description="Sumo case uuid"),
     ensemble_name: str = Query(description="Ensemble name"),
@@ -47,8 +49,10 @@ def get_surface_polygons_data(
 ) -> List[schemas.PolygonData]:
     timer = PerfTimer()
 
-    access = SurfacePolygonsAccess(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
-    xtgeo_poly = access.get_surface_polygons(real_num=realization_num, name=name, attribute=attribute)
+    access = await SurfacePolygonsAccess.from_case_uuid(
+        authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
+    )
+    xtgeo_poly = await access.get_surface_polygons(real_num=realization_num, name=name, attribute=attribute)
 
     if not xtgeo_poly:
         raise HTTPException(status_code=404, detail="Surface not found")
