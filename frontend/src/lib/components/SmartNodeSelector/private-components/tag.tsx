@@ -3,6 +3,8 @@ import React from "react";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { Close, Error, ExpandLess, ExpandMore, Help, Warning } from "@mui/icons-material";
 
+import "animate.css";
+
 import { TreeNodeSelection } from "../private-utils/treeNodeSelection";
 
 type TagProps = {

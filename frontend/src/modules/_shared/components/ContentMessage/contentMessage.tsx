@@ -24,7 +24,7 @@ export const ContentMessage: React.FC<ContentMessageProps> = (props) => {
     );
 };
 
-ContentMessage.displayName = "MessageContent";
+ContentMessage.displayName = "ContentMessage";
 
 export type ContentErrorProps = {
     children: React.ReactNode;

@@ -8,7 +8,7 @@ import { useViewStatusWriter } from "@framework/StatusWriter";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { ColorScaleGradientType } from "@lib/utils/ColorScale";
-import { ContentError } from "@modules/_shared/components/MessageContent/messageContent";
+import { ContentError } from "@modules/_shared/components/ContentMessage";
 
 import { useHistoricalVectorDataQueries, useStatisticalVectorDataQueries, useVectorDataQueries } from "./queryHooks";
 import { GroupBy, State, VisualizationMode } from "./state";
@@ -68,22 +68,18 @@ export const view = ({ moduleContext, workbenchSession, workbenchSettings }: Mod
         vectorSpecificationsWithHistoricalData?.some((vec) => vec.hasHistoricalVector) ?? false
     );
 
-    const isQueryFetching = [
-        ...vectorDataQueries.filter((query) => query.isFetching),
-        ...vectorStatisticsQueries.filter((query) => query.isFetching),
-        ...historicalVectorDataQueries.filter((query) => query.isFetching),
-    ];
+    const isQueryFetching =
+        vectorDataQueries.some((query) => query.isFetching) ||
+        vectorStatisticsQueries.some((query) => query.isFetching) ||
+        historicalVectorDataQueries.some((query) => query.isFetching);
 
-    statusWriter.setLoading(isQueryFetching.length > 0);
+    statusWriter.setLoading(isQueryFetching);
 
-    statusWriter.setDebugMessage("bla");
-
-    const hasQueryError = [
-        ...vectorDataQueries.filter((query) => query.isError),
-        ...vectorStatisticsQueries.filter((query) => query.isError),
-        ...historicalVectorDataQueries.filter((query) => query.isError),
-    ];
-    if (hasQueryError.length > 0) {
+    const hasQueryError =
+        vectorDataQueries.some((query) => query.isError) ||
+        vectorStatisticsQueries.some((query) => query.isError) ||
+        historicalVectorDataQueries.some((query) => query.isError);
+    if (hasQueryError) {
         statusWriter.addError("One or more queries have an error state.");
         return <ContentError>One or more queries have an error state.</ContentError>;
     }
