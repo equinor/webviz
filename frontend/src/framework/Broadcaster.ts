@@ -227,6 +227,10 @@ export class Broadcaster {
         this.notifySubscribersAboutChannelsChanges();
     }
 
+    getChannelsForModuleInstance(moduleInstanceId: string): BroadcastChannel[] {
+        return this._channels.filter((c) => c.getModuleInstanceId() === moduleInstanceId);
+    }
+
     getChannel(channelName: string): BroadcastChannel | null {
         const channel = this._channels.find((c) => c.getName() === channelName);
         if (!channel) {

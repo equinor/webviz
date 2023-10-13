@@ -167,6 +167,18 @@ export class Workbench {
     }
 
     removeModuleInstance(moduleInstanceId: string): void {
+        const channels = this._broadcaster.getChannelsForModuleInstance(moduleInstanceId);
+
+        for (const channel of channels) {
+            for (const moduleInstance of this._moduleInstances) {
+                for (const [inputChannelName, inputChannel] of Object.entries(moduleInstance.getInputChannels())) {
+                    if (inputChannel === channel) {
+                        moduleInstance.removeInputChannel(inputChannelName);
+                    }
+                }
+            }
+        }
+
         this._broadcaster.unregisterAllChannelsForModuleInstance(moduleInstanceId);
         this._moduleInstances = this._moduleInstances.filter((el) => el.getId() !== moduleInstanceId);
 
