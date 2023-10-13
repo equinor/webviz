@@ -2,7 +2,6 @@ import { BroadcastChannelKeyCategory, BroadcastChannelValueType } from "@framewo
 
 export enum BroadcastChannelNames {
     Realization_Value = "Value (per realization)",
-    Realization_Value_TEST = "Value (per realization) TEST",
 }
 
 export const broadcastChannelsDef = {
