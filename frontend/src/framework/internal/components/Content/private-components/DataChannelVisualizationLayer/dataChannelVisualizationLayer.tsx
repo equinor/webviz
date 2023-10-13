@@ -57,7 +57,7 @@ export const DataChannelVisualizationLayer: React.FC<DataChannelVisualizationPro
     React.useEffect(() => {
         let localMousePressed = false;
         let localCurrentOriginPoint: Point = { x: 0, y: 0 };
-        let localEditDataChannelConnections: boolean = false;
+        let localEditDataChannelConnections = false;
 
         function handleDataChannelOriginPointerDown(payload: GuiEventPayloads[GuiEvent.DataChannelOriginPointerDown]) {
             const clientRect = payload.originElement.getBoundingClientRect();

@@ -143,13 +143,16 @@ export class Workbench {
         });
     }
 
+    resetModuleInstanceNumbers(): void {
+        this._perModuleRunningInstanceNumber = {};
+    }
+
     clearLayout(): void {
         for (const moduleInstance of this._moduleInstances) {
             this._broadcaster.unregisterAllChannelsForModuleInstance(moduleInstance.getId());
         }
         this._moduleInstances = [];
         this._layout = [];
-        this._perModuleRunningInstanceNumber = {};
         this.notifySubscribers(WorkbenchEvents.ModuleInstancesChanged);
     }
 

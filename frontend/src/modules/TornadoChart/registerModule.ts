@@ -7,7 +7,7 @@ import { State } from "./state";
 
 const inputChannelDefs: InputBroadcastChannelDef[] = [
     {
-        name: "responseChannel",
+        name: "response",
         displayName: "Response",
         keyCategories: [BroadcastChannelKeyCategory.Realization],
     },
