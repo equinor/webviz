@@ -1,13 +1,12 @@
 import React from "react";
 
 import { ModuleContext } from "./ModuleContext";
-import { StatusMessageType, StatusSource } from "./ModuleInstanceStatusController";
-import { ModuleInstanceStatusControllerInternal } from "./internal/ModuleInstanceStatusControllerInternal";
+import { ModuleInstanceStatusController, StatusMessageType, StatusSource } from "./ModuleInstanceStatusController";
 
 export class ViewStatusWriter {
-    private _statusController: ModuleInstanceStatusControllerInternal;
+    private _statusController: ModuleInstanceStatusController;
 
-    constructor(statusController: ModuleInstanceStatusControllerInternal) {
+    constructor(statusController: ModuleInstanceStatusController) {
         this._statusController = statusController;
     }
 
@@ -29,9 +28,9 @@ export class ViewStatusWriter {
 }
 
 export class SettingsStatusWriter {
-    private _statusController: ModuleInstanceStatusControllerInternal;
+    private _statusController: ModuleInstanceStatusController;
 
-    constructor(statusController: ModuleInstanceStatusControllerInternal) {
+    constructor(statusController: ModuleInstanceStatusController) {
         this._statusController = statusController;
     }
 
