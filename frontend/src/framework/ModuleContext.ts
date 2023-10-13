@@ -2,6 +2,7 @@ import React from "react";
 
 import { BroadcastChannel } from "./Broadcaster";
 import { ModuleInstance } from "./ModuleInstance";
+import { ModuleInstanceStatusController } from "./ModuleInstanceStatusController";
 import { StateBaseType, StateStore, useSetStoreValue, useStoreState, useStoreValue } from "./StateStore";
 import { SyncSettingKey } from "./SyncSettings";
 
@@ -55,5 +56,9 @@ export class ModuleContext<S extends StateBaseType> {
 
     setInstanceTitle(title: string): void {
         this._moduleInstance.setTitle(title);
+    }
+
+    getStatusController(): ModuleInstanceStatusController {
+        return this._moduleInstance.getStatusController();
     }
 }

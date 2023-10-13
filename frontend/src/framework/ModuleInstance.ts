@@ -9,6 +9,7 @@ import { ModuleContext } from "./ModuleContext";
 import { StateBaseType, StateOptions, StateStore } from "./StateStore";
 import { SyncSettingKey } from "./SyncSettings";
 import { Workbench } from "./Workbench";
+import { ModuleInstanceStatusControllerInternal } from "./internal/ModuleInstanceStatusControllerInternal";
 
 export enum ModuleInstanceState {
     INITIALIZING,
@@ -35,6 +36,7 @@ export class ModuleInstance<StateType extends StateBaseType> {
     private _cachedDefaultState: StateType | null;
     private _cachedStateStoreOptions?: StateOptions<StateType>;
     private _initialSettings: InitialSettings | null;
+    private _statusController: ModuleInstanceStatusControllerInternal;
 
     constructor(
         module: Module<StateType>,
@@ -57,6 +59,7 @@ export class ModuleInstance<StateType extends StateBaseType> {
         this._fatalError = null;
         this._cachedDefaultState = null;
         this._initialSettings = null;
+        this._statusController = new ModuleInstanceStatusControllerInternal();
 
         this._broadcastChannels = {} as Record<string, BroadcastChannel>;
 
@@ -176,6 +179,10 @@ export class ModuleInstance<StateType extends StateBaseType> {
 
     getModule(): Module<StateType> {
         return this._module;
+    }
+
+    getStatusController(): ModuleInstanceStatusControllerInternal {
+        return this._statusController;
     }
 
     subscribeToImportStateChange(cb: () => void): () => void {
