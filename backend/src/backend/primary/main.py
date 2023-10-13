@@ -22,6 +22,7 @@ from .routers.well_completions.router import router as well_completions_router
 from .routers.well.router import router as well_router
 from .routers.seismic.router import router as seismic_router
 from .routers.surface_polygons.router import router as surface_polygons_router
+from .routers.graph.router import router as graph_router
 
 logging.basicConfig(
     level=logging.WARNING,
@@ -60,6 +61,7 @@ app.include_router(well_completions_router, prefix="/well_completions", tags=["w
 app.include_router(well_router, prefix="/well", tags=["well"])
 app.include_router(seismic_router, prefix="/seismic", tags=["seismic"])
 app.include_router(surface_polygons_router, prefix="/surface_polygons", tags=["surface_polygons"])
+app.include_router(graph_router, prefix="/graph", tags=["graph"])
 
 authHelper = AuthHelper()
 app.include_router(authHelper.router)

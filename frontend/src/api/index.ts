@@ -23,6 +23,7 @@ export type { EnsembleSensitivity as EnsembleSensitivity_api } from './models/En
 export type { EnsembleSensitivityCase as EnsembleSensitivityCase_api } from './models/EnsembleSensitivityCase';
 export type { FieldInfo as FieldInfo_api } from './models/FieldInfo';
 export { Frequency as Frequency_api } from './models/Frequency';
+export type { GraphUserPhoto as GraphUserPhoto_api } from './models/GraphUserPhoto';
 export type { GridIntersection as GridIntersection_api } from './models/GridIntersection';
 export type { GridSurface as GridSurface_api } from './models/GridSurface';
 export type { HTTPValidationError as HTTPValidationError_api } from './models/HTTPValidationError';
@@ -57,6 +58,7 @@ export type { WellCompletionsZone as WellCompletionsZone_api } from './models/We
 
 export { DefaultService } from './services/DefaultService';
 export { ExploreService } from './services/ExploreService';
+export { GraphService } from './services/GraphService';
 export { GridService } from './services/GridService';
 export { InplaceVolumetricsService } from './services/InplaceVolumetricsService';
 export { ParametersService } from './services/ParametersService';

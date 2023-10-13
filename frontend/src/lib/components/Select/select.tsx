@@ -10,6 +10,7 @@ import { withDefaults } from "../_component-utils/components";
 
 export type SelectOption = {
     value: string;
+    icon?: React.ReactNode;
     label: string;
     disabled?: boolean;
 };
@@ -252,7 +253,8 @@ export const Select = withDefaults<SelectProps>()(defaultProps, (props) => {
                                     style={{ height: 24 }}
                                     title={option.label}
                                 >
-                                    <span className="min-w-0 text-ellipsis overflow-hidden whitespace-nowrap">
+                                    <span className="min-w-0 text-ellipsis overflow-hidden whitespace-nowrap flex flex-gap-2">
+                                        {option.icon}
                                         {option.label}
                                     </span>
                                 </div>

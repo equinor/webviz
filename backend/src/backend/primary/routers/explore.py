@@ -18,6 +18,8 @@ class FieldInfo(BaseModel):
 class CaseInfo(BaseModel):
     uuid: str
     name: str
+    status: str
+    user: str
 
 
 class EnsembleInfo(BaseModel):
@@ -64,11 +66,11 @@ async def get_cases(
     if field_identifier == "DROGON":
         for case_info in case_info_arr:
             if case_info.uuid == "10f41041-2c17-4374-a735-bb0de62e29dc":
-                ret_arr.insert(0, CaseInfo(uuid=case_info.uuid, name=f"GOOD -- {case_info.name}"))
+                ret_arr.insert(0, CaseInfo(uuid=case_info.uuid, name=f"GOOD -- {case_info.name}", status=case_info.status, user=case_info.user))
             else:
-                ret_arr.append(CaseInfo(uuid=case_info.uuid, name=case_info.name))
+                ret_arr.append(CaseInfo(uuid=case_info.uuid, name=case_info.name, status=case_info.status, user=case_info.user))
     else:
-        ret_arr = [CaseInfo(uuid=ci.uuid, name=ci.name) for ci in case_info_arr]
+        ret_arr = [CaseInfo(uuid=ci.uuid, name=ci.name, status=ci.status, user=ci.user) for ci in case_info_arr]
 
     return ret_arr
 

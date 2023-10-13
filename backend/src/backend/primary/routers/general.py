@@ -66,8 +66,8 @@ async def logged_in_user(
     if authenticated_user.has_graph_access_token() and includeGraphApiInfo:
         graph_api_access = GraphApiAccess(authenticated_user.get_graph_access_token())
         try:
-            avatar_b64str_future = asyncio.create_task(graph_api_access.get_user_profile_photo())
-            graph_user_info_future = asyncio.create_task(graph_api_access.get_user_info())
+            avatar_b64str_future = asyncio.create_task(graph_api_access.get_user_profile_photo("me"))
+            graph_user_info_future = asyncio.create_task(graph_api_access.get_user_info("me"))
 
             avatar_b64str = await avatar_b64str_future
             graph_user_info = await graph_user_info_future

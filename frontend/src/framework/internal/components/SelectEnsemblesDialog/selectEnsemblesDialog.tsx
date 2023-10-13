@@ -15,6 +15,8 @@ import { Add, Check, Remove } from "@mui/icons-material";
 import { useQuery } from "@tanstack/react-query";
 
 import { isEqual } from "lodash";
+import { Switch } from "@lib/components/Switch";
+import { UserAvatar } from "./private-components/userAvatar";
 
 export type EnsembleItem = {
     caseUuid: string;
@@ -30,9 +32,20 @@ export type SelectEnsemblesDialogProps = {
 const STALE_TIME = 0;
 const CACHE_TIME = 5 * 60 * 1000;
 
+interface CaseFilterSettings {
+    keep: boolean;
+    onlyMyCases: boolean;
+    users: string[];
+}
+
 export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (props) => {
     const [confirmCancel, setConfirmCancel] = React.useState<boolean>(false);
     const [newlySelectedEnsembles, setNewlySelectedEnsembles] = React.useState<EnsembleItem[]>([]);
+    const [casesFilteringOptions, setCasesFilteringOptions] = React.useState<CaseFilterSettings>({
+        keep: true,
+        onlyMyCases: false,
+        users: [],
+    });
 
     React.useLayoutEffect(() => {
         setNewlySelectedEnsembles(props.selectedEnsembles);
@@ -149,8 +162,30 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
         return !isEqual(props.selectedEnsembles, newlySelectedEnsembles);
     }
 
+    function handleKeepCasesSwitchChange(e: React.ChangeEvent<HTMLInputElement>) {
+        setCasesFilteringOptions((prev) => ({ ...prev, keep: e.target.checked }));
+    }
+
+    function handleCasesByMeChange(e: React.ChangeEvent<HTMLInputElement>) {
+        setCasesFilteringOptions((prev) => ({ ...prev, onlyMyCases: e.target.checked }));
+    }
+
+    function filterCases(cases: CaseInfo_api[] | undefined): CaseInfo_api[] | undefined {
+        if (!cases) {
+            return cases;
+        }
+        let filteredCases = cases;
+        if (casesFilteringOptions.keep) {
+            filteredCases = filteredCases.filter((c) => c.status === "keep");
+        }
+        if (casesFilteringOptions.onlyMyCases) {
+            filteredCases = filteredCases.filter((c) => c.user === "me");
+        }
+        return filteredCases;
+    }
+
     const fieldOpts = fieldsQuery.data?.map((f) => ({ value: f.field_identifier, label: f.field_identifier })) ?? [];
-    const caseOpts = casesQuery.data?.map((c) => ({ value: c.uuid, label: c.name })) ?? [];
+    const caseOpts = filterCases(casesQuery.data)?.map((c) => ({ value: c.uuid, label: c.name, icon: <UserAvatar userId={`${c.user.toUpperCase()}@equinor.com`} /> })) ?? [];
     const ensembleOpts =
         ensemblesQuery.data?.map((e) => ({ value: e.name, label: `${e.name}  (${e.realization_count} reals)` })) ?? [];
 
@@ -198,6 +233,10 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                                 errorComponent={<div className="text-red-500">Error loading cases</div>}
                                 loadingComponent={<CircularProgress />}
                             >
+                                <div className="flex justify-end gap-4">
+                                    <Label position="right" text="Keep"><Switch checked={casesFilteringOptions.keep} onChange={handleKeepCasesSwitchChange} /></Label>
+                                    <Label position="right" text="My cases"><Switch checked={casesFilteringOptions.onlyMyCases} onChange={handleCasesByMeChange} /></Label>
+                                    </div>
                                 <Select
                                     options={caseOpts}
                                     value={[selectedCaseId]}

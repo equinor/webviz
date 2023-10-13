@@ -20,6 +20,8 @@ class AssetInfo(BaseModel):
 class CaseInfo(BaseModel):
     uuid: str
     name: str
+    status: str
+    user: str
 
 
 class IterationInfo(BaseModel):
@@ -49,7 +51,7 @@ class SumoExplore:
 
         case_info_arr: List[CaseInfo] = []
         async for case in case_collection:
-            case_info_arr.append(CaseInfo(uuid=case.uuid, name=case.name))
+            case_info_arr.append(CaseInfo(uuid=case.uuid, name=case.name, status=case.status, user=case.user))
 
         # Sort on case name before returning
         case_info_arr.sort(key=lambda case_info: case_info.name)

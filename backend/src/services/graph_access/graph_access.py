@@ -20,18 +20,29 @@ class GraphApiAccess:
             )
             return response
 
-    async def get_user_profile_photo(self) -> str | None:
+    async def get_user_profile_photo(self, user_id: str) -> str | None:
         print("entering get_user_profile_photo")
-        response = await self._request("https://graph.microsoft.com/v1.0/me/photo/$value")
+        request_url = f"https://graph.microsoft.com/v1.0/me/photo/$value"
+        if user_id != "me":
+            request_url = f"https://graph.microsoft.com/v1.0/users/{user_id}/photo/$value"
+
+        print(f"Trying to fetch user photo from: {request_url}")
+        response = await self._request(request_url)
 
         if response.status_code == 200:
             return base64.b64encode(response.content).decode("utf-8")
         else:
+            print(f"Failed ({response.status_code}): {response.content}")
             return None
 
-    async def get_user_info(self) -> Mapping[str, str] | None:
+    async def get_user_info(self, user_id) -> Mapping[str, str] | None:
         print("entering get_user_info")
-        response = await self._request("https://graph.microsoft.com/v1.0/me")
+        request_url = f"https://graph.microsoft.com/v1.0/me"
+        if user_id != "me":
+            request_url = f"https://graph.microsoft.com/v1.0/users/{user_id}"
+
+        print(f"Trying to fetch user info from: {request_url}")
+        response = await self._request(request_url)
 
         if response.status_code == 200:
             return response.json()
