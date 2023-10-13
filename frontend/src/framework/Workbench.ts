@@ -36,7 +36,6 @@ export class Workbench {
     private _workbenchSettings: PrivateWorkbenchSettings;
     private _broadcaster: Broadcaster;
     private _guiMessageBroker: GuiMessageBroker;
-    private _globalCursor: GlobalCursor;
     private _subscribersMap: { [key: string]: Set<() => void> };
     private _layout: LayoutElement[];
     private _perModuleRunningInstanceNumber: Record<string, number>;
@@ -48,7 +47,6 @@ export class Workbench {
         this._workbenchSettings = new PrivateWorkbenchSettings();
         this._broadcaster = new Broadcaster();
         this._guiMessageBroker = new GuiMessageBroker();
-        this._globalCursor = new GlobalCursor();
         this._subscribersMap = {};
         this._layout = [];
         this._perModuleRunningInstanceNumber = {};
@@ -85,10 +83,6 @@ export class Workbench {
 
     getGuiMessageBroker(): GuiMessageBroker {
         return this._guiMessageBroker;
-    }
-
-    getGlobalCursor(): GlobalCursor {
-        return this._globalCursor;
     }
 
     private notifySubscribers(event: WorkbenchEvents): void {

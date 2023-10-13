@@ -67,7 +67,7 @@ export const DataChannelVisualizationLayer: React.FC<DataChannelVisualizationPro
             };
             setVisible(true);
             setOriginPoint(localCurrentOriginPoint);
-            props.workbench.getGlobalCursor().setOverrideCursor(GlobalCursorType.Crosshair);
+            guiMessageBroker.getGlobalCursor().setOverrideCursor(GlobalCursorType.Crosshair);
             localMousePressed = true;
             setCurrentPointerPosition(localCurrentOriginPoint);
             setCurrentChannelName(null);
@@ -100,7 +100,7 @@ export const DataChannelVisualizationLayer: React.FC<DataChannelVisualizationPro
             setVisible(false);
             setEditDataChannelConnectionsForModuleInstanceId(null);
             setShowDataChannelConnections(false);
-            props.workbench.getGlobalCursor().restoreOverrideCursor();
+            guiMessageBroker.getGlobalCursor().restoreOverrideCursor();
             setDataChannelConnectionsLayerVisible(false);
         }
 
@@ -136,15 +136,15 @@ export const DataChannelVisualizationLayer: React.FC<DataChannelVisualizationPro
         function handleNodeHover(payload: GuiEventPayloads[GuiEvent.DataChannelNodeHover]) {
             if (!localEditDataChannelConnections) {
                 if (payload.connectionAllowed) {
-                    props.workbench.getGlobalCursor().changeOverrideCursor(GlobalCursorType.Copy);
+                    guiMessageBroker.getGlobalCursor().changeOverrideCursor(GlobalCursorType.Copy);
                 } else {
-                    props.workbench.getGlobalCursor().changeOverrideCursor(GlobalCursorType.NotAllowed);
+                    guiMessageBroker.getGlobalCursor().changeOverrideCursor(GlobalCursorType.NotAllowed);
                 }
             }
         }
 
         function handleNodeUnhover() {
-            props.workbench.getGlobalCursor().restoreOverrideCursor();
+            guiMessageBroker.getGlobalCursor().restoreOverrideCursor();
         }
 
         function handleEditDataChannelConnectionsRequest(

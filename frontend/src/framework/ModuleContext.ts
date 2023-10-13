@@ -16,18 +16,6 @@ export class ModuleContext<S extends StateBaseType> {
         this._stateStore = stateStore;
     }
 
-    getInputChannel(name: string): BroadcastChannel | null {
-        return this._moduleInstance.getInputChannel(name);
-    }
-
-    setInputChannel(inputName: string, channelName: string): void {
-        this._moduleInstance.setInputChannel(inputName, channelName);
-    }
-
-    getInputChannelDef(name: string): InputBroadcastChannelDef | undefined {
-        return this._moduleInstance.getInputChannelDefs().find((channelDef) => channelDef.name === name);
-    }
-
     getInstanceIdString(): string {
         return this._moduleInstance.getId();
     }
@@ -63,16 +51,28 @@ export class ModuleContext<S extends StateBaseType> {
         return keyArr;
     }
 
-    getChannel(channelName: string): BroadcastChannel {
-        return this._moduleInstance.getBroadcastChannel(channelName);
-    }
-
     setInstanceTitle(title: string): void {
         this._moduleInstance.setTitle(title);
     }
 
     getStatusController(): ModuleInstanceStatusController {
         return this._moduleInstance.getStatusController();
+    }
+
+    getChannel(channelName: string): BroadcastChannel {
+        return this._moduleInstance.getBroadcastChannel(channelName);
+    }
+
+    getInputChannel(name: string): BroadcastChannel | null {
+        return this._moduleInstance.getInputChannel(name);
+    }
+
+    setInputChannel(inputName: string, channelName: string): void {
+        this._moduleInstance.setInputChannel(inputName, channelName);
+    }
+
+    getInputChannelDef(name: string): InputBroadcastChannelDef | undefined {
+        return this._moduleInstance.getInputChannelDefs().find((channelDef) => channelDef.name === name);
     }
 
     useInputChannel(name: string, initialSettings?: InitialSettings): BroadcastChannel | null {
