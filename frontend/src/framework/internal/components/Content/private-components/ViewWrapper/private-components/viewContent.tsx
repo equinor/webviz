@@ -2,6 +2,7 @@ import React from "react";
 
 import { ImportState } from "@framework/Module";
 import { ModuleInstance, ModuleInstanceState } from "@framework/ModuleInstance";
+import { StatusSource } from "@framework/ModuleInstanceStatusController";
 import { Workbench } from "@framework/Workbench";
 import { DebugProfiler } from "@framework/internal/components/DebugProfiler";
 import { ErrorBoundary } from "@framework/internal/components/ErrorBoundary";
@@ -20,39 +21,40 @@ export const ViewContent = React.memo((props: ViewContentProps) => {
         ModuleInstanceState.INITIALIZING
     );
 
-    React.useEffect(() => {
+    React.useEffect(function handleMount() {
+        setModuleInstanceState(props.moduleInstance.getModuleInstanceState());
         setImportState(props.moduleInstance.getImportState());
 
         function handleModuleInstanceImportStateChange() {
             setImportState(props.moduleInstance.getImportState());
         }
 
-        const unsubscribeFunc = props.moduleInstance.subscribeToImportStateChange(
-            handleModuleInstanceImportStateChange
-        );
-
-        return unsubscribeFunc;
-    }, []);
-
-    React.useEffect(() => {
-        setModuleInstanceState(props.moduleInstance.getModuleInstanceState());
-
         function handleModuleInstanceStateChange() {
             setModuleInstanceState(props.moduleInstance.getModuleInstanceState());
         }
 
-        const unsubscribeFunc = props.moduleInstance.subscribeToModuleInstanceStateChange(
+        const unsubscribeFromImportStateChange = props.moduleInstance.subscribeToImportStateChange(
+            handleModuleInstanceImportStateChange
+        );
+
+        const unsubscribeFromModuleInstanceStateChange = props.moduleInstance.subscribeToModuleInstanceStateChange(
             handleModuleInstanceStateChange
         );
 
-        return unsubscribeFunc;
+        return function handleUnmount() {
+            unsubscribeFromImportStateChange();
+            unsubscribeFromModuleInstanceStateChange();
+        };
     }, []);
 
-    const handleModuleInstanceReload = React.useCallback(() => {
-        props.moduleInstance.reset().then(() => {
-            setModuleInstanceState(props.moduleInstance.getModuleInstanceState());
-        });
-    }, [props.moduleInstance]);
+    const handleModuleInstanceReload = React.useCallback(
+        function handleModuleInstanceReload() {
+            props.moduleInstance.reset().then(() => {
+                setModuleInstanceState(props.moduleInstance.getModuleInstanceState());
+            });
+        },
+        [props.moduleInstance]
+    );
 
     if (importState === ImportState.NotImported) {
         return <div className="h-full w-full flex justify-center items-center">Not imported</div>;
@@ -114,8 +116,12 @@ export const ViewContent = React.memo((props: ViewContentProps) => {
     const View = props.moduleInstance.getViewFC();
     return (
         <ErrorBoundary moduleInstance={props.moduleInstance}>
-            <div className="p-4 h-full w-full">
-                <DebugProfiler id={`${props.moduleInstance.getId()}-view`}>
+            <div className="p-2 h-full w-full">
+                <DebugProfiler
+                    id={`${props.moduleInstance.getId()}-view`}
+                    statusController={props.moduleInstance.getStatusController()}
+                    source={StatusSource.View}
+                >
                     <View
                         moduleContext={props.moduleInstance.getContext()}
                         workbenchSession={props.workbench.getWorkbenchSession()}

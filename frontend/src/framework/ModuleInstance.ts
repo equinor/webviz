@@ -9,6 +9,7 @@ import { ModuleContext } from "./ModuleContext";
 import { StateBaseType, StateOptions, StateStore } from "./StateStore";
 import { SyncSettingKey } from "./SyncSettings";
 import { Workbench } from "./Workbench";
+import { ModuleInstanceStatusControllerInternal } from "./internal/ModuleInstanceStatusControllerInternal";
 
 export enum ModuleInstanceState {
     INITIALIZING,
@@ -37,6 +38,7 @@ export class ModuleInstance<StateType extends StateBaseType> {
     private _cachedDefaultState: StateType | null;
     private _cachedStateStoreOptions?: StateOptions<StateType>;
     private _initialSettings: InitialSettings | null;
+    private _statusController: ModuleInstanceStatusControllerInternal;
     private _inputChannelDefs: InputBroadcastChannelDef[];
     private _inputChannels: Record<string, BroadcastChannel> = {};
     private _workbench: Workbench;
@@ -65,6 +67,7 @@ export class ModuleInstance<StateType extends StateBaseType> {
         this._fatalError = null;
         this._cachedDefaultState = null;
         this._initialSettings = null;
+        this._statusController = new ModuleInstanceStatusControllerInternal();
         this._inputChannelDefs = inputChannelDefs;
         this._inputChannels = {};
         this._workbench = workbench;
@@ -256,6 +259,10 @@ export class ModuleInstance<StateType extends StateBaseType> {
 
     getModule(): Module<StateType> {
         return this._module;
+    }
+
+    getStatusController(): ModuleInstanceStatusControllerInternal {
+        return this._statusController;
     }
 
     subscribeToImportStateChange(cb: () => void): () => void {

@@ -4,9 +4,11 @@ import Plot from "react-plotly.js";
 import { Ensemble } from "@framework/Ensemble";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { ModuleFCProps } from "@framework/Module";
+import { useViewStatusWriter } from "@framework/StatusWriter";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { ColorScaleGradientType } from "@lib/utils/ColorScale";
+import { ContentError } from "@modules/_shared/components/ContentMessage";
 
 import { useHistoricalVectorDataQueries, useStatisticalVectorDataQueries, useVectorDataQueries } from "./queryHooks";
 import { GroupBy, State, VisualizationMode } from "./state";
@@ -23,6 +25,8 @@ export const view = ({ moduleContext, workbenchSession, workbenchSettings }: Mod
     const wrapperDivSize = useElementSize(wrapperDivRef);
 
     const ensembleSet = useEnsembleSet(workbenchSession);
+
+    const statusWriter = useViewStatusWriter(moduleContext);
 
     // Store values
     const vectorSpecifications = moduleContext.useStoreValue("vectorSpecifications");
@@ -64,13 +68,20 @@ export const view = ({ moduleContext, workbenchSession, workbenchSettings }: Mod
         vectorSpecificationsWithHistoricalData?.some((vec) => vec.hasHistoricalVector) ?? false
     );
 
-    const hasQueryError = [
-        ...vectorDataQueries.filter((query) => query.isError),
-        ...vectorStatisticsQueries.filter((query) => query.isError),
-        ...historicalVectorDataQueries.filter((query) => query.isError),
-    ];
-    if (hasQueryError.length > 0) {
-        return <div>One or more query has error state</div>;
+    const isQueryFetching =
+        vectorDataQueries.some((query) => query.isFetching) ||
+        vectorStatisticsQueries.some((query) => query.isFetching) ||
+        historicalVectorDataQueries.some((query) => query.isFetching);
+
+    statusWriter.setLoading(isQueryFetching);
+
+    const hasQueryError =
+        vectorDataQueries.some((query) => query.isError) ||
+        vectorStatisticsQueries.some((query) => query.isError) ||
+        historicalVectorDataQueries.some((query) => query.isError);
+    if (hasQueryError) {
+        statusWriter.addError("One or more queries have an error state.");
+        return <ContentError>One or more queries have an error state.</ContentError>;
     }
 
     // Map vector specifications and queries with data

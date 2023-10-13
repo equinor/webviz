@@ -3,6 +3,7 @@ import React from "react";
 import { BroadcastChannel, InputBroadcastChannelDef } from "./Broadcaster";
 import { InitialSettings } from "./InitialSettings";
 import { ModuleInstance } from "./ModuleInstance";
+import { ModuleInstanceStatusController } from "./ModuleInstanceStatusController";
 import { StateBaseType, StateStore, useSetStoreValue, useStoreState, useStoreValue } from "./StateStore";
 import { SyncSettingKey } from "./SyncSettings";
 
@@ -68,6 +69,10 @@ export class ModuleContext<S extends StateBaseType> {
 
     setInstanceTitle(title: string): void {
         this._moduleInstance.setTitle(title);
+    }
+
+    getStatusController(): ModuleInstanceStatusController {
+        return this._moduleInstance.getStatusController();
     }
 
     useInputChannel(name: string, initialSettings?: InitialSettings): BroadcastChannel | null {

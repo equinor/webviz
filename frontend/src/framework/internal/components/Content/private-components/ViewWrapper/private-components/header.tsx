@@ -1,9 +1,17 @@
 import React from "react";
+import ReactDOM from "react-dom";
 
 import { GuiEvent, GuiMessageBroker } from "@framework/GuiMessageBroker";
 import { ModuleInstance } from "@framework/ModuleInstance";
+import { StatusMessageType } from "@framework/ModuleInstanceStatusController";
 import { SyncSettingKey, SyncSettingsMeta } from "@framework/SyncSettings";
+import { useStatusControllerStateValue } from "@framework/internal/ModuleInstanceStatusControllerInternal";
+import { Badge } from "@lib/components/Badge";
+import { CircularProgress } from "@lib/components/CircularProgress";
+import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
 import { isDevMode } from "@lib/utils/devMode";
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
+import { Close, Error, Warning } from "@mui/icons-material";
 import { Close, Input, Output } from "@mui/icons-material";
 
 export type HeaderProps = {
@@ -21,26 +29,36 @@ export const Header: React.FC<HeaderProps> = (props) => {
         props.moduleInstance.getSyncedSettingKeys()
     );
     const [title, setTitle] = React.useState<string>(props.moduleInstance.getTitle());
+    const isLoading = useStatusControllerStateValue(props.moduleInstance.getStatusController(), "loading");
+    const statusMessages = useStatusControllerStateValue(props.moduleInstance.getStatusController(), "messages");
+    const [statusMessagesVisible, setStatusMessagesVisible] = React.useState<boolean>(false);
 
-    React.useEffect(() => {
+    const ref = React.useRef<HTMLDivElement>(null);
+    const boundingRect = useElementBoundingRect(ref);
+
+    React.useEffect(function handleMount() {
         function handleSyncedSettingsChange(newSyncedSettings: SyncSettingKey[]) {
             setSyncedSettings([...newSyncedSettings]);
         }
 
-        const unsubscribeFunc = props.moduleInstance.subscribeToSyncedSettingKeysChange(handleSyncedSettingsChange);
-
-        return unsubscribeFunc;
-    }, []);
-
-    React.useEffect(() => {
         function handleTitleChange(newTitle: string) {
             setTitle(newTitle);
         }
 
-        const unsubscribeFunc = props.moduleInstance.subscribeToTitleChange(handleTitleChange);
+        const unsubscribeFromSyncSettingsChange =
+            props.moduleInstance.subscribeToSyncedSettingKeysChange(handleSyncedSettingsChange);
+        const unsubscribeFromTitleChange = props.moduleInstance.subscribeToTitleChange(handleTitleChange);
 
-        return unsubscribeFunc;
+        return function handleUnmount() {
+            unsubscribeFromSyncSettingsChange();
+            unsubscribeFromTitleChange();
+        };
     }, []);
+
+    function handlePointerDown(e: React.PointerEvent<HTMLDivElement>) {
+        props.onPointerDown(e);
+        setStatusMessagesVisible(false);
+    }
 
     function handleDataChannelOriginPointerDown(e: React.PointerEvent<HTMLDivElement>) {
         if (!dataChannelOriginRef.current) {
@@ -66,14 +84,110 @@ export const Header: React.FC<HeaderProps> = (props) => {
         e.stopPropagation();
     }
 
+    function handleStatusPointerDown(e: React.PointerEvent<HTMLDivElement>) {
+        setStatusMessagesVisible(!statusMessagesVisible);
+        e.stopPropagation();
+    }
+
+    function makeStatusIndicator(): React.ReactNode {
+        const stateIndicators: React.ReactNode[] = [];
+
+        if (isLoading) {
+            stateIndicators.push(
+                <div
+                    key="header-loading"
+                    className="flex items-center justify-center h-full p-1 cursor-help"
+                    title="This module is currently loading new content."
+                >
+                    <CircularProgress size="medium-small" />
+                </div>
+            );
+        }
+        const numErrors = statusMessages.filter((message) => message.type === StatusMessageType.Error).length;
+        const numWarnings = statusMessages.filter((message) => message.type === StatusMessageType.Warning).length;
+
+        if (numErrors > 0 || numWarnings > 0) {
+            stateIndicators.push(
+                <div
+                    key="header-status-messages"
+                    className={resolveClassNames(
+                        "flex items-center justify-center cursor-pointer h-full p-1 hover:bg-blue-100",
+                        { "bg-blue-300 hover:bg-blue-400": statusMessagesVisible }
+                    )}
+                    onPointerDown={handleStatusPointerDown}
+                >
+                    <Badge badgeContent={numErrors + numWarnings} className="flex">
+                        <Error
+                            fontSize="medium"
+                            color="error"
+                            style={{ display: numErrors === 0 ? "none" : "block" }}
+                        />
+                        <div className="overflow-hidden h-full">
+                            <Warning
+                                fontSize="medium"
+                                color="warning"
+                                style={{ display: numWarnings === 0 ? "none" : "block" }}
+                                className={resolveClassNames({
+                                    "-ml-3": numErrors > 0,
+                                })}
+                            />
+                        </div>
+                    </Badge>
+                </div>
+            );
+        }
+
+        if (stateIndicators.length === 0) return null;
+
+        return (
+            <div className="h-full flex items-center justify-center">
+                <span className="bg-slate-300 w-[1px] h-3/4 mr-2" />
+                {stateIndicators}
+                <span className="bg-slate-300 w-[1px] h-3/4 ml-2" />
+            </div>
+        );
+    }
+
+    function makeStatusMessages(): React.ReactNode {
+        return (
+            <div className="flex flex-col p-2 gap-2">
+                {statusMessages.map((entry, i) => (
+                    <div key={`${entry.message}-${i}`} className="flex items-center gap-2">
+                        {entry.type === StatusMessageType.Error && <Error fontSize="small" color="error" />}
+                        {entry.type === StatusMessageType.Warning && <Warning fontSize="small" color="warning" />}
+                        <span
+                            className="ml-2 overflow-hidden text-ellipsis min-w-0 whitespace-nowrap"
+                            title={entry.message}
+                        >
+                            {entry.message}
+                        </span>
+                    </div>
+                ))}
+            </div>
+        );
+    }
+
+    const hasErrors = statusMessages.some((entry) => entry.type === StatusMessageType.Error);
+
     return (
         <div
-            className={`bg-slate-100 p-2 pl-4 pr-4 flex items-center select-none shadow ${
-                props.isDragged ? "cursor-grabbing" : "cursor-move"
-            }`}
-            onPointerDown={props.onPointerDown}
+            className={resolveClassNames("flex items-center select-none shadow relative", {
+                "cursor-grabbing": props.isDragged,
+                "cursor-move": !props.isDragged,
+                "bg-red-100": hasErrors,
+                "bg-slate-100": !hasErrors,
+            })}
+            onPointerDown={handlePointerDown}
+            ref={ref}
         >
-            <div className="flex-grow flex items-center text-sm font-bold min-w-0">
+            <div
+                className={resolveClassNames("absolute -bottom-0.5 left-0 w-full overflow-hidden", {
+                    hidden: !isLoading,
+                })}
+            >
+                <div className="bg-blue-600 animate-linear-indefinite h-0.5 w-full rounded" />
+            </div>
+            <div className="flex-grow flex items-center text-sm font-bold min-w-0 p-2">
                 <span title={title} className="flex-grow text-ellipsis whitespace-nowrap overflow-hidden min-w-0">
                     {title}
                 </span>
@@ -97,6 +211,7 @@ export const Header: React.FC<HeaderProps> = (props) => {
                     ))}
                 </>
             </div>
+            {makeStatusIndicator()}
             {props.moduleInstance.hasBroadcastChannels() && (
                 <div
                     id={`moduleinstance-${props.moduleInstance.getId()}-data-channel-origin`}
@@ -119,13 +234,27 @@ export const Header: React.FC<HeaderProps> = (props) => {
                 </div>
             )}
             <div
-                className="hover:text-slate-500 cursor-pointer"
+                className="hover:text-slate-500 cursor-pointer p-2"
                 onPointerDown={props.onRemoveClick}
                 onPointerUp={handlePointerUp}
                 title="Remove this module"
             >
                 <Close className="w-4 h-4" />
             </div>
+            {statusMessagesVisible &&
+                ReactDOM.createPortal(
+                    <div
+                        className={"absolute shadow min-w-[200px] z-40 bg-white overflow-hidden"}
+                        style={{
+                            top: boundingRect.bottom,
+                            right: window.innerWidth - boundingRect.right,
+                            maxWidth: boundingRect.width,
+                        }}
+                    >
+                        {makeStatusMessages()}
+                    </div>,
+                    document.body
+                )}
         </div>
     );
 };
