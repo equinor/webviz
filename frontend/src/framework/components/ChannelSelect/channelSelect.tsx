@@ -20,7 +20,13 @@ export type ChannelSelectProps = {
 export const ChannelSelect: React.FC<ChannelSelectProps> = (props) => {
     const { channelKeyCategory, onChange, broadcaster, ...rest } = props;
     const [channel, setChannel] = React.useState<string>(props.initialChannel ?? "");
+    const [prevInitialChannel, setPrevInitialChannel] = React.useState<string | undefined>(props.initialChannel);
     const [channels, setChannels] = React.useState<string[]>([]);
+
+    if (prevInitialChannel !== props.initialChannel) {
+        setPrevInitialChannel(props.initialChannel);
+        setChannel(props.initialChannel ?? "");
+    }
 
     React.useEffect(() => {
         const handleChannelsChanged = (channels: BroadcastChannel[]) => {
@@ -36,6 +42,7 @@ export const ChannelSelect: React.FC<ChannelSelectProps> = (props) => {
 
             if (channels.length === 0 || !channels.find((el) => el.getName() === channel)) {
                 setChannel("");
+
                 if (onChange) {
                     onChange("");
                 }
@@ -45,7 +52,7 @@ export const ChannelSelect: React.FC<ChannelSelectProps> = (props) => {
         const unsubscribeFunc = broadcaster.subscribeToChannelsChanges(handleChannelsChanged);
 
         return unsubscribeFunc;
-    }, [channelKeyCategory, onChange, broadcaster]);
+    }, [channelKeyCategory, onChange, broadcaster, channel]);
 
     const handleChannelsChanged = (channel: string) => {
         setChannel(channel);
