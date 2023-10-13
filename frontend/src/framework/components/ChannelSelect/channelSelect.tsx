@@ -18,6 +18,11 @@ export const ChannelSelect: React.FC<ChannelSelectProps> = (props) => {
     const channel = moduleContext.useInputChannel(props.channelName);
     const [channels, setChannels] = React.useState<string[]>([]);
 
+    if (prevInitialChannel !== props.initialChannel) {
+        setPrevInitialChannel(props.initialChannel);
+        setChannel(props.initialChannel ?? "");
+    }
+
     React.useEffect(() => {
         const handleChannelsChanged = (channels: BroadcastChannel[]) => {
             const inputChannel = moduleContext.getInputChannel(props.channelName);

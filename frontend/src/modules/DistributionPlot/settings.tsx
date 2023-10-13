@@ -1,7 +1,7 @@
 import React, { ChangeEvent } from "react";
 
 import { BroadcastChannelKeyCategory } from "@framework/Broadcaster";
-import { applyToStateOnMount } from "@framework/InitialSettings";
+import { applyInitialSettingsToState } from "@framework/InitialSettings";
 import { ModuleFCProps } from "@framework/Module";
 import { ChannelSelect } from "@framework/components/ChannelSelect";
 import { Dropdown } from "@lib/components/Dropdown";
@@ -64,10 +64,10 @@ export function settings({ moduleContext, workbenchServices, initialSettings }: 
     const [orientation, setOrientation] = moduleContext.useStoreState("orientation");
     const [crossPlottingType, setCrossPlottingType] = React.useState<BroadcastChannelKeyCategory | null>(null);
 
-    initialSettings?.applyToStateOnMount("plotType", "string", setPlotType);
-    initialSettings?.applyToStateOnMount("numBins", "number", setNumBins);
-    initialSettings?.applyToStateOnMount("orientation", "string", setOrientation);
-    initialSettings?.applyToStateOnMount("crossPlottingType", "string", setCrossPlottingType);
+    applyInitialSettingsToState(initialSettings, "plotType", "string", setPlotType);
+    applyInitialSettingsToState(initialSettings, "numBins", "number", setNumBins);
+    applyInitialSettingsToState(initialSettings, "orientation", "string", setOrientation);
+    applyInitialSettingsToState(initialSettings, "crossPlottingType", "string", setCrossPlottingType);
 
     const channelX = moduleContext.useInputChannel("channelX", initialSettings);
     const channelY = moduleContext.useInputChannel("channelY", initialSettings);

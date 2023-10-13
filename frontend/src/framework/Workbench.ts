@@ -18,7 +18,6 @@ import { WorkbenchSessionPrivate } from "./internal/WorkbenchSessionPrivate";
 
 export enum WorkbenchEvents {
     ModuleInstancesChanged = "ModuleInstancesChanged",
-    FullModuleRerenderRequested = "FullModuleRerenderRequested",
 }
 
 export type LayoutElement = {
@@ -149,9 +148,9 @@ export class Workbench {
             this._broadcaster.unregisterAllChannelsForModuleInstance(moduleInstance.getId());
         }
         this._moduleInstances = [];
-        this._perModuleRunningInstanceNumber = {};
         this._layout = [];
-        this.notifySubscribers(WorkbenchEvents.FullModuleRerenderRequested);
+        this._perModuleRunningInstanceNumber = {};
+        this.notifySubscribers(WorkbenchEvents.ModuleInstancesChanged);
     }
 
     makeAndAddModuleInstance(moduleName: string, layout: LayoutElement): ModuleInstance<any> {
@@ -186,7 +185,6 @@ export class Workbench {
 
     setLayout(layout: LayoutElement[]): void {
         this._layout = layout;
-        this.notifySubscribers(WorkbenchEvents.FullModuleRerenderRequested);
 
         const modifiedLayout = layout.map((el) => {
             return { ...el, moduleInstanceId: undefined };
