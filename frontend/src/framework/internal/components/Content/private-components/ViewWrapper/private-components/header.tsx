@@ -4,7 +4,7 @@ import ReactDOM from "react-dom";
 import { ModuleInstance } from "@framework/ModuleInstance";
 import { StatusMessageType } from "@framework/ModuleInstanceStatusController";
 import { SyncSettingKey, SyncSettingsMeta } from "@framework/SyncSettings";
-import { useStatusControllerStateValue } from "@framework/internal/ModuleInstanceStatusControllerPrivate";
+import { useStatusControllerStateValue } from "@framework/internal/ModuleInstanceStatusControllerInternal";
 import { Badge } from "@lib/components/Badge";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";

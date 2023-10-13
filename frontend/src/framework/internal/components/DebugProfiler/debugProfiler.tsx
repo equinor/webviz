@@ -2,9 +2,9 @@ import React from "react";
 
 import { StatusSource } from "@framework/ModuleInstanceStatusController";
 import {
-    ModuleInstanceStatusControllerPrivate,
+    ModuleInstanceStatusControllerInternal,
     useStatusControllerStateValue,
-} from "@framework/internal/ModuleInstanceStatusControllerPrivate";
+} from "@framework/internal/ModuleInstanceStatusControllerInternal";
 import { isDevMode } from "@lib/utils/devMode";
 
 type DebugProfilerRenderInfoProps = {
@@ -41,7 +41,7 @@ DebugProfilerWrapper.displayName = "DebugProfilerWrapper";
 export type DebugProfilerProps = {
     id: string;
     children: React.ReactNode;
-    statusController: ModuleInstanceStatusControllerPrivate;
+    statusController: ModuleInstanceStatusControllerInternal;
     source: StatusSource;
 };
 
