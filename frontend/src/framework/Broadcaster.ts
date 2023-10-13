@@ -83,10 +83,10 @@ export type InputBroadcastChannelDef = {
 };
 
 export function checkChannelCompatibility(
-    channelDef1: BroadcastChannelDef,
+    channelDef: BroadcastChannelDef,
     channelKeyCategory: BroadcastChannelKeyCategory
 ): boolean {
-    if (channelDef1.key !== channelKeyCategory) {
+    if (channelDef.key !== channelKeyCategory) {
         return false;
     }
 
