@@ -3,6 +3,7 @@ import React from "react";
 import { SurfaceStatisticFunction_api } from "@api";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { ModuleFCProps } from "@framework/Module";
+import { useSettingsStatusWriter } from "@framework/StatusWriter";
 import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { SingleEnsembleSelect } from "@framework/components/SingleEnsembleSelect";
@@ -32,12 +33,11 @@ const TimeTypeEnumToStringMapping = {
 };
 //-----------------------------------------------------------------------------------------------------------
 export function MapSettings(props: ModuleFCProps<MapState>) {
-    const myInstanceIdStr = props.moduleContext.getInstanceIdString();
-    console.debug(`${myInstanceIdStr} -- render MapSettings`);
-
     const ensembleSet = useEnsembleSet(props.workbenchSession);
     const [selectedEnsembleIdent, setSelectedEnsembleIdent] = React.useState<EnsembleIdent | null>(null);
     const [timeType, setTimeType] = React.useState<TimeType>(TimeType.None);
+
+    const statusWriter = useSettingsStatusWriter(props.moduleContext);
 
     const [selectedSurfaceName, setSelectedSurfaceName] = React.useState<string | null>(null);
     const [selectedSurfaceAttribute, setSelectedSurfaceAttribute] = React.useState<string | null>(null);
@@ -51,17 +51,17 @@ export function MapSettings(props: ModuleFCProps<MapState>) {
     const syncedValueSurface = syncHelper.useValue(SyncSettingKey.SURFACE, "global.syncValue.surface");
     const syncedValueDate = syncHelper.useValue(SyncSettingKey.DATE, "global.syncValue.date");
 
-    const renderCount = React.useRef(0);
-    React.useEffect(function incrementRenderCount() {
-        renderCount.current = renderCount.current + 1;
-    });
-
     const candidateEnsembleIdent = maybeAssignFirstSyncedEnsemble(selectedEnsembleIdent, syncedValueEnsembles);
     const computedEnsembleIdent = fixupEnsembleIdent(candidateEnsembleIdent, ensembleSet);
     const surfaceDirectoryQuery = useSurfaceDirectoryQuery(
         computedEnsembleIdent?.getCaseUuid(),
         computedEnsembleIdent?.getEnsembleName()
     );
+
+    const isError = surfaceDirectoryQuery.isError;
+    if (isError) {
+        statusWriter.addError("Error loading surface directory");
+    }
 
     const surfaceDirectory = new SurfaceDirectory(
         surfaceDirectoryQuery.data
@@ -286,7 +286,6 @@ export function MapSettings(props: ModuleFCProps<MapState>) {
                 onAggregationSelectionChange={handleAggregationChanged}
             />
             {chooseRealizationElement}
-            <div>({renderCount.current})</div>
         </>
     );
 }
