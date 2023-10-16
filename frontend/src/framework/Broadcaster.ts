@@ -76,11 +76,17 @@ export type BroadcastChannelData = {
     value: number | string;
 };
 
+export type InputBroadcastChannelDef = {
+    name: string;
+    displayName: string;
+    keyCategories?: BroadcastChannelKeyCategory[];
+};
+
 export function checkChannelCompatibility(
-    channelDef1: BroadcastChannelDef,
+    channelDef: BroadcastChannelDef,
     channelKeyCategory: BroadcastChannelKeyCategory
 ): boolean {
-    if (channelDef1.key !== channelKeyCategory) {
+    if (channelDef.key !== channelKeyCategory) {
         return false;
     }
 
@@ -89,6 +95,7 @@ export function checkChannelCompatibility(
 
 export class BroadcastChannel {
     private _name: string;
+    private _displayName: string;
     private _metaData: BroadcastChannelMeta | null;
     private _moduleInstanceId: string;
     private _subscribers: Set<(data: BroadcastChannelData[], metaData: BroadcastChannelMeta) => void>;
@@ -96,8 +103,9 @@ export class BroadcastChannel {
     private _dataDef: BroadcastChannelDef;
     private _dataGenerator: (() => BroadcastChannelData[]) | null;
 
-    constructor(name: string, def: BroadcastChannelDef, moduleInstanceId: string) {
+    constructor(name: string, displayName: string, def: BroadcastChannelDef, moduleInstanceId: string) {
         this._name = name;
+        this._displayName = displayName;
         this._subscribers = new Set();
         this._cachedData = null;
         this._dataDef = def;
@@ -142,6 +150,10 @@ export class BroadcastChannel {
         return this._name;
     }
 
+    getDisplayName(): string {
+        return this._displayName;
+    }
+
     getDataDef(): BroadcastChannelDef {
         return this._dataDef;
     }
@@ -173,7 +185,7 @@ export class BroadcastChannel {
     }
 
     subscribe(
-        callbackChannelDataChanged: (data: BroadcastChannelData[], metaData: BroadcastChannelMeta) => void
+        callbackChannelDataChanged: (data: BroadcastChannelData[] | null, metaData: BroadcastChannelMeta | null) => void
     ): () => void {
         this._subscribers.add(callbackChannelDataChanged);
 
@@ -181,9 +193,7 @@ export class BroadcastChannel {
             this._cachedData = this.generateAndVerifyData(this._dataGenerator);
         }
 
-        if (this._cachedData && this._metaData) {
-            callbackChannelDataChanged(this._cachedData, this._metaData);
-        }
+        callbackChannelDataChanged(this._cachedData ?? null, this._metaData ?? null);
 
         return () => {
             this._subscribers.delete(callbackChannelDataChanged);
@@ -202,10 +212,11 @@ export class Broadcaster {
 
     registerChannel(
         channelName: string,
+        displayName: string,
         channelDef: BroadcastChannelDef,
         moduleInstanceId: string
     ): BroadcastChannel {
-        const channel = new BroadcastChannel(channelName, channelDef, moduleInstanceId);
+        const channel = new BroadcastChannel(channelName, displayName, channelDef, moduleInstanceId);
         this._channels.push(channel);
         this.notifySubscribersAboutChannelsChanges();
         return channel;
@@ -214,6 +225,10 @@ export class Broadcaster {
     unregisterAllChannelsForModuleInstance(moduleInstanceId: string): void {
         this._channels = this._channels.filter((c) => c.getModuleInstanceId() !== moduleInstanceId);
         this.notifySubscribersAboutChannelsChanges();
+    }
+
+    getChannelsForModuleInstance(moduleInstanceId: string): BroadcastChannel[] {
+        return this._channels.filter((c) => c.getModuleInstanceId() === moduleInstanceId);
     }
 
     getChannel(channelName: string): BroadcastChannel | null {

@@ -15,7 +15,7 @@ function App() {
     const workbench = React.useRef<Workbench>(new Workbench());
     const queryClient = useQueryClient();
 
-    React.useEffect(() => {
+    React.useEffect(function handleMount() {
         if (!workbench.current.loadLayoutFromLocalStorage()) {
             workbench.current.makeLayout(layout);
         }
@@ -32,8 +32,9 @@ function App() {
             });
         }
 
-        return function () {
+        return function handleUnmount() {
             workbench.current.clearLayout();
+            workbench.current.resetModuleInstanceNumbers();
         };
     }, []);
 
