@@ -2,7 +2,7 @@ import React from "react";
 
 import { cloneDeep } from "lodash";
 
-import { BroadcastChannelsDef } from "./Broadcaster";
+import { BroadcastChannelsDef, InputBroadcastChannelDef } from "./Broadcaster";
 import { InitialSettings } from "./InitialSettings";
 import { ModuleContext } from "./ModuleContext";
 import { ModuleInstance } from "./ModuleInstance";
@@ -45,12 +45,14 @@ export class Module<StateType extends StateBaseType> {
     private _channelsDef: BroadcastChannelsDef;
     private _drawPreviewFunc: DrawPreviewFunc | null;
     private _description: string | null;
+    private _inputChannelDefs: InputBroadcastChannelDef[];
 
     constructor(
         name: string,
         defaultTitle: string,
         syncableSettingKeys: SyncSettingKey[] = [],
         broadcastChannelsDef: BroadcastChannelsDef = {},
+        inputChannelDefs: InputBroadcastChannelDef[] = [],
         drawPreviewFunc: DrawPreviewFunc | null = null,
         description: string | null = null
     ) {
@@ -64,6 +66,7 @@ export class Module<StateType extends StateBaseType> {
         this._workbench = null;
         this._syncableSettingKeys = syncableSettingKeys;
         this._channelsDef = broadcastChannelsDef;
+        this._inputChannelDefs = inputChannelDefs;
         this._drawPreviewFunc = drawPreviewFunc;
         this._description = description;
     }
@@ -115,7 +118,13 @@ export class Module<StateType extends StateBaseType> {
             throw new Error("Module must be added to a workbench before making an instance");
         }
 
-        const instance = new ModuleInstance<StateType>(this, instanceNumber, this._channelsDef, this._workbench);
+        const instance = new ModuleInstance<StateType>(
+            this,
+            instanceNumber,
+            this._channelsDef,
+            this._workbench,
+            this._inputChannelDefs
+        );
         this._moduleInstances.push(instance);
         this.maybeImportSelf();
         return instance;

@@ -32,25 +32,27 @@ function nFormatter(num: number, digits: number): string {
     return item ? (num / item.value).toFixed(digits).replace(rx, "$1") + item.symbol : "0";
 }
 
-export const view = ({ moduleContext, workbenchServices, workbenchSettings }: ModuleFCProps<State>) => {
-    const plotType = moduleContext.useStoreValue("plotType");
-    const channelNameX = moduleContext.useStoreValue("channelNameX");
-    const channelNameY = moduleContext.useStoreValue("channelNameY");
-    const channelNameZ = moduleContext.useStoreValue("channelNameZ");
+export const view = ({
+    moduleContext,
+    workbenchServices,
+    initialSettings,
+    workbenchSettings,
+}: ModuleFCProps<State>) => {
+    const [plotType, setPlotType] = moduleContext.useStoreState("plotType");
     const numBins = moduleContext.useStoreValue("numBins");
     const orientation = moduleContext.useStoreValue("orientation");
 
     const [highlightedKey, setHighlightedKey] = React.useState<number | null>(null);
     const [dataX, setDataX] = React.useState<any[] | null>(null);
     const [dataY, setDataY] = React.useState<any[] | null>(null);
-    const [dataZ, setDataZ] = React.useState<any[] | null>(null);
+    const [dataColor, setDataColor] = React.useState<any[] | null>(null);
     const [metaDataX, setMetaDataX] = React.useState<BroadcastChannelMeta | null>(null);
     const [metaDataY, setMetaDataY] = React.useState<BroadcastChannelMeta | null>(null);
-    const [metaDataZ, setMetaDataZ] = React.useState<BroadcastChannelMeta | null>(null);
+    const [metaDataColor, setMetaDataColor] = React.useState<BroadcastChannelMeta | null>(null);
 
-    const channelX = workbenchServices.getBroadcaster().getChannel(channelNameX ?? "");
-    const channelY = workbenchServices.getBroadcaster().getChannel(channelNameY ?? "");
-    const channelZ = workbenchServices.getBroadcaster().getChannel(channelNameZ ?? "");
+    const channelX = moduleContext.useInputChannel("channelX", initialSettings);
+    const channelY = moduleContext.useInputChannel("channelY", initialSettings);
+    const channelColor = moduleContext.useInputChannel("channelColor", initialSettings);
 
     const colorSet = workbenchSettings.useColorSet();
     const seqColorScale = workbenchSettings.useContinuousColorScale({
@@ -67,7 +69,7 @@ export const view = ({ moduleContext, workbenchServices, workbenchSettings }: Mo
             return;
         }
 
-        const handleChannelXChanged = (data: any, metaData: BroadcastChannelMeta) => {
+        const handleChannelXChanged = (data: any | null, metaData: BroadcastChannelMeta | null) => {
             setDataX(data);
             setMetaDataX(metaData);
         };
@@ -84,7 +86,11 @@ export const view = ({ moduleContext, workbenchServices, workbenchSettings }: Mo
             return;
         }
 
-        const handleChannelYChanged = (data: any, metaData: BroadcastChannelMeta) => {
+        if (plotType !== PlotType.ScatterWithColorMapping && plotType !== PlotType.Scatter) {
+            setPlotType(PlotType.Scatter);
+        }
+
+        const handleChannelYChanged = (data: any | null, metaData: BroadcastChannelMeta | null) => {
             setDataY(data);
             setMetaDataY(metaData);
         };
@@ -95,21 +101,25 @@ export const view = ({ moduleContext, workbenchServices, workbenchSettings }: Mo
     }, [channelY]);
 
     React.useEffect(() => {
-        if (!channelZ) {
-            setDataZ(null);
-            setMetaDataZ(null);
+        if (!channelColor) {
+            setDataColor(null);
+            setMetaDataColor(null);
             return;
         }
 
-        const handleChannelZChanged = (data: any, metaData: BroadcastChannelMeta) => {
-            setDataZ(data);
-            setMetaDataZ(metaData);
+        if (plotType !== PlotType.ScatterWithColorMapping) {
+            setPlotType(PlotType.ScatterWithColorMapping);
+        }
+
+        const handleChannelColorChanged = (data: any | null, metaData: BroadcastChannelMeta | null) => {
+            setDataColor(data);
+            setMetaDataColor(metaData);
         };
 
-        const unsubscribeFunc = channelZ.subscribe(handleChannelZChanged);
+        const unsubscribeFunc = channelColor.subscribe(handleChannelColorChanged);
 
         return unsubscribeFunc;
-    }, [channelZ]);
+    }, [channelColor]);
 
     React.useEffect(() => {
         if (channelX?.getDataDef().key === BroadcastChannelKeyCategory.Realization) {
@@ -133,13 +143,13 @@ export const view = ({ moduleContext, workbenchServices, workbenchSettings }: Mo
         }
 
         if (plotType === PlotType.Histogram) {
-            if (channelNameX === "" || channelNameX === null) {
+            if (!channelX) {
                 return "Please select a channel for the x-axis.";
             }
             if (dataX === null) {
                 return (
                     <>
-                        No data on channel <Tag label={channelNameX} /> yet.
+                        No data on channel <Tag label={channelX.getDisplayName()} /> yet.
                     </>
                 );
             }
@@ -174,13 +184,13 @@ export const view = ({ moduleContext, workbenchServices, workbenchSettings }: Mo
         }
 
         if (plotType === PlotType.BarChart) {
-            if (channelNameX === "" || channelNameX === null) {
+            if (!channelX) {
                 return "Please select a channel for the x-axis.";
             }
             if (dataX === null) {
                 return (
                     <>
-                        No data on channel <Tag label={channelNameX} /> yet.
+                        No data on channel <Tag label={channelX.getName()} /> yet.
                     </>
                 );
             }
@@ -210,25 +220,25 @@ export const view = ({ moduleContext, workbenchServices, workbenchSettings }: Mo
         }
 
         if (plotType === PlotType.Scatter) {
-            if (channelNameX === "" || channelNameX === null) {
+            if (!channelX) {
                 return "Please select a channel for the x-axis.";
             }
 
-            if (channelNameY === "" || channelNameY === null) {
+            if (!channelY) {
                 return "Please select a channel for the y-axis.";
             }
 
             if (dataX === null) {
                 return (
                     <>
-                        No data on channel <Tag label={channelNameX} /> yet.
+                        No data on channel <Tag label={channelX.getName()} /> yet.
                     </>
                 );
             }
             if (dataY === null) {
                 return (
                     <>
-                        No data on channel <Tag label={channelNameY} /> yet.
+                        No data on channel <Tag label={channelY.getName()} /> yet.
                     </>
                 );
             }
@@ -264,36 +274,36 @@ export const view = ({ moduleContext, workbenchServices, workbenchSettings }: Mo
         }
 
         if (plotType === PlotType.ScatterWithColorMapping) {
-            if (channelNameX === "" || channelNameX === null) {
+            if (!channelX) {
                 return "Please select a channel for the x-axis.";
             }
 
-            if (channelNameY === "" || channelNameY === null) {
+            if (!channelY) {
                 return "Please select a channel for the y-axis.";
             }
 
-            if (channelNameZ === "" || channelNameZ === null) {
-                return "Please select a channel for the z-axis.";
+            if (!channelColor) {
+                return "Please select a channel for the color mapping.";
             }
 
             if (dataX === null) {
                 return (
                     <>
-                        No data on channel <Tag label={channelNameX} /> yet.
+                        No data on channel <Tag label={channelX.getName()} /> yet.
                     </>
                 );
             }
             if (dataY === null) {
                 return (
                     <>
-                        No data on channel <Tag label={channelNameY} /> yet.
+                        No data on channel <Tag label={channelY.getName()} /> yet.
                     </>
                 );
             }
-            if (dataZ === null) {
+            if (dataColor === null) {
                 return (
                     <>
-                        No data on channel <Tag label={channelNameZ} /> yet.
+                        No data on channel <Tag label={channelColor.getName()} /> yet.
                     </>
                 );
             }
@@ -304,7 +314,7 @@ export const view = ({ moduleContext, workbenchServices, workbenchSettings }: Mo
 
             const keysX = dataX.map((el: any) => el.key);
             const keysY = dataY.map((el: any) => el.key);
-            const keysZ = dataZ.map((el: any) => el.key);
+            const keysZ = dataColor.map((el: any) => el.key);
             if (
                 keysX.length === keysY.length &&
                 keysY.length === keysZ.length &&
@@ -314,7 +324,7 @@ export const view = ({ moduleContext, workbenchServices, workbenchSettings }: Mo
                 keysX.forEach((key) => {
                     const dataPointX = dataX.find((el: any) => el.key === key);
                     const dataPointY = dataY.find((el: any) => el.key === key);
-                    const dataPointZ = dataZ.find((el: any) => el.key === key);
+                    const dataPointZ = dataColor.find((el: any) => el.key === key);
                     xValues.push(dataPointX.value);
                     yValues.push(dataPointY.value);
                     zValues.push(dataPointZ.value);
@@ -331,13 +341,70 @@ export const view = ({ moduleContext, workbenchServices, workbenchSettings }: Mo
                     highlightedKey={highlightedKey ?? undefined}
                     xAxisTitle={`${metaDataX?.description ?? ""} [${metaDataX?.unit ?? ""}]`}
                     yAxisTitle={`${metaDataY?.description ?? ""} [${metaDataY?.unit ?? ""}]`}
-                    zAxisTitle={`${metaDataZ?.description ?? ""} [${metaDataZ?.unit ?? ""}]`}
+                    zAxisTitle={`${metaDataColor?.description ?? ""} [${metaDataColor?.unit ?? ""}]`}
                     width={wrapperDivSize.width}
                     onHoverData={handleHoverChanged}
                     height={wrapperDivSize.height}
                     colorScale={seqColorScale}
                 />
             );
+        }
+
+        if (dataX) {
+            if (plotType === PlotType.Histogram) {
+                const xValues = dataX.map((el: any) => el.value);
+                const xMin = Math.min(...xValues);
+                const xMax = Math.max(...xValues);
+                const binSize = (xMax - xMin) / numBins;
+                const bins: { from: number; to: number }[] = Array.from({ length: numBins }, (_, i) => ({
+                    from: xMin + i * binSize,
+                    to: xMin + (i + 1) * binSize,
+                }));
+                bins[bins.length - 1].to = xMax + 1e-6; // make sure the last bin includes the max value
+                const binValues: number[] = bins.map(
+                    (range) => xValues.filter((el) => el >= range.from && el < range.to).length
+                );
+
+                const binStrings = bins.map((range) => `${nFormatter(range.from, 2)}-${nFormatter(range.to, 2)}`);
+
+                return (
+                    <Histogram
+                        key="histogram"
+                        x={binStrings}
+                        y={binValues}
+                        xAxisTitle={`${metaDataX?.description ?? ""} [${metaDataX?.unit ?? ""}]`}
+                        yAxisTitle={channelX?.getDataDef().key ?? ""}
+                        width={wrapperDivSize.width}
+                        height={wrapperDivSize.height}
+                        colorSet={colorSet}
+                    />
+                );
+            }
+
+            if (plotType === PlotType.BarChart) {
+                const keyData = dataX.map((el: any) => el.key);
+                const valueData = dataX.map((el: any) => el.value);
+
+                const keyTitle = channelX?.getDataDef().key ?? "";
+                const valueTitle = `${metaDataX?.description ?? ""} [${metaDataX?.unit ?? ""}]`;
+
+                return (
+                    <BarChart
+                        key="barchart"
+                        x={orientation === "h" ? valueData : keyData}
+                        y={orientation === "h" ? keyData : valueData}
+                        xAxisTitle={orientation === "h" ? valueTitle : keyTitle}
+                        yAxisTitle={orientation === "h" ? keyTitle : valueTitle}
+                        width={wrapperDivSize.width}
+                        height={wrapperDivSize.height}
+                        orientation={orientation}
+                        onHoverData={handleHoverChanged}
+                        keyData={keyData}
+                        highlightedKey={highlightedKey ?? undefined}
+                        colorSet={colorSet}
+                    />
+                );
+            }
         }
     }
 

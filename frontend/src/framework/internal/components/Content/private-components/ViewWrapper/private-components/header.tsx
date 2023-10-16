@@ -1,6 +1,7 @@
 import React from "react";
 import ReactDOM from "react-dom";
 
+import { GuiEvent, GuiMessageBroker } from "@framework/GuiMessageBroker";
 import { ModuleInstance } from "@framework/ModuleInstance";
 import { StatusMessageType } from "@framework/ModuleInstanceStatusController";
 import { SyncSettingKey, SyncSettingsMeta } from "@framework/SyncSettings";
@@ -10,16 +11,19 @@ import { CircularProgress } from "@lib/components/CircularProgress";
 import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
 import { isDevMode } from "@lib/utils/devMode";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-import { Close, Error, Warning } from "@mui/icons-material";
+import { Close, Error, Input, Output, Warning } from "@mui/icons-material";
 
 export type HeaderProps = {
     moduleInstance: ModuleInstance<any>;
     isDragged: boolean;
     onPointerDown: (event: React.PointerEvent<HTMLDivElement>) => void;
     onRemoveClick: (event: React.PointerEvent<HTMLDivElement>) => void;
+    onInputChannelsClick: (event: React.PointerEvent<HTMLDivElement>) => void;
+    guiMessageBroker: GuiMessageBroker;
 };
 
 export const Header: React.FC<HeaderProps> = (props) => {
+    const dataChannelOriginRef = React.useRef<HTMLDivElement>(null);
     const [syncedSettings, setSyncedSettings] = React.useState<SyncSettingKey[]>(
         props.moduleInstance.getSyncedSettingKeys()
     );
@@ -53,6 +57,26 @@ export const Header: React.FC<HeaderProps> = (props) => {
     function handlePointerDown(e: React.PointerEvent<HTMLDivElement>) {
         props.onPointerDown(e);
         setStatusMessagesVisible(false);
+    }
+
+    function handleDataChannelOriginPointerDown(e: React.PointerEvent<HTMLDivElement>) {
+        if (!dataChannelOriginRef.current) {
+            return;
+        }
+        props.guiMessageBroker.publishEvent(GuiEvent.DataChannelOriginPointerDown, {
+            moduleInstanceId: props.moduleInstance.getId(),
+            originElement: dataChannelOriginRef.current,
+        });
+        e.stopPropagation();
+        e.preventDefault();
+    }
+
+    function handleInputChannelsPointerUp(e: React.PointerEvent<HTMLDivElement>) {
+        props.onInputChannelsClick(e);
+    }
+
+    function handleInputChannelsPointerDown(e: React.PointerEvent<HTMLDivElement>) {
+        e.stopPropagation();
     }
 
     function handlePointerUp(e: React.PointerEvent<HTMLDivElement>) {
@@ -116,9 +140,8 @@ export const Header: React.FC<HeaderProps> = (props) => {
 
         return (
             <div className="h-full flex items-center justify-center">
-                <span className="bg-slate-300 w-[1px] h-3/4 mr-2" />
+                <span className="bg-slate-300 w-[1px] h-3/4 mx-2" />
                 {stateIndicators}
-                <span className="bg-slate-300 w-[1px] h-3/4 ml-2" />
             </div>
         );
     }
@@ -187,8 +210,33 @@ export const Header: React.FC<HeaderProps> = (props) => {
                 </>
             </div>
             {makeStatusIndicator()}
+            {(props.moduleInstance.hasBroadcastChannels() || props.moduleInstance.getInputChannelDefs().length > 0) && (
+                <span className="bg-slate-300 w-[1px] h-3/4 ml-2" />
+            )}
+            {props.moduleInstance.hasBroadcastChannels() && (
+                <div
+                    id={`moduleinstance-${props.moduleInstance.getId()}-data-channel-origin`}
+                    ref={dataChannelOriginRef}
+                    className="hover:text-slate-500 cursor-grab ml-2"
+                    title="Connect data channels to other module instances"
+                    onPointerDown={handleDataChannelOriginPointerDown}
+                >
+                    <Output fontSize="small" />
+                </div>
+            )}
+            {props.moduleInstance.getInputChannelDefs().length > 0 && (
+                <div
+                    className="hover:text-slate-500 cursor-pointer ml-2"
+                    title="Edit input data channels"
+                    onPointerUp={handleInputChannelsPointerUp}
+                    onPointerDown={handleInputChannelsPointerDown}
+                >
+                    <Input fontSize="small" />
+                </div>
+            )}
+            <span className="bg-slate-300 w-[1px] h-3/4 ml-2" />
             <div
-                className="hover:text-slate-500 cursor-pointer p-2"
+                className="hover:text-slate-500 cursor-pointer p-1"
                 onPointerDown={props.onRemoveClick}
                 onPointerUp={handlePointerUp}
                 title="Remove this module"

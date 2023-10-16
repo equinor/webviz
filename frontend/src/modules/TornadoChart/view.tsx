@@ -18,12 +18,7 @@ import { PlotType, State } from "./state";
 
 import { createSensitivityColorMap } from "../_shared/sensitivityColors";
 
-export const view = ({
-    moduleContext,
-    workbenchSession,
-    workbenchSettings,
-    workbenchServices,
-}: ModuleFCProps<State>) => {
+export const view = ({ moduleContext, workbenchSession, workbenchSettings, initialSettings }: ModuleFCProps<State>) => {
     // Leave this in until we get a feeling for React18/Plotly
     const renderCount = React.useRef(0);
     React.useEffect(function incrementRenderCount() {
@@ -34,9 +29,10 @@ export const view = ({
     const wrapperDivSize = useElementSize(wrapperDivRef);
     const ensembleSet = useEnsembleSet(workbenchSession);
     const [plotType, setPlotType] = moduleContext.useStoreState("plotType");
-    const responseChannelName = moduleContext.useStoreValue("responseChannelName");
     const [channelEnsemble, setChannelEnsemble] = React.useState<Ensemble | null>(null);
     const [channelResponseData, setChannelResponseData] = React.useState<EnsembleScalarResponse | null>(null);
+
+    const responseChannel = moduleContext.useInputChannel("response", initialSettings);
 
     const [showLabels, setShowLabels] = React.useState(true);
     const [hideZeroY, setHideZeroY] = React.useState(false);
@@ -54,7 +50,6 @@ export const view = ({
         }
     };
 
-    const responseChannel = workbenchServices.getBroadcaster().getChannel(responseChannelName ?? "");
     React.useEffect(() => {
         if (!responseChannel) {
             setChannelEnsemble(null);
@@ -62,7 +57,13 @@ export const view = ({
             return;
         }
 
-        function handleChannelDataChanged(data: BroadcastChannelData[], metaData: BroadcastChannelMeta) {
+        function handleChannelDataChanged(data: BroadcastChannelData[] | null, metaData: BroadcastChannelMeta | null) {
+            if (!data || !metaData) {
+                setChannelEnsemble(null);
+                setChannelResponseData(null);
+                return;
+            }
+
             if (data.length === 0) {
                 setChannelEnsemble(null);
                 setChannelResponseData(null);

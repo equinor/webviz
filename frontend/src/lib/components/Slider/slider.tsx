@@ -221,7 +221,7 @@ export const Slider = React.forwardRef((props: SliderProps, ref: React.Forwarded
                                 "h-5",
                                 "block",
                                 "bg-blue-600",
-                                "z-50",
+                                "z-30",
                                 "shadow-sm",
                                 "rounded-full",
                                 "transform",

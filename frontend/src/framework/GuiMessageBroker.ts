@@ -2,6 +2,8 @@ import React from "react";
 
 import { Point } from "@lib/utils/geometry";
 
+import { GlobalCursor } from "./internal/GlobalCursor";
+
 export enum DrawerContent {
     ModuleSettings = "ModuleSettings",
     ModulesList = "ModulesList",
@@ -15,12 +17,23 @@ export enum GuiState {
     SettingsPanelWidthInPercent = "settingsPanelWidthInPercent",
     LoadingEnsembleSet = "loadingEnsembleSet",
     ActiveModuleInstanceId = "activeModuleInstanceId",
+    DataChannelConnectionLayerVisible = "dataChannelConnectionLayerVisible",
 }
 
 export enum GuiEvent {
     ModuleHeaderPointerDown = "moduleHeaderPointerDown",
     NewModulePointerDown = "newModulePointerDown",
     RemoveModuleInstanceRequest = "removeModuleInstanceRequest",
+    EditDataChannelConnectionsForModuleInstanceRequest = "editDataChannelConnectionsForModuleInstanceRequest",
+    ShowDataChannelConnectionsRequest = "showDataChannelConnectionsRequest",
+    HideDataChannelConnectionsRequest = "hideDataChannelConnectionsRequest",
+    HighlightDataChannelConnectionRequest = "highlightDataChannelConnectionRequest",
+    UnhighlightDataChannelConnectionRequest = "unhighlightDataChannelConnectionRequest",
+    DataChannelPointerUp = "dataChannelPointerUp",
+    DataChannelOriginPointerDown = "dataChannelOriginPointerDown",
+    DataChannelConnectionsChange = "dataChannelConnectionsChange",
+    DataChannelNodeHover = "dataChannelNodeHover",
+    DataChannelNodeUnhover = "dataChannelNodeUnhover",
 }
 
 export type GuiEventPayloads = {
@@ -37,6 +50,20 @@ export type GuiEventPayloads = {
     [GuiEvent.RemoveModuleInstanceRequest]: {
         moduleInstanceId: string;
     };
+    [GuiEvent.EditDataChannelConnectionsForModuleInstanceRequest]: {
+        moduleInstanceId: string;
+    };
+    [GuiEvent.HighlightDataChannelConnectionRequest]: {
+        moduleInstanceId: string;
+        dataChannelName: string;
+    };
+    [GuiEvent.DataChannelOriginPointerDown]: {
+        moduleInstanceId: string;
+        originElement: HTMLElement;
+    };
+    [GuiEvent.DataChannelNodeHover]: {
+        connectionAllowed: boolean;
+    };
 };
 
 type GuiStateValueTypes = {
@@ -44,6 +71,7 @@ type GuiStateValueTypes = {
     [GuiState.SettingsPanelWidthInPercent]: number;
     [GuiState.LoadingEnsembleSet]: boolean;
     [GuiState.ActiveModuleInstanceId]: string;
+    [GuiState.DataChannelConnectionLayerVisible]: boolean;
 };
 
 const defaultStates: Map<GuiState, any> = new Map();
@@ -58,13 +86,19 @@ export class GuiMessageBroker {
     private _eventListeners: Map<GuiEvent, Set<(event: any) => void>>;
     private _stateSubscribers: Map<GuiState, Set<(state: any) => void>>;
     private _storedValues: Map<GuiState, any>;
+    private _globalCursor: GlobalCursor;
 
     constructor() {
         this._eventListeners = new Map();
         this._stateSubscribers = new Map();
         this._storedValues = defaultStates;
+        this._globalCursor = new GlobalCursor();
 
         this.loadPersistentStates();
+    }
+
+    getGlobalCursor(): GlobalCursor {
+        return this._globalCursor;
     }
 
     private loadPersistentStates() {
@@ -84,7 +118,12 @@ export class GuiMessageBroker {
         }
     }
 
-    subscribeToEvent<T extends GuiEvent>(event: T, callback: (payload: GuiEventPayloads[T]) => void) {
+    subscribeToEvent<T extends Exclude<GuiEvent, keyof GuiEventPayloads>>(event: T, callback: () => void): () => void;
+    subscribeToEvent<T extends keyof GuiEventPayloads>(
+        event: T,
+        callback: (payload: GuiEventPayloads[T]) => void
+    ): () => void;
+    subscribeToEvent<T extends GuiEvent>(event: T, callback: (payload?: any) => void): () => void {
         const eventListeners = this._eventListeners.get(event) || new Set();
         eventListeners.add(callback);
         this._eventListeners.set(event, eventListeners);
@@ -94,7 +133,9 @@ export class GuiMessageBroker {
         };
     }
 
-    publishEvent<T extends GuiEvent>(event: T, payload: GuiEventPayloads[T]) {
+    publishEvent<T extends Exclude<GuiEvent, keyof GuiEventPayloads>>(event: T): void;
+    publishEvent<T extends keyof GuiEventPayloads>(event: T, payload: GuiEventPayloads[T]): void;
+    publishEvent<T extends GuiEvent>(event: T, payload?: any): void {
         const eventListeners = this._eventListeners.get(event);
         if (eventListeners) {
             eventListeners.forEach((callback) => callback({ ...payload }));

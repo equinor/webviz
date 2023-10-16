@@ -2,7 +2,7 @@ import { ErrorInfo } from "react";
 
 import { cloneDeep } from "lodash";
 
-import { BroadcastChannel, BroadcastChannelsDef } from "./Broadcaster";
+import { BroadcastChannel, BroadcastChannelsDef, InputBroadcastChannelDef } from "./Broadcaster";
 import { InitialSettings } from "./InitialSettings";
 import { ImportState, Module, ModuleFC } from "./Module";
 import { ModuleContext } from "./ModuleContext";
@@ -31,18 +31,24 @@ export class ModuleInstance<StateType extends StateBaseType> {
     private _importStateSubscribers: Set<() => void>;
     private _moduleInstanceStateSubscribers: Set<(moduleInstanceState: ModuleInstanceState) => void>;
     private _syncedSettingsSubscribers: Set<(syncedSettings: SyncSettingKey[]) => void>;
+    private _inputChannelSubscribers: Record<string, Set<(channel: BroadcastChannel | null) => void>>;
+    private _inputChannelsSubscribers: Set<() => void>;
     private _titleChangeSubscribers: Set<(title: string) => void>;
     private _broadcastChannels: Record<string, BroadcastChannel>;
     private _cachedDefaultState: StateType | null;
     private _cachedStateStoreOptions?: StateOptions<StateType>;
     private _initialSettings: InitialSettings | null;
     private _statusController: ModuleInstanceStatusControllerInternal;
+    private _inputChannelDefs: InputBroadcastChannelDef[];
+    private _inputChannels: Record<string, BroadcastChannel> = {};
+    private _workbench: Workbench;
 
     constructor(
         module: Module<StateType>,
         instanceNumber: number,
         broadcastChannelsDef: BroadcastChannelsDef,
-        workbench: Workbench
+        workbench: Workbench,
+        inputChannelDefs: InputBroadcastChannelDef[]
     ) {
         this._id = `${module.getName()}-${instanceNumber}`;
         this._title = module.getDefaultTitle();
@@ -55,11 +61,16 @@ export class ModuleInstance<StateType extends StateBaseType> {
         this._syncedSettingsSubscribers = new Set();
         this._moduleInstanceStateSubscribers = new Set();
         this._titleChangeSubscribers = new Set();
+        this._inputChannelSubscribers = {};
+        this._inputChannelsSubscribers = new Set();
         this._moduleInstanceState = ModuleInstanceState.INITIALIZING;
         this._fatalError = null;
         this._cachedDefaultState = null;
         this._initialSettings = null;
         this._statusController = new ModuleInstanceStatusControllerInternal();
+        this._inputChannelDefs = inputChannelDefs;
+        this._inputChannels = {};
+        this._workbench = workbench;
 
         this._broadcastChannels = {} as Record<string, BroadcastChannel>;
 
@@ -70,9 +81,45 @@ export class ModuleInstance<StateType extends StateBaseType> {
                 const enrichedChannelName = `${this._id} - ${channelName as string}`;
                 this._broadcastChannels[channelName] = workbench
                     .getBroadcaster()
-                    .registerChannel(enrichedChannelName, broadcastChannelsDef[channelName as string], this._id);
+                    .registerChannel(
+                        enrichedChannelName,
+                        channelName,
+                        broadcastChannelsDef[channelName as string],
+                        this._id
+                    );
             });
         }
+    }
+
+    getInputChannelDefs(): InputBroadcastChannelDef[] {
+        return this._inputChannelDefs;
+    }
+
+    setInputChannel(inputName: string, channelName: string): void {
+        const channel = this._workbench.getBroadcaster().getChannel(channelName);
+        if (!channel) {
+            throw new Error(`Channel '${channelName}' does not exist on module '${this._title}'`);
+        }
+        this._inputChannels[inputName] = channel;
+        this.notifySubscribersAboutInputChannelChange(inputName);
+        this.notifySubscribersAboutInputChannelsChange();
+    }
+
+    removeInputChannel(inputName: string): void {
+        delete this._inputChannels[inputName];
+        this.notifySubscribersAboutInputChannelChange(inputName);
+        this.notifySubscribersAboutInputChannelsChange();
+    }
+
+    getInputChannel(inputName: string): BroadcastChannel | null {
+        if (!this._inputChannels[inputName]) {
+            return null;
+        }
+        return this._inputChannels[inputName];
+    }
+
+    getInputChannels(): Record<string, BroadcastChannel> {
+        return this._inputChannels;
     }
 
     getBroadcastChannel(channelName: string): BroadcastChannel {
@@ -81,6 +128,14 @@ export class ModuleInstance<StateType extends StateBaseType> {
         }
 
         return this._broadcastChannels[channelName];
+    }
+
+    getBroadcastChannels(): Record<string, BroadcastChannel> {
+        return this._broadcastChannels;
+    }
+
+    hasBroadcastChannels(): boolean {
+        return Object.keys(this._broadcastChannels).length > 0;
     }
 
     setDefaultState(defaultState: StateType, options?: StateOptions<StateType>): void {
@@ -121,6 +176,31 @@ export class ModuleInstance<StateType extends StateBaseType> {
 
         return () => {
             this._syncedSettingsSubscribers.delete(cb);
+        };
+    }
+
+    subscribeToInputChannelsChange(cb: () => void): () => void {
+        this._inputChannelsSubscribers.add(cb);
+
+        // Trigger callback immediately with our current set of keys
+        cb();
+
+        return () => {
+            this._inputChannelsSubscribers.delete(cb);
+        };
+    }
+
+    subscribeToInputChannelChange(inputName: string, cb: (channel: BroadcastChannel | null) => void): () => void {
+        if (!this._inputChannelSubscribers[inputName]) {
+            this._inputChannelSubscribers[inputName] = new Set();
+        }
+
+        this._inputChannelSubscribers[inputName].add(cb);
+
+        cb(this.getInputChannel(inputName));
+
+        return () => {
+            this._inputChannelSubscribers[inputName].delete(cb);
         };
     }
 
@@ -201,6 +281,21 @@ export class ModuleInstance<StateType extends StateBaseType> {
     notifySubscribersAboutSyncedSettingKeysChange(): void {
         this._syncedSettingsSubscribers.forEach((subscriber) => {
             subscriber(this._syncedSettingKeys);
+        });
+    }
+
+    notifySubscribersAboutInputChannelsChange(): void {
+        this._inputChannelsSubscribers.forEach((subscriber) => {
+            subscriber();
+        });
+    }
+
+    notifySubscribersAboutInputChannelChange(inputName: string): void {
+        if (!this._inputChannelSubscribers[inputName]) {
+            return;
+        }
+        this._inputChannelSubscribers[inputName].forEach((subscriber) => {
+            subscriber(this.getInputChannel(inputName));
         });
     }
 

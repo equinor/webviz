@@ -7,3 +7,5 @@ ModuleRegistry.registerModule<State>({
     defaultTitle: "My Module",
     description: "My module description",
 });
+
+ModuleRegistry.registerModule<State>({ moduleName: "MyModule", defaultTitle: "My Module" });
