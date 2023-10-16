@@ -5,6 +5,7 @@ import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { Parameter, ParameterIdent, ParameterType } from "@framework/EnsembleParameters";
 import { EnsembleSet } from "@framework/EnsembleSet";
 import { ModuleFCProps } from "@framework/Module";
+import { useSettingsStatusWriter } from "@framework/StatusWriter";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { MultiEnsembleSelect } from "@framework/components/MultiEnsembleSelect";
 import { ParameterListFilter } from "@framework/components/ParameterListFilter";
@@ -39,6 +40,7 @@ import {
     VisualizationModeEnumToStringMapping,
 } from "./state";
 import { EnsembleVectorListsHelper } from "./utils/ensemblesVectorListHelper";
+import { makeDisplayStringFromStringArray } from "./utils/stringUtils";
 
 enum StatisticsType {
     INDIVIDUAL = "Individual",
@@ -47,6 +49,7 @@ enum StatisticsType {
 
 export function settings({ moduleContext, workbenchSession }: ModuleFCProps<State>) {
     const ensembleSet = useEnsembleSet(workbenchSession);
+    const statusWriter = useSettingsStatusWriter(moduleContext);
 
     // Store state/values
     const [resampleFrequency, setResamplingFrequency] = moduleContext.useStoreState("resamplingFrequency");
@@ -125,19 +128,34 @@ export function settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
         setStatisticsType(computedStatisticsType);
     }
 
+    // Set warning for selected vectors not existing in a selected ensemble
+    for (const ensembleIdent of selectedEnsembleIdents) {
+        const nonExistingVectors = selectedVectorNames.filter(
+            (vector) => !ensembleVectorListsHelper.isVectorInEnsemble(ensembleIdent, vector)
+        );
+        if (nonExistingVectors.length === 0) {
+            continue;
+        }
+
+        const ensembleStr = ensembleSet.findEnsemble(ensembleIdent)?.getDisplayName() ?? ensembleIdent.toString();
+        statusWriter.addWarning(
+            `Vector ${makeDisplayStringFromStringArray(nonExistingVectors)} does not exist in ensemble ${ensembleStr}`
+        );
+    }
+
     React.useEffect(
         function propagateVectorSpecsToView() {
             const newVectorSpecifications: VectorSpec[] = [];
-            for (const ensemble of selectedEnsembleIdents) {
+            for (const ensembleIdent of selectedEnsembleIdents) {
                 for (const vector of selectedVectorNames) {
-                    if (!ensembleVectorListsHelper.isVectorInEnsemble(ensemble, vector)) {
+                    if (!ensembleVectorListsHelper.isVectorInEnsemble(ensembleIdent, vector)) {
                         continue;
                     }
 
                     newVectorSpecifications.push({
-                        ensembleIdent: ensemble,
+                        ensembleIdent: ensembleIdent,
                         vectorName: vector,
-                        hasHistoricalVector: ensembleVectorListsHelper.hasHistoricalVector(ensemble, vector),
+                        hasHistoricalVector: ensembleVectorListsHelper.hasHistoricalVector(ensembleIdent, vector),
                     });
                 }
             }
