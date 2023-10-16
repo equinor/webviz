@@ -62,10 +62,10 @@ export function useViewStatusWriter(moduleContext: ModuleContext<any>): ViewStat
     return statusWriter.current;
 }
 
-export function useSettingsStatusWriter(moduleContext: ModuleContext<any>): SettingsStatusWriter {
+export function useSettingsStatusWriter(moduleContext: ModuleContext<any>): ViewStatusWriter {
     const statusController = moduleContext.getStatusController();
 
-    const statusWriter = React.useRef<SettingsStatusWriter>(new SettingsStatusWriter(statusController));
+    const statusWriter = React.useRef<ViewStatusWriter>(new ViewStatusWriter(statusController));
 
     statusController.clearMessages(StatusSource.Settings);
     statusController.incrementReportedComponentRenderCount(StatusSource.Settings);
