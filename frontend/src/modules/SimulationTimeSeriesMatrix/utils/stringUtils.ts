@@ -4,9 +4,8 @@
  * Example: ["a", "b", "c"] -> "a, b and c"
  */
 export function makeDisplayStringFromStringArray(stringArray: string[]): string {
-    return stringArray.length === 0
-        ? ""
-        : stringArray.length === 1
-        ? stringArray[0]
-        : stringArray.slice(0, -1).join(", ") + " and " + stringArray[stringArray.length - 1];
+    if (stringArray.length === 0) return "";
+    if (stringArray.length === 1) return stringArray[0];
+
+    return stringArray.slice(0, -1).join(", ") + " and " + stringArray[stringArray.length - 1];
 }
