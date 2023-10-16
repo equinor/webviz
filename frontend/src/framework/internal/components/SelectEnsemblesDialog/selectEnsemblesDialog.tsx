@@ -259,7 +259,7 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                                             onChange={handleKeepCasesSwitchChange}
                                         />
                                     </Label>
-                                    <Label position="right" text="My cases" title="Show only cases that I created">
+                                    <Label position="right" text="My cases" title="Show only my cases">
                                         <Switch
                                             checked={casesFilteringOptions.onlyMyCases}
                                             onChange={handleCasesByMeChange}
@@ -311,7 +311,7 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                     </div>
                     <div className="flex flex-col flex-grow gap-4 p-4">
                         <Label text="Selected Ensembles">
-                            <table className="w-full border border-collapse table-fixed  text-sm">
+                            <table className="w-full border border-collapse table-fixed text-sm">
                                 <thead>
                                     <tr>
                                         <th className="min-w-1/2 text-left p-2 bg-slate-300">Case</th>
