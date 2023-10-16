@@ -2,6 +2,7 @@ import React from "react";
 
 import { CaseInfo_api, EnsembleInfo_api } from "@api";
 import { apiService } from "@framework/ApiService";
+import { useAuthProvider } from "@framework/internal/providers/AuthProvider";
 import { ApiStateWrapper } from "@lib/components/ApiStateWrapper";
 import { Button } from "@lib/components/Button";
 import { CircularProgress } from "@lib/components/CircularProgress";
@@ -10,11 +11,15 @@ import { Dropdown } from "@lib/components/Dropdown";
 import { IconButton } from "@lib/components/IconButton";
 import { Label } from "@lib/components/Label";
 import { Select } from "@lib/components/Select";
+import { Switch } from "@lib/components/Switch";
+import { TableSelect, TableSelectOption } from "@lib/components/TableSelect";
 import { useValidState } from "@lib/hooks/useValidState";
 import { Add, Check, Remove } from "@mui/icons-material";
 import { useQuery } from "@tanstack/react-query";
 
 import { isEqual } from "lodash";
+
+import { UserAvatar } from "./private-components/userAvatar";
 
 export type EnsembleItem = {
     caseUuid: string;
@@ -30,9 +35,22 @@ export type SelectEnsemblesDialogProps = {
 const STALE_TIME = 0;
 const CACHE_TIME = 5 * 60 * 1000;
 
+interface CaseFilterSettings {
+    keep: boolean;
+    onlyMyCases: boolean;
+    users: string[];
+}
+
 export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (props) => {
     const [confirmCancel, setConfirmCancel] = React.useState<boolean>(false);
     const [newlySelectedEnsembles, setNewlySelectedEnsembles] = React.useState<EnsembleItem[]>([]);
+    const [casesFilteringOptions, setCasesFilteringOptions] = React.useState<CaseFilterSettings>({
+        keep: true,
+        onlyMyCases: false,
+        users: [],
+    });
+
+    const { userInfo } = useAuthProvider();
 
     React.useLayoutEffect(() => {
         setNewlySelectedEnsembles(props.selectedEnsembles);
@@ -149,8 +167,40 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
         return !isEqual(props.selectedEnsembles, newlySelectedEnsembles);
     }
 
+    function handleKeepCasesSwitchChange(e: React.ChangeEvent<HTMLInputElement>) {
+        setCasesFilteringOptions((prev) => ({ ...prev, keep: e.target.checked }));
+    }
+
+    function handleCasesByMeChange(e: React.ChangeEvent<HTMLInputElement>) {
+        setCasesFilteringOptions((prev) => ({ ...prev, onlyMyCases: e.target.checked }));
+    }
+
+    function filterCases(cases: CaseInfo_api[] | undefined): CaseInfo_api[] | undefined {
+        if (!cases) {
+            return cases;
+        }
+        let filteredCases = cases;
+        if (casesFilteringOptions.keep) {
+            filteredCases = filteredCases.filter((c) => c.status === "keep");
+        }
+        if (casesFilteringOptions.onlyMyCases) {
+            filteredCases = filteredCases.filter((c) => c.user === userInfo?.username.replace("@equinor.com", ""));
+        } else if (casesFilteringOptions.users.length > 0) {
+            filteredCases = filteredCases.filter((c) => casesFilteringOptions.users.includes(c.user));
+        }
+        return filteredCases;
+    }
+
     const fieldOpts = fieldsQuery.data?.map((f) => ({ value: f.field_identifier, label: f.field_identifier })) ?? [];
-    const caseOpts = casesQuery.data?.map((c) => ({ value: c.uuid, label: c.name })) ?? [];
+    const caseOpts: TableSelectOption[] =
+        filterCases(casesQuery.data)?.map((el) => ({
+            id: el.uuid,
+            values: [
+                { label: el.name },
+                { label: el.user, adornment: <UserAvatar userId={el.user} /> },
+                { label: el.status },
+            ],
+        })) ?? [];
     const ensembleOpts =
         ensemblesQuery.data?.map((e) => ({ value: e.name, label: `${e.name}  (${e.realization_count} reals)` })) ?? [];
 
@@ -164,6 +214,7 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                 title="Select ensembles"
                 modal
                 width={"75%"}
+                minWidth={800}
                 actions={
                     <div className="flex gap-4">
                         <Button onClick={handleClose} color="danger" disabled={!checkIfAnyChanges()}>
@@ -198,7 +249,25 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                                 errorComponent={<div className="text-red-500">Error loading cases</div>}
                                 loadingComponent={<CircularProgress />}
                             >
-                                <Select
+                                <div className="flex justify-end gap-4 items-center">
+                                    <span className="flex-grow text-sm text-slate-500">
+                                        Select from {caseOpts.length} cases
+                                    </span>
+                                    <Label position="right" text="Keep" title="Show only cases marked as keep">
+                                        <Switch
+                                            checked={casesFilteringOptions.keep}
+                                            onChange={handleKeepCasesSwitchChange}
+                                        />
+                                    </Label>
+                                    <Label position="right" text="My cases" title="Show only my cases">
+                                        <Switch
+                                            checked={casesFilteringOptions.onlyMyCases}
+                                            onChange={handleCasesByMeChange}
+                                        />
+                                    </Label>
+                                </div>
+                                <TableSelect
+                                    headerLabels={["Name", "Author", "Status"]}
                                     options={caseOpts}
                                     value={[selectedCaseId]}
                                     onChange={handleCaseChanged}
@@ -206,6 +275,7 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                                     size={5}
                                     width={400}
                                     filter
+                                    columnSizesInPercent={[60, 20, 20]}
                                 />
                             </ApiStateWrapper>
                         </Label>
@@ -241,7 +311,7 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                     </div>
                     <div className="flex flex-col flex-grow gap-4 p-4">
                         <Label text="Selected Ensembles">
-                            <table className="w-full border border-collapse table-fixed">
+                            <table className="w-full border border-collapse table-fixed text-sm">
                                 <thead>
                                     <tr>
                                         <th className="min-w-1/2 text-left p-2 bg-slate-300">Case</th>
@@ -277,6 +347,7 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                                                         handleRemoveEnsemble(item.caseUuid, item.ensembleName)
                                                     }
                                                     color="danger"
+                                                    title="Remove ensemble from selection"
                                                 >
                                                     <Remove fontSize="small" />
                                                 </IconButton>{" "}

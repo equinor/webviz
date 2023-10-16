@@ -7,11 +7,12 @@ import { v4 } from "uuid";
 
 export type LabelProps = {
     text: string;
+    title?: string;
     children: React.ReactElement;
     wrapperClassName?: string;
     labelClassName?: string;
     synced?: boolean;
-    position?: "above" | "left";
+    position?: "above" | "left" | "right";
 };
 
 export const Label: React.FC<LabelProps> = (props) => {
@@ -22,7 +23,9 @@ export const Label: React.FC<LabelProps> = (props) => {
             className={resolveClassNames(props.wrapperClassName ?? "", {
                 "flex flex-col": props.position === "above" && props.position === undefined,
                 "flex flex-row items-center gap-4": props.position === "left",
+                "flex items-center flex-row-reverse gap-4": props.position === "right",
             })}
+            title={props.title}
         >
             <label
                 className={resolveClassNames(
@@ -46,7 +49,9 @@ export const Label: React.FC<LabelProps> = (props) => {
                 )}
                 {props.text}
             </label>
-            <div className={resolveClassNames({ "flex-grow": props.position === "left" })}>
+            <div
+                className={resolveClassNames({ "flex-grow": props.position === "left" || props.position === "right" })}
+            >
                 {props.children.props.id ? props.children : React.cloneElement(props.children, { id: id.current })}
             </div>
         </div>
