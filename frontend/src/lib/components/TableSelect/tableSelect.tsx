@@ -1,31 +1,33 @@
 import React, { Key } from "react";
 
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-import { getTextWidth } from "@lib/utils/textSize";
+
+import { isEqual } from "lodash";
 
 import { BaseComponent, BaseComponentProps } from "../BaseComponent";
 import { Input } from "../Input";
 import { Virtualization } from "../Virtualization";
 import { withDefaults } from "../_component-utils/components";
 
-export type SelectOption = {
-    value: string;
-    icon?: React.ReactNode;
-    label: string;
+export type TableSelectOption = {
+    id: string;
+    values: { label: string; adornment?: React.ReactNode }[];
     disabled?: boolean;
 };
 
-export type SelectProps = {
+export type TableSelectProps = {
     id?: string;
     wrapperId?: string;
-    options: SelectOption[];
+    headerLabels: string[];
+    options: TableSelectOption[];
     value?: string[];
-    onChange?: (values: string[]) => void;
+    onChange?: (ids: string[]) => void;
     placeholder?: string;
     filter?: boolean;
     size?: number;
     multiple?: boolean;
     width?: string | number;
+    columnSizesInPercent?: number[];
 } & BaseComponentProps;
 
 const defaultProps = {
@@ -37,15 +39,26 @@ const defaultProps = {
 
 const noMatchingOptionsText = "No matching options";
 
-export const Select = withDefaults<SelectProps>()(defaultProps, (props) => {
-    const [filter, setFilter] = React.useState<string>("");
+export const TableSelect = withDefaults<TableSelectProps>()(defaultProps, (props) => {
+    const [prevHeaderLabels, setPrevHeaderLabels] = React.useState<string[]>(props.headerLabels);
+    const [filters, setFilters] = React.useState<string[]>(props.headerLabels.map(() => ""));
     const [hasFocus, setHasFocus] = React.useState<boolean>(false);
     const [selected, setSelected] = React.useState<string[]>([]);
     const [keysPressed, setKeysPressed] = React.useState<Key[]>([]);
     const [startIndex, setStartIndex] = React.useState<number>(0);
     const [lastShiftIndex, setLastShiftIndex] = React.useState<number>(-1);
     const [currentIndex, setCurrentIndex] = React.useState<number>(0);
-    const [minWidth, setMinWidth] = React.useState<number>(0);
+
+    if (!isEqual(prevHeaderLabels, props.headerLabels)) {
+        setPrevHeaderLabels(props.headerLabels);
+        setFilters(props.headerLabels.map(() => ""));
+    }
+
+    if (props.columnSizesInPercent && props.columnSizesInPercent.reduce((a, b) => a + b, 0) !== 100) {
+        throw new Error("Column sizes must add up to 100");
+    }
+
+    const columnSizesPerc = props.columnSizesInPercent ?? props.headerLabels.map(() => 100 / props.headerLabels.length);
 
     const ref = React.useRef<HTMLDivElement>(null);
     const noOptionsText = props.placeholder ?? "No options";
@@ -53,30 +66,15 @@ export const Select = withDefaults<SelectProps>()(defaultProps, (props) => {
         if (!props.filter) {
             return props.options;
         }
-        return props.options.filter((option) => option.label.toLowerCase().includes(filter.toLowerCase()));
-    }, [props.options, filter]);
-
-    React.useEffect(() => {
-        let longestOptionWidth = props.options.reduce((prev, current) => {
-            const labelWidth = getTextWidth(current.label, document.body);
-            if (labelWidth > prev) {
-                return labelWidth;
-            }
-            return prev;
-        }, 0);
-
-        if (longestOptionWidth === 0) {
-            if (props.options.length === 0 || filter === "") {
-                longestOptionWidth = getTextWidth(noOptionsText, document.body);
-            } else {
-                longestOptionWidth = getTextWidth(noMatchingOptionsText, document.body);
-            }
-        }
-        setMinWidth(longestOptionWidth + 40);
-    }, [props.options, noOptionsText, filter]);
+        return props.options.filter((option) => {
+            return option.values.every((value, index) => {
+                return value.label.toLowerCase().includes(filters[index].toLowerCase());
+            });
+        });
+    }, [props.options, filters]);
 
     const toggleValue = React.useCallback(
-        (option: SelectOption, index: number) => {
+        (option: TableSelectOption, index: number) => {
             let newSelected = [...selected];
             if (props.multiple) {
                 if (keysPressed.includes("Shift")) {
@@ -85,20 +83,20 @@ export const Select = withDefaults<SelectProps>()(defaultProps, (props) => {
                     newSelected = props.options
                         .slice(start, end + 1)
                         .filter((option) => !option.disabled)
-                        .map((option) => option.value);
+                        .map((option) => option.id);
                 } else if (!option.disabled) {
                     if (keysPressed.includes("Control")) {
-                        if (!selected.includes(option.value)) {
-                            newSelected = [...selected, option.value];
+                        if (!selected.includes(option.id)) {
+                            newSelected = [...selected, option.id];
                         } else {
-                            newSelected = selected.filter((v) => v !== option.value);
+                            newSelected = selected.filter((v) => v !== option.id);
                         }
                     } else {
-                        newSelected = [option.value];
+                        newSelected = [option.id];
                     }
                 }
             } else if (!option.disabled) {
-                newSelected = [option.value];
+                newSelected = [option.id];
             } else {
                 newSelected = [];
             }
@@ -108,7 +106,7 @@ export const Select = withDefaults<SelectProps>()(defaultProps, (props) => {
                 if (props.multiple) {
                     props.onChange(newSelected);
                 } else if (!option.disabled) {
-                    props.onChange([option.value]);
+                    props.onChange([option.id]);
                 } else {
                     props.onChange([]);
                 }
@@ -179,8 +177,12 @@ export const Select = withDefaults<SelectProps>()(defaultProps, (props) => {
         }
     }, [props.value]);
 
-    const handleFilterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setFilter(e.target.value);
+    const handleFilterChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>, index: number) => {
+        setFilters((prev) => {
+            const newFilters = [...prev];
+            prev[index] = e.target.value;
+            return newFilters;
+        });
         if (ref.current) {
             ref.current.scrollTop = 0;
         }
@@ -195,16 +197,29 @@ export const Select = withDefaults<SelectProps>()(defaultProps, (props) => {
                     "pointer-events-none": props.disabled,
                     "opacity-30": props.disabled,
                 })}
-                style={{ width: props.width, minWidth: props.width ?? minWidth }}
+                style={{ width: props.width, minWidth: props.width }}
             >
                 {props.filter && (
-                    <Input
-                        id={props.id}
-                        type="text"
-                        value={filter}
-                        onChange={handleFilterChange}
-                        placeholder="Filter options..."
-                    />
+                    <div
+                        className={resolveClassNames("flex", {
+                            "mr-3": filteredOptions.length > props.size,
+                        })}
+                    >
+                        {props.headerLabels.map((headerLabel, index) => (
+                            <div className="box-border" style={{ width: `${columnSizesPerc[index]}%` }}>
+                                {headerLabel}
+                                <br />
+                                <Input
+                                    id={props.id}
+                                    type="text"
+                                    value={filters[index]}
+                                    onChange={(e) => handleFilterChange(e, index)}
+                                    placeholder={`Filter ${headerLabel}...`}
+                                    title={`Filter ${headerLabel}...`}
+                                />
+                            </div>
+                        ))}
+                    </div>
                 )}
                 <div
                     className="overflow-y-auto border border-gray-300 rounded-md w-full bg-white"
@@ -216,29 +231,28 @@ export const Select = withDefaults<SelectProps>()(defaultProps, (props) => {
                 >
                     {filteredOptions.length === 0 && (
                         <div className="p-1 flex items-center text-gray-400 select-none">
-                            {props.options.length === 0 || filter === "" ? noOptionsText : noMatchingOptionsText}
+                            {props.options.length === 0 || filters.some((el) => el !== "")
+                                ? noMatchingOptionsText
+                                : noOptionsText}
                         </div>
                     )}
                     <Virtualization
                         containerRef={ref}
                         items={filteredOptions}
                         itemSize={24}
-                        renderItem={(option, index) => {
+                        renderItem={(option: TableSelectOption, index: number) => {
                             return (
                                 <div
-                                    key={option.value}
+                                    key={option.id}
                                     className={resolveClassNames(
                                         "cursor-pointer",
-                                        "pl-2",
-                                        "pr-2",
                                         "flex",
-                                        "gap-2",
                                         "items-center",
                                         "select-none",
                                         {
-                                            "hover:bg-blue-100": !selected.includes(option.value),
+                                            "hover:bg-blue-100": !selected.includes(option.id),
                                             "bg-blue-600 text-white box-border hover:bg-blue-700": selected.includes(
-                                                option.value
+                                                option.id
                                             ),
                                             "pointer-events-none": option.disabled,
                                             "text-gray-400": option.disabled,
@@ -253,10 +267,25 @@ export const Select = withDefaults<SelectProps>()(defaultProps, (props) => {
                                     }}
                                     style={{ height: 24 }}
                                 >
-                                    {option.icon}
-                                    <span title={option.label} className="min-w-0 text-ellipsis overflow-hidden whitespace-nowrap">
-                                            {option.label}
-                                    </span>
+                                    {option.values.map((value, index) => {
+                                        return (
+                                            <div
+                                                key={index}
+                                                className={resolveClassNames("p-1 flex justify-center", {
+                                                    "border-l": index > 0,
+                                                })}
+                                                style={{ width: `${columnSizesPerc[index]}%` }}
+                                            >
+                                                {value.adornment}
+                                                <span
+                                                    className="min-w-0 text-ellipsis overflow-hidden whitespace-nowrap w-full block"
+                                                    title={value.label}
+                                                >
+                                                    {value.label}
+                                                </span>
+                                            </div>
+                                        );
+                                    })}
                                 </div>
                             );
                         }}
@@ -269,4 +298,4 @@ export const Select = withDefaults<SelectProps>()(defaultProps, (props) => {
     );
 });
 
-Select.displayName = "Select";
+TableSelect.displayName = "TableSelect";

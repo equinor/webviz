@@ -18,7 +18,7 @@ function useUserInfoQuery(
 ): UseQueryResult<GraphUserPhoto_api> {
     return useQuery({
         queryKey: ["getUserInfo", userId],
-        queryFn: () => apiService.graph.userInfo(userId),
+        queryFn: () => apiService.graph.userInfo(`${userId.toUpperCase()}@equinor.com`),
         staleTime: STALE_TIME,
         cacheTime: CACHE_TIME,
         enabled: userId !== "",
@@ -42,5 +42,5 @@ export const UserAvatar: React.FC<UserAvatarProps> = (props) => {
             />
         );
     }
-    return <AccountCircle className="w-5 h-5 mr-1" />;
+    return <span title={props.userId}><AccountCircle className="w-5 h-5 mr-1" /></span>;
 }
