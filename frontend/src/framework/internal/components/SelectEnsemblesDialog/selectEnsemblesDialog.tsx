@@ -13,7 +13,6 @@ import { Label } from "@lib/components/Label";
 import { Select } from "@lib/components/Select";
 import { Switch } from "@lib/components/Switch";
 import { TableSelect, TableSelectOption } from "@lib/components/TableSelect";
-import { TagPicker } from "@lib/components/TagPicker";
 import { useValidState } from "@lib/hooks/useValidState";
 import { Add, Check, Remove } from "@mui/icons-material";
 import { useQuery } from "@tanstack/react-query";

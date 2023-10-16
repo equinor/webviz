@@ -206,7 +206,11 @@ export const TableSelect = withDefaults<TableSelectProps>()(defaultProps, (props
                         })}
                     >
                         {props.headerLabels.map((headerLabel, index) => (
-                            <div className="box-border" style={{ width: `${columnSizesPerc[index]}%` }}>
+                            <div
+                                key={`${headerLabel}-${index}`}
+                                className="box-border"
+                                style={{ width: `${columnSizesPerc[index]}%` }}
+                            >
                                 {headerLabel}
                                 <br />
                                 <Input
