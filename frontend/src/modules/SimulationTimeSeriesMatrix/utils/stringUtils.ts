@@ -3,7 +3,7 @@
  *
  * Example: ["a", "b", "c"] -> "a, b and c"
  */
-export function makeDisplayStringFromStringArray(stringArray: string[]): string {
+export function joinStringArrayToHumanReadableString(stringArray: string[]): string {
     if (stringArray.length === 0) return "";
     if (stringArray.length === 1) return stringArray[0];
 

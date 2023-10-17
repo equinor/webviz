@@ -40,7 +40,7 @@ import {
     VisualizationModeEnumToStringMapping,
 } from "./state";
 import { EnsembleVectorListsHelper } from "./utils/ensemblesVectorListHelper";
-import { makeDisplayStringFromStringArray } from "./utils/stringUtils";
+import { joinStringArrayToHumanReadableString } from "./utils/stringUtils";
 
 enum StatisticsType {
     INDIVIDUAL = "Individual",
@@ -138,9 +138,8 @@ export function settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
         }
 
         const ensembleStr = ensembleSet.findEnsemble(ensembleIdent)?.getDisplayName() ?? ensembleIdent.toString();
-        statusWriter.addWarning(
-            `Vector ${makeDisplayStringFromStringArray(nonExistingVectors)} does not exist in ensemble ${ensembleStr}`
-        );
+        const vectorArrayStr = joinStringArrayToHumanReadableString(nonExistingVectors);
+        statusWriter.addWarning(`Vector ${vectorArrayStr} does not exist in ensemble ${ensembleStr}`);
     }
 
     React.useEffect(

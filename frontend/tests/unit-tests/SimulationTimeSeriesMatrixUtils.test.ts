@@ -1,11 +1,10 @@
-// import { scaleHexColorLightness } from "@modules/SimulationTimeSeriesMatrix/utils/colorUtils";
-import { makeDisplayStringFromStringArray } from "@modules/SimulationTimeSeriesMatrix/utils/stringUtils";
+import { joinStringArrayToHumanReadableString } from "@modules/SimulationTimeSeriesMatrix/utils/stringUtils";
 
 describe("Test of utility functions for SimulationTimeSeriesMatrix module", () => {
-    test("Test make display string from string array", () => {
-        expect(makeDisplayStringFromStringArray(["a", "b", "c"])).toBe("a, b and c");
-        expect(makeDisplayStringFromStringArray(["a"])).toBe("a");
-        expect(makeDisplayStringFromStringArray([])).toBe("");
-        expect(makeDisplayStringFromStringArray(["a", "b"])).toBe("a and b");
+    test("Test join string array to human readable string", () => {
+        expect(joinStringArrayToHumanReadableString(["a", "b", "c"])).toBe("a, b and c");
+        expect(joinStringArrayToHumanReadableString(["a"])).toBe("a");
+        expect(joinStringArrayToHumanReadableString([])).toBe("");
+        expect(joinStringArrayToHumanReadableString(["a", "b"])).toBe("a and b");
     });
 });
