@@ -1,8 +1,9 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
+import type { Body_get_fence } from '../models/Body_get_fence';
 import type { SeismicCubeMeta } from '../models/SeismicCubeMeta';
-import type { SeismicIntersectionData } from '../models/SeismicIntersectionData';
+import type { SeismicFenceData } from '../models/SeismicFenceData';
 
 import type { CancelablePromise } from '../core/CancelablePromise';
 import type { BaseHttpRequest } from '../core/BaseHttpRequest';
@@ -38,14 +39,15 @@ export class SeismicService {
 
     /**
      * Get Fence
-     * Get a fence of seismic data from a set of coordinates.
+     * Get a fence of seismic data from a set of (x, y) coordinates.
      * @param caseUuid Sumo case uuid
      * @param ensembleName Ensemble name
      * @param realizationNum Realization number
      * @param seismicAttribute Seismic cube attribute
      * @param timeOrIntervalStr Timestamp or timestep
      * @param observed Observed or simulated
-     * @returns SeismicIntersectionData Successful Response
+     * @param requestBody
+     * @returns SeismicFenceData Successful Response
      * @throws ApiError
      */
     public getFence(
@@ -55,7 +57,8 @@ export class SeismicService {
         seismicAttribute: string,
         timeOrIntervalStr: string,
         observed: boolean,
-    ): CancelablePromise<SeismicIntersectionData> {
+        requestBody: Body_get_fence,
+    ): CancelablePromise<SeismicFenceData> {
         return this.httpRequest.request({
             method: 'POST',
             url: '/seismic/fence/',
@@ -67,6 +70,8 @@ export class SeismicService {
                 'time_or_interval_str': timeOrIntervalStr,
                 'observed': observed,
             },
+            body: requestBody,
+            mediaType: 'application/json',
             errors: {
                 422: `Validation Error`,
             },

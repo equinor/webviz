@@ -3,17 +3,31 @@ import os
 from typing import List
 import json
 
+
 import numpy as np
 from numpy.typing import NDArray
-from requests_toolbelt.multipart.decoder import MultipartDecoder
+from requests_toolbelt.multipart.decoder import MultipartDecoder, BodyPart
 import httpx
 
 from ..sumo_access.seismic_types import VdsHandle
-from .types import VdsMetaData
+from .response_types import VdsMetadata, VdsFenceMetadata
+from .request_types import (
+    VdsCoordinates,
+    VdsCoordinateSystem,
+    VdsInterpolation,
+    VdsFenceRequest,
+    VdsRequestedResource,
+    VdsMetadataRequest,
+)
 
 VDS_HOST_ADDRESS = os.getenv("WEBVIZ_VDS_HOST_ADDRESS")
 
 LOGGER = logging.getLogger(__name__)
+
+
+def bytes_to_ndarray_float32(bytes_data: bytes, shape: List[int]) -> NDArray[np.float32]:
+    """Convert bytes to numpy ndarray"""
+    return np.ndarray(shape, "<f4", bytes_data)
 
 
 class VdsAccess:
@@ -28,15 +42,20 @@ class VdsAccess:
         self.sas: str = sumo_seismic_vds_handle.sas_token
         self.vds_url: str = sumo_seismic_vds_handle.vds_url
 
-    async def _query(self, endpoint: str, params: dict) -> httpx.Response:
+        self._interpolation = VdsInterpolation.LINEAR
+
+    # async def _query(self, endpoint: str, request: VdsRequestedResource) -> httpx.Response:
+    async def _query(endpoint: str, request: VdsRequestedResource) -> httpx.Response:
         """Query the service"""
-        params.update({"url": self.vds_url, "sas": self.sas})
+
+        # request.sas = self.sas
+        # request.vds = self.vds_url
 
         async with httpx.AsyncClient() as client:
             response = await client.post(
                 f"{VDS_HOST_ADDRESS}/{endpoint}",
                 headers={"Content-Type": "application/json"},
-                content=json.dumps(params),
+                content=json.dumps(request.request_parameters()),
                 timeout=60,
             )
 
@@ -45,69 +64,82 @@ class VdsAccess:
 
         return response
 
-    async def get_slice(self, direction: str, lineno: int) -> NDArray[np.float32]:
-        """Gets a slice in i,j,k direction from the VDS service"""
+    # async def get_slice(self, direction: str, lineno: int) -> NDArray[np.float32]:
+    #     """Gets a slice in i,j,k direction from the VDS service"""
 
-        endpoint = "slice"
-        params = {
-            "direction": direction,
-            "lineno": lineno,
-            "vds": self.vds_url,
-            "sas": self.sas,
-        }
-        response = await self._query(endpoint, params)
+    #     endpoint = "slice"
+    #     params = {
+    #         "direction": direction,
+    #         "lineno": lineno,
+    #         "vds": self.vds_url,
+    #         "sas": self.sas,
+    #     }
+    #     response = await self._query(endpoint, params)
 
-        # Use MultipartDecoder with httpx's Response content and headers
-        decoder = MultipartDecoder(content=response.content, content_type=response.headers["Content-Type"])
-        parts = decoder.parts
+    #     # Use MultipartDecoder with httpx's Response content and headers
+    #     decoder = MultipartDecoder(content=response.content, content_type=response.headers["Content-Type"])
+    #     parts = decoder.parts
 
-        metadata = json.loads(parts[0].content)
-        shape = (metadata["y"]["samples"], metadata["x"]["samples"])
-        if metadata["format"] != "<f4":
-            raise ValueError(f"Expected float32, got {metadata['format']}")
-        byte_array = parts[1].content
-        values_np = bytes_to_ndarray_float22(byte_array, list(shape))
-        return values_np
+    #     metadata = json.loads(parts[0].content)
+    #     shape = (metadata["y"]["samples"], metadata["x"]["samples"])
+    #     if metadata["format"] != "<f4":
+    #         raise ValueError(f"Expected float32, got {metadata['format']}")
+    #     byte_array = parts[1].content
+    #     values_np = bytes_to_ndarray_float32(byte_array, list(shape))
+    #     return values_np
 
-    async def get_fence(self, coordinates: List[List[float]], coordinate_system: str = "cdp") -> NDArray[np.float32]:
-        """Gets traces along an arbitrary path of x,y coordinates."""
+    async def get_fence(
+        self,
+        coordinates: VdsCoordinates,
+        coordinate_system: VdsCoordinateSystem = VdsCoordinateSystem.CDP
+        # ) -> NDArray[np.float32]:
+    ) -> np.ndarray:
+        """
+        Gets traces along an arbitrary path of (x, y) coordinates
+
+        Returns:
+        """
+
         endpoint = "fence"
+        hard_coded_fill_value = -999
 
-        params = {
-            "coordinateSystem": coordinate_system,
-            "coordinates": coordinates,
-            "vds": self.vds_url,
-            "sas": self.sas,
-            "interpolation": "linear",
-            "fillValue": -999,
-        }
+        fence_request = VdsFenceRequest(
+            vds=self.vds_url,
+            sas=self.sas,
+            coordinate_system=coordinate_system,
+            coordinates=coordinates,
+            interpolation=self._interpolation,
+            fill_value=hard_coded_fill_value,
+        )
 
-        response = await self._query(endpoint, params)
+        response = await self._query(endpoint, fence_request)
 
         # Use MultipartDecoder with httpx's Response content and headers
         decoder = MultipartDecoder(content=response.content, content_type=response.headers["Content-Type"])
         parts = decoder.parts
 
-        metadata = json.loads(parts[0].content)
+        # Validate parts from decoded response - metadata, data
+        if len(parts) != 2 or not parts[0].content or not parts[1].content:
+            raise ValueError(f"Expected two parts, got {len(parts)}")
+
+        # Expect each part in parts tuple to be BodyPart
+        if not isinstance(parts[0], BodyPart) or not isinstance(parts[1], BodyPart):
+            raise ValueError(f"Expected parts to be BodyPart, got {type(parts[0])}, {type(parts[1])}")
+
+        metadata = VdsFenceMetadata(**parts[0].content)
         byte_array = parts[1].content
-        if metadata["format"] != "<f4":
-            raise ValueError(f"Expected float32, got {metadata['format']}")
-        values_np = bytes_to_ndarray_float22(byte_array, list(metadata["shape"]))
+
+        if metadata.format != "<f4":
+            raise ValueError(f"Expected float32, got {metadata.format}")
+        values_np = bytes_to_ndarray_float32(byte_array, metadata.shape)
         return values_np
 
-    async def get_metadata(self) -> VdsMetaData:
+    async def get_metadata(self) -> VdsMetadata:
         """Gets metadata from the cube"""
         endpoint = "metadata"
 
-        params = {
-            "vds": self.vds_url,
-            "sas": self.sas,
-        }
-        response = await self._query(endpoint, params)
+        metadata_request = VdsMetadataRequest(vds=self.vds_url, sas=self.sas)
+        response = await self._query(endpoint, metadata_request)
+
         metadata = response.json()
-        return VdsMetaData(**metadata)
-
-
-def bytes_to_ndarray_float22(bytes_data: bytes, shape: List[int]) -> NDArray[np.float32]:
-    """Convert bytes to numpy ndarray"""
-    return np.ndarray(shape, "<f4", bytes_data)
+        return VdsMetadata(**metadata)
