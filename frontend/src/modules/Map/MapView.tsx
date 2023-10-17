@@ -29,9 +29,9 @@ export function MapView(props: ModuleFCProps<MapState>) {
             {hasError ? (
                 <ContentError>Error loading surface data</ContentError>
             ) : isLoading ? (
-                <ContentInfo>Is loading surface data</ContentInfo>
+                <ContentInfo>Loading surface data</ContentInfo>
             ) : !surfData ? (
-                <ContentInfo>No surface data - make valid selection</ContentInfo>
+                <ContentInfo>Could not find surface data for the current selection</ContentInfo>
             ) : (
                 <SubsurfaceViewer
                     id="deckgl"
