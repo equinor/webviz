@@ -3,7 +3,7 @@ import React from "react";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { Close } from "@mui/icons-material";
 
-import _ from "lodash";
+import _ from "lodash-es";
 
 import { Suggestions } from "./private-components/suggestions";
 import { Tag } from "./private-components/tag";

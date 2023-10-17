@@ -5,7 +5,7 @@ import { ColorPalette } from "@lib/utils/ColorPalette";
 import { ColorScale, ColorScaleGradientType, ColorScaleOptions, ColorScaleType } from "@lib/utils/ColorScale";
 import { ColorSet } from "@lib/utils/ColorSet";
 
-import { isEqual } from "lodash";
+import { isEqual } from "lodash-es";
 
 export enum ColorPaletteType {
     Categorical = "categorical",

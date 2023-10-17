@@ -1,5 +1,8 @@
 import { EnsembleParameters, Parameter, ParameterIdent, ParameterType } from "@framework/EnsembleParameters";
 import { MinMax } from "@lib/utils/MinMax";
+import { expect } from "@playwright/test";
+
+import { test } from "./_baseFixtures";
 
 // prettier-ignore
 const PARAM_ARR: Parameter[] = [
@@ -12,8 +15,7 @@ const PARAM_ARR: Parameter[] = [
     {type: ParameterType.DISCRETE, name: "dparam_B", groupName: null, description: "descB", isConstant: false, realizations: [1,2,3], values: ["A", "B", "C"]},
 ];
 
-
-describe("EnsembleParameters tests", () => {
+test.describe("EnsembleParameters tests", () => {
     test("Get list of parameter idents", () => {
         const ensParams = new EnsembleParameters(PARAM_ARR);
         {
@@ -98,8 +100,7 @@ describe("EnsembleParameters tests", () => {
     });
 });
 
-
-describe("ParameterIdent tests", () => {
+test.describe("ParameterIdent tests", () => {
     test("Conversion to/from string", () => {
         {
             const identStr = ParameterIdent.fromNameAndGroup("aName", "aGroup").toString();

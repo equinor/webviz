@@ -1,6 +1,6 @@
 import React from "react";
 
-import { isEqual } from "lodash";
+import { isEqual } from "lodash-es";
 
 import { Broadcaster } from "./Broadcaster";
 import { EnsembleIdent } from "./EnsembleIdent";

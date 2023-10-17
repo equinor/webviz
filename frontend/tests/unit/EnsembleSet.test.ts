@@ -1,6 +1,9 @@
 import { Ensemble } from "@framework/Ensemble";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { EnsembleSet } from "@framework/EnsembleSet";
+import { expect } from "@playwright/test";
+
+import { test } from "./_baseFixtures";
 
 const ensembleArr = [
     new Ensemble("11111111-aaaa-4444-aaaa-aaaaaaaaaaaa", "case1", "ens1", [], [], null),
@@ -8,7 +11,7 @@ const ensembleArr = [
     new Ensemble("22222222-aaaa-4444-aaaa-aaaaaaaaaaaa", "case2", "ens1", [], [], null),
 ];
 
-describe("EnsembleSet tests", () => {
+test.describe("EnsembleSet tests", () => {
     test("access empty EnsembleSet", () => {
         const ensSet = new EnsembleSet([]);
         expect(ensSet.hasAnyEnsembles()).toBe(false);

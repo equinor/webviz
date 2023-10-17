@@ -17,7 +17,7 @@ import { useValidState } from "@lib/hooks/useValidState";
 import { Add, Check, Remove } from "@mui/icons-material";
 import { useQuery } from "@tanstack/react-query";
 
-import { isEqual } from "lodash";
+import { isEqual } from "lodash-es";
 
 import { UserAvatar } from "./private-components/userAvatar";
 

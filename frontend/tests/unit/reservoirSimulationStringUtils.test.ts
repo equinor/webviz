@@ -1,6 +1,9 @@
 import { simulationUnitReformat, simulationVectorDescription } from "@modules/_shared/reservoirSimulationStringUtils";
+import { expect } from "@playwright/test";
 
-describe("Reservoir Simulation string utils tests", () => {
+import { test } from "./_baseFixtures";
+
+test.describe("Reservoir Simulation string utils tests", () => {
     test("Test simulationVectorDescription", () => {
         expect(simulationVectorDescription("INVALID_VECTOR")).toEqual("INVALID_VECTOR");
         expect(simulationVectorDescription("WOPR:A1")).toEqual("Oil Production Rate, well A1");

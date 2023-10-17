@@ -24,7 +24,7 @@ import { useValidState } from "@lib/hooks/useValidState";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { FilterAlt } from "@mui/icons-material";
 
-import { isEqual } from "lodash";
+import { isEqual } from "lodash-es";
 
 import { useVectorListQueries } from "./queryHooks";
 import {

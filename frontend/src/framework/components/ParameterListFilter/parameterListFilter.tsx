@@ -5,7 +5,7 @@ import { SmartNodeSelector, SmartNodeSelectorSelection } from "@lib/components/S
 import { TreeDataNode } from "@lib/components/SmartNodeSelector";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
-import { isEqual } from "lodash";
+import { isEqual } from "lodash-es";
 
 // Icons placed here due to limitation of jest for testing utils (cannot import svg)
 import checkIcon from "./private-assets/check.svg";

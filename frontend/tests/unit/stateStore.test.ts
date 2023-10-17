@@ -1,4 +1,7 @@
 import { StateStore } from "@framework/StateStore";
+import { expect } from "@playwright/test";
+
+import { test } from "./_baseFixtures";
 
 type TestState = {
     value: string;
@@ -14,8 +17,8 @@ type TestState = {
     }[];
 };
 
-describe("StateStore", () => {
-    it("Can set and get value", () => {
+test.describe("StateStore", () => {
+    test("Can set and get value", () => {
         const store = new StateStore<TestState>({
             value: "first",
             count: 0,

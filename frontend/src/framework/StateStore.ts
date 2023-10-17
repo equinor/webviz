@@ -1,6 +1,6 @@
 import React from "react";
 
-import { isEqual } from "lodash";
+import { isEqual } from "lodash-es";
 
 export type StateBaseType = object;
 export type StateOptions<T extends StateBaseType> = {

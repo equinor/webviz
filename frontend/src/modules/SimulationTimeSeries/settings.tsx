@@ -15,7 +15,7 @@ import { Input } from "@lib/components/Input";
 import { Label } from "@lib/components/Label";
 import { Select, SelectOption } from "@lib/components/Select";
 
-import { sortBy, sortedUniq } from "lodash";
+import { sortBy, sortedUniq } from "lodash-es";
 
 import { useVectorListQuery } from "./queryHooks";
 import { State } from "./state";

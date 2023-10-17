@@ -6,6 +6,9 @@ import {
     getParametersMatchingSelectedNodes,
 } from "@framework/components/ParameterListFilter/private-utils/smartNodeSelectorUtils";
 import { TreeDataNode } from "@lib/components/SmartNodeSelector";
+import { expect } from "@playwright/test";
+
+import { test } from "./_baseFixtures";
 
 const CONTINUOUS_PARAMETER: ContinuousParameter = {
     type: ParameterType.CONTINUOUS,
@@ -39,7 +42,7 @@ const DISCRETE_PARAMETER: DiscreteParameter = {
     values: [10, 11, 12],
 };
 
-describe("Test of utility functions for ParameterListFilter", () => {
+test.describe("Test of utility functions for ParameterListFilter", () => {
     test("Test create and add node", () => {
         const myTestList: TreeDataNode[] = [];
         const newNode = createAndAddNode(myTestList, "my node");
