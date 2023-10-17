@@ -3,7 +3,6 @@ import React, { useEffect } from "react";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { ModuleFCProps } from "@framework/Module";
 import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
-import { useFirstEnsembleInEnsembleSet } from "@framework/WorkbenchSession";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { fixupEnsembleIdent, maybeAssignFirstSyncedEnsemble } from "@framework/utils/ensembleUiHelpers";
 import { ApiStateWrapper } from "@lib/components/ApiStateWrapper";

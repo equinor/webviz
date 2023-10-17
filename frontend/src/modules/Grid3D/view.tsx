@@ -125,7 +125,7 @@ export function view({ moduleContext, workbenchSettings, workbenchSession }: Mod
     return (
         <div className="relative w-full h-full flex flex-col">
             <SubsurfaceViewer
-                id="deckgl"
+                id={viewIds.view}
                 bounds={[bounds[0], bounds[1], bounds[3], bounds[4]]}
                 colorTables={colorTables}
                 layers={newLayers}
@@ -144,7 +144,7 @@ export function view({ moduleContext, workbenchSettings, workbenchSession }: Mod
                 }}
             >
                 {" "}
-                <ViewAnnotation id={"annotation"}>
+                <ViewAnnotation id={viewIds.annotation}>
                     <ContinuousLegend
                         colorTables={colorTables}
                         colorName="Continuous"
