@@ -1,12 +1,32 @@
+import { WellBoreTrajectory_api } from "@api";
+import { ContinuousLegend } from "@emerson-eps/color-tables";
 import { ModuleFCProps } from "@framework/Module";
 import { useFirstEnsembleInEnsembleSet } from "@framework/WorkbenchSession";
+import { ColorScaleGradientType } from "@lib/utils/ColorScale";
+import {
+    createContinuousColorScaleForMap,
+    createNorthArrowLayer,
+    createWellBoreHeaderLayer,
+    createWellboreTrajectoryLayer,
+} from "@modules/SubsurfaceMap/_utils";
 import SubsurfaceViewer from "@webviz/subsurface-viewer";
+import { ViewAnnotation } from "@webviz/subsurface-viewer/dist/components/ViewAnnotation";
 
-import { useGridParameter, useGridSurface, useStatisticalGridParameter } from "./queryHooks";
+import {
+    useGetFieldWellsTrajectories,
+    useGridParameter,
+    useGridSurface,
+    useStatisticalGridParameter,
+} from "./queryHooks";
 import state from "./state";
 
 //-----------------------------------------------------------------------------------------------------------
-export function view({ moduleContext, workbenchSession }: ModuleFCProps<state>) {
+export function view({ moduleContext, workbenchSettings, workbenchSession }: ModuleFCProps<state>) {
+    const myInstanceIdStr = moduleContext.getInstanceIdString();
+    const viewIds = {
+        view: `${myInstanceIdStr}--view`,
+        annotation: `${myInstanceIdStr}--annotation`,
+    };
     // From Workbench
     const firstEnsemble = useFirstEnsembleInEnsembleSet(workbenchSession);
 
@@ -15,84 +35,126 @@ export function view({ moduleContext, workbenchSession }: ModuleFCProps<state>) 
     const parameterName = moduleContext.useStoreValue("parameterName");
     const realizations = moduleContext.useStoreValue("realizations");
     const useStatistics = moduleContext.useStoreValue("useStatistics");
+    const selectedWellUuids = moduleContext.useStoreValue("selectedWellUuids");
+    const colorScale = workbenchSettings.useContinuousColorScale({
+        gradientType: ColorScaleGradientType.Sequential,
+    });
+    const colorTables = createContinuousColorScaleForMap(colorScale);
 
     //Queries
     const firstCaseUuid = firstEnsemble?.getCaseUuid() ?? null;
     const firstEnsembleName = firstEnsemble?.getEnsembleName() ?? null;
-    const gridSurfaceQuery = useGridSurface(firstCaseUuid, firstEnsembleName, gridName, realizations ? realizations[0] : "0");
-    const gridParameterQuery = useGridParameter(firstCaseUuid, firstEnsembleName, gridName, parameterName, realizations ? realizations[0] : "0", useStatistics);
-    const statisticalGridParameterQuery = useStatisticalGridParameter(firstCaseUuid, firstEnsembleName, gridName, parameterName, realizations, useStatistics);
+    const gridSurfaceQuery = useGridSurface(
+        firstCaseUuid,
+        firstEnsembleName,
+        gridName,
+        realizations ? realizations[0] : "0"
+    );
+    const gridParameterQuery = useGridParameter(
+        firstCaseUuid,
+        firstEnsembleName,
+        gridName,
+        parameterName,
+        realizations ? realizations[0] : "0",
+        useStatistics
+    );
+    const statisticalGridParameterQuery = useStatisticalGridParameter(
+        firstCaseUuid,
+        firstEnsembleName,
+        gridName,
+        parameterName,
+        realizations,
+        useStatistics
+    );
+    const wellTrajectoriesQuery = useGetFieldWellsTrajectories(firstCaseUuid ?? undefined);
+    const bounds = gridSurfaceQuery?.data
+        ? [
+              gridSurfaceQuery.data.xmin,
+              gridSurfaceQuery.data.ymin,
+              gridSurfaceQuery.data.zmin,
+              gridSurfaceQuery.data.xmax,
+              gridSurfaceQuery.data.ymax,
+              gridSurfaceQuery.data.zmax,
+          ]
+        : [0, 0, 0, 100, 100, 100];
 
+    const newLayers: Record<string, unknown>[] = [
+        createNorthArrowLayer(),
+        {
+            "@@type": "AxesLayer",
+            id: "axes-layer",
+            bounds: bounds,
+        },
+    ];
 
-    const bounds = gridSurfaceQuery?.data ? [gridSurfaceQuery.data.xmin, gridSurfaceQuery.data.ymin, -gridSurfaceQuery.data.zmax, gridSurfaceQuery.data.xmax, gridSurfaceQuery.data.ymax, -gridSurfaceQuery.data.zmin] : [0, 0, 0, 100, 100, 100];
-
-    if (!gridSurfaceQuery.data) { return (<div>no grid geometry</div>) }
-
-    let propertiesArray: number[] = []
+    let propertiesArray: number[] = [0, 1];
     if (!useStatistics && gridParameterQuery?.data) {
-        propertiesArray = Array.from(gridParameterQuery.data)
-    }
-    else if (useStatistics && statisticalGridParameterQuery?.data) {
-        propertiesArray = Array.from(statisticalGridParameterQuery.data)
+        propertiesArray = Array.from(gridParameterQuery.data);
+    } else if (useStatistics && statisticalGridParameterQuery?.data) {
+        propertiesArray = Array.from(statisticalGridParameterQuery.data);
     }
 
-    const points: Float32Array = gridSurfaceQuery.data.pointsFloat32Arr;
-    const polys: Uint32Array = gridSurfaceQuery.data.polysUint32Arr;
+    if (gridSurfaceQuery.data) {
+        const points: Float32Array = gridSurfaceQuery.data.pointsFloat32Arr;
+        const polys: Uint32Array = gridSurfaceQuery.data.polysUint32Arr;
+        newLayers.push({
+            "@@type": "Grid3DLayer",
+            id: "grid3d-layer",
+            material: false,
+            pointsData: Array.from(points),
+            polysData: Array.from(polys),
+            propertiesData: propertiesArray,
+            colorMapName: "Continuous",
+            ZIncreasingDownwards: false,
+        });
+    }
 
+    if (wellTrajectoriesQuery.data) {
+        const wellTrajectories: WellBoreTrajectory_api[] = wellTrajectoriesQuery.data.filter((well) =>
+            selectedWellUuids.includes(well.wellbore_uuid)
+        );
+        const wellTrajectoryLayer: Record<string, unknown> = createWellboreTrajectoryLayer(wellTrajectories);
+        const wellBoreHeaderLayer: Record<string, unknown> = createWellBoreHeaderLayer(wellTrajectories);
+        newLayers.push(wellTrajectoryLayer);
+        newLayers.push(wellBoreHeaderLayer);
+    }
+    const propertyRange = [
+        propertiesArray.reduce((a, b) => Math.min(a, b)),
+        propertiesArray.reduce((a, b) => Math.max(a, b)),
+    ];
     return (
         <div className="relative w-full h-full flex flex-col">
-
             <SubsurfaceViewer
                 id="deckgl"
                 bounds={[bounds[0], bounds[1], bounds[3], bounds[4]]}
-                colorTables={[
-                    {
-                        name: "viridis (Seq)",
-                        colors: [
-                            [0.0, 68, 1, 84],
-                            [0.05263157894736842, 71, 20, 102],
-                            [0.10526315789473684, 71, 37, 117],
-                            [0.15789473684210525, 69, 54, 129],
-                            [0.21052631578947367, 63, 69, 135],
-                            [0.2631578947368421, 57, 85, 139],
-                            [0.3157894736842105, 50, 98, 141],
-                            [0.3684210526315789, 44, 112, 142],
-                            [0.42105263157894735, 39, 124, 142],
-                            [0.47368421052631576, 34, 137, 141],
-                            [0.5263157894736842, 31, 150, 139],
-                            [0.5789473684210527, 31, 163, 134],
-                            [0.631578947368421, 41, 175, 127],
-                            [0.6842105263157894, 61, 187, 116],
-                            [0.7368421052631579, 85, 198, 102],
-                            [0.7894736842105263, 116, 208, 84],
-                            [0.8421052631578947, 149, 215, 63],
-                            [0.894736842105263, 186, 222, 39],
-                            [0.9473684210526315, 220, 226, 24],
-                            [1.0, 253, 231, 36],
-                        ],
-                        "discrete": false,
-                    }]}
-                layers={[
-                    {
-                        "@@type": "AxesLayer",
-                        "id": "axes-layer",
-                        "bounds": bounds
-                    },
-                    {
-                        "@@type": "Grid3DLayer",
-                        id: "grid3d-layer",
-                        material: false,
-                        pointsData: Array.from(points),
-                        polysData: Array.from(polys),
-                        propertiesData: propertiesArray,
-                        colorMapName: "viridis (Seq)",
-                    },
-                ]}
+                colorTables={colorTables}
+                layers={newLayers}
+                toolbar={{ visible: true }}
                 views={{
-                    "layout": [1, 1],
-                    "viewports": [{ "id": "view_1", "show3D": true }],
+                    layout: [1, 1],
+                    showLabel: false,
+                    viewports: [
+                        {
+                            id: "view_1",
+                            isSync: true,
+                            show3D: true,
+                            layerIds: newLayers.map((layer) => layer.id) as string[],
+                        },
+                    ],
                 }}
-            />
+            >
+                {" "}
+                <ViewAnnotation id={"annotation"}>
+                    <ContinuousLegend
+                        colorTables={colorTables}
+                        colorName="Continuous"
+                        min={propertyRange ? propertyRange[0] : undefined}
+                        max={propertyRange ? propertyRange[1] : undefined}
+                        cssLegendStyles={{ bottom: "0", right: "0" }}
+                    />
+                </ViewAnnotation>
+            </SubsurfaceViewer>
+
             <div className="absolute bottom-5 right-5 italic text-pink-400">{moduleContext.getInstanceIdString()}</div>
         </div>
     );
