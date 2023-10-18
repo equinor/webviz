@@ -1,63 +1,53 @@
 import React from "react";
 
-import {
-    BroadcastChannel,
-    BroadcastChannelKeyCategory,
-    Broadcaster,
-    checkChannelCompatibility,
-} from "@framework/Broadcaster";
+import { BroadcastChannel, Broadcaster } from "@framework/Broadcaster";
+import { ModuleContext } from "@framework/ModuleContext";
 import { BaseComponentProps } from "@lib/components/BaseComponent";
 import { Dropdown } from "@lib/components/Dropdown";
 
 export type ChannelSelectProps = {
-    initialChannel?: string;
-    channelKeyCategory?: BroadcastChannelKeyCategory;
-    onChange?: (channel: string) => void;
+    moduleContext: ModuleContext<any>;
+    channelName: string;
     className?: string;
     broadcaster: Broadcaster;
 } & BaseComponentProps;
 
 export const ChannelSelect: React.FC<ChannelSelectProps> = (props) => {
-    const { channelKeyCategory, onChange, broadcaster, ...rest } = props;
-    const [channel, setChannel] = React.useState<string>(props.initialChannel ?? "");
+    const { moduleContext, broadcaster, ...rest } = props;
+
+    const channel = moduleContext.useInputChannel(props.channelName);
     const [channels, setChannels] = React.useState<string[]>([]);
 
     React.useEffect(() => {
         const handleChannelsChanged = (channels: BroadcastChannel[]) => {
-            setChannels(
-                channels
-                    .filter(
-                        (el) =>
-                            !props.channelKeyCategory ||
-                            checkChannelCompatibility(el.getDataDef(), props.channelKeyCategory)
-                    )
-                    .map((el) => el.getName())
-            );
+            const inputChannel = moduleContext.getInputChannel(props.channelName);
 
-            if (channels.length === 0 || !channels.find((el) => el.getName() === channel)) {
-                setChannel("");
-                if (onChange) {
-                    onChange("");
+            const acceptedKeys = moduleContext.getInputChannelDef(props.channelName)?.keyCategories;
+
+            const validChannels = Object.values(channels).filter((channel) => {
+                if (!acceptedKeys || acceptedKeys.some((key) => channel.getDataDef().key === key)) {
+                    if (!inputChannel || inputChannel.getDataDef().key === channel.getDataDef().key) {
+                        return true;
+                    }
+                    return false;
                 }
-            }
+            });
+            setChannels(validChannels.map((el) => el.getName()));
         };
 
         const unsubscribeFunc = broadcaster.subscribeToChannelsChanges(handleChannelsChanged);
 
         return unsubscribeFunc;
-    }, [channelKeyCategory, onChange, broadcaster]);
+    }, [moduleContext, broadcaster, props.channelName]);
 
-    const handleChannelsChanged = (channel: string) => {
-        setChannel(channel);
-        if (onChange) {
-            onChange(channel);
-        }
+    const handleChannelsChanged = (channelName: string) => {
+        moduleContext.setInputChannel(props.channelName, channelName);
     };
 
     return (
         <Dropdown
             options={channels.map((el) => ({ label: el, value: el }))}
-            value={channel}
+            value={channel?.getName()}
             onChange={handleChannelsChanged}
             {...rest}
         />

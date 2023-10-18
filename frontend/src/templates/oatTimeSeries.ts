@@ -20,7 +20,7 @@ const template: Template = {
             syncedSettings: [SyncSettingKey.ENSEMBLE],
         },
         {
-            instanceRef: "TorandoChartInstance",
+            instanceRef: "TornadoChartInstance",
             moduleName: "TornadoChart",
             layout: {
                 relHeight: 0.5,
@@ -30,7 +30,7 @@ const template: Template = {
             },
             syncedSettings: [SyncSettingKey.ENSEMBLE],
             dataChannelsToInitialSettingsMapping: {
-                responseChannelName: {
+                response: {
                     listensToInstanceRef: "MainTimeSeriesSensitivityInstance",
                     keyCategory: BroadcastChannelKeyCategory.Realization,
                     channelName: BroadcastChannelNames.Realization_Value,
@@ -48,7 +48,7 @@ const template: Template = {
             },
             syncedSettings: [SyncSettingKey.ENSEMBLE],
             dataChannelsToInitialSettingsMapping: {
-                channelNameX: {
+                channelX: {
                     listensToInstanceRef: "MainTimeSeriesSensitivityInstance",
                     keyCategory: BroadcastChannelKeyCategory.Realization,
                     channelName: BroadcastChannelNames.Realization_Value,

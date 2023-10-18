@@ -171,7 +171,7 @@ export class Tag extends React.Component<TagProps> {
                     <button
                         key={"TagPreviousButton_" + index}
                         className={resolveClassNames(
-                            "appearance-none bg-cyan-600 border-0 cursor-pointer inline-block outline-none p-0 m-0 h-1/2 w-4 disabled:opacity-30 disabled:cursor-default",
+                            "appearance-none bg-cyan-600 border-0 cursor-pointer inline-block outline-none p-0 m-0 h-1/2 w-4 disabled:opacity-30 disabled:cursor-default text-xs",
                             { "hover:bg-cyan-500": position !== 0 }
                         )}
                         disabled={position === 0}
@@ -186,12 +186,12 @@ export class Tag extends React.Component<TagProps> {
                             e.stopPropagation();
                         }}
                     >
-                        <ExpandLess fontSize="small" className="text-white" />
+                        <ExpandLess fontSize="inherit" className="text-white" />
                     </button>
                     <button
                         key={"TagNextButton_" + index}
                         className={resolveClassNames(
-                            "appearance-none bg-cyan-600 border-0 cursor-pointer inline-block outline-none p-0 m-0 h-1/2 w-4 disabled:opacity-30 disabled:cursor-default",
+                            "appearance-none bg-cyan-600 border-0 cursor-pointer inline-block outline-none p-0 m-0 h-1/2 w-4 disabled:opacity-30 disabled:cursor-default text-xs",
                             { "hover:bg-cyan-500": position !== subgroups.length - 1 }
                         )}
                         disabled={position === subgroups.length - 1}
@@ -206,7 +206,7 @@ export class Tag extends React.Component<TagProps> {
                             e.stopPropagation();
                         }}
                     >
-                        <ExpandMore fontSize="small" className="text-white" />
+                        <ExpandMore fontSize="inherit" className="text-white" />
                     </button>
                 </div>
             );
@@ -407,11 +407,11 @@ export class Tag extends React.Component<TagProps> {
                     <button
                         type="button"
                         key={"TagRemoveButton_" + index}
-                        className="absolute -right-2 -top-2 bg-cyan-600 border border-white rounded-full cursor-pointer w-4 h-4 p-0 flex items-center justify-center hover:bg-cyan-500 z-8"
+                        className="absolute -right-2 -top-2 bg-cyan-600 border border-white rounded-full cursor-pointer w-4 h-4 p-0 flex items-center justify-center hover:bg-cyan-500 z-8 text-sm"
                         title="Remove"
                         onClick={(e): void => removeTag(e, index)}
                     >
-                        <Close fontSize="small" className="text-white" />
+                        <Close fontSize="inherit" className="text-white" />
                     </button>
                 )}
                 {this.createBrowseButtons(treeNodeSelection, index)}

@@ -1,6 +1,7 @@
 import React, { ChangeEvent } from "react";
 
 import { BroadcastChannelKeyCategory } from "@framework/Broadcaster";
+import { applyInitialSettingsToState } from "@framework/InitialSettings";
 import { ModuleFCProps } from "@framework/Module";
 import { ChannelSelect } from "@framework/components/ChannelSelect";
 import { Dropdown } from "@lib/components/Dropdown";
@@ -54,33 +55,38 @@ const crossPlottingTypes = [
 
 //-----------------------------------------------------------------------------------------------------------
 export function settings({ moduleContext, workbenchServices, initialSettings }: ModuleFCProps<State>) {
-    const [channelNameX, setChannelNameX] = moduleContext.useStoreState("channelNameX");
-    const [channelNameY, setChannelNameY] = moduleContext.useStoreState("channelNameY");
-    const [channelNameZ, setChannelNameZ] = moduleContext.useStoreState("channelNameZ");
+    const [prevChannelXName, setPrevChannelXName] = React.useState<string | null>(null);
+    const [prevChannelYName, setPrevChannelYName] = React.useState<string | null>(null);
+    const [prevChannelColorName, setPrevChannelColorName] = React.useState<string | null>(null);
+
     const [plotType, setPlotType] = moduleContext.useStoreState("plotType");
     const [numBins, setNumBins] = moduleContext.useStoreState("numBins");
     const [orientation, setOrientation] = moduleContext.useStoreState("orientation");
     const [crossPlottingType, setCrossPlottingType] = React.useState<BroadcastChannelKeyCategory | null>(null);
 
-    initialSettings?.applyToStateOnMount("channelNameX", "string", setChannelNameX);
-    initialSettings?.applyToStateOnMount("channelNameY", "string", setChannelNameY);
-    initialSettings?.applyToStateOnMount("channelNameZ", "string", setChannelNameZ);
-    initialSettings?.applyToStateOnMount("plotType", "string", setPlotType);
-    initialSettings?.applyToStateOnMount("numBins", "number", setNumBins);
-    initialSettings?.applyToStateOnMount("orientation", "string", setOrientation);
-    initialSettings?.applyToStateOnMount("crossPlottingType", "string", setCrossPlottingType);
+    applyInitialSettingsToState(initialSettings, "plotType", "string", setPlotType);
+    applyInitialSettingsToState(initialSettings, "numBins", "number", setNumBins);
+    applyInitialSettingsToState(initialSettings, "orientation", "string", setOrientation);
+    applyInitialSettingsToState(initialSettings, "crossPlottingType", "string", setCrossPlottingType);
 
-    const handleChannelXChanged = (channelName: string) => {
-        setChannelNameX(channelName);
-    };
+    const channelX = moduleContext.useInputChannel("channelX", initialSettings);
+    const channelY = moduleContext.useInputChannel("channelY", initialSettings);
+    const channelColor = moduleContext.useInputChannel("channelColor", initialSettings);
 
-    const handleChannelYChanged = (channelName: string) => {
-        setChannelNameY(channelName);
-    };
+    if (channelX && channelX.getName() !== prevChannelXName && crossPlottingType === null) {
+        setPrevChannelXName(channelX?.getName() ?? null);
+        setCrossPlottingType(channelX?.getDataDef().key ?? null);
+    }
 
-    const handleChannelZChanged = (channelName: string) => {
-        setChannelNameZ(channelName);
-    };
+    if (channelY && channelY?.getName() !== prevChannelYName && crossPlottingType === null) {
+        setPrevChannelYName(channelY?.getName() ?? null);
+        setCrossPlottingType(channelY?.getDataDef().key ?? null);
+    }
+
+    if (channelColor && channelColor?.getName() !== prevChannelColorName && crossPlottingType === null) {
+        setPrevChannelColorName(channelColor?.getName() ?? null);
+        setCrossPlottingType(channelColor?.getDataDef().key ?? null);
+    }
 
     const handlePlotTypeChanged = (value: string) => {
         setPlotType(value as PlotType);
@@ -110,9 +116,8 @@ export function settings({ moduleContext, workbenchServices, initialSettings }: 
         content.push(
             <Label text="Data channel X axis" key="data-channel-x-axis">
                 <ChannelSelect
-                    onChange={handleChannelXChanged}
-                    channelKeyCategory={crossPlottingType}
-                    initialChannel={channelNameX || undefined}
+                    moduleContext={moduleContext}
+                    channelName="channelX"
                     broadcaster={workbenchServices.getBroadcaster()}
                 />
             </Label>
@@ -122,9 +127,8 @@ export function settings({ moduleContext, workbenchServices, initialSettings }: 
             content.push(
                 <Label text="Data channel Y axis" key="data-channel-y-axis">
                     <ChannelSelect
-                        onChange={handleChannelYChanged}
-                        channelKeyCategory={crossPlottingType}
-                        initialChannel={channelNameY || undefined}
+                        moduleContext={moduleContext}
+                        channelName="channelY"
                         broadcaster={workbenchServices.getBroadcaster()}
                     />
                 </Label>
@@ -135,9 +139,8 @@ export function settings({ moduleContext, workbenchServices, initialSettings }: 
             content.push(
                 <Label text="Data channel color mapping" key="data-channel-color-mapping">
                     <ChannelSelect
-                        onChange={handleChannelZChanged}
-                        channelKeyCategory={crossPlottingType}
-                        initialChannel={channelNameZ || undefined}
+                        moduleContext={moduleContext}
+                        channelName="channelColor"
                         broadcaster={workbenchServices.getBroadcaster()}
                     />
                 </Label>

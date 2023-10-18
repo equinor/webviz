@@ -16,7 +16,7 @@ CLIENT_SECRET = os.environ["WEBVIZ_CLIENT_SECRET"]
 SMDA_SUBSCRIPTION_KEY = os.environ["WEBVIZ_SMDA_SUBSCRIPTION_KEY"]
 SMDA_RESOURCE_SCOPE = os.environ["WEBVIZ_SMDA_RESOURCE_SCOPE"]
 SUMO_ENV = os.getenv("WEBVIZ_SUMO_ENV", "dev")
-GRAPH_SCOPES = ["User.Read"]
+GRAPH_SCOPES = ["User.Read", "User.ReadBasic.All"]
 
 RESOURCE_SCOPES_DICT = {
     "sumo": [f"api://{sumo_app_reg[SUMO_ENV]['RESOURCE_ID']}/access_as_user"],

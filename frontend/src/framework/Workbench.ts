@@ -17,7 +17,6 @@ import { WorkbenchSessionPrivate } from "./internal/WorkbenchSessionPrivate";
 
 export enum WorkbenchEvents {
     ModuleInstancesChanged = "ModuleInstancesChanged",
-    FullModuleRerenderRequested = "FullModuleRerenderRequested",
 }
 
 export type LayoutElement = {
@@ -137,14 +136,17 @@ export class Workbench {
         });
     }
 
+    resetModuleInstanceNumbers(): void {
+        this._perModuleRunningInstanceNumber = {};
+    }
+
     clearLayout(): void {
         for (const moduleInstance of this._moduleInstances) {
             this._broadcaster.unregisterAllChannelsForModuleInstance(moduleInstance.getId());
         }
         this._moduleInstances = [];
-        this._perModuleRunningInstanceNumber = {};
         this._layout = [];
-        this.notifySubscribers(WorkbenchEvents.FullModuleRerenderRequested);
+        this.notifySubscribers(WorkbenchEvents.ModuleInstancesChanged);
     }
 
     makeAndAddModuleInstance(moduleName: string, layout: LayoutElement): ModuleInstance<any> {
@@ -165,6 +167,18 @@ export class Workbench {
     }
 
     removeModuleInstance(moduleInstanceId: string): void {
+        const channels = this._broadcaster.getChannelsForModuleInstance(moduleInstanceId);
+
+        for (const channel of channels) {
+            for (const moduleInstance of this._moduleInstances) {
+                for (const [inputChannelName, inputChannel] of Object.entries(moduleInstance.getInputChannels())) {
+                    if (inputChannel === channel) {
+                        moduleInstance.removeInputChannel(inputChannelName);
+                    }
+                }
+            }
+        }
+
         this._broadcaster.unregisterAllChannelsForModuleInstance(moduleInstanceId);
         this._moduleInstances = this._moduleInstances.filter((el) => el.getId() !== moduleInstanceId);
 
@@ -179,7 +193,6 @@ export class Workbench {
 
     setLayout(layout: LayoutElement[]): void {
         this._layout = layout;
-        this.notifySubscribers(WorkbenchEvents.FullModuleRerenderRequested);
 
         const modifiedLayout = layout.map((el) => {
             return { ...el, moduleInstanceId: undefined };

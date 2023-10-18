@@ -4,9 +4,11 @@ import Plot from "react-plotly.js";
 import { Ensemble } from "@framework/Ensemble";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { ModuleFCProps } from "@framework/Module";
+import { useViewStatusWriter } from "@framework/StatusWriter";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { ColorScaleGradientType } from "@lib/utils/ColorScale";
+import { ContentError } from "@modules/_shared/components/ContentMessage";
 
 import { useHistoricalVectorDataQueries, useStatisticalVectorDataQueries, useVectorDataQueries } from "./queryHooks";
 import { GroupBy, State, VisualizationMode } from "./state";
@@ -23,6 +25,7 @@ export const view = ({ moduleContext, workbenchSession, workbenchSettings }: Mod
     const wrapperDivSize = useElementSize(wrapperDivRef);
 
     const ensembleSet = useEnsembleSet(workbenchSession);
+    const statusWriter = useViewStatusWriter(moduleContext);
 
     // Store values
     const vectorSpecifications = moduleContext.useStoreValue("vectorSpecifications");
@@ -64,13 +67,26 @@ export const view = ({ moduleContext, workbenchSession, workbenchSettings }: Mod
         vectorSpecificationsWithHistoricalData?.some((vec) => vec.hasHistoricalVector) ?? false
     );
 
-    const hasQueryError = [
-        ...vectorDataQueries.filter((query) => query.isError),
-        ...vectorStatisticsQueries.filter((query) => query.isError),
-        ...historicalVectorDataQueries.filter((query) => query.isError),
-    ];
-    if (hasQueryError.length > 0) {
-        return <div>One or more query has error state</div>;
+    // Get fetching status from queries
+    const isQueryFetching =
+        vectorDataQueries.some((query) => query.isFetching) ||
+        vectorStatisticsQueries.some((query) => query.isFetching) ||
+        historicalVectorDataQueries.some((query) => query.isFetching);
+
+    statusWriter.setLoading(isQueryFetching);
+
+    // Get error/warning status from queries
+    const hasRealizationsQueryError = vectorDataQueries.some((query) => query.isError);
+    const hasStatisticsQueryError = vectorStatisticsQueries.some((query) => query.isError);
+    const hasHistoricalVectorQueryError = historicalVectorDataQueries.some((query) => query.isError);
+    if (hasRealizationsQueryError) {
+        statusWriter.addError("One or more realization data queries have an error state.");
+    }
+    if (hasStatisticsQueryError) {
+        statusWriter.addError("One or more statistics data queries have an error state.");
+    }
+    if (hasHistoricalVectorQueryError) {
+        statusWriter.addWarning("One or more historical data queries have an error state.");
     }
 
     // Map vector specifications and queries with data
@@ -103,11 +119,24 @@ export const view = ({ moduleContext, workbenchSession, workbenchSettings }: Mod
     // Create parameter color scale helper
     const doColorByParameter =
         colorRealizationsByParameter &&
+        visualizationMode === VisualizationMode.INDIVIDUAL_REALIZATIONS &&
         parameterIdent !== null &&
         selectedEnsembles.some((ensemble) => ensemble.getParameters().hasParameter(parameterIdent));
     const ensemblesParameterColoring = doColorByParameter
         ? new EnsemblesContinuousParameterColoring(selectedEnsembles, parameterIdent, parameterColorScale)
         : null;
+
+    // Set warning for ensembles without selected parameter when coloring is enabled
+    if (doColorByParameter && ensemblesParameterColoring) {
+        const ensemblesWithoutParameter = selectedEnsembles.filter(
+            (ensemble) => !ensemblesParameterColoring.hasParameterForEnsemble(ensemble.getIdent())
+        );
+        for (const ensemble of ensemblesWithoutParameter) {
+            statusWriter.addWarning(
+                `Ensemble ${ensemble.getDisplayName()} does not have parameter ${ensemblesParameterColoring.getParameterDisplayName()}`
+            );
+        }
+    }
 
     // Callback function for ensemble display name
     function makeEnsembleDisplayName(ensembleIdent: EnsembleIdent): string {
@@ -182,16 +211,20 @@ export const view = ({ moduleContext, workbenchSession, workbenchSettings }: Mod
         subplotBuilder.addHistoryTraces(loadedVectorSpecificationsAndHistoricalData);
     }
 
-    // TODO: Keep uirevision?
+    const doRenderContentError = hasRealizationsQueryError || hasStatisticsQueryError;
     const plotData = subplotBuilder.createPlotData();
     return (
         <div className="w-full h-full" ref={wrapperDivRef}>
-            <Plot
-                key={plotData.length} // Note: To trigger re-render and remove legends when plotData is empty
-                data={plotData}
-                layout={subplotBuilder.createPlotLayout()}
-                config={{ scrollZoom: true }}
-            />
+            {doRenderContentError ? (
+                <ContentError>One or more queries have an error state.</ContentError>
+            ) : (
+                <Plot
+                    key={plotData.length} // Note: Temporary to trigger re-render and remove legends when plotData is empty
+                    data={plotData}
+                    layout={subplotBuilder.createPlotLayout()}
+                    config={{ scrollZoom: true }}
+                />
+            )}
         </div>
     );
 };

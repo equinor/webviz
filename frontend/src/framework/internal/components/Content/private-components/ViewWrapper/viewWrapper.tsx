@@ -1,11 +1,12 @@
 import React from "react";
 
-import { DrawerContent, GuiEvent, GuiState, useGuiState } from "@framework/GuiMessageBroker";
+import { DrawerContent, GuiEvent, GuiState, useGuiState, useGuiValue } from "@framework/GuiMessageBroker";
 import { ModuleInstance } from "@framework/ModuleInstance";
 import { Workbench } from "@framework/Workbench";
 import { Point, pointDifference, pointRelativeToDomRect, pointerEventToPoint } from "@lib/utils/geometry";
 
 import { Header } from "./private-components/header";
+import { InputChannelNodes } from "./private-components/inputChannelNodeWrapper";
 import { ViewContent } from "./private-components/viewContent";
 
 import { ViewWrapperPlaceholder } from "../viewWrapperPlaceholder";
@@ -34,6 +35,11 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
     );
 
     const guiMessageBroker = props.workbench.getGuiMessageBroker();
+
+    const dataChannelConnectionsLayerVisible = useGuiValue(
+        guiMessageBroker,
+        GuiState.DataChannelConnectionLayerVisible
+    );
 
     const timeRef = React.useRef<number | null>(null);
 
@@ -64,6 +70,9 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
     );
 
     function handleModuleClick() {
+        if (dataChannelConnectionsLayerVisible) {
+            return;
+        }
         if (settingsPanelWidth <= 5) {
             setSettingsPanelWidth(20);
         }
@@ -86,6 +95,13 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
             return;
         }
         handleModuleClick();
+    }
+
+    function handleInputChannelsClick(e: React.PointerEvent<HTMLDivElement>): void {
+        guiMessageBroker.publishEvent(GuiEvent.EditDataChannelConnectionsForModuleInstanceRequest, {
+            moduleInstanceId: props.moduleInstance.getId(),
+        });
+        e.stopPropagation();
     }
 
     const showAsActive =
@@ -122,9 +138,16 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
                         isDragged={props.isDragged}
                         onPointerDown={handleHeaderPointerDown}
                         onRemoveClick={handleRemoveClick}
+                        onInputChannelsClick={handleInputChannelsClick}
+                        guiMessageBroker={guiMessageBroker}
                     />
                     <div className="flex-grow overflow-auto h-0" onClick={handleModuleClick}>
                         <ViewContent workbench={props.workbench} moduleInstance={props.moduleInstance} />
+                        <InputChannelNodes
+                            forwardedRef={ref}
+                            moduleInstance={props.moduleInstance}
+                            workbench={props.workbench}
+                        />
                     </div>
                 </div>
             </div>

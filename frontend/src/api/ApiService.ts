@@ -7,6 +7,7 @@ import { AxiosHttpRequest } from './core/AxiosHttpRequest';
 
 import { DefaultService } from './services/DefaultService';
 import { ExploreService } from './services/ExploreService';
+import { GraphService } from './services/GraphService';
 import { GridService } from './services/GridService';
 import { InplaceVolumetricsService } from './services/InplaceVolumetricsService';
 import { ParametersService } from './services/ParametersService';
@@ -24,6 +25,7 @@ export class ApiService {
 
     public readonly default: DefaultService;
     public readonly explore: ExploreService;
+    public readonly graph: GraphService;
     public readonly grid: GridService;
     public readonly inplaceVolumetrics: InplaceVolumetricsService;
     public readonly parameters: ParametersService;
@@ -52,6 +54,7 @@ export class ApiService {
 
         this.default = new DefaultService(this.request);
         this.explore = new ExploreService(this.request);
+        this.graph = new GraphService(this.request);
         this.grid = new GridService(this.request);
         this.inplaceVolumetrics = new InplaceVolumetricsService(this.request);
         this.parameters = new ParametersService(this.request);

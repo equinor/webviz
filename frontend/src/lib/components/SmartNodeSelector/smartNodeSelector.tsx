@@ -1677,13 +1677,13 @@ export class SmartNodeSelectorComponent extends React.Component<SmartNodeSelecto
                     </ul>
                     <div className="absolute right-2 top-1/2 -mt-3">
                         <button
-                            className="appearance-none bg-cyan-600 rounded-full w-6 h-6 flex items-center justify-center hover:bg-cyan-500 text-white cursor-pointer disabled:hidden"
+                            className="appearance-none bg-cyan-600 rounded-full w-6 h-6 flex items-center justify-center hover:bg-cyan-500 text-white cursor-pointer disabled:hidden text-sm"
                             type="button"
                             title="Clear all"
                             onClick={this.clearAllTags}
                             disabled={this.countTags() <= 1 && this.hasLastEmptyTag()}
                         >
-                            <Close fontSize="small" />
+                            <Close fontSize="inherit" />
                         </button>
                     </div>
                     {showSuggestions && (
