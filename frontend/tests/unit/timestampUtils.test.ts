@@ -1,11 +1,10 @@
 import { hasTime, hasTimezone } from "@framework/utils/timestampUtils";
 import { isoStringToTimestampUtcMs } from "@framework/utils/timestampUtils";
 import { timestampUtcMsToCompactIsoString, timestampUtcMsToIsoString } from "@framework/utils/timestampUtils";
-import { expect } from "@playwright/test";
 
-import { test } from "./_baseFixtures";
+import { describe, expect, test } from "vitest";
 
-test.describe("TimestampUtils tests", () => {
+describe("TimestampUtils tests", () => {
     test("Check if ISO 8601 string contains time", () => {
         expect(hasTime("2018-01-01")).toBe(false);
         expect(hasTime("2018-01-01T")).toBe(false);

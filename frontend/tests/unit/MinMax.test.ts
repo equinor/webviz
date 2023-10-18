@@ -1,9 +1,8 @@
 import { MinMax } from "@lib/utils/MinMax";
-import { expect } from "@playwright/test";
 
-import { test } from "./_baseFixtures";
+import { describe, expect, test } from "vitest";
 
-test.describe("MinMax tests", () => {
+describe("MinMax tests", () => {
     test("Check validity of MinMax instances", () => {
         expect(new MinMax(0, 1).isValid()).toBe(true);
         expect(new MinMax(-1, -1).isValid()).toBe(true);

@@ -18,10 +18,6 @@
     },
     "include": [
         "src",
-        "tests",
-        "tests/unit/state-store.test.ts",
-        "tests/unit/.playwright.config.ts",
-        "tests/e2e/.playwright.config.ts"
     ],
     "references": [{ "path": "./tsconfig.node.json" }],
     "extends": "./aliases.json"

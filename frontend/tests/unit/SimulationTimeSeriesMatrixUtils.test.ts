@@ -1,10 +1,9 @@
 import { scaleHexColorLightness } from "@modules/SimulationTimeSeriesMatrix/utils/colorUtils";
 import { joinStringArrayToHumanReadableString } from "@modules/SimulationTimeSeriesMatrix/utils/stringUtils";
-import { expect } from "@playwright/test";
 
-import { test } from "./_baseFixtures";
+import { describe, expect, test } from "vitest";
 
-test.describe("Test of utility functions for SimulationTimeSeriesMatrix module", () => {
+describe("Test of utility functions for SimulationTimeSeriesMatrix module", () => {
     test("Test join string array to human readable string", () => {
         expect(joinStringArrayToHumanReadableString(["a", "b", "c"])).toBe("a, b and c");
         expect(joinStringArrayToHumanReadableString(["a"])).toBe("a");
