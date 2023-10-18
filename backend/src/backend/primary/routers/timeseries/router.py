@@ -28,6 +28,7 @@ async def get_vector_list(
     """Get list of all vectors in a given Sumo ensemble, excluding any historical vectors"""
 
     access = await SummaryAccess.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
+    print("SUMO ACCESS TOKEN: " + authenticated_user.get_sumo_access_token())
     vector_info_arr = await access.get_available_vectors()
 
     ret_arr: list[schemas.VectorDescription] = [

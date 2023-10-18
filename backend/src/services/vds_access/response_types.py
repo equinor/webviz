@@ -19,7 +19,10 @@ class VdsArray:
     """
     Definition of a response array from vds-slice
 
-    A data format is represented by numpy-style formatcodes.
+    format: A data format is represented by numpy-style formatcodes.
+    shape: Shape of an array, e.g. [10,50] for a 2D array with 10 rows and 50 columns.
+
+
 
     See: https://github.com/equinor/vds-slice/blob/ab6f39789bf3d3b59a8df14f1c4682d340dc0bf3/internal/core/core.go#L96-L103
     """

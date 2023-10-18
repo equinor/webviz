@@ -42,7 +42,7 @@ class VdsCoordinateSystem(StrEnum):
 @dataclass
 class VdsCoordinates:
     """
-    A list coordinates in the VDS coordinate system, as (x, y) points.
+    A list of coordinates in the VDS coordinate system, as (x, y) points.
 
     Convert coordinates to format for query request parameter - [[x1,y1], [x2,y2], ..., [xn,yn]]
 
@@ -52,7 +52,14 @@ class VdsCoordinates:
     x_points: List[float]
     y_points: List[float]
 
-    def list(self) -> List[float]:
+    def __init__(self, x_points: List[float], y_points: List[float]) -> None:
+        if len(x_points) != len(y_points):
+            raise ValueError("x_points and y_points must be of equal length")
+
+        self.x_points = x_points
+        self.y_points = y_points
+
+    def to_list(self) -> List[float]:
         return [[x, y] for x, y in zip(self.x_points, self.y_points)]
 
 
@@ -101,7 +108,7 @@ class VdsFenceRequest(VdsRequestedResource):
             "vds": self.vds,
             "sas": self.sas,
             "coordinateSystem": self.coordinate_system.value,
-            "coordinates": self.coordinates.list(),
+            "coordinates": self.coordinates.to_list(),
             "interpolation": self.interpolation.value,
             "fillValue": self.fill_value,
         }

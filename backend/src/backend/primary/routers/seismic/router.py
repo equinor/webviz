@@ -5,7 +5,7 @@ from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Body
 
-from src.services.sumo_access.seismic_access import SeismicAccess
+from src.services.sumo_access.seismic_access import SeismicAccess, VdsHandle
 from src.services.vds_access.vds_access import VdsAccess
 from src.services.utils.authenticated_user import AuthenticatedUser
 from src.backend.auth.auth_helper import AuthHelper
@@ -49,14 +49,13 @@ async def get_fence(
     observed: bool = Query(description="Observed or simulated"),
     polyline: schemas.SeismicFencePolyline = Body(alias="seismicFencePolyline", embed=True),
 ) -> schemas.SeismicFenceData:
-    """Get a fence of seismic data from a set of (x, y) coordinates."""
-
+    """Get a fence of seismic data from a polyline defined by a set of (x, y) coordinates in domain coordinate system."""
     # NOTE: This is a post request as cutting plane must be a body parameter. Should the naming be changed from "get_fence" to "post_fence"?
 
     seismic_access = SeismicAccess(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
 
     try:
-        vds_handle = seismic_access.get_vds_handle(
+        vds_handle: VdsHandle = seismic_access.get_vds_handle(
             realization=realization_num,
             seismic_attribute=seismic_attribute,
             time_or_interval_str=time_or_interval_str,
@@ -65,20 +64,25 @@ async def get_fence(
     except ValueError as err:
         raise HTTPException(status_code=404, detail=str(err)) from err
 
-    vds_access = VdsAccess(vds_handle)
+    vds_access = VdsAccess(sas_token=vds_handle.sas_token, vds_url=vds_handle.vds_url)
 
     # Retrieve fence and post as seismic intersection
-    values_float32 = await vds_access.get_fence(
+    fence_traces_ndarray_float32 = await vds_access.get_fence_traces_as_ndarray(
         coordinate_system=VdsCoordinateSystem.CDP,
         coordinates=VdsCoordinates(polyline.x_points, polyline.y_points),
     )
+    if len(fence_traces_ndarray_float32.shape) != 2:
+        raise ValueError(f"Expected fence traces array of 2 dimensions, got {len(fence_traces_ndarray_float32.shape)}")
 
     meta: VdsMetadata = await vds_access.get_metadata()
+    if len(meta.axis) != 3:
+        raise ValueError(f"Expected 3 axes, got {len(meta.axis)}")
+    depth_axis_meta = meta.axis[2]
 
-    # Ensure axis len = 3?
-    z_axis_meta = meta.axis[2]
-
-    # Provide/return the "shape" of the np.ndarray to the frontend
     return schemas.SeismicFenceData(
-        values_base64arr=b64_encode_float_array_as_float32(values_float32), z_axis=z_axis_meta
+        fence_traces_encoded=b64_encode_float_array_as_float32(fence_traces_ndarray_float32),
+        num_traces=fence_traces_ndarray_float32.shape[0],
+        num_trace_samples=fence_traces_ndarray_float32.shape[1],
+        min_height=depth_axis_meta.min,  # TODO: Should this be depth_axis_meta.max?
+        max_height=depth_axis_meta.max,  # TODO: Should this be depth_axis_meta.min?
     )
