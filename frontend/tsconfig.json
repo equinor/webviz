@@ -16,9 +16,8 @@
         "noEmit": true,
         "jsx": "react-jsx"
     },
-    "include": [
-        "src",
-    ],
+    "include": ["src", "tests"],
+    "exclude": ["tests/ct/playwright/"],
     "references": [{ "path": "./tsconfig.node.json" }],
     "extends": "./aliases.json"
 }

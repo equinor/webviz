@@ -17,7 +17,7 @@ import { Label } from "@lib/components/Label";
 import { Select, SelectOption } from "@lib/components/Select";
 import { SmartNodeSelectorSelection, TreeDataNode } from "@lib/components/SmartNodeSelector";
 
-import { isEqual } from "lodash-es";
+import { isEqual } from "lodash";
 
 import { useVectorListQuery } from "./queryHooks";
 import { State } from "./state";

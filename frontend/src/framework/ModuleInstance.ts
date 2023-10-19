@@ -1,6 +1,6 @@
 import { ErrorInfo } from "react";
 
-import { cloneDeep } from "lodash-es";
+import { cloneDeep } from "lodash";
 
 import { BroadcastChannel, BroadcastChannelsDef, InputBroadcastChannelDef } from "./Broadcaster";
 import { InitialSettings } from "./InitialSettings";

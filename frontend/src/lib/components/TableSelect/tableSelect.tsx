@@ -2,7 +2,7 @@ import React, { Key } from "react";
 
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
-import { isEqual } from "lodash-es";
+import { isEqual } from "lodash";
 
 import { BaseComponent, BaseComponentProps } from "../BaseComponent";
 import { Input } from "../Input";

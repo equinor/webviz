@@ -2,10 +2,10 @@ import { defineConfig, devices } from "@playwright/experimental-ct-react";
 import react from "@vitejs/plugin-react";
 
 import path from "path";
-import { fileURLToPath } from 'url';
+import { fileURLToPath } from "url";
 import vitePluginChecker from "vite-plugin-checker";
 
-import aliases from "../../aliases.json" assert { type: "json" };
+import aliases from "../../aliases.json";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -46,6 +46,7 @@ export default defineConfig({
                             __dirname,
                             "..",
                             "..",
+                            // @ts-ignore
                             aliases.compilerOptions.paths[current][0].replace("/*", "")
                         ),
                     }),

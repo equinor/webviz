@@ -16,7 +16,7 @@ import { Switch } from "@lib/components/Switch";
 import { useValidState } from "@lib/hooks/useValidState";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
-import { isEqual } from "lodash-es";
+import { isEqual } from "lodash";
 
 import { useWellCompletionsQuery } from "./queryHooks";
 import { DataLoadingStatus, State } from "./state";

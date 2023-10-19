@@ -1,6 +1,6 @@
 import React from "react";
 
-import { cloneDeep } from "lodash-es";
+import { cloneDeep } from "lodash";
 
 import { BroadcastChannelsDef, InputBroadcastChannelDef } from "./Broadcaster";
 import { InitialSettings } from "./InitialSettings";

@@ -6,7 +6,7 @@ import {
     StatusSource,
 } from "@framework/ModuleInstanceStatusController";
 
-import { cloneDeep, filter, isEqual, keys } from "lodash-es";
+import { cloneDeep, filter, isEqual, keys } from "lodash";
 
 type StatusMessage = {
     source: StatusSource;

@@ -3,7 +3,7 @@ import React from "react";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
-import { isEqual } from "lodash-es";
+import { isEqual } from "lodash";
 
 type ResizablePanelsProps = {
     id: string;

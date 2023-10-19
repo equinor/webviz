@@ -8,7 +8,7 @@ import { timestampUtcMsToCompactIsoString } from "@framework/utils/timestampUtil
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { createSensitivityColorMap } from "@modules/_shared/sensitivityColors";
 
-import { indexOf } from "lodash-es";
+import { indexOf } from "lodash";
 
 import { BroadcastChannelNames } from "./channelDefs";
 import {
