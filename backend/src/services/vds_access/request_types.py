@@ -31,6 +31,13 @@ class VdsCoordinateSystem(StrEnum):
     """
     Coordinate system options for vds fence
 
+    * ilxl: inline, crossline pairs
+    * ij: Coordinates are given as in 0-indexed system, where the first
+          line in each direction is 0 and the last is number-of-lines - 1.
+    * cdp: Coordinates are given as cdpx/cdpy pairs. In the original SEGY
+           this would correspond to the cdpx and cdpy fields in the
+           trace-headers after applying the scaling factor.
+
     Source: https://github.com/equinor/vds-slice/blob/ab6f39789bf3d3b59a8df14f1c4682d340dc0bf3/api/request.go#L86C3-L86C3
     """
 
@@ -42,7 +49,7 @@ class VdsCoordinateSystem(StrEnum):
 @dataclass
 class VdsCoordinates:
     """
-    A list of coordinates in the VDS coordinate system, as (x, y) points.
+    A list of coordinates in the selected VdsCoordinateSystem, as (x, y) points.
 
     Convert coordinates to format for query request parameter - [[x1,y1], [x2,y2], ..., [xn,yn]]
 

@@ -39,7 +39,17 @@ export class SeismicService {
 
     /**
      * Get Fence
-     * Get a fence of seismic data from a set of (x, y) coordinates.
+     * Get a fence of seismic data from a polyline defined by a set of (x, y) coordinates in domain coordinate system.
+     *
+     * The fence data contains a set of traces perpendicular to the polyline, with one trace per (x, y)-point in polyline.
+     * Each trace has number of samples equal length, and is a set of values along the height/depth axis of the fence.
+     *
+     * The returned data
+     * * fence_traces_encoded: array of traces is a base64 encoded flattened float32 array of trace values. Decoding info: [num_traces, num_trace_samples]
+     * * num_traces: Number of traces in fence
+     * * num_trace_samples: Number of samples in each trace
+     * * min_height: Minimum height/depth value of fence
+     * * max_height: Maximum height/depth value of fence
      * @param caseUuid Sumo case uuid
      * @param ensembleName Ensemble name
      * @param realizationNum Realization number

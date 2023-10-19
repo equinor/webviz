@@ -10,7 +10,7 @@ from src.services.vds_access.vds_access import VdsAccess
 from src.services.utils.authenticated_user import AuthenticatedUser
 from src.backend.auth.auth_helper import AuthHelper
 from src.services.utils.b64 import b64_encode_float_array_as_float32
-from services.vds_access.response_types import VdsMetadata
+from src.services.vds_access.response_types import VdsMetadata
 from src.services.vds_access.request_types import VdsCoordinateSystem, VdsCoordinates
 
 from . import schemas
@@ -49,10 +49,23 @@ async def get_fence(
     observed: bool = Query(description="Observed or simulated"),
     polyline: schemas.SeismicFencePolyline = Body(alias="seismicFencePolyline", embed=True),
 ) -> schemas.SeismicFenceData:
-    """Get a fence of seismic data from a polyline defined by a set of (x, y) coordinates in domain coordinate system."""
+    """Get a fence of seismic data from a polyline defined by a set of (x, y) coordinates in domain coordinate system.
+
+    The fence data contains a set of traces perpendicular to the polyline, with one trace per (x, y)-point in polyline.
+    Each trace has number of samples equal length, and is a set of values along the height/depth axis of the fence.
+
+    The returned data
+    * fence_traces_encoded: array of traces is a base64 encoded flattened float32 array of trace values. Decoding info: [num_traces, num_trace_samples]
+    * num_traces: Number of traces in fence
+    * num_trace_samples: Number of samples in each trace
+    * min_height: Minimum height/depth value of fence
+    * max_height: Maximum height/depth value of fence
+    """
     # NOTE: This is a post request as cutting plane must be a body parameter. Should the naming be changed from "get_fence" to "post_fence"?
 
-    seismic_access = SeismicAccess(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
+    seismic_access = await SeismicAccess.from_case_uuid(
+        authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
+    )
 
     try:
         vds_handle: VdsHandle = seismic_access.get_vds_handle(
@@ -66,10 +79,11 @@ async def get_fence(
 
     vds_access = VdsAccess(sas_token=vds_handle.sas_token, vds_url=vds_handle.vds_url)
 
-    # Retrieve fence and post as seismic intersection
+    # Retrieve fence and post as seismic intersection using cdp coordinates for vds-slice
+    # NOTE: Correct coordinate format and scaling - see VdsCoordinateSystem?
     fence_traces_ndarray_float32 = await vds_access.get_fence_traces_as_ndarray(
-        coordinate_system=VdsCoordinateSystem.CDP,
         coordinates=VdsCoordinates(polyline.x_points, polyline.y_points),
+        coordinate_system=VdsCoordinateSystem.CDP,
     )
     if len(fence_traces_ndarray_float32.shape) != 2:
         raise ValueError(f"Expected fence traces array of 2 dimensions, got {len(fence_traces_ndarray_float32.shape)}")
