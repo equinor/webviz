@@ -5,6 +5,13 @@ from pydantic import BaseModel
 from src.services.utils.b64 import B64FloatArray
 
 
+class SeismicCubeMeta(BaseModel):
+    seismic_attribute: str
+    iso_date_or_interval: str
+    is_observation: bool
+    is_depth: bool
+
+
 class SeismicFencePolyline(BaseModel):
     """
     (x, y) points defining a polyline in domain coordinate system, to retrieve fence of seismic data.
@@ -24,40 +31,33 @@ class SeismicFencePolyline(BaseModel):
     # points_xy: List[float]
 
 
-class SeismicCubeMeta(BaseModel):
-    seismic_attribute: str
-    iso_date_or_interval: str
-    is_observation: bool
-    is_depth: bool
-
-
 class SeismicFenceData(BaseModel):
     """
     Definition of a fence of seismic data from a set of (x, y) coordinates in domain coordinate system.
-
-    - fence_traces_encoded: The fence trace array is base64 encoded float array.
-    - num_traces: The number of traces along length/width direction of the fence, i.e. the number of (x, y) coordinates.
-    - num_trace_samples: The number of samples in each trace, i.e. the number of values along the height/depth axis of the fence.
-    - min_height: The minimum height/depth value of the fence.
-    - max_height: The maximum height/depth value of the fence.
-
     Each (x, y) point provides a trace perpendicular to the x-y plane, with number of samples equal to the depth of the seismic cube.
 
-    trace1  trace2  trace3
-    |-------|-------|
-    |-------|-------|
-    |-------|-------|  Height/depth axis
-    |-------|-------|
-    |-------|-------|
+    The trace is along the along length direction of the fence.
+
+    `Properties:`
+    - `fence_traces_b64arr`: The fence trace array is base64 encoded 1D float array - where data is stored trace by trace.
+    - `num_traces`: The number of traces in the fence trace array. Equals the number of (x, y) coordinates in requested polyline, and implies traces
+    - `num_trace_samples`: The number of samples in each trace.
+    - `min_fence_depth`: The minimum depth value of the fence.
+    - `max_fence_depth`: The maximum depth value of the fence.
+
+    `Description - fence_traces_b64arr:`\n
+    The encoded fence trace array is a flattened array of traces, where data is stored trace by trace.
+    With `m = num_traces`, and `n = num_trace_samples`, the flattened array has length `mxn`.
+
+    Fence traces 1D array: [trace_1, trace_2, ..., trace_m] \n
+    Trace 1D array: [sample_1, sample_2, ..., sample_n]
 
     See:
     - VdsAxis: https://github.com/equinor/vds-slice/blob/ab6f39789bf3d3b59a8df14f1c4682d340dc0bf3/internal/core/core.go#L37-L55
     """
 
-    fence_traces_encoded: B64FloatArray  # Encoded flattened array of fence values
-    # num_length_samples:int
-    # num_height_samples: int
+    fence_traces_b64arr: B64FloatArray
     num_traces: int
     num_trace_samples: int
-    min_height: float
-    max_height: float
+    min_fence_depth: float
+    max_fence_depth: float

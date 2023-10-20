@@ -8,6 +8,7 @@ import "./Grid3DIntersection/registerModule";
 import "./InplaceVolumetrics/registerModule";
 import "./Map/registerModule";
 import "./Pvt/registerModule";
+import "./SeismicIntersection/registerModule";
 import "./SimulationTimeSeries/registerModule";
 import "./SimulationTimeSeriesMatrix/registerModule";
 import "./SimulationTimeSeriesSensitivity/registerModule";

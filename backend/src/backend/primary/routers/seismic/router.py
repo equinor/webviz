@@ -55,11 +55,14 @@ async def get_fence(
     Each trace has number of samples equal length, and is a set of values along the height/depth axis of the fence.
 
     The returned data
-    * fence_traces_encoded: array of traces is a base64 encoded flattened float32 array of trace values. Decoding info: [num_traces, num_trace_samples]
-    * num_traces: Number of traces in fence
+    * fence_traces_b64arr: The fence trace array is base64 encoded 1D float array - where data is stored trace by trace. Decoding info: [num_traces, num_trace_samples]
+    * num_traces: Number of traces in fence array
     * num_trace_samples: Number of samples in each trace
-    * min_height: Minimum height/depth value of fence
-    * max_height: Maximum height/depth value of fence
+    * min_fence_depth: The minimum depth value of the fence.
+    * max_fence_depth: The maximum depth value of the fence.
+
+    TODO: Replace time_or_interval_str with time_or_interval: schemas.TimeOrInterval?
+
     """
     # NOTE: This is a post request as cutting plane must be a body parameter. Should the naming be changed from "get_fence" to "post_fence"?
 
@@ -81,12 +84,14 @@ async def get_fence(
 
     # Retrieve fence and post as seismic intersection using cdp coordinates for vds-slice
     # NOTE: Correct coordinate format and scaling - see VdsCoordinateSystem?
-    fence_traces_ndarray_float32 = await vds_access.get_fence_traces_as_ndarray(
+    [
+        flattened_fence_traces_array,
+        num_traces,
+        num_trace_samples,
+    ] = await vds_access.get_flattened_fence_traces_array_and_metadata(
         coordinates=VdsCoordinates(polyline.x_points, polyline.y_points),
         coordinate_system=VdsCoordinateSystem.CDP,
     )
-    if len(fence_traces_ndarray_float32.shape) != 2:
-        raise ValueError(f"Expected fence traces array of 2 dimensions, got {len(fence_traces_ndarray_float32.shape)}")
 
     meta: VdsMetadata = await vds_access.get_metadata()
     if len(meta.axis) != 3:
@@ -94,9 +99,9 @@ async def get_fence(
     depth_axis_meta = meta.axis[2]
 
     return schemas.SeismicFenceData(
-        fence_traces_encoded=b64_encode_float_array_as_float32(fence_traces_ndarray_float32),
-        num_traces=fence_traces_ndarray_float32.shape[0],
-        num_trace_samples=fence_traces_ndarray_float32.shape[1],
-        min_height=depth_axis_meta.min,  # TODO: Should this be depth_axis_meta.max?
-        max_height=depth_axis_meta.max,  # TODO: Should this be depth_axis_meta.min?
+        fence_traces_b64arr=b64_encode_float_array_as_float32(flattened_fence_traces_array),
+        num_traces=num_traces,
+        num_trace_samples=num_trace_samples,
+        min_fence_depth=depth_axis_meta.min,  # TODO: Should this be depth_axis_meta.max?
+        max_fence_depth=depth_axis_meta.max,  # TODO: Should this be depth_axis_meta.min?
     )

@@ -83,7 +83,7 @@ class VdsRequestedResource:
     sas: str  # sas-token
 
     def request_parameters(self) -> dict:
-        raise NotImplementedError
+        return {"vds": self.vds, "sas": self.sas}
 
 
 @dataclass

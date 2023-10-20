@@ -45,11 +45,13 @@ export class SeismicService {
      * Each trace has number of samples equal length, and is a set of values along the height/depth axis of the fence.
      *
      * The returned data
-     * * fence_traces_encoded: array of traces is a base64 encoded flattened float32 array of trace values. Decoding info: [num_traces, num_trace_samples]
-     * * num_traces: Number of traces in fence
+     * * fence_traces_b64arr: The fence trace array is base64 encoded 1D float array - where data is stored trace by trace. Decoding info: [num_traces, num_trace_samples]
+     * * num_traces: Number of traces in fence array
      * * num_trace_samples: Number of samples in each trace
-     * * min_height: Minimum height/depth value of fence
-     * * max_height: Maximum height/depth value of fence
+     * * min_fence_depth: The minimum depth value of the fence.
+     * * max_fence_depth: The maximum depth value of the fence.
+     *
+     * TODO: Replace time_or_interval_str with time_or_interval: schemas.TimeOrInterval?
      * @param caseUuid Sumo case uuid
      * @param ensembleName Ensemble name
      * @param realizationNum Realization number

@@ -1,15 +1,13 @@
 import logging
 import os
-from typing import List
+from typing import List, Tuple
 import json
-
 
 import numpy as np
 from numpy.typing import NDArray
 from requests_toolbelt.multipart.decoder import MultipartDecoder, BodyPart
 import httpx
 
-from ..sumo_access.seismic_types import VdsHandle
 from .response_types import VdsMetadata, VdsFenceMetadata
 from .request_types import (
     VdsCoordinates,
@@ -33,6 +31,13 @@ def bytes_to_ndarray_float32(bytes_data: bytes, shape: List[int]) -> NDArray[np.
 
     """
     return np.ndarray(shape=shape, dtype="<f4", buffer=bytes_data, order="C")
+
+
+def bytes_to_flatten_ndarray_float32(bytes_data: bytes, shape: List[int]) -> NDArray[np.float32]:
+    """
+    Convert bytes to numpy flatten ndarray with row-major order, i.e. "C" order
+    """
+    return np.ndarray(shape=shape, dtype="<f4", buffer=bytes_data, order="C").flatten(order="C")
 
 
 class VdsAccess:
@@ -67,47 +72,67 @@ class VdsAccess:
 
         return response
 
-    # async def get_slice(self, direction: str, lineno: int) -> NDArray[np.float32]:
-    #     """Gets a slice in i,j,k direction from the VDS service"""
+    async def get_metadata(self) -> VdsMetadata:
+        """Gets metadata from the cube"""
+        endpoint = "metadata"
 
-    #     endpoint = "slice"
-    #     params = {
-    #         "direction": direction,
-    #         "lineno": lineno,
-    #         "vds": self.vds_url,
-    #         "sas": self.sas,
-    #     }
-    #     response = await self._query(endpoint, params)
+        metadata_request = VdsMetadataRequest(vds=self.vds_url, sas=self.sas)
+        response = await self._query(endpoint, metadata_request)
 
-    #     # Use MultipartDecoder with httpx's Response content and headers
-    #     decoder = MultipartDecoder(content=response.content, content_type=response.headers["Content-Type"])
-    #     parts = decoder.parts
+        metadata = response.json()
+        return VdsMetadata(**metadata)
 
-    #     metadata = json.loads(parts[0].content)
-    #     shape = (metadata["y"]["samples"], metadata["x"]["samples"])
-    #     if metadata["format"] != "<f4":
-    #         raise ValueError(f"Expected float32, got {metadata['format']}")
-    #     byte_array = parts[1].content
-    #     values_np = bytes_to_ndarray_float32(byte_array, list(shape))
-    #     return values_np
-
-    async def get_fence_traces_as_ndarray(
+    async def get_flattened_fence_traces_array_and_metadata(
         self, coordinates: VdsCoordinates, coordinate_system: VdsCoordinateSystem = VdsCoordinateSystem.CDP
-    ) -> NDArray[np.float32]:
+    ) -> Tuple[NDArray[np.float32], int, int]:
         """
-        Gets traces along an arbitrary path of (x, y) coordinates.
+        Gets traces along an arbitrary path of (x, y) coordinates, with a trace per coordinate.
 
-        The traces are perpendicular on the on the coordinates in the x-y plane. The number of traces are
-        equal to the number of (x, y) coordinates, and each trace has the same number of samples equal the
-        depth of the seismic cube.
+        The traces are perpendicular on the on the coordinates in the x-y plane, and each trace has number
+        of samples equal to the depth of the seismic cube.
 
-        TODO: Consider return ndarray with shape vs return 1D array with metadata?
+        With traces perpendicular to the x-y plane, the traces are defined to go along the depth direction
+        of the fence.
 
         `Returns:`
-        np.ndarray - with: dtype=float32, shape=[num_traces, num_trace_samples] and order='C'
+        `Tuple[flattened_fence_traces_array: NDArray[np.float32], num_traces: int, num_trace_samples: int]`
 
-        * num_traces = number of traces along the length of the fence, i.e. number of (x, y) coordinates
-        * num_trace_samples = number of samples in each trace, i.e. number of values along the height/depth axis of the fence.
+        `flattened_fence_traces_array`: 1D np.ndarray with dtype=float32, stored trace by trace. The array has length `num_traces x num_trace_samples`.\n
+        `num_traces`: number of traces along the length of the fence, i.e. number of (x, y) coordinates.\n
+        `num_trace_samples`: number of samples in each trace, i.e. number of values along the height/depth axis of the fence.\n
+
+
+        \n`Description:`
+
+        With `m = num_traces`, and `n = num_trace_samples`, the flattened array has length `mxn`.
+
+        `2D Fence Trace Array:`
+
+        ```
+        [[t11, t12, ..., t1n],
+        [t21, t22, ..., t2n],
+                ...          ,
+        [tm1, tm2, ..., tmn]]
+        ```
+
+        \n`Flattened 2D trace array with row major order:`
+
+        ```
+        [t11, t12, ..., t1n, t21, t22, ..., t2n, ..., tm1, tm2, ..., tmn]
+        ```
+
+        \n`Visualization Example:`
+
+        ```
+        trace_1  trace_2     trace_m
+        |--------|--- ... ---| sample_1
+        |--------|--- ... ---| sample_2
+                .
+                .
+                .
+        |--------|--- ... ---| sample_n-1
+        |--------|--- ... ---| sample_n
+        ```
         """
 
         endpoint = "fence"
@@ -146,14 +171,12 @@ class VdsAccess:
         if len(metadata.shape) != 2:
             raise ValueError(f"Expected shape to be 2D, got {metadata.shape}")
 
-        return bytes_to_ndarray_float32(byte_array, shape=metadata.shape)
+        # TODO: Drop and just provide flattened straight away?
+        fence_traces_ndarray_float32 = bytes_to_ndarray_float32(byte_array, shape=metadata.shape)
 
-    async def get_metadata(self) -> VdsMetadata:
-        """Gets metadata from the cube"""
-        endpoint = "metadata"
+        # Flattened array with row major order, i.e. C-order in numpy
+        flattened_fence_traces_float32_array = bytes_to_flatten_ndarray_float32(
+            fence_traces_ndarray_float32, shape=fence_traces_ndarray_float32.shape
+        )
 
-        metadata_request = VdsMetadataRequest(vds=self.vds_url, sas=self.sas)
-        response = await self._query(endpoint, metadata_request)
-
-        metadata = response.json()
-        return VdsMetadata(**metadata)
+        return (flattened_fence_traces_float32_array, metadata.shape[0], metadata.shape[1])
