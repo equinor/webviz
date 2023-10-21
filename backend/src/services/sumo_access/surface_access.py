@@ -18,10 +18,12 @@ LOGGER = logging.getLogger(__name__)
 
 class SurfaceAccess(SumoEnsemble):
     async def get_surface_directory(self) -> List[SurfaceMeta]:
+        first_real: int = self.get_realizations()[0]
+
         real_surface_collection: SurfaceCollection = self._case.surfaces.filter(
             iteration=self._iteration_name,
             aggregation=False,
-            realization=0,
+            realization=first_real,
             stage=SumoContext.REALIZATION,
         )
 
