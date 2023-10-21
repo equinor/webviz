@@ -9,9 +9,11 @@ import { Button } from "@lib/components/Button";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { ColorScaleGradientType } from "@lib/utils/ColorScale";
 import { useSurfaceDataQueryByAddress } from "@modules_shared/Surface";
+import { RestartAlt } from "@mui/icons-material";
 import { ViewAnnotation } from "@webviz/subsurface-viewer/dist/components/ViewAnnotation";
 
 import {
+    SurfaceGridSpec,
     useGetFieldWellsTrajectories,
     usePolygonsDataQueryByAddress,
     usePropertySurfaceDataByQueryAddress,
@@ -87,8 +89,19 @@ export function view({ moduleContext, workbenchSettings, workbenchServices }: Mo
 
     const meshSurfDataQuery = useSurfaceDataQueryByAddress(meshSurfAddr);
 
-    const hasMeshSurfData = meshSurfDataQuery?.data ? true : false;
-    const propertySurfDataQuery = usePropertySurfaceDataByQueryAddress(meshSurfAddr, propertySurfAddr, hasMeshSurfData);
+    let meshSurfaceGridSpec: SurfaceGridSpec | null = null;
+    if (meshSurfDataQuery.data) {
+        meshSurfaceGridSpec = {
+            xinc: meshSurfDataQuery.data.x_inc,
+            yinc: meshSurfDataQuery.data.y_inc,
+            xori: meshSurfDataQuery.data.x_ori,
+            yori: meshSurfDataQuery.data.y_ori,
+            rotation: meshSurfDataQuery.data.rot_deg,
+            ncol: meshSurfDataQuery.data.x_count,
+            nrow: meshSurfDataQuery.data.y_count,
+        };
+    }
+    const propertySurfDataQuery = usePropertySurfaceDataByQueryAddress(meshSurfaceGridSpec, propertySurfAddr);
 
     const wellTrajectoriesQuery = useGetFieldWellsTrajectories(meshSurfAddr?.caseUuid);
     const polygonsQuery = usePolygonsDataQueryByAddress(polygonsAddr);
@@ -98,6 +111,7 @@ export function view({ moduleContext, workbenchSettings, workbenchServices }: Mo
     let colorRange: [number, number] | null = null;
 
     // Mesh data query should only trigger update if the property surface address is not set or if the property surface data is loaded
+
     if (meshSurfDataQuery.data && !propertySurfAddr) {
         // Drop conversion as soon as SubsurfaceViewer accepts typed arrays
         const newMeshData = Array.from(meshSurfDataQuery.data.valuesFloat32Arr);
@@ -219,9 +233,10 @@ export function view({ moduleContext, workbenchSettings, workbenchServices }: Mo
             </div>
 
             <div className="absolute top-0 right-0 z-10">
-                <Button variant="contained" onClick={() => toggleResetBounds(!resetBounds)}>
-                    Reset viewport bounds
-                </Button>
+                <Button
+                    startIcon={<RestartAlt fontSize="small" />}
+                    onClick={() => toggleResetBounds(!resetBounds)}
+                ></Button>
             </div>
             <div className="z-1">
                 {show3D ? (

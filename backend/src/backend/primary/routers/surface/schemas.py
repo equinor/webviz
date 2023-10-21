@@ -68,3 +68,13 @@ class SurfaceData(BaseModel):
     val_max: float
     rot_deg: float
     values_b64arr: B64FloatArray
+
+
+class XtgeoRegularGridSpec(BaseModel):
+    ncol: int
+    nrow: int
+    xinc: float
+    yinc: float
+    xori: float
+    yori: float
+    rotation: float

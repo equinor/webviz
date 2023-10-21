@@ -37,7 +37,7 @@ async def get_surface_directory(
         authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
     )
     sumo_surf_dir = await surface_access.get_surface_directory()
-
+    print(sumo_surf_dir)
     case_inspector = await SumoCase.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid)
     strat_column_identifier = await case_inspector.get_stratigraphic_column_identifier()
     strat_access: Union[StratigraphyAccess, _mocked_stratigraphy_access.StratigraphyAccess]
@@ -82,6 +82,33 @@ async def get_realization_surface_data(
     return surf_data_response
 
 
+@router.get("/observed_surface_data/")
+async def get_observed_surface_data(
+    response: Response,
+    authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
+    case_uuid: str = Query(description="Sumo case uuid"),
+    ensemble_name: str = Query(description="Ensemble name"),
+    name: str = Query(description="Surface name"),
+    attribute: str = Query(description="Surface attribute"),
+    time_or_interval: Optional[str] = Query(None, description="Time point or time interval string"),
+) -> schemas.SurfaceData:
+    perf_metrics = PerfMetrics(response)
+
+    access = await SurfaceAccess.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
+    xtgeo_surf = access.get_observed_surface_data(name=name, attribute=attribute, time_or_interval_str=time_or_interval)
+    perf_metrics.record_lap("get-surf")
+
+    if not xtgeo_surf:
+        raise HTTPException(status_code=404, detail="Surface not found")
+
+    surf_data_response = converters.to_api_surface_data(xtgeo_surf)
+    perf_metrics.record_lap("convert")
+
+    LOGGER.debug(f"Loaded observed surface in: {perf_metrics.to_string()}")
+
+    return surf_data_response
+
+
 @router.get("/statistical_surface_data/")
 async def get_statistical_surface_data(
     response: Response,
@@ -121,15 +148,19 @@ async def get_statistical_surface_data(
 
 
 # pylint: disable=too-many-arguments
-@router.get("/property_surface_resampled_to_static_surface/")
-async def get_property_surface_resampled_to_static_surface(
+@router.get("/resampled_realization_surface_data/")
+async def get_resampled_realization_surface_data(
     response: Response,
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     case_uuid: str = Query(description="Sumo case uuid"),
     ensemble_name: str = Query(description="Ensemble name"),
-    realization_num_mesh: int = Query(description="Realization number"),
-    name_mesh: str = Query(description="Surface name"),
-    attribute_mesh: str = Query(description="Surface attribute"),
+    ncol_mesh: int = Query(description="Realization number"),
+    nrow_mesh: int = Query(description="Surface name"),
+    xinc_mesh: float = Query(description="Surface attribute"),
+    yinc_mesh: float = Query(description="Surface attribute"),
+    xori_mesh: float = Query(description="Surface attribute"),
+    yori_mesh: float = Query(description="Surface attribute"),
+    rotation_mesh: float = Query(description="Surface attribute"),
     realization_num_property: int = Query(description="Realization number"),
     name_property: str = Query(description="Surface name"),
     attribute_property: str = Query(description="Surface attribute"),
@@ -138,10 +169,6 @@ async def get_property_surface_resampled_to_static_surface(
     perf_metrics = PerfMetrics(response)
 
     access = await SurfaceAccess.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
-    xtgeo_surf_mesh = access.get_realization_surface_data(
-        real_num=realization_num_mesh, name=name_mesh, attribute=attribute_mesh
-    )
-    perf_metrics.record_lap("mesh-surf")
 
     xtgeo_surf_property = access.get_realization_surface_data(
         real_num=realization_num_property,
@@ -151,10 +178,19 @@ async def get_property_surface_resampled_to_static_surface(
     )
     perf_metrics.record_lap("prop-surf")
 
-    if not xtgeo_surf_mesh or not xtgeo_surf_property:
+    if not xtgeo_surf_property:
         raise HTTPException(status_code=404, detail="Surface not found")
 
-    resampled_surface = converters.resample_property_surface_to_mesh_surface(xtgeo_surf_mesh, xtgeo_surf_property)
+    mesh_surface_spec = schemas.XtgeoRegularGridSpec(
+        ncol=ncol_mesh,
+        nrow=nrow_mesh,
+        xinc=xinc_mesh,
+        yinc=yinc_mesh,
+        xori=xori_mesh,
+        yori=yori_mesh,
+        rotation=rotation_mesh,
+    )
+    resampled_surface = converters.resample_property_surface_to_mesh_surface(mesh_surface_spec, xtgeo_surf_property)
     perf_metrics.record_lap("resample")
 
     surf_data_response: schemas.SurfaceData = converters.to_api_surface_data(resampled_surface)
@@ -165,14 +201,71 @@ async def get_property_surface_resampled_to_static_surface(
     return surf_data_response
 
 
-@router.get("/property_surface_resampled_to_statistical_static_surface/")
-async def get_property_surface_resampled_to_statistical_static_surface(
+# pylint: disable=too-many-arguments
+@router.get("/resampled_observed_surface_data/")
+async def get_resampled_observed_surface_data(
+    response: Response,
+    authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
+    case_uuid: str = Query(description="Sumo case uuid"),
+    ensemble_name: str = Query(description="Ensemble name"),
+    ncol_mesh: int = Query(description="Realization number"),
+    nrow_mesh: int = Query(description="Surface name"),
+    xinc_mesh: float = Query(description="Surface attribute"),
+    yinc_mesh: float = Query(description="Surface attribute"),
+    xori_mesh: float = Query(description="Surface attribute"),
+    yori_mesh: float = Query(description="Surface attribute"),
+    rotation_mesh: float = Query(description="Surface attribute"),
+    name_property: str = Query(description="Surface name"),
+    attribute_property: str = Query(description="Surface attribute"),
+    time_or_interval_property: Optional[str] = Query(None, description="Time point or time interval string"),
+) -> schemas.SurfaceData:
+    perf_metrics = PerfMetrics(response)
+
+    access = await SurfaceAccess.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
+
+    xtgeo_surf_property = access.get_observed_surface_data(
+        name=name_property,
+        attribute=attribute_property,
+        time_or_interval_str=time_or_interval_property,
+    )
+    perf_metrics.record_lap("prop-surf")
+
+    if not xtgeo_surf_property:
+        raise HTTPException(status_code=404, detail="Surface not found")
+
+    mesh_surface_spec = schemas.XtgeoRegularGridSpec(
+        ncol=ncol_mesh,
+        nrow=nrow_mesh,
+        xinc=xinc_mesh,
+        yinc=yinc_mesh,
+        xori=xori_mesh,
+        yori=yori_mesh,
+        rotation=rotation_mesh,
+    )
+    resampled_surface = converters.resample_property_surface_to_mesh_surface(mesh_surface_spec, xtgeo_surf_property)
+    perf_metrics.record_lap("resample")
+
+    surf_data_response: schemas.SurfaceData = converters.to_api_surface_data(resampled_surface)
+    perf_metrics.record_lap("convert")
+
+    LOGGER.debug(f"Loaded property surface in: {perf_metrics.to_string()}")
+
+    return surf_data_response
+
+
+@router.get("/resampled_statistical_surface_data/")
+async def get_resampled_statistical_surface_data(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     case_uuid: str = Query(description="Sumo case uuid"),
     ensemble_name: str = Query(description="Ensemble name"),
     statistic_function: schemas.SurfaceStatisticFunction = Query(description="Statistics to calculate"),
-    name_mesh: str = Query(description="Surface name"),
-    attribute_mesh: str = Query(description="Surface attribute"),
+    ncol_mesh: int = Query(description="Realization number"),
+    nrow_mesh: int = Query(description="Surface name"),
+    xinc_mesh: float = Query(description="Surface attribute"),
+    yinc_mesh: float = Query(description="Surface attribute"),
+    xori_mesh: float = Query(description="Surface attribute"),
+    yori_mesh: float = Query(description="Surface attribute"),
+    rotation_mesh: float = Query(description="Surface attribute"),
     # statistic_function_property: schemas.SurfaceStatisticFunction = Query(description="Statistics to calculate"),
     name_property: str = Query(description="Surface name"),
     attribute_property: str = Query(description="Surface attribute"),
@@ -183,11 +276,6 @@ async def get_property_surface_resampled_to_statistical_static_surface(
     access = await SurfaceAccess.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
     service_stat_func_to_compute = StatisticFunction.from_string_value(statistic_function)
     if service_stat_func_to_compute is not None:
-        xtgeo_surf_mesh = access.get_statistical_surface_data(
-            statistic_function=service_stat_func_to_compute,
-            name=name_mesh,
-            attribute=attribute_mesh,
-        )
         xtgeo_surf_property = access.get_statistical_surface_data(
             statistic_function=service_stat_func_to_compute,
             name=name_property,
@@ -195,10 +283,18 @@ async def get_property_surface_resampled_to_statistical_static_surface(
             time_or_interval_str=time_or_interval_property,
         )
 
-    if not xtgeo_surf_mesh or not xtgeo_surf_property:
+    if not xtgeo_surf_property:
         raise HTTPException(status_code=404, detail="Surface not found")
-
-    resampled_surface = converters.resample_property_surface_to_mesh_surface(xtgeo_surf_mesh, xtgeo_surf_property)
+    mesh_surface_spec = schemas.XtgeoRegularGridSpec(
+        ncol=ncol_mesh,
+        nrow=nrow_mesh,
+        xinc=xinc_mesh,
+        yinc=yinc_mesh,
+        xori=xori_mesh,
+        yori=yori_mesh,
+        rotation=rotation_mesh,
+    )
+    resampled_surface = converters.resample_property_surface_to_mesh_surface(mesh_surface_spec, xtgeo_surf_property)
 
     surf_data_response = converters.to_api_surface_data(resampled_surface)
 

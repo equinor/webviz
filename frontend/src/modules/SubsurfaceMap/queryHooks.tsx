@@ -15,6 +15,15 @@ import { SurfacePolygonsAddress } from "./SurfacePolygonsAddress";
 const STALE_TIME = 60 * 1000;
 const CACHE_TIME = 60 * 1000;
 
+export type SurfaceGridSpec = {
+    ncol: number;
+    nrow: number;
+    xinc: number;
+    yinc: number;
+    xori: number;
+    yori: number;
+    rotation: number;
+};
 export function usePolygonDirectoryQuery(
     caseUuid: string | undefined,
     ensembleName: string | undefined
@@ -58,9 +67,8 @@ export function useGetFieldWellsTrajectories(caseUuid: string | undefined): UseQ
 }
 
 export function usePropertySurfaceDataByQueryAddress(
-    meshSurfAddr: SurfaceAddress | null,
-    propertySurfAddr: SurfaceAddress | null,
-    enabled: boolean
+    meshSurfSpec: SurfaceGridSpec | null,
+    propertySurfAddr: SurfaceAddress | null
 ): UseQueryResult<SurfaceData_trans> {
     function dummyApiCall(): Promise<SurfaceData_trans> {
         return new Promise((_resolve, reject) => {
@@ -68,7 +76,7 @@ export function usePropertySurfaceDataByQueryAddress(
         });
     }
 
-    if (!propertySurfAddr || !meshSurfAddr) {
+    if (!propertySurfAddr || !meshSurfSpec) {
         return useQuery({
             queryKey: ["getSurfaceData_DUMMY_ALWAYS_DISABLED"],
             queryFn: () => dummyApiCall,
@@ -80,52 +88,96 @@ export function usePropertySurfaceDataByQueryAddress(
     let queryKey: QueryKey | null = null;
 
     // Static, per realization surface
-    if (meshSurfAddr.addressType === "realization" && propertySurfAddr.addressType === "realization") {
+    if (propertySurfAddr.addressType === "realization") {
         queryKey = [
-            "getPropertySurfaceResampledToStaticSurface",
-            meshSurfAddr.caseUuid,
-            meshSurfAddr.ensemble,
-            meshSurfAddr.realizationNum,
-            meshSurfAddr.name,
-            meshSurfAddr.attribute,
+            "getResampledRealizationSurfaceData",
+            meshSurfSpec.ncol,
+            meshSurfSpec.nrow,
+            meshSurfSpec.xinc,
+            meshSurfSpec.yinc,
+            meshSurfSpec.xori,
+            meshSurfSpec.yori,
+            meshSurfSpec.rotation,
             propertySurfAddr.realizationNum,
             propertySurfAddr.name,
             propertySurfAddr.attribute,
             propertySurfAddr.isoDateOrInterval,
         ];
         queryFn = () =>
-            apiService.surface.getPropertySurfaceResampledToStaticSurface(
-                meshSurfAddr.caseUuid,
-                meshSurfAddr.ensemble,
-                meshSurfAddr.realizationNum,
-                meshSurfAddr.name,
-                meshSurfAddr.attribute,
+            apiService.surface.getResampledRealizationSurfaceData(
+                propertySurfAddr.caseUuid,
+                propertySurfAddr.ensemble,
+                meshSurfSpec.ncol,
+                meshSurfSpec.nrow,
+                meshSurfSpec.xinc,
+                meshSurfSpec.yinc,
+                meshSurfSpec.xori,
+                meshSurfSpec.yori,
+                meshSurfSpec.rotation,
                 propertySurfAddr.realizationNum,
                 propertySurfAddr.name,
                 propertySurfAddr.attribute,
                 propertySurfAddr.isoDateOrInterval
             );
-    } else if (meshSurfAddr.addressType === "statistical" && propertySurfAddr.addressType === "statistical") {
+    } else if (propertySurfAddr.addressType === "observation") {
         queryKey = [
-            "getPropertySurfaceResampledToStaticSurface",
-            meshSurfAddr.caseUuid,
-            meshSurfAddr.ensemble,
-            meshSurfAddr.statisticFunction,
-            meshSurfAddr.name,
-            meshSurfAddr.attribute,
-            // propertySurfAddr.statisticFunction,
+            "getResampledObservedSurfaceData",
+            meshSurfSpec.ncol,
+            meshSurfSpec.nrow,
+            meshSurfSpec.xinc,
+            meshSurfSpec.yinc,
+            meshSurfSpec.xori,
+            meshSurfSpec.yori,
+            meshSurfSpec.rotation,
             propertySurfAddr.name,
             propertySurfAddr.attribute,
             propertySurfAddr.isoDateOrInterval,
         ];
         queryFn = () =>
-            apiService.surface.getPropertySurfaceResampledToStatisticalStaticSurface(
-                meshSurfAddr.caseUuid,
-                meshSurfAddr.ensemble,
-                meshSurfAddr.statisticFunction,
-                meshSurfAddr.name,
-                meshSurfAddr.attribute,
-                // propertySurfAddr.statisticFunction,
+            apiService.surface.getResampledObservedSurfaceData(
+                propertySurfAddr.caseUuid,
+                propertySurfAddr.ensemble,
+                meshSurfSpec.ncol,
+                meshSurfSpec.nrow,
+                meshSurfSpec.xinc,
+                meshSurfSpec.yinc,
+                meshSurfSpec.xori,
+                meshSurfSpec.yori,
+                meshSurfSpec.rotation,
+                propertySurfAddr.name,
+                propertySurfAddr.attribute,
+                propertySurfAddr.isoDateOrInterval
+            );
+    } else if (propertySurfAddr.addressType === "statistical") {
+        queryKey = [
+            "getResampledStatisticalSurfaceData",
+            propertySurfAddr.caseUuid,
+            propertySurfAddr.ensemble,
+            propertySurfAddr.statisticFunction,
+            meshSurfSpec.ncol,
+            meshSurfSpec.nrow,
+            meshSurfSpec.xinc,
+            meshSurfSpec.yinc,
+            meshSurfSpec.xori,
+            meshSurfSpec.yori,
+            meshSurfSpec.rotation,
+
+            propertySurfAddr.name,
+            propertySurfAddr.attribute,
+            propertySurfAddr.isoDateOrInterval,
+        ];
+        queryFn = () =>
+            apiService.surface.getResampledStatisticalSurfaceData(
+                propertySurfAddr.caseUuid,
+                propertySurfAddr.ensemble,
+                propertySurfAddr.statisticFunction,
+                meshSurfSpec.ncol,
+                meshSurfSpec.nrow,
+                meshSurfSpec.xinc,
+                meshSurfSpec.yinc,
+                meshSurfSpec.xori,
+                meshSurfSpec.yori,
+                meshSurfSpec.rotation,
                 propertySurfAddr.name,
                 propertySurfAddr.attribute,
                 propertySurfAddr.isoDateOrInterval
@@ -140,7 +192,6 @@ export function usePropertySurfaceDataByQueryAddress(
         select: transformSurfaceData,
         staleTime: STALE_TIME,
         cacheTime: CACHE_TIME,
-        enabled: enabled,
     });
 }
 export function usePolygonsDataQueryByAddress(

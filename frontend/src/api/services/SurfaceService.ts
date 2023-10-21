@@ -74,6 +74,39 @@ export class SurfaceService {
     }
 
     /**
+     * Get Observed Surface Data
+     * @param caseUuid Sumo case uuid
+     * @param ensembleName Ensemble name
+     * @param name Surface name
+     * @param attribute Surface attribute
+     * @param timeOrInterval Time point or time interval string
+     * @returns SurfaceData Successful Response
+     * @throws ApiError
+     */
+    public getObservedSurfaceData(
+        caseUuid: string,
+        ensembleName: string,
+        name: string,
+        attribute: string,
+        timeOrInterval?: (string | null),
+    ): CancelablePromise<SurfaceData> {
+        return this.httpRequest.request({
+            method: 'GET',
+            url: '/surface/observed_surface_data/',
+            query: {
+                'case_uuid': caseUuid,
+                'ensemble_name': ensembleName,
+                'name': name,
+                'attribute': attribute,
+                'time_or_interval': timeOrInterval,
+            },
+            errors: {
+                422: `Validation Error`,
+            },
+        });
+    }
+
+    /**
      * Get Statistical Surface Data
      * @param caseUuid Sumo case uuid
      * @param ensembleName Ensemble name
@@ -110,12 +143,16 @@ export class SurfaceService {
     }
 
     /**
-     * Get Property Surface Resampled To Static Surface
+     * Get Resampled Realization Surface Data
      * @param caseUuid Sumo case uuid
      * @param ensembleName Ensemble name
-     * @param realizationNumMesh Realization number
-     * @param nameMesh Surface name
-     * @param attributeMesh Surface attribute
+     * @param ncolMesh Realization number
+     * @param nrowMesh Surface name
+     * @param xincMesh Surface attribute
+     * @param yincMesh Surface attribute
+     * @param xoriMesh Surface attribute
+     * @param yoriMesh Surface attribute
+     * @param rotationMesh Surface attribute
      * @param realizationNumProperty Realization number
      * @param nameProperty Surface name
      * @param attributeProperty Surface attribute
@@ -123,12 +160,16 @@ export class SurfaceService {
      * @returns SurfaceData Successful Response
      * @throws ApiError
      */
-    public getPropertySurfaceResampledToStaticSurface(
+    public getResampledRealizationSurfaceData(
         caseUuid: string,
         ensembleName: string,
-        realizationNumMesh: number,
-        nameMesh: string,
-        attributeMesh: string,
+        ncolMesh: number,
+        nrowMesh: number,
+        xincMesh: number,
+        yincMesh: number,
+        xoriMesh: number,
+        yoriMesh: number,
+        rotationMesh: number,
         realizationNumProperty: number,
         nameProperty: string,
         attributeProperty: string,
@@ -136,13 +177,17 @@ export class SurfaceService {
     ): CancelablePromise<SurfaceData> {
         return this.httpRequest.request({
             method: 'GET',
-            url: '/surface/property_surface_resampled_to_static_surface/',
+            url: '/surface/resampled_realization_surface_data/',
             query: {
                 'case_uuid': caseUuid,
                 'ensemble_name': ensembleName,
-                'realization_num_mesh': realizationNumMesh,
-                'name_mesh': nameMesh,
-                'attribute_mesh': attributeMesh,
+                'ncol_mesh': ncolMesh,
+                'nrow_mesh': nrowMesh,
+                'xinc_mesh': xincMesh,
+                'yinc_mesh': yincMesh,
+                'xori_mesh': xoriMesh,
+                'yori_mesh': yoriMesh,
+                'rotation_mesh': rotationMesh,
                 'realization_num_property': realizationNumProperty,
                 'name_property': nameProperty,
                 'attribute_property': attributeProperty,
@@ -155,37 +200,106 @@ export class SurfaceService {
     }
 
     /**
-     * Get Property Surface Resampled To Statistical Static Surface
+     * Get Resampled Observed Surface Data
      * @param caseUuid Sumo case uuid
      * @param ensembleName Ensemble name
-     * @param statisticFunction Statistics to calculate
-     * @param nameMesh Surface name
-     * @param attributeMesh Surface attribute
+     * @param ncolMesh Realization number
+     * @param nrowMesh Surface name
+     * @param xincMesh Surface attribute
+     * @param yincMesh Surface attribute
+     * @param xoriMesh Surface attribute
+     * @param yoriMesh Surface attribute
+     * @param rotationMesh Surface attribute
      * @param nameProperty Surface name
      * @param attributeProperty Surface attribute
      * @param timeOrIntervalProperty Time point or time interval string
      * @returns SurfaceData Successful Response
      * @throws ApiError
      */
-    public getPropertySurfaceResampledToStatisticalStaticSurface(
+    public getResampledObservedSurfaceData(
         caseUuid: string,
         ensembleName: string,
-        statisticFunction: SurfaceStatisticFunction,
-        nameMesh: string,
-        attributeMesh: string,
+        ncolMesh: number,
+        nrowMesh: number,
+        xincMesh: number,
+        yincMesh: number,
+        xoriMesh: number,
+        yoriMesh: number,
+        rotationMesh: number,
         nameProperty: string,
         attributeProperty: string,
         timeOrIntervalProperty?: (string | null),
     ): CancelablePromise<SurfaceData> {
         return this.httpRequest.request({
             method: 'GET',
-            url: '/surface/property_surface_resampled_to_statistical_static_surface/',
+            url: '/surface/resampled_observed_surface_data/',
+            query: {
+                'case_uuid': caseUuid,
+                'ensemble_name': ensembleName,
+                'ncol_mesh': ncolMesh,
+                'nrow_mesh': nrowMesh,
+                'xinc_mesh': xincMesh,
+                'yinc_mesh': yincMesh,
+                'xori_mesh': xoriMesh,
+                'yori_mesh': yoriMesh,
+                'rotation_mesh': rotationMesh,
+                'name_property': nameProperty,
+                'attribute_property': attributeProperty,
+                'time_or_interval_property': timeOrIntervalProperty,
+            },
+            errors: {
+                422: `Validation Error`,
+            },
+        });
+    }
+
+    /**
+     * Get Resampled Statistical Surface Data
+     * @param caseUuid Sumo case uuid
+     * @param ensembleName Ensemble name
+     * @param statisticFunction Statistics to calculate
+     * @param ncolMesh Realization number
+     * @param nrowMesh Surface name
+     * @param xincMesh Surface attribute
+     * @param yincMesh Surface attribute
+     * @param xoriMesh Surface attribute
+     * @param yoriMesh Surface attribute
+     * @param rotationMesh Surface attribute
+     * @param nameProperty Surface name
+     * @param attributeProperty Surface attribute
+     * @param timeOrIntervalProperty Time point or time interval string
+     * @returns SurfaceData Successful Response
+     * @throws ApiError
+     */
+    public getResampledStatisticalSurfaceData(
+        caseUuid: string,
+        ensembleName: string,
+        statisticFunction: SurfaceStatisticFunction,
+        ncolMesh: number,
+        nrowMesh: number,
+        xincMesh: number,
+        yincMesh: number,
+        xoriMesh: number,
+        yoriMesh: number,
+        rotationMesh: number,
+        nameProperty: string,
+        attributeProperty: string,
+        timeOrIntervalProperty?: (string | null),
+    ): CancelablePromise<SurfaceData> {
+        return this.httpRequest.request({
+            method: 'GET',
+            url: '/surface/resampled_statistical_surface_data/',
             query: {
                 'case_uuid': caseUuid,
                 'ensemble_name': ensembleName,
                 'statistic_function': statisticFunction,
-                'name_mesh': nameMesh,
-                'attribute_mesh': attributeMesh,
+                'ncol_mesh': ncolMesh,
+                'nrow_mesh': nrowMesh,
+                'xinc_mesh': xincMesh,
+                'yinc_mesh': yincMesh,
+                'xori_mesh': xoriMesh,
+                'yori_mesh': yoriMesh,
+                'rotation_mesh': rotationMesh,
                 'name_property': nameProperty,
                 'attribute_property': attributeProperty,
                 'time_or_interval_property': timeOrIntervalProperty,

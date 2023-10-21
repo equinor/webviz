@@ -54,6 +54,10 @@ const TimeTypeEnumToStringMapping = {
     [TimeType.TimePoint]: "Time point",
     [TimeType.Interval]: "Time interval",
 };
+const ObservedOrSimulatedEnum = {
+    Observed: "observed",
+    Simulated: "simulated",
+};
 export function settings({ moduleContext, workbenchSession, workbenchServices }: ModuleFCProps<state>) {
     const myInstanceIdStr = moduleContext.getInstanceIdString();
     console.debug(`${myInstanceIdStr} -- render TopographicMap settings`);
@@ -66,6 +70,7 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
     const [selectedPropertySurfaceName, setSelectedPropertySurfaceName] = React.useState<string | null>(null);
     const [selectedPropertySurfaceAttribute, setSelectedPropertySurfaceAttribute] = React.useState<string | null>(null);
     const [selectedPropertyTimeOrInterval, setSelectedPropertyTimeOrInterval] = React.useState<string | null>(null);
+    const [propertySurfaceIsObserved, setPropertySurfaceIsObserved] = React.useState<boolean>(false);
     const [timeType, setTimeType] = React.useState<TimeType>(TimeType.None);
     const [selectedPolygonName, setSelectedPolygonName] = React.useState<string | null>(null);
     const [selectedPolygonAttribute, setSelectedPolygonAttribute] = React.useState<string | null>(null);
@@ -149,6 +154,7 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
                   surfaceMetas: propertySurfDirQuery.data,
                   timeType: timeType,
                   excludeAttributeTypes: [SurfaceAttributeType_api.DEPTH],
+                  useObservedSurfaces: propertySurfaceIsObserved,
               }
             : null
     );
@@ -242,11 +248,11 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
                     null
                 );
 
-                if (aggregation === null) {
-                    surfAddr = addrFactory.createRealizationAddress(realizationNum);
-                } else {
-                    surfAddr = addrFactory.createStatisticalAddress(aggregation);
-                }
+                // if (aggregation === null) {
+                surfAddr = addrFactory.createRealizationAddress(realizationNum);
+                // } else {
+                // surfAddr = addrFactory.createStatisticalAddress(aggregation);
+                // }
             }
 
             console.debug(`propagateSurfaceSelectionToView() => ${surfAddr ? "valid surfAddr" : "NULL surfAddr"}`);
@@ -269,8 +275,9 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
                     computedPropertySurfaceAttribute,
                     computedPropertyTimeOrInterval
                 );
-
-                if (aggregation === null) {
+                if (propertySurfaceIsObserved) {
+                    surfAddr = addrFactory.createObservedAddress();
+                } else if (aggregation === null) {
                     surfAddr = addrFactory.createRealizationAddress(realizationNum);
                 } else {
                     surfAddr = addrFactory.createStatisticalAddress(aggregation);
@@ -288,6 +295,7 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
             aggregation,
             realizationNum,
             usePropertySurface,
+            propertySurfaceIsObserved,
         ]
     );
     React.useEffect(
@@ -438,6 +446,9 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
     function handleTimeModeChange(event: React.ChangeEvent<HTMLInputElement>) {
         setTimeType(event.target.value as TimeType);
     }
+    function handleIsObserved(event: React.ChangeEvent<HTMLInputElement>) {
+        setPropertySurfaceIsObserved(event.target.value === "observed");
+    }
     return (
         <div className="flex flex-col gap-2 overflow-y-auto">
             <CollapsibleGroup expanded={true} title="Ensemble and realization">
@@ -509,6 +520,15 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
                             loadingComponent={<CircularProgress />}
                         >
                             {" "}
+                            <RadioGroup
+                                value={propertySurfaceIsObserved ? "observed" : "simulated"}
+                                direction="horizontal"
+                                options={[
+                                    { value: "simulated", label: "Simulated" },
+                                    { value: "observed", label: "Observed" },
+                                ]}
+                                onChange={handleIsObserved}
+                            />
                             <RadioGroup
                                 value={timeType}
                                 direction="horizontal"

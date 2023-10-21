@@ -59,8 +59,24 @@ export function useSurfaceDataQueryByAddress(surfAddr: SurfaceAddress | null): U
                 surfAddr.attribute,
                 surfAddr.isoDateOrInterval ?? undefined
             );
+    } else if (surfAddr.addressType === "observation") {
+        queryKey = [
+            "getObservationSurfaceData",
+            surfAddr.caseUuid,
+            surfAddr.ensemble,
+            surfAddr.name,
+            surfAddr.attribute,
+            surfAddr.isoDateOrInterval,
+        ];
+        queryFn = () =>
+            apiService.surface.getObservedSurfaceData(
+                surfAddr.caseUuid,
+                surfAddr.ensemble,
+                surfAddr.name,
+                surfAddr.attribute,
+                surfAddr.isoDateOrInterval ?? undefined
+            );
     }
-
     // Dynamic, statistical surface
     else if (surfAddr.addressType === "statistical") {
         queryKey = [
