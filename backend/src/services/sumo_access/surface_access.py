@@ -21,7 +21,7 @@ class SurfaceAccess(SumoEnsemble):
         surface_collection: SurfaceCollection = self._case.surfaces.filter(
             iteration=self._iteration_name,
             aggregation=False,
-            realization=0,
+            realization=self._case.get_realizations(iteration=self._iteration_name)[0],
         )
 
         surfs: List[SurfaceMeta] = []
@@ -34,12 +34,17 @@ class SurfaceAccess(SumoEnsemble):
                 iso_string_or_time_interval = t_start
             if t_start and t_end:
                 iso_string_or_time_interval = f"{t_start}/{t_end}"
-
+            content = surf["data"].get("content", SumoContent.DEPTH)
+            if content == "unset":
+                content = SumoContent.DEPTH
+            tagname = surf["data"].get("tagname", "Unknown")
+            if tagname == "":
+                tagname = "Unknown"
             surf_meta = SurfaceMeta(
                 name=surf["data"]["name"],
-                tagname=surf["data"].get("tagname", "Unknown"),
+                tagname=tagname,
                 iso_date_or_interval=iso_string_or_time_interval,
-                content=surf["data"].get("content", SumoContent.DEPTH),
+                content=content,
                 is_observation=surf["data"]["is_observation"],
                 is_stratigraphic=surf["data"]["stratigraphic"],
                 zmin=surf["data"]["bbox"]["zmin"],

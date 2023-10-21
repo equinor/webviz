@@ -1,10 +1,13 @@
 import logging
+from io import BytesIO
 from typing import List, Optional
 
 import numpy as np
 import pandas as pd
+import pyarrow as pa
+import pyarrow.parquet as pq
 
-from .queries.parameters import get_parameters_for_iteration, SumoEnsembleParameter
+from ..utils.perf_timer import PerfTimer
 from ._helpers import SumoEnsemble
 from .parameter_types import (
     EnsembleParameter,
@@ -20,17 +23,30 @@ LOGGER = logging.getLogger(__name__)
 class ParameterAccess(SumoEnsemble):
     async def get_parameters_and_sensitivities(self) -> EnsembleParameters:
         """Retrieve parameters for an ensemble"""
+        timer = PerfTimer()
 
-        # Sumo query. Replace with explorer when ready
-        sumo_parameters: List[SumoEnsembleParameter] = await get_parameters_for_iteration(
-            self._sumo_client, self._case_uuid, self._iteration_name
+        table_collection = self._case.tables.filter(
+            iteration=self._iteration_name,
+            aggregation="collection",
+            name="parameters",
+            tagname="all",
         )
+        if await table_collection.length_async() == 0:
+            raise ValueError(f"No parameter tables found {self._case.name, self._iteration_name}")
+        if await table_collection.length_async() > 1:
+            raise ValueError(f"Multiple parameter tables found {self._case.name,self._iteration_name}")
 
-        sensitivities = create_ensemble_sensitivities(sumo_parameters)
-        parameters = [create_ensemble_parameter(sumo_parameter) for sumo_parameter in sumo_parameters]
+        table = table_collection[0]
+        byte_stream: BytesIO = table.blob
+        table = pq.read_table(byte_stream)
+        et_download_arrow_table_ms = timer.lap_ms()
+        LOGGER.debug(f"Downloaded arrow table in {et_download_arrow_table_ms}ms")
+
+        ensemble_parameters = parameter_table_to_ensemble_parameters(table)
+        sensitivities = create_ensemble_sensitivities(ensemble_parameters)
 
         return EnsembleParameters(
-            parameters=parameters,
+            parameters=ensemble_parameters,
             sensitivities=sensitivities,
         )
 
@@ -40,27 +56,8 @@ class ParameterAccess(SumoEnsemble):
         return next(parameter for parameter in parameters.parameters if parameter.name == parameter_name)
 
 
-def create_ensemble_parameter(
-    sumo_parameter: SumoEnsembleParameter,
-) -> EnsembleParameter:
-    """Create an EnsembleParameter from a Sumo parameter object"""
-
-    return EnsembleParameter(
-        name=sumo_parameter.name,
-        is_logarithmic=sumo_parameter.name.startswith("LOG10_"),
-        is_numerical=is_array_numeric(np.array(sumo_parameter.values)),
-        is_constant=all(value == sumo_parameter.values[0] for value in sumo_parameter.values),
-        group_name=sumo_parameter.groupname,
-        descriptive_name=f"{sumo_parameter.name} (log)"
-        if sumo_parameter.name.startswith("LOG10_")
-        else sumo_parameter.name,
-        values=sumo_parameter.values,
-        realizations=sumo_parameter.realizations,
-    )
-
-
 def create_ensemble_sensitivities(
-    sumo_ensemble_parameters: List[SumoEnsembleParameter],
+    sumo_ensemble_parameters: List[EnsembleParameter],
 ) -> Optional[List[EnsembleSensitivity]]:
     """Extract sensitivities from a list of SumoEnsembleParameter objects"""
     sensitivities = []
@@ -115,6 +112,32 @@ def create_ensemble_sensitivity_cases(
     return cases
 
 
-def is_array_numeric(array: np.ndarray) -> bool:
-    """Check if an array is numeric"""
-    return np.issubdtype(array.dtype, np.number)
+def parameter_table_to_ensemble_parameters(parameter_table: pa.Table) -> List[EnsembleParameter]:
+    """Convert a parameter table to an EnsembleParameter"""
+    ensemble_parameters: List[EnsembleParameter] = []
+    for column_name in parameter_table.column_names:
+
+        if column_name == "REAL":
+            continue
+        parameter_name_components = column_name.split(":")
+        if len(parameter_name_components) > 2:
+            raise ValueError(f"Parameter {column_name} has too many componenents. Expected <groupname>:<parametername>")
+        if len(parameter_name_components) == 1:
+            parameter_name = column_name
+            group_name = None
+        else:
+            group_name = parameter_name_components[0]
+            parameter_name = parameter_name_components[1]
+        ensemble_parameters.append(
+            EnsembleParameter(
+                name=parameter_name,
+                is_logarithmic=column_name.startswith("LOG10_"),
+                is_numerical=parameter_table.schema.field(column_name).type != pa.string,
+                is_constant=len(set(parameter_table[column_name])) == 1,
+                group_name=group_name,
+                descriptive_name=parameter_name,
+                values=parameter_table[column_name].to_numpy().tolist(),
+                realizations=parameter_table["REAL"].to_numpy().tolist(),
+            )
+        )
+    return ensemble_parameters
