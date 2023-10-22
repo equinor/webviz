@@ -1,7 +1,7 @@
 import logging
 from typing import List
 
-import orjson as json
+import json
 from fmu.sumo.explorer.objects.dictionary import Dictionary
 
 from ._helpers import SumoEnsemble
@@ -66,5 +66,5 @@ def _create_rft_observations(observations_dict: dict) -> List[RftObservations]:
     rft_observations = []
     if ObservationType.RFT not in observations_dict:
         return rft_observations
-    LOGGER.debug(f"RFT observations found. This is not yet implemented.")
+    LOGGER.debug("RFT observations found. This is not yet implemented.")
     return rft_observations
