@@ -40,7 +40,7 @@ class ObservationAccess(SumoEnsemble):
 
 def _create_summary_observations(observations_dict: dict) -> List[SummaryVectorObservations]:
     """Create summary observations from the observations dictionary"""
-    summary_observations = []
+    summary_observations: List[SummaryVectorObservations] = []
     if ObservationType.SUMMARY not in observations_dict:
         return summary_observations
     for smry_obs in observations_dict[ObservationType.SUMMARY]:
@@ -63,7 +63,7 @@ def _create_summary_observations(observations_dict: dict) -> List[SummaryVectorO
 
 def _create_rft_observations(observations_dict: dict) -> List[RftObservations]:
     """Create RFT observations from the observations dictionary"""
-    rft_observations = []
+    rft_observations: List[RftObservations] = []
     if ObservationType.RFT not in observations_dict:
         return rft_observations
     LOGGER.debug("RFT observations found. This is not yet implemented.")
