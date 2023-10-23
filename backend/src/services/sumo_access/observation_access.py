@@ -24,14 +24,14 @@ class ObservationAccess(SumoEnsemble):
             name="observations",
             tagname="all",
         )
-        if len(observations_collection) == 0:
+        if await observations_collection.length_async() == 0:
             return Observations()
-        if len(observations_collection) > 1:
+        if await observations_collection.length_async() > 1:
             raise ValueError(f"More than one observations dictionary found. {observations_collection.names}")
 
-        observations_handle: Dictionary = observations_collection[0]
-        observations_bytes = observations_handle.blob
-        observations_dict = json.loads(observations_bytes.decode())
+        observations_handle: Dictionary = await observations_collection.getitem_async(0)
+        observations_byteio = await observations_handle.blob_async
+        observations_dict = json.loads(observations_byteio.getvalue().decode())
 
         return Observations(
             summary=_create_summary_observations(observations_dict), rft=_create_rft_observations(observations_dict)
