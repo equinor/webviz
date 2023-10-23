@@ -35,7 +35,9 @@ class SurfaceAccess(SumoEnsemble):
 
         return surfs
 
-    async def _surface_collection_to_surface_meta_list(self, surface_collection: SurfaceCollection) -> SurfaceMeta:
+    async def _surface_collection_to_surface_meta_list(
+        self, surface_collection: SurfaceCollection
+    ) -> List[SurfaceMeta]:
         surfs: List[SurfaceMeta] = []
         async for surf in surface_collection:
             iso_string_or_time_interval = None
