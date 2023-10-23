@@ -306,11 +306,4 @@ def get_smry_table_collection(case: Case, iteration_name: str, column_name: Opti
     if len(table_names) == 1:
         return all_smry_table_collections
 
-    LOGGER.debug(f"Multiple summary table collections found: {table_names}. Picking first one: {table_names[0]}")
-    return case.tables.filter(
-        aggregation="collection",
-        name=table_names[0],
-        tagname="summary",
-        iteration=iteration_name,
-        column=column_name,
-    )
+    raise ValueError(f"Multiple summary table collections found: {table_names}. Expected only one.")
