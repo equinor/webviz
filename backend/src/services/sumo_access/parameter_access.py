@@ -35,9 +35,10 @@ class ParameterAccess(SumoEnsemble):
         if await table_collection.length_async() > 1:
             raise ValueError(f"Multiple parameter tables found {self._case.name,self._iteration_name}")
 
-        table = table_collection[0]
+        table = await table_collection.getitem_async(0)
         byte_stream: BytesIO = table.blob
         table = pq.read_table(byte_stream)
+
         et_download_arrow_table_ms = timer.lap_ms()
         LOGGER.debug(f"Downloaded arrow table in {et_download_arrow_table_ms}ms")
 
@@ -115,7 +116,6 @@ def parameter_table_to_ensemble_parameters(parameter_table: pa.Table) -> List[En
     """Convert a parameter table to an EnsembleParameter"""
     ensemble_parameters: List[EnsembleParameter] = []
     for column_name in parameter_table.column_names:
-
         if column_name == "REAL":
             continue
         parameter_name_components = column_name.split(":")
