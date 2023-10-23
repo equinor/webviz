@@ -1,0 +1,31 @@
+import logging
+from typing import Annotated
+
+import pyarrow as pa
+import pyarrow.compute as pc
+from fastapi import APIRouter, Depends, HTTPException, Query
+
+from src.backend.auth.auth_helper import AuthHelper
+from src.services.summary_vector_statistics import compute_vector_statistics
+from src.services.sumo_access.generic_types import EnsembleScalarResponse
+from src.services.sumo_access.parameter_access import ParameterAccess
+from src.services.sumo_access.rft_access import RftAccess
+from src.services.utils.authenticated_user import AuthenticatedUser
+
+LOGGER = logging.getLogger(__name__)
+
+router = APIRouter()
+
+
+@router.get("/rft/")
+async def get_rft(
+    authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
+    case_uuid: Annotated[str, Query(description="Sumo case uuid")],
+    ensemble_name: Annotated[str, Query(description="Ensemble name")],
+) -> list:
+    access = await RftAccess.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
+    well_names = await access.get_well_names()
+    for well in well_names:
+        dates = await access.get_dates(well)
+        print(dates)
+    return []
