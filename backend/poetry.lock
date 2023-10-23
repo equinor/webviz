@@ -2701,13 +2701,13 @@ pbr = ">=2.0.0,<2.1.0 || >2.1.0"
 
 [[package]]
 name = "sumo-wrapper-python"
-version = "0.4.0"
+version = "0.4.1"
 description = "Python wrapper for the Sumo API"
 optional = false
 python-versions = ">=3.6"
 files = [
-    {file = "sumo-wrapper-python-0.4.0.tar.gz", hash = "sha256:d53b596f8a526c649ef7f6a4297826cb0496f0d421f64b20f101cd41d16e0e2e"},
-    {file = "sumo_wrapper_python-0.4.0-py3-none-any.whl", hash = "sha256:df0c2709e6d5d33a2d5a8e13db684a03601fb1bb4f78ccb668170f9daf28d173"},
+    {file = "sumo-wrapper-python-0.4.1.tar.gz", hash = "sha256:7018c0162b9510937c976c1d7179bca7a71ae06278c219407ff27ed4bbee4037"},
+    {file = "sumo_wrapper_python-0.4.1-py3-none-any.whl", hash = "sha256:c7cc4c7331cc486b836fa0f39d0eb016b8fb7463f847f71e525a066da18ffce5"},
 ]
 
 [package.dependencies]
@@ -3047,4 +3047,4 @@ tests = ["hypothesis", "pytest", "pytest-benchmark", "pytest-mock", "pytest-snap
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "9e2918b5054ba8591d7dace93c523e26be1fa807ec8d384d64d4d0e73b655d32"
+content-hash = "3a5231dade6fe172008bdfab1842eaa86f7b3d71249b06af756fa979948033ee"

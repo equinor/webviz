@@ -237,7 +237,7 @@ async def _load_arrow_table_for_from_sumo(case: Case, iteration_name: str, vecto
     # The tables we have seen so far have format set to 'arrow', but the actual data is in parquet format.
     # This must be a bug or a misunderstanding.
     # For now, just read the parquet data into an arrow table
-    byte_stream: BytesIO = sumo_table.blob
+    byte_stream: BytesIO = await sumo_table.blob_async
     table = pq.read_table(byte_stream)
     et_download_arrow_table_ms = timer.lap_ms()
 

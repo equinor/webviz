@@ -36,7 +36,7 @@ class ParameterAccess(SumoEnsemble):
             raise ValueError(f"Multiple parameter tables found {self._case.name,self._iteration_name}")
 
         table = await table_collection.getitem_async(0)
-        byte_stream: BytesIO = table.blob
+        byte_stream: BytesIO = await table.blob_async
         table = pq.read_table(byte_stream)
 
         et_download_arrow_table_ms = timer.lap_ms()
