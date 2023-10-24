@@ -111,8 +111,7 @@ dist
 .vscode/
 !.vscode/tasks.json
 
-# nyc code coverage
-nyc_output/
-
-# playwright report
+# playwright results
 playwright-report/
+/test-results/
+/playwright/.cache/
