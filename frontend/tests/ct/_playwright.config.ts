@@ -5,7 +5,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import vitePluginChecker from "vite-plugin-checker";
 
-import aliases from "../../aliases.json";
+import aliases from "../../aliases.json" assert { type: "json" };
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -46,7 +46,6 @@ export default defineConfig({
                             __dirname,
                             "..",
                             "..",
-                            // @ts-ignore
                             aliases.compilerOptions.paths[current][0].replace("/*", "")
                         ),
                     }),

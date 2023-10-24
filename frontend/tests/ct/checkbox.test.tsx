@@ -6,7 +6,7 @@ import { expect, test } from "@playwright/experimental-ct-react";
 test.use({ viewport: { width: 1920, height: 1080 } });
 
 test.describe("Checkbox", () => {
-    test("Matches snapshot", async ({ mount }) => {
+    test("Can be checked", async ({ mount }) => {
         let programmaticallyChecked = false;
         function handleChange(_: React.ChangeEvent<HTMLInputElement>, checked: boolean) {
             programmaticallyChecked = checked;
