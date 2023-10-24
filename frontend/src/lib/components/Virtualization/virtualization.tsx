@@ -41,6 +41,7 @@ export const Virtualization = withDefaults<VirtualizationProps>()(defaultProps, 
         props.direction,
         props.startIndex,
         props.itemSize,
+        props.items,
         containerSize.height,
         containerSize.width,
     ]);
