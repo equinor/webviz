@@ -1,3 +1,4 @@
+import { WellBoreHeader_api, WellBoreTrajectory_api } from "@api";
 import { apiService } from "@framework/ApiService";
 import { UseQueryResult, useQuery } from "@tanstack/react-query";
 
@@ -6,10 +7,16 @@ import { GridSurface_trans, transformGridSurface } from "./queryDataTransforms";
 const STALE_TIME = 60 * 1000;
 const CACHE_TIME = 60 * 1000;
 
-export function useGridSurface(caseUuid: string | null, ensembleName: string | null, gridName: string | null, realization: string | null): UseQueryResult<GridSurface_trans> {
+export function useGridSurface(
+    caseUuid: string | null,
+    ensembleName: string | null,
+    gridName: string | null,
+    realization: string | null
+): UseQueryResult<GridSurface_trans> {
     return useQuery({
         queryKey: ["getGridSurface", caseUuid, ensembleName, gridName, realization],
-        queryFn: () => apiService.grid.gridSurface(caseUuid ?? "", ensembleName ?? "", gridName ?? "", realization ?? ""),
+        queryFn: () =>
+            apiService.grid.gridSurface(caseUuid ?? "", ensembleName ?? "", gridName ?? "", realization ?? ""),
         select: transformGridSurface,
         staleTime: STALE_TIME,
         cacheTime: 0,
@@ -17,27 +24,53 @@ export function useGridSurface(caseUuid: string | null, ensembleName: string | n
     });
 }
 
-export function useGridParameter(caseUuid: string | null, ensembleName: string | null, gridName: string | null, parameterName: string | null, realization: string | null, useStatistics: boolean): UseQueryResult<number[]> {
+export function useGridParameter(
+    caseUuid: string | null,
+    ensembleName: string | null,
+    gridName: string | null,
+    parameterName: string | null,
+    realization: string | null,
+    useStatistics: boolean
+): UseQueryResult<number[]> {
     return useQuery({
         queryKey: ["getGridParameter", caseUuid, ensembleName, gridName, parameterName, realization],
-        queryFn: () => apiService.grid.gridParameter(caseUuid ?? "", ensembleName ?? "", gridName ?? "", parameterName ?? "", realization ?? ""),
+        queryFn: () =>
+            apiService.grid.gridParameter(
+                caseUuid ?? "",
+                ensembleName ?? "",
+                gridName ?? "",
+                parameterName ?? "",
+                realization ?? ""
+            ),
         staleTime: STALE_TIME,
         cacheTime: 0,
         enabled: caseUuid && ensembleName && gridName && parameterName && realization && !useStatistics ? true : false,
     });
 }
 
-
-export function useStatisticalGridParameter(caseUuid: string | null, ensembleName: string | null, gridName: string | null, parameterName: string | null, realizations: string[] | null, useStatistics: boolean): UseQueryResult<number[]> {
+export function useStatisticalGridParameter(
+    caseUuid: string | null,
+    ensembleName: string | null,
+    gridName: string | null,
+    parameterName: string | null,
+    realizations: string[] | null,
+    useStatistics: boolean
+): UseQueryResult<number[]> {
     return useQuery({
         queryKey: ["getStatisticalGridParameter", caseUuid, ensembleName, gridName, parameterName, realizations],
-        queryFn: () => apiService.grid.statisticalGridParameter(caseUuid ?? "", ensembleName ?? "", gridName ?? "", parameterName ?? "", realizations ?? []),
+        queryFn: () =>
+            apiService.grid.statisticalGridParameter(
+                caseUuid ?? "",
+                ensembleName ?? "",
+                gridName ?? "",
+                parameterName ?? "",
+                realizations ?? []
+            ),
         staleTime: STALE_TIME,
         cacheTime: 0,
         enabled: caseUuid && ensembleName && gridName && parameterName && realizations && useStatistics ? true : false,
     });
 }
-
 
 export function useGridModelNames(caseUuid: string | null, ensembleName: string | null): UseQueryResult<string[]> {
     return useQuery({
@@ -49,12 +82,36 @@ export function useGridModelNames(caseUuid: string | null, ensembleName: string 
     });
 }
 
-export function useGridParameterNames(caseUuid: string | null, ensembleName: string | null, gridName: string | null): UseQueryResult<string[]> {
+export function useGridParameterNames(
+    caseUuid: string | null,
+    ensembleName: string | null,
+    gridName: string | null
+): UseQueryResult<string[]> {
     return useQuery({
         queryKey: ["getParameterNames", caseUuid, ensembleName, gridName],
         queryFn: () => apiService.grid.getParameterNames(caseUuid ?? "", ensembleName ?? "", gridName ?? ""),
         staleTime: STALE_TIME,
         cacheTime: CACHE_TIME,
         enabled: caseUuid && ensembleName && gridName ? true : false,
+    });
+}
+
+export function useGetWellHeaders(caseUuid: string | undefined): UseQueryResult<WellBoreHeader_api[]> {
+    return useQuery({
+        queryKey: ["getWellHeaders", caseUuid],
+        queryFn: () => apiService.well.getWellHeaders(caseUuid ?? ""),
+        staleTime: STALE_TIME,
+        cacheTime: STALE_TIME,
+        enabled: caseUuid ? true : false,
+    });
+}
+
+export function useGetFieldWellsTrajectories(caseUuid: string | undefined): UseQueryResult<WellBoreTrajectory_api[]> {
+    return useQuery({
+        queryKey: ["getFieldWellsTrajectories", caseUuid],
+        queryFn: () => apiService.well.getFieldWellTrajectories(caseUuid ?? ""),
+        staleTime: STALE_TIME,
+        cacheTime: CACHE_TIME,
+        enabled: caseUuid ? true : false,
     });
 }
