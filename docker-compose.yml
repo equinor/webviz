@@ -52,15 +52,7 @@ services:
     volumes:
       - ./backend/src:/home/appuser/backend/src
 
-  redis-user-session-state:
-    image: "bitnami/redis:6.2.10@sha256:bd42fcdab5959ce2b21b6ea8410d4b3ee87ecb2e320260326ec731ecfcffbd0e"
-    expose:
-      - "6380"
-    environment:
-      - ALLOW_EMPTY_PASSWORD=yes
-      - REDIS_PORT_NUMBER=6380
-
-  redis-login-state:
+  redis-user-session:
     image: "bitnami/redis:6.2.10@sha256:bd42fcdab5959ce2b21b6ea8410d4b3ee87ecb2e320260326ec731ecfcffbd0e"
     expose:
       - "6379"
