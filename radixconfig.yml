@@ -63,6 +63,22 @@ spec:
       variables:
         UVICORN_PORT: 8000
         UVICORN_ENTRYPOINT: src.backend.user_session.main:app
+      environmentConfig:
+        # As of October 2023 in radix, these settings need to be duplicated for both environments.
+        - environment: prod
+          volumeMounts:
+            - name: webvizcache
+              path: /tmp/webvizcache/
+              blobfuse2:
+                container: cache
+                uid: 1234
+        - environment: review
+          volumeMounts:
+            - name: webvizcache
+              path: /tmp/webvizcache/
+              blobfuse2:
+                container: cache
+                uid: 1234
   dnsAppAlias:
     environment: prod
     component: frontend
