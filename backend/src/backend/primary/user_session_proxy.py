@@ -8,9 +8,22 @@ from starlette.requests import Request
 from starlette.responses import StreamingResponse
 from starlette.background import BackgroundTask
 
+from src import config
 from src.services.utils.authenticated_user import AuthenticatedUser
 
 LOCALHOST_DEVELOPMENT = os.environ.get("UVICORN_RELOAD") == "true"
+
+
+class _RedisUserJobs:
+    def __init__(self) -> None:
+        # redis.Redis does not yet have namespace support - https://github.com/redis/redis-py/issues/12 - need to prefix manually.
+        self._redis_client = redis.Redis.from_url(config.REDIS_URL, decode_responses=True)
+
+    def get_job_name(self, user_id: str) -> Optional[str]:
+        return self._redis_client.get("user-job-name:" + user_id)
+
+    def set_job_name(self, user_id: str, job_name: str) -> None:
+        self._redis_client.set("user-job-name:" + user_id, job_name)
 
 
 class RadixJobScheduler:
@@ -20,15 +33,13 @@ class RadixJobScheduler:
     def __init__(self, name: str, port: int) -> None:
         self._name = name
         self._port = port
-
-        # redis.Redis does not yet have namespace support - https://github.com/redis/redis-py/issues/12 - need to prefix manually.
-        self._redis_client = redis.Redis(host="redis-user-session", port=6379, decode_responses=True)
+        self._redis_user_jobs = _RedisUserJobs()
 
     def _get_job_name(self, user_id: str) -> Optional[str]:
-        return self._redis_client.get("user-job-name-" + user_id)
+        return self._redis_user_jobs.get_job_name(user_id)
 
     def _set_job_name(self, user_id: str, job_name: str) -> None:
-        self._redis_client.set("user-job-name-" + user_id, job_name)
+        self._redis_user_jobs.set_job_name(user_id, job_name)
 
     async def _active_running_job(self, user_id: str) -> bool:
         """Returns true if there already is a running job for logged in user."""
