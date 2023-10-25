@@ -74,9 +74,9 @@ class RftAccess(SumoEnsemble):
             table = table.filter(mask)
         mask = pc.equal(table["WELL"], well_name)
         table = table.filter(mask)
-
-        mask = pc.is_in(table["DATE"], value_set=pa.array(timestamps_utc_ms))
-        table = table.filter(mask)
+        if timestamps_utc_ms is not None:
+            mask = pc.is_in(table["DATE"], value_set=pa.array(timestamps_utc_ms))
+            table = table.filter(mask)
 
         return table
 

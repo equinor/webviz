@@ -1,9 +1,10 @@
 export interface RftWellAddress {
     addressType: "realizations";
     caseUuid: string;
-    ensemble: string;
+    ensembleName: string;
     wellName: string;
     responseName: string;
+    timePoint: number;
     realizationNums: number[] | null
 
 }

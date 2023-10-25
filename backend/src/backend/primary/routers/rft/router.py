@@ -36,15 +36,17 @@ async def get_realization_data(
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
     case_uuid: Annotated[str, Query(description="Sumo case uuid")],
     ensemble_name: Annotated[str, Query(description="Ensemble name")],
+    well_name: Annotated[str, Query(description="Well name")],
+    response_name: Annotated[str, Query(description="Response name")],
+    timestamps_utc_ms: Annotated[list[int] | None, Query(description="Timestamps utc ms")] = None,
+    realizations: Annotated[list[int] | None, Query(description="Realizations")] = None,
 ) -> list[schemas.RftWellRealizationData]:
     access = await RftAccess.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
-    rft_well_infos = await access.get_well_list()
-    print(rft_well_infos)
     data = await access.get_rft_realization_data(
-        well_name=rft_well_infos[0].well_name,
-        timestamps_utc_ms=rft_well_infos[0].timestamps_utc_ms,
-        response_name="PRESSURE",
-        realizations=[1],
+        well_name=well_name,
+        response_name=response_name,
+        timestamps_utc_ms=timestamps_utc_ms,
+        realizations=realizations,
     )
-    print(data)
+
     return data

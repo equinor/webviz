@@ -39,12 +39,20 @@ export class RftService {
      * Get Realization Data
      * @param caseUuid Sumo case uuid
      * @param ensembleName Ensemble name
+     * @param wellName Well name
+     * @param responseName Response name
+     * @param timestampsUtcMs Timestamps utc ms
+     * @param realizations Realizations
      * @returns RftWellRealizationData Successful Response
      * @throws ApiError
      */
     public getRealizationData(
         caseUuid: string,
         ensembleName: string,
+        wellName: string,
+        responseName: string,
+        timestampsUtcMs?: (Array<number> | null),
+        realizations?: (Array<number> | null),
     ): CancelablePromise<Array<RftWellRealizationData>> {
         return this.httpRequest.request({
             method: 'GET',
@@ -52,6 +60,10 @@ export class RftService {
             query: {
                 'case_uuid': caseUuid,
                 'ensemble_name': ensembleName,
+                'well_name': wellName,
+                'response_name': responseName,
+                'timestamps_utc_ms': timestampsUtcMs,
+                'realizations': realizations,
             },
             errors: {
                 422: `Validation Error`,

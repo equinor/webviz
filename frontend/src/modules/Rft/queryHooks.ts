@@ -1,4 +1,4 @@
-import { RftWellInfo_api } from "@api";
+import { RftWellInfo_api, RftWellRealizationData_api } from "@api";
 import { apiService } from "@framework/ApiService";
 import { UseQueryResult, useQuery } from "@tanstack/react-query";
 
@@ -15,6 +15,23 @@ export function useRftWellList(
         staleTime: STALE_TIME,
         cacheTime: CACHE_TIME,
         enabled: caseUuid && ensembleName ? true : false,
+    });
+}
+
+export function useRftRealizationData(
+    caseUuid: string | undefined,
+    ensembleName: string | undefined,
+    wellName: string | undefined,
+    responseName: string | undefined,
+    timePoints: number[] | undefined,
+    realizationNums: number[] | null | undefined,
+): UseQueryResult<RftWellRealizationData_api[]> {
+    return useQuery({
+        queryKey: ["getRftRealizationData", caseUuid, ensembleName, wellName, responseName, timePoints, realizationNums],
+        queryFn: () => apiService.rft.getRealizationData(caseUuid ?? "", ensembleName ?? "", wellName ?? "", responseName ?? "", timePoints ?? undefined, realizationNums ?? undefined),
+        staleTime: STALE_TIME,
+        cacheTime: CACHE_TIME,
+        enabled: caseUuid && ensembleName && wellName && responseName ? true : false,
     });
 }
 
