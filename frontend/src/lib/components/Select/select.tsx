@@ -1,7 +1,6 @@
 import React, { Key } from "react";
 
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-import { getTextWidth } from "@lib/utils/textSize";
 
 import { isEqual } from "lodash";
 
