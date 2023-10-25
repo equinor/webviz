@@ -125,7 +125,6 @@ export const Select = withDefaults<SelectProps>()(defaultProps, (props) => {
             setKeysPressed((keysPressed) => [...keysPressed, e.key]);
 
             if (e.key === "Shift") {
-                console.debug("Shift pressed", currentIndex);
                 setLastShiftIndex(currentIndex);
             }
 
