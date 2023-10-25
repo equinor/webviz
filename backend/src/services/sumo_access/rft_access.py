@@ -4,7 +4,6 @@ from io import BytesIO
 
 import numpy as np
 import pandas as pd
-import polars as pl
 import pyarrow as pa
 import pyarrow.compute as pc
 import pyarrow.parquet as pq
@@ -18,14 +17,12 @@ LOGGER = logging.getLogger(__name__)
 
 
 class RftAccess(SumoEnsemble):
-    async def get_rft_info(self) -> list[RftWellInfo]:
-        table = await get_concatenated_rft_table(
-            self._case, self._iteration_name, column_names=["PRESSURE"], realizations=None
-        )
+    async def get_well_list(self) -> list[RftWellInfo]:
+        table = await get_concatenated_rft_table(self._case, self._iteration_name, column_names=["PRESSURE"])
         rft_well_infos: list[RftWellInfo] = []
         well_names = table["WELL"].unique().tolist()
         for well_name in well_names:
-            timestamps_utc_ms = list(set(table["DATE"].to_numpy().astype(int).tolist()))
+            timestamps_utc_ms = sorted(list(set(table["DATE"].to_numpy().astype(int).tolist())))
 
             rft_well_infos.append(RftWellInfo(well_name=well_name, timestamps_utc_ms=timestamps_utc_ms))
 

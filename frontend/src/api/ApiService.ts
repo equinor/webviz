@@ -13,6 +13,7 @@ import { InplaceVolumetricsService } from './services/InplaceVolumetricsService'
 import { ObservationsService } from './services/ObservationsService';
 import { ParametersService } from './services/ParametersService';
 import { PvtService } from './services/PvtService';
+import { RftService } from './services/RftService';
 import { SeismicService } from './services/SeismicService';
 import { SurfaceService } from './services/SurfaceService';
 import { SurfacePolygonsService } from './services/SurfacePolygonsService';
@@ -32,6 +33,7 @@ export class ApiService {
     public readonly observations: ObservationsService;
     public readonly parameters: ParametersService;
     public readonly pvt: PvtService;
+    public readonly rft: RftService;
     public readonly seismic: SeismicService;
     public readonly surface: SurfaceService;
     public readonly surfacePolygons: SurfacePolygonsService;
@@ -62,6 +64,7 @@ export class ApiService {
         this.observations = new ObservationsService(this.request);
         this.parameters = new ParametersService(this.request);
         this.pvt = new PvtService(this.request);
+        this.rft = new RftService(this.request);
         this.seismic = new SeismicService(this.request);
         this.surface = new SurfaceService(this.request);
         this.surfacePolygons = new SurfacePolygonsService(this.request);

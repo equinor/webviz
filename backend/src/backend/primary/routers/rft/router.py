@@ -19,28 +19,28 @@ LOGGER = logging.getLogger(__name__)
 router = APIRouter()
 
 
-@router.get("/rft/rft_info")
-async def get_rft_info(
+@router.get("/well_list")
+async def get_well_list(
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
     case_uuid: Annotated[str, Query(description="Sumo case uuid")],
     ensemble_name: Annotated[str, Query(description="Ensemble name")],
 ) -> list[schemas.RftWellInfo]:
     access = await RftAccess.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
-    rft_well_infos = await access.get_rft_info()
+    rft_well_list = await access.get_well_list()
 
-    return rft_well_infos
+    return rft_well_list
 
 
-@router.get("/rft/rft_data")
-async def get_rft_data(
+@router.get("/realization_data")
+async def get_realization_data(
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
     case_uuid: Annotated[str, Query(description="Sumo case uuid")],
     ensemble_name: Annotated[str, Query(description="Ensemble name")],
 ) -> list[schemas.RftWellRealizationData]:
     access = await RftAccess.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
-    rft_well_infos = await access.get_rft_info()
+    rft_well_infos = await access.get_well_list()
     print(rft_well_infos)
-    data = await access.get_rft_data(
+    data = await access.get_rft_realization_data(
         well_name=rft_well_infos[0].well_name,
         timestamps_utc_ms=rft_well_infos[0].timestamps_utc_ms,
         response_name="PRESSURE",
