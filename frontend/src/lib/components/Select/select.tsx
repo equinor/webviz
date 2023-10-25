@@ -191,8 +191,6 @@ export const Select = withDefaults<SelectProps>()(defaultProps, (props) => {
         }
     };
 
-    console.debug("startIndex", startIndex, "currentIndex", currentIndex);
-
     return (
         <BaseComponent disabled={props.disabled}>
             <div
