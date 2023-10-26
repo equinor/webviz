@@ -1,6 +1,6 @@
 import os
 import asyncio
-from typing import Any
+from typing import Any, Optional
 
 import httpx
 import redis
@@ -8,9 +8,22 @@ from starlette.requests import Request
 from starlette.responses import StreamingResponse
 from starlette.background import BackgroundTask
 
+from src import config
 from src.services.utils.authenticated_user import AuthenticatedUser
 
 LOCALHOST_DEVELOPMENT = os.environ.get("UVICORN_RELOAD") == "true"
+
+
+class _RedisUserJobs:
+    def __init__(self) -> None:
+        # redis.Redis does not yet have namespace support - https://github.com/redis/redis-py/issues/12 - need to prefix manually.
+        self._redis_client = redis.Redis.from_url(config.REDIS_URL, decode_responses=True)
+
+    def get_job_name(self, user_id: str) -> Optional[str]:
+        return self._redis_client.get("user-job-name:" + user_id)
+
+    def set_job_name(self, user_id: str, job_name: str) -> None:
+        self._redis_client.set("user-job-name:" + user_id, job_name)
 
 
 class RadixJobScheduler:
@@ -20,12 +33,18 @@ class RadixJobScheduler:
     def __init__(self, name: str, port: int) -> None:
         self._name = name
         self._port = port
-        self._existing_job_names = redis.Redis(host="redis-user-session-state", port=6380, decode_responses=True)
+        self._redis_user_jobs = _RedisUserJobs()
+
+    def _get_job_name(self, user_id: str) -> Optional[str]:
+        return self._redis_user_jobs.get_job_name(user_id)
+
+    def _set_job_name(self, user_id: str, job_name: str) -> None:
+        self._redis_user_jobs.set_job_name(user_id, job_name)
 
     async def _active_running_job(self, user_id: str) -> bool:
         """Returns true if there already is a running job for logged in user."""
 
-        existing_job_name = self._existing_job_names.get(user_id)
+        existing_job_name = self._get_job_name(user_id)
         if not existing_job_name:
             return False
         if LOCALHOST_DEVELOPMENT:
@@ -53,7 +72,7 @@ class RadixJobScheduler:
         same name."""
 
         if LOCALHOST_DEVELOPMENT:
-            self._existing_job_names.set(user_id, self._name)
+            self._set_job_name(user_id, self._name)
         else:
             print(f"Requesting new user session container for user {user_id}.")
             async with httpx.AsyncClient() as client:
@@ -74,7 +93,7 @@ class RadixJobScheduler:
                         }
                     },
                 )
-            self._existing_job_names.set(user_id, res.json()["name"])
+            self._set_job_name(user_id, res.json()["name"])
 
             while not await self._active_running_job(user_id):
                 # It takes a couple of seconds before Radix job uvicorn process has
@@ -87,7 +106,7 @@ class RadixJobScheduler:
         if not await self._active_running_job(user_id):
             await self._create_new_job(user_id)
 
-        job_name = self._existing_job_names.get(user_id)
+        job_name = self._get_job_name(user_id)
 
         return f"http://{job_name}:{self._port}"
 
