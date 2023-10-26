@@ -60,7 +60,6 @@ export const Select = withDefaults<SelectProps>()(defaultProps, (props) => {
     if (!isEqual(filteredOptions, prevFilteredOptions)) {
         let newCurrentIndex = 0;
         let newStartIndex = 0;
-        const indexOffset = currentIndex - startIndex;
         let oldCurrentValue = prevFilteredOptions[currentIndex]?.value;
         if (props.value?.length >= 1) {
             oldCurrentValue = props.value[0];
@@ -70,7 +69,7 @@ export const Select = withDefaults<SelectProps>()(defaultProps, (props) => {
             const newIndex = filteredOptions.findIndex((option) => option.value === oldCurrentValue);
             if (newIndex !== -1) {
                 newCurrentIndex = newIndex;
-                newStartIndex = Math.max(0, newIndex - indexOffset);
+                newStartIndex = newIndex;
             }
         }
         setCurrentIndex(newCurrentIndex);
