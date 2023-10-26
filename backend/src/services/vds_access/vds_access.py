@@ -25,10 +25,7 @@ LOGGER = logging.getLogger(__name__)
 
 def bytes_to_ndarray_float32(bytes_data: bytes, shape: List[int]) -> NDArray[np.float32]:
     """
-    Convert bytes to numpy ndarray with specified shape and "C" order
-
-    NOTE: Need for order in this function?
-
+    Convert bytes to numpy ndarray with row-major order, i.e. "C" order
     """
     return np.ndarray(shape=shape, dtype="<f4", buffer=bytes_data, order="C")
 
@@ -37,7 +34,7 @@ def bytes_to_flatten_ndarray_float32(bytes_data: bytes, shape: List[int]) -> NDA
     """
     Convert bytes to numpy flatten ndarray with row-major order, i.e. "C" order
     """
-    return np.ndarray(shape=shape, dtype="<f4", buffer=bytes_data, order="C").flatten(order="C")
+    return bytes_to_ndarray_float32(bytes_data, shape).flatten(order="C")
 
 
 class VdsAccess:
@@ -58,6 +55,8 @@ class VdsAccess:
     @staticmethod
     async def _query(endpoint: str, request: VdsRequestedResource) -> httpx.Response:
         """Query the service"""
+
+        VDS_HOST_ADDRESS = "https://server-oneseismictest-dev.playground.radix.equinor.com"
 
         async with httpx.AsyncClient() as client:
             response = await client.post(
@@ -127,9 +126,9 @@ class VdsAccess:
         trace_1  trace_2     trace_m
         |--------|--- ... ---| sample_1
         |--------|--- ... ---| sample_2
-                .
-                .
-                .
+                     .
+                     .
+                     .
         |--------|--- ... ---| sample_n-1
         |--------|--- ... ---| sample_n
         ```
@@ -171,12 +170,12 @@ class VdsAccess:
         if len(metadata.shape) != 2:
             raise ValueError(f"Expected shape to be 2D, got {metadata.shape}")
 
-        # TODO: Drop and just provide flattened straight away?
-        fence_traces_ndarray_float32 = bytes_to_ndarray_float32(byte_array, shape=metadata.shape)
+        # fence array data: [[t11, t12, ..., t1n], [t21, t22, ..., t2n], ..., [tm1, tm2, ..., tmn]]
+        # m = num_traces, n = num_trace_samples
+        num_traces = metadata.shape[0]
+        num_trace_samples = metadata.shape[1]
 
         # Flattened array with row major order, i.e. C-order in numpy
-        flattened_fence_traces_float32_array = bytes_to_flatten_ndarray_float32(
-            fence_traces_ndarray_float32, shape=fence_traces_ndarray_float32.shape
-        )
+        flattened_fence_traces_float32_array = bytes_to_flatten_ndarray_float32(byte_array, shape=metadata.shape)
 
-        return (flattened_fence_traces_float32_array, metadata.shape[0], metadata.shape[1])
+        return (flattened_fence_traces_float32_array, num_traces, num_trace_samples)

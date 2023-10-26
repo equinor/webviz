@@ -6,8 +6,3 @@ export type SeismicAddress = {
     observed: boolean;
     timeString?: string;
 };
-
-export enum SurveyType {
-    SEISMIC_3D = "3D",
-    SEISMIC_4D = "4D",
-}

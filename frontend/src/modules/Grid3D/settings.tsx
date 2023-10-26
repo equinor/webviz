@@ -12,8 +12,9 @@ import { CircularProgress } from "@lib/components/CircularProgress";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { Label } from "@lib/components/Label";
 import { Select, SelectOption } from "@lib/components/Select";
+import { useGetWellHeaders } from "@modules/_shared/WellBore/queryHooks";
 
-import { useGetWellHeaders, useGridModelNames, useGridParameterNames } from "./queryHooks";
+import { useGridModelNames, useGridParameterNames } from "./queryHooks";
 import state from "./state";
 
 //-----------------------------------------------------------------------------------------------------------

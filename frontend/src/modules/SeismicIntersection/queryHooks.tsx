@@ -16,7 +16,7 @@ export function useSeismicCubeDirectoryQuery(
         queryFn: () => apiService.seismic.getSeismicDirectory(caseUuid ?? "", ensembleName ?? ""),
         staleTime: STALE_TIME,
         cacheTime: CACHE_TIME,
-        enabled: caseUuid && ensembleName ? true : false,
+        enabled: !!(caseUuid && ensembleName),
     });
 }
 
@@ -40,7 +40,7 @@ export function useSeismicFenceDataQuery(
             seismicAttribute,
             timeOrIntervalStr,
             observed,
-            polyline,
+            bodyPolyline,
         ],
         queryFn: () =>
             apiService.seismic.getFence(
@@ -59,11 +59,11 @@ export function useSeismicFenceDataQuery(
             allowEnable &&
             caseUuid &&
             ensembleName &&
-            realizationNum &&
+            realizationNum !== null &&
             seismicAttribute &&
             timeOrIntervalStr &&
-            observed &&
-            polyline
+            observed !== null &&
+            polyline !== null
         ),
     });
 }

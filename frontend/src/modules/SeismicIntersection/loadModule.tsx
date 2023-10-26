@@ -5,7 +5,7 @@ import { State } from "./state";
 import { view } from "./view";
 
 const defaultState: State = {
-    wellBoreAddress: { uwi: "55/33-A-4", uuid: "drogon_horizontal", type: "smda" },
+    wellboreAddress: { uwi: "55/33-A-4", uuid: "drogon_horizontal", type: "smda" },
     seismicAddress: null,
     // viewSettings: {
     //     showGridParameter: false,

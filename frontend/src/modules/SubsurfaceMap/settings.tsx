@@ -23,11 +23,12 @@ import {
     TimeType,
     useSurfaceDirectoryQuery,
 } from "@modules/_shared/Surface";
+import { useGetWellHeaders } from "@modules/_shared/WellBore/queryHooks";
 
 import { SurfacePolygonsAddress } from "./SurfacePolygonsAddress";
 import { AggregationSelector } from "./components/AggregationSelector";
 import { PolygonDirectoryProvider } from "./polygonsDirectoryProvider";
-import { useGetWellHeaders, usePolygonDirectoryQuery } from "./queryHooks";
+import { usePolygonDirectoryQuery } from "./queryHooks";
 import { state } from "./state";
 
 //-----------------------------------------------------------------------------------------------------------

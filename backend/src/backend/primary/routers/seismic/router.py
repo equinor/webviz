@@ -1,7 +1,7 @@
 import logging
 import numpy as np
 from numpy.typing import NDArray
-from typing import List
+from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Body
 
@@ -47,7 +47,7 @@ async def get_fence(
     seismic_attribute: str = Query(description="Seismic cube attribute"),
     time_or_interval_str: str = Query(description="Timestamp or timestep"),
     observed: bool = Query(description="Observed or simulated"),
-    polyline: schemas.SeismicFencePolyline = Body(alias="seismicFencePolyline", embed=True),
+    polyline: schemas.SeismicFencePolyline = Body(embed=True),
 ) -> schemas.SeismicFenceData:
     """Get a fence of seismic data from a polyline defined by a set of (x, y) coordinates in domain coordinate system.
 
@@ -70,8 +70,9 @@ async def get_fence(
         authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
     )
 
+    vds_handle: Optional[VdsHandle] = None
     try:
-        vds_handle: VdsHandle = seismic_access.get_vds_handle(
+        vds_handle: VdsHandle = await seismic_access.get_vds_handle(
             realization=realization_num,
             seismic_attribute=seismic_attribute,
             time_or_interval_str=time_or_interval_str,
@@ -79,6 +80,9 @@ async def get_fence(
         )
     except ValueError as err:
         raise HTTPException(status_code=404, detail=str(err)) from err
+
+    if vds_handle is None:
+        raise HTTPException(status_code=404, detail="Vds handle not found")
 
     vds_access = VdsAccess(sas_token=vds_handle.sas_token, vds_url=vds_handle.vds_url)
 
@@ -102,6 +106,6 @@ async def get_fence(
         fence_traces_b64arr=b64_encode_float_array_as_float32(flattened_fence_traces_array),
         num_traces=num_traces,
         num_trace_samples=num_trace_samples,
-        min_fence_depth=depth_axis_meta.min,  # TODO: Should this be depth_axis_meta.max?
-        max_fence_depth=depth_axis_meta.max,  # TODO: Should this be depth_axis_meta.min?
+        min_fence_depth=depth_axis_meta.min,
+        max_fence_depth=depth_axis_meta.max,
     )

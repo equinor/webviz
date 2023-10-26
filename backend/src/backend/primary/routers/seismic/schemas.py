@@ -22,13 +22,12 @@ class SeismicFencePolyline(BaseModel):
 
     NOTE:
     - Verify coordinates are in domain coordinate system (UTM)?
-    - Consider points_xy array with [x1, y1, x2, y2, ..., xn, yn] instead of x_points and y_points arrays?
+    - Consider points_xy: List[float] - i.e. array with [x1, y1, x2, y2, ..., xn, yn] instead of x_points and y_points arrays?
     - Ensure equal length of x_points and y_points arrays?
     """
 
     x_points: List[float]
     y_points: List[float]
-    # points_xy: List[float]
 
 
 class SeismicFenceData(BaseModel):
