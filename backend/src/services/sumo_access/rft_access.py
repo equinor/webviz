@@ -21,8 +21,10 @@ class RftAccess(SumoEnsemble):
         table = await get_concatenated_rft_table(self._case, self._iteration_name, column_names=["PRESSURE"])
         rft_well_infos: list[RftWellInfo] = []
         well_names = table["WELL"].unique().tolist()
+
         for well_name in well_names:
-            timestamps_utc_ms = sorted(list(set(table["DATE"].to_numpy().astype(int).tolist())))
+            well_table = table.filter(pc.equal(table["WELL"], well_name))
+            timestamps_utc_ms = sorted(list(set(well_table["DATE"].to_numpy().astype(int).tolist())))
 
             rft_well_infos.append(RftWellInfo(well_name=well_name, timestamps_utc_ms=timestamps_utc_ms))
 

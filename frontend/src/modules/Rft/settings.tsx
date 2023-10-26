@@ -1,39 +1,43 @@
 import React, { useEffect } from "react";
-import { ModuleFCProps } from "@framework/Module";
-import { useFirstEnsembleInEnsembleSet } from "@framework/WorkbenchSession";
-import { ApiStateWrapper } from "@lib/components/ApiStateWrapper";
 
-import { Checkbox } from "@lib/components/Checkbox";
-import { Label } from "@lib/components/Label";
-import { Dropdown, DropdownOption } from "@lib/components/Dropdown";
-
-import { TimestampSlider } from "@lib/components/TimestampSlider";
-import state, { RftWellAddress } from "./state";
-import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
+import { ModuleFCProps } from "@framework/Module";
+import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
+import { useFirstEnsembleInEnsembleSet } from "@framework/WorkbenchSession";
+import { useEnsembleSet } from "@framework/WorkbenchSession";
+import { SingleEnsembleSelect } from "@framework/components/SingleEnsembleSelect";
 import { fixupEnsembleIdent, maybeAssignFirstSyncedEnsemble } from "@framework/utils/ensembleUiHelpers";
+import { timestampUtcMsToCompactIsoString } from "@framework/utils/timestampUtils";
+import { ApiStateWrapper } from "@lib/components/ApiStateWrapper";
+import { Checkbox } from "@lib/components/Checkbox";
+import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
+import { Dropdown, DropdownOption } from "@lib/components/Dropdown";
+import { Label } from "@lib/components/Label";
+import { Select } from "@lib/components/Select";
+import { TimestampSlider } from "@lib/components/TimestampSlider";
+
+import { isEqual } from "lodash";
 
 import { useRftWellList } from "./queryHooks";
-import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
-import { SingleEnsembleSelect } from "@framework/components/SingleEnsembleSelect";
-import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
-import { Select } from "@lib/components/Select";
-import { isEqual } from "lodash";
+import state, { RftWellAddress } from "./state";
 
 //Helpers to populate dropdowns
 const stringToOptions = (strings: string[]): DropdownOption[] => {
     return strings.map((string) => ({ label: string, value: string }));
-}
-const numberToOptions = (numbers: number[]): DropdownOption[] => {
-    return numbers.map((number) => ({ label: number.toString(), value: number.toString() }));
-}
+};
+const timepointOptions = (timePoints: number[]): DropdownOption[] => {
+    return timePoints.map((timePoint) => ({
+        label: timestampUtcMsToCompactIsoString(timePoint),
+        value: timePoint.toString(),
+    }));
+};
 
 export function settings({ moduleContext, workbenchServices, workbenchSession }: ModuleFCProps<state>) {
     const ensembleSet = useEnsembleSet(workbenchSession);
-    const [rftWellAddress, setRftWellAddress] = moduleContext.useStoreState("rftWellAddress")
+    const [rftWellAddress, setRftWellAddress] = moduleContext.useStoreState("rftWellAddress");
     const [selectedEnsembleIdent, setSelectedEnsembleIdent] = React.useState<EnsembleIdent | null>(null);
     const [selectedWellName, setSelectedWellName] = React.useState<string | null>(null);
-    const [selectedTime, setSelectedTime] = React.useState<number | null>(null)
+    const [selectedTimePoint, setSelectedTimePoint] = React.useState<number | null>(null);
     const syncedSettingKeys = moduleContext.useSyncedSettingKeys();
     const syncHelper = new SyncSettingsHelper(syncedSettingKeys, workbenchServices);
     const syncedValueEnsembles = syncHelper.useValue(SyncSettingKey.ENSEMBLE, "global.syncValue.ensembles");
@@ -51,11 +55,9 @@ export function settings({ moduleContext, workbenchServices, workbenchSession }:
     if (rftWellListQuery.data) {
         rftWellListQuery.data.forEach((well) => {
             wellNames.push(well.well_name);
-
         });
     }
-    const computedWellName = fixupSyncedOrSelectedOrFirstStringValue(
-        null, selectedWellName, wellNames)
+    const computedWellName = fixupSyncedOrSelectedOrFirstStringValue(null, selectedWellName, wellNames);
     if (computedWellName !== selectedWellName) {
         setSelectedWellName(computedWellName);
     }
@@ -68,11 +70,11 @@ export function settings({ moduleContext, workbenchServices, workbenchSession }:
                 });
             }
         });
-
     }
-    const computedTimePoint = fixupSyncedOrSelectedOrFirstNumberValue(
-        null, selectedTime, availableTimePoints.map((timepoint) => timepoint)
-    );
+    const computedTimePoint = fixupSyncedOrSelectedOrFirstNumberValue(null, selectedTimePoint, availableTimePoints);
+    if (computedTimePoint !== selectedTimePoint) {
+        setSelectedTimePoint(computedTimePoint);
+    }
     React.useEffect(() => {
         if (selectedEnsembleIdent && selectedWellName && computedTimePoint) {
             const addr: RftWellAddress = {
@@ -82,10 +84,10 @@ export function settings({ moduleContext, workbenchServices, workbenchSession }:
                 wellName: selectedWellName,
                 timePoint: computedTimePoint,
                 responseName: "PRESSURE",
-                realizationNums: null
+                realizationNums: null,
             };
             if (!isEqual(addr, rftWellAddress)) {
-                setRftWellAddress(addr)
+                setRftWellAddress(addr);
             }
         }
     }, [computedTimePoint, selectedWellName, selectedEnsembleIdent]);
@@ -103,8 +105,12 @@ export function settings({ moduleContext, workbenchServices, workbenchSession }:
         }
         setSelectedWellName(null);
     }
-    function handleTimePointChange(event: Event, value: number | number[]) {
-        setSelectedTime(value as number);
+    function handleTimePointChange(timePoints: string[]) {
+        if (timePoints.length !== 0) {
+            setSelectedTimePoint(parseInt(timePoints[0]));
+            return;
+        }
+        setSelectedTimePoint(null);
     }
     return (
         <div>
@@ -116,8 +122,20 @@ export function settings({ moduleContext, workbenchServices, workbenchSession }:
                 />
             </CollapsibleGroup>
             <CollapsibleGroup expanded={true} title="Well">
-                <Select size={5} filter={true} options={stringToOptions(wellNames)} value={computedWellName ? [computedWellName] : []} onChange={handleWellNameChange} />
-                <TimestampSlider value={computedTimePoint ?? undefined} onChange={handleTimePointChange} valueLabelDisplay={"off"} values={availableTimePoints} />
+                <Select
+                    size={10}
+                    filter={true}
+                    options={stringToOptions(wellNames)}
+                    value={computedWellName ? [computedWellName] : []}
+                    onChange={handleWellNameChange}
+                />
+                <Select
+                    size={10}
+                    filter={true}
+                    options={timepointOptions(availableTimePoints)}
+                    value={computedTimePoint ? [computedTimePoint.toString()] : []}
+                    onChange={handleTimePointChange}
+                />
             </CollapsibleGroup>
         </div>
     );
