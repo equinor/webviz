@@ -15,7 +15,7 @@ CLIENT_ID = "900ed417-a860-4970-bd37-73b059ca6f0d"
 CLIENT_SECRET = os.environ["WEBVIZ_CLIENT_SECRET"]
 SMDA_SUBSCRIPTION_KEY = os.environ["WEBVIZ_SMDA_SUBSCRIPTION_KEY"]
 SMDA_RESOURCE_SCOPE = os.environ["WEBVIZ_SMDA_RESOURCE_SCOPE"]
-SUMO_ENV = os.getenv("WEBVIZ_SUMO_ENV", "dev")
+SUMO_ENV = os.getenv("WEBVIZ_SUMO_ENV", "prod")
 GRAPH_SCOPES = ["User.Read", "User.ReadBasic.All"]
 VDS_HOST_ADDRESS = os.environ["WEBVIZ_VDS_HOST_ADDRESS"]
 
@@ -26,5 +26,5 @@ RESOURCE_SCOPES_DICT = {
 
 print(f"{RESOURCE_SCOPES_DICT=}")
 
-REDIS_URL = "redis://redis-login-state:6379"
+REDIS_URL = "redis://redis-user-session:6379"
 SESSION_STORAGE = "redis"

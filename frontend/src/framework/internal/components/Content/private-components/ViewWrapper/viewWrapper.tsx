@@ -42,6 +42,7 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
     );
 
     const timeRef = React.useRef<number | null>(null);
+    const pointerDown = React.useRef<boolean>(false);
 
     const handleHeaderPointerDown = React.useCallback(
         function handlePointerDown(e: React.PointerEvent<HTMLDivElement>) {
@@ -85,9 +86,14 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
 
     function handlePointerDown() {
         timeRef.current = Date.now();
+        pointerDown.current = true;
     }
 
     function handlePointerUp() {
+        if (!pointerDown.current) {
+            return;
+        }
+        pointerDown.current = false;
         if (drawerContent === DrawerContent.ModulesList) {
             if (!timeRef.current || Date.now() - timeRef.current < 800) {
                 handleModuleClick();

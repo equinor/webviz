@@ -1671,7 +1671,9 @@ export class SmartNodeSelectorComponent extends React.Component<SmartNodeSelecto
                                     maxNumSelectedNodes={numSelectedNodes === -1 ? -1 : numSelectedNodes}
                                 />
                             );
-                            numSelectedNodes -= selection.numberOfExactlyMatchedNodes();
+                            if (maxNumSelectedNodes !== -1) {
+                                numSelectedNodes -= selection.numberOfExactlyMatchedNodes();
+                            }
                             return tag;
                         })}
                     </ul>

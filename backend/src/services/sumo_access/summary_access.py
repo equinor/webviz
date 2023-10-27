@@ -6,7 +6,7 @@ import numpy as np
 import pyarrow as pa
 import pyarrow.compute as pc
 import pyarrow.parquet as pq
-from fmu.sumo.explorer.objects import Case
+from fmu.sumo.explorer.objects import Case, TableCollection
 
 from src.services.utils.arrow_helpers import sort_table_on_real_then_date
 from src.services.utils.perf_timer import PerfTimer
@@ -24,13 +24,7 @@ class SummaryAccess(SumoEnsemble):
     async def get_available_vectors(self) -> List[VectorInfo]:
         timer = PerfTimer()
 
-        smry_table_collection = self._case.tables.filter(
-            aggregation="collection",
-            name="summary",
-            tagname="eclipse",
-            iteration=self._iteration_name,
-        )
-
+        smry_table_collection = await get_smry_table_collection(self._case, self._iteration_name)
         column_names = await smry_table_collection.columns_async
 
         ret_info_arr: List[VectorInfo] = []
@@ -228,19 +222,13 @@ class SummaryAccess(SumoEnsemble):
 async def _load_arrow_table_for_from_sumo(case: Case, iteration_name: str, vector_name: str) -> Optional[pa.Table]:
     timer = PerfTimer()
 
-    smry_table_collection = case.tables.filter(
-        aggregation="collection",
-        name="summary",
-        tagname="eclipse",
-        iteration=iteration_name,
-        column=vector_name,
-    )
+    smry_table_collection = await get_smry_table_collection(case, iteration_name, column_name=vector_name)
     if await smry_table_collection.length_async() == 0:
         return None
     if await smry_table_collection.length_async() > 1:
         raise ValueError(f"Multiple tables found for vector {vector_name=}")
 
-    sumo_table = smry_table_collection[0]
+    sumo_table = await smry_table_collection.getitem_async(0)
     # print(f"{sumo_table.format=}")
     et_locate_sumo_table_ms = timer.lap_ms()
 
@@ -249,7 +237,7 @@ async def _load_arrow_table_for_from_sumo(case: Case, iteration_name: str, vecto
     # The tables we have seen so far have format set to 'arrow', but the actual data is in parquet format.
     # This must be a bug or a misunderstanding.
     # For now, just read the parquet data into an arrow table
-    byte_stream: BytesIO = sumo_table.blob
+    byte_stream: BytesIO = await sumo_table.blob_async
     table = pq.read_table(byte_stream)
     et_download_arrow_table_ms = timer.lap_ms()
 
@@ -302,3 +290,22 @@ def _construct_historical_vector_name(non_historical_vector_name: str) -> Option
         return hist_vec
 
     return None
+
+
+async def get_smry_table_collection(
+    case: Case, iteration_name: str, column_name: Optional[str] = None
+) -> TableCollection:
+    """Get a collection of summary tables for a case and iteration"""
+    all_smry_table_collections = case.tables.filter(
+        aggregation="collection",
+        tagname="summary",
+        iteration=iteration_name,
+        column=column_name,
+    )
+    table_names = await all_smry_table_collections.names_async
+    if len(table_names) == 0:
+        raise ValueError("No summary table collections found")
+    if len(table_names) == 1:
+        return all_smry_table_collections
+
+    raise ValueError(f"Multiple summary table collections found: {table_names}. Expected only one.")

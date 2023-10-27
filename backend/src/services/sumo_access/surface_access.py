@@ -21,7 +21,7 @@ class SurfaceAccess(SumoEnsemble):
         surface_collection: SurfaceCollection = self._case.surfaces.filter(
             iteration=self._iteration_name,
             aggregation=False,
-            realization=0,
+            realization=self._case.get_realizations(iteration=self._iteration_name)[0],
         )
 
         surfs: List[SurfaceMeta] = []
@@ -34,12 +34,30 @@ class SurfaceAccess(SumoEnsemble):
                 iso_string_or_time_interval = t_start
             if t_start and t_end:
                 iso_string_or_time_interval = f"{t_start}/{t_end}"
+            content = surf["data"].get("content", SumoContent.DEPTH)
 
+            # Remove this once Sumo enforces content (content-unset)
+            # https://github.com/equinor/webviz/issues/433
+
+            if content == "unset":
+                LOGGER.info(
+                    f"Surface {surf['data']['name']} has unset content. Defaulting temporarily to depth until enforced by dataio."
+                )
+                content = SumoContent.DEPTH
+
+            # Remove this once Sumo enforces tagname (tagname-unset)
+            # https://github.com/equinor/webviz/issues/433
+            tagname = surf["data"].get("tagname", "")
+            if tagname == "":
+                LOGGER.info(
+                    f"Surface {surf['data']['name']} has empty tagname. Defaulting temporarily to Unknown until enforced by dataio."
+                )
+                tagname = "Unknown"
             surf_meta = SurfaceMeta(
                 name=surf["data"]["name"],
-                tagname=surf["data"].get("tagname", "Unknown"),
+                tagname=tagname,
                 iso_date_or_interval=iso_string_or_time_interval,
-                content=surf["data"].get("content", SumoContent.DEPTH),
+                content=content,
                 is_observation=surf["data"]["is_observation"],
                 is_stratigraphic=surf["data"]["stratigraphic"],
                 zmin=surf["data"]["bbox"]["zmin"],
@@ -80,13 +98,15 @@ class SurfaceAccess(SumoEnsemble):
                     end=timestamp_arr[1],
                     exact=True,
                 )
-
+        # Remove this once Sumo enforces tagname (tagname-unset)
+        # https://github.com/equinor/webviz/issues/433
+        tagname = attribute if attribute != "Unknown" else ""
         surface_collection = self._case.surfaces.filter(
             iteration=self._iteration_name,
             aggregation=False,
             realization=real_num,
             name=name,
-            tagname=attribute,
+            tagname=tagname,
             time=time_filter,
         )
 
