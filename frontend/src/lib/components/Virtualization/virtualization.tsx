@@ -2,6 +2,8 @@ import React from "react";
 
 import { useElementSize } from "@lib/hooks/useElementSize";
 
+import { isEqual } from "lodash";
+
 import { withDefaults } from "../_component-utils/components";
 
 export type VirtualizationProps<T = any> = {
@@ -21,29 +23,68 @@ const defaultProps = {
 
 export const Virtualization = withDefaults<VirtualizationProps>()(defaultProps, (props) => {
     const [range, setRange] = React.useState<{ start: number; end: number }>({ start: props.startIndex, end: 0 });
+    const [prevPropsSubset, setPrevPropsSubset] = React.useState<Pick<
+        VirtualizationProps,
+        "items" | "startIndex" | "direction" | "itemSize"
+    > | null>(null);
     const [placeholderSizes, setPlaceholderSizes] = React.useState<{ start: number; end: number }>({
         start: props.startIndex * props.itemSize,
         end: 0,
     });
+    const [initialScrollPositions, setInitialScrollPositions] = React.useState<
+        | {
+              top: number;
+              left: number;
+          }
+        | undefined
+    >(undefined);
 
     const containerSize = useElementSize(props.containerRef);
 
-    React.useEffect(() => {
+    const currentPropsSubset = {
+        items: props.items,
+        startIndex: props.startIndex,
+        direction: props.direction,
+        itemSize: props.itemSize,
+    };
+
+    if (!isEqual(prevPropsSubset, currentPropsSubset)) {
         if (props.containerRef.current) {
-            if (props.direction === "vertical") {
-                props.containerRef.current.scrollTop = props.startIndex * props.itemSize;
-            } else {
-                props.containerRef.current.scrollLeft = props.startIndex * props.itemSize;
+            const newInitialScrollPositions = {
+                top: props.startIndex * props.itemSize,
+                left: props.startIndex * props.itemSize,
+            };
+            let size = containerSize.height;
+            let scrollPosition = newInitialScrollPositions?.top || 0;
+            if (props.direction === "horizontal") {
+                size = containerSize.width;
+                scrollPosition = newInitialScrollPositions?.left || 0;
             }
+
+            const startIndex = Math.max(0, Math.floor(scrollPosition / props.itemSize) - 1);
+            const endIndex = Math.min(props.items.length - 1, Math.ceil((scrollPosition + size) / props.itemSize) + 1);
+
+            setRange({ start: startIndex, end: endIndex });
+            setPlaceholderSizes({
+                start: startIndex * props.itemSize,
+                end: (props.items.length - 1 - endIndex) * props.itemSize,
+            });
+            setInitialScrollPositions(newInitialScrollPositions);
+            setPrevPropsSubset({
+                items: props.items,
+                startIndex: props.startIndex,
+                direction: props.direction,
+                itemSize: props.itemSize,
+            });
         }
-    }, [
-        props.containerRef,
-        props.direction,
-        props.startIndex,
-        props.itemSize,
-        containerSize.height,
-        containerSize.width,
-    ]);
+    }
+
+    React.useEffect(() => {
+        if (props.containerRef.current && initialScrollPositions) {
+            props.containerRef.current.scrollTop = initialScrollPositions.top;
+            props.containerRef.current.scrollLeft = initialScrollPositions.left;
+        }
+    }, [props.containerRef, initialScrollPositions]);
 
     React.useEffect(() => {
         let lastScrollPosition = -1;
