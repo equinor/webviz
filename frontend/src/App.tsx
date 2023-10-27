@@ -26,10 +26,7 @@ function App() {
 
         const storedEnsembleIdents = workbench.current.maybeLoadEnsembleSetFromLocalStorage();
         if (storedEnsembleIdents) {
-            workbench.current.getGuiMessageBroker().setState(GuiState.LoadingEnsembleSet, true);
-            workbench.current.loadAndSetupEnsembleSetInSession(queryClient, storedEnsembleIdents).then(() => {
-                workbench.current.getGuiMessageBroker().setState(GuiState.LoadingEnsembleSet, false);
-            });
+            workbench.current.loadAndSetupEnsembleSetInSession(queryClient, storedEnsembleIdents);
         }
 
         return function handleUnmount() {

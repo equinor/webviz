@@ -19,7 +19,7 @@ export function useGridSurface(
             apiService.grid.gridSurface(caseUuid ?? "", ensembleName ?? "", gridName ?? "", realization ?? ""),
         select: transformGridSurface,
         staleTime: STALE_TIME,
-        cacheTime: 0,
+        gcTime: 0,
         enabled: caseUuid && ensembleName && gridName && realization ? true : false,
     });
 }
@@ -43,7 +43,7 @@ export function useGridParameter(
                 realization ?? ""
             ),
         staleTime: STALE_TIME,
-        cacheTime: 0,
+        gcTime: 0,
         enabled: caseUuid && ensembleName && gridName && parameterName && realization && !useStatistics ? true : false,
     });
 }
@@ -67,7 +67,7 @@ export function useStatisticalGridParameter(
                 realizations ?? []
             ),
         staleTime: STALE_TIME,
-        cacheTime: 0,
+        gcTime: 0,
         enabled: caseUuid && ensembleName && gridName && parameterName && realizations && useStatistics ? true : false,
     });
 }
@@ -77,7 +77,7 @@ export function useGridModelNames(caseUuid: string | null, ensembleName: string 
         queryKey: ["getGridModelNames", caseUuid, ensembleName],
         queryFn: () => apiService.grid.getGridModelNames(caseUuid ?? "", ensembleName ?? ""),
         staleTime: STALE_TIME,
-        cacheTime: CACHE_TIME,
+        gcTime: CACHE_TIME,
         enabled: caseUuid && ensembleName ? true : false,
     });
 }
@@ -91,7 +91,7 @@ export function useGridParameterNames(
         queryKey: ["getParameterNames", caseUuid, ensembleName, gridName],
         queryFn: () => apiService.grid.getParameterNames(caseUuid ?? "", ensembleName ?? "", gridName ?? ""),
         staleTime: STALE_TIME,
-        cacheTime: CACHE_TIME,
+        gcTime: CACHE_TIME,
         enabled: caseUuid && ensembleName && gridName ? true : false,
     });
 }
@@ -101,7 +101,7 @@ export function useGetWellHeaders(caseUuid: string | undefined): UseQueryResult<
         queryKey: ["getWellHeaders", caseUuid],
         queryFn: () => apiService.well.getWellHeaders(caseUuid ?? ""),
         staleTime: STALE_TIME,
-        cacheTime: STALE_TIME,
+        gcTime: STALE_TIME,
         enabled: caseUuid ? true : false,
     });
 }
@@ -111,7 +111,7 @@ export function useGetFieldWellsTrajectories(caseUuid: string | undefined): UseQ
         queryKey: ["getFieldWellsTrajectories", caseUuid],
         queryFn: () => apiService.well.getFieldWellTrajectories(caseUuid ?? ""),
         staleTime: STALE_TIME,
-        cacheTime: CACHE_TIME,
+        gcTime: CACHE_TIME,
         enabled: caseUuid ? true : false,
     });
 }

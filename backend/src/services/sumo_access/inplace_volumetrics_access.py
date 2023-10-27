@@ -57,14 +57,14 @@ class PossibleInplaceVolumetricsNumericalColumnNames(str, Enum):
 class InplaceVolumetricsCategoricalMetaData(BaseModel):
     name: str
     unique_values: List[Union[str, int, float]]
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(from_attributes=True) # Might be removed
 
 
 class InplaceVolumetricsTableMetaData(BaseModel):
     name: str
     categorical_column_metadata: List[InplaceVolumetricsCategoricalMetaData]
     numerical_column_names: List[str]
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(from_attributes=True) # Might be removed
 
 
 class InplaceVolumetricsAccess(SumoEnsemble):
@@ -73,11 +73,12 @@ class InplaceVolumetricsAccess(SumoEnsemble):
         vol_table_collections: TableCollection = self._case.tables.filter(
             aggregation="collection", tagname="vol", iteration=self._iteration_name
         )
+
         vol_tables_metadata = []
-        async for vol_table_name in vol_table_collections.names:
+        async for vol_table in vol_table_collections:
             vol_table_collection: TableCollection = self._case.tables.filter(
                 aggregation="collection",
-                name=vol_table_name,
+                name=vol_table.name,
                 tagname="vol",
                 iteration=self._iteration_name,
             )
@@ -86,7 +87,7 @@ class InplaceVolumetricsAccess(SumoEnsemble):
                 for col in vol_table_collection.columns
                 if PossibleInplaceVolumetricsNumericalColumnNames.has_value(col)
             ]
-            first_numerical_column_table = self.get_table(vol_table_name, numerical_column_names[0])
+            first_numerical_column_table = self.get_table(vol_table.name, numerical_column_names[0])
             categorical_column_metadata = [
                 InplaceVolumetricsCategoricalMetaData(
                     name=col,
@@ -96,7 +97,7 @@ class InplaceVolumetricsAccess(SumoEnsemble):
                 if PossibleInplaceVolumetricsCategoricalColumnNames.has_value(col)
             ]
             vol_table_metadata = InplaceVolumetricsTableMetaData(
-                name=vol_table_name,
+                name=vol_table.name,
                 categorical_column_metadata=categorical_column_metadata,
                 numerical_column_names=numerical_column_names,
             )

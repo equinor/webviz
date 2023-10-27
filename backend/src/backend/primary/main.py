@@ -1,7 +1,8 @@
 import datetime
 import logging
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
 from fastapi.routing import APIRoute
 from fastapi.responses import ORJSONResponse
 from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
@@ -24,6 +25,7 @@ from .routers.seismic.router import router as seismic_router
 from .routers.surface_polygons.router import router as surface_polygons_router
 from .routers.graph.router import router as graph_router
 from .routers.observations.router import router as observations_router
+from .exceptions import ResultNotMatchingExpectations
 
 logging.basicConfig(
     level=logging.WARNING,
@@ -83,3 +85,15 @@ app.add_middleware(AddProcessTimeToServerTimingMiddleware, metric_name="total")
 @app.get("/")
 async def root() -> str:
     return f"Backend is alive at this time: {datetime.datetime.now()}"
+
+@app.exception_handler(Exception)
+async def exception_handler(request: Request, exc: Exception):
+    if isinstance(exc, ResultNotMatchingExpectations):
+        return JSONResponse(
+            status_code=404,
+            content={"message": exc.message},
+        )
+    return JSONResponse(
+        status_code=500,
+        content={"message": exc},
+    )

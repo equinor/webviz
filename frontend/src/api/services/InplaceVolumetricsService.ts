@@ -13,20 +13,20 @@ export class InplaceVolumetricsService {
     constructor(public readonly httpRequest: BaseHttpRequest) {}
 
     /**
-     * Get Table Names And Descriptions
+     * Get Table Names And Metadata
      * Get all volumetric tables for a given ensemble.
      * @param caseUuid Sumo case uuid
      * @param ensembleName Ensemble name
      * @returns InplaceVolumetricsTableMetaData Successful Response
      * @throws ApiError
      */
-    public getTableNamesAndDescriptions(
+    public getTableNamesAndMetadata(
         caseUuid: string,
         ensembleName: string,
     ): CancelablePromise<Array<InplaceVolumetricsTableMetaData>> {
         return this.httpRequest.request({
             method: 'GET',
-            url: '/inplace_volumetrics/table_names_and_descriptions/',
+            url: '/inplace_volumetrics/table_names_and_metadata/',
             query: {
                 'case_uuid': caseUuid,
                 'ensemble_name': ensembleName,

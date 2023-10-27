@@ -6,6 +6,7 @@ import "./Grid3D/registerModule";
 import "./Grid3DIntersection/registerModule";
 import "./Grid3DIntersection/registerModule";
 import "./InplaceVolumetrics/registerModule";
+import "./InplaceVolumetricsNew/registerModule";
 import "./Map/registerModule";
 import "./Pvt/registerModule";
 import "./SimulationTimeSeries/registerModule";

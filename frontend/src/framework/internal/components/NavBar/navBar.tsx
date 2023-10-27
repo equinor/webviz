@@ -2,9 +2,9 @@ import React from "react";
 
 import WebvizLogo from "@assets/webviz.svg";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
-import { DrawerContent, GuiState, useGuiState } from "@framework/GuiMessageBroker";
+import { DrawerContent, GuiState, useGuiState, useGuiValue } from "@framework/GuiMessageBroker";
 import { Workbench, WorkbenchEvents } from "@framework/Workbench";
-import { useEnsembleSet } from "@framework/WorkbenchSession";
+import { useEnsembleSet, useIsEnsembleSetLoading } from "@framework/WorkbenchSession";
 import { LoginButton } from "@framework/internal/components/LoginButton";
 import { SelectEnsemblesDialog } from "@framework/internal/components/SelectEnsemblesDialog";
 import { EnsembleItem } from "@framework/internal/components/SelectEnsemblesDialog/selectEnsemblesDialog";
@@ -13,16 +13,7 @@ import { Button } from "@lib/components/Button";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { isDevMode } from "@lib/utils/devMode";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-import {
-    ChevronLeft,
-    ChevronRight,
-    GridView,
-    Link,
-    List,
-    Palette,
-    Settings,
-    WebAsset,
-} from "@mui/icons-material";
+import { ChevronLeft, ChevronRight, GridView, Link, List, Palette, Settings, WebAsset } from "@mui/icons-material";
 import { useQueryClient } from "@tanstack/react-query";
 
 import { UserSessionState } from "./private-components/UserSessionState";
@@ -39,10 +30,7 @@ export const NavBar: React.FC<NavBarProps> = (props) => {
     const [ensembleDialogOpen, setEnsembleDialogOpen] = React.useState<boolean>(false);
     const [layoutEmpty, setLayoutEmpty] = React.useState<boolean>(props.workbench.getLayout().length === 0);
     const [expanded, setExpanded] = React.useState<boolean>(localStorage.getItem("navBarExpanded") === "true");
-    const [loadingEnsembleSet, setLoadingEnsembleSet] = useGuiState(
-        props.workbench.getGuiMessageBroker(),
-        GuiState.LoadingEnsembleSet
-    );
+    const loadingEnsembleSet = useIsEnsembleSetLoading(props.workbench.getWorkbenchSession());
     const [drawerContent, setDrawerContent] = useGuiState(
         props.workbench.getGuiMessageBroker(),
         GuiState.DrawerContent
@@ -117,10 +105,7 @@ export const NavBar: React.FC<NavBarProps> = (props) => {
             const selectedEnsembleIdents = selectedEnsembles.map(
                 (ens) => new EnsembleIdent(ens.caseUuid, ens.ensembleName)
             );
-            setLoadingEnsembleSet(true);
-            props.workbench.loadAndSetupEnsembleSetInSession(queryClient, selectedEnsembleIdents).then(() => {
-                setLoadingEnsembleSet(false);
-            });
+            props.workbench.loadAndSetupEnsembleSetInSession(queryClient, selectedEnsembleIdents);
         }
     }
 

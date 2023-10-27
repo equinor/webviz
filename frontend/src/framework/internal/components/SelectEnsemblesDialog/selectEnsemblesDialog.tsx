@@ -78,7 +78,7 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
             return apiService.explore.getCases(selectedField);
         },
         enabled: fieldsQuery.isSuccess,
-        cacheTime: CACHE_TIME,
+        gcTime: CACHE_TIME,
         staleTime: STALE_TIME,
     });
 
@@ -97,7 +97,7 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
             return apiService.explore.getEnsembles(selectedCaseId);
         },
         enabled: casesQuery.isSuccess,
-        cacheTime: CACHE_TIME,
+        gcTime: CACHE_TIME,
         staleTime: STALE_TIME,
     });
 

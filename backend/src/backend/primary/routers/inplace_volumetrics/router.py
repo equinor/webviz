@@ -12,12 +12,14 @@ from src.services.utils.authenticated_user import AuthenticatedUser
 
 from src.backend.auth.auth_helper import AuthHelper
 
+from src.backend.primary.exceptions import ResultNotMatchingExpectations
+
 
 router = APIRouter()
 
 
-@router.get("/table_names_and_descriptions/", tags=["inplace_volumetrics"])
-async def get_table_names_and_descriptions(
+@router.get("/table_names_and_metadata/", tags=["inplace_volumetrics"])
+async def get_table_names_and_metadata(
     # fmt:off
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     case_uuid: str = Query(description="Sumo case uuid"),
@@ -25,12 +27,11 @@ async def get_table_names_and_descriptions(
     # fmt:on
 ) -> List[InplaceVolumetricsTableMetaData]:
     """Get all volumetric tables for a given ensemble."""
-
     access = await InplaceVolumetricsAccess.from_case_uuid(
         authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
     )
-    table_names = access.get_table_names_and_metadata()
-    return table_names
+    table_names_and_metadata = await access.get_table_names_and_metadata()
+    return table_names_and_metadata
 
 
 @router.post("/realizations_response/", tags=["inplace_volumetrics"])

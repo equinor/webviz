@@ -224,6 +224,7 @@ export class Workbench {
         }
 
         console.debug("loadAndSetupEnsembleSetInSession - starting load");
+        this._workbenchSession.setEnsembleSetLoadingState(true);
         const newEnsembleSet = await loadEnsembleSetMetadataFromBackend(queryClient, ensembleIdentsToLoad);
         console.debug("loadAndSetupEnsembleSetInSession - loading done");
 

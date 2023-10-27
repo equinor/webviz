@@ -15,7 +15,6 @@ export enum DrawerContent {
 export enum GuiState {
     DrawerContent = "drawerContent",
     SettingsPanelWidthInPercent = "settingsPanelWidthInPercent",
-    LoadingEnsembleSet = "loadingEnsembleSet",
     ActiveModuleInstanceId = "activeModuleInstanceId",
     DataChannelConnectionLayerVisible = "dataChannelConnectionLayerVisible",
 }
@@ -69,7 +68,6 @@ export type GuiEventPayloads = {
 type GuiStateValueTypes = {
     [GuiState.DrawerContent]: DrawerContent;
     [GuiState.SettingsPanelWidthInPercent]: number;
-    [GuiState.LoadingEnsembleSet]: boolean;
     [GuiState.ActiveModuleInstanceId]: string;
     [GuiState.DataChannelConnectionLayerVisible]: boolean;
 };
@@ -77,7 +75,6 @@ type GuiStateValueTypes = {
 const defaultStates: Map<GuiState, any> = new Map();
 defaultStates.set(GuiState.DrawerContent, DrawerContent.ModuleSettings);
 defaultStates.set(GuiState.SettingsPanelWidthInPercent, 30);
-defaultStates.set(GuiState.LoadingEnsembleSet, false);
 defaultStates.set(GuiState.ActiveModuleInstanceId, "");
 
 const persistentStates: GuiState[] = [GuiState.SettingsPanelWidthInPercent];
