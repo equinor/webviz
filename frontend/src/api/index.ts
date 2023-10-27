@@ -11,8 +11,8 @@ export type { OpenAPIConfig } from './core/OpenAPI';
 
 export { B64FloatArray as B64FloatArray_api } from './models/B64FloatArray';
 export { B64UintArray as B64UintArray_api } from './models/B64UintArray';
-export type { Body_get_fence as Body_get_fence_api } from './models/Body_get_fence';
 export type { Body_get_realizations_response as Body_get_realizations_response_api } from './models/Body_get_realizations_response';
+export type { Body_get_seismic_fence as Body_get_seismic_fence_api } from './models/Body_get_seismic_fence';
 export type { CaseInfo as CaseInfo_api } from './models/CaseInfo';
 export type { Completions as Completions_api } from './models/Completions';
 export type { EnsembleDetails as EnsembleDetails_api } from './models/EnsembleDetails';

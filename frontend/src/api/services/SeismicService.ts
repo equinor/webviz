@@ -1,7 +1,7 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-import type { Body_get_fence } from '../models/Body_get_fence';
+import type { Body_get_seismic_fence } from '../models/Body_get_seismic_fence';
 import type { SeismicCubeMeta } from '../models/SeismicCubeMeta';
 import type { SeismicFenceData } from '../models/SeismicFenceData';
 
@@ -38,7 +38,7 @@ export class SeismicService {
     }
 
     /**
-     * Get Fence
+     * Get Seismic Fence
      * Get a fence of seismic data from a polyline defined by a set of (x, y) coordinates in domain coordinate system.
      *
      * The fence data contains a set of traces perpendicular to the polyline, with one trace per (x, y)-point in polyline.
@@ -50,8 +50,6 @@ export class SeismicService {
      * * num_trace_samples: Number of samples in each trace
      * * min_fence_depth: The minimum depth value of the fence.
      * * max_fence_depth: The maximum depth value of the fence.
-     *
-     * TODO: Replace time_or_interval_str with time_or_interval: schemas.TimeOrInterval?
      * @param caseUuid Sumo case uuid
      * @param ensembleName Ensemble name
      * @param realizationNum Realization number
@@ -62,18 +60,18 @@ export class SeismicService {
      * @returns SeismicFenceData Successful Response
      * @throws ApiError
      */
-    public getFence(
+    public getSeismicFence(
         caseUuid: string,
         ensembleName: string,
         realizationNum: number,
         seismicAttribute: string,
         timeOrIntervalStr: string,
         observed: boolean,
-        requestBody: Body_get_fence,
+        requestBody: Body_get_seismic_fence,
     ): CancelablePromise<SeismicFenceData> {
         return this.httpRequest.request({
             method: 'POST',
-            url: '/seismic/fence/',
+            url: '/seismic/seismic_fence/',
             query: {
                 'case_uuid': caseUuid,
                 'ensemble_name': ensembleName,

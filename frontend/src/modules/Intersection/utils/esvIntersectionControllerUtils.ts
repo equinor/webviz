@@ -4,48 +4,10 @@ import {
     IntersectionReferenceSystem,
     OverlayMouseMoveEvent,
     SeismicCanvasLayer,
-    Trajectory,
     WellborepathLayer,
     getSeismicInfo,
     getSeismicOptions,
 } from "@equinor/esv-intersection";
-
-/**
- * Utility to make extended trajectory object from wellbore trajectory
- */
-export function makeExtendedTrajectory(wellboreTrajectory: WellBoreTrajectory_api, extension: number): Trajectory {
-    const eastingArr = wellboreTrajectory.easting_arr;
-    const northingArr = wellboreTrajectory.northing_arr;
-    const tvdArr = wellboreTrajectory.tvd_msl_arr;
-    const trajectory = eastingArr.map((easting: number, idx: number) => [
-        parseFloat(easting.toFixed(3)),
-        parseFloat(northingArr[idx].toFixed(3)),
-        parseFloat(tvdArr[idx].toFixed(3)),
-    ]);
-    if (eastingArr[0] == eastingArr[eastingArr.length - 1] && northingArr[0] == northingArr[northingArr.length - 1]) {
-        const addcoordatstart = eastingArr[0] - 100;
-        const addcoordatend = eastingArr[eastingArr.length - 1] + 100;
-        const addcoordatstart2 = northingArr[0] - 100;
-        const addcoordatend2 = northingArr[northingArr.length - 1] + 100;
-        const firstzcoord = tvdArr[0];
-        const lastzcoord = tvdArr[tvdArr.length - 1];
-
-        trajectory.unshift([addcoordatstart, addcoordatstart2, firstzcoord]);
-        trajectory.push([addcoordatend, addcoordatend2, lastzcoord]);
-    }
-
-    const referenceSystem = new IntersectionReferenceSystem(trajectory);
-    referenceSystem.offset = trajectory[0][2]; // Offset should be md at start of path
-
-    const displacement = referenceSystem.displacement || 1;
-    // Number of samples. Needs some thought.
-    const samplingIncrement = 5; //meters
-    const steps = Math.min(1000, Math.floor((displacement + extension * 2) / samplingIncrement));
-    console.debug("Number of samples for intersection ", steps);
-    const traj = referenceSystem.getExtendedTrajectory(steps, extension, extension);
-    traj.points = traj.points.map((point) => [parseFloat(point[0].toFixed(3)), parseFloat(point[1].toFixed(3))]);
-    return traj;
-}
 
 /**
  * Utility to add md overlay for hover to esv intersection controller

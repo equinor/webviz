@@ -4,10 +4,10 @@ import { SyncSettingKey } from "@framework/SyncSettings";
 // import { preview } from "./preview";
 import { State } from "./state";
 
+// TODO: Add preview?
 ModuleRegistry.registerModule<State>({
-    moduleName: "SeismicIntersection",
-    defaultTitle: "Seismic Intersection",
+    moduleName: "Intersection",
+    defaultTitle: "Intersection",
     syncableSettingKeys: [SyncSettingKey.ENSEMBLE],
-    // preview,
-    description: "Visualization fence of seismic intersection data with a wellbore",
+    description: "Visualization of intersection data with a wellbore",
 });

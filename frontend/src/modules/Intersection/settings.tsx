@@ -18,7 +18,7 @@ import { Select, SelectOption } from "@lib/components/Select";
 import { useValidState } from "@lib/hooks/useValidState";
 import { useGetWellHeaders } from "@modules/_shared/WellBore";
 
-import { isEqual } from "lodash";
+import { isEqual, set } from "lodash";
 
 import { useSeismicCubeDirectoryQuery } from "./queryHooks";
 import { State } from "./state";
@@ -34,7 +34,6 @@ const TimeTypeEnumToSeismicTimeTypeStringMapping = {
     [TimeType.Interval]: "Seismic intervals",
 };
 const enum SeismicDataSource {
-    //TODO: Find better name of enum?
     SIMULATED = "Simulated",
     OBSERVED = "Observed",
 }
@@ -50,6 +49,8 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
 
     const setSeismicAddress = moduleContext.useSetStoreValue("seismicAddress");
     const setWellboreAddress = moduleContext.useSetStoreValue("wellboreAddress");
+    const [extension, setExtension] = moduleContext.useStoreState("extension");
+    const [zScale, setZScale] = moduleContext.useStoreState("zScale");
 
     const [selectedEnsembleIdent, setSelectedEnsembleIdent] = React.useState<EnsembleIdent | null>(null);
     const [realizationNumber, setRealizationNumber] = React.useState<number>(0);
@@ -197,6 +198,19 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
         syncHelper.publishValue(SyncSettingKey.WELLBORE, "global.syncValue.wellBore", newWellboreAddress);
     }
 
+    function handleExtensionChange(event: React.ChangeEvent<HTMLInputElement>) {
+        const newExtension = parseInt(event.target.value, 10);
+        if (newExtension >= 0) {
+            setExtension(newExtension);
+        }
+    }
+    function handleZScaleChange(event: React.ChangeEvent<HTMLInputElement>) {
+        const newZScale = parseInt(event.target.value, 10);
+        if (newZScale >= 0) {
+            setZScale(newZScale);
+        }
+    }
+
     return (
         <div className="flex flex-col gap-4 overflow-y-auto">
             <CollapsibleGroup title="Ensemble and Realization" expanded={true}>
@@ -290,6 +304,14 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
                         </div>
                     </ApiStateWrapper>
                 </div>
+            </CollapsibleGroup>
+            <CollapsibleGroup title="Intersection Settings" expanded={false}>
+                <Label text="Extension">
+                    <Input type={"number"} value={extension} onChange={handleExtensionChange} />
+                </Label>
+                <Label text="Z-scale">
+                    <Input type={"number"} value={zScale} onChange={handleZScaleChange} />
+                </Label>
             </CollapsibleGroup>
         </div>
     );

@@ -1,5 +1,4 @@
 import logging
-import os
 from typing import List, Tuple
 import json
 
@@ -18,7 +17,7 @@ from .request_types import (
     VdsMetadataRequest,
 )
 
-VDS_HOST_ADDRESS = os.getenv("WEBVIZ_VDS_HOST_ADDRESS")
+from src import config
 
 LOGGER = logging.getLogger(__name__)
 
@@ -51,16 +50,13 @@ class VdsAccess:
 
         self._interpolation = VdsInterpolation.LINEAR
 
-    # async def _query(self, endpoint: str, request: VdsRequestedResource) -> httpx.Response:
     @staticmethod
     async def _query(endpoint: str, request: VdsRequestedResource) -> httpx.Response:
         """Query the service"""
 
-        VDS_HOST_ADDRESS = "https://server-oneseismictest-dev.playground.radix.equinor.com"
-
         async with httpx.AsyncClient() as client:
             response = await client.post(
-                f"{VDS_HOST_ADDRESS}/{endpoint}",
+                f"{config.VDS_HOST_ADDRESS}/{endpoint}",
                 headers={"Content-Type": "application/json"},
                 content=json.dumps(request.request_parameters()),
                 timeout=60,

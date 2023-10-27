@@ -1,4 +1,4 @@
-import { Body_get_fence_api, SeismicCubeMeta_api, SeismicFencePolyline_api } from "@api";
+import { Body_get_seismic_fence_api, SeismicCubeMeta_api, SeismicFencePolyline_api } from "@api";
 import { apiService } from "@framework/ApiService";
 import { UseQueryResult, useQuery } from "@tanstack/react-query";
 
@@ -30,10 +30,10 @@ export function useSeismicFenceDataQuery(
     polyline: SeismicFencePolyline_api | null,
     allowEnable: boolean
 ): UseQueryResult<SeismicFenceData_trans> {
-    const bodyPolyline: Body_get_fence_api = { polyline: polyline ?? { x_points: [], y_points: [] } };
+    const bodyPolyline: Body_get_seismic_fence_api = { polyline: polyline ?? { x_points: [], y_points: [] } };
     return useQuery({
         queryKey: [
-            "getFence",
+            "getSeismicFence",
             caseUuid,
             ensembleName,
             realizationNum,
@@ -43,7 +43,7 @@ export function useSeismicFenceDataQuery(
             bodyPolyline,
         ],
         queryFn: () =>
-            apiService.seismic.getFence(
+            apiService.seismic.getSeismicFence(
                 caseUuid ?? "",
                 ensembleName ?? "",
                 realizationNum ?? 0,

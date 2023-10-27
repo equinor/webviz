@@ -38,8 +38,8 @@ async def get_seismic_directory(
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
 
-@router.post("/fence/")
-async def get_fence(
+@router.post("/seismic_fence/")
+async def get_seismic_fence(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     case_uuid: str = Query(description="Sumo case uuid"),
     ensemble_name: str = Query(description="Ensemble name"),
@@ -60,12 +60,7 @@ async def get_fence(
     * num_trace_samples: Number of samples in each trace
     * min_fence_depth: The minimum depth value of the fence.
     * max_fence_depth: The maximum depth value of the fence.
-
-    TODO: Replace time_or_interval_str with time_or_interval: schemas.TimeOrInterval?
-
     """
-    # NOTE: This is a post request as cutting plane must be a body parameter. Should the naming be changed from "get_fence" to "post_fence"?
-
     seismic_access = await SeismicAccess.from_case_uuid(
         authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
     )
