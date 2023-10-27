@@ -3064,4 +3064,4 @@ tests = ["hypothesis", "pytest", "pytest-benchmark", "pytest-mock", "pytest-snap
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "3a5231dade6fe172008bdfab1842eaa86f7b3d71249b06af756fa979948033ee"
+content-hash = "2964982b6d91c9ee014d6c788628f7bb5f1812f009002a8462b618c300b9b17e"
