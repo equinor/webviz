@@ -13,7 +13,5 @@ export class WorkbenchSessionPrivate extends WorkbenchSession {
     setEnsembleSet(newEnsembleSet: EnsembleSet): void {
         this._ensembleSet = newEnsembleSet;
         this.notifySubscribers(WorkbenchSessionEvent.EnsembleSetChanged);
-        // Whenever a new ensemble set is set, we assume that the loading state has changed to false
-        this.notifySubscribers(WorkbenchSessionEvent.EnsembleSetLoadingStateChanged, { isLoading: false });
     }
 }

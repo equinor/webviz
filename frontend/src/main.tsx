@@ -8,6 +8,10 @@ import { CustomQueryClientProvider } from "@framework/internal/providers/QueryCl
 import App from "./App";
 import { GlobalErrorBoundary } from "./GlobalErrorBoundary";
 
+if (import.meta.hot) {
+    import.meta.hot.accept();
+}
+
 /*
     If the `cleanStart` query parameter is given, 
     the application will clear all local storage before rendering the application.

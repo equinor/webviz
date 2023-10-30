@@ -11,7 +11,7 @@ export type TableNameAndMetadataFilterOptions = {
     categories: Record<string, (string | number)[]>;
 };
 
-const fluidZoneRegExp = /^\w+_(?<fluidZone>\w+)$/;
+const fluidZoneRegExp = /^(?<response>\w+)_(?<fluidZone>\w+)$/;
 
 export function useTableNameAndMetadataFilterOptions(
     tableNamesAndMetadata: TableNamesAndMetaData
@@ -61,6 +61,10 @@ export function useTableNameAndMetadataFilterOptions(
                         const fluidZone = match.groups?.fluidZone;
                         if (fluidZone && !newReducedTableNamesAndMetadata.fluidZones.includes(fluidZone)) {
                             newReducedTableNamesAndMetadata.fluidZones.push(fluidZone);
+                        }
+                        const response = match.groups?.response;
+                        if (response && !newReducedTableNamesAndMetadata.responses.includes(response)) {
+                            newReducedTableNamesAndMetadata.responses.push(response);
                         }
                     }
                 }

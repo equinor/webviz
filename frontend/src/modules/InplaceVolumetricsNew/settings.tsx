@@ -10,8 +10,9 @@ import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { Label } from "@lib/components/Label";
 import { Select } from "@lib/components/Select";
 import { LoadingStateWrapper } from "@lib/components/StateWrapper/stateWrapper";
-import { FilterAlt } from "@mui/icons-material";
+import { BubbleChart, FilterAlt } from "@mui/icons-material";
 
+import FilterSelect from "./components/filterSelect";
 import { useTableNameAndMetadataFilterOptions } from "./hooks/useTableNameAndMetadataFilterOptions";
 import { useTableNamesAndMetadata } from "./hooks/useTableNamesAndMetadata";
 import { State } from "./state";
@@ -31,21 +32,16 @@ export const settings = ({ workbenchSession, moduleContext }: ModuleFCProps<Stat
     }
 
     function makeCategoricalSelect(categoryName: string, options: (string | number)[]) {
-        const selectOptions = options.map((option) => ({ value: `${option}`, label: `${option}` }));
-        return (
-            <Label text={categoryName}>
-                <Select options={selectOptions} size={5} />
-            </Label>
-        );
+        const stringifiedOptions = options.map((option) => `${option}`);
+        return <FilterSelect key={categoryName} name={categoryName} options={stringifiedOptions} size={5} />;
     }
-
-    const fluidZoneOptions =
-        filterOptions?.fluidZones.map((fluidZone) => ({ value: fluidZone, label: fluidZone })) ?? [];
-    const sourceOptions = filterOptions?.sources.map((source) => ({ value: source, label: source })) ?? [];
 
     return (
         <div className="w-full h-full flex flex-col gap-4">
-            <CollapsibleGroup title="Filter" icon={<FilterAlt fontSize="small" />}>
+            <CollapsibleGroup title="Volume response" icon={<BubbleChart fontSize="small" />} expanded>
+                <FilterSelect name="Response" options={filterOptions?.responses || []} size={5} />
+            </CollapsibleGroup>
+            <CollapsibleGroup title="Filter" icon={<FilterAlt fontSize="small" />} expanded>
                 <div className="flex flex-col gap-2">
                     <Label text="Ensemble">
                         <LoadingStateWrapper isLoading={isEnsembleSetLoading} loadingComponent={<CircularProgress />}>
@@ -63,12 +59,8 @@ export const settings = ({ workbenchSession, moduleContext }: ModuleFCProps<Stat
                         loadingComponent={<CircularProgress />}
                         className="flex flex-col gap-2"
                     >
-                        <Label text="Fluid zone">
-                            <Select options={fluidZoneOptions} size={2} />
-                        </Label>
-                        <Label text="Source">
-                            <Select options={sourceOptions} size={2} />
-                        </Label>
+                        <FilterSelect name="Fluid zone" options={filterOptions?.fluidZones || []} size={2} />
+                        <FilterSelect name="Source" options={filterOptions?.sources || []} size={2} />
                         {filterOptions &&
                             Object.entries(filterOptions.categories).map(([category, values]) =>
                                 makeCategoricalSelect(category, values)
