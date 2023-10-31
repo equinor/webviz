@@ -72,22 +72,23 @@ export function settings({ moduleContext, workbenchServices, workbenchSession }:
     if (computedTimePoint !== selectedTimePoint) {
         setSelectedTimePoint(computedTimePoint);
     }
-    React.useEffect(() => {
-        if (selectedEnsembleIdent && selectedWellName && computedTimePoint) {
-            const addr: RftWellAddress = {
-                addressType: "realizations",
-                caseUuid: selectedEnsembleIdent.getCaseUuid(),
-                ensembleName: selectedEnsembleIdent.getEnsembleName(),
-                wellName: selectedWellName,
-                timePoint: computedTimePoint,
-                responseName: "PRESSURE",
-                realizationNums: null,
-            };
-            if (!isEqual(addr, rftWellAddress)) {
-                setRftWellAddress(addr);
+    React.useEffect(
+        function propogateRftAddressToView() {
+            if (selectedEnsembleIdent && selectedWellName && computedTimePoint) {
+                const addr: RftWellAddress = {
+                    addressType: "realizations",
+                    caseUuid: selectedEnsembleIdent.getCaseUuid(),
+                    ensembleName: selectedEnsembleIdent.getEnsembleName(),
+                    wellName: selectedWellName,
+                    timePoint: computedTimePoint,
+                    responseName: "PRESSURE",
+                    realizationNums: null,
+                };
+                if (!isEqual(addr, rftWellAddress)) {
+                    setRftWellAddress(addr);
+                }
             }
-        }
-    }, [computedTimePoint, selectedWellName, selectedEnsembleIdent]);
+        }, [computedTimePoint, selectedWellName, selectedEnsembleIdent]);
     function handleEnsembleSelectionChange(newEnsembleIdent: EnsembleIdent | null) {
         console.debug("handleEnsembleSelectionChange()");
         setSelectedEnsembleIdent(newEnsembleIdent);
