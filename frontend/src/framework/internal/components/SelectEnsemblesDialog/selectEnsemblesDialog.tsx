@@ -17,7 +17,7 @@ import { useValidState } from "@lib/hooks/useValidState";
 import { Add, Check, Remove } from "@mui/icons-material";
 import { useQuery } from "@tanstack/react-query";
 
-import { isEqual } from "lodash";
+import { isEqual, set } from "lodash";
 
 import { UserAvatar } from "./private-components/userAvatar";
 
@@ -28,7 +28,8 @@ export type EnsembleItem = {
 };
 
 export type SelectEnsemblesDialogProps = {
-    onClose: (selectedEnsembleIdents: EnsembleItem[] | null) => void;
+    loadAndSetupEnsembles: (selectedEnsembles: EnsembleItem[]) => Promise<void>;
+    onClose: () => void;
     selectedEnsembles: EnsembleItem[];
 };
 
@@ -42,6 +43,7 @@ interface CaseFilterSettings {
 }
 
 export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (props) => {
+    const [isLoadingEnsembles, setIsLoadingEnsembles] = React.useState<boolean>(false);
     const [confirmCancel, setConfirmCancel] = React.useState<boolean>(false);
     const [newlySelectedEnsembles, setNewlySelectedEnsembles] = React.useState<EnsembleItem[]>([]);
     const [casesFilteringOptions, setCasesFilteringOptions] = React.useState<CaseFilterSettings>({
@@ -148,7 +150,7 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
 
     function handleClose() {
         setConfirmCancel(false);
-        props.onClose(null);
+        props.onClose();
     }
 
     function handleCancel() {
@@ -160,7 +162,15 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
     }
 
     function handleApplyEnsembleSelection() {
-        props.onClose(newlySelectedEnsembles);
+        setIsLoadingEnsembles(true);
+        props
+            .loadAndSetupEnsembles(newlySelectedEnsembles)
+            .then(() => {
+                handleClose();
+            })
+            .finally(() => {
+                setIsLoadingEnsembles(false);
+            });
     }
 
     function checkIfAnyChanges(): boolean {
@@ -206,6 +216,16 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
 
     const ensembleAlreadySelected = checkIfEnsembleAlreadySelected();
 
+    function makeApplyButtonStartIcon() {
+        if (isLoadingEnsembles) {
+            return <CircularProgress size="small" />;
+        } else if (checkIfAnyChanges()) {
+            return <Check fontSize="small" />;
+        } else {
+            return undefined;
+        }
+    }
+
     return (
         <>
             <Dialog
@@ -217,11 +237,19 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                 minWidth={800}
                 actions={
                     <div className="flex gap-4">
-                        <Button onClick={handleClose} color="danger" disabled={!checkIfAnyChanges()}>
+                        <Button
+                            onClick={handleClose}
+                            color="danger"
+                            disabled={!checkIfAnyChanges() || isLoadingEnsembles}
+                        >
                             Discard changes
                         </Button>
-                        <Button onClick={handleApplyEnsembleSelection} disabled={!checkIfAnyChanges()}>
-                            Apply changes
+                        <Button
+                            onClick={handleApplyEnsembleSelection}
+                            disabled={!checkIfAnyChanges() || isLoadingEnsembles}
+                            startIcon={makeApplyButtonStartIcon()}
+                        >
+                            {isLoadingEnsembles ? "Loading ensembles..." : "Apply"}
                         </Button>
                     </div>
                 }

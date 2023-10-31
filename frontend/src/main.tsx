@@ -1,16 +1,11 @@
 import React from "react";
 import { createRoot } from "react-dom/client";
 
-import { StartScreen } from "@framework/internal/components/StartScreen";
 import { AuthProvider } from "@framework/internal/providers/AuthProvider";
 import { CustomQueryClientProvider } from "@framework/internal/providers/QueryClientProvider";
 
 import App from "./App";
 import { GlobalErrorBoundary } from "./GlobalErrorBoundary";
-
-if (import.meta.hot) {
-    import.meta.hot.accept();
-}
 
 /*
     If the `cleanStart` query parameter is given, 
@@ -37,11 +32,9 @@ root.render(
     <React.StrictMode>
         <GlobalErrorBoundary>
             <AuthProvider>
-                <StartScreen>
-                    <CustomQueryClientProvider>
-                        <App />
-                    </CustomQueryClientProvider>
-                </StartScreen>
+                <CustomQueryClientProvider>
+                    <App />
+                </CustomQueryClientProvider>
             </AuthProvider>
         </GlobalErrorBoundary>
     </React.StrictMode>

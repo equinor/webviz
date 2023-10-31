@@ -2,6 +2,7 @@ import logging
 from enum import Enum
 from io import BytesIO
 from typing import List, Optional, Sequence, Union
+import time
 
 from concurrent.futures import ThreadPoolExecutor
 import pandas as pd
@@ -78,7 +79,6 @@ class InplaceVolumetricsAccess(SumoEnsemble):
         vol_table_collections: TableCollection = self._case.tables.filter(
             aggregation="collection", tagname="vol", iteration=self._iteration_name
         )
-
         vol_tables_metadata = []
         vol_table_names = await vol_table_collections.names_async
         for vol_table_name in vol_table_names:

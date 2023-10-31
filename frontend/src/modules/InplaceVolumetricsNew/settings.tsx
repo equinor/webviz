@@ -5,10 +5,10 @@ import { ModuleFCProps } from "@framework/Module";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
 import { useEnsembleSet, useIsEnsembleSetLoading } from "@framework/WorkbenchSession";
 import { MultiEnsembleSelect } from "@framework/components/MultiEnsembleSelect";
+import { RealizationPicker } from "@framework/components/RealizationPicker/realizationPicker";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { Label } from "@lib/components/Label";
-import { Select } from "@lib/components/Select";
 import { LoadingStateWrapper } from "@lib/components/StateWrapper/stateWrapper";
 import { BubbleChart, FilterAlt } from "@mui/icons-material";
 
@@ -65,6 +65,9 @@ export const settings = ({ workbenchSession, moduleContext }: ModuleFCProps<Stat
                             Object.entries(filterOptions.categories).map(([category, values]) =>
                                 makeCategoricalSelect(category, values)
                             )}
+                        <Label text="Realizations">
+                            <RealizationPicker ensembleIdents={selectedEnsembleIdents} />
+                        </Label>
                     </LoadingStateWrapper>
                 </div>
             </CollapsibleGroup>

@@ -1,7 +1,7 @@
 import React, { Key } from "react";
 
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-import { getTextWidth } from "@lib/utils/textSize";
+import { getTextWidthWithElement } from "@lib/utils/textSize";
 
 import { BaseComponent, BaseComponentProps } from "../BaseComponent";
 import { Input } from "../Input";
@@ -58,7 +58,7 @@ export const Select = withDefaults<SelectProps>()(defaultProps, (props) => {
 
     React.useEffect(() => {
         let longestOptionWidth = props.options.reduce((prev, current) => {
-            const labelWidth = getTextWidth(current.label, document.body);
+            const labelWidth = getTextWidthWithElement(current.label, document.body);
             if (labelWidth > prev) {
                 return labelWidth;
             }
@@ -67,9 +67,9 @@ export const Select = withDefaults<SelectProps>()(defaultProps, (props) => {
 
         if (longestOptionWidth === 0) {
             if (props.options.length === 0 || filter === "") {
-                longestOptionWidth = getTextWidth(noOptionsText, document.body);
+                longestOptionWidth = getTextWidthWithElement(noOptionsText, document.body);
             } else {
-                longestOptionWidth = getTextWidth(noMatchingOptionsText, document.body);
+                longestOptionWidth = getTextWidthWithElement(noMatchingOptionsText, document.body);
             }
         }
         setMinWidth(longestOptionWidth + 40);
@@ -254,8 +254,11 @@ export const Select = withDefaults<SelectProps>()(defaultProps, (props) => {
                                     style={{ height: 24 }}
                                 >
                                     {option.icon}
-                                    <span title={option.label} className="min-w-0 text-ellipsis overflow-hidden whitespace-nowrap">
-                                            {option.label}
+                                    <span
+                                        title={option.label}
+                                        className="min-w-0 text-ellipsis overflow-hidden whitespace-nowrap"
+                                    >
+                                        {option.label}
                                     </span>
                                 </div>
                             );

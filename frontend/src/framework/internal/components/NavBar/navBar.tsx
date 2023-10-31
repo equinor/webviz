@@ -11,6 +11,7 @@ import { EnsembleItem } from "@framework/internal/components/SelectEnsemblesDial
 import { Badge } from "@lib/components/Badge";
 import { Button } from "@lib/components/Button";
 import { CircularProgress } from "@lib/components/CircularProgress";
+import { WebvizSpinner } from "@lib/components/WebvizSpinner/webvizSpinner";
 import { isDevMode } from "@lib/utils/devMode";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { ChevronLeft, ChevronRight, GridView, Link, List, Palette, Settings, WebAsset } from "@mui/icons-material";
@@ -99,14 +100,8 @@ export const NavBar: React.FC<NavBarProps> = (props) => {
         setDrawerContent(DrawerContent.ColorPaletteSettings);
     }
 
-    function handleEnsembleDialogClose(selectedEnsembles: EnsembleItem[] | null) {
+    function handleEnsembleDialogClose() {
         setEnsembleDialogOpen(false);
-        if (selectedEnsembles !== null) {
-            const selectedEnsembleIdents = selectedEnsembles.map(
-                (ens) => new EnsembleIdent(ens.caseUuid, ens.ensembleName)
-            );
-            props.workbench.loadAndSetupEnsembleSetInSession(queryClient, selectedEnsembleIdents);
-        }
     }
 
     function handleCollapseOrExpand() {
@@ -119,6 +114,13 @@ export const NavBar: React.FC<NavBarProps> = (props) => {
         caseName: ens.getCaseName(),
         ensembleName: ens.getEnsembleName(),
     }));
+
+    function loadAndSetupEnsembles(selectedEnsembles: EnsembleItem[]): Promise<void> {
+        const selectedEnsembleIdents = selectedEnsembles.map(
+            (ens) => new EnsembleIdent(ens.caseUuid, ens.ensembleName)
+        );
+        return props.workbench.loadAndSetupEnsembleSetInSession(queryClient, selectedEnsembleIdents);
+    }
 
     return (
         <div
@@ -241,7 +243,11 @@ export const NavBar: React.FC<NavBarProps> = (props) => {
                 </div>
             </div>
             {ensembleDialogOpen && (
-                <SelectEnsemblesDialog selectedEnsembles={selectedEnsembles} onClose={handleEnsembleDialogClose} />
+                <SelectEnsemblesDialog
+                    loadAndSetupEnsembles={loadAndSetupEnsembles}
+                    selectedEnsembles={selectedEnsembles}
+                    onClose={handleEnsembleDialogClose}
+                />
             )}
         </div>
     );

@@ -2,6 +2,7 @@ import React from "react";
 
 import { GuiEvent, GuiEventPayloads } from "@framework/GuiMessageBroker";
 import { LayoutElement, Workbench } from "@framework/Workbench";
+import { LayoutBox, LayoutBoxComponents, makeLayoutBoxes } from "@framework/components/LayoutBox";
 import { useModuleInstances } from "@framework/internal/hooks/workbenchHooks";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import {
@@ -19,7 +20,6 @@ import {
 import { v4 } from "uuid";
 
 import { ViewWrapper } from "./ViewWrapper";
-import { LayoutBox, LayoutBoxComponents, makeLayoutBoxes } from "./layoutBox";
 import { ViewWrapperPlaceholder } from "./viewWrapperPlaceholder";
 
 type LayoutProps = {

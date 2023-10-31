@@ -95,5 +95,5 @@ async def exception_handler(request: Request, exc: Exception):
         )
     return JSONResponse(
         status_code=500,
-        content={"message": exc},
+        content={"message": str(exc)},
     )
