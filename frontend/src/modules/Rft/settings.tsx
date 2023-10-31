@@ -1,20 +1,17 @@
-import React, { useEffect } from "react";
+import React from "react";
 
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { ModuleFCProps } from "@framework/Module";
 import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
-import { useFirstEnsembleInEnsembleSet } from "@framework/WorkbenchSession";
+
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { SingleEnsembleSelect } from "@framework/components/SingleEnsembleSelect";
 import { fixupEnsembleIdent, maybeAssignFirstSyncedEnsemble } from "@framework/utils/ensembleUiHelpers";
 import { timestampUtcMsToCompactIsoString } from "@framework/utils/timestampUtils";
-import { ApiStateWrapper } from "@lib/components/ApiStateWrapper";
-import { Checkbox } from "@lib/components/Checkbox";
+
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
-import { Dropdown, DropdownOption } from "@lib/components/Dropdown";
-import { Label } from "@lib/components/Label";
-import { Select } from "@lib/components/Select";
-import { TimestampSlider } from "@lib/components/TimestampSlider";
+
+import { Select, SelectOption } from "@lib/components/Select";
 
 import { isEqual } from "lodash";
 
@@ -22,10 +19,10 @@ import { useRftWellList } from "./queryHooks";
 import state, { RftWellAddress } from "./state";
 
 //Helpers to populate dropdowns
-const stringToOptions = (strings: string[]): DropdownOption[] => {
+const stringToOptions = (strings: string[]): SelectOption[] => {
     return strings.map((string) => ({ label: string, value: string }));
 };
-const timepointOptions = (timePoints: number[]): DropdownOption[] => {
+const timepointOptions = (timePoints: number[]): SelectOption[] => {
     return timePoints.map((timePoint) => ({
         label: timestampUtcMsToCompactIsoString(timePoint),
         value: timePoint.toString(),

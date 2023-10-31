@@ -14,28 +14,13 @@ class RftSumoTableSchema(BaseModel):
     column_names: list[str]
 
 
-class RftWellInfo(BaseModel):
+class RftInfo(BaseModel):
     well_name: str
     timestamps_utc_ms: list[int]
 
 
-# class RftRealizationResponse(BaseModel):
-#     realization: int
-#     depth: list[float]
-#     pressure: list[float]
 
-
-# class RftTimestampResponse(BaseModel):
-#     timestamp_utc_ms: int
-#     realizations_response: list[RftRealizationResponse]
-
-
-# class RftWellResponse(BaseModel):
-#     well_name: str
-#     timestamps_response: list[RftTimestampResponse]
-
-
-class RftWellRealizationData(BaseModel):
+class RftRealizationData(BaseModel):
     well_name: str
     realization: int
     timestamp_utc_ms: int

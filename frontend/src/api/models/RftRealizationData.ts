@@ -2,7 +2,7 @@
 /* tslint:disable */
 /* eslint-disable */
 
-export type RftWellRealizationData = {
+export type RftRealizationData = {
     well_name: string;
     realization: number;
     timestamp_utc_ms: number;

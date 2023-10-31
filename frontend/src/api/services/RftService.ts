@@ -1,8 +1,8 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-import type { RftWellInfo } from '../models/RftWellInfo';
-import type { RftWellRealizationData } from '../models/RftWellRealizationData';
+import type { RftInfo } from '../models/RftInfo';
+import type { RftRealizationData } from '../models/RftRealizationData';
 
 import type { CancelablePromise } from '../core/CancelablePromise';
 import type { BaseHttpRequest } from '../core/BaseHttpRequest';
@@ -12,19 +12,19 @@ export class RftService {
     constructor(public readonly httpRequest: BaseHttpRequest) {}
 
     /**
-     * Get Well List
+     * Get Rft Info
      * @param caseUuid Sumo case uuid
      * @param ensembleName Ensemble name
-     * @returns RftWellInfo Successful Response
+     * @returns RftInfo Successful Response
      * @throws ApiError
      */
-    public getWellList(
+    public getRftInfo(
         caseUuid: string,
         ensembleName: string,
-    ): CancelablePromise<Array<RftWellInfo>> {
+    ): CancelablePromise<Array<RftInfo>> {
         return this.httpRequest.request({
             method: 'GET',
-            url: '/rft/well_list',
+            url: '/rft/rft_info',
             query: {
                 'case_uuid': caseUuid,
                 'ensemble_name': ensembleName,
@@ -43,7 +43,7 @@ export class RftService {
      * @param responseName Response name
      * @param timestampsUtcMs Timestamps utc ms
      * @param realizations Realizations
-     * @returns RftWellRealizationData Successful Response
+     * @returns RftRealizationData Successful Response
      * @throws ApiError
      */
     public getRealizationData(
@@ -53,7 +53,7 @@ export class RftService {
         responseName: string,
         timestampsUtcMs?: (Array<number> | null),
         realizations?: (Array<number> | null),
-    ): CancelablePromise<Array<RftWellRealizationData>> {
+    ): CancelablePromise<Array<RftRealizationData>> {
         return this.httpRequest.request({
             method: 'GET',
             url: '/rft/realization_data',

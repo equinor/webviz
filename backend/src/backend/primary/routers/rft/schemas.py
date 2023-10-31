@@ -1,12 +1,12 @@
 from pydantic import BaseModel
 
 
-class RftWellInfo(BaseModel):
+class RftInfo(BaseModel):
     well_name: str
     timestamps_utc_ms: list[int]
 
 
-class RftWellRealizationData(BaseModel):
+class RftRealizationData(BaseModel):
     well_name: str
     realization: int
     timestamp_utc_ms: int

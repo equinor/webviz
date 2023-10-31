@@ -1,7 +1,7 @@
 import React from "react";
 import Plot from "react-plotly.js";
 
-import { RftWellRealizationData_api } from "@api";
+import { RftRealizationData_api } from "@api";
 import { timestampUtcMsToCompactIsoString } from "@framework/utils/timestampUtils";
 import { ModuleFCProps } from "@framework/Module";
 import { useElementSize } from "@lib/hooks/useElementSize";
@@ -11,7 +11,7 @@ import { PlotData } from "plotly.js";
 import { useRftRealizationData } from "./queryHooks";
 import State from "./state";
 
-export const view = ({ moduleContext, workbenchSession, workbenchSettings }: ModuleFCProps<State>) => {
+export const view = ({ moduleContext }: ModuleFCProps<State>) => {
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);
     const wrapperDivSize = useElementSize(wrapperDivRef);
     const rftWellAddress = moduleContext.useStoreValue("rftWellAddress");
@@ -25,7 +25,7 @@ export const view = ({ moduleContext, workbenchSession, workbenchSettings }: Mod
     );
     const timePoint = rftWellAddress?.timePoint;
 
-    const realizationDataForTimePoint: RftWellRealizationData_api[] = [];
+    const realizationDataForTimePoint: RftRealizationData_api[] = [];
     if (rftRealizationDataQuery.data && timePoint) {
         rftRealizationDataQuery.data.forEach((realizationData) => {
             if (realizationData.timestamp_utc_ms === timePoint) {
@@ -57,7 +57,7 @@ export const view = ({ moduleContext, workbenchSession, workbenchSettings }: Mod
     );
 };
 
-function createRftRealizationTrace(rftRealizationData: RftWellRealizationData_api): Partial<PlotData> {
+function createRftRealizationTrace(rftRealizationData: RftRealizationData_api): Partial<PlotData> {
     const trace: Partial<PlotData> = {
         x: rftRealizationData.value_arr,
         y: rftRealizationData.depth_arr,
@@ -78,7 +78,7 @@ function createRftRealizationTrace(rftRealizationData: RftWellRealizationData_ap
     return trace;
 }
 
-function getResponseValueRange(rftRealizationData: RftWellRealizationData_api[] | null): [number, number] {
+function getResponseValueRange(rftRealizationData: RftRealizationData_api[] | null): [number, number] {
     let minValue = Number.POSITIVE_INFINITY;
     let maxValue = Number.NEGATIVE_INFINITY;
     if (rftRealizationData !== null && rftRealizationData.length) {

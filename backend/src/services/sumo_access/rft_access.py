@@ -11,47 +11,47 @@ from fmu.sumo.explorer.objects import Case, TableCollection
 
 from ._helpers import SumoEnsemble
 from ..utils.perf_timer import PerfTimer
-from .rft_types import RftWellInfo, RftWellRealizationData
+from .rft_types import RftInfo, RftRealizationData
 
 LOGGER = logging.getLogger(__name__)
 
 
 class RftAccess(SumoEnsemble):
-    async def get_well_list(self) -> list[RftWellInfo]:
+    async def get_rft_info(self) -> list[RftInfo]:
         table = await get_concatenated_rft_table(self._case, self._iteration_name, column_names=["PRESSURE"])
-        rft_well_infos: list[RftWellInfo] = []
+        rft_well_infos: list[RftInfo] = []
         well_names = table["WELL"].unique().tolist()
 
         for well_name in well_names:
             well_table = table.filter(pc.equal(table["WELL"], well_name))
             timestamps_utc_ms = sorted(list(set(well_table["DATE"].to_numpy().astype(int).tolist())))
 
-            rft_well_infos.append(RftWellInfo(well_name=well_name, timestamps_utc_ms=timestamps_utc_ms))
+            rft_well_infos.append(RftInfo(well_name=well_name, timestamps_utc_ms=timestamps_utc_ms))
 
         return rft_well_infos
 
-    async def get_rft_realization_data(
+    async def get_rft_well_realization_data(
         self,
         well_name: str,
         response_name: str,
         timestamps_utc_ms: Optional[int],
         realizations: Optional[Sequence[int]],
-    ) -> List[RftWellRealizationData]:
+    ) -> List[RftRealizationData]:
         column_names = [response_name, "DEPTH"]
         table = await self.get_rft_table(
-            well_name=well_name,
+            well_names=[well_name],
             column_names=column_names,
             timestamps_utc_ms=timestamps_utc_ms,
             realizations=realizations,
         )
         pandas_table = table.to_pandas(types_mapper=pd.ArrowDtype)
 
-        ret_arr: List[RftWellRealizationData] = []
+        ret_arr: List[RftRealizationData] = []
 
         for real, real_df in pandas_table.groupby("REAL"):
             for datetime, date_df in real_df.groupby("DATE"):
                 ret_arr.append(
-                    RftWellRealizationData(
+                    RftRealizationData(
                         well_name=well_name,
                         realization=real,
                         timestamp_utc_ms=datetime.timestamp() * 1000,
@@ -64,7 +64,7 @@ class RftAccess(SumoEnsemble):
 
     async def get_rft_table(
         self,
-        well_name: str,
+        well_names: List[str],
         column_names: List[str],
         timestamps_utc_ms: Optional[int],
         realizations: Optional[Sequence[int]],
@@ -74,7 +74,7 @@ class RftAccess(SumoEnsemble):
         if realizations is not None:
             mask = pc.is_in(table["REAL"], value_set=pa.array(realizations))
             table = table.filter(mask)
-        mask = pc.equal(table["WELL"], well_name)
+        mask = pc.is_in(table["WELL"], value_set=pa.array(well_names))
         table = table.filter(mask)
         if timestamps_utc_ms is not None:
             mask = pc.is_in(table["DATE"], value_set=pa.array(timestamps_utc_ms))
