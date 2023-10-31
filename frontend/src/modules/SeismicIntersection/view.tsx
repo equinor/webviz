@@ -179,12 +179,19 @@ export const view = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
                     isLeftToRight: true,
                 }
             )
-                .then((image) =>
+                .then((image) => {
+                    if (!image) {
+                        setSeismicFenceImageBitmapAndStatus({
+                            image: null,
+                            status: SeismicImageBitmapStatus.INVALID,
+                        });
+                        return;
+                    }
                     setSeismicFenceImageBitmapAndStatus({
-                        image: image ?? null,
+                        image: image,
                         status: SeismicImageBitmapStatus.VALID,
-                    })
-                )
+                    });
+                })
                 .catch(() =>
                     setSeismicFenceImageBitmapAndStatus({ image: null, status: SeismicImageBitmapStatus.ERROR })
                 );
