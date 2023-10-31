@@ -11,7 +11,7 @@ const defaultState: State = {
     zScale: 5,
 };
 
-const module = ModuleRegistry.initModule<State>("Intersection", defaultState);
+const module = ModuleRegistry.initModule<State>("SeismicIntersection", defaultState);
 
 module.viewFC = view;
 module.settingsFC = settings;
