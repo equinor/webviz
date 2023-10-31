@@ -84,10 +84,10 @@ class RftAccess(SumoEnsemble):
 
 async def get_concatenated_rft_table(case: Case, iteration_name: str, column_names: List[str]) -> pa.Table:
     concatenated_table = None
-    for table_index, column_name in enumerate(column_names):
+    for column_name in column_names:
         table = await _load_arrow_table_for_from_sumo(case, iteration_name, column_name=column_name)
 
-        if table_index == 0:
+        if concatenated_table is None:
             concatenated_table = table
         else:
             concatenated_table = concatenated_table.append_column(column_name, table[column_name])
