@@ -2,7 +2,6 @@ import logging
 from typing import List, Optional, Sequence
 from io import BytesIO
 
-import numpy as np
 import pandas as pd
 import pyarrow as pa
 import pyarrow.compute as pc
