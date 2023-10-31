@@ -19,7 +19,6 @@ class RftInfo(BaseModel):
     timestamps_utc_ms: list[int]
 
 
-
 class RftRealizationData(BaseModel):
     well_name: str
     realization: int
