@@ -12,7 +12,7 @@ import type { B64FloatArray } from './B64FloatArray';
  *
  * `Properties:`
  * - `fence_traces_b64arr`: The fence trace array is base64 encoded 1D float array - where data is stored trace by trace.
- * - `num_traces`: The number of traces in the fence trace array. Equals the number of (x, y) coordinates in requested polyline, and implies traces
+ * - `num_traces`: The number of traces in the fence trace array. Equals the number of (x, y) coordinates in requested polyline.
  * - `num_trace_samples`: The number of samples in each trace.
  * - `min_fence_depth`: The minimum depth value of the fence.
  * - `max_fence_depth`: The maximum depth value of the fence.
@@ -24,7 +24,7 @@ import type { B64FloatArray } from './B64FloatArray';
  *
  * Fence traces 1D array: [trace_1, trace_2, ..., trace_m]
  *
- * Trace 1D array: [sample_1, sample_2, ..., sample_n]
+ * trace_1, trace_2, ... , trace_m are 1D arrays: [sample_1, sample_2, ..., sample_n]
  *
  * See:
  * - VdsAxis: https://github.com/equinor/vds-slice/blob/ab6f39789bf3d3b59a8df14f1c4682d340dc0bf3/internal/core/core.go#L37-L55

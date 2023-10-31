@@ -3,15 +3,17 @@ from typing import List
 
 from pydantic import BaseModel
 
-"""
-This file contains the response types for the vds-slice service found in the following file:
-
-https://github.com/equinor/vds-slice/blob/master/internal/core/core.go
-
-Master commit hash: ab6f39789bf3d3b59a8df14f1c4682d340dc0bf3
-
-https://github.com/equinor/vds-slice/blob/ab6f39789bf3d3b59a8df14f1c4682d340dc0bf3/internal/core/core.go
-"""
+######################################################################################################
+#
+# This file contains the response types for the vds-slice service found in the following file:
+#
+# https://github.com/equinor/vds-slice/blob/master/internal/core/core.go
+#
+# Master commit hash: ab6f39789bf3d3b59a8df14f1c4682d340dc0bf3
+#
+# https://github.com/equinor/vds-slice/blob/ab6f39789bf3d3b59a8df14f1c4682d340dc0bf3/internal/core/core.go
+#
+######################################################################################################
 
 
 @dataclass
@@ -38,8 +40,6 @@ class VdsFenceMetadata(VdsArray):
 
     See: https://github.com/equinor/vds-slice/blob/ab6f39789bf3d3b59a8df14f1c4682d340dc0bf3/internal/core/core.go#L160-L162
     """
-
-    pass
 
 
 class VdsAxis(BaseModel):

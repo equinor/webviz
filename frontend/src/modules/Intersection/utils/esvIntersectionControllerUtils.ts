@@ -129,7 +129,10 @@ export function updateLayout(
 ): void {
     // Calculate midpoint for xAxis
     // Need to calculate y...
-    const _hMid: number = curtain ? (curtain[0][0] + curtain[curtain.length - 1][0]) / 2 - extension : 1000;
+
+    void curtain; // TODO: Remove this line when curtain is used
+    void extension; // TODO: Remove this line when extension is used
+    // const _hMid: number = curtain ? (curtain[0][0] + curtain[curtain.length - 1][0]) / 2 - extension : 1000;
 
     // this.controller.setViewport(hMid, 1750, 5000);
 

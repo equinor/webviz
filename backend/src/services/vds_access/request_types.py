@@ -2,15 +2,17 @@ from dataclasses import dataclass
 from enum import StrEnum
 from typing import List
 
-"""
-This file contains the request types for the vds-slice service found in the following file:
-
-https://github.com/equinor/vds-slice/blob/master/api/request.go
-
-Master commit hash: ab6f39789bf3d3b59a8df14f1c4682d340dc0bf3
-
-https://github.com/equinor/vds-slice/blob/ab6f39789bf3d3b59a8df14f1c4682d340dc0bf3/api/request.go
-"""
+######################################################################################################
+#
+# This file contains the request types for the vds-slice service found in the following file:
+#
+# https://github.com/equinor/vds-slice/blob/master/api/request.go
+#
+# Master commit hash: ab6f39789bf3d3b59a8df14f1c4682d340dc0bf3
+#
+# https://github.com/equinor/vds-slice/blob/ab6f39789bf3d3b59a8df14f1c4682d340dc0bf3/api/request.go
+#
+######################################################################################################
 
 
 class VdsInterpolation(StrEnum):
@@ -66,7 +68,7 @@ class VdsCoordinates:
         self.x_points = x_points
         self.y_points = y_points
 
-    def to_list(self) -> List[float]:
+    def to_list(self) -> List[List[float]]:
         return [[x, y] for x, y in zip(self.x_points, self.y_points)]
 
 
@@ -93,8 +95,6 @@ class VdsMetadataRequest(VdsRequestedResource):
 
     See: https://github.com/equinor/vds-slice/blob/ab6f39789bf3d3b59a8df14f1c4682d340dc0bf3/api/request.go#L62-L64
     """
-
-    pass
 
 
 @dataclass

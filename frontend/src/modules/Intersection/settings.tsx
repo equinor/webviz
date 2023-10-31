@@ -18,7 +18,7 @@ import { Select, SelectOption } from "@lib/components/Select";
 import { useValidState } from "@lib/hooks/useValidState";
 import { useGetWellHeaders } from "@modules/_shared/WellBore";
 
-import { isEqual, set } from "lodash";
+import { isEqual } from "lodash";
 
 import { useSeismicCubeDirectoryQuery } from "./queryHooks";
 import { State } from "./state";

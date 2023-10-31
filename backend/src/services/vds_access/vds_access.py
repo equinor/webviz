@@ -7,6 +7,8 @@ from numpy.typing import NDArray
 from requests_toolbelt.multipart.decoder import MultipartDecoder, BodyPart
 import httpx
 
+from src import config
+
 from .response_types import VdsMetadata, VdsFenceMetadata
 from .request_types import (
     VdsCoordinates,
@@ -17,7 +19,6 @@ from .request_types import (
     VdsMetadataRequest,
 )
 
-from src import config
 
 LOGGER = logging.getLogger(__name__)
 

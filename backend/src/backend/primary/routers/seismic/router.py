@@ -1,6 +1,4 @@
 import logging
-import numpy as np
-from numpy.typing import NDArray
 from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Body
@@ -67,7 +65,7 @@ async def get_seismic_fence(
 
     vds_handle: Optional[VdsHandle] = None
     try:
-        vds_handle: VdsHandle = await seismic_access.get_vds_handle(
+        vds_handle = await seismic_access.get_vds_handle(
             realization=realization_num,
             seismic_attribute=seismic_attribute,
             time_or_interval_str=time_or_interval_str,

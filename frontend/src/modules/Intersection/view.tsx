@@ -133,7 +133,8 @@ export const view = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
 
     // Regenerate seismic fence image when fence data changes
     // - Must be useEffect due to async generateSeismicSliceImage function
-    // - seismicFenceDataQuery.data in dependency array: Assumes provides same reference as long as the query data is the same (https://github.com/TanStack/query/commit/89bec2039324282a023e4e726ea6ae2e1c45178a)
+    // - seismicFenceDataQuery.data in dependency array: Assumes provides same reference as long as the query data is the
+    //   same (https://github.com/TanStack/query/commit/89bec2039324282a023e4e726ea6ae2e1c45178a)
     React.useEffect(
         function generateSeismicFenceImageLayerData() {
             if (!seismicFenceDataQuery.data) return;
@@ -155,7 +156,7 @@ export const view = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
             const yAxisValues = newSeismicImageYAxisValues;
             const trajectory = newWellboreTrajectoryProjection ?? [];
 
-            // Note: useQuery has cache, this does not - thereby the image is regenerated when switching back and forth
+            // Note: No cache, thereby the image is regenerated when switching back and forth
             generateSeismicSliceImage(
                 { datapoints: imageDataPoints, yAxisValues: yAxisValues },
                 trajectory,
@@ -165,7 +166,7 @@ export const view = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
                 }
             )
                 .then((image) => setSeismicFenceImageBitmapAndStatus({ image: image ?? null, errorStatus: false }))
-                .catch((_error) => setSeismicFenceImageBitmapAndStatus({ image: null, errorStatus: true }));
+                .catch(() => setSeismicFenceImageBitmapAndStatus({ image: null, errorStatus: true }));
 
             setWellboreTrajectoryProjection(newWellboreTrajectoryProjection);
             setSeismicImageDataArray(newSeismicImageDataArray);
@@ -179,6 +180,7 @@ export const view = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
         [seismicFenceDataQuery.data, extendedWellboreTrajectory]
     );
 
+    // Update esv-intersection controller when data is ready - keep old data to prevent blank view when fetching new data
     if (esvIntersectionControllerRef.current && renderWellboreTrajectory) {
         esvIntersectionControllerRef.current.removeAllLayers();
         esvIntersectionControllerRef.current.clearAllData();

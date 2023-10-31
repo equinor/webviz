@@ -18,6 +18,9 @@ export function makeExtendedTrajectoryFromWellboreTrajectory(
         parseFloat(northingArr[idx].toFixed(3)),
         parseFloat(tvdArr[idx].toFixed(3)),
     ]);
+
+    // If the first and last coordinates are the same, the trajectory is assumed to be a vertical line. In this case,
+    // add a coordinate at the start and end of the trajectory to ensure that the trajectory is not considered a vertical line.
     if (eastingArr[0] == eastingArr[eastingArr.length - 1] && northingArr[0] == northingArr[northingArr.length - 1]) {
         const addcoordatstart = eastingArr[0] - 100;
         const addcoordatend = eastingArr[eastingArr.length - 1] + 100;
@@ -38,9 +41,14 @@ export function makeExtendedTrajectoryFromWellboreTrajectory(
     const samplingIncrement = 5; //meters
     const steps = Math.min(1000, Math.floor((displacement + extension * 2) / samplingIncrement));
     console.debug("Number of samples for intersection ", steps);
-    const traj = referenceSystem.getExtendedTrajectory(steps, extension, extension);
-    traj.points = traj.points.map((point) => [parseFloat(point[0].toFixed(3)), parseFloat(point[1].toFixed(3))]);
-    return traj;
+
+    const extendedTrajectory = referenceSystem.getExtendedTrajectory(steps, extension, extension);
+    extendedTrajectory.points = extendedTrajectory.points.map((point) => [
+        parseFloat(point[0].toFixed(3)),
+        parseFloat(point[1].toFixed(3)),
+    ]);
+
+    return extendedTrajectory;
 }
 
 /**
