@@ -32,8 +32,10 @@ export type { InplaceVolumetricsTableMetaData as InplaceVolumetricsTableMetaData
 export type { Observations as Observations_api } from './models/Observations';
 export type { PolygonData as PolygonData_api } from './models/PolygonData';
 export type { PvtData as PvtData_api } from './models/PvtData';
+export type { RftInfo as RftInfo_api } from './models/RftInfo';
 export type { RftObservation as RftObservation_api } from './models/RftObservation';
 export type { RftObservations as RftObservations_api } from './models/RftObservations';
+export type { RftRealizationData as RftRealizationData_api } from './models/RftRealizationData';
 export type { SeismicCubeMeta as SeismicCubeMeta_api } from './models/SeismicCubeMeta';
 export { SensitivityType as SensitivityType_api } from './models/SensitivityType';
 export { StatisticFunction as StatisticFunction_api } from './models/StatisticFunction';
@@ -69,6 +71,7 @@ export { InplaceVolumetricsService } from './services/InplaceVolumetricsService'
 export { ObservationsService } from './services/ObservationsService';
 export { ParametersService } from './services/ParametersService';
 export { PvtService } from './services/PvtService';
+export { RftService } from './services/RftService';
 export { SeismicService } from './services/SeismicService';
 export { SurfaceService } from './services/SurfaceService';
 export { SurfacePolygonsService } from './services/SurfacePolygonsService';
