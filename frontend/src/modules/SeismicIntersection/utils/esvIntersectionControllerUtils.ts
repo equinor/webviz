@@ -91,7 +91,6 @@ export function addSeismicLayer(
     });
     layer.data = { image: image, options: getSeismicOptions(info) };
     controller.addLayer(layer);
-    // addSeismicOverlay(controller, dataValues);
 }
 
 export type SeismicUpdateLayoutOptions = {

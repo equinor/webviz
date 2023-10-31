@@ -4,7 +4,7 @@ from sumo.wrapper import SumoClient
 from fmu.sumo.explorer.objects import CaseCollection, Case
 
 from src import config
-from .queries.case import get_stratigraphic_column_identifier, get_field_identifiers, get_coordinate_system_identifier
+from .queries.case import get_stratigraphic_column_identifier, get_field_identifiers
 
 
 def create_sumo_client_instance(access_token: str) -> SumoClient:
@@ -46,10 +46,6 @@ class SumoCase:
     async def get_field_identifiers(self) -> List[str]:
         """Retrieve the field identifiers for a case"""
         return await get_field_identifiers(self._sumo_client, self._case_uuid)
-
-    async def get_coordinate_system_identifier(self) -> str:
-        """Retrieve the coordinate system identifier for a case"""
-        return await get_coordinate_system_identifier(self._sumo_client, self._case_uuid)
 
 
 class SumoEnsemble(SumoCase):
