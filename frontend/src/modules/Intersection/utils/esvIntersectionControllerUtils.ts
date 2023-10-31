@@ -1,7 +1,6 @@
 import { WellBoreTrajectory_api } from "@api";
 import {
     Controller,
-    IntersectionReferenceSystem,
     OverlayMouseMoveEvent,
     SeismicCanvasLayer,
     WellborepathLayer,
@@ -9,12 +8,13 @@ import {
     getSeismicOptions,
 } from "@equinor/esv-intersection";
 
+import { makeReferenceSystemFromWellboreTrajectory } from "./esvIntersectionDataConversion";
+
 /**
  * Utility to add md overlay for hover to esv intersection controller
  */
 export function addMDOverlay(controller: Controller) {
     const elm = controller.overlay.create("md", {
-        // onMouseMove: (event: any) => {
         onMouseMove: (event: OverlayMouseMoveEvent<Controller>) => {
             const { target, caller, x } = event;
             const newX = caller.currentStateAsEvent.xScale.invert(x);
@@ -26,9 +26,7 @@ export function addMDOverlay(controller: Controller) {
             target.textContent = Number.isFinite(md) ? `MD: ${md?.toFixed(1)}` : "-";
             if (md && (md < 0 || referenceSystem.length < md)) {
                 target.setAttribute("style", "visibility: hidden");
-                // target.style.visibility = "hidden";
             } else {
-                // target.style.visibility = "visible";
                 target.setAttribute("style", "visibility: visible");
             }
         },
@@ -52,35 +50,18 @@ export function addMDOverlay(controller: Controller) {
 }
 
 /**
- * Utility to add well bore trajectory and set reference system to esv intersection controller
+ * Utility to add well bore trajectory to esv intersection controller
  *
- * Sets reference system with trajectory coordinates - overriding any existing reference system
+ * Sets reference system with trajectory 3D coordinates, controller reference system must be handled outside
  */
-export function addWellborePathLayerAndSetReferenceSystem(
-    controller: Controller,
-    wellBoreTrajectory: WellBoreTrajectory_api
-): void {
-    if (
-        wellBoreTrajectory.easting_arr.length !== wellBoreTrajectory.northing_arr.length &&
-        wellBoreTrajectory.northing_arr.length !== wellBoreTrajectory.tvd_msl_arr.length
-    ) {
-        throw new Error("Wellbore trajectory coordinate arrays are not of equal length");
-    }
-
-    const coords = wellBoreTrajectory.easting_arr.map((easting: number, idx: number) => [
-        easting,
-        wellBoreTrajectory.northing_arr[idx],
-        wellBoreTrajectory.tvd_msl_arr[idx],
-    ]);
-
-    controller.setReferenceSystem(new IntersectionReferenceSystem(coords));
-
+export function addWellborePathLayer(controller: Controller, wellBoreTrajectory: WellBoreTrajectory_api): void {
+    const referenceSystem = makeReferenceSystemFromWellboreTrajectory(wellBoreTrajectory);
     controller.addLayer(
         new WellborepathLayer("wellborepath", {
             order: 3,
             strokeWidth: "4px",
             stroke: "black",
-            referenceSystem: controller.referenceSystem,
+            referenceSystem: referenceSystem,
         })
     );
 }

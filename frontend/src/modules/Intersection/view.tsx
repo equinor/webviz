@@ -19,23 +19,31 @@ import { isEqual } from "lodash";
 
 import { useSeismicFenceDataQuery } from "./queryHooks";
 import { State } from "./state";
-import {
-    addMDOverlay,
-    addSeismicLayer,
-    addWellborePathLayerAndSetReferenceSystem,
-} from "./utils/esvIntersectionControllerUtils";
+import { addMDOverlay, addSeismicLayer, addWellborePathLayer } from "./utils/esvIntersectionControllerUtils";
 import {
     createSeismicSliceImageDataArrayFromFenceData,
     createSeismicSliceImageYAxisValuesArrayFromFenceData,
     makeExtendedTrajectoryFromWellboreTrajectory,
+    makeReferenceSystemFromWellboreTrajectory,
 } from "./utils/esvIntersectionDataConversion";
+
+enum SeismicImageBitmapStatus {
+    ERROR = "error",
+    INVALID = "invalid",
+    VALID = "valid",
+}
+
+type SeismicLayerData = {
+    wellboreTrajectoryXyProjection: number[][]; // Array of 2D projected points [x, y]
+    seismicImageDataArray: number[][]; // Array of seismic image data values
+    seismicImageYAxisValues: number[]; // Array of seismic image y axis values
+};
 
 export const view = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>) => {
     const wrapperDivRef = React.useRef<HTMLDivElement | null>(null);
     const wrapperDivSize = useElementSize(wrapperDivRef);
     const esvIntersectionContainerRef = React.useRef<HTMLDivElement | null>(null);
     const esvIntersectionControllerRef = React.useRef<Controller | null>(null);
-    const [extendedWellboreTrajectory, setExtendedWellboreTrajectory] = React.useState<Trajectory | null>(null);
 
     const gridLayerUuid = useId();
     const statusWriter = useViewStatusWriter(moduleContext);
@@ -50,18 +58,19 @@ export const view = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
     });
     const seismicColors = seismicColorScale.getColorPalette().getColors();
 
+    // State for extended wellbore trajectory
+    const [extendedWellboreTrajectory, setExtendedWellboreTrajectory] = React.useState<Trajectory | null>(null);
+
     // Data for well trajectory layer in esv-intersection (to be in synch with seismic fence layer)
     const [renderWellboreTrajectory, setRenderWellboreTrajectory] = React.useState<WellBoreTrajectory_api | null>(null);
 
     // Data for seismic fence layer in esv-intersection
     const [seismicFencePolyline, setSeismicFencePolyline] = React.useState<SeismicFencePolyline_api | null>(null);
-    const [wellboreTrajectoryProjection, setWellboreTrajectoryProjection] = React.useState<number[][] | null>(null);
-    const [seismicImageDataArray, setSeismicImageDataArray] = React.useState<number[][] | null>(null);
-    const [seismicImageYAxisValues, setSeismicImageYAxisValues] = React.useState<number[] | null>(null);
+    const [seismicLayerData, setSeismicLayerData] = React.useState<SeismicLayerData | null>(null);
     const [seismicFenceImageBitmapAndStatus, setSeismicFenceImageBitmapAndStatus] = React.useState<{
         image: ImageBitmap | null;
-        errorStatus: boolean;
-    }>({ image: null, errorStatus: false });
+        status: SeismicImageBitmapStatus;
+    }>({ image: null, status: SeismicImageBitmapStatus.INVALID });
 
     React.useEffect(function initializeEsvIntersectionController() {
         if (esvIntersectionContainerRef.current) {
@@ -76,7 +85,7 @@ export const view = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
             esvIntersectionControllerRef.current.addLayer(new GridLayer(gridLayerUuid));
             esvIntersectionControllerRef.current.setBounds([10, 1000], [0, 3000]);
             esvIntersectionControllerRef.current.setViewport(1000, 1650, 6000);
-            esvIntersectionControllerRef.current.zoomPanHandler.zFactor = zScale; // viewSettings.zScale
+            esvIntersectionControllerRef.current.zoomPanHandler.zFactor = zScale;
         }
         return () => {
             console.debug("controller destroyed");
@@ -97,22 +106,27 @@ export const view = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
             extension
         );
 
-        const x_points = newExtendedWellboreTrajectory
-            ? newExtendedWellboreTrajectory.points.map((coord) => coord[0])
-            : [];
-        const y_points = newExtendedWellboreTrajectory
-            ? newExtendedWellboreTrajectory.points.map((coord) => coord[1])
-            : [];
+        const referenceSystem = makeReferenceSystemFromWellboreTrajectory(getWellTrajectoriesQuery.data[0]);
+        if (esvIntersectionControllerRef.current) {
+            esvIntersectionControllerRef.current.setReferenceSystem(referenceSystem);
+        }
 
         if (!isEqual(newExtendedWellboreTrajectory, extendedWellboreTrajectory)) {
             setExtendedWellboreTrajectory(newExtendedWellboreTrajectory);
+
+            const x_points = newExtendedWellboreTrajectory
+                ? newExtendedWellboreTrajectory.points.map((coord) => coord[0])
+                : [];
+            const y_points = newExtendedWellboreTrajectory
+                ? newExtendedWellboreTrajectory.points.map((coord) => coord[1])
+                : [];
             setSeismicFencePolyline({ x_points, y_points });
         }
 
         // When new well trajectory is loaded, update the renderWellboreTrajectory and clear the seismic fence image
         if (!isEqual(getWellTrajectoriesQuery.data[0], renderWellboreTrajectory)) {
             setRenderWellboreTrajectory(getWellTrajectoriesQuery.data[0]);
-            setSeismicFenceImageBitmapAndStatus({ image: null, errorStatus: false });
+            setSeismicLayerData(null);
         }
     }
 
@@ -133,19 +147,19 @@ export const view = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
 
     // Regenerate seismic fence image when fence data changes
     // - Must be useEffect due to async generateSeismicSliceImage function
-    // - seismicFenceDataQuery.data in dependency array: Assumes provides same reference as long as the query data is the
+    // - seismicFenceDataQuery.data in dependency array: Assumes useQuery provides same reference as long as the query data is the
     //   same (https://github.com/TanStack/query/commit/89bec2039324282a023e4e726ea6ae2e1c45178a)
     React.useEffect(
         function generateSeismicFenceImageLayerData() {
             if (!seismicFenceDataQuery.data) return;
 
-            // Curtain projection on a set of points in 3D
-            const newWellboreTrajectoryProjection: number[][] | null = extendedWellboreTrajectory
+            // Get an array of projected [x, y] points, as 2D curtain projection from a set of trajectory 3D points and offset
+            const newWellboreTrajectoryXyProjection: number[][] | null = extendedWellboreTrajectory
                 ? IntersectionReferenceSystem.toDisplacement(
                       extendedWellboreTrajectory.points,
                       extendedWellboreTrajectory.offset
                   )
-                : null;
+                : [];
 
             const newSeismicImageDataArray = createSeismicSliceImageDataArrayFromFenceData(seismicFenceDataQuery.data);
             const newSeismicImageYAxisValues = createSeismicSliceImageYAxisValuesArrayFromFenceData(
@@ -154,7 +168,7 @@ export const view = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
 
             const imageDataPoints = newSeismicImageDataArray;
             const yAxisValues = newSeismicImageYAxisValues;
-            const trajectory = newWellboreTrajectoryProjection ?? [];
+            const trajectory = newWellboreTrajectoryXyProjection;
 
             // Note: No cache, thereby the image is regenerated when switching back and forth
             generateSeismicSliceImage(
@@ -165,19 +179,29 @@ export const view = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
                     isLeftToRight: true,
                 }
             )
-                .then((image) => setSeismicFenceImageBitmapAndStatus({ image: image ?? null, errorStatus: false }))
-                .catch(() => setSeismicFenceImageBitmapAndStatus({ image: null, errorStatus: true }));
+                .then((image) =>
+                    setSeismicFenceImageBitmapAndStatus({
+                        image: image ?? null,
+                        status: SeismicImageBitmapStatus.VALID,
+                    })
+                )
+                .catch(() =>
+                    setSeismicFenceImageBitmapAndStatus({ image: null, status: SeismicImageBitmapStatus.ERROR })
+                );
 
-            setWellboreTrajectoryProjection(newWellboreTrajectoryProjection);
-            setSeismicImageDataArray(newSeismicImageDataArray);
-            setSeismicImageYAxisValues(newSeismicImageYAxisValues);
+            // Update calculated data and wellbore trajectory
+            setSeismicLayerData({
+                wellboreTrajectoryXyProjection: newWellboreTrajectoryXyProjection,
+                seismicImageDataArray: newSeismicImageDataArray,
+                seismicImageYAxisValues: newSeismicImageYAxisValues,
+            });
             setRenderWellboreTrajectory(
                 getWellTrajectoriesQuery.data && getWellTrajectoriesQuery.data.length !== 0
                     ? getWellTrajectoriesQuery.data[0]
                     : null
             );
         },
-        [seismicFenceDataQuery.data, extendedWellboreTrajectory]
+        [seismicFenceDataQuery.data, extendedWellboreTrajectory, getWellTrajectoriesQuery.data]
     );
 
     // Update esv-intersection controller when data is ready - keep old data to prevent blank view when fetching new data
@@ -185,20 +209,15 @@ export const view = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
         esvIntersectionControllerRef.current.removeAllLayers();
         esvIntersectionControllerRef.current.clearAllData();
 
-        addWellborePathLayerAndSetReferenceSystem(esvIntersectionControllerRef.current, renderWellboreTrajectory);
+        addWellborePathLayer(esvIntersectionControllerRef.current, renderWellboreTrajectory);
 
-        if (
-            seismicImageDataArray &&
-            seismicImageYAxisValues &&
-            seismicFenceImageBitmapAndStatus.image &&
-            wellboreTrajectoryProjection
-        ) {
+        if (seismicLayerData && seismicFenceImageBitmapAndStatus.image) {
             addSeismicLayer(esvIntersectionControllerRef.current, {
-                curtain: wellboreTrajectoryProjection,
+                curtain: seismicLayerData.wellboreTrajectoryXyProjection,
                 extension: extension,
                 image: seismicFenceImageBitmapAndStatus.image,
-                dataValues: seismicImageDataArray,
-                yAxisValues: seismicImageYAxisValues,
+                dataValues: seismicLayerData.seismicImageDataArray,
+                yAxisValues: seismicLayerData.seismicImageYAxisValues,
             });
         }
 

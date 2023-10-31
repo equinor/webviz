@@ -8,47 +8,126 @@ import { SeismicFenceData_trans } from "./queryDataTransforms";
  */
 export function makeExtendedTrajectoryFromWellboreTrajectory(
     wellboreTrajectory: WellBoreTrajectory_api,
-    extension: number
+    extension: number,
+    samplingIncrementMeters = 5 // // TODO: Number of samples. Needs some thought.
 ): Trajectory {
-    const eastingArr = wellboreTrajectory.easting_arr;
-    const northingArr = wellboreTrajectory.northing_arr;
-    const tvdArr = wellboreTrajectory.tvd_msl_arr;
-    const trajectory = eastingArr.map((easting: number, idx: number) => [
-        parseFloat(easting.toFixed(3)),
-        parseFloat(northingArr[idx].toFixed(3)),
-        parseFloat(tvdArr[idx].toFixed(3)),
-    ]);
+    let trajectoryXyzPoints = makeTrajectoryXyzPointsFromWellboreTrajectory(wellboreTrajectory);
 
-    // If the first and last coordinates are the same, the trajectory is assumed to be a vertical line. In this case,
-    // add a coordinate at the start and end of the trajectory to ensure that the trajectory is not considered a vertical line.
-    if (eastingArr[0] == eastingArr[eastingArr.length - 1] && northingArr[0] == northingArr[northingArr.length - 1]) {
-        const addcoordatstart = eastingArr[0] - 100;
-        const addcoordatend = eastingArr[eastingArr.length - 1] + 100;
-        const addcoordatstart2 = northingArr[0] - 100;
-        const addcoordatend2 = northingArr[northingArr.length - 1] + 100;
-        const firstzcoord = tvdArr[0];
-        const lastzcoord = tvdArr[tvdArr.length - 1];
-
-        trajectory.unshift([addcoordatstart, addcoordatstart2, firstzcoord]);
-        trajectory.push([addcoordatend, addcoordatend2, lastzcoord]);
+    if (isVerticalTrajectory(trajectoryXyzPoints)) {
+        trajectoryXyzPoints = addStartAndEndPointsToTrajectoryForVerticalLine(trajectoryXyzPoints);
     }
 
-    const referenceSystem = new IntersectionReferenceSystem(trajectory);
-    referenceSystem.offset = trajectory[0][2]; // Offset should be md at start of path
+    const referenceSystem = new IntersectionReferenceSystem(trajectoryXyzPoints);
+    referenceSystem.offset = trajectoryXyzPoints[0][2]; // Offset should be md at start of path
 
     const displacement = referenceSystem.displacement || 1;
-    // Number of samples. Needs some thought.
-    const samplingIncrement = 5; //meters
-    const steps = Math.min(1000, Math.floor((displacement + extension * 2) / samplingIncrement));
-    console.debug("Number of samples for intersection ", steps);
 
-    const extendedTrajectory = referenceSystem.getExtendedTrajectory(steps, extension, extension);
+    const numPoints = Math.min(1000, Math.floor((displacement + extension * 2) / samplingIncrementMeters));
+    const extendedTrajectory = referenceSystem.getExtendedTrajectory(numPoints, extension, extension);
     extendedTrajectory.points = extendedTrajectory.points.map((point) => [
         parseFloat(point[0].toFixed(3)),
         parseFloat(point[1].toFixed(3)),
     ]);
 
     return extendedTrajectory;
+}
+
+/**
+ * Helper function to check if a trajectory made of 3D coordinates [x,y,z] is a vertical line
+ *
+ * Checks for first coordinate with different x and y coordinates than the first point
+ */
+function isVerticalTrajectory(trajectoryXyzPoints: number[][]): boolean {
+    if (trajectoryXyzPoints.length === 0) return false;
+
+    const firstPoint = trajectoryXyzPoints[0];
+
+    if (firstPoint.length !== 3) {
+        throw new Error("First coordinates of trajectory must be 3D coordinates of length 3");
+    }
+
+    // Detect first 3D point which is not on the same x and y coordinates as the first point and return false
+    for (let i = 1; i < trajectoryXyzPoints.length; ++i) {
+        const point = trajectoryXyzPoints[i];
+        if (point.length !== 3) {
+            throw new Error("Trajectory points must be 3D coordinates of length 3");
+        }
+        if (point[0] !== firstPoint[0] || point[1] !== firstPoint[1]) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+/**
+ * Helper function to add start and end points to trajectory to prevent pure vertical line
+ *
+ * This function assumes check of vertical line beforehand, and only performs adding of start and end points
+ *
+ * @param trajectoryXyzPoints - Array of 3D coordinates [x,y,z]
+ */
+function addStartAndEndPointsToTrajectoryForVerticalLine(trajectoryXyzPoints: number[][]): number[][] {
+    if (trajectoryXyzPoints.length === 0) return [];
+
+    const firstCoordinates = trajectoryXyzPoints[0];
+    const lastCoordinates = trajectoryXyzPoints[trajectoryXyzPoints.length - 1];
+
+    if (firstCoordinates.length !== 3 || lastCoordinates.length !== 3) {
+        throw new Error("First and last coordinates of trajectory must be 3D coordinates of length 3");
+    }
+
+    const modifiedTrajectoryXyzPoints = [...trajectoryXyzPoints];
+
+    // Compare x (index 0) and y (index 1) coordinates of first and last points
+    // Add start and end coordinates to trajectory
+    const addCoordAtStart = firstCoordinates[0] - 100;
+    const addCoordAtEnd = lastCoordinates[0] + 100;
+    const addCoordAtStart2 = firstCoordinates[1] - 100;
+    const addCoordAtEnd2 = lastCoordinates[1] + 100;
+    const firstZCoord = firstCoordinates[2];
+    const lastZCoord = lastCoordinates[2];
+
+    modifiedTrajectoryXyzPoints.unshift([addCoordAtStart, addCoordAtStart2, firstZCoord]);
+    modifiedTrajectoryXyzPoints.push([addCoordAtEnd, addCoordAtEnd2, lastZCoord]);
+
+    return modifiedTrajectoryXyzPoints;
+}
+
+/**
+ * Make an array of 3D coordinates [x,y,z] from a wellbore trajectory
+ *
+ * [x,y,z] = [easting, northing, tvd_msl]
+ */
+export function makeTrajectoryXyzPointsFromWellboreTrajectory(wellboreTrajectory: WellBoreTrajectory_api): number[][] {
+    const eastingArr = wellboreTrajectory.easting_arr;
+    const northingArr = wellboreTrajectory.northing_arr;
+    const tvdArr = wellboreTrajectory.tvd_msl_arr;
+
+    if (eastingArr.length !== northingArr.length && northingArr.length !== tvdArr.length) {
+        throw new Error("Wellbore trajectory coordinate arrays are not of same length");
+    }
+
+    // Trajectory points: array of 3D coordinates [x,y,z]
+    const trajectoryXyzPoints = eastingArr.map((easting: number, idx: number) => [
+        parseFloat(easting.toFixed(3)),
+        parseFloat(northingArr[idx].toFixed(3)),
+        parseFloat(tvdArr[idx].toFixed(3)),
+    ]);
+
+    return trajectoryXyzPoints;
+}
+
+/**
+ * Make a reference system from array 3D points [x,y,z] defined by a wellbore trajectory
+ */
+export function makeReferenceSystemFromWellboreTrajectory(
+    wellboreTrajectory: WellBoreTrajectory_api
+): IntersectionReferenceSystem {
+    const referenceSystem = new IntersectionReferenceSystem(
+        makeTrajectoryXyzPointsFromWellboreTrajectory(wellboreTrajectory)
+    );
+    return referenceSystem;
 }
 
 /**
