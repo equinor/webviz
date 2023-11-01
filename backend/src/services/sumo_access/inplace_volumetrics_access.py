@@ -92,7 +92,7 @@ class InplaceVolumetricsAccess(SumoEnsemble):
             numerical_column_names = [
                 col for col in vol_table_column_names if PossibleInplaceVolumetricsNumericalColumnNames.has_value(col)
             ]
-            first_numerical_column_table = await _load_arrow_table_for_from_sumo(
+            first_numerical_column_table = await _load_arrow_table_from_sumo(
                 self._case,
                 self._iteration_name,
                 vol_table_name,
@@ -124,7 +124,7 @@ class InplaceVolumetricsAccess(SumoEnsemble):
         realizations: Optional[Sequence[int]] = None,
     ) -> EnsembleScalarResponse:
         """Retrieve the volumetric response for the given table name and column name"""
-        table = await _load_arrow_table_for_from_sumo(self._case, self._iteration_name, table_name, column_name)
+        table = await _load_arrow_table_from_sumo(self._case, self._iteration_name, table_name, column_name)
         if realizations is not None:
             mask = pc.is_in(table["REAL"], value_set=pa.array(realizations))
             table = table.filter(mask)
@@ -141,7 +141,7 @@ class InplaceVolumetricsAccess(SumoEnsemble):
         )
 
 
-async def _load_arrow_table_for_from_sumo(
+async def _load_arrow_table_from_sumo(
     case: Case, iteration_name: str, table_name: str, column_name: str
 ) -> pa.Table:
     timer = PerfTimer()
