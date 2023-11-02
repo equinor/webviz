@@ -160,8 +160,14 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
     function handleRealizationTextChanged(event: React.ChangeEvent<HTMLInputElement>) {
         const base10 = 10;
         const realNum = parseInt(event.target.value, base10);
-        if (realNum >= 0) {
+        const isValidRealNum = selectedEnsembleIdent
+            ? ensembleSet.findEnsemble(selectedEnsembleIdent)?.getRealizations().includes(realNum)
+            : null;
+        if (realNum >= 0 && isValidRealNum) {
             setRealizationNumber(realNum);
+            return;
+        } else {
+            setRealizationNumber(0);
         }
     }
 
@@ -214,16 +220,24 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
     return (
         <div className="flex flex-col gap-4 overflow-y-auto">
             <CollapsibleGroup title="Ensemble and Realization" expanded={true}>
-                <Label text="Ensemble" synced={syncHelper.isSynced(SyncSettingKey.ENSEMBLE)}>
-                    <SingleEnsembleSelect
-                        ensembleSet={ensembleSet}
-                        value={computedEnsembleIdent ? computedEnsembleIdent : null}
-                        onChange={handleEnsembleSelectionChange}
-                    />
-                </Label>
-                <Label text="Realization">
-                    <Input type={"number"} value={realizationNumber} onChange={handleRealizationTextChanged} />
-                </Label>
+                <div className="flex flex-col gap-4 overflow-y-auto">
+                    <Label text="Ensemble" synced={syncHelper.isSynced(SyncSettingKey.ENSEMBLE)}>
+                        <SingleEnsembleSelect
+                            ensembleSet={ensembleSet}
+                            value={computedEnsembleIdent ? computedEnsembleIdent : null}
+                            onChange={handleEnsembleSelectionChange}
+                        />
+                    </Label>
+                    <Label
+                        text={`Realization (max: ${
+                            selectedEnsembleIdent
+                                ? ensembleSet.findEnsemble(selectedEnsembleIdent)?.getMaxRealizationNumber()
+                                : 0
+                        })`}
+                    >
+                        <Input type={"number"} value={realizationNumber} onChange={handleRealizationTextChanged} />
+                    </Label>
+                </div>
             </CollapsibleGroup>
             <CollapsibleGroup expanded={true} title="Well trajectory">
                 <ApiStateWrapper

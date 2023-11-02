@@ -1,6 +1,6 @@
 import React, { useId } from "react";
 
-import { SeismicFencePolyline_api, WellBoreTrajectory_api } from "@api";
+import { SeismicFencePolyline_api } from "@api";
 import {
     Controller,
     GridLayer,
