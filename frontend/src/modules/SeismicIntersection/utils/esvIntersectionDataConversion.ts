@@ -4,15 +4,15 @@ import { IntersectionReferenceSystem, Trajectory } from "@equinor/esv-intersecti
 import { SeismicFenceData_trans } from "./queryDataTransforms";
 
 /**
- * Utility to make extended trajectory object from wellbore trajectory and extension
+ * Utility to make extended trajectory object from array of 3D trajectory coordinates [x,y,z] and extension
+ *
+ * TODO: Number of samples. Needs some thought for future
  */
-export function makeExtendedTrajectoryFromWellboreTrajectory(
-    wellboreTrajectory: WellBoreTrajectory_api,
+export function makeExtendedTrajectoryFromTrajectoryXyzPoints(
+    trajectoryXyzPoints: number[][],
     extension: number,
-    samplingIncrementMeters = 5 // // TODO: Number of samples. Needs some thought.
+    samplingIncrementMeters = 5
 ): Trajectory {
-    let trajectoryXyzPoints = makeTrajectoryXyzPointsFromWellboreTrajectory(wellboreTrajectory);
-
     if (isVerticalTrajectory(trajectoryXyzPoints)) {
         trajectoryXyzPoints = addStartAndEndPointsToTrajectoryForVerticalLine(trajectoryXyzPoints);
     }
@@ -61,7 +61,7 @@ function isVerticalTrajectory(trajectoryXyzPoints: number[][]): boolean {
 }
 
 /**
- * Helper function to add start and end points to trajectory to prevent pure vertical line
+ * Helper function to add start and end points to array of 3D trajectory coordinates [x,y,z] to prevent pure vertical line
  *
  * This function assumes check of vertical line beforehand, and only performs adding of start and end points
  *
@@ -97,7 +97,8 @@ function addStartAndEndPointsToTrajectoryForVerticalLine(trajectoryXyzPoints: nu
 /**
  * Make an array of 3D coordinates [x,y,z] from a wellbore trajectory
  *
- * [x,y,z] = [easting, northing, tvd_msl]
+ * @param wellboreTrajectory - Wellbore trajectory object
+ * @returns Array of 3D coordinates [x,y,z] - with [x,y,z] = [easting, northing, tvd_msl]
  */
 export function makeTrajectoryXyzPointsFromWellboreTrajectory(wellboreTrajectory: WellBoreTrajectory_api): number[][] {
     const eastingArr = wellboreTrajectory.easting_arr;
@@ -119,14 +120,12 @@ export function makeTrajectoryXyzPointsFromWellboreTrajectory(wellboreTrajectory
 }
 
 /**
- * Make a reference system from array 3D points [x,y,z] defined by a wellbore trajectory
+ * Make a reference system from array of 3D coordinates [x,y,z] defined for a trajectory
  */
-export function makeReferenceSystemFromWellboreTrajectory(
-    wellboreTrajectory: WellBoreTrajectory_api
+export function makeReferenceSystemFromTrajectoryXyzPoints(
+    trajectoryXyzPoints: number[][]
 ): IntersectionReferenceSystem {
-    const referenceSystem = new IntersectionReferenceSystem(
-        makeTrajectoryXyzPointsFromWellboreTrajectory(wellboreTrajectory)
-    );
+    const referenceSystem = new IntersectionReferenceSystem(trajectoryXyzPoints);
     return referenceSystem;
 }
 

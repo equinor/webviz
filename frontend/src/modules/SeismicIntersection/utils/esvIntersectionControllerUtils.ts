@@ -1,4 +1,3 @@
-import { WellBoreTrajectory_api } from "@api";
 import {
     Controller,
     OverlayMouseMoveEvent,
@@ -8,7 +7,7 @@ import {
     getSeismicOptions,
 } from "@equinor/esv-intersection";
 
-import { makeReferenceSystemFromWellboreTrajectory } from "./esvIntersectionDataConversion";
+import { makeReferenceSystemFromTrajectoryXyzPoints } from "./esvIntersectionDataConversion";
 
 /**
  * Utility to add md overlay for hover to esv intersection controller
@@ -54,8 +53,8 @@ export function addMDOverlay(controller: Controller) {
  *
  * Sets reference system with trajectory 3D coordinates, controller reference system must be handled outside
  */
-export function addWellborePathLayer(controller: Controller, wellBoreTrajectory: WellBoreTrajectory_api): void {
-    const referenceSystem = makeReferenceSystemFromWellboreTrajectory(wellBoreTrajectory);
+export function addWellborePathLayer(controller: Controller, wellboreTrajectoryXyzPoints: number[][]): void {
+    const referenceSystem = makeReferenceSystemFromTrajectoryXyzPoints(wellboreTrajectoryXyzPoints);
     controller.addLayer(
         new WellborepathLayer("wellborepath", {
             order: 3,
@@ -91,31 +90,4 @@ export function addSeismicLayer(
     });
     layer.data = { image: image, options: getSeismicOptions(info) };
     controller.addLayer(layer);
-}
-
-export type SeismicUpdateLayoutOptions = {
-    width: number;
-    height: number;
-    zScale: number;
-    curtain: number[][] | null;
-    extension: number;
-};
-/**
- * Utility to update layout of esv intersection controller
- */
-export function updateLayout(
-    controller: Controller,
-    { width, height, zScale, curtain, extension }: SeismicUpdateLayoutOptions
-): void {
-    // Calculate midpoint for xAxis
-    // Need to calculate y...
-
-    void curtain; // TODO: Remove this line when curtain is used
-    void extension; // TODO: Remove this line when extension is used
-    // const _hMid: number = curtain ? (curtain[0][0] + curtain[curtain.length - 1][0]) / 2 - extension : 1000;
-
-    // this.controller.setViewport(hMid, 1750, 5000);
-
-    controller.adjustToSize(width, height);
-    controller.zoomPanHandler.zFactor = zScale;
 }
