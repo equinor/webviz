@@ -42,7 +42,7 @@ export class SeismicService {
      * Get a fence of seismic data from a polyline defined by a set of (x, y) coordinates in domain coordinate system.
      *
      * The fence data contains a set of traces perpendicular to the polyline, with one trace per (x, y)-point in polyline.
-     * Each trace has number of samples equal length, and is a set of values along the height/depth axis of the fence.
+     * Each trace has equal number of samples, and is a set of sample values along the depth direction of the seismic cube.
      *
      * The returned data
      * * fence_traces_b64arr: The fence trace array is base64 encoded 1D float array - where data is stored trace by trace. Decoding info: [num_traces, num_trace_samples]

@@ -8,7 +8,7 @@ import type { B64FloatArray } from './B64FloatArray';
  * Definition of a fence of seismic data from a set of (x, y) coordinates in domain coordinate system.
  * Each (x, y) point provides a trace perpendicular to the x-y plane, with number of samples equal to the depth of the seismic cube.
  *
- * The trace is along the along length direction of the fence.
+ * Each trace is defined to be a set of depth value samples along the length direction of the fence.
  *
  * `Properties:`
  * - `fence_traces_b64arr`: The fence trace array is base64 encoded 1D float array - where data is stored trace by trace.
