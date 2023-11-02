@@ -1,6 +1,7 @@
 import React from "react";
 
 import { EnsembleIdent } from "@framework/EnsembleIdent";
+import { EnsembleSet } from "@framework/EnsembleSet";
 import { ModuleFCProps } from "@framework/Module";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
 import { useEnsembleSet, useIsEnsembleSetLoading } from "@framework/WorkbenchSession";
@@ -16,6 +17,20 @@ import FilterSelect from "./components/filterSelect";
 import { useTableNameAndMetadataFilterOptions } from "./hooks/useTableNameAndMetadataFilterOptions";
 import { useTableNamesAndMetadata } from "./hooks/useTableNamesAndMetadata";
 import { State } from "./state";
+
+function findValidRealizations(ensembleIdents: EnsembleIdent[], ensembleSet: EnsembleSet): Set<number> {
+    const validRealizations: Set<number> = new Set();
+    for (const ensembleIdent of ensembleIdents) {
+        const ensemble = ensembleSet.findEnsemble(ensembleIdent);
+        if (ensemble) {
+            for (const realization of ensemble.getRealizations()) {
+                validRealizations.add(realization);
+            }
+        }
+    }
+
+    return validRealizations;
+}
 
 export const settings = ({ workbenchSession, moduleContext }: ModuleFCProps<State>) => {
     const [selectedEnsembleIdents, setSelectedEnsembleIdents] = React.useState<EnsembleIdent[]>([]);
@@ -35,6 +50,8 @@ export const settings = ({ workbenchSession, moduleContext }: ModuleFCProps<Stat
         const stringifiedOptions = options.map((option) => `${option}`);
         return <FilterSelect key={categoryName} name={categoryName} options={stringifiedOptions} size={5} />;
     }
+
+    const validRealizations = findValidRealizations(selectedEnsembleIdents, ensembleSet);
 
     return (
         <div className="w-full h-full flex flex-col gap-4">
@@ -66,7 +83,11 @@ export const settings = ({ workbenchSession, moduleContext }: ModuleFCProps<Stat
                                 makeCategoricalSelect(category, values)
                             )}
                         <Label text="Realizations">
-                            <RealizationPicker ensembleIdents={selectedEnsembleIdents} />
+                            <RealizationPicker
+                                ensembleIdents={selectedEnsembleIdents}
+                                validRealizations={validRealizations}
+                                debounceTimeMs={1000}
+                            />
                         </Label>
                     </LoadingStateWrapper>
                 </div>

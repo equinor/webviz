@@ -13,11 +13,25 @@ type Selection = {
     value: string;
 };
 
+enum SelectionValidity {
+    Valid,
+    InputError,
+    Invalid,
+}
+
+type SelectionValidityInfo = {
+    validity: SelectionValidity;
+    numMatchedRealizations: number;
+    numMatchedValidRealizations: number;
+};
+
 type RealizationRangeTagProps = {
     uuid: string;
     active: boolean;
     caretPosition?: "start" | "end";
     initialValue: string;
+    checkValidity: (value: string) => SelectionValidityInfo;
+    onChange: (value: string) => void;
     onRemove: () => void;
     onFocus: () => void;
     onKeyDown: (event: React.KeyboardEvent<HTMLInputElement>) => void;
@@ -25,23 +39,10 @@ type RealizationRangeTagProps = {
 
 const realizationRangeRegex = /^\d+(\-\d+)?$/;
 
-function checkIfValueIsValid(value: string): boolean {
-    if (!realizationRangeRegex.test(value)) {
-        return false;
-    }
-
-    const range = value.split("-");
-    if (range.length === 1) {
-        return parseInt(range[0]) >= 1;
-    } else if (range.length === 2) {
-        return parseInt(range[0]) >= 1 && parseInt(range[1]) >= parseInt(range[0]);
-    }
-
-    return false;
-}
-
 const RealizationRangeTag: React.FC<RealizationRangeTagProps> = (props) => {
-    const [valid, setValid] = React.useState<boolean>(checkIfValueIsValid(props.initialValue));
+    const [validityInfo, setValidityInfo] = React.useState<SelectionValidityInfo>(
+        props.checkValidity(props.initialValue)
+    );
     const [value, setValue] = React.useState<string>(props.initialValue);
     const [hasFocus, setHasFocus] = React.useState<boolean>(false);
 
@@ -62,11 +63,9 @@ const RealizationRangeTag: React.FC<RealizationRangeTagProps> = (props) => {
 
     function handleChange(event: React.ChangeEvent<HTMLInputElement>) {
         const value = event.target.value;
-        if (checkIfValueIsValid(value)) {
-            setValid(true);
-        } else {
-            setValid(false);
-        }
+        setValidityInfo(props.checkValidity(value));
+        props.onChange(value);
+        setValue(value);
     }
 
     function handleFocus(e: React.FocusEvent<HTMLInputElement>) {
@@ -75,19 +74,56 @@ const RealizationRangeTag: React.FC<RealizationRangeTagProps> = (props) => {
         setHasFocus(true);
     }
 
+    function makeTitle(): string | undefined {
+        if (validityInfo.validity === SelectionValidity.InputError) {
+            return "Invalid input";
+        } else if (validityInfo.validity === SelectionValidity.Invalid) {
+            return "This value is not valid for the selected ensemble(s)";
+        }
+        return undefined;
+    }
+
+    function makeMatchCounter(): React.ReactNode {
+        if (validityInfo.numMatchedRealizations <= 1) {
+            return null;
+        }
+
+        if (validityInfo.numMatchedValidRealizations === validityInfo.numMatchedRealizations) {
+            return (
+                <span
+                    className="rounded-lg bg-white text-xs mr-2 p-1 font-semibold"
+                    title={`Matches ${validityInfo.numMatchedRealizations} realizations.`}
+                >
+                    {validityInfo.numMatchedRealizations}
+                </span>
+            );
+        }
+
+        return (
+            <span
+                className="rounded-lg bg-white text-xs mr-2 p-1 font-semibold"
+                title={`Matches ${validityInfo.numMatchedRealizations} valid selections, but only ${validityInfo.numMatchedValidRealizations} are valid.`}
+            >
+                {validityInfo.numMatchedValidRealizations}/{validityInfo.numMatchedRealizations}
+            </span>
+        );
+    }
+
     return (
         <li
-            className={resolveClassNames("flex items-center rounded px-2 py-1 mr-1 text-sm", {
+            className={resolveClassNames("flex items-center rounded px-2 py-1 mr-1", {
                 "bg-blue-200": !hasFocus,
-                "bg-red-300": !valid && !hasFocus,
+                "bg-red-300": validityInfo.validity === SelectionValidity.InputError && !hasFocus,
+                "bg-orange-300": validityInfo.validity === SelectionValidity.Invalid && !hasFocus,
                 "outline outline-blue-600": hasFocus,
             })}
-            title={valid ? undefined : "Invalid value"}
+            title={makeTitle()}
         >
+            {makeMatchCounter()}
             <input
                 ref={ref}
                 className="bg-transparent outline-none"
-                style={{ width: getTextWidthWithFont(value, "normal 16px sans-serif") }}
+                style={{ width: getTextWidthWithFont(value, "normal 1.25rem sans-serif") }}
                 type="text"
                 defaultValue={value}
                 onChange={handleChange}
@@ -110,8 +146,32 @@ const RealizationRangeTag: React.FC<RealizationRangeTagProps> = (props) => {
     );
 };
 
+function calcUniqueSelections(selections: Selection[], validRealizations?: Set<number>): number[] {
+    const uniqueSelections = new Set<number>();
+    selections.forEach((selection) => {
+        const range = selection.value.split("-");
+        if (range.length === 1) {
+            uniqueSelections.add(parseInt(range[0]));
+        } else if (range.length === 2) {
+            for (let i = parseInt(range[0]); i <= parseInt(range[1]); i++) {
+                uniqueSelections.add(i);
+            }
+        }
+    });
+
+    let uniqueSelectionsArray = Array.from(uniqueSelections);
+
+    if (validRealizations) {
+        uniqueSelectionsArray = uniqueSelectionsArray.filter((realization) => validRealizations.has(realization));
+    }
+
+    return uniqueSelectionsArray.sort((a, b) => a - b);
+}
+
 export type RealizationPickerProps = {
     ensembleIdents: EnsembleIdent[];
+    validRealizations?: Set<number>;
+    debounceTimeMs?: number;
     onChange?: (selectedRealizations: number[]) => void;
 } & BaseComponentProps;
 
@@ -123,32 +183,104 @@ export const RealizationPicker: React.FC<RealizationPickerProps> = (props) => {
     const debounceTimeout = React.useRef<ReturnType<typeof setTimeout> | null>(null);
     const inputRef = React.useRef<HTMLInputElement>(null);
 
-    function calcUniqueSelections(): number[] {
-        const uniqueSelections = new Set<number>();
-        selections.forEach((selection) => {
-            const range = selection.value.split("-");
-            if (range.length === 1) {
-                uniqueSelections.add(parseInt(range[0]));
-            } else if (range.length === 2) {
-                for (let i = parseInt(range[0]); i <= parseInt(range[1]); i++) {
-                    uniqueSelections.add(i);
+    function checkValidity(value: string): SelectionValidityInfo {
+        if (!realizationRangeRegex.test(value)) {
+            return {
+                validity: SelectionValidity.InputError,
+                numMatchedRealizations: 0,
+                numMatchedValidRealizations: 0,
+            };
+        }
+
+        const range = value.split("-");
+        if (range.length === 1) {
+            if (parseInt(range[0]) < 1) {
+                return {
+                    validity: SelectionValidity.InputError,
+                    numMatchedRealizations: 0,
+                    numMatchedValidRealizations: 0,
+                };
+            }
+            if (props.validRealizations) {
+                if (!props.validRealizations.has(parseInt(range[0]))) {
+                    return {
+                        validity: SelectionValidity.Invalid,
+                        numMatchedRealizations: 1,
+                        numMatchedValidRealizations: 0,
+                    };
                 }
             }
-        });
-        return Array.from(uniqueSelections).sort((a, b) => a - b);
+            return {
+                validity: SelectionValidity.Valid,
+                numMatchedRealizations: 1,
+                numMatchedValidRealizations: 1,
+            };
+        } else if (range.length === 2) {
+            if (parseInt(range[0]) < 1 || parseInt(range[1]) <= parseInt(range[0])) {
+                return {
+                    validity: SelectionValidity.InputError,
+                    numMatchedRealizations: 0,
+                    numMatchedValidRealizations: 0,
+                };
+            }
+            const numMatches = parseInt(range[1]) - parseInt(range[0]) + 1;
+            if (props.validRealizations) {
+                let numNotValid = 0;
+                for (let i = parseInt(range[0]); i <= parseInt(range[1]); i++) {
+                    if (!props.validRealizations.has(i)) {
+                        numNotValid++;
+                    }
+                }
+                if (numNotValid > 0) {
+                    return {
+                        validity: SelectionValidity.Invalid,
+                        numMatchedRealizations: numMatches,
+                        numMatchedValidRealizations: numMatches - numNotValid,
+                    };
+                }
+            }
+            return {
+                validity: SelectionValidity.Valid,
+                numMatchedRealizations: numMatches,
+                numMatchedValidRealizations: numMatches,
+            };
+        }
+
+        return {
+            validity: SelectionValidity.Valid,
+            numMatchedRealizations: 1,
+            numMatchedValidRealizations: 1,
+        };
+    }
+
+    function handleSelectionsChange(newSelections: Selection[]) {
+        if (debounceTimeout.current) {
+            clearTimeout(debounceTimeout.current);
+        }
+
+        debounceTimeout.current = setTimeout(() => {
+            if (props.onChange) {
+                props.onChange(calcUniqueSelections(newSelections, props.validRealizations));
+            }
+        }, props.debounceTimeMs || 0);
     }
 
     function handleChange(event: React.ChangeEvent<HTMLInputElement>) {
         const value = event.target.value;
-        setSelections((selections) => [...selections, { value, uuid: v4() }]);
+        const newSelections = [...selections, { value, uuid: v4() }];
+        setSelections(newSelections);
         setActiveSelectionUuid(null);
         event.target.value = "";
+        handleSelectionsChange(newSelections);
     }
 
     function handlePointerDown() {
         if (inputRef.current) {
-            inputRef.current.focus();
             setActiveSelectionUuid(null);
+            setTimeout(() => {
+                inputRef.current?.focus();
+                inputRef.current?.setSelectionRange(0, 0);
+            }, 500);
         }
     }
 
@@ -172,7 +304,7 @@ export const RealizationPicker: React.FC<RealizationPickerProps> = (props) => {
         } else if (event.key === "Enter" || event.key === ",") {
             event.preventDefault();
             handleChange(event as any);
-        } else if (event.key === "Backspace") {
+        } else if (event.key === "Backspace" || event.key === "Delete" || event.key === "Home" || event.key === "End") {
             return;
         } else if (event.key === "ArrowLeft") {
             if (eventTarget.selectionStart === 0 && eventTarget.selectionEnd === 0) {
@@ -209,12 +341,23 @@ export const RealizationPicker: React.FC<RealizationPickerProps> = (props) => {
         }
     }
 
+    function handleTagValueChange(uuid: string, value: string) {
+        const newSelections = selections.map((selection) => {
+            if (selection.uuid === uuid) {
+                return { ...selection, value };
+            }
+            return selection;
+        });
+        setSelections(newSelections);
+        handleSelectionsChange(newSelections);
+    }
+
     function clearSelections() {
         setSelections([]);
         setActiveSelectionUuid(null);
     }
 
-    const numSelectedRealizations = calcUniqueSelections().length;
+    const numSelectedRealizations = calcUniqueSelections(selections, props.validRealizations).length;
 
     return (
         <BaseComponent disabled={props.disabled}>
@@ -227,9 +370,11 @@ export const RealizationPicker: React.FC<RealizationPickerProps> = (props) => {
                             caretPosition={caretPosition}
                             key={selection.uuid}
                             initialValue={selection.value}
+                            checkValidity={checkValidity}
                             onRemove={() => handleRemove(selection.uuid)}
                             onFocus={() => setActiveSelectionUuid(selection.uuid)}
                             onKeyDown={handleKeyDown}
+                            onChange={(value) => handleTagValueChange(selection.uuid, value)}
                         />
                     ))}
                     <li className="flex-grow flex">
