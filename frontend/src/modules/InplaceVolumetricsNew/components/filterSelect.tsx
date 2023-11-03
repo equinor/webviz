@@ -8,24 +8,30 @@ export type FilterSelectProps = {
     name: string;
     options: string[];
     size: number;
-    onChange?: (value: string) => void;
+    onChange?: (values: string[]) => void;
 };
 
 export const FilterSelect: React.FC<FilterSelectProps> = (props) => {
-    const [value, setValue] = useValidState<string>("", props.options);
+    const [values, setValues] = React.useState<string[]>([]);
 
     const selectOptions = props.options.map((option) => ({ value: `${option}`, label: `${option}` }));
 
-    function handleSelectionChange(values: string[]) {
-        setValue(values[0]);
+    function handleSelectionChange(newValues: string[]) {
+        setValues(newValues);
         if (props.onChange) {
-            props.onChange(values[0]);
+            props.onChange(newValues);
         }
     }
 
     return (
         <Label text={props.name}>
-            <Select options={selectOptions} size={props.size} value={[value]} onChange={handleSelectionChange} />
+            <Select
+                options={selectOptions}
+                size={props.size}
+                value={values}
+                onChange={handleSelectionChange}
+                multiple
+            />
         </Label>
     );
 };

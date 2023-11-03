@@ -5,7 +5,9 @@ import { State } from "./state";
 import { view } from "./view";
 
 const defaultState: State = {
-    subModules: [],
+    selectedEnsembleIdents: [],
+    selectedResponseNames: [],
+    selectedTableNames: [],
 };
 
 const module = ModuleRegistry.initModule<State>("InplaceVolumetricsNew", defaultState);

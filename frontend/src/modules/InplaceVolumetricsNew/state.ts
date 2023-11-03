@@ -1,11 +1,7 @@
-export type SubModule = {
-    id: string;
-    relX: number;
-    relY: number;
-    relWidth: number;
-    relHeight: number;
-};
+import { EnsembleIdent } from "@framework/EnsembleIdent";
 
 export type State = {
-    subModules: SubModule[];
+    selectedEnsembleIdents: EnsembleIdent[];
+    selectedTableNames: string[];
+    selectedResponseNames: string[];
 };

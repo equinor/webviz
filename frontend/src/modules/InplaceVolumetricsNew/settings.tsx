@@ -33,7 +33,10 @@ function findValidRealizations(ensembleIdents: EnsembleIdent[], ensembleSet: Ens
 }
 
 export const settings = ({ workbenchSession, moduleContext }: ModuleFCProps<State>) => {
-    const [selectedEnsembleIdents, setSelectedEnsembleIdents] = React.useState<EnsembleIdent[]>([]);
+    const [selectedEnsembleIdents, setSelectedEnsembleIdents] = moduleContext.useStoreState("selectedEnsembleIdents");
+    const [selectedResponseNames, setSelectedResponseNames] = moduleContext.useStoreState("selectedResponseNames");
+    const [selectedTableNames, setSelectedTableNames] = moduleContext.useStoreState("selectedTableNames");
+
     const isEnsembleSetLoading = useIsEnsembleSetLoading(workbenchSession);
     const ensembleSet = useEnsembleSet(workbenchSession);
 
@@ -51,12 +54,25 @@ export const settings = ({ workbenchSession, moduleContext }: ModuleFCProps<Stat
         return <FilterSelect key={categoryName} name={categoryName} options={stringifiedOptions} size={5} />;
     }
 
+    function handleSourceChange(values: string[]) {
+        setSelectedTableNames(values);
+    }
+
+    function handleResponsesChange(values: string[]) {
+        setSelectedResponseNames(values);
+    }
+
     const validRealizations = findValidRealizations(selectedEnsembleIdents, ensembleSet);
 
     return (
         <div className="w-full h-full flex flex-col gap-4">
             <CollapsibleGroup title="Volume response" icon={<BubbleChart fontSize="small" />} expanded>
-                <FilterSelect name="Response" options={filterOptions?.responses || []} size={5} />
+                <FilterSelect
+                    name="Response"
+                    options={filterOptions?.responses || []}
+                    size={5}
+                    onChange={handleResponsesChange}
+                />
             </CollapsibleGroup>
             <CollapsibleGroup title="Filter" icon={<FilterAlt fontSize="small" />} expanded>
                 <div className="flex flex-col gap-2">
@@ -77,7 +93,12 @@ export const settings = ({ workbenchSession, moduleContext }: ModuleFCProps<Stat
                         className="flex flex-col gap-2"
                     >
                         <FilterSelect name="Fluid zone" options={filterOptions?.fluidZones || []} size={2} />
-                        <FilterSelect name="Source" options={filterOptions?.sources || []} size={2} />
+                        <FilterSelect
+                            name="Source"
+                            options={filterOptions?.sources || []}
+                            size={2}
+                            onChange={handleSourceChange}
+                        />
                         {filterOptions &&
                             Object.entries(filterOptions.categories).map(([category, values]) =>
                                 makeCategoricalSelect(category, values)
