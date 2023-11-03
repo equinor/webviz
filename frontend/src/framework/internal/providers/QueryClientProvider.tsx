@@ -1,6 +1,6 @@
 import React from "react";
 
-import { QueryCache, QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { MutationCache, QueryCache, QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 
 import { AuthState, useAuthProvider } from "./AuthProvider";
@@ -25,12 +25,12 @@ export const CustomQueryClientProvider: React.FC<{ children: React.ReactElement 
                     refetchOnWindowFocus: false,
                     refetchOnMount: false,
                     refetchOnReconnect: true,
-                    cacheTime: 0,
+                    gcTime: 0,
                 },
             },
             queryCache: new QueryCache({
-                onError: async (error) => {
-                    if (error && (error as QueryError).status === 401) {
+                onError: (error) => {
+                    if (error && (error as unknown as QueryError).status === 401) {
                         authProvider.setAuthState(AuthState.NotLoggedIn);
                     }
                 },

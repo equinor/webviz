@@ -23,7 +23,7 @@ export function usePolygonDirectoryQuery(
         queryKey: ["getSurfacePolygonsDirectory", caseUuid, ensembleName],
         queryFn: () => apiService.surfacePolygons.getSurfacePolygonsDirectory(caseUuid ?? "", ensembleName ?? ""),
         staleTime: STALE_TIME,
-        cacheTime: STALE_TIME,
+        gcTime: STALE_TIME,
         enabled: caseUuid && ensembleName ? true : false,
     });
 }
@@ -33,7 +33,7 @@ export function useGetWellHeaders(caseUuid: string | undefined): UseQueryResult<
         queryKey: ["getWellHeaders", caseUuid],
         queryFn: () => apiService.well.getWellHeaders(caseUuid ?? ""),
         staleTime: STALE_TIME,
-        cacheTime: STALE_TIME,
+        gcTime: STALE_TIME,
         enabled: caseUuid ? true : false,
     });
 }
@@ -43,7 +43,7 @@ export function useGetWellTrajectories(wellUuids: string[] | undefined): UseQuer
         queryKey: ["getWellTrajectories", wellUuids],
         queryFn: () => apiService.well.getWellTrajectories(wellUuids ?? []),
         staleTime: STALE_TIME,
-        cacheTime: CACHE_TIME,
+        gcTime: CACHE_TIME,
         enabled: wellUuids ? true : false,
     });
 }
@@ -52,7 +52,7 @@ export function useGetFieldWellsTrajectories(caseUuid: string | undefined): UseQ
         queryKey: ["getFieldWellsTrajectories", caseUuid],
         queryFn: () => apiService.well.getFieldWellTrajectories(caseUuid ?? ""),
         staleTime: STALE_TIME,
-        cacheTime: CACHE_TIME,
+        gcTime: CACHE_TIME,
         enabled: caseUuid ? true : false,
     });
 }
@@ -139,7 +139,7 @@ export function usePropertySurfaceDataByQueryAddress(
         queryFn: queryFn,
         select: transformSurfaceData,
         staleTime: STALE_TIME,
-        cacheTime: CACHE_TIME,
+        gcTime: CACHE_TIME,
         enabled: enabled,
     });
 }
@@ -178,6 +178,6 @@ export function usePolygonsDataQueryByAddress(
                 polygonAddr.attribute
             ),
         staleTime: STALE_TIME,
-        cacheTime: CACHE_TIME,
+        gcTime: CACHE_TIME,
     });
 }
