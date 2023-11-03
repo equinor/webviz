@@ -184,7 +184,9 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
             filteredCases = filteredCases.filter((c) => c.status === "keep");
         }
         if (casesFilteringOptions.onlyMyCases) {
-            filteredCases = filteredCases.filter((c) => c.user === userInfo?.username.replace("@equinor.com", ""));
+            filteredCases = filteredCases.filter(
+                (c) => c.user.toLowerCase() === userInfo?.username.replace("@equinor.com", "").toLowerCase()
+            );
         } else if (casesFilteringOptions.users.length > 0) {
             filteredCases = filteredCases.filter((c) => casesFilteringOptions.users.includes(c.user));
         }
