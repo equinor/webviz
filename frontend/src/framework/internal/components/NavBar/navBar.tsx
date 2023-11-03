@@ -2,7 +2,7 @@ import React from "react";
 
 import WebvizLogo from "@assets/webviz.svg";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
-import { DrawerContent, GuiState, useGuiState, useGuiValue } from "@framework/GuiMessageBroker";
+import { DrawerContent, GuiState, useGuiState } from "@framework/GuiMessageBroker";
 import { Workbench, WorkbenchEvents } from "@framework/Workbench";
 import { useEnsembleSet, useIsEnsembleSetLoading } from "@framework/WorkbenchSession";
 import { LoginButton } from "@framework/internal/components/LoginButton";
@@ -11,7 +11,6 @@ import { EnsembleItem } from "@framework/internal/components/SelectEnsemblesDial
 import { Badge } from "@lib/components/Badge";
 import { Button } from "@lib/components/Button";
 import { CircularProgress } from "@lib/components/CircularProgress";
-import { WebvizSpinner } from "@lib/components/WebvizSpinner/webvizSpinner";
 import { isDevMode } from "@lib/utils/devMode";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { ChevronLeft, ChevronRight, GridView, Link, List, Palette, Settings, WebAsset } from "@mui/icons-material";
