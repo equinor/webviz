@@ -121,7 +121,7 @@ export const settings = ({ moduleContext, workbenchSession, workbenchServices }:
 
     React.useEffect(
         function handleQueryStateChange() {
-            if (wellCompletionsQuery.status === "loading" && wellCompletionsQuery.fetchStatus === "fetching") {
+            if (wellCompletionsQuery.isFetching) {
                 setDataLoadingStatus(DataLoadingStatus.Loading);
             } else if (wellCompletionsQuery.status === "error") {
                 setDataLoadingStatus(DataLoadingStatus.Error);

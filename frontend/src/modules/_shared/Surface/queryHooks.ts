@@ -16,7 +16,7 @@ export function useSurfaceDirectoryQuery(
         queryKey: ["getSurfaceDirectory", caseUuid, ensembleName],
         queryFn: () => apiService.surface.getSurfaceDirectory(caseUuid ?? "", ensembleName ?? ""),
         staleTime: STALE_TIME,
-        cacheTime: CACHE_TIME,
+        gcTime: CACHE_TIME,
         enabled: caseUuid && ensembleName ? true : false,
     });
 }
@@ -90,6 +90,6 @@ export function useSurfaceDataQueryByAddress(surfAddr: SurfaceAddress | null): U
         queryFn: queryFn,
         select: transformSurfaceData,
         staleTime: STALE_TIME,
-        cacheTime: CACHE_TIME,
+        gcTime: CACHE_TIME,
     });
 }

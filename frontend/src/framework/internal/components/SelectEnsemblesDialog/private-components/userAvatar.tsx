@@ -18,7 +18,7 @@ function useUserInfoQuery(userId: string): UseQueryResult<GraphUserPhoto_api> {
         queryKey: ["getUserInfo", userId],
         queryFn: () => apiService.graph.userInfo(`${userId.toUpperCase()}@equinor.com`),
         staleTime: STALE_TIME,
-        cacheTime: CACHE_TIME,
+        gcTime: CACHE_TIME,
         enabled: userId !== "",
     });
 }
