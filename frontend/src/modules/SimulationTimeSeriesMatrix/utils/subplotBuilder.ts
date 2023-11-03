@@ -1,4 +1,9 @@
-import { VectorHistoricalData_api, VectorRealizationData_api, VectorStatisticData_api } from "@api";
+import {
+    SummaryVectorObservations_api,
+    VectorHistoricalData_api,
+    VectorRealizationData_api,
+    VectorStatisticData_api,
+} from "@api";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { ColorSet } from "@lib/utils/ColorSet";
 import { simulationUnitReformat, simulationVectorDescription } from "@modules/_shared/reservoirSimulationStringUtils";
@@ -9,6 +14,7 @@ import { Annotations, Layout } from "plotly.js";
 import {
     createHistoricalVectorTrace,
     createVectorFanchartTraces,
+    createVectorObservationsTraces,
     createVectorRealizationTrace,
     createVectorRealizationTraces,
     createVectorStatisticsTraces,
@@ -466,8 +472,33 @@ export class SubplotBuilder {
         }
     }
 
-    addVectorObservations(): void {
-        throw new Error("Method not implemented.");
+    addVectorObservations(
+        vectorsObservationData: {
+            vectorSpecification: VectorSpec;
+            data: SummaryVectorObservations_api;
+        }[]
+    ): void {
+        // Only allow selected vectors
+        const selectedVectorsObservationData = vectorsObservationData.filter((vec) =>
+            this._selectedVectorSpecifications.some(
+                (selectedVec) => selectedVec.vectorName === vec.vectorSpecification.vectorName
+            )
+        );
+
+        // Create traces for each vector
+        for (const elm of selectedVectorsObservationData) {
+            const subplotIndex = this.getSubplotIndex(elm.vectorSpecification);
+            if (subplotIndex === -1) continue;
+
+            const vectorObservationsTraces = createVectorObservationsTraces({
+                vectorObservations: elm.data.observations,
+                color: this._observationColor,
+                type: this._scatterType,
+            });
+
+            this._plotData.push(...vectorObservationsTraces);
+            this._hasObservationTraces = true;
+        }
     }
 
     private getSubplotIndex(vectorSpecification: VectorSpec) {

@@ -1,5 +1,5 @@
 import { Frequency_api, VectorDescription_api } from "@api";
-import { VectorHistoricalData_api, VectorRealizationData_api, VectorStatisticData_api } from "@api";
+import { Observations_api, VectorHistoricalData_api, VectorRealizationData_api, VectorStatisticData_api } from "@api";
 import { apiService } from "@framework/ApiService";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { UseQueryResult, useQueries } from "@tanstack/react-query";
@@ -137,6 +137,21 @@ export function useHistoricalVectorDataQueries(
                     item.ensembleIdent.getEnsembleName() &&
                     resampleFrequency
                 ),
+            };
+        }),
+    });
+}
+
+export function useEnsembleObservations(ensembleIdents: EnsembleIdent[] | null): UseQueryResult<Observations_api>[] {
+    return useQueries({
+        queries: (ensembleIdents ?? []).map((item) => {
+            return {
+                queryKey: ["getObservations", item.getCaseUuid(), item.getEnsembleName()],
+                queryFn: () =>
+                    apiService.observations.getObservations(item.getCaseUuid() ?? "", item.getEnsembleName() ?? ""),
+                staleTime: STALE_TIME,
+                cacheTime: CACHE_TIME,
+                enabled: !!(item.getCaseUuid() && item.getEnsembleName()),
             };
         }),
     });

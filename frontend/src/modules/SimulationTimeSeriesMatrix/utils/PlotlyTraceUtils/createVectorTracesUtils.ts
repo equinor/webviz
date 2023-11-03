@@ -1,5 +1,6 @@
 import {
     StatisticFunction_api,
+    SummaryVectorDateObservation_api,
     VectorHistoricalData_api,
     VectorRealizationData_api,
     VectorStatisticData_api,
@@ -148,6 +149,47 @@ export function createHistoricalVectorTrace({
         yaxis: yaxis,
         xaxis: xaxis,
     };
+}
+
+/**
+    Utility function for creating traces for vector observations
+ */
+export type CreateVectorObservationTraceOptions = {
+    vectorObservations: Array<SummaryVectorDateObservation_api>;
+    color?: string;
+    legendGroup?: string;
+    showLegend?: boolean;
+    type?: "scatter" | "scattergl";
+};
+export function createVectorObservationsTraces({
+    vectorObservations,
+    color = "black",
+    legendGroup = "Observation",
+    showLegend = false,
+    type = "scatter",
+}: CreateVectorObservationTraceOptions): Partial<TimeSeriesPlotData>[] {
+    const name = legendGroup !== "Observation" ? `Observation: ${legendGroup}` : "Observation";
+
+    return vectorObservations.map((observation) => {
+        const hovertext = observation.comment;
+        const hovertemplate = hovertext ? `(%{x}, %{y})<br>${hovertext}` : "(%{x}, %{y})<br>";
+
+        return {
+            name: name,
+            legendgroup: legendGroup,
+            x: [observation.date],
+            y: [observation.value],
+            marker: { color: color },
+            hovertemplate: hovertemplate,
+            showlegend: showLegend,
+            type: type,
+            error_y: {
+                type: "constant",
+                value: observation.error,
+                visible: true,
+            },
+        };
+    });
 }
 
 /**

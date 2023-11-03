@@ -1,6 +1,7 @@
 import React from "react";
 import Plot from "react-plotly.js";
 
+import { SummaryVectorObservations_api } from "@api";
 import { Ensemble } from "@framework/Ensemble";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { ModuleFCProps } from "@framework/Module";
@@ -10,8 +11,13 @@ import { useElementSize } from "@lib/hooks/useElementSize";
 import { ColorScaleGradientType } from "@lib/utils/ColorScale";
 import { ContentError } from "@modules/_shared/components/ContentMessage";
 
-import { useHistoricalVectorDataQueries, useStatisticalVectorDataQueries, useVectorDataQueries } from "./queryHooks";
-import { GroupBy, State, VisualizationMode } from "./state";
+import {
+    useEnsembleObservations,
+    useHistoricalVectorDataQueries,
+    useStatisticalVectorDataQueries,
+    useVectorDataQueries,
+} from "./queryHooks";
+import { GroupBy, State, VectorSpec, VisualizationMode } from "./state";
 import { EnsemblesContinuousParameterColoring } from "./utils/ensemblesContinuousParameterColoring";
 import { SubplotBuilder, SubplotOwner } from "./utils/subplotBuilder";
 import {
@@ -34,6 +40,7 @@ export const view = ({ moduleContext, workbenchSession, workbenchSettings }: Mod
     const realizationsToInclude = moduleContext.useStoreValue("realizationsToInclude");
     const visualizationMode = moduleContext.useStoreValue("visualizationMode");
     const showHistorical = moduleContext.useStoreValue("showHistorical");
+    const showObservations = moduleContext.useStoreValue("showObservations");
     const statisticsSelection = moduleContext.useStoreValue("statisticsSelection");
     const parameterIdent = moduleContext.useStoreValue("parameterIdent");
     const colorRealizationsByParameter = moduleContext.useStoreValue("colorRealizationsByParameter");
@@ -42,6 +49,19 @@ export const view = ({ moduleContext, workbenchSession, workbenchSettings }: Mod
     const colorSet = workbenchSettings.useColorSet();
     const parameterColorScale = workbenchSettings.useContinuousColorScale({
         gradientType: ColorScaleGradientType.Diverging,
+    });
+
+    // Get selected ensembles from vector specifications
+    const selectedEnsembles: Ensemble[] = [];
+    vectorSpecifications?.forEach((vectorSpecification) => {
+        if (selectedEnsembles.some((ensemble) => ensemble.getIdent().equals(vectorSpecification.ensembleIdent))) {
+            return;
+        }
+
+        const ensemble = ensembleSet.findEnsemble(vectorSpecification.ensembleIdent);
+        if (!ensemble) return;
+
+        selectedEnsembles.push(ensemble);
     });
 
     // Queries
@@ -66,6 +86,36 @@ export const view = ({ moduleContext, workbenchSession, workbenchSettings }: Mod
         resampleFrequency,
         vectorSpecificationsWithHistoricalData?.some((vec) => vec.hasHistoricalVector) ?? false
     );
+
+    // Cache ensemble ident and vector names and store observations in state? To prevent re-calculating every time?
+    // useQuery v5 has combine for useQueries, will combine be cashed? Cashed post-processing of query result?
+    const ensembleObservationsQueries = useEnsembleObservations(selectedEnsembles.map((elm) => elm.getIdent()) ?? null);
+    const vectorSpecificationAndObservations: {
+        vectorSpecification: VectorSpec;
+        data: SummaryVectorObservations_api;
+    }[] = [];
+    for (let i = 0; i < ensembleObservationsQueries.length && vectorSpecifications !== null; ++i) {
+        const queryData = ensembleObservationsQueries[i].data;
+        if (!queryData) continue;
+
+        const ensembleIdent = selectedEnsembles[i].getIdent();
+        const vectorObservations = queryData.summary.filter((elm) =>
+            vectorSpecifications.some(
+                (vecSpec) => vecSpec.vectorName === elm.vector_name && vecSpec.ensembleIdent.equals(ensembleIdent)
+            )
+        );
+
+        for (const vectorObservation of vectorObservations) {
+            vectorSpecificationAndObservations.push({
+                vectorSpecification: {
+                    vectorName: vectorObservation.vector_name,
+                    ensembleIdent: ensembleIdent,
+                    hasHistoricalVector: false,
+                },
+                data: vectorObservation,
+            });
+        }
+    }
 
     // Get fetching status from queries
     const isQueryFetching =
@@ -102,19 +152,6 @@ export const view = ({ moduleContext, workbenchSession, workbenchSettings }: Mod
               historicalVectorDataQueries
           )
         : [];
-
-    // Retrieve selected ensembles from vector specifications
-    const selectedEnsembles: Ensemble[] = [];
-    vectorSpecifications?.forEach((vectorSpecification) => {
-        if (selectedEnsembles.some((ensemble) => ensemble.getIdent().equals(vectorSpecification.ensembleIdent))) {
-            return;
-        }
-
-        const ensemble = ensembleSet.findEnsemble(vectorSpecification.ensembleIdent);
-        if (!ensemble) return;
-
-        selectedEnsembles.push(ensemble);
-    });
 
     // Create parameter color scale helper
     const doColorByParameter =
@@ -209,6 +246,9 @@ export const view = ({ moduleContext, workbenchSession, workbenchSettings }: Mod
     }
     if (showHistorical) {
         subplotBuilder.addHistoryTraces(loadedVectorSpecificationsAndHistoricalData);
+    }
+    if (showObservations) {
+        subplotBuilder.addVectorObservations(vectorSpecificationAndObservations);
     }
 
     const doRenderContentError = hasRealizationsQueryError || hasStatisticsQueryError;
