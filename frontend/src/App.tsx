@@ -1,45 +1,139 @@
 import React from "react";
 
-import { DrawerContent, GuiState } from "@framework/GuiMessageBroker";
+import WebvizLogo from "@assets/webviz.svg";
+import { DrawerContent, GuiState, useGuiState } from "@framework/GuiMessageBroker";
 import { LayoutElement, Workbench } from "@framework/Workbench";
 import { NavBar } from "@framework/internal/components/NavBar";
 import { SettingsContentPanels } from "@framework/internal/components/SettingsContentPanels";
+import { AuthState, useAuthProvider } from "@framework/internal/providers/AuthProvider";
+import { Button } from "@lib/components/Button";
+import { WebvizSpinner } from "@lib/components/WebvizSpinner";
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { useQueryClient } from "@tanstack/react-query";
 
 import "./modules/registerAllModules";
 import "./templates/registerAllTemplates";
 
+enum InitAppState {
+    CheckingIfUserIsSignedIn = "checking-if-user-is-signed-in",
+    LoadingEnsembles = "loading-ensembles",
+    InitCompleted = "init-completed",
+}
+
 const layout: LayoutElement[] = [];
 
 function App() {
+    const [isMounted, setIsMounted] = React.useState<boolean>(false);
+    const [initAppState, setInitAppState] = React.useState<InitAppState>(InitAppState.CheckingIfUserIsSignedIn);
+
     const workbench = React.useRef<Workbench>(new Workbench());
     const queryClient = useQueryClient();
+    const { authState } = useAuthProvider();
 
-    React.useEffect(function handleMount() {
+    function initApp() {
         if (!workbench.current.loadLayoutFromLocalStorage()) {
             workbench.current.makeLayout(layout);
         }
 
         if (workbench.current.getLayout().length === 0) {
             workbench.current.getGuiMessageBroker().setState(GuiState.DrawerContent, DrawerContent.ModulesList);
+        } else {
+            workbench.current.getGuiMessageBroker().setState(GuiState.DrawerContent, DrawerContent.ModuleSettings);
         }
+        setInitAppState(InitAppState.InitCompleted);
+    }
 
-        const storedEnsembleIdents = workbench.current.maybeLoadEnsembleSetFromLocalStorage();
-        if (storedEnsembleIdents) {
-            workbench.current.loadAndSetupEnsembleSetInSession(queryClient, storedEnsembleIdents);
-        }
+    React.useEffect(
+        function handleMountWhenSignedIn() {
+            if (authState !== AuthState.LoggedIn || isMounted) {
+                return;
+            }
 
-        return function handleUnmount() {
-            workbench.current.clearLayout();
-            workbench.current.resetModuleInstanceNumbers();
-        };
-    }, []);
+            setIsMounted(true);
+
+            const storedEnsembleIdents = workbench.current.maybeLoadEnsembleSetFromLocalStorage();
+            if (storedEnsembleIdents) {
+                setInitAppState(InitAppState.LoadingEnsembles);
+                workbench.current.loadAndSetupEnsembleSetInSession(queryClient, storedEnsembleIdents).finally(() => {
+                    initApp();
+                });
+            }
+
+            return function handleUnmount() {
+                workbench.current.clearLayout();
+                workbench.current.resetModuleInstanceNumbers();
+            };
+        },
+        [authState, isMounted]
+    );
+
+    function signIn() {
+        window.location.href = `/api/login?redirect_url_after_login=${btoa("/")}`;
+    }
+
+    function makeStateMessages() {
+        return (
+            <div className="relative mt-4 w-full">
+                <div
+                    className={resolveClassNames(
+                        "absolute top-0 transition-opacity duration-500 ease-in-out w-full text-center",
+                        {
+                            "opacity-0": initAppState !== InitAppState.CheckingIfUserIsSignedIn,
+                            "opacity-100": initAppState === InitAppState.CheckingIfUserIsSignedIn,
+                        }
+                    )}
+                >
+                    Checking if user is signed in...
+                </div>
+                <div
+                    className={resolveClassNames(
+                        "absolute top-0 transition-opacity duration-500 ease-in-out w-full text-center",
+                        {
+                            "opacity-0": initAppState !== InitAppState.LoadingEnsembles,
+                            "opacity-100": initAppState === InitAppState.LoadingEnsembles,
+                        }
+                    )}
+                >
+                    Restoring working session...
+                </div>
+            </div>
+        );
+    }
+
+    const isInitialisingApp = initAppState !== InitAppState.InitCompleted;
 
     return (
-        <div className="h-screen flex flex-row">
-            <NavBar workbench={workbench.current} />
-            <SettingsContentPanels workbench={workbench.current} />
-        </div>
+        <>
+            {authState === AuthState.NotLoggedIn && (
+                <div className="w-screen h-screen flex flex-col items-center justify-center gap-8">
+                    <img src={WebvizLogo} alt="Webviz logo" className="w-32 h-32" />
+                    <p className="text-lg">Please sign in to continue.</p>
+                    <Button onClick={signIn}>Sign in</Button>
+                </div>
+            )}
+            {isInitialisingApp && (
+                <div
+                    className={resolveClassNames(
+                        "absolute inset-0 w-screen h-screen flex flex-col items-center justify-center gap-8",
+                        {
+                            hidden: !isInitialisingApp,
+                        }
+                    )}
+                >
+                    <WebvizSpinner size={100} />
+                    {makeStateMessages()}
+                </div>
+            )}
+            <div
+                className={resolveClassNames("h-screen flex flex-row transition-opacity ease-in-out duration-1000", {
+                    "opacity-0": isInitialisingApp,
+                    "opacity-100": !isInitialisingApp,
+                })}
+            >
+                <NavBar workbench={workbench.current} />
+                <SettingsContentPanels workbench={workbench.current} />
+            </div>
+        </>
     );
 }
 

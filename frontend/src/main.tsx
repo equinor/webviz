@@ -1,7 +1,6 @@
 import React from "react";
 import { createRoot } from "react-dom/client";
 
-import { StartScreen } from "@framework/internal/components/StartScreen";
 import { AuthProvider } from "@framework/internal/providers/AuthProvider";
 import { CustomQueryClientProvider } from "@framework/internal/providers/QueryClientProvider";
 
@@ -33,11 +32,9 @@ root.render(
     <React.StrictMode>
         <GlobalErrorBoundary>
             <AuthProvider>
-                <StartScreen>
-                    <CustomQueryClientProvider>
-                        <App />
-                    </CustomQueryClientProvider>
-                </StartScreen>
+                <CustomQueryClientProvider>
+                    <App />
+                </CustomQueryClientProvider>
             </AuthProvider>
         </GlobalErrorBoundary>
     </React.StrictMode>
