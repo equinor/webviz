@@ -104,25 +104,26 @@ function App() {
 
     return (
         <>
-            {authState === AuthState.NotLoggedIn && (
+            {authState === AuthState.NotLoggedIn ? (
                 <div className="w-screen h-screen flex flex-col items-center justify-center gap-8">
                     <img src={WebvizLogo} alt="Webviz logo" className="w-32 h-32" />
                     <p className="text-lg">Please sign in to continue.</p>
                     <Button onClick={signIn}>Sign in</Button>
                 </div>
-            )}
-            {isInitialisingApp && (
-                <div
-                    className={resolveClassNames(
-                        "absolute inset-0 w-screen h-screen flex flex-col items-center justify-center gap-8",
-                        {
-                            hidden: !isInitialisingApp,
-                        }
-                    )}
-                >
-                    <WebvizSpinner size={100} />
-                    {makeStateMessages()}
-                </div>
+            ) : (
+                isInitialisingApp && (
+                    <div
+                        className={resolveClassNames(
+                            "absolute inset-0 w-screen h-screen flex flex-col items-center justify-center gap-8",
+                            {
+                                hidden: !isInitialisingApp,
+                            }
+                        )}
+                    >
+                        <WebvizSpinner size={100} />
+                        {makeStateMessages()}
+                    </div>
+                )
             )}
             <div
                 className={resolveClassNames("h-screen flex flex-row transition-opacity ease-in-out duration-1000", {
