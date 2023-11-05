@@ -1,4 +1,5 @@
 from typing import List
+import base64
 
 import numpy as np
 import xtgeo
@@ -9,6 +10,8 @@ from src.services.sumo_access.surface_types import SurfaceMeta as SumoSurfaceMet
 from src.services.sumo_access.surface_types import XtgeoSurfaceIntersectionPolyline, XtgeoSurfaceIntersectionResult
 from src.services.utils.b64 import b64_encode_float_array_as_float32
 from src.services.utils.surface_to_float32 import surface_to_float32_numpy_array
+from src.services.utils.surface_to_png import surface_to_png_bytes_optimized
+from src.services.utils.surface_orientation import calc_surface_orientation_for_colormap_layer
 
 from . import schemas
 
@@ -26,7 +29,7 @@ def resample_property_surface_to_mesh_surface(
     return mesh_surface
 
 
-def to_api_surface_data(xtgeo_surf: xtgeo.RegularSurface) -> schemas.SurfaceData:
+def to_api_surface_data_as_float32(xtgeo_surf: xtgeo.RegularSurface) -> schemas.SurfaceData:
     """
     Create API SurfaceData from xtgeo regular surface
     """
@@ -49,6 +52,32 @@ def to_api_surface_data(xtgeo_surf: xtgeo.RegularSurface) -> schemas.SurfaceData
         val_max=xtgeo_surf.values.max(),
         rot_deg=xtgeo_surf.rotation,
         values_b64arr=values_b64arr,
+    )
+
+
+def to_api_surface_data_as_png(xtgeo_surf: xtgeo.RegularSurface) -> schemas.SurfaceDataPng:
+    """
+    Create API SurfaceData from xtgeo regular surface
+    """
+
+    png_bytes: bytes = surface_to_png_bytes_optimized(xtgeo_surf)
+    base64_data = base64.b64encode(png_bytes).decode("ascii")
+
+    surf_orient = calc_surface_orientation_for_colormap_layer(xtgeo_surf)
+
+    return schemas.SurfaceDataPng(
+        x_min_surf_orient=surf_orient.x_min,
+        x_max_surf_orient=surf_orient.x_max,
+        y_min_surf_orient=surf_orient.y_min,
+        y_max_surf_orient=surf_orient.y_max,
+        x_min=xtgeo_surf.xmin,
+        x_max=xtgeo_surf.xmax,
+        y_min=xtgeo_surf.ymin,
+        y_max=xtgeo_surf.ymax,
+        val_min=xtgeo_surf.values.min(),
+        val_max=xtgeo_surf.values.max(),
+        rot_deg=surf_orient.rot_around_xmin_ymax_deg,
+        base64_encoded_image=f"{base64_data}",
     )
 
 

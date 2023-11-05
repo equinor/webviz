@@ -7,7 +7,7 @@
  */
 export type SummaryVectorDateObservation = {
     date: string;
-    comment: (string | null);
+    comment?: (string | null);
     value: number;
     error: number;
     label: string;

@@ -17,7 +17,7 @@
  */
 export type RftObservation = {
     value: number;
-    comment: (string | null);
+    comment?: (string | null);
     error: number;
     zone: string;
     md_msl: number;

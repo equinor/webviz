@@ -15,7 +15,7 @@ import type { RftObservation } from './RftObservation';
 export type RftObservations = {
     well: string;
     date: string;
-    comment: (string | null);
+    comment?: (string | null);
     observations: Array<RftObservation>;
 };
 

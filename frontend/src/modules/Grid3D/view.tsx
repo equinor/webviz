@@ -8,7 +8,7 @@ import {
     createNorthArrowLayer,
     createWellBoreHeaderLayer,
     createWellboreTrajectoryLayer,
-} from "@modules/SubsurfaceMap/_utils";
+} from "@modules/_shared/Surface/subsurfaceMapUtils";
 import { useFieldWellsTrajectoriesQuery } from "@modules/_shared/WellBore/queryHooks";
 import SubsurfaceViewer from "@webviz/subsurface-viewer";
 import { ViewAnnotation } from "@webviz/subsurface-viewer/dist/components/ViewAnnotation";

@@ -3,6 +3,6 @@
 /* tslint:disable */
 /* eslint-disable */
 export type GraphUserPhoto = {
-    avatar_b64str: (string | null);
+    avatar_b64str?: (string | null);
 };
 

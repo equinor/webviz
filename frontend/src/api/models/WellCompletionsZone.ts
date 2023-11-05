@@ -4,6 +4,6 @@
 /* eslint-disable */
 export type WellCompletionsZone = {
     name: string;
-    subzones: (Array<WellCompletionsZone> | null);
+    subzones?: (Array<WellCompletionsZone> | null);
 };
 

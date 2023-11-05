@@ -116,3 +116,18 @@ class SurfaceRealizationSampleValues(BaseModel):
 class PointSetXY(BaseModel):
     x_points: list[float]
     y_points: list[float]
+
+
+class SurfaceDataPng(BaseModel):
+    x_min_surf_orient: float
+    x_max_surf_orient: float
+    y_min_surf_orient: float
+    y_max_surf_orient: float
+    x_min: float
+    x_max: float
+    y_min: float
+    y_max: float
+    val_min: float
+    val_max: float
+    rot_deg: float
+    base64_encoded_image: str

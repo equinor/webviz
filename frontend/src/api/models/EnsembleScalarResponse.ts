@@ -8,7 +8,7 @@
 export type EnsembleScalarResponse = {
     realizations: Array<number>;
     values: Array<number>;
-    name: (string | null);
-    unit: (string | null);
+    name?: (string | null);
+    unit?: (string | null);
 };
 

@@ -15,10 +15,10 @@ export type StratigraphicUnit = {
     stratUnitType: string;
     topAge: number;
     baseAge: number;
-    stratUnitParent: (string | null);
+    stratUnitParent?: (string | null);
     colorR: number;
     colorG: number;
     colorB: number;
-    lithologyType: (number | string);
+    lithologyType?: (number | string);
 };
 

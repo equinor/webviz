@@ -100,7 +100,11 @@ class SurfaceAccess(SumoEnsemble):
         return _make_intersection(surface, xtgeo_fencespec)
 
     async def get_realization_surface_data_async(
-        self, real_num: int, name: str, attribute: str, time_or_interval_str: Optional[str] = None
+        self,
+        real_num: int,
+        name: str,
+        attribute: str,
+        time_or_interval_str: Optional[str] = None,
     ) -> Optional[xtgeo.RegularSurface]:
         """
         Get surface data for a realization surface

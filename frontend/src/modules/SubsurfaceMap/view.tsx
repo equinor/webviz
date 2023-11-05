@@ -11,9 +11,8 @@ import { ColorScaleGradientType } from "@lib/utils/ColorScale";
 import { usePolygonsDataQueryByAddress } from "@modules/_shared/Polygons";
 import { useFieldWellsTrajectoriesQuery } from "@modules/_shared/WellBore/queryHooks";
 import { useSurfaceDataQueryByAddress } from "@modules_shared/Surface";
-import { ViewAnnotation } from "@webviz/subsurface-viewer/dist/components/ViewAnnotation";
-
 import {
+    Bounds,
     SurfaceMeta,
     createAxesLayer,
     createContinuousColorScaleForMap,
@@ -22,39 +21,14 @@ import {
     createSurfacePolygonsLayer,
     createWellBoreHeaderLayer,
     createWellboreTrajectoryLayer,
-} from "./_utils";
+    shouldUpdateViewPortBounds,
+} from "@modules_shared/Surface/subsurfaceMapUtils";
+import { ViewAnnotation } from "@webviz/subsurface-viewer/dist/components/ViewAnnotation";
+
 import { SyncedSubsurfaceViewer } from "./components/SyncedSubsurfaceViewer";
 import { usePropertySurfaceDataByQueryAddress } from "./queryHooks";
 import { state } from "./state";
 
-type Bounds = [number, number, number, number];
-
-const updateViewPortBounds = (
-    existingViewPortBounds: Bounds | undefined,
-    resetBounds: boolean,
-    surfaceMeta: SurfaceMeta
-): Bounds => {
-    const updatedBounds: Bounds = [surfaceMeta.x_min, surfaceMeta.y_min, surfaceMeta.x_max, surfaceMeta.y_max];
-
-    if (!existingViewPortBounds || resetBounds) {
-        console.debug("updateViewPortBounds: no existing bounds, returning updated bounds");
-        return updatedBounds;
-    }
-
-    // Check if bounds overlap
-    if (
-        existingViewPortBounds[2] < updatedBounds[0] || // existing right edge is to the left of updated left edge
-        existingViewPortBounds[0] > updatedBounds[2] || // existing left edge is to the right of updated right edge
-        existingViewPortBounds[3] < updatedBounds[1] || // existing bottom edge is above updated top edge
-        existingViewPortBounds[1] > updatedBounds[3] // existing top edge is below updated bottom edge
-    ) {
-        console.debug("updateViewPortBounds: bounds don't overlap, returning updated bounds");
-        return updatedBounds; // Return updated bounds since they don't overlap
-    }
-
-    // Otherwise, return the existing bounds
-    return existingViewPortBounds;
-};
 //-----------------------------------------------------------------------------------------------------------
 export function View({ moduleContext, workbenchSettings, workbenchServices }: ModuleFCProps<state>) {
     const myInstanceIdStr = moduleContext.getInstanceIdString();
@@ -130,8 +104,15 @@ export function View({ moduleContext, workbenchSettings, workbenchServices }: Mo
     React.useEffect(() => {
         if (meshSurfDataQuery.data) {
             const newSurfaceMetaData: SurfaceMeta = { ...meshSurfDataQuery.data };
-
-            setviewPortBounds(updateViewPortBounds(viewportBounds, resetBounds, newSurfaceMetaData));
+            const newBounds: Bounds = [
+                newSurfaceMetaData.x_min,
+                newSurfaceMetaData.y_min,
+                newSurfaceMetaData.x_max,
+                newSurfaceMetaData.y_max,
+            ];
+            if (resetBounds || shouldUpdateViewPortBounds(viewportBounds, newBounds)) {
+                setviewPortBounds(newBounds);
+            }
             toggleResetBounds(false);
 
             const axesLayer: Record<string, unknown> = createAxesLayer([
