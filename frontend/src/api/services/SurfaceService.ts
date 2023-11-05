@@ -5,6 +5,7 @@
 import type { Body_post_get_surface_intersection } from '../models/Body_post_get_surface_intersection';
 import type { Body_post_sample_surface_in_points } from '../models/Body_post_sample_surface_in_points';
 import type { SurfaceData } from '../models/SurfaceData';
+import type { SurfaceDataPng } from '../models/SurfaceDataPng';
 import type { SurfaceIntersectionData } from '../models/SurfaceIntersectionData';
 import type { SurfaceMeta } from '../models/SurfaceMeta';
 import type { SurfaceRealizationSampleValues } from '../models/SurfaceRealizationSampleValues';
@@ -98,6 +99,111 @@ export class SurfaceService {
                 'case_uuid': caseUuid,
                 'ensemble_name': ensembleName,
                 'statistic_function': statisticFunction,
+                'name': name,
+                'attribute': attribute,
+                'time_or_interval': timeOrInterval,
+            },
+            errors: {
+                422: `Validation Error`,
+            },
+        });
+    }
+    /**
+     * Get Realization Surface Data As Png
+     * @param caseUuid Sumo case uuid
+     * @param ensembleName Ensemble name
+     * @param realizationNum Realization number
+     * @param name Surface name
+     * @param attribute Surface attribute
+     * @param timeOrInterval Time point or time interval string
+     * @returns SurfaceDataPng Successful Response
+     * @throws ApiError
+     */
+    public getRealizationSurfaceDataAsPng(
+        caseUuid: string,
+        ensembleName: string,
+        realizationNum: number,
+        name: string,
+        attribute: string,
+        timeOrInterval?: (string | null),
+    ): CancelablePromise<SurfaceDataPng> {
+        return this.httpRequest.request({
+            method: 'GET',
+            url: '/surface/realization_surface_data_as_png/',
+            query: {
+                'case_uuid': caseUuid,
+                'ensemble_name': ensembleName,
+                'realization_num': realizationNum,
+                'name': name,
+                'attribute': attribute,
+                'time_or_interval': timeOrInterval,
+            },
+            errors: {
+                422: `Validation Error`,
+            },
+        });
+    }
+    /**
+     * Get Statistical Surface Data As Png
+     * @param caseUuid Sumo case uuid
+     * @param ensembleName Ensemble name
+     * @param statisticFunction Statistics to calculate
+     * @param name Surface name
+     * @param attribute Surface attribute
+     * @param realizationNums Realization numbers
+     * @param timeOrInterval Time point or time interval string
+     * @returns SurfaceDataPng Successful Response
+     * @throws ApiError
+     */
+    public getStatisticalSurfaceDataAsPng(
+        caseUuid: string,
+        ensembleName: string,
+        statisticFunction: SurfaceStatisticFunction,
+        name: string,
+        attribute: string,
+        realizationNums?: (Array<number> | null),
+        timeOrInterval?: (string | null),
+    ): CancelablePromise<SurfaceDataPng> {
+        return this.httpRequest.request({
+            method: 'GET',
+            url: '/surface/statistical_surface_data_as_png/',
+            query: {
+                'case_uuid': caseUuid,
+                'ensemble_name': ensembleName,
+                'statistic_function': statisticFunction,
+                'realization_nums': realizationNums,
+                'name': name,
+                'attribute': attribute,
+                'time_or_interval': timeOrInterval,
+            },
+            errors: {
+                422: `Validation Error`,
+            },
+        });
+    }
+    /**
+     * Get Observation Surface Data As Png
+     * @param caseUuid Sumo case uuid
+     * @param ensembleName Ensemble name
+     * @param name Surface name
+     * @param attribute Surface attribute
+     * @param timeOrInterval Time point or time interval string
+     * @returns SurfaceDataPng Successful Response
+     * @throws ApiError
+     */
+    public getObservationSurfaceDataAsPng(
+        caseUuid: string,
+        ensembleName: string,
+        name: string,
+        attribute: string,
+        timeOrInterval?: (string | null),
+    ): CancelablePromise<SurfaceDataPng> {
+        return this.httpRequest.request({
+            method: 'GET',
+            url: '/surface/observation_surface_data_as_png/',
+            query: {
+                'case_uuid': caseUuid,
+                'ensemble_name': ensembleName,
                 'name': name,
                 'attribute': attribute,
                 'time_or_interval': timeOrInterval,

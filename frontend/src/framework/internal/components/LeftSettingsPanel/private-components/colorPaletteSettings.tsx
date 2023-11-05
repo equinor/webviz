@@ -17,7 +17,7 @@ import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { convertRemToPixels } from "@lib/utils/screenUnitConversions";
 import { ExpandMore, Palette } from "@mui/icons-material";
 
-enum ColorPaletteSelectorType {
+export enum ColorPaletteSelectorType {
     Categorical = "categorical",
     Continuous = "continuous",
     Discrete = "discrete",
@@ -73,7 +73,7 @@ const ColorPaletteItem: React.FC<ColorPaletteItemProps> = (props) => {
     );
 };
 
-type ColorPaletteSelectorProps = {
+export type ColorPaletteSelectorProps = {
     colorPalettes: ColorPalette[];
     selectedColorPaletteId: string;
     onChange?: (colorPalette: ColorPalette) => void;
@@ -81,7 +81,7 @@ type ColorPaletteSelectorProps = {
     steps?: number;
 };
 
-const ColorPaletteSelector: React.FC<ColorPaletteSelectorProps> = (props) => {
+export const ColorPaletteSelector: React.FC<ColorPaletteSelectorProps> = (props) => {
     const [open, setOpen] = React.useState<boolean>(false);
     const [selectedColorPalette, setSelectedColorPalette] = React.useState<ColorPalette>(
         props.colorPalettes.find((el) => el.getId() === props.selectedColorPaletteId) || props.colorPalettes[0]

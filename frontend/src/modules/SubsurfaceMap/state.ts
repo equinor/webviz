@@ -1,7 +1,16 @@
 import { PolygonsAddress } from "@modules/_shared/Polygons/polygonsAddress";
 import { SurfaceAddress } from "@modules/_shared/Surface";
 
-import { SurfaceMeshLayerSettings, ViewSettings } from "./_utils";
+export type SurfaceMeshLayerSettings = {
+    contours?: boolean | number[];
+    gridLines?: boolean;
+    smoothShading?: boolean;
+    material?: boolean;
+};
+
+export type ViewSettings = {
+    show3d: boolean;
+};
 
 export interface state {
     meshSurfaceAddress: SurfaceAddress | null;

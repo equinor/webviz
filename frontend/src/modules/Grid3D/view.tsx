@@ -3,13 +3,9 @@ import { ContinuousLegend } from "@emerson-eps/color-tables";
 import { ModuleFCProps } from "@framework/Module";
 import { useFirstEnsembleInEnsembleSet } from "@framework/WorkbenchSession";
 import { ColorScaleGradientType } from "@lib/utils/ColorScale";
-import {
-    createContinuousColorScaleForMap,
-    createNorthArrowLayer,
-    createWellBoreHeaderLayer,
-    createWellboreTrajectoryLayer,
-} from "@modules/SubsurfaceMap/_utils";
 import { useFieldWellsTrajectoriesQuery } from "@modules/_shared/WellBore/queryHooks";
+import { Grid3DLayer, NorthArrowLayer, WellsLayer } from "@modules/_shared/components/SubsurfaceViewer/layers";
+import { createContinuousColorScaleForMap } from "@modules/_shared/components/SubsurfaceViewer/utils";
 import SubsurfaceViewer from "@webviz/subsurface-viewer";
 import { ViewAnnotation } from "@webviz/subsurface-viewer/dist/components/ViewAnnotation";
 
@@ -74,45 +70,35 @@ export function View({ moduleContext, workbenchSettings, workbenchSession }: Mod
           ]
         : [0, 0, 0, 100, 100, 100];
 
-    const newLayers: Record<string, unknown>[] = [
-        createNorthArrowLayer(),
-        {
-            "@@type": "AxesLayer",
-            id: "axes-layer",
-            bounds: bounds,
-        },
-    ];
+    const newLayers: Record<string, any>[] = [];
+    const northArrowLayer = new NorthArrowLayer();
+    newLayers.push(northArrowLayer.getLayer());
 
     let propertiesArray: number[] = [0, 1];
-    if (!useStatistics && gridParameterQuery?.data) {
-        propertiesArray = Array.from(gridParameterQuery.data);
-    } else if (useStatistics && statisticalGridParameterQuery?.data) {
-        propertiesArray = Array.from(statisticalGridParameterQuery.data);
-    }
-
     if (gridSurfaceQuery.data) {
+        const gridLayer = new Grid3DLayer();
         const points: Float32Array = gridSurfaceQuery.data.pointsFloat32Arr;
         const polys: Uint32Array = gridSurfaceQuery.data.polysUint32Arr;
-        newLayers.push({
-            "@@type": "Grid3DLayer",
-            id: "grid3d-layer",
-            material: false,
-            pointsData: Array.from(points),
-            polysData: Array.from(polys),
-            propertiesData: propertiesArray,
-            colorMapName: "Continuous",
-            ZIncreasingDownwards: false,
-        });
+        gridLayer.setData(points, polys);
+
+        if (!useStatistics && gridParameterQuery?.data) {
+            propertiesArray = Array.from(gridParameterQuery.data);
+            gridLayer.setPropertyData(propertiesArray);
+        } else if (useStatistics && statisticalGridParameterQuery?.data) {
+            propertiesArray = Array.from(statisticalGridParameterQuery.data);
+            gridLayer.setPropertyData(propertiesArray);
+        }
+        newLayers.push(gridLayer.getLayer());
     }
 
     if (wellTrajectoriesQuery.data) {
+        const wellsLayer = new WellsLayer({ render2D: false });
         const wellTrajectories: WellBoreTrajectory_api[] = wellTrajectoriesQuery.data.filter((well) =>
             selectedWellUuids.includes(well.wellbore_uuid)
         );
-        const wellTrajectoryLayer: Record<string, unknown> = createWellboreTrajectoryLayer(wellTrajectories);
-        const wellBoreHeaderLayer: Record<string, unknown> = createWellBoreHeaderLayer(wellTrajectories);
-        newLayers.push(wellTrajectoryLayer);
-        newLayers.push(wellBoreHeaderLayer);
+        wellsLayer.setData(wellTrajectories, null, null);
+
+        newLayers.push(wellsLayer.getLayer());
     }
     const propertyRange = [
         propertiesArray.reduce((a, b) => Math.min(a, b)),
@@ -125,7 +111,6 @@ export function View({ moduleContext, workbenchSettings, workbenchSession }: Mod
                 bounds={[bounds[0], bounds[1], bounds[3], bounds[4]]}
                 colorTables={colorTables}
                 layers={newLayers}
-                toolbar={{ visible: true }}
                 views={{
                     layout: [1, 1],
                     showLabel: false,
@@ -139,7 +124,6 @@ export function View({ moduleContext, workbenchSettings, workbenchSession }: Mod
                     ],
                 }}
             >
-                {" "}
                 <ViewAnnotation id={viewIds.annotation}>
                     <ContinuousLegend
                         colorTables={colorTables}

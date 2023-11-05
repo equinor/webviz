@@ -16,6 +16,7 @@ from primary.services.sumo_access._helpers import SumoCase
 from primary.services.surface_query_service.surface_query_service import batch_sample_surface_in_points_async
 from primary.services.surface_query_service.surface_query_service import RealizationSampleResult
 
+
 from . import converters
 from . import schemas
 
@@ -68,14 +69,17 @@ async def get_realization_surface_data(
 
     access = await SurfaceAccess.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
     xtgeo_surf = await access.get_realization_surface_data_async(
-        real_num=realization_num, name=name, attribute=attribute, time_or_interval_str=time_or_interval
+        real_num=realization_num,
+        name=name,
+        attribute=attribute,
+        time_or_interval_str=time_or_interval,
     )
     perf_metrics.record_lap("get-surf")
 
     if not xtgeo_surf:
         raise HTTPException(status_code=404, detail="Surface not found")
 
-    surf_data_response = converters.to_api_surface_data(xtgeo_surf)
+    surf_data_response = converters.to_api_surface_data_as_float32(xtgeo_surf)
     perf_metrics.record_lap("convert")
 
     LOGGER.info(f"Loaded realization surface in: {perf_metrics.to_string()}")
@@ -113,10 +117,115 @@ async def get_statistical_surface_data(
     if not xtgeo_surf:
         raise HTTPException(status_code=404, detail="Could not find or compute surface")
 
-    surf_data_response: schemas.SurfaceData = converters.to_api_surface_data(xtgeo_surf)
+    surf_data_response: schemas.SurfaceData = converters.to_api_surface_data_as_float32(xtgeo_surf)
+    perf_metrics.record_lap("convert")
+
+    LOGGER.debug(f"Calculated statistical surface in: {perf_metrics.to_string()}")
+
+    return surf_data_response
+
+
+@router.get("/realization_surface_data_as_png/")
+async def get_realization_surface_data_as_png(
+    response: Response,
+    authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
+    case_uuid: str = Query(description="Sumo case uuid"),
+    ensemble_name: str = Query(description="Ensemble name"),
+    realization_num: int = Query(description="Realization number"),
+    name: str = Query(description="Surface name"),
+    attribute: str = Query(description="Surface attribute"),
+    time_or_interval: Optional[str] = Query(None, description="Time point or time interval string"),
+) -> schemas.SurfaceDataPng:
+    perf_metrics = PerfMetrics(response)
+
+    access = await SurfaceAccess.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
+    xtgeo_surf = await access.get_realization_surface_data_async(
+        real_num=realization_num,
+        name=name,
+        attribute=attribute,
+        time_or_interval_str=time_or_interval,
+    )
+    perf_metrics.record_lap("get-surf")
+
+    if not xtgeo_surf:
+        raise HTTPException(status_code=404, detail="Surface not found")
+
+    surf_data_response = converters.to_api_surface_data_as_png(xtgeo_surf)
+    perf_metrics.record_lap("convert")
+
+    LOGGER.debug(f"Loaded realization surface in: {perf_metrics.to_string()}")
+
+    return surf_data_response
+
+
+@router.get("/statistical_surface_data_as_png/")
+async def get_statistical_surface_data_as_png(
+    response: Response,
+    authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
+    case_uuid: str = Query(description="Sumo case uuid"),
+    ensemble_name: str = Query(description="Ensemble name"),
+    statistic_function: schemas.SurfaceStatisticFunction = Query(description="Statistics to calculate"),
+    realization_nums: Optional[List[int]] = Query(None, description="Realization numbers"),
+    name: str = Query(description="Surface name"),
+    attribute: str = Query(description="Surface attribute"),
+    time_or_interval: Optional[str] = Query(None, description="Time point or time interval string"),
+) -> schemas.SurfaceDataPng:
+    perf_metrics = PerfMetrics(response)
+
+    access = await SurfaceAccess.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
+
+    service_stat_func_to_compute = StatisticFunction.from_string_value(statistic_function)
+    if service_stat_func_to_compute is None:
+        raise HTTPException(status_code=404, detail="Invalid statistic requested")
+
+    xtgeo_surf = await access.get_statistical_surface_data_async(
+        statistic_function=service_stat_func_to_compute,
+        name=name,
+        attribute=attribute,
+        time_or_interval_str=time_or_interval,
+        realization_nums=realization_nums,
+    )
+    perf_metrics.record_lap("sumo-calc")
+
+    if not xtgeo_surf:
+        raise HTTPException(status_code=404, detail="Could not find or compute surface")
+
+    surf_data_response = converters.to_api_surface_data_as_png(xtgeo_surf)
     perf_metrics.record_lap("convert")
 
     LOGGER.info(f"Calculated statistical surface in: {perf_metrics.to_string()}")
+
+    return surf_data_response
+
+
+@router.get("/observation_surface_data_as_png/")
+async def get_observation_surface_data_as_png(
+    response: Response,
+    authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
+    case_uuid: str = Query(description="Sumo case uuid"),
+    ensemble_name: str = Query(description="Ensemble name"),
+    name: str = Query(description="Surface name"),
+    attribute: str = Query(description="Surface attribute"),
+    time_or_interval: Optional[str] = Query(None, description="Time point or time interval string"),
+) -> schemas.SurfaceDataPng:
+    perf_metrics = PerfMetrics(response)
+
+    access = await SurfaceAccess.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
+
+    xtgeo_surf = await access.get_observation_surface_data_async(
+        name=name,
+        attribute=attribute,
+        time_or_interval_str=time_or_interval,
+    )
+    perf_metrics.record_lap("sumo-calc")
+
+    if not xtgeo_surf:
+        raise HTTPException(status_code=404, detail="Could not find or compute surface")
+
+    surf_data_response = converters.to_api_surface_data_as_png(xtgeo_surf)
+    perf_metrics.record_lap("convert")
+
+    LOGGER.info(f"Observed surface in: {perf_metrics.to_string()}")
 
     return surf_data_response
 
@@ -158,7 +267,7 @@ async def get_property_surface_resampled_to_static_surface(
     resampled_surface = converters.resample_property_surface_to_mesh_surface(xtgeo_surf_mesh, xtgeo_surf_property)
     perf_metrics.record_lap("resample")
 
-    surf_data_response: schemas.SurfaceData = converters.to_api_surface_data(resampled_surface)
+    surf_data_response: schemas.SurfaceData = converters.to_api_surface_data_as_float32(resampled_surface)
     perf_metrics.record_lap("convert")
 
     LOGGER.info(f"Loaded property surface in: {perf_metrics.to_string()}")
@@ -201,7 +310,7 @@ async def get_property_surface_resampled_to_statistical_static_surface(
 
     resampled_surface = converters.resample_property_surface_to_mesh_surface(xtgeo_surf_mesh, xtgeo_surf_property)
 
-    surf_data_response = converters.to_api_surface_data(resampled_surface)
+    surf_data_response = converters.to_api_surface_data_as_float32(resampled_surface)
 
     LOGGER.info(f"Loaded property surface and created image, total time: {timer.elapsed_ms()}ms")
 

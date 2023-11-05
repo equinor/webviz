@@ -73,6 +73,7 @@ class SumoContent(str, Enum):
     PINCHOUT = "pinchout"
     SUBCROP = "subcrop"
     FAULT_LINES = "fault_lines"
+    VOLUMES = "volumes"
 
     @classmethod
     def values(cls) -> List[str]:

@@ -36,6 +36,7 @@ class SurfaceAttributeType(str, Enum):
     THICKNESS = "thickness"  # Values are isochores (real or conceptual difference between two depth surfaces)
     ISOCHORE = "isochore"  # Values are isochores (real or conceptual difference between two depth surfaces)
     FLUID_CONTACT = "fluid_contact"  # Values are fluid contacts (oil-water, gas-water, etc.)
+    VOLUMES = "volumes"  # Values are volumetric results (e.g. STOIIP, GIIP, etc.)
 
 
 class SurfaceMeta(BaseModel):
@@ -116,3 +117,18 @@ class SurfaceRealizationSampleValues(BaseModel):
 class PointSetXY(BaseModel):
     x_points: list[float]
     y_points: list[float]
+
+
+class SurfaceDataPng(BaseModel):
+    x_min_surf_orient: float
+    x_max_surf_orient: float
+    y_min_surf_orient: float
+    y_max_surf_orient: float
+    x_min: float
+    x_max: float
+    y_min: float
+    y_max: float
+    val_min: float
+    val_max: float
+    rot_deg: float
+    base64_encoded_image: str

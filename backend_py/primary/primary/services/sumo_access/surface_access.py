@@ -100,7 +100,11 @@ class SurfaceAccess(SumoEnsemble):
         return _make_intersection(surface, xtgeo_fencespec)
 
     async def get_realization_surface_data_async(
-        self, real_num: int, name: str, attribute: str, time_or_interval_str: Optional[str] = None
+        self,
+        real_num: int,
+        name: str,
+        attribute: str,
+        time_or_interval_str: Optional[str] = None,
     ) -> Optional[xtgeo.RegularSurface]:
         """
         Get surface data for a realization surface
@@ -169,12 +173,64 @@ class SurfaceAccess(SumoEnsemble):
 
         return xtgeo_surf
 
+    async def get_observation_surface_data_async(
+        self,
+        name: str,
+        attribute: str,
+        time_or_interval_str: Optional[str] = None,
+    ) -> Optional[xtgeo.RegularSurface]:
+        """
+        Get surface data for an observed surface
+        """
+
+        if time_or_interval_str is None:
+            time_filter = TimeFilter(TimeType.NONE)
+
+        else:
+            timestamp_arr = time_or_interval_str.split("/", 1)
+            if len(timestamp_arr) == 0 or len(timestamp_arr) > 2:
+                raise ValueError("time_or_interval_str must contain a single timestamp or interval")
+            if len(timestamp_arr) == 1:
+                time_filter = TimeFilter(
+                    TimeType.TIMESTAMP,
+                    start=timestamp_arr[0],
+                    end=timestamp_arr[0],
+                    exact=True,
+                )
+            else:
+                time_filter = TimeFilter(
+                    TimeType.INTERVAL,
+                    start=timestamp_arr[0],
+                    end=timestamp_arr[1],
+                    exact=True,
+                )
+        # Remove this once Sumo enforces tagname (tagname-unset)
+        # https://github.com/equinor/webviz/issues/433
+        tagname = attribute if attribute != "Unknown" else ""
+        surface_collection = self._case.surfaces.filter(
+            stage="case",  # Should get these from dataio,
+            name=name,
+            tagname=tagname,
+            time=time_filter,
+        )
+
+        surf_count = await surface_collection.length_async()
+        if surf_count == 0:
+            return None
+
+        sumo_surf: Surface = await surface_collection.getitem_async(0)
+        byte_stream: BytesIO = await sumo_surf.blob_async
+        xtgeo_surf = xtgeo.surface_from_file(byte_stream)
+
+        return xtgeo_surf
+
     async def get_statistical_surface_data_async(
         self,
         statistic_function: StatisticFunction,
         name: str,
         attribute: str,
         time_or_interval_str: Optional[str] = None,
+        realization_nums: Optional[List[int]] = None,
     ) -> Optional[xtgeo.RegularSurface]:
         """
         Compute statistic and return surface data
@@ -210,6 +266,7 @@ class SurfaceAccess(SumoEnsemble):
             name=name,
             tagname=attribute,
             time=time_filter,
+            realization=realization_nums,
         )
 
         surf_count = await surface_collection.length_async()

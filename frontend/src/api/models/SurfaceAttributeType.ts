@@ -20,4 +20,5 @@ export enum SurfaceAttributeType {
     THICKNESS = 'thickness',
     ISOCHORE = 'isochore',
     FLUID_CONTACT = 'fluid_contact',
+    VOLUMES = 'volumes',
 }

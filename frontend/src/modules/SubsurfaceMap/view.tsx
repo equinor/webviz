@@ -10,51 +10,22 @@ import { CircularProgress } from "@lib/components/CircularProgress";
 import { ColorScaleGradientType } from "@lib/utils/ColorScale";
 import { usePolygonsDataQueryByAddress } from "@modules/_shared/Polygons";
 import { useFieldWellsTrajectoriesQuery } from "@modules/_shared/WellBore/queryHooks";
+import {
+    Axes3DLayer,
+    FaultPolygonsLayer,
+    MeshMapLayer,
+    NorthArrowLayer,
+    WellsLayer,
+} from "@modules/_shared/components/SubsurfaceViewer/layers";
 import { useSurfaceDataQueryByAddress } from "@modules_shared/Surface";
+import { createContinuousColorScaleForMap } from "@modules_shared/components/SubsurfaceViewer/utils";
 import { ViewAnnotation } from "@webviz/subsurface-viewer/dist/components/ViewAnnotation";
 
-import {
-    SurfaceMeta,
-    createAxesLayer,
-    createContinuousColorScaleForMap,
-    createNorthArrowLayer,
-    createSurfaceMeshLayer,
-    createSurfacePolygonsLayer,
-    createWellBoreHeaderLayer,
-    createWellboreTrajectoryLayer,
-} from "./_utils";
-import { SyncedSubsurfaceViewer } from "./components/SyncedSubsurfaceViewer";
 import { usePropertySurfaceDataByQueryAddress } from "./queryHooks";
 import { state } from "./state";
 
-type Bounds = [number, number, number, number];
+import { SyncedSubsurfaceViewer } from "../_shared/components/SubsurfaceViewer";
 
-const updateViewPortBounds = (
-    existingViewPortBounds: Bounds | undefined,
-    resetBounds: boolean,
-    surfaceMeta: SurfaceMeta
-): Bounds => {
-    const updatedBounds: Bounds = [surfaceMeta.x_min, surfaceMeta.y_min, surfaceMeta.x_max, surfaceMeta.y_max];
-
-    if (!existingViewPortBounds || resetBounds) {
-        console.debug("updateViewPortBounds: no existing bounds, returning updated bounds");
-        return updatedBounds;
-    }
-
-    // Check if bounds overlap
-    if (
-        existingViewPortBounds[2] < updatedBounds[0] || // existing right edge is to the left of updated left edge
-        existingViewPortBounds[0] > updatedBounds[2] || // existing left edge is to the right of updated right edge
-        existingViewPortBounds[3] < updatedBounds[1] || // existing bottom edge is above updated top edge
-        existingViewPortBounds[1] > updatedBounds[3] // existing top edge is below updated bottom edge
-    ) {
-        console.debug("updateViewPortBounds: bounds don't overlap, returning updated bounds");
-        return updatedBounds; // Return updated bounds since they don't overlap
-    }
-
-    // Otherwise, return the existing bounds
-    return existingViewPortBounds;
-};
 //-----------------------------------------------------------------------------------------------------------
 export function View({ moduleContext, workbenchSettings, workbenchServices }: ModuleFCProps<state>) {
     const myInstanceIdStr = moduleContext.getInstanceIdString();
@@ -73,7 +44,7 @@ export function View({ moduleContext, workbenchSettings, workbenchServices }: Mo
     const surfaceSettings = moduleContext.useStoreValue("surfaceSettings");
     const viewSettings = moduleContext.useStoreValue("viewSettings");
     const [resetBounds, toggleResetBounds] = React.useState<boolean>(false);
-    const [axesLayer, setAxesLayer] = React.useState<Record<string, unknown> | null>(null);
+    const [axesLayer, setAxesLayer] = React.useState<Axes3DLayer | null>(null);
     const [viewportBounds, setviewPortBounds] = React.useState<[number, number, number, number] | undefined>(undefined);
     const syncedSettingKeys = moduleContext.useSyncedSettingKeys();
     const syncHelper = new SyncSettingsHelper(syncedSettingKeys, workbenchServices);
@@ -91,37 +62,40 @@ export function View({ moduleContext, workbenchSettings, workbenchServices }: Mo
     const wellTrajectoriesQuery = useFieldWellsTrajectoriesQuery(meshSurfAddr?.caseUuid);
     const polygonsQuery = usePolygonsDataQueryByAddress(polygonsAddr);
 
-    const newLayers: Record<string, unknown>[] = [createNorthArrowLayer()];
+    const newLayers: Record<string, any>[] = [];
+    const northArrowLayer = new NorthArrowLayer();
+    newLayers.push(northArrowLayer.getLayer());
 
     let colorRange: [number, number] | null = null;
 
     // Mesh data query should only trigger update if the property surface address is not set or if the property surface data is loaded
-    if (meshSurfDataQuery.data && !propertySurfAddr) {
+    if (meshSurfDataQuery.data) {
+        const surfaceLayer = new MeshMapLayer();
         // Drop conversion as soon as SubsurfaceViewer accepts typed arrays
         const newMeshData = Array.from(meshSurfDataQuery.data.valuesFloat32Arr);
 
-        const newSurfaceMetaData: SurfaceMeta = { ...meshSurfDataQuery.data };
-        const surfaceLayer: Record<string, unknown> = createSurfaceMeshLayer(
-            newSurfaceMetaData,
-            newMeshData,
-            surfaceSettings
-        );
-        newLayers.push(surfaceLayer);
+        surfaceLayer.setFrame({
+            origin: [meshSurfDataQuery.data.x_ori, meshSurfDataQuery.data.y_ori],
+            increment: [meshSurfDataQuery.data.x_inc, meshSurfDataQuery.data.y_inc],
+            count: [meshSurfDataQuery.data.x_count, meshSurfDataQuery.data.y_count],
+            rotDeg: meshSurfDataQuery.data.rot_deg,
+        });
+        surfaceLayer.setMeshData(newMeshData);
+        surfaceLayer.setColorRange(meshSurfDataQuery.data.val_min, meshSurfDataQuery.data.val_max);
+        // if (surfaceSettings?.contours) {
+        //     surfaceLayer.setContours(surfaceSettings.contours);
+        // }
         colorRange = [meshSurfDataQuery.data.val_min, meshSurfDataQuery.data.val_max];
-    } else if (meshSurfDataQuery.data && propertySurfDataQuery.data) {
-        // Drop conversion as soon as SubsurfaceViewer accepts typed arrays
-        const newMeshData = Array.from(meshSurfDataQuery.data.valuesFloat32Arr);
-        const newPropertyData = Array.from(propertySurfDataQuery.data.valuesFloat32Arr);
 
-        const newSurfaceMetaData: SurfaceMeta = { ...meshSurfDataQuery.data };
-        const surfaceLayer: Record<string, unknown> = createSurfaceMeshLayer(
-            newSurfaceMetaData,
-            newMeshData,
-            surfaceSettings,
-            newPropertyData
-        );
-        newLayers.push(surfaceLayer);
-        colorRange = [propertySurfDataQuery.data.val_min, propertySurfDataQuery.data.val_max];
+        if (propertySurfDataQuery.data) {
+            // Drop conversion as soon as SubsurfaceViewer accepts typed arrays
+
+            const newPropertyData = Array.from(propertySurfDataQuery.data.valuesFloat32Arr);
+            surfaceLayer.setPropertyData(newPropertyData);
+            surfaceLayer.setColorRange(propertySurfDataQuery.data.val_min, propertySurfDataQuery.data.val_max);
+            colorRange = [propertySurfDataQuery.data.val_min, propertySurfDataQuery.data.val_max];
+        }
+        newLayers.push(surfaceLayer.getLayer());
     }
 
     // Calculate viewport bounds and axes layer from the surface bounds.
@@ -129,38 +103,41 @@ export function View({ moduleContext, workbenchSettings, workbenchServices }: Mo
 
     React.useEffect(() => {
         if (meshSurfDataQuery.data) {
-            const newSurfaceMetaData: SurfaceMeta = { ...meshSurfDataQuery.data };
-
-            setviewPortBounds(updateViewPortBounds(viewportBounds, resetBounds, newSurfaceMetaData));
+            const newBounds: Bounds = [
+                meshSurfDataQuery.data.x_min,
+                meshSurfDataQuery.data.y_min,
+                meshSurfDataQuery.data.x_max,
+                meshSurfDataQuery.data.y_max,
+            ];
+            if (resetBounds || shouldUpdateViewPortBounds(viewportBounds, newBounds)) {
+                setviewPortBounds(newBounds);
+            }
             toggleResetBounds(false);
-
-            const axesLayer: Record<string, unknown> = createAxesLayer([
-                newSurfaceMetaData.x_min,
-                newSurfaceMetaData.y_min,
-                0,
-                newSurfaceMetaData.x_max,
-                newSurfaceMetaData.y_max,
-                3500,
-            ]);
-            setAxesLayer(axesLayer);
         }
     }, [meshSurfDataQuery.data, propertySurfDataQuery.data, resetBounds, viewportBounds]);
 
-    axesLayer && newLayers.push(axesLayer);
+    if (viewportBounds) {
+        const axesLayer = new Axes3DLayer();
+        axesLayer.setBounds([viewportBounds[0], viewportBounds[1], 0, viewportBounds[2], viewportBounds[3], 3500]);
+        newLayers.push(axesLayer.getLayer());
+    }
 
     if (polygonsQuery.data) {
         const polygonsData: PolygonData_api[] = polygonsQuery.data;
-        const polygonsLayer: Record<string, unknown> = createSurfacePolygonsLayer(polygonsData);
-        newLayers.push(polygonsLayer);
+        const faultPolygonsLayer = new FaultPolygonsLayer();
+        faultPolygonsLayer.setData(polygonsData);
+
+        newLayers.push(faultPolygonsLayer.getLayer());
     }
+    const wellsLayer = new WellsLayer({ render2D: !show3D });
+
     if (wellTrajectoriesQuery.data) {
         const wellTrajectories: WellBoreTrajectory_api[] = wellTrajectoriesQuery.data.filter((well) =>
             selectedWellUuids.includes(well.wellbore_uuid)
         );
-        const wellTrajectoryLayer: Record<string, unknown> = createWellboreTrajectoryLayer(wellTrajectories);
-        const wellBoreHeaderLayer: Record<string, unknown> = createWellBoreHeaderLayer(wellTrajectories);
-        newLayers.push(wellTrajectoryLayer);
-        newLayers.push(wellBoreHeaderLayer);
+        wellsLayer.setData(wellTrajectories, null, null);
+
+        newLayers.push(wellsLayer.getLayer());
     }
 
     function onMouseEvent(event: any) {
@@ -168,18 +145,11 @@ export function View({ moduleContext, workbenchSettings, workbenchServices }: Mo
         if (event.type === "click") {
             if (syncHelper.isSynced(SyncSettingKey.WELLBORE)) {
                 event.infos.forEach((info: any) => {
-                    if (info.layer.id === "wells-layer") {
+                    if (info.layer.id === wellsLayer.getId()) {
                         clickedUWIs.push({
                             type: "smda",
                             uwi: info.object.properties.uwi,
                             uuid: info.object.properties.uuid,
-                        });
-                    }
-                    if (info.layer.id === "well-header-layer") {
-                        clickedUWIs.push({
-                            type: "smda",
-                            uwi: info.object.uwi,
-                            uuid: info.object.uuid,
                         });
                     }
                 });
@@ -230,7 +200,6 @@ export function View({ moduleContext, workbenchSettings, workbenchServices }: Mo
                         bounds={viewportBounds}
                         layers={newLayers}
                         colorTables={colorTables}
-                        toolbar={{ visible: true }}
                         views={{
                             layout: [1, 1],
                             showLabel: false,
@@ -263,7 +232,6 @@ export function View({ moduleContext, workbenchSettings, workbenchServices }: Mo
                         bounds={viewportBounds}
                         layers={newLayers}
                         colorTables={colorTables}
-                        toolbar={{ visible: true }}
                         views={{
                             layout: [1, 1],
                             showLabel: false,
@@ -292,4 +260,21 @@ export function View({ moduleContext, workbenchSettings, workbenchServices }: Mo
             </div>
         </div>
     );
+}
+type Bounds = [number, number, number, number];
+function shouldUpdateViewPortBounds(existingViewPortBounds: Bounds | undefined, newBounds: Bounds): boolean {
+    if (!existingViewPortBounds) {
+        return true;
+    }
+    // Check if bounds overlap, update if not
+    if (
+        existingViewPortBounds[2] < newBounds[0] ||
+        existingViewPortBounds[0] > newBounds[2] ||
+        existingViewPortBounds[3] < newBounds[1] ||
+        existingViewPortBounds[1] > newBounds[3]
+    ) {
+        return true;
+    }
+
+    return false;
 }
