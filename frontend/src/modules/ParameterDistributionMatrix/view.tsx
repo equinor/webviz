@@ -33,7 +33,6 @@ export function view({ moduleContext, workbenchSession, workbenchSettings }: Mod
             const ensembleParameters = ensemble.getParameters();
             if (!ensembleParameters.hasParameter(parameter)) continue;
             const ensembleParameter = ensembleParameters.getParameter(parameter);
-            if (!ensembleParameter) continue;
             const ensembleParameterValues: EnsembleParameterValues = {
                 ensembleDisplayName: ensemble.getDisplayName(),
                 values: ensembleParameter.values as number[],
