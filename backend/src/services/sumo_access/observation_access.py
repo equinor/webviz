@@ -51,10 +51,15 @@ def _create_summary_observations(observations_dict: dict) -> List[SummaryVectorO
         observation_values = observations_data["value"]
         observation_errors = observations_data["error"]
         observation_dates = observations_data["date"]
-        if len(observation_names) != len(observation_values) != len(observation_errors) != len(observation_dates):
-            raise ValueError(f"Inconsistent observations data for vector {vector_name}")
 
         num_observations = len(observation_names)
+        if (
+            len(observation_values) != num_observations
+            or len(observation_errors) != num_observations
+            or len(observation_dates) != num_observations
+        ):
+            raise ValueError(f"Inconsistent observations data for vector {vector_name}")
+
         summary_observations.append(
             SummaryVectorObservations(
                 vector_name=vector_name,
