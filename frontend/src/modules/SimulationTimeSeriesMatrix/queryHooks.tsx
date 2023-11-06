@@ -1,4 +1,9 @@
-import { Frequency_api, VectorDescription_api } from "@api";
+import {
+    Frequency_api,
+    SummaryVectorDateObservation_api,
+    SummaryVectorObservations_api,
+    VectorDescription_api,
+} from "@api";
 import { Observations_api, VectorHistoricalData_api, VectorRealizationData_api, VectorStatisticData_api } from "@api";
 import { apiService } from "@framework/ApiService";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
@@ -142,17 +147,64 @@ export function useHistoricalVectorDataQueries(
     });
 }
 
-export function useEnsembleObservations(ensembleIdents: EnsembleIdent[] | null): UseQueryResult<Observations_api>[] {
+export function useVectorObservationQueries(
+    vectorSpecifications: VectorSpec[] | null
+): UseQueryResult<SummaryVectorObservations_api | null>[] {
     return useQueries({
-        queries: (ensembleIdents ?? []).map((item) => {
+        queries: (vectorSpecifications ?? []).map((item) => {
             return {
-                queryKey: ["getObservations", item.getCaseUuid(), item.getEnsembleName()],
+                queryKey: ["getObservations", item.ensembleIdent.getCaseUuid(), item.ensembleIdent.getEnsembleName()],
                 queryFn: () =>
-                    apiService.observations.getObservations(item.getCaseUuid() ?? "", item.getEnsembleName() ?? ""),
+                    apiService.observations.getObservations(
+                        item.ensembleIdent.getCaseUuid() ?? "",
+                        item.ensembleIdent.getEnsembleName() ?? ""
+                    ),
+                select: (data: Observations_api) =>
+                    data.summary.find((elm) => elm.vector_name === item.vectorName) ?? null,
                 staleTime: STALE_TIME,
                 cacheTime: CACHE_TIME,
-                enabled: !!(item.getCaseUuid() && item.getEnsembleName()),
+                enabled: !!(item.ensembleIdent.getCaseUuid() && item.ensembleIdent.getEnsembleName()),
             };
         }),
     });
 }
+
+// export type SummaryVectorsObservations_trans = {
+//     // Vector name and given observations
+//     [key: string]: { ensembleIdent: EnsembleIdent; observationsData: SummaryVectorObservations_api | null };
+// };
+
+// export function useVectorObservationQueries2(
+//     vectorSpecifications: VectorSpec[] | null
+// ): SummaryVectorsObservations_trans {
+//     const uniqueEnsembleIdents = [...new Set(vectorSpecifications?.map((item) => item.ensembleIdent) ?? [])];
+
+//     return useQueries({
+//         queries: (uniqueEnsembleIdents ?? []).map((item) => {
+//             return {
+//                 queryKey: ["getObservations", item.getCaseUuid(), item.getEnsembleName()],
+//                 queryFn: () =>
+//                     apiService.observations.getObservations(item.getCaseUuid() ?? "", item.getEnsembleName() ?? ""),
+//                 staleTime: STALE_TIME,
+//                 cacheTime: CACHE_TIME,
+//                 enabled: !!(item.getCaseUuid() && item.getEnsembleName()),
+//             };
+//         }),
+//         combine: (results: Observations_api[]) => {
+//             const transformedResults: SummaryVectorsObservations_trans = {};
+//             for (const result of results) {
+//                 const ensembleIdent = uniqueEnsembleIdents[results.indexOf(result)];
+
+//                 const observationsData = result.summary.find(
+//                     (item) =>
+//                         item.vector_name ===
+//                         vectorSpecifications?.find((item) => item.ensembleIdent === ensembleIdent)?.vectorName
+//                 );
+//                 if (!observationsData) continue;
+
+//                 transformedResults[observationsData.vector_name] = { ensembleIdent, observationsData };
+//             }
+//             return transformedResults;
+//         },
+//     });
+// }
