@@ -490,10 +490,13 @@ export class SubplotBuilder {
             const subplotIndex = this.getSubplotIndex(elm.vectorSpecification);
             if (subplotIndex === -1) continue;
 
+            const name = this.makeTraceNameFromVectorSpecification(elm.vectorSpecification);
             const vectorObservationsTraces = createVectorObservationsTraces({
                 vectorObservations: elm.data.observations,
+                name: name,
                 color: this._observationColor,
                 type: this._scatterType,
+                yaxis: `y${subplotIndex + 1}`,
             });
 
             this._plotData.push(...vectorObservationsTraces);

@@ -157,30 +157,39 @@ export function createHistoricalVectorTrace({
 export type CreateVectorObservationTraceOptions = {
     vectorObservations: Array<SummaryVectorDateObservation_api>;
     color?: string;
+    yaxis?: string;
+    xaxis?: string;
     legendGroup?: string;
     showLegend?: boolean;
+    name?: string;
     type?: "scatter" | "scattergl";
 };
 export function createVectorObservationsTraces({
     vectorObservations,
     color = "black",
+    yaxis = "y",
+    xaxis = "x",
     legendGroup = "Observation",
     showLegend = false,
+    name = undefined,
     type = "scatter",
 }: CreateVectorObservationTraceOptions): Partial<TimeSeriesPlotData>[] {
-    const name = legendGroup !== "Observation" ? `Observation: ${legendGroup}` : "Observation";
+    // NB: "scattergl" does not include "+/- error" in the hover template `(%{x}, %{y})`, "scatter" does.
 
+    const traceName = name ? `Observation<br>${name}` : "Observation";
     return vectorObservations.map((observation) => {
-        const hovertext = observation.comment;
-        const hovertemplate = hovertext ? `(%{x}, %{y})<br>${hovertext}` : "(%{x}, %{y})<br>";
+        const hoverText = observation.comment ? `${observation.label}: ${observation.comment}` : observation.label;
+        const hoverData = type === "scattergl" ? `(%{x}, %{y} ± ${observation.error})<br>` : `(%{x}, %{y})<br>`;
 
         return {
-            name: name,
+            name: traceName,
             legendgroup: legendGroup,
             x: [observation.date],
             y: [observation.value],
             marker: { color: color },
-            hovertemplate: hovertemplate,
+            yaxis: yaxis,
+            xaxis: xaxis,
+            hovertemplate: hoverText ? `${hoverData}${hoverText}` : hoverData,
             showlegend: showLegend,
             type: type,
             error_y: {
