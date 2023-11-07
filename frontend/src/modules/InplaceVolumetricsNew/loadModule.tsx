@@ -8,6 +8,7 @@ const defaultState: State = {
     selectedEnsembleIdents: [],
     selectedResponseNames: [],
     selectedTableNames: [],
+    selectedCategoricalMetadata: [],
 };
 
 const module = ModuleRegistry.initModule<State>("InplaceVolumetricsNew", defaultState);

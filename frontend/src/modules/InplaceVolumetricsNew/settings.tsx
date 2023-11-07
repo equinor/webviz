@@ -36,6 +36,9 @@ export const settings = ({ workbenchSession, moduleContext }: ModuleFCProps<Stat
     const [selectedEnsembleIdents, setSelectedEnsembleIdents] = moduleContext.useStoreState("selectedEnsembleIdents");
     const [selectedResponseNames, setSelectedResponseNames] = moduleContext.useStoreState("selectedResponseNames");
     const [selectedTableNames, setSelectedTableNames] = moduleContext.useStoreState("selectedTableNames");
+    const [selectedCategoricalMetadata, setSelectedCategoricalMetadata] =
+        moduleContext.useStoreState("selectedCategoricalMetadata");
+    const [selectedFluidZones, setSelectedFluidZones] = React.useState<string[]>([]);
 
     const isEnsembleSetLoading = useIsEnsembleSetLoading(workbenchSession);
     const ensembleSet = useEnsembleSet(workbenchSession);
@@ -45,38 +48,55 @@ export const settings = ({ workbenchSession, moduleContext }: ModuleFCProps<Stat
     const tableNamesAndMetadata = useTableNamesAndMetadata(selectedEnsembleIdents);
     const filterOptions = useTableNameAndMetadataFilterOptions(tableNamesAndMetadata);
 
+    const filteredResponses =
+        filterOptions?.responses
+            .filter((el) => selectedFluidZones.includes(el.fluidZone))
+            .map((el) => `${el.response}_${el.fluidZone}`) || [];
+
     function handleEnsembleSelectionChange(ensembleIdents: EnsembleIdent[]) {
         setSelectedEnsembleIdents(ensembleIdents);
     }
 
     function makeCategoricalSelect(categoryName: string, options: (string | number)[]) {
         const stringifiedOptions = options.map((option) => `${option}`);
-        return <FilterSelect key={categoryName} name={categoryName} options={stringifiedOptions} size={5} />;
+        return (
+            <FilterSelect
+                key={categoryName}
+                name={categoryName}
+                options={stringifiedOptions}
+                size={5}
+                onChange={(values) => handleCategoricalMetadataChange(categoryName, values)}
+            />
+        );
     }
 
     function handleSourceChange(values: string[]) {
         setSelectedTableNames(values);
     }
 
+    function handleFluidZoneChange(values: string[]) {
+        setSelectedFluidZones(values);
+    }
+
     function handleResponsesChange(values: string[]) {
-        setSelectedResponseNames(values);
+        setSelectedResponseNames(
+            filterOptions?.responses.filter((el) => values.includes(el.response)).map((el) => el.response) || []
+        );
+    }
+
+    function handleCategoricalMetadataChange(name: string, uniqueValues: (string | number)[]) {
+        const newSelectedCategoricalMetadata = selectedCategoricalMetadata.filter((el) => el.name !== name);
+        newSelectedCategoricalMetadata.push({ name, unique_values: uniqueValues });
+        setSelectedCategoricalMetadata(newSelectedCategoricalMetadata);
     }
 
     const validRealizations = findValidRealizations(selectedEnsembleIdents, ensembleSet);
 
     return (
         <div className="w-full h-full flex flex-col gap-4">
-            <CollapsibleGroup title="Volume response" icon={<BubbleChart fontSize="small" />} expanded>
-                <FilterSelect
-                    name="Response"
-                    options={filterOptions?.responses || []}
-                    size={5}
-                    onChange={handleResponsesChange}
-                />
-            </CollapsibleGroup>
             <CollapsibleGroup title="Filter" icon={<FilterAlt fontSize="small" />} expanded>
                 <div className="flex flex-col gap-2">
-                    <Label text="Ensemble">
+                    <Label text="Ensembles">
                         <LoadingStateWrapper isLoading={isEnsembleSetLoading} loadingComponent={<CircularProgress />}>
                             <MultiEnsembleSelect
                                 ensembleSet={ensembleSet}
@@ -92,11 +112,16 @@ export const settings = ({ workbenchSession, moduleContext }: ModuleFCProps<Stat
                         loadingComponent={<CircularProgress />}
                         className="flex flex-col gap-2"
                     >
-                        <FilterSelect name="Fluid zone" options={filterOptions?.fluidZones || []} size={2} />
                         <FilterSelect
-                            name="Source"
-                            options={filterOptions?.sources || []}
+                            name="Fluid zones"
+                            options={filterOptions?.fluidZones || []}
                             size={2}
+                            onChange={handleFluidZoneChange}
+                        />
+                        <FilterSelect
+                            name="Tables"
+                            options={filterOptions?.tables || []}
+                            size={3}
                             onChange={handleSourceChange}
                         />
                         {filterOptions &&
@@ -110,6 +135,12 @@ export const settings = ({ workbenchSession, moduleContext }: ModuleFCProps<Stat
                                 debounceTimeMs={1000}
                             />
                         </Label>
+                        <FilterSelect
+                            name="Responses"
+                            options={filteredResponses}
+                            size={5}
+                            onChange={handleResponsesChange}
+                        />
                     </LoadingStateWrapper>
                 </div>
             </CollapsibleGroup>

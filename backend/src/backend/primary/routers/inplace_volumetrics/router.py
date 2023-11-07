@@ -57,7 +57,7 @@ async def get_realizations_response(
     access = await InplaceVolumetricsAccess.from_case_uuid(
         authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
     )
-    response = access.get_response(table_name, response_name, categorical_filter, realizations)
+    response = await access.get_response(table_name, response_name, categorical_filter, realizations)
     return response
 
 

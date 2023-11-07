@@ -5,9 +5,9 @@ import { isEqual } from "lodash";
 import { TableNamesAndMetaData } from "./useTableNamesAndMetadata";
 
 export type TableNameAndMetadataFilterOptions = {
-    sources: string[];
+    tables: string[];
     fluidZones: string[];
-    responses: string[];
+    responses: { response: string; fluidZone: string }[];
     categories: Record<string, (string | number)[]>;
 };
 
@@ -25,7 +25,7 @@ export function useTableNameAndMetadataFilterOptions(
     if (!tableNamesAndMetadata.isFetching && !isEqual(prevTableNamesAndMetadata, tableNamesAndMetadata)) {
         setPrevTableNamesAndMetadata(tableNamesAndMetadata);
         const newReducedTableNamesAndMetadata: TableNameAndMetadataFilterOptions = {
-            sources: [],
+            tables: [],
             fluidZones: [],
             responses: [],
             categories: {},
@@ -37,8 +37,8 @@ export function useTableNameAndMetadataFilterOptions(
             for (const tableMetadata of tableNamesAndMetadataItem.tableNamesAndMetadata) {
                 if (!tableMetadata) continue;
 
-                if (!newReducedTableNamesAndMetadata.sources.includes(tableMetadata.name)) {
-                    newReducedTableNamesAndMetadata.sources.push(tableMetadata.name);
+                if (!newReducedTableNamesAndMetadata.tables.includes(tableMetadata.name)) {
+                    newReducedTableNamesAndMetadata.tables.push(tableMetadata.name);
                 }
 
                 for (const categoricalColumnMetadata of tableMetadata.categorical_column_metadata) {
@@ -62,9 +62,19 @@ export function useTableNameAndMetadataFilterOptions(
                         if (fluidZone && !newReducedTableNamesAndMetadata.fluidZones.includes(fluidZone)) {
                             newReducedTableNamesAndMetadata.fluidZones.push(fluidZone);
                         }
+
                         const response = match.groups?.response;
-                        if (response && !newReducedTableNamesAndMetadata.responses.includes(response)) {
-                            newReducedTableNamesAndMetadata.responses.push(response);
+                        if (
+                            response &&
+                            fluidZone &&
+                            !newReducedTableNamesAndMetadata.responses.find(
+                                (el) => el.response === response && el.fluidZone === fluidZone
+                            )
+                        ) {
+                            newReducedTableNamesAndMetadata.responses.push({
+                                response,
+                                fluidZone,
+                            });
                         }
                     }
                 }
