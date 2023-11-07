@@ -89,7 +89,7 @@ export const view = (props: ModuleFCProps<State>) => {
         };
 
         for (const response of item.responses) {
-            if (responseNames.includes(response.responseName.replace("_GAS", "").replace("_OIL", ""))) {
+            if (responseNames.includes(response.responseName)) {
                 row[response.responseName] = response.value;
             }
         }

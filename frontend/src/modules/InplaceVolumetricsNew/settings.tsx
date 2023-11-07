@@ -49,9 +49,8 @@ export const settings = ({ workbenchSession, moduleContext }: ModuleFCProps<Stat
     const filterOptions = useTableNameAndMetadataFilterOptions(tableNamesAndMetadata);
 
     const filteredResponses =
-        filterOptions?.responses
-            .filter((el) => selectedFluidZones.includes(el.fluidZone))
-            .map((el) => `${el.response}_${el.fluidZone}`) || [];
+        filterOptions?.responses.filter((el) => selectedFluidZones.includes(el.fluidZone)).map((el) => el.response) ||
+        [];
 
     function handleEnsembleSelectionChange(ensembleIdents: EnsembleIdent[]) {
         setSelectedEnsembleIdents(ensembleIdents);
@@ -79,9 +78,13 @@ export const settings = ({ workbenchSession, moduleContext }: ModuleFCProps<Stat
     }
 
     function handleResponsesChange(values: string[]) {
-        setSelectedResponseNames(
-            filterOptions?.responses.filter((el) => values.includes(el.response)).map((el) => el.response) || []
-        );
+        const newSelectedResponseNames: string[] = [];
+        for (const value of values) {
+            for (const fluidZone of selectedFluidZones) {
+                newSelectedResponseNames.push(`${value}_${fluidZone}`);
+            }
+        }
+        setSelectedResponseNames(newSelectedResponseNames);
     }
 
     function handleCategoricalMetadataChange(name: string, uniqueValues: (string | number)[]) {

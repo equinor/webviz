@@ -29,7 +29,7 @@ export function useRealizationsResponses(
         for (const responseName of responseNames) {
             for (const tableName of tableNames) {
                 queries.push({
-                    queryKey: ["getRealizationsResponse", ensembleIdent?.toString(), tableName, responseName],
+                    queryKey: ["getRealizationsResponse", ensembleIdent?.toString(), tableName, responseName, filters],
                     queryFn: () => {
                         const caseUuid = ensembleIdent?.getCaseUuid();
                         const ensembleName = ensembleIdent?.getEnsembleName();
