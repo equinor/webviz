@@ -1,5 +1,5 @@
 import { Frequency_api, SummaryVectorObservations_api, VectorDescription_api } from "@api";
-import { Observations_api, VectorHistoricalData_api, VectorRealizationData_api, VectorStatisticData_api } from "@api";
+import { VectorHistoricalData_api, VectorRealizationData_api, VectorStatisticData_api } from "@api";
 import { apiService } from "@framework/ApiService";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { UseQueryResult, useQueries } from "@tanstack/react-query";
