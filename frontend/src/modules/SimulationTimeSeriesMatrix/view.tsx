@@ -1,6 +1,7 @@
 import React from "react";
 import Plot from "react-plotly.js";
 
+import { SummaryVectorObservations_api } from "@api";
 import { Ensemble } from "@framework/Ensemble";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { ModuleFCProps } from "@framework/Module";
@@ -14,9 +15,9 @@ import {
     useHistoricalVectorDataQueries,
     useStatisticalVectorDataQueries,
     useVectorDataQueries,
-    useVectorObservationQueries,
+    useVectorObservationsQueries,
 } from "./queryHooks";
-import { GroupBy, State, VisualizationMode } from "./state";
+import { GroupBy, State, VectorSpec, VisualizationMode } from "./state";
 import { EnsemblesContinuousParameterColoring } from "./utils/ensemblesContinuousParameterColoring";
 import { SubplotBuilder, SubplotOwner } from "./utils/subplotBuilder";
 import {
@@ -85,15 +86,14 @@ export const view = ({ moduleContext, workbenchSession, workbenchSettings }: Mod
         resampleFrequency,
         vectorSpecificationsWithHistoricalData?.some((vec) => vec.hasHistoricalVector) ?? false
     );
-
-    const vectorObservationQueries = useVectorObservationQueries(vectorSpecifications ?? null);
+    const vectorObservationsQueries = useVectorObservationsQueries(vectorSpecifications, showObservations);
 
     // Get fetching status from queries
     const isQueryFetching =
         vectorDataQueries.some((query) => query.isFetching) ||
         vectorStatisticsQueries.some((query) => query.isFetching) ||
         historicalVectorDataQueries.some((query) => query.isFetching) ||
-        vectorObservationQueries.some((query) => query.isFetching);
+        vectorObservationsQueries.isFetching;
 
     statusWriter.setLoading(isQueryFetching);
 
@@ -101,7 +101,6 @@ export const view = ({ moduleContext, workbenchSession, workbenchSettings }: Mod
     const hasRealizationsQueryError = vectorDataQueries.some((query) => query.isError);
     const hasStatisticsQueryError = vectorStatisticsQueries.some((query) => query.isError);
     const hasHistoricalVectorQueryError = historicalVectorDataQueries.some((query) => query.isError);
-    const hasVectorObservationQueryError = vectorObservationQueries.some((query) => query.isError);
     if (hasRealizationsQueryError) {
         statusWriter.addError("One or more realization data queries have an error state.");
     }
@@ -111,8 +110,8 @@ export const view = ({ moduleContext, workbenchSession, workbenchSettings }: Mod
     if (hasHistoricalVectorQueryError) {
         statusWriter.addWarning("One or more historical data queries have an error state.");
     }
-    if (hasVectorObservationQueryError) {
-        statusWriter.addWarning("One or more observation data queries have an error state.");
+    if (vectorObservationsQueries.isError) {
+        statusWriter.addWarning("One or more vector observation queries have an error state.");
     }
 
     // Map vector specifications and queries with data
@@ -128,9 +127,20 @@ export const view = ({ moduleContext, workbenchSession, workbenchSettings }: Mod
               historicalVectorDataQueries
           )
         : [];
-    const loadedVectorSpecificationsAndObservationData = vectorSpecifications
-        ? createLoadedVectorSpecificationAndDataArray(vectorSpecifications, vectorObservationQueries)
-        : [];
+
+    const loadedVectorSpecificationsAndObservationData: {
+        vectorSpecification: VectorSpec;
+        data: SummaryVectorObservations_api;
+    }[] = [];
+    vectorObservationsQueries.ensembleVectorObservationsMap.forEach((ensembleObservationData, ensembleIdent) => {
+        if (!ensembleObservationData.hasSummaryObservations) {
+            const ensembleName = ensembleSet.findEnsemble(ensembleIdent)?.getDisplayName() ?? ensembleIdent.toString();
+            statusWriter.addWarning(`${ensembleName} has no observations.`);
+            return;
+        }
+
+        loadedVectorSpecificationsAndObservationData.push(...ensembleObservationData.vectorsObservationData);
+    });
 
     // Create parameter color scale helper
     const doColorByParameter =

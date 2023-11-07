@@ -140,36 +140,71 @@ export function useHistoricalVectorDataQueries(
     });
 }
 
-export function useVectorObservationQueries(
-    vectorSpecifications: VectorSpec[] | null
-): UseQueryResult<SummaryVectorObservations_api | null>[] {
-    // This function is utilizing tanstack ability to prevent duplicate queries.
-    //
-    // See: https://tanstack.com/query/v5/docs/react/reference/useQueries
-    //
-    // "Having the same query key more than once in the array of query objects may cause some data to be shared between
-    // queries. To avoid this, consider de-duplicating the queries and map the results back to the desired structure."
-    //
-    // Testing shows that number of queries to back-end is equal to number of unique query keys, i.e. number of unique
-    // ensembleIdents. Thereby all queries asking for same ensembleIdent, shares the data. As the data is shared between
-    // queries, the `select: (data: TData) => unknown` works with the same reference to data. Thereby the `select`
-    // function should not modify the data, but only return a new object.
+export type EnsembleVectorObservationsMap = Map<
+    EnsembleIdent,
+    {
+        hasSummaryObservations: boolean;
+        vectorsObservationData: { vectorSpecification: VectorSpec; data: SummaryVectorObservations_api }[];
+    }
+>;
 
+/**
+ * This function takes vectorSpecifications and returns a map of ensembleIdent and the respective vector observations.
+ *
+ * If the returned summary array from back-end is empty array, the ensemble does not have observations.
+ * If the selected vectors are not among the returned summary array, the vector does not have observations.
+ */
+export function useVectorObservationsQueries(
+    vectorSpecifications: VectorSpec[] | null,
+    allowEnable: boolean
+): { isFetching: boolean; isError: boolean; ensembleVectorObservationsMap: EnsembleVectorObservationsMap } {
+    const uniqueEnsembleIdents = [...new Set(vectorSpecifications?.map((item) => item.ensembleIdent) ?? [])];
     return useQueries({
-        queries: (vectorSpecifications ?? []).map((item) => {
+        queries: (uniqueEnsembleIdents ?? []).map((item) => {
             return {
-                queryKey: ["getObservations", item.ensembleIdent.getCaseUuid(), item.ensembleIdent.getEnsembleName()],
+                queryKey: ["getObservations", item.getCaseUuid(), item.getEnsembleName()],
                 queryFn: () =>
-                    apiService.observations.getObservations(
-                        item.ensembleIdent.getCaseUuid() ?? "",
-                        item.ensembleIdent.getEnsembleName() ?? ""
-                    ),
-                select: (data: Observations_api) =>
-                    data.summary.find((elm) => elm.vector_name === item.vectorName) ?? null,
+                    apiService.observations.getObservations(item.getCaseUuid() ?? "", item.getEnsembleName() ?? ""),
                 staleTime: STALE_TIME,
                 cacheTime: CACHE_TIME,
-                enabled: !!(item.ensembleIdent.getCaseUuid() && item.ensembleIdent.getEnsembleName()),
+                enabled: !!(allowEnable && item.getCaseUuid() && item.getEnsembleName()),
             };
         }),
+        combine: (results) => {
+            const combinedResult: EnsembleVectorObservationsMap = new Map();
+            if (!vectorSpecifications)
+                return { isFetching: false, isError: false, ensembleVectorObservationsMap: combinedResult };
+
+            results.forEach((result, index) => {
+                const ensembleIdent = uniqueEnsembleIdents.at(index);
+                if (!ensembleIdent) return;
+
+                const ensembleVectorSpecifications = vectorSpecifications.filter(
+                    (item) => item.ensembleIdent === ensembleIdent
+                );
+
+                const ensembleHasObservations = result.data?.summary.length !== 0;
+                combinedResult.set(ensembleIdent, {
+                    hasSummaryObservations: ensembleHasObservations,
+                    vectorsObservationData: [],
+                });
+                for (const vectorSpec of ensembleVectorSpecifications) {
+                    const vectorObservationsData =
+                        result.data?.summary.find((elm) => elm.vector_name === vectorSpec.vectorName) ?? null;
+                    if (!vectorObservationsData) continue;
+
+                    combinedResult.get(ensembleIdent)?.vectorsObservationData.push({
+                        vectorSpecification: vectorSpec,
+                        data: vectorObservationsData,
+                    });
+                }
+            });
+
+            return {
+                isFetching: results.some((result) => result.isFetching),
+                isError: results.some((result) => result.isError),
+                ensembleVectorObservationsMap: combinedResult,
+            };
+        },
     });
 }
