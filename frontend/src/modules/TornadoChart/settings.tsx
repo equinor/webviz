@@ -4,7 +4,6 @@ import { ModuleFCProps } from "@framework/Module";
 import { ChannelSelect } from "@framework/components/ChannelSelect";
 import { Dropdown } from "@lib/components/Dropdown";
 import { Label } from "@lib/components/Label";
-import { R } from "@tanstack/react-query-devtools/build/legacy/devtools-c71c5f06";
 
 import { State } from "./state";
 
