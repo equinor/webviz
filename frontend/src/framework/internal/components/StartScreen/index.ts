@@ -1,1 +1,0 @@
-export { StartScreen } from "./startScreen";
