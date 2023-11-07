@@ -12,7 +12,6 @@ const CACHE_TIME = 60 * 1000;
 export function useVectorListQueries(
     caseUuidsAndEnsembleNames: EnsembleIdent[] | null
 ): UseQueryResult<VectorDescription_api[]>[] {
-    // Note: how to cancel queryFn if key is updated?
     return useQueries({
         queries: (caseUuidsAndEnsembleNames ?? []).map((item) => {
             return {
@@ -33,7 +32,6 @@ export function useVectorDataQueries(
     realizationsToInclude: number[] | null,
     allowEnable: boolean
 ): UseQueryResult<VectorRealizationData_api[]>[] {
-    // Note: how to cancel queryFn if key is updated?
     return useQueries({
         queries: (vectorSpecifications ?? []).map((item) => {
             return {
@@ -145,8 +143,18 @@ export function useHistoricalVectorDataQueries(
 export function useVectorObservationQueries(
     vectorSpecifications: VectorSpec[] | null
 ): UseQueryResult<SummaryVectorObservations_api | null>[] {
-    // NOTE: Having the same query key more than once in the array of query object may cause some data to be shared between
-    // queries. Thereby, the data of the first query with a specific key can be used for all queries with the same key.
+    // This function is utilizing tanstack ability to prevent duplicate queries.
+    //
+    // See: https://tanstack.com/query/v5/docs/react/reference/useQueries
+    //
+    // "Having the same query key more than once in the array of query objects may cause some data to be shared between
+    // queries. To avoid this, consider de-duplicating the queries and map the results back to the desired structure."
+    //
+    // Testing shows that number of queries to back-end is equal to number of unique query keys, i.e. number of unique
+    // ensembleIdents. Thereby all queries asking for same ensembleIdent, shares the data. As the data is shared between
+    // queries, the `select: (data: TData) => unknown` works with the same reference to data. Thereby the `select`
+    // function should not modify the data, but only return a new object.
+
     return useQueries({
         queries: (vectorSpecifications ?? []).map((item) => {
             return {
