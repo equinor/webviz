@@ -23,6 +23,7 @@ services:
       dockerfile: backend.Dockerfile
     ports:
       - 5000:5000
+      - 5678:5678
     environment:
       - UVICORN_PORT=5000
       - UVICORN_RELOAD=true
@@ -34,6 +35,12 @@ services:
       - CODESPACE_NAME  # Automatically set env. variable by GitHub codespace
     volumes:
       - ./backend/src:/home/appuser/backend/src
+    command:
+      [
+        "sh",
+        "-c",
+        "pip install debugpy && python -m debugpy --listen 0.0.0.0:5678 -m uvicorn --proxy-headers --host=0.0.0.0 $${UVICORN_ENTRYPOINT}",
+      ]
 
   backend-user-session:
     build:
