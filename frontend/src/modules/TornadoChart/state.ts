@@ -10,6 +10,8 @@ export type SelectedSensitivity = {
 
 export interface State {
     plotType: PlotType;
+    referenceSensitivityName: string | null;
+    sensitivityNames: string[];
     selectedSensitivity: SelectedSensitivity | null;
     responseChannelName: string | null;
 }

@@ -96,7 +96,7 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
                 setSelectedSensitivities(sensitivityNames);
             }
         },
-        [sensitivityNames]
+        [computedEnsemble]
     );
     const sensitivityOptions: SelectOption[] = sensitivityNames.map((name) => ({
         value: name,

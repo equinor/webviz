@@ -49,11 +49,12 @@ export class SensitivityResponseCalculator {
     constructor(
         sensitivities: EnsembleSensitivities,
         ensembleResponse: EnsembleScalarResponse,
-        referenceSensitivity = "rms_seed"
+        referenceSensitivity: string | null
     ) {
         this._ensembleResponse = ensembleResponse;
         this._sensitivities = sensitivities;
-        if (!this._sensitivities.hasSensitivityName(referenceSensitivity)) {
+
+        if (!referenceSensitivity || !this._sensitivities.hasSensitivityName(referenceSensitivity)) {
             throw new Error(
                 `SensitivityResponseCalculator: Reference sensitivity ${referenceSensitivity} not found in ensemble`
             );
