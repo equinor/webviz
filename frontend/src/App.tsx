@@ -1,7 +1,7 @@
 import React from "react";
 
 import WebvizLogo from "@assets/webviz.svg";
-import { DrawerContent, GuiState, useGuiState } from "@framework/GuiMessageBroker";
+import { DrawerContent, GuiState } from "@framework/GuiMessageBroker";
 import { LayoutElement, Workbench } from "@framework/Workbench";
 import { NavBar } from "@framework/internal/components/NavBar";
 import { SettingsContentPanels } from "@framework/internal/components/SettingsContentPanels";
@@ -43,6 +43,10 @@ function App() {
         setInitAppState(InitAppState.InitCompleted);
     }
 
+    function signIn() {
+        window.location.href = `/api/login?redirect_url_after_login=${btoa("/")}`;
+    }
+
     React.useEffect(
         function handleMountWhenSignedIn() {
             if (authState !== AuthState.LoggedIn || isMounted) {
@@ -66,10 +70,6 @@ function App() {
         },
         [authState, isMounted]
     );
-
-    function signIn() {
-        window.location.href = `/api/login?redirect_url_after_login=${btoa("/")}`;
-    }
 
     function makeStateMessages() {
         return (

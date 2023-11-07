@@ -10,6 +10,7 @@ import { Dialog } from "@lib/components/Dialog";
 import { Dropdown } from "@lib/components/Dropdown";
 import { IconButton } from "@lib/components/IconButton";
 import { Label } from "@lib/components/Label";
+import { Overlay } from "@lib/components/Overlay";
 import { Select } from "@lib/components/Select";
 import { Switch } from "@lib/components/Switch";
 import { TableSelect, TableSelectOption } from "@lib/components/TableSelect";
@@ -194,7 +195,9 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
             filteredCases = filteredCases.filter((c) => c.status === "keep");
         }
         if (casesFilteringOptions.onlyMyCases) {
-            filteredCases = filteredCases.filter((c) => c.user === userInfo?.username.replace("@equinor.com", ""));
+            filteredCases = filteredCases.filter(
+                (c) => c.user.toLowerCase() === userInfo?.username.replace("@equinor.com", "").toLowerCase()
+            );
         } else if (casesFilteringOptions.users.length > 0) {
             filteredCases = filteredCases.filter((c) => casesFilteringOptions.users.includes(c.user));
         }
@@ -390,6 +393,7 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                         )}
                     </div>
                 </div>
+                <Overlay visible={isLoadingEnsembles} />
             </Dialog>
             {
                 <Dialog

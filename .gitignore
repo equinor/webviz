@@ -110,3 +110,10 @@ dist
 # .vscode
 .vscode/
 !.vscode/tasks.json
+!.vscode/launch.json
+
+# Ignore Jupyter Notebook files
+*.ipynb
+
+# Ignore Jupyter Notebook checkpoints (hidden directories)
+.ipynb_checkpoints/

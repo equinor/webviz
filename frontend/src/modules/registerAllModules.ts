@@ -9,6 +9,7 @@ import "./InplaceVolumetrics/registerModule";
 import "./InplaceVolumetricsNew/registerModule";
 import "./Map/registerModule";
 import "./Pvt/registerModule";
+import "./Rft/registerModule"
 import "./SimulationTimeSeries/registerModule";
 import "./SimulationTimeSeriesMatrix/registerModule";
 import "./SimulationTimeSeriesSensitivity/registerModule";
@@ -16,6 +17,7 @@ import "./SubsurfaceMap/registerModule";
 import "./TimeSeriesParameterDistribution/registerModule";
 import "./TornadoChart/registerModule";
 import "./WellCompletions/registerModule";
+
 
 if (isDevMode()) {
     await import("./MyModule/registerModule");

@@ -1,7 +1,8 @@
 import React, { Key } from "react";
 
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-import { getTextWidthWithElement } from "@lib/utils/textSize";
+
+import { isEqual } from "lodash";
 
 import { BaseComponent, BaseComponentProps } from "../BaseComponent";
 import { Input } from "../Input";
@@ -45,7 +46,7 @@ export const Select = withDefaults<SelectProps>()(defaultProps, (props) => {
     const [startIndex, setStartIndex] = React.useState<number>(0);
     const [lastShiftIndex, setLastShiftIndex] = React.useState<number>(-1);
     const [currentIndex, setCurrentIndex] = React.useState<number>(0);
-    const [minWidth, setMinWidth] = React.useState<number>(0);
+    const [prevFilteredOptions, setPrevFilteredOptions] = React.useState<SelectOption[]>([]);
 
     const ref = React.useRef<HTMLDivElement>(null);
     const noOptionsText = props.placeholder ?? "No options";
@@ -56,24 +57,24 @@ export const Select = withDefaults<SelectProps>()(defaultProps, (props) => {
         return props.options.filter((option) => option.label.toLowerCase().includes(filter.toLowerCase()));
     }, [props.options, filter]);
 
-    React.useEffect(() => {
-        let longestOptionWidth = props.options.reduce((prev, current) => {
-            const labelWidth = getTextWidthWithElement(current.label, document.body);
-            if (labelWidth > prev) {
-                return labelWidth;
-            }
-            return prev;
-        }, 0);
-
-        if (longestOptionWidth === 0) {
-            if (props.options.length === 0 || filter === "") {
-                longestOptionWidth = getTextWidthWithElement(noOptionsText, document.body);
-            } else {
-                longestOptionWidth = getTextWidthWithElement(noMatchingOptionsText, document.body);
+    if (!isEqual(filteredOptions, prevFilteredOptions)) {
+        let newCurrentIndex = 0;
+        let newStartIndex = 0;
+        let oldCurrentValue = prevFilteredOptions[currentIndex]?.value;
+        if (props.value?.length >= 1) {
+            oldCurrentValue = props.value[0];
+        }
+        setPrevFilteredOptions(filteredOptions);
+        if (oldCurrentValue) {
+            const newIndex = filteredOptions.findIndex((option) => option.value === oldCurrentValue);
+            if (newIndex !== -1) {
+                newCurrentIndex = newIndex;
+                newStartIndex = newIndex;
             }
         }
-        setMinWidth(longestOptionWidth + 40);
-    }, [props.options, noOptionsText, filter]);
+        setCurrentIndex(newCurrentIndex);
+        setStartIndex(newStartIndex);
+    }
 
     const toggleValue = React.useCallback(
         (option: SelectOption, index: number) => {
@@ -121,10 +122,11 @@ export const Select = withDefaults<SelectProps>()(defaultProps, (props) => {
         const handleKeyDown = (e: KeyboardEvent) => {
             setKeysPressed((keysPressed) => [...keysPressed, e.key]);
 
+            if (e.key === "Shift") {
+                setLastShiftIndex(currentIndex);
+            }
+
             if (hasFocus) {
-                if (e.key === "Shift") {
-                    setLastShiftIndex(currentIndex);
-                }
                 if (e.key === "ArrowUp") {
                     e.preventDefault();
                     const newIndex = Math.max(0, currentIndex - 1);
@@ -195,7 +197,7 @@ export const Select = withDefaults<SelectProps>()(defaultProps, (props) => {
                     "pointer-events-none": props.disabled,
                     "opacity-30": props.disabled,
                 })}
-                style={{ width: props.width, minWidth: props.width ?? minWidth }}
+                style={{ width: props.width, minWidth: props.width }}
             >
                 {props.filter && (
                     <Input
