@@ -1,0 +1,34 @@
+from typing import Optional
+
+from fastapi import APIRouter, Depends, HTTPException, Query
+
+from src.backend.auth.auth_helper import AuthHelper
+from src.services.utils.authenticated_user import AuthenticatedUser
+
+from src.services.sumo_access.group_tree_access import GroupTreeAccess
+from src.services.sumo_access.summary_access import Frequency, SummaryAccess
+from src.services.group_tree_data import GroupTreeData
+
+router = APIRouter()
+
+
+@router.get("/group_tree_data/")
+async def get_group_tree_data(
+    # fmt:off
+    authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
+    case_uuid: str = Query(description="Sumo case uuid"),
+    ensemble_name: str = Query(description="Ensemble name"),
+    realization: Optional[int] = Query(None, description="Optional realization to include. If not specified, all realizations will be returned."),
+    # fmt:on
+):
+    grouptree_access = await GroupTreeAccess.from_case_uuid(
+        authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
+    )
+    summary_access = await SummaryAccess.from_case_uuid(
+        authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
+    )
+
+    grouptree_data = GroupTreeData(grouptree_access, summary_access, realization=realization)
+    await grouptree_data.initialize_data()
+
+    return grouptree_data.create_group_tree_dataset()
