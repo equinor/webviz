@@ -140,16 +140,34 @@ export function useHistoricalVectorDataQueries(
     });
 }
 
-export type EnsembleVectorObservationsMap = Map<
-    EnsembleIdent,
-    {
-        hasSummaryObservations: boolean;
-        vectorsObservationData: { vectorSpecification: VectorSpec; data: SummaryVectorObservations_api }[];
-    }
->;
+/**
+ * Definition of ensemble vector observation data
+ *
+ * hasSummaryObservations: true if the ensemble has observations, i.e the summary observations array is not empty
+ * vectorsObservationData: array of vector observation data for requested vector specifications
+ */
+export type EnsembleVectorObservationData = {
+    hasSummaryObservations: boolean;
+    vectorsObservationData: { vectorSpecification: VectorSpec; data: SummaryVectorObservations_api }[];
+};
 
 /**
- * This function takes vectorSpecifications and returns a map of ensembleIdent and the respective vector observations.
+ * Definition of map of ensemble ident and ensemble vector observation data
+ */
+export type EnsembleVectorObservationDataMap = Map<EnsembleIdent, EnsembleVectorObservationData>;
+
+/**
+ * Definition of vector observations queries result for combined queries
+ */
+export type VectorObservationsQueriesResult = {
+    isFetching: boolean;
+    isError: boolean;
+    ensembleVectorObservationDataMap: EnsembleVectorObservationDataMap;
+};
+
+/**
+ * This function takes vectorSpecifications and returns a map of ensembleIdent and the respective observations data for
+ * the selected vectors.
  *
  * If the returned summary array from back-end is empty array, the ensemble does not have observations.
  * If the selected vectors are not among the returned summary array, the vector does not have observations.
@@ -157,7 +175,7 @@ export type EnsembleVectorObservationsMap = Map<
 export function useVectorObservationsQueries(
     vectorSpecifications: VectorSpec[] | null,
     allowEnable: boolean
-): { isFetching: boolean; isError: boolean; ensembleVectorObservationsMap: EnsembleVectorObservationsMap } {
+): VectorObservationsQueriesResult {
     const uniqueEnsembleIdents = [...new Set(vectorSpecifications?.map((item) => item.ensembleIdent) ?? [])];
     return useQueries({
         queries: (uniqueEnsembleIdents ?? []).map((item) => {
@@ -171,9 +189,9 @@ export function useVectorObservationsQueries(
             };
         }),
         combine: (results) => {
-            const combinedResult: EnsembleVectorObservationsMap = new Map();
+            const combinedResult: EnsembleVectorObservationDataMap = new Map();
             if (!vectorSpecifications)
-                return { isFetching: false, isError: false, ensembleVectorObservationsMap: combinedResult };
+                return { isFetching: false, isError: false, ensembleVectorObservationDataMap: combinedResult };
 
             results.forEach((result, index) => {
                 const ensembleIdent = uniqueEnsembleIdents.at(index);
@@ -203,7 +221,7 @@ export function useVectorObservationsQueries(
             return {
                 isFetching: results.some((result) => result.isFetching),
                 isError: results.some((result) => result.isError),
-                ensembleVectorObservationsMap: combinedResult,
+                ensembleVectorObservationDataMap: combinedResult,
             };
         },
     });

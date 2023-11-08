@@ -132,7 +132,7 @@ export const view = ({ moduleContext, workbenchSession, workbenchSettings }: Mod
         vectorSpecification: VectorSpec;
         data: SummaryVectorObservations_api;
     }[] = [];
-    vectorObservationsQueries.ensembleVectorObservationsMap.forEach((ensembleObservationData, ensembleIdent) => {
+    vectorObservationsQueries.ensembleVectorObservationDataMap.forEach((ensembleObservationData, ensembleIdent) => {
         if (!ensembleObservationData.hasSummaryObservations) {
             const ensembleName = ensembleSet.findEnsemble(ensembleIdent)?.getDisplayName() ?? ensembleIdent.toString();
             statusWriter.addWarning(`${ensembleName} has no observations.`);
