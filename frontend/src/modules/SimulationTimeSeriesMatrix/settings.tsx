@@ -111,10 +111,10 @@ export function settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
     const selectedVectorNamesHasHistorical = ensembleVectorListsHelper.hasAnyHistoricalVector(selectedVectorNames);
     const currentVectorSelectorData = createVectorSelectorDataFromVectors(ensembleVectorListsHelper.vectorsUnion());
 
-    const [selectedParameterIdentStr, setSelectedParameterIdentStr] = useValidState<string | null>(null, [
-        filteredParameterIdentList,
-        (item: ParameterIdent) => item.toString(),
-    ]);
+    const [selectedParameterIdentStr, setSelectedParameterIdentStr] = useValidState<string | null>({
+        initialState: null,
+        validStates: filteredParameterIdentList.map((item: ParameterIdent) => item.toString()),
+    });
 
     // Await update of vectorSelectorData until all vector lists are retrieved
     const hasVectorListQueriesErrorOrFetching = vectorListQueries.some((query) => query.isFetching || query.isError);

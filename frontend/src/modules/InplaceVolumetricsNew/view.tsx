@@ -1,9 +1,12 @@
 import React from "react";
 
 import { ModuleFCProps } from "@framework/Module";
+import { useViewStatusWriter } from "@framework/StatusWriter";
+import { CircularProgress } from "@lib/components/CircularProgress";
 import { Table } from "@lib/components/Table";
 import { TableHeading } from "@lib/components/Table/table";
 import { useElementSize } from "@lib/hooks/useElementSize";
+import { ContentInfo } from "@modules/_shared/components/ContentMessage";
 
 import { useRealizationsResponses } from "./hooks/useRealizationResponses";
 import { State } from "./state";
@@ -14,19 +17,24 @@ export const view = (props: ModuleFCProps<State>) => {
     const ensembleIdents = props.moduleContext.useStoreValue("selectedEnsembleIdents");
     const categoricalMetadata = props.moduleContext.useStoreValue("selectedCategoricalMetadata");
     const ref = React.useRef<HTMLDivElement>(null);
+
+    const statusWriter = useViewStatusWriter(props.moduleContext);
+
     const size = useElementSize(ref);
 
     const tableData = useRealizationsResponses(ensembleIdents, tableNames, responseNames, {
         categorical_filter: categoricalMetadata,
     });
 
+    statusWriter.setLoading(tableData.isFetching);
+
     const headings: TableHeading = {
         ensemble: {
             label: "Ensemble",
             sizeInPercent: 10,
         },
-        source: {
-            label: "Source",
+        table: {
+            label: "Table",
             sizeInPercent: 10,
         },
         realization: {
@@ -42,64 +50,64 @@ export const view = (props: ModuleFCProps<State>) => {
         };
     }
 
-    const data: Record<keyof typeof headings, string | number>[] = [];
+    const realizationValues: string[] = [];
+    const responseValues: Record<keyof typeof headings, (string | number)[]> = {};
 
-    const responsesData = tableData.data.reduce((acc, table) => {
-        if (table.responses) {
-            const ensemble = table.ensembleIdent.toString();
-            const source = table.tableName;
-            const responseName = table.responseName;
+    const rows: Record<keyof typeof headings, string | number>[] = [];
 
-            for (let i = 0; i < table.responses.realizations.length; i++) {
-                const realization = table.responses.realizations[i];
+    for (const response of tableData.data ?? []) {
+        const ensemble = response.ensembleIdent?.toString() ?? "";
+        const table = response.tableName ?? "";
+        const responseName = response.responseName ?? "";
 
-                const existingItem = acc.find(
-                    (item) => item.ensemble === ensemble && item.source === source && item.realization === realization
-                );
+        if (response.responses) {
+            for (const realization of response.responses.realizations) {
+                const row: Record<keyof typeof headings, string | number> = Object.values().find((el) => el.ensemble === ensemble && el.table === table && el.realization === realization) ?? {
+                const row: Record<keyof typeof headings, string | number> = {
+                    ensemble,
+                    table,
+                    realization,
 
-                if (!existingItem) {
-                    acc.push({
-                        ensemble,
-                        source,
-                        realization,
-                        responses: [
-                            {
-                                responseName,
-                                value: table.responses.values[i],
-                            },
-                        ],
-                    });
-                } else {
-                    existingItem.responses.push({
-                        responseName,
-                        value: table.responses.values[i],
-                    });
-                }
             }
         }
 
-        return acc;
-    }, [] as { ensemble: string; source: string; realization: number; responses: { responseName: string; value: number }[] }[]);
-
-    for (const item of responsesData) {
-        const row: Record<keyof typeof headings, string | number> = {
-            ensemble: item.ensemble,
-            source: item.source,
-            realization: item.realization,
-        };
-
-        for (const response of item.responses) {
-            if (responseNames.includes(response.responseName)) {
-                row[response.responseName] = response.value;
-            }
+        if (!realizationValues.includes(realization)) {
+            realizationValues.push(realization);
         }
 
-        data.push(row);
+        if (!responseValues[responseName]) {
+            responseValues[responseName] = [];
+        }
+
+        if (!responseValues[responseName].includes(response.value)) {
+            responseValues[responseName].push(response.value);
+        }
     }
 
     return (
         <div ref={ref} className="flex flex-col w-full h-full">
-            <Table headings={headings} data={data} />
+            {tableData.isFetching ? (
+                <ContentInfo>
+                    <CircularProgress />
+                </ContentInfo>
+            ) : (
+                <table className="w-full h-full">
+                    <thead>
+                        <tr>
+                            {Object.entries(headings).map(([key, value]) => (
+                                <th key={key} className="text-left">
+                                    {value.label}
+                                </th>
+                            ))}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {
+
+                        }
+                    </tbody>
+                </table>
+            )}
         </div>
     );
 };

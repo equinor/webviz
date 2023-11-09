@@ -12,7 +12,14 @@ export type FilterSelectProps = {
 };
 
 export const FilterSelect: React.FC<FilterSelectProps> = (props) => {
-    const [values, setValues] = React.useState<string[]>([]);
+    function validateState(state: string[]): boolean {
+        return state.every((el) => props.options.includes(el));
+    }
+
+    const [values, setValues] = useValidState<string[]>({
+        initialState: props.options,
+        validateStateFunc: validateState,
+    });
 
     const selectOptions = props.options.map((option) => ({ value: `${option}`, label: `${option}` }));
 

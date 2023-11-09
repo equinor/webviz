@@ -49,8 +49,12 @@ export const settings = ({ workbenchSession, moduleContext }: ModuleFCProps<Stat
     const filterOptions = useTableNameAndMetadataFilterOptions(tableNamesAndMetadata);
 
     const filteredResponses =
-        filterOptions?.responses.filter((el) => selectedFluidZones.includes(el.fluidZone)).map((el) => el.response) ||
-        [];
+        filterOptions?.responses?.reduce((acc, el) => {
+            if (selectedFluidZones.includes(el.fluidZone)) {
+                acc.add(el.response);
+            }
+            return acc;
+        }, new Set<string>()) ?? [];
 
     function handleEnsembleSelectionChange(ensembleIdents: EnsembleIdent[]) {
         setSelectedEnsembleIdents(ensembleIdents);
@@ -140,7 +144,7 @@ export const settings = ({ workbenchSession, moduleContext }: ModuleFCProps<Stat
                         </Label>
                         <FilterSelect
                             name="Responses"
-                            options={filteredResponses}
+                            options={Array.from(filteredResponses)}
                             size={5}
                             onChange={handleResponsesChange}
                         />
