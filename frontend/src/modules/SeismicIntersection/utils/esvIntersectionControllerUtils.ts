@@ -67,7 +67,7 @@ export function addWellborePathLayer(controller: Controller, wellboreTrajectoryX
 
 export type SeismicLayerOptions = {
     curtain: number[][];
-    extension: number;
+    xAxisOffset: number;
     image: ImageBitmap;
     dataValues: number[][];
     yAxisValues: number[];
@@ -77,12 +77,13 @@ export type SeismicLayerOptions = {
  */
 export function addSeismicLayer(
     controller: Controller,
-    { curtain, extension, image, dataValues, yAxisValues }: SeismicLayerOptions
+    { curtain, xAxisOffset, image, dataValues, yAxisValues }: SeismicLayerOptions
 ): void {
     const info = getSeismicInfo({ datapoints: dataValues, yAxisValues }, curtain);
     if (info) {
-        info.minX = info.minX - extension;
-        info.maxX = info.maxX - extension;
+        // Adjust x axis offset to account for curtain
+        info.minX = info.minX - xAxisOffset;
+        info.maxX = info.maxX - xAxisOffset;
     }
     const layer = new SeismicCanvasLayer("seismic", {
         order: 1,

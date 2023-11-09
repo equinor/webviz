@@ -6,28 +6,34 @@ import { SeismicFenceData_trans } from "./queryDataTransforms";
 /**
  * Utility to make extended trajectory object from array of 3D trajectory coordinates [x,y,z] and extension
  *
- * TODO: Number of samples. Needs some thought for future
+ * TODO: Number of samples. Needs some thought for future, perhaps detect num samples based on seismic metadata?
  */
 export function makeExtendedTrajectoryFromTrajectoryXyzPoints(
     trajectoryXyzPoints: number[][],
     extension: number,
     samplingIncrementMeters = 5
 ): Trajectory {
-    if (isVerticalTrajectory(trajectoryXyzPoints)) {
-        trajectoryXyzPoints = addStartAndEndPointsToTrajectoryForVerticalLine(trajectoryXyzPoints);
+    const isVertical = isVerticalTrajectory(trajectoryXyzPoints);
+    if (isVertical) {
+        // Adds extension to top and bottom of vertical line
+        trajectoryXyzPoints = addStartAndEndPointsToTrajectoryForVerticalLine(trajectoryXyzPoints, extension);
     }
 
     const referenceSystem = new IntersectionReferenceSystem(trajectoryXyzPoints);
-    referenceSystem.offset = trajectoryXyzPoints[0][2]; // Offset should be md at start of path
 
-    const displacement = referenceSystem.displacement || 1;
+    // Offset: md at start of well path
+    referenceSystem.offset = trajectoryXyzPoints[0][2];
 
+    const displacement = referenceSystem.displacement ?? 1;
     const numPoints = Math.min(1000, Math.floor((displacement + extension * 2) / samplingIncrementMeters));
-    const extendedTrajectory = referenceSystem.getExtendedTrajectory(numPoints, extension, extension);
-    extendedTrajectory.points = extendedTrajectory.points.map((point) => [
-        parseFloat(point[0].toFixed(3)),
-        parseFloat(point[1].toFixed(3)),
-    ]);
+    const extendedTrajectory = isVertical
+        ? referenceSystem.getTrajectory(numPoints)
+        : referenceSystem.getExtendedTrajectory(numPoints, extension, extension);
+
+    extendedTrajectory.points.forEach((point) => {
+        point[0] = parseFloat(point[0].toFixed(3));
+        point[1] = parseFloat(point[1].toFixed(3));
+    });
 
     return extendedTrajectory;
 }
@@ -67,7 +73,10 @@ function isVerticalTrajectory(trajectoryXyzPoints: number[][]): boolean {
  *
  * @param trajectoryXyzPoints - Array of 3D coordinates [x,y,z]
  */
-function addStartAndEndPointsToTrajectoryForVerticalLine(trajectoryXyzPoints: number[][]): number[][] {
+function addStartAndEndPointsToTrajectoryForVerticalLine(
+    trajectoryXyzPoints: number[][],
+    extension: number
+): number[][] {
     if (trajectoryXyzPoints.length === 0) return [];
 
     const firstCoordinates = trajectoryXyzPoints[0];
@@ -81,15 +90,18 @@ function addStartAndEndPointsToTrajectoryForVerticalLine(trajectoryXyzPoints: nu
 
     // Compare x (index 0) and y (index 1) coordinates of first and last points
     // Add start and end coordinates to trajectory
-    const addCoordAtStart = firstCoordinates[0] - 100;
-    const addCoordAtEnd = lastCoordinates[0] + 100;
-    const addCoordAtStart2 = firstCoordinates[1] - 100;
-    const addCoordAtEnd2 = lastCoordinates[1] + 100;
+    // NOTE: Should be consider to create a 3D vector with length = extension, i.e. extension = sqrt(x^2 + y^2 + z^2), with z constant,
+    // i.e. -> x = sqrt(extension) and y = sqrt(extension)?
+    const firstXCoord = firstCoordinates[0] - extension;
+    const firstYCoord = firstCoordinates[1];
     const firstZCoord = firstCoordinates[2];
+
+    const lastXCoord = lastCoordinates[0] + extension;
+    const lastYCoord = lastCoordinates[1];
     const lastZCoord = lastCoordinates[2];
 
-    modifiedTrajectoryXyzPoints.unshift([addCoordAtStart, addCoordAtStart2, firstZCoord]);
-    modifiedTrajectoryXyzPoints.push([addCoordAtEnd, addCoordAtEnd2, lastZCoord]);
+    modifiedTrajectoryXyzPoints.unshift([firstXCoord, firstYCoord, firstZCoord]);
+    modifiedTrajectoryXyzPoints.push([lastXCoord, lastYCoord, lastZCoord]);
 
     return modifiedTrajectoryXyzPoints;
 }
@@ -148,7 +160,10 @@ export function makeReferenceSystemFromTrajectoryXyzPoints(
  * a2 b2 c2 d2
  * a3 b3 c3 d3
  */
-export function createSeismicSliceImageDataArrayFromFenceData(fenceData: SeismicFenceData_trans): number[][] {
+export function createSeismicSliceImageDataArrayFromFenceData(
+    fenceData: SeismicFenceData_trans,
+    fillValue = 0
+): number[][] {
     const imageArray: number[][] = [];
 
     const numTraces = fenceData.num_traces;
@@ -159,7 +174,9 @@ export function createSeismicSliceImageDataArrayFromFenceData(fenceData: Seismic
         const row: number[] = [];
         for (let j = 0; j < numTraces; ++j) {
             const index = i + j * numSamples;
-            row.push(fenceValues[index]);
+            const fenceValue = fenceValues[index];
+            const validFenceValue = Number.isNaN(fenceValue) ? fillValue : fenceValue;
+            row.push(validFenceValue);
         }
         imageArray.push(row);
     }

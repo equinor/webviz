@@ -57,7 +57,11 @@ export const view = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
     const seismicColorScale = workbenchSettings.useDiscreteColorScale({
         gradientType: ColorScaleGradientType.Diverging,
     });
-    const seismicColors = seismicColorScale.getColorPalette().getColors();
+
+    const [seismicColors, setSeismicColors] = React.useState<string[]>(seismicColorScale.getColorPalette().getColors());
+    if (!isEqual(seismicColorScale.getColorPalette().getColors(), seismicColors)) {
+        setSeismicColors(seismicColorScale.getColorPalette().getColors());
+    }
 
     // Extended wellbore trajectory for creating intersection/fence extended on both sides of wellbore
     const [extendedWellboreTrajectory, setExtendedWellboreTrajectory] = React.useState<Trajectory | null>(null);
@@ -118,12 +122,8 @@ export const view = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
         if (!isEqual(newExtendedWellboreTrajectory, extendedWellboreTrajectory)) {
             setExtendedWellboreTrajectory(newExtendedWellboreTrajectory);
 
-            const x_points = newExtendedWellboreTrajectory
-                ? newExtendedWellboreTrajectory.points.map((coord) => coord[0])
-                : [];
-            const y_points = newExtendedWellboreTrajectory
-                ? newExtendedWellboreTrajectory.points.map((coord) => coord[1])
-                : [];
+            const x_points = newExtendedWellboreTrajectory?.points.map((coord) => coord[0]) ?? [];
+            const y_points = newExtendedWellboreTrajectory?.points.map((coord) => coord[1]) ?? [];
             setSeismicFencePolyline({ x_points, y_points });
         }
 
@@ -158,7 +158,7 @@ export const view = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
             if (!seismicFenceDataQuery.data) return;
 
             // Get an array of projected 2D points [x, y], as 2D curtain projection from a set of trajectory 3D points and offset
-            const newExtendedWellboreTrajectoryXyProjection: number[][] | null = extendedWellboreTrajectory
+            const newExtendedWellboreTrajectoryXyProjection: number[][] = extendedWellboreTrajectory
                 ? IntersectionReferenceSystem.toDisplacement(
                       extendedWellboreTrajectory.points,
                       extendedWellboreTrajectory.offset
@@ -216,7 +216,7 @@ export const view = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
             }
             setRenderWellboreTrajectoryXyzPoints(newRenderWellboreTrajectoryXyzPoints);
         },
-        [seismicFenceDataQuery.data, extendedWellboreTrajectory, getWellTrajectoriesQuery.data]
+        [seismicFenceDataQuery.data, extendedWellboreTrajectory, getWellTrajectoriesQuery.data, seismicColors]
     );
 
     // Update esv-intersection controller when data is ready - keep old data to prevent blank view when fetching new data
@@ -226,10 +226,14 @@ export const view = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
 
         addWellborePathLayer(esvIntersectionControllerRef.current, renderWellboreTrajectoryXyzPoints);
 
-        if (seismicLayerData && seismicFenceImageBitmapAndStatus.image) {
+        if (
+            seismicLayerData &&
+            seismicFenceImageBitmapAndStatus.image &&
+            seismicFenceImageBitmapAndStatus.status === SeismicImageBitmapStatus.VALID
+        ) {
             addSeismicLayer(esvIntersectionControllerRef.current, {
                 curtain: seismicLayerData.trajectoryXyProjection,
-                extension: extension,
+                xAxisOffset: extension,
                 image: seismicFenceImageBitmapAndStatus.image,
                 dataValues: seismicLayerData.seismicImageDataArray,
                 yAxisValues: seismicLayerData.seismicImageYAxisValues,

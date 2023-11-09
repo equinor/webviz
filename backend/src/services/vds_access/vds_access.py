@@ -45,11 +45,12 @@ class VdsAccess:
     Note that we are not providing the service with the actual vds file, but rather a SAS token and an URL to the vds file.
     """
 
-    def __init__(self, sas_token: str, vds_url: str) -> None:
-        self.sas: str = sas_token
-        self.vds_url: str = vds_url
-
-        self._interpolation = VdsInterpolation.LINEAR
+    def __init__(
+        self, sas_token: str, vds_url: str, interpolation_method: VdsInterpolation = VdsInterpolation.LINEAR
+    ) -> None:
+        self.sas = sas_token
+        self.vds_url = vds_url
+        self._interpolation = interpolation_method
 
     @staticmethod
     async def _query(endpoint: str, request: VdsRequestedResource) -> httpx.Response:
@@ -89,6 +90,8 @@ class VdsAccess:
 
         With traces perpendicular to the x-y plane, the traces are defined to go along the depth direction
         of the fence.
+
+        Invalid values, e.g. values for points outside of the seismic cube, are set to np.nan.
 
         `Returns:`
         `Tuple[flattened_fence_traces_array: NDArray[np.float32], num_traces: int, num_trace_samples: int]`
@@ -132,7 +135,11 @@ class VdsAccess:
         """
 
         endpoint = "fence"
-        hard_coded_fill_value = -999
+
+        # Temporary hard coded fill value for points outside of the seismic cube.
+        # If no fill value is provided in the request is rejected with error if list of coordinates
+        # contain points outside of the seismic cube.
+        hard_coded_fill_value = -999.25
 
         fence_request = VdsFenceRequest(
             vds=self.vds_url,
@@ -174,5 +181,8 @@ class VdsAccess:
 
         # Flattened array with row major order, i.e. C-order in numpy
         flattened_fence_traces_float32_array = bytes_to_flatten_ndarray_float32(byte_array, shape=metadata.shape)
+
+        # Convert every value of `hard_coded_fill_value` to np.nan
+        flattened_fence_traces_float32_array[flattened_fence_traces_float32_array == hard_coded_fill_value] = np.nan
 
         return (flattened_fence_traces_float32_array, num_traces, num_trace_samples)
