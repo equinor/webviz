@@ -73,13 +73,12 @@ spec:
       image: bitnami/redis:6.2.10@sha256:bd42fcdab5959ce2b21b6ea8410d4b3ee87ecb2e320260326ec731ecfcffbd0e
       ports:
         - name: http
-          port: 6380
+          port: 6379
       variables:
         ALLOW_EMPTY_PASSWORD: yes
-        REDIS_PORT_NUMBER: 6380
         # https://redis.io/docs/management/config/#configuring-redis-as-a-cache
         # maxmemory for redis must be aligned with component's requested memory, here 1gb vs 2gb
-        REDIS_EXTRA_FLAGS: --maxmemory 1gb  --maxmemory-policy allkeys-lru  --save ''  --appendonly no  --loglevel debug
+        REDIS_EXTRA_FLAGS: --maxmemory 1gb  --maxmemory-policy allkeys-lru  --save ''  --appendonly no  --loglevel verbose
       resources:
         requests:
           memory: 2Gi
