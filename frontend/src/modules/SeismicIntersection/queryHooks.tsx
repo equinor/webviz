@@ -15,7 +15,7 @@ export function useSeismicCubeDirectoryQuery(
         queryKey: ["getSeismicDirectory", caseUuid, ensembleName],
         queryFn: () => apiService.seismic.getSeismicDirectory(caseUuid ?? "", ensembleName ?? ""),
         staleTime: STALE_TIME,
-        cacheTime: CACHE_TIME,
+        gcTime: CACHE_TIME,
         enabled: !!(caseUuid && ensembleName),
     });
 }
@@ -54,7 +54,7 @@ export function useSeismicFenceDataQuery(
             ),
         select: transformSeismicFenceData,
         staleTime: STALE_TIME,
-        cacheTime: CACHE_TIME,
+        gcTime: CACHE_TIME,
         enabled: !!(
             allowEnable &&
             caseUuid &&

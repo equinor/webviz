@@ -10,7 +10,7 @@ export function useGetWellHeaders(caseUuid: string | undefined): UseQueryResult<
         queryKey: ["getWellHeaders", caseUuid],
         queryFn: () => apiService.well.getWellHeaders(caseUuid ?? ""),
         staleTime: STALE_TIME,
-        cacheTime: STALE_TIME,
+        gcTime: CACHE_TIME,
         enabled: caseUuid ? true : false,
     });
 }
@@ -20,7 +20,7 @@ export function useGetFieldWellsTrajectories(caseUuid: string | undefined): UseQ
         queryKey: ["getFieldWellsTrajectories", caseUuid],
         queryFn: () => apiService.well.getFieldWellTrajectories(caseUuid ?? ""),
         staleTime: STALE_TIME,
-        cacheTime: CACHE_TIME,
+        gcTime: CACHE_TIME,
         enabled: caseUuid ? true : false,
     });
 }
@@ -30,7 +30,7 @@ export function useGetWellTrajectories(wellUuids: string[] | undefined): UseQuer
         queryKey: ["getWellTrajectories", wellUuids],
         queryFn: () => apiService.well.getWellTrajectories(wellUuids ?? []),
         staleTime: STALE_TIME,
-        cacheTime: CACHE_TIME,
+        gcTime: CACHE_TIME,
         enabled: wellUuids ? true : false,
     });
 }
