@@ -43,7 +43,6 @@ class SumoExplore:
                 field_idents.append(field.get("identifier"))
 
         field_idents = sorted(list(set(field_idents)))
-        field_idents.insert(0, field_idents.pop(field_idents.index("DROGON")))
         return [FieldInfo(identifier=field_ident) for field_ident in field_idents]
 
     async def get_cases(self, field_identifier: str) -> List[CaseInfo]:

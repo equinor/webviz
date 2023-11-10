@@ -15,7 +15,7 @@ export function useWellCompletionsQuery(
         queryFn: () =>
             apiService.wellCompletions.getWellCompletionsData(caseUuid ?? "", ensembleName ?? "", realizationNumber),
         staleTime: STALE_TIME,
-        cacheTime: CACHE_TIME,
+        gcTime: CACHE_TIME,
         enabled: caseUuid && ensembleName ? true : false,
     });
 }

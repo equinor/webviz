@@ -4,7 +4,7 @@ import { QueryClient } from "@tanstack/react-query";
 
 import { Ensemble } from "../Ensemble";
 import { EnsembleIdent } from "../EnsembleIdent";
-import { Parameter, ParameterType, ContinuousParameter, DiscreteParameter } from "../EnsembleParameters";
+import { ContinuousParameter, DiscreteParameter, Parameter, ParameterType } from "../EnsembleParameters";
 import { Sensitivity, SensitivityCase } from "../EnsembleSensitivities";
 import { EnsembleSet } from "../EnsembleSet";
 
@@ -29,7 +29,7 @@ export async function loadEnsembleSetMetadataFromBackend(
             queryKey: ["getEnsembleDetails", caseUuid, ensembleName],
             queryFn: () => apiService.explore.getEnsembleDetails(caseUuid, ensembleName),
             staleTime: STALE_TIME,
-            cacheTime: CACHE_TIME,
+            gcTime: CACHE_TIME,
         });
         ensembleDetailsPromiseArr.push(ensembleDetailsPromise);
 
@@ -37,7 +37,7 @@ export async function loadEnsembleSetMetadataFromBackend(
             queryKey: ["getParameters", caseUuid, ensembleName],
             queryFn: () => apiService.parameters.getParameters(caseUuid, ensembleName),
             staleTime: STALE_TIME,
-            cacheTime: CACHE_TIME,
+            gcTime: CACHE_TIME,
         });
         parametersPromiseArr.push(parametersPromise);
 
@@ -45,7 +45,7 @@ export async function loadEnsembleSetMetadataFromBackend(
             queryKey: ["getSensitivities", caseUuid, ensembleName],
             queryFn: () => apiService.parameters.getSensitivities(caseUuid, ensembleName),
             staleTime: STALE_TIME,
-            cacheTime: CACHE_TIME,
+            gcTime: CACHE_TIME,
         });
         sensitivitiesPromiseArr.push(sensitivitiesPromise);
     }
@@ -141,8 +141,7 @@ function buildParameterArrFromApiResponse(apiParameterArr: EnsembleParameter_api
                 values: apiPar.values as number[],
             };
             retParameterArr.push(retPar);
-        }
-        else {
+        } else {
             const retPar: DiscreteParameter = {
                 type: ParameterType.DISCRETE,
                 name: apiPar.name,

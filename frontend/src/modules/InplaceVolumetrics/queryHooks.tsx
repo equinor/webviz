@@ -16,7 +16,7 @@ export function useEnsemblesQuery(caseUuid: string | null): UseQueryResult<Array
         queryKey: ["getEnsembles", caseUuid],
         queryFn: () => apiService.explore.getEnsembles(caseUuid ?? ""),
         staleTime: STALE_TIME,
-        cacheTime: CACHE_TIME,
+        gcTime: CACHE_TIME,
         enabled: caseUuid ? true : false,
     });
 }
@@ -33,7 +33,7 @@ export function useTableDescriptionsQuery(
                 ensemble?.getEnsembleName() ?? ""
             ),
         staleTime: STALE_TIME,
-        cacheTime: CACHE_TIME,
+        gcTime: CACHE_TIME,
         enabled: allowEnable && ensemble ? true : false,
     });
 }
@@ -57,7 +57,7 @@ export function useRealizationsResponseQuery(
                 requestBody ?? {}
             ),
         staleTime: STALE_TIME,
-        cacheTime: CACHE_TIME,
+        gcTime: CACHE_TIME,
         enabled: allowEnable && caseUuid && ensembleName && tableName && responseName ? true : false,
     });
 }

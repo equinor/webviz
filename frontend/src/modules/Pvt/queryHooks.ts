@@ -14,7 +14,7 @@ export function usePvtDataQuery(
         queryKey: ["tableData", caseUuid, ensembleName, realization],
         queryFn: () => apiService.pvt.tableData(caseUuid ?? "", ensembleName ?? "", realization ?? 0),
         staleTime: STALE_TIME,
-        cacheTime: CACHE_TIME,
+        gcTime: CACHE_TIME,
         enabled: caseUuid && ensembleName && realization != null ? true : false,
     });
 }

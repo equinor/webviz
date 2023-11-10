@@ -10,6 +10,7 @@ import { Dialog } from "@lib/components/Dialog";
 import { Dropdown } from "@lib/components/Dropdown";
 import { IconButton } from "@lib/components/IconButton";
 import { Label } from "@lib/components/Label";
+import { Overlay } from "@lib/components/Overlay";
 import { Select } from "@lib/components/Select";
 import { Switch } from "@lib/components/Switch";
 import { TableSelect, TableSelectOption } from "@lib/components/TableSelect";
@@ -28,7 +29,8 @@ export type EnsembleItem = {
 };
 
 export type SelectEnsemblesDialogProps = {
-    onClose: (selectedEnsembleIdents: EnsembleItem[] | null) => void;
+    loadAndSetupEnsembles: (selectedEnsembles: EnsembleItem[]) => Promise<void>;
+    onClose: () => void;
     selectedEnsembles: EnsembleItem[];
 };
 
@@ -42,6 +44,7 @@ interface CaseFilterSettings {
 }
 
 export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (props) => {
+    const [isLoadingEnsembles, setIsLoadingEnsembles] = React.useState<boolean>(false);
     const [confirmCancel, setConfirmCancel] = React.useState<boolean>(false);
     const [newlySelectedEnsembles, setNewlySelectedEnsembles] = React.useState<EnsembleItem[]>([]);
     const [casesFilteringOptions, setCasesFilteringOptions] = React.useState<CaseFilterSettings>({
@@ -78,7 +81,7 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
             return apiService.explore.getCases(selectedField);
         },
         enabled: fieldsQuery.isSuccess,
-        cacheTime: CACHE_TIME,
+        gcTime: CACHE_TIME,
         staleTime: STALE_TIME,
     });
 
@@ -97,7 +100,7 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
             return apiService.explore.getEnsembles(selectedCaseId);
         },
         enabled: casesQuery.isSuccess,
-        cacheTime: CACHE_TIME,
+        gcTime: CACHE_TIME,
         staleTime: STALE_TIME,
     });
 
@@ -148,7 +151,7 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
 
     function handleClose() {
         setConfirmCancel(false);
-        props.onClose(null);
+        props.onClose();
     }
 
     function handleCancel() {
@@ -160,7 +163,15 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
     }
 
     function handleApplyEnsembleSelection() {
-        props.onClose(newlySelectedEnsembles);
+        setIsLoadingEnsembles(true);
+        props
+            .loadAndSetupEnsembles(newlySelectedEnsembles)
+            .then(() => {
+                handleClose();
+            })
+            .finally(() => {
+                setIsLoadingEnsembles(false);
+            });
     }
 
     function checkIfAnyChanges(): boolean {
@@ -184,7 +195,9 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
             filteredCases = filteredCases.filter((c) => c.status === "keep");
         }
         if (casesFilteringOptions.onlyMyCases) {
-            filteredCases = filteredCases.filter((c) => c.user === userInfo?.username.replace("@equinor.com", ""));
+            filteredCases = filteredCases.filter(
+                (c) => c.user.toLowerCase() === userInfo?.username.replace("@equinor.com", "").toLowerCase()
+            );
         } else if (casesFilteringOptions.users.length > 0) {
             filteredCases = filteredCases.filter((c) => casesFilteringOptions.users.includes(c.user));
         }
@@ -206,6 +219,16 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
 
     const ensembleAlreadySelected = checkIfEnsembleAlreadySelected();
 
+    function makeApplyButtonStartIcon() {
+        if (isLoadingEnsembles) {
+            return <CircularProgress size="small" />;
+        } else if (checkIfAnyChanges()) {
+            return <Check fontSize="small" />;
+        } else {
+            return undefined;
+        }
+    }
+
     return (
         <>
             <Dialog
@@ -217,11 +240,19 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                 minWidth={800}
                 actions={
                     <div className="flex gap-4">
-                        <Button onClick={handleClose} color="danger" disabled={!checkIfAnyChanges()}>
+                        <Button
+                            onClick={handleClose}
+                            color="danger"
+                            disabled={!checkIfAnyChanges() || isLoadingEnsembles}
+                        >
                             Discard changes
                         </Button>
-                        <Button onClick={handleApplyEnsembleSelection} disabled={!checkIfAnyChanges()}>
-                            Apply changes
+                        <Button
+                            onClick={handleApplyEnsembleSelection}
+                            disabled={!checkIfAnyChanges() || isLoadingEnsembles}
+                            startIcon={makeApplyButtonStartIcon()}
+                        >
+                            {isLoadingEnsembles ? "Loading ensembles..." : "Apply"}
                         </Button>
                     </div>
                 }
@@ -362,6 +393,7 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                         )}
                     </div>
                 </div>
+                <Overlay visible={isLoadingEnsembles} />
             </Dialog>
             {
                 <Dialog

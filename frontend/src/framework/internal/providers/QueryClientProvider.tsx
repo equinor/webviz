@@ -25,12 +25,12 @@ export const CustomQueryClientProvider: React.FC<{ children: React.ReactElement 
                     refetchOnWindowFocus: false,
                     refetchOnMount: false,
                     refetchOnReconnect: true,
-                    cacheTime: 0,
+                    gcTime: 0,
                 },
             },
             queryCache: new QueryCache({
-                onError: async (error) => {
-                    if (error && (error as QueryError).status === 401) {
+                onError: (error) => {
+                    if (error && (error as unknown as QueryError).status === 401) {
                         authProvider.setAuthState(AuthState.NotLoggedIn);
                     }
                 },
