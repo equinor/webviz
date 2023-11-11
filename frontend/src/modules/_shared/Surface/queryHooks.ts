@@ -5,8 +5,8 @@ import { QueryFunction, QueryKey, UseQueryResult, useQuery } from "@tanstack/rea
 import { SurfaceData_trans, transformSurfaceData } from "./queryDataTransforms";
 import { SurfaceAddress } from "./surfaceAddress";
 
-const STALE_TIME = 0;
-const CACHE_TIME = 0;
+const STALE_TIME = 60 * 1000;
+const CACHE_TIME = 60 * 1000;
 
 export function useSurfaceDirectoryQuery(
     caseUuid: string | undefined,

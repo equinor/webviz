@@ -14,7 +14,6 @@ from src.backend.auth.auth_helper import AuthHelper
 from src.backend.utils.perf_metrics import PerfMetrics
 from src.services.sumo_access._helpers import SumoCase
 
-from src.services.utils.user_cache import get_user_cache, UserCache
 
 from . import converters
 from . import schemas
@@ -66,25 +65,14 @@ async def get_realization_surface_data(
 ) -> schemas.SurfaceData:
     perf_metrics = PerfMetrics(response)
 
-    user_cache: UserCache = get_user_cache(authenticated_user)
-    cache_key = f"surface:{case_uuid}_{ensemble_name}_{realization_num}_{name}_{attribute}_{time_or_interval}"
-
-    cached_xtgeo_surf = await user_cache.get_Any(cache_key)
-
-    xtgeo_surf = cached_xtgeo_surf
-    if not xtgeo_surf:
-        access = await SurfaceAccess.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
-        xtgeo_surf = access.get_realization_surface_data(
-            real_num=realization_num, name=name, attribute=attribute, time_or_interval_str=time_or_interval
-        )
-        perf_metrics.record_lap("get-surf")
+    access = await SurfaceAccess.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
+    xtgeo_surf = access.get_realization_surface_data(
+        real_num=realization_num, name=name, attribute=attribute, time_or_interval_str=time_or_interval
+    )
+    perf_metrics.record_lap("get-surf")
 
     if not xtgeo_surf:
         raise HTTPException(status_code=404, detail="Surface not found")
-
-    if not cached_xtgeo_surf:
-        await user_cache.set_Any(cache_key, xtgeo_surf)
-        perf_metrics.record_lap("write-cache")
 
     surf_data_response = converters.to_api_surface_data(xtgeo_surf)
     perf_metrics.record_lap("convert")
