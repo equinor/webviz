@@ -127,15 +127,12 @@ class SurfaceAccess(SumoEnsemble):
         et_xtgeo_read_ms = timer.lap_ms()
 
         size_mb = byte_stream.getbuffer().nbytes / (1024 * 1024)
-        nx = xtgeo_surf.ncol
-        ny = xtgeo_surf.nrow
-
         LOGGER.debug(
             f"Got realization surface from Sumo in: {timer.elapsed_ms()}ms ("
             f"locate={et_locate_ms}ms, "
             f"download={et_download_ms}ms, "
             f"xtgeo_read={et_xtgeo_read_ms}ms) "
-            f"[{nx}x{ny}, {size_mb:.2f}MB] "
+            f"[{xtgeo_surf.ncol}x{xtgeo_surf.nrow}, {size_mb:.2f}MB] "
             f"({addr_str})"
         )
 
