@@ -126,7 +126,7 @@ class SurfaceAccess(SumoEnsemble):
         xtgeo_surf = xtgeo.surface_from_file(byte_stream)
         et_xtgeo_read_ms = timer.lap_ms()
 
-        size_mb = byte_stream.getbuffer().nbytes/(1024*1024)
+        size_mb = byte_stream.getbuffer().nbytes / (1024 * 1024)
         nx = xtgeo_surf.ncol
         ny = xtgeo_surf.nrow
 
@@ -215,7 +215,9 @@ class SurfaceAccess(SumoEnsemble):
         return addr_str
 
 
-async def _compute_statistical_surface_async(statistic: StatisticFunction, surface_coll: SurfaceCollection) -> xtgeo.RegularSurface:
+async def _compute_statistical_surface_async(
+    statistic: StatisticFunction, surface_coll: SurfaceCollection
+) -> xtgeo.RegularSurface:
     xtgeo_surf: xtgeo.RegularSurface = None
     if statistic == StatisticFunction.MIN:
         xtgeo_surf = await surface_coll.min_async()
