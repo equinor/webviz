@@ -37,12 +37,15 @@ spec:
       variables:
         UVICORN_PORT: 5000
         UVICORN_ENTRYPOINT: src.backend.primary.main:app
-      resources:
-        requests:
-          memory: 4Gi
-          cpu: 1000m
       environmentConfig:
         - environment: prod
+          resources:
+            requests:
+              memory: 8Gi
+              cpu: 1000m
+            limits:
+              # Memory limit=request and cpu limit omitted on purpose
+              memory: 8Gi
           horizontalScaling:
             minReplicas: 2
             maxReplicas: 4
@@ -52,6 +55,12 @@ spec:
               cpu:
                 averageUtilization: 80
         - environment: review
+          resources:
+            requests:
+              memory: 4Gi
+              cpu: 500m
+            limits:
+              memory: 4Gi
           horizontalScaling:
             minReplicas: 1
             maxReplicas: 3
@@ -83,6 +92,8 @@ spec:
         requests:
           memory: 2Gi
           cpu: 200m
+        limits:
+          memory: 2Gi
 
   jobs:
     - name: backend-user-session
