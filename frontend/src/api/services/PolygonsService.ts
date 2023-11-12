@@ -2,30 +2,30 @@
 /* tslint:disable */
 /* eslint-disable */
 import type { PolygonData } from '../models/PolygonData';
-import type { SurfacePolygonDirectory } from '../models/SurfacePolygonDirectory';
+import type { PolygonsMeta } from '../models/PolygonsMeta';
 
 import type { CancelablePromise } from '../core/CancelablePromise';
 import type { BaseHttpRequest } from '../core/BaseHttpRequest';
 
-export class SurfacePolygonsService {
+export class PolygonsService {
 
     constructor(public readonly httpRequest: BaseHttpRequest) {}
 
     /**
-     * Get Surface Polygons Directory
-     * Get a directory of surface polygon names and attributes
+     * Get Polygons Directory
+     * Get a directory of polygons in a Sumo ensemble
      * @param caseUuid Sumo case uuid
      * @param ensembleName Ensemble name
-     * @returns SurfacePolygonDirectory Successful Response
+     * @returns PolygonsMeta Successful Response
      * @throws ApiError
      */
-    public getSurfacePolygonsDirectory(
+    public getPolygonsDirectory(
         caseUuid: string,
         ensembleName: string,
-    ): CancelablePromise<SurfacePolygonDirectory> {
+    ): CancelablePromise<Array<PolygonsMeta>> {
         return this.httpRequest.request({
             method: 'GET',
-            url: '/surface_polygons/surface_polygons_directory/',
+            url: '/polygons/polygons_directory/',
             query: {
                 'case_uuid': caseUuid,
                 'ensemble_name': ensembleName,
@@ -37,7 +37,7 @@ export class SurfacePolygonsService {
     }
 
     /**
-     * Get Surface Polygons Data
+     * Get Polygons Data
      * @param caseUuid Sumo case uuid
      * @param ensembleName Ensemble name
      * @param realizationNum Realization number
@@ -46,7 +46,7 @@ export class SurfacePolygonsService {
      * @returns PolygonData Successful Response
      * @throws ApiError
      */
-    public getSurfacePolygonsData(
+    public getPolygonsData(
         caseUuid: string,
         ensembleName: string,
         realizationNum: number,
@@ -55,7 +55,7 @@ export class SurfacePolygonsService {
     ): CancelablePromise<Array<PolygonData>> {
         return this.httpRequest.request({
             method: 'GET',
-            url: '/surface_polygons/surface_polygons_data/',
+            url: '/polygons/polygons_data/',
             query: {
                 'case_uuid': caseUuid,
                 'ensemble_name': ensembleName,
