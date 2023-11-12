@@ -16,7 +16,7 @@ LOGGER = logging.getLogger(__name__)
 
 
 class PolygonsAccess(SumoEnsemble):
-    async def get_polygons_directory(self) -> List[PolygonsMeta]:
+    async def get_polygons_directory_async(self) -> List[PolygonsMeta]:
         polygons_collection: PolygonsCollection = self._case.polygons.filter(
             iteration=self._iteration_name,
             realization=self._case.get_realizations(iteration=self._iteration_name)[0],
@@ -52,7 +52,7 @@ class PolygonsAccess(SumoEnsemble):
             polygons_arr.append(polygons_meta)
         return polygons_arr
 
-    async def get_polygons(self, real_num: int, name: str, attribute: str) -> Optional[xtgeo.Polygons]:
+    async def get_polygons_async(self, real_num: int, name: str, attribute: str) -> Optional[xtgeo.Polygons]:
         """
         Get polygons data
         """
@@ -66,7 +66,7 @@ class PolygonsAccess(SumoEnsemble):
             tagname=attribute,
         )
 
-        polygons_count = len(polygons_collection)
+        polygons_count = await polygons_collection.length_async()
         if polygons_count == 0:
             LOGGER.warning(f"No surface polygons found in Sumo for {addr_str}")
             return None
@@ -78,8 +78,8 @@ class PolygonsAccess(SumoEnsemble):
                 f"Multiple ({polygons_count}) polygons set found in Sumo for: {addr_str}. Returning first polygons set."
             )
             # Some fields has multiple polygons set. There should only be one.
-            for poly in polygons_collection:
-                byte_stream = poly.blob
+            async for poly in polygons_collection:
+                byte_stream = await poly.blob_async
                 poly_df = pd.read_csv(byte_stream)
                 if set(["X_UTME", "Y_UTMN", "Z_TVDSS", "POLY_ID"]) == set(poly_df.columns):
                     is_valid = True
@@ -89,8 +89,8 @@ class PolygonsAccess(SumoEnsemble):
                     is_valid = True
                     break
         else:
-            sumo_polys = polygons_collection[0]
-            byte_stream = sumo_polys.blob
+            sumo_polys = await polygons_collection.getitem_async(0)
+            byte_stream = await sumo_polys.blob_async
             poly_df = pd.read_csv(byte_stream)
             if set(["X_UTME", "Y_UTMN", "Z_TVDSS", "POLY_ID"]) == set(poly_df.columns):
                 is_valid = True

@@ -31,7 +31,7 @@ async def get_polygons_directory(
     Get a directory of polygons in a Sumo ensemble
     """
     access = await PolygonsAccess.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
-    polygons_dir = await access.get_polygons_directory()
+    polygons_dir = await access.get_polygons_directory_async()
 
     case_inspector = await SumoCase.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid)
     strat_column_identifier = await case_inspector.get_stratigraphic_column_identifier()
@@ -59,7 +59,7 @@ async def get_polygons_data(
     timer = PerfTimer()
 
     access = await PolygonsAccess.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
-    xtgeo_poly = await access.get_polygons(real_num=realization_num, name=name, attribute=attribute)
+    xtgeo_poly = await access.get_polygons_async(real_num=realization_num, name=name, attribute=attribute)
 
     if not xtgeo_poly:
         raise HTTPException(status_code=404, detail="Polygons not found")
