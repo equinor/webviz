@@ -38,8 +38,8 @@ def to_api_polygons_directory(
 def _sort_by_stratigraphical_order(
     sumo_polygons_metas: List[SumoPolygonsMeta], stratigraphic_surfaces: List[StratigraphicSurface]
 ) -> List[schemas.PolygonsMeta]:
-    """Sort the Sumo surface meta list by the order they appear in the stratigraphic column.
-    Non-stratigraphical surfaces are appended at the end of the list."""
+    """Sort the Sumo polygons meta list by the order they appear in the stratigraphic column.
+    Non-stratigraphical polygons are appended at the end of the list."""
 
     polygons_metas_with_official_strat_name = []
     polygons_metas_with_custom_names = []
