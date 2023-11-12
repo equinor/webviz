@@ -1,6 +1,6 @@
 import React, { ChangeEvent } from "react";
 
-import { BroadcastChannelKeyCategory } from "@framework/Broadcaster";
+import { Genre } from "@framework/Broadcaster";
 import { applyInitialSettingsToState } from "@framework/InitialSettings";
 import { ModuleFCProps } from "@framework/Module";
 import { ChannelSelect } from "@framework/components/ChannelSelect";
@@ -33,23 +33,23 @@ const plotTypes = [
 const crossPlottingTypes = [
     {
         label: "Realization",
-        value: BroadcastChannelKeyCategory.Realization,
+        value: Genre.Realization,
     },
     {
         label: "Time",
-        value: BroadcastChannelKeyCategory.TimestampMs,
+        value: Genre.TimestampMs,
     },
     {
         label: "Measured depth",
-        value: BroadcastChannelKeyCategory.MeasuredDepth,
+        value: Genre.MeasuredDepth,
     },
     {
         label: "Grid index",
-        value: BroadcastChannelKeyCategory.GridIndex,
+        value: Genre.GridIndex,
     },
     {
         label: "Grid IJK",
-        value: BroadcastChannelKeyCategory.GridIJK,
+        value: Genre.GridIJK,
     },
 ];
 
@@ -62,7 +62,7 @@ export function settings({ moduleContext, workbenchServices, initialSettings }: 
     const [plotType, setPlotType] = moduleContext.useStoreState("plotType");
     const [numBins, setNumBins] = moduleContext.useStoreState("numBins");
     const [orientation, setOrientation] = moduleContext.useStoreState("orientation");
-    const [crossPlottingType, setCrossPlottingType] = React.useState<BroadcastChannelKeyCategory | null>(null);
+    const [crossPlottingType, setCrossPlottingType] = React.useState<Genre | null>(null);
 
     applyInitialSettingsToState(initialSettings, "plotType", "string", setPlotType);
     applyInitialSettingsToState(initialSettings, "numBins", "number", setNumBins);
@@ -93,7 +93,7 @@ export function settings({ moduleContext, workbenchServices, initialSettings }: 
     };
 
     const handleCrossPlottingTypeChanged = (value: string) => {
-        setCrossPlottingType(value as BroadcastChannelKeyCategory);
+        setCrossPlottingType(value as Genre);
     };
 
     const handleNumBinsChanged = (_: Event, value: number | number[]) => {

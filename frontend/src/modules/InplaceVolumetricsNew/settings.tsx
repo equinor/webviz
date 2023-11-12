@@ -11,7 +11,7 @@ import { CircularProgress } from "@lib/components/CircularProgress";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { Label } from "@lib/components/Label";
 import { LoadingStateWrapper } from "@lib/components/StateWrapper/stateWrapper";
-import { BubbleChart, FilterAlt } from "@mui/icons-material";
+import { FilterAlt } from "@mui/icons-material";
 
 import FilterSelect from "./components/filterSelect";
 import { useTableNameAndMetadataFilterOptions } from "./hooks/useTableNameAndMetadataFilterOptions";

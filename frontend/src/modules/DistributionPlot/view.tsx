@@ -1,6 +1,6 @@
 import React from "react";
 
-import { BroadcastChannelKeyCategory, BroadcastChannelMeta } from "@framework/Broadcaster";
+import { BroadcastChannelMeta, Genre } from "@framework/Broadcaster";
 import { ModuleFCProps } from "@framework/Module";
 import { Tag } from "@lib/components/Tag";
 import { useElementSize } from "@lib/hooks/useElementSize";
@@ -122,7 +122,7 @@ export const view = ({
     }, [channelColor]);
 
     React.useEffect(() => {
-        if (channelX?.getDataDef().key === BroadcastChannelKeyCategory.Realization) {
+        if (channelX?.getDataDef().key === Genre.Realization) {
             workbenchServices.subscribe("global.hoverRealization", (data) => {
                 setHighlightedKey(data ? data.realization : null);
             });
@@ -130,7 +130,7 @@ export const view = ({
     }, [channelX, workbenchServices]);
 
     const handleHoverChanged = (data: any) => {
-        if (channelX?.getDataDef().key === BroadcastChannelKeyCategory.Realization) {
+        if (channelX?.getDataDef().key === Genre.Realization) {
             workbenchServices.publishGlobalData("global.hoverRealization", {
                 realization: data !== null ? (data as number) : -1,
             });

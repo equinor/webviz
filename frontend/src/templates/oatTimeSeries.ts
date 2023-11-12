@@ -1,4 +1,4 @@
-import { BroadcastChannelKeyCategory } from "@framework/Broadcaster";
+import { Genre } from "@framework/Broadcaster";
 import { SyncSettingKey } from "@framework/SyncSettings";
 import { Template, TemplateRegistry } from "@framework/TemplateRegistry";
 import { PlotType } from "@modules/DistributionPlot/state";
@@ -32,7 +32,7 @@ const template: Template = {
             dataChannelsToInitialSettingsMapping: {
                 response: {
                     listensToInstanceRef: "MainTimeSeriesSensitivityInstance",
-                    keyCategory: BroadcastChannelKeyCategory.Realization,
+                    keyCategory: Genre.Realization,
                     channelName: BroadcastChannelNames.Realization_Value,
                 },
             },
@@ -50,13 +50,13 @@ const template: Template = {
             dataChannelsToInitialSettingsMapping: {
                 channelX: {
                     listensToInstanceRef: "MainTimeSeriesSensitivityInstance",
-                    keyCategory: BroadcastChannelKeyCategory.Realization,
+                    keyCategory: Genre.Realization,
                     channelName: BroadcastChannelNames.Realization_Value,
                 },
             },
             initialSettings: {
                 plotType: PlotType.Histogram,
-                crossPlottingType: BroadcastChannelKeyCategory.Realization,
+                crossPlottingType: Genre.Realization,
             },
         },
     ],

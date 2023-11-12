@@ -50,37 +50,32 @@ export const view = (props: ModuleFCProps<State>) => {
         };
     }
 
-    const realizationValues: string[] = [];
-    const responseValues: Record<keyof typeof headings, (string | number)[]> = {};
-
     const rows: Record<keyof typeof headings, string | number>[] = [];
 
-    for (const response of tableData.data ?? []) {
-        const ensemble = response.ensembleIdent?.toString() ?? "";
-        const table = response.tableName ?? "";
-        const responseName = response.responseName ?? "";
+    for (const responseData of tableData.data ?? []) {
+        const ensemble = responseData.ensembleIdent?.toString() ?? "";
+        const table = responseData.tableName ?? "";
+        const responseName = responseData.responseName ?? "";
 
-        if (response.responses) {
-            for (const realization of response.responses.realizations) {
-                const row: Record<keyof typeof headings, string | number> = Object.values().find((el) => el.ensemble === ensemble && el.table === table && el.realization === realization) ?? {
-                const row: Record<keyof typeof headings, string | number> = {
-                    ensemble,
-                    table,
-                    realization,
+        if (responseData.responses) {
+            for (let i = 0; i < responseData.responses.values.length; i++) {
+                const response = responseData.responses.values[i];
+                const realization = responseData.responses.realizations[i];
 
+                const row = rows.find(
+                    (el) => el.ensemble === ensemble && el.table === table && el.realization === realization
+                );
+                if (row) {
+                    row[responseName] = response;
+                } else {
+                    rows.push({
+                        ensemble,
+                        table,
+                        realization,
+                        [responseName]: response,
+                    });
+                }
             }
-        }
-
-        if (!realizationValues.includes(realization)) {
-            realizationValues.push(realization);
-        }
-
-        if (!responseValues[responseName]) {
-            responseValues[responseName] = [];
-        }
-
-        if (!responseValues[responseName].includes(response.value)) {
-            responseValues[responseName].push(response.value);
         }
     }
 
@@ -102,9 +97,13 @@ export const view = (props: ModuleFCProps<State>) => {
                         </tr>
                     </thead>
                     <tbody>
-                        {
-
-                        }
+                        {rows.map((row, index) => (
+                            <tr key={index}>
+                                {Object.entries(row).map(([key, value]) => (
+                                    <td key={key}>{value}</td>
+                                ))}
+                            </tr>
+                        ))}
                     </tbody>
                 </table>
             )}

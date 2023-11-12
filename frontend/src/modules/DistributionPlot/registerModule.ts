@@ -1,4 +1,4 @@
-import { BroadcastChannelKeyCategory, InputBroadcastChannelDef } from "@framework/Broadcaster";
+import { Genre, InputBroadcastChannelDef } from "@framework/Broadcaster";
 import { ModuleRegistry } from "@framework/ModuleRegistry";
 import { SyncSettingKey } from "@framework/SyncSettings";
 
@@ -9,17 +9,17 @@ const inputChannelDefs: InputBroadcastChannelDef[] = [
     {
         name: "channelX",
         displayName: "X axis",
-        keyCategories: [BroadcastChannelKeyCategory.Realization],
+        keyCategories: [Genre.Realization],
     },
     {
         name: "channelY",
         displayName: "Y axis",
-        keyCategories: [BroadcastChannelKeyCategory.Realization],
+        keyCategories: [Genre.Realization],
     },
     {
         name: "channelColor",
         displayName: "Color mapping",
-        keyCategories: [BroadcastChannelKeyCategory.Realization],
+        keyCategories: [Genre.Realization],
     },
 ];
 

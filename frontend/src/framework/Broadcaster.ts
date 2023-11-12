@@ -1,6 +1,6 @@
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 
-export enum BroadcastChannelKeyCategory {
+export enum Genre {
     TimestampMs = "timestampms",
     Realization = "realization",
     GridIndex = "grid-index",
@@ -8,7 +8,7 @@ export enum BroadcastChannelKeyCategory {
     MeasuredDepth = "measured-depth",
 }
 
-export enum BroadcastChannelValueType {
+export enum GenreContent {
     Numeric = "numeric",
     String = "string",
 }
@@ -19,17 +19,17 @@ enum Type {
     NumberTriplet = "number-triplet",
 }
 
-const BroadcastChannelKeyCategoryToTypeMap = {
-    [BroadcastChannelKeyCategory.TimestampMs]: Type.Number,
-    [BroadcastChannelKeyCategory.Realization]: Type.Number,
-    [BroadcastChannelKeyCategory.GridIndex]: Type.Number,
-    [BroadcastChannelKeyCategory.GridIJK]: Type.NumberTriplet,
-    [BroadcastChannelKeyCategory.MeasuredDepth]: Type.Number,
+const GenreToTypeMapping = {
+    [Genre.TimestampMs]: Type.Number,
+    [Genre.Realization]: Type.Number,
+    [Genre.GridIndex]: Type.Number,
+    [Genre.GridIJK]: Type.NumberTriplet,
+    [Genre.MeasuredDepth]: Type.Number,
 };
 
-const BroadcastChannelValueTypeToTypeMap = {
-    [BroadcastChannelValueType.Numeric]: Type.Number,
-    [BroadcastChannelValueType.String]: Type.String,
+const GenreContentToTypeMapping = {
+    [GenreContent.Numeric]: Type.Number,
+    [GenreContent.String]: Type.String,
 };
 
 function checkValueIsExpectedType(value: any, type: Type): boolean {
@@ -57,8 +57,8 @@ function checkValueIsExpectedType(value: any, type: Type): boolean {
 }
 
 export type BroadcastChannelDef = {
-    key: BroadcastChannelKeyCategory;
-    value: BroadcastChannelValueType;
+    key: Genre;
+    value: GenreContent;
 };
 
 export type BroadcastChannelsDef = {
@@ -79,13 +79,10 @@ export type BroadcastChannelData = {
 export type InputBroadcastChannelDef = {
     name: string;
     displayName: string;
-    keyCategories?: BroadcastChannelKeyCategory[];
+    keyCategories?: Genre[];
 };
 
-export function checkChannelCompatibility(
-    channelDef: BroadcastChannelDef,
-    channelKeyCategory: BroadcastChannelKeyCategory
-): boolean {
+export function checkChannelCompatibility(channelDef: BroadcastChannelDef, channelKeyCategory: Genre): boolean {
     if (channelDef.key !== channelKeyCategory) {
         return false;
     }
@@ -127,12 +124,12 @@ export class BroadcastChannel {
             return;
         }
 
-        const expectedKeyType = BroadcastChannelKeyCategoryToTypeMap[this._dataDef.key];
+        const expectedKeyType = GenreToTypeMapping[this._dataDef.key];
         if (!checkValueIsExpectedType(data[0].key, expectedKeyType)) {
             throw new Error(this.makeExceptionMessage("Key", data[0].key.toString(), expectedKeyType));
         }
 
-        const expectedValueType = BroadcastChannelValueTypeToTypeMap[this._dataDef.value];
+        const expectedValueType = GenreContentToTypeMapping[this._dataDef.value];
         if (!checkValueIsExpectedType(data[0].value, expectedValueType)) {
             throw new Error(this.makeExceptionMessage("Value", data[0].value.toString(), expectedValueType));
         }

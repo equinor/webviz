@@ -1,4 +1,4 @@
-import { BroadcastChannelKeyCategory, BroadcastChannelValueType } from "@framework/Broadcaster";
+import { Genre, GenreContent } from "@framework/Broadcaster";
 
 export enum BroadcastChannelNames {
     Response = "Response (per realization)",
@@ -6,7 +6,7 @@ export enum BroadcastChannelNames {
 
 export const broadcastChannelsDef = {
     [BroadcastChannelNames.Response]: {
-        key: BroadcastChannelKeyCategory.Realization,
-        value: BroadcastChannelValueType.Numeric,
+        key: Genre.Realization,
+        value: GenreContent.Numeric,
     },
 };

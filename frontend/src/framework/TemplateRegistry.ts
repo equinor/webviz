@@ -1,10 +1,10 @@
-import { BroadcastChannelKeyCategory } from "./Broadcaster";
+import { Genre } from "./Broadcaster";
 import { SyncSettingKey } from "./SyncSettings";
 import { LayoutElement } from "./Workbench";
 
 export type DataChannelTemplate = {
     listensToInstanceRef: string;
-    keyCategory: BroadcastChannelKeyCategory;
+    keyCategory: Genre;
     channelName: string;
 };
 
