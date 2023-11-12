@@ -26,6 +26,7 @@ class PolygonsAttributeType(str, Enum):
     FIELD_OUTLINE = "field_outline"  # Values are field outlines
     PINCHOUT = "pinchout"  # Values are pinchouts
     SUBCROP = "subcrop"  # Values are subcrops
+    FAULT_LINES = "fault_lines"  # Values are fault lines
 
 
 class PolygonsMeta(BaseModel):

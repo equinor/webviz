@@ -50,7 +50,6 @@ def _sort_by_stratigraphical_order(
                 polygons_meta = schemas.PolygonsMeta(
                     name=sumo_polygons_meta.name,
                     name_is_stratigraphic_offical=True,
-                    stratigraphic_feature=strat_surface.feature,
                     relative_stratigraphic_level=strat_surface.relative_strat_unit_level,
                     parent_stratigraphic_identifier=strat_surface.strat_unit_parent,
                     stratigraphic_identifier=strat_surface.strat_unit_identifier,
@@ -65,7 +64,6 @@ def _sort_by_stratigraphical_order(
             polygons_meta = schemas.PolygonsMeta(
                 name=sumo_polygons_meta.name,
                 name_is_stratigraphic_offical=False,
-                stratigraphic_feature=None,
                 relative_stratigraphic_level=None,
                 parent_stratigraphic_identifier=None,
                 stratigraphic_identifier=None,
