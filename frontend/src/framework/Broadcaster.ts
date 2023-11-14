@@ -56,33 +56,35 @@ function checkValueIsExpectedType(value: any, type: Type): boolean {
     throw new Error(`Unknown type '${type}'`);
 }
 
-export type BroadcastChannelDef = {
+export type Broadcaster = {
+    name: string;
+    genre: Genre;
+}
+
+export type OutputChannel = {
+    name: string;
     key: Genre;
     value: GenreContent;
 };
 
-export type BroadcastChannelsDef = {
-    [key: string]: BroadcastChannelDef;
-};
-
-export type BroadcastChannelMeta = {
+export type ChannelMeta = {
     ensembleIdent: EnsembleIdent;
     description: string;
     unit: string;
 };
 
-export type BroadcastChannelData = {
+export type ChannelData = {
     key: number | [number, number, number];
     value: number | string;
 };
 
-export type InputBroadcastChannelDef = {
+export type InputChannel = {
     name: string;
     displayName: string;
     keyCategories?: Genre[];
 };
 
-export function checkChannelCompatibility(channelDef: BroadcastChannelDef, channelKeyCategory: Genre): boolean {
+export function checkChannelCompatibility(channelDef: OutputChannel, channelKeyCategory: Genre): boolean {
     if (channelDef.key !== channelKeyCategory) {
         return false;
     }
@@ -93,14 +95,14 @@ export function checkChannelCompatibility(channelDef: BroadcastChannelDef, chann
 export class BroadcastChannel {
     private _name: string;
     private _displayName: string;
-    private _metaData: BroadcastChannelMeta | null;
+    private _metaData: ChannelMeta | null;
     private _moduleInstanceId: string;
-    private _subscribers: Set<(data: BroadcastChannelData[], metaData: BroadcastChannelMeta) => void>;
-    private _cachedData: BroadcastChannelData[] | null;
-    private _dataDef: BroadcastChannelDef;
-    private _dataGenerator: (() => BroadcastChannelData[]) | null;
+    private _subscribers: Set<(data: ChannelData[], metaData: ChannelMeta) => void>;
+    private _cachedData: ChannelData[] | null;
+    private _dataDef: OutputChannel;
+    private _dataGenerator: (() => ChannelData[]) | null;
 
-    constructor(name: string, displayName: string, def: BroadcastChannelDef, moduleInstanceId: string) {
+    constructor(name: string, displayName: string, def: OutputChannel, moduleInstanceId: string) {
         this._name = name;
         this._displayName = displayName;
         this._subscribers = new Set();
@@ -119,7 +121,7 @@ export class BroadcastChannel {
         )}\nModule: ${this._moduleInstanceId}\nChannel name: ${this._name}`;
     }
 
-    private assertGeneratedDataMatchesDefinition(data: BroadcastChannelData[]): void {
+    private assertGeneratedDataMatchesDefinition(data: ChannelData[]): void {
         if (data.length === 0) {
             return;
         }
@@ -135,7 +137,7 @@ export class BroadcastChannel {
         }
     }
 
-    private generateAndVerifyData(dataGenerator: () => BroadcastChannelData[]): BroadcastChannelData[] {
+    private generateAndVerifyData(dataGenerator: () => ChannelData[]): ChannelData[] {
         const generatedData = dataGenerator();
 
         this.assertGeneratedDataMatchesDefinition(generatedData);
@@ -151,11 +153,11 @@ export class BroadcastChannel {
         return this._displayName;
     }
 
-    getDataDef(): BroadcastChannelDef {
+    getDataDef(): OutputChannel {
         return this._dataDef;
     }
 
-    getMetaData(): BroadcastChannelMeta {
+    getMetaData(): ChannelMeta {
         if (!this._metaData) {
             throw new Error("No meta data");
         }
@@ -166,7 +168,7 @@ export class BroadcastChannel {
         return this._moduleInstanceId;
     }
 
-    broadcast(metaData: BroadcastChannelMeta, dataGenerator: () => BroadcastChannelData[]): void {
+    broadcast(metaData: ChannelMeta, dataGenerator: () => ChannelData[]): void {
         this._dataGenerator = dataGenerator;
         this._metaData = metaData;
 
@@ -182,7 +184,7 @@ export class BroadcastChannel {
     }
 
     subscribe(
-        callbackChannelDataChanged: (data: BroadcastChannelData[] | null, metaData: BroadcastChannelMeta | null) => void
+        callbackChannelDataChanged: (data: ChannelData[] | null, metaData: ChannelMeta | null) => void
     ): () => void {
         this._subscribers.add(callbackChannelDataChanged);
 
@@ -198,7 +200,7 @@ export class BroadcastChannel {
     }
 }
 
-export class Broadcaster {
+export class DataBroadcaster {
     private _channels: BroadcastChannel[];
     private _subscribers: Set<(channels: BroadcastChannel[]) => void>;
 
@@ -210,7 +212,7 @@ export class Broadcaster {
     registerChannel(
         channelName: string,
         displayName: string,
-        channelDef: BroadcastChannelDef,
+        channelDef: OutputChannel,
         moduleInstanceId: string
     ): BroadcastChannel {
         const channel = new BroadcastChannel(channelName, displayName, channelDef, moduleInstanceId);

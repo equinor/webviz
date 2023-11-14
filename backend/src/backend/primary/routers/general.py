@@ -69,8 +69,12 @@ async def logged_in_user(
             avatar_b64str_future = asyncio.create_task(graph_api_access.get_user_profile_photo("me"))
             graph_user_info_future = asyncio.create_task(graph_api_access.get_user_info("me"))
 
-            avatar_b64str = await avatar_b64str_future
-            graph_user_info = await graph_user_info_future
+            l = [avatar_b64str_future, graph_user_info_future]
+
+            [avatar_b64str, graph_user_info] = await l
+
+            # avatar_b64str = await avatar_b64str_future
+            # graph_user_info = await graph_user_info_future
 
             user_info.avatar_b64str = avatar_b64str
             if graph_user_info is not None:

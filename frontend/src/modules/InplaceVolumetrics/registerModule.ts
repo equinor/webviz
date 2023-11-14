@@ -6,5 +6,5 @@ import { State } from "./state";
 ModuleRegistry.registerModule<State>({
     moduleName: "InplaceVolumetrics",
     defaultTitle: "Inplace volumetrics",
-    broadcastChannelsDef,
+    outputChannels: broadcastChannelsDef,
 });

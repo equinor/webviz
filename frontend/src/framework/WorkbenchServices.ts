@@ -2,7 +2,7 @@ import React from "react";
 
 import { isEqual } from "lodash";
 
-import { Broadcaster } from "./Broadcaster";
+import { DataBroadcaster } from "./Broadcaster";
 import { EnsembleIdent } from "./EnsembleIdent";
 import { Wellbore } from "./Wellbore";
 import { Workbench } from "./Workbench";
@@ -91,7 +91,7 @@ export class WorkbenchServices {
         }
     }
 
-    getBroadcaster(): Broadcaster {
+    getBroadcaster(): DataBroadcaster {
         return this._workbench.getBroadcaster();
     }
 }

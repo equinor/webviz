@@ -1,4 +1,4 @@
-import { BroadcastChannelsDef, InputBroadcastChannelDef } from "./Broadcaster";
+import { OutputChannel, InputChannel } from "./Broadcaster";
 import { Module } from "./Module";
 import { DrawPreviewFunc } from "./Preview";
 import { StateBaseType, StateOptions } from "./StateStore";
@@ -9,8 +9,8 @@ export type RegisterModuleOptions = {
     moduleName: string;
     defaultTitle: string;
     syncableSettingKeys?: SyncSettingKey[];
-    broadcastChannelsDef?: BroadcastChannelsDef;
-    inputChannelDefs?: InputBroadcastChannelDef[];
+    outputChannels?: OutputChannel[];
+    inputChannels?: InputChannel[];
     preview?: DrawPreviewFunc;
     description?: string;
 };
@@ -39,8 +39,8 @@ export class ModuleRegistry {
             options.moduleName,
             options.defaultTitle,
             options.syncableSettingKeys,
-            options.broadcastChannelsDef,
-            options.inputChannelDefs,
+            options.outputChannels,
+            options.inputChannels,
             options.preview ?? null,
             options.description ?? null
         );

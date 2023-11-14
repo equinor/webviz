@@ -1,6 +1,6 @@
 import React from "react";
 
-import { BroadcastChannelMeta, Genre } from "@framework/Broadcaster";
+import { ChannelMeta, Genre } from "@framework/Broadcaster";
 import { ModuleFCProps } from "@framework/Module";
 import { Tag } from "@lib/components/Tag";
 import { useElementSize } from "@lib/hooks/useElementSize";
@@ -46,9 +46,9 @@ export const view = ({
     const [dataX, setDataX] = React.useState<any[] | null>(null);
     const [dataY, setDataY] = React.useState<any[] | null>(null);
     const [dataColor, setDataColor] = React.useState<any[] | null>(null);
-    const [metaDataX, setMetaDataX] = React.useState<BroadcastChannelMeta | null>(null);
-    const [metaDataY, setMetaDataY] = React.useState<BroadcastChannelMeta | null>(null);
-    const [metaDataColor, setMetaDataColor] = React.useState<BroadcastChannelMeta | null>(null);
+    const [metaDataX, setMetaDataX] = React.useState<ChannelMeta | null>(null);
+    const [metaDataY, setMetaDataY] = React.useState<ChannelMeta | null>(null);
+    const [metaDataColor, setMetaDataColor] = React.useState<ChannelMeta | null>(null);
 
     const channelX = moduleContext.useInputChannel("channelX", initialSettings);
     const channelY = moduleContext.useInputChannel("channelY", initialSettings);
@@ -69,7 +69,7 @@ export const view = ({
             return;
         }
 
-        const handleChannelXChanged = (data: any | null, metaData: BroadcastChannelMeta | null) => {
+        const handleChannelXChanged = (data: any | null, metaData: ChannelMeta | null) => {
             setDataX(data);
             setMetaDataX(metaData);
         };
@@ -90,7 +90,7 @@ export const view = ({
             setPlotType(PlotType.Scatter);
         }
 
-        const handleChannelYChanged = (data: any | null, metaData: BroadcastChannelMeta | null) => {
+        const handleChannelYChanged = (data: any | null, metaData: ChannelMeta | null) => {
             setDataY(data);
             setMetaDataY(metaData);
         };
@@ -111,7 +111,7 @@ export const view = ({
             setPlotType(PlotType.ScatterWithColorMapping);
         }
 
-        const handleChannelColorChanged = (data: any | null, metaData: BroadcastChannelMeta | null) => {
+        const handleChannelColorChanged = (data: any | null, metaData: ChannelMeta | null) => {
             setDataColor(data);
             setMetaDataColor(metaData);
         };

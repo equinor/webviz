@@ -1,6 +1,6 @@
 import { QueryClient } from "@tanstack/react-query";
 
-import { Broadcaster } from "./Broadcaster";
+import { DataBroadcaster } from "./Broadcaster";
 import { EnsembleIdent } from "./EnsembleIdent";
 import { GuiMessageBroker, GuiState } from "./GuiMessageBroker";
 import { InitialSettings } from "./InitialSettings";
@@ -33,7 +33,7 @@ export class Workbench {
     private _workbenchSession: WorkbenchSessionPrivate;
     private _workbenchServices: PrivateWorkbenchServices;
     private _workbenchSettings: PrivateWorkbenchSettings;
-    private _broadcaster: Broadcaster;
+    private _broadcaster: DataBroadcaster;
     private _guiMessageBroker: GuiMessageBroker;
     private _subscribersMap: { [key: string]: Set<() => void> };
     private _layout: LayoutElement[];
@@ -76,7 +76,7 @@ export class Workbench {
         return this._workbenchSettings;
     }
 
-    getBroadcaster(): Broadcaster {
+    getBroadcaster(): DataBroadcaster {
         return this._broadcaster;
     }
 
