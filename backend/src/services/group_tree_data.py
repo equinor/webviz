@@ -1,14 +1,17 @@
-from typing import Callable, Dict, List, Optional, Tuple, Any
+import logging
 from enum import Enum
+from functools import reduce
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
-from fastapi import APIRouter, Depends, HTTPException, Query
 import numpy as np
 import pandas as pd
 import pyarrow as pa
-
+from fastapi import APIRouter, Depends, HTTPException, Query
 from src.services.sumo_access.group_tree_access import GroupTreeAccess
 from src.services.sumo_access.summary_access import Frequency, SummaryAccess
 from src.services.sumo_access.summary_types import RealizationVector
+
+LOGGER = logging.getLogger(__name__)
 
 
 class TreeType(Enum):
@@ -139,10 +142,10 @@ class GroupTreeData:
     async def create_group_tree_dataset(
         self,
         tree_mode: TreeModeOptions,
-        stat_option: StatOptions,
         real: int,
         node_types: List[NodeType],
-    ) -> Tuple[List[Dict[Any, Any]], List[Dict[str, str]], List[Dict[str, str]]]:
+        stat_option: Optional[StatOptions] = None,
+    ) -> List[Dict[Any, Any]]:
         """This method is called when an event is triggered to create a new dataset
         to the GroupTree plugin. First there is a lot of filtering of the smry and
         grouptree data, before the filtered data is sent to the function that is
@@ -158,14 +161,16 @@ class GroupTreeData:
         # Filter smry
         vectors = [sumvec for sumvec in self._sumvecs["SUMVEC"] if sumvec in self._all_vectors]
 
-        smry = {}
+        dfs = []
         for vec in vectors:
             table, _ = await self._summary_access.get_vector_table(
                 vector_name=vec,
                 resampling_frequency=self._resampling_frequency,
-                realizations=real,
+                realizations=[real],
             )
-            smry[vec] = table
+            dfs.append(table.to_pandas())
+
+        smry = reduce(lambda left, right: pd.merge(left, right, on=["DATE", "REAL"]), dfs)
 
         if tree_mode is TreeModeOptions.STATISTICS:
             raise NotImplementedError("Statistical Model not implemented")
@@ -197,14 +202,16 @@ class GroupTreeData:
             dfs.append(gruptree_filtered[gruptree_filtered[f"IS_{tpe.value}".upper()]])
         gruptree_filtered = pd.concat(dfs).drop_duplicates()
 
-        return (
-            _create_dataset(smry, gruptree_filtered, self._sumvecs, self._terminal_node),
-            self._get_edge_options(node_types),
-            [
-                {"name": datatype, "label": _get_label(datatype)}
-                for datatype in [DataType.PRESSURE, DataType.BHP, DataType.WMCTL]
-            ],
-        )
+        return await _create_dataset(smry, gruptree_filtered, self._sumvecs, self._terminal_node)
+
+        # return (
+        #     await _create_dataset(smry, gruptree_filtered, self._sumvecs, self._terminal_node),
+        #     await self._get_edge_options(node_types),
+        #     [
+        #         {"name": datatype, "label": await _get_label(datatype)}
+        #         for datatype in [DataType.PRESSURE, DataType.BHP, DataType.WMCTL]
+        #     ],
+        # )
 
     def _tree_is_equivalent_in_all_real(self) -> bool:
         """Checks if the group tree is equivalent in all realizations,
@@ -279,7 +286,7 @@ class GroupTreeData:
             options.append(
                 {
                     "name": DataType.WATERINJRATE,
-                    "label": get_label(DataType.WATERINJRATE),
+                    "label": _get_label(DataType.WATERINJRATE),
                 }
             )
         if NodeType.INJ in node_types and self._has_gasinj:
@@ -625,7 +632,7 @@ class GroupTreeModel:
         return branch_nodes
 
 
-def _create_dataset(
+async def _create_dataset(
     smry: pd.DataFrame,
     gruptree: pd.DataFrame,
     sumvecs: pd.DataFrame,
@@ -650,15 +657,15 @@ def _create_dataset(
             trees.append(
                 {
                     "dates": [date.strftime("%Y-%m-%d") for date in dates],
-                    "tree": _extract_tree(gruptree_date, terminal_node, smry_in_datespan, dates, sumvecs),
+                    "tree": await _extract_tree(gruptree_date, terminal_node, smry_in_datespan, dates, sumvecs),
                 }
             )
         else:
-            logging.getLogger(__name__).info(f"""No summary data found for gruptree between {date} and {next_date}""")
+            LOGGER.info(f"""No summary data found for gruptree between {date} and {next_date}""")
     return trees
 
 
-def _extract_tree(
+async def _extract_tree(
     gruptree: pd.DataFrame,
     nodename: str,
     smry_in_datespan: Dict[Any, pd.DataFrame],
@@ -671,7 +678,9 @@ def _extract_tree(
     """
     # pylint: disable=too-many-locals
     node_sumvecs = sumvecs[sumvecs["NODENAME"] == nodename]
-    nodedict = _get_nodedict(gruptree, nodename)
+    nodedict = await _get_nodedict(gruptree, nodename)
+    # print(node_sumvecs)
+    # print(nodedict)
 
     result: dict = {
         "node_label": nodename,
@@ -682,29 +691,29 @@ def _extract_tree(
     edges = node_sumvecs[node_sumvecs["EDGE_NODE"] == EdgeOrNode.EDGE].to_dict("records")
     nodes = node_sumvecs[node_sumvecs["EDGE_NODE"] == EdgeOrNode.NODE].to_dict("records")
 
-    edge_data: Dict[str, List[float]] = {item["DATATYPE"]: [] for item in edges}
-    node_data: Dict[str, List[float]] = {item["DATATYPE"]: [] for item in nodes}
+    edge_data: Dict[str, List[float]] = {item["DATATYPE"].value: [] for item in edges}
+    node_data: Dict[str, List[float]] = {item["DATATYPE"].value: [] for item in nodes}
 
     # Looping the dates only once is very important for the speed of this function
     for _, smry_at_date in smry_in_datespan:
         for item in edges:
-            edge_data[item["DATATYPE"]].append(round(smry_at_date[item["SUMVEC"]].values[0], 2))
+            edge_data[item["DATATYPE"].value].append(float(round(smry_at_date[item["SUMVEC"]].values[0], 2)))
         for item in nodes:
             try:
-                node_data[item["DATATYPE"]].append(round(smry_at_date[item["SUMVEC"]].values[0], 2))
+                node_data[item["DATATYPE"].value].append(float(round(smry_at_date[item["SUMVEC"]].values[0], 2)))
             except KeyError:
-                node_data[item["DATATYPE"]].append(np.nan)
-
+                node_data[item["DATATYPE"].value].append(np.nan)
     result["edge_data"] = edge_data
     result["node_data"] = node_data
-
     children = list(gruptree[gruptree["PARENT"] == nodename]["CHILD"].unique())
     if children:
-        result["children"] = [extract_tree(gruptree, child, smry_in_datespan, dates, sumvecs) for child in children]
+        result["children"] = [
+            await _extract_tree(gruptree, child, smry_in_datespan, dates, sumvecs) for child in children
+        ]
     return result
 
 
-def _get_nodedict(gruptree: pd.DataFrame, nodename: str) -> Dict[str, Any]:
+async def _get_nodedict(gruptree: pd.DataFrame, nodename: str) -> Dict[str, Any]:
     """Returns the node data from a row in the gruptree dataframe as a dictionary.
     This function also checks that there is exactly one element with the given name.
     """

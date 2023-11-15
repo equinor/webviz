@@ -1,9 +1,8 @@
 import logging
-from typing import Dict, Iterator, List, Optional, Set, Tuple
 from io import BytesIO
+from typing import Dict, Iterator, List, Optional, Set, Tuple
 
 import pandas as pd
-
 from src.services.utils.perf_timer import PerfTimer
 
 from ._helpers import SumoEnsemble

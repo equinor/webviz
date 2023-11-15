@@ -1,13 +1,12 @@
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-
 from src.backend.auth.auth_helper import AuthHelper
-from src.services.utils.authenticated_user import AuthenticatedUser
-
+from src.services.group_tree_data import (GroupTreeData, NodeType, StatOptions,
+                                          TreeModeOptions)
 from src.services.sumo_access.group_tree_access import GroupTreeAccess
 from src.services.sumo_access.summary_access import Frequency, SummaryAccess
-from src.services.group_tree_data import GroupTreeData
+from src.services.utils.authenticated_user import AuthenticatedUser
 
 router = APIRouter()
 
@@ -28,7 +27,16 @@ async def get_group_tree_data(
         authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
     )
 
-    grouptree_data = GroupTreeData(grouptree_access, summary_access, realization=realization)
+    grouptree_data = GroupTreeData(
+        grouptree_access, summary_access, realization=realization, excl_well_startswith=["R_"]
+    )
     await grouptree_data.initialize_data()
 
-    return grouptree_data.create_group_tree_dataset()
+    data = await grouptree_data.create_group_tree_dataset(
+        tree_mode=TreeModeOptions.SINGLE_REAL,
+        real=0,
+        node_types=[NodeType.PROD, NodeType.INJ, NodeType.OTHER],
+        stat_option=None,
+    )
+    # print(data)
+    return data
