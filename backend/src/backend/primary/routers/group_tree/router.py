@@ -1,6 +1,6 @@
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, Query
 from src.backend.auth.auth_helper import AuthHelper
 from src.services.group_tree_data import (GroupTreeData, NodeType, StatOptions,
                                           TreeModeOptions)

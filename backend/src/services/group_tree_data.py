@@ -6,10 +6,9 @@ from typing import Any, Callable, Dict, List, Optional, Tuple
 import numpy as np
 import pandas as pd
 import pyarrow as pa
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import HTTPException
 from src.services.sumo_access.group_tree_access import GroupTreeAccess
 from src.services.sumo_access.summary_access import Frequency, SummaryAccess
-from src.services.sumo_access.summary_types import RealizationVector
 
 LOGGER = logging.getLogger(__name__)
 
