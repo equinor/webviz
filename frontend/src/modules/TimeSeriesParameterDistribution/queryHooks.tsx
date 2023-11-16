@@ -14,7 +14,7 @@ export function useVectorsQuery(
         queryKey: ["getVectorList", caseUuid, ensembleName],
         queryFn: () => apiService.timeseries.getVectorList(caseUuid ?? "", ensembleName ?? ""),
         staleTime: STALE_TIME,
-        cacheTime: CACHE_TIME,
+        gcTime: CACHE_TIME,
         enabled: caseUuid && ensembleName ? true : false,
     });
 }
@@ -27,7 +27,7 @@ export function useTimestampsListQuery(
         queryKey: ["getTimestampsList", caseUuid, ensembleName],
         queryFn: () => apiService.timeseries.getTimestampsList(caseUuid ?? "", ensembleName ?? ""),
         staleTime: STALE_TIME,
-        cacheTime: CACHE_TIME,
+        gcTime: CACHE_TIME,
         enabled: caseUuid && ensembleName ? true : false,
     });
 }
@@ -40,7 +40,7 @@ export function useGetParameterNamesQuery(
         queryKey: ["getParameterNamesAndDescription", caseUuid, ensembleName],
         queryFn: () => apiService.parameters.getParameterNamesAndDescription(caseUuid ?? "", ensembleName ?? ""),
         staleTime: STALE_TIME,
-        cacheTime: CACHE_TIME,
+        gcTime: CACHE_TIME,
         enabled: caseUuid && ensembleName ? true : false,
     });
 }
@@ -54,7 +54,7 @@ export function useParameterQuery(
         queryKey: ["getParameter", caseUuid, ensembleName, parameterName],
         queryFn: () => apiService.parameters.getParameter(caseUuid ?? "", ensembleName ?? "", parameterName ?? ""),
         staleTime: STALE_TIME,
-        cacheTime: CACHE_TIME,
+        gcTime: CACHE_TIME,
         enabled: caseUuid && ensembleName && parameterName ? true : false,
     });
 }
@@ -74,7 +74,7 @@ export function useVectorAtTimestampQuery(
                 timestampUtcMs ?? 0
             ),
         staleTime: STALE_TIME,
-        cacheTime: CACHE_TIME,
+        gcTime: CACHE_TIME,
         enabled: !!(caseUuid && ensembleName && vectorName && timestampUtcMs != null),
     });
 }

@@ -5,36 +5,53 @@ import { EnsembleSet } from "./EnsembleSet";
 
 export enum WorkbenchSessionEvent {
     EnsembleSetChanged = "EnsembleSetChanged",
+    EnsembleSetLoadingStateChanged = "EnsembleSetLoadingStateChanged",
 }
 
-export class WorkbenchSession {
-    private _subscribersMap: { [eventKey: string]: Set<() => void> };
-    protected _ensembleSet: EnsembleSet;
+export type WorkbenchSessionPayloads = {
+    [WorkbenchSessionEvent.EnsembleSetLoadingStateChanged]: {
+        isLoading: boolean;
+    };
+};
 
-    protected constructor() {
-        this._subscribersMap = {};
-        this._ensembleSet = new EnsembleSet([]);
-    }
+export class WorkbenchSession {
+    private _subscribersMap: Map<keyof WorkbenchSessionEvent, Set<(payload: any) => void>> = new Map();
+    protected _ensembleSet: EnsembleSet = new EnsembleSet([]);
 
     getEnsembleSet(): EnsembleSet {
         return this._ensembleSet;
     }
 
-    subscribe(event: WorkbenchSessionEvent, cb: () => void) {
-        const subscribersSet = this._subscribersMap[event] || new Set();
+    subscribe<T extends Exclude<WorkbenchSessionEvent, keyof WorkbenchSessionPayloads>>(
+        event: T,
+        cb: () => void
+    ): () => void;
+    subscribe<T extends keyof WorkbenchSessionPayloads>(
+        event: T,
+        cb: (payload: WorkbenchSessionPayloads[T]) => void
+    ): () => void;
+    subscribe<T extends keyof WorkbenchSessionEvent>(event: T, cb: (payload: any) => void) {
+        const subscribersSet = this._subscribersMap.get(event) || new Set();
         subscribersSet.add(cb);
-        this._subscribersMap[event] = subscribersSet;
+        this._subscribersMap.set(event, subscribersSet);
         return () => {
             subscribersSet.delete(cb);
         };
     }
 
-    protected notifySubscribers(event: WorkbenchSessionEvent): void {
-        const subscribersSet = this._subscribersMap[event];
+    protected notifySubscribers<T extends Exclude<WorkbenchSessionEvent, keyof WorkbenchSessionPayloads>>(
+        event: T
+    ): void;
+    protected notifySubscribers<T extends keyof WorkbenchSessionPayloads>(
+        event: T,
+        payload: WorkbenchSessionPayloads[T]
+    ): void;
+    protected notifySubscribers<T extends keyof WorkbenchSessionEvent>(event: T, payload?: any): void {
+        const subscribersSet = this._subscribersMap.get(event);
         if (!subscribersSet) return;
 
         for (const callbackFn of subscribersSet) {
-            callbackFn();
+            callbackFn(payload);
         }
     }
 }
@@ -67,4 +84,27 @@ export function useFirstEnsembleInEnsembleSet(workbenchSession: WorkbenchSession
     }
 
     return ensembleSet.getEnsembleArr()[0];
+}
+
+export function useIsEnsembleSetLoading(workbenchSession: WorkbenchSession): boolean {
+    const [isLoading, setIsLoading] = React.useState<boolean>(false);
+
+    React.useEffect(
+        function subscribeToEnsembleSetLoadingStateChanges() {
+            function handleEnsembleSetLoadingStateChanged(
+                payload: WorkbenchSessionPayloads[WorkbenchSessionEvent.EnsembleSetLoadingStateChanged]
+            ) {
+                setIsLoading(payload.isLoading);
+            }
+
+            const unsubFunc = workbenchSession.subscribe(
+                WorkbenchSessionEvent.EnsembleSetLoadingStateChanged,
+                handleEnsembleSetLoadingStateChanged
+            );
+            return unsubFunc;
+        },
+        [workbenchSession]
+    );
+
+    return isLoading;
 }

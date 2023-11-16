@@ -14,7 +14,7 @@ export function useVectorListQuery(
         queryKey: ["getVectorList", caseUuid, ensembleName],
         queryFn: () => apiService.timeseries.getVectorList(caseUuid ?? "", ensembleName ?? ""),
         staleTime: STALE_TIME,
-        cacheTime: CACHE_TIME,
+        gcTime: CACHE_TIME,
         enabled: caseUuid && ensembleName ? true : false,
     });
 }
@@ -46,7 +46,7 @@ export function useVectorDataQuery(
                 realizationsToInclude ?? undefined
             ),
         staleTime: STALE_TIME,
-        cacheTime: CACHE_TIME,
+        gcTime: CACHE_TIME,
         enabled: !!(allowEnable && caseUuid && ensembleName && vectorName && allOrNonEmptyRealArr),
     });
 }
@@ -79,7 +79,7 @@ export function useStatisticalVectorDataQuery(
                 realizationsToInclude ?? undefined
             ),
         staleTime: STALE_TIME,
-        cacheTime: CACHE_TIME,
+        gcTime: CACHE_TIME,
         enabled: !!(allowEnable && caseUuid && ensembleName && vectorName && resampleFrequency && allOrNonEmptyRealArr),
     });
 }
@@ -101,7 +101,7 @@ export function useHistoricalVectorDataQuery(
                 resampleFrequency ?? Frequency_api.MONTHLY
             ),
         staleTime: STALE_TIME,
-        cacheTime: CACHE_TIME,
+        gcTime: CACHE_TIME,
         enabled: !!(allowEnable && caseUuid && ensembleName && nonHistoricalVectorName && resampleFrequency),
     });
 }

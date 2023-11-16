@@ -255,7 +255,7 @@ export class Tag extends React.Component<TagProps> {
             return "Incomplete";
         } else {
             const exactlyMatchedNodePaths = nodeSelection.exactlyMatchedNodePaths();
-            if (exactlyMatchedNodePaths.length === -1 || exactlyMatchedNodePaths.length <= maxNumSelectedNodes) {
+            if (maxNumSelectedNodes === -1 || exactlyMatchedNodePaths.length <= maxNumSelectedNodes) {
                 return exactlyMatchedNodePaths.join("\n");
             }
             return `Matched ${exactlyMatchedNodePaths.length} node${

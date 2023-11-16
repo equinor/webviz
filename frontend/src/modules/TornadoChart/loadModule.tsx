@@ -6,6 +6,8 @@ import { view } from "./view";
 
 const defaultState: State = {
     plotType: PlotType.TORNADO,
+    referenceSensitivityName: null,
+    sensitivityNames: [],
     selectedSensitivity: null,
     responseChannelName: null,
 };

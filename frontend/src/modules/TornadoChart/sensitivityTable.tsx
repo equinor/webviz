@@ -60,7 +60,7 @@ const SensitivityTable: React.FC<SensitivityTableProps> = (props) => {
                 [TableColumns.TRUE_HIGH]: numFormat(sensitivityResponse.highCaseAverage),
                 [TableColumns.LOW_REALS]: sensitivityResponse.lowCaseRealizations.length,
                 [TableColumns.HIGH_REALS]: sensitivityResponse.highCaseRealizations.length,
-                [TableColumns.REFERENCE]: "rms_seed",
+                [TableColumns.REFERENCE]: props.sensitivityResponseDataset.referenceSensitivity,
             }));
         setTableRows(rows);
     }, [props.sensitivityResponseDataset, props.hideZeroY]);

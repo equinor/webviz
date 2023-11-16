@@ -57,30 +57,9 @@ async def get_cases(
     sumo_discovery = SumoExplore(authenticated_user.get_sumo_access_token())
     case_info_arr = await sumo_discovery.get_cases(field_identifier=field_identifier)
 
-    print(case_info_arr)
-
-    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    # Sumo Explorer + Drogon + SMRY data is still a work in progress!
-    # Present the single DROGON case that we know to be good as the first item, also prefixing it with "GOOD"
     ret_arr: List[CaseInfo] = []
-    if field_identifier == "DROGON":
-        for case_info in case_info_arr:
-            if case_info.uuid == "10f41041-2c17-4374-a735-bb0de62e29dc":
-                ret_arr.insert(
-                    0,
-                    CaseInfo(
-                        uuid=case_info.uuid,
-                        name=f"GOOD -- {case_info.name}",
-                        status=case_info.status,
-                        user=case_info.user,
-                    ),
-                )
-            else:
-                ret_arr.append(
-                    CaseInfo(uuid=case_info.uuid, name=case_info.name, status=case_info.status, user=case_info.user)
-                )
-    else:
-        ret_arr = [CaseInfo(uuid=ci.uuid, name=ci.name, status=ci.status, user=ci.user) for ci in case_info_arr]
+
+    ret_arr = [CaseInfo(uuid=ci.uuid, name=ci.name, status=ci.status, user=ci.user) for ci in case_info_arr]
 
     return ret_arr
 
