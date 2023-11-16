@@ -69,6 +69,10 @@ class SumoContent(str, Enum):
     THICKNESS = "thickness"
     ISOCHORE = "isochore"
     FLUID_CONTACT = "fluid_contact"
+    FIELD_OUTLINE = "field_outline"
+    PINCHOUT = "pinchout"
+    SUBCROP = "subcrop"
+    FAULT_LINES = "fault_lines"
 
     @classmethod
     def values(cls) -> List[str]:

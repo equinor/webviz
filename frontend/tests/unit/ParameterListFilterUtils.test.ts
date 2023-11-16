@@ -7,6 +7,8 @@ import {
 } from "@framework/components/ParameterListFilter/private-utils/smartNodeSelectorUtils";
 import { TreeDataNode } from "@lib/components/SmartNodeSelector";
 
+import { describe, expect, test } from "vitest";
+
 const CONTINUOUS_PARAMETER: ContinuousParameter = {
     type: ParameterType.CONTINUOUS,
     name: "continuous parameter",

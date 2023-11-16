@@ -1,5 +1,7 @@
 import { simulationUnitReformat, simulationVectorDescription } from "@modules/_shared/reservoirSimulationStringUtils";
 
+import { describe, expect, test } from "vitest";
+
 describe("Reservoir Simulation string utils tests", () => {
     test("Test simulationVectorDescription", () => {
         expect(simulationVectorDescription("INVALID_VECTOR")).toEqual("INVALID_VECTOR");
