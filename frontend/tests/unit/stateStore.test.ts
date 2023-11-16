@@ -1,5 +1,7 @@
 import { StateStore } from "@framework/StateStore";
 
+import { describe, expect, test } from "vitest";
+
 type TestState = {
     value: string;
     count: number;
@@ -15,7 +17,7 @@ type TestState = {
 };
 
 describe("StateStore", () => {
-    it("Can set and get value", () => {
+    test("Can set and get value", () => {
         const store = new StateStore<TestState>({
             value: "first",
             count: 0,

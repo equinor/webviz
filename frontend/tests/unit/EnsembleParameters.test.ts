@@ -1,6 +1,8 @@
 import { EnsembleParameters, Parameter, ParameterIdent, ParameterType } from "@framework/EnsembleParameters";
 import { MinMax } from "@lib/utils/MinMax";
 
+import { describe, expect, test } from "vitest";
+
 // prettier-ignore
 const PARAM_ARR: Parameter[] = [
     {type: ParameterType.CONTINUOUS, name: "cparam_10", groupName: null,   description: "desc10",   isConstant: false, isLogarithmic: false, realizations: [1,2,3], values: [11, 12, 19]},
@@ -11,7 +13,6 @@ const PARAM_ARR: Parameter[] = [
     {type: ParameterType.DISCRETE, name: "dparam_A", groupName: null, description: "descA", isConstant: false, realizations: [1,2,3], values: [1, 2, 3]},
     {type: ParameterType.DISCRETE, name: "dparam_B", groupName: null, description: "descB", isConstant: false, realizations: [1,2,3], values: ["A", "B", "C"]},
 ];
-
 
 describe("EnsembleParameters tests", () => {
     test("Get list of parameter idents", () => {
@@ -97,7 +98,6 @@ describe("EnsembleParameters tests", () => {
         }
     });
 });
-
 
 describe("ParameterIdent tests", () => {
     test("Conversion to/from string", () => {

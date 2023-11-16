@@ -2,6 +2,8 @@ import { Ensemble } from "@framework/Ensemble";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { EnsembleSet } from "@framework/EnsembleSet";
 
+import { describe, expect, test } from "vitest";
+
 const ensembleArr = [
     new Ensemble("11111111-aaaa-4444-aaaa-aaaaaaaaaaaa", "case1", "ens1", [], [], null),
     new Ensemble("11111111-aaaa-4444-aaaa-aaaaaaaaaaaa", "case1", "ens2", [], [], null),
