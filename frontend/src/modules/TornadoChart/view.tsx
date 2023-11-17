@@ -1,6 +1,6 @@
 import React from "react";
 
-import { ChannelData, ChannelMeta } from "@framework/Broadcaster";
+import { BroadcastChannelData, BroadcastChannelMeta } from "@framework/Broadcaster";
 import { Ensemble } from "@framework/Ensemble";
 import { ModuleFCProps } from "@framework/Module";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
@@ -60,7 +60,7 @@ export const view = ({ moduleContext, workbenchSession, workbenchSettings, initi
             return;
         }
 
-        function handleChannelDataChanged(data: ChannelData[] | null, metaData: ChannelMeta | null) {
+        function handleChannelDataChanged(data: BroadcastChannelData[] | null, metaData: BroadcastChannelMeta | null) {
             if (!data || !metaData) {
                 setChannelEnsemble(null);
                 setChannelResponseData(null);

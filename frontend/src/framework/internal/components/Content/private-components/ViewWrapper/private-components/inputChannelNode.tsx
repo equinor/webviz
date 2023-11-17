@@ -1,6 +1,6 @@
 import React from "react";
 
-import { Genre } from "@framework/Broadcaster";
+import { BroadcastChannelKeyCategory } from "@framework/Broadcaster";
 import { GuiEvent, GuiEventPayloads } from "@framework/GuiMessageBroker";
 import { Workbench } from "@framework/Workbench";
 import { IconButton } from "@lib/components/IconButton";
@@ -11,7 +11,7 @@ import { Remove } from "@mui/icons-material";
 export type InputChannelNodeProps = {
     inputName: string;
     displayName: string;
-    channelKeyCategories?: Genre[];
+    channelKeyCategories?: BroadcastChannelKeyCategory[];
     moduleInstanceId: string;
     onChannelConnect: (inputName: string, moduleInstanceId: string, destinationPoint: Point) => void;
     onChannelConnectionDisconnect: (inputName: string) => void;
@@ -46,7 +46,7 @@ export const InputChannelNode: React.FC<InputChannelNodeProps> = (props) => {
                 return;
             }
             const dataChannels = originModuleInstance.getBroadcastChannels();
-            const channelKeyCategories: Genre[] = [];
+            const channelKeyCategories: BroadcastChannelKeyCategory[] = [];
             for (const dataChannelName in dataChannels) {
                 channelKeyCategories.push(dataChannels[dataChannelName].getDataDef().key);
             }
@@ -67,7 +67,7 @@ export const InputChannelNode: React.FC<InputChannelNodeProps> = (props) => {
 
             const alreadySetInputChannels = moduleInstance.getInputChannels();
 
-            const alreadySetInputKeys: Genre[] = [];
+            const alreadySetInputKeys: BroadcastChannelKeyCategory[] = [];
 
             for (const channelName in alreadySetInputChannels) {
                 alreadySetInputKeys.push(alreadySetInputChannels[channelName].getDataDef().key);

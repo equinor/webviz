@@ -2,10 +2,11 @@ import React from "react";
 
 import { cloneDeep } from "lodash";
 
-import { OutputChannel, InputChannel } from "./Broadcaster";
+import { BroadcastChannelsDef, InputBroadcastChannelDef } from "./Broadcaster";
 import { InitialSettings } from "./InitialSettings";
 import { ModuleContext } from "./ModuleContext";
 import { ModuleInstance } from "./ModuleInstance";
+import { Channel, ChannelInput } from "./NewBroadcaster";
 import { DrawPreviewFunc } from "./Preview";
 import { StateBaseType, StateOptions } from "./StateStore";
 import { SyncSettingKey } from "./SyncSettings";
@@ -42,33 +43,39 @@ export class Module<StateType extends StateBaseType> {
     private _stateOptions: StateOptions<StateType> | undefined;
     private _workbench: Workbench | null;
     private _syncableSettingKeys: SyncSettingKey[];
-    private _channelsDef: OutputChannel[];
+    private _channelsDef: BroadcastChannelsDef;
     private _drawPreviewFunc: DrawPreviewFunc | null;
     private _description: string | null;
-    private _inputChannelDefs: InputChannel[];
+    private _inputChannelDefs: InputBroadcastChannelDef[];
+    private _channels: Channel[];
+    private _channelInputs: ChannelInput[];
 
-    constructor(
-        name: string,
-        defaultTitle: string,
-        syncableSettingKeys: SyncSettingKey[] = [],
-        broadcastChannelsDef: OutputChannel[] = [],
-        inputChannelDefs: InputChannel[] = [],
-        drawPreviewFunc: DrawPreviewFunc | null = null,
-        description: string | null = null
-    ) {
-        this._name = name;
-        this._defaultTitle = defaultTitle;
+    constructor(options: {
+        name: string;
+        defaultTitle: string;
+        syncableSettingKeys?: SyncSettingKey[];
+        broadcastChannelsDef?: BroadcastChannelsDef;
+        inputChannelDefs?: InputBroadcastChannelDef[];
+        drawPreviewFunc?: DrawPreviewFunc;
+        description?: string;
+        channels?: Channel[];
+        channelInputs?: ChannelInput[];
+    }) {
+        this._name = options.name;
+        this._defaultTitle = options.defaultTitle;
         this.viewFC = () => <div>Not defined</div>;
         this.settingsFC = () => <div>Not defined</div>;
         this._importState = ImportState.NotImported;
         this._moduleInstances = [];
         this._defaultState = null;
         this._workbench = null;
-        this._syncableSettingKeys = syncableSettingKeys;
-        this._channelsDef = broadcastChannelsDef;
-        this._inputChannelDefs = inputChannelDefs;
-        this._drawPreviewFunc = drawPreviewFunc;
-        this._description = description;
+        this._syncableSettingKeys = options.syncableSettingKeys ?? [];
+        this._channelsDef = options.broadcastChannelsDef ?? {};
+        this._inputChannelDefs = options.inputChannelDefs ?? [];
+        this._drawPreviewFunc = options.drawPreviewFunc ?? null;
+        this._description = options.description ?? null;
+        this._channels = options.channels ?? [];
+        this._channelInputs = options.channelInputs ?? [];
     }
 
     getDrawPreviewFunc(): DrawPreviewFunc | null {
@@ -118,13 +125,15 @@ export class Module<StateType extends StateBaseType> {
             throw new Error("Module must be added to a workbench before making an instance");
         }
 
-        const instance = new ModuleInstance<StateType>(
-            this,
+        const instance = new ModuleInstance<StateType>({
+            module: this,
             instanceNumber,
-            this._channelsDef,
-            this._workbench,
-            this._inputChannelDefs
-        );
+            channels: this._channels,
+            channelInputs: this._channelInputs,
+            broadcastChannelsDef: this._channelsDef,
+            inputChannelDefs: this._inputChannelDefs,
+            workbench: this._workbench,
+        });
         this._moduleInstances.push(instance);
         this.maybeImportSelf();
         return instance;

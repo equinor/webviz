@@ -1,12 +1,13 @@
 import { QueryClient } from "@tanstack/react-query";
 
-import { DataBroadcaster } from "./Broadcaster";
+import { Broadcaster } from "./Broadcaster";
 import { EnsembleIdent } from "./EnsembleIdent";
 import { GuiMessageBroker, GuiState } from "./GuiMessageBroker";
 import { InitialSettings } from "./InitialSettings";
 import { ImportState } from "./Module";
 import { ModuleInstance } from "./ModuleInstance";
 import { ModuleRegistry } from "./ModuleRegistry";
+import { BroadcastService } from "./NewBroadcaster";
 import { Template } from "./TemplateRegistry";
 import { WorkbenchServices } from "./WorkbenchServices";
 import { WorkbenchSession } from "./WorkbenchSession";
@@ -33,7 +34,8 @@ export class Workbench {
     private _workbenchSession: WorkbenchSessionPrivate;
     private _workbenchServices: PrivateWorkbenchServices;
     private _workbenchSettings: PrivateWorkbenchSettings;
-    private _broadcaster: DataBroadcaster;
+    private _broadcaster: Broadcaster;
+    private _broadcastService: BroadcastService;
     private _guiMessageBroker: GuiMessageBroker;
     private _subscribersMap: { [key: string]: Set<() => void> };
     private _layout: LayoutElement[];
@@ -45,6 +47,7 @@ export class Workbench {
         this._workbenchServices = new PrivateWorkbenchServices(this);
         this._workbenchSettings = new PrivateWorkbenchSettings();
         this._broadcaster = new Broadcaster();
+        this._broadcastService = new BroadcastService();
         this._guiMessageBroker = new GuiMessageBroker();
         this._subscribersMap = {};
         this._layout = [];
@@ -76,7 +79,7 @@ export class Workbench {
         return this._workbenchSettings;
     }
 
-    getBroadcaster(): DataBroadcaster {
+    getBroadcaster(): Broadcaster {
         return this._broadcaster;
     }
 

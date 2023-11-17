@@ -1,6 +1,6 @@
 import React from "react";
 
-import { BroadcastChannel, DataBroadcaster } from "@framework/Broadcaster";
+import { BroadcastChannel, Broadcaster } from "@framework/Broadcaster";
 import { ModuleContext } from "@framework/ModuleContext";
 import { BaseComponentProps } from "@lib/components/BaseComponent";
 import { Dropdown } from "@lib/components/Dropdown";
@@ -9,7 +9,7 @@ export type ChannelSelectProps = {
     moduleContext: ModuleContext<any>;
     channelName: string;
     className?: string;
-    broadcaster: DataBroadcaster;
+    broadcaster: Broadcaster;
 } & BaseComponentProps;
 
 export const ChannelSelect: React.FC<ChannelSelectProps> = (props) => {

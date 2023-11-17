@@ -2,7 +2,7 @@ import React from "react";
 import Plot from "react-plotly.js";
 
 import { Body_get_realizations_response_api } from "@api";
-import { ChannelMeta } from "@framework/Broadcaster";
+import { BroadcastChannelMeta } from "@framework/Broadcaster";
 import { ModuleFCProps } from "@framework/Module";
 import { useSubscribedValue } from "@framework/WorkbenchServices";
 import { ApiStateWrapper } from "@lib/components/ApiStateWrapper";
@@ -96,7 +96,7 @@ export const view = (props: ModuleFCProps<State>) => {
                 return data;
             };
 
-            const channelMeta: ChannelMeta = {
+            const channelMeta: BroadcastChannelMeta = {
                 ensembleIdent: ensemble.getIdent(),
                 description: `${ensemble.getDisplayName()} ${tableName ?? ""} ${responseName ?? ""}`,
                 unit: "",

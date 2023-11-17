@@ -1,5 +1,6 @@
-import { OutputChannel, InputChannel } from "./Broadcaster";
+import { BroadcastChannelsDef, InputBroadcastChannelDef } from "./Broadcaster";
 import { Module } from "./Module";
+import { Channel, ChannelInput } from "./NewBroadcaster";
 import { DrawPreviewFunc } from "./Preview";
 import { StateBaseType, StateOptions } from "./StateStore";
 import { SyncSettingKey } from "./SyncSettings";
@@ -9,8 +10,11 @@ export type RegisterModuleOptions = {
     moduleName: string;
     defaultTitle: string;
     syncableSettingKeys?: SyncSettingKey[];
-    outputChannels?: OutputChannel[];
-    inputChannels?: InputChannel[];
+    outputChannels?: BroadcastChannelsDef;
+    newChannels?: Channel[];
+    newChannelInput?: ChannelInput[];
+    inputChannels?: InputBroadcastChannelDef[];
+
     preview?: DrawPreviewFunc;
     description?: string;
 };
@@ -35,15 +39,17 @@ export class ModuleRegistry {
     static registerModule<ModuleStateType extends StateBaseType>(
         options: RegisterModuleOptions
     ): Module<ModuleStateType> {
-        const module = new Module<ModuleStateType>(
-            options.moduleName,
-            options.defaultTitle,
-            options.syncableSettingKeys,
-            options.outputChannels,
-            options.inputChannels,
-            options.preview ?? null,
-            options.description ?? null
-        );
+        const module = new Module<ModuleStateType>({
+            name: options.moduleName,
+            defaultTitle: options.defaultTitle,
+            syncableSettingKeys: options.syncableSettingKeys ?? [],
+            broadcastChannelsDef: options.outputChannels ?? {},
+            inputChannelDefs: options.inputChannels ?? [],
+            channels: options.newChannels ?? [],
+            channelInputs: options.newChannelInput ?? [],
+            drawPreviewFunc: options.preview,
+            description: options.description,
+        });
         this._registeredModules[options.moduleName] = module;
         return module;
     }

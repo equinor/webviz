@@ -1,6 +1,6 @@
 import React from "react";
 
-import { BroadcastChannel, InputChannel } from "./Broadcaster";
+import { BroadcastChannel, InputBroadcastChannelDef } from "./Broadcaster";
 import { InitialSettings } from "./InitialSettings";
 import { ModuleInstance } from "./ModuleInstance";
 import { ModuleInstanceStatusController } from "./ModuleInstanceStatusController";
@@ -71,7 +71,7 @@ export class ModuleContext<S extends StateBaseType> {
         this._moduleInstance.setInputChannel(inputName, channelName);
     }
 
-    getInputChannelDef(name: string): InputChannel | undefined {
+    getInputChannelDef(name: string): InputBroadcastChannelDef | undefined {
         return this._moduleInstance.getInputChannelDefs().find((channelDef) => channelDef.name === name);
     }
 

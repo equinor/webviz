@@ -2,7 +2,7 @@ import React from "react";
 import Plot from "react-plotly.js";
 
 import { VectorHistoricalData_api, VectorRealizationData_api, VectorStatisticData_api } from "@api";
-import { ChannelMeta } from "@framework/Broadcaster";
+import { BroadcastChannelMeta } from "@framework/Broadcaster";
 import { ModuleFCProps } from "@framework/Module";
 import { useSubscribedValue } from "@framework/WorkbenchServices";
 import { useElementSize } from "@lib/hooks/useElementSize";
@@ -84,7 +84,7 @@ export const view = ({ moduleContext, workbenchSession, workbenchServices }: Mod
                 return data;
             };
 
-            const channelMeta: ChannelMeta = {
+            const channelMeta: BroadcastChannelMeta = {
                 ensembleIdent: ensemble.getIdent(),
                 description: `${ensemble.getDisplayName()} ${vectorSpec?.vectorName}`,
                 unit: vectorQuery.data?.at(0)?.unit || "",

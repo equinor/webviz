@@ -1,15 +1,15 @@
-import { Genre, InputChannel } from "@framework/Broadcaster";
+import { BroadcastChannelKeyCategory, InputBroadcastChannelDef } from "@framework/Broadcaster";
 import { ModuleRegistry } from "@framework/ModuleRegistry";
 import { SyncSettingKey } from "@framework/SyncSettings";
 
 import { preview } from "./preview";
 import { State } from "./state";
 
-const inputChannelDefs: InputChannel[] = [
+const inputChannelDefs: InputBroadcastChannelDef[] = [
     {
         name: "response",
         displayName: "Response",
-        keyCategories: [Genre.Realization],
+        keyCategories: [BroadcastChannelKeyCategory.Realization],
     },
 ];
 

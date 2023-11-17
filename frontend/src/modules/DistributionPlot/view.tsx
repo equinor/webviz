@@ -1,6 +1,6 @@
 import React from "react";
 
-import { ChannelMeta, Genre } from "@framework/Broadcaster";
+import { BroadcastChannelKeyCategory, BroadcastChannelMeta } from "@framework/Broadcaster";
 import { ModuleFCProps } from "@framework/Module";
 import { Tag } from "@lib/components/Tag";
 import { useElementSize } from "@lib/hooks/useElementSize";
@@ -46,9 +46,9 @@ export const view = ({
     const [dataX, setDataX] = React.useState<any[] | null>(null);
     const [dataY, setDataY] = React.useState<any[] | null>(null);
     const [dataColor, setDataColor] = React.useState<any[] | null>(null);
-    const [metaDataX, setMetaDataX] = React.useState<ChannelMeta | null>(null);
-    const [metaDataY, setMetaDataY] = React.useState<ChannelMeta | null>(null);
-    const [metaDataColor, setMetaDataColor] = React.useState<ChannelMeta | null>(null);
+    const [metaDataX, setMetaDataX] = React.useState<BroadcastChannelMeta | null>(null);
+    const [metaDataY, setMetaDataY] = React.useState<BroadcastChannelMeta | null>(null);
+    const [metaDataColor, setMetaDataColor] = React.useState<BroadcastChannelMeta | null>(null);
 
     const channelX = moduleContext.useInputChannel("channelX", initialSettings);
     const channelY = moduleContext.useInputChannel("channelY", initialSettings);
@@ -69,7 +69,7 @@ export const view = ({
             return;
         }
 
-        const handleChannelXChanged = (data: any | null, metaData: ChannelMeta | null) => {
+        const handleChannelXChanged = (data: any | null, metaData: BroadcastChannelMeta | null) => {
             setDataX(data);
             setMetaDataX(metaData);
         };
@@ -90,7 +90,7 @@ export const view = ({
             setPlotType(PlotType.Scatter);
         }
 
-        const handleChannelYChanged = (data: any | null, metaData: ChannelMeta | null) => {
+        const handleChannelYChanged = (data: any | null, metaData: BroadcastChannelMeta | null) => {
             setDataY(data);
             setMetaDataY(metaData);
         };
@@ -111,7 +111,7 @@ export const view = ({
             setPlotType(PlotType.ScatterWithColorMapping);
         }
 
-        const handleChannelColorChanged = (data: any | null, metaData: ChannelMeta | null) => {
+        const handleChannelColorChanged = (data: any | null, metaData: BroadcastChannelMeta | null) => {
             setDataColor(data);
             setMetaDataColor(metaData);
         };
@@ -122,7 +122,7 @@ export const view = ({
     }, [channelColor]);
 
     React.useEffect(() => {
-        if (channelX?.getDataDef().key === Genre.Realization) {
+        if (channelX?.getDataDef().key === BroadcastChannelKeyCategory.Realization) {
             workbenchServices.subscribe("global.hoverRealization", (data) => {
                 setHighlightedKey(data ? data.realization : null);
             });
@@ -130,7 +130,7 @@ export const view = ({
     }, [channelX, workbenchServices]);
 
     const handleHoverChanged = (data: any) => {
-        if (channelX?.getDataDef().key === Genre.Realization) {
+        if (channelX?.getDataDef().key === BroadcastChannelKeyCategory.Realization) {
             workbenchServices.publishGlobalData("global.hoverRealization", {
                 realization: data !== null ? (data as number) : -1,
             });

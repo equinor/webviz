@@ -1,6 +1,6 @@
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 
-export enum Genre {
+export enum BroadcastChannelKeyCategory {
     TimestampMs = "timestampms",
     Realization = "realization",
     GridIndex = "grid-index",
@@ -8,7 +8,7 @@ export enum Genre {
     MeasuredDepth = "measured-depth",
 }
 
-export enum GenreContent {
+export enum BroadcastChannelValueType {
     Numeric = "numeric",
     String = "string",
 }
@@ -19,17 +19,17 @@ enum Type {
     NumberTriplet = "number-triplet",
 }
 
-const GenreToTypeMapping = {
-    [Genre.TimestampMs]: Type.Number,
-    [Genre.Realization]: Type.Number,
-    [Genre.GridIndex]: Type.Number,
-    [Genre.GridIJK]: Type.NumberTriplet,
-    [Genre.MeasuredDepth]: Type.Number,
+const BroadcastChannelKeyCategoryToTypeMap = {
+    [BroadcastChannelKeyCategory.TimestampMs]: Type.Number,
+    [BroadcastChannelKeyCategory.Realization]: Type.Number,
+    [BroadcastChannelKeyCategory.GridIndex]: Type.Number,
+    [BroadcastChannelKeyCategory.GridIJK]: Type.NumberTriplet,
+    [BroadcastChannelKeyCategory.MeasuredDepth]: Type.Number,
 };
 
-const GenreContentToTypeMapping = {
-    [GenreContent.Numeric]: Type.Number,
-    [GenreContent.String]: Type.String,
+const BroadcastChannelValueTypeToTypeMap = {
+    [BroadcastChannelValueType.Numeric]: Type.Number,
+    [BroadcastChannelValueType.String]: Type.String,
 };
 
 function checkValueIsExpectedType(value: any, type: Type): boolean {
@@ -56,35 +56,36 @@ function checkValueIsExpectedType(value: any, type: Type): boolean {
     throw new Error(`Unknown type '${type}'`);
 }
 
-export type Broadcaster = {
-    name: string;
-    genre: Genre;
-}
-
-export type OutputChannel = {
-    name: string;
-    key: Genre;
-    value: GenreContent;
+export type BroadcastChannelDef = {
+    key: BroadcastChannelKeyCategory;
+    value: BroadcastChannelValueType;
 };
 
-export type ChannelMeta = {
+export type BroadcastChannelsDef = {
+    [key: string]: BroadcastChannelDef;
+};
+
+export type BroadcastChannelMeta = {
     ensembleIdent: EnsembleIdent;
     description: string;
     unit: string;
 };
 
-export type ChannelData = {
+export type BroadcastChannelData = {
     key: number | [number, number, number];
     value: number | string;
 };
 
-export type InputChannel = {
+export type InputBroadcastChannelDef = {
     name: string;
     displayName: string;
-    keyCategories?: Genre[];
+    keyCategories?: BroadcastChannelKeyCategory[];
 };
 
-export function checkChannelCompatibility(channelDef: OutputChannel, channelKeyCategory: Genre): boolean {
+export function checkChannelCompatibility(
+    channelDef: BroadcastChannelDef,
+    channelKeyCategory: BroadcastChannelKeyCategory
+): boolean {
     if (channelDef.key !== channelKeyCategory) {
         return false;
     }
@@ -95,14 +96,14 @@ export function checkChannelCompatibility(channelDef: OutputChannel, channelKeyC
 export class BroadcastChannel {
     private _name: string;
     private _displayName: string;
-    private _metaData: ChannelMeta | null;
+    private _metaData: BroadcastChannelMeta | null;
     private _moduleInstanceId: string;
-    private _subscribers: Set<(data: ChannelData[], metaData: ChannelMeta) => void>;
-    private _cachedData: ChannelData[] | null;
-    private _dataDef: OutputChannel;
-    private _dataGenerator: (() => ChannelData[]) | null;
+    private _subscribers: Set<(data: BroadcastChannelData[], metaData: BroadcastChannelMeta) => void>;
+    private _cachedData: BroadcastChannelData[] | null;
+    private _dataDef: BroadcastChannelDef;
+    private _dataGenerator: (() => BroadcastChannelData[]) | null;
 
-    constructor(name: string, displayName: string, def: OutputChannel, moduleInstanceId: string) {
+    constructor(name: string, displayName: string, def: BroadcastChannelDef, moduleInstanceId: string) {
         this._name = name;
         this._displayName = displayName;
         this._subscribers = new Set();
@@ -121,23 +122,23 @@ export class BroadcastChannel {
         )}\nModule: ${this._moduleInstanceId}\nChannel name: ${this._name}`;
     }
 
-    private assertGeneratedDataMatchesDefinition(data: ChannelData[]): void {
+    private assertGeneratedDataMatchesDefinition(data: BroadcastChannelData[]): void {
         if (data.length === 0) {
             return;
         }
 
-        const expectedKeyType = GenreToTypeMapping[this._dataDef.key];
+        const expectedKeyType = BroadcastChannelKeyCategoryToTypeMap[this._dataDef.key];
         if (!checkValueIsExpectedType(data[0].key, expectedKeyType)) {
             throw new Error(this.makeExceptionMessage("Key", data[0].key.toString(), expectedKeyType));
         }
 
-        const expectedValueType = GenreContentToTypeMapping[this._dataDef.value];
+        const expectedValueType = BroadcastChannelValueTypeToTypeMap[this._dataDef.value];
         if (!checkValueIsExpectedType(data[0].value, expectedValueType)) {
             throw new Error(this.makeExceptionMessage("Value", data[0].value.toString(), expectedValueType));
         }
     }
 
-    private generateAndVerifyData(dataGenerator: () => ChannelData[]): ChannelData[] {
+    private generateAndVerifyData(dataGenerator: () => BroadcastChannelData[]): BroadcastChannelData[] {
         const generatedData = dataGenerator();
 
         this.assertGeneratedDataMatchesDefinition(generatedData);
@@ -153,11 +154,11 @@ export class BroadcastChannel {
         return this._displayName;
     }
 
-    getDataDef(): OutputChannel {
+    getDataDef(): BroadcastChannelDef {
         return this._dataDef;
     }
 
-    getMetaData(): ChannelMeta {
+    getMetaData(): BroadcastChannelMeta {
         if (!this._metaData) {
             throw new Error("No meta data");
         }
@@ -168,7 +169,7 @@ export class BroadcastChannel {
         return this._moduleInstanceId;
     }
 
-    broadcast(metaData: ChannelMeta, dataGenerator: () => ChannelData[]): void {
+    broadcast(metaData: BroadcastChannelMeta, dataGenerator: () => BroadcastChannelData[]): void {
         this._dataGenerator = dataGenerator;
         this._metaData = metaData;
 
@@ -184,7 +185,7 @@ export class BroadcastChannel {
     }
 
     subscribe(
-        callbackChannelDataChanged: (data: ChannelData[] | null, metaData: ChannelMeta | null) => void
+        callbackChannelDataChanged: (data: BroadcastChannelData[] | null, metaData: BroadcastChannelMeta | null) => void
     ): () => void {
         this._subscribers.add(callbackChannelDataChanged);
 
@@ -200,7 +201,7 @@ export class BroadcastChannel {
     }
 }
 
-export class DataBroadcaster {
+export class Broadcaster {
     private _channels: BroadcastChannel[];
     private _subscribers: Set<(channels: BroadcastChannel[]) => void>;
 
@@ -212,7 +213,7 @@ export class DataBroadcaster {
     registerChannel(
         channelName: string,
         displayName: string,
-        channelDef: OutputChannel,
+        channelDef: BroadcastChannelDef,
         moduleInstanceId: string
     ): BroadcastChannel {
         const channel = new BroadcastChannel(channelName, displayName, channelDef, moduleInstanceId);

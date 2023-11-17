@@ -1,7 +1,7 @@
 import React from "react";
 
 import { StatisticFunction_api, VectorRealizationData_api, VectorStatisticSensitivityData_api } from "@api";
-import { ChannelData, ChannelMeta } from "@framework/Broadcaster";
+import { BroadcastChannelData, BroadcastChannelMeta } from "@framework/Broadcaster";
 import { ModuleFCProps } from "@framework/Module";
 import { useSubscribedValue } from "@framework/WorkbenchServices";
 import { timestampUtcMsToCompactIsoString } from "@framework/utils/timestampUtils";
@@ -82,8 +82,8 @@ export const view = ({
             if (!ensemble || !realizationsQuery.data || activeTimestampUtcMs === null) {
                 return;
             }
-            const dataGenerator = (): ChannelData[] => {
-                const data: ChannelData[] = [];
+            const dataGenerator = (): BroadcastChannelData[] => {
+                const data: BroadcastChannelData[] = [];
                 realizationsQuery.data.forEach((vec) => {
                     const indexOfTimeStamp = indexOf(vec.timestamps_utc_ms, activeTimestampUtcMs);
                     data.push({
@@ -95,7 +95,7 @@ export const view = ({
             };
 
             const activeTimestampAsIsoString = timestampUtcMsToCompactIsoString(activeTimestampUtcMs);
-            const channelMeta: ChannelMeta = {
+            const channelMeta: BroadcastChannelMeta = {
                 ensembleIdent: ensemble.getIdent(),
                 description: `${ensemble.getDisplayName()} ${vectorSpec?.vectorName} ${activeTimestampAsIsoString}`,
                 unit: realizationsQuery.data?.at(0)?.unit || "",

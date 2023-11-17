@@ -2,10 +2,11 @@ import { ErrorInfo } from "react";
 
 import { cloneDeep } from "lodash";
 
-import { BroadcastChannel, OutputChannel, InputChannel } from "./Broadcaster";
+import { BroadcastChannel, BroadcastChannelsDef, InputBroadcastChannelDef } from "./Broadcaster";
 import { InitialSettings } from "./InitialSettings";
 import { ImportState, Module, ModuleFC } from "./Module";
 import { ModuleContext } from "./ModuleContext";
+import { Channel, ChannelInput, ModuleBroadcaster } from "./NewBroadcaster";
 import { StateBaseType, StateOptions, StateStore } from "./StateStore";
 import { SyncSettingKey } from "./SyncSettings";
 import { Workbench } from "./Workbench";
@@ -39,21 +40,25 @@ export class ModuleInstance<StateType extends StateBaseType> {
     private _cachedStateStoreOptions?: StateOptions<StateType>;
     private _initialSettings: InitialSettings | null;
     private _statusController: ModuleInstanceStatusControllerInternal;
-    private _inputChannelDefs: InputChannel[];
+    private _inputChannelDefs: InputBroadcastChannelDef[];
     private _inputChannels: Record<string, BroadcastChannel> = {};
     private _workbench: Workbench;
+    private _broadcaster: ModuleBroadcaster;
 
-    constructor(
-        module: Module<StateType>,
-        instanceNumber: number,
-        outputChannels: OutputChannel[],
-        workbench: Workbench,
-        inputChannels: InputChannel[]
-    ) {
-        this._id = `${module.getName()}-${instanceNumber}`;
-        this._title = module.getDefaultTitle();
+    constructor(options: {
+        module: Module<StateType>;
+        instanceNumber: number;
+        broadcastChannelsDef: BroadcastChannelsDef;
+        workbench: Workbench;
+        inputChannelDefs: InputBroadcastChannelDef[];
+
+        channels: Channel[];
+        channelInputs: ChannelInput[];
+    }) {
+        this._id = `${options.module.getName()}-${options.instanceNumber}`;
+        this._title = options.module.getDefaultTitle();
         this._stateStore = null;
-        this._module = module;
+        this._module = options.module;
         this._importStateSubscribers = new Set();
         this._context = null;
         this._initialised = false;
@@ -68,27 +73,41 @@ export class ModuleInstance<StateType extends StateBaseType> {
         this._cachedDefaultState = null;
         this._initialSettings = null;
         this._statusController = new ModuleInstanceStatusControllerInternal();
-        this._inputChannelDefs = inputChannels;
+        this._inputChannelDefs = options.inputChannelDefs;
         this._inputChannels = {};
-        this._workbench = workbench;
+        this._workbench = options.workbench;
+
+        this._broadcaster = new ModuleBroadcaster(this._id);
+
+        options.channels.forEach((channel) => {
+            this._broadcaster.registerChannel({
+                ident: channel.ident,
+                name: channel.name,
+                genre: channel.genre,
+                contentType: channel.contentType,
+            });
+        });
 
         this._broadcastChannels = {} as Record<string, BroadcastChannel>;
 
-        if (outputChannels) {
-            for (const outputChannel of outputChannels) {
-                const channelName = outputChannel.name;
+        const broadcastChannelNames = Object.keys(options.broadcastChannelsDef);
+
+        if (broadcastChannelNames) {
+            broadcastChannelNames.forEach((channelName) => {
                 const enrichedChannelName = `${this._id} - ${channelName as string}`;
-                this._broadcastChannels[channelName] = workbench.getBroadcaster().registerChannel(
-                    enrichedChannelName,
-                    channelName,
-                    outputChannel,
-                    this._id,
-                )
-            }
+                this._broadcastChannels[channelName] = options.workbench
+                    .getBroadcaster()
+                    .registerChannel(
+                        enrichedChannelName,
+                        channelName,
+                        options.broadcastChannelsDef[channelName as string],
+                        this._id
+                    );
+            });
         }
     }
 
-    getInputChannelDefs(): InputChannel[] {
+    getInputChannelDefs(): InputBroadcastChannelDef[] {
         return this._inputChannelDefs;
     }
 
