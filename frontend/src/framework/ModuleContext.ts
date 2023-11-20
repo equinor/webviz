@@ -4,6 +4,7 @@ import { BroadcastChannel, InputBroadcastChannelDef } from "./Broadcaster";
 import { InitialSettings } from "./InitialSettings";
 import { ModuleInstance } from "./ModuleInstance";
 import { ModuleInstanceStatusController } from "./ModuleInstanceStatusController";
+import { ModuleChannel } from "./NewBroadcaster";
 import { StateBaseType, StateStore, useSetStoreValue, useStoreState, useStoreValue } from "./StateStore";
 import { SyncSettingKey } from "./SyncSettings";
 
@@ -57,6 +58,11 @@ export class ModuleContext<S extends StateBaseType> {
 
     getStatusController(): ModuleInstanceStatusController {
         return this._moduleInstance.getStatusController();
+    }
+
+    getNewChannel(channelIdent: string): ModuleChannel<any, any> | null {
+        const broadcaster = this._moduleInstance.getBroadcaster();
+        return broadcaster.getChannel(channelIdent);
     }
 
     getChannel(channelName: string): BroadcastChannel {

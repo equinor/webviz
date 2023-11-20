@@ -1,4 +1,5 @@
 import { BroadcastChannelKeyCategory, BroadcastChannelValueType } from "@framework/Broadcaster";
+import { Channel, ContentType, Genre } from "@framework/NewBroadcaster";
 
 export enum BroadcastChannelNames {
     Realization_Value = "Value (per realization)",

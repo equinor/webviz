@@ -1,6 +1,6 @@
 import { BroadcastChannelsDef, InputBroadcastChannelDef } from "./Broadcaster";
 import { Module } from "./Module";
-import { Channel, ChannelInput } from "./NewBroadcaster";
+import { Channel, ChannelListener } from "./NewBroadcaster";
 import { DrawPreviewFunc } from "./Preview";
 import { StateBaseType, StateOptions } from "./StateStore";
 import { SyncSettingKey } from "./SyncSettings";
@@ -12,7 +12,7 @@ export type RegisterModuleOptions = {
     syncableSettingKeys?: SyncSettingKey[];
     outputChannels?: BroadcastChannelsDef;
     newChannels?: Channel[];
-    newChannelInput?: ChannelInput[];
+    channelListeners?: ChannelListener[];
     inputChannels?: InputBroadcastChannelDef[];
 
     preview?: DrawPreviewFunc;
@@ -46,7 +46,7 @@ export class ModuleRegistry {
             broadcastChannelsDef: options.outputChannels ?? {},
             inputChannelDefs: options.inputChannels ?? [],
             channels: options.newChannels ?? [],
-            channelInputs: options.newChannelInput ?? [],
+            channelListeners: options.channelListeners ?? [],
             drawPreviewFunc: options.preview,
             description: options.description,
         });

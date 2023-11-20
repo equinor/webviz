@@ -98,21 +98,28 @@ export const InputChannelNodes: React.FC<InputChannelNodesProps> = (props) => {
                 return;
             }
 
-            const acceptedKeys = props.moduleInstance
-                .getInputChannelDefs()
-                .find((channelDef) => channelDef.name === inputName)?.keyCategories;
+            const supportedGenres = props.moduleInstance
+                .getChannelListeners()
+                .find((el) => el.getName() === inputName)
+                ?.getSupportedGenres();
 
-            const channels = Object.values(originModuleInstance.getBroadcastChannels()).filter((channel) => {
-                if (!acceptedKeys || acceptedKeys.some((key) => channel.getDataDef().key === key)) {
+            const channels = originModuleInstance
+                .getBroadcaster()
+                .getChannels()
+                .filter((channel) => {
+                    if (!supportedGenres || supportedGenres.some((key) => channel.getGenre() === key)) {
+                        /*
                     return Object.values(props.moduleInstance.getInputChannels()).every((inputChannel) => {
                         if (inputChannel.getDataDef().key === channel.getDataDef().key) {
                             return true;
                         }
                         return false;
                     });
-                }
-                return false;
-            });
+                    */
+                        return true;
+                    }
+                    return false;
+                });
 
             if (channels.length === 0) {
                 guiMessageBroker.publishEvent(GuiEvent.HideDataChannelConnectionsRequest);

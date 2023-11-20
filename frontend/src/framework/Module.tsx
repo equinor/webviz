@@ -6,7 +6,7 @@ import { BroadcastChannelsDef, InputBroadcastChannelDef } from "./Broadcaster";
 import { InitialSettings } from "./InitialSettings";
 import { ModuleContext } from "./ModuleContext";
 import { ModuleInstance } from "./ModuleInstance";
-import { Channel, ChannelInput } from "./NewBroadcaster";
+import { Channel, ChannelListener, ModuleChannelListener } from "./NewBroadcaster";
 import { DrawPreviewFunc } from "./Preview";
 import { StateBaseType, StateOptions } from "./StateStore";
 import { SyncSettingKey } from "./SyncSettings";
@@ -48,7 +48,7 @@ export class Module<StateType extends StateBaseType> {
     private _description: string | null;
     private _inputChannelDefs: InputBroadcastChannelDef[];
     private _channels: Channel[];
-    private _channelInputs: ChannelInput[];
+    private _channelListeners: ChannelListener[];
 
     constructor(options: {
         name: string;
@@ -59,7 +59,7 @@ export class Module<StateType extends StateBaseType> {
         drawPreviewFunc?: DrawPreviewFunc;
         description?: string;
         channels?: Channel[];
-        channelInputs?: ChannelInput[];
+        channelListeners?: ChannelListener[];
     }) {
         this._name = options.name;
         this._defaultTitle = options.defaultTitle;
@@ -75,7 +75,7 @@ export class Module<StateType extends StateBaseType> {
         this._drawPreviewFunc = options.drawPreviewFunc ?? null;
         this._description = options.description ?? null;
         this._channels = options.channels ?? [];
-        this._channelInputs = options.channelInputs ?? [];
+        this._channelListeners = options.channelListeners ?? [];
     }
 
     getDrawPreviewFunc(): DrawPreviewFunc | null {
@@ -129,7 +129,7 @@ export class Module<StateType extends StateBaseType> {
             module: this,
             instanceNumber,
             channels: this._channels,
-            channelInputs: this._channelInputs,
+            channelListeners: this._channelListeners,
             broadcastChannelsDef: this._channelsDef,
             inputChannelDefs: this._inputChannelDefs,
             workbench: this._workbench,

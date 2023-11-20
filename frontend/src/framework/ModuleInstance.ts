@@ -6,7 +6,7 @@ import { BroadcastChannel, BroadcastChannelsDef, InputBroadcastChannelDef } from
 import { InitialSettings } from "./InitialSettings";
 import { ImportState, Module, ModuleFC } from "./Module";
 import { ModuleContext } from "./ModuleContext";
-import { Channel, ChannelInput, ModuleBroadcaster } from "./NewBroadcaster";
+import { Channel, ChannelListener, ModuleBroadcaster, ModuleChannelListener } from "./NewBroadcaster";
 import { StateBaseType, StateOptions, StateStore } from "./StateStore";
 import { SyncSettingKey } from "./SyncSettings";
 import { Workbench } from "./Workbench";
@@ -42,6 +42,7 @@ export class ModuleInstance<StateType extends StateBaseType> {
     private _statusController: ModuleInstanceStatusControllerInternal;
     private _inputChannelDefs: InputBroadcastChannelDef[];
     private _inputChannels: Record<string, BroadcastChannel> = {};
+    private _channelListeners: ModuleChannelListener[];
     private _workbench: Workbench;
     private _broadcaster: ModuleBroadcaster;
 
@@ -53,7 +54,7 @@ export class ModuleInstance<StateType extends StateBaseType> {
         inputChannelDefs: InputBroadcastChannelDef[];
 
         channels: Channel[];
-        channelInputs: ChannelInput[];
+        channelListeners: ChannelListener[];
     }) {
         this._id = `${options.module.getName()}-${options.instanceNumber}`;
         this._title = options.module.getDefaultTitle();
@@ -78,6 +79,9 @@ export class ModuleInstance<StateType extends StateBaseType> {
         this._workbench = options.workbench;
 
         this._broadcaster = new ModuleBroadcaster(this._id);
+        this._channelListeners = options.channelListeners.map(
+            (el) => new ModuleChannelListener(el.ident, el.name, el.supportedGenres)
+        );
 
         options.channels.forEach((channel) => {
             this._broadcaster.registerChannel({
@@ -105,6 +109,14 @@ export class ModuleInstance<StateType extends StateBaseType> {
                     );
             });
         }
+    }
+
+    getBroadcaster(): ModuleBroadcaster {
+        return this._broadcaster;
+    }
+
+    getChannelListeners(): ModuleChannelListener[] {
+        return this._channelListeners;
     }
 
     getInputChannelDefs(): InputBroadcastChannelDef[] {
@@ -151,7 +163,7 @@ export class ModuleInstance<StateType extends StateBaseType> {
     }
 
     hasBroadcastChannels(): boolean {
-        return Object.keys(this._broadcastChannels).length > 0;
+        return this._broadcaster.getChannels().length > 0;
     }
 
     setDefaultState(defaultState: StateType, options?: StateOptions<StateType>): void {

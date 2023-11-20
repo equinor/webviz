@@ -1,6 +1,7 @@
 import React from "react";
 
 import { ModuleFCProps } from "@framework/Module";
+import { useBroadcast } from "@framework/NewBroadcaster";
 import { useViewStatusWriter } from "@framework/StatusWriter";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { Table } from "@lib/components/Table";
@@ -8,6 +9,7 @@ import { TableHeading } from "@lib/components/Table/table";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { ContentInfo } from "@modules/_shared/components/ContentMessage";
 
+import { Channels } from "./channels";
 import { useRealizationsResponses } from "./hooks/useRealizationResponses";
 import { State } from "./state";
 
@@ -27,6 +29,26 @@ export const view = (props: ModuleFCProps<State>) => {
     });
 
     statusWriter.setLoading(tableData.isFetching);
+
+    const channel = props.moduleContext.getNewChannel(Channels.ResponseValuePerRealization);
+
+    if (channel) {
+        useBroadcast({
+            dependencies: [tableData.data, tableData.isFetching],
+            channel,
+            programs: responseNames.map((el) => ({ ident: el, name: el })),
+            contentGenerator: (programIdent: string) => {
+                const data = tableData.data?.find((el) => el.responseName === programIdent);
+                if (data && data.responses) {
+                    return data.responses.realizations.map((el, index) => ({
+                        key: el,
+                        value: data.responses?.values[index] ?? 0,
+                    }));
+                }
+                return [];
+            },
+        });
+    }
 
     const headings: TableHeading = {
         ensemble: {

@@ -6,7 +6,7 @@ import { Workbench } from "@framework/Workbench";
 import { Point, pointDifference, pointRelativeToDomRect, pointerEventToPoint } from "@lib/utils/geometry";
 
 import { Header } from "./private-components/header";
-import { InputChannelNodes } from "./private-components/inputChannelNodeWrapper";
+import { InputChannelNodes } from "./private-components/inputChannelNodes";
 import { ViewContent } from "./private-components/viewContent";
 
 import { ViewWrapperPlaceholder } from "../viewWrapperPlaceholder";

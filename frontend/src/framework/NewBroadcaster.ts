@@ -12,7 +12,7 @@ export enum Genre {
     MeasuredDepth = "measured-depth",
 }
 
-enum ContentType {
+export enum ContentType {
     Numeric = "numeric",
     String = "string",
 }
@@ -25,11 +25,8 @@ export interface Channel {
 }
 
 interface Program {
+    ident: string;
     name: string;
-}
-
-interface Listener {
-    genre: Genre;
 }
 
 interface Content {
@@ -56,7 +53,7 @@ const ProgramTypes = {
     [ContentType.String]: Type.String,
 };
 
-export interface ChannelInput {
+export interface ChannelListener {
     ident: string;
     name: string;
     supportedGenres: Genre[];
@@ -109,11 +106,11 @@ export class ChannelProgram {
     }
 }
 
-export function useBroadcast(options: {
-    channel: ModuleChannel;
+export function useBroadcast<TGenre extends Genre, TContentType extends ContentType>(options: {
+    channel: ModuleChannel<TGenre, TContentType>;
     dependencies: any[];
-    metadata: ChannelMeta;
-    programGenerator: () => Program[];
+    programs: Program[];
+    contentGenerator: (programIdent: string) => Content[];
 }) {
     const [prevDependencies, setPrevDependencies] = React.useState<any[]>([]);
 
@@ -122,12 +119,9 @@ export function useBroadcast(options: {
 
         options.channel.unregisterAllPrograms();
 
-        const programs = options.programGenerator();
-        /*
-        for (const program of programs) {
-            options.channel.registerProgram(program.name);
+        for (const program of options.programs) {
+            options.channel.registerProgram(program.name, () => options.contentGenerator(program.ident));
         }
-        */
     }
 }
 
@@ -135,7 +129,7 @@ export enum ModuleChannelTopics {
     ProgramsChange = "programs-change",
 }
 
-export class ModuleChannel {
+export class ModuleChannel<TGenre extends Genre, TContentType extends ContentType> {
     /**
      * This class holds all programs of a module.
      */
@@ -146,8 +140,8 @@ export class ModuleChannel {
     constructor(
         private _ident: string,
         private _name: string,
-        private _genre: Genre,
-        private _contentType: ContentType
+        private _genre: TGenre,
+        private _contentType: TContentType
     ) {}
 
     getIdent(): string {
@@ -219,16 +213,45 @@ export enum ModuleBroadcasterTopics {
     ChannelsChange = "channels-change",
 }
 
+export class ModuleChannelListener {
+    constructor(private _ident: string, private _name: string, private _supportedGenres: Genre[]) {}
+
+    getIdent(): string {
+        return this._ident;
+    }
+
+    getName(): string {
+        return this._name;
+    }
+
+    getSupportedGenres(): Genre[] {
+        return this._supportedGenres;
+    }
+}
+
 export class ModuleBroadcaster {
     /**
      * This class holds all channels of a module.
      */
 
-    private _channels: ModuleChannel[] = [];
+    private _channels: ModuleChannel<any, any>[] = [];
     private _subscribersMap: Map<ModuleBroadcasterTopics, Set<() => void>> = new Map();
 
     // Is constructor assignment a pattern we would like to use?
     constructor(private _moduleInstanceId: string) {}
+
+    getChannel(ident: string): ModuleChannel<any, any> | null {
+        const channel = this._channels.find((c) => c.getIdent() === ident);
+        if (!channel) {
+            return null;
+        }
+
+        return channel;
+    }
+
+    getChannels(): ModuleChannel<any, any>[] {
+        return this._channels;
+    }
 
     getModuleInstanceId(): string {
         return this._moduleInstanceId;
