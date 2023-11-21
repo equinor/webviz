@@ -2,6 +2,7 @@ import React from "react";
 
 import { BroadcastChannelKeyCategory } from "@framework/Broadcaster";
 import { GuiEvent, GuiEventPayloads } from "@framework/GuiMessageBroker";
+import { Genre, ModuleBroadcasterTopic, ModuleChannelListenerTopic } from "@framework/NewBroadcaster";
 import { Workbench } from "@framework/Workbench";
 import { IconButton } from "@lib/components/IconButton";
 import { Point, pointerEventToPoint, rectContainsPoint } from "@lib/utils/geometry";
@@ -9,9 +10,9 @@ import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { Remove } from "@mui/icons-material";
 
 export type InputChannelNodeProps = {
-    inputName: string;
-    displayName: string;
-    channelKeyCategories?: BroadcastChannelKeyCategory[];
+    ident: string;
+    name: string;
+    supportedGenres?: Genre[];
     moduleInstanceId: string;
     onChannelConnect: (inputName: string, moduleInstanceId: string, destinationPoint: Point) => void;
     onChannelConnectionDisconnect: (inputName: string) => void;
@@ -45,38 +46,18 @@ export const InputChannelNode: React.FC<InputChannelNodeProps> = (props) => {
             if (!originModuleInstance) {
                 return;
             }
-            const dataChannels = originModuleInstance.getBroadcastChannels();
-            const channelKeyCategories: BroadcastChannelKeyCategory[] = [];
-            for (const dataChannelName in dataChannels) {
-                channelKeyCategories.push(dataChannels[dataChannelName].getDataDef().key);
-            }
-
-            if (
-                props.channelKeyCategories &&
-                !channelKeyCategories.some(
-                    (channelKeyCategory) =>
-                        props.channelKeyCategories && props.channelKeyCategories.includes(channelKeyCategory)
-                )
-            ) {
-                return;
-            }
 
             if (!moduleInstance) {
                 return;
             }
 
-            const alreadySetInputChannels = moduleInstance.getInputChannels();
-
-            const alreadySetInputKeys: BroadcastChannelKeyCategory[] = [];
-
-            for (const channelName in alreadySetInputChannels) {
-                alreadySetInputKeys.push(alreadySetInputChannels[channelName].getDataDef().key);
+            const channels = originModuleInstance.getBroadcaster().getChannels();
+            const channelGenres: Genre[] = [];
+            for (const channelName in channels) {
+                channelGenres.push(channels[channelName].getGenre());
             }
 
-            if (
-                alreadySetInputKeys.length > 0 &&
-                !alreadySetInputKeys.some((key) => channelKeyCategories.includes(key))
-            ) {
+            if (props.supportedGenres && !props.supportedGenres.some((genre) => channelGenres.includes(genre))) {
                 return;
             }
 
@@ -89,11 +70,12 @@ export const InputChannelNode: React.FC<InputChannelNodeProps> = (props) => {
         function handlePointerUp(e: PointerEvent) {
             if (localHovered) {
                 if (removeButtonRef.current && removeButtonRef.current.contains(e.target as Node)) {
-                    props.onChannelConnectionDisconnect(props.inputName);
+                    props.onChannelConnectionDisconnect(props.ident);
                     setHovered(false);
+                    setHasConnection(false);
                     localHovered = false;
                 } else if (localConnectable) {
-                    props.onChannelConnect(props.inputName, localModuleInstanceId, pointerEventToPoint(e));
+                    props.onChannelConnect(props.ident, localModuleInstanceId, pointerEventToPoint(e));
                     setHovered(false);
                     localHovered = false;
                 } else if (!localConnectable && !localEditDataChannelConnections) {
@@ -143,8 +125,8 @@ export const InputChannelNode: React.FC<InputChannelNodeProps> = (props) => {
                 return;
             }
 
-            const inputChannels = moduleInstance.getInputChannels();
-            const hasConnection = props.inputName in inputChannels;
+            const listener = moduleInstance.getBroadcaster().getListener(props.ident);
+            const hasConnection = listener?.isListening() ?? false;
             setHasConnection(hasConnection);
         }
 
@@ -173,7 +155,10 @@ export const InputChannelNode: React.FC<InputChannelNodeProps> = (props) => {
             resizeObserver.observe(ref.current);
         }
 
-        const unsubscribeFunc = moduleInstance?.subscribeToInputChannelsChange(checkIfConnection);
+        const unsubscribeFunc = moduleInstance
+            ?.getBroadcaster()
+            .getListener(props.ident)
+            ?.subscribe(ModuleChannelListenerTopic.ChannelChange, checkIfConnection);
 
         return () => {
             removeDataChannelDoneHandler();
@@ -190,12 +175,19 @@ export const InputChannelNode: React.FC<InputChannelNodeProps> = (props) => {
                 unsubscribeFunc();
             }
         };
-    }, [props.onChannelConnect, props.workbench, props.moduleInstanceId, props.inputName, props.channelKeyCategories]);
+    }, [
+        props.onChannelConnect,
+        props.onChannelConnectionDisconnect,
+        props.workbench,
+        props.moduleInstanceId,
+        props.ident,
+        props.supportedGenres,
+    ]);
 
     function handlePointerEnter() {
         guiMessageBroker.publishEvent(GuiEvent.HighlightDataChannelConnectionRequest, {
             moduleInstanceId: props.moduleInstanceId,
-            dataChannelName: props.inputName,
+            dataChannelName: props.ident,
         });
 
         guiMessageBroker.publishEvent(GuiEvent.DataChannelNodeHover, {
@@ -210,7 +202,7 @@ export const InputChannelNode: React.FC<InputChannelNodeProps> = (props) => {
 
     return (
         <div
-            id={`channel-connector-${props.moduleInstanceId}-${props.inputName}`}
+            id={`channel-connector-${props.moduleInstanceId}-${props.ident}`}
             ref={ref}
             data-channelconnector
             className={resolveClassNames(
@@ -228,7 +220,7 @@ export const InputChannelNode: React.FC<InputChannelNodeProps> = (props) => {
             onPointerEnter={handlePointerEnter}
             onPointerLeave={handlePointerLeave}
         >
-            {props.displayName}
+            {props.name}
             <IconButton
                 ref={removeButtonRef}
                 className={resolveClassNames("m-0 hover:bg-white hover:text-red-600", {

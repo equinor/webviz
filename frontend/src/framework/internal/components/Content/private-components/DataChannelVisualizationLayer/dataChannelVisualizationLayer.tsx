@@ -255,14 +255,18 @@ export const DataChannelVisualizationLayer: React.FC<DataChannelVisualizationPro
             ) {
                 continue;
             }
-            const inputChannels = moduleInstance.getInputChannels();
-            if (!inputChannels) {
+            const listeners = moduleInstance.getBroadcaster().getListeners();
+            if (!listeners) {
                 continue;
             }
 
-            for (const inputChannelName in inputChannels) {
-                const inputChannel = inputChannels[inputChannelName];
-                const originModuleInstanceId = inputChannel.getModuleInstanceId();
+            for (const listener of listeners) {
+                const channel = listener.getChannel();
+                if (!channel) {
+                    continue;
+                }
+
+                const originModuleInstanceId = channel.getBroadcaster().getModuleInstanceId();
                 const originModuleInstance = props.workbench.getModuleInstance(originModuleInstanceId);
                 if (!originModuleInstance) {
                     continue;
@@ -272,7 +276,7 @@ export const DataChannelVisualizationLayer: React.FC<DataChannelVisualizationPro
                     `moduleinstance-${originModuleInstanceId}-data-channel-origin`
                 );
                 const destinationElement = document.getElementById(
-                    `channel-connector-${moduleInstance.getId()}-${inputChannelName}`
+                    `channel-connector-${moduleInstance.getId()}-${listener.getIdent()}`
                 );
                 if (!originElement || !destinationElement) {
                     continue;
@@ -307,18 +311,18 @@ export const DataChannelVisualizationLayer: React.FC<DataChannelVisualizationPro
                 };
 
                 const highlighted =
-                    highlightedDataChannelConnection?.dataChannelName === inputChannelName &&
+                    highlightedDataChannelConnection?.dataChannelName === channel.getIdent() &&
                     highlightedDataChannelConnection?.moduleInstanceId === moduleInstance.getId();
 
                 dataChannelPaths.push({
-                    key: `${originModuleInstanceId}-${moduleInstance.getId()}-${inputChannelName}-${JSON.stringify(
+                    key: `${originModuleInstanceId}-${moduleInstance.getId()}-${channel.getIdent()}-${JSON.stringify(
                         boundingRect
                     )}`,
                     origin: originPoint,
                     midPoint1: midPoint1,
                     midPoint2: midPoint2,
                     destination: destinationPoint,
-                    description: inputChannel.getDisplayName(),
+                    description: channel.getName(),
                     descriptionCenterPoint: descriptionCenterPoint,
                     highlighted: highlighted,
                 });

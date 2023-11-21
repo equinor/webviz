@@ -4,7 +4,7 @@ import { BroadcastChannel, InputBroadcastChannelDef } from "./Broadcaster";
 import { InitialSettings } from "./InitialSettings";
 import { ModuleInstance } from "./ModuleInstance";
 import { ModuleInstanceStatusController } from "./ModuleInstanceStatusController";
-import { ModuleChannel } from "./NewBroadcaster";
+import { Content, ModuleChannel, ModuleChannelListener, useChannelListener } from "./NewBroadcaster";
 import { StateBaseType, StateStore, useSetStoreValue, useStoreState, useStoreValue } from "./StateStore";
 import { SyncSettingKey } from "./SyncSettings";
 
@@ -79,6 +79,31 @@ export class ModuleContext<S extends StateBaseType> {
 
     getInputChannelDef(name: string): InputBroadcastChannelDef | undefined {
         return this._moduleInstance.getInputChannelDefs().find((channelDef) => channelDef.name === name);
+    }
+
+    useChannelListener(
+        ident: string,
+        initialSettings?: InitialSettings
+    ): { name: string; programs: { programName: string; content: Content[] }[]; listening: boolean } {
+        const listener = this._moduleInstance.getBroadcaster().getListener(ident);
+
+        React.useEffect(() => {
+            if (initialSettings) {
+                const setting = initialSettings.get(ident, "string");
+                if (setting && listener) {
+                    const channel = this._moduleInstance.getBroadcaster().getChannel(setting);
+                    if (!channel) {
+                        return;
+                    }
+                    listener.startListeningTo(
+                        channel,
+                        channel.getPrograms().map((el) => el.getName())
+                    );
+                }
+            }
+        }, [initialSettings, listener]);
+
+        return useChannelListener(this._moduleInstance.getBroadcaster().getListener(ident));
     }
 
     useInputChannel(name: string, initialSettings?: InitialSettings): BroadcastChannel | null {

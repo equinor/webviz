@@ -90,7 +90,7 @@ export const InputChannelNodes: React.FC<InputChannelNodesProps> = (props) => {
     }, [props.moduleInstance, guiMessageBroker]);
 
     const handleChannelConnect = React.useCallback(
-        function handleChannelConnect(inputName: string, moduleInstanceId: string, destinationPoint: Point) {
+        function handleChannelConnect(listenerIdent: string, moduleInstanceId: string, destinationPoint: Point) {
             const originModuleInstance = props.workbench.getModuleInstance(moduleInstanceId);
 
             if (!originModuleInstance) {
@@ -99,8 +99,9 @@ export const InputChannelNodes: React.FC<InputChannelNodesProps> = (props) => {
             }
 
             const supportedGenres = props.moduleInstance
-                .getChannelListeners()
-                .find((el) => el.getName() === inputName)
+                .getBroadcaster()
+                .getListeners()
+                .find((el) => el.getName() === listenerIdent)
                 ?.getSupportedGenres();
 
             const channels = originModuleInstance
@@ -128,22 +129,37 @@ export const InputChannelNodes: React.FC<InputChannelNodesProps> = (props) => {
 
             if (channels.length > 1) {
                 setChannelSelectorCenterPoint(destinationPoint);
-                setSelectableChannels(Object.values(channels).map((channel) => channel.getName()));
-                setCurrentInputName(inputName);
+                setSelectableChannels(Object.values(channels).map((channel) => channel.getIdent()));
+                setCurrentInputName(listenerIdent);
                 return;
             }
 
-            const channelName = Object.values(channels)[0].getName();
+            const channel = Object.values(channels)[0];
 
-            props.moduleInstance.setInputChannel(inputName, channelName);
+            const listener = props.moduleInstance.getBroadcaster().getListener(listenerIdent);
+
+            if (!listener) {
+                return;
+            }
+
+            if (!listener.getSupportedGenres().includes(channels[0].getGenre())) {
+                return;
+            }
+
+            listener.startListeningTo(
+                channel,
+                channel.getPrograms().map((el) => el.getName())
+            );
+
             guiMessageBroker.publishEvent(GuiEvent.HideDataChannelConnectionsRequest);
+            guiMessageBroker.publishEvent(GuiEvent.DataChannelConnectionsChange);
         },
         [props.moduleInstance, props.workbench]
     );
 
     const handleChannelDisconnect = React.useCallback(
-        function handleChannelDisconnect(inputName: string) {
-            props.moduleInstance.removeInputChannel(inputName);
+        function handleChannelDisconnect(listenerIdent: string) {
+            props.moduleInstance.getBroadcaster().getListener(listenerIdent)?.stopListening();
             guiMessageBroker.publishEvent(GuiEvent.DataChannelConnectionsChange);
         },
         [props.moduleInstance]
@@ -179,20 +195,23 @@ export const InputChannelNodes: React.FC<InputChannelNodesProps> = (props) => {
                 height: elementRect.height,
             }}
         >
-            {props.moduleInstance.getInputChannelDefs().map((channelDef) => {
-                return (
-                    <InputChannelNode
-                        key={channelDef.name}
-                        moduleInstanceId={props.moduleInstance.getId()}
-                        inputName={channelDef.name}
-                        displayName={channelDef.displayName}
-                        channelKeyCategories={channelDef.keyCategories}
-                        workbench={props.workbench}
-                        onChannelConnect={handleChannelConnect}
-                        onChannelConnectionDisconnect={handleChannelDisconnect}
-                    />
-                );
-            })}
+            {props.moduleInstance
+                .getBroadcaster()
+                .getListeners()
+                .map((listener) => {
+                    return (
+                        <InputChannelNode
+                            key={listener.getIdent()}
+                            moduleInstanceId={props.moduleInstance.getId()}
+                            ident={listener.getIdent()}
+                            name={listener.getName()}
+                            supportedGenres={listener.getSupportedGenres()}
+                            workbench={props.workbench}
+                            onChannelConnect={handleChannelConnect}
+                            onChannelConnectionDisconnect={handleChannelDisconnect}
+                        />
+                    );
+                })}
             {channelSelectorCenterPoint && (
                 <ChannelSelector
                     position={channelSelectorCenterPoint}

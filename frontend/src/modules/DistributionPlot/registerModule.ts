@@ -24,29 +24,10 @@ const inputChannelDefs: InputBroadcastChannelDef[] = [
     },
 ];
 
-const channelListeners: ChannelListener[] = [
-    {
-        ident: "channelX",
-        name: "X axis",
-        supportedGenres: [Genre.Realization],
-    },
-    {
-        ident: "channelY",
-        name: "Y axis",
-        supportedGenres: [Genre.Realization],
-    },
-    {
-        ident: "channelColor",
-        name: "Color mapping",
-        supportedGenres: [Genre.Realization],
-    },
-];
-
 ModuleRegistry.registerModule<State>({
     moduleName: "DistributionPlot",
     defaultTitle: "Distribution plot",
     syncableSettingKeys: [SyncSettingKey.ENSEMBLE, SyncSettingKey.TIME_SERIES],
     inputChannels: inputChannelDefs,
-    channelListeners: channelListeners,
     preview,
 });

@@ -42,7 +42,6 @@ export class ModuleInstance<StateType extends StateBaseType> {
     private _statusController: ModuleInstanceStatusControllerInternal;
     private _inputChannelDefs: InputBroadcastChannelDef[];
     private _inputChannels: Record<string, BroadcastChannel> = {};
-    private _channelListeners: ModuleChannelListener[];
     private _workbench: Workbench;
     private _broadcaster: ModuleBroadcaster;
 
@@ -79,9 +78,15 @@ export class ModuleInstance<StateType extends StateBaseType> {
         this._workbench = options.workbench;
 
         this._broadcaster = new ModuleBroadcaster(this._id);
-        this._channelListeners = options.channelListeners.map(
-            (el) => new ModuleChannelListener(el.ident, el.name, el.supportedGenres)
-        );
+
+        options.channelListeners.forEach((channelListener) => {
+            this._broadcaster.registerListener({
+                ident: channelListener.ident,
+                name: channelListener.name,
+                supportedGenres: channelListener.supportedGenres,
+                multiTasking: channelListener.multiTasking ?? false,
+            });
+        });
 
         options.channels.forEach((channel) => {
             this._broadcaster.registerChannel({
@@ -113,10 +118,6 @@ export class ModuleInstance<StateType extends StateBaseType> {
 
     getBroadcaster(): ModuleBroadcaster {
         return this._broadcaster;
-    }
-
-    getChannelListeners(): ModuleChannelListener[] {
-        return this._channelListeners;
     }
 
     getInputChannelDefs(): InputBroadcastChannelDef[] {
