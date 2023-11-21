@@ -71,6 +71,7 @@ export { DefaultService } from './services/DefaultService';
 export { ExploreService } from './services/ExploreService';
 export { GraphService } from './services/GraphService';
 export { GridService } from './services/GridService';
+export { GroupTreeService } from './services/GroupTreeService';
 export { InplaceVolumetricsService } from './services/InplaceVolumetricsService';
 export { ObservationsService } from './services/ObservationsService';
 export { ParametersService } from './services/ParametersService';

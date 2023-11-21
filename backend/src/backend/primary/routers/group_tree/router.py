@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, List
 
 from fastapi import APIRouter, Depends, Query
 from src.backend.auth.auth_helper import AuthHelper
@@ -19,7 +19,7 @@ async def get_group_tree_data(
     ensemble_name: str = Query(description="Ensemble name"),
     realization: Optional[int] = Query(None, description="Optional realization to include. If not specified, all realizations will be returned."),
     # fmt:on
-):
+) -> List:
     grouptree_access = await GroupTreeAccess.from_case_uuid(
         authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
     )

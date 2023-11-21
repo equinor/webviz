@@ -1,5 +1,6 @@
 import { apiService } from "@framework/ApiService";
 import { UseQueryResult, useQuery } from "@tanstack/react-query";
+import { Data } from "@webviz/group-tree/dist/redux/types"
 
 const STALE_TIME = 60 * 1000;
 const CACHE_TIME = 60 * 1000;

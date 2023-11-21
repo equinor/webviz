@@ -9,6 +9,7 @@ import { DefaultService } from './services/DefaultService';
 import { ExploreService } from './services/ExploreService';
 import { GraphService } from './services/GraphService';
 import { GridService } from './services/GridService';
+import { GroupTreeService } from './services/GroupTreeService';
 import { InplaceVolumetricsService } from './services/InplaceVolumetricsService';
 import { ObservationsService } from './services/ObservationsService';
 import { ParametersService } from './services/ParametersService';
@@ -29,6 +30,7 @@ export class ApiService {
     public readonly explore: ExploreService;
     public readonly graph: GraphService;
     public readonly grid: GridService;
+    public readonly groupTree: GroupTreeService;
     public readonly inplaceVolumetrics: InplaceVolumetricsService;
     public readonly observations: ObservationsService;
     public readonly parameters: ParametersService;
@@ -60,6 +62,7 @@ export class ApiService {
         this.explore = new ExploreService(this.request);
         this.graph = new GraphService(this.request);
         this.grid = new GridService(this.request);
+        this.groupTree = new GroupTreeService(this.request);
         this.inplaceVolumetrics = new InplaceVolumetricsService(this.request);
         this.observations = new ObservationsService(this.request);
         this.parameters = new ParametersService(this.request);
