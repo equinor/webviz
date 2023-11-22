@@ -35,7 +35,7 @@ export const DataChannelVisualizationLayer: React.FC<DataChannelVisualizationPro
     );
     const [highlightedDataChannelConnection, setHighlightedDataChannelConnection] = React.useState<{
         moduleInstanceId: string;
-        dataChannelName: string;
+        listenerIdent: string;
     } | null>(null);
     const [editDataChannelConnectionsForModuleInstanceId, setEditDataChannelConnectionsForModuleInstanceId] =
         React.useState<string | null>(null);
@@ -160,7 +160,7 @@ export const DataChannelVisualizationLayer: React.FC<DataChannelVisualizationPro
         ) {
             setHighlightedDataChannelConnection({
                 moduleInstanceId: payload.moduleInstanceId,
-                dataChannelName: payload.dataChannelName,
+                listenerIdent: payload.listenerIdent,
             });
         }
 
@@ -311,18 +311,33 @@ export const DataChannelVisualizationLayer: React.FC<DataChannelVisualizationPro
                 };
 
                 const highlighted =
-                    highlightedDataChannelConnection?.dataChannelName === channel.getIdent() &&
+                    highlightedDataChannelConnection?.listenerIdent === listener.getIdent() &&
                     highlightedDataChannelConnection?.moduleInstanceId === moduleInstance.getId();
 
+                const programs = channel
+                    .getPrograms()
+                    .filter((el) => listener.getProgramIdents().includes(el.getIdent()))
+                    .map((el) => el.getName());
+
+                let programsDescription = "";
+
+                if (programs.length === 1) {
+                    programsDescription = programs[0];
+                }
+
+                if (programs.length > 1) {
+                    programsDescription = `${programs[0]} + ${programs.length - 1} more`;
+                }
+
                 dataChannelPaths.push({
-                    key: `${originModuleInstanceId}-${moduleInstance.getId()}-${channel.getIdent()}-${JSON.stringify(
+                    key: `${originModuleInstanceId}-${moduleInstance.getId()}-${listener.getIdent()}-${JSON.stringify(
                         boundingRect
                     )}`,
                     origin: originPoint,
                     midPoint1: midPoint1,
                     midPoint2: midPoint2,
                     destination: destinationPoint,
-                    description: channel.getName(),
+                    description: `${channel.getName()}\n(${programsDescription})`,
                     descriptionCenterPoint: descriptionCenterPoint,
                     highlighted: highlighted,
                 });

@@ -7,7 +7,6 @@ import { InitialSettings } from "./InitialSettings";
 import { ImportState } from "./Module";
 import { ModuleInstance } from "./ModuleInstance";
 import { ModuleRegistry } from "./ModuleRegistry";
-import { BroadcastService } from "./NewBroadcaster";
 import { Template } from "./TemplateRegistry";
 import { WorkbenchServices } from "./WorkbenchServices";
 import { WorkbenchSession } from "./WorkbenchSession";
@@ -35,7 +34,6 @@ export class Workbench {
     private _workbenchServices: PrivateWorkbenchServices;
     private _workbenchSettings: PrivateWorkbenchSettings;
     private _broadcaster: Broadcaster;
-    private _broadcastService: BroadcastService;
     private _guiMessageBroker: GuiMessageBroker;
     private _subscribersMap: { [key: string]: Set<() => void> };
     private _layout: LayoutElement[];
@@ -47,7 +45,6 @@ export class Workbench {
         this._workbenchServices = new PrivateWorkbenchServices(this);
         this._workbenchSettings = new PrivateWorkbenchSettings();
         this._broadcaster = new Broadcaster();
-        this._broadcastService = new BroadcastService();
         this._guiMessageBroker = new GuiMessageBroker();
         this._subscribersMap = {};
         this._layout = [];

@@ -30,25 +30,21 @@ export const view = (props: ModuleFCProps<State>) => {
 
     statusWriter.setLoading(tableData.isFetching);
 
-    const channel = props.moduleContext.getNewChannel(Channels.ResponseValuePerRealization);
-
-    if (channel) {
-        useBroadcast({
-            dependencies: [tableData.data, tableData.isFetching],
-            channel,
-            programs: responseNames.map((el) => ({ ident: el, name: el })),
-            contentGenerator: (programIdent: string) => {
-                const data = tableData.data?.find((el) => el.responseName === programIdent);
-                if (data && data.responses) {
-                    return data.responses.realizations.map((el, index) => ({
-                        key: el,
-                        value: data.responses?.values[index] ?? 0,
-                    }));
-                }
-                return [];
-            },
-        });
-    }
+    props.moduleContext.useBroadcast({
+        dependencies: [tableData.data, tableData.isFetching],
+        channelIdent: Channels.ResponseValuePerRealization,
+        programs: responseNames.map((el) => ({ ident: el, name: el })),
+        contentGenerator: (programIdent: string) => {
+            const data = tableData.data?.find((el) => el.responseName === programIdent);
+            if (data && data.responses) {
+                return data.responses.realizations.map((el, index) => ({
+                    key: el,
+                    value: data.responses?.values[index] ?? 0,
+                }));
+            }
+            return [];
+        },
+    });
 
     const headings: TableHeading = {
         ensemble: {

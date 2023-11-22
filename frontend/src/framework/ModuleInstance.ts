@@ -6,7 +6,7 @@ import { BroadcastChannel, BroadcastChannelsDef, InputBroadcastChannelDef } from
 import { InitialSettings } from "./InitialSettings";
 import { ImportState, Module, ModuleFC } from "./Module";
 import { ModuleContext } from "./ModuleContext";
-import { Channel, ChannelListener, ModuleBroadcaster, ModuleChannelListener } from "./NewBroadcaster";
+import { Channel, ChannelListener, ModuleBroadcastService, ModuleChannelListener } from "./NewBroadcaster";
 import { StateBaseType, StateOptions, StateStore } from "./StateStore";
 import { SyncSettingKey } from "./SyncSettings";
 import { Workbench } from "./Workbench";
@@ -43,7 +43,7 @@ export class ModuleInstance<StateType extends StateBaseType> {
     private _inputChannelDefs: InputBroadcastChannelDef[];
     private _inputChannels: Record<string, BroadcastChannel> = {};
     private _workbench: Workbench;
-    private _broadcaster: ModuleBroadcaster;
+    private _broadcaster: ModuleBroadcastService;
 
     constructor(options: {
         module: Module<StateType>;
@@ -77,7 +77,7 @@ export class ModuleInstance<StateType extends StateBaseType> {
         this._inputChannels = {};
         this._workbench = options.workbench;
 
-        this._broadcaster = new ModuleBroadcaster(this._id);
+        this._broadcaster = new ModuleBroadcastService(this._id);
 
         options.channelListeners.forEach((channelListener) => {
             this._broadcaster.registerListener({
@@ -116,7 +116,7 @@ export class ModuleInstance<StateType extends StateBaseType> {
         }
     }
 
-    getBroadcaster(): ModuleBroadcaster {
+    getBroadcaster(): ModuleBroadcastService {
         return this._broadcaster;
     }
 

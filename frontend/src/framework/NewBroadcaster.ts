@@ -24,7 +24,7 @@ export interface Channel {
     contentType: ContentType;
 }
 
-interface Program {
+export interface Program {
     ident: string;
     name: string;
 }
@@ -74,7 +74,11 @@ export class ChannelProgram {
     private _cachedContent: Content[] = [];
     private _subscribersMap: Map<ProgramTopic, Set<() => void>> = new Map();
 
-    constructor(private _name: string, private _contentGenerator: () => Content[]) {}
+    constructor(private _ident: string, private _name: string, private _contentGenerator: () => Content[]) {}
+
+    getIdent(): string {
+        return this._ident;
+    }
 
     getName(): string {
         return this._name;
@@ -123,15 +127,17 @@ export function useBroadcast<TGenre extends Genre, TContentType extends ContentT
         setPrevDependencies(options.dependencies);
 
         for (const oldProgram of options.channel.getPrograms()) {
-            if (!options.programs.some((p) => p.name === oldProgram.getName())) {
-                options.channel.unregisterProgram(oldProgram.getName());
+            if (!options.programs.some((p) => p.ident === oldProgram.getIdent())) {
+                options.channel.unregisterProgram(oldProgram.getIdent());
             }
         }
         for (const program of options.programs) {
-            if (!options.channel.hasProgram(program.name)) {
-                options.channel.registerProgram(program.name, () => options.contentGenerator(program.ident));
+            if (!options.channel.hasProgram(program.ident)) {
+                options.channel.registerProgram(program.ident, program.name, () =>
+                    options.contentGenerator(program.ident)
+                );
             } else {
-                options.channel.getProgram(program.name)?.broadcast(() => options.contentGenerator(program.ident));
+                options.channel.getProgram(program.ident)?.broadcast(() => options.contentGenerator(program.ident));
             }
         }
     }
@@ -152,7 +158,7 @@ export class ModuleChannel<TGenre extends Genre, TContentType extends ContentTyp
     private _subscribersMap: Map<ModuleChannelTopic, Set<() => void>> = new Map();
 
     constructor(
-        private _broadcaster: ModuleBroadcaster,
+        private _broadcaster: ModuleBroadcastService,
         private _ident: string,
         private _name: string,
         private _genre: TGenre,
@@ -169,7 +175,7 @@ export class ModuleChannel<TGenre extends Genre, TContentType extends ContentTyp
         return this._name;
     }
 
-    getBroadcaster(): ModuleBroadcaster {
+    getBroadcaster(): ModuleBroadcastService {
         return this._broadcaster;
     }
 
@@ -194,36 +200,20 @@ export class ModuleChannel<TGenre extends Genre, TContentType extends ContentTyp
         return this._programs;
     }
 
-    broadcast(programIdents: string[], contentGenerator: (programIdent: string) => Content[]): void {
-        for (const oldProgram of this._programs) {
-            if (!programIdents.includes(oldProgram.getName())) {
-                this.unregisterProgram(oldProgram.getName());
-            }
-        }
-        for (const programIdent of programIdents) {
-            if (!this.hasProgram(programIdent)) {
-                this.registerProgram(programIdent, () => contentGenerator(programIdent));
-            } else {
-                this.getProgram(programIdent)?.broadcast(() => contentGenerator(programIdent));
-            }
-        }
-        this.notifySubscribers(ModuleChannelTopic.ContentChange);
-    }
-
     private handleProgramContentChange(): void {
         this.notifySubscribers(ModuleChannelTopic.ContentChange);
     }
 
-    registerProgram(name: string, contentGenerator: () => Content[]): void {
-        const program = new ChannelProgram(name, contentGenerator);
+    registerProgram(ident: string, name: string, contentGenerator: () => Content[]): void {
+        const program = new ChannelProgram(ident, name, contentGenerator);
         program.subscribe(ProgramTopic.ContentChange, this.handleProgramContentChange);
         this._programs.push(program);
         this.notifySubscribers(ModuleChannelTopic.ProgramsChange);
         this.notifySubscribers(ModuleChannelTopic.ContentChange);
     }
 
-    unregisterProgram(name: string): void {
-        this._programs = this._programs.filter((p) => p.getName() !== name);
+    unregisterProgram(ident: string): void {
+        this._programs = this._programs.filter((p) => p.getIdent() !== ident);
         this.notifySubscribers(ModuleChannelTopic.ProgramsChange);
     }
 
@@ -233,7 +223,7 @@ export class ModuleChannel<TGenre extends Genre, TContentType extends ContentTyp
     }
 
     hasProgram(ident: string): boolean {
-        return this._programs.some((p) => p.getName() === ident);
+        return this._programs.some((p) => p.getIdent() === ident);
     }
 
     subscribe(topic: ModuleChannelTopic, callback: () => void): void {
@@ -277,7 +267,7 @@ export enum ModuleChannelListenerTopic {
 }
 
 export class ModuleChannelListener {
-    private _broadcaster: ModuleBroadcaster;
+    private _broadcaster: ModuleBroadcastService;
     private _ident: string;
     private _name: string;
     private _supportedGenres: Genre[];
@@ -287,7 +277,7 @@ export class ModuleChannelListener {
     private _subscribersMap: Map<ModuleChannelListenerTopic, Set<() => void>> = new Map();
 
     constructor(options: {
-        broadcaster: ModuleBroadcaster;
+        broadcaster: ModuleBroadcastService;
         ident: string;
         name: string;
         supportedGenres: Genre[];
@@ -303,11 +293,15 @@ export class ModuleChannelListener {
         this.handleProgramsChange = this.handleProgramsChange.bind(this);
     }
 
-    getBroadcaster(): ModuleBroadcaster {
+    getBroadcaster(): ModuleBroadcastService {
         return this._broadcaster;
     }
 
     startListeningTo(channel: ModuleChannel<any, any>, programIdents: string[]): void {
+        if (this.isListening()) {
+            this.stopListening();
+        }
+
         this._channel = channel;
         this._programIdents = programIdents;
 
@@ -316,10 +310,15 @@ export class ModuleChannelListener {
         this._channel.subscribe(ModuleChannelTopic.ProgramsChange, this.handleProgramsChange);
 
         this.notifySubscribers(ModuleChannelListenerTopic.ChannelChange);
+        this.notifySubscribers(ModuleChannelListenerTopic.ContentChange);
     }
 
     getChannel(): ModuleChannel<any, any> | null {
         return this._channel;
+    }
+
+    getProgramIdents(): string[] {
+        return this._programIdents;
     }
 
     stopListening(): void {
@@ -385,6 +384,8 @@ export class ModuleChannelListener {
     }
 
     private handleProgramsChange(): void {
+        this.notifySubscribers(ModuleChannelListenerTopic.ContentChange);
+        /*
         const updatedProgramIdents = this._programIdents.filter((programIdent) =>
             this._channel?.hasProgram(programIdent)
         );
@@ -393,6 +394,7 @@ export class ModuleChannelListener {
             this.notifySubscribers(ModuleChannelListenerTopic.ChannelChange);
             return;
         }
+        */
     }
 }
 
@@ -410,12 +412,20 @@ export function useChannelListener(channelListener: ModuleChannelListener | null
                 return;
             }
 
-            const programs = channel.getPrograms().map((program) => {
-                return {
-                    programName: program.getName(),
-                    content: program.getContent(),
-                };
-            });
+            const programs = channel
+                .getPrograms()
+                .filter((program) => {
+                    if (channelListener?.getProgramIdents().includes(program.getIdent())) {
+                        return true;
+                    }
+                    return false;
+                })
+                .map((program) => {
+                    return {
+                        programName: program.getName(),
+                        content: program.getContent(),
+                    };
+                });
 
             setPrograms(programs ?? []);
         }
@@ -442,9 +452,10 @@ export enum ModuleBroadcasterTopic {
     ListenersChange = "listeners-change",
 }
 
-export class ModuleBroadcaster {
+export class ModuleBroadcastService {
     /**
-     * This class holds all channels of a module.
+     * This class holds all channels and listeners of a module.
+     * NOTE: Should listeners and channels be separated into different classes?
      */
 
     private _channels: ModuleChannel<any, any>[] = [];
@@ -500,6 +511,14 @@ export class ModuleBroadcaster {
         this.notifySubscribers(ModuleBroadcasterTopic.ChannelsChange);
     }
 
+    unregisterAllListeners(): void {
+        for (const listener of this._listeners) {
+            listener.stopListening();
+        }
+        this._listeners = [];
+        this.notifySubscribers(ModuleBroadcasterTopic.ListenersChange);
+    }
+
     subscribe(topic: ModuleBroadcasterTopic, callback: () => void): () => void {
         const topicSubscribers = this._subscribersMap.get(topic) || new Set();
 
@@ -513,65 +532,6 @@ export class ModuleBroadcaster {
     }
 
     private notifySubscribers(topic: ModuleBroadcasterTopic): void {
-        const topicSubscribers = this._subscribersMap.get(topic);
-
-        if (!topicSubscribers) {
-            return;
-        }
-
-        for (const subscriber of topicSubscribers) {
-            subscriber();
-        }
-    }
-}
-
-export enum BroadcastingServiceTopic {
-    BroadcastersChange = "broadcasters-change",
-}
-
-export class BroadcastService {
-    /**
-     * This class holds all modules' broadcasters and makes them available to the outside world.
-     */
-
-    private _broadcasters: ModuleBroadcaster[] = [];
-    private _subscribersMap: Map<BroadcastingServiceTopic, Set<() => void>> = new Map();
-
-    registerBroadcaster(moduleInstanceId: string): void {
-        this._broadcasters.push(new ModuleBroadcaster(moduleInstanceId));
-        this.notifySubscribers(BroadcastingServiceTopic.BroadcastersChange);
-    }
-
-    unregisterBroadcaster(moduleInstanceId: string): void {
-        const broadcaster = this._broadcasters.find((b) => b.getModuleInstanceId() === moduleInstanceId);
-        if (!broadcaster) {
-            return;
-        }
-
-        broadcaster.unregisterAllChannels();
-
-        this._broadcasters = this._broadcasters.filter((b) => b.getModuleInstanceId() !== moduleInstanceId);
-        this.notifySubscribers(BroadcastingServiceTopic.BroadcastersChange);
-    }
-
-    getBroadcasterForModuleInstance(moduleInstanceId: string): ModuleBroadcaster | null {
-        const broadcaster = this._broadcasters.find((b) => b.getModuleInstanceId() === moduleInstanceId);
-        if (!broadcaster) {
-            return null;
-        }
-
-        return broadcaster;
-    }
-
-    subscribe(topic: BroadcastingServiceTopic, callback: () => void): void {
-        const topicSubscribers = this._subscribersMap.get(topic) || new Set();
-
-        topicSubscribers.add(callback);
-
-        this._subscribersMap.set(topic, topicSubscribers);
-    }
-
-    private notifySubscribers(topic: BroadcastingServiceTopic): void {
         const topicSubscribers = this._subscribersMap.get(topic);
 
         if (!topicSubscribers) {

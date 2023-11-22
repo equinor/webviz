@@ -4,7 +4,7 @@ import { BroadcastChannel, InputBroadcastChannelDef } from "./Broadcaster";
 import { InitialSettings } from "./InitialSettings";
 import { ModuleInstance } from "./ModuleInstance";
 import { ModuleInstanceStatusController } from "./ModuleInstanceStatusController";
-import { Content, ModuleChannel, ModuleChannelListener, useChannelListener } from "./NewBroadcaster";
+import { Content, Program, useBroadcast, useChannelListener } from "./NewBroadcaster";
 import { StateBaseType, StateStore, useSetStoreValue, useStoreState, useStoreValue } from "./StateStore";
 import { SyncSettingKey } from "./SyncSettings";
 
@@ -60,11 +60,6 @@ export class ModuleContext<S extends StateBaseType> {
         return this._moduleInstance.getStatusController();
     }
 
-    getNewChannel(channelIdent: string): ModuleChannel<any, any> | null {
-        const broadcaster = this._moduleInstance.getBroadcaster();
-        return broadcaster.getChannel(channelIdent);
-    }
-
     getChannel(channelName: string): BroadcastChannel {
         return this._moduleInstance.getBroadcastChannel(channelName);
     }
@@ -104,6 +99,22 @@ export class ModuleContext<S extends StateBaseType> {
         }, [initialSettings, listener]);
 
         return useChannelListener(this._moduleInstance.getBroadcaster().getListener(ident));
+    }
+
+    useBroadcast(options: {
+        channelIdent: string;
+        dependencies: any[];
+        programs: Program[];
+        contentGenerator: (programIdent: string) => Content[];
+    }) {
+        const channel = this._moduleInstance.getBroadcaster().getChannel(options.channelIdent);
+        if (!channel) {
+            throw new Error(`Channel '${options.channelIdent}' does not exist`);
+        }
+        return useBroadcast({
+            channel,
+            ...options,
+        });
     }
 
     useInputChannel(name: string, initialSettings?: InitialSettings): BroadcastChannel | null {

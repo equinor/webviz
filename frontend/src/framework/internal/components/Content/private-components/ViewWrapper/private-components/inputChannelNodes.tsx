@@ -8,7 +8,7 @@ import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
 import { Point } from "@lib/utils/geometry";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
-import { ChannelSelector } from "./channelSelector";
+import { ChannelSelector, SelectableChannel } from "./channelSelector";
 import { InputChannelNode } from "./inputChannelNode";
 
 export type InputChannelNodesProps = {
@@ -19,9 +19,10 @@ export type InputChannelNodesProps = {
 
 export const InputChannelNodes: React.FC<InputChannelNodesProps> = (props) => {
     const [visible, setVisible] = React.useState<boolean>(false);
-    const [currentInputName, setCurrentInputName] = React.useState<string | null>(null);
+    const [currentListenerIdent, setCurrentListenerIdent] = React.useState<string | null>(null);
+    const [currentOriginModuleInstanceId, setCurrentOriginModuleInstanceId] = React.useState<string | null>(null);
     const [channelSelectorCenterPoint, setChannelSelectorCenterPoint] = React.useState<Point | null>(null);
-    const [selectableChannels, setSelectableChannels] = React.useState<string[]>([]);
+    const [selectableChannels, setSelectableChannels] = React.useState<SelectableChannel[]>([]);
 
     const elementRect = useElementBoundingRect(props.forwardedRef);
 
@@ -127,10 +128,21 @@ export const InputChannelNodes: React.FC<InputChannelNodesProps> = (props) => {
                 return;
             }
 
-            if (channels.length > 1) {
+            if (channels.length > 1 || channels[0].getPrograms().length > 1) {
+                const newSelectableChannels: SelectableChannel[] = channels.map((channel) => {
+                    return {
+                        ident: channel.getIdent(),
+                        name: channel.getName(),
+                        programs: channel.getPrograms().map((program) => ({
+                            ident: program.getIdent(),
+                            name: program.getName(),
+                        })),
+                    };
+                });
                 setChannelSelectorCenterPoint(destinationPoint);
-                setSelectableChannels(Object.values(channels).map((channel) => channel.getIdent()));
-                setCurrentInputName(listenerIdent);
+                setSelectableChannels(newSelectableChannels);
+                setCurrentOriginModuleInstanceId(moduleInstanceId);
+                setCurrentListenerIdent(listenerIdent);
                 return;
             }
 
@@ -171,16 +183,47 @@ export const InputChannelNodes: React.FC<InputChannelNodesProps> = (props) => {
         guiMessageBroker.publishEvent(GuiEvent.HideDataChannelConnectionsRequest);
     }
 
-    function handleChannelSelection(channelName: string) {
+    function handleChannelSelection(channelIdent: string) {
         guiMessageBroker.publishEvent(GuiEvent.HideDataChannelConnectionsRequest);
 
-        if (!currentInputName) {
+        if (!currentListenerIdent) {
             return;
         }
         setChannelSelectorCenterPoint(null);
         setSelectableChannels([]);
 
-        props.moduleInstance.setInputChannel(currentInputName, channelName);
+        props.moduleInstance.setInputChannel(currentListenerIdent, channelIdent);
+    }
+
+    function handleProgramSelection(channelIdent: string, programIdents: string[]) {
+        guiMessageBroker.publishEvent(GuiEvent.HideDataChannelConnectionsRequest);
+
+        if (!currentListenerIdent) {
+            return;
+        }
+        setChannelSelectorCenterPoint(null);
+        setSelectableChannels([]);
+
+        if (!currentOriginModuleInstanceId) {
+            return;
+        }
+        const originModuleInstance = props.workbench.getModuleInstance(currentOriginModuleInstanceId);
+
+        if (!originModuleInstance) {
+            return;
+        }
+
+        const listener = props.moduleInstance.getBroadcaster().getListener(currentListenerIdent);
+        const channel = originModuleInstance.getBroadcaster().getChannel(channelIdent);
+
+        if (!listener || !channel) {
+            return;
+        }
+
+        listener.startListeningTo(channel, programIdents);
+
+        setCurrentListenerIdent(null);
+        setCurrentOriginModuleInstanceId(null);
     }
 
     return createPortal(
@@ -215,9 +258,9 @@ export const InputChannelNodes: React.FC<InputChannelNodesProps> = (props) => {
             {channelSelectorCenterPoint && (
                 <ChannelSelector
                     position={channelSelectorCenterPoint}
-                    channelNames={selectableChannels}
+                    selectableChannels={selectableChannels}
                     onCancel={handleCancelChannelSelection}
-                    onSelectChannel={handleChannelSelection}
+                    onSelectPrograms={handleProgramSelection}
                 />
             )}
         </div>,

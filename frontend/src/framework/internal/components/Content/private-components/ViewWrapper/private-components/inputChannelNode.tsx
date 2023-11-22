@@ -187,7 +187,7 @@ export const InputChannelNode: React.FC<InputChannelNodeProps> = (props) => {
     function handlePointerEnter() {
         guiMessageBroker.publishEvent(GuiEvent.HighlightDataChannelConnectionRequest, {
             moduleInstanceId: props.moduleInstanceId,
-            dataChannelName: props.ident,
+            listenerIdent: props.ident,
         });
 
         guiMessageBroker.publishEvent(GuiEvent.DataChannelNodeHover, {
