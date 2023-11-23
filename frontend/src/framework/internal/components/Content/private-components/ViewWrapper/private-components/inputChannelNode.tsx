@@ -78,6 +78,7 @@ export const InputChannelNode: React.FC<InputChannelNodeProps> = (props) => {
                     props.onChannelConnect(props.ident, localModuleInstanceId, pointerEventToPoint(e));
                     setHovered(false);
                     localHovered = false;
+                    guiMessageBroker.publishEvent(GuiEvent.HideDataChannelConnectionsRequest);
                 } else if (!localConnectable && !localEditDataChannelConnections) {
                     setHovered(false);
                     localHovered = false;

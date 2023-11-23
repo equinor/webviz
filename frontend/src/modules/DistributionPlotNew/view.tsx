@@ -1,13 +1,16 @@
 import React from "react";
+import Plot from "react-plotly.js";
 
 import { BroadcastChannelKeyCategory, BroadcastChannelMeta } from "@framework/Broadcaster";
 import { ModuleFCProps } from "@framework/Module";
-import { Content } from "@framework/NewBroadcaster";
+import { Content, Type } from "@framework/NewBroadcaster";
 import { Tag } from "@lib/components/Tag";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { ColorScaleGradientType } from "@lib/utils/ColorScale";
 import { ColorSet } from "@lib/utils/ColorSet";
 import { ContentInfo } from "@modules/_shared/components/ContentMessage";
+
+import { Layout, PlotData } from "plotly.js";
 
 import { BarChart } from "./components/barChart";
 import { Histogram } from "./components/histogram";
@@ -108,6 +111,129 @@ function makeScatterPlot(options: {
     );
 }
 
+function makeScatterPlotMatrix(options: {
+    columnData: {
+        moduleInstanceId: string;
+        channelIdent: string;
+        programIdent: string;
+        programName: string;
+        content: Content<number>[];
+    }[];
+    rowData: {
+        moduleInstanceId: string;
+        channelIdent: string;
+        programIdent: string;
+        programName: string;
+        content: Content<number>[];
+    }[];
+    width: number;
+    height: number;
+    numBins: number;
+}): React.ReactNode {
+    let plotLayout: Partial<Layout> = {
+        width: options.width,
+        height: options.height,
+        grid: {
+            rows: options.rowData.length,
+            columns: options.columnData.length,
+            pattern: "coupled",
+        },
+    };
+
+    const plotData: Partial<PlotData>[] = [];
+
+    for (let row = 0; row < options.rowData.length; row++) {
+        const key = `yaxis${row + 1}`;
+        plotLayout = {
+            ...plotLayout,
+            [key]: {
+                title: {
+                    text: options.rowData[row].programName,
+                },
+                zeroline: true,
+                showgrid: true,
+            },
+        };
+        for (let col = 0; col < options.columnData.length; col++) {
+            const key = `xaxis${col + 1}`;
+            plotLayout = {
+                ...plotLayout,
+                [key]: {
+                    title: {
+                        text: options.columnData[col].programName,
+                    },
+                    zeroline: true,
+                    showgrid: true,
+                },
+            };
+
+            const dataX = options.columnData[col];
+            const dataY = options.rowData[row];
+
+            const xValues: number[] = [];
+            const yValues: number[] = [];
+
+            const keysX = dataX.content.map((el: any) => el.key);
+            const keysY = dataY.content.map((el: any) => el.key);
+            if (keysX.length === keysY.length && !keysX.some((el, index) => el !== keysY[index])) {
+                keysX.forEach((key) => {
+                    const dataPointX = dataX.content.find((el: any) => el.key === key);
+                    const dataPointY = dataY.content.find((el: any) => el.key === key);
+                    if (dataPointX && dataPointY) {
+                        xValues.push(dataPointX.value as number);
+                        yValues.push(dataPointY.value as number);
+                    }
+                });
+            }
+
+            if (
+                dataX.moduleInstanceId === dataY.moduleInstanceId &&
+                dataX.channelIdent === dataY.channelIdent &&
+                dataX.programIdent === dataY.programIdent
+            ) {
+                const xMin = Math.min(...xValues);
+                const xMax = Math.max(...xValues);
+                const binSize = (xMax - xMin) / options.numBins;
+                const bins: { from: number; to: number }[] = Array.from({ length: options.numBins }, (_, i) => ({
+                    from: xMin + i * binSize,
+                    to: xMin + (i + 1) * binSize,
+                }));
+                bins[bins.length - 1].to = xMax + 1e-6; // make sure the last bin includes the max value
+                const binValues: number[] = bins.map(
+                    (range) => xValues.filter((el) => el >= range.from && el < range.to).length
+                );
+
+                const binStrings = bins.map((range) => `${nFormatter(range.from, 2)}-${nFormatter(range.to, 2)}`);
+
+                plotData.push({
+                    x: binStrings,
+                    y: binValues,
+                    type: "bar",
+                    showlegend: false,
+                    xaxis: `x${col + 1}`,
+                    yaxis: `y${row + 1}`,
+                });
+            } else {
+                plotData.push({
+                    x: xValues,
+                    y: yValues,
+                    type: "scatter",
+                    mode: "markers",
+                    marker: {
+                        size: 10,
+                        color: "rgb(0, 0, 0)",
+                    },
+                    showlegend: false,
+                    xaxis: `x${col + 1}`,
+                    yaxis: `y${row + 1}`,
+                });
+            }
+        }
+    }
+
+    return <Plot data={plotData} layout={plotLayout} />;
+}
+
 export const view = ({
     moduleContext,
     workbenchServices,
@@ -126,15 +252,23 @@ export const view = ({
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);
     const wrapperDivSize = useElementSize(wrapperDivRef);
 
-    const listenerX = moduleContext.useChannelListener("channelX", initialSettings);
-    const listenerY = moduleContext.useChannelListener("channelY", initialSettings);
+    const listenerX = moduleContext.useChannelListener<Type.Number>({
+        listenerIdent: "channelX",
+        initialSettings,
+        expectedValueType: Type.Number,
+    });
+    const listenerY = moduleContext.useChannelListener<Type.Number>({
+        listenerIdent: "channelY",
+        initialSettings,
+        expectedValueType: Type.Number,
+    });
 
     function makeContent() {
         if (!listenerX.listening) {
             return <ContentInfo>Connect a channel to channel X</ContentInfo>;
         }
 
-        if (listenerX.programs.length === 0) {
+        if (listenerX.channel.programs.length === 0) {
             return <ContentInfo>No data on channel X</ContentInfo>;
         }
 
@@ -143,22 +277,22 @@ export const view = ({
                 return <ContentInfo>Connect a channel to channel Y</ContentInfo>;
             }
 
-            if (listenerY.programs.length === 0) {
+            if (listenerY.channel.programs.length === 0) {
                 return <ContentInfo>No data on channel Y</ContentInfo>;
             }
         }
 
         if (plotType === PlotType.Histogram) {
             const histograms: React.ReactNode[] = [];
-            const numPrograms = listenerX.programs.length;
+            const numPrograms = listenerX.channel.programs.length;
             const numCols = Math.floor(Math.sqrt(numPrograms));
             const numRows = Math.ceil(numPrograms / numCols);
 
-            for (const program of listenerX.programs) {
+            for (const program of listenerX.channel.programs) {
                 const xValues = program.content.map((el: any) => el.value);
                 histograms.push(
                     makeHistogram(
-                        program.programName,
+                        program.name,
                         xValues,
                         numBins,
                         colorSet,
@@ -194,10 +328,31 @@ export const view = ({
         }
 
         if (plotType === PlotType.Scatter) {
-            if (listenerX.programs.length !== listenerY.programs.length) {
-                return <ContentInfo>Channel X and channel Y must have the same number of programs</ContentInfo>;
-            }
+            return makeScatterPlotMatrix({
+                columnData: listenerX.channel.programs.map((program) => {
+                    return {
+                        moduleInstanceId: listenerX.channel.moduleInstanceId,
+                        channelIdent: listenerX.channel.ident,
+                        programIdent: program.ident,
+                        programName: program.name,
+                        content: program.content,
+                    };
+                }),
+                rowData: listenerY.channel.programs.map((program) => {
+                    return {
+                        moduleInstanceId: listenerY.channel.moduleInstanceId,
+                        channelIdent: listenerY.channel.ident,
+                        programIdent: program.ident,
+                        programName: program.name,
+                        content: program.content,
+                    };
+                }),
+                width: wrapperDivSize.width,
+                height: wrapperDivSize.height,
+                numBins,
+            });
 
+            /*
             const scatterPlots: React.ReactNode[] = [];
             const numPrograms = listenerX.programs.length;
             const numCols = Math.floor(Math.sqrt(numPrograms));
@@ -246,6 +401,7 @@ export const view = ({
                 }
             }
             return <div className="w-full h-full flex flex-row flex-wrap gap-2">{grid}</div>;
+            */
         }
     }
 

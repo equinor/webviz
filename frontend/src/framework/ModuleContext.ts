@@ -4,7 +4,7 @@ import { BroadcastChannel, InputBroadcastChannelDef } from "./Broadcaster";
 import { InitialSettings } from "./InitialSettings";
 import { ModuleInstance } from "./ModuleInstance";
 import { ModuleInstanceStatusController } from "./ModuleInstanceStatusController";
-import { Content, Program, useBroadcast, useChannelListener } from "./NewBroadcaster";
+import { Content, Program, Type, TypeToTSTypeMapping, useBroadcast, useChannelListener } from "./NewBroadcaster";
 import { StateBaseType, StateStore, useSetStoreValue, useStoreState, useStoreValue } from "./StateStore";
 import { SyncSettingKey } from "./SyncSettings";
 
@@ -76,15 +76,26 @@ export class ModuleContext<S extends StateBaseType> {
         return this._moduleInstance.getInputChannelDefs().find((channelDef) => channelDef.name === name);
     }
 
-    useChannelListener(
-        ident: string,
-        initialSettings?: InitialSettings
-    ): { name: string; programs: { programName: string; content: Content[] }[]; listening: boolean } {
-        const listener = this._moduleInstance.getBroadcaster().getListener(ident);
+    useChannelListener<TContentValueType extends Type>(options: {
+        listenerIdent: string;
+        expectedValueType: TContentValueType;
+        initialSettings?: InitialSettings;
+    }): {
+        ident: string;
+        name: string;
+        channel: {
+            ident: string;
+            name: string;
+            moduleInstanceId: string;
+            programs: { ident: string; name: string; content: Content<TypeToTSTypeMapping[TContentValueType]>[] }[];
+        };
+        listening: boolean;
+    } {
+        const listener = this._moduleInstance.getBroadcaster().getListener(options.listenerIdent);
 
         React.useEffect(() => {
-            if (initialSettings) {
-                const setting = initialSettings.get(ident, "string");
+            if (options.initialSettings) {
+                const setting = options.initialSettings.get(options.listenerIdent, "string");
                 if (setting && listener) {
                     const channel = this._moduleInstance.getBroadcaster().getChannel(setting);
                     if (!channel) {
@@ -96,9 +107,12 @@ export class ModuleContext<S extends StateBaseType> {
                     );
                 }
             }
-        }, [initialSettings, listener]);
+        }, [options.initialSettings, listener]);
 
-        return useChannelListener(this._moduleInstance.getBroadcaster().getListener(ident));
+        return useChannelListener<TContentValueType>({
+            channelListener: this._moduleInstance.getBroadcaster().getListener(options.listenerIdent),
+            expectedValueType: options.expectedValueType,
+        });
     }
 
     useBroadcast(options: {

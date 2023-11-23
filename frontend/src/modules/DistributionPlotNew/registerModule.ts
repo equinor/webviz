@@ -1,4 +1,3 @@
-import { BroadcastChannelKeyCategory, InputBroadcastChannelDef } from "@framework/Broadcaster";
 import { ModuleRegistry } from "@framework/ModuleRegistry";
 import { ChannelListener, Genre } from "@framework/NewBroadcaster";
 import { SyncSettingKey } from "@framework/SyncSettings";
@@ -17,10 +16,17 @@ const channelListeners: ChannelListener[] = [
         ident: "channelY",
         name: "Y axis",
         supportedGenres: [Genre.Realization],
+        multiTasking: true,
     },
     {
         ident: "channelColor",
         name: "Color mapping",
+        supportedGenres: [Genre.Realization],
+        multiTasking: true,
+    },
+    {
+        ident: "singleTaskingListener",
+        name: "Single tasking listener",
         supportedGenres: [Genre.Realization],
     },
 ];

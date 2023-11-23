@@ -29,12 +29,12 @@ export interface Program {
     name: string;
 }
 
-export interface Content {
+export interface Content<TValueType = number | string> {
     key: number | [number, number, number];
-    value: number | string;
+    value: TValueType;
 }
 
-enum Type {
+export enum Type {
     Number = "number",
     String = "string",
     NumberTriplet = "number-triplet",
@@ -53,6 +53,12 @@ const ProgramTypes = {
     [ContentType.String]: Type.String,
 };
 
+export type TypeToTSTypeMapping = {
+    [Type.Number]: number;
+    [Type.String]: string;
+    [Type.NumberTriplet]: [number, number, number];
+};
+
 export interface ChannelListener {
     ident: string;
     name: string;
@@ -65,6 +71,30 @@ export type ChannelMeta = {
     description: string;
     unit: string;
 };
+
+function checkValueIsExpectedType(value: any, type: Type): boolean {
+    if (type === Type.Number) {
+        return typeof value === "number";
+    }
+
+    if (type === Type.String) {
+        return typeof value === "string";
+    }
+
+    if (type === Type.NumberTriplet) {
+        if (!Array.isArray(value)) {
+            return false;
+        }
+
+        if (value.length !== 3) {
+            return false;
+        }
+
+        return value.every((v) => typeof v === "number");
+    }
+
+    throw new Error(`Unknown type '${type}'`);
+}
 
 export enum ProgramTopic {
     ContentChange = "content-change",
@@ -271,23 +301,24 @@ export class ModuleChannelListener {
     private _ident: string;
     private _name: string;
     private _supportedGenres: Genre[];
-    private _multiTasking: boolean;
+    private _canMultitask: boolean;
     private _channel: ModuleChannel<any, any> | null = null;
     private _programIdents: string[] = [];
     private _subscribersMap: Map<ModuleChannelListenerTopic, Set<() => void>> = new Map();
+    private _listeningToAllPrograms: boolean = false;
 
     constructor(options: {
         broadcaster: ModuleBroadcastService;
         ident: string;
         name: string;
         supportedGenres: Genre[];
-        multiTasking?: boolean;
+        canMultitask?: boolean;
     }) {
         this._broadcaster = options.broadcaster;
         this._ident = options.ident;
         this._name = options.name;
         this._supportedGenres = options.supportedGenres;
-        this._multiTasking = options.multiTasking ?? false;
+        this._canMultitask = options.canMultitask ?? false;
         this.handleChannelRemove = this.handleChannelRemove.bind(this);
         this.handleContentChange = this.handleContentChange.bind(this);
         this.handleProgramsChange = this.handleProgramsChange.bind(this);
@@ -297,17 +328,34 @@ export class ModuleChannelListener {
         return this._broadcaster;
     }
 
-    startListeningTo(channel: ModuleChannel<any, any>, programIdents: string[]): void {
+    startListeningTo(channel: ModuleChannel<any, any>, programIdents: string[] | "All"): void {
         if (this.isListening()) {
             this.stopListening();
         }
 
         this._channel = channel;
-        this._programIdents = programIdents;
+        if (programIdents === "All") {
+            if (this._canMultitask) {
+                this._programIdents = channel.getPrograms().map((p) => p.getIdent());
+            } else {
+                const firstProgram = channel.getPrograms().at(0);
+                if (firstProgram) {
+                    this._programIdents = [firstProgram.getIdent()];
+                } else {
+                    this._programIdents = [];
+                }
+            }
+            this._listeningToAllPrograms = true;
+            this._channel.subscribe(ModuleChannelTopic.ProgramsChange, this.handleProgramsChange);
+        } else {
+            this._programIdents = programIdents;
+            this._listeningToAllPrograms = false;
+            this._channel.unsubscribe(ModuleChannelTopic.ProgramsChange, this.handleProgramsChange);
+        }
 
         this._channel.subscribe(ModuleChannelTopic.ChannelAboutToBeRemoved, this.handleChannelRemove);
         this._channel.subscribe(ModuleChannelTopic.ContentChange, this.handleContentChange);
-        this._channel.subscribe(ModuleChannelTopic.ProgramsChange, this.handleProgramsChange);
+        this._channel.subscribe(ModuleChannelTopic.ProgramsChange, this.handleContentChange);
 
         this.notifySubscribers(ModuleChannelListenerTopic.ChannelChange);
         this.notifySubscribers(ModuleChannelListenerTopic.ContentChange);
@@ -315,6 +363,14 @@ export class ModuleChannelListener {
 
     getChannel(): ModuleChannel<any, any> | null {
         return this._channel;
+    }
+
+    getCanMultiTask(): boolean {
+        return this._canMultitask;
+    }
+
+    getIsListeningToAllPrograms(): boolean {
+        return this._listeningToAllPrograms;
     }
 
     getProgramIdents(): string[] {
@@ -384,30 +440,40 @@ export class ModuleChannelListener {
     }
 
     private handleProgramsChange(): void {
-        this.notifySubscribers(ModuleChannelListenerTopic.ContentChange);
-        /*
-        const updatedProgramIdents = this._programIdents.filter((programIdent) =>
-            this._channel?.hasProgram(programIdent)
-        );
-        if (updatedProgramIdents.length !== this._programIdents.length) {
-            this._programIdents = updatedProgramIdents;
-            this.notifySubscribers(ModuleChannelListenerTopic.ChannelChange);
-            return;
+        if (this._canMultitask) {
+            this._programIdents = this._channel?.getPrograms().map((p) => p.getIdent()) ?? [];
+        } else {
+            const firstProgram = this._channel?.getPrograms().at(0);
+            if (firstProgram) {
+                this._programIdents = [firstProgram.getIdent()];
+            } else {
+                this._programIdents = [];
+            }
         }
-        */
     }
 }
 
-export function useChannelListener(channelListener: ModuleChannelListener | null): {
+export function useChannelListener<TContentValueType extends Type>(options: {
+    channelListener: ModuleChannelListener | null;
+    expectedValueType: TContentValueType;
+}): {
+    ident: string;
     name: string;
-    programs: { programName: string; content: Content[] }[];
+    channel: {
+        ident: string;
+        name: string;
+        moduleInstanceId: string;
+        programs: { ident: string; name: string; content: Content<TypeToTSTypeMapping[TContentValueType]>[] }[];
+    };
     listening: boolean;
 } {
-    const [programs, setPrograms] = React.useState<{ programName: string; content: Content[] }[]>([]);
+    const [programs, setPrograms] = React.useState<
+        { ident: string; name: string; content: Content<TypeToTSTypeMapping[TContentValueType]>[] }[]
+    >([]);
 
     React.useEffect(() => {
         function handleContentChange(): void {
-            const channel = channelListener?.getChannel();
+            const channel = options.channelListener?.getChannel();
             if (!channel) {
                 return;
             }
@@ -415,22 +481,31 @@ export function useChannelListener(channelListener: ModuleChannelListener | null
             const programs = channel
                 .getPrograms()
                 .filter((program) => {
-                    if (channelListener?.getProgramIdents().includes(program.getIdent())) {
+                    if (options.channelListener?.getProgramIdents().includes(program.getIdent())) {
                         return true;
                     }
                     return false;
                 })
                 .map((program) => {
+                    const content = program.getContent();
+                    for (const c of content) {
+                        if (!checkValueIsExpectedType(c.value, options.expectedValueType)) {
+                            throw new Error(
+                                `Value '${c.value}' is not of expected type '${options.expectedValueType}'`
+                            );
+                        }
+                    }
                     return {
-                        programName: program.getName(),
-                        content: program.getContent(),
+                        ident: program.getIdent(),
+                        name: program.getName(),
+                        content: program.getContent() as Content<TypeToTSTypeMapping[TContentValueType]>[],
                     };
                 });
 
             setPrograms(programs ?? []);
         }
 
-        const unsubscribeFunc = channelListener?.subscribe(
+        const unsubscribeFunc = options.channelListener?.subscribe(
             ModuleChannelListenerTopic.ContentChange,
             handleContentChange
         );
@@ -442,9 +517,19 @@ export function useChannelListener(channelListener: ModuleChannelListener | null
                 unsubscribeFunc();
             }
         };
-    }, [channelListener]);
+    }, [options.channelListener]);
 
-    return { name: channelListener?.getName() ?? "", programs, listening: channelListener?.isListening() ?? false };
+    return {
+        ident: options.channelListener?.getChannel()?.getIdent() ?? "",
+        name: options.channelListener?.getName() ?? "",
+        channel: {
+            ident: options.channelListener?.getChannel()?.getIdent() ?? "",
+            name: options.channelListener?.getChannel()?.getName() ?? "",
+            moduleInstanceId: options.channelListener?.getBroadcaster().getModuleInstanceId() ?? "",
+            programs,
+        },
+        listening: options.channelListener?.isListening() ?? false,
+    };
 }
 
 export enum ModuleBroadcasterTopic {
@@ -497,7 +582,7 @@ export class ModuleBroadcastService {
             ident: options.ident,
             name: options.name,
             supportedGenres: options.supportedGenres,
-            multiTasking: options.multiTasking,
+            canMultitask: options.multiTasking,
         });
         this._listeners.push(newListener);
         this.notifySubscribers(ModuleBroadcasterTopic.ListenersChange);
