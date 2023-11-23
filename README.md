@@ -79,3 +79,5 @@ environment variables automatically set up.
 When you start up the docker containers, GitHub codespace will automatically make a link where
 you can access the application in development mode (i.e. changes you do the code will automatically
 be reflected in the application).
+
+### Snyk usage
