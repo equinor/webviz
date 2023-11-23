@@ -6,7 +6,8 @@ import { view } from "./view";
 
 const initialState: State = {
     ensembleIdent: null,
-    statOrReal: StatisticsOrRealization.Realization
+    statOrReal: StatisticsOrRealization.Realization,
+    realization: 0
 };
 
 const module = ModuleRegistry.initModule<State>("GroupTree", initialState);
