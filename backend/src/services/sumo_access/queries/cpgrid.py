@@ -3,9 +3,7 @@ from typing import List
 from sumo.wrapper import SumoClient
 
 
-async def get_grid_names(
-    sumo_client: SumoClient, case_id: str, iteration: str
-) -> List[str]:
+async def get_grid_names(sumo_client: SumoClient, case_id: str, iteration: str) -> List[str]:
     """Get a list of grid names for a case and iteration"""
     payload = {
         "size": 0,
