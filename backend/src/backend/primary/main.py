@@ -1,5 +1,6 @@
 import datetime
 import logging
+import os
 
 from fastapi import FastAPI
 from fastapi.routing import APIRoute
@@ -7,6 +8,8 @@ from fastapi.responses import ORJSONResponse
 from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
 
 from src.backend.utils.add_process_time_to_server_timing_middleware import AddProcessTimeToServerTimingMiddleware
+from src.backend.utils.azure_monitor_setup import setup_azure_monitor_telemetry
+from src.backend.utils.logging_setup import ensure_console_log_handler_is_configured, setup_normal_log_levels
 from src.backend.shared_middleware import add_shared_middlewares
 from src.backend.auth.auth_helper import AuthHelper
 from .routers.explore import router as explore_router
@@ -26,13 +29,15 @@ from .routers.graph.router import router as graph_router
 from .routers.observations.router import router as observations_router
 from .routers.rft.router import router as rft_router
 
-logging.basicConfig(
-    level=logging.WARNING,
-    format="%(asctime)s %(levelname)-3s [%(name)s]: %(message)s",
-    datefmt="%H:%M:%S",
-)
-logging.getLogger("src.services.sumo_access").setLevel(level=logging.DEBUG)
-logging.getLogger("src.backend.primary.routers.surface").setLevel(level=logging.DEBUG)
+
+ensure_console_log_handler_is_configured()
+setup_normal_log_levels()
+
+# Temporarily set some to DEBUG
+logging.getLogger("src.services.sumo_access").setLevel(logging.DEBUG)
+logging.getLogger("src.backend.primary.routers.surface").setLevel(logging.DEBUG)
+
+LOGGER = logging.getLogger(__name__)
 
 
 def custom_generate_unique_id(route: APIRoute) -> str:
@@ -44,6 +49,13 @@ app = FastAPI(
     root_path="/api",
     default_response_class=ORJSONResponse,
 )
+
+if os.environ.get("APPLICATIONINSIGHTS_CONNECTION_STRING"):
+    LOGGER.info("Configuring Azure Monitor telemetry for primary backend")
+    setup_azure_monitor_telemetry(app)
+else:
+    LOGGER.warning("Skipping telemetry configuration, APPLICATIONINSIGHTS_CONNECTION_STRING env variable not set.")
+
 
 # The tags we add here will determine the name of the frontend api service for our endpoints as well as
 # providing some grouping when viewing the openapi documentation.

@@ -75,7 +75,7 @@ async def get_realization_surface_data(
     surf_data_response = converters.to_api_surface_data(xtgeo_surf)
     perf_metrics.record_lap("convert")
 
-    LOGGER.debug(f"Loaded realization surface in: {perf_metrics.to_string()}")
+    LOGGER.info(f"Loaded realization surface in: {perf_metrics.to_string()}")
 
     return surf_data_response
 

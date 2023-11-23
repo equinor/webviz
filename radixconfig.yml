@@ -34,9 +34,13 @@ spec:
                 envVar: WEBVIZ_SMDA_RESOURCE_SCOPE
               - name: WEBVIZ-SMDA-SUBSCRIPTION-KEY
                 envVar: WEBVIZ_SMDA_SUBSCRIPTION_KEY
+              - name: APPLICATIONINSIGHTS-CONNECTION-STRING
+                envVar: APPLICATIONINSIGHTS_CONNECTION_STRING
       variables:
         UVICORN_PORT: 5000
         UVICORN_ENTRYPOINT: src.backend.primary.main:app
+        OTEL_SERVICE_NAME: primary-backend
+        OTEL_RESOURCE_ATTRIBUTES: service.namespace=$(RADIX_ENVIRONMENT), service.version=0.1.2
       environmentConfig:
         - environment: prod
           resources:
@@ -112,9 +116,13 @@ spec:
                 envVar: WEBVIZ_SMDA_RESOURCE_SCOPE
               - name: WEBVIZ-SMDA-SUBSCRIPTION-KEY
                 envVar: WEBVIZ_SMDA_SUBSCRIPTION_KEY
+              - name: APPLICATIONINSIGHTS-CONNECTION-STRING
+                envVar: APPLICATIONINSIGHTS_CONNECTION_STRING
       variables:
         UVICORN_PORT: 8000
         UVICORN_ENTRYPOINT: src.backend.user_session.main:app
+        OTEL_SERVICE_NAME: user-session
+        OTEL_RESOURCE_ATTRIBUTES: service.namespace=$(RADIX_ENVIRONMENT), service.version=0.1.2
       environmentConfig:
         # As of October 2023 in radix, these settings need to be duplicated for both environments.
         - environment: prod
