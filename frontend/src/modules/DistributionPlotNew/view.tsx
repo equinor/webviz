@@ -128,7 +128,7 @@ function makeScatterPlotMatrix(options: {
     }[];
     width: number;
     height: number;
-    numBins: number;
+    colorSet: ColorSet;
 }): React.ReactNode {
     let plotLayout: Partial<Layout> = {
         width: options.width,
@@ -137,6 +137,10 @@ function makeScatterPlotMatrix(options: {
             rows: options.rowData.length,
             columns: options.columnData.length,
             pattern: "coupled",
+        },
+        margin: {
+            t: 5,
+            r: 5,
         },
     };
 
@@ -191,24 +195,7 @@ function makeScatterPlotMatrix(options: {
                 dataX.channelIdent === dataY.channelIdent &&
                 dataX.programIdent === dataY.programIdent
             ) {
-                const xMin = Math.min(...xValues);
-                const xMax = Math.max(...xValues);
-                const binSize = (xMax - xMin) / options.numBins;
-                const bins: { from: number; to: number }[] = Array.from({ length: options.numBins }, (_, i) => ({
-                    from: xMin + i * binSize,
-                    to: xMin + (i + 1) * binSize,
-                }));
-                bins[bins.length - 1].to = xMax + 1e-6; // make sure the last bin includes the max value
-                const binValues: number[] = bins.map(
-                    (range) => xValues.filter((el) => el >= range.from && el < range.to).length
-                );
-
-                const binStrings = bins.map((range) => `${nFormatter(range.from, 2)}-${nFormatter(range.to, 2)}`);
-
                 plotData.push({
-                    x: binStrings,
-                    y: binValues,
-                    type: "bar",
                     showlegend: false,
                     xaxis: `x${col + 1}`,
                     yaxis: `y${row + 1}`,
@@ -221,7 +208,7 @@ function makeScatterPlotMatrix(options: {
                     mode: "markers",
                     marker: {
                         size: 10,
-                        color: "rgb(0, 0, 0)",
+                        color: options.colorSet.getFirstColor(),
                     },
                     showlegend: false,
                     xaxis: `x${col + 1}`,
@@ -349,7 +336,7 @@ export const view = ({
                 }),
                 width: wrapperDivSize.width,
                 height: wrapperDivSize.height,
-                numBins,
+                colorSet,
             });
 
             /*
