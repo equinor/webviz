@@ -33,9 +33,8 @@ from .routers.rft.router import router as rft_router
 ensure_console_log_handler_is_configured()
 setup_normal_log_levels()
 
-# Temporarily set some to DEBUG
+# temporarily set some loggers to DEBUG
 logging.getLogger("src.services.sumo_access").setLevel(logging.DEBUG)
-logging.getLogger("src.backend.primary.routers.surface").setLevel(logging.DEBUG)
 
 LOGGER = logging.getLogger(__name__)
 

@@ -6,6 +6,9 @@ import { apiService } from "@framework/ApiService";
 const useUserSessionState = () => useQuery({
     queryKey: ["default.userSessionContainer"],
     queryFn: () => apiService.default.userSessionContainer(),
+    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     refetchInterval: 20000000
 });
 
