@@ -185,7 +185,7 @@ async def get_nx_ny_nz_for_ensemble_grids(
         "size": 1000,
     }
 
-    response = await sumo_client.get_async("/search", payload)
+    response = await sumo_client.post_async("/search", json=payload)
     result = response.json()
     hits = result["hits"]["hits"]
 
