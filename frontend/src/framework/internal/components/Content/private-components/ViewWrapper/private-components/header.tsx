@@ -210,10 +210,11 @@ export const Header: React.FC<HeaderProps> = (props) => {
                 </>
             </div>
             {makeStatusIndicator()}
-            {(props.moduleInstance.hasBroadcastChannels() || props.moduleInstance.getInputChannelDefs().length > 0) && (
+            {(props.moduleInstance.getPublishSubscribeBroker().getSubscribers().length > 0 ||
+                props.moduleInstance.getPublishSubscribeBroker().getChannels().length > 0) && (
                 <span className="bg-slate-300 w-[1px] h-3/4 ml-2" />
             )}
-            {props.moduleInstance.getBroadcaster().getChannels().length > 0 && (
+            {props.moduleInstance.getPublishSubscribeBroker().getChannels().length > 0 && (
                 <div
                     id={`moduleinstance-${props.moduleInstance.getId()}-data-channel-origin`}
                     ref={dataChannelOriginRef}
@@ -224,7 +225,7 @@ export const Header: React.FC<HeaderProps> = (props) => {
                     <Output fontSize="small" />
                 </div>
             )}
-            {props.moduleInstance.getBroadcaster().getListeners().length > 0 && (
+            {props.moduleInstance.getPublishSubscribeBroker().getSubscribers().length > 0 && (
                 <div
                     className="hover:text-slate-500 cursor-pointer ml-2"
                     title="Edit input data channels"

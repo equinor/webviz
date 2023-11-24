@@ -1,15 +1,13 @@
 import React from "react";
 
 import { ModuleFCProps } from "@framework/Module";
-import { useBroadcast } from "@framework/NewBroadcaster";
 import { useViewStatusWriter } from "@framework/StatusWriter";
 import { CircularProgress } from "@lib/components/CircularProgress";
-import { Table } from "@lib/components/Table";
 import { TableHeading } from "@lib/components/Table/table";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { ContentInfo } from "@modules/_shared/components/ContentMessage";
 
-import { Channels } from "./channels";
+import { Channels } from "./channelDefs";
 import { useRealizationsResponses } from "./hooks/useRealizationResponses";
 import { State } from "./state";
 
@@ -49,11 +47,11 @@ export const view = (props: ModuleFCProps<State>) => {
 
     statusWriter.setLoading(tableData.isFetching);
 
-    props.moduleContext.useBroadcast({
+    props.moduleContext.usePublish({
         dependencies: [tableData.data, tableData.isFetching],
         channelIdent: Channels.ResponseValuePerRealization,
-        programs: responseNames.map((el) => ({ ident: el, name: el })),
-        contentGenerator: (programIdent: string) => {
+        contents: responseNames.map((el) => ({ ident: el, name: el })),
+        dataGenerator: (programIdent: string) => {
             const data = tableData.data?.find((el) => el.responseName === programIdent);
             if (data && data.responses) {
                 return data.responses.realizations.map((el, index) => ({

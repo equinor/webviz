@@ -10,6 +10,10 @@ import { useElementSize } from "@lib/hooks/useElementSize";
 import { ColorScaleGradientType } from "@lib/utils/ColorScale";
 import { ContentError } from "@modules/_shared/components/ContentMessage";
 
+import { indexOf } from "lodash";
+import { Layout, PlotDatum, PlotMouseEvent } from "plotly.js";
+
+import { BroadcastChannelNames } from "./channelDefs";
 import { useHistoricalVectorDataQueries, useStatisticalVectorDataQueries, useVectorDataQueries } from "./queryHooks";
 import { GroupBy, State, VisualizationMode } from "./state";
 import { EnsemblesContinuousParameterColoring } from "./utils/ensemblesContinuousParameterColoring";
@@ -26,6 +30,8 @@ export const view = ({ moduleContext, workbenchSession, workbenchSettings }: Mod
 
     const ensembleSet = useEnsembleSet(workbenchSession);
     const statusWriter = useViewStatusWriter(moduleContext);
+
+    const [activeTimestampUtcMs, setActiveTimestampUtcMs] = React.useState<number | null>(null);
 
     // Store values
     const vectorSpecifications = moduleContext.useStoreValue("vectorSpecifications");
@@ -102,6 +108,30 @@ export const view = ({ moduleContext, workbenchSession, workbenchSettings }: Mod
               historicalVectorDataQueries
           )
         : [];
+
+    moduleContext.usePublish({
+        channelIdent: BroadcastChannelNames.TimeSeries,
+        dependencies: [loadedVectorSpecificationsAndRealizationData, activeTimestampUtcMs],
+        contents: loadedVectorSpecificationsAndRealizationData.map((el) => ({
+            ident: el.vectorSpecification.vectorName,
+            name: el.vectorSpecification.vectorName,
+        })),
+        dataGenerator: (vectorName: string) => {
+            const data: { key: number; value: number }[] = [];
+            loadedVectorSpecificationsAndRealizationData.forEach((vec) => {
+                if (vec.vectorSpecification.vectorName === vectorName) {
+                    vec.data.forEach((el) => {
+                        const indexOfTimestamp = indexOf(el.timestamps_utc_ms, activeTimestampUtcMs);
+                        data.push({
+                            key: el.realization,
+                            value: indexOfTimestamp === -1 ? el.values[0] : el.values[indexOfTimestamp],
+                        });
+                    });
+                }
+            });
+            return data;
+        },
+    });
 
     // Retrieve selected ensembles from vector specifications
     const selectedEnsembles: Ensemble[] = [];
@@ -211,8 +241,43 @@ export const view = ({ moduleContext, workbenchSession, workbenchSettings }: Mod
         subplotBuilder.addHistoryTraces(loadedVectorSpecificationsAndHistoricalData);
     }
 
+    function handleClickInChart(e: PlotMouseEvent) {
+        const clickedPoint: PlotDatum = e.points[0];
+        if (!clickedPoint) {
+            return;
+        }
+
+        if (clickedPoint.pointIndex >= 0 && clickedPoint.pointIndex < clickedPoint.data.x.length) {
+            const timestampUtcMs = clickedPoint.data.x[clickedPoint.pointIndex];
+            if (typeof timestampUtcMs === "number") {
+                setActiveTimestampUtcMs(timestampUtcMs);
+            }
+        }
+    }
+
     const doRenderContentError = hasRealizationsQueryError || hasStatisticsQueryError;
     const plotData = subplotBuilder.createPlotData();
+    const plotLayout: Partial<Layout> = {
+        ...subplotBuilder.createPlotLayout(),
+        shapes: activeTimestampUtcMs
+            ? [
+                  {
+                      type: "line",
+                      xref: "x",
+                      yref: "paper",
+                      x0: activeTimestampUtcMs,
+                      y0: 0,
+                      x1: activeTimestampUtcMs,
+                      y1: 1,
+                      line: {
+                          color: "red",
+                          width: 3,
+                          dash: "dot",
+                      },
+                  },
+              ]
+            : [],
+    };
     return (
         <div className="w-full h-full" ref={wrapperDivRef}>
             {doRenderContentError ? (
@@ -221,8 +286,9 @@ export const view = ({ moduleContext, workbenchSession, workbenchSettings }: Mod
                 <Plot
                     key={plotData.length} // Note: Temporary to trigger re-render and remove legends when plotData is empty
                     data={plotData}
-                    layout={subplotBuilder.createPlotLayout()}
+                    layout={plotLayout}
                     config={{ scrollZoom: true }}
+                    onClick={handleClickInChart}
                 />
             )}
         </div>

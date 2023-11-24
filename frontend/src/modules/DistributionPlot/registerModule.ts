@@ -1,26 +1,33 @@
-import { BroadcastChannelKeyCategory, InputBroadcastChannelDef } from "@framework/Broadcaster";
+import { Genre, SubscriberDefinition } from "@framework/DataChannelTypes";
 import { ModuleRegistry } from "@framework/ModuleRegistry";
-import { ChannelListener, Genre } from "@framework/NewBroadcaster";
 import { SyncSettingKey } from "@framework/SyncSettings";
 
 import { preview } from "./preview";
 import { State } from "./state";
 
-const inputChannelDefs: InputBroadcastChannelDef[] = [
+const subscribers: SubscriberDefinition[] = [
     {
-        name: "channelX",
-        displayName: "X axis",
-        keyCategories: [BroadcastChannelKeyCategory.Realization],
+        ident: "channelX",
+        name: "X axis",
+        supportedGenres: [Genre.Realization],
+        supportsMultiContents: true,
     },
     {
-        name: "channelY",
-        displayName: "Y axis",
-        keyCategories: [BroadcastChannelKeyCategory.Realization],
+        ident: "channelY",
+        name: "Y axis",
+        supportedGenres: [Genre.Realization],
+        supportsMultiContents: true,
     },
     {
-        name: "channelColor",
-        displayName: "Color mapping",
-        keyCategories: [BroadcastChannelKeyCategory.Realization],
+        ident: "channelColor",
+        name: "Color mapping",
+        supportedGenres: [Genre.Realization],
+        supportsMultiContents: true,
+    },
+    {
+        ident: "singleTaskingListener",
+        name: "Single tasking listener",
+        supportedGenres: [Genre.Realization],
     },
 ];
 
@@ -28,6 +35,6 @@ ModuleRegistry.registerModule<State>({
     moduleName: "DistributionPlot",
     defaultTitle: "Distribution plot",
     syncableSettingKeys: [SyncSettingKey.ENSEMBLE, SyncSettingKey.TIME_SERIES],
-    inputChannels: inputChannelDefs,
+    subscribers: subscribers,
     preview,
 });

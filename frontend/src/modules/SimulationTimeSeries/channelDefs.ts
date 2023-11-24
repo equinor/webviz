@@ -1,13 +1,14 @@
-import { BroadcastChannelKeyCategory, BroadcastChannelValueType } from "@framework/Broadcaster";
-import { Channel, ContentType, Genre } from "@framework/NewBroadcaster";
+import { ChannelDefinition, DataType, Genre } from "@framework/DataChannelTypes";
 
 export enum BroadcastChannelNames {
     Realization_Value = "Value (per realization)",
 }
 
-export const broadcastChannelsDef = {
-    [BroadcastChannelNames.Realization_Value]: {
-        key: BroadcastChannelKeyCategory.Realization,
-        value: BroadcastChannelValueType.Numeric,
+export const channelDefs: ChannelDefinition[] = [
+    {
+        ident: BroadcastChannelNames.Realization_Value,
+        name: "Value (per realization)",
+        genre: Genre.Realization,
+        dataType: DataType.Numeric,
     },
-};
+];

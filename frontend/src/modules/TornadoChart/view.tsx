@@ -1,6 +1,6 @@
 import React from "react";
 
-import { BroadcastChannelData, BroadcastChannelMeta } from "@framework/Broadcaster";
+import { Type } from "@framework/DataChannelTypes";
 import { Ensemble } from "@framework/Ensemble";
 import { ModuleFCProps } from "@framework/Module";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
@@ -35,7 +35,12 @@ export const view = ({ moduleContext, workbenchSession, workbenchSettings, initi
     const [channelEnsemble, setChannelEnsemble] = React.useState<Ensemble | null>(null);
     const [channelResponseData, setChannelResponseData] = React.useState<EnsembleScalarResponse | null>(null);
     const [availableSensitivityNames, setAvailableSensitivityNames] = moduleContext.useStoreState("sensitivityNames");
-    const responseChannel = moduleContext.useInputChannel("response", initialSettings);
+
+    const responseSubscriber = moduleContext.useSubscriber({
+        subscriberIdent: "response",
+        expectedValueType: Type.Number,
+        initialSettings,
+    });
 
     const [showLabels, setShowLabels] = React.useState(true);
     const [hideZeroY, setHideZeroY] = React.useState(false);
@@ -53,45 +58,17 @@ export const view = ({ moduleContext, workbenchSession, workbenchSettings, initi
         }
     };
 
-    React.useEffect(() => {
-        if (!responseChannel) {
-            setChannelEnsemble(null);
-            setChannelResponseData(null);
-            return;
-        }
-
-        function handleChannelDataChanged(data: BroadcastChannelData[] | null, metaData: BroadcastChannelMeta | null) {
-            if (!data || !metaData) {
-                setChannelEnsemble(null);
-                setChannelResponseData(null);
-                return;
-            }
-
-            if (data.length === 0) {
-                setChannelEnsemble(null);
-                setChannelResponseData(null);
-                return;
-            }
-
-            const realizations: number[] = [];
-            const values: number[] = [];
+    const realizations: number[] = [];
+    const values: number[] = [];
+    if (responseSubscriber.hasActiveSubscription && responseSubscriber.channel.contents.length > 0) {
+        const data = responseSubscriber.channel.contents[0].dataArray;
+        if (data) {
             data.forEach((el) => {
                 realizations.push(el.key as number);
                 values.push(el.value as number);
             });
-
-            setChannelEnsemble(ensembleSet.findEnsemble(metaData.ensembleIdent));
-            setChannelResponseData({
-                realizations: realizations,
-                values: values,
-                name: metaData.description,
-                unit: metaData.unit,
-            });
         }
-
-        const unsubscribeFunc = responseChannel.subscribe(handleChannelDataChanged);
-        return unsubscribeFunc;
-    }, [responseChannel, ensembleSet]);
+    }
 
     const sensitivities = channelEnsemble?.getSensitivities();
     React.useEffect(
@@ -110,13 +87,18 @@ export const view = ({ moduleContext, workbenchSession, workbenchSettings, initi
     );
 
     let computedSensitivityResponseDataset: SensitivityResponseDataset | null = null;
-    if (referenceSensitivityName && sensitivities && channelResponseData) {
+    if (referenceSensitivityName && sensitivities && realizations.length > 0 && values.length > 0) {
         // How to handle errors?
 
         try {
             const sensitivityResponseCalculator = new SensitivityResponseCalculator(
                 sensitivities,
-                channelResponseData,
+                {
+                    realizations,
+                    values,
+                    name: responseSubscriber.channel?.contents[0].name ?? "",
+                    unit: "",
+                },
                 referenceSensitivityName
             );
             computedSensitivityResponseDataset = sensitivityResponseCalculator.computeSensitivitiesForResponse();
@@ -127,10 +109,10 @@ export const view = ({ moduleContext, workbenchSession, workbenchSettings, initi
 
     let errMessage = "";
     if (!computedSensitivityResponseDataset) {
-        if (!responseChannel) {
+        if (!responseSubscriber.hasActiveSubscription) {
             errMessage = "Select a data channel to plot";
         } else {
-            errMessage = `No data received on channel ${responseChannel.getName()}`;
+            errMessage = `No data received on channel ${responseSubscriber.channel.name}`;
         }
     }
 

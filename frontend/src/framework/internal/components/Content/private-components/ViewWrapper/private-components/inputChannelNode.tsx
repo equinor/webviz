@@ -1,9 +1,9 @@
 import React from "react";
 
-import { BroadcastChannelKeyCategory } from "@framework/Broadcaster";
+import { Genre } from "@framework/DataChannelTypes";
 import { GuiEvent, GuiEventPayloads } from "@framework/GuiMessageBroker";
-import { Genre, ModuleBroadcasterTopic, ModuleChannelListenerTopic } from "@framework/NewBroadcaster";
 import { Workbench } from "@framework/Workbench";
+import { SubscriberTopic } from "@framework/internal/DataChannels/Subscriber";
 import { IconButton } from "@lib/components/IconButton";
 import { Point, pointerEventToPoint, rectContainsPoint } from "@lib/utils/geometry";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
@@ -51,7 +51,7 @@ export const InputChannelNode: React.FC<InputChannelNodeProps> = (props) => {
                 return;
             }
 
-            const channels = originModuleInstance.getBroadcaster().getChannels();
+            const channels = originModuleInstance.getPublishSubscribeBroker().getChannels();
             const channelGenres: Genre[] = [];
             for (const channelName in channels) {
                 channelGenres.push(channels[channelName].getGenre());
@@ -126,8 +126,8 @@ export const InputChannelNode: React.FC<InputChannelNodeProps> = (props) => {
                 return;
             }
 
-            const listener = moduleInstance.getBroadcaster().getListener(props.ident);
-            const hasConnection = listener?.isListening() ?? false;
+            const listener = moduleInstance.getPublishSubscribeBroker().getSubscriber(props.ident);
+            const hasConnection = listener?.hasActiveSubscription() ?? false;
             setHasConnection(hasConnection);
         }
 
@@ -157,9 +157,9 @@ export const InputChannelNode: React.FC<InputChannelNodeProps> = (props) => {
         }
 
         const unsubscribeFunc = moduleInstance
-            ?.getBroadcaster()
-            .getListener(props.ident)
-            ?.subscribe(ModuleChannelListenerTopic.ChannelChange, checkIfConnection);
+            ?.getPublishSubscribeBroker()
+            .getSubscriber(props.ident)
+            ?.subscribe(SubscriberTopic.ChannelChange, checkIfConnection);
 
         return () => {
             removeDataChannelDoneHandler();

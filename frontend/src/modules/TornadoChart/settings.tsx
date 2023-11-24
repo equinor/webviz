@@ -1,7 +1,6 @@
 import React from "react";
 
 import { ModuleFCProps } from "@framework/Module";
-import { ChannelSelect } from "@framework/components/ChannelSelect";
 import { Dropdown } from "@lib/components/Dropdown";
 import { Label } from "@lib/components/Label";
 
@@ -28,13 +27,6 @@ export function settings({ moduleContext, workbenchServices }: ModuleFCProps<Sta
 
     return (
         <>
-            <Label text="Data channel" key="data-channel-x-axis">
-                <ChannelSelect
-                    moduleContext={moduleContext}
-                    channelName="response"
-                    broadcaster={workbenchServices.getBroadcaster()}
-                />
-            </Label>
             <Label text="Reference sensitivity">
                 <Dropdown
                     value={referenceSensitivityName ?? ""}

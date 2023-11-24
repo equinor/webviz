@@ -2,7 +2,7 @@ import React from "react";
 import Plot from "react-plotly.js";
 
 import { Body_get_realizations_response_api } from "@api";
-import { BroadcastChannelMeta } from "@framework/Broadcaster";
+import { Data } from "@framework/DataChannelTypes";
 import { ModuleFCProps } from "@framework/Module";
 import { useSubscribedValue } from "@framework/WorkbenchServices";
 import { ApiStateWrapper } from "@lib/components/ApiStateWrapper";
@@ -11,7 +11,7 @@ import { useElementSize } from "@lib/hooks/useElementSize";
 
 import { Layout, PlotData, PlotHoverEvent } from "plotly.js";
 
-import { BroadcastChannelNames } from "./channelDefs";
+import { BroadcastChannelNames, channelDefs } from "./channelDefs";
 import { useRealizationsResponseQuery } from "./queryHooks";
 import { VolumetricResponseAbbreviations } from "./settings";
 import { State } from "./state";
@@ -77,14 +77,13 @@ export const view = (props: ModuleFCProps<State>) => {
 
     const ensemble = ensembleIdent ? props.workbenchSession.getEnsembleSet().findEnsemble(ensembleIdent) : null;
 
-    React.useEffect(
-        function broadcast() {
-            if (!ensemble) {
-                return;
-            }
-
-            const dataGenerator = (): { key: number; value: number }[] => {
-                const data: { key: number; value: number }[] = [];
+    if (ensemble && tableName && responseName) {
+        props.moduleContext.usePublish({
+            channelIdent: BroadcastChannelNames.Response,
+            dependencies: [realizationsResponseQuery.data, ensemble, tableName, responseName],
+            contents: [{ ident: responseName, name: responseName }],
+            dataGenerator: () => {
+                const data: Data<number>[] = [];
                 if (realizationsResponseQuery.data) {
                     realizationsResponseQuery.data.realizations.forEach((realization, index) => {
                         data.push({
@@ -94,18 +93,9 @@ export const view = (props: ModuleFCProps<State>) => {
                     });
                 }
                 return data;
-            };
-
-            const channelMeta: BroadcastChannelMeta = {
-                ensembleIdent: ensemble.getIdent(),
-                description: `${ensemble.getDisplayName()} ${tableName ?? ""} ${responseName ?? ""}`,
-                unit: "",
-            };
-
-            props.moduleContext.getChannel(BroadcastChannelNames.Response).broadcast(channelMeta, dataGenerator);
-        },
-        [realizationsResponseQuery.data, ensemble, tableName, responseName]
-    );
+            },
+        });
+    }
 
     const layout: Partial<Layout> = {
         width: wrapperDivSize.width,

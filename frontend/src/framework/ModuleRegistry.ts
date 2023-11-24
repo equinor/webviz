@@ -1,6 +1,5 @@
-import { BroadcastChannelsDef, InputBroadcastChannelDef } from "./Broadcaster";
+import { ChannelDefinition, SubscriberDefinition } from "./DataChannelTypes";
 import { Module } from "./Module";
-import { Channel, ChannelListener } from "./NewBroadcaster";
 import { DrawPreviewFunc } from "./Preview";
 import { StateBaseType, StateOptions } from "./StateStore";
 import { SyncSettingKey } from "./SyncSettings";
@@ -10,10 +9,8 @@ export type RegisterModuleOptions = {
     moduleName: string;
     defaultTitle: string;
     syncableSettingKeys?: SyncSettingKey[];
-    outputChannels?: BroadcastChannelsDef;
-    newChannels?: Channel[];
-    channelListeners?: ChannelListener[];
-    inputChannels?: InputBroadcastChannelDef[];
+    channels?: ChannelDefinition[];
+    subscribers?: SubscriberDefinition[];
 
     preview?: DrawPreviewFunc;
     description?: string;
@@ -43,10 +40,8 @@ export class ModuleRegistry {
             name: options.moduleName,
             defaultTitle: options.defaultTitle,
             syncableSettingKeys: options.syncableSettingKeys ?? [],
-            broadcastChannelsDef: options.outputChannels ?? {},
-            inputChannelDefs: options.inputChannels ?? [],
-            channels: options.newChannels ?? [],
-            channelListeners: options.channelListeners ?? [],
+            channels: options.channels ?? [],
+            subscribers: options.subscribers ?? [],
             drawPreviewFunc: options.preview,
             description: options.description,
         });

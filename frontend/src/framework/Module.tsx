@@ -2,11 +2,10 @@ import React from "react";
 
 import { cloneDeep } from "lodash";
 
-import { BroadcastChannelsDef, InputBroadcastChannelDef } from "./Broadcaster";
+import { ChannelDefinition, SubscriberDefinition } from "./DataChannelTypes";
 import { InitialSettings } from "./InitialSettings";
 import { ModuleContext } from "./ModuleContext";
 import { ModuleInstance } from "./ModuleInstance";
-import { Channel, ChannelListener, ModuleChannelListener } from "./NewBroadcaster";
 import { DrawPreviewFunc } from "./Preview";
 import { StateBaseType, StateOptions } from "./StateStore";
 import { SyncSettingKey } from "./SyncSettings";
@@ -43,23 +42,19 @@ export class Module<StateType extends StateBaseType> {
     private _stateOptions: StateOptions<StateType> | undefined;
     private _workbench: Workbench | null;
     private _syncableSettingKeys: SyncSettingKey[];
-    private _channelsDef: BroadcastChannelsDef;
     private _drawPreviewFunc: DrawPreviewFunc | null;
     private _description: string | null;
-    private _inputChannelDefs: InputBroadcastChannelDef[];
-    private _channels: Channel[];
-    private _channelListeners: ChannelListener[];
+    private _channels: ChannelDefinition[];
+    private _subscribers: SubscriberDefinition[];
 
     constructor(options: {
         name: string;
         defaultTitle: string;
         syncableSettingKeys?: SyncSettingKey[];
-        broadcastChannelsDef?: BroadcastChannelsDef;
-        inputChannelDefs?: InputBroadcastChannelDef[];
         drawPreviewFunc?: DrawPreviewFunc;
         description?: string;
-        channels?: Channel[];
-        channelListeners?: ChannelListener[];
+        channels?: ChannelDefinition[];
+        subscribers?: SubscriberDefinition[];
     }) {
         this._name = options.name;
         this._defaultTitle = options.defaultTitle;
@@ -70,12 +65,10 @@ export class Module<StateType extends StateBaseType> {
         this._defaultState = null;
         this._workbench = null;
         this._syncableSettingKeys = options.syncableSettingKeys ?? [];
-        this._channelsDef = options.broadcastChannelsDef ?? {};
-        this._inputChannelDefs = options.inputChannelDefs ?? [];
         this._drawPreviewFunc = options.drawPreviewFunc ?? null;
         this._description = options.description ?? null;
         this._channels = options.channels ?? [];
-        this._channelListeners = options.channelListeners ?? [];
+        this._subscribers = options.subscribers ?? [];
     }
 
     getDrawPreviewFunc(): DrawPreviewFunc | null {
@@ -129,10 +122,7 @@ export class Module<StateType extends StateBaseType> {
             module: this,
             instanceNumber,
             channels: this._channels,
-            channelListeners: this._channelListeners,
-            broadcastChannelsDef: this._channelsDef,
-            inputChannelDefs: this._inputChannelDefs,
-            workbench: this._workbench,
+            subscribers: this._subscribers,
         });
         this._moduleInstances.push(instance);
         this.maybeImportSelf();

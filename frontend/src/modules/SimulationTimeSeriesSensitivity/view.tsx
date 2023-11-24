@@ -1,7 +1,6 @@
 import React from "react";
 
 import { StatisticFunction_api, VectorRealizationData_api, VectorStatisticSensitivityData_api } from "@api";
-import { BroadcastChannelData, BroadcastChannelMeta } from "@framework/Broadcaster";
 import { ModuleFCProps } from "@framework/Module";
 import { useSubscribedValue } from "@framework/WorkbenchServices";
 import { timestampUtcMsToCompactIsoString } from "@framework/utils/timestampUtils";
@@ -76,35 +75,25 @@ export const view = ({
         setActiveTimestampUtcMs(lastTimestampUtcMs);
     }
 
-    // Broadcast the data to the realization data channel
-    React.useEffect(
-        function broadcast() {
-            if (!ensemble || !realizationsQuery.data || activeTimestampUtcMs === null) {
-                return;
-            }
-            const dataGenerator = (): BroadcastChannelData[] => {
-                const data: BroadcastChannelData[] = [];
+    moduleContext.usePublish({
+        channelIdent: BroadcastChannelNames.Realization_Value,
+        dependencies: [vectorSpec, realizationsQuery.data, ensemble, activeTimestampUtcMs],
+        contents: [{ ident: vectorSpec?.vectorName ?? "", name: vectorSpec?.vectorName ?? "" }],
+        dataGenerator: () => {
+            const data: { key: number; value: number }[] = [];
+            if (vectorSpec && realizationsQuery.data && ensemble) {
                 realizationsQuery.data.forEach((vec) => {
-                    const indexOfTimeStamp = indexOf(vec.timestamps_utc_ms, activeTimestampUtcMs);
+                    const indexOfTimestamp = indexOf(vec.timestamps_utc_ms, activeTimestampUtcMs);
                     data.push({
                         key: vec.realization,
-                        value: indexOfTimeStamp === -1 ? 0 : vec.values[indexOfTimeStamp],
+                        value: indexOfTimestamp === -1 ? 0 : vec.values[indexOfTimestamp],
                     });
                 });
-                return data;
-            };
-
-            const activeTimestampAsIsoString = timestampUtcMsToCompactIsoString(activeTimestampUtcMs);
-            const channelMeta: BroadcastChannelMeta = {
-                ensembleIdent: ensemble.getIdent(),
-                description: `${ensemble.getDisplayName()} ${vectorSpec?.vectorName} ${activeTimestampAsIsoString}`,
-                unit: realizationsQuery.data?.at(0)?.unit || "",
-            };
-
-            moduleContext.getChannel(BroadcastChannelNames.Realization_Value).broadcast(channelMeta, dataGenerator);
+            }
+            return data;
         },
-        [ensemble, vectorSpec, realizationsQuery.data, activeTimestampUtcMs, moduleContext]
-    );
+    });
+
     const colorSet = workbenchSettings.useColorSet();
 
     const allSensitivityNamesInEnsemble = ensemble?.getSensitivities()?.getSensitivityNames().sort() ?? [];

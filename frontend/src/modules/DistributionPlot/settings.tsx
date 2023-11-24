@@ -1,9 +1,7 @@
-import React, { ChangeEvent } from "react";
+import React from "react";
 
-import { BroadcastChannelKeyCategory } from "@framework/Broadcaster";
 import { applyInitialSettingsToState } from "@framework/InitialSettings";
 import { ModuleFCProps } from "@framework/Module";
-import { ChannelSelect } from "@framework/components/ChannelSelect";
 import { Dropdown } from "@lib/components/Dropdown";
 import { Label } from "@lib/components/Label";
 import { RadioGroup } from "@lib/components/RadioGroup";
@@ -30,29 +28,6 @@ const plotTypes = [
     },
 ];
 
-const crossPlottingTypes = [
-    {
-        label: "Realization",
-        value: BroadcastChannelKeyCategory.Realization,
-    },
-    {
-        label: "Time",
-        value: BroadcastChannelKeyCategory.TimestampMs,
-    },
-    {
-        label: "Measured depth",
-        value: BroadcastChannelKeyCategory.MeasuredDepth,
-    },
-    {
-        label: "Grid index",
-        value: BroadcastChannelKeyCategory.GridIndex,
-    },
-    {
-        label: "Grid IJK",
-        value: BroadcastChannelKeyCategory.GridIJK,
-    },
-];
-
 //-----------------------------------------------------------------------------------------------------------
 export function settings({ moduleContext, workbenchServices, initialSettings }: ModuleFCProps<State>) {
     const [prevChannelXName, setPrevChannelXName] = React.useState<string | null>(null);
@@ -62,38 +37,13 @@ export function settings({ moduleContext, workbenchServices, initialSettings }: 
     const [plotType, setPlotType] = moduleContext.useStoreState("plotType");
     const [numBins, setNumBins] = moduleContext.useStoreState("numBins");
     const [orientation, setOrientation] = moduleContext.useStoreState("orientation");
-    const [crossPlottingType, setCrossPlottingType] = React.useState<BroadcastChannelKeyCategory | null>(null);
 
     applyInitialSettingsToState(initialSettings, "plotType", "string", setPlotType);
     applyInitialSettingsToState(initialSettings, "numBins", "number", setNumBins);
     applyInitialSettingsToState(initialSettings, "orientation", "string", setOrientation);
-    applyInitialSettingsToState(initialSettings, "crossPlottingType", "string", setCrossPlottingType);
-
-    const channelX = moduleContext.useInputChannel("channelX", initialSettings);
-    const channelY = moduleContext.useInputChannel("channelY", initialSettings);
-    const channelColor = moduleContext.useInputChannel("channelColor", initialSettings);
-
-    if (channelX && channelX.getName() !== prevChannelXName && crossPlottingType === null) {
-        setPrevChannelXName(channelX?.getName() ?? null);
-        setCrossPlottingType(channelX?.getDataDef().key ?? null);
-    }
-
-    if (channelY && channelY?.getName() !== prevChannelYName && crossPlottingType === null) {
-        setPrevChannelYName(channelY?.getName() ?? null);
-        setCrossPlottingType(channelY?.getDataDef().key ?? null);
-    }
-
-    if (channelColor && channelColor?.getName() !== prevChannelColorName && crossPlottingType === null) {
-        setPrevChannelColorName(channelColor?.getName() ?? null);
-        setCrossPlottingType(channelColor?.getDataDef().key ?? null);
-    }
 
     const handlePlotTypeChanged = (value: string) => {
         setPlotType(value as PlotType);
-    };
-
-    const handleCrossPlottingTypeChanged = (value: string) => {
-        setCrossPlottingType(value as BroadcastChannelKeyCategory);
     };
 
     const handleNumBinsChanged = (_: Event, value: number | number[]) => {
@@ -103,49 +53,15 @@ export function settings({ moduleContext, workbenchServices, initialSettings }: 
         setNumBins(value);
     };
 
-    const handleOrientationChanged = (e: ChangeEvent<HTMLInputElement>) => {
+    const handleOrientationChanged = (e: React.ChangeEvent<HTMLInputElement>) => {
         setOrientation(e.target.value as "h" | "v");
     };
 
     const makeContent = (): React.ReactNode => {
-        if (plotType === null || crossPlottingType === null) {
+        if (plotType === null) {
             return null;
         }
         const content: React.ReactNode[] = [];
-
-        content.push(
-            <Label text="Data channel X axis" key="data-channel-x-axis">
-                <ChannelSelect
-                    moduleContext={moduleContext}
-                    channelName="channelX"
-                    broadcaster={workbenchServices.getBroadcaster()}
-                />
-            </Label>
-        );
-
-        if (plotType === PlotType.Scatter || plotType === PlotType.ScatterWithColorMapping) {
-            content.push(
-                <Label text="Data channel Y axis" key="data-channel-y-axis">
-                    <ChannelSelect
-                        moduleContext={moduleContext}
-                        channelName="channelY"
-                        broadcaster={workbenchServices.getBroadcaster()}
-                    />
-                </Label>
-            );
-        }
-
-        if (plotType === PlotType.ScatterWithColorMapping) {
-            content.push(
-                <Label text="Data channel color mapping" key="data-channel-color-mapping">
-                    <ChannelSelect
-                        moduleContext={moduleContext}
-                        channelName="channelColor"
-                        broadcaster={workbenchServices.getBroadcaster()}
-                    />
-                </Label>
-            );
-        }
 
         if (plotType === PlotType.Histogram) {
             content.push(
@@ -183,13 +99,6 @@ export function settings({ moduleContext, workbenchServices, initialSettings }: 
         <>
             <Label text="Plot type">
                 <Dropdown value={plotType as string} options={plotTypes} onChange={handlePlotTypeChanged} />
-            </Label>
-            <Label text="Cross plotting">
-                <Dropdown
-                    value={crossPlottingType as string}
-                    options={crossPlottingTypes}
-                    onChange={handleCrossPlottingTypeChanged}
-                />
             </Label>
             {makeContent()}
         </>

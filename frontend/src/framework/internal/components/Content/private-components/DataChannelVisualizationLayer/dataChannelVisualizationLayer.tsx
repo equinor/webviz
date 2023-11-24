@@ -78,9 +78,9 @@ export const DataChannelVisualizationLayer: React.FC<DataChannelVisualizationPro
                 return;
             }
 
-            const availableChannels = moduleInstance.getBroadcastChannels();
+            const availableChannels = moduleInstance.getPublishSubscribeBroker().getChannels();
             if (Object.keys(availableChannels).length === 1) {
-                setCurrentChannelName(Object.values(availableChannels)[0].getDisplayName());
+                setCurrentChannelName(Object.values(availableChannels)[0].getName());
                 return;
             }
         }
@@ -255,13 +255,13 @@ export const DataChannelVisualizationLayer: React.FC<DataChannelVisualizationPro
             ) {
                 continue;
             }
-            const listeners = moduleInstance.getBroadcaster().getListeners();
-            if (!listeners) {
+            const subscribers = moduleInstance.getPublishSubscribeBroker().getSubscribers();
+            if (!subscribers) {
                 continue;
             }
 
-            for (const listener of listeners) {
-                const channel = listener.getChannel();
+            for (const subscriber of subscribers) {
+                const channel = subscriber.getChannel();
                 if (!channel) {
                     continue;
                 }
@@ -276,7 +276,7 @@ export const DataChannelVisualizationLayer: React.FC<DataChannelVisualizationPro
                     `moduleinstance-${originModuleInstanceId}-data-channel-origin`
                 );
                 const destinationElement = document.getElementById(
-                    `channel-connector-${moduleInstance.getId()}-${listener.getIdent()}`
+                    `channel-connector-${moduleInstance.getId()}-${subscriber.getIdent()}`
                 );
                 if (!originElement || !destinationElement) {
                     continue;
@@ -311,12 +311,12 @@ export const DataChannelVisualizationLayer: React.FC<DataChannelVisualizationPro
                 };
 
                 const highlighted =
-                    highlightedDataChannelConnection?.listenerIdent === listener.getIdent() &&
+                    highlightedDataChannelConnection?.listenerIdent === subscriber.getIdent() &&
                     highlightedDataChannelConnection?.moduleInstanceId === moduleInstance.getId();
 
                 const programs = channel
-                    .getPrograms()
-                    .filter((el) => listener.getProgramIdents().includes(el.getIdent()))
+                    .getContents()
+                    .filter((el) => subscriber.getContentIdents().includes(el.getIdent()))
                     .map((el) => el.getName());
 
                 let programsDescription = "";
@@ -330,7 +330,7 @@ export const DataChannelVisualizationLayer: React.FC<DataChannelVisualizationPro
                 }
 
                 dataChannelPaths.push({
-                    key: `${originModuleInstanceId}-${moduleInstance.getId()}-${listener.getIdent()}-${JSON.stringify(
+                    key: `${originModuleInstanceId}-${moduleInstance.getId()}-${subscriber.getIdent()}-${JSON.stringify(
                         boundingRect
                     )}`,
                     origin: originPoint,

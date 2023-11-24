@@ -2,7 +2,6 @@ import React from "react";
 import Plot from "react-plotly.js";
 
 import { VectorHistoricalData_api, VectorRealizationData_api, VectorStatisticData_api } from "@api";
-import { BroadcastChannelMeta } from "@framework/Broadcaster";
 import { ModuleFCProps } from "@framework/Module";
 import { useSubscribedValue } from "@framework/WorkbenchServices";
 import { useElementSize } from "@lib/hooks/useElementSize";
@@ -65,13 +64,12 @@ export const view = ({ moduleContext, workbenchSession, workbenchServices }: Mod
     const ensembleSet = workbenchSession.getEnsembleSet();
     const ensemble = vectorSpec ? ensembleSet.findEnsemble(vectorSpec.ensembleIdent) : null;
 
-    React.useEffect(
-        function broadcast() {
-            if (!ensemble) {
-                return;
-            }
-
-            const dataGenerator = (): { key: number; value: number }[] => {
+    if (vectorSpec) {
+        moduleContext.usePublish({
+            channelIdent: BroadcastChannelNames.Realization_Value,
+            dependencies: [vectorQuery.data, ensemble, vectorSpec],
+            contents: [{ ident: vectorSpec.vectorName, name: vectorSpec.vectorName }],
+            dataGenerator: () => {
                 const data: { key: number; value: number }[] = [];
                 if (vectorQuery.data) {
                     vectorQuery.data.forEach((vec) => {
@@ -82,18 +80,9 @@ export const view = ({ moduleContext, workbenchSession, workbenchServices }: Mod
                     });
                 }
                 return data;
-            };
-
-            const channelMeta: BroadcastChannelMeta = {
-                ensembleIdent: ensemble.getIdent(),
-                description: `${ensemble.getDisplayName()} ${vectorSpec?.vectorName}`,
-                unit: vectorQuery.data?.at(0)?.unit || "",
-            };
-
-            moduleContext.getChannel(BroadcastChannelNames.Realization_Value).broadcast(channelMeta, dataGenerator);
-        },
-        [vectorQuery.data, ensemble, vectorSpec, moduleContext]
-    );
+            },
+        });
+    }
 
     const subscribedHoverTimestamp = useSubscribedValue("global.hoverTimestamp", workbenchServices);
     const subscribedHoverRealization = useSubscribedValue("global.hoverRealization", workbenchServices);

@@ -1,7 +1,8 @@
 import React from "react";
 import { createPortal } from "react-dom";
 
-import { ModuleChannelListener } from "@framework/NewBroadcaster";
+import { ContentDefinition } from "@framework/DataChannelTypes";
+import { Subscriber } from "@framework/internal/DataChannels/Subscriber";
 import { Button } from "@lib/components/Button";
 import { Checkbox, CheckboxProps } from "@lib/components/Checkbox";
 import { IconButton } from "@lib/components/IconButton";
@@ -13,27 +14,27 @@ import { Close, ExpandLess, ExpandMore } from "@mui/icons-material";
 export type SelectableChannel = {
     ident: string;
     name: string;
-    programs: { ident: string; name: string }[];
+    contents: ContentDefinition[];
 };
 
 type ChannelSelectionItemProps = {
     multiSelect: boolean;
     channel: SelectableChannel;
     selected: boolean;
-    selectedProgramIdents: string[];
+    selectedContentIdents: string[];
     onSelectChannel: (channelIdent: string, checked: boolean) => void;
-    onSelectProgram: (channelIdent: string, programIdent: string, checked: boolean) => void;
+    onSelectContent: (channelIdent: string, contentIdent: string, checked: boolean) => void;
 };
 
 const ChannelSelectionItem: React.FC<ChannelSelectionItemProps> = (props) => {
-    const [expanded, setExpanded] = React.useState(props.selectedProgramIdents.length > 0 && !props.selected);
+    const [expanded, setExpanded] = React.useState(props.selectedContentIdents.length > 0 && !props.selected);
 
     function handleChannelToggle(e: React.ChangeEvent<HTMLInputElement>) {
         props.onSelectChannel(props.channel.ident, e.currentTarget.checked);
     }
 
-    function handleProgramToggle(programIdent: string, e: React.ChangeEvent<HTMLInputElement>) {
-        props.onSelectProgram(props.channel.ident, programIdent, e.currentTarget.checked);
+    function handleContentToggle(contentIdent: string, e: React.ChangeEvent<HTMLInputElement>) {
+        props.onSelectContent(props.channel.ident, contentIdent, e.currentTarget.checked);
     }
 
     return (
@@ -50,22 +51,22 @@ const ChannelSelectionItem: React.FC<ChannelSelectionItemProps> = (props) => {
                         {props.selected && (
                             <div className="absolute inset-0 bg-slate-100 opacity-90 w-full h-full flex items-center justify-center text-sm">
                                 {props.multiSelect
-                                    ? "All programs are automatically selected."
-                                    : "The first program is automatically selected."}
+                                    ? "All contents are automatically selected."
+                                    : "The first content is automatically selected."}
                             </div>
                         )}
-                        {props.channel.programs.map((program, index) => (
+                        {props.channel.contents.map((content, index) => (
                             <div
-                                key={program.ident}
+                                key={content.ident}
                                 className="flex items-center gap-1 ml-5 pl-0 p-2 hover:bg-blue-50 cursor-pointer text-sm border-l border-slate-400 h-8"
                             >
                                 <span className="h-px w-2 bg-slate-400 mr-2 inline-block" />
                                 <Checkbox
-                                    onChange={(e) => handleProgramToggle(program.ident, e)}
-                                    label={program.name}
+                                    onChange={(e) => handleContentToggle(content.ident, e)}
+                                    label={content.name}
                                     checked={
                                         (props.selected && (props.multiSelect || index === 0)) ||
-                                        props.selectedProgramIdents.includes(program.ident)
+                                        props.selectedContentIdents.includes(content.ident)
                                     }
                                 />
                             </div>
@@ -79,18 +80,18 @@ const ChannelSelectionItem: React.FC<ChannelSelectionItemProps> = (props) => {
 
 ChannelSelectionItem.displayName = "ChannelSelectionItem";
 
-export type SelectedPrograms = {
+export type SelectedContents = {
     channelIdent: string;
-    programIdents: string[];
+    contentIdents: string[];
 };
 
 export type ChannelSelectorProps = {
-    listener: ModuleChannelListener;
+    subscriber: Subscriber;
     selectableChannels: SelectableChannel[];
     selectedChannelIdent?: string;
-    selectedPrograms?: SelectedPrograms;
+    selectedContents?: SelectedContents;
     position: Point;
-    onSelect: (channelIdent: string, programIdents: string[]) => void;
+    onSelect: (channelIdent: string, contentIdents: string[]) => void;
     onCancel: () => void;
 };
 
@@ -98,8 +99,8 @@ export const ChannelSelector: React.FC<ChannelSelectorProps> = (props) => {
     const [selectedChannelIdent, setSelectedChannelIdent] = React.useState<string | null>(
         props.selectedChannelIdent ?? null
     );
-    const [selectedPrograms, setSelectedPrograms] = React.useState<SelectedPrograms | null>(
-        props.selectedPrograms ?? null
+    const [selectedContents, setSelectedContents] = React.useState<SelectedContents | null>(
+        props.selectedContents ?? null
     );
 
     React.useEffect(() => {
@@ -129,17 +130,17 @@ export const ChannelSelector: React.FC<ChannelSelectorProps> = (props) => {
     }
 
     function handleSelectionDone() {
-        if (selectedPrograms === null && selectedChannelIdent === null) {
+        if (selectedContents === null && selectedChannelIdent === null) {
             return;
         }
         if (selectedChannelIdent !== null) {
             props.onSelect(selectedChannelIdent, []);
             return;
         }
-        if (selectedPrograms === null) {
+        if (selectedContents === null) {
             return;
         }
-        props.onSelect(selectedPrograms.channelIdent, selectedPrograms.programIdents);
+        props.onSelect(selectedContents.channelIdent, selectedContents.contentIdents);
     }
 
     function handleChannelToggle(channelIdent: string, checked: boolean) {
@@ -155,48 +156,48 @@ export const ChannelSelector: React.FC<ChannelSelectorProps> = (props) => {
         }
     }
 
-    function handleProgramToggle(channelIdent: string, programIdent: string, checked: boolean) {
+    function handleContentToggle(channelIdent: string, contentIdent: string, checked: boolean) {
         if (checked) {
             if (
-                selectedPrograms === null ||
-                selectedPrograms.channelIdent !== channelIdent ||
-                !props.listener.getCanMultiTask()
+                selectedContents === null ||
+                selectedContents.channelIdent !== channelIdent ||
+                !props.subscriber.getHasMultiContentSupport()
             ) {
-                setSelectedPrograms({ channelIdent, programIdents: [programIdent] });
+                setSelectedContents({ channelIdent, contentIdents: [contentIdent] });
                 return;
             }
-            setSelectedPrograms({
+            setSelectedContents({
                 channelIdent,
-                programIdents: [...(selectedPrograms.programIdents ?? []), programIdent],
+                contentIdents: [...(selectedContents.contentIdents ?? []), contentIdent],
             });
         } else {
-            if (selectedPrograms === null || selectedPrograms.channelIdent !== channelIdent) {
+            if (selectedContents === null || selectedContents.channelIdent !== channelIdent) {
                 return;
             }
 
-            setSelectedPrograms({
+            setSelectedContents({
                 channelIdent,
-                programIdents: selectedPrograms.programIdents?.filter((el) => el !== programIdent) ?? [],
+                contentIdents: selectedContents.contentIdents?.filter((el) => el !== contentIdent) ?? [],
             });
         }
     }
 
     function checkIfSelectionIsMade() {
-        if (selectedPrograms === null && selectedChannelIdent === null) {
+        if (selectedContents === null && selectedChannelIdent === null) {
             return false;
         }
-        if (selectedChannelIdent === null && selectedPrograms !== null && selectedPrograms.programIdents.length === 0) {
+        if (selectedChannelIdent === null && selectedContents !== null && selectedContents.contentIdents.length === 0) {
             return false;
         }
         return true;
     }
 
     const channelElementHeight = convertRemToPixels(3);
-    const programElementHeight = convertRemToPixels(2);
+    const contentElementHeight = convertRemToPixels(2);
 
     const calculatedHeight =
         props.selectableChannels.reduce((acc, el) => {
-            return acc + channelElementHeight + el.programs.length * programElementHeight;
+            return acc + channelElementHeight + el.contents.length * contentElementHeight;
         }, 0) +
         convertRemToPixels(3) +
         convertRemToPixels(4) +
@@ -222,7 +223,7 @@ export const ChannelSelector: React.FC<ChannelSelectorProps> = (props) => {
                     className="px-2 bg-slate-200 font-bold flex items-center text-sm h-12"
                 >
                     <div className="flex-grow">
-                        Make <i className="font-bold text-green-700">{props.listener.getName()}</i> listen to...
+                        Make <i className="font-bold text-green-700">{props.subscriber.getName()}</i> subscribe to...
                     </div>
                     <div className="hover:text-slate-500 cursor-pointer" onClick={props.onCancel}>
                         <Close fontSize="small" />
@@ -231,15 +232,15 @@ export const ChannelSelector: React.FC<ChannelSelectorProps> = (props) => {
                 <div className="flex-grow overflow-auto">
                     {props.selectableChannels.map((channel) => (
                         <ChannelSelectionItem
-                            multiSelect={props.listener.getCanMultiTask()}
+                            multiSelect={props.subscriber.getHasMultiContentSupport()}
                             key={channel.ident}
                             channel={channel}
                             selected={selectedChannelIdent === channel.ident}
-                            selectedProgramIdents={
-                                selectedPrograms?.channelIdent === channel.ident ? selectedPrograms.programIdents : []
+                            selectedContentIdents={
+                                selectedContents?.channelIdent === channel.ident ? selectedContents.contentIdents : []
                             }
                             onSelectChannel={handleChannelToggle}
-                            onSelectProgram={handleProgramToggle}
+                            onSelectContent={handleContentToggle}
                         />
                     ))}
                 </div>

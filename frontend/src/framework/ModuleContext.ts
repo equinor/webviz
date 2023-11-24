@@ -1,12 +1,13 @@
 import React from "react";
 
-import { BroadcastChannel, InputBroadcastChannelDef } from "./Broadcaster";
+import { ContentDefinition, Data, DataType, Type, TypeToTSTypeMapping } from "./DataChannelTypes";
 import { InitialSettings } from "./InitialSettings";
 import { ModuleInstance } from "./ModuleInstance";
 import { ModuleInstanceStatusController } from "./ModuleInstanceStatusController";
-import { Content, Program, Type, TypeToTSTypeMapping, useBroadcast, useChannelListener } from "./NewBroadcaster";
 import { StateBaseType, StateStore, useSetStoreValue, useStoreState, useStoreValue } from "./StateStore";
 import { SyncSettingKey } from "./SyncSettings";
+import { usePublish } from "./internal/DataChannels/hooks/usePublish";
+import { useSubscriber } from "./internal/DataChannels/hooks/useSubscriber";
 
 export class ModuleContext<S extends StateBaseType> {
     private _moduleInstance: ModuleInstance<S>;
@@ -60,98 +61,47 @@ export class ModuleContext<S extends StateBaseType> {
         return this._moduleInstance.getStatusController();
     }
 
-    getChannel(channelName: string): BroadcastChannel {
-        return this._moduleInstance.getBroadcastChannel(channelName);
-    }
-
-    getInputChannel(name: string): BroadcastChannel | null {
-        return this._moduleInstance.getInputChannel(name);
-    }
-
-    setInputChannel(inputName: string, channelName: string): void {
-        this._moduleInstance.setInputChannel(inputName, channelName);
-    }
-
-    getInputChannelDef(name: string): InputBroadcastChannelDef | undefined {
-        return this._moduleInstance.getInputChannelDefs().find((channelDef) => channelDef.name === name);
-    }
-
-    useChannelListener<TContentValueType extends Type>(options: {
-        listenerIdent: string;
+    useSubscriber<TContentValueType extends Type>(options: {
+        subscriberIdent: string;
         expectedValueType: TContentValueType;
         initialSettings?: InitialSettings;
-    }): {
-        ident: string;
-        name: string;
-        channel: {
-            ident: string;
-            name: string;
-            moduleInstanceId: string;
-            programs: { ident: string; name: string; content: Content<TypeToTSTypeMapping[TContentValueType]>[] }[];
-        };
-        listening: boolean;
-    } {
-        const listener = this._moduleInstance.getBroadcaster().getListener(options.listenerIdent);
+    }): ReturnType<typeof useSubscriber<TContentValueType>> {
+        const subscriber = this._moduleInstance.getPublishSubscribeBroker().getSubscriber(options.subscriberIdent);
 
         React.useEffect(() => {
             if (options.initialSettings) {
-                const setting = options.initialSettings.get(options.listenerIdent, "string");
-                if (setting && listener) {
-                    const channel = this._moduleInstance.getBroadcaster().getChannel(setting);
+                const setting = options.initialSettings.get(options.subscriberIdent, "string");
+                if (setting && subscriber) {
+                    const channel = this._moduleInstance.getPublishSubscribeBroker().getChannel(setting);
                     if (!channel) {
                         return;
                     }
-                    listener.startListeningTo(
-                        channel,
-                        channel.getPrograms().map((el) => el.getName())
-                    );
+                    subscriber.subscribeToChannel(channel, "All");
                 }
             }
-        }, [options.initialSettings, listener]);
+        }, [options.initialSettings, subscriber]);
 
-        return useChannelListener<TContentValueType>({
-            channelListener: this._moduleInstance.getBroadcaster().getListener(options.listenerIdent),
+        return useSubscriber<TContentValueType>({
+            subscriber: this._moduleInstance.getPublishSubscribeBroker().getSubscriber(options.subscriberIdent),
             expectedValueType: options.expectedValueType,
         });
     }
 
-    useBroadcast(options: {
+    usePublish(options: {
         channelIdent: string;
         dependencies: any[];
-        programs: Program[];
-        contentGenerator: (programIdent: string) => Content[];
+        contents: ContentDefinition[];
+        dataGenerator: (
+            contentIdent: string
+        ) => Data[] | { data: Data[]; metaData: Record<string, DataType> | undefined };
     }) {
-        const channel = this._moduleInstance.getBroadcaster().getChannel(options.channelIdent);
+        const channel = this._moduleInstance.getPublishSubscribeBroker().getChannel(options.channelIdent);
         if (!channel) {
             throw new Error(`Channel '${options.channelIdent}' does not exist`);
         }
-        return useBroadcast({
+        return usePublish({
             channel,
             ...options,
         });
-    }
-
-    useInputChannel(name: string, initialSettings?: InitialSettings): BroadcastChannel | null {
-        const [channel, setChannel] = React.useState<BroadcastChannel | null>(null);
-
-        React.useEffect(() => {
-            if (initialSettings) {
-                const setting = initialSettings.get(name, "string");
-                if (setting) {
-                    this._moduleInstance.setInputChannel(name, setting);
-                }
-            }
-        }, [initialSettings]);
-
-        React.useEffect(() => {
-            function handleNewChannel(newChannel: BroadcastChannel | null) {
-                setChannel(newChannel);
-            }
-
-            const unsubscribeFunc = this._moduleInstance.subscribeToInputChannelChange(name, handleNewChannel);
-            return unsubscribeFunc;
-        }, [name]);
-
-        return channel;
     }
 }

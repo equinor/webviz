@@ -1,15 +1,16 @@
-import { BroadcastChannelKeyCategory, InputBroadcastChannelDef } from "@framework/Broadcaster";
+import { Genre, SubscriberDefinition } from "@framework/DataChannelTypes";
 import { ModuleRegistry } from "@framework/ModuleRegistry";
 import { SyncSettingKey } from "@framework/SyncSettings";
 
 import { preview } from "./preview";
 import { State } from "./state";
 
-const inputChannelDefs: InputBroadcastChannelDef[] = [
+const subscriberDefs: SubscriberDefinition[] = [
     {
-        name: "response",
-        displayName: "Response",
-        keyCategories: [BroadcastChannelKeyCategory.Realization],
+        ident: "response",
+        name: "Response",
+        supportedGenres: [Genre.Realization],
+        supportsMultiContents: false,
     },
 ];
 
@@ -17,6 +18,6 @@ ModuleRegistry.registerModule<State>({
     moduleName: "TornadoChart",
     defaultTitle: "Tornado Chart",
     syncableSettingKeys: [SyncSettingKey.ENSEMBLE, SyncSettingKey.TIME_SERIES],
-    inputChannels: inputChannelDefs,
     preview,
+    subscribers: subscriberDefs,
 });
