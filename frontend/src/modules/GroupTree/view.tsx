@@ -6,13 +6,15 @@ import { State, StatisticsOrRealization } from "./state";
 import { useGroupTreeQuery } from "./queryHooks";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 
+
 export const view = ({ moduleContext }: ModuleFCProps<State>) => {
     const ensembleIdent = moduleContext.useStoreValue("ensembleIdent")
     const statOrReal = moduleContext.useStoreValue("statOrReal")
     const real = moduleContext.useStoreValue("realization")
+    const resampleFrequency = moduleContext.useStoreValue("resamplingFrequency")
 
-    const data = useGroupTreeQuery(ensembleIdent?.getCaseUuid(), ensembleIdent?.getEnsembleName(), real)
-    // console.log("data:")
+    const data = useGroupTreeQuery(ensembleIdent?.getCaseUuid(), ensembleIdent?.getEnsembleName(), real, resampleFrequency)
+    
     // console.log(data.data)
 
     let edgeOptions = [{name: "oilrate", label: "Oil Rate"}, {name: "gasrate", label: "Gas Rate"}]

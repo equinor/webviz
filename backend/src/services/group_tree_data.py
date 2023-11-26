@@ -60,11 +60,11 @@ class GroupTreeData:
         grouptree_access: GroupTreeAccess,
         summary_access: SummaryAccess,
         realization: Optional[int],
+        resampling_frequency: Frequency,
         terminal_node: str = "FIELD",
         tree_type: str = "GRUPTREE",
         excl_well_startswith: Optional[List[str]] = None,
         excl_well_endswith: Optional[List[str]] = None,
-        resampling_frequency: Frequency = Frequency.YEARLY,
     ):
         self._grouptree_access = grouptree_access
         self._summary_access = summary_access

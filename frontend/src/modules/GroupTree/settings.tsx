@@ -1,5 +1,6 @@
 import React from "react";
 
+import { Frequency_api } from "@api";
 import { Ensemble } from "@framework/Ensemble";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { ModuleFCProps } from "@framework/Module";
@@ -21,6 +22,7 @@ export const settings = ({ moduleContext, workbenchSession, workbenchServices }:
     const setEnsembleIdent = moduleContext.useSetStoreValue("ensembleIdent")
     const [selectedStatOrReal, setSelectedStatOrReal] = moduleContext.useStoreState("statOrReal");
     const [selectedRealization, setSelectedRealization] = moduleContext.useStoreState("realization");
+    const [resampleFrequency, setResamplingFrequency] = moduleContext.useStoreState("resamplingFrequency");
 
     const [selectedEnsembleIdent, setSelectedEnsembleIdent] = useValidState<EnsembleIdent | null>(null, [
         ensembleSet.getEnsembleArr(),
@@ -60,13 +62,14 @@ export const settings = ({ moduleContext, workbenchSession, workbenchServices }:
         setSelectedRealization(parseInt(newReal))
     }
 
-    function makeRealizationItems(nbOfReal: number): DropdownOption[] {
-        const itemArr: DropdownOption[] = [];
-        for (let real = 0; real <= nbOfReal-1; real++) {
-            itemArr.push({ value: real.toString(), label: real.toString()})
-          }
-
-        return itemArr;
+    function handleFrequencySelectionChange(newFreqStr: string) {
+        console.debug(`handleFrequencySelectionChange()  newFreqStr=${newFreqStr}`);
+        let newFreq: Frequency_api | null = null;
+        if (newFreqStr !== "RAW") {
+            newFreq = newFreqStr as Frequency_api;
+        }
+        console.debug(`handleFrequencySelectionChange()  newFreqStr=${newFreqStr}  newFreq=${newFreq}`);
+        setResamplingFrequency(newFreq);
     }
 
     return (
@@ -83,6 +86,13 @@ export const settings = ({ moduleContext, workbenchSession, workbenchServices }:
                     />
                 </>
             </Label>
+            <Label text="Frequency">
+                <Dropdown
+                    options={makeFrequencyOptionItems()}
+                    value={resampleFrequency ?? "RAW"}
+                    onChange={handleFrequencySelectionChange}
+                />
+            </Label>
             <Label text="Statistics Or Realization">
                 <RadioGroup
                     value={selectedStatOrReal}
@@ -95,10 +105,28 @@ export const settings = ({ moduleContext, workbenchSession, workbenchServices }:
             <Label text="Realizations:">
                 <Dropdown
                     options={makeRealizationItems(computedEnsemble?.getMaxRealizationNumber() ?? -1)}
-                    value={"0"}
+                    value={selectedRealization.toString()}
                     onChange={handleRealizationChange}
                 />
             </Label>
         </div>
     );
 };
+
+function makeFrequencyOptionItems(): DropdownOption[] {
+    const itemArr: DropdownOption[] = [
+        { value: Frequency_api.DAILY, label: "Daily" },
+        { value: Frequency_api.MONTHLY, label: "Monthly" },
+        { value: Frequency_api.QUARTERLY, label: "Quarterly" },
+        { value: Frequency_api.YEARLY, label: "Yearly" },
+    ];
+    return itemArr;
+}
+
+function makeRealizationItems(nbOfReal: number): DropdownOption[] {
+    const itemArr: DropdownOption[] = [];
+    for (let real = 0; real <= nbOfReal-1; real++) {
+        itemArr.push({ value: real.toString(), label: real.toString()})
+      }
+    return itemArr;
+}
