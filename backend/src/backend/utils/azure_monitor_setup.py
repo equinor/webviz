@@ -34,7 +34,7 @@ class LoggingHandlerWithFormatting(LoggingHandler):
 # - APPLICATIONINSIGHTS_CONNECTION_STRING
 # - OTEL_SERVICE_NAME
 # - OTEL_RESOURCE_ATTRIBUTES
-def setup_azure_monitor_telemetry(fastapi_app: FastAPI):
+def setup_azure_monitor_telemetry(fastapi_app: FastAPI) -> None:
     # Under ideal circumstances, the below call to configure_azure_monitor() should be the only call needed
     # to configure the entire telemetry stack. However, it seems that there are multiple glitches.
     # - Supposedly, FastAPI instrumentation should be added automatically, but this only seems to work

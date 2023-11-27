@@ -1,7 +1,7 @@
 import logging
 
 
-def ensure_console_log_handler_is_configured():
+def ensure_console_log_handler_is_configured() -> None:
     root_logger = logging.getLogger()
 
     # Look for the default console handler that is added by the Python logging module
@@ -20,7 +20,7 @@ def ensure_console_log_handler_is_configured():
     console_handler.setFormatter(formatter)
 
 
-def setup_normal_log_levels():
+def setup_normal_log_levels() -> None:
     # Set baseline logging level to INFO
     logging.getLogger().setLevel(logging.INFO)
 
