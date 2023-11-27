@@ -35,13 +35,12 @@ class LoggingHandlerWithFormatting(LoggingHandler):
 # - OTEL_SERVICE_NAME
 # - OTEL_RESOURCE_ATTRIBUTES
 def setup_azure_monitor_telemetry(fastapi_app: FastAPI):
-
     # Under ideal circumstances, the below call to configure_azure_monitor() should be the only call needed
     # to configure the entire telemetry stack. However, it seems that there are multiple glitches.
     # - Supposedly, FastAPI instrumentation should be added automatically, but this only seems to work
     #   if the call to configure_azure_monitor() happens very early in the module loading process, and
     #   specifically it seems that it has to happen before any import of FastAPIP
-    # - The default log handler that is added does not obey the specified log message format string, 
+    # - The default log handler that is added does not obey the specified log message format string,
     #   even if it is set using OTEL_PYTHON_LOG_FORMAT. It justs logs the raw message string.
     #
     # Note that this call will throw an exception if the APPLICATIONINSIGHTS_CONNECTION_STRING

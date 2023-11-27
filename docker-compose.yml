@@ -34,7 +34,7 @@ services:
       - WEBVIZ_SUMO_ENV
       - APPLICATIONINSIGHTS_CONNECTION_STRING
       - OTEL_SERVICE_NAME=primary-backend
-      - OTEL_RESOURCE_ATTRIBUTES=service.namespace=local, service.version=0.1.2
+      - OTEL_RESOURCE_ATTRIBUTES=service.namespace=local, service.version=dummy0.1.2
       - CODESPACE_NAME  # Automatically set env. variable by GitHub codespace
     volumes:
       - ./backend/src:/home/appuser/backend/src
@@ -61,7 +61,7 @@ services:
       - WEBVIZ_SUMO_ENV
       - APPLICATIONINSIGHTS_CONNECTION_STRING
       - OTEL_SERVICE_NAME=user-session
-      - OTEL_RESOURCE_ATTRIBUTES=service.namespace=local, service.version=0.1.2
+      - OTEL_RESOURCE_ATTRIBUTES=service.namespace=local, service.version=dummy0.1.2
     volumes:
       - ./backend/src:/home/appuser/backend/src
 

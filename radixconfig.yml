@@ -34,8 +34,6 @@ spec:
                 envVar: WEBVIZ_SMDA_RESOURCE_SCOPE
               - name: WEBVIZ-SMDA-SUBSCRIPTION-KEY
                 envVar: WEBVIZ_SMDA_SUBSCRIPTION_KEY
-              - name: APPLICATIONINSIGHTS-CONNECTION-STRING
-                envVar: APPLICATIONINSIGHTS_CONNECTION_STRING
       variables:
         UVICORN_PORT: 5000
         UVICORN_ENTRYPOINT: src.backend.primary.main:app

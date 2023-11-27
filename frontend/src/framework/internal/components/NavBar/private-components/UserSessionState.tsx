@@ -6,10 +6,7 @@ import { apiService } from "@framework/ApiService";
 const useUserSessionState = () => useQuery({
     queryKey: ["default.userSessionContainer"],
     queryFn: () => apiService.default.userSessionContainer(),
-    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    refetchInterval: 20000000
+    refetchInterval: 2000
 });
 
 export const UserSessionState = ({expanded}: {expanded: boolean}) => {
