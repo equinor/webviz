@@ -41,8 +41,14 @@ spec:
         UVICORN_ENTRYPOINT: src.backend.primary.main:app
       environmentConfig:
         - environment: prod
+          secretRefs:
+            azureKeyVaults:
+              - name: webviz
+                items:
+                  - name: WEBVIZ-INSIGHTS-CONNECTIONSTRING-PROD
+                    envVar: APPLICATIONINSIGHTS_CONNECTION_STRING
           variables:
-            OTEL_RESOURCE_ATTRIBUTES: service.name=primary-backend, service.namespace=prod, service.version=0.1.2
+            OTEL_RESOURCE_ATTRIBUTES: service.name=primary-backend, service.namespace=prod, service.version=tbd0.1.2
           resources:
             requests:
               memory: 8Gi
@@ -59,8 +65,14 @@ spec:
               cpu:
                 averageUtilization: 80
         - environment: review
+          secretRefs:
+            azureKeyVaults:
+              - name: webviz
+                items:
+                  - name: WEBVIZ-INSIGHTS-CONNECTIONSTRING-REVIEW
+                    envVar: APPLICATIONINSIGHTS_CONNECTION_STRING
           variables:
-            OTEL_RESOURCE_ATTRIBUTES: service.name=primary-backend, service.namespace=review, service.version=0.1.2
+            OTEL_RESOURCE_ATTRIBUTES: service.name=primary-backend, service.namespace=review, service.version=tbd0.1.2
           resources:
             requests:
               memory: 4Gi
@@ -118,16 +130,20 @@ spec:
                 envVar: WEBVIZ_SMDA_RESOURCE_SCOPE
               - name: WEBVIZ-SMDA-SUBSCRIPTION-KEY
                 envVar: WEBVIZ_SMDA_SUBSCRIPTION_KEY
-              - name: APPLICATIONINSIGHTS-CONNECTION-STRING
-                envVar: APPLICATIONINSIGHTS_CONNECTION_STRING
       variables:
         UVICORN_PORT: 8000
         UVICORN_ENTRYPOINT: src.backend.user_session.main:app
       environmentConfig:
         # As of October 2023 in radix, these settings need to be duplicated for both environments.
         - environment: prod
+          secretRefs:
+            azureKeyVaults:
+              - name: webviz
+                items:
+                  - name: WEBVIZ-INSIGHTS-CONNECTIONSTRING-PROD
+                    envVar: APPLICATIONINSIGHTS_CONNECTION_STRING
           variables:
-            OTEL_RESOURCE_ATTRIBUTES: service.name=user-session, service.namespace=prod, service.version=0.1.2
+            OTEL_RESOURCE_ATTRIBUTES: service.name=user-session, service.namespace=prod, service.version=tbd0.1.2
           volumeMounts:
             - name: webvizcache
               path: /tmp/webvizcache/
@@ -135,8 +151,14 @@ spec:
                 container: cache
                 uid: 1234
         - environment: review
+          secretRefs:
+            azureKeyVaults:
+              - name: webviz
+                items:
+                  - name: WEBVIZ-INSIGHTS-CONNECTIONSTRING-REVIEW
+                    envVar: APPLICATIONINSIGHTS_CONNECTION_STRING
           variables:
-            OTEL_RESOURCE_ATTRIBUTES: service.name=user-session, service.namespace=review, service.version=0.1.2
+            OTEL_RESOURCE_ATTRIBUTES: service.name=user-session, service.namespace=review, service.version=tbd0.1.2
           volumeMounts:
             - name: webvizcache
               path: /tmp/webvizcache/
