@@ -1,4 +1,7 @@
+from typing import List
+
 import pyarrow as pa
+import pyarrow.compute as pc
 import numpy as np
 
 
@@ -16,6 +19,15 @@ def is_date_column_monotonically_increasing(table: pa.Table) -> bool:
         return False
 
     return True
+
+
+def detect_missing_realizations(table_with_real_column: pa.Table, required_reals_arr: pa.IntegerArray) -> List[int]:
+    unique_reals_in_table = table_with_real_column["REAL"].unique()
+
+    reals_present_mask = pc.is_in(required_reals_arr, value_set=unique_reals_in_table)
+    reals_not_present_mask = pc.invert(reals_present_mask)
+    missing_realizations_list = required_reals_arr.filter(reals_not_present_mask).to_pylist()
+    return missing_realizations_list
 
 
 def create_float_downcasting_schema(schema: pa.Schema) -> pa.Schema:

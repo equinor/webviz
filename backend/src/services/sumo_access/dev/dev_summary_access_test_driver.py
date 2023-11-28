@@ -23,14 +23,17 @@ async def test_summary_access(summary_access: SummaryAccess) -> None:
     #     print(vector_info)
 
 
-    # vector_names = [vector_info.name for vector_info in vector_info_list]
-    # vector_table, _vector_meta = await summary_access.get_vectors_table_single_real(
-    #     vector_names=vector_names, resampling_frequency=Frequency.DAILY, realization=1
-    # )
-    # print("\n\nSINGLE_REAL\n-----------------------")
-    # print(vector_table.shape)
+    #vector_names = [vector_info.name for vector_info in vector_info_list]
+    vector_names = ["FWPT", "FOPR", "FOPT"]
+    vector_table, vector_meta_list = await summary_access.get_single_real_vectors_table_async(
+        vector_names=vector_names, resampling_frequency=Frequency.DAILY, realization=1
+    )
+    print("\n\nSINGLE_REAL\n-----------------------")
+    print(vector_table.shape)
+    print(vector_table)
+    print(vector_meta_list)
 
-    # return
+    return
 
     vector_table, _vector_meta = await summary_access.get_vector_table(
         vector_name="FOPT", resampling_frequency=None, realizations=None

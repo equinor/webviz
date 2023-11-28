@@ -9,6 +9,7 @@ import pyarrow.parquet as pq
 from fmu.sumo.explorer.objects import Case, TableCollection, Table
 
 from src.services.utils.arrow_helpers import sort_table_on_real_then_date, sort_table_on_date
+from src.services.utils.arrow_helpers import detect_missing_realizations
 from src.services.utils.perf_timer import PerfTimer
 
 from ._field_metadata import create_vector_metadata_from_field_meta
@@ -24,6 +25,8 @@ class SummaryAccess(SumoEnsemble):
     async def get_available_vectors(self) -> List[VectorInfo]:
         timer = PerfTimer()
 
+        # For now, only consider the collection-aggregated tables even if we will also be accessing and
+        # returning data for the per-realization summary tables.
         smry_table_collection: TableCollection = self._case.tables.filter(
             tagname="summary",
             iteration=self._iteration_name,
@@ -60,64 +63,12 @@ class SummaryAccess(SumoEnsemble):
                 info.has_historical = True
 
         LOGGER.debug(
-            f"Got vector names from Sumo in {timer.elapsed_ms()}ms "
+            f"Got vector names from Sumo in: {timer.elapsed_ms()}ms "
             f"(get_table_names={et_get_table_names_ms}ms, get_column_names={et_get_column_names_ms}ms) "
             f"(total_column_count={len(column_names)})"
         )
 
         return ret_info_arr
-
-    async def get_vectors_table_single_real(
-        self,
-        vector_names: Sequence[str],
-        resampling_frequency: Optional[Frequency],
-        realization: int,
-    ) -> Tuple[pa.Table, List[VectorMetadata]]:
-        if not vector_names:
-            raise ValueError("List of requested vector names is empty")
-
-        timer = PerfTimer()
-
-        full_table: pa.Table = await _load_single_real_full_arrow_table_from_sumo(
-            self._case, self._iteration_name, realization
-        )
-        et_loading_ms = timer.lap_ms()
-
-        columns_to_get = ["DATE"]
-        columns_to_get.extend(vector_names)
-        table = full_table.select(columns_to_get)
-
-        # Verify that the column datatypes are as we expect
-        schema = table.schema
-        for vector_name in vector_names:
-            if schema.field(vector_name).type != pa.float32():
-                raise ValueError(f"Unexpected type for {vector_name} column {schema.field(vector_name).type=}")
-
-        # The resampling function requires that the table is sorted on the DATE column
-        # Can we assume that this is always the case, and if so should we assert this condition?
-        table = sort_table_on_date(table)
-
-        # The resampling algorithm below uses the field metadata to determine if the vector is a rate or not.
-        # For now, fail hard if metadata is not present.
-        vector_metadata_list: List[VectorMetadata] = []
-        for vector_name in vector_names:
-            vector_metadata = create_vector_metadata_from_field_meta(schema.field(vector_name))
-            if not vector_metadata:
-                raise ValueError(f"Did not find valid metadata for vector {vector_name}")
-        et_preparing_ms = timer.lap_ms()
-
-        # Do the actual resampling
-        if resampling_frequency is not None:
-            table = resample_single_real_table(table, resampling_frequency)
-        et_resampling_ms = timer.lap_ms()
-
-        LOGGER.debug(
-            f"Got single realization summary table from Sumo in {timer.elapsed_ms()}ms "
-            f"(loading={et_loading_ms}ms, preparing={et_preparing_ms}ms, resampling={et_resampling_ms}ms) "
-            f"({realization=}, {resampling_frequency=}, {table.shape=})"
-        )
-
-        return table, vector_metadata_list
 
     async def get_vector_table(
         self,
@@ -134,14 +85,18 @@ class SummaryAccess(SumoEnsemble):
         """
         timer = PerfTimer()
 
-        table = await _load_arrow_table_for_from_sumo(self._case, self._iteration_name, vector_name)
-        if table is None:
-            raise ValueError(f"No table found for vector {vector_name=}")
+        table = await _load_all_real_arrow_table_from_sumo(self._case, self._iteration_name, vector_name)
         et_loading_ms = timer.lap_ms()
 
         if realizations is not None:
-            mask = pc.is_in(table["REAL"], value_set=pa.array(realizations))
+            requested_reals_arr = pa.array(realizations)
+            mask = pc.is_in(table["REAL"], value_set=requested_reals_arr)
             table = table.filter(mask)
+
+            # Verify that we got data for all the requested realizations
+            missing_reals_list = detect_missing_realizations(table, requested_reals_arr)
+            if missing_reals_list:
+                raise ValueError(f"No data found for some of the requested realizations, {missing_reals_list=}")
 
         # Our assumption is that the table is segmented on REAL and that within each segment,
         # the DATE column is sorted. We may want to add some checks here to verify this assumption since the
@@ -165,10 +120,9 @@ class SummaryAccess(SumoEnsemble):
         table = table.combine_chunks()
 
         LOGGER.debug(
-            f"Got vector table from Sumo in: {timer.elapsed_ms()}ms ("
-            f"loading={et_loading_ms}ms, "
-            f"resampling={et_resampling_ms}ms) "
-            f"{vector_name=} {resampling_frequency=} {table.shape=}"
+            f"Got summary vector data from Sumo in: {timer.elapsed_ms()}ms "
+            f"(loading={et_loading_ms}ms, resampling={et_resampling_ms}ms) "
+            f"({vector_name=} {resampling_frequency=} {table.shape=})"
         )
 
         return table, vector_metadata
@@ -205,6 +159,59 @@ class SummaryAccess(SumoEnsemble):
 
         return ret_arr
 
+    async def get_single_real_vectors_table_async(
+        self,
+        vector_names: Sequence[str],
+        resampling_frequency: Optional[Frequency],
+        realization: int,
+    ) -> Tuple[pa.Table, List[VectorMetadata]]:
+        if not vector_names:
+            raise ValueError("List of requested vector names is empty")
+
+        timer = PerfTimer()
+
+        full_table: pa.Table = await _load_single_real_full_arrow_table_from_sumo(
+            self._case, self._iteration_name, realization
+        )
+        et_loading_ms = timer.lap_ms()
+
+        columns_to_get = ["DATE"]
+        columns_to_get.extend(vector_names)
+        table = full_table.select(columns_to_get)
+
+        # Verify that the column datatypes are as we expect
+        schema = table.schema
+        for vector_name in vector_names:
+            if schema.field(vector_name).type != pa.float32():
+                raise ValueError(f"Unexpected type for {vector_name} column {schema.field(vector_name).type=}")
+
+        # The resampling function requires that the table is sorted on the DATE column
+        # Can we assume that this is always the case, and if so should we assert this condition?
+        table = sort_table_on_date(table)
+
+        # The resampling algorithm below uses the field metadata to determine if the vector is a rate or not.
+        # For now, fail hard if metadata is not present.
+        vector_metadata_list: List[VectorMetadata] = []
+        for vector_name in vector_names:
+            vector_metadata = create_vector_metadata_from_field_meta(schema.field(vector_name))
+            if not vector_metadata:
+                raise ValueError(f"Did not find valid metadata for vector {vector_name}")
+            vector_metadata_list.append(vector_metadata)
+        et_preparing_ms = timer.lap_ms()
+
+        # Do the actual resampling
+        if resampling_frequency is not None:
+            table = resample_single_real_table(table, resampling_frequency)
+        et_resampling_ms = timer.lap_ms()
+
+        LOGGER.debug(
+            f"Got single realization summary data for {len(vector_names)} vectors from Sumo in: {timer.elapsed_ms()}ms "
+            f"(loading={et_loading_ms}ms, preparing={et_preparing_ms}ms, resampling={et_resampling_ms}ms) "
+            f"({realization=}, {resampling_frequency=}, {table.shape=})"
+        )
+
+        return table, vector_metadata_list
+
     async def get_matching_historical_vector(
         self,
         non_historical_vector_name: str,
@@ -216,9 +223,7 @@ class SummaryAccess(SumoEnsemble):
         if not hist_vec_name:
             return None
 
-        table = await _load_arrow_table_for_from_sumo(self._case, self._iteration_name, hist_vec_name)
-        if table is None:
-            return None
+        table = await _load_all_real_arrow_table_from_sumo(self._case, self._iteration_name, hist_vec_name)
         et_load_table_ms = timer.lap_ms()
 
         # Use data from the first realization
@@ -292,74 +297,18 @@ class SummaryAccess(SumoEnsemble):
         return pc.unique(table.column("DATE")).to_numpy().astype(int).tolist()
 
 
-async def _load_single_real_full_arrow_table_from_sumo(case: Case, iteration_name: str, realization: int) -> pa.Table:
+async def _load_all_real_arrow_table_from_sumo(case: Case, iteration_name: str, vector_name: str) -> pa.Table:
     timer = PerfTimer()
 
-    sumo_table: Table = await _locate_sumo_smry_table_for_single_real(case, iteration_name, realization)
-    et_locate_sumo_table_ms = timer.lap_ms()
+    sumo_table = await _locate_all_real_combined_sumo_table(case, iteration_name, column_name=vector_name)
+    et_locate_ms = timer.lap_ms()
 
     # print(f"{sumo_table.name=}")
     # print(f"{sumo_table.tagname=}")
     # print(f"{sumo_table.format=}")
-    # print(f"{sumo_table.context=}")
-    # print(f"{sumo_table.stage=}")
-    # print(f"{sumo_table.aggregation=}")
-    # print(f"{sumo_table.relative_path=}")
-    # print(f"{sumo_table.metadata=}")
 
-    # Note that this will download and load the entire table into memory regardless
-    # of which columns in the table we will actually use.
     table: pa.Table = await sumo_table.to_arrow_async()
-    et_download_arrow_table_ms = timer.lap_ms()
-
-    # Verify that we got the expected DATE column and no REAL column
-    if not "DATE" in table.column_names:
-        raise ValueError("Table does not contain a DATE column")
-    date_field: pa.Field = table.field("DATE")
-    if date_field.type != pa.timestamp("ms"):
-        raise ValueError(f"Unexpected type for DATE column {date_field.type=}")
-
-    if "REAL" in table.column_names:
-        raise ValueError("Table contains an unexpected REAL column")
-
-    # The call above has already downloaded and cached the raw blob, just use this to get the data size
-    blob_size_mb = _try_to_determine_blob_size_mb(sumo_table._blob)
-
-    LOGGER.debug(
-        f"Loaded single realization arrow table from Sumo in {timer.elapsed_ms()}ms "
-        f"(locate_sumo_table={et_locate_sumo_table_ms}ms, download_arrow_table={et_download_arrow_table_ms}ms) "
-        f"({realization=}, {table.shape=}, {blob_size_mb=:.2f})"
-    )
-
-    return table
-
-
-# rename to
-#   _load_multi_real_arrow...
-#   _load_combined_arrow...
-#   _load_multi_real_combined_arrow...
-#   _load_concatenated_arrow...
-async def _load_arrow_table_for_from_sumo(case: Case, iteration_name: str, vector_name: str) -> Optional[pa.Table]:
-    timer = PerfTimer()
-
-    smry_table_collection = await get_smry_table_collection(case, iteration_name, column_name=vector_name)
-    if await smry_table_collection.length_async() == 0:
-        return None
-    if await smry_table_collection.length_async() > 1:
-        raise ValueError(f"Multiple tables found for vector {vector_name=}")
-
-    sumo_table = await smry_table_collection.getitem_async(0)
-    # print(f"{sumo_table.format=}")
-    et_locate_sumo_table_ms = timer.lap_ms()
-
-    # Now, read as an arrow table
-    # Note!!!
-    # The tables we have seen so far have format set to 'arrow', but the actual data is in parquet format.
-    # This must be a bug or a misunderstanding.
-    # For now, just read the parquet data into an arrow table
-    byte_stream: BytesIO = await sumo_table.blob_async
-    table = pq.read_table(byte_stream)
-    et_download_arrow_table_ms = timer.lap_ms()
+    et_download_and_read_ms = timer.lap_ms()
 
     # Verify that we got the expected columns
     if not "DATE" in table.column_names:
@@ -384,13 +333,55 @@ async def _load_arrow_table_for_from_sumo(case: Case, iteration_name: str, vecto
     if schema.field(vector_name).type != pa.float32():
         raise ValueError(f"Unexpected type for {vector_name} column {schema.field(vector_name).type=}")
 
-    blob_size_mb = _try_to_determine_blob_size_mb(byte_stream)
+    # The call above has already downloaded and cached the raw blob, just use this to get the data size
+    blob_size_mb = _try_to_determine_blob_size_mb(sumo_table._blob)
 
     LOGGER.debug(
-        f"Loaded arrow table from Sumo in: {timer.elapsed_ms()}ms ("
-        f"locate_sumo_table={et_locate_sumo_table_ms}ms, "
-        f"download_arrow_table={et_download_arrow_table_ms}ms) "
+        f"Loaded all realizations arrow table from Sumo in: {timer.elapsed_ms()}ms "
+        f"(locate={et_locate_ms}ms, download_and_read={et_download_and_read_ms}ms) "
         f"({vector_name=}, {table.shape=}, {blob_size_mb=:.2f})"
+    )
+
+    return table
+
+
+async def _load_single_real_full_arrow_table_from_sumo(case: Case, iteration_name: str, realization: int) -> pa.Table:
+    timer = PerfTimer()
+
+    sumo_table: Table = await _locate_single_real_sumo_table(case, iteration_name, realization)
+    et_locate_ms = timer.lap_ms()
+
+    # print(f"{sumo_table.name=}")
+    # print(f"{sumo_table.tagname=}")
+    # print(f"{sumo_table.format=}")
+    # print(f"{sumo_table.context=}")
+    # print(f"{sumo_table.stage=}")
+    # print(f"{sumo_table.aggregation=}")
+    # print(f"{sumo_table.relative_path=}")
+    # print(f"{sumo_table.metadata=}")
+
+    # Note that this will download and load the entire table into memory regardless
+    # of which columns in the table we will actually use.
+    table: pa.Table = await sumo_table.to_arrow_async()
+    et_download_and_read_ms = timer.lap_ms()
+
+    # Verify that we got the expected DATE column and no REAL column
+    if not "DATE" in table.column_names:
+        raise ValueError("Table does not contain a DATE column")
+    date_field: pa.Field = table.field("DATE")
+    if date_field.type != pa.timestamp("ms"):
+        raise ValueError(f"Unexpected type for DATE column {date_field.type=}")
+
+    if "REAL" in table.column_names:
+        raise ValueError("Table contains an unexpected REAL column")
+
+    # The call above has already downloaded and cached the raw blob, just use this to get the data size
+    blob_size_mb = _try_to_determine_blob_size_mb(sumo_table._blob)
+
+    LOGGER.debug(
+        f"Loaded single realization arrow table from Sumo in: {timer.elapsed_ms()}ms "
+        f"(locate={et_locate_ms}ms, download_and_read={et_download_and_read_ms}ms) "
+        f"({realization=}, {table.shape=}, {blob_size_mb=:.2f})"
     )
 
     return table
@@ -414,36 +405,37 @@ def _construct_historical_vector_name(non_historical_vector_name: str) -> Option
     return None
 
 
-async def get_smry_table_collection(
-    case: Case, iteration_name: str, column_name: Optional[str] = None
-) -> TableCollection:
-    """Get a collection of summary tables for a case and iteration"""
-    all_smry_table_collections = case.tables.filter(
-        aggregation="collection",
+async def _locate_all_real_combined_sumo_table(case: Case, iteration_name: str, column_name: str) -> Table:
+    """Locate sumo table that has concatenated summary data for all realizations for a single vector"""
+    table_collection = case.tables.filter(
         tagname="summary",
+        stage="iteration",
+        aggregation="collection",
         iteration=iteration_name,
         column=column_name,
     )
-    table_names = await all_smry_table_collections.names_async
+
+    table_names = await table_collection.names_async
     if len(table_names) == 0:
-        raise ValueError("No summary table collections found")
-    if len(table_names) == 1:
-        return all_smry_table_collections
+        raise ValueError(f"No summary tables with collection aggregation found: {column_name=}")
+    if len(table_names) > 1:
+        raise ValueError(f"Multiple summary tables with collection aggregation found: {column_name=}, {table_names=}")
 
-    raise ValueError(f"Multiple summary table collections found: {table_names}. Expected only one.")
+    return await table_collection.getitem_async(0)
 
 
-async def _locate_sumo_smry_table_for_single_real(case: Case, iteration_name: str, realization: int) -> Table:
+async def _locate_single_real_sumo_table(case: Case, iteration_name: str, realization: int) -> Table:
+    """Locate the sumo table with summary data for all vectors for the for the specified single realization"""
     table_collection: TableCollection = case.tables.filter(
         tagname="summary",
-        # stage="realization",
+        stage="realization",
         iteration=iteration_name,
         realization=realization,
     )
 
     table_names = await table_collection.names_async
     if len(table_names) == 0:
-        raise ValueError(f"No summary table found for realization {realization}")
+        raise ValueError(f"No summary tables found for realization {realization}")
     if len(table_names) > 1:
         raise ValueError(f"Multiple summary tables found for realization {realization}, {table_names=}")
 
