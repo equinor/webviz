@@ -1,6 +1,6 @@
 import React from "react";
 
-import { Frequency_api } from "@api";
+import { Frequency_api, StatisticFunction_api } from "@api";
 import { Ensemble } from "@framework/Ensemble";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { ModuleFCProps } from "@framework/Module";
@@ -13,8 +13,10 @@ import { Label } from "@lib/components/Label";
 import { RadioGroup } from "@lib/components/RadioGroup";
 
 import { useValidState } from "@lib/hooks/useValidState";
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { State, StatisticsOrRealization } from "./state";
 import { ModuleContext } from "@framework/ModuleContext";
+import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 
 export const settings = ({ moduleContext, workbenchSession, workbenchServices }: ModuleFCProps<State>) => {
     const ensembleSet = useEnsembleSet(workbenchSession);
@@ -22,6 +24,7 @@ export const settings = ({ moduleContext, workbenchSession, workbenchServices }:
     const setEnsembleIdent = moduleContext.useSetStoreValue("ensembleIdent")
     const [selectedStatOrReal, setSelectedStatOrReal] = moduleContext.useStoreState("statOrReal");
     const [selectedRealization, setSelectedRealization] = moduleContext.useStoreState("realization");
+    const [selectedStatOption, setSelectedStatOption] = moduleContext.useStoreState("statOption");
     const [resampleFrequency, setResamplingFrequency] = moduleContext.useStoreState("resamplingFrequency");
 
     const [selectedEnsembleIdent, setSelectedEnsembleIdent] = useValidState<EnsembleIdent | null>(null, [
@@ -49,9 +52,9 @@ export const settings = ({ moduleContext, workbenchSession, workbenchServices }:
 
     function handleEnsembleSelectionChange(newEnsembleIdent: EnsembleIdent | null) {
         setSelectedEnsembleIdent(newEnsembleIdent);
-        if (newEnsembleIdent) {
-            syncHelper.publishValue(SyncSettingKey.ENSEMBLE, "global.syncValue.ensembles", [newEnsembleIdent]);
-        }
+        // if (newEnsembleIdent) {
+        //     syncHelper.publishValue(SyncSettingKey.ENSEMBLE, "global.syncValue.ensembles", [newEnsembleIdent]);
+        // }
     }
 
     function handleStatOrRealChange(event: React.ChangeEvent<HTMLInputElement>) {
@@ -72,28 +75,27 @@ export const settings = ({ moduleContext, workbenchSession, workbenchServices }:
         setResamplingFrequency(newFreq);
     }
 
+    function handleStatOptionChange(event: React.ChangeEvent<HTMLInputElement>) {
+        setSelectedStatOption(event.target.value as StatisticFunction_api)
+    }
+
     return (
-        <div>
-            <Label
-                text="Ensemble:"
-                labelClassName={syncHelper.isSynced(SyncSettingKey.ENSEMBLE) ? "bg-indigo-700 text-white" : ""}
-            >
-                <>
-                    <SingleEnsembleSelect
-                        ensembleSet={ensembleSet}
-                        value={computedEnsembleIdent}
-                        onChange={handleEnsembleSelectionChange}
-                    />
-                </>
-            </Label>
-            <Label text="Frequency">
+        <div className="flex flex-col gap-2 overflow-y-auto">
+            <CollapsibleGroup expanded={true} title="Ensemble">
+                <SingleEnsembleSelect
+                    ensembleSet={ensembleSet}
+                    value={computedEnsembleIdent}
+                    onChange={handleEnsembleSelectionChange}
+                />
+            </CollapsibleGroup>
+            <CollapsibleGroup expanded={true} title="Frequency">
                 <Dropdown
                     options={makeFrequencyOptionItems()}
                     value={resampleFrequency ?? "RAW"}
                     onChange={handleFrequencySelectionChange}
                 />
-            </Label>
-            <Label text="Statistics Or Realization">
+            </CollapsibleGroup>
+            <CollapsibleGroup expanded={true} title="Statistics or Realization">
                 <RadioGroup
                     value={selectedStatOrReal}
                     options={Object.values(StatisticsOrRealization).map((val: StatisticsOrRealization) => {
@@ -101,17 +103,49 @@ export const settings = ({ moduleContext, workbenchSession, workbenchServices }:
                     })}
                     onChange={handleStatOrRealChange}
                 />
-            </Label>
-            <Label text="Realizations:">
-                <Dropdown
-                    options={makeRealizationItems(computedEnsemble?.getMaxRealizationNumber() ?? -1)}
-                    value={selectedRealization.toString()}
-                    onChange={handleRealizationChange}
-                />
-            </Label>
+                <div className="mt-4">     
+                    <Label text="Realization:">
+                        <div
+                            className={resolveClassNames({
+                                "pointer-events-none opacity-40":
+                                    selectedStatOrReal === StatisticsOrRealization.Statistics,
+                            })}
+                        >
+                            {
+                                <Dropdown
+                                    options={makeRealizationItems(computedEnsemble?.getMaxRealizationNumber() ?? -1)}
+                                    value={selectedRealization.toString()}
+                                    onChange={handleRealizationChange}
+                                />
+                            }
+                        </div>
+                    </Label>
+                </div>
+                <div className="mt-4">
+                    <Label text="Statistics Options">
+                        <div
+                            className={resolveClassNames({
+                                "pointer-events-none opacity-40":
+                                    selectedStatOrReal === StatisticsOrRealization.Realization,
+                            })}
+                        >
+                            {
+                                <RadioGroup
+                                    value={selectedStatOption}
+                                    options={Object.values(StatisticFunction_api).map((val: StatisticFunction_api) => {
+                                        return { value: val, label: val.charAt(0).toUpperCase()+val.slice(1).toLowerCase() };
+                                    })}
+                                    onChange={handleStatOptionChange}
+                                />
+                            }
+                        </div>
+                    </Label>
+                </div>                
+            </CollapsibleGroup>
         </div>
     );
 };
+
 
 function makeFrequencyOptionItems(): DropdownOption[] {
     const itemArr: DropdownOption[] = [

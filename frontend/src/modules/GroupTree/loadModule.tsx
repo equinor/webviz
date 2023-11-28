@@ -1,5 +1,5 @@
 import { ModuleRegistry } from "@framework/ModuleRegistry";
-import { Frequency_api} from "@api";
+import { Frequency_api, StatisticFunction_api} from "@api";
 
 import { settings } from "./settings";
 import { State, StatisticsOrRealization } from "./state";
@@ -9,6 +9,7 @@ const initialState: State = {
     ensembleIdent: null,
     statOrReal: StatisticsOrRealization.Realization,
     realization: 0,
+    statOption: StatisticFunction_api.MEAN,
     resamplingFrequency: Frequency_api.YEARLY,
 };
 
