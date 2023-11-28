@@ -246,6 +246,11 @@ export const DataChannelVisualizationLayer: React.FC<DataChannelVisualizationPro
         y: midPointY,
     };
 
+    if (Math.abs(originPoint.y - currentPointerPosition.y) < 40) {
+        midPoint1.y = originPoint.y - Math.sign(originPoint.y - currentPointerPosition.y) * 80;
+        midPoint2.y = currentPointerPosition.y - Math.sign(originPoint.y - currentPointerPosition.y) * 80;
+    }
+
     function makeDataChannelPaths() {
         const dataChannelPaths: DataChannelPath[] = [];
         for (const moduleInstance of props.workbench.getModuleInstances()) {
@@ -304,6 +309,11 @@ export const DataChannelVisualizationLayer: React.FC<DataChannelVisualizationPro
                     x: destinationPoint.x,
                     y: (originPoint.y + destinationPoint.y) / 2,
                 };
+
+                if (Math.abs(originPoint.y - destinationPoint.y) < 40) {
+                    midPoint1.y = originPoint.y - Math.sign(originPoint.y - destinationPoint.y) * 80;
+                    midPoint2.y = destinationPoint.y - Math.sign(originPoint.y - destinationPoint.y) * 80;
+                }
 
                 const descriptionCenterPoint: Point = {
                     x: (originPoint.x + destinationPoint.x) / 2,

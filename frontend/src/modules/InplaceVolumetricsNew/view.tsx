@@ -11,31 +11,12 @@ import { Channels } from "./channelDefs";
 import { useRealizationsResponses } from "./hooks/useRealizationResponses";
 import { State } from "./state";
 
-function heavyOperation() {
-    const promise = new Promise<string>((resolve) => {
-        setTimeout(() => resolve("done!"), 1000);
-    });
-    return promise;
-}
-
 export const view = (props: ModuleFCProps<State>) => {
     const responseNames = props.moduleContext.useStoreValue("selectedResponseNames");
     const tableNames = props.moduleContext.useStoreValue("selectedTableNames");
     const ensembleIdents = props.moduleContext.useStoreValue("selectedEnsembleIdents");
     const categoricalMetadata = props.moduleContext.useStoreValue("selectedCategoricalMetadata");
     const ref = React.useRef<HTMLDivElement>(null);
-    const [test, setTest] = React.useState<string>("");
-
-    async function asyncFunc() {
-        const result = await heavyOperation();
-        setTest(result);
-    }
-
-    function callAsyncFunc() {
-        asyncFunc();
-    }
-
-    asyncFunc();
 
     const statusWriter = useViewStatusWriter(props.moduleContext);
 
