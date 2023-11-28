@@ -5,11 +5,10 @@ from typing import List, Optional, Sequence, Tuple, Set
 import numpy as np
 import pyarrow as pa
 import pyarrow.compute as pc
-import pyarrow.parquet as pq
 from fmu.sumo.explorer.objects import Case, TableCollection, Table
 
-from src.services.utils.arrow_helpers import sort_table_on_real_then_date, sort_table_on_date
-from src.services.utils.arrow_helpers import detect_missing_realizations
+from src.services.utils.arrow_helpers import sort_table_on_real_then_date, is_date_column_monotonically_increasing
+from src.services.utils.arrow_helpers import find_first_non_increasing_date_pair, detect_missing_realizations
 from src.services.utils.perf_timer import PerfTimer
 
 from ._field_metadata import create_vector_metadata_from_field_meta
@@ -77,7 +76,8 @@ class SummaryAccess(SumoEnsemble):
         realizations: Optional[Sequence[int]],
     ) -> Tuple[pa.Table, VectorMetadata]:
         """
-        Get pyarrow.Table containing values for the specified vector.
+        Get pyarrow.Table containing values for the specified vector and the specified realizations.
+        If realizations is None, data for all available realizations will be returned.
         The returned table will always contain a 'DATE' and 'REAL' column in addition to the requested vector.
         The 'DATE' column will be of type timestamp[ms] and the 'REAL' column will be of type int16.
         The vector column will be of type float32.
@@ -165,6 +165,15 @@ class SummaryAccess(SumoEnsemble):
         resampling_frequency: Optional[Frequency],
         realization: int,
     ) -> Tuple[pa.Table, List[VectorMetadata]]:
+        """
+        Get pyarrow.Table containing values for the specified vector and the specified realization.
+        This function will fetch per-realization summary data from Sumo, thereby downloading data only for the
+        specified realization, BUT it will download all the vector columns in the process.
+        The returned table will always contain a 'DATE' column in addition to the requested vector.
+        The 'DATE' column will be of type timestamp[ms].
+        The vector column will be of type float32.
+        If `resampling_frequency` is None, the data will be returned with full/raw resolution.
+        """
         if not vector_names:
             raise ValueError("List of requested vector names is empty")
 
@@ -186,8 +195,9 @@ class SummaryAccess(SumoEnsemble):
                 raise ValueError(f"Unexpected type for {vector_name} column {schema.field(vector_name).type=}")
 
         # The resampling function requires that the table is sorted on the DATE column
-        # Can we assume that this is always the case, and if so should we assert this condition?
-        table = sort_table_on_date(table)
+        if not is_date_column_monotonically_increasing(table):
+            error_pair = find_first_non_increasing_date_pair(table)
+            raise ValueError(f"DATE column must be monotonically increasing, first offending timestamps: {error_pair}")
 
         # The resampling algorithm below uses the field metadata to determine if the vector is a rate or not.
         # For now, fail hard if metadata is not present.

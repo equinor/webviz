@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Tuple, Optional
 
 import pyarrow as pa
 import pyarrow.compute as pc
@@ -19,6 +19,15 @@ def is_date_column_monotonically_increasing(table: pa.Table) -> bool:
         return False
 
     return True
+
+
+def find_first_non_increasing_date_pair(table: pa.Table) -> Tuple[Optional[np.datetime64], Optional[np.datetime64]]:
+    dates_np = table.column("DATE").to_numpy()
+    offending_indices = np.asarray(np.diff(dates_np) <= np.timedelta64(0)).nonzero()[0]
+    if not offending_indices:
+        return (None, None)
+
+    return (dates_np[offending_indices[0]], dates_np[offending_indices[0] + 1])
 
 
 def detect_missing_realizations(table_with_real_column: pa.Table, required_reals_arr: pa.IntegerArray) -> List[int]:
