@@ -118,18 +118,33 @@ export const view = ({ moduleContext, workbenchSession, workbenchSettings }: Mod
         })),
         dataGenerator: (vectorName: string) => {
             const data: { key: number; value: number }[] = [];
+            let metaData: {
+                unit: string;
+                ensemble: string;
+            } | null = null;
             loadedVectorSpecificationsAndRealizationData.forEach((vec) => {
                 if (vec.vectorSpecification.vectorName === vectorName) {
+                    let unit = "";
                     vec.data.forEach((el) => {
+                        unit = el.unit;
                         const indexOfTimestamp = indexOf(el.timestamps_utc_ms, activeTimestampUtcMs);
                         data.push({
                             key: el.realization,
                             value: indexOfTimestamp === -1 ? el.values[0] : el.values[indexOfTimestamp],
                         });
                     });
+                    if (metaData === null) {
+                        metaData = {
+                            unit,
+                            ensemble: vec.vectorSpecification.ensembleIdent.toString(),
+                        };
+                    }
                 }
             });
-            return data;
+            return {
+                data,
+                metaData: metaData ?? undefined,
+            };
         },
     });
 
