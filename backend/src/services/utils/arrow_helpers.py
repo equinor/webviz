@@ -1,8 +1,21 @@
 import pyarrow as pa
+import numpy as np
 
 
 def sort_table_on_real_then_date(table: pa.Table) -> pa.Table:
     return table.sort_by([("REAL", "ascending"), ("DATE", "ascending")])
+
+
+def sort_table_on_date(table: pa.Table) -> pa.Table:
+    return table.sort_by("DATE")
+
+
+def is_date_column_monotonically_increasing(table: pa.Table) -> bool:
+    dates_np = table.column("DATE").to_numpy()
+    if not np.all(np.diff(dates_np) > np.timedelta64(0)):
+        return False
+
+    return True
 
 
 def create_float_downcasting_schema(schema: pa.Schema) -> pa.Schema:

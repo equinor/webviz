@@ -55,6 +55,17 @@ async def get_realizations_vector_data(
     access = await SummaryAccess.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
 
     sumo_freq = Frequency.from_string_value(resampling_frequency.value if resampling_frequency else "dummy")
+    
+    # !!!!!
+    # !!!!!
+    # !!!!!
+    dummy_table = await access.get_vectors_table_single_real(
+        vector_names=[vector_name],
+        resampling_frequency=sumo_freq,
+        realization=0,
+    )
+    
+    
     sumo_vec_arr = await access.get_vector(
         vector_name=vector_name,
         resampling_frequency=sumo_freq,
