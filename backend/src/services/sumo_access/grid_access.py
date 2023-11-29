@@ -40,7 +40,7 @@ class GridAccess(SumoEnsemble):
         )
         stream = self._sumo_client.get(f"/objects('{geometry_blob_id}')/blob")
         print(f"{grid_name} {realization} {geometry_blob_id} in {round(timer.lap_s(),2)}s")
-        grid_geom = xtgeo.grid_from_file(BytesIO(stream))
+        grid_geom = xtgeo.grid_from_file(BytesIO(stream.content))
 
         return grid_geom
 
@@ -58,7 +58,7 @@ class GridAccess(SumoEnsemble):
         )
         stream = self._sumo_client.get(f"/objects('{parameter_blob_id}')/blob")
         print(f"{grid_name} {grid_parameter_name} {realization} {parameter_blob_id} in {round(timer.lap_s(),2)}s")
-        grid_param = xtgeo.gridproperty_from_file(BytesIO(stream))
+        grid_param = xtgeo.gridproperty_from_file(BytesIO(stream.content))
         return grid_param
 
     async def grids_have_equal_nxnynz(self, grid_name: str) -> bool:

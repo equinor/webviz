@@ -110,6 +110,12 @@ dist
 # .vscode
 .vscode/
 !.vscode/tasks.json
+!.vscode/launch.json
+
+# playwright results
+playwright-report/
+/test-results/
+/playwright/.cache/
 
 # Ignore Jupyter Notebook files
 *.ipynb

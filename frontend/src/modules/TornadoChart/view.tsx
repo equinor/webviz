@@ -7,6 +7,8 @@ import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { BarChart, TableChart, Tune } from "@mui/icons-material";
 
+import { isEqual } from "lodash";
+
 import SensitivityChart from "./sensitivityChart";
 import {
     EnsembleScalarResponse,
@@ -29,9 +31,10 @@ export const view = ({ moduleContext, workbenchSession, workbenchSettings, initi
     const wrapperDivSize = useElementSize(wrapperDivRef);
     const ensembleSet = useEnsembleSet(workbenchSession);
     const [plotType, setPlotType] = moduleContext.useStoreState("plotType");
+    const referenceSensitivityName = moduleContext.useStoreValue("referenceSensitivityName");
     const [channelEnsemble, setChannelEnsemble] = React.useState<Ensemble | null>(null);
     const [channelResponseData, setChannelResponseData] = React.useState<EnsembleScalarResponse | null>(null);
-
+    const [availableSensitivityNames, setAvailableSensitivityNames] = moduleContext.useStoreState("sensitivityNames");
     const responseChannel = moduleContext.useInputChannel("response", initialSettings);
 
     const [showLabels, setShowLabels] = React.useState(true);
@@ -91,6 +94,15 @@ export const view = ({ moduleContext, workbenchSession, workbenchSettings, initi
     }, [responseChannel, ensembleSet]);
 
     const sensitivities = channelEnsemble?.getSensitivities();
+    React.useEffect(
+        function propogateSensitivityNamesToSettings() {
+            const sensitivityNames = sensitivities?.getSensitivityNames().sort() ?? [];
+            if (!isEqual(sensitivityNames, availableSensitivityNames)) {
+                setAvailableSensitivityNames(sensitivityNames);
+            }
+        },
+        [sensitivities]
+    );
     const colorSet = workbenchSettings.useColorSet();
     const sensitivitiesColorMap = createSensitivityColorMap(
         sensitivities?.getSensitivityNames().sort() ?? [],
@@ -98,10 +110,15 @@ export const view = ({ moduleContext, workbenchSession, workbenchSettings, initi
     );
 
     let computedSensitivityResponseDataset: SensitivityResponseDataset | null = null;
-    if (sensitivities && channelResponseData) {
+    if (referenceSensitivityName && sensitivities && channelResponseData) {
         // How to handle errors?
+
         try {
-            const sensitivityResponseCalculator = new SensitivityResponseCalculator(sensitivities, channelResponseData);
+            const sensitivityResponseCalculator = new SensitivityResponseCalculator(
+                sensitivities,
+                channelResponseData,
+                referenceSensitivityName
+            );
             computedSensitivityResponseDataset = sensitivityResponseCalculator.computeSensitivitiesForResponse();
         } catch (e) {
             console.warn(e);

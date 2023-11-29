@@ -61,6 +61,8 @@ function App() {
                 workbench.current.loadAndSetupEnsembleSetInSession(queryClient, storedEnsembleIdents).finally(() => {
                     initApp();
                 });
+            } else {
+                initApp();
             }
 
             return function handleUnmount() {

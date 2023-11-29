@@ -14,10 +14,8 @@ from src.backend.auth.auth_helper import AuthHelper
 from src.backend.utils.perf_metrics import PerfMetrics
 from src.services.sumo_access._helpers import SumoCase
 
-
 from . import converters
 from . import schemas
-
 
 LOGGER = logging.getLogger(__name__)
 
@@ -36,7 +34,7 @@ async def get_surface_directory(
     surface_access = await SurfaceAccess.from_case_uuid(
         authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
     )
-    sumo_surf_dir = await surface_access.get_surface_directory()
+    sumo_surf_dir = await surface_access.get_surface_directory_async()
 
     case_inspector = await SumoCase.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid)
     strat_column_identifier = await case_inspector.get_stratigraphic_column_identifier()
@@ -66,7 +64,7 @@ async def get_realization_surface_data(
     perf_metrics = PerfMetrics(response)
 
     access = await SurfaceAccess.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
-    xtgeo_surf = access.get_realization_surface_data(
+    xtgeo_surf = await access.get_realization_surface_data_async(
         real_num=realization_num, name=name, attribute=attribute, time_or_interval_str=time_or_interval
     )
     perf_metrics.record_lap("get-surf")
@@ -77,7 +75,7 @@ async def get_realization_surface_data(
     surf_data_response = converters.to_api_surface_data(xtgeo_surf)
     perf_metrics.record_lap("convert")
 
-    LOGGER.debug(f"Loaded realization surface in: {perf_metrics.to_string()}")
+    LOGGER.info(f"Loaded realization surface in: {perf_metrics.to_string()}")
 
     return surf_data_response
 
@@ -101,7 +99,7 @@ async def get_statistical_surface_data(
     if service_stat_func_to_compute is None:
         raise HTTPException(status_code=404, detail="Invalid statistic requested")
 
-    xtgeo_surf = access.get_statistical_surface_data(
+    xtgeo_surf = await access.get_statistical_surface_data_async(
         statistic_function=service_stat_func_to_compute,
         name=name,
         attribute=attribute,
@@ -115,7 +113,7 @@ async def get_statistical_surface_data(
     surf_data_response: schemas.SurfaceData = converters.to_api_surface_data(xtgeo_surf)
     perf_metrics.record_lap("convert")
 
-    LOGGER.debug(f"Calculated statistical surface in: {perf_metrics.to_string()}")
+    LOGGER.info(f"Calculated statistical surface in: {perf_metrics.to_string()}")
 
     return surf_data_response
 
@@ -138,12 +136,12 @@ async def get_property_surface_resampled_to_static_surface(
     perf_metrics = PerfMetrics(response)
 
     access = await SurfaceAccess.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
-    xtgeo_surf_mesh = access.get_realization_surface_data(
+    xtgeo_surf_mesh = await access.get_realization_surface_data_async(
         real_num=realization_num_mesh, name=name_mesh, attribute=attribute_mesh
     )
     perf_metrics.record_lap("mesh-surf")
 
-    xtgeo_surf_property = access.get_realization_surface_data(
+    xtgeo_surf_property = await access.get_realization_surface_data_async(
         real_num=realization_num_property,
         name=name_property,
         attribute=attribute_property,
@@ -160,7 +158,7 @@ async def get_property_surface_resampled_to_static_surface(
     surf_data_response: schemas.SurfaceData = converters.to_api_surface_data(resampled_surface)
     perf_metrics.record_lap("convert")
 
-    LOGGER.debug(f"Loaded property surface in: {perf_metrics.to_string()}")
+    LOGGER.info(f"Loaded property surface in: {perf_metrics.to_string()}")
 
     return surf_data_response
 
@@ -183,12 +181,12 @@ async def get_property_surface_resampled_to_statistical_static_surface(
     access = await SurfaceAccess.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
     service_stat_func_to_compute = StatisticFunction.from_string_value(statistic_function)
     if service_stat_func_to_compute is not None:
-        xtgeo_surf_mesh = access.get_statistical_surface_data(
+        xtgeo_surf_mesh = await access.get_statistical_surface_data_async(
             statistic_function=service_stat_func_to_compute,
             name=name_mesh,
             attribute=attribute_mesh,
         )
-        xtgeo_surf_property = access.get_statistical_surface_data(
+        xtgeo_surf_property = await access.get_statistical_surface_data_async(
             statistic_function=service_stat_func_to_compute,
             name=name_property,
             attribute=attribute_property,
@@ -202,6 +200,6 @@ async def get_property_surface_resampled_to_statistical_static_surface(
 
     surf_data_response = converters.to_api_surface_data(resampled_surface)
 
-    LOGGER.debug(f"Loaded property surface and created image, total time: {timer.elapsed_ms()}ms")
+    LOGGER.info(f"Loaded property surface and created image, total time: {timer.elapsed_ms()}ms")
 
     return surf_data_response
