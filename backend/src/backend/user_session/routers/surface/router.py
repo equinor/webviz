@@ -3,7 +3,9 @@
 
 from typing import List, Tuple
 import logging
+from concurrent.futures import ThreadPoolExecutor
 from aiocache import Cache
+
 import numpy as np
 from fastapi.responses import ORJSONResponse
 
@@ -14,7 +16,7 @@ from fastapi import APIRouter, Depends, Request, Body
 from src.backend.auth.auth_helper import AuthenticatedUser, AuthHelper
 
 from src.services.sumo_access.surface_access import SurfaceAccess
-
+import asyncio
 from src.backend.primary.routers.surface import schemas
 from .test_async import async_get_cached_surf
 from .test_go import go_get_surface_blobs
@@ -97,11 +99,6 @@ async def well_intersection_reals_from_user_session(
         # await cache.set(f"{authenticated_user._user_id}-{uuid}", surface)
         surfaces.append(surface)
 
-    # print(surfaces)
-    # return []
-
-    intersections = []
-
     fence_arr = np.array(
         [
             polyline.x_points,
@@ -110,13 +107,21 @@ async def well_intersection_reals_from_user_session(
             polyline.cum_length,
         ]
     ).T
-    for surf in surfaces:
+
+    def worker(surf):
         line = surf.get_randomline(fence_arr)
         intersection = schemas.SurfaceIntersectionPoints(
             name=f"{surf.name}",
             cum_length=line[:, 0].tolist(),
             z_array=line[:, 1].tolist(),
         )
-        intersections.append(intersection)
+        return intersection
 
-    return ORJSONResponse([section.dict() for section in intersections])
+    loop = asyncio.get_running_loop()
+
+    with ThreadPoolExecutor() as executor:
+        tasks = [loop.run_in_executor(executor, worker, surf) for surf in surfaces]
+        intersections = await asyncio.gather(*tasks)
+
+    result = [intersection.dict() for intersection in intersections]
+    return ORJSONResponse(result)

@@ -23,4 +23,4 @@ RUN pip install poetry \
     && pip install -r requirements.txt
 
 
-CMD exec uvicorn --proxy-headers  --host=0.0.0.0 $UVICORN_ENTRYPOINT 
+CMD exec uvicorn --proxy-headers --timeout-keep-alive 300 --host=0.0.0.0 $UVICORN_ENTRYPOINT 

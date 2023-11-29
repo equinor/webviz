@@ -30,11 +30,11 @@ def go_get_surface_blobs(sumo_token: str, case_uuid: str, object_ids: list[str])
     res = GetZippedBlobs(json.dumps(new_request).encode("utf-8"))
     res_string = ctypes.string_at(res).decode("ascii")
     data_map_b64 = json.loads(res_string)
-
+    print("Done downloading surfaces", flush=True)
     surfaces = {}
     for object_id, b64_blob in data_map_b64.items():
         bytestr = base64.b64decode(b64_blob)
         xtgeo_surface = xtgeo.surface_from_file(BytesIO(bytestr), fformat="irap_binary")
         surfaces[object_id] = xtgeo_surface
-
+    print("Done decoding surfaces", flush=True)
     return surfaces
