@@ -26,10 +26,7 @@ def go_get_surface_blobs(sumo_token: str, case_uuid: str, object_ids: list[str])
         "base_uri": base_uri,
         "auth_token": auth_token,
         "object_ids": object_ids,
-        "output_zero_as_nan": True,
-        "nan_as_zero": False,
         "bearer_token": sumo_token,
-        "operation": ["mean"],
         "env": "prod",
     }
     elapsed_init = timer.lap_ms()
