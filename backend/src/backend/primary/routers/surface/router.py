@@ -5,8 +5,12 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Response
 
 from src.services.sumo_access.surface_access import SurfaceAccess
 from src.services.smda_access.stratigraphy_access import StratigraphyAccess
-from src.services.smda_access.stratigraphy_utils import sort_stratigraphic_names_by_hierarchy
-from src.services.smda_access.mocked_drogon_smda_access import _mocked_stratigraphy_access
+from src.services.smda_access.stratigraphy_utils import (
+    sort_stratigraphic_names_by_hierarchy,
+)
+from src.services.smda_access.mocked_drogon_smda_access import (
+    _mocked_stratigraphy_access,
+)
 from src.services.utils.statistic_function import StatisticFunction
 from src.services.utils.authenticated_user import AuthenticatedUser
 from src.services.utils.perf_timer import PerfTimer
@@ -65,7 +69,10 @@ async def get_realization_surface_data(
 
     access = await SurfaceAccess.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
     xtgeo_surf = await access.get_realization_surface_data_async(
-        real_num=realization_num, name=name, attribute=attribute, time_or_interval_str=time_or_interval
+        real_num=realization_num,
+        name=name,
+        attribute=attribute,
+        time_or_interval_str=time_or_interval,
     )
     perf_metrics.record_lap("get-surf")
 
@@ -200,6 +207,16 @@ async def get_property_surface_resampled_to_statistical_static_surface(
 
     surf_data_response = converters.to_api_surface_data(resampled_surface)
 
-    LOGGER.info(f"Loaded property surface and created image, total time: {timer.elapsed_ms()}ms")
+    LOGGER.debug(f"Loaded property surface and created image, total time: {timer.elapsed_ms()}ms")
 
     return surf_data_response
+
+
+@router.post("/well_intersection_reals_from_user_session")
+async def well_intersection_reals_from_user_session(
+    request: Request,
+    polyline: schemas.FencePolyline = Body(embed=True),
+    authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
+) -> List[schemas.SurfaceIntersectionPoints]:
+    response = await proxy_to_user_session(request, authenticated_user)
+    return response
