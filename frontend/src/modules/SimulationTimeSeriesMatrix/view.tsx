@@ -1,6 +1,7 @@
 import React from "react";
 import Plot from "react-plotly.js";
 
+import { SummaryVectorObservations_api } from "@api";
 import { Ensemble } from "@framework/Ensemble";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { ModuleFCProps } from "@framework/Module";
@@ -10,8 +11,13 @@ import { useElementSize } from "@lib/hooks/useElementSize";
 import { ColorScaleGradientType } from "@lib/utils/ColorScale";
 import { ContentError } from "@modules/_shared/components/ContentMessage";
 
-import { useHistoricalVectorDataQueries, useStatisticalVectorDataQueries, useVectorDataQueries } from "./queryHooks";
-import { GroupBy, State, VisualizationMode } from "./state";
+import {
+    useHistoricalVectorDataQueries,
+    useStatisticalVectorDataQueries,
+    useVectorDataQueries,
+    useVectorObservationsQueries,
+} from "./queryHooks";
+import { GroupBy, State, VectorSpec, VisualizationMode } from "./state";
 import { EnsemblesContinuousParameterColoring } from "./utils/ensemblesContinuousParameterColoring";
 import { SubplotBuilder, SubplotOwner } from "./utils/subplotBuilder";
 import {
@@ -34,6 +40,7 @@ export const view = ({ moduleContext, workbenchSession, workbenchSettings }: Mod
     const realizationsToInclude = moduleContext.useStoreValue("realizationsToInclude");
     const visualizationMode = moduleContext.useStoreValue("visualizationMode");
     const showHistorical = moduleContext.useStoreValue("showHistorical");
+    const showObservations = moduleContext.useStoreValue("showObservations");
     const statisticsSelection = moduleContext.useStoreValue("statisticsSelection");
     const parameterIdent = moduleContext.useStoreValue("parameterIdent");
     const colorRealizationsByParameter = moduleContext.useStoreValue("colorRealizationsByParameter");
@@ -42,6 +49,19 @@ export const view = ({ moduleContext, workbenchSession, workbenchSettings }: Mod
     const colorSet = workbenchSettings.useColorSet();
     const parameterColorScale = workbenchSettings.useContinuousColorScale({
         gradientType: ColorScaleGradientType.Diverging,
+    });
+
+    // Get selected ensembles from vector specifications
+    const selectedEnsembles: Ensemble[] = [];
+    vectorSpecifications?.forEach((vectorSpecification) => {
+        if (selectedEnsembles.some((ensemble) => ensemble.getIdent().equals(vectorSpecification.ensembleIdent))) {
+            return;
+        }
+
+        const ensemble = ensembleSet.findEnsemble(vectorSpecification.ensembleIdent);
+        if (!ensemble) return;
+
+        selectedEnsembles.push(ensemble);
     });
 
     // Queries
@@ -66,12 +86,14 @@ export const view = ({ moduleContext, workbenchSession, workbenchSettings }: Mod
         resampleFrequency,
         vectorSpecificationsWithHistoricalData?.some((vec) => vec.hasHistoricalVector) ?? false
     );
+    const vectorObservationsQueries = useVectorObservationsQueries(vectorSpecifications, showObservations);
 
     // Get fetching status from queries
     const isQueryFetching =
         vectorDataQueries.some((query) => query.isFetching) ||
         vectorStatisticsQueries.some((query) => query.isFetching) ||
-        historicalVectorDataQueries.some((query) => query.isFetching);
+        historicalVectorDataQueries.some((query) => query.isFetching) ||
+        vectorObservationsQueries.isFetching;
 
     statusWriter.setLoading(isQueryFetching);
 
@@ -88,6 +110,9 @@ export const view = ({ moduleContext, workbenchSession, workbenchSettings }: Mod
     if (hasHistoricalVectorQueryError) {
         statusWriter.addWarning("One or more historical data queries have an error state.");
     }
+    if (vectorObservationsQueries.isError) {
+        statusWriter.addWarning("One or more vector observation queries have an error state.");
+    }
 
     // Map vector specifications and queries with data
     const loadedVectorSpecificationsAndRealizationData = vectorSpecifications
@@ -103,17 +128,18 @@ export const view = ({ moduleContext, workbenchSession, workbenchSettings }: Mod
           )
         : [];
 
-    // Retrieve selected ensembles from vector specifications
-    const selectedEnsembles: Ensemble[] = [];
-    vectorSpecifications?.forEach((vectorSpecification) => {
-        if (selectedEnsembles.some((ensemble) => ensemble.getIdent().equals(vectorSpecification.ensembleIdent))) {
+    const loadedVectorSpecificationsAndObservationData: {
+        vectorSpecification: VectorSpec;
+        data: SummaryVectorObservations_api;
+    }[] = [];
+    vectorObservationsQueries.ensembleVectorObservationDataMap.forEach((ensembleObservationData, ensembleIdent) => {
+        if (!ensembleObservationData.hasSummaryObservations) {
+            const ensembleName = ensembleSet.findEnsemble(ensembleIdent)?.getDisplayName() ?? ensembleIdent.toString();
+            statusWriter.addWarning(`${ensembleName} has no observations.`);
             return;
         }
 
-        const ensemble = ensembleSet.findEnsemble(vectorSpecification.ensembleIdent);
-        if (!ensemble) return;
-
-        selectedEnsembles.push(ensemble);
+        loadedVectorSpecificationsAndObservationData.push(...ensembleObservationData.vectorsObservationData);
     });
 
     // Create parameter color scale helper
@@ -209,6 +235,9 @@ export const view = ({ moduleContext, workbenchSession, workbenchSettings }: Mod
     }
     if (showHistorical) {
         subplotBuilder.addHistoryTraces(loadedVectorSpecificationsAndHistoricalData);
+    }
+    if (showObservations) {
+        subplotBuilder.addObservationsTraces(loadedVectorSpecificationsAndObservationData);
     }
 
     const doRenderContentError = hasRealizationsQueryError || hasStatisticsQueryError;
