@@ -178,8 +178,14 @@ export function createVectorObservationsTraces({
 
     const traceName = name ? `Observation<br>${name}` : "Observation";
     return vectorObservations.map((observation) => {
-        const hoverText = observation.comment ? `${observation.label}: ${observation.comment}` : observation.label;
-        const hoverData = type === "scattergl" ? `(%{x}, %{y} ± ${observation.error})<br>` : `(%{x}, %{y})<br>`;
+        let hoverText = observation.label;
+        let hoverData = `(%{x}, %{y})<br>`;
+        if (observation.comment) {
+            hoverText += `: ${observation.comment}`;
+        }
+        if (type === "scattergl") {
+            hoverData = `(%{x}, %{y} ± ${observation.error})<br>`;
+        }
 
         return {
             name: traceName,
