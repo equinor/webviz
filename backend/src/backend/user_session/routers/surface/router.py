@@ -92,19 +92,19 @@ async def well_intersection_reals_from_user_session(
         else:
             surfaces.append(possible_surface)
     elapsed_cache = timer.lap_ms()
+    if uuids_to_download:
+        # Download remaining
+        data_map_b64 = go_get_surface_blobs(authenticated_user.get_sumo_access_token(), case_uuid, uuids_to_download)
+        elapsed_download = timer.lap_ms()
 
-    # Download remaining
-    data_map_b64 = go_get_surface_blobs(authenticated_user.get_sumo_access_token(), case_uuid, uuids_to_download)
-    elapsed_download = timer.lap_ms()
+        # Convert to xtgeo
+        downloaded_surface_dict = await b64_to_xtgeo(data_map_b64)
+        elapsed_xtgeo = timer.lap_ms()
 
-    # Convert to xtgeo
-    downloaded_surface_dict = await b64_to_xtgeo(data_map_b64)
-    elapsed_xtgeo = timer.lap_ms()
-
-    # Add to cache
-    for uuid, surface in downloaded_surface_dict.items():
-        await cache.set(f"{authenticated_user._user_id}-{uuid}", surface)
-        surfaces.append(surface)
+        # Add to cache
+        for uuid, surface in downloaded_surface_dict.items():
+            await cache.set(f"{authenticated_user._user_id}-{uuid}", surface)
+            surfaces.append(surface)
 
     # Intersect
     fence_arr = np.array(
