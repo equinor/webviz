@@ -64,7 +64,6 @@ async def well_intersection_reals_from_user_session(
     request: Request,
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
 ) -> List[schemas.SurfaceIntersectionPoints]:
-
     body = await request.json()
     polyline = schemas.FencePolyline(**body.get("polyline"))
 
@@ -73,9 +72,7 @@ async def well_intersection_reals_from_user_session(
     snames = polyline.names
     sattr = polyline.attribute
     ensemble_name = polyline.ensemble_name
-    sumo_client = SumoClient(
-        env="prod", token=authenticated_user.get_sumo_access_token(), interactive=False
-    )
+    sumo_client = SumoClient(env="prod", token=authenticated_user.get_sumo_access_token(), interactive=False)
     case_collection = CaseCollection(sumo_client).filter(uuid=case_uuid)
     case = case_collection[0]
     surface_collection = case.surfaces.filter(
@@ -97,7 +94,7 @@ async def well_intersection_reals_from_user_session(
         authenticated_user.get_sumo_access_token(), case_uuid, uuids_to_download
     )
     for uuid, surface in downloaded_surface_dict.items():
-        await cache.set(f"{authenticated_user._user_id}-{uuid}", surface)
+        # await cache.set(f"{authenticated_user._user_id}-{uuid}", surface)
         surfaces.append(surface)
 
     # print(surfaces)

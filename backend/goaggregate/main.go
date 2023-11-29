@@ -2,9 +2,10 @@ package main
 
 import "C"
 import (
-	"encoding/hex"
+	
 	"encoding/json"
 	"fmt"
+	"encoding/base64"
 	goaggregate "goaggregate/utils"
 )
 
@@ -21,11 +22,18 @@ func GetZippedBlobs(request *C.char) *C.char {
 	if len(errArray) > 0 {
 		// Handle errors
 	}	
-	zipBytes, err := goaggregate.ZipData(dataMap)
-	if err != nil {
-		fmt.Errorf("Error writing result surfaces to zip: %v", err.Error())
-	}
-	return C.CString(hex.EncodeToString(zipBytes))	
+    dataMapB64 := make(map[string]string)
+    for id, blob := range dataMap {
+        b64Str := base64.StdEncoding.EncodeToString(blob)
+        dataMapB64[id] = b64Str
+    }
+
+    jsonData, err := json.Marshal(dataMapB64)
+    if err != nil {
+        // handle error
+    }
+
+    return C.CString(string(jsonData))
 }
 
 func main() {
