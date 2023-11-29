@@ -47,14 +47,14 @@ def go_get_surface_blobs(sumo_token: str, case_uuid: str, object_ids: list[str])
         f"init go and query sumo={elapsed_init}ms, "
         f"get={elapsed_get}ms, "
         f"decode={elapsed_decode}ms, "
-        f"size_mb={size_mb:.2f},"
-        f"speed_mbps={speed_mbps:.2f})",
+        f"size_MB={size_mb:.2f},"
+        f"speed_Mbps={speed_mbps:.2f})",
         extra={
             "init": elapsed_init,
             "get": elapsed_get,
             "decode": elapsed_decode,
-            "size_mb": size_mb,
-            "speed_mbps": speed_mbps,
+            "size_MB": size_mb,
+            "speed_Mbps": speed_mbps,
         },
     )
     return data_map_b64
