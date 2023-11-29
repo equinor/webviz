@@ -121,6 +121,7 @@ export const ViewContent = React.memo((props: ViewContentProps) => {
                     id={`${props.moduleInstance.getId()}-view`}
                     statusController={props.moduleInstance.getStatusController()}
                     source={StatusSource.View}
+                    guiMessageBroker={props.workbench.getGuiMessageBroker()}
                 >
                     <View
                         moduleContext={props.moduleInstance.getContext()}
