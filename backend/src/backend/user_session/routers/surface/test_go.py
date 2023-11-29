@@ -34,13 +34,20 @@ def go_get_surface_blobs(sumo_token: str, case_uuid: str, object_ids: list[str])
     }
     elapsed_init = timer.lap_ms()
     res = GetZippedBlobs(json.dumps(new_request).encode("utf-8"))
+
     elapsed_get = timer.lap_ms()
     res_string = ctypes.string_at(res).decode("ascii")
+    size_bytes = len(res_string)
+    size_mb = size_bytes / (1024 * 1024)
     data_map_b64 = json.loads(res_string)
     elapsed_decode = timer.lap_ms()
     LOGGER.info(
-        f"Downloaded surfaces with Go: {timer.elapsed_ms()}ms",
-        extra={"init": elapsed_init, "get": elapsed_get, "decode": elapsed_decode},
+        f"Downloaded surfaces with Go: {timer.elapsed_ms()}ms ("
+        f"init go and query sumo={elapsed_init}ms, "
+        f"get={elapsed_get}ms, "
+        f"decode={elapsed_decode}ms, "
+        f"size_mb={size_mb:.2f}) ",
+        extra={"init": elapsed_init, "get": elapsed_get, "decode": elapsed_decode, "size_mb": size_mb},
     )
     return data_map_b64
     for object_id, b64_blob in data_map_b64.items():
