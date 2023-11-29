@@ -27,6 +27,7 @@ fmu-sumo = "1.0.3"
 sumo-wrapper-python = "1.0.6"
 azure-monitor-opentelemetry = "^1.1.0"
 requests-toolbelt = "^1.0.0"
+aiocache = "^0.12.2"
 
 
 [tool.poetry.group.dev.dependencies]

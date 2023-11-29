@@ -1,7 +1,7 @@
 import logging
 from typing import List, Union, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Response
+from fastapi import APIRouter, Depends, HTTPException, Query, Response, Body, Request
 
 from src.services.sumo_access.surface_access import SurfaceAccess
 from src.services.smda_access.stratigraphy_access import StratigraphyAccess
@@ -17,7 +17,7 @@ from src.services.utils.perf_timer import PerfTimer
 from src.backend.auth.auth_helper import AuthHelper
 from src.backend.utils.perf_metrics import PerfMetrics
 from src.services.sumo_access._helpers import SumoCase
-
+from src.backend.primary.user_session_proxy import proxy_to_user_session
 from . import converters
 from . import schemas
 

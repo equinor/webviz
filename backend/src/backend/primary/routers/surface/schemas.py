@@ -31,15 +31,11 @@ class SurfaceAttributeType(str, Enum):
 
     DEPTH = "depth"  # Values are depths
     TIME = "time"  # Values are time (ms)
-    PROPERTY = (
-        "property"  # Values are generic, but typically extracted from a gridmodel
-    )
+    PROPERTY = "property"  # Values are generic, but typically extracted from a gridmodel
     SEISMIC = "seismic"  # Values are extracted from a seismic cube
     THICKNESS = "thickness"  # Values are isochores (real or conceptual difference between two depth surfaces)
     ISOCHORE = "isochore"  # Values are isochores (real or conceptual difference between two depth surfaces)
-    FLUID_CONTACT = (
-        "fluid_contact"  # Values are fluid contacts (oil-water, gas-water, etc.)
-    )
+    FLUID_CONTACT = "fluid_contact"  # Values are fluid contacts (oil-water, gas-water, etc.)
 
 
 class SurfaceMeta(BaseModel):
@@ -48,9 +44,7 @@ class SurfaceMeta(BaseModel):
     stratigraphic_identifier: Optional[str] = None  # Svarte fm.
     relative_stratigraphic_level: Optional[int] = None
     parent_stratigraphic_identifier: Optional[str] = None
-    stratigraphic_feature: Optional[
-        StratigraphicFeature
-    ] = None  # Distinguish between horizon and unit
+    stratigraphic_feature: Optional[StratigraphicFeature] = None  # Distinguish between horizon and unit
     attribute_name: str
     attribute_type: SurfaceAttributeType
     iso_date_or_interval: Optional[str] = None
@@ -79,15 +73,15 @@ class SurfaceData(BaseModel):
 class FencePolyline(BaseModel):
     case_uuid: str
     ensemble_name: str
-    realization_nums: List[int] | None
-    names: List[str]
+    realization_nums: list[int] | None
+    names: list[str]
     attribute: str
-    x_points: List[float]
-    y_points: List[float]
-    cum_length: List[float]
+    x_points: list[float]
+    y_points: list[float]
+    cum_length: list[float]
 
 
 class SurfaceIntersectionPoints(BaseModel):
     name: str
-    z_array: List[float]
-    cum_length: List[float]
+    z_array: list[float]
+    cum_length: list[float]
