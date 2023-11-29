@@ -1,12 +1,16 @@
 import logging
 from typing import List, Union, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Response
+from fastapi import APIRouter, Depends, HTTPException, Query, Response, Body, Request
 
 from src.services.sumo_access.surface_access import SurfaceAccess
 from src.services.smda_access.stratigraphy_access import StratigraphyAccess
-from src.services.smda_access.stratigraphy_utils import sort_stratigraphic_names_by_hierarchy
-from src.services.smda_access.mocked_drogon_smda_access import _mocked_stratigraphy_access
+from src.services.smda_access.stratigraphy_utils import (
+    sort_stratigraphic_names_by_hierarchy,
+)
+from src.services.smda_access.mocked_drogon_smda_access import (
+    _mocked_stratigraphy_access,
+)
 from src.services.utils.statistic_function import StatisticFunction
 from src.services.utils.authenticated_user import AuthenticatedUser
 from src.services.utils.perf_timer import PerfTimer
@@ -16,6 +20,8 @@ from src.services.sumo_access._helpers import SumoCase
 
 from . import converters
 from . import schemas
+
+import numpy as np
 
 LOGGER = logging.getLogger(__name__)
 
@@ -65,7 +71,10 @@ async def get_realization_surface_data(
 
     access = await SurfaceAccess.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
     xtgeo_surf = await access.get_realization_surface_data_async(
-        real_num=realization_num, name=name, attribute=attribute, time_or_interval_str=time_or_interval
+        real_num=realization_num,
+        name=name,
+        attribute=attribute,
+        time_or_interval_str=time_or_interval,
     )
     perf_metrics.record_lap("get-surf")
 
@@ -186,7 +195,7 @@ async def get_property_surface_resampled_to_statistical_static_surface(
             name=name_mesh,
             attribute=attribute_mesh,
         )
-        xtgeo_surf_property = await access.get_statistical_surface_data_async(
+        xtgeo_surf_property = await access.get_statistical_surfaces_data_async(
             statistic_function=service_stat_func_to_compute,
             name=name_property,
             attribute=attribute_property,
@@ -200,6 +209,177 @@ async def get_property_surface_resampled_to_statistical_static_surface(
 
     surf_data_response = converters.to_api_surface_data(resampled_surface)
 
-    LOGGER.info(f"Loaded property surface and created image, total time: {timer.elapsed_ms()}ms")
+    LOGGER.debug(f"Loaded property surface and created image, total time: {timer.elapsed_ms()}ms")
 
     return surf_data_response
+
+
+@router.post("/intersectSurface")
+async def intersectSurface(
+    request: Request,
+    ensemble_ident: schemas.EnsembleIdent = Body(embed=True),
+    realizations_surface_set_spec: schemas.RealizationsSurfaceSetSpec = Body(embed=True),
+    surface_fence_spec: schemas.SurfaceFenceSpec = Body(embed=True),
+    authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
+) -> List[schemas.SurfaceIntersectionPoints]:
+    
+    case_uuid = ensemble_ident.case_uuid
+    snames = realizations_surface_set_spec.surface_names
+    sattr = realizations_surface_set_spec.surface_attribute
+    ensemble_name = ensemble_ident.ensemble_name
+    realization_nums = realizations_surface_set_spec.realization_nums
+
+    uuids = get_surface_set_uuids(
+        case_uuid,
+        ensemble_name,
+        realizations_surface_set_spec,
+        authenticated_user.get_sumo_access_token(),
+    )
+    base_uri, auth_token = get_base_uri_and_auth_token_for_case(
+        case_uuid,
+        "prod",
+        authenticated_user.get_sumo_access_token(),
+    )
+    new_request = {
+        "base_uri": base_uri,
+        "auth_token": auth_token,
+        "object_ids": uuids,
+        "xcoords": surface_fence_spec.x_points,
+        "ycoords": surface_fence_spec.y_points,
+        "env": "prod",
+    }
+    
+    url = "http://backend-go:5001/intersectSurface"  # URL of the Go server endpoint
+    import httpx
+
+
+    async with httpx.AsyncClient(timeout=300) as client:
+        response = await client.post(url, json=new_request)
+        z_arrs =  response.json()
+        intersections : List[schemas.SurfaceIntersectionPoints] = []
+        for idx, z_arr in enumerate(z_arrs):
+            intersections.append(schemas.SurfaceIntersectionPoints(
+            name=f"test",
+            cum_length=surface_fence_spec.cum_length,
+            z_array=z_arr
+        ))
+    
+        return intersections
+    
+
+
+
+@router.post("/well_intersection_statistics")
+async def well_intersection_statistics(
+    request: Request,
+    ensemble_ident: schemas.EnsembleIdent = Body(embed=True),
+    statistical_surface_set_spec: schemas.StatisticalSurfaceSetSpec = Body(embed=True),
+    surface_fence_spec: schemas.SurfaceFenceSpec = Body(embed=True),
+    authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
+) -> List[schemas.SurfaceIntersectionPoints]:
+    access = await SurfaceAccess.from_case_uuid(
+        authenticated_user.get_sumo_access_token(), ensemble_ident.case_uuid, ensemble_ident.ensemble_name
+    )
+
+    async def fetch_surface(statistics, surface_name):
+        surfaces = await access.get_statistical_surfaces_data_async(
+            statistic_functions=[StatisticFunction.from_string_value(statistic) for statistic in statistics],
+            name=surface_name,
+            attribute=statistical_surface_set_spec.surface_attribute,
+            realizations=statistical_surface_set_spec.realization_nums,
+        )
+        print(surfaces, "fetch")
+        return surfaces
+
+    async def fetch_all_surfaces():
+        tasks = []
+        for surface_name in statistical_surface_set_spec.surface_names:
+            task = fetch_surface(statistical_surface_set_spec.statistic_function, surface_name)
+            tasks.append(task)
+
+        # Run all the tasks concurrently
+        tmp_surfaces = await asyncio.gather(*tasks)
+        print(tmp_surfaces)
+        return tmp_surfaces
+
+    nested_surfaces = await fetch_all_surfaces()
+    surfaces = []
+    if nested_surfaces:
+        for surface_list in nested_surfaces:
+            if surface_list:
+                for surface in surface_list:
+                    surfaces.append(surface)
+
+    fence_arr = np.array(
+        [
+            surface_fence_spec.x_points,
+            surface_fence_spec.y_points,
+            np.zeros(len(surface_fence_spec.y_points)),
+            surface_fence_spec.cum_length,
+        ]
+    ).T
+    intersections = await make_intersections(surfaces, fence_arr)
+    return intersections
+
+
+from concurrent.futures import ThreadPoolExecutor
+import asyncio
+
+
+async def make_intersections(surfaces, fence_arr):
+    def make_intersection(surf):
+        line = surf.get_randomline(fence_arr)
+        intersection = schemas.SurfaceIntersectionPoints(
+            name=f"{surf.name}",
+            cum_length=line[:, 0].tolist(),
+            z_array=line[:, 1].tolist(),
+        )
+        return intersection
+
+    loop = asyncio.get_running_loop()
+
+    with ThreadPoolExecutor() as executor:
+        tasks = [loop.run_in_executor(executor, make_intersection, surf) for surf in surfaces]
+        intersections = await asyncio.gather(*tasks)
+    return intersections
+
+
+from sumo.wrapper import SumoClient
+from fmu.sumo.explorer.objects import CaseCollection
+import requests
+def get_surface_set_uuids(
+    case_uuid,
+    ensemble_name,
+    realization_surface_set_spec: schemas.RealizationsSurfaceSetSpec,
+    bearer_token,
+):
+    sumo_client = SumoClient(env="prod", token=bearer_token, interactive=False)
+    case_collection = CaseCollection(sumo_client).filter(uuid=case_uuid)
+    case = case_collection[0]
+    surface_collection = case.surfaces.filter(
+        iteration=ensemble_name,
+        name=realization_surface_set_spec.surface_names,
+        tagname=realization_surface_set_spec.surface_attribute,
+        realization=realization_surface_set_spec.realization_nums,
+    )
+    return [surf.uuid for surf in surface_collection]
+
+
+def get_base_uri_and_auth_token_for_case(case_id, env, token):
+    temp_uri = f"{get_base_uri(env)}/objects('{case_id}')/authtoken"
+
+    body, _ = get_with_token(temp_uri, token)
+
+    base_uri = body["baseuri"].removesuffix("/")
+    auth_token = body["auth"]
+
+    return base_uri, auth_token
+
+
+def get_base_uri(env):
+    return f"https://main-sumo-{env}.radix.equinor.com/api/v1"
+
+
+def get_with_token(url, token):
+    res = requests.get(url, headers={"Authorization": f"Bearer {token}"})
+    return res.json(), res.status_code
