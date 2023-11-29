@@ -472,7 +472,7 @@ export class SubplotBuilder {
         }
     }
 
-    addVectorObservations(
+    addObservationsTraces(
         vectorsObservationData: {
             vectorSpecification: VectorSpec;
             data: SummaryVectorObservations_api;

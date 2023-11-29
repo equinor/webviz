@@ -237,7 +237,7 @@ export const view = ({ moduleContext, workbenchSession, workbenchSettings }: Mod
         subplotBuilder.addHistoryTraces(loadedVectorSpecificationsAndHistoricalData);
     }
     if (showObservations) {
-        subplotBuilder.addVectorObservations(loadedVectorSpecificationsAndObservationData);
+        subplotBuilder.addObservationsTraces(loadedVectorSpecificationsAndObservationData);
     }
 
     const doRenderContentError = hasRealizationsQueryError || hasStatisticsQueryError;
