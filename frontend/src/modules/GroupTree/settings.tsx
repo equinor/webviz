@@ -88,10 +88,10 @@ export const settings = ({ moduleContext, workbenchSession, workbenchServices }:
                     onChange={handleEnsembleSelectionChange}
                 />
             </CollapsibleGroup>
-            <CollapsibleGroup expanded={true} title="Frequency">
+            <CollapsibleGroup expanded={false} title="Frequency">
                 <Dropdown
                     options={makeFrequencyOptionItems()}
-                    value={resampleFrequency ?? "RAW"}
+                    value={resampleFrequency ?? Frequency_api.YEARLY}
                     onChange={handleFrequencySelectionChange}
                 />
             </CollapsibleGroup>
@@ -141,6 +141,9 @@ export const settings = ({ moduleContext, workbenchSession, workbenchServices }:
                         </div>
                     </Label>
                 </div>                
+            </CollapsibleGroup>
+            <CollapsibleGroup expanded={false} title="Filtering options">
+                <div>Not implemented</div>
             </CollapsibleGroup>
         </div>
     );

@@ -12,8 +12,9 @@ export const view = ({ moduleContext }: ModuleFCProps<State>) => {
     const statOrReal = moduleContext.useStoreValue("statOrReal")
     const real = moduleContext.useStoreValue("realization")
     const resampleFrequency = moduleContext.useStoreValue("resamplingFrequency")
+    const statOption = moduleContext.useStoreValue("statOption")
 
-    const data = useGroupTreeQuery(ensembleIdent?.getCaseUuid(), ensembleIdent?.getEnsembleName(), real, resampleFrequency)
+    const groupTreeQuery = useGroupTreeQuery(ensembleIdent?.getCaseUuid(), ensembleIdent?.getEnsembleName(), real, resampleFrequency)
     
     // console.log(data.data)
 
@@ -21,16 +22,25 @@ export const view = ({ moduleContext }: ModuleFCProps<State>) => {
     let nodeOptions = [{name: "pressure", label: "Pressure"}, {name: "wmctl", label: "WMCTL"}]
 
     if (statOrReal === StatisticsOrRealization.Statistics) {
-        return <div>Statistical option is not implemented.</div>
+        return <div className="w-full h-full flex justify-center items-center text-red-500">Statistics is not implemented.</div>
     }
 
     return (
         <div className="w-full h-full">
-            {!data.data ? (
-                <div>Loading...</div>
+            {!groupTreeQuery.data ? (
+                groupTreeQuery.status === "loading" && groupTreeQuery.fetchStatus === "fetching" ? (
+                    <div className="absolute left-0 right-0 w-full h-full bg-white bg-opacity-80 flex items-center justify-center z-10">
+                        <CircularProgress />
+                    </div>                    
+                ) : groupTreeQuery.status === "error" ? (
+                    <div className="w-full h-full flex justify-center items-center text-red-500">
+                        Error loading group tree data.
+                    </div>                    
+                ) : (
+                    <></>
+                )
             ) : (
-                <GroupTree id="test_id" data={data.data} edgeOptions={edgeOptions} nodeOptions={nodeOptions}/>
-        
+                <GroupTree id="test_id" data={groupTreeQuery.data} edgeOptions={edgeOptions} nodeOptions={nodeOptions}/>
             )}
         </div>
     );
