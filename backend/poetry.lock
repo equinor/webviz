@@ -73,19 +73,19 @@ files = [
 
 [[package]]
 name = "azure-core"
-version = "1.26.2"
+version = "1.29.5"
 description = "Microsoft Azure Core Library for Python"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "azure-core-1.26.2.zip", hash = "sha256:986bfd8687889782d79481d4c5d0af04ab4a18ca2f210364804a88e4eaa1586a"},
-    {file = "azure_core-1.26.2-py3-none-any.whl", hash = "sha256:df306e6e4abc145610ca6744aef943129a6fd7a11977e56731f69ac0e00724f9"},
+    {file = "azure-core-1.29.5.tar.gz", hash = "sha256:52983c89d394c6f881a121e5101c5fa67278ca3b1f339c8fb2ef39230c70e9ac"},
+    {file = "azure_core-1.29.5-py3-none-any.whl", hash = "sha256:0fa04b7b1f7d44a4fb8468c4093deb2ea01fdf4faddbf802ed9205615f99d68c"},
 ]
 
 [package.dependencies]
 requests = ">=2.18.4"
 six = ">=1.11.0"
-typing-extensions = ">=4.0.1"
+typing-extensions = ">=4.6.0"
 
 [package.extras]
 aio = ["aiohttp (>=3.0)"]

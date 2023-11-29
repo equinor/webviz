@@ -5,7 +5,10 @@ from fastapi import FastAPI
 from fastapi.responses import ORJSONResponse
 
 from src.backend.utils.azure_monitor_setup import setup_azure_monitor_telemetry
-from src.backend.utils.logging_setup import ensure_console_log_handler_is_configured, setup_normal_log_levels
+from src.backend.utils.logging_setup import (
+    ensure_console_log_handler_is_configured,
+    setup_normal_log_levels,
+)
 from src.backend.shared_middleware import add_shared_middlewares
 from .inactivity_shutdown import InactivityShutdown
 from .routers.general import router as general_router
