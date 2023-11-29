@@ -11,4 +11,10 @@ export const channelDefs: ChannelDefinition[] = [
         genre: Genre.Realization,
         dataType: DataType.Numeric,
     },
+    {
+        ident: BroadcastChannelNames.Response,
+        name: "Response2 (per realization)",
+        genre: Genre.Realization,
+        dataType: DataType.Numeric,
+    },
 ];

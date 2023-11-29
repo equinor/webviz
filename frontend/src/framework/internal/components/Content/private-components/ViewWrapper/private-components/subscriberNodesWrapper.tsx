@@ -1,7 +1,7 @@
 import React from "react";
 import { createPortal } from "react-dom";
 
-import { GuiEvent, GuiEventPayloads } from "@framework/GuiMessageBroker";
+import { GuiEvent, GuiState, useGuiState } from "@framework/GuiMessageBroker";
 import { ModuleInstance } from "@framework/ModuleInstance";
 import { Workbench } from "@framework/Workbench";
 import { Subscriber } from "@framework/internal/DataChannels/Subscriber";
@@ -9,16 +9,16 @@ import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
 import { Point } from "@lib/utils/geometry";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
-import { ChannelSelector, SelectableChannel, SelectedContents } from "./channelSelector";
-import { InputChannelNode } from "./inputChannelNode";
+import { ChannelSelector, SelectableChannel, SelectedContents } from "./channelContentSelector";
+import { SubscriberNode } from "./subscriberNode";
 
-export type InputChannelNodesProps = {
+export type SubscriberNodesWrapperProps = {
     forwardedRef: React.RefObject<HTMLDivElement>;
     moduleInstance: ModuleInstance<any>;
     workbench: Workbench;
 };
 
-export const InputChannelNodes: React.FC<InputChannelNodesProps> = (props) => {
+export const SubscriberNodesWrapper: React.FC<SubscriberNodesWrapperProps> = (props) => {
     const [visible, setVisible] = React.useState<boolean>(false);
     const [currentSubscriber, setCurrentSubscriber] = React.useState<Subscriber | null>(null);
     const [currentOriginModuleInstanceId, setCurrentOriginModuleInstanceId] = React.useState<string | null>(null);
@@ -30,6 +30,11 @@ export const InputChannelNodes: React.FC<InputChannelNodesProps> = (props) => {
     const elementRect = useElementBoundingRect(props.forwardedRef);
 
     const guiMessageBroker = props.workbench.getGuiMessageBroker();
+
+    const [editDataChannelConnections, setEditDataChannelConnections] = useGuiState(
+        guiMessageBroker,
+        GuiState.EditDataChannelConnections
+    );
 
     React.useEffect(() => {
         let localVisible = false;
@@ -45,33 +50,17 @@ export const InputChannelNodes: React.FC<InputChannelNodesProps> = (props) => {
         }
 
         function handlePointerUp(e: PointerEvent) {
-            if (!localVisible) {
+            if (!localVisible && !editDataChannelConnections) {
                 return;
             }
-            if (
-                (!e.target || !(e.target as Element).hasAttribute("data-channelconnector")) &&
-                !(e.target as Element).closest("#channel-selector-header")
-            ) {
+            if (!channelSelectorCenterPoint) {
                 guiMessageBroker.publishEvent(GuiEvent.HideDataChannelConnectionsRequest);
                 setVisible(false);
+                localVisible = false;
+                setEditDataChannelConnections(false);
             }
             e.stopPropagation();
         }
-
-        function handleEditDataChannelConnectionsRequest(
-            payload: GuiEventPayloads[GuiEvent.EditDataChannelConnectionsForModuleInstanceRequest]
-        ) {
-            if (payload.moduleInstanceId !== props.moduleInstance.getId()) {
-                return;
-            }
-            setVisible(true);
-            localVisible = true;
-        }
-
-        const removeEditDataChannelConnectionsRequestHandler = guiMessageBroker.subscribeToEvent(
-            GuiEvent.EditDataChannelConnectionsForModuleInstanceRequest,
-            handleEditDataChannelConnectionsRequest
-        );
 
         const removeDataChannelOriginPointerDownHandler = guiMessageBroker.subscribeToEvent(
             GuiEvent.DataChannelOriginPointerDown,
@@ -86,12 +75,11 @@ export const InputChannelNodes: React.FC<InputChannelNodesProps> = (props) => {
         document.addEventListener("pointerup", handlePointerUp);
 
         return () => {
-            removeEditDataChannelConnectionsRequestHandler();
             removeDataChannelDoneHandler();
             removeDataChannelOriginPointerDownHandler();
             document.removeEventListener("pointerup", handlePointerUp);
         };
-    }, [props.moduleInstance, guiMessageBroker]);
+    }, [props.moduleInstance, guiMessageBroker, channelSelectorCenterPoint]);
 
     const handleChannelConnect = React.useCallback(
         function handleChannelConnect(subscriberIdent: string, moduleInstanceId: string, destinationPoint: Point) {
@@ -198,11 +186,15 @@ export const InputChannelNodes: React.FC<InputChannelNodesProps> = (props) => {
     function handleCancelChannelSelection() {
         setChannelSelectorCenterPoint(null);
         setSelectableChannels([]);
-        guiMessageBroker.publishEvent(GuiEvent.HideDataChannelConnectionsRequest);
+        if (!editDataChannelConnections) {
+            guiMessageBroker.publishEvent(GuiEvent.HideDataChannelConnectionsRequest);
+        }
     }
 
-    function handleProgramSelection(channelIdent: string, contentIdents: string[]) {
-        guiMessageBroker.publishEvent(GuiEvent.HideDataChannelConnectionsRequest);
+    function handleContentSelection(channelIdent: string, contentIdents: string[]) {
+        if (!editDataChannelConnections) {
+            guiMessageBroker.publishEvent(GuiEvent.HideDataChannelConnectionsRequest);
+        }
 
         if (!currentSubscriber) {
             return;
@@ -240,7 +232,7 @@ export const InputChannelNodes: React.FC<InputChannelNodesProps> = (props) => {
     return createPortal(
         <div
             className={resolveClassNames("absolute flex items-center justify-center z-50", {
-                invisible: !visible,
+                invisible: !editDataChannelConnections && !visible,
             })}
             style={{
                 left: elementRect.x,
@@ -254,7 +246,7 @@ export const InputChannelNodes: React.FC<InputChannelNodesProps> = (props) => {
                 .getSubscribers()
                 .map((subscriber) => {
                     return (
-                        <InputChannelNode
+                        <SubscriberNode
                             key={subscriber.getIdent()}
                             moduleInstanceId={props.moduleInstance.getId()}
                             ident={subscriber.getIdent()}
@@ -272,7 +264,7 @@ export const InputChannelNodes: React.FC<InputChannelNodesProps> = (props) => {
                     position={channelSelectorCenterPoint}
                     selectableChannels={selectableChannels}
                     onCancel={handleCancelChannelSelection}
-                    onSelect={handleProgramSelection}
+                    onSelect={handleContentSelection}
                     selectedChannelIdent={prevSelectedChannelIdent ?? undefined}
                     selectedContents={prevSelectedContents ?? undefined}
                 />

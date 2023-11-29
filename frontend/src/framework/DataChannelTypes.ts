@@ -31,3 +31,8 @@ export type TypeToTSTypeMapping = {
     [Type.String]: string;
     [Type.NumberTriplet]: [number, number, number];
 };
+
+export type DataTypeToTsTypeMapping = {
+    [DataType.Numeric]: number;
+    [DataType.String]: string;
+};

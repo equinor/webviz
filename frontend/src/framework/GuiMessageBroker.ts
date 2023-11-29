@@ -17,6 +17,7 @@ export enum GuiState {
     SettingsPanelWidthInPercent = "settingsPanelWidthInPercent",
     ActiveModuleInstanceId = "activeModuleInstanceId",
     DataChannelConnectionLayerVisible = "dataChannelConnectionLayerVisible",
+    EditDataChannelConnections = "editDataChannelConnections",
 }
 
 export enum GuiEvent {
@@ -70,6 +71,7 @@ type GuiStateValueTypes = {
     [GuiState.SettingsPanelWidthInPercent]: number;
     [GuiState.ActiveModuleInstanceId]: string;
     [GuiState.DataChannelConnectionLayerVisible]: boolean;
+    [GuiState.EditDataChannelConnections]: boolean;
 };
 
 const defaultStates: Map<GuiState, any> = new Map();

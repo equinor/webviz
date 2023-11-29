@@ -4,12 +4,11 @@ import { createPortal } from "react-dom";
 import { ContentDefinition } from "@framework/DataChannelTypes";
 import { Subscriber } from "@framework/internal/DataChannels/Subscriber";
 import { Button } from "@lib/components/Button";
-import { Checkbox, CheckboxProps } from "@lib/components/Checkbox";
-import { IconButton } from "@lib/components/IconButton";
+import { Checkbox } from "@lib/components/Checkbox";
 import { Overlay } from "@lib/components/Overlay";
 import { Point } from "@lib/utils/geometry";
 import { convertRemToPixels } from "@lib/utils/screenUnitConversions";
-import { Close, ExpandLess, ExpandMore } from "@mui/icons-material";
+import { Close } from "@mui/icons-material";
 
 export type SelectableChannel = {
     ident: string;
@@ -17,7 +16,7 @@ export type SelectableChannel = {
     contents: ContentDefinition[];
 };
 
-type ChannelSelectionItemProps = {
+type ChannelContentSelectorProps = {
     multiSelect: boolean;
     channel: SelectableChannel;
     selected: boolean;
@@ -26,9 +25,7 @@ type ChannelSelectionItemProps = {
     onSelectContent: (channelIdent: string, contentIdent: string, checked: boolean) => void;
 };
 
-const ChannelSelectionItem: React.FC<ChannelSelectionItemProps> = (props) => {
-    const [expanded, setExpanded] = React.useState(props.selectedContentIdents.length > 0 && !props.selected);
-
+const ChannelContentSelector: React.FC<ChannelContentSelectorProps> = (props) => {
     function handleChannelToggle(e: React.ChangeEvent<HTMLInputElement>) {
         props.onSelectChannel(props.channel.ident, e.currentTarget.checked);
     }
@@ -40,45 +37,38 @@ const ChannelSelectionItem: React.FC<ChannelSelectionItemProps> = (props) => {
     return (
         <div>
             <div className="p-2 hover:bg-blue-50 cursor-pointer text-sm font-bold flex items-center gap-2 h-12">
-                <IconButton onClick={() => setExpanded(!expanded)} size="small">
-                    {expanded ? <ExpandLess fontSize="inherit" /> : <ExpandMore fontSize="inherit" />}
-                </IconButton>
                 <Checkbox onChange={handleChannelToggle} label={props.channel.name} checked={props.selected} />
             </div>
-            <div className="relative">
-                {expanded && (
-                    <>
-                        {props.selected && (
-                            <div className="absolute inset-0 bg-slate-100 opacity-90 w-full h-full flex items-center justify-center text-sm">
-                                {props.multiSelect
-                                    ? "All contents are automatically selected."
-                                    : "The first content is automatically selected."}
-                            </div>
-                        )}
-                        {props.channel.contents.map((content, index) => (
-                            <div
-                                key={content.ident}
-                                className="flex items-center gap-1 ml-5 pl-0 p-2 hover:bg-blue-50 cursor-pointer text-sm border-l border-slate-400 h-8"
-                            >
-                                <span className="h-px w-2 bg-slate-400 mr-2 inline-block" />
-                                <Checkbox
-                                    onChange={(e) => handleContentToggle(content.ident, e)}
-                                    label={content.name}
-                                    checked={
-                                        (props.selected && (props.multiSelect || index === 0)) ||
-                                        props.selectedContentIdents.includes(content.ident)
-                                    }
-                                />
-                            </div>
-                        ))}
-                    </>
+            <div className="relative pb-2">
+                {props.selected && (
+                    <div className="absolute inset-0 bg-slate-100 opacity-90 w-full h-full flex items-center justify-center text-sm">
+                        {props.multiSelect
+                            ? "All contents are automatically selected."
+                            : "The first content is automatically selected."}
+                    </div>
                 )}
+                {props.channel.contents.map((content, index) => (
+                    <div
+                        key={content.ident}
+                        className="flex items-center gap-1 ml-5 pl-0 p-2 hover:bg-blue-50 cursor-pointer text-sm border-l border-slate-400 h-8"
+                    >
+                        <span className="h-px w-2 bg-slate-400 mr-2 inline-block" />
+                        <Checkbox
+                            onChange={(e) => handleContentToggle(content.ident, e)}
+                            label={content.name}
+                            checked={
+                                (props.selected && (props.multiSelect || index === 0)) ||
+                                props.selectedContentIdents.includes(content.ident)
+                            }
+                        />
+                    </div>
+                ))}
             </div>
         </div>
     );
 };
 
-ChannelSelectionItem.displayName = "ChannelSelectionItem";
+ChannelContentSelector.displayName = "ChannelSelectionItem";
 
 export type SelectedContents = {
     channelIdent: string;
@@ -105,10 +95,11 @@ export const ChannelSelector: React.FC<ChannelSelectorProps> = (props) => {
 
     React.useEffect(() => {
         const handleClickOutside = (e: PointerEvent) => {
+            e.stopPropagation();
+            e.preventDefault();
             const target = e.target as HTMLElement;
             if (target.closest("#channel-selector-header")) {
                 e.preventDefault();
-                e.stopPropagation();
                 return;
             }
 
@@ -118,18 +109,20 @@ export const ChannelSelector: React.FC<ChannelSelectorProps> = (props) => {
             props.onCancel();
         };
 
-        document.addEventListener("pointerdown", handleClickOutside);
+        document.addEventListener("pointerup", handleClickOutside, true);
 
         return () => {
-            document.removeEventListener("pointerdown", handleClickOutside);
+            document.removeEventListener("pointerup", handleClickOutside, true);
         };
     }, [props.onCancel]);
 
-    function handleCancelChannelSelection() {
+    function handleCancelChannelSelection(e: React.PointerEvent<HTMLButtonElement>) {
+        e.stopPropagation();
         props.onCancel();
     }
 
-    function handleSelectionDone() {
+    function handleSelectionDone(e: React.PointerEvent<HTMLButtonElement>) {
+        e.stopPropagation();
         if (selectedContents === null && selectedChannelIdent === null) {
             return;
         }
@@ -192,7 +185,7 @@ export const ChannelSelector: React.FC<ChannelSelectorProps> = (props) => {
         return true;
     }
 
-    const channelElementHeight = convertRemToPixels(3);
+    const channelElementHeight = convertRemToPixels(3.5);
     const contentElementHeight = convertRemToPixels(2);
 
     const calculatedHeight =
@@ -217,6 +210,7 @@ export const ChannelSelector: React.FC<ChannelSelectorProps> = (props) => {
                     top: top,
                     maxHeight: maxHeight,
                 }}
+                onPointerUp={(e) => e.stopPropagation()}
             >
                 <div
                     id="channel-selector-header"
@@ -231,7 +225,7 @@ export const ChannelSelector: React.FC<ChannelSelectorProps> = (props) => {
                 </div>
                 <div className="flex-grow overflow-auto">
                     {props.selectableChannels.map((channel) => (
-                        <ChannelSelectionItem
+                        <ChannelContentSelector
                             multiSelect={props.subscriber.getHasMultiContentSupport()}
                             key={channel.ident}
                             channel={channel}

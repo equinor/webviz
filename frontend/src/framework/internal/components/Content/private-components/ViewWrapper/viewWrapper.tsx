@@ -6,7 +6,7 @@ import { Workbench } from "@framework/Workbench";
 import { Point, pointDifference, pointRelativeToDomRect, pointerEventToPoint } from "@lib/utils/geometry";
 
 import { Header } from "./private-components/header";
-import { InputChannelNodes } from "./private-components/inputChannelNodes";
+import { SubscriberNodesWrapper } from "./private-components/subscriberNodesWrapper";
 import { ViewContent } from "./private-components/viewContent";
 
 import { ViewWrapperPlaceholder } from "../viewWrapperPlaceholder";
@@ -40,6 +40,8 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
         guiMessageBroker,
         GuiState.DataChannelConnectionLayerVisible
     );
+
+    const [, setEditDataChannelConnections] = useGuiState(guiMessageBroker, GuiState.EditDataChannelConnections);
 
     const timeRef = React.useRef<number | null>(null);
     const pointerDown = React.useRef<boolean>(false);
@@ -103,10 +105,11 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
         handleModuleClick();
     }
 
-    function handleInputChannelsClick(e: React.PointerEvent<HTMLDivElement>): void {
+    function handleSubscribersClick(e: React.PointerEvent<HTMLDivElement>): void {
         guiMessageBroker.publishEvent(GuiEvent.EditDataChannelConnectionsForModuleInstanceRequest, {
             moduleInstanceId: props.moduleInstance.getId(),
         });
+        setEditDataChannelConnections(true);
         e.stopPropagation();
     }
 
@@ -144,12 +147,12 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
                         isDragged={props.isDragged}
                         onPointerDown={handleHeaderPointerDown}
                         onRemoveClick={handleRemoveClick}
-                        onInputChannelsClick={handleInputChannelsClick}
+                        onSubscribersClick={handleSubscribersClick}
                         guiMessageBroker={guiMessageBroker}
                     />
                     <div className="flex-grow overflow-auto h-0" onClick={handleModuleClick}>
                         <ViewContent workbench={props.workbench} moduleInstance={props.moduleInstance} />
-                        <InputChannelNodes
+                        <SubscriberNodesWrapper
                             forwardedRef={ref}
                             moduleInstance={props.moduleInstance}
                             workbench={props.workbench}

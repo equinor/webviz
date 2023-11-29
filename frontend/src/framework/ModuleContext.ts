@@ -1,6 +1,6 @@
 import React from "react";
 
-import { ContentDefinition, Data, DataType, Type, TypeToTSTypeMapping } from "./DataChannelTypes";
+import { ContentDefinition, Data, DataType, DataTypeToTsTypeMapping, Type } from "./DataChannelTypes";
 import { InitialSettings } from "./InitialSettings";
 import { ModuleInstance } from "./ModuleInstance";
 import { ModuleInstanceStatusController } from "./ModuleInstanceStatusController";
@@ -93,7 +93,7 @@ export class ModuleContext<S extends StateBaseType> {
         contents: ContentDefinition[];
         dataGenerator: (
             contentIdent: string
-        ) => Data[] | { data: Data[]; metaData: Record<string, DataType> | undefined };
+        ) => Data[] | { data: Data[]; metaData: Record<string, DataTypeToTsTypeMapping[DataType]> | undefined };
     }) {
         const channel = this._moduleInstance.getPublishSubscribeBroker().getChannel(options.channelIdent);
         if (!channel) {

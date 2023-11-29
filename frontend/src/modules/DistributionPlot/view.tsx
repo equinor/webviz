@@ -273,11 +273,11 @@ export const view = ({
             const numCols = Math.floor(Math.sqrt(numPrograms));
             const numRows = Math.ceil(numPrograms / numCols);
 
-            for (const program of listenerX.channel.contents) {
-                const xValues = program.dataArray.map((el: any) => el.value);
+            for (const content of listenerX.channel.contents) {
+                const xValues = content.dataArray.map((el: any) => el.value);
                 histograms.push(
                     makeHistogram(
-                        `${program.name} [${program.metaData?.unit ?? ""}]`,
+                        `${content.name} [${content.metaData?.unit ?? ""}]`,
                         xValues,
                         numBins,
                         colorSet,

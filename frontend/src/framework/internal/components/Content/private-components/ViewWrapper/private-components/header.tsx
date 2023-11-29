@@ -18,7 +18,7 @@ export type HeaderProps = {
     isDragged: boolean;
     onPointerDown: (event: React.PointerEvent<HTMLDivElement>) => void;
     onRemoveClick: (event: React.PointerEvent<HTMLDivElement>) => void;
-    onInputChannelsClick: (event: React.PointerEvent<HTMLDivElement>) => void;
+    onSubscribersClick: (event: React.PointerEvent<HTMLDivElement>) => void;
     guiMessageBroker: GuiMessageBroker;
 };
 
@@ -71,11 +71,11 @@ export const Header: React.FC<HeaderProps> = (props) => {
         e.preventDefault();
     }
 
-    function handleInputChannelsPointerUp(e: React.PointerEvent<HTMLDivElement>) {
-        props.onInputChannelsClick(e);
+    function handleSubscribersPointerUp(e: React.PointerEvent<HTMLDivElement>) {
+        props.onSubscribersClick(e);
     }
 
-    function handleInputChannelsPointerDown(e: React.PointerEvent<HTMLDivElement>) {
+    function handleSubscriberPointerDown(e: React.PointerEvent<HTMLDivElement>) {
         e.stopPropagation();
     }
 
@@ -229,8 +229,8 @@ export const Header: React.FC<HeaderProps> = (props) => {
                 <div
                     className="hover:text-slate-500 cursor-pointer ml-2"
                     title="Edit input data channels"
-                    onPointerUp={handleInputChannelsPointerUp}
-                    onPointerDown={handleInputChannelsPointerDown}
+                    onPointerUp={handleSubscribersPointerUp}
+                    onPointerDown={handleSubscriberPointerDown}
                 >
                     <Input fontSize="small" />
                 </div>
