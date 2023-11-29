@@ -103,7 +103,7 @@ async def well_intersection_reals_from_user_session(
 
     # Add to cache
     for uuid, surface in downloaded_surface_dict.items():
-        # await cache.set(f"{authenticated_user._user_id}-{uuid}", surface)
+        await cache.set(f"{authenticated_user._user_id}-{uuid}", surface)
         surfaces.append(surface)
 
     # Intersect
