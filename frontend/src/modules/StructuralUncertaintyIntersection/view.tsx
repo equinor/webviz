@@ -11,7 +11,7 @@ import { ModuleFCProps } from "@framework/Module";
 import { useViewStatusWriter } from "@framework/StatusWriter";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { ColorScaleGradientType } from "@lib/utils/ColorScale";
-import { useGetWellTrajectories } from "@modules/_shared/WellBore/queryHooks";
+import { useWellTrajectoriesQuery } from "@modules/_shared/WellBore/queryHooks";
 import { ContentError } from "@modules/_shared/components/ContentMessage";
 
 import { isEqual } from "lodash";
@@ -25,8 +25,6 @@ import {
     addWellborePathLayer,
 } from "./utils/esvIntersectionControllerUtils";
 import {
-    createSeismicSliceImageDataArrayFromFenceData,
-    createSeismicSliceImageYAxisValuesArrayFromFenceData,
     makeExtendedTrajectoryFromTrajectoryXyzPoints,
     makeReferenceSystemFromTrajectoryXyzPoints,
     makeTrajectoryXyzPointsFromWellboreTrajectory,
@@ -81,7 +79,7 @@ export const view = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
     }, []);
 
     // Get well trajectories query
-    const getWellTrajectoriesQuery = useGetWellTrajectories(wellboreAddress ? [wellboreAddress.uuid] : undefined);
+    const getWellTrajectoriesQuery = useWellTrajectoriesQuery(wellboreAddress ? [wellboreAddress.uuid] : undefined);
     if (getWellTrajectoriesQuery.isError) {
         statusWriter.addError("Error loading well trajectories");
     }

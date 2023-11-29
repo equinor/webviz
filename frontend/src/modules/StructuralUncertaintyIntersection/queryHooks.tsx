@@ -1,10 +1,4 @@
-import {
-    Body_well_intersection_reals_from_user_session_api,
-    SeismicCubeMeta_api,
-    SeismicFencePolyline_api,
-    SurfaceData_api,
-    SurfaceIntersectionPoints_api,
-} from "@api";
+import { Body_well_intersection_reals_from_user_session_api, SurfaceIntersectionPoints_api } from "@api";
 import { apiService } from "@framework/ApiService";
 import { UseQueryResult, useQuery } from "@tanstack/react-query";
 

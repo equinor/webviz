@@ -1,7 +1,9 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
+import type { Body_well_intersection_reals_from_user_session } from '../models/Body_well_intersection_reals_from_user_session';
 import type { SurfaceData } from '../models/SurfaceData';
+import type { SurfaceIntersectionPoints } from '../models/SurfaceIntersectionPoints';
 import type { SurfaceMeta } from '../models/SurfaceMeta';
 import type { SurfaceStatisticFunction } from '../models/SurfaceStatisticFunction';
 
@@ -190,6 +192,26 @@ export class SurfaceService {
                 'attribute_property': attributeProperty,
                 'time_or_interval_property': timeOrIntervalProperty,
             },
+            errors: {
+                422: `Validation Error`,
+            },
+        });
+    }
+
+    /**
+     * Well Intersection Reals From User Session
+     * @param requestBody
+     * @returns SurfaceIntersectionPoints Successful Response
+     * @throws ApiError
+     */
+    public wellIntersectionRealsFromUserSession(
+        requestBody: Body_well_intersection_reals_from_user_session,
+    ): CancelablePromise<Array<SurfaceIntersectionPoints>> {
+        return this.httpRequest.request({
+            method: 'POST',
+            url: '/surface/well_intersection_reals_from_user_session',
+            body: requestBody,
+            mediaType: 'application/json',
             errors: {
                 422: `Validation Error`,
             },

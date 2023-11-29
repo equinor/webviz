@@ -1,8 +1,6 @@
 import { WellBoreTrajectory_api } from "@api";
 import { IntersectionReferenceSystem, Trajectory } from "@equinor/esv-intersection";
 
-import { SeismicFenceData_trans } from "./queryDataTransforms";
-
 /**
  * Utility to make extended trajectory object from array of 3D trajectory coordinates [x,y,z] and extension
  *
@@ -160,42 +158,3 @@ export function makeReferenceSystemFromTrajectoryXyzPoints(
  * a2 b2 c2 d2
  * a3 b3 c3 d3
  */
-export function createSeismicSliceImageDataArrayFromFenceData(
-    fenceData: SeismicFenceData_trans,
-    fillValue = 0
-): number[][] {
-    const imageArray: number[][] = [];
-
-    const numTraces = fenceData.num_traces;
-    const numSamples = fenceData.num_trace_samples;
-    const fenceValues = fenceData.fenceTracesFloat32Arr;
-
-    for (let i = 0; i < numSamples; ++i) {
-        const row: number[] = [];
-        for (let j = 0; j < numTraces; ++j) {
-            const index = i + j * numSamples;
-            const fenceValue = fenceValues[index];
-            const validFenceValue = Number.isNaN(fenceValue) ? fillValue : fenceValue;
-            row.push(validFenceValue);
-        }
-        imageArray.push(row);
-    }
-    return imageArray;
-}
-
-/**
- * Utility to create an array of values for the Y axis of the seismic slice image. I.e. depth values
- * for the seismic depth axis.
- */
-export function createSeismicSliceImageYAxisValuesArrayFromFenceData(fenceData: SeismicFenceData_trans): number[] {
-    const yAxisValues: number[] = [];
-
-    const numSamples = fenceData.num_trace_samples;
-    const minDepth = fenceData.min_fence_depth;
-    const maxDepth = fenceData.max_fence_depth;
-
-    for (let i = 0; i < numSamples; ++i) {
-        yAxisValues.push(minDepth + ((maxDepth - minDepth) / numSamples) * i);
-    }
-    return yAxisValues;
-}

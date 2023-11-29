@@ -17,7 +17,7 @@ import { Label } from "@lib/components/Label";
 import { Select, SelectOption } from "@lib/components/Select";
 import { useValidState } from "@lib/hooks/useValidState";
 import { SurfaceDirectory, TimeType, useSurfaceDirectoryQuery } from "@modules/_shared/Surface";
-import { useGetWellHeaders } from "@modules/_shared/WellBore";
+import { useWellHeadersQuery } from "@modules/_shared/WellBore";
 
 import { isEqual } from "lodash";
 
@@ -68,7 +68,7 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
     }
     console.log(selectedReals);
     // Queries
-    const wellHeadersQuery = useGetWellHeaders(computedEnsembleIdent?.getCaseUuid());
+    const wellHeadersQuery = useWellHeadersQuery(computedEnsembleIdent?.getCaseUuid());
     const surfaceDirectoryQuery = useSurfaceDirectoryQuery(
         computedEnsembleIdent?.getCaseUuid(),
         computedEnsembleIdent?.getEnsembleName()
