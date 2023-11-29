@@ -77,7 +77,7 @@ export const view = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
             esvIntersectionControllerRef.current?.destroy();
         };
     }, []);
-
+    console.log(wellboreAddress);
     // Get well trajectories query
     const getWellTrajectoriesQuery = useWellTrajectoriesQuery(wellboreAddress ? [wellboreAddress.uuid] : undefined);
     if (getWellTrajectoriesQuery.isError) {
