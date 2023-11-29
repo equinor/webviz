@@ -105,7 +105,9 @@ async def well_intersection_reals_from_user_session(
         for uuid, surface in downloaded_surface_dict.items():
             await cache.set(f"{authenticated_user._user_id}-{uuid}", surface)
             surfaces.append(surface)
-
+    else:
+        elapsed_download = 0
+        elapsed_xtgeo = 0
     # Intersect
     fence_arr = np.array(
         [
