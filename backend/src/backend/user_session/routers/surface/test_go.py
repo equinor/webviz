@@ -38,7 +38,10 @@ def go_get_surface_blobs(sumo_token: str, case_uuid: str, object_ids: list[str])
     res_string = ctypes.string_at(res).decode("ascii")
     data_map_b64 = json.loads(res_string)
     elapsed_decode = timer.lap_ms()
-    surfaces = {}
+    LOGGER.info(
+        f"Downloaded surfaces with Go: {timer.elapsed_ms()}ms",
+        extra={"init": elapsed_init, "get": elapsed_get, "decode": elapsed_decode},
+    )
     return data_map_b64
     for object_id, b64_blob in data_map_b64.items():
         bytestr = base64.b64decode(b64_blob)
