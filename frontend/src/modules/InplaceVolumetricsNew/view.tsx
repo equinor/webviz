@@ -32,8 +32,8 @@ export const view = (props: ModuleFCProps<State>) => {
         dependencies: [tableData.data, tableData.isFetching],
         channelIdent: Channels.ResponseValuePerRealization,
         contents: responseNames.map((el) => ({ ident: el, name: el })),
-        dataGenerator: (programIdent: string) => {
-            const data = tableData.data?.find((el) => el.responseName === programIdent);
+        dataGenerator: (contentIdent: string) => {
+            const data = tableData.data?.find((el) => el.responseName === contentIdent);
             if (data && data.responses) {
                 return data.responses.realizations.map((el, index) => ({
                     key: el,

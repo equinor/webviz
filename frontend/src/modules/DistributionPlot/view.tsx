@@ -15,6 +15,7 @@ import { Histogram } from "./components/histogram";
 import { ScatterPlot } from "./components/scatterPlot";
 import { ScatterPlotWithColorMapping } from "./components/scatterPlotWithColorMapping";
 import { PlotType, State } from "./state";
+import { subscriberDefs } from "./subscriberDefs";
 
 function nFormatter(num: number, digits: number): string {
     const lookup = [
@@ -73,8 +74,8 @@ function makeHistogram(
 function makeScatterPlot(options: {
     xAxisTitle: string;
     yAxisTitle: string;
-    dataX: Data[];
-    dataY: Data[];
+    dataX: Data<Type.Number, Type.Number>[];
+    dataY: Data<Type.Number, Type.Number>[];
     width: number;
     height: number;
     keyData: number[];
@@ -115,14 +116,14 @@ function makeScatterPlotMatrix(options: {
         channelIdent: string;
         contentIdent: string;
         contentName: string;
-        dataArray: Data<number>[];
+        dataArray: Data<Type.Number, Type.Number>[];
     }[];
     rowData: {
         moduleInstanceId: string;
         channelIdent: string;
         contentIdent: string;
         contentName: string;
-        dataArray: Data<number>[];
+        dataArray: Data<Type.Number, Type.Number>[];
     }[];
     width: number;
     height: number;
@@ -224,7 +225,7 @@ export const view = ({
     workbenchServices,
     initialSettings,
     workbenchSettings,
-}: ModuleFCProps<State>) => {
+}: ModuleFCProps<State, never, typeof subscriberDefs>) => {
     const [plotType, setPlotType] = moduleContext.useStoreState("plotType");
     const numBins = moduleContext.useStoreValue("numBins");
     const orientation = moduleContext.useStoreValue("orientation");
@@ -237,12 +238,12 @@ export const view = ({
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);
     const wrapperDivSize = useElementSize(wrapperDivRef);
 
-    const listenerX = moduleContext.useSubscriber<Type.Number>({
+    const listenerX = moduleContext.useSubscriber({
         subscriberIdent: "channelX",
         initialSettings,
         expectedValueType: Type.Number,
     });
-    const listenerY = moduleContext.useSubscriber<Type.Number>({
+    const listenerY = moduleContext.useSubscriber({
         subscriberIdent: "channelY",
         initialSettings,
         expectedValueType: Type.Number,

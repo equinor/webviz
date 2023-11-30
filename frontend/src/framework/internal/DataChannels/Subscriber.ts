@@ -3,11 +3,12 @@ import { PublishSubscribeBroker } from "./PublishSubscribeBroker";
 
 import { Genre } from "../../DataChannelTypes";
 
-export interface SubscriberDefinition {
-    ident: string;
-    name: string;
-    supportedGenres: Genre[];
-    supportsMultiContents?: boolean;
+export interface SubscriberDefinitions {
+    [ident: string]: {
+        readonly name: string;
+        readonly supportedGenres: readonly Genre[];
+        readonly supportsMultiContents?: boolean;
+    };
 }
 
 export enum SubscriberTopic {
@@ -15,11 +16,11 @@ export enum SubscriberTopic {
     ChannelChange = "channel-change",
 }
 
-export class Subscriber {
-    private _broker: PublishSubscribeBroker;
+export class Subscriber<TSupportedGenres extends readonly Genre[]> {
+    private _broker: PublishSubscribeBroker<any, any>;
     private _ident: string;
     private _name: string;
-    private _supportedGenres: Genre[];
+    private _supportedGenres: TSupportedGenres;
     private _supportsMultiContents: boolean;
     private _channel: Channel<any, any, any> | null = null;
     private _contentIdents: string[] = [];
@@ -27,10 +28,10 @@ export class Subscriber {
     private _subscribedToAllContents: boolean = false;
 
     constructor(options: {
-        broker: PublishSubscribeBroker;
+        broker: PublishSubscribeBroker<any, any>;
         ident: string;
         name: string;
-        supportedGenres: Genre[];
+        supportedGenres: TSupportedGenres;
         supportsMultiContents?: boolean;
     }) {
         this._broker = options.broker;
@@ -43,7 +44,7 @@ export class Subscriber {
         this.handleContentsChange = this.handleContentsChange.bind(this);
     }
 
-    getBroker(): PublishSubscribeBroker {
+    getBroker(): PublishSubscribeBroker<any, any> {
         return this._broker;
     }
 
@@ -118,7 +119,7 @@ export class Subscriber {
         return this._name;
     }
 
-    getSupportedGenres(): Genre[] {
+    getSupportedGenres(): readonly Genre[] {
         return this._supportedGenres;
     }
 

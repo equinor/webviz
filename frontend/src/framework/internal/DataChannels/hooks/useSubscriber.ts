@@ -1,11 +1,16 @@
 import React from "react";
 
-import { Data, DataType, Type, TypeToTSTypeMapping } from "../../../DataChannelTypes";
+import { Data, Genre, GenreType, Type } from "../../../DataChannelTypes";
 import { Subscriber, SubscriberTopic } from "../Subscriber";
 import { checkValueIsExpectedType } from "../utils/checkIfValueIsExpectedType";
 
-export function useSubscriber<TContentValueType extends Type>(options: {
-    subscriber: Subscriber | null;
+type TGenre = [Genre.Realization];
+type k = GenreType[TGenre[number]];
+
+type t = ReturnType<typeof useSubscriber<[Genre.Realization], Type.Number>>;
+
+export function useSubscriber<TGenre extends readonly Genre[], TContentValueType extends Type>(options: {
+    subscriber: Subscriber<TGenre> | null;
     expectedValueType: TContentValueType;
 }): {
     ident: string;
@@ -17,8 +22,8 @@ export function useSubscriber<TContentValueType extends Type>(options: {
         contents: {
             ident: string;
             name: string;
-            dataArray: Data<TypeToTSTypeMapping[TContentValueType]>[];
-            metaData: Record<string, DataType> | undefined;
+            dataArray: Data<GenreType[TGenre[number]], TContentValueType>[];
+            metaData: Record<string, Type> | undefined;
         }[];
     };
     hasActiveSubscription: boolean;
@@ -27,8 +32,8 @@ export function useSubscriber<TContentValueType extends Type>(options: {
         {
             ident: string;
             name: string;
-            dataArray: Data<TypeToTSTypeMapping[TContentValueType]>[];
-            metaData: Record<string, DataType> | undefined;
+            dataArray: Data<GenreType[TGenre[number]], TContentValueType>[];
+            metaData: Record<string, Type> | undefined;
         }[]
     >([]);
 
@@ -59,7 +64,7 @@ export function useSubscriber<TContentValueType extends Type>(options: {
                     return {
                         ident: content.getIdent(),
                         name: content.getName(),
-                        dataArray: content.getDataArray() as Data<TypeToTSTypeMapping[TContentValueType]>[],
+                        dataArray: content.getDataArray() as Data<GenreType[TGenre[number]], TContentValueType>[],
                         metaData: content.getMetaData(),
                     };
                 });

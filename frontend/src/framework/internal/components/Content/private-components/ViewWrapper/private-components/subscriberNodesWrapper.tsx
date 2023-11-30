@@ -14,13 +14,13 @@ import { SubscriberNode } from "./subscriberNode";
 
 export type SubscriberNodesWrapperProps = {
     forwardedRef: React.RefObject<HTMLDivElement>;
-    moduleInstance: ModuleInstance<any>;
+    moduleInstance: ModuleInstance<any, any, any>;
     workbench: Workbench;
 };
 
 export const SubscriberNodesWrapper: React.FC<SubscriberNodesWrapperProps> = (props) => {
     const [visible, setVisible] = React.useState<boolean>(false);
-    const [currentSubscriber, setCurrentSubscriber] = React.useState<Subscriber | null>(null);
+    const [currentSubscriber, setCurrentSubscriber] = React.useState<Subscriber<any> | null>(null);
     const [currentOriginModuleInstanceId, setCurrentOriginModuleInstanceId] = React.useState<string | null>(null);
     const [channelSelectorCenterPoint, setChannelSelectorCenterPoint] = React.useState<Point | null>(null);
     const [selectableChannels, setSelectableChannels] = React.useState<SelectableChannel[]>([]);
@@ -79,7 +79,7 @@ export const SubscriberNodesWrapper: React.FC<SubscriberNodesWrapperProps> = (pr
             removeDataChannelOriginPointerDownHandler();
             document.removeEventListener("pointerup", handlePointerUp);
         };
-    }, [props.moduleInstance, guiMessageBroker, channelSelectorCenterPoint]);
+    }, [props.moduleInstance, guiMessageBroker, channelSelectorCenterPoint, editDataChannelConnections]);
 
     const handleChannelConnect = React.useCallback(
         function handleChannelConnect(subscriberIdent: string, moduleInstanceId: string, destinationPoint: Point) {
@@ -101,15 +101,18 @@ export const SubscriberNodesWrapper: React.FC<SubscriberNodesWrapperProps> = (pr
                 .getChannels()
                 .filter((channel) => {
                     if (!supportedGenres || supportedGenres.some((key) => channel.getGenre() === key)) {
-                        /*
-                    return Object.values(props.moduleInstance.getInputChannels()).every((inputChannel) => {
-                        if (inputChannel.getDataDef().key === channel.getDataDef().key) {
-                            return true;
-                        }
-                        return false;
-                    });
-                    */
-                        return true;
+                        return props.moduleInstance
+                            .getPublishSubscribeBroker()
+                            .getSubscribers()
+                            .every((subscriber) => {
+                                if (!subscriber.hasActiveSubscription()) {
+                                    return true;
+                                }
+                                if (subscriber.getChannel()?.getGenre() === channel.getGenre()) {
+                                    return true;
+                                }
+                                return false;
+                            });
                     }
                     return false;
                 });

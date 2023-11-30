@@ -8,6 +8,7 @@ import { RadioGroup } from "@lib/components/RadioGroup";
 import { Slider } from "@lib/components/Slider";
 
 import { PlotType, State } from "./state";
+import { subscriberDefs } from "./subscriberDefs";
 
 const plotTypes = [
     {
@@ -29,7 +30,11 @@ const plotTypes = [
 ];
 
 //-----------------------------------------------------------------------------------------------------------
-export function settings({ moduleContext, workbenchServices, initialSettings }: ModuleFCProps<State>) {
+export function settings({
+    moduleContext,
+    workbenchServices,
+    initialSettings,
+}: ModuleFCProps<State, never, typeof subscriberDefs>) {
     const [prevChannelXName, setPrevChannelXName] = React.useState<string | null>(null);
     const [prevChannelYName, setPrevChannelYName] = React.useState<string | null>(null);
     const [prevChannelColorName, setPrevChannelColorName] = React.useState<string | null>(null);

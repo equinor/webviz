@@ -1,14 +1,13 @@
-import { ChannelDefinition, DataType, Genre } from "@framework/DataChannelTypes";
+import { ChannelDefinitions, Genre, Type } from "@framework/DataChannelTypes";
 
 export enum Channels {
     ResponseValuePerRealization = "Response value (per realization)",
 }
 
-export const channels: ChannelDefinition[] = [
-    {
-        ident: Channels.ResponseValuePerRealization,
+export const channels: ChannelDefinitions = {
+    [Channels.ResponseValuePerRealization]: {
         name: "Response value (per realization)",
         genre: Genre.Realization,
-        dataType: DataType.Numeric,
+        dataType: Type.Number,
     },
-];
+};

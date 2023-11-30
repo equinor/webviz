@@ -12,7 +12,7 @@ import { Edit, Remove } from "@mui/icons-material";
 export type SubscriberNodeProps = {
     ident: string;
     name: string;
-    supportedGenres?: Genre[];
+    supportedGenres?: readonly Genre[];
     moduleInstanceId: string;
     onChannelConnect: (inputName: string, moduleInstanceId: string, destinationPoint: Point) => void;
     onChannelConnectionDisconnect: (inputName: string) => void;

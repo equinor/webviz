@@ -2,21 +2,23 @@ import React from "react";
 
 import { isEqual } from "lodash";
 
-import { Data, DataType, Genre } from "../../../DataChannelTypes";
+import { Data, Genre, GenreType, Type } from "../../../DataChannelTypes";
 import { Channel } from "../Channel";
 import { ContentDefinition } from "../Content";
 
 export function usePublish<
     TGenre extends Genre,
-    TContentType extends DataType,
-    TMetaData extends Record<string, DataType> | undefined
+    TContentType extends Type,
+    TMetaData extends Record<string, Type> | undefined
 >(options: {
     channel: Channel<TGenre, TContentType, TMetaData>;
     dependencies: any[];
     contents: ContentDefinition[];
     dataGenerator: (
         contentIdent: string
-    ) => TMetaData extends undefined ? Data[] : { data: Data[]; metaData: TMetaData };
+    ) => TMetaData extends undefined
+        ? Data<GenreType[TGenre], TContentType>[]
+        : { data: Data<GenreType[TGenre], TContentType>[]; metaData: TMetaData };
 }) {
     const [prevDependencies, setPrevDependencies] = React.useState<any[]>([]);
 

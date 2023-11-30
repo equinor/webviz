@@ -13,7 +13,7 @@ import { Settings as SettingsIcon } from "@mui/icons-material";
 import { DebugProfiler } from "../../DebugProfiler";
 
 type SettingProps = {
-    moduleInstance: ModuleInstance<any>;
+    moduleInstance: ModuleInstance<any, any, any>;
     activeModuleInstanceId: string;
     workbench: Workbench;
 };

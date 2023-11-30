@@ -1,4 +1,4 @@
-import { ChannelDefinition, SubscriberDefinition } from "./DataChannelTypes";
+import { ChannelDefinitions, SubscriberDefinitions } from "./DataChannelTypes";
 import { Module } from "./Module";
 import { DrawPreviewFunc } from "./Preview";
 import { StateBaseType, StateOptions } from "./StateStore";
@@ -9,8 +9,8 @@ export type RegisterModuleOptions = {
     moduleName: string;
     defaultTitle: string;
     syncableSettingKeys?: SyncSettingKey[];
-    channels?: ChannelDefinition[];
-    subscribers?: SubscriberDefinition[];
+    channels?: ChannelDefinitions;
+    subscribers?: SubscriberDefinitions;
 
     preview?: DrawPreviewFunc;
     description?: string;
@@ -27,21 +27,29 @@ export class ModuleNotFoundError extends Error {
 }
 
 export class ModuleRegistry {
-    private static _registeredModules: Record<string, Module<any>> = {};
-    private static _moduleNotFoundPlaceholders: Record<string, Module<any>> = {};
+    private static _registeredModules: Record<string, Module<any, any, any>> = {};
+    private static _moduleNotFoundPlaceholders: Record<string, Module<any, any, any>> = {};
 
     /* eslint-disable-next-line @typescript-eslint/no-empty-function */
     private constructor() {}
 
-    static registerModule<ModuleStateType extends StateBaseType>(
+    static registerModule<TStateType extends StateBaseType>(
         options: RegisterModuleOptions
-    ): Module<ModuleStateType> {
-        const module = new Module<ModuleStateType>({
+    ): Module<
+        TStateType,
+        typeof options.channels extends undefined ? never : Exclude<typeof options.channels, undefined>,
+        typeof options.subscribers extends undefined ? never : Exclude<typeof options.subscribers, undefined>
+    > {
+        const module = new Module<
+            TStateType,
+            typeof options.channels extends undefined ? never : Exclude<typeof options.channels, undefined>,
+            typeof options.subscribers extends undefined ? never : Exclude<typeof options.subscribers, undefined>
+        >({
             name: options.moduleName,
             defaultTitle: options.defaultTitle,
             syncableSettingKeys: options.syncableSettingKeys ?? [],
-            channels: options.channels ?? [],
-            subscribers: options.subscribers ?? [],
+            channels: options.channels,
+            subscribers: options.subscribers,
             drawPreviewFunc: options.preview,
             description: options.description,
         });
@@ -49,33 +57,37 @@ export class ModuleRegistry {
         return module;
     }
 
-    static initModule<ModuleStateType extends StateBaseType>(
+    static initModule<
+        TStateType extends StateBaseType,
+        TChannelDefs extends ChannelDefinitions | never = never,
+        TSubscriberDefs extends SubscriberDefinitions | never = never
+    >(
         moduleName: string,
-        defaultState: ModuleStateType,
-        options?: StateOptions<ModuleStateType>
-    ): Module<ModuleStateType> {
+        defaultState: TStateType,
+        options?: StateOptions<TStateType>
+    ): Module<TStateType, TChannelDefs, TSubscriberDefs> {
         const module = this._registeredModules[moduleName];
         if (module) {
             module.setDefaultState(defaultState, options);
-            return module as Module<ModuleStateType>;
+            return module as Module<TStateType, TChannelDefs, TSubscriberDefs>;
         }
         throw new ModuleNotFoundError(moduleName);
     }
 
-    static getModule(moduleName: string): Module<any> {
+    static getModule(moduleName: string): Module<any, any, any> {
         const module = this._registeredModules[moduleName];
         if (module) {
-            return module as Module<any>;
+            return module as Module<any, any, any>;
         }
         const placeholder = this._moduleNotFoundPlaceholders[moduleName];
         if (placeholder) {
-            return placeholder as Module<any>;
+            return placeholder as Module<any, any, any>;
         }
         this._moduleNotFoundPlaceholders[moduleName] = new ModuleNotFoundPlaceholder(moduleName);
-        return this._moduleNotFoundPlaceholders[moduleName] as Module<any>;
+        return this._moduleNotFoundPlaceholders[moduleName] as Module<any, any, any>;
     }
 
-    static getRegisteredModules(): Record<string, Module<any>> {
+    static getRegisteredModules(): Record<string, Module<any, any, any>> {
         return this._registeredModules;
     }
 }

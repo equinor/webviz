@@ -9,15 +9,15 @@ export enum ContentTopic {
     ContentChange = "content-change",
 }
 
-export class Content<TMetaData> {
-    private _cachedDataArray: (TMetaData extends undefined ? Data[] : { data: Data[]; metaData: TMetaData }) | null =
+export class Content<TData, TMetaData> {
+    private _cachedDataArray: (TMetaData extends undefined ? TData[] : { data: TData[]; metaData: TMetaData }) | null =
         null;
     private _subscribersMap: Map<ContentTopic, Set<() => void>> = new Map();
 
     constructor(
         private _ident: string,
         private _name: string,
-        private _dataGenerator: () => TMetaData extends undefined ? Data[] : { data: Data[]; metaData: TMetaData }
+        private _dataGenerator: () => TMetaData extends undefined ? TData[] : { data: TData[]; metaData: TMetaData }
     ) {}
 
     getIdent(): string {
@@ -28,13 +28,13 @@ export class Content<TMetaData> {
         return this._name;
     }
 
-    publish(dataGenerator: () => TMetaData extends undefined ? Data[] : { data: Data[]; metaData: TMetaData }): void {
+    publish(dataGenerator: () => TMetaData extends undefined ? TData[] : { data: TData[]; metaData: TMetaData }): void {
         this._dataGenerator = dataGenerator;
         this._cachedDataArray = null;
         this.notifySubscribers(ContentTopic.ContentChange);
     }
 
-    getDataArray(): Data[] {
+    getDataArray(): TData[] {
         if (this._cachedDataArray === null) {
             this._cachedDataArray = this._dataGenerator();
         }

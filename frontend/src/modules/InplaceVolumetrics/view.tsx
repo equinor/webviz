@@ -2,7 +2,7 @@ import React from "react";
 import Plot from "react-plotly.js";
 
 import { Body_get_realizations_response_api } from "@api";
-import { Data } from "@framework/DataChannelTypes";
+import { Data, Type } from "@framework/DataChannelTypes";
 import { ModuleFCProps } from "@framework/Module";
 import { useSubscribedValue } from "@framework/WorkbenchServices";
 import { ApiStateWrapper } from "@lib/components/ApiStateWrapper";
@@ -16,7 +16,7 @@ import { useRealizationsResponseQuery } from "./queryHooks";
 import { VolumetricResponseAbbreviations } from "./settings";
 import { State } from "./state";
 
-export const view = (props: ModuleFCProps<State>) => {
+export const view = (props: ModuleFCProps<State, typeof channelDefs>) => {
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);
     const wrapperDivSize = useElementSize(wrapperDivRef);
     const ensembleIdent = props.moduleContext.useStoreValue("ensembleIdent");
@@ -83,7 +83,7 @@ export const view = (props: ModuleFCProps<State>) => {
             dependencies: [realizationsResponseQuery.data, ensemble, tableName, responseName],
             contents: [{ ident: responseName, name: responseName }],
             dataGenerator: () => {
-                const data: Data<number>[] = [];
+                const data: Data<Type.Number, Type.Number>[] = [];
                 if (realizationsResponseQuery.data) {
                     realizationsResponseQuery.data.realizations.forEach((realization, index) => {
                         data.push({

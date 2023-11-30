@@ -13,6 +13,7 @@ import { Label } from "@lib/components/Label";
 import { Select } from "@lib/components/Select";
 import { UseQueryResult } from "@tanstack/react-query";
 
+import { channelDefs } from "./channelDefs";
 import { useTableDescriptionsQuery } from "./queryHooks";
 import { State } from "./state";
 
@@ -96,7 +97,7 @@ function getTableResponseOptions(
     return responsesToSelectOptions(responses);
 }
 
-export function settings({ moduleContext, workbenchSession }: ModuleFCProps<State>) {
+export function settings({ moduleContext, workbenchSession }: ModuleFCProps<State, typeof channelDefs>) {
     const ensembleSet = useEnsembleSet(workbenchSession);
     const [ensembleIdent, setEnsembleIdent] = moduleContext.useStoreState("ensembleIdent");
     const [tableName, setTableName] = moduleContext.useStoreState("tableName");
