@@ -40,16 +40,15 @@ class SeismicFenceData(BaseModel):
     `Properties:`
     - `fence_traces_b64arr`: The fence trace array is base64 encoded 1D float array - where data is stored trace by trace.
     - `num_traces`: The number of traces in the fence trace array. Equals the number of (x, y) coordinates in requested polyline.
-    - `num_trace_samples`: The number of samples in each trace.
+    - `num_samples_per_trace`: The number of samples in each trace.
     - `min_fence_depth`: The minimum depth value of the fence.
     - `max_fence_depth`: The maximum depth value of the fence.
 
     `Description - fence_traces_b64arr:`\n
     The encoded fence trace array is a flattened array of traces, where data is stored trace by trace.
-    With `m = num_traces`, and `n = num_trace_samples`, the flattened array has length `mxn`.
+    With `m = num_traces`, and `n = num_samples_per_trace`, the flattened array has length `mxn`.
 
-    Fence traces 1D array: [trace_1, trace_2, ..., trace_m] \n
-    trace_1, trace_2, ... , trace_m are 1D arrays: [sample_1, sample_2, ..., sample_n]
+    Fence traces 1D array: [trace_1_sample_1, trace_1_sample_2, ..., trace_1_sample_n, ..., trace_m_sample_1, trace_m_sample_2, ..., trace_m_sample_n] \n
 
     See:
     - VdsAxis: https://github.com/equinor/vds-slice/blob/ab6f39789bf3d3b59a8df14f1c4682d340dc0bf3/internal/core/core.go#L37-L55
@@ -57,6 +56,6 @@ class SeismicFenceData(BaseModel):
 
     fence_traces_b64arr: B64FloatArray
     num_traces: int
-    num_trace_samples: int
+    num_samples_per_trace: int
     min_fence_depth: float
     max_fence_depth: float

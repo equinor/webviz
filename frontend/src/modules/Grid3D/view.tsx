@@ -9,7 +9,7 @@ import {
     createWellBoreHeaderLayer,
     createWellboreTrajectoryLayer,
 } from "@modules/SubsurfaceMap/_utils";
-import { useGetFieldWellsTrajectories } from "@modules/_shared/WellBore/queryHooks";
+import { useFieldWellsTrajectoriesQuery } from "@modules/_shared/WellBore/queryHooks";
 import SubsurfaceViewer from "@webviz/subsurface-viewer";
 import { ViewAnnotation } from "@webviz/subsurface-viewer/dist/components/ViewAnnotation";
 
@@ -62,7 +62,7 @@ export function view({ moduleContext, workbenchSettings, workbenchSession }: Mod
         realizations,
         useStatistics
     );
-    const wellTrajectoriesQuery = useGetFieldWellsTrajectories(firstCaseUuid ?? undefined);
+    const wellTrajectoriesQuery = useFieldWellsTrajectoriesQuery(firstCaseUuid ?? undefined);
     const bounds = gridSurfaceQuery?.data
         ? [
               gridSurfaceQuery.data.xmin,

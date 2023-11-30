@@ -1,5 +1,6 @@
 import {
     Controller,
+    OverlayMouseExitEvent,
     OverlayMouseMoveEvent,
     SeismicCanvasLayer,
     WellborepathLayer,
@@ -19,32 +20,36 @@ export function addMDOverlay(controller: Controller) {
             const newX = caller.currentStateAsEvent.xScale.invert(x);
             const referenceSystem = caller.referenceSystem;
 
-            if (!referenceSystem || !target) return;
+            if (!referenceSystem || !(target instanceof HTMLElement)) return;
 
             const md = referenceSystem.unproject(newX);
             target.textContent = Number.isFinite(md) ? `MD: ${md?.toFixed(1)}` : "-";
             if (md && (md < 0 || referenceSystem.length < md)) {
-                target.setAttribute("style", "visibility: hidden");
+                target.classList.replace("visible", "invisible");
             } else {
-                target.setAttribute("style", "visibility: visible");
+                target.classList.replace("invisible", "visible");
             }
         },
-        onMouseExit: (event: any) => {
-            event.target.style.visibility = "hidden";
+        onMouseExit: (event: OverlayMouseExitEvent<Controller>) => {
+            if (event.target instanceof HTMLElement) {
+                event.target.classList.replace("visible", "invisible");
+            }
         },
     });
+
     if (elm) {
-        elm.style.visibility = "hidden";
-        elm.style.display = "inline-block";
-        elm.style.padding = "2px";
-        elm.style.borderRadius = "4px";
-        elm.style.textAlign = "right";
-        elm.style.position = "absolute";
-        elm.style.backgroundColor = "rgba(0,0,0,0.5)";
-        elm.style.color = "white";
-        elm.style.right = "5px";
-        elm.style.bottom = "5px";
-        elm.style.zIndex = "100";
+        elm.classList.add(
+            "invisible",
+            "inline-block",
+            "p-1",
+            "rounded",
+            "text-right",
+            "absolute",
+            "bg-black",
+            "bg-opacity-20",
+            "text-white",
+            "z-100"
+        );
     }
 }
 

@@ -1,1 +1,1 @@
-export { useGetFieldWellsTrajectories, useGetWellHeaders } from "./queryHooks";
+export { useFieldWellsTrajectoriesQuery, useWellHeadersQuery, useWellTrajectoriesQuery } from "./queryHooks";

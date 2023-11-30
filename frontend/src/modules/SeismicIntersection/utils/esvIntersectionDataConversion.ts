@@ -151,7 +151,7 @@ export function makeReferenceSystemFromTrajectoryXyzPoints(
  * trace a,b,c and d
  *
  * num_traces = 4
- * num_samples = 3
+ * num_samples_per_trace = 3
  * fence_traces = [a1, a2, a3, b1, b2, b3, c1, c2, c3, d1, d2, d3]
  *
  * Image:
@@ -167,7 +167,7 @@ export function createSeismicSliceImageDataArrayFromFenceData(
     const imageArray: number[][] = [];
 
     const numTraces = fenceData.num_traces;
-    const numSamples = fenceData.num_trace_samples;
+    const numSamples = fenceData.num_samples_per_trace;
     const fenceValues = fenceData.fenceTracesFloat32Arr;
 
     for (let i = 0; i < numSamples; ++i) {
@@ -190,7 +190,7 @@ export function createSeismicSliceImageDataArrayFromFenceData(
 export function createSeismicSliceImageYAxisValuesArrayFromFenceData(fenceData: SeismicFenceData_trans): number[] {
     const yAxisValues: number[] = [];
 
-    const numSamples = fenceData.num_trace_samples;
+    const numSamples = fenceData.num_samples_per_trace;
     const minDepth = fenceData.min_fence_depth;
     const maxDepth = fenceData.max_fence_depth;
 

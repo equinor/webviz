@@ -5,7 +5,7 @@ import { State } from "./state";
 import { view } from "./view";
 
 const defaultState: State = {
-    wellboreAddress: { uwi: "55/33-A-4", uuid: "drogon_horizontal", type: "smda" },
+    wellboreAddress: null,
     seismicAddress: null,
     extension: 1000,
     zScale: 5,

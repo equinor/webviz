@@ -18,21 +18,32 @@ export enum SeismicSliceImageStatus {
     ERROR = "error",
 }
 
-export function useGenerateSeismicSliceImage(data: SeismicSliceImageOptions | null) {
+export type SeismicSliceImageData = {
+    image: ImageBitmap | null;
+    synchedOptions: SeismicSliceImageOptions | null;
+    status: SeismicSliceImageStatus;
+};
+
+/**
+ * Hook to generate seismic slice image for async utility.
+ *
+ * Returns image, synched image options used to generate the image, and image status.
+ */
+export function useGenerateSeismicSliceImageData(imageOptions: SeismicSliceImageOptions | null): SeismicSliceImageData {
     const [prevData, setPrevData] = React.useState<any>(null);
     const [image, setImage] = React.useState<ImageBitmap | null>(null);
     const [imageStatus, setImageStatus] = React.useState<SeismicSliceImageStatus>(SeismicSliceImageStatus.SUCCESS);
     const [synchedImageOptions, setSynchedImageOptions] = React.useState<SeismicSliceImageOptions | null>(null);
 
-    if (data !== null && !isEqual(data, prevData)) {
-        setPrevData(data);
+    if (imageOptions !== null && !isEqual(imageOptions, prevData)) {
+        setPrevData(imageOptions);
         setImageStatus(SeismicSliceImageStatus.LOADING);
 
         // Async generation of seismic slice image
         generateSeismicSliceImage(
-            { datapoints: data.dataValues, yAxisValues: data.yAxisValues },
-            data.trajectoryXyPoints,
-            data.colormap,
+            { datapoints: imageOptions.dataValues, yAxisValues: imageOptions.yAxisValues },
+            imageOptions.trajectoryXyPoints,
+            imageOptions.colormap,
             {
                 isLeftToRight: true,
             }
@@ -40,14 +51,15 @@ export function useGenerateSeismicSliceImage(data: SeismicSliceImageOptions | nu
             .then((result) => {
                 setImage(result ?? null);
                 setImageStatus(SeismicSliceImageStatus.SUCCESS);
-                setSynchedImageOptions(data);
+                setSynchedImageOptions(imageOptions);
             })
             .catch(() => {
                 setImage(null);
                 setImageStatus(SeismicSliceImageStatus.ERROR);
-                setSynchedImageOptions(data);
+                setSynchedImageOptions(imageOptions);
             });
     }
 
+    // Slice image data
     return { image: image, synchedOptions: synchedImageOptions, status: imageStatus };
 }

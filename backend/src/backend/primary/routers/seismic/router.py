@@ -19,25 +19,25 @@ LOGGER = logging.getLogger(__name__)
 router = APIRouter()
 
 
-@router.get("/seismic_directory/")
-async def get_seismic_directory(
+@router.get("/seismic_cube_meta_list/")
+async def get_seismic_cube_meta_list(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     case_uuid: str = Query(description="Sumo case uuid"),
     ensemble_name: str = Query(description="Ensemble name"),
 ) -> List[schemas.SeismicCubeMeta]:
     """
-    Get a directory of seismic cubes.
+    Get a list of seismic cube meta.
     """
     access = await SeismicAccess.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
-    seismic_cube_metas = await access.get_seismic_directory()
+    seismic_cube_meta_list = await access.get_seismic_cube_meta_list_async()
     try:
-        return [schemas.SeismicCubeMeta(**meta.__dict__) for meta in seismic_cube_metas]
+        return [schemas.SeismicCubeMeta(**meta.__dict__) for meta in seismic_cube_meta_list]
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
 
-@router.post("/seismic_fence/")
-async def get_seismic_fence(
+@router.post("/get_seismic_fence/")
+async def post_get_seismic_fence(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     case_uuid: str = Query(description="Sumo case uuid"),
     ensemble_name: str = Query(description="Ensemble name"),
@@ -52,12 +52,8 @@ async def get_seismic_fence(
     The fence data contains a set of traces perpendicular to the polyline, with one trace per (x, y)-point in polyline.
     Each trace has equal number of samples, and is a set of sample values along the depth direction of the seismic cube.
 
-    The returned data
-    * fence_traces_b64arr: The fence trace array is base64 encoded 1D float array - where data is stored trace by trace. Decoding info: [num_traces, num_trace_samples]
-    * num_traces: Number of traces in fence array
-    * num_trace_samples: Number of samples in each trace
-    * min_fence_depth: The minimum depth value of the fence.
-    * max_fence_depth: The maximum depth value of the fence.
+    Returns:
+    A SeismicFenceData object with fence traces in encoded 1D array, metadata for trace array decoding and fence min/max depth.
     """
     seismic_access = await SeismicAccess.from_case_uuid(
         authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
@@ -65,7 +61,7 @@ async def get_seismic_fence(
 
     vds_handle: Optional[VdsHandle] = None
     try:
-        vds_handle = await seismic_access.get_vds_handle(
+        vds_handle = await seismic_access.get_vds_handle_async(
             realization=realization_num,
             seismic_attribute=seismic_attribute,
             time_or_interval_str=time_or_interval_str,
@@ -84,13 +80,13 @@ async def get_seismic_fence(
     [
         flattened_fence_traces_array,
         num_traces,
-        num_trace_samples,
-    ] = await vds_access.get_flattened_fence_traces_array_and_metadata(
+        num_samples_per_trace,
+    ] = await vds_access.get_flattened_fence_traces_array_and_metadata_async(
         coordinates=VdsCoordinates(polyline.x_points, polyline.y_points),
         coordinate_system=VdsCoordinateSystem.CDP,
     )
 
-    meta: VdsMetadata = await vds_access.get_metadata()
+    meta: VdsMetadata = await vds_access.get_metadata_async()
     if len(meta.axis) != 3:
         raise ValueError(f"Expected 3 axes, got {len(meta.axis)}")
     depth_axis_meta = meta.axis[2]
@@ -98,7 +94,7 @@ async def get_seismic_fence(
     return schemas.SeismicFenceData(
         fence_traces_b64arr=b64_encode_float_array_as_float32(flattened_fence_traces_array),
         num_traces=num_traces,
-        num_trace_samples=num_trace_samples,
+        num_samples_per_trace=num_samples_per_trace,
         min_fence_depth=depth_axis_meta.min,
         max_fence_depth=depth_axis_meta.max,
     )

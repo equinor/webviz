@@ -1,27 +1,27 @@
 import { SeismicCubeMeta_api } from "@api";
 import { isIsoStringInterval } from "@framework/utils/timestampUtils";
 
-// Time type for seismic directory.
+// Time type for seismic cubes.
 export enum TimeType {
     TimePoint = "TimePoint",
     Interval = "Interval",
 }
 
-export type SeismicCubeDirectoryOptions = {
-    seismicCubeMetaArray: SeismicCubeMeta_api[];
+export type SeismicCubeMetaDirectoryOptions = {
+    seismicCubeMetaList: SeismicCubeMeta_api[];
     timeType: TimeType;
     useObservedSeismicCubes?: boolean;
 };
 
-// Class responsible for managing a directory of seismic cubes.
-export class SeismicCubeDirectory {
+// Class responsible for managing a list of seismic cube meta.
+export class SeismicCubeMetaDirectory {
     private _seismicCubeList: SeismicCubeMeta_api[] = [];
 
     // Constructs a SeismicCubeDirectory with optional content filter criteria.
-    constructor(options: SeismicCubeDirectoryOptions) {
+    constructor(options: SeismicCubeMetaDirectoryOptions) {
         if (!options) return;
 
-        let filteredList = filterSeismicCubeMetaArrayOnTimeType(options.seismicCubeMetaArray, options.timeType);
+        let filteredList = filterSeismicCubeMetaListOnTimeType(options.seismicCubeMetaList, options.timeType);
 
         if (options.useObservedSeismicCubes) {
             filteredList = filteredList.filter((cube) => cube.is_observation);
@@ -49,17 +49,17 @@ export class SeismicCubeDirectory {
 }
 
 // Internal utility to filter directory based on time type.
-function filterSeismicCubeMetaArrayOnTimeType(
-    seismicCubeMetaArray: SeismicCubeMeta_api[],
+function filterSeismicCubeMetaListOnTimeType(
+    seismicCubeMetaList: SeismicCubeMeta_api[],
     timeType: TimeType
 ): SeismicCubeMeta_api[] {
     switch (timeType) {
         case TimeType.TimePoint:
-            return seismicCubeMetaArray.filter(
+            return seismicCubeMetaList.filter(
                 (cube) => cube.iso_date_or_interval && !isIsoStringInterval(cube.iso_date_or_interval)
             );
         case TimeType.Interval:
-            return seismicCubeMetaArray.filter(
+            return seismicCubeMetaList.filter(
                 (cube) => cube.iso_date_or_interval && isIsoStringInterval(cube.iso_date_or_interval)
             );
         default:

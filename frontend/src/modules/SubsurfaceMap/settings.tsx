@@ -23,7 +23,7 @@ import {
     TimeType,
     useSurfaceDirectoryQuery,
 } from "@modules/_shared/Surface";
-import { useGetWellHeaders } from "@modules/_shared/WellBore/queryHooks";
+import { useWellHeadersQuery } from "@modules/_shared/WellBore/queryHooks";
 
 import { SurfacePolygonsAddress } from "./SurfacePolygonsAddress";
 import { AggregationSelector } from "./components/AggregationSelector";
@@ -337,7 +337,7 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
         [show3D]
     );
 
-    const wellHeadersQuery = useGetWellHeaders(computedEnsembleIdent?.getCaseUuid());
+    const wellHeadersQuery = useWellHeadersQuery(computedEnsembleIdent?.getCaseUuid());
     let wellHeaderOptions: SelectOption[] = [];
 
     if (wellHeadersQuery.data) {

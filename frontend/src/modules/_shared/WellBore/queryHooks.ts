@@ -5,7 +5,7 @@ import { UseQueryResult, useQuery } from "@tanstack/react-query";
 const STALE_TIME = 60 * 1000;
 const CACHE_TIME = 60 * 1000;
 
-export function useGetWellHeaders(caseUuid: string | undefined): UseQueryResult<WellBoreHeader_api[]> {
+export function useWellHeadersQuery(caseUuid: string | undefined): UseQueryResult<WellBoreHeader_api[]> {
     return useQuery({
         queryKey: ["getWellHeaders", caseUuid],
         queryFn: () => apiService.well.getWellHeaders(caseUuid ?? ""),
@@ -15,7 +15,7 @@ export function useGetWellHeaders(caseUuid: string | undefined): UseQueryResult<
     });
 }
 
-export function useGetFieldWellsTrajectories(caseUuid: string | undefined): UseQueryResult<WellBoreTrajectory_api[]> {
+export function useFieldWellsTrajectoriesQuery(caseUuid: string | undefined): UseQueryResult<WellBoreTrajectory_api[]> {
     return useQuery({
         queryKey: ["getFieldWellsTrajectories", caseUuid],
         queryFn: () => apiService.well.getFieldWellTrajectories(caseUuid ?? ""),
@@ -25,7 +25,7 @@ export function useGetFieldWellsTrajectories(caseUuid: string | undefined): UseQ
     });
 }
 
-export function useGetWellTrajectories(wellUuids: string[] | undefined): UseQueryResult<WellBoreTrajectory_api[]> {
+export function useWellTrajectoriesQuery(wellUuids: string[] | undefined): UseQueryResult<WellBoreTrajectory_api[]> {
     return useQuery({
         queryKey: ["getWellTrajectories", wellUuids],
         queryFn: () => apiService.well.getWellTrajectories(wellUuids ?? []),

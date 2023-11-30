@@ -53,7 +53,7 @@ class VdsAccess:
         self._interpolation = interpolation_method
 
     @staticmethod
-    async def _query(endpoint: str, request: VdsRequestedResource) -> httpx.Response:
+    async def _query_async(endpoint: str, request: VdsRequestedResource) -> httpx.Response:
         """Query the service"""
 
         async with httpx.AsyncClient() as client:
@@ -69,17 +69,17 @@ class VdsAccess:
 
         return response
 
-    async def get_metadata(self) -> VdsMetadata:
+    async def get_metadata_async(self) -> VdsMetadata:
         """Gets metadata from the cube"""
         endpoint = "metadata"
 
         metadata_request = VdsMetadataRequest(vds=self.vds_url, sas=self.sas)
-        response = await self._query(endpoint, metadata_request)
+        response = await self._query_async(endpoint, metadata_request)
 
         metadata = response.json()
         return VdsMetadata(**metadata)
 
-    async def get_flattened_fence_traces_array_and_metadata(
+    async def get_flattened_fence_traces_array_and_metadata_async(
         self, coordinates: VdsCoordinates, coordinate_system: VdsCoordinateSystem = VdsCoordinateSystem.CDP
     ) -> Tuple[NDArray[np.float32], int, int]:
         """
@@ -94,18 +94,18 @@ class VdsAccess:
         Invalid values, e.g. values for points outside of the seismic cube, are set to np.nan.
 
         `Returns:`
-        `Tuple[flattened_fence_traces_array: NDArray[np.float32], num_traces: int, num_trace_samples: int]`
+        `Tuple[flattened_fence_traces_array: NDArray[np.float32], num_traces: int, num_samples_per_trace: int]`
 
-        `flattened_fence_traces_array`: 1D np.ndarray with dtype=float32, stored trace by trace. The array has length `num_traces x num_trace_samples`.\n
+        `flattened_fence_traces_array`: 1D np.ndarray with dtype=float32, stored trace by trace. The array has length `num_traces x num_samples_per_trace`.\n
         `num_traces`: number of traces along the length of the fence, i.e. number of (x, y) coordinates.\n
-        `num_trace_samples`: number of samples in each trace, i.e. number of values along the height/depth axis of the fence.\n
+        `num_samples_per_trace`: number of samples in each trace, i.e. number of values along the height/depth axis of the fence.\n
 
 
         \n`Description:`
 
-        With `m = num_traces`, and `n = num_trace_samples`, the flattened array has length `mxn`.
+        With `m = num_traces`, and `n = num_samples_per_trace`, the flattened array has length `mxn`.
 
-        `2D Fence Trace Array:`
+        `2D Fence Trace Array from VDS-slice query:`
 
         ```
         [[t11, t12, ..., t1n],
@@ -114,7 +114,7 @@ class VdsAccess:
         [tm1, tm2, ..., tmn]]
         ```
 
-        \n`Flattened 2D trace array with row major order:`
+        \n`Returned flattened 2D trace array with row major order:`
 
         ```
         [t11, t12, ..., t1n, t21, t22, ..., t2n, ..., tm1, tm2, ..., tmn]
@@ -151,7 +151,7 @@ class VdsAccess:
         )
 
         # Fence query returns two parts - metadata and data
-        response = await self._query(endpoint, fence_request)
+        response = await self._query_async(endpoint, fence_request)
 
         # Use MultipartDecoder with httpx's Response content and headers
         decoder = MultipartDecoder(content=response.content, content_type=response.headers["Content-Type"])
@@ -175,9 +175,9 @@ class VdsAccess:
             raise ValueError(f"Expected shape to be 2D, got {metadata.shape}")
 
         # fence array data: [[t11, t12, ..., t1n], [t21, t22, ..., t2n], ..., [tm1, tm2, ..., tmn]]
-        # m = num_traces, n = num_trace_samples
+        # m = num_traces, n = num_samples_per_trace
         num_traces = metadata.shape[0]
-        num_trace_samples = metadata.shape[1]
+        num_samples_per_trace = metadata.shape[1]
 
         # Flattened array with row major order, i.e. C-order in numpy
         flattened_fence_traces_float32_array = bytes_to_flatten_ndarray_float32(byte_array, shape=metadata.shape)
@@ -185,4 +185,4 @@ class VdsAccess:
         # Convert every value of `hard_coded_fill_value` to np.nan
         flattened_fence_traces_float32_array[flattened_fence_traces_float32_array == hard_coded_fill_value] = np.nan
 
-        return (flattened_fence_traces_float32_array, num_traces, num_trace_samples)
+        return (flattened_fence_traces_float32_array, num_traces, num_samples_per_trace)

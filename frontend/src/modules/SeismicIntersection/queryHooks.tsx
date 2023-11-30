@@ -1,4 +1,4 @@
-import { Body_get_seismic_fence_api, SeismicCubeMeta_api, SeismicFencePolyline_api } from "@api";
+import { Body_post_get_seismic_fence_api, SeismicCubeMeta_api, SeismicFencePolyline_api } from "@api";
 import { apiService } from "@framework/ApiService";
 import { UseQueryResult, useQuery } from "@tanstack/react-query";
 
@@ -7,13 +7,13 @@ import { SeismicFenceData_trans, transformSeismicFenceData } from "./utils/query
 const STALE_TIME = 60 * 1000;
 const CACHE_TIME = 60 * 1000;
 
-export function useSeismicCubeDirectoryQuery(
+export function useSeismicCubeMetaListQuery(
     caseUuid: string | undefined,
     ensembleName: string | undefined
 ): UseQueryResult<SeismicCubeMeta_api[]> {
     return useQuery({
-        queryKey: ["getSeismicDirectory", caseUuid, ensembleName],
-        queryFn: () => apiService.seismic.getSeismicDirectory(caseUuid ?? "", ensembleName ?? ""),
+        queryKey: ["getSeismicCubeMetaList", caseUuid, ensembleName],
+        queryFn: () => apiService.seismic.getSeismicCubeMetaList(caseUuid ?? "", ensembleName ?? ""),
         staleTime: STALE_TIME,
         gcTime: CACHE_TIME,
         enabled: !!(caseUuid && ensembleName),
@@ -30,10 +30,10 @@ export function useSeismicFenceDataQuery(
     polyline: SeismicFencePolyline_api | null,
     allowEnable: boolean
 ): UseQueryResult<SeismicFenceData_trans> {
-    const bodyPolyline: Body_get_seismic_fence_api = { polyline: polyline ?? { x_points: [], y_points: [] } };
+    const bodyPolyline: Body_post_get_seismic_fence_api = { polyline: polyline ?? { x_points: [], y_points: [] } };
     return useQuery({
         queryKey: [
-            "getSeismicFence",
+            "postGetSeismicFence",
             caseUuid,
             ensembleName,
             realizationNum,
@@ -43,7 +43,7 @@ export function useSeismicFenceDataQuery(
             bodyPolyline,
         ],
         queryFn: () =>
-            apiService.seismic.getSeismicFence(
+            apiService.seismic.postGetSeismicFence(
                 caseUuid ?? "",
                 ensembleName ?? "",
                 realizationNum ?? 0,

@@ -16,14 +16,14 @@ import { Label } from "@lib/components/Label";
 import { RadioGroup } from "@lib/components/RadioGroup";
 import { Select, SelectOption } from "@lib/components/Select";
 import { useValidState } from "@lib/hooks/useValidState";
-import { useGetWellHeaders } from "@modules/_shared/WellBore";
+import { useWellHeadersQuery } from "@modules/_shared/WellBore";
 
 import { isEqual } from "lodash";
 
-import { useSeismicCubeDirectoryQuery } from "./queryHooks";
+import { useSeismicCubeMetaListQuery } from "./queryHooks";
 import { State } from "./state";
 import { SeismicAddress } from "./types";
-import { SeismicCubeDirectory, TimeType } from "./utils/seismicCubeDirectory";
+import { SeismicCubeMetaDirectory, TimeType } from "./utils/seismicCubeDirectory";
 
 const TimeTypeEnumToSurveyTypeStringMapping = {
     [TimeType.TimePoint]: "3D",
@@ -38,14 +38,19 @@ const enum SeismicDataSource {
     OBSERVED = "Observed",
 }
 
+// To be a variable in the future?
+const WELLBORE_TYPE = "smda";
+
+//
+const EXTENSION_LIMITS = { min: 100, max: 100000 }; // Min/max extension in meters outside both sides of the well path [m]
+const Z_SCALE_LIMITS = { min: 1, max: 100 }; // Minimum z-scale factor
+
 export function settings({ moduleContext, workbenchSession, workbenchServices }: ModuleFCProps<State>) {
     const syncedSettingKeys = moduleContext.useSyncedSettingKeys();
     const syncHelper = new SyncSettingsHelper(syncedSettingKeys, workbenchServices);
     const syncedValueEnsembles = syncHelper.useValue(SyncSettingKey.ENSEMBLE, "global.syncValue.ensembles");
     const ensembleSet = useEnsembleSet(workbenchSession);
     const statusWriter = useSettingsStatusWriter(moduleContext);
-
-    const wellboreType = "smda";
 
     const setSeismicAddress = moduleContext.useSetStoreValue("seismicAddress");
     const setWellboreAddress = moduleContext.useSetStoreValue("wellboreAddress");
@@ -68,23 +73,23 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
     }
 
     // Queries
-    const wellHeadersQuery = useGetWellHeaders(computedEnsembleIdent?.getCaseUuid());
-    const seismicCubeDirectoryQuery = useSeismicCubeDirectoryQuery(
+    const wellHeadersQuery = useWellHeadersQuery(computedEnsembleIdent?.getCaseUuid());
+    const seismicCubeMetaListQuery = useSeismicCubeMetaListQuery(
         computedEnsembleIdent?.getCaseUuid(),
         computedEnsembleIdent?.getEnsembleName()
     );
     if (wellHeadersQuery.isError) {
         statusWriter.addError("Error loading well headers");
     }
-    if (seismicCubeDirectoryQuery.isError) {
-        statusWriter.addError("Error loading seismic directory");
+    if (seismicCubeMetaListQuery.isError) {
+        statusWriter.addError("Error loading seismic cube meta list");
     }
 
     // Handling well headers query
     const syncedWellBore = syncHelper.useValue(SyncSettingKey.WELLBORE, "global.syncValue.wellBore");
     const availableWellboreList: Wellbore[] =
         wellHeadersQuery.data?.map((wellbore) => ({
-            type: wellboreType,
+            type: WELLBORE_TYPE,
             uwi: wellbore.unique_wellbore_identifier,
             uuid: wellbore.wellbore_uuid,
         })) || [];
@@ -98,10 +103,10 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
         setSelectedWellboreAddress(computedWellboreAddress);
     }
 
-    // Handling seismic cube directory query
-    const seismicCubeDirectory = seismicCubeDirectoryQuery.data
-        ? new SeismicCubeDirectory({
-              seismicCubeMetaArray: seismicCubeDirectoryQuery.data,
+    // Create seismic cube directory
+    const seismicCubeMetaDirectory = seismicCubeMetaListQuery.data
+        ? new SeismicCubeMetaDirectory({
+              seismicCubeMetaList: seismicCubeMetaListQuery.data,
               timeType: surveyTimeType,
               useObservedSeismicCubes: isObserved,
           })
@@ -109,20 +114,20 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
 
     const [selectedSeismicAttribute, setSelectedSeismicAttribute] = useValidState<string | null>(
         null,
-        seismicCubeDirectory?.getAttributeNames() ?? []
+        seismicCubeMetaDirectory?.getAttributeNames() ?? []
     );
     const [selectedTime, setSelectedTime] = useValidState<string | null>(
         null,
-        seismicCubeDirectory?.getTimeOrIntervalStrings() ?? []
+        seismicCubeMetaDirectory?.getTimeOrIntervalStrings() ?? []
     );
 
-    const seismicAttributeOptions = seismicCubeDirectory
-        ? seismicCubeDirectory.getAttributeNames().map((attribute) => {
+    const seismicAttributeOptions = seismicCubeMetaDirectory
+        ? seismicCubeMetaDirectory.getAttributeNames().map((attribute) => {
               return { label: attribute, value: attribute };
           })
         : [];
-    const timeOptions = seismicCubeDirectory
-        ? createOptionsFromTimeOrIntervalStrings(seismicCubeDirectory.getTimeOrIntervalStrings())
+    const timeOptions = seismicCubeMetaDirectory
+        ? createOptionsFromTimeOrIntervalStrings(seismicCubeMetaDirectory.getTimeOrIntervalStrings())
         : [];
 
     React.useEffect(
@@ -199,22 +204,18 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
 
         if (!wellUwi) return;
 
-        const newWellboreAddress: Wellbore = { type: wellboreType, uuid: wellboreUuid, uwi: wellUwi };
+        const newWellboreAddress: Wellbore = { type: WELLBORE_TYPE, uuid: wellboreUuid, uwi: wellUwi };
         setSelectedWellboreAddress(newWellboreAddress);
         syncHelper.publishValue(SyncSettingKey.WELLBORE, "global.syncValue.wellBore", newWellboreAddress);
     }
 
     function handleExtensionChange(event: React.ChangeEvent<HTMLInputElement>) {
         const newExtension = parseInt(event.target.value, 10);
-        if (newExtension >= 0) {
-            setExtension(newExtension);
-        }
+        setExtension(newExtension);
     }
     function handleZScaleChange(event: React.ChangeEvent<HTMLInputElement>) {
         const newZScale = parseInt(event.target.value, 10);
-        if (newZScale >= 0) {
-            setZScale(newZScale);
-        }
+        setZScale(newZScale);
     }
 
     return (
@@ -294,7 +295,7 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
                         />
                     </Label>
                     <ApiStateWrapper
-                        apiResult={seismicCubeDirectoryQuery}
+                        apiResult={seismicCubeMetaListQuery}
                         errorComponent={"Error loading seismic directory"}
                         loadingComponent={<CircularProgress />}
                     >
@@ -321,10 +322,22 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
             </CollapsibleGroup>
             <CollapsibleGroup title="Intersection Settings" expanded={false}>
                 <Label text="Extension">
-                    <Input type={"number"} value={extension} onChange={handleExtensionChange} />
+                    <Input
+                        type={"number"}
+                        min={EXTENSION_LIMITS.min}
+                        max={EXTENSION_LIMITS.max}
+                        value={extension}
+                        onChange={handleExtensionChange}
+                    />
                 </Label>
                 <Label text="Z-scale">
-                    <Input type={"number"} value={zScale} onChange={handleZScaleChange} />
+                    <Input
+                        type={"number"}
+                        min={Z_SCALE_LIMITS.min}
+                        max={Z_SCALE_LIMITS.max}
+                        value={zScale}
+                        onChange={handleZScaleChange}
+                    />
                 </Label>
             </CollapsibleGroup>
         </div>
@@ -353,10 +366,35 @@ function createOptionsFromTimeOrIntervalStrings(timeOrIntervalStrings: string[])
     if (timeOrIntervalStrings.length == 0) {
         return [];
     }
-    // '2018-01-01T00:00:00.000Z--2019-07-01T00:00:00.000Z' to '2018-01-01--2019-07-01'
+
+    // '2018-01-01T00:00:00.000/2019-07-01T00:00:00.000' to '2018-01-01/2019-07-01'
     const options = timeOrIntervalStrings.map((elm) => {
-        const date = elm.replaceAll("T00:00:00.000Z", "");
-        return { label: date, value: elm };
+        const isInterval = elm.includes("/");
+        return { value: elm, label: isInterval ? isoIntervalStringToDateLabel(elm) : isoStringToDateLabel(elm) };
     });
     return options;
+}
+
+/**
+ * Extracts the date substring from an ISO string
+ *
+ * Input ISO string format: '2018-01-01T00:00:00.000'
+ * Returns: '2018-01-01'
+ */
+function isoStringToDateLabel(inputIsoString: string): string {
+    const date = inputIsoString.split("T")[0];
+    return `${date}`;
+}
+
+/**
+ * Extracts interval date substring from an ISO string
+ *
+ * Input ISO string format: '2018-01-01T00:00:00.000/2019-07-01T00:00:00.000'
+ * Returns: '2018-01-01/2019-07-01'
+ */
+function isoIntervalStringToDateLabel(inputIsoIntervalString: string): string {
+    const [start, end] = inputIsoIntervalString.split("/");
+    const startDate = start.split("T")[0];
+    const endDate = end.split("T")[0];
+    return `${startDate}/${endDate}`;
 }

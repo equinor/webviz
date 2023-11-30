@@ -6,7 +6,7 @@ import { ModuleFCProps } from "@framework/Module";
 import { useViewStatusWriter } from "@framework/StatusWriter";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { ColorScaleGradientType } from "@lib/utils/ColorScale";
-import { useGetWellTrajectories } from "@modules/_shared/WellBore/queryHooks";
+import { useWellTrajectoriesQuery } from "@modules/_shared/WellBore/queryHooks";
 import { ContentError } from "@modules/_shared/components/ContentMessage";
 
 import { isEqual } from "lodash";
@@ -24,7 +24,7 @@ import {
 import {
     SeismicSliceImageOptions,
     SeismicSliceImageStatus,
-    useGenerateSeismicSliceImage,
+    useGenerateSeismicSliceImageData,
 } from "./utils/esvIntersectionHooks";
 
 export const view = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>) => {
@@ -64,7 +64,7 @@ export const view = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
     // Async generating seismic slice image
     const [generateSeismicSliceImageOptions, setGenerateSeismicSliceImageOptions] =
         React.useState<SeismicSliceImageOptions | null>(null);
-    const generateSeismicSliceImageHook = useGenerateSeismicSliceImage(generateSeismicSliceImageOptions);
+    const generatedSeismicSliceImageData = useGenerateSeismicSliceImageData(generateSeismicSliceImageOptions);
 
     React.useEffect(function initializeEsvIntersectionController() {
         if (esvIntersectionContainerRef.current) {
@@ -82,21 +82,20 @@ export const view = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
             esvIntersectionControllerRef.current.zoomPanHandler.zFactor = zScale;
         }
         return () => {
-            console.debug("controller destroyed");
             esvIntersectionControllerRef.current?.destroy();
         };
     }, []);
 
     // Get well trajectories query
-    const getWellTrajectoriesQuery = useGetWellTrajectories(wellboreAddress ? [wellboreAddress.uuid] : undefined);
-    if (getWellTrajectoriesQuery.isError) {
+    const wellTrajectoriesQuery = useWellTrajectoriesQuery(wellboreAddress ? [wellboreAddress.uuid] : undefined);
+    if (wellTrajectoriesQuery.isError) {
         statusWriter.addError("Error loading well trajectories");
     }
 
     // Use first trajectory and create polyline for seismic fence query, and extended wellbore trajectory for generating seismic fence image
     let candidateSeismicFencePolyline = seismicFencePolyline;
-    if (getWellTrajectoriesQuery.data && getWellTrajectoriesQuery.data.length !== 0) {
-        const trajectoryXyzPoints = makeTrajectoryXyzPointsFromWellboreTrajectory(getWellTrajectoriesQuery.data[0]);
+    if (wellTrajectoriesQuery.data && wellTrajectoriesQuery.data.length !== 0) {
+        const trajectoryXyzPoints = makeTrajectoryXyzPointsFromWellboreTrajectory(wellTrajectoriesQuery.data[0]);
         const newExtendedWellboreTrajectory = makeExtendedTrajectoryFromTrajectoryXyzPoints(
             trajectoryXyzPoints,
             extension
@@ -175,37 +174,37 @@ export const view = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
 
         if (
             generateSeismicSliceImageOptions &&
-            generateSeismicSliceImageHook.synchedOptions &&
-            generateSeismicSliceImageHook.image &&
-            generateSeismicSliceImageHook.status === SeismicSliceImageStatus.SUCCESS
+            generatedSeismicSliceImageData.synchedOptions &&
+            generatedSeismicSliceImageData.image &&
+            generatedSeismicSliceImageData.status === SeismicSliceImageStatus.SUCCESS
         ) {
             addSeismicLayer(esvIntersectionControllerRef.current, {
-                curtain: generateSeismicSliceImageHook.synchedOptions.trajectoryXyPoints,
-                xAxisOffset: generateSeismicSliceImageHook.synchedOptions.extension,
-                image: generateSeismicSliceImageHook.image,
-                dataValues: generateSeismicSliceImageHook.synchedOptions.dataValues,
-                yAxisValues: generateSeismicSliceImageHook.synchedOptions.yAxisValues,
+                curtain: generatedSeismicSliceImageData.synchedOptions.trajectoryXyPoints,
+                xAxisOffset: generatedSeismicSliceImageData.synchedOptions.extension,
+                image: generatedSeismicSliceImageData.image,
+                dataValues: generatedSeismicSliceImageData.synchedOptions.dataValues,
+                yAxisValues: generatedSeismicSliceImageData.synchedOptions.yAxisValues,
             });
         }
 
         // Update layout
-        esvIntersectionControllerRef.current.zoomPanHandler.zFactor = zScale;
+        esvIntersectionControllerRef.current.zoomPanHandler.zFactor = Math.max(1.0, zScale); // Prevent scaling to zero
         esvIntersectionControllerRef.current.adjustToSize(
             Math.max(0, wrapperDivSize.width),
             Math.max(0, wrapperDivSize.height - 100)
         );
     }
 
-    statusWriter.setLoading(getWellTrajectoriesQuery.isFetching || seismicFenceDataQuery.isFetching);
+    statusWriter.setLoading(wellTrajectoriesQuery.isFetching || seismicFenceDataQuery.isFetching);
     return (
         <div ref={wrapperDivRef} className="relative w-full h-full">
-            {seismicFenceDataQuery.isError && getWellTrajectoriesQuery.isError ? (
+            {seismicFenceDataQuery.isError && wellTrajectoriesQuery.isError ? (
                 <ContentError>Error loading well trajectories and seismic fence data</ContentError>
             ) : seismicFenceDataQuery.isError ? (
                 <ContentError>Error loading seismic fence data</ContentError>
-            ) : getWellTrajectoriesQuery.isError ? (
+            ) : wellTrajectoriesQuery.isError ? (
                 <ContentError>Error loading well trajectories</ContentError>
-            ) : generateSeismicSliceImageHook.status === SeismicSliceImageStatus.ERROR ? (
+            ) : generatedSeismicSliceImageData.status === SeismicSliceImageStatus.ERROR ? (
                 <ContentError>Error generating seismic slice image</ContentError>
             ) : (
                 <div ref={esvIntersectionContainerRef}></div>
