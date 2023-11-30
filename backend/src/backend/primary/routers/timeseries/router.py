@@ -59,6 +59,21 @@ async def get_realizations_vector_data(
     # !!!!!
     # !!!!!
     # !!!!!
+    # detail = { 
+    #     "error": {
+    #         "code": "string",
+    #         "message": "string",
+    #         "innererror": { 
+    #             "code": "string"
+    #         },
+    #         "details": []
+    #     }
+    # }
+    # raise HTTPException(status_code=404, detail=detail)
+
+    # !!!!!
+    # !!!!!
+    # !!!!!
     dummy_table, dummy_meta_list = await access.get_single_real_vectors_table_async(
         vector_names=[vector_name],
         resampling_frequency=sumo_freq,

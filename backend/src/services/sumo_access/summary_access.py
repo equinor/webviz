@@ -166,12 +166,12 @@ class SummaryAccess(SumoEnsemble):
         realization: int,
     ) -> Tuple[pa.Table, List[VectorMetadata]]:
         """
-        Get pyarrow.Table containing values for the specified vector and the specified realization.
+        Get pyarrow.Table containing values for the specified vectors and the single specified realization.
         This function will fetch per-realization summary data from Sumo, thereby downloading data only for the
         specified realization, BUT it will download all the vector columns in the process.
-        The returned table will always contain a 'DATE' column in addition to the requested vector.
+        The returned table will always contain a 'DATE' column in addition to the requested vectors.
         The 'DATE' column will be of type timestamp[ms].
-        The vector column will be of type float32.
+        The vector columns will be of type float32.
         If `resampling_frequency` is None, the data will be returned with full/raw resolution.
         """
         if not vector_names:
