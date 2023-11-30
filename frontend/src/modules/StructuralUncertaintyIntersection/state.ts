@@ -1,15 +1,10 @@
 import { Wellbore } from "@framework/Wellbore";
 
-export type SurfaceSetSpec = {
-    caseUuid: string;
-    ensembleName: string;
-    names: string[];
-    attribute: string;
-    realizationNums: number[] | null;
-};
+import { IntersectionSettings, RealizationsSurfaceSetSpec, StatisticalSurfaceSetSpec } from "./types";
+
 export interface State {
     wellboreAddress: Wellbore | null;
-    surfaceSetSpec: SurfaceSetSpec | null;
-    extension: number;
-    zScale: number;
+    realizationsSurfaceSetSpec: RealizationsSurfaceSetSpec | null;
+    statisticalSurfaceSetSpec: StatisticalSurfaceSetSpec | null;
+    intersectionSettings: IntersectionSettings;
 }

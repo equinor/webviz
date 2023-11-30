@@ -23,7 +23,7 @@ export type { EnsembleParameterDescription as EnsembleParameterDescription_api }
 export type { EnsembleScalarResponse as EnsembleScalarResponse_api } from "./models/EnsembleScalarResponse";
 export type { EnsembleSensitivity as EnsembleSensitivity_api } from "./models/EnsembleSensitivity";
 export type { EnsembleSensitivityCase as EnsembleSensitivityCase_api } from "./models/EnsembleSensitivityCase";
-export type { FencePolyline as FencePolyline_api } from "./models/FencePolyline";
+
 export type { FieldInfo as FieldInfo_api } from "./models/FieldInfo";
 export { Frequency as Frequency_api } from "./models/Frequency";
 export type { GraphUserPhoto as GraphUserPhoto_api } from "./models/GraphUserPhoto";

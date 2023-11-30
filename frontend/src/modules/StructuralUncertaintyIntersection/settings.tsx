@@ -1,6 +1,6 @@
 import React from "react";
 
-import { SurfaceAttributeType_api } from "@api";
+import { SurfaceAttributeType_api, SurfaceStatisticFunction_api } from "@api";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { ModuleFCProps } from "@framework/Module";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
@@ -10,6 +10,7 @@ import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { SingleEnsembleSelect } from "@framework/components/SingleEnsembleSelect";
 import { fixupEnsembleIdent, maybeAssignFirstSyncedEnsemble } from "@framework/utils/ensembleUiHelpers";
 import { ApiStateWrapper } from "@lib/components/ApiStateWrapper";
+import { Checkbox } from "@lib/components/Checkbox";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { Input } from "@lib/components/Input";
@@ -21,7 +22,11 @@ import { useWellHeadersQuery } from "@modules/_shared/WellBore";
 
 import { isEqual } from "lodash";
 
-import { State, SurfaceSetSpec } from "./state";
+import { IntersectionSettingsSelect } from "./components/intersectionSettings";
+import { RealizationsSelect } from "./components/realizationsSelect";
+import { TogglableMultiSelect } from "./components/togglableMultiSelect";
+import { State } from "./state";
+import { RealizationsSurfaceSetSpec, StatisticalSurfaceSetSpec } from "./types";
 
 export function settings({ moduleContext, workbenchSession, workbenchServices }: ModuleFCProps<State>) {
     const syncedSettingKeys = moduleContext.useSyncedSettingKeys();
@@ -33,22 +38,23 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
 
     const wellboreType = "smda";
 
-    const setSurfaceSetSpec = moduleContext.useSetStoreValue("surfaceSetSpec");
+    const setStatisticalSurfaceSetSpec = moduleContext.useSetStoreValue("statisticalSurfaceSetSpec");
+    const setRealizationsSurfaceSetSpec = moduleContext.useSetStoreValue("realizationsSurfaceSetSpec");
+
     const setWellboreAddress = moduleContext.useSetStoreValue("wellboreAddress");
-    const [extension, setExtension] = moduleContext.useStoreState("extension");
-    const [zScale, setZScale] = moduleContext.useStoreState("zScale");
+
+    const [intersectionSettings, setIntersectionSettings] = moduleContext.useStoreState("intersectionSettings");
 
     const [selectedEnsembleIdent, setSelectedEnsembleIdent] = React.useState<EnsembleIdent | null>(null);
 
     const [selectedWellboreAddress, setSelectedWellboreAddress] = React.useState<Wellbore | null>(
         moduleContext.useStoreValue("wellboreAddress")
     );
-    console.log(selectedWellboreAddress, "settings");
 
     const candidateEnsembleIdent = maybeAssignFirstSyncedEnsemble(selectedEnsembleIdent, syncedValueEnsembles);
 
     const computedEnsembleIdent = fixupEnsembleIdent(candidateEnsembleIdent, ensembleSet);
-    console.log(syncedValueEnsembles, computedEnsembleIdent);
+
     if (computedEnsembleIdent && !computedEnsembleIdent.equals(selectedEnsembleIdent)) {
         setSelectedEnsembleIdent(computedEnsembleIdent);
     }
@@ -57,19 +63,6 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
         : null;
     const [selectedReals, setSelectedReals] = React.useState<number[] | null>(null);
 
-    if (availableReals && selectedReals) {
-        const newSelectedReals = selectedReals.filter((real) => availableReals.includes(real));
-        if (newSelectedReals.length === 0) {
-            setSelectedReals(availableReals.map((real) => real));
-        } else if (!isEqual(newSelectedReals, selectedReals)) {
-            setSelectedReals(newSelectedReals);
-        }
-    } else {
-        if (availableReals && !selectedReals) {
-            setSelectedReals(availableReals.map((real) => real));
-        }
-    }
-    console.log(selectedReals);
     // Queries
     const wellHeadersQuery = useWellHeadersQuery(computedEnsembleIdent?.getCaseUuid());
     const surfaceDirectoryQuery = useSurfaceDirectoryQuery(
@@ -101,7 +94,6 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
         setSelectedWellboreAddress(computedWellboreAddress);
     }
 
-    // Handling seismic cube directory query
     const surfaceDirectory = surfaceDirectoryQuery.data
         ? new SurfaceDirectory({
               surfaceMetas: surfaceDirectoryQuery.data,
@@ -114,45 +106,53 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
         null,
         surfaceDirectory?.getAttributeNames(null) ?? []
     );
-    const [selectedSurfaceNames, setSelectedSurfaceNames] = React.useState<string[] | null>(null);
+    const [statisticalSurfaceNames, setStatisticalSurfaceNames] = React.useState<string[] | null>(null);
+    const [realizationsSurfaceNames, setRealizationsSurfaceNames] = React.useState<string[] | null>(null);
     const availableSurfaceNames = surfaceDirectory ? surfaceDirectory.getSurfaceNames(selectedSurfaceAttribute) : null;
-    if (availableSurfaceNames && selectedSurfaceNames) {
-        const newSelectedSurfaceNames = selectedSurfaceNames.filter((name) => availableSurfaceNames.includes(name));
-        if (newSelectedSurfaceNames.length === 0) {
-            setSelectedSurfaceNames(availableSurfaceNames);
-        } else if (!isEqual(newSelectedSurfaceNames, selectedSurfaceNames)) {
-            setSelectedSurfaceNames(newSelectedSurfaceNames);
-        }
-    }
 
     const surfaceAttrOptions = surfaceDirectory
         ? surfaceDirectory.getAttributeNames(null).map((attribute) => {
               return { label: attribute, value: attribute };
           })
         : [];
-    const surfaceNameOptions = surfaceDirectory
-        ? surfaceDirectory.getSurfaceNames(selectedSurfaceAttribute).map((surfaceName) => {
-              return { label: surfaceName, value: surfaceName };
-          })
-        : [];
 
     React.useEffect(
-        function sendSurfaceSetSpecToView() {
-            let surfaceSetSpec: SurfaceSetSpec | null = null;
-            if (computedEnsembleIdent && selectedSurfaceAttribute && selectedSurfaceNames) {
+        function propagateStatisticalSurfaceSetSpecToView() {
+            let surfaceSetSpec: StatisticalSurfaceSetSpec | null = null;
+            if (computedEnsembleIdent && selectedSurfaceAttribute && statisticalSurfaceNames) {
                 surfaceSetSpec = {
                     caseUuid: computedEnsembleIdent.getCaseUuid(),
                     ensembleName: computedEnsembleIdent.getEnsembleName(),
                     realizationNums: selectedReals,
                     attribute: selectedSurfaceAttribute,
-                    names: selectedSurfaceNames,
+                    names: statisticalSurfaceNames,
+                    statistics: [
+                        SurfaceStatisticFunction_api.MEAN,
+                        SurfaceStatisticFunction_api.MIN,
+                        SurfaceStatisticFunction_api.MAX,
+                    ],
                 };
             }
-            setSurfaceSetSpec(surfaceSetSpec);
+            setStatisticalSurfaceSetSpec(surfaceSetSpec);
         },
-        [computedEnsembleIdent, selectedSurfaceAttribute, selectedSurfaceNames, selectedReals]
+        [computedEnsembleIdent, selectedSurfaceAttribute, statisticalSurfaceNames, selectedReals]
     );
-
+    React.useEffect(
+        function propagateRealizationsSurfaceSetSpecToView() {
+            let surfaceSetSpec: RealizationsSurfaceSetSpec | null = null;
+            if (computedEnsembleIdent && selectedSurfaceAttribute && realizationsSurfaceNames) {
+                surfaceSetSpec = {
+                    caseUuid: computedEnsembleIdent.getCaseUuid(),
+                    ensembleName: computedEnsembleIdent.getEnsembleName(),
+                    realizationNums: selectedReals,
+                    attribute: selectedSurfaceAttribute,
+                    names: realizationsSurfaceNames,
+                };
+            }
+            setRealizationsSurfaceSetSpec(surfaceSetSpec);
+        },
+        [computedEnsembleIdent, selectedSurfaceAttribute, realizationsSurfaceNames, selectedReals]
+    );
     React.useEffect(
         function propagateWellBoreAddressToView() {
             setWellboreAddress(selectedWellboreAddress);
@@ -192,19 +192,6 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
         syncHelper.publishValue(SyncSettingKey.WELLBORE, "global.syncValue.wellBore", newWellboreAddress);
     }
 
-    function handleExtensionChange(event: React.ChangeEvent<HTMLInputElement>) {
-        const newExtension = parseInt(event.target.value, 10);
-        if (newExtension >= 0) {
-            setExtension(newExtension);
-        }
-    }
-    function handleZScaleChange(event: React.ChangeEvent<HTMLInputElement>) {
-        const newZScale = parseInt(event.target.value, 10);
-        if (newZScale >= 0) {
-            setZScale(newZScale);
-        }
-    }
-
     return (
         <div className="flex flex-col gap-4 overflow-y-auto">
             <CollapsibleGroup title="Ensemble and Realization" expanded={true}>
@@ -216,17 +203,11 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
                             onChange={handleEnsembleSelectionChange}
                         />
                     </Label>
-                    <Label text="Realizations">
-                        <Select
-                            options={availableReals?.map((real) => ({ label: `${real}`, value: `${real}` })) ?? []}
-                            value={selectedReals ? selectedReals.map((real) => `${real}`) : []}
-                            onChange={(values: string[]) => {
-                                setSelectedReals(values.map((value) => parseInt(value, 10)));
-                            }}
-                            size={8}
-                            multiple={true}
-                        />
-                    </Label>
+
+                    <RealizationsSelect
+                        availableRealizations={availableReals?.map((real) => real) ?? []}
+                        onChange={setSelectedReals}
+                    />
                 </div>
             </CollapsibleGroup>
             <CollapsibleGroup expanded={true} title="Well trajectory">
@@ -251,7 +232,7 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
                     </Label>
                 </ApiStateWrapper>
             </CollapsibleGroup>
-            <CollapsibleGroup title="Surface">
+            <CollapsibleGroup title="Surfaces">
                 <ApiStateWrapper
                     apiResult={surfaceDirectoryQuery}
                     errorComponent={"Error loading seismic directory"}
@@ -266,25 +247,25 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
                                 onChange={handleSurfaceAttributeChange}
                             />
                         </Label>
-                        <Label text="Surface name">
-                            <Select
-                                options={surfaceNameOptions}
-                                value={selectedSurfaceNames ? selectedSurfaceNames : []}
-                                onChange={setSelectedSurfaceNames}
-                                size={8}
-                                multiple={true}
-                            />
-                        </Label>
+                        <TogglableMultiSelect
+                            values={availableSurfaceNames ?? []}
+                            label="Show statistical surfaces"
+                            onChange={setStatisticalSurfaceNames}
+                        />
+
+                        <TogglableMultiSelect
+                            values={availableSurfaceNames ?? []}
+                            label="Show realization surfaces"
+                            onChange={setRealizationsSurfaceNames}
+                        />
                     </div>
                 </ApiStateWrapper>
             </CollapsibleGroup>
             <CollapsibleGroup title="Intersection Settings" expanded={false}>
-                <Label text="Extension">
-                    <Input type={"number"} value={extension} onChange={handleExtensionChange} />
-                </Label>
-                <Label text="Z-scale">
-                    <Input type={"number"} value={zScale} onChange={handleZScaleChange} />
-                </Label>
+                <IntersectionSettingsSelect
+                    intersectionSettings={intersectionSettings}
+                    onChange={setIntersectionSettings}
+                />
             </CollapsibleGroup>
         </div>
     );

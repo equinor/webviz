@@ -144,6 +144,7 @@ class SurfaceAccess(SumoEnsemble):
         name: str,
         attribute: str,
         time_or_interval_str: Optional[str] = None,
+        realizations: Optional[List[int]] = None,
     ) -> Optional[xtgeo.RegularSurface]:
         """
         Compute statistic and return surface data
@@ -179,15 +180,16 @@ class SurfaceAccess(SumoEnsemble):
             name=name,
             tagname=attribute,
             time=time_filter,
+            realization=realizations,
         )
-
+        if not realizations:
+            realizations = await surface_collection.realizations_async
         surf_count = await surface_collection.length_async()
         if surf_count == 0:
             LOGGER.warning(f"No statistical surfaces found in Sumo for {addr_str}")
             return None
         et_locate_ms = timer.lap_ms()
 
-        realizations = await surface_collection.realizations_async
         et_collect_reals_ms = timer.lap_ms()
 
         xtgeo_surf = await _compute_statistical_surface_async(statistic_function, surface_collection)

@@ -2,6 +2,7 @@
 /* tslint:disable */
 /* eslint-disable */
 import type { Body_well_intersection_reals_from_user_session } from '../models/Body_well_intersection_reals_from_user_session';
+import type { Body_well_intersection_statistics } from '../models/Body_well_intersection_statistics';
 import type { SurfaceData } from '../models/SurfaceData';
 import type { SurfaceIntersectionPoints } from '../models/SurfaceIntersectionPoints';
 import type { SurfaceMeta } from '../models/SurfaceMeta';
@@ -210,6 +211,26 @@ export class SurfaceService {
         return this.httpRequest.request({
             method: 'POST',
             url: '/surface/well_intersection_reals_from_user_session',
+            body: requestBody,
+            mediaType: 'application/json',
+            errors: {
+                422: `Validation Error`,
+            },
+        });
+    }
+
+    /**
+     * Well Intersection Statistics
+     * @param requestBody
+     * @returns SurfaceIntersectionPoints Successful Response
+     * @throws ApiError
+     */
+    public wellIntersectionStatistics(
+        requestBody: Body_well_intersection_statistics,
+    ): CancelablePromise<Array<SurfaceIntersectionPoints>> {
+        return this.httpRequest.request({
+            method: 'POST',
+            url: '/surface/well_intersection_statistics',
             body: requestBody,
             mediaType: 'application/json',
             errors: {

@@ -21,6 +21,8 @@ from src.backend.primary.user_session_proxy import proxy_to_user_session
 from . import converters
 from . import schemas
 
+import numpy as np
+
 LOGGER = logging.getLogger(__name__)
 
 router = APIRouter()
@@ -215,8 +217,92 @@ async def get_property_surface_resampled_to_statistical_static_surface(
 @router.post("/well_intersection_reals_from_user_session")
 async def well_intersection_reals_from_user_session(
     request: Request,
-    polyline: schemas.FencePolyline = Body(embed=True),
+    ensemble_ident: schemas.EnsembleIdent = Body(embed=True),
+    realizations_surface_set_spec: schemas.RealizationsSurfaceSetSpec = Body(embed=True),
+    surface_fence_spec: schemas.SurfaceFenceSpec = Body(embed=True),
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
 ) -> List[schemas.SurfaceIntersectionPoints]:
     response = await proxy_to_user_session(request, authenticated_user)
     return response
+
+
+@router.post("/well_intersection_statistics")
+async def well_intersection_statistics(
+    request: Request,
+    ensemble_ident: schemas.EnsembleIdent = Body(embed=True),
+    statistical_surface_set_spec: schemas.StatisticalSurfaceSetSpec = Body(embed=True),
+    surface_fence_spec: schemas.SurfaceFenceSpec = Body(embed=True),
+    authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
+) -> List[schemas.SurfaceIntersectionPoints]:
+    access = await SurfaceAccess.from_case_uuid(
+        authenticated_user.get_sumo_access_token(), ensemble_ident.case_uuid, ensemble_ident.ensemble_name
+    )
+    surfaces = []
+
+    async def fetch_surface(statistic, surface_name):
+        surface = await access.get_statistical_surface_data_async(
+            statistic_function=StatisticFunction.from_string_value(statistic),
+            name=surface_name,
+            attribute=statistical_surface_set_spec.surface_attribute,
+            realizations=statistical_surface_set_spec.realization_nums,
+        )
+        surface.name = surface_name + "_" + statistic
+        return surface
+
+    async def fetch_all_surfaces():
+        tasks = []
+        for statistic in statistical_surface_set_spec.statistic_function:
+            for surface_name in statistical_surface_set_spec.surface_names:
+                # Create a task for each combination of statistic and surface_name
+                task = fetch_surface(statistic, surface_name)
+                tasks.append(task)
+
+        # Run all the tasks concurrently
+        tmp_surfaces = await asyncio.gather(*tasks)
+        return tmp_surfaces
+
+    # for statistic in statistical_surface_set_spec.statistic_function:
+    #     for surface_name in statistical_surface_set_spec.surface_names:
+    #         surface = await access.get_statistical_surface_data_async(
+    #             statistic_function=StatisticFunction.from_string_value(statistic),
+    #             name=surface_name,
+    #             attribute=statistical_surface_set_spec.surface_attribute,
+    #             realizations=statistical_surface_set_spec.realization_nums,
+    #         )
+    #         surface.name = surface_name + "_" + statistic
+    #         surfaces.append(surface)
+    surfaces = await fetch_all_surfaces()
+
+    fence_arr = np.array(
+        [
+            surface_fence_spec.x_points,
+            surface_fence_spec.y_points,
+            np.zeros(len(surface_fence_spec.y_points)),
+            surface_fence_spec.cum_length,
+        ]
+    ).T
+    intersections = await make_intersections(surfaces, fence_arr)
+    print(intersections)
+    return intersections
+
+
+from concurrent.futures import ThreadPoolExecutor
+import asyncio
+
+
+async def make_intersections(surfaces, fence_arr):
+    def make_intersection(surf):
+        line = surf.get_randomline(fence_arr)
+        intersection = schemas.SurfaceIntersectionPoints(
+            name=f"{surf.name}",
+            cum_length=line[:, 0].tolist(),
+            z_array=line[:, 1].tolist(),
+        )
+        return intersection
+
+    loop = asyncio.get_running_loop()
+
+    with ThreadPoolExecutor() as executor:
+        tasks = [loop.run_in_executor(executor, make_intersection, surf) for surf in surfaces]
+        intersections = await asyncio.gather(*tasks)
+    return intersections

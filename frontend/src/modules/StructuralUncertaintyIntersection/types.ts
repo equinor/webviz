@@ -1,3 +1,6 @@
+import { SurfaceStatisticFunction_api } from "@api";
+import { EnsembleIdent } from "@framework/EnsembleIdent";
+
 export type SeismicAddress = {
     caseUuid: string;
     ensemble: string;
@@ -5,4 +8,24 @@ export type SeismicAddress = {
     attribute: string;
     observed: boolean;
     timeString?: string;
+};
+export type RealizationsSurfaceSetSpec = {
+    caseUuid: string;
+    ensembleName: string;
+    names: string[];
+    attribute: string;
+    realizationNums: number[] | null;
+};
+export type StatisticalSurfaceSetSpec = {
+    caseUuid: string;
+    ensembleName: string;
+    names: string[];
+    attribute: string;
+    realizationNums: number[] | null;
+    statistics: SurfaceStatisticFunction_api[];
+};
+
+export type IntersectionSettings = {
+    extension: number;
+    zScale: number;
 };

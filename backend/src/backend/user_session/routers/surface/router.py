@@ -71,15 +71,21 @@ async def well_intersection_reals_from_user_session(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
 ) -> List[schemas.SurfaceIntersectionPoints]:
     body = await request.json()
-    polyline = schemas.FencePolyline(**body.get("polyline"))
+
+    ensemble_ident = schemas.EnsembleIdent(**body.get("ensemble_ident"))
+    realization_surface_set_spec = schemas.RealizationsSurfaceSetSpec(**body.get("realizations_surface_set_spec"))
+    surface_fence_spec = schemas.SurfaceFenceSpec(**body.get("surface_fence_spec"))
     timer = PerfTimer()
     # Config
-    case_uuid = polyline.case_uuid
-    snames = polyline.names
-    sattr = polyline.attribute
-    ensemble_name = polyline.ensemble_name
+    case_uuid = ensemble_ident.case_uuid
+    snames = realization_surface_set_spec.surface_names
+    sattr = realization_surface_set_spec.surface_attribute
+    ensemble_name = ensemble_ident.ensemble_name
+    realization_nums = realization_surface_set_spec.realization_nums
     # Get uuids
-    uuids = get_uuids(case_uuid, ensemble_name, polyline, snames, sattr, authenticated_user.get_sumo_access_token())
+    uuids = get_uuids(
+        case_uuid, ensemble_name, realization_nums, snames, sattr, authenticated_user.get_sumo_access_token()
+    )
     elapsed_meta = timer.lap_ms()
 
     # Check if cached
@@ -111,10 +117,10 @@ async def well_intersection_reals_from_user_session(
     # Intersect
     fence_arr = np.array(
         [
-            polyline.x_points,
-            polyline.y_points,
-            np.zeros(len(polyline.y_points)),
-            polyline.cum_length,
+            surface_fence_spec.x_points,
+            surface_fence_spec.y_points,
+            np.zeros(len(surface_fence_spec.y_points)),
+            surface_fence_spec.cum_length,
         ]
     ).T
     intersections = await make_intersections(surfaces, fence_arr)
@@ -179,7 +185,7 @@ async def make_intersections(surfaces, fence_arr):
     return intersections
 
 
-def get_uuids(case_uuid, ensemble_name, polyline, snames, sattr, bearer_token):
+def get_uuids(case_uuid, ensemble_name, realization_nums, snames, sattr, bearer_token):
     sumo_client = SumoClient(env="prod", token=bearer_token, interactive=False)
     case_collection = CaseCollection(sumo_client).filter(uuid=case_uuid)
     case = case_collection[0]
@@ -187,6 +193,6 @@ def get_uuids(case_uuid, ensemble_name, polyline, snames, sattr, bearer_token):
         iteration=ensemble_name,
         name=snames,
         tagname=sattr,
-        realization=polyline.realization_nums,
+        realization=realization_nums,
     )
     return [surf.uuid for surf in surface_collection]

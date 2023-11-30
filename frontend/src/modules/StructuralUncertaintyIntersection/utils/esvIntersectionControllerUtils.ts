@@ -101,7 +101,10 @@ export function addSeismicLayer(
 export function addSurfaceLayers(
     controller: Controller,
     surfaceSetIPoints: SurfaceIntersectionPoints_api[],
-    pixiContext: PixiRenderApplication
+    pixiContext: PixiRenderApplication,
+    layerName: string,
+    color: string,
+    width: number
 ) {
     const surfaceIndicesWithLabels: { name: string; idx: number }[] = [];
     surfaceSetIPoints.forEach((surface, idx) => {
@@ -117,19 +120,19 @@ export function addSurfaceLayers(
                 data: surface.z_array.map((z: number, idx) => {
                     return [surface.cum_length[idx] - 100, z];
                 }),
-                color: "black",
+                color: color,
                 id: surface.name,
                 label: surfaceIndicesWithLabels.find((surfaceWithLabel) => surfaceWithLabel.idx === idx)?.name ?? "",
-                width: 4,
+                width: width,
             };
         }),
     };
-    const geomodelLayer = new GeomodelLayerV2<SurfaceData>(pixiContext, "geomodel", {
+    const geomodelLayer = new GeomodelLayerV2<SurfaceData>(pixiContext, `${layerName}`, {
         order: 3,
         layerOpacity: 0.6,
         data: geolayerdata,
     });
-    const geomodelLabelsLayer = new GeomodelLabelsLayer<SurfaceData>("geomodellabels", {
+    const geomodelLabelsLayer = new GeomodelLabelsLayer<SurfaceData>(`${layerName}labels`, {
         order: 3,
         data: geolayerdata,
         maxFontSize: 16,

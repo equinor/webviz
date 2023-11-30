@@ -3,12 +3,12 @@
 /* eslint-disable */
 
 import type { EnsembleIdent } from './EnsembleIdent';
-import type { RealizationsSurfaceSetSpec } from './RealizationsSurfaceSetSpec';
+import type { StatisticalSurfaceSetSpec } from './StatisticalSurfaceSetSpec';
 import type { SurfaceFenceSpec } from './SurfaceFenceSpec';
 
-export type Body_well_intersection_reals_from_user_session = {
+export type Body_well_intersection_statistics = {
     ensemble_ident: EnsembleIdent;
-    realizations_surface_set_spec: RealizationsSurfaceSetSpec;
+    statistical_surface_set_spec: StatisticalSurfaceSetSpec;
     surface_fence_spec: SurfaceFenceSpec;
 };
 
