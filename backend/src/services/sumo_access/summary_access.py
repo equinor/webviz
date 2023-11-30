@@ -94,9 +94,10 @@ class SummaryAccess(SumoEnsemble):
             table = table.filter(mask)
 
             # Verify that we got data for all the requested realizations
-            missing_reals_list = detect_missing_realizations(table, requested_reals_arr)
-            if missing_reals_list:
-                raise ValueError(f"No data found for some of the requested realizations, {missing_reals_list=}")
+            # Wait a little before enabling this test until we have proper error propagation to client in place
+            # missing_reals_list = detect_missing_realizations(table, requested_reals_arr)
+            # if missing_reals_list:
+            #     raise ValueError(f"No data found for some of the requested realizations, {missing_reals_list=}")
 
         # Our assumption is that the table is segmented on REAL and that within each segment,
         # the DATE column is sorted. We may want to add some checks here to verify this assumption since the
@@ -445,9 +446,9 @@ async def _locate_single_real_sumo_table(case: Case, iteration_name: str, realiz
 
     table_names = await table_collection.names_async
     if len(table_names) == 0:
-        raise ValueError(f"No summary tables found for realization {realization}")
+        raise ValueError(f"No summary tables found for realization {realization=}")
     if len(table_names) > 1:
-        raise ValueError(f"Multiple summary tables found for realization {realization}, {table_names=}")
+        raise ValueError(f"Multiple summary tables found for realization {realization=}, {table_names=}")
 
     return await table_collection.getitem_async(0)
 
