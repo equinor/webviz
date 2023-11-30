@@ -8,10 +8,12 @@ import { Wellbore } from "@framework/Wellbore";
 import { Button } from "@lib/components/Button";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { ColorScaleGradientType } from "@lib/utils/ColorScale";
+import { usePolygonsDataQueryByAddress } from "@modules/_shared/Polygons";
 import { useFieldWellsTrajectoriesQuery } from "@modules/_shared/WellBore/queryHooks";
 import { useSurfaceDataQueryByAddress } from "@modules_shared/Surface";
 import { ViewAnnotation } from "@webviz/subsurface-viewer/dist/components/ViewAnnotation";
 
+import {  usePropertySurfaceDataByQueryAddress } from "./queryHooks";
 import {
     SurfaceMeta,
     createAxesLayer,

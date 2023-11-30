@@ -1,5 +1,6 @@
 import {
     StatisticFunction_api,
+    SummaryVectorDateObservation_api,
     VectorHistoricalData_api,
     VectorRealizationData_api,
     VectorStatisticData_api,
@@ -148,6 +149,62 @@ export function createHistoricalVectorTrace({
         yaxis: yaxis,
         xaxis: xaxis,
     };
+}
+
+/**
+    Utility function for creating traces for vector observations
+ */
+export type CreateVectorObservationTraceOptions = {
+    vectorObservations: Array<SummaryVectorDateObservation_api>;
+    color?: string;
+    yaxis?: string;
+    xaxis?: string;
+    legendGroup?: string;
+    showLegend?: boolean;
+    name?: string;
+    type?: "scatter" | "scattergl";
+};
+export function createVectorObservationsTraces({
+    vectorObservations,
+    color = "black",
+    yaxis = "y",
+    xaxis = "x",
+    legendGroup = "Observation",
+    showLegend = false,
+    name = undefined,
+    type = "scatter",
+}: CreateVectorObservationTraceOptions): Partial<TimeSeriesPlotData>[] {
+    // NB: "scattergl" does not include "+/- error" in the hover template `(%{x}, %{y})`, "scatter" does.
+
+    const traceName = name ? `Observation<br>${name}` : "Observation";
+    return vectorObservations.map((observation) => {
+        let hoverText = observation.label;
+        let hoverData = `(%{x}, %{y})<br>`;
+        if (observation.comment) {
+            hoverText += `: ${observation.comment}`;
+        }
+        if (type === "scattergl") {
+            hoverData = `(%{x}, %{y} ± ${observation.error})<br>`;
+        }
+
+        return {
+            name: traceName,
+            legendgroup: legendGroup,
+            x: [observation.date],
+            y: [observation.value],
+            marker: { color: color },
+            yaxis: yaxis,
+            xaxis: xaxis,
+            hovertemplate: hoverText ? `${hoverData}${hoverText}` : hoverData,
+            showlegend: showLegend,
+            type: type,
+            error_y: {
+                type: "constant",
+                value: observation.error,
+                visible: true,
+            },
+        };
+    });
 }
 
 /**

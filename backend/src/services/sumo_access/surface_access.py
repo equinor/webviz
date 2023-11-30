@@ -4,7 +4,7 @@ from typing import List, Optional
 
 import xtgeo
 from fmu.sumo.explorer import TimeFilter, TimeType
-from fmu.sumo.explorer.objects import SurfaceCollection
+from fmu.sumo.explorer.objects import SurfaceCollection, Surface
 
 from src.services.utils.perf_timer import PerfTimer
 from src.services.utils.statistic_function import StatisticFunction
@@ -17,7 +17,7 @@ LOGGER = logging.getLogger(__name__)
 
 
 class SurfaceAccess(SumoEnsemble):
-    async def get_surface_directory(self) -> List[SurfaceMeta]:
+    async def get_surface_directory_async(self) -> List[SurfaceMeta]:
         surface_collection: SurfaceCollection = self._case.surfaces.filter(
             iteration=self._iteration_name,
             aggregation=False,
@@ -68,7 +68,7 @@ class SurfaceAccess(SumoEnsemble):
 
         return surfs
 
-    def get_realization_surface_data(
+    async def get_realization_surface_data_async(
         self, real_num: int, name: str, attribute: str, time_or_interval_str: Optional[str] = None
     ) -> Optional[xtgeo.RegularSurface]:
         """
@@ -110,22 +110,35 @@ class SurfaceAccess(SumoEnsemble):
             time=time_filter,
         )
 
-        surf_count = len(surface_collection)
+        surf_count = await surface_collection.length_async()
         if surf_count == 0:
             LOGGER.warning(f"No realization surface found in Sumo for {addr_str}")
             return None
         if surf_count > 1:
             LOGGER.warning(f"Multiple ({surf_count}) surfaces found in Sumo for: {addr_str}. Returning first surface.")
 
-        sumo_surf = surface_collection[0]
-        byte_stream: BytesIO = sumo_surf.blob
-        xtgeo_surf = xtgeo.surface_from_file(byte_stream)
+        sumo_surf: Surface = await surface_collection.getitem_async(0)
+        et_locate_ms = timer.lap_ms()
 
-        LOGGER.debug(f"Got realization surface from Sumo in: {timer.elapsed_ms()}ms ({addr_str})")
+        byte_stream: BytesIO = await sumo_surf.blob_async
+        et_download_ms = timer.lap_ms()
+
+        xtgeo_surf = xtgeo.surface_from_file(byte_stream)
+        et_xtgeo_read_ms = timer.lap_ms()
+
+        size_mb = byte_stream.getbuffer().nbytes / (1024 * 1024)
+        LOGGER.debug(
+            f"Got realization surface from Sumo in: {timer.elapsed_ms()}ms ("
+            f"locate={et_locate_ms}ms, "
+            f"download={et_download_ms}ms, "
+            f"xtgeo_read={et_xtgeo_read_ms}ms) "
+            f"[{xtgeo_surf.ncol}x{xtgeo_surf.nrow}, {size_mb:.2f}MB] "
+            f"({addr_str})"
+        )
 
         return xtgeo_surf
 
-    def get_statistical_surface_data(
+    async def get_statistical_surface_data_async(
         self,
         statistic_function: StatisticFunction,
         name: str,
@@ -159,7 +172,6 @@ class SurfaceAccess(SumoEnsemble):
                     end=timestamp_arr[1],
                     exact=True,
                 )
-        et_get_case_ms = timer.lap_ms()
 
         surface_collection = self._case.surfaces.filter(
             iteration=self._iteration_name,
@@ -168,16 +180,17 @@ class SurfaceAccess(SumoEnsemble):
             tagname=attribute,
             time=time_filter,
         )
-        et_collect_surfaces_ms = timer.lap_ms()
 
-        surf_count = len(surface_collection)
+        surf_count = await surface_collection.length_async()
         if surf_count == 0:
             LOGGER.warning(f"No statistical surfaces found in Sumo for {addr_str}")
             return None
+        et_locate_ms = timer.lap_ms()
 
-        realizations = surface_collection.realizations
+        realizations = await surface_collection.realizations_async
+        et_collect_reals_ms = timer.lap_ms()
 
-        xtgeo_surf = _compute_statistical_surface(statistic_function, surface_collection)
+        xtgeo_surf = await _compute_statistical_surface_async(statistic_function, surface_collection)
         et_calc_stat_ms = timer.lap_ms()
 
         if not xtgeo_surf:
@@ -186,8 +199,8 @@ class SurfaceAccess(SumoEnsemble):
 
         LOGGER.debug(
             f"Calculated statistical surface using Sumo in: {timer.elapsed_ms()}ms ("
-            f"get_case={et_get_case_ms}ms, "
-            f"collect_surfaces={et_collect_surfaces_ms}ms, "
+            f"locate={et_locate_ms}ms, "
+            f"collect_reals={et_collect_reals_ms}ms, "
             f"calc_stat={et_calc_stat_ms}ms) "
             f"({addr_str} {len(realizations)=} )"
         )
@@ -199,22 +212,24 @@ class SurfaceAccess(SumoEnsemble):
         return addr_str
 
 
-def _compute_statistical_surface(statistic: StatisticFunction, surface_coll: SurfaceCollection) -> xtgeo.RegularSurface:
+async def _compute_statistical_surface_async(
+    statistic: StatisticFunction, surface_coll: SurfaceCollection
+) -> xtgeo.RegularSurface:
     xtgeo_surf: xtgeo.RegularSurface = None
     if statistic == StatisticFunction.MIN:
-        xtgeo_surf = surface_coll.min()
+        xtgeo_surf = await surface_coll.min_async()
     elif statistic == StatisticFunction.MAX:
-        xtgeo_surf = surface_coll.max()
+        xtgeo_surf = await surface_coll.max_async()
     elif statistic == StatisticFunction.MEAN:
-        xtgeo_surf = surface_coll.mean()
+        xtgeo_surf = await surface_coll.mean_async()
     elif statistic == StatisticFunction.P10:
-        xtgeo_surf = surface_coll.p10()
+        xtgeo_surf = await surface_coll.p10_async()
     elif statistic == StatisticFunction.P90:
-        xtgeo_surf = surface_coll.p90()
+        xtgeo_surf = await surface_coll.p90_async()
     elif statistic == StatisticFunction.P50:
-        xtgeo_surf = surface_coll.p50()
+        xtgeo_surf = await surface_coll.p50_async()
     elif statistic == StatisticFunction.STD:
-        xtgeo_surf = surface_coll.std()
+        xtgeo_surf = await surface_coll.std_async()
     else:
         raise ValueError("Unhandled statistic function")
 

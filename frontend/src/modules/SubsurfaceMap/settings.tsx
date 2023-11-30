@@ -16,6 +16,7 @@ import { Input } from "@lib/components/Input";
 import { Label } from "@lib/components/Label";
 import { RadioGroup } from "@lib/components/RadioGroup";
 import { Select, SelectOption } from "@lib/components/Select";
+import { PolygonsAddress, PolygonsDirectory, usePolygonsDirectoryQuery } from "@modules/_shared/Polygons";
 import {
     SurfaceAddress,
     SurfaceAddressFactory,
@@ -25,10 +26,7 @@ import {
 } from "@modules/_shared/Surface";
 import { useWellHeadersQuery } from "@modules/_shared/WellBore/queryHooks";
 
-import { SurfacePolygonsAddress } from "./SurfacePolygonsAddress";
 import { AggregationSelector } from "./components/AggregationSelector";
-import { PolygonDirectoryProvider } from "./polygonsDirectoryProvider";
-import { usePolygonDirectoryQuery } from "./queryHooks";
 import { state } from "./state";
 
 //-----------------------------------------------------------------------------------------------------------
@@ -203,31 +201,43 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
     }
 
     // Polygon
-    const polygonDirQuery = usePolygonDirectoryQuery(
+    const polygonsDirectoryQuery = usePolygonsDirectoryQuery(
         computedEnsembleIdent?.getCaseUuid(),
         computedEnsembleIdent?.getEnsembleName()
     );
-    const polygonDirProvider = new PolygonDirectoryProvider(polygonDirQuery);
 
-    const computedPolygonName = linkPolygonNameToSurfaceName
-        ? polygonDirProvider.validateOrResetPolygonNameFromSurfaceName(computedMeshSurfaceName)
-        : polygonDirProvider.validateOrResetPolygonName(selectedPolygonName);
-    const computedPolygonAttribute = polygonDirProvider.validateOrResetPolygonAttribute(
-        computedPolygonName,
-        selectedPolygonAttribute
+    const polygonsDirectory = new PolygonsDirectory(
+        polygonsDirectoryQuery.data
+            ? {
+                  polygonsMetas: polygonsDirectoryQuery.data,
+                  //   includeAttributeTypes: [PolygonsAttributeType_api.DEPTH],
+              }
+            : null
     );
 
-    if (computedPolygonName && computedPolygonName !== selectedPolygonName) {
-        setSelectedPolygonName(computedPolygonName);
+    const fixedPolygonsSpec = fixupPolygons(
+        polygonsDirectory,
+        {
+            polygonsName: linkPolygonNameToSurfaceName ? selectedMeshSurfaceName : selectedPolygonName,
+            polygonsAttribute: selectedPolygonAttribute,
+        },
+        { polygonsName: null, polygonsAttribute: null }
+    );
+
+    const computedPolygonsName = fixedPolygonsSpec.polygonsName;
+    const computedPolygonsAttribute = fixedPolygonsSpec.polygonsAttribute;
+
+    if (computedPolygonsName && computedPolygonsName !== selectedPolygonName) {
+        setSelectedPolygonName(computedPolygonsName);
     }
-    if (computedPolygonAttribute && computedPolygonAttribute !== selectedPolygonAttribute) {
-        setSelectedPolygonAttribute(computedPolygonAttribute);
+    if (computedPolygonsAttribute && computedPolygonsAttribute !== selectedPolygonAttribute) {
+        setSelectedPolygonAttribute(computedPolygonsAttribute);
     }
     let polyNameOptions: SelectOption[] = [];
     let polyAttributesOptions: SelectOption[] = [];
-    polyNameOptions = polygonDirProvider.polygonNames().map((name) => ({ value: name, label: name }));
-    polyAttributesOptions = polygonDirProvider
-        .attributesForPolygonName(computedPolygonName)
+    polyNameOptions = polygonsDirectory.getPolygonsNames(null).map((name) => ({ value: name, label: name }));
+    polyAttributesOptions = polygonsDirectory
+        .getAttributeNames(computedPolygonsName)
         .map((attr) => ({ value: attr, label: attr }));
 
     React.useEffect(
@@ -293,13 +303,13 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
     );
     React.useEffect(
         function propogatePolygonsSelectionToView() {
-            let polygonAddr: SurfacePolygonsAddress | null = null;
-            if (computedEnsembleIdent && computedPolygonName && computedPolygonAttribute && showPolygon) {
+            let polygonAddr: PolygonsAddress | null = null;
+            if (computedEnsembleIdent && computedPolygonsName && computedPolygonsAttribute && showPolygon) {
                 polygonAddr = {
                     caseUuid: computedEnsembleIdent.getCaseUuid(),
                     ensemble: computedEnsembleIdent.getEnsembleName(),
-                    name: computedPolygonName,
-                    attribute: computedPolygonAttribute,
+                    name: computedPolygonsName,
+                    attribute: computedPolygonsAttribute,
                     realizationNum: realizationNum,
                 };
             }
@@ -558,7 +568,7 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
                     )}
                 </>
             </CollapsibleGroup>
-            <CollapsibleGroup expanded={false} title="Fault polygons">
+            <CollapsibleGroup expanded={false} title="Polygons">
                 <Label
                     wrapperClassName=" flow-root mt-4 mb-2"
                     labelClassName="float-left block text-sm font-medium text-gray-700 dark:text-gray-200"
@@ -570,7 +580,7 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
                 </Label>
                 {showPolygon && (
                     <ApiStateWrapper
-                        apiResult={polygonDirQuery}
+                        apiResult={polygonsDirectoryQuery}
                         errorComponent={"Error loading polygons directory"}
                         loadingComponent={<CircularProgress />}
                     >
@@ -590,7 +600,7 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
                                 </Label>
                                 <Select
                                     options={polyNameOptions}
-                                    value={computedPolygonName ? [computedPolygonName] : []}
+                                    value={computedPolygonsName ? [computedPolygonsName] : []}
                                     onChange={handlePolyNameSelectionChange}
                                     size={5}
                                     disabled={linkPolygonNameToSurfaceName}
@@ -601,11 +611,11 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
                         <Label text="Attribute">
                             <Select
                                 options={polyAttributesOptions}
-                                value={computedPolygonAttribute ? [computedPolygonAttribute] : []}
+                                value={computedPolygonsAttribute ? [computedPolygonsAttribute] : []}
                                 placeholder={
                                     linkPolygonNameToSurfaceName
                                         ? `No attributes found for ${computedMeshSurfaceName}`
-                                        : `No attributes found for ${computedPolygonName}`
+                                        : `No attributes found for ${computedPolygonsName}`
                                 }
                                 onChange={handlePolyAttributeSelectionChange}
                                 size={5}
@@ -758,7 +768,37 @@ function fixupSurface(
         timeOrInterval: finalTimeOrInterval,
     };
 }
+type PartialPolygonsSpec = {
+    polygonsName: string | null;
+    polygonsAttribute: string | null;
+};
 
+function fixupPolygons(
+    polygonsDirectory: PolygonsDirectory,
+    selectedPolygons: PartialPolygonsSpec,
+    syncedPolygons: PartialPolygonsSpec
+): PartialPolygonsSpec {
+    const polygonsNames = polygonsDirectory.getPolygonsNames(null);
+    const finalPolygonsName = fixupSyncedOrSelectedOrFirstValue(
+        syncedPolygons.polygonsName,
+        selectedPolygons.polygonsName,
+        polygonsNames
+    );
+    let finalPolygonsAttribute: string | null = null;
+    if (finalPolygonsName) {
+        const polygonsAttributes = polygonsDirectory.getAttributeNames(finalPolygonsName);
+        finalPolygonsAttribute = fixupSyncedOrSelectedOrFirstValue(
+            syncedPolygons.polygonsAttribute,
+            selectedPolygons.polygonsAttribute,
+            polygonsAttributes
+        );
+    }
+
+    return {
+        polygonsName: finalPolygonsName,
+        polygonsAttribute: finalPolygonsAttribute,
+    };
+}
 function fixupSyncedOrSelectedOrFirstValue(
     syncedValue: string | null,
     selectedValue: string | null,

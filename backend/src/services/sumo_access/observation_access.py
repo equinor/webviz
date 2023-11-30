@@ -1,5 +1,5 @@
 import logging
-from typing import List
+from typing import List, Dict
 
 import json
 from fmu.sumo.explorer.objects.dictionary import Dictionary
@@ -43,18 +43,34 @@ def _create_summary_observations(observations_dict: dict) -> List[SummaryVectorO
     summary_observations: List[SummaryVectorObservations] = []
     if ObservationType.SUMMARY not in observations_dict:
         return summary_observations
-    for smry_obs in observations_dict[ObservationType.SUMMARY]:
+
+    summary_observations_dict: Dict[str, Dict[str, list]] = observations_dict[ObservationType.SUMMARY]
+
+    for vector_name, observations_data in summary_observations_dict.items():
+        observation_names = observations_data["observation_name"]
+        observation_values = observations_data["value"]
+        observation_errors = observations_data["error"]
+        observation_dates = observations_data["date"]
+
+        num_observations = len(observation_names)
+        if (
+            len(observation_values) != num_observations
+            or len(observation_errors) != num_observations
+            or len(observation_dates) != num_observations
+        ):
+            raise ValueError(f"Inconsistent observations data for vector {vector_name}")
+
         summary_observations.append(
             SummaryVectorObservations(
-                vector_name=smry_obs["key"],
+                vector_name=vector_name,
                 observations=[
                     SummaryVectorDateObservation(
-                        date=obs["date"],
-                        value=obs["value"],
-                        error=obs["error"],
-                        label=obs["label"],
+                        date=observation_dates[i],
+                        value=observation_values[i],
+                        error=observation_errors[i],
+                        label=observation_names[i],
                     )
-                    for obs in smry_obs["observations"]
+                    for i in range(num_observations)
                 ],
             )
         )
