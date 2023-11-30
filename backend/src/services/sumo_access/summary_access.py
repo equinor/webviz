@@ -21,7 +21,7 @@ LOGGER = logging.getLogger(__name__)
 
 
 class SummaryAccess(SumoEnsemble):
-    async def get_available_vectors(self) -> List[VectorInfo]:
+    async def get_available_vectors_async(self) -> List[VectorInfo]:
         timer = PerfTimer()
 
         # For now, only consider the collection-aggregated tables even if we will also be accessing and
@@ -69,7 +69,7 @@ class SummaryAccess(SumoEnsemble):
 
         return ret_info_arr
 
-    async def get_vector_table(
+    async def get_vector_table_async(
         self,
         vector_name: str,
         resampling_frequency: Optional[Frequency],
@@ -128,13 +128,13 @@ class SummaryAccess(SumoEnsemble):
 
         return table, vector_metadata
 
-    async def get_vector(
+    async def get_vector_async(
         self,
         vector_name: str,
         resampling_frequency: Optional[Frequency],
         realizations: Optional[Sequence[int]],
     ) -> List[RealizationVector]:
-        table, vector_metadata = await self.get_vector_table(vector_name, resampling_frequency, realizations)
+        table, vector_metadata = await self.get_vector_table_async(vector_name, resampling_frequency, realizations)
 
         real_arr_np = table.column("REAL").to_numpy()
         unique_reals, first_occurrence_idx, real_counts = np.unique(real_arr_np, return_index=True, return_counts=True)
@@ -223,7 +223,7 @@ class SummaryAccess(SumoEnsemble):
 
         return table, vector_metadata_list
 
-    async def get_matching_historical_vector(
+    async def get_matching_historical_vector_async(
         self,
         non_historical_vector_name: str,
         resampling_frequency: Optional[Frequency],
@@ -273,13 +273,13 @@ class SummaryAccess(SumoEnsemble):
             metadata=vector_metadata,
         )
 
-    async def get_vector_values_at_timestamp(
+    async def get_vector_values_at_timestamp_async(
         self,
         vector_name: str,
         timestamp_utc_ms: int,
         realizations: Optional[Sequence[int]] = None,
     ) -> EnsembleScalarResponse:
-        table, _ = await self.get_vector_table(vector_name, resampling_frequency=None, realizations=realizations)
+        table, _ = await self.get_vector_table_async(vector_name, resampling_frequency=None, realizations=realizations)
 
         if realizations is not None:
             mask = pc.is_in(table["REAL"], value_set=pa.array(realizations))
@@ -292,15 +292,15 @@ class SummaryAccess(SumoEnsemble):
             values=table[vector_name].to_pylist(),
         )
 
-    async def get_timestamps(
+    async def get_timestamps_async(
         self,
         resampling_frequency: Optional[Frequency] = None,
     ) -> List[int]:
         """
         Get list of available timestamps in ms UTC
         """
-        table, _ = await self.get_vector_table(
-            (await self.get_available_vectors())[0].name,
+        table, _ = await self.get_vector_table_async(
+            (await self.get_available_vectors_async())[0].name,
             resampling_frequency=resampling_frequency,
             realizations=None,
         )
@@ -314,9 +314,9 @@ async def _load_all_real_arrow_table_from_sumo(case: Case, iteration_name: str, 
     sumo_table = await _locate_all_real_combined_sumo_table(case, iteration_name, column_name=vector_name)
     et_locate_ms = timer.lap_ms()
 
+    # print(f"{sumo_table.format=}")
     # print(f"{sumo_table.name=}")
     # print(f"{sumo_table.tagname=}")
-    # print(f"{sumo_table.format=}")
 
     table: pa.Table = await sumo_table.to_arrow_async()
     et_download_and_read_ms = timer.lap_ms()
@@ -362,14 +362,12 @@ async def _load_single_real_full_arrow_table_from_sumo(case: Case, iteration_nam
     sumo_table: Table = await _locate_single_real_sumo_table(case, iteration_name, realization)
     et_locate_ms = timer.lap_ms()
 
+    # print(f"{sumo_table.format=}")
     # print(f"{sumo_table.name=}")
     # print(f"{sumo_table.tagname=}")
-    # print(f"{sumo_table.format=}")
     # print(f"{sumo_table.context=}")
     # print(f"{sumo_table.stage=}")
     # print(f"{sumo_table.aggregation=}")
-    # print(f"{sumo_table.relative_path=}")
-    # print(f"{sumo_table.metadata=}")
 
     # Note that this will download and load the entire table into memory regardless
     # of which columns in the table we will actually use.

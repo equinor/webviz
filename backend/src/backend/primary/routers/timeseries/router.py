@@ -28,7 +28,7 @@ async def get_vector_list(
     """Get list of all vectors in a given Sumo ensemble, excluding any historical vectors"""
 
     access = await SummaryAccess.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
-    vector_info_arr = await access.get_available_vectors()
+    vector_info_arr = await access.get_available_vectors_async()
 
     ret_arr: list[schemas.VectorDescription] = [
         schemas.VectorDescription(name=vi.name, descriptive_name=vi.name, has_historical=vi.has_historical)
@@ -55,15 +55,15 @@ async def get_realizations_vector_data(
     access = await SummaryAccess.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
 
     sumo_freq = Frequency.from_string_value(resampling_frequency.value if resampling_frequency else "dummy")
-    
+
     # !!!!!
     # !!!!!
     # !!!!!
-    # detail = { 
+    # detail = {
     #     "error": {
     #         "code": "string",
     #         "message": "string",
-    #         "innererror": { 
+    #         "innererror": {
     #             "code": "string"
     #         },
     #         "details": []
@@ -79,9 +79,8 @@ async def get_realizations_vector_data(
         resampling_frequency=sumo_freq,
         realization=1,
     )
-    
-    
-    sumo_vec_arr = await access.get_vector(
+
+    sumo_vec_arr = await access.get_vector_async(
         vector_name=vector_name,
         resampling_frequency=sumo_freq,
         realizations=realizations,
@@ -119,7 +118,7 @@ async def get_timestamps_list(
     """
     access = await SummaryAccess.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
     sumo_freq = Frequency.from_string_value(resampling_frequency.value if resampling_frequency else "dummy")
-    return await access.get_timestamps(resampling_frequency=sumo_freq)
+    return await access.get_timestamps_async(resampling_frequency=sumo_freq)
 
 
 @router.get("/historical_vector_data/")
@@ -135,7 +134,7 @@ async def get_historical_vector_data(
     access = await SummaryAccess.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
 
     sumo_freq = Frequency.from_string_value(resampling_frequency.value if resampling_frequency else "dummy")
-    sumo_hist_vec = await access.get_matching_historical_vector(
+    sumo_hist_vec = await access.get_matching_historical_vector_async(
         non_historical_vector_name=non_historical_vector_name, resampling_frequency=sumo_freq
     )
 
@@ -170,7 +169,7 @@ async def get_statistical_vector_data(
     service_freq = Frequency.from_string_value(resampling_frequency.value)
     service_stat_funcs_to_compute = converters.to_service_statistic_functions(statistic_functions)
 
-    vector_table, vector_metadata = await access.get_vector_table(
+    vector_table, vector_metadata = await access.get_vector_table_async(
         vector_name=vector_name,
         resampling_frequency=service_freq,
         realizations=realizations,
@@ -209,7 +208,7 @@ async def get_statistical_vector_data_per_sensitivity(
 
     service_freq = Frequency.from_string_value(resampling_frequency.value)
     service_stat_funcs_to_compute = converters.to_service_statistic_functions(statistic_functions)
-    vector_table, vector_metadata = await summmary_access.get_vector_table(
+    vector_table, vector_metadata = await summmary_access.get_vector_table_async(
         vector_name=vector_name, resampling_frequency=service_freq, realizations=None
     )
     ret_data: list[schemas.VectorStatisticSensitivityData] = []
@@ -254,7 +253,7 @@ async def get_realization_vector_at_timestamp(
     summary_access = await SummaryAccess.from_case_uuid(
         authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
     )
-    ensemble_response = await summary_access.get_vector_values_at_timestamp(
+    ensemble_response = await summary_access.get_vector_values_at_timestamp_async(
         vector_name=vector_name, timestamp_utc_ms=timestamp_utc_ms, realizations=None
     )
     return ensemble_response

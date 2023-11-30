@@ -13,7 +13,7 @@ from ..sumo_explore import SumoExplore
 
 
 async def test_summary_access(summary_access: SummaryAccess) -> None:
-    vector_info_list = await summary_access.get_available_vectors()
+    vector_info_list = await summary_access.get_available_vectors_async()
     if len(vector_info_list) == 0:
         print("\n\nNo summary vectors found, giving up!\n")
         return
@@ -35,19 +35,19 @@ async def test_summary_access(summary_access: SummaryAccess) -> None:
 
     return
 
-    vector_table, _vector_meta = await summary_access.get_vector_table(
+    vector_table, _vector_meta = await summary_access.get_vector_table_async(
         vector_name="FOPT", resampling_frequency=None, realizations=None
     )
     print("\n\nRAW\n-----------------------")
     print(vector_table.shape)
 
-    vector_table, _vector_meta = await summary_access.get_vector_table(
+    vector_table, _vector_meta = await summary_access.get_vector_table_async(
         vector_name="FOPT", resampling_frequency=Frequency.DAILY, realizations=None
     )
     print("\n\nDAILY\n-----------------------")
     print(vector_table.shape)
 
-    vector_table, _vector_meta = await summary_access.get_vector_table(
+    vector_table, _vector_meta = await summary_access.get_vector_table_async(
         vector_name="FOPT", resampling_frequency=Frequency.YEARLY, realizations=None
     )
     print("\n\nYEARLY\n-----------------------")
@@ -55,14 +55,14 @@ async def test_summary_access(summary_access: SummaryAccess) -> None:
     print(vector_table.shape)
 
     print("\n\nYEARLY - only real 0\n-----------------------")
-    vector_table, _vector_meta = await summary_access.get_vector_table(
+    vector_table, _vector_meta = await summary_access.get_vector_table_async(
         vector_name="FOPT", resampling_frequency=Frequency.YEARLY, realizations=[0]
     )
     vector_table = vector_table.filter(pa.compute.equal(vector_table["REAL"], 0))
     print(vector_table)
     print(vector_table.shape)
 
-    vector_arr: List[RealizationVector] = await summary_access.get_vector(
+    vector_arr: List[RealizationVector] = await summary_access.get_vector_async(
         "FOPT", resampling_frequency=Frequency.YEARLY, realizations=None
     )
     print("\n\n")
@@ -70,7 +70,7 @@ async def test_summary_access(summary_access: SummaryAccess) -> None:
     print(vector_arr[0])
 
     print("\n\nYEARLY\n-----------------------")
-    vector_table, _vector_meta = await summary_access.get_vector_table(
+    vector_table, _vector_meta = await summary_access.get_vector_table_async(
         vector_name="FOPT", resampling_frequency=Frequency.YEARLY, realizations=None
     )
     print(vector_table)
