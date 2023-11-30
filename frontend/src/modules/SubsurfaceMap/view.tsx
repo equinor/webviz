@@ -13,7 +13,6 @@ import { useFieldWellsTrajectoriesQuery } from "@modules/_shared/WellBore/queryH
 import { useSurfaceDataQueryByAddress } from "@modules_shared/Surface";
 import { ViewAnnotation } from "@webviz/subsurface-viewer/dist/components/ViewAnnotation";
 
-import {  usePropertySurfaceDataByQueryAddress } from "./queryHooks";
 import {
     SurfaceMeta,
     createAxesLayer,
@@ -25,7 +24,7 @@ import {
     createWellboreTrajectoryLayer,
 } from "./_utils";
 import { SyncedSubsurfaceViewer } from "./components/SyncedSubsurfaceViewer";
-import { usePolygonsDataQueryByAddress, usePropertySurfaceDataByQueryAddress } from "./queryHooks";
+import { usePropertySurfaceDataByQueryAddress } from "./queryHooks";
 import { state } from "./state";
 
 type Bounds = [number, number, number, number];
