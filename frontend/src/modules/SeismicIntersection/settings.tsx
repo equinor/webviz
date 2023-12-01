@@ -41,7 +41,7 @@ const enum SeismicDataSource {
 // To be a variable in the future?
 const WELLBORE_TYPE = "smda";
 
-//
+// Hardcoded min/max limits for input elements
 const EXTENSION_LIMITS = { min: 100, max: 100000 }; // Min/max extension in meters outside both sides of the well path [m]
 const Z_SCALE_LIMITS = { min: 1, max: 100 }; // Minimum z-scale factor
 
