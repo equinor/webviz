@@ -195,7 +195,7 @@ async def get_property_surface_resampled_to_statistical_static_surface(
             name=name_mesh,
             attribute=attribute_mesh,
         )
-        xtgeo_surf_property = await access.get_statistical_surface_data_async(
+        xtgeo_surf_property = await access.get_statistical_surfaces_data_async(
             statistic_function=service_stat_func_to_compute,
             name=name_property,
             attribute=attribute_property,
@@ -237,41 +237,35 @@ async def well_intersection_statistics(
     access = await SurfaceAccess.from_case_uuid(
         authenticated_user.get_sumo_access_token(), ensemble_ident.case_uuid, ensemble_ident.ensemble_name
     )
-    surfaces = []
 
-    async def fetch_surface(statistic, surface_name):
-        surface = await access.get_statistical_surface_data_async(
-            statistic_function=StatisticFunction.from_string_value(statistic),
+    async def fetch_surface(statistics, surface_name):
+        surfaces = await access.get_statistical_surfaces_data_async(
+            statistic_functions=[StatisticFunction.from_string_value(statistic) for statistic in statistics],
             name=surface_name,
             attribute=statistical_surface_set_spec.surface_attribute,
             realizations=statistical_surface_set_spec.realization_nums,
         )
-        surface.name = surface_name + "_" + statistic
-        return surface
+        print(surfaces, "fetch")
+        return surfaces
 
     async def fetch_all_surfaces():
         tasks = []
-        for statistic in statistical_surface_set_spec.statistic_function:
-            for surface_name in statistical_surface_set_spec.surface_names:
-                # Create a task for each combination of statistic and surface_name
-                task = fetch_surface(statistic, surface_name)
-                tasks.append(task)
+        for surface_name in statistical_surface_set_spec.surface_names:
+            task = fetch_surface(statistical_surface_set_spec.statistic_function, surface_name)
+            tasks.append(task)
 
         # Run all the tasks concurrently
         tmp_surfaces = await asyncio.gather(*tasks)
+        print(tmp_surfaces)
         return tmp_surfaces
 
-    # for statistic in statistical_surface_set_spec.statistic_function:
-    #     for surface_name in statistical_surface_set_spec.surface_names:
-    #         surface = await access.get_statistical_surface_data_async(
-    #             statistic_function=StatisticFunction.from_string_value(statistic),
-    #             name=surface_name,
-    #             attribute=statistical_surface_set_spec.surface_attribute,
-    #             realizations=statistical_surface_set_spec.realization_nums,
-    #         )
-    #         surface.name = surface_name + "_" + statistic
-    #         surfaces.append(surface)
-    surfaces = await fetch_all_surfaces()
+    nested_surfaces = await fetch_all_surfaces()
+    surfaces = []
+    if nested_surfaces:
+        for surface_list in nested_surfaces:
+            if surface_list:
+                for surface in surface_list:
+                    surfaces.append(surface)
 
     fence_arr = np.array(
         [
@@ -282,7 +276,6 @@ async def well_intersection_statistics(
         ]
     ).T
     intersections = await make_intersections(surfaces, fence_arr)
-    print(intersections)
     return intersections
 
 

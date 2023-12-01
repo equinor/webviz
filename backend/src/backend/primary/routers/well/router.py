@@ -1,7 +1,7 @@
 import logging
 from typing import List, Union
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, HTTPException
 
 from src.services.smda_access import mocked_drogon_smda_access
 from src.services.smda_access.well_access import WellAccess
@@ -24,11 +24,9 @@ async def get_well_headers(
     # fmt:on
 ) -> List[WellBoreHeader]:
     """Get well headers for all wells in the field"""
-    print(case_uuid, " case_uuid FIELD")
     case_inspector = await SumoCase.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid)
     field_identifier = (await case_inspector.get_field_identifiers())[0]
     well_access: Union[WellAccess, mocked_drogon_smda_access.WellAccess]
-    print(field_identifier, "FIELD IDENTIFIER FIELD")
     if field_identifier == "DROGON":
         # Handle DROGON
         well_access = mocked_drogon_smda_access.WellAccess(authenticated_user.get_smda_access_token())
@@ -50,7 +48,6 @@ async def get_field_well_trajectories(
     case_inspector = await SumoCase.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid)
     field_identifier = (await case_inspector.get_field_identifiers())[0]
     well_access: Union[WellAccess, mocked_drogon_smda_access.WellAccess]
-    print(field_identifier, "FIELD IDENTIFIER FIELD")
     if field_identifier == "DROGON":
         # Handle DROGON
         well_access = mocked_drogon_smda_access.WellAccess(authenticated_user.get_smda_access_token())
@@ -78,4 +75,8 @@ async def get_well_trajectories(
     else:
         well_access = WellAccess(authenticated_user.get_smda_access_token())
 
-    return await well_access.get_wellbore_trajectories(wellbore_uuids=wellbore_uuids)
+    try:
+        trajectories = await well_access.get_wellbore_trajectories(wellbore_uuids=wellbore_uuids)
+        return trajectories
+    except KeyError:
+        raise HTTPException(status_code=404, detail="No wellbore trajectory data found")
