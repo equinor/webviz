@@ -12,8 +12,9 @@ import { CircularProgress } from "@lib/components/CircularProgress";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { Label } from "@lib/components/Label";
 import { Select, SelectOption } from "@lib/components/Select";
+import { useWellHeadersQuery } from "@modules/_shared/WellBore/queryHooks";
 
-import { useGetWellHeaders, useGridModelNames, useGridParameterNames } from "./queryHooks";
+import { useGridModelNames, useGridParameterNames } from "./queryHooks";
 import state from "./state";
 
 //-----------------------------------------------------------------------------------------------------------
@@ -43,7 +44,7 @@ export function settings({ moduleContext, workbenchServices, workbenchSession }:
     const firstEnsembleName = computedEnsembleIdent?.getEnsembleName() ?? null;
     const gridNamesQuery = useGridModelNames(firstCaseUuid, firstEnsembleName);
     const parameterNamesQuery = useGridParameterNames(firstCaseUuid, firstEnsembleName, gridName);
-    const wellHeadersQuery = useGetWellHeaders(computedEnsembleIdent?.getCaseUuid());
+    const wellHeadersQuery = useWellHeadersQuery(computedEnsembleIdent?.getCaseUuid());
     // Handle Linked query
     useEffect(() => {
         if (parameterNamesQuery.data) {

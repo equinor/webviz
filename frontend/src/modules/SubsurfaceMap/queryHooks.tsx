@@ -1,4 +1,4 @@
-import { SurfaceData_api, WellBoreHeader_api, WellBoreTrajectory_api } from "@api";
+import { SurfaceData_api } from "@api";
 import { apiService } from "@framework/ApiService";
 import { SurfaceAddress } from "@modules_shared/Surface";
 import { SurfaceData_trans, transformSurfaceData } from "@modules_shared/Surface/queryDataTransforms";
@@ -6,35 +6,6 @@ import { QueryFunction, QueryKey, UseQueryResult, useQuery } from "@tanstack/rea
 
 const STALE_TIME = 60 * 1000;
 const CACHE_TIME = 60 * 1000;
-
-export function useGetWellHeaders(caseUuid: string | undefined): UseQueryResult<WellBoreHeader_api[]> {
-    return useQuery({
-        queryKey: ["getWellHeaders", caseUuid],
-        queryFn: () => apiService.well.getWellHeaders(caseUuid ?? ""),
-        staleTime: STALE_TIME,
-        gcTime: STALE_TIME,
-        enabled: caseUuid ? true : false,
-    });
-}
-
-export function useGetWellTrajectories(wellUuids: string[] | undefined): UseQueryResult<WellBoreTrajectory_api[]> {
-    return useQuery({
-        queryKey: ["getWellTrajectories", wellUuids],
-        queryFn: () => apiService.well.getWellTrajectories(wellUuids ?? []),
-        staleTime: STALE_TIME,
-        gcTime: CACHE_TIME,
-        enabled: wellUuids ? true : false,
-    });
-}
-export function useGetFieldWellsTrajectories(caseUuid: string | undefined): UseQueryResult<WellBoreTrajectory_api[]> {
-    return useQuery({
-        queryKey: ["getFieldWellsTrajectories", caseUuid],
-        queryFn: () => apiService.well.getFieldWellTrajectories(caseUuid ?? ""),
-        staleTime: STALE_TIME,
-        gcTime: CACHE_TIME,
-        enabled: caseUuid ? true : false,
-    });
-}
 
 export function usePropertySurfaceDataByQueryAddress(
     meshSurfAddr: SurfaceAddress | null,
