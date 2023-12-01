@@ -141,8 +141,8 @@ class GroupTreeData:
     async def create_group_tree_dataset(
         self,
         tree_mode: TreeModeOptions,
-        real: int,
         node_types: List[NodeType],
+        real: Optional[int] = None,
         stat_option: Optional[StatOptions] = None,
     ) -> List[Dict[Any, Any]]:
         """This method is called when an event is triggered to create a new dataset
@@ -157,6 +157,9 @@ class GroupTreeData:
         https://github.com/equinor/webviz-subsurface-components/blob/master/react/src/demo/example-data/group-tree.json
         """  # noqa
 
+        if tree_mode == TreeModeOptions.SINGLE_REAL and real is None:
+            raise ValueError("Realization cannot be None when Tree mode is SINGLE REAL")
+
         # Filter smry
         vectors = [sumvec for sumvec in self._sumvecs["SUMVEC"] if sumvec in self._all_vectors]
 
@@ -165,30 +168,24 @@ class GroupTreeData:
             table, _ = await self._summary_access.get_vector_table(
                 vector_name=vec,
                 resampling_frequency=self._resampling_frequency,
-                realizations=[real],
+                realizations=[real] if real is not None else None,
             )
             dfs.append(table.to_pandas())
 
         smry = reduce(lambda left, right: pd.merge(left, right, on=["DATE", "REAL"]), dfs)
 
         if tree_mode is TreeModeOptions.STATISTICS:
-            raise NotImplementedError("Statistical Model not implemented")
-
-            # if stat_option is StatOptions.MEAN:
-            #     smry = smry.groupby("DATE").mean().reset_index()
-            # elif stat_option in [StatOptions.P50, StatOptions.P10, StatOptions.P90]:
-            #     quantile = {"p50": 0.5, "p10": 0.9, "p90": 0.1}[stat_option.value]
-            #     smry = smry.groupby("DATE").quantile(quantile).reset_index()
-            # elif stat_option is StatOptions.MAX:
-            #     smry = smry.groupby("DATE").max().reset_index()
-            # elif stat_option is StatOptions.MIN:
-            #     smry = smry.groupby("DATE").min().reset_index()
-            # else:
-            #     raise ValueError(
-            #         f"Statistical option: {stat_option.value} not implemented"
-            #     )
-        # else:
-        #     smry = smry[smry["REAL"] == real]
+            if stat_option is StatOptions.MEAN:
+                smry = smry.groupby("DATE").mean().reset_index()
+            elif stat_option in [StatOptions.P50, StatOptions.P10, StatOptions.P90]:
+                quantile = {"p50": 0.5, "p10": 0.9, "p90": 0.1}[stat_option.value]
+                smry = smry.groupby("DATE").quantile(quantile).reset_index()
+            elif stat_option is StatOptions.MAX:
+                smry = smry.groupby("DATE").max().reset_index()
+            elif stat_option is StatOptions.MIN:
+                smry = smry.groupby("DATE").min().reset_index()
+            else:
+                raise ValueError(f"Statistical option: {stat_option.value} not implemented")
 
         gruptree_filtered = self._grouptree
         if tree_mode == TreeModeOptions.SINGLE_REAL and not self._tree_is_equivalent_in_all_real():
