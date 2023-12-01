@@ -15,9 +15,11 @@ import { useElementSize } from "@lib/hooks/useElementSize";
 import { ColorScaleGradientType } from "@lib/utils/ColorScale";
 import { useWellTrajectoriesQuery } from "@modules/_shared/WellBore/queryHooks";
 import { ContentError } from "@modules/_shared/components/ContentMessage";
+import { ContentErrorProps } from "@modules/_shared/components/ContentMessage/contentMessage";
 
 import { isEqual } from "lodash";
 
+import { EsvIntersection } from "./components/esvIntersection";
 import {
     SurfacePolyLineSpec,
     useWellRealizationsSurfaceSetIntersectionQuery,
@@ -108,12 +110,14 @@ export const view = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
 
             const x_points = newExtendedWellboreTrajectory?.points.map((coord) => coord[0]) ?? [];
             const y_points = newExtendedWellboreTrajectory?.points.map((coord) => coord[1]) ?? [];
+            console.log(newExtendedWellboreTrajectory.offset);
             const cum_length = newExtendedWellboreTrajectory
                 ? IntersectionReferenceSystem.toDisplacement(
                       newExtendedWellboreTrajectory.points,
                       newExtendedWellboreTrajectory.offset
                   ).map((coord) => coord[0] - intersectionSettings.extension)
                 : [];
+            console.log(cum_length);
             candidateSurfacePolyLineSpec = { x_points, y_points, cum_length };
             setSurfacePolyLineSpec(candidateSurfacePolyLineSpec);
         }
@@ -219,16 +223,36 @@ export const view = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
     statusWriter.setLoading(
         getWellTrajectoriesQuery.isFetching || surfaceSetRealizationsIntersectionPointsQuery.isFetching
     );
+    // Build up an error string handling multiple errors. e.g. "Error loading well trajectories and seismic fence data"
+    // Do not useMemo
+    let errorString = "";
+    if (getWellTrajectoriesQuery.isError) {
+        errorString += "Error loading well trajectories";
+    }
+    if (surfaceSetRealizationsIntersectionPointsQuery.isError) {
+        errorString += "Error loading seismic fence data";
+    }
+    if (surfaceSetStatisticsInsectionPointsQuery.isError) {
+        errorString += "Error loading statistical surface data";
+    }
+    if (errorString !== "") {
+        statusWriter.addError(errorString);
+    }
+
     return (
         <div ref={wrapperDivRef} className="relative w-full h-full">
-            {surfaceSetRealizationsIntersectionPointsQuery.isError && getWellTrajectoriesQuery.isError ? (
-                <ContentError>Error loading well trajectories and seismic fence data</ContentError>
-            ) : surfaceSetRealizationsIntersectionPointsQuery.isError ? (
-                <ContentError>Error loading seismic fence data</ContentError>
-            ) : getWellTrajectoriesQuery.isError ? (
-                <ContentError>Error loading well trajectories</ContentError>
+            {errorString !== "" ? (
+                <ContentError>{errorString}</ContentError>
             ) : (
-                <div ref={esvIntersectionContainerRef}></div>
+                <EsvIntersection
+                    width={width}
+                    height={height}
+                    zScale={5}
+                    extension={5}
+                    wellborePath={renderWellboreTrajectoryXyzPoints}
+                    statisticalSurfaceIntersectionPoints={surfaceSetStatisticsInsectionPointsQuery.data}
+                    realizationsSurfaceIntersectionPoints={surfaceSetRealizationsIntersectionPointsQuery.data}
+                />
             )}
         </div>
     );

@@ -118,7 +118,7 @@ export function addSurfaceLayers(
         lines: surfaceSetIPoints.map((surface, idx) => {
             return {
                 data: surface.z_array.map((z: number, idx) => {
-                    return [surface.cum_length[idx] - 100, z];
+                    return [surface.cum_length[idx], z];
                 }),
                 color: color,
                 id: surface.name,
@@ -127,6 +127,7 @@ export function addSurfaceLayers(
             };
         }),
     };
+
     const geomodelLayer = new GeomodelLayerV2<SurfaceData>(pixiContext, `${layerName}`, {
         order: 3,
         layerOpacity: 0.6,
