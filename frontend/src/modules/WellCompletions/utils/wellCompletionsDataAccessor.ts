@@ -67,7 +67,7 @@ export class WellCompletionsDataAccessor {
         // Extract all subzones
         this._subzones = [];
         this._data.zones.forEach((zone) =>
-            WellCompletionsDataAccessor.buildZoneTreeAndAssignColor(zone, stratigraphyColorSet, this._subzones)
+            WellCompletionsDataAccessor.createLeafNodesAndAssignColor(zone, stratigraphyColorSet, this._subzones)
         );
     }
 
@@ -224,20 +224,20 @@ export class WellCompletionsDataAccessor {
         );
     }
 
-    private static buildZoneTreeAndAssignColor(
+    private static createLeafNodesAndAssignColor(
         apiZone: WellCompletionsZone_api,
         stratigraphyColorSet: ColorSet,
-        resultTree: Zone[]
+        leafNodes: Zone[]
     ): void {
         const color =
-            resultTree.length === 0 ? stratigraphyColorSet.getFirstColor() : stratigraphyColorSet.getNextColor();
+            leafNodes.length === 0 ? stratigraphyColorSet.getFirstColor() : stratigraphyColorSet.getNextColor();
 
         // Depth-first search to find all leaf nodes
         if (!apiZone.subzones || apiZone.subzones.length === 0) {
-            resultTree.push({ name: apiZone.name, color: color });
+            leafNodes.push({ name: apiZone.name, color: color });
         } else {
             apiZone.subzones.forEach((apiSubZone) =>
-                WellCompletionsDataAccessor.buildZoneTreeAndAssignColor(apiSubZone, stratigraphyColorSet, resultTree)
+                WellCompletionsDataAccessor.createLeafNodesAndAssignColor(apiSubZone, stratigraphyColorSet, leafNodes)
             );
         }
     }
