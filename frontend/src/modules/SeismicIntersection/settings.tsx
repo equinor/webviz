@@ -8,11 +8,11 @@ import { Wellbore } from "@framework/Wellbore";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { SingleEnsembleSelect } from "@framework/components/SingleEnsembleSelect";
 import { fixupEnsembleIdent, maybeAssignFirstSyncedEnsemble } from "@framework/utils/ensembleUiHelpers";
-import { ApiStateWrapper } from "@lib/components/ApiStateWrapper";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { Input } from "@lib/components/Input";
 import { Label } from "@lib/components/Label";
+import { QueryStateWrapper } from "@lib/components/QueryStateWrapper";
 import { RadioGroup } from "@lib/components/RadioGroup";
 import { Select, SelectOption } from "@lib/components/Select";
 import { useValidState } from "@lib/hooks/useValidState";
@@ -241,7 +241,7 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
                 </div>
             </CollapsibleGroup>
             <CollapsibleGroup expanded={true} title="Well trajectory">
-                <ApiStateWrapper
+                <QueryStateWrapper
                     apiResult={wellHeadersQuery}
                     errorComponent={"Error loading wells"}
                     loadingComponent={<CircularProgress />}
@@ -260,7 +260,7 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
                             multiple={true}
                         />
                     </Label>
-                </ApiStateWrapper>
+                </QueryStateWrapper>
             </CollapsibleGroup>
             <CollapsibleGroup title="Seismic specifications">
                 <div className="flex flex-col gap-4 overflow-y-auto">
@@ -294,7 +294,7 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
                             onChange={(_, value: string | number) => setSurveyTimeType(value as TimeType)}
                         />
                     </Label>
-                    <ApiStateWrapper
+                    <QueryStateWrapper
                         apiResult={seismicCubeMetaListQuery}
                         errorComponent={"Error loading seismic directory"}
                         loadingComponent={<CircularProgress />}
@@ -317,7 +317,7 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
                                 />
                             </Label>
                         </div>
-                    </ApiStateWrapper>
+                    </QueryStateWrapper>
                 </div>
             </CollapsibleGroup>
             <CollapsibleGroup title="Intersection Settings" expanded={false}>

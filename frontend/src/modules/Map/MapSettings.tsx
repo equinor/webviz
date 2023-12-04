@@ -8,11 +8,11 @@ import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { SingleEnsembleSelect } from "@framework/components/SingleEnsembleSelect";
 import { fixupEnsembleIdent, maybeAssignFirstSyncedEnsemble } from "@framework/utils/ensembleUiHelpers";
-import { ApiStateWrapper } from "@lib/components/ApiStateWrapper";
 import { Checkbox } from "@lib/components/Checkbox";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { Input } from "@lib/components/Input";
 import { Label } from "@lib/components/Label";
+import { QueryStateWrapper } from "@lib/components/QueryStateWrapper";
 import { RadioGroup } from "@lib/components/RadioGroup";
 import { Select, SelectOption } from "@lib/components/Select";
 import {
@@ -243,7 +243,7 @@ export function MapSettings(props: ModuleFCProps<MapState>) {
                 </div>
             </Label>
 
-            <ApiStateWrapper
+            <QueryStateWrapper
                 apiResult={surfaceDirectoryQuery}
                 errorComponent={"Error loading surface directory"}
                 loadingComponent={<CircularProgress />}
@@ -280,7 +280,7 @@ export function MapSettings(props: ModuleFCProps<MapState>) {
                         />
                     </Label>
                 )}
-            </ApiStateWrapper>
+            </QueryStateWrapper>
             <AggregationDropdown
                 selectedAggregation={aggregation}
                 onAggregationSelectionChange={handleAggregationChanged}

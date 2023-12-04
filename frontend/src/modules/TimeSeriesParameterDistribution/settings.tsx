@@ -8,10 +8,10 @@ import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { SingleEnsembleSelect } from "@framework/components/SingleEnsembleSelect";
 import { fixupEnsembleIdent, maybeAssignFirstSyncedEnsemble } from "@framework/utils/ensembleUiHelpers";
 import { timestampUtcMsToCompactIsoString } from "@framework/utils/timestampUtils";
-import { ApiStateWrapper } from "@lib/components/ApiStateWrapper";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { Dropdown } from "@lib/components/Dropdown";
 import { Label } from "@lib/components/Label";
+import { QueryStateWrapper } from "@lib/components/QueryStateWrapper";
 import { Select, SelectOption } from "@lib/components/Select";
 
 import { useGetParameterNamesQuery, useTimestampsListQuery, useVectorsQuery } from "./queryHooks";
@@ -35,7 +35,10 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
     const computedEnsemble = fixupEnsembleIdent(candidateEnsemble, ensembleSet);
 
     const vectorsQuery = useVectorsQuery(computedEnsemble?.getCaseUuid(), computedEnsemble?.getEnsembleName());
-    const timestampsQuery = useTimestampsListQuery(computedEnsemble?.getCaseUuid(), computedEnsemble?.getEnsembleName());
+    const timestampsQuery = useTimestampsListQuery(
+        computedEnsemble?.getCaseUuid(),
+        computedEnsemble?.getEnsembleName()
+    );
     const parameterNamesQuery = useGetParameterNamesQuery(
         computedEnsemble?.getCaseUuid(),
         computedEnsemble?.getEnsembleName()
@@ -98,7 +101,7 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
                     onChange={handleEnsembleSelectionChange}
                 />
             </Label>
-            <ApiStateWrapper
+            <QueryStateWrapper
                 apiResult={vectorsQuery}
                 errorComponent={"Error loading vector names"}
                 loadingComponent={<CircularProgress />}
@@ -115,8 +118,8 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
                         size={5}
                     />
                 </Label>
-            </ApiStateWrapper>
-            <ApiStateWrapper
+            </QueryStateWrapper>
+            <QueryStateWrapper
                 apiResult={timestampsQuery}
                 errorComponent={"Error loading timestamps"}
                 loadingComponent={<CircularProgress />}
@@ -128,8 +131,8 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
                         onChange={(tsValAsString) => setTimestampUtcMs(Number(tsValAsString))}
                     />
                 </Label>
-            </ApiStateWrapper>
-            <ApiStateWrapper
+            </QueryStateWrapper>
+            <QueryStateWrapper
                 apiResult={parameterNamesQuery}
                 errorComponent={"Error loading parameter names"}
                 loadingComponent={<CircularProgress />}
@@ -141,7 +144,7 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
                         onChange={setParameterName}
                     />
                 </Label>
-            </ApiStateWrapper>
+            </QueryStateWrapper>
         </>
     );
 }

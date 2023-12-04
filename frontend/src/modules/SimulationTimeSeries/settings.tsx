@@ -7,12 +7,12 @@ import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { SingleEnsembleSelect } from "@framework/components/SingleEnsembleSelect";
 import { fixupEnsembleIdent, maybeAssignFirstSyncedEnsemble } from "@framework/utils/ensembleUiHelpers";
-import { ApiStateWrapper } from "@lib/components/ApiStateWrapper";
 import { Checkbox } from "@lib/components/Checkbox";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { Dropdown, DropdownOption } from "@lib/components/Dropdown";
 import { Input } from "@lib/components/Input";
 import { Label } from "@lib/components/Label";
+import { QueryStateWrapper } from "@lib/components/QueryStateWrapper";
 import { Select, SelectOption } from "@lib/components/Select";
 
 import { sortBy, sortedUniq } from "lodash";
@@ -144,7 +144,7 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
                     onChange={handleEnsembleSelectionChange}
                 />
             </Label>
-            <ApiStateWrapper
+            <QueryStateWrapper
                 apiResult={vectorListQuery}
                 errorComponent={"Error loading vector names"}
                 loadingComponent={<CircularProgress />}
@@ -161,7 +161,7 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
                         size={5}
                     />
                 </Label>
-            </ApiStateWrapper>
+            </QueryStateWrapper>
             <Label text="Frequency">
                 <Dropdown
                     options={makeFrequencyOptionItems()}

@@ -11,12 +11,12 @@ import { MultiEnsembleSelect } from "@framework/components/MultiEnsembleSelect";
 import { ParameterListFilter } from "@framework/components/ParameterListFilter";
 import { VectorSelector, createVectorSelectorDataFromVectors } from "@framework/components/VectorSelector";
 import { fixupEnsembleIdents } from "@framework/utils/ensembleUiHelpers";
-import { ApiStatesWrapper } from "@lib/components/ApiStatesWrapper";
 import { Checkbox } from "@lib/components/Checkbox";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { Dropdown } from "@lib/components/Dropdown";
 import { Label } from "@lib/components/Label";
+import { QueriesErrorCriteria, QueryStateWrapper } from "@lib/components/QueryStateWrapper";
 import { RadioGroup } from "@lib/components/RadioGroup";
 import { Select } from "@lib/components/Select";
 import { SmartNodeSelectorSelection, TreeDataNode } from "@lib/components/SmartNodeSelector";
@@ -359,10 +359,11 @@ export function settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
                         "pointer-events-none opacity-80": vectorListQueries.some((query) => query.isLoading),
                     })}
                 >
-                    <ApiStatesWrapper
+                    <QueryStateWrapper
                         apiResults={vectorListQueries}
                         loadingComponent={<CircularProgress />}
-                        errorComponent={"Could not load the vectors for selected ensembles"}
+                        errorCriteria={QueriesErrorCriteria.EVERY_QUERY}
+                        errorComponent={"Could not load vectors for selected ensembles"}
                     >
                         <VectorSelector
                             data={vectorSelectorData}
@@ -372,7 +373,7 @@ export function settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
                             lineBreakAfterTag={true}
                             onChange={handleVectorSelectChange}
                         />
-                    </ApiStatesWrapper>
+                    </QueryStateWrapper>
                 </div>
             </CollapsibleGroup>
             <CollapsibleGroup expanded={false} title="Color realization by parameter">
