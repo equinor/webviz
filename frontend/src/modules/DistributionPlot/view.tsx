@@ -189,31 +189,19 @@ function makeScatterPlotMatrix(options: {
                 });
             }
 
-            if (
-                dataX.moduleInstanceId === dataY.moduleInstanceId &&
-                dataX.channelIdent === dataY.channelIdent &&
-                dataX.contentIdent === dataY.contentIdent
-            ) {
-                plotData.push({
-                    showlegend: false,
-                    xaxis: `x${col + 1}`,
-                    yaxis: `y${row + 1}`,
-                });
-            } else {
-                plotData.push({
-                    x: xValues,
-                    y: yValues,
-                    type: "scatter",
-                    mode: "markers",
-                    marker: {
-                        size: 10,
-                        color: options.colorSet.getFirstColor(),
-                    },
-                    showlegend: false,
-                    xaxis: `x${col + 1}`,
-                    yaxis: `y${row + 1}`,
-                });
-            }
+            plotData.push({
+                x: xValues,
+                y: yValues,
+                type: "scatter",
+                mode: "markers",
+                marker: {
+                    size: 10,
+                    color: options.colorSet.getFirstColor(),
+                },
+                showlegend: false,
+                xaxis: `x${col + 1}`,
+                yaxis: `y${row + 1}`,
+            });
         }
     }
 
@@ -316,6 +304,8 @@ export const view = ({
         }
 
         if (plotType === PlotType.Scatter) {
+            const reverseRowData = [...listenerY.channel.contents];
+            reverseRowData.reverse();
             return makeScatterPlotMatrix({
                 columnData: listenerX.channel.contents.map((content) => {
                     return {
@@ -326,13 +316,13 @@ export const view = ({
                         dataArray: content.dataArray,
                     };
                 }),
-                rowData: listenerY.channel.contents.map((program) => {
+                rowData: reverseRowData.map((content) => {
                     return {
                         moduleInstanceId: listenerY.channel.moduleInstanceId,
                         channelIdent: listenerY.channel.ident,
-                        contentIdent: program.ident,
-                        contentName: program.name,
-                        dataArray: program.dataArray,
+                        contentIdent: content.ident,
+                        contentName: content.name,
+                        dataArray: content.dataArray,
                     };
                 }),
                 width: wrapperDivSize.width,

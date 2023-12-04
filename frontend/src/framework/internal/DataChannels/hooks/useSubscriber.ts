@@ -21,7 +21,7 @@ export function useSubscriber<TGenres extends Genre[], TValueType extends Type>(
         ident: string;
         name: string;
         moduleInstanceId: string;
-        contents: {
+        readonly contents: {
             ident: string;
             name: string;
             dataArray: Data<GenreType[(typeof options.expectedGenres)[number]], typeof options.expectedValueType>[];

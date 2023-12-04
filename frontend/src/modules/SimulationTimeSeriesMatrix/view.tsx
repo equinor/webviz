@@ -13,6 +13,7 @@ import { ContentError } from "@modules/_shared/components/ContentMessage";
 
 import { indexOf } from "lodash";
 import { Layout, PlotDatum, PlotMouseEvent } from "plotly.js";
+
 import { BroadcastChannelNames } from "./channelDefs";
 import {
     useHistoricalVectorDataQueries,
@@ -141,6 +142,12 @@ export const view = ({ moduleContext, workbenchSession, workbenchSettings }: Mod
         if (!ensembleObservationData.hasSummaryObservations) {
             const ensembleName = ensembleSet.findEnsemble(ensembleIdent)?.getDisplayName() ?? ensembleIdent.toString();
             statusWriter.addWarning(`${ensembleName} has no observations.`);
+            return;
+        }
+
+        loadedVectorSpecificationsAndObservationData.push(...ensembleObservationData.vectorsObservationData);
+    });
+
     moduleContext.usePublish({
         channelIdent: BroadcastChannelNames.TimeSeries,
         dependencies: [loadedVectorSpecificationsAndRealizationData, activeTimestampUtcMs],
@@ -178,16 +185,6 @@ export const view = ({ moduleContext, workbenchSession, workbenchSettings }: Mod
                 metaData: metaData ?? undefined,
             };
         },
-    });
-
-    // Retrieve selected ensembles from vector specifications
-    const selectedEnsembles: Ensemble[] = [];
-    vectorSpecifications?.forEach((vectorSpecification) => {
-        if (selectedEnsembles.some((ensemble) => ensemble.getIdent().equals(vectorSpecification.ensembleIdent))) {
-            return;
-        }
-
-        loadedVectorSpecificationsAndObservationData.push(...ensembleObservationData.vectorsObservationData);
     });
 
     // Create parameter color scale helper
