@@ -1,46 +1,39 @@
-import { Channel, ChannelDefinitions } from "./Channel";
-import { Subscriber, SubscriberDefinitions } from "./Subscriber";
+import { Channel } from "./Channel";
+import { Subscriber } from "./Subscriber";
 
-import { Genre } from "../../DataChannelTypes";
+import { Data, Genre, Type, TypeToTSTypeMapping } from "../../DataChannelTypes";
 
 export enum BroadcastServiceTopic {
     ChannelsChange = "channels-change",
     ListenersChange = "listeners-change",
 }
 
-export class PublishSubscribeBroker<
-    TChannelDefs extends ChannelDefinitions | never,
-    TSubscriberDefs extends SubscriberDefinitions | never
-> {
+export class PublishSubscribeBroker {
     /**
      * This class holds all channels and subscribers of a module instance.
      * NOTE: Should subscribers and channels be separated into different classes?
      */
 
-    private _channels: Channel<any, any, any>[] = [];
-    private _subscribers: Subscriber<any>[] = [];
+    private _channels: Channel[] = [];
+    private _subscribers: Subscriber[] = [];
     private _subscribersMap: Map<BroadcastServiceTopic, Set<() => void>> = new Map();
 
     // Is constructor assignment a pattern we would like to use?
     constructor(private _moduleInstanceId: string) {}
 
-    getChannel<T extends Extract<keyof TChannelDefs, string>>(
-        ident: T
-    ): Channel<TChannelDefs[T]["genre"], TChannelDefs[T]["dataType"], TChannelDefs[T]["metaData"]> | null {
+    getChannel(ident: string): Channel | null {
         return this._channels.find((c) => c.getIdent() === ident) ?? null;
     }
 
-    getChannels(): Channel<any, any, any>[] {
+    getChannels(): Channel[] {
         return this._channels;
     }
 
-    getSubscriber<T extends Extract<keyof TSubscriberDefs, string>>(
-        ident: T
-    ): Subscriber<TSubscriberDefs[T]["supportedGenres"]> | null {
+    getSubscriber(ident: string): Subscriber | null {
         return this._subscribers.find((l) => l.getIdent() === ident) ?? null;
     }
 
-    getSubscribers(): Subscriber<any>[] {
+    getSubscribers(): Subscriber[] {
         return this._subscribers;
     }
 
@@ -48,12 +41,12 @@ export class PublishSubscribeBroker<
         return this._moduleInstanceId;
     }
 
-    registerChannel<T extends Extract<keyof TChannelDefs, string>>(options: {
-        ident: T;
-        name: string;
-        genre: TChannelDefs[T]["genre"];
-        dataType: TChannelDefs[T]["dataType"];
-        metaData?: TChannelDefs[T]["metaData"];
+    registerChannel(options: {
+        readonly ident: string;
+        readonly name: string;
+        readonly genre: Genre;
+        readonly dataType: Type;
+        readonly metaData?: Record<string, TypeToTSTypeMapping[Type]>;
     }): void {
         const newChannel = new Channel(
             this,

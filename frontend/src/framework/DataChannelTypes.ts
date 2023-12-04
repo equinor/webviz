@@ -1,6 +1,6 @@
-export type { ChannelDefinitions } from "./internal/DataChannels/Channel";
 export type { ContentDefinition } from "./internal/DataChannels/Content";
-export type { SubscriberDefinitions } from "./internal/DataChannels/Subscriber";
+export type { ChannelDefinition } from "./internal/DataChannels/Channel";
+export type { SubscriberDefinition } from "./internal/DataChannels/Subscriber";
 
 export enum Genre {
     TimestampMs = "timestamp-ms",

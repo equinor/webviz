@@ -1,5 +1,6 @@
 import React from "react";
 
+import { Data, Type } from "@framework/DataChannelTypes";
 import { ModuleFCProps } from "@framework/Module";
 import { useViewStatusWriter } from "@framework/StatusWriter";
 import { CircularProgress } from "@lib/components/CircularProgress";
@@ -34,13 +35,18 @@ export const view = (props: ModuleFCProps<State>) => {
         contents: responseNames.map((el) => ({ ident: el, name: el })),
         dataGenerator: (contentIdent: string) => {
             const data = tableData.data?.find((el) => el.responseName === contentIdent);
+            const dataArray: Data<Type.Number, Type.Number>[] = [];
             if (data && data.responses) {
-                return data.responses.realizations.map((el, index) => ({
-                    key: el,
-                    value: data.responses?.values[index] ?? 0,
-                }));
+                dataArray.push(
+                    ...data.responses.realizations.map((el, index) => ({
+                        key: el,
+                        value: data.responses?.values[index] ?? 0,
+                    }))
+                );
             }
-            return [];
+            return {
+                data: dataArray,
+            };
         },
     });
 

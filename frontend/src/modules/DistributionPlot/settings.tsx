@@ -30,11 +30,7 @@ const plotTypes = [
 ];
 
 //-----------------------------------------------------------------------------------------------------------
-export function settings({
-    moduleContext,
-    workbenchServices,
-    initialSettings,
-}: ModuleFCProps<State, never, typeof subscriberDefs>) {
+export function settings({ moduleContext, workbenchServices, initialSettings }: ModuleFCProps<State>) {
     const [prevChannelXName, setPrevChannelXName] = React.useState<string | null>(null);
     const [prevChannelYName, setPrevChannelYName] = React.useState<string | null>(null);
     const [prevChannelColorName, setPrevChannelColorName] = React.useState<string | null>(null);

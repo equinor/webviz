@@ -1,7 +1,7 @@
 import React from "react";
 import Plot from "react-plotly.js";
 
-import { Data, Type } from "@framework/DataChannelTypes";
+import { Data, Genre, Type } from "@framework/DataChannelTypes";
 import { ModuleFCProps } from "@framework/Module";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { ColorScaleGradientType } from "@lib/utils/ColorScale";
@@ -225,7 +225,7 @@ export const view = ({
     workbenchServices,
     initialSettings,
     workbenchSettings,
-}: ModuleFCProps<State, never, typeof subscriberDefs>) => {
+}: ModuleFCProps<State>) => {
     const [plotType, setPlotType] = moduleContext.useStoreState("plotType");
     const numBins = moduleContext.useStoreValue("numBins");
     const orientation = moduleContext.useStoreValue("orientation");
@@ -241,11 +241,13 @@ export const view = ({
     const listenerX = moduleContext.useSubscriber({
         subscriberIdent: "channelX",
         initialSettings,
+        expectedGenres: [Genre.Realization],
         expectedValueType: Type.Number,
     });
     const listenerY = moduleContext.useSubscriber({
         subscriberIdent: "channelY",
         initialSettings,
+        expectedGenres: [Genre.Realization],
         expectedValueType: Type.Number,
     });
 

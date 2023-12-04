@@ -11,7 +11,7 @@ const defaultState: State = {
     orientation: "h",
 };
 
-const module = ModuleRegistry.initModule<State, never, typeof subscriberDefs>("DistributionPlot", defaultState);
+const module = ModuleRegistry.initModule<State>("DistributionPlot", defaultState);
 
 module.viewFC = view;
 module.settingsFC = settings;

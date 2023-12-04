@@ -1,15 +1,14 @@
 import { Content, ContentTopic } from "./Content";
 import { PublishSubscribeBroker } from "./PublishSubscribeBroker";
 
-import { Data, Genre, GenreType, Type } from "../../DataChannelTypes";
+import { Data, Genre, Type, TypeToTSTypeMapping } from "../../DataChannelTypes";
 
-export interface ChannelDefinitions {
-    [ident: string]: {
-        name: string;
-        genre: Genre;
-        dataType: Type;
-        metaData?: Record<string, Type>;
-    };
+export interface ChannelDefinition {
+    readonly ident: string;
+    readonly name: string;
+    readonly genre: Genre;
+    readonly dataType: Type;
+    readonly metaData?: Record<string, Type>;
 }
 
 export enum ChannelTopic {
@@ -18,21 +17,21 @@ export enum ChannelTopic {
     ChannelAboutToBeRemoved = "channel-about-to-be-removed",
 }
 
-export class Channel<TGenre extends Genre, TDataType extends Type, TMetaData extends Record<string, Type> | undefined> {
+export class Channel {
     /**
      * This class holds all programs of a module.
      */
 
-    private contents: Content<Data<GenreType[TGenre], TDataType>, TMetaData>[] = [];
+    private contents: Content[] = [];
     private _subscribersMap: Map<ChannelTopic, Set<() => void>> = new Map();
 
     constructor(
-        private _broadcaster: PublishSubscribeBroker<any, any>,
+        private _broadcaster: PublishSubscribeBroker,
         private _ident: string,
         private _name: string,
-        private _genre: TGenre,
-        private _dataType: TDataType,
-        private _metaData?: TMetaData
+        private _genre: Genre,
+        private _dataType: Type,
+        private _metaData?: Record<string, TypeToTSTypeMapping[Type]>
     ) {
         this.handleContentDataChange = this.handleContentDataChange.bind(this);
     }
@@ -45,7 +44,7 @@ export class Channel<TGenre extends Genre, TDataType extends Type, TMetaData ext
         return this._name;
     }
 
-    getBroadcaster(): PublishSubscribeBroker<any, any> {
+    getBroadcaster(): PublishSubscribeBroker {
         return this._broadcaster;
     }
 
@@ -53,15 +52,15 @@ export class Channel<TGenre extends Genre, TDataType extends Type, TMetaData ext
         return this._genre;
     }
 
-    getMetaData(): Record<string, Type> | undefined {
-        return this._metaData;
-    }
-
     getDataType(): Type {
         return this._dataType;
     }
 
-    getContent(name: string): Content<Data<GenreType[TGenre], TDataType>, TMetaData> | null {
+    getMetaData(): Record<string, TypeToTSTypeMapping[Type]> | null {
+        return this._metaData ?? null;
+    }
+
+    getContent(name: string): Content | null {
         const content = this.contents.find((p) => p.getName() === name);
         if (!content) {
             return null;
@@ -70,7 +69,7 @@ export class Channel<TGenre extends Genre, TDataType extends Type, TMetaData ext
         return content;
     }
 
-    getContents(): Content<Data<GenreType[TGenre], TDataType>, TMetaData>[] {
+    getContents(): Content[] {
         return this.contents;
     }
 
@@ -81,11 +80,9 @@ export class Channel<TGenre extends Genre, TDataType extends Type, TMetaData ext
     registerContent(
         ident: string,
         name: string,
-        dataGenerator: () => TMetaData extends undefined
-            ? Data<GenreType[TGenre], TDataType>[]
-            : { data: Data<GenreType[TGenre], TDataType>[]; metaData: TMetaData }
+        dataGenerator: () => { data: Data<Type, Type>[]; metaData?: Record<string, TypeToTSTypeMapping[Type]> }
     ): void {
-        const content = new Content<Data<GenreType[TGenre], TDataType>, TMetaData>(ident, name, dataGenerator);
+        const content = new Content(ident, name, dataGenerator);
         content.subscribe(ContentTopic.ContentChange, this.handleContentDataChange);
         this.contents.push(content);
         this.notifySubscribers(ChannelTopic.ContentsChange);

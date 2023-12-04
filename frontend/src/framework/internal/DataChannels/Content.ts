@@ -1,4 +1,4 @@
-import { Data } from "../../DataChannelTypes";
+import { Data, Type, TypeToTSTypeMapping } from "../../DataChannelTypes";
 
 export interface ContentDefinition {
     ident: string;
@@ -9,15 +9,17 @@ export enum ContentTopic {
     ContentChange = "content-change",
 }
 
-export class Content<TData, TMetaData> {
-    private _cachedDataArray: (TMetaData extends undefined ? TData[] : { data: TData[]; metaData: TMetaData }) | null =
-        null;
+export class Content {
+    private _cachedDataArray: {
+        data: Data<Type, Type>[];
+        metaData?: Record<string, TypeToTSTypeMapping[Type]>;
+    } | null = null;
     private _subscribersMap: Map<ContentTopic, Set<() => void>> = new Map();
 
     constructor(
         private _ident: string,
         private _name: string,
-        private _dataGenerator: () => TMetaData extends undefined ? TData[] : { data: TData[]; metaData: TMetaData }
+        private _dataGenerator: () => { data: Data<Type, Type>[]; metaData?: Record<string, TypeToTSTypeMapping[Type]> }
     ) {}
 
     getIdent(): string {
@@ -28,13 +30,15 @@ export class Content<TData, TMetaData> {
         return this._name;
     }
 
-    publish(dataGenerator: () => TMetaData extends undefined ? TData[] : { data: TData[]; metaData: TMetaData }): void {
+    publish(
+        dataGenerator: () => { data: Data<Type, Type>[]; metaData?: Record<string, TypeToTSTypeMapping[Type]> }
+    ): void {
         this._dataGenerator = dataGenerator;
         this._cachedDataArray = null;
         this.notifySubscribers(ContentTopic.ContentChange);
     }
 
-    getDataArray(): TData[] {
+    getDataArray(): Data<Type, Type>[] {
         if (this._cachedDataArray === null) {
             this._cachedDataArray = this._dataGenerator();
         }
@@ -44,14 +48,14 @@ export class Content<TData, TMetaData> {
         return this._cachedDataArray;
     }
 
-    getMetaData(): TMetaData | undefined {
+    getMetaData(): Record<string, TypeToTSTypeMapping[Type]> | null {
         if (this._cachedDataArray === null) {
             this._cachedDataArray = this._dataGenerator();
         }
         if (typeof this._cachedDataArray === "object" && "metaData" in this._cachedDataArray) {
-            return this._cachedDataArray.metaData;
+            return this._cachedDataArray.metaData ?? null;
         }
-        return undefined;
+        return null;
     }
 
     subscribe(topic: ContentTopic, callback: () => void): void {

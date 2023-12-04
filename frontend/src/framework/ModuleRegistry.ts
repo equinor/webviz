@@ -1,4 +1,4 @@
-import { ChannelDefinitions, SubscriberDefinitions } from "./DataChannelTypes";
+import { ChannelDefinition, SubscriberDefinition } from "./DataChannelTypes";
 import { Module } from "./Module";
 import { DrawPreviewFunc } from "./Preview";
 import { StateBaseType, StateOptions } from "./StateStore";
@@ -9,8 +9,8 @@ export type RegisterModuleOptions = {
     moduleName: string;
     defaultTitle: string;
     syncableSettingKeys?: SyncSettingKey[];
-    channels?: ChannelDefinitions;
-    subscribers?: SubscriberDefinitions;
+    channels?: ChannelDefinition[];
+    subscribers?: SubscriberDefinition[];
 
     preview?: DrawPreviewFunc;
     description?: string;
@@ -27,24 +27,14 @@ export class ModuleNotFoundError extends Error {
 }
 
 export class ModuleRegistry {
-    private static _registeredModules: Record<string, Module<any, any, any>> = {};
-    private static _moduleNotFoundPlaceholders: Record<string, Module<any, any, any>> = {};
+    private static _registeredModules: Record<string, Module<any>> = {};
+    private static _moduleNotFoundPlaceholders: Record<string, Module<any>> = {};
 
     /* eslint-disable-next-line @typescript-eslint/no-empty-function */
     private constructor() {}
 
-    static registerModule<TStateType extends StateBaseType>(
-        options: RegisterModuleOptions
-    ): Module<
-        TStateType,
-        typeof options.channels extends undefined ? never : Exclude<typeof options.channels, undefined>,
-        typeof options.subscribers extends undefined ? never : Exclude<typeof options.subscribers, undefined>
-    > {
-        const module = new Module<
-            TStateType,
-            typeof options.channels extends undefined ? never : Exclude<typeof options.channels, undefined>,
-            typeof options.subscribers extends undefined ? never : Exclude<typeof options.subscribers, undefined>
-        >({
+    static registerModule<TStateType extends StateBaseType>(options: RegisterModuleOptions): Module<TStateType> {
+        const module = new Module<TStateType>({
             name: options.moduleName,
             defaultTitle: options.defaultTitle,
             syncableSettingKeys: options.syncableSettingKeys ?? [],
@@ -57,37 +47,33 @@ export class ModuleRegistry {
         return module;
     }
 
-    static initModule<
-        TStateType extends StateBaseType,
-        TChannelDefs extends ChannelDefinitions | never = never,
-        TSubscriberDefs extends SubscriberDefinitions | never = never
-    >(
+    static initModule<TStateType extends StateBaseType>(
         moduleName: string,
         defaultState: TStateType,
         options?: StateOptions<TStateType>
-    ): Module<TStateType, TChannelDefs, TSubscriberDefs> {
+    ): Module<TStateType> {
         const module = this._registeredModules[moduleName];
         if (module) {
             module.setDefaultState(defaultState, options);
-            return module as Module<TStateType, TChannelDefs, TSubscriberDefs>;
+            return module as Module<TStateType>;
         }
         throw new ModuleNotFoundError(moduleName);
     }
 
-    static getModule(moduleName: string): Module<any, any, any> {
+    static getModule(moduleName: string): Module<any> {
         const module = this._registeredModules[moduleName];
         if (module) {
-            return module as Module<any, any, any>;
+            return module as Module<any>;
         }
         const placeholder = this._moduleNotFoundPlaceholders[moduleName];
         if (placeholder) {
-            return placeholder as Module<any, any, any>;
+            return placeholder as Module<any>;
         }
         this._moduleNotFoundPlaceholders[moduleName] = new ModuleNotFoundPlaceholder(moduleName);
-        return this._moduleNotFoundPlaceholders[moduleName] as Module<any, any, any>;
+        return this._moduleNotFoundPlaceholders[moduleName] as Module<any>;
     }
 
-    static getRegisteredModules(): Record<string, Module<any, any, any>> {
+    static getRegisteredModules(): Record<string, Module<any>> {
         return this._registeredModules;
     }
 }

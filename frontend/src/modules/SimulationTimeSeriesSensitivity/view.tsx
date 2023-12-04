@@ -90,7 +90,7 @@ export const view = ({
                     });
                 });
             }
-            return data;
+            return { data };
         },
     });
 

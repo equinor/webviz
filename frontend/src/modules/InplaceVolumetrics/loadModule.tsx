@@ -14,7 +14,7 @@ const defaultState: State = {
     realizationsToInclude: null,
 };
 
-const module = ModuleRegistry.initModule<State, typeof channelDefs>("InplaceVolumetrics", defaultState);
+const module = ModuleRegistry.initModule<State>("InplaceVolumetrics", defaultState);
 
 module.viewFC = view;
 module.settingsFC = settings;

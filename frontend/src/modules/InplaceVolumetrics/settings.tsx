@@ -97,7 +97,7 @@ function getTableResponseOptions(
     return responsesToSelectOptions(responses);
 }
 
-export function settings({ moduleContext, workbenchSession }: ModuleFCProps<State, typeof channelDefs>) {
+export function settings({ moduleContext, workbenchSession }: ModuleFCProps<State>) {
     const ensembleSet = useEnsembleSet(workbenchSession);
     const [ensembleIdent, setEnsembleIdent] = moduleContext.useStoreState("ensembleIdent");
     const [tableName, setTableName] = moduleContext.useStoreState("tableName");

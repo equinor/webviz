@@ -76,7 +76,7 @@ export type SelectedContents = {
 };
 
 export type ChannelSelectorProps = {
-    subscriber: Subscriber<any>;
+    subscriber: Subscriber;
     selectableChannels: SelectableChannel[];
     selectedChannelIdent?: string;
     selectedContents?: SelectedContents;

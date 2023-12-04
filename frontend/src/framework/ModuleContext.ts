@@ -1,13 +1,6 @@
 import React from "react";
 
-import {
-    ChannelDefinitions,
-    ContentDefinition,
-    Data,
-    GenreType,
-    SubscriberDefinitions,
-    Type,
-} from "./DataChannelTypes";
+import { ContentDefinition, Data, Genre, GenreType, Type, TypeToTSTypeMapping } from "./DataChannelTypes";
 import { InitialSettings } from "./InitialSettings";
 import { ModuleInstance } from "./ModuleInstance";
 import { ModuleInstanceStatusController } from "./ModuleInstanceStatusController";
@@ -16,15 +9,11 @@ import { SyncSettingKey } from "./SyncSettings";
 import { usePublish } from "./internal/DataChannels/hooks/usePublish";
 import { useSubscriber } from "./internal/DataChannels/hooks/useSubscriber";
 
-export class ModuleContext<
-    S extends StateBaseType,
-    TChannelDefs extends ChannelDefinitions,
-    TSubscriberDefs extends SubscriberDefinitions
-> {
-    private _moduleInstance: ModuleInstance<S, TChannelDefs, TSubscriberDefs>;
+export class ModuleContext<S extends StateBaseType> {
+    private _moduleInstance: ModuleInstance<S>;
     private _stateStore: StateStore<S>;
 
-    constructor(moduleInstance: ModuleInstance<S, TChannelDefs, TSubscriberDefs>, stateStore: StateStore<S>) {
+    constructor(moduleInstance: ModuleInstance<S>, stateStore: StateStore<S>) {
         this._moduleInstance = moduleInstance;
         this._stateStore = stateStore;
     }
@@ -72,11 +61,12 @@ export class ModuleContext<
         return this._moduleInstance.getStatusController();
     }
 
-    useSubscriber<TIdent extends Extract<keyof TSubscriberDefs, string>, TContentValueType extends Type>(options: {
-        subscriberIdent: TIdent;
-        expectedValueType: TContentValueType;
+    useSubscriber<TGenres extends Genre[], TValueType extends Type>(options: {
+        subscriberIdent: string;
+        expectedGenres: TGenres;
+        expectedValueType: TValueType;
         initialSettings?: InitialSettings;
-    }): ReturnType<typeof useSubscriber<TSubscriberDefs[TIdent]["supportedGenres"], TContentValueType>> {
+    }): ReturnType<typeof useSubscriber<(typeof options)["expectedGenres"], (typeof options)["expectedValueType"]>> {
         const subscriber = this._moduleInstance.getPublishSubscribeBroker().getSubscriber(options.subscriberIdent);
 
         React.useEffect(() => {
@@ -92,22 +82,21 @@ export class ModuleContext<
             }
         }, [options.initialSettings, subscriber]);
 
-        return useSubscriber<TSubscriberDefs[TIdent]["supportedGenres"], TContentValueType>({
+        return useSubscriber({
             subscriber: this._moduleInstance.getPublishSubscribeBroker().getSubscriber(options.subscriberIdent),
+            expectedGenres: options.expectedGenres,
             expectedValueType: options.expectedValueType,
         });
     }
 
-    usePublish<TIdent extends Extract<keyof TChannelDefs, string>>(options: {
-        channelIdent: TIdent;
+    usePublish(options: {
+        channelIdent: string;
         dependencies: any[];
         contents: ContentDefinition[];
-        dataGenerator: (contentIdent: string) => TChannelDefs[TIdent]["metaData"] extends undefined
-            ? Data<GenreType[TChannelDefs[TIdent]["genre"]], TChannelDefs[TIdent]["dataType"]>[]
-            : {
-                  data: Data<GenreType[TChannelDefs[TIdent]["genre"]], TChannelDefs[TIdent]["dataType"]>[];
-                  metaData: TChannelDefs[TIdent]["metaData"];
-              };
+        dataGenerator: (contentIdent: string) => {
+            data: Data<Type, Type>[];
+            metaData?: Record<string, TypeToTSTypeMapping[Type]>;
+        };
     }) {
         const channel = this._moduleInstance.getPublishSubscribeBroker().getChannel(options.channelIdent);
         if (!channel) {

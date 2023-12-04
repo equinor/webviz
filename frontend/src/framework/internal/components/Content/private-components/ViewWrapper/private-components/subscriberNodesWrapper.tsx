@@ -14,13 +14,13 @@ import { SubscriberNode } from "./subscriberNode";
 
 export type SubscriberNodesWrapperProps = {
     forwardedRef: React.RefObject<HTMLDivElement>;
-    moduleInstance: ModuleInstance<any, any, any>;
+    moduleInstance: ModuleInstance<any>;
     workbench: Workbench;
 };
 
 export const SubscriberNodesWrapper: React.FC<SubscriberNodesWrapperProps> = (props) => {
     const [visible, setVisible] = React.useState<boolean>(false);
-    const [currentSubscriber, setCurrentSubscriber] = React.useState<Subscriber<any> | null>(null);
+    const [currentSubscriber, setCurrentSubscriber] = React.useState<Subscriber | null>(null);
     const [currentOriginModuleInstanceId, setCurrentOriginModuleInstanceId] = React.useState<string | null>(null);
     const [channelSelectorCenterPoint, setChannelSelectorCenterPoint] = React.useState<Point | null>(null);
     const [selectableChannels, setSelectableChannels] = React.useState<SelectableChannel[]>([]);

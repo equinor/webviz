@@ -11,7 +11,7 @@ import { CircularProgress } from "@lib/components/CircularProgress";
 import { CrashView } from "./crashView";
 
 type ViewContentProps = {
-    moduleInstance: ModuleInstance<any, any, any>;
+    moduleInstance: ModuleInstance<any>;
     workbench: Workbench;
 };
 

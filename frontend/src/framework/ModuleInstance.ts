@@ -2,7 +2,7 @@ import { ErrorInfo } from "react";
 
 import { cloneDeep } from "lodash";
 
-import { ChannelDefinitions, SubscriberDefinitions } from "./DataChannelTypes";
+import { ChannelDefinition, SubscriberDefinition } from "./DataChannelTypes";
 import { InitialSettings } from "./InitialSettings";
 import { ImportState, Module, ModuleFC } from "./Module";
 import { ModuleContext } from "./ModuleContext";
@@ -18,11 +18,7 @@ export enum ModuleInstanceState {
     RESETTING,
 }
 
-export class ModuleInstance<
-    TStateType extends StateBaseType,
-    TChannelDefs extends ChannelDefinitions | never = never,
-    TSubscriberDefs extends SubscriberDefinitions | never = never
-> {
+export class ModuleInstance<TStateType extends StateBaseType> {
     private _id: string;
     private _title: string;
     private _initialised: boolean;
@@ -30,8 +26,8 @@ export class ModuleInstance<
     private _fatalError: { err: Error; errInfo: ErrorInfo } | null;
     private _syncedSettingKeys: SyncSettingKey[];
     private _stateStore: StateStore<TStateType> | null;
-    private _module: Module<TStateType, TChannelDefs, TSubscriberDefs>;
-    private _context: ModuleContext<TStateType, TChannelDefs, TSubscriberDefs> | null;
+    private _module: Module<TStateType>;
+    private _context: ModuleContext<TStateType> | null;
     private _importStateSubscribers: Set<() => void>;
     private _moduleInstanceStateSubscribers: Set<(moduleInstanceState: ModuleInstanceState) => void>;
     private _syncedSettingsSubscribers: Set<(syncedSettings: SyncSettingKey[]) => void>;
@@ -40,14 +36,14 @@ export class ModuleInstance<
     private _cachedStateStoreOptions?: StateOptions<TStateType>;
     private _initialSettings: InitialSettings | null;
     private _statusController: ModuleInstanceStatusControllerInternal;
-    private _publishSubscribeBroker: PublishSubscribeBroker<TChannelDefs, TSubscriberDefs>;
+    private _publishSubscribeBroker: PublishSubscribeBroker;
 
     constructor(options: {
-        module: Module<TStateType, TChannelDefs, TSubscriberDefs>;
+        module: Module<TStateType>;
         instanceNumber: number;
 
-        channels: TChannelDefs | null;
-        subscribers: SubscriberDefinitions | null;
+        channels: ChannelDefinition[] | null;
+        subscribers: SubscriberDefinition[] | null;
     }) {
         this._id = `${options.module.getName()}-${options.instanceNumber}`;
         this._title = options.module.getDefaultTitle();
@@ -66,41 +62,33 @@ export class ModuleInstance<
         this._initialSettings = null;
         this._statusController = new ModuleInstanceStatusControllerInternal();
 
-        this._publishSubscribeBroker = new PublishSubscribeBroker<TChannelDefs, TSubscriberDefs>(this._id);
+        this._publishSubscribeBroker = new PublishSubscribeBroker(this._id);
 
         if (options.subscribers) {
-            Object.keys(options.subscribers).forEach((subscriberIdent) => {
-                if (!options.subscribers) {
-                    return;
-                }
-                const subscriber = options.subscribers[subscriberIdent];
+            for (const subscriber of options.subscribers) {
                 this._publishSubscribeBroker.registerSubscriber({
-                    ident: subscriberIdent as Extract<keyof TSubscriberDefs, string>,
+                    ident: subscriber.ident,
                     name: subscriber.name,
                     supportedGenres: subscriber.supportedGenres,
                     supportsMultiContents: subscriber.supportsMultiContents ?? false,
                 });
-            });
+            }
         }
 
         if (options.channels) {
-            Object.keys(options.channels).forEach((channelIdent: string) => {
-                if (!options.channels) {
-                    return;
-                }
-                const channel = options.channels[channelIdent];
+            for (const channel of options.channels) {
                 this._publishSubscribeBroker.registerChannel({
-                    ident: channelIdent as Extract<keyof TChannelDefs, string>,
+                    ident: channel.ident,
                     name: channel.name,
                     genre: channel.genre,
                     dataType: channel.dataType,
                     metaData: channel.metaData,
                 });
-            });
+            }
         }
     }
 
-    getPublishSubscribeBroker(): PublishSubscribeBroker<TChannelDefs, TSubscriberDefs> {
+    getPublishSubscribeBroker(): PublishSubscribeBroker {
         return this._publishSubscribeBroker;
     }
 
@@ -111,7 +99,7 @@ export class ModuleInstance<
         }
 
         this._stateStore = new StateStore<TStateType>(cloneDeep(defaultState), options);
-        this._context = new ModuleContext<TStateType, TChannelDefs, TSubscriberDefs>(this, this._stateStore);
+        this._context = new ModuleContext<TStateType>(this, this._stateStore);
         this._initialised = true;
         this.setModuleInstanceState(ModuleInstanceState.OK);
     }
@@ -149,11 +137,11 @@ export class ModuleInstance<
         return this._initialised;
     }
 
-    getViewFC(): ModuleFC<TStateType, TChannelDefs, TSubscriberDefs> {
+    getViewFC(): ModuleFC<TStateType> {
         return this._module.viewFC;
     }
 
-    getSettingsFC(): ModuleFC<TStateType, TChannelDefs, TSubscriberDefs> {
+    getSettingsFC(): ModuleFC<TStateType> {
         return this._module.settingsFC;
     }
 
@@ -161,7 +149,7 @@ export class ModuleInstance<
         return this._module.getImportState();
     }
 
-    getContext(): ModuleContext<TStateType, TChannelDefs, TSubscriberDefs> {
+    getContext(): ModuleContext<TStateType> {
         if (!this._context) {
             throw `Module context is not available yet. Did you forget to init the module '${this._title}.'?`;
         }
@@ -198,7 +186,7 @@ export class ModuleInstance<
         });
     }
 
-    getModule(): Module<TStateType, TChannelDefs, TSubscriberDefs> {
+    getModule(): Module<TStateType> {
         return this._module;
     }
 

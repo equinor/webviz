@@ -1,17 +1,19 @@
 import React from "react";
 
-import { Data, Genre, GenreType, Type } from "../../../DataChannelTypes";
+import { Data, Genre, GenreType, Type, TypeToTSTypeMapping } from "../../../DataChannelTypes";
 import { Subscriber, SubscriberTopic } from "../Subscriber";
 import { checkValueIsExpectedType } from "../utils/checkIfValueIsExpectedType";
 
-type TGenre = [Genre.Realization];
-type k = GenreType[TGenre[number]];
+type m = Genre[];
+const s = [Genre.Realization] as const;
+type n = GenreType[(typeof s)[number]];
+type l = [Genre.Realization];
+type k = GenreType[l[number]];
 
-type t = ReturnType<typeof useSubscriber<[Genre.Realization], Type.Number>>;
-
-export function useSubscriber<TGenre extends readonly Genre[], TContentValueType extends Type>(options: {
-    subscriber: Subscriber<TGenre> | null;
-    expectedValueType: TContentValueType;
+export function useSubscriber<TGenres extends Genre[], TValueType extends Type>(options: {
+    subscriber: Subscriber | null;
+    expectedGenres: TGenres;
+    expectedValueType: TValueType;
 }): {
     ident: string;
     name: string;
@@ -22,8 +24,8 @@ export function useSubscriber<TGenre extends readonly Genre[], TContentValueType
         contents: {
             ident: string;
             name: string;
-            dataArray: Data<GenreType[TGenre[number]], TContentValueType>[];
-            metaData: Record<string, Type> | undefined;
+            dataArray: Data<GenreType[(typeof options.expectedGenres)[number]], typeof options.expectedValueType>[];
+            metaData: Record<string, TypeToTSTypeMapping[Type]> | undefined;
         }[];
     };
     hasActiveSubscription: boolean;
@@ -32,8 +34,8 @@ export function useSubscriber<TGenre extends readonly Genre[], TContentValueType
         {
             ident: string;
             name: string;
-            dataArray: Data<GenreType[TGenre[number]], TContentValueType>[];
-            metaData: Record<string, Type> | undefined;
+            dataArray: Data<GenreType[TGenres[number]], TValueType>[];
+            metaData: Record<string, TypeToTSTypeMapping[Type]> | undefined;
         }[]
     >([]);
 
@@ -42,6 +44,14 @@ export function useSubscriber<TGenre extends readonly Genre[], TContentValueType
             const channel = options.subscriber?.getChannel();
             if (!channel) {
                 return;
+            }
+
+            if (!options.expectedGenres.includes(channel.getGenre())) {
+                throw new Error(
+                    `Genre '${channel.getGenre()}' is not one of the expected genres '${options.expectedGenres.join(
+                        ", "
+                    )}'`
+                );
             }
 
             const contents = channel
@@ -64,8 +74,8 @@ export function useSubscriber<TGenre extends readonly Genre[], TContentValueType
                     return {
                         ident: content.getIdent(),
                         name: content.getName(),
-                        dataArray: content.getDataArray() as Data<GenreType[TGenre[number]], TContentValueType>[],
-                        metaData: content.getMetaData(),
+                        dataArray: content.getDataArray() as Data<GenreType[TGenres[number]], TValueType>[],
+                        metaData: content.getMetaData() ?? undefined,
                     };
                 });
 

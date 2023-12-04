@@ -2,7 +2,7 @@ import React from "react";
 
 import { cloneDeep } from "lodash";
 
-import { ChannelDefinitions, SubscriberDefinitions } from "./DataChannelTypes";
+import { ChannelDefinition, SubscriberDefinition } from "./DataChannelTypes";
 import { InitialSettings } from "./InitialSettings";
 import { ModuleContext } from "./ModuleContext";
 import { ModuleInstance } from "./ModuleInstance";
@@ -14,23 +14,15 @@ import { WorkbenchServices } from "./WorkbenchServices";
 import { WorkbenchSession } from "./WorkbenchSession";
 import { WorkbenchSettings } from "./WorkbenchSettings";
 
-export type ModuleFCProps<
-    TStateType extends StateBaseType,
-    TChannelDefs extends ChannelDefinitions | never = never,
-    TSubscriberDefs extends SubscriberDefinitions | never = never
-> = {
-    moduleContext: ModuleContext<TStateType, TChannelDefs, TSubscriberDefs>;
+export type ModuleFCProps<TStateType extends StateBaseType> = {
+    moduleContext: ModuleContext<TStateType>;
     workbenchSession: WorkbenchSession;
     workbenchServices: WorkbenchServices;
     workbenchSettings: WorkbenchSettings;
     initialSettings?: InitialSettings;
 };
 
-export type ModuleFC<
-    TStateType extends StateBaseType,
-    TChannelDefs extends ChannelDefinitions,
-    TSubscriberDefs extends SubscriberDefinitions
-> = React.FC<ModuleFCProps<TStateType, TChannelDefs, TSubscriberDefs>>;
+export type ModuleFC<TStateType extends StateBaseType> = React.FC<ModuleFCProps<TStateType>>;
 
 export enum ImportState {
     NotImported = "NotImported",
@@ -39,25 +31,21 @@ export enum ImportState {
     Failed = "Failed",
 }
 
-export class Module<
-    StateType extends StateBaseType,
-    TChannelDefs extends ChannelDefinitions | never,
-    TSubscriberDefs extends SubscriberDefinitions | never
-> {
+export class Module<StateType extends StateBaseType> {
     private _name: string;
     private _defaultTitle: string;
-    public viewFC: ModuleFC<StateType, TChannelDefs, TSubscriberDefs>;
-    public settingsFC: ModuleFC<StateType, TChannelDefs, TSubscriberDefs>;
+    public viewFC: ModuleFC<StateType>;
+    public settingsFC: ModuleFC<StateType>;
     protected _importState: ImportState;
-    private _moduleInstances: ModuleInstance<StateType, TChannelDefs, TSubscriberDefs>[];
+    private _moduleInstances: ModuleInstance<StateType>[];
     private _defaultState: StateType | null;
     private _stateOptions: StateOptions<StateType> | undefined;
     private _workbench: Workbench | null;
     private _syncableSettingKeys: SyncSettingKey[];
     private _drawPreviewFunc: DrawPreviewFunc | null;
     private _description: string | null;
-    private _channels: TChannelDefs | null;
-    private _subscribers: TSubscriberDefs | null;
+    private _channels: ChannelDefinition[] | null;
+    private _subscribers: SubscriberDefinition[] | null;
 
     constructor(options: {
         name: string;
@@ -65,8 +53,8 @@ export class Module<
         syncableSettingKeys?: SyncSettingKey[];
         drawPreviewFunc?: DrawPreviewFunc;
         description?: string;
-        channels?: TChannelDefs;
-        subscribers?: TSubscriberDefs;
+        channels?: ChannelDefinition[];
+        subscribers?: SubscriberDefinition[];
     }) {
         this._name = options.name;
         this._defaultTitle = options.defaultTitle;
@@ -125,12 +113,12 @@ export class Module<
         return this._syncableSettingKeys.includes(key);
     }
 
-    makeInstance(instanceNumber: number): ModuleInstance<StateType, TChannelDefs, TSubscriberDefs> {
+    makeInstance(instanceNumber: number): ModuleInstance<StateType> {
         if (!this._workbench) {
             throw new Error("Module must be added to a workbench before making an instance");
         }
 
-        const instance = new ModuleInstance<StateType, TChannelDefs, TSubscriberDefs>({
+        const instance = new ModuleInstance<StateType>({
             module: this,
             instanceNumber,
             channels: this._channels,

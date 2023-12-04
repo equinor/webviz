@@ -1,28 +1,33 @@
-import { Genre, SubscriberDefinitions } from "@framework/DataChannelTypes";
+import { Genre, SubscriberDefinition } from "@framework/DataChannelTypes";
 
-export const subscriberDefs = {
-    ["channelX"]: {
+export const subscriberDefs: SubscriberDefinition[] = [
+    {
+        ident: "channelX",
         name: "X axis",
         supportedGenres: [Genre.Realization],
         supportsMultiContents: true,
     },
-    ["channelY"]: {
+    {
+        ident: "channelY",
         name: "Y axis",
         supportedGenres: [Genre.Realization],
         supportsMultiContents: true,
     },
-    ["channelZ"]: {
+    {
+        ident: "channelZ",
         name: "Z axis",
         supportedGenres: [Genre.Realization],
         supportsMultiContents: true,
     },
-    ["channelColor"]: {
+    {
+        ident: "channelColor",
         name: "Color mapping",
         supportedGenres: [Genre.Realization],
         supportsMultiContents: true,
     },
-    ["singleTaskingListener"]: {
+    {
+        ident: "singleTaskingListener",
         name: "Single tasking listener",
         supportedGenres: [Genre.Realization],
     },
-} as const;
+];

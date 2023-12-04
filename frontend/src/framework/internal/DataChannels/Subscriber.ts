@@ -3,12 +3,11 @@ import { PublishSubscribeBroker } from "./PublishSubscribeBroker";
 
 import { Genre } from "../../DataChannelTypes";
 
-export interface SubscriberDefinitions {
-    [ident: string]: {
-        readonly name: string;
-        readonly supportedGenres: readonly Genre[];
-        readonly supportsMultiContents?: boolean;
-    };
+export interface SubscriberDefinition {
+    readonly ident: string;
+    readonly name: string;
+    readonly supportedGenres: readonly Genre[];
+    readonly supportsMultiContents?: boolean;
 }
 
 export enum SubscriberTopic {
@@ -16,22 +15,22 @@ export enum SubscriberTopic {
     ChannelChange = "channel-change",
 }
 
-export class Subscriber<TSupportedGenres extends readonly Genre[]> {
-    private _broker: PublishSubscribeBroker<any, any>;
-    private _ident: string;
-    private _name: string;
-    private _supportedGenres: TSupportedGenres;
-    private _supportsMultiContents: boolean;
-    private _channel: Channel<any, any, any> | null = null;
+export class Subscriber {
+    private readonly _broker: PublishSubscribeBroker;
+    private readonly _ident: string;
+    private readonly _name: string;
+    private readonly _supportedGenres: readonly Genre[];
+    private readonly _supportsMultiContents: boolean;
+    private _channel: Channel | null = null;
     private _contentIdents: string[] = [];
     private _subscribersMap: Map<SubscriberTopic, Set<() => void>> = new Map();
     private _subscribedToAllContents: boolean = false;
 
     constructor(options: {
-        broker: PublishSubscribeBroker<any, any>;
+        broker: PublishSubscribeBroker;
         ident: string;
         name: string;
-        supportedGenres: TSupportedGenres;
+        supportedGenres: readonly Genre[];
         supportsMultiContents?: boolean;
     }) {
         this._broker = options.broker;
@@ -44,11 +43,11 @@ export class Subscriber<TSupportedGenres extends readonly Genre[]> {
         this.handleContentsChange = this.handleContentsChange.bind(this);
     }
 
-    getBroker(): PublishSubscribeBroker<any, any> {
+    getBroker(): PublishSubscribeBroker {
         return this._broker;
     }
 
-    subscribeToChannel(channel: Channel<any, any, any>, contentIdents: string[] | "All"): void {
+    subscribeToChannel(channel: Channel, contentIdents: string[] | "All"): void {
         if (this.hasActiveSubscription()) {
             this.unsubscribeFromCurrentChannel();
         }
@@ -81,7 +80,7 @@ export class Subscriber<TSupportedGenres extends readonly Genre[]> {
         this.notifySubscribers(SubscriberTopic.ContentChange);
     }
 
-    getChannel(): Channel<any, any, any> | null {
+    getChannel(): Channel | null {
         return this._channel;
     }
 
