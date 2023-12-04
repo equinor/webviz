@@ -17,7 +17,7 @@ LOCALHOST_DEVELOPMENT = os.environ.get("UVICORN_RELOAD") == "true"
 class _RedisUserJobs:
     def __init__(self) -> None:
         # redis.Redis does not yet have namespace support - https://github.com/redis/redis-py/issues/12 - need to prefix manually.
-        self._redis_client = redis.Redis.from_url(config.REDIS_URL, decode_responses=True)
+        self._redis_client = redis.Redis.from_url(config.REDIS_USER_SESSION_URL, decode_responses=True)
 
     def get_job_name(self, user_id: str) -> Optional[str]:
         return self._redis_client.get("user-job-name:" + user_id)

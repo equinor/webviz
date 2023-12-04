@@ -96,6 +96,7 @@ export const Setting: React.FC<SettingProps> = (props) => {
                             id={`${props.moduleInstance.getId()}-settings`}
                             source={StatusSource.Settings}
                             statusController={props.moduleInstance.getStatusController()}
+                            guiMessageBroker={props.workbench.getGuiMessageBroker()}
                         >
                             <Settings
                                 moduleContext={props.moduleInstance.getContext()}

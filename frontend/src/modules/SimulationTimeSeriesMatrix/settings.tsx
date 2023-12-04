@@ -353,12 +353,7 @@ export function settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
                     disabled={!selectedVectorNamesHasHistorical}
                     onChange={handleShowHistorical}
                 />
-                <Checkbox
-                    label="Show observations - NEED DATA IN SUMO"
-                    checked={showObservations}
-                    disabled={true}
-                    onChange={handleShowObservations}
-                />
+                <Checkbox label="Show observations" checked={showObservations} onChange={handleShowObservations} />
                 <div
                     className={resolveClassNames({
                         "pointer-events-none opacity-80": vectorListQueries.some((query) => query.isLoading),

@@ -6,5 +6,5 @@
         "allowSyntheticDefaultImports": true,
         "resolveJsonModule": true
     },
-    "include": ["vite.config.ts", "aliases.json"]
+    "include": ["vite.config.ts", "aliases.json", "tests/ct/_playwright.config.ts", "tests/ct/playwright/"]
 }

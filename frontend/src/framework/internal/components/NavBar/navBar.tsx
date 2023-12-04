@@ -29,6 +29,7 @@ const NavBarDivider: React.FC = () => {
 
 export const NavBar: React.FC<NavBarProps> = (props) => {
     const [ensembleDialogOpen, setEnsembleDialogOpen] = React.useState<boolean>(false);
+    const [newSelectedEnsembles, setNewSelectedEnsembles] = React.useState<EnsembleItem[]>([]);
     const [layoutEmpty, setLayoutEmpty] = React.useState<boolean>(props.workbench.getLayout().length === 0);
     const [expanded, setExpanded] = React.useState<boolean>(localStorage.getItem("navBarExpanded") === "true");
     const loadingEnsembleSet = useIsEnsembleSetLoading(props.workbench.getWorkbenchSession());
@@ -109,17 +110,23 @@ export const NavBar: React.FC<NavBarProps> = (props) => {
         localStorage.setItem("navBarExpanded", (!expanded).toString());
     }
 
-    const selectedEnsembles = ensembleSet.getEnsembleArr().map((ens) => ({
+    const selectedEnsembles: EnsembleItem[] = ensembleSet.getEnsembleArr().map((ens) => ({
         caseUuid: ens.getCaseUuid(),
         caseName: ens.getCaseName(),
         ensembleName: ens.getEnsembleName(),
     }));
 
     function loadAndSetupEnsembles(selectedEnsembles: EnsembleItem[]): Promise<void> {
+        setNewSelectedEnsembles(selectedEnsembles);
         const selectedEnsembleIdents = selectedEnsembles.map(
             (ens) => new EnsembleIdent(ens.caseUuid, ens.ensembleName)
         );
         return props.workbench.loadAndSetupEnsembleSetInSession(queryClient, selectedEnsembleIdents);
+    }
+
+    let fixedSelectedEnsembles = selectedEnsembles;
+    if (loadingEnsembleSet) {
+        fixedSelectedEnsembles = newSelectedEnsembles;
     }
 
     return (
@@ -245,7 +252,7 @@ export const NavBar: React.FC<NavBarProps> = (props) => {
             {ensembleDialogOpen && (
                 <SelectEnsemblesDialog
                     loadAndSetupEnsembles={loadAndSetupEnsembles}
-                    selectedEnsembles={selectedEnsembles}
+                    selectedEnsembles={fixedSelectedEnsembles}
                     onClose={handleEnsembleDialogClose}
                 />
             )}

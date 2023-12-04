@@ -1,116 +1,134 @@
 name: webviz
 
 on:
-  push:
-  pull_request:
-    branches:
-      - main
-  release:
-    types:
-      - published
+    push:
+    pull_request:
+        branches:
+            - main
+    release:
+        types:
+            - published
 
 jobs:
-  frontend:
-    runs-on: ubuntu-latest
+    frontend:
+        runs-on: ubuntu-latest
 
-    steps:
-      - name: 📖 Checkout commit locally
-        uses: actions/checkout@v3
+        steps:
+            - name: 📖 Checkout commit locally
+              uses: actions/checkout@v3
 
-      - uses: actions/setup-node@v3
-        with:
-          node-version: 18
-          cache: npm
-          cache-dependency-path: frontend/package-lock.json
+            - uses: actions/setup-node@v3
+              with:
+                  node-version: 18
+                  cache: npm
+                  cache-dependency-path: frontend/package-lock.json
 
-      - name: ℹ️ Node and npm versions
-        run: |
-          node -v
-          npm -v
+            - name: ℹ️ Node and npm versions
+              run: |
+                  node -v
+                  npm -v
 
-      - name: 📦 Install build dependencies
-        working-directory: ./frontend
-        run: |
-          npm ci --include=dev
+            - name: 📦 Install build dependencies
+              working-directory: ./frontend
+              run: |
+                  npm ci --include=dev
 
-      - name: ℹ️ Installed npm packages (depth = 0)
-        working-directory: ./frontend
-        run: npm list --depth=0
+            - name: ℹ️ Installed npm packages (depth = 0)
+              working-directory: ./frontend
+              run: npm list --depth=0
 
-      - name: 🏗️ Build JavaScript bundle
-        working-directory: ./frontend
-        run: npm run build
+            - name: 🏗️ Build JavaScript bundle
+              working-directory: ./frontend
+              run: npm run build
 
-      - name: 🕵️ Check code style, linting & dependencies
-        working-directory: ./frontend
-        run: |
-          npm run validate
+            - name: 🕵️ Check code style, linting & dependencies
+              working-directory: ./frontend
+              run: |
+                  npm run validate
 
-      - name: 🤖 Run tests
-        working-directory: ./frontend
-        run: |
-          npm run test
+            - name: Install Playwright Browsers
+              working-directory: ./frontend
+              run: |
+                  npx playwright install --with-deps
 
-      - name: 🕵️ Check auto-generated frontend code is in sync with backend
-        run: |
-          docker build -f backend.Dockerfile -t backend:latest .
-          CONTAINER_ID=$(docker run --detach -p 5000:5000 --env UVICORN_PORT=5000 --env UVICORN_ENTRYPOINT=src.backend.primary.main:app --env WEBVIZ_CLIENT_SECRET=0 --env WEBVIZ_SMDA_SUBSCRIPTION_KEY=0 --env WEBVIZ_SMDA_RESOURCE_SCOPE=0 backend:latest)
-          sleep 5  # Ensure the backend server is up and running exposing /openapi.json
-          npm run generate-api --prefix ./frontend
-          docker stop $CONTAINER_ID
-          git diff --exit-code ./frontend/src/api || exit 1
+            - name: 🤖 Run unit tests
+              working-directory: ./frontend
+              run: |
+                  npm run test:unit
 
-  backend:
-    runs-on: ubuntu-latest
+            - name: 🤖 Run component tests
+              working-directory: ./frontend
+              run: |
+                  npm run test:ct
 
-    steps:
-      - name: 📖 Checkout commit locally
-        uses: actions/checkout@v3
+            - uses: actions/upload-artifact@v3
+              if: always()
+              with:
+                  name: playwright-report
+                  path: playwright-report/
+                  retention-days: 30
 
-      - name: 🐍 Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: "3.11"
-          cache: pip
+            - name: 🕵️ Check auto-generated frontend code is in sync with backend
+              run: |
+                  docker build -f backend.Dockerfile -t backend:latest .
+                  CONTAINER_ID=$(docker run --detach -p 5000:5000 --env UVICORN_PORT=5000 --env UVICORN_ENTRYPOINT=src.backend.primary.main:app --env WEBVIZ_CLIENT_SECRET=0 --env WEBVIZ_SMDA_SUBSCRIPTION_KEY=0 --env WEBVIZ_SMDA_RESOURCE_SCOPE=0 --env WEBVIZ_VDS_HOST_ADDRESS=0 backend:latest)
+                  sleep 5  # Ensure the backend server is up and running exposing /openapi.json
+                  npm run generate-api --prefix ./frontend
+                  docker stop $CONTAINER_ID
+                  git diff --exit-code ./frontend/src/api || exit 1
 
-      - name: 📦 Install poetry and dependencies
-        working-directory: ./backend
-        run: |
-          pip install --upgrade pip
-          pip install poetry
-          poetry config virtualenvs.create false
-          poetry lock --check --no-update  # Check lock file is consistent with pyproject.toml
-          poetry install --with dev
+    backend:
+        runs-on: ubuntu-latest
 
-      - name: 🕵️ Check code style & linting
-        working-directory: ./backend
-        run: |
-          black --check src/ tests/
-          pylint src/ tests/
-          bandit --recursive src/
-          mypy src/ tests/
+        steps:
+            - name: 📖 Checkout commit locally
+              uses: actions/checkout@v3
 
-      - name: 🤖 Run tests
-        working-directory: ./backend
-        env:
-          WEBVIZ_CLIENT_SECRET: 0
-          WEBVIZ_SMDA_SUBSCRIPTION_KEY: 0
-          WEBVIZ_SMDA_RESOURCE_SCOPE: 0
-        run: |
-          pytest ./tests/unit
+            - name: 🐍 Set up Python
+              uses: actions/setup-python@v4
+              with:
+                  python-version: "3.11"
+                  cache: pip
 
-  build_docker_images:
-    runs-on: ubuntu-latest
+            - name: 📦 Install poetry and dependencies
+              working-directory: ./backend
+              run: |
+                  pip install --upgrade pip
+                  pip install poetry
+                  poetry config virtualenvs.create false
+                  poetry lock --check --no-update  # Check lock file is consistent with pyproject.toml
+                  poetry install --with dev
 
-    steps:
-      - name: 📖 Checkout commit locally
-        uses: actions/checkout@v3
+            - name: 🕵️ Check code style & linting
+              working-directory: ./backend
+              run: |
+                  black --check src/ tests/
+                  pylint src/ tests/
+                  bandit --recursive src/
+                  mypy src/ tests/
 
-      - uses: actions/setup-node@v3
-        with:
-          node-version: 18
+            - name: 🤖 Run tests
+              working-directory: ./backend
+              env:
+                  WEBVIZ_CLIENT_SECRET: 0
+                  WEBVIZ_SMDA_SUBSCRIPTION_KEY: 0
+                  WEBVIZ_SMDA_RESOURCE_SCOPE: 0
+                  WEBVIZ_VDS_HOST_ADDRESS: 0
+              run: |
+                  pytest ./tests/unit
 
-      - name: 🐳 Verify Docker images build
-        run: |
-          docker build -f frontend-prod.Dockerfile .
-          docker build -f backend.Dockerfile .
+    build_docker_images:
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: 📖 Checkout commit locally
+              uses: actions/checkout@v3
+
+            - uses: actions/setup-node@v3
+              with:
+                  node-version: 18
+
+            - name: 🐳 Verify Docker images build
+              run: |
+                  docker build -f frontend-prod.Dockerfile .
+                  docker build -f backend.Dockerfile .

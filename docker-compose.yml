@@ -32,6 +32,10 @@ services:
       - WEBVIZ_SMDA_RESOURCE_SCOPE
       - WEBVIZ_SMDA_SUBSCRIPTION_KEY
       - WEBVIZ_SUMO_ENV
+      - WEBVIZ_VDS_HOST_ADDRESS
+      - APPLICATIONINSIGHTS_CONNECTION_STRING
+      - OTEL_SERVICE_NAME=primary-backend
+      - OTEL_RESOURCE_ATTRIBUTES=service.namespace=local, service.version=dummy0.1.2
       - CODESPACE_NAME  # Automatically set env. variable by GitHub codespace
     volumes:
       - ./backend/src:/home/appuser/backend/src
@@ -56,19 +60,25 @@ services:
       - WEBVIZ_SMDA_RESOURCE_SCOPE
       - WEBVIZ_SMDA_SUBSCRIPTION_KEY
       - WEBVIZ_SUMO_ENV
+      - WEBVIZ_VDS_HOST_ADDRESS
+      - APPLICATIONINSIGHTS_CONNECTION_STRING
+      - OTEL_SERVICE_NAME=user-session
+      - OTEL_RESOURCE_ATTRIBUTES=service.namespace=local, service.version=dummy0.1.2
     volumes:
       - ./backend/src:/home/appuser/backend/src
 
   redis-user-session:
-    image: "bitnami/redis:6.2.10@sha256:bd42fcdab5959ce2b21b6ea8410d4b3ee87ecb2e320260326ec731ecfcffbd0e"
+    image: bitnami/redis:6.2.10@sha256:bd42fcdab5959ce2b21b6ea8410d4b3ee87ecb2e320260326ec731ecfcffbd0e
     expose:
-      - "6379"
+      - 6379
     environment:
       - ALLOW_EMPTY_PASSWORD=yes
-    volumes:
-      - redis-data:/data
-      - redis-conf:/usr/local/etc/redis/redis.conf
 
-volumes:
-  redis-data:
-  redis-conf:
+  redis-cache:
+    image: bitnami/redis:6.2.10@sha256:bd42fcdab5959ce2b21b6ea8410d4b3ee87ecb2e320260326ec731ecfcffbd0e
+    expose:
+      - 6379
+    environment:
+      - ALLOW_EMPTY_PASSWORD=yes
+      # https://redis.io/docs/management/config/#configuring-redis-as-a-cache
+      - REDIS_EXTRA_FLAGS=--maxmemory 1gb  --maxmemory-policy allkeys-lru  --save ''  --appendonly no  --loglevel notice

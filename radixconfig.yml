@@ -10,6 +10,7 @@ spec:
     - name: review
       build:
         from: review
+
   components:
     - name: frontend
       dockerFileName: frontend-prod.Dockerfile
@@ -17,6 +18,7 @@ spec:
       ports:
         - name: http
           port: 8080
+
     - name: backend-primary
       dockerFileName: backend.Dockerfile
       ports:
@@ -32,9 +34,60 @@ spec:
                 envVar: WEBVIZ_SMDA_RESOURCE_SCOPE
               - name: WEBVIZ-SMDA-SUBSCRIPTION-KEY
                 envVar: WEBVIZ_SMDA_SUBSCRIPTION_KEY
+              - name: WEBVIZ-VDS-HOST-ADDRESS
+                envVar: WEBVIZ_VDS_HOST_ADDRESS
       variables:
         UVICORN_PORT: 5000
         UVICORN_ENTRYPOINT: src.backend.primary.main:app
+      environmentConfig:
+        - environment: prod
+          secretRefs:
+            azureKeyVaults:
+              - name: webviz
+                items:
+                  - name: WEBVIZ-INSIGHTS-CONNECTIONSTRING-PROD
+                    envVar: APPLICATIONINSIGHTS_CONNECTION_STRING
+          variables:
+            OTEL_RESOURCE_ATTRIBUTES: service.name=primary-backend, service.namespace=prod, service.version=tbd0.1.2
+          resources:
+            requests:
+              memory: 8Gi
+              cpu: 1000m
+            limits:
+              # Memory limit=request and cpu limit omitted on purpose
+              memory: 8Gi
+          horizontalScaling:
+            minReplicas: 2
+            maxReplicas: 4
+            resources:
+              memory:
+                averageUtilization: 60
+              cpu:
+                averageUtilization: 80
+        - environment: review
+          secretRefs:
+            azureKeyVaults:
+              - name: webviz
+                items:
+                  - name: WEBVIZ-INSIGHTS-CONNECTIONSTRING-REVIEW
+                    envVar: APPLICATIONINSIGHTS_CONNECTION_STRING
+          variables:
+            OTEL_RESOURCE_ATTRIBUTES: service.name=primary-backend, service.namespace=review, service.version=tbd0.1.2
+          resources:
+            requests:
+              memory: 4Gi
+              cpu: 500m
+            limits:
+              memory: 4Gi
+          horizontalScaling:
+            minReplicas: 1
+            maxReplicas: 3
+            resources:
+              memory:
+                averageUtilization: 60
+              cpu:
+                averageUtilization: 80
+
     - name: redis-user-session
       image: bitnami/redis:6.2.10@sha256:bd42fcdab5959ce2b21b6ea8410d4b3ee87ecb2e320260326ec731ecfcffbd0e
       ports:
@@ -42,6 +95,23 @@ spec:
           port: 6379
       variables:
         ALLOW_EMPTY_PASSWORD: yes
+
+    - name: redis-cache
+      image: bitnami/redis:6.2.10@sha256:bd42fcdab5959ce2b21b6ea8410d4b3ee87ecb2e320260326ec731ecfcffbd0e
+      ports:
+        - name: http
+          port: 6379
+      variables:
+        ALLOW_EMPTY_PASSWORD: yes
+        # https://redis.io/docs/management/config/#configuring-redis-as-a-cache
+        # maxmemory for redis must be aligned with component's requested memory, here 1gb vs 2gb
+        REDIS_EXTRA_FLAGS: --maxmemory 1gb  --maxmemory-policy allkeys-lru  --save ''  --appendonly no  --loglevel verbose
+      resources:
+        requests:
+          memory: 2Gi
+          cpu: 200m
+        limits:
+          memory: 2Gi
 
   jobs:
     - name: backend-user-session
@@ -66,6 +136,14 @@ spec:
       environmentConfig:
         # As of October 2023 in radix, these settings need to be duplicated for both environments.
         - environment: prod
+          secretRefs:
+            azureKeyVaults:
+              - name: webviz
+                items:
+                  - name: WEBVIZ-INSIGHTS-CONNECTIONSTRING-PROD
+                    envVar: APPLICATIONINSIGHTS_CONNECTION_STRING
+          variables:
+            OTEL_RESOURCE_ATTRIBUTES: service.name=user-session, service.namespace=prod, service.version=tbd0.1.2
           volumeMounts:
             - name: webvizcache
               path: /tmp/webvizcache/
@@ -73,12 +151,21 @@ spec:
                 container: cache
                 uid: 1234
         - environment: review
+          secretRefs:
+            azureKeyVaults:
+              - name: webviz
+                items:
+                  - name: WEBVIZ-INSIGHTS-CONNECTIONSTRING-REVIEW
+                    envVar: APPLICATIONINSIGHTS_CONNECTION_STRING
+          variables:
+            OTEL_RESOURCE_ATTRIBUTES: service.name=user-session, service.namespace=review, service.version=tbd0.1.2
           volumeMounts:
             - name: webvizcache
               path: /tmp/webvizcache/
               blobfuse2:
                 container: cache
                 uid: 1234
+
   dnsAppAlias:
     environment: prod
     component: frontend

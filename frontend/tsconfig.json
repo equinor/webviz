@@ -17,6 +17,7 @@
         "jsx": "react-jsx"
     },
     "include": ["src", "tests"],
+    "exclude": ["tests/ct/playwright/", "**/_playwright.config.ts"],
     "references": [{ "path": "./tsconfig.node.json" }],
     "extends": "./aliases.json"
 }

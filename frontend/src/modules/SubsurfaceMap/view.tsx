@@ -8,14 +8,11 @@ import { Wellbore } from "@framework/Wellbore";
 import { Button } from "@lib/components/Button";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { ColorScaleGradientType } from "@lib/utils/ColorScale";
+import { usePolygonsDataQueryByAddress } from "@modules/_shared/Polygons";
+import { useFieldWellsTrajectoriesQuery } from "@modules/_shared/WellBore/queryHooks";
 import { useSurfaceDataQueryByAddress } from "@modules_shared/Surface";
 import { ViewAnnotation } from "@webviz/subsurface-viewer/dist/components/ViewAnnotation";
 
-import {
-    useGetFieldWellsTrajectories,
-    usePolygonsDataQueryByAddress,
-    usePropertySurfaceDataByQueryAddress,
-} from "././queryHooks";
 import {
     SurfaceMeta,
     createAxesLayer,
@@ -27,6 +24,7 @@ import {
     createWellboreTrajectoryLayer,
 } from "./_utils";
 import { SyncedSubsurfaceViewer } from "./components/SyncedSubsurfaceViewer";
+import { usePropertySurfaceDataByQueryAddress } from "./queryHooks";
 import { state } from "./state";
 
 type Bounds = [number, number, number, number];
@@ -90,7 +88,7 @@ export function view({ moduleContext, workbenchSettings, workbenchServices }: Mo
     const hasMeshSurfData = meshSurfDataQuery?.data ? true : false;
     const propertySurfDataQuery = usePropertySurfaceDataByQueryAddress(meshSurfAddr, propertySurfAddr, hasMeshSurfData);
 
-    const wellTrajectoriesQuery = useGetFieldWellsTrajectories(meshSurfAddr?.caseUuid);
+    const wellTrajectoriesQuery = useFieldWellsTrajectoriesQuery(meshSurfAddr?.caseUuid);
     const polygonsQuery = usePolygonsDataQueryByAddress(polygonsAddr);
 
     const newLayers: Record<string, unknown>[] = [createNorthArrowLayer()];

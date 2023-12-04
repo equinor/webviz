@@ -23,8 +23,10 @@ pandas = {version = "2.0.1", extras = ["performance"]}
 httpx = "^0.24.0"
 psutil = "^5.9.5"
 vtk = "^9.2.6"
-fmu-sumo = "^0.5.4"
-sumo-wrapper-python = "^0.4.1"
+fmu-sumo = "1.0.3"
+sumo-wrapper-python = "1.0.6"
+azure-monitor-opentelemetry = "^1.1.0"
+requests-toolbelt = "^1.0.0"
 
 
 [tool.poetry.group.dev.dependencies]

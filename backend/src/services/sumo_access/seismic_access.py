@@ -12,9 +12,9 @@ LOGGER = logging.getLogger(__name__)
 
 
 class SeismicAccess(SumoEnsemble):
-    async def get_seismic_directory(self) -> List[SeismicCubeMeta]:
+    async def get_seismic_cube_meta_list_async(self) -> List[SeismicCubeMeta]:
         seismic_cube_collection: CubeCollection = self._case.cubes.filter(iteration=self._iteration_name, realization=0)
-        seismic_cube_metas: List[SeismicCubeMeta] = []
+        seismic_cube_meta_list: List[SeismicCubeMeta] = []
         async for cube in seismic_cube_collection:
             t_start = cube["data"].get("time", {}).get("t0", {}).get("value", None)
             t_end = cube["data"].get("time", {}).get("t1", {}).get("value", None)
@@ -34,10 +34,10 @@ class SeismicAccess(SumoEnsemble):
                 is_observation=cube["data"]["is_observation"],
                 is_depth=cube["data"]["vertical_domain"] == "depth",
             )
-            seismic_cube_metas.append(seismic_meta)
-        return seismic_cube_metas
+            seismic_cube_meta_list.append(seismic_meta)
+        return seismic_cube_meta_list
 
-    async def get_vds_handle(
+    async def get_vds_handle_async(
         self,
         seismic_attribute: str,
         realization: int,
