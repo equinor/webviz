@@ -68,12 +68,17 @@ async def well_intersection_reals_from_user_session(
             coro_array.append(my_download_to_file(container_client=container_client, sumo_surf_uuid=uuid))
         res_array = await asyncio.gather(*coro_array)
         dl_time_s = timer.lap_s()
-        print(f"download surfs: {dl_time_s:.2f}s")
+        print(f"download surfs: {dl_time_s:.2f}s", flush=True)
+        LOGGER.info(f"download surfs: {dl_time_s:.2f}s", extra={"download_surfs": dl_time_s})
 
         tot_mb = 0
         for res in res_array:
             tot_mb += len(res) / (1024 * 1024)
-        print(f"Total MB downloaded: {tot_mb:.2f}MB  =>  {tot_mb/dl_time_s:.2f}MB/s")
+        print(f"Total MB downloaded: {tot_mb:.2f}MB  =>  {tot_mb/dl_time_s:.2f}MB/s", flush=True)
+        LOGGER.info(
+            f"Total MB downloaded: {tot_mb:.2f}MB  =>  {tot_mb/dl_time_s:.2f}MB/s",
+            extra={"total_mb": tot_mb, "mb_per_s": tot_mb / dl_time_s},
+        )
 
     surfs = [xtgeo.surface_from_file(BytesIO(bytestr), fformat="irap_binary") for bytestr in res_array]
     fence_arr = np.array(
