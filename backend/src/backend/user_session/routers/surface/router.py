@@ -3,7 +3,7 @@
 
 from typing import List, Tuple
 import logging
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ProcessPoolExecutor
 from aiocache import Cache
 
 import numpy as np
@@ -80,7 +80,9 @@ async def well_intersection_reals_from_user_session(
             extra={"total_mb": tot_mb, "mb_per_s": tot_mb / dl_time_s},
         )
 
-    surfs = [xtgeo.surface_from_file(BytesIO(bytestr), fformat="irap_binary") for bytestr in res_array]
+    # surfs = [xtgeo.surface_from_file(BytesIO(bytestr), fformat="irap_binary") for bytestr in res_array]
+    surfaces = await load_xtgeo(res_array)
+    print(f"convert surfs: {timer.lap_s():.2f}s", flush=True)
     fence_arr = np.array(
         [
             surface_fence_spec.x_points,
@@ -89,16 +91,9 @@ async def well_intersection_reals_from_user_session(
             surface_fence_spec.cum_length,
         ]
     ).T
+    intersections = await make_intersections(surfaces, fence_arr)
 
-    for surf in surfs:
-        line = surf.get_randomline(fence_arr)
-        intersection = schemas.SurfaceIntersectionPoints(
-            name=f"{surf.name}",
-            cum_length=line[:, 0].tolist(),
-            z_array=line[:, 1].tolist(),
-        )
-        intersections.append(intersection)
-
+    print(f"intersect surfs: {timer.lap_s():.2f}s", flush=True)
     return ORJSONResponse([section.dict() for section in intersections])
 
 
@@ -212,22 +207,35 @@ async def b64_to_xtgeo(data_map_b64):
     return downloaded_surface_dict
 
 
-async def make_intersections(surfaces, fence_arr):
-    def make_intersection(surf):
-        line = surf.get_randomline(fence_arr)
-        intersection = schemas.SurfaceIntersectionPoints(
-            name=f"{surf.name}",
-            cum_length=line[:, 0].tolist(),
-            z_array=line[:, 1].tolist(),
-        )
-        return intersection
+def make_intersection(surf, fence_arr):
+    line = surf.get_randomline(fence_arr)
+    intersection = schemas.SurfaceIntersectionPoints(
+        name=f"{surf.name}",
+        cum_length=line[:, 0].tolist(),
+        z_array=line[:, 1].tolist(),
+    )
+    return intersection
 
+
+async def make_intersections(surfaces, fence_arr):
     loop = asyncio.get_running_loop()
 
-    with ThreadPoolExecutor() as executor:
-        tasks = [loop.run_in_executor(executor, make_intersection, surf) for surf in surfaces]
+    with ProcessPoolExecutor() as executor:
+        tasks = [loop.run_in_executor(executor, make_intersection, surf, fence_arr) for surf in surfaces]
         intersections = await asyncio.gather(*tasks)
     return intersections
+
+
+def load_surf(bytestr) -> xtgeo.RegularSurface:
+    return xtgeo.surface_from_file(BytesIO(bytestr), fformat="irap_binary")
+
+
+async def load_xtgeo(res_array):
+    loop = asyncio.get_running_loop()
+    with ProcessPoolExecutor() as executor:
+        tasks = [loop.run_in_executor(executor, load_surf, bytestr) for bytestr in res_array]
+        surfaces = await asyncio.gather(*tasks)
+    return surfaces
 
 
 def get_uuids(case_uuid, ensemble_name, realization_nums, snames, sattr, bearer_token):
