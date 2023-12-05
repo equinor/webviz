@@ -116,19 +116,27 @@ export function settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
         (item: ParameterIdent) => item.toString(),
     ]);
 
-    // Await update of vectorSelectorData until all vector lists are retrieved
-    const hasVectorListQueriesErrorOrFetching = vectorListQueries.some((query) => query.isFetching || query.isError);
-    if (!hasVectorListQueriesErrorOrFetching && !isEqual(currentVectorSelectorData, vectorSelectorData)) {
+    // Await update of vectorSelectorData until all vector lists are finished fetching
+    const isVectorListQueriesFetching = vectorListQueries.some((query) => query.isFetching);
+    let computedVectorSelectorData = vectorSelectorData;
+    if (!isVectorListQueriesFetching && !isEqual(currentVectorSelectorData, vectorSelectorData)) {
+        computedVectorSelectorData = currentVectorSelectorData;
         setVectorSelectorData(currentVectorSelectorData);
     }
 
-    // Set statistics type for checkbox rendering
-    const computedStatisticsType = computeStatisticsType(statisticsType, visualizationMode);
-    if (statisticsType !== computedStatisticsType) {
-        setStatisticsType(computedStatisticsType);
+    // Set error if all vector list queries fail
+    const hasEveryVectorListQueryError =
+        vectorListQueries.length > 0 && vectorListQueries.every((query) => query.isError);
+    if (hasEveryVectorListQueryError) {
+        let errorMessage = "Could not load vectors for selected ensemble";
+        if (vectorListQueries.length > 1) {
+            errorMessage += "s";
+        }
+        statusWriter.addError(errorMessage);
     }
 
     // Set warning for selected vectors not existing in a selected ensemble
+    // Note: selectedVectorNames is not updated until vectorSelectorData is updated and VectorSelector triggers onChange
     for (const ensembleIdent of selectedEnsembleIdents) {
         const nonExistingVectors = selectedVectorNames.filter(
             (vector) => !ensembleVectorListsHelper.isVectorInEnsemble(ensembleIdent, vector)
@@ -140,6 +148,12 @@ export function settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
         const ensembleStr = ensembleSet.findEnsemble(ensembleIdent)?.getDisplayName() ?? ensembleIdent.toString();
         const vectorArrayStr = joinStringArrayToHumanReadableString(nonExistingVectors);
         statusWriter.addWarning(`Vector ${vectorArrayStr} does not exist in ensemble ${ensembleStr}`);
+    }
+
+    // Set statistics type for checkbox rendering
+    const computedStatisticsType = computeStatisticsType(statisticsType, visualizationMode);
+    if (statisticsType !== computedStatisticsType) {
+        setStatisticsType(computedStatisticsType);
     }
 
     React.useEffect(
@@ -204,7 +218,7 @@ export function settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
         setSelectedEnsembleIdents(ensembleIdentArr);
     }
 
-    function handleVectorSelectChange(selection: SmartNodeSelectorSelection) {
+    function handleVectorSelectionChange(selection: SmartNodeSelectorSelection) {
         setSelectedVectorNames(selection.selectedNodes);
     }
 
@@ -366,12 +380,12 @@ export function settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
                         errorComponent={"Could not load vectors for selected ensembles"}
                     >
                         <VectorSelector
-                            data={vectorSelectorData}
+                            data={computedVectorSelectorData}
                             placeholder="Add new vector..."
                             maxNumSelectedNodes={50}
                             numSecondsUntilSuggestionsAreShown={0.5}
                             lineBreakAfterTag={true}
-                            onChange={handleVectorSelectChange}
+                            onChange={handleVectorSelectionChange}
                         />
                     </QueryStateWrapper>
                 </div>
