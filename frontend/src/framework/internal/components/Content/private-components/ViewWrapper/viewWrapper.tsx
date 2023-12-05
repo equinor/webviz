@@ -150,7 +150,7 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
                         onSubscribersClick={handleSubscribersClick}
                         guiMessageBroker={guiMessageBroker}
                     />
-                    <div className="flex-grow overflow-auto h-0" onClick={handleModuleClick}>
+                    <div className="flex-grow overflow-auto h-0" onPointerUp={handleModuleClick}>
                         <ViewContent workbench={props.workbench} moduleInstance={props.moduleInstance} />
                         <SubscriberNodesWrapper
                             forwardedRef={ref}

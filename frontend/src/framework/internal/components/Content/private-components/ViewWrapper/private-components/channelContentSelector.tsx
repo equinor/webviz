@@ -96,7 +96,6 @@ export const ChannelSelector: React.FC<ChannelSelectorProps> = (props) => {
     React.useEffect(() => {
         const handleClickOutside = (e: PointerEvent) => {
             e.stopPropagation();
-            e.preventDefault();
             const target = e.target as HTMLElement;
             if (target.closest("#channel-selector-header")) {
                 e.preventDefault();
@@ -104,6 +103,7 @@ export const ChannelSelector: React.FC<ChannelSelectorProps> = (props) => {
             }
 
             if (target.closest("#channel-selector")) {
+                e.preventDefault();
                 return;
             }
             props.onCancel();
