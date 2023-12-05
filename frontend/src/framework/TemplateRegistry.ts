@@ -1,10 +1,10 @@
-import { Genre } from "./DataChannelTypes";
+import { KeyKind } from "./DataChannelTypes";
 import { SyncSettingKey } from "./SyncSettings";
 import { LayoutElement } from "./Workbench";
 
 export type DataChannelTemplate = {
     listensToInstanceRef: string;
-    keyCategory: Genre;
+    keyCategory: KeyKind;
     channelName: string;
 };
 

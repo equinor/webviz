@@ -2,7 +2,7 @@ export type { ContentDefinition } from "./internal/DataChannels/Content";
 export type { ChannelDefinition } from "./internal/DataChannels/Channel";
 export type { SubscriberDefinition } from "./internal/DataChannels/Subscriber";
 
-export enum Genre {
+export enum KeyKind {
     TimestampMs = "timestamp-ms",
     Realization = "realization",
     GridIndex = "grid-index",
@@ -16,20 +16,20 @@ export enum Type {
     NumberTriplet = "number-triplet",
 }
 
-export interface GenreType {
-    [Genre.TimestampMs]: Type.Number;
-    [Genre.Realization]: Type.Number;
-    [Genre.GridIndex]: Type.Number;
-    [Genre.GridIJK]: Type.NumberTriplet;
-    [Genre.MeasuredDepth]: Type.Number;
+export interface KeyKindToTypeMapping {
+    [KeyKind.TimestampMs]: Type.Number;
+    [KeyKind.Realization]: Type.Number;
+    [KeyKind.GridIndex]: Type.Number;
+    [KeyKind.GridIJK]: Type.NumberTriplet;
+    [KeyKind.MeasuredDepth]: Type.Number;
 }
 
 export interface Data<TKeyType extends Type, TValueType extends Type> {
-    key: TypeToTSTypeMapping[TKeyType];
-    value: TypeToTSTypeMapping[TValueType];
+    key: TypeToTypeScriptTypeMapping[TKeyType];
+    value: TypeToTypeScriptTypeMapping[TValueType];
 }
 
-export type TypeToTSTypeMapping = {
+export type TypeToTypeScriptTypeMapping = {
     [Type.Number]: number;
     [Type.String]: string;
     [Type.NumberTriplet]: [number, number, number];

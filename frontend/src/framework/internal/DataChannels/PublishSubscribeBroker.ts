@@ -1,7 +1,7 @@
 import { Channel } from "./Channel";
 import { Subscriber } from "./Subscriber";
 
-import { Data, Genre, Type, TypeToTSTypeMapping } from "../../DataChannelTypes";
+import { Data, KeyKind, Type, TypeToTypeScriptTypeMapping } from "../../DataChannelTypes";
 
 export enum BroadcastServiceTopic {
     ChannelsChange = "channels-change",
@@ -44,9 +44,9 @@ export class PublishSubscribeBroker {
     registerChannel(options: {
         readonly ident: string;
         readonly name: string;
-        readonly genre: Genre;
+        readonly genre: KeyKind;
         readonly dataType: Type;
-        readonly metaData?: Record<string, TypeToTSTypeMapping[Type]>;
+        readonly metaData?: Record<string, TypeToTypeScriptTypeMapping[Type]>;
     }): void {
         const newChannel = new Channel(
             this,
@@ -63,7 +63,7 @@ export class PublishSubscribeBroker {
     registerSubscriber(options: {
         ident: string;
         name: string;
-        supportedGenres: readonly Genre[];
+        supportedGenres: readonly KeyKind[];
         supportsMultiContents: boolean;
     }): void {
         const newListener = new Subscriber({

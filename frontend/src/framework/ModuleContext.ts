@@ -1,6 +1,13 @@
 import React from "react";
 
-import { ContentDefinition, Data, Genre, GenreType, Type, TypeToTSTypeMapping } from "./DataChannelTypes";
+import {
+    ContentDefinition,
+    Data,
+    KeyKind,
+    KeyKindToTypeMapping,
+    Type,
+    TypeToTypeScriptTypeMapping,
+} from "./DataChannelTypes";
 import { InitialSettings } from "./InitialSettings";
 import { ModuleInstance } from "./ModuleInstance";
 import { ModuleInstanceStatusController } from "./ModuleInstanceStatusController";
@@ -61,7 +68,7 @@ export class ModuleContext<S extends StateBaseType> {
         return this._moduleInstance.getStatusController();
     }
 
-    useSubscriber<TGenres extends Genre[], TValueType extends Type>(options: {
+    useSubscriber<TGenres extends KeyKind[], TValueType extends Type>(options: {
         subscriberIdent: string;
         expectedGenres: TGenres;
         expectedValueType: TValueType;
@@ -95,7 +102,7 @@ export class ModuleContext<S extends StateBaseType> {
         contents: ContentDefinition[];
         dataGenerator: (contentIdent: string) => {
             data: Data<Type, Type>[];
-            metaData?: Record<string, TypeToTSTypeMapping[Type]>;
+            metaData?: Record<string, TypeToTypeScriptTypeMapping[Type]>;
         };
     }) {
         const channel = this._moduleInstance.getPublishSubscribeBroker().getChannel(options.channelIdent);

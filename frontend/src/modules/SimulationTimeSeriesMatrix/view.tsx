@@ -10,6 +10,7 @@ import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { ColorScaleGradientType } from "@lib/utils/ColorScale";
 import { ContentError } from "@modules/_shared/components/ContentMessage";
+import { simulationUnitReformat } from "@modules/_shared/reservoirSimulationStringUtils";
 
 import { indexOf } from "lodash";
 import { Layout, PlotDatum, PlotMouseEvent } from "plotly.js";
@@ -165,7 +166,7 @@ export const view = ({ moduleContext, workbenchSession, workbenchSettings }: Mod
                 if (vec.vectorSpecification.vectorName === vectorName) {
                     let unit = "";
                     vec.data.forEach((el) => {
-                        unit = el.unit;
+                        unit = simulationUnitReformat(el.unit);
                         const indexOfTimestamp = indexOf(el.timestamps_utc_ms, activeTimestampUtcMs);
                         data.push({
                             key: el.realization,

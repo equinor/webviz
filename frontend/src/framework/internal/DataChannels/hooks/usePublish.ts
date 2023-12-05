@@ -2,7 +2,7 @@ import React from "react";
 
 import { isEqual } from "lodash";
 
-import { Data, Type, TypeToTSTypeMapping } from "../../../DataChannelTypes";
+import { Data, Type, TypeToTypeScriptTypeMapping } from "../../../DataChannelTypes";
 import { Channel } from "../Channel";
 import { ContentDefinition } from "../Content";
 
@@ -12,7 +12,7 @@ export function usePublish(options: {
     contents: ContentDefinition[];
     dataGenerator: (contentIdent: string) => {
         data: Data<Type, Type>[];
-        metaData?: Record<string, TypeToTSTypeMapping[Type]>;
+        metaData?: Record<string, TypeToTypeScriptTypeMapping[Type]>;
     };
 }) {
     const [prevDependencies, setPrevDependencies] = React.useState<any[]>([]);

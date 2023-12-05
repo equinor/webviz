@@ -1,16 +1,16 @@
 import React from "react";
 
-import { Data, Genre, GenreType, Type, TypeToTSTypeMapping } from "../../../DataChannelTypes";
+import { Data, KeyKind, KeyKindToTypeMapping, Type, TypeToTypeScriptTypeMapping } from "../../../DataChannelTypes";
 import { Subscriber, SubscriberTopic } from "../Subscriber";
 import { checkValueIsExpectedType } from "../utils/checkIfValueIsExpectedType";
 
-type m = Genre[];
-const s = [Genre.Realization] as const;
-type n = GenreType[(typeof s)[number]];
-type l = [Genre.Realization];
-type k = GenreType[l[number]];
+type m = KeyKind[];
+const s = [KeyKind.Realization] as const;
+type n = KeyKindToTypeMapping[(typeof s)[number]];
+type l = [KeyKind.Realization];
+type k = KeyKindToTypeMapping[l[number]];
 
-export function useSubscriber<TGenres extends Genre[], TValueType extends Type>(options: {
+export function useSubscriber<TGenres extends KeyKind[], TValueType extends Type>(options: {
     subscriber: Subscriber | null;
     expectedGenres: TGenres;
     expectedValueType: TValueType;
@@ -24,8 +24,11 @@ export function useSubscriber<TGenres extends Genre[], TValueType extends Type>(
         readonly contents: {
             ident: string;
             name: string;
-            dataArray: Data<GenreType[(typeof options.expectedGenres)[number]], typeof options.expectedValueType>[];
-            metaData: Record<string, TypeToTSTypeMapping[Type]> | undefined;
+            dataArray: Data<
+                KeyKindToTypeMapping[(typeof options.expectedGenres)[number]],
+                typeof options.expectedValueType
+            >[];
+            metaData: Record<string, TypeToTypeScriptTypeMapping[Type]> | undefined;
         }[];
     };
     hasActiveSubscription: boolean;
@@ -34,8 +37,8 @@ export function useSubscriber<TGenres extends Genre[], TValueType extends Type>(
         {
             ident: string;
             name: string;
-            dataArray: Data<GenreType[TGenres[number]], TValueType>[];
-            metaData: Record<string, TypeToTSTypeMapping[Type]> | undefined;
+            dataArray: Data<KeyKindToTypeMapping[TGenres[number]], TValueType>[];
+            metaData: Record<string, TypeToTypeScriptTypeMapping[Type]> | undefined;
         }[]
     >([]);
 
@@ -74,7 +77,7 @@ export function useSubscriber<TGenres extends Genre[], TValueType extends Type>(
                     return {
                         ident: content.getIdent(),
                         name: content.getName(),
-                        dataArray: content.getDataArray() as Data<GenreType[TGenres[number]], TValueType>[],
+                        dataArray: content.getDataArray() as Data<KeyKindToTypeMapping[TGenres[number]], TValueType>[],
                         metaData: content.getMetaData() ?? undefined,
                     };
                 });

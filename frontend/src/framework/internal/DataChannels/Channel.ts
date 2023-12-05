@@ -1,12 +1,12 @@
 import { Content, ContentTopic } from "./Content";
 import { PublishSubscribeBroker } from "./PublishSubscribeBroker";
 
-import { Data, Genre, Type, TypeToTSTypeMapping } from "../../DataChannelTypes";
+import { Data, KeyKind, Type, TypeToTypeScriptTypeMapping } from "../../DataChannelTypes";
 
 export interface ChannelDefinition {
     readonly ident: string;
     readonly name: string;
-    readonly genre: Genre;
+    readonly genre: KeyKind;
     readonly dataType: Type;
     readonly metaData?: Record<string, Type>;
 }
@@ -18,10 +18,6 @@ export enum ChannelTopic {
 }
 
 export class Channel {
-    /**
-     * This class holds all programs of a module.
-     */
-
     private contents: Content[] = [];
     private _subscribersMap: Map<ChannelTopic, Set<() => void>> = new Map();
 
@@ -29,9 +25,9 @@ export class Channel {
         private _broadcaster: PublishSubscribeBroker,
         private _ident: string,
         private _name: string,
-        private _genre: Genre,
+        private _genre: KeyKind,
         private _dataType: Type,
-        private _metaData?: Record<string, TypeToTSTypeMapping[Type]>
+        private _metaData?: Record<string, TypeToTypeScriptTypeMapping[Type]>
     ) {
         this.handleContentDataChange = this.handleContentDataChange.bind(this);
     }
@@ -48,7 +44,7 @@ export class Channel {
         return this._broadcaster;
     }
 
-    getGenre(): Genre {
+    getGenre(): KeyKind {
         return this._genre;
     }
 
@@ -56,7 +52,7 @@ export class Channel {
         return this._dataType;
     }
 
-    getMetaData(): Record<string, TypeToTSTypeMapping[Type]> | null {
+    getMetaData(): Record<string, TypeToTypeScriptTypeMapping[Type]> | null {
         return this._metaData ?? null;
     }
 
@@ -80,7 +76,7 @@ export class Channel {
     registerContent(
         ident: string,
         name: string,
-        dataGenerator: () => { data: Data<Type, Type>[]; metaData?: Record<string, TypeToTSTypeMapping[Type]> }
+        dataGenerator: () => { data: Data<Type, Type>[]; metaData?: Record<string, TypeToTypeScriptTypeMapping[Type]> }
     ): void {
         const content = new Content(ident, name, dataGenerator);
         content.subscribe(ContentTopic.ContentChange, this.handleContentDataChange);

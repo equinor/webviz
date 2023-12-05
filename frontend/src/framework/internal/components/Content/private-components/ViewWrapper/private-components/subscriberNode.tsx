@@ -1,6 +1,6 @@
 import React from "react";
 
-import { Genre } from "@framework/DataChannelTypes";
+import { KeyKind } from "@framework/DataChannelTypes";
 import { GuiEvent, GuiEventPayloads, GuiState, useGuiState } from "@framework/GuiMessageBroker";
 import { Workbench } from "@framework/Workbench";
 import { SubscriberTopic } from "@framework/internal/DataChannels/Subscriber";
@@ -12,7 +12,7 @@ import { Edit, Remove } from "@mui/icons-material";
 export type SubscriberNodeProps = {
     ident: string;
     name: string;
-    supportedGenres?: readonly Genre[];
+    supportedGenres?: readonly KeyKind[];
     moduleInstanceId: string;
     onChannelConnect: (inputName: string, moduleInstanceId: string, destinationPoint: Point) => void;
     onChannelConnectionDisconnect: (inputName: string) => void;
@@ -56,7 +56,7 @@ export const SubscriberNode: React.FC<SubscriberNodeProps> = (props) => {
             }
 
             const channels = originModuleInstance.getPublishSubscribeBroker().getChannels();
-            const channelGenres: Genre[] = [];
+            const channelGenres: KeyKind[] = [];
             for (const channelName in channels) {
                 channelGenres.push(channels[channelName].getGenre());
             }

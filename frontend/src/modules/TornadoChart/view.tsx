@@ -1,6 +1,6 @@
 import React from "react";
 
-import { Genre, Type } from "@framework/DataChannelTypes";
+import { KeyKind, Type } from "@framework/DataChannelTypes";
 import { Ensemble } from "@framework/Ensemble";
 import { ModuleFCProps } from "@framework/Module";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
@@ -38,7 +38,7 @@ export const view = ({ moduleContext, workbenchSession, workbenchSettings, initi
 
     const responseSubscriber = moduleContext.useSubscriber({
         subscriberIdent: "response",
-        expectedGenres: [Genre.Realization],
+        expectedGenres: [KeyKind.Realization],
         expectedValueType: Type.Number,
         initialSettings,
     });

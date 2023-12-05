@@ -1,4 +1,4 @@
-import { Genre, SubscriberDefinition } from "@framework/DataChannelTypes";
+import { KeyKind, SubscriberDefinition } from "@framework/DataChannelTypes";
 import { ModuleRegistry } from "@framework/ModuleRegistry";
 import { SyncSettingKey } from "@framework/SyncSettings";
 
@@ -9,7 +9,7 @@ const subscriberDefs: SubscriberDefinition[] = [
     {
         ident: "response",
         name: "Response",
-        supportedGenres: [Genre.Realization],
+        supportedGenres: [KeyKind.Realization],
         supportsMultiContents: false,
     },
 ];

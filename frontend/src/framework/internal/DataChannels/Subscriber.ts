@@ -1,12 +1,12 @@
 import { Channel, ChannelTopic } from "./Channel";
 import { PublishSubscribeBroker } from "./PublishSubscribeBroker";
 
-import { Genre } from "../../DataChannelTypes";
+import { KeyKind } from "../../DataChannelTypes";
 
 export interface SubscriberDefinition {
     readonly ident: string;
     readonly name: string;
-    readonly supportedGenres: readonly Genre[];
+    readonly supportedGenres: readonly KeyKind[];
     readonly supportsMultiContents?: boolean;
 }
 
@@ -19,7 +19,7 @@ export class Subscriber {
     private readonly _broker: PublishSubscribeBroker;
     private readonly _ident: string;
     private readonly _name: string;
-    private readonly _supportedGenres: readonly Genre[];
+    private readonly _supportedGenres: readonly KeyKind[];
     private readonly _supportsMultiContents: boolean;
     private _channel: Channel | null = null;
     private _contentIdents: string[] = [];
@@ -30,7 +30,7 @@ export class Subscriber {
         broker: PublishSubscribeBroker;
         ident: string;
         name: string;
-        supportedGenres: readonly Genre[];
+        supportedGenres: readonly KeyKind[];
         supportsMultiContents?: boolean;
     }) {
         this._broker = options.broker;
@@ -118,7 +118,7 @@ export class Subscriber {
         return this._name;
     }
 
-    getSupportedGenres(): readonly Genre[] {
+    getSupportedGenres(): readonly KeyKind[] {
         return this._supportedGenres;
     }
 

@@ -1,4 +1,4 @@
-import { Data, Type, TypeToTSTypeMapping } from "../../DataChannelTypes";
+import { Data, Type, TypeToTypeScriptTypeMapping } from "../../DataChannelTypes";
 
 export interface ContentDefinition {
     ident: string;
@@ -12,14 +12,17 @@ export enum ContentTopic {
 export class Content {
     private _cachedDataArray: {
         data: Data<Type, Type>[];
-        metaData?: Record<string, TypeToTSTypeMapping[Type]>;
+        metaData?: Record<string, TypeToTypeScriptTypeMapping[Type]>;
     } | null = null;
     private _subscribersMap: Map<ContentTopic, Set<() => void>> = new Map();
 
     constructor(
         private _ident: string,
         private _name: string,
-        private _dataGenerator: () => { data: Data<Type, Type>[]; metaData?: Record<string, TypeToTSTypeMapping[Type]> }
+        private _dataGenerator: () => {
+            data: Data<Type, Type>[];
+            metaData?: Record<string, TypeToTypeScriptTypeMapping[Type]>;
+        }
     ) {}
 
     getIdent(): string {
@@ -31,7 +34,7 @@ export class Content {
     }
 
     publish(
-        dataGenerator: () => { data: Data<Type, Type>[]; metaData?: Record<string, TypeToTSTypeMapping[Type]> }
+        dataGenerator: () => { data: Data<Type, Type>[]; metaData?: Record<string, TypeToTypeScriptTypeMapping[Type]> }
     ): void {
         this._dataGenerator = dataGenerator;
         this._cachedDataArray = null;
@@ -48,7 +51,7 @@ export class Content {
         return this._cachedDataArray;
     }
 
-    getMetaData(): Record<string, TypeToTSTypeMapping[Type]> | null {
+    getMetaData(): Record<string, TypeToTypeScriptTypeMapping[Type]> | null {
         if (this._cachedDataArray === null) {
             this._cachedDataArray = this._dataGenerator();
         }

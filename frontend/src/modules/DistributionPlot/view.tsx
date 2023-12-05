@@ -1,7 +1,7 @@
 import React from "react";
 import Plot from "react-plotly.js";
 
-import { Data, Genre, Type } from "@framework/DataChannelTypes";
+import { Data, KeyKind, Type } from "@framework/DataChannelTypes";
 import { ModuleFCProps } from "@framework/Module";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { ColorScaleGradientType } from "@lib/utils/ColorScale";
@@ -229,13 +229,13 @@ export const view = ({
     const listenerX = moduleContext.useSubscriber({
         subscriberIdent: "channelX",
         initialSettings,
-        expectedGenres: [Genre.Realization],
+        expectedGenres: [KeyKind.Realization],
         expectedValueType: Type.Number,
     });
     const listenerY = moduleContext.useSubscriber({
         subscriberIdent: "channelY",
         initialSettings,
-        expectedGenres: [Genre.Realization],
+        expectedGenres: [KeyKind.Realization],
         expectedValueType: Type.Number,
     });
 
