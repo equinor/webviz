@@ -242,7 +242,7 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
             </CollapsibleGroup>
             <CollapsibleGroup expanded={true} title="Well trajectory">
                 <QueryStateWrapper
-                    apiResult={wellHeadersQuery}
+                    queryResult={wellHeadersQuery}
                     errorComponent={"Error loading wells"}
                     loadingComponent={<CircularProgress />}
                 >
@@ -295,7 +295,7 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
                         />
                     </Label>
                     <QueryStateWrapper
-                        apiResult={seismicCubeMetaListQuery}
+                        queryResult={seismicCubeMetaListQuery}
                         errorComponent={"Error loading seismic directory"}
                         loadingComponent={<CircularProgress />}
                     >

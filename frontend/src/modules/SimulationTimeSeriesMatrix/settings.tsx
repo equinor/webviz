@@ -360,7 +360,7 @@ export function settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
                     })}
                 >
                     <QueryStateWrapper
-                        apiResults={vectorListQueries}
+                        queryResults={vectorListQueries}
                         loadingComponent={<CircularProgress />}
                         errorCriteria={QueriesErrorCriteria.EVERY_QUERY}
                         errorComponent={"Could not load vectors for selected ensembles"}

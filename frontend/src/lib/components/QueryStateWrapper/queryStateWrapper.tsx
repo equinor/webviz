@@ -21,11 +21,11 @@ export type QueryStateWrapperBaseProps = {
 };
 
 export type QueryStateWrapperProps = QueryStateWrapperBaseProps & {
-    apiResult: QueryObserverResult;
+    queryResult: QueryObserverResult;
 };
 
 export type QueryStatesWrapperProps = QueryStateWrapperBaseProps & {
-    apiResults: QueryObserverResult[];
+    queryResults: QueryObserverResult[];
     errorCriteria: QueriesDisplayErrorCriteria;
 };
 
@@ -34,16 +34,16 @@ export const QueryStateWrapper: React.FC<QueryStateWrapperProps | QueryStatesWra
 ) => {
     let showQueryLoading = false;
     let showQueryError = false;
-    if ("apiResult" in props) {
-        showQueryLoading = props.apiResult.isLoading;
-        showQueryError = props.apiResult.isError;
+    if ("queryResult" in props) {
+        showQueryLoading = props.queryResult.isLoading;
+        showQueryError = props.queryResult.isError;
     } else {
-        showQueryLoading = props.apiResults.some((elm) => elm.isLoading);
-        if (props.apiResults.length > 0) {
+        showQueryLoading = props.queryResults.some((elm) => elm.isLoading);
+        if (props.queryResults.length > 0) {
             showQueryError =
                 props.errorCriteria === QueriesDisplayErrorCriteria.SOME_QUERY
-                    ? props.apiResults.some((elm) => elm.isError)
-                    : props.apiResults.every((elm) => elm.isError);
+                    ? props.queryResults.some((elm) => elm.isError)
+                    : props.queryResults.every((elm) => elm.isError);
         }
     }
 

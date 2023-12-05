@@ -111,7 +111,7 @@ export function settings({ moduleContext, workbenchServices, workbenchSession }:
             </CollapsibleGroup>
             <CollapsibleGroup expanded={true} title="Grid data">
                 <QueryStateWrapper
-                    apiResult={gridNamesQuery}
+                    queryResult={gridNamesQuery}
                     errorComponent={"Error loading grid models"}
                     loadingComponent={<CircularProgress />}
                 >
@@ -138,7 +138,7 @@ export function settings({ moduleContext, workbenchServices, workbenchSession }:
             </CollapsibleGroup>
             <CollapsibleGroup expanded={true} title="Well data">
                 <QueryStateWrapper
-                    apiResult={wellHeadersQuery}
+                    queryResult={wellHeadersQuery}
                     errorComponent={"Error loading wells"}
                     loadingComponent={<CircularProgress />}
                 >

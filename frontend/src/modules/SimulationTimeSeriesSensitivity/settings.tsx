@@ -156,7 +156,7 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
                 />
             </CollapsibleGroup>
             <QueryStateWrapper
-                apiResult={vectorsListQuery}
+                queryResult={vectorsListQuery}
                 loadingComponent={<CircularProgress />}
                 errorComponent={"Could not load the vectors for selected ensembles"}
             >

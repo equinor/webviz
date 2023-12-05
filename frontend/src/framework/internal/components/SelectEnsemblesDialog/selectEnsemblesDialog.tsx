@@ -262,7 +262,7 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                     <div className="flex flex-col gap-4 p-4 border-r bg-slate-100 h-full">
                         <Label text="Field">
                             <QueryStateWrapper
-                                apiResult={fieldsQuery}
+                                queryResult={fieldsQuery}
                                 errorComponent={<div className="text-red-500">Error loading fields</div>}
                                 loadingComponent={<CircularProgress />}
                             >
@@ -276,7 +276,7 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                         </Label>
                         <Label text="Case">
                             <QueryStateWrapper
-                                apiResult={casesQuery}
+                                queryResult={casesQuery}
                                 errorComponent={<div className="text-red-500">Error loading cases</div>}
                                 loadingComponent={<CircularProgress />}
                             >
@@ -312,7 +312,7 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                         </Label>
                         <Label text="Ensemble">
                             <QueryStateWrapper
-                                apiResult={ensemblesQuery}
+                                queryResult={ensemblesQuery}
                                 errorComponent={<div className="text-red-500">Error loading ensembles</div>}
                                 loadingComponent={<CircularProgress />}
                             >

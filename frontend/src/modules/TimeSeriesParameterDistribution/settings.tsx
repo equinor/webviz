@@ -102,7 +102,7 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
                 />
             </Label>
             <QueryStateWrapper
-                apiResult={vectorsQuery}
+                queryResult={vectorsQuery}
                 errorComponent={"Error loading vector names"}
                 loadingComponent={<CircularProgress />}
             >
@@ -120,7 +120,7 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
                 </Label>
             </QueryStateWrapper>
             <QueryStateWrapper
-                apiResult={timestampsQuery}
+                queryResult={timestampsQuery}
                 errorComponent={"Error loading timestamps"}
                 loadingComponent={<CircularProgress />}
             >
@@ -133,7 +133,7 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
                 </Label>
             </QueryStateWrapper>
             <QueryStateWrapper
-                apiResult={parameterNamesQuery}
+                queryResult={parameterNamesQuery}
                 errorComponent={"Error loading parameter names"}
                 loadingComponent={<CircularProgress />}
             >

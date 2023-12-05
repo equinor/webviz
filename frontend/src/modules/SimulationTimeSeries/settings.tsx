@@ -145,7 +145,7 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
                 />
             </Label>
             <QueryStateWrapper
-                apiResult={vectorListQuery}
+                queryResult={vectorListQuery}
                 errorComponent={"Error loading vector names"}
                 loadingComponent={<CircularProgress />}
             >

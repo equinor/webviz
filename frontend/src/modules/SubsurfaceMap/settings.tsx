@@ -471,7 +471,7 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
             </CollapsibleGroup>
             <CollapsibleGroup expanded={true} title="Depth surface">
                 <QueryStateWrapper
-                    apiResult={meshSurfDirQuery}
+                    queryResult={meshSurfDirQuery}
                     errorComponent={"Error loading surface directory"}
                     loadingComponent={<CircularProgress />}
                 >
@@ -515,7 +515,7 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
                     </Label>
                     {usePropertySurface && (
                         <QueryStateWrapper
-                            apiResult={propertySurfDirQuery}
+                            queryResult={propertySurfDirQuery}
                             errorComponent={"Error loading surface directory"}
                             loadingComponent={<CircularProgress />}
                         >
@@ -580,7 +580,7 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
                 </Label>
                 {showPolygon && (
                     <QueryStateWrapper
-                        apiResult={polygonsDirectoryQuery}
+                        queryResult={polygonsDirectoryQuery}
                         errorComponent={"Error loading polygons directory"}
                         loadingComponent={<CircularProgress />}
                     >
@@ -626,7 +626,7 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
             </CollapsibleGroup>
             <CollapsibleGroup expanded={false} title="Well data">
                 <QueryStateWrapper
-                    apiResult={wellHeadersQuery}
+                    queryResult={wellHeadersQuery}
                     errorComponent={"Error loading wells"}
                     loadingComponent={<CircularProgress />}
                 >

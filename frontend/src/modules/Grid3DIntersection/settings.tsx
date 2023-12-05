@@ -53,7 +53,7 @@ export function settings({ moduleContext, workbenchSession }: ModuleFCProps<stat
     return (
         <div>
             <QueryStateWrapper
-                apiResult={gridNamesQuery}
+                queryResult={gridNamesQuery}
                 errorComponent={"Error loading vector names"}
                 loadingComponent={<CircularProgress />}
             >

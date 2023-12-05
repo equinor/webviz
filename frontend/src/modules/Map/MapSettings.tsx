@@ -244,7 +244,7 @@ export function MapSettings(props: ModuleFCProps<MapState>) {
             </Label>
 
             <QueryStateWrapper
-                apiResult={surfaceDirectoryQuery}
+                queryResult={surfaceDirectoryQuery}
                 errorComponent={"Error loading surface directory"}
                 loadingComponent={<CircularProgress />}
             >

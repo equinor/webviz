@@ -175,7 +175,7 @@ export function settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
                 />
             </Label>
             <QueryStateWrapper
-                apiResult={tableDescriptionsQuery}
+                queryResult={tableDescriptionsQuery}
                 loadingComponent={<CircularProgress />}
                 errorComponent={"Could not load table descriptions"}
                 className="flex flex-col gap-4"

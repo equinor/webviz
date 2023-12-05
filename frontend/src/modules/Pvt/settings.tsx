@@ -125,7 +125,7 @@ export function settings({ moduleContext, workbenchSession }: ModuleFCProps<stat
     return (
         <div>
             <QueryStateWrapper
-                apiResult={pvtDataQuery}
+                queryResult={pvtDataQuery}
                 errorComponent={"Error loading pvt data"}
                 loadingComponent={"Error loading pvt data"}
             >

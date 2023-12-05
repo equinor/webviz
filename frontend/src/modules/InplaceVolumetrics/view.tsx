@@ -116,7 +116,7 @@ export const view = (props: ModuleFCProps<State>) => {
     return (
         <div className="w-full h-full" ref={wrapperDivRef}>
             <QueryStateWrapper
-                apiResult={realizationsResponseQuery}
+                queryResult={realizationsResponseQuery}
                 loadingComponent={<CircularProgress />}
                 errorComponent={"feil"}
             >
