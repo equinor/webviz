@@ -25,48 +25,88 @@ from fmu.sumo.explorer.objects import CaseCollection, Case, SurfaceCollection
 from src.services.utils.perf_timer import PerfTimer
 import base64
 from io import BytesIO
+from azure.storage.blob.aio import BlobServiceClient, BlobClient, ContainerClient
+import requests
 
 LOGGER = logging.getLogger(__name__)
 router = APIRouter()
 
 
 cache = Cache(Cache.MEMORY, ttl=3600)
-# @router.post("/well_intersection_reals_from_user_session")
-# async def well_intersection_reals_from_user_session(
-#     request: Request,
-#     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
-# ) -> List[schemas.SurfaceIntersectionPoints]:
-
-#     body = await request.json()
-#     polyline = schemas.FencePolyline(**body.get("polyline"))
-#     intersections = []
-
-#     fence_arr = np.array(
-#         [
-#             polyline.x_points,
-#             polyline.y_points,
-#             np.zeros(len(polyline.y_points)),
-#             polyline.cum_length,
-#         ]
-#     ).T
-
-#     async for surf in async_get_cached_surf(
-#         authenticated_user,
-#         polyline,
-#     ):
-#         line = surf.get_randomline(fence_arr)
-#         intersection = schemas.SurfaceIntersectionPoints(
-#             name=f"{surf.name}",
-#             cum_length=line[:, 0].tolist(),
-#             z_array=line[:, 1].tolist(),
-#         )
-#         intersections.append(intersection)
-
-#     return ORJSONResponse([section.dict() for section in intersections])
 
 
 @router.post("/well_intersection_reals_from_user_session")
 async def well_intersection_reals_from_user_session(
+    request: Request,
+    authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
+) -> List[schemas.SurfaceIntersectionPoints]:
+    body = await request.json()
+    ensemble_ident = schemas.EnsembleIdent(**body.get("ensemble_ident"))
+    realization_surface_set_spec = schemas.RealizationsSurfaceSetSpec(**body.get("realizations_surface_set_spec"))
+    surface_fence_spec = schemas.SurfaceFenceSpec(**body.get("surface_fence_spec"))
+    timer = PerfTimer()
+    # Config
+    case_uuid = ensemble_ident.case_uuid
+    snames = realization_surface_set_spec.surface_names
+    sattr = realization_surface_set_spec.surface_attribute
+    ensemble_name = ensemble_ident.ensemble_name
+    realization_nums = realization_surface_set_spec.realization_nums
+    intersections = []
+
+    uuids = get_uuids(
+        case_uuid, ensemble_name, realization_nums, snames, sattr, authenticated_user.get_sumo_access_token()
+    )
+    base_uri, auth_token = get_base_uri_and_auth_token_for_case(
+        case_uuid, "prod", authenticated_user.get_sumo_access_token()
+    )
+
+    async with ContainerClient.from_container_url(container_url=base_uri, credential=auth_token) as container_client:
+        coro_array = []
+        timer = PerfTimer()
+
+        for uuid in uuids:
+            coro_array.append(my_download_to_file(container_client=container_client, sumo_surf_uuid=uuid))
+        res_array = await asyncio.gather(*coro_array)
+        dl_time_s = timer.lap_s()
+        print(f"download surfs: {dl_time_s:.2f}s")
+
+        tot_mb = 0
+        for res in res_array:
+            tot_mb += len(res) / (1024 * 1024)
+        print(f"Total MB downloaded: {tot_mb:.2f}MB  =>  {tot_mb/dl_time_s:.2f}MB/s")
+
+    surfs = [xtgeo.surface_from_file(BytesIO(bytestr), fformat="irap_binary") for bytestr in res_array]
+    fence_arr = np.array(
+        [
+            surface_fence_spec.x_points,
+            surface_fence_spec.y_points,
+            np.zeros(len(surface_fence_spec.y_points)),
+            surface_fence_spec.cum_length,
+        ]
+    ).T
+
+    for surf in surfs:
+        line = surf.get_randomline(fence_arr)
+        intersection = schemas.SurfaceIntersectionPoints(
+            name=f"{surf.name}",
+            cum_length=line[:, 0].tolist(),
+            z_array=line[:, 1].tolist(),
+        )
+        intersections.append(intersection)
+
+    return ORJSONResponse([section.dict() for section in intersections])
+
+
+async def my_download_to_file(container_client: ContainerClient, sumo_surf_uuid):
+    blob_client: BlobClient = container_client.get_blob_client(blob=sumo_surf_uuid)
+    download_stream = await blob_client.download_blob(
+        max_concurrency=4,
+    )
+    return await download_stream.readall()
+
+
+@router.post("/well_intersection_reals_from_user_session")
+async def well_intersection_reals_from_user_session2(
     request: Request,
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
 ) -> List[schemas.SurfaceIntersectionPoints]:
@@ -196,3 +236,23 @@ def get_uuids(case_uuid, ensemble_name, realization_nums, snames, sattr, bearer_
         realization=realization_nums,
     )
     return [surf.uuid for surf in surface_collection]
+
+
+def get_base_uri_and_auth_token_for_case(case_id, env, token):
+    temp_uri = f"{get_base_uri(env)}/objects('{case_id}')/authtoken"
+
+    body, _ = get_with_token(temp_uri, token)
+
+    base_uri = body["baseuri"].removesuffix("/")
+    auth_token = body["auth"]
+
+    return base_uri, auth_token
+
+
+def get_base_uri(env):
+    return f"https://main-sumo-{env}.radix.equinor.com/api/v1"
+
+
+def get_with_token(url, token):
+    res = requests.get(url, headers={"Authorization": f"Bearer {token}"})
+    return res.json(), res.status_code

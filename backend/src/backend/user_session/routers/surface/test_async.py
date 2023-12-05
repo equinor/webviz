@@ -18,15 +18,17 @@ from src.services.sumo_access.surface_access import SurfaceAccess
 from src.backend.primary.routers.surface import schemas
 
 
-async def async_get_cached_surf(authenticated_user: AuthenticatedUser, polyline):
-    for name in polyline.names:
-        for real in polyline.realization_nums:
+async def async_get_cached_surf(
+    authenticated_user: AuthenticatedUser, case_uuid, ensemble_name, realization_nums, names, attribute
+):
+    for name in names:
+        for real in realization_nums:
             surf = await get_realization_surface_data(
                 authenticated_user,
-                polyline.case_uuid,
-                polyline.ensemble_name,
+                case_uuid,
+                ensemble_name,
                 name,
-                polyline.attribute,
+                attribute,
                 real,
             )
             surf.name = name
@@ -42,10 +44,7 @@ def cache_key_with_user_id(func, *args, **kwargs):
         else:
             new_args.append(arg)
 
-    new_kwargs = {
-        k: (v._user_id if isinstance(v, AuthenticatedUser) else v)
-        for k, v in kwargs.items()
-    }
+    new_kwargs = {k: (v._user_id if isinstance(v, AuthenticatedUser) else v) for k, v in kwargs.items()}
     print("new_args", new_args, flush=True)
     print("new_kwargs", new_kwargs, flush=True)
     return (func.__qualname__, tuple(new_args), frozenset(new_kwargs.items()))
