@@ -77,17 +77,23 @@ async def well_intersection_reals_from_user_session(
     # surfaces = [
     #     xtgeo.surface_from_file(bytestr, fformat="irap_binary") for bytestr in bytesios
     # ]
+    init_surf = xtgeo.surface_from_file(bytesios[0], fformat="irap_binary")
     elapsed_xtgeo = timer.lap_s()
 
     # surfaces2 = [
-    #     _import_irap_binary_purepy(xtgeofile, values=True) for xtgeofile in xtgeofiles
     # ]
+    surfaces = []
+    header = None
 
     for idx, byteio in enumerate(bytesios):
         byteio.seek(0)
         buf = byteio.read()
-        header = read_header(buf)
+        if idx == 0:
+            header = read_header(buf)
+
         values = read_values_optimized(header, buf)
+        # values = read_values_optimized(header, buf)
+        surfaces.append(init_surf.copy())
         surfaces[idx].values = values
         del buf
 
