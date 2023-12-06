@@ -2,13 +2,13 @@ import { ErrorInfo } from "react";
 
 import { cloneDeep } from "lodash";
 
-import { ChannelDefinition, SubscriberDefinition } from "./DataChannelTypes";
+import { ModuleChannelDefinition, ModuleChannelReceiverDefinition } from "./DataChannelTypes";
 import { InitialSettings } from "./InitialSettings";
 import { ImportState, Module, ModuleFC } from "./Module";
 import { ModuleContext } from "./ModuleContext";
 import { StateBaseType, StateOptions, StateStore } from "./StateStore";
 import { SyncSettingKey } from "./SyncSettings";
-import { PublishSubscribeBroker } from "./internal/DataChannels/PublishSubscribeBroker";
+import { ModuleChannelManager } from "./internal/DataChannels/ModuleChannelManager";
 import { ModuleInstanceStatusControllerInternal } from "./internal/ModuleInstanceStatusControllerInternal";
 
 export enum ModuleInstanceState {
@@ -36,14 +36,14 @@ export class ModuleInstance<TStateType extends StateBaseType> {
     private _cachedStateStoreOptions?: StateOptions<TStateType>;
     private _initialSettings: InitialSettings | null;
     private _statusController: ModuleInstanceStatusControllerInternal;
-    private _publishSubscribeBroker: PublishSubscribeBroker;
+    private _publishSubscribeBroker: ModuleChannelManager;
 
     constructor(options: {
         module: Module<TStateType>;
         instanceNumber: number;
 
-        channels: ChannelDefinition[] | null;
-        subscribers: SubscriberDefinition[] | null;
+        channels: ModuleChannelDefinition[] | null;
+        subscribers: ModuleChannelReceiverDefinition[] | null;
     }) {
         this._id = `${options.module.getName()}-${options.instanceNumber}`;
         this._title = options.module.getDefaultTitle();
@@ -62,14 +62,14 @@ export class ModuleInstance<TStateType extends StateBaseType> {
         this._initialSettings = null;
         this._statusController = new ModuleInstanceStatusControllerInternal();
 
-        this._publishSubscribeBroker = new PublishSubscribeBroker(this._id);
+        this._publishSubscribeBroker = new ModuleChannelManager(this._id);
 
         if (options.subscribers) {
             for (const subscriber of options.subscribers) {
-                this._publishSubscribeBroker.registerSubscriber({
-                    ident: subscriber.ident,
-                    name: subscriber.name,
-                    supportedGenres: subscriber.supportedGenres,
+                this._publishSubscribeBroker.registerReceiver({
+                    idString: subscriber.idString,
+                    displayName: subscriber.displayName,
+                    supportedKindsOfKeys: subscriber.supportedKindsOfKeys,
                     supportsMultiContents: subscriber.supportsMultiContents ?? false,
                 });
             }
@@ -78,17 +78,15 @@ export class ModuleInstance<TStateType extends StateBaseType> {
         if (options.channels) {
             for (const channel of options.channels) {
                 this._publishSubscribeBroker.registerChannel({
-                    ident: channel.ident,
-                    name: channel.name,
-                    genre: channel.genre,
-                    dataType: channel.dataType,
-                    metaData: channel.metaData,
+                    idString: channel.idString,
+                    displayName: channel.displayName,
+                    kindOfKey: channel.kindOfKey,
                 });
             }
         }
     }
 
-    getPublishSubscribeBroker(): PublishSubscribeBroker {
+    getPublishSubscribeBroker(): ModuleChannelManager {
         return this._publishSubscribeBroker;
     }
 

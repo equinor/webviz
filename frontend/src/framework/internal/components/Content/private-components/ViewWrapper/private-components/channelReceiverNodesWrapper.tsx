@@ -4,23 +4,23 @@ import { createPortal } from "react-dom";
 import { GuiEvent, GuiState, useGuiState } from "@framework/GuiMessageBroker";
 import { ModuleInstance } from "@framework/ModuleInstance";
 import { Workbench } from "@framework/Workbench";
-import { Subscriber } from "@framework/internal/DataChannels/Subscriber";
+import { ModuleChannelReceiver } from "@framework/internal/DataChannels/ModuleChannelReceiver";
 import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
 import { Point } from "@lib/utils/geometry";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import { ChannelSelector, SelectableChannel, SelectedContents } from "./channelContentSelector";
-import { SubscriberNode } from "./subscriberNode";
+import { ChannelReceiverNode } from "./channelReceiverNode";
 
-export type SubscriberNodesWrapperProps = {
+export type ChannelReceiverNodesWrapperProps = {
     forwardedRef: React.RefObject<HTMLDivElement>;
     moduleInstance: ModuleInstance<any>;
     workbench: Workbench;
 };
 
-export const SubscriberNodesWrapper: React.FC<SubscriberNodesWrapperProps> = (props) => {
+export const ChannelReceiverNodesWrapper: React.FC<ChannelReceiverNodesWrapperProps> = (props) => {
     const [visible, setVisible] = React.useState<boolean>(false);
-    const [currentSubscriber, setCurrentSubscriber] = React.useState<Subscriber | null>(null);
+    const [currentSubscriber, setCurrentSubscriber] = React.useState<ModuleChannelReceiver | null>(null);
     const [currentOriginModuleInstanceId, setCurrentOriginModuleInstanceId] = React.useState<string | null>(null);
     const [channelSelectorCenterPoint, setChannelSelectorCenterPoint] = React.useState<Point | null>(null);
     const [selectableChannels, setSelectableChannels] = React.useState<SelectableChannel[]>([]);
@@ -90,25 +90,25 @@ export const SubscriberNodesWrapper: React.FC<SubscriberNodesWrapperProps> = (pr
                 return;
             }
 
-            const supportedGenres = props.moduleInstance
+            const supportedKindsOfKey = props.moduleInstance
                 .getPublishSubscribeBroker()
-                .getSubscribers()
-                .find((el) => el.getName() === subscriberIdent)
-                ?.getSupportedGenres();
+                .getReceivers()
+                .find((el) => el.getDisplayName() === subscriberIdent)
+                ?.getSupportedKindsOfKeys();
 
             const channels = originModuleInstance
                 .getPublishSubscribeBroker()
                 .getChannels()
                 .filter((channel) => {
-                    if (!supportedGenres || supportedGenres.some((key) => channel.getGenre() === key)) {
+                    if (!supportedKindsOfKey || supportedKindsOfKey.some((key) => channel.getKindOfKey() === key)) {
                         return props.moduleInstance
                             .getPublishSubscribeBroker()
-                            .getSubscribers()
+                            .getReceivers()
                             .every((subscriber) => {
                                 if (!subscriber.hasActiveSubscription()) {
                                     return true;
                                 }
-                                if (subscriber.getChannel()?.getGenre() === channel.getGenre()) {
+                                if (subscriber.getChannel()?.getKindOfKey() === channel.getKindOfKey()) {
                                     return true;
                                 }
                                 return false;
@@ -124,7 +124,7 @@ export const SubscriberNodesWrapper: React.FC<SubscriberNodesWrapperProps> = (pr
 
             const channel = Object.values(channels)[0];
 
-            const subscriber = props.moduleInstance.getPublishSubscribeBroker().getSubscriber(subscriberIdent);
+            const subscriber = props.moduleInstance.getPublishSubscribeBroker().getReceiver(subscriberIdent);
 
             if (!subscriber) {
                 return;
@@ -133,16 +133,16 @@ export const SubscriberNodesWrapper: React.FC<SubscriberNodesWrapperProps> = (pr
             if (channels.length > 1 || channels[0].getContents().length > 1) {
                 const newSelectableChannels: SelectableChannel[] = channels.map((channel) => {
                     return {
-                        ident: channel.getIdent(),
-                        name: channel.getName(),
-                        contents: channel.getContents().map((program) => ({
-                            ident: program.getIdent(),
-                            name: program.getName(),
+                        idString: channel.getIdString(),
+                        displayName: channel.getDisplayName(),
+                        contents: channel.getContents().map((content) => ({
+                            idString: content.getIdString(),
+                            displayName: content.getDisplayName(),
                         })),
                     };
                 });
 
-                const prevSelectedChannelIdent = subscriber?.getChannel()?.getIdent() ?? null;
+                const prevSelectedChannelIdent = subscriber?.getChannel()?.getIdString() ?? null;
 
                 setChannelSelectorCenterPoint(destinationPoint);
                 setSelectableChannels(newSelectableChannels);
@@ -152,7 +152,7 @@ export const SubscriberNodesWrapper: React.FC<SubscriberNodesWrapperProps> = (pr
                 if (prevSelectedChannelIdent !== null && !subscriber.getHasSubscribedToAllContents()) {
                     const prevSelectedContents = {
                         channelIdent: prevSelectedChannelIdent,
-                        contentIdents: subscriber.getContentIdents(),
+                        contentIdents: subscriber.getContentIdStrings(),
                     };
                     setPrevSelectedContents(prevSelectedContents);
                     setPrevSelectedChannelIdent(null);
@@ -163,7 +163,7 @@ export const SubscriberNodesWrapper: React.FC<SubscriberNodesWrapperProps> = (pr
                 return;
             }
 
-            if (!subscriber.getSupportedGenres().includes(channels[0].getGenre())) {
+            if (!subscriber.getSupportedKindsOfKeys().includes(channels[0].getKindOfKey())) {
                 return;
             }
 
@@ -179,7 +179,7 @@ export const SubscriberNodesWrapper: React.FC<SubscriberNodesWrapperProps> = (pr
         function handleChannelDisconnect(subscriberIdent: string) {
             props.moduleInstance
                 .getPublishSubscribeBroker()
-                .getSubscriber(subscriberIdent)
+                .getReceiver(subscriberIdent)
                 ?.unsubscribeFromCurrentChannel();
             guiMessageBroker.publishEvent(GuiEvent.DataChannelConnectionsChange);
         },
@@ -246,15 +246,15 @@ export const SubscriberNodesWrapper: React.FC<SubscriberNodesWrapperProps> = (pr
         >
             {props.moduleInstance
                 .getPublishSubscribeBroker()
-                .getSubscribers()
+                .getReceivers()
                 .map((subscriber) => {
                     return (
-                        <SubscriberNode
-                            key={subscriber.getIdent()}
+                        <ChannelReceiverNode
+                            key={subscriber.getIdString()}
                             moduleInstanceId={props.moduleInstance.getId()}
-                            ident={subscriber.getIdent()}
-                            name={subscriber.getName()}
-                            supportedGenres={subscriber.getSupportedGenres()}
+                            ident={subscriber.getIdString()}
+                            name={subscriber.getDisplayName()}
+                            supportedKindsOfKey={subscriber.getSupportedKindsOfKeys()}
                             workbench={props.workbench}
                             onChannelConnect={handleChannelConnect}
                             onChannelConnectionDisconnect={handleChannelDisconnect}

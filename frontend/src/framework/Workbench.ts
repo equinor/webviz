@@ -274,7 +274,7 @@ export class Workbench {
                         throw new Error("Could not find channel");
                     }
 
-                    initialSettings[propName] = channel.getName();
+                    initialSettings[propName] = channel.getDisplayName();
                 }
             }
 

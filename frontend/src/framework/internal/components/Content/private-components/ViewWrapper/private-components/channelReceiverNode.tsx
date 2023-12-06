@@ -3,23 +3,23 @@ import React from "react";
 import { KeyKind } from "@framework/DataChannelTypes";
 import { GuiEvent, GuiEventPayloads, GuiState, useGuiState } from "@framework/GuiMessageBroker";
 import { Workbench } from "@framework/Workbench";
-import { SubscriberTopic } from "@framework/internal/DataChannels/Subscriber";
+import { ModuleChannelReceiverNotificationTopic } from "@framework/internal/DataChannels/ModuleChannelReceiver";
 import { IconButton } from "@lib/components/IconButton";
 import { Point, pointerEventToPoint, rectContainsPoint } from "@lib/utils/geometry";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { Edit, Remove } from "@mui/icons-material";
 
-export type SubscriberNodeProps = {
+export type ChannelReceiverNodeProps = {
     ident: string;
     name: string;
-    supportedGenres?: readonly KeyKind[];
+    supportedKindsOfKey?: readonly KeyKind[];
     moduleInstanceId: string;
     onChannelConnect: (inputName: string, moduleInstanceId: string, destinationPoint: Point) => void;
     onChannelConnectionDisconnect: (inputName: string) => void;
     workbench: Workbench;
 };
 
-export const SubscriberNode: React.FC<SubscriberNodeProps> = (props) => {
+export const ChannelReceiverNode: React.FC<ChannelReceiverNodeProps> = (props) => {
     const ref = React.useRef<HTMLDivElement>(null);
     const removeButtonRef = React.useRef<HTMLButtonElement>(null);
     const editButtonRef = React.useRef<HTMLButtonElement>(null);
@@ -56,12 +56,15 @@ export const SubscriberNode: React.FC<SubscriberNodeProps> = (props) => {
             }
 
             const channels = originModuleInstance.getPublishSubscribeBroker().getChannels();
-            const channelGenres: KeyKind[] = [];
+            const channelKeyKinds: KeyKind[] = [];
             for (const channelName in channels) {
-                channelGenres.push(channels[channelName].getGenre());
+                channelKeyKinds.push(channels[channelName].getKindOfKey());
             }
 
-            if (props.supportedGenres && !props.supportedGenres.some((genre) => channelGenres.includes(genre))) {
+            if (
+                props.supportedKindsOfKey &&
+                !props.supportedKindsOfKey.some((kind) => channelKeyKinds.includes(kind))
+            ) {
                 return;
             }
 
@@ -123,7 +126,7 @@ export const SubscriberNode: React.FC<SubscriberNodeProps> = (props) => {
                 return;
             }
 
-            const listener = moduleInstance.getPublishSubscribeBroker().getSubscriber(props.ident);
+            const listener = moduleInstance.getPublishSubscribeBroker().getReceiver(props.ident);
             const hasConnection = listener?.hasActiveSubscription() ?? false;
             setHasConnection(hasConnection);
         }
@@ -150,8 +153,8 @@ export const SubscriberNode: React.FC<SubscriberNodeProps> = (props) => {
 
         const unsubscribeFunc = moduleInstance
             ?.getPublishSubscribeBroker()
-            .getSubscriber(props.ident)
-            ?.subscribe(SubscriberTopic.ChannelChange, checkIfConnection);
+            .getReceiver(props.ident)
+            ?.subscribe(ModuleChannelReceiverNotificationTopic.ChannelChange, checkIfConnection);
 
         return () => {
             removeDataChannelDoneHandler();
@@ -173,7 +176,7 @@ export const SubscriberNode: React.FC<SubscriberNodeProps> = (props) => {
         props.workbench,
         props.moduleInstanceId,
         props.ident,
-        props.supportedGenres,
+        props.supportedKindsOfKey,
         editDataChannelConnections,
     ]);
 
@@ -194,7 +197,7 @@ export const SubscriberNode: React.FC<SubscriberNodeProps> = (props) => {
     }
 
     const moduleInstance = props.workbench.getModuleInstance(props.moduleInstanceId);
-    const listener = moduleInstance?.getPublishSubscribeBroker().getSubscriber(props.ident);
+    const listener = moduleInstance?.getPublishSubscribeBroker().getReceiver(props.ident);
     const channel = listener?.getChannel();
 
     function handleEditChannelClick(e: React.PointerEvent<HTMLButtonElement>) {
@@ -203,7 +206,7 @@ export const SubscriberNode: React.FC<SubscriberNodeProps> = (props) => {
         }
         props.onChannelConnect(
             props.ident,
-            channel.getBroadcaster().getModuleInstanceId(),
+            channel.getManager().getModuleInstanceId(),
             pointerEventToPoint(e.nativeEvent)
         );
     }
@@ -212,9 +215,9 @@ export const SubscriberNode: React.FC<SubscriberNodeProps> = (props) => {
     if (channel) {
         hasMultiplePossibleConnections =
             channel
-                .getBroadcaster()
+                .getManager()
                 .getChannels()
-                .filter((el) => props.supportedGenres?.includes(el.getGenre())).length > 1;
+                .filter((el) => props.supportedKindsOfKey?.includes(el.getKindOfKey())).length > 1;
         if (!hasMultiplePossibleConnections) {
             hasMultiplePossibleConnections = channel.getContents().length > 1;
         }

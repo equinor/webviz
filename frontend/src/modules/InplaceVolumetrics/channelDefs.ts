@@ -1,15 +1,13 @@
-import { ChannelDefinition, KeyKind, Type } from "@framework/DataChannelTypes";
+import { KeyKind, KeyType, ModuleChannelDefinition } from "@framework/DataChannelTypes";
 
 export enum BroadcastChannelNames {
     Response = "Response (per realization)",
 }
 
-export const channelDefs: ChannelDefinition[] = [
+export const channelDefs: ModuleChannelDefinition[] = [
     {
-        ident: BroadcastChannelNames.Response,
-        name: "Response (per realization)",
-        genre: KeyKind.Realization,
-        dataType: Type.Number,
-        metaData: undefined,
+        idString: BroadcastChannelNames.Response,
+        displayName: "Response (per realization)",
+        kindOfKey: KeyKind.Realization,
     },
 ];

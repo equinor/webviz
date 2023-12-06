@@ -1,6 +1,6 @@
 import React from "react";
 
-import { Data, Type } from "@framework/DataChannelTypes";
+import { DataElement, KeyType } from "@framework/DataChannelTypes";
 import { ModuleFCProps } from "@framework/Module";
 import { useViewStatusWriter } from "@framework/StatusWriter";
 import { CircularProgress } from "@lib/components/CircularProgress";
@@ -29,13 +29,13 @@ export const view = (props: ModuleFCProps<State>) => {
 
     statusWriter.setLoading(tableData.isFetching);
 
-    props.moduleContext.usePublish({
+    props.moduleContext.usePublishChannelContents({
         dependencies: [tableData.data, tableData.isFetching],
-        channelIdent: Channels.ResponseValuePerRealization,
-        contents: responseNames.map((el) => ({ ident: el, name: el })),
+        channelIdString: Channels.ResponseValuePerRealization,
+        contents: responseNames.map((el) => ({ idString: el, displayName: el })),
         dataGenerator: (contentIdent: string) => {
             const data = tableData.data?.find((el) => el.responseName === contentIdent);
-            const dataArray: Data<Type.Number, Type.Number>[] = [];
+            const dataArray: DataElement<KeyType.Number>[] = [];
             if (data && data.responses) {
                 dataArray.push(
                     ...data.responses.realizations.map((el, index) => ({

@@ -5,8 +5,8 @@ import { ModuleInstance } from "@framework/ModuleInstance";
 import { Workbench } from "@framework/Workbench";
 import { Point, pointDifference, pointRelativeToDomRect, pointerEventToPoint } from "@lib/utils/geometry";
 
+import { ChannelReceiverNodesWrapper } from "./private-components/channelReceiverNodesWrapper";
 import { Header } from "./private-components/header";
-import { SubscriberNodesWrapper } from "./private-components/subscriberNodesWrapper";
 import { ViewContent } from "./private-components/viewContent";
 
 import { ViewWrapperPlaceholder } from "../viewWrapperPlaceholder";
@@ -152,7 +152,7 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
                     />
                     <div className="flex-grow overflow-auto h-0" onPointerUp={handleModuleClick}>
                         <ViewContent workbench={props.workbench} moduleInstance={props.moduleInstance} />
-                        <SubscriberNodesWrapper
+                        <ChannelReceiverNodesWrapper
                             forwardedRef={ref}
                             moduleInstance={props.moduleInstance}
                             workbench={props.workbench}

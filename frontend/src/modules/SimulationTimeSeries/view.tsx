@@ -65,10 +65,10 @@ export const view = ({ moduleContext, workbenchSession, workbenchServices }: Mod
     const ensemble = vectorSpec ? ensembleSet.findEnsemble(vectorSpec.ensembleIdent) : null;
 
     if (vectorSpec) {
-        moduleContext.usePublish({
-            channelIdent: BroadcastChannelNames.Realization_Value,
+        moduleContext.usePublishChannelContents({
+            channelIdString: BroadcastChannelNames.Realization_Value,
             dependencies: [vectorQuery.data, ensemble, vectorSpec],
-            contents: [{ ident: vectorSpec.vectorName, name: vectorSpec.vectorName }],
+            contents: [{ idString: vectorSpec.vectorName, displayName: vectorSpec.vectorName }],
             dataGenerator: () => {
                 const data: { key: number; value: number }[] = [];
                 if (vectorQuery.data) {

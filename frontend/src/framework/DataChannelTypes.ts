@@ -1,6 +1,6 @@
-export type { ContentDefinition } from "./internal/DataChannels/Content";
-export type { ChannelDefinition } from "./internal/DataChannels/Channel";
-export type { SubscriberDefinition } from "./internal/DataChannels/Subscriber";
+export type { ModuleChannelContentDefinition } from "./internal/DataChannels/ModuleChannelContent";
+export type { ModuleChannelDefinition } from "./internal/DataChannels/ModuleChannel";
+export type { ModuleChannelReceiverDefinition } from "./internal/DataChannels/ModuleChannelReceiver";
 
 export enum KeyKind {
     TimestampMs = "timestamp-ms",
@@ -10,27 +10,25 @@ export enum KeyKind {
     MeasuredDepth = "measured-depth",
 }
 
-export enum Type {
+export enum KeyType {
     Number = "number",
-    String = "string",
     NumberTriplet = "number-triplet",
 }
 
-export interface KeyKindToTypeMapping {
-    [KeyKind.TimestampMs]: Type.Number;
-    [KeyKind.Realization]: Type.Number;
-    [KeyKind.GridIndex]: Type.Number;
-    [KeyKind.GridIJK]: Type.NumberTriplet;
-    [KeyKind.MeasuredDepth]: Type.Number;
+export interface KeyKindToKeyTypeMapping {
+    [KeyKind.TimestampMs]: KeyType.Number;
+    [KeyKind.Realization]: KeyType.Number;
+    [KeyKind.GridIndex]: KeyType.Number;
+    [KeyKind.GridIJK]: KeyType.NumberTriplet;
+    [KeyKind.MeasuredDepth]: KeyType.Number;
 }
 
-export interface Data<TKeyType extends Type, TValueType extends Type> {
-    key: TypeToTypeScriptTypeMapping[TKeyType];
-    value: TypeToTypeScriptTypeMapping[TValueType];
+export interface DataElement<TKeyType extends KeyType> {
+    key: KeyTypeToTypeScriptTypeMapping[TKeyType];
+    value: number;
 }
 
-export type TypeToTypeScriptTypeMapping = {
-    [Type.Number]: number;
-    [Type.String]: string;
-    [Type.NumberTriplet]: [number, number, number];
+export type KeyTypeToTypeScriptTypeMapping = {
+    [KeyType.Number]: number;
+    [KeyType.NumberTriplet]: [number, number, number];
 };

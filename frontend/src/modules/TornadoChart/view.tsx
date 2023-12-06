@@ -1,6 +1,6 @@
 import React from "react";
 
-import { KeyKind, Type } from "@framework/DataChannelTypes";
+import { KeyKind, KeyType } from "@framework/DataChannelTypes";
 import { Ensemble } from "@framework/Ensemble";
 import { ModuleFCProps } from "@framework/Module";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
@@ -36,10 +36,9 @@ export const view = ({ moduleContext, workbenchSession, workbenchSettings, initi
     const [channelResponseData, setChannelResponseData] = React.useState<EnsembleScalarResponse | null>(null);
     const [availableSensitivityNames, setAvailableSensitivityNames] = moduleContext.useStoreState("sensitivityNames");
 
-    const responseSubscriber = moduleContext.useSubscriber({
+    const responseSubscriber = moduleContext.useChannelReceiver({
         subscriberIdent: "response",
-        expectedGenres: [KeyKind.Realization],
-        expectedValueType: Type.Number,
+        expectedKeyKinds: [KeyKind.Realization],
         initialSettings,
     });
 
@@ -97,7 +96,7 @@ export const view = ({ moduleContext, workbenchSession, workbenchSettings, initi
                 {
                     realizations,
                     values,
-                    name: responseSubscriber.channel?.contents[0].name ?? "",
+                    name: responseSubscriber.channel?.contents[0].displayName ?? "",
                     unit: "",
                 },
                 referenceSensitivityName
@@ -113,7 +112,7 @@ export const view = ({ moduleContext, workbenchSession, workbenchSettings, initi
         if (!responseSubscriber.hasActiveSubscription) {
             errMessage = "Select a data channel to plot";
         } else {
-            errMessage = `No data received on channel ${responseSubscriber.channel.name}`;
+            errMessage = `No data received on channel ${responseSubscriber.channel.displayName}`;
         }
     }
 

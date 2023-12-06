@@ -1,4 +1,4 @@
-import { ChannelDefinition, SubscriberDefinition } from "./DataChannelTypes";
+import { ModuleChannelDefinition, ModuleChannelReceiverDefinition } from "./DataChannelTypes";
 import { Module } from "./Module";
 import { DrawPreviewFunc } from "./Preview";
 import { StateBaseType, StateOptions } from "./StateStore";
@@ -9,8 +9,8 @@ export type RegisterModuleOptions = {
     moduleName: string;
     defaultTitle: string;
     syncableSettingKeys?: SyncSettingKey[];
-    channels?: ChannelDefinition[];
-    subscribers?: SubscriberDefinition[];
+    channels?: ModuleChannelDefinition[];
+    subscribers?: ModuleChannelReceiverDefinition[];
 
     preview?: DrawPreviewFunc;
     description?: string;
@@ -39,7 +39,7 @@ export class ModuleRegistry {
             defaultTitle: options.defaultTitle,
             syncableSettingKeys: options.syncableSettingKeys ?? [],
             channels: options.channels,
-            subscribers: options.subscribers,
+            receivers: options.subscribers,
             drawPreviewFunc: options.preview,
             description: options.description,
         });

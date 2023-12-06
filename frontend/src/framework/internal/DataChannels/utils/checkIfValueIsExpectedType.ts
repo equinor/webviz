@@ -1,15 +1,11 @@
-import { Type } from "../../../DataChannelTypes";
+import { KeyType } from "@framework/DataChannelTypes";
 
-export function checkValueIsExpectedType(value: any, type: Type): boolean {
-    if (type === Type.Number) {
+export function checkValueIsExpectedType(value: any, type: KeyType): boolean {
+    if (type === KeyType.Number) {
         return typeof value === "number";
     }
 
-    if (type === Type.String) {
-        return typeof value === "string";
-    }
-
-    if (type === Type.NumberTriplet) {
+    if (type === KeyType.NumberTriplet) {
         if (!Array.isArray(value)) {
             return false;
         }

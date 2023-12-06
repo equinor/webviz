@@ -1,15 +1,15 @@
-import { KeyKind, SubscriberDefinition } from "@framework/DataChannelTypes";
+import { KeyKind, ModuleChannelReceiverDefinition } from "@framework/DataChannelTypes";
 import { ModuleRegistry } from "@framework/ModuleRegistry";
 import { SyncSettingKey } from "@framework/SyncSettings";
 
 import { preview } from "./preview";
 import { State } from "./state";
 
-const subscriberDefs: SubscriberDefinition[] = [
+const subscriberDefs: ModuleChannelReceiverDefinition[] = [
     {
-        ident: "response",
-        name: "Response",
-        supportedGenres: [KeyKind.Realization],
+        idString: "response",
+        displayName: "Response",
+        supportedKindsOfKeys: [KeyKind.Realization],
         supportsMultiContents: false,
     },
 ];

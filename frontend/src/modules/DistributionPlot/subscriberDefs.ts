@@ -1,33 +1,33 @@
-import { KeyKind, SubscriberDefinition } from "@framework/DataChannelTypes";
+import { KeyKind, ModuleChannelReceiverDefinition } from "@framework/DataChannelTypes";
 
-export const subscriberDefs: SubscriberDefinition[] = [
+export const subscriberDefs: ModuleChannelReceiverDefinition[] = [
     {
-        ident: "channelX",
-        name: "X axis",
-        supportedGenres: [KeyKind.Realization],
+        idString: "channelX",
+        displayName: "X axis",
+        supportedKindsOfKeys: [KeyKind.Realization],
         supportsMultiContents: true,
     },
     {
-        ident: "channelY",
-        name: "Y axis",
-        supportedGenres: [KeyKind.Realization],
+        idString: "channelY",
+        displayName: "Y axis",
+        supportedKindsOfKeys: [KeyKind.Realization],
         supportsMultiContents: true,
     },
     {
-        ident: "channelZ",
-        name: "Z axis",
-        supportedGenres: [KeyKind.Realization],
+        idString: "channelZ",
+        displayName: "Z axis",
+        supportedKindsOfKeys: [KeyKind.Realization],
         supportsMultiContents: true,
     },
     {
-        ident: "channelColor",
-        name: "Color mapping",
-        supportedGenres: [KeyKind.Realization],
+        idString: "channelColor",
+        displayName: "Color mapping",
+        supportedKindsOfKeys: [KeyKind.Realization],
         supportsMultiContents: true,
     },
     {
-        ident: "singleTaskingListener",
-        name: "Single tasking listener",
-        supportedGenres: [KeyKind.Realization],
+        idString: "singleTaskingListener",
+        displayName: "Single tasking listener",
+        supportedKindsOfKeys: [KeyKind.Realization],
     },
 ];

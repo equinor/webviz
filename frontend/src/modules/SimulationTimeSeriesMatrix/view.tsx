@@ -149,12 +149,12 @@ export const view = ({ moduleContext, workbenchSession, workbenchSettings }: Mod
         loadedVectorSpecificationsAndObservationData.push(...ensembleObservationData.vectorsObservationData);
     });
 
-    moduleContext.usePublish({
-        channelIdent: BroadcastChannelNames.TimeSeries,
+    moduleContext.usePublishChannelContents({
+        channelIdString: BroadcastChannelNames.TimeSeries,
         dependencies: [loadedVectorSpecificationsAndRealizationData, activeTimestampUtcMs],
         contents: loadedVectorSpecificationsAndRealizationData.map((el) => ({
-            ident: el.vectorSpecification.vectorName,
-            name: el.vectorSpecification.vectorName,
+            idString: el.vectorSpecification.vectorName,
+            displayName: el.vectorSpecification.vectorName,
         })),
         dataGenerator: (vectorName: string) => {
             const data: { key: number; value: number }[] = [];

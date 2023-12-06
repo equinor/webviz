@@ -2,7 +2,7 @@ import React from "react";
 
 import { cloneDeep } from "lodash";
 
-import { ChannelDefinition, SubscriberDefinition } from "./DataChannelTypes";
+import { ModuleChannelDefinition, ModuleChannelReceiverDefinition } from "./DataChannelTypes";
 import { InitialSettings } from "./InitialSettings";
 import { ModuleContext } from "./ModuleContext";
 import { ModuleInstance } from "./ModuleInstance";
@@ -44,31 +44,39 @@ export class Module<StateType extends StateBaseType> {
     private _syncableSettingKeys: SyncSettingKey[];
     private _drawPreviewFunc: DrawPreviewFunc | null;
     private _description: string | null;
-    private _channels: ChannelDefinition[] | null;
-    private _subscribers: SubscriberDefinition[] | null;
+    private _channels: ModuleChannelDefinition[] | null;
+    private _receivers: ModuleChannelReceiverDefinition[] | null;
 
-    constructor(options: {
+    constructor({
+        name,
+        defaultTitle,
+        syncableSettingKeys,
+        drawPreviewFunc,
+        description,
+        channels,
+        receivers,
+    }: {
         name: string;
         defaultTitle: string;
         syncableSettingKeys?: SyncSettingKey[];
         drawPreviewFunc?: DrawPreviewFunc;
         description?: string;
-        channels?: ChannelDefinition[];
-        subscribers?: SubscriberDefinition[];
+        channels?: ModuleChannelDefinition[];
+        receivers?: ModuleChannelReceiverDefinition[];
     }) {
-        this._name = options.name;
-        this._defaultTitle = options.defaultTitle;
+        this._name = name;
+        this._defaultTitle = defaultTitle;
         this.viewFC = () => <div>Not defined</div>;
         this.settingsFC = () => <div>Not defined</div>;
         this._importState = ImportState.NotImported;
         this._moduleInstances = [];
         this._defaultState = null;
         this._workbench = null;
-        this._syncableSettingKeys = options.syncableSettingKeys ?? [];
-        this._drawPreviewFunc = options.drawPreviewFunc ?? null;
-        this._description = options.description ?? null;
-        this._channels = options.channels ?? null;
-        this._subscribers = options.subscribers ?? null;
+        this._syncableSettingKeys = syncableSettingKeys ?? [];
+        this._drawPreviewFunc = drawPreviewFunc ?? null;
+        this._description = description ?? null;
+        this._channels = channels ?? null;
+        this._receivers = receivers ?? null;
     }
 
     getDrawPreviewFunc(): DrawPreviewFunc | null {
@@ -122,7 +130,7 @@ export class Module<StateType extends StateBaseType> {
             module: this,
             instanceNumber,
             channels: this._channels,
-            subscribers: this._subscribers,
+            subscribers: this._receivers,
         });
         this._moduleInstances.push(instance);
         this.maybeImportSelf();

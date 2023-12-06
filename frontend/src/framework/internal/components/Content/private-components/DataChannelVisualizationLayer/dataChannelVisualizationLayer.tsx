@@ -75,7 +75,7 @@ export const DataChannelVisualizationLayer: React.FC<DataChannelVisualizationPro
 
             const availableChannels = moduleInstance.getPublishSubscribeBroker().getChannels();
             if (Object.keys(availableChannels).length === 1) {
-                setCurrentChannelName(Object.values(availableChannels)[0].getName());
+                setCurrentChannelName(Object.values(availableChannels)[0].getDisplayName());
                 return;
             }
         }
@@ -257,7 +257,7 @@ export const DataChannelVisualizationLayer: React.FC<DataChannelVisualizationPro
             ) {
                 continue;
             }
-            const subscribers = moduleInstance.getPublishSubscribeBroker().getSubscribers();
+            const subscribers = moduleInstance.getPublishSubscribeBroker().getReceivers();
             if (!subscribers) {
                 continue;
             }
@@ -268,7 +268,7 @@ export const DataChannelVisualizationLayer: React.FC<DataChannelVisualizationPro
                     continue;
                 }
 
-                const originModuleInstanceId = channel.getBroadcaster().getModuleInstanceId();
+                const originModuleInstanceId = channel.getManager().getModuleInstanceId();
                 const originModuleInstance = props.workbench.getModuleInstance(originModuleInstanceId);
                 if (!originModuleInstance) {
                     continue;
@@ -278,7 +278,7 @@ export const DataChannelVisualizationLayer: React.FC<DataChannelVisualizationPro
                     `moduleinstance-${originModuleInstanceId}-data-channel-origin`
                 );
                 const destinationElement = document.getElementById(
-                    `channel-connector-${moduleInstance.getId()}-${subscriber.getIdent()}`
+                    `channel-connector-${moduleInstance.getId()}-${subscriber.getIdString()}`
                 );
                 if (!originElement || !destinationElement) {
                     continue;
@@ -327,13 +327,13 @@ export const DataChannelVisualizationLayer: React.FC<DataChannelVisualizationPro
                 };
 
                 const highlighted =
-                    highlightedDataChannelConnection?.listenerIdent === subscriber.getIdent() &&
+                    highlightedDataChannelConnection?.listenerIdent === subscriber.getIdString() &&
                     highlightedDataChannelConnection?.moduleInstanceId === moduleInstance.getId();
 
                 const programs = channel
                     .getContents()
-                    .filter((el) => subscriber.getContentIdents().includes(el.getIdent()))
-                    .map((el) => el.getName());
+                    .filter((el) => subscriber.getContentIdStrings().includes(el.getIdString()))
+                    .map((el) => el.getDisplayName());
 
                 let programsDescription = "";
 
@@ -346,14 +346,14 @@ export const DataChannelVisualizationLayer: React.FC<DataChannelVisualizationPro
                 }
 
                 dataChannelPaths.push({
-                    key: `${originModuleInstanceId}-${moduleInstance.getId()}-${subscriber.getIdent()}-${JSON.stringify(
+                    key: `${originModuleInstanceId}-${moduleInstance.getId()}-${subscriber.getIdString()}-${JSON.stringify(
                         boundingRect
                     )}`,
                     origin: originPoint,
                     midPoint1: midPoint1,
                     midPoint2: midPoint2,
                     destination: destinationPoint,
-                    description: `${channel.getName()} ${programsDescription}`,
+                    description: `${channel.getDisplayName()} ${programsDescription}`,
                     descriptionCenterPoint: descriptionCenterPoint,
                     highlighted: highlighted,
                 });

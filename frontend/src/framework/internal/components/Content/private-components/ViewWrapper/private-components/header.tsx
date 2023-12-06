@@ -210,7 +210,7 @@ export const Header: React.FC<HeaderProps> = (props) => {
                 </>
             </div>
             {makeStatusIndicator()}
-            {(props.moduleInstance.getPublishSubscribeBroker().getSubscribers().length > 0 ||
+            {(props.moduleInstance.getPublishSubscribeBroker().getReceivers().length > 0 ||
                 props.moduleInstance.getPublishSubscribeBroker().getChannels().length > 0) && (
                 <span className="bg-slate-300 w-[1px] h-3/4 ml-2" />
             )}
@@ -225,7 +225,7 @@ export const Header: React.FC<HeaderProps> = (props) => {
                     <Output fontSize="small" />
                 </div>
             )}
-            {props.moduleInstance.getPublishSubscribeBroker().getSubscribers().length > 0 && (
+            {props.moduleInstance.getPublishSubscribeBroker().getReceivers().length > 0 && (
                 <div
                     className="hover:text-slate-500 cursor-pointer ml-2"
                     title="Edit input data channels"

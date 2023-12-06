@@ -1,14 +1,13 @@
-import { ChannelDefinition, KeyKind, Type } from "@framework/DataChannelTypes";
+import { KeyKind, KeyType, ModuleChannelDefinition } from "@framework/DataChannelTypes";
 
 export enum Channels {
     GridIJK = "Grid IJK",
 }
 
-export const channels: ChannelDefinition[] = [
+export const channels: ModuleChannelDefinition[] = [
     {
-        ident: Channels.GridIJK,
-        name: "Grid IJK",
-        genre: KeyKind.GridIJK,
-        dataType: Type.Number,
+        idString: Channels.GridIJK,
+        displayName: "Grid IJK",
+        kindOfKey: KeyKind.GridIJK,
     },
 ];

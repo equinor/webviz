@@ -2,7 +2,7 @@ import React from "react";
 import Plot from "react-plotly.js";
 
 import { Body_get_realizations_response_api } from "@api";
-import { Data, Type } from "@framework/DataChannelTypes";
+import { DataElement, KeyType } from "@framework/DataChannelTypes";
 import { ModuleFCProps } from "@framework/Module";
 import { useSubscribedValue } from "@framework/WorkbenchServices";
 import { ApiStateWrapper } from "@lib/components/ApiStateWrapper";
@@ -78,12 +78,12 @@ export const view = (props: ModuleFCProps<State>) => {
     const ensemble = ensembleIdent ? props.workbenchSession.getEnsembleSet().findEnsemble(ensembleIdent) : null;
 
     if (ensemble && tableName && responseName) {
-        props.moduleContext.usePublish({
-            channelIdent: BroadcastChannelNames.Response,
+        props.moduleContext.usePublishChannelContents({
+            channelIdString: BroadcastChannelNames.Response,
             dependencies: [realizationsResponseQuery.data, ensemble, tableName, responseName],
-            contents: [{ ident: responseName, name: responseName }],
+            contents: [{ idString: responseName, displayName: responseName }],
             dataGenerator: () => {
-                const data: Data<Type.Number, Type.Number>[] = [];
+                const data: DataElement<KeyType.Number>[] = [];
                 if (realizationsResponseQuery.data) {
                     realizationsResponseQuery.data.realizations.forEach((realization, index) => {
                         data.push({

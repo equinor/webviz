@@ -75,10 +75,10 @@ export const view = ({
         setActiveTimestampUtcMs(lastTimestampUtcMs);
     }
 
-    moduleContext.usePublish({
-        channelIdent: BroadcastChannelNames.Realization_Value,
+    moduleContext.usePublishChannelContents({
+        channelIdString: BroadcastChannelNames.Realization_Value,
         dependencies: [vectorSpec, realizationsQuery.data, ensemble, activeTimestampUtcMs],
-        contents: [{ ident: vectorSpec?.vectorName ?? "", name: vectorSpec?.vectorName ?? "" }],
+        contents: [{ idString: vectorSpec?.vectorName ?? "", displayName: vectorSpec?.vectorName ?? "" }],
         dataGenerator: () => {
             const data: { key: number; value: number }[] = [];
             if (vectorSpec && realizationsQuery.data && ensemble) {

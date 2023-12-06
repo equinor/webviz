@@ -1,20 +1,13 @@
 import React from "react";
 
-import {
-    ContentDefinition,
-    Data,
-    KeyKind,
-    KeyKindToTypeMapping,
-    Type,
-    TypeToTypeScriptTypeMapping,
-} from "./DataChannelTypes";
+import { DataElement, KeyKind, KeyType, ModuleChannelContentDefinition } from "./DataChannelTypes";
 import { InitialSettings } from "./InitialSettings";
 import { ModuleInstance } from "./ModuleInstance";
 import { ModuleInstanceStatusController } from "./ModuleInstanceStatusController";
 import { StateBaseType, StateStore, useSetStoreValue, useStoreState, useStoreValue } from "./StateStore";
 import { SyncSettingKey } from "./SyncSettings";
-import { usePublish } from "./internal/DataChannels/hooks/usePublish";
-import { useSubscriber } from "./internal/DataChannels/hooks/useSubscriber";
+import { useChannelReceiver } from "./internal/DataChannels/hooks/useChannelReceiver";
+import { usePublishChannelContents } from "./internal/DataChannels/hooks/usePublishChannelContents";
 
 export class ModuleContext<S extends StateBaseType> {
     private _moduleInstance: ModuleInstance<S>;
@@ -68,13 +61,12 @@ export class ModuleContext<S extends StateBaseType> {
         return this._moduleInstance.getStatusController();
     }
 
-    useSubscriber<TGenres extends KeyKind[], TValueType extends Type>(options: {
+    useChannelReceiver<TKeyKinds extends KeyKind[]>(options: {
         subscriberIdent: string;
-        expectedGenres: TGenres;
-        expectedValueType: TValueType;
+        expectedKeyKinds: TKeyKinds;
         initialSettings?: InitialSettings;
-    }): ReturnType<typeof useSubscriber<(typeof options)["expectedGenres"], (typeof options)["expectedValueType"]>> {
-        const subscriber = this._moduleInstance.getPublishSubscribeBroker().getSubscriber(options.subscriberIdent);
+    }): ReturnType<typeof useChannelReceiver<(typeof options)["expectedKeyKinds"]>> {
+        const subscriber = this._moduleInstance.getPublishSubscribeBroker().getReceiver(options.subscriberIdent);
 
         React.useEffect(() => {
             if (options.initialSettings) {
@@ -89,27 +81,26 @@ export class ModuleContext<S extends StateBaseType> {
             }
         }, [options.initialSettings, subscriber]);
 
-        return useSubscriber({
-            subscriber: this._moduleInstance.getPublishSubscribeBroker().getSubscriber(options.subscriberIdent),
-            expectedGenres: options.expectedGenres,
-            expectedValueType: options.expectedValueType,
+        return useChannelReceiver({
+            subscriber: this._moduleInstance.getPublishSubscribeBroker().getReceiver(options.subscriberIdent),
+            expectedKeyKinds: options.expectedKeyKinds,
         });
     }
 
-    usePublish(options: {
-        channelIdent: string;
+    usePublishChannelContents(options: {
+        channelIdString: string;
         dependencies: any[];
-        contents: ContentDefinition[];
+        contents: ModuleChannelContentDefinition[];
         dataGenerator: (contentIdent: string) => {
-            data: Data<Type, Type>[];
-            metaData?: Record<string, TypeToTypeScriptTypeMapping[Type]>;
+            data: DataElement<KeyType>[];
+            metaData?: Record<string, string | number>;
         };
     }) {
-        const channel = this._moduleInstance.getPublishSubscribeBroker().getChannel(options.channelIdent);
+        const channel = this._moduleInstance.getPublishSubscribeBroker().getChannel(options.channelIdString);
         if (!channel) {
-            throw new Error(`Channel '${options.channelIdent}' does not exist`);
+            throw new Error(`Channel '${options.channelIdString}' does not exist`);
         }
-        return usePublish({
+        return usePublishChannelContents({
             channel,
             ...options,
         });
