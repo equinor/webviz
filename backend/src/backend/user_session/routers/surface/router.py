@@ -84,30 +84,38 @@ async def well_intersection_reals_from_user_session(
     # ]
     surfaces = []
     header = None
-
+    fence_arr = np.array(
+        [
+            surface_fence_spec.x_points,
+            surface_fence_spec.y_points,
+            np.zeros(len(surface_fence_spec.y_points)),
+            surface_fence_spec.cum_length,
+        ]
+    ).T
     for idx, byteio in enumerate(bytesios):
         byteio.seek(0)
+
         buf = byteio.read()
         if idx == 0:
             header = read_header(buf)
 
-        values = read_values_optimized(header, buf)
-        # values = read_values_optimized(header, buf)
-        surfaces.append(init_surf.copy())
-        surfaces[idx].values = values
+        init_surf.values = read_values_optimized(header, buf)
+        print(init_surf.values.min())
+        intersections.append(make_intersection(init_surf, fence_arr))
+
         del buf
 
     elapsed_xtgeo2 = timer.lap_s()
-    intersections = await make_intersections(surfaces, surface_fence_spec)
+    # intersections = await make_intersections(surfaces, surface_fence_spec)
     elapsed_intersect = timer.lap_s()
 
     LOGGER.info(
         f"Got intersected surface set from Sumo: {timer.elapsed_ms()}ms ("
-        f"download={elapsed_download}ms, "
-        f"bytesio={elapsed_bytesio}ms, "
-        f"xtgeo={elapsed_xtgeo}ms, "
-        f"xtgeo2={elapsed_xtgeo2}ms, "
-        f"intersect={elapsed_intersect}ms, "
+        f"download={elapsed_download}s, "
+        f"bytesio={elapsed_bytesio}s, "
+        f"xtgeo={elapsed_xtgeo}s, "
+        f"xtgeo2={elapsed_xtgeo2}s, "
+        f"intersect={elapsed_intersect}s, "
         f"size={tot_mb:.2f}MB, "
         f"speed={tot_mb/elapsed_download:.2f}MB/s)",
         extra={
