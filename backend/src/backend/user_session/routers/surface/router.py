@@ -119,7 +119,7 @@ def make_intersection(surf, fence_arr):
 
 
 async def make_intersections(surfaces, surface_fence_spec):
-    loop = asyncio.get_running_loop()
+    # loop = asyncio.get_running_loop()
     fence_arr = np.array(
         [
             surface_fence_spec.x_points,
@@ -128,12 +128,13 @@ async def make_intersections(surfaces, surface_fence_spec):
             surface_fence_spec.cum_length,
         ]
     ).T
-    with ProcessPoolExecutor() as executor:
-        tasks = [
-            loop.run_in_executor(executor, make_intersection, surf, fence_arr)
-            for surf in surfaces
-        ]
-        intersections = await asyncio.gather(*tasks)
+    intersections = [make_intersection(surf, fence_arr) for surf in surfaces]
+    # with ProcessPoolExecutor() as executor:
+    #     tasks = [
+    #         loop.run_in_executor(executor, make_intersection, surf, fence_arr)
+    #         for surf in surfaces
+    #     ]
+    #     intersections = await asyncio.gather(*tasks)
     return intersections
 
 
@@ -142,12 +143,13 @@ def load_surf(bytestr) -> xtgeo.RegularSurface:
 
 
 async def load_xtgeo(res_array):
-    loop = asyncio.get_running_loop()
-    with ProcessPoolExecutor() as executor:
-        tasks = [
-            loop.run_in_executor(executor, load_surf, bytestr) for bytestr in res_array
-        ]
-        surfaces = await asyncio.gather(*tasks)
+    # loop = asyncio.get_running_loop()
+    # with ProcessPoolExecutor() as executor:
+    #     tasks = [
+    #         loop.run_in_executor(executor, load_surf, bytestr) for bytestr in res_array
+    #     ]
+    #     surfaces = await asyncio.gather(*tasks)
+    surfaces = [load_surf(bytestr) for bytestr in res_array]
     return surfaces
 
 
