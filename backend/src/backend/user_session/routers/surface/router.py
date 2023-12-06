@@ -24,6 +24,10 @@ from src.services.utils.perf_timer import PerfTimer
 from io import BytesIO
 from azure.storage.blob.aio import BlobClient, ContainerClient
 import requests
+from xtgeo.surface._regsurf_import import _import_irap_binary_purepy
+from xtgeo import _XTGeoFile
+from struct import unpack
+from xtgeo.common.constants import UNDEF_MAP_IRAPA, UNDEF_MAP_IRAPB
 
 LOGGER = logging.getLogger(__name__)
 router = APIRouter()
@@ -55,49 +59,149 @@ async def well_intersection_reals_from_user_session(
         realization_surface_set_spec,
         authenticated_user.get_sumo_access_token(),
     )
-    base_uri, auth_token = get_base_uri_and_auth_token_for_case(
-        case_uuid, "prod", authenticated_user.get_sumo_access_token()
+
+    res_array = await download_surface_blobs(
+        case_uuid, authenticated_user.get_sumo_access_token(), uuids
     )
 
-    async with ContainerClient.from_container_url(
-        container_url=base_uri, credential=auth_token
-    ) as container_client:
-        coro_array = []
-        timer = PerfTimer()
+    elapsed_download = timer.lap_s()
 
-        for uuid in uuids:
-            coro_array.append(
-                download_blob(container_client=container_client, sumo_surf_uuid=uuid)
-            )
-        res_array = await asyncio.gather(*coro_array)
-        elapsed_download = timer.lap_s()
+    tot_mb = 0
+    for res in res_array:
+        tot_mb += len(res) / (1024 * 1024)
+    bytesios = [BytesIO(bytestr) for bytestr in res_array]
+    xtgeofiles = [_XTGeoFile(bytestr) for bytestr in bytesios]
+    test = [BytesIO(bytestr).read() for bytestr in res_array]
+    elapsed_bytesio = timer.lap_s()
 
-        tot_mb = 0
-        for res in res_array:
-            tot_mb += len(res) / (1024 * 1024)
-
-    surfaces = await load_xtgeo(res_array)
+    surfaces = [
+        xtgeo.surface_from_file(bytestr, fformat="irap_binary") for bytestr in bytesios
+    ]
     elapsed_xtgeo = timer.lap_s()
 
+    # surfaces2 = [
+    #     _import_irap_binary_purepy(xtgeofile, values=True) for xtgeofile in xtgeofiles
+    # ]
+
+    for idx, byteio in enumerate(bytesios):
+        byteio.seek(0)
+        buf = byteio.read()
+        header = read_header(buf)
+        values = read_values_optimized(header, buf)
+        surfaces[idx].values = values
+        del buf
+
+    elapsed_xtgeo2 = timer.lap_s()
     intersections = await make_intersections(surfaces, surface_fence_spec)
     elapsed_intersect = timer.lap_s()
 
     LOGGER.info(
         f"Got intersected surface set from Sumo: {timer.elapsed_ms()}ms ("
         f"download={elapsed_download}ms, "
+        f"bytesio={elapsed_bytesio}ms, "
         f"xtgeo={elapsed_xtgeo}ms, "
+        f"xtgeo2={elapsed_xtgeo2}ms, "
         f"intersect={elapsed_intersect}ms, "
         f"size={tot_mb:.2f}MB, "
         f"speed={tot_mb/elapsed_download:.2f}MB/s)",
         extra={
             "download": elapsed_download,
+            "bytesio": elapsed_bytesio,
             "xtgeo": elapsed_xtgeo,
+            "xtgeo2": elapsed_xtgeo2,
             "intersect": elapsed_intersect,
             "size": tot_mb,
             "speed": tot_mb / elapsed_download,
         },
     )
     return ORJSONResponse([section.dict() for section in intersections])
+
+
+def read_header(buf):
+    # unpack header with big-endian format string
+    hed = unpack(">3i6f3i3f10i", buf[:100])
+
+    args = {}
+    args["nrow"] = hed[2]
+    args["xori"] = hed[3]
+    args["yori"] = hed[5]
+    args["xinc"] = hed[7]
+    args["yinc"] = hed[8]
+    args["ncol"] = hed[11]
+    args["rotation"] = hed[12]
+
+    args["yflip"] = 1
+    if args["yinc"] < 0.0:
+        args["yinc"] *= -1
+        args["yflip"] = -1
+
+    return args
+
+
+def read_values_optimized(header, buf):
+    stv = 100
+    n_blocks = (len(buf) - stv) // (
+        header["ncol"] * 4 + 8
+    )  # approximate number of blocks
+    datav = np.empty(
+        (header["ncol"] * n_blocks,), dtype=np.float32
+    )  # preallocated array
+
+    idx = 0
+    while stv < len(buf):
+        blockv = unpack(">i", buf[stv : stv + 4])[0]
+        stv += 4
+        datav[idx : idx + blockv // 4] = np.frombuffer(
+            buf[stv : blockv + stv], dtype=">f4"
+        )
+        idx += blockv // 4
+        stv += blockv + 4
+
+    values = np.reshape(datav[:idx], (header["ncol"], header["nrow"]), order="F")
+    return np.ma.masked_greater_equal(values, UNDEF_MAP_IRAPB)
+
+
+def read_values(header, buf):
+    # Values: traverse through data blocks
+    stv = 100  # Starting byte
+    datav = []
+
+    while True:
+        # start block integer - number of bytes of floats in following block
+        blockv = unpack(">i", buf[stv : stv + 4])[0]
+        stv += 4
+        # floats
+        datav.append(
+            np.array(unpack(">" + str(int(blockv / 4)) + "f", buf[stv : blockv + stv]))
+        )
+        stv += blockv
+        # end block integer not needed really
+        _ = unpack(">i", buf[stv : stv + 4])[0]
+        stv += 4
+        if stv == len(buf):
+            break
+
+    values = np.hstack(datav)
+    values = np.reshape(values, (header["ncol"], header["nrow"]), order="F")
+    values = np.array(values, order="C")
+    values = np.ma.masked_greater_equal(values, UNDEF_MAP_IRAPB)
+    return np.ma.masked_invalid(values)
+
+
+async def download_surface_blobs(case_uuid, access_token, uuids):
+    base_uri, auth_token = get_base_uri_and_auth_token_for_case(
+        case_uuid, "prod", access_token
+    )
+    async with ContainerClient.from_container_url(
+        container_url=base_uri, credential=auth_token
+    ) as container_client:
+        coro_array = []
+        for uuid in uuids:
+            coro_array.append(
+                download_blob(container_client=container_client, sumo_surf_uuid=uuid)
+            )
+        res_array = await asyncio.gather(*coro_array)
+    return res_array
 
 
 async def download_blob(container_client: ContainerClient, sumo_surf_uuid):
@@ -139,7 +243,7 @@ async def make_intersections(surfaces, surface_fence_spec):
 
 
 def load_surf(bytestr) -> xtgeo.RegularSurface:
-    return xtgeo.surface_from_file(BytesIO(bytestr), fformat="irap_binary")
+    return xtgeo.surface_from_file(bytestr, fformat="irap_binary")
 
 
 async def load_xtgeo(res_array):
@@ -149,7 +253,7 @@ async def load_xtgeo(res_array):
     #         loop.run_in_executor(executor, load_surf, bytestr) for bytestr in res_array
     #     ]
     #     surfaces = await asyncio.gather(*tasks)
-    surfaces = [load_surf(bytestr) for bytestr in res_array]
+    surfaces = [load_surf(BytesIO(bytestr)) for bytestr in res_array]
     return surfaces
 
 
