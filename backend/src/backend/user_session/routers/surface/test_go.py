@@ -9,11 +9,14 @@ import base64
 from . import sumo
 import logging
 from src.services.utils.perf_timer import PerfTimer
+import numpy as np
 
 LOGGER = logging.getLogger(__name__)
 
 
-def go_get_surface_blobs(sumo_token: str, case_uuid: str, object_ids: list[str]) -> list[xtgeo.RegularSurface]:
+def go_get_surface_blobs(
+    sumo_token: str, case_uuid: str, object_ids: list[str]
+) -> list[np.ndarray]:
     timer = PerfTimer()
     GetZippedBlobs = golibrary.GetZippedBlobs
     GetZippedBlobs.restype = ctypes.c_void_p
@@ -68,7 +71,12 @@ def go_get_surface_blobs(sumo_token: str, case_uuid: str, object_ids: list[str])
         f"get={elapsed_get}ms, "
         f"decode={elapsed_decode}ms, "
         f"xtgeo={elapsed_xtgeo}ms) ",
-        extra={"init": elapsed_init, "get": elapsed_get, "decode": elapsed_decode, "xtgeo": elapsed_xtgeo},
+        extra={
+            "init": elapsed_init,
+            "get": elapsed_get,
+            "decode": elapsed_decode,
+            "xtgeo": elapsed_xtgeo,
+        },
     )
 
     return surfaces
