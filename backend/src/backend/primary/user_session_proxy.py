@@ -17,7 +17,9 @@ LOCALHOST_DEVELOPMENT = os.environ.get("UVICORN_RELOAD") == "true"
 class _RedisUserJobs:
     def __init__(self) -> None:
         # redis.Redis does not yet have namespace support - https://github.com/redis/redis-py/issues/12 - need to prefix manually.
-        self._redis_client = redis.Redis.from_url(config.REDIS_USER_SESSION_URL, decode_responses=True)
+        self._redis_client = redis.Redis.from_url(
+            config.REDIS_USER_SESSION_URL, decode_responses=True
+        )
 
     def get_job_name(self, user_id: str) -> Optional[str]:
         return self._redis_client.get("user-job-name:" + user_id)
@@ -51,7 +53,9 @@ class RadixJobScheduler:
             return True
 
         async with httpx.AsyncClient() as client:
-            res = await client.get(f"http://{self._name}:{self._port}/api/v1/jobs/{existing_job_name}")
+            res = await client.get(
+                f"http://{self._name}:{self._port}/api/v1/jobs/{existing_job_name}"
+            )
 
         job = res.json()
 
@@ -88,8 +92,8 @@ class RadixJobScheduler:
                     # these could be dynamic based on e.g. the selected ensemble sizess by the user.
                     json={
                         "resources": {
-                            "limits": {"memory": "64GiB", "cpu": "4"},
-                            "requests": {"memory": "32GiB", "cpu": "2"},
+                            "limits": {"memory": "128GiB", "cpu": "16"},
+                            "requests": {"memory": "32GiB", "cpu": "4"},
                         }
                     },
                 )
@@ -115,7 +119,9 @@ class RadixJobScheduler:
 RADIX_JOB_SCHEDULER_INSTANCE = RadixJobScheduler("backend-user-session", 8000)
 
 
-async def proxy_to_user_session(request: Request, authenticated_user: AuthenticatedUser) -> Any:
+async def proxy_to_user_session(
+    request: Request, authenticated_user: AuthenticatedUser
+) -> Any:
     # Ideally this function should probably be a starlette/FastAPI middleware, but it appears that
     # it is not yet possible to put middleware on single routes through decorator like in express.js.
 
