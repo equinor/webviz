@@ -70,13 +70,13 @@ async def well_intersection_reals_from_user_session(
     for res in res_array:
         tot_mb += len(res) / (1024 * 1024)
     bytesios = [BytesIO(bytestr) for bytestr in res_array]
-    xtgeofiles = [_XTGeoFile(bytestr) for bytestr in bytesios]
-    test = [BytesIO(bytestr).read() for bytestr in res_array]
+    # xtgeofiles = [_XTGeoFile(bytestr) for bytestr in bytesios]
+    # test = [BytesIO(bytestr).read() for bytestr in res_array]
     elapsed_bytesio = timer.lap_s()
 
-    surfaces = [
-        xtgeo.surface_from_file(bytestr, fformat="irap_binary") for bytestr in bytesios
-    ]
+    # surfaces = [
+    #     xtgeo.surface_from_file(bytestr, fformat="irap_binary") for bytestr in bytesios
+    # ]
     elapsed_xtgeo = timer.lap_s()
 
     # surfaces2 = [
@@ -140,12 +140,8 @@ def read_header(buf):
 
 def read_values_optimized(header, buf):
     stv = 100
-    n_blocks = (len(buf) - stv) // (
-        header["ncol"] * 4 + 8
-    )  # approximate number of blocks
-    datav = np.empty(
-        (header["ncol"] * n_blocks,), dtype=np.float32
-    )  # preallocated array
+    n_blocks = (len(buf) - stv) // (header["ncol"] * 4 + 8)
+    datav = np.empty((header["ncol"] * n_blocks,), dtype=np.float32)  # preallocate
 
     idx = 0
     while stv < len(buf):
