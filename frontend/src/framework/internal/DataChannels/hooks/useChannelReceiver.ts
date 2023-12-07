@@ -4,22 +4,32 @@ import { DataElement, KeyKind, KeyKindToKeyTypeMapping } from "@framework/DataCh
 
 import { ModuleChannelReceiver, ModuleChannelReceiverNotificationTopic } from "../ModuleChannelReceiver";
 
-export interface ChannelReceiverReturnData<TGenres extends KeyKind[]> {
+export interface ChannelReceiverChannelContent<TKeyKinds extends KeyKind[]> {
     idString: string;
     displayName: string;
-    channel: {
-        idString: string;
-        displayName: string;
-        moduleInstanceId: string;
-        readonly contents: {
-            idString: string;
-            displayName: string;
-            dataArray: DataElement<KeyKindToKeyTypeMapping[TGenres[number]]>[];
-            metaData: Record<string, string | number> | undefined;
-        }[];
-    };
-    hasActiveSubscription: boolean;
+    dataArray: DataElement<KeyKindToKeyTypeMapping[TKeyKinds[number]]>[];
+    metaData: Record<string, string | number> | undefined;
 }
+
+export type ChannelReceiverReturnData<TKeyKinds extends KeyKind[]> =
+    | {
+          idString: string;
+          displayName: string;
+          channel: {
+              idString: string;
+              displayName: string;
+              moduleInstanceId: string;
+              kindOfKey: KeyKind | string;
+              readonly contents: ChannelReceiverChannelContent<TKeyKinds>[];
+          };
+          hasActiveSubscription: true;
+      }
+    | {
+          idString: string;
+          displayName: string;
+          channel?: undefined;
+          hasActiveSubscription: false;
+      };
 
 export function useChannelReceiver<TGenres extends KeyKind[]>({
     subscriber,
@@ -28,9 +38,7 @@ export function useChannelReceiver<TGenres extends KeyKind[]>({
     subscriber: ModuleChannelReceiver | null;
     expectedKeyKinds: TGenres;
 }): ChannelReceiverReturnData<typeof expectedKeyKinds> {
-    const [contents, setContents] = React.useState<
-        ChannelReceiverReturnData<typeof expectedKeyKinds>["channel"]["contents"]
-    >([]);
+    const [contents, setContents] = React.useState<ChannelReceiverChannelContent<typeof expectedKeyKinds>[]>([]);
 
     React.useEffect(() => {
         function handleContentsDataArrayChange(): void {
@@ -81,15 +89,48 @@ export function useChannelReceiver<TGenres extends KeyKind[]>({
         };
     }, [subscriber]);
 
+    if (!subscriber) {
+        return {
+            idString: "",
+            displayName: "",
+            channel: undefined,
+            hasActiveSubscription: false,
+        };
+    }
+
+    const channel = subscriber?.getChannel();
+
+    if (!subscriber.hasActiveSubscription() || !channel) {
+        return {
+            idString: subscriber.getIdString(),
+            displayName: subscriber.getDisplayName(),
+            channel: undefined,
+            hasActiveSubscription: false,
+        };
+    }
+
+    let channelObject: ChannelReceiverReturnData<typeof expectedKeyKinds>["channel"] | undefined = undefined;
+
+    if (channel) {
+        channelObject = {
+            idString: channel.getIdString() ?? "",
+            displayName: channel.getDisplayName() ?? "",
+            moduleInstanceId: channel.getManager().getModuleInstanceId() ?? "",
+            kindOfKey: channel.getKindOfKey() ?? "",
+            contents: contents,
+        };
+    }
+
     return {
         idString: subscriber?.getIdString() ?? "",
         displayName: subscriber?.getDisplayName() ?? "",
         channel: {
-            idString: subscriber?.getChannel()?.getIdString() ?? "",
-            displayName: subscriber?.getChannel()?.getDisplayName() ?? "",
-            moduleInstanceId: subscriber?.getManager().getModuleInstanceId() ?? "",
+            idString: channel.getIdString() ?? "",
+            displayName: channel.getDisplayName() ?? "",
+            moduleInstanceId: channel.getManager().getModuleInstanceId() ?? "",
+            kindOfKey: channel.getKindOfKey() ?? "",
             contents: contents,
         },
-        hasActiveSubscription: subscriber?.hasActiveSubscription() ?? false,
+        hasActiveSubscription: true,
     };
 }

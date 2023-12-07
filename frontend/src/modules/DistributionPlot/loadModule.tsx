@@ -2,11 +2,10 @@ import { ModuleRegistry } from "@framework/ModuleRegistry";
 
 import { settings } from "./settings";
 import { PlotType, State } from "./state";
-import { subscriberDefs } from "./subscriberDefs";
 import { view } from "./view";
 
 const defaultState: State = {
-    plotType: PlotType.Histogram,
+    plotType: PlotType.BarChart,
     numBins: 10,
     orientation: "h",
 };
