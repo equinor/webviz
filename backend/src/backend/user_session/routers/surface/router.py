@@ -65,70 +65,15 @@ async def well_intersection_reals_from_user_session(
     )
     elapsed_meta = timer.lap_ms()
 
-    # Check if cached
-    uuids_to_download = []
-    surfaces = []
-    for uuid in uuids:
-        possible_surface = await cache.get(f"{authenticated_user._user_id}-{uuid}")
-        if possible_surface is None:
-            uuids_to_download.append(uuid)
-        else:
-            surfaces.append(possible_surface)
-    elapsed_cache = timer.lap_ms()
-    if uuids_to_download:
-        # Download remaining
-        data_map_b64 = go_get_surface_blobs(
-            authenticated_user.get_sumo_access_token(), case_uuid, uuids_to_download
-        )
-        elapsed_download = timer.lap_ms()
-
-        # Convert to xtgeo
-        import json
-
-        for arr in data_map_b64:
-            print(np.frombuffer(BytesIO(arr).getbuffer(), dtype=np.float32), flush=True)
-
-        elapsed_xtgeo = timer.lap_ms()
-
-        # Add to cache
-        for uuid, surface in downloaded_surface_dict.items():
-            await cache.set(f"{authenticated_user._user_id}-{uuid}", surface)
-            surfaces.append(surface)
-    else:
-        elapsed_download = 0
-        elapsed_xtgeo = 0
-    # Intersect
-    fence_arr = np.array(
-        [
-            surface_fence_spec.x_points,
-            surface_fence_spec.y_points,
-            np.zeros(len(surface_fence_spec.y_points)),
-            surface_fence_spec.cum_length,
-        ]
-    ).T
-    intersections = await make_intersections(surfaces, fence_arr)
-    elapsed_intersect = timer.lap_ms()
-
-    result = [intersection.dict() for intersection in intersections]
-    elapsed_response_format = timer.lap_ms()
-    LOGGER.info(
-        f"Got intersected surface set from Sumo: {timer.elapsed_ms()}ms ("
-        f"meta={elapsed_meta}ms, "
-        f"cache={elapsed_cache}ms, "
-        f"download={elapsed_download}ms, "
-        f"xtgeo={elapsed_xtgeo}ms, "
-        f"intersect={elapsed_intersect}ms, "
-        f"response_format={elapsed_response_format}ms) ",
-        extra={
-            "meta": elapsed_meta,
-            "cache": elapsed_cache,
-            "download": elapsed_download,
-            "xtgeo": elapsed_xtgeo,
-            "intersect": elapsed_intersect,
-            "response_format": elapsed_response_format,
-        },
-    )
-    return ORJSONResponse(result)
+    z_arrs = go_get_surface_blobs(authenticated_user.get_sumo_access_token(), case_uuid, uuids, surface_fence_spec)
+    intersections : List[schemas.SurfaceIntersectionPoints] = []
+    for idx, z_arr in enumerate(z_arrs):
+        intersections.append(schemas.SurfaceIntersectionPoints(
+            name=f"test",
+            cum_length=surface_fence_spec.cum_length,
+            z_array=z_arr
+        ))
+    return ORJSONResponse([section.dict() for section in intersections])
 
 
 @router.post("/well_intersection_reals_from_user_session2")

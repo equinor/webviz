@@ -10,15 +10,15 @@ from . import sumo
 import logging
 from src.services.utils.perf_timer import PerfTimer
 import numpy as np
-
+from src.backend.primary.routers.surface import schemas
 LOGGER = logging.getLogger(__name__)
 
 
 def go_get_surface_blobs(
-    sumo_token: str, case_uuid: str, object_ids: list[str]
+    sumo_token: str, case_uuid: str, object_ids: list[str], surface_fence_spec: schemas.SurfaceFenceSpec
 ) -> list[np.ndarray]:
     timer = PerfTimer()
-    GetZippedBlobs = golibrary.GetZippedBlobs
+    GetZippedBlobs = golibrary.IntersectManySurfaces
     GetZippedBlobs.restype = ctypes.c_void_p
     base_uri, auth_token = sumo.get_base_uri_and_auth_token_for_case(
         case_uuid,
@@ -29,14 +29,16 @@ def go_get_surface_blobs(
         "base_uri": base_uri,
         "auth_token": auth_token,
         "object_ids": object_ids,
-        "bearer_token": sumo_token,
+        "xcoords": surface_fence_spec.x_points,
+        "ycoords": surface_fence_spec.y_points,
         "env": "prod",
     }
     elapsed_init = timer.lap_ms()
     res = GetZippedBlobs(json.dumps(new_request).encode("utf-8"))
-
+    
     elapsed_get = timer.lap_ms()
     res_string = ctypes.string_at(res).decode("ascii")
+    # print(res_string)
     size_bytes = len(res_string)
     size_mb = size_bytes / (1024 * 1024)
     data_map_b64 = json.loads(res_string)
@@ -59,7 +61,7 @@ def go_get_surface_blobs(
             "document_count": len(object_ids),
         },
     )
-    return data_map_b64
+    return json.loads(res_string)
     for object_id, b64_blob in data_map_b64.items():
         bytestr = base64.b64decode(b64_blob)
         xtgeo_surface = xtgeo.surface_from_file(BytesIO(bytestr), fformat="irap_binary")

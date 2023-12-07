@@ -1,4 +1,4 @@
-module goaggregate
+module intersectTest
 
 go 1.20
 
