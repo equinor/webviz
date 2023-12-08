@@ -12,7 +12,7 @@ export type SensitivityColors = {
     sensitivityName: string;
     color: string;
 };
-export type sensitivityChartProps = {
+export type SensitivityChartProps = {
     sensitivityResponseDataset: SensitivityResponseDataset;
     sensitivityColorMap: SensitivityColorMap;
     showLabels: boolean;
@@ -188,7 +188,7 @@ const highTrace = (
     };
 };
 
-const sensitivityChart: React.FC<sensitivityChartProps> = (props) => {
+export const SensitivityChart: React.FC<SensitivityChartProps> = (props) => {
     const [traceDataArr, setTraceDataArr] = useState<Partial<PlotData>[]>([]);
     const [xAxisRange, setXAxisRange] = useState<[number, number]>([0, 0]);
     const [selectedBar, setSelectedBar] = useState<SelectedBar | null>(null);
@@ -240,10 +240,9 @@ const sensitivityChart: React.FC<sensitivityChartProps> = (props) => {
     const layout: Partial<Layout> = {
         width,
         height,
-        margin: { t: 100, r: 0, b: 100, l: 100 },
+        margin: { t: 30, r: 0, b: 60, l: 100 },
         barmode: "overlay",
         uirevision: "do not touch",
-        title: { text: `Tornadoplot for ${props.sensitivityResponseDataset.responseName} <br>`, x: 0, y: 1.01 },
         xaxis: {
             title: {
                 text: props.sensitivityResponseDataset.scale,
@@ -309,5 +308,3 @@ const sensitivityChart: React.FC<sensitivityChartProps> = (props) => {
         />
     );
 };
-
-export default sensitivityChart;

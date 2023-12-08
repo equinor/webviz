@@ -79,47 +79,49 @@ export function settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
 
     return (
         <div className="flex flex-col gap-2">
-            <CollapsibleGroup title="Reference sensitivity">
+            <CollapsibleGroup title="Reference sensitivity" expanded>
                 <Dropdown
                     value={referenceSensitivityName ?? ""}
                     options={sensitivityNames.map((s) => ({ label: s, value: s }))}
                     onChange={setReferenceSensitivityName}
                 />
             </CollapsibleGroup>
-            <CollapsibleGroup title="View settings">
-                <Label text="Display component">
-                    <RadioGroup
-                        value={displayComponentType}
-                        options={[
-                            {
-                                label: "Tornado chart",
-                                value: DisplayComponentType.TornadoChart,
-                            },
-                            {
-                                label: "Sensitivity matrix",
-                                value: DisplayComponentType.Table,
-                            },
-                        ]}
-                        onChange={handleDisplayComponentChange}
-                    />
-                </Label>
-                <Label text="Show sensitivities without impact">
-                    <Switch checked={hideZeroY} onChange={handleHideZeroYChange} />
-                </Label>
-                <Label text="Show labels">
-                    <Switch
-                        checked={showLabels}
-                        onChange={handleShowLabelsChange}
-                        disabled={displayComponentType !== DisplayComponentType.TornadoChart}
-                    />
-                </Label>
-                <Label text="Show realization points">
-                    <Switch
-                        checked={showRealizationPoints}
-                        onChange={handleShowRealizationPointsChange}
-                        disabled={displayComponentType !== DisplayComponentType.TornadoChart}
-                    />
-                </Label>
+            <CollapsibleGroup title="View component" expanded>
+                <RadioGroup
+                    value={displayComponentType}
+                    options={[
+                        {
+                            label: "Tornado chart",
+                            value: DisplayComponentType.TornadoChart,
+                        },
+                        {
+                            label: "Table",
+                            value: DisplayComponentType.Table,
+                        },
+                    ]}
+                    onChange={handleDisplayComponentChange}
+                />
+            </CollapsibleGroup>
+            <CollapsibleGroup title="View settings" expanded>
+                <div className="flex flex-col gap-4">
+                    <Label text="Show sensitivities without impact">
+                        <Switch checked={hideZeroY} onChange={handleHideZeroYChange} />
+                    </Label>
+                    <Label text="Show labels">
+                        <Switch
+                            checked={showLabels}
+                            onChange={handleShowLabelsChange}
+                            disabled={displayComponentType !== DisplayComponentType.TornadoChart}
+                        />
+                    </Label>
+                    <Label text="Show realization points">
+                        <Switch
+                            checked={showRealizationPoints}
+                            onChange={handleShowRealizationPointsChange}
+                            disabled={displayComponentType !== DisplayComponentType.TornadoChart}
+                        />
+                    </Label>
+                </div>
             </CollapsibleGroup>
         </div>
     );

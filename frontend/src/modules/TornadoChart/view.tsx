@@ -7,16 +7,9 @@ import { ModuleFCProps } from "@framework/Module";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { ContentInfo } from "@modules/_shared/components/ContentMessage/contentMessage";
-import { BarChart, TableChart, Tune } from "@mui/icons-material";
 
-import { isEqual } from "lodash";
-
-import SensitivityChart from "./sensitivityChart";
-import {
-    EnsembleScalarResponse,
-    SensitivityResponseCalculator,
-    SensitivityResponseDataset,
-} from "./sensitivityResponseCalculator";
+import { SensitivityChart } from "./sensitivityChart";
+import { SensitivityResponseCalculator, SensitivityResponseDataset } from "./sensitivityResponseCalculator";
 import SensitivityTable from "./sensitivityTable";
 import { DisplayComponentType, State } from "./state";
 
@@ -91,6 +84,7 @@ export const view = ({ moduleContext, workbenchSession, workbenchSettings, initi
     }
 
     function makeContent() {
+        moduleContext.setInstanceTitle(`Tornado chart`);
         if (!responseReceiver.hasActiveSubscription) {
             return <ContentInfo>Select a data channel</ContentInfo>;
         }
@@ -104,6 +98,7 @@ export const view = ({ moduleContext, workbenchSession, workbenchSettings, initi
         }
 
         if (computedSensitivityResponseDataset && displayComponentType === DisplayComponentType.TornadoChart) {
+            moduleContext.setInstanceTitle(`Tornado chart for ${computedSensitivityResponseDataset.responseName}`);
             return (
                 <SensitivityChart
                     sensitivityResponseDataset={computedSensitivityResponseDataset}
@@ -119,6 +114,7 @@ export const view = ({ moduleContext, workbenchSession, workbenchSettings, initi
         }
 
         if (computedSensitivityResponseDataset && displayComponentType === DisplayComponentType.Table) {
+            moduleContext.setInstanceTitle(`Sensitivity table for ${computedSensitivityResponseDataset.responseName}`);
             return (
                 <div className="text-sm">
                     <SensitivityTable
