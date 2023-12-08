@@ -95,8 +95,8 @@ export class ModuleChannel {
         this.notifySubscribers(ModuleChannelNotificationTopic.ContentsDataArraysChange);
     }
 
-    unregisterContent(ident: string): void {
-        this._contents = this._contents.filter((content) => content.getIdString() !== ident);
+    unregisterContent(idString: string): void {
+        this._contents = this._contents.filter((content) => content.getIdString() !== idString);
 
         this.notifySubscribers(ModuleChannelNotificationTopic.ContentsArrayChange);
     }

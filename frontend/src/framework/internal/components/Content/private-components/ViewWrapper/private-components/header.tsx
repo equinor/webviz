@@ -18,7 +18,7 @@ export type HeaderProps = {
     isDragged: boolean;
     onPointerDown: (event: React.PointerEvent<HTMLDivElement>) => void;
     onRemoveClick: (event: React.PointerEvent<HTMLDivElement>) => void;
-    onSubscribersClick: (event: React.PointerEvent<HTMLDivElement>) => void;
+    onReceiversClick: (event: React.PointerEvent<HTMLDivElement>) => void;
     guiMessageBroker: GuiMessageBroker;
 };
 
@@ -71,11 +71,11 @@ export const Header: React.FC<HeaderProps> = (props) => {
         e.preventDefault();
     }
 
-    function handleSubscribersPointerUp(e: React.PointerEvent<HTMLDivElement>) {
-        props.onSubscribersClick(e);
+    function handleReceiversPointerUp(e: React.PointerEvent<HTMLDivElement>) {
+        props.onReceiversClick(e);
     }
 
-    function handleSubscriberPointerDown(e: React.PointerEvent<HTMLDivElement>) {
+    function handleReceiverPointerDown(e: React.PointerEvent<HTMLDivElement>) {
         e.stopPropagation();
     }
 
@@ -210,11 +210,11 @@ export const Header: React.FC<HeaderProps> = (props) => {
                 </>
             </div>
             {makeStatusIndicator()}
-            {(props.moduleInstance.getPublishSubscribeBroker().getReceivers().length > 0 ||
-                props.moduleInstance.getPublishSubscribeBroker().getChannels().length > 0) && (
+            {(props.moduleInstance.getChannelManager().getReceivers().length > 0 ||
+                props.moduleInstance.getChannelManager().getChannels().length > 0) && (
                 <span className="bg-slate-300 w-[1px] h-3/4 ml-2" />
             )}
-            {props.moduleInstance.getPublishSubscribeBroker().getChannels().length > 0 && (
+            {props.moduleInstance.getChannelManager().getChannels().length > 0 && (
                 <div
                     id={`moduleinstance-${props.moduleInstance.getId()}-data-channel-origin`}
                     ref={dataChannelOriginRef}
@@ -225,12 +225,12 @@ export const Header: React.FC<HeaderProps> = (props) => {
                     <Output fontSize="small" />
                 </div>
             )}
-            {props.moduleInstance.getPublishSubscribeBroker().getReceivers().length > 0 && (
+            {props.moduleInstance.getChannelManager().getReceivers().length > 0 && (
                 <div
                     className="hover:text-slate-500 cursor-pointer ml-2"
                     title="Edit input data channels"
-                    onPointerUp={handleSubscribersPointerUp}
-                    onPointerDown={handleSubscriberPointerDown}
+                    onPointerUp={handleReceiversPointerUp}
+                    onPointerDown={handleReceiverPointerDown}
                 >
                     <Input fontSize="small" />
                 </div>

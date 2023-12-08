@@ -105,7 +105,7 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
         handleModuleClick();
     }
 
-    function handleSubscribersClick(e: React.PointerEvent<HTMLDivElement>): void {
+    function handleReceiversClick(e: React.PointerEvent<HTMLDivElement>): void {
         guiMessageBroker.publishEvent(GuiEvent.EditDataChannelConnectionsForModuleInstanceRequest, {
             moduleInstanceId: props.moduleInstance.getId(),
         });
@@ -147,7 +147,7 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
                         isDragged={props.isDragged}
                         onPointerDown={handleHeaderPointerDown}
                         onRemoveClick={handleRemoveClick}
-                        onSubscribersClick={handleSubscribersClick}
+                        onReceiversClick={handleReceiversClick}
                         guiMessageBroker={guiMessageBroker}
                     />
                     <div className="flex-grow overflow-auto h-0" onPointerUp={handleModuleClick}>

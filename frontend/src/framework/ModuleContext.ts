@@ -62,28 +62,28 @@ export class ModuleContext<S extends StateBaseType> {
     }
 
     useChannelReceiver<TKeyKinds extends KeyKind[]>(options: {
-        subscriberIdent: string;
-        expectedKeyKinds: TKeyKinds;
+        idString: string;
+        expectedKindsOfKeys: TKeyKinds;
         initialSettings?: InitialSettings;
-    }): ReturnType<typeof useChannelReceiver<(typeof options)["expectedKeyKinds"]>> {
-        const subscriber = this._moduleInstance.getPublishSubscribeBroker().getReceiver(options.subscriberIdent);
+    }): ReturnType<typeof useChannelReceiver<(typeof options)["expectedKindsOfKeys"]>> {
+        const receiver = this._moduleInstance.getChannelManager().getReceiver(options.idString);
 
         React.useEffect(() => {
             if (options.initialSettings) {
-                const setting = options.initialSettings.get(options.subscriberIdent, "string");
-                if (setting && subscriber) {
-                    const channel = this._moduleInstance.getPublishSubscribeBroker().getChannel(setting as any);
+                const setting = options.initialSettings.get(options.idString, "string");
+                if (setting && receiver) {
+                    const channel = this._moduleInstance.getChannelManager().getChannel(setting as any);
                     if (!channel) {
                         return;
                     }
-                    subscriber.subscribeToChannel(channel, "All");
+                    receiver.subscribeToChannel(channel, "All");
                 }
             }
-        }, [options.initialSettings, subscriber]);
+        }, [options.initialSettings, receiver]);
 
         return useChannelReceiver({
-            subscriber: this._moduleInstance.getPublishSubscribeBroker().getReceiver(options.subscriberIdent),
-            expectedKeyKinds: options.expectedKeyKinds,
+            receiver: this._moduleInstance.getChannelManager().getReceiver(options.idString),
+            expectedKindsOfKeys: options.expectedKindsOfKeys,
         });
     }
 
@@ -91,12 +91,12 @@ export class ModuleContext<S extends StateBaseType> {
         channelIdString: string;
         dependencies: any[];
         contents: ModuleChannelContentDefinition[];
-        dataGenerator: (contentIdent: string) => {
+        dataGenerator: (contentIdString: string) => {
             data: DataElement<KeyType>[];
             metaData?: Record<string, string | number>;
         };
     }) {
-        const channel = this._moduleInstance.getPublishSubscribeBroker().getChannel(options.channelIdString);
+        const channel = this._moduleInstance.getChannelManager().getChannel(options.channelIdString);
         if (!channel) {
             throw new Error(`Channel '${options.channelIdString}' does not exist`);
         }

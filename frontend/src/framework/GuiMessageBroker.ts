@@ -57,7 +57,7 @@ export type GuiEventPayloads = {
     };
     [GuiEvent.HighlightDataChannelConnectionRequest]: {
         moduleInstanceId: string;
-        listenerIdent: string;
+        receiverIdString: string;
     };
     [GuiEvent.DataChannelOriginPointerDown]: {
         moduleInstanceId: string;

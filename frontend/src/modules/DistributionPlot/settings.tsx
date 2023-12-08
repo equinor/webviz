@@ -7,8 +7,8 @@ import { Label } from "@lib/components/Label";
 import { RadioGroup } from "@lib/components/RadioGroup";
 import { Slider } from "@lib/components/Slider";
 
+import { receiverDefs } from "./receiverDefs";
 import { PlotType, State } from "./state";
-import { subscriberDefs } from "./subscriberDefs";
 
 const plotTypes = [
     {

@@ -3,6 +3,7 @@ import Plot from "react-plotly.js";
 
 import { DataElement, KeyKind, KeyType } from "@framework/DataChannelTypes";
 import { ModuleFCProps } from "@framework/Module";
+import { Tag } from "@lib/components/Tag";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { ColorScaleGradientType } from "@lib/utils/ColorScale";
 import { ColorSet } from "@lib/utils/ColorSet";
@@ -59,32 +60,48 @@ export const view = ({
     const wrapperDivSize = useElementSize(wrapperDivRef);
 
     const receiverX = moduleContext.useChannelReceiver({
-        subscriberIdent: "channelX",
+        idString: "channelX",
         initialSettings,
-        expectedKeyKinds: [KeyKind.Realization],
+        expectedKindsOfKeys: [KeyKind.Realization],
     });
     const receiverY = moduleContext.useChannelReceiver({
-        subscriberIdent: "channelY",
+        idString: "channelY",
         initialSettings,
-        expectedKeyKinds: [KeyKind.Realization],
+        expectedKindsOfKeys: [KeyKind.Realization],
     });
 
     function makeContent() {
         if (!receiverX.hasActiveSubscription) {
-            return <ContentInfo>Connect a channel to channel X</ContentInfo>;
+            return (
+                <ContentInfo>
+                    Connect a channel to <Tag label={receiverX.displayName} />
+                </ContentInfo>
+            );
         }
 
         if (receiverX.channel.contents.length === 0) {
-            return <ContentInfo>No data on channel X</ContentInfo>;
+            return (
+                <ContentInfo>
+                    No data on <Tag label={receiverX.displayName} />
+                </ContentInfo>
+            );
         }
 
         if (plotType === PlotType.Scatter || plotType === PlotType.ScatterWithColorMapping) {
             if (!receiverY.hasActiveSubscription) {
-                return <ContentInfo>Connect a channel to channel Y</ContentInfo>;
+                return (
+                    <ContentInfo>
+                        Connect a channel to <Tag label={receiverY.displayName} />
+                    </ContentInfo>
+                );
             }
 
             if (receiverY.channel.contents.length === 0) {
-                return <ContentInfo>No data on channel Y</ContentInfo>;
+                return (
+                    <ContentInfo>
+                        No data on <Tag label={receiverY.displayName} />
+                    </ContentInfo>
+                );
             }
         }
 
@@ -216,7 +233,11 @@ export const view = ({
 
         if (plotType === PlotType.Scatter) {
             if (!receiverY.hasActiveSubscription) {
-                return <ContentInfo>Connect a channel to channel Y</ContentInfo>;
+                return (
+                    <ContentInfo>
+                        Connect a channel to <Tag label="Channel Y" />
+                    </ContentInfo>
+                );
             }
             const figure = makeSubplots({
                 numRows: receiverX.channel.contents.length,
@@ -285,31 +306,6 @@ export const view = ({
                 });
             });
             return figure.makePlot();
-            /*
-            return makeScatterPlotMatrix({
-                columnData: listenerX.channel.contents.map((content) => {
-                    return {
-                        moduleInstanceId: listenerX.channel.moduleInstanceId,
-                        channelIdent: listenerX.channel.idString,
-                        contentIdent: content.idString,
-                        contentName: content.displayName,
-                        dataArray: content.dataArray,
-                    };
-                }),
-                rowData: reverseRowData.map((content) => {
-                    return {
-                        moduleInstanceId: listenerY.channel.moduleInstanceId,
-                        channelIdent: listenerY.channel.idString,
-                        contentIdent: content.idString,
-                        contentName: content.displayName,
-                        dataArray: content.dataArray,
-                    };
-                }),
-                width: wrapperDivSize.width,
-                height: wrapperDivSize.height,
-                colorSet,
-            });
-            */
         }
     }
 

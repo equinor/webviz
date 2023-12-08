@@ -5,7 +5,7 @@ import { PlotType, State } from "./state";
 import { view } from "./view";
 
 const defaultState: State = {
-    plotType: PlotType.BarChart,
+    plotType: PlotType.Histogram,
     numBins: 10,
     orientation: "h",
 };

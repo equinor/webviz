@@ -78,7 +78,7 @@ const RealizationRangeTag: React.FC<RealizationRangeTagProps> = (props) => {
         if (validityInfo.validity === SelectionValidity.InputError) {
             return "Invalid input";
         } else if (validityInfo.validity === SelectionValidity.Invalid) {
-            return "This value is not valid for the selected ensemble(s)";
+            return "This value is not valid for the selected ensemble(s).";
         }
         return undefined;
     }

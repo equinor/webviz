@@ -1,6 +1,6 @@
 import { KeyKind, ModuleChannelReceiverDefinition } from "@framework/DataChannelTypes";
 
-export const subscriberDefs: ModuleChannelReceiverDefinition[] = [
+export const receiverDefs: ModuleChannelReceiverDefinition[] = [
     {
         idString: "channelX",
         displayName: "X axis",

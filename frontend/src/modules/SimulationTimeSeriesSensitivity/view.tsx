@@ -90,7 +90,14 @@ export const view = ({
                     });
                 });
             }
-            return { data };
+            return {
+                data,
+                metaData: {
+                    ensembleIdent: ensemble?.getIdent().toString() ?? "",
+                    unit: "unit",
+                    description: "description",
+                },
+            };
         },
     });
 

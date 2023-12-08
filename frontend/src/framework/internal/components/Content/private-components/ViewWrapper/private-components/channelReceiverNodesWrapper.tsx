@@ -20,11 +20,11 @@ export type ChannelReceiverNodesWrapperProps = {
 
 export const ChannelReceiverNodesWrapper: React.FC<ChannelReceiverNodesWrapperProps> = (props) => {
     const [visible, setVisible] = React.useState<boolean>(false);
-    const [currentSubscriber, setCurrentSubscriber] = React.useState<ModuleChannelReceiver | null>(null);
+    const [currentReceiver, setCurrentReceiver] = React.useState<ModuleChannelReceiver | null>(null);
     const [currentOriginModuleInstanceId, setCurrentOriginModuleInstanceId] = React.useState<string | null>(null);
     const [channelSelectorCenterPoint, setChannelSelectorCenterPoint] = React.useState<Point | null>(null);
     const [selectableChannels, setSelectableChannels] = React.useState<SelectableChannel[]>([]);
-    const [prevSelectedChannelIdent, setPrevSelectedChannelIdent] = React.useState<string | null>(null);
+    const [prevSelectedChannelIdString, setPrevSelectedChannelIdString] = React.useState<string | null>(null);
     const [prevSelectedContents, setPrevSelectedContents] = React.useState<SelectedContents | null>(null);
 
     const elementRect = useElementBoundingRect(props.forwardedRef);
@@ -82,7 +82,7 @@ export const ChannelReceiverNodesWrapper: React.FC<ChannelReceiverNodesWrapperPr
     }, [props.moduleInstance, guiMessageBroker, channelSelectorCenterPoint, editDataChannelConnections]);
 
     const handleChannelConnect = React.useCallback(
-        function handleChannelConnect(subscriberIdent: string, moduleInstanceId: string, destinationPoint: Point) {
+        function handleChannelConnect(receiverIdString: string, moduleInstanceId: string, destinationPoint: Point) {
             const originModuleInstance = props.workbench.getModuleInstance(moduleInstanceId);
 
             if (!originModuleInstance) {
@@ -90,25 +90,25 @@ export const ChannelReceiverNodesWrapper: React.FC<ChannelReceiverNodesWrapperPr
                 return;
             }
 
-            const supportedKindsOfKey = props.moduleInstance
-                .getPublishSubscribeBroker()
+            const supportedKindsOfKeys = props.moduleInstance
+                .getChannelManager()
                 .getReceivers()
-                .find((el) => el.getDisplayName() === subscriberIdent)
+                .find((el) => el.getDisplayName() === receiverIdString)
                 ?.getSupportedKindsOfKeys();
 
             const channels = originModuleInstance
-                .getPublishSubscribeBroker()
+                .getChannelManager()
                 .getChannels()
                 .filter((channel) => {
-                    if (!supportedKindsOfKey || supportedKindsOfKey.some((key) => channel.getKindOfKey() === key)) {
+                    if (!supportedKindsOfKeys || supportedKindsOfKeys.some((key) => channel.getKindOfKey() === key)) {
                         return props.moduleInstance
-                            .getPublishSubscribeBroker()
+                            .getChannelManager()
                             .getReceivers()
-                            .every((subscriber) => {
-                                if (!subscriber.hasActiveSubscription()) {
+                            .every((receiver) => {
+                                if (!receiver.hasActiveSubscription()) {
                                     return true;
                                 }
-                                if (subscriber.getChannel()?.getKindOfKey() === channel.getKindOfKey()) {
+                                if (receiver.getChannel()?.getKindOfKey() === channel.getKindOfKey()) {
                                     return true;
                                 }
                                 return false;
@@ -124,9 +124,9 @@ export const ChannelReceiverNodesWrapper: React.FC<ChannelReceiverNodesWrapperPr
 
             const channel = Object.values(channels)[0];
 
-            const subscriber = props.moduleInstance.getPublishSubscribeBroker().getReceiver(subscriberIdent);
+            const receiver = props.moduleInstance.getChannelManager().getReceiver(receiverIdString);
 
-            if (!subscriber) {
+            if (!receiver) {
                 return;
             }
 
@@ -142,32 +142,32 @@ export const ChannelReceiverNodesWrapper: React.FC<ChannelReceiverNodesWrapperPr
                     };
                 });
 
-                const prevSelectedChannelIdent = subscriber?.getChannel()?.getIdString() ?? null;
+                const prevSelectedChannelIdString = receiver?.getChannel()?.getIdString() ?? null;
 
                 setChannelSelectorCenterPoint(destinationPoint);
                 setSelectableChannels(newSelectableChannels);
                 setCurrentOriginModuleInstanceId(moduleInstanceId);
-                setCurrentSubscriber(subscriber);
+                setCurrentReceiver(receiver);
 
-                if (prevSelectedChannelIdent !== null && !subscriber.getHasSubscribedToAllContents()) {
+                if (prevSelectedChannelIdString !== null && !receiver.getHasSubscribedToAllContents()) {
                     const prevSelectedContents = {
-                        channelIdent: prevSelectedChannelIdent,
-                        contentIdents: subscriber.getContentIdStrings(),
+                        channelIdString: prevSelectedChannelIdString,
+                        contentIdStrings: receiver.getContentIdStrings(),
                     };
                     setPrevSelectedContents(prevSelectedContents);
-                    setPrevSelectedChannelIdent(null);
+                    setPrevSelectedChannelIdString(null);
                 } else {
                     setPrevSelectedContents(null);
-                    setPrevSelectedChannelIdent(prevSelectedChannelIdent);
+                    setPrevSelectedChannelIdString(prevSelectedChannelIdString);
                 }
                 return;
             }
 
-            if (!subscriber.getSupportedKindsOfKeys().includes(channels[0].getKindOfKey())) {
+            if (!receiver.getSupportedKindsOfKeys().includes(channels[0].getKindOfKey())) {
                 return;
             }
 
-            subscriber.subscribeToChannel(channel, "All");
+            receiver.subscribeToChannel(channel, "All");
 
             guiMessageBroker.publishEvent(GuiEvent.HideDataChannelConnectionsRequest);
             guiMessageBroker.publishEvent(GuiEvent.DataChannelConnectionsChange);
@@ -176,11 +176,8 @@ export const ChannelReceiverNodesWrapper: React.FC<ChannelReceiverNodesWrapperPr
     );
 
     const handleChannelDisconnect = React.useCallback(
-        function handleChannelDisconnect(subscriberIdent: string) {
-            props.moduleInstance
-                .getPublishSubscribeBroker()
-                .getReceiver(subscriberIdent)
-                ?.unsubscribeFromCurrentChannel();
+        function handleChannelDisconnect(receiverIdString: string) {
+            props.moduleInstance.getChannelManager().getReceiver(receiverIdString)?.unsubscribeFromCurrentChannel();
             guiMessageBroker.publishEvent(GuiEvent.DataChannelConnectionsChange);
         },
         [props.moduleInstance]
@@ -194,12 +191,12 @@ export const ChannelReceiverNodesWrapper: React.FC<ChannelReceiverNodesWrapperPr
         }
     }
 
-    function handleContentSelection(channelIdent: string, contentIdents: string[]) {
+    function handleContentSelection(channelIdString: string, contentIdStrings: string[]) {
         if (!editDataChannelConnections) {
             guiMessageBroker.publishEvent(GuiEvent.HideDataChannelConnectionsRequest);
         }
 
-        if (!currentSubscriber) {
+        if (!currentReceiver) {
             return;
         }
         setChannelSelectorCenterPoint(null);
@@ -214,22 +211,22 @@ export const ChannelReceiverNodesWrapper: React.FC<ChannelReceiverNodesWrapperPr
             return;
         }
 
-        const subscriber = currentSubscriber;
-        const channel = originModuleInstance.getPublishSubscribeBroker().getChannel(channelIdent);
+        const receiver = currentReceiver;
+        const channel = originModuleInstance.getChannelManager().getChannel(channelIdString);
 
-        setCurrentSubscriber(null);
+        setCurrentReceiver(null);
         setCurrentOriginModuleInstanceId(null);
 
-        if (!subscriber || !channel) {
+        if (!receiver || !channel) {
             return;
         }
 
-        if (contentIdents.length === 0) {
-            subscriber.subscribeToChannel(channel, "All");
+        if (contentIdStrings.length === 0) {
+            receiver.subscribeToChannel(channel, "All");
             return;
         }
 
-        subscriber.subscribeToChannel(channel, contentIdents);
+        receiver.subscribeToChannel(channel, contentIdStrings);
     }
 
     return createPortal(
@@ -245,30 +242,30 @@ export const ChannelReceiverNodesWrapper: React.FC<ChannelReceiverNodesWrapperPr
             }}
         >
             {props.moduleInstance
-                .getPublishSubscribeBroker()
+                .getChannelManager()
                 .getReceivers()
-                .map((subscriber) => {
+                .map((receiver) => {
                     return (
                         <ChannelReceiverNode
-                            key={subscriber.getIdString()}
+                            key={receiver.getIdString()}
                             moduleInstanceId={props.moduleInstance.getId()}
-                            ident={subscriber.getIdString()}
-                            name={subscriber.getDisplayName()}
-                            supportedKindsOfKey={subscriber.getSupportedKindsOfKeys()}
+                            idString={receiver.getIdString()}
+                            displayName={receiver.getDisplayName()}
+                            supportedKindsOfKeys={receiver.getSupportedKindsOfKeys()}
                             workbench={props.workbench}
                             onChannelConnect={handleChannelConnect}
                             onChannelConnectionDisconnect={handleChannelDisconnect}
                         />
                     );
                 })}
-            {channelSelectorCenterPoint && currentSubscriber && (
+            {channelSelectorCenterPoint && currentReceiver && (
                 <ChannelSelector
-                    subscriber={currentSubscriber}
+                    receiver={currentReceiver}
                     position={channelSelectorCenterPoint}
                     selectableChannels={selectableChannels}
                     onCancel={handleCancelChannelSelection}
                     onSelect={handleContentSelection}
-                    selectedChannelIdent={prevSelectedChannelIdent ?? undefined}
+                    selectedChannelIdString={prevSelectedChannelIdString ?? undefined}
                     selectedContents={prevSelectedContents ?? undefined}
                 />
             )}

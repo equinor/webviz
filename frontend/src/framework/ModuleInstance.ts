@@ -36,19 +36,23 @@ export class ModuleInstance<TStateType extends StateBaseType> {
     private _cachedStateStoreOptions?: StateOptions<TStateType>;
     private _initialSettings: InitialSettings | null;
     private _statusController: ModuleInstanceStatusControllerInternal;
-    private _publishSubscribeBroker: ModuleChannelManager;
+    private _channelManager: ModuleChannelManager;
 
-    constructor(options: {
+    constructor({
+        module,
+        instanceNumber,
+        channels,
+        receivers,
+    }: {
         module: Module<TStateType>;
         instanceNumber: number;
-
         channels: ModuleChannelDefinition[] | null;
-        subscribers: ModuleChannelReceiverDefinition[] | null;
+        receivers: ModuleChannelReceiverDefinition[] | null;
     }) {
-        this._id = `${options.module.getName()}-${options.instanceNumber}`;
-        this._title = options.module.getDefaultTitle();
+        this._id = `${module.getName()}-${instanceNumber}`;
+        this._title = module.getDefaultTitle();
         this._stateStore = null;
-        this._module = options.module;
+        this._module = module;
         this._importStateSubscribers = new Set();
         this._context = null;
         this._initialised = false;
@@ -62,22 +66,22 @@ export class ModuleInstance<TStateType extends StateBaseType> {
         this._initialSettings = null;
         this._statusController = new ModuleInstanceStatusControllerInternal();
 
-        this._publishSubscribeBroker = new ModuleChannelManager(this._id);
+        this._channelManager = new ModuleChannelManager(this._id);
 
-        if (options.subscribers) {
-            for (const subscriber of options.subscribers) {
-                this._publishSubscribeBroker.registerReceiver({
-                    idString: subscriber.idString,
-                    displayName: subscriber.displayName,
-                    supportedKindsOfKeys: subscriber.supportedKindsOfKeys,
-                    supportsMultiContents: subscriber.supportsMultiContents ?? false,
+        if (receivers) {
+            for (const receiver of receivers) {
+                this._channelManager.registerReceiver({
+                    idString: receiver.idString,
+                    displayName: receiver.displayName,
+                    supportedKindsOfKeys: receiver.supportedKindsOfKeys,
+                    supportsMultiContents: receiver.supportsMultiContents ?? false,
                 });
             }
         }
 
-        if (options.channels) {
-            for (const channel of options.channels) {
-                this._publishSubscribeBroker.registerChannel({
+        if (channels) {
+            for (const channel of channels) {
+                this._channelManager.registerChannel({
                     idString: channel.idString,
                     displayName: channel.displayName,
                     kindOfKey: channel.kindOfKey,
@@ -86,8 +90,8 @@ export class ModuleInstance<TStateType extends StateBaseType> {
         }
     }
 
-    getPublishSubscribeBroker(): ModuleChannelManager {
-        return this._publishSubscribeBroker;
+    getChannelManager(): ModuleChannelManager {
+        return this._channelManager;
     }
 
     setDefaultState(defaultState: TStateType, options?: StateOptions<TStateType>): void {

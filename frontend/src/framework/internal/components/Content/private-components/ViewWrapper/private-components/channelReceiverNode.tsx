@@ -10,9 +10,9 @@ import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { Edit, Remove } from "@mui/icons-material";
 
 export type ChannelReceiverNodeProps = {
-    ident: string;
-    name: string;
-    supportedKindsOfKey?: readonly KeyKind[];
+    idString: string;
+    displayName: string;
+    supportedKindsOfKeys?: readonly KeyKind[];
     moduleInstanceId: string;
     onChannelConnect: (inputName: string, moduleInstanceId: string, destinationPoint: Point) => void;
     onChannelConnectionDisconnect: (inputName: string) => void;
@@ -55,15 +55,15 @@ export const ChannelReceiverNode: React.FC<ChannelReceiverNodeProps> = (props) =
                 return;
             }
 
-            const channels = originModuleInstance.getPublishSubscribeBroker().getChannels();
+            const channels = originModuleInstance.getChannelManager().getChannels();
             const channelKeyKinds: KeyKind[] = [];
             for (const channelName in channels) {
                 channelKeyKinds.push(channels[channelName].getKindOfKey());
             }
 
             if (
-                props.supportedKindsOfKey &&
-                !props.supportedKindsOfKey.some((kind) => channelKeyKinds.includes(kind))
+                props.supportedKindsOfKeys &&
+                !props.supportedKindsOfKeys.some((kind) => channelKeyKinds.includes(kind))
             ) {
                 return;
             }
@@ -77,12 +77,12 @@ export const ChannelReceiverNode: React.FC<ChannelReceiverNodeProps> = (props) =
         function handlePointerUp(e: PointerEvent) {
             if (localHovered) {
                 if (removeButtonRef.current && removeButtonRef.current.contains(e.target as Node)) {
-                    props.onChannelConnectionDisconnect(props.ident);
+                    props.onChannelConnectionDisconnect(props.idString);
                     setHovered(false);
                     setHasConnection(false);
                     localHovered = false;
                 } else if (localConnectable) {
-                    props.onChannelConnect(props.ident, localModuleInstanceId, pointerEventToPoint(e));
+                    props.onChannelConnect(props.idString, localModuleInstanceId, pointerEventToPoint(e));
                     setHovered(false);
                     localHovered = false;
                 } else if (!localConnectable && !editDataChannelConnections) {
@@ -126,8 +126,8 @@ export const ChannelReceiverNode: React.FC<ChannelReceiverNodeProps> = (props) =
                 return;
             }
 
-            const listener = moduleInstance.getPublishSubscribeBroker().getReceiver(props.ident);
-            const hasConnection = listener?.hasActiveSubscription() ?? false;
+            const receiver = moduleInstance.getChannelManager().getReceiver(props.idString);
+            const hasConnection = receiver?.hasActiveSubscription() ?? false;
             setHasConnection(hasConnection);
         }
 
@@ -152,8 +152,8 @@ export const ChannelReceiverNode: React.FC<ChannelReceiverNodeProps> = (props) =
         }
 
         const unsubscribeFunc = moduleInstance
-            ?.getPublishSubscribeBroker()
-            .getReceiver(props.ident)
+            ?.getChannelManager()
+            .getReceiver(props.idString)
             ?.subscribe(ModuleChannelReceiverNotificationTopic.ChannelChange, checkIfConnection);
 
         return () => {
@@ -175,15 +175,15 @@ export const ChannelReceiverNode: React.FC<ChannelReceiverNodeProps> = (props) =
         props.onChannelConnectionDisconnect,
         props.workbench,
         props.moduleInstanceId,
-        props.ident,
-        props.supportedKindsOfKey,
+        props.idString,
+        props.supportedKindsOfKeys,
         editDataChannelConnections,
     ]);
 
     function handlePointerEnter() {
         guiMessageBroker.publishEvent(GuiEvent.HighlightDataChannelConnectionRequest, {
             moduleInstanceId: props.moduleInstanceId,
-            listenerIdent: props.ident,
+            receiverIdString: props.idString,
         });
 
         guiMessageBroker.publishEvent(GuiEvent.DataChannelNodeHover, {
@@ -197,15 +197,15 @@ export const ChannelReceiverNode: React.FC<ChannelReceiverNodeProps> = (props) =
     }
 
     const moduleInstance = props.workbench.getModuleInstance(props.moduleInstanceId);
-    const listener = moduleInstance?.getPublishSubscribeBroker().getReceiver(props.ident);
-    const channel = listener?.getChannel();
+    const receiver = moduleInstance?.getChannelManager().getReceiver(props.idString);
+    const channel = receiver?.getChannel();
 
     function handleEditChannelClick(e: React.PointerEvent<HTMLButtonElement>) {
         if (!channel) {
             return;
         }
         props.onChannelConnect(
-            props.ident,
+            props.idString,
             channel.getManager().getModuleInstanceId(),
             pointerEventToPoint(e.nativeEvent)
         );
@@ -217,7 +217,7 @@ export const ChannelReceiverNode: React.FC<ChannelReceiverNodeProps> = (props) =
             channel
                 .getManager()
                 .getChannels()
-                .filter((el) => props.supportedKindsOfKey?.includes(el.getKindOfKey())).length > 1;
+                .filter((el) => props.supportedKindsOfKeys?.includes(el.getKindOfKey())).length > 1;
         if (!hasMultiplePossibleConnections) {
             hasMultiplePossibleConnections = channel.getContents().length > 1;
         }
@@ -225,7 +225,7 @@ export const ChannelReceiverNode: React.FC<ChannelReceiverNodeProps> = (props) =
 
     return (
         <div
-            id={`channel-connector-${props.moduleInstanceId}-${props.ident}`}
+            id={`channel-connector-${props.moduleInstanceId}-${props.idString}`}
             ref={ref}
             data-channelconnector
             className={resolveClassNames(
@@ -243,7 +243,7 @@ export const ChannelReceiverNode: React.FC<ChannelReceiverNodeProps> = (props) =
             onPointerEnter={handlePointerEnter}
             onPointerLeave={handlePointerLeave}
         >
-            <div className="h-16 flex items-center">{props.name}</div>
+            <div className="h-16 flex items-center">{props.displayName}</div>
             <div
                 className={resolveClassNames(
                     "flex gap-2 bg-slate-200 w-full rounded-b items-center justify-center p-1",

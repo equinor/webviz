@@ -35,7 +35,7 @@ export const DataChannelVisualizationLayer: React.FC<DataChannelVisualizationPro
     );
     const [highlightedDataChannelConnection, setHighlightedDataChannelConnection] = React.useState<{
         moduleInstanceId: string;
-        listenerIdent: string;
+        receiverIdString: string;
     } | null>(null);
     const [editDataChannelConnectionsForModuleInstanceId, setEditDataChannelConnectionsForModuleInstanceId] =
         React.useState<string | null>(null);
@@ -73,7 +73,7 @@ export const DataChannelVisualizationLayer: React.FC<DataChannelVisualizationPro
                 return;
             }
 
-            const availableChannels = moduleInstance.getPublishSubscribeBroker().getChannels();
+            const availableChannels = moduleInstance.getChannelManager().getChannels();
             if (Object.keys(availableChannels).length === 1) {
                 setCurrentChannelName(Object.values(availableChannels)[0].getDisplayName());
                 return;
@@ -104,13 +104,13 @@ export const DataChannelVisualizationLayer: React.FC<DataChannelVisualizationPro
                 return;
             }
             const hoveredElement = document.elementFromPoint(e.clientX, e.clientY);
-            const subscriberNode = hoveredElement?.closest("[data-channelconnector]");
+            const receiverNode = hoveredElement?.closest("[data-channelconnector]");
             if (
-                subscriberNode &&
-                subscriberNode instanceof HTMLElement &&
-                subscriberNode.hasAttribute("data-channelconnector")
+                receiverNode &&
+                receiverNode instanceof HTMLElement &&
+                receiverNode.hasAttribute("data-channelconnector")
             ) {
-                const boundingRect = subscriberNode.getBoundingClientRect();
+                const boundingRect = receiverNode.getBoundingClientRect();
                 setCurrentPointerPosition({
                     x: boundingRect.left + boundingRect.width / 2,
                     y: boundingRect.top, //localCurrentOriginPoint.y > boundingRect.top ? boundingRect.bottom : boundingRect.top,
@@ -156,7 +156,7 @@ export const DataChannelVisualizationLayer: React.FC<DataChannelVisualizationPro
         ) {
             setHighlightedDataChannelConnection({
                 moduleInstanceId: payload.moduleInstanceId,
-                listenerIdent: payload.listenerIdent,
+                receiverIdString: payload.receiverIdString,
             });
         }
 
@@ -257,13 +257,13 @@ export const DataChannelVisualizationLayer: React.FC<DataChannelVisualizationPro
             ) {
                 continue;
             }
-            const subscribers = moduleInstance.getPublishSubscribeBroker().getReceivers();
-            if (!subscribers) {
+            const receivers = moduleInstance.getChannelManager().getReceivers();
+            if (!receivers) {
                 continue;
             }
 
-            for (const subscriber of subscribers) {
-                const channel = subscriber.getChannel();
+            for (const receiver of receivers) {
+                const channel = receiver.getChannel();
                 if (!channel) {
                     continue;
                 }
@@ -278,7 +278,7 @@ export const DataChannelVisualizationLayer: React.FC<DataChannelVisualizationPro
                     `moduleinstance-${originModuleInstanceId}-data-channel-origin`
                 );
                 const destinationElement = document.getElementById(
-                    `channel-connector-${moduleInstance.getId()}-${subscriber.getIdString()}`
+                    `channel-connector-${moduleInstance.getId()}-${receiver.getIdString()}`
                 );
                 if (!originElement || !destinationElement) {
                     continue;
@@ -327,33 +327,33 @@ export const DataChannelVisualizationLayer: React.FC<DataChannelVisualizationPro
                 };
 
                 const highlighted =
-                    highlightedDataChannelConnection?.listenerIdent === subscriber.getIdString() &&
+                    highlightedDataChannelConnection?.receiverIdString === receiver.getIdString() &&
                     highlightedDataChannelConnection?.moduleInstanceId === moduleInstance.getId();
 
-                const programs = channel
+                const contents = channel
                     .getContents()
-                    .filter((el) => subscriber.getContentIdStrings().includes(el.getIdString()))
+                    .filter((el) => receiver.getContentIdStrings().includes(el.getIdString()))
                     .map((el) => el.getDisplayName());
 
-                let programsDescription = "";
+                let contentsDescription = "";
 
-                if (programs.length === 1) {
-                    programsDescription = programs[0];
+                if (contents.length === 1) {
+                    contentsDescription = contents[0];
                 }
 
-                if (programs.length > 1) {
-                    programsDescription = `(${programs[0]} + ${programs.length - 1} more)`;
+                if (contents.length > 1) {
+                    contentsDescription = `(${contents[0]} + ${contents.length - 1} more)`;
                 }
 
                 dataChannelPaths.push({
-                    key: `${originModuleInstanceId}-${moduleInstance.getId()}-${subscriber.getIdString()}-${JSON.stringify(
+                    key: `${originModuleInstanceId}-${moduleInstance.getId()}-${receiver.getIdString()}-${JSON.stringify(
                         boundingRect
                     )}`,
                     origin: originPoint,
                     midPoint1: midPoint1,
                     midPoint2: midPoint2,
                     destination: destinationPoint,
-                    description: `${channel.getDisplayName()} ${programsDescription}`,
+                    description: `${channel.getDisplayName()} ${contentsDescription}`,
                     descriptionCenterPoint: descriptionCenterPoint,
                     highlighted: highlighted,
                 });

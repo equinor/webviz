@@ -135,9 +135,9 @@ export class Workbench {
 
     clearLayout(): void {
         for (const moduleInstance of this._moduleInstances) {
-            const broker = moduleInstance.getPublishSubscribeBroker();
+            const broker = moduleInstance.getChannelManager();
             broker.unregisterAllChannels();
-            broker.unregisterAllSubscribers();
+            broker.unregisterAllReceivers();
         }
         this._moduleInstances = [];
         this._layout = [];
@@ -162,10 +162,10 @@ export class Workbench {
     }
 
     removeModuleInstance(moduleInstanceId: string): void {
-        const broker = this.getModuleInstance(moduleInstanceId)?.getPublishSubscribeBroker();
+        const broker = this.getModuleInstance(moduleInstanceId)?.getChannelManager();
         if (broker) {
             broker.unregisterAllChannels();
-            broker.unregisterAllSubscribers();
+            broker.unregisterAllReceivers();
         }
 
         this._moduleInstances = this._moduleInstances.filter((el) => el.getId() !== moduleInstanceId);
@@ -267,9 +267,7 @@ export class Workbench {
                     }
 
                     const listensToModuleInstance = this._moduleInstances[moduleInstanceIndex];
-                    const channel = listensToModuleInstance
-                        .getPublishSubscribeBroker()
-                        .getChannel(dataChannel.channelName);
+                    const channel = listensToModuleInstance.getChannelManager().getChannel(dataChannel.channelName);
                     if (!channel) {
                         throw new Error("Could not find channel");
                     }

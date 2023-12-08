@@ -64,9 +64,9 @@ export class ModuleChannelReceiver {
             if (this._supportsMultiContents) {
                 this._contentIdStrings = channel.getContents().map((p) => p.getIdString());
             } else {
-                const firstProgram = channel.getContents().at(0);
-                if (firstProgram) {
-                    this._contentIdStrings = [firstProgram.getIdString()];
+                const firstContent = channel.getContents().at(0);
+                if (firstContent) {
+                    this._contentIdStrings = [firstContent.getIdString()];
                 } else {
                     this._contentIdStrings = [];
                 }

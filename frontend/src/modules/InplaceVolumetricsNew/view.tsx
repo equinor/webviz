@@ -33,8 +33,8 @@ export const view = (props: ModuleFCProps<State>) => {
         dependencies: [tableData.data, tableData.isFetching],
         channelIdString: Channels.ResponseValuePerRealization,
         contents: responseNames.map((el) => ({ idString: el, displayName: el })),
-        dataGenerator: (contentIdent: string) => {
-            const data = tableData.data?.find((el) => el.responseName === contentIdent);
+        dataGenerator: (contentIdString: string) => {
+            const data = tableData.data?.find((el) => el.responseName === contentIdString);
             const dataArray: DataElement<KeyType.Number>[] = [];
             if (data && data.responses) {
                 dataArray.push(

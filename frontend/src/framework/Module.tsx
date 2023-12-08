@@ -1,5 +1,7 @@
 import React from "react";
 
+import { isDevMode } from "@lib/utils/devMode";
+
 import { cloneDeep } from "lodash";
 
 import { ModuleChannelDefinition, ModuleChannelReceiverDefinition } from "./DataChannelTypes";
@@ -130,7 +132,7 @@ export class Module<StateType extends StateBaseType> {
             module: this,
             instanceNumber,
             channels: this._channels,
-            subscribers: this._receivers,
+            receivers: this._receivers,
         });
         this._moduleInstances.push(instance);
         this.maybeImportSelf();
@@ -159,8 +161,6 @@ export class Module<StateType extends StateBaseType> {
             }
             return;
         }
-
-        this.setImportState(ImportState.Importing);
 
         import(`@modules/${this._name}/loadModule.tsx`)
             .then(() => {

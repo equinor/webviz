@@ -32,24 +32,24 @@ export type ChannelReceiverReturnData<TKeyKinds extends KeyKind[]> =
       };
 
 export function useChannelReceiver<TGenres extends KeyKind[]>({
-    subscriber,
-    expectedKeyKinds,
+    receiver,
+    expectedKindsOfKeys,
 }: {
-    subscriber: ModuleChannelReceiver | null;
-    expectedKeyKinds: TGenres;
-}): ChannelReceiverReturnData<typeof expectedKeyKinds> {
-    const [contents, setContents] = React.useState<ChannelReceiverChannelContent<typeof expectedKeyKinds>[]>([]);
+    receiver: ModuleChannelReceiver | null;
+    expectedKindsOfKeys: TGenres;
+}): ChannelReceiverReturnData<typeof expectedKindsOfKeys> {
+    const [contents, setContents] = React.useState<ChannelReceiverChannelContent<typeof expectedKindsOfKeys>[]>([]);
 
     React.useEffect(() => {
         function handleContentsDataArrayChange(): void {
-            const channel = subscriber?.getChannel();
+            const channel = receiver?.getChannel();
             if (!channel) {
                 return;
             }
 
-            if (!expectedKeyKinds.includes(channel.getKindOfKey())) {
+            if (!expectedKindsOfKeys.includes(channel.getKindOfKey())) {
                 throw new Error(
-                    `Kind of key '${channel.getKindOfKey()}' is not one of the expected genres '${expectedKeyKinds.join(
+                    `Kind of key '${channel.getKindOfKey()}' is not one of the expected genres '${expectedKindsOfKeys.join(
                         ", "
                     )}'`
                 );
@@ -58,7 +58,7 @@ export function useChannelReceiver<TGenres extends KeyKind[]>({
             const contents = channel
                 .getContents()
                 .filter((content) => {
-                    if (subscriber?.getContentIdStrings().includes(content.getIdString())) {
+                    if (receiver?.getContentIdStrings().includes(content.getIdString())) {
                         return true;
                     }
                     return false;
@@ -75,7 +75,7 @@ export function useChannelReceiver<TGenres extends KeyKind[]>({
             setContents(contents ?? []);
         }
 
-        const unsubscribeFunc = subscriber?.subscribe(
+        const unsubscribeFunc = receiver?.subscribe(
             ModuleChannelReceiverNotificationTopic.ContentsDataArrayChange,
             handleContentsDataArrayChange
         );
@@ -87,9 +87,9 @@ export function useChannelReceiver<TGenres extends KeyKind[]>({
                 unsubscribeFunc();
             }
         };
-    }, [subscriber]);
+    }, [receiver]);
 
-    if (!subscriber) {
+    if (!receiver) {
         return {
             idString: "",
             displayName: "",
@@ -98,18 +98,18 @@ export function useChannelReceiver<TGenres extends KeyKind[]>({
         };
     }
 
-    const channel = subscriber?.getChannel();
+    const channel = receiver?.getChannel();
 
-    if (!subscriber.hasActiveSubscription() || !channel) {
+    if (!receiver.hasActiveSubscription() || !channel) {
         return {
-            idString: subscriber.getIdString(),
-            displayName: subscriber.getDisplayName(),
+            idString: receiver.getIdString(),
+            displayName: receiver.getDisplayName(),
             channel: undefined,
             hasActiveSubscription: false,
         };
     }
 
-    let channelObject: ChannelReceiverReturnData<typeof expectedKeyKinds>["channel"] | undefined = undefined;
+    let channelObject: ChannelReceiverReturnData<typeof expectedKindsOfKeys>["channel"] | undefined = undefined;
 
     if (channel) {
         channelObject = {
@@ -122,8 +122,8 @@ export function useChannelReceiver<TGenres extends KeyKind[]>({
     }
 
     return {
-        idString: subscriber?.getIdString() ?? "",
-        displayName: subscriber?.getDisplayName() ?? "",
+        idString: receiver?.getIdString() ?? "",
+        displayName: receiver?.getDisplayName() ?? "",
         channel: {
             idString: channel.getIdString() ?? "",
             displayName: channel.getDisplayName() ?? "",

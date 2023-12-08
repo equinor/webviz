@@ -69,14 +69,14 @@ export class ModuleChannelManager {
         supportedKindsOfKeys: readonly KeyKind[];
         supportsMultiContents: boolean;
     }): void {
-        const newListener = new ModuleChannelReceiver({
+        const receiver = new ModuleChannelReceiver({
             manager: this,
             idString: idString,
             displayName: displayName,
             supportedKindsOfKeys: supportedKindsOfKeys,
             supportsMultiContents: supportsMultiContents,
         });
-        this._receivers.push(newListener);
+        this._receivers.push(receiver);
 
         this.notifySubscribers(ModuleChannelManagerNotificationTopic.ReceiversChange);
     }
@@ -90,9 +90,9 @@ export class ModuleChannelManager {
         this.notifySubscribers(ModuleChannelManagerNotificationTopic.ChannelsChange);
     }
 
-    unregisterAllSubscribers(): void {
-        for (const listener of this._receivers) {
-            listener.unsubscribeFromCurrentChannel();
+    unregisterAllReceivers(): void {
+        for (const receiver of this._receivers) {
+            receiver.unsubscribeFromCurrentChannel();
         }
         this._receivers = [];
 

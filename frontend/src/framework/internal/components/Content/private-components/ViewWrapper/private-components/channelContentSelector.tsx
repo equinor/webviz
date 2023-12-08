@@ -20,9 +20,9 @@ type ChannelContentSelectorProps = {
     multiSelect: boolean;
     channel: SelectableChannel;
     selected: boolean;
-    selectedContentIdents: string[];
-    onSelectChannel: (channelIdent: string, checked: boolean) => void;
-    onSelectContent: (channelIdent: string, contentIdent: string, checked: boolean) => void;
+    selectedContentIdStrings: string[];
+    onSelectChannel: (channelIdString: string, checked: boolean) => void;
+    onSelectContent: (channelIdString: string, contentIdString: string, checked: boolean) => void;
 };
 
 const ChannelContentSelector: React.FC<ChannelContentSelectorProps> = (props) => {
@@ -30,8 +30,8 @@ const ChannelContentSelector: React.FC<ChannelContentSelectorProps> = (props) =>
         props.onSelectChannel(props.channel.idString, e.currentTarget.checked);
     }
 
-    function handleContentToggle(contentIdent: string, e: React.ChangeEvent<HTMLInputElement>) {
-        props.onSelectContent(props.channel.idString, contentIdent, e.currentTarget.checked);
+    function handleContentToggle(contentIdString: string, e: React.ChangeEvent<HTMLInputElement>) {
+        props.onSelectContent(props.channel.idString, contentIdString, e.currentTarget.checked);
     }
 
     return (
@@ -58,7 +58,7 @@ const ChannelContentSelector: React.FC<ChannelContentSelectorProps> = (props) =>
                             label={content.displayName}
                             checked={
                                 (props.selected && (props.multiSelect || index === 0)) ||
-                                props.selectedContentIdents.includes(content.idString)
+                                props.selectedContentIdStrings.includes(content.idString)
                             }
                         />
                     </div>
@@ -71,23 +71,23 @@ const ChannelContentSelector: React.FC<ChannelContentSelectorProps> = (props) =>
 ChannelContentSelector.displayName = "ChannelSelectionItem";
 
 export type SelectedContents = {
-    channelIdent: string;
-    contentIdents: string[];
+    channelIdString: string;
+    contentIdStrings: string[];
 };
 
 export type ChannelSelectorProps = {
-    subscriber: ModuleChannelReceiver;
+    receiver: ModuleChannelReceiver;
     selectableChannels: SelectableChannel[];
-    selectedChannelIdent?: string;
+    selectedChannelIdString?: string;
     selectedContents?: SelectedContents;
     position: Point;
-    onSelect: (channelIdent: string, contentIdents: string[]) => void;
+    onSelect: (channelIdString: string, contentIdStrings: string[]) => void;
     onCancel: () => void;
 };
 
 export const ChannelSelector: React.FC<ChannelSelectorProps> = (props) => {
-    const [selectedChannelIdent, setSelectedChannelIdent] = React.useState<string | null>(
-        props.selectedChannelIdent ?? null
+    const [selectedChannelIdString, setSelectedChannelIdString] = React.useState<string | null>(
+        props.selectedChannelIdString ?? null
     );
     const [selectedContents, setSelectedContents] = React.useState<SelectedContents | null>(
         props.selectedContents ?? null
@@ -123,63 +123,67 @@ export const ChannelSelector: React.FC<ChannelSelectorProps> = (props) => {
 
     function handleSelectionDone(e: React.PointerEvent<HTMLButtonElement>) {
         e.stopPropagation();
-        if (selectedContents === null && selectedChannelIdent === null) {
+        if (selectedContents === null && selectedChannelIdString === null) {
             return;
         }
-        if (selectedChannelIdent !== null) {
-            props.onSelect(selectedChannelIdent, []);
+        if (selectedChannelIdString !== null) {
+            props.onSelect(selectedChannelIdString, []);
             return;
         }
         if (selectedContents === null) {
             return;
         }
-        props.onSelect(selectedContents.channelIdent, selectedContents.contentIdents);
+        props.onSelect(selectedContents.channelIdString, selectedContents.contentIdStrings);
     }
 
-    function handleChannelToggle(channelIdent: string, checked: boolean) {
-        const channel = props.selectableChannels.find((el) => el.idString === channelIdent);
+    function handleChannelToggle(channelIdString: string, checked: boolean) {
+        const channel = props.selectableChannels.find((el) => el.idString === channelIdString);
         if (!channel) {
             return;
         }
 
         if (checked) {
-            setSelectedChannelIdent(channelIdent);
+            setSelectedChannelIdString(channelIdString);
         } else {
-            setSelectedChannelIdent(null);
+            setSelectedChannelIdString(null);
         }
     }
 
-    function handleContentToggle(channelIdent: string, contentIdent: string, checked: boolean) {
+    function handleContentToggle(channelIdString: string, contentIdString: string, checked: boolean) {
         if (checked) {
             if (
                 selectedContents === null ||
-                selectedContents.channelIdent !== channelIdent ||
-                !props.subscriber.getHasMultiContentSupport()
+                selectedContents.channelIdString !== channelIdString ||
+                !props.receiver.getHasMultiContentSupport()
             ) {
-                setSelectedContents({ channelIdent, contentIdents: [contentIdent] });
+                setSelectedContents({ channelIdString: channelIdString, contentIdStrings: [contentIdString] });
                 return;
             }
             setSelectedContents({
-                channelIdent,
-                contentIdents: [...(selectedContents.contentIdents ?? []), contentIdent],
+                channelIdString: channelIdString,
+                contentIdStrings: [...(selectedContents.contentIdStrings ?? []), contentIdString],
             });
         } else {
-            if (selectedContents === null || selectedContents.channelIdent !== channelIdent) {
+            if (selectedContents === null || selectedContents.channelIdString !== channelIdString) {
                 return;
             }
 
             setSelectedContents({
-                channelIdent,
-                contentIdents: selectedContents.contentIdents?.filter((el) => el !== contentIdent) ?? [],
+                channelIdString: channelIdString,
+                contentIdStrings: selectedContents.contentIdStrings?.filter((el) => el !== contentIdString) ?? [],
             });
         }
     }
 
     function checkIfSelectionIsMade() {
-        if (selectedContents === null && selectedChannelIdent === null) {
+        if (selectedContents === null && selectedChannelIdString === null) {
             return false;
         }
-        if (selectedChannelIdent === null && selectedContents !== null && selectedContents.contentIdents.length === 0) {
+        if (
+            selectedChannelIdString === null &&
+            selectedContents !== null &&
+            selectedContents.contentIdStrings.length === 0
+        ) {
             return false;
         }
         return true;
@@ -217,7 +221,7 @@ export const ChannelSelector: React.FC<ChannelSelectorProps> = (props) => {
                     className="px-2 bg-slate-200 font-bold flex items-center text-sm h-12"
                 >
                     <div className="flex-grow">
-                        Make <i className="font-bold text-green-700">{props.subscriber.getDisplayName()}</i> subscribe
+                        Make <i className="font-bold text-green-700">{props.receiver.getDisplayName()}</i> subscribe
                         to...
                     </div>
                     <div className="hover:text-slate-500 cursor-pointer" onClick={props.onCancel}>
@@ -227,13 +231,13 @@ export const ChannelSelector: React.FC<ChannelSelectorProps> = (props) => {
                 <div className="flex-grow overflow-auto">
                     {props.selectableChannels.map((channel) => (
                         <ChannelContentSelector
-                            multiSelect={props.subscriber.getHasMultiContentSupport()}
+                            multiSelect={props.receiver.getHasMultiContentSupport()}
                             key={channel.idString}
                             channel={channel}
-                            selected={selectedChannelIdent === channel.idString}
-                            selectedContentIdents={
-                                selectedContents?.channelIdent === channel.idString
-                                    ? selectedContents.contentIdents
+                            selected={selectedChannelIdString === channel.idString}
+                            selectedContentIdStrings={
+                                selectedContents?.channelIdString === channel.idString
+                                    ? selectedContents.contentIdStrings
                                     : []
                             }
                             onSelectChannel={handleChannelToggle}
