@@ -10,6 +10,7 @@ from fmu.sumo.explorer.objects import Case, TableCollection
 
 from src.services.utils.arrow_helpers import sort_table_on_real_then_date
 from src.services.utils.perf_timer import PerfTimer
+from src.services.service_exceptions import Service, NoDataError, InvalidDataError, MultipleDataMatchesError
 
 from ._field_metadata import create_vector_metadata_from_field_meta
 from ._helpers import SumoEnsemble
@@ -63,7 +64,7 @@ class SummaryAccess(SumoEnsemble):
 
         table = await _load_arrow_table_for_from_sumo(self._case, self._iteration_name, vector_name)
         if table is None:
-            raise ValueError(f"No table found for vector {vector_name=}")
+            raise NoDataError(f"No table found for vector {vector_name=}", Service.SUMO)
         et_loading_ms = timer.lap_ms()
 
         if realizations is not None:
@@ -80,7 +81,7 @@ class SummaryAccess(SumoEnsemble):
         # For now, fail hard if metadata is not present. This test could be refined, but should suffice now.
         vector_metadata = create_vector_metadata_from_field_meta(table.schema.field(vector_name))
         if not vector_metadata:
-            raise ValueError(f"Did not find valid metadata for vector {vector_name}")
+            raise InvalidDataError(f"Did not find valid metadata for vector {vector_name}", Service.SUMO)
 
         # Do the actual resampling
         timer.lap_ms()
@@ -160,7 +161,7 @@ class SummaryAccess(SumoEnsemble):
         # Need metadata both for resampling and return value
         vector_metadata = create_vector_metadata_from_field_meta(table.schema.field(hist_vec_name))
         if not vector_metadata:
-            raise ValueError(f"Did not find valid metadata for vector {hist_vec_name}")
+            raise InvalidDataError(f"Did not find valid metadata for vector {hist_vec_name}", Service.SUMO)
 
         # Do the actual resampling
         if resampling_frequency is not None:
@@ -226,7 +227,7 @@ async def _load_arrow_table_for_from_sumo(case: Case, iteration_name: str, vecto
     if await smry_table_collection.length_async() == 0:
         return None
     if await smry_table_collection.length_async() > 1:
-        raise ValueError(f"Multiple tables found for vector {vector_name=}")
+        raise MultipleDataMatchesError(f"Multiple tables found for vector {vector_name=}", Service.SUMO)
 
     sumo_table = await smry_table_collection.getitem_async(0)
     # print(f"{sumo_table.format=}")
@@ -243,26 +244,28 @@ async def _load_arrow_table_for_from_sumo(case: Case, iteration_name: str, vecto
 
     # Verify that we got the expected columns
     if not "DATE" in table.column_names:
-        raise ValueError("Table does not contain a DATE column")
+        raise InvalidDataError("Table does not contain a DATE column", Service.SUMO)
     if not "REAL" in table.column_names:
-        raise ValueError("Table does not contain a REAL column")
+        raise InvalidDataError("Table does not contain a REAL column", Service.SUMO)
     if not vector_name in table.column_names:
-        raise ValueError(f"Table does not contain a {vector_name} column")
+        raise InvalidDataError(f"Table does not contain a {vector_name} column", Service.SUMO)
     if table.num_columns != 3:
-        raise ValueError("Table should contain exactly 3 columns")
+        raise InvalidDataError("Table should contain exactly 3 columns", Service.SUMO)
 
     # Verify that we got the expected columns
     if sorted(table.column_names) != sorted(["DATE", "REAL", vector_name]):
-        raise ValueError(f"Unexpected columns in table {table.column_names=}")
+        raise InvalidDataError(f"Unexpected columns in table {table.column_names=}", Service.SUMO)
 
     # Verify that the column datatypes are as we expect
     schema = table.schema
     if schema.field("DATE").type != pa.timestamp("ms"):
-        raise ValueError(f"Unexpected type for DATE column {schema.field('DATE').type=}")
+        raise InvalidDataError(f"Unexpected type for DATE column {schema.field('DATE').type=}", Service.SUMO)
     if schema.field("REAL").type != pa.int16():
-        raise ValueError(f"Unexpected type for REAL column {schema.field('REAL').type=}")
+        raise InvalidDataError(f"Unexpected type for REAL column {schema.field('REAL').type=}", Service.SUMO)
     if schema.field(vector_name).type != pa.float32():
-        raise ValueError(f"Unexpected type for {vector_name} column {schema.field(vector_name).type=}")
+        raise InvalidDataError(
+            f"Unexpected type for {vector_name} column {schema.field(vector_name).type=}", Service.SUMO
+        )
 
     LOGGER.debug(
         f"Loaded arrow table from Sumo in: {timer.elapsed_ms()}ms ("
@@ -304,8 +307,10 @@ async def get_smry_table_collection(
     )
     table_names = await all_smry_table_collections.names_async
     if len(table_names) == 0:
-        raise ValueError("No summary table collections found")
+        raise NoDataError("No summary table collections found", Service.SUMO)
     if len(table_names) == 1:
         return all_smry_table_collections
 
-    raise ValueError(f"Multiple summary table collections found: {table_names}. Expected only one.")
+    raise MultipleDataMatchesError(
+        f"Multiple summary table collections found: {table_names}. Expected only one.", Service.SUMO
+    )
