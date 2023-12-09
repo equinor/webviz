@@ -5,6 +5,7 @@ import { DrawerContent, GuiState } from "@framework/GuiMessageBroker";
 import { LayoutElement, Workbench } from "@framework/Workbench";
 import { NavBar } from "@framework/internal/components/NavBar";
 import { SettingsContentPanels } from "@framework/internal/components/SettingsContentPanels";
+import { ToggleDevToolsButton } from "@framework/internal/components/ToggleDevToolsButton";
 import { AuthState, useAuthProvider } from "@framework/internal/providers/AuthProvider";
 import { Button } from "@lib/components/Button";
 import { WebvizSpinner } from "@lib/components/WebvizSpinner";
@@ -136,6 +137,7 @@ function App() {
                 <NavBar workbench={workbench.current} />
                 <SettingsContentPanels workbench={workbench.current} />
             </div>
+            <ToggleDevToolsButton guiMessageBroker={workbench.current.getGuiMessageBroker()} />
         </>
     );
 }

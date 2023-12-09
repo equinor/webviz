@@ -1,4 +1,3 @@
-import { WellBoreHeader_api, WellBoreTrajectory_api } from "@api";
 import { apiService } from "@framework/ApiService";
 import { UseQueryResult, useQuery } from "@tanstack/react-query";
 
@@ -93,25 +92,5 @@ export function useGridParameterNames(
         staleTime: STALE_TIME,
         gcTime: CACHE_TIME,
         enabled: caseUuid && ensembleName && gridName ? true : false,
-    });
-}
-
-export function useGetWellHeaders(caseUuid: string | undefined): UseQueryResult<WellBoreHeader_api[]> {
-    return useQuery({
-        queryKey: ["getWellHeaders", caseUuid],
-        queryFn: () => apiService.well.getWellHeaders(caseUuid ?? ""),
-        staleTime: STALE_TIME,
-        gcTime: STALE_TIME,
-        enabled: caseUuid ? true : false,
-    });
-}
-
-export function useGetFieldWellsTrajectories(caseUuid: string | undefined): UseQueryResult<WellBoreTrajectory_api[]> {
-    return useQuery({
-        queryKey: ["getFieldWellsTrajectories", caseUuid],
-        queryFn: () => apiService.well.getFieldWellTrajectories(caseUuid ?? ""),
-        staleTime: STALE_TIME,
-        gcTime: CACHE_TIME,
-        enabled: caseUuid ? true : false,
     });
 }

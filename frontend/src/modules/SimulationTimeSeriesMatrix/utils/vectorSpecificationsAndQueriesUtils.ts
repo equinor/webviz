@@ -11,7 +11,7 @@ import { FanchartStatisticOption, VectorSpec } from "../state";
  */
 export function createLoadedVectorSpecificationAndDataArray<T>(
     vectorSpecifications: VectorSpec[],
-    queryResults: UseQueryResult<T>[]
+    queryResults: UseQueryResult<T | null>[]
 ): { vectorSpecification: VectorSpec; data: T }[] {
     if (vectorSpecifications.length !== queryResults.length) {
         throw new Error(

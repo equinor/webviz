@@ -7,7 +7,7 @@ from pydantic import BaseModel
 class ObservationType(str, Enum):
     """The observation file in Sumo is a dictionary with these datatypes as keys."""
 
-    SUMMARY = "smry"
+    SUMMARY = "summary"
     RFT = "rft"
 
 

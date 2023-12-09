@@ -34,6 +34,8 @@ spec:
                 envVar: WEBVIZ_SMDA_RESOURCE_SCOPE
               - name: WEBVIZ-SMDA-SUBSCRIPTION-KEY
                 envVar: WEBVIZ_SMDA_SUBSCRIPTION_KEY
+              - name: WEBVIZ-VDS-HOST-ADDRESS
+                envVar: WEBVIZ_VDS_HOST_ADDRESS
       variables:
         UVICORN_PORT: 5000
         UVICORN_ENTRYPOINT: src.backend.primary.main:app

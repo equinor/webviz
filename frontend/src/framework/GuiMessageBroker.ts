@@ -1,5 +1,6 @@
 import React from "react";
 
+import { isDevMode } from "@lib/utils/devMode";
 import { Point } from "@lib/utils/geometry";
 
 import { GlobalCursor } from "./internal/GlobalCursor";
@@ -17,6 +18,7 @@ export enum GuiState {
     SettingsPanelWidthInPercent = "settingsPanelWidthInPercent",
     ActiveModuleInstanceId = "activeModuleInstanceId",
     DataChannelConnectionLayerVisible = "dataChannelConnectionLayerVisible",
+    DevToolsVisible = "devToolsVisible",
 }
 
 export enum GuiEvent {
@@ -70,14 +72,17 @@ type GuiStateValueTypes = {
     [GuiState.SettingsPanelWidthInPercent]: number;
     [GuiState.ActiveModuleInstanceId]: string;
     [GuiState.DataChannelConnectionLayerVisible]: boolean;
+    [GuiState.DevToolsVisible]: boolean;
 };
 
 const defaultStates: Map<GuiState, any> = new Map();
 defaultStates.set(GuiState.DrawerContent, DrawerContent.ModuleSettings);
 defaultStates.set(GuiState.SettingsPanelWidthInPercent, 30);
 defaultStates.set(GuiState.ActiveModuleInstanceId, "");
+defaultStates.set(GuiState.DataChannelConnectionLayerVisible, false);
+defaultStates.set(GuiState.DevToolsVisible, isDevMode());
 
-const persistentStates: GuiState[] = [GuiState.SettingsPanelWidthInPercent];
+const persistentStates: GuiState[] = [GuiState.SettingsPanelWidthInPercent, GuiState.DevToolsVisible];
 
 export class GuiMessageBroker {
     private _eventListeners: Map<GuiEvent, Set<(event: any) => void>>;
