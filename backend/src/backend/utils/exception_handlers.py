@@ -1,16 +1,14 @@
-import logging
 import json
-from fastapi.encoders import jsonable_encoder
-from fastapi import FastAPI, HTTPException
-from fastapi.exceptions import RequestValidationError, HTTPException
-from fastapi.responses import PlainTextResponse, JSONResponse, Response
-from starlette.exceptions import HTTPException as StarletteHTTPException
+import logging
+
+from fastapi import FastAPI
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse, Response
 from fastapi.utils import is_body_allowed_for_status_code
-
-from starlette.status import HTTP_500_INTERNAL_SERVER_ERROR, HTTP_422_UNPROCESSABLE_ENTITY
-
+from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.requests import Request
 from starlette.responses import JSONResponse, Response
+from starlette.status import HTTP_422_UNPROCESSABLE_ENTITY, HTTP_500_INTERNAL_SERVER_ERROR
 
 from src.services.service_exceptions import ServiceLayerException
 
