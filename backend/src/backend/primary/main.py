@@ -9,6 +9,8 @@ from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
 
 from src.backend.utils.add_process_time_to_server_timing_middleware import AddProcessTimeToServerTimingMiddleware
 from src.backend.utils.azure_monitor_setup import setup_azure_monitor_telemetry
+from src.backend.utils.exception_handlers import override_default_fastapi_exception_handlers
+from src.backend.utils.exception_handlers import configure_service_level_exception_handlers
 from src.backend.utils.logging_setup import ensure_console_log_handler_is_configured, setup_normal_log_levels
 from src.backend.shared_middleware import add_shared_middlewares
 from src.backend.auth.auth_helper import AuthHelper
@@ -81,6 +83,9 @@ app.include_router(rft_router, prefix="/rft", tags=["rft"])
 authHelper = AuthHelper()
 app.include_router(authHelper.router)
 app.include_router(general_router)
+
+configure_service_level_exception_handlers(app)
+override_default_fastapi_exception_handlers(app)
 
 # This middleware instance approximately measures execution time of the route handler itself
 app.add_middleware(AddProcessTimeToServerTimingMiddleware, metric_name="total-exec-route")
