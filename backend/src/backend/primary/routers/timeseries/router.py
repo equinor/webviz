@@ -3,9 +3,10 @@ from typing import Annotated
 
 import pyarrow as pa
 import pyarrow.compute as pc
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Response
 
 from src.backend.auth.auth_helper import AuthHelper
+from src.backend.utils.perf_metrics import PerfMetrics
 from src.services.summary_vector_statistics import compute_vector_statistics
 from src.services.sumo_access.generic_types import EnsembleScalarResponse
 from src.services.sumo_access.parameter_access import ParameterAccess
@@ -41,6 +42,7 @@ async def get_vector_list(
 @router.get("/realizations_vector_data/")
 async def get_realizations_vector_data(
     # fmt:off
+    response: Response,
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
     case_uuid: Annotated[str, Query(description="Sumo case uuid")],
     ensemble_name:  Annotated[str, Query(description="Ensemble name")],
@@ -52,26 +54,10 @@ async def get_realizations_vector_data(
 ) -> list[schemas.VectorRealizationData]:
     """Get vector data per realization"""
 
+    perf_metrics = PerfMetrics(response)
     access = await SummaryAccess.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
-
     sumo_freq = Frequency.from_string_value(resampling_frequency.value if resampling_frequency else "dummy")
 
-    # !!!!!
-    # !!!!!
-    # !!!!!
-    # detail = {
-    #     "error": {
-    #         "code": "string",
-    #         "message": "string",
-    #         "innererror": {
-    #             "code": "string"
-    #         },
-    #         "details": []
-    #     }
-    # }
-    # raise HTTPException(status_code=404, detail=detail)
-
-    # !!!!!
     # !!!!!
     # !!!!!
     dummy_table, dummy_meta_list = await access.get_single_real_vectors_table_async(
@@ -79,12 +65,16 @@ async def get_realizations_vector_data(
         resampling_frequency=sumo_freq,
         realization=1,
     )
+    perf_metrics.record_lap("get-single-real-vector")
+    # !!!!!
+    # !!!!!
 
     sumo_vec_arr = await access.get_vector_async(
         vector_name=vector_name,
         resampling_frequency=sumo_freq,
         realizations=realizations,
     )
+    perf_metrics.record_lap("get-vector")
 
     ret_arr: list[schemas.VectorRealizationData] = []
     for vec in sumo_vec_arr:
@@ -97,6 +87,8 @@ async def get_realizations_vector_data(
                 is_rate=vec.metadata.is_rate,
             )
         )
+
+    LOGGER.info(f"Loaded realization summary data in: {perf_metrics.to_string()}")
 
     return ret_arr
 
@@ -152,6 +144,7 @@ async def get_historical_vector_data(
 @router.get("/statistical_vector_data/")
 async def get_statistical_vector_data(
     # fmt:off
+    response: Response,
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
     case_uuid: Annotated[str, Query(description="Sumo case uuid")],
     ensemble_name:  Annotated[str, Query(description="Ensemble name")],
@@ -164,6 +157,8 @@ async def get_statistical_vector_data(
 ) -> schemas.VectorStatisticData:
     """Get statistical vector data for an ensemble"""
 
+    perf_metrics = PerfMetrics(response)
+
     access = await SummaryAccess.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
 
     service_freq = Frequency.from_string_value(resampling_frequency.value)
@@ -174,12 +169,16 @@ async def get_statistical_vector_data(
         resampling_frequency=service_freq,
         realizations=realizations,
     )
-    print(vector_table)
+    perf_metrics.record_lap("get-table")
+
     statistics = compute_vector_statistics(vector_table, vector_name, service_stat_funcs_to_compute)
     if not statistics:
         raise HTTPException(status_code=404, detail="Could not compute statistics")
+    perf_metrics.record_lap("calc-stat")
 
     ret_data: schemas.VectorStatisticData = converters.to_api_vector_statistic_data(statistics, vector_metadata)
+
+    LOGGER.info(f"Loaded and computed statistical summary data in: {perf_metrics.to_string()}")
 
     return ret_data
 
