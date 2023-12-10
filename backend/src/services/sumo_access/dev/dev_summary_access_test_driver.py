@@ -17,11 +17,10 @@ async def test_summary_access(summary_access: SummaryAccess) -> None:
     if len(vector_info_list) == 0:
         print("\n\nNo summary vectors found, giving up!\n")
         return
-    
+
     # print("\n\nVECTOR_INFO\n-----------------------")
     # for vector_info in vector_info_list:
     #     print(vector_info)
-
 
     # # Test getting a number of vectors for a single realization
     # print("\n\nSINGLE_REAL MONTHLY\n-----------------------")
@@ -35,20 +34,17 @@ async def test_summary_access(summary_access: SummaryAccess) -> None:
     # print(vector_table)
     # print(vector_meta_list)
 
-
     print("\n\nTABLE RAW\n-----------------------")
     vector_table, _vector_meta = await summary_access.get_vector_table_async(
         vector_name="FOPT", resampling_frequency=None, realizations=None
     )
     print(vector_table.shape)
 
-
     print("\n\nTABLE DAILY\n-----------------------")
     vector_table, _vector_meta = await summary_access.get_vector_table_async(
         vector_name="FOPT", resampling_frequency=Frequency.DAILY, realizations=None
     )
     print(vector_table.shape)
-
 
     print("\n\nTABLE YEARLY\n-----------------------")
     vector_table, _vector_meta = await summary_access.get_vector_table_async(
@@ -57,15 +53,13 @@ async def test_summary_access(summary_access: SummaryAccess) -> None:
     print(vector_table)
     print(vector_table.shape)
 
-    
     print("\n\nTABLE YEARLY - only real 0\n-----------------------")
     vector_table, _vector_meta = await summary_access.get_vector_table_async(
-        vector_name="FOPT", resampling_frequency=Frequency.YEARLY, realizations=[0,1]
+        vector_name="FOPT", resampling_frequency=Frequency.YEARLY, realizations=[0, 1]
     )
     vector_table = vector_table.filter(pa.compute.equal(vector_table["REAL"], 0))
     print(vector_table)
     print(vector_table.shape)
-
 
     print("\n\nYEARLY\n-----------------------")
     vector_arr: List[RealizationVector] = await summary_access.get_vector_async(
@@ -74,7 +68,8 @@ async def test_summary_access(summary_access: SummaryAccess) -> None:
     print(f"{len(vector_arr)=}")
     print(vector_arr[0])
 
-
+    #
+    # Fetch table to use when computing statistics first
     vector_table, _vector_meta = await summary_access.get_vector_table_async(
         vector_name="FOPT", resampling_frequency=Frequency.YEARLY, realizations=None
     )
@@ -107,21 +102,19 @@ async def main() -> None:
 
     logging.getLogger("src.services.sumo_access").setLevel(level=logging.DEBUG)
 
-
     dummy_sumo_client = SumoClient("prod")
     access_token = dummy_sumo_client.auth.get_token()
 
     explore = SumoExplore(access_token=access_token)
-    #case_list = await explore.get_cases(field_identifier="DROGON")
-    #case_list = await explore.get_cases(field_identifier="JOHAN SVERDRUP")
+    # case_list = await explore.get_cases(field_identifier="DROGON")
+    # case_list = await explore.get_cases(field_identifier="JOHAN SVERDRUP")
     case_list = await explore.get_cases(field_identifier="SNORRE")
     # for case_info in case_list:
     #     print(case_info)
 
-
     sumo_case_id = "11167ec3-41f7-452c-8a08-38466df6bb97"
-    sumo_case_id = "e2c7ca0a-8087-4e78-a0f5-121632af3d7b" # Sverdrup, no vectors
-    sumo_case_id = "010d73c1-33aa-4fa9-9288-6b99e1436780" # Snorre
+    sumo_case_id = "e2c7ca0a-8087-4e78-a0f5-121632af3d7b"  # Sverdrup, no vectors
+    sumo_case_id = "010d73c1-33aa-4fa9-9288-6b99e1436780"  # Snorre
     sumo_case_name = None
     for case_info in case_list:
         if case_info.uuid == sumo_case_id:
