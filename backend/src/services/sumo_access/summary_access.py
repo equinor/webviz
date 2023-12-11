@@ -8,7 +8,8 @@ import pyarrow.compute as pc
 from fmu.sumo.explorer.objects import Case, TableCollection, Table
 
 from src.services.utils.arrow_helpers import sort_table_on_real_then_date, is_date_column_monotonically_increasing
-from src.services.utils.arrow_helpers import find_first_non_increasing_date_pair, detect_missing_realizations
+from src.services.utils.arrow_helpers import find_first_non_increasing_date_pair
+#from src.services.utils.arrow_helpers import detect_missing_realizations
 from src.services.utils.perf_timer import PerfTimer
 
 from ._field_metadata import create_vector_metadata_from_field_meta
@@ -345,7 +346,7 @@ async def _load_all_real_arrow_table_from_sumo(case: Case, iteration_name: str, 
         raise ValueError(f"Unexpected type for {vector_name} column {schema.field(vector_name).type=}")
 
     # The call above has already downloaded and cached the raw blob, just use this to get the data size
-    blob_size_mb = _try_to_determine_blob_size_mb(sumo_table._blob)
+    blob_size_mb = _try_to_determine_blob_size_mb(sumo_table.blob)
 
     LOGGER.debug(
         f"Loaded all realizations arrow table from Sumo in: {timer.elapsed_ms()}ms "
@@ -385,7 +386,7 @@ async def _load_single_real_full_arrow_table_from_sumo(case: Case, iteration_nam
         raise ValueError("Table contains an unexpected REAL column")
 
     # The call above has already downloaded and cached the raw blob, just use this to get the data size
-    blob_size_mb = _try_to_determine_blob_size_mb(sumo_table._blob)
+    blob_size_mb = _try_to_determine_blob_size_mb(sumo_table.blob)
 
     LOGGER.debug(
         f"Loaded single realization arrow table from Sumo in: {timer.elapsed_ms()}ms "
