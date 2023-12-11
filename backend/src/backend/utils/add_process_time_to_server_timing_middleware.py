@@ -34,7 +34,7 @@ class AddProcessTimeToServerTimingMiddleware:
         await self._app(scope, receive, send_with_server_timing_header)
 
 
-# To be removed once we have proper traction on the new ASGI-based middleware above 
+# To be removed once we have proper traction on the new ASGI-based middleware above
 class DeprecatedAddProcessTimeToServerTimingMiddleware(BaseHTTPMiddleware):
     def __init__(self, app: ASGIApp, metric_name: str):
         super().__init__(app)
