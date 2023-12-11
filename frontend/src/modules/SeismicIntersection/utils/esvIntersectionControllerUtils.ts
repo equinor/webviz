@@ -1,8 +1,13 @@
+import { SurfaceIntersectionData_api } from "@api";
 import {
     Controller,
+    GeomodelLabelsLayer,
+    GeomodelLayerV2,
     OverlayMouseExitEvent,
     OverlayMouseMoveEvent,
+    PixiRenderApplication,
     SeismicCanvasLayer,
+    SurfaceData,
     WellborepathLayer,
     getSeismicInfo,
     getSeismicOptions,
@@ -96,4 +101,53 @@ export function addSeismicLayer(
     });
     layer.data = { image: image, options: getSeismicOptions(info) };
     controller.addLayer(layer);
+}
+
+export type SurfaceLayerOptions = {
+    surfaceIntersectionDataList: SurfaceIntersectionData_api[]; // TODO: Extract data outside and do not pass api data?
+    layerName: string;
+    surfaceColor: string;
+    surfaceWidth: number;
+};
+export function addSurfaceLayer(
+    controller: Controller,
+    pixiContext: PixiRenderApplication,
+    { surfaceIntersectionDataList, layerName, surfaceColor, surfaceWidth }: SurfaceLayerOptions
+): void {
+    const surfaceIndicesWithLabels: { label: string; idx: number }[] = [];
+    surfaceIntersectionDataList.forEach((surface, idx) => {
+        if (surface.name !== surfaceIndicesWithLabels[surfaceIndicesWithLabels.length - 1]?.label) {
+            surfaceIndicesWithLabels.push({ label: surface.name, idx: idx });
+        }
+    });
+
+    // Create surface intersection lines
+    const surfaceIntersectionLines: SurfaceData = {
+        areas: [],
+        lines: surfaceIntersectionDataList.map((surface) => {
+            return {
+                data: surface.z_points.map((z: number, idx) => {
+                    return [surface.cum_length[idx], z];
+                }),
+                color: surfaceColor,
+                id: `${surface.name}-id`,
+                label: surface.name,
+                width: surfaceWidth,
+            };
+        }),
+    };
+
+    const geomodelLayer = new GeomodelLayerV2<SurfaceData>(pixiContext, `${layerName}`, {
+        order: 3,
+        layerOpacity: 0.6,
+        data: surfaceIntersectionLines,
+    });
+    const geomodelLabelsLayer = new GeomodelLabelsLayer<SurfaceData>(`${layerName}labels`, {
+        order: 3,
+        data: surfaceIntersectionLines,
+        maxFontSize: 16,
+        minFontSize: 10,
+    });
+    controller.addLayer(geomodelLayer);
+    controller.addLayer(geomodelLabelsLayer);
 }

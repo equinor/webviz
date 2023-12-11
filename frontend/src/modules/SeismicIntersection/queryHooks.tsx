@@ -1,4 +1,11 @@
-import { Body_post_get_seismic_fence_api, SeismicCubeMeta_api, SeismicFencePolyline_api } from "@api";
+import {
+    Body_post_get_seismic_fence_api,
+    Body_post_get_surface_intersection_api,
+    SeismicCubeMeta_api,
+    SeismicFencePolyline_api,
+    SurfaceIntersectionCumulativeLengthPolyline_api,
+    SurfaceIntersectionData_api,
+} from "@api";
 import { apiService } from "@framework/ApiService";
 import { UseQueryResult, useQuery } from "@tanstack/react-query";
 
@@ -64,6 +71,55 @@ export function useSeismicFenceDataQuery(
             timeOrIntervalStr &&
             observed !== null &&
             polyline !== null
+        ),
+    });
+}
+
+export function useSurfaceIntersectionQuery(
+    caseUuid: string | null,
+    ensembleName: string | null,
+    realizationNum: number | null,
+    surfaceNames: string[] | null,
+    attribute: string | null,
+    timeOrIntervalStr: string | null,
+    cumulativeLengthPolyline: SurfaceIntersectionCumulativeLengthPolyline_api | null,
+    allowEnable: boolean
+): UseQueryResult<SurfaceIntersectionData_api[]> {
+    const bodyPolyline: Body_post_get_surface_intersection_api = {
+        cumulative_length_polyline: cumulativeLengthPolyline ?? { x_points: [], y_points: [], cum_lengths: [] },
+    };
+
+    return useQuery({
+        queryKey: [
+            "getSurfaceIntersection",
+            caseUuid,
+            ensembleName,
+            realizationNum,
+            surfaceNames,
+            attribute,
+            timeOrIntervalStr,
+            bodyPolyline,
+        ],
+        queryFn: () =>
+            apiService.surface.postGetSurfaceIntersection(
+                caseUuid ?? "",
+                ensembleName ?? "",
+                realizationNum ?? 0,
+                surfaceNames ?? [],
+                attribute ?? "",
+                timeOrIntervalStr ?? "",
+                bodyPolyline
+            ),
+        staleTime: STALE_TIME,
+        gcTime: CACHE_TIME,
+        enabled: !!(
+            allowEnable &&
+            caseUuid &&
+            ensembleName &&
+            realizationNum !== null &&
+            surfaceNames &&
+            attribute &&
+            cumulativeLengthPolyline !== null
         ),
     });
 }

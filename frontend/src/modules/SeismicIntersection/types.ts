@@ -6,3 +6,12 @@ export type SeismicAddress = {
     observed: boolean;
     timeString?: string;
 };
+
+export type SurfaceAddress = {
+    caseUuid: string;
+    ensemble: string;
+    realizationNumber: number;
+    surfaceNames: string[];
+    attribute: string;
+    timeString?: string;
+};

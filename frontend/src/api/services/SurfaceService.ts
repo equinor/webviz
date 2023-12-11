@@ -1,7 +1,9 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
+import type { Body_post_get_surface_intersection } from '../models/Body_post_get_surface_intersection';
 import type { SurfaceData } from '../models/SurfaceData';
+import type { SurfaceIntersectionData } from '../models/SurfaceIntersectionData';
 import type { SurfaceMeta } from '../models/SurfaceMeta';
 import type { SurfaceStatisticFunction } from '../models/SurfaceStatisticFunction';
 
@@ -190,6 +192,50 @@ export class SurfaceService {
                 'attribute_property': attributeProperty,
                 'time_or_interval_property': timeOrIntervalProperty,
             },
+            errors: {
+                422: `Validation Error`,
+            },
+        });
+    }
+
+    /**
+     * Post Get Surface Intersection
+     * Get an array of surface intersection data, one for each requested surface name.
+     *
+     * The surface intersection data for each surface name contains: An array of z-values, one z-value per (x, y)-point in polyline,
+     * and cumulative lengths, the accumulated length at each z-value in the array.
+     * @param caseUuid Sumo case uuid
+     * @param ensembleName Ensemble name
+     * @param realizationNum Realization number
+     * @param names Surface names
+     * @param attribute Surface attribute
+     * @param timeOrIntervalStr Timestamp or timestep
+     * @param requestBody
+     * @returns SurfaceIntersectionData Successful Response
+     * @throws ApiError
+     */
+    public postGetSurfaceIntersection(
+        caseUuid: string,
+        ensembleName: string,
+        realizationNum: number,
+        names: Array<string>,
+        attribute: string,
+        timeOrIntervalStr: string,
+        requestBody: Body_post_get_surface_intersection,
+    ): CancelablePromise<Array<SurfaceIntersectionData>> {
+        return this.httpRequest.request({
+            method: 'POST',
+            url: '/surfaceget_surface_intersection',
+            query: {
+                'case_uuid': caseUuid,
+                'ensemble_name': ensembleName,
+                'realization_num': realizationNum,
+                'names': names,
+                'attribute': attribute,
+                'time_or_interval_str': timeOrIntervalStr,
+            },
+            body: requestBody,
+            mediaType: 'application/json',
             errors: {
                 422: `Validation Error`,
             },

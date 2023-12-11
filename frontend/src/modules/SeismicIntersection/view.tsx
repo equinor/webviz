@@ -1,7 +1,13 @@
 import React, { useId } from "react";
 
 import { SeismicFencePolyline_api } from "@api";
-import { Controller, GridLayer, IntersectionReferenceSystem, Trajectory } from "@equinor/esv-intersection";
+import {
+    Controller,
+    GridLayer,
+    IntersectionReferenceSystem,
+    PixiRenderApplication,
+    Trajectory,
+} from "@equinor/esv-intersection";
 import { ModuleFCProps } from "@framework/Module";
 import { useViewStatusWriter } from "@framework/StatusWriter";
 import { useElementSize } from "@lib/hooks/useElementSize";
@@ -10,8 +16,9 @@ import { useWellTrajectoriesQuery } from "@modules/_shared/WellBore/queryHooks";
 import { ContentError } from "@modules/_shared/components/ContentMessage";
 
 import { isEqual } from "lodash";
+import { SurfaceIntersectionCumulativeLengthPolyline } from "src/api/models/SurfaceIntersectionCumulativeLengthPolyline";
 
-import { useSeismicFenceDataQuery } from "./queryHooks";
+import { useSeismicFenceDataQuery, useSurfaceIntersectionQuery } from "./queryHooks";
 import { State } from "./state";
 import { addMDOverlay, addSeismicLayer, addWellborePathLayer } from "./utils/esvIntersectionControllerUtils";
 import {
@@ -32,11 +39,13 @@ export const view = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
     const wrapperDivSize = useElementSize(wrapperDivRef);
     const esvIntersectionContainerRef = React.useRef<HTMLDivElement | null>(null);
     const esvIntersectionControllerRef = React.useRef<Controller | null>(null);
+    const esvPixiRenderApplicationRef = React.useRef<PixiRenderApplication | null>(null);
 
     const gridLayerUuid = useId();
     const statusWriter = useViewStatusWriter(moduleContext);
 
     const seismicAddress = moduleContext.useStoreValue("seismicAddress");
+    const surfaceAddress = moduleContext.useStoreValue("surfaceAddress");
     const wellboreAddress = moduleContext.useStoreValue("wellboreAddress");
     const extension = moduleContext.useStoreValue("extension");
     const zScale = moduleContext.useStoreValue("zScale");
@@ -58,8 +67,10 @@ export const view = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
         null
     );
 
-    // Data for seismic fence layer in esv-intersection
+    // States to fetch seismic fence and surface intersection
     const [seismicFencePolyline, setSeismicFencePolyline] = React.useState<SeismicFencePolyline_api | null>(null);
+    const [surfaceIntersectionCumulativeLengthPolyline, setSurfaceIntersectionCumulativeLengthPolyline] =
+        React.useState<SurfaceIntersectionCumulativeLengthPolyline | null>(null);
 
     // Async generating seismic slice image
     const [generateSeismicSliceImageOptions, setGenerateSeismicSliceImageOptions] =
@@ -74,6 +85,13 @@ export const view = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
                 axisOptions,
             });
 
+            const width = wrapperDivSize.width;
+            const height = wrapperDivSize.height - 100;
+
+            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+            // @ts-ignore
+            esvPixiRenderApplicationRef.current = new PixiRenderApplication({ width, height });
+
             // Initialize/configure controller
             addMDOverlay(esvIntersectionControllerRef.current);
             esvIntersectionControllerRef.current.addLayer(new GridLayer(gridLayerUuid));
@@ -83,6 +101,7 @@ export const view = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
         }
         return () => {
             esvIntersectionControllerRef.current?.destroy();
+            esvPixiRenderApplicationRef.current?.destroy();
         };
     }, []);
 
@@ -94,6 +113,7 @@ export const view = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
 
     // Use first trajectory and create polyline for seismic fence query, and extended wellbore trajectory for generating seismic fence image
     let candidateSeismicFencePolyline = seismicFencePolyline;
+    let candidateSurfaceIntersectionCumulativeLengthPolyline = surfaceIntersectionCumulativeLengthPolyline;
     if (wellTrajectoriesQuery.data && wellTrajectoriesQuery.data.length !== 0) {
         const trajectoryXyzPoints = makeTrajectoryXyzPointsFromWellboreTrajectory(wellTrajectoriesQuery.data[0]);
         const newExtendedWellboreTrajectory = makeExtendedTrajectoryFromTrajectoryXyzPoints(
@@ -114,6 +134,15 @@ export const view = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
             const y_points = newExtendedWellboreTrajectory?.points.map((coord) => coord[1]) ?? [];
             candidateSeismicFencePolyline = { x_points, y_points };
             setSeismicFencePolyline(candidateSeismicFencePolyline);
+
+            const cum_lengths = newExtendedWellboreTrajectory
+                ? IntersectionReferenceSystem.toDisplacement(
+                      newExtendedWellboreTrajectory.points,
+                      newExtendedWellboreTrajectory.offset
+                  ).map((coord) => coord[0] - extension)
+                : [];
+            candidateSurfaceIntersectionCumulativeLengthPolyline = { x_points, y_points, cum_lengths };
+            setSurfaceIntersectionCumulativeLengthPolyline(candidateSurfaceIntersectionCumulativeLengthPolyline);
         }
 
         // When new well trajectory 3D points are loaded, update the render trajectory and clear the seismic fence image
@@ -136,6 +165,21 @@ export const view = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
     );
     if (seismicFenceDataQuery.isError) {
         statusWriter.addError("Error loading seismic fence data");
+    }
+
+    // Get surface intersection data from polyline
+    const surfaceIntersectionDataQuery = useSurfaceIntersectionQuery(
+        surfaceAddress?.caseUuid ?? null,
+        surfaceAddress?.ensemble ?? null,
+        surfaceAddress?.realizationNumber ?? null,
+        surfaceAddress?.surfaceNames ?? null,
+        surfaceAddress?.attribute ?? null,
+        surfaceAddress?.timeString ?? null,
+        candidateSurfaceIntersectionCumulativeLengthPolyline,
+        seismicAddress !== null
+    );
+    if (surfaceIntersectionDataQuery.isError) {
+        statusWriter.addError("Error loading surface intersection data");
     }
 
     if (seismicFenceDataQuery.data) {

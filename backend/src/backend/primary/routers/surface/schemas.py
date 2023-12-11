@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Optional
+from typing import List, Optional
 
 from pydantic import BaseModel
 
@@ -68,3 +68,39 @@ class SurfaceData(BaseModel):
     val_max: float
     rot_deg: float
     values_b64arr: B64FloatArray
+
+
+class SurfaceIntersectionData(BaseModel):
+    """
+    Definition of a surface intersection made from a set of (x, y) coordinates.
+
+    name: Name of the surface
+    z_points: Array of z-values at the intersection points, i.e. depth value for each (x,y) point.
+    cum_lengths: Cumulative length values at the intersection points, i.e. length between each element in the z points.
+
+    """
+
+    name: str
+    z_points: list[float]
+    cum_length: list[float]
+
+
+class SurfaceIntersectionCumulativeLengthPolyline(BaseModel):
+    """
+    (x, y) points defining a polyline in domain coordinate system, to retrieve intersection of a surface, with a cumulative length
+    between at each (x, y)-point coordinates in domain coordinate system.
+
+    Expect equal number of x- and y-points.
+
+    x_points: X-coordinates of polyline points.
+    y_points: Y-coordinates of polyline points.
+    cum_lengths: Cumulative lengths of the polyline segments, i.e. the length of the polyline up to each (x,y) point.
+
+    The cumulative lengths can be e.g. measured depth along a well path.
+
+    Note: Coordinates are in domain coordinate system (UTM)
+    """
+
+    x_points: List[float]
+    y_points: List[float]
+    cum_lengths: List[float]  # TODO: Verify if it necessary with respect to xtgeo

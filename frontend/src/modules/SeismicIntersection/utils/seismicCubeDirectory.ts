@@ -2,14 +2,14 @@ import { SeismicCubeMeta_api } from "@api";
 import { isIsoStringInterval } from "@framework/utils/timestampUtils";
 
 // Time type for seismic cubes.
-export enum TimeType {
+export enum SeismicTimeType {
     TimePoint = "TimePoint",
     Interval = "Interval",
 }
 
 export type SeismicCubeMetaDirectoryOptions = {
     seismicCubeMetaList: SeismicCubeMeta_api[];
-    timeType: TimeType;
+    timeType: SeismicTimeType;
     useObservedSeismicCubes?: boolean;
 };
 
@@ -51,14 +51,14 @@ export class SeismicCubeMetaDirectory {
 // Internal utility to filter directory based on time type.
 function filterSeismicCubeMetaListOnTimeType(
     seismicCubeMetaList: SeismicCubeMeta_api[],
-    timeType: TimeType
+    timeType: SeismicTimeType
 ): SeismicCubeMeta_api[] {
     switch (timeType) {
-        case TimeType.TimePoint:
+        case SeismicTimeType.TimePoint:
             return seismicCubeMetaList.filter(
                 (cube) => cube.iso_date_or_interval && !isIsoStringInterval(cube.iso_date_or_interval)
             );
-        case TimeType.Interval:
+        case SeismicTimeType.Interval:
             return seismicCubeMetaList.filter(
                 (cube) => cube.iso_date_or_interval && isIsoStringInterval(cube.iso_date_or_interval)
             );

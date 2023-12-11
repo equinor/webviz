@@ -1,7 +1,7 @@
 import { SurfaceAttributeType_api, SurfaceMeta_api } from "@api";
 import { isIsoStringInterval } from "@framework/utils/timestampUtils";
 
-export enum TimeType {
+export enum SurfaceTimeType {
     None = "None",
     TimePoint = "TimePoint",
     Interval = "Interval",
@@ -9,7 +9,7 @@ export enum TimeType {
 
 export type SurfaceDirectoryOptions = {
     surfaceMetas: SurfaceMeta_api[];
-    timeType: TimeType;
+    timeType: SurfaceTimeType;
     includeAttributeTypes?: SurfaceAttributeType_api[];
     excludeAttributeTypes?: SurfaceAttributeType_api[];
     useObservedSurfaces?: boolean;
@@ -72,7 +72,7 @@ export class SurfaceDirectory {
                 return matchedOnSurfName && matchedOnAttrName;
             });
         }
-        if (filteredList.length === 0){
+        if (filteredList.length === 0) {
             return [];
         }
 
@@ -109,15 +109,15 @@ export class SurfaceDirectory {
 }
 
 // Filters directory based on time type.
-function filterOnTimeType(surfaceList: SurfaceMeta_api[], timeType: TimeType): SurfaceMeta_api[] {
+function filterOnTimeType(surfaceList: SurfaceMeta_api[], timeType: SurfaceTimeType): SurfaceMeta_api[] {
     switch (timeType) {
-        case TimeType.None:
+        case SurfaceTimeType.None:
             return surfaceList.filter((surface) => !surface.iso_date_or_interval);
-        case TimeType.TimePoint:
+        case SurfaceTimeType.TimePoint:
             return surfaceList.filter(
                 (surface) => surface.iso_date_or_interval && !isIsoStringInterval(surface.iso_date_or_interval)
             );
-        case TimeType.Interval:
+        case SurfaceTimeType.Interval:
             return surfaceList.filter(
                 (surface) => surface.iso_date_or_interval && isIsoStringInterval(surface.iso_date_or_interval)
             );

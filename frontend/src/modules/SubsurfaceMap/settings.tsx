@@ -21,7 +21,7 @@ import {
     SurfaceAddress,
     SurfaceAddressFactory,
     SurfaceDirectory,
-    TimeType,
+    SurfaceTimeType,
     useSurfaceDirectoryQuery,
 } from "@modules/_shared/Surface";
 import { useWellHeadersQuery } from "@modules/_shared/WellBore/queryHooks";
@@ -48,10 +48,10 @@ function LabelledCheckbox(props: LabelledCheckboxProps): JSX.Element {
 function Header(props: { text: string }): JSX.Element {
     return <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mt-2">{props.text}</label>;
 }
-const TimeTypeEnumToStringMapping = {
-    [TimeType.None]: "Static",
-    [TimeType.TimePoint]: "Time point",
-    [TimeType.Interval]: "Time interval",
+const SurfaceTimeTypeEnumToStringMapping = {
+    [SurfaceTimeType.None]: "Static",
+    [SurfaceTimeType.TimePoint]: "Time point",
+    [SurfaceTimeType.Interval]: "Time interval",
 };
 export function settings({ moduleContext, workbenchSession, workbenchServices }: ModuleFCProps<state>) {
     const myInstanceIdStr = moduleContext.getInstanceIdString();
@@ -65,7 +65,7 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
     const [selectedPropertySurfaceName, setSelectedPropertySurfaceName] = React.useState<string | null>(null);
     const [selectedPropertySurfaceAttribute, setSelectedPropertySurfaceAttribute] = React.useState<string | null>(null);
     const [selectedPropertyTimeOrInterval, setSelectedPropertyTimeOrInterval] = React.useState<string | null>(null);
-    const [timeType, setTimeType] = React.useState<TimeType>(TimeType.None);
+    const [timeType, setTimeType] = React.useState<SurfaceTimeType>(SurfaceTimeType.None);
     const [selectedPolygonName, setSelectedPolygonName] = React.useState<string | null>(null);
     const [selectedPolygonAttribute, setSelectedPolygonAttribute] = React.useState<string | null>(null);
     const [linkPolygonNameToSurfaceName, setLinkPolygonNameToSurfaceName] = React.useState<boolean>(true);
@@ -99,7 +99,7 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
         meshSurfDirQuery.data
             ? {
                   surfaceMetas: meshSurfDirQuery.data,
-                  timeType: TimeType.None,
+                  timeType: SurfaceTimeType.None,
                   includeAttributeTypes: [SurfaceAttributeType_api.DEPTH],
               }
             : null
@@ -188,13 +188,13 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
     propertySurfAttributeOptions = propertySurfaceDirectory
         .getAttributeNames(computedPropertySurfaceName)
         .map((attr) => ({ value: attr, label: attr }));
-    if (timeType === TimeType.Interval || timeType === TimeType.TimePoint) {
+    if (timeType === SurfaceTimeType.Interval || timeType === SurfaceTimeType.TimePoint) {
         propertySurfTimeOrIntervalOptions = propertySurfaceDirectory
             .getTimeOrIntervalStrings(computedPropertySurfaceName, computedPropertySurfaceAttribute)
             .map((interval) => ({
                 value: interval,
                 label:
-                    timeType === TimeType.TimePoint
+                    timeType === SurfaceTimeType.TimePoint
                         ? isoStringToDateLabel(interval)
                         : isoIntervalStringToDateLabel(interval),
             }));
@@ -447,7 +447,7 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
         }
     }
     function handleTimeModeChange(event: React.ChangeEvent<HTMLInputElement>) {
-        setTimeType(event.target.value as TimeType);
+        setTimeType(event.target.value as SurfaceTimeType);
     }
     return (
         <div className="flex flex-col gap-2 overflow-y-auto">
@@ -523,8 +523,8 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
                             <RadioGroup
                                 value={timeType}
                                 direction="horizontal"
-                                options={Object.values(TimeType).map((val: TimeType) => {
-                                    return { value: val, label: TimeTypeEnumToStringMapping[val] };
+                                options={Object.values(SurfaceTimeType).map((val: SurfaceTimeType) => {
+                                    return { value: val, label: SurfaceTimeTypeEnumToStringMapping[val] };
                                 })}
                                 onChange={handleTimeModeChange}
                             />
@@ -554,8 +554,8 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
                                     size={5}
                                 />
                             </Label>
-                            {timeType !== TimeType.None && (
-                                <Label text={timeType === TimeType.TimePoint ? "Time Point" : "Time Interval"}>
+                            {timeType !== SurfaceTimeType.None && (
+                                <Label text={timeType === SurfaceTimeType.TimePoint ? "Time Point" : "Time Interval"}>
                                     <Select
                                         options={propertySurfTimeOrIntervalOptions}
                                         value={computedPropertyTimeOrInterval ? [computedPropertyTimeOrInterval] : []}

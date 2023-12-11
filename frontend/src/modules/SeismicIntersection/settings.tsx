@@ -16,22 +16,24 @@ import { Label } from "@lib/components/Label";
 import { RadioGroup } from "@lib/components/RadioGroup";
 import { Select, SelectOption } from "@lib/components/Select";
 import { useValidState } from "@lib/hooks/useValidState";
+import { SurfaceDirectory, SurfaceTimeType } from "@modules/_shared/Surface";
+import { useSurfaceDirectoryQuery } from "@modules/_shared/Surface";
 import { useWellHeadersQuery } from "@modules/_shared/WellBore";
 
 import { isEqual } from "lodash";
 
 import { useSeismicCubeMetaListQuery } from "./queryHooks";
 import { State } from "./state";
-import { SeismicAddress } from "./types";
-import { SeismicCubeMetaDirectory, TimeType } from "./utils/seismicCubeDirectory";
+import { SeismicAddress, SurfaceAddress } from "./types";
+import { SeismicCubeMetaDirectory, SeismicTimeType } from "./utils/seismicCubeDirectory";
 
-const TimeTypeEnumToSurveyTypeStringMapping = {
-    [TimeType.TimePoint]: "3D",
-    [TimeType.Interval]: "4D",
+const SeismicTimeTypeEnumToSurveyTypeStringMapping = {
+    [SeismicTimeType.TimePoint]: "3D",
+    [SeismicTimeType.Interval]: "4D",
 };
-const TimeTypeEnumToSeismicTimeTypeStringMapping = {
-    [TimeType.TimePoint]: "Seismic timestamps",
-    [TimeType.Interval]: "Seismic intervals",
+const SeismicTimeTypeEnumToSeismicTimeTypeStringMapping = {
+    [SeismicTimeType.TimePoint]: "Seismic timestamps",
+    [SeismicTimeType.Interval]: "Seismic intervals",
 };
 const enum SeismicDataSource {
     SIMULATED = "Simulated",
@@ -53,6 +55,7 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
     const statusWriter = useSettingsStatusWriter(moduleContext);
 
     const setSeismicAddress = moduleContext.useSetStoreValue("seismicAddress");
+    const setSurfaceAddress = moduleContext.useSetStoreValue("surfaceAddress");
     const setWellboreAddress = moduleContext.useSetStoreValue("wellboreAddress");
     const [extension, setExtension] = moduleContext.useStoreState("extension");
     const [zScale, setZScale] = moduleContext.useStoreState("zScale");
@@ -61,7 +64,8 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
     const [realizationNumber, setRealizationNumber] = React.useState<number>(0);
     const [isObserved, setIsObserved] = React.useState<boolean>(false);
 
-    const [surveyTimeType, setSurveyTimeType] = React.useState<TimeType>(TimeType.TimePoint);
+    const [seismicTimeType, setSeismicTimeType] = React.useState<SeismicTimeType>(SeismicTimeType.TimePoint);
+    const [surfaceTimeType, setSurfaceTimeType] = React.useState<SurfaceTimeType>(SurfaceTimeType.None);
     const [selectedWellboreAddress, setSelectedWellboreAddress] = React.useState<Wellbore | null>(
         moduleContext.useStoreValue("wellboreAddress")
     );
@@ -78,11 +82,18 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
         computedEnsembleIdent?.getCaseUuid(),
         computedEnsembleIdent?.getEnsembleName()
     );
+    const surfaceDirectoryQuery = useSurfaceDirectoryQuery(
+        computedEnsembleIdent?.getCaseUuid(),
+        computedEnsembleIdent?.getEnsembleName()
+    );
     if (wellHeadersQuery.isError) {
         statusWriter.addError("Error loading well headers");
     }
     if (seismicCubeMetaListQuery.isError) {
         statusWriter.addError("Error loading seismic cube meta list");
+    }
+    if (surfaceDirectoryQuery.isError) {
+        statusWriter.addError("Error loading surface directory");
     }
 
     // Handling well headers query
@@ -103,11 +114,28 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
         setSelectedWellboreAddress(computedWellboreAddress);
     }
 
+    // Create surface directory
+    const surfaceDirectory = new SurfaceDirectory(
+        surfaceDirectoryQuery.data ? { surfaceMetas: surfaceDirectoryQuery.data, timeType: surfaceTimeType } : null
+    );
+    const [selectedSurfaceName, setSelectedSurfaceName] = useValidState<string | null>(
+        null,
+        surfaceDirectoryQuery.data?.map((surfaceMeta) => surfaceMeta.name) ?? []
+    );
+    const [selectedSurfaceAttribute, setSelectedSurfaceAttribute] = useValidState<string | null>(
+        null,
+        surfaceDirectory.getAttributeNames(selectedSurfaceName) ?? []
+    );
+    const [selectedSurfaceTime, setSelectedSurfaceTime] = useValidState<string | null>(
+        null,
+        surfaceDirectory.getTimeOrIntervalStrings(selectedSurfaceName, selectedSurfaceAttribute) ?? []
+    );
+
     // Create seismic cube directory
     const seismicCubeMetaDirectory = seismicCubeMetaListQuery.data
         ? new SeismicCubeMetaDirectory({
               seismicCubeMetaList: seismicCubeMetaListQuery.data,
-              timeType: surveyTimeType,
+              timeType: seismicTimeType,
               useObservedSeismicCubes: isObserved,
           })
         : null;
@@ -116,7 +144,7 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
         null,
         seismicCubeMetaDirectory?.getAttributeNames() ?? []
     );
-    const [selectedTime, setSelectedTime] = useValidState<string | null>(
+    const [selectedSeismicTime, setSelectedSeismicTime] = useValidState<string | null>(
         null,
         seismicCubeMetaDirectory?.getTimeOrIntervalStrings() ?? []
     );
@@ -126,26 +154,44 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
               return { label: attribute, value: attribute };
           })
         : [];
-    const timeOptions = seismicCubeMetaDirectory
+    const seismicTimeOptions = seismicCubeMetaDirectory
         ? createOptionsFromTimeOrIntervalStrings(seismicCubeMetaDirectory.getTimeOrIntervalStrings())
         : [];
 
     React.useEffect(
         function propagateSeismicAddressToView() {
             let seismicAddress: SeismicAddress | null = null;
-            if (computedEnsembleIdent && selectedSeismicAttribute && selectedTime) {
+            if (computedEnsembleIdent && selectedSeismicAttribute && selectedSeismicTime) {
                 seismicAddress = {
                     caseUuid: computedEnsembleIdent.getCaseUuid(),
                     ensemble: computedEnsembleIdent.getEnsembleName(),
                     realizationNumber: realizationNumber,
                     attribute: selectedSeismicAttribute,
-                    timeString: selectedTime,
+                    timeString: selectedSeismicTime,
                     observed: isObserved,
                 };
             }
             setSeismicAddress(seismicAddress);
         },
-        [computedEnsembleIdent, selectedSeismicAttribute, selectedTime, isObserved, realizationNumber]
+        [computedEnsembleIdent, selectedSeismicAttribute, selectedSeismicTime, isObserved, realizationNumber]
+    );
+
+    React.useEffect(
+        function propagateSurfaceAddressToView() {
+            let surfaceAddress: SurfaceAddress | null = null;
+            if (computedEnsembleIdent && selectedSeismicAttribute && selectedSurfaceTime) {
+                surfaceAddress = {
+                    caseUuid: computedEnsembleIdent.getCaseUuid(),
+                    ensemble: computedEnsembleIdent.getEnsembleName(),
+                    realizationNumber: realizationNumber,
+                    surfaceNames: [],
+                    attribute: selectedSeismicAttribute,
+                    timeString: selectedSurfaceTime,
+                };
+            }
+            setSurfaceAddress(surfaceAddress);
+        },
+        [computedEnsembleIdent, selectedSeismicAttribute, selectedSurfaceTime, realizationNumber]
     );
 
     React.useEffect(
@@ -186,10 +232,10 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
 
     function handleSeismicTimeChange(values: string[]) {
         if (values.length === 0) {
-            setSelectedTime(null);
+            setSelectedSeismicTime(null);
             return;
         }
-        setSelectedTime(values[0]);
+        setSelectedSeismicTime(values[0]);
     }
 
     function handleWellChange(selectedWellboreUuids: string[], validWellboreList: Wellbore[]) {
@@ -281,17 +327,17 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
                         <RadioGroup
                             options={[
                                 {
-                                    label: TimeTypeEnumToSurveyTypeStringMapping[TimeType.TimePoint],
-                                    value: TimeType.TimePoint,
+                                    label: SeismicTimeTypeEnumToSurveyTypeStringMapping[SeismicTimeType.TimePoint],
+                                    value: SeismicTimeType.TimePoint,
                                 },
                                 {
-                                    label: TimeTypeEnumToSurveyTypeStringMapping[TimeType.Interval],
-                                    value: TimeType.Interval,
+                                    label: SeismicTimeTypeEnumToSurveyTypeStringMapping[SeismicTimeType.Interval],
+                                    value: SeismicTimeType.Interval,
                                 },
                             ]}
                             direction="horizontal"
-                            value={surveyTimeType}
-                            onChange={(_, value: string | number) => setSurveyTimeType(value as TimeType)}
+                            value={seismicTimeType}
+                            onChange={(_, value: string | number) => setSeismicTimeType(value as SeismicTimeType)}
                         />
                     </Label>
                     <ApiStateWrapper
@@ -308,10 +354,10 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
                                     onChange={handleSeismicAttributeChange}
                                 />
                             </Label>
-                            <Label text={TimeTypeEnumToSeismicTimeTypeStringMapping[surveyTimeType]}>
+                            <Label text={SeismicTimeTypeEnumToSeismicTimeTypeStringMapping[seismicTimeType]}>
                                 <Select
-                                    options={timeOptions}
-                                    value={selectedTime ? [selectedTime] : []}
+                                    options={seismicTimeOptions}
+                                    value={selectedSeismicTime ? [selectedSeismicTime] : []}
                                     onChange={handleSeismicTimeChange}
                                     size={8}
                                 />

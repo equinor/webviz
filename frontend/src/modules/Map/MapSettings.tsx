@@ -19,23 +19,23 @@ import {
     SurfaceAddress,
     SurfaceAddressFactory,
     SurfaceDirectory,
-    TimeType,
+    SurfaceTimeType,
     useSurfaceDirectoryQuery,
 } from "@modules/_shared/Surface";
 
 import { MapState } from "./MapState";
 import { AggregationDropdown } from "./UiComponents";
 
-const TimeTypeEnumToStringMapping = {
-    [TimeType.None]: "Static",
-    [TimeType.TimePoint]: "Time point",
-    [TimeType.Interval]: "Time interval",
+const SurfaceTimeTypeEnumToStringMapping = {
+    [SurfaceTimeType.None]: "Static",
+    [SurfaceTimeType.TimePoint]: "Time point",
+    [SurfaceTimeType.Interval]: "Time interval",
 };
 //-----------------------------------------------------------------------------------------------------------
 export function MapSettings(props: ModuleFCProps<MapState>) {
     const ensembleSet = useEnsembleSet(props.workbenchSession);
     const [selectedEnsembleIdent, setSelectedEnsembleIdent] = React.useState<EnsembleIdent | null>(null);
-    const [timeType, setTimeType] = React.useState<TimeType>(TimeType.None);
+    const [timeType, setTimeType] = React.useState<SurfaceTimeType>(SurfaceTimeType.None);
 
     const statusWriter = useSettingsStatusWriter(props.moduleContext);
 
@@ -177,7 +177,7 @@ export function MapSettings(props: ModuleFCProps<MapState>) {
     }
 
     function handleTimeModeChange(event: React.ChangeEvent<HTMLInputElement>) {
-        setTimeType(event.target.value as TimeType);
+        setTimeType(event.target.value as SurfaceTimeType);
     }
 
     let surfNameOptions: SelectOption[] = [];
@@ -193,13 +193,13 @@ export function MapSettings(props: ModuleFCProps<MapState>) {
         label: attr,
     }));
 
-    if (timeType === TimeType.Interval || timeType === TimeType.TimePoint) {
+    if (timeType === SurfaceTimeType.Interval || timeType === SurfaceTimeType.TimePoint) {
         timeOrIntervalOptions = surfaceDirectory
             .getTimeOrIntervalStrings(computedSurfaceName, computedSurfaceAttribute)
             .map((interval) => ({
                 value: interval,
                 label:
-                    timeType === TimeType.TimePoint
+                    timeType === SurfaceTimeType.TimePoint
                         ? isoStringToDateLabel(interval)
                         : isoIntervalStringToDateLabel(interval),
             }));
@@ -228,8 +228,8 @@ export function MapSettings(props: ModuleFCProps<MapState>) {
             </Label>
             <RadioGroup
                 value={timeType}
-                options={Object.values(TimeType).map((val: TimeType) => {
-                    return { value: val, label: TimeTypeEnumToStringMapping[val] };
+                options={Object.values(SurfaceTimeType).map((val: SurfaceTimeType) => {
+                    return { value: val, label: SurfaceTimeTypeEnumToStringMapping[val] };
                 })}
                 onChange={handleTimeModeChange}
             />
@@ -270,8 +270,8 @@ export function MapSettings(props: ModuleFCProps<MapState>) {
                         size={5}
                     />
                 </Label>
-                {timeType !== TimeType.None && (
-                    <Label text={timeType === TimeType.TimePoint ? "Time Point" : "Time Interval"}>
+                {timeType !== SurfaceTimeType.None && (
+                    <Label text={timeType === SurfaceTimeType.TimePoint ? "Time Point" : "Time Interval"}>
                         <Select
                             options={timeOrIntervalOptions}
                             value={computedTimeOrInterval ? [computedTimeOrInterval] : []}
