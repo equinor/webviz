@@ -59,6 +59,7 @@ async def get_realizations_vector_data(
     # !!!!!!!!!!!!!!!!!!!!!!!!!!
     # !!!!!!!!!!!!!!!!!!!!!!!!!!
     # Testing error handling
+    # TO BE REMOVED BEFORE MERGE
     if vector_name == "FGIR":
         raise InvalidDataError("Dummy service error because vector name is FGIR", Service.SUMO)
     if vector_name == "FGIT":
