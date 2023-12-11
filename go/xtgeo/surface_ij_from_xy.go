@@ -1,10 +1,15 @@
 package xtgeo
 
 import (
+	"errors"
 	"math"
 )
 
-func XSucuIJFromXY(xin, yin, xori, xinc, yori, yinc float64, nx, ny, yflip int, rotDeg float64, flag int) (i, j int, rx, ry float64, errCode int) {
+// SurfaceIJFromXY computes the indices (I, J) and relative coordinates (rx, ry)
+// of a point in a rotated grid given its X, Y coordinates.
+// Returns indices (I, J), relative coordinates (rx, ry), and an error.
+func SurfaceIJFromXY(xin, yin, xori, xinc, yori, yinc float64, nx, ny, yflip int, rotDeg float64, flag int) (int, int, float64, float64, error) {
+
 	angle := rotDeg * Pi / 180.0
 
 	yinc = yinc * float64(yflip)
@@ -21,13 +26,13 @@ func XSucuIJFromXY(xin, yin, xori, xinc, yori, yinc float64, nx, ny, yflip int, 
 
 	// Determine relative coordinate on X axis
 	option2 := 2
-	_, _, _, relx, ierx := XPointLinePos(x1, y1, 0.0, x2, y2, 0.0, xin, yin, 0.0, option2)
+	_, _, _, relx, ierx := ProjectedPointOnLine(x1, y1, 0.0, x2, y2, 0.0, xin, yin, 0.0, option2)
 
 	// Determine relative coordinate on Y axis
-	_, _, _, rely, iery := XPointLinePos(x1, y1, 0.0, x3, y3, 0.0, xin, yin, 0.0, option2)
+	_, _, _, rely, iery := ProjectedPointOnLine(x1, y1, 0.0, x3, y3, 0.0, xin, yin, 0.0, option2)
 
 	if ierx == -1 || iery == -1 {
-		return 0, 0, 0.0, 0.0, -1
+		return 0, 0, 0.0, 0.0, errors.New("point is outside the surface")
 	}
 
 	// New coordinates
@@ -45,5 +50,5 @@ func XSucuIJFromXY(xin, yin, xori, xinc, yori, yinc float64, nx, ny, yflip int, 
 		jpos = int(py/yinc) + 1
 	}
 
-	return ipos, jpos, px, py, ExitSuccess
+	return ipos, jpos, px, py, nil
 }

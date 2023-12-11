@@ -1,0 +1,29 @@
+// // Xtgeo source: https://github.com/equinor/xtgeo/blob/main/src/clib/xtg/x_interp_map_nodes.c
+
+// package xtgeo
+// import (
+// 	"math"
+// )
+// func XInterpMapBilinearRotated(xV, yV, zV []float64, x, y float64) float64 {
+// 	isInside := XCheckIsInside(xV, yV, zV, x, y)
+// 	z := 0.0
+// 	if !isInside {
+// 		return UndefMap
+// 	}
+
+// 	previous := VeryLargeFloat
+// 	z = UndefMap
+// 	dx := math.Sqrt(math.Pow(xV[1]-xV[0], 2) + math.Pow(yV[1]-yV[0], 2))
+//     dy := math.Sqrt(math.Pow(xV[2]-xV[0], 2) + math.Pow(yV[2]-yV[0], 2))
+
+//     dxx, err := XPointLineDist(xV[0], yV[0], xV[2], yV[2], x, y)
+//     if err != nil {
+//         return UndefMap
+//     }
+
+//     dyy, err := XPointLineDist(xV[0], yV[0], xV[1], yV[1], x, y)
+//     if err != nil {
+//         return UndefMap
+//     }
+// 	return z
+// }

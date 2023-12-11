@@ -2,7 +2,9 @@
 // Todo: Add Tor`s function.
 package xtgeo
 
-func XInterpMapNearestNodes(xV, yV, zV []float64, x, y float64) float64 {
+import "fmt"
+
+func SurfaceInterpolateNearestNode(xV, yV, zV []float64, x, y float64) float64 {
 	xmin, ymin := UndefMap, UndefMap
 	xmax, ymax := -UndefMap, -UndefMap
 	z := 0.0
@@ -23,11 +25,14 @@ func XInterpMapNearestNodes(xV, yV, zV []float64, x, y float64) float64 {
 
 	}
 	if x < xmin || x > xmax || y < ymin || y > ymax {
+		fmt.Println("Error in SurfaceInterpolateNearestNode: x or y is outside the nodes")
+		fmt.Println(x, y, xmin, xmax, ymin, ymax)
 		return UndefMap
 	}
 
 	for i := 0; i <= 3; i++ {
 		if zV[i] > UndefMapLimit {
+			fmt.Println("Error in SurfaceInterpolateNearestNode: zV[i] is undefined")
 			return UndefMap
 		}
 	}
@@ -35,7 +40,7 @@ func XInterpMapNearestNodes(xV, yV, zV []float64, x, y float64) float64 {
 	previous := VeryLargeFloat
 	z = UndefMap
 	for i := 0; i < 4; i++ {
-		len, _, _ := XVectorInfo2(x, xV[i], y, yV[i], 1)
+		len, _, _ := CalculateVectorLengthAndAngle(x, xV[i], y, yV[i], 1)
 		if len < previous {
 			z = zV[i]
 			previous = len

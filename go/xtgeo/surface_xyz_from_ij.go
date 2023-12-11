@@ -5,7 +5,7 @@ import (
 	"math"
 )
 
-func XSurfXYZFromIJ(i, j int, xori, xinc, yori, yinc float64, nx, ny, yflip int, rotDeg float64, pMapV []float64, nn int, flag int) (x, y, z float64, err error) {
+func SurfaceXYZFromIJ(i, j int, xori, xinc, yori, yinc float64, nx, ny, yflip int, rotDeg float64, pMapV []float64, nn int, flag int) (x, y, z float64, err error) {
 	if i < 1 || i > nx || j < 1 || j > ny {
 		if i == 0 {
 			i = 1
@@ -27,7 +27,7 @@ func XSurfXYZFromIJ(i, j int, xori, xinc, yori, yinc float64, nx, ny, yflip int,
 
 	ic := -1
 	if flag == 0 {
-		ic = XIJK2IC(i, j, 1, nx, ny, 1, 0) // C order
+		ic, err = SurfaceIJKTo1D(i, j, 1, nx, ny, 1, 0, FortranOrder) // C order
 		if ic < 0 || ic >= nn {
 			z = Undef
 		} else {

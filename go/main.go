@@ -63,19 +63,26 @@ func main() {
 					return
 				}
 
-				zValue := xtgeo.XSurfGetZVFromXYV(
+				zValue, err := xtgeo.SurfaceZArrFromXYPairs(
 					iReq.Xcoords, iReq.Ycoords,
 					int(surface.Nx), int(surface.Ny),
 					float64(surface.Xori), float64(surface.Yori),
 					float64(surface.Xinc), float64(surface.Yinc),
 					1, float64(surface.Rot),
 					convertFloat32toFloat64(surface.DataSlice),
-					0,
+					xtgeo.NearestNeighbor,
 				)
+				if err != nil {
+					// Handle error
+					fmt.Printf("Error in SurfaceZArrFromXYPairs: %v\n", err)
+					return
+				}
+
 				// Lock the mutex to prevent concurrent access to the slice
 				mu.Lock()
 				allZValues = append(allZValues, zValue)
 				mu.Unlock()
+
 			}(data)
 		}
 
