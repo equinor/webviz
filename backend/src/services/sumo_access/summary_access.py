@@ -9,7 +9,6 @@ from fmu.sumo.explorer.objects import Case, TableCollection, Table
 
 from src.services.utils.arrow_helpers import sort_table_on_real_then_date, is_date_column_monotonically_increasing
 from src.services.utils.arrow_helpers import find_first_non_increasing_date_pair
-#from src.services.utils.arrow_helpers import detect_missing_realizations
 from src.services.utils.perf_timer import PerfTimer
 
 from ._field_metadata import create_vector_metadata_from_field_meta
