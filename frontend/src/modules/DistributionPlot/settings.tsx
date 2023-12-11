@@ -2,13 +2,13 @@ import React from "react";
 
 import { applyInitialSettingsToState } from "@framework/InitialSettings";
 import { ModuleFCProps } from "@framework/Module";
+import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { Dropdown } from "@lib/components/Dropdown";
 import { Label } from "@lib/components/Label";
 import { RadioGroup } from "@lib/components/RadioGroup";
 import { Slider } from "@lib/components/Slider";
 
-import { receiverDefs } from "./receiverDefs";
-import { PlotType, State } from "./state";
+import { DisplayMode, PlotType, State } from "./state";
 
 const plotTypes = [
     {
@@ -31,34 +31,35 @@ const plotTypes = [
 
 //-----------------------------------------------------------------------------------------------------------
 export function settings({ moduleContext, workbenchServices, initialSettings }: ModuleFCProps<State>) {
-    const [prevChannelXName, setPrevChannelXName] = React.useState<string | null>(null);
-    const [prevChannelYName, setPrevChannelYName] = React.useState<string | null>(null);
-    const [prevChannelColorName, setPrevChannelColorName] = React.useState<string | null>(null);
-
     const [plotType, setPlotType] = moduleContext.useStoreState("plotType");
     const [numBins, setNumBins] = moduleContext.useStoreState("numBins");
     const [orientation, setOrientation] = moduleContext.useStoreState("orientation");
+    const [displayMode, setDisplayMode] = moduleContext.useStoreState("displayMode");
 
     applyInitialSettingsToState(initialSettings, "plotType", "string", setPlotType);
     applyInitialSettingsToState(initialSettings, "numBins", "number", setNumBins);
     applyInitialSettingsToState(initialSettings, "orientation", "string", setOrientation);
 
-    const handlePlotTypeChanged = (value: string) => {
+    function handlePlotTypeChanged(value: string) {
         setPlotType(value as PlotType);
-    };
+    }
 
-    const handleNumBinsChanged = (_: Event, value: number | number[]) => {
+    function handleNumBinsChange(_: Event, value: number | number[]) {
         if (Array.isArray(value)) {
             return;
         }
         setNumBins(value);
-    };
+    }
 
-    const handleOrientationChanged = (e: React.ChangeEvent<HTMLInputElement>) => {
+    function handleOrientationChange(e: React.ChangeEvent<HTMLInputElement>) {
         setOrientation(e.target.value as "h" | "v");
-    };
+    }
 
-    const makeContent = (): React.ReactNode => {
+    function handleDisplayTypeChange(e: React.ChangeEvent<HTMLInputElement>) {
+        setDisplayMode(e.target.value as DisplayMode);
+    }
+
+    function makeContent(): React.ReactNode {
         if (plotType === null) {
             return null;
         }
@@ -67,7 +68,7 @@ export function settings({ moduleContext, workbenchServices, initialSettings }: 
         if (plotType === PlotType.Histogram) {
             content.push(
                 <Label text="Number of bins" key="number-of-bins">
-                    <Slider value={numBins} onChange={handleNumBinsChanged} min={1} max={30} valueLabelDisplay="auto" />
+                    <Slider value={numBins} onChange={handleNumBinsChange} min={1} max={30} valueLabelDisplay="auto" />
                 </Label>
             );
         }
@@ -86,7 +87,7 @@ export function settings({ moduleContext, workbenchServices, initialSettings }: 
                                 value: "v",
                             },
                         ]}
-                        onChange={handleOrientationChanged}
+                        onChange={handleOrientationChange}
                         value={orientation}
                     />
                 </Label>
@@ -94,14 +95,34 @@ export function settings({ moduleContext, workbenchServices, initialSettings }: 
         }
 
         return content;
-    };
+    }
 
     return (
-        <>
-            <Label text="Plot type">
+        <div className="flex flex-col gap-2">
+            <CollapsibleGroup title="Plot type" expanded>
                 <Dropdown value={plotType as string} options={plotTypes} onChange={handlePlotTypeChanged} />
-            </Label>
-            {makeContent()}
-        </>
+            </CollapsibleGroup>
+            <CollapsibleGroup title="Plot settings" expanded>
+                <div className="flex flex-col gap-2">
+                    {makeContent()}
+                    <Label text="Display multiple plots as">
+                        <RadioGroup
+                            options={[
+                                {
+                                    label: "Matrix",
+                                    value: DisplayMode.PlotMatrix,
+                                },
+                                {
+                                    label: "Single plot with multiple colors",
+                                    value: DisplayMode.SinglePlotMultiColor,
+                                },
+                            ]}
+                            onChange={handleDisplayTypeChange}
+                            value={displayMode}
+                        />
+                    </Label>
+                </div>
+            </CollapsibleGroup>
+        </div>
     );
 }

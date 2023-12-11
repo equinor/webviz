@@ -1,55 +1,23 @@
 import React from "react";
-import Plot from "react-plotly.js";
 
-import { DataElement, KeyKind, KeyType } from "@framework/DataChannelTypes";
+import { KeyKind } from "@framework/DataChannelTypes";
 import { ModuleFCProps } from "@framework/Module";
 import { Tag } from "@lib/components/Tag";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { ColorScaleGradientType } from "@lib/utils/ColorScale";
-import { ColorSet } from "@lib/utils/ColorSet";
 import { ContentInfo } from "@modules/_shared/components/ContentMessage";
 
 import { Layout, PlotData } from "plotly.js";
 
-import { BarChart } from "./components/barChart";
-import { Histogram } from "./components/histogram";
-import { ScatterPlot } from "./components/scatterPlot";
-import { ScatterPlotWithColorMapping } from "./components/scatterPlotWithColorMapping";
-import { PlotType, State } from "./state";
-import { makeSubplots } from "./utils/Figure";
-import { makeHistogram } from "./utils/histogram";
-import { makePlotGrid } from "./utils/plotGrid";
-import { makeScatterPlotMatrix } from "./utils/scatterPlotMatrix";
+import { DisplayMode, PlotType, State } from "./state";
+import { Figure, makeSubplots } from "./utils/Figure";
+import { makeHistogramBins, makeHistogramTrace } from "./utils/histogram";
 
-function nFormatter(num: number, digits: number): string {
-    const lookup = [
-        { value: 1, symbol: "" },
-        { value: 1e3, symbol: "k" },
-        { value: 1e6, symbol: "M" },
-        { value: 1e9, symbol: "B" },
-        { value: 1e12, symbol: "T" },
-        { value: 1e15, symbol: "P" },
-        { value: 1e18, symbol: "E" },
-    ];
-    const rx = /\.0+$|(\.[0-9]*[1-9])0+$/;
-    const item = lookup
-        .slice()
-        .reverse()
-        .find(function (item) {
-            return num >= item.value;
-        });
-    return item ? (num / item.value).toFixed(digits).replace(rx, "$1") + item.symbol : "0";
-}
-
-export const view = ({
-    moduleContext,
-    workbenchServices,
-    initialSettings,
-    workbenchSettings,
-}: ModuleFCProps<State>) => {
+export const view = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>) => {
     const [plotType, setPlotType] = moduleContext.useStoreState("plotType");
     const numBins = moduleContext.useStoreValue("numBins");
     const orientation = moduleContext.useStoreValue("orientation");
+    const displayMode = moduleContext.useStoreValue("displayMode");
 
     const colorSet = workbenchSettings.useColorSet();
     const seqColorScale = workbenchSettings.useContinuousColorScale({
@@ -61,12 +29,10 @@ export const view = ({
 
     const receiverX = moduleContext.useChannelReceiver({
         idString: "channelX",
-        initialSettings,
         expectedKindsOfKeys: [KeyKind.Realization],
     });
     const receiverY = moduleContext.useChannelReceiver({
         idString: "channelY",
-        initialSettings,
         expectedKindsOfKeys: [KeyKind.Realization],
     });
 
@@ -110,61 +76,78 @@ export const view = ({
             const numCols = Math.floor(Math.sqrt(numContents));
             const numRows = Math.ceil(numContents / numCols);
 
-            const figure = makeSubplots({
-                numRows,
-                numCols,
-                width: wrapperDivSize.width,
-                height: wrapperDivSize.height,
-                sharedXAxes: false,
-                sharedYAxes: false,
-                verticalSpacing: 0.15 / numRows,
-                horizontalSpacing: 0.3 / numCols,
-            });
+            let figure: Figure | null = null;
 
-            let cellIndex = 0;
-            for (let rowIndex = 0; rowIndex < numRows; rowIndex++) {
-                for (let colIndex = 0; colIndex < numCols; colIndex++) {
-                    if (cellIndex >= numContents) {
-                        break;
-                    }
-                    const data = receiverX.channel.contents[cellIndex];
-                    const xValues = data.dataArray.map((el: any) => el.value);
+            if (displayMode === DisplayMode.PlotMatrix) {
+                figure = makeSubplots({
+                    numRows,
+                    numCols,
+                    width: wrapperDivSize.width,
+                    height: wrapperDivSize.height,
+                    sharedXAxes: false,
+                    sharedYAxes: false,
+                    verticalSpacing: 0.3 / numRows,
+                    horizontalSpacing: 0.3 / numCols,
+                });
+            } else {
+                figure = new Figure({
+                    layout: {
+                        width: wrapperDivSize.width,
+                        height: wrapperDivSize.height,
+                    },
+                });
+            }
 
-                    const xMin = Math.min(...xValues);
-                    const xMax = Math.max(...xValues);
-                    const binSize = (xMax - xMin) / numBins;
-                    const bins: { from: number; to: number }[] = Array.from({ length: numBins }, (_, i) => ({
-                        from: xMin + i * binSize,
-                        to: xMin + (i + 1) * binSize,
-                    }));
-                    bins[bins.length - 1].to = xMax + 1e-6; // make sure the last bin includes the max value
-                    const binValues: number[] = bins.map(
-                        (range) => xValues.filter((el) => el >= range.from && el < range.to).length
-                    );
+            if (displayMode === DisplayMode.PlotMatrix) {
+                let cellIndex = 0;
+                for (let rowIndex = 0; rowIndex < numRows; rowIndex++) {
+                    for (let colIndex = 0; colIndex < numCols; colIndex++) {
+                        if (cellIndex >= numContents) {
+                            break;
+                        }
+                        const data = receiverX.channel.contents[cellIndex];
+                        const xValues = data.dataArray.map((el: any) => el.value);
 
-                    const binStrings = bins.map((range) => `${nFormatter(range.from, 2)}-${nFormatter(range.to, 2)}`);
-
-                    const trace: Partial<PlotData> = {
-                        x: binStrings,
-                        y: binValues,
-                        marker: {
-                            size: 5,
+                        const trace = makeHistogramTrace({
+                            xValues: xValues,
+                            numBins,
                             color: colorSet.getFirstColor(),
-                        },
-                        showlegend: false,
-                        type: "bar",
-                    };
+                        });
 
-                    const xAxisTitle = data.displayName;
+                        figure.addTrace(trace, rowIndex + 1, colIndex + 1);
 
-                    figure.addTrace(trace, rowIndex + 1, colIndex + 1);
-                    const patch: Partial<Layout> = {
-                        [`xaxis${cellIndex + 1}`]: {
-                            title: xAxisTitle,
-                        },
-                    };
-                    figure.updateLayout(patch);
-                    cellIndex++;
+                        const xAxisTitle = data.displayName;
+
+                        const patch: Partial<Layout> = {
+                            [`xaxis${cellIndex + 1}`]: {
+                                title: xAxisTitle,
+                            },
+                            [`yaxis${cellIndex + 1}`]: {
+                                title: "Percent",
+                            },
+                        };
+                        figure.updateLayout(patch);
+                        cellIndex++;
+                    }
+                }
+            } else {
+                const xValuesArray = receiverX.channel.contents.map((content) =>
+                    content.dataArray.map((el: any) => el.value)
+                );
+                const bins = makeHistogramBins({
+                    xValuesArray,
+                    numBins,
+                });
+
+                for (let i = 0; i < xValuesArray.length; i++) {
+                    const trace = makeHistogramTrace({
+                        xValues: xValuesArray[i],
+                        numBins,
+                        bins,
+                        color: colorSet.getColor(i),
+                    });
+
+                    figure.addTrace(trace);
                 }
             }
 
@@ -305,6 +288,13 @@ export const view = ({
                     }
                 });
             });
+            const patch: Partial<Layout> = {
+                margin: {
+                    t: 5,
+                    r: 5,
+                },
+            };
+            figure.updateLayout(patch);
             return figure.makePlot();
         }
     }

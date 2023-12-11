@@ -1,6 +1,6 @@
 import { ColorSet } from "@lib/utils/ColorSet";
 
-import { Histogram } from "../components/histogram";
+import { PlotData } from "plotly.js";
 
 function nFormatter(num: number, digits: number): string {
     const lookup = [
@@ -22,43 +22,51 @@ function nFormatter(num: number, digits: number): string {
     return item ? (num / item.value).toFixed(digits).replace(rx, "$1") + item.symbol : "0";
 }
 
-export function makeHistogram({
-    title,
-    xValues,
+export function makeHistogramBins({
+    xValuesArray,
     numBins,
-    colorSet,
-    width,
-    height,
 }: {
-    title: string;
-    xValues: number[];
+    xValuesArray: number[][];
     numBins: number;
-    colorSet: ColorSet;
-    width: number;
-    height: number;
-}): React.ReactNode {
-    const xMin = Math.min(...xValues);
-    const xMax = Math.max(...xValues);
+}): { from: number; to: number }[] {
+    const xMin = Math.min(...xValuesArray.map((el) => Math.min(...el)));
+    const xMax = Math.max(...xValuesArray.map((el) => Math.max(...el)));
     const binSize = (xMax - xMin) / numBins;
     const bins: { from: number; to: number }[] = Array.from({ length: numBins }, (_, i) => ({
         from: xMin + i * binSize,
         to: xMin + (i + 1) * binSize,
     }));
     bins[bins.length - 1].to = xMax + 1e-6; // make sure the last bin includes the max value
-    const binValues: number[] = bins.map((range) => xValues.filter((el) => el >= range.from && el < range.to).length);
+    return bins;
+}
 
+export function makeHistogramTrace({
+    xValues,
+    numBins,
+    bins,
+    color,
+}: {
+    xValues: number[];
+    numBins: number;
+    bins?: { from: number; to: number }[];
+    color: string;
+}): Partial<PlotData> {
+    if (!bins) {
+        bins = makeHistogramBins({ xValuesArray: [xValues], numBins });
+    }
+    const binValues: number[] = bins.map((range) => xValues.filter((el) => el >= range.from && el < range.to).length);
     const binStrings = bins.map((range) => `${nFormatter(range.from, 2)}-${nFormatter(range.to, 2)}`);
 
-    return (
-        <Histogram
-            key="histogram"
-            x={binStrings}
-            y={binValues}
-            xAxisTitle={`${title}`}
-            yAxisTitle={""}
-            width={width}
-            height={height}
-            colorSet={colorSet}
-        />
-    );
+    const trace: Partial<PlotData> = {
+        x: binStrings,
+        y: binValues,
+        marker: {
+            size: 5,
+            color: color,
+        },
+        showlegend: false,
+        type: "bar",
+    };
+
+    return trace;
 }

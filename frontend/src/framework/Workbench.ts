@@ -267,12 +267,18 @@ export class Workbench {
                     }
 
                     const listensToModuleInstance = this._moduleInstances[moduleInstanceIndex];
-                    const channel = listensToModuleInstance.getChannelManager().getChannel(dataChannel.channelName);
+                    const channel = listensToModuleInstance.getChannelManager().getChannel(dataChannel.channelIdString);
                     if (!channel) {
                         throw new Error("Could not find channel");
                     }
 
-                    initialSettings[propName] = channel.getDisplayName();
+                    const receiver = moduleInstance.getChannelManager().getReceiver(propName);
+
+                    if (!receiver) {
+                        throw new Error("Could not find receiver");
+                    }
+
+                    receiver.subscribeToChannel(channel, "All");
                 }
             }
 

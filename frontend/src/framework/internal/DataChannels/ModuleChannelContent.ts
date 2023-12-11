@@ -9,15 +9,22 @@ export enum ModuleChannelContentNotificationTopic {
     DataArrayChange = "data-array-change",
 }
 
+export interface ModuleChannelContentMetaData {
+    ensembleIdentString: string;
+    unit?: string;
+}
+
+export type DataGenerator = () => {
+    data: DataElement<KeyType>[];
+    metaData: ModuleChannelContentMetaData;
+};
+
 export class ModuleChannelContent {
     private _idString: string;
     private _displayName: string;
-    private _dataGenerator: () => {
-        data: DataElement<KeyType>[];
-        metaData?: Record<string, string | number>;
-    };
+    private _dataGenerator: DataGenerator;
     private _cachedDataArray: DataElement<KeyType>[] | null = null;
-    private _cachedMetaData: Record<string, string | number> | null = null;
+    private _cachedMetaData: ModuleChannelContentMetaData | null = null;
     private _subscribersMap: Map<ModuleChannelContentNotificationTopic, Set<() => void>> = new Map();
 
     constructor({
@@ -27,10 +34,7 @@ export class ModuleChannelContent {
     }: {
         idString: string;
         displayName: string;
-        dataGenerator: () => {
-            data: DataElement<KeyType>[];
-            metaData?: Record<string, string | number>;
-        };
+        dataGenerator: DataGenerator;
     }) {
         this._idString = idString;
         this._displayName = displayName;
@@ -48,7 +52,7 @@ export class ModuleChannelContent {
     publish(
         dataGenerator: () => {
             data: DataElement<KeyType>[];
-            metaData?: Record<string, string | number>;
+            metaData: ModuleChannelContentMetaData;
         }
     ): void {
         this._dataGenerator = dataGenerator;
@@ -71,11 +75,11 @@ export class ModuleChannelContent {
         return this._cachedDataArray as DataElement<KeyType>[];
     }
 
-    getMetaData(): Record<string, string | number> | null {
+    getMetaData(): ModuleChannelContentMetaData {
         if (this._cachedMetaData === null) {
             this.runDataGenerator();
         }
-        return this._cachedMetaData;
+        return this._cachedMetaData as ModuleChannelContentMetaData;
     }
 
     subscribe(topic: ModuleChannelContentNotificationTopic, callback: () => void): void {

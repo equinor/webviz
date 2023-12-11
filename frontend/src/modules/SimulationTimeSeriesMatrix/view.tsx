@@ -160,8 +160,11 @@ export const view = ({ moduleContext, workbenchSession, workbenchSettings }: Mod
             const data: { key: number; value: number }[] = [];
             let metaData: {
                 unit: string;
-                ensemble: string;
-            } | null = null;
+                ensembleIdentString: string;
+            } = {
+                unit: "",
+                ensembleIdentString: "",
+            };
             loadedVectorSpecificationsAndRealizationData.forEach((vec) => {
                 if (vec.vectorSpecification.vectorName === vectorName) {
                     let unit = "";
@@ -176,7 +179,7 @@ export const view = ({ moduleContext, workbenchSession, workbenchSettings }: Mod
                     if (metaData === null) {
                         metaData = {
                             unit,
-                            ensemble: vec.vectorSpecification.ensembleIdent.toString(),
+                            ensembleIdentString: vec.vectorSpecification.ensembleIdent.toString(),
                         };
                     }
                 }

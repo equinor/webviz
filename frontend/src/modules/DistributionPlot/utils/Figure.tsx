@@ -19,7 +19,7 @@ export class Figure {
     }) {
         this._plotData = data ?? [];
         this._plotLayout = layout ?? {};
-        this._gridAxesMapping = gridAxesMapping ?? [];
+        this._gridAxesMapping = gridAxesMapping ?? [[1, 1]];
     }
 
     private getAxisIndex(row: number, column: number): number {

@@ -93,9 +93,8 @@ export const view = ({
             return {
                 data,
                 metaData: {
-                    ensembleIdent: ensemble?.getIdent().toString() ?? "",
+                    ensembleIdentString: ensemble?.getIdent().toString() ?? "",
                     unit: "unit",
-                    description: "description",
                 },
             };
         },

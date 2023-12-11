@@ -32,7 +32,9 @@ export const view = (props: ModuleFCProps<State>) => {
     props.moduleContext.usePublishChannelContents({
         dependencies: [tableData.data, tableData.isFetching],
         channelIdString: Channels.ResponseValuePerRealization,
-        contents: responseNames.map((el) => ({ idString: el, displayName: el })),
+        contents: responseNames
+            .map((el) => ensembleIdents.map((ens) => ({ idString: `${el}-${ens}`, displayName: `${el} (${ens})` })))
+            .flat(),
         dataGenerator: (contentIdString: string) => {
             const data = tableData.data?.find((el) => el.responseName === contentIdString);
             const dataArray: DataElement<KeyType.Number>[] = [];
@@ -46,6 +48,9 @@ export const view = (props: ModuleFCProps<State>) => {
             }
             return {
                 data: dataArray,
+                metaData: {
+                    ensembleIdentString: data?.ensembleIdent?.toString() ?? "",
+                },
             };
         },
     });

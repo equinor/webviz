@@ -79,7 +79,12 @@ export const view = ({ moduleContext, workbenchSession, workbenchServices }: Mod
                         });
                     });
                 }
-                return { data };
+                return {
+                    data,
+                    metaData: {
+                        ensembleIdentString: vectorSpec.ensembleIdent.toString(),
+                    },
+                };
             },
         });
     }

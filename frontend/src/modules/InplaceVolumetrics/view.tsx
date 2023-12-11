@@ -92,7 +92,7 @@ export const view = (props: ModuleFCProps<State>) => {
                         });
                     });
                 }
-                return { data: data };
+                return { data: data, metaData: { ensembleIdentString: ensembleIdent?.toString() ?? "" } };
             },
         });
     }

@@ -2,13 +2,14 @@ import React from "react";
 
 import { DataElement, KeyKind, KeyKindToKeyTypeMapping } from "@framework/DataChannelTypes";
 
+import { ModuleChannelContentMetaData } from "../ModuleChannelContent";
 import { ModuleChannelReceiver, ModuleChannelReceiverNotificationTopic } from "../ModuleChannelReceiver";
 
 export interface ChannelReceiverChannelContent<TKeyKinds extends KeyKind[]> {
     idString: string;
     displayName: string;
     dataArray: DataElement<KeyKindToKeyTypeMapping[TKeyKinds[number]]>[];
-    metaData: Record<string, string | number> | undefined;
+    metaData: ModuleChannelContentMetaData;
 }
 
 export type ChannelReceiverReturnData<TKeyKinds extends KeyKind[]> =
@@ -68,7 +69,7 @@ export function useChannelReceiver<TGenres extends KeyKind[]>({
                         idString: content.getIdString(),
                         displayName: content.getDisplayName(),
                         dataArray: content.getDataArray() as DataElement<KeyKindToKeyTypeMapping[TGenres[number]]>[],
-                        metaData: content.getMetaData() ?? undefined,
+                        metaData: content.getMetaData(),
                     };
                 });
 
@@ -109,15 +110,12 @@ export function useChannelReceiver<TGenres extends KeyKind[]>({
         };
     }
 
-    let channelObject: ChannelReceiverReturnData<typeof expectedKindsOfKeys>["channel"] | undefined = undefined;
-
-    if (channel) {
-        channelObject = {
-            idString: channel.getIdString() ?? "",
-            displayName: channel.getDisplayName() ?? "",
-            moduleInstanceId: channel.getManager().getModuleInstanceId() ?? "",
-            kindOfKey: channel.getKindOfKey() ?? "",
-            contents: contents,
+    if (!channel) {
+        return {
+            idString: receiver?.getIdString() ?? "",
+            displayName: receiver?.getDisplayName() ?? "",
+            channel: undefined,
+            hasActiveSubscription: false,
         };
     }
 

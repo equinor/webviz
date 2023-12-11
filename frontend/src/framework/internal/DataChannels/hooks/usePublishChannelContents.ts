@@ -2,9 +2,8 @@ import React from "react";
 
 import { isEqual } from "lodash";
 
-import { DataElement, KeyType } from "../../../DataChannelTypes";
 import { ModuleChannel } from "../ModuleChannel";
-import { ModuleChannelContentDefinition } from "../ModuleChannelContent";
+import { DataGenerator, ModuleChannelContentDefinition } from "../ModuleChannelContent";
 
 export function usePublishChannelContents({
     channel,
@@ -15,10 +14,7 @@ export function usePublishChannelContents({
     channel: ModuleChannel;
     dependencies: any[];
     contents: ModuleChannelContentDefinition[];
-    dataGenerator: (contentIdString: string) => {
-        data: DataElement<KeyType>[];
-        metaData?: Record<string, string | number>;
-    };
+    dataGenerator: (contentIdString: string) => ReturnType<DataGenerator>;
 }) {
     const [prevDependencies, setPrevDependencies] = React.useState<any[]>([]);
 

@@ -3,6 +3,7 @@ import React from "react";
 import { KeyKind } from "@framework/DataChannelTypes";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { ModuleFCProps } from "@framework/Module";
+import { Checkbox } from "@lib/components/Checkbox";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { Dropdown } from "@lib/components/Dropdown";
 import { Label } from "@lib/components/Label";
@@ -36,18 +37,25 @@ export function settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
 
     const sensitivityNames: string[] = [];
     if (responseReceiver.hasActiveSubscription) {
-        if (responseReceiver.channel.contents.length > 0 && responseReceiver.channel.contents[0].metaData) {
-            const ensembleIdentString = responseReceiver.channel.contents[0].metaData.ensembleIdent;
+        if (
+            responseReceiver.channel.contents.length > 0 &&
+            responseReceiver.channel.contents[0].metaData.ensembleIdentString
+        ) {
+            const ensembleIdentString = responseReceiver.channel.contents[0].metaData.ensembleIdentString;
             if (typeof ensembleIdentString === "string") {
-                const ensembleIdent = EnsembleIdent.fromString(ensembleIdentString);
-                const ensemble = ensembleSet.findEnsemble(ensembleIdent);
-                if (ensemble) {
-                    sensitivityNames.push(
-                        ...(ensemble
-                            .getSensitivities()
-                            ?.getSensitivityArr()
-                            .map((el) => el.name) ?? [])
-                    );
+                try {
+                    const ensembleIdent = EnsembleIdent.fromString(ensembleIdentString);
+                    const ensemble = ensembleSet.findEnsemble(ensembleIdent);
+                    if (ensemble) {
+                        sensitivityNames.push(
+                            ...(ensemble
+                                .getSensitivities()
+                                ?.getSensitivityArr()
+                                .map((el) => el.name) ?? [])
+                        );
+                    }
+                } catch (e) {
+                    console.error(e);
                 }
             }
         }
@@ -104,23 +112,23 @@ export function settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
             </CollapsibleGroup>
             <CollapsibleGroup title="View settings" expanded>
                 <div className="flex flex-col gap-4">
-                    <Label text="Show sensitivities without impact">
-                        <Switch checked={hideZeroY} onChange={handleHideZeroYChange} />
-                    </Label>
-                    <Label text="Show labels">
-                        <Switch
-                            checked={showLabels}
-                            onChange={handleShowLabelsChange}
-                            disabled={displayComponentType !== DisplayComponentType.TornadoChart}
-                        />
-                    </Label>
-                    <Label text="Show realization points">
-                        <Switch
-                            checked={showRealizationPoints}
-                            onChange={handleShowRealizationPointsChange}
-                            disabled={displayComponentType !== DisplayComponentType.TornadoChart}
-                        />
-                    </Label>
+                    <Checkbox
+                        checked={hideZeroY}
+                        onChange={handleHideZeroYChange}
+                        label="Show sensitivities without impact"
+                    />
+                    <Checkbox
+                        checked={showLabels}
+                        onChange={handleShowLabelsChange}
+                        disabled={displayComponentType !== DisplayComponentType.TornadoChart}
+                        label="Show labels"
+                    />
+                    <Checkbox
+                        checked={showRealizationPoints}
+                        onChange={handleShowRealizationPointsChange}
+                        disabled={displayComponentType !== DisplayComponentType.TornadoChart}
+                        label="Show realization points"
+                    />
                 </div>
             </CollapsibleGroup>
         </div>

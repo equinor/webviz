@@ -1,11 +1,11 @@
 import React from "react";
 
-import { DataElement, KeyKind, KeyType, ModuleChannelContentDefinition } from "./DataChannelTypes";
-import { InitialSettings } from "./InitialSettings";
+import { KeyKind, ModuleChannelContentDefinition } from "./DataChannelTypes";
 import { ModuleInstance } from "./ModuleInstance";
 import { ModuleInstanceStatusController } from "./ModuleInstanceStatusController";
 import { StateBaseType, StateStore, useSetStoreValue, useStoreState, useStoreValue } from "./StateStore";
 import { SyncSettingKey } from "./SyncSettings";
+import { DataGenerator } from "./internal/DataChannels/ModuleChannelContent";
 import { useChannelReceiver } from "./internal/DataChannels/hooks/useChannelReceiver";
 import { usePublishChannelContents } from "./internal/DataChannels/hooks/usePublishChannelContents";
 
@@ -64,25 +64,11 @@ export class ModuleContext<S extends StateBaseType> {
     useChannelReceiver<TKeyKinds extends KeyKind[]>(options: {
         idString: string;
         expectedKindsOfKeys: TKeyKinds;
-        initialSettings?: InitialSettings;
     }): ReturnType<typeof useChannelReceiver<(typeof options)["expectedKindsOfKeys"]>> {
         const receiver = this._moduleInstance.getChannelManager().getReceiver(options.idString);
 
-        React.useEffect(() => {
-            if (options.initialSettings) {
-                const setting = options.initialSettings.get(options.idString, "string");
-                if (setting && receiver) {
-                    const channel = this._moduleInstance.getChannelManager().getChannel(setting as any);
-                    if (!channel) {
-                        return;
-                    }
-                    receiver.subscribeToChannel(channel, "All");
-                }
-            }
-        }, [options.initialSettings, receiver]);
-
         return useChannelReceiver({
-            receiver: this._moduleInstance.getChannelManager().getReceiver(options.idString),
+            receiver,
             expectedKindsOfKeys: options.expectedKindsOfKeys,
         });
     }
@@ -91,10 +77,7 @@ export class ModuleContext<S extends StateBaseType> {
         channelIdString: string;
         dependencies: any[];
         contents: ModuleChannelContentDefinition[];
-        dataGenerator: (contentIdString: string) => {
-            data: DataElement<KeyType>[];
-            metaData?: Record<string, string | number>;
-        };
+        dataGenerator: (contentIdString: string) => ReturnType<DataGenerator>;
     }) {
         const channel = this._moduleInstance.getChannelManager().getChannel(options.channelIdString);
         if (!channel) {

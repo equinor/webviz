@@ -4,8 +4,8 @@ import { LayoutElement } from "./Workbench";
 
 export type DataChannelTemplate = {
     listensToInstanceRef: string;
-    keyCategory: KeyKind;
-    channelName: string;
+    kindOfKey: KeyKind;
+    channelIdString: string;
 };
 
 export type TemplateLayoutElement = Omit<LayoutElement, "moduleInstanceId" | "moduleName">;

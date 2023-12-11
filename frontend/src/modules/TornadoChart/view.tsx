@@ -5,6 +5,7 @@ import { Ensemble } from "@framework/Ensemble";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { ModuleFCProps } from "@framework/Module";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
+import { Tag } from "@lib/components/Tag";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { ContentInfo } from "@modules/_shared/components/ContentMessage/contentMessage";
 
@@ -29,10 +30,8 @@ export const view = ({ moduleContext, workbenchSession, workbenchSettings, initi
     const responseReceiver = moduleContext.useChannelReceiver({
         idString: "response",
         expectedKindsOfKeys: [KeyKind.Realization],
-        initialSettings,
     });
 
-    // This is the output slot
     const setSelectedSensitivity = moduleContext.useSetStoreValue("selectedSensitivity");
 
     const realizations: number[] = [];
@@ -46,8 +45,8 @@ export const view = ({ moduleContext, workbenchSession, workbenchSettings, initi
                 values.push(el.value as number);
             });
         }
-        if (responseReceiver.channel.contents[0].metaData) {
-            const ensembleIdentString = responseReceiver.channel.contents[0].metaData.ensembleIdent;
+        if (responseReceiver.channel.contents[0].metaData.ensembleIdentString) {
+            const ensembleIdentString = responseReceiver.channel.contents[0].metaData.ensembleIdentString;
             if (typeof ensembleIdentString === "string") {
                 const ensembleIdent = EnsembleIdent.fromString(ensembleIdentString);
                 channelEnsemble = ensembleSet.findEnsemble(ensembleIdent);
@@ -64,29 +63,27 @@ export const view = ({ moduleContext, workbenchSession, workbenchSettings, initi
 
     let computedSensitivityResponseDataset: SensitivityResponseDataset | null = null;
     if (referenceSensitivityName && sensitivities && realizations.length > 0 && values.length > 0) {
-        // How to handle errors?
-
-        try {
-            const sensitivityResponseCalculator = new SensitivityResponseCalculator(
-                sensitivities,
-                {
-                    realizations,
-                    values,
-                    name: responseReceiver.channel?.contents[0].displayName ?? "",
-                    unit: "",
-                },
-                referenceSensitivityName
-            );
-            computedSensitivityResponseDataset = sensitivityResponseCalculator.computeSensitivitiesForResponse();
-        } catch (e) {
-            console.warn(e);
-        }
+        const sensitivityResponseCalculator = new SensitivityResponseCalculator(
+            sensitivities,
+            {
+                realizations,
+                values,
+                name: responseReceiver.channel?.contents[0].displayName ?? "",
+                unit: "",
+            },
+            referenceSensitivityName
+        );
+        computedSensitivityResponseDataset = sensitivityResponseCalculator.computeSensitivitiesForResponse();
     }
 
     function makeContent() {
         moduleContext.setInstanceTitle(`Tornado chart`);
         if (!responseReceiver.hasActiveSubscription) {
-            return <ContentInfo>Select a data channel</ContentInfo>;
+            return (
+                <ContentInfo>
+                    Connect a data channel to <Tag label="Response" />
+                </ContentInfo>
+            );
         }
 
         if (responseReceiver.channel.contents.length === 0) {

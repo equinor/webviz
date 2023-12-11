@@ -1,4 +1,4 @@
-import { ModuleChannelContent, ModuleChannelContentNotificationTopic } from "./ModuleChannelContent";
+import { DataGenerator, ModuleChannelContent, ModuleChannelContentNotificationTopic } from "./ModuleChannelContent";
 import { ModuleChannelManager } from "./ModuleChannelManager";
 
 import { DataElement, KeyKind, KeyType } from "../../DataChannelTypes";
@@ -82,10 +82,7 @@ export class ModuleChannel {
     }: {
         idString: string;
         displayName: string;
-        dataGenerator: () => {
-            data: DataElement<KeyType>[];
-            metaData?: Record<string, string | number>;
-        };
+        dataGenerator: DataGenerator;
     }): void {
         const content = new ModuleChannelContent({ idString, displayName, dataGenerator });
         content.subscribe(ModuleChannelContentNotificationTopic.DataArrayChange, this.handleContentDataArraysChange);
