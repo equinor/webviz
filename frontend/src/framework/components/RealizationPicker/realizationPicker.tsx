@@ -42,7 +42,7 @@ type RealizationRangeTagProps = {
     onKeyDown: (event: React.KeyboardEvent<HTMLInputElement>) => void;
 };
 
-const REALIZATION_RANGE_REGEX = /^\d+(\-\d+)?$/;
+const REALIZATION_RANGE_REGEX = /^\d+(-\d+)?$/;
 
 const RealizationRangeTag: React.FC<RealizationRangeTagProps> = (props) => {
     const [prevValidRealizations, setPrevValidRealizations] = React.useState<typeof props.validRealizations | null>(
@@ -158,6 +158,8 @@ const RealizationRangeTag: React.FC<RealizationRangeTagProps> = (props) => {
         </li>
     );
 };
+
+RealizationRangeTag.displayName = "RealizationRangeTag";
 
 function calcUniqueSelections(selections: readonly Selection[], validRealizations?: readonly number[]): number[] {
     const uniqueSelections = new Set<number>();
@@ -416,3 +418,5 @@ export const RealizationPicker: React.FC<RealizationPickerProps> = (props) => {
         </BaseComponent>
     );
 };
+
+RealizationPicker.displayName = "RealizationPicker";
