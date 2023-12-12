@@ -1,6 +1,5 @@
 import React from "react";
 
-import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { BaseComponent, BaseComponentProps } from "@lib/components/BaseComponent";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { getTextWidthWithFont } from "@lib/utils/textSize";
@@ -8,16 +7,21 @@ import { Close } from "@mui/icons-material";
 
 import { v4 } from "uuid";
 
+enum SelectionValidity {
+    Valid = "valid",
+    InputError = "inputError",
+    Invalid = "invalid",
+}
+
+enum CaretPosition {
+    Start = "start",
+    End = "end",
+}
+
 type Selection = {
     uuid: string;
     value: string;
 };
-
-enum SelectionValidity {
-    Valid,
-    InputError,
-    Invalid,
-}
 
 type SelectionValidityInfo = {
     validity: SelectionValidity;
@@ -28,18 +32,22 @@ type SelectionValidityInfo = {
 type RealizationRangeTagProps = {
     uuid: string;
     active: boolean;
-    caretPosition?: "start" | "end";
+    caretPosition?: CaretPosition;
     initialValue: string;
     checkValidity: (value: string) => SelectionValidityInfo;
+    validRealizations?: readonly number[];
     onChange: (value: string) => void;
     onRemove: () => void;
     onFocus: () => void;
     onKeyDown: (event: React.KeyboardEvent<HTMLInputElement>) => void;
 };
 
-const realizationRangeRegex = /^\d+(\-\d+)?$/;
+const REALIZATION_RANGE_REGEX = /^\d+(\-\d+)?$/;
 
 const RealizationRangeTag: React.FC<RealizationRangeTagProps> = (props) => {
+    const [prevValidRealizations, setPrevValidRealizations] = React.useState<typeof props.validRealizations | null>(
+        null
+    );
     const [validityInfo, setValidityInfo] = React.useState<SelectionValidityInfo>(
         props.checkValidity(props.initialValue)
     );
@@ -48,10 +56,15 @@ const RealizationRangeTag: React.FC<RealizationRangeTagProps> = (props) => {
 
     const ref = React.useRef<HTMLInputElement>(null);
 
+    if (prevValidRealizations !== props.validRealizations) {
+        setPrevValidRealizations(props.validRealizations);
+        setValidityInfo(props.checkValidity(value));
+    }
+
     React.useEffect(() => {
         if (props.active && ref.current) {
             ref.current.focus();
-            if (props.caretPosition === "start") {
+            if (props.caretPosition === CaretPosition.Start) {
                 ref.current.setSelectionRange(0, 0);
             } else {
                 ref.current.setSelectionRange(value.length, value.length);
@@ -101,8 +114,8 @@ const RealizationRangeTag: React.FC<RealizationRangeTagProps> = (props) => {
 
         return (
             <span
-                className="rounded-lg bg-white text-xs mr-2 p-1 font-semibold"
-                title={`Matches ${validityInfo.numMatchedRealizations} valid selections, but only ${validityInfo.numMatchedValidRealizations} are valid.`}
+                className="rounded-lg bg-white text-xs mr-2 p-0.5 font-semibold"
+                title={`Matches ${validityInfo.numMatchedRealizations} realizations, but only ${validityInfo.numMatchedValidRealizations} are valid.`}
             >
                 {validityInfo.numMatchedValidRealizations}/{validityInfo.numMatchedRealizations}
             </span>
@@ -111,7 +124,7 @@ const RealizationRangeTag: React.FC<RealizationRangeTagProps> = (props) => {
 
     return (
         <li
-            className={resolveClassNames("flex items-center rounded px-2 py-1 mr-1", {
+            className={resolveClassNames("flex items-center rounded px-2 py-0.5 mr-1", {
                 "bg-blue-200": !hasFocus,
                 "bg-red-300": validityInfo.validity === SelectionValidity.InputError && !hasFocus,
                 "bg-orange-300": validityInfo.validity === SelectionValidity.Invalid && !hasFocus,
@@ -146,7 +159,7 @@ const RealizationRangeTag: React.FC<RealizationRangeTagProps> = (props) => {
     );
 };
 
-function calcUniqueSelections(selections: Selection[], validRealizations?: Set<number>): number[] {
+function calcUniqueSelections(selections: readonly Selection[], validRealizations?: readonly number[]): number[] {
     const uniqueSelections = new Set<number>();
     selections.forEach((selection) => {
         const range = selection.value.split("-");
@@ -162,15 +175,14 @@ function calcUniqueSelections(selections: Selection[], validRealizations?: Set<n
     let uniqueSelectionsArray = Array.from(uniqueSelections);
 
     if (validRealizations) {
-        uniqueSelectionsArray = uniqueSelectionsArray.filter((realization) => validRealizations.has(realization));
+        uniqueSelectionsArray = uniqueSelectionsArray.filter((realization) => validRealizations.includes(realization));
     }
 
     return uniqueSelectionsArray.sort((a, b) => a - b);
 }
 
 export type RealizationPickerProps = {
-    ensembleIdents: EnsembleIdent[];
-    validRealizations?: Set<number>;
+    validRealizations?: readonly number[];
     debounceTimeMs?: number;
     onChange?: (selectedRealizations: number[]) => void;
 } & BaseComponentProps;
@@ -178,80 +190,83 @@ export type RealizationPickerProps = {
 export const RealizationPicker: React.FC<RealizationPickerProps> = (props) => {
     const [selections, setSelections] = React.useState<Selection[]>([]);
     const [activeSelectionUuid, setActiveSelectionUuid] = React.useState<string | null>(null);
-    const [caretPosition, setCaretPosition] = React.useState<"start" | "end">("end");
+    const [caretPosition, setCaretPosition] = React.useState<CaretPosition>(CaretPosition.End);
 
     const debounceTimeout = React.useRef<ReturnType<typeof setTimeout> | null>(null);
     const inputRef = React.useRef<HTMLInputElement>(null);
 
-    function checkValidity(value: string): SelectionValidityInfo {
-        if (!realizationRangeRegex.test(value)) {
-            return {
-                validity: SelectionValidity.InputError,
-                numMatchedRealizations: 0,
-                numMatchedValidRealizations: 0,
-            };
-        }
-
-        const range = value.split("-");
-        if (range.length === 1) {
-            if (parseInt(range[0]) < 1) {
+    const checkValidity = React.useCallback(
+        function checkValidity(value: string): SelectionValidityInfo {
+            if (!REALIZATION_RANGE_REGEX.test(value)) {
                 return {
                     validity: SelectionValidity.InputError,
                     numMatchedRealizations: 0,
                     numMatchedValidRealizations: 0,
                 };
             }
-            if (props.validRealizations) {
-                if (!props.validRealizations.has(parseInt(range[0]))) {
+
+            const range = value.split("-");
+            if (range.length === 1) {
+                if (parseInt(range[0]) < 1) {
                     return {
-                        validity: SelectionValidity.Invalid,
-                        numMatchedRealizations: 1,
+                        validity: SelectionValidity.InputError,
+                        numMatchedRealizations: 0,
                         numMatchedValidRealizations: 0,
                     };
                 }
+                if (props.validRealizations) {
+                    if (!props.validRealizations.includes(parseInt(range[0]))) {
+                        return {
+                            validity: SelectionValidity.Invalid,
+                            numMatchedRealizations: 1,
+                            numMatchedValidRealizations: 0,
+                        };
+                    }
+                }
+                return {
+                    validity: SelectionValidity.Valid,
+                    numMatchedRealizations: 1,
+                    numMatchedValidRealizations: 1,
+                };
+            } else if (range.length === 2) {
+                if (parseInt(range[0]) < 1 || parseInt(range[1]) <= parseInt(range[0])) {
+                    return {
+                        validity: SelectionValidity.InputError,
+                        numMatchedRealizations: 0,
+                        numMatchedValidRealizations: 0,
+                    };
+                }
+                const numMatches = parseInt(range[1]) - parseInt(range[0]) + 1;
+                if (props.validRealizations) {
+                    let numNotValid = 0;
+                    for (let i = parseInt(range[0]); i <= parseInt(range[1]); i++) {
+                        if (!props.validRealizations.includes(i)) {
+                            numNotValid++;
+                        }
+                    }
+                    if (numNotValid > 0) {
+                        return {
+                            validity: SelectionValidity.Invalid,
+                            numMatchedRealizations: numMatches,
+                            numMatchedValidRealizations: numMatches - numNotValid,
+                        };
+                    }
+                }
+                return {
+                    validity: SelectionValidity.Valid,
+                    numMatchedRealizations: numMatches,
+                    numMatchedValidRealizations: numMatches,
+                };
             }
+
             return {
                 validity: SelectionValidity.Valid,
                 numMatchedRealizations: 1,
                 numMatchedValidRealizations: 1,
             };
-        } else if (range.length === 2) {
-            if (parseInt(range[0]) < 1 || parseInt(range[1]) <= parseInt(range[0])) {
-                return {
-                    validity: SelectionValidity.InputError,
-                    numMatchedRealizations: 0,
-                    numMatchedValidRealizations: 0,
-                };
-            }
-            const numMatches = parseInt(range[1]) - parseInt(range[0]) + 1;
-            if (props.validRealizations) {
-                let numNotValid = 0;
-                for (let i = parseInt(range[0]); i <= parseInt(range[1]); i++) {
-                    if (!props.validRealizations.has(i)) {
-                        numNotValid++;
-                    }
-                }
-                if (numNotValid > 0) {
-                    return {
-                        validity: SelectionValidity.Invalid,
-                        numMatchedRealizations: numMatches,
-                        numMatchedValidRealizations: numMatches - numNotValid,
-                    };
-                }
-            }
-            return {
-                validity: SelectionValidity.Valid,
-                numMatchedRealizations: numMatches,
-                numMatchedValidRealizations: numMatches,
-            };
-        }
-
-        return {
-            validity: SelectionValidity.Valid,
-            numMatchedRealizations: 1,
-            numMatchedValidRealizations: 1,
-        };
-    }
+        },
+        [props.validRealizations]
+    );
 
     function handleSelectionsChange(newSelections: Selection[]) {
         if (debounceTimeout.current) {
@@ -279,7 +294,7 @@ export const RealizationPicker: React.FC<RealizationPickerProps> = (props) => {
             setActiveSelectionUuid(null);
             setTimeout(() => {
                 inputRef.current?.focus();
-                inputRef.current?.setSelectionRange(0, 0);
+                inputRef.current?.setSelectionRange(inputRef.current?.value.length, inputRef.current?.value.length);
             }, 500);
         }
     }
@@ -314,7 +329,7 @@ export const RealizationPicker: React.FC<RealizationPickerProps> = (props) => {
                 }
                 if (currentSelectionIndex > 0) {
                     setActiveSelectionUuid(selections[currentSelectionIndex - 1].uuid);
-                    setCaretPosition("end");
+                    setCaretPosition(CaretPosition.End);
                 }
                 event.preventDefault();
             }
@@ -328,7 +343,7 @@ export const RealizationPicker: React.FC<RealizationPickerProps> = (props) => {
                 );
                 if (currentSelectionIndex !== -1 && currentSelectionIndex < selections.length - 1) {
                     setActiveSelectionUuid(selections[currentSelectionIndex + 1].uuid);
-                    setCaretPosition("start");
+                    setCaretPosition(CaretPosition.Start);
                 } else {
                     setActiveSelectionUuid(null);
                     inputRef.current?.focus();
@@ -361,16 +376,17 @@ export const RealizationPicker: React.FC<RealizationPickerProps> = (props) => {
 
     return (
         <BaseComponent disabled={props.disabled}>
-            <div className="relative border border-gray-300 rounded p-2 pr-6">
-                <ul className="flex flex-wrap items-center cursor-text gap-1" onPointerDown={handlePointerDown}>
+            <div className="relative border border-gray-300 rounded p-2 pr-6 min-h-[3rem]">
+                <ul className="flex flex-wrap items-center cursor-text gap-1 h-full" onPointerDown={handlePointerDown}>
                     {selections.map((selection) => (
                         <RealizationRangeTag
+                            key={selection.uuid}
                             uuid={selection.uuid}
                             active={selection.uuid === activeSelectionUuid}
                             caretPosition={caretPosition}
-                            key={selection.uuid}
                             initialValue={selection.value}
                             checkValidity={checkValidity}
+                            validRealizations={props.validRealizations}
                             onRemove={() => handleRemove(selection.uuid)}
                             onFocus={() => setActiveSelectionUuid(selection.uuid)}
                             onKeyDown={handleKeyDown}

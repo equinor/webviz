@@ -3,7 +3,7 @@ import ReactDOM from "react-dom";
 
 import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-import { getTextWidth } from "@lib/utils/textSize";
+import { getTextWidthWithElement } from "@lib/utils/textSize";
 import { ExpandLess, ExpandMore } from "@mui/icons-material";
 
 import { BaseComponent, BaseComponentProps } from "../BaseComponent";
@@ -102,7 +102,7 @@ export const Dropdown = withDefaults<DropdownProps>()(defaultProps, (props) => {
 
     React.useEffect(() => {
         let longestOptionWidth = props.options.reduce((prev, current) => {
-            const labelWidth = getTextWidth(current.label, document.body);
+            const labelWidth = getTextWidthWithElement(current.label, document.body);
             if (labelWidth > prev) {
                 return labelWidth;
             }
@@ -111,9 +111,9 @@ export const Dropdown = withDefaults<DropdownProps>()(defaultProps, (props) => {
 
         if (longestOptionWidth === 0) {
             if (props.options.length === 0 || filter === "") {
-                longestOptionWidth = getTextWidth(noOptionsText, document.body);
+                longestOptionWidth = getTextWidthWithElement(noOptionsText, document.body);
             } else {
-                longestOptionWidth = getTextWidth(noMatchingOptionsText, document.body);
+                longestOptionWidth = getTextWidthWithElement(noMatchingOptionsText, document.body);
             }
         }
         setDropdownRect((prev) => ({ ...prev, width: longestOptionWidth + 32 }));
