@@ -29,13 +29,10 @@ if os.environ.get("APPLICATIONINSIGHTS_CONNECTION_STRING"):
     LOGGER.info("Configuring Azure Monitor telemetry for user session server")
     setup_azure_monitor_telemetry(app)
 else:
-    LOGGER.warning(
-        "Skipping telemetry configuration, APPLICATIONINSIGHTS_CONNECTION_STRING env variable not set."
-    )
+    LOGGER.warning("Skipping telemetry configuration, APPLICATIONINSIGHTS_CONNECTION_STRING env variable not set.")
 
 app.include_router(general_router)
 app.include_router(grid_router, prefix="/grid")
-
 add_shared_middlewares(app)
 
 # We shut down the user session container after some
