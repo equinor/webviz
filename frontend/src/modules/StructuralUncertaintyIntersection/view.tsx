@@ -1,6 +1,6 @@
 import React, { useId } from "react";
 
-import { RealizationsSurfaceSetSpec_api, StatisticalSurfaceSetSpec_api } from "@api";
+import { RealizationsSurfaceSetSpec_api, StatisticalSurfaceSetSpec_api, SurfaceIntersectionPoints_api } from "@api";
 import {
     Controller,
     GridLayer,
@@ -20,6 +20,7 @@ import { isEqual } from "lodash";
 import { EsvIntersection } from "./components/esvIntersection";
 import {
     SurfacePolyLineSpec,
+    useWellIntersectionSurfaceSetQueries,
     useWellRealizationsSurfaceSetIntersectionQuery,
     useWellStatisticsSurfaceSetIntersectionQuery,
 } from "./queryHooks";
@@ -136,6 +137,7 @@ export const view = ({ moduleContext }: ModuleFCProps<State>) => {
             realization_nums: realizationsSurfaceSetSpec.realizationNums ?? [],
         };
     }
+
     let statisticalSurfaceSetSpec_api: StatisticalSurfaceSetSpec_api | null = null;
     if (statisticalSurfaceSetSpec) {
         statisticalSurfaceSetSpec_api = {
@@ -152,6 +154,20 @@ export const view = ({ moduleContext }: ModuleFCProps<State>) => {
         candidateSurfacePolyLineSpec,
         true
     );
+
+    const wellIntersectionSurfaceSetQueries = useWellIntersectionSurfaceSetQueries(
+        realEnsembleIdent,
+        realizationsSurfaceSetSpec_api,
+        candidateSurfacePolyLineSpec,
+        true
+    );
+    let realData: SurfaceIntersectionPoints_api[] = [];
+    wellIntersectionSurfaceSetQueries.data?.forEach((surfaceSetIntersectionPoints) => {
+        console.log(surfaceSetIntersectionPoints.surfaceName);
+        surfaceSetIntersectionPoints.intersectionPoints.forEach((intersectionPoint) => {
+            realData.push(intersectionPoint);
+        });
+    });
     if (surfaceSetRealizationsIntersectionPointsQuery.isError) {
         statusWriter.addError("Error loading seismic fence data");
     }
@@ -163,7 +179,7 @@ export const view = ({ moduleContext }: ModuleFCProps<State>) => {
     );
     if (
         esvIntersectionControllerRef.current &&
-        (surfaceSetRealizationsIntersectionPointsQuery.data || surfaceSetStatisticsInsectionPointsQuery.data) &&
+        (realData || surfaceSetStatisticsInsectionPointsQuery.data) &&
         renderWellboreTrajectoryXyzPoints
     ) {
         // // Get an array of projected 2D points [x, y], as 2D curtain projection from a set of trajectory 3D points and offset
@@ -184,10 +200,10 @@ export const view = ({ moduleContext }: ModuleFCProps<State>) => {
         }
 
         addWellborePathLayer(esvIntersectionControllerRef.current, renderWellboreTrajectoryXyzPoints);
-        if (surfaceSetRealizationsIntersectionPointsQuery.data) {
+        if (realData) {
             addSurfaceLayers(
                 esvIntersectionControllerRef.current,
-                surfaceSetRealizationsIntersectionPointsQuery.data,
+                realData,
                 esvPixiContentRef.current,
                 "realizations",
                 "black",
@@ -212,18 +228,14 @@ export const view = ({ moduleContext }: ModuleFCProps<State>) => {
         );
     }
 
-    statusWriter.setLoading(
-        getWellTrajectoriesQuery.isFetching || surfaceSetRealizationsIntersectionPointsQuery.isFetching
-    );
+    statusWriter.setLoading(getWellTrajectoriesQuery.isFetching || wellIntersectionSurfaceSetQueries.isFetching);
     // Build up an error string handling multiple errors. e.g. "Error loading well trajectories and seismic fence data"
     // Do not useMemo
     let errorString = "";
     if (getWellTrajectoriesQuery.isError) {
         errorString += "Error loading well trajectories";
     }
-    if (surfaceSetRealizationsIntersectionPointsQuery.isError) {
-        errorString += "Error loading seismic fence data";
-    }
+
     if (surfaceSetStatisticsInsectionPointsQuery.isError) {
         errorString += "Error loading statistical surface data";
     }
@@ -243,7 +255,7 @@ export const view = ({ moduleContext }: ModuleFCProps<State>) => {
                     extension={5}
                     wellborePath={renderWellboreTrajectoryXyzPoints}
                     statisticalSurfaceIntersectionPoints={surfaceSetStatisticsInsectionPointsQuery.data}
-                    realizationsSurfaceIntersectionPoints={surfaceSetRealizationsIntersectionPointsQuery.data}
+                    realizationsSurfaceIntersectionPoints={realData}
                 />
             )}
         </div>
