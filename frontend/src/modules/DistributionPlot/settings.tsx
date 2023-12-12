@@ -54,7 +54,7 @@ const crossPlottingTypes = [
 ];
 
 //-----------------------------------------------------------------------------------------------------------
-export function settings({ moduleContext, workbenchServices, initialSettings }: ModuleFCProps<State>) {
+export function Settings({ moduleContext, workbenchServices, initialSettings }: ModuleFCProps<State>) {
     const [prevChannelXName, setPrevChannelXName] = React.useState<string | null>(null);
     const [prevChannelYName, setPrevChannelYName] = React.useState<string | null>(null);
     const [prevChannelColorName, setPrevChannelColorName] = React.useState<string | null>(null);

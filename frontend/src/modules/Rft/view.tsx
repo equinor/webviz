@@ -2,8 +2,8 @@ import React from "react";
 import Plot from "react-plotly.js";
 
 import { RftRealizationData_api } from "@api";
-import { timestampUtcMsToCompactIsoString } from "@framework/utils/timestampUtils";
 import { ModuleFCProps } from "@framework/Module";
+import { timestampUtcMsToCompactIsoString } from "@framework/utils/timestampUtils";
 import { useElementSize } from "@lib/hooks/useElementSize";
 
 import { PlotData } from "plotly.js";
@@ -11,7 +11,7 @@ import { PlotData } from "plotly.js";
 import { useRftRealizationData } from "./queryHooks";
 import State from "./state";
 
-export const view = ({ moduleContext }: ModuleFCProps<State>) => {
+export const View = ({ moduleContext }: ModuleFCProps<State>) => {
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);
     const wrapperDivSize = useElementSize(wrapperDivRef);
     const rftWellAddress = moduleContext.useStoreValue("rftWellAddress");
@@ -38,7 +38,10 @@ export const view = ({ moduleContext }: ModuleFCProps<State>) => {
     realizationDataForTimePoint.forEach((realizationData) => {
         plotData.push(createRftRealizationTrace(realizationData));
     });
-    const title = rftWellAddress && timePoint ? `RFT for ${rftWellAddress.wellName}, ${timestampUtcMsToCompactIsoString(timePoint)}` : "";
+    const title =
+        rftWellAddress && timePoint
+            ? `RFT for ${rftWellAddress.wellName}, ${timestampUtcMsToCompactIsoString(timePoint)}`
+            : "";
     return (
         <div className="w-full h-full" ref={wrapperDivRef}>
             <Plot
@@ -65,10 +68,10 @@ function createRftRealizationTrace(rftRealizationData: RftRealizationData_api): 
         type: "scatter",
         mode: "lines",
         hovertemplate:
-            '<br><b>Pressure</b>: %{x}' +
-            '<br><b>Depth</b>: %{y}' +
+            "<br><b>Pressure</b>: %{x}" +
+            "<br><b>Depth</b>: %{y}" +
             `<br><b>Realization</b>: ${rftRealizationData.realization}` +
-            '<extra></extra>',
+            "<extra></extra>",
         showlegend: false,
         line: {
             color: "red",

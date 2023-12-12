@@ -29,36 +29,36 @@ export function usePolygonsDataQueryByAddress(
         });
     }
 
-    if (!polygonsAddress) {
-        return useQuery({
-            queryKey: ["getPolygonsData_DUMMY_ALWAYS_DISABLED"],
-            queryFn: () => dummyApiCall,
-            enabled: false,
-        });
-    }
+    let queryKey: QueryKey | null = null;
+    let queryFn: QueryFunction<PolygonData_api[]> | null = null;
 
-    const queryKey: QueryKey | null = [
-        "getPolygonsData",
-        polygonsAddress.caseUuid,
-        polygonsAddress.ensemble,
-        polygonsAddress.realizationNum,
-        polygonsAddress.name,
-        polygonsAddress.attribute,
-    ];
-    const queryFn: QueryFunction<PolygonData_api[]> = () =>
-        apiService.polygons.getPolygonsData(
+    if (!polygonsAddress) {
+        queryKey = ["getPolygonsData_DUMMY_ALWAYS_DISABLED"];
+        queryFn = dummyApiCall;
+    } else {
+        queryKey = [
+            "getPolygonsData",
             polygonsAddress.caseUuid,
             polygonsAddress.ensemble,
             polygonsAddress.realizationNum,
             polygonsAddress.name,
-            polygonsAddress.attribute
-        );
+            polygonsAddress.attribute,
+        ];
+        queryFn = () =>
+            apiService.polygons.getPolygonsData(
+                polygonsAddress.caseUuid,
+                polygonsAddress.ensemble,
+                polygonsAddress.realizationNum,
+                polygonsAddress.name,
+                polygonsAddress.attribute
+            );
+    }
 
     return useQuery({
         queryKey: queryKey,
         queryFn: queryFn,
-
         staleTime: STALE_TIME,
         gcTime: CACHE_TIME,
+        enabled: Boolean(polygonsAddress),
     });
 }

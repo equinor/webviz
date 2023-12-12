@@ -27,7 +27,7 @@ import {
     useGenerateSeismicSliceImageData,
 } from "./utils/esvIntersectionHooks";
 
-export const view = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>) => {
+export const View = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>) => {
     const wrapperDivRef = React.useRef<HTMLDivElement | null>(null);
     const wrapperDivSize = useElementSize(wrapperDivRef);
     const esvIntersectionContainerRef = React.useRef<HTMLDivElement | null>(null);
@@ -66,25 +66,28 @@ export const view = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
         React.useState<SeismicSliceImageOptions | null>(null);
     const generatedSeismicSliceImageData = useGenerateSeismicSliceImageData(generateSeismicSliceImageOptions);
 
-    React.useEffect(function initializeEsvIntersectionController() {
-        if (esvIntersectionContainerRef.current) {
-            const axisOptions = { xLabel: "x", yLabel: "y", unitOfMeasure: "m" };
-            esvIntersectionControllerRef.current = new Controller({
-                container: esvIntersectionContainerRef.current,
-                axisOptions,
-            });
+    React.useEffect(
+        function initializeEsvIntersectionController() {
+            if (esvIntersectionContainerRef.current) {
+                const axisOptions = { xLabel: "x", yLabel: "y", unitOfMeasure: "m" };
+                esvIntersectionControllerRef.current = new Controller({
+                    container: esvIntersectionContainerRef.current,
+                    axisOptions,
+                });
 
-            // Initialize/configure controller
-            addMDOverlay(esvIntersectionControllerRef.current);
-            esvIntersectionControllerRef.current.addLayer(new GridLayer(gridLayerUuid));
-            esvIntersectionControllerRef.current.setBounds([10, 1000], [0, 3000]);
-            esvIntersectionControllerRef.current.setViewport(1000, 1650, 6000);
-            esvIntersectionControllerRef.current.zoomPanHandler.zFactor = zScale;
-        }
-        return () => {
-            esvIntersectionControllerRef.current?.destroy();
-        };
-    }, []);
+                // Initialize/configure controller
+                addMDOverlay(esvIntersectionControllerRef.current);
+                esvIntersectionControllerRef.current.addLayer(new GridLayer(gridLayerUuid));
+                esvIntersectionControllerRef.current.setBounds([10, 1000], [0, 3000]);
+                esvIntersectionControllerRef.current.setViewport(1000, 1650, 6000);
+                esvIntersectionControllerRef.current.zoomPanHandler.zFactor = zScale;
+            }
+            return () => {
+                esvIntersectionControllerRef.current?.destroy();
+            };
+        },
+        [gridLayerUuid, zScale]
+    );
 
     // Get well trajectories query
     const wellTrajectoriesQuery = useWellTrajectoriesQuery(wellboreAddress ? [wellboreAddress.uuid] : undefined);

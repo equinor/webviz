@@ -96,7 +96,7 @@ function getTableResponseOptions(
     return responsesToSelectOptions(responses);
 }
 
-export function settings({ moduleContext, workbenchSession }: ModuleFCProps<State>) {
+export function Settings({ moduleContext, workbenchSession }: ModuleFCProps<State>) {
     const ensembleSet = useEnsembleSet(workbenchSession);
     const [ensembleIdent, setEnsembleIdent] = moduleContext.useStoreState("ensembleIdent");
     const [tableName, setTableName] = moduleContext.useStoreState("tableName");
@@ -112,7 +112,7 @@ export function settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
                 setEnsembleIdent(fixedEnsembleIdent);
             }
         },
-        [ensembleSet, ensembleIdent]
+        [ensembleSet, ensembleIdent, setEnsembleIdent]
     );
 
     React.useEffect(
@@ -127,7 +127,7 @@ export function settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
                 setResponseName(null);
             }
         },
-        [tableDescriptionsQuery.data]
+        [tableDescriptionsQuery.data, setTableName, setResponseName]
     );
 
     function handleEnsembleSelectionChange(newEnsembleIdent: EnsembleIdent | null) {
@@ -143,23 +143,26 @@ export function settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
         setResponseName(responseName);
     }
 
-    const handleSelectionChange = React.useCallback((categoryName: string, categoryValues: string[]) => {
-        console.debug("handleSelectionChange()");
-        let currentCategoryFilter = categoricalFilter;
-        if (currentCategoryFilter) {
-            const categoryIndex = currentCategoryFilter.findIndex((category) => category.name === categoryName);
-            if (categoryIndex > -1) {
-                currentCategoryFilter[categoryIndex].unique_values = categoryValues;
+    const handleSelectionChange = React.useCallback(
+        (categoryName: string, categoryValues: string[]) => {
+            console.debug("handleSelectionChange()");
+            let currentCategoryFilter = categoricalFilter;
+            if (currentCategoryFilter) {
+                const categoryIndex = currentCategoryFilter.findIndex((category) => category.name === categoryName);
+                if (categoryIndex > -1) {
+                    currentCategoryFilter[categoryIndex].unique_values = categoryValues;
+                } else {
+                    currentCategoryFilter.push({ name: categoryName, unique_values: categoryValues });
+                }
             } else {
+                currentCategoryFilter = [];
                 currentCategoryFilter.push({ name: categoryName, unique_values: categoryValues });
             }
-        } else {
-            currentCategoryFilter = [];
-            currentCategoryFilter.push({ name: categoryName, unique_values: categoryValues });
-        }
 
-        setCategoricalFilter(currentCategoryFilter);
-    }, []);
+            setCategoricalFilter(currentCategoryFilter);
+        },
+        [categoricalFilter, setCategoricalFilter]
+    );
 
     const tableNameOptions = getTableNameOptions(tableDescriptionsQuery);
     const tableCategoricalOptions = getTableCategoricalOptions(tableDescriptionsQuery, tableName);

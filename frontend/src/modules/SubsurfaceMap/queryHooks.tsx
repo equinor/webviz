@@ -12,25 +12,20 @@ export function usePropertySurfaceDataByQueryAddress(
     propertySurfAddr: SurfaceAddress | null,
     enabled: boolean
 ): UseQueryResult<SurfaceData_trans> {
-    function dummyApiCall(): Promise<SurfaceData_trans> {
+    function dummyApiCall(): Promise<SurfaceData_api> {
         return new Promise((_resolve, reject) => {
             reject(null);
-        });
-    }
-
-    if (!propertySurfAddr || !meshSurfAddr) {
-        return useQuery({
-            queryKey: ["getSurfaceData_DUMMY_ALWAYS_DISABLED"],
-            queryFn: () => dummyApiCall,
-            enabled: false,
         });
     }
 
     let queryFn: QueryFunction<SurfaceData_api> | null = null;
     let queryKey: QueryKey | null = null;
 
-    // Static, per realization surface
-    if (meshSurfAddr.addressType === "realization" && propertySurfAddr.addressType === "realization") {
+    if (!propertySurfAddr || !meshSurfAddr) {
+        queryKey = ["getSurfaceData_DUMMY_ALWAYS_DISABLED"];
+        queryFn = dummyApiCall;
+        enabled = false;
+    } else if (meshSurfAddr.addressType === "realization" && propertySurfAddr.addressType === "realization") {
         queryKey = [
             "getPropertySurfaceResampledToStaticSurface",
             meshSurfAddr.caseUuid,

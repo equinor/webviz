@@ -47,7 +47,7 @@ enum StatisticsType {
     FANCHART = "Fanchart",
 }
 
-export function settings({ moduleContext, workbenchSession }: ModuleFCProps<State>) {
+export function Settings({ moduleContext, workbenchSession }: ModuleFCProps<State>) {
     const ensembleSet = useEnsembleSet(workbenchSession);
     const statusWriter = useSettingsStatusWriter(moduleContext);
 
@@ -107,7 +107,10 @@ export function settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
     }
 
     const vectorListQueries = useVectorListQueries(selectedEnsembleIdents);
-    const ensembleVectorListsHelper = new EnsembleVectorListsHelper(selectedEnsembleIdents, vectorListQueries);
+    const ensembleVectorListsHelper = React.useMemo(
+        () => new EnsembleVectorListsHelper(selectedEnsembleIdents, vectorListQueries),
+        [selectedEnsembleIdents, vectorListQueries]
+    );
     const selectedVectorNamesHasHistorical = ensembleVectorListsHelper.hasAnyHistoricalVector(selectedVectorNames);
     const currentVectorSelectorData = createVectorSelectorDataFromVectors(ensembleVectorListsHelper.vectorsUnion());
 
@@ -142,6 +145,8 @@ export function settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
         statusWriter.addWarning(`Vector ${vectorArrayStr} does not exist in ensemble ${ensembleStr}`);
     }
 
+    const numberOfQueriesWithData = ensembleVectorListsHelper.numberOfQueriesWithData();
+
     React.useEffect(
         function propagateVectorSpecsToView() {
             const newVectorSpecifications: VectorSpec[] = [];
@@ -160,7 +165,13 @@ export function settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
             }
             setVectorSpecifications(newVectorSpecifications);
         },
-        [selectedEnsembleIdents, selectedVectorNames, ensembleVectorListsHelper.numberOfQueriesWithData()]
+        [
+            selectedEnsembleIdents,
+            selectedVectorNames,
+            numberOfQueriesWithData,
+            setVectorSpecifications,
+            ensembleVectorListsHelper,
+        ]
     );
 
     React.useEffect(
@@ -185,7 +196,7 @@ export function settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
                 setParameterIdent(null);
             }
         },
-        [selectedParameterIdentStr, filteredParameterIdentList]
+        [selectedParameterIdentStr, filteredParameterIdentList, setParameterIdent]
     );
 
     function handleGroupByChange(event: React.ChangeEvent<HTMLInputElement>) {

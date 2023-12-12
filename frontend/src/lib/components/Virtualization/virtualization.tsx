@@ -2,8 +2,6 @@ import React from "react";
 
 import { useElementSize } from "@lib/hooks/useElementSize";
 
-import { isEqual } from "lodash";
-
 import { withDefaults } from "../_component-utils/components";
 
 export type VirtualizationProps<T = any> = {
@@ -21,12 +19,37 @@ const defaultProps = {
     startIndex: 0,
 };
 
+type VirtualizationPropsSubset = Pick<VirtualizationProps, "items" | "startIndex" | "direction" | "itemSize"> | null;
+
+function checkEqualityOfProps(a: VirtualizationPropsSubset, b: VirtualizationPropsSubset): boolean {
+    if (a === null && b !== null) {
+        return false;
+    }
+
+    if (a !== null && b === null) {
+        return false;
+    }
+
+    if (a === null && b === null) {
+        return true;
+    }
+
+    // This seems to be an unnecessary check?
+    if (a === null || b === null) {
+        return false;
+    }
+
+    return (
+        a.itemSize === b.itemSize &&
+        a.direction === b.direction &&
+        a.startIndex === b.startIndex &&
+        a.items.length === b.items.length
+    );
+}
+
 export const Virtualization = withDefaults<VirtualizationProps>()(defaultProps, (props) => {
     const [range, setRange] = React.useState<{ start: number; end: number }>({ start: props.startIndex, end: 0 });
-    const [prevPropsSubset, setPrevPropsSubset] = React.useState<Pick<
-        VirtualizationProps,
-        "items" | "startIndex" | "direction" | "itemSize"
-    > | null>(null);
+    const [prevPropsSubset, setPrevPropsSubset] = React.useState<VirtualizationPropsSubset>(null);
     const [placeholderSizes, setPlaceholderSizes] = React.useState<{ start: number; end: number }>({
         start: props.startIndex * props.itemSize,
         end: 0,
@@ -48,7 +71,7 @@ export const Virtualization = withDefaults<VirtualizationProps>()(defaultProps, 
         itemSize: props.itemSize,
     };
 
-    if (!isEqual(prevPropsSubset, currentPropsSubset)) {
+    if (!checkEqualityOfProps(prevPropsSubset, currentPropsSubset)) {
         if (props.containerRef.current) {
             const newInitialScrollPositions = {
                 top: props.startIndex * props.itemSize,
