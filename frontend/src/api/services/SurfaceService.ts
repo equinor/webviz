@@ -209,8 +209,8 @@ export class SurfaceService {
      * @param realizationNum Realization number
      * @param names Surface names
      * @param attribute Surface attribute
-     * @param timeOrIntervalStr Timestamp or timestep
      * @param requestBody
+     * @param timeOrIntervalStr Time point or time interval string
      * @returns SurfaceIntersectionData Successful Response
      * @throws ApiError
      */
@@ -220,8 +220,8 @@ export class SurfaceService {
         realizationNum: number,
         names: Array<string>,
         attribute: string,
-        timeOrIntervalStr: string,
         requestBody: Body_post_get_surface_intersection,
+        timeOrIntervalStr?: (string | null),
     ): CancelablePromise<Array<SurfaceIntersectionData>> {
         return this.httpRequest.request({
             method: 'POST',

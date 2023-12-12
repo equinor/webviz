@@ -220,10 +220,8 @@ async def post_get_surface_intersection(
     realization_num: int = Query(description="Realization number"),
     names: List[str] = Query(description="Surface names"),
     attribute: str = Query(description="Surface attribute"),
-    time_or_interval_str: str = Query(description="Timestamp or timestep"),
-    cumulative_length_polyline: schemas.SurfaceIntersectionCumulativeLengthPolyline = Body(
-        alias="cumulativeLengthPolyline", embed=True
-    ),
+    time_or_interval_str: Optional[str] = Query(None, description="Time point or time interval string"),
+    cumulative_length_polyline: schemas.SurfaceIntersectionCumulativeLengthPolyline = Body(embed=True),
 ) -> List[schemas.SurfaceIntersectionData]:
     """Get an array of surface intersection data, one for each requested surface name.
 
@@ -232,16 +230,23 @@ async def post_get_surface_intersection(
     """
     access = await SurfaceAccess.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
 
-    async def get_surface_async(name: str) -> RegularSurface:
+    async def get_surface_async(name: str) -> RegularSurface | None:
         surface = await access.get_realization_surface_data_async(
             real_num=realization_num, name=name, attribute=attribute, time_or_interval_str=time_or_interval_str
         )
+        if surface is not None:
+            surface.name = name
         return surface
 
-    async def get_all_surfaces_async() -> List[RegularSurface]:
+    async def get_all_surfaces_async() -> List[RegularSurface | None]:
+        # Note: asyncio.gather() might not return in the same order as the input list
         return await asyncio.gather(*[get_surface_async(name) for name in names])
 
-    surfaces = await get_all_surfaces_async()  # Nested?
+    surfaces: List[RegularSurface] = await get_all_surfaces_async()  # Nested?
+
+    for surface in surfaces:
+        if surface is None:
+            raise HTTPException(status_code=404, detail="Surface not found")
 
     # xtgeo fencespec: 2D numpy with X, Y, Z, HLEN as rows
     xtgeo_fencespec = np.array(
@@ -272,6 +277,9 @@ def make_intersection(surface: RegularSurface, xtgeo_fencespec: np.ndarray) -> s
 def make_intersections(
     surfaces: List[RegularSurface], xtgeo_fencespec: np.ndarray
 ) -> List[schemas.SurfaceIntersectionData]:
+    if len(surfaces) == 0:
+        return []
+
     intersections = [make_intersection(surface, xtgeo_fencespec) for surface in surfaces]
     return intersections
 

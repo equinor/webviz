@@ -52,6 +52,46 @@ export class SurfaceDirectory {
         return [...new Set(filteredList.map((surface) => surface.attribute_name))].sort();
     }
 
+    // Retrieves intersection of attribute names with filtering on surface names.
+    public getAttributeNamesIntersection(requireSurfaceNames: string[]): string[] {
+        if (requireSurfaceNames.length === 0) {
+            return [];
+        }
+
+        const uniqueSurfaceNames = [...new Set(requireSurfaceNames)].sort();
+        const filteredSurfaceList = this._surfaceList.filter((surface) => uniqueSurfaceNames.includes(surface.name));
+        const uniqueAttributeNames = [...new Set(filteredSurfaceList.map((surface) => surface.attribute_name))].sort();
+
+        if (uniqueAttributeNames.length === 0) {
+            return [];
+        }
+
+        // Find if attribute name is present in all surfaces.
+        const attributeNamesIntersection: string[] = [];
+        for (const attributeName of uniqueAttributeNames) {
+            let isAttributeInAllRequiredSurfaces = false;
+
+            // Check if attribute name is present in all required surfaces.
+            for (const surfaceName of uniqueSurfaceNames) {
+                const surfaceWithNameAndAttribute = filteredSurfaceList.find(
+                    (surface) => surface.name === surfaceName && surface.attribute_name === attributeName
+                );
+
+                if (surfaceWithNameAndAttribute === undefined) {
+                    isAttributeInAllRequiredSurfaces = false;
+                    break;
+                }
+                isAttributeInAllRequiredSurfaces = true;
+            }
+
+            if (!isAttributeInAllRequiredSurfaces) {
+                continue;
+            }
+            attributeNamesIntersection.push(attributeName);
+        }
+        return attributeNamesIntersection;
+    }
+
     // Retrieves unique surface names with optional filtering on surface attribute.
     public getSurfaceNames(requireAttributeName: string | null): string[] {
         let filteredList = this._surfaceList;

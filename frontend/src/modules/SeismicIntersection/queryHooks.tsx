@@ -107,8 +107,8 @@ export function useSurfaceIntersectionQuery(
                 realizationNum ?? 0,
                 surfaceNames ?? [],
                 attribute ?? "",
-                timeOrIntervalStr ?? "",
-                bodyPolyline
+                bodyPolyline,
+                timeOrIntervalStr // Can be null
             ),
         staleTime: STALE_TIME,
         gcTime: CACHE_TIME,

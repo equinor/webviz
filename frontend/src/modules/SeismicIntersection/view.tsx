@@ -20,7 +20,12 @@ import { SurfaceIntersectionCumulativeLengthPolyline } from "src/api/models/Surf
 
 import { useSeismicFenceDataQuery, useSurfaceIntersectionQuery } from "./queryHooks";
 import { State } from "./state";
-import { addMDOverlay, addSeismicLayer, addWellborePathLayer } from "./utils/esvIntersectionControllerUtils";
+import {
+    addMDOverlay,
+    addSeismicLayer,
+    addSurfaceLayers,
+    addWellborePathLayer,
+} from "./utils/esvIntersectionControllerUtils";
 import {
     createSeismicSliceImageDataArrayFromFenceData,
     createSeismicSliceImageYAxisValuesArrayFromFenceData,
@@ -141,6 +146,7 @@ export const view = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
                       newExtendedWellboreTrajectory.offset
                   ).map((coord) => coord[0] - extension)
                 : [];
+
             candidateSurfaceIntersectionCumulativeLengthPolyline = { x_points, y_points, cum_lengths };
             setSurfaceIntersectionCumulativeLengthPolyline(candidateSurfaceIntersectionCumulativeLengthPolyline);
         }
@@ -174,7 +180,7 @@ export const view = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
         surfaceAddress?.realizationNumber ?? null,
         surfaceAddress?.surfaceNames ?? null,
         surfaceAddress?.attribute ?? null,
-        surfaceAddress?.timeString ?? null,
+        null, // Time string not used for surface intersection
         candidateSurfaceIntersectionCumulativeLengthPolyline,
         seismicAddress !== null
     );
@@ -231,6 +237,15 @@ export const view = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
             });
         }
 
+        if (surfaceIntersectionDataQuery.data && esvPixiRenderApplicationRef.current) {
+            addSurfaceLayers(esvIntersectionControllerRef.current, esvPixiRenderApplicationRef.current, {
+                surfaceIntersectionDataList: surfaceIntersectionDataQuery.data,
+                layerName: "Surface intersection",
+                surfaceColor: "red",
+                surfaceWidth: 10,
+            });
+        }
+
         // Update layout
         esvIntersectionControllerRef.current.zoomPanHandler.zFactor = Math.max(1.0, zScale); // Prevent scaling to zero
         esvIntersectionControllerRef.current.adjustToSize(
@@ -239,7 +254,9 @@ export const view = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
         );
     }
 
-    statusWriter.setLoading(wellTrajectoriesQuery.isFetching || seismicFenceDataQuery.isFetching);
+    statusWriter.setLoading(
+        wellTrajectoriesQuery.isFetching || seismicFenceDataQuery.isFetching || surfaceIntersectionDataQuery.isFetching
+    );
     return (
         <div ref={wrapperDivRef} className="relative w-full h-full">
             {seismicFenceDataQuery.isError && wellTrajectoriesQuery.isError ? (
@@ -248,6 +265,8 @@ export const view = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
                 <ContentError>Error loading seismic fence data</ContentError>
             ) : wellTrajectoriesQuery.isError ? (
                 <ContentError>Error loading well trajectories</ContentError>
+            ) : surfaceIntersectionDataQuery.isError ? (
+                <ContentError>Error loading surface intersection data</ContentError>
             ) : generatedSeismicSliceImageData.status === SeismicSliceImageStatus.ERROR ? (
                 <ContentError>Error generating seismic slice image</ContentError>
             ) : (

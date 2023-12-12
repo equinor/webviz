@@ -1,5 +1,6 @@
 import React from "react";
 
+import { SurfaceAttributeType_api } from "@api";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { ModuleFCProps } from "@framework/Module";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
@@ -47,6 +48,9 @@ const WELLBORE_TYPE = "smda";
 const EXTENSION_LIMITS = { min: 100, max: 100000 }; // Min/max extension in meters outside both sides of the well path [m]
 const Z_SCALE_LIMITS = { min: 1, max: 100 }; // Minimum z-scale factor
 
+// Hardcoded surface time type - no surface as function of time
+const SURFACE_TIME_TYPE = SurfaceTimeType.None;
+
 export function settings({ moduleContext, workbenchSession, workbenchServices }: ModuleFCProps<State>) {
     const syncedSettingKeys = moduleContext.useSyncedSettingKeys();
     const syncHelper = new SyncSettingsHelper(syncedSettingKeys, workbenchServices);
@@ -65,7 +69,6 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
     const [isObserved, setIsObserved] = React.useState<boolean>(false);
 
     const [seismicTimeType, setSeismicTimeType] = React.useState<SeismicTimeType>(SeismicTimeType.TimePoint);
-    const [surfaceTimeType, setSurfaceTimeType] = React.useState<SurfaceTimeType>(SurfaceTimeType.None);
     const [selectedWellboreAddress, setSelectedWellboreAddress] = React.useState<Wellbore | null>(
         moduleContext.useStoreValue("wellboreAddress")
     );
@@ -114,10 +117,17 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
         setSelectedWellboreAddress(computedWellboreAddress);
     }
 
-    // Create surface directory
+    // Create surface directory (depth and time to match attributes for seismic cube)
     const surfaceDirectory = new SurfaceDirectory(
-        surfaceDirectoryQuery.data ? { surfaceMetas: surfaceDirectoryQuery.data, timeType: surfaceTimeType } : null
+        surfaceDirectoryQuery.data
+            ? {
+                  surfaceMetas: surfaceDirectoryQuery.data,
+                  timeType: SURFACE_TIME_TYPE,
+                  includeAttributeTypes: [SurfaceAttributeType_api.DEPTH, SurfaceAttributeType_api.TIME],
+              }
+            : null
     );
+    // TODO: Allow multiple surface names? I.e. string[] instead of string
     const [selectedSurfaceName, setSelectedSurfaceName] = useValidState<string | null>(
         null,
         surfaceDirectoryQuery.data?.map((surfaceMeta) => surfaceMeta.name) ?? []
@@ -126,10 +136,8 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
         null,
         surfaceDirectory.getAttributeNames(selectedSurfaceName) ?? []
     );
-    const [selectedSurfaceTime, setSelectedSurfaceTime] = useValidState<string | null>(
-        null,
-        surfaceDirectory.getTimeOrIntervalStrings(selectedSurfaceName, selectedSurfaceAttribute) ?? []
-    );
+
+    // TODO: Add fixup and use synced value surface?
 
     // Create seismic cube directory
     const seismicCubeMetaDirectory = seismicCubeMetaListQuery.data
@@ -179,19 +187,18 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
     React.useEffect(
         function propagateSurfaceAddressToView() {
             let surfaceAddress: SurfaceAddress | null = null;
-            if (computedEnsembleIdent && selectedSeismicAttribute && selectedSurfaceTime) {
+            if (computedEnsembleIdent && selectedSurfaceAttribute && selectedSurfaceName) {
                 surfaceAddress = {
                     caseUuid: computedEnsembleIdent.getCaseUuid(),
                     ensemble: computedEnsembleIdent.getEnsembleName(),
                     realizationNumber: realizationNumber,
-                    surfaceNames: [],
-                    attribute: selectedSeismicAttribute,
-                    timeString: selectedSurfaceTime,
+                    surfaceNames: [selectedSurfaceName],
+                    attribute: selectedSurfaceAttribute,
                 };
             }
             setSurfaceAddress(surfaceAddress);
         },
-        [computedEnsembleIdent, selectedSeismicAttribute, selectedSurfaceTime, realizationNumber]
+        [computedEnsembleIdent, selectedSurfaceAttribute, selectedSurfaceName, realizationNumber]
     );
 
     React.useEffect(
@@ -220,6 +227,22 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
         } else {
             setRealizationNumber(0);
         }
+    }
+
+    function handleSurfaceNameChange(values: string[]) {
+        if (values.length === 0) {
+            setSelectedSurfaceName(null);
+            return;
+        }
+        setSelectedSurfaceName(values[0]);
+    }
+
+    function handleSurfaceAttributeChange(values: string[]) {
+        if (values.length === 0) {
+            setSelectedSurfaceAttribute(null);
+            return;
+        }
+        setSelectedSurfaceAttribute(values[0]);
     }
 
     function handleSeismicAttributeChange(values: string[]) {
@@ -306,6 +329,36 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
                             multiple={true}
                         />
                     </Label>
+                </ApiStateWrapper>
+            </CollapsibleGroup>
+            <CollapsibleGroup title="Surface specifications">
+                <ApiStateWrapper
+                    apiResult={surfaceDirectoryQuery}
+                    errorComponent={"Error loading surface directory"}
+                    loadingComponent={<CircularProgress />}
+                >
+                    <div className="flex flex-col gap-4 overflow-y-auto">
+                        <Label text="Stratigraphic name">
+                            <Select
+                                options={surfaceDirectory.getSurfaceNames(null).map((name) => {
+                                    return { label: name, value: name };
+                                })}
+                                value={selectedSurfaceName ? [selectedSurfaceName] : []}
+                                size={4}
+                                onChange={handleSurfaceNameChange}
+                            />
+                        </Label>
+                        <Label text="Attribute">
+                            <Select
+                                options={surfaceDirectory.getAttributeNames(null).map((attribute) => {
+                                    return { label: attribute, value: attribute };
+                                })}
+                                value={selectedSurfaceAttribute ? [selectedSurfaceAttribute] : []}
+                                size={4}
+                                onChange={handleSurfaceAttributeChange}
+                            />
+                        </Label>
+                    </div>
                 </ApiStateWrapper>
             </CollapsibleGroup>
             <CollapsibleGroup title="Seismic specifications">

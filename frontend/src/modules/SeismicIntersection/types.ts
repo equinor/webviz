@@ -13,5 +13,4 @@ export type SurfaceAddress = {
     realizationNumber: number;
     surfaceNames: string[];
     attribute: string;
-    timeString?: string;
 };

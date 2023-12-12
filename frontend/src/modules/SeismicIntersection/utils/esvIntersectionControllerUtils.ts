@@ -109,7 +109,7 @@ export type SurfaceLayerOptions = {
     surfaceColor: string;
     surfaceWidth: number;
 };
-export function addSurfaceLayer(
+export function addSurfaceLayers(
     controller: Controller,
     pixiContext: PixiRenderApplication,
     { surfaceIntersectionDataList, layerName, surfaceColor, surfaceWidth }: SurfaceLayerOptions
