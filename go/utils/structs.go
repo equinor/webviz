@@ -63,8 +63,8 @@ type AggregateRequest struct {
 	Env              string   `json:"env"`
 }
 type IntersectRequest struct {
-	Xcoords   []float64 `json:"xcoords"`
-	Ycoords   []float64 `json:"ycoords"`
+	Xcoords   []float32 `json:"xcoords"`
+	Ycoords   []float32 `json:"ycoords"`
 	ObjectIDs []string  `json:"object_ids"`
 	BaseUri   string    `json:"base_uri"`
 	AuthToken string    `json:"auth_token"`

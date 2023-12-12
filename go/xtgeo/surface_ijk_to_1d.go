@@ -25,6 +25,7 @@ func SurfaceIJKTo1D(i, j, k, nx, ny, nz int, iaStart int, order IndexOrder) (int
 		index = (k-1)*nx*ny + (j-1)*nx + i
 	case COrder:
 		// C order (row major order: k loops fastest, then j, then i)
+		// Provbably not needed.
 		index = (i-1)*nz*ny + (j-1)*nz + k
 	default:
 		return -2, errors.New("unknown index order")

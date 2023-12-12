@@ -13,14 +13,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func convertFloat32toFloat64(float32Slice []float32) []float64 {
-	float64Slice := make([]float64, len(float32Slice))
-	for i, value := range float32Slice {
-		float64Slice[i] = float64(value)
-	}
-	return float64Slice
-}
-
 func main() {
 	router := gin.Default()
 	fmt.Println("Starting server...")
@@ -50,7 +42,7 @@ func main() {
 		// Mutual exclusion lock. See below
 		var mu sync.Mutex
 		startTime := time.Now()
-		allZValues := make([][]float64, 0)
+		allZValues := make([][]float32, 0)
 
 		for _, data := range dataMap {
 			wg.Add(1)
@@ -66,11 +58,11 @@ func main() {
 				zValue, err := xtgeo.SurfaceZArrFromXYPairs(
 					iReq.Xcoords, iReq.Ycoords,
 					int(surface.Nx), int(surface.Ny),
-					float64(surface.Xori), float64(surface.Yori),
-					float64(surface.Xinc), float64(surface.Yinc),
-					1, float64(surface.Rot),
-					convertFloat32toFloat64(surface.DataSlice),
-					xtgeo.NearestNeighbor,
+					surface.Xori, surface.Yori,
+					surface.Xinc, surface.Yinc,
+					1, surface.Rot,
+					surface.DataSlice,
+					xtgeo.Bilinear,
 				)
 				if err != nil {
 					// Handle error
