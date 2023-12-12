@@ -128,13 +128,14 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
             : null
     );
     // TODO: Allow multiple surface names? I.e. string[] instead of string
-    const [selectedSurfaceName, setSelectedSurfaceName] = useValidState<string | null>(
-        null,
-        surfaceDirectoryQuery.data?.map((surfaceMeta) => surfaceMeta.name) ?? []
-    );
+    // const [selectedSurfaceName, setSelectedSurfaceName] = useValidState<string | null>(
+    //     null,
+    //     surfaceDirectoryQuery.data?.map((surfaceMeta) => surfaceMeta.name) ?? []
+    // );
+    const [selectedSurfaceNames, setSelectedSurfaceNames] = React.useState<string[]>([]);
     const [selectedSurfaceAttribute, setSelectedSurfaceAttribute] = useValidState<string | null>(
         null,
-        surfaceDirectory.getAttributeNames(selectedSurfaceName) ?? []
+        surfaceDirectory.getAttributeNames(selectedSurfaceNames.length !== 0 ? selectedSurfaceNames[0] : null) ?? []
     );
 
     // TODO: Add fixup and use synced value surface?
@@ -187,18 +188,18 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
     React.useEffect(
         function propagateSurfaceAddressToView() {
             let surfaceAddress: SurfaceAddress | null = null;
-            if (computedEnsembleIdent && selectedSurfaceAttribute && selectedSurfaceName) {
+            if (computedEnsembleIdent && selectedSurfaceAttribute && selectedSurfaceNames.length !== 0) {
                 surfaceAddress = {
                     caseUuid: computedEnsembleIdent.getCaseUuid(),
                     ensemble: computedEnsembleIdent.getEnsembleName(),
                     realizationNumber: realizationNumber,
-                    surfaceNames: [selectedSurfaceName],
+                    surfaceNames: selectedSurfaceNames,
                     attribute: selectedSurfaceAttribute,
                 };
             }
             setSurfaceAddress(surfaceAddress);
         },
-        [computedEnsembleIdent, selectedSurfaceAttribute, selectedSurfaceName, realizationNumber]
+        [computedEnsembleIdent, selectedSurfaceAttribute, selectedSurfaceNames, realizationNumber]
     );
 
     React.useEffect(
@@ -230,11 +231,12 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
     }
 
     function handleSurfaceNameChange(values: string[]) {
-        if (values.length === 0) {
-            setSelectedSurfaceName(null);
-            return;
-        }
-        setSelectedSurfaceName(values[0]);
+        // if (values.length === 0) {
+        //     setSelectedSurfaceName(null);
+        //     return;
+        // }
+        // setSelectedSurfaceName(values[0]);
+        setSelectedSurfaceNames(values);
     }
 
     function handleSurfaceAttributeChange(values: string[]) {
@@ -343,7 +345,8 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
                                 options={surfaceDirectory.getSurfaceNames(null).map((name) => {
                                     return { label: name, value: name };
                                 })}
-                                value={selectedSurfaceName ? [selectedSurfaceName] : []}
+                                value={selectedSurfaceNames}
+                                multiple={true}
                                 size={4}
                                 onChange={handleSurfaceNameChange}
                             />
