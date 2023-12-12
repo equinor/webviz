@@ -32,6 +32,19 @@ export function useValidState<T>(options: {
     const computedInitialState =
         typeof options.initialState === "function" ? (options.initialState as () => T)() : options.initialState;
 
+    const validatingFunc = options.validateStateFunc;
+    function setValidStateWithValidatingFunc(newState: T | ((prevState: T) => T), acceptInvalidState = true) {
+        if (validatingFunc === undefined) {
+            throw new Error("validateStateFunc must be provided");
+        }
+        const computedNewState = typeof newState === "function" ? (newState as (prevState: T) => T)(state) : newState;
+        if (!acceptInvalidState && !validatingFunc(computedNewState)) {
+            return;
+        }
+
+        setState(newState);
+    }
+
     if (options.validateStateFunc !== undefined) {
         if (!options.validateStateFunc(state)) {
             validState = computedInitialState;
@@ -40,19 +53,7 @@ export function useValidState<T>(options: {
             }
         }
 
-        const validatingFunc = options.validateStateFunc;
-
-        function setValidState(newState: T | ((prevState: T) => T), acceptInvalidState = true) {
-            const computedNewState =
-                typeof newState === "function" ? (newState as (prevState: T) => T)(state) : newState;
-            if (!acceptInvalidState && !validatingFunc(computedNewState)) {
-                return;
-            }
-
-            setState(newState);
-        }
-
-        return [validState, setValidState];
+        return [validState, setValidStateWithValidatingFunc];
     }
 
     if (options.validStates === undefined) {

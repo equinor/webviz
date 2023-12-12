@@ -112,14 +112,14 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
           })
         : null;
 
-    const [selectedSeismicAttribute, setSelectedSeismicAttribute] = useValidState<string | null>(
-        null,
-        seismicCubeMetaDirectory?.getAttributeNames() ?? []
-    );
-    const [selectedTime, setSelectedTime] = useValidState<string | null>(
-        null,
-        seismicCubeMetaDirectory?.getTimeOrIntervalStrings() ?? []
-    );
+    const [selectedSeismicAttribute, setSelectedSeismicAttribute] = useValidState<string | null>({
+        initialState: null,
+        validStates: seismicCubeMetaDirectory?.getAttributeNames() ?? [],
+    });
+    const [selectedTime, setSelectedTime] = useValidState<string | null>({
+        initialState: null,
+        validStates: seismicCubeMetaDirectory?.getTimeOrIntervalStrings() ?? [],
+    });
 
     const seismicAttributeOptions = seismicCubeMetaDirectory
         ? seismicCubeMetaDirectory.getAttributeNames().map((attribute) => {

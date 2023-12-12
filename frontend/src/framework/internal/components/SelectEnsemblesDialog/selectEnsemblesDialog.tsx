@@ -66,11 +66,11 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
         },
     });
 
-    const [selectedField, setSelectedField] = useValidState<string>(
-        "",
-        [fieldsQuery.data ?? [], (item) => item.field_identifier],
-        true
-    );
+    const [selectedField, setSelectedField] = useValidState<string>({
+        initialState: "",
+        validStates: fieldsQuery.data?.map((item) => item.field_identifier) ?? [],
+        keepStateWhenInvalid: true,
+    });
 
     const casesQuery = useQuery({
         queryKey: ["getCases", selectedField],
@@ -85,11 +85,11 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
         staleTime: STALE_TIME,
     });
 
-    const [selectedCaseId, setSelectedCaseId] = useValidState<string>(
-        "",
-        [casesQuery.data ?? [], (item) => item.uuid],
-        true
-    );
+    const [selectedCaseId, setSelectedCaseId] = useValidState<string>({
+        initialState: "",
+        validStates: casesQuery.data?.map((item) => item.uuid) ?? [],
+        keepStateWhenInvalid: true,
+    });
 
     const ensemblesQuery = useQuery({
         queryKey: ["getEnsembles", selectedCaseId],
@@ -104,11 +104,11 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
         staleTime: STALE_TIME,
     });
 
-    const [selectedEnsembleName, setSelectedEnsembleName] = useValidState<string>(
-        "",
-        [ensemblesQuery.data ?? [], (el) => el.name],
-        true
-    );
+    const [selectedEnsembleName, setSelectedEnsembleName] = useValidState<string>({
+        initialState: "",
+        validStates: ensemblesQuery.data?.map((el) => el.name) ?? [],
+        keepStateWhenInvalid: true,
+    });
 
     function handleFieldChanged(fieldIdentifier: string) {
         setSelectedField(fieldIdentifier);
