@@ -10,10 +10,8 @@ import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { SingleEnsembleSelect } from "@framework/components/SingleEnsembleSelect";
 import { fixupEnsembleIdent, maybeAssignFirstSyncedEnsemble } from "@framework/utils/ensembleUiHelpers";
 import { ApiStateWrapper } from "@lib/components/ApiStateWrapper";
-import { Checkbox } from "@lib/components/Checkbox";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
-import { Input } from "@lib/components/Input";
 import { Label } from "@lib/components/Label";
 import { Select, SelectOption } from "@lib/components/Select";
 import { useValidState } from "@lib/hooks/useValidState";
@@ -287,16 +285,4 @@ function fixupSyncedOrSelectedOrFirstWellbore(
         return legalWellbores[0];
     }
     return null;
-}
-
-function createOptionsFromTimeOrIntervalStrings(timeOrIntervalStrings: string[]): SelectOption[] {
-    if (timeOrIntervalStrings.length == 0) {
-        return [];
-    }
-    // '2018-01-01T00:00:00.000Z--2019-07-01T00:00:00.000Z' to '2018-01-01--2019-07-01'
-    const options = timeOrIntervalStrings.map((elm) => {
-        const date = elm.replaceAll("T00:00:00.000Z", "");
-        return { label: date, value: elm };
-    });
-    return options;
 }

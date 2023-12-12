@@ -1,5 +1,4 @@
 import { SurfaceStatisticFunction_api } from "@api";
-import { EnsembleIdent } from "@framework/EnsembleIdent";
 
 export type SeismicAddress = {
     caseUuid: string;

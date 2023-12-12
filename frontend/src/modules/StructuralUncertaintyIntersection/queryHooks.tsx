@@ -10,8 +10,6 @@ import { apiService } from "@framework/ApiService";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { UseQueryResult, useQuery } from "@tanstack/react-query";
 
-import { RealizationsSurfaceSetSpec } from "./types";
-
 const STALE_TIME = 60 * 1000;
 const CACHE_TIME = 60 * 1000;
 

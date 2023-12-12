@@ -1,10 +1,8 @@
 import React from "react";
 
-import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { Checkbox } from "@lib/components/Checkbox";
 import { Label } from "@lib/components/Label";
 import { Select } from "@lib/components/Select";
-import { SurfaceDirectory } from "@modules/_shared/Surface";
 
 import { isEqual } from "lodash";
 

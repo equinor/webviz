@@ -67,13 +67,12 @@ export const EsvIntersection: React.FC<EsvIntersectionProps> = (props) => {
             controller.current.zoomPanHandler.zFactor = props.zScale;
         }
         return () => {
-            console.debug("controller destroyed");
             controller.current?.destroy();
         };
     }, []);
     if (!isEqual(previousWellborePath, props.wellborePath)) {
         setPreviousWellborePath(props.wellborePath);
-        console.log("Layers cleared");
+
         controller.current?.getLayer("statisticalSurfaceLayer")?.clearData();
         controller.current?.getLayer("realizationsSurfaceLayer")?.clearData();
     }
@@ -84,14 +83,14 @@ export const EsvIntersection: React.FC<EsvIntersectionProps> = (props) => {
 
         if (props.statisticalSurfaceIntersectionPoints) {
             const layerData = statisticalSurfaceIntersectionsToSurfaceData(props.statisticalSurfaceIntersectionPoints);
-            console.log("Update stat data");
+
             controller.current.getLayer("statisticalSurfaceLayer")?.setData(layerData);
         }
         if (props.realizationsSurfaceIntersectionPoints) {
             const layerData = realizationsSurfaceIntersectionsToSurfaceData(
                 props.realizationsSurfaceIntersectionPoints
             );
-            console.log("Update real data");
+
             controller.current.getLayer("realizationsSurfaceLayer")?.setData(layerData);
         }
     }

@@ -12,10 +12,8 @@ import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { ModuleFCProps } from "@framework/Module";
 import { useViewStatusWriter } from "@framework/StatusWriter";
 import { useElementSize } from "@lib/hooks/useElementSize";
-import { ColorScaleGradientType } from "@lib/utils/ColorScale";
 import { useWellTrajectoriesQuery } from "@modules/_shared/WellBore/queryHooks";
 import { ContentError } from "@modules/_shared/components/ContentMessage";
-import { ContentErrorProps } from "@modules/_shared/components/ContentMessage/contentMessage";
 
 import { isEqual } from "lodash";
 
@@ -26,19 +24,14 @@ import {
     useWellStatisticsSurfaceSetIntersectionQuery,
 } from "./queryHooks";
 import { State } from "./state";
-import {
-    addMDOverlay,
-    addSeismicLayer,
-    addSurfaceLayers,
-    addWellborePathLayer,
-} from "./utils/esvIntersectionControllerUtils";
+import { addMDOverlay, addSurfaceLayers, addWellborePathLayer } from "./utils/esvIntersectionControllerUtils";
 import {
     makeExtendedTrajectoryFromTrajectoryXyzPoints,
     makeReferenceSystemFromTrajectoryXyzPoints,
     makeTrajectoryXyzPointsFromWellboreTrajectory,
 } from "./utils/esvIntersectionDataConversion";
 
-export const view = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>) => {
+export const view = ({ moduleContext }: ModuleFCProps<State>) => {
     const wrapperDivRef = React.useRef<HTMLDivElement | null>(null);
     const wrapperDivSize = useElementSize(wrapperDivRef);
     const esvIntersectionContainerRef = React.useRef<HTMLDivElement | null>(null);
@@ -82,7 +75,7 @@ export const view = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
             esvIntersectionControllerRef.current?.destroy();
         };
     }, []);
-    console.log(wellboreAddress);
+
     // Get well trajectories query
     const getWellTrajectoriesQuery = useWellTrajectoriesQuery(wellboreAddress ? [wellboreAddress.uuid] : undefined);
     if (getWellTrajectoriesQuery.isError) {
@@ -110,14 +103,14 @@ export const view = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
 
             const x_points = newExtendedWellboreTrajectory?.points.map((coord) => coord[0]) ?? [];
             const y_points = newExtendedWellboreTrajectory?.points.map((coord) => coord[1]) ?? [];
-            console.log(newExtendedWellboreTrajectory.offset);
+
             const cum_length = newExtendedWellboreTrajectory
                 ? IntersectionReferenceSystem.toDisplacement(
                       newExtendedWellboreTrajectory.points,
                       newExtendedWellboreTrajectory.offset
                   ).map((coord) => coord[0] - intersectionSettings.extension)
                 : [];
-            console.log(cum_length);
+
             candidateSurfacePolyLineSpec = { x_points, y_points, cum_length };
             setSurfacePolyLineSpec(candidateSurfacePolyLineSpec);
         }
@@ -188,7 +181,6 @@ export const view = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
             // @ts-ignore
 
             esvPixiContentRef.current = new PixiRenderApplication({ width, height });
-            console.log("hello");
         }
 
         addWellborePathLayer(esvIntersectionControllerRef.current, renderWellboreTrajectoryXyzPoints);
