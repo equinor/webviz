@@ -29,16 +29,14 @@ func main() {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
-		fmt.Printf("Received request: %+v\n", iReq)
 
-		type result struct {
-			zValues []float32
-			err     error
-		}
-
+		// Run in parallell
 		var wg sync.WaitGroup
+		// Mutual exclusion lock. See below
+		var mu sync.Mutex
 		startTime := time.Now()
-		resultChan := make(chan result, len(iReq.ObjectIDs))
+		allZValues := make([][]float32, 0)
+		var errArray []error
 
 		for _, objectId := range iReq.ObjectIDs {
 			wg.Add(1)
@@ -46,24 +44,25 @@ func main() {
 			go func(objectId string) {
 				defer wg.Done()
 
-				var r result
-
+				// Download blob
 				data, statusCode, err := FetchBlob(objectId, iReq.BaseUri, &iReq.AuthToken)
 				if err != nil || statusCode != 200 {
-					fmt.Printf("Error fetching blob for objectId %s: %v\n", objectId, err)
-					r.err = err
-					resultChan <- r
+					mu.Lock()
+					errArray = append(errArray, err)
+					mu.Unlock()
 					return
 				}
 
+				// Deserialize blob
 				surface, err := utils.DeserializeBlobToSurface(data)
 				if err != nil {
-					fmt.Printf("Error deserializing blob for objectId %s: %v\n", objectId, err)
-					r.err = err
-					resultChan <- r
+					mu.Lock()
+					errArray = append(errArray, err)
+					mu.Unlock()
 					return
 				}
 
+				// Intersect
 				zValue, err := xtgeo.SurfaceZArrFromXYPairs(
 					iReq.Xcoords, iReq.Ycoords,
 					int(surface.Nx), int(surface.Ny),
@@ -74,55 +73,21 @@ func main() {
 					xtgeo.Bilinear,
 				)
 				if err != nil {
-					fmt.Printf("Error calculating zValue for objectId %s: %v\n", objectId, err)
-					r.err = err
-					resultChan <- r
+					// Handle error
+					fmt.Printf("Error in SurfaceZArrFromXYPairs: %v\n", err)
 					return
 				}
-
-				r.zValues = zValue
-				resultChan <- r
-				fmt.Println(zValue)
-				fmt.Printf("Sent result for objectId: %s\n", objectId)
-
+				// Lock the mutex to prevent concurrent access to the slice
+				mu.Lock()
+				allZValues = append(allZValues, zValue)
+				mu.Unlock()
 			}(objectId)
 		}
 
-		// Collect results
-		allZValues := make([][]float32, 0)
-		var errArray []error
-		go func() {
-			for r := range resultChan {
-				if r.err != nil {
-					errArray = append(errArray, r.err)
-				} else {
-					allZValues = append(allZValues, r.zValues)
-				}
-			}
-		}()
-
 		wg.Wait()
-		fmt.Printf("allZValues: %+v, errArray: %+v\n", allZValues, errArray)
-
-		close(resultChan)
-		fmt.Printf("allZValues: %+v, errArray: %+v\n", allZValues, errArray)
-
 		duration := time.Now().Sub(startTime)
 		fmt.Printf("Total time: %v\n", duration)
-
-		if len(errArray) > 0 {
-			// Handle the error case
-			errorMessages := make([]string, 0, len(errArray))
-			for _, err := range errArray {
-				errorMessages = append(errorMessages, err.Error())
-			}
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"errors": errorMessages,
-			})
-		} else {
-			// Send the successful response
-			c.JSON(http.StatusOK, allZValues)
-		}
+		c.JSON(http.StatusOK, allZValues)
 	})
 
 	router.Run(":5001") // Listen and serve on 0.0.0.0:5001
