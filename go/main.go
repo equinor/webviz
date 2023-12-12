@@ -87,6 +87,10 @@ func main() {
 		wg.Wait()
 		duration := time.Now().Sub(startTime)
 		fmt.Printf("Total time: %v\n", duration)
+		fmt.Println(allZValues)
+		var test = 10e32
+		fmt.Printf("test: %v\n", test)
+		fmt.Printf("test: %v\n", float32(test))
 		c.JSON(http.StatusOK, allZValues)
 	})
 

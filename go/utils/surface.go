@@ -11,7 +11,7 @@ import (
 	"sync"
 )
 
-const UndefinedSurfValue = float32(1000000000000000000000000000000)
+const UndefinedSurfValue = float32(1e30)
 
 func GetSurfaceDataFromBlobs(objectIds []string, sasToken string, baseUrl string, nanAsZero bool) ([]*Surface, []error) {
 	var wg sync.WaitGroup

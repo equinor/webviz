@@ -330,11 +330,13 @@ async def intersectSurface(
     for z_arrs in await fetch_all():
 
         for idx, z_arr in enumerate(z_arrs):
+            # Replace 1e30 with np.nan in z_arr
+            zarr = np.where(np.isclose(z_arr, 1e30, atol=1e22), np.nan, z_arr)
             intersections.append(
                 schemas.SurfaceIntersectionPoints(
                     name=f"test",
                     cum_length=surface_fence_spec.cum_length,
-                    z_array=z_arr,
+                    z_array=zarr,
                 )
             )
     return intersections
