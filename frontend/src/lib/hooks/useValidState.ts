@@ -1,25 +1,28 @@
 import React from "react";
 
+import { isEqual } from "lodash";
+
 export function useValidState<T, K = any>(
     initialState: T | (() => T),
     validStates: readonly T[] | [readonly K[], (element: K) => T],
     keepStateWhenInvalid = true
 ): [T, (newState: T | ((prevState: T) => T), acceptInvalidState?: boolean) => void] {
     const [state, setState] = React.useState<T>(initialState);
+    const [adjustedValidStates, setAdjustedValidStates] = React.useState<T[]>([]);
 
     let validState = state;
     const computedInitialState = typeof initialState === "function" ? (initialState as () => T)() : initialState;
 
-    let adjustedValidStates: T[] = [];
+    let newAdjustedValidStates: T[] = [];
     if (validStates.length === 2 && Array.isArray(validStates[0]) && typeof validStates[1] === "function") {
-        adjustedValidStates = validStates[0].map(validStates[1] as (element: K) => T);
+        newAdjustedValidStates = validStates[0].map(validStates[1] as (element: K) => T);
     } else {
-        adjustedValidStates = validStates as T[];
+        newAdjustedValidStates = validStates as T[];
     }
 
-    if (!adjustedValidStates.includes(state)) {
-        if (adjustedValidStates.length > 0) {
-            validState = adjustedValidStates[0];
+    if (!newAdjustedValidStates.includes(state)) {
+        if (newAdjustedValidStates.length > 0) {
+            validState = newAdjustedValidStates[0];
         } else {
             validState = computedInitialState;
         }
@@ -28,14 +31,22 @@ export function useValidState<T, K = any>(
         }
     }
 
-    function setValidState(newState: T | ((prevState: T) => T), acceptInvalidState = true) {
-        const computedNewState = typeof newState === "function" ? (newState as (prevState: T) => T)(state) : newState;
-        if (!acceptInvalidState && !adjustedValidStates.includes(computedNewState)) {
-            return;
-        }
-
-        setState(newState);
+    if (!isEqual(adjustedValidStates, newAdjustedValidStates)) {
+        setAdjustedValidStates(newAdjustedValidStates);
     }
+
+    const setValidState = React.useCallback(
+        function setValidState(newState: T | ((prevState: T) => T), acceptInvalidState = true) {
+            const computedNewState =
+                typeof newState === "function" ? (newState as (prevState: T) => T)(state) : newState;
+            if (!acceptInvalidState && !adjustedValidStates.includes(computedNewState)) {
+                return;
+            }
+
+            setState(newState);
+        },
+        [state, adjustedValidStates]
+    );
 
     return [validState, setValidState];
 }
