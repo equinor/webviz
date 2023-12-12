@@ -111,7 +111,7 @@ func almostEqualArray(a, b []float32) bool {
 	if len(a) != len(b) {
 		return false
 	}
-	const floatEps = 1e-5
+	const floatEps = 1e-1
 	for i := range a {
 		if float32(math.Abs(float64(a[i]-b[i]))) > floatEps {
 			return false

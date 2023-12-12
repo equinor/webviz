@@ -60,7 +60,18 @@ func SurfaceInterpolateBilinear(xV, yV, zV []float32, x, y float32) float32 {
 		fmt.Println(x, y, xmin, xmax, ymin, ymax)
 		return UndefMap
 	}
-
+	// /* assume that all nodes are defined (this need to be better...?) */
+	// for (i = 0; i <= 3; i++) {
+	//     if (z_v[i] > UNDEF_MAP_LIMIT) {
+	//         return UNDEF_MAP;
+	//     }
+	// }
+	for i := 0; i <= 3; i++ {
+		if zV[i] >= UndefMap {
+			fmt.Println("Error in SurfaceInterpolateNearestNode: zV[i] is undefined")
+			return UndefMap
+		}
+	}
 	a, b := calculateRelativePositions(x, y, xV, yV)
 
 	z := zV[0] + a*(zV[1]-zV[0]) + b*(zV[2]-zV[0]) + a*b*(zV[3]+zV[0]-zV[2]-zV[1])
@@ -90,9 +101,14 @@ func SurfaceInterpolateNearestNode(xV, yV, zV []float32, x, y float32) float32 {
 		fmt.Println(x, y, xmin, xmax, ymin, ymax)
 		return UndefMap
 	}
-
+	// /* assume that all nodes are defined (this need to be better...?) */
+	// for (i = 0; i <= 3; i++) {
+	//     if (z_v[i] > UNDEF_MAP_LIMIT) {
+	//         return UNDEF_MAP;
+	//     }
+	// }
 	for i := 0; i <= 3; i++ {
-		if zV[i] > UndefMapLimit {
+		if zV[i] >= UndefMap {
 			fmt.Println("Error in SurfaceInterpolateNearestNode: zV[i] is undefined")
 			return UndefMap
 		}

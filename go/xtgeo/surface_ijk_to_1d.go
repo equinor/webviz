@@ -12,7 +12,7 @@ const (
 	COrder                         // C order (row major)
 )
 
-// SurfaceIJKTo1D converts (i, j, k) coordinates to a 1-dimensional index based on the specified order.
+// SurfaceIJKTo1D flattens (i, j, k) coordinates to a 1-d index based on the specified order.
 func SurfaceIJKTo1D(i, j, k, nx, ny, nz int, iaStart int, order IndexOrder) (int, error) {
 	if i < 1 || i > nx || j < 1 || j > ny || k < 1 || k > nz {
 		return -2, errors.New("indices are out of range")
