@@ -147,13 +147,6 @@ export const view = ({ moduleContext }: ModuleFCProps<State>) => {
             realization_nums: statisticalSurfaceSetSpec.realizationNums ?? [],
         };
     }
-    // Get seismic fence data from polyline
-    const surfaceSetRealizationsIntersectionPointsQuery = useWellRealizationsSurfaceSetIntersectionQuery(
-        realEnsembleIdent,
-        realizationsSurfaceSetSpec_api,
-        candidateSurfacePolyLineSpec,
-        true
-    );
 
     const wellIntersectionSurfaceSetQueries = useWellIntersectionSurfaceSetQueries(
         realEnsembleIdent,
@@ -168,9 +161,7 @@ export const view = ({ moduleContext }: ModuleFCProps<State>) => {
             realData.push(intersectionPoint);
         });
     });
-    if (surfaceSetRealizationsIntersectionPointsQuery.isError) {
-        statusWriter.addError("Error loading seismic fence data");
-    }
+
     const surfaceSetStatisticsInsectionPointsQuery = useWellStatisticsSurfaceSetIntersectionQuery(
         statEnsembleIdent,
         statisticalSurfaceSetSpec_api,
