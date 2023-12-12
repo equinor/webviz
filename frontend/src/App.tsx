@@ -50,6 +50,8 @@ function App() {
 
     React.useEffect(
         function handleMountWhenSignedIn() {
+            const workbenchRef = workbench.current;
+
             if (authState !== AuthState.LoggedIn || isMounted) {
                 return;
             }
@@ -67,11 +69,11 @@ function App() {
             }
 
             return function handleUnmount() {
-                workbench.current.clearLayout();
-                workbench.current.resetModuleInstanceNumbers();
+                workbenchRef.clearLayout();
+                workbenchRef.resetModuleInstanceNumbers();
             };
         },
-        [authState, isMounted]
+        [authState, isMounted, queryClient]
     );
 
     function makeStateMessages() {

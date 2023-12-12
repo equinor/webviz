@@ -29,6 +29,8 @@ export type ParameterListFilterProps = {
 };
 
 export const ParameterListFilter: React.FC<ParameterListFilterProps> = (props: ParameterListFilterProps) => {
+    const { onChange } = props;
+
     const smartNodeSelectorId = React.useId();
     const [selectedTags, setSelectedTags] = React.useState<string[]>(
         props.initialFilters ?? [ParameterParentNodeNames.IS_NONCONSTANT]
@@ -52,8 +54,8 @@ export const ParameterListFilter: React.FC<ParameterListFilterProps> = (props: P
         function createFilterParameters() {
             if (parameters === null || parameters.length === 0) {
                 setNumberOfMatchingParameters(0);
-                if (props.onChange) {
-                    props.onChange([]);
+                if (onChange) {
+                    onChange([]);
                 }
                 return;
             }
@@ -64,11 +66,11 @@ export const ParameterListFilter: React.FC<ParameterListFilterProps> = (props: P
                 smartNodeSelectorDelimiter
             );
             setNumberOfMatchingParameters(filteredParameters.length);
-            if (props.onChange) {
-                props.onChange(filteredParameters);
+            if (onChange) {
+                onChange(filteredParameters);
             }
         },
-        [selectedNodes, parameters, props.onChange]
+        [selectedNodes, parameters, onChange, smartNodeSelectorDelimiter]
     );
 
     function handleSmartNodeSelectorChange(selection: SmartNodeSelectorSelection) {

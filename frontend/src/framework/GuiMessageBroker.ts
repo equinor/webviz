@@ -200,15 +200,19 @@ export function useGuiState<T extends GuiState>(
         guiMessageBroker.makeStateSnapshotGetter(state)
     );
 
-    function stateSetter(
-        valueOrFunc: GuiStateValueTypes[T] | ((prev: GuiStateValueTypes[T]) => GuiStateValueTypes[T])
-    ): void {
-        if (valueOrFunc instanceof Function) {
-            guiMessageBroker.setState(state, valueOrFunc(stateValue));
-            return;
-        }
-        guiMessageBroker.setState(state, valueOrFunc);
-    }
+    const stateSetter = React.useCallback(
+        function stateSetter(
+            valueOrFunc: GuiStateValueTypes[T] | ((prev: GuiStateValueTypes[T]) => GuiStateValueTypes[T])
+        ): void {
+            if (valueOrFunc instanceof Function) {
+                const value = guiMessageBroker.getState(state);
+                guiMessageBroker.setState(state, valueOrFunc(value));
+                return;
+            }
+            guiMessageBroker.setState(state, valueOrFunc);
+        },
+        [guiMessageBroker, state]
+    );
 
     return [stateValue, stateSetter];
 }
