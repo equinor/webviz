@@ -113,7 +113,7 @@ export const DataChannelVisualizationLayer: React.FC<DataChannelVisualizationPro
                 const boundingRect = receiverNode.getBoundingClientRect();
                 setCurrentPointerPosition({
                     x: boundingRect.left + boundingRect.width / 2,
-                    y: boundingRect.top, //localCurrentOriginPoint.y > boundingRect.top ? boundingRect.bottom : boundingRect.top,
+                    y: boundingRect.top,
                 });
                 return;
             }
@@ -226,14 +226,6 @@ export const DataChannelVisualizationLayer: React.FC<DataChannelVisualizationPro
     }, []);
     let midPointY = (originPoint.y + currentPointerPosition.y) / 2;
 
-    /*
-    if (currentPointerPosition.y < originPoint.y + 40 && currentPointerPosition.y > originPoint.y) {
-        midPointY = originPoint.y - 20;
-    } else if (currentPointerPosition.y > originPoint.y - 40 && currentPointerPosition.y < originPoint.y) {
-        midPointY = originPoint.y + 20;
-    }
-    */
-
     if (currentPointerPosition.y < originPoint.y) {
         midPointY = currentPointerPosition.y / 2;
     }
@@ -313,13 +305,6 @@ export const DataChannelVisualizationLayer: React.FC<DataChannelVisualizationPro
                     x: destinationPoint.x,
                     y: midPointY,
                 };
-
-                /*
-                if (Math.abs(originPoint.y - destinationPoint.y) < 40) {
-                    midPoint1.y = originPoint.y - Math.sign(originPoint.y - destinationPoint.y) * 80;
-                    midPoint2.y = destinationPoint.y - Math.sign(originPoint.y - destinationPoint.y) * 80;
-                }
-                */
 
                 const descriptionCenterPoint: Point = {
                     x: (originPoint.x + destinationPoint.x) / 2,
