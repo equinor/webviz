@@ -1,7 +1,5 @@
 import React from "react";
 
-import { isDevMode } from "@lib/utils/devMode";
-
 import { cloneDeep } from "lodash";
 
 import { ModuleChannelDefinition, ModuleChannelReceiverDefinition } from "./DataChannelTypes";

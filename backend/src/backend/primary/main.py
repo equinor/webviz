@@ -29,7 +29,6 @@ from .routers.polygons.router import router as polygons_router
 from .routers.graph.router import router as graph_router
 from .routers.observations.router import router as observations_router
 from .routers.rft.router import router as rft_router
-from .exceptions import ResultNotMatchingExpectations
 
 
 ensure_console_log_handler_is_configured()
@@ -98,15 +97,3 @@ app.add_middleware(AddProcessTimeToServerTimingMiddleware, metric_name="total")
 @app.get("/")
 async def root() -> str:
     return f"Backend is alive at this time: {datetime.datetime.now()}"
-
-@app.exception_handler(Exception)
-async def exception_handler(request: Request, exc: Exception):
-    if isinstance(exc, ResultNotMatchingExpectations):
-        return JSONResponse(
-            status_code=404,
-            content={"message": exc.message},
-        )
-    return JSONResponse(
-        status_code=500,
-        content={"message": str(exc)},
-    )

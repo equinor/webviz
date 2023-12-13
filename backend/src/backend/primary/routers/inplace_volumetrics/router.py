@@ -1,5 +1,5 @@
 from typing import List, Optional, Sequence
-from fastapi import APIRouter, Depends, Query, Response
+from fastapi import APIRouter, Depends, Query
 
 from src.services.sumo_access.inplace_volumetrics_access import (
     InplaceVolumetricsAccess,
@@ -12,33 +12,25 @@ from src.services.utils.authenticated_user import AuthenticatedUser
 
 from src.backend.auth.auth_helper import AuthHelper
 
-from src.services.utils.perf_timer import PerfTimer
-from src.backend.auth.auth_helper import AuthHelper
-from src.backend.utils.perf_metrics import PerfMetrics
 
 router = APIRouter()
 
 
-@router.get("/table_names_and_metadata/", tags=["inplace_volumetrics"])
-async def get_table_names_and_metadata(
+@router.get("/table_names_and_descriptions/", tags=["inplace_volumetrics"])
+async def get_table_names_and_descriptions(
     # fmt:off
-    response: Response,
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     case_uuid: str = Query(description="Sumo case uuid"),
     ensemble_name: str = Query(description="Ensemble name"),
     # fmt:on
 ) -> List[InplaceVolumetricsTableMetaData]:
     """Get all volumetric tables for a given ensemble."""
-    perf_metrics = PerfMetrics(response)
+
     access = await InplaceVolumetricsAccess.from_case_uuid(
         authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
     )
-    perf_metrics.record_lap("create-accessor")
-    table_names_and_metadata = await access.get_table_names_and_metadata()
-    perf_metrics.record_lap("get-table-names-and-metadata")
-    # Only in order to make developing easier
-    response.headers["cache-control"] = "max-age=3600"
-    return table_names_and_metadata
+    table_names = access.get_table_names_and_metadata()
+    return table_names
 
 
 @router.post("/realizations_response/", tags=["inplace_volumetrics"])
@@ -57,7 +49,7 @@ async def get_realizations_response(
     access = await InplaceVolumetricsAccess.from_case_uuid(
         authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
     )
-    response = await access.get_response(table_name, response_name, categorical_filter, realizations)
+    response = access.get_response(table_name, response_name, categorical_filter, realizations)
     return response
 
 
