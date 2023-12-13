@@ -1,7 +1,7 @@
+import { KeyKind } from "@framework/DataChannelTypes";
+
 import { DataGenerator, ModuleChannelContent, ModuleChannelContentNotificationTopic } from "./ModuleChannelContent";
 import { ModuleChannelManager } from "./ModuleChannelManager";
-
-import { DataElement, KeyKind, KeyType } from "../../DataChannelTypes";
 
 export interface ModuleChannelDefinition {
     readonly idString: string;
@@ -75,37 +75,26 @@ export class ModuleChannel {
         this.notifySubscribers(ModuleChannelNotificationTopic.ContentsDataArraysChange);
     }
 
-    registerContent({
-        idString,
-        displayName,
-        dataGenerator,
-    }: {
-        idString: string;
-        displayName: string;
-        dataGenerator: DataGenerator;
-    }): void {
-        const content = new ModuleChannelContent({ idString, displayName, dataGenerator });
-        content.subscribe(ModuleChannelContentNotificationTopic.DataArrayChange, this.handleContentDataArraysChange);
-        this._contents.push(content);
+    replaceContents(
+        newContents: {
+            idString: string;
+            displayName: string;
+            dataGenerator: DataGenerator;
+        }[]
+    ): void {
+        this._contents = [];
+
+        for (const contentDef of newContents) {
+            const content = new ModuleChannelContent({ ...contentDef });
+            content.subscribe(
+                ModuleChannelContentNotificationTopic.DataArrayChange,
+                this.handleContentDataArraysChange
+            );
+            this._contents.push(content);
+        }
 
         this.notifySubscribers(ModuleChannelNotificationTopic.ContentsArrayChange);
         this.notifySubscribers(ModuleChannelNotificationTopic.ContentsDataArraysChange);
-    }
-
-    unregisterContent(idString: string): void {
-        this._contents = this._contents.filter((content) => content.getIdString() !== idString);
-
-        this.notifySubscribers(ModuleChannelNotificationTopic.ContentsArrayChange);
-    }
-
-    unregisterAllContents(): void {
-        this._contents = [];
-
-        this.notifySubscribers(ModuleChannelNotificationTopic.ContentsArrayChange);
-    }
-
-    hasContent(idString: string): boolean {
-        return this._contents.some((content) => content.getIdString() === idString);
     }
 
     subscribe(topic: ModuleChannelNotificationTopic, callback: () => void): void {

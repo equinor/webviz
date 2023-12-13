@@ -24,7 +24,7 @@ export class ModuleChannelReceiver {
     private _channel: ModuleChannel | null = null;
     private _contentIdStrings: string[] = [];
     private _subscribersMap: Map<ModuleChannelReceiverNotificationTopic, Set<() => void>> = new Map();
-    private _subscribedToAllContents: boolean = false;
+    private _subscribedToAllContents = false;
 
     constructor({
         manager,
