@@ -200,7 +200,10 @@ export const ChannelSelector: React.FC<ChannelSelectorProps> = (props) => {
         convertRemToPixels(4) +
         4;
     const left = Math.min(props.position.x, window.innerWidth - convertRemToPixels(10) - 10);
-    const top = Math.min(props.position.y - calculatedHeight / 2, window.innerHeight - calculatedHeight - 10);
+    const top = Math.max(
+        10,
+        Math.min(props.position.y - calculatedHeight / 2, window.innerHeight - calculatedHeight - 10)
+    );
     const maxHeight = Math.min(calculatedHeight, window.innerHeight - 20);
 
     return createPortal(
@@ -248,7 +251,7 @@ export const ChannelSelector: React.FC<ChannelSelectorProps> = (props) => {
                 <div className="px-2 bg-slate-200 flex gap-2 justify-end h-16 items-center">
                     <Button onClick={handleCancelChannelSelection}>Cancel</Button>
                     <Button onClick={handleSelectionDone} disabled={!checkIfSelectionIsMade()}>
-                        Confirm
+                        Subscribe
                     </Button>
                 </div>
             </div>

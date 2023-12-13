@@ -75,6 +75,7 @@ export const ChannelReceiverNode: React.FC<ChannelReceiverNodeProps> = (props) =
         }
 
         function handlePointerUp(e: PointerEvent) {
+            console.debug("handlePointerUp");
             if (localHovered) {
                 if (removeButtonRef.current && removeButtonRef.current.contains(e.target as Node)) {
                     props.onChannelConnectionDisconnect(props.idString);
@@ -229,7 +230,7 @@ export const ChannelReceiverNode: React.FC<ChannelReceiverNodeProps> = (props) =
             ref={ref}
             data-channelconnector
             className={resolveClassNames(
-                "w-40 flex flex-col items-center justify-center rounded border h-20 m-2 gap-2 text-sm text-center",
+                "w-40 max-w-[25%] flex flex-col items-center justify-center rounded border h-20 max-h-[25%] m-2 gap-2 text-sm text-center",
                 {
                     "bg-green-600 border-green-600": hovered && connectable,
                     "bg-red-600 border-red-600": hovered && !connectable && !editDataChannelConnections,

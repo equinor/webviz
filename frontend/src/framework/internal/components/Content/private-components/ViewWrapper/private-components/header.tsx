@@ -67,8 +67,8 @@ export const Header: React.FC<HeaderProps> = (props) => {
             moduleInstanceId: props.moduleInstance.getId(),
             originElement: dataChannelOriginRef.current,
         });
-        e.stopPropagation();
         e.preventDefault();
+        e.stopPropagation();
     }
 
     function handleReceiversPointerUp(e: React.PointerEvent<HTMLDivElement>) {
@@ -169,7 +169,7 @@ export const Header: React.FC<HeaderProps> = (props) => {
 
     return (
         <div
-            className={resolveClassNames("flex items-center select-none shadow relative", {
+            className={resolveClassNames("flex items-center select-none shadow relative touch-none", {
                 "cursor-grabbing": props.isDragged,
                 "cursor-move": !props.isDragged,
                 "bg-red-100": hasErrors,
@@ -218,7 +218,7 @@ export const Header: React.FC<HeaderProps> = (props) => {
                 <div
                     id={`moduleinstance-${props.moduleInstance.getId()}-data-channel-origin`}
                     ref={dataChannelOriginRef}
-                    className="hover:text-slate-500 cursor-grab ml-2"
+                    className="hover:text-slate-500 cursor-grab ml-2 touch-none"
                     title="Connect data channels to other module instances"
                     onPointerDown={handleDataChannelOriginPointerDown}
                 >

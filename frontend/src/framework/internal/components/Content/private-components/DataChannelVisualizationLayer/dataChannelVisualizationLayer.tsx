@@ -55,6 +55,7 @@ export const DataChannelVisualizationLayer: React.FC<DataChannelVisualizationPro
         let localEditDataChannelConnections = false;
 
         function handleDataChannelOriginPointerDown(payload: GuiEventPayloads[GuiEvent.DataChannelOriginPointerDown]) {
+            document.body.classList.add("touch-none");
             const clientRect = payload.originElement.getBoundingClientRect();
             localCurrentOriginPoint = {
                 x: clientRect.left + clientRect.width / 2,
@@ -82,6 +83,7 @@ export const DataChannelVisualizationLayer: React.FC<DataChannelVisualizationPro
 
         function handlePointerUp() {
             localMousePressed = false;
+            document.body.classList.remove("touch-none");
 
             if (localEditDataChannelConnections) {
                 return;
@@ -103,6 +105,11 @@ export const DataChannelVisualizationLayer: React.FC<DataChannelVisualizationPro
             if (!localMousePressed) {
                 return;
             }
+
+            // Prevent any scrolling on touch devices
+            e.preventDefault();
+            e.stopPropagation();
+
             const hoveredElement = document.elementFromPoint(e.clientX, e.clientY);
             const receiverNode = hoveredElement?.closest("[data-channelconnector]");
             if (

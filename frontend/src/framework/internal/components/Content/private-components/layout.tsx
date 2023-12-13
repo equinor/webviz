@@ -91,11 +91,11 @@ export const Layout: React.FC<LayoutProps> = (props) => {
         };
 
         const handleModuleHeaderPointerDown = (payload: GuiEventPayloads[GuiEvent.ModuleHeaderPointerDown]) => {
-            console.debug("handleModuleHeaderPointerDown", payload);
             pointerDownPoint = payload.pointerPosition;
             pointerDownElementPosition = payload.elementPosition;
             pointerDownElementId = payload.moduleInstanceId;
             isNewModule = false;
+            // document.body.classList.add("touch-none");
         };
 
         const handleNewModulePointerDown = (payload: GuiEventPayloads[GuiEvent.NewModulePointerDown]) => {
@@ -105,6 +105,7 @@ export const Layout: React.FC<LayoutProps> = (props) => {
             setTempLayoutBoxId(pointerDownElementId);
             isNewModule = true;
             moduleName = payload.moduleName;
+            // document.body.classList.add("touch-none");
         };
 
         const handlePointerUp = (e: PointerEvent) => {
@@ -144,6 +145,7 @@ export const Layout: React.FC<LayoutProps> = (props) => {
             moduleInstanceId = null;
             dragging = false;
             document.body.classList.remove("select-none");
+            document.body.classList.remove("touch-none");
             originalLayout = currentLayout;
         };
 
@@ -151,6 +153,11 @@ export const Layout: React.FC<LayoutProps> = (props) => {
             if (!pointerDownPoint || !ref.current || !pointerDownElementId || !pointerDownElementPosition) {
                 return;
             }
+
+            // Prevent any scrolling on touch devices
+            e.preventDefault();
+            e.stopPropagation();
+
             if (!dragging) {
                 if (pointDistance(pointerEventToPoint(e), pointerDownPoint) > MANHATTAN_LENGTH) {
                     setDraggedModuleInstanceId(pointerDownElementId);
