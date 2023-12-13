@@ -76,7 +76,7 @@ export class ModuleChannel {
     }
 
     replaceContents(
-        newContents: {
+        contentDefinitions: {
             idString: string;
             displayName: string;
             dataGenerator: DataGenerator;
@@ -84,8 +84,8 @@ export class ModuleChannel {
     ): void {
         this._contents = [];
 
-        for (const contentDef of newContents) {
-            const content = new ModuleChannelContent({ ...contentDef });
+        for (const contentDefinition of contentDefinitions) {
+            const content = new ModuleChannelContent({ ...contentDefinition });
             content.subscribe(
                 ModuleChannelContentNotificationTopic.DataArrayChange,
                 this.handleContentDataArraysChange

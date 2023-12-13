@@ -9,12 +9,12 @@ export enum ModuleChannelManagerNotificationTopic {
 }
 
 export class ModuleChannelManager {
-    private _moduleInstanceId: string;
+    private readonly _moduleInstanceId: string;
     private _channels: ModuleChannel[] = [];
     private _receivers: ModuleChannelReceiver[] = [];
     private _subscribersMap: Map<ModuleChannelManagerNotificationTopic, Set<() => void>> = new Map();
 
-    constructor(moduleInstanceId: string) {
+    constructor(readonly moduleInstanceId: string) {
         this._moduleInstanceId = moduleInstanceId;
     }
 
@@ -22,7 +22,7 @@ export class ModuleChannelManager {
         return this._channels.find((channel) => channel.getIdString() === idString) ?? null;
     }
 
-    getChannels(): ModuleChannel[] {
+    getChannels(): readonly ModuleChannel[] {
         return this._channels;
     }
 
@@ -30,7 +30,7 @@ export class ModuleChannelManager {
         return this._receivers.find((receiver) => receiver.getIdString() === idString) ?? null;
     }
 
-    getReceivers(): ModuleChannelReceiver[] {
+    getReceivers(): readonly ModuleChannelReceiver[] {
         return this._receivers;
     }
 
@@ -38,45 +38,42 @@ export class ModuleChannelManager {
         return this._moduleInstanceId;
     }
 
-    registerChannel({
-        idString,
-        displayName,
-        kindOfKey,
-    }: {
-        readonly idString: string;
-        readonly displayName: string;
-        readonly kindOfKey: KeyKind;
-    }): void {
-        const newChannel = new ModuleChannel({
-            manager: this,
-            idString,
-            displayName,
-            kindOfKey,
-        });
-        this._channels.push(newChannel);
+    registerChannels(
+        channelDefinitions: {
+            readonly idString: string;
+            readonly displayName: string;
+            readonly kindOfKey: KeyKind;
+        }[]
+    ): void {
+        for (const channelDefinition of channelDefinitions) {
+            const newChannel = new ModuleChannel({
+                manager: this,
+                ...channelDefinition,
+            });
+            this._channels.push(newChannel);
+        }
 
         this.notifySubscribers(ModuleChannelManagerNotificationTopic.ChannelsChange);
     }
 
-    registerReceiver({
-        idString,
-        displayName,
-        supportedKindsOfKeys,
-        supportsMultiContents,
-    }: {
-        idString: string;
-        displayName: string;
-        supportedKindsOfKeys: readonly KeyKind[];
-        supportsMultiContents: boolean;
-    }): void {
-        const receiver = new ModuleChannelReceiver({
-            manager: this,
-            idString: idString,
-            displayName: displayName,
-            supportedKindsOfKeys: supportedKindsOfKeys,
-            supportsMultiContents: supportsMultiContents,
-        });
-        this._receivers.push(receiver);
+    registerReceivers(
+        receiverDefinitions: {
+            readonly idString: string;
+            readonly displayName: string;
+            readonly supportedKindsOfKeys: readonly KeyKind[];
+            readonly supportsMultiContents: boolean;
+        }[]
+    ): void {
+        for (const receiverDefinition of receiverDefinitions) {
+            const receiver = new ModuleChannelReceiver({
+                manager: this,
+                idString: receiverDefinition.idString,
+                displayName: receiverDefinition.displayName,
+                supportedKindsOfKeys: receiverDefinition.supportedKindsOfKeys,
+                supportsMultiContents: receiverDefinition.supportsMultiContents,
+            });
+            this._receivers.push(receiver);
+        }
 
         this.notifySubscribers(ModuleChannelManagerNotificationTopic.ReceiversChange);
     }

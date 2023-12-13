@@ -69,24 +69,16 @@ export class ModuleInstance<StateType extends StateBaseType> {
         this._channelManager = new ModuleChannelManager(this._id);
 
         if (channelReceiverDefinitions) {
-            for (const receiver of channelReceiverDefinitions) {
-                this._channelManager.registerReceiver({
-                    idString: receiver.idString,
-                    displayName: receiver.displayName,
-                    supportedKindsOfKeys: receiver.supportedKindsOfKeys,
-                    supportsMultiContents: receiver.supportsMultiContents ?? false,
-                });
-            }
+            this._channelManager.registerReceivers(
+                channelReceiverDefinitions.map((el) => ({
+                    ...el,
+                    supportsMultiContents: el.supportsMultiContents ?? false,
+                }))
+            );
         }
 
         if (channelDefinitions) {
-            for (const channel of channelDefinitions) {
-                this._channelManager.registerChannel({
-                    idString: channel.idString,
-                    displayName: channel.displayName,
-                    kindOfKey: channel.kindOfKey,
-                });
-            }
+            this._channelManager.registerChannels(channelDefinitions);
         }
     }
 
