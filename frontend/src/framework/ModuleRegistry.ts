@@ -9,8 +9,8 @@ export type RegisterModuleOptions = {
     moduleName: string;
     defaultTitle: string;
     syncableSettingKeys?: SyncSettingKey[];
-    channels?: ModuleChannelDefinition[];
-    receivers?: ModuleChannelReceiverDefinition[];
+    channelDefinitions?: ModuleChannelDefinition[];
+    channelReceiverDefinitions?: ModuleChannelReceiverDefinition[];
     preview?: DrawPreviewFunc;
     description?: string;
 };
@@ -37,8 +37,8 @@ export class ModuleRegistry {
             name: options.moduleName,
             defaultTitle: options.defaultTitle,
             syncableSettingKeys: options.syncableSettingKeys ?? [],
-            channels: options.channels,
-            receivers: options.receivers,
+            channelDefinitions: options.channelDefinitions,
+            channelReceiverDefinitions: options.channelReceiverDefinitions,
             drawPreviewFunc: options.preview,
             description: options.description,
         });

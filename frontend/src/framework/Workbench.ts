@@ -135,9 +135,9 @@ export class Workbench {
 
     clearLayout(): void {
         for (const moduleInstance of this._moduleInstances) {
-            const broker = moduleInstance.getChannelManager();
-            broker.unregisterAllChannels();
-            broker.unregisterAllReceivers();
+            const manager = moduleInstance.getChannelManager();
+            manager.unregisterAllChannels();
+            manager.unregisterAllReceivers();
         }
         this._moduleInstances = [];
         this._layout = [];
@@ -162,10 +162,10 @@ export class Workbench {
     }
 
     removeModuleInstance(moduleInstanceId: string): void {
-        const broker = this.getModuleInstance(moduleInstanceId)?.getChannelManager();
-        if (broker) {
-            broker.unregisterAllChannels();
-            broker.unregisterAllReceivers();
+        const manager = this.getModuleInstance(moduleInstanceId)?.getChannelManager();
+        if (manager) {
+            manager.unregisterAllChannels();
+            manager.unregisterAllReceivers();
         }
 
         this._moduleInstances = this._moduleInstances.filter((el) => el.getId() !== moduleInstanceId);

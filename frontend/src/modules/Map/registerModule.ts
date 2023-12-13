@@ -10,5 +10,5 @@ ModuleRegistry.registerModule<MapState>({
     defaultTitle: "Map",
     syncableSettingKeys: [SyncSettingKey.ENSEMBLE, SyncSettingKey.SURFACE, SyncSettingKey.DATE],
     preview,
-    channels: channels,
+    channelDefinitions: channels,
 });

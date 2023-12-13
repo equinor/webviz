@@ -9,7 +9,7 @@ ModuleRegistry.registerModule<State>({
     moduleName: "SimulationTimeSeries",
     defaultTitle: "Simulation time series",
     syncableSettingKeys: [SyncSettingKey.ENSEMBLE, SyncSettingKey.TIME_SERIES],
-    channels: channelDefs,
+    channelDefinitions: channelDefs,
     preview,
     description: "Time series of simulation results",
 });

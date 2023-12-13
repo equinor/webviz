@@ -14,15 +14,15 @@ import { WorkbenchServices } from "./WorkbenchServices";
 import { WorkbenchSession } from "./WorkbenchSession";
 import { WorkbenchSettings } from "./WorkbenchSettings";
 
-export type ModuleFCProps<TStateType extends StateBaseType> = {
-    moduleContext: ModuleContext<TStateType>;
+export type ModuleFCProps<StateType extends StateBaseType> = {
+    moduleContext: ModuleContext<StateType>;
     workbenchSession: WorkbenchSession;
     workbenchServices: WorkbenchServices;
     workbenchSettings: WorkbenchSettings;
     initialSettings?: InitialSettings;
 };
 
-export type ModuleFC<TStateType extends StateBaseType> = React.FC<ModuleFCProps<TStateType>>;
+export type ModuleFC<StateType extends StateBaseType> = React.FC<ModuleFCProps<StateType>>;
 
 export enum ImportState {
     NotImported = "NotImported",
@@ -44,8 +44,8 @@ export class Module<StateType extends StateBaseType> {
     private _syncableSettingKeys: SyncSettingKey[];
     private _drawPreviewFunc: DrawPreviewFunc | null;
     private _description: string | null;
-    private _channels: ModuleChannelDefinition[] | null;
-    private _receivers: ModuleChannelReceiverDefinition[] | null;
+    private _channelDefinitions: ModuleChannelDefinition[] | null;
+    private _channelReceiverDefinitions: ModuleChannelReceiverDefinition[] | null;
 
     constructor({
         name,
@@ -53,16 +53,16 @@ export class Module<StateType extends StateBaseType> {
         syncableSettingKeys,
         drawPreviewFunc,
         description,
-        channels,
-        receivers,
+        channelDefinitions,
+        channelReceiverDefinitions,
     }: {
         name: string;
         defaultTitle: string;
         syncableSettingKeys?: SyncSettingKey[];
         drawPreviewFunc?: DrawPreviewFunc;
         description?: string;
-        channels?: ModuleChannelDefinition[];
-        receivers?: ModuleChannelReceiverDefinition[];
+        channelDefinitions?: ModuleChannelDefinition[];
+        channelReceiverDefinitions?: ModuleChannelReceiverDefinition[];
     }) {
         this._name = name;
         this._defaultTitle = defaultTitle;
@@ -75,8 +75,8 @@ export class Module<StateType extends StateBaseType> {
         this._syncableSettingKeys = syncableSettingKeys ?? [];
         this._drawPreviewFunc = drawPreviewFunc ?? null;
         this._description = description ?? null;
-        this._channels = channels ?? null;
-        this._receivers = receivers ?? null;
+        this._channelDefinitions = channelDefinitions ?? null;
+        this._channelReceiverDefinitions = channelReceiverDefinitions ?? null;
     }
 
     getDrawPreviewFunc(): DrawPreviewFunc | null {
@@ -129,8 +129,8 @@ export class Module<StateType extends StateBaseType> {
         const instance = new ModuleInstance<StateType>({
             module: this,
             instanceNumber,
-            channels: this._channels,
-            receivers: this._receivers,
+            channelDefinitions: this._channelDefinitions,
+            channelReceiverDefinitions: this._channelReceiverDefinitions,
         });
         this._moduleInstances.push(instance);
         this.maybeImportSelf();
@@ -159,6 +159,8 @@ export class Module<StateType extends StateBaseType> {
             }
             return;
         }
+
+        this.setImportState(ImportState.Importing);
 
         import(`@modules/${this._name}/loadModule.tsx`)
             .then(() => {

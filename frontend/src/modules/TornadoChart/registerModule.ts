@@ -10,5 +10,5 @@ ModuleRegistry.registerModule<State>({
     defaultTitle: "Tornado Chart",
     syncableSettingKeys: [SyncSettingKey.ENSEMBLE, SyncSettingKey.TIME_SERIES],
     preview,
-    receivers: receiverDefs,
+    channelReceiverDefinitions: receiverDefs,
 });

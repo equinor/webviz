@@ -9,6 +9,6 @@ ModuleRegistry.registerModule<State>({
     moduleName: "DistributionPlot",
     defaultTitle: "Distribution plot",
     syncableSettingKeys: [SyncSettingKey.ENSEMBLE, SyncSettingKey.TIME_SERIES],
-    receivers: receiverDefs,
+    channelReceiverDefinitions: receiverDefs,
     preview,
 });

@@ -18,22 +18,22 @@ export enum ModuleInstanceState {
     RESETTING,
 }
 
-export class ModuleInstance<TStateType extends StateBaseType> {
+export class ModuleInstance<StateType extends StateBaseType> {
     private _id: string;
     private _title: string;
     private _initialised: boolean;
     private _moduleInstanceState: ModuleInstanceState;
     private _fatalError: { err: Error; errInfo: ErrorInfo } | null;
     private _syncedSettingKeys: SyncSettingKey[];
-    private _stateStore: StateStore<TStateType> | null;
-    private _module: Module<TStateType>;
-    private _context: ModuleContext<TStateType> | null;
+    private _stateStore: StateStore<StateType> | null;
+    private _module: Module<StateType>;
+    private _context: ModuleContext<StateType> | null;
     private _importStateSubscribers: Set<() => void>;
     private _moduleInstanceStateSubscribers: Set<(moduleInstanceState: ModuleInstanceState) => void>;
     private _syncedSettingsSubscribers: Set<(syncedSettings: SyncSettingKey[]) => void>;
     private _titleChangeSubscribers: Set<(title: string) => void>;
-    private _cachedDefaultState: TStateType | null;
-    private _cachedStateStoreOptions?: StateOptions<TStateType>;
+    private _cachedDefaultState: StateType | null;
+    private _cachedStateStoreOptions?: StateOptions<StateType>;
     private _initialSettings: InitialSettings | null;
     private _statusController: ModuleInstanceStatusControllerInternal;
     private _channelManager: ModuleChannelManager;
@@ -41,13 +41,13 @@ export class ModuleInstance<TStateType extends StateBaseType> {
     constructor({
         module,
         instanceNumber,
-        channels,
-        receivers,
+        channelDefinitions,
+        channelReceiverDefinitions,
     }: {
-        module: Module<TStateType>;
+        module: Module<StateType>;
         instanceNumber: number;
-        channels: ModuleChannelDefinition[] | null;
-        receivers: ModuleChannelReceiverDefinition[] | null;
+        channelDefinitions: ModuleChannelDefinition[] | null;
+        channelReceiverDefinitions: ModuleChannelReceiverDefinition[] | null;
     }) {
         this._id = `${module.getName()}-${instanceNumber}`;
         this._title = module.getDefaultTitle();
@@ -68,8 +68,8 @@ export class ModuleInstance<TStateType extends StateBaseType> {
 
         this._channelManager = new ModuleChannelManager(this._id);
 
-        if (receivers) {
-            for (const receiver of receivers) {
+        if (channelReceiverDefinitions) {
+            for (const receiver of channelReceiverDefinitions) {
                 this._channelManager.registerReceiver({
                     idString: receiver.idString,
                     displayName: receiver.displayName,
@@ -79,8 +79,8 @@ export class ModuleInstance<TStateType extends StateBaseType> {
             }
         }
 
-        if (channels) {
-            for (const channel of channels) {
+        if (channelDefinitions) {
+            for (const channel of channelDefinitions) {
                 this._channelManager.registerChannel({
                     idString: channel.idString,
                     displayName: channel.displayName,
@@ -94,14 +94,14 @@ export class ModuleInstance<TStateType extends StateBaseType> {
         return this._channelManager;
     }
 
-    setDefaultState(defaultState: TStateType, options?: StateOptions<TStateType>): void {
+    setDefaultState(defaultState: StateType, options?: StateOptions<StateType>): void {
         if (this._cachedDefaultState === null) {
             this._cachedDefaultState = defaultState;
             this._cachedStateStoreOptions = options;
         }
 
-        this._stateStore = new StateStore<TStateType>(cloneDeep(defaultState), options);
-        this._context = new ModuleContext<TStateType>(this, this._stateStore);
+        this._stateStore = new StateStore<StateType>(cloneDeep(defaultState), options);
+        this._context = new ModuleContext<StateType>(this, this._stateStore);
         this._initialised = true;
         this.setModuleInstanceState(ModuleInstanceState.OK);
     }
@@ -139,11 +139,11 @@ export class ModuleInstance<TStateType extends StateBaseType> {
         return this._initialised;
     }
 
-    getViewFC(): ModuleFC<TStateType> {
+    getViewFC(): ModuleFC<StateType> {
         return this._module.viewFC;
     }
 
-    getSettingsFC(): ModuleFC<TStateType> {
+    getSettingsFC(): ModuleFC<StateType> {
         return this._module.settingsFC;
     }
 
@@ -151,7 +151,7 @@ export class ModuleInstance<TStateType extends StateBaseType> {
         return this._module.getImportState();
     }
 
-    getContext(): ModuleContext<TStateType> {
+    getContext(): ModuleContext<StateType> {
         if (!this._context) {
             throw `Module context is not available yet. Did you forget to init the module '${this._title}.'?`;
         }
@@ -188,7 +188,7 @@ export class ModuleInstance<TStateType extends StateBaseType> {
         });
     }
 
-    getModule(): Module<TStateType> {
+    getModule(): Module<StateType> {
         return this._module;
     }
 
@@ -256,7 +256,7 @@ export class ModuleInstance<TStateType extends StateBaseType> {
         this.setModuleInstanceState(ModuleInstanceState.RESETTING);
 
         return new Promise((resolve) => {
-            this.setDefaultState(this._cachedDefaultState as TStateType, this._cachedStateStoreOptions);
+            this.setDefaultState(this._cachedDefaultState as StateType, this._cachedStateStoreOptions);
             resolve();
         });
     }

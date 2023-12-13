@@ -28,7 +28,7 @@ export interface DataElement<TKeyType extends KeyType> {
     value: number;
 }
 
-export type KeyTypeToTypeScriptTypeMapping = {
+type KeyTypeToTypeScriptTypeMapping = {
     [KeyType.Number]: number;
     [KeyType.NumberTriplet]: [number, number, number];
 };

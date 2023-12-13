@@ -11,5 +11,5 @@ ModuleRegistry.registerModule<State>({
     defaultTitle: "Simulation Time Series Matrix",
     // syncableSettingKeys: [SyncSettingKey.ENSEMBLE, SyncSettingKey.TIME_SERIES],
     preview,
-    channels: channelDefs,
+    channelDefinitions: channelDefs,
 });

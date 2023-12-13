@@ -28,7 +28,7 @@ export function useTableDescriptionsQuery(
     return useQuery({
         queryKey: ["getTableNamesAndDescriptions", ensemble],
         queryFn: () =>
-            apiService.inplaceVolumetrics.getTableNamesAndMetadata(
+            apiService.inplaceVolumetrics.getTableNamesAndDescriptions(
                 ensemble?.getCaseUuid() ?? "",
                 ensemble?.getEnsembleName() ?? ""
             ),
