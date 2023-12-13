@@ -5,7 +5,7 @@ import { CircularProgress } from "@lib/components/CircularProgress";
 import { Menu } from "@lib/components/Menu";
 import { MenuItem } from "@lib/components/MenuItem";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-import { getTextWidth } from "@lib/utils/textSize";
+import { getTextWidthWithElement } from "@lib/utils/textSize";
 import { Dropdown, MenuButton } from "@mui/base";
 import { AccountCircle, Login, Logout } from "@mui/icons-material";
 
@@ -62,7 +62,6 @@ export const LoginButton: React.FC<LoginButtonProps> = (props) => {
                 }
             }
             return <AccountCircle className="w-5 h-5 mr-1" />;
-
         } else if (authState === AuthState.NotLoggedIn) {
             return <Login fontSize="small" className=" mr-1" />;
         } else {
@@ -82,11 +81,11 @@ export const LoginButton: React.FC<LoginButtonProps> = (props) => {
 
     let text = makeText();
     if (textRef.current !== null && props.showText) {
-        let textWidth = getTextWidth(text, textRef.current);
+        let textWidth = getTextWidthWithElement(text, textRef.current);
         let addDots = false;
         while (textWidth > 150) {
             text = text.slice(0, -1);
-            textWidth = getTextWidth(text + "...", textRef.current);
+            textWidth = getTextWidthWithElement(text + "...", textRef.current);
             addDots = true;
         }
         if (addDots) {
@@ -102,10 +101,7 @@ export const LoginButton: React.FC<LoginButtonProps> = (props) => {
                     "w-full inline-flex items-center min-w-0 px-4 py-2 font-medium rounded-md hover:bg-indigo-100"
                 )}
             >
-                <span
-                    className="flex items-center gap-2"
-                    title={makeText()}
-                >
+                <span className="flex items-center gap-2" title={makeText()}>
                     {makeIcon()}
                     <span className="overflow-hidden text-ellipsis min-w-0 whitespace-nowrap" ref={textRef}>
                         {props.showText && text}
