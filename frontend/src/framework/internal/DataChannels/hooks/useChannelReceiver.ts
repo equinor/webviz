@@ -99,7 +99,7 @@ export function useChannelReceiver<TGenres extends KeyKind[]>({
         };
     }
 
-    const channel = receiver?.getChannel();
+    const channel = receiver.getChannel();
 
     if (!receiver.hasActiveSubscription() || !channel) {
         return {
@@ -110,23 +110,14 @@ export function useChannelReceiver<TGenres extends KeyKind[]>({
         };
     }
 
-    if (!channel) {
-        return {
-            idString: receiver?.getIdString() ?? "",
-            displayName: receiver?.getDisplayName() ?? "",
-            channel: undefined,
-            hasActiveSubscription: false,
-        };
-    }
-
     return {
-        idString: receiver?.getIdString() ?? "",
-        displayName: receiver?.getDisplayName() ?? "",
+        idString: receiver.getIdString(),
+        displayName: receiver.getDisplayName(),
         channel: {
-            idString: channel.getIdString() ?? "",
-            displayName: channel.getDisplayName() ?? "",
-            moduleInstanceId: channel.getManager().getModuleInstanceId() ?? "",
-            kindOfKey: channel.getKindOfKey() ?? "",
+            idString: channel.getIdString(),
+            displayName: channel.getDisplayName(),
+            moduleInstanceId: channel.getManager().getModuleInstanceId(),
+            kindOfKey: channel.getKindOfKey(),
             contents: contents,
         },
         hasActiveSubscription: true,
