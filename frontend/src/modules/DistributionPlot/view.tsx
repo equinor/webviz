@@ -38,7 +38,7 @@ export const View = ({
     initialSettings,
     workbenchSettings,
 }: ModuleFCProps<State>) => {
-    const [plotType, setPlotType] = moduleContext.useStoreState("plotType");
+    const plotType = moduleContext.useStoreValue("plotType");
     const numBins = moduleContext.useStoreValue("numBins");
     const orientation = moduleContext.useStoreValue("orientation");
 
