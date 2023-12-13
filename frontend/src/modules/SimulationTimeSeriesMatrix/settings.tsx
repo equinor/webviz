@@ -25,7 +25,7 @@ import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { FilterAlt } from "@mui/icons-material";
 
 import { isEqual } from "lodash";
-import { VectorDescription } from "src/api/models/VectorDescription";
+import { VectorDescription_api } from "src/api";
 
 import { useVectorListQueries } from "./queryHooks";
 import {
@@ -71,7 +71,10 @@ export function Settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
     const [vectorSelectorData, setVectorSelectorData] = React.useState<TreeDataNode[]>([]);
     const [statisticsType, setStatisticsType] = React.useState<StatisticsType>(StatisticsType.INDIVIDUAL);
     const [filteredParameterIdentList, setFilteredParameterIdentList] = React.useState<ParameterIdent[]>([]);
-    const [prevVectorQueriesList, setPrevVectorQueriesList] = React.useState<(VectorDescription[] | undefined)[]>([]);
+    const [prevVectorQueriesDataList, setPrevVectorQueriesDataList] = React.useState<
+        (VectorDescription_api[] | undefined)[]
+    >([]);
+    const [prevSelectedEnsembleIdents, setPrevSelectedEnsembleIdents] = React.useState<EnsembleIdent[]>([]);
 
     const ensembleVectorListsHelper = React.useRef<EnsembleVectorListsHelper>(new EnsembleVectorListsHelper([], []));
 
@@ -115,10 +118,12 @@ export function Settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
     if (
         !isEqual(
             vectorListQueries.map((el) => el.data),
-            prevVectorQueriesList
-        )
+            prevVectorQueriesDataList
+        ) ||
+        !isEqual(selectedEnsembleIdents, prevSelectedEnsembleIdents)
     ) {
-        setPrevVectorQueriesList(vectorListQueries.map((el) => el.data));
+        setPrevVectorQueriesDataList(vectorListQueries.map((el) => el.data));
+        setPrevSelectedEnsembleIdents(selectedEnsembleIdents);
         ensembleVectorListsHelper.current = new EnsembleVectorListsHelper(selectedEnsembleIdents, vectorListQueries);
     }
 
