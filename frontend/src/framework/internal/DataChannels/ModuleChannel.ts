@@ -58,15 +58,6 @@ export class ModuleChannel {
         return this._kindOfKey;
     }
 
-    getContent(idString: string): ModuleChannelContent | null {
-        const content = this._contents.find((content) => content.getIdString() === idString);
-        if (!content) {
-            return null;
-        }
-
-        return content;
-    }
-
     getContents(): ModuleChannelContent[] {
         return this._contents;
     }
