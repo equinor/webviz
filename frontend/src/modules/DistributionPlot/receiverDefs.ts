@@ -14,20 +14,9 @@ export const receiverDefs: ModuleChannelReceiverDefinition[] = [
         supportsMultiContents: true,
     },
     {
-        idString: "channelZ",
-        displayName: "Z axis",
-        supportedKindsOfKeys: [KeyKind.Realization],
-        supportsMultiContents: true,
-    },
-    {
-        idString: "channelColor",
+        idString: "channelColorMapping",
         displayName: "Color mapping",
         supportedKindsOfKeys: [KeyKind.Realization],
         supportsMultiContents: true,
-    },
-    {
-        idString: "singleTaskingListener",
-        displayName: "Single tasking listener",
-        supportedKindsOfKeys: [KeyKind.Realization],
     },
 ];

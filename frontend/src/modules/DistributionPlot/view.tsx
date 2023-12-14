@@ -14,7 +14,7 @@ import { Figure, makeSubplots } from "./utils/Figure";
 import { makeHistogramBins, makeHistogramTrace } from "./utils/histogram";
 
 export const view = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>) => {
-    const [plotType, setPlotType] = moduleContext.useStoreState("plotType");
+    const plotType = moduleContext.useStoreValue("plotType");
     const numBins = moduleContext.useStoreValue("numBins");
     const orientation = moduleContext.useStoreValue("orientation");
     const displayMode = moduleContext.useStoreValue("displayMode");
@@ -33,6 +33,10 @@ export const view = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
     });
     const receiverY = moduleContext.useChannelReceiver({
         idString: "channelY",
+        expectedKindsOfKeys: [KeyKind.Realization],
+    });
+    const receiverColorMapping = moduleContext.useChannelReceiver({
+        idString: "channelColorMapping",
         expectedKindsOfKeys: [KeyKind.Realization],
     });
 
@@ -66,6 +70,24 @@ export const view = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
                 return (
                     <ContentInfo>
                         No data on <Tag label={receiverY.displayName} />
+                    </ContentInfo>
+                );
+            }
+        }
+
+        if (plotType === PlotType.ScatterWithColorMapping) {
+            if (!receiverColorMapping.hasActiveSubscription) {
+                return (
+                    <ContentInfo>
+                        Connect a channel to <Tag label={receiverColorMapping.displayName} />
+                    </ContentInfo>
+                );
+            }
+
+            if (receiverColorMapping.channel.contents.length === 0) {
+                return (
+                    <ContentInfo>
+                        No data on <Tag label={receiverColorMapping.displayName} />
                     </ContentInfo>
                 );
             }
@@ -214,14 +236,7 @@ export const view = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
             return figure.makePlot();
         }
 
-        if (plotType === PlotType.Scatter) {
-            if (!receiverY.hasActiveSubscription) {
-                return (
-                    <ContentInfo>
-                        Connect a channel to <Tag label="Channel Y" />
-                    </ContentInfo>
-                );
-            }
+        if (plotType === PlotType.Scatter && receiverY.channel) {
             const figure = makeSubplots({
                 numRows: receiverX.channel.contents.length,
                 numCols: receiverY.channel.contents.length,
@@ -286,6 +301,114 @@ export const view = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
                         };
                         figure.updateLayout(patch);
                     }
+                });
+            });
+            const patch: Partial<Layout> = {
+                margin: {
+                    t: 5,
+                    r: 5,
+                },
+            };
+            figure.updateLayout(patch);
+            return figure.makePlot();
+        }
+
+        if (plotType === PlotType.ScatterWithColorMapping && receiverY.channel && receiverColorMapping.channel) {
+            const verticalSpacing = 0.1 / receiverX.channel.contents.length;
+            const horizontalSpacing = 0.5 / receiverY.channel.contents.length;
+            const figure = makeSubplots({
+                numRows: receiverX.channel.contents.length,
+                numCols: receiverY.channel.contents.length,
+                width: wrapperDivSize.width,
+                height: wrapperDivSize.height,
+                sharedXAxes: true,
+                sharedYAxes: true,
+                verticalSpacing,
+                horizontalSpacing,
+                margin: {
+                    t: 40,
+                    r: 80,
+                },
+            });
+
+            let cellIndex = 0;
+            receiverX.channel.contents.forEach((dataX, rowIndex) => {
+                receiverY.channel.contents.forEach((dataY, colIndex) => {
+                    cellIndex++;
+                    receiverColorMapping.channel.contents.forEach((dataColor) => {
+                        const xValues: number[] = [];
+                        const yValues: number[] = [];
+                        const colorValues: number[] = [];
+
+                        const keysX = dataX.dataArray.map((el: any) => el.key);
+                        const keysY = dataY.dataArray.map((el: any) => el.key);
+                        const keysColor = dataColor.dataArray.map((el: any) => el.key);
+                        if (
+                            keysX.length === keysY.length &&
+                            keysX.length === keysColor.length &&
+                            !keysX.some((el, index) => el !== keysY[index] || el !== keysColor[index])
+                        ) {
+                            keysX.forEach((key) => {
+                                const dataPointX = dataX.dataArray.find((el: any) => el.key === key);
+                                const dataPointY = dataY.dataArray.find((el: any) => el.key === key);
+                                const dataPointColor = dataColor.dataArray.find((el: any) => el.key === key);
+                                if (dataPointX && dataPointY && dataPointColor) {
+                                    xValues.push(dataPointX.value as number);
+                                    yValues.push(dataPointY.value as number);
+                                    colorValues.push(dataPointColor.value as number);
+                                }
+                            });
+                        }
+
+                        const colorBarX =
+                            receiverY.channel.contents.length === 1
+                                ? 1
+                                : (1 / receiverY.channel.contents.length) * (colIndex + 1) - horizontalSpacing / 2;
+                        const colorBarY =
+                            receiverX.channel.contents.length === 1
+                                ? 0.5
+                                : (1 / receiverX.channel.contents.length) * (rowIndex + 0.5);
+
+                        const trace: Partial<PlotData> = {
+                            x: xValues,
+                            y: yValues,
+                            mode: "markers",
+                            marker: {
+                                size: 5,
+                                color: colorValues,
+                                colorscale: seqColorScale.getPlotlyColorScale(),
+                                colorbar: {
+                                    title: dataColor.displayName,
+                                    titleside: "right",
+                                    x: colorBarX,
+                                    y: colorBarY,
+                                    len: 1 / receiverX.channel.contents.length,
+                                },
+                                showscale: true,
+                            },
+                            showlegend: false,
+                            type: "scatter",
+                        };
+
+                        figure.addTrace(trace, rowIndex + 1, colIndex + 1);
+
+                        if (rowIndex === 0) {
+                            const patch: Partial<Layout> = {
+                                [`xaxis${cellIndex}`]: {
+                                    title: `${dataY.displayName} [${dataY.metaData?.unit ?? ""}]`,
+                                },
+                            };
+                            figure.updateLayout(patch);
+                        }
+                        if (colIndex === 0) {
+                            const patch: Partial<Layout> = {
+                                [`yaxis${cellIndex}`]: {
+                                    title: `${dataX.displayName} [${dataX.metaData?.unit ?? ""}]`,
+                                },
+                            };
+                            figure.updateLayout(patch);
+                        }
+                    });
                 });
             });
             const patch: Partial<Layout> = {

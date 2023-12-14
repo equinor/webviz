@@ -95,7 +95,6 @@ export const Layout: React.FC<LayoutProps> = (props) => {
             pointerDownElementPosition = payload.elementPosition;
             pointerDownElementId = payload.moduleInstanceId;
             isNewModule = false;
-            // document.body.classList.add("touch-none");
         };
 
         const handleNewModulePointerDown = (payload: GuiEventPayloads[GuiEvent.NewModulePointerDown]) => {
@@ -105,7 +104,6 @@ export const Layout: React.FC<LayoutProps> = (props) => {
             setTempLayoutBoxId(pointerDownElementId);
             isNewModule = true;
             moduleName = payload.moduleName;
-            // document.body.classList.add("touch-none");
         };
 
         const handlePointerUp = (e: PointerEvent) => {

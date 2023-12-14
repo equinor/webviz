@@ -1,7 +1,7 @@
 import React from "react";
 import { createPortal } from "react-dom";
 
-import { GuiEvent, GuiState, useGuiState } from "@framework/GuiMessageBroker";
+import { GuiEvent, GuiEventPayloads, GuiState, useGuiState } from "@framework/GuiMessageBroker";
 import { ModuleInstance } from "@framework/ModuleInstance";
 import { Workbench } from "@framework/Workbench";
 import { ModuleChannelReceiver } from "@framework/internal/DataChannels/ModuleChannelReceiver";
@@ -62,6 +62,23 @@ export const ChannelReceiverNodesWrapper: React.FC<ChannelReceiverNodesWrapperPr
             e.stopPropagation();
         }
 
+        function handleEditDataChannelConnectionsChange(
+            payload: GuiEventPayloads[GuiEvent.EditDataChannelConnectionsForModuleInstanceRequest]
+        ) {
+            if (payload.moduleInstanceId !== props.moduleInstance.getId()) {
+                setVisible(false);
+                localVisible = false;
+                return;
+            }
+            setVisible(true);
+            localVisible = true;
+        }
+
+        const removeEditDataChannelConnectionsHandler = guiMessageBroker.subscribeToEvent(
+            GuiEvent.EditDataChannelConnectionsForModuleInstanceRequest,
+            handleEditDataChannelConnectionsChange
+        );
+
         const removeDataChannelOriginPointerDownHandler = guiMessageBroker.subscribeToEvent(
             GuiEvent.DataChannelOriginPointerDown,
             handleDataChannelOriginPointerDown
@@ -75,6 +92,7 @@ export const ChannelReceiverNodesWrapper: React.FC<ChannelReceiverNodesWrapperPr
         document.addEventListener("pointerup", handlePointerUp);
 
         return () => {
+            removeEditDataChannelConnectionsHandler();
             removeDataChannelDoneHandler();
             removeDataChannelOriginPointerDownHandler();
             document.removeEventListener("pointerup", handlePointerUp);
@@ -232,7 +250,7 @@ export const ChannelReceiverNodesWrapper: React.FC<ChannelReceiverNodesWrapperPr
     return createPortal(
         <div
             className={resolveClassNames("absolute flex items-center justify-center z-50 flex-", {
-                invisible: !editDataChannelConnections && !visible,
+                invisible: !((editDataChannelConnections && visible) || visible),
             })}
             style={{
                 left: elementRect.x,

@@ -35,7 +35,6 @@ export const ChannelReceiverNode: React.FC<ChannelReceiverNodeProps> = (props) =
     );
 
     React.useEffect(() => {
-        let localHovered = false;
         let localConnectable = false;
         let localModuleInstanceId = "";
 
@@ -75,22 +74,20 @@ export const ChannelReceiverNode: React.FC<ChannelReceiverNodeProps> = (props) =
         }
 
         function handlePointerUp(e: PointerEvent) {
-            console.debug("handlePointerUp");
-            if (localHovered) {
-                if (removeButtonRef.current && removeButtonRef.current.contains(e.target as Node)) {
-                    props.onChannelConnectionDisconnect(props.idString);
-                    setHovered(false);
-                    setHasConnection(false);
-                    localHovered = false;
-                } else if (localConnectable) {
-                    props.onChannelConnect(props.idString, localModuleInstanceId, pointerEventToPoint(e));
-                    setHovered(false);
-                    localHovered = false;
-                } else if (!localConnectable && !editDataChannelConnections) {
-                    setHovered(false);
-                    localHovered = false;
-                    guiMessageBroker.publishEvent(GuiEvent.HideDataChannelConnectionsRequest);
-                }
+            const el = document.elementFromPoint(e.pageX, e.pageY);
+            if (!el || !ref.current || !ref.current.contains(el)) {
+                return;
+            }
+            if (removeButtonRef.current && removeButtonRef.current.contains(e.target as Node)) {
+                props.onChannelConnectionDisconnect(props.idString);
+                setHovered(false);
+                setHasConnection(false);
+            } else if (localConnectable) {
+                props.onChannelConnect(props.idString, localModuleInstanceId, pointerEventToPoint(e));
+                setHovered(false);
+            } else if (!localConnectable && !editDataChannelConnections) {
+                setHovered(false);
+                guiMessageBroker.publishEvent(GuiEvent.HideDataChannelConnectionsRequest);
             }
             guiMessageBroker.publishEvent(GuiEvent.DataChannelPointerUp);
             e.stopPropagation();
@@ -100,7 +97,6 @@ export const ChannelReceiverNode: React.FC<ChannelReceiverNodeProps> = (props) =
             localConnectable = false;
             setConnectable(false);
             setHovered(false);
-            localHovered = false;
             setEditDataChannelConnections(false);
         }
 
@@ -108,13 +104,9 @@ export const ChannelReceiverNode: React.FC<ChannelReceiverNodeProps> = (props) =
             const boundingRect = ref.current?.getBoundingClientRect();
             if (boundingRect && rectContainsPoint(boundingRect, pointerEventToPoint(e))) {
                 setHovered(true);
-                localHovered = true;
                 return;
             }
-            if (localHovered) {
-                setHovered(false);
-                localHovered = false;
-            }
+            setHovered(false);
         }
 
         function handleResize() {
@@ -141,7 +133,7 @@ export const ChannelReceiverNode: React.FC<ChannelReceiverNodeProps> = (props) =
             handleDataChannelDone
         );
 
-        ref.current?.addEventListener("pointerup", handlePointerUp, true);
+        document.addEventListener("pointerup", handlePointerUp, true);
         document.addEventListener("pointermove", handlePointerMove);
         window.addEventListener("resize", handleResize);
 
@@ -161,7 +153,7 @@ export const ChannelReceiverNode: React.FC<ChannelReceiverNodeProps> = (props) =
             removeDataChannelDoneHandler();
             removeDataChannelOriginPointerDownHandler();
 
-            ref.current?.removeEventListener("pointerup", handlePointerUp);
+            document.removeEventListener("pointerup", handlePointerUp, true);
             document.removeEventListener("pointermove", handlePointerMove);
             window.removeEventListener("resize", handleResize);
 

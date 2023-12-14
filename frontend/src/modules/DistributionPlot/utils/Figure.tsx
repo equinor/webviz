@@ -1,7 +1,7 @@
 import Plot from "react-plotly.js";
 
 import { merge } from "lodash";
-import { AxisName, Layout, LayoutAxis, PlotData } from "plotly.js";
+import { ColorBar, Layout, PlotData } from "plotly.js";
 
 export class Figure {
     private _plotData: Partial<PlotData>[];
@@ -65,6 +65,20 @@ export class Figure {
     }
 }
 
+function makeDomain(numElements: number, index: number, spacing: number, margin: [number, number]): [number, number] {
+    const size = 1 - margin[0] - margin[1];
+    let domainStart = margin[0] + (index / numElements) * size;
+    let domainEnd = margin[0] + ((index + 1) / numElements) * size;
+    if (index > 0) {
+        domainStart += spacing / 2;
+    }
+    if (index < numElements - 1) {
+        domainEnd -= spacing / 2;
+    }
+
+    return [domainStart, domainEnd];
+}
+
 export function makeSubplots({
     numRows,
     numCols,
@@ -74,6 +88,7 @@ export function makeSubplots({
     height,
     horizontalSpacing,
     verticalSpacing,
+    margin,
 }: {
     numRows?: number;
     numCols?: number;
@@ -83,17 +98,15 @@ export function makeSubplots({
     height?: number;
     horizontalSpacing?: number;
     verticalSpacing?: number;
+    margin?: Partial<Layout["margin"]>;
 }): Figure {
     let layout: Partial<Layout> = {
-        width: width,
-        height: height,
-        margin: {
-            t: 5,
-            r: 5,
-        },
+        width,
+        height,
+        margin,
     };
 
-    let gridAxesMapping: number[][] = [];
+    const gridAxesMapping: number[][] = [];
 
     if (!numRows) {
         numRows = 1;
@@ -111,6 +124,13 @@ export function makeSubplots({
         verticalSpacing = 0.2 / numRows;
     }
 
+    const adjustedMargin = {
+        l: (margin?.l ?? 0) / (width ?? 1),
+        r: (margin?.r ?? 0) / (width ?? 1),
+        t: (margin?.t ?? 0) / (height ?? 1),
+        b: (margin?.b ?? 0) / (height ?? 1),
+    };
+
     for (let row = 0; row < numRows; row++) {
         gridAxesMapping.push([]);
         for (let col = 0; col < numCols; col++) {
@@ -126,11 +146,14 @@ export function makeSubplots({
             const matchingYAxisIndex =
                 sharedYAxes === "all" ? row * numCols + 1 : sharedYAxes ? row * numCols + 1 : undefined;
 
-            const xDomainStart = col * (1 / numCols) + (horizontalSpacing / 2) * col;
-            const xDomainEnd = (col + 1) * (1 / numCols) - (horizontalSpacing / 2) * (numCols - col - 1);
-
-            const yDomainStart = row * (1 / numRows) + (verticalSpacing / 2) * row;
-            const yDomainEnd = (row + 1) * (1 / numRows) - (verticalSpacing / 2) * (numRows - row - 1);
+            const [xDomainStart, xDomainEnd] = makeDomain(numCols, col, horizontalSpacing, [
+                adjustedMargin.l,
+                adjustedMargin.r,
+            ]);
+            const [yDomainStart, yDomainEnd] = makeDomain(numRows, row, verticalSpacing, [
+                adjustedMargin.t,
+                adjustedMargin.b,
+            ]);
 
             if (matchingXAxisIndex !== undefined && matchingXAxisIndex !== index + 1) {
                 layout = {
