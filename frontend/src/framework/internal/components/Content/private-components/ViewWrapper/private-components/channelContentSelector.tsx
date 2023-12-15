@@ -86,6 +86,7 @@ export type ChannelSelectorProps = {
 };
 
 export const ChannelSelector: React.FC<ChannelSelectorProps> = (props) => {
+    const { onCancel } = props;
     const [selectedChannelIdString, setSelectedChannelIdString] = React.useState<string | null>(
         props.selectedChannelIdString ?? null
     );
@@ -106,7 +107,7 @@ export const ChannelSelector: React.FC<ChannelSelectorProps> = (props) => {
                 e.preventDefault();
                 return;
             }
-            props.onCancel();
+            onCancel();
         };
 
         document.addEventListener("pointerup", handleClickOutside, true);
@@ -114,11 +115,11 @@ export const ChannelSelector: React.FC<ChannelSelectorProps> = (props) => {
         return () => {
             document.removeEventListener("pointerup", handleClickOutside, true);
         };
-    }, [props.onCancel]);
+    }, [onCancel]);
 
     function handleCancelChannelSelection(e: React.PointerEvent<HTMLButtonElement>) {
         e.stopPropagation();
-        props.onCancel();
+        onCancel();
     }
 
     function handleSelectionDone(e: React.PointerEvent<HTMLButtonElement>) {

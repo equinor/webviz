@@ -11,7 +11,7 @@ import { useElementSize } from "@lib/hooks/useElementSize";
 
 import { Layout, PlotData, PlotHoverEvent } from "plotly.js";
 
-import { BroadcastChannelNames, channelDefs } from "./channelDefs";
+import { BroadcastChannelNames } from "./channelDefs";
 import { useRealizationsResponseQuery } from "./queryHooks";
 import { VolumetricResponseAbbreviations } from "./settings";
 import { State } from "./state";

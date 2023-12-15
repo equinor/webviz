@@ -3,7 +3,6 @@ import React from "react";
 import { StatisticFunction_api, VectorRealizationData_api, VectorStatisticSensitivityData_api } from "@api";
 import { ModuleFCProps } from "@framework/Module";
 import { useSubscribedValue } from "@framework/WorkbenchServices";
-import { timestampUtcMsToCompactIsoString } from "@framework/utils/timestampUtils";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { createSensitivityColorMap } from "@modules/_shared/sensitivityColors";
 

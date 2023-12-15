@@ -13,12 +13,7 @@ import { DisplayMode, PlotType, State } from "./state";
 import { Figure, makeSubplots } from "./utils/Figure";
 import { makeHistogramBins, makeHistogramTrace } from "./utils/histogram";
 
-export const View = ({
-    moduleContext,
-    workbenchServices,
-    initialSettings,
-    workbenchSettings,
-}: ModuleFCProps<State>) => {
+export const View = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>) => {
     const plotType = moduleContext.useStoreValue("plotType");
     const numBins = moduleContext.useStoreValue("numBins");
     const orientation = moduleContext.useStoreValue("orientation");

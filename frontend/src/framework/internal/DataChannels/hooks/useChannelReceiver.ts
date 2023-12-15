@@ -88,7 +88,7 @@ export function useChannelReceiver<TGenres extends KeyKind[]>({
                 unsubscribeFunc();
             }
         };
-    }, [receiver]);
+    }, [receiver, expectedKindsOfKeys]);
 
     if (!receiver) {
         return {

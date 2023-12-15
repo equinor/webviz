@@ -13,7 +13,6 @@ import { Label } from "@lib/components/Label";
 import { Select } from "@lib/components/Select";
 import { UseQueryResult } from "@tanstack/react-query";
 
-import { channelDefs } from "./channelDefs";
 import { useTableDescriptionsQuery } from "./queryHooks";
 import { State } from "./state";
 

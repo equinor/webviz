@@ -6,14 +6,11 @@ import { ModuleFCProps } from "@framework/Module";
 import { Checkbox } from "@lib/components/Checkbox";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { Dropdown } from "@lib/components/Dropdown";
-import { Label } from "@lib/components/Label";
 import { RadioGroup } from "@lib/components/RadioGroup";
-import { Switch } from "@lib/components/Switch";
 
 import { DisplayComponentType, State } from "./state";
 
-export function Settings({ moduleContext, workbenchServices }: ModuleFCProps<State>) {
-    const sensitivityNames = moduleContext.useStoreValue("sensitivityNames");
+export function Settings({ moduleContext, workbenchSession }: ModuleFCProps<State>) {
     const [displayComponentType, setDisplayComponentType] = moduleContext.useStoreState("displayComponentType");
     const [hideZeroY, setHideZeroY] = moduleContext.useStoreState("hideZeroY");
     const [showLabels, setShowLabels] = moduleContext.useStoreState("showLabels");

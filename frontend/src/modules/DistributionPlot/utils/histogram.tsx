@@ -1,5 +1,3 @@
-import { ColorSet } from "@lib/utils/ColorSet";
-
 import { PlotData } from "plotly.js";
 
 function nFormatter(num: number, digits: number): string {

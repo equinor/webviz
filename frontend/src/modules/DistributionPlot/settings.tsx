@@ -30,7 +30,7 @@ const plotTypes = [
 ];
 
 //-----------------------------------------------------------------------------------------------------------
-export function Settings({ moduleContext, workbenchServices, initialSettings }: ModuleFCProps<State>) {
+export function Settings({ moduleContext, initialSettings }: ModuleFCProps<State>) {
     const [plotType, setPlotType] = moduleContext.useStoreState("plotType");
     const [numBins, setNumBins] = moduleContext.useStoreState("numBins");
     const [orientation, setOrientation] = moduleContext.useStoreState("orientation");
@@ -39,7 +39,6 @@ export function Settings({ moduleContext, workbenchServices, initialSettings }: 
     useApplyInitialSettingsToState(initialSettings, "plotType", "string", setPlotType);
     useApplyInitialSettingsToState(initialSettings, "numBins", "number", setNumBins);
     useApplyInitialSettingsToState(initialSettings, "orientation", "string", setOrientation);
-    useApplyInitialSettingsToState(initialSettings, "crossPlottingType", "string", setCrossPlottingType);
 
     function handlePlotTypeChanged(value: string) {
         setPlotType(value as PlotType);

@@ -1,7 +1,7 @@
 import Plot from "react-plotly.js";
 
 import { merge } from "lodash";
-import { ColorBar, Layout, PlotData } from "plotly.js";
+import { Layout, PlotData } from "plotly.js";
 
 export class Figure {
     private _plotData: Partial<PlotData>[];

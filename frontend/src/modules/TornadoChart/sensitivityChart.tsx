@@ -188,7 +188,7 @@ const highTrace = (
     };
 };
 
-export const SensitivityChart: React.FC<sensitivityChartProps> = (props) => {
+export const SensitivityChart: React.FC<SensitivityChartProps> = (props) => {
     const [traceDataArr, setTraceDataArr] = React.useState<Partial<PlotData>[]>([]);
     const [xAxisRange, setXAxisRange] = React.useState<[number, number]>([0, 0]);
     const [selectedBar, setSelectedBar] = React.useState<SelectedBar | null>(null);

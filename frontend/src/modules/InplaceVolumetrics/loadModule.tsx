@@ -1,6 +1,5 @@
 import { ModuleRegistry } from "@framework/ModuleRegistry";
 
-import { channelDefs } from "./channelDefs";
 import { Settings } from "./settings";
 import { State } from "./state";
 import { View } from "./view";

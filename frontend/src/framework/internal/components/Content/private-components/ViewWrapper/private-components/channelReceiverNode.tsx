@@ -20,6 +20,7 @@ export type ChannelReceiverNodeProps = {
 };
 
 export const ChannelReceiverNode: React.FC<ChannelReceiverNodeProps> = (props) => {
+    const { onChannelConnect, onChannelConnectionDisconnect } = props;
     const ref = React.useRef<HTMLDivElement>(null);
     const removeButtonRef = React.useRef<HTMLButtonElement>(null);
     const editButtonRef = React.useRef<HTMLButtonElement>(null);
@@ -79,11 +80,11 @@ export const ChannelReceiverNode: React.FC<ChannelReceiverNodeProps> = (props) =
                 return;
             }
             if (removeButtonRef.current && removeButtonRef.current.contains(e.target as Node)) {
-                props.onChannelConnectionDisconnect(props.idString);
+                onChannelConnectionDisconnect(props.idString);
                 setHovered(false);
                 setHasConnection(false);
             } else if (localConnectable) {
-                props.onChannelConnect(props.idString, localModuleInstanceId, pointerEventToPoint(e));
+                onChannelConnect(props.idString, localModuleInstanceId, pointerEventToPoint(e));
                 setHovered(false);
             } else if (!localConnectable && !editDataChannelConnections) {
                 setHovered(false);
@@ -164,13 +165,15 @@ export const ChannelReceiverNode: React.FC<ChannelReceiverNodeProps> = (props) =
             }
         };
     }, [
-        props.onChannelConnect,
-        props.onChannelConnectionDisconnect,
+        onChannelConnect,
+        onChannelConnectionDisconnect,
         props.workbench,
         props.moduleInstanceId,
         props.idString,
         props.supportedKindsOfKeys,
         editDataChannelConnections,
+        guiMessageBroker,
+        setEditDataChannelConnections,
     ]);
 
     function handlePointerEnter() {

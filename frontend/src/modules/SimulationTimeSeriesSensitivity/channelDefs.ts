@@ -1,4 +1,4 @@
-import { KeyKind, KeyType, ModuleChannelDefinition } from "@framework/DataChannelTypes";
+import { KeyKind, ModuleChannelDefinition } from "@framework/DataChannelTypes";
 
 export enum BroadcastChannelNames {
     Realization_Value = "Value (per realization)",

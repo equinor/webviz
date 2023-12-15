@@ -9,20 +9,14 @@ import { Tag } from "@lib/components/Tag";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { ContentInfo } from "@modules/_shared/components/ContentMessage/contentMessage";
 
-import { isEqual } from "lodash";
-
 import { SensitivityChart } from "./sensitivityChart";
-import {
-    EnsembleScalarResponse,
-    SensitivityResponseCalculator,
-    SensitivityResponseDataset,
-} from "./sensitivityResponseCalculator";
+import { SensitivityResponseCalculator, SensitivityResponseDataset } from "./sensitivityResponseCalculator";
 import SensitivityTable from "./sensitivityTable";
 import { DisplayComponentType, State } from "./state";
 
 import { createSensitivityColorMap } from "../_shared/sensitivityColors";
 
-export const View = ({ moduleContext, workbenchSession, workbenchSettings, initialSettings }: ModuleFCProps<State>) => {
+export const View = ({ moduleContext, workbenchSession, workbenchSettings }: ModuleFCProps<State>) => {
     const showLabels = moduleContext.useStoreValue("showLabels");
     const hideZeroY = moduleContext.useStoreValue("hideZeroY");
     const showRealizationPoints = moduleContext.useStoreValue("showRealizationPoints");
