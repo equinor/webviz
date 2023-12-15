@@ -29,21 +29,30 @@ export function useValidState<T>(options: {
     const [state, setState] = React.useState<T>(options.initialState);
 
     let validState = state;
+
     const computedInitialState =
         typeof options.initialState === "function" ? (options.initialState as () => T)() : options.initialState;
 
-    const validatingFunc = options.validateStateFunc;
-    function setValidStateWithValidatingFunc(newState: T | ((prevState: T) => T), acceptInvalidState = true) {
-        if (validatingFunc === undefined) {
-            throw new Error("validateStateFunc must be provided");
-        }
-        const computedNewState = typeof newState === "function" ? (newState as (prevState: T) => T)(state) : newState;
-        if (!acceptInvalidState && !validatingFunc(computedNewState)) {
-            return;
-        }
+    // ---
+    // Handle the case where validatingFunc is provided
 
-        setState(newState);
-    }
+    const validatingFunc = options.validateStateFunc;
+
+    const setValidStateWithValidatingFunc = React.useCallback(
+        function setValidStateWithValidatingFunc(newState: T | ((prevState: T) => T), acceptInvalidState = true) {
+            if (validatingFunc === undefined) {
+                throw new Error("validateStateFunc must be provided");
+            }
+            const computedNewState =
+                typeof newState === "function" ? (newState as (prevState: T) => T)(state) : newState;
+            if (!acceptInvalidState && !validatingFunc(computedNewState)) {
+                return;
+            }
+
+            setState(newState);
+        },
+        [state, validatingFunc]
+    );
 
     if (options.validateStateFunc !== undefined) {
         if (!options.validateStateFunc(state)) {
@@ -55,6 +64,8 @@ export function useValidState<T>(options: {
 
         return [validState, setValidStateWithValidatingFunc];
     }
+
+    // ---
 
     if (options.validStates === undefined) {
         throw new Error("validStates must be provided");
@@ -73,26 +84,17 @@ export function useValidState<T>(options: {
 
     const validStates = options.validStates;
 
-    function setValidState(newState: T | ((prevState: T) => T), acceptInvalidState = true) {
-        const computedNewState = typeof newState === "function" ? (newState as (prevState: T) => T)(state) : newState;
-        if (!acceptInvalidState && !validStates.includes(computedNewState)) {
-            return;
-        }
-
-        setState(newState);
-    }
-
     const setValidState = React.useCallback(
         function setValidState(newState: T | ((prevState: T) => T), acceptInvalidState = true) {
             const computedNewState =
                 typeof newState === "function" ? (newState as (prevState: T) => T)(state) : newState;
-            if (!acceptInvalidState && !adjustedValidStates.includes(computedNewState)) {
+            if (!acceptInvalidState && !validStates.includes(computedNewState)) {
                 return;
             }
 
             setState(newState);
         },
-        [state, adjustedValidStates]
+        [state, options.validStates]
     );
 
     return [validState, setValidState];
