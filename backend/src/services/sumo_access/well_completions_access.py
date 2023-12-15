@@ -114,6 +114,10 @@ class WellCompletionDataConverter:
         self._datemap = {dte: i for i, dte in enumerate(sorted(self._well_completions_df["DATE"].unique()))}
         self._zone_name_list = list(sorted(self._well_completions_df["ZONE"].unique()))
 
+        # NOTE: The zone tree structure should be provided by server in the future
+        # to obtain parent/child relationship between zones
+        self._zones_tree = None
+
         self._well_completions_df["TIMESTEP"] = self._well_completions_df["DATE"].map(self._datemap)
 
         # NOTE:
@@ -130,7 +134,7 @@ class WellCompletionDataConverter:
             units=WellCompletionsUnits(
                 kh=WellCompletionsUnitInfo(unit=self._kh_unit, decimalPlaces=self._kh_decimal_places)
             ),
-            zones=self._extract_well_completions_zones(zones=None, zone_name_list=self._zone_name_list),
+            zones=self._extract_well_completions_zones(zones=self._zones_tree, zone_name_list=self._zone_name_list),
             timeSteps=[pd.to_datetime(str(dte)).strftime("%Y-%m-%d") for dte in self._datemap.keys()],
             wells=self._extract_wells(),
         )
@@ -189,7 +193,7 @@ class WellCompletionDataConverter:
         if remaining_valid_zones:
             raise ValueError(
                 "The following zones are defined in the well completions data, "
-                f"but not in the stratigraphy: {remaining_valid_zones}"
+                f"but not in the list of zone names: {remaining_valid_zones}"
             )
 
         return zones
