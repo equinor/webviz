@@ -22,19 +22,10 @@ const defaultProps = {
 type VirtualizationPropsSubset = Pick<VirtualizationProps, "items" | "startIndex" | "direction" | "itemSize"> | null;
 
 function checkEqualityOfProps(a: VirtualizationPropsSubset, b: VirtualizationPropsSubset): boolean {
-    if (a === null && b !== null) {
-        return false;
-    }
-
-    if (a !== null && b === null) {
-        return false;
-    }
-
     if (a === null && b === null) {
         return true;
     }
 
-    // This seems to be an unnecessary check?
     if (a === null || b === null) {
         return false;
     }

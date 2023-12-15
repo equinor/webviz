@@ -115,9 +115,7 @@ export const Settings = ({ moduleContext, workbenchSession, workbenchServices }:
 
             // Update available time steps
             const allTimeSteps = wellCompletionsDataAccessor.current.getTimeSteps();
-            if (availableTimeSteps !== allTimeSteps) {
-                setAvailableTimeSteps(allTimeSteps);
-            }
+            setAvailableTimeSteps((prev) => (prev !== allTimeSteps ? allTimeSteps : prev));
 
             // Update selected time step indices if not among available time steps
             let timeStepIndex = selectedTimeStepOptions.timeStepIndex;
@@ -147,14 +145,7 @@ export const Settings = ({ moduleContext, workbenchSession, workbenchServices }:
             }
             createAndSetPlotData(allTimeSteps, timeStepIndex, selectedTimeStepOptions.timeAggregationType);
         },
-        [
-            wellCompletionsQuery.data,
-            selectedTimeStepOptions,
-            availableTimeSteps,
-            setPlotData,
-            setAvailableTimeSteps,
-            createAndSetPlotData,
-        ]
+        [wellCompletionsQuery.data, selectedTimeStepOptions, setPlotData, setAvailableTimeSteps, createAndSetPlotData]
     );
 
     React.useEffect(

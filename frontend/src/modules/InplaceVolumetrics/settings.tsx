@@ -117,7 +117,6 @@ export function Settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
 
     React.useEffect(
         function selectDefaultTable() {
-            console.debug("selectDefaultTable()");
             if (tableDescriptionsQuery.data) {
                 setTableName(tableDescriptionsQuery.data[0].name);
                 const responses = tableDescriptionsQuery.data[0].numerical_column_names;
@@ -131,21 +130,17 @@ export function Settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
     );
 
     function handleEnsembleSelectionChange(newEnsembleIdent: EnsembleIdent | null) {
-        console.debug("handleEnsembleSelectionChange()");
         setEnsembleIdent(newEnsembleIdent);
     }
     function handleTableChange(tableName: string) {
-        console.debug("handleTableChange()");
         setTableName(tableName);
     }
     function handleResponseChange(responseName: string) {
-        console.debug("handleResponseChange()");
         setResponseName(responseName);
     }
 
     const handleSelectionChange = React.useCallback(
-        (categoryName: string, categoryValues: string[]) => {
-            console.debug("handleSelectionChange()");
+        function handleSelectionChange(categoryName: string, categoryValues: string[]) {
             let currentCategoryFilter = categoricalFilter;
             if (currentCategoryFilter) {
                 const categoryIndex = currentCategoryFilter.findIndex((category) => category.name === categoryName);
