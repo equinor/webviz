@@ -34,7 +34,6 @@ async def get_realization_group_tree_data(
         grouptree_access=grouptree_access,
         summary_access=summary_access,
         realization=realization,
-        excl_well_startswith=["R_"],
         resampling_frequency=sumo_freq,
     )
     await grouptree_data.initialize_data()
@@ -69,8 +68,6 @@ async def get_statistical_group_tree_data(
     grouptree_data = GroupTreeData(
         grouptree_access=grouptree_access,
         summary_access=summary_access,
-        realization=0,  # This must be fixed
-        excl_well_startswith=["R_"],
         resampling_frequency=sumo_freq,
     )
     await grouptree_data.initialize_data()

@@ -41,7 +41,18 @@ class GroupTreeAccess(SumoEnsemble):
             table_collection = self._case.tables.filter(
                 tagname=GroupTreeAccess.TAGNAME, aggregation="collection", iteration=self._iteration_name
             )
-            raise NotImplementedError("Multiple realizations not implemented.")
+
+            df0 = table_collection[0].to_pandas
+            df1 = table_collection[1].to_pandas
+            df2 = table_collection[2].to_pandas
+
+            group_tree_df = pd.merge(df0, df1, left_index=True, right_index=True)
+            group_tree_df = pd.merge(group_tree_df, df2, left_index=True, right_index=True)
+
+            _validate_group_tree_df(group_tree_df)
+
+            LOGGER.debug(f"Loaded gruptree table from Sumo in: {timer.elapsed_ms()}ms (")
+            return group_tree_df
 
 
 def _validate_group_tree_df(df: pd.DataFrame) -> None:

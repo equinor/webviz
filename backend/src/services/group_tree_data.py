@@ -59,8 +59,8 @@ class GroupTreeData:
         self,
         grouptree_access: GroupTreeAccess,
         summary_access: SummaryAccess,
-        realization: Optional[int],
         resampling_frequency: Frequency,
+        realization: Optional[int] = None,
         terminal_node: str = "FIELD",
         tree_type: str = "GRUPTREE",
         excl_well_startswith: Optional[List[str]] = None,
@@ -187,15 +187,15 @@ class GroupTreeData:
             else:
                 raise ValueError(f"Statistical option: {stat_option.value} not implemented")
 
-        gruptree_filtered = self._grouptree
-        if tree_mode == TreeModeOptions.SINGLE_REAL and not self._tree_is_equivalent_in_all_real():
-            # Trees are not equal. Filter on realization
-            gruptree_filtered = gruptree_filtered[gruptree_filtered["REAL"] == real]
+        if tree_mode == TreeModeOptions.STATISTICS and not self._grouptree_model._tree_is_equivalent_in_all_real:
+            raise ValueError(
+                "Statistics cannot be calculated because the Group Tree is not equivalent in all realizations."
+            )
 
         # Filter nodetype prod, inj and/or other
         dfs = []
         for tpe in node_types:
-            dfs.append(gruptree_filtered[gruptree_filtered[f"IS_{tpe.value}".upper()]])
+            dfs.append(self._grouptree[self._grouptree[f"IS_{tpe.value}".upper()]])
         gruptree_filtered = pd.concat(dfs).drop_duplicates()
 
         return await _create_dataset(smry, gruptree_filtered, self._sumvecs, self._terminal_node)
@@ -208,13 +208,6 @@ class GroupTreeData:
         #         for datatype in [DataType.PRESSURE, DataType.BHP, DataType.WMCTL]
         #     ],
         # )
-
-    def _tree_is_equivalent_in_all_real(self) -> bool:
-        """Checks if the group tree is equivalent in all realizations,
-        in which case there is only one REAL number in the dataframe
-        """
-        # return self._gruptree["REAL"].nunique() == 1
-        return True
 
     def _check_that_sumvecs_exists(self, check_sumvecs: List[str]) -> None:
         """Takes in a list of summary vectors and checks if they are
@@ -550,6 +543,11 @@ class GroupTreeModel:
             # Filter out GRUPTREE entries
             self._dataframe = self._dataframe[self._dataframe["KEYWORD"] != TreeType.GRUPTREE.value]
 
+        self._tree_is_equivalent_in_all_real = False
+
+        if "REAL" not in self._dataframe.columns or self._dataframe["REAL"].nunique() == 1:
+            self._tree_is_equivalent_in_all_real = True
+
     @property
     def dataframe(self) -> pd.DataFrame:
         """Returns a dataframe that will have the following columns:
@@ -564,6 +562,10 @@ class GroupTreeModel:
         If not, all trees are stored.
         """
         return self._dataframe
+
+    @property
+    def tree_is_equivalent_in_all_real(self) -> bool:
+        return self.tree_is_equivalent_in_all_real
 
     def get_filtered_dataframe(
         self,
