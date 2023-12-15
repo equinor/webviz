@@ -53,7 +53,7 @@ async def get_statistical_group_tree_data(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     case_uuid: str = Query(description="Sumo case uuid"),
     ensemble_name: str = Query(description="Ensemble name"),
-    statOption: schemas.StatOption = Query(description="Statistical option"),
+    stat_option: schemas.StatOption = Query(description="Statistical option"),
     resampling_frequency: Annotated[schemas.Frequency | None, Query(description="Resampling frequency. If not specified, yearly data will be used.")] = None,
     # fmt:on
 ) -> List:
@@ -75,6 +75,6 @@ async def get_statistical_group_tree_data(
     data = await grouptree_data.create_group_tree_dataset(
         tree_mode=TreeModeOptions.STATISTICS,
         node_types=[NodeType.PROD, NodeType.INJ, NodeType.OTHER],
-        stat_option=StatOptions[statOption.value],
+        stat_option=StatOptions[stat_option.value],
     )
     return data
