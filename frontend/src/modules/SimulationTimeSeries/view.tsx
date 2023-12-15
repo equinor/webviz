@@ -19,7 +19,7 @@ interface MyPlotData extends Partial<PlotData> {
     legendrank?: number;
 }
 
-export const view = ({ moduleContext, workbenchSession, workbenchServices }: ModuleFCProps<State>) => {
+export const View = ({ moduleContext, workbenchSession, workbenchServices }: ModuleFCProps<State>) => {
     // Leave this in until we get a feeling for React18/Plotly
     const renderCount = React.useRef(0);
     React.useEffect(function incrementRenderCount() {

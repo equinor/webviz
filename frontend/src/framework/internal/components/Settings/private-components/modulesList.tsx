@@ -53,6 +53,7 @@ const ModulesListItem: React.FC<ModulesListItemProps> = (props) => {
     const itemSize = useElementSize(ref);
 
     React.useEffect(() => {
+        const refCurrent = ref.current;
         let pointerDownPoint: Point | null = null;
         let dragging = false;
         let pointerDownElementPosition: Point | null = null;
@@ -121,13 +122,13 @@ const ModulesListItem: React.FC<ModulesListItemProps> = (props) => {
         }
 
         return () => {
-            if (ref.current) {
-                ref.current.removeEventListener("pointerdown", handlePointerDown);
+            if (refCurrent) {
+                refCurrent.removeEventListener("pointerdown", handlePointerDown);
             }
             document.removeEventListener("pointerup", handlePointerUp);
             document.removeEventListener("pointermove", handlePointerMove);
         };
-    }, [props.relContainer]);
+    }, [props.relContainer, props.guiMessageBroker, props.name]);
 
     return (
         <>

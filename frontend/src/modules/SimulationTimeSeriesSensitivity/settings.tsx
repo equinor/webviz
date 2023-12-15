@@ -24,7 +24,7 @@ import { State } from "./state";
 
 //-----------------------------------------------------------------------------------------------------------
 
-export function settings({ moduleContext, workbenchSession, workbenchServices }: ModuleFCProps<State>) {
+export function Settings({ moduleContext, workbenchSession, workbenchServices }: ModuleFCProps<State>) {
     const ensembleSet = useEnsembleSet(workbenchSession);
 
     const [selectedEnsembleIdent, setSelectedEnsembleIdent] = React.useState<EnsembleIdent | null>(null);
@@ -85,14 +85,18 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
     const computedVectorTag = candidateVectorTag;
 
     const computedEnsemble = computedEnsembleIdent ? ensembleSet.findEnsemble(computedEnsembleIdent) : null;
-    const sensitivityNames = computedEnsemble?.getSensitivities()?.getSensitivityNames() ?? [];
+    const sensitivityNames = React.useMemo(
+        () => computedEnsemble?.getSensitivities()?.getSensitivityNames() ?? [],
+        [computedEnsemble]
+    );
+
     React.useEffect(
         function setSensitivitiesOnEnsembleChange() {
             if (!isEqual(selectedSensitivities, sensitivityNames)) {
                 setSelectedSensitivities(sensitivityNames);
             }
         },
-        [computedEnsemble]
+        [computedEnsemble, sensitivityNames, selectedSensitivities, setSelectedSensitivities]
     );
     const sensitivityOptions: SelectOption[] = sensitivityNames.map((name) => ({
         value: name,
@@ -114,7 +118,7 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
                 moduleContext.getStateStore().setValue("vectorSpec", null);
             }
         },
-        [computedEnsembleIdent, computedVectorName, hasComputedVectorName, hasHistoricalVector]
+        [computedEnsembleIdent, computedVectorName, hasComputedVectorName, hasHistoricalVector, moduleContext]
     );
 
     function handleEnsembleSelectionChange(newEnsembleIdent: EnsembleIdent | null) {

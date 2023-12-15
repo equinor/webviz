@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React from "react";
 
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { ModuleFCProps } from "@framework/Module";
@@ -18,7 +18,7 @@ import { useGridModelNames, useGridParameterNames } from "./queryHooks";
 import state from "./state";
 
 //-----------------------------------------------------------------------------------------------------------
-export function settings({ moduleContext, workbenchServices, workbenchSession }: ModuleFCProps<state>) {
+export function Settings({ moduleContext, workbenchServices, workbenchSession }: ModuleFCProps<state>) {
     // From Workbench
 
     const ensembleSet = useEnsembleSet(workbenchSession);
@@ -46,7 +46,7 @@ export function settings({ moduleContext, workbenchServices, workbenchSession }:
     const parameterNamesQuery = useGridParameterNames(firstCaseUuid, firstEnsembleName, gridName);
     const wellHeadersQuery = useWellHeadersQuery(computedEnsembleIdent?.getCaseUuid());
     // Handle Linked query
-    useEffect(() => {
+    React.useEffect(() => {
         if (parameterNamesQuery.data) {
             if (gridName && parameterNamesQuery.data.find((name) => name === parameterName)) {
                 // New grid has same parameter
@@ -55,7 +55,7 @@ export function settings({ moduleContext, workbenchServices, workbenchSession }:
                 setParameterName(parameterNamesQuery.data[0]);
             }
         }
-    }, [parameterNamesQuery.data, parameterName]);
+    }, [parameterNamesQuery.data, parameterName, gridName, setParameterName]);
 
     const parameterNames = parameterNamesQuery.data ? parameterNamesQuery.data : [];
     const allRealizations = computedEnsembleIdent

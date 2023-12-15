@@ -5,7 +5,7 @@ import { CircularProgress } from "@lib/components/CircularProgress";
 import { Menu } from "@lib/components/Menu";
 import { MenuItem } from "@lib/components/MenuItem";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-import { getTextWidth } from "@lib/utils/textSize";
+import { getTextWidthWithElement } from "@lib/utils/textSize";
 import { Dropdown, MenuButton } from "@mui/base";
 import { AccountCircle, Login, Logout } from "@mui/icons-material";
 
@@ -81,11 +81,11 @@ export const LoginButton: React.FC<LoginButtonProps> = (props) => {
 
     let text = makeText();
     if (textRef.current !== null && props.showText) {
-        let textWidth = getTextWidth(text, textRef.current);
+        let textWidth = getTextWidthWithElement(text, textRef.current);
         let addDots = false;
         while (textWidth > 150) {
             text = text.slice(0, -1);
-            textWidth = getTextWidth(text + "...", textRef.current);
+            textWidth = getTextWidthWithElement(text + "...", textRef.current);
             addDots = true;
         }
         if (addDots) {

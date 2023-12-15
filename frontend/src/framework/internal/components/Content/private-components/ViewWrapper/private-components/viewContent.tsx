@@ -21,31 +21,34 @@ export const ViewContent = React.memo((props: ViewContentProps) => {
         ModuleInstanceState.INITIALIZING
     );
 
-    React.useEffect(function handleMount() {
-        setModuleInstanceState(props.moduleInstance.getModuleInstanceState());
-        setImportState(props.moduleInstance.getImportState());
-
-        function handleModuleInstanceImportStateChange() {
-            setImportState(props.moduleInstance.getImportState());
-        }
-
-        function handleModuleInstanceStateChange() {
+    React.useEffect(
+        function handleMount() {
             setModuleInstanceState(props.moduleInstance.getModuleInstanceState());
-        }
+            setImportState(props.moduleInstance.getImportState());
 
-        const unsubscribeFromImportStateChange = props.moduleInstance.subscribeToImportStateChange(
-            handleModuleInstanceImportStateChange
-        );
+            function handleModuleInstanceImportStateChange() {
+                setImportState(props.moduleInstance.getImportState());
+            }
 
-        const unsubscribeFromModuleInstanceStateChange = props.moduleInstance.subscribeToModuleInstanceStateChange(
-            handleModuleInstanceStateChange
-        );
+            function handleModuleInstanceStateChange() {
+                setModuleInstanceState(props.moduleInstance.getModuleInstanceState());
+            }
 
-        return function handleUnmount() {
-            unsubscribeFromImportStateChange();
-            unsubscribeFromModuleInstanceStateChange();
-        };
-    }, []);
+            const unsubscribeFromImportStateChange = props.moduleInstance.subscribeToImportStateChange(
+                handleModuleInstanceImportStateChange
+            );
+
+            const unsubscribeFromModuleInstanceStateChange = props.moduleInstance.subscribeToModuleInstanceStateChange(
+                handleModuleInstanceStateChange
+            );
+
+            return function handleUnmount() {
+                unsubscribeFromImportStateChange();
+                unsubscribeFromModuleInstanceStateChange();
+            };
+        },
+        [props.moduleInstance]
+    );
 
     const handleModuleInstanceReload = React.useCallback(
         function handleModuleInstanceReload() {

@@ -1,17 +1,18 @@
 import React, { useEffect } from "react";
-import { useFirstEnsembleInEnsembleSet } from "@framework/WorkbenchSession";
+
 import { ModuleFCProps } from "@framework/Module";
+import { useFirstEnsembleInEnsembleSet } from "@framework/WorkbenchSession";
 import { useElementSize } from "@lib/hooks/useElementSize";
+
+import PlotlyPvtScatter from "./plotlyPvtScatter";
+import { PlotDataType, PvtPlotAccessor } from "./pvtPlotDataAccessor";
+import { PvtQueryDataAccessor } from "./pvtQueryDataAccessor";
 import { usePvtDataQuery } from "./queryHooks";
 import state from "./state";
 
-import { PvtQueryDataAccessor } from "./pvtQueryDataAccessor";
-import { PvtPlotAccessor, PlotDataType } from "./pvtPlotDataAccessor";
-import PlotlyPvtScatter from "./plotlyPvtScatter";
 //-----------------------------------------------------------------------------------------------------------
 
-
-export function view({ moduleContext, workbenchSession }: ModuleFCProps<state>) {
+export function View({ moduleContext, workbenchSession }: ModuleFCProps<state>) {
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);
     const wrapperDivSize = useElementSize(wrapperDivRef);
 
@@ -21,28 +22,28 @@ export function view({ moduleContext, workbenchSession }: ModuleFCProps<state>) 
     const activeDataSet = moduleContext.useStoreValue("activeDataSet");
     const activeRealization = moduleContext.useStoreValue("realization");
 
-    const [plotData, setPlotData] = React.useState<PlotDataType[]>([])
-    const pvtDataQuery = usePvtDataQuery(firstEnsemble?.getCaseUuid() ?? null, firstEnsemble?.getEnsembleName() ?? null, activeRealization);
-
+    const [plotData, setPlotData] = React.useState<PlotDataType[]>([]);
+    const pvtDataQuery = usePvtDataQuery(
+        firstEnsemble?.getCaseUuid() ?? null,
+        firstEnsemble?.getEnsembleName() ?? null,
+        activeRealization
+    );
 
     useEffect(() => {
         if (activeDataSet && pvtDataQuery.data) {
-            const pvtQueryDataAccessor = new PvtQueryDataAccessor(pvtDataQuery.data)
-            const PvtPlotData = []
+            const pvtQueryDataAccessor = new PvtQueryDataAccessor(pvtDataQuery.data);
+            const PvtPlotData = [];
             for (const pvtPlotData of activeDataSet) {
-                const pvtData = pvtQueryDataAccessor.getPvtData(pvtPlotData.pvtName, pvtPlotData.pvtNum)
-                const pvtPlotAccessor = new PvtPlotAccessor(pvtData)
-                PvtPlotData.push(pvtPlotAccessor.getPlotData(pvtPlotData.pvtPlot))
+                const pvtData = pvtQueryDataAccessor.getPvtData(pvtPlotData.pvtName, pvtPlotData.pvtNum);
+                const pvtPlotAccessor = new PvtPlotAccessor(pvtData);
+                PvtPlotData.push(pvtPlotAccessor.getPlotData(pvtPlotData.pvtPlot));
             }
-            setPlotData(PvtPlotData)
+            setPlotData(PvtPlotData);
         }
-    },
-        [activeDataSet, pvtDataQuery.data]
-    )
-    if (!pvtDataQuery.data || !activeDataSet || activeDataSet.length == 0) { return (<div>no pvt data</div>) }
-
-
-
+    }, [activeDataSet, pvtDataQuery.data]);
+    if (!pvtDataQuery.data || !activeDataSet || activeDataSet.length == 0) {
+        return <div>no pvt data</div>;
+    }
 
     return (
         <div className="flex flex-wrap h-full w-full" ref={wrapperDivRef}>
@@ -58,4 +59,3 @@ export function view({ moduleContext, workbenchSession }: ModuleFCProps<state>) 
         </div>
     );
 }
-

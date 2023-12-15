@@ -9,20 +9,25 @@ import { Tag } from "@lib/components/Tag";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { ContentInfo } from "@modules/_shared/components/ContentMessage/contentMessage";
 
+import { isEqual } from "lodash";
+
 import { SensitivityChart } from "./sensitivityChart";
-import { SensitivityResponseCalculator, SensitivityResponseDataset } from "./sensitivityResponseCalculator";
+import {
+    EnsembleScalarResponse,
+    SensitivityResponseCalculator,
+    SensitivityResponseDataset,
+} from "./sensitivityResponseCalculator";
 import SensitivityTable from "./sensitivityTable";
 import { DisplayComponentType, State } from "./state";
 
 import { createSensitivityColorMap } from "../_shared/sensitivityColors";
 
-export const view = ({ moduleContext, workbenchSession, workbenchSettings, initialSettings }: ModuleFCProps<State>) => {
+export const View = ({ moduleContext, workbenchSession, workbenchSettings, initialSettings }: ModuleFCProps<State>) => {
     const showLabels = moduleContext.useStoreValue("showLabels");
     const hideZeroY = moduleContext.useStoreValue("hideZeroY");
     const showRealizationPoints = moduleContext.useStoreValue("showRealizationPoints");
     const displayComponentType = moduleContext.useStoreValue("displayComponentType");
     const referenceSensitivityName = moduleContext.useStoreValue("referenceSensitivityName");
-
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);
     const wrapperDivSize = useElementSize(wrapperDivRef);
     const ensembleSet = useEnsembleSet(workbenchSession);

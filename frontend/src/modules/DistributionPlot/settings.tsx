@@ -1,6 +1,6 @@
 import React from "react";
 
-import { applyInitialSettingsToState } from "@framework/InitialSettings";
+import { useApplyInitialSettingsToState } from "@framework/InitialSettings";
 import { ModuleFCProps } from "@framework/Module";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { Dropdown } from "@lib/components/Dropdown";
@@ -30,15 +30,16 @@ const plotTypes = [
 ];
 
 //-----------------------------------------------------------------------------------------------------------
-export function settings({ moduleContext, workbenchServices, initialSettings }: ModuleFCProps<State>) {
+export function Settings({ moduleContext, workbenchServices, initialSettings }: ModuleFCProps<State>) {
     const [plotType, setPlotType] = moduleContext.useStoreState("plotType");
     const [numBins, setNumBins] = moduleContext.useStoreState("numBins");
     const [orientation, setOrientation] = moduleContext.useStoreState("orientation");
     const [displayMode, setDisplayMode] = moduleContext.useStoreState("displayMode");
 
-    applyInitialSettingsToState(initialSettings, "plotType", "string", setPlotType);
-    applyInitialSettingsToState(initialSettings, "numBins", "number", setNumBins);
-    applyInitialSettingsToState(initialSettings, "orientation", "string", setOrientation);
+    useApplyInitialSettingsToState(initialSettings, "plotType", "string", setPlotType);
+    useApplyInitialSettingsToState(initialSettings, "numBins", "number", setNumBins);
+    useApplyInitialSettingsToState(initialSettings, "orientation", "string", setOrientation);
+    useApplyInitialSettingsToState(initialSettings, "crossPlottingType", "string", setCrossPlottingType);
 
     function handlePlotTypeChanged(value: string) {
         setPlotType(value as PlotType);

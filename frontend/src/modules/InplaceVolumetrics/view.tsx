@@ -16,7 +16,7 @@ import { useRealizationsResponseQuery } from "./queryHooks";
 import { VolumetricResponseAbbreviations } from "./settings";
 import { State } from "./state";
 
-export const view = (props: ModuleFCProps<State>) => {
+export const View = (props: ModuleFCProps<State>) => {
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);
     const wrapperDivSize = useElementSize(wrapperDivRef);
     const ensembleIdent = props.moduleContext.useStoreValue("ensembleIdent");

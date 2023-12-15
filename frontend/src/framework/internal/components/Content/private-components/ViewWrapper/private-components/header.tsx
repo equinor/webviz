@@ -35,24 +35,27 @@ export const Header: React.FC<HeaderProps> = (props) => {
     const ref = React.useRef<HTMLDivElement>(null);
     const boundingRect = useElementBoundingRect(ref);
 
-    React.useEffect(function handleMount() {
-        function handleSyncedSettingsChange(newSyncedSettings: SyncSettingKey[]) {
-            setSyncedSettings([...newSyncedSettings]);
-        }
+    React.useEffect(
+        function handleMount() {
+            function handleSyncedSettingsChange(newSyncedSettings: SyncSettingKey[]) {
+                setSyncedSettings([...newSyncedSettings]);
+            }
 
-        function handleTitleChange(newTitle: string) {
-            setTitle(newTitle);
-        }
+            function handleTitleChange(newTitle: string) {
+                setTitle(newTitle);
+            }
 
-        const unsubscribeFromSyncSettingsChange =
-            props.moduleInstance.subscribeToSyncedSettingKeysChange(handleSyncedSettingsChange);
-        const unsubscribeFromTitleChange = props.moduleInstance.subscribeToTitleChange(handleTitleChange);
+            const unsubscribeFromSyncSettingsChange =
+                props.moduleInstance.subscribeToSyncedSettingKeysChange(handleSyncedSettingsChange);
+            const unsubscribeFromTitleChange = props.moduleInstance.subscribeToTitleChange(handleTitleChange);
 
-        return function handleUnmount() {
-            unsubscribeFromSyncSettingsChange();
-            unsubscribeFromTitleChange();
-        };
-    }, []);
+            return function handleUnmount() {
+                unsubscribeFromSyncSettingsChange();
+                unsubscribeFromTitleChange();
+            };
+        },
+        [props.moduleInstance]
+    );
 
     function handlePointerDown(e: React.PointerEvent<HTMLDivElement>) {
         props.onPointerDown(e);

@@ -12,13 +12,13 @@ import { Switch } from "@lib/components/Switch";
 
 import { DisplayComponentType, State } from "./state";
 
-export function settings({ moduleContext, workbenchSession }: ModuleFCProps<State>) {
+export function Settings({ moduleContext, workbenchServices }: ModuleFCProps<State>) {
+    const sensitivityNames = moduleContext.useStoreValue("sensitivityNames");
     const [displayComponentType, setDisplayComponentType] = moduleContext.useStoreState("displayComponentType");
     const [hideZeroY, setHideZeroY] = moduleContext.useStoreState("hideZeroY");
     const [showLabels, setShowLabels] = moduleContext.useStoreState("showLabels");
     const [showRealizationPoints, setShowRealizationPoints] = moduleContext.useStoreState("showRealizationPoints");
     const setModuleReferenceSensitivityName = moduleContext.useSetStoreValue("referenceSensitivityName");
-
     const [referenceSensitivityName, setReferenceSensitivityName] = React.useState<string | null>(null);
 
     const ensembleSet = workbenchSession.getEnsembleSet();
@@ -27,7 +27,7 @@ export function settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
         function propogateReferenceSensitivityName() {
             setModuleReferenceSensitivityName(referenceSensitivityName);
         },
-        [referenceSensitivityName]
+        [referenceSensitivityName, setModuleReferenceSensitivityName]
     );
 
     const responseReceiver = moduleContext.useChannelReceiver({
