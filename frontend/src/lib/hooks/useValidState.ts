@@ -33,9 +33,6 @@ export function useValidState<T>(options: {
     const computedInitialState =
         typeof options.initialState === "function" ? (options.initialState as () => T)() : options.initialState;
 
-    // ---
-    // Handle the case where validatingFunc is provided
-
     const validatingFunc = options.validateStateFunc;
 
     const setValidStateWithValidatingFunc = React.useCallback(
@@ -54,6 +51,19 @@ export function useValidState<T>(options: {
         [state, validatingFunc]
     );
 
+    const setValidState = React.useCallback(
+        function setValidState(newState: T | ((prevState: T) => T), acceptInvalidState = true) {
+            const computedNewState =
+                typeof newState === "function" ? (newState as (prevState: T) => T)(state) : newState;
+            if (!acceptInvalidState && !options.validStates?.includes(computedNewState)) {
+                return;
+            }
+
+            setState(newState);
+        },
+        [state, options.validStates]
+    );
+
     if (options.validateStateFunc !== undefined) {
         if (!options.validateStateFunc(state)) {
             validState = computedInitialState;
@@ -64,8 +74,6 @@ export function useValidState<T>(options: {
 
         return [validState, setValidStateWithValidatingFunc];
     }
-
-    // ---
 
     if (options.validStates === undefined) {
         throw new Error("validStates must be provided");
@@ -81,21 +89,6 @@ export function useValidState<T>(options: {
             setState(validState);
         }
     }
-
-    const validStates = options.validStates;
-
-    const setValidState = React.useCallback(
-        function setValidState(newState: T | ((prevState: T) => T), acceptInvalidState = true) {
-            const computedNewState =
-                typeof newState === "function" ? (newState as (prevState: T) => T)(state) : newState;
-            if (!acceptInvalidState && !validStates.includes(computedNewState)) {
-                return;
-            }
-
-            setState(newState);
-        },
-        [state, options.validStates]
-    );
 
     return [validState, setValidState];
 }
