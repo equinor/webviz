@@ -1,17 +1,16 @@
 import { ModuleRegistry } from "@framework/ModuleRegistry";
 
-import { settings } from "./settings";
+import { Settings } from "./settings";
 import { State } from "./state";
-import { view } from "./view";
+import { View } from "./view";
 
 const defaultState: State = {
     vectorSpec: null,
     timestampUtcMs: null,
-    parameterName: undefined
+    parameterName: undefined,
 };
-
 
 const module = ModuleRegistry.initModule<State>("TimeSeriesParameterDistribution", defaultState);
 
-module.viewFC = view;
-module.settingsFC = settings;
+module.viewFC = View;
+module.settingsFC = Settings;

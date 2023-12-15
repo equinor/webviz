@@ -49,6 +49,8 @@ const noMatchingOptionsText = "No matching options";
 const noOptionsText = "No options";
 
 export const Dropdown = withDefaults<DropdownProps>()(defaultProps, (props) => {
+    const { onChange } = props;
+
     const [dropdownVisible, setDropdownVisible] = React.useState<boolean>(false);
     const [dropdownRect, setDropdownRect] = React.useState<DropdownRect>({
         width: 0,
@@ -166,7 +168,15 @@ export const Dropdown = withDefaults<DropdownProps>()(defaultProps, (props) => {
                 setOptionIndexWithFocusToCurrentSelection();
             }
         }
-    }, [inputBoundingRect, dropdownVisible, filteredOptions, selection]);
+    }, [
+        inputBoundingRect,
+        dropdownVisible,
+        filteredOptions,
+        selection,
+        dropdownRect.width,
+        props.options,
+        setOptionIndexWithFocusToCurrentSelection,
+    ]);
 
     const handleOptionClick = React.useCallback(
         (value: string) => {
@@ -175,12 +185,21 @@ export const Dropdown = withDefaults<DropdownProps>()(defaultProps, (props) => {
             setDropdownVisible(false);
             setFilter(null);
             setFilteredOptions(props.options);
-            if (props.onChange) {
-                props.onChange(value);
+            if (onChange) {
+                onChange(value);
             }
             setOptionIndexWithFocus(-1);
         },
-        [props.onChange, selection, props.options]
+        [
+            onChange,
+            props.options,
+            setOptionIndexWithFocus,
+            setSelectionIndex,
+            setDropdownVisible,
+            setFilter,
+            setFilteredOptions,
+            setSelection,
+        ]
     );
 
     React.useEffect(() => {

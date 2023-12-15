@@ -17,10 +17,13 @@ export const SettingsContentPanels: React.FC<SettingsContentPanelsProps> = (prop
         GuiState.SettingsPanelWidthInPercent
     );
 
-    function handleSettingsPanelResize(sizes: number[]) {
-        setSettingsPanelWidth(sizes[0]);
-        localStorage.setItem("settingsPanelWidthInPercent", sizes[0].toString());
-    }
+    const handleSettingsPanelResize = React.useCallback(
+        function handleSettingsPanelResize(sizes: number[]) {
+            setSettingsPanelWidth(sizes[0]);
+            localStorage.setItem("settingsPanelWidthInPercent", sizes[0].toString());
+        },
+        [setSettingsPanelWidth]
+    );
 
     return (
         <ResizablePanels

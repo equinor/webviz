@@ -1,3 +1,15 @@
+/**
+ * Why are we disbling rules-of-hooks here?
+ *
+ * Well, we are using several hooks in this class, which is not allowed by this rule.
+ * However, we are not using these hooks in a component, but in a utility class.
+ * The important thing to remember is that these functions must be called on every render,
+ * unconditionally (i.e. not in a conditional statement) and not in a loop.
+ * This is exactly what we are doing here. We are only using the class to group the functions together
+ * and give additional context to the functions.
+ */
+
+/* eslint-disable react-hooks/rules-of-hooks */
 import React from "react";
 
 import { WorkbenchSettingsEvents } from "@framework/internal/PrivateWorkbenchSettings";
@@ -215,6 +227,9 @@ export class WorkbenchSettings {
             ],
         };
 
+        const divergingSteps = this._steps[ColorScaleDiscreteSteps.Diverging];
+        const sequentialSteps = this._steps[ColorScaleDiscreteSteps.Sequential];
+
         const [adjustedOptions, setAdjustedOptions] = React.useState<ColorScaleOptions>(optionsWithDefaults);
 
         const [colorScale, setColorScale] = React.useState<ColorScale>(new ColorScale(optionsWithDefaults));
@@ -228,11 +243,8 @@ export class WorkbenchSettings {
             const handleColorPalettesChanged = () => {
                 const newColorScale = new ColorScale({
                     ...adjustedOptions,
-                    steps: this._steps[
-                        options.gradientType === ColorScaleGradientType.Sequential
-                            ? ColorScaleDiscreteSteps.Sequential
-                            : ColorScaleDiscreteSteps.Diverging
-                    ],
+                    steps:
+                        options.gradientType === ColorScaleGradientType.Sequential ? sequentialSteps : divergingSteps,
                     colorPalette: this.getSelectedColorPalette(
                         options.gradientType === ColorScaleGradientType.Sequential
                             ? ColorPaletteType.ContinuousSequential
@@ -252,7 +264,7 @@ export class WorkbenchSettings {
             return () => {
                 unsubscribeFunc();
             };
-        }, [adjustedOptions]);
+        }, [adjustedOptions, divergingSteps, sequentialSteps, options.gradientType]);
 
         return colorScale;
     }
@@ -301,7 +313,7 @@ export class WorkbenchSettings {
             return () => {
                 unsubscribeFunc();
             };
-        }, [adjustedOptions]);
+        }, [adjustedOptions, options.gradientType]);
 
         return colorScale;
     }

@@ -56,7 +56,7 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
                 });
             }
         },
-        [props.moduleInstance]
+        [props.moduleInstance, guiMessageBroker]
     );
 
     const handleRemoveClick = React.useCallback(
@@ -67,7 +67,7 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
             e.preventDefault();
             e.stopPropagation();
         },
-        [props.moduleInstance]
+        [props.moduleInstance, guiMessageBroker]
     );
 
     function handleModuleClick() {

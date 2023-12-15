@@ -72,7 +72,7 @@ const RealizationRangeTag: React.FC<RealizationRangeTagProps> = (props) => {
         } else if (!props.active && ref.current) {
             ref.current.blur();
         }
-    }, [props.active]);
+    }, [props.active, props.caretPosition, value]);
 
     function handleChange(event: React.ChangeEvent<HTMLInputElement>) {
         const value = event.target.value;

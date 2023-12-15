@@ -210,7 +210,7 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
             id: el.uuid,
             values: [
                 { label: el.name },
-                { label: el.user, adornment: <UserAvatar userId={el.user} /> },
+                { label: el.user, adornment: <UserAvatar key={el.uuid} userId={el.user} /> },
                 { label: el.status },
             ],
         })) ?? [];
