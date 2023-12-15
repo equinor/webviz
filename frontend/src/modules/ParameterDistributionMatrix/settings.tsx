@@ -16,7 +16,7 @@ import { isEqual } from "lodash";
 import { EnsembleSetParameterIdents, State } from "./state";
 
 const MAX_PARAMETERS = 50;
-export function settings({ moduleContext, workbenchSession }: ModuleFCProps<State>) {
+export function Settings({ moduleContext, workbenchSession }: ModuleFCProps<State>) {
     const statusWriter = useSettingsStatusWriter(moduleContext);
 
     const ensembleSet = useEnsembleSet(workbenchSession);
@@ -136,7 +136,13 @@ export function settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
 
             setEnsembleSetParameterIdents(newEnsembleSetParameterIdents);
         },
-        [selectedEnsembleIdents, selectedParameterIdentsStrings]
+        [
+            selectedEnsembleIdents,
+            selectedParameterIdentsStrings,
+            filteredParameterIdentList,
+            workbenchSession,
+            setEnsembleSetParameterIdents,
+        ]
     );
 
     return (

@@ -110,7 +110,7 @@ export const Table: React.FC<TableProps<TableHeading>> = (props) => {
 
     React.useEffect(() => {
         setFilteredData(filterData(preprocessedData, filterValues, props.headings));
-    }, [preprocessedData, filterValues]);
+    }, [preprocessedData, filterValues, props.headings]);
 
     React.useEffect(() => {
         setFilteredData((prev) => sortData(prev, sortColumnAndDirection.col, sortColumnAndDirection.dir));
@@ -129,25 +129,25 @@ export const Table: React.FC<TableProps<TableHeading>> = (props) => {
         }
     }, [props.headings, props.data]);
 
-    const handlePointerOver = (row: TableRow<any>) => {
+    function handlePointerOver(row: TableRow<any>) {
         if (props.onHover) {
             props.onHover(row);
         }
-    };
+    }
 
-    const handlePointerDown = (row: TableRow<any>) => {
+    function handlePointerDown(row: TableRow<any>) {
         if (props.onClick) {
             props.onClick(row);
         }
-    };
+    }
 
-    const handleFilterChange = (col: string, value: string) => {
+    function handleFilterChange(col: string, value: string) {
         setFilterValues({ ...filterValues, [col]: value });
-    };
+    }
 
-    const handleSortDirectionChange = (col: string, dir: SortDirection) => {
+    function handleSortDirectionChange(col: string, dir: SortDirection) {
         setSortColumnAndDirection({ col, dir });
-    };
+    }
 
     if (layoutError.error) {
         return <div>{layoutError.message}</div>;

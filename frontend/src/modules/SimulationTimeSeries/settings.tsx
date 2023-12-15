@@ -21,7 +21,7 @@ import { useVectorListQuery } from "./queryHooks";
 import { State } from "./state";
 
 //-----------------------------------------------------------------------------------------------------------
-export function settings({ moduleContext, workbenchSession, workbenchServices }: ModuleFCProps<State>) {
+export function Settings({ moduleContext, workbenchSession, workbenchServices }: ModuleFCProps<State>) {
     const myInstanceIdStr = moduleContext.getInstanceIdString();
     console.debug(`${myInstanceIdStr} -- render SimulationTimeSeries settings`);
 
@@ -77,7 +77,7 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
                 moduleContext.getStateStore().setValue("vectorSpec", null);
             }
         },
-        [computedEnsembleIdent, computedVectorName, computedVectorNameHasHistoricalData]
+        [computedEnsembleIdent, computedVectorName, computedVectorNameHasHistoricalData, moduleContext]
     );
 
     const computedEnsemble = computedEnsembleIdent ? ensembleSet.findEnsemble(computedEnsembleIdent) : null;

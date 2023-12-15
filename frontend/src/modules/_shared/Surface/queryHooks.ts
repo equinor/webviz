@@ -22,25 +22,19 @@ export function useSurfaceDirectoryQuery(
 }
 
 export function useSurfaceDataQueryByAddress(surfAddr: SurfaceAddress | null): UseQueryResult<SurfaceData_trans> {
-    function dummyApiCall(): Promise<SurfaceData_trans> {
+    function dummyApiCall(): Promise<SurfaceData_api> {
         return new Promise((_resolve, reject) => {
             reject(null);
-        });
-    }
-
-    if (!surfAddr) {
-        return useQuery({
-            queryKey: ["getSurfaceData_DUMMY_ALWAYS_DISABLED"],
-            queryFn: () => dummyApiCall,
-            enabled: false,
         });
     }
 
     let queryFn: QueryFunction<SurfaceData_api> | null = null;
     let queryKey: QueryKey | null = null;
 
-    // Dynamic, per realization surface
-    if (surfAddr.addressType === "realization") {
+    if (surfAddr === null) {
+        queryKey = ["getSurfaceData_DUMMY_ALWAYS_DISABLED"];
+        queryFn = dummyApiCall;
+    } else if (surfAddr.addressType === "realization") {
         queryKey = [
             "getRealizationSurfaceData",
             surfAddr.caseUuid,
@@ -59,10 +53,7 @@ export function useSurfaceDataQueryByAddress(surfAddr: SurfaceAddress | null): U
                 surfAddr.attribute,
                 surfAddr.isoDateOrInterval ?? undefined
             );
-    }
-
-    // Dynamic, statistical surface
-    else if (surfAddr.addressType === "statistical") {
+    } else if (surfAddr.addressType === "statistical") {
         queryKey = [
             "getStatisticalSurfaceData",
             surfAddr.caseUuid,
@@ -91,5 +82,6 @@ export function useSurfaceDataQueryByAddress(surfAddr: SurfaceAddress | null): U
         select: transformSurfaceData,
         staleTime: STALE_TIME,
         gcTime: CACHE_TIME,
+        enabled: Boolean(surfAddr),
     });
 }

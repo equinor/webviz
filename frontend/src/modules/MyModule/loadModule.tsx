@@ -3,7 +3,7 @@ import { ColorScaleGradientType, ColorScaleType } from "@lib/utils/ColorScale";
 
 import { settings } from "./settings";
 import { State } from "./state";
-import { view } from "./view";
+import { View } from "./view";
 
 const defaultState: State = {
     type: ColorScaleType.Discrete,
@@ -15,5 +15,5 @@ const defaultState: State = {
 
 const module = ModuleRegistry.initModule<State>("MyModule", defaultState);
 
-module.viewFC = view;
+module.viewFC = View;
 module.settingsFC = settings;
