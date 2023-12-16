@@ -2,6 +2,8 @@ import React from "react";
 
 import { DataElement, KeyKind, KeyKindToKeyTypeMapping } from "@framework/DataChannelTypes";
 
+import { isEqual } from "lodash";
+
 import { ModuleChannelContentMetaData } from "../ModuleChannelContent";
 import { ModuleChannelReceiver, ModuleChannelReceiverNotificationTopic } from "../ModuleChannelReceiver";
 
@@ -40,13 +42,24 @@ export function useChannelReceiver<TGenres extends KeyKind[]>({
     expectedKindsOfKeys: TGenres;
 }): ChannelReceiverReturnData<typeof expectedKindsOfKeys> {
     const [contents, setContents] = React.useState<ChannelReceiverChannelContent<typeof expectedKindsOfKeys>[]>([]);
+    const [prevExpectedKindsOfKeys, setPrevExpectedKindsOfKeys] = React.useState<TGenres | null>(null);
 
     React.useEffect(() => {
         function handleContentsDataArrayChange(): void {
-            const channel = receiver?.getChannel();
+            if (!receiver) {
+                return;
+            }
+
+            const channel = receiver.getChannel();
             if (!channel) {
                 return;
             }
+
+            if (isEqual(prevExpectedKindsOfKeys, expectedKindsOfKeys)) {
+                return;
+            }
+
+            setPrevExpectedKindsOfKeys(expectedKindsOfKeys);
 
             if (!expectedKindsOfKeys.includes(channel.getKindOfKey())) {
                 throw new Error(
@@ -88,7 +101,7 @@ export function useChannelReceiver<TGenres extends KeyKind[]>({
                 unsubscribeFunc();
             }
         };
-    }, [receiver, expectedKindsOfKeys]);
+    }, [receiver, expectedKindsOfKeys, prevExpectedKindsOfKeys]);
 
     if (!receiver) {
         return {
