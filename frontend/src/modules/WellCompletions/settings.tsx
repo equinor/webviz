@@ -36,14 +36,17 @@ export const Settings = ({ moduleContext, workbenchSession, workbenchServices }:
     const [realizationSelection, setRealizationSelection] = React.useState<RealizationSelection>(
         RealizationSelection.Aggregated
     );
-    const [selectedEnsembleIdent, setSelectedEnsembleIdent] = useValidState<EnsembleIdent | null>(null, [
-        ensembleSet.getEnsembleArr(),
-        (item: Ensemble) => item.getIdent(),
-    ]);
-    const [selectedRealizationNumber, setSelectedRealizationNumber] = useValidState<number>(0, [
-        (selectedEnsembleIdent && ensembleSet.findEnsemble(selectedEnsembleIdent)?.getRealizations()) ?? [],
-        (item: number) => item,
-    ]);
+    const [selectedEnsembleIdent, setSelectedEnsembleIdent] = useValidState<EnsembleIdent | null>({
+        initialState: null,
+        validStates: ensembleSet.getEnsembleArr().map((item: Ensemble) => item.getIdent()),
+    });
+    const [selectedRealizationNumber, setSelectedRealizationNumber] = useValidState<number>({
+        initialState: 0,
+        validStates:
+            (selectedEnsembleIdent && ensembleSet.findEnsemble(selectedEnsembleIdent)?.getRealizations())?.map(
+                (item: number) => item
+            ) ?? [],
+    });
 
     const [selectedTimeStepOptions, setSelectedTimeStepOptions] = React.useState<{
         timeStepIndex: number | [number, number] | null;
