@@ -56,21 +56,8 @@ async def get_realizations_vector_data(
 
     perf_metrics = PerfMetrics(response)
     access = await SummaryAccess.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
+
     sumo_freq = Frequency.from_string_value(resampling_frequency.value if resampling_frequency else "dummy")
-
-    # !!!!!
-    # !!!!!
-    # TEMPORARY FOR TESTING, remove before merging!
-    #
-    dummy_table, dummy_meta_list = await access.get_single_real_vectors_table_async(
-        vector_names=[vector_name],
-        resampling_frequency=sumo_freq,
-        realization=1,
-    )
-    perf_metrics.record_lap("get-single-real-vector")
-    # !!!!!
-    # !!!!!
-
     sumo_vec_arr = await access.get_vector_async(
         vector_name=vector_name,
         resampling_frequency=sumo_freq,
