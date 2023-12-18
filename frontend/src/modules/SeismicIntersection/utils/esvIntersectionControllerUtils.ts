@@ -1,4 +1,7 @@
+import { SurfaceIntersectionData_api, WellBorePicksAndStratigraphyUnits_api } from "@api";
 import {
+    Annotation,
+    CalloutCanvasLayer,
     Controller,
     GeomodelCanvasLayer,
     GeomodelLabelsLayer,
@@ -7,8 +10,10 @@ import {
     SeismicCanvasLayer,
     SurfaceData,
     WellborepathLayer,
+    getPicksData,
     getSeismicInfo,
     getSeismicOptions,
+    transformFormationData,
 } from "@equinor/esv-intersection";
 
 import { makeReferenceSystemFromTrajectoryXyzPoints } from "./esvIntersectionDataConversion";
@@ -150,4 +155,22 @@ export function addSurfacesLayer(
     });
     controller.addLayer(geomodelLayer);
     controller.addLayer(geomodelLabelsLayer);
+}
+
+export function addWellborePicksLayer(
+    controller: Controller,
+    WellBorePicksAndStratigraphyUnits_api: WellBorePicksAndStratigraphyUnits_api // TODO: Decompose and pass Pick and Unit data separately?
+) {
+    const picksData = transformFormationData(
+        WellBorePicksAndStratigraphyUnits_api.wellborePicks as any,
+        WellBorePicksAndStratigraphyUnits_api.stratigraphyUnits as any
+    );
+    const layer = new CalloutCanvasLayer<Annotation[]>("callout", {
+        order: 100,
+        data: getPicksData(picksData),
+        referenceSystem: controller.referenceSystem,
+        minFontSize: 12,
+        maxFontSize: 16,
+    });
+    controller.addLayer(layer);
 }

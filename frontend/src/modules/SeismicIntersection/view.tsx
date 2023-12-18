@@ -10,7 +10,10 @@ import { ModuleFCProps } from "@framework/Module";
 import { useViewStatusWriter } from "@framework/StatusWriter";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { ColorScaleGradientType } from "@lib/utils/ColorScale";
-import { useWellTrajectoriesQuery } from "@modules/_shared/WellBore/queryHooks";
+import {
+    useWellTrajectoriesQuery,
+    useWellborePicksAndStratigraphyUnitsQuery,
+} from "@modules/_shared/WellBore/queryHooks";
 import { ContentError } from "@modules/_shared/components/ContentMessage";
 
 import { isEqual } from "lodash";
@@ -22,6 +25,7 @@ import {
     addSeismicLayer,
     addSurfacesLayer,
     addWellborePathLayer,
+    addWellborePicksLayer,
 } from "./utils/esvIntersectionControllerUtils";
 import {
     createEsvSurfaceIntersectionDataArrayFromSurfaceIntersectionDataApiArray,
@@ -178,6 +182,15 @@ export const View = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
         statusWriter.addWarning(`Error loading surface intersection data for "${surfaceName}"`);
     }
 
+    // Get well bore picks
+    const wellBorePicksAndStratigraphyUnitsQuery = useWellborePicksAndStratigraphyUnitsQuery(
+        seismicAddress?.caseUuid,
+        wellboreAddress ? wellboreAddress.uwi : undefined
+    );
+    if (wellBorePicksAndStratigraphyUnitsQuery.isError) {
+        statusWriter.addError("Error loading wellbore picks and stratigraphy units");
+    }
+
     if (seismicFenceDataQuery.data) {
         // Get an array of projected 2D points [x, y], as 2D curtain projection from a set of trajectory 3D points and offset
         const newExtendedWellboreTrajectoryXyProjection: number[][] = extendedWellboreTrajectory
@@ -243,6 +256,10 @@ export const View = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
                 surfaceColor: "red",
                 surfaceWidth: 10,
             });
+        }
+
+        if (wellBorePicksAndStratigraphyUnitsQuery.data) {
+            addWellborePicksLayer(esvIntersectionControllerRef.current, wellBorePicksAndStratigraphyUnitsQuery.data);
         }
 
         // Update layout
