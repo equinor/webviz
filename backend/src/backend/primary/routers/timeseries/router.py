@@ -13,7 +13,6 @@ from src.services.sumo_access.parameter_access import ParameterAccess
 from src.services.sumo_access.summary_access import Frequency, SummaryAccess
 from src.services.utils.authenticated_user import AuthenticatedUser
 
-
 from . import converters, schemas
 
 LOGGER = logging.getLogger(__name__)
