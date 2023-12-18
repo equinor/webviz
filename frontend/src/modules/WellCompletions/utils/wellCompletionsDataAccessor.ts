@@ -4,6 +4,7 @@ import {
     WellCompletionsWell_api,
     WellCompletionsZone_api,
 } from "@api";
+import { ColorSet } from "@lib/utils/ColorSet";
 import { CompletionPlotData, PlotData, WellPlotData, Zone } from "@webviz/well-completions-plot";
 
 import { getRegexPredicate } from "./stringUtils";
@@ -55,7 +56,7 @@ export class WellCompletionsDataAccessor {
         this._wells = [];
     }
 
-    parseWellCompletionsData(data: WellCompletionsData_api): void {
+    parseWellCompletionsData(data: WellCompletionsData_api, stratigraphyColorSet: ColorSet): void {
         // TODO:
         // - Filter wells when filter functionality is in place
         // - Filter subzones when filter functionality is in place
@@ -63,9 +64,11 @@ export class WellCompletionsDataAccessor {
         this._data = data;
         this._wells = this._data.wells;
 
-        // Exctract all subzones
+        // Extract all subzones
         this._subzones = [];
-        this._data.stratigraphy.forEach((zone) => WellCompletionsDataAccessor.findSubzones(zone, this._subzones));
+        this._data.zones.forEach((zone) =>
+            WellCompletionsDataAccessor.createLeafNodesAndAssignColor(zone, stratigraphyColorSet, this._subzones)
+        );
     }
 
     setSearchWellText(searchWell: string): void {
@@ -221,12 +224,21 @@ export class WellCompletionsDataAccessor {
         );
     }
 
-    private static findSubzones(apiZone: WellCompletionsZone_api, result: Zone[]): void {
+    private static createLeafNodesAndAssignColor(
+        apiZone: WellCompletionsZone_api,
+        stratigraphyColorSet: ColorSet,
+        leafNodes: Zone[]
+    ): void {
+        const color =
+            leafNodes.length === 0 ? stratigraphyColorSet.getFirstColor() : stratigraphyColorSet.getNextColor();
+
         // Depth-first search to find all leaf nodes
         if (!apiZone.subzones || apiZone.subzones.length === 0) {
-            result.push({ name: apiZone.name, color: apiZone.color });
+            leafNodes.push({ name: apiZone.name, color: color });
         } else {
-            apiZone.subzones.forEach((apiSubZone) => WellCompletionsDataAccessor.findSubzones(apiSubZone, result));
+            apiZone.subzones.forEach((apiSubZone) =>
+                WellCompletionsDataAccessor.createLeafNodesAndAssignColor(apiSubZone, stratigraphyColorSet, leafNodes)
+            );
         }
     }
 }

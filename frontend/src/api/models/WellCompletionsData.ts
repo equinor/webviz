@@ -12,7 +12,7 @@ import type { WellCompletionsZone } from './WellCompletionsZone';
 export type WellCompletionsData = {
     version: string;
     units: WellCompletionsUnits;
-    stratigraphy: Array<WellCompletionsZone>;
+    zones: Array<WellCompletionsZone>;
     timeSteps: Array<string>;
     wells: Array<WellCompletionsWell>;
 };

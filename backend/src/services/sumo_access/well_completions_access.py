@@ -1,5 +1,4 @@
-import itertools
-from typing import Dict, Iterator, List, Optional, Set, Tuple
+from typing import Dict, List, Optional, Set, Tuple
 
 import pandas as pd
 
@@ -113,33 +112,19 @@ class WellCompletionDataConverter:
         self._kh_unit = "mDm"  # NOTE: How to find metadata?
         self._kh_decimal_places = 2
         self._datemap = {dte: i for i, dte in enumerate(sorted(self._well_completions_df["DATE"].unique()))}
-        self._zones = list(sorted(self._well_completions_df["ZONE"].unique()))
+        self._zone_name_list = list(sorted(self._well_completions_df["ZONE"].unique()))
+
+        # NOTE: The zone tree structure should be provided by server in the future
+        # to obtain parent/child relationship between zones
+        self._zones_tree = None
 
         self._well_completions_df["TIMESTEP"] = self._well_completions_df["DATE"].map(self._datemap)
 
         # NOTE:
         # - How to handle well attributes? Should be provided by Sumo?
-        # - How to handle theme colors?
         self._well_attributes: Dict[
             str, Dict[str, WellCompletionsAttributeType]
         ] = {}  # Each well has dict of attributes
-        self._theme_colors = ["#6EA35A", "#EDAF4C", "#CA413D"]  # Hard coded
-
-    def _dummy_stratigraphy(self) -> List[WellCompletionsZone]:
-        """
-        Returns a default stratigraphy for TESTING, should be provided by Sumo
-        """
-        return [
-            WellCompletionsZone(
-                name="TopVolantis_BaseVolantis",
-                color="#6EA35A",
-                subzones=[
-                    WellCompletionsZone(name="Valysar", color="#6EA35A"),
-                    WellCompletionsZone(name="Therys", color="#EDAF4C"),
-                    WellCompletionsZone(name="Volon", color="#CA413D"),
-                ],
-            ),
-        ]
 
     def create_data(self) -> WellCompletionsData:
         """Creates well completions dataset for front-end"""
@@ -149,7 +134,7 @@ class WellCompletionDataConverter:
             units=WellCompletionsUnits(
                 kh=WellCompletionsUnitInfo(unit=self._kh_unit, decimalPlaces=self._kh_decimal_places)
             ),
-            stratigraphy=self._extract_stratigraphy(self._dummy_stratigraphy(), self._zones),
+            zones=self._extract_well_completions_zones(zones=self._zones_tree, zone_name_list=self._zone_name_list),
             timeSteps=[pd.to_datetime(str(dte)).strftime("%Y-%m-%d") for dte in self._datemap.keys()],
             wells=self._extract_wells(),
         )
@@ -187,63 +172,36 @@ class WellCompletionDataConverter:
         well.completions = completions
         return well
 
-    def _extract_stratigraphy(
-        self, stratigraphy: Optional[List[WellCompletionsZone]], zones: List[str]
+    def _extract_well_completions_zones(
+        self, zones: Optional[List[WellCompletionsZone]], zone_name_list: List[str]
     ) -> List[WellCompletionsZone]:
-        """Returns the stratigraphy part of the dataset to front-end"""
-        color_iterator = itertools.cycle(self._theme_colors)
+        """Returns the well completions zone objects of the dataset to front-end
 
-        # If no stratigraphy file is found then the stratigraphy is
+        If optional zones definition is provided, it is filtered to only include zones from zone_name_list.
+        If no zones definition is provided, a flat zones definition made from zone_name_list is returned.
+        """
+
+        # If no well completions zones is found then the well completions zone are
         # created from the unique zones in the well completions data input.
-        # They will then probably not come in the correct order.
-        if stratigraphy is None:
-            return [WellCompletionsZone(name=zone, color=next(color_iterator)) for zone in zones]
+        # They will then probably not come in the correct, and no sone/subzone relationship will be defined.
+        if zones is None:
+            return [WellCompletionsZone(name=zone) for zone in zone_name_list]
 
-        # If stratigraphy is not None the following is done:
-        stratigraphy, remaining_valid_zones = self._filter_valid_nodes(stratigraphy, zones)
+        # If the input zones are not None then filter the zones to only include
+        zones, remaining_valid_zones = self._filter_valid_nodes(zones, zone_name_list)
 
         if remaining_valid_zones:
             raise ValueError(
                 "The following zones are defined in the well completions data, "
-                f"but not in the stratigraphy: {remaining_valid_zones}"
+                f"but not in the list of zone names: {remaining_valid_zones}"
             )
 
-        return self._add_colors_to_stratigraphy(stratigraphy, color_iterator)
-
-    def _add_colors_to_stratigraphy(
-        self,
-        stratigraphy: List[WellCompletionsZone],
-        color_iterator: Iterator,
-        zone_color_mapping: Optional[Dict[str, str]] = None,
-    ) -> List[WellCompletionsZone]:
-        """Add colors to the stratigraphy tree. The function will recursively parse the tree.
-
-        There are tree sources of color:
-        1. The color is given in the stratigraphy list, in which case nothing is done to the node
-        2. The color is the optional the zone->color map
-        3. If none of the above applies, the color will be taken from the theme color iterable for \
-        the leaves. For other levels, a dummy color grey is used
-        """
-        for zone in stratigraphy:
-            if zone.color == "":
-                if zone_color_mapping is not None and zone.name in zone_color_mapping:
-                    zone.color = zone_color_mapping[zone.name]
-                elif zone.subzones is None:
-                    zone = next(color_iterator)  # theme colors only applied on leaves
-                else:
-                    zone.color = "#808080"  # grey
-            if zone.subzones is not None:
-                zone.subzones = self._add_colors_to_stratigraphy(
-                    zone.subzones,
-                    color_iterator,
-                    zone_color_mapping=zone_color_mapping,
-                )
-        return stratigraphy
+        return zones
 
     def _filter_valid_nodes(
-        self, stratigraphy: List[WellCompletionsZone], valid_zone_names: List[str]
+        self, zones: List[WellCompletionsZone], valid_zone_names: List[str]
     ) -> Tuple[List[WellCompletionsZone], List[str]]:
-        """Returns the stratigraphy tree with only valid nodes.
+        """Returns the zones tree with only valid nodes.
         A node is considered valid if it self or one of it's subzones are in the
         valid zone names list (passed from the lyr file)
 
@@ -252,14 +210,14 @@ class WellCompletionDataConverter:
 
         output = []
         remaining_valid_zones = valid_zone_names
-        for zone in stratigraphy:
+        for zone in zones:
             if zone.subzones is not None:
                 zone.subzones, remaining_valid_zones = self._filter_valid_nodes(zone.subzones, remaining_valid_zones)
             if zone.name in remaining_valid_zones:
                 output.append(zone)
                 remaining_valid_zones = [
                     elm for elm in remaining_valid_zones if elm != zone.name
-                ]  # remove zone name from valid zones if it is found in the stratigraphy
+                ]  # remove zone name from valid zones if it is found in the zones tree
             elif zone.subzones is not None:
                 output.append(zone)
 

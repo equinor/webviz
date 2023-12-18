@@ -1,30 +1,42 @@
+import React from "react";
+
 import { ModuleFCProps } from "@framework/Module";
+import { useViewStatusWriter } from "@framework/StatusWriter";
 import { CircularProgress } from "@lib/components/CircularProgress";
+import { ContentError } from "@modules/_shared/components/ContentMessage";
+import { ContentInfo } from "@modules/_shared/components/ContentMessage";
 import { WellCompletionsPlot } from "@webviz/well-completions-plot";
 
 import { DataLoadingStatus, State } from "./state";
 
-export const view = ({ moduleContext }: ModuleFCProps<State>) => {
+export const View = ({ moduleContext }: ModuleFCProps<State>) => {
+    const wellCompletionsPlotId = React.useId();
+    const statusWriter = useViewStatusWriter(moduleContext);
+
     const plotData = moduleContext.useStoreValue("plotData");
     const availableTimeSteps = moduleContext.useStoreValue("availableTimeSteps");
     const dataLoadingStatus = moduleContext.useStoreValue("dataLoadingStatus");
+
+    statusWriter.setLoading(dataLoadingStatus === DataLoadingStatus.Loading);
 
     return (
         <div className="w-full h-full">
             {!plotData ? (
                 dataLoadingStatus === DataLoadingStatus.Error ? (
-                    <div className="w-full h-full flex justify-center items-center text-red-500">
-                        Error loading well completions data for selected Ensemble and realization
-                    </div>
+                    <ContentError>Error loading well completions data</ContentError>
                 ) : dataLoadingStatus === DataLoadingStatus.Loading ? (
-                    <div className="absolute left-0 right-0 w-full h-full bg-white bg-opacity-80 flex items-center justify-center z-10">
+                    <ContentInfo>
                         <CircularProgress />
-                    </div>
+                    </ContentInfo>
                 ) : (
                     <></>
                 )
             ) : (
-                <WellCompletionsPlot id="test_id" timeSteps={availableTimeSteps || []} plotData={plotData} />
+                <WellCompletionsPlot
+                    id={wellCompletionsPlotId}
+                    timeSteps={availableTimeSteps || []}
+                    plotData={plotData}
+                />
             )}
         </div>
     );
