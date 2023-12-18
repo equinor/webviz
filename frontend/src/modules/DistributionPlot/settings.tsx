@@ -126,3 +126,5 @@ export function Settings({ moduleContext, initialSettings }: ModuleFCProps<State
         </div>
     );
 }
+
+Settings.displayName = "Settings";

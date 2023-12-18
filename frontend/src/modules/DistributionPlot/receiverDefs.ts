@@ -17,6 +17,6 @@ export const receiverDefs: ModuleChannelReceiverDefinition[] = [
         idString: "channelColorMapping",
         displayName: "Color mapping",
         supportedKindsOfKeys: [KeyKind.Realization],
-        supportsMultiContents: true,
+        supportsMultiContents: false,
     },
 ];

@@ -50,7 +50,6 @@ export class Figure {
     }
 
     makePlot(): React.ReactNode {
-        console.debug("makePlot", this._plotData, this._plotLayout);
         return (
             <Plot
                 data={this._plotData}

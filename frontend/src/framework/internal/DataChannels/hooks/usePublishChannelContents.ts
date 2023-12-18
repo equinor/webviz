@@ -8,23 +8,25 @@ import { DataGenerator, ModuleChannelContentDefinition } from "../ModuleChannelC
 export function usePublishChannelContents({
     channel,
     dependencies,
+    enabled,
     contents,
     dataGenerator,
 }: {
     channel: ModuleChannel;
     dependencies: any[];
+    enabled?: boolean;
     contents: ModuleChannelContentDefinition[];
     dataGenerator: (contentIdString: string) => ReturnType<DataGenerator>;
 }) {
     const [prevDependencies, setPrevDependencies] = React.useState<any[]>([]);
 
     React.useEffect(() => {
-        if (!isEqual(prevDependencies, dependencies)) {
+        if (enabled && !isEqual(prevDependencies, dependencies)) {
             setPrevDependencies(dependencies);
 
             channel.replaceContents(
                 contents.map((content) => ({ ...content, dataGenerator: () => dataGenerator(content.idString) }))
             );
         }
-    }, [channel, contents, dataGenerator, dependencies, prevDependencies]);
+    }, [channel, contents, dataGenerator, dependencies, prevDependencies, enabled]);
 }

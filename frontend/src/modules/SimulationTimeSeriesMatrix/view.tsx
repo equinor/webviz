@@ -152,6 +152,7 @@ export const View = ({ moduleContext, workbenchSession, workbenchSettings }: Mod
     moduleContext.usePublishChannelContents({
         channelIdString: BroadcastChannelNames.TimeSeries,
         dependencies: [loadedVectorSpecificationsAndRealizationData, activeTimestampUtcMs],
+        enabled: !isQueryFetching,
         contents: loadedVectorSpecificationsAndRealizationData.map((el) => ({
             idString: el.vectorSpecification.vectorName,
             displayName: el.vectorSpecification.vectorName,

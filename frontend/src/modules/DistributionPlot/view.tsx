@@ -2,22 +2,26 @@ import React from "react";
 
 import { KeyKind } from "@framework/DataChannelTypes";
 import { ModuleFCProps } from "@framework/Module";
+import { useViewStatusWriter } from "@framework/StatusWriter";
 import { Tag } from "@lib/components/Tag";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { ColorScaleGradientType } from "@lib/utils/ColorScale";
 import { ContentInfo } from "@modules/_shared/components/ContentMessage";
 
-import { Layout, PlotData } from "plotly.js";
+import { ColorBar, Layout, PlotData } from "plotly.js";
 
 import { DisplayMode, PlotType, State } from "./state";
 import { Figure, makeSubplots } from "./utils/Figure";
 import { makeHistogramBins, makeHistogramTrace } from "./utils/histogram";
+import { calcTextSize } from "./utils/textSize";
 
 export const View = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>) => {
     const plotType = moduleContext.useStoreValue("plotType");
     const numBins = moduleContext.useStoreValue("numBins");
     const orientation = moduleContext.useStoreValue("orientation");
     const displayMode = moduleContext.useStoreValue("displayMode");
+
+    const statusWriter = useViewStatusWriter(moduleContext);
 
     const colorSet = workbenchSettings.useColorSet();
     const seqColorScale = workbenchSettings.useContinuousColorScale({
@@ -39,6 +43,8 @@ export const View = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
         idString: "channelColorMapping",
         expectedKindsOfKeys: [KeyKind.Realization],
     });
+
+    statusWriter.setLoading(receiverX.isPending || receiverY.isPending || receiverColorMapping.isPending);
 
     function makeContent() {
         if (!receiverX.hasActiveSubscription) {
@@ -247,6 +253,15 @@ export const View = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
                 verticalSpacing: 0.05 / receiverX.channel.contents.length,
             });
 
+            const font = {
+                size: calcTextSize({
+                    width: wrapperDivSize.width,
+                    height: wrapperDivSize.height,
+                    numPlotsX: receiverX.channel.contents.length,
+                    numPlotsY: receiverY.channel.contents.length,
+                }),
+            };
+
             let cellIndex = 0;
             receiverX.channel.contents.forEach((contentRow, rowIndex) => {
                 receiverY.channel.contents.forEach((contentCol, colIndex) => {
@@ -289,6 +304,7 @@ export const View = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
                         const patch: Partial<Layout> = {
                             [`xaxis${cellIndex}`]: {
                                 title: `${contentCol.displayName} [${contentCol.metaData?.unit ?? ""}]`,
+                                font,
                             },
                         };
                         figure.updateLayout(patch);
@@ -297,6 +313,7 @@ export const View = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
                         const patch: Partial<Layout> = {
                             [`yaxis${cellIndex}`]: {
                                 title: `${contentRow.displayName} [${contentRow.metaData?.unit ?? ""}]`,
+                                font,
                             },
                         };
                         figure.updateLayout(patch);
@@ -315,7 +332,7 @@ export const View = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
 
         if (plotType === PlotType.ScatterWithColorMapping && receiverY.channel && receiverColorMapping.channel) {
             const verticalSpacing = 0.1 / receiverX.channel.contents.length;
-            const horizontalSpacing = 0.5 / receiverY.channel.contents.length;
+            const horizontalSpacing = 0.1 / receiverY.channel.contents.length;
             const figure = makeSubplots({
                 numRows: receiverX.channel.contents.length,
                 numCols: receiverY.channel.contents.length,
@@ -326,98 +343,97 @@ export const View = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
                 verticalSpacing,
                 horizontalSpacing,
                 margin: {
-                    t: 40,
-                    r: 80,
+                    t: 10,
+                    r: 20,
+                    b: 30,
+                    l: 30,
                 },
             });
+
+            const colorScale = seqColorScale.getPlotlyColorScale();
+            const dataColor = receiverColorMapping.channel.contents[0];
+            const colorBar: Partial<ColorBar> = {
+                title: dataColor.displayName,
+                titleside: "right",
+            };
+            const font = {
+                size: calcTextSize({
+                    width: wrapperDivSize.width,
+                    height: wrapperDivSize.height,
+                    numPlotsX: receiverX.channel.contents.length,
+                    numPlotsY: receiverY.channel.contents.length,
+                }),
+            };
+
+            const patch: Partial<Layout> = {
+                font,
+            };
+            figure.updateLayout(patch);
 
             let cellIndex = 0;
             receiverX.channel.contents.forEach((dataX, rowIndex) => {
                 receiverY.channel.contents.forEach((dataY, colIndex) => {
                     cellIndex++;
-                    receiverColorMapping.channel.contents.forEach((dataColor) => {
-                        const xValues: number[] = [];
-                        const yValues: number[] = [];
-                        const colorValues: number[] = [];
+                    const xValues: number[] = [];
+                    const yValues: number[] = [];
+                    const colorValues: number[] = [];
 
-                        const keysX = dataX.dataArray.map((el: any) => el.key);
-                        const keysY = dataY.dataArray.map((el: any) => el.key);
-                        const keysColor = dataColor.dataArray.map((el: any) => el.key);
-                        if (
-                            keysX.length === keysY.length &&
-                            keysX.length === keysColor.length &&
-                            !keysX.some((el, index) => el !== keysY[index] || el !== keysColor[index])
-                        ) {
-                            keysX.forEach((key) => {
-                                const dataPointX = dataX.dataArray.find((el: any) => el.key === key);
-                                const dataPointY = dataY.dataArray.find((el: any) => el.key === key);
-                                const dataPointColor = dataColor.dataArray.find((el: any) => el.key === key);
-                                if (dataPointX && dataPointY && dataPointColor) {
-                                    xValues.push(dataPointX.value as number);
-                                    yValues.push(dataPointY.value as number);
-                                    colorValues.push(dataPointColor.value as number);
-                                }
-                            });
-                        }
+                    const keysX = dataX.dataArray.map((el: any) => el.key);
+                    const keysY = dataY.dataArray.map((el: any) => el.key);
+                    const keysColor = dataColor.dataArray.map((el: any) => el.key);
+                    if (
+                        keysX.length === keysY.length &&
+                        keysX.length === keysColor.length &&
+                        !keysX.some((el, index) => el !== keysY[index] || el !== keysColor[index])
+                    ) {
+                        keysX.forEach((key) => {
+                            const dataPointX = dataX.dataArray.find((el: any) => el.key === key);
+                            const dataPointY = dataY.dataArray.find((el: any) => el.key === key);
+                            const dataPointColor = dataColor.dataArray.find((el: any) => el.key === key);
+                            if (dataPointX && dataPointY && dataPointColor) {
+                                xValues.push(dataPointX.value as number);
+                                yValues.push(dataPointY.value as number);
+                                colorValues.push(dataPointColor.value as number);
+                            }
+                        });
+                    }
 
-                        const colorBarX =
-                            receiverY.channel.contents.length === 1
-                                ? 1
-                                : (1 / receiverY.channel.contents.length) * (colIndex + 1) - horizontalSpacing / 2;
-                        const colorBarY =
-                            receiverX.channel.contents.length === 1
-                                ? 0.5
-                                : (1 / receiverX.channel.contents.length) * (rowIndex + 0.5);
+                    const trace: Partial<PlotData> = {
+                        x: xValues,
+                        y: yValues,
+                        mode: "markers",
+                        marker: {
+                            size: 5,
+                            color: colorValues,
+                            colorscale: colorScale,
+                            colorbar: cellIndex === 1 ? colorBar : undefined,
+                        },
+                        showlegend: false,
+                        type: "scatter",
+                    };
 
-                        const trace: Partial<PlotData> = {
-                            x: xValues,
-                            y: yValues,
-                            mode: "markers",
-                            marker: {
-                                size: 5,
-                                color: colorValues,
-                                colorscale: seqColorScale.getPlotlyColorScale(),
-                                colorbar: {
-                                    title: dataColor.displayName,
-                                    titleside: "right",
-                                    x: colorBarX,
-                                    y: colorBarY,
-                                    len: 1 / receiverX.channel.contents.length,
-                                },
-                                showscale: true,
+                    figure.addTrace(trace, rowIndex + 1, colIndex + 1);
+
+                    if (rowIndex === 0) {
+                        const patch: Partial<Layout> = {
+                            [`xaxis${cellIndex}`]: {
+                                title: `${dataY.displayName} [${dataY.metaData?.unit ?? ""}]`,
+                                font,
                             },
-                            showlegend: false,
-                            type: "scatter",
                         };
-
-                        figure.addTrace(trace, rowIndex + 1, colIndex + 1);
-
-                        if (rowIndex === 0) {
-                            const patch: Partial<Layout> = {
-                                [`xaxis${cellIndex}`]: {
-                                    title: `${dataY.displayName} [${dataY.metaData?.unit ?? ""}]`,
-                                },
-                            };
-                            figure.updateLayout(patch);
-                        }
-                        if (colIndex === 0) {
-                            const patch: Partial<Layout> = {
-                                [`yaxis${cellIndex}`]: {
-                                    title: `${dataX.displayName} [${dataX.metaData?.unit ?? ""}]`,
-                                },
-                            };
-                            figure.updateLayout(patch);
-                        }
-                    });
+                        figure.updateLayout(patch);
+                    }
+                    if (colIndex === 0) {
+                        const patch: Partial<Layout> = {
+                            [`yaxis${cellIndex}`]: {
+                                title: `${dataX.displayName} [${dataX.metaData?.unit ?? ""}]`,
+                                font,
+                            },
+                        };
+                        figure.updateLayout(patch);
+                    }
                 });
             });
-            const patch: Partial<Layout> = {
-                margin: {
-                    t: 5,
-                    r: 5,
-                },
-            };
-            figure.updateLayout(patch);
             return figure.makePlot();
         }
     }
@@ -428,3 +444,5 @@ export const View = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
         </div>
     );
 };
+
+View.displayName = "View";

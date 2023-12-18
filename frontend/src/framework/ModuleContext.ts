@@ -88,6 +88,7 @@ export class ModuleContext<S extends StateBaseType> {
     usePublishChannelContents(options: {
         channelIdString: string;
         dependencies: any[];
+        enabled?: boolean;
         contents: ModuleChannelContentDefinition[];
         dataGenerator: (contentIdString: string) => ReturnType<DataGenerator>;
     }) {

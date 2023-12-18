@@ -14,10 +14,12 @@ export interface ChannelReceiverChannelContent<TKeyKinds extends KeyKind[]> {
     metaData: ModuleChannelContentMetaData;
 }
 
-export type ChannelReceiverReturnData<TKeyKinds extends KeyKind[]> =
+export type ChannelReceiverReturnData<TKeyKinds extends KeyKind[]> = {
+    idString: string;
+    displayName: string;
+    isPending: boolean;
+} & (
     | {
-          idString: string;
-          displayName: string;
           channel: {
               idString: string;
               displayName: string;
@@ -28,11 +30,10 @@ export type ChannelReceiverReturnData<TKeyKinds extends KeyKind[]> =
           hasActiveSubscription: true;
       }
     | {
-          idString: string;
-          displayName: string;
           channel?: undefined;
           hasActiveSubscription: false;
-      };
+      }
+);
 
 export function useChannelReceiver<TGenres extends KeyKind[]>({
     receiver,
@@ -41,72 +42,79 @@ export function useChannelReceiver<TGenres extends KeyKind[]>({
     receiver: ModuleChannelReceiver | null;
     expectedKindsOfKeys: TGenres;
 }): ChannelReceiverReturnData<typeof expectedKindsOfKeys> {
+    const [isPending, startTransition] = React.useTransition();
     const [contents, setContents] = React.useState<ChannelReceiverChannelContent<typeof expectedKindsOfKeys>[]>([]);
-    const [prevExpectedKindsOfKeys, setPrevExpectedKindsOfKeys] = React.useState<TGenres | null>(null);
+    const [prevExpectedKindsOfKeys, setPrevExpectedKindsOfKeys] = React.useState<TGenres>(expectedKindsOfKeys);
 
-    React.useEffect(() => {
-        function handleContentsDataArrayChange(): void {
-            if (!receiver) {
-                return;
-            }
+    if (!isEqual(prevExpectedKindsOfKeys, expectedKindsOfKeys)) {
+        setPrevExpectedKindsOfKeys(expectedKindsOfKeys);
+    }
 
-            const channel = receiver.getChannel();
-            if (!channel) {
-                return;
-            }
+    React.useEffect(
+        function handleSubscribe() {
+            function handleContentsDataArrayChange(): void {
+                if (!receiver) {
+                    return;
+                }
 
-            if (isEqual(prevExpectedKindsOfKeys, expectedKindsOfKeys)) {
-                return;
-            }
+                const channel = receiver.getChannel();
+                if (!channel) {
+                    return;
+                }
 
-            setPrevExpectedKindsOfKeys(expectedKindsOfKeys);
+                if (!prevExpectedKindsOfKeys.includes(channel.getKindOfKey())) {
+                    throw new Error(
+                        `Kind of key '${channel.getKindOfKey()}' is not one of the expected genres '${prevExpectedKindsOfKeys.join(
+                            ", "
+                        )}'`
+                    );
+                }
 
-            if (!expectedKindsOfKeys.includes(channel.getKindOfKey())) {
-                throw new Error(
-                    `Kind of key '${channel.getKindOfKey()}' is not one of the expected genres '${expectedKindsOfKeys.join(
-                        ", "
-                    )}'`
-                );
-            }
+                startTransition(function getDataArray() {
+                    const contents = channel
+                        .getContents()
+                        .filter((content) => {
+                            if (receiver?.getContentIdStrings().includes(content.getIdString())) {
+                                return true;
+                            }
+                            return false;
+                        })
+                        .map((content) => {
+                            return {
+                                idString: content.getIdString(),
+                                displayName: content.getDisplayName(),
+                                dataArray: content.getDataArray() as DataElement<
+                                    KeyKindToKeyTypeMapping[TGenres[number]]
+                                >[],
+                                metaData: content.getMetaData(),
+                            };
+                        });
 
-            const contents = channel
-                .getContents()
-                .filter((content) => {
-                    if (receiver?.getContentIdStrings().includes(content.getIdString())) {
-                        return true;
-                    }
-                    return false;
-                })
-                .map((content) => {
-                    return {
-                        idString: content.getIdString(),
-                        displayName: content.getDisplayName(),
-                        dataArray: content.getDataArray() as DataElement<KeyKindToKeyTypeMapping[TGenres[number]]>[],
-                        metaData: content.getMetaData(),
-                    };
+                    setContents(contents ?? []);
                 });
-
-            setContents(contents ?? []);
-        }
-
-        const unsubscribeFunc = receiver?.subscribe(
-            ModuleChannelReceiverNotificationTopic.ContentsDataArrayChange,
-            handleContentsDataArrayChange
-        );
-
-        handleContentsDataArrayChange();
-
-        return () => {
-            if (unsubscribeFunc) {
-                unsubscribeFunc();
             }
-        };
-    }, [receiver, expectedKindsOfKeys, prevExpectedKindsOfKeys]);
+
+            const unsubscribeFunc = receiver?.subscribe(
+                ModuleChannelReceiverNotificationTopic.ContentsDataArrayChange,
+                handleContentsDataArrayChange
+            );
+
+            handleContentsDataArrayChange();
+
+            return () => {
+                if (unsubscribeFunc) {
+                    unsubscribeFunc();
+                }
+            };
+        },
+        [receiver, prevExpectedKindsOfKeys]
+    );
 
     if (!receiver) {
         return {
             idString: "",
             displayName: "",
+            isPending,
             channel: undefined,
             hasActiveSubscription: false,
         };
@@ -118,6 +126,7 @@ export function useChannelReceiver<TGenres extends KeyKind[]>({
         return {
             idString: receiver.getIdString(),
             displayName: receiver.getDisplayName(),
+            isPending,
             channel: undefined,
             hasActiveSubscription: false,
         };
@@ -126,6 +135,7 @@ export function useChannelReceiver<TGenres extends KeyKind[]>({
     return {
         idString: receiver.getIdString(),
         displayName: receiver.getDisplayName(),
+        isPending,
         channel: {
             idString: channel.getIdString(),
             displayName: channel.getDisplayName(),
