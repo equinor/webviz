@@ -16,6 +16,7 @@ import { Input } from "@lib/components/Input";
 import { Label } from "@lib/components/Label";
 import { RadioGroup } from "@lib/components/RadioGroup";
 import { Select, SelectOption } from "@lib/components/Select";
+import { useValidArrayState } from "@lib/hooks/useValidArrayState";
 import { useValidState } from "@lib/hooks/useValidState";
 import { SurfaceDirectory, SurfaceTimeType } from "@modules/_shared/Surface";
 import { useSurfaceDirectoryQuery } from "@modules/_shared/Surface";
@@ -63,6 +64,9 @@ export function Settings({ moduleContext, workbenchSession, workbenchServices }:
     const setWellboreAddress = moduleContext.useSetStoreValue("wellboreAddress");
     const [extension, setExtension] = moduleContext.useStoreState("extension");
     const [zScale, setZScale] = moduleContext.useStoreState("zScale");
+
+    const [fetchedSurfaceNames, setFetchedSurfaceNames] = React.useState<string[]>([]);
+    const [fetchedSurfaceAttributes, setFetchedSurfaceAttributes] = React.useState<string[]>([]);
 
     const [selectedEnsembleIdent, setSelectedEnsembleIdent] = React.useState<EnsembleIdent | null>(null);
     const [realizationNumber, setRealizationNumber] = React.useState<number>(0);
@@ -127,18 +131,36 @@ export function Settings({ moduleContext, workbenchSession, workbenchServices }:
               }
             : null
     );
-    // TODO: Allow multiple surface names? I.e. string[] instead of string
-    // const [selectedSurfaceName, setSelectedSurfaceName] = useValidState<string | null>(
-    //     null,
-    //     surfaceDirectoryQuery.data?.map((surfaceMeta) => surfaceMeta.name) ?? []
-    // );
-    const [selectedSurfaceNames, setSelectedSurfaceNames] = React.useState<string[]>([]);
-    const [selectedSurfaceAttribute, setSelectedSurfaceAttribute] = useValidState<string | null>(
-        null,
-        surfaceDirectory.getAttributeNames(selectedSurfaceNames.length !== 0 ? selectedSurfaceNames[0] : null) ?? []
-    );
 
+    // Find surface names and set valid state hook
+    let computedSurfaceNames: string[] = fetchedSurfaceNames;
+    const candidateSurfaceNames = surfaceDirectory.getSurfaceNames(null);
+    if (surfaceDirectoryQuery.data && !isEqual(computedSurfaceNames, candidateSurfaceNames)) {
+        computedSurfaceNames = candidateSurfaceNames;
+        setFetchedSurfaceNames(candidateSurfaceNames);
+    }
+    const [selectedSurfaceNames, setSelectedSurfaceNames] = useValidArrayState<string>({
+        initialState: [],
+        validStateArray: computedSurfaceNames,
+    });
+
+    // Get intersection of attributes for selected surfaces and set valid state hook
+    let computedSurfaceAttributes: string[] = fetchedSurfaceAttributes;
+    const candidateSurfaceAttributes = surfaceDirectory.getAttributeNamesIntersection(selectedSurfaceNames);
+    if (surfaceDirectoryQuery.data && !isEqual(computedSurfaceAttributes, candidateSurfaceAttributes)) {
+        computedSurfaceAttributes = candidateSurfaceAttributes;
+        setFetchedSurfaceAttributes(candidateSurfaceAttributes);
+    }
+    const [selectedSurfaceAttribute, setSelectedSurfaceAttribute] = useValidState<string | null>({
+        initialState: null,
+        validStates: computedSurfaceAttributes,
+    });
+
+    // ***************************************************
+    //
     // TODO: Add fixup and use synced value surface?
+    //
+    // ***************************************************
 
     // Create seismic cube directory
     const seismicCubeMetaDirectory = seismicCubeMetaListQuery.data
@@ -153,7 +175,7 @@ export function Settings({ moduleContext, workbenchSession, workbenchServices }:
         initialState: null,
         validStates: seismicCubeMetaDirectory?.getAttributeNames() ?? [],
     });
-    const [selectedSeismicTime, setSelectedSeismicTime] = useValidState<string | null>(
+    const [selectedSeismicTime, setSelectedSeismicTime] = useValidState<string | null>({
         initialState: null,
         validStates: seismicCubeMetaDirectory?.getTimeOrIntervalStrings() ?? [],
     });
@@ -238,11 +260,6 @@ export function Settings({ moduleContext, workbenchSession, workbenchServices }:
     }
 
     function handleSurfaceNameChange(values: string[]) {
-        // if (values.length === 0) {
-        //     setSelectedSurfaceName(null);
-        //     return;
-        // }
-        // setSelectedSurfaceName(values[0]);
         setSelectedSurfaceNames(values);
     }
 
@@ -349,7 +366,7 @@ export function Settings({ moduleContext, workbenchSession, workbenchServices }:
                     <div className="flex flex-col gap-4 overflow-y-auto">
                         <Label text="Stratigraphic name">
                             <Select
-                                options={surfaceDirectory.getSurfaceNames(null).map((name) => {
+                                options={computedSurfaceNames.map((name) => {
                                     return { label: name, value: name };
                                 })}
                                 value={selectedSurfaceNames}
@@ -360,7 +377,7 @@ export function Settings({ moduleContext, workbenchSession, workbenchServices }:
                         </Label>
                         <Label text="Attribute">
                             <Select
-                                options={surfaceDirectory.getAttributeNames(null).map((attribute) => {
+                                options={computedSurfaceAttributes.map((attribute) => {
                                     return { label: attribute, value: attribute };
                                 })}
                                 value={selectedSurfaceAttribute ? [selectedSurfaceAttribute] : []}
