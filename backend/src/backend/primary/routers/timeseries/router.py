@@ -66,8 +66,8 @@ async def get_realizations_vector_data(
         raise InvalidDataError("Dummy service error because vector name is FGIR", Service.SUMO)
     if vector_name == "FGIT":
         raise AuthorizationError("Dummy service error because vector name is FGIT", Service.SUMO)
-    if vector_name == "FGLIR":
-        raise HTTPException(404, "Dummy HTTP layer error, because vector name is FGLIR")
+    if vector_name == "FGLR":
+        raise HTTPException(404, "Dummy HTTP layer error, because vector name is FGLR")
     # !!!!!!!!!!!!!!!!!!!!!!!!!!
     # !!!!!!!!!!!!!!!!!!!!!!!!!!
 

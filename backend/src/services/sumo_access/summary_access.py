@@ -8,9 +8,16 @@ import pyarrow.compute as pc
 from fmu.sumo.explorer.objects import Case, TableCollection, Table
 
 from src.services.utils.arrow_helpers import sort_table_on_real_then_date, is_date_column_monotonically_increasing
-from src.services.utils.arrow_helpers import find_first_non_increasing_date_pair
+from src.services.utils.arrow_helpers import find_first_non_increasing_date_pair, detect_missing_realizations
 from src.services.utils.perf_timer import PerfTimer
-from src.services.service_exceptions import Service, NoDataError, InvalidDataError, MultipleDataMatchesError
+from src.services.service_exceptions import (
+    Service,
+    NoDataError,
+    InvalidDataError,
+    MultipleDataMatchesError,
+    InvalidParameterError,
+)
+
 
 from ._field_metadata import create_vector_metadata_from_field_meta
 from ._helpers import SumoEnsemble
@@ -40,8 +47,9 @@ class SummaryAccess(SumoEnsemble):
             LOGGER.warning(f"No summary tables found in case={self._case_uuid}, iteration={self._iteration_name}")
             return []
         if len(table_names) > 1:
-            raise ValueError(
-                f"Multiple summary tables found in case={self._case_uuid}, iteration={self._iteration_name}: {table_names=}"
+            raise MultipleDataMatchesError(
+                f"Multiple summary tables found in case={self._case_uuid}, iteration={self._iteration_name}: {table_names=}",
+                Service.SUMO,
             )
 
         column_names = await smry_table_collection.columns_async
@@ -96,9 +104,9 @@ class SummaryAccess(SumoEnsemble):
 
             # Verify that we got data for all the requested realizations
             # Wait a little before enabling this test until we have proper error propagation to client in place
-            # missing_reals_list = detect_missing_realizations(table, requested_reals_arr)
-            # if missing_reals_list:
-            #     raise ValueError(f"No data found for some of the requested realizations, {missing_reals_list=}")
+            reals_without_data = detect_missing_realizations(table, requested_reals_arr)
+            if reals_without_data:
+                raise NoDataError(f"No data in some requested realizations, {reals_without_data=}", Service.SUMO)
 
         # Our assumption is that the table is segmented on REAL and that within each segment,
         # the DATE column is sorted. We may want to add some checks here to verify this assumption since the
@@ -177,7 +185,7 @@ class SummaryAccess(SumoEnsemble):
         If `resampling_frequency` is None, the data will be returned with full/raw resolution.
         """
         if not vector_names:
-            raise ValueError("List of requested vector names is empty")
+            raise InvalidParameterError("List of requested vector names is empty", Service.SUMO)
 
         timer = PerfTimer()
 
@@ -194,12 +202,16 @@ class SummaryAccess(SumoEnsemble):
         schema = table.schema
         for vector_name in vector_names:
             if schema.field(vector_name).type != pa.float32():
-                raise ValueError(f"Unexpected type for {vector_name} column {schema.field(vector_name).type=}")
+                raise InvalidDataError(
+                    f"Unexpected type for {vector_name} column {schema.field(vector_name).type=}", Service.SUMO
+                )
 
         # The resampling function requires that the table is sorted on the DATE column
         if not is_date_column_monotonically_increasing(table):
             error_pair = find_first_non_increasing_date_pair(table)
-            raise ValueError(f"DATE column must be monotonically increasing, first offending timestamps: {error_pair}")
+            raise InvalidDataError(
+                f"DATE column must be monotonically increasing, first offending timestamps: {error_pair}", Service.SUMO
+            )
 
         # The resampling algorithm below uses the field metadata to determine if the vector is a rate or not.
         # For now, fail hard if metadata is not present.
@@ -207,7 +219,7 @@ class SummaryAccess(SumoEnsemble):
         for vector_name in vector_names:
             vector_metadata = create_vector_metadata_from_field_meta(schema.field(vector_name))
             if not vector_metadata:
-                raise ValueError(f"Did not find valid metadata for vector {vector_name}")
+                raise InvalidDataError(f"Did not find valid metadata for vector {vector_name}", Service.SUMO)
             vector_metadata_list.append(vector_metadata)
         et_preparing_ms = timer.lap_ms()
 
@@ -379,13 +391,13 @@ async def _load_single_real_full_arrow_table_from_sumo(case: Case, iteration_nam
 
     # Verify that we got the expected DATE column and no REAL column
     if not "DATE" in table.column_names:
-        raise ValueError("Table does not contain a DATE column")
+        raise InvalidDataError("Table does not contain a DATE column", Service.SUMO)
     date_field: pa.Field = table.field("DATE")
     if date_field.type != pa.timestamp("ms"):
-        raise ValueError(f"Unexpected type for DATE column {date_field.type=}")
+        raise InvalidDataError(f"Unexpected type for DATE column {date_field.type=}", Service.SUMO)
 
     if "REAL" in table.column_names:
-        raise ValueError("Table contains an unexpected REAL column")
+        raise InvalidDataError("Table contains an unexpected REAL column", Service.SUMO)
 
     # The call above has already downloaded and cached the raw blob, just use this to get the data size
     blob_size_mb = _try_to_determine_blob_size_mb(sumo_table.blob)
@@ -429,9 +441,11 @@ async def _locate_all_real_combined_sumo_table(case: Case, iteration_name: str, 
 
     table_names = await table_collection.names_async
     if len(table_names) == 0:
-        raise ValueError(f"No summary tables with collection aggregation found: {column_name=}")
+        raise NoDataError(f"No summary tables with collection aggregation found: {column_name=}", Service.SUMO)
     if len(table_names) > 1:
-        raise ValueError(f"Multiple summary tables with collection aggregation found: {column_name=}, {table_names=}")
+        raise MultipleDataMatchesError(
+            f"Multiple summary tables with collection aggregation found: {column_name=}, {table_names=}", Service.SUMO
+        )
 
     return await table_collection.getitem_async(0)
 
@@ -447,9 +461,11 @@ async def _locate_single_real_sumo_table(case: Case, iteration_name: str, realiz
 
     table_names = await table_collection.names_async
     if len(table_names) == 0:
-        raise ValueError(f"No summary tables found for realization {realization=}")
+        raise NoDataError(f"No summary tables found for realization {realization=}", Service.SUMO)
     if len(table_names) > 1:
-        raise ValueError(f"Multiple summary tables found for realization {realization=}, {table_names=}")
+        raise MultipleDataMatchesError(
+            f"Multiple summary tables found for realization {realization=}, {table_names=}", Service.SUMO
+        )
 
     return await table_collection.getitem_async(0)
 
