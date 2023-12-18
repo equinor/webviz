@@ -1,6 +1,6 @@
 import { ModuleRegistry } from "@framework/ModuleRegistry";
 
-import { settings } from "./settings";
+import { Settings } from "./settings";
 import { DataLoadingStatus, State } from "./state";
 import { view } from "./view";
 
@@ -13,4 +13,4 @@ const initialState: State = {
 const module = ModuleRegistry.initModule<State>("WellCompletions", initialState);
 
 module.viewFC = view;
-module.settingsFC = settings;
+module.settingsFC = Settings;

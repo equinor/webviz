@@ -3,7 +3,7 @@ import ReactDOM from "react-dom";
 
 import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-import { getTextWidth } from "@lib/utils/textSize";
+import { getTextWidthWithElement } from "@lib/utils/textSize";
 import { ExpandLess, ExpandMore } from "@mui/icons-material";
 
 import { BaseComponent, BaseComponentProps } from "../BaseComponent";
@@ -49,6 +49,8 @@ const noMatchingOptionsText = "No matching options";
 const noOptionsText = "No options";
 
 export const Dropdown = withDefaults<DropdownProps>()(defaultProps, (props) => {
+    const { onChange } = props;
+
     const [dropdownVisible, setDropdownVisible] = React.useState<boolean>(false);
     const [dropdownRect, setDropdownRect] = React.useState<DropdownRect>({
         width: 0,
@@ -102,7 +104,7 @@ export const Dropdown = withDefaults<DropdownProps>()(defaultProps, (props) => {
 
     React.useEffect(() => {
         let longestOptionWidth = props.options.reduce((prev, current) => {
-            const labelWidth = getTextWidth(current.label, document.body);
+            const labelWidth = getTextWidthWithElement(current.label, document.body);
             if (labelWidth > prev) {
                 return labelWidth;
             }
@@ -111,9 +113,9 @@ export const Dropdown = withDefaults<DropdownProps>()(defaultProps, (props) => {
 
         if (longestOptionWidth === 0) {
             if (props.options.length === 0 || filter === "") {
-                longestOptionWidth = getTextWidth(noOptionsText, document.body);
+                longestOptionWidth = getTextWidthWithElement(noOptionsText, document.body);
             } else {
-                longestOptionWidth = getTextWidth(noMatchingOptionsText, document.body);
+                longestOptionWidth = getTextWidthWithElement(noMatchingOptionsText, document.body);
             }
         }
         setDropdownRect((prev) => ({ ...prev, width: longestOptionWidth + 32 }));
@@ -166,7 +168,15 @@ export const Dropdown = withDefaults<DropdownProps>()(defaultProps, (props) => {
                 setOptionIndexWithFocusToCurrentSelection();
             }
         }
-    }, [inputBoundingRect, dropdownVisible, filteredOptions, selection]);
+    }, [
+        inputBoundingRect,
+        dropdownVisible,
+        filteredOptions,
+        selection,
+        dropdownRect.width,
+        props.options,
+        setOptionIndexWithFocusToCurrentSelection,
+    ]);
 
     const handleOptionClick = React.useCallback(
         (value: string) => {
@@ -175,12 +185,21 @@ export const Dropdown = withDefaults<DropdownProps>()(defaultProps, (props) => {
             setDropdownVisible(false);
             setFilter(null);
             setFilteredOptions(props.options);
-            if (props.onChange) {
-                props.onChange(value);
+            if (onChange) {
+                onChange(value);
             }
             setOptionIndexWithFocus(-1);
         },
-        [props.onChange, selection, props.options]
+        [
+            onChange,
+            props.options,
+            setOptionIndexWithFocus,
+            setSelectionIndex,
+            setDropdownVisible,
+            setFilter,
+            setFilteredOptions,
+            setSelection,
+        ]
     );
 
     React.useEffect(() => {
