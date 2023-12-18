@@ -9,7 +9,7 @@ import { WellCompletionsPlot } from "@webviz/well-completions-plot";
 
 import { DataLoadingStatus, State } from "./state";
 
-export const view = ({ moduleContext }: ModuleFCProps<State>) => {
+export const View = ({ moduleContext }: ModuleFCProps<State>) => {
     const wellCompletionsPlotId = React.useId();
     const statusWriter = useViewStatusWriter(moduleContext);
 

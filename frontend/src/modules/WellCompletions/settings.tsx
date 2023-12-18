@@ -28,7 +28,7 @@ enum RealizationSelection {
     Single = "Single",
 }
 
-export const settings = ({
+export const Settings = ({
     moduleContext,
     workbenchSession,
     workbenchServices,
@@ -92,8 +92,8 @@ export const settings = ({
     // Use ref to prevent new every render
     const wellCompletionsDataAccessor = React.useRef<WellCompletionsDataAccessor>(new WellCompletionsDataAccessor());
 
-    const createAndSetPlotData = React.useCallback(
-        function createAndSetPlotData(
+    const createAndPropagatePlotDataToView = React.useCallback(
+        function createAndPropagatePlotDataToView(
             availableTimeSteps: string[] | null,
             timeStepIndex: number | [number, number] | null,
             timeAggregation: TimeAggregationType
@@ -118,6 +118,7 @@ export const settings = ({
                 typeof timeStepIndex === "number"
                     ? availableTimeSteps[timeStepIndex]
                     : [availableTimeSteps[timeStepIndex[0]], availableTimeSteps[timeStepIndex[1]]];
+
             setPlotData(wellCompletionsDataAccessor.current.createPlotData(timeStepSelection, timeAggregation));
         },
         [setPlotData]
@@ -170,7 +171,14 @@ export const settings = ({
 
             createAndPropagatePlotDataToView(allTimeSteps, timeStepIndex, selectedTimeStepOptions.timeAggregationType);
         },
-        [wellCompletionsQuery.data, selectedTimeStepOptions, setPlotData, setAvailableTimeSteps, createAndSetPlotData]
+        [
+            wellCompletionsQuery.data,
+            selectedTimeStepOptions,
+            stratigraphyColorSet,
+            setPlotData,
+            setAvailableTimeSteps,
+            createAndPropagatePlotDataToView,
+        ]
     );
 
     React.useEffect(
