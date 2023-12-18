@@ -2,7 +2,7 @@ import { ModuleRegistry } from "@framework/ModuleRegistry";
 
 import { Settings } from "./settings";
 import { DataLoadingStatus, State } from "./state";
-import { view } from "./view";
+import { View } from "./view";
 
 const initialState: State = {
     dataLoadingStatus: DataLoadingStatus.Idle,
@@ -12,5 +12,5 @@ const initialState: State = {
 
 const module = ModuleRegistry.initModule<State>("WellCompletions", initialState);
 
-module.viewFC = view;
+module.viewFC = View;
 module.settingsFC = Settings;
