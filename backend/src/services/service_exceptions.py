@@ -22,7 +22,7 @@ class ServiceLayerException(Exception):
         return self.__class__.__name__
 
     def __str__(self) -> str:
-        return f"SSSSS {self.message} [service={self.service.value}]"
+        return f"{self.message} [service={self.service.value}]"
 
 
 class AuthorizationError(ServiceLayerException):
