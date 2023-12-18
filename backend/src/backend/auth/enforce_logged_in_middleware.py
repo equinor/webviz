@@ -19,6 +19,10 @@ class EnforceLoggedInMiddleware(BaseHTTPMiddleware):
     By default all protected paths will return status code 401 if user is not logged in,
     but the `paths_redirected_to_login` can be used to specify a list of paths that
     should cause redirect to the `/login` endpoint instead.
+
+    Note that the fact that we're deriving from BaseHTTPMiddleware seems to cause some problems discovered
+    while working on exception/error handling. We should probably reimplement this middleware as pure ASGI middleware
+    instead, see: https://www.starlette.io/middleware/#pure-asgi-middleware
     """
 
     def __init__(
