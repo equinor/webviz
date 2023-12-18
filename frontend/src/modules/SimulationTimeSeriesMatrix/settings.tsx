@@ -133,10 +133,10 @@ export function Settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
         ensembleVectorListsHelper.current.vectorsUnion()
     );
 
-    const [selectedParameterIdentStr, setSelectedParameterIdentStr] = useValidState<string | null>(null, [
-        filteredParameterIdentList,
-        (item: ParameterIdent) => item.toString(),
-    ]);
+    const [selectedParameterIdentStr, setSelectedParameterIdentStr] = useValidState<string | null>({
+        initialState: null,
+        validStates: filteredParameterIdentList.map((item: ParameterIdent) => item.toString()),
+    });
 
     // Await update of vectorSelectorData until all vector lists are retrieved
     const hasVectorListQueriesErrorOrFetching = vectorListQueries.some((query) => query.isFetching || query.isError);
