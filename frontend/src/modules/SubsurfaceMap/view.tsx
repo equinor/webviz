@@ -56,7 +56,7 @@ const updateViewPortBounds = (
     return existingViewPortBounds;
 };
 //-----------------------------------------------------------------------------------------------------------
-export function view({ moduleContext, workbenchSettings, workbenchServices }: ModuleFCProps<state>) {
+export function View({ moduleContext, workbenchSettings, workbenchServices }: ModuleFCProps<state>) {
     const myInstanceIdStr = moduleContext.getInstanceIdString();
     console.debug(`${myInstanceIdStr} -- render TopographicMap view`);
     const viewIds = {

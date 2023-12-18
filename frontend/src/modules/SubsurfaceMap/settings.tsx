@@ -53,7 +53,7 @@ const SurfaceTimeTypeEnumToStringMapping = {
     [SurfaceTimeType.TimePoint]: "Time point",
     [SurfaceTimeType.Interval]: "Time interval",
 };
-export function settings({ moduleContext, workbenchSession, workbenchServices }: ModuleFCProps<state>) {
+export function Settings({ moduleContext, workbenchSession, workbenchServices }: ModuleFCProps<state>) {
     const myInstanceIdStr = moduleContext.getInstanceIdString();
     console.debug(`${myInstanceIdStr} -- render TopographicMap settings`);
 
@@ -263,7 +263,17 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
             console.debug(`propagateSurfaceSelectionToView() => ${surfAddr ? "valid surfAddr" : "NULL surfAddr"}`);
             moduleContext.getStateStore().setValue("meshSurfaceAddress", surfAddr);
         },
-        [selectedEnsembleIdent, selectedMeshSurfaceName, selectedMeshSurfaceAttribute, aggregation, realizationNum]
+        [
+            selectedEnsembleIdent,
+            selectedMeshSurfaceName,
+            selectedMeshSurfaceAttribute,
+            aggregation,
+            realizationNum,
+            computedEnsembleIdent,
+            computedMeshSurfaceName,
+            computedMeshSurfaceAttribute,
+            moduleContext,
+        ]
     );
     React.useEffect(
         function propagatePropertySurfaceSelectionToView() {
@@ -299,6 +309,11 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
             aggregation,
             realizationNum,
             usePropertySurface,
+            computedEnsembleIdent,
+            computedPropertySurfaceName,
+            computedPropertySurfaceAttribute,
+            computedPropertyTimeOrInterval,
+            moduleContext,
         ]
     );
     React.useEffect(
@@ -325,6 +340,11 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
             showPolygon,
             aggregation,
             realizationNum,
+            computedEnsembleIdent,
+            computedMeshSurfaceName,
+            computedPolygonsName,
+            computedPolygonsAttribute,
+            moduleContext,
         ]
     );
     React.useEffect(
@@ -336,7 +356,7 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
                 material: showMaterial,
             });
         },
-        [showContour, contourStartValue, contourIncValue, showGrid, showSmoothShading, showMaterial]
+        [showContour, contourStartValue, contourIncValue, showGrid, showSmoothShading, showMaterial, moduleContext]
     );
     React.useEffect(
         function propogateSubsurfaceMapViewSettingsToView() {
@@ -344,7 +364,7 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
                 show3d: show3D,
             });
         },
-        [show3D]
+        [show3D, moduleContext]
     );
 
     const wellHeadersQuery = useWellHeadersQuery(computedEnsembleIdent?.getCaseUuid());

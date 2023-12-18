@@ -227,7 +227,13 @@ export const DataChannelVisualizationLayer: React.FC<DataChannelVisualizationPro
             document.removeEventListener("pointermove", handlePointerMove);
             document.removeEventListener("resize", handleConnectionChange);
         };
-    }, []);
+    }, [
+        forceRerender,
+        guiMessageBroker,
+        props.workbench,
+        setDataChannelConnectionsLayerVisible,
+        setShowDataChannelConnections,
+    ]);
     let midPointY = (originPoint.y + currentPointerPosition.y) / 2;
 
     if (currentPointerPosition.y < originPoint.y + 40 && currentPointerPosition.y > originPoint.y) {

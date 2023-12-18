@@ -1,9 +1,9 @@
 import { Frequency_api, StatisticFunction_api } from "@api";
 import { ModuleRegistry } from "@framework/ModuleRegistry";
 
-import { settings } from "./settings";
+import { Settings } from "./settings";
 import { FanchartStatisticOption, GroupBy, State, VisualizationMode } from "./state";
-import { view } from "./view";
+import { View } from "./view";
 
 const defaultState: State = {
     groupBy: GroupBy.TIME_SERIES,
@@ -23,5 +23,5 @@ const defaultState: State = {
 
 const module = ModuleRegistry.initModule<State>("SimulationTimeSeriesMatrix", defaultState);
 
-module.viewFC = view;
-module.settingsFC = settings;
+module.viewFC = View;
+module.settingsFC = Settings;

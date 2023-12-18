@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import Plot from "react-plotly.js";
 
 import { SensitivityColorMap } from "@modules/_shared/sensitivityColors";
@@ -188,13 +188,13 @@ const highTrace = (
     };
 };
 
-const sensitivityChart: React.FC<sensitivityChartProps> = (props) => {
-    const [traceDataArr, setTraceDataArr] = useState<Partial<PlotData>[]>([]);
-    const [xAxisRange, setXAxisRange] = useState<[number, number]>([0, 0]);
-    const [selectedBar, setSelectedBar] = useState<SelectedBar | null>(null);
+export const SensitivityChart: React.FC<sensitivityChartProps> = (props) => {
+    const [traceDataArr, setTraceDataArr] = React.useState<Partial<PlotData>[]>([]);
+    const [xAxisRange, setXAxisRange] = React.useState<[number, number]>([0, 0]);
+    const [selectedBar, setSelectedBar] = React.useState<SelectedBar | null>(null);
     const { showLabels, hideZeroY, sensitivityResponseDataset, height, width } = props;
 
-    useEffect(() => {
+    React.useEffect(() => {
         const traces: Partial<PlotData>[] = [];
         let filteredSensitivityResponses = sensitivityResponseDataset.sensitivityResponses;
         if (hideZeroY) {
@@ -215,7 +215,7 @@ const sensitivityChart: React.FC<sensitivityChartProps> = (props) => {
                 filteredSensitivityResponses.map((s) => s.highCaseReferenceDifference)
             )
         );
-    }, [sensitivityResponseDataset, showLabels, hideZeroY, selectedBar]);
+    }, [sensitivityResponseDataset, showLabels, hideZeroY, selectedBar, props.sensitivityColorMap]);
 
     const handleClick = (event: PlotMouseEvent) => {
         const point = event.points[0];
@@ -310,4 +310,4 @@ const sensitivityChart: React.FC<sensitivityChartProps> = (props) => {
     );
 };
 
-export default sensitivityChart;
+SensitivityChart.displayName = "SensitivityChart";

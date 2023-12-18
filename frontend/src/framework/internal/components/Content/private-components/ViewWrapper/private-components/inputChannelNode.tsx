@@ -19,6 +19,8 @@ export type InputChannelNodeProps = {
 };
 
 export const InputChannelNode: React.FC<InputChannelNodeProps> = (props) => {
+    const { onChannelConnect, onChannelConnectionDisconnect } = props;
+
     const ref = React.useRef<HTMLDivElement>(null);
     const removeButtonRef = React.useRef<HTMLButtonElement>(null);
     const [connectable, setConnectable] = React.useState<boolean>(false);
@@ -33,6 +35,7 @@ export const InputChannelNode: React.FC<InputChannelNodeProps> = (props) => {
         let localConnectable = false;
         let localModuleInstanceId = "";
         let localEditDataChannelConnections = false;
+        const refCurrent = ref.current;
 
         const moduleInstance = props.workbench.getModuleInstance(props.moduleInstanceId);
 
@@ -89,11 +92,11 @@ export const InputChannelNode: React.FC<InputChannelNodeProps> = (props) => {
         function handlePointerUp(e: PointerEvent) {
             if (localHovered) {
                 if (removeButtonRef.current && removeButtonRef.current.contains(e.target as Node)) {
-                    props.onChannelConnectionDisconnect(props.inputName);
+                    onChannelConnectionDisconnect(props.inputName);
                     setHovered(false);
                     localHovered = false;
                 } else if (localConnectable) {
-                    props.onChannelConnect(props.inputName, localModuleInstanceId, pointerEventToPoint(e));
+                    onChannelConnect(props.inputName, localModuleInstanceId, pointerEventToPoint(e));
                     setHovered(false);
                     localHovered = false;
                 } else if (!localConnectable && !localEditDataChannelConnections) {
@@ -168,9 +171,9 @@ export const InputChannelNode: React.FC<InputChannelNodeProps> = (props) => {
 
         const resizeObserver = new ResizeObserver(handleResize);
 
-        if (ref.current) {
+        if (refCurrent) {
             handleResize();
-            resizeObserver.observe(ref.current);
+            resizeObserver.observe(refCurrent);
         }
 
         const unsubscribeFunc = moduleInstance?.subscribeToInputChannelsChange(checkIfConnection);
@@ -180,7 +183,7 @@ export const InputChannelNode: React.FC<InputChannelNodeProps> = (props) => {
             removeDataChannelOriginPointerDownHandler();
             removeShowDataChannelConnectionsRequestHandler();
 
-            ref.current?.removeEventListener("pointerup", handlePointerUp);
+            refCurrent?.removeEventListener("pointerup", handlePointerUp);
             document.removeEventListener("pointermove", handlePointerMove);
             window.removeEventListener("resize", handleResize);
 
@@ -190,7 +193,15 @@ export const InputChannelNode: React.FC<InputChannelNodeProps> = (props) => {
                 unsubscribeFunc();
             }
         };
-    }, [props.onChannelConnect, props.workbench, props.moduleInstanceId, props.inputName, props.channelKeyCategories]);
+    }, [
+        onChannelConnect,
+        onChannelConnectionDisconnect,
+        props.workbench,
+        props.moduleInstanceId,
+        props.inputName,
+        props.channelKeyCategories,
+        guiMessageBroker,
+    ]);
 
     function handlePointerEnter() {
         guiMessageBroker.publishEvent(GuiEvent.HighlightDataChannelConnectionRequest, {

@@ -17,7 +17,7 @@ import { useGridParameter, useGridSurface, useStatisticalGridParameter } from ".
 import state from "./state";
 
 //-----------------------------------------------------------------------------------------------------------
-export function view({ moduleContext, workbenchSettings, workbenchSession }: ModuleFCProps<state>) {
+export function View({ moduleContext, workbenchSettings, workbenchSession }: ModuleFCProps<state>) {
     const myInstanceIdStr = moduleContext.getInstanceIdString();
     const viewIds = {
         view: `${myInstanceIdStr}--view`,

@@ -62,7 +62,7 @@ export const NavBar: React.FC<NavBarProps> = (props) => {
                 unsubscribeFunc();
             };
         },
-        [drawerContent]
+        [drawerContent, props.workbench, setDrawerContent]
     );
 
     function ensureSettingsPanelIsVisible() {

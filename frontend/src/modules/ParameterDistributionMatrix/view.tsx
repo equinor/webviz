@@ -6,7 +6,7 @@ import { useElementSize } from "@lib/hooks/useElementSize";
 import { ParameterDistributionPlot } from "./components/ParameterDistributionPlot";
 import { EnsembleParameterValues, ParameterDataArr, State } from "./state";
 
-export function view({ moduleContext, workbenchSession, workbenchSettings }: ModuleFCProps<State>) {
+export function View({ moduleContext, workbenchSession, workbenchSettings }: ModuleFCProps<State>) {
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);
     const wrapperDivSize = useElementSize(wrapperDivRef);
 

@@ -9,7 +9,7 @@ import { BarChart, TableChart, Tune } from "@mui/icons-material";
 
 import { isEqual } from "lodash";
 
-import SensitivityChart from "./sensitivityChart";
+import { SensitivityChart } from "./sensitivityChart";
 import {
     EnsembleScalarResponse,
     SensitivityResponseCalculator,
@@ -20,13 +20,7 @@ import { PlotType, State } from "./state";
 
 import { createSensitivityColorMap } from "../_shared/sensitivityColors";
 
-export const view = ({ moduleContext, workbenchSession, workbenchSettings, initialSettings }: ModuleFCProps<State>) => {
-    // Leave this in until we get a feeling for React18/Plotly
-    const renderCount = React.useRef(0);
-    React.useEffect(function incrementRenderCount() {
-        renderCount.current = renderCount.current + 1;
-    });
-
+export const View = ({ moduleContext, workbenchSession, workbenchSettings, initialSettings }: ModuleFCProps<State>) => {
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);
     const wrapperDivSize = useElementSize(wrapperDivRef);
     const ensembleSet = useEnsembleSet(workbenchSession);
@@ -101,7 +95,7 @@ export const view = ({ moduleContext, workbenchSession, workbenchSettings, initi
                 setAvailableSensitivityNames(sensitivityNames);
             }
         },
-        [sensitivities]
+        [sensitivities, availableSensitivityNames, setAvailableSensitivityNames]
     );
     const colorSet = workbenchSettings.useColorSet();
     const sensitivitiesColorMap = createSensitivityColorMap(
@@ -228,7 +222,6 @@ export const view = ({ moduleContext, workbenchSession, workbenchSettings, initi
                     </div>
                 )}
             </div>
-            <div className="absolute top-10 left-5 italic text-pink-400">(rc={renderCount.current})</div>
         </div>
     );
 };

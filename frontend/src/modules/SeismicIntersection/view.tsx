@@ -1,4 +1,4 @@
-import React, { useId } from "react";
+import React from "react";
 
 import { SeismicFencePolyline_api } from "@api";
 import {
@@ -39,14 +39,13 @@ import {
     useGenerateSeismicSliceImageData,
 } from "./utils/esvIntersectionHooks";
 
-export const view = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>) => {
+export const View = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>) => {
     const wrapperDivRef = React.useRef<HTMLDivElement | null>(null);
     const wrapperDivSize = useElementSize(wrapperDivRef);
     const esvIntersectionContainerRef = React.useRef<HTMLDivElement | null>(null);
     const esvIntersectionControllerRef = React.useRef<Controller | null>(null);
     const esvPixiRenderApplicationRef = React.useRef<PixiRenderApplication | null>(null);
 
-    const gridLayerUuid = useId();
     const statusWriter = useViewStatusWriter(moduleContext);
 
     const seismicAddress = moduleContext.useStoreValue("seismicAddress");
@@ -99,10 +98,8 @@ export const view = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
 
             // Initialize/configure controller
             addMDOverlay(esvIntersectionControllerRef.current);
-            esvIntersectionControllerRef.current.addLayer(new GridLayer(gridLayerUuid));
             esvIntersectionControllerRef.current.setBounds([10, 1000], [0, 3000]);
             esvIntersectionControllerRef.current.setViewport(1000, 1650, 6000);
-            esvIntersectionControllerRef.current.zoomPanHandler.zFactor = zScale;
         }
         return () => {
             esvIntersectionControllerRef.current?.destroy();
