@@ -13,9 +13,6 @@ from src.services.sumo_access.parameter_access import ParameterAccess
 from src.services.sumo_access.summary_access import Frequency, SummaryAccess
 from src.services.utils.authenticated_user import AuthenticatedUser
 
-# For testing error handling
-from src.services.service_exceptions import Service, InvalidDataError, AuthorizationError
-
 
 from . import converters, schemas
 
@@ -57,19 +54,6 @@ async def get_realizations_vector_data(
     # fmt:on
 ) -> list[schemas.VectorRealizationData]:
     """Get vector data per realization"""
-
-    # !!!!!!!!!!!!!!!!!!!!!!!!!!
-    # !!!!!!!!!!!!!!!!!!!!!!!!!!
-    # Testing error handling
-    # TO BE REMOVED BEFORE MERGE
-    if vector_name == "FGIR":
-        raise InvalidDataError("Dummy service error because vector name is FGIR", Service.SUMO)
-    if vector_name == "FGIT":
-        raise AuthorizationError("Dummy service error because vector name is FGIT", Service.SUMO)
-    if vector_name == "FGLR":
-        raise HTTPException(404, "Dummy HTTP layer error, because vector name is FGLR")
-    # !!!!!!!!!!!!!!!!!!!!!!!!!!
-    # !!!!!!!!!!!!!!!!!!!!!!!!!!
 
     perf_metrics = PerfMetrics(response)
     access = await SummaryAccess.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
