@@ -8,7 +8,7 @@ import pyarrow.compute as pc
 from fmu.sumo.explorer.objects import Case, TableCollection, Table
 
 from src.services.utils.arrow_helpers import sort_table_on_real_then_date, is_date_column_monotonically_increasing
-from src.services.utils.arrow_helpers import find_first_non_increasing_date_pair, detect_missing_realizations
+from src.services.utils.arrow_helpers import find_first_non_increasing_date_pair
 from src.services.utils.perf_timer import PerfTimer
 from src.services.service_exceptions import (
     Service,
@@ -104,9 +104,9 @@ class SummaryAccess(SumoEnsemble):
 
             # Verify that we got data for all the requested realizations
             # Wait a little before enabling this test until we have proper error propagation to client in place
-            reals_without_data = detect_missing_realizations(table, requested_reals_arr)
-            if reals_without_data:
-                raise NoDataError(f"No data in some requested realizations, {reals_without_data=}", Service.SUMO)
+            # reals_without_data = detect_missing_realizations(table, requested_reals_arr)
+            # if reals_without_data:
+            #     raise NoDataError(f"No data in some requested realizations, {reals_without_data=}", Service.SUMO)
 
         # Our assumption is that the table is segmented on REAL and that within each segment,
         # the DATE column is sorted. We may want to add some checks here to verify this assumption since the
