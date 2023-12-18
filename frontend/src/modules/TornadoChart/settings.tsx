@@ -7,7 +7,7 @@ import { Label } from "@lib/components/Label";
 
 import { State } from "./state";
 
-export function settings({ moduleContext, workbenchServices }: ModuleFCProps<State>) {
+export function Settings({ moduleContext, workbenchServices }: ModuleFCProps<State>) {
     const sensitivityNames = moduleContext.useStoreValue("sensitivityNames");
     const [referenceSensitivityName, setReferenceSensitivityName] = React.useState<string | null>(null);
     const setModuleReferenceSensitivityName = moduleContext.useSetStoreValue("referenceSensitivityName");
@@ -15,7 +15,7 @@ export function settings({ moduleContext, workbenchServices }: ModuleFCProps<Sta
         function propogateReferenceSensitivityName() {
             setModuleReferenceSensitivityName(referenceSensitivityName);
         },
-        [referenceSensitivityName]
+        [referenceSensitivityName, setModuleReferenceSensitivityName]
     );
 
     if (!referenceSensitivityName && sensitivityNames.length > 0) {

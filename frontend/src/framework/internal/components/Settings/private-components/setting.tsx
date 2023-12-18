@@ -36,7 +36,7 @@ export const Setting: React.FC<SettingProps> = (props) => {
         );
 
         return unsubscribeFunc;
-    }, []);
+    }, [props.moduleInstance]);
 
     if (importState !== ImportState.Imported || !props.moduleInstance.isInitialised()) {
         return null;

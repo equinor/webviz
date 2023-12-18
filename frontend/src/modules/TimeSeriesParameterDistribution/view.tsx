@@ -4,16 +4,14 @@ import { ModuleFCProps } from "@framework/Module";
 import { useElementSize } from "@lib/hooks/useElementSize";
 
 import PlotlyScatter from "./plotlyScatterChart";
-
-import { useVectorAtTimestampQuery, useParameterQuery } from "./queryHooks";
+import { useParameterQuery, useVectorAtTimestampQuery } from "./queryHooks";
 import { State } from "./state";
 
-
-export const view = ({ moduleContext }: ModuleFCProps<State>) => {
+export const View = ({ moduleContext }: ModuleFCProps<State>) => {
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);
     const wrapperDivSize = useElementSize(wrapperDivRef);
     const vectorSpec = moduleContext.useStoreValue("vectorSpec");
-    const [highlightedRealization, setHighlightedRealization] = React.useState(-1)
+    const [highlightedRealization, setHighlightedRealization] = React.useState(-1);
     const parameterName = moduleContext.useStoreValue("parameterName");
     const timestampUtcMs = moduleContext.useStoreValue("timestampUtcMs");
 
@@ -24,20 +22,15 @@ export const view = ({ moduleContext }: ModuleFCProps<State>) => {
         timestampUtcMs
     );
 
-    const parameterQuery = useParameterQuery(
-        vectorSpec?.caseUuid,
-        vectorSpec?.ensembleName,
-        parameterName,
-    )
+    const parameterQuery = useParameterQuery(vectorSpec?.caseUuid, vectorSpec?.ensembleName, parameterName);
 
     const handleHoveredRealization = (real: any) => {
-        setHighlightedRealization(real)
-    }
-
+        setHighlightedRealization(real);
+    };
 
     return (
         <div className="w-full h-full" ref={wrapperDivRef}>
-            {parameterQuery.data && vectorAtTimestampQuery.data &&
+            {parameterQuery.data && vectorAtTimestampQuery.data && (
                 <PlotlyScatter
                     x={parameterQuery.data.values as number[]}
                     y={vectorAtTimestampQuery.data.values as number[]}
@@ -47,7 +40,7 @@ export const view = ({ moduleContext }: ModuleFCProps<State>) => {
                     width={wrapperDivSize.width}
                     height={wrapperDivSize.height}
                 />
-            }
+            )}
         </div>
     );
 };

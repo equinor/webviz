@@ -89,6 +89,43 @@ def interpolate_backfill(x: np.ndarray, xp: np.ndarray, yp: np.ndarray, yleft: f
     return ret_arr
 
 
+def resample_single_real_table(table: pa.Table, freq: Frequency) -> pa.Table:
+    """Resample table that contains only a single realization.
+    The table must contain a DATE column and it must be sorted on DATE
+    """
+
+    schema = table.schema
+
+    raw_dates_np = table.column("DATE").to_numpy()
+    raw_dates_np_as_uint = raw_dates_np.astype(np.uint64)
+
+    min_raw_date = np.min(raw_dates_np)
+    max_raw_date = np.max(raw_dates_np)
+
+    sample_dates_np = generate_normalized_sample_dates(min_raw_date, max_raw_date, freq=freq)
+    sample_dates_np_as_uint = sample_dates_np.astype(np.uint64)
+
+    column_arrays = []
+
+    for colname in schema.names:
+        if colname == "DATE":
+            column_arrays.append(sample_dates_np)
+        elif colname == "REAL":
+            column_arrays.append(np.full(len(sample_dates_np), table.column("REAL")[0].as_py()))
+        else:
+            raw_numpy_arr = table.column(colname).to_numpy()
+            if is_rate_from_field_meta(table.field(colname)):
+                i = interpolate_backfill(sample_dates_np_as_uint, raw_dates_np_as_uint, raw_numpy_arr, 0, 0)
+            else:
+                i = np.interp(sample_dates_np_as_uint, raw_dates_np_as_uint, raw_numpy_arr)
+
+            column_arrays.append(i)
+
+    ret_table = pa.table(column_arrays, schema=schema)
+
+    return ret_table
+
+
 @dataclass
 class RealInterpolationInfo:
     raw_dates_np: np.ndarray

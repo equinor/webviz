@@ -1,17 +1,14 @@
 import { ModuleRegistry } from "@framework/ModuleRegistry";
 
-import { settings } from "./settings";
+import { Settings } from "./settings";
 import State from "./state";
-import { view } from "./view";
+import { View } from "./view";
 
 const defaultState: State = {
-    rftWellAddress: null
-
+    rftWellAddress: null,
 };
 
-const module = ModuleRegistry.initModule<State>("Rft", defaultState, {
+const module = ModuleRegistry.initModule<State>("Rft", defaultState, {});
 
-});
-
-module.viewFC = view;
-module.settingsFC = settings;
+module.viewFC = View;
+module.settingsFC = Settings;

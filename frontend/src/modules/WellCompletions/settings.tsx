@@ -46,14 +46,17 @@ export const settings = ({
     const [realizationSelection, setRealizationSelection] = React.useState<RealizationSelection>(
         RealizationSelection.Aggregated
     );
-    const [selectedEnsembleIdent, setSelectedEnsembleIdent] = useValidState<EnsembleIdent | null>(null, [
-        ensembleSet.getEnsembleArr(),
-        (item: Ensemble) => item.getIdent(),
-    ]);
-    const [selectedRealizationNumber, setSelectedRealizationNumber] = useValidState<number>(0, [
-        (selectedEnsembleIdent && ensembleSet.findEnsemble(selectedEnsembleIdent)?.getRealizations()) ?? [],
-        (item: number) => item,
-    ]);
+    const [selectedEnsembleIdent, setSelectedEnsembleIdent] = useValidState<EnsembleIdent | null>({
+        initialState: null,
+        validStates: ensembleSet.getEnsembleArr().map((item: Ensemble) => item.getIdent()),
+    });
+    const [selectedRealizationNumber, setSelectedRealizationNumber] = useValidState<number>({
+        initialState: 0,
+        validStates:
+            (selectedEnsembleIdent && ensembleSet.findEnsemble(selectedEnsembleIdent)?.getRealizations())?.map(
+                (item: number) => item
+            ) ?? [],
+    });
 
     const [selectedTimeStepOptions, setSelectedTimeStepOptions] = React.useState<{
         timeStepIndex: number | [number, number] | null;
@@ -89,6 +92,37 @@ export const settings = ({
     // Use ref to prevent new every render
     const wellCompletionsDataAccessor = React.useRef<WellCompletionsDataAccessor>(new WellCompletionsDataAccessor());
 
+    const createAndSetPlotData = React.useCallback(
+        function createAndSetPlotData(
+            availableTimeSteps: string[] | null,
+            timeStepIndex: number | [number, number] | null,
+            timeAggregation: TimeAggregationType
+        ): void {
+            if (!wellCompletionsDataAccessor.current || availableTimeSteps === null || timeStepIndex === null) {
+                setPlotData(null);
+                return;
+            }
+            if (typeof timeStepIndex === "number" && availableTimeSteps.length < timeStepIndex) {
+                setPlotData(null);
+                return;
+            }
+            if (
+                typeof timeStepIndex !== "number" &&
+                (availableTimeSteps.length < timeStepIndex[0] || availableTimeSteps.length < timeStepIndex[1])
+            ) {
+                setPlotData(null);
+                return;
+            }
+
+            const timeStepSelection: string | [string, string] =
+                typeof timeStepIndex === "number"
+                    ? availableTimeSteps[timeStepIndex]
+                    : [availableTimeSteps[timeStepIndex[0]], availableTimeSteps[timeStepIndex[1]]];
+            setPlotData(wellCompletionsDataAccessor.current.createPlotData(timeStepSelection, timeAggregation));
+        },
+        [setPlotData]
+    );
+
     React.useEffect(
         function handleNewQueryData() {
             if (!wellCompletionsQuery.data) {
@@ -105,9 +139,7 @@ export const settings = ({
 
             // Update available time steps
             const allTimeSteps = wellCompletionsDataAccessor.current.getTimeSteps();
-            if (availableTimeSteps !== allTimeSteps) {
-                setAvailableTimeSteps(allTimeSteps);
-            }
+            setAvailableTimeSteps((prev) => (prev !== allTimeSteps ? allTimeSteps : prev));
 
             // Update selected time step indices if not among available time steps
             let timeStepIndex = selectedTimeStepOptions.timeStepIndex;
@@ -138,7 +170,7 @@ export const settings = ({
 
             createAndPropagatePlotDataToView(allTimeSteps, timeStepIndex, selectedTimeStepOptions.timeAggregationType);
         },
-        [wellCompletionsQuery.data, selectedTimeStepOptions, stratigraphyColorSet]
+        [wellCompletionsQuery.data, selectedTimeStepOptions, setPlotData, setAvailableTimeSteps, createAndSetPlotData]
     );
 
     React.useEffect(
@@ -151,37 +183,8 @@ export const settings = ({
                 setDataLoadingStatus(DataLoadingStatus.Idle);
             }
         },
-        [wellCompletionsQuery.status, wellCompletionsQuery.fetchStatus]
+        [wellCompletionsQuery.status, wellCompletionsQuery.isFetching, setDataLoadingStatus]
     );
-
-    function createAndPropagatePlotDataToView(
-        availableTimeSteps: string[] | null,
-        timeStepIndex: number | [number, number] | null,
-        timeAggregation: TimeAggregationType
-    ): void {
-        if (!wellCompletionsDataAccessor.current || availableTimeSteps === null || timeStepIndex === null) {
-            setPlotData(null);
-            return;
-        }
-        if (typeof timeStepIndex === "number" && availableTimeSteps.length < timeStepIndex) {
-            setPlotData(null);
-            return;
-        }
-        if (
-            typeof timeStepIndex !== "number" &&
-            (availableTimeSteps.length < timeStepIndex[0] || availableTimeSteps.length < timeStepIndex[1])
-        ) {
-            setPlotData(null);
-            return;
-        }
-
-        const timeStepSelection: string | [string, string] =
-            typeof timeStepIndex === "number"
-                ? availableTimeSteps[timeStepIndex]
-                : [availableTimeSteps[timeStepIndex[0]], availableTimeSteps[timeStepIndex[1]]];
-
-        setPlotData(wellCompletionsDataAccessor.current.createPlotData(timeStepSelection, timeAggregation));
-    }
 
     function handleEnsembleSelectionChange(newEnsembleIdent: EnsembleIdent | null) {
         setSelectedEnsembleIdent(newEnsembleIdent);

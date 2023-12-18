@@ -21,7 +21,7 @@ import { TimeSeriesPlotlyTrace, createStatisticalLineTraces } from "./simulation
 import { createLineTrace, createRealizationLineTraces } from "./simulationTimeSeriesChart/traces";
 import { State } from "./state";
 
-export const view = ({
+export const View = ({
     moduleContext,
     workbenchSession,
     workbenchSettings,

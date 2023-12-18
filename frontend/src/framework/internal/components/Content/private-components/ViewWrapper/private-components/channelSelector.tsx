@@ -13,6 +13,8 @@ export type ChannelSelectorProps = {
 };
 
 export const ChannelSelector: React.FC<ChannelSelectorProps> = (props) => {
+    const { onCancel } = props;
+
     React.useEffect(() => {
         const handleClickOutside = (e: PointerEvent) => {
             const target = e.target as HTMLElement;
@@ -25,7 +27,7 @@ export const ChannelSelector: React.FC<ChannelSelectorProps> = (props) => {
             if (target.closest("#channel-selector")) {
                 return;
             }
-            props.onCancel();
+            onCancel();
         };
 
         document.addEventListener("pointerdown", handleClickOutside);
@@ -33,7 +35,7 @@ export const ChannelSelector: React.FC<ChannelSelectorProps> = (props) => {
         return () => {
             document.removeEventListener("pointerdown", handleClickOutside);
         };
-    }, [props.onCancel]);
+    }, [onCancel]);
 
     return createPortal(
         <>

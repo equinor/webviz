@@ -33,6 +33,7 @@ export const Slider = React.forwardRef((props: SliderProps, ref: React.Forwarded
     }
 
     React.useEffect(function handleMount() {
+        const divRefCurrent = divRef.current;
         let pointerPressed = false;
         let hovered = false;
 
@@ -110,17 +111,17 @@ export const Slider = React.forwardRef((props: SliderProps, ref: React.Forwarded
             setValueLabelVisible(false);
         };
 
-        if (divRef.current) {
-            divRef.current.addEventListener("pointerover", handlePointerOver);
-            divRef.current.addEventListener("pointerout", handlePointerOut);
-            divRef.current.addEventListener("pointerdown", handlePointerDown);
+        if (divRefCurrent) {
+            divRefCurrent.addEventListener("pointerover", handlePointerOver);
+            divRefCurrent.addEventListener("pointerout", handlePointerOut);
+            divRefCurrent.addEventListener("pointerdown", handlePointerDown);
             document.addEventListener("pointerup", handlePointerUp);
         }
         return () => {
-            if (divRef.current) {
-                divRef.current.removeEventListener("pointerover", handlePointerOver);
-                divRef.current.removeEventListener("pointerout", handlePointerOut);
-                divRef.current.removeEventListener("pointerdown", handlePointerDown);
+            if (divRefCurrent) {
+                divRefCurrent.removeEventListener("pointerover", handlePointerOver);
+                divRefCurrent.removeEventListener("pointerout", handlePointerOut);
+                divRefCurrent.removeEventListener("pointerdown", handlePointerDown);
                 document.removeEventListener("pointerup", handlePointerUp);
             }
         };

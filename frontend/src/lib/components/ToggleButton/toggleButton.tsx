@@ -16,7 +16,7 @@ export const ToggleButton = React.forwardRef((props: ToggleButtonProps, ref: Rea
     const handleClick = React.useCallback(() => {
         setIsActive(!isActive);
         onToggle(!active);
-    }, [active, onToggle]);
+    }, [active, onToggle, isActive]);
 
     return (
         <BaseComponent disabled={props.disabled}>

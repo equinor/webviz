@@ -131,7 +131,7 @@ export const InputChannelNodes: React.FC<InputChannelNodesProps> = (props) => {
             props.moduleInstance.setInputChannel(inputName, channelName);
             guiMessageBroker.publishEvent(GuiEvent.HideDataChannelConnectionsRequest);
         },
-        [props.moduleInstance, props.workbench]
+        [props.moduleInstance, props.workbench, guiMessageBroker]
     );
 
     const handleChannelDisconnect = React.useCallback(
@@ -139,7 +139,7 @@ export const InputChannelNodes: React.FC<InputChannelNodesProps> = (props) => {
             props.moduleInstance.removeInputChannel(inputName);
             guiMessageBroker.publishEvent(GuiEvent.DataChannelConnectionsChange);
         },
-        [props.moduleInstance]
+        [props.moduleInstance, guiMessageBroker]
     );
 
     function handleCancelChannelSelection() {

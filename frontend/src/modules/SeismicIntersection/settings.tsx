@@ -45,7 +45,7 @@ const WELLBORE_TYPE = "smda";
 const EXTENSION_LIMITS = { min: 100, max: 100000 }; // Min/max extension in meters outside both sides of the well path [m]
 const Z_SCALE_LIMITS = { min: 1, max: 100 }; // Minimum z-scale factor
 
-export function settings({ moduleContext, workbenchSession, workbenchServices }: ModuleFCProps<State>) {
+export function Settings({ moduleContext, workbenchSession, workbenchServices }: ModuleFCProps<State>) {
     const syncedSettingKeys = moduleContext.useSyncedSettingKeys();
     const syncHelper = new SyncSettingsHelper(syncedSettingKeys, workbenchServices);
     const syncedValueEnsembles = syncHelper.useValue(SyncSettingKey.ENSEMBLE, "global.syncValue.ensembles");
@@ -112,14 +112,14 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
           })
         : null;
 
-    const [selectedSeismicAttribute, setSelectedSeismicAttribute] = useValidState<string | null>(
-        null,
-        seismicCubeMetaDirectory?.getAttributeNames() ?? []
-    );
-    const [selectedTime, setSelectedTime] = useValidState<string | null>(
-        null,
-        seismicCubeMetaDirectory?.getTimeOrIntervalStrings() ?? []
-    );
+    const [selectedSeismicAttribute, setSelectedSeismicAttribute] = useValidState<string | null>({
+        initialState: null,
+        validStates: seismicCubeMetaDirectory?.getAttributeNames() ?? [],
+    });
+    const [selectedTime, setSelectedTime] = useValidState<string | null>({
+        initialState: null,
+        validStates: seismicCubeMetaDirectory?.getTimeOrIntervalStrings() ?? [],
+    });
 
     const seismicAttributeOptions = seismicCubeMetaDirectory
         ? seismicCubeMetaDirectory.getAttributeNames().map((attribute) => {
@@ -145,14 +145,21 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
             }
             setSeismicAddress(seismicAddress);
         },
-        [computedEnsembleIdent, selectedSeismicAttribute, selectedTime, isObserved, realizationNumber]
+        [
+            computedEnsembleIdent,
+            selectedSeismicAttribute,
+            selectedTime,
+            isObserved,
+            realizationNumber,
+            setSeismicAddress,
+        ]
     );
 
     React.useEffect(
         function propagateWellBoreAddressToView() {
             setWellboreAddress(selectedWellboreAddress);
         },
-        [selectedWellboreAddress]
+        [selectedWellboreAddress, setWellboreAddress]
     );
 
     function handleEnsembleSelectionChange(newEnsembleIdent: EnsembleIdent | null) {

@@ -402,7 +402,7 @@ for (let i = 0; i < countryData.length; i += 2) {
     alcConsumption.push(countryData[i + 1] as number);
 }
 
-export const view = (props: ModuleFCProps<State>) => {
+export const View = (props: ModuleFCProps<State>) => {
     const type = props.moduleContext.useStoreValue("type");
     const gradientType = props.moduleContext.useStoreValue("gradientType");
     const min = props.moduleContext.useStoreValue("min");
