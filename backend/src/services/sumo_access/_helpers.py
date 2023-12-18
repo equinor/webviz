@@ -19,9 +19,9 @@ async def _init_helper(access_token: str, case_uuid: str) -> Tuple[SumoClient, C
 
     matching_case_count = await case_collection.length_async()
     if matching_case_count == 0:
-        raise NoDataError(f"Sumo case not found {case_uuid=}", Service.SUMO)
+        raise NoDataError(f"Sumo case not found for {case_uuid=}", Service.SUMO)
     if matching_case_count > 1:
-        raise MultipleDataMatchesError(f"Multiple sumo cases found {case_uuid=}", Service.SUMO)
+        raise MultipleDataMatchesError(f"Multiple sumo cases found for {case_uuid=}", Service.SUMO)
 
     case = case_collection[0]
 
