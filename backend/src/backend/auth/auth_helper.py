@@ -198,8 +198,6 @@ class AuthHelper:
                 "graph_access_token": graph_token,
                 "sumo_access_token": sumo_token,
                 "smda_access_token": smda_token,
-                "pdm_access_token": None,
-                "ssdl_access_token": None,
             },
         )
 
