@@ -70,6 +70,7 @@ def create_vector_metadata_from_field_meta(field: pa.Field) -> Optional[VectorMe
         get_num = int(get_num_bytestr.decode("ascii"))
 
     return VectorMetadata(
+        name=field.name,
         unit=unit_bytestr.decode("ascii"),
         is_total=bool(is_total_bytestr == b"True"),
         is_rate=bool(is_rate_bytestr == b"True"),
