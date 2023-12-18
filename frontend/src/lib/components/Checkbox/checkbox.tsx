@@ -14,6 +14,8 @@ export type CheckboxProps = {
 } & BaseComponentProps;
 
 export const Checkbox: React.FC<CheckboxProps> = (props) => {
+    const { onChange } = props;
+
     const [checked, setChecked] = React.useState<boolean>(props.checked ?? false);
     const id = React.useRef<string>(props.id ?? `checkbox-${v4()}`);
 
@@ -24,9 +26,9 @@ export const Checkbox: React.FC<CheckboxProps> = (props) => {
     const handleChange = React.useCallback(
         (event: React.ChangeEvent<HTMLInputElement>) => {
             setChecked(event.target.checked);
-            props.onChange && props.onChange(event, event.target.checked);
+            onChange && onChange(event, event.target.checked);
         },
-        [setChecked, props.onChange]
+        [setChecked, onChange]
     );
 
     return (

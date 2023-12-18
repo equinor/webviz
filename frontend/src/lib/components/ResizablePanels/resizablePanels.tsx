@@ -29,6 +29,8 @@ function storeConfigurationInLocalStorage(id: string, sizes: number[]) {
 }
 
 export const ResizablePanels: React.FC<ResizablePanelsProps> = (props) => {
+    const { onSizesChange } = props;
+
     if (props.minSizes && props.minSizes.length !== props.children.length) {
         throw new Error("minSizes must have the same length as children");
     }
@@ -123,11 +125,11 @@ export const ResizablePanels: React.FC<ResizablePanelsProps> = (props) => {
             if (!dragging) {
                 return;
             }
-            storeConfigurationInLocalStorage(props.id, sizes);
+            storeConfigurationInLocalStorage(props.id, changedSizes);
             dragging = false;
             setIsDragging(false);
-            if (props.onSizesChange) {
-                props.onSizesChange(changedSizes);
+            if (onSizesChange) {
+                onSizesChange(changedSizes);
             }
             document.body.classList.remove("touch-none");
         }
@@ -143,7 +145,7 @@ export const ResizablePanels: React.FC<ResizablePanelsProps> = (props) => {
             document.removeEventListener("pointerup", handlePointerUp);
             document.removeEventListener("blur", handlePointerUp);
         };
-    }, [props.direction, props.id, props.onSizesChange]);
+    }, [props.direction, props.id, onSizesChange]);
 
     const minSizesToggleVisibilityValue = 100 * (props.direction === "horizontal" ? 50 / totalWidth : 50 / totalHeight);
 

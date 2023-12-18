@@ -1,8 +1,8 @@
 import { ModuleRegistry } from "@framework/ModuleRegistry";
 
-import { settings } from "./settings";
+import { Settings } from "./settings";
 import state from "./state";
-import { view } from "./view";
+import { View } from "./view";
 
 const defaultState: state = {
     gridName: "Simgrid",
@@ -14,5 +14,5 @@ const defaultState: state = {
 
 const module = ModuleRegistry.initModule<state>("Grid3D", defaultState, {});
 
-module.viewFC = view;
-module.settingsFC = settings;
+module.viewFC = View;
+module.settingsFC = Settings;
