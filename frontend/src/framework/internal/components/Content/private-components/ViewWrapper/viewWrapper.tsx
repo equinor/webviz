@@ -4,6 +4,7 @@ import { DrawerContent, GuiEvent, GuiState, useGuiState, useGuiValue } from "@fr
 import { ModuleInstance } from "@framework/ModuleInstance";
 import { Workbench } from "@framework/Workbench";
 import { Point, pointDifference, pointRelativeToDomRect, pointerEventToPoint } from "@lib/utils/geometry";
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import { ChannelReceiverNodesWrapper } from "./private-components/channelReceiverNodesWrapper";
 import { Header } from "./private-components/header";
@@ -21,6 +22,7 @@ type ViewWrapperProps = {
     y: number;
     isDragged: boolean;
     dragPosition: Point;
+    editingLayout: boolean;
 };
 
 export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
@@ -116,10 +118,14 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
     const showAsActive =
         props.isActive && [DrawerContent.ModuleSettings, DrawerContent.SyncSettings].includes(drawerContent);
 
+    const previewFunc = props.moduleInstance.getModule().getDrawPreviewFunc();
+
     return (
         <>
             {props.isDragged && (
-                <ViewWrapperPlaceholder width={props.width} height={props.height} x={props.x} y={props.y} />
+                <>
+                    <ViewWrapperPlaceholder width={props.width} height={props.height} x={props.x} y={props.y} />
+                </>
             )}
             <div
                 ref={ref}
@@ -131,17 +137,28 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
                     top: props.isDragged ? props.dragPosition.y : props.y,
                     zIndex: props.isDragged ? 1 : 0,
                     opacity: props.isDragged ? 0.5 : 1,
+                    contain: "content",
                 }}
             >
                 <div
-                    className={`bg-white h-full w-full flex flex-col ${
-                        showAsActive && drawerContent ? "border-blue-500" : ""
-                    } border-solid border-2 box-border shadow ${
-                        props.isDragged ? "cursor-grabbing select-none" : "cursor-grab"
-                    }}`}
+                    className={resolveClassNames(
+                        "relative bg-white h-full w-full flex flex-col p-1 box-border shadow",
+                        {
+                            "cursor-grabbing select-none": props.isDragged,
+                        }
+                    )}
                     onPointerDown={handlePointerDown}
                     onPointerUp={handlePointerUp}
                 >
+                    <div
+                        className={resolveClassNames(
+                            "absolute w-full h-full z-10 inset-0 bg-transparent box-border border-solid border-2 pointer-events-none",
+                            {
+                                "border-blue-500": showAsActive && drawerContent === DrawerContent.ModuleSettings,
+                                "border-transparent": !showAsActive || drawerContent !== DrawerContent.ModuleSettings,
+                            }
+                        )}
+                    />
                     <Header
                         moduleInstance={props.moduleInstance}
                         isDragged={props.isDragged}
@@ -150,7 +167,15 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
                         onReceiversClick={handleReceiversClick}
                         guiMessageBroker={guiMessageBroker}
                     />
-                    <div className="flex-grow overflow-auto h-0" onPointerUp={handleModuleClick}>
+                    {(props.isDragged || props.editingLayout) && previewFunc
+                        ? previewFunc(props.width - 50, props.height - 50)
+                        : null}
+
+                    <div
+                        className="flex-grow overflow-auto h-0"
+                        onPointerUp={handleModuleClick}
+                        style={{ display: props.isDragged || props.editingLayout ? "none" : "flex" }}
+                    >
                         <ViewContent workbench={props.workbench} moduleInstance={props.moduleInstance} />
                         <ChannelReceiverNodesWrapper
                             forwardedRef={ref}

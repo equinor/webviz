@@ -18,6 +18,7 @@ export type ChannelReceiverReturnData<TKeyKinds extends KeyKind[]> = {
     idString: string;
     displayName: string;
     isPending: boolean;
+    revisionNumber: number;
 } & (
     | {
           channel: {
@@ -44,6 +45,7 @@ export function useChannelReceiver<TGenres extends KeyKind[]>({
 }): ChannelReceiverReturnData<typeof expectedKindsOfKeys> {
     const [isPending, startTransition] = React.useTransition();
     const [contents, setContents] = React.useState<ChannelReceiverChannelContent<typeof expectedKindsOfKeys>[]>([]);
+    const [revisionNumber, setRevisionNumber] = React.useState(0);
     const [prevExpectedKindsOfKeys, setPrevExpectedKindsOfKeys] = React.useState<TGenres>(expectedKindsOfKeys);
 
     if (!isEqual(prevExpectedKindsOfKeys, expectedKindsOfKeys)) {
@@ -91,6 +93,7 @@ export function useChannelReceiver<TGenres extends KeyKind[]>({
                         });
 
                     setContents(contents ?? []);
+                    setRevisionNumber((prev) => prev + 1);
                 });
             }
 
@@ -115,6 +118,7 @@ export function useChannelReceiver<TGenres extends KeyKind[]>({
             idString: "",
             displayName: "",
             isPending,
+            revisionNumber,
             channel: undefined,
             hasActiveSubscription: false,
         };
@@ -127,6 +131,7 @@ export function useChannelReceiver<TGenres extends KeyKind[]>({
             idString: receiver.getIdString(),
             displayName: receiver.getDisplayName(),
             isPending,
+            revisionNumber,
             channel: undefined,
             hasActiveSubscription: false,
         };
@@ -136,6 +141,7 @@ export function useChannelReceiver<TGenres extends KeyKind[]>({
         idString: receiver.getIdString(),
         displayName: receiver.getDisplayName(),
         isPending,
+        revisionNumber,
         channel: {
             idString: channel.getIdString(),
             displayName: channel.getDisplayName(),

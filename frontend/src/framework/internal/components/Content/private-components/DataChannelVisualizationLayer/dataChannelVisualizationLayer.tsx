@@ -55,7 +55,6 @@ export const DataChannelVisualizationLayer: React.FC<DataChannelVisualizationPro
         let localEditDataChannelConnections = false;
 
         function handleDataChannelOriginPointerDown(payload: GuiEventPayloads[GuiEvent.DataChannelOriginPointerDown]) {
-            document.body.classList.add("touch-none");
             const clientRect = payload.originElement.getBoundingClientRect();
             localCurrentOriginPoint = {
                 x: clientRect.left + clientRect.width / 2,
@@ -63,7 +62,6 @@ export const DataChannelVisualizationLayer: React.FC<DataChannelVisualizationPro
             };
             setVisible(true);
             setOriginPoint(localCurrentOriginPoint);
-            guiMessageBroker.getGlobalCursor().setOverrideCursor(GlobalCursorType.Crosshair);
             localMousePressed = true;
             setCurrentPointerPosition(localCurrentOriginPoint);
             setCurrentChannelName(null);
@@ -83,7 +81,6 @@ export const DataChannelVisualizationLayer: React.FC<DataChannelVisualizationPro
 
         function handlePointerUp() {
             localMousePressed = false;
-            document.body.classList.remove("touch-none");
 
             if (localEditDataChannelConnections) {
                 return;
@@ -97,7 +94,6 @@ export const DataChannelVisualizationLayer: React.FC<DataChannelVisualizationPro
             setVisible(false);
             setEditDataChannelConnectionsForModuleInstanceId(null);
             setShowDataChannelConnections(false);
-            guiMessageBroker.getGlobalCursor().restoreOverrideCursor();
             setShowDataChannelConnections(false);
         }
 
@@ -137,6 +133,7 @@ export const DataChannelVisualizationLayer: React.FC<DataChannelVisualizationPro
         }
 
         function handleNodeHover(payload: GuiEventPayloads[GuiEvent.DataChannelNodeHover]) {
+            /*
             if (!localEditDataChannelConnections) {
                 if (payload.connectionAllowed) {
                     guiMessageBroker.getGlobalCursor().changeOverrideCursor(GlobalCursorType.Copy);
@@ -144,10 +141,11 @@ export const DataChannelVisualizationLayer: React.FC<DataChannelVisualizationPro
                     guiMessageBroker.getGlobalCursor().changeOverrideCursor(GlobalCursorType.NotAllowed);
                 }
             }
+            */
         }
 
         function handleNodeUnhover() {
-            guiMessageBroker.getGlobalCursor().restoreOverrideCursor();
+            // guiMessageBroker.getGlobalCursor().restoreOverrideCursor();
         }
 
         function handleEditDataChannelConnectionsRequest(

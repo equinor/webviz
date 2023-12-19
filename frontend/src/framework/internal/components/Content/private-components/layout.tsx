@@ -142,8 +142,6 @@ export const Layout: React.FC<LayoutProps> = (props) => {
             pointerDownElementId = null;
             moduleInstanceId = null;
             dragging = false;
-            document.body.classList.remove("select-none");
-            document.body.classList.remove("touch-none");
             originalLayout = currentLayout;
         };
 
@@ -163,7 +161,6 @@ export const Layout: React.FC<LayoutProps> = (props) => {
                     const rect = ref.current.getBoundingClientRect();
                     setPosition(pointRelativeToDomRect(pointerDownElementPosition, rect));
                     relativePointerPosition = pointRelativeToDomRect(pointerDownPoint, rect);
-                    document.body.classList.add("select-none");
                     dragging = true;
                     pointerToElementDiff = pointDifference(pointerDownPoint, pointerDownElementPosition);
                     lastTimeStamp = e.timeStamp;
@@ -216,7 +213,6 @@ export const Layout: React.FC<LayoutProps> = (props) => {
                 setDraggedModuleInstanceId(null);
                 moduleInstanceId = null;
                 dragging = false;
-                document.body.classList.remove("select-none");
                 originalLayout = currentLayout;
                 currentLayoutBox = makeLayoutBoxes(currentLayout);
                 originalLayoutBox = currentLayoutBox;
@@ -324,6 +320,7 @@ export const Layout: React.FC<LayoutProps> = (props) => {
                             y={rect.y}
                             isDragged={isDragged}
                             dragPosition={position}
+                            editingLayout={draggedModuleInstanceId !== null}
                         />
                     );
                 })}

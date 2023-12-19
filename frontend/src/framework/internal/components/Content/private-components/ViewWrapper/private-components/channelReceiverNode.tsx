@@ -102,6 +102,9 @@ export const ChannelReceiverNode: React.FC<ChannelReceiverNodeProps> = (props) =
         }
 
         function handlePointerMove(e: PointerEvent) {
+            if (!editDataChannelConnections && !localConnectable) {
+                return;
+            }
             const boundingRect = ref.current?.getBoundingClientRect();
             if (boundingRect && rectContainsPoint(boundingRect, pointerEventToPoint(e))) {
                 setHovered(true);

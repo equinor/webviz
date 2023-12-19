@@ -13,6 +13,7 @@ export interface ModuleChannelContentMetaData {
     ensembleIdentString: string;
     unit?: string;
     displayString?: string;
+    preferredColor?: string;
 }
 
 export type DataGenerator = () => {
