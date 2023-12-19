@@ -7,15 +7,17 @@ import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { ModuleFCProps } from "@framework/Module";
 import { useViewStatusWriter } from "@framework/StatusWriter";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
+import { ModuleChannelContentMetaData } from "@framework/internal/DataChannels/ModuleChannelContent";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { ColorScaleGradientType } from "@lib/utils/ColorScale";
 import { ContentError } from "@modules/_shared/components/ContentMessage";
-import { simulationUnitReformat } from "@modules/_shared/reservoirSimulationStringUtils";
+import { simulationUnitReformat, simulationVectorDescription } from "@modules/_shared/reservoirSimulationStringUtils";
 
 import { indexOf } from "lodash";
 import { Layout, PlotDatum, PlotMouseEvent } from "plotly.js";
 
 import { BroadcastChannelNames } from "./channelDefs";
+import { makeVectorGroupDataGenerator } from "./dataGenerators";
 import {
     useHistoricalVectorDataQueries,
     useStatisticalVectorDataQueries,
@@ -157,39 +159,10 @@ export const View = ({ moduleContext, workbenchSession, workbenchSettings }: Mod
             idString: el.vectorSpecification.vectorName,
             displayName: el.vectorSpecification.vectorName,
         })),
-        dataGenerator: (vectorName: string) => {
-            const data: { key: number; value: number }[] = [];
-            let metaData: {
-                unit: string;
-                ensembleIdentString: string;
-            } = {
-                unit: "",
-                ensembleIdentString: "",
-            };
-            loadedVectorSpecificationsAndRealizationData.forEach((vec) => {
-                if (vec.vectorSpecification.vectorName === vectorName) {
-                    let unit = "";
-                    vec.data.forEach((el) => {
-                        unit = simulationUnitReformat(el.unit);
-                        const indexOfTimestamp = indexOf(el.timestamps_utc_ms, activeTimestampUtcMs);
-                        data.push({
-                            key: el.realization,
-                            value: indexOfTimestamp === -1 ? el.values[0] : el.values[indexOfTimestamp],
-                        });
-                    });
-                    if (metaData === null) {
-                        metaData = {
-                            unit,
-                            ensembleIdentString: vec.vectorSpecification.ensembleIdent.toString(),
-                        };
-                    }
-                }
-            });
-            return {
-                data,
-                metaData: metaData ?? undefined,
-            };
-        },
+        dataGenerator: makeVectorGroupDataGenerator(
+            loadedVectorSpecificationsAndRealizationData,
+            activeTimestampUtcMs ?? 0
+        ),
     });
 
     // Create parameter color scale helper

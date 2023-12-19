@@ -13,6 +13,7 @@ import { ColorBar, Layout, PlotData } from "plotly.js";
 import { DisplayMode, PlotType, State } from "./state";
 import { Figure, makeSubplots } from "./utils/Figure";
 import { makeHistogramBins, makeHistogramTrace } from "./utils/histogram";
+import { makePlotTitle } from "./utils/stringUtils";
 import { calcTextSize } from "./utils/textSize";
 
 export const View = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>) => {
@@ -303,7 +304,7 @@ export const View = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
                     if (rowIndex === 0) {
                         const patch: Partial<Layout> = {
                             [`xaxis${cellIndex}`]: {
-                                title: `${contentCol.displayName} [${contentCol.metaData?.unit ?? ""}]`,
+                                title: makePlotTitle(contentCol),
                                 font,
                             },
                         };
@@ -312,7 +313,7 @@ export const View = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
                     if (colIndex === 0) {
                         const patch: Partial<Layout> = {
                             [`yaxis${cellIndex}`]: {
-                                title: `${contentRow.displayName} [${contentRow.metaData?.unit ?? ""}]`,
+                                title: makePlotTitle(contentRow),
                                 font,
                             },
                         };
@@ -353,7 +354,7 @@ export const View = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
             const colorScale = seqColorScale.getPlotlyColorScale();
             const dataColor = receiverColorMapping.channel.contents[0];
             const colorBar: Partial<ColorBar> = {
-                title: dataColor.displayName,
+                title: makePlotTitle(dataColor),
                 titleside: "right",
             };
             const font = {
@@ -417,7 +418,7 @@ export const View = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
                     if (rowIndex === 0) {
                         const patch: Partial<Layout> = {
                             [`xaxis${cellIndex}`]: {
-                                title: `${dataY.displayName} [${dataY.metaData?.unit ?? ""}]`,
+                                title: makePlotTitle(dataX),
                                 font,
                             },
                         };
@@ -426,7 +427,7 @@ export const View = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
                     if (colIndex === 0) {
                         const patch: Partial<Layout> = {
                             [`yaxis${cellIndex}`]: {
-                                title: `${dataX.displayName} [${dataX.metaData?.unit ?? ""}]`,
+                                title: makePlotTitle(dataY),
                                 font,
                             },
                         };

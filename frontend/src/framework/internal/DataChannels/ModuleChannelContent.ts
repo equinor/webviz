@@ -12,6 +12,7 @@ export enum ModuleChannelContentNotificationTopic {
 export interface ModuleChannelContentMetaData {
     ensembleIdentString: string;
     unit?: string;
+    displayString?: string;
 }
 
 export type DataGenerator = () => {

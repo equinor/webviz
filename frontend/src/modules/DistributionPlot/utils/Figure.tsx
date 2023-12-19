@@ -140,10 +140,19 @@ export function makeSubplots({
             const anchorX = `y${index + 1}`;
             const anchorY = `x${index + 1}`;
 
-            const matchingXAxisIndex =
-                sharedXAxes === "all" ? (numRows - 1) * numCols + 1 : sharedXAxes ? col + 1 : undefined;
-            const matchingYAxisIndex =
-                sharedYAxes === "all" ? row * numCols + 1 : sharedYAxes ? row * numCols + 1 : undefined;
+            let matchingXAxisIndex = undefined;
+            if (sharedXAxes === "all") {
+                matchingXAxisIndex = (numRows - 1) * numCols + 1;
+            } else if (sharedXAxes) {
+                matchingXAxisIndex = col + 1;
+            }
+
+            let matchingYAxisIndex = undefined;
+            if (sharedYAxes === "all") {
+                matchingYAxisIndex = row * numCols + 1;
+            } else if (sharedYAxes) {
+                matchingYAxisIndex = row * numCols + 1;
+            }
 
             const [xDomainStart, xDomainEnd] = makeDomain(numCols, col, horizontalSpacing, [
                 adjustedMargin.l,
