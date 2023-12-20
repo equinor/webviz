@@ -10,6 +10,7 @@ from .utils.arrow_helpers import (
     set_date_column_type_to_timestamp_ms,
 )
 from .utils.statistic_function import StatisticFunction
+from .service_exceptions import Service, InvalidParameterError
 
 
 class VectorStatistics(BaseModel):
@@ -65,7 +66,7 @@ def compute_vector_statistics_table(
             agg_dict["P50"] = pd.NamedAgg(column=vector_name, aggfunc=p50_func)
 
     if not agg_dict:
-        raise ValueError("At least one statistic must be requested")
+        raise InvalidParameterError("At least one statistic must be requested", Service.GENERAL)
 
     if summary_vector_table.num_rows == 0:
         return None
