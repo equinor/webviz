@@ -1,13 +1,7 @@
 import React from "react";
 
 import { SeismicFencePolyline_api } from "@api";
-import {
-    Controller,
-    GridLayer,
-    IntersectionReferenceSystem,
-    PixiRenderApplication,
-    Trajectory,
-} from "@equinor/esv-intersection";
+import { Controller, IntersectionReferenceSystem, PixiRenderApplication, Trajectory } from "@equinor/esv-intersection";
 import { ModuleFCProps } from "@framework/Module";
 import { useViewStatusWriter } from "@framework/StatusWriter";
 import { useElementSize } from "@lib/hooks/useElementSize";

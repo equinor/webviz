@@ -228,7 +228,7 @@ export function Settings({ moduleContext, workbenchSession, workbenchServices }:
             }
             setSurfaceAddress(surfaceAddress);
         },
-        [computedEnsembleIdent, selectedSurfaceAttribute, selectedSurfaceNames, realizationNumber]
+        [computedEnsembleIdent, selectedSurfaceAttribute, selectedSurfaceNames, realizationNumber, setSurfaceAddress]
     );
 
     React.useEffect(

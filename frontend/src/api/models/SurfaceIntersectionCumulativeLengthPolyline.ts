@@ -15,6 +15,8 @@
  * The cumulative lengths can be e.g. measured depth along a well path.
  *
  * Note: Coordinates are in domain coordinate system (UTM)
+ *
+ * Note: Verify if cum_lengths is necessary with respect to xtgeo
  */
 export type SurfaceIntersectionCumulativeLengthPolyline = {
     x_points: Array<number>;

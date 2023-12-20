@@ -127,7 +127,7 @@ export function addSurfaceLayers(
         lines: surfaceIntersectionDataList.map((surface) => {
             return {
                 data: surface.z_points.map((z: number, idx) => {
-                    return [surface.cum_length[idx], z];
+                    return [surface.cum_lengths[idx], z];
                 }),
                 color: surfaceColor,
                 id: `${surface.name}-id`,

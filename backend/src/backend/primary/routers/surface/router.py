@@ -2,11 +2,10 @@ import logging
 from typing import List, Union, Optional
 
 import asyncio
-from concurrent.futures import ThreadPoolExecutor
 
 import numpy as np
 
-from xtgeo import RegularSurface
+import xtgeo
 
 from fastapi import APIRouter, Body, Depends, HTTPException, Query, Response
 
@@ -230,66 +229,16 @@ async def post_get_surface_intersection(
     """
     access = await SurfaceAccess.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
 
-    async def get_surface_async(name: str) -> RegularSurface | None:
-        surface = await access.get_realization_surface_data_async(
-            real_num=realization_num, name=name, attribute=attribute, time_or_interval_str=time_or_interval_str
-        )
-        if surface is not None:
-            surface.name = name
-        return surface
+    intersection_polyline = converters.from_api_cumulative_length_polyline_to_xtgeo_polyline(cumulative_length_polyline)
 
-    async def get_all_surfaces_async() -> List[RegularSurface | None]:
-        # Note: asyncio.gather() might not return in the same order as the input list
-        return await asyncio.gather(*[get_surface_async(name) for name in names])
-
-    surfaces: List[RegularSurface] = await get_all_surfaces_async()  # Nested?
-
-    for surface in surfaces:
-        if surface is None:
-            raise HTTPException(status_code=404, detail="Surface not found")
-
-    # xtgeo fencespec: 2D numpy with X, Y, Z, HLEN as rows
-    xtgeo_fencespec = np.array(
-        [
-            cumulative_length_polyline.x_points,
-            cumulative_length_polyline.y_points,
-            np.zeros(len(cumulative_length_polyline.x_points)),
-            cumulative_length_polyline.cum_lengths,
-        ]
-    ).T
-
-    # surface_intersections = await make_intersections_async(surfaces, xtgeo_fencespec)
-
-    surface_intersections = make_intersections(surfaces, xtgeo_fencespec)
-    return surface_intersections
-
-
-def make_intersection(surface: RegularSurface, xtgeo_fencespec: np.ndarray) -> schemas.SurfaceIntersectionData:
-    line = surface.get_randomline(xtgeo_fencespec)
-    intersection = schemas.SurfaceIntersectionData(
-        name=f"{surface.name}",
-        cum_length=line[:, 0].tolist(),
-        z_points=line[:, 1].tolist(),
+    surface_intersections = await access.get_realization_surfaces_intersection_async(
+        real_num=realization_num,
+        names=names,
+        attribute=attribute,
+        polyline=intersection_polyline,
+        time_or_interval_str=time_or_interval_str,
     )
-    return intersection
 
+    surface_intersections_response = converters.to_api_surface_intersection_list(surface_intersections)
 
-def make_intersections(
-    surfaces: List[RegularSurface], xtgeo_fencespec: np.ndarray
-) -> List[schemas.SurfaceIntersectionData]:
-    if len(surfaces) == 0:
-        return []
-
-    intersections = [make_intersection(surface, xtgeo_fencespec) for surface in surfaces]
-    return intersections
-
-
-async def make_intersections_async(
-    surfaces: List[RegularSurface], xtgeo_fencespec: np.ndarray
-) -> List[schemas.SurfaceIntersectionData]:
-    loop = asyncio.get_running_loop()
-
-    with ThreadPoolExecutor() as executor:
-        tasks = [loop.run_in_executor(executor, make_intersection, surface, xtgeo_fencespec) for surface in surfaces]
-        intersections = await asyncio.gather(*tasks)
-    return intersections
+    return surface_intersections_response

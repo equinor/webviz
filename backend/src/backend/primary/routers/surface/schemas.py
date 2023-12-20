@@ -75,14 +75,14 @@ class SurfaceIntersectionData(BaseModel):
     Definition of a surface intersection made from a set of (x, y) coordinates.
 
     name: Name of the surface
-    z_points: Array of z-values at the intersection points, i.e. depth value for each (x,y) point.
-    cum_lengths: Cumulative length values at the intersection points, i.e. length between each element in the z points.
+    z_points: Array of z-points (depth values) at the intersection points, i.e. depth value for each (x,y) point.
+    cum_lengths: Cumulative length values at the intersection points, i.e. accumulated length between each element in the z points.
 
     """
 
     name: str
-    z_points: list[float]
-    cum_length: list[float]
+    z_points: List[float]
+    cum_lengths: List[float]
 
 
 class SurfaceIntersectionCumulativeLengthPolyline(BaseModel):
@@ -99,8 +99,10 @@ class SurfaceIntersectionCumulativeLengthPolyline(BaseModel):
     The cumulative lengths can be e.g. measured depth along a well path.
 
     Note: Coordinates are in domain coordinate system (UTM)
+
+    Note: Verify if cum_lengths is necessary with respect to xtgeo
     """
 
     x_points: List[float]
     y_points: List[float]
-    cum_lengths: List[float]  # TODO: Verify if it necessary with respect to xtgeo
+    cum_lengths: List[float]
