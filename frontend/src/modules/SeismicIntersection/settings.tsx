@@ -156,12 +156,6 @@ export function Settings({ moduleContext, workbenchSession, workbenchServices }:
         validStates: computedSurfaceAttributes,
     });
 
-    // ***************************************************
-    //
-    // TODO: Add fixup and use synced value surface?
-    //
-    // ***************************************************
-
     // Create seismic cube directory
     const seismicCubeMetaDirectory = seismicCubeMetaListQuery.data
         ? new SeismicCubeMetaDirectory({

@@ -102,14 +102,11 @@ class SurfaceAccess(SumoEnsemble):
             surfaces = await asyncio.gather(*[get_surface_async(name) for name in names])
 
             # Filter out None values
+            # NOTE: Should we raise an exception if any surface is None instead?
             valid_surfaces = [surface for surface in surfaces if surface is not None]
             return valid_surfaces
 
         surfaces: List[xtgeo.RegularSurface] = await get_all_surfaces_async()
-
-        for surface in surfaces:
-            if surface is None:
-                raise ValueError(status_code=404, detail="Surface not found")
 
         # The input fencespec is a 2D numpy where each row is X, Y, Z, HLEN,
         # where X, Y are UTM coordinates, Z is depth/time, and HLEN is a

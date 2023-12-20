@@ -1,12 +1,6 @@
 import logging
 from typing import List, Union, Optional
 
-import asyncio
-
-import numpy as np
-
-import xtgeo
-
 from fastapi import APIRouter, Body, Depends, HTTPException, Query, Response
 
 from src.services.sumo_access.surface_access import SurfaceAccess
@@ -224,8 +218,8 @@ async def post_get_surface_intersection(
 ) -> List[schemas.SurfaceIntersectionData]:
     """Get an array of surface intersection data, one for each requested surface name.
 
-    The surface intersection data for each surface name contains: An array of z-values, one z-value per (x, y)-point in polyline,
-    and cumulative lengths, the accumulated length at each z-value in the array.
+    The surface intersection data for each surface name contains: An array of z-points, i.e. one z-value/depth per (x, y)-point in polyline,
+    and cumulative lengths, the accumulated length at each z-point in the array.
     """
     access = await SurfaceAccess.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
 

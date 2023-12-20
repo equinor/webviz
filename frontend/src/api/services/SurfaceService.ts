@@ -202,8 +202,8 @@ export class SurfaceService {
      * Post Get Surface Intersection
      * Get an array of surface intersection data, one for each requested surface name.
      *
-     * The surface intersection data for each surface name contains: An array of z-values, one z-value per (x, y)-point in polyline,
-     * and cumulative lengths, the accumulated length at each z-value in the array.
+     * The surface intersection data for each surface name contains: An array of z-points, i.e. one z-value/depth per (x, y)-point in polyline,
+     * and cumulative lengths, the accumulated length at each z-point in the array.
      * @param caseUuid Sumo case uuid
      * @param ensembleName Ensemble name
      * @param realizationNum Realization number
