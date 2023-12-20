@@ -364,7 +364,7 @@ export function Settings({ moduleContext, workbenchSession, workbenchServices }:
                     loadingComponent={<CircularProgress />}
                 >
                     <div className="flex flex-col gap-4 overflow-y-auto">
-                        <Label text="Stratigraphic name">
+                        <Label text="Stratigraphic names">
                             <Select
                                 options={computedSurfaceNames.map((name) => {
                                     return { label: name, value: name };
@@ -375,7 +375,7 @@ export function Settings({ moduleContext, workbenchSession, workbenchServices }:
                                 onChange={handleSurfaceNameChange}
                             />
                         </Label>
-                        <Label text="Attribute">
+                        <Label text={`Attribute in selected surface${selectedSurfaceNames.length > 1 ? "s" : ""}`}>
                             <Select
                                 options={computedSurfaceAttributes.map((attribute) => {
                                     return { label: attribute, value: attribute };

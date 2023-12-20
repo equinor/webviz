@@ -58,37 +58,35 @@ export class SurfaceDirectory {
             return [];
         }
 
-        const uniqueSurfaceNames = [...new Set(requireSurfaceNames)].sort();
-        const filteredSurfaceList = this._surfaceList.filter((surface) => uniqueSurfaceNames.includes(surface.name));
+        const uniqueRequiredSurfaceNames = [...new Set(requireSurfaceNames)];
+        const filteredSurfaceList = this._surfaceList.filter((surface) =>
+            uniqueRequiredSurfaceNames.includes(surface.name)
+        );
         const uniqueAttributeNames = [...new Set(filteredSurfaceList.map((surface) => surface.attribute_name))].sort();
 
         if (uniqueAttributeNames.length === 0) {
             return [];
         }
 
-        // Find if attribute name is present in all surfaces.
+        // Find attribute names present in all required surfaces.
         const attributeNamesIntersection: string[] = [];
+
         for (const attributeName of uniqueAttributeNames) {
-            let isAttributeInAllRequiredSurfaces = false;
-
-            // Check if attribute name is present in all required surfaces.
-            for (const surfaceName of uniqueSurfaceNames) {
-                const surfaceWithNameAndAttribute = filteredSurfaceList.find(
-                    (surface) => surface.name === surfaceName && surface.attribute_name === attributeName
+            // For each unique required surface name, check if there exist a surface object with the given
+            // surface name and attribute name.
+            const isAttributeInAllRequiredSurfaces = uniqueRequiredSurfaceNames.every((surfaceName) => {
+                return (
+                    filteredSurfaceList.find(
+                        (surface) => surface.name === surfaceName && surface.attribute_name === attributeName
+                    ) !== undefined
                 );
+            });
 
-                if (surfaceWithNameAndAttribute === undefined) {
-                    isAttributeInAllRequiredSurfaces = false;
-                    break;
-                }
-                isAttributeInAllRequiredSurfaces = true;
+            if (isAttributeInAllRequiredSurfaces) {
+                attributeNamesIntersection.push(attributeName);
             }
-
-            if (!isAttributeInAllRequiredSurfaces) {
-                continue;
-            }
-            attributeNamesIntersection.push(attributeName);
         }
+
         return attributeNamesIntersection;
     }
 
