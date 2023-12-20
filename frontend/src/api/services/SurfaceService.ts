@@ -200,14 +200,14 @@ export class SurfaceService {
 
     /**
      * Post Get Surface Intersection
-     * Get an array of surface intersection data, one for each requested surface name.
+     * Get surface intersection data for requested surface name.
      *
-     * The surface intersection data for each surface name contains: An array of z-points, i.e. one z-value/depth per (x, y)-point in polyline,
+     * The surface intersection data for surface name contains: An array of z-points, i.e. one z-value/depth per (x, y)-point in polyline,
      * and cumulative lengths, the accumulated length at each z-point in the array.
      * @param caseUuid Sumo case uuid
      * @param ensembleName Ensemble name
      * @param realizationNum Realization number
-     * @param names Surface names
+     * @param name Surface name
      * @param attribute Surface attribute
      * @param requestBody
      * @param timeOrIntervalStr Time point or time interval string
@@ -218,11 +218,11 @@ export class SurfaceService {
         caseUuid: string,
         ensembleName: string,
         realizationNum: number,
-        names: Array<string>,
+        name: string,
         attribute: string,
         requestBody: Body_post_get_surface_intersection,
         timeOrIntervalStr?: (string | null),
-    ): CancelablePromise<Array<SurfaceIntersectionData>> {
+    ): CancelablePromise<SurfaceIntersectionData> {
         return this.httpRequest.request({
             method: 'POST',
             url: '/surfaceget_surface_intersection',
@@ -230,7 +230,7 @@ export class SurfaceService {
                 'case_uuid': caseUuid,
                 'ensemble_name': ensembleName,
                 'realization_num': realizationNum,
-                'names': names,
+                'name': name,
                 'attribute': attribute,
                 'time_or_interval_str': timeOrIntervalStr,
             },

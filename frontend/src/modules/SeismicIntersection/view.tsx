@@ -1,6 +1,10 @@
 import React from "react";
 
-import { SeismicFencePolyline_api } from "@api";
+import {
+    SeismicFencePolyline_api,
+    SurfaceIntersectionCumulativeLengthPolyline_api,
+    SurfaceIntersectionData_api,
+} from "@api";
 import { Controller, IntersectionReferenceSystem, Trajectory } from "@equinor/esv-intersection";
 import { ModuleFCProps } from "@framework/Module";
 import { useViewStatusWriter } from "@framework/StatusWriter";
@@ -10,17 +14,17 @@ import { useWellTrajectoriesQuery } from "@modules/_shared/WellBore/queryHooks";
 import { ContentError } from "@modules/_shared/components/ContentMessage";
 
 import { isEqual } from "lodash";
-import { SurfaceIntersectionCumulativeLengthPolyline } from "src/api/models/SurfaceIntersectionCumulativeLengthPolyline";
 
-import { useSeismicFenceDataQuery, useSurfaceIntersectionQuery } from "./queryHooks";
+import { useSeismicFenceDataQuery, useSurfaceIntersectionQueries } from "./queryHooks";
 import { State } from "./state";
 import {
     addMDOverlay,
     addSeismicLayer,
-    addSurfaceLayers,
+    addSurfacesLayer,
     addWellborePathLayer,
 } from "./utils/esvIntersectionControllerUtils";
 import {
+    createEsvSurfaceIntersectionDataArrayFromSurfaceIntersectionDataApiArray,
     createSeismicSliceImageDataArrayFromFenceData,
     createSeismicSliceImageYAxisValuesArrayFromFenceData,
     makeExtendedTrajectoryFromTrajectoryXyzPoints,
@@ -67,7 +71,7 @@ export const View = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
     // States to fetch seismic fence and surface intersection
     const [seismicFencePolyline, setSeismicFencePolyline] = React.useState<SeismicFencePolyline_api | null>(null);
     const [surfaceIntersectionCumulativeLengthPolyline, setSurfaceIntersectionCumulativeLengthPolyline] =
-        React.useState<SurfaceIntersectionCumulativeLengthPolyline | null>(null);
+        React.useState<SurfaceIntersectionCumulativeLengthPolyline_api | null>(null);
 
     // Async generating seismic slice image
     const [generateSeismicSliceImageOptions, setGenerateSeismicSliceImageOptions] =
@@ -156,7 +160,7 @@ export const View = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
     }
 
     // Get surface intersection data from polyline
-    const surfaceIntersectionDataQuery = useSurfaceIntersectionQuery(
+    const surfaceIntersectionDataQueries = useSurfaceIntersectionQueries(
         surfaceAddress?.caseUuid ?? null,
         surfaceAddress?.ensemble ?? null,
         surfaceAddress?.realizationNumber ?? null,
@@ -166,8 +170,12 @@ export const View = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
         candidateSurfaceIntersectionCumulativeLengthPolyline,
         seismicAddress !== null
     );
-    if (surfaceIntersectionDataQuery.isError) {
-        statusWriter.addError("Error loading surface intersection data");
+    for (const query of surfaceIntersectionDataQueries) {
+        if (!query.isError) continue;
+
+        const queryIndex = surfaceIntersectionDataQueries.indexOf(query);
+        const surfaceName = surfaceAddress?.surfaceNames ? surfaceAddress?.surfaceNames[queryIndex] : "unknown";
+        statusWriter.addWarning(`Error loading surface intersection data for "${surfaceName}"`);
     }
 
     if (seismicFenceDataQuery.data) {
@@ -219,9 +227,17 @@ export const View = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
             });
         }
 
-        if (surfaceIntersectionDataQuery.data) {
-            addSurfaceLayers(esvIntersectionControllerRef.current, {
-                surfaceIntersectionDataList: surfaceIntersectionDataQuery.data,
+        const fetchedSurfaceIntersections: SurfaceIntersectionData_api[] = [];
+        for (const surfaceIntersectionDataQuery of surfaceIntersectionDataQueries) {
+            if (!surfaceIntersectionDataQuery.data) continue;
+
+            fetchedSurfaceIntersections.push(surfaceIntersectionDataQuery.data);
+        }
+        if (fetchedSurfaceIntersections.length !== 0) {
+            const convertedSurfaceIntersectionDataList =
+                createEsvSurfaceIntersectionDataArrayFromSurfaceIntersectionDataApiArray(fetchedSurfaceIntersections);
+            addSurfacesLayer(esvIntersectionControllerRef.current, {
+                surfaceIntersectionDataList: convertedSurfaceIntersectionDataList,
                 layerName: "Surface intersection",
                 surfaceColor: "red",
                 surfaceWidth: 10,
@@ -237,8 +253,14 @@ export const View = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
     }
 
     statusWriter.setLoading(
-        wellTrajectoriesQuery.isFetching || seismicFenceDataQuery.isFetching || surfaceIntersectionDataQuery.isFetching
+        wellTrajectoriesQuery.isFetching ||
+            seismicFenceDataQuery.isFetching ||
+            surfaceIntersectionDataQueries.some((query) => query.isFetching)
     );
+
+    const hasErrorForEverySurfaceIntersectionQuery =
+        surfaceIntersectionDataQueries.length > 0 && surfaceIntersectionDataQueries.every((query) => query.isError);
+
     return (
         <div ref={wrapperDivRef} className="relative w-full h-full">
             {seismicFenceDataQuery.isError && wellTrajectoriesQuery.isError ? (
@@ -247,7 +269,7 @@ export const View = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
                 <ContentError>Error loading seismic fence data</ContentError>
             ) : wellTrajectoriesQuery.isError ? (
                 <ContentError>Error loading well trajectories</ContentError>
-            ) : surfaceIntersectionDataQuery.isError ? (
+            ) : hasErrorForEverySurfaceIntersectionQuery ? (
                 <ContentError>Error loading surface intersection data</ContentError>
             ) : generatedSeismicSliceImageData.status === SeismicSliceImageStatus.ERROR ? (
                 <ContentError>Error generating seismic slice image</ContentError>

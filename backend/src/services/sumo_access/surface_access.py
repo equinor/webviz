@@ -2,7 +2,6 @@ import logging
 from io import BytesIO
 from typing import List, Optional
 
-import asyncio
 import xtgeo
 import numpy as np
 
@@ -72,48 +71,33 @@ class SurfaceAccess(SumoEnsemble):
 
         return surfs
 
-    async def get_realization_surfaces_intersection_async(
+    async def get_realization_surface_intersection_async(
         self,
         real_num: int,
-        names: List[str],
+        name: str,
         attribute: str,
         polyline: XtgeoSurfaceIntersectionPolyline,
         time_or_interval_str: Optional[str] = None,
-    ) -> List[xtgeo.RegularSurface]:
+    ) -> xtgeo.RegularSurface:
         """
-        Get intersection of realization surfaces for requested surface names
+        Get intersection of realization surface for requested surface name
         """
+        surface = await self.get_realization_surface_data_async(
+            real_num=real_num, name=name, attribute=attribute, time_or_interval_str=time_or_interval_str
+        )
 
-        async def get_surface_async(name: str) -> xtgeo.RegularSurface | None:
-            surface = await self.get_realization_surface_data_async(
-                real_num=real_num, name=name, attribute=attribute, time_or_interval_str=time_or_interval_str
-            )
+        if surface is None:
+            raise ValueError(f'Surface "{name}" not found in sumo')
 
-            if surface is None:
-                LOGGER.warning(f'Surface "{name}" not found in sumo')
-
-            # Apply name as asyncio.gather does not ensure order
-            if surface is not None:
-                surface.name = name
-            return surface
-
-        async def get_all_surfaces_async() -> List[xtgeo.RegularSurface]:
-            # Note: asyncio.gather() might not return in the same order as the input list
-            surfaces = await asyncio.gather(*[get_surface_async(name) for name in names])
-
-            # Filter out None values
-            # NOTE: Should we raise an exception if any surface is None instead?
-            valid_surfaces = [surface for surface in surfaces if surface is not None]
-            return valid_surfaces
-
-        surfaces: List[xtgeo.RegularSurface] = await get_all_surfaces_async()
+        # Ensure name is applied
+        surface.name = name
 
         # The input fencespec is a 2D numpy where each row is X, Y, Z, HLEN,
         # where X, Y are UTM coordinates, Z is depth/time, and HLEN is a
         # length along the fence.
         xtgeo_fencespec = np.array([polyline.X, polyline.Y, polyline.Z, polyline.HLEN]).T
 
-        return _make_intersections(surfaces, xtgeo_fencespec)
+        return _make_intersection(surface, xtgeo_fencespec)
 
     async def get_realization_surface_data_async(
         self, real_num: int, name: str, attribute: str, time_or_interval_str: Optional[str] = None

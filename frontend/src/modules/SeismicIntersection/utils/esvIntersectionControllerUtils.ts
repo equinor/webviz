@@ -1,4 +1,3 @@
-import { SurfaceIntersectionData_api } from "@api";
 import {
     Controller,
     GeomodelCanvasLayer,
@@ -102,15 +101,20 @@ export function addSeismicLayer(
     controller.addLayer(layer);
 }
 
-export type SurfaceLayerOptions = {
-    surfaceIntersectionDataList: SurfaceIntersectionData_api[]; // TODO: Extract data outside and do not pass api data?
+export type SurfaceIntersectionData = {
+    name: string;
+    xyPoints: number[][]; // [x, y] points for surface intersection line in reference system
+};
+
+export type SurfacesLayerOptions = {
+    surfaceIntersectionDataList: SurfaceIntersectionData[];
     layerName: string;
     surfaceColor: string;
     surfaceWidth: number;
 };
-export function addSurfaceLayers(
+export function addSurfacesLayer(
     controller: Controller,
-    { surfaceIntersectionDataList, layerName, surfaceColor, surfaceWidth }: SurfaceLayerOptions
+    { surfaceIntersectionDataList, layerName, surfaceColor, surfaceWidth }: SurfacesLayerOptions
 ): void {
     const surfaceIndicesWithLabels: { label: string; idx: number }[] = [];
     surfaceIntersectionDataList.forEach((surface, idx) => {
@@ -124,9 +128,7 @@ export function addSurfaceLayers(
         areas: [],
         lines: surfaceIntersectionDataList.map((surface) => {
             return {
-                data: surface.z_points.map((z: number, idx) => {
-                    return [surface.cum_lengths[idx], z];
-                }),
+                data: surface.xyPoints,
                 color: surfaceColor,
                 id: `${surface.name}-id`,
                 label: surface.name,

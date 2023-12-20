@@ -211,28 +211,28 @@ async def post_get_surface_intersection(
     case_uuid: str = Query(description="Sumo case uuid"),
     ensemble_name: str = Query(description="Ensemble name"),
     realization_num: int = Query(description="Realization number"),
-    names: List[str] = Query(description="Surface names"),
+    name: str = Query(description="Surface name"),
     attribute: str = Query(description="Surface attribute"),
     time_or_interval_str: Optional[str] = Query(None, description="Time point or time interval string"),
     cumulative_length_polyline: schemas.SurfaceIntersectionCumulativeLengthPolyline = Body(embed=True),
-) -> List[schemas.SurfaceIntersectionData]:
-    """Get an array of surface intersection data, one for each requested surface name.
+) -> schemas.SurfaceIntersectionData:
+    """Get surface intersection data for requested surface name.
 
-    The surface intersection data for each surface name contains: An array of z-points, i.e. one z-value/depth per (x, y)-point in polyline,
+    The surface intersection data for surface name contains: An array of z-points, i.e. one z-value/depth per (x, y)-point in polyline,
     and cumulative lengths, the accumulated length at each z-point in the array.
     """
     access = await SurfaceAccess.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
 
     intersection_polyline = converters.from_api_cumulative_length_polyline_to_xtgeo_polyline(cumulative_length_polyline)
 
-    surface_intersections = await access.get_realization_surfaces_intersection_async(
+    surface_intersection = await access.get_realization_surface_intersection_async(
         real_num=realization_num,
-        names=names,
+        name=name,
         attribute=attribute,
         polyline=intersection_polyline,
         time_or_interval_str=time_or_interval_str,
     )
 
-    surface_intersections_response = converters.to_api_surface_intersection_list(surface_intersections)
+    surface_intersection_response = converters.to_api_surface_intersection(surface_intersection)
 
-    return surface_intersections_response
+    return surface_intersection_response

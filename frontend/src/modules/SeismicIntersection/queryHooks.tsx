@@ -7,7 +7,7 @@ import {
     SurfaceIntersectionData_api,
 } from "@api";
 import { apiService } from "@framework/ApiService";
-import { UseQueryResult, useQuery } from "@tanstack/react-query";
+import { UseQueryResult, useQueries, useQuery } from "@tanstack/react-query";
 
 import { SeismicFenceData_trans, transformSeismicFenceData } from "./utils/queryDataTransforms";
 
@@ -75,7 +75,7 @@ export function useSeismicFenceDataQuery(
     });
 }
 
-export function useSurfaceIntersectionQuery(
+export function useSurfaceIntersectionQueries(
     caseUuid: string | null,
     ensembleName: string | null,
     realizationNum: number | null,
@@ -84,42 +84,46 @@ export function useSurfaceIntersectionQuery(
     timeOrIntervalStr: string | null,
     cumulativeLengthPolyline: SurfaceIntersectionCumulativeLengthPolyline_api | null,
     allowEnable: boolean
-): UseQueryResult<SurfaceIntersectionData_api[]> {
+): UseQueryResult<SurfaceIntersectionData_api>[] {
     const bodyPolyline: Body_post_get_surface_intersection_api = {
         cumulative_length_polyline: cumulativeLengthPolyline ?? { x_points: [], y_points: [], cum_lengths: [] },
     };
 
-    return useQuery({
-        queryKey: [
-            "getSurfaceIntersection",
-            caseUuid,
-            ensembleName,
-            realizationNum,
-            surfaceNames,
-            attribute,
-            timeOrIntervalStr,
-            bodyPolyline,
-        ],
-        queryFn: () =>
-            apiService.surface.postGetSurfaceIntersection(
-                caseUuid ?? "",
-                ensembleName ?? "",
-                realizationNum ?? 0,
-                surfaceNames ?? [],
-                attribute ?? "",
-                bodyPolyline,
-                timeOrIntervalStr // Can be null
-            ),
-        staleTime: STALE_TIME,
-        gcTime: CACHE_TIME,
-        enabled: !!(
-            allowEnable &&
-            caseUuid &&
-            ensembleName &&
-            realizationNum !== null &&
-            surfaceNames &&
-            attribute &&
-            cumulativeLengthPolyline !== null
-        ),
+    return useQueries({
+        queries: (surfaceNames ?? []).map((surfaceName) => {
+            return {
+                queryKey: [
+                    "getSurfaceIntersection",
+                    caseUuid,
+                    ensembleName,
+                    realizationNum,
+                    surfaceName,
+                    attribute,
+                    timeOrIntervalStr,
+                    bodyPolyline,
+                ],
+                queryFn: () =>
+                    apiService.surface.postGetSurfaceIntersection(
+                        caseUuid ?? "",
+                        ensembleName ?? "",
+                        realizationNum ?? 0,
+                        surfaceName ?? "",
+                        attribute ?? "",
+                        bodyPolyline,
+                        timeOrIntervalStr // Can be null
+                    ),
+                staleTime: STALE_TIME,
+                gcTime: CACHE_TIME,
+                enabled: !!(
+                    allowEnable &&
+                    caseUuid &&
+                    ensembleName &&
+                    realizationNum !== null &&
+                    surfaceName &&
+                    attribute &&
+                    cumulativeLengthPolyline !== null
+                ),
+            };
+        }),
     });
 }

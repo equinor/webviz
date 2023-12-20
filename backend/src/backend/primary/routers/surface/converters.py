@@ -123,21 +123,20 @@ def from_api_cumulative_length_polyline_to_xtgeo_polyline(
     return XtgeoSurfaceIntersectionPolyline(
         X=cumulative_length_polyline.x_points,
         Y=cumulative_length_polyline.y_points,
-        Z=np.zeros(len(cumulative_length_polyline.x_points)),
+        Z=np.zeros(len(cumulative_length_polyline.x_points)).tolist(),
         HLEN=cumulative_length_polyline.cum_lengths,
     )
 
 
-def to_api_surface_intersection_list(
-    xtgeo_surface_intersections: List[XtgeoSurfaceIntersectionResult],
-) -> List[schemas.SurfaceIntersectionData]:
+def to_api_surface_intersection(
+    xtgeo_surface_intersection: XtgeoSurfaceIntersectionResult,
+) -> schemas.SurfaceIntersectionData:
     """
-    Convert a list of surface intersections to API surface intersections
+    Convert a surface intersection to API surface intersection
     """
 
-    return [
-        schemas.SurfaceIntersectionData(
-            name=intersection.name, z_points=intersection.zval, cum_lengths=intersection.distance
-        )
-        for intersection in xtgeo_surface_intersections
-    ]
+    return schemas.SurfaceIntersectionData(
+        name=xtgeo_surface_intersection.name,
+        z_points=xtgeo_surface_intersection.zval,
+        cum_lengths=xtgeo_surface_intersection.distance,
+    )
