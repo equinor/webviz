@@ -38,7 +38,6 @@ export const View = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
     const wrapperDivSize = useElementSize(wrapperDivRef);
     const esvIntersectionContainerRef = React.useRef<HTMLDivElement | null>(null);
     const esvIntersectionControllerRef = React.useRef<Controller | null>(null);
-    const esvPixiRenderApplicationRef = React.useRef<PixiRenderApplication | null>(null);
 
     const statusWriter = useViewStatusWriter(moduleContext);
 
@@ -83,13 +82,6 @@ export const View = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
                 axisOptions,
             });
 
-            const width = wrapperDivSize.width;
-            const height = wrapperDivSize.height - 100;
-
-            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-            // @ts-ignore
-            esvPixiRenderApplicationRef.current = new PixiRenderApplication({ width, height });
-
             // Initialize/configure controller
             addMDOverlay(esvIntersectionControllerRef.current);
             esvIntersectionControllerRef.current.setBounds([10, 1000], [0, 3000]);
@@ -97,7 +89,6 @@ export const View = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
         }
         return () => {
             esvIntersectionControllerRef.current?.destroy();
-            esvPixiRenderApplicationRef.current?.destroy();
         };
     }, []);
 
@@ -228,8 +219,8 @@ export const View = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
             });
         }
 
-        if (surfaceIntersectionDataQuery.data && esvPixiRenderApplicationRef.current) {
-            addSurfaceLayers(esvIntersectionControllerRef.current, esvPixiRenderApplicationRef.current, {
+        if (surfaceIntersectionDataQuery.data) {
+            addSurfaceLayers(esvIntersectionControllerRef.current, {
                 surfaceIntersectionDataList: surfaceIntersectionDataQuery.data,
                 layerName: "Surface intersection",
                 surfaceColor: "red",

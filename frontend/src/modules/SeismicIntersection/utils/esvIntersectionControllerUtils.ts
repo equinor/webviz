@@ -1,11 +1,10 @@
 import { SurfaceIntersectionData_api } from "@api";
 import {
     Controller,
+    GeomodelCanvasLayer,
     GeomodelLabelsLayer,
-    GeomodelLayerV2,
     OverlayMouseExitEvent,
     OverlayMouseMoveEvent,
-    PixiRenderApplication,
     SeismicCanvasLayer,
     SurfaceData,
     WellborepathLayer,
@@ -111,7 +110,6 @@ export type SurfaceLayerOptions = {
 };
 export function addSurfaceLayers(
     controller: Controller,
-    pixiContext: PixiRenderApplication,
     { surfaceIntersectionDataList, layerName, surfaceColor, surfaceWidth }: SurfaceLayerOptions
 ): void {
     const surfaceIndicesWithLabels: { label: string; idx: number }[] = [];
@@ -137,7 +135,7 @@ export function addSurfaceLayers(
         }),
     };
 
-    const geomodelLayer = new GeomodelLayerV2<SurfaceData>(pixiContext, `${layerName}`, {
+    const geomodelLayer = new GeomodelCanvasLayer(`${layerName}`, {
         order: 3,
         layerOpacity: 0.6,
         data: surfaceIntersectionLines,
