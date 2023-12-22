@@ -1,1 +1,1 @@
-export { QueryStateWrapper, QueriesDisplayErrorCriteria as QueriesErrorCriteria } from "./queryStateWrapper";
+export { QueryStateWrapper, QueriesErrorCriteria } from "./queryStateWrapper";

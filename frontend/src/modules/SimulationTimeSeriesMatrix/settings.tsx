@@ -376,7 +376,7 @@ export function settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
                     <QueryStateWrapper
                         queryResults={vectorListQueries}
                         loadingComponent={<CircularProgress />}
-                        errorCriteria={QueriesErrorCriteria.EVERY_QUERY}
+                        showErrorWhen={QueriesErrorCriteria.ALL_QUERIES_HAVE_ERROR}
                         errorComponent={"Could not load vectors for selected ensembles"}
                     >
                         <VectorSelector

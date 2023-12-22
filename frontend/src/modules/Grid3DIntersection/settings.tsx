@@ -69,7 +69,7 @@ export function settings({ moduleContext, workbenchSession }: ModuleFCProps<stat
 
                 <Label text="Grid parameter">
                     <Select
-                        options={stringToOptions(parameterNames || [])}
+                        options={stringToOptions(parameterNames)}
                         value={[parameterName || parameterNames[0]]}
                         onChange={(pnames) => setParameterName(pnames[0])}
                         filter={true}
@@ -79,7 +79,7 @@ export function settings({ moduleContext, workbenchSession }: ModuleFCProps<stat
 
                 <Label text="Realizations">
                     <Select
-                        options={stringToOptions((allRealizations as any) || [])}
+                        options={stringToOptions(allRealizations)}
                         value={realizations ? realizations : [allRealizations[0]]}
                         onChange={(reals) => setRealizations(reals)}
                         filter={true}

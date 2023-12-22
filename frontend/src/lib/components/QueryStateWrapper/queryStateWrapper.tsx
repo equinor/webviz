@@ -4,11 +4,11 @@ import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { QueryObserverResult } from "@tanstack/react-query";
 
 // Definition of error criteria for multiple queries
-// - SOME_QUERY: If at least one query has an error, the error component is displayed
-// - EVERY_QUERY: If all queries have an error, the error component is displayed
-export enum QueriesDisplayErrorCriteria {
-    SOME_QUERY = "some_query",
-    EVERY_QUERY = "every_query",
+// - SOME_QUERIES_HAVE_ERROR: If at least one query has an error, the error component is displayed
+// - ALL_QUERIES_HAVE_ERROR: If all queries have an error, the error component is displayed
+export enum QueriesErrorCriteria {
+    SOME_QUERIES_HAVE_ERROR = "some_queries_have_error",
+    ALL_QUERIES_HAVE_ERROR = "all_queries_have_error",
 }
 
 // Base state wrapper props
@@ -26,7 +26,7 @@ export type QueryStateWrapperProps = QueryStateWrapperBaseProps & {
 
 export type QueryStatesWrapperProps = QueryStateWrapperBaseProps & {
     queryResults: QueryObserverResult[];
-    errorCriteria: QueriesDisplayErrorCriteria;
+    showErrorWhen: QueriesErrorCriteria;
 };
 
 export const QueryStateWrapper: React.FC<QueryStateWrapperProps | QueryStatesWrapperProps> = (
@@ -35,13 +35,14 @@ export const QueryStateWrapper: React.FC<QueryStateWrapperProps | QueryStatesWra
     let showQueryLoading = false;
     let showQueryError = false;
     if ("queryResult" in props) {
-        showQueryLoading = props.queryResult.isLoading;
+        showQueryLoading = props.queryResult.isFetching;
         showQueryError = props.queryResult.isError;
     } else {
-        showQueryLoading = props.queryResults.some((elm) => elm.isLoading);
+        // Check to prevent .every() returning true on empty array
         if (props.queryResults.length > 0) {
+            showQueryLoading = props.queryResults.some((elm) => elm.isFetching);
             showQueryError =
-                props.errorCriteria === QueriesDisplayErrorCriteria.SOME_QUERY
+                props.showErrorWhen === QueriesErrorCriteria.SOME_QUERIES_HAVE_ERROR
                     ? props.queryResults.some((elm) => elm.isError)
                     : props.queryResults.every((elm) => elm.isError);
         }
