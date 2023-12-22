@@ -68,6 +68,7 @@ export function Settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
     const [previousEnsembleSet, setPreviousEnsembleSet] = React.useState<EnsembleSet>(ensembleSet);
     const [selectedEnsembleIdents, setSelectedEnsembleIdents] = React.useState<EnsembleIdent[]>([]);
     const [selectedVectorNames, setSelectedVectorNames] = React.useState<string[]>([]);
+    const [selectedVectorTags, setSelectedVectorTags] = React.useState<string[]>([]);
     const [vectorSelectorData, setVectorSelectorData] = React.useState<TreeDataNode[]>([]);
     const [statisticsType, setStatisticsType] = React.useState<StatisticsType>(StatisticsType.INDIVIDUAL);
     const [filteredParameterIdentList, setFilteredParameterIdentList] = React.useState<ParameterIdent[]>([]);
@@ -157,19 +158,30 @@ export function Settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
         statusWriter.addError(errorMessage);
     }
 
-    // Set warning for selected vectors not existing in a selected ensemble
-    // Note: selectedVectorNames is not updated until vectorSelectorData is updated and VectorSelector triggers onChange
-    for (const ensembleIdent of selectedEnsembleIdents) {
-        const nonExistingVectors = selectedVectorNames.filter(
-            (vector) => !ensembleVectorListsHelper.current.isVectorInEnsemble(ensembleIdent, vector)
+    // Set warning for vector names not existing in a selected ensemble
+    const validateVectorNamesInEnsemble = (vectorNames: string[], ensembleIdent: EnsembleIdent) => {
+        const existingVectors = vectorNames.filter((vector) =>
+            ensembleVectorListsHelper.current.isVectorInEnsemble(ensembleIdent, vector)
         );
-        if (nonExistingVectors.length === 0) {
-            continue;
+        if (existingVectors.length === vectorNames.length) {
+            return;
         }
 
+        const nonExistingVectors = vectorNames.filter((vector) => !existingVectors.includes(vector));
         const ensembleStr = ensembleSet.findEnsemble(ensembleIdent)?.getDisplayName() ?? ensembleIdent.toString();
         const vectorArrayStr = joinStringArrayToHumanReadableString(nonExistingVectors);
         statusWriter.addWarning(`Vector ${vectorArrayStr} does not exist in ensemble ${ensembleStr}`);
+    };
+
+    // Note: selectedVectorNames is not updated until vectorSelectorData is updated and VectorSelector triggers onChange
+    if (selectedEnsembleIdents.length === 1) {
+        // If single ensemble is selected and no vectors exist, selectedVectorNames is empty as no vectors are valid
+        // in the VectorSelector. Then utilizing selectedVectorTags for status message
+        const vectorNames = selectedVectorNames.length > 0 ? selectedVectorNames : selectedVectorTags;
+        validateVectorNamesInEnsemble(vectorNames, selectedEnsembleIdents[0]);
+    }
+    for (const ensembleIdent of selectedEnsembleIdents) {
+        validateVectorNamesInEnsemble(selectedVectorNames, ensembleIdent);
     }
 
     // Set statistics type for checkbox rendering
@@ -247,6 +259,7 @@ export function Settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
 
     function handleVectorSelectionChange(selection: SmartNodeSelectorSelection) {
         setSelectedVectorNames(selection.selectedNodes);
+        setSelectedVectorTags(selection.selectedTags);
     }
 
     function handleFrequencySelectionChange(newFrequencyStr: string) {
