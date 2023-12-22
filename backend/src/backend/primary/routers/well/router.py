@@ -11,6 +11,8 @@ from src.backend.auth.auth_helper import AuthHelper
 from src.services.sumo_access._helpers import SumoCase
 from src.services.smda_access.types import WellBoreHeader, WellBoreTrajectory
 
+from src.services.smda_access.types import WellBorePick, StratigraphicUnit
+
 from . import schemas
 
 LOGGER = logging.getLogger(__name__)
@@ -140,4 +142,37 @@ async def get_wellbore_picks_and_stratigraphy_units(
     stratigraphy_units = await stratigraphy_access.get_stratigraphic_units(stratigraphic_column_identifier)
     wellbore_picks = await well_access.get_wellbore_picks(wellbore_uuid=wellbore_uuid.lower())
 
-    return schemas.WellBorePicksAndStratigraphyUnits(picks=wellbore_picks, stratigraphy_units=stratigraphy_units)
+    return schemas.WellBorePicksAndStratigraphyUnits(
+        wellbore_picks=wellbore_picks,
+        stratigraphy_units=stratigraphy_units,
+    )
+
+    # return schemas.WellBorePicksAndStratigraphyUnits(
+    #     wellbore_picks=convert_well_bore_picks_to_schema(wellbore_picks),
+    #     stratigraphy_units=convert_stratigraphic_units_to_schema(stratigraphy_units),
+    # )
+
+
+def convert_well_bore_picks_to_schema(well_bore_picks: List[WellBorePick]) -> List[schemas.WellBorePick]:
+    return [
+        schemas.WellBorePick(
+            northing=pick.northing,
+            easting=pick.easting,
+            tvd=pick.tvd,
+            tvd_msl=pick.tvd_msl,
+            md=pick.md,
+            md_msl=pick.md_msl,
+            unique_wellbore_identifier=pick.unique_wellbore_identifier,
+            pick_identifier=pick.pick_identifier,
+            # confidence=pick.confidence,
+            # depth_reference_point=pick.depth_reference_point,
+            # md_unit=pick.md_unit,
+        )
+        for pick in well_bore_picks
+    ]
+
+
+def convert_stratigraphic_units_to_schema(
+    stratigraphic_units: List[StratigraphicUnit],
+) -> List[schemas.StratigraphicUnit]:
+    return [schemas.StratigraphicUnit(**unit.__dict__) for unit in stratigraphic_units]

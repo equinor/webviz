@@ -16,6 +16,8 @@ import {
     transformFormationData,
 } from "@equinor/esv-intersection";
 
+import { toInteger } from "lodash";
+
 import { makeReferenceSystemFromTrajectoryXyzPoints } from "./esvIntersectionDataConversion";
 
 /**
@@ -159,11 +161,46 @@ export function addSurfacesLayer(
 
 export function addWellborePicksLayer(
     controller: Controller,
-    WellBorePicksAndStratigraphyUnits_api: WellBorePicksAndStratigraphyUnits_api // TODO: Decompose and pass Pick and Unit data separately?
+    wellBorePicksAndStratigraphyUnits_api: WellBorePicksAndStratigraphyUnits_api // TODO: Decompose and pass Pick and Unit data separately?
 ) {
+    // ****************************************************************************************************
+    // ****************************************************************************************************
+    //
+    // TODO:
+    // Get correct data from backend api and convert to correct format for esv intersection
+    // ../webviz/backend/src/backend/primary/routers/well/schemas.py vs
+    // ..webviz/backend/src/services/smda_access/mocked_drogon_smda_access/_mocked_stratigraphy_access.py
+    //
+    // ****************************************************************************************************
+    // ****************************************************************************************************
+
     const picksData = transformFormationData(
-        WellBorePicksAndStratigraphyUnits_api.wellborePicks as any,
-        WellBorePicksAndStratigraphyUnits_api.stratigraphyUnits as any
+        wellBorePicksAndStratigraphyUnits_api.wellborePicks.map((pick) => {
+            return {
+                pickIdentifier: pick.pickIdentifier,
+                confidence: pick.confidence,
+                depthReferencePoint: pick.depthReferencePoint,
+                md: pick.md,
+                mdUnit: pick.mdUnit,
+                tvd: pick.tvd,
+            };
+        }),
+        wellBorePicksAndStratigraphyUnits_api.stratigraphyUnits.map((unit) => {
+            return {
+                identifier: unit.identifier,
+                top: unit.top,
+                base: unit.base,
+                baseAge: unit.baseAge,
+                topAge: unit.topAge,
+                colorR: unit.colorR,
+                colorG: unit.colorG,
+                colorB: unit.colorB,
+                stratUnitLevel: unit.stratUnitLevel,
+                stratUnitParent: unit.stratUnitParent == null ? 0 : toInteger(unit.stratUnitParent),
+                lithologyType:
+                    typeof unit.lithologyType == "string" ? toInteger(unit.lithologyType) : unit.lithologyType,
+            };
+        })
     );
     const layer = new CalloutCanvasLayer<Annotation[]>("callout", {
         order: 100,

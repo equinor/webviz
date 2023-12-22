@@ -2,6 +2,14 @@ from typing import List, Optional
 from pydantic import BaseModel
 
 
+# from src.services.smda_access.types import WellBorePick, StratigraphicUnit
+
+
+# class WellBorePicksAndStratigraphyUnits(BaseModel):
+#     wellbore_picks: List[WellBorePick]
+#     stratigraphy_units: List[StratigraphicUnit]
+
+
 def to_camel_case(string: str) -> str:
     components = string.split("_")
     return components[0] + "".join(x.title() for x in components[1:])
@@ -14,6 +22,21 @@ class CamelCaseBaseModel(BaseModel):
 
 
 class StratigraphicUnit(CamelCaseBaseModel):
+    """
+    Needed for esvIntersection:
+    - identifier
+    - top
+    - base
+    - base_age
+    - top_age
+    - color_r
+    - color_g
+    - color_b
+    - strat_unit_level
+    - strat_unit_parent
+    - lithology_type
+    """
+
     identifier: str
     top: str
     base: str
@@ -32,6 +55,16 @@ class StratigraphicUnit(CamelCaseBaseModel):
 
 
 class WellBorePick(CamelCaseBaseModel):
+    """
+    Needed for esvIntersection:
+    - pick_identifier
+    - confidence
+    - depth_reference_point
+    - md
+    - md_unit
+    - tvd
+    """
+
     northing: float
     easting: float
     tvd: float

@@ -19,7 +19,7 @@ class WellAccess:
         # elif wellbore_uuid == "drogon_vertical":
         #     well_picks = [pick for pick in mocked_wellbore_picks if pick.unique_wellbore_identifier == "55/33-1"]
         # return well_picks
-        return [pick for pick in mocked_wellbore_picks if pick["unique_wellbore_identifier"] == wellbore_uuid]
+        return [pick for pick in mocked_wellbore_picks if pick.unique_wellbore_identifier == wellbore_uuid]
 
     # type: ignore
     # pylint: disable=unused-argument
