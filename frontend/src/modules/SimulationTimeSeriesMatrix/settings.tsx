@@ -25,6 +25,7 @@ import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { FilterAlt } from "@mui/icons-material";
 
 import { isEqual } from "lodash";
+import { VectorDescription_api } from "src/api";
 
 import { useVectorListQueries } from "./queryHooks";
 import {
@@ -47,7 +48,7 @@ enum StatisticsType {
     FANCHART = "Fanchart",
 }
 
-export function settings({ moduleContext, workbenchSession }: ModuleFCProps<State>) {
+export function Settings({ moduleContext, workbenchSession }: ModuleFCProps<State>) {
     const ensembleSet = useEnsembleSet(workbenchSession);
     const statusWriter = useSettingsStatusWriter(moduleContext);
 
@@ -70,6 +71,12 @@ export function settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
     const [vectorSelectorData, setVectorSelectorData] = React.useState<TreeDataNode[]>([]);
     const [statisticsType, setStatisticsType] = React.useState<StatisticsType>(StatisticsType.INDIVIDUAL);
     const [filteredParameterIdentList, setFilteredParameterIdentList] = React.useState<ParameterIdent[]>([]);
+    const [prevVectorQueriesDataList, setPrevVectorQueriesDataList] = React.useState<
+        (VectorDescription_api[] | undefined)[]
+    >([]);
+    const [prevSelectedEnsembleIdents, setPrevSelectedEnsembleIdents] = React.useState<EnsembleIdent[]>([]);
+
+    const ensembleVectorListsHelper = React.useRef<EnsembleVectorListsHelper>(new EnsembleVectorListsHelper([], []));
 
     if (!isEqual(ensembleSet, previousEnsembleSet)) {
         const newSelectedEnsembleIdents = selectedEnsembleIdents.filter((ensemble) =>
@@ -107,14 +114,29 @@ export function settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
     }
 
     const vectorListQueries = useVectorListQueries(selectedEnsembleIdents);
-    const ensembleVectorListsHelper = new EnsembleVectorListsHelper(selectedEnsembleIdents, vectorListQueries);
-    const selectedVectorNamesHasHistorical = ensembleVectorListsHelper.hasAnyHistoricalVector(selectedVectorNames);
-    const currentVectorSelectorData = createVectorSelectorDataFromVectors(ensembleVectorListsHelper.vectorsUnion());
 
-    const [selectedParameterIdentStr, setSelectedParameterIdentStr] = useValidState<string | null>(null, [
-        filteredParameterIdentList,
-        (item: ParameterIdent) => item.toString(),
-    ]);
+    if (
+        !isEqual(
+            vectorListQueries.map((el) => el.data),
+            prevVectorQueriesDataList
+        ) ||
+        !isEqual(selectedEnsembleIdents, prevSelectedEnsembleIdents)
+    ) {
+        setPrevVectorQueriesDataList(vectorListQueries.map((el) => el.data));
+        setPrevSelectedEnsembleIdents(selectedEnsembleIdents);
+        ensembleVectorListsHelper.current = new EnsembleVectorListsHelper(selectedEnsembleIdents, vectorListQueries);
+    }
+
+    const selectedVectorNamesHasHistorical =
+        ensembleVectorListsHelper.current.hasAnyHistoricalVector(selectedVectorNames);
+    const currentVectorSelectorData = createVectorSelectorDataFromVectors(
+        ensembleVectorListsHelper.current.vectorsUnion()
+    );
+
+    const [selectedParameterIdentStr, setSelectedParameterIdentStr] = useValidState<string | null>({
+        initialState: null,
+        validStates: filteredParameterIdentList.map((item: ParameterIdent) => item.toString()),
+    });
 
     // Await update of vectorSelectorData until all vector lists are finished fetching
     const isVectorListQueriesFetching = vectorListQueries.some((query) => query.isFetching);
@@ -139,7 +161,7 @@ export function settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
     // Note: selectedVectorNames is not updated until vectorSelectorData is updated and VectorSelector triggers onChange
     for (const ensembleIdent of selectedEnsembleIdents) {
         const nonExistingVectors = selectedVectorNames.filter(
-            (vector) => !ensembleVectorListsHelper.isVectorInEnsemble(ensembleIdent, vector)
+            (vector) => !ensembleVectorListsHelper.current.isVectorInEnsemble(ensembleIdent, vector)
         );
         if (nonExistingVectors.length === 0) {
             continue;
@@ -156,25 +178,30 @@ export function settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
         setStatisticsType(computedStatisticsType);
     }
 
+    const numberOfQueriesWithData = ensembleVectorListsHelper.current.numberOfQueriesWithData();
+
     React.useEffect(
         function propagateVectorSpecsToView() {
             const newVectorSpecifications: VectorSpec[] = [];
             for (const ensembleIdent of selectedEnsembleIdents) {
                 for (const vector of selectedVectorNames) {
-                    if (!ensembleVectorListsHelper.isVectorInEnsemble(ensembleIdent, vector)) {
+                    if (!ensembleVectorListsHelper.current.isVectorInEnsemble(ensembleIdent, vector)) {
                         continue;
                     }
 
                     newVectorSpecifications.push({
                         ensembleIdent: ensembleIdent,
                         vectorName: vector,
-                        hasHistoricalVector: ensembleVectorListsHelper.hasHistoricalVector(ensembleIdent, vector),
+                        hasHistoricalVector: ensembleVectorListsHelper.current.hasHistoricalVector(
+                            ensembleIdent,
+                            vector
+                        ),
                     });
                 }
             }
             setVectorSpecifications(newVectorSpecifications);
         },
-        [selectedEnsembleIdents, selectedVectorNames, ensembleVectorListsHelper.numberOfQueriesWithData()]
+        [selectedEnsembleIdents, selectedVectorNames, numberOfQueriesWithData, setVectorSpecifications]
     );
 
     React.useEffect(
@@ -199,7 +226,7 @@ export function settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
                 setParameterIdent(null);
             }
         },
-        [selectedParameterIdentStr, filteredParameterIdentList]
+        [selectedParameterIdentStr, filteredParameterIdentList, setParameterIdent]
     );
 
     function handleGroupByChange(event: React.ChangeEvent<HTMLInputElement>) {

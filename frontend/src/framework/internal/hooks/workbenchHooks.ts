@@ -17,7 +17,7 @@ export function useModuleInstances(workbench: Workbench): ModuleInstance<any>[] 
         );
 
         return unsubscribeFunc;
-    }, []);
+    }, [workbench]);
 
     return moduleInstances;
 }

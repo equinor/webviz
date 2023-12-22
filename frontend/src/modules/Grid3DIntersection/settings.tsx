@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React from "react";
 
 import { ModuleFCProps } from "@framework/Module";
 import { useFirstEnsembleInEnsembleSet } from "@framework/WorkbenchSession";
@@ -12,7 +12,7 @@ import { useGridModelNames, useGridParameterNames } from "./queryHooks";
 import state from "./state";
 
 //-----------------------------------------------------------------------------------------------------------
-export function settings({ moduleContext, workbenchSession }: ModuleFCProps<state>) {
+export function Settings({ moduleContext, workbenchSession }: ModuleFCProps<state>) {
     // From Workbench
     const firstEnsemble = useFirstEnsembleInEnsembleSet(workbenchSession);
 
@@ -29,7 +29,7 @@ export function settings({ moduleContext, workbenchSession }: ModuleFCProps<stat
     const parameterNamesQuery = useGridParameterNames(firstCaseUuid, firstEnsembleName, gridName);
 
     // Handle Linked query
-    useEffect(() => {
+    React.useEffect(() => {
         if (parameterNamesQuery.data) {
             if (gridName && parameterNamesQuery.data.find((name) => name === parameterName)) {
                 // New grid has same parameter
@@ -38,7 +38,7 @@ export function settings({ moduleContext, workbenchSession }: ModuleFCProps<stat
                 setParameterName(parameterNamesQuery.data[0]);
             }
         }
-    }, [parameterNamesQuery.data, parameterName]);
+    }, [parameterNamesQuery.data, parameterName, gridName, setParameterName]);
 
     // If no grid names, stop here
     if (!gridNamesQuery.data) {

@@ -26,7 +26,7 @@ import {
     filterVectorSpecificationAndIndividualStatisticsDataArray,
 } from "./utils/vectorSpecificationsAndQueriesUtils";
 
-export const view = ({ moduleContext, workbenchSession, workbenchSettings }: ModuleFCProps<State>) => {
+export const View = ({ moduleContext, workbenchSession, workbenchSettings }: ModuleFCProps<State>) => {
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);
     const wrapperDivSize = useElementSize(wrapperDivRef);
 

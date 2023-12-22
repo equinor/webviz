@@ -4,6 +4,7 @@ from sumo.wrapper import SumoClient
 from fmu.sumo.explorer.objects import CaseCollection, Case
 
 from src import config
+from src.services.service_exceptions import Service, NoDataError, MultipleDataMatchesError
 from .queries.case import get_stratigraphic_column_identifier, get_field_identifiers
 
 
@@ -16,8 +17,11 @@ async def _init_helper(access_token: str, case_uuid: str) -> Tuple[SumoClient, C
     sumo_client: SumoClient = create_sumo_client_instance(access_token)
     case_collection = CaseCollection(sumo_client).filter(uuid=case_uuid)
 
-    if await case_collection.length_async() != 1:
-        raise ValueError(f"None or multiple sumo cases found {case_uuid=}")
+    matching_case_count = await case_collection.length_async()
+    if matching_case_count == 0:
+        raise NoDataError(f"Sumo case not found for {case_uuid=}", Service.SUMO)
+    if matching_case_count > 1:
+        raise MultipleDataMatchesError(f"Multiple sumo cases found for {case_uuid=}", Service.SUMO)
 
     case = case_collection[0]
 

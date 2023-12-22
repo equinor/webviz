@@ -266,7 +266,7 @@ export const Layout: React.FC<LayoutProps> = (props) => {
                 clearTimeout(delayTimer);
             }
         };
-    }, [size, moduleInstances]);
+    }, [size, moduleInstances, guiMessageBroker, props.workbench]);
 
     const makeTempViewWrapperPlaceholder = () => {
         if (!tempLayoutBoxId) {

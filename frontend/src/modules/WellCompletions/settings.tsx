@@ -3,6 +3,7 @@ import React from "react";
 import { Ensemble } from "@framework/Ensemble";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { ModuleFCProps } from "@framework/Module";
+import { useSettingsStatusWriter } from "@framework/StatusWriter";
 import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { SingleEnsembleSelect } from "@framework/components/SingleEnsembleSelect";
@@ -27,23 +28,35 @@ enum RealizationSelection {
     Single = "Single",
 }
 
-export const settings = ({ moduleContext, workbenchSession, workbenchServices }: ModuleFCProps<State>) => {
+export const Settings = ({
+    moduleContext,
+    workbenchSession,
+    workbenchServices,
+    workbenchSettings,
+}: ModuleFCProps<State>) => {
     const ensembleSet = useEnsembleSet(workbenchSession);
+    const statusWriter = useSettingsStatusWriter(moduleContext);
+
     const [availableTimeSteps, setAvailableTimeSteps] = moduleContext.useStoreState("availableTimeSteps");
     const setDataLoadingStatus = moduleContext.useSetStoreValue("dataLoadingStatus");
     const setPlotData = moduleContext.useSetStoreValue("plotData");
 
+    const stratigraphyColorSet = workbenchSettings.useColorSet();
+
     const [realizationSelection, setRealizationSelection] = React.useState<RealizationSelection>(
         RealizationSelection.Aggregated
     );
-    const [selectedEnsembleIdent, setSelectedEnsembleIdent] = useValidState<EnsembleIdent | null>(null, [
-        ensembleSet.getEnsembleArr(),
-        (item: Ensemble) => item.getIdent(),
-    ]);
-    const [selectedRealizationNumber, setSelectedRealizationNumber] = useValidState<number>(0, [
-        (selectedEnsembleIdent && ensembleSet.findEnsemble(selectedEnsembleIdent)?.getRealizations()) ?? [],
-        (item: number) => item,
-    ]);
+    const [selectedEnsembleIdent, setSelectedEnsembleIdent] = useValidState<EnsembleIdent | null>({
+        initialState: null,
+        validStates: ensembleSet.getEnsembleArr().map((item: Ensemble) => item.getIdent()),
+    });
+    const [selectedRealizationNumber, setSelectedRealizationNumber] = useValidState<number>({
+        initialState: 0,
+        validStates:
+            (selectedEnsembleIdent && ensembleSet.findEnsemble(selectedEnsembleIdent)?.getRealizations())?.map(
+                (item: number) => item
+            ) ?? [],
+    });
 
     const [selectedTimeStepOptions, setSelectedTimeStepOptions] = React.useState<{
         timeStepIndex: number | [number, number] | null;
@@ -68,8 +81,48 @@ export const settings = ({ moduleContext, workbenchSession, workbenchServices }:
         realizationSelection === RealizationSelection.Single ? selectedRealizationNumber : undefined
     );
 
+    if (wellCompletionsQuery.isError) {
+        let message = "Error loading well completions data for ensemble";
+        if (realizationSelection === RealizationSelection.Single) {
+            message += ` and realization ${selectedRealizationNumber}`;
+        }
+        statusWriter.addError(message);
+    }
+
     // Use ref to prevent new every render
     const wellCompletionsDataAccessor = React.useRef<WellCompletionsDataAccessor>(new WellCompletionsDataAccessor());
+
+    const createAndPropagatePlotDataToView = React.useCallback(
+        function createAndPropagatePlotDataToView(
+            availableTimeSteps: string[] | null,
+            timeStepIndex: number | [number, number] | null,
+            timeAggregation: TimeAggregationType
+        ): void {
+            if (!wellCompletionsDataAccessor.current || availableTimeSteps === null || timeStepIndex === null) {
+                setPlotData(null);
+                return;
+            }
+            if (typeof timeStepIndex === "number" && availableTimeSteps.length < timeStepIndex) {
+                setPlotData(null);
+                return;
+            }
+            if (
+                typeof timeStepIndex !== "number" &&
+                (availableTimeSteps.length < timeStepIndex[0] || availableTimeSteps.length < timeStepIndex[1])
+            ) {
+                setPlotData(null);
+                return;
+            }
+
+            const timeStepSelection: string | [string, string] =
+                typeof timeStepIndex === "number"
+                    ? availableTimeSteps[timeStepIndex]
+                    : [availableTimeSteps[timeStepIndex[0]], availableTimeSteps[timeStepIndex[1]]];
+
+            setPlotData(wellCompletionsDataAccessor.current.createPlotData(timeStepSelection, timeAggregation));
+        },
+        [setPlotData]
+    );
 
     React.useEffect(
         function handleNewQueryData() {
@@ -80,13 +133,14 @@ export const settings = ({ moduleContext, workbenchSession, workbenchServices }:
                 return;
             }
 
-            wellCompletionsDataAccessor.current.parseWellCompletionsData(wellCompletionsQuery.data);
+            wellCompletionsDataAccessor.current.parseWellCompletionsData(
+                wellCompletionsQuery.data,
+                stratigraphyColorSet
+            );
 
             // Update available time steps
             const allTimeSteps = wellCompletionsDataAccessor.current.getTimeSteps();
-            if (availableTimeSteps !== allTimeSteps) {
-                setAvailableTimeSteps(allTimeSteps);
-            }
+            setAvailableTimeSteps((prev) => (prev !== allTimeSteps ? allTimeSteps : prev));
 
             // Update selected time step indices if not among available time steps
             let timeStepIndex = selectedTimeStepOptions.timeStepIndex;
@@ -114,13 +168,21 @@ export const settings = ({ moduleContext, workbenchSession, workbenchServices }:
                 setPlotData(null);
                 return;
             }
-            createAndSetPlotData(allTimeSteps, timeStepIndex, selectedTimeStepOptions.timeAggregationType);
+
+            createAndPropagatePlotDataToView(allTimeSteps, timeStepIndex, selectedTimeStepOptions.timeAggregationType);
         },
-        [wellCompletionsQuery.data, selectedTimeStepOptions]
+        [
+            wellCompletionsQuery.data,
+            selectedTimeStepOptions,
+            stratigraphyColorSet,
+            setPlotData,
+            setAvailableTimeSteps,
+            createAndPropagatePlotDataToView,
+        ]
     );
 
     React.useEffect(
-        function handleQueryStateChange() {
+        function propagateQueryStatesToView() {
             if (wellCompletionsQuery.isFetching) {
                 setDataLoadingStatus(DataLoadingStatus.Loading);
             } else if (wellCompletionsQuery.status === "error") {
@@ -129,36 +191,8 @@ export const settings = ({ moduleContext, workbenchSession, workbenchServices }:
                 setDataLoadingStatus(DataLoadingStatus.Idle);
             }
         },
-        [wellCompletionsQuery.status, wellCompletionsQuery.fetchStatus]
+        [wellCompletionsQuery.status, wellCompletionsQuery.isFetching, setDataLoadingStatus]
     );
-
-    function createAndSetPlotData(
-        availableTimeSteps: string[] | null,
-        timeStepIndex: number | [number, number] | null,
-        timeAggregation: TimeAggregationType
-    ): void {
-        if (!wellCompletionsDataAccessor.current || availableTimeSteps === null || timeStepIndex === null) {
-            setPlotData(null);
-            return;
-        }
-        if (typeof timeStepIndex === "number" && availableTimeSteps.length < timeStepIndex) {
-            setPlotData(null);
-            return;
-        }
-        if (
-            typeof timeStepIndex !== "number" &&
-            (availableTimeSteps.length < timeStepIndex[0] || availableTimeSteps.length < timeStepIndex[1])
-        ) {
-            setPlotData(null);
-            return;
-        }
-
-        const timeStepSelection: string | [string, string] =
-            typeof timeStepIndex === "number"
-                ? availableTimeSteps[timeStepIndex]
-                : [availableTimeSteps[timeStepIndex[0]], availableTimeSteps[timeStepIndex[1]]];
-        setPlotData(wellCompletionsDataAccessor.current.createPlotData(timeStepSelection, timeAggregation));
-    }
 
     function handleEnsembleSelectionChange(newEnsembleIdent: EnsembleIdent | null) {
         setSelectedEnsembleIdent(newEnsembleIdent);
@@ -208,7 +242,7 @@ export const settings = ({ moduleContext, workbenchSession, workbenchServices }:
             });
         }
 
-        createAndSetPlotData(availableTimeSteps, newTimeStepIndex, newTimeAggregation);
+        createAndPropagatePlotDataToView(availableTimeSteps, newTimeStepIndex, newTimeAggregation);
     }
 
     function handleSelectedTimeStepIndexChange(e: Event, newIndex: number | number[]) {
@@ -224,14 +258,18 @@ export const settings = ({ moduleContext, workbenchSession, workbenchServices }:
             }));
         }
 
-        createAndSetPlotData(availableTimeSteps, newTimeStepIndex, selectedTimeStepOptions.timeAggregationType);
+        createAndPropagatePlotDataToView(
+            availableTimeSteps,
+            newTimeStepIndex,
+            selectedTimeStepOptions.timeAggregationType
+        );
     }
 
     function handleSearchWellChange(e: React.ChangeEvent<HTMLInputElement>) {
         const value = e.target.value;
         wellCompletionsDataAccessor.current?.setSearchWellText(value);
 
-        createAndSetPlotData(
+        createAndPropagatePlotDataToView(
             availableTimeSteps,
             selectedTimeStepOptions.timeStepIndex,
             selectedTimeStepOptions.timeAggregationType
@@ -242,7 +280,7 @@ export const settings = ({ moduleContext, workbenchSession, workbenchServices }:
         const checked = e.target.checked;
         wellCompletionsDataAccessor.current?.setHideZeroCompletions(checked);
 
-        createAndSetPlotData(
+        createAndPropagatePlotDataToView(
             availableTimeSteps,
             selectedTimeStepOptions.timeStepIndex,
             selectedTimeStepOptions.timeAggregationType
@@ -271,20 +309,11 @@ export const settings = ({ moduleContext, workbenchSession, workbenchServices }:
                 text="Ensemble:"
                 labelClassName={syncHelper.isSynced(SyncSettingKey.ENSEMBLE) ? "bg-indigo-700 text-white" : ""}
             >
-                <>
-                    <SingleEnsembleSelect
-                        ensembleSet={ensembleSet}
-                        value={computedEnsembleIdent}
-                        onChange={handleEnsembleSelectionChange}
-                    />
-                    {
-                        <div className="text-red-500 text-sm h-4">
-                            {wellCompletionsQuery.isError
-                                ? "Current ensemble does not contain well completions data"
-                                : ""}
-                        </div>
-                    }
-                </>
+                <SingleEnsembleSelect
+                    ensembleSet={ensembleSet}
+                    value={computedEnsembleIdent}
+                    onChange={handleEnsembleSelectionChange}
+                />
             </Label>
             <div className={resolveClassNames({ "pointer-events-none opacity-40": wellCompletionsQuery.isError })}>
                 <Label text="Realization selection">

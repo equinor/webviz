@@ -1,8 +1,8 @@
 import { ModuleRegistry } from "@framework/ModuleRegistry";
 
-import { settings } from "./settings";
+import { Settings } from "./settings";
 import { state } from "./state";
-import { view } from "./view";
+import { View } from "./view";
 
 const defaultState: state = {
     meshSurfaceAddress: null,
@@ -20,5 +20,5 @@ const module = ModuleRegistry.initModule<state>("SubsurfaceMap", defaultState, {
     surfaceSettings: { deepCompare: true },
 });
 
-module.viewFC = view;
-module.settingsFC = settings;
+module.viewFC = View;
+module.settingsFC = Settings;

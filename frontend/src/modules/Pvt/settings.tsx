@@ -22,7 +22,7 @@ const numberToOptions = (numbers: number[]): DropdownOption[] => {
     return numbers.map((number) => ({ label: number.toString(), value: number.toString() }));
 };
 
-export function settings({ moduleContext, workbenchSession }: ModuleFCProps<state>) {
+export function Settings({ moduleContext, workbenchSession }: ModuleFCProps<state>) {
     //Just using the first ensemble for now
     const firstEnsemble = useFirstEnsembleInEnsembleSet(workbenchSession);
 
@@ -81,7 +81,15 @@ export function settings({ moduleContext, workbenchSession }: ModuleFCProps<stat
             setAvailablePlots(newAvailablePlots);
             setActivePvtPlots(newAvailablePlotValues);
         }
-    }, [pvtDataQuery.data, activePvtName]);
+    }, [
+        pvtDataQuery.data,
+        activePvtName,
+        activePvtNum,
+        activePvtPlots,
+        setActivePvtNum,
+        setActivePvtPlots,
+        setAvailablePlots,
+    ]);
 
     // effect triggered by changing any setting. Updates list of plot data sent to view
     // Split up? Have in view instead?
@@ -98,7 +106,7 @@ export function settings({ moduleContext, workbenchSession }: ModuleFCProps<stat
             }
             setPvtPlotDataSet(pvtPlotData);
         }
-    }, [activePvtNum, activePvtName, activePvtPlots, pvtDataQuery.data]);
+    }, [activePvtNum, activePvtName, activePvtPlots, pvtDataQuery.data, setPvtPlotDataSet]);
 
     // Handle failed query
     if (!pvtDataQuery.data) {

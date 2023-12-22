@@ -18,7 +18,7 @@ import { useGetParameterNamesQuery, useTimestampsListQuery, useVectorsQuery } fr
 import { State } from "./state";
 
 //-----------------------------------------------------------------------------------------------------------
-export function settings({ moduleContext, workbenchSession, workbenchServices }: ModuleFCProps<State>) {
+export function Settings({ moduleContext, workbenchSession, workbenchServices }: ModuleFCProps<State>) {
     const ensembleSet = useEnsembleSet(workbenchSession);
     const [selectedEnsemble, setSelectedEnsemble] = React.useState<EnsembleIdent | null>(null);
 
@@ -69,7 +69,7 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
                 moduleContext.getStateStore().setValue("vectorSpec", null);
             }
         },
-        [computedEnsemble, computedVectorName]
+        [computedEnsemble, computedVectorName, moduleContext, ensembleSet]
     );
 
     function handleEnsembleSelectionChange(newEnsembleIdent: EnsembleIdent | null) {

@@ -3,14 +3,11 @@ import React from "react";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { ModuleFCProps } from "@framework/Module";
 import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
-
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { SingleEnsembleSelect } from "@framework/components/SingleEnsembleSelect";
 import { fixupEnsembleIdent, maybeAssignFirstSyncedEnsemble } from "@framework/utils/ensembleUiHelpers";
 import { timestampUtcMsToCompactIsoString } from "@framework/utils/timestampUtils";
-
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
-
 import { Select, SelectOption } from "@lib/components/Select";
 
 import { isEqual } from "lodash";
@@ -29,7 +26,7 @@ const timepointOptions = (timePoints: number[]): SelectOption[] => {
     }));
 };
 
-export function settings({ moduleContext, workbenchServices, workbenchSession }: ModuleFCProps<state>) {
+export function Settings({ moduleContext, workbenchServices, workbenchSession }: ModuleFCProps<state>) {
     const ensembleSet = useEnsembleSet(workbenchSession);
     const [rftWellAddress, setRftWellAddress] = moduleContext.useStoreState("rftWellAddress");
     const [selectedEnsembleIdent, setSelectedEnsembleIdent] = React.useState<EnsembleIdent | null>(null);
@@ -88,7 +85,9 @@ export function settings({ moduleContext, workbenchServices, workbenchSession }:
                     setRftWellAddress(addr);
                 }
             }
-        }, [computedTimePoint, selectedWellName, selectedEnsembleIdent]);
+        },
+        [computedTimePoint, selectedWellName, selectedEnsembleIdent, setRftWellAddress, rftWellAddress]
+    );
     function handleEnsembleSelectionChange(newEnsembleIdent: EnsembleIdent | null) {
         console.debug("handleEnsembleSelectionChange()");
         setSelectedEnsembleIdent(newEnsembleIdent);

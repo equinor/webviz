@@ -16,7 +16,7 @@ import { useRealizationsResponseQuery } from "./queryHooks";
 import { VolumetricResponseAbbreviations } from "./settings";
 import { State } from "./state";
 
-export const view = (props: ModuleFCProps<State>) => {
+export const View = (props: ModuleFCProps<State>) => {
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);
     const wrapperDivSize = useElementSize(wrapperDivRef);
     const ensembleIdent = props.moduleContext.useStoreValue("ensembleIdent");
@@ -104,7 +104,7 @@ export const view = (props: ModuleFCProps<State>) => {
 
             props.moduleContext.getChannel(BroadcastChannelNames.Response).broadcast(channelMeta, dataGenerator);
         },
-        [realizationsResponseQuery.data, ensemble, tableName, responseName]
+        [realizationsResponseQuery.data, ensemble, tableName, responseName, props.moduleContext]
     );
 
     const layout: Partial<Layout> = {

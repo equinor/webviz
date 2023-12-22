@@ -1,3 +1,15 @@
+/**
+ * Why are we disabling rules-of-hooks here?
+ *
+ * Well, we are using several hooks in this class, which is not allowed by this rule.
+ * However, we are not using these hooks in a component, but in a utility class.
+ * The important thing to remember is that these functions must be called on every render,
+ * unconditionally (i.e. not in a conditional statement) and not in a loop.
+ * This is exactly what we are doing here. We are only using the class to group the functions together
+ * and give additional context to the functions.
+ */
+
+/* eslint-disable react-hooks/rules-of-hooks */
 import { GlobalTopicDefinitions, TopicDefinitionsType } from "@framework/WorkbenchServices";
 import { useSubscribedValueConditionally } from "@framework/WorkbenchServices";
 import { WorkbenchServices } from "@framework/WorkbenchServices";
