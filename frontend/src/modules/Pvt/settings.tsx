@@ -2,10 +2,10 @@ import React, { useEffect } from "react";
 
 import { ModuleFCProps } from "@framework/Module";
 import { useFirstEnsembleInEnsembleSet } from "@framework/WorkbenchSession";
-import { ApiStateWrapper } from "@lib/components/ApiStateWrapper";
 import { Checkbox } from "@lib/components/Checkbox";
 import { Dropdown, DropdownOption } from "@lib/components/Dropdown";
 import { Label } from "@lib/components/Label";
+import { QueryStateWrapper } from "@lib/components/QueryStateWrapper";
 
 import { PlotOptionType, getAvailablePlotsForPhase } from "./pvtPlotDataAccessor";
 import { PvtQueryDataAccessor } from "./pvtQueryDataAccessor";
@@ -132,8 +132,8 @@ export function Settings({ moduleContext, workbenchSession }: ModuleFCProps<stat
     };
     return (
         <div>
-            <ApiStateWrapper
-                apiResult={pvtDataQuery}
+            <QueryStateWrapper
+                queryResult={pvtDataQuery}
                 errorComponent={"Error loading pvt data"}
                 loadingComponent={"Error loading pvt data"}
             >
@@ -173,7 +173,7 @@ export function Settings({ moduleContext, workbenchSession }: ModuleFCProps<stat
                         ))}
                     </>
                 </Label>
-            </ApiStateWrapper>
+            </QueryStateWrapper>
         </div>
     );
 }

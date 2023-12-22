@@ -54,7 +54,7 @@ export class EnsembleVectorListsHelper {
     isVectorInEnsemble(ensemble: EnsembleIdent, vector: string): boolean {
         const index = this._ensembleIdents.indexOf(ensemble);
 
-        if (!this._queries[index].data) return false;
+        if (index === -1 || !this._queries[index].data) return false;
 
         return this._queries[index].data?.some((vec) => vec.name === vector) ?? false;
     }
@@ -69,6 +69,7 @@ export class EnsembleVectorListsHelper {
         if (!this.isVectorInEnsemble(ensemble, vector)) return false;
 
         const index = this._ensembleIdents.indexOf(ensemble);
+        if (index === -1 || !this._queries[index].data) return false;
 
         return this._queries[index].data?.some((vec) => vec.name === vector && vec.has_historical) ?? false;
     }

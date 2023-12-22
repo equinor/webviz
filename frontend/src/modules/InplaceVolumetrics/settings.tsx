@@ -6,10 +6,10 @@ import { ModuleFCProps } from "@framework/Module";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { SingleEnsembleSelect } from "@framework/components/SingleEnsembleSelect";
 import { fixupEnsembleIdent } from "@framework/utils/ensembleUiHelpers";
-import { ApiStateWrapper } from "@lib/components/ApiStateWrapper/apiStateWrapper";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { Dropdown } from "@lib/components/Dropdown";
 import { Label } from "@lib/components/Label";
+import { QueryStateWrapper } from "@lib/components/QueryStateWrapper";
 import { Select } from "@lib/components/Select";
 import { UseQueryResult } from "@tanstack/react-query";
 
@@ -172,8 +172,8 @@ export function Settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
                     onChange={handleEnsembleSelectionChange}
                 />
             </Label>
-            <ApiStateWrapper
-                apiResult={tableDescriptionsQuery}
+            <QueryStateWrapper
+                queryResult={tableDescriptionsQuery}
                 loadingComponent={<CircularProgress />}
                 errorComponent={"Could not load table descriptions"}
                 className="flex flex-col gap-4"
@@ -212,7 +212,7 @@ export function Settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
                         </Label>
                     );
                 })}
-            </ApiStateWrapper>
+            </QueryStateWrapper>
         </>
     );
 }
