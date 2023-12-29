@@ -8,10 +8,10 @@ import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { SingleEnsembleSelect } from "@framework/components/SingleEnsembleSelect";
 import { fixupEnsembleIdent, maybeAssignFirstSyncedEnsemble } from "@framework/utils/ensembleUiHelpers";
 import { timestampUtcMsToCompactIsoString } from "@framework/utils/timestampUtils";
-import { ApiStateWrapper } from "@lib/components/ApiStateWrapper";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { Dropdown } from "@lib/components/Dropdown";
 import { Label } from "@lib/components/Label";
+import { QueryStateWrapper } from "@lib/components/QueryStateWrapper";
 import { Select, SelectOption } from "@lib/components/Select";
 
 import { useGetParameterNamesQuery, useTimestampsListQuery, useVectorsQuery } from "./queryHooks";
@@ -101,8 +101,8 @@ export function Settings({ moduleContext, workbenchSession, workbenchServices }:
                     onChange={handleEnsembleSelectionChange}
                 />
             </Label>
-            <ApiStateWrapper
-                apiResult={vectorsQuery}
+            <QueryStateWrapper
+                queryResult={vectorsQuery}
                 errorComponent={"Error loading vector names"}
                 loadingComponent={<CircularProgress />}
             >
@@ -118,9 +118,9 @@ export function Settings({ moduleContext, workbenchSession, workbenchServices }:
                         size={5}
                     />
                 </Label>
-            </ApiStateWrapper>
-            <ApiStateWrapper
-                apiResult={timestampsQuery}
+            </QueryStateWrapper>
+            <QueryStateWrapper
+                queryResult={timestampsQuery}
                 errorComponent={"Error loading timestamps"}
                 loadingComponent={<CircularProgress />}
             >
@@ -131,9 +131,9 @@ export function Settings({ moduleContext, workbenchSession, workbenchServices }:
                         onChange={(tsValAsString) => setTimestampUtcMs(Number(tsValAsString))}
                     />
                 </Label>
-            </ApiStateWrapper>
-            <ApiStateWrapper
-                apiResult={parameterNamesQuery}
+            </QueryStateWrapper>
+            <QueryStateWrapper
+                queryResult={parameterNamesQuery}
                 errorComponent={"Error loading parameter names"}
                 loadingComponent={<CircularProgress />}
             >
@@ -144,7 +144,7 @@ export function Settings({ moduleContext, workbenchSession, workbenchServices }:
                         onChange={setParameterName}
                     />
                 </Label>
-            </ApiStateWrapper>
+            </QueryStateWrapper>
         </>
     );
 }

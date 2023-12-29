@@ -7,13 +7,13 @@ import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { SingleEnsembleSelect } from "@framework/components/SingleEnsembleSelect";
 import { fixupEnsembleIdent, maybeAssignFirstSyncedEnsemble } from "@framework/utils/ensembleUiHelpers";
-import { ApiStateWrapper } from "@lib/components/ApiStateWrapper";
 import { Button } from "@lib/components/Button";
 import { Checkbox } from "@lib/components/Checkbox";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { Input } from "@lib/components/Input";
 import { Label } from "@lib/components/Label";
+import { QueryStateWrapper } from "@lib/components/QueryStateWrapper";
 import { RadioGroup } from "@lib/components/RadioGroup";
 import { Select, SelectOption } from "@lib/components/Select";
 import { PolygonsAddress, PolygonsDirectory, usePolygonsDirectoryQuery } from "@modules/_shared/Polygons";
@@ -490,8 +490,8 @@ export function Settings({ moduleContext, workbenchSession, workbenchServices }:
                 )}
             </CollapsibleGroup>
             <CollapsibleGroup expanded={true} title="Depth surface">
-                <ApiStateWrapper
-                    apiResult={meshSurfDirQuery}
+                <QueryStateWrapper
+                    queryResult={meshSurfDirQuery}
                     errorComponent={"Error loading surface directory"}
                     loadingComponent={<CircularProgress />}
                 >
@@ -517,7 +517,7 @@ export function Settings({ moduleContext, workbenchSession, workbenchServices }:
                             size={5}
                         />
                     </Label>
-                </ApiStateWrapper>
+                </QueryStateWrapper>
             </CollapsibleGroup>
             <CollapsibleGroup expanded={false} title="Property surface (color)">
                 <>
@@ -534,8 +534,8 @@ export function Settings({ moduleContext, workbenchSession, workbenchServices }:
                         </div>
                     </Label>
                     {usePropertySurface && (
-                        <ApiStateWrapper
-                            apiResult={propertySurfDirQuery}
+                        <QueryStateWrapper
+                            queryResult={propertySurfDirQuery}
                             errorComponent={"Error loading surface directory"}
                             loadingComponent={<CircularProgress />}
                         >
@@ -584,7 +584,7 @@ export function Settings({ moduleContext, workbenchSession, workbenchServices }:
                                     />
                                 </Label>
                             )}
-                        </ApiStateWrapper>
+                        </QueryStateWrapper>
                     )}
                 </>
             </CollapsibleGroup>
@@ -599,8 +599,8 @@ export function Settings({ moduleContext, workbenchSession, workbenchServices }:
                     </div>
                 </Label>
                 {showPolygon && (
-                    <ApiStateWrapper
-                        apiResult={polygonsDirectoryQuery}
+                    <QueryStateWrapper
+                        queryResult={polygonsDirectoryQuery}
                         errorComponent={"Error loading polygons directory"}
                         loadingComponent={<CircularProgress />}
                     >
@@ -641,12 +641,12 @@ export function Settings({ moduleContext, workbenchSession, workbenchServices }:
                                 size={5}
                             />
                         </Label>
-                    </ApiStateWrapper>
+                    </QueryStateWrapper>
                 )}
             </CollapsibleGroup>
             <CollapsibleGroup expanded={false} title="Well data">
-                <ApiStateWrapper
-                    apiResult={wellHeadersQuery}
+                <QueryStateWrapper
+                    queryResult={wellHeadersQuery}
                     errorComponent={"Error loading wells"}
                     loadingComponent={<CircularProgress />}
                 >
@@ -675,7 +675,7 @@ export function Settings({ moduleContext, workbenchSession, workbenchServices }:
                             />
                         </>
                     </Label>
-                </ApiStateWrapper>
+                </QueryStateWrapper>
             </CollapsibleGroup>
             <CollapsibleGroup expanded={false} title="View settings">
                 <div>
