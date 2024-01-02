@@ -10,6 +10,7 @@ import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { SingleEnsembleSelect } from "@framework/components/SingleEnsembleSelect";
 import { fixupEnsembleIdent, maybeAssignFirstSyncedEnsemble } from "@framework/utils/ensembleUiHelpers";
 import { ApiStateWrapper } from "@lib/components/ApiStateWrapper";
+import { Checkbox } from "@lib/components/Checkbox";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { Label } from "@lib/components/Label";
@@ -60,7 +61,9 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
         ? ensembleSet.findEnsemble(selectedEnsembleIdent)?.getRealizations()
         : null;
     const [selectedReals, setSelectedReals] = React.useState<number[] | null>(null);
-
+    if (!selectedReals && availableReals) {
+        setSelectedReals(availableReals.map((real) => real));
+    }
     // Queries
     const wellHeadersQuery = useWellHeadersQuery(computedEnsembleIdent?.getCaseUuid());
     const surfaceDirectoryQuery = useSurfaceDirectoryQuery(
@@ -105,9 +108,12 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
         surfaceDirectory?.getAttributeNames(null) ?? []
     );
     const [statisticalSurfaceNames, setStatisticalSurfaceNames] = React.useState<string[] | null>(null);
+    const [showRealizationSurfaces, setShowRealizationSurfaces] = React.useState<boolean>(true);
     const [realizationsSurfaceNames, setRealizationsSurfaceNames] = React.useState<string[] | null>(null);
     const availableSurfaceNames = surfaceDirectory ? surfaceDirectory.getSurfaceNames(selectedSurfaceAttribute) : null;
-
+    if (!realizationsSurfaceNames && availableSurfaceNames) {
+        setRealizationsSurfaceNames([availableSurfaceNames[0]]);
+    }
     const surfaceAttrOptions = surfaceDirectory
         ? surfaceDirectory.getAttributeNames(null).map((attribute) => {
               return { label: attribute, value: attribute };
@@ -117,7 +123,12 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
     React.useEffect(
         function propagateStatisticalSurfaceSetSpecToView() {
             let surfaceSetSpec: StatisticalSurfaceSetSpec | null = null;
-            if (computedEnsembleIdent && selectedSurfaceAttribute && statisticalSurfaceNames) {
+            if (
+                showRealizationSurfaces &&
+                computedEnsembleIdent &&
+                selectedSurfaceAttribute &&
+                statisticalSurfaceNames
+            ) {
                 surfaceSetSpec = {
                     caseUuid: computedEnsembleIdent.getCaseUuid(),
                     ensembleName: computedEnsembleIdent.getEnsembleName(),
@@ -133,7 +144,13 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
             }
             setStatisticalSurfaceSetSpec(surfaceSetSpec);
         },
-        [computedEnsembleIdent, selectedSurfaceAttribute, statisticalSurfaceNames, selectedReals]
+        [
+            computedEnsembleIdent,
+            selectedSurfaceAttribute,
+            statisticalSurfaceNames,
+            selectedReals,
+            showRealizationSurfaces,
+        ]
     );
     React.useEffect(
         function propagateRealizationsSurfaceSetSpecToView() {
@@ -204,6 +221,7 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
 
                     <RealizationsSelect
                         availableRealizations={availableReals?.map((real) => real) ?? []}
+                        selectedRealizations={selectedReals ?? []}
                         onChange={setSelectedReals}
                     />
                 </div>
@@ -230,7 +248,7 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
                     </Label>
                 </ApiStateWrapper>
             </CollapsibleGroup>
-            <CollapsibleGroup title="Surfaces">
+            <CollapsibleGroup title="Surfaces" expanded>
                 <ApiStateWrapper
                     apiResult={surfaceDirectoryQuery}
                     errorComponent={"Error loading seismic directory"}
@@ -251,11 +269,23 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
                             onChange={setStatisticalSurfaceNames}
                         />
 
-                        <TogglableMultiSelect
-                            values={availableSurfaceNames ?? []}
-                            label="Show realization surfaces"
-                            onChange={setRealizationsSurfaceNames}
-                        />
+                        <div>
+                            <Label wrapperClassName="flex gap-2" text="Show realization surfaces">
+                                <Checkbox
+                                    onChange={(e: any) => setShowRealizationSurfaces(e.target.checked)}
+                                    checked={showRealizationSurfaces}
+                                />
+                            </Label>
+                            {showRealizationSurfaces && (
+                                <Select
+                                    options={availableSurfaceNames?.map((name) => ({ label: name, value: name })) ?? []}
+                                    onChange={(e) => setRealizationsSurfaceNames(e)}
+                                    value={realizationsSurfaceNames ?? []}
+                                    size={5}
+                                    multiple={true}
+                                />
+                            )}
+                        </div>
                     </div>
                 </ApiStateWrapper>
             </CollapsibleGroup>

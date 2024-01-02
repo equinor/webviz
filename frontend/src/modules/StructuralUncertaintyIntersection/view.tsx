@@ -35,11 +35,7 @@ import {
 export const view = ({ moduleContext }: ModuleFCProps<State>) => {
     const wrapperDivRef = React.useRef<HTMLDivElement | null>(null);
     const wrapperDivSize = useElementSize(wrapperDivRef);
-    const esvIntersectionContainerRef = React.useRef<HTMLDivElement | null>(null);
-    const esvIntersectionControllerRef = React.useRef<Controller | null>(null);
-    const esvPixiContentRef = React.useRef<PixiRenderApplication | null>(null);
-    // const [pixiContext, setPixiContext] = React.useState<PixiRenderApplication | null>(null);
-    const gridLayerUuid = useId();
+
     const statusWriter = useViewStatusWriter(moduleContext);
 
     const realizationsSurfaceSetSpec = moduleContext.useStoreValue("realizationsSurfaceSetSpec");
@@ -56,26 +52,6 @@ export const view = ({ moduleContext }: ModuleFCProps<State>) => {
     // Data for seismic fence layer in esv-intersection
     const width = wrapperDivSize.width;
     const height = wrapperDivSize.height - 100;
-    React.useEffect(function initializeEsvIntersectionController() {
-        if (esvIntersectionContainerRef.current) {
-            const axisOptions = { xLabel: "x", yLabel: "y", unitOfMeasure: "m" };
-            esvIntersectionControllerRef.current = new Controller({
-                container: esvIntersectionContainerRef.current,
-                axisOptions,
-            });
-
-            // Initialize/configure controller
-            addMDOverlay(esvIntersectionControllerRef.current);
-            esvIntersectionControllerRef.current.addLayer(new GridLayer(gridLayerUuid));
-            esvIntersectionControllerRef.current.setBounds([10, 1000], [0, 3000]);
-            esvIntersectionControllerRef.current.setViewport(1000, 1650, 6000);
-            esvIntersectionControllerRef.current.zoomPanHandler.zFactor = intersectionSettings.zScale;
-        }
-        return () => {
-            console.debug("controller destroyed");
-            esvIntersectionControllerRef.current?.destroy();
-        };
-    }, []);
 
     // Get well trajectories query
     const getWellTrajectoriesQuery = useWellTrajectoriesQuery(wellboreAddress ? [wellboreAddress.uuid] : undefined);
@@ -92,11 +68,6 @@ export const view = ({ moduleContext }: ModuleFCProps<State>) => {
             trajectoryXyzPoints,
             intersectionSettings.extension
         );
-
-        const referenceSystem = makeReferenceSystemFromTrajectoryXyzPoints(trajectoryXyzPoints);
-        if (esvIntersectionControllerRef.current) {
-            esvIntersectionControllerRef.current.setReferenceSystem(referenceSystem);
-        }
 
         // If the new extended trajectory is different, update the polyline, but keep the seismic fence image
         if (!isEqual(newExtendedWellboreTrajectory, extendedWellboreTrajectory)) {
@@ -154,9 +125,8 @@ export const view = ({ moduleContext }: ModuleFCProps<State>) => {
         candidateSurfacePolyLineSpec,
         true
     );
-    let realData: SurfaceIntersectionPoints_api[] = [];
+    const realData: SurfaceIntersectionPoints_api[] = [];
     wellIntersectionSurfaceSetQueries.data?.forEach((surfaceSetIntersectionPoints) => {
-        console.log(surfaceSetIntersectionPoints.surfaceName);
         surfaceSetIntersectionPoints.intersectionPoints.forEach((intersectionPoint) => {
             realData.push(intersectionPoint);
         });
@@ -168,56 +138,6 @@ export const view = ({ moduleContext }: ModuleFCProps<State>) => {
         candidateSurfacePolyLineSpec,
         true
     );
-    if (
-        esvIntersectionControllerRef.current &&
-        (realData || surfaceSetStatisticsInsectionPointsQuery.data) &&
-        renderWellboreTrajectoryXyzPoints
-    ) {
-        // // Get an array of projected 2D points [x, y], as 2D curtain projection from a set of trajectory 3D points and offset
-        // const newExtendedWellboreTrajectoryXyProjection: number[][] = extendedWellboreTrajectory
-        //     ? IntersectionReferenceSystem.toDisplacement(
-        //           extendedWellboreTrajectory.points,
-        //           extendedWellboreTrajectory.offset
-        //       )
-        //     : [];
-
-        esvIntersectionControllerRef.current.removeAllLayers();
-        esvIntersectionControllerRef.current.clearAllData();
-        if (!esvPixiContentRef.current) {
-            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-            // @ts-ignore
-
-            esvPixiContentRef.current = new PixiRenderApplication({ width, height });
-        }
-
-        addWellborePathLayer(esvIntersectionControllerRef.current, renderWellboreTrajectoryXyzPoints);
-        if (realData) {
-            addSurfaceLayers(
-                esvIntersectionControllerRef.current,
-                realData,
-                esvPixiContentRef.current,
-                "realizations",
-                "black",
-                4
-            );
-        }
-        if (surfaceSetStatisticsInsectionPointsQuery.data) {
-            addSurfaceLayers(
-                esvIntersectionControllerRef.current,
-                surfaceSetStatisticsInsectionPointsQuery.data,
-                esvPixiContentRef.current,
-                "statistical",
-                "red",
-                10
-            );
-        }
-        // Update layout
-        esvIntersectionControllerRef.current.zoomPanHandler.zFactor = intersectionSettings.zScale;
-        esvIntersectionControllerRef.current.adjustToSize(
-            Math.max(0, wrapperDivSize.width),
-            Math.max(0, wrapperDivSize.height - 100)
-        );
-    }
 
     statusWriter.setLoading(getWellTrajectoriesQuery.isFetching || wellIntersectionSurfaceSetQueries.isFetching);
     // Build up an error string handling multiple errors. e.g. "Error loading well trajectories and seismic fence data"
@@ -235,7 +155,7 @@ export const view = ({ moduleContext }: ModuleFCProps<State>) => {
     }
 
     return (
-        <div ref={wrapperDivRef} className="relative w-full h-full">
+        <div ref={wrapperDivRef} className="w-full h-full">
             {errorString !== "" ? (
                 <ContentError>{errorString}</ContentError>
             ) : (

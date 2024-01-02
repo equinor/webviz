@@ -22,6 +22,10 @@ export function addMDOverlay(controller: Controller) {
         onMouseMove: (event: OverlayMouseMoveEvent<Controller>) => {
             const { target, caller, x } = event;
             const newX = caller.currentStateAsEvent.xScale.invert(x);
+            // console.log(caller.currentStateAsEvent);
+            // console.log(caller.getLayer("realizationsSurfaceLayer")?.getData());
+            // console.log(newX);
+            // console.log(x);
             const referenceSystem = caller.referenceSystem;
 
             if (!referenceSystem || !target) return;

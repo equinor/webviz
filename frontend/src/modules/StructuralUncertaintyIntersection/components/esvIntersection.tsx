@@ -33,7 +33,7 @@ export const EsvIntersection: React.FC<EsvIntersectionProps> = (props) => {
     const pixiContent = React.useRef<PixiRenderApplication | null>(null);
     const [previousWellborePath, setPreviousWellborePath] = React.useState<number[][] | null>(null);
     const width = props.width;
-    const height = props.height - 100;
+    const height = props.height;
     const seaAndRKBLayerData: ReferenceLine[] = [
         { text: "RKB", lineType: "dashed", color: "black", depth: 0 },
         { text: "MSL", lineType: "wavy", color: "blue", depth: 30 },
@@ -77,7 +77,7 @@ export const EsvIntersection: React.FC<EsvIntersectionProps> = (props) => {
         controller.current?.getLayer("realizationsSurfaceLayer")?.clearData();
     }
     if (controller.current && props.wellborePath) {
-        controller.current.adjustToSize(Math.max(0, width), Math.max(0, height - 100));
+        controller.current.adjustToSize(Math.max(0, width), Math.max(0, height));
         const referenceSystem = makeReferenceSystemFromTrajectoryXyzPoints(props.wellborePath);
         controller.current.setReferenceSystem(referenceSystem);
 
@@ -94,7 +94,7 @@ export const EsvIntersection: React.FC<EsvIntersectionProps> = (props) => {
             controller.current.getLayer("realizationsSurfaceLayer")?.setData(layerData);
         }
     }
-    return <div ref={containerDiv} style={{ width: width, height: height }} />;
+    return <div ref={containerDiv} className="w-full h-full" />;
 };
 
 function statisticalSurfaceIntersectionsToSurfaceData(intersections: SurfaceIntersectionPoints_api[]): SurfaceData {
