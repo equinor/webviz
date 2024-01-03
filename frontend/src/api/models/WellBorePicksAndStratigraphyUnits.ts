@@ -6,7 +6,7 @@ import type { StratigraphicUnit } from './StratigraphicUnit';
 import type { WellBorePick } from './WellBorePick';
 
 export type WellBorePicksAndStratigraphyUnits = {
-    wellborePicks: Array<WellBorePick>;
-    stratigraphyUnits: Array<StratigraphicUnit>;
+    wellbore_picks: Array<WellBorePick>;
+    stratigraphy_units: Array<StratigraphicUnit>;
 };
 

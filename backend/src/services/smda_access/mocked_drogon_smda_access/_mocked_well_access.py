@@ -11,7 +11,7 @@ class WellAccess:
 
     # type: ignore
     # pylint: disable=unused-argument
-    async def get_wellbore_picks(self, wellbore_uuid: str, obs_no: int = None) -> List[WellBorePick]:
+    async def get_wellbore_picks(self, wellbore_uuid: str, pick_identifier: Optional[str] = None) -> List[WellBorePick]:
         """Get Drogon picks"""
         # well_picks = []
         # if wellbore_uuid == "drogon_horizontal":
@@ -19,7 +19,8 @@ class WellAccess:
         # elif wellbore_uuid == "drogon_vertical":
         #     well_picks = [pick for pick in mocked_wellbore_picks if pick.unique_wellbore_identifier == "55/33-1"]
         # return well_picks
-        return [pick for pick in mocked_wellbore_picks if pick.unique_wellbore_identifier == wellbore_uuid]
+        result = [pick for pick in mocked_wellbore_picks if pick.unique_wellbore_identifier == wellbore_uuid]
+        return result
 
     # type: ignore
     # pylint: disable=unused-argument

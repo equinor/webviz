@@ -174,34 +174,64 @@ export function addWellborePicksLayer(
     // ****************************************************************************************************
     // ****************************************************************************************************
 
+    // const picksData = transformFormationData(
+    //     wellBorePicksAndStratigraphyUnits_api.wellborePicks.map((pick) => {
+    //         return {
+    //             pickIdentifier: pick.pickIdentifier,
+    //             confidence: pick.confidence,
+    //             depthReferencePoint: pick.depthReferencePoint,
+    //             md: pick.md,
+    //             mdUnit: pick.mdUnit,
+    //             tvd: pick.tvd,
+    //         };
+    //     }),
+    //     wellBorePicksAndStratigraphyUnits_api.stratigraphyUnits.map((unit) => {
+    //         return {
+    //             identifier: unit.identifier,
+    //             top: unit.top,
+    //             base: unit.base,
+    //             baseAge: unit.baseAge ?? 0,
+    //             topAge: unit.topAge ?? 0,
+    //             colorR: unit.colorR,
+    //             colorG: unit.colorG,
+    //             colorB: unit.colorB,
+    //             stratUnitLevel: unit.stratUnitLevel,
+    //             stratUnitParent: unit.stratUnitParent == null ? 0 : toInteger(unit.stratUnitParent),
+    //             lithologyType:
+    //                 typeof unit.lithologyType == "string" ? toInteger(unit.lithologyType) : unit.lithologyType,
+    //         };
+    //     })
+    // );
+
     const picksData = transformFormationData(
-        wellBorePicksAndStratigraphyUnits_api.wellborePicks.map((pick) => {
+        wellBorePicksAndStratigraphyUnits_api.wellbore_picks.map((pick) => {
             return {
-                pickIdentifier: pick.pickIdentifier,
+                pickIdentifier: pick.pick_identifier,
                 confidence: pick.confidence,
-                depthReferencePoint: pick.depthReferencePoint,
+                depthReferencePoint: pick.depth_reference_point,
                 md: pick.md,
-                mdUnit: pick.mdUnit,
+                mdUnit: pick.md_unit,
                 tvd: pick.tvd,
             };
         }),
-        wellBorePicksAndStratigraphyUnits_api.stratigraphyUnits.map((unit) => {
+        wellBorePicksAndStratigraphyUnits_api.stratigraphy_units.map((unit) => {
             return {
                 identifier: unit.identifier,
                 top: unit.top,
                 base: unit.base,
-                baseAge: unit.baseAge,
-                topAge: unit.topAge,
-                colorR: unit.colorR,
-                colorG: unit.colorG,
-                colorB: unit.colorB,
-                stratUnitLevel: unit.stratUnitLevel,
-                stratUnitParent: unit.stratUnitParent == null ? 0 : toInteger(unit.stratUnitParent),
+                baseAge: unit.base_age ?? 0,
+                topAge: unit.top_age ?? 0,
+                colorR: unit.color_r,
+                colorG: unit.color_g,
+                colorB: unit.color_b,
+                stratUnitLevel: unit.strat_unit_level,
+                stratUnitParent: unit.strat_unit_parent == null ? 0 : toInteger(unit.strat_unit_parent),
                 lithologyType:
-                    typeof unit.lithologyType == "string" ? toInteger(unit.lithologyType) : unit.lithologyType,
+                    typeof unit.lithology_type == "string" ? toInteger(unit.lithology_type) : unit.lithology_type,
             };
         })
     );
+
     const layer = new CalloutCanvasLayer<Annotation[]>("callout", {
         order: 100,
         data: getPicksData(picksData),

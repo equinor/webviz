@@ -185,7 +185,8 @@ export const View = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
     // Get well bore picks
     const wellBorePicksAndStratigraphyUnitsQuery = useWellborePicksAndStratigraphyUnitsQuery(
         seismicAddress?.caseUuid,
-        wellboreAddress ? wellboreAddress.uwi : undefined
+        wellboreAddress ? wellboreAddress.uwi : undefined,
+        surfaceAddress?.surfaceNames ?? undefined
     );
     if (wellBorePicksAndStratigraphyUnitsQuery.isError) {
         statusWriter.addError("Error loading wellbore picks and stratigraphy units");

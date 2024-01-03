@@ -115,6 +115,7 @@ async def get_wellbore_picks_and_stratigraphy_units(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     case_uuid: str = Query(description="Sumo case uuid"), # Should be field identifier?
     wellbore_uuid: str = Query(description="Wellbore uuid"),
+    pick_identifiers: List[str] = Query(description="Pick identifiers")
     # fmt:on
 ) -> schemas.WellBorePicksAndStratigraphyUnits:
     """Get well bore picks for a single well bore"""
@@ -140,36 +141,23 @@ async def get_wellbore_picks_and_stratigraphy_units(
     # END TEMP CODE
 
     stratigraphy_units = await stratigraphy_access.get_stratigraphic_units(stratigraphic_column_identifier)
-    wellbore_picks = await well_access.get_wellbore_picks(wellbore_uuid=wellbore_uuid.lower())
+    wellbore_picks = await well_access.get_wellbore_picks(wellbore_uuid=wellbore_uuid)
+
+    # Filter picks
+    # TODO: How to handle requested picks not existing among returned picks?
+    if pick_identifiers:
+        wellbore_picks = [pick for pick in wellbore_picks if pick.pick_identifier in pick_identifiers]
 
     return schemas.WellBorePicksAndStratigraphyUnits(
-        wellbore_picks=wellbore_picks,
-        stratigraphy_units=stratigraphy_units,
+        wellbore_picks=convert_wellbore_picks_to_schema(wellbore_picks),
+        stratigraphy_units=convert_stratigraphic_units_to_schema(stratigraphy_units),
     )
 
-    # return schemas.WellBorePicksAndStratigraphyUnits(
-    #     wellbore_picks=convert_well_bore_picks_to_schema(wellbore_picks),
-    #     stratigraphy_units=convert_stratigraphic_units_to_schema(stratigraphy_units),
-    # )
 
+def convert_wellbore_picks_to_schema(wellbore_picks: List[WellBorePick]) -> List[schemas.WellBorePick]:
+    test: List[schemas.WellBorePick] = []
 
-def convert_well_bore_picks_to_schema(well_bore_picks: List[WellBorePick]) -> List[schemas.WellBorePick]:
-    return [
-        schemas.WellBorePick(
-            northing=pick.northing,
-            easting=pick.easting,
-            tvd=pick.tvd,
-            tvd_msl=pick.tvd_msl,
-            md=pick.md,
-            md_msl=pick.md_msl,
-            unique_wellbore_identifier=pick.unique_wellbore_identifier,
-            pick_identifier=pick.pick_identifier,
-            # confidence=pick.confidence,
-            # depth_reference_point=pick.depth_reference_point,
-            # md_unit=pick.md_unit,
-        )
-        for pick in well_bore_picks
-    ]
+    return [schemas.WellBorePick(**pick.__dict__) for pick in wellbore_picks]
 
 
 def convert_stratigraphic_units_to_schema(

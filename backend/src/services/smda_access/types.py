@@ -4,6 +4,16 @@ from pydantic import BaseModel
 
 
 class WellBorePick(BaseModel):
+    """
+    Needed for esvIntersection:
+    - pick_identifier
+    - confidence
+    - depth_reference_point
+    - md
+    - md_unit
+    - tvd
+    """
+
     northing: float
     easting: float
     tvd: float
@@ -12,6 +22,9 @@ class WellBorePick(BaseModel):
     md_msl: float
     unique_wellbore_identifier: str
     pick_identifier: str
+    confidence: Optional[str] = None
+    depth_reference_point: str
+    md_unit: str
 
 
 class WellBoreTrajectory(BaseModel):
@@ -43,10 +56,12 @@ class StratigraphicUnit(BaseModel):
     strat_unit_level: int
     strat_unit_type: str
     top_age: Optional[int | float] = None
+    base_age: Optional[int | float] = None
     strat_unit_parent: Optional[str] = None
     color_r: int
     color_g: int
     color_b: int
+    lithology_type: int | float | str = "unknown"
 
 
 class StratigraphicFeature(str, Enum):
