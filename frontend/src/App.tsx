@@ -17,11 +17,19 @@ import "./templates/registerAllTemplates";
 
 function DevLabel() {
     return (
-        <div className="bg-orange-600 text-white p-2 rounded max-w-[400px] text-sm text-center mt-4">
+        <div className="bg-orange-600 text-white p-2 rounded max-w-[400px] text-sm text-center mt-4 z-50 shadow">
             <strong>NOTE:</strong> This application is still under heavy development and bugs are to be expected. Please
-            help us improve Webviz by reporting any undesired behaviour as an issue on our{" "}
-            <a href="https://github.com/equinor/webviz/issues" target="blank" className="underline">
-                GitHub repository
+            help us improve Webviz by reporting any undesired behaviour either on{" "}
+            <a href="https://equinor.slack.com/messages/webviz/" target="blank" className="underline cursor-pointer">
+                Slack
+            </a>{" "}
+            or{" "}
+            <a
+                href="(https://web.yammer.com/main/groups/eyJfdHlwZSI6Ikdyb3VwIiwiaWQiOiIxMzM5NzE0NyJ9"
+                target="blank"
+                className="underline cursor-pointer"
+            >
+                Yammer
             </a>
             .
         </div>
