@@ -320,7 +320,6 @@ export const Layout: React.FC<LayoutProps> = (props) => {
                             y={rect.y}
                             isDragged={isDragged}
                             dragPosition={position}
-                            editingLayout={draggedModuleInstanceId !== null}
                         />
                     );
                 })}

@@ -153,6 +153,8 @@ export const ChannelReceiverNode: React.FC<ChannelReceiverNodeProps> = (props) =
             .getReceiver(props.idString)
             ?.subscribe(ModuleChannelReceiverNotificationTopic.ChannelChange, checkIfConnection);
 
+        checkIfConnection();
+
         return () => {
             removeDataChannelDoneHandler();
             removeDataChannelOriginPointerDownHandler();

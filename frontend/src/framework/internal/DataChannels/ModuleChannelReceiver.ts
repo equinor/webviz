@@ -124,6 +124,7 @@ export class ModuleChannelReceiver {
             );
             this._channel = null;
             this._contentIdStrings = [];
+            this.notifySubscribers(ModuleChannelReceiverNotificationTopic.ChannelChange);
         }
     }
 

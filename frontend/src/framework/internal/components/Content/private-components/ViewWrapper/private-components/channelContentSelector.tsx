@@ -252,7 +252,7 @@ export const ChannelSelector: React.FC<ChannelSelectorProps> = (props) => {
                 <div className="px-2 bg-slate-200 flex gap-2 justify-end h-16 items-center">
                     <Button onClick={handleCancelChannelSelection}>Cancel</Button>
                     <Button onClick={handleSelectionDone} disabled={!checkIfSelectionIsMade()}>
-                        Subscribe
+                        OK
                     </Button>
                 </div>
             </div>

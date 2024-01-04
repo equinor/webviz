@@ -22,7 +22,6 @@ type ViewWrapperProps = {
     y: number;
     isDragged: boolean;
     dragPosition: Point;
-    editingLayout: boolean;
 };
 
 export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
@@ -142,7 +141,7 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
             >
                 <div
                     className={resolveClassNames(
-                        "relative bg-white h-full w-full flex flex-col p-1 box-border shadow",
+                        "relative bg-white h-full w-full flex flex-col box-border shadow p-1 border-slate-100",
                         {
                             "cursor-grabbing select-none": props.isDragged,
                         }
@@ -167,15 +166,7 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
                         onReceiversClick={handleReceiversClick}
                         guiMessageBroker={guiMessageBroker}
                     />
-                    {(props.isDragged || props.editingLayout) && previewFunc
-                        ? previewFunc(props.width - 50, props.height - 50)
-                        : null}
-
-                    <div
-                        className="flex-grow overflow-auto h-0"
-                        onPointerUp={handleModuleClick}
-                        style={{ display: props.isDragged || props.editingLayout ? "none" : "flex" }}
-                    >
+                    <div className="flex flex-grow overflow-auto h-0" onPointerUp={handleModuleClick}>
                         <ViewContent workbench={props.workbench} moduleInstance={props.moduleInstance} />
                         <ChannelReceiverNodesWrapper
                             forwardedRef={ref}

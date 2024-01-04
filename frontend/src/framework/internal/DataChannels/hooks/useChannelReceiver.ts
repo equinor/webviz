@@ -54,13 +54,15 @@ export function useChannelReceiver<TGenres extends KeyKind[]>({
 
     React.useEffect(
         function handleSubscribe() {
-            function handleContentsDataArrayChange(): void {
+            function handleContentsDataArrayOrChannelChange(): void {
                 if (!receiver) {
                     return;
                 }
 
                 const channel = receiver.getChannel();
                 if (!channel) {
+                    setContents([]);
+                    setRevisionNumber((prev) => prev + 1);
                     return;
                 }
 
@@ -97,16 +99,24 @@ export function useChannelReceiver<TGenres extends KeyKind[]>({
                 });
             }
 
-            const unsubscribeFunc = receiver?.subscribe(
+            const unsubscribeFromContentsChangeFunc = receiver?.subscribe(
                 ModuleChannelReceiverNotificationTopic.ContentsDataArrayChange,
-                handleContentsDataArrayChange
+                handleContentsDataArrayOrChannelChange
             );
 
-            handleContentsDataArrayChange();
+            const unsubscribeFromCurrentChannelFunc = receiver?.subscribe(
+                ModuleChannelReceiverNotificationTopic.ChannelChange,
+                handleContentsDataArrayOrChannelChange
+            );
+
+            handleContentsDataArrayOrChannelChange();
 
             return () => {
-                if (unsubscribeFunc) {
-                    unsubscribeFunc();
+                if (unsubscribeFromContentsChangeFunc) {
+                    unsubscribeFromContentsChangeFunc();
+                }
+                if (unsubscribeFromCurrentChannelFunc) {
+                    unsubscribeFromCurrentChannelFunc();
                 }
             };
         },
