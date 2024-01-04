@@ -370,8 +370,8 @@ export function Settings({ moduleContext, workbenchSession, workbenchServices }:
                 </QueryStateWrapper>
             </CollapsibleGroup>
             <CollapsibleGroup title="Surface specifications">
-                <ApiStateWrapper
-                    apiResult={surfaceDirectoryQuery}
+                <QueryStateWrapper
+                    queryResult={surfaceDirectoryQuery}
                     errorComponent={"Error loading surface directory"}
                     loadingComponent={<CircularProgress />}
                 >
@@ -398,7 +398,7 @@ export function Settings({ moduleContext, workbenchSession, workbenchServices }:
                             />
                         </Label>
                     </div>
-                </ApiStateWrapper>
+                </QueryStateWrapper>
             </CollapsibleGroup>
             <CollapsibleGroup title="Seismic specifications">
                 <div className="flex flex-col gap-4 overflow-y-auto">
