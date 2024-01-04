@@ -3,7 +3,7 @@ import { CircularProgress } from "@lib/components/CircularProgress";
 import GroupTree from "@webviz/group-tree";
 
 import { State, StatisticsOrRealization } from "./state";
-import { useGroupTreeQuery } from "./queryHooks";
+import { useRealizationGroupTreeQuery, useStatisticsGroupTreeQuery } from "./queryHooks";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 
 
@@ -13,16 +13,17 @@ export const view = ({ moduleContext }: ModuleFCProps<State>) => {
     const real = moduleContext.useStoreValue("realization")
     const resampleFrequency = moduleContext.useStoreValue("resamplingFrequency")
     const statOption = moduleContext.useStoreValue("statOption")
-
-    const groupTreeQuery = useGroupTreeQuery(ensembleIdent?.getCaseUuid(), ensembleIdent?.getEnsembleName(), real, resampleFrequency)
     
     // console.log(data.data)
 
     let edgeOptions = [{name: "oilrate", label: "Oil Rate"}, {name: "gasrate", label: "Gas Rate"}]
     let nodeOptions = [{name: "pressure", label: "Pressure"}, {name: "wmctl", label: "WMCTL"}]
 
+    let groupTreeQuery = undefined
     if (statOrReal === StatisticsOrRealization.Statistics) {
-        return <div className="w-full h-full flex justify-center items-center text-red-500">Statistics is not implemented.</div>
+        groupTreeQuery = useStatisticsGroupTreeQuery(ensembleIdent?.getCaseUuid(), ensembleIdent?.getEnsembleName(), statOption, resampleFrequency)
+    } else {
+        groupTreeQuery = useRealizationGroupTreeQuery(ensembleIdent?.getCaseUuid(), ensembleIdent?.getEnsembleName(), real, resampleFrequency)
     }
 
     return (
