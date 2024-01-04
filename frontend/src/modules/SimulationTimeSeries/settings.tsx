@@ -7,12 +7,12 @@ import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { SingleEnsembleSelect } from "@framework/components/SingleEnsembleSelect";
 import { fixupEnsembleIdent, maybeAssignFirstSyncedEnsemble } from "@framework/utils/ensembleUiHelpers";
-import { ApiStateWrapper } from "@lib/components/ApiStateWrapper";
 import { Checkbox } from "@lib/components/Checkbox";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { Dropdown, DropdownOption } from "@lib/components/Dropdown";
 import { Input } from "@lib/components/Input";
 import { Label } from "@lib/components/Label";
+import { QueryStateWrapper } from "@lib/components/QueryStateWrapper";
 import { Select, SelectOption } from "@lib/components/Select";
 
 import { sortBy, sortedUniq } from "lodash";
@@ -21,7 +21,7 @@ import { useVectorListQuery } from "./queryHooks";
 import { State } from "./state";
 
 //-----------------------------------------------------------------------------------------------------------
-export function settings({ moduleContext, workbenchSession, workbenchServices }: ModuleFCProps<State>) {
+export function Settings({ moduleContext, workbenchSession, workbenchServices }: ModuleFCProps<State>) {
     const myInstanceIdStr = moduleContext.getInstanceIdString();
     console.debug(`${myInstanceIdStr} -- render SimulationTimeSeries settings`);
 
@@ -77,7 +77,7 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
                 moduleContext.getStateStore().setValue("vectorSpec", null);
             }
         },
-        [computedEnsembleIdent, computedVectorName, computedVectorNameHasHistoricalData]
+        [computedEnsembleIdent, computedVectorName, computedVectorNameHasHistoricalData, moduleContext]
     );
 
     const computedEnsemble = computedEnsembleIdent ? ensembleSet.findEnsemble(computedEnsembleIdent) : null;
@@ -144,8 +144,8 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
                     onChange={handleEnsembleSelectionChange}
                 />
             </Label>
-            <ApiStateWrapper
-                apiResult={vectorListQuery}
+            <QueryStateWrapper
+                queryResult={vectorListQuery}
                 errorComponent={"Error loading vector names"}
                 loadingComponent={<CircularProgress />}
             >
@@ -161,7 +161,7 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
                         size={5}
                     />
                 </Label>
-            </ApiStateWrapper>
+            </QueryStateWrapper>
             <Label text="Frequency">
                 <Dropdown
                     options={makeFrequencyOptionItems()}

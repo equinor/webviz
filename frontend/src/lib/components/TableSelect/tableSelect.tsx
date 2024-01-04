@@ -37,9 +37,24 @@ const defaultProps = {
     multiple: false,
 };
 
+function checkForEqualityWithoutAdornment(a: TableSelectOption[], b: TableSelectOption[]) {
+    return isEqual(
+        a.map((option) => ({
+            ...option,
+            values: option.values.map((value) => value.label),
+        })),
+        b.map((option) => ({
+            ...option,
+            values: option.values.map((value) => value.label),
+        }))
+    );
+}
+
 const noMatchingOptionsText = "No matching options";
 
 export const TableSelect = withDefaults<TableSelectProps>()(defaultProps, (props) => {
+    const { onChange } = props;
+
     const [prevHeaderLabels, setPrevHeaderLabels] = React.useState<string[]>(props.headerLabels);
     const [filters, setFilters] = React.useState<string[]>(props.headerLabels.map(() => ""));
     const [hasFocus, setHasFocus] = React.useState<boolean>(false);
@@ -48,6 +63,7 @@ export const TableSelect = withDefaults<TableSelectProps>()(defaultProps, (props
     const [startIndex, setStartIndex] = React.useState<number>(0);
     const [lastShiftIndex, setLastShiftIndex] = React.useState<number>(-1);
     const [currentIndex, setCurrentIndex] = React.useState<number>(0);
+    const [prevFilteredOptions, setPrevFilteredOptions] = React.useState<TableSelectOption[]>([]);
 
     if (!isEqual(prevHeaderLabels, props.headerLabels)) {
         setPrevHeaderLabels(props.headerLabels);
@@ -62,19 +78,41 @@ export const TableSelect = withDefaults<TableSelectProps>()(defaultProps, (props
 
     const ref = React.useRef<HTMLDivElement>(null);
     const noOptionsText = props.placeholder ?? "No options";
-    const filteredOptions = React.useMemo(() => {
-        if (!props.filter) {
-            return props.options;
-        }
-        return props.options.filter((option) => {
-            return option.values.every((value, index) => {
-                return value.label.toLowerCase().includes(filters[index].toLowerCase());
+    const filteredOptions = React.useMemo(
+        function filterOptions() {
+            if (!props.filter) {
+                return props.options;
+            }
+            return props.options.filter((option) => {
+                return option.values.every((value, index) => {
+                    return value.label.toLowerCase().includes(filters[index].toLowerCase());
+                });
             });
-        });
-    }, [props.options, filters]);
+        },
+        [props.options, filters, props.filter]
+    );
+
+    if (!checkForEqualityWithoutAdornment(filteredOptions, prevFilteredOptions)) {
+        let newCurrentIndex = 0;
+        let newStartIndex = 0;
+        let oldCurrentId = prevFilteredOptions[currentIndex]?.id;
+        if (props.value?.length >= 1) {
+            oldCurrentId = props.value[0];
+        }
+        setPrevFilteredOptions(filteredOptions);
+        if (oldCurrentId) {
+            const newIndex = filteredOptions.findIndex((option) => option.id === oldCurrentId);
+            if (newIndex !== -1) {
+                newCurrentIndex = newIndex;
+                newStartIndex = newIndex;
+            }
+        }
+        setCurrentIndex(newCurrentIndex);
+        setStartIndex(newStartIndex);
+    }
 
     const toggleValue = React.useCallback(
-        (option: TableSelectOption, index: number) => {
+        function toggleValue(option: TableSelectOption, index: number) {
             let newSelected = [...selected];
             if (props.multiple) {
                 if (keysPressed.includes("Shift")) {
@@ -102,82 +140,88 @@ export const TableSelect = withDefaults<TableSelectProps>()(defaultProps, (props
             }
             setCurrentIndex(index);
             setSelected(newSelected);
-            if (props.onChange) {
+            if (onChange) {
                 if (props.multiple) {
-                    props.onChange(newSelected);
+                    onChange(newSelected);
                 } else if (!option.disabled) {
-                    props.onChange([option.id]);
+                    onChange([option.id]);
                 } else {
-                    props.onChange([]);
+                    onChange([]);
                 }
             }
         },
-        [props.multiple, props.options, selected, props.onChange, keysPressed, lastShiftIndex]
+        [props.multiple, props.options, selected, onChange, keysPressed, lastShiftIndex]
     );
 
-    React.useEffect(() => {
-        const handleKeyDown = (e: KeyboardEvent) => {
-            setKeysPressed((keysPressed) => [...keysPressed, e.key]);
+    React.useEffect(
+        function handleKeyActions() {
+            const handleKeyDown = (e: KeyboardEvent) => {
+                setKeysPressed((keysPressed) => [...keysPressed, e.key]);
 
-            if (hasFocus) {
-                if (e.key === "Shift") {
-                    setLastShiftIndex(currentIndex);
-                }
-                if (e.key === "ArrowUp") {
-                    e.preventDefault();
-                    const newIndex = Math.max(0, currentIndex - 1);
-                    toggleValue(filteredOptions[newIndex], newIndex);
-                    if (newIndex < startIndex) {
-                        setStartIndex(newIndex);
+                if (hasFocus) {
+                    if (e.key === "Shift") {
+                        setLastShiftIndex(currentIndex);
+                    }
+                    if (e.key === "ArrowUp") {
+                        e.preventDefault();
+                        const newIndex = Math.max(0, currentIndex - 1);
+                        toggleValue(filteredOptions[newIndex], newIndex);
+                        if (newIndex < startIndex) {
+                            setStartIndex(newIndex);
+                        }
+                    }
+                    if (e.key === "ArrowDown") {
+                        e.preventDefault();
+                        const newIndex = Math.min(filteredOptions.length - 1, currentIndex + 1);
+                        toggleValue(filteredOptions[newIndex], newIndex);
+                        if (newIndex >= startIndex + props.size - 1) {
+                            setStartIndex(Math.max(0, newIndex - props.size + 1));
+                        }
+                    }
+                    if (e.key === "PageUp") {
+                        e.preventDefault();
+                        const newIndex = Math.max(0, currentIndex - props.size);
+                        toggleValue(filteredOptions[newIndex], newIndex);
+                        if (newIndex < startIndex) {
+                            setStartIndex(newIndex);
+                        }
+                    }
+                    if (e.key === "PageDown") {
+                        e.preventDefault();
+                        const newIndex = Math.min(filteredOptions.length - 1, currentIndex + props.size);
+                        toggleValue(filteredOptions[newIndex], newIndex);
+                        if (newIndex >= startIndex + props.size - 1) {
+                            setStartIndex(Math.max(0, newIndex - props.size + 1));
+                        }
                     }
                 }
-                if (e.key === "ArrowDown") {
-                    e.preventDefault();
-                    const newIndex = Math.min(filteredOptions.length - 1, currentIndex + 1);
-                    toggleValue(filteredOptions[newIndex], newIndex);
-                    if (newIndex >= startIndex + props.size - 1) {
-                        setStartIndex(Math.max(0, newIndex - props.size + 1));
-                    }
-                }
-                if (e.key === "PageUp") {
-                    e.preventDefault();
-                    const newIndex = Math.max(0, currentIndex - props.size);
-                    toggleValue(filteredOptions[newIndex], newIndex);
-                    if (newIndex < startIndex) {
-                        setStartIndex(newIndex);
-                    }
-                }
-                if (e.key === "PageDown") {
-                    e.preventDefault();
-                    const newIndex = Math.min(filteredOptions.length - 1, currentIndex + props.size);
-                    toggleValue(filteredOptions[newIndex], newIndex);
-                    if (newIndex >= startIndex + props.size - 1) {
-                        setStartIndex(Math.max(0, newIndex - props.size + 1));
-                    }
-                }
+            };
+
+            const handleKeyUp = (e: KeyboardEvent) => {
+                setKeysPressed((keysPressed) => keysPressed.filter((key) => key !== e.key));
+            };
+
+            window.addEventListener("keydown", handleKeyDown);
+            window.addEventListener("keyup", handleKeyUp);
+
+            return () => {
+                window.removeEventListener("keydown", handleKeyDown);
+                window.removeEventListener("keyup", handleKeyUp);
+            };
+        },
+        [currentIndex, selected, filteredOptions, props.size, hasFocus, startIndex, toggleValue]
+    );
+
+    React.useLayoutEffect(
+        function handleInitialSelection() {
+            if (props.value) {
+                setSelected(props.value);
             }
-        };
+        },
+        [props.value]
+    );
 
-        const handleKeyUp = (e: KeyboardEvent) => {
-            setKeysPressed((keysPressed) => keysPressed.filter((key) => key !== e.key));
-        };
-
-        window.addEventListener("keydown", handleKeyDown);
-        window.addEventListener("keyup", handleKeyUp);
-
-        return () => {
-            window.removeEventListener("keydown", handleKeyDown);
-            window.removeEventListener("keyup", handleKeyUp);
-        };
-    }, [currentIndex, selected, filteredOptions, props.size, hasFocus, startIndex, toggleValue]);
-
-    React.useLayoutEffect(() => {
-        if (props.value) {
-            setSelected(props.value);
-        }
-    }, [props.value]);
-
-    const handleFilterChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>, index: number) => {
+    function handleFilterChange(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>, index: number) {
         setFilters((prev) => {
             const newFilters = [...prev];
             prev[index] = e.target.value;
@@ -186,7 +230,7 @@ export const TableSelect = withDefaults<TableSelectProps>()(defaultProps, (props
         if (ref.current) {
             ref.current.scrollTop = 0;
         }
-    };
+    }
 
     return (
         <BaseComponent disabled={props.disabled}>

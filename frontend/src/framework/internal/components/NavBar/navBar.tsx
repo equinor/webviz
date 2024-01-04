@@ -62,7 +62,7 @@ export const NavBar: React.FC<NavBarProps> = (props) => {
                 unsubscribeFunc();
             };
         },
-        [drawerContent]
+        [drawerContent, props.workbench, setDrawerContent]
     );
 
     function ensureSettingsPanelIsVisible() {
@@ -139,6 +139,14 @@ export const NavBar: React.FC<NavBarProps> = (props) => {
                 <div className="w-full flex justify-center mb-2 mt-1 p-2">
                     <img src={WebvizLogo} alt="Webviz logo" className="w-20 h-20" />
                 </div>
+                <a
+                    className="bg-orange-600 text-white p-1 rounded text-xs text-center cursor-help"
+                    title="NOTE: This application is still under heavy development and bugs are to be expected. Please help us improve Webviz by reporting any undesired behaviour as an issue on our GitHub repository. Click to open issues page."
+                    href="https://github.com/equinor/webviz/issues"
+                    target="blank"
+                >
+                    BETA
+                </a>
                 <div className="flex justify-end">
                     <Button
                         onClick={handleCollapseOrExpand}

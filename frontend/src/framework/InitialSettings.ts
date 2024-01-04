@@ -60,7 +60,7 @@ export class InitialSettings {
     }
 }
 
-export function applyInitialSettingsToState(
+export function useApplyInitialSettingsToState(
     initialSettings: InitialSettings | undefined,
     settingName: string,
     type: keyof InitialSettingsSupportedTypes,
@@ -73,5 +73,5 @@ export function applyInitialSettingsToState(
                 stateSetter(setting);
             }
         }
-    }, [initialSettings]);
+    }, [initialSettings, settingName, type, stateSetter]);
 }

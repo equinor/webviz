@@ -39,6 +39,8 @@ const defaultProps = {
 const noMatchingOptionsText = "No matching options";
 
 export const Select = withDefaults<SelectProps>()(defaultProps, (props) => {
+    const { onChange } = props;
+
     const [filter, setFilter] = React.useState<string>("");
     const [hasFocus, setHasFocus] = React.useState<boolean>(false);
     const [selected, setSelected] = React.useState<string[]>([]);
@@ -55,7 +57,7 @@ export const Select = withDefaults<SelectProps>()(defaultProps, (props) => {
             return props.options;
         }
         return props.options.filter((option) => option.label.toLowerCase().includes(filter.toLowerCase()));
-    }, [props.options, filter]);
+    }, [props.options, filter, props.filter]);
 
     if (!isEqual(filteredOptions, prevFilteredOptions)) {
         let newCurrentIndex = 0;
@@ -105,17 +107,17 @@ export const Select = withDefaults<SelectProps>()(defaultProps, (props) => {
             }
             setCurrentIndex(index);
             setSelected(newSelected);
-            if (props.onChange) {
+            if (onChange) {
                 if (props.multiple) {
-                    props.onChange(newSelected);
+                    onChange(newSelected);
                 } else if (!option.disabled) {
-                    props.onChange([option.value]);
+                    onChange([option.value]);
                 } else {
-                    props.onChange([]);
+                    onChange([]);
                 }
             }
         },
-        [props.multiple, props.options, selected, props.onChange, keysPressed, lastShiftIndex]
+        [props.multiple, props.options, selected, onChange, keysPressed, lastShiftIndex, setCurrentIndex, setSelected]
     );
 
     React.useEffect(() => {

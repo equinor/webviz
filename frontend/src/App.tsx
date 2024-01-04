@@ -15,6 +15,19 @@ import { useQueryClient } from "@tanstack/react-query";
 import "./modules/registerAllModules";
 import "./templates/registerAllTemplates";
 
+function DevLabel() {
+    return (
+        <div className="bg-orange-600 text-white p-2 rounded max-w-[400px] text-sm text-center mt-4">
+            <strong>NOTE:</strong> This application is still under heavy development and bugs are to be expected. Please
+            help us improve Webviz by reporting any undesired behaviour as an issue on our{" "}
+            <a href="https://github.com/equinor/webviz/issues" target="blank" className="underline">
+                GitHub repository
+            </a>
+            .
+        </div>
+    );
+}
+
 enum InitAppState {
     CheckingIfUserIsSignedIn = "checking-if-user-is-signed-in",
     LoadingEnsembles = "loading-ensembles",
@@ -50,6 +63,8 @@ function App() {
 
     React.useEffect(
         function handleMountWhenSignedIn() {
+            const workbenchRef = workbench.current;
+
             if (authState !== AuthState.LoggedIn || isMounted) {
                 return;
             }
@@ -67,11 +82,11 @@ function App() {
             }
 
             return function handleUnmount() {
-                workbench.current.clearLayout();
-                workbench.current.resetModuleInstanceNumbers();
+                workbenchRef.clearLayout();
+                workbenchRef.resetModuleInstanceNumbers();
             };
         },
-        [authState, isMounted]
+        [authState, isMounted, queryClient]
     );
 
     function makeStateMessages() {
@@ -112,6 +127,7 @@ function App() {
                     <img src={WebvizLogo} alt="Webviz logo" className="w-32 h-32" />
                     <p className="text-lg">Please sign in to continue.</p>
                     <Button onClick={signIn}>Sign in</Button>
+                    <DevLabel />
                 </div>
             ) : (
                 isInitialisingApp && (
@@ -125,6 +141,7 @@ function App() {
                     >
                         <WebvizSpinner size={100} />
                         {makeStateMessages()}
+                        <DevLabel />
                     </div>
                 )
             )}

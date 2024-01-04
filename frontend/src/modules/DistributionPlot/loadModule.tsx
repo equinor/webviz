@@ -1,8 +1,8 @@
 import { ModuleRegistry } from "@framework/ModuleRegistry";
 
-import { settings } from "./settings";
+import { Settings } from "./settings";
 import { PlotType, State } from "./state";
-import { view } from "./view";
+import { View } from "./view";
 
 const defaultState: State = {
     plotType: PlotType.Histogram,
@@ -12,5 +12,5 @@ const defaultState: State = {
 
 const module = ModuleRegistry.initModule<State>("DistributionPlot", defaultState);
 
-module.viewFC = view;
-module.settingsFC = settings;
+module.viewFC = View;
+module.settingsFC = Settings;

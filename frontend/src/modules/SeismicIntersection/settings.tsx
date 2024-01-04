@@ -8,11 +8,11 @@ import { Wellbore } from "@framework/Wellbore";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { SingleEnsembleSelect } from "@framework/components/SingleEnsembleSelect";
 import { fixupEnsembleIdent, maybeAssignFirstSyncedEnsemble } from "@framework/utils/ensembleUiHelpers";
-import { ApiStateWrapper } from "@lib/components/ApiStateWrapper";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { Input } from "@lib/components/Input";
 import { Label } from "@lib/components/Label";
+import { QueryStateWrapper } from "@lib/components/QueryStateWrapper";
 import { RadioGroup } from "@lib/components/RadioGroup";
 import { Select, SelectOption } from "@lib/components/Select";
 import { useValidState } from "@lib/hooks/useValidState";
@@ -45,7 +45,7 @@ const WELLBORE_TYPE = "smda";
 const EXTENSION_LIMITS = { min: 100, max: 100000 }; // Min/max extension in meters outside both sides of the well path [m]
 const Z_SCALE_LIMITS = { min: 1, max: 100 }; // Minimum z-scale factor
 
-export function settings({ moduleContext, workbenchSession, workbenchServices }: ModuleFCProps<State>) {
+export function Settings({ moduleContext, workbenchSession, workbenchServices }: ModuleFCProps<State>) {
     const syncedSettingKeys = moduleContext.useSyncedSettingKeys();
     const syncHelper = new SyncSettingsHelper(syncedSettingKeys, workbenchServices);
     const syncedValueEnsembles = syncHelper.useValue(SyncSettingKey.ENSEMBLE, "global.syncValue.ensembles");
@@ -112,14 +112,14 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
           })
         : null;
 
-    const [selectedSeismicAttribute, setSelectedSeismicAttribute] = useValidState<string | null>(
-        null,
-        seismicCubeMetaDirectory?.getAttributeNames() ?? []
-    );
-    const [selectedTime, setSelectedTime] = useValidState<string | null>(
-        null,
-        seismicCubeMetaDirectory?.getTimeOrIntervalStrings() ?? []
-    );
+    const [selectedSeismicAttribute, setSelectedSeismicAttribute] = useValidState<string | null>({
+        initialState: null,
+        validStates: seismicCubeMetaDirectory?.getAttributeNames() ?? [],
+    });
+    const [selectedTime, setSelectedTime] = useValidState<string | null>({
+        initialState: null,
+        validStates: seismicCubeMetaDirectory?.getTimeOrIntervalStrings() ?? [],
+    });
 
     const seismicAttributeOptions = seismicCubeMetaDirectory
         ? seismicCubeMetaDirectory.getAttributeNames().map((attribute) => {
@@ -145,14 +145,21 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
             }
             setSeismicAddress(seismicAddress);
         },
-        [computedEnsembleIdent, selectedSeismicAttribute, selectedTime, isObserved, realizationNumber]
+        [
+            computedEnsembleIdent,
+            selectedSeismicAttribute,
+            selectedTime,
+            isObserved,
+            realizationNumber,
+            setSeismicAddress,
+        ]
     );
 
     React.useEffect(
         function propagateWellBoreAddressToView() {
             setWellboreAddress(selectedWellboreAddress);
         },
-        [selectedWellboreAddress]
+        [selectedWellboreAddress, setWellboreAddress]
     );
 
     function handleEnsembleSelectionChange(newEnsembleIdent: EnsembleIdent | null) {
@@ -241,8 +248,8 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
                 </div>
             </CollapsibleGroup>
             <CollapsibleGroup expanded={true} title="Well trajectory">
-                <ApiStateWrapper
-                    apiResult={wellHeadersQuery}
+                <QueryStateWrapper
+                    queryResult={wellHeadersQuery}
                     errorComponent={"Error loading wells"}
                     loadingComponent={<CircularProgress />}
                 >
@@ -260,7 +267,7 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
                             multiple={true}
                         />
                     </Label>
-                </ApiStateWrapper>
+                </QueryStateWrapper>
             </CollapsibleGroup>
             <CollapsibleGroup title="Seismic specifications">
                 <div className="flex flex-col gap-4 overflow-y-auto">
@@ -294,8 +301,8 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
                             onChange={(_, value: string | number) => setSurveyTimeType(value as TimeType)}
                         />
                     </Label>
-                    <ApiStateWrapper
-                        apiResult={seismicCubeMetaListQuery}
+                    <QueryStateWrapper
+                        queryResult={seismicCubeMetaListQuery}
                         errorComponent={"Error loading seismic directory"}
                         loadingComponent={<CircularProgress />}
                     >
@@ -317,7 +324,7 @@ export function settings({ moduleContext, workbenchSession, workbenchServices }:
                                 />
                             </Label>
                         </div>
-                    </ApiStateWrapper>
+                    </QueryStateWrapper>
                 </div>
             </CollapsibleGroup>
             <CollapsibleGroup title="Intersection Settings" expanded={false}>

@@ -22,7 +22,6 @@ class WellCompletionsWell(BaseModel):
 
 class WellCompletionsZone(BaseModel):
     name: str
-    color: str
     subzones: Optional[List["WellCompletionsZone"]] = None
 
 
@@ -40,6 +39,6 @@ class WellCompletionsData(BaseModel):
 
     version: str
     units: WellCompletionsUnits
-    stratigraphy: List[WellCompletionsZone]
+    zones: List[WellCompletionsZone]
     timeSteps: List[str]
     wells: List[WellCompletionsWell]

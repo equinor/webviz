@@ -32,13 +32,13 @@ function nFormatter(num: number, digits: number): string {
     return item ? (num / item.value).toFixed(digits).replace(rx, "$1") + item.symbol : "0";
 }
 
-export const view = ({
+export const View = ({
     moduleContext,
     workbenchServices,
     initialSettings,
     workbenchSettings,
 }: ModuleFCProps<State>) => {
-    const [plotType, setPlotType] = moduleContext.useStoreState("plotType");
+    const plotType = moduleContext.useStoreValue("plotType");
     const numBins = moduleContext.useStoreValue("numBins");
     const orientation = moduleContext.useStoreValue("orientation");
 
@@ -86,10 +86,6 @@ export const view = ({
             return;
         }
 
-        if (plotType !== PlotType.ScatterWithColorMapping && plotType !== PlotType.Scatter) {
-            setPlotType(PlotType.Scatter);
-        }
-
         const handleChannelYChanged = (data: any | null, metaData: BroadcastChannelMeta | null) => {
             setDataY(data);
             setMetaDataY(metaData);
@@ -105,10 +101,6 @@ export const view = ({
             setDataColor(null);
             setMetaDataColor(null);
             return;
-        }
-
-        if (plotType !== PlotType.ScatterWithColorMapping) {
-            setPlotType(PlotType.ScatterWithColorMapping);
         }
 
         const handleChannelColorChanged = (data: any | null, metaData: BroadcastChannelMeta | null) => {

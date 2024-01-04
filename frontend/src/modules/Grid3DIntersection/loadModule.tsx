@@ -1,20 +1,17 @@
 import { ModuleRegistry } from "@framework/ModuleRegistry";
 
-import { settings } from "./settings";
+import { Settings } from "./settings";
 import state from "./state";
-import { view } from "./view";
+import { View } from "./view";
 
 const defaultState: state = {
     gridName: "Simgrid",
     parameterName: "PORO",
     realizations: ["1"],
     useStatistics: false,
-
 };
 
-const module = ModuleRegistry.initModule<state>("Grid3DIntersection", defaultState, {
+const module = ModuleRegistry.initModule<state>("Grid3DIntersection", defaultState, {});
 
-});
-
-module.viewFC = view;
-module.settingsFC = settings;
+module.viewFC = View;
+module.settingsFC = Settings;

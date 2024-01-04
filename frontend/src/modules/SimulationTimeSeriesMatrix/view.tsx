@@ -26,7 +26,7 @@ import {
     filterVectorSpecificationAndIndividualStatisticsDataArray,
 } from "./utils/vectorSpecificationsAndQueriesUtils";
 
-export const view = ({ moduleContext, workbenchSession, workbenchSettings }: ModuleFCProps<State>) => {
+export const View = ({ moduleContext, workbenchSession, workbenchSettings }: ModuleFCProps<State>) => {
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);
     const wrapperDivSize = useElementSize(wrapperDivRef);
 
@@ -133,7 +133,7 @@ export const view = ({ moduleContext, workbenchSession, workbenchSettings }: Mod
         data: SummaryVectorObservations_api;
     }[] = [];
     vectorObservationsQueries.ensembleVectorObservationDataMap.forEach((ensembleObservationData, ensembleIdent) => {
-        if (!ensembleObservationData.hasSummaryObservations) {
+        if (showObservations && !ensembleObservationData.hasSummaryObservations) {
             const ensembleName = ensembleSet.findEnsemble(ensembleIdent)?.getDisplayName() ?? ensembleIdent.toString();
             statusWriter.addWarning(`${ensembleName} has no observations.`);
             return;

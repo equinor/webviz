@@ -75,13 +75,17 @@ export function useStoreState<T extends keyof S, S extends StateBaseType>(
         return unsubscribeFunc;
     }, [key, stateStore]);
 
-    function setter(valueOrFunc: S[T] | ((prev: S[T]) => S[T])): void {
-        if (valueOrFunc instanceof Function) {
-            stateStore.setValue(key, valueOrFunc(state));
-            return;
-        }
-        stateStore.setValue(key, valueOrFunc);
-    }
+    const setter = React.useCallback(
+        function setter(valueOrFunc: S[T] | ((prev: S[T]) => S[T])): void {
+            if (valueOrFunc instanceof Function) {
+                const value = stateStore.getValue(key);
+                stateStore.setValue(key, valueOrFunc(value));
+                return;
+            }
+            stateStore.setValue(key, valueOrFunc);
+        },
+        [key, stateStore]
+    );
 
     return [state, setter];
 }

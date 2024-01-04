@@ -3,7 +3,6 @@ import React from "react";
 import { CaseInfo_api, EnsembleInfo_api } from "@api";
 import { apiService } from "@framework/ApiService";
 import { useAuthProvider } from "@framework/internal/providers/AuthProvider";
-import { ApiStateWrapper } from "@lib/components/ApiStateWrapper";
 import { Button } from "@lib/components/Button";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { Dialog } from "@lib/components/Dialog";
@@ -11,6 +10,7 @@ import { Dropdown } from "@lib/components/Dropdown";
 import { IconButton } from "@lib/components/IconButton";
 import { Label } from "@lib/components/Label";
 import { Overlay } from "@lib/components/Overlay";
+import { QueryStateWrapper } from "@lib/components/QueryStateWrapper";
 import { Select } from "@lib/components/Select";
 import { Switch } from "@lib/components/Switch";
 import { TableSelect, TableSelectOption } from "@lib/components/TableSelect";
@@ -66,11 +66,11 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
         },
     });
 
-    const [selectedField, setSelectedField] = useValidState<string>(
-        "",
-        [fieldsQuery.data ?? [], (item) => item.field_identifier],
-        true
-    );
+    const [selectedField, setSelectedField] = useValidState<string>({
+        initialState: "",
+        validStates: fieldsQuery.data?.map((item) => item.field_identifier) ?? [],
+        keepStateWhenInvalid: true,
+    });
 
     const casesQuery = useQuery({
         queryKey: ["getCases", selectedField],
@@ -85,11 +85,11 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
         staleTime: STALE_TIME,
     });
 
-    const [selectedCaseId, setSelectedCaseId] = useValidState<string>(
-        "",
-        [casesQuery.data ?? [], (item) => item.uuid],
-        true
-    );
+    const [selectedCaseId, setSelectedCaseId] = useValidState<string>({
+        initialState: "",
+        validStates: casesQuery.data?.map((item) => item.uuid) ?? [],
+        keepStateWhenInvalid: true,
+    });
 
     const ensemblesQuery = useQuery({
         queryKey: ["getEnsembles", selectedCaseId],
@@ -104,11 +104,11 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
         staleTime: STALE_TIME,
     });
 
-    const [selectedEnsembleName, setSelectedEnsembleName] = useValidState<string>(
-        "",
-        [ensemblesQuery.data ?? [], (el) => el.name],
-        true
-    );
+    const [selectedEnsembleName, setSelectedEnsembleName] = useValidState<string>({
+        initialState: "",
+        validStates: ensemblesQuery.data?.map((el) => el.name) ?? [],
+        keepStateWhenInvalid: true,
+    });
 
     function handleFieldChanged(fieldIdentifier: string) {
         setSelectedField(fieldIdentifier);
@@ -210,7 +210,7 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
             id: el.uuid,
             values: [
                 { label: el.name },
-                { label: el.user, adornment: <UserAvatar userId={el.user} /> },
+                { label: el.user, adornment: <UserAvatar key={el.uuid} userId={el.user} /> },
                 { label: el.status },
             ],
         })) ?? [];
@@ -261,8 +261,8 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                 <div className="flex gap-4 max-w-full">
                     <div className="flex flex-col gap-4 p-4 border-r bg-slate-100 h-full">
                         <Label text="Field">
-                            <ApiStateWrapper
-                                apiResult={fieldsQuery}
+                            <QueryStateWrapper
+                                queryResult={fieldsQuery}
                                 errorComponent={<div className="text-red-500">Error loading fields</div>}
                                 loadingComponent={<CircularProgress />}
                             >
@@ -272,11 +272,11 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                                     onChange={handleFieldChanged}
                                     disabled={fieldOpts.length === 0}
                                 />
-                            </ApiStateWrapper>
+                            </QueryStateWrapper>
                         </Label>
                         <Label text="Case">
-                            <ApiStateWrapper
-                                apiResult={casesQuery}
+                            <QueryStateWrapper
+                                queryResult={casesQuery}
                                 errorComponent={<div className="text-red-500">Error loading cases</div>}
                                 loadingComponent={<CircularProgress />}
                             >
@@ -308,11 +308,11 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                                     filter
                                     columnSizesInPercent={[60, 20, 20]}
                                 />
-                            </ApiStateWrapper>
+                            </QueryStateWrapper>
                         </Label>
                         <Label text="Ensemble">
-                            <ApiStateWrapper
-                                apiResult={ensemblesQuery}
+                            <QueryStateWrapper
+                                queryResult={ensemblesQuery}
                                 errorComponent={<div className="text-red-500">Error loading ensembles</div>}
                                 loadingComponent={<CircularProgress />}
                             >
@@ -324,7 +324,7 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                                     size={5}
                                     width="100%"
                                 />
-                            </ApiStateWrapper>
+                            </QueryStateWrapper>
                         </Label>
                         <div className="flex justify-end">
                             <Button
