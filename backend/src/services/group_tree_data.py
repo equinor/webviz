@@ -90,7 +90,7 @@ class GroupTreeData:
 
         self._wells: List[str] = self._grouptree[self._grouptree["KEYWORD"] == "WELSPECS"]["CHILD"].unique()
 
-        vector_info_arr = await self._summary_access.get_available_vectors()
+        vector_info_arr = await self._summary_access.get_available_vectors_async()
         self._all_vectors: List[str] = [vec.name for vec in vector_info_arr]
 
         # Check that all WSTAT summary vectors exist
@@ -100,7 +100,7 @@ class GroupTreeData:
         wstat_unique = {}
         for well in self._wells:
             vec = f"WSTAT:{well}"
-            table, _ = await self._summary_access.get_vector_table(
+            table, _ = await self._summary_access.get_vector_table_async(
                 vector_name=vec,
                 resampling_frequency=self._resampling_frequency,
                 realizations=None,  # {self._realization}
@@ -119,7 +119,7 @@ class GroupTreeData:
             self._check_that_sumvecs_exists(["FWIR", "FGIR"])
             smry = {}
             for vec in ["FWIR", "FGIR"]:
-                table, _ = await self._summary_access.get_vector_table(
+                table, _ = await self._summary_access.get_vector_table_async(
                     vector_name=vec,
                     resampling_frequency=self._resampling_frequency,
                     realizations=None,
@@ -159,38 +159,50 @@ class GroupTreeData:
 
         if tree_mode == TreeModeOptions.SINGLE_REAL and real is None:
             raise ValueError("Realization cannot be None when Tree mode is SINGLE REAL")
-
-        # Filter smry
-        vectors = [sumvec for sumvec in self._sumvecs["SUMVEC"] if sumvec in self._all_vectors]
-
-        dfs = []
-        for vec in vectors:
-            table, _ = await self._summary_access.get_vector_table(
-                vector_name=vec,
-                resampling_frequency=self._resampling_frequency,
-                realizations=[real] if real is not None else None,
-            )
-            dfs.append(table.to_pandas())
-
-        smry = reduce(lambda left, right: pd.merge(left, right, on=["DATE", "REAL"]), dfs)
-
-        if tree_mode is TreeModeOptions.STATISTICS:
-            if stat_option is StatOptions.MEAN:
-                smry = smry.groupby("DATE").mean().reset_index()
-            elif stat_option in [StatOptions.P50, StatOptions.P10, StatOptions.P90]:
-                quantile = {"p50": 0.5, "p10": 0.9, "p90": 0.1}[stat_option.value]
-                smry = smry.groupby("DATE").quantile(quantile).reset_index()
-            elif stat_option is StatOptions.MAX:
-                smry = smry.groupby("DATE").max().reset_index()
-            elif stat_option is StatOptions.MIN:
-                smry = smry.groupby("DATE").min().reset_index()
-            else:
-                raise ValueError(f"Statistical option: {stat_option.value} not implemented")
-
+        
         if tree_mode == TreeModeOptions.STATISTICS and not self._grouptree_model._tree_is_equivalent_in_all_real:
             raise ValueError(
                 "Statistics cannot be calculated because the Group Tree is not equivalent in all realizations."
             )
+
+        # Filter smry
+        vectors = [sumvec for sumvec in self._sumvecs["SUMVEC"] if sumvec in self._all_vectors]
+
+        if tree_mode == TreeModeOptions.SINGLE_REAL:
+
+            table, _ = await self._summary_access.get_single_real_vectors_table_async(
+                vector_names=vectors,
+                resampling_frequency=self._resampling_frequency,
+                realization=self._realization,
+            )
+            smry = table.to_pandas()
+
+        elif tree_mode == TreeModeOptions.STATISTICS:
+
+            dfs = []
+            for vec in vectors:
+                table, _ = await self._summary_access.get_vector_table_async(
+                    vector_name=vec,
+                    resampling_frequency=self._resampling_frequency,
+                    realizations=None,
+                )
+                dfs.append(table.to_pandas())
+
+            smry = reduce(lambda left, right: pd.merge(left, right, on=["DATE", "REAL"]), dfs)
+
+            if tree_mode is TreeModeOptions.STATISTICS:
+                if stat_option is StatOptions.MEAN:
+                    smry = smry.groupby("DATE").mean().reset_index()
+                elif stat_option in [StatOptions.P50, StatOptions.P10, StatOptions.P90]:
+                    quantile = {"p50": 0.5, "p10": 0.9, "p90": 0.1}[stat_option.value]
+                    smry = smry.groupby("DATE").quantile(quantile).reset_index()
+                elif stat_option is StatOptions.MAX:
+                    smry = smry.groupby("DATE").max().reset_index()
+                elif stat_option is StatOptions.MIN:
+                    smry = smry.groupby("DATE").min().reset_index()
+                else:
+                    raise ValueError(f"Statistical option: {stat_option.value} not implemented")
+
 
         # Filter nodetype prod, inj and/or other
         dfs = []
