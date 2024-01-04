@@ -29,7 +29,7 @@ export const view = ({ moduleContext }: ModuleFCProps<State>) => {
     return (
         <div className="w-full h-full">
             {!groupTreeQuery.data ? (
-                groupTreeQuery.status === "loading" && groupTreeQuery.fetchStatus === "fetching" ? (
+                groupTreeQuery.isFetching ? (
                     <div className="absolute left-0 right-0 w-full h-full bg-white bg-opacity-80 flex items-center justify-center z-10">
                         <CircularProgress />
                     </div>                    

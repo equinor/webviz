@@ -27,11 +27,10 @@ export const settings = ({ moduleContext, workbenchSession, workbenchServices }:
     const [selectedStatOption, setSelectedStatOption] = moduleContext.useStoreState("statOption");
     const [resampleFrequency, setResamplingFrequency] = moduleContext.useStoreState("resamplingFrequency");
 
-    const [selectedEnsembleIdent, setSelectedEnsembleIdent] = useValidState<EnsembleIdent | null>(null, [
-        ensembleSet.getEnsembleArr(),
-        (item: Ensemble) => item.getIdent(),
-    ]);
-    
+    const [selectedEnsembleIdent, setSelectedEnsembleIdent] = useValidState<EnsembleIdent | null>({
+        initialState: null,
+        validStates: ensembleSet.getEnsembleArr().map((item: Ensemble) => item.getIdent()),
+    });
 
     React.useEffect(
         function propagateEnsembleIdentToView() {

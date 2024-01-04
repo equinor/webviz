@@ -17,7 +17,7 @@ export function useRealizationGroupTreeQuery(
         queryFn: () =>
             apiService.groupTree.getRealizationGroupTreeData(caseUuid ?? "", ensembleName ?? "", realizationNumber, resamplingFrequency),
         staleTime: STALE_TIME,
-        cacheTime: CACHE_TIME,
+        gcTime: CACHE_TIME,
         enabled: caseUuid && ensembleName ? true : false,
     });
 }
@@ -33,7 +33,7 @@ export function useStatisticsGroupTreeQuery(
         queryFn: () =>
             apiService.groupTree.getStatisticalGroupTreeData(caseUuid ?? "", ensembleName ?? "", statOption, resamplingFrequency),
         staleTime: STALE_TIME,
-        cacheTime: CACHE_TIME,
+        gcTime: CACHE_TIME,
         enabled: caseUuid && ensembleName ? true : false,
     });
 }
