@@ -213,6 +213,7 @@ export const View = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
         addWellborePathLayer(esvIntersectionControllerRef.current, renderWellboreTrajectoryXyzPoints);
 
         if (
+            seismicAddress &&
             generateSeismicSliceImageOptions &&
             generatedSeismicSliceImageData.synchedOptions &&
             generatedSeismicSliceImageData.image &&

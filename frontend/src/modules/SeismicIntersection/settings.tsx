@@ -83,6 +83,13 @@ export function Settings({ moduleContext, workbenchSession, workbenchServices }:
         setSelectedEnsembleIdent(computedEnsembleIdent);
     }
 
+    const isValidRealizationNumber = selectedEnsembleIdent
+        ? ensembleSet.findEnsemble(selectedEnsembleIdent)?.getRealizations().includes(realizationNumber) ?? false
+        : false;
+    if (!isValidRealizationNumber) {
+        statusWriter.addError("Realization number does not exist in ensemble");
+    }
+
     // Queries
     const wellHeadersQuery = useWellHeadersQuery(computedEnsembleIdent?.getCaseUuid());
     const seismicCubeMetaListQuery = useSeismicCubeMetaListQuery(
@@ -132,21 +139,10 @@ export function Settings({ moduleContext, workbenchSession, workbenchServices }:
             : null
     );
 
-    // Find surface names and set valid state hook
-    let computedSurfaceNames: string[] = fetchedSurfaceNames;
-    const candidateSurfaceNames = surfaceDirectory.getSurfaceNames(null);
-    if (surfaceDirectoryQuery.data && !isEqual(computedSurfaceNames, candidateSurfaceNames)) {
-        computedSurfaceNames = candidateSurfaceNames;
-        setFetchedSurfaceNames(candidateSurfaceNames);
-    }
-    const [selectedSurfaceNames, setSelectedSurfaceNames] = useValidArrayState<string>({
-        initialState: [],
-        validStateArray: computedSurfaceNames,
-    });
-
-    // Get intersection of attributes for selected surfaces and set valid state hook
+    // Get attributes for available surfaces and set valid state hook
     let computedSurfaceAttributes: string[] = fetchedSurfaceAttributes;
-    const candidateSurfaceAttributes = surfaceDirectory.getAttributeNamesIntersection(selectedSurfaceNames);
+    const noSurfaceNameFilter = null; // No filter for surface attributes
+    const candidateSurfaceAttributes = surfaceDirectory.getAttributeNames(noSurfaceNameFilter);
     if (surfaceDirectoryQuery.data && !isEqual(computedSurfaceAttributes, candidateSurfaceAttributes)) {
         computedSurfaceAttributes = candidateSurfaceAttributes;
         setFetchedSurfaceAttributes(candidateSurfaceAttributes);
@@ -154,6 +150,18 @@ export function Settings({ moduleContext, workbenchSession, workbenchServices }:
     const [selectedSurfaceAttribute, setSelectedSurfaceAttribute] = useValidState<string | null>({
         initialState: null,
         validStates: computedSurfaceAttributes,
+    });
+
+    // Find surface names which has selected attribute and set valid state hook
+    let computedSurfaceNames: string[] = fetchedSurfaceNames;
+    const candidateSurfaceNames = surfaceDirectory.getSurfaceNames(selectedSurfaceAttribute);
+    if (surfaceDirectoryQuery.data && !isEqual(computedSurfaceNames, candidateSurfaceNames)) {
+        computedSurfaceNames = candidateSurfaceNames;
+        setFetchedSurfaceNames(candidateSurfaceNames);
+    }
+    const [selectedSurfaceNames, setSelectedSurfaceNames] = useValidArrayState<string>({
+        initialState: [],
+        validStateArray: computedSurfaceNames,
     });
 
     // Create seismic cube directory
@@ -186,7 +194,7 @@ export function Settings({ moduleContext, workbenchSession, workbenchServices }:
     React.useEffect(
         function propagateSeismicAddressToView() {
             let seismicAddress: SeismicAddress | null = null;
-            if (computedEnsembleIdent && selectedSeismicAttribute && selectedSeismicTime) {
+            if (computedEnsembleIdent && selectedSeismicAttribute && selectedSeismicTime && isValidRealizationNumber) {
                 seismicAddress = {
                     caseUuid: computedEnsembleIdent.getCaseUuid(),
                     ensemble: computedEnsembleIdent.getEnsembleName(),
@@ -203,6 +211,7 @@ export function Settings({ moduleContext, workbenchSession, workbenchServices }:
             selectedSeismicAttribute,
             selectedSeismicTime,
             isObserved,
+            isValidRealizationNumber,
             realizationNumber,
             setSeismicAddress,
         ]
@@ -211,7 +220,12 @@ export function Settings({ moduleContext, workbenchSession, workbenchServices }:
     React.useEffect(
         function propagateSurfaceAddressToView() {
             let surfaceAddress: SurfaceAddress | null = null;
-            if (computedEnsembleIdent && selectedSurfaceAttribute && selectedSurfaceNames.length !== 0) {
+            if (
+                computedEnsembleIdent &&
+                selectedSurfaceAttribute &&
+                selectedSurfaceNames.length !== 0 &&
+                isValidRealizationNumber
+            ) {
                 surfaceAddress = {
                     caseUuid: computedEnsembleIdent.getCaseUuid(),
                     ensemble: computedEnsembleIdent.getEnsembleName(),
@@ -222,7 +236,14 @@ export function Settings({ moduleContext, workbenchSession, workbenchServices }:
             }
             setSurfaceAddress(surfaceAddress);
         },
-        [computedEnsembleIdent, selectedSurfaceAttribute, selectedSurfaceNames, realizationNumber, setSurfaceAddress]
+        [
+            computedEnsembleIdent,
+            selectedSurfaceAttribute,
+            selectedSurfaceNames,
+            isValidRealizationNumber,
+            realizationNumber,
+            setSurfaceAddress,
+        ]
     );
 
     React.useEffect(
@@ -241,16 +262,8 @@ export function Settings({ moduleContext, workbenchSession, workbenchServices }:
 
     function handleRealizationTextChanged(event: React.ChangeEvent<HTMLInputElement>) {
         const base10 = 10;
-        const realNum = parseInt(event.target.value, base10);
-        const isValidRealNum = selectedEnsembleIdent
-            ? ensembleSet.findEnsemble(selectedEnsembleIdent)?.getRealizations().includes(realNum)
-            : null;
-        if (realNum >= 0 && isValidRealNum) {
-            setRealizationNumber(realNum);
-            return;
-        } else {
-            setRealizationNumber(0);
-        }
+        const realNum = Math.max(0, parseInt(event.target.value, base10));
+        setRealizationNumber(realNum);
     }
 
     function handleSurfaceNameChange(values: string[]) {
@@ -325,7 +338,12 @@ export function Settings({ moduleContext, workbenchSession, workbenchServices }:
                                 : 0
                         })`}
                     >
-                        <Input type={"number"} value={realizationNumber} onChange={handleRealizationTextChanged} />
+                        <Input
+                            error={!isValidRealizationNumber}
+                            type={"number"}
+                            value={realizationNumber}
+                            onChange={handleRealizationTextChanged}
+                        />
                     </Label>
                 </div>
             </CollapsibleGroup>
@@ -358,7 +376,17 @@ export function Settings({ moduleContext, workbenchSession, workbenchServices }:
                     loadingComponent={<CircularProgress />}
                 >
                     <div className="flex flex-col gap-4 overflow-y-auto">
-                        <Label text="Stratigraphic names">
+                        <Label text={`Surface attributes`}>
+                            <Select
+                                options={computedSurfaceAttributes.map((attribute) => {
+                                    return { label: attribute, value: attribute };
+                                })}
+                                value={selectedSurfaceAttribute ? [selectedSurfaceAttribute] : []}
+                                size={4}
+                                onChange={handleSurfaceAttributeChange}
+                            />
+                        </Label>
+                        <Label text="Surfaces with selected attribute">
                             <Select
                                 options={computedSurfaceNames.map((name) => {
                                     return { label: name, value: name };
@@ -367,16 +395,6 @@ export function Settings({ moduleContext, workbenchSession, workbenchServices }:
                                 multiple={true}
                                 size={4}
                                 onChange={handleSurfaceNameChange}
-                            />
-                        </Label>
-                        <Label text={`Attribute in selected surface${selectedSurfaceNames.length > 1 ? "s" : ""}`}>
-                            <Select
-                                options={computedSurfaceAttributes.map((attribute) => {
-                                    return { label: attribute, value: attribute };
-                                })}
-                                value={selectedSurfaceAttribute ? [selectedSurfaceAttribute] : []}
-                                size={4}
-                                onChange={handleSurfaceAttributeChange}
                             />
                         </Label>
                     </div>
