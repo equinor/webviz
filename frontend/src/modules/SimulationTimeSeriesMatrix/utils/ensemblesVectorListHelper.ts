@@ -31,18 +31,16 @@ export class EnsembleVectorListsHelper {
      * @returns Array of unique vector names, as union of all vectors in all queries
      */
     vectorsUnion(): string[] {
-        const vectorUnion: string[] = [];
+        const uniqueVectorNames = new Set<string>();
         for (const query of this._queries) {
-            if (!query.data) continue;
-
-            // Add vector if name is not already in vectorUnion
-            for (const vector of query.data) {
-                if (vectorUnion.includes(vector.name)) continue;
-
-                vectorUnion.push(vector.name);
+            if (query.data) {
+                for (const vector of query.data) {
+                    uniqueVectorNames.add(vector.name);
+                }
             }
         }
-        return vectorUnion;
+
+        return Array.from(uniqueVectorNames);
     }
 
     /**
@@ -54,7 +52,7 @@ export class EnsembleVectorListsHelper {
     isVectorInEnsemble(ensemble: EnsembleIdent, vector: string): boolean {
         const index = this._ensembleIdents.indexOf(ensemble);
 
-        if (!this._queries[index].data) return false;
+        if (index === -1 || !this._queries[index].data) return false;
 
         return this._queries[index].data?.some((vec) => vec.name === vector) ?? false;
     }
@@ -69,6 +67,7 @@ export class EnsembleVectorListsHelper {
         if (!this.isVectorInEnsemble(ensemble, vector)) return false;
 
         const index = this._ensembleIdents.indexOf(ensemble);
+        if (index === -1 || !this._queries[index].data) return false;
 
         return this._queries[index].data?.some((vec) => vec.name === vector && vec.has_historical) ?? false;
     }
