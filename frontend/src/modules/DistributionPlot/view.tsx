@@ -11,7 +11,7 @@ import { ContentInfo } from "@modules/_shared/components/ContentMessage";
 
 import { ColorBar, Layout, PlotData } from "plotly.js";
 
-import { DisplayMode, PlotType, State } from "./state";
+import { PlotType, State } from "./state";
 import { Figure, makeSubplots } from "./utils/Figure";
 import { makeHistogramBins, makeHistogramTrace } from "./utils/histogram";
 import { makePlotTitle } from "./utils/stringUtils";
@@ -31,7 +31,6 @@ export const View = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
     const plotType = moduleContext.useStoreValue("plotType");
     const numBins = moduleContext.useStoreValue("numBins");
     const orientation = moduleContext.useStoreValue("orientation");
-    const displayMode = moduleContext.useStoreValue("displayMode");
 
     const statusWriter = useViewStatusWriter(moduleContext);
 
@@ -139,81 +138,48 @@ export const View = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
                 const numCols = Math.floor(Math.sqrt(numContents));
                 const numRows = Math.ceil(numContents / numCols);
 
-                let figure: Figure | null = null;
+                const figure = makeSubplots({
+                    numRows,
+                    numCols,
+                    width: wrapperDivSize.width,
+                    height: wrapperDivSize.height,
+                    sharedXAxes: false,
+                    sharedYAxes: false,
+                    verticalSpacing: 0.3 / numRows,
+                    horizontalSpacing: 0.3 / numCols,
+                });
 
-                if (displayMode === DisplayMode.PlotMatrix) {
-                    figure = makeSubplots({
-                        numRows,
-                        numCols,
-                        width: wrapperDivSize.width,
-                        height: wrapperDivSize.height,
-                        sharedXAxes: false,
-                        sharedYAxes: false,
-                        verticalSpacing: 0.3 / numRows,
-                        horizontalSpacing: 0.3 / numCols,
-                    });
-                } else {
-                    figure = new Figure({
-                        layout: {
-                            // width: wrapperDivSize.width,
-                            // height: wrapperDivSize.height,
-                        },
-                    });
-                }
-
-                if (displayMode === DisplayMode.PlotMatrix) {
-                    let cellIndex = 0;
-                    for (let rowIndex = 0; rowIndex < numRows; rowIndex++) {
-                        for (let colIndex = 0; colIndex < numCols; colIndex++) {
-                            if (cellIndex >= numContents) {
-                                break;
-                            }
-                            const data = receiverX.channel.contents[cellIndex];
-                            const xValues = data.dataArray.map((el: any) => el.value);
-
-                            const trace = makeHistogramTrace({
-                                xValues: xValues,
-                                numBins,
-                                color: colorSet.getFirstColor(),
-                            });
-
-                            figure.addTrace(trace, rowIndex + 1, colIndex + 1);
-
-                            const xAxisTitle = data.displayName;
-
-                            const patch: Partial<Layout> = {
-                                [`xaxis${cellIndex + 1}`]: {
-                                    title: xAxisTitle,
-                                },
-                                [`yaxis${cellIndex + 1}`]: {
-                                    title: "Percent",
-                                },
-                            };
-                            figure.updateLayout(patch);
-                            cellIndex++;
+                let cellIndex = 0;
+                for (let rowIndex = 0; rowIndex < numRows; rowIndex++) {
+                    for (let colIndex = 0; colIndex < numCols; colIndex++) {
+                        if (cellIndex >= numContents) {
+                            break;
                         }
-                    }
-                } else {
-                    const xValuesArray = receiverX.channel.contents.map((content) =>
-                        content.dataArray.map((el: any) => el.value)
-                    );
-                    const bins = makeHistogramBins({
-                        xValuesArray,
-                        numBins,
-                    });
+                        const data = receiverX.channel.contents[cellIndex];
+                        const xValues = data.dataArray.map((el: any) => el.value);
 
-                    for (let i = 0; i < xValuesArray.length; i++) {
                         const trace = makeHistogramTrace({
-                            xValues: xValuesArray[i],
+                            xValues: xValues,
                             numBins,
-                            bins,
-                            color: colorSet.getColor(i),
+                            color: colorSet.getFirstColor(),
                         });
 
-                        figure.addTrace(trace);
+                        figure.addTrace(trace, rowIndex + 1, colIndex + 1);
+
+                        const xAxisTitle = data.displayName;
+
+                        const patch: Partial<Layout> = {
+                            [`xaxis${cellIndex + 1}`]: {
+                                title: xAxisTitle,
+                            },
+                            [`yaxis${cellIndex + 1}`]: {
+                                title: "Percent",
+                            },
+                        };
+                        figure.updateLayout(patch);
+                        cellIndex++;
                     }
                 }
-
                 setPlot(figure.makePlot());
                 return;
             }

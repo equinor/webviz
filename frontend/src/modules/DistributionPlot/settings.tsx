@@ -8,7 +8,7 @@ import { Label } from "@lib/components/Label";
 import { RadioGroup } from "@lib/components/RadioGroup";
 import { Slider } from "@lib/components/Slider";
 
-import { DisplayMode, PlotType, State } from "./state";
+import { PlotType, State } from "./state";
 
 const plotTypes = [
     {
@@ -34,7 +34,6 @@ export function Settings({ moduleContext, initialSettings }: ModuleFCProps<State
     const [plotType, setPlotType] = moduleContext.useStoreState("plotType");
     const [numBins, setNumBins] = moduleContext.useStoreState("numBins");
     const [orientation, setOrientation] = moduleContext.useStoreState("orientation");
-    const [displayMode, setDisplayMode] = moduleContext.useStoreState("displayMode");
 
     useApplyInitialSettingsToState(initialSettings, "plotType", "string", setPlotType);
     useApplyInitialSettingsToState(initialSettings, "numBins", "number", setNumBins);
@@ -55,10 +54,6 @@ export function Settings({ moduleContext, initialSettings }: ModuleFCProps<State
         setOrientation(e.target.value as "h" | "v");
     }
 
-    function handleDisplayTypeChange(e: React.ChangeEvent<HTMLInputElement>) {
-        setDisplayMode(e.target.value as DisplayMode);
-    }
-
     function makeContent(): React.ReactNode {
         if (plotType === null) {
             return null;
@@ -67,30 +62,40 @@ export function Settings({ moduleContext, initialSettings }: ModuleFCProps<State
 
         if (plotType === PlotType.Histogram) {
             content.push(
-                <Label text="Number of bins" key="number-of-bins">
-                    <Slider value={numBins} onChange={handleNumBinsChange} min={1} max={30} valueLabelDisplay="auto" />
-                </Label>
+                <CollapsibleGroup title="Plot settings" expanded>
+                    <Label text="Number of bins" key="number-of-bins">
+                        <Slider
+                            value={numBins}
+                            onChange={handleNumBinsChange}
+                            min={1}
+                            max={30}
+                            valueLabelDisplay="auto"
+                        />
+                    </Label>
+                </CollapsibleGroup>
             );
         }
 
         if (plotType === PlotType.BarChart) {
             content.push(
-                <Label text="Orientation" key="orientation">
-                    <RadioGroup
-                        options={[
-                            {
-                                label: "Horizontal",
-                                value: "h",
-                            },
-                            {
-                                label: "Vertical",
-                                value: "v",
-                            },
-                        ]}
-                        onChange={handleOrientationChange}
-                        value={orientation}
-                    />
-                </Label>
+                <CollapsibleGroup title="Plot settings" expanded>
+                    <Label text="Orientation" key="orientation">
+                        <RadioGroup
+                            options={[
+                                {
+                                    label: "Horizontal",
+                                    value: "h",
+                                },
+                                {
+                                    label: "Vertical",
+                                    value: "v",
+                                },
+                            ]}
+                            onChange={handleOrientationChange}
+                            value={orientation}
+                        />
+                    </Label>
+                </CollapsibleGroup>
             );
         }
 
@@ -102,27 +107,7 @@ export function Settings({ moduleContext, initialSettings }: ModuleFCProps<State
             <CollapsibleGroup title="Plot type" expanded>
                 <Dropdown value={plotType as string} options={plotTypes} onChange={handlePlotTypeChanged} />
             </CollapsibleGroup>
-            <CollapsibleGroup title="Plot settings" expanded>
-                <div className="flex flex-col gap-2">
-                    {makeContent()}
-                    <Label text="Display multiple plots as">
-                        <RadioGroup
-                            options={[
-                                {
-                                    label: "Matrix",
-                                    value: DisplayMode.PlotMatrix,
-                                },
-                                {
-                                    label: "Single plot with multiple colors",
-                                    value: DisplayMode.SinglePlotMultiColor,
-                                },
-                            ]}
-                            onChange={handleDisplayTypeChange}
-                            value={displayMode}
-                        />
-                    </Label>
-                </div>
-            </CollapsibleGroup>
+            {makeContent()}
         </div>
     );
 }
