@@ -21,7 +21,7 @@ export function usePublishChannelContents({
     const [prevDependencies, setPrevDependencies] = React.useState<any[]>([]);
 
     React.useEffect(() => {
-        if (enabled && !isEqual(prevDependencies, dependencies)) {
+        if ((enabled || enabled === undefined) && !isEqual(prevDependencies, dependencies)) {
             setPrevDependencies(dependencies);
 
             channel.replaceContents(
