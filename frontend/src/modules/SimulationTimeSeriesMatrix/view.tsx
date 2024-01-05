@@ -7,13 +7,10 @@ import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { ModuleFCProps } from "@framework/Module";
 import { useViewStatusWriter } from "@framework/StatusWriter";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
-import { ModuleChannelContentMetaData } from "@framework/internal/DataChannels/ModuleChannelContent";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { ColorScaleGradientType } from "@lib/utils/ColorScale";
 import { ContentError } from "@modules/_shared/components/ContentMessage";
-import { simulationUnitReformat, simulationVectorDescription } from "@modules/_shared/reservoirSimulationStringUtils";
 
-import { indexOf } from "lodash";
 import { Layout, PlotDatum, PlotMouseEvent } from "plotly.js";
 
 import { BroadcastChannelNames } from "./channelDefs";

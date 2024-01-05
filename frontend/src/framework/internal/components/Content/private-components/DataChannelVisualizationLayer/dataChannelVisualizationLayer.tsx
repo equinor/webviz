@@ -3,7 +3,6 @@ import ReactDOM from "react-dom";
 
 import { GuiEvent, GuiEventPayloads, GuiState, useGuiState } from "@framework/GuiMessageBroker";
 import { Workbench } from "@framework/Workbench";
-import { GlobalCursorType } from "@framework/internal/GlobalCursor";
 import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
 import { Point } from "@lib/utils/geometry";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
@@ -132,22 +131,6 @@ export const DataChannelVisualizationLayer: React.FC<DataChannelVisualizationPro
             }, 100);
         }
 
-        function handleNodeHover(payload: GuiEventPayloads[GuiEvent.DataChannelNodeHover]) {
-            /*
-            if (!localEditDataChannelConnections) {
-                if (payload.connectionAllowed) {
-                    guiMessageBroker.getGlobalCursor().changeOverrideCursor(GlobalCursorType.Copy);
-                } else {
-                    guiMessageBroker.getGlobalCursor().changeOverrideCursor(GlobalCursorType.NotAllowed);
-                }
-            }
-            */
-        }
-
-        function handleNodeUnhover() {
-            // guiMessageBroker.getGlobalCursor().restoreOverrideCursor();
-        }
-
         function handleEditDataChannelConnectionsRequest(
             payload: GuiEventPayloads[GuiEvent.EditDataChannelConnectionsForModuleInstanceRequest]
         ) {
@@ -200,14 +183,6 @@ export const DataChannelVisualizationLayer: React.FC<DataChannelVisualizationPro
             GuiEvent.DataChannelConnectionsChange,
             handleConnectionChange
         );
-        const removeNodeHoverHandler = guiMessageBroker.subscribeToEvent(
-            GuiEvent.DataChannelNodeHover,
-            handleNodeHover
-        );
-        const removeNodeUnhoverHandler = guiMessageBroker.subscribeToEvent(
-            GuiEvent.DataChannelNodeUnhover,
-            handleNodeUnhover
-        );
 
         document.addEventListener("pointerup", handlePointerUp);
         document.addEventListener("pointermove", handlePointerMove);
@@ -221,8 +196,6 @@ export const DataChannelVisualizationLayer: React.FC<DataChannelVisualizationPro
             removeDataChannelPointerUpHandler();
             removeDataChannelDoneHandler();
             removeConnectionChangeHandler();
-            removeNodeHoverHandler();
-            removeNodeUnhoverHandler();
 
             document.removeEventListener("pointerup", handlePointerUp);
             document.removeEventListener("pointermove", handlePointerMove);

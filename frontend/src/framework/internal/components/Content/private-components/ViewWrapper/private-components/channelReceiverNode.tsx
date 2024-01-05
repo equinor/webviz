@@ -17,6 +17,7 @@ export type ChannelReceiverNodeProps = {
     onChannelConnect: (inputName: string, moduleInstanceId: string, destinationPoint: Point) => void;
     onChannelConnectionDisconnect: (inputName: string) => void;
     workbench: Workbench;
+    hoverable: boolean;
 };
 
 export const ChannelReceiverNode: React.FC<ChannelReceiverNodeProps> = (props) => {
@@ -224,6 +225,8 @@ export const ChannelReceiverNode: React.FC<ChannelReceiverNodeProps> = (props) =
         }
     }
 
+    const hoveredAndHoverable = hovered && props.hoverable;
+
     return (
         <div
             id={`channel-connector-${props.moduleInstanceId}-${props.idString}`}
@@ -232,12 +235,12 @@ export const ChannelReceiverNode: React.FC<ChannelReceiverNodeProps> = (props) =
             className={resolveClassNames(
                 "w-40 max-w-[25%] flex flex-col items-center justify-center rounded border h-20 max-h-[25%] m-2 gap-2 text-sm text-center",
                 {
-                    "bg-green-600 border-green-600": hovered && connectable,
-                    "bg-red-600 border-red-600": hovered && !connectable && !editDataChannelConnections,
-                    "bg-blue-600 border-blue-600": hovered && !connectable && editDataChannelConnections,
+                    "bg-green-600 border-green-600": hoveredAndHoverable && connectable,
+                    "bg-red-600 border-red-600": hoveredAndHoverable && !connectable && !editDataChannelConnections,
+                    "bg-blue-600 border-blue-600": hoveredAndHoverable && !connectable && editDataChannelConnections,
                     "opacity-50": !connectable && !editDataChannelConnections,
-                    "bg-slate-100": !hovered,
-                    "text-white": hovered,
+                    "bg-slate-100": !hoveredAndHoverable,
+                    "text-white": hoveredAndHoverable,
                     "shadow-md": hasConnection,
                 }
             )}

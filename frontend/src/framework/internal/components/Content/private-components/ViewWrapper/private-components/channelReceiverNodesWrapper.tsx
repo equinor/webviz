@@ -253,6 +253,8 @@ export const ChannelReceiverNodesWrapper: React.FC<ChannelReceiverNodesWrapperPr
         receiver.subscribeToChannel(channel, contentIdStrings);
     }
 
+    const channelSelectorVisible = channelSelectorCenterPoint !== null && currentReceiver !== null;
+
     return createPortal(
         <div
             className={resolveClassNames("absolute flex items-center justify-center z-50 flex-", {
@@ -279,10 +281,11 @@ export const ChannelReceiverNodesWrapper: React.FC<ChannelReceiverNodesWrapperPr
                             workbench={props.workbench}
                             onChannelConnect={handleChannelConnect}
                             onChannelConnectionDisconnect={handleChannelDisconnect}
+                            hoverable={!channelSelectorVisible}
                         />
                     );
                 })}
-            {channelSelectorCenterPoint && currentReceiver && (
+            {channelSelectorVisible && (
                 <ChannelSelector
                     receiver={currentReceiver}
                     position={channelSelectorCenterPoint}

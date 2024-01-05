@@ -1,5 +1,5 @@
 import { VectorRealizationData_api } from "@api";
-import { DataGenerator, ModuleChannelContentMetaData } from "@framework/internal/DataChannels/ModuleChannelContent";
+import { DataGenerator, ModuleChannelContentMetaData } from "@framework/DataChannelTypes";
 import { simulationUnitReformat, simulationVectorDescription } from "@modules/_shared/reservoirSimulationStringUtils";
 
 import { indexOf } from "lodash";

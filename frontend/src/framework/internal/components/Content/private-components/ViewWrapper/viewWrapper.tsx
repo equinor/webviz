@@ -117,8 +117,6 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
     const showAsActive =
         props.isActive && [DrawerContent.ModuleSettings, DrawerContent.SyncSettings].includes(drawerContent);
 
-    const previewFunc = props.moduleInstance.getModule().getDrawPreviewFunc();
-
     return (
         <>
             {props.isDragged && (

@@ -1,4 +1,4 @@
-import { ChannelReceiverChannelContent } from "@framework/internal/DataChannels/hooks/useChannelReceiver";
+import { ChannelReceiverChannelContent } from "@framework/DataChannelTypes";
 
 export function makePlotTitle(content: ChannelReceiverChannelContent<any>): string {
     let title = "";

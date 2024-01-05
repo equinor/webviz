@@ -1,6 +1,8 @@
 export type { ModuleChannelContentDefinition } from "./internal/DataChannels/ModuleChannelContent";
 export type { ModuleChannelDefinition } from "./internal/DataChannels/ModuleChannel";
 export type { ModuleChannelReceiverDefinition } from "./internal/DataChannels/ModuleChannelReceiver";
+export type { DataGenerator, ModuleChannelContentMetaData } from "./internal/DataChannels/ModuleChannelContent";
+export type { ChannelReceiverChannelContent } from "./internal/DataChannels/hooks/useChannelReceiver";
 
 export enum KeyKind {
     TimestampMs = "timestamp-ms",
