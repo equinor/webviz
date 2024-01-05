@@ -12,8 +12,8 @@ import { ContentInfo } from "@modules/_shared/components/ContentMessage";
 import { ColorBar, Layout, PlotData } from "plotly.js";
 
 import { PlotType, State } from "./state";
-import { Figure, makeSubplots } from "./utils/Figure";
-import { makeHistogramBins, makeHistogramTrace } from "./utils/histogram";
+import { makeSubplots } from "./utils/Figure";
+import { makeHistogramTrace } from "./utils/histogram";
 import { makePlotTitle } from "./utils/stringUtils";
 import { calcTextSize } from "./utils/textSize";
 
