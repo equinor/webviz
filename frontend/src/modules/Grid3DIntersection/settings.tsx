@@ -2,10 +2,10 @@ import React from "react";
 
 import { ModuleFCProps } from "@framework/Module";
 import { useFirstEnsembleInEnsembleSet } from "@framework/WorkbenchSession";
-import { ApiStateWrapper } from "@lib/components/ApiStateWrapper";
 import { Checkbox } from "@lib/components/Checkbox";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { Label } from "@lib/components/Label";
+import { QueryStateWrapper } from "@lib/components/QueryStateWrapper";
 import { Select, SelectOption } from "@lib/components/Select";
 
 import { useGridModelNames, useGridParameterNames } from "./queryHooks";
@@ -52,8 +52,8 @@ export function Settings({ moduleContext, workbenchSession }: ModuleFCProps<stat
 
     return (
         <div>
-            <ApiStateWrapper
-                apiResult={gridNamesQuery}
+            <QueryStateWrapper
+                queryResult={gridNamesQuery}
                 errorComponent={"Error loading vector names"}
                 loadingComponent={<CircularProgress />}
             >
@@ -69,7 +69,7 @@ export function Settings({ moduleContext, workbenchSession }: ModuleFCProps<stat
 
                 <Label text="Grid parameter">
                     <Select
-                        options={stringToOptions(parameterNames || [])}
+                        options={stringToOptions(parameterNames)}
                         value={[parameterName || parameterNames[0]]}
                         onChange={(pnames) => setParameterName(pnames[0])}
                         filter={true}
@@ -79,7 +79,7 @@ export function Settings({ moduleContext, workbenchSession }: ModuleFCProps<stat
 
                 <Label text="Realizations">
                     <Select
-                        options={stringToOptions((allRealizations as any) || [])}
+                        options={stringToOptions(allRealizations)}
                         value={realizations ? realizations : [allRealizations[0]]}
                         onChange={(reals) => setRealizations(reals)}
                         filter={true}
@@ -93,7 +93,7 @@ export function Settings({ moduleContext, workbenchSession }: ModuleFCProps<stat
                     onChange={(event: React.ChangeEvent<HTMLInputElement>) => setUseStatistics(event.target.checked)}
                 />
                 {"(Select multiple realizations)"}
-            </ApiStateWrapper>
+            </QueryStateWrapper>
         </div>
     );
 }

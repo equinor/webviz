@@ -8,12 +8,12 @@ import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { SingleEnsembleSelect } from "@framework/components/SingleEnsembleSelect";
 import { VectorSelector, createVectorSelectorDataFromVectors } from "@framework/components/VectorSelector";
 import { fixupEnsembleIdent, maybeAssignFirstSyncedEnsemble } from "@framework/utils/ensembleUiHelpers";
-import { ApiStateWrapper } from "@lib/components/ApiStateWrapper";
 import { Checkbox } from "@lib/components/Checkbox";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { Dropdown, DropdownOption } from "@lib/components/Dropdown";
 import { Label } from "@lib/components/Label";
+import { QueryStateWrapper } from "@lib/components/QueryStateWrapper";
 import { Select, SelectOption } from "@lib/components/Select";
 import { SmartNodeSelectorSelection, TreeDataNode } from "@lib/components/SmartNodeSelector";
 
@@ -152,8 +152,8 @@ export function Settings({ moduleContext, workbenchSession, workbenchServices }:
                     onChange={handleEnsembleSelectionChange}
                 />
             </CollapsibleGroup>
-            <ApiStateWrapper
-                apiResult={vectorsListQuery}
+            <QueryStateWrapper
+                queryResult={vectorsListQuery}
                 loadingComponent={<CircularProgress />}
                 errorComponent={"Could not load the vectors for selected ensembles"}
             >
@@ -180,7 +180,7 @@ export function Settings({ moduleContext, workbenchSession, workbenchServices }:
                         </div>
                     </Label>
                 </CollapsibleGroup>
-            </ApiStateWrapper>
+            </QueryStateWrapper>
             <CollapsibleGroup expanded={false} title="Visualization">
                 <Checkbox
                     label="Mean over realizations"

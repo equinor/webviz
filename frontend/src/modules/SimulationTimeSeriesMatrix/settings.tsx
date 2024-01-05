@@ -11,12 +11,12 @@ import { MultiEnsembleSelect } from "@framework/components/MultiEnsembleSelect";
 import { ParameterListFilter } from "@framework/components/ParameterListFilter";
 import { VectorSelector, createVectorSelectorDataFromVectors } from "@framework/components/VectorSelector";
 import { fixupEnsembleIdents } from "@framework/utils/ensembleUiHelpers";
-import { ApiStatesWrapper } from "@lib/components/ApiStatesWrapper";
 import { Checkbox } from "@lib/components/Checkbox";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { Dropdown } from "@lib/components/Dropdown";
 import { Label } from "@lib/components/Label";
+import { QueriesErrorCriteria, QueryStateWrapper } from "@lib/components/QueryStateWrapper";
 import { RadioGroup } from "@lib/components/RadioGroup";
 import { Select } from "@lib/components/Select";
 import { SmartNodeSelectorSelection, TreeDataNode } from "@lib/components/SmartNodeSelector";
@@ -68,6 +68,7 @@ export function Settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
     const [previousEnsembleSet, setPreviousEnsembleSet] = React.useState<EnsembleSet>(ensembleSet);
     const [selectedEnsembleIdents, setSelectedEnsembleIdents] = React.useState<EnsembleIdent[]>([]);
     const [selectedVectorNames, setSelectedVectorNames] = React.useState<string[]>([]);
+    const [selectedVectorTags, setSelectedVectorTags] = React.useState<string[]>([]);
     const [vectorSelectorData, setVectorSelectorData] = React.useState<TreeDataNode[]>([]);
     const [statisticsType, setStatisticsType] = React.useState<StatisticsType>(StatisticsType.INDIVIDUAL);
     const [filteredParameterIdentList, setFilteredParameterIdentList] = React.useState<ParameterIdent[]>([]);
@@ -138,30 +139,55 @@ export function Settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
         validStates: filteredParameterIdentList.map((item: ParameterIdent) => item.toString()),
     });
 
-    // Await update of vectorSelectorData until all vector lists are retrieved
-    const hasVectorListQueriesErrorOrFetching = vectorListQueries.some((query) => query.isFetching || query.isError);
-    if (!hasVectorListQueriesErrorOrFetching && !isEqual(currentVectorSelectorData, vectorSelectorData)) {
+    // Await update of vectorSelectorData until all vector lists are finished fetching
+    const isVectorListQueriesFetching = vectorListQueries.some((query) => query.isFetching);
+    let computedVectorSelectorData = vectorSelectorData;
+    if (!isVectorListQueriesFetching && !isEqual(currentVectorSelectorData, vectorSelectorData)) {
+        computedVectorSelectorData = currentVectorSelectorData;
         setVectorSelectorData(currentVectorSelectorData);
+    }
+
+    // Set error if all vector list queries fail
+    const hasEveryVectorListQueryError =
+        vectorListQueries.length > 0 && vectorListQueries.every((query) => query.isError);
+    if (hasEveryVectorListQueryError) {
+        let errorMessage = "Could not load vectors for selected ensemble";
+        if (vectorListQueries.length > 1) {
+            errorMessage += "s";
+        }
+        statusWriter.addError(errorMessage);
+    }
+
+    // Set warning for vector names not existing in a selected ensemble
+    const validateVectorNamesInEnsemble = (vectorNames: string[], ensembleIdent: EnsembleIdent) => {
+        const existingVectors = vectorNames.filter((vector) =>
+            ensembleVectorListsHelper.current.isVectorInEnsemble(ensembleIdent, vector)
+        );
+        if (existingVectors.length === vectorNames.length) {
+            return;
+        }
+
+        const nonExistingVectors = vectorNames.filter((vector) => !existingVectors.includes(vector));
+        const ensembleStr = ensembleSet.findEnsemble(ensembleIdent)?.getDisplayName() ?? ensembleIdent.toString();
+        const vectorArrayStr = joinStringArrayToHumanReadableString(nonExistingVectors);
+        statusWriter.addWarning(`Vector ${vectorArrayStr} does not exist in ensemble ${ensembleStr}`);
+    };
+
+    // Note: selectedVectorNames is not updated until vectorSelectorData is updated and VectorSelector triggers onChange
+    if (selectedEnsembleIdents.length === 1) {
+        // If single ensemble is selected and no vectors exist, selectedVectorNames is empty as no vectors are valid
+        // in the VectorSelector. Then utilizing selectedVectorTags for status message
+        const vectorNames = selectedVectorNames.length > 0 ? selectedVectorNames : selectedVectorTags;
+        validateVectorNamesInEnsemble(vectorNames, selectedEnsembleIdents[0]);
+    }
+    for (const ensembleIdent of selectedEnsembleIdents) {
+        validateVectorNamesInEnsemble(selectedVectorNames, ensembleIdent);
     }
 
     // Set statistics type for checkbox rendering
     const computedStatisticsType = computeStatisticsType(statisticsType, visualizationMode);
     if (statisticsType !== computedStatisticsType) {
         setStatisticsType(computedStatisticsType);
-    }
-
-    // Set warning for selected vectors not existing in a selected ensemble
-    for (const ensembleIdent of selectedEnsembleIdents) {
-        const nonExistingVectors = selectedVectorNames.filter(
-            (vector) => !ensembleVectorListsHelper.current.isVectorInEnsemble(ensembleIdent, vector)
-        );
-        if (nonExistingVectors.length === 0) {
-            continue;
-        }
-
-        const ensembleStr = ensembleSet.findEnsemble(ensembleIdent)?.getDisplayName() ?? ensembleIdent.toString();
-        const vectorArrayStr = joinStringArrayToHumanReadableString(nonExistingVectors);
-        statusWriter.addWarning(`Vector ${vectorArrayStr} does not exist in ensemble ${ensembleStr}`);
     }
 
     const numberOfQueriesWithData = ensembleVectorListsHelper.current.numberOfQueriesWithData();
@@ -231,8 +257,9 @@ export function Settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
         setSelectedEnsembleIdents(ensembleIdentArr);
     }
 
-    function handleVectorSelectChange(selection: SmartNodeSelectorSelection) {
+    function handleVectorSelectionChange(selection: SmartNodeSelectorSelection) {
         setSelectedVectorNames(selection.selectedNodes);
+        setSelectedVectorTags(selection.selectedTags);
     }
 
     function handleFrequencySelectionChange(newFrequencyStr: string) {
@@ -386,20 +413,21 @@ export function Settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
                         "pointer-events-none opacity-80": vectorListQueries.some((query) => query.isLoading),
                     })}
                 >
-                    <ApiStatesWrapper
-                        apiResults={vectorListQueries}
+                    <QueryStateWrapper
+                        queryResults={vectorListQueries}
                         loadingComponent={<CircularProgress />}
-                        errorComponent={"Could not load the vectors for selected ensembles"}
+                        showErrorWhen={QueriesErrorCriteria.ALL_QUERIES_HAVE_ERROR}
+                        errorComponent={"Could not load vectors for selected ensembles"}
                     >
                         <VectorSelector
-                            data={vectorSelectorData}
+                            data={computedVectorSelectorData}
                             placeholder="Add new vector..."
                             maxNumSelectedNodes={50}
                             numSecondsUntilSuggestionsAreShown={0.5}
                             lineBreakAfterTag={true}
-                            onChange={handleVectorSelectChange}
+                            onChange={handleVectorSelectionChange}
                         />
-                    </ApiStatesWrapper>
+                    </QueryStateWrapper>
                 </div>
             </CollapsibleGroup>
             <CollapsibleGroup expanded={false} title="Color realization by parameter">

@@ -5,8 +5,8 @@ import { Body_get_realizations_response_api } from "@api";
 import { DataElement, KeyType } from "@framework/DataChannelTypes";
 import { ModuleFCProps } from "@framework/Module";
 import { useSubscribedValue } from "@framework/WorkbenchServices";
-import { ApiStateWrapper } from "@lib/components/ApiStateWrapper";
 import { CircularProgress } from "@lib/components/CircularProgress";
+import { QueryStateWrapper } from "@lib/components/QueryStateWrapper";
 import { useElementSize } from "@lib/hooks/useElementSize";
 
 import { Layout, PlotData, PlotHoverEvent } from "plotly.js";
@@ -105,8 +105,8 @@ export const View = (props: ModuleFCProps<State>) => {
     };
     return (
         <div className="w-full h-full" ref={wrapperDivRef}>
-            <ApiStateWrapper
-                apiResult={realizationsResponseQuery}
+            <QueryStateWrapper
+                queryResult={realizationsResponseQuery}
                 loadingComponent={<CircularProgress />}
                 errorComponent={"feil"}
             >
@@ -117,7 +117,7 @@ export const View = (props: ModuleFCProps<State>) => {
                     onHover={handleHover}
                     onUnhover={handleUnHover}
                 />
-            </ApiStateWrapper>
+            </QueryStateWrapper>
         </div>
     );
 };
