@@ -1,5 +1,6 @@
 import React from "react";
 
+import { SurfaceAttributeType_api } from "@api";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { ModuleFCProps } from "@framework/Module";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
@@ -15,23 +16,26 @@ import { Label } from "@lib/components/Label";
 import { QueryStateWrapper } from "@lib/components/QueryStateWrapper";
 import { RadioGroup } from "@lib/components/RadioGroup";
 import { Select, SelectOption } from "@lib/components/Select";
+import { useValidArrayState } from "@lib/hooks/useValidArrayState";
 import { useValidState } from "@lib/hooks/useValidState";
+import { SurfaceDirectory, SurfaceTimeType } from "@modules/_shared/Surface";
+import { useSurfaceDirectoryQuery } from "@modules/_shared/Surface";
 import { useWellHeadersQuery } from "@modules/_shared/WellBore";
 
 import { isEqual } from "lodash";
 
 import { useSeismicCubeMetaListQuery } from "./queryHooks";
 import { State } from "./state";
-import { SeismicAddress } from "./types";
-import { SeismicCubeMetaDirectory, TimeType } from "./utils/seismicCubeDirectory";
+import { SeismicAddress, SurfaceAddress } from "./types";
+import { SeismicCubeMetaDirectory, SeismicTimeType } from "./utils/seismicCubeDirectory";
 
-const TimeTypeEnumToSurveyTypeStringMapping = {
-    [TimeType.TimePoint]: "3D",
-    [TimeType.Interval]: "4D",
+const SeismicTimeTypeEnumToSurveyTypeStringMapping = {
+    [SeismicTimeType.TimePoint]: "3D",
+    [SeismicTimeType.Interval]: "4D",
 };
-const TimeTypeEnumToSeismicTimeTypeStringMapping = {
-    [TimeType.TimePoint]: "Seismic timestamps",
-    [TimeType.Interval]: "Seismic intervals",
+const SeismicTimeTypeEnumToSeismicTimeTypeStringMapping = {
+    [SeismicTimeType.TimePoint]: "Seismic timestamps",
+    [SeismicTimeType.Interval]: "Seismic intervals",
 };
 const enum SeismicDataSource {
     SIMULATED = "Simulated",
@@ -45,6 +49,9 @@ const WELLBORE_TYPE = "smda";
 const EXTENSION_LIMITS = { min: 100, max: 100000 }; // Min/max extension in meters outside both sides of the well path [m]
 const Z_SCALE_LIMITS = { min: 1, max: 100 }; // Minimum z-scale factor
 
+// Hardcoded surface time type - no surface as function of time
+const SURFACE_TIME_TYPE = SurfaceTimeType.None;
+
 export function Settings({ moduleContext, workbenchSession, workbenchServices }: ModuleFCProps<State>) {
     const syncedSettingKeys = moduleContext.useSyncedSettingKeys();
     const syncHelper = new SyncSettingsHelper(syncedSettingKeys, workbenchServices);
@@ -53,15 +60,19 @@ export function Settings({ moduleContext, workbenchSession, workbenchServices }:
     const statusWriter = useSettingsStatusWriter(moduleContext);
 
     const setSeismicAddress = moduleContext.useSetStoreValue("seismicAddress");
+    const setSurfaceAddress = moduleContext.useSetStoreValue("surfaceAddress");
     const setWellboreAddress = moduleContext.useSetStoreValue("wellboreAddress");
     const [extension, setExtension] = moduleContext.useStoreState("extension");
     const [zScale, setZScale] = moduleContext.useStoreState("zScale");
+
+    const [fetchedSurfaceNames, setFetchedSurfaceNames] = React.useState<string[]>([]);
+    const [fetchedSurfaceAttributes, setFetchedSurfaceAttributes] = React.useState<string[]>([]);
 
     const [selectedEnsembleIdent, setSelectedEnsembleIdent] = React.useState<EnsembleIdent | null>(null);
     const [realizationNumber, setRealizationNumber] = React.useState<number>(0);
     const [isObserved, setIsObserved] = React.useState<boolean>(false);
 
-    const [surveyTimeType, setSurveyTimeType] = React.useState<TimeType>(TimeType.TimePoint);
+    const [seismicTimeType, setSeismicTimeType] = React.useState<SeismicTimeType>(SeismicTimeType.TimePoint);
     const [selectedWellboreAddress, setSelectedWellboreAddress] = React.useState<Wellbore | null>(
         moduleContext.useStoreValue("wellboreAddress")
     );
@@ -72,9 +83,20 @@ export function Settings({ moduleContext, workbenchSession, workbenchServices }:
         setSelectedEnsembleIdent(computedEnsembleIdent);
     }
 
+    const isValidRealizationNumber = selectedEnsembleIdent
+        ? ensembleSet.findEnsemble(selectedEnsembleIdent)?.getRealizations().includes(realizationNumber) ?? false
+        : false;
+    if (!isValidRealizationNumber) {
+        statusWriter.addError("Realization number does not exist in ensemble");
+    }
+
     // Queries
     const wellHeadersQuery = useWellHeadersQuery(computedEnsembleIdent?.getCaseUuid());
     const seismicCubeMetaListQuery = useSeismicCubeMetaListQuery(
+        computedEnsembleIdent?.getCaseUuid(),
+        computedEnsembleIdent?.getEnsembleName()
+    );
+    const surfaceDirectoryQuery = useSurfaceDirectoryQuery(
         computedEnsembleIdent?.getCaseUuid(),
         computedEnsembleIdent?.getEnsembleName()
     );
@@ -83,6 +105,9 @@ export function Settings({ moduleContext, workbenchSession, workbenchServices }:
     }
     if (seismicCubeMetaListQuery.isError) {
         statusWriter.addError("Error loading seismic cube meta list");
+    }
+    if (surfaceDirectoryQuery.isError) {
+        statusWriter.addError("Error loading surface directory");
     }
 
     // Handling well headers query
@@ -103,11 +128,47 @@ export function Settings({ moduleContext, workbenchSession, workbenchServices }:
         setSelectedWellboreAddress(computedWellboreAddress);
     }
 
+    // Create surface directory (depth and time to match attributes for seismic cube)
+    const surfaceDirectory = new SurfaceDirectory(
+        surfaceDirectoryQuery.data
+            ? {
+                  surfaceMetas: surfaceDirectoryQuery.data,
+                  timeType: SURFACE_TIME_TYPE,
+                  includeAttributeTypes: [SurfaceAttributeType_api.DEPTH, SurfaceAttributeType_api.TIME],
+              }
+            : null
+    );
+
+    // Get attributes for available surfaces and set valid state hook
+    let computedSurfaceAttributes: string[] = fetchedSurfaceAttributes;
+    const noSurfaceNameFilter = null; // No filter for surface attributes
+    const candidateSurfaceAttributes = surfaceDirectory.getAttributeNames(noSurfaceNameFilter);
+    if (surfaceDirectoryQuery.data && !isEqual(computedSurfaceAttributes, candidateSurfaceAttributes)) {
+        computedSurfaceAttributes = candidateSurfaceAttributes;
+        setFetchedSurfaceAttributes(candidateSurfaceAttributes);
+    }
+    const [selectedSurfaceAttribute, setSelectedSurfaceAttribute] = useValidState<string | null>({
+        initialState: null,
+        validStates: computedSurfaceAttributes,
+    });
+
+    // Find surface names which has selected attribute and set valid state hook
+    let computedSurfaceNames: string[] = fetchedSurfaceNames;
+    const candidateSurfaceNames = surfaceDirectory.getSurfaceNames(selectedSurfaceAttribute);
+    if (surfaceDirectoryQuery.data && !isEqual(computedSurfaceNames, candidateSurfaceNames)) {
+        computedSurfaceNames = candidateSurfaceNames;
+        setFetchedSurfaceNames(candidateSurfaceNames);
+    }
+    const [selectedSurfaceNames, setSelectedSurfaceNames] = useValidArrayState<string>({
+        initialState: [],
+        validStateArray: computedSurfaceNames,
+    });
+
     // Create seismic cube directory
     const seismicCubeMetaDirectory = seismicCubeMetaListQuery.data
         ? new SeismicCubeMetaDirectory({
               seismicCubeMetaList: seismicCubeMetaListQuery.data,
-              timeType: surveyTimeType,
+              timeType: seismicTimeType,
               useObservedSeismicCubes: isObserved,
           })
         : null;
@@ -116,7 +177,7 @@ export function Settings({ moduleContext, workbenchSession, workbenchServices }:
         initialState: null,
         validStates: seismicCubeMetaDirectory?.getAttributeNames() ?? [],
     });
-    const [selectedTime, setSelectedTime] = useValidState<string | null>({
+    const [selectedSeismicTime, setSelectedSeismicTime] = useValidState<string | null>({
         initialState: null,
         validStates: seismicCubeMetaDirectory?.getTimeOrIntervalStrings() ?? [],
     });
@@ -126,20 +187,20 @@ export function Settings({ moduleContext, workbenchSession, workbenchServices }:
               return { label: attribute, value: attribute };
           })
         : [];
-    const timeOptions = seismicCubeMetaDirectory
+    const seismicTimeOptions = seismicCubeMetaDirectory
         ? createOptionsFromTimeOrIntervalStrings(seismicCubeMetaDirectory.getTimeOrIntervalStrings())
         : [];
 
     React.useEffect(
         function propagateSeismicAddressToView() {
             let seismicAddress: SeismicAddress | null = null;
-            if (computedEnsembleIdent && selectedSeismicAttribute && selectedTime) {
+            if (computedEnsembleIdent && selectedSeismicAttribute && selectedSeismicTime && isValidRealizationNumber) {
                 seismicAddress = {
                     caseUuid: computedEnsembleIdent.getCaseUuid(),
                     ensemble: computedEnsembleIdent.getEnsembleName(),
                     realizationNumber: realizationNumber,
                     attribute: selectedSeismicAttribute,
-                    timeString: selectedTime,
+                    timeString: selectedSeismicTime,
                     observed: isObserved,
                 };
             }
@@ -148,10 +209,40 @@ export function Settings({ moduleContext, workbenchSession, workbenchServices }:
         [
             computedEnsembleIdent,
             selectedSeismicAttribute,
-            selectedTime,
+            selectedSeismicTime,
             isObserved,
+            isValidRealizationNumber,
             realizationNumber,
             setSeismicAddress,
+        ]
+    );
+
+    React.useEffect(
+        function propagateSurfaceAddressToView() {
+            let surfaceAddress: SurfaceAddress | null = null;
+            if (
+                computedEnsembleIdent &&
+                selectedSurfaceAttribute &&
+                selectedSurfaceNames.length !== 0 &&
+                isValidRealizationNumber
+            ) {
+                surfaceAddress = {
+                    caseUuid: computedEnsembleIdent.getCaseUuid(),
+                    ensemble: computedEnsembleIdent.getEnsembleName(),
+                    realizationNumber: realizationNumber,
+                    surfaceNames: selectedSurfaceNames,
+                    attribute: selectedSurfaceAttribute,
+                };
+            }
+            setSurfaceAddress(surfaceAddress);
+        },
+        [
+            computedEnsembleIdent,
+            selectedSurfaceAttribute,
+            selectedSurfaceNames,
+            isValidRealizationNumber,
+            realizationNumber,
+            setSurfaceAddress,
         ]
     );
 
@@ -171,16 +262,20 @@ export function Settings({ moduleContext, workbenchSession, workbenchServices }:
 
     function handleRealizationTextChanged(event: React.ChangeEvent<HTMLInputElement>) {
         const base10 = 10;
-        const realNum = parseInt(event.target.value, base10);
-        const isValidRealNum = selectedEnsembleIdent
-            ? ensembleSet.findEnsemble(selectedEnsembleIdent)?.getRealizations().includes(realNum)
-            : null;
-        if (realNum >= 0 && isValidRealNum) {
-            setRealizationNumber(realNum);
+        const realNum = Math.max(0, parseInt(event.target.value, base10));
+        setRealizationNumber(realNum);
+    }
+
+    function handleSurfaceNameChange(values: string[]) {
+        setSelectedSurfaceNames(values);
+    }
+
+    function handleSurfaceAttributeChange(values: string[]) {
+        if (values.length === 0) {
+            setSelectedSurfaceAttribute(null);
             return;
-        } else {
-            setRealizationNumber(0);
         }
+        setSelectedSurfaceAttribute(values[0]);
     }
 
     function handleSeismicAttributeChange(values: string[]) {
@@ -193,10 +288,10 @@ export function Settings({ moduleContext, workbenchSession, workbenchServices }:
 
     function handleSeismicTimeChange(values: string[]) {
         if (values.length === 0) {
-            setSelectedTime(null);
+            setSelectedSeismicTime(null);
             return;
         }
-        setSelectedTime(values[0]);
+        setSelectedSeismicTime(values[0]);
     }
 
     function handleWellChange(selectedWellboreUuids: string[], validWellboreList: Wellbore[]) {
@@ -243,7 +338,12 @@ export function Settings({ moduleContext, workbenchSession, workbenchServices }:
                                 : 0
                         })`}
                     >
-                        <Input type={"number"} value={realizationNumber} onChange={handleRealizationTextChanged} />
+                        <Input
+                            error={!isValidRealizationNumber}
+                            type={"number"}
+                            value={realizationNumber}
+                            onChange={handleRealizationTextChanged}
+                        />
                     </Label>
                 </div>
             </CollapsibleGroup>
@@ -269,6 +369,37 @@ export function Settings({ moduleContext, workbenchSession, workbenchServices }:
                     </Label>
                 </QueryStateWrapper>
             </CollapsibleGroup>
+            <CollapsibleGroup title="Surface specifications">
+                <QueryStateWrapper
+                    queryResult={surfaceDirectoryQuery}
+                    errorComponent={"Error loading surface directory"}
+                    loadingComponent={<CircularProgress />}
+                >
+                    <div className="flex flex-col gap-4 overflow-y-auto">
+                        <Label text={`Surface attributes`}>
+                            <Select
+                                options={computedSurfaceAttributes.map((attribute) => {
+                                    return { label: attribute, value: attribute };
+                                })}
+                                value={selectedSurfaceAttribute ? [selectedSurfaceAttribute] : []}
+                                size={4}
+                                onChange={handleSurfaceAttributeChange}
+                            />
+                        </Label>
+                        <Label text="Surfaces with selected attribute">
+                            <Select
+                                options={computedSurfaceNames.map((name) => {
+                                    return { label: name, value: name };
+                                })}
+                                value={selectedSurfaceNames}
+                                multiple={true}
+                                size={4}
+                                onChange={handleSurfaceNameChange}
+                            />
+                        </Label>
+                    </div>
+                </QueryStateWrapper>
+            </CollapsibleGroup>
             <CollapsibleGroup title="Seismic specifications">
                 <div className="flex flex-col gap-4 overflow-y-auto">
                     <Label text="Seismic data type">
@@ -288,17 +419,17 @@ export function Settings({ moduleContext, workbenchSession, workbenchServices }:
                         <RadioGroup
                             options={[
                                 {
-                                    label: TimeTypeEnumToSurveyTypeStringMapping[TimeType.TimePoint],
-                                    value: TimeType.TimePoint,
+                                    label: SeismicTimeTypeEnumToSurveyTypeStringMapping[SeismicTimeType.TimePoint],
+                                    value: SeismicTimeType.TimePoint,
                                 },
                                 {
-                                    label: TimeTypeEnumToSurveyTypeStringMapping[TimeType.Interval],
-                                    value: TimeType.Interval,
+                                    label: SeismicTimeTypeEnumToSurveyTypeStringMapping[SeismicTimeType.Interval],
+                                    value: SeismicTimeType.Interval,
                                 },
                             ]}
                             direction="horizontal"
-                            value={surveyTimeType}
-                            onChange={(_, value: string | number) => setSurveyTimeType(value as TimeType)}
+                            value={seismicTimeType}
+                            onChange={(_, value: string | number) => setSeismicTimeType(value as SeismicTimeType)}
                         />
                     </Label>
                     <QueryStateWrapper
@@ -315,10 +446,10 @@ export function Settings({ moduleContext, workbenchSession, workbenchServices }:
                                     onChange={handleSeismicAttributeChange}
                                 />
                             </Label>
-                            <Label text={TimeTypeEnumToSeismicTimeTypeStringMapping[surveyTimeType]}>
+                            <Label text={SeismicTimeTypeEnumToSeismicTimeTypeStringMapping[seismicTimeType]}>
                                 <Select
-                                    options={timeOptions}
-                                    value={selectedTime ? [selectedTime] : []}
+                                    options={seismicTimeOptions}
+                                    value={selectedSeismicTime ? [selectedSeismicTime] : []}
                                     onChange={handleSeismicTimeChange}
                                     size={8}
                                 />

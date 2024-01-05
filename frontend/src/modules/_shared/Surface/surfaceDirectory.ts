@@ -1,7 +1,7 @@
 import { SurfaceAttributeType_api, SurfaceMeta_api } from "@api";
 import { isIsoStringInterval } from "@framework/utils/timestampUtils";
 
-export enum TimeType {
+export enum SurfaceTimeType {
     None = "None",
     TimePoint = "TimePoint",
     Interval = "Interval",
@@ -9,7 +9,7 @@ export enum TimeType {
 
 export type SurfaceDirectoryOptions = {
     surfaceMetas: SurfaceMeta_api[];
-    timeType: TimeType;
+    timeType: SurfaceTimeType;
     includeAttributeTypes?: SurfaceAttributeType_api[];
     excludeAttributeTypes?: SurfaceAttributeType_api[];
     useObservedSurfaces?: boolean;
@@ -52,6 +52,44 @@ export class SurfaceDirectory {
         return [...new Set(filteredList.map((surface) => surface.attribute_name))].sort();
     }
 
+    // Retrieves intersection of attribute names with filtering on surface names.
+    public getAttributeNamesIntersection(requireSurfaceNames: string[]): string[] {
+        if (requireSurfaceNames.length === 0) {
+            return [];
+        }
+
+        const uniqueRequiredSurfaceNames = [...new Set(requireSurfaceNames)];
+        const filteredSurfaceList = this._surfaceList.filter((surface) =>
+            uniqueRequiredSurfaceNames.includes(surface.name)
+        );
+        const uniqueAttributeNames = [...new Set(filteredSurfaceList.map((surface) => surface.attribute_name))].sort();
+
+        if (uniqueAttributeNames.length === 0) {
+            return [];
+        }
+
+        // Find attribute names present in all required surfaces.
+        const attributeNamesIntersection: string[] = [];
+
+        for (const attributeName of uniqueAttributeNames) {
+            // For each unique required surface name, check if there exist a surface object with the given
+            // surface name and attribute name.
+            const isAttributeInAllRequiredSurfaces = uniqueRequiredSurfaceNames.every((surfaceName) => {
+                return (
+                    filteredSurfaceList.find(
+                        (surface) => surface.name === surfaceName && surface.attribute_name === attributeName
+                    ) !== undefined
+                );
+            });
+
+            if (isAttributeInAllRequiredSurfaces) {
+                attributeNamesIntersection.push(attributeName);
+            }
+        }
+
+        return attributeNamesIntersection;
+    }
+
     // Retrieves unique surface names with optional filtering on surface attribute.
     public getSurfaceNames(requireAttributeName: string | null): string[] {
         let filteredList = this._surfaceList;
@@ -72,7 +110,7 @@ export class SurfaceDirectory {
                 return matchedOnSurfName && matchedOnAttrName;
             });
         }
-        if (filteredList.length === 0){
+        if (filteredList.length === 0) {
             return [];
         }
 
@@ -109,15 +147,15 @@ export class SurfaceDirectory {
 }
 
 // Filters directory based on time type.
-function filterOnTimeType(surfaceList: SurfaceMeta_api[], timeType: TimeType): SurfaceMeta_api[] {
+function filterOnTimeType(surfaceList: SurfaceMeta_api[], timeType: SurfaceTimeType): SurfaceMeta_api[] {
     switch (timeType) {
-        case TimeType.None:
+        case SurfaceTimeType.None:
             return surfaceList.filter((surface) => !surface.iso_date_or_interval);
-        case TimeType.TimePoint:
+        case SurfaceTimeType.TimePoint:
             return surfaceList.filter(
                 (surface) => surface.iso_date_or_interval && !isIsoStringInterval(surface.iso_date_or_interval)
             );
-        case TimeType.Interval:
+        case SurfaceTimeType.Interval:
             return surfaceList.filter(
                 (surface) => surface.iso_date_or_interval && isIsoStringInterval(surface.iso_date_or_interval)
             );

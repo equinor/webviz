@@ -13,6 +13,7 @@ export { B64FloatArray as B64FloatArray_api } from './models/B64FloatArray';
 export { B64UintArray as B64UintArray_api } from './models/B64UintArray';
 export type { Body_get_realizations_response as Body_get_realizations_response_api } from './models/Body_get_realizations_response';
 export type { Body_post_get_seismic_fence as Body_post_get_seismic_fence_api } from './models/Body_post_get_seismic_fence';
+export type { Body_post_get_surface_intersection as Body_post_get_surface_intersection_api } from './models/Body_post_get_surface_intersection';
 export type { CaseInfo as CaseInfo_api } from './models/CaseInfo';
 export type { Completions as Completions_api } from './models/Completions';
 export type { EnsembleDetails as EnsembleDetails_api } from './models/EnsembleDetails';
@@ -50,6 +51,8 @@ export type { SummaryVectorDateObservation as SummaryVectorDateObservation_api }
 export type { SummaryVectorObservations as SummaryVectorObservations_api } from './models/SummaryVectorObservations';
 export { SurfaceAttributeType as SurfaceAttributeType_api } from './models/SurfaceAttributeType';
 export type { SurfaceData as SurfaceData_api } from './models/SurfaceData';
+export type { SurfaceIntersectionCumulativeLengthPolyline as SurfaceIntersectionCumulativeLengthPolyline_api } from './models/SurfaceIntersectionCumulativeLengthPolyline';
+export type { SurfaceIntersectionData as SurfaceIntersectionData_api } from './models/SurfaceIntersectionData';
 export type { SurfaceMeta as SurfaceMeta_api } from './models/SurfaceMeta';
 export { SurfaceStatisticFunction as SurfaceStatisticFunction_api } from './models/SurfaceStatisticFunction';
 export type { UserInfo as UserInfo_api } from './models/UserInfo';

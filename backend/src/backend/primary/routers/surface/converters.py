@@ -6,6 +6,7 @@ from numpy.typing import NDArray
 
 from src.services.smda_access.types import StratigraphicSurface
 from src.services.sumo_access.surface_types import SurfaceMeta as SumoSurfaceMeta
+from src.services.sumo_access.surface_types import XtgeoSurfaceIntersectionPolyline, XtgeoSurfaceIntersectionResult
 from src.services.utils.b64 import b64_encode_float_array_as_float32
 from src.services.utils.surface_to_float32 import surface_to_float32_numpy_array
 
@@ -111,3 +112,31 @@ def _sort_by_stratigraphical_order(
             surface_metas_with_custom_names.append(surface_meta)
 
     return surface_metas_with_official_strat_name + surface_metas_with_custom_names
+
+
+def from_api_cumulative_length_polyline_to_xtgeo_polyline(
+    cumulative_length_polyline: schemas.SurfaceIntersectionCumulativeLengthPolyline,
+) -> XtgeoSurfaceIntersectionPolyline:
+    """
+    Convert API cumulative length polyline to the polyline for xtgeo
+    """
+    return XtgeoSurfaceIntersectionPolyline(
+        X=cumulative_length_polyline.x_points,
+        Y=cumulative_length_polyline.y_points,
+        Z=np.zeros(len(cumulative_length_polyline.x_points)).tolist(),
+        HLEN=cumulative_length_polyline.cum_lengths,
+    )
+
+
+def to_api_surface_intersection(
+    xtgeo_surface_intersection: XtgeoSurfaceIntersectionResult,
+) -> schemas.SurfaceIntersectionData:
+    """
+    Convert a surface intersection to API surface intersection
+    """
+
+    return schemas.SurfaceIntersectionData(
+        name=xtgeo_surface_intersection.name,
+        z_points=xtgeo_surface_intersection.zval,
+        cum_lengths=xtgeo_surface_intersection.distance,
+    )
