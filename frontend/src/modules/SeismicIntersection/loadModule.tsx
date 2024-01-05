@@ -7,6 +7,7 @@ import { View } from "./view";
 const defaultState: State = {
     wellboreAddress: null,
     seismicAddress: null,
+    surfaceAddress: null,
     extension: 1000,
     zScale: 5,
 };

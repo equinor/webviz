@@ -1,10 +1,11 @@
 import { Wellbore } from "@framework/Wellbore";
 
-import { SeismicAddress } from "./types";
+import { SeismicAddress, SurfaceAddress } from "./types";
 
 export interface State {
     wellboreAddress: Wellbore | null;
     seismicAddress: SeismicAddress | null;
+    surfaceAddress: SurfaceAddress | null;
     extension: number;
     zScale: number;
 }

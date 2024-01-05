@@ -1,6 +1,7 @@
-import { WellBoreTrajectory_api } from "@api";
+import { SurfaceIntersectionData_api, WellBoreTrajectory_api } from "@api";
 import { IntersectionReferenceSystem, Trajectory } from "@equinor/esv-intersection";
 
+import { SurfaceIntersectionData } from "./esvIntersectionControllerUtils";
 import { SeismicFenceData_trans } from "./queryDataTransforms";
 
 /**
@@ -198,4 +199,30 @@ export function createSeismicSliceImageYAxisValuesArrayFromFenceData(fenceData: 
         yAxisValues.push(minDepth + ((maxDepth - minDepth) / numSamples) * i);
     }
     return yAxisValues;
+}
+
+/**
+ * Utility to create an array of surface intersection data for the esv intersection layer.
+ *
+ * Takes the surface intersection data from API and converts it to an array of [x,y] points for each surface intersection line.
+ */
+export function createEsvSurfaceIntersectionDataArrayFromSurfaceIntersectionDataApiArray(
+    surfaceIntersectionData: SurfaceIntersectionData_api[]
+): SurfaceIntersectionData[] {
+    const surfaceIntersectionDataArray: SurfaceIntersectionData[] = [];
+
+    for (const surfaceIntersection of surfaceIntersectionData) {
+        if (surfaceIntersection.z_points.length !== surfaceIntersection.cum_lengths.length) {
+            throw new Error(
+                `Surface intersection data for ${surfaceIntersection.name} has different number of z_points and cum_lengths`
+            );
+        }
+
+        const xyPoints = surfaceIntersection.z_points.map((z: number, idx) => {
+            return [surfaceIntersection.cum_lengths[idx], z];
+        });
+        surfaceIntersectionDataArray.push({ name: surfaceIntersection.name, xyPoints: xyPoints });
+    }
+
+    return surfaceIntersectionDataArray;
 }
