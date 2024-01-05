@@ -7,7 +7,7 @@ export enum BroadcastChannelNames {
 export const channelDefs: ModuleChannelDefinition[] = [
     {
         idString: BroadcastChannelNames.TimeSeries,
-        displayName: "TimeSeries (with value per realization)",
+        displayName: "Time series (with value per realization)",
         kindOfKey: KeyKind.Realization,
     },
 ];
