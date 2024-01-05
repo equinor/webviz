@@ -12,11 +12,7 @@ export function useVectorListQuery(
 ): UseQueryResult<Array<VectorDescription_api>> {
     return useQuery({
         queryKey: ["getVectorList", caseUuid, ensembleName],
-        queryFn: ({signal}) => {
-            const promise = apiService.timeseries.getVectorList(caseUuid ?? "", ensembleName ?? "");
-            signal.addEventListener("abort", () => promise.cancel());
-            return promise;
-        },
+        queryFn: () => apiService.timeseries.getVectorList(caseUuid ?? "", ensembleName ?? ""),
         staleTime: STALE_TIME,
         gcTime: CACHE_TIME,
         enabled: caseUuid && ensembleName ? true : false,
