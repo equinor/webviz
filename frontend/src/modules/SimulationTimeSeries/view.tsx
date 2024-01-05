@@ -64,30 +64,29 @@ export const View = ({ moduleContext, workbenchSession, workbenchServices }: Mod
     const ensembleSet = workbenchSession.getEnsembleSet();
     const ensemble = vectorSpec ? ensembleSet.findEnsemble(vectorSpec.ensembleIdent) : null;
 
-    if (vectorSpec) {
-        moduleContext.usePublishChannelContents({
-            channelIdString: BroadcastChannelNames.Realization_Value,
-            dependencies: [vectorQuery.data, ensemble, vectorSpec],
-            contents: [{ idString: vectorSpec.vectorName, displayName: vectorSpec.vectorName }],
-            dataGenerator: () => {
-                const data: { key: number; value: number }[] = [];
-                if (vectorQuery.data) {
-                    vectorQuery.data.forEach((vec) => {
-                        data.push({
-                            key: vec.realization,
-                            value: vec.values[0],
-                        });
+    moduleContext.usePublishChannelContents({
+        channelIdString: BroadcastChannelNames.Realization_Value,
+        dependencies: [vectorQuery.data, ensemble, vectorSpec],
+        enabled: vectorSpec !== null,
+        contents: [{ idString: vectorSpec?.vectorName ?? "", displayName: vectorSpec?.vectorName ?? "" }],
+        dataGenerator: () => {
+            const data: { key: number; value: number }[] = [];
+            if (vectorQuery.data) {
+                vectorQuery.data.forEach((vec) => {
+                    data.push({
+                        key: vec.realization,
+                        value: vec.values[0],
                     });
-                }
-                return {
-                    data,
-                    metaData: {
-                        ensembleIdentString: vectorSpec.ensembleIdent.toString(),
-                    },
-                };
-            },
-        });
-    }
+                });
+            }
+            return {
+                data,
+                metaData: {
+                    ensembleIdentString: vectorSpec?.ensembleIdent.toString() ?? "",
+                },
+            };
+        },
+    });
 
     const subscribedHoverTimestamp = useSubscribedValue("global.hoverTimestamp", workbenchServices);
     const subscribedHoverRealization = useSubscribedValue("global.hoverRealization", workbenchServices);
