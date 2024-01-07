@@ -95,18 +95,18 @@ class GroupTreeData:
 
         # Check that all WSTAT summary vectors exist
         # They are used to determine which summary vector are needed next.
-        self._check_that_sumvecs_exists([f"WSTAT:{well}" for well in self._wells])
+        wstat_vecs = [f"WSTAT:{well}" for well in self._wells]
+        self._check_that_sumvecs_exists(wstat_vecs)
 
-        wstat_unique = {}
-        for well in self._wells:
-            vec = f"WSTAT:{well}"
-            table, _ = await self._summary_access.get_vector_table_async(
-                vector_name=vec,
-                resampling_frequency=self._resampling_frequency,
-                realizations=None,  # {self._realization}
-            )
-            # Get unique wstat values for well
-            wstat_unique[well] = pa.compute.unique(table[vec]).to_pylist()
+        wstat_df, _ = await self._summary_access.get_single_real_vectors_table_async(
+            vector_names=wstat_vecs,
+            resampling_frequency=self._resampling_frequency,
+            realization=self._realization
+            if self._realization is not None
+            else min(self._summary_access.get_realizations()),
+        )
+
+        wstat_unique = {well: pa.compute.unique(wstat_df[f"WSTAT:{well}"]).to_pylist() for well in self._wells}
 
         # Add nodetypes IS_PROD, IS_INJ and IS_OTHER to gruptree
         self._grouptree = _add_nodetype(self._grouptree, wstat_unique, self._wells, self._terminal_node)
@@ -159,7 +159,7 @@ class GroupTreeData:
 
         if tree_mode == TreeModeOptions.SINGLE_REAL and real is None:
             raise ValueError("Realization cannot be None when Tree mode is SINGLE REAL")
-        
+
         if tree_mode == TreeModeOptions.STATISTICS and not self._grouptree_model._tree_is_equivalent_in_all_real:
             raise ValueError(
                 "Statistics cannot be calculated because the Group Tree is not equivalent in all realizations."
@@ -169,7 +169,6 @@ class GroupTreeData:
         vectors = [sumvec for sumvec in self._sumvecs["SUMVEC"] if sumvec in self._all_vectors]
 
         if tree_mode == TreeModeOptions.SINGLE_REAL:
-
             table, _ = await self._summary_access.get_single_real_vectors_table_async(
                 vector_names=vectors,
                 resampling_frequency=self._resampling_frequency,
@@ -178,7 +177,6 @@ class GroupTreeData:
             smry = table.to_pandas()
 
         elif tree_mode == TreeModeOptions.STATISTICS:
-
             dfs = []
             for vec in vectors:
                 table, _ = await self._summary_access.get_vector_table_async(
@@ -202,7 +200,6 @@ class GroupTreeData:
                     smry = smry.groupby("DATE").min().reset_index()
                 else:
                     raise ValueError(f"Statistical option: {stat_option.value} not implemented")
-
 
         # Filter nodetype prod, inj and/or other
         dfs = []
