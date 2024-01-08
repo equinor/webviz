@@ -1,8 +1,11 @@
 import {
     Controller,
+    GeomodelCanvasLayer,
+    GeomodelLabelsLayer,
     OverlayMouseExitEvent,
     OverlayMouseMoveEvent,
     SeismicCanvasLayer,
+    SurfaceData,
     WellborepathLayer,
     getSeismicInfo,
     getSeismicOptions,
@@ -96,4 +99,55 @@ export function addSeismicLayer(
     });
     layer.data = { image: image, options: getSeismicOptions(info) };
     controller.addLayer(layer);
+}
+
+export type SurfaceIntersectionData = {
+    name: string;
+    xyPoints: number[][]; // [x, y] points for surface intersection line in reference system
+};
+
+export type SurfacesLayerOptions = {
+    surfaceIntersectionDataList: SurfaceIntersectionData[];
+    layerName: string;
+    surfaceColor: string;
+    surfaceWidth: number;
+};
+export function addSurfacesLayer(
+    controller: Controller,
+    { surfaceIntersectionDataList, layerName, surfaceColor, surfaceWidth }: SurfacesLayerOptions
+): void {
+    const surfaceIndicesWithLabels: { label: string; idx: number }[] = [];
+    surfaceIntersectionDataList.forEach((surface, idx) => {
+        if (surface.name !== surfaceIndicesWithLabels[surfaceIndicesWithLabels.length - 1]?.label) {
+            surfaceIndicesWithLabels.push({ label: surface.name, idx: idx });
+        }
+    });
+
+    // Create surface intersection lines
+    const surfaceIntersectionLines: SurfaceData = {
+        areas: [],
+        lines: surfaceIntersectionDataList.map((surface) => {
+            return {
+                data: surface.xyPoints,
+                color: surfaceColor,
+                id: `${surface.name}-id`,
+                label: surface.name,
+                width: surfaceWidth,
+            };
+        }),
+    };
+
+    const geomodelLayer = new GeomodelCanvasLayer(`${layerName}`, {
+        order: 3,
+        layerOpacity: 0.6,
+        data: surfaceIntersectionLines,
+    });
+    const geomodelLabelsLayer = new GeomodelLabelsLayer<SurfaceData>(`${layerName}labels`, {
+        order: 3,
+        data: surfaceIntersectionLines,
+        maxFontSize: 16,
+        minFontSize: 10,
+    });
+    controller.addLayer(geomodelLayer);
+    controller.addLayer(geomodelLabelsLayer);
 }
