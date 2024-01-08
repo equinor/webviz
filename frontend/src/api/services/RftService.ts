@@ -1,16 +1,13 @@
+/* generated using openapi-typescript-codegen -- do no edit */
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
 import type { RftInfo } from '../models/RftInfo';
 import type { RftRealizationData } from '../models/RftRealizationData';
-
 import type { CancelablePromise } from '../core/CancelablePromise';
 import type { BaseHttpRequest } from '../core/BaseHttpRequest';
-
 export class RftService {
-
     constructor(public readonly httpRequest: BaseHttpRequest) {}
-
     /**
      * Get Rft Info
      * @param caseUuid Sumo case uuid
@@ -34,7 +31,6 @@ export class RftService {
             },
         });
     }
-
     /**
      * Get Realization Data
      * @param caseUuid Sumo case uuid
@@ -70,5 +66,4 @@ export class RftService {
             },
         });
     }
-
 }

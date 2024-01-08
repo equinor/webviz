@@ -1,10 +1,10 @@
+/* generated using openapi-typescript-codegen -- do no edit */
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
 import type { BaseHttpRequest } from './core/BaseHttpRequest';
 import type { OpenAPIConfig } from './core/OpenAPI';
 import { AxiosHttpRequest } from './core/AxiosHttpRequest';
-
 import { DefaultService } from './services/DefaultService';
 import { ExploreService } from './services/ExploreService';
 import { GraphService } from './services/GraphService';
@@ -20,11 +20,8 @@ import { SurfaceService } from './services/SurfaceService';
 import { TimeseriesService } from './services/TimeseriesService';
 import { WellService } from './services/WellService';
 import { WellCompletionsService } from './services/WellCompletionsService';
-
 type HttpRequestConstructor = new (config: OpenAPIConfig) => BaseHttpRequest;
-
 export class ApiService {
-
     public readonly default: DefaultService;
     public readonly explore: ExploreService;
     public readonly graph: GraphService;
@@ -40,9 +37,7 @@ export class ApiService {
     public readonly timeseries: TimeseriesService;
     public readonly well: WellService;
     public readonly wellCompletions: WellCompletionsService;
-
     public readonly request: BaseHttpRequest;
-
     constructor(config?: Partial<OpenAPIConfig>, HttpRequest: HttpRequestConstructor = AxiosHttpRequest) {
         this.request = new HttpRequest({
             BASE: config?.BASE ?? '/api',
@@ -55,7 +50,6 @@ export class ApiService {
             HEADERS: config?.HEADERS,
             ENCODE_PATH: config?.ENCODE_PATH,
         });
-
         this.default = new DefaultService(this.request);
         this.explore = new ExploreService(this.request);
         this.graph = new GraphService(this.request);

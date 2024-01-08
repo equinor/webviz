@@ -1,17 +1,14 @@
+/* generated using openapi-typescript-codegen -- do no edit */
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
 import type { Body_post_get_seismic_fence } from '../models/Body_post_get_seismic_fence';
 import type { SeismicCubeMeta } from '../models/SeismicCubeMeta';
 import type { SeismicFenceData } from '../models/SeismicFenceData';
-
 import type { CancelablePromise } from '../core/CancelablePromise';
 import type { BaseHttpRequest } from '../core/BaseHttpRequest';
-
 export class SeismicService {
-
     constructor(public readonly httpRequest: BaseHttpRequest) {}
-
     /**
      * Get Seismic Cube Meta List
      * Get a list of seismic cube meta.
@@ -36,7 +33,6 @@ export class SeismicService {
             },
         });
     }
-
     /**
      * Post Get Seismic Fence
      * Get a fence of seismic data from a polyline defined by a set of (x, y) coordinates in domain coordinate system.
@@ -83,5 +79,4 @@ export class SeismicService {
             },
         });
     }
-
 }

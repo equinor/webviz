@@ -1,7 +1,7 @@
+/* generated using openapi-typescript-codegen -- do no edit */
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-
 /**
  * A surface has a single array with values, e.g. depth, time, property, seismic, thickness.
  * Only surfaces with depth and time have z-values that can be plotted in 3D.
