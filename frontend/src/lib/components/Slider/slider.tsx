@@ -1,7 +1,7 @@
 import React from "react";
-import ReactDOM from "react-dom";
 
 import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
+import { createPortal } from "@lib/utils/createPortal";
 import { Point } from "@lib/utils/geometry";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { Slider as SliderUnstyled, SliderProps as SliderUnstyledProps } from "@mui/base";
@@ -281,7 +281,7 @@ export const Slider = React.forwardRef((props: SliderProps, ref: React.Forwarded
             </div>
             {valueLabelDisplay !== undefined &&
                 valueLabelDisplay !== "off" &&
-                ReactDOM.createPortal(
+                createPortal(
                     <div
                         className="absolute flex justify-center w-40 -ml-20 h-4 -mt-5 pointer-events-none z-50"
                         ref={valueLabelRef}
@@ -320,8 +320,7 @@ export const Slider = React.forwardRef((props: SliderProps, ref: React.Forwarded
                         >
                             {makeLabel()}
                         </div>
-                    </div>,
-                    document.body
+                    </div>
                 )}
         </BaseComponent>
     );

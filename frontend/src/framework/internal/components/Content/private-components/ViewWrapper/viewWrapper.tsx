@@ -4,6 +4,7 @@ import { DrawerContent, GuiEvent, GuiState, useGuiState, useGuiValue } from "@fr
 import { ModuleInstance } from "@framework/ModuleInstance";
 import { Workbench } from "@framework/Workbench";
 import { Point, pointDifference, pointRelativeToDomRect, pointerEventToPoint } from "@lib/utils/geometry";
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import { Header } from "./private-components/header";
 import { InputChannelNodes } from "./private-components/inputChannelNodeWrapper";
@@ -21,9 +22,15 @@ type ViewWrapperProps = {
     y: number;
     isDragged: boolean;
     dragPosition: Point;
+    changingLayout: boolean;
 };
 
 export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
+    const [prevWidth, setPrevWidth] = React.useState<number>(props.width);
+    const [prevHeight, setPrevHeight] = React.useState<number>(props.height);
+    const [prevX, setPrevX] = React.useState<number>(props.x);
+    const [prevY, setPrevY] = React.useState<number>(props.y);
+
     const ref = React.useRef<HTMLDivElement>(null);
     const [drawerContent, setDrawerContent] = useGuiState(
         props.workbench.getGuiMessageBroker(),
@@ -43,6 +50,22 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
 
     const timeRef = React.useRef<number | null>(null);
     const pointerDown = React.useRef<boolean>(false);
+
+    if (props.width !== prevWidth && !props.changingLayout) {
+        setPrevWidth(props.width);
+    }
+
+    if (props.height !== prevHeight && !props.changingLayout) {
+        setPrevHeight(props.height);
+    }
+
+    if (props.x !== prevX && !props.changingLayout) {
+        setPrevX(props.x);
+    }
+
+    if (props.y !== prevY && !props.changingLayout) {
+        setPrevY(props.y);
+    }
 
     const handleHeaderPointerDown = React.useCallback(
         function handlePointerDown(e: React.PointerEvent<HTMLDivElement>) {
@@ -118,16 +141,40 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
             {props.isDragged && (
                 <ViewWrapperPlaceholder width={props.width} height={props.height} x={props.x} y={props.y} />
             )}
+            {props.changingLayout && (
+                <div
+                    className="absolute box-border p-0.5"
+                    style={{
+                        width: props.width,
+                        height: props.height,
+                        left: props.isDragged ? props.dragPosition.x : props.x,
+                        top: props.isDragged ? props.dragPosition.y : props.y,
+                        opacity: props.isDragged ? 0.5 : 1,
+                        zIndex: props.isDragged ? 1 : 0,
+                    }}
+                >
+                    <div className="bg-white h-full w-full flex flex-col border-solid border-2 box-border shadow">
+                        <Header
+                            moduleInstance={props.moduleInstance}
+                            isDragged={props.isDragged}
+                            onPointerDown={handleHeaderPointerDown}
+                            onRemoveClick={handleRemoveClick}
+                            onInputChannelsClick={handleInputChannelsClick}
+                            guiMessageBroker={guiMessageBroker}
+                        />
+                    </div>
+                </div>
+            )}
             <div
                 ref={ref}
                 className="absolute box-border p-0.5"
                 style={{
-                    width: props.width,
-                    height: props.height,
-                    left: props.isDragged ? props.dragPosition.x : props.x,
-                    top: props.isDragged ? props.dragPosition.y : props.y,
-                    zIndex: props.isDragged ? 1 : 0,
-                    opacity: props.isDragged ? 0.5 : 1,
+                    width: prevWidth,
+                    height: prevHeight,
+                    left: prevX,
+                    top: prevY,
+                    contain: "content",
+                    visibility: props.changingLayout ? "hidden" : "visible",
                 }}
             >
                 <div
@@ -147,7 +194,10 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
                         onInputChannelsClick={handleInputChannelsClick}
                         guiMessageBroker={guiMessageBroker}
                     />
-                    <div className="flex-grow overflow-auto h-0" onClick={handleModuleClick}>
+                    <div
+                        className={resolveClassNames("flex-grow overflow-auto h-0", { hidden: props.changingLayout })}
+                        onClick={handleModuleClick}
+                    >
                         <ViewContent workbench={props.workbench} moduleInstance={props.moduleInstance} />
                         <InputChannelNodes
                             forwardedRef={ref}

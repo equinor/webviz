@@ -287,7 +287,7 @@ export const Layout: React.FC<LayoutProps> = (props) => {
     return (
         <div ref={mainRef} className="relative flex h-full w-full">
             <div ref={ref} className="h-full flex-grow">
-                {layoutBoxRef.current && (
+                {layoutBoxRef.current && draggedModuleInstanceId !== null && (
                     <LayoutBoxComponents
                         active={draggedModuleInstanceId}
                         layoutBox={layoutBoxRef.current}
@@ -315,6 +315,7 @@ export const Layout: React.FC<LayoutProps> = (props) => {
                             y={rect.y}
                             isDragged={isDragged}
                             dragPosition={position}
+                            changingLayout={draggedModuleInstanceId !== null}
                         />
                     );
                 })}

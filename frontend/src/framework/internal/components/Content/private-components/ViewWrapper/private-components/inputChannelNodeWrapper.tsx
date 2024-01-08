@@ -1,10 +1,10 @@
 import React from "react";
-import { createPortal } from "react-dom";
 
 import { GuiEvent, GuiEventPayloads } from "@framework/GuiMessageBroker";
 import { ModuleInstance } from "@framework/ModuleInstance";
 import { Workbench } from "@framework/Workbench";
 import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
+import { createPortal } from "@lib/utils/createPortal";
 import { Point } from "@lib/utils/geometry";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
@@ -194,7 +194,6 @@ export const InputChannelNodes: React.FC<InputChannelNodesProps> = (props) => {
                     onSelectChannel={handleChannelSelection}
                 />
             )}
-        </div>,
-        document.body
+        </div>
     );
 };

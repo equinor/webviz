@@ -1,7 +1,7 @@
 import React from "react";
-import ReactDOM from "react-dom";
 
 import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
+import { createPortal } from "@lib/utils/createPortal";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { getTextWidthWithElement } from "@lib/utils/textSize";
 import { ExpandLess, ExpandMore } from "@mui/icons-material";
@@ -299,7 +299,7 @@ export const Dropdown = withDefaults<DropdownProps>()(defaultProps, (props) => {
                     value={makeInputValue()}
                 />
                 {dropdownVisible &&
-                    ReactDOM.createPortal(
+                    createPortal(
                         <div
                             className="absolute bg-white border border-gray-300 rounded-md shadow-md overflow-y-auto z-50 box-border"
                             style={{ ...dropdownRect }}
@@ -355,8 +355,7 @@ export const Dropdown = withDefaults<DropdownProps>()(defaultProps, (props) => {
                                     </div>
                                 )}
                             />
-                        </div>,
-                        document.body
+                        </div>
                     )}
             </div>
         </BaseComponent>

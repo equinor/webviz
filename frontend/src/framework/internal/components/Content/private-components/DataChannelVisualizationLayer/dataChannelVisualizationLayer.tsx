@@ -1,10 +1,10 @@
 import React from "react";
-import ReactDOM from "react-dom";
 
 import { GuiEvent, GuiEventPayloads, GuiState, useGuiState } from "@framework/GuiMessageBroker";
 import { Workbench } from "@framework/Workbench";
 import { GlobalCursorType } from "@framework/internal/GlobalCursor";
 import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
+import { createPortal } from "@lib/utils/createPortal";
 import { Point } from "@lib/utils/geometry";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
@@ -339,7 +339,7 @@ export const DataChannelVisualizationLayer: React.FC<DataChannelVisualizationPro
 
     const dataChannelPaths = makeDataChannelPaths();
 
-    return ReactDOM.createPortal(
+    return createPortal(
         <svg
             ref={ref}
             className={resolveClassNames("absolute bg-slate-50 left-0 top-0 h-full w-full z-40 bg-opacity-70", {
@@ -450,7 +450,6 @@ export const DataChannelVisualizationLayer: React.FC<DataChannelVisualizationPro
                     </text>
                 </g>
             ))}
-        </svg>,
-        document.body
+        </svg>
     );
 };

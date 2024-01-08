@@ -1,5 +1,4 @@
 import React from "react";
-import ReactDOM from "react-dom";
 
 import { DrawerContent, GuiState, useGuiValue } from "@framework/GuiMessageBroker";
 import { Workbench } from "@framework/Workbench";
@@ -13,6 +12,7 @@ import { Label } from "@lib/components/Label";
 import { Overlay } from "@lib/components/Overlay";
 import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
 import { ColorPalette } from "@lib/utils/ColorPalette";
+import { createPortal } from "@lib/utils/createPortal";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { convertRemToPixels } from "@lib/utils/screenUnitConversions";
 import { ExpandMore, Palette } from "@mui/icons-material";
@@ -147,7 +147,7 @@ const ColorPaletteSelector: React.FC<ColorPaletteSelectorProps> = (props) => {
                 <ExpandMore fontSize="small" className="flex-grow-0" />
             </IconButton>
             {open &&
-                ReactDOM.createPortal(
+                createPortal(
                     <>
                         <Overlay visible={true} />
                         <div
@@ -163,8 +163,7 @@ const ColorPaletteSelector: React.FC<ColorPaletteSelectorProps> = (props) => {
                         >
                             {renderColorPalettes()}
                         </div>
-                    </>,
-                    document.body
+                    </>
                 )}
         </div>
     );
