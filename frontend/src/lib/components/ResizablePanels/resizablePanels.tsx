@@ -75,6 +75,8 @@ export const ResizablePanels: React.FC<ResizablePanelsProps> = (props) => {
                 dragging = true;
                 setIsDragging(true);
                 e.preventDefault();
+
+                addEventListeners();
             }
         }
 
@@ -130,18 +132,27 @@ export const ResizablePanels: React.FC<ResizablePanelsProps> = (props) => {
             if (onSizesChange) {
                 onSizesChange(changedSizes);
             }
+            removeEventListeners();
         }
 
-        document.addEventListener("pointerdown", handlePointerDown);
-        document.addEventListener("pointermove", handlePointerMove);
-        document.addEventListener("pointerup", handlePointerUp);
-        document.addEventListener("blur", handlePointerUp);
+        function addEventListeners() {
+            document.addEventListener("pointermove", handlePointerMove);
+            document.addEventListener("pointerup", handlePointerUp);
+            document.addEventListener("blur", handlePointerUp);
+        }
 
-        return () => {
-            document.removeEventListener("pointerdown", handlePointerDown);
+        function removeEventListeners() {
             document.removeEventListener("pointermove", handlePointerMove);
             document.removeEventListener("pointerup", handlePointerUp);
             document.removeEventListener("blur", handlePointerUp);
+        }
+
+        document.addEventListener("pointerdown", handlePointerDown);
+
+        return () => {
+            document.removeEventListener("pointerdown", handlePointerDown);
+
+            removeEventListeners();
         };
     }, [props.direction, props.id, onSizesChange]);
 

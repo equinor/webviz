@@ -1,6 +1,7 @@
 import React from "react";
 
 import { Size } from "@lib/utils/geometry";
+import { elementIsVisible } from "@lib/utils/htmlElementUtils";
 
 export function useElementSize(ref: React.RefObject<HTMLElement>): Size {
     const [size, setSize] = React.useState<Size>({ width: 0, height: 0 });
@@ -12,7 +13,7 @@ export function useElementSize(ref: React.RefObject<HTMLElement>): Size {
             let newSize: Size = { width: 0, height: 0 };
             if (ref.current) {
                 // If element is not visible do not change size as it might be expensive to render
-                if (!(ref.current.offsetWidth || ref.current.offsetHeight || ref.current.getClientRects().length)) {
+                if (!elementIsVisible(ref.current)) {
                     isHidden = true;
                     return;
                 }

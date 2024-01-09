@@ -136,10 +136,6 @@ export const InputChannelNode: React.FC<InputChannelNodeProps> = (props) => {
             }
         }
 
-        function handleResize() {
-            guiMessageBroker.publishEvent(GuiEvent.DataChannelConnectionsChange);
-        }
-
         function checkIfConnection() {
             const moduleInstance = props.workbench.getModuleInstance(props.moduleInstanceId);
             if (!moduleInstance) {
@@ -167,14 +163,6 @@ export const InputChannelNode: React.FC<InputChannelNodeProps> = (props) => {
 
         ref.current?.addEventListener("pointerup", handlePointerUp, true);
         document.addEventListener("pointermove", handlePointerMove);
-        window.addEventListener("resize", handleResize);
-
-        const resizeObserver = new ResizeObserver(handleResize);
-
-        if (refCurrent) {
-            handleResize();
-            resizeObserver.observe(refCurrent);
-        }
 
         const unsubscribeFunc = moduleInstance?.subscribeToInputChannelsChange(checkIfConnection);
 
@@ -185,9 +173,6 @@ export const InputChannelNode: React.FC<InputChannelNodeProps> = (props) => {
 
             refCurrent?.removeEventListener("pointerup", handlePointerUp);
             document.removeEventListener("pointermove", handlePointerMove);
-            window.removeEventListener("resize", handleResize);
-
-            resizeObserver.disconnect();
 
             if (unsubscribeFunc) {
                 unsubscribeFunc();

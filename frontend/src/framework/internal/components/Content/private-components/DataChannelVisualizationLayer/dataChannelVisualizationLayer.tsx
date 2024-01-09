@@ -58,6 +58,7 @@ export const DataChannelVisualizationLayer: React.FC<DataChannelVisualizationPro
         let localMousePressed = false;
         let localCurrentOriginPoint: Point = { x: 0, y: 0 };
         let localEditDataChannelConnections = false;
+        let resizeObserver: ResizeObserver | null = null;
 
         function handleDataChannelOriginPointerDown(payload: GuiEventPayloads[GuiEvent.DataChannelOriginPointerDown]) {
             const clientRect = payload.originElement.getBoundingClientRect();
@@ -72,6 +73,7 @@ export const DataChannelVisualizationLayer: React.FC<DataChannelVisualizationPro
             setCurrentPointerPosition(localCurrentOriginPoint);
             setCurrentChannelName(null);
             setDataChannelConnectionsLayerVisible(true);
+            addDraggingEventListeners();
 
             const moduleInstance = props.workbench.getModuleInstance(payload.moduleInstanceId);
             if (!moduleInstance) {
@@ -93,6 +95,8 @@ export const DataChannelVisualizationLayer: React.FC<DataChannelVisualizationPro
             }
             setShowDataChannelConnections(false);
             setEditDataChannelConnectionsForModuleInstanceId(null);
+
+            removeDraggingEventListeners();
         }
 
         function handleDataChannelDone() {
@@ -102,6 +106,13 @@ export const DataChannelVisualizationLayer: React.FC<DataChannelVisualizationPro
             setShowDataChannelConnections(false);
             guiMessageBroker.getGlobalCursor().restoreOverrideCursor();
             setDataChannelConnectionsLayerVisible(false);
+
+            if (timeoutRef.current) {
+                clearTimeout(timeoutRef.current);
+            }
+
+            disconnectResizeObserver();
+            removeDraggingEventListeners();
         }
 
         function handlePointerMove(e: PointerEvent) {
@@ -153,6 +164,8 @@ export const DataChannelVisualizationLayer: React.FC<DataChannelVisualizationPro
             localEditDataChannelConnections = true;
             setEditDataChannelConnectionsForModuleInstanceId(payload.moduleInstanceId);
             setShowDataChannelConnections(true);
+
+            addResizeObserver();
         }
 
         function handleHighlightDataChannelConnectionRequest(
@@ -162,6 +175,39 @@ export const DataChannelVisualizationLayer: React.FC<DataChannelVisualizationPro
                 moduleInstanceId: payload.moduleInstanceId,
                 dataChannelName: payload.dataChannelName,
             });
+        }
+
+        function addDraggingEventListeners() {
+            document.addEventListener("pointerup", handlePointerUp);
+            document.addEventListener("pointermove", handlePointerMove);
+            document.addEventListener("pointercancel", handlePointerUp);
+            document.addEventListener("blur", handlePointerUp);
+        }
+
+        function removeDraggingEventListeners() {
+            document.removeEventListener("pointerup", handlePointerUp);
+            document.removeEventListener("pointermove", handlePointerMove);
+            document.removeEventListener("pointercancel", handlePointerUp);
+            document.removeEventListener("blur", handlePointerUp);
+        }
+
+        function addResizeObserver() {
+            if (!ref.current) {
+                return;
+            }
+
+            if (resizeObserver) {
+                resizeObserver.disconnect();
+            }
+
+            resizeObserver = new ResizeObserver(handleConnectionChange);
+            resizeObserver.observe(ref.current);
+        }
+
+        function disconnectResizeObserver() {
+            if (resizeObserver) {
+                resizeObserver.disconnect();
+            }
         }
 
         function handleUnhighlightDataChannelConnectionRequest() {
@@ -208,10 +254,6 @@ export const DataChannelVisualizationLayer: React.FC<DataChannelVisualizationPro
             handleNodeUnhover
         );
 
-        document.addEventListener("pointerup", handlePointerUp);
-        document.addEventListener("pointermove", handlePointerMove);
-        document.addEventListener("resize", handleConnectionChange);
-
         return () => {
             removeEditDataChannelConnectionsRequestHandler();
             removeHighlightDataChannelConnectionRequestHandler();
@@ -223,9 +265,8 @@ export const DataChannelVisualizationLayer: React.FC<DataChannelVisualizationPro
             removeNodeHoverHandler();
             removeNodeUnhoverHandler();
 
-            document.removeEventListener("pointerup", handlePointerUp);
-            document.removeEventListener("pointermove", handlePointerMove);
-            document.removeEventListener("resize", handleConnectionChange);
+            removeDraggingEventListeners();
+            disconnectResizeObserver();
         };
     }, [
         forceRerender,
@@ -331,10 +372,6 @@ export const DataChannelVisualizationLayer: React.FC<DataChannelVisualizationPro
             }
         }
         return dataChannelPaths;
-    }
-
-    if (!visible && !showDataChannelConnections) {
-        return null;
     }
 
     const dataChannelPaths = makeDataChannelPaths();

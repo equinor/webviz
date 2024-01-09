@@ -90,7 +90,7 @@ export const Layout: React.FC<LayoutProps> = (props) => {
             delayTimer = null;
         }
 
-        function handlePointerUp(e: PointerEvent) {
+        function handlePointerUp(e: Event) {
             if (!pointerDownPoint) {
                 return;
             }
@@ -118,6 +118,7 @@ export const Layout: React.FC<LayoutProps> = (props) => {
                 props.workbench.setLayout(currentLayout);
                 setPosition({ x: 0, y: 0 });
                 setPointer({ x: -1, y: -1 });
+
                 e.stopPropagation();
                 e.preventDefault();
             }
@@ -127,7 +128,7 @@ export const Layout: React.FC<LayoutProps> = (props) => {
             moduleInstanceId = null;
             dragging = false;
             originalLayout = currentLayout;
-            removeEventListeners();
+            removeDraggingEventListeners();
         }
 
         function handlePointerMove(e: PointerEvent) {
@@ -199,7 +200,7 @@ export const Layout: React.FC<LayoutProps> = (props) => {
                 setLayout(currentLayout);
                 isNewModule = false;
                 setTempLayoutBoxId(null);
-                removeEventListeners();
+                removeDraggingEventListeners();
             }
         }
 
@@ -219,16 +220,20 @@ export const Layout: React.FC<LayoutProps> = (props) => {
             props.workbench.setLayout(currentLayout);
         }
 
-        function addEventListeners() {
+        function addDraggingEventListeners() {
             document.addEventListener("pointerup", handlePointerUp);
             document.addEventListener("pointermove", handlePointerMove);
             document.addEventListener("keydown", handleButtonClick);
+            document.addEventListener("pointercancel", handlePointerUp);
+            document.addEventListener("blur", handlePointerUp);
         }
 
-        function removeEventListeners() {
+        function removeDraggingEventListeners() {
             document.removeEventListener("pointerup", handlePointerUp);
             document.removeEventListener("pointermove", handlePointerMove);
             document.removeEventListener("keydown", handleButtonClick);
+            document.removeEventListener("pointercancel", handlePointerUp);
+            document.removeEventListener("blur", handlePointerUp);
         }
 
         function handleModuleHeaderPointerDown(payload: GuiEventPayloads[GuiEvent.ModuleHeaderPointerDown]) {
@@ -236,7 +241,7 @@ export const Layout: React.FC<LayoutProps> = (props) => {
             pointerDownElementPosition = payload.elementPosition;
             pointerDownElementId = payload.moduleInstanceId;
             isNewModule = false;
-            addEventListeners();
+            addDraggingEventListeners();
         }
 
         function handleNewModulePointerDown(payload: GuiEventPayloads[GuiEvent.NewModulePointerDown]) {
@@ -246,7 +251,7 @@ export const Layout: React.FC<LayoutProps> = (props) => {
             setTempLayoutBoxId(pointerDownElementId);
             isNewModule = true;
             moduleName = payload.moduleName;
-            addEventListeners();
+            addDraggingEventListeners();
         }
 
         const removeModuleHeaderPointerDownSubscriber = guiMessageBroker.subscribeToEvent(
@@ -266,7 +271,7 @@ export const Layout: React.FC<LayoutProps> = (props) => {
             removeModuleHeaderPointerDownSubscriber();
             removeNewModulePointerDownSubscriber();
             removeRemoveModuleInstanceRequestSubscriber();
-            removeEventListeners();
+            removeDraggingEventListeners();
 
             if (delayTimer) {
                 clearTimeout(delayTimer);

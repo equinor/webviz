@@ -100,6 +100,7 @@ export const Slider = React.forwardRef((props: SliderProps, ref: React.Forwarded
                         });
                     }
                 }
+                document.addEventListener("pointerup", handlePointerUp);
             }
         };
 
@@ -109,13 +110,13 @@ export const Slider = React.forwardRef((props: SliderProps, ref: React.Forwarded
                 return;
             }
             setValueLabelVisible(false);
+            document.removeEventListener("pointerup", handlePointerUp);
         };
 
         if (divRefCurrent) {
             divRefCurrent.addEventListener("pointerover", handlePointerOver);
             divRefCurrent.addEventListener("pointerout", handlePointerOut);
             divRefCurrent.addEventListener("pointerdown", handlePointerDown);
-            document.addEventListener("pointerup", handlePointerUp);
         }
         return () => {
             if (divRefCurrent) {

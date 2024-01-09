@@ -70,6 +70,7 @@ const ModulesListItem: React.FC<ModulesListItemProps> = (props) => {
                     pointerPosition: point,
                 });
                 pointerDownPoint = point;
+                addDraggingEventListeners();
             }
         };
 
@@ -78,6 +79,8 @@ const ModulesListItem: React.FC<ModulesListItemProps> = (props) => {
             dragging = false;
             setIsDragged(false);
             pointerDownElementPosition = null;
+
+            removeDraggingEventListeners();
         };
 
         const handlePointerMove = (e: PointerEvent) => {
@@ -110,18 +113,29 @@ const ModulesListItem: React.FC<ModulesListItemProps> = (props) => {
             }
         };
 
-        if (ref.current) {
-            ref.current.addEventListener("pointerdown", handlePointerDown);
+        function addDraggingEventListeners() {
             document.addEventListener("pointerup", handlePointerUp);
             document.addEventListener("pointermove", handlePointerMove);
+            document.addEventListener("pointercancel", handlePointerUp);
+            document.addEventListener("blur", handlePointerUp);
+        }
+
+        function removeDraggingEventListeners() {
+            document.removeEventListener("pointerup", handlePointerUp);
+            document.removeEventListener("pointermove", handlePointerMove);
+            document.removeEventListener("pointercancel", handlePointerUp);
+            document.removeEventListener("blur", handlePointerUp);
+        }
+
+        if (ref.current) {
+            ref.current.addEventListener("pointerdown", handlePointerDown);
         }
 
         return () => {
             if (refCurrent) {
                 refCurrent.removeEventListener("pointerdown", handlePointerDown);
             }
-            document.removeEventListener("pointerup", handlePointerUp);
-            document.removeEventListener("pointermove", handlePointerMove);
+            removeDraggingEventListeners();
         };
     }, [props.relContainer, props.guiMessageBroker, props.name]);
 
