@@ -72,7 +72,7 @@ export const Layout: React.FC<LayoutProps> = (props) => {
         let delayTimer: ReturnType<typeof setTimeout> | null = null;
         let isNewModule = false;
 
-        const adjustLayout = () => {
+        function adjustLayout() {
             if (currentLayoutBox && moduleInstanceId) {
                 const preview = currentLayoutBox.previewLayout(
                     relativePointerPosition,
@@ -88,25 +88,9 @@ export const Layout: React.FC<LayoutProps> = (props) => {
                 layoutBoxRef.current = currentLayoutBox;
             }
             delayTimer = null;
-        };
+        }
 
-        const handleModuleHeaderPointerDown = (payload: GuiEventPayloads[GuiEvent.ModuleHeaderPointerDown]) => {
-            pointerDownPoint = payload.pointerPosition;
-            pointerDownElementPosition = payload.elementPosition;
-            pointerDownElementId = payload.moduleInstanceId;
-            isNewModule = false;
-        };
-
-        const handleNewModulePointerDown = (payload: GuiEventPayloads[GuiEvent.NewModulePointerDown]) => {
-            pointerDownPoint = payload.pointerPosition;
-            pointerDownElementPosition = payload.elementPosition;
-            pointerDownElementId = v4();
-            setTempLayoutBoxId(pointerDownElementId);
-            isNewModule = true;
-            moduleName = payload.moduleName;
-        };
-
-        const handlePointerUp = (e: PointerEvent) => {
+        function handlePointerUp(e: PointerEvent) {
             if (!pointerDownPoint) {
                 return;
             }
@@ -143,9 +127,10 @@ export const Layout: React.FC<LayoutProps> = (props) => {
             moduleInstanceId = null;
             dragging = false;
             originalLayout = currentLayout;
-        };
+            removeEventListeners();
+        }
 
-        const handlePointerMove = (e: PointerEvent) => {
+        function handlePointerMove(e: PointerEvent) {
             if (!pointerDownPoint || !ref.current || !pointerDownElementId || !pointerDownElementPosition) {
                 return;
             }
@@ -193,9 +178,9 @@ export const Layout: React.FC<LayoutProps> = (props) => {
                     delayTimer = setTimeout(adjustLayout, 500);
                 }
             }
-        };
+        }
 
-        const handleButtonClick = (e: KeyboardEvent) => {
+        function handleButtonClick(e: KeyboardEvent) {
             if (e.key === "Escape") {
                 if (delayTimer) {
                     clearTimeout(delayTimer);
@@ -214,10 +199,11 @@ export const Layout: React.FC<LayoutProps> = (props) => {
                 setLayout(currentLayout);
                 isNewModule = false;
                 setTempLayoutBoxId(null);
+                removeEventListeners();
             }
-        };
+        }
 
-        const handleRemoveModuleInstanceRequest = (payload: GuiEventPayloads[GuiEvent.RemoveModuleInstanceRequest]) => {
+        function handleRemoveModuleInstanceRequest(payload: GuiEventPayloads[GuiEvent.RemoveModuleInstanceRequest]) {
             if (delayTimer) {
                 clearTimeout(delayTimer);
             }
@@ -231,7 +217,37 @@ export const Layout: React.FC<LayoutProps> = (props) => {
             originalLayout = currentLayout;
             originalLayoutBox = currentLayoutBox;
             props.workbench.setLayout(currentLayout);
-        };
+        }
+
+        function addEventListeners() {
+            document.addEventListener("pointerup", handlePointerUp);
+            document.addEventListener("pointermove", handlePointerMove);
+            document.addEventListener("keydown", handleButtonClick);
+        }
+
+        function removeEventListeners() {
+            document.removeEventListener("pointerup", handlePointerUp);
+            document.removeEventListener("pointermove", handlePointerMove);
+            document.removeEventListener("keydown", handleButtonClick);
+        }
+
+        function handleModuleHeaderPointerDown(payload: GuiEventPayloads[GuiEvent.ModuleHeaderPointerDown]) {
+            pointerDownPoint = payload.pointerPosition;
+            pointerDownElementPosition = payload.elementPosition;
+            pointerDownElementId = payload.moduleInstanceId;
+            isNewModule = false;
+            addEventListeners();
+        }
+
+        function handleNewModulePointerDown(payload: GuiEventPayloads[GuiEvent.NewModulePointerDown]) {
+            pointerDownPoint = payload.pointerPosition;
+            pointerDownElementPosition = payload.elementPosition;
+            pointerDownElementId = v4();
+            setTempLayoutBoxId(pointerDownElementId);
+            isNewModule = true;
+            moduleName = payload.moduleName;
+            addEventListeners();
+        }
 
         const removeModuleHeaderPointerDownSubscriber = guiMessageBroker.subscribeToEvent(
             GuiEvent.ModuleHeaderPointerDown,
@@ -246,18 +262,12 @@ export const Layout: React.FC<LayoutProps> = (props) => {
             handleRemoveModuleInstanceRequest
         );
 
-        document.addEventListener("pointerup", handlePointerUp);
-        document.addEventListener("pointermove", handlePointerMove);
-        document.addEventListener("keydown", handleButtonClick);
-
         return () => {
             removeModuleHeaderPointerDownSubscriber();
             removeNewModulePointerDownSubscriber();
             removeRemoveModuleInstanceRequestSubscriber();
+            removeEventListeners();
 
-            document.removeEventListener("pointerup", handlePointerUp);
-            document.removeEventListener("pointermove", handlePointerMove);
-            document.removeEventListener("keydown", handleButtonClick);
             if (delayTimer) {
                 clearTimeout(delayTimer);
             }
