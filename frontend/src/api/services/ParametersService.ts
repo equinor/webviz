@@ -1,17 +1,14 @@
+/* generated using openapi-typescript-codegen -- do no edit */
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
 import type { EnsembleParameter } from '../models/EnsembleParameter';
 import type { EnsembleParameterDescription } from '../models/EnsembleParameterDescription';
 import type { EnsembleSensitivity } from '../models/EnsembleSensitivity';
-
 import type { CancelablePromise } from '../core/CancelablePromise';
 import type { BaseHttpRequest } from '../core/BaseHttpRequest';
-
 export class ParametersService {
-
     constructor(public readonly httpRequest: BaseHttpRequest) {}
-
     /**
      * Get Parameter Names And Description
      * Retrieve parameter names and description for an ensemble
@@ -42,7 +39,6 @@ export class ParametersService {
             },
         });
     }
-
     /**
      * Get Parameter
      * Get a parameter in a given Sumo ensemble
@@ -70,7 +66,6 @@ export class ParametersService {
             },
         });
     }
-
     /**
      * Get Parameters
      * @param caseUuid Sumo case uuid
@@ -94,7 +89,6 @@ export class ParametersService {
             },
         });
     }
-
     /**
      * Is Sensitivity Run
      * Check if a given Sumo ensemble is a sensitivity run
@@ -119,7 +113,6 @@ export class ParametersService {
             },
         });
     }
-
     /**
      * Get Sensitivities
      * Get sensitivities in a given Sumo ensemble
@@ -144,5 +137,4 @@ export class ParametersService {
             },
         });
     }
-
 }

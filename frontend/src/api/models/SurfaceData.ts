@@ -1,9 +1,8 @@
+/* generated using openapi-typescript-codegen -- do no edit */
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-
 import type { B64FloatArray } from './B64FloatArray';
-
 export type SurfaceData = {
     x_ori: number;
     y_ori: number;

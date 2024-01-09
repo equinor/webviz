@@ -1,3 +1,4 @@
+/* generated using openapi-typescript-codegen -- do no edit */
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
@@ -9,14 +10,10 @@ import type { VectorHistoricalData } from '../models/VectorHistoricalData';
 import type { VectorRealizationData } from '../models/VectorRealizationData';
 import type { VectorStatisticData } from '../models/VectorStatisticData';
 import type { VectorStatisticSensitivityData } from '../models/VectorStatisticSensitivityData';
-
 import type { CancelablePromise } from '../core/CancelablePromise';
 import type { BaseHttpRequest } from '../core/BaseHttpRequest';
-
 export class TimeseriesService {
-
     constructor(public readonly httpRequest: BaseHttpRequest) {}
-
     /**
      * Get Vector List
      * Get list of all vectors in a given Sumo ensemble, excluding any historical vectors
@@ -41,7 +38,6 @@ export class TimeseriesService {
             },
         });
     }
-
     /**
      * Get Realizations Vector Data
      * Get vector data per realization
@@ -75,7 +71,6 @@ export class TimeseriesService {
             },
         });
     }
-
     /**
      * Get Timestamps List
      * Get the intersection of available timestamps.
@@ -108,7 +103,6 @@ export class TimeseriesService {
             },
         });
     }
-
     /**
      * Get Historical Vector Data
      * @param caseUuid Sumo case uuid
@@ -138,7 +132,6 @@ export class TimeseriesService {
             },
         });
     }
-
     /**
      * Get Statistical Vector Data
      * Get statistical vector data for an ensemble
@@ -175,7 +168,6 @@ export class TimeseriesService {
             },
         });
     }
-
     /**
      * Get Statistical Vector Data Per Sensitivity
      * Get statistical vector data for an ensemble per sensitivity
@@ -209,7 +201,6 @@ export class TimeseriesService {
             },
         });
     }
-
     /**
      * Get Realization Vector At Timestamp
      * @param caseUuid Sumo case uuid
@@ -239,5 +230,4 @@ export class TimeseriesService {
             },
         });
     }
-
 }

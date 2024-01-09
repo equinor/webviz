@@ -1,15 +1,12 @@
+/* generated using openapi-typescript-codegen -- do no edit */
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
 import type { Observations } from '../models/Observations';
-
 import type { CancelablePromise } from '../core/CancelablePromise';
 import type { BaseHttpRequest } from '../core/BaseHttpRequest';
-
 export class ObservationsService {
-
     constructor(public readonly httpRequest: BaseHttpRequest) {}
-
     /**
      * Get Observations
      * Retrieve all observations found in sumo case
@@ -34,5 +31,4 @@ export class ObservationsService {
             },
         });
     }
-
 }
