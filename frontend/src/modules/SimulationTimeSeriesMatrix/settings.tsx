@@ -422,7 +422,7 @@ export function Settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
                         <VectorSelector
                             data={computedVectorSelectorData}
                             placeholder="Add new vector..."
-                            maxNumSelectedNodes={50}
+                            maxNumSelectedNodes={20}
                             numSecondsUntilSuggestionsAreShown={0.5}
                             lineBreakAfterTag={true}
                             onChange={handleVectorSelectionChange}
