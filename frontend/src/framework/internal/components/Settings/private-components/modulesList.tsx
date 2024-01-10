@@ -67,6 +67,7 @@ const ModulesListItem: React.FC<ModulesListItemProps> = (props) => {
                 props.guiMessageBroker.publishEvent(GuiEvent.NewModulePointerDown, {
                     moduleName: props.name,
                     elementPosition: pointDifference(point, pointRelativeToDomRect(point, rect)),
+                    elementSize: { width: rect.width, height: rect.height },
                     pointerPosition: point,
                 });
                 pointerDownPoint = point;

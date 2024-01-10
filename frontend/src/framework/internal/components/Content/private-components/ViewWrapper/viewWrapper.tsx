@@ -75,6 +75,7 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
                 guiMessageBroker.publishEvent(GuiEvent.ModuleHeaderPointerDown, {
                     moduleInstanceId: props.moduleInstance.getId(),
                     elementPosition: pointDifference(point, pointRelativeToDomRect(point, rect)),
+                    elementSize: { width: rect.width, height: rect.height },
                     pointerPosition: point,
                 });
             }

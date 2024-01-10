@@ -1,7 +1,7 @@
 import React from "react";
 
 import { isDevMode } from "@lib/utils/devMode";
-import { Point } from "@lib/utils/geometry";
+import { Point, Size } from "@lib/utils/geometry";
 
 import { GlobalCursor } from "./internal/GlobalCursor";
 
@@ -41,11 +41,13 @@ export type GuiEventPayloads = {
     [GuiEvent.ModuleHeaderPointerDown]: {
         moduleInstanceId: string;
         elementPosition: Point;
+        elementSize: Size;
         pointerPosition: Point;
     };
     [GuiEvent.NewModulePointerDown]: {
         moduleName: string;
         elementPosition: Point;
+        elementSize: Size;
         pointerPosition: Point;
     };
     [GuiEvent.RemoveModuleInstanceRequest]: {
