@@ -10,6 +10,10 @@ import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { MultiEnsembleSelect } from "@framework/components/MultiEnsembleSelect";
 import { ParameterListFilter } from "@framework/components/ParameterListFilter";
 import { VectorSelector, createVectorSelectorDataFromVectors } from "@framework/components/VectorSelector";
+import {
+    createVectorSelectorDataFromVectors2,
+    createVectorSelectorDataFromVectors3,
+} from "@framework/components/VectorSelector/vectorSelector";
 import { fixupEnsembleIdents } from "@framework/utils/ensembleUiHelpers";
 import { Checkbox } from "@lib/components/Checkbox";
 import { CircularProgress } from "@lib/components/CircularProgress";
@@ -49,6 +53,13 @@ enum StatisticsType {
 }
 
 export function Settings({ moduleContext, workbenchSession }: ModuleFCProps<State>) {
+    // Render count for testing
+    const renderCount = React.useRef(0);
+    renderCount.current = renderCount.current + 1;
+    // React.useEffect(function incrementRenderCount() {
+    //     renderCount.current = renderCount.current + 1;
+    // });
+
     const ensembleSet = useEnsembleSet(workbenchSession);
     const statusWriter = useSettingsStatusWriter(moduleContext);
 
@@ -69,6 +80,7 @@ export function Settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
     const [selectedEnsembleIdents, setSelectedEnsembleIdents] = React.useState<EnsembleIdent[]>([]);
     const [selectedVectorNames, setSelectedVectorNames] = React.useState<string[]>([]);
     const [selectedVectorTags, setSelectedVectorTags] = React.useState<string[]>([]);
+    const [availableVectorNames, setAvailableVectorNames] = React.useState<string[]>([]);
     const [vectorSelectorData, setVectorSelectorData] = React.useState<TreeDataNode[]>([]);
     const [statisticsType, setStatisticsType] = React.useState<StatisticsType>(StatisticsType.INDIVIDUAL);
     const [filteredParameterIdentList, setFilteredParameterIdentList] = React.useState<ParameterIdent[]>([]);
@@ -128,24 +140,40 @@ export function Settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
         ensembleVectorListsHelper.current = new EnsembleVectorListsHelper(selectedEnsembleIdents, vectorListQueries);
     }
 
+    const isVectorListQueriesFetching = vectorListQueries.some((query) => query.isFetching);
+
     const selectedVectorNamesHasHistorical =
-        ensembleVectorListsHelper.current.hasAnyHistoricalVector(selectedVectorNames);
-    const currentVectorSelectorData = createVectorSelectorDataFromVectors(
-        ensembleVectorListsHelper.current.vectorsUnion()
-    );
+        !isVectorListQueriesFetching && ensembleVectorListsHelper.current.hasAnyHistoricalVector(selectedVectorNames);
+
+    // Await update of vectorSelectorData until all vector lists are finished fetching
+    let computedVectorSelectorData = vectorSelectorData;
+    let computedAvailableVectorNames = availableVectorNames;
+    const vectorNamesUnion = ensembleVectorListsHelper.current.vectorsUnion();
+    if (!isVectorListQueriesFetching && !isEqual(computedAvailableVectorNames, vectorNamesUnion)) {
+        computedAvailableVectorNames = vectorNamesUnion;
+        const startTime = performance.now();
+        computedVectorSelectorData = createVectorSelectorDataFromVectors(vectorNamesUnion);
+        const endTime = performance.now();
+        console.log("Time to build first tree data: ", endTime - startTime);
+
+        const startTime2 = performance.now();
+        const currentVectorSelectorData2 = createVectorSelectorDataFromVectors2(vectorNamesUnion);
+        const endTime2 = performance.now();
+        console.log("Time to build second tree data: ", endTime2 - startTime2);
+
+        const startTime3 = performance.now();
+        const currentVectorSelectorData3 = createVectorSelectorDataFromVectors3(vectorNamesUnion);
+        const endTime3 = performance.now();
+        console.log("Time to build third tree data: ", endTime3 - startTime3);
+
+        setAvailableVectorNames(computedAvailableVectorNames);
+        setVectorSelectorData(computedVectorSelectorData);
+    }
 
     const [selectedParameterIdentStr, setSelectedParameterIdentStr] = useValidState<string | null>({
         initialState: null,
         validStates: filteredParameterIdentList.map((item: ParameterIdent) => item.toString()),
     });
-
-    // Await update of vectorSelectorData until all vector lists are finished fetching
-    const isVectorListQueriesFetching = vectorListQueries.some((query) => query.isFetching);
-    let computedVectorSelectorData = vectorSelectorData;
-    if (!isVectorListQueriesFetching && !isEqual(currentVectorSelectorData, vectorSelectorData)) {
-        computedVectorSelectorData = currentVectorSelectorData;
-        setVectorSelectorData(currentVectorSelectorData);
-    }
 
     // Set error if all vector list queries fail
     const hasEveryVectorListQueryError =
@@ -371,6 +399,7 @@ export function Settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
 
     return (
         <div className="flex flex-col gap-2 overflow-y-auto">
+            <div className="absolute top-10 left-5 italic text-pink-400">(rc={renderCount.current})</div>
             <CollapsibleGroup expanded={false} title="Group by">
                 <RadioGroup
                     value={groupBy}

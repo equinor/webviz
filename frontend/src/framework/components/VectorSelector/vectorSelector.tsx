@@ -294,6 +294,10 @@ export const VectorSelector: React.FC<VectorSelectorProps> = (props) => {
     return <VectorSelectorComponent {...adjustedProps} />;
 };
 
+/**
+ * Add vector to existing vector selector data tree node list.
+ * With optional description at first or last node level.
+ */
 export function addVectorToVectorSelectorData(
     vectorSelectorData: TreeDataNode[],
     vector: string,
@@ -329,7 +333,130 @@ export function addVectorToVectorSelectorData(
     });
 }
 
+/**
+ * Create vector selector data tree node list from list of vector names
+ *
+ * This method sorts the vector names alphabetically before adding them to the tree data
+ */
 export function createVectorSelectorDataFromVectors(vectors: string[]): TreeDataNode[] {
+    if (vectors.length === 0) return [];
+
+    const vectorSelectorData: TreeDataNode[] = [];
+
+    // Sort alphabetically - to place vectors with same parent node next to each other
+    const sortedVectors = [...vectors].sort();
+
+    // Add nodes with same parent simultaneously
+    for (let i = 0; i < sortedVectors.length; ) {
+        const parentNode = vectors[i].split(":")[0];
+
+        // Find the index of the first vector with a different parent node
+        const endIndex = sortedVectors.findIndex((vector, j) => j >= i && !vector.startsWith(parentNode));
+
+        // endIndex will be the index of the first vector with a different parent node
+        const vectorsWithSameParentNode: string[] = sortedVectors.slice(i, endIndex !== -1 ? endIndex : undefined);
+
+        const parentNodeData: TreeDataNode = {
+            name: parentNode,
+        };
+        parentNodeData.children = [];
+        vectorSelectorData.push(parentNodeData);
+
+        // Add each vector recursively
+        for (const vector of vectorsWithSameParentNode) {
+            let currentChildList = parentNodeData.children;
+            const nodes = vector.split(":").slice(1);
+
+            nodes.forEach((node, index) => {
+                let foundNode = false;
+                for (const child of currentChildList) {
+                    if (child.name === node) {
+                        foundNode = true;
+                        currentChildList = child.children ?? [];
+                        break;
+                    }
+                }
+                if (!foundNode) {
+                    const nodeData: TreeDataNode = {
+                        name: node,
+                        children: index < nodes.length - 1 ? [] : undefined,
+                    };
+
+                    currentChildList.push(nodeData);
+                    currentChildList = nodeData.children ?? [];
+                }
+            });
+        }
+
+        // Move to the next parent node
+        i = endIndex !== -1 ? endIndex : sortedVectors.length;
+    }
+
+    return vectorSelectorData;
+}
+
+export function createVectorSelectorDataFromVectors2(vectors: string[]): TreeDataNode[] {
+    if (vectors.length === 0) return [];
+
+    const vectorSelectorData: TreeDataNode[] = [];
+
+    // Sort alphabetically - to place vectors with same parent node next to each other
+    const sortedVectors = [...vectors].sort();
+
+    // Add nodes with same parent simultaneously
+    for (let i = 0; i < sortedVectors.length; ) {
+        const parentNode = vectors[i].split(":")[0];
+
+        // Find all vectors with same parent node, break on first different parent node
+        const vectorsWithSameParentNode: string[] = [];
+        for (let j = i; j < sortedVectors.length; ++j) {
+            const vector = sortedVectors[j];
+
+            if (!vector.startsWith(parentNode)) break;
+
+            vectorsWithSameParentNode.push(vector);
+        }
+
+        const parentNodeData: TreeDataNode = {
+            name: parentNode,
+        };
+        parentNodeData.children = [];
+        vectorSelectorData.push(parentNodeData);
+
+        // Add each vector recursively
+        for (const vector of vectorsWithSameParentNode) {
+            let currentChildList = parentNodeData.children;
+            const nodes = vector.split(":").slice(1);
+
+            nodes.forEach((node, index) => {
+                let foundNode = false;
+                for (const child of currentChildList) {
+                    if (child.name === node) {
+                        foundNode = true;
+                        currentChildList = child.children ?? [];
+                        break;
+                    }
+                }
+                if (!foundNode) {
+                    const nodeData: TreeDataNode = {
+                        name: node,
+                        children: index < nodes.length - 1 ? [] : undefined,
+                    };
+
+                    currentChildList.push(nodeData);
+                    currentChildList = nodeData.children ?? [];
+                }
+            });
+        }
+
+        // Find index of next parent node
+        i += vectorsWithSameParentNode.length;
+    }
+
+    return vectorSelectorData;
+}
+
+export function createVectorSelectorDataFromVectors3(vectors: string[]): TreeDataNode[] {
     const vectorSelectorData: TreeDataNode[] = [];
 
     for (const vector of vectors) {
