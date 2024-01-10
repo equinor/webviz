@@ -125,7 +125,7 @@ export const InputChannelNode: React.FC<InputChannelNodeProps> = (props) => {
 
         function handlePointerMove(e: PointerEvent) {
             const boundingRect = ref.current?.getBoundingClientRect();
-            if (boundingRect && rectContainsPoint(boundingRect, pointerEventToPoint(e))) {
+            if (!localHovered && boundingRect && rectContainsPoint(boundingRect, pointerEventToPoint(e))) {
                 setHovered(true);
                 localHovered = true;
                 return;
