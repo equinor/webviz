@@ -1,6 +1,7 @@
 import React from "react";
 
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
+import { getTextWidthWithFont } from "@lib/utils/textSize";
 import { Close, Error, ExpandLess, ExpandMore, Help, Warning } from "@mui/icons-material";
 
 import "animate.css";
@@ -97,23 +98,11 @@ export class Tag extends React.Component<TagProps> {
     }
 
     private calculateTextWidth(text: string, padding = 10, minWidth = 50): number {
-        const { treeNodeSelection } = this.props;
-        const span = document.createElement("span");
         if (text === undefined) {
             text = "";
         }
-        const input = (treeNodeSelection.getRef() as React.RefObject<HTMLInputElement>).current as HTMLInputElement;
-        if (input) {
-            const fontSize = window.getComputedStyle(input).fontSize;
-            span.style.fontSize = fontSize;
-        } else {
-            span.style.fontSize = "0.875rem";
-        }
-        const textNode = document.createTextNode(text.replace(/ /g, "\u00A0"));
-        span.appendChild(textNode);
-        document.body.appendChild(span);
-        const width = span.offsetWidth;
-        document.body.removeChild(span);
+
+        const width = getTextWidthWithFont(text, "Equinor", 0.875);
         return Math.max(minWidth, width + padding);
     }
 

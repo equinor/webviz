@@ -48,16 +48,24 @@ export const Select = withDefaults<SelectProps>()(defaultProps, (props) => {
     const [startIndex, setStartIndex] = React.useState<number>(0);
     const [lastShiftIndex, setLastShiftIndex] = React.useState<number>(-1);
     const [currentIndex, setCurrentIndex] = React.useState<number>(0);
+    const [options, setOptions] = React.useState<SelectOption[]>(props.options);
+    const [prevOptions, setPrevOptions] = React.useState<SelectOption[]>(props.options);
     const [prevFilteredOptions, setPrevFilteredOptions] = React.useState<SelectOption[]>([]);
 
     const ref = React.useRef<HTMLDivElement>(null);
     const noOptionsText = props.placeholder ?? "No options";
+
+    if (!isEqual(props.options, prevOptions)) {
+        setPrevOptions(props.options);
+        setOptions(props.options);
+    }
+
     const filteredOptions = React.useMemo(() => {
         if (!props.filter) {
-            return props.options;
+            return options;
         }
-        return props.options.filter((option) => option.label.toLowerCase().includes(filter.toLowerCase()));
-    }, [props.options, filter, props.filter]);
+        return options.filter((option) => option.label.toLowerCase().includes(filter.toLowerCase()));
+    }, [options, filter, props.filter]);
 
     if (!isEqual(filteredOptions, prevFilteredOptions)) {
         let newCurrentIndex = 0;
@@ -79,13 +87,13 @@ export const Select = withDefaults<SelectProps>()(defaultProps, (props) => {
     }
 
     const toggleValue = React.useCallback(
-        (option: SelectOption, index: number) => {
+        function toggleValue(option: SelectOption, index: number) {
             let newSelected = [...selected];
             if (props.multiple) {
                 if (keysPressed.includes("Shift")) {
                     const start = Math.min(lastShiftIndex, index);
                     const end = Math.max(lastShiftIndex, index);
-                    newSelected = props.options
+                    newSelected = options
                         .slice(start, end + 1)
                         .filter((option) => !option.disabled)
                         .map((option) => option.value);
@@ -117,7 +125,7 @@ export const Select = withDefaults<SelectProps>()(defaultProps, (props) => {
                 }
             }
         },
-        [props.multiple, props.options, selected, onChange, keysPressed, lastShiftIndex, setCurrentIndex, setSelected]
+        [props.multiple, options, selected, onChange, keysPressed, lastShiftIndex, setCurrentIndex, setSelected]
     );
 
     React.useEffect(() => {

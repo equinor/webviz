@@ -31,28 +31,36 @@ export function useElementBoundingRect(ref: React.RefObject<HTMLElement | SVGSVG
             }
         };
 
-        function handleIntersectionChange(entries: IntersectionObserverEntry[]): void {
-            if (entries[0]) {
-                setRect(entries[0].boundingClientRect);
+        function handleMutations(): void {
+            if (ref.current) {
+                const newRect = ref.current.getBoundingClientRect();
+
+                if (!domRectsAreEqual(currentRect, newRect)) {
+                    currentRect = newRect;
+                    setRect(newRect);
+                }
             }
         }
 
         const resizeObserver = new ResizeObserver(handleResize);
-        const intersectionObserver = new IntersectionObserver(handleIntersectionChange);
+        const mutationObserver = new MutationObserver(handleMutations);
         window.addEventListener("resize", handleResize);
         window.addEventListener("scroll", handleResize, true);
 
         if (ref.current) {
             handleResize();
             resizeObserver.observe(ref.current);
-            if (ref.current.parentElement) {
-                intersectionObserver.observe(ref.current);
-            }
+            mutationObserver.observe(ref.current, {
+                attributes: true,
+                subtree: false,
+                childList: false,
+                attributeFilter: ["style", "class"],
+            });
         }
 
         return () => {
             resizeObserver.disconnect();
-            intersectionObserver.disconnect();
+            mutationObserver.disconnect();
             window.removeEventListener("resize", handleResize);
             window.removeEventListener("scroll", handleResize, true);
         };

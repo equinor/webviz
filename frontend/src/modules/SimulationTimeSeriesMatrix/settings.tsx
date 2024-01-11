@@ -2,7 +2,7 @@ import React from "react";
 
 import { Frequency_api, StatisticFunction_api } from "@api";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
-import { Parameter, ParameterIdent, ParameterType } from "@framework/EnsembleParameters";
+import { Parameter, ParameterIdent } from "@framework/EnsembleParameters";
 import { EnsembleSet } from "@framework/EnsembleSet";
 import { ModuleFCProps } from "@framework/Module";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
@@ -16,6 +16,7 @@ import { CircularProgress } from "@lib/components/CircularProgress";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { Dropdown } from "@lib/components/Dropdown";
 import { Label } from "@lib/components/Label";
+import { PendingWrapper } from "@lib/components/PendingWrapper";
 import { QueriesErrorCriteria, QueryStateWrapper } from "@lib/components/QueryStateWrapper";
 import { RadioGroup } from "@lib/components/RadioGroup";
 import { Select } from "@lib/components/Select";
@@ -41,6 +42,7 @@ import {
     VisualizationModeEnumToStringMapping,
 } from "./state";
 import { EnsembleVectorListsHelper } from "./utils/ensemblesVectorListHelper";
+import { getContinuousAndNonConstantParameters } from "./utils/getContinuousAndNonConstantParameters";
 import { joinStringArrayToHumanReadableString } from "./utils/stringUtils";
 
 enum StatisticsType {
@@ -64,6 +66,9 @@ export function Settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
     const setParameterIdent = moduleContext.useSetStoreValue("parameterIdent");
     const setVectorSpecifications = moduleContext.useSetStoreValue("vectorSpecifications");
 
+    // Transitions
+    const [isPending, startTransition] = React.useTransition();
+
     // States
     const [previousEnsembleSet, setPreviousEnsembleSet] = React.useState<EnsembleSet>(ensembleSet);
     const [selectedEnsembleIdents, setSelectedEnsembleIdents] = React.useState<EnsembleIdent[]>([]);
@@ -76,6 +81,12 @@ export function Settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
         (VectorDescription_api[] | undefined)[]
     >([]);
     const [prevSelectedEnsembleIdents, setPrevSelectedEnsembleIdents] = React.useState<EnsembleIdent[]>([]);
+    // If the selectedEnsembleIdents state gets an initial value, this should also be set to an initial value
+    // NOTE: DO NOT call a function in order to set the initial value, as this will cause the function to be called
+    // on every render. Rather set it the same place as where the initial value of selectedEnsembleIdents is set.
+    const [continuousAndNonConstantParametersUnion, setContinuousAndNonConstantParametersUnion] = React.useState<
+        Parameter[]
+    >([]);
 
     const ensembleVectorListsHelper = React.useRef<EnsembleVectorListsHelper>(new EnsembleVectorListsHelper([], []));
 
@@ -89,29 +100,6 @@ export function Settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
         }
 
         setPreviousEnsembleSet(ensembleSet);
-    }
-
-    // Get list of continuous parameters from selected ensembles
-    const continuousAndNonConstantParametersUnion: Parameter[] = [];
-    for (const ensembleIdent of selectedEnsembleIdents) {
-        const ensemble = ensembleSet.findEnsemble(ensembleIdent);
-        if (!ensemble) continue;
-
-        const continuousAndNonConstantParameters = ensemble
-            .getParameters()
-            .getParameterArr()
-            .filter((parameter) => parameter.type === ParameterType.CONTINUOUS && !parameter.isConstant);
-
-        // Add non-duplicate parameters to list - verified by ParameterIdent
-        for (const parameter of continuousAndNonConstantParameters) {
-            const parameterIdent = ParameterIdent.fromNameAndGroup(parameter.name, parameter.groupName);
-            const isParameterInUnion = continuousAndNonConstantParametersUnion.some((elm) =>
-                parameterIdent.equals(ParameterIdent.fromNameAndGroup(elm.name, elm.groupName))
-            );
-
-            if (isParameterInUnion) continue;
-            continuousAndNonConstantParametersUnion.push(parameter);
-        }
     }
 
     const vectorListQueries = useVectorListQueries(selectedEnsembleIdents);
@@ -130,6 +118,7 @@ export function Settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
 
     const selectedVectorNamesHasHistorical =
         ensembleVectorListsHelper.current.hasAnyHistoricalVector(selectedVectorNames);
+
     const currentVectorSelectorData = createVectorSelectorDataFromVectors(
         ensembleVectorListsHelper.current.vectorsUnion()
     );
@@ -255,6 +244,12 @@ export function Settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
 
     function handleEnsembleSelectChange(ensembleIdentArr: EnsembleIdent[]) {
         setSelectedEnsembleIdents(ensembleIdentArr);
+
+        startTransition(function transitionToGetContinuousAndNonConstantParameters() {
+            setContinuousAndNonConstantParametersUnion(
+                getContinuousAndNonConstantParameters(ensembleIdentArr, ensembleSet)
+            );
+        });
     }
 
     function handleVectorSelectionChange(selection: SmartNodeSelectorSelection) {
@@ -452,11 +447,13 @@ export function Settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
                             title="Parameter list filter"
                             icon={<FilterAlt fontSize="small" />}
                         >
-                            <ParameterListFilter
-                                parameters={continuousAndNonConstantParametersUnion}
-                                initialFilters={["Continuous", "Nonconstant"]}
-                                onChange={handleParameterListFilterChange}
-                            />
+                            <PendingWrapper isPending={isPending}>
+                                <ParameterListFilter
+                                    parameters={continuousAndNonConstantParametersUnion}
+                                    initialFilters={["Continuous", "Nonconstant"]}
+                                    onChange={handleParameterListFilterChange}
+                                />
+                            </PendingWrapper>
                         </CollapsibleGroup>
                     </div>
                     <Select

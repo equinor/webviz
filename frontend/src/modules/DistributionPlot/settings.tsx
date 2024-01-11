@@ -107,7 +107,7 @@ export function Settings({ moduleContext, workbenchServices, initialSettings }: 
         setOrientation(e.target.value as "h" | "v");
     };
 
-    const makeContent = (): React.ReactNode => {
+    function makeContent(): React.ReactNode {
         if (plotType === null || crossPlottingType === null) {
             return null;
         }
@@ -177,7 +177,7 @@ export function Settings({ moduleContext, workbenchServices, initialSettings }: 
         }
 
         return content;
-    };
+    }
 
     return (
         <>
