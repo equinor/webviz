@@ -1,16 +1,13 @@
+/* generated using openapi-typescript-codegen -- do no edit */
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
 import type { PolygonData } from '../models/PolygonData';
 import type { PolygonsMeta } from '../models/PolygonsMeta';
-
 import type { CancelablePromise } from '../core/CancelablePromise';
 import type { BaseHttpRequest } from '../core/BaseHttpRequest';
-
 export class PolygonsService {
-
     constructor(public readonly httpRequest: BaseHttpRequest) {}
-
     /**
      * Get Polygons Directory
      * Get a directory of polygons in a Sumo ensemble
@@ -35,7 +32,6 @@ export class PolygonsService {
             },
         });
     }
-
     /**
      * Get Polygons Data
      * @param caseUuid Sumo case uuid
@@ -68,5 +64,4 @@ export class PolygonsService {
             },
         });
     }
-
 }

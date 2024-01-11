@@ -1,11 +1,10 @@
+/* generated using openapi-typescript-codegen -- do no edit */
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-
 import type { WellCompletionsUnits } from './WellCompletionsUnits';
 import type { WellCompletionsWell } from './WellCompletionsWell';
 import type { WellCompletionsZone } from './WellCompletionsZone';
-
 /**
  * Type definition for well completions data
  */

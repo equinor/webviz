@@ -1,15 +1,12 @@
+/* generated using openapi-typescript-codegen -- do no edit */
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
 import type { UserInfo } from '../models/UserInfo';
-
 import type { CancelablePromise } from '../core/CancelablePromise';
 import type { BaseHttpRequest } from '../core/BaseHttpRequest';
-
 export class DefaultService {
-
     constructor(public readonly httpRequest: BaseHttpRequest) {}
-
     /**
      *  Login Route
      * @param redirectUrlAfterLogin
@@ -30,7 +27,6 @@ export class DefaultService {
             },
         });
     }
-
     /**
      *  Authorized Callback Route
      * @returns any Successful Response
@@ -42,7 +38,6 @@ export class DefaultService {
             url: '/auth-callback',
         });
     }
-
     /**
      * Alive
      * @returns string Successful Response
@@ -54,7 +49,6 @@ export class DefaultService {
             url: '/alive',
         });
     }
-
     /**
      * Alive Protected
      * @returns string Successful Response
@@ -66,7 +60,6 @@ export class DefaultService {
             url: '/alive_protected',
         });
     }
-
     /**
      * Logged In User
      * @param includeGraphApiInfo Set to true to include user avatar and display name from Microsoft Graph API
@@ -87,7 +80,6 @@ export class DefaultService {
             },
         });
     }
-
     /**
      * User Session Container
      * Get information about user session container (note that one is started if not already running).
@@ -100,7 +92,6 @@ export class DefaultService {
             url: '/user_session_container',
         });
     }
-
     /**
      * Root
      * @returns string Successful Response
@@ -112,5 +103,4 @@ export class DefaultService {
             url: '/',
         });
     }
-
 }

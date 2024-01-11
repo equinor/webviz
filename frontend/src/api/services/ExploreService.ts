@@ -1,3 +1,4 @@
+/* generated using openapi-typescript-codegen -- do no edit */
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
@@ -5,14 +6,10 @@ import type { CaseInfo } from '../models/CaseInfo';
 import type { EnsembleDetails } from '../models/EnsembleDetails';
 import type { EnsembleInfo } from '../models/EnsembleInfo';
 import type { FieldInfo } from '../models/FieldInfo';
-
 import type { CancelablePromise } from '../core/CancelablePromise';
 import type { BaseHttpRequest } from '../core/BaseHttpRequest';
-
 export class ExploreService {
-
     constructor(public readonly httpRequest: BaseHttpRequest) {}
-
     /**
      * Get Fields
      * Get list of fields
@@ -25,7 +22,6 @@ export class ExploreService {
             url: '/fields',
         });
     }
-
     /**
      * Get Cases
      * Get list of cases for specified field
@@ -47,7 +43,6 @@ export class ExploreService {
             },
         });
     }
-
     /**
      * Get Ensembles
      * Get list of ensembles for a case
@@ -69,7 +64,6 @@ export class ExploreService {
             },
         });
     }
-
     /**
      * Get Ensemble Details
      * Get more detailed information for an ensemble
@@ -94,5 +88,4 @@ export class ExploreService {
             },
         });
     }
-
 }
