@@ -1,13 +1,17 @@
-import { EnsembleIdent } from "@framework/EnsembleIdent";
-import { Frequency_api, StatisticFunction_api } from "@api";
-import { Data } from "@webviz/group-tree/dist/redux/types"
+import { DatedTree, EdgeMetadata, NodeMetadata } from "@webviz/group-tree-plot";
 
 export enum StatisticsOrRealization {Statistics="Statistics", Realization="Realization"}
 
+export enum QueryStatus {Loading="Loading", Error="Error", Idle="Idle"}
+
 export type State = {
-    ensembleIdent: EnsembleIdent|null;
-    statOrReal: StatisticsOrRealization;
-    realization: number;
-    statOption: StatisticFunction_api;
-    resamplingFrequency: Frequency_api|null;
+    edgeMetadataList: EdgeMetadata[];
+    nodeMetadataList: NodeMetadata[];
+    datedTrees: DatedTree[];
+    selectedEdgeKey: string;
+    selectedNodeKey: string;
+    selectedDateTime: string;
+    queryStatus: QueryStatus;
 };
+
+

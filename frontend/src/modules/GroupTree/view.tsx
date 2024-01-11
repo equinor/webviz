@@ -1,47 +1,36 @@
 import { ModuleFCProps } from "@framework/Module";
 import { CircularProgress } from "@lib/components/CircularProgress";
-import GroupTree from "@webviz/group-tree";
+// import GroupTree from "@webviz/group-tree";
+import { GroupTreePlot } from "@webviz/group-tree-plot";
 
-import { State, StatisticsOrRealization } from "./state";
+import { State, StatisticsOrRealization, QueryStatus } from "./state";
 import { useRealizationGroupTreeQuery, useStatisticsGroupTreeQuery } from "./queryHooks";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
+import { ContentError, ContentInfo } from "@modules/_shared/components/ContentMessage";
 
 
 export const view = ({ moduleContext }: ModuleFCProps<State>) => {
-    const ensembleIdent = moduleContext.useStoreValue("ensembleIdent")
-    const statOrReal = moduleContext.useStoreValue("statOrReal")
-    const real = moduleContext.useStoreValue("realization")
-    const resampleFrequency = moduleContext.useStoreValue("resamplingFrequency")
-    const statOption = moduleContext.useStoreValue("statOption")
-    
-    // console.log(data.data)
 
-    let edgeOptions = [{name: "oilrate", label: "Oil Rate"}, {name: "gasrate", label: "Gas Rate"}]
-    let nodeOptions = [{name: "pressure", label: "Pressure"}, {name: "wmctl", label: "WMCTL"}]
-
-    let groupTreeQuery = undefined
-    if (statOrReal === StatisticsOrRealization.Statistics) {
-        groupTreeQuery = useStatisticsGroupTreeQuery(ensembleIdent?.getCaseUuid(), ensembleIdent?.getEnsembleName(), statOption, resampleFrequency)
-    } else {
-        groupTreeQuery = useRealizationGroupTreeQuery(ensembleIdent?.getCaseUuid(), ensembleIdent?.getEnsembleName(), real, resampleFrequency)
-    }
+    const edgeMetadataList = moduleContext.useStoreValue("edgeMetadataList")
+    const nodeMetadataList = moduleContext.useStoreValue("nodeMetadataList")
+    const datedTrees = moduleContext.useStoreValue("datedTrees")
+    const selectedEdgeKey = moduleContext.useStoreValue("selectedEdgeKey")
+    const selectedNodeKey = moduleContext.useStoreValue("selectedNodeKey")
+    const selectedDateTime = moduleContext.useStoreValue("selectedDateTime")
+    const queryStatus = moduleContext.useStoreValue("queryStatus")
 
     return (
         <div className="w-full h-full">
-            {!groupTreeQuery.data ? (
-                groupTreeQuery.isFetching ? (
-                    <div className="absolute left-0 right-0 w-full h-full bg-white bg-opacity-80 flex items-center justify-center z-10">
+            {queryStatus === QueryStatus.Loading ? (
+                    <ContentInfo>
                         <CircularProgress />
-                    </div>                    
-                ) : groupTreeQuery.status === "error" ? (
-                    <div className="w-full h-full flex justify-center items-center text-red-500">
-                        Error loading group tree data.
-                    </div>                    
-                ) : (
-                    <></>
-                )
+                    </ContentInfo>                    
+            ) : queryStatus === QueryStatus.Error ? (
+                <ContentError>
+                    Error loading group tree data.
+                </ContentError>                    
             ) : (
-                <GroupTree id="test_id" data={groupTreeQuery.data} edgeOptions={edgeOptions} nodeOptions={nodeOptions}/>
+                <GroupTreePlot id="test_id" edgeMetadataList={edgeMetadataList} nodeMetadataList={nodeMetadataList} datedTrees={datedTrees} selectedEdgeKey={selectedEdgeKey} selectedNodeKey={selectedNodeKey} selectedDateTime={selectedDateTime}/>
             )}
         </div>
     );

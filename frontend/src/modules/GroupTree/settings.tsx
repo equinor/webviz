@@ -17,27 +17,45 @@ import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { State, StatisticsOrRealization } from "./state";
 import { ModuleContext } from "@framework/ModuleContext";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
+import { useRealizationGroupTreeQuery, useStatisticsGroupTreeQuery } from "./queryHooks";
 
 export const settings = ({ moduleContext, workbenchSession, workbenchServices }: ModuleFCProps<State>) => {
     const ensembleSet = useEnsembleSet(workbenchSession);
-    
-    const setEnsembleIdent = moduleContext.useSetStoreValue("ensembleIdent")
-    const [selectedStatOrReal, setSelectedStatOrReal] = moduleContext.useStoreState("statOrReal");
-    const [selectedRealization, setSelectedRealization] = moduleContext.useStoreState("realization");
-    const [selectedStatOption, setSelectedStatOption] = moduleContext.useStoreState("statOption");
-    const [resampleFrequency, setResamplingFrequency] = moduleContext.useStoreState("resamplingFrequency");
+    const [selectedStatOrReal, setSelectedStatOrReal] = React.useState<StatisticsOrRealization>(StatisticsOrRealization.Realization);
+    const [selectedRealization, setSelectedRealization] = React.useState<number>(0);
+    const [selectedStatOption, setSelectedStatOption] = React.useState<StatisticFunction_api>(StatisticFunction_api.MEAN);
+    const [selectedResampleFrequency, setResamplingFrequency] = React.useState<Frequency_api>(Frequency_api.YEARLY);
 
     const [selectedEnsembleIdent, setSelectedEnsembleIdent] = useValidState<EnsembleIdent | null>({
         initialState: null,
         validStates: ensembleSet.getEnsembleArr().map((item: Ensemble) => item.getIdent()),
     });
 
-    React.useEffect(
-        function propagateEnsembleIdentToView() {
-            setEnsembleIdent(selectedEnsembleIdent)
-        }, [selectedEnsembleIdent]
-    )
+
+    let groupTreeQuery = undefined
+    if (selectedStatOrReal === StatisticsOrRealization.Statistics) {
+        groupTreeQuery = useStatisticsGroupTreeQuery(selectedEnsembleIdent?.getCaseUuid(), selectedEnsembleIdent?.getEnsembleName(), selectedStatOption, selectedResampleFrequency)
+    } else {
+        groupTreeQuery = useRealizationGroupTreeQuery(selectedEnsembleIdent?.getCaseUuid(), selectedEnsembleIdent?.getEnsembleName(), selectedRealization, selectedResampleFrequency)
+    }
     
+    const [selectedEdgeKey, setSelectedEdgeKey] = useValidState<string | null>({
+        initialState: null,
+        validStates: ["oilrate"]//groupTreeQuery.data?.edgeMetadataList.map(item => item.key) ?? []
+    })
+
+    //const validNodeKeys = 
+    const [selectedNodeKey, setSelectedNodeKey] = useValidState<string | null>({
+        initialState: null,
+        validStates: ["pressure"] //groupTreeQuery.data?.nodeMetadataList.map(item => item.key) ?? []
+    })
+
+    //dates = // finn alle datoer fra datedTrees
+    const [selectedDate, setSelectedDate] = useValidState<string | null>({
+        initialState: null,
+        validStates: ["2018-01-01", "2019-01-01", "2020-01-01"] //dates.map(item => item.key) ?? []
+    })
+
     const syncedSettingKeys = moduleContext.useSyncedSettingKeys();
     const syncHelper = new SyncSettingsHelper(syncedSettingKeys, workbenchServices);
     const syncedValueEnsembles = syncHelper.useValue(SyncSettingKey.ENSEMBLE, "global.syncValue.ensembles");
@@ -65,12 +83,7 @@ export const settings = ({ moduleContext, workbenchSession, workbenchServices }:
     }
 
     function handleFrequencySelectionChange(newFreqStr: string) {
-        console.debug(`handleFrequencySelectionChange()  newFreqStr=${newFreqStr}`);
-        let newFreq: Frequency_api | null = null;
-        if (newFreqStr !== "RAW") {
-            newFreq = newFreqStr as Frequency_api;
-        }
-        console.debug(`handleFrequencySelectionChange()  newFreqStr=${newFreqStr}  newFreq=${newFreq}`);
+        let newFreq = newFreqStr as Frequency_api;
         setResamplingFrequency(newFreq);
     }
 
@@ -90,7 +103,7 @@ export const settings = ({ moduleContext, workbenchSession, workbenchServices }:
             <CollapsibleGroup expanded={false} title="Frequency">
                 <Dropdown
                     options={makeFrequencyOptionItems()}
-                    value={resampleFrequency ?? Frequency_api.YEARLY}
+                    value={selectedResampleFrequency ?? Frequency_api.YEARLY}
                     onChange={handleFrequencySelectionChange}
                 />
             </CollapsibleGroup>
