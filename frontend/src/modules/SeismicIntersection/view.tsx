@@ -52,6 +52,7 @@ export const View = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
     const seismicAddress = moduleContext.useStoreValue("seismicAddress");
     const surfaceAddress = moduleContext.useStoreValue("surfaceAddress");
     const wellboreAddress = moduleContext.useStoreValue("wellboreAddress");
+    const showWellborePicks = moduleContext.useStoreValue("showWellborePicks");
     const extension = moduleContext.useStoreValue("extension");
     const zScale = moduleContext.useStoreValue("zScale");
 
@@ -185,8 +186,9 @@ export const View = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
     // Get well bore picks
     const wellBorePicksAndStratigraphyUnitsQuery = useWellborePicksAndStratigraphyUnitsQuery(
         seismicAddress?.caseUuid,
-        wellboreAddress ? wellboreAddress.uwi : undefined,
-        surfaceAddress?.surfaceNames ?? undefined
+        wellboreAddress ? wellboreAddress.uuid : undefined,
+        surfaceAddress?.surfaceNames ?? undefined,
+        showWellborePicks
     );
     if (wellBorePicksAndStratigraphyUnitsQuery.isError) {
         statusWriter.addError("Error loading wellbore picks and stratigraphy units");
@@ -259,7 +261,7 @@ export const View = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
             });
         }
 
-        if (wellBorePicksAndStratigraphyUnitsQuery.data) {
+        if (showWellborePicks && wellBorePicksAndStratigraphyUnitsQuery.data) {
             addWellborePicksLayer(esvIntersectionControllerRef.current, wellBorePicksAndStratigraphyUnitsQuery.data);
         }
 

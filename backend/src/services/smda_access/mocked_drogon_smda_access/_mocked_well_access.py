@@ -13,14 +13,11 @@ class WellAccess:
     # pylint: disable=unused-argument
     async def get_wellbore_picks(self, wellbore_uuid: str, pick_identifier: Optional[str] = None) -> List[WellBorePick]:
         """Get Drogon picks"""
-        # well_picks = []
-        # if wellbore_uuid == "drogon_horizontal":
-        #     well_picks = [pick for pick in mocked_wellbore_picks if pick.unique_wellbore_identifier == "55/33-A-4"]
-        # elif wellbore_uuid == "drogon_vertical":
-        #     well_picks = [pick for pick in mocked_wellbore_picks if pick.unique_wellbore_identifier == "55/33-1"]
-        # return well_picks
-        result = [pick for pick in mocked_wellbore_picks if pick.unique_wellbore_identifier == wellbore_uuid]
-        return result
+        if wellbore_uuid == "drogon_horizontal":
+            well_picks = [pick for pick in mocked_wellbore_picks if pick.unique_wellbore_identifier == "55/33-A-4"]
+        elif wellbore_uuid == "drogon_vertical":
+            well_picks = [pick for pick in mocked_wellbore_picks if pick.unique_wellbore_identifier == "55/33-1"]
+        return well_picks
 
     # type: ignore
     # pylint: disable=unused-argument

@@ -5,13 +5,9 @@ from pydantic import BaseModel
 
 class WellBorePick(BaseModel):
     """
-    Needed for esvIntersection:
-    - pick_identifier
-    - confidence
-    - depth_reference_point
-    - md
-    - md_unit
-    - tvd
+    Wellbore pick from SMDA
+
+    Attributes needed for esvIntersection component
     """
 
     northing: float
@@ -50,13 +46,19 @@ class WellBoreHeader(BaseModel):
 
 
 class StratigraphicUnit(BaseModel):
+    """
+    Stratigraphic unit from SMDA
+
+    Attributes needed for esvIntersection component
+    """
+
     identifier: str
     top: str
     base: str
     strat_unit_level: int
     strat_unit_type: str
-    top_age: Optional[int | float] = None
-    base_age: Optional[int | float] = None
+    top_age: int | float
+    base_age: int | float
     strat_unit_parent: Optional[str] = None
     color_r: int
     color_g: int

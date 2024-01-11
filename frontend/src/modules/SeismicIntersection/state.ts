@@ -6,6 +6,7 @@ export interface State {
     wellboreAddress: Wellbore | null;
     seismicAddress: SeismicAddress | null;
     surfaceAddress: SurfaceAddress | null;
+    showWellborePicks: boolean;
     extension: number;
     zScale: number;
 }

@@ -3,30 +3,21 @@
 /* eslint-disable */
 
 /**
- * Needed for esvIntersection:
- * - identifier
- * - top
- * - base
- * - base_age
- * - top_age
- * - color_r
- * - color_g
- * - color_b
- * - strat_unit_level
- * - strat_unit_parent
- * - lithology_type
+ * Wellbore pick from SMDA
+ *
+ * Camel case attributes needed for esvIntersection component in front-end
  */
 export type WellBorePick = {
     northing: number;
     easting: number;
     tvd: number;
-    tvd_msl: number;
+    tvdMsl: number;
     md: number;
-    md_msl: number;
-    unique_wellbore_identifier: string;
-    pick_identifier: string;
+    mdMsl: number;
+    uniqueWellboreIdentifier: string;
+    pickIdentifier: string;
     confidence: (string | null);
-    depth_reference_point: string;
-    md_unit: string;
+    depthReferencePoint: string;
+    mdUnit: string;
 };
 

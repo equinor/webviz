@@ -161,75 +161,11 @@ export function addSurfacesLayer(
 
 export function addWellborePicksLayer(
     controller: Controller,
-    wellBorePicksAndStratigraphyUnits_api: WellBorePicksAndStratigraphyUnits_api // TODO: Decompose and pass Pick and Unit data separately?
+    wellBorePicksAndStratigraphyUnits_api: WellBorePicksAndStratigraphyUnits_api
 ) {
-    // ****************************************************************************************************
-    // ****************************************************************************************************
-    //
-    // TODO:
-    // Get correct data from backend api and convert to correct format for esv intersection
-    // ../webviz/backend/src/backend/primary/routers/well/schemas.py vs
-    // ..webviz/backend/src/services/smda_access/mocked_drogon_smda_access/_mocked_stratigraphy_access.py
-    //
-    // ****************************************************************************************************
-    // ****************************************************************************************************
-
-    // const picksData = transformFormationData(
-    //     wellBorePicksAndStratigraphyUnits_api.wellborePicks.map((pick) => {
-    //         return {
-    //             pickIdentifier: pick.pickIdentifier,
-    //             confidence: pick.confidence,
-    //             depthReferencePoint: pick.depthReferencePoint,
-    //             md: pick.md,
-    //             mdUnit: pick.mdUnit,
-    //             tvd: pick.tvd,
-    //         };
-    //     }),
-    //     wellBorePicksAndStratigraphyUnits_api.stratigraphyUnits.map((unit) => {
-    //         return {
-    //             identifier: unit.identifier,
-    //             top: unit.top,
-    //             base: unit.base,
-    //             baseAge: unit.baseAge ?? 0,
-    //             topAge: unit.topAge ?? 0,
-    //             colorR: unit.colorR,
-    //             colorG: unit.colorG,
-    //             colorB: unit.colorB,
-    //             stratUnitLevel: unit.stratUnitLevel,
-    //             stratUnitParent: unit.stratUnitParent == null ? 0 : toInteger(unit.stratUnitParent),
-    //             lithologyType:
-    //                 typeof unit.lithologyType == "string" ? toInteger(unit.lithologyType) : unit.lithologyType,
-    //         };
-    //     })
-    // );
-
     const picksData = transformFormationData(
-        wellBorePicksAndStratigraphyUnits_api.wellbore_picks.map((pick) => {
-            return {
-                pickIdentifier: pick.pick_identifier,
-                confidence: pick.confidence,
-                depthReferencePoint: pick.depth_reference_point,
-                md: pick.md,
-                mdUnit: pick.md_unit,
-                tvd: pick.tvd,
-            };
-        }),
-        wellBorePicksAndStratigraphyUnits_api.stratigraphy_units.map((unit) => {
-            return {
-                identifier: unit.identifier,
-                top: unit.top,
-                base: unit.base,
-                baseAge: unit.base_age ?? 0,
-                topAge: unit.top_age ?? 0,
-                colorR: unit.color_r,
-                colorG: unit.color_g,
-                colorB: unit.color_b,
-                stratUnitLevel: unit.strat_unit_level,
-                stratUnitParent: unit.strat_unit_parent == null ? 0 : toInteger(unit.strat_unit_parent),
-                lithologyType:
-                    typeof unit.lithology_type == "string" ? toInteger(unit.lithology_type) : unit.lithology_type,
-            };
-        })
+        wellBorePicksAndStratigraphyUnits_api.wellbore_picks as any[],
+        wellBorePicksAndStratigraphyUnits_api.stratigraphy_units as any[]
     );
 
     const layer = new CalloutCanvasLayer<Annotation[]>("callout", {

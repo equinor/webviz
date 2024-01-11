@@ -14,6 +14,7 @@ from src.services.smda_access.types import WellBoreHeader, WellBoreTrajectory
 from src.services.smda_access.types import WellBorePick, StratigraphicUnit
 
 from . import schemas
+from . import converters
 
 LOGGER = logging.getLogger(__name__)
 
@@ -84,31 +85,6 @@ async def get_well_trajectories(
     return await well_access.get_wellbore_trajectories(wellbore_uuids=wellbore_uuids)
 
 
-# @router.get("/wellbore_picks/")
-# def get_wellbore_picks_for_wellbore(
-#     # fmt:off
-#     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
-#     case_uuid: str = Query(description="Sumo case uuid"), # Should be field identifier?
-#     wellbore_uuid: str = Query(description="Wellbore uuid"),
-#     # fmt:on
-# ) -> schemas.WellBorePicksAndStratUnits:
-#  """Get well bore picks for a single well bore"""
-#     well_access: Union[WellAccess, mocked_drogon_smda_access.WellAccess]
-#     case_inspector = CaseInspector(authenticated_user.get_sumo_access_token(), case_uuid)
-#     strat_column_identifier = case_inspector.get_stratigraphic_column_identifier()
-
-#     # Handle DROGON
-#     if "drogon" in wellbore_uuid.lower():
-#         well_access = mocked_drogon_smda_access.WellAccess(authenticated_user.get_smda_access_token())
-#         strat_access = mocked_drogon_smda_access.StratigraphyAccess(authenticated_user.get_smda_access_token())
-#     else:
-#         well_access = WellAccess(authenticated_user.get_smda_access_token())
-#         strat_access = StratigraphyAccess(authenticated_user.get_smda_access_token())
-#     strat_units = strat_access.get_stratigraphic_units(strat_column_identifier)
-#     wellbore_picks = well_access.get_wellbore_picks_for_wellbore(wellbore_uuid=wellbore_uuid)
-#     return schemas.WellBorePicksAndStratUnits(picks=wellbore_picks, strat_units=strat_units)
-
-
 @router.get("/wellbore_picks_and_stratigraphy_units/")
 async def get_wellbore_picks_and_stratigraphy_units(
     # fmt:off
@@ -126,19 +102,14 @@ async def get_wellbore_picks_and_stratigraphy_units(
     stratigraphic_column_identifier = await sumo_case.get_stratigraphic_column_identifier()
 
     # Handle DROGON
-    # if "drogon" in wellbore_uuid.lower():
-    #     well_access = mocked_drogon_smda_access.WellAccess(authenticated_user.get_smda_access_token())
-    #     stratigraphy_access = mocked_drogon_smda_access.StratigraphyAccess(authenticated_user.get_smda_access_token())
-    # else:
-    #     # NOTE: TEMPORARY EARLY RETURN
-    #     return schemas.WellBorePicksAndStratigraphyUnits([], [])
-    #     well_access = WellAccess(authenticated_user.get_smda_access_token())
-    #     stratigraphy_access = StratigraphyAccess(authenticated_user.get_smda_access_token())
+    field_identifiers = await sumo_case.get_field_identifiers()
+    if "DROGON" in field_identifiers:
+        well_access = mocked_drogon_smda_access.WellAccess(authenticated_user.get_smda_access_token())
+        stratigraphy_access = mocked_drogon_smda_access.StratigraphyAccess(authenticated_user.get_smda_access_token())
 
-    # START TEMP CODE
-    well_access = mocked_drogon_smda_access.WellAccess(authenticated_user.get_smda_access_token())
-    stratigraphy_access = mocked_drogon_smda_access.StratigraphyAccess(authenticated_user.get_smda_access_token())
-    # END TEMP CODE
+    else:
+        well_access = WellAccess(authenticated_user.get_smda_access_token())
+        stratigraphy_access = StratigraphyAccess(authenticated_user.get_smda_access_token())
 
     stratigraphy_units = await stratigraphy_access.get_stratigraphic_units(stratigraphic_column_identifier)
     wellbore_picks = await well_access.get_wellbore_picks(wellbore_uuid=wellbore_uuid)
@@ -149,18 +120,6 @@ async def get_wellbore_picks_and_stratigraphy_units(
         wellbore_picks = [pick for pick in wellbore_picks if pick.pick_identifier in pick_identifiers]
 
     return schemas.WellBorePicksAndStratigraphyUnits(
-        wellbore_picks=convert_wellbore_picks_to_schema(wellbore_picks),
-        stratigraphy_units=convert_stratigraphic_units_to_schema(stratigraphy_units),
+        wellbore_picks=converters.convert_wellbore_picks_to_schema(wellbore_picks),
+        stratigraphy_units=converters.convert_stratigraphic_units_to_schema(stratigraphy_units),
     )
-
-
-def convert_wellbore_picks_to_schema(wellbore_picks: List[WellBorePick]) -> List[schemas.WellBorePick]:
-    test: List[schemas.WellBorePick] = []
-
-    return [schemas.WellBorePick(**pick.__dict__) for pick in wellbore_picks]
-
-
-def convert_stratigraphic_units_to_schema(
-    stratigraphic_units: List[StratigraphicUnit],
-) -> List[schemas.StratigraphicUnit]:
-    return [schemas.StratigraphicUnit(**unit.__dict__) for unit in stratigraphic_units]

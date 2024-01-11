@@ -8,6 +8,7 @@ const defaultState: State = {
     wellboreAddress: null,
     seismicAddress: null,
     surfaceAddress: null,
+    showWellborePicks: true,
     extension: 1000,
     zScale: 5,
 };

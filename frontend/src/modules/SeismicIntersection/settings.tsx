@@ -9,6 +9,7 @@ import { Wellbore } from "@framework/Wellbore";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { SingleEnsembleSelect } from "@framework/components/SingleEnsembleSelect";
 import { fixupEnsembleIdent, maybeAssignFirstSyncedEnsemble } from "@framework/utils/ensembleUiHelpers";
+import { Checkbox } from "@lib/components/Checkbox";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { Input } from "@lib/components/Input";
@@ -62,6 +63,7 @@ export function Settings({ moduleContext, workbenchSession, workbenchServices }:
     const setSeismicAddress = moduleContext.useSetStoreValue("seismicAddress");
     const setSurfaceAddress = moduleContext.useSetStoreValue("surfaceAddress");
     const setWellboreAddress = moduleContext.useSetStoreValue("wellboreAddress");
+    const [showWellborePicks, setShowWellborePicks] = moduleContext.useStoreState("showWellborePicks");
     const [extension, setExtension] = moduleContext.useStoreState("extension");
     const [zScale, setZScale] = moduleContext.useStoreState("zScale");
 
@@ -315,9 +317,14 @@ export function Settings({ moduleContext, workbenchSession, workbenchServices }:
         const newExtension = parseInt(event.target.value, 10);
         setExtension(newExtension);
     }
+
     function handleZScaleChange(event: React.ChangeEvent<HTMLInputElement>) {
         const newZScale = parseInt(event.target.value, 10);
         setZScale(newZScale);
+    }
+
+    function handleShowWellborePicksChange(_event: React.ChangeEvent<HTMLInputElement>, checked: boolean) {
+        setShowWellborePicks(checked);
     }
 
     return (
@@ -397,6 +404,11 @@ export function Settings({ moduleContext, workbenchSession, workbenchServices }:
                                 onChange={handleSurfaceNameChange}
                             />
                         </Label>
+                        <Checkbox
+                            label="Show Picks"
+                            checked={showWellborePicks}
+                            onChange={handleShowWellborePicksChange}
+                        />
                     </div>
                 </QueryStateWrapper>
             </CollapsibleGroup>

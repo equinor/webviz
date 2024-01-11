@@ -38,7 +38,8 @@ export function useWellTrajectoriesQuery(wellUuids: string[] | undefined): UseQu
 export function useWellborePicksAndStratigraphyUnitsQuery(
     caseUuid: string | undefined,
     wellboreUuid: string | undefined,
-    pickIdentifiers: string[] | undefined
+    pickIdentifiers: string[] | undefined,
+    allowEnable: boolean
 ): UseQueryResult<WellBorePicksAndStratigraphyUnits_api> {
     return useQuery({
         queryKey: ["getWellborePicksAndStratigraphyUnits", caseUuid, wellboreUuid, pickIdentifiers],
@@ -50,6 +51,6 @@ export function useWellborePicksAndStratigraphyUnitsQuery(
             ),
         staleTime: STALE_TIME,
         gcTime: CACHE_TIME,
-        enabled: !!(caseUuid && wellboreUuid && pickIdentifiers),
+        enabled: !!(allowEnable && caseUuid && wellboreUuid && pickIdentifiers),
     });
 }
