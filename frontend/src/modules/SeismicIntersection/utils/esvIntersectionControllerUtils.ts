@@ -1,4 +1,4 @@
-import { SurfaceIntersectionData_api, WellBorePicksAndStratigraphyUnits_api } from "@api";
+import { WellBorePicksAndStratigraphyUnits_api } from "@api";
 import {
     Annotation,
     CalloutCanvasLayer,
@@ -15,8 +15,6 @@ import {
     getSeismicOptions,
     transformFormationData,
 } from "@equinor/esv-intersection";
-
-import { toInteger } from "lodash";
 
 import { makeReferenceSystemFromTrajectoryXyzPoints } from "./esvIntersectionDataConversion";
 

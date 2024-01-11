@@ -75,7 +75,6 @@ export class WellService {
             },
         });
     }
-
     /**
      * Get Wellbore Picks And Stratigraphy Units
      * Get well bore picks for a single well bore
@@ -103,5 +102,4 @@ export class WellService {
             },
         });
     }
-
 }
