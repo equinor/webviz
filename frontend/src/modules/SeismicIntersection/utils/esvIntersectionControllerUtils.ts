@@ -14,7 +14,7 @@ import {
     getSeismicInfo,
     getSeismicOptions,
     transformFormationData,
-} from "@equinor/esv-intersection";
+} from "@equinor/esv-intersection/";
 
 import { makeReferenceSystemFromTrajectoryXyzPoints } from "./esvIntersectionDataConversion";
 
@@ -161,6 +161,10 @@ export function addWellborePicksLayer(
     controller: Controller,
     wellBorePicksAndStratigraphyUnits_api: WellBorePicksAndStratigraphyUnits_api
 ) {
+    // Note: The wellbore_picks and stratigraphy_units arrays are provided as `any[]` because the
+    // attributes of the objects are defined with camel case notation in the API. Thereby the properties
+    // of the argument objects `Pick` and `Unit` will match the properties of the API objects. Ideally the
+    // esv-intersection would export the types for the arguments s.t. convert methods could be used.
     const picksData = transformFormationData(
         wellBorePicksAndStratigraphyUnits_api.wellbore_picks as any[],
         wellBorePicksAndStratigraphyUnits_api.stratigraphy_units as any[]

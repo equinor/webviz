@@ -11,8 +11,6 @@ from src.backend.auth.auth_helper import AuthHelper
 from src.services.sumo_access._helpers import SumoCase
 from src.services.smda_access.types import WellBoreHeader, WellBoreTrajectory
 
-from src.services.smda_access.types import WellBorePick, StratigraphicUnit
-
 from . import schemas
 from . import converters
 
@@ -115,7 +113,7 @@ async def get_wellbore_picks_and_stratigraphy_units(
     wellbore_picks = await well_access.get_wellbore_picks(wellbore_uuid=wellbore_uuid)
 
     # Filter picks
-    # TODO: How to handle requested picks not existing among returned picks?
+    # NOTE: How to handle requested picks not existing among returned picks?
     if pick_identifiers:
         wellbore_picks = [pick for pick in wellbore_picks if pick.pick_identifier in pick_identifiers]
 
