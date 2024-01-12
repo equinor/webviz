@@ -47,13 +47,17 @@ export type DebugProfilerProps = {
     guiMessageBroker: GuiMessageBroker;
 };
 
-type RenderInfo = {
-    phase: "mount" | "update";
-    actualDuration: number;
-    baseDuration: number;
-    startTime: number;
-    commitTime: number;
-    interactions: Set<any>;
+type TupleToObject<T extends readonly any[], M extends Record<Exclude<keyof T, keyof any[]>, PropertyKey>> = {
+    [K in Exclude<keyof T, keyof any[]> as M[K]]: T[K];
+};
+
+type RenderInfo = Omit<
+    TupleToObject<
+        Parameters<React.ProfilerOnRenderCallback>,
+        ["id", "phase", "actualDuration", "baseDuration", "startTime", "commitTime", "interactions"]
+    >,
+    "id"
+> & {
     renderCount: number;
     minTime: number;
     maxTime: number;
@@ -75,13 +79,15 @@ export const DebugProfiler: React.FC<DebugProfilerProps> = (props) => {
 
     const handleRender = React.useCallback(
         (
-            _: string,
-            phase: "mount" | "update",
-            actualDuration: number,
-            baseDuration: number,
-            startTime: number,
-            commitTime: number,
-            interactions: Set<any>
+            ...[
+                ,
+                phase,
+                actualDuration,
+                baseDuration,
+                startTime,
+                commitTime,
+                interactions,
+            ]: Parameters<React.ProfilerOnRenderCallback>
         ) => {
             setRenderInfo((prev) => ({
                 phase,
