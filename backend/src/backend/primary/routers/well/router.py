@@ -110,7 +110,7 @@ async def get_wellbore_picks_and_stratigraphy_units(
         stratigraphy_access = StratigraphyAccess(authenticated_user.get_smda_access_token())
 
     stratigraphy_units = await stratigraphy_access.get_stratigraphic_units(stratigraphic_column_identifier)
-    wellbore_picks = await well_access.get_wellbore_picks(wellbore_uuid=wellbore_uuid)
+    wellbore_picks = await well_access.get_picks_for_wellbore(wellbore_uuid=wellbore_uuid)
 
     # Filter picks
     # NOTE: How to handle requested picks not existing among returned picks?
