@@ -1,4 +1,7 @@
+from typing import Any, Dict, List
 from enum import Enum
+
+from pydantic import BaseModel
 
 
 class Frequency(str, Enum):
@@ -16,3 +19,9 @@ class StatOption(str, Enum):
     P50 = "P50"
     MIN = "MIN"
     MAX = "MAX"
+
+
+class GroupTreeData(BaseModel):
+    edge_metadata_list: List[Dict[str, str]]
+    node_metadata_list: List[Dict[str, str]]
+    dated_trees: List[Dict[Any, Any]]

@@ -144,7 +144,7 @@ class GroupTreeData:
         node_types: List[NodeType],
         real: Optional[int] = None,
         stat_option: Optional[StatOptions] = None,
-    ) -> List[Dict[Any, Any]]:
+    ) -> Tuple[List[Dict[Any, Any]], List[Dict[str, str]], List[Dict[str, str]]]:
         """This method is called when an event is triggered to create a new dataset
         to the GroupTree plugin. First there is a lot of filtering of the smry and
         grouptree data, before the filtered data is sent to the function that is
@@ -207,16 +207,14 @@ class GroupTreeData:
             dfs.append(self._grouptree[self._grouptree[f"IS_{tpe.value}".upper()]])
         gruptree_filtered = pd.concat(dfs).drop_duplicates()
 
-        return await _create_dataset(smry, gruptree_filtered, self._sumvecs, self._terminal_node)
-
-        # return (
-        #     await _create_dataset(smry, gruptree_filtered, self._sumvecs, self._terminal_node),
-        #     await self._get_edge_options(node_types),
-        #     [
-        #         {"name": datatype, "label": await _get_label(datatype)}
-        #         for datatype in [DataType.PRESSURE, DataType.BHP, DataType.WMCTL]
-        #     ],
-        # )
+        return (
+            await _create_dataset(smry, gruptree_filtered, self._sumvecs, self._terminal_node),
+            self._get_edge_options(node_types),
+            [
+                {"name": datatype.value, "label": _get_label(datatype)}
+                for datatype in [DataType.PRESSURE, DataType.BHP, DataType.WMCTL]
+            ],
+        )
 
     def _check_that_sumvecs_exists(self, check_sumvecs: List[str]) -> None:
         """Takes in a list of summary vectors and checks if they are
@@ -279,19 +277,19 @@ class GroupTreeData:
         options = []
         if NodeType.PROD in node_types:
             for rate in [DataType.OILRATE, DataType.GASRATE, DataType.WATERRATE]:
-                options.append({"name": rate, "label": _get_label(rate)})
+                options.append({"name": rate.value, "label": _get_label(rate)})
         if NodeType.INJ in node_types and self._has_waterinj:
             options.append(
                 {
-                    "name": DataType.WATERINJRATE,
+                    "name": DataType.WATERINJRATE.value,
                     "label": _get_label(DataType.WATERINJRATE),
                 }
             )
         if NodeType.INJ in node_types and self._has_gasinj:
-            options.append({"name": DataType.GASINJRATE, "label": _get_label(DataType.GASINJRATE)})
+            options.append({"name": DataType.GASINJRATE.value, "label": _get_label(DataType.GASINJRATE)})
         if options:
             return options
-        return [{"name": DataType.OILRATE, "label": _get_label(DataType.OILRATE)}]
+        return [{"name": DataType.OILRATE.value, "label": _get_label(DataType.OILRATE)}]
 
 
 def _add_nodetype(
