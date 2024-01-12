@@ -29,6 +29,7 @@ import {
 } from "./utils/esvIntersectionControllerUtils";
 import {
     createEsvSurfaceIntersectionDataArrayFromSurfaceIntersectionDataApiArray,
+    createEsvWellborePicksAndStratigraphyUnits,
     createSeismicSliceImageDataArrayFromFenceData,
     createSeismicSliceImageYAxisValuesArrayFromFenceData,
     makeExtendedTrajectoryFromTrajectoryXyzPoints,
@@ -184,13 +185,13 @@ export const View = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
     }
 
     // Get well bore picks
-    const wellBorePicksAndStratigraphyUnitsQuery = useWellborePicksAndStratigraphyUnitsQuery(
+    const wellborePicksAndStratigraphyUnitsQuery = useWellborePicksAndStratigraphyUnitsQuery(
         seismicAddress?.caseUuid,
         wellboreAddress ? wellboreAddress.uuid : undefined,
         surfaceAddress?.surfaceNames ?? undefined,
         showWellborePicks
     );
-    if (wellBorePicksAndStratigraphyUnitsQuery.isError) {
+    if (wellborePicksAndStratigraphyUnitsQuery.isError) {
         statusWriter.addError("Error loading wellbore picks and stratigraphy units");
     }
 
@@ -261,8 +262,11 @@ export const View = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
             });
         }
 
-        if (showWellborePicks && wellBorePicksAndStratigraphyUnitsQuery.data) {
-            addWellborePicksLayer(esvIntersectionControllerRef.current, wellBorePicksAndStratigraphyUnitsQuery.data);
+        if (showWellborePicks && wellborePicksAndStratigraphyUnitsQuery.data) {
+            const { wellborePicks, stratigraphyUnits } = createEsvWellborePicksAndStratigraphyUnits(
+                wellborePicksAndStratigraphyUnitsQuery.data
+            );
+            addWellborePicksLayer(esvIntersectionControllerRef.current, wellborePicks, stratigraphyUnits);
         }
 
         // Update layout
