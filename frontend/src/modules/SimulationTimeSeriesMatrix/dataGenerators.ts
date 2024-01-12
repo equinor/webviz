@@ -1,5 +1,6 @@
 import { VectorRealizationData_api } from "@api";
 import { DataGenerator, ModuleChannelContentMetaData } from "@framework/DataChannelTypes";
+import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { simulationUnitReformat, simulationVectorDescription } from "@modules/_shared/reservoirSimulationStringUtils";
 
 import { indexOf } from "lodash";
@@ -11,9 +12,11 @@ export function makeVectorGroupDataGenerator(
         vectorSpecification: VectorSpec;
         data: VectorRealizationData_api[];
     }[],
-    activeTimestampUtcMs: number
-): (vectorName: string) => ReturnType<DataGenerator> {
-    return (vectorName: string) => {
+    activeTimestampUtcMs: number,
+    makeEnsembleDisplayName: (ensembleIdent: EnsembleIdent) => string
+): (contentIdString: string) => ReturnType<DataGenerator> {
+    return (contentIdString: string) => {
+        const [vectorName] = contentIdString.split("-::-");
         const data: { key: number; value: number }[] = [];
         let metaData: ModuleChannelContentMetaData = {
             unit: "",
@@ -37,7 +40,9 @@ export function makeVectorGroupDataGenerator(
             metaData = {
                 unit,
                 ensembleIdentString: vector.vectorSpecification.ensembleIdent.toString(),
-                displayString: simulationVectorDescription(vector.vectorSpecification.vectorName),
+                displayString: `${simulationVectorDescription(
+                    vector.vectorSpecification.vectorName
+                )} (${makeEnsembleDisplayName(vector.vectorSpecification.ensembleIdent)})`,
             };
         }
         return {

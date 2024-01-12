@@ -14,7 +14,7 @@ import { ColorBar, Layout, PlotData } from "plotly.js";
 import { PlotType, State } from "./state";
 import { makeSubplots } from "./utils/Figure";
 import { makeHistogramTrace } from "./utils/histogram";
-import { makePlotTitle } from "./utils/stringUtils";
+import { makeHoverText, makePlotTitle } from "./utils/stringUtils";
 import { calcTextSize } from "./utils/textSize";
 
 export const View = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>) => {
@@ -145,8 +145,14 @@ export const View = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
                     height: wrapperDivSize.height,
                     sharedXAxes: false,
                     sharedYAxes: false,
-                    verticalSpacing: 0.3 / numRows,
-                    horizontalSpacing: 0.3 / numCols,
+                    verticalSpacing: 150 / (wrapperDivSize.height - 50),
+                    horizontalSpacing: 0.2 / numCols,
+                    margin: {
+                        t: 0,
+                        r: 20,
+                        b: 150,
+                        l: 40,
+                    },
                 });
 
                 let cellIndex = 0;
@@ -166,11 +172,9 @@ export const View = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
 
                         figure.addTrace(trace, rowIndex + 1, colIndex + 1);
 
-                        const xAxisTitle = data.displayName;
-
                         const patch: Partial<Layout> = {
                             [`xaxis${cellIndex + 1}`]: {
-                                title: xAxisTitle,
+                                title: makePlotTitle(data),
                             },
                             [`yaxis${cellIndex + 1}`]: {
                                 title: "Percent",
@@ -196,8 +200,14 @@ export const View = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
                     height: wrapperDivSize.height,
                     sharedXAxes: false,
                     sharedYAxes: false,
-                    verticalSpacing: 0.15 / numRows,
-                    horizontalSpacing: 0.3 / numCols,
+                    verticalSpacing: 100 / (wrapperDivSize.height - 50),
+                    horizontalSpacing: 0.2 / numCols,
+                    margin: {
+                        t: 0,
+                        r: 20,
+                        b: 50,
+                        l: 90,
+                    },
                 });
 
                 let cellIndex = 0;
@@ -210,7 +220,7 @@ export const View = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
                         const keyData = data.dataArray.map((el: any) => el.key);
                         const valueData = data.dataArray.map((el: any) => el.value);
 
-                        const dataTitle = data.displayName;
+                        const dataTitle = makePlotTitle(data);
                         const kindOfKeyTitle = `${receiverX.channel.kindOfKey}` ?? "";
 
                         const trace: Partial<PlotData> = {
@@ -222,6 +232,7 @@ export const View = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
                             },
                             showlegend: false,
                             type: "bar",
+                            orientation,
                         };
 
                         const xAxisTitle = orientation === "h" ? dataTitle : kindOfKeyTitle;
@@ -253,7 +264,14 @@ export const View = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
                     height: wrapperDivSize.height,
                     sharedXAxes: true,
                     sharedYAxes: true,
-                    verticalSpacing: 0.05 / receiverX.channel.contents.length,
+                    verticalSpacing: 20 / (wrapperDivSize.height - 80),
+                    horizontalSpacing: 20 / (wrapperDivSize.width - 80),
+                    margin: {
+                        t: 0,
+                        r: 0,
+                        b: 80,
+                        l: 80,
+                    },
                 });
 
                 const font = {
@@ -275,6 +293,7 @@ export const View = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
 
                         const xValues: number[] = [];
                         const yValues: number[] = [];
+                        const realizations: number[] = [];
 
                         let color = colorSet.getFirstColor();
                         const preferredColorX = contentRow.metaData.preferredColor;
@@ -295,6 +314,7 @@ export const View = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
                                 if (dataPointX && dataPointY) {
                                     xValues.push(dataPointX.value as number);
                                     yValues.push(dataPointY.value as number);
+                                    realizations.push(key as number);
                                 }
                             });
                         }
@@ -309,6 +329,7 @@ export const View = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
                             },
                             showlegend: false,
                             type: "scattergl",
+                            hovertemplate: realizations.map((real) => makeHoverText(contentRow, contentCol, real)),
                         };
 
                         figure.addTrace(trace, rowIndex + 1, colIndex + 1);
@@ -338,6 +359,8 @@ export const View = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
                         t: 5,
                         r: 5,
                     },
+                    font,
+                    autosize: true,
                 };
                 figure.updateLayout(patch);
                 setPlot(figure.makePlot());
@@ -345,8 +368,6 @@ export const View = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
             }
 
             if (plotType === PlotType.ScatterWithColorMapping && receiverY.channel && receiverColorMapping.channel) {
-                const verticalSpacing = 0.1 / receiverX.channel.contents.length;
-                const horizontalSpacing = 0.1 / receiverY.channel.contents.length;
                 const figure = makeSubplots({
                     numRows: receiverX.channel.contents.length,
                     numCols: receiverY.channel.contents.length,
@@ -354,13 +375,13 @@ export const View = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
                     height: wrapperDivSize.height,
                     sharedXAxes: true,
                     sharedYAxes: true,
-                    verticalSpacing,
-                    horizontalSpacing,
+                    verticalSpacing: 20 / (wrapperDivSize.height - 80),
+                    horizontalSpacing: 20 / (wrapperDivSize.width - 80),
                     margin: {
                         t: 10,
                         r: 20,
-                        b: 30,
-                        l: 30,
+                        b: 80,
+                        l: 80,
                     },
                 });
 
@@ -396,6 +417,7 @@ export const View = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
                         const keysX = dataX.dataArray.map((el: any) => el.key);
                         const keysY = dataY.dataArray.map((el: any) => el.key);
                         const keysColor = dataColor.dataArray.map((el: any) => el.key);
+                        const realizations: number[] = [];
                         if (
                             keysX.length === keysY.length &&
                             keysX.length === keysColor.length &&
@@ -409,6 +431,7 @@ export const View = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
                                     xValues.push(dataPointX.value as number);
                                     yValues.push(dataPointY.value as number);
                                     colorValues.push(dataPointColor.value as number);
+                                    realizations.push(key as number);
                                 }
                             });
                         }
@@ -425,6 +448,7 @@ export const View = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
                             },
                             showlegend: false,
                             type: "scattergl",
+                            hovertemplate: realizations.map((real) => makeHoverText(dataX, dataY, real)),
                         };
 
                         figure.addTrace(trace, rowIndex + 1, colIndex + 1);

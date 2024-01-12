@@ -102,7 +102,12 @@ export function makeSubplots({
     let layout: Partial<Layout> = {
         width,
         height,
-        margin,
+        margin: {
+            l: 0,
+            r: 0,
+            t: 0,
+            b: 0,
+        },
     };
 
     const gridAxesMapping: number[][] = [];
@@ -158,9 +163,11 @@ export function makeSubplots({
                 adjustedMargin.l,
                 adjustedMargin.r,
             ]);
+
+            // Note that the yDomainStart and yDomainEnd are swapped because the y-axis starts at the bottom
             const [yDomainStart, yDomainEnd] = makeDomain(numRows, row, verticalSpacing, [
-                adjustedMargin.t,
                 adjustedMargin.b,
+                adjustedMargin.t,
             ]);
 
             if (matchingXAxisIndex !== undefined && matchingXAxisIndex !== index + 1) {

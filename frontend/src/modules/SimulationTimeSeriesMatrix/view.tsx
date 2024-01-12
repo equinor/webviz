@@ -7,6 +7,7 @@ import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { ModuleFCProps } from "@framework/Module";
 import { useViewStatusWriter } from "@framework/StatusWriter";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
+import { timestampUtcMsToCompactIsoString } from "@framework/utils/timestampUtils";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { ColorScaleGradientType } from "@lib/utils/ColorScale";
 import { ContentError } from "@modules/_shared/components/ContentMessage";
@@ -148,17 +149,26 @@ export const View = ({ moduleContext, workbenchSession, workbenchSettings }: Mod
         loadedVectorSpecificationsAndObservationData.push(...ensembleObservationData.vectorsObservationData);
     });
 
+    if (!isQueryFetching && activeTimestampUtcMs === null && loadedVectorSpecificationsAndRealizationData.length > 0) {
+        const firstTimeStamp =
+            loadedVectorSpecificationsAndRealizationData.at(0)?.data.at(0)?.timestamps_utc_ms[0] ?? null;
+        setActiveTimestampUtcMs(firstTimeStamp);
+    }
+
     moduleContext.usePublishChannelContents({
         channelIdString: BroadcastChannelNames.TimeSeries,
         dependencies: [loadedVectorSpecificationsAndRealizationData, activeTimestampUtcMs],
         enabled: !isQueryFetching,
         contents: loadedVectorSpecificationsAndRealizationData.map((el) => ({
-            idString: el.vectorSpecification.vectorName,
-            displayName: el.vectorSpecification.vectorName,
+            idString: `${el.vectorSpecification.vectorName}-::-${el.vectorSpecification.ensembleIdent}`,
+            displayName: `${el.vectorSpecification.vectorName} (${makeEnsembleDisplayName(
+                el.vectorSpecification.ensembleIdent
+            )})`,
         })),
         dataGenerator: makeVectorGroupDataGenerator(
             loadedVectorSpecificationsAndRealizationData,
-            activeTimestampUtcMs ?? 0
+            activeTimestampUtcMs ?? 0,
+            makeEnsembleDisplayName
         ),
     });
 
@@ -293,6 +303,23 @@ export const View = ({ moduleContext, workbenchSession, workbenchSettings }: Mod
                           width: 3,
                           dash: "dot",
                       },
+                  },
+              ]
+            : [],
+        annotations: activeTimestampUtcMs
+            ? [
+                  {
+                      xref: "x",
+                      yref: "paper",
+                      x: activeTimestampUtcMs,
+                      y: 0 - 22 / wrapperDivSize.height,
+                      text: timestampUtcMsToCompactIsoString(activeTimestampUtcMs),
+                      showarrow: false,
+                      arrowhead: 0,
+                      bgcolor: "rgba(255, 255, 255, 1)",
+                      bordercolor: "rgba(255, 0, 0, 1)",
+                      borderwidth: 2,
+                      borderpad: 4,
                   },
               ]
             : [],

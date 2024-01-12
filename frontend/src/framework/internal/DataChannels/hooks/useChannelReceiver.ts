@@ -36,17 +36,17 @@ export type ChannelReceiverReturnData<TKeyKinds extends KeyKind[]> = {
       }
 );
 
-export function useChannelReceiver<TGenres extends KeyKind[]>({
+export function useChannelReceiver<TKeyKinds extends KeyKind[]>({
     receiver,
     expectedKindsOfKeys,
 }: {
     receiver: ModuleChannelReceiver | null;
-    expectedKindsOfKeys: TGenres;
+    expectedKindsOfKeys: TKeyKinds;
 }): ChannelReceiverReturnData<typeof expectedKindsOfKeys> {
     const [isPending, startTransition] = React.useTransition();
     const [contents, setContents] = React.useState<ChannelReceiverChannelContent<typeof expectedKindsOfKeys>[]>([]);
     const [revisionNumber, setRevisionNumber] = React.useState(0);
-    const [prevExpectedKindsOfKeys, setPrevExpectedKindsOfKeys] = React.useState<TGenres>(expectedKindsOfKeys);
+    const [prevExpectedKindsOfKeys, setPrevExpectedKindsOfKeys] = React.useState<TKeyKinds>(expectedKindsOfKeys);
 
     if (!isEqual(prevExpectedKindsOfKeys, expectedKindsOfKeys)) {
         setPrevExpectedKindsOfKeys(expectedKindsOfKeys);
@@ -68,7 +68,7 @@ export function useChannelReceiver<TGenres extends KeyKind[]>({
 
                 if (!prevExpectedKindsOfKeys.includes(channel.getKindOfKey())) {
                     throw new Error(
-                        `Kind of key '${channel.getKindOfKey()}' is not one of the expected genres '${prevExpectedKindsOfKeys.join(
+                        `Kind of key '${channel.getKindOfKey()}' is not one of the expected kinds of keys '${prevExpectedKindsOfKeys.join(
                             ", "
                         )}'`
                     );
@@ -88,7 +88,7 @@ export function useChannelReceiver<TGenres extends KeyKind[]>({
                                 idString: content.getIdString(),
                                 displayName: content.getDisplayName(),
                                 dataArray: content.getDataArray() as DataElement<
-                                    KeyKindToKeyTypeMapping[TGenres[number]]
+                                    KeyKindToKeyTypeMapping[TKeyKinds[number]]
                                 >[],
                                 metaData: content.getMetaData(),
                             };
