@@ -1,4 +1,4 @@
-import { SurfaceIntersectionData_api, WellBorePicksAndStratigraphyUnits_api, WellBoreTrajectory_api } from "@api";
+import { SurfaceIntersectionData_api, WellBorePicksAndStratigraphicUnits_api, WellBoreTrajectory_api } from "@api";
 import { IntersectionReferenceSystem, Trajectory } from "@equinor/esv-intersection";
 
 import { SurfaceIntersectionData } from "./esvIntersectionControllerUtils";
@@ -229,14 +229,14 @@ export function createEsvSurfaceIntersectionDataArrayFromSurfaceIntersectionData
 }
 
 /**
- * Utility to create an object of wellbore picks and stratigraphy units for the esv intersection layer.
+ * Utility to create an object of wellbore picks and stratigraphic units for the esv intersection layer.
  *
  * Converts the API data to the format required by the esv intersection layer.
  */
-export function createEsvWellborePicksAndStratigraphyUnits(
-    wellborePicksAndStratigraphyUnits_api: WellBorePicksAndStratigraphyUnits_api
-): { wellborePicks: Pick[]; stratigraphyUnits: Unit[] } {
-    const wellborePicks: Pick[] = wellborePicksAndStratigraphyUnits_api.wellbore_picks.map((pick) => {
+export function createEsvWellborePicksAndStratigraphicUnits(
+    wellborePicksAndStratigraphicUnits_api: WellBorePicksAndStratigraphicUnits_api
+): { wellborePicks: Pick[]; stratigraphicUnits: Unit[] } {
+    const wellborePicks: Pick[] = wellborePicksAndStratigraphicUnits_api.wellbore_picks.map((pick) => {
         return {
             pickIdentifier: pick.pickIdentifier,
             confidence: pick.confidence,
@@ -249,7 +249,7 @@ export function createEsvWellborePicksAndStratigraphyUnits(
 
     // lithologyType and stratUnitParent are defined as number in esv intersection layer, but is retrieved as string
     // from back-end
-    const stratigraphyUnits: Unit[] = wellborePicksAndStratigraphyUnits_api.stratigraphy_units.map((unit) => {
+    const stratigraphicUnits: Unit[] = wellborePicksAndStratigraphicUnits_api.stratigraphic_units.map((unit) => {
         return {
             identifier: unit.identifier,
             top: unit.top,
@@ -265,5 +265,5 @@ export function createEsvWellborePicksAndStratigraphyUnits(
         };
     });
 
-    return { wellborePicks: wellborePicks, stratigraphyUnits: stratigraphyUnits };
+    return { wellborePicks: wellborePicks, stratigraphicUnits: stratigraphicUnits };
 }

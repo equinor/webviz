@@ -4,8 +4,8 @@
 /* eslint-disable */
 import type { StratigraphicUnit } from './StratigraphicUnit';
 import type { WellBorePick } from './WellBorePick';
-export type WellBorePicksAndStratigraphyUnits = {
+export type WellBorePicksAndStratigraphicUnits = {
     wellbore_picks: Array<WellBorePick>;
-    stratigraphy_units: Array<StratigraphicUnit>;
+    stratigraphic_units: Array<StratigraphicUnit>;
 };
 

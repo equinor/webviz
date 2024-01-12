@@ -12,7 +12,7 @@ import { useElementSize } from "@lib/hooks/useElementSize";
 import { ColorScaleGradientType } from "@lib/utils/ColorScale";
 import {
     useWellTrajectoriesQuery,
-    useWellborePicksAndStratigraphyUnitsQuery,
+    useWellborePicksAndStratigraphicUnitsQuery,
 } from "@modules/_shared/WellBore/queryHooks";
 import { ContentError } from "@modules/_shared/components/ContentMessage";
 
@@ -29,7 +29,7 @@ import {
 } from "./utils/esvIntersectionControllerUtils";
 import {
     createEsvSurfaceIntersectionDataArrayFromSurfaceIntersectionDataApiArray,
-    createEsvWellborePicksAndStratigraphyUnits,
+    createEsvWellborePicksAndStratigraphicUnits,
     createSeismicSliceImageDataArrayFromFenceData,
     createSeismicSliceImageYAxisValuesArrayFromFenceData,
     makeExtendedTrajectoryFromTrajectoryXyzPoints,
@@ -185,14 +185,14 @@ export const View = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
     }
 
     // Get well bore picks
-    const wellborePicksAndStratigraphyUnitsQuery = useWellborePicksAndStratigraphyUnitsQuery(
+    const wellborePicksAndStratigraphicUnitsQuery = useWellborePicksAndStratigraphicUnitsQuery(
         seismicAddress?.caseUuid,
         wellboreAddress ? wellboreAddress.uuid : undefined,
         surfaceAddress?.surfaceNames ?? undefined,
         showWellborePicks
     );
-    if (wellborePicksAndStratigraphyUnitsQuery.isError) {
-        statusWriter.addError("Error loading wellbore picks and stratigraphy units");
+    if (wellborePicksAndStratigraphicUnitsQuery.isError) {
+        statusWriter.addError("Error loading wellbore picks and stratigraphic units");
     }
 
     if (seismicFenceDataQuery.data) {
@@ -262,11 +262,11 @@ export const View = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
             });
         }
 
-        if (showWellborePicks && wellborePicksAndStratigraphyUnitsQuery.data) {
-            const { wellborePicks, stratigraphyUnits } = createEsvWellborePicksAndStratigraphyUnits(
-                wellborePicksAndStratigraphyUnitsQuery.data
+        if (showWellborePicks && wellborePicksAndStratigraphicUnitsQuery.data) {
+            const { wellborePicks, stratigraphicUnits } = createEsvWellborePicksAndStratigraphicUnits(
+                wellborePicksAndStratigraphicUnitsQuery.data
             );
-            addWellborePicksLayer(esvIntersectionControllerRef.current, wellborePicks, stratigraphyUnits);
+            addWellborePicksLayer(esvIntersectionControllerRef.current, wellborePicks, stratigraphicUnits);
         }
 
         // Update layout

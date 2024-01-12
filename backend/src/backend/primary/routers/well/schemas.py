@@ -43,6 +43,6 @@ class WellBorePick(BaseModel):
     mdUnit: str
 
 
-class WellBorePicksAndStratigraphyUnits(BaseModel):
+class WellBorePicksAndStratigraphicUnits(BaseModel):
     wellbore_picks: List[WellBorePick] = []
-    stratigraphy_units: List[StratigraphicUnit] = []
+    stratigraphic_units: List[StratigraphicUnit] = []

@@ -3,7 +3,7 @@
 /* tslint:disable */
 /* eslint-disable */
 import type { WellBoreHeader } from '../models/WellBoreHeader';
-import type { WellBorePicksAndStratigraphyUnits } from '../models/WellBorePicksAndStratigraphyUnits';
+import type { WellBorePicksAndStratigraphicUnits } from '../models/WellBorePicksAndStratigraphicUnits';
 import type { WellBoreTrajectory } from '../models/WellBoreTrajectory';
 import type { CancelablePromise } from '../core/CancelablePromise';
 import type { BaseHttpRequest } from '../core/BaseHttpRequest';
@@ -76,22 +76,22 @@ export class WellService {
         });
     }
     /**
-     * Get Wellbore Picks And Stratigraphy Units
+     * Get Wellbore Picks And Stratigraphic Units
      * Get well bore picks for a single well bore
      * @param caseUuid Sumo case uuid
      * @param wellboreUuid Wellbore uuid
      * @param pickIdentifiers Pick identifiers
-     * @returns WellBorePicksAndStratigraphyUnits Successful Response
+     * @returns WellBorePicksAndStratigraphicUnits Successful Response
      * @throws ApiError
      */
-    public getWellborePicksAndStratigraphyUnits(
+    public getWellborePicksAndStratigraphicUnits(
         caseUuid: string,
         wellboreUuid: string,
         pickIdentifiers: Array<string>,
-    ): CancelablePromise<WellBorePicksAndStratigraphyUnits> {
+    ): CancelablePromise<WellBorePicksAndStratigraphicUnits> {
         return this.httpRequest.request({
             method: 'GET',
-            url: '/well/wellbore_picks_and_stratigraphy_units/',
+            url: '/well/wellbore_picks_and_stratigraphic_units/',
             query: {
                 'case_uuid': caseUuid,
                 'wellbore_uuid': wellboreUuid,
