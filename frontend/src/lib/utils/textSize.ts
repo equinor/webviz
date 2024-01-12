@@ -15,6 +15,7 @@ function calcAndStoreCharWidths(font: string) {
         }
     }
     storedFontWidths.set(font, charWidths);
+    canvas.remove();
     return charWidths;
 }
 
@@ -35,6 +36,8 @@ export function getTextWidthWithFont(text: string, font: string, sizeInRem: numb
         const charWidth = charWidths.get(char);
         if (charWidth) {
             width += charWidth * sizeInRem;
+        } else {
+            width += 1 * sizeInRem;
         }
     }
     return width;
