@@ -301,10 +301,11 @@ export const VectorSelector: React.FC<VectorSelectorProps> = (props) => {
 export function addVectorToVectorSelectorData(
     vectorSelectorData: TreeDataNode[],
     vector: string,
+    delimiter = ":",
     description?: string,
     descriptionAtLastNode = false
 ): void {
-    const nodes = vector.split(":");
+    const nodes = vector.split(delimiter);
     let currentChildList = vectorSelectorData;
 
     nodes.forEach((node, index) => {
@@ -321,11 +322,14 @@ export function addVectorToVectorSelectorData(
                 description !== undefined &&
                 ((descriptionAtLastNode && index === nodes.length - 1) || (!descriptionAtLastNode && index === 0));
 
-            const nodeData: TreeDataNode = {
-                name: node,
-                children: index < nodes.length - 1 ? [] : undefined,
-                description: doAddDescription ? description : undefined,
-            };
+            const _children = index < nodes.length - 1 ? [] : undefined;
+            const nodeData: TreeDataNode = doAddDescription
+                ? {
+                      name: node,
+                      children: _children,
+                      description: description,
+                  }
+                : { name: node, children: _children };
 
             currentChildList.push(nodeData);
             currentChildList = nodeData.children ?? [];
@@ -336,9 +340,12 @@ export function addVectorToVectorSelectorData(
 /**
  * Create vector selector data tree node list from list of vector names
  *
- * This method sorts the vector names alphabetically before adding them to the tree data
+ * This method sorts the vector names alphabetically before adding them to the tree data.
+ *
+ * The method assumes most vectors only has one node level, i.e. one occurrence of the delimiter.
+ * Thereby the inner recursive node creation loop is not optimized for vectors with many node levels.
  */
-export function createVectorSelectorDataFromVectors(vectors: string[]): TreeDataNode[] {
+export function createVectorSelectorDataFromVectors(vectors: string[], delimiter = ":"): TreeDataNode[] {
     if (vectors.length === 0) return [];
 
     const vectorSelectorData: TreeDataNode[] = [];
@@ -348,10 +355,10 @@ export function createVectorSelectorDataFromVectors(vectors: string[]): TreeData
 
     // Add vectors with same parent node simultaneously
     for (let i = 0; i < sortedVectors.length; ) {
-        const parentNode = sortedVectors[i].split(":")[0];
+        const parentNode = sortedVectors[i].split(delimiter)[0];
 
         // Find the index of the first vector with a different parent node
-        const endIndex = sortedVectors.findIndex((vector, j) => j >= i && !vector.startsWith(parentNode));
+        const endIndex = sortedVectors.findIndex((vector, j) => j >= i && vector.split(delimiter)[0] !== parentNode);
 
         // endIndex will be the index of the first vector with a different parent node
         const vectorsWithSameParentNode: string[] = sortedVectors.slice(i, endIndex !== -1 ? endIndex : undefined);
@@ -365,7 +372,7 @@ export function createVectorSelectorDataFromVectors(vectors: string[]): TreeData
         // Add each vector recursively
         for (const vector of vectorsWithSameParentNode) {
             let currentChildList = parentNodeData.children;
-            const nodes = vector.split(":").slice(1);
+            const nodes = vector.split(delimiter).slice(1);
 
             nodes.forEach((node, index) => {
                 let foundNode = false;

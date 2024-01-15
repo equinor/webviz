@@ -6,8 +6,30 @@ import { TreeDataNode } from "@lib/components/SmartNodeSelector";
 
 import { describe, expect, test } from "vitest";
 
-const VECTOR_NAMES = ["WOPR:A1", "WOPR:A2", "FOPT", "FGIP", "GGOR:OP", "GGOR:WI", "RGIP:1", "RGIP:2"];
+const VECTOR_NAMES = [
+    "WOPR:A1",
+    "WOPR:A2",
+    "FOPT",
+    "FGIP",
+    "GGOR:OP",
+    "GGOR:WI",
+    "RGIP:1",
+    "RGIP:2",
+    "ANQP:1",
+    "ANQP:2",
+    "ANQP:10",
+    "ANQP:11",
+];
 const EXPECTED_VECTOR_SELECTOR_DATA: TreeDataNode[] = [
+    {
+        name: "ANQP",
+        children: [
+            { name: "1", children: undefined },
+            { name: "10", children: undefined },
+            { name: "11", children: undefined },
+            { name: "2", children: undefined },
+        ],
+    },
     { name: "FGIP", children: [] },
     { name: "FOPT", children: [] },
     {
@@ -46,6 +68,15 @@ describe("Test of utility functions for VectorSelector component", () => {
         const vectorSelectorData = createVectorSelectorDataFromVectors(VECTOR_NAMES);
         addVectorToVectorSelectorData(vectorSelectorData, "WOPR:ADDITIONAL_WELL");
         expect(vectorSelectorData).toEqual([
+            {
+                name: "ANQP",
+                children: [
+                    { name: "1", children: undefined },
+                    { name: "10", children: undefined },
+                    { name: "11", children: undefined },
+                    { name: "2", children: undefined },
+                ],
+            },
             { name: "FGIP", children: [] },
             { name: "FOPT", children: [] },
             {
@@ -77,6 +108,15 @@ describe("Test of utility functions for VectorSelector component", () => {
         const vectorSelectorData = createVectorSelectorDataFromVectors(VECTOR_NAMES);
         addVectorToVectorSelectorData(vectorSelectorData, "NEW_PARENT:ADDITIONAL_WELL");
         expect(vectorSelectorData).toEqual([
+            {
+                name: "ANQP",
+                children: [
+                    { name: "1", children: undefined },
+                    { name: "10", children: undefined },
+                    { name: "11", children: undefined },
+                    { name: "2", children: undefined },
+                ],
+            },
             { name: "FGIP", children: [] },
             { name: "FOPT", children: [] },
             {
