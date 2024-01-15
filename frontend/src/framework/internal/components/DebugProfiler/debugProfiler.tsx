@@ -47,13 +47,37 @@ export type DebugProfilerProps = {
     guiMessageBroker: GuiMessageBroker;
 };
 
+/* 
+* This helper type could be used to convert the React.ProfilerOnRenderCallback parameters tuple to an object with named properties.
+* This would make it easier to automatically adjust to type changes in the React.ProfilerOnRenderCallback parameters tuple.
+* However, the downside of this approach is that the TypeScript syntax is hard to read and understand.
+* Therefore, we are not using this type for now and are instead manually specifying the types of the React.ProfilerOnRenderCallback parameters.
+*
+type TupleToObject<T extends readonly any[], M extends Record<Exclude<keyof T, keyof any[]>, PropertyKey>> = {
+    [K in Exclude<keyof T, keyof any[]> as M[K]]: T[K];
+};
+
+type RenderInfo = Omit<
+    TupleToObject<
+        Parameters<React.ProfilerOnRenderCallback>,
+        ["id", "phase", "actualDuration", "baseDuration", "startTime", "commitTime", "interactions"]
+    >,
+    "id"
+> & {
+    renderCount: number;
+    minTime: number;
+    maxTime: number;
+    totalTime: number;
+    avgTime: number;
+};
+*/
+
 type RenderInfo = {
-    phase: "mount" | "update";
+    phase: "mount" | "update" | "nested-update";
     actualDuration: number;
     baseDuration: number;
     startTime: number;
     commitTime: number;
-    interactions: Set<any>;
     renderCount: number;
     minTime: number;
     maxTime: number;
@@ -75,13 +99,14 @@ export const DebugProfiler: React.FC<DebugProfilerProps> = (props) => {
 
     const handleRender = React.useCallback(
         (
-            _: string,
-            phase: "mount" | "update",
-            actualDuration: number,
-            baseDuration: number,
-            startTime: number,
-            commitTime: number,
-            interactions: Set<any>
+            ...[
+                ,
+                phase,
+                actualDuration,
+                baseDuration,
+                startTime,
+                commitTime,
+            ]: Parameters<React.ProfilerOnRenderCallback>
         ) => {
             setRenderInfo((prev) => ({
                 phase,
@@ -89,7 +114,6 @@ export const DebugProfiler: React.FC<DebugProfilerProps> = (props) => {
                 baseDuration,
                 startTime,
                 commitTime,
-                interactions,
                 renderCount: (prev?.renderCount ?? 0) + 1,
                 minTime: Math.min(prev?.minTime ?? actualDuration, actualDuration),
                 maxTime: Math.max(prev?.maxTime ?? actualDuration, actualDuration),
