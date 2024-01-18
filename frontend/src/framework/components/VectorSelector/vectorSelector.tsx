@@ -294,13 +294,18 @@ export const VectorSelector: React.FC<VectorSelectorProps> = (props) => {
     return <VectorSelectorComponent {...adjustedProps} />;
 };
 
+/**
+ * Add vector to existing vector selector data tree node list.
+ * With optional description at first or last node level.
+ */
 export function addVectorToVectorSelectorData(
     vectorSelectorData: TreeDataNode[],
     vector: string,
+    delimiter = ":",
     description?: string,
     descriptionAtLastNode = false
 ): void {
-    const nodes = vector.split(":");
+    const nodes = vector.split(delimiter);
     let currentChildList = vectorSelectorData;
 
     nodes.forEach((node, index) => {
@@ -317,11 +322,14 @@ export function addVectorToVectorSelectorData(
                 description !== undefined &&
                 ((descriptionAtLastNode && index === nodes.length - 1) || (!descriptionAtLastNode && index === 0));
 
-            const nodeData: TreeDataNode = {
-                name: node,
-                children: index < nodes.length - 1 ? [] : undefined,
-                description: doAddDescription ? description : undefined,
-            };
+            const _children = index < nodes.length - 1 ? [] : undefined;
+            const nodeData: TreeDataNode = doAddDescription
+                ? {
+                      name: node,
+                      children: _children,
+                      description: description,
+                  }
+                : { name: node, children: _children };
 
             currentChildList.push(nodeData);
             currentChildList = nodeData.children ?? [];
@@ -329,11 +337,66 @@ export function addVectorToVectorSelectorData(
     });
 }
 
-export function createVectorSelectorDataFromVectors(vectors: string[]): TreeDataNode[] {
+/**
+ * Create vector selector data tree node list from list of vector names
+ *
+ * This method sorts the vector names alphabetically before adding them to the tree data.
+ *
+ * The method assumes most vectors only has one node level, i.e. one occurrence of the delimiter.
+ * Thereby the inner recursive node creation loop is not optimized for vectors with many node levels.
+ */
+export function createVectorSelectorDataFromVectors(vectors: string[], delimiter = ":"): TreeDataNode[] {
+    if (vectors.length === 0) return [];
+
     const vectorSelectorData: TreeDataNode[] = [];
 
-    for (const vector of vectors) {
-        addVectorToVectorSelectorData(vectorSelectorData, vector);
+    // Sort alphabetically - to place vectors with same parent node next to each other
+    const sortedVectors = [...vectors].sort();
+
+    // Add vectors with same parent node simultaneously
+    for (let i = 0; i < sortedVectors.length; ) {
+        const parentNode = sortedVectors[i].split(delimiter)[0];
+
+        // Find the index of the first vector with a different parent node
+        const endIndex = sortedVectors.findIndex((vector, j) => j >= i && vector.split(delimiter)[0] !== parentNode);
+
+        // endIndex will be the index of the first vector with a different parent node
+        const vectorsWithSameParentNode: string[] = sortedVectors.slice(i, endIndex !== -1 ? endIndex : undefined);
+
+        const parentNodeData: TreeDataNode = {
+            name: parentNode,
+        };
+        parentNodeData.children = [];
+        vectorSelectorData.push(parentNodeData);
+
+        // Add each vector recursively
+        for (const vector of vectorsWithSameParentNode) {
+            let currentChildList = parentNodeData.children;
+            const nodes = vector.split(delimiter).slice(1);
+
+            nodes.forEach((node, index) => {
+                let foundNode = false;
+                for (const child of currentChildList) {
+                    if (child.name === node) {
+                        foundNode = true;
+                        currentChildList = child.children ?? [];
+                        break;
+                    }
+                }
+                if (!foundNode) {
+                    const nodeData: TreeDataNode = {
+                        name: node,
+                        children: index < nodes.length - 1 ? [] : undefined,
+                    };
+
+                    currentChildList.push(nodeData);
+                    currentChildList = nodeData.children ?? [];
+                }
+            });
+        }
+
+        // Move to the next parent node
+        i = endIndex !== -1 ? endIndex : sortedVectors.length;
     }
 
     return vectorSelectorData;

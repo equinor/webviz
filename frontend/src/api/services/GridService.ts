@@ -1,16 +1,13 @@
+/* generated using openapi-typescript-codegen -- do no edit */
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
 import type { GridIntersection } from '../models/GridIntersection';
 import type { GridSurface } from '../models/GridSurface';
-
 import type { CancelablePromise } from '../core/CancelablePromise';
 import type { BaseHttpRequest } from '../core/BaseHttpRequest';
-
 export class GridService {
-
     constructor(public readonly httpRequest: BaseHttpRequest) {}
-
     /**
      * Get Grid Model Names
      * Get a list of grid model names
@@ -35,7 +32,6 @@ export class GridService {
             },
         });
     }
-
     /**
      * Get Parameter Names
      * Get a list of grid parameter names
@@ -63,7 +59,6 @@ export class GridService {
             },
         });
     }
-
     /**
      * Grid Surface
      * Get a grid
@@ -94,7 +89,6 @@ export class GridService {
             },
         });
     }
-
     /**
      * Grid Parameter
      * Get a grid parameter
@@ -128,7 +122,6 @@ export class GridService {
             },
         });
     }
-
     /**
      * Grid Parameter Intersection
      * Get a grid parameter
@@ -162,7 +155,6 @@ export class GridService {
             },
         });
     }
-
     /**
      * Statistical Grid Parameter Intersection
      * Get a grid parameter
@@ -196,7 +188,6 @@ export class GridService {
             },
         });
     }
-
     /**
      * Statistical Grid Parameter
      * Get a grid parameter
@@ -230,5 +221,4 @@ export class GridService {
             },
         });
     }
-
 }

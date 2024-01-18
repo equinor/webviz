@@ -1,10 +1,9 @@
+/* generated using openapi-typescript-codegen -- do no edit */
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-
 import type { StratigraphicFeature } from './StratigraphicFeature';
 import type { SurfaceAttributeType } from './SurfaceAttributeType';
-
 export type SurfaceMeta = {
     name: string;
     name_is_stratigraphic_offical: boolean;

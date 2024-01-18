@@ -1,15 +1,12 @@
+/* generated using openapi-typescript-codegen -- do no edit */
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
 import type { WellCompletionsData } from '../models/WellCompletionsData';
-
 import type { CancelablePromise } from '../core/CancelablePromise';
 import type { BaseHttpRequest } from '../core/BaseHttpRequest';
-
 export class WellCompletionsService {
-
     constructor(public readonly httpRequest: BaseHttpRequest) {}
-
     /**
      * Get Well Completions Data
      * @param caseUuid Sumo case uuid
@@ -36,5 +33,4 @@ export class WellCompletionsService {
             },
         });
     }
-
 }

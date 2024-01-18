@@ -1,9 +1,8 @@
+/* generated using openapi-typescript-codegen -- do no edit */
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-
 import type { RftObservation } from './RftObservation';
-
 /**
  * A collection of RFT (Repeat Formation Tester) observations for a specific well at a specific date.
  *

@@ -1,9 +1,8 @@
+/* generated using openapi-typescript-codegen -- do no edit */
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-
 import type { PolygonsAttributeType } from './PolygonsAttributeType';
-
 export type PolygonsMeta = {
     name: string;
     name_is_stratigraphic_offical: boolean;

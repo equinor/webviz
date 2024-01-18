@@ -1,7 +1,7 @@
+/* generated using openapi-typescript-codegen -- do no edit */
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-
 export type VectorHistoricalData = {
     timestamps_utc_ms: Array<number>;
     values: Array<number>;

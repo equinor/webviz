@@ -1,7 +1,7 @@
+/* generated using openapi-typescript-codegen -- do no edit */
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-
 /**
  * (x, y) points defining a polyline in domain coordinate system, to retrieve fence of seismic data.
  *

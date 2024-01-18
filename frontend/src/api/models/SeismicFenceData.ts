@@ -1,9 +1,8 @@
+/* generated using openapi-typescript-codegen -- do no edit */
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-
 import type { B64FloatArray } from './B64FloatArray';
-
 /**
  * Definition of a fence of seismic data from a set of (x, y) coordinates in domain coordinate system.
  * Each (x, y) point provides a trace perpendicular to the x-y plane, with number of samples equal to the depth of the seismic cube.

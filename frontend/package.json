@@ -28,7 +28,7 @@
         "@webviz/subsurface-viewer": "^0.3.1",
         "@webviz/well-completions-plot": "^0.0.1-alpha.1",
         "animate.css": "^4.1.1",
-        "axios": "^1.3.0",
+        "axios": "^1.6.5",
         "culori": "^3.2.0",
         "lodash": "^4.17.21",
         "react": "^18.2.0",
@@ -49,8 +49,8 @@
         "@types/uuid": "^9.0.0",
         "@typescript-eslint/eslint-plugin": "^5.59.6",
         "@typescript-eslint/parser": "^5.59.6",
-        "@vitejs/plugin-react": "^4.0.0",
-        "@vitest/coverage-istanbul": "^0.34.6",
+        "@vitejs/plugin-react": "^4.2.1",
+        "@vitest/coverage-istanbul": "^1.1.3",
         "autoprefixer": "^10.4.13",
         "dependency-cruiser": "^13.1.0",
         "eslint": "^8.40.0",
@@ -60,14 +60,14 @@
         "eslint-plugin-react": "^7.32.2",
         "eslint-plugin-react-hooks": "^4.6.0",
         "glob": "^10.3.3",
-        "openapi-typescript-codegen": "^0.24.0",
+        "openapi-typescript-codegen": "^0.26.0",
         "postcss": "^8.4.21",
         "prettier": "2.8.3",
         "sass": "^1.62.0",
         "tailwindcss": "^3.2.4",
         "typescript": "^4.9.3",
-        "vite": "^4.3.9",
+        "vite": "^5.0.10",
         "vite-plugin-checker": "^0.6.0",
-        "vitest": "^0.34.6"
+        "vitest": "^1.1.3"
     }
 }
