@@ -12,7 +12,7 @@ import { useElementSize } from "@lib/hooks/useElementSize";
 import { ColorScaleGradientType } from "@lib/utils/ColorScale";
 import { ContentError } from "@modules/_shared/components/ContentMessage";
 
-import { Layout, PlotDatum, PlotMouseEvent } from "plotly.js";
+import { Annotations, Layout, PlotDatum, PlotMouseEvent, Shape } from "plotly.js";
 
 import { BroadcastChannelNames } from "./channelDefs";
 import { makeVectorGroupDataGenerator } from "./dataGenerators";
@@ -285,45 +285,49 @@ export const View = ({ moduleContext, workbenchSession, workbenchSettings }: Mod
     }
 
     const doRenderContentError = hasRealizationsQueryError || hasStatisticsQueryError;
+
     const plotData = subplotBuilder.createPlotData();
-    const plotLayout: Partial<Layout> = {
-        ...subplotBuilder.createPlotLayout(),
-        shapes: activeTimestampUtcMs
-            ? [
-                  {
-                      type: "line",
-                      xref: "x",
-                      yref: "paper",
-                      x0: activeTimestampUtcMs,
-                      y0: 0,
-                      x1: activeTimestampUtcMs,
-                      y1: 1,
-                      line: {
-                          color: "red",
-                          width: 3,
-                          dash: "dot",
-                      },
-                  },
-              ]
-            : [],
-        annotations: activeTimestampUtcMs
-            ? [
-                  {
-                      xref: "x",
-                      yref: "paper",
-                      x: activeTimestampUtcMs,
-                      y: 0 - 22 / wrapperDivSize.height,
-                      text: timestampUtcMsToCompactIsoString(activeTimestampUtcMs),
-                      showarrow: false,
-                      arrowhead: 0,
-                      bgcolor: "rgba(255, 255, 255, 1)",
-                      bordercolor: "rgba(255, 0, 0, 1)",
-                      borderwidth: 2,
-                      borderpad: 4,
-                  },
-              ]
-            : [],
+    const plotLayout = subplotBuilder.createPlotLayout();
+
+    const timeAnnotation: Partial<Annotations> = activeTimestampUtcMs
+        ? {
+              xref: "x",
+              yref: "paper",
+              x: activeTimestampUtcMs,
+              y: 0 - 22 / wrapperDivSize.height,
+              text: timestampUtcMsToCompactIsoString(activeTimestampUtcMs),
+              showarrow: false,
+              arrowhead: 0,
+              bgcolor: "rgba(255, 255, 255, 1)",
+              bordercolor: "rgba(255, 0, 0, 1)",
+              borderwidth: 2,
+              borderpad: 4,
+          }
+        : {};
+
+    const timeShape: Partial<Shape> = activeTimestampUtcMs
+        ? {
+              type: "line",
+              xref: "x",
+              yref: "paper",
+              x0: activeTimestampUtcMs,
+              y0: 0,
+              x1: activeTimestampUtcMs,
+              y1: 1,
+              line: {
+                  color: "red",
+                  width: 3,
+                  dash: "dot",
+              },
+          }
+        : {};
+
+    const adjustedPlotLayout: Partial<Layout> = {
+        ...plotLayout,
+        shapes: [...(plotLayout.shapes ?? []), timeShape],
+        annotations: [...(plotLayout.annotations ?? []), timeAnnotation],
     };
+
     return (
         <div className="w-full h-full" ref={wrapperDivRef}>
             {doRenderContentError ? (
@@ -332,7 +336,7 @@ export const View = ({ moduleContext, workbenchSession, workbenchSettings }: Mod
                 <Plot
                     key={plotData.length} // Note: Temporary to trigger re-render and remove legends when plotData is empty
                     data={plotData}
-                    layout={plotLayout}
+                    layout={adjustedPlotLayout}
                     config={{ scrollZoom: true }}
                     onClick={handleClickInChart}
                 />
