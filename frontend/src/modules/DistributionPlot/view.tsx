@@ -1,6 +1,6 @@
 import React from "react";
 
-import { KeyKind } from "@framework/DataChannelTypes";
+import { ChannelReceiverChannelContent, KeyKind } from "@framework/DataChannelTypes";
 import { ModuleFCProps } from "@framework/Module";
 import { useViewStatusWriter } from "@framework/StatusWriter";
 import { Tag } from "@lib/components/Tag";
@@ -9,12 +9,12 @@ import { ColorScaleGradientType } from "@lib/utils/ColorScale";
 import { Size } from "@lib/utils/geometry";
 import { ContentInfo } from "@modules/_shared/components/ContentMessage";
 
-import { ColorBar, Layout, PlotData } from "plotly.js";
+import { Layout, PlotData } from "plotly.js";
 
 import { PlotType, State } from "./state";
 import { makeSubplots } from "./utils/Figure";
 import { makeHistogramTrace } from "./utils/histogram";
-import { makeHoverText, makePlotTitle } from "./utils/stringUtils";
+import { makeHoverText, makeHoverTextWithColor, makePlotTitle } from "./utils/stringUtils";
 import { calcTextSize } from "./utils/textSize";
 
 export const View = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>) => {
@@ -256,7 +256,10 @@ export const View = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
                 return;
             }
 
-            if (plotType === PlotType.Scatter && receiverY.channel) {
+            if (
+                (plotType === PlotType.Scatter && receiverY.channel) ||
+                (plotType === PlotType.ScatterWithColorMapping && receiverY.channel && receiverColorMapping.channel)
+            ) {
                 const figure = makeSubplots({
                     numRows: receiverX.channel.contents.length,
                     numCols: receiverY.channel.contents.length,
@@ -273,6 +276,13 @@ export const View = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
                         l: 80,
                     },
                 });
+
+                const colorScale = seqColorScale.getPlotlyColorScale();
+                let dataColor: ChannelReceiverChannelContent<KeyKind.Realization[]> | null = null;
+
+                if (plotType === PlotType.ScatterWithColorMapping) {
+                    dataColor = receiverColorMapping.channel?.contents[0] ?? null;
+                }
 
                 const font = {
                     size: calcTextSize({
@@ -293,6 +303,7 @@ export const View = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
 
                         const xValues: number[] = [];
                         const yValues: number[] = [];
+                        const colorValues: number[] = [];
                         const realizations: number[] = [];
 
                         let color = colorSet.getFirstColor();
@@ -307,13 +318,24 @@ export const View = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
 
                         const keysX = dataX.dataArray.map((el: any) => el.key);
                         const keysY = dataY.dataArray.map((el: any) => el.key);
-                        if (keysX.length === keysY.length && !keysX.some((el, index) => el !== keysY[index])) {
+                        const keysColor = dataColor?.dataArray.map((el: any) => el.key) ?? [];
+                        if (
+                            keysX.length === keysY.length &&
+                            (dataColor === null || keysColor.length === keysX.length) &&
+                            !keysX.some(
+                                (el, index) => el !== keysY[index] || (dataColor !== null && el !== keysColor[index])
+                            )
+                        ) {
                             keysX.forEach((key) => {
                                 const dataPointX = dataX.dataArray.find((el: any) => el.key === key);
                                 const dataPointY = dataY.dataArray.find((el: any) => el.key === key);
+                                const dataPointColor = dataColor?.dataArray.find((el: any) => el.key === key);
                                 if (dataPointX && dataPointY) {
                                     xValues.push(dataPointX.value as number);
                                     yValues.push(dataPointY.value as number);
+                                    if (dataPointColor) {
+                                        colorValues.push(dataPointColor.value as number);
+                                    }
                                     realizations.push(key as number);
                                 }
                             });
@@ -325,11 +347,23 @@ export const View = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
                             mode: "markers",
                             marker: {
                                 size: 5,
-                                color: color,
+                                color: dataColor ? colorValues : color,
+                                colorscale: dataColor ? colorScale : undefined,
+                                colorbar:
+                                    dataColor && cellIndex === 1
+                                        ? {
+                                              title: makePlotTitle(dataColor),
+                                              titleside: "right",
+                                          }
+                                        : undefined,
                             },
                             showlegend: false,
                             type: "scattergl",
-                            hovertemplate: realizations.map((real) => makeHoverText(contentRow, contentCol, real)),
+                            hovertemplate: realizations.map((real) =>
+                                dataColor
+                                    ? makeHoverTextWithColor(contentRow, contentCol, dataColor, real)
+                                    : makeHoverText(contentRow, contentCol, real)
+                            ),
                         };
 
                         figure.addTrace(trace, rowIndex + 1, colIndex + 1);
@@ -365,116 +399,6 @@ export const View = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
                 figure.updateLayout(patch);
                 setPlot(figure.makePlot());
                 return;
-            }
-
-            if (plotType === PlotType.ScatterWithColorMapping && receiverY.channel && receiverColorMapping.channel) {
-                const figure = makeSubplots({
-                    numRows: receiverX.channel.contents.length,
-                    numCols: receiverY.channel.contents.length,
-                    width: wrapperDivSize.width,
-                    height: wrapperDivSize.height,
-                    sharedXAxes: true,
-                    sharedYAxes: true,
-                    verticalSpacing: 20 / (wrapperDivSize.height - 80),
-                    horizontalSpacing: 20 / (wrapperDivSize.width - 80),
-                    margin: {
-                        t: 10,
-                        r: 20,
-                        b: 80,
-                        l: 80,
-                    },
-                });
-
-                const colorScale = seqColorScale.getPlotlyColorScale();
-                const dataColor = receiverColorMapping.channel.contents[0];
-                const colorBar: Partial<ColorBar> = {
-                    title: makePlotTitle(dataColor),
-                    titleside: "right",
-                };
-                const font = {
-                    size: calcTextSize({
-                        width: wrapperDivSize.width,
-                        height: wrapperDivSize.height,
-                        numPlotsX: receiverX.channel.contents.length,
-                        numPlotsY: receiverY.channel.contents.length,
-                    }),
-                };
-
-                const patch: Partial<Layout> = {
-                    font,
-                    autosize: true,
-                };
-                figure.updateLayout(patch);
-
-                let cellIndex = 0;
-                receiverX.channel.contents.forEach((dataX, rowIndex) => {
-                    receiverY.channel.contents.forEach((dataY, colIndex) => {
-                        cellIndex++;
-                        const xValues: number[] = [];
-                        const yValues: number[] = [];
-                        const colorValues: number[] = [];
-
-                        const keysX = dataX.dataArray.map((el: any) => el.key);
-                        const keysY = dataY.dataArray.map((el: any) => el.key);
-                        const keysColor = dataColor.dataArray.map((el: any) => el.key);
-                        const realizations: number[] = [];
-                        if (
-                            keysX.length === keysY.length &&
-                            keysX.length === keysColor.length &&
-                            !keysX.some((el, index) => el !== keysY[index] || el !== keysColor[index])
-                        ) {
-                            keysX.forEach((key) => {
-                                const dataPointX = dataX.dataArray.find((el: any) => el.key === key);
-                                const dataPointY = dataY.dataArray.find((el: any) => el.key === key);
-                                const dataPointColor = dataColor.dataArray.find((el: any) => el.key === key);
-                                if (dataPointX && dataPointY && dataPointColor) {
-                                    xValues.push(dataPointX.value as number);
-                                    yValues.push(dataPointY.value as number);
-                                    colorValues.push(dataPointColor.value as number);
-                                    realizations.push(key as number);
-                                }
-                            });
-                        }
-
-                        const trace: Partial<PlotData> = {
-                            x: xValues,
-                            y: yValues,
-                            mode: "markers",
-                            marker: {
-                                size: 5,
-                                color: colorValues,
-                                colorscale: colorScale,
-                                colorbar: cellIndex === 1 ? colorBar : undefined,
-                            },
-                            showlegend: false,
-                            type: "scattergl",
-                            hovertemplate: realizations.map((real) => makeHoverText(dataX, dataY, real)),
-                        };
-
-                        figure.addTrace(trace, rowIndex + 1, colIndex + 1);
-
-                        if (rowIndex === 0) {
-                            const patch: Partial<Layout> = {
-                                [`xaxis${cellIndex}`]: {
-                                    title: makePlotTitle(dataX),
-                                    font,
-                                },
-                            };
-                            figure.updateLayout(patch);
-                        }
-                        if (colIndex === 0) {
-                            const patch: Partial<Layout> = {
-                                [`yaxis${cellIndex}`]: {
-                                    title: makePlotTitle(dataY),
-                                    font,
-                                },
-                            };
-                            figure.updateLayout(patch);
-                        }
-                    });
-                });
-
-                setPlot(figure.makePlot());
             }
         });
     }

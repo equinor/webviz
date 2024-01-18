@@ -26,3 +26,16 @@ export function makeHoverText(
 
     return `${nameX}: <b>%{x}</b><br>${nameY}: <b>%{y}</b><br>Realization: <b>${realization}</b>`;
 }
+
+export function makeHoverTextWithColor(
+    contentX: ChannelReceiverChannelContent<any>,
+    contentY: ChannelReceiverChannelContent<any>,
+    contentColor: ChannelReceiverChannelContent<any>,
+    realization: number
+): string {
+    const nameX = makePlotTitle(contentX, false);
+    const nameY = makePlotTitle(contentY, false);
+    const nameColor = makePlotTitle(contentColor, false);
+
+    return `${nameX}: <b>%{x}</b><br>${nameY}: <b>%{y}</b><br>${nameColor}: <b>%{marker.color:,.0f}</b><br>Realization: <b>${realization}</b> `;
+}
