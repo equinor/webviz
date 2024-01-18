@@ -16,7 +16,7 @@ export function makeVectorGroupDataGenerator(
     makeEnsembleDisplayName: (ensembleIdent: EnsembleIdent) => string
 ): (contentIdString: string) => ReturnType<DataGenerator> {
     return (contentIdString: string) => {
-        const [vectorName] = contentIdString.split("-::-");
+        const [vectorName, ensembleIdent] = contentIdString.split("-::-");
         const data: { key: number; value: number }[] = [];
         let metaData: ModuleChannelContentMetaData = {
             unit: "",
@@ -25,7 +25,9 @@ export function makeVectorGroupDataGenerator(
         };
 
         const vector = vectorSpecificationsAndRealizationData.find(
-            (vec) => vec.vectorSpecification.vectorName === vectorName
+            (vec) =>
+                vec.vectorSpecification.vectorName === vectorName &&
+                vec.vectorSpecification.ensembleIdent.toString() === ensembleIdent
         );
         if (vector) {
             let unit = "";
