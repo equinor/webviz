@@ -3,8 +3,6 @@ import { DataGenerator, ModuleChannelContentMetaData } from "@framework/DataChan
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { simulationUnitReformat, simulationVectorDescription } from "@modules/_shared/reservoirSimulationStringUtils";
 
-import { indexOf } from "lodash";
-
 import { VectorSpec } from "./state";
 
 export function makeVectorGroupDataGenerator(
