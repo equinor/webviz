@@ -23,6 +23,14 @@ export class Figure {
     }
 
     private getAxisIndex(row: number, column: number): number {
+        if (row > this._gridAxesMapping.length || column > this._gridAxesMapping[row - 1].length) {
+            throw new Error(`Invalid row/column index: ${row}/${column}`);
+        }
+
+        if (row < 1 || column < 1) {
+            throw new Error(`Invalid row/column index: ${row}/${column}`);
+        }
+
         return this._gridAxesMapping[row - 1][column - 1];
     }
 

@@ -289,43 +289,47 @@ export const View = ({ moduleContext, workbenchSession, workbenchSettings }: Mod
     const plotData = subplotBuilder.createPlotData();
     const plotLayout = subplotBuilder.createPlotLayout();
 
-    const timeAnnotation: Partial<Annotations> = activeTimestampUtcMs
-        ? {
-              xref: "x",
-              yref: "paper",
-              x: activeTimestampUtcMs,
-              y: 0 - 22 / wrapperDivSize.height,
-              text: timestampUtcMsToCompactIsoString(activeTimestampUtcMs),
-              showarrow: false,
-              arrowhead: 0,
-              bgcolor: "rgba(255, 255, 255, 1)",
-              bordercolor: "rgba(255, 0, 0, 1)",
-              borderwidth: 2,
-              borderpad: 4,
-          }
-        : {};
-
-    const timeShape: Partial<Shape> = activeTimestampUtcMs
-        ? {
-              type: "line",
-              xref: "x",
-              yref: "paper",
-              x0: activeTimestampUtcMs,
-              y0: 0,
-              x1: activeTimestampUtcMs,
-              y1: 1,
-              line: {
-                  color: "red",
-                  width: 3,
-                  dash: "dot",
+    const timeAnnotation: Partial<Annotations>[] = activeTimestampUtcMs
+        ? [
+              {
+                  xref: "x",
+                  yref: "paper",
+                  x: activeTimestampUtcMs,
+                  y: 0 - 22 / wrapperDivSize.height,
+                  text: timestampUtcMsToCompactIsoString(activeTimestampUtcMs),
+                  showarrow: false,
+                  arrowhead: 0,
+                  bgcolor: "rgba(255, 255, 255, 1)",
+                  bordercolor: "rgba(255, 0, 0, 1)",
+                  borderwidth: 2,
+                  borderpad: 4,
               },
-          }
-        : {};
+          ]
+        : [];
+
+    const timeShape: Partial<Shape>[] = activeTimestampUtcMs
+        ? [
+              {
+                  type: "line",
+                  xref: "x",
+                  yref: "paper",
+                  x0: activeTimestampUtcMs,
+                  y0: 0,
+                  x1: activeTimestampUtcMs,
+                  y1: 1,
+                  line: {
+                      color: "red",
+                      width: 3,
+                      dash: "dot",
+                  },
+              },
+          ]
+        : [];
 
     const adjustedPlotLayout: Partial<Layout> = {
         ...plotLayout,
-        shapes: [...(plotLayout.shapes ?? []), timeShape],
-        annotations: [...(plotLayout.annotations ?? []), timeAnnotation],
+        shapes: [...(plotLayout.shapes ?? []), ...timeShape],
+        annotations: [...(plotLayout.annotations ?? []), ...timeAnnotation],
     };
 
     return (

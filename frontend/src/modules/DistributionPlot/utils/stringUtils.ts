@@ -1,6 +1,6 @@
 import { ChannelReceiverChannelContent } from "@framework/DataChannelTypes";
 
-export function makePlotTitle(content: ChannelReceiverChannelContent<any>, useLineBreak = true): string {
+export function makeTitleFromChannelContent(content: ChannelReceiverChannelContent<any>, useLineBreak = true): string {
     let title = "";
 
     if (content.metaData.displayString) {
@@ -21,8 +21,8 @@ export function makeHoverText(
     contentY: ChannelReceiverChannelContent<any>,
     realization: number
 ): string {
-    const nameX = makePlotTitle(contentX, false);
-    const nameY = makePlotTitle(contentY, false);
+    const nameX = makeTitleFromChannelContent(contentX, false);
+    const nameY = makeTitleFromChannelContent(contentY, false);
 
     return `${nameX}: <b>%{x}</b><br>${nameY}: <b>%{y}</b><br>Realization: <b>${realization}</b>`;
 }
@@ -33,9 +33,9 @@ export function makeHoverTextWithColor(
     contentColor: ChannelReceiverChannelContent<any>,
     realization: number
 ): string {
-    const nameX = makePlotTitle(contentX, false);
-    const nameY = makePlotTitle(contentY, false);
-    const nameColor = makePlotTitle(contentColor, false);
+    const nameX = makeTitleFromChannelContent(contentX, false);
+    const nameY = makeTitleFromChannelContent(contentY, false);
+    const nameColor = makeTitleFromChannelContent(contentColor, false);
 
     return `${nameX}: <b>%{x}</b><br>${nameY}: <b>%{y}</b><br>${nameColor}: <b>%{marker.color:,.0f}</b><br>Realization: <b>${realization}</b> `;
 }

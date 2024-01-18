@@ -14,7 +14,7 @@ import { Layout, PlotData } from "plotly.js";
 import { PlotType, State } from "./state";
 import { makeSubplots } from "./utils/Figure";
 import { makeHistogramTrace } from "./utils/histogram";
-import { makeHoverText, makeHoverTextWithColor, makePlotTitle } from "./utils/stringUtils";
+import { makeHoverText, makeHoverTextWithColor, makeTitleFromChannelContent } from "./utils/stringUtils";
 import { calcTextSize } from "./utils/textSize";
 
 export const View = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>) => {
@@ -174,7 +174,7 @@ export const View = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
 
                         const patch: Partial<Layout> = {
                             [`xaxis${cellIndex + 1}`]: {
-                                title: makePlotTitle(data),
+                                title: makeTitleFromChannelContent(data),
                             },
                             [`yaxis${cellIndex + 1}`]: {
                                 title: "Percent",
@@ -220,7 +220,7 @@ export const View = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
                         const keyData = data.dataArray.map((el: any) => el.key);
                         const valueData = data.dataArray.map((el: any) => el.value);
 
-                        const dataTitle = makePlotTitle(data);
+                        const dataTitle = makeTitleFromChannelContent(data);
                         const kindOfKeyTitle = `${receiverX.channel.kindOfKey}` ?? "";
 
                         const trace: Partial<PlotData> = {
@@ -352,7 +352,7 @@ export const View = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
                                 colorbar:
                                     dataColor && cellIndex === 1
                                         ? {
-                                              title: makePlotTitle(dataColor),
+                                              title: makeTitleFromChannelContent(dataColor),
                                               titleside: "right",
                                           }
                                         : undefined,
@@ -371,7 +371,7 @@ export const View = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
                         if (rowIndex === 0) {
                             const patch: Partial<Layout> = {
                                 [`xaxis${cellIndex}`]: {
-                                    title: makePlotTitle(contentCol),
+                                    title: makeTitleFromChannelContent(contentCol),
                                     font,
                                 },
                             };
@@ -380,7 +380,7 @@ export const View = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
                         if (colIndex === 0) {
                             const patch: Partial<Layout> = {
                                 [`yaxis${cellIndex}`]: {
-                                    title: makePlotTitle(contentRow),
+                                    title: makeTitleFromChannelContent(contentRow),
                                     font,
                                 },
                             };

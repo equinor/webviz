@@ -33,7 +33,7 @@ export function makeVectorGroupDataGenerator(
             let unit = "";
             vector.data.forEach((el) => {
                 unit = simulationUnitReformat(el.unit);
-                const indexOfTimestamp = indexOf(el.timestamps_utc_ms, activeTimestampUtcMs);
+                const indexOfTimestamp = el.timestamps_utc_ms.indexOf(activeTimestampUtcMs);
                 data.push({
                     key: el.realization,
                     value: indexOfTimestamp === -1 ? el.values[0] : el.values[indexOfTimestamp],

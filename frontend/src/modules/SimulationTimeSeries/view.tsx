@@ -72,10 +72,10 @@ export const View = ({ moduleContext, workbenchSession, workbenchServices }: Mod
         dataGenerator: () => {
             const data: { key: number; value: number }[] = [];
             if (vectorQuery.data) {
-                vectorQuery.data.forEach((vec) => {
+                vectorQuery.data.forEach((vectorRealizationData) => {
                     data.push({
-                        key: vec.realization,
-                        value: vec.values[0],
+                        key: vectorRealizationData.realization,
+                        value: vectorRealizationData.values[0],
                     });
                 });
             }
