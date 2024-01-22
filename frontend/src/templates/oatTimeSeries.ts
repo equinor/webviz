@@ -2,7 +2,7 @@ import { KeyKind } from "@framework/DataChannelTypes";
 import { SyncSettingKey } from "@framework/SyncSettings";
 import { Template, TemplateRegistry } from "@framework/TemplateRegistry";
 import { PlotType } from "@modules/DistributionPlot/state";
-import { BroadcastChannelNames } from "@modules/SimulationTimeSeries/channelDefs";
+import { ChannelIds } from "@modules/SimulationTimeSeries/channelDefs";
 
 const template: Template = {
     description:
@@ -32,8 +32,8 @@ const template: Template = {
             dataChannelsToInitialSettingsMapping: {
                 response: {
                     listensToInstanceRef: "MainTimeSeriesSensitivityInstance",
-                    kindOfKey: KeyKind.Realization,
-                    channelIdString: BroadcastChannelNames.Realization_Value,
+                    kindOfKey: KeyKind.REALIZATION,
+                    channelIdString: ChannelIds.REALIZATION_VALUE,
                 },
             },
         },
@@ -50,13 +50,13 @@ const template: Template = {
             dataChannelsToInitialSettingsMapping: {
                 channelX: {
                     listensToInstanceRef: "MainTimeSeriesSensitivityInstance",
-                    kindOfKey: KeyKind.Realization,
-                    channelIdString: BroadcastChannelNames.Realization_Value,
+                    kindOfKey: KeyKind.REALIZATION,
+                    channelIdString: ChannelIds.REALIZATION_VALUE,
                 },
             },
             initialSettings: {
                 plotType: PlotType.Histogram,
-                crossPlottingType: KeyKind.Realization,
+                crossPlottingType: KeyKind.REALIZATION,
             },
         },
     ],

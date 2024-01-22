@@ -11,7 +11,7 @@ import { useElementSize } from "@lib/hooks/useElementSize";
 
 import { Layout, PlotData, PlotHoverEvent } from "plotly.js";
 
-import { BroadcastChannelNames } from "./channelDefs";
+import { ChannelIds } from "./channelDefs";
 import { useRealizationsResponseQuery } from "./queryHooks";
 import { VolumetricResponseAbbreviations } from "./settings";
 import { State } from "./state";
@@ -77,23 +77,24 @@ export const View = (props: ModuleFCProps<State>) => {
 
     const ensemble = ensembleIdent ? props.workbenchSession.getEnsembleSet().findEnsemble(ensembleIdent) : null;
 
+    function dataGenerator() {
+        const data: DataElement<KeyType.NUMBER>[] = [];
+        if (realizationsResponseQuery.data) {
+            realizationsResponseQuery.data.realizations.forEach((realization, index) => {
+                data.push({
+                    key: realization,
+                    value: realizationsResponseQuery.data.values[index],
+                });
+            });
+        }
+        return { data: data, metaData: { ensembleIdentString: ensembleIdent?.toString() ?? "" } };
+    }
+
     if (ensemble && tableName && responseName) {
         props.moduleContext.usePublishChannelContents({
-            channelIdString: BroadcastChannelNames.Response,
+            channelIdString: ChannelIds.RESPONSE,
             dependencies: [realizationsResponseQuery.data, ensemble, tableName, responseName],
-            contents: [{ idString: responseName, displayName: responseName }],
-            dataGenerator: () => {
-                const data: DataElement<KeyType.Number>[] = [];
-                if (realizationsResponseQuery.data) {
-                    realizationsResponseQuery.data.realizations.forEach((realization, index) => {
-                        data.push({
-                            key: realization,
-                            value: realizationsResponseQuery.data.values[index],
-                        });
-                    });
-                }
-                return { data: data, metaData: { ensembleIdentString: ensembleIdent?.toString() ?? "" } };
-            },
+            contents: [{ contentIdString: responseName, displayName: responseName, dataGenerator }],
         });
     }
 

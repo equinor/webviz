@@ -4,45 +4,34 @@ import { DataElement, KeyKind, KeyKindToKeyTypeMapping } from "@framework/DataCh
 
 import { isEqual } from "lodash";
 
-import { ModuleChannelContentMetaData } from "../ModuleChannelContent";
-import { ModuleChannelReceiver, ModuleChannelReceiverNotificationTopic } from "../ModuleChannelReceiver";
+import { ChannelContentMetaData } from "../ChannelContent";
+import { ChannelReceiver, ChannelReceiverNotificationTopic } from "../ChannelReceiver";
 
 export interface ChannelReceiverChannelContent<TKeyKinds extends KeyKind[]> {
     idString: string;
     displayName: string;
     dataArray: DataElement<KeyKindToKeyTypeMapping[TKeyKinds[number]]>[];
-    metaData: ModuleChannelContentMetaData;
+    metaData: ChannelContentMetaData;
 }
 
 export type ChannelReceiverReturnData<TKeyKinds extends KeyKind[]> = {
-    idString: string;
-    displayName: string;
-    isPending: boolean;
-    revisionNumber: number;
-} & (
-    | {
-          channel: {
-              idString: string;
-              displayName: string;
-              moduleInstanceId: string;
-              kindOfKey: KeyKind | string;
-              readonly contents: ChannelReceiverChannelContent<TKeyKinds>[];
-          };
-          hasActiveSubscription: true;
-      }
-    | {
-          channel?: undefined;
-          hasActiveSubscription: false;
-      }
-);
+    readonly idString: string;
+    readonly displayName: string;
+    readonly isPending: boolean;
+    readonly revisionNumber: number;
+    readonly channel?: {
+        readonly idString: string;
+        readonly displayName: string;
+        readonly moduleInstanceId: string;
+        readonly kindOfKey: KeyKind | string;
+        readonly contents: ChannelReceiverChannelContent<TKeyKinds>[];
+    };
+};
 
-export function useChannelReceiver<TKeyKinds extends KeyKind[]>({
-    receiver,
-    expectedKindsOfKeys,
-}: {
-    receiver: ModuleChannelReceiver | null;
-    expectedKindsOfKeys: TKeyKinds;
-}): ChannelReceiverReturnData<typeof expectedKindsOfKeys> {
+export function useChannelReceiver<TKeyKinds extends KeyKind[]>(
+    receiver: ChannelReceiver,
+    expectedKindsOfKeys: TKeyKinds
+): ChannelReceiverReturnData<typeof expectedKindsOfKeys> {
     const [isPending, startTransition] = React.useTransition();
     const [contents, setContents] = React.useState<ChannelReceiverChannelContent<typeof expectedKindsOfKeys>[]>([]);
     const [revisionNumber, setRevisionNumber] = React.useState(0);
@@ -100,12 +89,12 @@ export function useChannelReceiver<TKeyKinds extends KeyKind[]>({
             }
 
             const unsubscribeFromContentsChangeFunc = receiver?.subscribe(
-                ModuleChannelReceiverNotificationTopic.ContentsDataArrayChange,
+                ChannelReceiverNotificationTopic.CONTENTS_DATA_ARRAY_CHANGE,
                 handleContentsDataArrayOrChannelChange
             );
 
             const unsubscribeFromCurrentChannelFunc = receiver?.subscribe(
-                ModuleChannelReceiverNotificationTopic.ChannelChange,
+                ChannelReceiverNotificationTopic.CHANNEL_CHANGE,
                 handleContentsDataArrayOrChannelChange
             );
 
@@ -130,7 +119,6 @@ export function useChannelReceiver<TKeyKinds extends KeyKind[]>({
             isPending,
             revisionNumber,
             channel: undefined,
-            hasActiveSubscription: false,
         };
     }
 
@@ -143,7 +131,6 @@ export function useChannelReceiver<TKeyKinds extends KeyKind[]>({
             isPending,
             revisionNumber,
             channel: undefined,
-            hasActiveSubscription: false,
         };
     }
 
@@ -159,6 +146,5 @@ export function useChannelReceiver<TKeyKinds extends KeyKind[]>({
             kindOfKey: channel.getKindOfKey(),
             contents: contents,
         },
-        hasActiveSubscription: true,
     };
 }

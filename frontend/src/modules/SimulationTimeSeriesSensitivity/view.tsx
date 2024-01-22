@@ -8,7 +8,7 @@ import { createSensitivityColorMap } from "@modules/_shared/sensitivityColors";
 
 import { indexOf } from "lodash";
 
-import { BroadcastChannelNames } from "./channelDefs";
+import { ChannelIds } from "./channelDefs";
 import {
     useHistoricalVectorDataQuery,
     useStatisticalVectorSensitivityDataQuery,
@@ -74,29 +74,32 @@ export const View = ({
         setActiveTimestampUtcMs(lastTimestampUtcMs);
     }
 
-    moduleContext.usePublishChannelContents({
-        channelIdString: BroadcastChannelNames.Realization_Value,
-        dependencies: [vectorSpec, realizationsQuery.data, ensemble, activeTimestampUtcMs],
-        contents: [{ idString: vectorSpec?.vectorName ?? "", displayName: vectorSpec?.vectorName ?? "" }],
-        dataGenerator: () => {
-            const data: { key: number; value: number }[] = [];
-            if (vectorSpec && realizationsQuery.data && ensemble) {
-                realizationsQuery.data.forEach((vec) => {
-                    const indexOfTimestamp = indexOf(vec.timestamps_utc_ms, activeTimestampUtcMs);
-                    data.push({
-                        key: vec.realization,
-                        value: indexOfTimestamp === -1 ? 0 : vec.values[indexOfTimestamp],
-                    });
+    function dataGenerator() {
+        const data: { key: number; value: number }[] = [];
+        if (vectorSpec && realizationsQuery.data && ensemble) {
+            realizationsQuery.data.forEach((vec) => {
+                const indexOfTimestamp = indexOf(vec.timestamps_utc_ms, activeTimestampUtcMs);
+                data.push({
+                    key: vec.realization,
+                    value: indexOfTimestamp === -1 ? 0 : vec.values[indexOfTimestamp],
                 });
-            }
-            return {
-                data,
-                metaData: {
-                    ensembleIdentString: ensemble?.getIdent().toString() ?? "",
-                    unit: "unit",
-                },
-            };
-        },
+            });
+        }
+        return {
+            data,
+            metaData: {
+                ensembleIdentString: ensemble?.getIdent().toString() ?? "",
+                unit: "unit",
+            },
+        };
+    }
+
+    moduleContext.usePublishChannelContents({
+        channelIdString: ChannelIds.REALIZATION_VALUE,
+        dependencies: [vectorSpec, realizationsQuery.data, ensemble, activeTimestampUtcMs],
+        contents: [
+            { contentIdString: vectorSpec?.vectorName ?? "", displayName: vectorSpec?.vectorName ?? "", dataGenerator },
+        ],
     });
 
     const colorSet = workbenchSettings.useColorSet();

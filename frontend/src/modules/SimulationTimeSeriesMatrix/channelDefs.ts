@@ -1,13 +1,13 @@
-import { KeyKind, ModuleChannelDefinition } from "@framework/DataChannelTypes";
+import { ChannelDefinition, KeyKind } from "@framework/DataChannelTypes";
 
-export enum BroadcastChannelNames {
-    TimeSeries = "TimeSeries (with value per realization)",
+export enum ChannelIds {
+    TIME_SERIES = "TimeSeries (with value per realization)",
 }
 
-export const channelDefs: ModuleChannelDefinition[] = [
+export const channelDefs: ChannelDefinition[] = [
     {
-        idString: BroadcastChannelNames.TimeSeries,
+        idString: ChannelIds.TIME_SERIES,
         displayName: "Time series (with value per realization)",
-        kindOfKey: KeyKind.Realization,
+        kindOfKey: KeyKind.REALIZATION,
     },
 ];

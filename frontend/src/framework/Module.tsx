@@ -2,7 +2,7 @@ import React from "react";
 
 import { cloneDeep } from "lodash";
 
-import { ModuleChannelDefinition, ModuleChannelReceiverDefinition } from "./DataChannelTypes";
+import { ChannelDefinition, ChannelReceiverDefinition } from "./DataChannelTypes";
 import { InitialSettings } from "./InitialSettings";
 import { ModuleContext } from "./ModuleContext";
 import { ModuleInstance } from "./ModuleInstance";
@@ -44,8 +44,8 @@ export class Module<StateType extends StateBaseType> {
     private _syncableSettingKeys: SyncSettingKey[];
     private _drawPreviewFunc: DrawPreviewFunc | null;
     private _description: string | null;
-    private _channelDefinitions: ModuleChannelDefinition[] | null;
-    private _channelReceiverDefinitions: ModuleChannelReceiverDefinition[] | null;
+    private _channelDefinitions: ChannelDefinition[] | null;
+    private _channelReceiverDefinitions: ChannelReceiverDefinition[] | null;
 
     constructor({
         name,
@@ -61,8 +61,8 @@ export class Module<StateType extends StateBaseType> {
         syncableSettingKeys?: SyncSettingKey[];
         drawPreviewFunc?: DrawPreviewFunc;
         description?: string;
-        channelDefinitions?: ModuleChannelDefinition[];
-        channelReceiverDefinitions?: ModuleChannelReceiverDefinition[];
+        channelDefinitions?: ChannelDefinition[];
+        channelReceiverDefinitions?: ChannelReceiverDefinition[];
     }) {
         this._name = name;
         this._defaultTitle = defaultTitle;

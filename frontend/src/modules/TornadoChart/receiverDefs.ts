@@ -1,10 +1,10 @@
-import { KeyKind, ModuleChannelReceiverDefinition } from "@framework/DataChannelTypes";
+import { ChannelReceiverDefinition, KeyKind } from "@framework/DataChannelTypes";
 
-export const receiverDefs: ModuleChannelReceiverDefinition[] = [
+export const receiverDefs: ChannelReceiverDefinition[] = [
     {
         idString: "response",
         displayName: "Response",
-        supportedKindsOfKeys: [KeyKind.Realization],
+        supportedKindsOfKeys: [KeyKind.REALIZATION],
         supportsMultiContents: false,
     },
 ];

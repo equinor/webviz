@@ -1,8 +1,8 @@
 import React from "react";
 import { createPortal } from "react-dom";
 
-import { ModuleChannelContentDefinition } from "@framework/DataChannelTypes";
-import { ModuleChannelReceiver } from "@framework/internal/DataChannels/ModuleChannelReceiver";
+import { ChannelContentDefinition } from "@framework/DataChannelTypes";
+import { ChannelReceiver } from "@framework/internal/DataChannels/ChannelReceiver";
 import { Button } from "@lib/components/Button";
 import { Checkbox } from "@lib/components/Checkbox";
 import { Overlay } from "@lib/components/Overlay";
@@ -13,7 +13,7 @@ import { Close } from "@mui/icons-material";
 export type SelectableChannel = {
     idString: string;
     displayName: string;
-    contents: ModuleChannelContentDefinition[];
+    contents: Omit<ChannelContentDefinition, "dataGenerator">[];
 };
 
 type ChannelContentSelectorProps = {
@@ -49,16 +49,16 @@ const ChannelContentSelector: React.FC<ChannelContentSelectorProps> = (props) =>
                 )}
                 {props.channel.contents.map((content, index) => (
                     <div
-                        key={content.idString}
+                        key={content.contentIdString}
                         className="flex items-center gap-1 ml-5 pl-0 p-2 hover:bg-blue-50 cursor-pointer text-sm border-l border-slate-400 h-8"
                     >
                         <span className="h-px w-2 bg-slate-400 mr-2 inline-block" />
                         <Checkbox
-                            onChange={(e) => handleContentToggle(content.idString, e)}
+                            onChange={(e) => handleContentToggle(content.contentIdString, e)}
                             label={content.displayName}
                             checked={
                                 (props.selected && (props.multiSelect || index === 0)) ||
-                                props.selectedContentIdStrings.includes(content.idString)
+                                props.selectedContentIdStrings.includes(content.contentIdString)
                             }
                         />
                     </div>
@@ -76,7 +76,7 @@ export type SelectedContents = {
 };
 
 export type ChannelSelectorProps = {
-    receiver: ModuleChannelReceiver;
+    receiver: ChannelReceiver;
     selectableChannels: SelectableChannel[];
     selectedChannelIdString?: string;
     selectedContents?: SelectedContents;

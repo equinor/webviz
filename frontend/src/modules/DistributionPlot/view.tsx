@@ -43,16 +43,16 @@ export const View = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
     const wrapperDivSize = useElementSize(wrapperDivRef);
 
     const receiverX = moduleContext.useChannelReceiver({
-        idString: "channelX",
-        expectedKindsOfKeys: [KeyKind.Realization],
+        receiverIdString: "channelX",
+        expectedKindsOfKeys: [KeyKind.REALIZATION],
     });
     const receiverY = moduleContext.useChannelReceiver({
-        idString: "channelY",
-        expectedKindsOfKeys: [KeyKind.Realization],
+        receiverIdString: "channelY",
+        expectedKindsOfKeys: [KeyKind.REALIZATION],
     });
     const receiverColorMapping = moduleContext.useChannelReceiver({
-        idString: "channelColorMapping",
-        expectedKindsOfKeys: [KeyKind.Realization],
+        receiverIdString: "channelColorMapping",
+        expectedKindsOfKeys: [KeyKind.REALIZATION],
     });
 
     statusWriter.setLoading(isPending || receiverX.isPending || receiverY.isPending || receiverColorMapping.isPending);
@@ -75,7 +75,7 @@ export const View = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
         setPrevSize(wrapperDivSize);
 
         startTransition(function makeContent() {
-            if (!receiverX.hasActiveSubscription) {
+            if (!receiverX.channel) {
                 setPlot(
                     <ContentInfo>
                         Connect a channel to <Tag label={receiverX.displayName} />
@@ -94,7 +94,7 @@ export const View = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
             }
 
             if (plotType === PlotType.Scatter || plotType === PlotType.ScatterWithColorMapping) {
-                if (!receiverY.hasActiveSubscription) {
+                if (!receiverY.channel) {
                     setPlot(
                         <ContentInfo>
                             Connect a channel to <Tag label={receiverY.displayName} />
@@ -114,7 +114,7 @@ export const View = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
             }
 
             if (plotType === PlotType.ScatterWithColorMapping) {
-                if (!receiverColorMapping.hasActiveSubscription) {
+                if (!receiverColorMapping.channel) {
                     setPlot(
                         <ContentInfo>
                             Connect a channel to <Tag label={receiverColorMapping.displayName} />
@@ -145,13 +145,13 @@ export const View = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
                     height: wrapperDivSize.height,
                     sharedXAxes: false,
                     sharedYAxes: false,
-                    verticalSpacing: 150 / (wrapperDivSize.height - 50),
+                    verticalSpacing: 100 / (wrapperDivSize.height - 50),
                     horizontalSpacing: 0.2 / numCols,
                     margin: {
                         t: 0,
                         r: 20,
-                        b: 150,
-                        l: 40,
+                        b: 50,
+                        l: 90,
                     },
                 });
 
@@ -278,7 +278,7 @@ export const View = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
                 });
 
                 const colorScale = seqColorScale.getPlotlyColorScale();
-                let dataColor: ChannelReceiverChannelContent<KeyKind.Realization[]> | null = null;
+                let dataColor: ChannelReceiverChannelContent<KeyKind.REALIZATION[]> | null = null;
 
                 if (plotType === PlotType.ScatterWithColorMapping) {
                     dataColor = receiverColorMapping.channel?.contents[0] ?? null;
@@ -295,6 +295,9 @@ export const View = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
 
                 let cellIndex = 0;
                 receiverX.channel.contents.forEach((contentRow, rowIndex) => {
+                    if (!receiverY.channel) {
+                        return;
+                    }
                     receiverY.channel.contents.forEach((contentCol, colIndex) => {
                         cellIndex++;
 

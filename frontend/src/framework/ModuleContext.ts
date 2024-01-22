@@ -12,12 +12,11 @@
 /* eslint-disable react-hooks/rules-of-hooks */
 import React from "react";
 
-import { KeyKind, ModuleChannelContentDefinition } from "./DataChannelTypes";
+import { ChannelContentDefinition, KeyKind } from "./DataChannelTypes";
 import { ModuleInstance } from "./ModuleInstance";
 import { ModuleInstanceStatusController } from "./ModuleInstanceStatusController";
 import { StateBaseType, StateStore, useSetStoreValue, useStoreState, useStoreValue } from "./StateStore";
 import { SyncSettingKey } from "./SyncSettings";
-import { DataGenerator } from "./internal/DataChannels/ModuleChannelContent";
 import { useChannelReceiver } from "./internal/DataChannels/hooks/useChannelReceiver";
 import { usePublishChannelContents } from "./internal/DataChannels/hooks/usePublishChannelContents";
 
@@ -74,28 +73,30 @@ export class ModuleContext<S extends StateBaseType> {
     }
 
     useChannelReceiver<TKeyKinds extends KeyKind[]>(options: {
-        idString: string;
+        receiverIdString: string;
         expectedKindsOfKeys: TKeyKinds;
     }): ReturnType<typeof useChannelReceiver<(typeof options)["expectedKindsOfKeys"]>> {
-        const receiver = this._moduleInstance.getChannelManager().getReceiver(options.idString);
+        const receiver = this._moduleInstance.getChannelManager().getReceiver(options.receiverIdString);
 
-        return useChannelReceiver({
-            receiver,
-            expectedKindsOfKeys: options.expectedKindsOfKeys,
-        });
+        if (!receiver) {
+            throw new Error(`Receiver '${options.receiverIdString}' does not exist`);
+        }
+
+        return useChannelReceiver(receiver, options.expectedKindsOfKeys);
     }
 
     usePublishChannelContents(options: {
         channelIdString: string;
         dependencies: any[];
         enabled?: boolean;
-        contents: ModuleChannelContentDefinition[];
-        dataGenerator: (contentIdString: string) => ReturnType<DataGenerator>;
+        contents: ChannelContentDefinition[];
     }) {
         const channel = this._moduleInstance.getChannelManager().getChannel(options.channelIdString);
+
         if (!channel) {
             throw new Error(`Channel '${options.channelIdString}' does not exist`);
         }
+
         return usePublishChannelContents({
             channel,
             ...options,

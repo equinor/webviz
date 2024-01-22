@@ -27,8 +27,8 @@ export const View = ({ moduleContext, workbenchSession, workbenchSettings }: Mod
     const ensembleSet = useEnsembleSet(workbenchSession);
 
     const responseReceiver = moduleContext.useChannelReceiver({
-        idString: "response",
-        expectedKindsOfKeys: [KeyKind.Realization],
+        receiverIdString: "response",
+        expectedKindsOfKeys: [KeyKind.REALIZATION],
     });
 
     const setSelectedSensitivity = moduleContext.useSetStoreValue("selectedSensitivity");
@@ -36,7 +36,7 @@ export const View = ({ moduleContext, workbenchSession, workbenchSettings }: Mod
     const realizations: number[] = [];
     const values: number[] = [];
     let channelEnsemble: Ensemble | null = null;
-    if (responseReceiver.hasActiveSubscription && responseReceiver.channel.contents.length > 0) {
+    if (responseReceiver.channel && responseReceiver.channel.contents.length > 0) {
         const data = responseReceiver.channel.contents[0].dataArray;
         if (data) {
             data.forEach((el) => {
@@ -77,7 +77,7 @@ export const View = ({ moduleContext, workbenchSession, workbenchSettings }: Mod
 
     function makeContent() {
         moduleContext.setInstanceTitle(`Tornado chart`);
-        if (!responseReceiver.hasActiveSubscription) {
+        if (!responseReceiver.channel) {
             return (
                 <ContentInfo>
                     Connect a data channel to <Tag label="Response" />

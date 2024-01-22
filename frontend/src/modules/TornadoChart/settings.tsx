@@ -28,12 +28,12 @@ export function Settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
     );
 
     const responseReceiver = moduleContext.useChannelReceiver({
-        idString: "response",
-        expectedKindsOfKeys: [KeyKind.Realization],
+        receiverIdString: "response",
+        expectedKindsOfKeys: [KeyKind.REALIZATION],
     });
 
     const sensitivityNames: string[] = [];
-    if (responseReceiver.hasActiveSubscription) {
+    if (responseReceiver.channel) {
         if (
             responseReceiver.channel.contents.length > 0 &&
             responseReceiver.channel.contents[0].metaData.ensembleIdentString

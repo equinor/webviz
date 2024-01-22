@@ -1,22 +1,22 @@
 import { VectorRealizationData_api } from "@api";
-import { DataGenerator, ModuleChannelContentMetaData } from "@framework/DataChannelTypes";
+import { ChannelContentMetaData, DataGenerator } from "@framework/DataChannelTypes";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { simulationUnitReformat, simulationVectorDescription } from "@modules/_shared/reservoirSimulationStringUtils";
 
 import { VectorSpec } from "./state";
 
 export function makeVectorGroupDataGenerator(
+    vectorSpecification: VectorSpec,
     vectorSpecificationsAndRealizationData: {
         vectorSpecification: VectorSpec;
         data: VectorRealizationData_api[];
     }[],
     activeTimestampUtcMs: number,
     makeEnsembleDisplayName: (ensembleIdent: EnsembleIdent) => string
-): (contentIdString: string) => ReturnType<DataGenerator> {
-    return (contentIdString: string) => {
-        const [vectorName, ensembleIdent] = contentIdString.split("-::-");
+): DataGenerator {
+    return () => {
         const data: { key: number; value: number }[] = [];
-        let metaData: ModuleChannelContentMetaData = {
+        let metaData: ChannelContentMetaData = {
             unit: "",
             ensembleIdentString: "",
             displayString: "",
@@ -24,8 +24,8 @@ export function makeVectorGroupDataGenerator(
 
         const vector = vectorSpecificationsAndRealizationData.find(
             (vec) =>
-                vec.vectorSpecification.vectorName === vectorName &&
-                vec.vectorSpecification.ensembleIdent.toString() === ensembleIdent
+                vec.vectorSpecification.vectorName === vectorSpecification.vectorName &&
+                vec.vectorSpecification.ensembleIdent.equals(vectorSpecification.ensembleIdent)
         );
         if (vector) {
             let unit = "";

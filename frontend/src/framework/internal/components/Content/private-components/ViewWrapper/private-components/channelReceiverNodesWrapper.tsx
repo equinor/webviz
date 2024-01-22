@@ -4,7 +4,7 @@ import { createPortal } from "react-dom";
 import { GuiEvent, GuiEventPayloads, GuiState, useGuiState } from "@framework/GuiMessageBroker";
 import { ModuleInstance } from "@framework/ModuleInstance";
 import { Workbench } from "@framework/Workbench";
-import { ModuleChannelReceiver } from "@framework/internal/DataChannels/ModuleChannelReceiver";
+import { ChannelReceiver } from "@framework/internal/DataChannels/ChannelReceiver";
 import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
 import { Point } from "@lib/utils/geometry";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
@@ -20,7 +20,7 @@ export type ChannelReceiverNodesWrapperProps = {
 
 export const ChannelReceiverNodesWrapper: React.FC<ChannelReceiverNodesWrapperProps> = (props) => {
     const [visible, setVisible] = React.useState<boolean>(false);
-    const [currentReceiver, setCurrentReceiver] = React.useState<ModuleChannelReceiver | null>(null);
+    const [currentReceiver, setCurrentReceiver] = React.useState<ChannelReceiver | null>(null);
     const [currentOriginModuleInstanceId, setCurrentOriginModuleInstanceId] = React.useState<string | null>(null);
     const [channelSelectorCenterPoint, setChannelSelectorCenterPoint] = React.useState<Point | null>(null);
     const [selectableChannels, setSelectableChannels] = React.useState<SelectableChannel[]>([]);
@@ -160,7 +160,7 @@ export const ChannelReceiverNodesWrapper: React.FC<ChannelReceiverNodesWrapperPr
                         idString: channel.getIdString(),
                         displayName: channel.getDisplayName(),
                         contents: channel.getContents().map((content) => ({
-                            idString: content.getIdString(),
+                            contentIdString: content.getIdString(),
                             displayName: content.getDisplayName(),
                         })),
                     };

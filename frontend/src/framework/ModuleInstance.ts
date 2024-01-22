@@ -2,13 +2,13 @@ import { ErrorInfo } from "react";
 
 import { cloneDeep } from "lodash";
 
-import { ModuleChannelDefinition, ModuleChannelReceiverDefinition } from "./DataChannelTypes";
+import { ChannelDefinition, ChannelReceiverDefinition } from "./DataChannelTypes";
 import { InitialSettings } from "./InitialSettings";
 import { ImportState, Module, ModuleFC } from "./Module";
 import { ModuleContext } from "./ModuleContext";
 import { StateBaseType, StateOptions, StateStore } from "./StateStore";
 import { SyncSettingKey } from "./SyncSettings";
-import { ModuleChannelManager } from "./internal/DataChannels/ModuleChannelManager";
+import { ChannelManager } from "./internal/DataChannels/ChannelManager";
 import { ModuleInstanceStatusControllerInternal } from "./internal/ModuleInstanceStatusControllerInternal";
 
 export enum ModuleInstanceState {
@@ -36,7 +36,7 @@ export class ModuleInstance<StateType extends StateBaseType> {
     private _cachedStateStoreOptions?: StateOptions<StateType>;
     private _initialSettings: InitialSettings | null;
     private _statusController: ModuleInstanceStatusControllerInternal;
-    private _channelManager: ModuleChannelManager;
+    private _channelManager: ChannelManager;
 
     constructor({
         module,
@@ -46,8 +46,8 @@ export class ModuleInstance<StateType extends StateBaseType> {
     }: {
         module: Module<StateType>;
         instanceNumber: number;
-        channelDefinitions: ModuleChannelDefinition[] | null;
-        channelReceiverDefinitions: ModuleChannelReceiverDefinition[] | null;
+        channelDefinitions: ChannelDefinition[] | null;
+        channelReceiverDefinitions: ChannelReceiverDefinition[] | null;
     }) {
         this._id = `${module.getName()}-${instanceNumber}`;
         this._title = module.getDefaultTitle();
@@ -66,7 +66,7 @@ export class ModuleInstance<StateType extends StateBaseType> {
         this._initialSettings = null;
         this._statusController = new ModuleInstanceStatusControllerInternal();
 
-        this._channelManager = new ModuleChannelManager(this._id);
+        this._channelManager = new ChannelManager(this._id);
 
         if (channelReceiverDefinitions) {
             this._channelManager.registerReceivers(
@@ -82,7 +82,7 @@ export class ModuleInstance<StateType extends StateBaseType> {
         }
     }
 
-    getChannelManager(): ModuleChannelManager {
+    getChannelManager(): ChannelManager {
         return this._channelManager;
     }
 

@@ -8,7 +8,7 @@ import { useElementSize } from "@lib/hooks/useElementSize";
 
 import { Layout, PlotData, PlotDatum, PlotHoverEvent } from "plotly.js";
 
-import { BroadcastChannelNames } from "./channelDefs";
+import { ChannelIds } from "./channelDefs";
 import { useHistoricalVectorDataQuery, useStatisticalVectorDataQuery, useVectorDataQuery } from "./queryHooks";
 import { State } from "./state";
 
@@ -64,28 +64,31 @@ export const View = ({ moduleContext, workbenchSession, workbenchServices }: Mod
     const ensembleSet = workbenchSession.getEnsembleSet();
     const ensemble = vectorSpec ? ensembleSet.findEnsemble(vectorSpec.ensembleIdent) : null;
 
+    function dataGenerator() {
+        const data: { key: number; value: number }[] = [];
+        if (vectorQuery.data) {
+            vectorQuery.data.forEach((vectorRealizationData) => {
+                data.push({
+                    key: vectorRealizationData.realization,
+                    value: vectorRealizationData.values[0],
+                });
+            });
+        }
+        return {
+            data,
+            metaData: {
+                ensembleIdentString: vectorSpec?.ensembleIdent.toString() ?? "",
+            },
+        };
+    }
+
     moduleContext.usePublishChannelContents({
-        channelIdString: BroadcastChannelNames.Realization_Value,
+        channelIdString: ChannelIds.REALIZATION_VALUE,
         dependencies: [vectorQuery.data, ensemble, vectorSpec],
         enabled: vectorSpec !== null,
-        contents: [{ idString: vectorSpec?.vectorName ?? "", displayName: vectorSpec?.vectorName ?? "" }],
-        dataGenerator: () => {
-            const data: { key: number; value: number }[] = [];
-            if (vectorQuery.data) {
-                vectorQuery.data.forEach((vectorRealizationData) => {
-                    data.push({
-                        key: vectorRealizationData.realization,
-                        value: vectorRealizationData.values[0],
-                    });
-                });
-            }
-            return {
-                data,
-                metaData: {
-                    ensembleIdentString: vectorSpec?.ensembleIdent.toString() ?? "",
-                },
-            };
-        },
+        contents: [
+            { contentIdString: vectorSpec?.vectorName ?? "", displayName: vectorSpec?.vectorName ?? "", dataGenerator },
+        ],
     });
 
     const subscribedHoverTimestamp = useSubscribedValue("global.hoverTimestamp", workbenchServices);

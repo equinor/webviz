@@ -7,6 +7,7 @@ import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { ModuleFCProps } from "@framework/Module";
 import { useViewStatusWriter } from "@framework/StatusWriter";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
+import { ChannelContentDefinition } from "@framework/internal/DataChannels/ChannelContent";
 import { timestampUtcMsToCompactIsoString } from "@framework/utils/timestampUtils";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { ColorScaleGradientType } from "@lib/utils/ColorScale";
@@ -14,7 +15,7 @@ import { ContentError } from "@modules/_shared/components/ContentMessage";
 
 import { Annotations, Layout, PlotDatum, PlotMouseEvent, Shape } from "plotly.js";
 
-import { BroadcastChannelNames } from "./channelDefs";
+import { ChannelIds } from "./channelDefs";
 import { makeVectorGroupDataGenerator } from "./dataGenerators";
 import {
     useHistoricalVectorDataQueries,
@@ -155,21 +156,24 @@ export const View = ({ moduleContext, workbenchSession, workbenchSettings }: Mod
         setActiveTimestampUtcMs(firstTimeStamp);
     }
 
-    moduleContext.usePublishChannelContents({
-        channelIdString: BroadcastChannelNames.TimeSeries,
-        dependencies: [loadedVectorSpecificationsAndRealizationData, activeTimestampUtcMs],
-        enabled: !isQueryFetching,
-        contents: loadedVectorSpecificationsAndRealizationData.map((el) => ({
-            idString: `${el.vectorSpecification.vectorName}-::-${el.vectorSpecification.ensembleIdent}`,
-            displayName: `${el.vectorSpecification.vectorName} (${makeEnsembleDisplayName(
-                el.vectorSpecification.ensembleIdent
-            )})`,
-        })),
+    const contents: ChannelContentDefinition[] = loadedVectorSpecificationsAndRealizationData.map((el) => ({
+        contentIdString: `${el.vectorSpecification.vectorName}-::-${el.vectorSpecification.ensembleIdent}`,
+        displayName: `${el.vectorSpecification.vectorName} (${makeEnsembleDisplayName(
+            el.vectorSpecification.ensembleIdent
+        )})`,
         dataGenerator: makeVectorGroupDataGenerator(
+            el.vectorSpecification,
             loadedVectorSpecificationsAndRealizationData,
             activeTimestampUtcMs ?? 0,
             makeEnsembleDisplayName
         ),
+    }));
+
+    moduleContext.usePublishChannelContents({
+        channelIdString: ChannelIds.TIME_SERIES,
+        dependencies: [loadedVectorSpecificationsAndRealizationData, activeTimestampUtcMs],
+        enabled: !isQueryFetching,
+        contents,
     });
 
     // Create parameter color scale helper

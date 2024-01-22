@@ -3,7 +3,7 @@ import React from "react";
 import { KeyKind } from "@framework/DataChannelTypes";
 import { GuiEvent, GuiEventPayloads, GuiState, useGuiState } from "@framework/GuiMessageBroker";
 import { Workbench } from "@framework/Workbench";
-import { ModuleChannelReceiverNotificationTopic } from "@framework/internal/DataChannels/ModuleChannelReceiver";
+import { ChannelReceiverNotificationTopic } from "@framework/internal/DataChannels/ChannelReceiver";
 import { IconButton } from "@lib/components/IconButton";
 import { Point, pointerEventToPoint, rectContainsPoint } from "@lib/utils/geometry";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
@@ -152,7 +152,7 @@ export const ChannelReceiverNode: React.FC<ChannelReceiverNodeProps> = (props) =
         const unsubscribeFunc = moduleInstance
             ?.getChannelManager()
             .getReceiver(props.idString)
-            ?.subscribe(ModuleChannelReceiverNotificationTopic.ChannelChange, checkIfConnection);
+            ?.subscribe(ChannelReceiverNotificationTopic.CHANNEL_CHANGE, checkIfConnection);
 
         checkIfConnection();
 

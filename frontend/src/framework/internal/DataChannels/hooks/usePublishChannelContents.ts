@@ -2,31 +2,24 @@ import React from "react";
 
 import { isEqual } from "lodash";
 
-import { ModuleChannel } from "../ModuleChannel";
-import { DataGenerator, ModuleChannelContentDefinition } from "../ModuleChannelContent";
+import { Channel } from "../Channel";
+import { ChannelContentDefinition } from "../ChannelContent";
 
-export function usePublishChannelContents({
-    channel,
-    dependencies,
-    enabled,
-    contents,
-    dataGenerator,
-}: {
-    channel: ModuleChannel;
-    dependencies: any[];
-    enabled?: boolean;
-    contents: ModuleChannelContentDefinition[];
-    dataGenerator: (contentIdString: string) => ReturnType<DataGenerator>;
-}) {
+export interface UsePublishChannelContentsOptions {
+    readonly channel: Channel;
+    readonly dependencies: any[];
+    readonly enabled?: boolean;
+    readonly contents: ChannelContentDefinition[];
+}
+
+export function usePublishChannelContents(options: UsePublishChannelContentsOptions): void {
     const [prevDependencies, setPrevDependencies] = React.useState<any[]>([]);
 
     React.useEffect(() => {
-        if ((enabled || enabled === undefined) && !isEqual(prevDependencies, dependencies)) {
-            setPrevDependencies(dependencies);
+        if ((options.enabled || options.enabled === undefined) && !isEqual(prevDependencies, options.dependencies)) {
+            setPrevDependencies(options.dependencies);
 
-            channel.replaceContents(
-                contents.map((content) => ({ ...content, dataGenerator: () => dataGenerator(content.idString) }))
-            );
+            options.channel.replaceContents(options.contents);
         }
-    }, [channel, contents, dataGenerator, dependencies, prevDependencies, enabled]);
+    }, [options.channel, options.contents, options.dependencies, prevDependencies, options.enabled]);
 }

@@ -1,22 +1,22 @@
-import { KeyKind, ModuleChannelReceiverDefinition } from "@framework/DataChannelTypes";
+import { ChannelReceiverDefinition, KeyKind } from "@framework/DataChannelTypes";
 
-export const receiverDefs: ModuleChannelReceiverDefinition[] = [
+export const receiverDefs: ChannelReceiverDefinition[] = [
     {
         idString: "channelX",
         displayName: "X axis",
-        supportedKindsOfKeys: [KeyKind.Realization],
+        supportedKindsOfKeys: [KeyKind.REALIZATION],
         supportsMultiContents: true,
     },
     {
         idString: "channelY",
         displayName: "Y axis",
-        supportedKindsOfKeys: [KeyKind.Realization],
+        supportedKindsOfKeys: [KeyKind.REALIZATION],
         supportsMultiContents: true,
     },
     {
         idString: "channelColorMapping",
         displayName: "Color mapping",
-        supportedKindsOfKeys: [KeyKind.Realization],
+        supportedKindsOfKeys: [KeyKind.REALIZATION],
         supportsMultiContents: false,
     },
 ];

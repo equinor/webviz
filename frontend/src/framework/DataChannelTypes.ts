@@ -1,28 +1,28 @@
-export type { ModuleChannelContentDefinition } from "./internal/DataChannels/ModuleChannelContent";
-export type { ModuleChannelDefinition } from "./internal/DataChannels/ModuleChannel";
-export type { ModuleChannelReceiverDefinition } from "./internal/DataChannels/ModuleChannelReceiver";
-export type { DataGenerator, ModuleChannelContentMetaData } from "./internal/DataChannels/ModuleChannelContent";
+export type { ChannelContentDefinition } from "./internal/DataChannels/ChannelContent";
+export type { ChannelDefinition } from "./internal/DataChannels/Channel";
+export type { ChannelReceiverDefinition } from "./internal/DataChannels/ChannelReceiver";
+export type { DataGenerator, ChannelContentMetaData } from "./internal/DataChannels/ChannelContent";
 export type { ChannelReceiverChannelContent } from "./internal/DataChannels/hooks/useChannelReceiver";
 
 export enum KeyKind {
-    TimestampMs = "timestamp-ms",
-    Realization = "realization",
-    GridIndex = "grid-index",
-    GridIJK = "grid-ijk",
-    MeasuredDepth = "measured-depth",
+    TIMESTAMP_MS = "timestamp-ms",
+    REALIZATION = "realization",
+    GRID_INDEX = "grid-index",
+    GRID_IJK = "grid-ijk",
+    MEASURED_DEPTH = "measured-depth",
 }
 
 export enum KeyType {
-    Number = "number",
-    NumberTriplet = "number-triplet",
+    NUMBER = "number",
+    NUMBER_TRIPLET = "number-triplet",
 }
 
 export interface KeyKindToKeyTypeMapping {
-    [KeyKind.TimestampMs]: KeyType.Number;
-    [KeyKind.Realization]: KeyType.Number;
-    [KeyKind.GridIndex]: KeyType.Number;
-    [KeyKind.GridIJK]: KeyType.NumberTriplet;
-    [KeyKind.MeasuredDepth]: KeyType.Number;
+    [KeyKind.TIMESTAMP_MS]: KeyType.NUMBER;
+    [KeyKind.REALIZATION]: KeyType.NUMBER;
+    [KeyKind.GRID_INDEX]: KeyType.NUMBER;
+    [KeyKind.GRID_IJK]: KeyType.NUMBER_TRIPLET;
+    [KeyKind.MEASURED_DEPTH]: KeyType.NUMBER;
 }
 
 export interface DataElement<TKeyType extends KeyType> {
@@ -31,6 +31,6 @@ export interface DataElement<TKeyType extends KeyType> {
 }
 
 type KeyTypeToTypeScriptTypeMapping = {
-    [KeyType.Number]: number;
-    [KeyType.NumberTriplet]: [number, number, number];
+    [KeyType.NUMBER]: number;
+    [KeyType.NUMBER_TRIPLET]: [number, number, number];
 };
