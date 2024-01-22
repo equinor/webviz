@@ -1,5 +1,7 @@
 import react from "@vitejs/plugin-react";
 
+import jotaiDebugLabel from "jotai/babel/plugin-debug-label";
+import jotaiReactRefresh from "jotai/babel/plugin-react-refresh";
 import path from "path";
 import { defineConfig } from "vite";
 import vitePluginChecker from "vite-plugin-checker";
@@ -25,7 +27,14 @@ export default defineConfig(({ mode }) => {
     }
 
     return {
-        plugins: [react(), vitePluginChecker({ typescript: true })],
+        plugins: [
+            react({
+                babel: {
+                    plugins: [jotaiDebugLabel, jotaiReactRefresh],
+                },
+            }),
+            vitePluginChecker({ typescript: true }),
+        ],
         build: {
             rollupOptions: {
                 input: {

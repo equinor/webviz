@@ -1,5 +1,6 @@
 import { ErrorInfo } from "react";
 
+import { createStore } from "jotai";
 import { cloneDeep } from "lodash";
 
 import { BroadcastChannel, BroadcastChannelsDef, InputBroadcastChannelDef } from "./Broadcaster";
@@ -42,6 +43,8 @@ export class ModuleInstance<StateType extends StateBaseType> {
     private _inputChannelDefs: InputBroadcastChannelDef[];
     private _inputChannels: Record<string, BroadcastChannel> = {};
     private _workbench: Workbench;
+
+    private _jotaiStore: ReturnType<typeof createStore> = createStore();
 
     constructor(
         module: Module<StateType>,
@@ -89,6 +92,10 @@ export class ModuleInstance<StateType extends StateBaseType> {
                     );
             });
         }
+    }
+
+    getJotaiStore(): ReturnType<typeof createStore> {
+        return this._jotaiStore;
     }
 
     getInputChannelDefs(): InputBroadcastChannelDef[] {

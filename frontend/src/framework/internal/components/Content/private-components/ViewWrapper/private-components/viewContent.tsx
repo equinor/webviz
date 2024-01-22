@@ -8,6 +8,8 @@ import { DebugProfiler } from "@framework/internal/components/DebugProfiler";
 import { ErrorBoundary } from "@framework/internal/components/ErrorBoundary";
 import { CircularProgress } from "@lib/components/CircularProgress";
 
+import { Provider } from "jotai";
+
 import { CrashView } from "./crashView";
 
 type ViewContentProps = {
@@ -20,6 +22,8 @@ export const ViewContent = React.memo((props: ViewContentProps) => {
     const [moduleInstanceState, setModuleInstanceState] = React.useState<ModuleInstanceState>(
         ModuleInstanceState.INITIALIZING
     );
+
+    const store = props.moduleInstance.getJotaiStore();
 
     React.useEffect(
         function handleMount() {
@@ -126,13 +130,15 @@ export const ViewContent = React.memo((props: ViewContentProps) => {
                     source={StatusSource.View}
                     guiMessageBroker={props.workbench.getGuiMessageBroker()}
                 >
-                    <View
-                        moduleContext={props.moduleInstance.getContext()}
-                        workbenchSession={props.workbench.getWorkbenchSession()}
-                        workbenchServices={props.workbench.getWorkbenchServices()}
-                        workbenchSettings={props.workbench.getWorkbenchSettings()}
-                        initialSettings={props.moduleInstance.getInitialSettings() || undefined}
-                    />
+                    <Provider store={store}>
+                        <View
+                            moduleContext={props.moduleInstance.getContext()}
+                            workbenchSession={props.workbench.getWorkbenchSession()}
+                            workbenchServices={props.workbench.getWorkbenchServices()}
+                            workbenchSettings={props.workbench.getWorkbenchSettings()}
+                            initialSettings={props.moduleInstance.getInitialSettings() || undefined}
+                        />
+                    </Provider>
                 </DebugProfiler>
             </div>
         </ErrorBoundary>
