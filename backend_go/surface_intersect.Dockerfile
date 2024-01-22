@@ -7,7 +7,7 @@ ENV PROJECT_DIR=/app \
     CGO_ENABLED=1
 WORKDIR /app
 
-COPY ./go ./
+COPY ./backend_go/surface_intersect/ ./
 
 RUN chown -R appuser:appuser /app
 

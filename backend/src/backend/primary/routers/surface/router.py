@@ -306,7 +306,7 @@ async def intersectSurface(
         "prod",
         authenticated_user.get_sumo_access_token(),
     )
-    url = "http://backend-go:5001/intersectSurface"  # URL of the Go server endpoint
+    url = "http://surface_intersect:5001/intersect_surface"  # URL of the Go server endpoint
     import httpx
 
     async def fetch_all():

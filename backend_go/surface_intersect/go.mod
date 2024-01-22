@@ -1,4 +1,4 @@
-module intersectTest
+module surface_intersect
 
 go 1.20
 

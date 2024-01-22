@@ -1,7 +1,6 @@
 package xtgeo
 
 import (
-	utils "intersectTest/utils"
 	"io"
 	"math"
 	"os"
@@ -120,7 +119,7 @@ func almostEqualArray(a, b []float32) bool {
 	return true
 }
 
-func ReadTestSurface(fileName string) (*utils.Surface, error) {
+func ReadTestSurface(fileName string) (*Surface, error) {
 
 	file, err := os.Open(fileName)
 
@@ -133,9 +132,9 @@ func ReadTestSurface(fileName string) (*utils.Surface, error) {
 	if err != nil {
 		return nil, err
 	}
-	surface := &utils.Surface{}
+	surface := &Surface{}
 
-	surface, err = utils.DeserializeBlobToSurface(fileData)
+	surface, err = DeserializeBlobToSurface(fileData)
 
 	return surface, nil
 }
