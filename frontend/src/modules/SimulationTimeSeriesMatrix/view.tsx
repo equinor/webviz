@@ -2,12 +2,12 @@ import React from "react";
 import Plot from "react-plotly.js";
 
 import { SummaryVectorObservations_api } from "@api";
+import { ChannelContentDefinition } from "@framework/DataChannelTypes";
 import { Ensemble } from "@framework/Ensemble";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { ModuleFCProps } from "@framework/Module";
 import { useViewStatusWriter } from "@framework/StatusWriter";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
-import { ChannelContentDefinition } from "@framework/internal/DataChannels/ChannelContent";
 import { timestampUtcMsToCompactIsoString } from "@framework/utils/timestampUtils";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { ColorScaleGradientType } from "@lib/utils/ColorScale";
