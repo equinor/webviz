@@ -1,6 +1,6 @@
 import { ErrorInfo } from "react";
 
-import { createStore } from "jotai";
+import { Atom, createStore } from "jotai";
 import { cloneDeep } from "lodash";
 
 import { BroadcastChannel, BroadcastChannelsDef, InputBroadcastChannelDef } from "./Broadcaster";
@@ -45,13 +45,15 @@ export class ModuleInstance<StateType extends StateBaseType> {
     private _workbench: Workbench;
 
     private _jotaiStore: ReturnType<typeof createStore> = createStore();
+    private _jotaiAtoms: Atom<unknown>[] = [];
 
     constructor(
         module: Module<StateType>,
         instanceNumber: number,
         broadcastChannelsDef: BroadcastChannelsDef,
         workbench: Workbench,
-        inputChannelDefs: InputBroadcastChannelDef[]
+        inputChannelDefs: InputBroadcastChannelDef[],
+        atoms: Atom<unknown>[]
     ) {
         this._id = `${module.getName()}-${instanceNumber}`;
         this._title = module.getDefaultTitle();
@@ -92,6 +94,8 @@ export class ModuleInstance<StateType extends StateBaseType> {
                     );
             });
         }
+
+        this._jotaiAtoms = atoms;
     }
 
     getJotaiStore(): ReturnType<typeof createStore> {

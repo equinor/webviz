@@ -14,3 +14,5 @@ export const vectorsAtom = atomWithQuery((get) => ({
         ),
 }));
 export const atomBasedOnVectors = atom<boolean>((get) => get(vectorsAtom).isFetching);
+
+export const atoms = [selectedEnsembleAtom, vectorsAtom, atomBasedOnVectors];
