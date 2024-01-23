@@ -1,7 +1,7 @@
+import { KeyKind } from "@framework/DataChannelTypes";
+
 import { Channel, ChannelNotificationTopic } from "./Channel";
 import { ChannelManager } from "./ChannelManager";
-
-import { KeyKind } from "../../DataChannelTypes";
 
 export interface ChannelReceiverDefinition {
     readonly idString: string;

@@ -18,6 +18,13 @@ export enum ModuleInstanceState {
     RESETTING,
 }
 
+export interface ModuleInstanceOptions<StateType extends StateBaseType> {
+    module: Module<StateType>;
+    instanceNumber: number;
+    channelDefinitions: ChannelDefinition[] | null;
+    channelReceiverDefinitions: ChannelReceiverDefinition[] | null;
+}
+
 export class ModuleInstance<StateType extends StateBaseType> {
     private _id: string;
     private _title: string;
@@ -38,21 +45,11 @@ export class ModuleInstance<StateType extends StateBaseType> {
     private _statusController: ModuleInstanceStatusControllerInternal;
     private _channelManager: ChannelManager;
 
-    constructor({
-        module,
-        instanceNumber,
-        channelDefinitions,
-        channelReceiverDefinitions,
-    }: {
-        module: Module<StateType>;
-        instanceNumber: number;
-        channelDefinitions: ChannelDefinition[] | null;
-        channelReceiverDefinitions: ChannelReceiverDefinition[] | null;
-    }) {
-        this._id = `${module.getName()}-${instanceNumber}`;
-        this._title = module.getDefaultTitle();
+    constructor(options: ModuleInstanceOptions<StateType>) {
+        this._id = `${options.module.getName()}-${options.instanceNumber}`;
+        this._title = options.module.getDefaultTitle();
         this._stateStore = null;
-        this._module = module;
+        this._module = options.module;
         this._importStateSubscribers = new Set();
         this._context = null;
         this._initialised = false;
@@ -68,17 +65,17 @@ export class ModuleInstance<StateType extends StateBaseType> {
 
         this._channelManager = new ChannelManager(this._id);
 
-        if (channelReceiverDefinitions) {
+        if (options.channelReceiverDefinitions) {
             this._channelManager.registerReceivers(
-                channelReceiverDefinitions.map((el) => ({
+                options.channelReceiverDefinitions.map((el) => ({
                     ...el,
                     supportsMultiContents: el.supportsMultiContents ?? false,
                 }))
             );
         }
 
-        if (channelDefinitions) {
-            this._channelManager.registerChannels(channelDefinitions);
+        if (options.channelDefinitions) {
+            this._channelManager.registerChannels(options.channelDefinitions);
         }
     }
 

@@ -31,6 +31,16 @@ export enum ImportState {
     Failed = "Failed",
 }
 
+export interface ModuleOptions {
+    name: string;
+    defaultTitle: string;
+    syncableSettingKeys?: SyncSettingKey[];
+    drawPreviewFunc?: DrawPreviewFunc;
+    description?: string;
+    channelDefinitions?: ChannelDefinition[];
+    channelReceiverDefinitions?: ChannelReceiverDefinition[];
+}
+
 export class Module<StateType extends StateBaseType> {
     private _name: string;
     private _defaultTitle: string;
@@ -47,36 +57,20 @@ export class Module<StateType extends StateBaseType> {
     private _channelDefinitions: ChannelDefinition[] | null;
     private _channelReceiverDefinitions: ChannelReceiverDefinition[] | null;
 
-    constructor({
-        name,
-        defaultTitle,
-        syncableSettingKeys,
-        drawPreviewFunc,
-        description,
-        channelDefinitions,
-        channelReceiverDefinitions,
-    }: {
-        name: string;
-        defaultTitle: string;
-        syncableSettingKeys?: SyncSettingKey[];
-        drawPreviewFunc?: DrawPreviewFunc;
-        description?: string;
-        channelDefinitions?: ChannelDefinition[];
-        channelReceiverDefinitions?: ChannelReceiverDefinition[];
-    }) {
-        this._name = name;
-        this._defaultTitle = defaultTitle;
+    constructor(options: ModuleOptions) {
+        this._name = options.name;
+        this._defaultTitle = options.defaultTitle;
         this.viewFC = () => <div>Not defined</div>;
         this.settingsFC = () => <div>Not defined</div>;
         this._importState = ImportState.NotImported;
         this._moduleInstances = [];
         this._defaultState = null;
         this._workbench = null;
-        this._syncableSettingKeys = syncableSettingKeys ?? [];
-        this._drawPreviewFunc = drawPreviewFunc ?? null;
-        this._description = description ?? null;
-        this._channelDefinitions = channelDefinitions ?? null;
-        this._channelReceiverDefinitions = channelReceiverDefinitions ?? null;
+        this._syncableSettingKeys = options.syncableSettingKeys ?? [];
+        this._drawPreviewFunc = options.drawPreviewFunc ?? null;
+        this._description = options.description ?? null;
+        this._channelDefinitions = options.channelDefinitions ?? null;
+        this._channelReceiverDefinitions = options.channelReceiverDefinitions ?? null;
     }
 
     getDrawPreviewFunc(): DrawPreviewFunc | null {
