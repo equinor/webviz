@@ -2,7 +2,6 @@ import React from "react";
 
 import { isEqual } from "lodash";
 
-import { Broadcaster } from "./Broadcaster";
 import { EnsembleIdent } from "./EnsembleIdent";
 import { Wellbore } from "./Wellbore";
 import { Workbench } from "./Workbench";
@@ -89,10 +88,6 @@ export class WorkbenchServices {
         for (const callbackFn of subscribersSet) {
             callbackFn(value);
         }
-    }
-
-    getBroadcaster(): Broadcaster {
-        return this._workbench.getBroadcaster();
     }
 }
 

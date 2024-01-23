@@ -2,7 +2,7 @@ import React from "react";
 
 import { cloneDeep } from "lodash";
 
-import { BroadcastChannelsDef, InputBroadcastChannelDef } from "./Broadcaster";
+import { ChannelDefinition, ChannelReceiverDefinition } from "./DataChannelTypes";
 import { InitialSettings } from "./InitialSettings";
 import { ModuleContext } from "./ModuleContext";
 import { ModuleInstance } from "./ModuleInstance";
@@ -14,21 +14,31 @@ import { WorkbenchServices } from "./WorkbenchServices";
 import { WorkbenchSession } from "./WorkbenchSession";
 import { WorkbenchSettings } from "./WorkbenchSettings";
 
-export type ModuleFCProps<S extends StateBaseType> = {
-    moduleContext: ModuleContext<S>;
+export type ModuleFCProps<StateType extends StateBaseType> = {
+    moduleContext: ModuleContext<StateType>;
     workbenchSession: WorkbenchSession;
     workbenchServices: WorkbenchServices;
     workbenchSettings: WorkbenchSettings;
     initialSettings?: InitialSettings;
 };
 
-export type ModuleFC<S extends StateBaseType> = React.FC<ModuleFCProps<S>>;
+export type ModuleFC<StateType extends StateBaseType> = React.FC<ModuleFCProps<StateType>>;
 
 export enum ImportState {
     NotImported = "NotImported",
     Importing = "Importing",
     Imported = "Imported",
     Failed = "Failed",
+}
+
+export interface ModuleOptions {
+    name: string;
+    defaultTitle: string;
+    syncableSettingKeys?: SyncSettingKey[];
+    drawPreviewFunc?: DrawPreviewFunc;
+    description?: string;
+    channelDefinitions?: ChannelDefinition[];
+    channelReceiverDefinitions?: ChannelReceiverDefinition[];
 }
 
 export class Module<StateType extends StateBaseType> {
@@ -42,33 +52,25 @@ export class Module<StateType extends StateBaseType> {
     private _stateOptions: StateOptions<StateType> | undefined;
     private _workbench: Workbench | null;
     private _syncableSettingKeys: SyncSettingKey[];
-    private _channelsDef: BroadcastChannelsDef;
     private _drawPreviewFunc: DrawPreviewFunc | null;
     private _description: string | null;
-    private _inputChannelDefs: InputBroadcastChannelDef[];
+    private _channelDefinitions: ChannelDefinition[] | null;
+    private _channelReceiverDefinitions: ChannelReceiverDefinition[] | null;
 
-    constructor(
-        name: string,
-        defaultTitle: string,
-        syncableSettingKeys: SyncSettingKey[] = [],
-        broadcastChannelsDef: BroadcastChannelsDef = {},
-        inputChannelDefs: InputBroadcastChannelDef[] = [],
-        drawPreviewFunc: DrawPreviewFunc | null = null,
-        description: string | null = null
-    ) {
-        this._name = name;
-        this._defaultTitle = defaultTitle;
+    constructor(options: ModuleOptions) {
+        this._name = options.name;
+        this._defaultTitle = options.defaultTitle;
         this.viewFC = () => <div>Not defined</div>;
         this.settingsFC = () => <div>Not defined</div>;
         this._importState = ImportState.NotImported;
         this._moduleInstances = [];
         this._defaultState = null;
         this._workbench = null;
-        this._syncableSettingKeys = syncableSettingKeys;
-        this._channelsDef = broadcastChannelsDef;
-        this._inputChannelDefs = inputChannelDefs;
-        this._drawPreviewFunc = drawPreviewFunc;
-        this._description = description;
+        this._syncableSettingKeys = options.syncableSettingKeys ?? [];
+        this._drawPreviewFunc = options.drawPreviewFunc ?? null;
+        this._description = options.description ?? null;
+        this._channelDefinitions = options.channelDefinitions ?? null;
+        this._channelReceiverDefinitions = options.channelReceiverDefinitions ?? null;
     }
 
     getDrawPreviewFunc(): DrawPreviewFunc | null {
@@ -118,13 +120,12 @@ export class Module<StateType extends StateBaseType> {
             throw new Error("Module must be added to a workbench before making an instance");
         }
 
-        const instance = new ModuleInstance<StateType>(
-            this,
+        const instance = new ModuleInstance<StateType>({
+            module: this,
             instanceNumber,
-            this._channelsDef,
-            this._workbench,
-            this._inputChannelDefs
-        );
+            channelDefinitions: this._channelDefinitions,
+            channelReceiverDefinitions: this._channelReceiverDefinitions,
+        });
         this._moduleInstances.push(instance);
         this.maybeImportSelf();
         return instance;

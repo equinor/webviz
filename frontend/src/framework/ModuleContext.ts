@@ -12,12 +12,13 @@
 /* eslint-disable react-hooks/rules-of-hooks */
 import React from "react";
 
-import { BroadcastChannel, InputBroadcastChannelDef } from "./Broadcaster";
-import { InitialSettings } from "./InitialSettings";
+import { ChannelContentDefinition, KeyKind } from "./DataChannelTypes";
 import { ModuleInstance } from "./ModuleInstance";
 import { ModuleInstanceStatusController } from "./ModuleInstanceStatusController";
 import { StateBaseType, StateStore, useSetStoreValue, useStoreState, useStoreValue } from "./StateStore";
 import { SyncSettingKey } from "./SyncSettings";
+import { useChannelReceiver } from "./internal/DataChannels/hooks/useChannelReceiver";
+import { usePublishChannelContents } from "./internal/DataChannels/hooks/usePublishChannelContents";
 
 export class ModuleContext<S extends StateBaseType> {
     private _moduleInstance: ModuleInstance<S>;
@@ -71,43 +72,34 @@ export class ModuleContext<S extends StateBaseType> {
         return this._moduleInstance.getStatusController();
     }
 
-    getChannel(channelName: string): BroadcastChannel {
-        return this._moduleInstance.getBroadcastChannel(channelName);
+    useChannelReceiver<TKeyKinds extends KeyKind[]>(options: {
+        receiverIdString: string;
+        expectedKindsOfKeys: TKeyKinds;
+    }): ReturnType<typeof useChannelReceiver<(typeof options)["expectedKindsOfKeys"]>> {
+        const receiver = this._moduleInstance.getChannelManager().getReceiver(options.receiverIdString);
+
+        if (!receiver) {
+            throw new Error(`Receiver '${options.receiverIdString}' does not exist`);
+        }
+
+        return useChannelReceiver(receiver, options.expectedKindsOfKeys);
     }
 
-    getInputChannel(name: string): BroadcastChannel | null {
-        return this._moduleInstance.getInputChannel(name);
-    }
+    usePublishChannelContents(options: {
+        channelIdString: string;
+        dependencies: any[];
+        enabled?: boolean;
+        contents: ChannelContentDefinition[];
+    }) {
+        const channel = this._moduleInstance.getChannelManager().getChannel(options.channelIdString);
 
-    setInputChannel(inputName: string, channelName: string): void {
-        this._moduleInstance.setInputChannel(inputName, channelName);
-    }
+        if (!channel) {
+            throw new Error(`Channel '${options.channelIdString}' does not exist`);
+        }
 
-    getInputChannelDef(name: string): InputBroadcastChannelDef | undefined {
-        return this._moduleInstance.getInputChannelDefs().find((channelDef) => channelDef.name === name);
-    }
-
-    useInputChannel(name: string, initialSettings?: InitialSettings): BroadcastChannel | null {
-        const [channel, setChannel] = React.useState<BroadcastChannel | null>(null);
-
-        React.useEffect(() => {
-            if (initialSettings) {
-                const setting = initialSettings.get(name, "string");
-                if (setting) {
-                    this._moduleInstance.setInputChannel(name, setting);
-                }
-            }
-        }, [initialSettings, name]);
-
-        React.useEffect(() => {
-            function handleNewChannel(newChannel: BroadcastChannel | null) {
-                setChannel(newChannel);
-            }
-
-            const unsubscribeFunc = this._moduleInstance.subscribeToInputChannelChange(name, handleNewChannel);
-            return unsubscribeFunc;
-        }, [name]);
-
-        return channel;
+        return usePublishChannelContents({
+            channel,
+            ...options,
+        });
     }
 }
