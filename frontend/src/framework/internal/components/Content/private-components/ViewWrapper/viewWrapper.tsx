@@ -165,7 +165,7 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
                             isDragged={props.isDragged}
                             onPointerDown={handleHeaderPointerDown}
                             onRemoveClick={handleRemoveClick}
-                            onInputChannelsClick={handleInputChannelsClick}
+                            onReceiversClick={handleReceiversClick}
                             guiMessageBroker={guiMessageBroker}
                         />
                     </div>

@@ -19,12 +19,6 @@ function calcAndStoreCharWidths(font: string) {
     return charWidths;
 }
 
-export function getTextWidthWithElement(text: string, element: HTMLElement): number {
-    // re-use canvas object for better performance
-    const font = getCanvasFont(element);
-    return getTextWidthWithFont(text, font, 1);
-}
-
 export function getTextWidthWithFont(text: string, font: string, sizeInRem: number): number {
     let charWidths = storedFontWidths.get(font);
     if (!charWidths) {

@@ -535,7 +535,6 @@ export const DataChannelVisualizationLayer: React.FC<DataChannelVisualizationPro
                     )}
                 </g>
             )}
-        </svg>,
-        document.body
+        </svg>
     );
 };

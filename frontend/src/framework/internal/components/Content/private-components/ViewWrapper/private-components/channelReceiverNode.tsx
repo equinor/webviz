@@ -22,6 +22,7 @@ export type ChannelReceiverNodeProps = {
 
 export const ChannelReceiverNode: React.FC<ChannelReceiverNodeProps> = (props) => {
     const { onChannelConnect, onChannelConnectionDisconnect } = props;
+
     const ref = React.useRef<HTMLDivElement>(null);
     const removeButtonRef = React.useRef<HTMLButtonElement>(null);
     const editButtonRef = React.useRef<HTMLButtonElement>(null);
@@ -114,10 +115,6 @@ export const ChannelReceiverNode: React.FC<ChannelReceiverNodeProps> = (props) =
             setHovered(false);
         }
 
-        function handleResize() {
-            guiMessageBroker.publishEvent(GuiEvent.DataChannelConnectionsChange);
-        }
-
         function checkIfConnection() {
             const moduleInstance = props.workbench.getModuleInstance(props.moduleInstanceId);
             if (!moduleInstance) {
@@ -140,14 +137,6 @@ export const ChannelReceiverNode: React.FC<ChannelReceiverNodeProps> = (props) =
 
         document.addEventListener("pointerup", handlePointerUp, true);
         document.addEventListener("pointermove", handlePointerMove);
-        window.addEventListener("resize", handleResize);
-
-        const resizeObserver = new ResizeObserver(handleResize);
-
-        if (ref.current) {
-            handleResize();
-            resizeObserver.observe(ref.current);
-        }
 
         const unsubscribeFunc = moduleInstance
             ?.getChannelManager()
@@ -162,9 +151,6 @@ export const ChannelReceiverNode: React.FC<ChannelReceiverNodeProps> = (props) =
 
             document.removeEventListener("pointerup", handlePointerUp, true);
             document.removeEventListener("pointermove", handlePointerMove);
-            window.removeEventListener("resize", handleResize);
-
-            resizeObserver.disconnect();
 
             if (unsubscribeFunc) {
                 unsubscribeFunc();

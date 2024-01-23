@@ -1,11 +1,11 @@
 import React from "react";
-import { createPortal } from "react-dom";
 
 import { GuiEvent, GuiEventPayloads, GuiState, useGuiState } from "@framework/GuiMessageBroker";
 import { ModuleInstance } from "@framework/ModuleInstance";
 import { Workbench } from "@framework/Workbench";
 import { ChannelReceiver } from "@framework/internal/DataChannels/ChannelReceiver";
 import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
+import { createPortal } from "@lib/utils/createPortal";
 import { Point } from "@lib/utils/geometry";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
@@ -296,7 +296,6 @@ export const ChannelReceiverNodesWrapper: React.FC<ChannelReceiverNodesWrapperPr
                     selectedContents={prevSelectedContents ?? undefined}
                 />
             )}
-        </div>,
-        document.body
+        </div>
     );
 };
