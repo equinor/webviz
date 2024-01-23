@@ -1,17 +1,14 @@
+/* generated using openapi-typescript-codegen -- do no edit */
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
 import type { Body_get_realizations_response } from '../models/Body_get_realizations_response';
 import type { EnsembleScalarResponse } from '../models/EnsembleScalarResponse';
 import type { InplaceVolumetricsTableMetaData } from '../models/InplaceVolumetricsTableMetaData';
-
 import type { CancelablePromise } from '../core/CancelablePromise';
 import type { BaseHttpRequest } from '../core/BaseHttpRequest';
-
 export class InplaceVolumetricsService {
-
     constructor(public readonly httpRequest: BaseHttpRequest) {}
-
     /**
      * Get Table Names And Descriptions
      * Get all volumetric tables for a given ensemble.
@@ -36,7 +33,6 @@ export class InplaceVolumetricsService {
             },
         });
     }
-
     /**
      * Get Realizations Response
      * Get response for a given table and index filter.
@@ -71,5 +67,4 @@ export class InplaceVolumetricsService {
             },
         });
     }
-
 }

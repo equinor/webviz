@@ -61,6 +61,7 @@ const ModulesListItem: React.FC<ModulesListItemProps> = (props) => {
 
         const handlePointerDown = (e: PointerEvent) => {
             if (ref.current) {
+                document.body.classList.add("touch-none");
                 const point = pointerEventToPoint(e);
                 const rect = ref.current.getBoundingClientRect();
                 pointerDownElementPosition = pointDifference(point, pointRelativeToDomRect(point, rect));
@@ -76,9 +77,13 @@ const ModulesListItem: React.FC<ModulesListItemProps> = (props) => {
         };
 
         const handlePointerUp = () => {
+            if (!pointerDownPoint) {
+                return;
+            }
             pointerDownPoint = null;
             dragging = false;
             setIsDragged(false);
+            document.body.classList.remove("touch-none");
             pointerDownElementPosition = null;
 
             removeDraggingEventListeners();
@@ -145,7 +150,7 @@ const ModulesListItem: React.FC<ModulesListItemProps> = (props) => {
             {isDragged && <div ref={ref} className="bg-red-300 w-full h-40 mb-4" />}
             <div
                 ref={isDragged ? undefined : ref}
-                className="mb-4 cursor-move flex flex-col border box-border border-slate-300 border-solid text-sm text-gray-700 w-full h-40 select-none hover:shadow-md"
+                className="touch-none mb-4 cursor-move flex flex-col border box-border border-slate-300 border-solid text-sm text-gray-700 w-full h-40 select-none hover:shadow-md"
                 style={makeStyle(isDragged, dragSize, dragPosition)}
             >
                 <div ref={ref} className="bg-slate-100 p-2 flex items-center text-xs font-bold shadow">

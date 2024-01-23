@@ -42,15 +42,3 @@ export function getTextWidthWithFont(text: string, font: string, sizeInRem: numb
     }
     return width;
 }
-
-function getCssStyle(element: HTMLElement, property: string): string {
-    return window.getComputedStyle(element, null).getPropertyValue(property);
-}
-
-function getCanvasFont(element: HTMLElement): string {
-    const fontWeight = getCssStyle(element, "font-weight") || "normal";
-    const fontSize = getCssStyle(element, "font-size") || "16px";
-    const fontFamily = getCssStyle(element, "font-family") || "Times New Roman";
-
-    return `${fontWeight} ${fontSize} ${fontFamily}`;
-}

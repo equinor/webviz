@@ -1,7 +1,7 @@
+/* generated using openapi-typescript-codegen -- do no edit */
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-
 /**
  * (x, y) points defining a polyline in domain coordinate system, to retrieve intersection of a surface, with a cumulative length
  * between at each (x, y)-point coordinates in domain coordinate system.

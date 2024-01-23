@@ -74,6 +74,7 @@ export function Settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
     const [selectedEnsembleIdents, setSelectedEnsembleIdents] = React.useState<EnsembleIdent[]>([]);
     const [selectedVectorNames, setSelectedVectorNames] = React.useState<string[]>([]);
     const [selectedVectorTags, setSelectedVectorTags] = React.useState<string[]>([]);
+    const [availableVectorNames, setAvailableVectorNames] = React.useState<string[]>([]);
     const [vectorSelectorData, setVectorSelectorData] = React.useState<TreeDataNode[]>([]);
     const [statisticsType, setStatisticsType] = React.useState<StatisticsType>(StatisticsType.INDIVIDUAL);
     const [filteredParameterIdentList, setFilteredParameterIdentList] = React.useState<ParameterIdent[]>([]);
@@ -116,25 +117,27 @@ export function Settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
         ensembleVectorListsHelper.current = new EnsembleVectorListsHelper(selectedEnsembleIdents, vectorListQueries);
     }
 
-    const selectedVectorNamesHasHistorical =
-        ensembleVectorListsHelper.current.hasAnyHistoricalVector(selectedVectorNames);
+    const isVectorListQueriesFetching = vectorListQueries.some((query) => query.isFetching);
 
-    const currentVectorSelectorData = createVectorSelectorDataFromVectors(
-        ensembleVectorListsHelper.current.vectorsUnion()
-    );
+    // Await update of vectorSelectorData until all vector lists are finished fetching
+    let computedVectorSelectorData = vectorSelectorData;
+    let computedAvailableVectorNames = availableVectorNames;
+    const vectorNamesUnion = ensembleVectorListsHelper.current.vectorsUnion();
+    if (!isVectorListQueriesFetching && !isEqual(computedAvailableVectorNames, vectorNamesUnion)) {
+        computedAvailableVectorNames = vectorNamesUnion;
+        computedVectorSelectorData = createVectorSelectorDataFromVectors(vectorNamesUnion);
+
+        setAvailableVectorNames(computedAvailableVectorNames);
+        setVectorSelectorData(computedVectorSelectorData);
+    }
+
+    const selectedVectorNamesHasHistorical =
+        !isVectorListQueriesFetching && ensembleVectorListsHelper.current.hasAnyHistoricalVector(selectedVectorNames);
 
     const [selectedParameterIdentStr, setSelectedParameterIdentStr] = useValidState<string | null>({
         initialState: null,
         validStates: filteredParameterIdentList.map((item: ParameterIdent) => item.toString()),
     });
-
-    // Await update of vectorSelectorData until all vector lists are finished fetching
-    const isVectorListQueriesFetching = vectorListQueries.some((query) => query.isFetching);
-    let computedVectorSelectorData = vectorSelectorData;
-    if (!isVectorListQueriesFetching && !isEqual(currentVectorSelectorData, vectorSelectorData)) {
-        computedVectorSelectorData = currentVectorSelectorData;
-        setVectorSelectorData(currentVectorSelectorData);
-    }
 
     // Set error if all vector list queries fail
     const hasEveryVectorListQueryError =

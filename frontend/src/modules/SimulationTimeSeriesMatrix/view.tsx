@@ -2,15 +2,21 @@ import React from "react";
 import Plot from "react-plotly.js";
 
 import { SummaryVectorObservations_api } from "@api";
+import { ChannelContentDefinition } from "@framework/DataChannelTypes";
 import { Ensemble } from "@framework/Ensemble";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { ModuleFCProps } from "@framework/Module";
 import { useViewStatusWriter } from "@framework/StatusWriter";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
+import { timestampUtcMsToCompactIsoString } from "@framework/utils/timestampUtils";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { ColorScaleGradientType } from "@lib/utils/ColorScale";
 import { ContentError } from "@modules/_shared/components/ContentMessage";
 
+import { Annotations, Layout, PlotDatum, PlotMouseEvent, Shape } from "plotly.js";
+
+import { ChannelIds } from "./channelDefs";
+import { makeVectorGroupDataGenerator } from "./dataGenerators";
 import {
     useHistoricalVectorDataQueries,
     useStatisticalVectorDataQueries,
@@ -32,6 +38,8 @@ export const View = ({ moduleContext, workbenchSession, workbenchSettings }: Mod
 
     const ensembleSet = useEnsembleSet(workbenchSession);
     const statusWriter = useViewStatusWriter(moduleContext);
+
+    const [activeTimestampUtcMs, setActiveTimestampUtcMs] = React.useState<number | null>(null);
 
     // Store values
     const vectorSpecifications = moduleContext.useStoreValue("vectorSpecifications");
@@ -142,6 +150,32 @@ export const View = ({ moduleContext, workbenchSession, workbenchSettings }: Mod
         loadedVectorSpecificationsAndObservationData.push(...ensembleObservationData.vectorsObservationData);
     });
 
+    if (!isQueryFetching && activeTimestampUtcMs === null && loadedVectorSpecificationsAndRealizationData.length > 0) {
+        const firstTimeStamp =
+            loadedVectorSpecificationsAndRealizationData.at(0)?.data.at(0)?.timestamps_utc_ms[0] ?? null;
+        setActiveTimestampUtcMs(firstTimeStamp);
+    }
+
+    const contents: ChannelContentDefinition[] = loadedVectorSpecificationsAndRealizationData.map((el) => ({
+        contentIdString: `${el.vectorSpecification.vectorName}-::-${el.vectorSpecification.ensembleIdent}`,
+        displayName: `${el.vectorSpecification.vectorName} (${makeEnsembleDisplayName(
+            el.vectorSpecification.ensembleIdent
+        )})`,
+        dataGenerator: makeVectorGroupDataGenerator(
+            el.vectorSpecification,
+            loadedVectorSpecificationsAndRealizationData,
+            activeTimestampUtcMs ?? 0,
+            makeEnsembleDisplayName
+        ),
+    }));
+
+    moduleContext.usePublishChannelContents({
+        channelIdString: ChannelIds.TIME_SERIES,
+        dependencies: [loadedVectorSpecificationsAndRealizationData, activeTimestampUtcMs],
+        enabled: !isQueryFetching,
+        contents,
+    });
+
     // Create parameter color scale helper
     const doColorByParameter =
         colorRealizationsByParameter &&
@@ -240,8 +274,68 @@ export const View = ({ moduleContext, workbenchSession, workbenchSettings }: Mod
         subplotBuilder.addObservationsTraces(loadedVectorSpecificationsAndObservationData);
     }
 
+    function handleClickInChart(e: PlotMouseEvent) {
+        const clickedPoint: PlotDatum = e.points[0];
+        if (!clickedPoint) {
+            return;
+        }
+
+        if (clickedPoint.pointIndex >= 0 && clickedPoint.pointIndex < clickedPoint.data.x.length) {
+            const timestampUtcMs = clickedPoint.data.x[clickedPoint.pointIndex];
+            if (typeof timestampUtcMs === "number") {
+                setActiveTimestampUtcMs(timestampUtcMs);
+            }
+        }
+    }
+
     const doRenderContentError = hasRealizationsQueryError || hasStatisticsQueryError;
+
     const plotData = subplotBuilder.createPlotData();
+    const plotLayout = subplotBuilder.createPlotLayout();
+
+    const timeAnnotation: Partial<Annotations>[] = activeTimestampUtcMs
+        ? [
+              {
+                  xref: "x",
+                  yref: "paper",
+                  x: activeTimestampUtcMs,
+                  y: 0 - 22 / wrapperDivSize.height,
+                  text: timestampUtcMsToCompactIsoString(activeTimestampUtcMs),
+                  showarrow: false,
+                  arrowhead: 0,
+                  bgcolor: "rgba(255, 255, 255, 1)",
+                  bordercolor: "rgba(255, 0, 0, 1)",
+                  borderwidth: 2,
+                  borderpad: 4,
+              },
+          ]
+        : [];
+
+    const timeShape: Partial<Shape>[] = activeTimestampUtcMs
+        ? [
+              {
+                  type: "line",
+                  xref: "x",
+                  yref: "paper",
+                  x0: activeTimestampUtcMs,
+                  y0: 0,
+                  x1: activeTimestampUtcMs,
+                  y1: 1,
+                  line: {
+                      color: "red",
+                      width: 3,
+                      dash: "dot",
+                  },
+              },
+          ]
+        : [];
+
+    const adjustedPlotLayout: Partial<Layout> = {
+        ...plotLayout,
+        shapes: [...(plotLayout.shapes ?? []), ...timeShape],
+        annotations: [...(plotLayout.annotations ?? []), ...timeAnnotation],
+    };
+
     return (
         <div className="w-full h-full" ref={wrapperDivRef}>
             {doRenderContentError ? (
@@ -250,8 +344,9 @@ export const View = ({ moduleContext, workbenchSession, workbenchSettings }: Mod
                 <Plot
                     key={plotData.length} // Note: Temporary to trigger re-render and remove legends when plotData is empty
                     data={plotData}
-                    layout={subplotBuilder.createPlotLayout()}
+                    layout={adjustedPlotLayout}
                     config={{ scrollZoom: true }}
+                    onClick={handleClickInChart}
                 />
             )}
         </div>

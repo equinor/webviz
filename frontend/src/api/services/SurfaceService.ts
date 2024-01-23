@@ -1,3 +1,4 @@
+/* generated using openapi-typescript-codegen -- do no edit */
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
@@ -6,14 +7,10 @@ import type { SurfaceData } from '../models/SurfaceData';
 import type { SurfaceIntersectionData } from '../models/SurfaceIntersectionData';
 import type { SurfaceMeta } from '../models/SurfaceMeta';
 import type { SurfaceStatisticFunction } from '../models/SurfaceStatisticFunction';
-
 import type { CancelablePromise } from '../core/CancelablePromise';
 import type { BaseHttpRequest } from '../core/BaseHttpRequest';
-
 export class SurfaceService {
-
     constructor(public readonly httpRequest: BaseHttpRequest) {}
-
     /**
      * Get Surface Directory
      * Get a directory of surfaces in a Sumo ensemble
@@ -38,7 +35,6 @@ export class SurfaceService {
             },
         });
     }
-
     /**
      * Get Realization Surface Data
      * @param caseUuid Sumo case uuid
@@ -74,7 +70,6 @@ export class SurfaceService {
             },
         });
     }
-
     /**
      * Get Statistical Surface Data
      * @param caseUuid Sumo case uuid
@@ -110,7 +105,6 @@ export class SurfaceService {
             },
         });
     }
-
     /**
      * Get Property Surface Resampled To Static Surface
      * @param caseUuid Sumo case uuid
@@ -155,7 +149,6 @@ export class SurfaceService {
             },
         });
     }
-
     /**
      * Get Property Surface Resampled To Statistical Static Surface
      * @param caseUuid Sumo case uuid
@@ -197,7 +190,6 @@ export class SurfaceService {
             },
         });
     }
-
     /**
      * Post Get Surface Intersection
      * Get surface intersection data for requested surface name.
@@ -241,5 +233,4 @@ export class SurfaceService {
             },
         });
     }
-
 }

@@ -1,15 +1,12 @@
+/* generated using openapi-typescript-codegen -- do no edit */
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
 import type { PvtData } from '../models/PvtData';
-
 import type { CancelablePromise } from '../core/CancelablePromise';
 import type { BaseHttpRequest } from '../core/BaseHttpRequest';
-
 export class PvtService {
-
     constructor(public readonly httpRequest: BaseHttpRequest) {}
-
     /**
      * Table Data
      * Get pvt table data for a given Sumo ensemble and realization
@@ -37,7 +34,6 @@ export class PvtService {
             },
         });
     }
-
     /**
      * Realizations Tables Are Equal
      * Check if all realizations has the same pvt table
@@ -62,5 +58,4 @@ export class PvtService {
             },
         });
     }
-
 }

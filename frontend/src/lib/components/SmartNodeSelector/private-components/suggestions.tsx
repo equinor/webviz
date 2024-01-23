@@ -368,8 +368,13 @@ export class Suggestions extends React.Component<SuggestionsProps> {
     }
 
     renderPopup(): void {
-        this.maybeLoadNewOptions();
         const { tagInputFieldRef, visible, suggestionsRef } = this.props;
+        if (!visible) {
+            this._popupRoot?.render(null);
+            return;
+        }
+
+        this.maybeLoadNewOptions();
         const maxHeight =
             window.innerHeight -
             (tagInputFieldRef.current ? tagInputFieldRef.current.getBoundingClientRect().bottom + 10 : 200);

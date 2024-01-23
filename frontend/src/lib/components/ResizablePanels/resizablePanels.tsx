@@ -85,6 +85,10 @@ export const ResizablePanels: React.FC<ResizablePanelsProps> = (props) => {
                 return;
             }
 
+            // Prevent any scrolling on touch devices
+            e.preventDefault();
+            e.stopPropagation();
+
             let totalSize = 0;
             if (props.direction === "horizontal") {
                 totalSize = resizablePanelsRef.current?.getBoundingClientRect().width || 0;

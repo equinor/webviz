@@ -1,15 +1,12 @@
+/* generated using openapi-typescript-codegen -- do no edit */
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
 import type { GraphUserPhoto } from '../models/GraphUserPhoto';
-
 import type { CancelablePromise } from '../core/CancelablePromise';
 import type { BaseHttpRequest } from '../core/BaseHttpRequest';
-
 export class GraphService {
-
     constructor(public readonly httpRequest: BaseHttpRequest) {}
-
     /**
      * User Info
      * Get username, display name and avatar from Microsoft Graph API for a given user id
@@ -31,5 +28,4 @@ export class GraphService {
             },
         });
     }
-
 }

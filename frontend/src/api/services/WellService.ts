@@ -1,16 +1,13 @@
+/* generated using openapi-typescript-codegen -- do no edit */
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
 import type { WellBoreHeader } from '../models/WellBoreHeader';
 import type { WellBoreTrajectory } from '../models/WellBoreTrajectory';
-
 import type { CancelablePromise } from '../core/CancelablePromise';
 import type { BaseHttpRequest } from '../core/BaseHttpRequest';
-
 export class WellService {
-
     constructor(public readonly httpRequest: BaseHttpRequest) {}
-
     /**
      * Get Well Headers
      * Get well headers for all wells in the field
@@ -32,7 +29,6 @@ export class WellService {
             },
         });
     }
-
     /**
      * Get Field Well Trajectories
      * Get well trajectories for field
@@ -57,7 +53,6 @@ export class WellService {
             },
         });
     }
-
     /**
      * Get Well Trajectories
      * Get well trajectories
@@ -79,5 +74,4 @@ export class WellService {
             },
         });
     }
-
 }

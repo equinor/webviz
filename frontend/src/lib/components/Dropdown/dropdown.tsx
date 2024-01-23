@@ -3,7 +3,7 @@ import React from "react";
 import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
 import { createPortal } from "@lib/utils/createPortal";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-import { getTextWidthWithElement } from "@lib/utils/textSize";
+import { getTextWidthWithFont } from "@lib/utils/textSize";
 import { ExpandLess, ExpandMore } from "@mui/icons-material";
 
 import { BaseComponent, BaseComponentProps } from "../BaseComponent";
@@ -104,7 +104,7 @@ export const Dropdown = withDefaults<DropdownProps>()(defaultProps, (props) => {
 
     React.useEffect(() => {
         let longestOptionWidth = props.options.reduce((prev, current) => {
-            const labelWidth = getTextWidthWithElement(current.label, document.body);
+            const labelWidth = getTextWidthWithFont(current.label, "1rem");
             if (labelWidth > prev) {
                 return labelWidth;
             }
@@ -113,9 +113,9 @@ export const Dropdown = withDefaults<DropdownProps>()(defaultProps, (props) => {
 
         if (longestOptionWidth === 0) {
             if (props.options.length === 0 || filter === "") {
-                longestOptionWidth = getTextWidthWithElement(noOptionsText, document.body);
+                longestOptionWidth = getTextWidthWithFont(noOptionsText, "1rem");
             } else {
-                longestOptionWidth = getTextWidthWithElement(noMatchingOptionsText, document.body);
+                longestOptionWidth = getTextWidthWithFont(noMatchingOptionsText, "1rem");
             }
         }
         setDropdownRect((prev) => ({ ...prev, width: longestOptionWidth + 32 }));

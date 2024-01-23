@@ -6,8 +6,8 @@ import { Workbench } from "@framework/Workbench";
 import { Point, pointDifference, pointRelativeToDomRect, pointerEventToPoint } from "@lib/utils/geometry";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
+import { ChannelReceiverNodesWrapper } from "./private-components/channelReceiverNodesWrapper";
 import { Header } from "./private-components/header";
-import { InputChannelNodes } from "./private-components/inputChannelNodeWrapper";
 import { ViewContent } from "./private-components/viewContent";
 
 import { ViewWrapperPlaceholder } from "../viewWrapperPlaceholder";
@@ -47,6 +47,8 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
         guiMessageBroker,
         GuiState.DataChannelConnectionLayerVisible
     );
+
+    const [, setEditDataChannelConnections] = useGuiState(guiMessageBroker, GuiState.EditDataChannelConnections);
 
     const timeRef = React.useRef<number | null>(null);
     const pointerDown = React.useRef<boolean>(false);
@@ -127,10 +129,11 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
         handleModuleClick();
     }
 
-    function handleInputChannelsClick(e: React.PointerEvent<HTMLDivElement>): void {
+    function handleReceiversClick(e: React.PointerEvent<HTMLDivElement>): void {
         guiMessageBroker.publishEvent(GuiEvent.EditDataChannelConnectionsForModuleInstanceRequest, {
             moduleInstanceId: props.moduleInstance.getId(),
         });
+        setEditDataChannelConnections(true);
         e.stopPropagation();
     }
 
@@ -140,7 +143,9 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
     return (
         <>
             {props.isDragged && (
-                <ViewWrapperPlaceholder width={props.width} height={props.height} x={props.x} y={props.y} />
+                <>
+                    <ViewWrapperPlaceholder width={props.width} height={props.height} x={props.x} y={props.y} />
+                </>
             )}
             {props.changingLayout && (
                 <div
@@ -179,20 +184,30 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
                 }}
             >
                 <div
-                    className={`bg-white h-full w-full flex flex-col ${
-                        showAsActive && drawerContent ? "border-blue-500" : ""
-                    } border-solid border-2 box-border shadow ${
-                        props.isDragged ? "cursor-grabbing select-none" : "cursor-grab"
-                    }}`}
+                    className={resolveClassNames(
+                        "relative bg-white h-full w-full flex flex-col box-border shadow p-1 border-slate-100",
+                        {
+                            "cursor-grabbing select-none": props.isDragged,
+                        }
+                    )}
                     onPointerDown={handlePointerDown}
                     onPointerUp={handlePointerUp}
                 >
+                    <div
+                        className={resolveClassNames(
+                            "absolute w-full h-full z-10 inset-0 bg-transparent box-border border-solid border-2 pointer-events-none",
+                            {
+                                "border-blue-500": showAsActive && drawerContent === DrawerContent.ModuleSettings,
+                                "border-transparent": !showAsActive || drawerContent !== DrawerContent.ModuleSettings,
+                            }
+                        )}
+                    />
                     <Header
                         moduleInstance={props.moduleInstance}
                         isDragged={props.isDragged}
                         onPointerDown={handleHeaderPointerDown}
                         onRemoveClick={handleRemoveClick}
-                        onInputChannelsClick={handleInputChannelsClick}
+                        onReceiversClick={handleReceiversClick}
                         guiMessageBroker={guiMessageBroker}
                     />
                     <div
@@ -200,7 +215,7 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
                         onClick={handleModuleClick}
                     >
                         <ViewContent workbench={props.workbench} moduleInstance={props.moduleInstance} />
-                        <InputChannelNodes
+                        <ChannelReceiverNodesWrapper
                             forwardedRef={ref}
                             moduleInstance={props.moduleInstance}
                             workbench={props.workbench}

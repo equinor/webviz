@@ -1,10 +1,9 @@
+/* generated using openapi-typescript-codegen -- do no edit */
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-
 import type { EnsembleSensitivityCase } from './EnsembleSensitivityCase';
 import type { SensitivityType } from './SensitivityType';
-
 /**
  * Description/data for a single sensitivity in an ensemble
  */
