@@ -10,10 +10,10 @@ export function useElementBoundingRect(ref: React.RefObject<HTMLElement | SVGSVG
         let isHidden = false;
         let currentRect = new DOMRect(0, 0, 0, 0);
 
-        const handleResize = (): void => {
+        const handleResizeAndScroll = (): void => {
             if (ref.current) {
                 // If element is not visible do not change size as it might be expensive to render
-                if (!elementIsVisible(ref.current)) {
+                if (!isHidden && !elementIsVisible(ref.current)) {
                     isHidden = true;
                     return;
                 }
@@ -42,12 +42,13 @@ export function useElementBoundingRect(ref: React.RefObject<HTMLElement | SVGSVG
             }
         }
 
-        const resizeObserver = new ResizeObserver(handleResize);
+        const resizeObserver = new ResizeObserver(handleResizeAndScroll);
         const mutationObserver = new MutationObserver(handleMutations);
-        window.addEventListener("resize", handleResize);
+        window.addEventListener("resize", handleResizeAndScroll);
+        window.addEventListener("scroll", handleResizeAndScroll);
 
         if (ref.current) {
-            handleResize();
+            handleResizeAndScroll();
             resizeObserver.observe(ref.current);
             mutationObserver.observe(ref.current, {
                 attributes: true,
@@ -60,7 +61,8 @@ export function useElementBoundingRect(ref: React.RefObject<HTMLElement | SVGSVG
         return () => {
             resizeObserver.disconnect();
             mutationObserver.disconnect();
-            window.removeEventListener("resize", handleResize);
+            window.removeEventListener("resize", handleResizeAndScroll);
+            window.removeEventListener("scroll", handleResizeAndScroll);
         };
     }, [ref]);
 
