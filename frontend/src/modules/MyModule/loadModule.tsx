@@ -1,7 +1,7 @@
 import { ModuleRegistry } from "@framework/ModuleRegistry";
 import { ColorScaleGradientType, ColorScaleType } from "@lib/utils/ColorScale";
 
-import { settings } from "./settings";
+import { Settings } from "./settings";
 import { State } from "./state";
 import { View } from "./view";
 
@@ -16,4 +16,4 @@ const defaultState: State = {
 const module = ModuleRegistry.initModule<State>("MyModule", defaultState);
 
 module.viewFC = View;
-module.settingsFC = settings;
+module.settingsFC = Settings;

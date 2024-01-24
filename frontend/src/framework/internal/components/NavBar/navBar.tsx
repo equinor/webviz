@@ -115,12 +115,20 @@ export const NavBar: React.FC<NavBarProps> = (props) => {
         ensembleName: ens.getEnsembleName(),
     }));
 
-    function loadAndSetupEnsembles(selectedEnsembles: EnsembleItem[]): Promise<void> {
+    function loadAndSetupEnsemblesAndFieldConfigs(
+        selectedEnsembles: EnsembleItem[],
+        selectedFieldIdentifiers: string[]
+    ): Promise<void[]> {
         setNewSelectedEnsembles(selectedEnsembles);
         const selectedEnsembleIdents = selectedEnsembles.map(
             (ens) => new EnsembleIdent(ens.caseUuid, ens.ensembleName)
         );
-        return props.workbench.loadAndSetupEnsembleSetInSession(queryClient, selectedEnsembleIdents);
+        const promises: Promise<void>[] = [];
+
+        promises.push(props.workbench.loadAndSetupEnsembleSetInSession(queryClient, selectedEnsembleIdents));
+        promises.push(props.workbench.loadAndSetupFieldConfigSetInSession(selectedFieldIdentifiers));
+
+        return Promise.all(promises);
     }
 
     let fixedSelectedEnsembles = selectedEnsembles;
@@ -256,7 +264,7 @@ export const NavBar: React.FC<NavBarProps> = (props) => {
             </div>
             {ensembleDialogOpen && (
                 <SelectEnsemblesDialog
-                    loadAndSetupEnsembles={loadAndSetupEnsembles}
+                    loadAndSetupEnsemblesAndFieldConfigs={loadAndSetupEnsemblesAndFieldConfigs}
                     selectedEnsembles={fixedSelectedEnsembles}
                     onClose={handleEnsembleDialogClose}
                 />

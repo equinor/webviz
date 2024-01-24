@@ -25,7 +25,14 @@ export default defineConfig(({ mode }) => {
     }
 
     return {
-        plugins: [react(), vitePluginChecker({ typescript: true })],
+        plugins: [
+            react({
+                babel: {
+                    plugins: ["@babel/plugin-syntax-import-attributes"],
+                },
+            }),
+            vitePluginChecker({ typescript: true }),
+        ],
         build: {
             rollupOptions: {
                 input: {

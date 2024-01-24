@@ -1,6 +1,9 @@
 import React from "react";
 
-import { ModuleFCProps } from "@framework/Module";
+import { EnsembleIdent } from "@framework/EnsembleIdent";
+import { ModuleFC, ModuleFCProps } from "@framework/Module";
+import { useEnsembleSet, useFieldConfigSet } from "@framework/WorkbenchSession";
+import { SingleEnsembleSelect } from "@framework/components/SingleEnsembleSelect";
 import { ColorGradient } from "@lib/components/ColorGradient/colorGradient";
 import { Input } from "@lib/components/Input";
 import { Label } from "@lib/components/Label";
@@ -9,12 +12,27 @@ import { ColorScaleGradientType, ColorScaleType } from "@lib/utils/ColorScale";
 
 import { State } from "./state";
 
-export const settings = (props: ModuleFCProps<State>) => {
+export const Settings: ModuleFC<State> = (props: ModuleFCProps<State>) => {
     const [type, setType] = props.moduleContext.useStoreState("type");
     const [gradientType, setGradientType] = props.moduleContext.useStoreState("gradientType");
     const [min, setMin] = props.moduleContext.useStoreState("min");
     const [max, setMax] = props.moduleContext.useStoreState("max");
     const [divMidPoint, setDivMidPoint] = props.moduleContext.useStoreState("divMidPoint");
+
+    const [selectedEnsembeIdent, setSelectedEnsembleIdent] = React.useState<EnsembleIdent | null>(null);
+    const [fieldConfigApplied, setFieldConfigApplied] = React.useState<boolean>(false);
+
+    const ensembleSet = useEnsembleSet(props.workbenchSession);
+    const fieldConfigSet = useFieldConfigSet(props.workbenchSession);
+    const fieldConfig = fieldConfigSet.getConfig("Drogon");
+
+    React.useEffect(() => {
+        if (!fieldConfigApplied && fieldConfig) {
+            setFieldConfigApplied(true);
+            setMin(fieldConfig.range[0]);
+            setMax(fieldConfig.range[1]);
+        }
+    }, [fieldConfigApplied, fieldConfig, setMax, setMin]);
 
     function handleTypeChange(e: React.ChangeEvent<HTMLInputElement>) {
         setType(e.target.value as ColorScaleType);
@@ -22,6 +40,10 @@ export const settings = (props: ModuleFCProps<State>) => {
 
     function handleGradientTypeChange(e: React.ChangeEvent<HTMLInputElement>) {
         setGradientType(e.target.value as ColorScaleGradientType);
+    }
+
+    function handleEnsembleChange(ensembleIdent: EnsembleIdent | null) {
+        setSelectedEnsembleIdent(ensembleIdent);
     }
 
     const colorScale =
@@ -35,6 +57,13 @@ export const settings = (props: ModuleFCProps<State>) => {
 
     return (
         <div className="flex flex-col gap-4">
+            <Label text="Ensemble set">
+                <SingleEnsembleSelect
+                    ensembleSet={ensembleSet}
+                    value={selectedEnsembeIdent}
+                    onChange={handleEnsembleChange}
+                />
+            </Label>
             <Label text="Type">
                 <RadioGroup
                     value={type}

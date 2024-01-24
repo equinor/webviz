@@ -2,14 +2,20 @@ import React from "react";
 
 import { Ensemble } from "./Ensemble";
 import { EnsembleSet } from "./EnsembleSet";
+import { FieldConfigSet } from "./FieldConfigs";
 
 export enum WorkbenchSessionEvent {
     EnsembleSetChanged = "EnsembleSetChanged",
     EnsembleSetLoadingStateChanged = "EnsembleSetLoadingStateChanged",
+    FieldConfigSetChanged = "FieldConfigSetChanged",
+    FieldConfigSetLoadingStateChanged = "FieldConfigSetLoadingStateChanged",
 }
 
 export type WorkbenchSessionPayloads = {
     [WorkbenchSessionEvent.EnsembleSetLoadingStateChanged]: {
+        isLoading: boolean;
+    };
+    [WorkbenchSessionEvent.FieldConfigSetLoadingStateChanged]: {
         isLoading: boolean;
     };
 };
@@ -17,9 +23,14 @@ export type WorkbenchSessionPayloads = {
 export class WorkbenchSession {
     private _subscribersMap: Map<keyof WorkbenchSessionEvent, Set<(payload: any) => void>> = new Map();
     protected _ensembleSet: EnsembleSet = new EnsembleSet([]);
+    protected _fieldConfigSet: FieldConfigSet = new FieldConfigSet([]);
 
     getEnsembleSet(): EnsembleSet {
         return this._ensembleSet;
+    }
+
+    getFieldConfigSet(): FieldConfigSet {
+        return this._fieldConfigSet;
     }
 
     subscribe<T extends Exclude<WorkbenchSessionEvent, keyof WorkbenchSessionPayloads>>(
@@ -100,6 +111,52 @@ export function useIsEnsembleSetLoading(workbenchSession: WorkbenchSession): boo
             const unsubFunc = workbenchSession.subscribe(
                 WorkbenchSessionEvent.EnsembleSetLoadingStateChanged,
                 handleEnsembleSetLoadingStateChanged
+            );
+            return unsubFunc;
+        },
+        [workbenchSession]
+    );
+
+    return isLoading;
+}
+
+export function useFieldConfigSet(workbenchSession: WorkbenchSession): FieldConfigSet {
+    const [storedFieldConfigSet, setStoredFieldConfigSet] = React.useState<FieldConfigSet>(
+        workbenchSession.getFieldConfigSet()
+    );
+
+    React.useEffect(
+        function subscribeToFieldConfigSetChanges() {
+            function handleFieldConfigSetChanged() {
+                setStoredFieldConfigSet(workbenchSession.getFieldConfigSet());
+            }
+
+            const unsubFunc = workbenchSession.subscribe(
+                WorkbenchSessionEvent.FieldConfigSetChanged,
+                handleFieldConfigSetChanged
+            );
+            return unsubFunc;
+        },
+        [workbenchSession]
+    );
+
+    return storedFieldConfigSet;
+}
+
+export function useIsFieldConfigSetLoading(workbenchSession: WorkbenchSession): boolean {
+    const [isLoading, setIsLoading] = React.useState<boolean>(false);
+
+    React.useEffect(
+        function subscribeToFieldConfigSetLoadingStateChanges() {
+            function handleFieldConfigSetLoadingStateChanged(
+                payload: WorkbenchSessionPayloads[WorkbenchSessionEvent.FieldConfigSetLoadingStateChanged]
+            ) {
+                setIsLoading(payload.isLoading);
+            }
+
+            const unsubFunc = workbenchSession.subscribe(
+                WorkbenchSessionEvent.FieldConfigSetLoadingStateChanged,
+                handleFieldConfigSetLoadingStateChanged
             );
             return unsubFunc;
         },

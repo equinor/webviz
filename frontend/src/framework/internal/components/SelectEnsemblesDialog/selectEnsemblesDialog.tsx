@@ -29,7 +29,10 @@ export type EnsembleItem = {
 };
 
 export type SelectEnsemblesDialogProps = {
-    loadAndSetupEnsembles: (selectedEnsembles: EnsembleItem[]) => Promise<void>;
+    loadAndSetupEnsemblesAndFieldConfigs: (
+        selectedEnsembles: EnsembleItem[],
+        selectedFieldIdentifiers: string[]
+    ) => Promise<void[]>;
     onClose: () => void;
     selectedEnsembles: EnsembleItem[];
 };
@@ -47,6 +50,7 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
     const [isLoadingEnsembles, setIsLoadingEnsembles] = React.useState<boolean>(false);
     const [confirmCancel, setConfirmCancel] = React.useState<boolean>(false);
     const [newlySelectedEnsembles, setNewlySelectedEnsembles] = React.useState<EnsembleItem[]>([]);
+    const [newlySelectedFieldIdentifiers, setNewlySelectedFieldIdentifiers] = React.useState<Set<string>>(new Set([]));
     const [casesFilteringOptions, setCasesFilteringOptions] = React.useState<CaseFilterSettings>({
         keep: true,
         onlyMyCases: false,
@@ -137,9 +141,13 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
 
     function handleAddEnsemble() {
         if (!checkIfEnsembleAlreadySelected()) {
+            const fieldIdentifier = selectedField;
             const caseName = casesQuery.data?.find((c) => c.uuid === selectedCaseId)?.name ?? "UNKNOWN";
-            const ensArr = [{ caseUuid: selectedCaseId, caseName: caseName, ensembleName: selectedEnsembleName }];
+            const ensArr = [
+                { fieldIdentifier, caseUuid: selectedCaseId, caseName: caseName, ensembleName: selectedEnsembleName },
+            ];
             setNewlySelectedEnsembles((prev) => [...prev, ...ensArr]);
+            setNewlySelectedFieldIdentifiers((prev) => new Set([...prev, fieldIdentifier]));
         }
     }
 
@@ -165,7 +173,7 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
     function handleApplyEnsembleSelection() {
         setIsLoadingEnsembles(true);
         props
-            .loadAndSetupEnsembles(newlySelectedEnsembles)
+            .loadAndSetupEnsemblesAndFieldConfigs(newlySelectedEnsembles, Array.from(newlySelectedFieldIdentifiers))
             .then(() => {
                 handleClose();
             })

@@ -2,6 +2,7 @@ import React from "react";
 import Plot from "react-plotly.js";
 
 import { ModuleFCProps } from "@framework/Module";
+import { useEnsembleSet, useFieldConfigSet } from "@framework/WorkbenchSession";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { ColorScaleType } from "@lib/utils/ColorScale";
 
@@ -409,6 +410,10 @@ export const View = (props: ModuleFCProps<State>) => {
     const max = props.moduleContext.useStoreValue("max");
     const divMidPoint = props.moduleContext.useStoreValue("divMidPoint");
 
+    const fieldConfigSet = useFieldConfigSet(props.workbenchSession);
+
+    const drogonConfig = fieldConfigSet.getConfig("Drogon");
+
     const ref = React.useRef<HTMLDivElement>(null);
 
     const size = useElementSize(ref);
@@ -439,8 +444,13 @@ export const View = (props: ModuleFCProps<State>) => {
         margin: { t: 0, b: 0 },
     };
 
+    if (!drogonConfig) {
+        return <div>Drogon config not available</div>;
+    }
+
     return (
         <div ref={ref} className="w-full h-full">
+            {JSON.stringify(drogonConfig)}
             <Plot data={[data]} layout={layout} />
         </div>
     );

@@ -10,6 +10,7 @@ import { Template } from "./TemplateRegistry";
 import { WorkbenchServices } from "./WorkbenchServices";
 import { WorkbenchSession } from "./WorkbenchSession";
 import { loadEnsembleSetMetadataFromBackend } from "./internal/EnsembleSetLoader";
+import { loadFieldConfigs } from "./internal/FieldConfigSetLoader";
 import { PrivateWorkbenchServices } from "./internal/PrivateWorkbenchServices";
 import { PrivateWorkbenchSettings } from "./internal/PrivateWorkbenchSettings";
 import { WorkbenchSessionPrivate } from "./internal/WorkbenchSessionPrivate";
@@ -204,7 +205,7 @@ export class Workbench {
         queryClient: QueryClient,
         specifiedEnsembleIdents: EnsembleIdent[]
     ): Promise<void> {
-        this.storeEnsembleSetInLocalStorage(specifiedEnsembleIdents);
+        this.storeSpecifiedEnsemblesInLocalStorage(specifiedEnsembleIdents);
 
         const ensembleIdentsToLoad: EnsembleIdent[] = [];
         for (const ensSpec of specifiedEnsembleIdents) {
@@ -217,12 +218,30 @@ export class Workbench {
         console.debug("loadAndSetupEnsembleSetInSession - loading done");
         console.debug("loadAndSetupEnsembleSetInSession - publishing");
         this._workbenchSession.setEnsembleSetLoadingState(false);
+
         return this._workbenchSession.setEnsembleSet(newEnsembleSet);
     }
 
-    private storeEnsembleSetInLocalStorage(specifiedEnsembleIdents: EnsembleIdent[]): void {
+    async loadAndSetupFieldConfigSetInSession(fieldsToLoadConfigFor: string[]): Promise<void> {
+        this.storeFieldsToLoadConfigForInLocalStorage(fieldsToLoadConfigFor);
+
+        console.debug("loadAndSetupFieldConfigSetInSession - starting load");
+        this._workbenchSession.setFieldConfigSetLoadingState(true);
+        const newFieldConfigSet = await loadFieldConfigs(fieldsToLoadConfigFor);
+        console.debug("loadAndSetupFieldConfigSetInSession - loading done");
+        console.debug("loadAndSetupFieldConfigSetInSession - publishing");
+        this._workbenchSession.setFieldConfigSetLoadingState(false);
+
+        return this._workbenchSession.setFieldConfigSet(newFieldConfigSet);
+    }
+
+    private storeSpecifiedEnsemblesInLocalStorage(specifiedEnsembleIdents: EnsembleIdent[]): void {
         const ensembleIdentsToStore = specifiedEnsembleIdents.map((el) => el.toString());
         localStorage.setItem("ensembleIdents", JSON.stringify(ensembleIdentsToStore));
+    }
+
+    private storeFieldsToLoadConfigForInLocalStorage(fieldsToLoadConfigFor: string[]): void {
+        localStorage.setItem("fieldsToLoadConfigFor", JSON.stringify(fieldsToLoadConfigFor));
     }
 
     maybeLoadEnsembleSetFromLocalStorage(): EnsembleIdent[] | null {
