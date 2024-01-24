@@ -2,14 +2,13 @@ import React from "react";
 import Plot from "react-plotly.js";
 
 import { VectorHistoricalData_api, VectorRealizationData_api, VectorStatisticData_api } from "@api";
-import { BroadcastChannelMeta } from "@framework/Broadcaster";
 import { ModuleFCProps } from "@framework/Module";
 import { useSubscribedValue } from "@framework/WorkbenchServices";
 import { useElementSize } from "@lib/hooks/useElementSize";
 
 import { Layout, PlotData, PlotDatum, PlotHoverEvent } from "plotly.js";
 
-import { BroadcastChannelNames } from "./channelDefs";
+import { ChannelIds } from "./channelDefs";
 import { useHistoricalVectorDataQuery, useStatisticalVectorDataQuery, useVectorDataQuery } from "./queryHooks";
 import { State } from "./state";
 
@@ -65,35 +64,32 @@ export const View = ({ moduleContext, workbenchSession, workbenchServices }: Mod
     const ensembleSet = workbenchSession.getEnsembleSet();
     const ensemble = vectorSpec ? ensembleSet.findEnsemble(vectorSpec.ensembleIdent) : null;
 
-    React.useEffect(
-        function broadcast() {
-            if (!ensemble) {
-                return;
-            }
+    function dataGenerator() {
+        const data: { key: number; value: number }[] = [];
+        if (vectorQuery.data) {
+            vectorQuery.data.forEach((vectorRealizationData) => {
+                data.push({
+                    key: vectorRealizationData.realization,
+                    value: vectorRealizationData.values[0],
+                });
+            });
+        }
+        return {
+            data,
+            metaData: {
+                ensembleIdentString: vectorSpec?.ensembleIdent.toString() ?? "",
+            },
+        };
+    }
 
-            const dataGenerator = (): { key: number; value: number }[] => {
-                const data: { key: number; value: number }[] = [];
-                if (vectorQuery.data) {
-                    vectorQuery.data.forEach((vec) => {
-                        data.push({
-                            key: vec.realization,
-                            value: vec.values[0],
-                        });
-                    });
-                }
-                return data;
-            };
-
-            const channelMeta: BroadcastChannelMeta = {
-                ensembleIdent: ensemble.getIdent(),
-                description: `${ensemble.getDisplayName()} ${vectorSpec?.vectorName}`,
-                unit: vectorQuery.data?.at(0)?.unit || "",
-            };
-
-            moduleContext.getChannel(BroadcastChannelNames.Realization_Value).broadcast(channelMeta, dataGenerator);
-        },
-        [vectorQuery.data, ensemble, vectorSpec, moduleContext]
-    );
+    moduleContext.usePublishChannelContents({
+        channelIdString: ChannelIds.REALIZATION_VALUE,
+        dependencies: [vectorQuery.data, ensemble, vectorSpec],
+        enabled: vectorSpec !== null,
+        contents: [
+            { contentIdString: vectorSpec?.vectorName ?? "", displayName: vectorSpec?.vectorName ?? "", dataGenerator },
+        ],
+    });
 
     const subscribedHoverTimestamp = useSubscribedValue("global.hoverTimestamp", workbenchServices);
     const subscribedHoverRealization = useSubscribedValue("global.hoverRealization", workbenchServices);

@@ -3,8 +3,6 @@ import React from "react";
 import { isDevMode } from "@lib/utils/devMode";
 import { Point } from "@lib/utils/geometry";
 
-import { GlobalCursor } from "./internal/GlobalCursor";
-
 export enum DrawerContent {
     ModuleSettings = "ModuleSettings",
     ModulesList = "ModulesList",
@@ -19,6 +17,7 @@ export enum GuiState {
     ActiveModuleInstanceId = "activeModuleInstanceId",
     DataChannelConnectionLayerVisible = "dataChannelConnectionLayerVisible",
     DevToolsVisible = "devToolsVisible",
+    EditDataChannelConnections = "editDataChannelConnections",
 }
 
 export enum GuiEvent {
@@ -56,7 +55,7 @@ export type GuiEventPayloads = {
     };
     [GuiEvent.HighlightDataChannelConnectionRequest]: {
         moduleInstanceId: string;
-        dataChannelName: string;
+        receiverIdString: string;
     };
     [GuiEvent.DataChannelOriginPointerDown]: {
         moduleInstanceId: string;
@@ -73,6 +72,7 @@ type GuiStateValueTypes = {
     [GuiState.ActiveModuleInstanceId]: string;
     [GuiState.DataChannelConnectionLayerVisible]: boolean;
     [GuiState.DevToolsVisible]: boolean;
+    [GuiState.EditDataChannelConnections]: boolean;
 };
 
 const defaultStates: Map<GuiState, any> = new Map();
@@ -88,19 +88,13 @@ export class GuiMessageBroker {
     private _eventListeners: Map<GuiEvent, Set<(event: any) => void>>;
     private _stateSubscribers: Map<GuiState, Set<(state: any) => void>>;
     private _storedValues: Map<GuiState, any>;
-    private _globalCursor: GlobalCursor;
 
     constructor() {
         this._eventListeners = new Map();
         this._stateSubscribers = new Map();
         this._storedValues = defaultStates;
-        this._globalCursor = new GlobalCursor();
 
         this.loadPersistentStates();
-    }
-
-    getGlobalCursor(): GlobalCursor {
-        return this._globalCursor;
     }
 
     private loadPersistentStates() {
