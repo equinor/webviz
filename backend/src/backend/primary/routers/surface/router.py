@@ -1,16 +1,13 @@
 import logging
 from typing import List, Union, Optional
 
+import numpy as np
 from fastapi import APIRouter, Depends, HTTPException, Query, Response, Body, Request
 
 from src.services.sumo_access.surface_access import SurfaceAccess
 from src.services.smda_access.stratigraphy_access import StratigraphyAccess
-from src.services.smda_access.stratigraphy_utils import (
-    sort_stratigraphic_names_by_hierarchy,
-)
-from src.services.smda_access.mocked_drogon_smda_access import (
-    _mocked_stratigraphy_access,
-)
+from src.services.smda_access.stratigraphy_utils import sort_stratigraphic_names_by_hierarchy
+from src.services.smda_access.mocked_drogon_smda_access import _mocked_stratigraphy_access
 from src.services.utils.statistic_function import StatisticFunction
 from src.services.utils.authenticated_user import AuthenticatedUser
 from src.services.utils.perf_timer import PerfTimer
@@ -20,8 +17,6 @@ from src.services.sumo_access._helpers import SumoCase
 
 from . import converters
 from . import schemas
-
-import numpy as np
 
 LOGGER = logging.getLogger(__name__)
 
@@ -71,10 +66,7 @@ async def get_realization_surface_data(
 
     access = await SurfaceAccess.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
     xtgeo_surf = await access.get_realization_surface_data_async(
-        real_num=realization_num,
-        name=name,
-        attribute=attribute,
-        time_or_interval_str=time_or_interval,
+        real_num=realization_num, name=name, attribute=attribute, time_or_interval_str=time_or_interval
     )
     perf_metrics.record_lap("get-surf")
 
@@ -195,7 +187,7 @@ async def get_property_surface_resampled_to_statistical_static_surface(
             name=name_mesh,
             attribute=attribute_mesh,
         )
-        xtgeo_surf_property = await access.get_statistical_surfaces_data_async(
+        xtgeo_surf_property = await access.get_statistical_surface_data_async(
             statistic_function=service_stat_func_to_compute,
             name=name_property,
             attribute=attribute_property,
@@ -209,7 +201,7 @@ async def get_property_surface_resampled_to_statistical_static_surface(
 
     surf_data_response = converters.to_api_surface_data(resampled_surface)
 
-    LOGGER.debug(f"Loaded property surface and created image, total time: {timer.elapsed_ms()}ms")
+    LOGGER.info(f"Loaded property surface and created image, total time: {timer.elapsed_ms()}ms")
 
     return surf_data_response
 
@@ -345,7 +337,7 @@ async def well_intersection_statistics(
     )
 
     async def fetch_surface(statistics, surface_name):
-        surfaces = await access.get_statistical_surfaces_data_async(
+        surfaces = await access.get_statistical_surface_data_async(
             statistic_functions=[StatisticFunction.from_string_value(statistic) for statistic in statistics],
             name=surface_name,
             attribute=statistical_surface_set_spec.surface_attribute,

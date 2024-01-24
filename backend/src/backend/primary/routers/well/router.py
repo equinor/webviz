@@ -24,6 +24,7 @@ async def get_well_headers(
     # fmt:on
 ) -> List[WellBoreHeader]:
     """Get well headers for all wells in the field"""
+
     case_inspector = await SumoCase.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid)
     field_identifier = (await case_inspector.get_field_identifiers())[0]
     well_access: Union[WellAccess, mocked_drogon_smda_access.WellAccess]

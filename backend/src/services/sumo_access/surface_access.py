@@ -169,7 +169,7 @@ class SurfaceAccess(SumoEnsemble):
 
         return xtgeo_surf
 
-    async def get_statistical_surfaces_data_async(
+    async def get_statistical_surface_data_async(
         self,
         statistic_functions: list[StatisticFunction],
         name: str,
