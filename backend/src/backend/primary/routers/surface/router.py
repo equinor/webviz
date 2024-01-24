@@ -255,7 +255,6 @@ async def intersectSurface(
     surface_fence_spec: schemas.SurfaceFenceSpec = Body(embed=True),
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
 ) -> List[schemas.SurfaceIntersectionPoints]:
-
     case_uuid = ensemble_ident.case_uuid
     snames = realizations_surface_set_spec.surface_names
     sattr = realizations_surface_set_spec.surface_attribute
@@ -293,7 +292,6 @@ async def intersectSurface(
         realization_nums,
         bearer_token,
     ):
-
         object_ids = await get_surface_set_uuids(
             case_uuid,
             ensemble_name,
@@ -319,7 +317,6 @@ async def intersectSurface(
 
     intersections: List[schemas.SurfaceIntersectionPoints] = []
     for z_arrs in await fetch_all():
-
         for idx, z_arr in enumerate(z_arrs):
             # Replace 1e30 with np.nan in z_arr
             zarr = np.where(np.isclose(z_arr, 1e30, atol=1e22), np.nan, z_arr)
