@@ -287,7 +287,6 @@ async def _compute_statistical_surfaces_async(
     return surfs
 
 
-
 def _make_intersection(surface: xtgeo.RegularSurface, xtgeo_fencespec: np.ndarray) -> XtgeoSurfaceIntersectionResult:
     line = surface.get_randomline(xtgeo_fencespec)
     intersection = XtgeoSurfaceIntersectionResult(

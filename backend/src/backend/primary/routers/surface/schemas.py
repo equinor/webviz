@@ -106,6 +106,8 @@ class SurfaceIntersectionCumulativeLengthPolyline(BaseModel):
     x_points: List[float]
     y_points: List[float]
     cum_lengths: List[float]
+
+
 class SurfaceIntersectionPoints(BaseModel):
     name: str
     z_array: list[float]
