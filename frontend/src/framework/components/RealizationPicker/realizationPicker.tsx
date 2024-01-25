@@ -5,6 +5,7 @@ import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { getTextWidthWithFont } from "@lib/utils/textSize";
 import { Close } from "@mui/icons-material";
 
+import { isEqual } from "lodash";
 import { v4 } from "uuid";
 
 enum SelectionValidity {
@@ -146,7 +147,7 @@ const RealizationRangeTag: React.FC<RealizationRangeTagProps> = (props) => {
             />
             <div
                 className={resolveClassNames(
-                    "text-slate-800 hover:text-slate-600 text-sm cursor-pointer flex items-center",
+                    "text-slate-800 hover:text-slate-600 text-sm cursor-pointer flex items-center out",
                     {
                         invisible: hasFocus,
                     }
@@ -183,19 +184,46 @@ function calcUniqueSelections(selections: readonly Selection[], validRealization
     return uniqueSelectionsArray.sort((a, b) => a - b);
 }
 
+export type RealizationPickerSelection = {
+    selectedRealizations: number[];
+    selectedRangeTags: string[];
+};
+
 export type RealizationPickerProps = {
+    selectedRangeTags?: readonly string[];
+    initialRangeTags?: readonly string[];
     validRealizations?: readonly number[];
     debounceTimeMs?: number;
-    onChange?: (selectedRealizations: number[]) => void;
+    onChange?: (realizationPickerSelection: RealizationPickerSelection) => void;
 } & BaseComponentProps;
 
 export const RealizationPicker: React.FC<RealizationPickerProps> = (props) => {
-    const [selections, setSelections] = React.useState<Selection[]>([]);
+    const [selections, setSelections] = React.useState<Selection[]>(
+        props.initialRangeTags
+            ? [...props.initialRangeTags].map((rangeTag) => {
+                  return { value: rangeTag, uuid: v4() };
+              })
+            : []
+    );
     const [activeSelectionUuid, setActiveSelectionUuid] = React.useState<string | null>(null);
     const [caretPosition, setCaretPosition] = React.useState<CaretPosition>(CaretPosition.End);
+    const [prevSelectedRangeTags, setPrevSelectedRangeTags] = React.useState<string[]>(
+        props.selectedRangeTags ? [...props.selectedRangeTags] : []
+    );
 
     const debounceTimeout = React.useRef<ReturnType<typeof setTimeout> | null>(null);
     const inputRef = React.useRef<HTMLInputElement>(null);
+
+    let candidateSelections = selections;
+    if (props.selectedRangeTags !== undefined && !isEqual(props.selectedRangeTags, prevSelectedRangeTags)) {
+        candidateSelections =
+            props.selectedRangeTags?.map((rangeTag) => {
+                return { value: rangeTag, uuid: v4() };
+            }) ?? [];
+        setSelections(candidateSelections);
+        setPrevSelectedRangeTags(props.selectedRangeTags ? [...props.selectedRangeTags] : []);
+    }
+    const computedSelections = candidateSelections;
 
     const checkValidity = React.useCallback(
         function checkValidity(value: string): SelectionValidityInfo {
@@ -277,14 +305,17 @@ export const RealizationPicker: React.FC<RealizationPickerProps> = (props) => {
 
         debounceTimeout.current = setTimeout(() => {
             if (props.onChange) {
-                props.onChange(calcUniqueSelections(newSelections, props.validRealizations));
+                props.onChange({
+                    selectedRealizations: calcUniqueSelections(newSelections, props.validRealizations),
+                    selectedRangeTags: newSelections.map((selection) => selection.value),
+                });
             }
         }, props.debounceTimeMs || 0);
     }
 
     function handleChange(event: React.ChangeEvent<HTMLInputElement>) {
         const value = event.target.value;
-        const newSelections = [...selections, { value, uuid: v4() }];
+        const newSelections = [...computedSelections, { value, uuid: v4() }];
         setSelections(newSelections);
         setActiveSelectionUuid(null);
         event.target.value = "";
@@ -302,7 +333,9 @@ export const RealizationPicker: React.FC<RealizationPickerProps> = (props) => {
     }
 
     function handleRemove(uuid: string) {
-        setSelections((selections) => selections.filter((selection) => selection.uuid !== uuid));
+        const newSelections = computedSelections.filter((selection) => selection.uuid !== uuid);
+        setSelections(newSelections);
+        handleSelectionsChange(newSelections);
     }
 
     function handleKeyDown(event: React.KeyboardEvent<HTMLInputElement>) {
@@ -310,9 +343,11 @@ export const RealizationPicker: React.FC<RealizationPickerProps> = (props) => {
 
         const allowedChars = "0123456789-,";
         if (event.key === "Backspace" && event.currentTarget.value === "") {
-            const lastSelection = selections[selections.length - 1];
+            const lastSelection = computedSelections[computedSelections.length - 1];
             if (lastSelection) {
-                setSelections((selections) => selections.slice(0, -1));
+                const newSelections = selections.slice(0, -1);
+                setSelections(newSelections);
+                // handleSelectionsChange(newSelections);
             }
             if (inputRef.current) {
                 inputRef.current.value = lastSelection?.value || "";
@@ -325,12 +360,14 @@ export const RealizationPicker: React.FC<RealizationPickerProps> = (props) => {
             return;
         } else if (event.key === "ArrowLeft") {
             if (eventTarget.selectionStart === 0 && eventTarget.selectionEnd === 0) {
-                let currentSelectionIndex = selections.findIndex((selection) => selection.uuid === activeSelectionUuid);
+                let currentSelectionIndex = computedSelections.findIndex(
+                    (selection) => selection.uuid === activeSelectionUuid
+                );
                 if (activeSelectionUuid === null) {
-                    currentSelectionIndex = selections.length;
+                    currentSelectionIndex = computedSelections.length;
                 }
                 if (currentSelectionIndex > 0) {
-                    setActiveSelectionUuid(selections[currentSelectionIndex - 1].uuid);
+                    setActiveSelectionUuid(computedSelections[currentSelectionIndex - 1].uuid);
                     setCaretPosition(CaretPosition.End);
                 }
                 event.preventDefault();
@@ -340,11 +377,11 @@ export const RealizationPicker: React.FC<RealizationPickerProps> = (props) => {
                 eventTarget.selectionStart === eventTarget.value.length &&
                 eventTarget.selectionEnd === eventTarget.value.length
             ) {
-                const currentSelectionIndex = selections.findIndex(
+                const currentSelectionIndex = computedSelections.findIndex(
                     (selection) => selection.uuid === activeSelectionUuid
                 );
-                if (currentSelectionIndex !== -1 && currentSelectionIndex < selections.length - 1) {
-                    setActiveSelectionUuid(selections[currentSelectionIndex + 1].uuid);
+                if (currentSelectionIndex !== -1 && currentSelectionIndex < computedSelections.length - 1) {
+                    setActiveSelectionUuid(computedSelections[currentSelectionIndex + 1].uuid);
                     setCaretPosition(CaretPosition.Start);
                 } else {
                     setActiveSelectionUuid(null);
@@ -359,7 +396,7 @@ export const RealizationPicker: React.FC<RealizationPickerProps> = (props) => {
     }
 
     function handleTagValueChange(uuid: string, value: string) {
-        const newSelections = selections.map((selection) => {
+        const newSelections = computedSelections.map((selection) => {
             if (selection.uuid === uuid) {
                 return { ...selection, value };
             }
@@ -372,15 +409,16 @@ export const RealizationPicker: React.FC<RealizationPickerProps> = (props) => {
     function clearSelections() {
         setSelections([]);
         setActiveSelectionUuid(null);
+        handleSelectionsChange([]);
     }
 
-    const numSelectedRealizations = calcUniqueSelections(selections, props.validRealizations).length;
+    const numSelectedRealizations = calcUniqueSelections(computedSelections, props.validRealizations).length;
 
     return (
         <BaseComponent disabled={props.disabled}>
             <div className="relative border border-gray-300 rounded p-2 pr-6 min-h-[3rem]">
                 <ul className="flex flex-wrap items-center cursor-text gap-1 h-full" onPointerDown={handlePointerDown}>
-                    {selections.map((selection) => (
+                    {computedSelections.map((selection) => (
                         <RealizationRangeTag
                             key={selection.uuid}
                             uuid={selection.uuid}

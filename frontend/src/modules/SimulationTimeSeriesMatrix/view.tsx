@@ -37,7 +37,7 @@ export const View = ({ moduleContext, workbenchSession, workbenchSettings }: Mod
     const vectorSpecifications = moduleContext.useStoreValue("vectorSpecifications");
     const groupBy = moduleContext.useStoreValue("groupBy");
     const resampleFrequency = moduleContext.useStoreValue("resamplingFrequency");
-    const realizationsToInclude = moduleContext.useStoreValue("realizationsToInclude");
+    const useRealizationFiltering = moduleContext.useStoreValue("useRealizationFiltering");
     const visualizationMode = moduleContext.useStoreValue("visualizationMode");
     const showHistorical = moduleContext.useStoreValue("showHistorical");
     const showObservations = moduleContext.useStoreValue("showObservations");
@@ -64,17 +64,16 @@ export const View = ({ moduleContext, workbenchSession, workbenchSettings }: Mod
         selectedEnsembles.push(ensemble);
     });
 
+    for (const ensemble of selectedEnsembles) {
+        console.log(`Filtered realizations for ${ensemble.getDisplayName()}: ${ensemble.getFilteredRealizations()}`);
+    }
+
     // Queries
-    const vectorDataQueries = useVectorDataQueries(
-        vectorSpecifications,
-        resampleFrequency,
-        realizationsToInclude,
-        true
-    );
+    const vectorDataQueries = useVectorDataQueries(vectorSpecifications, resampleFrequency, null, true);
     const vectorStatisticsQueries = useStatisticalVectorDataQueries(
         vectorSpecifications,
         resampleFrequency,
-        realizationsToInclude,
+        null,
         visualizationMode === VisualizationMode.STATISTICAL_FANCHART ||
             visualizationMode === VisualizationMode.STATISTICAL_LINES ||
             visualizationMode === VisualizationMode.STATISTICS_AND_REALIZATIONS

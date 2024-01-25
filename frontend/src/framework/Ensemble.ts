@@ -1,6 +1,7 @@
 import { EnsembleIdent } from "./EnsembleIdent";
 import { EnsembleParameters, Parameter } from "./EnsembleParameters";
 import { EnsembleSensitivities, Sensitivity } from "./EnsembleSensitivities";
+import { RealizationFilter } from "./RealizationFilter";
 
 export class Ensemble {
     private _ensembleIdent: EnsembleIdent;
@@ -8,6 +9,7 @@ export class Ensemble {
     private _realizationsArr: number[];
     private _parameters: EnsembleParameters;
     private _sensitivities: EnsembleSensitivities | null;
+    private _realizationFilter: RealizationFilter;
 
     constructor(
         caseUuid: string,
@@ -26,6 +28,8 @@ export class Ensemble {
         if (sensitivityArr && sensitivityArr.length > 0) {
             this._sensitivities = new EnsembleSensitivities(sensitivityArr);
         }
+
+        this._realizationFilter = new RealizationFilter();
     }
 
     getIdent(): EnsembleIdent {
@@ -70,5 +74,17 @@ export class Ensemble {
 
     getSensitivities(): EnsembleSensitivities | null {
         return this._sensitivities;
+    }
+
+    getRealizationFilter(): RealizationFilter {
+        return this._realizationFilter;
+    }
+
+    getFilteredRealizations(): readonly number[] {
+        const filteredRealizations = this._realizationFilter.getFilteredRealizations();
+
+        if (!filteredRealizations) return this._realizationsArr;
+
+        return filteredRealizations.filter((r) => this._realizationsArr.includes(r));
     }
 }

@@ -73,5 +73,5 @@ export interface State {
         IndividualStatisticsSelection: StatisticFunction_api[];
         FanchartStatisticsSelection: FanchartStatisticOption[];
     };
-    realizationsToInclude: number[] | null;
+    useRealizationFiltering: boolean;
 }

@@ -62,7 +62,9 @@ export function useEnsembleSet(workbenchSession: WorkbenchSession): EnsembleSet 
     React.useEffect(
         function subscribeToEnsembleSetChanges() {
             function handleEnsembleSetChanged() {
-                setStoredEnsembleSet(workbenchSession.getEnsembleSet());
+                // NOTE: HACK!!! Temporary creating a new EnsembleSet instance here just to ensure new reference to trigger re-render.
+                // Future: Trigger re-render on change within an ensemble in the ensemble set.
+                setStoredEnsembleSet(new EnsembleSet([...workbenchSession.getEnsembleSet().getEnsembleArr()]));
             }
 
             const unsubFunc = workbenchSession.subscribe(

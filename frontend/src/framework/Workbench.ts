@@ -68,6 +68,10 @@ export class Workbench {
         return this._workbenchSession;
     }
 
+    getWorkbenchSessionPrivate(): WorkbenchSessionPrivate {
+        return this._workbenchSession;
+    }
+
     getWorkbenchServices(): WorkbenchServices {
         return this._workbenchServices;
     }

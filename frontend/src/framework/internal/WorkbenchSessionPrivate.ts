@@ -14,4 +14,8 @@ export class WorkbenchSessionPrivate extends WorkbenchSession {
         this._ensembleSet = newEnsembleSet;
         this.notifySubscribers(WorkbenchSessionEvent.EnsembleSetChanged);
     }
+
+    notifyAboutEnsembleRealizationFilterChange(): void {
+        this.notifySubscribers(WorkbenchSessionEvent.EnsembleSetChanged);
+    }
 }
