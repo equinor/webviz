@@ -1,95 +1,94 @@
 # This configuration aims at being a good setup
 # for doing development of the frontend + backend in combination.
 
-version: '3.6'
+version: "3.6"
 
 services:
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend-dev.Dockerfile
+    ports:
+      - 8080:8080
+    volumes:
+      - ./frontend/public:/usr/src/app/frontend/public
+      - ./frontend/src:/usr/src/app/frontend/src
+      - ./frontend/theme:/usr/src/app/frontend/theme
+      - ./frontend/index.html:/usr/src/app/frontend/index.html
 
-    frontend:
-        build:
-            context: .
-            dockerfile: frontend-dev.Dockerfile
-        ports:
-            - 8080:8080
-        volumes:
-            - ./frontend/public:/usr/src/app/frontend/public
-            - ./frontend/src:/usr/src/app/frontend/src
-            - ./frontend/theme:/usr/src/app/frontend/theme
-            - ./frontend/index.html:/usr/src/app/frontend/index.html
+  backend-primary:
+    build:
+      context: .
+      dockerfile: backend.Dockerfile
+    ports:
+      - 5000:5000
+      - 5678:5678
+    environment:
+      - UVICORN_PORT=5000
+      - UVICORN_RELOAD=true
+      - UVICORN_ENTRYPOINT=src.backend.primary.main:app
+      - WEBVIZ_CLIENT_SECRET
+      - WEBVIZ_SMDA_RESOURCE_SCOPE
+      - WEBVIZ_SMDA_SUBSCRIPTION_KEY
+      - WEBVIZ_SUMO_ENV
+      - WEBVIZ_VDS_HOST_ADDRESS
+      - APPLICATIONINSIGHTS_CONNECTION_STRING
+      - OTEL_SERVICE_NAME=primary-backend
+      - OTEL_RESOURCE_ATTRIBUTES=service.namespace=local, service.version=dummy0.1.2
+      - CODESPACE_NAME  # Automatically set env. variable by GitHub codespace
+    volumes:
+      - ./backend/src:/home/appuser/backend/src
+    command:
+      [
+        "sh",
+        "-c",
+        "pip install debugpy && python -m debugpy --listen 0.0.0.0:5678 -m uvicorn --proxy-headers --host=0.0.0.0 $${UVICORN_ENTRYPOINT}",
+      ]
 
-    backend-primary:
-        build:
-            context: .
-            dockerfile: backend.Dockerfile
-        ports:
-            - 5000:5000
-            - 5678:5678
-        environment:
-            - UVICORN_PORT=5000
-            - UVICORN_RELOAD=true
-            - UVICORN_ENTRYPOINT=src.backend.primary.main:app
-            - WEBVIZ_CLIENT_SECRET
-            - WEBVIZ_SMDA_RESOURCE_SCOPE
-            - WEBVIZ_SMDA_SUBSCRIPTION_KEY
-            - WEBVIZ_SUMO_ENV
-            - WEBVIZ_VDS_HOST_ADDRESS
-            - APPLICATIONINSIGHTS_CONNECTION_STRING
-            - OTEL_SERVICE_NAME=primary-backend
-            - OTEL_RESOURCE_ATTRIBUTES=service.namespace=local, service.version=dummy0.1.2
-            - CODESPACE_NAME  # Automatically set env. variable by GitHub codespace
-        volumes:
-            - ./backend/src:/home/appuser/backend/src
-        command:
-            [
-                "sh",
-                "-c",
-                "pip install debugpy && python -m debugpy --listen 0.0.0.0:5678 -m uvicorn --proxy-headers --host=0.0.0.0 $${UVICORN_ENTRYPOINT}",
-            ]
+  surface_intersect:
+    build:
+      context: .
+      dockerfile: ./backend_go/surface_intersect.Dockerfile
+    ports:
+      - 5001:5001
+    environment:
+      - CODESPACE_NAME # Automatically set env. variable by GitHub codespace
+    volumes:
+      - ./backend/src:/home/appuser/backend/src
 
-    surface_intersect:
-        build:
-            context: .
-            dockerfile: ./backend_go/surface_intersect.Dockerfile
-        ports:
-            - 5001:5001
-        environment:
-            - CODESPACE_NAME # Automatically set env. variable by GitHub codespace
-        volumes:
-            - ./backend/src:/home/appuser/backend/src
+  backend-user-session:
+    build:
+      context: .
+      dockerfile: backend.Dockerfile
+    ports:
+      - 8000:8000
+    environment:
+      - UVICORN_PORT=8000
+      - UVICORN_RELOAD=true
+      - UVICORN_ENTRYPOINT=src.backend.user_session.main:app
+      - WEBVIZ_CLIENT_SECRET
+      - WEBVIZ_SMDA_RESOURCE_SCOPE
+      - WEBVIZ_SMDA_SUBSCRIPTION_KEY
+      - WEBVIZ_SUMO_ENV
+      - WEBVIZ_VDS_HOST_ADDRESS
+      - APPLICATIONINSIGHTS_CONNECTION_STRING
+      - OTEL_SERVICE_NAME=user-session
+      - OTEL_RESOURCE_ATTRIBUTES=service.namespace=local, service.version=dummy0.1.2
+    volumes:
+      - ./backend/src:/home/appuser/backend/src
 
-    backend-user-session:
-        build:
-            context: .
-            dockerfile: backend.Dockerfile
-        ports:
-            - 8000:8000
-        environment:
-            - UVICORN_PORT=8000
-            - UVICORN_RELOAD=true
-            - UVICORN_ENTRYPOINT=src.backend.user_session.main:app
-            - WEBVIZ_CLIENT_SECRET
-            - WEBVIZ_SMDA_RESOURCE_SCOPE
-            - WEBVIZ_SMDA_SUBSCRIPTION_KEY
-            - WEBVIZ_SUMO_ENV
-            - WEBVIZ_VDS_HOST_ADDRESS
-            - APPLICATIONINSIGHTS_CONNECTION_STRING
-            - OTEL_SERVICE_NAME=user-session
-            - OTEL_RESOURCE_ATTRIBUTES=service.namespace=local, service.version=dummy0.1.2
-        volumes:
-            - ./backend/src:/home/appuser/backend/src
+  redis-user-session:
+    image: bitnami/redis:6.2.10@sha256:bd42fcdab5959ce2b21b6ea8410d4b3ee87ecb2e320260326ec731ecfcffbd0e
+    expose:
+      - 6379
+    environment:
+      - ALLOW_EMPTY_PASSWORD=yes
 
-    redis-user-session:
-        image: bitnami/redis:6.2.10@sha256:bd42fcdab5959ce2b21b6ea8410d4b3ee87ecb2e320260326ec731ecfcffbd0e
-        expose:
-            - 6379
-        environment:
-            - ALLOW_EMPTY_PASSWORD=yes
-
-    redis-cache:
-        image: bitnami/redis:6.2.10@sha256:bd42fcdab5959ce2b21b6ea8410d4b3ee87ecb2e320260326ec731ecfcffbd0e
-        expose:
-            - 6379
-        environment:
-            - ALLOW_EMPTY_PASSWORD=yes
-            # https://redis.io/docs/management/config/#configuring-redis-as-a-cache
-            - REDIS_EXTRA_FLAGS=--maxmemory 1gb  --maxmemory-policy allkeys-lru  --save ''  --appendonly no  --loglevel notice
+  redis-cache:
+    image: bitnami/redis:6.2.10@sha256:bd42fcdab5959ce2b21b6ea8410d4b3ee87ecb2e320260326ec731ecfcffbd0e
+    expose:
+      - 6379
+    environment:
+      - ALLOW_EMPTY_PASSWORD=yes
+      # https://redis.io/docs/management/config/#configuring-redis-as-a-cache
+      - REDIS_EXTRA_FLAGS=--maxmemory 1gb  --maxmemory-policy allkeys-lru  --save ''  --appendonly no  --loglevel notice
