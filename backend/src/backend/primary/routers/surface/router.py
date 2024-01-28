@@ -17,6 +17,9 @@ from src.services.sumo_access._helpers import SumoCase
 
 from . import converters
 from . import schemas
+from .surface_sampling_service import batch_sample_surface_in_points_async
+from .surface_sampling_service import RealizationSampleResult
+
 
 LOGGER = logging.getLogger(__name__)
 
@@ -239,6 +242,11 @@ async def post_get_surface_intersection(
     return surface_intersection_response
 
 
+#
+# Rename to:
+# @router.post("/sample_surface_in_points")
+# async def post_sample_surface_in_points(
+#
 @router.post("/intersectSurface")
 async def intersectSurface(
     request: Request,
@@ -248,77 +256,34 @@ async def intersectSurface(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
 ) -> List[schemas.SurfaceIntersectionPoints]:
     case_uuid = ensemble_ident.case_uuid
-    snames = realizations_surface_set_spec.surface_names
-    sattr = realizations_surface_set_spec.surface_attribute
     ensemble_name = ensemble_ident.ensemble_name
-    realization_nums = realizations_surface_set_spec.realization_nums
-    base_uri, auth_token = get_base_uri_and_auth_token_for_case(
-        case_uuid,
-        "prod",
-        authenticated_user.get_sumo_access_token(),
+    surface_name = realizations_surface_set_spec.surface_names[0]
+    surface_attribute = realizations_surface_set_spec.surface_attribute
+    realizations = realizations_surface_set_spec.realization_nums
+
+    sumo_access_token = authenticated_user.get_sumo_access_token()
+
+    result_arr: List[RealizationSampleResult] = await batch_sample_surface_in_points_async(
+        sumo_access_token=sumo_access_token,
+        case_uuid=case_uuid,
+        iteration_name=ensemble_name,
+        surface_name=surface_name,
+        surface_attribute=surface_attribute,
+        realizations=realizations,
+        x_coords=surface_fence_spec.x_points,
+        y_coords=surface_fence_spec.y_points,
     )
-    url = "http://surface_intersect:5001/intersect_surface"  # URL of the Go server endpoint
-    import httpx
-
-    async def fetch_all():
-        tasks = []
-        for sname in snames:
-            task = fetch_set(
-                case_uuid,
-                ensemble_name,
-                sname,
-                sattr,
-                realization_nums,
-                authenticated_user.get_sumo_access_token(),
-            )
-            tasks.append(task)
-
-        # Run all the tasks concurrently
-        return await asyncio.gather(*tasks)
-
-    async def fetch_set(
-        case_uuid,
-        ensemble_name,
-        surface_name,
-        surface_attribute,
-        realization_nums,
-        bearer_token,
-    ):
-        object_ids = await get_surface_set_uuids(
-            case_uuid,
-            ensemble_name,
-            surface_name,
-            surface_attribute,
-            realization_nums,
-            bearer_token,
-        )
-
-        async with httpx.AsyncClient(timeout=300) as client:
-            print("Running async go intersection for surface: ", surface_name)
-            new_request = {
-                "base_uri": base_uri,
-                "auth_token": auth_token,
-                "object_ids": object_ids,
-                "xcoords": surface_fence_spec.x_points,
-                "ycoords": surface_fence_spec.y_points,
-                "env": "prod",
-            }
-            response = await client.post(url, json=new_request)
-
-            return response.json()
 
     intersections: List[schemas.SurfaceIntersectionPoints] = []
-    for z_arrs in await fetch_all():
-        for idx, z_arr in enumerate(z_arrs):
-            # Replace 1e30 with np.nan in z_arr
-            zarr = np.where(np.isclose(z_arr, 1e30, atol=1e22), np.nan, z_arr)
-            intersections.append(
-                schemas.SurfaceIntersectionPoints(
-                    name=f"test",
-                    cum_length=surface_fence_spec.cum_length,
-                    z_array=zarr,
-                )
+    for res in result_arr:
+        intersections.append(
+            schemas.SurfaceIntersectionPoints(
+                name=f"test",
+                cum_length=surface_fence_spec.cum_length,
+                z_array=res.sampledValues,
             )
+        )
+
     return intersections
 
 
@@ -399,48 +364,3 @@ async def make_intersections(surfaces, fence_arr):
     return intersections
 
 
-from sumo.wrapper import SumoClient
-from fmu.sumo.explorer.objects import CaseCollection
-import requests
-
-
-async def get_surface_set_uuids(
-    case_uuid,
-    ensemble_name,
-    surface_name,
-    surface_attribute,
-    realization_nums,
-    bearer_token,
-):
-    sumo_client = SumoClient(env="prod", token=bearer_token, interactive=False)
-    case_collection = CaseCollection(sumo_client).filter(uuid=case_uuid)
-    case = case_collection[0]
-    surface_collection = case.surfaces.filter(
-        iteration=ensemble_name,
-        name=surface_name,
-        tagname=surface_attribute,
-        realization=realization_nums,
-    )
-    objects = await surface_collection._utils.get_objects_async(500, surface_collection._query, ["_id"])
-    object_ids = list(map(lambda obj: obj["_id"], objects))
-    return object_ids
-
-
-def get_base_uri_and_auth_token_for_case(case_id, env, token):
-    temp_uri = f"{get_base_uri(env)}/objects('{case_id}')/authtoken"
-
-    body, _ = get_with_token(temp_uri, token)
-
-    base_uri = body["baseuri"].removesuffix("/")
-    auth_token = body["auth"]
-
-    return base_uri, auth_token
-
-
-def get_base_uri(env):
-    return f"https://main-sumo-{env}.radix.equinor.com/api/v1"
-
-
-def get_with_token(url, token):
-    res = requests.get(url, headers={"Authorization": f"Bearer {token}"})
-    return res.json(), res.status_code

@@ -2,32 +2,42 @@ package main
 
 import (
 	"fmt"
+	"log/slog"
 	"net/http"
+	"os"
 	utils "surface_intersect/utils"
 	xtgeo "surface_intersect/xtgeo"
 	"sync"
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/lmittmann/tint"
 )
 
 func main() {
+	logger := slog.New(tint.NewHandler(os.Stdout, &tint.Options{Level: slog.LevelDebug, TimeFormat: time.TimeOnly}))
+	slog.SetDefault(logger)
+
+	logger.Info("Starting surface query server...")
+
 	router := gin.Default()
-	fmt.Println("Starting server...")
+
 	router.GET("/", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
 			"message": "Hello World",
 		})
 	})
 
-	router.POST("/intersect_surface", func(c *gin.Context) {
+	router.POST("/sample_in_points", func(c *gin.Context) {
 		// Endpoint to serve intersected surfaces
-		var iReq utils.IntersectRequest
-
+		var iReq utils.PointSamplingRequest
 		if err := c.BindJSON(&iReq); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			logger.Error("Error parsing request body:", slog.Any("error", err))
 			return
 		}
+
+		logger.Debug("Request body:", slog.Any("reqBody", iReq))
 
 		// Run in parallell
 		var wg sync.WaitGroup
@@ -37,7 +47,7 @@ func main() {
 		allZValues := make([][]float32, 0)
 		var errArray []error
 
-		for _, objectId := range iReq.ObjectIDs {
+		for _, realizationObjectId := range iReq.ObjectIds {
 			wg.Add(1)
 
 			go func(objectId string) {
@@ -62,8 +72,8 @@ func main() {
 				}
 
 				// Intersect
-				zValue, err := xtgeo.SurfaceZArrFromXYPairs(
-					iReq.Xcoords, iReq.Ycoords,
+				zValueArr, err := xtgeo.SurfaceZArrFromXYPairs(
+					iReq.XCoords, iReq.YCoords,
 					int(surface.Nx), int(surface.Ny),
 					surface.Xori, surface.Yori,
 					surface.Xinc, surface.Yinc,
@@ -73,21 +83,33 @@ func main() {
 				)
 				if err != nil {
 					// Handle error
-					fmt.Printf("Error in SurfaceZArrFromXYPairs: %v\n", err)
+					logger.Error("Error in SurfaceZArrFromXYPairs:", slog.Any("error", err))
 					return
 				}
 				// Lock the mutex to prevent concurrent access to the slice
 				mu.Lock()
-				allZValues = append(allZValues, zValue)
+				allZValues = append(allZValues, zValueArr)
 				mu.Unlock()
-			}(objectId)
+			}(realizationObjectId.ObjectUuid)
 		}
 
 		wg.Wait()
 		duration := time.Now().Sub(startTime)
-		fmt.Printf("Total time: %v\n", duration)
+		logger.Info(fmt.Sprintf("Total time: %v", duration))
 
-		c.JSON(http.StatusOK, allZValues)
+		resultArr := make([]utils.RealizationSampleResult, 0)
+		for _, zValueArr := range allZValues {
+			resultArr = append(resultArr, utils.RealizationSampleResult{Realization: -1, SampledValues: zValueArr})
+		}
+
+		// TO-DISCUSS:
+		// Must check this out in relation to the xtgeo code
+		// Undef value and limit seem to be misaligned!!!
+		responseBody := utils.PointSamplingResponse{
+			SampleResultArr: resultArr,
+			UndefLimit:      0.99e30,
+		}
+		c.JSON(http.StatusOK, responseBody)
 	})
 
 	router.Run(":5001") // Listen and serve on 0.0.0.0:5001
