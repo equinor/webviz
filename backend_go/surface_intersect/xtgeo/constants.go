@@ -4,6 +4,9 @@ import (
 	"math"
 )
 
+// TO-DISCUSS:
+// What is going on here?
+// These don't seem to be aligned
 const (
 	Undef                  = 1e30
 	UndefMapLimit          = 9.9e32

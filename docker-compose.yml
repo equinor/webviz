@@ -48,13 +48,11 @@ services:
   surface_intersect:
     build:
       context: .
-      dockerfile: ./backend_go/surface_intersect.Dockerfile
+      dockerfile: ./backend_go/surface_intersect-dev.Dockerfile
     ports:
       - 5001:5001
-    environment:
-      - CODESPACE_NAME # Automatically set env. variable by GitHub codespace
     volumes:
-      - ./backend/src:/home/appuser/backend/src
+      - ./backend_go/surface_intersect:/home/appuser/backend_go/surface_intersect
 
   backend-user-session:
     build:
