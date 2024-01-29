@@ -13,6 +13,8 @@ def test_monotonically_increasing_date_util_functions() -> None:
                 np.datetime64("2020-01-02", "ms"),
                 np.datetime64("2020-01-02", "ms"),
                 np.datetime64("2020-01-03", "ms"),
+                np.datetime64("2020-01-04", "ms"),
+                np.datetime64("2020-01-04", "ms"),
             ],
         },
     )
@@ -24,6 +26,8 @@ def test_monotonically_increasing_date_util_functions() -> None:
                 np.datetime64("2020-01-05", "ms"),
                 np.datetime64("2020-01-04", "ms"),
                 np.datetime64("2020-01-10", "ms"),
+                np.datetime64("2020-01-15", "ms"),
+                np.datetime64("2020-01-14", "ms"),
             ],
         },
     )
