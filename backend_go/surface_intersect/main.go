@@ -22,7 +22,7 @@ func main() {
 	logger.Info("Starting surface query server...")
 
 	// Can be used to force the number of CPUs that can be executing simultaneously
-	//runtime.GOMAXPROCS(4)
+	runtime.GOMAXPROCS(4)
 
 	numCpus := runtime.NumCPU()
 	goMaxProcs := runtime.GOMAXPROCS(0)
