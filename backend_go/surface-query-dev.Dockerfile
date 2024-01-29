@@ -2,7 +2,7 @@
 FROM golang:1.21
 
 RUN useradd --create-home --uid 1234 appuser
-USER appuser
+USER 1234
 
 RUN go install github.com/githubnemo/CompileDaemon@latest
 

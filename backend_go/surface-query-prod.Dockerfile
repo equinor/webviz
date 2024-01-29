@@ -2,7 +2,7 @@
 FROM golang:1.21 AS build-stage
 
 RUN useradd --create-home --uid 1234 appuser
-USER appuser
+USER 1234
 
 WORKDIR /home/appuser/gosrc
 COPY --chown=appuser ./backend_go/surface_intersect/ .
