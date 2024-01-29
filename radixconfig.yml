@@ -19,28 +19,28 @@ spec:
         - name: http
           port: 8080
 
-        - name: backend-go
-          dockerFileName: ./backend_go/surface_intersect.Dockerfile
-          ports:
-              - name: http
-                port: 5001
-          ingressConfiguration:
-              - websocketfriendly
-          resources:
-              requests:
-                  memory: 8Gi
-                  cpu: 2000m
-              limits:
-                  memory: 32Gi
+    - name: backend-go
+      dockerFileName: ./backend_go/surface_intersect.Dockerfile
+      ports:
+        - name: http
+          port: 5001
+      ingressConfiguration:
+        - websocketfriendly
+      resources:
+        requests:
+          memory: 8Gi
+          cpu: 2000m
+        limits:
+          memory: 32Gi
 
-          horizontalScaling:
-              minReplicas: 2
-              maxReplicas: 4
-              resources:
-                  memory:
-                      averageUtilization: 60
-                  cpu:
-                      averageUtilization: 80
+      horizontalScaling:
+        minReplicas: 2
+        maxReplicas: 4
+        resources:
+          memory:
+            averageUtilization: 60
+          cpu:
+            averageUtilization: 80
 
     - name: backend-primary
       dockerFileName: backend.Dockerfile
