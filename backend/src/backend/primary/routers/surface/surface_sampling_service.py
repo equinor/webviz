@@ -39,7 +39,7 @@ class _PointSamplingResponseBody(BaseModel):
 
 
 # URL of the Go server endpoint
-SERVER_ENDPOINT = "http://surface_intersect:5001/sample_in_points"
+SERVER_ENDPOINT = "http://surface-query:5001/sample_in_points"
 
 SUMO_BASE_URI = f"https://main-sumo-{config.SUMO_ENV}.radix.equinor.com/api/v1"
 

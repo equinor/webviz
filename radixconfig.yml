@@ -19,29 +19,6 @@ spec:
         - name: http
           port: 8080
 
-    - name: surface_intersect
-      dockerFileName: ./backend_go/surface_intersect.Dockerfile
-      ports:
-        - name: http
-          port: 5001
-      ingressConfiguration:
-        - websocketfriendly
-      resources:
-        requests:
-          memory: 8Gi
-          cpu: 2000m
-        limits:
-          memory: 32Gi
-
-      horizontalScaling:
-        minReplicas: 2
-        maxReplicas: 4
-        resources:
-          memory:
-            averageUtilization: 60
-          cpu:
-            averageUtilization: 80
-
     - name: backend-primary
       dockerFileName: backend.Dockerfile
       ports:
@@ -110,6 +87,29 @@ spec:
                 averageUtilization: 60
               cpu:
                 averageUtilization: 80
+
+    - name: surface-query
+      dockerFileName: ./backend_go/surface-query.Dockerfile
+      ports:
+        - name: http
+          port: 5001
+      ingressConfiguration:
+        - websocketfriendly
+      resources:
+        requests:
+          memory: 8Gi
+          cpu: 2000m
+        limits:
+          memory: 32Gi
+
+      horizontalScaling:
+        minReplicas: 2
+        maxReplicas: 4
+        resources:
+          memory:
+            averageUtilization: 60
+          cpu:
+            averageUtilization: 80
 
     - name: redis-user-session
       image: bitnami/redis:6.2.10@sha256:bd42fcdab5959ce2b21b6ea8410d4b3ee87ecb2e320260326ec731ecfcffbd0e

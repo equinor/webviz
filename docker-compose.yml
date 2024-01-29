@@ -45,10 +45,10 @@ services:
         "pip install debugpy && python -m debugpy --listen 0.0.0.0:5678 -m uvicorn --proxy-headers --host=0.0.0.0 $${UVICORN_ENTRYPOINT}",
       ]
 
-  surface_intersect:
+  surface-query:
     build:
       context: .
-      dockerfile: ./backend_go/surface_intersect-dev.Dockerfile
+      dockerfile: ./backend_go/surface-query-dev.Dockerfile
     ports:
       - 5001:5001
     volumes:
