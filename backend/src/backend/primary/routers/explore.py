@@ -29,6 +29,7 @@ class EnsembleInfo(BaseModel):
 
 class EnsembleDetails(BaseModel):
     name: str
+    field_identifier: str
     case_name: str
     case_uuid: str
     realizations: Sequence[int]
@@ -89,5 +90,9 @@ async def get_ensemble_details(
     iteration = await SumoEnsemble.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
     case_name = iteration.get_case_name()
     realizations = iteration.get_realizations()
+    field_identifiers = await iteration.get_field_identifiers()
 
-    return EnsembleDetails(name=ensemble_name, case_name=case_name, case_uuid=case_uuid, realizations=realizations)
+    if len(field_identifiers) != 1:
+        raise NotImplementedError("Multiple field identifiers not supported")
+
+    return EnsembleDetails(name=ensemble_name, case_name=case_name, case_uuid=case_uuid, realizations=realizations, field_identifier=field_identifiers[0])
