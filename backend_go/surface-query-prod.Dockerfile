@@ -25,7 +25,7 @@ RUN ls -slatr
 FROM golang:1.21 AS runtime-stage
 
 RUN useradd --create-home --uid 1234 appuser
-USER appuser
+USER 1234
 
 ENV GIN_MODE=release
 
