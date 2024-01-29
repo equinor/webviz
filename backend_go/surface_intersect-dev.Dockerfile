@@ -20,4 +20,7 @@ WORKDIR /home/appuser/backend_go/surface_intersect
 
 # The build flag sets how to build after a change has been detected in the source code
 # The command flag sets how to run the app after it has been built
-CMD CompileDaemon -build="go build -v -x -o /home/appuser/gobuild/ main.go" -include=go.mod -command="/home/appuser/gobuild/main" -verbose -color
+#
+# The -race flag can be added to the build option, ie "go build -race -o /x/y/z main.go" to detect race conditions
+# Beware that performance will suffer quite a bit, so don't leave it in there
+CMD CompileDaemon -build="go build -o /home/appuser/gobuild/ main.go" -include=go.mod -command="/home/appuser/gobuild/main" -verbose -color
