@@ -98,12 +98,11 @@ spec:
       resources:
         requests:
           memory: 8Gi
-          cpu: 2000m
+          cpu: 4000m
         limits:
-          memory: 32Gi
-
+          memory: 8Gi
       horizontalScaling:
-        minReplicas: 2
+        minReplicas: 1
         maxReplicas: 4
         resources:
           memory:
