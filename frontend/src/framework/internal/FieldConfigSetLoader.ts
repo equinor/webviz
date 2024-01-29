@@ -35,19 +35,26 @@ async function loadConfigFromFile(fieldIdentifier: string): Promise<LoadConfigFr
     };
 
     try {
-        const content = await import(`@assets/field-configs/${fieldIdentifier}.json?init`);
+        // With https://github.com/tc39/proposal-json-modules in place, we can make use of `{ with: {type: "json"} }` in order to make sure that the imported module is expected to be a JSON file.
+        // const content = await import(`/src/assets/field-configs/${fieldIdentifier}.json?init`, { with: {type: "json"} });
+        const content = await import(`/src/assets/field-configs/${fieldIdentifier}.json?init`);
         if (!validateConfig(content.default)) {
             result.error = new Error(
                 `Invalid format in config file '${fieldIdentifier}.json':\n${stringifyConfigValidationErrors(
                     validateConfig.errors ?? []
                 )}`
             );
+            return result;
         }
 
         if (content.default.fieldIdentifier !== fieldIdentifier) {
             result.error = new Error(`Field identifier mismatch in config file '${fieldIdentifier}.json'`);
+            return result;
         }
+
+        result.config = content.default;
     } catch (error: any) {
+        console.error(`Failed to load config for field '${fieldIdentifier}': ${error.message}`);
         result.error = new Error(`Failed to load config for field '${fieldIdentifier}': ${error.message}`);
     }
 

@@ -23,5 +23,6 @@ export class WorkbenchSessionPrivate extends WorkbenchSession {
 
     setFieldConfigSet(newFieldConfigSet: FieldConfigSet): void {
         this._fieldConfigSet = newFieldConfigSet;
+        this.notifySubscribers(WorkbenchSessionEvent.FieldConfigSetChanged);
     }
 }

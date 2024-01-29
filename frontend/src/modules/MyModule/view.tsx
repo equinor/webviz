@@ -412,7 +412,7 @@ export const View = (props: ModuleFCProps<State>) => {
 
     const fieldConfigSet = useFieldConfigSet(props.workbenchSession);
 
-    const drogonConfig = fieldConfigSet.getConfig("Drogon");
+    const drogonConfig = fieldConfigSet.getConfig("DROGON");
 
     const ref = React.useRef<HTMLDivElement>(null);
 
