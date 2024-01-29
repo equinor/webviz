@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"runtime"
 	utils "surface_intersect/utils"
 	xtgeo "surface_intersect/xtgeo"
 	"sync"
@@ -19,6 +20,13 @@ func main() {
 	slog.SetDefault(logger)
 
 	logger.Info("Starting surface query server...")
+
+	// Can be used to force the number of CPUs that can be executing simultaneously
+	//runtime.GOMAXPROCS(1)
+
+	numCpus := runtime.NumCPU()
+	goMaxProcs := runtime.GOMAXPROCS(0)
+	logger.Info(fmt.Sprintf("Num logical CPUs=%v, GOMAXPROCS=%v", numCpus, goMaxProcs))
 
 	router := gin.Default()
 
@@ -112,5 +120,7 @@ func main() {
 		c.JSON(http.StatusOK, responseBody)
 	})
 
-	router.Run(":5001") // Listen and serve on 0.0.0.0:5001
+	address := "0.0.0.0:5001"
+	logger.Info(fmt.Sprintf("Surface query server listening on: %v", address))
+	router.Run(address)
 }
