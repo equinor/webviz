@@ -95,4 +95,10 @@ async def get_ensemble_details(
     if len(field_identifiers) != 1:
         raise NotImplementedError("Multiple field identifiers not supported")
 
-    return EnsembleDetails(name=ensemble_name, case_name=case_name, case_uuid=case_uuid, realizations=realizations, field_identifier=field_identifiers[0])
+    return EnsembleDetails(
+        name=ensemble_name,
+        case_name=case_name,
+        case_uuid=case_uuid,
+        realizations=realizations,
+        field_identifier=field_identifiers[0],
+    )
