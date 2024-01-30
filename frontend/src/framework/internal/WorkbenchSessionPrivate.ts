@@ -12,10 +12,13 @@ export class WorkbenchSessionPrivate extends WorkbenchSession {
 
     setEnsembleSet(newEnsembleSet: EnsembleSet): void {
         this._ensembleSet = newEnsembleSet;
+        this._realizationFilterSet.synchronizeWithEnsembleSet(this._ensembleSet);
         this.notifySubscribers(WorkbenchSessionEvent.EnsembleSetChanged);
+
+        // NOTE: Should this.notifySubscribers(WorkbenchSessionEvent.RealizationFilterSetChanged); be called?
     }
 
     notifyAboutEnsembleRealizationFilterChange(): void {
-        this.notifySubscribers(WorkbenchSessionEvent.EnsembleSetChanged);
+        this.notifySubscribers(WorkbenchSessionEvent.RealizationFilterSetChanged);
     }
 }

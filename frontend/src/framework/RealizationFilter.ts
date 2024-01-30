@@ -1,5 +1,5 @@
-import { v4 } from "uuid";
-
+import { Ensemble } from "./Ensemble";
+import { EnsembleIdent } from "./EnsembleIdent";
 import { ContinuousParameter } from "./EnsembleParameters";
 
 export enum RealizationFilterType {
@@ -42,23 +42,23 @@ type RealizationIndexSelection = {
 };
 
 export class RealizationFilter {
-    private _id: string;
     private _filterType: RealizationFilterType;
+    private _parentEnsemble: Ensemble;
 
     private _selectedRealizationIndexSelection: RealizationIndexSelection;
     private _parameterValueFilters: RealizationContinuousParameterValueFilter[];
 
-    constructor(initialFilterType = RealizationFilterType.REALIZATION_INDEX) {
-        this._id = v4();
+    constructor(parentEnsemble: Ensemble, initialFilterType = RealizationFilterType.REALIZATION_INDEX) {
         this._filterType = initialFilterType;
+        this._parentEnsemble = parentEnsemble;
 
         this._selectedRealizationIndexSelection = { realizations: [], rangeTags: [] };
 
         this._parameterValueFilters = [];
     }
 
-    getId(): string {
-        return this._id;
+    getParentEnsembleIdent(): EnsembleIdent {
+        return this._parentEnsemble.getIdent();
     }
 
     setSelectedRealizationsAndRangeTags(selection: RealizationIndexSelection): void {
@@ -89,10 +89,18 @@ export class RealizationFilter {
         this._filterType = filterType;
     }
 
-    getFilteredRealizations(): readonly number[] | null {
+    getFilteredRealizations(): number[] {
+        const validRealizations = this._parentEnsemble.getRealizations();
+
+        if (validRealizations.length === 0) {
+            return [];
+        }
+
         // Realization index filter
         if (this._filterType === RealizationFilterType.REALIZATION_INDEX) {
-            return this._selectedRealizationIndexSelection.realizations;
+            return this._selectedRealizationIndexSelection.realizations.filter((elm) =>
+                validRealizations.includes(elm)
+            );
         }
 
         // Parameter filtering - intersection of realization indices across all parameter filters
@@ -103,10 +111,10 @@ export class RealizationFilter {
                     return this._parameterValueFilters[i].getRealizationsWithinMinMax().includes(realization);
                 });
             }
-            return realizationIndicesWithinMinMax;
+            return realizationIndicesWithinMinMax.filter((elm) => validRealizations.includes(elm));
         }
 
         // No filtering active
-        return null;
+        return [...validRealizations];
     }
 }

@@ -6,7 +6,7 @@ import { Ensemble } from "@framework/Ensemble";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { ModuleFCProps } from "@framework/Module";
 import { useViewStatusWriter } from "@framework/StatusWriter";
-import { useEnsembleSet } from "@framework/WorkbenchSession";
+import { useEnsembleRealizationFilterFunc, useEnsembleSet } from "@framework/WorkbenchSession";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { ColorScaleGradientType } from "@lib/utils/ColorScale";
 import { ContentError } from "@modules/_shared/components/ContentMessage";
@@ -31,6 +31,7 @@ export const View = ({ moduleContext, workbenchSession, workbenchSettings }: Mod
     const wrapperDivSize = useElementSize(wrapperDivRef);
 
     const ensembleSet = useEnsembleSet(workbenchSession);
+    const filterEnsembleRealizationFunc = useEnsembleRealizationFilterFunc(workbenchSession);
     const statusWriter = useViewStatusWriter(moduleContext);
 
     // Store values
@@ -65,7 +66,8 @@ export const View = ({ moduleContext, workbenchSession, workbenchSettings }: Mod
     });
 
     for (const ensemble of selectedEnsembles) {
-        console.log(`Filtered realizations for ${ensemble.getDisplayName()}: ${ensemble.getFilteredRealizations()}`);
+        const ensembleFilteredRealizations = filterEnsembleRealizationFunc(ensemble.getIdent());
+        console.log(`Filtered realizations for ${ensemble.getDisplayName()}: ${ensembleFilteredRealizations}`);
     }
 
     // Queries
