@@ -1,6 +1,5 @@
 import React from "react";
 
-import { Ensemble } from "@framework/Ensemble";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import {
     RealizationContinuousParameterValueFilter,

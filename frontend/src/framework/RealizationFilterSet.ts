@@ -110,14 +110,14 @@ export class RealizationFilterSet {
     /**
      * Get filter for ensembleIdent
      */
-    getRealizationFilterByEnsembleIdent(ensembleIdent: EnsembleIdent): RealizationFilter | null {
+    getRealizationFilterByEnsembleIdent(ensembleIdent: EnsembleIdent): RealizationFilter {
         const filter = this._ensembleRealizationFilterMap.get(ensembleIdent.toString());
-        // if (filter === undefined) {
-        //     throw new Error(
-        //         `We expect all ensembles to have a filter instance. No filter found for ${ensembleIdent.toString()}`
-        //     );
-        // }
+        if (filter === undefined) {
+            throw new Error(
+                `We expect all ensembles to have a filter instance. No filter found for ${ensembleIdent.toString()}`
+            );
+        }
 
-        return filter ?? null;
+        return filter;
     }
 }

@@ -71,24 +71,20 @@ export function useEnsembleRealizationFilterFunc(
     workbenchSession: WorkbenchSession
 ): EnsembleRealizationFilterFunction {
     const [storedEnsembleRealizationFilterFunc, setStoredEnsembleRealizationFilterFunc] =
-        React.useState<EnsembleRealizationFilterFunction>(() => []);
+        React.useState<EnsembleRealizationFilterFunction>(() => () => []); // Default to empty filter function
 
     React.useEffect(
         function subscribeToEnsembleRealizationFilterSetChanges() {
             function handleEnsembleRealizationFilterSetChanged() {
-                const ensembleRealizationFilterFunc = (ensembleIdent: EnsembleIdent): number[] => {
-                    const realizationFilterSet = workbenchSession.getRealizationFilterSet();
-                    const realizationFilter = realizationFilterSet.getRealizationFilterByEnsembleIdent(ensembleIdent);
+                const ensembleRealizationFilterFunc =
+                    () =>
+                    (ensembleIdent: EnsembleIdent): number[] => {
+                        const realizationFilterSet = workbenchSession.getRealizationFilterSet();
+                        const realizationFilter =
+                            realizationFilterSet.getRealizationFilterByEnsembleIdent(ensembleIdent);
 
-                    if (!realizationFilter) {
-                        const ensembleRealizations = [
-                            ...(workbenchSession.getEnsembleSet().findEnsemble(ensembleIdent)?.getRealizations() ?? []),
-                        ];
-                        return ensembleRealizations;
-                    }
-
-                    return realizationFilter.getFilteredRealizations();
-                };
+                        return realizationFilter.getFilteredRealizations();
+                    };
 
                 setStoredEnsembleRealizationFilterFunc(ensembleRealizationFilterFunc);
             }
