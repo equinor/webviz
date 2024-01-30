@@ -1,5 +1,7 @@
 import { QueryClient } from "@tanstack/react-query";
 
+import { createStore } from "jotai";
+
 import { Broadcaster } from "./Broadcaster";
 import { EnsembleIdent } from "./EnsembleIdent";
 import { GuiMessageBroker, GuiState } from "./GuiMessageBroker";
@@ -38,10 +40,11 @@ export class Workbench {
     private _subscribersMap: { [key: string]: Set<() => void> };
     private _layout: LayoutElement[];
     private _perModuleRunningInstanceNumber: Record<string, number>;
+    private _globalAtomStore: ReturnType<typeof createStore> = createStore();
 
     constructor() {
         this._moduleInstances = [];
-        this._workbenchSession = new WorkbenchSessionPrivate();
+        this._workbenchSession = new WorkbenchSessionPrivate(this._globalAtomStore);
         this._workbenchServices = new PrivateWorkbenchServices(this);
         this._workbenchSettings = new PrivateWorkbenchSettings();
         this._broadcaster = new Broadcaster();
@@ -62,6 +65,10 @@ export class Workbench {
 
     getLayout(): LayoutElement[] {
         return this._layout;
+    }
+
+    getGlobalAtomStore(): ReturnType<typeof createStore> {
+        return this._globalAtomStore;
     }
 
     getWorkbenchSession(): WorkbenchSession {

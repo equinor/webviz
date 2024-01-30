@@ -1,6 +1,6 @@
 import { ModuleRegistry } from "@framework/ModuleRegistry";
 
-import { atoms } from "./atoms";
+import { atomDefinitions } from "./atoms";
 import { State } from "./state";
 
-ModuleRegistry.registerModule<State>({ moduleName: "MyModule2", defaultTitle: "My Module 2", atoms: atoms });
+ModuleRegistry.registerModule<State>({ moduleName: "MyModule2", defaultTitle: "My Module 2", atoms: atomDefinitions });

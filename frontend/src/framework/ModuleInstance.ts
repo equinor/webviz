@@ -1,8 +1,8 @@
 import { ErrorInfo } from "react";
 
-import { Atom, createStore } from "jotai";
 import { cloneDeep } from "lodash";
 
+import { AtomDefinition } from "./AtomStore";
 import { BroadcastChannel, BroadcastChannelsDef, InputBroadcastChannelDef } from "./Broadcaster";
 import { InitialSettings } from "./InitialSettings";
 import { ImportState, Module, ModuleFC } from "./Module";
@@ -10,6 +10,7 @@ import { ModuleContext } from "./ModuleContext";
 import { StateBaseType, StateOptions, StateStore } from "./StateStore";
 import { SyncSettingKey } from "./SyncSettings";
 import { Workbench } from "./Workbench";
+import { AtomStorePrivate } from "./internal/AtomStorePrivate";
 import { ModuleInstanceStatusControllerInternal } from "./internal/ModuleInstanceStatusControllerInternal";
 
 export enum ModuleInstanceState {
@@ -44,8 +45,7 @@ export class ModuleInstance<StateType extends StateBaseType> {
     private _inputChannels: Record<string, BroadcastChannel> = {};
     private _workbench: Workbench;
 
-    private _jotaiStore: ReturnType<typeof createStore> = createStore();
-    private _jotaiAtoms: Atom<unknown>[] = [];
+    private _atomStore: AtomStorePrivate;
 
     constructor(
         module: Module<StateType>,
@@ -53,7 +53,7 @@ export class ModuleInstance<StateType extends StateBaseType> {
         broadcastChannelsDef: BroadcastChannelsDef,
         workbench: Workbench,
         inputChannelDefs: InputBroadcastChannelDef[],
-        atoms: Atom<unknown>[]
+        atoms: AtomDefinition[]
     ) {
         this._id = `${module.getName()}-${instanceNumber}`;
         this._title = module.getDefaultTitle();
@@ -95,11 +95,11 @@ export class ModuleInstance<StateType extends StateBaseType> {
             });
         }
 
-        this._jotaiAtoms = atoms;
+        this._atomStore = new AtomStorePrivate(atoms);
     }
 
-    getJotaiStore(): ReturnType<typeof createStore> {
-        return this._jotaiStore;
+    getAtomStore(): AtomStorePrivate {
+        return this._atomStore;
     }
 
     getInputChannelDefs(): InputBroadcastChannelDef[] {
@@ -156,7 +156,7 @@ export class ModuleInstance<StateType extends StateBaseType> {
         }
 
         this._stateStore = new StateStore<StateType>(cloneDeep(defaultState), options);
-        this._context = new ModuleContext<StateType>(this, this._stateStore);
+        this._context = new ModuleContext<StateType>(this, this._stateStore, this._atomStore);
         this._initialised = true;
         this.setModuleInstanceState(ModuleInstanceState.OK);
     }

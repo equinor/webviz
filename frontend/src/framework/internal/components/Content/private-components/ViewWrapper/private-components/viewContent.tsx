@@ -9,6 +9,7 @@ import { ErrorBoundary } from "@framework/internal/components/ErrorBoundary";
 import { CircularProgress } from "@lib/components/CircularProgress";
 
 import { Provider } from "jotai";
+import { ScopeProvider } from "jotai-scope";
 
 import { CrashView } from "./crashView";
 
@@ -23,7 +24,7 @@ export const ViewContent = React.memo((props: ViewContentProps) => {
         ModuleInstanceState.INITIALIZING
     );
 
-    const store = props.moduleInstance.getJotaiStore();
+    const store = props.moduleInstance.getAtomStore();
 
     React.useEffect(
         function handleMount() {
@@ -130,7 +131,7 @@ export const ViewContent = React.memo((props: ViewContentProps) => {
                     source={StatusSource.View}
                     guiMessageBroker={props.workbench.getGuiMessageBroker()}
                 >
-                    <Provider store={store}>
+                    <ScopeProvider atoms={store.getAtoms()}>
                         <View
                             moduleContext={props.moduleInstance.getContext()}
                             workbenchSession={props.workbench.getWorkbenchSession()}
@@ -138,7 +139,7 @@ export const ViewContent = React.memo((props: ViewContentProps) => {
                             workbenchSettings={props.workbench.getWorkbenchSettings()}
                             initialSettings={props.moduleInstance.getInitialSettings() || undefined}
                         />
-                    </Provider>
+                    </ScopeProvider>
                 </DebugProfiler>
             </div>
         </ErrorBoundary>

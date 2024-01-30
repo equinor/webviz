@@ -1,9 +1,13 @@
-import { AtomDefinition, AtomStore } from "@framework/AtomStore";
+import { AtomStore } from "@framework/AtomStore";
 
-import { createStore } from "jotai";
+import { Atom, createStore } from "jotai";
 
-export class AtomStorePrivate<S extends AtomDefinition> extends AtomStore<S> {
+export class AtomStorePrivate extends AtomStore {
     getInternalStore(): ReturnType<typeof createStore> {
         return this._store;
+    }
+
+    getAtoms(): Atom<unknown>[] {
+        return [...this._atoms.keys()];
     }
 }

@@ -1,5 +1,4 @@
-import { Atom } from "jotai";
-
+import { AtomDefinition } from "./AtomStore";
 import { BroadcastChannelsDef, InputBroadcastChannelDef } from "./Broadcaster";
 import { Module } from "./Module";
 import { DrawPreviewFunc } from "./Preview";
@@ -15,7 +14,7 @@ export type RegisterModuleOptions = {
     inputChannelDefs?: InputBroadcastChannelDef[];
     preview?: DrawPreviewFunc;
     description?: string;
-    atoms?: Atom<unknown>[];
+    atoms?: AtomDefinition[];
 };
 
 export class ModuleNotFoundError extends Error {

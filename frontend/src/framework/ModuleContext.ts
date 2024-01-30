@@ -12,6 +12,9 @@
 /* eslint-disable react-hooks/rules-of-hooks */
 import React from "react";
 
+import { Atom, ExtractAtomArgs, ExtractAtomResult, ExtractAtomValue, WritableAtom } from "jotai";
+
+import { AtomStore, Options, SetAtom, useStoredAtom } from "./AtomStore";
 import { BroadcastChannel, InputBroadcastChannelDef } from "./Broadcaster";
 import { InitialSettings } from "./InitialSettings";
 import { ModuleInstance } from "./ModuleInstance";
@@ -22,10 +25,12 @@ import { SyncSettingKey } from "./SyncSettings";
 export class ModuleContext<S extends StateBaseType> {
     private _moduleInstance: ModuleInstance<S>;
     private _stateStore: StateStore<S>;
+    private _atomStore: AtomStore;
 
-    constructor(moduleInstance: ModuleInstance<S>, stateStore: StateStore<S>) {
+    constructor(moduleInstance: ModuleInstance<S>, stateStore: StateStore<S>, atomStore: AtomStore) {
         this._moduleInstance = moduleInstance;
         this._stateStore = stateStore;
+        this._atomStore = atomStore;
     }
 
     getInstanceIdString(): string {
@@ -61,6 +66,22 @@ export class ModuleContext<S extends StateBaseType> {
         }, []);
 
         return keyArr;
+    }
+
+    useAtom<Value, Args extends any[], Result>(
+        atom: WritableAtom<Value, Args, Result>,
+        options?: Options
+    ): [Awaited<Value>, SetAtom<Args, Result>];
+    useAtom<Value>(atom: Atom<Value>, options?: Options): [Awaited<Value>, never];
+    useAtom<AtomType extends WritableAtom<any, any[], any>>(
+        atom: AtomType,
+        options?: Options
+    ): [Awaited<ExtractAtomValue<AtomType>>, SetAtom<ExtractAtomArgs<AtomType>, ExtractAtomResult<AtomType>>];
+    useAtom<AtomType extends Atom<any>>(
+        atom: AtomType,
+        options?: Options
+    ): [Awaited<ExtractAtomValue<AtomType>>, never] {
+        return useStoredAtom(this._atomStore, atom, options);
     }
 
     setInstanceTitle(title: string): void {

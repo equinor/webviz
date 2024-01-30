@@ -2,16 +2,17 @@ import React from "react";
 
 import { ModuleFCProps } from "@framework/Module";
 
-import { useAtom } from "jotai";
-
-import { atomBasedOnVectors } from "./atoms";
+import { atomBasedOnVectors, ensembleSetDependentAtom } from "./atoms";
 import { State } from "./state";
 
 export const View = (props: ModuleFCProps<State>) => {
-    const [isFetching] = useAtom(atomBasedOnVectors);
+    const [isFetching] = props.moduleContext.useAtom(atomBasedOnVectors);
+
+    const [firstEnsemble] = props.moduleContext.useAtom(ensembleSetDependentAtom);
 
     return (
         <div className="h-full w-full flex flex-col justify-center items-center">
+            {firstEnsemble?.toString()}
             {isFetching ? (
                 <div>Settings is loading...</div>
             ) : (

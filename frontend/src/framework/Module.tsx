@@ -1,8 +1,8 @@
 import React from "react";
 
-import { Atom } from "jotai";
 import { cloneDeep } from "lodash";
 
+import { AtomDefinition } from "./AtomStore";
 import { BroadcastChannelsDef, InputBroadcastChannelDef } from "./Broadcaster";
 import { InitialSettings } from "./InitialSettings";
 import { ModuleContext } from "./ModuleContext";
@@ -47,7 +47,7 @@ export class Module<StateType extends StateBaseType> {
     private _drawPreviewFunc: DrawPreviewFunc | null;
     private _description: string | null;
     private _inputChannelDefs: InputBroadcastChannelDef[];
-    private _atoms: Atom<any>[];
+    private _atoms: AtomDefinition[];
 
     constructor(
         name: string,
@@ -57,7 +57,7 @@ export class Module<StateType extends StateBaseType> {
         inputChannelDefs: InputBroadcastChannelDef[] = [],
         drawPreviewFunc: DrawPreviewFunc | null = null,
         description: string | null = null,
-        atoms: Atom<any>[] = []
+        atoms: AtomDefinition[] = []
     ) {
         this._name = name;
         this._defaultTitle = defaultTitle;

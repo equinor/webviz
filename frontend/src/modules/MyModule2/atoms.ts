@@ -1,7 +1,9 @@
 import { apiService } from "@framework/ApiService";
+import { AtomDefinition } from "@framework/AtomStore";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
+import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 
-import { atom } from "jotai";
+import { atom, useSetAtom } from "jotai";
 import { atomWithQuery } from "jotai-tanstack-query";
 
 export const selectedEnsembleAtom = atom<EnsembleIdent | null>(null);
@@ -14,5 +16,31 @@ export const vectorsAtom = atomWithQuery((get) => ({
         ),
 }));
 export const atomBasedOnVectors = atom<boolean>((get) => get(vectorsAtom).isFetching);
+export const userSelectedVectorAtom = atom<string | null>(null);
+export const selectedVectorAtom = atom<string | null>((get) => {
+    const vectors = get(vectorsAtom);
+    const userSelectedVector = get(userSelectedVectorAtom);
 
-export const atoms = [selectedEnsembleAtom, vectorsAtom, atomBasedOnVectors];
+    if (userSelectedVector && vectors.data) {
+        if (vectors.data.some((vector) => vector.name === userSelectedVector)) {
+            return userSelectedVector;
+        }
+    }
+
+    return vectors.data?.at(0)?.name ?? null;
+});
+
+export const ensembleSetDependentAtom = atom<EnsembleIdent | null>((get) => {
+    const ensembleSet = get(EnsembleSetAtom);
+    const firstEnsemble = ensembleSet.getEnsembleArr()[0];
+    return firstEnsemble?.getIdent() ?? null;
+});
+
+export const atomDefinitions: AtomDefinition[] = [
+    { name: "selectedEnsemble", atom: selectedEnsembleAtom },
+    { name: "vectors", atom: vectorsAtom },
+    { name: "atomBasedOnVectors", atom: atomBasedOnVectors },
+    { name: "userSelectedVector", atom: userSelectedVectorAtom },
+    { name: "selectedVector", atom: selectedVectorAtom },
+    { name: "firstEnsemble", atom: ensembleSetDependentAtom },
+];

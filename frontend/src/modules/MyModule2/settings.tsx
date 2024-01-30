@@ -3,25 +3,36 @@ import React from "react";
 import { VectorDescription_api } from "@api";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { ModuleFCProps } from "@framework/Module";
-import { useEnsembleSet } from "@framework/WorkbenchSession";
+import { useEnsembleSetAtom } from "@framework/WorkbenchSession";
 import { SingleEnsembleSelect } from "@framework/components/SingleEnsembleSelect";
 import { Label } from "@lib/components/Label";
 import { Select, SelectOption } from "@lib/components/Select";
 
-import { useAtom } from "jotai";
-
-import { atomBasedOnVectors, selectedEnsembleAtom, vectorsAtom } from "./atoms";
+import {
+    atomBasedOnVectors,
+    selectedEnsembleAtom,
+    selectedVectorAtom,
+    userSelectedVectorAtom,
+    vectorsAtom,
+} from "./atoms";
 import { State } from "./state";
 
 export const Settings = (props: ModuleFCProps<State>) => {
-    const ensembleSet = useEnsembleSet(props.workbenchSession);
+    const ensembleSet = useEnsembleSetAtom(props.workbenchSession);
 
-    const [selectedEnsemble, setSelectedEnsemble] = useAtom(selectedEnsembleAtom);
-    const [result] = useAtom(vectorsAtom);
-    const [isFetching] = useAtom(atomBasedOnVectors);
+    const [selectedEnsemble, setSelectedEnsemble] = props.moduleContext.useAtom(selectedEnsembleAtom);
+    const [result] = props.moduleContext.useAtom(vectorsAtom);
+    const [isFetching] = props.moduleContext.useAtom(atomBasedOnVectors);
+
+    const [, setUserSelectedVector] = props.moduleContext.useAtom(userSelectedVectorAtom);
+    const [selectedVector] = props.moduleContext.useAtom(selectedVectorAtom);
 
     function handleEnsembleSelectionChange(ensembleIdent: EnsembleIdent | null) {
         setSelectedEnsemble(ensembleIdent);
+    }
+
+    function handleVectorSelectionChange(selectedVectors: string[]) {
+        setUserSelectedVector(selectedVectors[0]);
     }
 
     return (
@@ -37,7 +48,13 @@ export const Settings = (props: ModuleFCProps<State>) => {
                 <div>Loading...</div>
             ) : (
                 <Label text="Vector">
-                    <Select options={makeVectorOptionItems(result.data)} filter={true} size={5} />
+                    <Select
+                        options={makeVectorOptionItems(result.data)}
+                        filter={true}
+                        size={5}
+                        value={selectedVector ? [selectedVector] : undefined}
+                        onChange={handleVectorSelectionChange}
+                    />
                 </Label>
             )}
         </>

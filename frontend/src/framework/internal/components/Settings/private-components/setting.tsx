@@ -11,6 +11,7 @@ import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { Settings as SettingsIcon } from "@mui/icons-material";
 
 import { Provider } from "jotai";
+import { ScopeProvider } from "jotai-scope";
 
 import { DebugProfiler } from "../../DebugProfiler";
 
@@ -25,7 +26,7 @@ export const Setting: React.FC<SettingProps> = (props) => {
     const [moduleInstanceState, setModuleInstanceState] = React.useState<ModuleInstanceState>(
         ModuleInstanceState.INITIALIZING
     );
-    const store = props.moduleInstance.getJotaiStore();
+    const store = props.moduleInstance.getAtomStore();
 
     React.useEffect(() => {
         setModuleInstanceState(props.moduleInstance.getModuleInstanceState());
@@ -101,7 +102,7 @@ export const Setting: React.FC<SettingProps> = (props) => {
                             statusController={props.moduleInstance.getStatusController()}
                             guiMessageBroker={props.workbench.getGuiMessageBroker()}
                         >
-                            <Provider store={store}>
+                            <ScopeProvider atoms={store.getAtoms()}>
                                 <Settings
                                     moduleContext={props.moduleInstance.getContext()}
                                     workbenchSession={props.workbench.getWorkbenchSession()}
@@ -109,7 +110,7 @@ export const Setting: React.FC<SettingProps> = (props) => {
                                     workbenchSettings={props.workbench.getWorkbenchSettings()}
                                     initialSettings={props.moduleInstance.getInitialSettings() || undefined}
                                 />
-                            </Provider>
+                            </ScopeProvider>
                         </DebugProfiler>
                     </div>
                 </div>
