@@ -24,7 +24,7 @@ export const Settings: ModuleFC<State> = (props: ModuleFCProps<State>) => {
 
     const ensembleSet = useEnsembleSet(props.workbenchSession);
     const fieldConfigSet = useFieldConfigSet(props.workbenchSession);
-    const fieldConfig = fieldConfigSet.getConfig("Drogon");
+    const fieldConfig = fieldConfigSet.getConfig("DROGON");
 
     React.useEffect(() => {
         if (!fieldConfigApplied && fieldConfig) {

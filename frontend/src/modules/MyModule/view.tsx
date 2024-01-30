@@ -410,10 +410,6 @@ export const View = (props: ModuleFCProps<State>) => {
     const max = props.moduleContext.useStoreValue("max");
     const divMidPoint = props.moduleContext.useStoreValue("divMidPoint");
 
-    const fieldConfigSet = useFieldConfigSet(props.workbenchSession);
-
-    const drogonConfig = fieldConfigSet.getConfig("DROGON");
-
     const ref = React.useRef<HTMLDivElement>(null);
 
     const size = useElementSize(ref);
@@ -444,13 +440,8 @@ export const View = (props: ModuleFCProps<State>) => {
         margin: { t: 0, b: 0 },
     };
 
-    if (!drogonConfig) {
-        return <div>Drogon config not available</div>;
-    }
-
     return (
         <div ref={ref} className="w-full h-full">
-            {JSON.stringify(drogonConfig)}
             <Plot data={[data]} layout={layout} />
         </div>
     );

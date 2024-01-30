@@ -37,7 +37,8 @@ async function loadConfigFromFile(fieldIdentifier: string): Promise<LoadConfigFr
     try {
         // With https://github.com/tc39/proposal-json-modules in place, we can make use of `{ with: {type: "json"} }` in order to make sure that the imported module is expected to be a JSON file.
         // const content = await import(`/src/assets/field-configs/${fieldIdentifier}.json?init`, { with: {type: "json"} });
-        const content = await import(`/src/assets/field-configs/${fieldIdentifier}.json?init`);
+        // In addition, Vite will warn about not being able to analyze the dynamic import, so we are ignoring that warning.
+        const content = await import(/* @vite-ignore */ `/src/assets/field-configs/${fieldIdentifier}.json?init`);
         if (!validateConfig(content.default)) {
             result.error = new Error(
                 `Invalid format in config file '${fieldIdentifier}.json':\n${stringifyConfigValidationErrors(
