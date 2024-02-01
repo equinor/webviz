@@ -2,7 +2,6 @@ import React from "react";
 
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import {
-    RealizationContinuousParameterValueFilter,
     RealizationFilter,
     RealizationFilterType,
     RealizationFilterTypeStringMapping,
@@ -18,31 +17,27 @@ import { Check, Close, FilterAlt as FilterIcon } from "@mui/icons-material";
 
 import { isEqual } from "lodash";
 
-type RealizationFilterPanelProps = { workbench: Workbench };
+type RealizationFilterSettingsProps = { workbench: Workbench };
 
-export const RealizationFilterPanel: React.FC<RealizationFilterPanelProps> = (props) => {
-    // const [selectedEnsemble, setSelectedEnsemble] = React.useState<Ensemble | null>(null);
+export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps> = (props) => {
+    const [isEdited, setIsEdited] = React.useState<boolean>(false);
     const [selectedRealizationFilter, setSelectedRealizationFilter] = React.useState<RealizationFilter | null>(null);
     const [selectedRealizations, setSelectedRealizations] = React.useState<number[]>([]);
     const [selectedRangeTags, setSelectedRangeTags] = React.useState<string[]>([]);
-    const [selectedParameterValueFilters, setSelectedParameterValueFilters] = React.useState<
-        RealizationContinuousParameterValueFilter[]
-    >([]);
     const [selectedFilterType, setSelectedFilterType] = React.useState<RealizationFilterType>(
         RealizationFilterType.REALIZATION_INDEX
     );
-    const [isEdited, setIsEdited] = React.useState<boolean>(false);
 
     const ensembleSet = useEnsembleSet(props.workbench.getWorkbenchSession());
-
     const realizationFilterSet = props.workbench.getWorkbenchSession().getRealizationFilterSet();
+
+    // TODO: Have a state which creates map between ensembleIdent and realizationTags?
 
     function handleSelectedEnsembleChange(newValue: string | undefined) {
         if (newValue === undefined) {
             setSelectedRealizationFilter(null);
             setSelectedRealizations([]);
             setSelectedRangeTags([]);
-            setSelectedParameterValueFilters([]);
             setSelectedFilterType(RealizationFilterType.REALIZATION_INDEX);
             setIsEdited(false);
             return;
@@ -53,20 +48,17 @@ export const RealizationFilterPanel: React.FC<RealizationFilterPanelProps> = (pr
         const realizationFilter = realizationFilterSet.getRealizationFilterByEnsembleIdent(ensembleIdent);
 
         if (realizationFilter === null) {
-            console.error(`No realization filter found for ensemble ${ensembleIdent.toString()}`); // TMP: Remove
             setSelectedRealizationFilter(null);
             return;
         }
 
         const selectedEnsembleRealizations = realizationFilter.getSelectedRealizations() ?? [];
         const selectedEnsembleRangeTags = realizationFilter.getSelectedRangeTags() ?? [];
-        const selectedEnsembleParameterValueFilters = realizationFilter.getParameterValueFilters() ?? [];
         const filterType = realizationFilter.getFilterType() ?? RealizationFilterType.REALIZATION_INDEX;
 
         setSelectedRealizationFilter(realizationFilter);
         setSelectedRealizations([...(selectedEnsembleRealizations ?? [])]);
         setSelectedRangeTags([...(selectedEnsembleRangeTags ?? [])]);
-        setSelectedParameterValueFilters(selectedEnsembleParameterValueFilters);
         setSelectedFilterType(filterType);
         setIsEdited(false);
     }
@@ -85,24 +77,24 @@ export const RealizationFilterPanel: React.FC<RealizationFilterPanelProps> = (pr
 
         setSelectedRealizations([...selectedRealizationFilter.getSelectedRealizations()]);
         setSelectedRangeTags([...selectedRealizationFilter.getSelectedRangeTags()]);
-        setSelectedParameterValueFilters(selectedRealizationFilter.getParameterValueFilters());
         setSelectedFilterType(selectedRealizationFilter.getFilterType());
         setIsEdited(false);
     }
 
     function handleApplyButtonOnClick() {
         if (!selectedRealizationFilter) return;
-        if (
-            isEqual(selectedRealizations, selectedRealizationFilter.getSelectedRealizations()) &&
-            isEqual(selectedRangeTags, selectedRealizationFilter.getSelectedRangeTags()) &&
-            selectedFilterType === selectedRealizationFilter.getFilterType()
-        ) {
-            return;
-        }
 
         setIsEdited(false);
 
-        // If selected realizations are unequal to current selected realizations for ensemble - update the ensemble and notify.
+        // Prevent unnecessary updates and notification
+        const isFilterSelectionsUnchanged =
+            isEqual(selectedRealizations, selectedRealizationFilter.getSelectedRealizations()) &&
+            isEqual(selectedRangeTags, selectedRealizationFilter.getSelectedRangeTags()) &&
+            selectedFilterType === selectedRealizationFilter.getFilterType();
+        if (isFilterSelectionsUnchanged) {
+            return;
+        }
+
         selectedRealizationFilter.setFilterType(selectedFilterType);
         selectedRealizationFilter.setSelectedRealizationsAndRangeTags({
             realizations: selectedRealizations,
@@ -121,13 +113,9 @@ export const RealizationFilterPanel: React.FC<RealizationFilterPanelProps> = (pr
         setIsEdited(newFilterType !== selectedRealizationFilter.getFilterType());
     }
 
-    // TODO:
-    // - How to populate selections/notify modules of changes?
-    // - More info on possible realization indices for RealizationPicker? A bit difficult to see what can be written in the input field.
-
     return (
         <>
-            <div className="flex justify-center items-center p-2 bg-slate-100 h-10">
+            <div className="flex justify-center items-center bg-slate-100 h-10">
                 <FilterIcon />
                 {""}
                 <span
@@ -137,7 +125,7 @@ export const RealizationFilterPanel: React.FC<RealizationFilterPanelProps> = (pr
                     {"Realization Filter"}
                 </span>
             </div>
-            <div className="flex flex-col gap-4 overflow-y-auto">
+            <div className="flex flex-col p-2 gap-4 overflow-y-auto">
                 <Label text="Ensemble">
                     <Dropdown
                         value={selectedRealizationFilter?.getParentEnsembleIdent().toString() ?? undefined}
@@ -166,25 +154,25 @@ export const RealizationFilterPanel: React.FC<RealizationFilterPanelProps> = (pr
                     />
                 </Label>
                 <Label text="Realizations by index">
-                    <RealizationPicker
-                        selectedRangeTags={selectedRangeTags}
-                        validRealizations={
-                            selectedRealizationFilter
-                                ? ensembleSet
-                                      .findEnsemble(selectedRealizationFilter.getParentEnsembleIdent())
-                                      ?.getRealizations()
-                                : []
-                        }
-                        debounceTimeMs={500}
-                        onChange={handleRealizationPickChange}
-                        disabled={
-                            !selectedRealizationFilter || selectedFilterType !== RealizationFilterType.REALIZATION_INDEX
-                        }
-                    />
+                    <div>
+                        <RealizationPicker
+                            selectedRangeTags={selectedRangeTags}
+                            validRealizations={
+                                selectedRealizationFilter
+                                    ? ensembleSet
+                                          .findEnsemble(selectedRealizationFilter.getParentEnsembleIdent())
+                                          ?.getRealizations()
+                                    : []
+                            }
+                            debounceTimeMs={500}
+                            onChange={handleRealizationPickChange}
+                            disabled={
+                                !selectedRealizationFilter ||
+                                selectedFilterType !== RealizationFilterType.REALIZATION_INDEX
+                            }
+                        />
+                    </div>
                 </Label>
-                {/* <Label text="Realizations by parameter values">
-                    <div>TO BE IMPLEMENTED</div>
-                </Label> */}
                 <div className="flex gap-4">
                     <Button
                         color="danger"

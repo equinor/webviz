@@ -18,7 +18,6 @@ const defaultState: State = {
         IndividualStatisticsSelection: Object.values(StatisticFunction_api),
         FanchartStatisticsSelection: Object.values(FanchartStatisticOption),
     },
-    useRealizationFiltering: false,
 };
 
 const module = ModuleRegistry.initModule<State>("SimulationTimeSeriesMatrix", defaultState);

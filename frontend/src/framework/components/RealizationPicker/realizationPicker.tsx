@@ -347,7 +347,6 @@ export const RealizationPicker: React.FC<RealizationPickerProps> = (props) => {
             if (lastSelection) {
                 const newSelections = selections.slice(0, -1);
                 setSelections(newSelections);
-                // handleSelectionsChange(newSelections);
             }
             if (inputRef.current) {
                 inputRef.current.value = lastSelection?.value || "";

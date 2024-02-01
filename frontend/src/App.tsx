@@ -3,9 +3,9 @@ import React from "react";
 import WebvizLogo from "@assets/webviz.svg";
 import { DrawerContent, GuiState } from "@framework/GuiMessageBroker";
 import { LayoutElement, Workbench } from "@framework/Workbench";
-import { FilterBar } from "@framework/internal/components/FilterBar";
 import { NavBar } from "@framework/internal/components/NavBar";
 import { SettingsContentPanels } from "@framework/internal/components/SettingsContentPanels";
+import { SidePanel } from "@framework/internal/components/SidePanel";
 import { ToggleDevToolsButton } from "@framework/internal/components/ToggleDevToolsButton";
 import { AuthState, useAuthProvider } from "@framework/internal/providers/AuthProvider";
 import { Button } from "@lib/components/Button";
@@ -162,7 +162,7 @@ function App() {
             >
                 <NavBar workbench={workbench.current} />
                 <SettingsContentPanels workbench={workbench.current} />
-                <FilterBar workbench={workbench.current} />
+                <SidePanel workbench={workbench.current} />
             </div>
             <ToggleDevToolsButton guiMessageBroker={workbench.current.getGuiMessageBroker()} />
         </>

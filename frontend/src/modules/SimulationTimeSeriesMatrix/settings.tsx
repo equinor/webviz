@@ -61,8 +61,6 @@ export function Settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
     const [showHistorical, setShowHistorical] = moduleContext.useStoreState("showHistorical");
     const [showObservations, setShowObservations] = moduleContext.useStoreState("showObservations");
     const [statisticsSelection, setStatisticsSelection] = moduleContext.useStoreState("statisticsSelection");
-    const [useRealizationFiltering, setUseRealizationFiltering] =
-        moduleContext.useStoreState("useRealizationFiltering");
     const setParameterIdent = moduleContext.useSetStoreValue("parameterIdent");
     const setVectorSpecifications = moduleContext.useSetStoreValue("vectorSpecifications");
 
@@ -285,10 +283,6 @@ export function Settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
         setVisualizationMode(event.target.value as VisualizationMode);
     }
 
-    function handleUseRealizationFilterChange(checked: boolean) {
-        setUseRealizationFiltering(checked);
-    }
-
     function handleFanchartStatisticsSelectionChange(
         event: React.ChangeEvent<HTMLInputElement>,
         statistic: FanchartStatisticOption
@@ -483,11 +477,6 @@ export function Settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
                 </div>
             </CollapsibleGroup>
             <CollapsibleGroup expanded={false} title="Visualization">
-                <Checkbox
-                    label={"Use realization filter"}
-                    checked={useRealizationFiltering}
-                    onChange={(_, checked) => handleUseRealizationFilterChange(checked)}
-                ></Checkbox>
                 <RadioGroup
                     value={visualizationMode}
                     options={Object.values(VisualizationMode).map((val: VisualizationMode) => {

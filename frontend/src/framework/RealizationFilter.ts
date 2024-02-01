@@ -1,3 +1,5 @@
+import { isEqual } from "lodash";
+
 import { Ensemble } from "./Ensemble";
 import { EnsembleIdent } from "./EnsembleIdent";
 import { ContinuousParameter } from "./EnsembleParameters";
@@ -38,22 +40,25 @@ export class RealizationContinuousParameterValueFilter {
 
 type RealizationIndexSelection = {
     realizations: readonly number[];
-    rangeTags: readonly string[];
+    rangeTags: readonly string[]; // TODO: Have rangeTags outside of RealizationFilter class? How to distinguish between empty realizationPicker and input resulting in no realizations?
 };
 
 export class RealizationFilter {
     private _filterType: RealizationFilterType;
     private _parentEnsemble: Ensemble;
 
-    private _selectedRealizationIndexSelection: RealizationIndexSelection;
+    private _realizationIndexSelection: RealizationIndexSelection;
     private _parameterValueFilters: RealizationContinuousParameterValueFilter[];
+
+    // Internal array for ref stability
+    private _filteredRealizations: readonly number[];
 
     constructor(parentEnsemble: Ensemble, initialFilterType = RealizationFilterType.REALIZATION_INDEX) {
         this._filterType = initialFilterType;
         this._parentEnsemble = parentEnsemble;
+        this._filteredRealizations = parentEnsemble.getRealizations();
 
-        this._selectedRealizationIndexSelection = { realizations: [], rangeTags: [] };
-
+        this._realizationIndexSelection = { realizations: [], rangeTags: [] };
         this._parameterValueFilters = [];
     }
 
@@ -62,59 +67,92 @@ export class RealizationFilter {
     }
 
     setSelectedRealizationsAndRangeTags(selection: RealizationIndexSelection): void {
-        this._selectedRealizationIndexSelection = selection;
+        this._realizationIndexSelection = selection;
+
+        // Update internal array if resulting realizations has changed
+        if (this._filterType === RealizationFilterType.REALIZATION_INDEX) {
+            this.runSelectedRealizationIndexFiltering();
+        }
     }
 
     getSelectedRealizations(): readonly number[] {
-        return this._selectedRealizationIndexSelection.realizations;
+        return this._realizationIndexSelection.realizations;
     }
 
     getSelectedRangeTags(): readonly string[] {
-        return this._selectedRealizationIndexSelection.rangeTags;
+        return this._realizationIndexSelection.rangeTags;
     }
 
-    addParameterValueFilter(parameterValueFilter: RealizationContinuousParameterValueFilter): void {
-        this._parameterValueFilters.push(parameterValueFilter);
+    setParameterValueFilters(parameterValueFilters: RealizationContinuousParameterValueFilter[]): void {
+        this._parameterValueFilters = parameterValueFilters;
+
+        if (this._filterType === RealizationFilterType.PARAMETER_VALUES) {
+            this.runParameterValueFiltering();
+        }
     }
 
+    updateParameterValueFiltering(): void {
+        if (this._filterType !== RealizationFilterType.PARAMETER_VALUES) return;
+
+        this.runParameterValueFiltering();
+    }
+
+    // Get reference and modify it directly, thereafter call updateParameterValueFiltering?
     getParameterValueFilters(): RealizationContinuousParameterValueFilter[] {
         return this._parameterValueFilters;
+    }
+
+    setFilterType(filterType: RealizationFilterType): void {
+        if (filterType === this._filterType) return;
+
+        this._filterType = filterType;
+        if (filterType === RealizationFilterType.REALIZATION_INDEX) {
+            this.runSelectedRealizationIndexFiltering();
+        } else if (filterType === RealizationFilterType.PARAMETER_VALUES) {
+            this.runParameterValueFiltering();
+        }
     }
 
     getFilterType(): RealizationFilterType {
         return this._filterType;
     }
 
-    setFilterType(filterType: RealizationFilterType): void {
-        this._filterType = filterType;
+    getFilteredRealizations(): readonly number[] {
+        return this._filteredRealizations;
     }
 
-    getFilteredRealizations(): number[] {
-        const validRealizations = this._parentEnsemble.getRealizations();
+    private runSelectedRealizationIndexFiltering(): void {
+        let newFilteredRealizations = this._parentEnsemble.getRealizations();
 
-        if (validRealizations.length === 0) {
-            return [];
-        }
-
-        // Realization index filter
-        if (this._filterType === RealizationFilterType.REALIZATION_INDEX) {
-            return this._selectedRealizationIndexSelection.realizations.filter((elm) =>
-                validRealizations.includes(elm)
+        // If there are any range tags, filter the realizations
+        if (this._realizationIndexSelection.rangeTags.length > 0) {
+            newFilteredRealizations = this._realizationIndexSelection.realizations.filter((elm) =>
+                this._parentEnsemble.getRealizations().includes(elm)
             );
         }
 
+        if (!isEqual(newFilteredRealizations, this._filteredRealizations)) {
+            this._filteredRealizations = newFilteredRealizations;
+        }
+    }
+
+    private runParameterValueFiltering(): void {
+        let newFilteredRealizations = this._parentEnsemble.getRealizations();
+
         // Parameter filtering - intersection of realization indices across all parameter filters
         if (this._parameterValueFilters.length > 0) {
+            const validRealizations = this._parentEnsemble.getRealizations();
             const realizationIndicesWithinMinMax = [...this._parameterValueFilters[0].getRealizationsWithinMinMax()];
             for (let i = 1; i < this._parameterValueFilters.length; i++) {
                 realizationIndicesWithinMinMax.filter((realization) => {
                     return this._parameterValueFilters[i].getRealizationsWithinMinMax().includes(realization);
                 });
             }
-            return realizationIndicesWithinMinMax.filter((elm) => validRealizations.includes(elm));
+            newFilteredRealizations = realizationIndicesWithinMinMax.filter((elm) => validRealizations.includes(elm));
         }
 
-        // No filtering active
-        return [...validRealizations];
+        if (!isEqual(newFilteredRealizations, this._filteredRealizations)) {
+            this._filteredRealizations = newFilteredRealizations;
+        }
     }
 }

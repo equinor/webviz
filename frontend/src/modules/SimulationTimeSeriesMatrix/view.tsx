@@ -11,6 +11,8 @@ import { useElementSize } from "@lib/hooks/useElementSize";
 import { ColorScaleGradientType } from "@lib/utils/ColorScale";
 import { ContentError } from "@modules/_shared/components/ContentMessage";
 
+import { isEqual } from "lodash";
+
 import {
     useHistoricalVectorDataQueries,
     useStatisticalVectorDataQueries,
@@ -31,20 +33,35 @@ export const View = ({ moduleContext, workbenchSession, workbenchSettings }: Mod
     const wrapperDivSize = useElementSize(wrapperDivRef);
 
     const ensembleSet = useEnsembleSet(workbenchSession);
-    const filterEnsembleRealizationFunc = useEnsembleRealizationFilterFunc(workbenchSession);
+    const getFilteredEnsembleRealizationsFunc = useEnsembleRealizationFilterFunc(workbenchSession);
     const statusWriter = useViewStatusWriter(moduleContext);
 
     // Store values
     const vectorSpecifications = moduleContext.useStoreValue("vectorSpecifications");
     const groupBy = moduleContext.useStoreValue("groupBy");
     const resampleFrequency = moduleContext.useStoreValue("resamplingFrequency");
-    const useRealizationFiltering = moduleContext.useStoreValue("useRealizationFiltering");
     const visualizationMode = moduleContext.useStoreValue("visualizationMode");
     const showHistorical = moduleContext.useStoreValue("showHistorical");
     const showObservations = moduleContext.useStoreValue("showObservations");
     const statisticsSelection = moduleContext.useStoreValue("statisticsSelection");
     const parameterIdent = moduleContext.useStoreValue("parameterIdent");
     const colorRealizationsByParameter = moduleContext.useStoreValue("colorRealizationsByParameter");
+
+    // Apply realization filtering
+    vectorSpecifications?.forEach((vectorSpecification) => {
+        const filteredEnsembleRealizations = getFilteredEnsembleRealizationsFunc(vectorSpecification.ensembleIdent);
+        const ensembleRealizations = ensembleSet.findEnsemble(vectorSpecification.ensembleIdent)?.getRealizations();
+
+        // Check if no realizations are filtered out
+        const isAllRealizationsSelected = isEqual(filteredEnsembleRealizations, ensembleRealizations);
+
+        vectorSpecification.selectedIndividualRealizations = isAllRealizationsSelected
+            ? null
+            : [...filteredEnsembleRealizations];
+        vectorSpecification.selectedStatisticsRealizations = isAllRealizationsSelected
+            ? null
+            : [...filteredEnsembleRealizations];
+    });
 
     // Color palettes
     const colorSet = workbenchSettings.useColorSet();
@@ -65,17 +82,11 @@ export const View = ({ moduleContext, workbenchSession, workbenchSettings }: Mod
         selectedEnsembles.push(ensemble);
     });
 
-    for (const ensemble of selectedEnsembles) {
-        const ensembleFilteredRealizations = filterEnsembleRealizationFunc(ensemble.getIdent());
-        console.log(`Filtered realizations for ${ensemble.getDisplayName()}: ${ensembleFilteredRealizations}`);
-    }
-
     // Queries
-    const vectorDataQueries = useVectorDataQueries(vectorSpecifications, resampleFrequency, null, true);
+    const vectorDataQueries = useVectorDataQueries(vectorSpecifications, resampleFrequency, true);
     const vectorStatisticsQueries = useStatisticalVectorDataQueries(
         vectorSpecifications,
         resampleFrequency,
-        null,
         visualizationMode === VisualizationMode.STATISTICAL_FANCHART ||
             visualizationMode === VisualizationMode.STATISTICAL_LINES ||
             visualizationMode === VisualizationMode.STATISTICS_AND_REALIZATIONS

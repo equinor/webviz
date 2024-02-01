@@ -5,7 +5,7 @@ import { EnsembleIdent } from "./EnsembleIdent";
 import { EnsembleSet } from "./EnsembleSet";
 import { RealizationFilterSet } from "./RealizationFilterSet";
 
-export type EnsembleRealizationFilterFunction = (ensembleIdents: EnsembleIdent) => number[];
+export type EnsembleRealizationFilterFunction = (ensembleIdent: EnsembleIdent) => readonly number[];
 
 export enum WorkbenchSessionEvent {
     EnsembleSetChanged = "EnsembleSetChanged",
@@ -22,7 +22,6 @@ export type WorkbenchSessionPayloads = {
 export class WorkbenchSession {
     private _subscribersMap: Map<keyof WorkbenchSessionEvent, Set<(payload: any) => void>> = new Map();
     protected _ensembleSet: EnsembleSet = new EnsembleSet([]);
-    // protected _realizationFilterSet = new RealizationFilterSet(this._ensembleSet, []);
     protected _realizationFilterSet = new RealizationFilterSet();
 
     getEnsembleSet(): EnsembleSet {
@@ -70,15 +69,18 @@ export class WorkbenchSession {
 export function useEnsembleRealizationFilterFunc(
     workbenchSession: WorkbenchSession
 ): EnsembleRealizationFilterFunction {
+    // With React.useState and filter function `S`, we have `S` = () => number[].
+    // For React.useState, initialState (() => S) implies notation () => S, i.e. () => () => number[].
     const [storedEnsembleRealizationFilterFunc, setStoredEnsembleRealizationFilterFunc] =
-        React.useState<EnsembleRealizationFilterFunction>(() => () => []); // Default to empty filter function
+        React.useState<EnsembleRealizationFilterFunction>(() => () => []);
 
     React.useEffect(
         function subscribeToEnsembleRealizationFilterSetChanges() {
             function handleEnsembleRealizationFilterSetChanged() {
+                // To obey () => () => number[], we need to wrap the filter function in another function.
                 const ensembleRealizationFilterFunc =
                     () =>
-                    (ensembleIdent: EnsembleIdent): number[] => {
+                    (ensembleIdent: EnsembleIdent): readonly number[] => {
                         const realizationFilterSet = workbenchSession.getRealizationFilterSet();
                         const realizationFilter =
                             realizationFilterSet.getRealizationFilterByEnsembleIdent(ensembleIdent);
@@ -88,6 +90,9 @@ export function useEnsembleRealizationFilterFunc(
 
                 setStoredEnsembleRealizationFilterFunc(ensembleRealizationFilterFunc);
             }
+
+            // Initial call to set the filter function.
+            handleEnsembleRealizationFilterSetChanged();
 
             const unsubFunc = workbenchSession.subscribe(
                 WorkbenchSessionEvent.RealizationFilterSetChanged,
@@ -107,9 +112,6 @@ export function useEnsembleSet(workbenchSession: WorkbenchSession): EnsembleSet 
     React.useEffect(
         function subscribeToEnsembleSetChanges() {
             function handleEnsembleSetChanged() {
-                // NOTE: HACK!!! Temporary creating a new EnsembleSet instance here just to ensure new reference to trigger re-render.
-                // Future: Trigger re-render on change within an ensemble in the ensemble set.
-                // setStoredEnsembleSet(new EnsembleSet([...workbenchSession.getEnsembleSet().getEnsembleArr()]));
                 setStoredEnsembleSet(workbenchSession.getEnsembleSet());
             }
 
