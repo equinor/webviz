@@ -66,33 +66,32 @@ export class WorkbenchSession {
     }
 }
 
+function createEnsembleRealizationFilterFuncForWorkbenchSession(workbenchSession: WorkbenchSession) {
+    return (ensembleIdent: EnsembleIdent): readonly number[] => {
+        const realizationFilterSet = workbenchSession.getRealizationFilterSet();
+        const realizationFilter = realizationFilterSet.getRealizationFilterByEnsembleIdent(ensembleIdent);
+
+        return realizationFilter.getFilteredRealizations();
+    };
+}
+
 export function useEnsembleRealizationFilterFunc(
     workbenchSession: WorkbenchSession
 ): EnsembleRealizationFilterFunction {
-    // With React.useState and filter function `S`, we have `S` = () => number[].
-    // For React.useState, initialState (() => S) implies notation () => S, i.e. () => () => number[].
+    // With React.useState and filter function `S`, we have `S` = () => readonly number[].
+    // For React.useState, initialState (() => S) implies notation () => S, i.e. () => () => readonly number[].
     const [storedEnsembleRealizationFilterFunc, setStoredEnsembleRealizationFilterFunc] =
-        React.useState<EnsembleRealizationFilterFunction>(() => () => []);
+        React.useState<EnsembleRealizationFilterFunction>(() =>
+            createEnsembleRealizationFilterFuncForWorkbenchSession(workbenchSession)
+        );
 
     React.useEffect(
         function subscribeToEnsembleRealizationFilterSetChanges() {
             function handleEnsembleRealizationFilterSetChanged() {
-                // To obey () => () => number[], we need to wrap the filter function in another function.
-                const ensembleRealizationFilterFunc =
-                    () =>
-                    (ensembleIdent: EnsembleIdent): readonly number[] => {
-                        const realizationFilterSet = workbenchSession.getRealizationFilterSet();
-                        const realizationFilter =
-                            realizationFilterSet.getRealizationFilterByEnsembleIdent(ensembleIdent);
-
-                        return realizationFilter.getFilteredRealizations();
-                    };
-
-                setStoredEnsembleRealizationFilterFunc(ensembleRealizationFilterFunc);
+                setStoredEnsembleRealizationFilterFunc(() =>
+                    createEnsembleRealizationFilterFuncForWorkbenchSession(workbenchSession)
+                );
             }
-
-            // Initial call to set the filter function.
-            handleEnsembleRealizationFilterSetChanged();
 
             const unsubFunc = workbenchSession.subscribe(
                 WorkbenchSessionEvent.RealizationFilterSetChanged,
