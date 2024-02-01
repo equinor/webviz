@@ -26,7 +26,7 @@ import (
 	"math"
 )
 
-func CalculateVectorLengthAndAngle(x1, x2, y1, y2 float64, option int) (vlen, xangleRadian, xangleDegrees float32) {
+func CalculateVectorLengthAndAngle(x1, x2, y1, y2 float64, option int) (vlen, xangleRadian, xangleDegrees float64) {
 	const epsilon = 0.00001
 	const pi = math.Pi
 
@@ -36,30 +36,30 @@ func CalculateVectorLengthAndAngle(x1, x2, y1, y2 float64, option int) (vlen, xa
 	}
 
 	// Compute vector length
-	vlen = float32(math.Sqrt(float64(math.Pow(float64(x2-x1), 2) + math.Pow(float64(y2-y1), 2))))
+	vlen = math.Sqrt(math.Pow(x2-x1, 2) + math.Pow(y2-y1, 2))
 
 	if option == -1 {
 		return vlen, 0.0, 0.0
 	}
 
-	var azi, deg float32
+	var azi, deg float64
 
 	if math.Abs(float64(x2-x1)) > epsilon {
-		deg = float32(math.Atan(float64((y2 - y1) / (x2 - x1))))
+		deg = math.Atan(float64((y2 - y1) / (x2 - x1)))
 
 		if x2 > x1 {
-			azi = float32(pi)/2 - deg
+			azi = pi/2 - deg
 		} else {
-			deg += float32(pi)
-			azi = 2*float32(pi) + float32(pi)/2 - deg
+			deg += pi
+			azi = 2*pi + pi/2 - deg
 		}
 	} else {
 		if y2 < y1 {
-			azi = float32(pi)
-			deg = -float32(pi) / 2.0
+			azi = pi
+			deg = -pi / 2.0
 		} else {
 			azi = 0
-			deg = float32(pi) / 2
+			deg = pi / 2
 		}
 	}
 
@@ -70,18 +70,18 @@ func CalculateVectorLengthAndAngle(x1, x2, y1, y2 float64, option int) (vlen, xa
 	if option == 1 {
 		xangleRadian = deg
 	}
-	xangleDegrees = xangleRadian * 180 / float32(pi)
+	xangleDegrees = xangleRadian * 180 / pi
 
 	return vlen, xangleRadian, xangleDegrees
 }
 
-func adjustAngle(angle float32) float32 {
+func adjustAngle(angle float64) float64 {
 	const pi = math.Pi
 	if angle < 0 {
-		return angle + 2*float32(pi)
+		return angle + 2*pi
 	}
-	if angle > 2*float32(pi) {
-		return angle - 2*float32(pi)
+	if angle > 2*pi {
+		return angle - 2*pi
 	}
 	return angle
 }

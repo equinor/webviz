@@ -114,7 +114,7 @@ func SurfaceInterpolateNearestNode(xV, yV []float64, zV []float32, x, y float64)
 		}
 	}
 
-	var previous float32 = UndefMap
+	var previous float64 = UndefMap
 	var z float32 = UndefMap
 	for i := 0; i < 4; i++ {
 		len, _, _ := CalculateVectorLengthAndAngle(x, xV[i], y, yV[i], 1)
