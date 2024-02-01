@@ -12,11 +12,11 @@ RUN mkdir /home/appuser/gobuild
 # This step is not strictly necessary, the eventual 'go mod download' will prefill the module cache
 RUN mkdir /home/appuser/goscratch
 WORKDIR /home/appuser/goscratch
-COPY ./backend_go/surface_intersect/go.mod ./
-COPY ./backend_go/surface_intersect/go.sum ./
+COPY ./backend_go/surface_query/go.mod ./
+COPY ./backend_go/surface_query/go.sum ./
 RUN go mod download
 
-WORKDIR /home/appuser/backend_go/surface_intersect
+WORKDIR /home/appuser/backend_go/surface_query
 
 # The build flag sets how to build after a change has been detected in the source code
 # The command flag sets how to run the app after it has been built

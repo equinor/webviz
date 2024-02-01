@@ -100,6 +100,8 @@ spec:
           memory: 8Gi
           cpu: 2000m
         limits:
+          # Even though the general advice is to leave cpu limit unspecified, here we set it to the same as requests.
+          # As of now, it seems that it's the cpu limit value that will be picked up by automaxprocs utilized in the go service.
           memory: 8Gi
           cpu: 2000m
       horizontalScaling:

@@ -5,7 +5,7 @@ RUN useradd --create-home --uid 1234 appuser
 USER 1234
 
 WORKDIR /home/appuser/gosrc
-COPY --chown=appuser ./backend_go/surface_intersect/ .
+COPY --chown=appuser ./backend_go/surface_query/ .
 
 RUN go mod download
 RUN go mod verify

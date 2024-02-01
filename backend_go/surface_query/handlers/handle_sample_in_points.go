@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
-	"surface_intersect/operations"
-	"surface_intersect/utils"
+	"surface_query/operations"
+	"surface_query/utils"
 	"time"
 
 	"github.com/gin-gonic/gin"

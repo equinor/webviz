@@ -9,7 +9,7 @@ import (
 
 	_ "go.uber.org/automaxprocs"
 
-	"surface_intersect/handlers"
+	"surface_query/handlers"
 
 	"github.com/gin-gonic/gin"
 	"github.com/lmittmann/tint"
@@ -22,7 +22,8 @@ func main() {
 	logger.Info("Starting surface query server...")
 
 	// Can be used to force the number of CPUs that can be executing simultaneously
-	runtime.GOMAXPROCS(4)
+	// Should not be needed as long as automaxprocs does its job
+	//runtime.GOMAXPROCS(4)
 
 	numCpus := runtime.NumCPU()
 	goMaxProcs := runtime.GOMAXPROCS(0)

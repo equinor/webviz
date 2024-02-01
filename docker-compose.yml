@@ -52,7 +52,7 @@ services:
     ports:
       - 5001:5001
     volumes:
-      - ./backend_go/surface_intersect:/home/appuser/backend_go/surface_intersect
+      - ./backend_go/surface_query:/home/appuser/backend_go/surface_query
 
   backend-user-session:
     build:

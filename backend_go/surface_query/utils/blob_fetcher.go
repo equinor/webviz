@@ -2,7 +2,7 @@ package utils
 
 import (
 	"fmt"
-	"surface_intersect/xtgeo"
+	"surface_query/xtgeo"
 )
 
 type BlobFetcher struct {

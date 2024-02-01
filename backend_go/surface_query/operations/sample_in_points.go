@@ -3,8 +3,8 @@ package operations
 import (
 	"fmt"
 	"log/slog"
-	"surface_intersect/utils"
-	"surface_intersect/xtgeo"
+	"surface_query/utils"
+	"surface_query/xtgeo"
 	"sync"
 )
 

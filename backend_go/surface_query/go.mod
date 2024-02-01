@@ -1,4 +1,4 @@
-module surface_intersect
+module surface_query
 
 go 1.21
 
