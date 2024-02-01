@@ -1,6 +1,5 @@
 import { QueryClient } from "@tanstack/react-query";
 
-import { Broadcaster } from "./Broadcaster";
 import { EnsembleIdent } from "./EnsembleIdent";
 import { GuiMessageBroker, GuiState } from "./GuiMessageBroker";
 import { InitialSettings } from "./InitialSettings";
@@ -33,7 +32,6 @@ export class Workbench {
     private _workbenchSession: WorkbenchSessionPrivate;
     private _workbenchServices: PrivateWorkbenchServices;
     private _workbenchSettings: PrivateWorkbenchSettings;
-    private _broadcaster: Broadcaster;
     private _guiMessageBroker: GuiMessageBroker;
     private _subscribersMap: { [key: string]: Set<() => void> };
     private _layout: LayoutElement[];
@@ -44,7 +42,6 @@ export class Workbench {
         this._workbenchSession = new WorkbenchSessionPrivate();
         this._workbenchServices = new PrivateWorkbenchServices(this);
         this._workbenchSettings = new PrivateWorkbenchSettings();
-        this._broadcaster = new Broadcaster();
         this._guiMessageBroker = new GuiMessageBroker();
         this._subscribersMap = {};
         this._layout = [];
@@ -78,10 +75,6 @@ export class Workbench {
 
     getWorkbenchSettings(): PrivateWorkbenchSettings {
         return this._workbenchSettings;
-    }
-
-    getBroadcaster(): Broadcaster {
-        return this._broadcaster;
     }
 
     getGuiMessageBroker(): GuiMessageBroker {
@@ -146,7 +139,9 @@ export class Workbench {
 
     clearLayout(): void {
         for (const moduleInstance of this._moduleInstances) {
-            this._broadcaster.unregisterAllChannelsForModuleInstance(moduleInstance.getId());
+            const manager = moduleInstance.getChannelManager();
+            manager.unregisterAllChannels();
+            manager.unregisterAllReceivers();
         }
         this._moduleInstances = [];
         this._layout = [];
@@ -171,19 +166,12 @@ export class Workbench {
     }
 
     removeModuleInstance(moduleInstanceId: string): void {
-        const channels = this._broadcaster.getChannelsForModuleInstance(moduleInstanceId);
-
-        for (const channel of channels) {
-            for (const moduleInstance of this._moduleInstances) {
-                for (const [inputChannelName, inputChannel] of Object.entries(moduleInstance.getInputChannels())) {
-                    if (inputChannel === channel) {
-                        moduleInstance.removeInputChannel(inputChannelName);
-                    }
-                }
-            }
+        const manager = this.getModuleInstance(moduleInstanceId)?.getChannelManager();
+        if (manager) {
+            manager.unregisterAllChannels();
+            manager.unregisterAllReceivers();
         }
 
-        this._broadcaster.unregisterAllChannelsForModuleInstance(moduleInstanceId);
         this._moduleInstances = this._moduleInstances.filter((el) => el.getId() !== moduleInstanceId);
 
         const newLayout = this._layout.filter((el) => el.moduleInstanceId !== moduleInstanceId);
@@ -283,12 +271,18 @@ export class Workbench {
                     }
 
                     const listensToModuleInstance = this._moduleInstances[moduleInstanceIndex];
-                    const channel = listensToModuleInstance.getContext().getChannel(dataChannel.channelName);
+                    const channel = listensToModuleInstance.getChannelManager().getChannel(dataChannel.channelIdString);
                     if (!channel) {
                         throw new Error("Could not find channel");
                     }
 
-                    initialSettings[propName] = channel.getName();
+                    const receiver = moduleInstance.getChannelManager().getReceiver(propName);
+
+                    if (!receiver) {
+                        throw new Error("Could not find receiver");
+                    }
+
+                    receiver.subscribeToChannel(channel, "All");
                 }
             }
 
