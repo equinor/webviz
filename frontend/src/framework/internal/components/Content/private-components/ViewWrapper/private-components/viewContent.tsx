@@ -131,15 +131,13 @@ export const ViewContent = React.memo((props: ViewContentProps) => {
                     source={StatusSource.View}
                     guiMessageBroker={props.workbench.getGuiMessageBroker()}
                 >
-                    <ScopeProvider atoms={store.getAtoms()}>
-                        <View
-                            moduleContext={props.moduleInstance.getContext()}
-                            workbenchSession={props.workbench.getWorkbenchSession()}
-                            workbenchServices={props.workbench.getWorkbenchServices()}
-                            workbenchSettings={props.workbench.getWorkbenchSettings()}
-                            initialSettings={props.moduleInstance.getInitialSettings() || undefined}
-                        />
-                    </ScopeProvider>
+                    <View
+                        moduleContext={props.moduleInstance.getContext()}
+                        workbenchSession={props.workbench.getWorkbenchSession()}
+                        workbenchServices={props.workbench.getWorkbenchServices()}
+                        workbenchSettings={props.workbench.getWorkbenchSettings()}
+                        initialSettings={props.moduleInstance.getInitialSettings() || undefined}
+                    />
                 </DebugProfiler>
             </div>
         </ErrorBoundary>

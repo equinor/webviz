@@ -39,12 +39,36 @@ export class AtomStore {
 
     constructor(atomDefinitions: AtomDefinition[]) {
         this._atoms = new Map();
+        this.loadInternalStore();
 
         for (const { name, atom } of atomDefinitions) {
             this._atoms.set(atom, name);
+            if (this._internalStore.has(name)) {
+                // We can only write to writable atoms
+                if ("write" in atom) {
+                    this._store.set(atom, this._internalStore.get(name));
+                }
+            }
             this._store.sub(atom, () => {
+                console.debug(`AtomStore: atom '${atom.debugLabel}' changed, saving to localStorage`);
                 this._internalStore.set(name, this._store.get(atom));
+                this.saveInternalStore();
             });
+        }
+    }
+
+    private saveInternalStore(): void {
+        const json = JSON.stringify(Object.fromEntries(this._internalStore.entries()));
+        localStorage.setItem("atomStore", json);
+    }
+
+    private loadInternalStore(): void {
+        const json = localStorage.getItem("atomStore");
+        if (json) {
+            const parsed = JSON.parse(json);
+            for (const [name, value] of Object.entries(parsed)) {
+                this._internalStore.set(name, value);
+            }
         }
     }
 
@@ -67,7 +91,7 @@ export class AtomStore {
             throw new Error(`Atom '${atom.debugLabel}' not found in AtomStore. Did you forget to register it?`);
         }
 
-        return useAtom(atom, options);
+        return useAtom(atom, { store: this._store, ...options });
     }
 }
 

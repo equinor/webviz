@@ -3,7 +3,7 @@ import { AtomDefinition } from "@framework/AtomStore";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 
-import { atom, useSetAtom } from "jotai";
+import { atom } from "jotai";
 import { atomWithQuery } from "jotai-tanstack-query";
 
 export const selectedEnsembleAtom = atom<EnsembleIdent | null>(null);
