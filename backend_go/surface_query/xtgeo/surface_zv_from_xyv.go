@@ -26,7 +26,7 @@ package xtgeo
 //
 //	zv []float32 - Array to store the interpolated or sampled Z values.
 //	err error    - An error, if any occurred during the processing.
-func SurfaceZArrFromXYPairs(xv []float32, yv []float32, nx, ny int, xori, yori, xinc, yinc float32, yflip int, rotDeg float32, pMapV []float32, algo InterpolationAlgorithm) ([]float32, error) {
+func SurfaceZArrFromXYPairs(xv []float64, yv []float64, nx, ny int, xori, yori, xinc, yinc float64, yflip int, rotDeg float64, pMapV []float32, algo InterpolationAlgorithm) ([]float32, error) {
 	zv := make([]float32, len(xv))
 
 	for i, x := range xv {

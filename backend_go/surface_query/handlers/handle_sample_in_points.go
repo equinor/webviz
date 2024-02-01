@@ -20,8 +20,8 @@ type pointSamplingRequest struct {
 	SasToken         string                `json:"sasToken" binding:"required"`
 	BlobStoreBaseUri string                `json:"blobStoreBaseUri" binding:"required"`
 	ObjectIds        []RealizationObjectId `json:"objectIds" binding:"required"`
-	XCoords          []float32             `json:"xCoords" binding:"required"`
-	YCoords          []float32             `json:"yCoords" binding:"required"`
+	XCoords          []float64             `json:"xCoords" binding:"required"`
+	YCoords          []float64             `json:"yCoords" binding:"required"`
 }
 
 type RealizationSampleResult struct {

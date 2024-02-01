@@ -39,20 +39,19 @@ func DeserializeBlobToSurface(blobBytes []byte) (*Surface, error) {
 
 		dataSlice = append(dataSlice, lineData...)
 	}
-
 	return &Surface{
 		Id_flag:   blobHeader.Id_flag,
-		Xori:      blobHeader.Xori,
-		Xmax:      blobHeader.Xmax,
-		Yori:      blobHeader.Yori,
-		Ymax:      blobHeader.Ymax,
-		Xinc:      blobHeader.Xinc,
-		Yinc:      blobHeader.Yinc,
+		Xori:      float64(blobHeader.Xori),
+		Xmax:      float64(blobHeader.Xmax),
+		Yori:      float64(blobHeader.Yori),
+		Ymax:      float64(blobHeader.Ymax),
+		Xinc:      float64(blobHeader.Xinc),
+		Yinc:      float64(blobHeader.Yinc),
 		Nx:        blobHeader.Nx,
 		Ny:        blobHeader.Ny,
-		Rot:       blobHeader.Rot,
-		X0ori:     blobHeader.X0ori,
-		Y0ori:     blobHeader.Y0ori,
+		Rot:       float64(blobHeader.Rot),
+		X0ori:     float64(blobHeader.X0ori),
+		Y0ori:     float64(blobHeader.Y0ori),
 		DataSlice: dataSlice,
 	}, nil
 }

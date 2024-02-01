@@ -5,7 +5,7 @@ import (
 )
 
 // findBounds calculates min and max bounds for x and y coordinates.
-func findBounds(xV, yV []float32) (xmin, ymin, xmax, ymax float32) {
+func findBounds(xV, yV []float64) (xmin, ymin, xmax, ymax float64) {
 	xmin, ymin = UndefMap, UndefMap
 	xmax, ymax = -UndefMap, -UndefMap
 
@@ -27,14 +27,14 @@ func findBounds(xV, yV []float32) (xmin, ymin, xmax, ymax float32) {
 }
 
 // isPointInsideBounds checks if the point x, y is inside the given bounds.
-func isPointInsideBounds(x, y, xmin, xmax, ymin, ymax float32) bool {
+func isPointInsideBounds(x, y, xmin, xmax, ymin, ymax float64) bool {
 	return !(x < xmin || x > xmax || y < ymin || y > ymax)
 }
 
 // calculateRelativePositions computes the relative positions a and b.
-func calculateRelativePositions(x, y float32, xV, yV []float32) (a, b float32) {
-	a = (x - xV[0]) / (xV[1] - xV[0])
-	b = (y - yV[0]) / (yV[2] - yV[0])
+func calculateRelativePositions(x, y float64, xV, yV []float64) (a, b float32) {
+	a = float32((x - xV[0]) / (xV[1] - xV[0]))
+	b = float32((y - yV[0]) / (yV[2] - yV[0]))
 	return
 }
 
@@ -52,7 +52,7 @@ func calculateRelativePositions(x, y float32, xV, yV []float32) (a, b float32) {
 // Returns:
 //
 //	Z value
-func SurfaceInterpolateBilinear(xV, yV, zV []float32, x, y float32) float32 {
+func SurfaceInterpolateBilinear(xV, yV []float64, zV []float32, x, y float64) float32 {
 	xmin, ymin, xmax, ymax := findBounds(xV, yV)
 
 	if !isPointInsideBounds(x, y, xmin, xmax, ymin, ymax) {
@@ -93,7 +93,7 @@ func SurfaceInterpolateBilinear(xV, yV, zV []float32, x, y float32) float32 {
 // Returns:
 //
 //	Z value
-func SurfaceInterpolateNearestNode(xV, yV, zV []float32, x, y float32) float32 {
+func SurfaceInterpolateNearestNode(xV, yV []float64, zV []float32, x, y float64) float32 {
 	xmin, ymin, xmax, ymax := findBounds(xV, yV)
 
 	if !isPointInsideBounds(x, y, xmin, xmax, ymin, ymax) {
@@ -114,7 +114,7 @@ func SurfaceInterpolateNearestNode(xV, yV, zV []float32, x, y float32) float32 {
 		}
 	}
 
-	var previous float32 = VeryLargeFloat
+	var previous float32 = UndefMap
 	var z float32 = UndefMap
 	for i := 0; i < 4; i++ {
 		len, _, _ := CalculateVectorLengthAndAngle(x, xV[i], y, yV[i], 1)

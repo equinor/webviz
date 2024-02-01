@@ -18,7 +18,7 @@ type RealSamplesRes struct {
 	SampledValues []float32
 }
 
-func BulkFetchAndSampleSurfaces(fetcher *utils.BlobFetcher, realObjIdArr []RealObjId, xCoords []float32, yCoords []float32) ([]RealSamplesRes, error) {
+func BulkFetchAndSampleSurfaces(fetcher *utils.BlobFetcher, realObjIdArr []RealObjId, xCoords []float64, yCoords []float64) ([]RealSamplesRes, error) {
 	logger := slog.Default()
 
 	numObjectIds := len(realObjIdArr)
@@ -81,7 +81,7 @@ type surfStats struct {
 	size_mb   float32
 }
 
-func fetchAndSampleSurface(fetcher *utils.BlobFetcher, surfObjectUuid string, xCoords []float32, yCoords []float32) ([]float32, *surfStats, error) {
+func fetchAndSampleSurface(fetcher *utils.BlobFetcher, surfObjectUuid string, xCoords []float64, yCoords []float64) ([]float32, *surfStats, error) {
 	logger := slog.Default()
 
 	surfStats := surfStats{}

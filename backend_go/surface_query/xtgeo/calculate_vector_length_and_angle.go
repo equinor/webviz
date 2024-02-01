@@ -26,7 +26,7 @@ import (
 	"math"
 )
 
-func CalculateVectorLengthAndAngle(x1, x2, y1, y2 float32, option int) (vlen, xangleRadian, xangleDegrees float32) {
+func CalculateVectorLengthAndAngle(x1, x2, y1, y2 float64, option int) (vlen, xangleRadian, xangleDegrees float32) {
 	const epsilon = 0.00001
 	const pi = math.Pi
 

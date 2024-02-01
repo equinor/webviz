@@ -5,21 +5,22 @@ import (
 )
 
 // calculateNodeValues calculates the xV and yV values for the nodes.
-func calculateNodeValues(ic, jc int, xinc, yinc, xori, yori float32) ([4]float32, [4]float32) {
-	var xV, yV [4]float32
-	xV[0] = xori + float32(ic-1)*xinc
-	xV[1] = xori + float32(ic)*xinc
+func calculateNodeValues(ic, jc int, xinc, yinc, xori, yori float64) ([4]float64, [4]float64) {
+	var xV, yV [4]float64
+
+	xV[0] = xori + float64(ic-1)*xinc
+	xV[1] = xori + float64(ic)*xinc
 	xV[2] = xV[0]
 	xV[3] = xV[1]
-	yV[0] = yori + float32(jc-1)*yinc
+	yV[0] = yori + float64(jc-1)*yinc
 	yV[1] = yV[0]
-	yV[2] = yori + float32(jc)*yinc
+	yV[2] = yori + float64(jc)*yinc
 	yV[3] = yV[2]
 	return xV, yV
 }
 
 // SurfaceZFromIJ calculates the Z value from IJ coordinates using either bilinear or nearest node.
-func SurfaceZFromIJ(ic, jc int, x, y, xinc, yinc, xori, yori float32, nx, ny int, pMapV []float32, algo InterpolationAlgorithm) (float32, error) {
+func SurfaceZFromIJ(ic, jc int, x, y, xinc, yinc, xori, yori float64, nx, ny int, pMapV []float32, algo InterpolationAlgorithm) (float32, error) {
 	xV, yV := calculateNodeValues(ic, jc, xinc, yinc, xori, yori)
 	var zV [4]float32
 	var err error

@@ -30,16 +30,16 @@ type IrapBinaryHeader struct {
 
 type Surface struct {
 	Id_flag   int32
-	Xori      float32
-	Xmax      float32
-	Yori      float32
-	Ymax      float32
-	Xinc      float32
-	Yinc      float32
+	Xori      float64
+	Xmax      float64
+	Yori      float64
+	Ymax      float64
+	Xinc      float64
+	Yinc      float64
 	Nx        int32
 	Ny        int32
-	Rot       float32
-	X0ori     float32
-	Y0ori     float32
+	Rot       float64
+	X0ori     float64
+	Y0ori     float64
 	DataSlice []float32
 }
