@@ -2,13 +2,15 @@ import React from "react";
 
 import { ModuleFCProps } from "@framework/Module";
 
+import { useAtom } from "jotai";
+
 import { atomBasedOnVectors, ensembleSetDependentAtom } from "./atoms";
 import { State } from "./state";
 
 export const View = (props: ModuleFCProps<State>) => {
-    const [isFetching] = props.moduleContext.useAtom(atomBasedOnVectors);
+    const [isFetching] = useAtom(atomBasedOnVectors);
 
-    const [firstEnsemble] = props.moduleContext.useAtom(ensembleSetDependentAtom);
+    const [firstEnsemble] = useAtom(ensembleSetDependentAtom);
 
     return (
         <div className="h-full w-full flex flex-col justify-center items-center">

@@ -2,7 +2,6 @@ import React from "react";
 
 import { cloneDeep } from "lodash";
 
-import { AtomDefinition } from "./AtomStore";
 import { BroadcastChannelsDef, InputBroadcastChannelDef } from "./Broadcaster";
 import { InitialSettings } from "./InitialSettings";
 import { ModuleContext } from "./ModuleContext";
@@ -47,7 +46,6 @@ export class Module<StateType extends StateBaseType> {
     private _drawPreviewFunc: DrawPreviewFunc | null;
     private _description: string | null;
     private _inputChannelDefs: InputBroadcastChannelDef[];
-    private _atoms: AtomDefinition[];
 
     constructor(
         name: string,
@@ -56,8 +54,7 @@ export class Module<StateType extends StateBaseType> {
         broadcastChannelsDef: BroadcastChannelsDef = {},
         inputChannelDefs: InputBroadcastChannelDef[] = [],
         drawPreviewFunc: DrawPreviewFunc | null = null,
-        description: string | null = null,
-        atoms: AtomDefinition[] = []
+        description: string | null = null
     ) {
         this._name = name;
         this._defaultTitle = defaultTitle;
@@ -72,7 +69,6 @@ export class Module<StateType extends StateBaseType> {
         this._inputChannelDefs = inputChannelDefs;
         this._drawPreviewFunc = drawPreviewFunc;
         this._description = description;
-        this._atoms = atoms;
     }
 
     getDrawPreviewFunc(): DrawPreviewFunc | null {
@@ -127,8 +123,7 @@ export class Module<StateType extends StateBaseType> {
             instanceNumber,
             this._channelsDef,
             this._workbench,
-            this._inputChannelDefs,
-            this._atoms
+            this._inputChannelDefs
         );
         this._moduleInstances.push(instance);
         this.maybeImportSelf();

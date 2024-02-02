@@ -11,6 +11,8 @@ import { useElementSize } from "@lib/hooks/useElementSize";
 import { ColorScaleGradientType } from "@lib/utils/ColorScale";
 import { ContentError } from "@modules/_shared/components/ContentMessage";
 
+import { useAtom } from "jotai";
+
 import { resampleFrequencyAtom } from "./atoms";
 import {
     useHistoricalVectorDataQueries,
@@ -37,7 +39,7 @@ export const View = ({ moduleContext, workbenchSession, workbenchSettings }: Mod
     // Store values
     const vectorSpecifications = moduleContext.useStoreValue("vectorSpecifications");
     const groupBy = moduleContext.useStoreValue("groupBy");
-    const [resampleFrequency] = moduleContext.useAtom(resampleFrequencyAtom);
+    const [resampleFrequency] = useAtom(resampleFrequencyAtom);
     const realizationsToInclude = moduleContext.useStoreValue("realizationsToInclude");
     const visualizationMode = moduleContext.useStoreValue("visualizationMode");
     const showHistorical = moduleContext.useStoreValue("showHistorical");

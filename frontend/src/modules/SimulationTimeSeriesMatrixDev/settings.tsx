@@ -24,6 +24,7 @@ import { useValidState } from "@lib/hooks/useValidState";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { FilterAlt } from "@mui/icons-material";
 
+import { useAtom } from "jotai";
 import { isEqual } from "lodash";
 import { VectorDescription_api } from "src/api";
 
@@ -54,7 +55,7 @@ export function Settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
     const statusWriter = useSettingsStatusWriter(moduleContext);
 
     // Store state/values
-    const [resampleFrequency, setResamplingFrequency] = moduleContext.useAtom(resampleFrequencyAtom);
+    const [resampleFrequency, setResamplingFrequency] = useAtom(resampleFrequencyAtom);
     const [groupBy, setGroupBy] = moduleContext.useStoreState("groupBy");
     const [colorRealizationsByParameter, setColorRealizationsByParameter] =
         moduleContext.useStoreState("colorRealizationsByParameter");

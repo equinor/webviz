@@ -2,7 +2,7 @@ import { ErrorInfo } from "react";
 
 import { cloneDeep } from "lodash";
 
-import { AtomDefinition } from "./AtomStore";
+import { AtomStore } from "./AtomStoreMaster";
 import { BroadcastChannel, BroadcastChannelsDef, InputBroadcastChannelDef } from "./Broadcaster";
 import { InitialSettings } from "./InitialSettings";
 import { ImportState, Module, ModuleFC } from "./Module";
@@ -10,7 +10,6 @@ import { ModuleContext } from "./ModuleContext";
 import { StateBaseType, StateOptions, StateStore } from "./StateStore";
 import { SyncSettingKey } from "./SyncSettings";
 import { Workbench } from "./Workbench";
-import { AtomStorePrivate } from "./internal/AtomStorePrivate";
 import { ModuleInstanceStatusControllerInternal } from "./internal/ModuleInstanceStatusControllerInternal";
 
 export enum ModuleInstanceState {
@@ -45,15 +44,12 @@ export class ModuleInstance<StateType extends StateBaseType> {
     private _inputChannels: Record<string, BroadcastChannel> = {};
     private _workbench: Workbench;
 
-    private _atomStore: AtomStorePrivate;
-
     constructor(
         module: Module<StateType>,
         instanceNumber: number,
         broadcastChannelsDef: BroadcastChannelsDef,
         workbench: Workbench,
-        inputChannelDefs: InputBroadcastChannelDef[],
-        atoms: AtomDefinition[]
+        inputChannelDefs: InputBroadcastChannelDef[]
     ) {
         this._id = `${module.getName()}-${instanceNumber}`;
         this._title = module.getDefaultTitle();
@@ -94,12 +90,10 @@ export class ModuleInstance<StateType extends StateBaseType> {
                     );
             });
         }
-
-        this._atomStore = new AtomStorePrivate(atoms);
     }
 
-    getAtomStore(): AtomStorePrivate {
-        return this._atomStore;
+    getAtomStore(): AtomStore {
+        return this._workbench.getAtomStoreMaster().getAtomStoreForModuleInstance(this._id);
     }
 
     getInputChannelDefs(): InputBroadcastChannelDef[] {
@@ -156,7 +150,7 @@ export class ModuleInstance<StateType extends StateBaseType> {
         }
 
         this._stateStore = new StateStore<StateType>(cloneDeep(defaultState), options);
-        this._context = new ModuleContext<StateType>(this, this._stateStore, this._atomStore);
+        this._context = new ModuleContext<StateType>(this, this._stateStore);
         this._initialised = true;
         this.setModuleInstanceState(ModuleInstanceState.OK);
     }

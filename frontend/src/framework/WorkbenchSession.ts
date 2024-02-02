@@ -1,10 +1,7 @@
 import React from "react";
 
-import { createStore, useAtom } from "jotai";
-
 import { Ensemble } from "./Ensemble";
 import { EnsembleSet } from "./EnsembleSet";
-import { EnsembleSetAtom } from "./GlobalAtoms";
 
 export enum WorkbenchSessionEvent {
     EnsembleSetChanged = "EnsembleSetChanged",
@@ -20,18 +17,9 @@ export type WorkbenchSessionPayloads = {
 export class WorkbenchSession {
     private _subscribersMap: Map<keyof WorkbenchSessionEvent, Set<(payload: any) => void>> = new Map();
     protected _ensembleSet: EnsembleSet = new EnsembleSet([]);
-    protected _globalAtomStore: ReturnType<typeof createStore>;
-
-    constructor(globalAtomStore: ReturnType<typeof createStore>) {
-        this._globalAtomStore = globalAtomStore;
-    }
 
     getEnsembleSet(): EnsembleSet {
         return this._ensembleSet;
-    }
-
-    getGlobalAtomStore(): ReturnType<typeof createStore> {
-        return this._globalAtomStore;
     }
 
     subscribe<T extends Exclude<WorkbenchSessionEvent, keyof WorkbenchSessionPayloads>>(
@@ -66,11 +54,6 @@ export class WorkbenchSession {
             callbackFn(payload);
         }
     }
-}
-
-export function useEnsembleSetAtom(workbenchSession: WorkbenchSession): EnsembleSet {
-    const [ensembleSet] = useAtom(EnsembleSetAtom, { store: workbenchSession.getGlobalAtomStore() });
-    return ensembleSet;
 }
 
 export function useEnsembleSet(workbenchSession: WorkbenchSession): EnsembleSet {

@@ -1,7 +1,6 @@
 import { QueryClient } from "@tanstack/react-query";
 
-import { createStore } from "jotai";
-
+import { AtomStoreMaster } from "./AtomStoreMaster";
 import { Broadcaster } from "./Broadcaster";
 import { EnsembleIdent } from "./EnsembleIdent";
 import { GuiMessageBroker, GuiState } from "./GuiMessageBroker";
@@ -40,11 +39,12 @@ export class Workbench {
     private _subscribersMap: { [key: string]: Set<() => void> };
     private _layout: LayoutElement[];
     private _perModuleRunningInstanceNumber: Record<string, number>;
-    private _globalAtomStore: ReturnType<typeof createStore> = createStore();
+    private _atomStoreMaster: AtomStoreMaster;
 
     constructor() {
         this._moduleInstances = [];
-        this._workbenchSession = new WorkbenchSessionPrivate(this._globalAtomStore);
+        this._atomStoreMaster = new AtomStoreMaster();
+        this._workbenchSession = new WorkbenchSessionPrivate(this._atomStoreMaster);
         this._workbenchServices = new PrivateWorkbenchServices(this);
         this._workbenchSettings = new PrivateWorkbenchSettings();
         this._broadcaster = new Broadcaster();
@@ -67,8 +67,8 @@ export class Workbench {
         return this._layout;
     }
 
-    getGlobalAtomStore(): ReturnType<typeof createStore> {
-        return this._globalAtomStore;
+    getAtomStoreMaster(): AtomStoreMaster {
+        return this._atomStoreMaster;
     }
 
     getWorkbenchSession(): WorkbenchSession {
@@ -137,6 +137,7 @@ export class Workbench {
 
             module.setWorkbench(this);
             const moduleInstance = module.makeInstance(this.getNextModuleInstanceNumber(module.getName()));
+            this._atomStoreMaster.makeAtomStoreForModuleInstance(moduleInstance.getId());
             this._moduleInstances.push(moduleInstance);
             this._layout[index] = { ...this._layout[index], moduleInstanceId: moduleInstance.getId() };
             this.notifySubscribers(WorkbenchEvents.ModuleInstancesChanged);
@@ -165,6 +166,7 @@ export class Workbench {
         module.setWorkbench(this);
 
         const moduleInstance = module.makeInstance(this.getNextModuleInstanceNumber(module.getName()));
+        this._atomStoreMaster.makeAtomStoreForModuleInstance(moduleInstance.getId());
         this._moduleInstances.push(moduleInstance);
 
         this._layout.push({ ...layout, moduleInstanceId: moduleInstance.getId() });
@@ -188,6 +190,8 @@ export class Workbench {
 
         this._broadcaster.unregisterAllChannelsForModuleInstance(moduleInstanceId);
         this._moduleInstances = this._moduleInstances.filter((el) => el.getId() !== moduleInstanceId);
+
+        this._atomStoreMaster.removeAtomStoreForModuleInstance(moduleInstanceId);
 
         const newLayout = this._layout.filter((el) => el.moduleInstanceId !== moduleInstanceId);
         this.setLayout(newLayout);

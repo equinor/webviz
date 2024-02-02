@@ -9,7 +9,6 @@ import { ErrorBoundary } from "@framework/internal/components/ErrorBoundary";
 import { CircularProgress } from "@lib/components/CircularProgress";
 
 import { Provider } from "jotai";
-import { ScopeProvider } from "jotai-scope";
 
 import { CrashView } from "./crashView";
 
@@ -24,7 +23,7 @@ export const ViewContent = React.memo((props: ViewContentProps) => {
         ModuleInstanceState.INITIALIZING
     );
 
-    const store = props.moduleInstance.getAtomStore();
+    const atomStore = props.moduleInstance.getAtomStore();
 
     React.useEffect(
         function handleMount() {
@@ -131,13 +130,15 @@ export const ViewContent = React.memo((props: ViewContentProps) => {
                     source={StatusSource.View}
                     guiMessageBroker={props.workbench.getGuiMessageBroker()}
                 >
-                    <View
-                        moduleContext={props.moduleInstance.getContext()}
-                        workbenchSession={props.workbench.getWorkbenchSession()}
-                        workbenchServices={props.workbench.getWorkbenchServices()}
-                        workbenchSettings={props.workbench.getWorkbenchSettings()}
-                        initialSettings={props.moduleInstance.getInitialSettings() || undefined}
-                    />
+                    <Provider store={atomStore}>
+                        <View
+                            moduleContext={props.moduleInstance.getContext()}
+                            workbenchSession={props.workbench.getWorkbenchSession()}
+                            workbenchServices={props.workbench.getWorkbenchServices()}
+                            workbenchSettings={props.workbench.getWorkbenchSettings()}
+                            initialSettings={props.moduleInstance.getInitialSettings() || undefined}
+                        />
+                    </Provider>
                 </DebugProfiler>
             </div>
         </ErrorBoundary>

@@ -1,5 +1,7 @@
 import { EnsembleSet } from "@framework/EnsembleSet";
 
-import { atom } from "jotai";
+import { isEqual } from "lodash";
 
-export const EnsembleSetAtom = atom<EnsembleSet>(new EnsembleSet([]));
+import { atomWithCompare } from "./AtomStoreMaster";
+
+export const EnsembleSetAtom = atomWithCompare<EnsembleSet>(new EnsembleSet([]), (prev, next) => isEqual(prev, next));

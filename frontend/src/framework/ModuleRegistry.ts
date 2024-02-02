@@ -1,4 +1,3 @@
-import { AtomDefinition } from "./AtomStore";
 import { BroadcastChannelsDef, InputBroadcastChannelDef } from "./Broadcaster";
 import { Module } from "./Module";
 import { DrawPreviewFunc } from "./Preview";
@@ -14,7 +13,6 @@ export type RegisterModuleOptions = {
     inputChannelDefs?: InputBroadcastChannelDef[];
     preview?: DrawPreviewFunc;
     description?: string;
-    atoms?: AtomDefinition[];
 };
 
 export class ModuleNotFoundError extends Error {
@@ -44,8 +42,7 @@ export class ModuleRegistry {
             options.broadcastChannelsDef,
             options.inputChannelDefs,
             options.preview ?? null,
-            options.description ?? null,
-            options.atoms ?? []
+            options.description ?? null
         );
         this._registeredModules[options.moduleName] = module;
         return module;

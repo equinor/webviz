@@ -2,11 +2,13 @@ import React from "react";
 
 import { VectorDescription_api } from "@api";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
+import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 import { ModuleFCProps } from "@framework/Module";
-import { useEnsembleSetAtom } from "@framework/WorkbenchSession";
 import { SingleEnsembleSelect } from "@framework/components/SingleEnsembleSelect";
 import { Label } from "@lib/components/Label";
 import { Select, SelectOption } from "@lib/components/Select";
+
+import { useAtom, useAtomValue } from "jotai";
 
 import {
     atomBasedOnVectors,
@@ -18,14 +20,13 @@ import {
 import { State } from "./state";
 
 export const Settings = (props: ModuleFCProps<State>) => {
-    const ensembleSet = useEnsembleSetAtom(props.workbenchSession);
+    const ensembleSet = useAtomValue(EnsembleSetAtom);
+    const [selectedEnsemble, setSelectedEnsemble] = useAtom(selectedEnsembleAtom);
+    const [result] = useAtom(vectorsAtom);
+    const [isFetching] = useAtom(atomBasedOnVectors);
 
-    const [selectedEnsemble, setSelectedEnsemble] = props.moduleContext.useAtom(selectedEnsembleAtom);
-    const [result] = props.moduleContext.useAtom(vectorsAtom);
-    const [isFetching] = props.moduleContext.useAtom(atomBasedOnVectors);
-
-    const [, setUserSelectedVector] = props.moduleContext.useAtom(userSelectedVectorAtom);
-    const [selectedVector] = props.moduleContext.useAtom(selectedVectorAtom);
+    const [, setUserSelectedVector] = useAtom(userSelectedVectorAtom);
+    const [selectedVector] = useAtom(selectedVectorAtom);
 
     function handleEnsembleSelectionChange(ensembleIdent: EnsembleIdent | null) {
         setSelectedEnsemble(ensembleIdent);
