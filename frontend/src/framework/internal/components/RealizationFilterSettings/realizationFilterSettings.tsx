@@ -13,6 +13,7 @@ import { Workbench } from "@framework/Workbench";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { RealizationPicker, RealizationPickerSelection } from "@framework/components/RealizationPicker";
 import { Button } from "@lib/components/Button";
+import { Dialog } from "@lib/components/Dialog";
 import { Dropdown } from "@lib/components/Dropdown";
 import { Label } from "@lib/components/Label";
 import { RadioGroup } from "@lib/components/RadioGroup";
@@ -28,7 +29,8 @@ import {
 type RealizationFilterSettingsProps = { workbench: Workbench };
 
 export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps> = (props) => {
-    const [isEdited, setIsEdited] = React.useState<boolean>(false);
+    const [candidateEnsembleIdent, setCandidateEnsembleIdent] = React.useState<EnsembleIdent | null>(null);
+    const [dialogOpen, setDialogOpen] = React.useState<boolean>(false);
     const [realizationIndexSelections, setRealizationIndexSelections] = React.useState<
         readonly RealizationIndexSelectionType[] | null
     >(null);
@@ -44,23 +46,27 @@ export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps>
     const ensembleSet = useEnsembleSet(props.workbench.getWorkbenchSession());
     const realizationFilterSet = props.workbench.getWorkbenchSession().getRealizationFilterSet();
 
-    function handleSelectedEnsembleChange(newValue: string | undefined) {
-        if (newValue === undefined) {
+    function hasUnsavedChanges(): boolean {
+        if (!selectedRealizationFilter) return false;
+
+        const isFilterSelectionsUnchanged =
+            isEqual(realizationIndexSelections, selectedRealizationFilter.getRealizationIndexSelections()) &&
+            selectedFilterType === selectedRealizationFilter.getFilterType() &&
+            selectedFilteringOption === selectedRealizationFilter.getFilteringOption();
+
+        return !isFilterSelectionsUnchanged;
+    }
+
+    function setStatesFromEnsembleIdent(ensembleIdent: EnsembleIdent | null) {
+        if (ensembleIdent === null) {
             setSelectedRealizationFilter(null);
+            setRealizationIndexSelections(null);
             setSelectedRangeTags([]);
             setSelectedFilterType(RealizationFilterType.REALIZATION_INDEX);
-            setIsEdited(false);
             return;
         }
 
-        const ensembleIdent = EnsembleIdent.fromString(newValue);
         const realizationFilter = realizationFilterSet.getRealizationFilterByEnsembleIdent(ensembleIdent);
-
-        if (realizationFilter === null) {
-            setSelectedRealizationFilter(null);
-            return;
-        }
-
         const realizationIndexSelection = realizationFilter.getRealizationIndexSelections();
 
         setSelectedRealizationFilter(realizationFilter);
@@ -68,7 +74,19 @@ export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps>
         setSelectedRangeTags(makeRealizationPickerTagsFromRealizationIndexSelections(realizationIndexSelection));
         setSelectedFilterType(realizationFilter.getFilterType());
         setSelectedFilteringOption(realizationFilter.getFilteringOption());
-        setIsEdited(false);
+    }
+
+    function handleSelectedEnsembleChange(newValue: string | undefined) {
+        if (hasUnsavedChanges()) {
+            const ensembleIdent = newValue ? EnsembleIdent.fromString(newValue) : null;
+            setCandidateEnsembleIdent(ensembleIdent);
+            setDialogOpen(true);
+            return;
+        }
+
+        const ensembleIdent = newValue ? EnsembleIdent.fromString(newValue) : null;
+        setCandidateEnsembleIdent(ensembleIdent);
+        setStatesFromEnsembleIdent(ensembleIdent);
     }
 
     function handleRealizationPickChange(newSelection: RealizationPickerSelection) {
@@ -77,12 +95,6 @@ export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps>
                 ? null
                 : makeRealizationIndexSelectionsFromRealizationPickerTags(newSelection.selectedRangeTags);
 
-        const isEdited = !isEqual(
-            realizationIndexSelection,
-            selectedRealizationFilter?.getRealizationIndexSelections()
-        );
-
-        setIsEdited(isEdited);
         setSelectedRangeTags(newSelection.selectedRangeTags);
         setRealizationIndexSelections(realizationIndexSelection);
     }
@@ -94,20 +106,13 @@ export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps>
         setRealizationIndexSelections(realizationIndexSelections);
         setSelectedRangeTags(makeRealizationPickerTagsFromRealizationIndexSelections(realizationIndexSelections));
         setSelectedFilterType(selectedRealizationFilter.getFilterType());
-        setIsEdited(false);
     }
 
     function handleApplyButtonOnClick() {
         if (!selectedRealizationFilter) return;
 
-        setIsEdited(false);
-
         // Prevent unnecessary updates and notification
-        const isFilterSelectionsUnchanged =
-            isEqual(realizationIndexSelections, selectedRealizationFilter.getRealizationIndexSelections()) &&
-            selectedFilterType === selectedRealizationFilter.getFilterType() &&
-            selectedFilteringOption === selectedRealizationFilter.getFilteringOption();
-        if (isFilterSelectionsUnchanged) {
+        if (!hasUnsavedChanges()) {
             return;
         }
 
@@ -119,20 +124,24 @@ export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps>
         props.workbench.getWorkbenchSessionPrivate().notifyAboutEnsembleRealizationFilterChange();
     }
 
-    function handleSelectedFilterTypeChange(newFilterType: RealizationFilterType) {
-        setSelectedFilterType(newFilterType);
-
-        if (!selectedRealizationFilter) return;
-
-        setIsEdited(newFilterType !== selectedRealizationFilter.getFilterType());
+    function handleDoNotSaveOnClick() {
+        setStatesFromEnsembleIdent(candidateEnsembleIdent);
+        setDialogOpen(false);
     }
 
-    function handleSelectedFilteringOptionChange(value: RealizationFilteringOption) {
-        setSelectedFilteringOption(value);
+    function handleDoSaveOnClick() {
+        // Save changes before changing ensemble
+        if (selectedRealizationFilter && hasUnsavedChanges()) {
+            selectedRealizationFilter.setFilterType(selectedFilterType);
+            selectedRealizationFilter.setFilteringOption(selectedFilteringOption);
+            selectedRealizationFilter.setRealizationIndexSelections(realizationIndexSelections);
 
-        if (!selectedRealizationFilter) return;
+            // Notify subscribers of change.
+            props.workbench.getWorkbenchSessionPrivate().notifyAboutEnsembleRealizationFilterChange();
+        }
 
-        setIsEdited(value !== selectedRealizationFilter.getFilteringOption());
+        setStatesFromEnsembleIdent(candidateEnsembleIdent);
+        setDialogOpen(false);
     }
 
     return (
@@ -170,9 +179,7 @@ export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps>
                                 value: RealizationFilterType.PARAMETER_VALUES,
                             },
                         ]}
-                        onChange={(_, value: string | number) =>
-                            handleSelectedFilterTypeChange(value as RealizationFilterType)
-                        }
+                        onChange={(_, value: string | number) => setSelectedFilterType(value as RealizationFilterType)}
                     />
                 </Label>
                 <Label text="Filter Option">
@@ -189,7 +196,7 @@ export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps>
                             },
                         ]}
                         onChange={(_, value: string | number) =>
-                            handleSelectedFilteringOptionChange(value as RealizationFilteringOption)
+                            setSelectedFilteringOption(value as RealizationFilteringOption)
                         }
                     ></RadioGroup>
                 </Label>
@@ -217,21 +224,46 @@ export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps>
                     <Button
                         color="danger"
                         variant="outlined"
-                        disabled={!selectedRealizationFilter || !isEdited}
-                        startIcon={isEdited ? <Close fontSize="small" /> : undefined}
+                        disabled={!selectedRealizationFilter || !hasUnsavedChanges()}
+                        startIcon={hasUnsavedChanges() ? <Close fontSize="small" /> : undefined}
                         onClick={handleDiscardChangesOnClick}
                     >
                         Discard changes
                     </Button>
                     <Button
                         variant="outlined"
-                        disabled={!selectedRealizationFilter || !isEdited}
-                        startIcon={isEdited ? <Check fontSize="small" /> : undefined}
+                        disabled={!selectedRealizationFilter || !hasUnsavedChanges()}
+                        startIcon={hasUnsavedChanges() ? <Check fontSize="small" /> : undefined}
                         onClick={handleApplyButtonOnClick}
                     >
                         Apply
                     </Button>
                 </div>
+                <Dialog open={dialogOpen}>
+                    <div className="flex flex-col gap-4 p-4">
+                        <Label text="Realizations by parameter values">
+                            <div>TO BE IMPLEMENTED</div>
+                        </Label>
+                    </div>
+                </Dialog>
+                {
+                    <Dialog
+                        open={dialogOpen}
+                        onClose={() => setDialogOpen(false)}
+                        title="Unsaved changes"
+                        modal
+                        actions={
+                            <div className="flex gap-4">
+                                <Button onClick={handleDoNotSaveOnClick} color="danger">
+                                    No, don&apos;t save
+                                </Button>
+                                <Button onClick={handleDoSaveOnClick}>Yes, save</Button>
+                            </div>
+                        }
+                    >
+                        You have unsaved changes which will be lost. Do you want to save changes?
+                    </Dialog>
+                }
             </div>
         </>
     );
