@@ -9,7 +9,10 @@ import { useViewStatusWriter } from "@framework/StatusWriter";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { ColorScaleGradientType } from "@lib/utils/ColorScale";
+import { selectedEnsembleAtom } from "@modules/MyModule2/atoms";
 import { ContentError } from "@modules/_shared/components/ContentMessage";
+
+import { useAtom } from "jotai";
 
 import {
     useHistoricalVectorDataQueries,
@@ -32,6 +35,10 @@ export const View = ({ moduleContext, workbenchSession, workbenchSettings }: Mod
 
     const ensembleSet = useEnsembleSet(workbenchSession);
     const statusWriter = useViewStatusWriter(moduleContext);
+
+    // Check if Jotai atoms are also available here
+    const [selectedEnsemble] = useAtom(selectedEnsembleAtom);
+    console.debug("SimTime", selectedEnsemble);
 
     // Store values
     const vectorSpecifications = moduleContext.useStoreValue("vectorSpecifications");
