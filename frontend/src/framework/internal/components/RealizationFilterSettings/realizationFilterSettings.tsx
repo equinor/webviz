@@ -26,7 +26,7 @@ import {
     makeRealizationPickerTagsFromRealizationIndexSelections,
 } from "./utils/dataTypeConversion";
 
-type RealizationFilterSettingsProps = { workbench: Workbench };
+type RealizationFilterSettingsProps = { workbench: Workbench; onClose: () => void };
 
 export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps> = (props) => {
     const [candidateEnsembleIdent, setCandidateEnsembleIdent] = React.useState<EnsembleIdent | null>(null);
@@ -144,6 +144,10 @@ export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps>
         setDialogOpen(false);
     }
 
+    function handleFilterPanelCollapseOrExpand() {
+        props.onClose();
+    }
+
     return (
         <>
             <div className="flex justify-center items-center bg-slate-100 h-10">
@@ -155,6 +159,9 @@ export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps>
                 >
                     {"Realization Filter"}
                 </span>
+                <Button title="Close filter" className="!text-slate-800" onClick={handleFilterPanelCollapseOrExpand}>
+                    <Close fontSize="small" />
+                </Button>
             </div>
             <div className="flex flex-col p-2 gap-4 overflow-y-auto">
                 <Label text="Ensemble">

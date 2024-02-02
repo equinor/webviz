@@ -18,6 +18,8 @@ export enum GuiState {
     DataChannelConnectionLayerVisible = "dataChannelConnectionLayerVisible",
     DevToolsVisible = "devToolsVisible",
     EditDataChannelConnections = "editDataChannelConnections",
+    FilterPanelWidthInPercent = "filterPanelWidthInPercent",
+    FilterPanelExpanded = "filterPanelExpanded",
 }
 
 export enum GuiEvent {
@@ -73,6 +75,8 @@ type GuiStateValueTypes = {
     [GuiState.DataChannelConnectionLayerVisible]: boolean;
     [GuiState.DevToolsVisible]: boolean;
     [GuiState.EditDataChannelConnections]: boolean;
+    [GuiState.FilterPanelWidthInPercent]: number;
+    [GuiState.FilterPanelExpanded]: boolean;
 };
 
 const defaultStates: Map<GuiState, any> = new Map();
@@ -81,8 +85,15 @@ defaultStates.set(GuiState.SettingsPanelWidthInPercent, 30);
 defaultStates.set(GuiState.ActiveModuleInstanceId, "");
 defaultStates.set(GuiState.DataChannelConnectionLayerVisible, false);
 defaultStates.set(GuiState.DevToolsVisible, isDevMode());
+defaultStates.set(GuiState.FilterPanelWidthInPercent, 0);
+defaultStates.set(GuiState.FilterPanelExpanded, false);
 
-const persistentStates: GuiState[] = [GuiState.SettingsPanelWidthInPercent, GuiState.DevToolsVisible];
+const persistentStates: GuiState[] = [
+    GuiState.SettingsPanelWidthInPercent,
+    GuiState.DevToolsVisible,
+    GuiState.FilterPanelWidthInPercent,
+    GuiState.FilterPanelExpanded,
+];
 
 export class GuiMessageBroker {
     private _eventListeners: Map<GuiEvent, Set<(event: any) => void>>;

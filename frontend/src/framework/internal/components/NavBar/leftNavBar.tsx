@@ -18,7 +18,7 @@ import { useQueryClient } from "@tanstack/react-query";
 
 import { UserSessionState } from "./private-components/UserSessionState";
 
-type NavBarProps = {
+type LeftNavBarProps = {
     workbench: Workbench;
 };
 
@@ -26,7 +26,7 @@ const NavBarDivider: React.FC = () => {
     return <div className="bg-slate-200 h-[1px] w-full mt-4 mb-4" />;
 };
 
-export const NavBar: React.FC<NavBarProps> = (props) => {
+export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
     const [ensembleDialogOpen, setEnsembleDialogOpen] = React.useState<boolean>(false);
     const [newSelectedEnsembles, setNewSelectedEnsembles] = React.useState<EnsembleItem[]>([]);
     const [layoutEmpty, setLayoutEmpty] = React.useState<boolean>(props.workbench.getLayout().length === 0);
