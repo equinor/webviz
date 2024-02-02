@@ -86,7 +86,7 @@ export function useStatisticalVectorDataQueries(
                         item.vectorName ?? "",
                         resampleFrequency ?? Frequency_api.MONTHLY,
                         undefined,
-                        item.selectedStatisticsRealizations ? [...item.selectedStatisticsRealizations] : undefined
+                        item.selectedStatisticsRealizations
                     ),
                 staleTime: STALE_TIME,
                 gcTime: CACHE_TIME,

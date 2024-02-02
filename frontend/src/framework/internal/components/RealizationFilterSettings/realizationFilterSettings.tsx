@@ -5,6 +5,9 @@ import {
     RealizationFilter,
     RealizationFilterType,
     RealizationFilterTypeStringMapping,
+    RealizationFilteringOption,
+    RealizationFilteringOptionStringMapping,
+    RealizationIndexSelectionType,
 } from "@framework/RealizationFilter";
 import { Workbench } from "@framework/Workbench";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
@@ -17,13 +20,23 @@ import { Check, Close, FilterAlt as FilterIcon } from "@mui/icons-material";
 
 import { isEqual } from "lodash";
 
+import {
+    makeRealizationIndexSelectionsFromRealizationPickerTags,
+    makeRealizationPickerTagsFromRealizationIndexSelections,
+} from "./utils/dataTypeConversion";
+
 type RealizationFilterSettingsProps = { workbench: Workbench };
 
 export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps> = (props) => {
     const [isEdited, setIsEdited] = React.useState<boolean>(false);
+    const [realizationIndexSelections, setRealizationIndexSelections] = React.useState<
+        readonly RealizationIndexSelectionType[] | null
+    >(null);
     const [selectedRealizationFilter, setSelectedRealizationFilter] = React.useState<RealizationFilter | null>(null);
-    const [selectedRealizations, setSelectedRealizations] = React.useState<number[]>([]);
     const [selectedRangeTags, setSelectedRangeTags] = React.useState<string[]>([]);
+    const [selectedFilteringOption, setSelectedFilteringOption] = React.useState<RealizationFilteringOption>(
+        RealizationFilteringOption.INCLUDE
+    );
     const [selectedFilterType, setSelectedFilterType] = React.useState<RealizationFilterType>(
         RealizationFilterType.REALIZATION_INDEX
     );
@@ -31,19 +44,15 @@ export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps>
     const ensembleSet = useEnsembleSet(props.workbench.getWorkbenchSession());
     const realizationFilterSet = props.workbench.getWorkbenchSession().getRealizationFilterSet();
 
-    // TODO: Have a state which creates map between ensembleIdent and realizationTags?
-
     function handleSelectedEnsembleChange(newValue: string | undefined) {
         if (newValue === undefined) {
             setSelectedRealizationFilter(null);
-            setSelectedRealizations([]);
             setSelectedRangeTags([]);
             setSelectedFilterType(RealizationFilterType.REALIZATION_INDEX);
             setIsEdited(false);
             return;
         }
 
-        ensembleSet.findEnsemble(EnsembleIdent.fromString(newValue));
         const ensembleIdent = EnsembleIdent.fromString(newValue);
         const realizationFilter = realizationFilterSet.getRealizationFilterByEnsembleIdent(ensembleIdent);
 
@@ -52,31 +61,38 @@ export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps>
             return;
         }
 
-        const selectedEnsembleRealizations = realizationFilter.getSelectedRealizations() ?? [];
-        const selectedEnsembleRangeTags = realizationFilter.getSelectedRangeTags() ?? [];
-        const filterType = realizationFilter.getFilterType() ?? RealizationFilterType.REALIZATION_INDEX;
+        const realizationIndexSelection = realizationFilter.getRealizationIndexSelections();
 
         setSelectedRealizationFilter(realizationFilter);
-        setSelectedRealizations([...(selectedEnsembleRealizations ?? [])]);
-        setSelectedRangeTags([...(selectedEnsembleRangeTags ?? [])]);
-        setSelectedFilterType(filterType);
+        setRealizationIndexSelections(realizationIndexSelection);
+        setSelectedRangeTags(makeRealizationPickerTagsFromRealizationIndexSelections(realizationIndexSelection));
+        setSelectedFilterType(realizationFilter.getFilterType());
+        setSelectedFilteringOption(realizationFilter.getFilteringOption());
         setIsEdited(false);
     }
 
     function handleRealizationPickChange(newSelection: RealizationPickerSelection) {
-        const isEdited =
-            !isEqual(newSelection.selectedRealizations, selectedRealizationFilter?.getSelectedRealizations() ?? []) ||
-            !isEqual(newSelection.selectedRangeTags, selectedRealizationFilter?.getSelectedRangeTags() ?? []);
+        const realizationIndexSelection =
+            newSelection.selectedRangeTags.length === 0
+                ? null
+                : makeRealizationIndexSelectionsFromRealizationPickerTags(newSelection.selectedRangeTags);
+
+        const isEdited = !isEqual(
+            realizationIndexSelection,
+            selectedRealizationFilter?.getRealizationIndexSelections()
+        );
+
         setIsEdited(isEdited);
-        setSelectedRealizations(newSelection.selectedRealizations);
         setSelectedRangeTags(newSelection.selectedRangeTags);
+        setRealizationIndexSelections(realizationIndexSelection);
     }
 
     function handleDiscardChangesOnClick() {
         if (!selectedRealizationFilter) return;
 
-        setSelectedRealizations([...selectedRealizationFilter.getSelectedRealizations()]);
-        setSelectedRangeTags([...selectedRealizationFilter.getSelectedRangeTags()]);
+        const realizationIndexSelections = selectedRealizationFilter.getRealizationIndexSelections();
+        setRealizationIndexSelections(realizationIndexSelections);
+        setSelectedRangeTags(makeRealizationPickerTagsFromRealizationIndexSelections(realizationIndexSelections));
         setSelectedFilterType(selectedRealizationFilter.getFilterType());
         setIsEdited(false);
     }
@@ -88,18 +104,16 @@ export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps>
 
         // Prevent unnecessary updates and notification
         const isFilterSelectionsUnchanged =
-            isEqual(selectedRealizations, selectedRealizationFilter.getSelectedRealizations()) &&
-            isEqual(selectedRangeTags, selectedRealizationFilter.getSelectedRangeTags()) &&
-            selectedFilterType === selectedRealizationFilter.getFilterType();
+            isEqual(realizationIndexSelections, selectedRealizationFilter.getRealizationIndexSelections()) &&
+            selectedFilterType === selectedRealizationFilter.getFilterType() &&
+            selectedFilteringOption === selectedRealizationFilter.getFilteringOption();
         if (isFilterSelectionsUnchanged) {
             return;
         }
 
         selectedRealizationFilter.setFilterType(selectedFilterType);
-        selectedRealizationFilter.setSelectedRealizationsAndRangeTags({
-            realizations: selectedRealizations,
-            rangeTags: selectedRangeTags,
-        });
+        selectedRealizationFilter.setFilteringOption(selectedFilteringOption);
+        selectedRealizationFilter.setRealizationIndexSelections(realizationIndexSelections);
 
         // Notify subscribers of change.
         props.workbench.getWorkbenchSessionPrivate().notifyAboutEnsembleRealizationFilterChange();
@@ -111,6 +125,14 @@ export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps>
         if (!selectedRealizationFilter) return;
 
         setIsEdited(newFilterType !== selectedRealizationFilter.getFilterType());
+    }
+
+    function handleSelectedFilteringOptionChange(value: RealizationFilteringOption) {
+        setSelectedFilteringOption(value);
+
+        if (!selectedRealizationFilter) return;
+
+        setIsEdited(value !== selectedRealizationFilter.getFilteringOption());
     }
 
     return (
@@ -152,6 +174,24 @@ export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps>
                             handleSelectedFilterTypeChange(value as RealizationFilterType)
                         }
                     />
+                </Label>
+                <Label text="Filter Option">
+                    <RadioGroup
+                        value={selectedFilteringOption}
+                        options={[
+                            {
+                                label: RealizationFilteringOptionStringMapping[RealizationFilteringOption.INCLUDE],
+                                value: RealizationFilteringOption.INCLUDE,
+                            },
+                            {
+                                label: RealizationFilteringOptionStringMapping[RealizationFilteringOption.EXCLUDE],
+                                value: RealizationFilteringOption.EXCLUDE,
+                            },
+                        ]}
+                        onChange={(_, value: string | number) =>
+                            handleSelectedFilteringOptionChange(value as RealizationFilteringOption)
+                        }
+                    ></RadioGroup>
                 </Label>
                 <Label text="Realizations by index">
                     <div>

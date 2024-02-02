@@ -13,6 +13,15 @@ export const RealizationFilterTypeStringMapping = {
     [RealizationFilterType.PARAMETER_VALUES]: "Parameter values",
 };
 
+export enum RealizationFilteringOption {
+    INCLUDE = "include",
+    EXCLUDE = "exclude",
+}
+export const RealizationFilteringOptionStringMapping = {
+    [RealizationFilteringOption.INCLUDE]: "Include",
+    [RealizationFilteringOption.EXCLUDE]: "Exclude",
+};
+
 export class RealizationContinuousParameterValueFilter {
     private _parameter: ContinuousParameter;
     private _minMax: [number, number];
@@ -38,27 +47,31 @@ export class RealizationContinuousParameterValueFilter {
     }
 }
 
-type RealizationIndexSelection = {
-    realizations: readonly number[];
-    rangeTags: readonly string[]; // TODO: Have rangeTags outside of RealizationFilter class? How to distinguish between empty realizationPicker and input resulting in no realizations?
-};
+export type IndexRangeType = { start: number; end: number };
+export type RealizationIndexSelectionType = IndexRangeType | number;
 
 export class RealizationFilter {
-    private _filterType: RealizationFilterType;
     private _parentEnsemble: Ensemble;
+    private _filteringOption: RealizationFilteringOption;
+    private _filterType: RealizationFilterType;
 
-    private _realizationIndexSelection: RealizationIndexSelection;
+    private _realizationIndexSelections: readonly RealizationIndexSelectionType[] | null;
     private _parameterValueFilters: RealizationContinuousParameterValueFilter[];
 
     // Internal array for ref stability
     private _filteredRealizations: readonly number[];
 
-    constructor(parentEnsemble: Ensemble, initialFilterType = RealizationFilterType.REALIZATION_INDEX) {
-        this._filterType = initialFilterType;
+    constructor(
+        parentEnsemble: Ensemble,
+        initialFilteringOption = RealizationFilteringOption.INCLUDE,
+        initialFilterType = RealizationFilterType.REALIZATION_INDEX
+    ) {
         this._parentEnsemble = parentEnsemble;
+        this._filteringOption = initialFilteringOption;
+        this._filterType = initialFilterType;
         this._filteredRealizations = parentEnsemble.getRealizations();
 
-        this._realizationIndexSelection = { realizations: [], rangeTags: [] };
+        this._realizationIndexSelections = null;
         this._parameterValueFilters = [];
     }
 
@@ -66,8 +79,8 @@ export class RealizationFilter {
         return this._parentEnsemble.getIdent();
     }
 
-    setSelectedRealizationsAndRangeTags(selection: RealizationIndexSelection): void {
-        this._realizationIndexSelection = selection;
+    setRealizationIndexSelections(selections: readonly RealizationIndexSelectionType[] | null): void {
+        this._realizationIndexSelections = selections;
 
         // Update internal array if resulting realizations has changed
         if (this._filterType === RealizationFilterType.REALIZATION_INDEX) {
@@ -75,12 +88,8 @@ export class RealizationFilter {
         }
     }
 
-    getSelectedRealizations(): readonly number[] {
-        return this._realizationIndexSelection.realizations;
-    }
-
-    getSelectedRangeTags(): readonly string[] {
-        return this._realizationIndexSelection.rangeTags;
+    getRealizationIndexSelections(): readonly RealizationIndexSelectionType[] | null {
+        return this._realizationIndexSelections;
     }
 
     setParameterValueFilters(parameterValueFilters: RealizationContinuousParameterValueFilter[]): void {
@@ -106,29 +115,52 @@ export class RealizationFilter {
         if (filterType === this._filterType) return;
 
         this._filterType = filterType;
-        if (filterType === RealizationFilterType.REALIZATION_INDEX) {
-            this.runSelectedRealizationIndexFiltering();
-        } else if (filterType === RealizationFilterType.PARAMETER_VALUES) {
-            this.runParameterValueFiltering();
-        }
+        this.runFiltering();
     }
 
     getFilterType(): RealizationFilterType {
         return this._filterType;
     }
 
+    setFilteringOption(filteringOption: RealizationFilteringOption): void {
+        this._filteringOption = filteringOption;
+        this.runFiltering();
+    }
+
+    getFilteringOption(): RealizationFilteringOption {
+        return this._filteringOption;
+    }
+
     getFilteredRealizations(): readonly number[] {
         return this._filteredRealizations;
+    }
+
+    private runFiltering(): void {
+        if (this._filterType === RealizationFilterType.REALIZATION_INDEX) {
+            this.runSelectedRealizationIndexFiltering();
+        } else if (this._filterType === RealizationFilterType.PARAMETER_VALUES) {
+            this.runParameterValueFiltering();
+        }
     }
 
     private runSelectedRealizationIndexFiltering(): void {
         let newFilteredRealizations = this._parentEnsemble.getRealizations();
 
-        // If there are any range tags, filter the realizations
-        if (this._realizationIndexSelection.rangeTags.length > 0) {
-            newFilteredRealizations = this._realizationIndexSelection.realizations.filter((elm) =>
-                this._parentEnsemble.getRealizations().includes(elm)
-            );
+        // If realization index selection is provided, filter the realizations
+        if (this._realizationIndexSelections !== null) {
+            // Create index array from realization index selection
+            const realizationIndexArray: number[] = [];
+            this._realizationIndexSelections.forEach((elm) => {
+                if (typeof elm === "number") {
+                    realizationIndexArray.push(elm);
+                } else {
+                    realizationIndexArray.push(
+                        ...Array.from({ length: elm.end - elm.start + 1 }, (_, i) => elm.start + i)
+                    );
+                }
+            });
+
+            newFilteredRealizations = this.createIncludeOrExcludeFilteredRealizationsArray(realizationIndexArray);
         }
 
         if (!isEqual(newFilteredRealizations, this._filteredRealizations)) {
@@ -141,18 +173,29 @@ export class RealizationFilter {
 
         // Parameter filtering - intersection of realization indices across all parameter filters
         if (this._parameterValueFilters.length > 0) {
-            const validRealizations = this._parentEnsemble.getRealizations();
             const realizationIndicesWithinMinMax = [...this._parameterValueFilters[0].getRealizationsWithinMinMax()];
             for (let i = 1; i < this._parameterValueFilters.length; i++) {
                 realizationIndicesWithinMinMax.filter((realization) => {
                     return this._parameterValueFilters[i].getRealizationsWithinMinMax().includes(realization);
                 });
             }
-            newFilteredRealizations = realizationIndicesWithinMinMax.filter((elm) => validRealizations.includes(elm));
+
+            newFilteredRealizations =
+                this.createIncludeOrExcludeFilteredRealizationsArray(realizationIndicesWithinMinMax);
         }
 
         if (!isEqual(newFilteredRealizations, this._filteredRealizations)) {
             this._filteredRealizations = newFilteredRealizations;
         }
+    }
+
+    private createIncludeOrExcludeFilteredRealizationsArray(sourceRealizations: readonly number[]): readonly number[] {
+        const validRealizations = this._parentEnsemble.getRealizations();
+
+        if (this._filteringOption === RealizationFilteringOption.INCLUDE) {
+            return sourceRealizations.filter((elm) => validRealizations.includes(elm));
+        }
+
+        return validRealizations.filter((elm) => !sourceRealizations.includes(elm));
     }
 }
