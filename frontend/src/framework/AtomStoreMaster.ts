@@ -1,4 +1,8 @@
-import { WritableAtom, createStore } from "jotai";
+import { QueryClient } from "@tanstack/query-core";
+import { QueriesOptions, QueriesResults } from "@tanstack/react-query";
+
+import { Atom, Getter, WritableAtom, atom, createStore } from "jotai";
+import { atomWithQuery } from "jotai-tanstack-query";
 import { atomWithReducer } from "jotai/utils";
 
 export function atomWithCompare<Value>(initialValue: Value, areEqual: (prev: Value, next: Value) => boolean) {
@@ -8,6 +12,30 @@ export function atomWithCompare<Value>(initialValue: Value, areEqual: (prev: Val
         }
 
         return next;
+    });
+}
+
+export function atomWithQueries<T extends Array<any>, TCombinedResult = QueriesResults<T>>(
+    getOptions: (get: Getter) => {
+        queries: readonly [...QueriesOptions<T>];
+        combine?: (result: QueriesResults<T>) => TCombinedResult;
+    },
+    getQueryClient?: (get: Getter) => QueryClient
+): Atom<TCombinedResult> {
+    return atom((get) => {
+        const options = getOptions(get);
+
+        const atoms = options.queries.map((option) => {
+            return atomWithQuery<T>(option, getQueryClient);
+        });
+
+        const results = atoms.map((atom) => get(atom));
+
+        if (options.combine) {
+            return options.combine(results as QueriesResults<T>);
+        }
+
+        return results as TCombinedResult;
     });
 }
 

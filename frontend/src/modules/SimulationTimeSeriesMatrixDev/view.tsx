@@ -11,9 +11,9 @@ import { useElementSize } from "@lib/hooks/useElementSize";
 import { ColorScaleGradientType } from "@lib/utils/ColorScale";
 import { ContentError } from "@modules/_shared/components/ContentMessage";
 
-import { useAtom } from "jotai";
+import { useAtom, useAtomValue } from "jotai";
 
-import { resampleFrequencyAtom } from "./atoms";
+import { colorRealizationsByParameterAtom, groupByAtom, resampleFrequencyAtom } from "./atoms";
 import {
     useHistoricalVectorDataQueries,
     useStatisticalVectorDataQueries,
@@ -38,15 +38,15 @@ export const View = ({ moduleContext, workbenchSession, workbenchSettings }: Mod
 
     // Store values
     const vectorSpecifications = moduleContext.useStoreValue("vectorSpecifications");
-    const groupBy = moduleContext.useStoreValue("groupBy");
-    const [resampleFrequency] = useAtom(resampleFrequencyAtom);
+    const groupBy = useAtomValue(groupByAtom);
+    const resampleFrequency = useAtomValue(resampleFrequencyAtom);
     const realizationsToInclude = moduleContext.useStoreValue("realizationsToInclude");
     const visualizationMode = moduleContext.useStoreValue("visualizationMode");
     const showHistorical = moduleContext.useStoreValue("showHistorical");
     const showObservations = moduleContext.useStoreValue("showObservations");
     const statisticsSelection = moduleContext.useStoreValue("statisticsSelection");
     const parameterIdent = moduleContext.useStoreValue("parameterIdent");
-    const colorRealizationsByParameter = moduleContext.useStoreValue("colorRealizationsByParameter");
+    const colorRealizationsByParameter = useAtomValue(colorRealizationsByParameterAtom);
 
     // Color palettes
     const colorSet = workbenchSettings.useColorSet();

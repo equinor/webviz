@@ -6,6 +6,7 @@ import { StatusSource } from "@framework/ModuleInstanceStatusController";
 import { Workbench } from "@framework/Workbench";
 import { DebugProfiler } from "@framework/internal/components/DebugProfiler";
 import { ErrorBoundary } from "@framework/internal/components/ErrorBoundary";
+import { HydrateQueryClientAtom } from "@framework/internal/components/HydrateQueryClientAtom";
 import { CircularProgress } from "@lib/components/CircularProgress";
 
 import { Provider } from "jotai";
@@ -131,13 +132,15 @@ export const ViewContent = React.memo((props: ViewContentProps) => {
                     guiMessageBroker={props.workbench.getGuiMessageBroker()}
                 >
                     <Provider store={atomStore}>
-                        <View
-                            moduleContext={props.moduleInstance.getContext()}
-                            workbenchSession={props.workbench.getWorkbenchSession()}
-                            workbenchServices={props.workbench.getWorkbenchServices()}
-                            workbenchSettings={props.workbench.getWorkbenchSettings()}
-                            initialSettings={props.moduleInstance.getInitialSettings() || undefined}
-                        />
+                        <HydrateQueryClientAtom>
+                            <View
+                                moduleContext={props.moduleInstance.getContext()}
+                                workbenchSession={props.workbench.getWorkbenchSession()}
+                                workbenchServices={props.workbench.getWorkbenchServices()}
+                                workbenchSettings={props.workbench.getWorkbenchSettings()}
+                                initialSettings={props.moduleInstance.getInitialSettings() || undefined}
+                            />
+                        </HydrateQueryClientAtom>
                     </Provider>
                 </DebugProfiler>
             </div>

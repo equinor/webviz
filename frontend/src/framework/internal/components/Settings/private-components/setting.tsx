@@ -13,6 +13,7 @@ import { Settings as SettingsIcon } from "@mui/icons-material";
 import { Provider } from "jotai";
 
 import { DebugProfiler } from "../../DebugProfiler";
+import { HydrateQueryClientAtom } from "../../HydrateQueryClientAtom";
 
 type SettingProps = {
     moduleInstance: ModuleInstance<any>;
@@ -102,13 +103,15 @@ export const Setting: React.FC<SettingProps> = (props) => {
                             guiMessageBroker={props.workbench.getGuiMessageBroker()}
                         >
                             <Provider store={atomStore}>
-                                <Settings
-                                    moduleContext={props.moduleInstance.getContext()}
-                                    workbenchSession={props.workbench.getWorkbenchSession()}
-                                    workbenchServices={props.workbench.getWorkbenchServices()}
-                                    workbenchSettings={props.workbench.getWorkbenchSettings()}
-                                    initialSettings={props.moduleInstance.getInitialSettings() || undefined}
-                                />
+                                <HydrateQueryClientAtom>
+                                    <Settings
+                                        moduleContext={props.moduleInstance.getContext()}
+                                        workbenchSession={props.workbench.getWorkbenchSession()}
+                                        workbenchServices={props.workbench.getWorkbenchServices()}
+                                        workbenchSettings={props.workbench.getWorkbenchSettings()}
+                                        initialSettings={props.moduleInstance.getInitialSettings() || undefined}
+                                    />
+                                </HydrateQueryClientAtom>
                             </Provider>
                         </DebugProfiler>
                     </div>

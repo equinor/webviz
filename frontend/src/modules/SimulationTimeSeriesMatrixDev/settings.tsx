@@ -2,15 +2,13 @@ import React from "react";
 
 import { Frequency_api, StatisticFunction_api } from "@api";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
-import { Parameter, ParameterIdent, ParameterType } from "@framework/EnsembleParameters";
-import { EnsembleSet } from "@framework/EnsembleSet";
+import { Parameter, ParameterIdent } from "@framework/EnsembleParameters";
 import { ModuleFCProps } from "@framework/Module";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { MultiEnsembleSelect } from "@framework/components/MultiEnsembleSelect";
 import { ParameterListFilter } from "@framework/components/ParameterListFilter";
 import { VectorSelector, createVectorSelectorDataFromVectors } from "@framework/components/VectorSelector";
-import { fixupEnsembleIdents } from "@framework/utils/ensembleUiHelpers";
 import { Checkbox } from "@lib/components/Checkbox";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
@@ -24,11 +22,22 @@ import { useValidState } from "@lib/hooks/useValidState";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { FilterAlt } from "@mui/icons-material";
 
-import { useAtom } from "jotai";
+import { useAtom, useAtomValue } from "jotai";
 import { isEqual } from "lodash";
 import { VectorDescription_api } from "src/api";
 
-import { resampleFrequencyAtom } from "./atoms";
+import {
+    colorRealizationsByParameterAtom,
+    continuousAndNonConstantParametersUnionAtom,
+    groupByAtom,
+    resampleFrequencyAtom,
+    selectedEnsembleIdentsAtom,
+    showHistoricalAtom,
+    showObservationsAtom,
+    userSelectedEnsembleIdentsAtom,
+    vectorListQueriesAtom,
+    visualizationModeAtom,
+} from "./atoms";
 import { useVectorListQueries } from "./queryHooks";
 import {
     FanchartStatisticOption,
@@ -56,19 +65,16 @@ export function Settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
 
     // Store state/values
     const [resampleFrequency, setResamplingFrequency] = useAtom(resampleFrequencyAtom);
-    const [groupBy, setGroupBy] = moduleContext.useStoreState("groupBy");
-    const [colorRealizationsByParameter, setColorRealizationsByParameter] =
-        moduleContext.useStoreState("colorRealizationsByParameter");
-    const [visualizationMode, setVisualizationMode] = moduleContext.useStoreState("visualizationMode");
-    const [showHistorical, setShowHistorical] = moduleContext.useStoreState("showHistorical");
-    const [showObservations, setShowObservations] = moduleContext.useStoreState("showObservations");
+    const [groupBy, setGroupBy] = useAtom(groupByAtom);
+    const [colorRealizationsByParameter, setColorRealizationsByParameter] = useAtom(colorRealizationsByParameterAtom);
+    const [visualizationMode, setVisualizationMode] = useAtom(visualizationModeAtom);
+    const [showHistorical, setShowHistorical] = useAtom(showHistoricalAtom);
+    const [showObservations, setShowObservations] = useAtom(showObservationsAtom);
     const [statisticsSelection, setStatisticsSelection] = moduleContext.useStoreState("statisticsSelection");
     const setParameterIdent = moduleContext.useSetStoreValue("parameterIdent");
     const setVectorSpecifications = moduleContext.useSetStoreValue("vectorSpecifications");
 
     // States
-    const [previousEnsembleSet, setPreviousEnsembleSet] = React.useState<EnsembleSet>(ensembleSet);
-    const [selectedEnsembleIdents, setSelectedEnsembleIdents] = React.useState<EnsembleIdent[]>([]);
     const [selectedVectorNames, setSelectedVectorNames] = React.useState<string[]>([]);
     const [selectedVectorTags, setSelectedVectorTags] = React.useState<string[]>([]);
     const [availableVectorNames, setAvailableVectorNames] = React.useState<string[]>([]);
@@ -82,42 +88,15 @@ export function Settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
 
     const ensembleVectorListsHelper = React.useRef<EnsembleVectorListsHelper>(new EnsembleVectorListsHelper([], []));
 
-    if (!isEqual(ensembleSet, previousEnsembleSet)) {
-        const newSelectedEnsembleIdents = selectedEnsembleIdents.filter((ensemble) =>
-            ensembleSet.hasEnsemble(ensemble)
-        );
-        const validatedEnsembleIdents = fixupEnsembleIdents(newSelectedEnsembleIdents, ensembleSet) ?? [];
-        if (!isEqual(selectedEnsembleIdents, validatedEnsembleIdents)) {
-            setSelectedEnsembleIdents(validatedEnsembleIdents);
-        }
-
-        setPreviousEnsembleSet(ensembleSet);
-    }
+    const [, setUserSelectedEnsembleIdents] = useAtom(userSelectedEnsembleIdentsAtom);
+    const selectedEnsembleIdents = useAtomValue(selectedEnsembleIdentsAtom);
 
     // Get list of continuous parameters from selected ensembles
-    const continuousAndNonConstantParametersUnion: Parameter[] = [];
-    for (const ensembleIdent of selectedEnsembleIdents) {
-        const ensemble = ensembleSet.findEnsemble(ensembleIdent);
-        if (!ensemble) continue;
+    const continuousAndNonConstantParametersUnion = useAtomValue(continuousAndNonConstantParametersUnionAtom);
 
-        const continuousAndNonConstantParameters = ensemble
-            .getParameters()
-            .getParameterArr()
-            .filter((parameter) => parameter.type === ParameterType.CONTINUOUS && !parameter.isConstant);
+    //const vectorListQueries = useVectorListQueries(selectedEnsembleIdents);
 
-        // Add non-duplicate parameters to list - verified by ParameterIdent
-        for (const parameter of continuousAndNonConstantParameters) {
-            const parameterIdent = ParameterIdent.fromNameAndGroup(parameter.name, parameter.groupName);
-            const isParameterInUnion = continuousAndNonConstantParametersUnion.some((elm) =>
-                parameterIdent.equals(ParameterIdent.fromNameAndGroup(elm.name, elm.groupName))
-            );
-
-            if (isParameterInUnion) continue;
-            continuousAndNonConstantParametersUnion.push(parameter);
-        }
-    }
-
-    const vectorListQueries = useVectorListQueries(selectedEnsembleIdents);
+    const vectorListQueries = useAtomValue(vectorListQueriesAtom);
 
     if (
         !isEqual(
@@ -260,7 +239,7 @@ export function Settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
     }
 
     function handleEnsembleSelectChange(ensembleIdentArr: EnsembleIdent[]) {
-        setSelectedEnsembleIdents(ensembleIdentArr);
+        setUserSelectedEnsembleIdents(ensembleIdentArr);
     }
 
     function handleVectorSelectionChange(selection: SmartNodeSelectorSelection) {
