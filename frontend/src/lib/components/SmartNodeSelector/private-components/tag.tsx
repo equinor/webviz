@@ -98,23 +98,21 @@ export class Tag extends React.Component<TagProps> {
 
     private calculateTextWidth(text: string, padding = 10, minWidth = 50): number {
         const { treeNodeSelection } = this.props;
-        const span = document.createElement("span");
-        if (text === undefined) {
-            text = "";
+
+        const canvas = document.createElement("canvas");
+        const context = canvas.getContext("2d");
+        if (!context) {
+            return minWidth;
         }
+
         const input = (treeNodeSelection.getRef() as React.RefObject<HTMLInputElement>).current as HTMLInputElement;
         if (input) {
-            const fontSize = window.getComputedStyle(input).fontSize;
-            span.style.fontSize = fontSize;
+            context.font = window.getComputedStyle(input).font;
         } else {
-            span.style.fontSize = "0.875rem";
+            context.font = "0.875rem sans-serif";
         }
-        const textNode = document.createTextNode(text.replace(/ /g, "\u00A0"));
-        span.appendChild(textNode);
-        document.body.appendChild(span);
-        const width = span.offsetWidth;
-        document.body.removeChild(span);
-        return Math.max(minWidth, width + padding);
+
+        return Math.max(minWidth, context.measureText(text).width + padding);
     }
 
     private createMatchesCounter(nodeSelection: TreeNodeSelection, index: number): JSX.Element | null {

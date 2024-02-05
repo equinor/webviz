@@ -6,7 +6,10 @@ import { BugReport, Forum, WebAssetOff } from "@mui/icons-material";
 
 export class ModuleNotFoundPlaceholder extends Module<Record<string, never>> {
     constructor(moduleName: string) {
-        super(moduleName, moduleName, [], {}, [], null);
+        super({
+            name: moduleName,
+            defaultTitle: moduleName,
+        });
         this._importState = ImportState.Imported;
     }
 

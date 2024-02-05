@@ -8,8 +8,10 @@ import { BaseComponent, BaseComponentProps } from "../BaseComponent";
 
 export type CheckboxProps = {
     id?: string;
+    name?: string;
     label?: string;
     checked?: boolean;
+    indeterminate?: boolean;
     onChange?: (event: React.ChangeEvent<HTMLInputElement>, checked: boolean) => void;
 } & BaseComponentProps;
 
@@ -36,6 +38,8 @@ export const Checkbox: React.FC<CheckboxProps> = (props) => {
             <div className="flex gap-2 items-center">
                 <input
                     id={props.id ?? id.current}
+                    name={props.name}
+                    ref={(el) => el && (el.indeterminate = props.indeterminate ?? false)}
                     type="checkbox"
                     checked={checked}
                     onChange={handleChange}
