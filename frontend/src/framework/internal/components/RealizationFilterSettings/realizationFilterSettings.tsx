@@ -181,10 +181,6 @@ export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps>
                                 label: RealizationFilterTypeStringMapping[RealizationFilterType.REALIZATION_INDEX],
                                 value: RealizationFilterType.REALIZATION_INDEX,
                             },
-                            {
-                                label: RealizationFilterTypeStringMapping[RealizationFilterType.PARAMETER_VALUES],
-                                value: RealizationFilterType.PARAMETER_VALUES,
-                            },
                         ]}
                         onChange={(_, value: string | number) => setSelectedFilterType(value as RealizationFilterType)}
                     />
