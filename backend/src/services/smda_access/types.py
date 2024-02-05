@@ -26,14 +26,10 @@ class WellBoreTrajectory(BaseModel):
 class WellBoreHeader(BaseModel):
     wellbore_uuid: str
     unique_wellbore_identifier: str
-    wellbore_purpose: str
-    easting: Optional[float] = None
-    northing: Optional[float] = None
-    parent_wellbore: Optional[str] = None
-    total_depth_driller_tvd: Optional[float] = None
-    total_depth_driller_md: Optional[float] = None
-    drill_start_date: Optional[str] = None
-    drill_end_date: Optional[str] = None
+    well_uuid: str
+    unique_well_identifier: str
+    well_easting: float
+    well_northing: float
 
 
 class StratigraphicUnit(BaseModel):
