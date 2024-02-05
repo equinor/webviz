@@ -29,13 +29,12 @@ export const RightNavBar: React.FC<RightNavBarProps> = (props) => {
     function handleFilterPanelCollapseOrExpand() {
         const newExpanded = !filterPanelExpanded;
 
-        setFilterPanelExpanded(newExpanded);
         localStorage.setItem("filterPanelExpanded", newExpanded.toString());
+        setFilterPanelExpanded(newExpanded);
         if (newExpanded) {
             ensureFilterPanelIsVisible();
             return;
         }
-
         setFilterPanelWidth(0);
     }
 

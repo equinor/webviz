@@ -21,16 +21,13 @@ export const SettingsContentPanels: React.FC<SettingsContentPanelsProps> = (prop
         props.workbench.getGuiMessageBroker(),
         GuiState.FilterPanelWidthInPercent
     );
-    const [filterPanelExpanded, setFilterPanelExpanded] = useGuiState(
-        props.workbench.getGuiMessageBroker(),
-        GuiState.FilterPanelExpanded
-    );
+    const [, setFilterPanelExpanded] = useGuiState(props.workbench.getGuiMessageBroker(), GuiState.FilterPanelExpanded);
 
     const handleResizablePanelsChange = React.useCallback(
         function handleResizablePanelsChange(sizes: number[]) {
             setSettingsPanelWidth(sizes[0]);
             setFilterPanelWidth(sizes[2]);
-            setFilterPanelExpanded(sizes[2] > 0);
+            setFilterPanelExpanded(sizes[2] > 0.0);
         },
         [setSettingsPanelWidth, setFilterPanelWidth, setFilterPanelExpanded]
     );
@@ -42,7 +39,6 @@ export const SettingsContentPanels: React.FC<SettingsContentPanelsProps> = (prop
             sizesInPercent={[settingsPanelWidth, 100 - settingsPanelWidth - filterPanelWidth, filterPanelWidth]}
             minSizes={[300, 0, 300]}
             onSizesChange={handleResizablePanelsChange}
-            visible={[settingsPanelWidth > 0, true, filterPanelExpanded]}
         >
             <Settings workbench={props.workbench} />
             <div className="flex flex-col flex-grow h-full">

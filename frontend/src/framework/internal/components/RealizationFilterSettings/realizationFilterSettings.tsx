@@ -29,6 +29,7 @@ import {
 type RealizationFilterSettingsProps = { workbench: Workbench; onClose: () => void };
 
 export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps> = (props) => {
+    const [, forceUpdate] = React.useReducer((x) => x + 1, 0);
     const [candidateEnsembleIdent, setCandidateEnsembleIdent] = React.useState<EnsembleIdent | null>(null);
     const [dialogOpen, setDialogOpen] = React.useState<boolean>(false);
     const [realizationIndexSelections, setRealizationIndexSelections] = React.useState<
@@ -46,16 +47,11 @@ export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps>
     const ensembleSet = useEnsembleSet(props.workbench.getWorkbenchSession());
     const realizationFilterSet = props.workbench.getWorkbenchSession().getRealizationFilterSet();
 
-    function hasUnsavedChanges(): boolean {
-        if (!selectedRealizationFilter) return false;
-
-        const isFilterSelectionsUnchanged =
-            isEqual(realizationIndexSelections, selectedRealizationFilter.getRealizationIndexSelections()) &&
-            selectedFilterType === selectedRealizationFilter.getFilterType() &&
-            selectedFilteringOption === selectedRealizationFilter.getFilteringOption();
-
-        return !isFilterSelectionsUnchanged;
-    }
+    const hasUnsavedChanges = !selectedRealizationFilter
+        ? false
+        : !isEqual(realizationIndexSelections, selectedRealizationFilter.getRealizationIndexSelections()) ||
+          selectedFilterType !== selectedRealizationFilter.getFilterType() ||
+          selectedFilteringOption !== selectedRealizationFilter.getFilteringOption();
 
     function setStatesFromEnsembleIdent(ensembleIdent: EnsembleIdent | null) {
         if (ensembleIdent === null) {
@@ -77,7 +73,7 @@ export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps>
     }
 
     function handleSelectedEnsembleChange(newValue: string | undefined) {
-        if (hasUnsavedChanges()) {
+        if (hasUnsavedChanges) {
             const ensembleIdent = newValue ? EnsembleIdent.fromString(newValue) : null;
             setCandidateEnsembleIdent(ensembleIdent);
             setDialogOpen(true);
@@ -106,13 +102,14 @@ export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps>
         setRealizationIndexSelections(realizationIndexSelections);
         setSelectedRangeTags(makeRealizationPickerTagsFromRealizationIndexSelections(realizationIndexSelections));
         setSelectedFilterType(selectedRealizationFilter.getFilterType());
+        setSelectedFilteringOption(selectedRealizationFilter.getFilteringOption());
     }
 
     function handleApplyButtonOnClick() {
         if (!selectedRealizationFilter) return;
 
         // Prevent unnecessary updates and notification
-        if (!hasUnsavedChanges()) {
+        if (!hasUnsavedChanges) {
             return;
         }
 
@@ -122,6 +119,9 @@ export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps>
 
         // Notify subscribers of change.
         props.workbench.getWorkbenchSessionPrivate().notifyAboutEnsembleRealizationFilterChange();
+
+        // Force update to reflect changes in UI, as states are not updated.
+        forceUpdate();
     }
 
     function handleDoNotSaveOnClick() {
@@ -131,7 +131,7 @@ export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps>
 
     function handleDoSaveOnClick() {
         // Save changes before changing ensemble
-        if (selectedRealizationFilter && hasUnsavedChanges()) {
+        if (selectedRealizationFilter && hasUnsavedChanges) {
             selectedRealizationFilter.setFilterType(selectedFilterType);
             selectedRealizationFilter.setFilteringOption(selectedFilteringOption);
             selectedRealizationFilter.setRealizationIndexSelections(realizationIndexSelections);
@@ -231,16 +231,16 @@ export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps>
                     <Button
                         color="danger"
                         variant="outlined"
-                        disabled={!selectedRealizationFilter || !hasUnsavedChanges()}
-                        startIcon={hasUnsavedChanges() ? <Close fontSize="small" /> : undefined}
+                        disabled={!selectedRealizationFilter || !hasUnsavedChanges}
+                        startIcon={hasUnsavedChanges ? <Close fontSize="small" /> : undefined}
                         onClick={handleDiscardChangesOnClick}
                     >
                         Discard changes
                     </Button>
                     <Button
                         variant="outlined"
-                        disabled={!selectedRealizationFilter || !hasUnsavedChanges()}
-                        startIcon={hasUnsavedChanges() ? <Check fontSize="small" /> : undefined}
+                        disabled={!selectedRealizationFilter || !hasUnsavedChanges}
+                        startIcon={hasUnsavedChanges ? <Check fontSize="small" /> : undefined}
                         onClick={handleApplyButtonOnClick}
                     >
                         Apply

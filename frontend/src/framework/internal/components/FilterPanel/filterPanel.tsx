@@ -9,9 +9,14 @@ type FilterPanelProps = { workbench: Workbench };
 
 export const FilterPanel: React.FC<FilterPanelProps> = (props) => {
     const [, setFilterPanelExpanded] = useGuiState(props.workbench.getGuiMessageBroker(), GuiState.FilterPanelExpanded);
+    const [, setFilterPanelWidth] = useGuiState(
+        props.workbench.getGuiMessageBroker(),
+        GuiState.FilterPanelWidthInPercent
+    );
 
     function handleRealizationFilterSettingsOnClose() {
         setFilterPanelExpanded(false);
+        setFilterPanelWidth(0);
     }
 
     return (
