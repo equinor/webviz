@@ -158,7 +158,12 @@ export class Suggestions extends React.Component<SuggestionsProps> {
                     Math.min(this._allOptions.length - 1, this._currentlySelectedSuggestionIndex + 1)
                 );
             }
-            if (e.key == "Enter" && this.currentlySelectedSuggestion() !== undefined && this._allOptions.length > 0 &&  !treeNodeSelection?.focussedNodeNameContainsWildcard()) {
+            if (
+                e.key == "Enter" &&
+                this.currentlySelectedSuggestion() !== undefined &&
+                this._allOptions.length > 0 &&
+                !treeNodeSelection?.focussedNodeNameContainsWildcard()
+            ) {
                 this.useSuggestion(e, this.currentlySelectedSuggestion().getAttribute("data-use") as string);
             }
         }
@@ -346,8 +351,13 @@ export class Suggestions extends React.Component<SuggestionsProps> {
     }
 
     renderPopup(): void {
-        this.maybeLoadNewOptions();
         const { tagInputFieldRef, visible, suggestionsRef } = this.props;
+        if (!visible) {
+            this._popupRoot?.render(null);
+            return;
+        }
+
+        this.maybeLoadNewOptions();
         const maxHeight =
             window.innerHeight -
             (tagInputFieldRef.current ? tagInputFieldRef.current.getBoundingClientRect().bottom + 10 : 200);

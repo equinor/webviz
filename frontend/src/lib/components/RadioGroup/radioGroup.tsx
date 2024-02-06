@@ -24,7 +24,7 @@ const defaultProps: OptionalValues<RadioGroupProps> = {
     direction: "vertical",
 };
 
-type RadioProps = {
+export type RadioProps = {
     name: string;
     label: React.ReactNode;
     value: string | number;
@@ -32,7 +32,7 @@ type RadioProps = {
     onChange?: (event: React.ChangeEvent<HTMLInputElement>, value: string | number) => void;
 } & BaseComponentProps;
 
-const Radio: React.FC<RadioProps> = (props) => {
+export const Radio: React.FC<RadioProps> = (props) => {
     return (
         <BaseComponent disabled={props.disabled}>
             <label className="relative inline-flex align-middle gap-2 items-center group">

@@ -1,4 +1,4 @@
-import { BroadcastChannelsDef, InputBroadcastChannelDef } from "./Broadcaster";
+import { ChannelDefinition, ChannelReceiverDefinition } from "./DataChannelTypes";
 import { Module } from "./Module";
 import { DrawPreviewFunc } from "./Preview";
 import { StateBaseType, StateOptions } from "./StateStore";
@@ -9,8 +9,8 @@ export type RegisterModuleOptions = {
     moduleName: string;
     defaultTitle: string;
     syncableSettingKeys?: SyncSettingKey[];
-    broadcastChannelsDef?: BroadcastChannelsDef;
-    inputChannelDefs?: InputBroadcastChannelDef[];
+    channelDefinitions?: ChannelDefinition[];
+    channelReceiverDefinitions?: ChannelReceiverDefinition[];
     preview?: DrawPreviewFunc;
     description?: string;
 };
@@ -32,31 +32,29 @@ export class ModuleRegistry {
     /* eslint-disable-next-line @typescript-eslint/no-empty-function */
     private constructor() {}
 
-    static registerModule<ModuleStateType extends StateBaseType>(
-        options: RegisterModuleOptions
-    ): Module<ModuleStateType> {
-        const module = new Module<ModuleStateType>(
-            options.moduleName,
-            options.defaultTitle,
-            options.syncableSettingKeys,
-            options.broadcastChannelsDef,
-            options.inputChannelDefs,
-            options.preview ?? null,
-            options.description ?? null
-        );
+    static registerModule<TStateType extends StateBaseType>(options: RegisterModuleOptions): Module<TStateType> {
+        const module = new Module<TStateType>({
+            name: options.moduleName,
+            defaultTitle: options.defaultTitle,
+            syncableSettingKeys: options.syncableSettingKeys ?? [],
+            channelDefinitions: options.channelDefinitions,
+            channelReceiverDefinitions: options.channelReceiverDefinitions,
+            drawPreviewFunc: options.preview,
+            description: options.description,
+        });
         this._registeredModules[options.moduleName] = module;
         return module;
     }
 
-    static initModule<ModuleStateType extends StateBaseType>(
+    static initModule<TStateType extends StateBaseType>(
         moduleName: string,
-        defaultState: ModuleStateType,
-        options?: StateOptions<ModuleStateType>
-    ): Module<ModuleStateType> {
+        defaultState: TStateType,
+        options?: StateOptions<TStateType>
+    ): Module<TStateType> {
         const module = this._registeredModules[moduleName];
         if (module) {
             module.setDefaultState(defaultState, options);
-            return module as Module<ModuleStateType>;
+            return module as Module<TStateType>;
         }
         throw new ModuleNotFoundError(moduleName);
     }

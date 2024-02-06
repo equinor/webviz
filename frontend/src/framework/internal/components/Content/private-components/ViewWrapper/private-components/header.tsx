@@ -18,7 +18,7 @@ export type HeaderProps = {
     isDragged: boolean;
     onPointerDown: (event: React.PointerEvent<HTMLDivElement>) => void;
     onRemoveClick: (event: React.PointerEvent<HTMLDivElement>) => void;
-    onInputChannelsClick: (event: React.PointerEvent<HTMLDivElement>) => void;
+    onReceiversClick: (event: React.PointerEvent<HTMLDivElement>) => void;
     guiMessageBroker: GuiMessageBroker;
 };
 
@@ -70,15 +70,15 @@ export const Header: React.FC<HeaderProps> = (props) => {
             moduleInstanceId: props.moduleInstance.getId(),
             originElement: dataChannelOriginRef.current,
         });
-        e.stopPropagation();
         e.preventDefault();
+        e.stopPropagation();
     }
 
-    function handleInputChannelsPointerUp(e: React.PointerEvent<HTMLDivElement>) {
-        props.onInputChannelsClick(e);
+    function handleReceiversPointerUp(e: React.PointerEvent<HTMLDivElement>) {
+        props.onReceiversClick(e);
     }
 
-    function handleInputChannelsPointerDown(e: React.PointerEvent<HTMLDivElement>) {
+    function handleReceiverPointerDown(e: React.PointerEvent<HTMLDivElement>) {
         e.stopPropagation();
     }
 
@@ -172,7 +172,7 @@ export const Header: React.FC<HeaderProps> = (props) => {
 
     return (
         <div
-            className={resolveClassNames("flex items-center select-none shadow relative", {
+            className={resolveClassNames("flex items-center select-none shadow relative touch-none", {
                 "cursor-grabbing": props.isDragged,
                 "cursor-move": !props.isDragged,
                 "bg-red-100": hasErrors,
@@ -213,26 +213,27 @@ export const Header: React.FC<HeaderProps> = (props) => {
                 </>
             </div>
             {makeStatusIndicator()}
-            {(props.moduleInstance.hasBroadcastChannels() || props.moduleInstance.getInputChannelDefs().length > 0) && (
+            {(props.moduleInstance.getChannelManager().getReceivers().length > 0 ||
+                props.moduleInstance.getChannelManager().getChannels().length > 0) && (
                 <span className="bg-slate-300 w-[1px] h-3/4 ml-2" />
             )}
-            {props.moduleInstance.hasBroadcastChannels() && (
+            {props.moduleInstance.getChannelManager().getChannels().length > 0 && (
                 <div
                     id={`moduleinstance-${props.moduleInstance.getId()}-data-channel-origin`}
                     ref={dataChannelOriginRef}
-                    className="hover:text-slate-500 cursor-grab ml-2"
+                    className="hover:text-slate-500 cursor-grab ml-2 touch-none"
                     title="Connect data channels to other module instances"
                     onPointerDown={handleDataChannelOriginPointerDown}
                 >
                     <Output fontSize="small" />
                 </div>
             )}
-            {props.moduleInstance.getInputChannelDefs().length > 0 && (
+            {props.moduleInstance.getChannelManager().getReceivers().length > 0 && (
                 <div
                     className="hover:text-slate-500 cursor-pointer ml-2"
                     title="Edit input data channels"
-                    onPointerUp={handleInputChannelsPointerUp}
-                    onPointerDown={handleInputChannelsPointerDown}
+                    onPointerUp={handleReceiversPointerUp}
+                    onPointerDown={handleReceiverPointerDown}
                 >
                     <Input fontSize="small" />
                 </div>

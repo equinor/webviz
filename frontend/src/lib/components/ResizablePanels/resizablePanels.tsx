@@ -74,7 +74,6 @@ export const ResizablePanels: React.FC<ResizablePanelsProps> = (props) => {
                 index = parseInt(e.target.dataset.handle, 10);
                 dragging = true;
                 setIsDragging(true);
-                document.body.classList.add("touch-none");
                 e.preventDefault();
             }
         }
@@ -83,6 +82,10 @@ export const ResizablePanels: React.FC<ResizablePanelsProps> = (props) => {
             if (!dragging) {
                 return;
             }
+
+            // Prevent any scrolling on touch devices
+            e.preventDefault();
+            e.stopPropagation();
 
             let totalSize = 0;
             if (props.direction === "horizontal") {
@@ -131,7 +134,6 @@ export const ResizablePanels: React.FC<ResizablePanelsProps> = (props) => {
             if (onSizesChange) {
                 onSizesChange(changedSizes);
             }
-            document.body.classList.remove("touch-none");
         }
 
         document.addEventListener("pointerdown", handlePointerDown);

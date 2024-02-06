@@ -1,16 +1,14 @@
 import React from "react";
 
 import { StatisticFunction_api, VectorRealizationData_api, VectorStatisticSensitivityData_api } from "@api";
-import { BroadcastChannelData, BroadcastChannelMeta } from "@framework/Broadcaster";
 import { ModuleFCProps } from "@framework/Module";
 import { useSubscribedValue } from "@framework/WorkbenchServices";
-import { timestampUtcMsToCompactIsoString } from "@framework/utils/timestampUtils";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { createSensitivityColorMap } from "@modules/_shared/sensitivityColors";
 
 import { indexOf } from "lodash";
 
-import { BroadcastChannelNames } from "./channelDefs";
+import { ChannelIds } from "./channelDefs";
 import {
     useHistoricalVectorDataQuery,
     useStatisticalVectorSensitivityDataQuery,
@@ -76,35 +74,34 @@ export const View = ({
         setActiveTimestampUtcMs(lastTimestampUtcMs);
     }
 
-    // Broadcast the data to the realization data channel
-    React.useEffect(
-        function broadcast() {
-            if (!ensemble || !realizationsQuery.data || activeTimestampUtcMs === null) {
-                return;
-            }
-            const dataGenerator = (): BroadcastChannelData[] => {
-                const data: BroadcastChannelData[] = [];
-                realizationsQuery.data.forEach((vec) => {
-                    const indexOfTimeStamp = indexOf(vec.timestamps_utc_ms, activeTimestampUtcMs);
-                    data.push({
-                        key: vec.realization,
-                        value: indexOfTimeStamp === -1 ? 0 : vec.values[indexOfTimeStamp],
-                    });
+    function dataGenerator() {
+        const data: { key: number; value: number }[] = [];
+        if (vectorSpec && realizationsQuery.data && ensemble) {
+            realizationsQuery.data.forEach((vec) => {
+                const indexOfTimestamp = indexOf(vec.timestamps_utc_ms, activeTimestampUtcMs);
+                data.push({
+                    key: vec.realization,
+                    value: indexOfTimestamp === -1 ? 0 : vec.values[indexOfTimestamp],
                 });
-                return data;
-            };
+            });
+        }
+        return {
+            data,
+            metaData: {
+                ensembleIdentString: ensemble?.getIdent().toString() ?? "",
+                unit: "unit",
+            },
+        };
+    }
 
-            const activeTimestampAsIsoString = timestampUtcMsToCompactIsoString(activeTimestampUtcMs);
-            const channelMeta: BroadcastChannelMeta = {
-                ensembleIdent: ensemble.getIdent(),
-                description: `${ensemble.getDisplayName()} ${vectorSpec?.vectorName} ${activeTimestampAsIsoString}`,
-                unit: realizationsQuery.data?.at(0)?.unit || "",
-            };
+    moduleContext.usePublishChannelContents({
+        channelIdString: ChannelIds.REALIZATION_VALUE,
+        dependencies: [vectorSpec, realizationsQuery.data, ensemble, activeTimestampUtcMs],
+        contents: [
+            { contentIdString: vectorSpec?.vectorName ?? "", displayName: vectorSpec?.vectorName ?? "", dataGenerator },
+        ],
+    });
 
-            moduleContext.getChannel(BroadcastChannelNames.Realization_Value).broadcast(channelMeta, dataGenerator);
-        },
-        [ensemble, vectorSpec, realizationsQuery.data, activeTimestampUtcMs, moduleContext]
-    );
     const colorSet = workbenchSettings.useColorSet();
 
     const allSensitivityNamesInEnsemble = ensemble?.getSensitivities()?.getSensitivityNames().sort() ?? [];
