@@ -1,6 +1,7 @@
 import React from "react";
 
-import { SurfaceAttributeType_api, SurfaceStatisticFunction_api } from "@api";
+import { StatisticFunction_api, SurfaceAttributeType_api, SurfaceStatisticFunction_api } from "@api";
+import { ColorSet } from "@lib/utils/ColorSet";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { ModuleFCProps } from "@framework/Module";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
@@ -25,23 +26,25 @@ import { IntersectionSettingsSelect } from "./components/intersectionSettings";
 import { RealizationsSelect } from "./components/realizationsSelect";
 import { TogglableMultiSelect } from "./components/togglableMultiSelect";
 import { State } from "./state";
-import { RealizationsSurfaceSetSpec, StatisticalSurfaceSetSpec } from "./types";
+import { StatisticFunctionEnumToStringMapping, StratigraphyColorMap, SurfaceSetAddress, VisualizationMode, VisualizationModeEnumToStringMapping } from "./types";
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
+import { RadioGroup } from "@lib/components/RadioGroup";
 
-export function Settings({ moduleContext, workbenchSession, workbenchServices }: ModuleFCProps<State>) {
+export function Settings({ moduleContext, workbenchSession, workbenchSettings, workbenchServices }: ModuleFCProps<State>) {
     const syncedSettingKeys = moduleContext.useSyncedSettingKeys();
     const syncHelper = new SyncSettingsHelper(syncedSettingKeys, workbenchServices);
     const syncedValueEnsembles = syncHelper.useValue(SyncSettingKey.ENSEMBLE, "global.syncValue.ensembles");
     const ensembleSet = useEnsembleSet(workbenchSession);
 
     const statusWriter = useSettingsStatusWriter(moduleContext);
-
+    const colorSet = workbenchSettings.useColorSet();
     const wellboreType = "smda";
 
-    const setStatisticalSurfaceSetSpec = moduleContext.useSetStoreValue("statisticalSurfaceSetSpec");
-    const setRealizationsSurfaceSetSpec = moduleContext.useSetStoreValue("realizationsSurfaceSetSpec");
+    const [statisticFunctions, setStatisticFunctions] = moduleContext.useStoreState("statisticFunctions");
+    const [visualizationMode, setVisualizationMode] = moduleContext.useStoreState("visualizationMode");
 
     const setWellboreAddress = moduleContext.useSetStoreValue("wellboreAddress");
-
+    const setSurfaceSetAddress = moduleContext.useSetStoreValue("SurfaceSetAddress");
     const [intersectionSettings, setIntersectionSettings] = moduleContext.useStoreState("intersectionSettings");
 
     const [selectedEnsembleIdent, setSelectedEnsembleIdent] = React.useState<EnsembleIdent | null>(null);
@@ -97,18 +100,17 @@ export function Settings({ moduleContext, workbenchSession, workbenchServices }:
 
     const surfaceDirectory = surfaceDirectoryQuery.data
         ? new SurfaceDirectory({
-              surfaceMetas: surfaceDirectoryQuery.data,
-              timeType: SurfaceTimeType.None,
-              includeAttributeTypes: [SurfaceAttributeType_api.DEPTH],
-          })
+            surfaceMetas: surfaceDirectoryQuery.data,
+            timeType: SurfaceTimeType.None,
+            includeAttributeTypes: [SurfaceAttributeType_api.DEPTH],
+        })
         : null;
 
     const [selectedSurfaceAttribute, setSelectedSurfaceAttribute] = useValidState<string | null>({
         initialState: null,
         validStates: surfaceDirectory?.getAttributeNames(null) ?? [],
     });
-    const [statisticalSurfaceNames, setStatisticalSurfaceNames] = React.useState<string[] | null>(null);
-    const [showRealizationSurfaces, setShowRealizationSurfaces] = React.useState<boolean>(true);
+
     const [realizationsSurfaceNames, setRealizationsSurfaceNames] = React.useState<string[] | null>(null);
     const availableSurfaceNames = surfaceDirectory ? surfaceDirectory.getSurfaceNames(selectedSurfaceAttribute) : null;
     if (!realizationsSurfaceNames && availableSurfaceNames) {
@@ -116,46 +118,13 @@ export function Settings({ moduleContext, workbenchSession, workbenchServices }:
     }
     const surfaceAttrOptions = surfaceDirectory
         ? surfaceDirectory.getAttributeNames(null).map((attribute) => {
-              return { label: attribute, value: attribute };
-          })
+            return { label: attribute, value: attribute };
+        })
         : [];
 
     React.useEffect(
-        function propagateStatisticalSurfaceSetSpecToView() {
-            let surfaceSetSpec: StatisticalSurfaceSetSpec | null = null;
-            if (
-                showRealizationSurfaces &&
-                computedEnsembleIdent &&
-                selectedSurfaceAttribute &&
-                statisticalSurfaceNames
-            ) {
-                surfaceSetSpec = {
-                    caseUuid: computedEnsembleIdent.getCaseUuid(),
-                    ensembleName: computedEnsembleIdent.getEnsembleName(),
-                    realizationNums: selectedReals,
-                    attribute: selectedSurfaceAttribute,
-                    names: statisticalSurfaceNames,
-                    statistics: [
-                        SurfaceStatisticFunction_api.MEAN,
-                        SurfaceStatisticFunction_api.MIN,
-                        SurfaceStatisticFunction_api.MAX,
-                    ],
-                };
-            }
-            setStatisticalSurfaceSetSpec(surfaceSetSpec);
-        },
-        [
-            computedEnsembleIdent,
-            selectedSurfaceAttribute,
-            statisticalSurfaceNames,
-            selectedReals,
-            showRealizationSurfaces,
-            setStatisticalSurfaceSetSpec,
-        ]
-    );
-    React.useEffect(
-        function propagateRealizationsSurfaceSetSpecToView() {
-            let surfaceSetSpec: RealizationsSurfaceSetSpec | null = null;
+        function propogateSurfaceSetAddress() {
+            let surfaceSetSpec: SurfaceSetAddress | null = null;
             if (computedEnsembleIdent && selectedSurfaceAttribute && realizationsSurfaceNames) {
                 surfaceSetSpec = {
                     caseUuid: computedEnsembleIdent.getCaseUuid(),
@@ -165,14 +134,14 @@ export function Settings({ moduleContext, workbenchSession, workbenchServices }:
                     names: realizationsSurfaceNames,
                 };
             }
-            setRealizationsSurfaceSetSpec(surfaceSetSpec);
+            setSurfaceSetAddress(surfaceSetSpec);
         },
         [
             computedEnsembleIdent,
             selectedSurfaceAttribute,
             realizationsSurfaceNames,
             selectedReals,
-            setRealizationsSurfaceSetSpec,
+
         ]
     );
     React.useEffect(
@@ -180,6 +149,18 @@ export function Settings({ moduleContext, workbenchSession, workbenchServices }:
             setWellboreAddress(selectedWellboreAddress);
         },
         [selectedWellboreAddress, setWellboreAddress]
+    );
+    React.useEffect(
+        function propogateColorsToView() {
+            if (surfaceDirectory && realizationsSurfaceNames) {
+
+                const surfaceColorMap = createStratigraphyColors(
+                    availableSurfaceNames?.sort() ?? [],
+                    colorSet
+                );
+                moduleContext.getStateStore().setValue("stratigraphyColorMap", surfaceColorMap);
+            }
+        }
     );
 
     function handleEnsembleSelectionChange(newEnsembleIdent: EnsembleIdent | null) {
@@ -213,7 +194,37 @@ export function Settings({ moduleContext, workbenchSession, workbenchServices }:
         setSelectedWellboreAddress(newWellboreAddress);
         syncHelper.publishValue(SyncSettingKey.WELLBORE, "global.syncValue.wellBore", newWellboreAddress);
     }
+    function makeStatisticCheckboxes() {
+        return Object.values(StatisticFunction_api).map((value: StatisticFunction_api) => {
+            return (
+                <Checkbox
+                    key={value}
+                    label={StatisticFunctionEnumToStringMapping[value]}
+                    checked={statisticFunctions?.includes(value)}
+                    onChange={(event) => {
+                        handleStatisticsChange(event, value);
+                    }}
+                />
+            );
+        });
+    }
 
+
+    function handleStatisticsChange(
+        event: React.ChangeEvent<HTMLInputElement>,
+        statistic: StatisticFunction_api
+    ) {
+        setStatisticFunctions((prev) => {
+            if (event.target.checked) {
+                return prev ? [...prev, statistic] : [statistic]
+            } else {
+                return prev ? prev.filter((item) => item !== statistic) : []
+            }
+        });
+    }
+    function handleVisualizationModeChange(event: React.ChangeEvent<HTMLInputElement>) {
+        setVisualizationMode(event.target.value as VisualizationMode);
+    }
     return (
         <div className="flex flex-col gap-4 overflow-y-auto">
             <CollapsibleGroup title="Ensemble and Realization" expanded={true}>
@@ -270,31 +281,39 @@ export function Settings({ moduleContext, workbenchSession, workbenchServices }:
                                 onChange={handleSurfaceAttributeChange}
                             />
                         </Label>
-                        <TogglableMultiSelect
-                            values={availableSurfaceNames ?? []}
-                            label="Show statistical surfaces"
-                            onChange={setStatisticalSurfaceNames}
-                        />
+                        <Label text="Surface names">
+                            <Select
+                                options={availableSurfaceNames?.map((name) => ({ label: name, value: name })) || []}
+                                onChange={(e) => setRealizationsSurfaceNames(e)}
+                                value={realizationsSurfaceNames || []}
+                                size={5}
+                                multiple={true}
+                            />
+                        </Label>
 
-                        <div>
-                            <Label wrapperClassName="flex gap-2" text="Show realization surfaces">
-                                <Checkbox
-                                    onChange={(e: any) => setShowRealizationSurfaces(e.target.checked)}
-                                    checked={showRealizationSurfaces}
-                                />
-                            </Label>
-                            {showRealizationSurfaces && (
-                                <Select
-                                    options={availableSurfaceNames?.map((name) => ({ label: name, value: name })) ?? []}
-                                    onChange={(e) => setRealizationsSurfaceNames(e)}
-                                    value={realizationsSurfaceNames ?? []}
-                                    size={5}
-                                    multiple={true}
-                                />
-                            )}
-                        </div>
                     </div>
                 </QueryStateWrapper>
+            </CollapsibleGroup>
+            <CollapsibleGroup expanded={false} title="Visualization">
+                <RadioGroup
+                    value={visualizationMode}
+                    options={Object.values(VisualizationMode).map((val: VisualizationMode) => {
+                        return { value: val, label: VisualizationModeEnumToStringMapping[val] };
+                    })}
+                    onChange={handleVisualizationModeChange}
+                />
+                <div className="mt-4">
+                    <Label text="Statistics Options">
+                        <div
+                            className={resolveClassNames({
+                                "pointer-events-none opacity-40":
+                                    visualizationMode === VisualizationMode.INDIVIDUAL_REALIZATIONS,
+                            })}
+                        >
+                            {makeStatisticCheckboxes()}
+                        </div>
+                    </Label>
+                </div>
             </CollapsibleGroup>
             <CollapsibleGroup title="Intersection Settings" expanded={false}>
                 <IntersectionSettingsSelect
@@ -322,4 +341,15 @@ function fixupSyncedOrSelectedOrFirstWellbore(
         return legalWellbores[0];
     }
     return null;
+}
+
+
+
+
+export function createStratigraphyColors(surfaceNames: string[], colorSet: ColorSet): StratigraphyColorMap {
+    const colorMap: StratigraphyColorMap = {};
+    surfaceNames.forEach((surfaceName, index) => {
+        colorMap[surfaceName] = index === 0 ? colorSet.getFirstColor() : colorSet.getNextColor();
+    });
+    return colorMap;
 }

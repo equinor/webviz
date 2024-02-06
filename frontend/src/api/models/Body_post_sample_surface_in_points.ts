@@ -3,11 +3,11 @@
 /* tslint:disable */
 /* eslint-disable */
 import type { EnsembleIdent } from './EnsembleIdent';
+import type { PointSetXY } from './PointSetXY';
 import type { RealizationsSurfaceSetSpec } from './RealizationsSurfaceSetSpec';
-import type { SurfaceFenceSpec } from './SurfaceFenceSpec';
-export type Body_intersectSurface = {
+export type Body_post_sample_surface_in_points = {
     ensemble_ident: EnsembleIdent;
     realizations_surface_set_spec: RealizationsSurfaceSetSpec;
-    surface_fence_spec: SurfaceFenceSpec;
+    sample_points: PointSetXY;
 };
 

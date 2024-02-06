@@ -1,14 +1,16 @@
 import {
-    Body_intersectSurface_api,
+    Body_post_sample_surface_in_points_api,
     Body_well_intersection_statistics_api,
     RealizationsSurfaceSetSpec_api,
     StatisticalSurfaceSetSpec_api,
-    SurfaceFenceSpec_api,
+    PointSetXY_api,
     SurfaceIntersectionPoints_api,
+    SurfaceRealizationSamplePoints_api
 } from "@api";
 import { apiService } from "@framework/ApiService";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { UseQueryResult, useQueries, useQuery } from "@tanstack/react-query";
+import { PointSetXY } from "src/api/models/PointSetXY";
 
 const STALE_TIME = 60 * 1000;
 const CACHE_TIME = 60 * 1000;
@@ -23,28 +25,32 @@ function dummyApiCall(): Promise<SurfaceIntersectionPoints_api[]> {
         reject(null);
     });
 }
-export type SurfaceSetIntersectionPoints = {
-    data: Array<{
-        surfaceName: string;
-        intersectionPoints: SurfaceIntersectionPoints_api[];
-    }>;
+export type SurfaceRealizationSetSamplePoints = {
+    data: Array<SurfaceRealizationSetSamplePointsData>;
     isFetching: boolean;
 };
+export type SurfaceRealizationSetSamplePointsData = {
 
-export function useWellIntersectionSurfaceSetQueries(
+    surfaceName: string;
+    realizationPoints: SurfaceRealizationSamplePoints_api[];
+
+};
+export function useSampleSurfaceInPointsQueries(
     ensembleIdent: EnsembleIdent,
     realizationsSurfaceSetSpec: RealizationsSurfaceSetSpec_api | null,
-    surfaceFenceSpec: SurfaceFenceSpec_api | null,
+    x_points: number[],
+    y_points: number[],
+
+
     allowEnable: boolean
-): SurfaceSetIntersectionPoints {
+): SurfaceRealizationSetSamplePoints {
     const isEnabled = !!(
         allowEnable &&
         ensembleIdent &&
         realizationsSurfaceSetSpec &&
-        surfaceFenceSpec &&
-        surfaceFenceSpec.x_points.length > 0 &&
-        surfaceFenceSpec.y_points.length > 0 &&
-        surfaceFenceSpec.cum_length.length > 0
+        x_points.length > 0 &&
+        y_points.length > 0
+
     );
 
     return useQueries({
@@ -57,30 +63,30 @@ export function useWellIntersectionSurfaceSetQueries(
                         surface_attribute: realizationsSurfaceSetSpec.surface_attribute,
                     };
 
-                    const body: Body_intersectSurface_api = {
+                    const body: Body_post_sample_surface_in_points_api = {
                         ensemble_ident: {
                             case_uuid: ensembleIdent?.getCaseUuid() ?? "",
                             ensemble_name: ensembleIdent?.getEnsembleName() ?? "",
                         },
                         realizations_surface_set_spec: realSurfSpec,
-                        surface_fence_spec: surfaceFenceSpec,
+                        sample_points: { x_points, y_points },
                     };
-                    const queryKey = ["WellIntersectionReals", body];
+                    const queryKey = ["postSampleSurfaceInPoints", body];
 
                     return {
                         queryKey,
                         queryFn: () => {
-                            return apiService.surface.intersectSurface(body);
+                            return apiService.surface.postSampleSurfaceInPoints(body);
                         },
                         staleTime: STALE_TIME,
                         gcTime: CACHE_TIME,
                     };
                 })) ||
             [],
-        combine: (results: UseQueryResult<Array<SurfaceIntersectionPoints_api>>[]) => ({
+        combine: (results: UseQueryResult<Array<SurfaceRealizationSamplePoints_api>>[]) => ({
             data: results.map((result, index) => ({
                 surfaceName: realizationsSurfaceSetSpec?.surface_names[index] ?? "",
-                intersectionPoints: result.data ?? [],
+                realizationPoints: result.data ?? [],
             })),
 
             isFetching: results.some((result) => result.isFetching),
@@ -88,49 +94,11 @@ export function useWellIntersectionSurfaceSetQueries(
     });
 }
 
-export function useWellRealizationsSurfaceSetIntersectionQuery(
-    ensembleIdent: EnsembleIdent,
-    realizationsSurfaceSetSpec: RealizationsSurfaceSetSpec_api | null,
-    surfaceFenceSpec: SurfaceFenceSpec_api | null,
-    allowEnable: boolean
-): UseQueryResult<SurfaceIntersectionPoints_api[]> {
-    const isEnabled = !!(
-        allowEnable &&
-        ensembleIdent &&
-        realizationsSurfaceSetSpec &&
-        surfaceFenceSpec &&
-        surfaceFenceSpec.x_points.length > 0 &&
-        surfaceFenceSpec.y_points.length > 0 &&
-        surfaceFenceSpec.cum_length.length > 0
-    );
-
-    if (isEnabled) {
-        const bodyParameter: Body_intersectSurface_api = {
-            ensemble_ident: { case_uuid: ensembleIdent.getCaseUuid(), ensemble_name: ensembleIdent.getEnsembleName() },
-            realizations_surface_set_spec: realizationsSurfaceSetSpec,
-            surface_fence_spec: surfaceFenceSpec,
-        };
-
-        return useQuery({
-            queryKey: ["WellIntersectionReals", bodyParameter],
-            queryFn: () => apiService.surface.intersectSurface(bodyParameter),
-            staleTime: STALE_TIME,
-            gcTime: CACHE_TIME,
-            enabled: isEnabled,
-        });
-    } else {
-        return useQuery({
-            queryKey: ["WellIntersectionReals_DUMMY_ALWAYS_DISABLED"],
-            queryFn: () => dummyApiCall,
-            enabled: false,
-        });
-    }
-}
 
 export function useWellStatisticsSurfaceSetIntersectionQuery(
     ensembleIdent: EnsembleIdent,
     statisticalSurfaceSetSpec: StatisticalSurfaceSetSpec_api | null,
-    surfaceFenceSpec: SurfaceFenceSpec_api | null,
+    surfaceFenceSpec: PointSetXY | null,
     allowEnable: boolean
 ): UseQueryResult<SurfaceIntersectionPoints_api[]> {
     const isEnabled = !!(
@@ -139,8 +107,7 @@ export function useWellStatisticsSurfaceSetIntersectionQuery(
         statisticalSurfaceSetSpec &&
         surfaceFenceSpec &&
         surfaceFenceSpec.x_points.length > 0 &&
-        surfaceFenceSpec.y_points.length > 0 &&
-        surfaceFenceSpec.cum_length.length > 0
+        surfaceFenceSpec.y_points.length > 0
     );
 
     if (isEnabled) {

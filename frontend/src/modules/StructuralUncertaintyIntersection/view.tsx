@@ -1,11 +1,9 @@
 import React, { useId } from "react";
 
-import { RealizationsSurfaceSetSpec_api, StatisticalSurfaceSetSpec_api, SurfaceIntersectionPoints_api } from "@api";
+import { RealizationsSurfaceSetSpec_api } from "@api";
 import {
-    Controller,
-    GridLayer,
     IntersectionReferenceSystem,
-    PixiRenderApplication,
+
     Trajectory,
 } from "@equinor/esv-intersection";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
@@ -20,17 +18,16 @@ import { isEqual } from "lodash";
 import { EsvIntersection } from "./components/esvIntersection";
 import {
     SurfacePolyLineSpec,
-    useWellIntersectionSurfaceSetQueries,
-    useWellRealizationsSurfaceSetIntersectionQuery,
-    useWellStatisticsSurfaceSetIntersectionQuery,
+
+    useSampleSurfaceInPointsQueries,
+
 } from "./queryHooks";
 import { State } from "./state";
-import { addMDOverlay, addSurfaceLayers, addWellborePathLayer } from "./utils/esvIntersectionControllerUtils";
 import {
     makeExtendedTrajectoryFromTrajectoryXyzPoints,
-    makeReferenceSystemFromTrajectoryXyzPoints,
     makeTrajectoryXyzPointsFromWellboreTrajectory,
 } from "./utils/esvIntersectionDataConversion";
+import Legend from "./components/Legend";
 
 export const View = ({ moduleContext }: ModuleFCProps<State>) => {
     const wrapperDivRef = React.useRef<HTMLDivElement | null>(null);
@@ -38,10 +35,12 @@ export const View = ({ moduleContext }: ModuleFCProps<State>) => {
 
     const statusWriter = useViewStatusWriter(moduleContext);
 
-    const realizationsSurfaceSetSpec = moduleContext.useStoreValue("realizationsSurfaceSetSpec");
-    const statisticalSurfaceSetSpec = moduleContext.useStoreValue("statisticalSurfaceSetSpec");
+    const surfaceSetAddress = moduleContext.useStoreValue("SurfaceSetAddress");
+    const visualizationMode = moduleContext.useStoreValue("visualizationMode");
+    const statisticFunctions = moduleContext.useStoreValue("statisticFunctions");
     const wellboreAddress = moduleContext.useStoreValue("wellboreAddress");
     const intersectionSettings = moduleContext.useStoreValue("intersectionSettings");
+    const stratigraphyColorMap = moduleContext.useStoreValue("stratigraphyColorMap");
 
     // Extended wellbore trajectory for creating intersection/fence extended on both sides of wellbore
     const [extendedWellboreTrajectory, setExtendedWellboreTrajectory] = React.useState<Trajectory | null>(null);
@@ -73,18 +72,6 @@ export const View = ({ moduleContext }: ModuleFCProps<State>) => {
         if (!isEqual(newExtendedWellboreTrajectory, extendedWellboreTrajectory)) {
             setExtendedWellboreTrajectory(newExtendedWellboreTrajectory);
 
-            const x_points = newExtendedWellboreTrajectory?.points.map((coord) => coord[0]) ?? [];
-            const y_points = newExtendedWellboreTrajectory?.points.map((coord) => coord[1]) ?? [];
-
-            const cum_length = newExtendedWellboreTrajectory
-                ? IntersectionReferenceSystem.toDisplacement(
-                      newExtendedWellboreTrajectory.points,
-                      newExtendedWellboreTrajectory.offset
-                  ).map((coord) => coord[0] - intersectionSettings.extension)
-                : [];
-
-            candidateSurfacePolyLineSpec = { x_points, y_points, cum_length };
-            setSurfacePolyLineSpec(candidateSurfacePolyLineSpec);
         }
 
         // When new well trajectory 3D points are loaded, update the render trajectory and clear the seismic fence image
@@ -93,53 +80,40 @@ export const View = ({ moduleContext }: ModuleFCProps<State>) => {
         }
     }
     const realEnsembleIdent: EnsembleIdent = EnsembleIdent.fromCaseUuidAndEnsembleName(
-        realizationsSurfaceSetSpec?.caseUuid ?? "",
-        realizationsSurfaceSetSpec?.ensembleName ?? ""
+        surfaceSetAddress?.caseUuid ?? "",
+        surfaceSetAddress?.ensembleName ?? ""
     );
-    const statEnsembleIdent: EnsembleIdent = EnsembleIdent.fromCaseUuidAndEnsembleName(
-        statisticalSurfaceSetSpec?.caseUuid ?? "",
-        statisticalSurfaceSetSpec?.ensembleName ?? ""
-    );
+
     let realizationsSurfaceSetSpec_api: RealizationsSurfaceSetSpec_api | null = null;
-    if (realizationsSurfaceSetSpec) {
+    if (surfaceSetAddress) {
         realizationsSurfaceSetSpec_api = {
-            surface_names: realizationsSurfaceSetSpec.names,
-            surface_attribute: realizationsSurfaceSetSpec.attribute,
-            realization_nums: realizationsSurfaceSetSpec.realizationNums ?? [],
+            surface_names: surfaceSetAddress.names,
+            surface_attribute: surfaceSetAddress.attribute,
+            realization_nums: surfaceSetAddress.realizationNums ?? [],
         };
     }
 
-    let statisticalSurfaceSetSpec_api: StatisticalSurfaceSetSpec_api | null = null;
-    if (statisticalSurfaceSetSpec) {
-        statisticalSurfaceSetSpec_api = {
-            surface_names: statisticalSurfaceSetSpec.names,
-            surface_attribute: statisticalSurfaceSetSpec.attribute,
-            statistic_function: statisticalSurfaceSetSpec.statistics,
-            realization_nums: statisticalSurfaceSetSpec.realizationNums ?? [],
-        };
-    }
+    const x_points = extendedWellboreTrajectory?.points.map((coord) => coord[0]) ?? [];
+    const y_points = extendedWellboreTrajectory?.points.map((coord) => coord[1]) ?? [];
 
-    const wellIntersectionSurfaceSetQueries = useWellIntersectionSurfaceSetQueries(
+    const cum_length = extendedWellboreTrajectory
+        ? IntersectionReferenceSystem.toDisplacement(
+            extendedWellboreTrajectory.points,
+            extendedWellboreTrajectory.offset
+        ).map((coord) => coord[0] - intersectionSettings.extension)
+        : [];
+
+    candidateSurfacePolyLineSpec = { x_points, y_points, cum_length };
+
+    const sampleSurfaceInPointsQueries = useSampleSurfaceInPointsQueries(
         realEnsembleIdent,
         realizationsSurfaceSetSpec_api,
-        candidateSurfacePolyLineSpec,
-        true
-    );
-    const realData: SurfaceIntersectionPoints_api[] = [];
-    wellIntersectionSurfaceSetQueries.data?.forEach((surfaceSetIntersectionPoints) => {
-        surfaceSetIntersectionPoints.intersectionPoints.forEach((intersectionPoint) => {
-            realData.push(intersectionPoint);
-        });
-    });
-
-    const surfaceSetStatisticsInsectionPointsQuery = useWellStatisticsSurfaceSetIntersectionQuery(
-        statEnsembleIdent,
-        statisticalSurfaceSetSpec_api,
-        candidateSurfacePolyLineSpec,
+        x_points,
+        y_points,
         true
     );
 
-    statusWriter.setLoading(getWellTrajectoriesQuery.isFetching || wellIntersectionSurfaceSetQueries.isFetching);
+    statusWriter.setLoading(getWellTrajectoriesQuery.isFetching || sampleSurfaceInPointsQueries.isFetching);
     // Build up an error string handling multiple errors. e.g. "Error loading well trajectories and seismic fence data"
     // Do not useMemo
     let errorString = "";
@@ -147,27 +121,39 @@ export const View = ({ moduleContext }: ModuleFCProps<State>) => {
         errorString += "Error loading well trajectories";
     }
 
-    if (surfaceSetStatisticsInsectionPointsQuery.isError) {
-        errorString += "Error loading statistical surface data";
-    }
+
     if (errorString !== "") {
         statusWriter.addError(errorString);
     }
+    const stratigraphyColorLegendItems = surfaceSetAddress?.names.map((key) => {
+        return { color: stratigraphyColorMap[key], label: key };
+    }
+    ) ?? [];
+
 
     return (
-        <div ref={wrapperDivRef} className="w-full h-full">
+        <div ref={wrapperDivRef} className="w-full h-full relative
+        ">
             {errorString !== "" ? (
                 <ContentError>{errorString}</ContentError>
             ) : (
-                <EsvIntersection
-                    width={width}
-                    height={height}
-                    zScale={5}
-                    extension={5}
-                    wellborePath={renderWellboreTrajectoryXyzPoints}
-                    statisticalSurfaceIntersectionPoints={surfaceSetStatisticsInsectionPointsQuery.data}
-                    realizationsSurfaceIntersectionPoints={realData}
-                />
+                <>
+                    <EsvIntersection
+                        width={width}
+                        height={height}
+                        zScale={5}
+                        extension={5}
+                        wellborePath={renderWellboreTrajectoryXyzPoints}
+                        surfaceRealizationSetSamplePointsData={sampleSurfaceInPointsQueries.data}
+                        visualizationMode={visualizationMode}
+                        statisticFunctions={statisticFunctions}
+                        cumLength={cum_length}
+                        stratigraphyColorMap={stratigraphyColorMap}
+                    />
+                    <div className="absolute bottom-0 left-0 right-0">
+                        <Legend items={stratigraphyColorLegendItems} />
+                    </div>
+                </>
             )}
         </div>
     );

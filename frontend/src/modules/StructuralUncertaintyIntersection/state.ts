@@ -1,10 +1,16 @@
 import { Wellbore } from "@framework/Wellbore";
 
-import { IntersectionSettings, RealizationsSurfaceSetSpec, StatisticalSurfaceSetSpec } from "./types";
+import { IntersectionSettings, SurfaceSetAddress, VisualizationMode } from "./types";
+import { StatisticFunction_api } from "@api";
+
 
 export interface State {
     wellboreAddress: Wellbore | null;
-    realizationsSurfaceSetSpec: RealizationsSurfaceSetSpec | null;
-    statisticalSurfaceSetSpec: StatisticalSurfaceSetSpec | null;
+    SurfaceSetAddress: SurfaceSetAddress | null;
+    visualizationMode: VisualizationMode;
+    stratigraphyColorMap: { [name: string]: string };
+    statisticFunctions: StatisticFunction_api[];
     intersectionSettings: IntersectionSettings;
 }
+
+

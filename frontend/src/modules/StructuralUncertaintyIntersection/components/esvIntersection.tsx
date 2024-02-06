@@ -1,8 +1,9 @@
 import React from "react";
 
-import { SurfaceIntersectionPoints_api } from "@api";
+import { StatisticFunction_api, SurfaceRealizationSamplePoints_api } from "@api";
 import {
     Controller,
+    GeomodelCanvasLayer,
     GeomodelLayerV2,
     GridLayer,
     PixiRenderApplication,
@@ -16,6 +17,8 @@ import { isEqual } from "lodash";
 
 import { addMDOverlay } from "../utils/esvIntersectionControllerUtils";
 import { makeReferenceSystemFromTrajectoryXyzPoints } from "../utils/esvIntersectionDataConversion";
+import { SurfaceRealizationSetSamplePointsData } from "../queryHooks";
+import { StratigraphyColorMap, VisualizationMode } from "../types";
 
 type EsvIntersectionProps = {
     width: number;
@@ -23,8 +26,11 @@ type EsvIntersectionProps = {
     zScale: number;
     extension: number;
     wellborePath: number[][] | null;
-    statisticalSurfaceIntersectionPoints?: SurfaceIntersectionPoints_api[] | null;
-    realizationsSurfaceIntersectionPoints?: SurfaceIntersectionPoints_api[] | null;
+    cumLength: number[] | null;
+    surfaceRealizationSetSamplePointsData?: SurfaceRealizationSetSamplePointsData[] | null;
+    visualizationMode: VisualizationMode;
+    statisticFunctions: StatisticFunction_api[];
+    stratigraphyColorMap: StratigraphyColorMap;
 };
 
 export const EsvIntersection: React.FC<EsvIntersectionProps> = (props) => {
@@ -56,7 +62,7 @@ export const EsvIntersection: React.FC<EsvIntersectionProps> = (props) => {
             controller.current.addLayer(new GridLayer("gridLayer"));
             controller.current.addLayer(new WellborepathLayer("wellBorePathLayer"));
             controller.current.addLayer(
-                new GeomodelLayerV2(pixiContent.current, "statisticalSurfaceLayer", { order: 3, layerOpacity: 0.6 })
+                new GeomodelCanvasLayer("statisticalSurfaceLayer", { order: 3, layerOpacity: 0.6 })
             );
             controller.current.addLayer(
                 new GeomodelLayerV2(pixiContent.current, "realizationsSurfaceLayer", { order: 4, layerOpacity: 0.6 })
@@ -73,75 +79,131 @@ export const EsvIntersection: React.FC<EsvIntersectionProps> = (props) => {
     if (!isEqual(previousWellborePath, props.wellborePath)) {
         setPreviousWellborePath(props.wellborePath);
 
-        controller.current?.getLayer("statisticalSurfaceLayer")?.clearData();
-        controller.current?.getLayer("realizationsSurfaceLayer")?.clearData();
     }
-    if (controller.current && props.wellborePath) {
+    if (controller.current && props.wellborePath && props.cumLength) {
         controller.current.adjustToSize(Math.max(0, width), Math.max(0, height));
         const referenceSystem = makeReferenceSystemFromTrajectoryXyzPoints(props.wellborePath);
         controller.current.setReferenceSystem(referenceSystem);
 
-        if (props.statisticalSurfaceIntersectionPoints) {
-            const layerData = statisticalSurfaceIntersectionsToSurfaceData(props.statisticalSurfaceIntersectionPoints);
+        controller.current?.getLayer("statisticalSurfaceLayer")?.clearData();
+        controller.current?.getLayer("realizationsSurfaceLayer")?.clearData();
+        if (props.surfaceRealizationSetSamplePointsData) {
+            if (props.visualizationMode === VisualizationMode.STATISTICAL_LINES || props.visualizationMode === VisualizationMode.STATISTICS_AND_REALIZATIONS) {
+                const statData = surfaceSamplePointsToStatisticalLayerData(
+                    props.surfaceRealizationSetSamplePointsData, props.cumLength, props.statisticFunctions, props.stratigraphyColorMap
+                );
+                controller.current.getLayer("statisticalSurfaceLayer")?.setData(statData);
+            }
+            if (props.visualizationMode === VisualizationMode.INDIVIDUAL_REALIZATIONS || props.visualizationMode === VisualizationMode.STATISTICS_AND_REALIZATIONS) {
+                const realizationData = surfaceSamplePointsToRealizationLayerData(
+                    props.surfaceRealizationSetSamplePointsData, props.cumLength, props.stratigraphyColorMap
+                );
+                controller.current.getLayer("realizationsSurfaceLayer")?.setData(realizationData);
+            }
 
-            controller.current.getLayer("statisticalSurfaceLayer")?.setData(layerData);
-        }
-        if (props.realizationsSurfaceIntersectionPoints) {
-            const layerData = realizationsSurfaceIntersectionsToSurfaceData(
-                props.realizationsSurfaceIntersectionPoints
-            );
-
-            controller.current.getLayer("realizationsSurfaceLayer")?.setData(layerData);
         }
     }
+
+
     return <div ref={containerDiv} className="w-full h-full" />;
 };
 
-function statisticalSurfaceIntersectionsToSurfaceData(intersections: SurfaceIntersectionPoints_api[]): SurfaceData {
-    const surfaceIndicesWithLabels: { name: string; idx: number }[] = [];
-    intersections.forEach((intersection, idx) => {
-        if (intersection.name !== surfaceIndicesWithLabels[surfaceIndicesWithLabels.length - 1]?.name) {
-            surfaceIndicesWithLabels.push({ name: intersection.name, idx: idx });
-        }
+
+function surfaceSamplePointsToRealizationLayerData(samplePoints: SurfaceRealizationSetSamplePointsData[], cumLength: number[], stratigraphyColorMap: StratigraphyColorMap): SurfaceData {
+    const surfaceValues: { name: string, realization: number, values: number[], showLabel: boolean }[] = [];
+    samplePoints.forEach((surfaceSet, idx) => {
+        surfaceSet.realizationPoints.forEach((realSamplePoints: SurfaceRealizationSamplePoints_api, rdx: number) => {
+            surfaceValues.push({ name: surfaceSet.surfaceName, showLabel: rdx === 0, realization: realSamplePoints.realization, values: realSamplePoints.sampled_values });
+        })
     });
     const geolayerdata: SurfaceData = {
         areas: [],
+        lines: surfaceValues.map((realizationValues) => {
 
-        lines: intersections.map((intersection, idx) => {
             return {
-                data: intersection.z_array.map((z: number, idx) => {
-                    return [intersection.cum_length[idx], z];
-                }),
-                color: "red",
-                id: intersection.name,
-                label: surfaceIndicesWithLabels.find((surfaceWithLabel) => surfaceWithLabel.idx === idx)?.name ?? "",
-                width: 10,
-            };
-        }),
-    };
-    return geolayerdata;
-}
-function realizationsSurfaceIntersectionsToSurfaceData(intersections: SurfaceIntersectionPoints_api[]): SurfaceData {
-    const surfaceIndicesWithLabels: { name: string; idx: number }[] = [];
-    intersections.forEach((intersection, idx) => {
-        if (intersection.name !== surfaceIndicesWithLabels[surfaceIndicesWithLabels.length - 1]?.name) {
-            surfaceIndicesWithLabels.push({ name: intersection.name, idx: idx });
-        }
-    });
-    const geolayerdata: SurfaceData = {
-        areas: [],
-
-        lines: intersections.map((intersection, idx) => {
-            return {
-                data: intersection.z_array.map((z: number, idx) => {
-                    return [intersection.cum_length[idx], z];
-                }),
-                color: "black",
-                id: intersection.name,
-                label: surfaceIndicesWithLabels.find((surfaceWithLabel) => surfaceWithLabel.idx === idx)?.name ?? "",
+                data: realizationValues.values.map((z: number, idx) => {
+                    return [cumLength[idx], z];
+                }
+                ),
+                color: stratigraphyColorMap[realizationValues.name] || "black",
+                id: realizationValues.name + realizationValues.realization,
+                label: realizationValues.showLabel ? realizationValues.name : "",
+                textColor: "black",
                 width: 1,
             };
         }),
     };
     return geolayerdata;
+}
+
+
+function surfaceSamplePointsToStatisticalLayerData(samplePoints: SurfaceRealizationSetSamplePointsData[], cumLength: number[], statisticFunctions: StatisticFunction_api[], stratigraphyColorMap: StratigraphyColorMap): SurfaceData {
+    const statisticLines: { name: string, statistic: string, values: number[], color: string }[] = [];
+
+    samplePoints.forEach((surfaceSet) => {
+        const allValues: number[][] = surfaceSet.realizationPoints.map((p) => p.sampled_values);
+        const numPoints = allValues[0]?.length || 0;
+        const statistics: any = {
+            MEAN: new Array(numPoints).fill(0),
+            MIN: new Array(numPoints).fill(Infinity),
+            MAX: new Array(numPoints).fill(-Infinity),
+            P10: new Array(numPoints).fill(0),
+            P50: new Array(numPoints).fill(0),
+            P90: new Array(numPoints).fill(0),
+        };
+
+        for (let i = 0; i < numPoints; i++) {
+            const valuesAtPosition = allValues.map((values) => values[i]);
+            statistics.MEAN[i] = mean(valuesAtPosition);
+            statistics.MIN[i] = Math.min(...valuesAtPosition);
+            statistics.MAX[i] = Math.max(...valuesAtPosition);
+            statistics.P10[i] = percentile(valuesAtPosition, 10);
+            statistics.P50[i] = percentile(valuesAtPosition, 50);
+            statistics.P90[i] = percentile(valuesAtPosition, 90);
+        }
+
+        Object.keys(statistics).forEach((stat) => {
+            if (!statisticFunctions.includes(stat as StatisticFunction_api)) {
+                return;
+            }
+            statisticLines.push({
+                name: surfaceSet.surfaceName,
+                statistic: stat,
+                values: statistics[stat],
+                color: stratigraphyColorMap[surfaceSet.surfaceName] || "black",
+            });
+        });
+    });
+
+    const geolayerdata: SurfaceData = {
+        areas: [],
+        lines: statisticLines.map((line) => ({
+            data: line.values.map((value, idx) => [cumLength[idx], value]),
+            color: line.color,
+            id: line.name + line.statistic,
+            label: line.statistic,
+            width: 1,
+        })),
+    };
+
+    return geolayerdata;
+
+    function mean(values: number[]): number {
+        return values.reduce((a, b) => a + b, 0) / values.length;
+    }
+
+
+
+    function percentile(values: number[], p: number): number {
+        values.sort((a, b) => a - b);
+        const position = (values.length - 1) * p / 100;
+        const base = Math.floor(position);
+        const rest = position - base;
+        if (values[base + 1] !== undefined) {
+            return values[base] + rest * (values[base + 1] - values[base]);
+        } else {
+            return values[base];
+        }
+    }
+
 }

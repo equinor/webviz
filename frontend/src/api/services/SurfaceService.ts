@@ -2,13 +2,14 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-import type { Body_intersectSurface } from '../models/Body_intersectSurface';
 import type { Body_post_get_surface_intersection } from '../models/Body_post_get_surface_intersection';
+import type { Body_post_sample_surface_in_points } from '../models/Body_post_sample_surface_in_points';
 import type { Body_well_intersection_statistics } from '../models/Body_well_intersection_statistics';
 import type { SurfaceData } from '../models/SurfaceData';
 import type { SurfaceIntersectionData } from '../models/SurfaceIntersectionData';
 import type { SurfaceIntersectionPoints } from '../models/SurfaceIntersectionPoints';
 import type { SurfaceMeta } from '../models/SurfaceMeta';
+import type { SurfaceRealizationSamplePoints } from '../models/SurfaceRealizationSamplePoints';
 import type { SurfaceStatisticFunction } from '../models/SurfaceStatisticFunction';
 import type { CancelablePromise } from '../core/CancelablePromise';
 import type { BaseHttpRequest } from '../core/BaseHttpRequest';
@@ -237,17 +238,17 @@ export class SurfaceService {
         });
     }
     /**
-     * Intersectsurface
+     * Post Sample Surface In Points
      * @param requestBody
-     * @returns SurfaceIntersectionPoints Successful Response
+     * @returns SurfaceRealizationSamplePoints Successful Response
      * @throws ApiError
      */
-    public intersectSurface(
-        requestBody: Body_intersectSurface,
-    ): CancelablePromise<Array<SurfaceIntersectionPoints>> {
+    public postSampleSurfaceInPoints(
+        requestBody: Body_post_sample_surface_in_points,
+    ): CancelablePromise<Array<SurfaceRealizationSamplePoints>> {
         return this.httpRequest.request({
             method: 'POST',
-            url: '/surface/intersectSurface',
+            url: '/surface/sample_surface_in_points',
             body: requestBody,
             mediaType: 'application/json',
             errors: {
