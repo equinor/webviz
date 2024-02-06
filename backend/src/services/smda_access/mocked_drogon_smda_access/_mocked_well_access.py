@@ -73,15 +73,17 @@ class WellAccess:
             WellBoreHeader(
                 wellbore_uuid="drogon_vertical",
                 unique_wellbore_identifier="55/33-1",
-                easting=462480.000,
-                northing=5934232.000,
-                wellbore_purpose="production",
+                well_uuid="drogon_vertical",
+                unique_well_identifier="55/33-1",
+                well_easting=462480.000,
+                well_northing=5934232.000,
             ),
             WellBoreHeader(
                 wellbore_uuid="drogon_horizontal",
                 unique_wellbore_identifier="55/33-A-4",
-                easting=463256.911,
-                northing=5930542.294,
-                wellbore_purpose="production",
+                well_uuid="drogon_horizontal",
+                unique_well_identifier="55/33-A-4",
+                well_easting=463256.911,
+                well_northing=5930542.294,
             ),
         ]

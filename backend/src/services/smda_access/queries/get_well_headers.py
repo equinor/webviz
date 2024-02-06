@@ -10,18 +10,14 @@ async def get_well_headers(
     access_token: str,
     field_identifier: str,
 ) -> List[WellBoreHeader]:
-    endpoint = "wellheaders"
+    endpoint = "wellbore-survey-headers"
     projection = [
         "wellbore_uuid",
         "unique_wellbore_identifier",
-        "easting",
-        "northing",
-        "total_depth_driller_tvd",
-        "total_depth_driller_md",
-        "drill_start_date",
-        # "drill_end_date",
-        "wellbore_purpose",
-        "parent_wellbore",
+        "well_uuid",
+        "unique_well_identifier",
+        "well_easting",
+        "well_northing",
     ]
     params = {
         "_projection": ",".join(projection),

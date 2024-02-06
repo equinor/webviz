@@ -76,7 +76,7 @@ export class TreeData {
         }
         this._stringifiedData = stringifiedData;
         this._nodeData = nodeData;
-        if (nodeData.length != indexCount) {
+        if (nodeData.length !== indexCount) {
             throw "implementation error";
         }
     }
