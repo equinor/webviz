@@ -17,7 +17,6 @@ import { isEqual } from "lodash";
 
 import { EsvIntersection } from "./components/esvIntersection";
 import {
-    SurfacePolyLineSpec,
 
     useSampleSurfaceInPointsQueries,
 
@@ -57,8 +56,7 @@ export const View = ({ moduleContext }: ModuleFCProps<State>) => {
     if (getWellTrajectoriesQuery.isError) {
         statusWriter.addError("Error loading well trajectories");
     }
-    const [surfacePolyLineSpec, setSurfacePolyLineSpec] = React.useState<SurfacePolyLineSpec | null>(null);
-    let candidateSurfacePolyLineSpec = surfacePolyLineSpec;
+
     // Use first trajectory and create polyline for seismic fence query, and extended wellbore trajectory for generating seismic fence image
 
     if (getWellTrajectoriesQuery.data && getWellTrajectoriesQuery.data.length !== 0) {
@@ -103,7 +101,6 @@ export const View = ({ moduleContext }: ModuleFCProps<State>) => {
         ).map((coord) => coord[0] - intersectionSettings.extension)
         : [];
 
-    candidateSurfacePolyLineSpec = { x_points, y_points, cum_length };
 
     const sampleSurfaceInPointsQueries = useSampleSurfaceInPointsQueries(
         realEnsembleIdent,

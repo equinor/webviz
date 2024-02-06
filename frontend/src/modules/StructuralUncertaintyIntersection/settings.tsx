@@ -15,7 +15,7 @@ import { CircularProgress } from "@lib/components/CircularProgress";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { Label } from "@lib/components/Label";
 import { QueryStateWrapper } from "@lib/components/QueryStateWrapper";
-import { Select, SelectOption } from "@lib/components/Select";
+import { Select } from "@lib/components/Select";
 import { useValidState } from "@lib/hooks/useValidState";
 import { SurfaceDirectory, SurfaceTimeType, useSurfaceDirectoryQuery } from "@modules/_shared/Surface";
 import { useWellHeadersQuery } from "@modules/_shared/WellBore";
@@ -24,7 +24,6 @@ import { isEqual } from "lodash";
 
 import { IntersectionSettingsSelect } from "./components/intersectionSettings";
 import { RealizationsSelect } from "./components/realizationsSelect";
-import { TogglableMultiSelect } from "./components/togglableMultiSelect";
 import { State } from "./state";
 import { StatisticFunctionEnumToStringMapping, StratigraphyColorMap, SurfaceSetAddress, VisualizationMode, VisualizationModeEnumToStringMapping } from "./types";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
