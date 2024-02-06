@@ -1,58 +1,38 @@
 import React from "react";
 
-import { BroadcastChannelKeyCategory, BroadcastChannelMeta } from "@framework/Broadcaster";
+import { ChannelReceiverChannelContent, KeyKind } from "@framework/DataChannelTypes";
 import { ModuleFCProps } from "@framework/Module";
+import { useViewStatusWriter } from "@framework/StatusWriter";
 import { Tag } from "@lib/components/Tag";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { ColorScaleGradientType } from "@lib/utils/ColorScale";
+import { Size } from "@lib/utils/geometry";
+import { ContentInfo } from "@modules/_shared/components/ContentMessage";
 
-import { BarChart } from "./components/barChart";
-import { Histogram } from "./components/histogram";
-import { ScatterPlot } from "./components/scatterPlot";
-import { ScatterPlotWithColorMapping } from "./components/scatterPlotWithColorMapping";
+import { Layout, PlotData } from "plotly.js";
+
 import { PlotType, State } from "./state";
+import { makeSubplots } from "./utils/Figure";
+import { makeHistogramTrace } from "./utils/histogram";
+import { makeHoverText, makeHoverTextWithColor, makeTitleFromChannelContent } from "./utils/stringUtils";
+import { calcTextSize } from "./utils/textSize";
 
-function nFormatter(num: number, digits: number): string {
-    const lookup = [
-        { value: 1, symbol: "" },
-        { value: 1e3, symbol: "k" },
-        { value: 1e6, symbol: "M" },
-        { value: 1e9, symbol: "B" },
-        { value: 1e12, symbol: "T" },
-        { value: 1e15, symbol: "P" },
-        { value: 1e18, symbol: "E" },
-    ];
-    const rx = /\.0+$|(\.[0-9]*[1-9])0+$/;
-    const item = lookup
-        .slice()
-        .reverse()
-        .find(function (item) {
-            return num >= item.value;
-        });
-    return item ? (num / item.value).toFixed(digits).replace(rx, "$1") + item.symbol : "0";
-}
+export const View = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>) => {
+    const [isPending, startTransition] = React.useTransition();
+    const [plot, setPlot] = React.useState<React.ReactNode>(null);
+    const [revNumberX, setRevNumberX] = React.useState<number>(0);
+    const [revNumberY, setRevNumberY] = React.useState<number>(0);
+    const [revNumberColorMapping, setRevNumberColorMapping] = React.useState<number>(0);
+    const [prevPlotType, setPrevPlotType] = React.useState<PlotType | null>(null);
+    const [prevNumBins, setPrevNumBins] = React.useState<number | null>(null);
+    const [prevOrientation, setPrevOrientation] = React.useState<"v" | "h" | null>(null);
+    const [prevSize, setPrevSize] = React.useState<Size | null>(null);
 
-export const View = ({
-    moduleContext,
-    workbenchServices,
-    initialSettings,
-    workbenchSettings,
-}: ModuleFCProps<State>) => {
     const plotType = moduleContext.useStoreValue("plotType");
     const numBins = moduleContext.useStoreValue("numBins");
     const orientation = moduleContext.useStoreValue("orientation");
 
-    const [highlightedKey, setHighlightedKey] = React.useState<number | null>(null);
-    const [dataX, setDataX] = React.useState<any[] | null>(null);
-    const [dataY, setDataY] = React.useState<any[] | null>(null);
-    const [dataColor, setDataColor] = React.useState<any[] | null>(null);
-    const [metaDataX, setMetaDataX] = React.useState<BroadcastChannelMeta | null>(null);
-    const [metaDataY, setMetaDataY] = React.useState<BroadcastChannelMeta | null>(null);
-    const [metaDataColor, setMetaDataColor] = React.useState<BroadcastChannelMeta | null>(null);
-
-    const channelX = moduleContext.useInputChannel("channelX", initialSettings);
-    const channelY = moduleContext.useInputChannel("channelY", initialSettings);
-    const channelColor = moduleContext.useInputChannel("channelColor", initialSettings);
+    const statusWriter = useViewStatusWriter(moduleContext);
 
     const colorSet = workbenchSettings.useColorSet();
     const seqColorScale = workbenchSettings.useContinuousColorScale({
@@ -62,347 +42,375 @@ export const View = ({
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);
     const wrapperDivSize = useElementSize(wrapperDivRef);
 
-    React.useEffect(() => {
-        if (!channelX) {
-            setDataX(null);
-            setMetaDataX(null);
-            return;
-        }
+    const receiverX = moduleContext.useChannelReceiver({
+        receiverIdString: "channelX",
+        expectedKindsOfKeys: [KeyKind.REALIZATION],
+    });
+    const receiverY = moduleContext.useChannelReceiver({
+        receiverIdString: "channelY",
+        expectedKindsOfKeys: [KeyKind.REALIZATION],
+    });
+    const receiverColorMapping = moduleContext.useChannelReceiver({
+        receiverIdString: "channelColorMapping",
+        expectedKindsOfKeys: [KeyKind.REALIZATION],
+    });
 
-        const handleChannelXChanged = (data: any | null, metaData: BroadcastChannelMeta | null) => {
-            setDataX(data);
-            setMetaDataX(metaData);
-        };
+    statusWriter.setLoading(isPending || receiverX.isPending || receiverY.isPending || receiverColorMapping.isPending);
 
-        const unsubscribeFunc = channelX.subscribe(handleChannelXChanged);
+    if (
+        receiverX.revisionNumber !== revNumberX ||
+        receiverY.revisionNumber !== revNumberY ||
+        receiverColorMapping.revisionNumber !== revNumberColorMapping ||
+        plotType !== prevPlotType ||
+        numBins !== prevNumBins ||
+        orientation !== prevOrientation ||
+        wrapperDivSize !== prevSize
+    ) {
+        setRevNumberX(receiverX.revisionNumber);
+        setRevNumberY(receiverY.revisionNumber);
+        setRevNumberColorMapping(receiverColorMapping.revisionNumber);
+        setPrevPlotType(plotType);
+        setPrevNumBins(numBins);
+        setPrevOrientation(orientation);
+        setPrevSize(wrapperDivSize);
 
-        return unsubscribeFunc;
-    }, [channelX]);
-
-    React.useEffect(() => {
-        if (!channelY) {
-            setDataY(null);
-            setMetaDataY(null);
-            return;
-        }
-
-        const handleChannelYChanged = (data: any | null, metaData: BroadcastChannelMeta | null) => {
-            setDataY(data);
-            setMetaDataY(metaData);
-        };
-
-        const unsubscribeFunc = channelY.subscribe(handleChannelYChanged);
-
-        return unsubscribeFunc;
-    }, [channelY]);
-
-    React.useEffect(() => {
-        if (!channelColor) {
-            setDataColor(null);
-            setMetaDataColor(null);
-            return;
-        }
-
-        const handleChannelColorChanged = (data: any | null, metaData: BroadcastChannelMeta | null) => {
-            setDataColor(data);
-            setMetaDataColor(metaData);
-        };
-
-        const unsubscribeFunc = channelColor.subscribe(handleChannelColorChanged);
-
-        return unsubscribeFunc;
-    }, [channelColor]);
-
-    React.useEffect(() => {
-        if (channelX?.getDataDef().key === BroadcastChannelKeyCategory.Realization) {
-            workbenchServices.subscribe("global.hoverRealization", (data) => {
-                setHighlightedKey(data ? data.realization : null);
-            });
-        }
-    }, [channelX, workbenchServices]);
-
-    const handleHoverChanged = (data: any) => {
-        if (channelX?.getDataDef().key === BroadcastChannelKeyCategory.Realization) {
-            workbenchServices.publishGlobalData("global.hoverRealization", {
-                realization: data !== null ? (data as number) : -1,
-            });
-        }
-    };
-
-    function makeContent(): React.ReactNode {
-        if (plotType === null) {
-            return "Please select a plot type.";
-        }
-
-        if (plotType === PlotType.Histogram) {
-            if (!channelX) {
-                return "Please select a channel for the x-axis.";
-            }
-            if (dataX === null) {
-                return (
-                    <>
-                        No data on channel <Tag label={channelX.getDisplayName()} /> yet.
-                    </>
+        startTransition(function makeContent() {
+            if (!receiverX.channel) {
+                setPlot(
+                    <ContentInfo>
+                        Connect a channel to <Tag label={receiverX.displayName} />
+                    </ContentInfo>
                 );
+                return;
             }
 
-            const xValues = dataX.map((el: any) => el.value);
-            const xMin = Math.min(...xValues);
-            const xMax = Math.max(...xValues);
-            const binSize = (xMax - xMin) / numBins;
-            const bins: { from: number; to: number }[] = Array.from({ length: numBins }, (_, i) => ({
-                from: xMin + i * binSize,
-                to: xMin + (i + 1) * binSize,
-            }));
-            bins[bins.length - 1].to = xMax + 1e-6; // make sure the last bin includes the max value
-            const binValues: number[] = bins.map(
-                (range) => xValues.filter((el) => el >= range.from && el < range.to).length
-            );
-
-            const binStrings = bins.map((range) => `${nFormatter(range.from, 2)}-${nFormatter(range.to, 2)}`);
-
-            return (
-                <Histogram
-                    key="histogram"
-                    x={binStrings}
-                    y={binValues}
-                    xAxisTitle={`${metaDataX?.description ?? ""} [${metaDataX?.unit ?? ""}]`}
-                    yAxisTitle={channelX?.getDataDef().key ?? ""}
-                    width={wrapperDivSize.width}
-                    height={wrapperDivSize.height}
-                    colorSet={colorSet}
-                />
-            );
-        }
-
-        if (plotType === PlotType.BarChart) {
-            if (!channelX) {
-                return "Please select a channel for the x-axis.";
-            }
-            if (dataX === null) {
-                return (
-                    <>
-                        No data on channel <Tag label={channelX.getName()} /> yet.
-                    </>
+            if (receiverX.channel.contents.length === 0) {
+                setPlot(
+                    <ContentInfo>
+                        No data on <Tag label={receiverX.displayName} />
+                    </ContentInfo>
                 );
+                return;
             }
 
-            const keyData = dataX.map((el: any) => el.key);
-            const valueData = dataX.map((el: any) => el.value);
+            if (plotType === PlotType.Scatter || plotType === PlotType.ScatterWithColorMapping) {
+                if (!receiverY.channel) {
+                    setPlot(
+                        <ContentInfo>
+                            Connect a channel to <Tag label={receiverY.displayName} />
+                        </ContentInfo>
+                    );
+                    return;
+                }
 
-            const keyTitle = channelX?.getDataDef().key ?? "";
-            const valueTitle = `${metaDataX?.description ?? ""} [${metaDataX?.unit ?? ""}]`;
-
-            return (
-                <BarChart
-                    key="barchart"
-                    x={orientation === "h" ? valueData : keyData}
-                    y={orientation === "h" ? keyData : valueData}
-                    xAxisTitle={orientation === "h" ? valueTitle : keyTitle}
-                    yAxisTitle={orientation === "h" ? keyTitle : valueTitle}
-                    width={wrapperDivSize.width}
-                    height={wrapperDivSize.height}
-                    orientation={orientation}
-                    onHoverData={handleHoverChanged}
-                    keyData={keyData}
-                    highlightedKey={highlightedKey ?? undefined}
-                    colorSet={colorSet}
-                />
-            );
-        }
-
-        if (plotType === PlotType.Scatter) {
-            if (!channelX) {
-                return "Please select a channel for the x-axis.";
+                if (receiverY.channel.contents.length === 0) {
+                    setPlot(
+                        <ContentInfo>
+                            No data on <Tag label={receiverY.displayName} />
+                        </ContentInfo>
+                    );
+                    return;
+                }
             }
 
-            if (!channelY) {
-                return "Please select a channel for the y-axis.";
+            if (plotType === PlotType.ScatterWithColorMapping) {
+                if (!receiverColorMapping.channel) {
+                    setPlot(
+                        <ContentInfo>
+                            Connect a channel to <Tag label={receiverColorMapping.displayName} />
+                        </ContentInfo>
+                    );
+                    return;
+                }
+
+                if (receiverColorMapping.channel.contents.length === 0) {
+                    setPlot(
+                        <ContentInfo>
+                            No data on <Tag label={receiverColorMapping.displayName} />
+                        </ContentInfo>
+                    );
+                    return;
+                }
             }
 
-            if (dataX === null) {
-                return (
-                    <>
-                        No data on channel <Tag label={channelX.getName()} /> yet.
-                    </>
-                );
-            }
-            if (dataY === null) {
-                return (
-                    <>
-                        No data on channel <Tag label={channelY.getName()} /> yet.
-                    </>
-                );
-            }
-
-            const xValues: number[] = [];
-            const yValues: number[] = [];
-
-            const keysX = dataX.map((el: any) => el.key);
-            const keysY = dataY.map((el: any) => el.key);
-            if (keysX.length === keysY.length && !keysX.some((el, index) => el !== keysY[index])) {
-                keysX.forEach((key) => {
-                    const dataPointX = dataX.find((el: any) => el.key === key);
-                    const dataPointY = dataY.find((el: any) => el.key === key);
-                    xValues.push(dataPointX.value);
-                    yValues.push(dataPointY.value);
-                });
-            }
-
-            return (
-                <ScatterPlot
-                    key="scatter"
-                    x={xValues}
-                    y={yValues}
-                    xAxisTitle={`${metaDataX?.description ?? ""} [${metaDataX?.unit ?? ""}]`}
-                    yAxisTitle={`${metaDataY?.description ?? ""} [${metaDataY?.unit ?? ""}]`}
-                    keyData={keysX}
-                    width={wrapperDivSize.width}
-                    height={wrapperDivSize.height}
-                    onHoverData={handleHoverChanged}
-                    highlightedKey={highlightedKey ?? undefined}
-                />
-            );
-        }
-
-        if (plotType === PlotType.ScatterWithColorMapping) {
-            if (!channelX) {
-                return "Please select a channel for the x-axis.";
-            }
-
-            if (!channelY) {
-                return "Please select a channel for the y-axis.";
-            }
-
-            if (!channelColor) {
-                return "Please select a channel for the color mapping.";
-            }
-
-            if (dataX === null) {
-                return (
-                    <>
-                        No data on channel <Tag label={channelX.getName()} /> yet.
-                    </>
-                );
-            }
-            if (dataY === null) {
-                return (
-                    <>
-                        No data on channel <Tag label={channelY.getName()} /> yet.
-                    </>
-                );
-            }
-            if (dataColor === null) {
-                return (
-                    <>
-                        No data on channel <Tag label={channelColor.getName()} /> yet.
-                    </>
-                );
-            }
-
-            const xValues: number[] = [];
-            const yValues: number[] = [];
-            const zValues: number[] = [];
-
-            const keysX = dataX.map((el: any) => el.key);
-            const keysY = dataY.map((el: any) => el.key);
-            const keysZ = dataColor.map((el: any) => el.key);
-            if (
-                keysX.length === keysY.length &&
-                keysY.length === keysZ.length &&
-                !keysX.some((el, index) => el !== keysY[index]) &&
-                !keysX.some((el, index) => el !== keysZ[index])
-            ) {
-                keysX.forEach((key) => {
-                    const dataPointX = dataX.find((el: any) => el.key === key);
-                    const dataPointY = dataY.find((el: any) => el.key === key);
-                    const dataPointZ = dataColor.find((el: any) => el.key === key);
-                    xValues.push(dataPointX.value);
-                    yValues.push(dataPointY.value);
-                    zValues.push(dataPointZ.value);
-                });
-            }
-
-            return (
-                <ScatterPlotWithColorMapping
-                    key="scatter-with-colormapping"
-                    x={xValues}
-                    y={yValues}
-                    z={zValues}
-                    keyData={keysX}
-                    highlightedKey={highlightedKey ?? undefined}
-                    xAxisTitle={`${metaDataX?.description ?? ""} [${metaDataX?.unit ?? ""}]`}
-                    yAxisTitle={`${metaDataY?.description ?? ""} [${metaDataY?.unit ?? ""}]`}
-                    zAxisTitle={`${metaDataColor?.description ?? ""} [${metaDataColor?.unit ?? ""}]`}
-                    width={wrapperDivSize.width}
-                    onHoverData={handleHoverChanged}
-                    height={wrapperDivSize.height}
-                    colorScale={seqColorScale}
-                />
-            );
-        }
-
-        if (dataX) {
             if (plotType === PlotType.Histogram) {
-                const xValues = dataX.map((el: any) => el.value);
-                const xMin = Math.min(...xValues);
-                const xMax = Math.max(...xValues);
-                const binSize = (xMax - xMin) / numBins;
-                const bins: { from: number; to: number }[] = Array.from({ length: numBins }, (_, i) => ({
-                    from: xMin + i * binSize,
-                    to: xMin + (i + 1) * binSize,
-                }));
-                bins[bins.length - 1].to = xMax + 1e-6; // make sure the last bin includes the max value
-                const binValues: number[] = bins.map(
-                    (range) => xValues.filter((el) => el >= range.from && el < range.to).length
-                );
+                const numContents = receiverX.channel.contents.length;
+                const numCols = Math.floor(Math.sqrt(numContents));
+                const numRows = Math.ceil(numContents / numCols);
 
-                const binStrings = bins.map((range) => `${nFormatter(range.from, 2)}-${nFormatter(range.to, 2)}`);
+                const figure = makeSubplots({
+                    numRows,
+                    numCols,
+                    width: wrapperDivSize.width,
+                    height: wrapperDivSize.height,
+                    sharedXAxes: false,
+                    sharedYAxes: false,
+                    verticalSpacing: 100 / (wrapperDivSize.height - 50),
+                    horizontalSpacing: 0.2 / numCols,
+                    margin: {
+                        t: 0,
+                        r: 20,
+                        b: 50,
+                        l: 90,
+                    },
+                });
 
-                return (
-                    <Histogram
-                        key="histogram"
-                        x={binStrings}
-                        y={binValues}
-                        xAxisTitle={`${metaDataX?.description ?? ""} [${metaDataX?.unit ?? ""}]`}
-                        yAxisTitle={channelX?.getDataDef().key ?? ""}
-                        width={wrapperDivSize.width}
-                        height={wrapperDivSize.height}
-                        colorSet={colorSet}
-                    />
-                );
+                let cellIndex = 0;
+                for (let rowIndex = 0; rowIndex < numRows; rowIndex++) {
+                    for (let colIndex = 0; colIndex < numCols; colIndex++) {
+                        if (cellIndex >= numContents) {
+                            break;
+                        }
+                        const data = receiverX.channel.contents[cellIndex];
+                        const xValues = data.dataArray.map((el: any) => el.value);
+
+                        const trace = makeHistogramTrace({
+                            xValues: xValues,
+                            numBins,
+                            color: colorSet.getFirstColor(),
+                        });
+
+                        figure.addTrace(trace, rowIndex + 1, colIndex + 1);
+
+                        const patch: Partial<Layout> = {
+                            [`xaxis${cellIndex + 1}`]: {
+                                title: makeTitleFromChannelContent(data),
+                            },
+                            [`yaxis${cellIndex + 1}`]: {
+                                title: "Percent",
+                            },
+                        };
+                        figure.updateLayout(patch);
+                        cellIndex++;
+                    }
+                }
+                setPlot(figure.makePlot());
+                return;
             }
 
             if (plotType === PlotType.BarChart) {
-                const keyData = dataX.map((el: any) => el.key);
-                const valueData = dataX.map((el: any) => el.value);
+                const numContents = receiverX.channel.contents.length;
+                const numCols = Math.floor(Math.sqrt(numContents));
+                const numRows = Math.ceil(numContents / numCols);
 
-                const keyTitle = channelX?.getDataDef().key ?? "";
-                const valueTitle = `${metaDataX?.description ?? ""} [${metaDataX?.unit ?? ""}]`;
+                const figure = makeSubplots({
+                    numRows,
+                    numCols,
+                    width: wrapperDivSize.width,
+                    height: wrapperDivSize.height,
+                    sharedXAxes: false,
+                    sharedYAxes: false,
+                    verticalSpacing: 100 / (wrapperDivSize.height - 50),
+                    horizontalSpacing: 0.2 / numCols,
+                    margin: {
+                        t: 0,
+                        r: 20,
+                        b: 50,
+                        l: 90,
+                    },
+                });
 
-                return (
-                    <BarChart
-                        key="barchart"
-                        x={orientation === "h" ? valueData : keyData}
-                        y={orientation === "h" ? keyData : valueData}
-                        xAxisTitle={orientation === "h" ? valueTitle : keyTitle}
-                        yAxisTitle={orientation === "h" ? keyTitle : valueTitle}
-                        width={wrapperDivSize.width}
-                        height={wrapperDivSize.height}
-                        orientation={orientation}
-                        onHoverData={handleHoverChanged}
-                        keyData={keyData}
-                        highlightedKey={highlightedKey ?? undefined}
-                        colorSet={colorSet}
-                    />
-                );
+                let cellIndex = 0;
+                for (let rowIndex = 0; rowIndex < numRows; rowIndex++) {
+                    for (let colIndex = 0; colIndex < numCols; colIndex++) {
+                        if (cellIndex >= numContents) {
+                            break;
+                        }
+                        const data = receiverX.channel.contents[cellIndex];
+                        const keyData = data.dataArray.map((el: any) => el.key);
+                        const valueData = data.dataArray.map((el: any) => el.value);
+
+                        const dataTitle = makeTitleFromChannelContent(data);
+                        const kindOfKeyTitle = `${receiverX.channel.kindOfKey}` ?? "";
+
+                        const trace: Partial<PlotData> = {
+                            x: orientation === "h" ? valueData : keyData,
+                            y: orientation === "h" ? keyData : valueData,
+                            marker: {
+                                size: 5,
+                                color: colorSet.getFirstColor(),
+                            },
+                            showlegend: false,
+                            type: "bar",
+                            orientation,
+                        };
+
+                        const xAxisTitle = orientation === "h" ? dataTitle : kindOfKeyTitle;
+                        const yAxisTitle = orientation === "h" ? kindOfKeyTitle : dataTitle;
+
+                        figure.addTrace(trace, rowIndex + 1, colIndex + 1);
+                        const patch: Partial<Layout> = {
+                            [`xaxis${cellIndex + 1}`]: {
+                                title: xAxisTitle,
+                            },
+                            [`yaxis${cellIndex + 1}`]: {
+                                title: yAxisTitle,
+                            },
+                        };
+                        figure.updateLayout(patch);
+                        cellIndex++;
+                    }
+                }
+
+                setPlot(figure.makePlot());
+                return;
             }
-        }
+
+            if (
+                (plotType === PlotType.Scatter && receiverY.channel) ||
+                (plotType === PlotType.ScatterWithColorMapping && receiverY.channel && receiverColorMapping.channel)
+            ) {
+                const figure = makeSubplots({
+                    numRows: receiverX.channel.contents.length,
+                    numCols: receiverY.channel.contents.length,
+                    width: wrapperDivSize.width,
+                    height: wrapperDivSize.height,
+                    sharedXAxes: true,
+                    sharedYAxes: true,
+                    verticalSpacing: 20 / (wrapperDivSize.height - 80),
+                    horizontalSpacing: 20 / (wrapperDivSize.width - 80),
+                    margin: {
+                        t: 0,
+                        r: 0,
+                        b: 80,
+                        l: 80,
+                    },
+                });
+
+                const colorScale = seqColorScale.getPlotlyColorScale();
+                let dataColor: ChannelReceiverChannelContent<KeyKind.REALIZATION[]> | null = null;
+
+                if (plotType === PlotType.ScatterWithColorMapping) {
+                    dataColor = receiverColorMapping.channel?.contents[0] ?? null;
+                }
+
+                const font = {
+                    size: calcTextSize({
+                        width: wrapperDivSize.width,
+                        height: wrapperDivSize.height,
+                        numPlotsX: receiverX.channel.contents.length,
+                        numPlotsY: receiverY.channel.contents.length,
+                    }),
+                };
+
+                let cellIndex = 0;
+                receiverX.channel.contents.forEach((contentRow, rowIndex) => {
+                    if (!receiverY.channel) {
+                        return;
+                    }
+                    receiverY.channel.contents.forEach((contentCol, colIndex) => {
+                        cellIndex++;
+
+                        const dataX = contentCol;
+                        const dataY = contentRow;
+
+                        const xValues: number[] = [];
+                        const yValues: number[] = [];
+                        const colorValues: number[] = [];
+                        const realizations: number[] = [];
+
+                        let color = colorSet.getFirstColor();
+                        const preferredColorX = contentRow.metaData.preferredColor;
+                        const preferredColorY = contentCol.metaData.preferredColor;
+
+                        if (preferredColorX && preferredColorY) {
+                            if (preferredColorX === preferredColorY) {
+                                color = preferredColorX;
+                            }
+                        }
+
+                        const keysX = dataX.dataArray.map((el: any) => el.key);
+                        const keysY = dataY.dataArray.map((el: any) => el.key);
+                        const keysColor = dataColor?.dataArray.map((el: any) => el.key) ?? [];
+                        if (
+                            keysX.length === keysY.length &&
+                            (dataColor === null || keysColor.length === keysX.length) &&
+                            !keysX.some(
+                                (el, index) => el !== keysY[index] || (dataColor !== null && el !== keysColor[index])
+                            )
+                        ) {
+                            keysX.forEach((key) => {
+                                const dataPointX = dataX.dataArray.find((el: any) => el.key === key);
+                                const dataPointY = dataY.dataArray.find((el: any) => el.key === key);
+                                const dataPointColor = dataColor?.dataArray.find((el: any) => el.key === key);
+                                if (dataPointX && dataPointY) {
+                                    xValues.push(dataPointX.value as number);
+                                    yValues.push(dataPointY.value as number);
+                                    if (dataPointColor) {
+                                        colorValues.push(dataPointColor.value as number);
+                                    }
+                                    realizations.push(key as number);
+                                }
+                            });
+                        }
+
+                        const trace: Partial<PlotData> = {
+                            x: xValues,
+                            y: yValues,
+                            mode: "markers",
+                            marker: {
+                                size: 5,
+                                color: dataColor ? colorValues : color,
+                                colorscale: dataColor ? colorScale : undefined,
+                                colorbar:
+                                    dataColor && cellIndex === 1
+                                        ? {
+                                              title: makeTitleFromChannelContent(dataColor),
+                                              titleside: "right",
+                                          }
+                                        : undefined,
+                            },
+                            showlegend: false,
+                            type: "scattergl",
+                            hovertemplate: realizations.map((real) =>
+                                dataColor
+                                    ? makeHoverTextWithColor(contentRow, contentCol, dataColor, real)
+                                    : makeHoverText(contentRow, contentCol, real)
+                            ),
+                        };
+
+                        figure.addTrace(trace, rowIndex + 1, colIndex + 1);
+
+                        if (rowIndex === 0) {
+                            const patch: Partial<Layout> = {
+                                [`xaxis${cellIndex}`]: {
+                                    title: makeTitleFromChannelContent(contentCol),
+                                    font,
+                                },
+                            };
+                            figure.updateLayout(patch);
+                        }
+                        if (colIndex === 0) {
+                            const patch: Partial<Layout> = {
+                                [`yaxis${cellIndex}`]: {
+                                    title: makeTitleFromChannelContent(contentRow),
+                                    font,
+                                },
+                            };
+                            figure.updateLayout(patch);
+                        }
+                    });
+                });
+                const patch: Partial<Layout> = {
+                    margin: {
+                        t: 5,
+                        r: 5,
+                    },
+                    font,
+                    autosize: true,
+                };
+                figure.updateLayout(patch);
+                setPlot(figure.makePlot());
+                return;
+            }
+        });
     }
 
     return (
         <div className="w-full h-full" ref={wrapperDivRef}>
-            {makeContent()}
+            {plot}
         </div>
     );
 };
+
+View.displayName = "View";

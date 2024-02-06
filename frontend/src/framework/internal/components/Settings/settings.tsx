@@ -36,7 +36,7 @@ export const Settings: React.FC<SettingsProps> = (props) => {
             <ColorPaletteSettings workbench={props.workbench} />
             <div
                 className={resolveClassNames(
-                    drawerContent === DrawerContent.ModuleSettings ? "visible" : "invisible",
+                    drawerContent === DrawerContent.ModuleSettings ? "block" : "hidden",
                     "h-full",
                     "w-full"
                 )}

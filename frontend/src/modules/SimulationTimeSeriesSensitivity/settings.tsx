@@ -25,9 +25,6 @@ import { State } from "./state";
 //-----------------------------------------------------------------------------------------------------------
 
 export function Settings({ moduleContext, workbenchSession, workbenchServices }: ModuleFCProps<State>) {
-    const myInstanceIdStr = moduleContext.getInstanceIdString();
-    console.debug(`${myInstanceIdStr} -- render SimulationTimeSeries settings`);
-
     const ensembleSet = useEnsembleSet(workbenchSession);
 
     const [selectedEnsembleIdent, setSelectedEnsembleIdent] = React.useState<EnsembleIdent | null>(null);
@@ -80,7 +77,6 @@ export function Settings({ moduleContext, workbenchSession, workbenchServices }:
     }
     // Override candidates if synced
     if (syncedValueSummaryVector?.vectorName) {
-        console.debug(`${myInstanceIdStr} -- syncing timeSeries to ${syncedValueSummaryVector.vectorName}`);
         candidateVectorName = syncedValueSummaryVector.vectorName;
         candidateVectorTag = syncedValueSummaryVector.vectorName;
     }
@@ -126,7 +122,6 @@ export function Settings({ moduleContext, workbenchSession, workbenchServices }:
     );
 
     function handleEnsembleSelectionChange(newEnsembleIdent: EnsembleIdent | null) {
-        console.debug("handleEnsembleSelectionChange()", newEnsembleIdent);
         setSelectedEnsembleIdent(newEnsembleIdent);
         if (newEnsembleIdent) {
             syncHelper.publishValue(SyncSettingKey.ENSEMBLE, "global.syncValue.ensembles", [newEnsembleIdent]);
@@ -134,12 +129,10 @@ export function Settings({ moduleContext, workbenchSession, workbenchServices }:
     }
 
     function handleFrequencySelectionChange(newFreqStr: string) {
-        console.debug(`handleFrequencySelectionChange()  newFreqStr=${newFreqStr}`);
         let newFreq: Frequency_api | null = null;
         if (newFreqStr !== "RAW") {
             newFreq = newFreqStr as Frequency_api;
         }
-        console.debug(`handleFrequencySelectionChange()  newFreqStr=${newFreqStr}  newFreq=${newFreq}`);
         setResamplingFrequency(newFreq);
     }
     function handleVectorSelectChange(selection: SmartNodeSelectorSelection) {
@@ -152,7 +145,7 @@ export function Settings({ moduleContext, workbenchSession, workbenchServices }:
 
     return (
         <>
-            <CollapsibleGroup expanded={false} title="Ensemble">
+            <CollapsibleGroup expanded={true} title="Ensemble">
                 <SingleEnsembleSelect
                     ensembleSet={ensembleSet}
                     value={computedEnsembleIdent}

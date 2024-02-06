@@ -102,7 +102,6 @@ export const Virtualization = withDefaults<VirtualizationProps>()(defaultProps, 
 
     React.useEffect(() => {
         let lastScrollPosition = -1;
-        let timer: ReturnType<typeof setTimeout> | null = null;
         const handleScroll = () => {
             if (props.containerRef.current) {
                 const scrollPosition =
@@ -134,16 +133,12 @@ export const Virtualization = withDefaults<VirtualizationProps>()(defaultProps, 
 
         if (props.containerRef.current) {
             props.containerRef.current.addEventListener("scroll", handleScroll);
-            timer = setTimeout(handleScroll, 1000);
         }
         handleScroll();
 
         return () => {
             if (props.containerRef.current) {
                 props.containerRef.current.removeEventListener("scroll", handleScroll);
-                if (timer) {
-                    clearTimeout(timer);
-                }
             }
         };
     }, [props.containerRef, props.direction, props.items, props.itemSize, containerSize.height, containerSize.width]);

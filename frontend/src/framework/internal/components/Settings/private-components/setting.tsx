@@ -83,6 +83,7 @@ export const Setting: React.FC<SettingProps> = (props) => {
                 props.activeModuleInstanceId === props.moduleInstance.getId() ? "flex" : "hidden",
                 "flex-col h-full w-full relative"
             )}
+            style={{ contain: "content" }}
         >
             <ErrorBoundary moduleInstance={props.moduleInstance}>
                 <div className="flex justify-center items-center p-2 bg-slate-100 h-10">
