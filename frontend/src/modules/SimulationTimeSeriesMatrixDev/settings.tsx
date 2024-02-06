@@ -29,6 +29,7 @@ import { VectorDescription_api } from "src/api";
 import {
     colorRealizationsByParameterAtom,
     continuousAndNonConstantParametersUnionAtom,
+    ensembleVectorListsHelperAtom,
     groupByAtom,
     resampleFrequencyAtom,
     selectedEnsembleIdentsAtom,
@@ -86,36 +87,22 @@ export function Settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
     >([]);
     const [prevSelectedEnsembleIdents, setPrevSelectedEnsembleIdents] = React.useState<EnsembleIdent[]>([]);
 
-    const ensembleVectorListsHelper = React.useRef<EnsembleVectorListsHelper>(new EnsembleVectorListsHelper([], []));
-
     const [, setUserSelectedEnsembleIdents] = useAtom(userSelectedEnsembleIdentsAtom);
     const selectedEnsembleIdents = useAtomValue(selectedEnsembleIdentsAtom);
 
     // Get list of continuous parameters from selected ensembles
     const continuousAndNonConstantParametersUnion = useAtomValue(continuousAndNonConstantParametersUnionAtom);
 
-    //const vectorListQueries = useVectorListQueries(selectedEnsembleIdents);
-
     const vectorListQueries = useAtomValue(vectorListQueriesAtom);
 
-    if (
-        !isEqual(
-            vectorListQueries.map((el) => el.data),
-            prevVectorQueriesDataList
-        ) ||
-        !isEqual(selectedEnsembleIdents, prevSelectedEnsembleIdents)
-    ) {
-        setPrevVectorQueriesDataList(vectorListQueries.map((el) => el.data));
-        setPrevSelectedEnsembleIdents(selectedEnsembleIdents);
-        ensembleVectorListsHelper.current = new EnsembleVectorListsHelper(selectedEnsembleIdents, vectorListQueries);
-    }
+    const ensembleVectorListsHelper = useAtomValue(ensembleVectorListsHelperAtom);
 
     const isVectorListQueriesFetching = vectorListQueries.some((query) => query.isFetching);
 
     // Await update of vectorSelectorData until all vector lists are finished fetching
     let computedVectorSelectorData = vectorSelectorData;
     let computedAvailableVectorNames = availableVectorNames;
-    const vectorNamesUnion = ensembleVectorListsHelper.current.vectorsUnion();
+    const vectorNamesUnion = ensembleVectorListsHelper.vectorsUnion();
     if (!isVectorListQueriesFetching && !isEqual(computedAvailableVectorNames, vectorNamesUnion)) {
         computedAvailableVectorNames = vectorNamesUnion;
         computedVectorSelectorData = createVectorSelectorDataFromVectors(vectorNamesUnion);
@@ -125,7 +112,7 @@ export function Settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
     }
 
     const selectedVectorNamesHasHistorical =
-        !isVectorListQueriesFetching && ensembleVectorListsHelper.current.hasAnyHistoricalVector(selectedVectorNames);
+        !isVectorListQueriesFetching && ensembleVectorListsHelper.hasAnyHistoricalVector(selectedVectorNames);
 
     const [selectedParameterIdentStr, setSelectedParameterIdentStr] = useValidState<string | null>({
         initialState: null,
@@ -146,7 +133,7 @@ export function Settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
     // Set warning for vector names not existing in a selected ensemble
     const validateVectorNamesInEnsemble = (vectorNames: string[], ensembleIdent: EnsembleIdent) => {
         const existingVectors = vectorNames.filter((vector) =>
-            ensembleVectorListsHelper.current.isVectorInEnsemble(ensembleIdent, vector)
+            ensembleVectorListsHelper.isVectorInEnsemble(ensembleIdent, vector)
         );
         if (existingVectors.length === vectorNames.length) {
             return;
@@ -175,24 +162,21 @@ export function Settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
         setStatisticsType(computedStatisticsType);
     }
 
-    const numberOfQueriesWithData = ensembleVectorListsHelper.current.numberOfQueriesWithData();
+    const numberOfQueriesWithData = ensembleVectorListsHelper.numberOfQueriesWithData();
 
     React.useEffect(
         function propagateVectorSpecsToView() {
             const newVectorSpecifications: VectorSpec[] = [];
             for (const ensembleIdent of selectedEnsembleIdents) {
                 for (const vector of selectedVectorNames) {
-                    if (!ensembleVectorListsHelper.current.isVectorInEnsemble(ensembleIdent, vector)) {
+                    if (!ensembleVectorListsHelper.isVectorInEnsemble(ensembleIdent, vector)) {
                         continue;
                     }
 
                     newVectorSpecifications.push({
                         ensembleIdent: ensembleIdent,
                         vectorName: vector,
-                        hasHistoricalVector: ensembleVectorListsHelper.current.hasHistoricalVector(
-                            ensembleIdent,
-                            vector
-                        ),
+                        hasHistoricalVector: ensembleVectorListsHelper.hasHistoricalVector(ensembleIdent, vector),
                     });
                 }
             }

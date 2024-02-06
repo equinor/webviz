@@ -1,4 +1,4 @@
-import { Frequency_api } from "@api";
+import { Frequency_api, VectorDescription_api } from "@api";
 import { apiService } from "@framework/ApiService";
 import { atomWithCompare, atomWithQueries } from "@framework/AtomStoreMaster";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
@@ -6,11 +6,12 @@ import { Parameter, ParameterIdent, ParameterType } from "@framework/EnsemblePar
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 import { fixupEnsembleIdents } from "@framework/utils/ensembleUiHelpers";
 
-import { atom } from "jotai";
+import { Getter, atom } from "jotai";
 import { atomWithQuery } from "jotai-tanstack-query";
 import { isEqual } from "lodash";
 
 import { GroupBy, VisualizationMode } from "./state";
+import { EnsembleVectorListsHelper } from "./utils/ensemblesVectorListHelper";
 
 export const resampleFrequencyAtom = atom<Frequency_api | null>(null);
 
@@ -74,14 +75,36 @@ export const vectorListQueriesAtom = atomWithQueries((get) => {
     const selectedEnsembleIdents = get(selectedEnsembleIdentsAtom);
 
     const queries = selectedEnsembleIdents.map((ensembleIdent) => {
-        return {
+        return () => ({
             queryKey: ["ensembles", ensembleIdent.toString()],
             queryFn: () =>
                 apiService.timeseries.getVectorList(ensembleIdent.getCaseUuid(), ensembleIdent.getEnsembleName()),
-        };
+        });
     });
 
     return {
         queries,
     };
+});
+
+export const vectorListDataAtom = atom<(VectorDescription_api[] | null)[]>((get) => {
+    const vectorListQueries = get(vectorListQueriesAtom);
+    const oldVectorListData: (VectorDescription_api[] | null)[] = get(vectorListDataAtom);
+
+    const newVectorListData = vectorListQueries.map((query) => {
+        return query.data ?? null;
+    });
+
+    if (isEqual(newVectorListData, oldVectorListData)) {
+        return oldVectorListData;
+    }
+
+    return newVectorListData;
+});
+
+export const ensembleVectorListsHelperAtom = atom((get) => {
+    const vectorListQueries = get(vectorListQueriesAtom);
+    const selectedEnsembleIdents = get(selectedEnsembleIdentsAtom);
+
+    return new EnsembleVectorListsHelper(selectedEnsembleIdents, vectorListQueries);
 });

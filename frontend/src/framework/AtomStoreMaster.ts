@@ -1,5 +1,5 @@
-import { QueryClient } from "@tanstack/query-core";
-import { QueriesOptions, QueriesResults } from "@tanstack/react-query";
+import { DefaultError, QueryClient, QueryKey, QueryObserverOptions, QueryObserverResult } from "@tanstack/query-core";
+import { QueriesResults } from "@tanstack/react-query";
 
 import { Atom, Getter, WritableAtom, atom, createStore } from "jotai";
 import { atomWithQuery } from "jotai-tanstack-query";
@@ -15,27 +15,43 @@ export function atomWithCompare<Value>(initialValue: Value, areEqual: (prev: Val
     });
 }
 
-export function atomWithQueries<T extends Array<any>, TCombinedResult = QueriesResults<T>>(
+type QueriesOptions<
+    TQueryFnData = unknown,
+    TError = DefaultError,
+    TData = TQueryFnData,
+    TQueryData = TQueryFnData,
+    TQueryKey extends QueryKey = QueryKey
+> = ((get: Getter) => Omit<QueryObserverOptions<TQueryFnData, TError, TData, TQueryData, TQueryKey>, "suspense">)[];
+
+export function atomWithQueries<
+    TQueryFnData = unknown,
+    TError = DefaultError,
+    TData = TQueryFnData,
+    TQueryData = TQueryFnData,
+    TQueryKey extends QueryKey = QueryKey
+>(
     getOptions: (get: Getter) => {
-        queries: readonly [...QueriesOptions<T>];
-        combine?: (result: QueriesResults<T>) => TCombinedResult;
+        queries: readonly [...QueriesOptions<TQueryFnData, TError, TData, TQueryData, TQueryKey>];
+        combine?: (result: QueryObserverResult<TData, TError>[]) => QueryObserverResult<TData, TError>[];
     },
     getQueryClient?: (get: Getter) => QueryClient
-): Atom<TCombinedResult> {
+): Atom<QueryObserverResult<TData, TError>[]> {
     return atom((get) => {
         const options = getOptions(get);
 
-        const atoms = options.queries.map((option) => {
-            return atomWithQuery<T>(option, getQueryClient);
-        });
+        const atoms = atom(
+            options.queries.map((option) => {
+                return atomWithQuery<TQueryFnData, TError, TData, TQueryData, TQueryKey>(option, getQueryClient);
+            })
+        );
 
-        const results = atoms.map((atom) => get(atom));
+        const results = get(atoms).map((atom) => get(atom));
 
         if (options.combine) {
-            return options.combine(results as QueriesResults<T>);
+            return options.combine(results);
         }
 
-        return results as TCombinedResult;
+        return results;
     });
 }
 
