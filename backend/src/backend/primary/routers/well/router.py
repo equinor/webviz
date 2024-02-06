@@ -89,7 +89,6 @@ async def get_wellbore_picks_and_stratigraphic_units(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     case_uuid: str = Query(description="Sumo case uuid"), # Should be field identifier?
     wellbore_uuid: str = Query(description="Wellbore uuid"),
-    pick_identifiers: List[str] = Query(description="Pick identifiers")
     # fmt:on
 ) -> schemas.WellBorePicksAndStratigraphicUnits:
     """Get well bore picks for a single well bore"""
@@ -110,12 +109,7 @@ async def get_wellbore_picks_and_stratigraphic_units(
         stratigraphy_access = StratigraphyAccess(authenticated_user.get_smda_access_token())
 
     stratigraphic_units = await stratigraphy_access.get_stratigraphic_units(stratigraphic_column_identifier)
-    wellbore_picks = await well_access.get_picks_for_wellbore(wellbore_uuid=wellbore_uuid)
-
-    # Filter picks
-    # NOTE: How to handle requested picks not existing among returned picks?
-    if pick_identifiers:
-        wellbore_picks = [pick for pick in wellbore_picks if pick.pick_identifier in pick_identifiers]
+    wellbore_picks = await well_access.get_all_picks_for_wellbore(wellbore_uuid=wellbore_uuid)
 
     return schemas.WellBorePicksAndStratigraphicUnits(
         wellbore_picks=converters.convert_wellbore_picks_to_schema(wellbore_picks),

@@ -80,14 +80,12 @@ export class WellService {
      * Get well bore picks for a single well bore
      * @param caseUuid Sumo case uuid
      * @param wellboreUuid Wellbore uuid
-     * @param pickIdentifiers Pick identifiers
      * @returns WellBorePicksAndStratigraphicUnits Successful Response
      * @throws ApiError
      */
     public getWellborePicksAndStratigraphicUnits(
         caseUuid: string,
         wellboreUuid: string,
-        pickIdentifiers: Array<string>,
     ): CancelablePromise<WellBorePicksAndStratigraphicUnits> {
         return this.httpRequest.request({
             method: 'GET',
@@ -95,7 +93,6 @@ export class WellService {
             query: {
                 'case_uuid': caseUuid,
                 'wellbore_uuid': wellboreUuid,
-                'pick_identifiers': pickIdentifiers,
             },
             errors: {
                 422: `Validation Error`,

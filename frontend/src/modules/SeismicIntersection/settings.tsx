@@ -9,9 +9,9 @@ import { Wellbore } from "@framework/Wellbore";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { SingleEnsembleSelect } from "@framework/components/SingleEnsembleSelect";
 import { fixupEnsembleIdent, maybeAssignFirstSyncedEnsemble } from "@framework/utils/ensembleUiHelpers";
-import { Checkbox } from "@lib/components/Checkbox";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
+import { Dropdown } from "@lib/components/Dropdown";
 import { Input } from "@lib/components/Input";
 import { Label } from "@lib/components/Label";
 import { QueryStateWrapper } from "@lib/components/QueryStateWrapper";
@@ -26,7 +26,7 @@ import { useWellHeadersQuery } from "@modules/_shared/WellBore";
 import { isEqual } from "lodash";
 
 import { useSeismicCubeMetaListQuery } from "./queryHooks";
-import { State } from "./state";
+import { State, WellborePickSelectionType, WellborePickSelectionTypeEnumToStringMapping } from "./state";
 import { SeismicAddress, SurfaceAddress } from "./types";
 import { SeismicCubeMetaDirectory, SeismicTimeType } from "./utils/seismicCubeDirectory";
 
@@ -38,10 +38,16 @@ const SeismicTimeTypeEnumToSeismicTimeTypeStringMapping = {
     [SeismicTimeType.TimePoint]: "Seismic timestamps",
     [SeismicTimeType.Interval]: "Seismic intervals",
 };
-const enum SeismicDataSource {
+
+enum SeismicDataSource {
     SIMULATED = "Simulated",
     OBSERVED = "Observed",
 }
+
+const SeismicDataSourceTypeToStringMapping = {
+    [SeismicDataSource.SIMULATED]: "Simulated",
+    [SeismicDataSource.OBSERVED]: "Observed",
+};
 
 // To be a variable in the future?
 const WELLBORE_TYPE = "smda";
@@ -63,7 +69,8 @@ export function Settings({ moduleContext, workbenchSession, workbenchServices }:
     const setSeismicAddress = moduleContext.useSetStoreValue("seismicAddress");
     const setSurfaceAddress = moduleContext.useSetStoreValue("surfaceAddress");
     const setWellboreAddress = moduleContext.useSetStoreValue("wellboreAddress");
-    const [showWellborePicks, setShowWellborePicks] = moduleContext.useStoreState("showWellborePicks");
+    const setWellborePickCaseUuid = moduleContext.useSetStoreValue("wellborePickCaseUuid");
+    const setWellborePickSelection = moduleContext.useSetStoreValue("wellborePickSelection");
     const [extension, setExtension] = moduleContext.useStoreState("extension");
     const [zScale, setZScale] = moduleContext.useStoreState("zScale");
 
@@ -77,6 +84,9 @@ export function Settings({ moduleContext, workbenchSession, workbenchServices }:
     const [seismicTimeType, setSeismicTimeType] = React.useState<SeismicTimeType>(SeismicTimeType.TimePoint);
     const [selectedWellboreAddress, setSelectedWellboreAddress] = React.useState<Wellbore | null>(
         moduleContext.useStoreValue("wellboreAddress")
+    );
+    const [selectedWellborePickSelection, setSelectedWellborePickSelection] = React.useState<WellborePickSelectionType>(
+        moduleContext.useStoreValue("wellborePickSelection")
     );
 
     const candidateEnsembleIdent = maybeAssignFirstSyncedEnsemble(selectedEnsembleIdent, syncedValueEnsembles);
@@ -110,6 +120,13 @@ export function Settings({ moduleContext, workbenchSession, workbenchServices }:
     }
     if (surfaceDirectoryQuery.isError) {
         statusWriter.addError("Error loading surface directory");
+    }
+
+    if (seismicCubeMetaListQuery.data && seismicCubeMetaListQuery.data.length === 0) {
+        statusWriter.addWarning("No seismic cubes found for ensemble");
+    }
+    if (surfaceDirectoryQuery.data && surfaceDirectoryQuery.data.length === 0) {
+        statusWriter.addWarning("No surfaces found for ensemble");
     }
 
     // Handling well headers query
@@ -255,6 +272,20 @@ export function Settings({ moduleContext, workbenchSession, workbenchServices }:
         [selectedWellboreAddress, setWellboreAddress]
     );
 
+    React.useEffect(
+        function propagateWellborePickCaseUuidToView() {
+            setWellborePickCaseUuid(computedEnsembleIdent?.getCaseUuid() ?? null);
+        },
+        [computedEnsembleIdent, setWellborePickCaseUuid]
+    );
+
+    React.useEffect(
+        function propagateWellborePickSelectionToView() {
+            setWellborePickSelection(selectedWellborePickSelection);
+        },
+        [selectedWellborePickSelection, setWellborePickSelection]
+    );
+
     function handleEnsembleSelectionChange(newEnsembleIdent: EnsembleIdent | null) {
         setSelectedEnsembleIdent(newEnsembleIdent);
         if (newEnsembleIdent) {
@@ -321,10 +352,6 @@ export function Settings({ moduleContext, workbenchSession, workbenchServices }:
     function handleZScaleChange(event: React.ChangeEvent<HTMLInputElement>) {
         const newZScale = parseInt(event.target.value, 10);
         setZScale(newZScale);
-    }
-
-    function handleShowWellborePicksChange(_event: React.ChangeEvent<HTMLInputElement>, checked: boolean) {
-        setShowWellborePicks(checked);
     }
 
     return (
@@ -404,11 +431,19 @@ export function Settings({ moduleContext, workbenchSession, workbenchServices }:
                                 onChange={handleSurfaceNameChange}
                             />
                         </Label>
-                        <Checkbox
-                            label="Show Picks"
-                            checked={showWellborePicks}
-                            onChange={handleShowWellborePicksChange}
-                        />
+                        <Label text="Wellbore pick selection">
+                            <Dropdown
+                                options={Object.values(WellborePickSelectionType).map(
+                                    (val: WellborePickSelectionType) => {
+                                        return { value: val, label: WellborePickSelectionTypeEnumToStringMapping[val] };
+                                    }
+                                )}
+                                value={selectedWellborePickSelection}
+                                onChange={(value: string) =>
+                                    setSelectedWellborePickSelection(value as WellborePickSelectionType)
+                                }
+                            />
+                        </Label>
                     </div>
                 </QueryStateWrapper>
             </CollapsibleGroup>
@@ -417,10 +452,9 @@ export function Settings({ moduleContext, workbenchSession, workbenchServices }:
                     <Label text="Seismic data type">
                         <RadioGroup
                             direction="horizontal"
-                            options={[
-                                { label: "Simulated", value: SeismicDataSource.SIMULATED },
-                                { label: "Observed", value: SeismicDataSource.OBSERVED },
-                            ]}
+                            options={Object.values(SeismicDataSource).map((val: SeismicDataSource) => {
+                                return { value: val, label: SeismicDataSourceTypeToStringMapping[val] };
+                            })}
                             value={isObserved ? SeismicDataSource.OBSERVED : SeismicDataSource.SIMULATED}
                             onChange={(_, value: string | number) =>
                                 setIsObserved(value === SeismicDataSource.OBSERVED)
@@ -429,16 +463,9 @@ export function Settings({ moduleContext, workbenchSession, workbenchServices }:
                     </Label>
                     <Label text="Seismic survey type">
                         <RadioGroup
-                            options={[
-                                {
-                                    label: SeismicTimeTypeEnumToSurveyTypeStringMapping[SeismicTimeType.TimePoint],
-                                    value: SeismicTimeType.TimePoint,
-                                },
-                                {
-                                    label: SeismicTimeTypeEnumToSurveyTypeStringMapping[SeismicTimeType.Interval],
-                                    value: SeismicTimeType.Interval,
-                                },
-                            ]}
+                            options={Object.values(SeismicTimeType).map((val: SeismicTimeType) => {
+                                return { value: val, label: SeismicTimeTypeEnumToSurveyTypeStringMapping[val] };
+                            })}
                             direction="horizontal"
                             value={seismicTimeType}
                             onChange={(_, value: string | number) => setSeismicTimeType(value as SeismicTimeType)}

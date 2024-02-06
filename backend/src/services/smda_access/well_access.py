@@ -40,9 +40,7 @@ class WellAccess:
     async def get_well_headers(self, field_identifier: str) -> List[WellBoreHeader]:
         return await get_well_headers(access_token=self._smda_token, field_identifier=field_identifier)
 
-    async def get_picks_for_wellbore(
-        self, wellbore_uuid: str, pick_identifier: Optional[str] = None
-    ) -> List[WellBorePick]:
+    async def get_all_picks_for_wellbore(self, wellbore_uuid: str) -> List[WellBorePick]:
         return await get_picks_for_wellbore(
-            access_token=self._smda_token, wellbore_uuid=wellbore_uuid, pick_identifier=pick_identifier
+            access_token=self._smda_token, wellbore_uuid=wellbore_uuid, pick_identifier=None
         )
