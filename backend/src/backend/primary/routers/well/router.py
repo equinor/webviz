@@ -5,10 +5,14 @@ from fastapi import APIRouter, Depends, Query, HTTPException
 
 from src.services.smda_access import mocked_drogon_smda_access
 from src.services.smda_access.well_access import WellAccess
+from src.services.smda_access.stratigraphy_access import StratigraphyAccess
 from src.services.utils.authenticated_user import AuthenticatedUser
 from src.backend.auth.auth_helper import AuthHelper
 from src.services.sumo_access._helpers import SumoCase
 from src.services.smda_access.types import WellBoreHeader, WellBoreTrajectory
+
+from . import schemas
+from . import converters
 
 LOGGER = logging.getLogger(__name__)
 
@@ -76,8 +80,38 @@ async def get_well_trajectories(
     else:
         well_access = WellAccess(authenticated_user.get_smda_access_token())
 
-    try:
-        trajectories = await well_access.get_wellbore_trajectories(wellbore_uuids=wellbore_uuids)
-        return trajectories
-    except KeyError:
-        raise HTTPException(status_code=404, detail="No wellbore trajectory data found")
+    return await well_access.get_wellbore_trajectories(wellbore_uuids=wellbore_uuids)
+
+
+@router.get("/wellbore_picks_and_stratigraphic_units/")
+async def get_wellbore_picks_and_stratigraphic_units(
+    # fmt:off
+    authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
+    case_uuid: str = Query(description="Sumo case uuid"), # Should be field identifier?
+    wellbore_uuid: str = Query(description="Wellbore uuid"),
+    # fmt:on
+) -> schemas.WellBorePicksAndStratigraphicUnits:
+    """Get well bore picks for a single well bore"""
+    well_access: Union[WellAccess, mocked_drogon_smda_access.WellAccess]
+    stratigraphy_access: Union[StratigraphyAccess, mocked_drogon_smda_access.StratigraphyAccess]
+
+    sumo_case = await SumoCase.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid)
+    stratigraphic_column_identifier = await sumo_case.get_stratigraphic_column_identifier()
+
+    # Handle DROGON
+    field_identifiers = await sumo_case.get_field_identifiers()
+    if "DROGON" in field_identifiers:
+        well_access = mocked_drogon_smda_access.WellAccess(authenticated_user.get_smda_access_token())
+        stratigraphy_access = mocked_drogon_smda_access.StratigraphyAccess(authenticated_user.get_smda_access_token())
+
+    else:
+        well_access = WellAccess(authenticated_user.get_smda_access_token())
+        stratigraphy_access = StratigraphyAccess(authenticated_user.get_smda_access_token())
+
+    stratigraphic_units = await stratigraphy_access.get_stratigraphic_units(stratigraphic_column_identifier)
+    wellbore_picks = await well_access.get_all_picks_for_wellbore(wellbore_uuid=wellbore_uuid)
+
+    return schemas.WellBorePicksAndStratigraphicUnits(
+        wellbore_picks=converters.convert_wellbore_picks_to_schema(wellbore_picks),
+        stratigraphic_units=converters.convert_stratigraphic_units_to_schema(stratigraphic_units),
+    )

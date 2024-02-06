@@ -4,27 +4,33 @@ import {
     SeismicFencePolyline_api,
     SurfaceIntersectionCumulativeLengthPolyline_api,
     SurfaceIntersectionData_api,
+    WellBorePicksAndStratigraphicUnits_api,
 } from "@api";
 import { Controller, IntersectionReferenceSystem, Trajectory } from "@equinor/esv-intersection";
 import { ModuleFCProps } from "@framework/Module";
 import { useViewStatusWriter } from "@framework/StatusWriter";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { ColorScaleGradientType } from "@lib/utils/ColorScale";
-import { useWellTrajectoriesQuery } from "@modules/_shared/WellBore/queryHooks";
+import {
+    useWellTrajectoriesQuery,
+    useWellborePicksAndStratigraphicUnitsQuery,
+} from "@modules/_shared/WellBore/queryHooks";
 import { ContentError } from "@modules/_shared/components/ContentMessage";
 
 import { isEqual } from "lodash";
 
 import { useSeismicFenceDataQuery, useSurfaceIntersectionQueries } from "./queryHooks";
-import { State } from "./state";
+import { State, WellborePickSelectionType } from "./state";
 import {
     addMDOverlay,
     addSeismicLayer,
     addSurfacesLayer,
     addWellborePathLayer,
+    addWellborePicksLayer,
 } from "./utils/esvIntersectionControllerUtils";
 import {
     createEsvSurfaceIntersectionDataArrayFromSurfaceIntersectionDataApiArray,
+    createEsvWellborePicksAndStratigraphicUnits,
     createSeismicSliceImageDataArrayFromFenceData,
     createSeismicSliceImageYAxisValuesArrayFromFenceData,
     makeExtendedTrajectoryFromTrajectoryXyzPoints,
@@ -48,6 +54,8 @@ export const View = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
     const seismicAddress = moduleContext.useStoreValue("seismicAddress");
     const surfaceAddress = moduleContext.useStoreValue("surfaceAddress");
     const wellboreAddress = moduleContext.useStoreValue("wellboreAddress");
+    const wellborePickCaseUuid = moduleContext.useStoreValue("wellborePickCaseUuid");
+    const wellborePickSelection = moduleContext.useStoreValue("wellborePickSelection");
     const extension = moduleContext.useStoreValue("extension");
     const zScale = moduleContext.useStoreValue("zScale");
 
@@ -168,7 +176,7 @@ export const View = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
         surfaceAddress?.attribute ?? null,
         null, // Time string not used for surface intersection
         candidateSurfaceIntersectionCumulativeLengthPolyline,
-        seismicAddress !== null
+        surfaceAddress !== null
     );
     for (const query of surfaceIntersectionDataQueries) {
         if (!query.isError) continue;
@@ -177,6 +185,43 @@ export const View = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
         const surfaceName = surfaceAddress?.surfaceNames ? surfaceAddress?.surfaceNames[queryIndex] : "unknown";
         statusWriter.addWarning(`Error loading surface intersection data for "${surfaceName}"`);
     }
+
+    // Get all well bore picks
+    const wellborePicksAndStratigraphicUnitsQuery = useWellborePicksAndStratigraphicUnitsQuery(
+        wellborePickCaseUuid ?? undefined,
+        wellboreAddress ? wellboreAddress.uuid : undefined,
+        wellborePickSelection !== WellborePickSelectionType.NONE
+    );
+    if (wellborePicksAndStratigraphicUnitsQuery.isError) {
+        statusWriter.addError("Error loading wellbore picks and stratigraphic units");
+    }
+
+    // Filter wellbore picks and stratigraphic units based on selected surface names
+    const selectedWellborePicksAndStratigraphicUnits: WellBorePicksAndStratigraphicUnits_api | null =
+        React.useMemo(() => {
+            if (
+                !wellborePicksAndStratigraphicUnitsQuery.data ||
+                wellborePickSelection === WellborePickSelectionType.NONE
+            ) {
+                return null;
+            }
+
+            if (wellborePickSelection === WellborePickSelectionType.ALL) {
+                return wellborePicksAndStratigraphicUnitsQuery.data;
+            }
+
+            if (wellborePickSelection === WellborePickSelectionType.SELECTED_SURFACES) {
+                const selectedSurfaceNames = surfaceAddress?.surfaceNames ?? [];
+                return {
+                    wellbore_picks: wellborePicksAndStratigraphicUnitsQuery.data.wellbore_picks.filter((pick) =>
+                        selectedSurfaceNames.includes(pick.pickIdentifier)
+                    ),
+                    stratigraphic_units: wellborePicksAndStratigraphicUnitsQuery.data.stratigraphic_units,
+                };
+            }
+
+            return wellborePicksAndStratigraphicUnitsQuery.data;
+        }, [wellborePicksAndStratigraphicUnitsQuery.data, wellborePickSelection, surfaceAddress?.surfaceNames]);
 
     if (seismicFenceDataQuery.data) {
         // Get an array of projected 2D points [x, y], as 2D curtain projection from a set of trajectory 3D points and offset
@@ -243,6 +288,13 @@ export const View = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
                 surfaceColor: "red",
                 surfaceWidth: 10,
             });
+        }
+
+        if (selectedWellborePicksAndStratigraphicUnits) {
+            const { wellborePicks, stratigraphicUnits } = createEsvWellborePicksAndStratigraphicUnits(
+                selectedWellborePicksAndStratigraphicUnits
+            );
+            addWellborePicksLayer(esvIntersectionControllerRef.current, wellborePicks, stratigraphicUnits);
         }
 
         // Update layout

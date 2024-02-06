@@ -54,6 +54,7 @@ export type { StatisticalSurfaceSetSpec as StatisticalSurfaceSetSpec_api } from 
 export { StatisticFunction as StatisticFunction_api } from './models/StatisticFunction';
 export type { StatisticValueObject as StatisticValueObject_api } from './models/StatisticValueObject';
 export { StratigraphicFeature as StratigraphicFeature_api } from './models/StratigraphicFeature';
+export type { StratigraphicUnit as StratigraphicUnit_api } from './models/StratigraphicUnit';
 export type { SummaryVectorDateObservation as SummaryVectorDateObservation_api } from './models/SummaryVectorDateObservation';
 export type { SummaryVectorObservations as SummaryVectorObservations_api } from './models/SummaryVectorObservations';
 export { SurfaceAttributeType as SurfaceAttributeType_api } from './models/SurfaceAttributeType';
@@ -72,6 +73,8 @@ export type { VectorRealizationData as VectorRealizationData_api } from './model
 export type { VectorStatisticData as VectorStatisticData_api } from './models/VectorStatisticData';
 export type { VectorStatisticSensitivityData as VectorStatisticSensitivityData_api } from './models/VectorStatisticSensitivityData';
 export type { WellBoreHeader as WellBoreHeader_api } from './models/WellBoreHeader';
+export type { WellBorePick as WellBorePick_api } from './models/WellBorePick';
+export type { WellBorePicksAndStratigraphicUnits as WellBorePicksAndStratigraphicUnits_api } from './models/WellBorePicksAndStratigraphicUnits';
 export type { WellBoreTrajectory as WellBoreTrajectory_api } from './models/WellBoreTrajectory';
 export type { WellCompletionsData as WellCompletionsData_api } from './models/WellCompletionsData';
 export type { WellCompletionsUnitInfo as WellCompletionsUnitInfo_api } from './models/WellCompletionsUnitInfo';

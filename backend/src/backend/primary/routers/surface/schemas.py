@@ -103,6 +103,10 @@ class SurfaceIntersectionCumulativeLengthPolyline(BaseModel):
     Note: Verify if cum_lengths is necessary with respect to xtgeo
     """
 
+    x_points: List[float]
+    y_points: List[float]
+    cum_lengths: List[float]
+
 
 class SurfaceRealizationSamplePoints(BaseModel):
     realization: int
