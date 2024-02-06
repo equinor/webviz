@@ -196,7 +196,7 @@ export const View = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
         statusWriter.addError("Error loading wellbore picks and stratigraphic units");
     }
 
-    // Filter wellbore picks and stratigraphic units based pick selection
+    // Filter wellbore picks and stratigraphic units based on selected surface names
     const selectedWellborePicksAndStratigraphicUnits: WellBorePicksAndStratigraphicUnits_api | null =
         React.useMemo(() => {
             if (
