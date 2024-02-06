@@ -2,6 +2,8 @@ from typing import List, Optional
 
 from ..types import WellBorePick, WellBoreTrajectory, WellBoreHeader
 
+from ._mocked_wellbore_picks import mocked_wellbore_picks
+
 
 class WellAccess:
     def __init__(self, access_token: str):
@@ -9,9 +11,13 @@ class WellAccess:
 
     # type: ignore
     # pylint: disable=unused-argument
-    async def get_wellbore_picks(self, field_identifier: str, pick_identifier: str) -> List[WellBorePick]:
+    async def get_all_picks_for_wellbore(self, wellbore_uuid: str) -> List[WellBorePick]:
         """Get Drogon picks"""
-        return []
+        if wellbore_uuid == "drogon_horizontal":
+            well_picks = [pick for pick in mocked_wellbore_picks if pick.unique_wellbore_identifier == "55/33-A-4"]
+        elif wellbore_uuid == "drogon_vertical":
+            well_picks = [pick for pick in mocked_wellbore_picks if pick.unique_wellbore_identifier == "55/33-1"]
+        return well_picks
 
     # type: ignore
     # pylint: disable=unused-argument

@@ -1,4 +1,4 @@
-import { WellBoreHeader_api, WellBoreTrajectory_api } from "@api";
+import { WellBoreHeader_api, WellBorePicksAndStratigraphicUnits_api, WellBoreTrajectory_api } from "@api";
 import { apiService } from "@framework/ApiService";
 import { UseQueryResult, useQuery } from "@tanstack/react-query";
 
@@ -32,5 +32,19 @@ export function useWellTrajectoriesQuery(wellUuids: string[] | undefined): UseQu
         staleTime: STALE_TIME,
         gcTime: CACHE_TIME,
         enabled: wellUuids ? true : false,
+    });
+}
+
+export function useWellborePicksAndStratigraphicUnitsQuery(
+    caseUuid: string | undefined,
+    wellboreUuid: string | undefined,
+    allowEnable: boolean
+): UseQueryResult<WellBorePicksAndStratigraphicUnits_api> {
+    return useQuery({
+        queryKey: ["getWellborePicksAndStratigraphicUnits", caseUuid, wellboreUuid],
+        queryFn: () => apiService.well.getWellborePicksAndStratigraphicUnits(caseUuid ?? "", wellboreUuid ?? ""),
+        staleTime: STALE_TIME,
+        gcTime: CACHE_TIME,
+        enabled: !!(allowEnable && caseUuid && wellboreUuid),
     });
 }
