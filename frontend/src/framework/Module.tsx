@@ -122,6 +122,7 @@ export class Module<StateType extends StateBaseType> {
 
         const instance = new ModuleInstance<StateType>({
             module: this,
+            workbench: this._workbench,
             instanceNumber,
             channelDefinitions: this._channelDefinitions,
             channelReceiverDefinitions: this._channelReceiverDefinitions,

@@ -13,7 +13,17 @@ import { ContentError } from "@modules/_shared/components/ContentMessage";
 
 import { useAtom, useAtomValue } from "jotai";
 
-import { colorRealizationsByParameterAtom, groupByAtom, resampleFrequencyAtom } from "./atoms";
+import {
+    colorRealizationsByParameterAtom,
+    groupByAtom,
+    parameterIdentAtom,
+    resampleFrequencyAtom,
+    showHistoricalAtom,
+    showObservationsAtom,
+    statisticsSelectionAtom,
+    vectorSpecificationsAtom,
+    visualizationModeAtom,
+} from "./atoms";
 import {
     useHistoricalVectorDataQueries,
     useStatisticalVectorDataQueries,
@@ -37,15 +47,15 @@ export const View = ({ moduleContext, workbenchSession, workbenchSettings }: Mod
     const statusWriter = useViewStatusWriter(moduleContext);
 
     // Store values
-    const vectorSpecifications = moduleContext.useStoreValue("vectorSpecifications");
+    const vectorSpecifications = useAtomValue(vectorSpecificationsAtom);
     const groupBy = useAtomValue(groupByAtom);
     const resampleFrequency = useAtomValue(resampleFrequencyAtom);
     const realizationsToInclude = moduleContext.useStoreValue("realizationsToInclude");
-    const visualizationMode = moduleContext.useStoreValue("visualizationMode");
-    const showHistorical = moduleContext.useStoreValue("showHistorical");
-    const showObservations = moduleContext.useStoreValue("showObservations");
-    const statisticsSelection = moduleContext.useStoreValue("statisticsSelection");
-    const parameterIdent = moduleContext.useStoreValue("parameterIdent");
+    const visualizationMode = useAtomValue(visualizationModeAtom);
+    const showHistorical = useAtomValue(showHistoricalAtom);
+    const showObservations = useAtomValue(showObservationsAtom);
+    const statisticsSelection = useAtomValue(statisticsSelectionAtom);
+    const parameterIdent = useAtomValue(parameterIdentAtom);
     const colorRealizationsByParameter = useAtomValue(colorRealizationsByParameterAtom);
 
     // Color palettes

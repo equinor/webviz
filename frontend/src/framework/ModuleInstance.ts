@@ -9,6 +9,7 @@ import { ImportState, Module, ModuleFC } from "./Module";
 import { ModuleContext } from "./ModuleContext";
 import { StateBaseType, StateOptions, StateStore } from "./StateStore";
 import { SyncSettingKey } from "./SyncSettings";
+import { Workbench } from "./Workbench";
 import { ChannelManager } from "./internal/DataChannels/ChannelManager";
 import { ModuleInstanceStatusControllerInternal } from "./internal/ModuleInstanceStatusControllerInternal";
 
@@ -21,6 +22,7 @@ export enum ModuleInstanceState {
 
 export interface ModuleInstanceOptions<StateType extends StateBaseType> {
     module: Module<StateType>;
+    workbench: Workbench;
     instanceNumber: number;
     channelDefinitions: ChannelDefinition[] | null;
     channelReceiverDefinitions: ChannelReceiverDefinition[] | null;
@@ -45,6 +47,7 @@ export class ModuleInstance<StateType extends StateBaseType> {
     private _initialSettings: InitialSettings | null;
     private _statusController: ModuleInstanceStatusControllerInternal;
     private _channelManager: ChannelManager;
+    private _workbench: Workbench;
 
     constructor(options: ModuleInstanceOptions<StateType>) {
         this._id = `${options.module.getName()}-${options.instanceNumber}`;
@@ -63,6 +66,7 @@ export class ModuleInstance<StateType extends StateBaseType> {
         this._cachedDefaultState = null;
         this._initialSettings = null;
         this._statusController = new ModuleInstanceStatusControllerInternal();
+        this._workbench = options.workbench;
 
         this._channelManager = new ChannelManager(this._id);
 
@@ -77,10 +81,11 @@ export class ModuleInstance<StateType extends StateBaseType> {
 
         if (options.channelDefinitions) {
             this._channelManager.registerChannels(options.channelDefinitions);
+        }
+    }
+
     getAtomStore(): AtomStore {
         return this._workbench.getAtomStoreMaster().getAtomStoreForModuleInstance(this._id);
-    }
-        }
     }
 
     getChannelManager(): ChannelManager {

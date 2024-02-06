@@ -46,6 +46,11 @@ export enum FanchartStatisticOption {
     P10_P90 = "p10p90",
 }
 
+export interface StatisticsSelection {
+    IndividualStatisticsSelection: StatisticFunction_api[];
+    FanchartStatisticsSelection: FanchartStatisticOption[];
+}
+
 export const FanchartStatisticOptionEnumToStringMapping = {
     [FanchartStatisticOption.MEAN]: "Mean",
     [FanchartStatisticOption.MIN_MAX]: "Min/Max",

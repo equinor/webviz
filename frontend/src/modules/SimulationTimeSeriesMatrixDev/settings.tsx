@@ -30,12 +30,17 @@ import {
     colorRealizationsByParameterAtom,
     continuousAndNonConstantParametersUnionAtom,
     ensembleVectorListsHelperAtom,
+    filteredParameterIdentListAtom,
     groupByAtom,
     resampleFrequencyAtom,
     selectedEnsembleIdentsAtom,
+    selectedParameterIdentStringAtom,
+    selectedVectorNamesAtom,
     showHistoricalAtom,
     showObservationsAtom,
+    statisticsSelectionAtom,
     userSelectedEnsembleIdentsAtom,
+    userSelectedParameterIdentStringAtom,
     vectorListQueriesAtom,
     visualizationModeAtom,
 } from "./atoms";
@@ -71,21 +76,15 @@ export function Settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
     const [visualizationMode, setVisualizationMode] = useAtom(visualizationModeAtom);
     const [showHistorical, setShowHistorical] = useAtom(showHistoricalAtom);
     const [showObservations, setShowObservations] = useAtom(showObservationsAtom);
-    const [statisticsSelection, setStatisticsSelection] = moduleContext.useStoreState("statisticsSelection");
-    const setParameterIdent = moduleContext.useSetStoreValue("parameterIdent");
-    const setVectorSpecifications = moduleContext.useSetStoreValue("vectorSpecifications");
+    const [statisticsSelection, setStatisticsSelection] = useAtom(statisticsSelectionAtom);
 
     // States
-    const [selectedVectorNames, setSelectedVectorNames] = React.useState<string[]>([]);
+    const [selectedVectorNames, setSelectedVectorNames] = useAtom(selectedVectorNamesAtom);
     const [selectedVectorTags, setSelectedVectorTags] = React.useState<string[]>([]);
     const [availableVectorNames, setAvailableVectorNames] = React.useState<string[]>([]);
     const [vectorSelectorData, setVectorSelectorData] = React.useState<TreeDataNode[]>([]);
     const [statisticsType, setStatisticsType] = React.useState<StatisticsType>(StatisticsType.INDIVIDUAL);
-    const [filteredParameterIdentList, setFilteredParameterIdentList] = React.useState<ParameterIdent[]>([]);
-    const [prevVectorQueriesDataList, setPrevVectorQueriesDataList] = React.useState<
-        (VectorDescription_api[] | undefined)[]
-    >([]);
-    const [prevSelectedEnsembleIdents, setPrevSelectedEnsembleIdents] = React.useState<EnsembleIdent[]>([]);
+    const [filteredParameterIdentList, setFilteredParameterIdentList] = useAtom(filteredParameterIdentListAtom);
 
     const [, setUserSelectedEnsembleIdents] = useAtom(userSelectedEnsembleIdentsAtom);
     const selectedEnsembleIdents = useAtomValue(selectedEnsembleIdentsAtom);
@@ -114,10 +113,8 @@ export function Settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
     const selectedVectorNamesHasHistorical =
         !isVectorListQueriesFetching && ensembleVectorListsHelper.hasAnyHistoricalVector(selectedVectorNames);
 
-    const [selectedParameterIdentStr, setSelectedParameterIdentStr] = useValidState<string | null>({
-        initialState: null,
-        validStates: filteredParameterIdentList.map((item: ParameterIdent) => item.toString()),
-    });
+    const [, setUserSelectedParameterIdentStr] = useAtom(userSelectedParameterIdentStringAtom);
+    const selectedParameterIdentStr = useAtomValue(selectedParameterIdentStringAtom);
 
     // Set error if all vector list queries fail
     const hasEveryVectorListQueryError =
@@ -162,64 +159,16 @@ export function Settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
         setStatisticsType(computedStatisticsType);
     }
 
-    const numberOfQueriesWithData = ensembleVectorListsHelper.numberOfQueriesWithData();
-
-    React.useEffect(
-        function propagateVectorSpecsToView() {
-            const newVectorSpecifications: VectorSpec[] = [];
-            for (const ensembleIdent of selectedEnsembleIdents) {
-                for (const vector of selectedVectorNames) {
-                    if (!ensembleVectorListsHelper.isVectorInEnsemble(ensembleIdent, vector)) {
-                        continue;
-                    }
-
-                    newVectorSpecifications.push({
-                        ensembleIdent: ensembleIdent,
-                        vectorName: vector,
-                        hasHistoricalVector: ensembleVectorListsHelper.hasHistoricalVector(ensembleIdent, vector),
-                    });
-                }
-            }
-            setVectorSpecifications(newVectorSpecifications);
-        },
-        [selectedEnsembleIdents, selectedVectorNames, numberOfQueriesWithData, setVectorSpecifications]
-    );
-
-    React.useEffect(
-        function propagateParameterIdentToView() {
-            if (selectedParameterIdentStr === null) {
-                setParameterIdent(null);
-                return;
-            }
-
-            // Try/catch as ParameterIdent.fromString() can throw
-            try {
-                const newParameterIdent = ParameterIdent.fromString(selectedParameterIdentStr);
-                const isParameterAmongFiltered = filteredParameterIdentList.some((parameter) =>
-                    parameter.equals(newParameterIdent)
-                );
-                if (isParameterAmongFiltered) {
-                    setParameterIdent(newParameterIdent);
-                } else {
-                    setParameterIdent(null);
-                }
-            } catch {
-                setParameterIdent(null);
-            }
-        },
-        [selectedParameterIdentStr, filteredParameterIdentList, setParameterIdent]
-    );
-
     function handleGroupByChange(event: React.ChangeEvent<HTMLInputElement>) {
         setGroupBy(event.target.value as GroupBy);
     }
 
     function handleColorByParameterChange(parameterIdentStrings: string[]) {
         if (parameterIdentStrings.length !== 0) {
-            setSelectedParameterIdentStr(parameterIdentStrings[0]);
+            setUserSelectedParameterIdentStr(parameterIdentStrings[0]);
             return;
         }
-        setSelectedParameterIdentStr(null);
+        setUserSelectedParameterIdentStr(null);
     }
 
     function handleEnsembleSelectChange(ensembleIdentArr: EnsembleIdent[]) {
