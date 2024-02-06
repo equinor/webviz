@@ -179,8 +179,8 @@ export const Slider = React.forwardRef((props: SliderProps, ref: React.Forwarded
                     slotProps={{
                         root: {
                             className: resolveClassNames(
-                                orientation === "vertical" ? "w-3" : "w-full",
-                                orientation === "vertical" ? "h-full" : "h-3",
+                                orientation === "vertical" ? "w-3" : "w-full mx-3",
+                                orientation === "vertical" ? "h-full my-3" : "h-3",
                                 "cursor-pointer",
                                 "touch-action-none",
                                 "inline-block",
@@ -273,7 +273,7 @@ export const Slider = React.forwardRef((props: SliderProps, ref: React.Forwarded
                                 "border-white",
                                 "transform",
                                 orientation === "vertical" ? "-translate-y-0" : "",
-                                "z-40"
+                                "z-20"
                             ),
                         },
                     }}

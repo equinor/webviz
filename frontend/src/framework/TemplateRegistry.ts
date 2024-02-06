@@ -1,11 +1,11 @@
-import { BroadcastChannelKeyCategory } from "./Broadcaster";
+import { KeyKind } from "./DataChannelTypes";
 import { SyncSettingKey } from "./SyncSettings";
 import { LayoutElement } from "./Workbench";
 
 export type DataChannelTemplate = {
     listensToInstanceRef: string;
-    keyCategory: BroadcastChannelKeyCategory;
-    channelName: string;
+    kindOfKey: KeyKind;
+    channelIdString: string;
 };
 
 export type TemplateLayoutElement = Omit<LayoutElement, "moduleInstanceId" | "moduleName">;

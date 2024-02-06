@@ -2,7 +2,7 @@ import React from "react";
 import Plot from "react-plotly.js";
 
 import { Body_get_realizations_response_api } from "@api";
-import { BroadcastChannelMeta } from "@framework/Broadcaster";
+import { DataElement, KeyType } from "@framework/DataChannelTypes";
 import { ModuleFCProps } from "@framework/Module";
 import { useSubscribedValue } from "@framework/WorkbenchServices";
 import { CircularProgress } from "@lib/components/CircularProgress";
@@ -11,7 +11,7 @@ import { useElementSize } from "@lib/hooks/useElementSize";
 
 import { Layout, PlotData, PlotHoverEvent } from "plotly.js";
 
-import { BroadcastChannelNames } from "./channelDefs";
+import { ChannelIds } from "./channelDefs";
 import { useRealizationsResponseQuery } from "./queryHooks";
 import { VolumetricResponseAbbreviations } from "./settings";
 import { State } from "./state";
@@ -77,35 +77,26 @@ export const View = (props: ModuleFCProps<State>) => {
 
     const ensemble = ensembleIdent ? props.workbenchSession.getEnsembleSet().findEnsemble(ensembleIdent) : null;
 
-    React.useEffect(
-        function broadcast() {
-            if (!ensemble) {
-                return;
-            }
+    function dataGenerator() {
+        const data: DataElement<KeyType.NUMBER>[] = [];
+        if (realizationsResponseQuery.data) {
+            realizationsResponseQuery.data.realizations.forEach((realization, index) => {
+                data.push({
+                    key: realization,
+                    value: realizationsResponseQuery.data.values[index],
+                });
+            });
+        }
+        return { data: data, metaData: { ensembleIdentString: ensembleIdent?.toString() ?? "" } };
+    }
 
-            const dataGenerator = (): { key: number; value: number }[] => {
-                const data: { key: number; value: number }[] = [];
-                if (realizationsResponseQuery.data) {
-                    realizationsResponseQuery.data.realizations.forEach((realization, index) => {
-                        data.push({
-                            key: realization,
-                            value: realizationsResponseQuery.data.values[index],
-                        });
-                    });
-                }
-                return data;
-            };
-
-            const channelMeta: BroadcastChannelMeta = {
-                ensembleIdent: ensemble.getIdent(),
-                description: `${ensemble.getDisplayName()} ${tableName ?? ""} ${responseName ?? ""}`,
-                unit: "",
-            };
-
-            props.moduleContext.getChannel(BroadcastChannelNames.Response).broadcast(channelMeta, dataGenerator);
-        },
-        [realizationsResponseQuery.data, ensemble, tableName, responseName, props.moduleContext]
-    );
+    if (ensemble && tableName && responseName) {
+        props.moduleContext.usePublishChannelContents({
+            channelIdString: ChannelIds.RESPONSE,
+            dependencies: [realizationsResponseQuery.data, ensemble, tableName, responseName],
+            contents: [{ contentIdString: responseName, displayName: responseName, dataGenerator }],
+        });
+    }
 
     const layout: Partial<Layout> = {
         width: wrapperDivSize.width,
