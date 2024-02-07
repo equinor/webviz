@@ -1,15 +1,16 @@
 type CharWidths = Map<string, number>;
 
-const text = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_.!~*'()[]{}/?:@#$%^&*+=`|\\\"<>";
+const charsToMeasureWidthFor =
+    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_.!~*'()[]{}/?:@#$%^&*+=`|\\\"<>";
 const storedFontWidths: Map<string, CharWidths> = new Map();
 
-function calcAndStoreCharWidths(font: string) {
+function calcAndStoreCharWidths(font: string): CharWidths {
     const charWidths: CharWidths = new Map();
     const canvas = document.createElement("canvas");
     const context = canvas.getContext("2d");
     if (context) {
         context.font = `1rem ${font}`;
-        for (const char of text) {
+        for (const char of charsToMeasureWidthFor) {
             const metrics = context.measureText(char);
             charWidths.set(char, metrics.width);
         }

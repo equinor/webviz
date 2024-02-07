@@ -1,7 +1,7 @@
 import React from "react";
 
 import { isDevMode } from "@lib/utils/devMode";
-import { Point, Size } from "@lib/utils/geometry";
+import { Size2D, Vector2D } from "@lib/utils/geometry";
 
 export enum DrawerContent {
     ModuleSettings = "ModuleSettings",
@@ -39,15 +39,15 @@ export enum GuiEvent {
 export type GuiEventPayloads = {
     [GuiEvent.ModuleHeaderPointerDown]: {
         moduleInstanceId: string;
-        elementPosition: Point;
-        elementSize: Size;
-        pointerPosition: Point;
+        elementPosition: Vector2D;
+        elementSize: Size2D;
+        pointerPosition: Vector2D;
     };
     [GuiEvent.NewModulePointerDown]: {
         moduleName: string;
-        elementPosition: Point;
-        elementSize: Size;
-        pointerPosition: Point;
+        elementPosition: Vector2D;
+        elementSize: Size2D;
+        pointerPosition: Vector2D;
     };
     [GuiEvent.RemoveModuleInstanceRequest]: {
         moduleInstanceId: string;

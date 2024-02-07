@@ -6,7 +6,7 @@ import { useViewStatusWriter } from "@framework/StatusWriter";
 import { Tag } from "@lib/components/Tag";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { ColorScaleGradientType } from "@lib/utils/ColorScale";
-import { Size } from "@lib/utils/geometry";
+import { Size2D } from "@lib/utils/geometry";
 import { ContentInfo } from "@modules/_shared/components/ContentMessage";
 import { ContentWarning } from "@modules/_shared/components/ContentMessage/contentMessage";
 import { Warning } from "@mui/icons-material";
@@ -19,11 +19,14 @@ import { makeHistogramTrace } from "./utils/histogram";
 import { makeHoverText, makeHoverTextWithColor, makeTitleFromChannelContent } from "./utils/stringUtils";
 import { calcTextSize } from "./utils/textSize";
 
+const MAX_NUM_PLOTS = 12;
+
 const MaxNumberPlotsExceededMessage: React.FC = () => {
     return (
         <ContentWarning>
             <Warning fontSize="large" className="mb-2" />
-            Too many plots to display. Due to performance limitations, the number of plots is limited to 12.
+            Too many plots to display. Due to performance limitations, the number of plots is limited to {MAX_NUM_PLOTS}
+            .
         </ContentWarning>
     );
 };
@@ -39,7 +42,7 @@ export const View = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
     const [prevPlotType, setPrevPlotType] = React.useState<PlotType | null>(null);
     const [prevNumBins, setPrevNumBins] = React.useState<number | null>(null);
     const [prevOrientation, setPrevOrientation] = React.useState<"v" | "h" | null>(null);
-    const [prevSize, setPrevSize] = React.useState<Size | null>(null);
+    const [prevSize, setPrevSize] = React.useState<Size2D | null>(null);
 
     const plotType = moduleContext.useStoreValue("plotType");
     const numBins = moduleContext.useStoreValue("numBins");
@@ -148,7 +151,7 @@ export const View = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
 
             if (plotType === PlotType.Histogram) {
                 const numContents = receiverX.channel.contents.length;
-                if (numContents > 12) {
+                if (numContents > MAX_NUM_PLOTS) {
                     setContent(<MaxNumberPlotsExceededMessage />);
                     return;
                 }
@@ -207,7 +210,7 @@ export const View = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
 
             if (plotType === PlotType.BarChart) {
                 const numContents = receiverX.channel.contents.length;
-                if (numContents > 12) {
+                if (numContents > MAX_NUM_PLOTS) {
                     setContent(<MaxNumberPlotsExceededMessage />);
                     return;
                 }
@@ -282,7 +285,7 @@ export const View = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
                 (plotType === PlotType.ScatterWithColorMapping && receiverY.channel && receiverColorMapping.channel)
             ) {
                 const numPlots = receiverX.channel.contents.length * receiverY.channel.contents.length;
-                if (numPlots > 12) {
+                if (numPlots > MAX_NUM_PLOTS) {
                     setContent(<MaxNumberPlotsExceededMessage />);
                     return;
                 }

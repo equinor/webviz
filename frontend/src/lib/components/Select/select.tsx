@@ -49,14 +49,12 @@ export const Select = withDefaults<SelectProps>()(defaultProps, (props) => {
     const [lastShiftIndex, setLastShiftIndex] = React.useState<number>(-1);
     const [currentIndex, setCurrentIndex] = React.useState<number>(0);
     const [options, setOptions] = React.useState<SelectOption[]>(props.options);
-    const [prevOptions, setPrevOptions] = React.useState<SelectOption[]>(props.options);
     const [prevFilteredOptions, setPrevFilteredOptions] = React.useState<SelectOption[]>([]);
 
     const ref = React.useRef<HTMLDivElement>(null);
     const noOptionsText = props.placeholder ?? "No options";
 
-    if (!isEqual(props.options, prevOptions)) {
-        setPrevOptions(props.options);
+    if (!isEqual(props.options, options)) {
         setOptions(props.options);
     }
 
@@ -228,7 +226,7 @@ export const Select = withDefaults<SelectProps>()(defaultProps, (props) => {
                 >
                     {filteredOptions.length === 0 && (
                         <div className="p-1 flex items-center text-gray-400 select-none">
-                            {props.options.length === 0 || filter === "" ? noOptionsText : noMatchingOptionsText}
+                            {options.length === 0 || filter === "" ? noOptionsText : noMatchingOptionsText}
                         </div>
                     )}
                     <Virtualization

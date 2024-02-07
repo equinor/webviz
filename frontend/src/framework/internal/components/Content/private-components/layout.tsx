@@ -7,17 +7,17 @@ import { useModuleInstances } from "@framework/internal/hooks/workbenchHooks";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import {
     MANHATTAN_LENGTH,
-    Point,
-    Rect,
-    Size,
+    Rect2D,
+    Size2D,
+    Vector2D,
     addMarginToRect,
-    pointDifference,
     pointDistance,
-    pointMultiplyWithVector,
     pointRelativeToDomRect,
-    pointScaleIndividually,
     pointerEventToPoint,
     rectContainsPoint,
+    vectorDifference,
+    vectorMultiplyWithVector,
+    vectorScaleIndividually,
 } from "@lib/utils/geometry";
 
 import { v4 } from "uuid";
@@ -30,7 +30,7 @@ type LayoutProps = {
     activeModuleInstanceId: string | null;
 };
 
-function convertLayoutRectToRealRect(element: LayoutElement, size: Size): Rect {
+function convertLayoutRectToRealRect(element: LayoutElement, size: Size2D): Rect2D {
     return {
         x: element.relX * size.width,
         y: element.relY * size.height,
@@ -41,24 +41,24 @@ function convertLayoutRectToRealRect(element: LayoutElement, size: Size): Rect {
 
 export const Layout: React.FC<LayoutProps> = (props) => {
     const [draggedModuleInstanceId, setDraggedModuleInstanceId] = React.useState<string | null>(null);
-    const [position, setPosition] = React.useState<Point>({ x: 0, y: 0 });
-    const [pointer, setPointer] = React.useState<Point>({ x: -1, y: -1 });
+    const [position, setPosition] = React.useState<Vector2D>({ x: 0, y: 0 });
+    const [pointer, setPointer] = React.useState<Vector2D>({ x: -1, y: -1 });
     const [layout, setLayout] = React.useState<LayoutElement[]>([]);
     const [tempLayoutBoxId, setTempLayoutBoxId] = React.useState<string | null>(null);
     const ref = React.useRef<HTMLDivElement>(null);
     const mainRef = React.useRef<HTMLDivElement>(null);
-    const size = useElementSize(ref);
+    const layoutDivSize = useElementSize(ref);
     const layoutBoxRef = React.useRef<LayoutBox | null>(null);
     const moduleInstances = useModuleInstances(props.workbench);
     const guiMessageBroker = props.workbench.getGuiMessageBroker();
 
     React.useEffect(() => {
-        let pointerDownPoint: Point | null = null;
-        let pointerDownElementPosition: Point | null = null;
+        let pointerDownPoint: Vector2D | null = null;
+        let pointerDownElementPosition: Vector2D | null = null;
         let pointerDownElementId: string | null = null;
-        let pointerDownElementSize: Size | null = null;
-        let relativePointerPosition: Point = { x: 0, y: 0 };
-        let relativePointerToElementDiff: Point = { x: 0, y: 0 };
+        let pointerDownElementSize: Size2D | null = null;
+        let relativePointerPosition: Vector2D = { x: 0, y: 0 };
+        let relativePointerToElementDiff: Vector2D = { x: 0, y: 0 };
         let dragging = false;
         let moduleInstanceId: string | null = null;
         let moduleName: string | null = null;
@@ -69,7 +69,7 @@ export const Layout: React.FC<LayoutProps> = (props) => {
         let currentLayoutBox = originalLayoutBox;
         layoutBoxRef.current = currentLayoutBox;
         let lastTimeStamp = 0;
-        let lastMovePosition: Point = { x: 0, y: 0 };
+        let lastMovePosition: Vector2D = { x: 0, y: 0 };
         let delayTimer: ReturnType<typeof setTimeout> | null = null;
         let isNewModule = false;
 
@@ -77,7 +77,7 @@ export const Layout: React.FC<LayoutProps> = (props) => {
             if (currentLayoutBox && moduleInstanceId) {
                 const preview = currentLayoutBox.previewLayout(
                     relativePointerPosition,
-                    size,
+                    layoutDivSize,
                     moduleInstanceId,
                     isNewModule
                 );
@@ -91,9 +91,9 @@ export const Layout: React.FC<LayoutProps> = (props) => {
                 const draggedElementSize = calcSizeOfDraggedElement();
 
                 setPosition(
-                    pointDifference(
+                    vectorDifference(
                         relativePointerPosition,
-                        pointMultiplyWithVector(relativePointerToElementDiff, { x: draggedElementSize.width, y: 1 })
+                        vectorMultiplyWithVector(relativePointerToElementDiff, { x: draggedElementSize.width, y: 1 })
                     )
                 );
             }
@@ -141,12 +141,12 @@ export const Layout: React.FC<LayoutProps> = (props) => {
             removeDraggingEventListeners();
         }
 
-        function calcSizeOfDraggedElement(): Size {
+        function calcSizeOfDraggedElement(): Size2D {
             const layoutElement = currentLayout.find((element) => element.moduleInstanceId === pointerDownElementId);
             if (!layoutElement) {
                 return { width: 0, height: 0 };
             }
-            const rect = convertLayoutRectToRealRect(layoutElement, size);
+            const rect = convertLayoutRectToRealRect(layoutElement, layoutDivSize);
             return { width: rect.width, height: rect.height };
         }
 
@@ -173,8 +173,8 @@ export const Layout: React.FC<LayoutProps> = (props) => {
                     setPosition(pointRelativeToDomRect(pointerDownElementPosition, rect));
                     relativePointerPosition = pointRelativeToDomRect(pointerDownPoint, rect);
                     dragging = true;
-                    relativePointerToElementDiff = pointScaleIndividually(
-                        pointDifference(pointerDownPoint, pointerDownElementPosition),
+                    relativePointerToElementDiff = vectorScaleIndividually(
+                        vectorDifference(pointerDownPoint, pointerDownElementPosition),
                         pointerDownElementSize.width,
                         1
                     );
@@ -187,14 +187,14 @@ export const Layout: React.FC<LayoutProps> = (props) => {
                 }
                 const rect = ref.current.getBoundingClientRect();
                 const draggedElementSize = calcSizeOfDraggedElement();
-                relativePointerPosition = pointDifference(pointerEventToPoint(e), rect);
+                relativePointerPosition = vectorDifference(pointerEventToPoint(e), rect);
                 setPosition(
-                    pointDifference(
+                    vectorDifference(
                         relativePointerPosition,
-                        pointMultiplyWithVector(relativePointerToElementDiff, { x: draggedElementSize.width, y: 1 })
+                        vectorMultiplyWithVector(relativePointerToElementDiff, { x: draggedElementSize.width, y: 1 })
                     )
                 );
-                setPointer(pointDifference(pointerEventToPoint(e), rect));
+                setPointer(vectorDifference(pointerEventToPoint(e), rect));
                 const speed = pointDistance(pointerEventToPoint(e), lastMovePosition) / (e.timeStamp - lastTimeStamp);
                 lastTimeStamp = e.timeStamp;
                 lastMovePosition = pointerEventToPoint(e);
@@ -320,7 +320,7 @@ export const Layout: React.FC<LayoutProps> = (props) => {
                 clearTimeout(delayTimer);
             }
         };
-    }, [size, moduleInstances, guiMessageBroker, props.workbench]);
+    }, [layoutDivSize, moduleInstances, guiMessageBroker, props.workbench]);
 
     function makeTempViewWrapperPlaceholder() {
         if (!tempLayoutBoxId) {
@@ -330,7 +330,7 @@ export const Layout: React.FC<LayoutProps> = (props) => {
         if (!layoutElement) {
             return null;
         }
-        const rect = convertLayoutRectToRealRect(layoutElement, size);
+        const rect = convertLayoutRectToRealRect(layoutElement, layoutDivSize);
         return (
             <ViewWrapperPlaceholder
                 key={tempLayoutBoxId}
@@ -349,7 +349,7 @@ export const Layout: React.FC<LayoutProps> = (props) => {
                     <LayoutBoxComponents
                         active={draggedModuleInstanceId}
                         layoutBox={layoutBoxRef.current}
-                        realSize={size}
+                        realSize={layoutDivSize}
                         zIndex={1}
                         pointer={pointer}
                     />
@@ -359,7 +359,7 @@ export const Layout: React.FC<LayoutProps> = (props) => {
                     if (!layoutElement) {
                         return null;
                     }
-                    const rect = convertLayoutRectToRealRect(layoutElement, size);
+                    const rect = convertLayoutRectToRealRect(layoutElement, layoutDivSize);
                     const isDragged = draggedModuleInstanceId === instance.getId();
                     return (
                         <ViewWrapper

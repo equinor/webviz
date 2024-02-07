@@ -67,7 +67,7 @@ export function Settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
     const setVectorSpecifications = moduleContext.useSetStoreValue("vectorSpecifications");
 
     // Transitions
-    const [isPending, startTransition] = React.useTransition();
+    const [isPendingGetParameters, startGetParametersTransition] = React.useTransition();
 
     // States
     const [previousEnsembleSet, setPreviousEnsembleSet] = React.useState<EnsembleSet>(ensembleSet);
@@ -248,7 +248,7 @@ export function Settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
     function handleEnsembleSelectChange(ensembleIdentArr: EnsembleIdent[]) {
         setSelectedEnsembleIdents(ensembleIdentArr);
 
-        startTransition(function transitionToGetContinuousAndNonConstantParameters() {
+        startGetParametersTransition(function transitionToGetContinuousAndNonConstantParameters() {
             setContinuousAndNonConstantParametersUnion(
                 getContinuousAndNonConstantParameters(ensembleIdentArr, ensembleSet)
             );
@@ -450,7 +450,7 @@ export function Settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
                             title="Parameter list filter"
                             icon={<FilterAlt fontSize="small" />}
                         >
-                            <PendingWrapper isPending={isPending}>
+                            <PendingWrapper isPending={isPendingGetParameters}>
                                 <ParameterListFilter
                                     parameters={continuousAndNonConstantParametersUnion}
                                     initialFilters={["Continuous", "Nonconstant"]}

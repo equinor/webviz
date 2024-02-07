@@ -8,12 +8,12 @@ import { Drawer } from "@framework/internal/components/Drawer";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import {
     MANHATTAN_LENGTH,
-    Point,
-    Size,
-    pointDifference,
+    Size2D,
+    Vector2D,
     pointDistance,
     pointRelativeToDomRect,
     pointerEventToPoint,
+    vectorDifference,
 } from "@lib/utils/geometry";
 import { Help, WebAsset } from "@mui/icons-material";
 
@@ -26,7 +26,7 @@ type ModulesListItemProps = {
     guiMessageBroker: GuiMessageBroker;
 };
 
-const makeStyle = (isDragged: boolean, dragSize: Size, dragPosition: Point): React.CSSProperties => {
+const makeStyle = (isDragged: boolean, dragSize: Size2D, dragPosition: Vector2D): React.CSSProperties => {
     if (isDragged) {
         return {
             width: dragSize.width,
@@ -47,27 +47,27 @@ const makeStyle = (isDragged: boolean, dragSize: Size, dragPosition: Point): Rea
 const ModulesListItem: React.FC<ModulesListItemProps> = (props) => {
     const ref = React.useRef<HTMLDivElement>(null);
     const [isDragged, setIsDragged] = React.useState<boolean>(false);
-    const [dragPosition, setDragPosition] = React.useState<Point>({ x: 0, y: 0 });
-    const [dragSize, setDragSize] = React.useState<Size>({ width: 0, height: 0 });
+    const [dragPosition, setDragPosition] = React.useState<Vector2D>({ x: 0, y: 0 });
+    const [dragSize, setDragSize] = React.useState<Size2D>({ width: 0, height: 0 });
 
     const itemSize = useElementSize(ref);
 
     React.useEffect(() => {
         const refCurrent = ref.current;
-        let pointerDownPoint: Point | null = null;
+        let pointerDownPoint: Vector2D | null = null;
         let dragging = false;
-        let pointerDownElementPosition: Point | null = null;
-        let pointerToElementDiff: Point = { x: 0, y: 0 };
+        let pointerDownElementPosition: Vector2D | null = null;
+        let pointerToElementDiff: Vector2D = { x: 0, y: 0 };
 
         const handlePointerDown = (e: PointerEvent) => {
             if (ref.current) {
                 document.body.classList.add("touch-none");
                 const point = pointerEventToPoint(e);
                 const rect = ref.current.getBoundingClientRect();
-                pointerDownElementPosition = pointDifference(point, pointRelativeToDomRect(point, rect));
+                pointerDownElementPosition = vectorDifference(point, pointRelativeToDomRect(point, rect));
                 props.guiMessageBroker.publishEvent(GuiEvent.NewModulePointerDown, {
                     moduleName: props.name,
-                    elementPosition: pointDifference(point, pointRelativeToDomRect(point, rect)),
+                    elementPosition: vectorDifference(point, pointRelativeToDomRect(point, rect)),
                     elementSize: { width: rect.width, height: rect.height },
                     pointerPosition: point,
                 });
@@ -105,7 +105,7 @@ const ModulesListItem: React.FC<ModulesListItemProps> = (props) => {
                     const rect = ref.current.getBoundingClientRect();
                     setDragSize({ width: rect.width, height: rect.height });
                 }
-                pointerToElementDiff = pointDifference(pointerDownPoint, pointerDownElementPosition);
+                pointerToElementDiff = vectorDifference(pointerDownPoint, pointerDownElementPosition);
                 return;
             }
 
@@ -113,7 +113,7 @@ const ModulesListItem: React.FC<ModulesListItemProps> = (props) => {
                 const rect = props.relContainer?.getBoundingClientRect();
                 if (rect) {
                     setDragPosition(
-                        pointDifference(pointDifference(pointerEventToPoint(e), rect), pointerToElementDiff)
+                        vectorDifference(vectorDifference(pointerEventToPoint(e), rect), pointerToElementDiff)
                     );
                 }
             }
