@@ -78,7 +78,7 @@ async def get_statistical_group_tree_data(
         node_types=[NodeType.PROD, NodeType.INJ, NodeType.OTHER],
         stat_option=StatOptions[stat_option.value],
     )
-    print(dated_trees)
+
     return schemas.GroupTreeData(
         edge_metadata_list=edge_metadata, node_metadata_list=node_metadata, dated_trees=dated_trees
     )

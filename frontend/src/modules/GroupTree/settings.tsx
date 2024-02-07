@@ -9,8 +9,10 @@ import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { SingleEnsembleSelect } from "@framework/components/SingleEnsembleSelect";
 import { maybeAssignFirstSyncedEnsemble } from "@framework/utils/ensembleUiHelpers";
 import { Dropdown, DropdownOption } from "@lib/components/Dropdown";
+import { DiscreteSlider } from "@lib/components/DiscreteSlider";
 import { Label } from "@lib/components/Label";
 import { RadioGroup } from "@lib/components/RadioGroup";
+import { DatedTree, EdgeMetadata, NodeMetadata } from "@webviz/group-tree-plot";
 
 import { useValidState } from "@lib/hooks/useValidState";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
@@ -31,30 +33,41 @@ export const settings = ({ moduleContext, workbenchSession, workbenchServices }:
         validStates: ensembleSet.getEnsembleArr().map((item: Ensemble) => item.getIdent()),
     });
 
+    const setDatedTrees = moduleContext.useSetStoreValue("datedTrees");
 
-    let groupTreeQuery = undefined
-    if (selectedStatOrReal === StatisticsOrRealization.Statistics) {
-        groupTreeQuery = useStatisticsGroupTreeQuery(selectedEnsembleIdent?.getCaseUuid(), selectedEnsembleIdent?.getEnsembleName(), selectedStatOption, selectedResampleFrequency)
-    } else {
-        groupTreeQuery = useRealizationGroupTreeQuery(selectedEnsembleIdent?.getCaseUuid(), selectedEnsembleIdent?.getEnsembleName(), selectedRealization, selectedResampleFrequency)
-    }
-    
+    // let groupTreeQuery = undefined
+    // if (selectedStatOrReal === StatisticsOrRealization.Statistics) {
+    //     groupTreeQuery = useStatisticsGroupTreeQuery(selectedEnsembleIdent?.getCaseUuid(), selectedEnsembleIdent?.getEnsembleName(), selectedStatOption, selectedResampleFrequency)
+    // } else {
+    //     groupTreeQuery = useRealizationGroupTreeQuery(selectedEnsembleIdent?.getCaseUuid(), selectedEnsembleIdent?.getEnsembleName(), selectedRealization, selectedResampleFrequency)
+    // }
+    const groupTreeQuery = useRealizationGroupTreeQuery(selectedEnsembleIdent?.getCaseUuid(), selectedEnsembleIdent?.getEnsembleName(), selectedRealization, selectedResampleFrequency)
+
+    const validEdgeKeys = groupTreeQuery.data?.edge_metadata_list.map(item => item.key) ?? []
     const [selectedEdgeKey, setSelectedEdgeKey] = useValidState<string | null>({
         initialState: null,
-        validStates: ["oilrate"]//groupTreeQuery.data?.edgeMetadataList.map(item => item.key) ?? []
+        validStates: validEdgeKeys
     })
 
-    //const validNodeKeys = 
+    const validNodeKeys = groupTreeQuery.data?.node_metadata_list.map(item => item.key) ?? []
     const [selectedNodeKey, setSelectedNodeKey] = useValidState<string | null>({
         initialState: null,
-        validStates: ["pressure"] //groupTreeQuery.data?.nodeMetadataList.map(item => item.key) ?? []
+        validStates: validNodeKeys
     })
 
-    //dates = // finn alle datoer fra datedTrees
+    const dates: string[] = []
+    if (groupTreeQuery.data) {
+        for(const datedTree of groupTreeQuery.data.dated_trees) {
+            dates.push(...datedTree.dates)
+        }
+    }
+    const uniqueDates = [...new Set(dates)];
     const [selectedDate, setSelectedDate] = useValidState<string | null>({
         initialState: null,
-        validStates: ["2018-01-01", "2019-01-01", "2020-01-01"] //dates.map(item => item.key) ?? []
+        validStates: uniqueDates
     })
+
+    setDatedTrees(groupTreeQuery.data?.dated_trees && [])
 
     const syncedSettingKeys = moduleContext.useSyncedSettingKeys();
     const syncHelper = new SyncSettingsHelper(syncedSettingKeys, workbenchServices);
@@ -89,6 +102,14 @@ export const settings = ({ moduleContext, workbenchSession, workbenchServices }:
 
     function handleStatOptionChange(event: React.ChangeEvent<HTMLInputElement>) {
         setSelectedStatOption(event.target.value as StatisticFunction_api)
+    }
+
+    function handleSelectedEdgeKeyChange(newEdgeKey: string) {
+        setSelectedEdgeKey(newEdgeKey)
+    }
+
+    function handleSelectedNodeKeyChange(newNodeKey: string) {
+        setSelectedNodeKey(newNodeKey)
     }
 
     return (
@@ -153,6 +174,51 @@ export const settings = ({ moduleContext, workbenchSession, workbenchServices }:
                         </div>
                     </Label>
                 </div>                
+            </CollapsibleGroup>
+            <CollapsibleGroup expanded={true} title="Edge, node and date selections">
+                <Label text="Edge options">
+                    <Dropdown
+                            options={validEdgeKeys.map(item => {return {label:item, value:item}})}
+                            value={selectedEdgeKey ?? ""}
+                            onChange={handleSelectedEdgeKeyChange}
+                        />    
+                </Label>       
+                <Label text="Node options">
+                    <Dropdown
+                            options={validNodeKeys.map(item => {return {label:item, value:item}})}
+                            value={selectedNodeKey ?? ""}
+                            onChange={handleSelectedNodeKeyChange}
+                        />    
+                </Label>
+                <Label
+                    text={
+                        selectedTimeStepOptions.timeStepIndex === null || !availableTimeSteps
+                            ? "Time Step"
+                            : typeof selectedTimeStepOptions.timeStepIndex === "number"
+                            ? `Time Step: (${availableTimeSteps[selectedTimeStepOptions.timeStepIndex]})`
+                            : `Time Steps: (${availableTimeSteps[selectedTimeStepOptions.timeStepIndex[0]]}, ${
+                                  availableTimeSteps[selectedTimeStepOptions.timeStepIndex[1]]
+                              })`
+                    }
+                >
+                    <DiscreteSlider
+                        valueLabelDisplay="auto"
+                        value={
+                            uniqueDates !== null
+                                ? selectedDate
+                                : undefined
+                        }
+                        values={
+                            uniqueDates
+                                ? uniqueDates.map((t, index) => {
+                                      return index;
+                                  })
+                                : []
+                        }
+                        valueLabelFormat={createValueLabelFormat}
+                        onChange={handleSelectedTimeStepIndexChange}
+                    />
+                </Label>
             </CollapsibleGroup>
             <CollapsibleGroup expanded={false} title="Filtering options">
                 <div>Not implemented</div>

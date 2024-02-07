@@ -4,7 +4,6 @@ import { CircularProgress } from "@lib/components/CircularProgress";
 import { GroupTreePlot } from "@webviz/group-tree-plot";
 
 import { State, StatisticsOrRealization, QueryStatus } from "./state";
-import { useRealizationGroupTreeQuery, useStatisticsGroupTreeQuery } from "./queryHooks";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { ContentError, ContentInfo } from "@modules/_shared/components/ContentMessage";
 

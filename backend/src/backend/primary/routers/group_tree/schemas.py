@@ -1,6 +1,6 @@
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Union, Optional
 from enum import Enum
-
+from src.services.group_tree_data import GroupTreeMetadata, DatedTree
 from pydantic import BaseModel
 
 
@@ -22,6 +22,6 @@ class StatOption(str, Enum):
 
 
 class GroupTreeData(BaseModel):
-    edge_metadata_list: List[Dict[str, str]]
-    node_metadata_list: List[Dict[str, str]]
-    dated_trees: List[Dict[Any, Any]]
+    edge_metadata_list: List[GroupTreeMetadata]
+    node_metadata_list: List[GroupTreeMetadata]
+    dated_trees: List[DatedTree]
