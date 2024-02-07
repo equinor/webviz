@@ -8,7 +8,7 @@ import { useSettingsStatusWriter } from "@framework/StatusWriter";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { MultiEnsembleSelect } from "@framework/components/MultiEnsembleSelect";
 import { ParameterListFilter } from "@framework/components/ParameterListFilter";
-import { VectorSelector, createVectorSelectorDataFromVectors } from "@framework/components/VectorSelector";
+import { VectorSelector } from "@framework/components/VectorSelector";
 import { Checkbox } from "@lib/components/Checkbox";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
@@ -17,21 +17,20 @@ import { Label } from "@lib/components/Label";
 import { QueriesErrorCriteria, QueryStateWrapper } from "@lib/components/QueryStateWrapper";
 import { RadioGroup } from "@lib/components/RadioGroup";
 import { Select } from "@lib/components/Select";
-import { SmartNodeSelectorSelection, TreeDataNode } from "@lib/components/SmartNodeSelector";
-import { useValidState } from "@lib/hooks/useValidState";
+import { SmartNodeSelectorSelection } from "@lib/components/SmartNodeSelector";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { FilterAlt } from "@mui/icons-material";
 
 import { useAtom, useAtomValue } from "jotai";
-import { isEqual } from "lodash";
-import { VectorDescription_api } from "src/api";
 
 import {
+    StatisticsType,
     colorRealizationsByParameterAtom,
     continuousAndNonConstantParametersUnionAtom,
     ensembleVectorListsHelperAtom,
     filteredParameterIdentListAtom,
     groupByAtom,
+    isVectorListQueriesFetchingAtom,
     resampleFrequencyAtom,
     selectedEnsembleIdentsAtom,
     selectedParameterIdentStringAtom,
@@ -39,12 +38,13 @@ import {
     showHistoricalAtom,
     showObservationsAtom,
     statisticsSelectionAtom,
+    statisticsTypeAtom,
     userSelectedEnsembleIdentsAtom,
     userSelectedParameterIdentStringAtom,
     vectorListQueriesAtom,
+    vectorSelectorDataAtom,
     visualizationModeAtom,
 } from "./atoms";
-import { useVectorListQueries } from "./queryHooks";
 import {
     FanchartStatisticOption,
     FanchartStatisticOptionEnumToStringMapping,
@@ -53,17 +53,10 @@ import {
     GroupByEnumToStringMapping,
     State,
     StatisticFunctionEnumToStringMapping,
-    VectorSpec,
     VisualizationMode,
     VisualizationModeEnumToStringMapping,
 } from "./state";
-import { EnsembleVectorListsHelper } from "./utils/ensemblesVectorListHelper";
 import { joinStringArrayToHumanReadableString } from "./utils/stringUtils";
-
-enum StatisticsType {
-    INDIVIDUAL = "Individual",
-    FANCHART = "Fanchart",
-}
 
 export function Settings({ moduleContext, workbenchSession }: ModuleFCProps<State>) {
     const ensembleSet = useEnsembleSet(workbenchSession);
@@ -81,9 +74,8 @@ export function Settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
     // States
     const [selectedVectorNames, setSelectedVectorNames] = useAtom(selectedVectorNamesAtom);
     const [selectedVectorTags, setSelectedVectorTags] = React.useState<string[]>([]);
-    const [availableVectorNames, setAvailableVectorNames] = React.useState<string[]>([]);
-    const [vectorSelectorData, setVectorSelectorData] = React.useState<TreeDataNode[]>([]);
-    const [statisticsType, setStatisticsType] = React.useState<StatisticsType>(StatisticsType.INDIVIDUAL);
+    const vectorSelectorData = useAtomValue(vectorSelectorDataAtom);
+    const statisticsType = useAtomValue(statisticsTypeAtom);
     const [filteredParameterIdentList, setFilteredParameterIdentList] = useAtom(filteredParameterIdentListAtom);
 
     const [, setUserSelectedEnsembleIdents] = useAtom(userSelectedEnsembleIdentsAtom);
@@ -96,19 +88,7 @@ export function Settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
 
     const ensembleVectorListsHelper = useAtomValue(ensembleVectorListsHelperAtom);
 
-    const isVectorListQueriesFetching = vectorListQueries.some((query) => query.isFetching);
-
-    // Await update of vectorSelectorData until all vector lists are finished fetching
-    let computedVectorSelectorData = vectorSelectorData;
-    let computedAvailableVectorNames = availableVectorNames;
-    const vectorNamesUnion = ensembleVectorListsHelper.vectorsUnion();
-    if (!isVectorListQueriesFetching && !isEqual(computedAvailableVectorNames, vectorNamesUnion)) {
-        computedAvailableVectorNames = vectorNamesUnion;
-        computedVectorSelectorData = createVectorSelectorDataFromVectors(vectorNamesUnion);
-
-        setAvailableVectorNames(computedAvailableVectorNames);
-        setVectorSelectorData(computedVectorSelectorData);
-    }
+    const isVectorListQueriesFetching = useAtomValue(isVectorListQueriesFetchingAtom);
 
     const selectedVectorNamesHasHistorical =
         !isVectorListQueriesFetching && ensembleVectorListsHelper.hasAnyHistoricalVector(selectedVectorNames);
@@ -151,12 +131,6 @@ export function Settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
     }
     for (const ensembleIdent of selectedEnsembleIdents) {
         validateVectorNamesInEnsemble(selectedVectorNames, ensembleIdent);
-    }
-
-    // Set statistics type for checkbox rendering
-    const computedStatisticsType = computeStatisticsType(statisticsType, visualizationMode);
-    if (statisticsType !== computedStatisticsType) {
-        setStatisticsType(computedStatisticsType);
     }
 
     function handleGroupByChange(event: React.ChangeEvent<HTMLInputElement>) {
@@ -255,7 +229,7 @@ export function Settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
     }
 
     function makeStatisticCheckboxes() {
-        if (computedStatisticsType === StatisticsType.FANCHART) {
+        if (statisticsType === StatisticsType.FANCHART) {
             return Object.values(FanchartStatisticOption).map((value: FanchartStatisticOption) => {
                 return (
                     <Checkbox
@@ -269,7 +243,7 @@ export function Settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
                 );
             });
         }
-        if (computedStatisticsType === StatisticsType.INDIVIDUAL) {
+        if (statisticsType === StatisticsType.INDIVIDUAL) {
             return Object.values(StatisticFunction_api).map((value: StatisticFunction_api) => {
                 return (
                     <Checkbox
@@ -338,7 +312,7 @@ export function Settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
                         errorComponent={"Could not load vectors for selected ensembles"}
                     >
                         <VectorSelector
-                            data={computedVectorSelectorData}
+                            data={vectorSelectorData}
                             placeholder="Add new vector..."
                             maxNumSelectedNodes={50}
                             numSecondsUntilSuggestionsAreShown={0.5}
@@ -413,25 +387,4 @@ export function Settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
             </CollapsibleGroup>
         </div>
     );
-}
-
-function computeStatisticsType(
-    previousStatisticsType: StatisticsType,
-    visualizationMode: VisualizationMode
-): StatisticsType {
-    if (
-        previousStatisticsType !== StatisticsType.FANCHART &&
-        visualizationMode === VisualizationMode.STATISTICAL_FANCHART
-    ) {
-        return StatisticsType.FANCHART;
-    }
-
-    if (
-        previousStatisticsType !== StatisticsType.INDIVIDUAL &&
-        [VisualizationMode.STATISTICAL_LINES, VisualizationMode.STATISTICS_AND_REALIZATIONS].includes(visualizationMode)
-    ) {
-        return StatisticsType.INDIVIDUAL;
-    }
-
-    return previousStatisticsType;
 }

@@ -2,7 +2,6 @@ import React from "react";
 import Plot from "react-plotly.js";
 
 import { SummaryVectorObservations_api } from "@api";
-import { Ensemble } from "@framework/Ensemble";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { ModuleFCProps } from "@framework/Module";
 import { useViewStatusWriter } from "@framework/StatusWriter";
@@ -11,30 +10,31 @@ import { useElementSize } from "@lib/hooks/useElementSize";
 import { ColorScaleGradientType } from "@lib/utils/ColorScale";
 import { ContentError } from "@modules/_shared/components/ContentMessage";
 
-import { useAtom, useAtomValue } from "jotai";
+import { useAtomValue } from "jotai";
 
 import {
     colorRealizationsByParameterAtom,
     groupByAtom,
+    historicalDataQueryHasErrorAtom,
+    loadedVectorSpecificationsAndHistoricalDataAtom,
+    loadedVectorSpecificationsAndRealizationDataAtom,
+    loadedVectorSpecificationsAndStatisticsDataAtom,
     parameterIdentAtom,
-    resampleFrequencyAtom,
+    queryIsFetchingAtom,
+    realizationsQueryHasErrorAtom,
+    selectedEnsemblesAtom,
     showHistoricalAtom,
     showObservationsAtom,
+    statisticsQueryHasErrorAtom,
     statisticsSelectionAtom,
+    vectorObservationsQueriesAtom,
     vectorSpecificationsAtom,
     visualizationModeAtom,
 } from "./atoms";
-import {
-    useHistoricalVectorDataQueries,
-    useStatisticalVectorDataQueries,
-    useVectorDataQueries,
-    useVectorObservationsQueries,
-} from "./queryHooks";
 import { GroupBy, State, VectorSpec, VisualizationMode } from "./state";
 import { EnsemblesContinuousParameterColoring } from "./utils/ensemblesContinuousParameterColoring";
 import { SubplotBuilder, SubplotOwner } from "./utils/subplotBuilder";
 import {
-    createLoadedVectorSpecificationAndDataArray,
     filterVectorSpecificationAndFanchartStatisticsDataArray,
     filterVectorSpecificationAndIndividualStatisticsDataArray,
 } from "./utils/vectorSpecificationsAndQueriesUtils";
@@ -49,14 +49,13 @@ export const View = ({ moduleContext, workbenchSession, workbenchSettings }: Mod
     // Store values
     const vectorSpecifications = useAtomValue(vectorSpecificationsAtom);
     const groupBy = useAtomValue(groupByAtom);
-    const resampleFrequency = useAtomValue(resampleFrequencyAtom);
-    const realizationsToInclude = moduleContext.useStoreValue("realizationsToInclude");
     const visualizationMode = useAtomValue(visualizationModeAtom);
     const showHistorical = useAtomValue(showHistoricalAtom);
     const showObservations = useAtomValue(showObservationsAtom);
     const statisticsSelection = useAtomValue(statisticsSelectionAtom);
     const parameterIdent = useAtomValue(parameterIdentAtom);
     const colorRealizationsByParameter = useAtomValue(colorRealizationsByParameterAtom);
+    const selectedEnsembles = useAtomValue(selectedEnsemblesAtom);
 
     // Color palettes
     const colorSet = workbenchSettings.useColorSet();
@@ -64,56 +63,17 @@ export const View = ({ moduleContext, workbenchSession, workbenchSettings }: Mod
         gradientType: ColorScaleGradientType.Diverging,
     });
 
-    // Get selected ensembles from vector specifications
-    const selectedEnsembles: Ensemble[] = [];
-    vectorSpecifications?.forEach((vectorSpecification) => {
-        if (selectedEnsembles.some((ensemble) => ensemble.getIdent().equals(vectorSpecification.ensembleIdent))) {
-            return;
-        }
-
-        const ensemble = ensembleSet.findEnsemble(vectorSpecification.ensembleIdent);
-        if (!ensemble) return;
-
-        selectedEnsembles.push(ensemble);
-    });
-
-    // Queries
-    const vectorDataQueries = useVectorDataQueries(
-        vectorSpecifications,
-        resampleFrequency,
-        realizationsToInclude,
-        true
-    );
-    const vectorStatisticsQueries = useStatisticalVectorDataQueries(
-        vectorSpecifications,
-        resampleFrequency,
-        realizationsToInclude,
-        visualizationMode === VisualizationMode.STATISTICAL_FANCHART ||
-            visualizationMode === VisualizationMode.STATISTICAL_LINES ||
-            visualizationMode === VisualizationMode.STATISTICS_AND_REALIZATIONS
-    );
-
-    const vectorSpecificationsWithHistoricalData = vectorSpecifications?.filter((vec) => vec.hasHistoricalVector);
-    const historicalVectorDataQueries = useHistoricalVectorDataQueries(
-        vectorSpecificationsWithHistoricalData ?? null,
-        resampleFrequency,
-        vectorSpecificationsWithHistoricalData?.some((vec) => vec.hasHistoricalVector) ?? false
-    );
-    const vectorObservationsQueries = useVectorObservationsQueries(vectorSpecifications, showObservations);
+    const vectorObservationsQueries = useAtomValue(vectorObservationsQueriesAtom);
 
     // Get fetching status from queries
-    const isQueryFetching =
-        vectorDataQueries.some((query) => query.isFetching) ||
-        vectorStatisticsQueries.some((query) => query.isFetching) ||
-        historicalVectorDataQueries.some((query) => query.isFetching) ||
-        vectorObservationsQueries.isFetching;
+    const isQueryFetching = useAtomValue(queryIsFetchingAtom);
 
     statusWriter.setLoading(isQueryFetching);
 
     // Get error/warning status from queries
-    const hasRealizationsQueryError = vectorDataQueries.some((query) => query.isError);
-    const hasStatisticsQueryError = vectorStatisticsQueries.some((query) => query.isError);
-    const hasHistoricalVectorQueryError = historicalVectorDataQueries.some((query) => query.isError);
+    const hasRealizationsQueryError = useAtomValue(realizationsQueryHasErrorAtom);
+    const hasStatisticsQueryError = useAtomValue(statisticsQueryHasErrorAtom);
+    const hasHistoricalVectorQueryError = useAtomValue(historicalDataQueryHasErrorAtom);
     if (hasRealizationsQueryError) {
         statusWriter.addError("One or more realization data queries have an error state.");
     }
@@ -128,18 +88,9 @@ export const View = ({ moduleContext, workbenchSession, workbenchSettings }: Mod
     }
 
     // Map vector specifications and queries with data
-    const loadedVectorSpecificationsAndRealizationData = vectorSpecifications
-        ? createLoadedVectorSpecificationAndDataArray(vectorSpecifications, vectorDataQueries)
-        : [];
-    const loadedVectorSpecificationsAndStatisticsData = vectorSpecifications
-        ? createLoadedVectorSpecificationAndDataArray(vectorSpecifications, vectorStatisticsQueries)
-        : [];
-    const loadedVectorSpecificationsAndHistoricalData = vectorSpecificationsWithHistoricalData
-        ? createLoadedVectorSpecificationAndDataArray(
-              vectorSpecificationsWithHistoricalData,
-              historicalVectorDataQueries
-          )
-        : [];
+    const loadedVectorSpecificationsAndRealizationData = useAtomValue(loadedVectorSpecificationsAndRealizationDataAtom);
+    const loadedVectorSpecificationsAndStatisticsData = useAtomValue(loadedVectorSpecificationsAndStatisticsDataAtom);
+    const loadedVectorSpecificationsAndHistoricalData = useAtomValue(loadedVectorSpecificationsAndHistoricalDataAtom);
 
     const loadedVectorSpecificationsAndObservationData: {
         vectorSpecification: VectorSpec;

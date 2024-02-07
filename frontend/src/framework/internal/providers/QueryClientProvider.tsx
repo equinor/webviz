@@ -33,9 +33,6 @@ export const CustomQueryClientProvider: React.FC<{ children: React.ReactElement 
                 },
             },
             queryCache: new QueryCache({
-                onSuccess: (data) => {
-                    console.debug("QueryClientProvider.tsx: QueryCache.onSuccess", data);
-                },
                 onError: (error) => {
                     if (error && (error as unknown as QueryError).status === 401) {
                         authProvider.setAuthState(AuthState.NotLoggedIn);
