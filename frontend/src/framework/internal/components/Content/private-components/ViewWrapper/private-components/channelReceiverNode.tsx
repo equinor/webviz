@@ -5,7 +5,7 @@ import { GuiEvent, GuiEventPayloads, GuiState, useGuiState } from "@framework/Gu
 import { Workbench } from "@framework/Workbench";
 import { ChannelReceiverNotificationTopic } from "@framework/internal/DataChannels/ChannelReceiver";
 import { IconButton } from "@lib/components/IconButton";
-import { Vector2D, pointerEventToPoint, rectContainsPoint } from "@lib/utils/geometry";
+import { Point2D, pointerEventToPoint, rectContainsPoint } from "@lib/utils/geometry";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { Edit, Remove } from "@mui/icons-material";
 
@@ -14,7 +14,7 @@ export type ChannelReceiverNodeProps = {
     displayName: string;
     supportedKindsOfKeys?: readonly KeyKind[];
     moduleInstanceId: string;
-    onChannelConnect: (inputName: string, moduleInstanceId: string, destinationPoint: Vector2D) => void;
+    onChannelConnect: (inputName: string, moduleInstanceId: string, destinationPoint: Point2D) => void;
     onChannelConnectionDisconnect: (inputName: string) => void;
     workbench: Workbench;
     hoverable: boolean;

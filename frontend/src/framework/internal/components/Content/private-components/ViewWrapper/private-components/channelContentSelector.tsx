@@ -6,7 +6,7 @@ import { ChannelReceiver } from "@framework/internal/DataChannels/ChannelReceive
 import { Button } from "@lib/components/Button";
 import { Checkbox } from "@lib/components/Checkbox";
 import { Overlay } from "@lib/components/Overlay";
-import { Vector2D } from "@lib/utils/geometry";
+import { Point2D } from "@lib/utils/geometry";
 import { convertRemToPixels } from "@lib/utils/screenUnitConversions";
 import { Close } from "@mui/icons-material";
 
@@ -80,7 +80,7 @@ export type ChannelSelectorProps = {
     selectableChannels: SelectableChannel[];
     selectedChannelIdString?: string;
     selectedContents?: SelectedContents;
-    position: Vector2D;
+    position: Point2D;
     onSelect: (channelIdString: string, contentIdStrings: string[]) => void;
     onCancel: () => void;
 };

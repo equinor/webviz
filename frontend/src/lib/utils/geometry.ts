@@ -59,7 +59,7 @@ export function vectorMultiplyWithScalar(vector: Vector2D, scalar: number): Vect
     return { x: vector.x * scalar, y: vector.y * scalar };
 }
 
-export function vectorMultiplyWithVector(vector1: Vector2D, vector2: Vector2D): Vector2D {
+export function vectorIndividuallyMultiplyComponentsWithOtherVector(vector1: Vector2D, vector2: Vector2D): Vector2D {
     return { x: vector1.x * vector2.x, y: vector1.y * vector2.y };
 }
 

@@ -3,7 +3,7 @@ import React from "react";
 import { DrawerContent, GuiEvent, GuiState, useGuiState, useGuiValue } from "@framework/GuiMessageBroker";
 import { ModuleInstance } from "@framework/ModuleInstance";
 import { Workbench } from "@framework/Workbench";
-import { Vector2D, pointRelativeToDomRect, pointerEventToPoint, vectorDifference } from "@lib/utils/geometry";
+import { Point2D, pointRelativeToDomRect, pointerEventToPoint, vectorDifference } from "@lib/utils/geometry";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import { ChannelReceiverNodesWrapper } from "./private-components/channelReceiverNodesWrapper";
@@ -21,7 +21,7 @@ type ViewWrapperProps = {
     x: number;
     y: number;
     isDragged: boolean;
-    dragPosition: Vector2D;
+    dragPosition: Point2D;
     changingLayout: boolean;
 };
 

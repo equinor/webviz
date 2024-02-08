@@ -8,8 +8,8 @@ import { Drawer } from "@framework/internal/components/Drawer";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import {
     MANHATTAN_LENGTH,
+    Point2D,
     Size2D,
-    Vector2D,
     pointDistance,
     pointRelativeToDomRect,
     pointerEventToPoint,
@@ -26,7 +26,7 @@ type ModulesListItemProps = {
     guiMessageBroker: GuiMessageBroker;
 };
 
-const makeStyle = (isDragged: boolean, dragSize: Size2D, dragPosition: Vector2D): React.CSSProperties => {
+const makeStyle = (isDragged: boolean, dragSize: Size2D, dragPosition: Point2D): React.CSSProperties => {
     if (isDragged) {
         return {
             width: dragSize.width,
@@ -47,17 +47,17 @@ const makeStyle = (isDragged: boolean, dragSize: Size2D, dragPosition: Vector2D)
 const ModulesListItem: React.FC<ModulesListItemProps> = (props) => {
     const ref = React.useRef<HTMLDivElement>(null);
     const [isDragged, setIsDragged] = React.useState<boolean>(false);
-    const [dragPosition, setDragPosition] = React.useState<Vector2D>({ x: 0, y: 0 });
+    const [dragPosition, setDragPosition] = React.useState<Point2D>({ x: 0, y: 0 });
     const [dragSize, setDragSize] = React.useState<Size2D>({ width: 0, height: 0 });
 
     const itemSize = useElementSize(ref);
 
     React.useEffect(() => {
         const refCurrent = ref.current;
-        let pointerDownPoint: Vector2D | null = null;
+        let pointerDownPoint: Point2D | null = null;
         let dragging = false;
-        let pointerDownElementPosition: Vector2D | null = null;
-        let pointerToElementDiff: Vector2D = { x: 0, y: 0 };
+        let pointerDownElementPosition: Point2D | null = null;
+        let pointerToElementDiff: Point2D = { x: 0, y: 0 };
 
         const handlePointerDown = (e: PointerEvent) => {
             if (ref.current) {
