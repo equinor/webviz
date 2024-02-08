@@ -12,12 +12,12 @@ import {
     Size2D,
     addMarginToRect,
     pointDistance,
+    pointIndividuallyMultiplyComponentsWithVector,
+    pointMultiplyComponentsWithIndividualScalars,
     pointRelativeToDomRect,
+    pointSubtraction,
     pointerEventToPoint,
     rectContainsPoint,
-    vectorDifference,
-    vectorIndividuallyMultiplyComponentsWithOtherVector,
-    vectorScaleIndividually,
 } from "@lib/utils/geometry";
 
 import { v4 } from "uuid";
@@ -91,9 +91,9 @@ export const Layout: React.FC<LayoutProps> = (props) => {
                 const draggedElementSize = calcSizeOfDraggedElement();
 
                 setPosition(
-                    vectorDifference(
+                    pointSubtraction(
                         relativePointerPosition,
-                        vectorIndividuallyMultiplyComponentsWithOtherVector(relativePointerToElementDiff, {
+                        pointIndividuallyMultiplyComponentsWithVector(relativePointerToElementDiff, {
                             x: draggedElementSize.width,
                             y: 1,
                         })
@@ -176,8 +176,8 @@ export const Layout: React.FC<LayoutProps> = (props) => {
                     setPosition(pointRelativeToDomRect(pointerDownElementPosition, rect));
                     relativePointerPosition = pointRelativeToDomRect(pointerDownPoint, rect);
                     dragging = true;
-                    relativePointerToElementDiff = vectorScaleIndividually(
-                        vectorDifference(pointerDownPoint, pointerDownElementPosition),
+                    relativePointerToElementDiff = pointMultiplyComponentsWithIndividualScalars(
+                        pointSubtraction(pointerDownPoint, pointerDownElementPosition),
                         pointerDownElementSize.width,
                         1
                     );
@@ -190,17 +190,17 @@ export const Layout: React.FC<LayoutProps> = (props) => {
                 }
                 const rect = ref.current.getBoundingClientRect();
                 const draggedElementSize = calcSizeOfDraggedElement();
-                relativePointerPosition = vectorDifference(pointerEventToPoint(e), rect);
+                relativePointerPosition = pointSubtraction(pointerEventToPoint(e), rect);
                 setPosition(
-                    vectorDifference(
+                    pointSubtraction(
                         relativePointerPosition,
-                        vectorIndividuallyMultiplyComponentsWithOtherVector(relativePointerToElementDiff, {
+                        pointIndividuallyMultiplyComponentsWithVector(relativePointerToElementDiff, {
                             x: draggedElementSize.width,
                             y: 1,
                         })
                     )
                 );
-                setPointer(vectorDifference(pointerEventToPoint(e), rect));
+                setPointer(pointSubtraction(pointerEventToPoint(e), rect));
                 const speed = pointDistance(pointerEventToPoint(e), lastMovePosition) / (e.timeStamp - lastTimeStamp);
                 lastTimeStamp = e.timeStamp;
                 lastMovePosition = pointerEventToPoint(e);

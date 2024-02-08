@@ -35,32 +35,32 @@ export function pointDistance(point1: Point2D, point2: Point2D): number {
     return Math.sqrt(Math.pow(point1.x - point2.x, 2) + Math.pow(point1.y - point2.y, 2));
 }
 
-export function vectorDifference(vector1: Vector2D, vector2: Vector2D): Vector2D {
-    return { x: vector1.x - vector2.x, y: vector1.y - vector2.y };
+export function pointSubtraction(minuend: Point2D, subtrahend: Point2D): Vector2D {
+    return { x: minuend.x - subtrahend.x, y: minuend.y - subtrahend.y };
 }
 
 export function vectorSum(vector1: Vector2D, vector2: Vector2D): Vector2D {
     return { x: vector1.x + vector2.x, y: vector1.y + vector2.y };
 }
 
-export function vectorAddScalar(vector: Vector2D, scalar: number): Vector2D {
+export function vectorAddScalarToComponents(vector: Vector2D, scalar: number): Vector2D {
     return { x: vector.x + scalar, y: vector.y + scalar };
 }
 
-export function vectorScale(vector: Vector2D, factor: number): Vector2D {
-    return { x: vector.x / factor, y: vector.y / factor };
-}
-
-export function vectorScaleIndividually(vector: Vector2D, factorX: number, factorY: number): Vector2D {
-    return { x: vector.x / factorX, y: vector.y / factorY };
+export function pointMultiplyComponentsWithIndividualScalars(
+    point: Point2D,
+    scalarX: number,
+    scalarY: number
+): Point2D {
+    return { x: point.x / scalarX, y: point.y / scalarY };
 }
 
 export function vectorMultiplyWithScalar(vector: Vector2D, scalar: number): Vector2D {
     return { x: vector.x * scalar, y: vector.y * scalar };
 }
 
-export function vectorIndividuallyMultiplyComponentsWithOtherVector(vector1: Vector2D, vector2: Vector2D): Vector2D {
-    return { x: vector1.x * vector2.x, y: vector1.y * vector2.y };
+export function pointIndividuallyMultiplyComponentsWithVector(point: Point2D, vector: Vector2D): Point2D {
+    return { x: point.x * vector.x, y: point.y * vector.y };
 }
 
 export function isPartlyContained(

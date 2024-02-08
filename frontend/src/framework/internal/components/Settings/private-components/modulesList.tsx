@@ -12,8 +12,8 @@ import {
     Size2D,
     pointDistance,
     pointRelativeToDomRect,
+    pointSubtraction,
     pointerEventToPoint,
-    vectorDifference,
 } from "@lib/utils/geometry";
 import { Help, WebAsset } from "@mui/icons-material";
 
@@ -64,10 +64,10 @@ const ModulesListItem: React.FC<ModulesListItemProps> = (props) => {
                 document.body.classList.add("touch-none");
                 const point = pointerEventToPoint(e);
                 const rect = ref.current.getBoundingClientRect();
-                pointerDownElementPosition = vectorDifference(point, pointRelativeToDomRect(point, rect));
+                pointerDownElementPosition = pointSubtraction(point, pointRelativeToDomRect(point, rect));
                 props.guiMessageBroker.publishEvent(GuiEvent.NewModulePointerDown, {
                     moduleName: props.name,
-                    elementPosition: vectorDifference(point, pointRelativeToDomRect(point, rect)),
+                    elementPosition: pointSubtraction(point, pointRelativeToDomRect(point, rect)),
                     elementSize: { width: rect.width, height: rect.height },
                     pointerPosition: point,
                 });
@@ -105,7 +105,7 @@ const ModulesListItem: React.FC<ModulesListItemProps> = (props) => {
                     const rect = ref.current.getBoundingClientRect();
                     setDragSize({ width: rect.width, height: rect.height });
                 }
-                pointerToElementDiff = vectorDifference(pointerDownPoint, pointerDownElementPosition);
+                pointerToElementDiff = pointSubtraction(pointerDownPoint, pointerDownElementPosition);
                 return;
             }
 
@@ -113,7 +113,7 @@ const ModulesListItem: React.FC<ModulesListItemProps> = (props) => {
                 const rect = props.relContainer?.getBoundingClientRect();
                 if (rect) {
                     setDragPosition(
-                        vectorDifference(vectorDifference(pointerEventToPoint(e), rect), pointerToElementDiff)
+                        pointSubtraction(pointSubtraction(pointerEventToPoint(e), rect), pointerToElementDiff)
                     );
                 }
             }

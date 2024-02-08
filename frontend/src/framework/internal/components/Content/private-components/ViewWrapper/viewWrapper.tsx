@@ -3,7 +3,7 @@ import React from "react";
 import { DrawerContent, GuiEvent, GuiState, useGuiState, useGuiValue } from "@framework/GuiMessageBroker";
 import { ModuleInstance } from "@framework/ModuleInstance";
 import { Workbench } from "@framework/Workbench";
-import { Point2D, pointRelativeToDomRect, pointerEventToPoint, vectorDifference } from "@lib/utils/geometry";
+import { Point2D, pointRelativeToDomRect, pointSubtraction, pointerEventToPoint } from "@lib/utils/geometry";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import { ChannelReceiverNodesWrapper } from "./private-components/channelReceiverNodesWrapper";
@@ -76,7 +76,7 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
                 const rect = ref.current.getBoundingClientRect();
                 guiMessageBroker.publishEvent(GuiEvent.ModuleHeaderPointerDown, {
                     moduleInstanceId: props.moduleInstance.getId(),
-                    elementPosition: vectorDifference(point, pointRelativeToDomRect(point, rect)),
+                    elementPosition: pointSubtraction(point, pointRelativeToDomRect(point, rect)),
                     elementSize: { width: rect.width, height: rect.height },
                     pointerPosition: point,
                 });
