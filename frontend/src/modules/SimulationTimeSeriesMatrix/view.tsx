@@ -182,6 +182,7 @@ export const View = ({ moduleContext, workbenchSession, workbenchSettings }: Mod
         visualizationMode === VisualizationMode.INDIVIDUAL_REALIZATIONS &&
         parameterIdent !== null &&
         selectedEnsembles.some((ensemble) => ensemble.getParameters().hasParameter(parameterIdent));
+
     const ensemblesParameterColoring = doColorByParameter
         ? new EnsemblesContinuousParameterColoring(selectedEnsembles, parameterIdent, parameterColorScale)
         : null;

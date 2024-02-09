@@ -1,4 +1,10 @@
-import { Frequency_api, Observations_api, StatisticFunction_api, VectorDescription_api } from "@api";
+import {
+    Frequency_api,
+    Observations_api,
+    StatisticFunction_api,
+    SummaryVectorObservations_api,
+    VectorDescription_api,
+} from "@api";
 import { apiService } from "@framework/ApiService";
 import { Ensemble } from "@framework/Ensemble";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
@@ -12,13 +18,37 @@ import { QueryObserverResult } from "@tanstack/query-core";
 import { atom } from "jotai";
 import { isEqual } from "lodash";
 
-import { EnsembleVectorObservationDataMap } from "./queryHooks";
 import { FanchartStatisticOption, GroupBy, StatisticsSelection, VectorSpec, VisualizationMode } from "./state";
 import { EnsembleVectorListsHelper } from "./utils/ensemblesVectorListHelper";
 import { createLoadedVectorSpecificationAndDataArray } from "./utils/vectorSpecificationsAndQueriesUtils";
 
 const STALE_TIME = 60 * 1000;
 const CACHE_TIME = 60 * 1000;
+
+/**
+ * Definition of ensemble vector observation data
+ *
+ * hasSummaryObservations: true if the ensemble has observations, i.e the summary observations array is not empty
+ * vectorsObservationData: array of vector observation data for requested vector specifications
+ */
+export type EnsembleVectorObservationData = {
+    hasSummaryObservations: boolean;
+    vectorsObservationData: { vectorSpecification: VectorSpec; data: SummaryVectorObservations_api }[];
+};
+
+/**
+ * Definition of map of ensemble ident and ensemble vector observation data
+ */
+export type EnsembleVectorObservationDataMap = Map<EnsembleIdent, EnsembleVectorObservationData>;
+
+/**
+ * Definition of vector observations queries result for combined queries
+ */
+export type VectorObservationsQueriesResult = {
+    isFetching: boolean;
+    isError: boolean;
+    ensembleVectorObservationDataMap: EnsembleVectorObservationDataMap;
+};
 
 export const resampleFrequencyAtom = atom<Frequency_api | null>(Frequency_api.MONTHLY);
 
@@ -473,4 +503,38 @@ export const loadedVectorSpecificationsAndHistoricalDataAtom = atom((get) => {
     const vectorSpecifications = get(vectorSpecificationsAtom);
 
     return createLoadedVectorSpecificationAndDataArray(vectorSpecifications, historicalVectorDataQueries);
+});
+
+export const userSelectedActiveTimestampUtcMsAtom = atom<number | null>(null);
+
+export const activeTimestampUtcMsAtom = atom<number | null>((get) => {
+    const loadedVectorSpecificationsAndRealizationData = get(loadedVectorSpecificationsAndRealizationDataAtom);
+    const isQueryFetching = get(queryIsFetchingAtom);
+    const userSelectedActiveTimestampUtcMs = get(userSelectedActiveTimestampUtcMsAtom);
+
+    if (
+        !isQueryFetching &&
+        userSelectedActiveTimestampUtcMs === null &&
+        loadedVectorSpecificationsAndRealizationData.length > 0
+    ) {
+        const firstTimeStamp =
+            loadedVectorSpecificationsAndRealizationData.at(0)?.data.at(0)?.timestamps_utc_ms[0] ?? null;
+        return firstTimeStamp;
+    }
+
+    return userSelectedActiveTimestampUtcMs;
+});
+
+export const colorByParameterAtom = atom<boolean>((get) => {
+    const colorRealizationsByParameter = get(colorRealizationsByParameterAtom);
+    const visualizationMode = get(visualizationModeAtom);
+    const parameterIdent = get(parameterIdentAtom);
+    const selectedEnsembles = get(selectedEnsemblesAtom);
+
+    return (
+        colorRealizationsByParameter &&
+        visualizationMode === VisualizationMode.INDIVIDUAL_REALIZATIONS &&
+        parameterIdent !== null &&
+        selectedEnsembles.some((ensemble) => ensemble.getParameters().hasParameter(parameterIdent))
+    );
 });

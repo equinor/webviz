@@ -45,6 +45,7 @@ import {
     vectorSelectorDataAtom,
     visualizationModeAtom,
 } from "./atoms";
+import { useMakeSettingsStatusWriterMessages } from "./hooks/useMakeSettingsStatusWriterMessages";
 import {
     FanchartStatisticOption,
     FanchartStatisticOptionEnumToStringMapping,
@@ -56,13 +57,13 @@ import {
     VisualizationMode,
     VisualizationModeEnumToStringMapping,
 } from "./state";
-import { joinStringArrayToHumanReadableString } from "./utils/stringUtils";
 
 export function Settings({ moduleContext, workbenchSession }: ModuleFCProps<State>) {
     const ensembleSet = useEnsembleSet(workbenchSession);
     const statusWriter = useSettingsStatusWriter(moduleContext);
 
-    // Store state/values
+    const [selectedVectorTags, setSelectedVectorTags] = React.useState<string[]>([]);
+
     const [resampleFrequency, setResamplingFrequency] = useAtom(resampleFrequencyAtom);
     const [groupBy, setGroupBy] = useAtom(groupByAtom);
     const [colorRealizationsByParameter, setColorRealizationsByParameter] = useAtom(colorRealizationsByParameterAtom);
@@ -70,68 +71,20 @@ export function Settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
     const [showHistorical, setShowHistorical] = useAtom(showHistoricalAtom);
     const [showObservations, setShowObservations] = useAtom(showObservationsAtom);
     const [statisticsSelection, setStatisticsSelection] = useAtom(statisticsSelectionAtom);
-
-    // States
     const [selectedVectorNames, setSelectedVectorNames] = useAtom(selectedVectorNamesAtom);
-    const [selectedVectorTags, setSelectedVectorTags] = React.useState<string[]>([]);
     const vectorSelectorData = useAtomValue(vectorSelectorDataAtom);
     const statisticsType = useAtomValue(statisticsTypeAtom);
     const [filteredParameterIdentList, setFilteredParameterIdentList] = useAtom(filteredParameterIdentListAtom);
-
     const [, setUserSelectedEnsembleIdents] = useAtom(userSelectedEnsembleIdentsAtom);
     const selectedEnsembleIdents = useAtomValue(selectedEnsembleIdentsAtom);
-
-    // Get list of continuous parameters from selected ensembles
     const continuousAndNonConstantParametersUnion = useAtomValue(continuousAndNonConstantParametersUnionAtom);
-
     const vectorListQueries = useAtomValue(vectorListQueriesAtom);
-
     const ensembleVectorListsHelper = useAtomValue(ensembleVectorListsHelperAtom);
-
     const isVectorListQueriesFetching = useAtomValue(isVectorListQueriesFetchingAtom);
-
-    const selectedVectorNamesHasHistorical =
-        !isVectorListQueriesFetching && ensembleVectorListsHelper.hasAnyHistoricalVector(selectedVectorNames);
-
     const [, setUserSelectedParameterIdentStr] = useAtom(userSelectedParameterIdentStringAtom);
     const selectedParameterIdentStr = useAtomValue(selectedParameterIdentStringAtom);
 
-    // Set error if all vector list queries fail
-    const hasEveryVectorListQueryError =
-        vectorListQueries.length > 0 && vectorListQueries.every((query) => query.isError);
-    if (hasEveryVectorListQueryError) {
-        let errorMessage = "Could not load vectors for selected ensemble";
-        if (vectorListQueries.length > 1) {
-            errorMessage += "s";
-        }
-        statusWriter.addError(errorMessage);
-    }
-
-    // Set warning for vector names not existing in a selected ensemble
-    const validateVectorNamesInEnsemble = (vectorNames: string[], ensembleIdent: EnsembleIdent) => {
-        const existingVectors = vectorNames.filter((vector) =>
-            ensembleVectorListsHelper.isVectorInEnsemble(ensembleIdent, vector)
-        );
-        if (existingVectors.length === vectorNames.length) {
-            return;
-        }
-
-        const nonExistingVectors = vectorNames.filter((vector) => !existingVectors.includes(vector));
-        const ensembleStr = ensembleSet.findEnsemble(ensembleIdent)?.getDisplayName() ?? ensembleIdent.toString();
-        const vectorArrayStr = joinStringArrayToHumanReadableString(nonExistingVectors);
-        statusWriter.addWarning(`Vector ${vectorArrayStr} does not exist in ensemble ${ensembleStr}`);
-    };
-
-    // Note: selectedVectorNames is not updated until vectorSelectorData is updated and VectorSelector triggers onChange
-    if (selectedEnsembleIdents.length === 1) {
-        // If single ensemble is selected and no vectors exist, selectedVectorNames is empty as no vectors are valid
-        // in the VectorSelector. Then utilizing selectedVectorTags for status message
-        const vectorNames = selectedVectorNames.length > 0 ? selectedVectorNames : selectedVectorTags;
-        validateVectorNamesInEnsemble(vectorNames, selectedEnsembleIdents[0]);
-    }
-    for (const ensembleIdent of selectedEnsembleIdents) {
-        validateVectorNamesInEnsemble(selectedVectorNames, ensembleIdent);
-    }
+    useMakeSettingsStatusWriterMessages(statusWriter, selectedVectorTags);
 
     function handleGroupByChange(event: React.ChangeEvent<HTMLInputElement>) {
         setGroupBy(event.target.value as GroupBy);
@@ -260,6 +213,9 @@ export function Settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
 
         return [];
     }
+
+    const selectedVectorNamesHasHistorical =
+        !isVectorListQueriesFetching && ensembleVectorListsHelper.hasAnyHistoricalVector(selectedVectorNames);
 
     return (
         <div className="flex flex-col gap-2 overflow-y-auto">
