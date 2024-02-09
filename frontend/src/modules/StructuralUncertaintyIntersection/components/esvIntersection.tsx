@@ -46,7 +46,7 @@ export const EsvIntersection: React.FC<EsvIntersectionProps> = (props) => {
         { text: "Seabed", lineType: "solid", color: "slategray", depth: 91.1, lineWidth: 2 },
     ];
     const seaAndRKBLayer = new ReferenceLineLayer("sea-and-rkb-layer", { data: seaAndRKBLayerData });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
     React.useEffect(function initializeEsvIntersectionController() {
         if (containerDiv.current) {
             const axisOptions = { xLabel: "x", yLabel: "y", unitOfMeasure: "m" };
@@ -76,6 +76,7 @@ export const EsvIntersection: React.FC<EsvIntersectionProps> = (props) => {
         return () => {
             controller.current?.destroy();
         };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
     if (!isEqual(previousWellborePath, props.wellborePath)) {
         setPreviousWellborePath(props.wellborePath);
