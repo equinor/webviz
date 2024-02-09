@@ -86,17 +86,7 @@ function makeDomain(numElements: number, index: number, spacing: number, margin:
     return [domainStart, domainEnd];
 }
 
-export function makeSubplots({
-    numRows,
-    numCols,
-    sharedXAxes,
-    sharedYAxes,
-    width,
-    height,
-    horizontalSpacing,
-    verticalSpacing,
-    margin,
-}: {
+export interface MakeSubplotOptions {
     numRows?: number;
     numCols?: number;
     sharedXAxes?: boolean | "all";
@@ -106,10 +96,13 @@ export function makeSubplots({
     horizontalSpacing?: number;
     verticalSpacing?: number;
     margin?: Partial<Layout["margin"]>;
-}): Figure {
+    showGrid?: boolean;
+}
+
+export function makeSubplots(options: MakeSubplotOptions): Figure {
     let layout: Partial<Layout> = {
-        width,
-        height,
+        width: options.width,
+        height: options.height,
         margin: {
             l: 0,
             r: 0,
@@ -120,33 +113,33 @@ export function makeSubplots({
 
     const gridAxesMapping: number[][] = [];
 
-    if (!numRows) {
-        numRows = 1;
+    if (!options.numRows) {
+        options.numRows = 1;
     }
 
-    if (!numCols) {
-        numCols = 1;
+    if (!options.numCols) {
+        options.numCols = 1;
     }
 
-    if (horizontalSpacing === undefined) {
-        horizontalSpacing = 0.2 / numCols;
+    if (options.horizontalSpacing === undefined) {
+        options.horizontalSpacing = 0.2 / options.numCols;
     }
 
-    if (verticalSpacing === undefined) {
-        verticalSpacing = 0.2 / numRows;
+    if (options.verticalSpacing === undefined) {
+        options.verticalSpacing = 0.2 / options.numRows;
     }
 
     const adjustedMargin = {
-        l: (margin?.l ?? 0) / (width ?? 1),
-        r: (margin?.r ?? 0) / (width ?? 1),
-        t: (margin?.t ?? 0) / (height ?? 1),
-        b: (margin?.b ?? 0) / (height ?? 1),
+        l: (options.margin?.l ?? 0) / (options.width ?? 1),
+        r: (options.margin?.r ?? 0) / (options.width ?? 1),
+        t: (options.margin?.t ?? 0) / (options.height ?? 1),
+        b: (options.margin?.b ?? 0) / (options.height ?? 1),
     };
 
-    for (let row = 0; row < numRows; row++) {
+    for (let row = 0; row < options.numRows; row++) {
         gridAxesMapping.push([]);
-        for (let col = 0; col < numCols; col++) {
-            const index = row * numCols + col;
+        for (let col = 0; col < options.numCols; col++) {
+            const index = row * options.numCols + col;
             const yAxisKey = `yaxis${index + 1}`;
             const xAxisKey = `xaxis${index + 1}`;
 
@@ -154,26 +147,26 @@ export function makeSubplots({
             const anchorY = `x${index + 1}`;
 
             let matchingXAxisIndex = undefined;
-            if (sharedXAxes === "all") {
-                matchingXAxisIndex = (numRows - 1) * numCols + 1;
-            } else if (sharedXAxes) {
+            if (options.sharedXAxes === "all") {
+                matchingXAxisIndex = (options.numRows - 1) * options.numCols + 1;
+            } else if (options.sharedXAxes) {
                 matchingXAxisIndex = col + 1;
             }
 
             let matchingYAxisIndex = undefined;
-            if (sharedYAxes === "all") {
-                matchingYAxisIndex = row * numCols + 1;
-            } else if (sharedYAxes) {
-                matchingYAxisIndex = row * numCols + 1;
+            if (options.sharedYAxes === "all") {
+                matchingYAxisIndex = row * options.numCols + 1;
+            } else if (options.sharedYAxes) {
+                matchingYAxisIndex = row * options.numCols + 1;
             }
 
-            const [xDomainStart, xDomainEnd] = makeDomain(numCols, col, horizontalSpacing, [
+            const [xDomainStart, xDomainEnd] = makeDomain(options.numCols, col, options.horizontalSpacing, [
                 adjustedMargin.l,
                 adjustedMargin.r,
             ]);
 
             // Note that the yDomainStart and yDomainEnd are swapped because the y-axis starts at the bottom
-            const [yDomainStart, yDomainEnd] = makeDomain(numRows, row, verticalSpacing, [
+            const [yDomainStart, yDomainEnd] = makeDomain(options.numRows, row, options.verticalSpacing, [
                 adjustedMargin.b,
                 adjustedMargin.t,
             ]);
@@ -186,6 +179,7 @@ export function makeSubplots({
                         domain: [xDomainStart, xDomainEnd],
                         matches: `x${matchingXAxisIndex === 1 ? "" : matchingXAxisIndex}`,
                         showticklabels: false,
+                        showgrid: options.showGrid ?? false,
                     },
                 };
             } else {
@@ -195,6 +189,7 @@ export function makeSubplots({
                         anchor: anchorX,
                         domain: [xDomainStart, xDomainEnd],
                         showticklabels: true,
+                        showgrid: options.showGrid ?? false,
                     },
                 };
             }
@@ -207,6 +202,7 @@ export function makeSubplots({
                         domain: [yDomainStart, yDomainEnd],
                         matches: `y${matchingYAxisIndex === 1 ? "" : matchingYAxisIndex}`,
                         showticklabels: false,
+                        showgrid: options.showGrid ?? false,
                     },
                 };
             } else {
@@ -216,6 +212,7 @@ export function makeSubplots({
                         anchor: anchorY,
                         domain: [yDomainStart, yDomainEnd],
                         showticklabels: true,
+                        showgrid: options.showGrid ?? false,
                     },
                 };
             }

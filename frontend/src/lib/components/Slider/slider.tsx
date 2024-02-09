@@ -1,8 +1,8 @@
 import React from "react";
-import ReactDOM from "react-dom";
 
 import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
-import { Point } from "@lib/utils/geometry";
+import { createPortal } from "@lib/utils/createPortal";
+import { Point2D } from "@lib/utils/geometry";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { Slider as SliderUnstyled, SliderProps as SliderUnstyledProps } from "@mui/base";
 
@@ -20,7 +20,7 @@ export const Slider = React.forwardRef((props: SliderProps, ref: React.Forwarded
     const [currentlyActiveThumb, setCurrentlyActiveThumb] = React.useState<number>(0);
     const [prevValue, setPrevValue] = React.useState<number | number[]>(propsValue ?? 0);
     const [valueLabelVisible, setValueLabelVisible] = React.useState<boolean>(false);
-    const [valueLabelPosition, setValueLabelPosition] = React.useState<Point>({ x: 0, y: 0 });
+    const [valueLabelPosition, setValueLabelPosition] = React.useState<Point2D>({ x: 0, y: 0 });
 
     const divRef = React.useRef<HTMLDivElement>(null);
     const valueLabelRef = React.useRef<HTMLDivElement>(null);
@@ -100,6 +100,7 @@ export const Slider = React.forwardRef((props: SliderProps, ref: React.Forwarded
                         });
                     }
                 }
+                document.addEventListener("pointerup", handlePointerUp);
             }
         };
 
@@ -109,13 +110,13 @@ export const Slider = React.forwardRef((props: SliderProps, ref: React.Forwarded
                 return;
             }
             setValueLabelVisible(false);
+            document.removeEventListener("pointerup", handlePointerUp);
         };
 
         if (divRefCurrent) {
             divRefCurrent.addEventListener("pointerover", handlePointerOver);
             divRefCurrent.addEventListener("pointerout", handlePointerOut);
             divRefCurrent.addEventListener("pointerdown", handlePointerDown);
-            document.addEventListener("pointerup", handlePointerUp);
         }
         return () => {
             if (divRefCurrent) {
@@ -281,7 +282,7 @@ export const Slider = React.forwardRef((props: SliderProps, ref: React.Forwarded
             </div>
             {valueLabelDisplay !== undefined &&
                 valueLabelDisplay !== "off" &&
-                ReactDOM.createPortal(
+                createPortal(
                     <div
                         className="absolute flex justify-center w-40 -ml-20 h-4 -mt-5 pointer-events-none z-50"
                         ref={valueLabelRef}
@@ -320,8 +321,7 @@ export const Slider = React.forwardRef((props: SliderProps, ref: React.Forwarded
                         >
                             {makeLabel()}
                         </div>
-                    </div>,
-                    document.body
+                    </div>
                 )}
         </BaseComponent>
     );

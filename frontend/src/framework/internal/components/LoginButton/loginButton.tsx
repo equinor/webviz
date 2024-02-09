@@ -81,11 +81,11 @@ export const LoginButton: React.FC<LoginButtonProps> = (props) => {
 
     let text = makeText();
     if (textRef.current !== null && props.showText) {
-        let textWidth = getTextWidthWithFont(text, "1rem normal");
+        let textWidth = getTextWidthWithFont(text, "Equinor", 1);
         let addDots = false;
         while (textWidth > 150) {
             text = text.slice(0, -1);
-            textWidth = getTextWidthWithFont(text + "...", "1rem normal");
+            textWidth = getTextWidthWithFont(text + "...", "Equinor", 1);
             addDots = true;
         }
         if (addDots) {

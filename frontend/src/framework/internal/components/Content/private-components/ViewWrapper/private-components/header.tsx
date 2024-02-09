@@ -1,5 +1,4 @@
 import React from "react";
-import ReactDOM from "react-dom";
 
 import { GuiEvent, GuiMessageBroker } from "@framework/GuiMessageBroker";
 import { ModuleInstance } from "@framework/ModuleInstance";
@@ -9,6 +8,7 @@ import { useStatusControllerStateValue } from "@framework/internal/ModuleInstanc
 import { Badge } from "@lib/components/Badge";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
+import { createPortal } from "@lib/utils/createPortal";
 import { isDevMode } from "@lib/utils/devMode";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { Close, Error, Input, Output, Warning } from "@mui/icons-material";
@@ -248,7 +248,7 @@ export const Header: React.FC<HeaderProps> = (props) => {
                 <Close className="w-4 h-4" />
             </div>
             {statusMessagesVisible &&
-                ReactDOM.createPortal(
+                createPortal(
                     <div
                         className={"absolute shadow min-w-[200px] z-40 bg-white overflow-hidden"}
                         style={{
@@ -258,8 +258,7 @@ export const Header: React.FC<HeaderProps> = (props) => {
                         }}
                     >
                         {makeStatusMessages()}
-                    </div>,
-                    document.body
+                    </div>
                 )}
         </div>
     );

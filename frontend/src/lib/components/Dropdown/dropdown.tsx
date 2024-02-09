@@ -1,7 +1,7 @@
 import React from "react";
-import ReactDOM from "react-dom";
 
 import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
+import { createPortal } from "@lib/utils/createPortal";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { getTextWidthWithFont } from "@lib/utils/textSize";
 import { ExpandLess, ExpandMore } from "@mui/icons-material";
@@ -104,7 +104,7 @@ export const Dropdown = withDefaults<DropdownProps>()(defaultProps, (props) => {
 
     React.useEffect(() => {
         let longestOptionWidth = props.options.reduce((prev, current) => {
-            const labelWidth = getTextWidthWithFont(current.label, "1rem");
+            const labelWidth = getTextWidthWithFont(current.label, "Equinor", 1);
             if (labelWidth > prev) {
                 return labelWidth;
             }
@@ -113,9 +113,9 @@ export const Dropdown = withDefaults<DropdownProps>()(defaultProps, (props) => {
 
         if (longestOptionWidth === 0) {
             if (props.options.length === 0 || filter === "") {
-                longestOptionWidth = getTextWidthWithFont(noOptionsText, "1rem");
+                longestOptionWidth = getTextWidthWithFont(noOptionsText, "Equinor", 1);
             } else {
-                longestOptionWidth = getTextWidthWithFont(noMatchingOptionsText, "1rem");
+                longestOptionWidth = getTextWidthWithFont(noMatchingOptionsText, "Equinor", 1);
             }
         }
         setDropdownRect((prev) => ({ ...prev, width: longestOptionWidth + 32 }));
@@ -299,7 +299,7 @@ export const Dropdown = withDefaults<DropdownProps>()(defaultProps, (props) => {
                     value={makeInputValue()}
                 />
                 {dropdownVisible &&
-                    ReactDOM.createPortal(
+                    createPortal(
                         <div
                             className="absolute bg-white border border-gray-300 rounded-md shadow-md overflow-y-auto z-50 box-border"
                             style={{ ...dropdownRect }}
@@ -355,8 +355,7 @@ export const Dropdown = withDefaults<DropdownProps>()(defaultProps, (props) => {
                                     </div>
                                 )}
                             />
-                        </div>,
-                        document.body
+                        </div>
                     )}
             </div>
         </BaseComponent>

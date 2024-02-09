@@ -80,8 +80,14 @@ export class Suggestions extends React.Component<SuggestionsProps> {
         window.addEventListener("resize", this.renderPopup);
         window.addEventListener("scroll", this.renderPopup, true);
 
+        const container = document.getElementById("portal-root");
+
+        if (!container) {
+            throw new Error("Could not find portal container");
+        }
+
         this._popup = document.createElement("div");
-        document.body.appendChild(this._popup);
+        container.appendChild(this._popup);
         this._popupRoot = createRoot(this._popup);
     }
 
@@ -91,8 +97,10 @@ export class Suggestions extends React.Component<SuggestionsProps> {
         window.removeEventListener("resize", this.renderPopup);
         window.removeEventListener("scroll", this.renderPopup, true);
 
-        if (this._popup) {
-            document.body.removeChild(this._popup);
+        const container = document.getElementById("portal-root");
+
+        if (this._popup && container) {
+            container.removeChild(this._popup);
         }
     }
 
@@ -118,7 +126,11 @@ export class Suggestions extends React.Component<SuggestionsProps> {
     }
 
     private currentlySelectedSuggestion(): Element {
-        return document.getElementsByClassName("Suggestions__Suggestion")[
+        if (!this._popup) {
+            throw new Error("Popup not initialized");
+        }
+
+        return this._popup.getElementsByClassName("Suggestions__Suggestion")[
             this._currentlySelectedSuggestionIndex - this.state.fromIndex
         ];
     }
@@ -223,7 +235,12 @@ export class Suggestions extends React.Component<SuggestionsProps> {
     private markSuggestionAsHovered(index: number): void {
         this._currentlySelectedSuggestionIndex = index;
         const newSelectedSuggestion = this.currentlySelectedSuggestion();
-        const selectedSuggestions = document.getElementsByClassName("Suggestions__Suggestion--Selected");
+
+        if (!this._popup) {
+            throw new Error("Popup not initialized");
+        }
+
+        const selectedSuggestions = this._popup.getElementsByClassName("Suggestions__Suggestion--Selected");
         for (let i = 0; i < selectedSuggestions.length; i++) {
             const el = selectedSuggestions[i];
             el.classList.remove("Suggestions__Suggestion--Selected");
