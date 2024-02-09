@@ -11,7 +11,6 @@ import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { timestampUtcMsToCompactIsoString } from "@framework/utils/timestampUtils";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { ColorScaleGradientType } from "@lib/utils/ColorScale";
-import { selectedEnsembleAtom } from "@modules/MyModule2/atoms";
 import { ContentError } from "@modules/_shared/components/ContentMessage";
 
 import { Annotations, Layout, PlotDatum, PlotMouseEvent, Shape } from "plotly.js";
