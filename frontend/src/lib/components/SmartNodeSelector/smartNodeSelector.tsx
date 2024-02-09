@@ -645,7 +645,6 @@ export class SmartNodeSelectorComponent extends React.Component<SmartNodeSelecto
 
     protected handleMouseUp(e: globalThis.MouseEvent): void {
         this.mouseButtonDown = false;
-        document.body.classList.remove("user-select-none");
         if (this.countSelectedTags() > 0) {
             this.hideSuggestions({});
             this.blurActiveElement();
@@ -690,7 +689,6 @@ export class SmartNodeSelectorComponent extends React.Component<SmartNodeSelecto
 
         this.selectionHasStarted = true;
 
-        document.body.classList.add("user-select-none");
         const inputFieldBoundingRect = domNode.getBoundingClientRect();
 
         const top = Math.min(this.mouseDownPosition[1], e.clientY);
