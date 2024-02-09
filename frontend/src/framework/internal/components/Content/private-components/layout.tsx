@@ -176,9 +176,10 @@ export const Layout: React.FC<LayoutProps> = (props) => {
                     setPosition(pointRelativeToDomRect(pointerDownElementPosition, rect));
                     relativePointerPosition = pointRelativeToDomRect(pointerDownPoint, rect);
                     dragging = true;
+                    const factorX = pointerDownElementSize.width === 0 ? 1 : 1 / pointerDownElementSize.width;
                     relativePointerToElementDiff = pointMultiplyComponentsWithIndividualScalars(
                         pointSubtraction(pointerDownPoint, pointerDownElementPosition),
-                        pointerDownElementSize.width,
+                        factorX,
                         1
                     );
                     lastTimeStamp = e.timeStamp;

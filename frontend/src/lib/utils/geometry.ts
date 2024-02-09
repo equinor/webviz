@@ -52,7 +52,7 @@ export function pointMultiplyComponentsWithIndividualScalars(
     scalarX: number,
     scalarY: number
 ): Point2D {
-    return { x: point.x / scalarX, y: point.y / scalarY };
+    return { x: point.x * scalarX, y: point.y * scalarY };
 }
 
 export function vectorMultiplyWithScalar(vector: Vector2D, scalar: number): Vector2D {
