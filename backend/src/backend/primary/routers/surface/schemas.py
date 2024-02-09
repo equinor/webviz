@@ -113,30 +113,6 @@ class SurfaceRealizationSamplePoints(BaseModel):
     sampled_values: list[float]
 
 
-class SurfaceIntersectionPoints(BaseModel):
-    name: str
-    z_array: list[float]
-    cum_length: list[float]
-
-
 class PointSetXY(BaseModel):
     x_points: list[float]
     y_points: list[float]
-
-
-class RealizationsSurfaceSetSpec(BaseModel):
-    realization_nums: list[int]
-    surface_names: list[str]
-    surface_attribute: str
-
-
-class EnsembleIdent(BaseModel):
-    case_uuid: str
-    ensemble_name: str
-
-
-class StatisticalSurfaceSetSpec(BaseModel):
-    surface_names: list[str]
-    surface_attribute: str
-    realization_nums: list[int]
-    statistic_function: list[SurfaceStatisticFunction]
