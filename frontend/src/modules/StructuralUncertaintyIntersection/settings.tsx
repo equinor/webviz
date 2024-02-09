@@ -131,7 +131,7 @@ export function Settings({
               return { label: attribute, value: attribute };
           })
         : [];
-
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     React.useEffect(
         function propogateSurfaceSetAddress() {
             let surfaceSetSpec: SurfaceSetAddress | null = null;
