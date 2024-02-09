@@ -110,6 +110,7 @@ async def _get_object_uuids_for_surface_realizations(
 
     # Is this the right way to get hold of the object uuids?
     internal_explorer_utils = InternalExplorerUtils(sumo_client)
+    # pylint: disable=protected-access
     object_meta_list: List[Dict] = await internal_explorer_utils.get_objects_async(
         500, surface_collection._query, ["_id", "fmu.realization.id"]
     )
@@ -137,7 +138,7 @@ def _get_sas_token_and_blob_store_base_uri_for_case(sumo_access_token: str, case
 
     req_url = f"{SUMO_BASE_URI}/objects('{case_uuid}')/authtoken"
     req_headers = {"Authorization": f"Bearer {sumo_access_token}"}
-    res = requests.get(url=req_url, headers=req_headers)
+    res = requests.get(url=req_url, headers=req_headers, timeout=60)
     if res.status_code != 200:
         raise AuthorizationError(f"Failed to get SAS token for case {case_uuid}", Service.GENERAL)
 

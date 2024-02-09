@@ -1,8 +1,7 @@
 import logging
 from typing import List, Union, Optional
 
-import numpy as np
-from fastapi import APIRouter, Depends, HTTPException, Query, Response, Body, Request
+from fastapi import APIRouter, Depends, HTTPException, Query, Response, Body
 
 from src.services.sumo_access.surface_access import SurfaceAccess
 from src.services.smda_access.stratigraphy_access import StratigraphyAccess

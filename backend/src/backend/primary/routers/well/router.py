@@ -1,7 +1,7 @@
 import logging
 from typing import List, Union
 
-from fastapi import APIRouter, Depends, Query, HTTPException
+from fastapi import APIRouter, Depends, Query
 
 from src.services.smda_access import mocked_drogon_smda_access
 from src.services.smda_access.well_access import WellAccess
