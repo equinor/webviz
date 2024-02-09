@@ -1,9 +1,16 @@
 import React from "react";
 
 import { LayoutElement } from "@framework/Workbench";
-import { Point, Rect, Size, outerRectContainsInnerRect, rectContainsPoint, rectsAreEqual } from "@lib/utils/geometry";
+import {
+    Point2D,
+    Rect2D,
+    Size2D,
+    outerRectContainsInnerRect,
+    rectContainsPoint,
+    rectsAreEqual,
+} from "@lib/utils/geometry";
 
-function layoutElementToRect(layoutElement: LayoutElement): Rect {
+function layoutElementToRect(layoutElement: LayoutElement): Rect2D {
     return {
         x: layoutElement.relX,
         y: layoutElement.relY,
@@ -34,16 +41,16 @@ export enum LayoutDirection {
 export type LayoutBoxEdge =
     | {
           edge: Exclude<LayoutBoxEdgeType, LayoutBoxEdgeType.HORIZONTAL | LayoutBoxEdgeType.VERTICAL>;
-          rect: Rect;
+          rect: Rect2D;
       }
     | {
           position: number;
           edge: LayoutBoxEdgeType.HORIZONTAL | LayoutBoxEdgeType.VERTICAL;
-          rect: Rect;
+          rect: Rect2D;
       };
 
 export class LayoutBox {
-    private _rectRelativeToParent: Rect;
+    private _rectRelativeToParent: Rect2D;
     private _children: LayoutBox[];
     private _level: number;
     private _moduleInstanceId: string | undefined;
@@ -53,7 +60,7 @@ export class LayoutBox {
     private _layoutDirection: LayoutDirection;
 
     constructor(
-        rect: Rect,
+        rect: Rect2D,
         direction: LayoutDirection,
         parent: LayoutBox | null = null,
         level = 0,
@@ -70,7 +77,7 @@ export class LayoutBox {
         this._layoutDirection = direction;
     }
 
-    getRect(): Rect {
+    getRect(): Rect2D {
         return this._rectRelativeToParent;
     }
 
@@ -78,7 +85,7 @@ export class LayoutBox {
         return this._moduleInstanceId;
     }
 
-    getRectWithMargin(realSizeFactor: Size): Rect {
+    getRectWithMargin(realSizeFactor: Size2D): Rect2D {
         const absoluteRect = this.getAbsoluteRect();
         if (this._parent === null) {
             return {
@@ -126,7 +133,7 @@ export class LayoutBox {
         return text;
     }
 
-    transformRectToRelative(rect: Rect): Rect {
+    transformRectToRelative(rect: Rect2D): Rect2D {
         let newRect = {
             x: (rect.x - this._rectRelativeToParent.x) / this._rectRelativeToParent.width,
             y: (rect.y - this._rectRelativeToParent.y) / this._rectRelativeToParent.height,
@@ -141,14 +148,14 @@ export class LayoutBox {
         return newRect;
     }
 
-    private getAbsoluteRect(): Rect {
+    private getAbsoluteRect(): Rect2D {
         if (this._parent === null) {
             return this._rectRelativeToParent;
         }
         return this._parent.transformRectToAbsolute(this._rectRelativeToParent);
     }
 
-    transformRectToAbsolute(rect: Rect): Rect {
+    transformRectToAbsolute(rect: Rect2D): Rect2D {
         let newRect = {
             x: rect.x * this._rectRelativeToParent.width + this._rectRelativeToParent.x,
             y: rect.y * this._rectRelativeToParent.height + this._rectRelativeToParent.y,
@@ -209,7 +216,7 @@ export class LayoutBox {
         if (rasterY.length > 1) {
             let lastY = absoluteRect.y;
             rasterY.forEach((y) => {
-                const rect: Rect = {
+                const rect: Rect2D = {
                     x: absoluteRect.x,
                     y: lastY,
                     width: absoluteRect.width,
@@ -261,7 +268,7 @@ export class LayoutBox {
         if (rasterX.length > 1) {
             let lastX = absoluteRect.x;
             rasterX.forEach((x) => {
-                const rect: Rect = {
+                const rect: Rect2D = {
                     x: lastX,
                     y: absoluteRect.y,
                     width: x - lastX,
@@ -369,7 +376,7 @@ export class LayoutBox {
         return this._children;
     }
 
-    findBoxContainingPoint(point: Point, realSize: Size): LayoutBox | null {
+    findBoxContainingPoint(point: Point2D, realSize: Size2D): LayoutBox | null {
         if (!rectContainsPoint(this.getRectWithMargin(realSize), point)) {
             return null;
         }
@@ -403,7 +410,7 @@ export class LayoutBox {
         return found;
     }
 
-    getEdgeRects(realSize: Size): LayoutBoxEdge[] {
+    getEdgeRects(realSize: Size2D): LayoutBoxEdge[] {
         const rect = this.getRectWithMargin(realSize);
         const edges: LayoutBoxEdge[] = [];
 
@@ -519,11 +526,7 @@ export class LayoutBox {
         return edges;
     }
 
-    findEdgeContainingPoint(
-        point: Point,
-        realSize: Size,
-        draggedModuleInstanceId: string
-    ): LayoutBoxEdge | null {
+    findEdgeContainingPoint(point: Point2D, realSize: Size2D, draggedModuleInstanceId: string): LayoutBoxEdge | null {
         const edgeRects = this.getEdgeRects(realSize);
         const edge = edgeRects.find((edgeRect) => rectContainsPoint(edgeRect.rect, point));
         if (!edge) {
@@ -589,8 +592,8 @@ export class LayoutBox {
     }
 
     previewLayout(
-        pointerPoint: Point,
-        realSize: Size,
+        pointerPoint: Point2D,
+        realSize: Size2D,
         draggedModuleInstanceId: string,
         isNewModule: boolean
     ): LayoutBox | null {
@@ -836,16 +839,16 @@ function flattenLayoutBoxes(layoutBox: LayoutBox): LayoutBox[] {
 export const LayoutBoxComponents: React.FC<{
     layoutBox: LayoutBox;
     active: string | null;
-    realSize: Size;
+    realSize: Size2D;
     zIndex: number;
-    pointer: Point;
+    pointer: Point2D;
 }> = (props) => {
     const flatBoxes = flattenLayoutBoxes(props.layoutBox);
     const activeBox = props.layoutBox.findBoxContainingPoint(props.pointer, props.realSize);
 
     const makeBoxEdges = (box: LayoutBox) => {
         const edges: LayoutBoxEdge[] = box.getEdgeRects(props.realSize);
-        let hoveredEdge: Rect | null = null;
+        let hoveredEdge: Rect2D | null = null;
         if (props.active && props.active !== box.getModuleInstanceId() && activeBox === box) {
             hoveredEdge = box.findEdgeContainingPoint(props.pointer, props.realSize, props.active)?.rect || null;
         }

@@ -16,6 +16,8 @@ DROGON_STRAT_UNITS = [
         strat_unit_type="formation",
         strat_unit_parent="VOLANTIS GP.",
         top_age=1,
+        base_age=2,
+        lithology_type="unknown",
     ),
     StratigraphicUnit(
         identifier="Therys Fm.",
@@ -28,6 +30,8 @@ DROGON_STRAT_UNITS = [
         strat_unit_type="formation",
         strat_unit_parent="VOLANTIS GP.",
         top_age=2,
+        base_age=3,
+        lithology_type="unknown",
     ),
     StratigraphicUnit(
         identifier="Volon Fm.",
@@ -40,6 +44,8 @@ DROGON_STRAT_UNITS = [
         strat_unit_type="formation",
         strat_unit_parent="VOLANTIS GP.",
         top_age=3,
+        base_age=4,
+        lithology_type="unknown",
     ),
     StratigraphicUnit(
         identifier="VOLANTIS GP.",
@@ -52,6 +58,8 @@ DROGON_STRAT_UNITS = [
         strat_unit_type="group",
         strat_unit_parent=None,
         top_age=4,
+        base_age=5,
+        lithology_type="unknown",
     ),
 ]
 

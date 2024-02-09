@@ -137,7 +137,7 @@ const RealizationRangeTag: React.FC<RealizationRangeTagProps> = (props) => {
             <input
                 ref={ref}
                 className="bg-transparent outline-none"
-                style={{ width: getTextWidthWithFont(value, "normal 1.25rem sans-serif") }}
+                style={{ width: getTextWidthWithFont(value, "Equinor", 1.25) }}
                 type="text"
                 defaultValue={value}
                 onChange={handleChange}

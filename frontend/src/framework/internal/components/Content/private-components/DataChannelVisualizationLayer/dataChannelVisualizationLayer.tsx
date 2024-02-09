@@ -1,10 +1,10 @@
 import React from "react";
-import ReactDOM from "react-dom";
 
 import { GuiEvent, GuiEventPayloads, GuiState, useGuiState } from "@framework/GuiMessageBroker";
 import { Workbench } from "@framework/Workbench";
 import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
-import { Point } from "@lib/utils/geometry";
+import { createPortal } from "@lib/utils/createPortal";
+import { Point2D } from "@lib/utils/geometry";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 export type DataChannelVisualizationProps = {
@@ -13,20 +13,20 @@ export type DataChannelVisualizationProps = {
 
 type DataChannelPath = {
     key: string;
-    origin: Point;
-    midPoint1: Point;
-    midPoint2: Point;
-    destination: Point;
+    origin: Point2D;
+    midPoint1: Point2D;
+    midPoint2: Point2D;
+    destination: Point2D;
     description: string;
-    descriptionCenterPoint: Point;
+    descriptionCenterPoint: Point2D;
     highlighted: boolean;
 };
 
 export const DataChannelVisualizationLayer: React.FC<DataChannelVisualizationProps> = (props) => {
     const ref = React.useRef<SVGSVGElement>(null);
     const [visible, setVisible] = React.useState<boolean>(false);
-    const [originPoint, setOriginPoint] = React.useState<Point>({ x: 0, y: 0 });
-    const [currentPointerPosition, setCurrentPointerPosition] = React.useState<Point>({ x: 0, y: 0 });
+    const [originPoint, setOriginPoint] = React.useState<Point2D>({ x: 0, y: 0 });
+    const [currentPointerPosition, setCurrentPointerPosition] = React.useState<Point2D>({ x: 0, y: 0 });
     const [currentChannelName, setCurrentChannelName] = React.useState<string | null>(null);
     const [showDataChannelConnections, setShowDataChannelConnections] = useGuiState(
         props.workbench.getGuiMessageBroker(),
@@ -50,8 +50,9 @@ export const DataChannelVisualizationLayer: React.FC<DataChannelVisualizationPro
 
     React.useEffect(() => {
         let localMousePressed = false;
-        let localCurrentOriginPoint: Point = { x: 0, y: 0 };
+        let localCurrentOriginPoint: Point2D = { x: 0, y: 0 };
         let localEditDataChannelConnections = false;
+        let resizeObserver: ResizeObserver | null = null;
 
         function handleDataChannelOriginPointerDown(payload: GuiEventPayloads[GuiEvent.DataChannelOriginPointerDown]) {
             const clientRect = payload.originElement.getBoundingClientRect();
@@ -65,6 +66,7 @@ export const DataChannelVisualizationLayer: React.FC<DataChannelVisualizationPro
             setCurrentPointerPosition(localCurrentOriginPoint);
             setCurrentChannelName(null);
             setShowDataChannelConnections(true);
+            addDraggingEventListeners();
 
             const moduleInstance = props.workbench.getModuleInstance(payload.moduleInstanceId);
             if (!moduleInstance) {
@@ -86,6 +88,8 @@ export const DataChannelVisualizationLayer: React.FC<DataChannelVisualizationPro
             }
             setShowDataChannelConnections(false);
             setEditDataChannelConnectionsForModuleInstanceId(null);
+
+            removeDraggingEventListeners();
         }
 
         function handleDataChannelDone() {
@@ -94,6 +98,13 @@ export const DataChannelVisualizationLayer: React.FC<DataChannelVisualizationPro
             setEditDataChannelConnectionsForModuleInstanceId(null);
             setShowDataChannelConnections(false);
             setShowDataChannelConnections(false);
+
+            if (timeoutRef.current) {
+                clearTimeout(timeoutRef.current);
+            }
+
+            disconnectResizeObserver();
+            removeDraggingEventListeners();
         }
 
         function handlePointerMove(e: PointerEvent) {
@@ -137,6 +148,8 @@ export const DataChannelVisualizationLayer: React.FC<DataChannelVisualizationPro
             localEditDataChannelConnections = true;
             setEditDataChannelConnectionsForModuleInstanceId(payload.moduleInstanceId);
             setShowDataChannelConnections(true);
+
+            addResizeObserver();
         }
 
         function handleHighlightDataChannelConnectionRequest(
@@ -146,6 +159,39 @@ export const DataChannelVisualizationLayer: React.FC<DataChannelVisualizationPro
                 moduleInstanceId: payload.moduleInstanceId,
                 receiverIdString: payload.receiverIdString,
             });
+        }
+
+        function addDraggingEventListeners() {
+            document.addEventListener("pointerup", handlePointerUp);
+            document.addEventListener("pointermove", handlePointerMove);
+            document.addEventListener("pointercancel", handlePointerUp);
+            document.addEventListener("blur", handlePointerUp);
+        }
+
+        function removeDraggingEventListeners() {
+            document.removeEventListener("pointerup", handlePointerUp);
+            document.removeEventListener("pointermove", handlePointerMove);
+            document.removeEventListener("pointercancel", handlePointerUp);
+            document.removeEventListener("blur", handlePointerUp);
+        }
+
+        function addResizeObserver() {
+            if (!ref.current) {
+                return;
+            }
+
+            if (resizeObserver) {
+                resizeObserver.disconnect();
+            }
+
+            resizeObserver = new ResizeObserver(handleConnectionChange);
+            resizeObserver.observe(ref.current);
+        }
+
+        function disconnectResizeObserver() {
+            if (resizeObserver) {
+                resizeObserver.disconnect();
+            }
         }
 
         function handleUnhighlightDataChannelConnectionRequest() {
@@ -184,10 +230,6 @@ export const DataChannelVisualizationLayer: React.FC<DataChannelVisualizationPro
             handleConnectionChange
         );
 
-        document.addEventListener("pointerup", handlePointerUp);
-        document.addEventListener("pointermove", handlePointerMove);
-        document.addEventListener("resize", handleConnectionChange);
-
         return () => {
             removeEditDataChannelConnectionsRequestHandler();
             removeHighlightDataChannelConnectionRequestHandler();
@@ -197,9 +239,8 @@ export const DataChannelVisualizationLayer: React.FC<DataChannelVisualizationPro
             removeDataChannelDoneHandler();
             removeConnectionChangeHandler();
 
-            document.removeEventListener("pointerup", handlePointerUp);
-            document.removeEventListener("pointermove", handlePointerMove);
-            document.removeEventListener("resize", handleConnectionChange);
+            removeDraggingEventListeners();
+            disconnectResizeObserver();
         };
     }, [forceRerender, guiMessageBroker, props.workbench, setShowDataChannelConnections]);
 
@@ -209,12 +250,12 @@ export const DataChannelVisualizationLayer: React.FC<DataChannelVisualizationPro
         midPointY = currentPointerPosition.y / 2;
     }
 
-    const midPoint1: Point = {
+    const midPoint1: Point2D = {
         x: originPoint.x,
         y: midPointY,
     };
 
-    const midPoint2: Point = {
+    const midPoint2: Point2D = {
         x: currentPointerPosition.x,
         y: midPointY,
     };
@@ -258,12 +299,12 @@ export const DataChannelVisualizationLayer: React.FC<DataChannelVisualizationPro
                 const originRect = originElement.getBoundingClientRect();
                 const destinationRect = destinationElement.getBoundingClientRect();
 
-                const originPoint: Point = {
+                const originPoint: Point2D = {
                     x: originRect.left + originRect.width / 2,
                     y: originRect.top + originRect.height / 2,
                 };
 
-                const destinationPoint: Point = {
+                const destinationPoint: Point2D = {
                     x: destinationRect.left + destinationRect.width / 2,
                     // y: destinationRect.top < originPoint.y ? destinationRect.bottom + 20 : destinationRect.top - 20,
                     y: destinationRect.top - 20,
@@ -275,17 +316,17 @@ export const DataChannelVisualizationLayer: React.FC<DataChannelVisualizationPro
                     midPointY = destinationPoint.y / 2;
                 }
 
-                const midPoint1: Point = {
+                const midPoint1: Point2D = {
                     x: originPoint.x,
                     y: midPointY,
                 };
 
-                const midPoint2: Point = {
+                const midPoint2: Point2D = {
                     x: destinationPoint.x,
                     y: midPointY,
                 };
 
-                const descriptionCenterPoint: Point = {
+                const descriptionCenterPoint: Point2D = {
                     x: (originPoint.x + destinationPoint.x) / 2,
                     y: (originPoint.y + destinationPoint.y) / 2,
                 };
@@ -326,13 +367,9 @@ export const DataChannelVisualizationLayer: React.FC<DataChannelVisualizationPro
         return dataChannelPaths;
     }
 
-    if (!visible && !showDataChannelConnections) {
-        return null;
-    }
-
     const dataChannelPaths = makeDataChannelPaths();
 
-    return ReactDOM.createPortal(
+    return createPortal(
         <svg
             ref={ref}
             className={resolveClassNames("absolute bg-slate-50 left-0 top-0 h-full w-full z-40 bg-opacity-70", {
@@ -498,7 +535,6 @@ export const DataChannelVisualizationLayer: React.FC<DataChannelVisualizationPro
                     )}
                 </g>
             )}
-        </svg>,
-        document.body
+        </svg>
     );
 };

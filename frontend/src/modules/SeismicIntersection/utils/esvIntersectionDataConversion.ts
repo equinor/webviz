@@ -1,7 +1,8 @@
-import { SurfaceIntersectionData_api, WellBoreTrajectory_api } from "@api";
+import { SurfaceIntersectionData_api, WellBorePicksAndStratigraphicUnits_api, WellBoreTrajectory_api } from "@api";
 import { IntersectionReferenceSystem, Trajectory } from "@equinor/esv-intersection";
 
 import { SurfaceIntersectionData } from "./esvIntersectionControllerUtils";
+import { Pick, Unit } from "./esvIntersectionTypes";
 import { SeismicFenceData_trans } from "./queryDataTransforms";
 
 /**
@@ -225,4 +226,44 @@ export function createEsvSurfaceIntersectionDataArrayFromSurfaceIntersectionData
     }
 
     return surfaceIntersectionDataArray;
+}
+
+/**
+ * Utility to create an object of wellbore picks and stratigraphic units for the esv intersection layer.
+ *
+ * Converts the API data to the format required by the esv intersection layer.
+ */
+export function createEsvWellborePicksAndStratigraphicUnits(
+    wellborePicksAndStratigraphicUnits_api: WellBorePicksAndStratigraphicUnits_api
+): { wellborePicks: Pick[]; stratigraphicUnits: Unit[] } {
+    const wellborePicks: Pick[] = wellborePicksAndStratigraphicUnits_api.wellbore_picks.map((pick) => {
+        return {
+            pickIdentifier: pick.pickIdentifier,
+            confidence: pick.confidence,
+            depthReferencePoint: pick.depthReferencePoint,
+            md: pick.md,
+            mdUnit: pick.mdUnit,
+            tvd: pick.tvd,
+        };
+    });
+
+    // lithologyType and stratUnitParent are defined as number in esv intersection layer, but is retrieved as string
+    // from back-end
+    const stratigraphicUnits: Unit[] = wellborePicksAndStratigraphicUnits_api.stratigraphic_units.map((unit) => {
+        return {
+            identifier: unit.identifier,
+            top: unit.top,
+            base: unit.base,
+            baseAge: unit.baseAge,
+            topAge: unit.topAge,
+            colorR: unit.colorR,
+            colorG: unit.colorG,
+            colorB: unit.colorB,
+            stratUnitLevel: unit.stratUnitLevel,
+            lithologyType: unit.lithologyType as number,
+            stratUnitParent: unit.stratUnitParent as unknown as number,
+        };
+    });
+
+    return { wellborePicks: wellborePicks, stratigraphicUnits: stratigraphicUnits };
 }

@@ -1,7 +1,7 @@
 import React from "react";
-import ReactDOM from "react-dom";
 
 import { useElementSize } from "@lib/hooks/useElementSize";
+import { createPortal } from "@lib/utils/createPortal";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { Close } from "@mui/icons-material";
 
@@ -36,7 +36,7 @@ export const Dialog: React.FC<DialogProps> = (props) => {
         handleClose(e);
     };
 
-    return ReactDOM.createPortal(
+    return createPortal(
         <div
             ref={wrapperRef}
             className={resolveClassNames("fixed", "inset-0", "w-full", "h-full", "z-50", {
@@ -85,7 +85,6 @@ export const Dialog: React.FC<DialogProps> = (props) => {
                 <div className="p-4">{props.children}</div>
                 {props.actions && <div className="flex justify-end mt-4 bg-slate-100 p-4">{props.actions}</div>}
             </div>
-        </div>,
-        document.body
+        </div>
     );
 };
