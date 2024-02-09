@@ -171,12 +171,11 @@ class SurfaceAccess(SumoEnsemble):
 
     async def get_statistical_surface_data_async(
         self,
-        statistic_functions: list[StatisticFunction],
+        statistic_function: StatisticFunction,
         name: str,
         attribute: str,
         time_or_interval_str: Optional[str] = None,
-        realizations: Optional[List[int]] = None,
-    ) -> list[xtgeo.RegularSurface]:
+    ) -> Optional[xtgeo.RegularSurface]:
         """
         Compute statistic and return surface data
         """
@@ -211,24 +210,23 @@ class SurfaceAccess(SumoEnsemble):
             name=name,
             tagname=attribute,
             time=time_filter,
-            realization=realizations,
         )
-        if not realizations:
-            realizations = await surface_collection.realizations_async
+
         surf_count = await surface_collection.length_async()
         if surf_count == 0:
             LOGGER.warning(f"No statistical surfaces found in Sumo for {addr_str}")
             return None
         et_locate_ms = timer.lap_ms()
 
+        realizations = await surface_collection.realizations_async
         et_collect_reals_ms = timer.lap_ms()
 
-        xtgeo_surfs = await _compute_statistical_surfaces_async(statistic_functions, surface_collection)
-        print(xtgeo_surfs)
+        xtgeo_surf = await _compute_statistical_surface_async(statistic_function, surface_collection)
         et_calc_stat_ms = timer.lap_ms()
 
-        if not xtgeo_surfs:
+        if not xtgeo_surf:
             LOGGER.warning(f"Could not calculate statistical surface using Sumo for {addr_str}")
+            return None
 
         LOGGER.debug(
             f"Calculated statistical surface using Sumo in: {timer.elapsed_ms()}ms ("
@@ -238,53 +236,35 @@ class SurfaceAccess(SumoEnsemble):
             f"({addr_str} {len(realizations)=} )"
         )
 
-        return xtgeo_surfs
+        return xtgeo_surf
 
     def _make_addr_str(self, real_num: int, name: str, attribute: str, date_str: Optional[str]) -> str:
         addr_str = f"R:{real_num}__N:{name}__A:{attribute}__D:{date_str}__I:{self._iteration_name}__C:{self._case_uuid}"
         return addr_str
 
 
-async def _compute_statistical_surfaces_async(
-    statistics: StatisticFunction, surface_coll: SurfaceCollection
-) -> list[xtgeo.RegularSurface]:
-    # xtgeo_surf: xtgeo.RegularSurface = None
-    # if statistic == StatisticFunction.MIN:
-    #     xtgeo_surf = await surface_coll.min_async()
-    # elif statistic == StatisticFunction.MAX:
-    #     xtgeo_surf = await surface_coll.max_async()
-    # elif statistic == StatisticFunction.MEAN:
-    #     xtgeo_surf = await surface_coll.mean_async()
-    # elif statistic == StatisticFunction.P10:
-    #     xtgeo_surf = await surface_coll.p10_async()
-    # elif statistic == StatisticFunction.P90:
-    #     xtgeo_surf = await surface_coll.p90_async()
-    # elif statistic == StatisticFunction.P50:
-    #     xtgeo_surf = await surface_coll.p50_async()
-    # elif statistic == StatisticFunction.STD:
-    #     xtgeo_surf = await surface_coll.std_async()
-    # else:
-    #     raise ValueError("Unhandled statistic function")
+async def _compute_statistical_surface_async(
+    statistic: StatisticFunction, surface_coll: SurfaceCollection
+) -> xtgeo.RegularSurface:
+    xtgeo_surf: xtgeo.RegularSurface = None
+    if statistic == StatisticFunction.MIN:
+        xtgeo_surf = await surface_coll.min_async()
+    elif statistic == StatisticFunction.MAX:
+        xtgeo_surf = await surface_coll.max_async()
+    elif statistic == StatisticFunction.MEAN:
+        xtgeo_surf = await surface_coll.mean_async()
+    elif statistic == StatisticFunction.P10:
+        xtgeo_surf = await surface_coll.p10_async()
+    elif statistic == StatisticFunction.P90:
+        xtgeo_surf = await surface_coll.p90_async()
+    elif statistic == StatisticFunction.P50:
+        xtgeo_surf = await surface_coll.p50_async()
+    elif statistic == StatisticFunction.STD:
+        xtgeo_surf = await surface_coll.std_async()
+    else:
+        raise ValueError("Unhandled statistic function")
 
-    # return xtgeo_surf
-    objects = await surface_coll._utils.get_objects_async(500, surface_coll._query, ["_id"])
-    object_ids = list(map(lambda obj: obj["_id"], objects))
-    res = await surface_coll._sumo.post_async(
-        "/surface/aggregate",
-        json={"operation": [stat.value for stat in statistics], "object_ids": object_ids},
-    )
-    res_bytes = res.content
-    # print(res.content)
-    import zipfile
-
-    surfs = []
-    with zipfile.ZipFile(BytesIO(res_bytes)) as z:
-        # return z.read(z.namelist()[0])
-        for stat_op in z.namelist():
-            xtgeo_surf = xtgeo.surface_from_file(BytesIO(z.read(stat_op)))
-            xtgeo_surf.name = StatisticFunction.from_string_value(stat_op.upper())
-            surfs.append(xtgeo_surf)
-    return surfs
+    return xtgeo_surf
 
 
 def _make_intersection(surface: xtgeo.RegularSurface, xtgeo_fencespec: np.ndarray) -> XtgeoSurfaceIntersectionResult:
@@ -295,12 +275,3 @@ def _make_intersection(surface: xtgeo.RegularSurface, xtgeo_fencespec: np.ndarra
         zval=line[:, 1].tolist(),
     )
     return intersection
-
-
-def _make_intersections(
-    surfaces: List[xtgeo.RegularSurface], xtgeo_fencespec: np.ndarray
-) -> List[XtgeoSurfaceIntersectionResult]:
-    if len(surfaces) == 0:
-        return []
-
-    return [_make_intersection(surface, xtgeo_fencespec) for surface in surfaces]
