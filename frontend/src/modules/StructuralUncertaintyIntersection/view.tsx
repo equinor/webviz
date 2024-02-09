@@ -1,7 +1,6 @@
-import React, { useId } from "react";
+import React from "react";
 
 import { IntersectionReferenceSystem, Trajectory } from "@equinor/esv-intersection";
-import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { ModuleFCProps } from "@framework/Module";
 import { useViewStatusWriter } from "@framework/StatusWriter";
 import { useElementSize } from "@lib/hooks/useElementSize";

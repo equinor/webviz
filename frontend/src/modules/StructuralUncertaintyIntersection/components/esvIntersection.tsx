@@ -122,7 +122,7 @@ function surfaceSamplePointsToRealizationLayerData(
     stratigraphyColorMap: StratigraphyColorMap
 ): SurfaceData {
     const surfaceValues: { name: string; realization: number; values: number[]; showLabel: boolean }[] = [];
-    samplePoints.forEach((surfaceSet, idx) => {
+    samplePoints.forEach((surfaceSet) => {
         surfaceSet.realizationPoints.forEach((realSamplePoints: SurfaceRealizationSamplePoints_api, rdx: number) => {
             surfaceValues.push({
                 name: surfaceSet.surfaceName,

@@ -1,6 +1,6 @@
 import React from "react";
 
-import { StatisticFunction_api, SurfaceAttributeType_api, SurfaceStatisticFunction_api } from "@api";
+import { StatisticFunction_api, SurfaceAttributeType_api } from "@api";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { ModuleFCProps } from "@framework/Module";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";

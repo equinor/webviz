@@ -1,6 +1,6 @@
 import { SurfaceRealizationSamplePoints_api } from "@api";
 import { apiService } from "@framework/ApiService";
-import { UseQueryResult, useQueries, useQuery } from "@tanstack/react-query";
+import { UseQueryResult, useQueries } from "@tanstack/react-query";
 
 const STALE_TIME = 60 * 1000;
 const CACHE_TIME = 60 * 1000;
