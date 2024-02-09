@@ -1,7 +1,6 @@
 import React from "react";
 
 import { StatisticFunction_api, SurfaceAttributeType_api, SurfaceStatisticFunction_api } from "@api";
-import { ColorSet } from "@lib/utils/ColorSet";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { ModuleFCProps } from "@framework/Module";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
@@ -15,8 +14,11 @@ import { CircularProgress } from "@lib/components/CircularProgress";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { Label } from "@lib/components/Label";
 import { QueryStateWrapper } from "@lib/components/QueryStateWrapper";
+import { RadioGroup } from "@lib/components/RadioGroup";
 import { Select } from "@lib/components/Select";
 import { useValidState } from "@lib/hooks/useValidState";
+import { ColorSet } from "@lib/utils/ColorSet";
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { SurfaceDirectory, SurfaceTimeType, useSurfaceDirectoryQuery } from "@modules/_shared/Surface";
 import { useWellHeadersQuery } from "@modules/_shared/WellBore";
 
@@ -25,11 +27,20 @@ import { isEqual } from "lodash";
 import { IntersectionSettingsSelect } from "./components/intersectionSettings";
 import { RealizationsSelect } from "./components/realizationsSelect";
 import { State } from "./state";
-import { StatisticFunctionEnumToStringMapping, StratigraphyColorMap, SurfaceSetAddress, VisualizationMode, VisualizationModeEnumToStringMapping } from "./types";
-import { resolveClassNames } from "@lib/utils/resolveClassNames";
-import { RadioGroup } from "@lib/components/RadioGroup";
+import {
+    StatisticFunctionEnumToStringMapping,
+    StratigraphyColorMap,
+    SurfaceSetAddress,
+    VisualizationMode,
+    VisualizationModeEnumToStringMapping,
+} from "./types";
 
-export function Settings({ moduleContext, workbenchSession, workbenchSettings, workbenchServices }: ModuleFCProps<State>) {
+export function Settings({
+    moduleContext,
+    workbenchSession,
+    workbenchSettings,
+    workbenchServices,
+}: ModuleFCProps<State>) {
     const syncedSettingKeys = moduleContext.useSyncedSettingKeys();
     const syncHelper = new SyncSettingsHelper(syncedSettingKeys, workbenchServices);
     const syncedValueEnsembles = syncHelper.useValue(SyncSettingKey.ENSEMBLE, "global.syncValue.ensembles");
@@ -99,10 +110,10 @@ export function Settings({ moduleContext, workbenchSession, workbenchSettings, w
 
     const surfaceDirectory = surfaceDirectoryQuery.data
         ? new SurfaceDirectory({
-            surfaceMetas: surfaceDirectoryQuery.data,
-            timeType: SurfaceTimeType.None,
-            includeAttributeTypes: [SurfaceAttributeType_api.DEPTH],
-        })
+              surfaceMetas: surfaceDirectoryQuery.data,
+              timeType: SurfaceTimeType.None,
+              includeAttributeTypes: [SurfaceAttributeType_api.DEPTH],
+          })
         : null;
 
     const [selectedSurfaceAttribute, setSelectedSurfaceAttribute] = useValidState<string | null>({
@@ -117,8 +128,8 @@ export function Settings({ moduleContext, workbenchSession, workbenchSettings, w
     }
     const surfaceAttrOptions = surfaceDirectory
         ? surfaceDirectory.getAttributeNames(null).map((attribute) => {
-            return { label: attribute, value: attribute };
-        })
+              return { label: attribute, value: attribute };
+          })
         : [];
 
     React.useEffect(
@@ -135,13 +146,7 @@ export function Settings({ moduleContext, workbenchSession, workbenchSettings, w
             }
             setSurfaceSetAddress(surfaceSetSpec);
         },
-        [
-            computedEnsembleIdent,
-            selectedSurfaceAttribute,
-            realizationsSurfaceNames,
-            selectedReals,
-
-        ]
+        [computedEnsembleIdent, selectedSurfaceAttribute, realizationsSurfaceNames, selectedReals]
     );
     React.useEffect(
         function propagateWellBoreAddressToView() {
@@ -149,18 +154,12 @@ export function Settings({ moduleContext, workbenchSession, workbenchSettings, w
         },
         [selectedWellboreAddress, setWellboreAddress]
     );
-    React.useEffect(
-        function propogateColorsToView() {
-            if (surfaceDirectory && realizationsSurfaceNames) {
-
-                const surfaceColorMap = createStratigraphyColors(
-                    availableSurfaceNames?.sort() ?? [],
-                    colorSet
-                );
-                moduleContext.getStateStore().setValue("stratigraphyColorMap", surfaceColorMap);
-            }
+    React.useEffect(function propogateColorsToView() {
+        if (surfaceDirectory && realizationsSurfaceNames) {
+            const surfaceColorMap = createStratigraphyColors(availableSurfaceNames?.sort() ?? [], colorSet);
+            moduleContext.getStateStore().setValue("stratigraphyColorMap", surfaceColorMap);
         }
-    );
+    });
 
     function handleEnsembleSelectionChange(newEnsembleIdent: EnsembleIdent | null) {
         setSelectedEnsembleIdent(newEnsembleIdent);
@@ -208,16 +207,12 @@ export function Settings({ moduleContext, workbenchSession, workbenchSettings, w
         });
     }
 
-
-    function handleStatisticsChange(
-        event: React.ChangeEvent<HTMLInputElement>,
-        statistic: StatisticFunction_api
-    ) {
+    function handleStatisticsChange(event: React.ChangeEvent<HTMLInputElement>, statistic: StatisticFunction_api) {
         setStatisticFunctions((prev) => {
             if (event.target.checked) {
-                return prev ? [...prev, statistic] : [statistic]
+                return prev ? [...prev, statistic] : [statistic];
             } else {
-                return prev ? prev.filter((item) => item !== statistic) : []
+                return prev ? prev.filter((item) => item !== statistic) : [];
             }
         });
     }
@@ -289,11 +284,10 @@ export function Settings({ moduleContext, workbenchSession, workbenchSettings, w
                                 multiple={true}
                             />
                         </Label>
-
                     </div>
                 </QueryStateWrapper>
             </CollapsibleGroup>
-            <CollapsibleGroup expanded={false} title="Visualization">
+            <CollapsibleGroup expanded={true} title="Visualization">
                 <RadioGroup
                     value={visualizationMode}
                     options={Object.values(VisualizationMode).map((val: VisualizationMode) => {
@@ -341,9 +335,6 @@ function fixupSyncedOrSelectedOrFirstWellbore(
     }
     return null;
 }
-
-
-
 
 export function createStratigraphyColors(surfaceNames: string[], colorSet: ColorSet): StratigraphyColorMap {
     const colorMap: StratigraphyColorMap = {};

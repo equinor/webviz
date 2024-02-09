@@ -11,7 +11,6 @@ import { ColorScaleGradientType } from "@lib/utils/ColorScale";
 import { usePolygonsDataQueryByAddress } from "@modules/_shared/Polygons";
 import { useFieldWellsTrajectoriesQuery } from "@modules/_shared/WellBore/queryHooks";
 import { useSurfaceDataQueryByAddress } from "@modules_shared/Surface";
-import { DrawLineStringMode } from "@nebula.gl/edit-modes";
 import { ViewAnnotation } from "@webviz/subsurface-viewer/dist/components/ViewAnnotation";
 
 import {
@@ -202,27 +201,6 @@ export function View({ moduleContext, workbenchSettings, workbenchServices }: Mo
         propertySurfDataQuery.isError ||
         polygonsQuery.isError ||
         wellTrajectoriesQuery.isError;
-    const [drawData, setDrawData] = React.useState<any>({
-        type: "FeatureCollection",
-        features: [],
-    });
-    newLayers.unshift({
-        "@@type": "EditableGeoJsonLayer",
-        id: "drawing-layer",
-        mode: DrawLineStringMode,
-        pickable: true,
-        visible: true,
-        depthTest: false,
-        data: drawData,
-        enableSnapping: true,
-        onEdit: handleDraw,
-    });
-    function handleDraw({ updatedData, editType, editContext }: any) {
-        if (editType === "addFeature") {
-            setDrawData(updatedData);
-        }
-    }
-
     return (
         <div className="relative w-full h-full flex flex-col">
             <div>
