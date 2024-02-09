@@ -3,7 +3,7 @@ import { ChannelContentMetaData, DataGenerator } from "@framework/DataChannelTyp
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { simulationUnitReformat, simulationVectorDescription } from "@modules/_shared/reservoirSimulationStringUtils";
 
-import { VectorSpec } from "./state";
+import { VectorSpec } from "./typesAndEnums";
 
 export function makeVectorGroupDataGenerator(
     vectorSpecification: VectorSpec,

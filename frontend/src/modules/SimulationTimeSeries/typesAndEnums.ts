@@ -1,6 +1,5 @@
 import { Frequency_api, StatisticFunction_api } from "@api";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
-import { ParameterIdent } from "@framework/EnsembleParameters";
 
 export interface VectorSpec {
     ensembleIdent: EnsembleIdent;
@@ -64,19 +63,3 @@ export const FrequencyEnumToStringMapping = {
     [Frequency_api.QUARTERLY]: "Quarterly",
     [Frequency_api.YEARLY]: "Yearly",
 };
-
-export interface State {
-    groupBy: GroupBy;
-    colorRealizationsByParameter: boolean;
-    parameterIdent: ParameterIdent | null;
-    visualizationMode: VisualizationMode;
-    vectorSpecifications: VectorSpec[] | null;
-    resamplingFrequency: Frequency_api | null;
-    showHistorical: boolean;
-    showObservations: boolean;
-    statisticsSelection: {
-        IndividualStatisticsSelection: StatisticFunction_api[];
-        FanchartStatisticsSelection: FanchartStatisticOption[];
-    };
-    realizationsToInclude: number[] | null;
-}

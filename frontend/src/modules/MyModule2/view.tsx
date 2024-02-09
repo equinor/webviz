@@ -1,13 +1,10 @@
 import React from "react";
 
-import { ModuleFCProps } from "@framework/Module";
-
 import { useAtom } from "jotai";
 
 import { atomBasedOnVectors, ensembleSetDependentAtom } from "./atoms";
-import { State } from "./state";
 
-export const View = (props: ModuleFCProps<State>) => {
+export const View = () => {
     const [isFetching] = useAtom(atomBasedOnVectors);
 
     const [firstEnsemble] = useAtom(ensembleSetDependentAtom);

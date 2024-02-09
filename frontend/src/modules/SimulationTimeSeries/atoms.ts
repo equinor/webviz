@@ -18,7 +18,7 @@ import { QueryObserverResult } from "@tanstack/query-core";
 import { atom } from "jotai";
 import { isEqual } from "lodash";
 
-import { FanchartStatisticOption, GroupBy, StatisticsSelection, VectorSpec, VisualizationMode } from "./state";
+import { FanchartStatisticOption, GroupBy, StatisticsSelection, VectorSpec, VisualizationMode } from "./typesAndEnums";
 import { EnsembleVectorListsHelper } from "./utils/ensemblesVectorListHelper";
 import { createLoadedVectorSpecificationAndDataArray } from "./utils/vectorSpecificationsAndQueriesUtils";
 

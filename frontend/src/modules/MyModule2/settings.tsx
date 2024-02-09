@@ -3,7 +3,6 @@ import React from "react";
 import { VectorDescription_api } from "@api";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
-import { ModuleFCProps } from "@framework/Module";
 import { SingleEnsembleSelect } from "@framework/components/SingleEnsembleSelect";
 import { Label } from "@lib/components/Label";
 import { Select, SelectOption } from "@lib/components/Select";
@@ -17,9 +16,8 @@ import {
     userSelectedVectorAtom,
     vectorsAtom,
 } from "./atoms";
-import { State } from "./state";
 
-export const Settings = (props: ModuleFCProps<State>) => {
+export const Settings = () => {
     const ensembleSet = useAtomValue(EnsembleSetAtom);
     const [selectedEnsemble, setSelectedEnsemble] = useAtom(selectedEnsembleAtom);
     const [result] = useAtom(vectorsAtom);

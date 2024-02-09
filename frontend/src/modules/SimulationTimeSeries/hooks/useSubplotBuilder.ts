@@ -24,7 +24,7 @@ import {
     vectorSpecificationsAtom,
     visualizationModeAtom,
 } from "../atoms";
-import { GroupBy, VectorSpec, VisualizationMode } from "../state";
+import { GroupBy, VectorSpec, VisualizationMode } from "../typesAndEnums";
 import { EnsemblesContinuousParameterColoring } from "../utils/ensemblesContinuousParameterColoring";
 import { SubplotBuilder, SubplotOwner } from "../utils/subplotBuilder";
 import { TimeSeriesPlotData } from "../utils/timeSeriesPlotData";
