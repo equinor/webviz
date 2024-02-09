@@ -4,10 +4,8 @@
 /* eslint-disable */
 import type { Body_post_get_surface_intersection } from '../models/Body_post_get_surface_intersection';
 import type { Body_post_sample_surface_in_points } from '../models/Body_post_sample_surface_in_points';
-import type { Body_well_intersection_statistics } from '../models/Body_well_intersection_statistics';
 import type { SurfaceData } from '../models/SurfaceData';
 import type { SurfaceIntersectionData } from '../models/SurfaceIntersectionData';
-import type { SurfaceIntersectionPoints } from '../models/SurfaceIntersectionPoints';
 import type { SurfaceMeta } from '../models/SurfaceMeta';
 import type { SurfaceRealizationSamplePoints } from '../models/SurfaceRealizationSamplePoints';
 import type { SurfaceStatisticFunction } from '../models/SurfaceStatisticFunction';
@@ -239,35 +237,33 @@ export class SurfaceService {
     }
     /**
      * Post Sample Surface In Points
+     * @param caseUuid Sumo case uuid
+     * @param ensembleName Ensemble name
+     * @param surfaceName Surface name
+     * @param surfaceAttribute Surface attribute
+     * @param realizationNums Realization numbers
      * @param requestBody
      * @returns SurfaceRealizationSamplePoints Successful Response
      * @throws ApiError
      */
     public postSampleSurfaceInPoints(
+        caseUuid: string,
+        ensembleName: string,
+        surfaceName: string,
+        surfaceAttribute: string,
+        realizationNums: Array<number>,
         requestBody: Body_post_sample_surface_in_points,
     ): CancelablePromise<Array<SurfaceRealizationSamplePoints>> {
         return this.httpRequest.request({
             method: 'POST',
             url: '/surface/sample_surface_in_points',
-            body: requestBody,
-            mediaType: 'application/json',
-            errors: {
-                422: `Validation Error`,
+            query: {
+                'case_uuid': caseUuid,
+                'ensemble_name': ensembleName,
+                'surface_name': surfaceName,
+                'surface_attribute': surfaceAttribute,
+                'realization_nums': realizationNums,
             },
-        });
-    }
-    /**
-     * Well Intersection Statistics
-     * @param requestBody
-     * @returns SurfaceIntersectionPoints Successful Response
-     * @throws ApiError
-     */
-    public wellIntersectionStatistics(
-        requestBody: Body_well_intersection_statistics,
-    ): CancelablePromise<Array<SurfaceIntersectionPoints>> {
-        return this.httpRequest.request({
-            method: 'POST',
-            url: '/surface/well_intersection_statistics',
             body: requestBody,
             mediaType: 'application/json',
             errors: {

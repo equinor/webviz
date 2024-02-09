@@ -1,32 +1,23 @@
 import React, { useId } from "react";
 
-import { RealizationsSurfaceSetSpec_api } from "@api";
-import {
-    IntersectionReferenceSystem,
-
-    Trajectory,
-} from "@equinor/esv-intersection";
+import { IntersectionReferenceSystem, Trajectory } from "@equinor/esv-intersection";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { ModuleFCProps } from "@framework/Module";
 import { useViewStatusWriter } from "@framework/StatusWriter";
 import { useElementSize } from "@lib/hooks/useElementSize";
+import {
+    makeExtendedTrajectoryFromTrajectoryXyzPoints,
+    makeTrajectoryXyzPointsFromWellboreTrajectory,
+} from "@modules/SeismicIntersection/utils/esvIntersectionDataConversion";
 import { useWellTrajectoriesQuery } from "@modules/_shared/WellBore/queryHooks";
 import { ContentError } from "@modules/_shared/components/ContentMessage";
 
 import { isEqual } from "lodash";
 
-import { EsvIntersection } from "./components/esvIntersection";
-import {
-
-    useSampleSurfaceInPointsQueries,
-
-} from "./queryHooks";
-import { State } from "./state";
-import {
-    makeExtendedTrajectoryFromTrajectoryXyzPoints,
-    makeTrajectoryXyzPointsFromWellboreTrajectory,
-} from "./utils/esvIntersectionDataConversion";
 import Legend from "./components/Legend";
+import { EsvIntersection } from "./components/esvIntersection";
+import { useSampleSurfaceInPointsQueries } from "./queryHooks";
+import { State } from "./state";
 
 export const View = ({ moduleContext }: ModuleFCProps<State>) => {
     const wrapperDivRef = React.useRef<HTMLDivElement | null>(null);
@@ -69,7 +60,6 @@ export const View = ({ moduleContext }: ModuleFCProps<State>) => {
         // If the new extended trajectory is different, update the polyline, but keep the seismic fence image
         if (!isEqual(newExtendedWellboreTrajectory, extendedWellboreTrajectory)) {
             setExtendedWellboreTrajectory(newExtendedWellboreTrajectory);
-
         }
 
         // When new well trajectory 3D points are loaded, update the render trajectory and clear the seismic fence image
@@ -77,34 +67,23 @@ export const View = ({ moduleContext }: ModuleFCProps<State>) => {
             setRenderWellboreTrajectoryXyzPoints(trajectoryXyzPoints);
         }
     }
-    const realEnsembleIdent: EnsembleIdent = EnsembleIdent.fromCaseUuidAndEnsembleName(
-        surfaceSetAddress?.caseUuid ?? "",
-        surfaceSetAddress?.ensembleName ?? ""
-    );
-
-    let realizationsSurfaceSetSpec_api: RealizationsSurfaceSetSpec_api | null = null;
-    if (surfaceSetAddress) {
-        realizationsSurfaceSetSpec_api = {
-            surface_names: surfaceSetAddress.names,
-            surface_attribute: surfaceSetAddress.attribute,
-            realization_nums: surfaceSetAddress.realizationNums ?? [],
-        };
-    }
 
     const x_points = extendedWellboreTrajectory?.points.map((coord) => coord[0]) ?? [];
     const y_points = extendedWellboreTrajectory?.points.map((coord) => coord[1]) ?? [];
 
     const cum_length = extendedWellboreTrajectory
         ? IntersectionReferenceSystem.toDisplacement(
-            extendedWellboreTrajectory.points,
-            extendedWellboreTrajectory.offset
-        ).map((coord) => coord[0] - intersectionSettings.extension)
+              extendedWellboreTrajectory.points,
+              extendedWellboreTrajectory.offset
+          ).map((coord) => coord[0] - intersectionSettings.extension)
         : [];
 
-
     const sampleSurfaceInPointsQueries = useSampleSurfaceInPointsQueries(
-        realEnsembleIdent,
-        realizationsSurfaceSetSpec_api,
+        surfaceSetAddress?.caseUuid ?? "",
+        surfaceSetAddress?.ensembleName ?? "",
+        surfaceSetAddress?.names ?? [],
+        surfaceSetAddress?.attribute ?? "",
+        surfaceSetAddress?.realizationNums ?? [],
         x_points,
         y_points,
         true
@@ -118,19 +97,20 @@ export const View = ({ moduleContext }: ModuleFCProps<State>) => {
         errorString += "Error loading well trajectories";
     }
 
-
     if (errorString !== "") {
         statusWriter.addError(errorString);
     }
-    const stratigraphyColorLegendItems = surfaceSetAddress?.names.map((key) => {
-        return { color: stratigraphyColorMap[key], label: key };
-    }
-    ) ?? [];
-
+    const stratigraphyColorLegendItems =
+        surfaceSetAddress?.names.map((key) => {
+            return { color: stratigraphyColorMap[key], label: key };
+        }) ?? [];
 
     return (
-        <div ref={wrapperDivRef} className="w-full h-full relative
-        ">
+        <div
+            ref={wrapperDivRef}
+            className="w-full h-full relative
+        "
+        >
             {errorString !== "" ? (
                 <ContentError>{errorString}</ContentError>
             ) : (

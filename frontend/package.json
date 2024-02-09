@@ -34,6 +34,7 @@
         "react": "^18.2.0",
         "react-dom": "^18.2.0",
         "react-plotly.js": "^2.6.0",
+        "simple-statistics": "^7.8.3",
         "uuid": "^9.0.0"
     },
     "devDependencies": {

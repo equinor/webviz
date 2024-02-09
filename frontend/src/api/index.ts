@@ -16,11 +16,9 @@ export type { Body_get_realizations_response as Body_get_realizations_response_a
 export type { Body_post_get_seismic_fence as Body_post_get_seismic_fence_api } from './models/Body_post_get_seismic_fence';
 export type { Body_post_get_surface_intersection as Body_post_get_surface_intersection_api } from './models/Body_post_get_surface_intersection';
 export type { Body_post_sample_surface_in_points as Body_post_sample_surface_in_points_api } from './models/Body_post_sample_surface_in_points';
-export type { Body_well_intersection_statistics as Body_well_intersection_statistics_api } from './models/Body_well_intersection_statistics';
 export type { CaseInfo as CaseInfo_api } from './models/CaseInfo';
 export type { Completions as Completions_api } from './models/Completions';
 export type { EnsembleDetails as EnsembleDetails_api } from './models/EnsembleDetails';
-export type { EnsembleIdent as EnsembleIdent_api } from './models/EnsembleIdent';
 export type { EnsembleInfo as EnsembleInfo_api } from './models/EnsembleInfo';
 export type { EnsembleParameter as EnsembleParameter_api } from './models/EnsembleParameter';
 export type { EnsembleParameterDescription as EnsembleParameterDescription_api } from './models/EnsembleParameterDescription';
@@ -41,7 +39,6 @@ export type { PolygonData as PolygonData_api } from './models/PolygonData';
 export { PolygonsAttributeType as PolygonsAttributeType_api } from './models/PolygonsAttributeType';
 export type { PolygonsMeta as PolygonsMeta_api } from './models/PolygonsMeta';
 export type { PvtData as PvtData_api } from './models/PvtData';
-export type { RealizationsSurfaceSetSpec as RealizationsSurfaceSetSpec_api } from './models/RealizationsSurfaceSetSpec';
 export type { RftInfo as RftInfo_api } from './models/RftInfo';
 export type { RftObservation as RftObservation_api } from './models/RftObservation';
 export type { RftObservations as RftObservations_api } from './models/RftObservations';
@@ -50,7 +47,6 @@ export type { SeismicCubeMeta as SeismicCubeMeta_api } from './models/SeismicCub
 export type { SeismicFenceData as SeismicFenceData_api } from './models/SeismicFenceData';
 export type { SeismicFencePolyline as SeismicFencePolyline_api } from './models/SeismicFencePolyline';
 export { SensitivityType as SensitivityType_api } from './models/SensitivityType';
-export type { StatisticalSurfaceSetSpec as StatisticalSurfaceSetSpec_api } from './models/StatisticalSurfaceSetSpec';
 export { StatisticFunction as StatisticFunction_api } from './models/StatisticFunction';
 export type { StatisticValueObject as StatisticValueObject_api } from './models/StatisticValueObject';
 export { StratigraphicFeature as StratigraphicFeature_api } from './models/StratigraphicFeature';
@@ -61,7 +57,6 @@ export { SurfaceAttributeType as SurfaceAttributeType_api } from './models/Surfa
 export type { SurfaceData as SurfaceData_api } from './models/SurfaceData';
 export type { SurfaceIntersectionCumulativeLengthPolyline as SurfaceIntersectionCumulativeLengthPolyline_api } from './models/SurfaceIntersectionCumulativeLengthPolyline';
 export type { SurfaceIntersectionData as SurfaceIntersectionData_api } from './models/SurfaceIntersectionData';
-export type { SurfaceIntersectionPoints as SurfaceIntersectionPoints_api } from './models/SurfaceIntersectionPoints';
 export type { SurfaceMeta as SurfaceMeta_api } from './models/SurfaceMeta';
 export type { SurfaceRealizationSamplePoints as SurfaceRealizationSamplePoints_api } from './models/SurfaceRealizationSamplePoints';
 export { SurfaceStatisticFunction as SurfaceStatisticFunction_api } from './models/SurfaceStatisticFunction';

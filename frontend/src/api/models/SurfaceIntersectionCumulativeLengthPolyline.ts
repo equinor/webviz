@@ -19,5 +19,8 @@
  * Note: Verify if cum_lengths is necessary with respect to xtgeo
  */
 export type SurfaceIntersectionCumulativeLengthPolyline = {
+    x_points: Array<number>;
+    y_points: Array<number>;
+    cum_lengths: Array<number>;
 };
 
