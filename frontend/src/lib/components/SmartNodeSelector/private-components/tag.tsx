@@ -1,6 +1,7 @@
 import React from "react";
 
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
+import { getTextWidthWithFont } from "@lib/utils/textSize";
 import { Close, Error, ExpandLess, ExpandMore, Help, Warning } from "@mui/icons-material";
 
 import "animate.css";
@@ -97,22 +98,12 @@ export class Tag extends React.Component<TagProps> {
     }
 
     private calculateTextWidth(text: string, padding = 10, minWidth = 50): number {
-        const { treeNodeSelection } = this.props;
-
-        const canvas = document.createElement("canvas");
-        const context = canvas.getContext("2d");
-        if (!context) {
-            return minWidth;
+        if (text === undefined) {
+            text = "";
         }
 
-        const input = (treeNodeSelection.getRef() as React.RefObject<HTMLInputElement>).current as HTMLInputElement;
-        if (input) {
-            context.font = window.getComputedStyle(input).font;
-        } else {
-            context.font = "0.875rem sans-serif";
-        }
-
-        return Math.max(minWidth, context.measureText(text).width + padding);
+        const width = getTextWidthWithFont(text, "Equinor", 0.875);
+        return Math.max(minWidth, width + padding);
     }
 
     private createMatchesCounter(nodeSelection: TreeNodeSelection, index: number): JSX.Element | null {

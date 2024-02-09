@@ -19,7 +19,7 @@ type ViewContentProps = {
 };
 
 export const ViewContent = React.memo((props: ViewContentProps) => {
-    const [importState, setImportState] = React.useState<ImportState>(ImportState.NotImported);
+    const [importState, setImportState] = React.useState<ImportState>(props.moduleInstance.getImportState());
     const [moduleInstanceState, setModuleInstanceState] = React.useState<ModuleInstanceState>(
         ModuleInstanceState.INITIALIZING
     );

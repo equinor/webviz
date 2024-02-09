@@ -6,8 +6,10 @@ import { useViewStatusWriter } from "@framework/StatusWriter";
 import { Tag } from "@lib/components/Tag";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { ColorScaleGradientType } from "@lib/utils/ColorScale";
-import { Size } from "@lib/utils/geometry";
+import { Size2D } from "@lib/utils/geometry";
 import { ContentInfo } from "@modules/_shared/components/ContentMessage";
+import { ContentWarning } from "@modules/_shared/components/ContentMessage/contentMessage";
+import { Warning } from "@mui/icons-material";
 
 import { Layout, PlotData } from "plotly.js";
 
@@ -17,16 +19,30 @@ import { makeHistogramTrace } from "./utils/histogram";
 import { makeHoverText, makeHoverTextWithColor, makeTitleFromChannelContent } from "./utils/stringUtils";
 import { calcTextSize } from "./utils/textSize";
 
+const MAX_NUM_PLOTS = 12;
+
+const MaxNumberPlotsExceededMessage: React.FC = () => {
+    return (
+        <ContentWarning>
+            <Warning fontSize="large" className="mb-2" />
+            Too many plots to display. Due to performance limitations, the number of plots is limited to {MAX_NUM_PLOTS}
+            .
+        </ContentWarning>
+    );
+};
+
+MaxNumberPlotsExceededMessage.displayName = "MaxNumberPlotsExceededMessage";
+
 export const View = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>) => {
     const [isPending, startTransition] = React.useTransition();
-    const [plot, setPlot] = React.useState<React.ReactNode>(null);
+    const [content, setContent] = React.useState<React.ReactNode>(null);
     const [revNumberX, setRevNumberX] = React.useState<number>(0);
     const [revNumberY, setRevNumberY] = React.useState<number>(0);
     const [revNumberColorMapping, setRevNumberColorMapping] = React.useState<number>(0);
     const [prevPlotType, setPrevPlotType] = React.useState<PlotType | null>(null);
     const [prevNumBins, setPrevNumBins] = React.useState<number | null>(null);
     const [prevOrientation, setPrevOrientation] = React.useState<"v" | "h" | null>(null);
-    const [prevSize, setPrevSize] = React.useState<Size | null>(null);
+    const [prevSize, setPrevSize] = React.useState<Size2D | null>(null);
 
     const plotType = moduleContext.useStoreValue("plotType");
     const numBins = moduleContext.useStoreValue("numBins");
@@ -76,7 +92,7 @@ export const View = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
 
         startTransition(function makeContent() {
             if (!receiverX.channel) {
-                setPlot(
+                setContent(
                     <ContentInfo>
                         Connect a channel to <Tag label={receiverX.displayName} />
                     </ContentInfo>
@@ -85,7 +101,7 @@ export const View = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
             }
 
             if (receiverX.channel.contents.length === 0) {
-                setPlot(
+                setContent(
                     <ContentInfo>
                         No data on <Tag label={receiverX.displayName} />
                     </ContentInfo>
@@ -95,7 +111,7 @@ export const View = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
 
             if (plotType === PlotType.Scatter || plotType === PlotType.ScatterWithColorMapping) {
                 if (!receiverY.channel) {
-                    setPlot(
+                    setContent(
                         <ContentInfo>
                             Connect a channel to <Tag label={receiverY.displayName} />
                         </ContentInfo>
@@ -104,7 +120,7 @@ export const View = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
                 }
 
                 if (receiverY.channel.contents.length === 0) {
-                    setPlot(
+                    setContent(
                         <ContentInfo>
                             No data on <Tag label={receiverY.displayName} />
                         </ContentInfo>
@@ -115,7 +131,7 @@ export const View = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
 
             if (plotType === PlotType.ScatterWithColorMapping) {
                 if (!receiverColorMapping.channel) {
-                    setPlot(
+                    setContent(
                         <ContentInfo>
                             Connect a channel to <Tag label={receiverColorMapping.displayName} />
                         </ContentInfo>
@@ -124,7 +140,7 @@ export const View = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
                 }
 
                 if (receiverColorMapping.channel.contents.length === 0) {
-                    setPlot(
+                    setContent(
                         <ContentInfo>
                             No data on <Tag label={receiverColorMapping.displayName} />
                         </ContentInfo>
@@ -135,6 +151,10 @@ export const View = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
 
             if (plotType === PlotType.Histogram) {
                 const numContents = receiverX.channel.contents.length;
+                if (numContents > MAX_NUM_PLOTS) {
+                    setContent(<MaxNumberPlotsExceededMessage />);
+                    return;
+                }
                 const numCols = Math.floor(Math.sqrt(numContents));
                 const numRows = Math.ceil(numContents / numCols);
 
@@ -184,12 +204,16 @@ export const View = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
                         cellIndex++;
                     }
                 }
-                setPlot(figure.makePlot());
+                setContent(figure.makePlot());
                 return;
             }
 
             if (plotType === PlotType.BarChart) {
                 const numContents = receiverX.channel.contents.length;
+                if (numContents > MAX_NUM_PLOTS) {
+                    setContent(<MaxNumberPlotsExceededMessage />);
+                    return;
+                }
                 const numCols = Math.floor(Math.sqrt(numContents));
                 const numRows = Math.ceil(numContents / numCols);
 
@@ -252,7 +276,7 @@ export const View = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
                     }
                 }
 
-                setPlot(figure.makePlot());
+                setContent(figure.makePlot());
                 return;
             }
 
@@ -260,6 +284,11 @@ export const View = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
                 (plotType === PlotType.Scatter && receiverY.channel) ||
                 (plotType === PlotType.ScatterWithColorMapping && receiverY.channel && receiverColorMapping.channel)
             ) {
+                const numPlots = receiverX.channel.contents.length * receiverY.channel.contents.length;
+                if (numPlots > MAX_NUM_PLOTS) {
+                    setContent(<MaxNumberPlotsExceededMessage />);
+                    return;
+                }
                 const figure = makeSubplots({
                     numRows: receiverX.channel.contents.length,
                     numCols: receiverY.channel.contents.length,
@@ -400,7 +429,7 @@ export const View = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
                     autosize: true,
                 };
                 figure.updateLayout(patch);
-                setPlot(figure.makePlot());
+                setContent(figure.makePlot());
                 return;
             }
         });
@@ -408,7 +437,7 @@ export const View = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
 
     return (
         <div className="w-full h-full" ref={wrapperDivRef}>
-            {plot}
+            {content}
         </div>
     );
 };

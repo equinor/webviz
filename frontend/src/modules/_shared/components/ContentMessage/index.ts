@@ -1,1 +1,1 @@
-export { ContentInfo, ContentError } from "./contentMessage";
+export { ContentInfo, ContentError, ContentWarning } from "./contentMessage";

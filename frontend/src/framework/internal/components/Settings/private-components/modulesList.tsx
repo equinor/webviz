@@ -8,11 +8,11 @@ import { Drawer } from "@framework/internal/components/Drawer";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import {
     MANHATTAN_LENGTH,
-    Point,
-    Size,
-    pointDifference,
+    Point2D,
+    Size2D,
     pointDistance,
     pointRelativeToDomRect,
+    pointSubtraction,
     pointerEventToPoint,
 } from "@lib/utils/geometry";
 import { Help, WebAsset } from "@mui/icons-material";
@@ -26,7 +26,7 @@ type ModulesListItemProps = {
     guiMessageBroker: GuiMessageBroker;
 };
 
-const makeStyle = (isDragged: boolean, dragSize: Size, dragPosition: Point): React.CSSProperties => {
+const makeStyle = (isDragged: boolean, dragSize: Size2D, dragPosition: Point2D): React.CSSProperties => {
     if (isDragged) {
         return {
             width: dragSize.width,
@@ -47,30 +47,32 @@ const makeStyle = (isDragged: boolean, dragSize: Size, dragPosition: Point): Rea
 const ModulesListItem: React.FC<ModulesListItemProps> = (props) => {
     const ref = React.useRef<HTMLDivElement>(null);
     const [isDragged, setIsDragged] = React.useState<boolean>(false);
-    const [dragPosition, setDragPosition] = React.useState<Point>({ x: 0, y: 0 });
-    const [dragSize, setDragSize] = React.useState<Size>({ width: 0, height: 0 });
+    const [dragPosition, setDragPosition] = React.useState<Point2D>({ x: 0, y: 0 });
+    const [dragSize, setDragSize] = React.useState<Size2D>({ width: 0, height: 0 });
 
     const itemSize = useElementSize(ref);
 
     React.useEffect(() => {
         const refCurrent = ref.current;
-        let pointerDownPoint: Point | null = null;
+        let pointerDownPoint: Point2D | null = null;
         let dragging = false;
-        let pointerDownElementPosition: Point | null = null;
-        let pointerToElementDiff: Point = { x: 0, y: 0 };
+        let pointerDownElementPosition: Point2D | null = null;
+        let pointerToElementDiff: Point2D = { x: 0, y: 0 };
 
         const handlePointerDown = (e: PointerEvent) => {
             if (ref.current) {
                 document.body.classList.add("touch-none");
                 const point = pointerEventToPoint(e);
                 const rect = ref.current.getBoundingClientRect();
-                pointerDownElementPosition = pointDifference(point, pointRelativeToDomRect(point, rect));
+                pointerDownElementPosition = pointSubtraction(point, pointRelativeToDomRect(point, rect));
                 props.guiMessageBroker.publishEvent(GuiEvent.NewModulePointerDown, {
                     moduleName: props.name,
-                    elementPosition: pointDifference(point, pointRelativeToDomRect(point, rect)),
+                    elementPosition: pointSubtraction(point, pointRelativeToDomRect(point, rect)),
+                    elementSize: { width: rect.width, height: rect.height },
                     pointerPosition: point,
                 });
                 pointerDownPoint = point;
+                addDraggingEventListeners();
             }
         };
 
@@ -83,6 +85,8 @@ const ModulesListItem: React.FC<ModulesListItemProps> = (props) => {
             setIsDragged(false);
             document.body.classList.remove("touch-none");
             pointerDownElementPosition = null;
+
+            removeDraggingEventListeners();
         };
 
         const handlePointerMove = (e: PointerEvent) => {
@@ -101,7 +105,7 @@ const ModulesListItem: React.FC<ModulesListItemProps> = (props) => {
                     const rect = ref.current.getBoundingClientRect();
                     setDragSize({ width: rect.width, height: rect.height });
                 }
-                pointerToElementDiff = pointDifference(pointerDownPoint, pointerDownElementPosition);
+                pointerToElementDiff = pointSubtraction(pointerDownPoint, pointerDownElementPosition);
                 return;
             }
 
@@ -109,24 +113,35 @@ const ModulesListItem: React.FC<ModulesListItemProps> = (props) => {
                 const rect = props.relContainer?.getBoundingClientRect();
                 if (rect) {
                     setDragPosition(
-                        pointDifference(pointDifference(pointerEventToPoint(e), rect), pointerToElementDiff)
+                        pointSubtraction(pointSubtraction(pointerEventToPoint(e), rect), pointerToElementDiff)
                     );
                 }
             }
         };
 
-        if (ref.current) {
-            ref.current.addEventListener("pointerdown", handlePointerDown);
+        function addDraggingEventListeners() {
             document.addEventListener("pointerup", handlePointerUp);
             document.addEventListener("pointermove", handlePointerMove);
+            document.addEventListener("pointercancel", handlePointerUp);
+            document.addEventListener("blur", handlePointerUp);
+        }
+
+        function removeDraggingEventListeners() {
+            document.removeEventListener("pointerup", handlePointerUp);
+            document.removeEventListener("pointermove", handlePointerMove);
+            document.removeEventListener("pointercancel", handlePointerUp);
+            document.removeEventListener("blur", handlePointerUp);
+        }
+
+        if (ref.current) {
+            ref.current.addEventListener("pointerdown", handlePointerDown);
         }
 
         return () => {
             if (refCurrent) {
                 refCurrent.removeEventListener("pointerdown", handlePointerDown);
             }
-            document.removeEventListener("pointerup", handlePointerUp);
-            document.removeEventListener("pointermove", handlePointerMove);
+            removeDraggingEventListeners();
         };
     }, [props.relContainer, props.guiMessageBroker, props.name]);
 

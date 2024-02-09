@@ -40,3 +40,8 @@ body {
     height: 12px;
     background: none;
 }
+
+#root-portal {
+    position: absolute;
+    inset: 0;
+}
