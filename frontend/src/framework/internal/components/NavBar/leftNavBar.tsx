@@ -36,9 +36,9 @@ export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
         props.workbench.getGuiMessageBroker(),
         GuiState.DrawerContent
     );
-    const [settingsPanelWidth, setSettingsPanelWidth] = useGuiState(
+    const [leftSettingsPanelWidth, setLeftSettingsPanelWidth] = useGuiState(
         props.workbench.getGuiMessageBroker(),
-        GuiState.SettingsPanelWidthInPercent
+        GuiState.LeftSettingsPanelWidthInPercent
     );
     const ensembleSet = useEnsembleSet(props.workbench.getWorkbenchSession());
 
@@ -66,8 +66,8 @@ export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
     );
 
     function ensureSettingsPanelIsVisible() {
-        if (settingsPanelWidth <= 5) {
-            setSettingsPanelWidth(20);
+        if (leftSettingsPanelWidth <= 5) {
+            setLeftSettingsPanelWidth(20);
         }
     }
 

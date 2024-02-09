@@ -69,7 +69,7 @@ export class WorkbenchSession {
 function createEnsembleRealizationFilterFuncForWorkbenchSession(workbenchSession: WorkbenchSession) {
     return function ensembleRealizationFilterFunc(ensembleIdent: EnsembleIdent): readonly number[] {
         const realizationFilterSet = workbenchSession.getRealizationFilterSet();
-        const realizationFilter = realizationFilterSet.getRealizationFilterByEnsembleIdent(ensembleIdent);
+        const realizationFilter = realizationFilterSet.getRealizationFilterForEnsembleIdent(ensembleIdent);
 
         return realizationFilter.getFilteredRealizations();
     };

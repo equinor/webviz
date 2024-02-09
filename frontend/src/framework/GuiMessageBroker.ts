@@ -13,13 +13,13 @@ export enum DrawerContent {
 
 export enum GuiState {
     DrawerContent = "drawerContent",
-    SettingsPanelWidthInPercent = "settingsPanelWidthInPercent",
+    LeftSettingsPanelWidthInPercent = "leftSettingsPanelWidthInPercent",
     ActiveModuleInstanceId = "activeModuleInstanceId",
     DataChannelConnectionLayerVisible = "dataChannelConnectionLayerVisible",
     DevToolsVisible = "devToolsVisible",
     EditDataChannelConnections = "editDataChannelConnections",
-    FilterPanelWidthInPercent = "filterPanelWidthInPercent",
-    FilterPanelExpanded = "filterPanelExpanded",
+    RightSettingsPanelWidthInPercent = "rightSettingsPanelWidthInPercent",
+    RightSettingsPanelExpanded = "rightSettingsPanelExpanded",
 }
 
 export enum GuiEvent {
@@ -70,29 +70,29 @@ export type GuiEventPayloads = {
 
 type GuiStateValueTypes = {
     [GuiState.DrawerContent]: DrawerContent;
-    [GuiState.SettingsPanelWidthInPercent]: number;
+    [GuiState.LeftSettingsPanelWidthInPercent]: number;
     [GuiState.ActiveModuleInstanceId]: string;
     [GuiState.DataChannelConnectionLayerVisible]: boolean;
     [GuiState.DevToolsVisible]: boolean;
     [GuiState.EditDataChannelConnections]: boolean;
-    [GuiState.FilterPanelWidthInPercent]: number;
-    [GuiState.FilterPanelExpanded]: boolean;
+    [GuiState.RightSettingsPanelWidthInPercent]: number;
+    [GuiState.RightSettingsPanelExpanded]: boolean;
 };
 
 const defaultStates: Map<GuiState, any> = new Map();
 defaultStates.set(GuiState.DrawerContent, DrawerContent.ModuleSettings);
-defaultStates.set(GuiState.SettingsPanelWidthInPercent, 30);
+defaultStates.set(GuiState.LeftSettingsPanelWidthInPercent, 30);
 defaultStates.set(GuiState.ActiveModuleInstanceId, "");
 defaultStates.set(GuiState.DataChannelConnectionLayerVisible, false);
 defaultStates.set(GuiState.DevToolsVisible, isDevMode());
-defaultStates.set(GuiState.FilterPanelWidthInPercent, 0);
-defaultStates.set(GuiState.FilterPanelExpanded, false);
+defaultStates.set(GuiState.RightSettingsPanelWidthInPercent, 0);
+defaultStates.set(GuiState.RightSettingsPanelExpanded, false);
 
 const persistentStates: GuiState[] = [
-    GuiState.SettingsPanelWidthInPercent,
+    GuiState.LeftSettingsPanelWidthInPercent,
     GuiState.DevToolsVisible,
-    GuiState.FilterPanelWidthInPercent,
-    GuiState.FilterPanelExpanded,
+    GuiState.RightSettingsPanelWidthInPercent,
+    GuiState.RightSettingsPanelExpanded,
 ];
 
 export class GuiMessageBroker {

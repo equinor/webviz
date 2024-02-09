@@ -1,11 +1,11 @@
-import { RealizationIndexSelectionType } from "@framework/RealizationFilter";
+import { RealizationIndexSelection } from "@framework/RealizationFilter";
 
 /**
  * Convert a realization index selection to a string tag for a realization picker.
  *
  * The string tag is in the format "start-end" or "index".
  */
-function makeRealizationPickerTagFromRealizationIndexSelection(selection: RealizationIndexSelectionType): string {
+function makeRealizationPickerTagFromRealizationIndexSelection(selection: RealizationIndexSelection): string {
     if (typeof selection === "number") {
         return `${selection}`;
     }
@@ -20,7 +20,7 @@ function makeRealizationPickerTagFromRealizationIndexSelection(selection: Realiz
  * The selection can be be null, in which case an empty array is returned.
  */
 export function makeRealizationPickerTagsFromRealizationIndexSelections(
-    selections: readonly RealizationIndexSelectionType[] | null
+    selections: readonly RealizationIndexSelection[] | null
 ): string[] {
     if (!selections) return [];
 
@@ -32,7 +32,7 @@ export function makeRealizationPickerTagsFromRealizationIndexSelections(
  *
  * The string tag is expected to be in the format "start-end" or "index".
  */
-function makeRealizationIndexSelectionFromRealizationPickerTag(tag: string): RealizationIndexSelectionType {
+function makeRealizationIndexSelectionFromRealizationPickerTag(tag: string): RealizationIndexSelection {
     const split = tag.split("-");
     if (split.length === 1) {
         return parseInt(split[0]);
@@ -43,8 +43,6 @@ function makeRealizationIndexSelectionFromRealizationPickerTag(tag: string): Rea
 /**
  * Convert string tags from a realization picker to realization index selections.
  */
-export function makeRealizationIndexSelectionsFromRealizationPickerTags(
-    tags: string[]
-): RealizationIndexSelectionType[] {
+export function makeRealizationIndexSelectionsFromRealizationPickerTags(tags: string[]): RealizationIndexSelection[] {
     return tags.map(makeRealizationIndexSelectionFromRealizationPickerTag);
 }

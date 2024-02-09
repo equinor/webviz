@@ -147,7 +147,7 @@ const RealizationRangeTag: React.FC<RealizationRangeTagProps> = (props) => {
             />
             <div
                 className={resolveClassNames(
-                    "text-slate-800 hover:text-slate-600 text-sm cursor-pointer flex items-center out",
+                    "text-slate-800 hover:text-slate-600 text-sm cursor-pointer flex items-center",
                     {
                         invisible: hasFocus,
                     }
@@ -214,16 +214,14 @@ export const RealizationPicker: React.FC<RealizationPickerProps> = (props) => {
     const debounceTimeout = React.useRef<ReturnType<typeof setTimeout> | null>(null);
     const inputRef = React.useRef<HTMLInputElement>(null);
 
-    let candidateSelections = selections;
     if (props.selectedRangeTags !== undefined && !isEqual(props.selectedRangeTags, prevSelectedRangeTags)) {
-        candidateSelections =
+        const newSelections =
             props.selectedRangeTags?.map((rangeTag) => {
                 return { value: rangeTag, uuid: v4() };
             }) ?? [];
-        setSelections(candidateSelections);
+        setSelections(newSelections);
         setPrevSelectedRangeTags(props.selectedRangeTags ? [...props.selectedRangeTags] : []);
     }
-    const computedSelections = candidateSelections;
 
     const checkValidity = React.useCallback(
         function checkValidity(value: string): SelectionValidityInfo {
@@ -315,7 +313,7 @@ export const RealizationPicker: React.FC<RealizationPickerProps> = (props) => {
 
     function handleChange(event: React.ChangeEvent<HTMLInputElement>) {
         const value = event.target.value;
-        const newSelections = [...computedSelections, { value, uuid: v4() }];
+        const newSelections = [...selections, { value, uuid: v4() }];
         setSelections(newSelections);
         setActiveSelectionUuid(null);
         event.target.value = "";
@@ -333,7 +331,7 @@ export const RealizationPicker: React.FC<RealizationPickerProps> = (props) => {
     }
 
     function handleRemove(uuid: string) {
-        const newSelections = computedSelections.filter((selection) => selection.uuid !== uuid);
+        const newSelections = selections.filter((selection) => selection.uuid !== uuid);
         setSelections(newSelections);
         handleSelectionsChange(newSelections);
     }
@@ -343,7 +341,7 @@ export const RealizationPicker: React.FC<RealizationPickerProps> = (props) => {
 
         const allowedChars = "0123456789-,";
         if (event.key === "Backspace" && event.currentTarget.value === "") {
-            const lastSelection = computedSelections[computedSelections.length - 1];
+            const lastSelection = selections[selections.length - 1];
             if (lastSelection) {
                 const newSelections = selections.slice(0, -1);
                 setSelections(newSelections);
@@ -359,14 +357,12 @@ export const RealizationPicker: React.FC<RealizationPickerProps> = (props) => {
             return;
         } else if (event.key === "ArrowLeft") {
             if (eventTarget.selectionStart === 0 && eventTarget.selectionEnd === 0) {
-                let currentSelectionIndex = computedSelections.findIndex(
-                    (selection) => selection.uuid === activeSelectionUuid
-                );
+                let currentSelectionIndex = selections.findIndex((selection) => selection.uuid === activeSelectionUuid);
                 if (activeSelectionUuid === null) {
-                    currentSelectionIndex = computedSelections.length;
+                    currentSelectionIndex = selections.length;
                 }
                 if (currentSelectionIndex > 0) {
-                    setActiveSelectionUuid(computedSelections[currentSelectionIndex - 1].uuid);
+                    setActiveSelectionUuid(selections[currentSelectionIndex - 1].uuid);
                     setCaretPosition(CaretPosition.End);
                 }
                 event.preventDefault();
@@ -376,11 +372,11 @@ export const RealizationPicker: React.FC<RealizationPickerProps> = (props) => {
                 eventTarget.selectionStart === eventTarget.value.length &&
                 eventTarget.selectionEnd === eventTarget.value.length
             ) {
-                const currentSelectionIndex = computedSelections.findIndex(
+                const currentSelectionIndex = selections.findIndex(
                     (selection) => selection.uuid === activeSelectionUuid
                 );
-                if (currentSelectionIndex !== -1 && currentSelectionIndex < computedSelections.length - 1) {
-                    setActiveSelectionUuid(computedSelections[currentSelectionIndex + 1].uuid);
+                if (currentSelectionIndex !== -1 && currentSelectionIndex < selections.length - 1) {
+                    setActiveSelectionUuid(selections[currentSelectionIndex + 1].uuid);
                     setCaretPosition(CaretPosition.Start);
                 } else {
                     setActiveSelectionUuid(null);
@@ -395,7 +391,7 @@ export const RealizationPicker: React.FC<RealizationPickerProps> = (props) => {
     }
 
     function handleTagValueChange(uuid: string, value: string) {
-        const newSelections = computedSelections.map((selection) => {
+        const newSelections = selections.map((selection) => {
             if (selection.uuid === uuid) {
                 return { ...selection, value };
             }
@@ -411,13 +407,13 @@ export const RealizationPicker: React.FC<RealizationPickerProps> = (props) => {
         handleSelectionsChange([]);
     }
 
-    const numSelectedRealizations = calcUniqueSelections(computedSelections, props.validRealizations).length;
+    const numSelectedRealizations = calcUniqueSelections(selections, props.validRealizations).length;
 
     return (
         <BaseComponent disabled={props.disabled}>
             <div className="relative border border-gray-300 rounded p-2 pr-6 min-h-[3rem]">
                 <ul className="flex flex-wrap items-center cursor-text gap-1 h-full" onPointerDown={handlePointerDown}>
-                    {computedSelections.map((selection) => (
+                    {selections.map((selection) => (
                         <RealizationRangeTag
                             key={selection.uuid}
                             uuid={selection.uuid}

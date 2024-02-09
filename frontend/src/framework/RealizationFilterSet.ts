@@ -6,10 +6,6 @@ export class RealizationFilterSet {
     // Map of ensembleIdent string to RealizationFilter
     private _ensembleIdentStringRealizationFilterMap: Map<string, RealizationFilter> = new Map();
 
-    constructor() {
-        return;
-    }
-
     /**
      * The method is used to synchronize the realization filter set with the ensemble set.
      *
@@ -38,7 +34,7 @@ export class RealizationFilterSet {
     /**
      * Get filter for ensembleIdent
      */
-    getRealizationFilterByEnsembleIdent(ensembleIdent: EnsembleIdent): RealizationFilter {
+    getRealizationFilterForEnsembleIdent(ensembleIdent: EnsembleIdent): RealizationFilter {
         const filter = this._ensembleIdentStringRealizationFilterMap.get(ensembleIdent.toString());
         if (filter === undefined) {
             throw new Error(

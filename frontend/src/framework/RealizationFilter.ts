@@ -10,46 +10,46 @@ export const RealizationFilterTypeStringMapping = {
     [RealizationFilterType.REALIZATION_INDEX]: "Realization index",
 };
 
-export enum RealizationFilteringOption {
-    INCLUDE = "include",
-    EXCLUDE = "exclude",
+export enum IncludeExcludeFilter {
+    INCLUDE_FILTER = "includeFilter",
+    EXCLUDE_FILTER = "excludeFilter",
 }
-export const RealizationFilteringOptionStringMapping = {
-    [RealizationFilteringOption.INCLUDE]: "Include",
-    [RealizationFilteringOption.EXCLUDE]: "Exclude",
+export const IncludeExcludeFilterEnumToStringMapping = {
+    [IncludeExcludeFilter.INCLUDE_FILTER]: "Include Filter",
+    [IncludeExcludeFilter.EXCLUDE_FILTER]: "Exclude Filter",
 };
 
-export type IndexRangeType = { start: number; end: number };
-export type RealizationIndexSelectionType = IndexRangeType | number;
+export type IndexRange = { start: number; end: number };
+export type RealizationIndexSelection = IndexRange | number;
 
 export class RealizationFilter {
-    private _parentEnsemble: Ensemble;
-    private _filteringOption: RealizationFilteringOption;
+    private _assignedEnsemble: Ensemble;
+    private _includeExcludeFilter: IncludeExcludeFilter;
     private _filterType: RealizationFilterType;
 
-    private _realizationIndexSelections: readonly RealizationIndexSelectionType[] | null;
+    private _realizationIndexSelections: readonly RealizationIndexSelection[] | null;
 
     // Internal array for ref stability
     private _filteredRealizations: readonly number[];
 
     constructor(
-        parentEnsemble: Ensemble,
-        initialFilteringOption = RealizationFilteringOption.INCLUDE,
+        assignedEnsemble: Ensemble,
+        initialIncludeExcludeFilter = IncludeExcludeFilter.INCLUDE_FILTER,
         initialFilterType = RealizationFilterType.REALIZATION_INDEX
     ) {
-        this._parentEnsemble = parentEnsemble;
-        this._filteringOption = initialFilteringOption;
+        this._assignedEnsemble = assignedEnsemble;
+        this._includeExcludeFilter = initialIncludeExcludeFilter;
         this._filterType = initialFilterType;
-        this._filteredRealizations = parentEnsemble.getRealizations();
+        this._filteredRealizations = assignedEnsemble.getRealizations();
 
         this._realizationIndexSelections = null;
     }
 
-    getParentEnsembleIdent(): EnsembleIdent {
-        return this._parentEnsemble.getIdent();
+    getAssignedEnsembleIdent(): EnsembleIdent {
+        return this._assignedEnsemble.getIdent();
     }
 
-    setRealizationIndexSelections(selections: readonly RealizationIndexSelectionType[] | null): void {
+    setRealizationIndexSelections(selections: readonly RealizationIndexSelection[] | null): void {
         this._realizationIndexSelections = selections;
 
         // Update internal array if resulting realizations has changed
@@ -58,7 +58,7 @@ export class RealizationFilter {
         }
     }
 
-    getRealizationIndexSelections(): readonly RealizationIndexSelectionType[] | null {
+    getRealizationIndexSelections(): readonly RealizationIndexSelection[] | null {
         return this._realizationIndexSelections;
     }
 
@@ -73,13 +73,13 @@ export class RealizationFilter {
         return this._filterType;
     }
 
-    setFilteringOption(filteringOption: RealizationFilteringOption): void {
-        this._filteringOption = filteringOption;
+    setIncludeOrExcludeFilter(value: IncludeExcludeFilter): void {
+        this._includeExcludeFilter = value;
         this.runFiltering();
     }
 
-    getFilteringOption(): RealizationFilteringOption {
-        return this._filteringOption;
+    getIncludeOrExcludeFilter(): IncludeExcludeFilter {
+        return this._includeExcludeFilter;
     }
 
     getFilteredRealizations(): readonly number[] {
@@ -93,7 +93,7 @@ export class RealizationFilter {
     }
 
     private runSelectedRealizationIndexFiltering(): void {
-        let newFilteredRealizations = this._parentEnsemble.getRealizations();
+        let newFilteredRealizations = this._assignedEnsemble.getRealizations();
 
         // If realization index selection is provided, filter the realizations
         if (this._realizationIndexSelections !== null) {
@@ -118,9 +118,9 @@ export class RealizationFilter {
     }
 
     private createIncludeOrExcludeFilteredRealizationsArray(sourceRealizations: readonly number[]): readonly number[] {
-        const validRealizations = this._parentEnsemble.getRealizations();
+        const validRealizations = this._assignedEnsemble.getRealizations();
 
-        if (this._filteringOption === RealizationFilteringOption.INCLUDE) {
+        if (this._includeExcludeFilter === IncludeExcludeFilter.INCLUDE_FILTER) {
             return sourceRealizations.filter((elm) => validRealizations.includes(elm));
         }
 

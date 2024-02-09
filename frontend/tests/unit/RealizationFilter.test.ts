@@ -1,5 +1,5 @@
 import { Ensemble } from "@framework/Ensemble";
-import { RealizationFilter, RealizationFilterType, RealizationFilteringOption } from "@framework/RealizationFilter";
+import { IncludeExcludeFilter, RealizationFilter, RealizationFilterType } from "@framework/RealizationFilter";
 
 import { describe, expect, test } from "vitest";
 
@@ -15,9 +15,9 @@ const FIRST_ENSEMBLE = new Ensemble(
 );
 
 describe("Test functionality of Realization Filter class", () => {
-    test("Test get parent ensembleIdent", () => {
+    test("Test get assigned ensembleIdent", () => {
         const firstRealizationFilter = new RealizationFilter(FIRST_ENSEMBLE);
-        expect(firstRealizationFilter.getParentEnsembleIdent()).toBe(FIRST_ENSEMBLE.getIdent());
+        expect(firstRealizationFilter.getAssignedEnsembleIdent()).toBe(FIRST_ENSEMBLE.getIdent());
     });
 
     test("Test set/get filter type", () => {
@@ -26,12 +26,12 @@ describe("Test functionality of Realization Filter class", () => {
         expect(realizationFilter.getFilterType()).toBe(RealizationFilterType.REALIZATION_INDEX);
     });
 
-    test("Test set/get filtering option", () => {
+    test("Test set/get include or exclude filter state", () => {
         const realizationFilter = new RealizationFilter(FIRST_ENSEMBLE);
 
-        expect(realizationFilter.getFilteringOption()).toBe(RealizationFilteringOption.INCLUDE);
-        realizationFilter.setFilteringOption(RealizationFilteringOption.EXCLUDE);
-        expect(realizationFilter.getFilteringOption()).toBe(RealizationFilteringOption.EXCLUDE);
+        expect(realizationFilter.getIncludeOrExcludeFilter()).toBe(IncludeExcludeFilter.INCLUDE_FILTER);
+        realizationFilter.setIncludeOrExcludeFilter(IncludeExcludeFilter.EXCLUDE_FILTER);
+        expect(realizationFilter.getIncludeOrExcludeFilter()).toBe(IncludeExcludeFilter.EXCLUDE_FILTER);
     });
 
     test("Test set/get realization index selections", () => {
@@ -56,7 +56,7 @@ describe("Test functionality of Realization Filter class", () => {
 
     test("Test get filtered realizations - exclude", () => {
         const realizationFilter = new RealizationFilter(FIRST_ENSEMBLE);
-        realizationFilter.setFilteringOption(RealizationFilteringOption.EXCLUDE);
+        realizationFilter.setIncludeOrExcludeFilter(IncludeExcludeFilter.EXCLUDE_FILTER);
 
         expect(realizationFilter.getFilteredRealizations()).toEqual(FIRST_ENSEMBLE_REALIZATIONS);
         realizationFilter.setRealizationIndexSelections([1, 2, 3]);

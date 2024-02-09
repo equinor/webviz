@@ -11,31 +11,29 @@ type RightNavBarProps = {
 };
 
 export const RightNavBar: React.FC<RightNavBarProps> = (props) => {
-    const [filterPanelWidth, setFilterPanelWidth] = useGuiState(
+    const [rightSettingsPanelWidth, setRightSettingsPanelWidth] = useGuiState(
         props.workbench.getGuiMessageBroker(),
-        GuiState.FilterPanelWidthInPercent
+        GuiState.RightSettingsPanelWidthInPercent
     );
-    const [filterPanelExpanded, setFilterPanelExpanded] = useGuiState(
+    const [rightSettingsPanelExpanded, setRightSettingsPanelExpanded] = useGuiState(
         props.workbench.getGuiMessageBroker(),
-        GuiState.FilterPanelExpanded
+        GuiState.RightSettingsPanelExpanded
     );
 
-    function ensureFilterPanelIsVisible() {
-        if (filterPanelWidth <= 5) {
-            setFilterPanelWidth(15);
+    function ensureSettingsPanelIsVisible() {
+        if (rightSettingsPanelWidth <= 5) {
+            setRightSettingsPanelWidth(15);
         }
     }
 
-    function handleFilterPanelCollapseOrExpand() {
-        const newExpanded = !filterPanelExpanded;
-
-        localStorage.setItem("filterPanelExpanded", newExpanded.toString());
-        setFilterPanelExpanded(newExpanded);
+    function handleSettingsPanelCollapseOrExpand() {
+        const newExpanded = !rightSettingsPanelExpanded;
+        setRightSettingsPanelExpanded(newExpanded);
         if (newExpanded) {
-            ensureFilterPanelIsVisible();
+            ensureSettingsPanelIsVisible();
             return;
         }
-        setFilterPanelWidth(0);
+        setRightSettingsPanelWidth(0);
     }
 
     return (
@@ -47,11 +45,11 @@ export const RightNavBar: React.FC<RightNavBarProps> = (props) => {
             <div className="flex flex-col gap-2 flex-grow">
                 <Button
                     title="Open Filter Panel"
-                    onClick={handleFilterPanelCollapseOrExpand}
+                    onClick={handleSettingsPanelCollapseOrExpand}
                     className={resolveClassNames(
                         "w-full",
                         "h-10",
-                        filterPanelExpanded ? "text-cyan-600" : "!text-slate-800"
+                        rightSettingsPanelExpanded ? "text-cyan-600" : "!text-slate-800"
                     )}
                     startIcon={<FilterAlt fontSize="small" className="w-5 h-5 mr-2" />}
                 />
