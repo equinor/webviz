@@ -148,7 +148,6 @@ export function Settings({
 
     React.useEffect(
         function propogateSurfaceSetAddress() {
-            console.log(realizationsSurfaceNames);
             let surfaceSetSpec: SurfaceSetAddress | null = null;
             if (computedEnsembleIdent && selectedSurfaceAttribute && realizationsSurfaceNames) {
                 surfaceSetSpec = {
