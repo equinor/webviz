@@ -37,7 +37,6 @@ export const View = ({ moduleContext }: ModuleFCProps<State>) => {
     const [renderWellboreTrajectoryXyzPoints, setRenderWellboreTrajectoryXyzPoints] = React.useState<number[][] | null>(
         null
     );
-    // Data for seismic fence layer in esv-intersection
     const width = wrapperDivSize.width;
     const height = wrapperDivSize.height - 100;
 
@@ -120,7 +119,7 @@ export const View = ({ moduleContext }: ModuleFCProps<State>) => {
                         zScale={5}
                         extension={5}
                         wellborePath={renderWellboreTrajectoryXyzPoints}
-                        surfaceRealizationSetSamplePointsData={sampleSurfaceInPointsQueries.data}
+                        surfaceRealizationSampleValuesData={sampleSurfaceInPointsQueries.data}
                         visualizationMode={visualizationMode}
                         statisticFunctions={statisticFunctions}
                         cumLength={cum_length}

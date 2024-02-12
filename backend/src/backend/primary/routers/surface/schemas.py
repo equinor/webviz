@@ -108,7 +108,7 @@ class SurfaceIntersectionCumulativeLengthPolyline(BaseModel):
     cum_lengths: List[float]
 
 
-class SurfaceRealizationSamplePoints(BaseModel):
+class SurfaceRealizationSampleValues(BaseModel):
     realization: int
     sampled_values: list[float]
 

@@ -1,6 +1,6 @@
 import React from "react";
 
-import { StatisticFunction_api, SurfaceRealizationSamplePoints_api } from "@api";
+import { StatisticFunction_api, SurfaceRealizationSampleValues_api } from "@api";
 import {
     Controller,
     GeomodelCanvasLayer,
@@ -17,7 +17,7 @@ import { makeReferenceSystemFromTrajectoryXyzPoints } from "@modules/SeismicInte
 
 import { isEqual } from "lodash";
 
-import { SurfaceRealizationSetSamplePointsData } from "../queryHooks";
+import { SurfaceRealizationSampleValuesData } from "../queryHooks";
 import { StratigraphyColorMap, VisualizationMode } from "../types";
 
 type EsvIntersectionProps = {
@@ -27,7 +27,7 @@ type EsvIntersectionProps = {
     extension: number;
     wellborePath: number[][] | null;
     cumLength: number[] | null;
-    surfaceRealizationSetSamplePointsData?: SurfaceRealizationSetSamplePointsData[] | null;
+    surfaceRealizationSampleValuesData?: SurfaceRealizationSampleValuesData[] | null;
     visualizationMode: VisualizationMode;
     statisticFunctions: StatisticFunction_api[];
     stratigraphyColorMap: StratigraphyColorMap;
@@ -88,13 +88,13 @@ export const EsvIntersection: React.FC<EsvIntersectionProps> = (props) => {
 
         controller.current?.getLayer("statisticalSurfaceLayer")?.clearData();
         controller.current?.getLayer("realizationsSurfaceLayer")?.clearData();
-        if (props.surfaceRealizationSetSamplePointsData) {
+        if (props.surfaceRealizationSampleValuesData) {
             if (
                 props.visualizationMode === VisualizationMode.STATISTICAL_LINES ||
                 props.visualizationMode === VisualizationMode.STATISTICS_AND_REALIZATIONS
             ) {
                 const statData = surfaceSamplePointsToStatisticalLayerData(
-                    props.surfaceRealizationSetSamplePointsData,
+                    props.surfaceRealizationSampleValuesData,
                     props.cumLength,
                     props.statisticFunctions,
                     props.stratigraphyColorMap
@@ -106,7 +106,7 @@ export const EsvIntersection: React.FC<EsvIntersectionProps> = (props) => {
                 props.visualizationMode === VisualizationMode.STATISTICS_AND_REALIZATIONS
             ) {
                 const realizationData = surfaceSamplePointsToRealizationLayerData(
-                    props.surfaceRealizationSetSamplePointsData,
+                    props.surfaceRealizationSampleValuesData,
                     props.cumLength,
                     props.stratigraphyColorMap
                 );
@@ -119,13 +119,13 @@ export const EsvIntersection: React.FC<EsvIntersectionProps> = (props) => {
 };
 
 function surfaceSamplePointsToRealizationLayerData(
-    samplePoints: SurfaceRealizationSetSamplePointsData[],
+    samplePoints: SurfaceRealizationSampleValuesData[],
     cumLength: number[],
     stratigraphyColorMap: StratigraphyColorMap
 ): SurfaceData {
     const surfaceValues: { name: string; realization: number; values: number[]; showLabel: boolean }[] = [];
     samplePoints.forEach((surfaceSet) => {
-        surfaceSet.realizationPoints.forEach((realSamplePoints: SurfaceRealizationSamplePoints_api, rdx: number) => {
+        surfaceSet.realizationPoints.forEach((realSamplePoints: SurfaceRealizationSampleValues_api, rdx: number) => {
             surfaceValues.push({
                 name: surfaceSet.surfaceName,
                 showLabel: rdx === 0,
@@ -153,7 +153,7 @@ function surfaceSamplePointsToRealizationLayerData(
 }
 
 function surfaceSamplePointsToStatisticalLayerData(
-    samplePoints: SurfaceRealizationSetSamplePointsData[],
+    samplePoints: SurfaceRealizationSampleValuesData[],
     cumLength: number[],
     statisticFunctions: StatisticFunction_api[],
     stratigraphyColorMap: StratigraphyColorMap

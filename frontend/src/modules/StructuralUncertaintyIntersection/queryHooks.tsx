@@ -1,4 +1,4 @@
-import { SurfaceRealizationSamplePoints_api } from "@api";
+import { SurfaceRealizationSampleValues_api } from "@api";
 import { apiService } from "@framework/ApiService";
 import { UseQueryResult, useQueries } from "@tanstack/react-query";
 
@@ -11,13 +11,13 @@ export type SurfacePolyLineSpec = {
     cum_length: number[];
 };
 
-export type SurfaceRealizationSetSamplePoints = {
-    data: Array<SurfaceRealizationSetSamplePointsData>;
+export type SurfaceRealizationSampleValues = {
+    data: Array<SurfaceRealizationSampleValuesData>;
     isFetching: boolean;
 };
-export type SurfaceRealizationSetSamplePointsData = {
+export type SurfaceRealizationSampleValuesData = {
     surfaceName: string;
-    realizationPoints: SurfaceRealizationSamplePoints_api[];
+    realizationPoints: SurfaceRealizationSampleValues_api[];
 };
 export function useSampleSurfaceInPointsQueries(
     caseUuid: string,
@@ -28,7 +28,7 @@ export function useSampleSurfaceInPointsQueries(
     x_points: number[],
     y_points: number[],
     allowEnable: boolean
-): SurfaceRealizationSetSamplePoints {
+): SurfaceRealizationSampleValues {
     const isEnabled = !!(
         allowEnable &&
         caseUuid &&
@@ -72,7 +72,7 @@ export function useSampleSurfaceInPointsQueries(
                     };
                 })) ||
             [],
-        combine: (results: UseQueryResult<Array<SurfaceRealizationSamplePoints_api>>[]) => ({
+        combine: (results: UseQueryResult<Array<SurfaceRealizationSampleValues_api>>[]) => ({
             data: results.map((result, index) => ({
                 surfaceName: surfaceNames[index] ?? "",
                 realizationPoints: result.data ?? [],

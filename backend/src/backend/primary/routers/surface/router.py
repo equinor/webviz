@@ -250,7 +250,7 @@ async def post_sample_surface_in_points(
     realization_nums: List[int] = Query(description="Realization numbers"),
     sample_points: schemas.PointSetXY = Body(embed=True),
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
-) -> List[schemas.SurfaceRealizationSamplePoints]:
+) -> List[schemas.SurfaceRealizationSampleValues]:
 
     sumo_access_token = authenticated_user.get_sumo_access_token()
 
@@ -265,10 +265,10 @@ async def post_sample_surface_in_points(
         y_coords=sample_points.y_points,
     )
 
-    intersections: List[schemas.SurfaceRealizationSamplePoints] = []
+    intersections: List[schemas.SurfaceRealizationSampleValues] = []
     for res in result_arr:
         intersections.append(
-            schemas.SurfaceRealizationSamplePoints(
+            schemas.SurfaceRealizationSampleValues(
                 realization=res.realization,
                 sampled_values=res.sampledValues,
             )

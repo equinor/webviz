@@ -7,7 +7,7 @@ import type { Body_post_sample_surface_in_points } from '../models/Body_post_sam
 import type { SurfaceData } from '../models/SurfaceData';
 import type { SurfaceIntersectionData } from '../models/SurfaceIntersectionData';
 import type { SurfaceMeta } from '../models/SurfaceMeta';
-import type { SurfaceRealizationSamplePoints } from '../models/SurfaceRealizationSamplePoints';
+import type { SurfaceRealizationSampleValues } from '../models/SurfaceRealizationSampleValues';
 import type { SurfaceStatisticFunction } from '../models/SurfaceStatisticFunction';
 import type { CancelablePromise } from '../core/CancelablePromise';
 import type { BaseHttpRequest } from '../core/BaseHttpRequest';
@@ -243,7 +243,7 @@ export class SurfaceService {
      * @param surfaceAttribute Surface attribute
      * @param realizationNums Realization numbers
      * @param requestBody
-     * @returns SurfaceRealizationSamplePoints Successful Response
+     * @returns SurfaceRealizationSampleValues Successful Response
      * @throws ApiError
      */
     public postSampleSurfaceInPoints(
@@ -253,7 +253,7 @@ export class SurfaceService {
         surfaceAttribute: string,
         realizationNums: Array<number>,
         requestBody: Body_post_sample_surface_in_points,
-    ): CancelablePromise<Array<SurfaceRealizationSamplePoints>> {
+    ): CancelablePromise<Array<SurfaceRealizationSampleValues>> {
         return this.httpRequest.request({
             method: 'POST',
             url: '/surface/sample_surface_in_points',
