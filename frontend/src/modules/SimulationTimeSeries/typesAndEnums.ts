@@ -1,5 +1,30 @@
-import { Frequency_api, StatisticFunction_api } from "@api";
+import { Frequency_api, StatisticFunction_api, SummaryVectorObservations_api } from "@api";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
+
+/**
+ * Definition of ensemble vector observation data
+ *
+ * hasSummaryObservations: true if the ensemble has observations, i.e the summary observations array is not empty
+ * vectorsObservationData: array of vector observation data for requested vector specifications
+ */
+export type EnsembleVectorObservationData = {
+    hasSummaryObservations: boolean;
+    vectorsObservationData: { vectorSpecification: VectorSpec; data: SummaryVectorObservations_api }[];
+};
+
+/**
+ * Definition of map of ensemble ident and ensemble vector observation data
+ */
+export type EnsembleVectorObservationDataMap = Map<EnsembleIdent, EnsembleVectorObservationData>;
+
+/**
+ * Definition of vector observations queries result for combined queries
+ */
+export type VectorObservationsQueriesResult = {
+    isFetching: boolean;
+    isError: boolean;
+    ensembleVectorObservationDataMap: EnsembleVectorObservationDataMap;
+};
 
 export interface VectorSpec {
     ensembleIdent: EnsembleIdent;
@@ -12,6 +37,11 @@ export enum VisualizationMode {
     STATISTICAL_LINES = "StatisticalLines",
     STATISTICAL_FANCHART = "StatisticalFanchart",
     STATISTICS_AND_REALIZATIONS = "StatisticsAndRealizations",
+}
+
+export enum StatisticsType {
+    INDIVIDUAL = "Individual",
+    FANCHART = "Fanchart",
 }
 
 export const VisualizationModeEnumToStringMapping = {
