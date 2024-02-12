@@ -13,11 +13,11 @@ from src.services.utils.perf_timer import PerfTimer
 from src.backend.auth.auth_helper import AuthHelper
 from src.backend.utils.perf_metrics import PerfMetrics
 from src.services.sumo_access._helpers import SumoCase
+from src.services.surface_query_service.surface_query_service import batch_sample_surface_in_points_async
+from src.services.surface_query_service.surface_query_service import RealizationSampleResult
 
 from . import converters
 from . import schemas
-from .surface_sampling_service import batch_sample_surface_in_points_async
-from .surface_sampling_service import RealizationSampleResult
 
 
 LOGGER = logging.getLogger(__name__)
