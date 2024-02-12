@@ -123,9 +123,23 @@ export function Settings({
 
     const [realizationsSurfaceNames, setRealizationsSurfaceNames] = React.useState<string[] | null>(null);
     const availableSurfaceNames = surfaceDirectory ? surfaceDirectory.getSurfaceNames(selectedSurfaceAttribute) : null;
-    if (!realizationsSurfaceNames && availableSurfaceNames) {
-        setRealizationsSurfaceNames([availableSurfaceNames[0]]);
+    if (availableSurfaceNames) {
+        if (!realizationsSurfaceNames) {
+            setRealizationsSurfaceNames([availableSurfaceNames[0]]);
+        } else {
+            const updatedRealizationsSurfaceNames = realizationsSurfaceNames.filter((name) =>
+                availableSurfaceNames.includes(name)
+            );
+            if (!isEqual(realizationsSurfaceNames, updatedRealizationsSurfaceNames)) {
+                setRealizationsSurfaceNames(
+                    updatedRealizationsSurfaceNames.length > 0 ? updatedRealizationsSurfaceNames : null
+                );
+            }
+        }
+    } else if (realizationsSurfaceNames) {
+        setRealizationsSurfaceNames(null);
     }
+
     const surfaceAttrOptions = surfaceDirectory
         ? surfaceDirectory.getAttributeNames(null).map((attribute) => {
               return { label: attribute, value: attribute };
@@ -134,6 +148,7 @@ export function Settings({
 
     React.useEffect(
         function propogateSurfaceSetAddress() {
+            console.log(realizationsSurfaceNames);
             let surfaceSetSpec: SurfaceSetAddress | null = null;
             if (computedEnsembleIdent && selectedSurfaceAttribute && realizationsSurfaceNames) {
                 surfaceSetSpec = {
