@@ -39,7 +39,7 @@ class _PointSamplingResponseBody(BaseModel):
 
 
 # URL of the Go server endpoint
-SERVER_ENDPOINT = "http://surface-query:5001/sample_in_points"
+SERVICE_ENDPOINT = f"{config.SURFACE_QUERY_URL}/sample_in_points"
 
 SUMO_BASE_URI = f"https://main-sumo-{config.SUMO_ENV}.radix.equinor.com/api/v1"
 
@@ -75,7 +75,7 @@ async def batch_sample_surface_in_points_async(
 
     async with httpx.AsyncClient(timeout=300) as client:
         LOGGER.info(f"Running async go point sampling for surface: {surface_name}")
-        response: httpx.Response = await client.post(url=SERVER_ENDPOINT, json=request_body.model_dump())
+        response: httpx.Response = await client.post(url=SERVICE_ENDPOINT, json=request_body.model_dump())
 
     json_data: bytes = response.content
     response_body = _PointSamplingResponseBody.model_validate_json(json_data)
