@@ -93,8 +93,6 @@ spec:
       ports:
         - name: http
           port: 5001
-      ingressConfiguration:
-        - websocketfriendly
       resources:
         requests:
           memory: 8Gi
