@@ -4,6 +4,8 @@ import os
 
 from fastapi import FastAPI, Request, Query
 import grid_pb2
+import httpx
+import tempfile
 
 app = FastAPI()
 
@@ -19,7 +21,9 @@ async def grid_surface(request: Request, sas_token: str, blob_store_base_uri: st
     print("token", sas_token)
     print("base_uri", blob_store_base_uri)
     print("blob_id", grid_blob_id)
-
+    tmp_file_name = await download_blob_to_tempfile(blob_store_base_uri, grid_blob_id, sas_token)
+    print(tmp_file_name)
+    print(f"Size of grid file. {os.path.getsize(tmp_file_name)}")
     fake_response = grid_pb2.GetGridSurfaceResponse(
         vertexArray=[],
         quadIndicesArr=[],
@@ -40,9 +44,15 @@ async def grid_surface(request: Request, sas_token: str, blob_store_base_uri: st
     }
 
 
-@app.get("/grid_parameter")
-async def grid_parameter(sas_token: str, blob_store_base_uri: str, blob_id: str):
+async def download_blob_to_tempfile(blob_store_base_uri, blob_id, sas_token):
+    async with httpx.AsyncClient() as client:
+        response = await client.get(url=f"{blob_store_base_uri}/{blob_id}?{sas_token}")
+        response.raise_for_status()  # Ensure we got a successful response
 
-    print("token", sas_token)
-    print("base_uri", blob_store_base_uri)
-    print("blob_id", blob_id)
+        # Create a temporary file to store the download
+        with tempfile.NamedTemporaryFile(delete=False) as tmp_file:
+            # Write the content of the response to the temporary file
+            tmp_file.write(response.content)
+            print(f"Blob downloaded to {tmp_file.name}")
+            # Return the path to the temporary file for further use
+            return tmp_file.name

@@ -46,14 +46,14 @@ export function View({ moduleContext, workbenchSettings, workbenchSession }: Mod
         gridName,
         realizations ? realizations[0] : "0"
     );
-    const gridParameterQuery = useGridParameter(
-        firstCaseUuid,
-        firstEnsembleName,
-        gridName,
-        parameterName,
-        realizations ? realizations[0] : "0",
-        useStatistics
-    );
+    // const gridParameterQuery = useGridParameter(
+    //     firstCaseUuid,
+    //     firstEnsembleName,
+    //     gridName,
+    //     parameterName,
+    //     realizations ? realizations[0] : "0",
+    //     useStatistics
+    // );
 
     return (
         <div className="relative w-full h-full flex flex-col">
