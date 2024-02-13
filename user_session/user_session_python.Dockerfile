@@ -27,6 +27,4 @@ RUN pip install --user poetry \
     && pip install --user -r requirements.txt
 
 RUN protoc --proto_path=. --python_out=. grid.proto
-RUN ls -lrt
-CMD ["ls", "-lrt"]
 CMD ["sh", "-c", "exec uvicorn --proxy-headers --host=0.0.0.0 $UVICORN_ENTRYPOINT"]
