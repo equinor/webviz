@@ -19,16 +19,13 @@ COPY --chown=appuser ./user_session/python /home/appuser/user_session
 COPY --chown=appuser ./user_session/grid.proto /home/appuser/user_session
 WORKDIR /home/appuser/user_session
 
-# Add PATH for .local/bin for the appuser for any locally installed binaries
+
 ENV PATH="${PATH}:/home/appuser/.local/bin"
 
 RUN pip install --user poetry \
     && poetry export -f requirements.txt -o requirements.txt --without-hashes \
     && pip install --user -r requirements.txt
 
-# Compile the proto file
-# Since we're now a non-root user, we ensure any created files are owned by appuser by default
-RUN protoc --proto_path=. --python_out=./src/backend grid.proto
 RUN protoc --proto_path=. --python_out=. grid.proto
 RUN ls -lrt
 CMD ["ls", "-lrt"]
