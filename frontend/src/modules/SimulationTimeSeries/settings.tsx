@@ -24,27 +24,28 @@ import { FilterAlt } from "@mui/icons-material";
 import { useAtom, useAtomValue } from "jotai";
 
 import {
-    StatisticsType,
     colorRealizationsByParameterAtom,
-    continuousAndNonConstantParametersUnionAtom,
-    ensembleVectorListsHelperAtom,
     filteredParameterIdentListAtom,
     groupByAtom,
-    isVectorListQueriesFetchingAtom,
     resampleFrequencyAtom,
-    selectedEnsembleIdentsAtom,
-    selectedParameterIdentStringAtom,
     selectedVectorNamesAtom,
     showHistoricalAtom,
     showObservationsAtom,
     statisticsSelectionAtom,
-    statisticsTypeAtom,
     userSelectedEnsembleIdentsAtom,
     userSelectedParameterIdentStringAtom,
-    vectorListQueriesAtom,
-    vectorSelectorDataAtom,
     visualizationModeAtom,
-} from "./atoms";
+} from "./atoms/baseAtoms";
+import {
+    continuousAndNonConstantParametersUnionAtom,
+    ensembleVectorListsHelperAtom,
+    isVectorListQueriesFetchingAtom,
+    selectedEnsembleIdentsAtom,
+    selectedParameterIdentStringAtom,
+    statisticsTypeAtom,
+    vectorSelectorDataAtom,
+} from "./atoms/derivedSettingsAtoms";
+import { vectorListQueriesAtom } from "./atoms/queryAtoms";
 import { useMakeSettingsStatusWriterMessages } from "./hooks/useMakeSettingsStatusWriterMessages";
 import {
     FanchartStatisticOption,
@@ -53,6 +54,7 @@ import {
     GroupBy,
     GroupByEnumToStringMapping,
     StatisticFunctionEnumToStringMapping,
+    StatisticsType,
     VisualizationMode,
     VisualizationModeEnumToStringMapping,
 } from "./typesAndEnums";

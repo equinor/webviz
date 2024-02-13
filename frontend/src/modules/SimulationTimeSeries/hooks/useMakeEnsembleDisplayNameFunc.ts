@@ -3,7 +3,7 @@ import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 
 import { useAtomValue } from "jotai";
 
-import { selectedEnsemblesAtom } from "../atoms";
+import { selectedEnsemblesAtom } from "../atoms/derivedSettingsAtoms";
 
 export function useMakeEnsembleDisplayNameFunc(): (ensembleIdent: EnsembleIdent) => string {
     const selectedEnsembles = useAtomValue(selectedEnsemblesAtom);

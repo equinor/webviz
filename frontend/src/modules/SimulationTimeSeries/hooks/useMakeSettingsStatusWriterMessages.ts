@@ -4,12 +4,9 @@ import { SettingsStatusWriter } from "@framework/StatusWriter";
 
 import { useAtomValue } from "jotai";
 
-import {
-    ensembleVectorListsHelperAtom,
-    selectedEnsembleIdentsAtom,
-    selectedVectorNamesAtom,
-    vectorListQueriesAtom,
-} from "../atoms";
+import { selectedVectorNamesAtom } from "../atoms/baseAtoms";
+import { ensembleVectorListsHelperAtom, selectedEnsembleIdentsAtom } from "../atoms/derivedSettingsAtoms";
+import { vectorListQueriesAtom } from "../atoms/queryAtoms";
 import { joinStringArrayToHumanReadableString } from "../utils/stringUtils";
 
 export function useMakeSettingsStatusWriterMessages(statusWriter: SettingsStatusWriter, selectedVectorTags: string[]) {

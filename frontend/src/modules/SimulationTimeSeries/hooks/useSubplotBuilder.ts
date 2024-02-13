@@ -1,5 +1,4 @@
 import { SummaryVectorObservations_api } from "@api";
-import { ColorScale } from "@lib/utils/ColorScale";
 import { ColorSet } from "@lib/utils/ColorSet";
 import { Size2D } from "@lib/utils/geometry";
 
@@ -9,21 +8,21 @@ import { Layout } from "plotly.js";
 import { useMakeEnsembleDisplayNameFunc } from "./useMakeEnsembleDisplayNameFunc";
 
 import {
-    activeTimestampUtcMsAtom,
-    colorByParameterAtom,
     groupByAtom,
-    loadedVectorSpecificationsAndHistoricalDataAtom,
-    loadedVectorSpecificationsAndRealizationDataAtom,
-    loadedVectorSpecificationsAndStatisticsDataAtom,
-    parameterIdentAtom,
-    selectedEnsemblesAtom,
     showHistoricalAtom,
     showObservationsAtom,
     statisticsSelectionAtom,
-    vectorObservationsQueriesAtom,
-    vectorSpecificationsAtom,
     visualizationModeAtom,
-} from "../atoms";
+} from "../atoms/baseAtoms";
+import { vectorSpecificationsAtom } from "../atoms/derivedSettingsAtoms";
+import {
+    activeTimestampUtcMsAtom,
+    colorByParameterAtom,
+    loadedVectorSpecificationsAndHistoricalDataAtom,
+    loadedVectorSpecificationsAndRealizationDataAtom,
+    loadedVectorSpecificationsAndStatisticsDataAtom,
+} from "../atoms/derivedViewAtoms";
+import { vectorObservationsQueriesAtom } from "../atoms/queryAtoms";
 import { GroupBy, VectorSpec, VisualizationMode } from "../typesAndEnums";
 import { EnsemblesContinuousParameterColoring } from "../utils/ensemblesContinuousParameterColoring";
 import { SubplotBuilder, SubplotOwner } from "../utils/subplotBuilder";
@@ -36,14 +35,12 @@ import {
 export function useSubplotBuilder(
     wrapperDivSize: Size2D,
     colorSet: ColorSet,
-    parameterColorScale: ColorScale
+    ensemblesParameterColoring: EnsemblesContinuousParameterColoring | null
 ): [Partial<TimeSeriesPlotData>[], Partial<Layout>] {
     const groupBy = useAtomValue(groupByAtom);
     const visualizationMode = useAtomValue(visualizationModeAtom);
     const showObservations = useAtomValue(showObservationsAtom);
-    const parameterIdent = useAtomValue(parameterIdentAtom);
     const vectorSpecifications = useAtomValue(vectorSpecificationsAtom);
-    const selectedEnsembles = useAtomValue(selectedEnsemblesAtom);
     const showHistorical = useAtomValue(showHistoricalAtom);
     const statisticsSelection = useAtomValue(statisticsSelectionAtom);
     const vectorObservationsQueries = useAtomValue(vectorObservationsQueriesAtom);
@@ -62,11 +59,6 @@ export function useSubplotBuilder(
         visualizationMode === VisualizationMode.STATISTICS_AND_REALIZATIONS
             ? "scattergl"
             : "scatter";
-
-    const ensemblesParameterColoring =
-        colorByParameter && parameterIdent
-            ? new EnsemblesContinuousParameterColoring(selectedEnsembles, parameterIdent, parameterColorScale)
-            : null;
 
     const loadedVectorSpecificationsAndObservationData: {
         vectorSpecification: VectorSpec;

@@ -9,7 +9,7 @@ import {
     activeTimestampUtcMsAtom,
     loadedVectorSpecificationsAndRealizationDataAtom,
     queryIsFetchingAtom,
-} from "../atoms";
+} from "../atoms/derivedViewAtoms";
 import { ChannelIds } from "../channelDefs";
 import { makeVectorGroupDataGenerator } from "../dataGenerators";
 

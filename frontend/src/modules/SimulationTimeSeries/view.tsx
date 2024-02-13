@@ -1,6 +1,7 @@
 import React from "react";
 import Plot from "react-plotly.js";
 
+import { Ensemble } from "@framework/Ensemble";
 import { ModuleFCProps } from "@framework/Module";
 import { useViewStatusWriter } from "@framework/StatusWriter";
 import { useElementSize } from "@lib/hooks/useElementSize";
@@ -10,13 +11,16 @@ import { ContentError } from "@modules/_shared/components/ContentMessage";
 import { useAtom, useAtomValue } from "jotai";
 import { PlotDatum, PlotMouseEvent } from "plotly.js";
 
+import { parameterIdentAtom, selectedEnsemblesAtom } from "./atoms/derivedSettingsAtoms";
 import {
+    colorByParameterAtom,
     realizationsQueryHasErrorAtom,
     statisticsQueryHasErrorAtom,
     userSelectedActiveTimestampUtcMsAtom,
-} from "./atoms";
+} from "./atoms/derivedViewAtoms";
 import { useMakeViewStatusWriterMessages } from "./hooks/useMakeViewStatusWriterMessages";
 import { useSubplotBuilder } from "./hooks/useSubplotBuilder";
+import { EnsemblesContinuousParameterColoring } from "./utils/ensemblesContinuousParameterColoring";
 
 export const View = ({ moduleContext, workbenchSettings }: ModuleFCProps<Record<string, never>>) => {
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);
@@ -24,8 +28,12 @@ export const View = ({ moduleContext, workbenchSettings }: ModuleFCProps<Record<
 
     const statusWriter = useViewStatusWriter(moduleContext);
 
+    const colorByParameter = useAtomValue(colorByParameterAtom);
+    const parameterIdent = useAtomValue(parameterIdentAtom);
+    const selectedEnsembles = useAtomValue(selectedEnsemblesAtom);
     const hasRealizationsQueryError = useAtomValue(realizationsQueryHasErrorAtom);
     const hasStatisticsQueryError = useAtomValue(statisticsQueryHasErrorAtom);
+
     const [, setActiveTimestampUtcMs] = useAtom(userSelectedActiveTimestampUtcMsAtom);
 
     // Color palettes
@@ -34,9 +42,26 @@ export const View = ({ moduleContext, workbenchSettings }: ModuleFCProps<Record<
         gradientType: ColorScaleGradientType.Diverging,
     });
 
-    useMakeViewStatusWriterMessages(statusWriter, parameterColorScale);
+    // Create parameter color scale helper
+    const ensemblesParameterColoring =
+        colorByParameter && parameterIdent
+            ? new EnsemblesContinuousParameterColoring(selectedEnsembles, parameterIdent, parameterColorScale)
+            : null;
 
-    const [plotData, plotLayout] = useSubplotBuilder(wrapperDivSize, colorSet, parameterColorScale);
+    const ensemblesWithoutParameter: Ensemble[] = [];
+    let parameterDisplayName: string | null = null;
+    if (ensemblesParameterColoring) {
+        ensemblesWithoutParameter.push(
+            ...selectedEnsembles.filter(
+                (ensemble) => !ensemblesParameterColoring.hasParameterForEnsemble(ensemble.getIdent())
+            )
+        );
+        parameterDisplayName = ensemblesParameterColoring.getParameterDisplayName();
+    }
+
+    useMakeViewStatusWriterMessages(statusWriter, parameterDisplayName, ensemblesWithoutParameter);
+
+    const [plotData, plotLayout] = useSubplotBuilder(wrapperDivSize, colorSet, ensemblesParameterColoring);
 
     function handleClickInChart(e: PlotMouseEvent) {
         const clickedPoint: PlotDatum = e.points[0];
