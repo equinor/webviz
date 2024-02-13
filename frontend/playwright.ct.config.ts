@@ -5,7 +5,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import vitePluginChecker from "vite-plugin-checker";
 
-import aliases from "../../aliases.json" assert { type: "json" };
+import aliases from "./aliases.json" assert { type: "json" };
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -14,7 +14,7 @@ const __dirname = path.dirname(__filename);
  * See https://playwright.dev/docs/test-configuration.
  */
 export default defineConfig({
-    testDir: "./",
+    testDir: "./tests/ct",
     /* The base directory, relative to the config file, for snapshot files created with toMatchSnapshot and toHaveScreenshot. */
     snapshotDir: "./__snapshots__",
     /* Maximum time one test can run for. */
@@ -44,8 +44,6 @@ export default defineConfig({
                         ...prev,
                         [current.replace("/*", "")]: path.resolve(
                             __dirname,
-                            "..",
-                            "..",
                             aliases.compilerOptions.paths[current][0].replace("/*", "")
                         ),
                     }),

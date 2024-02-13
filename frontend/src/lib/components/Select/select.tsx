@@ -38,163 +38,310 @@ const defaultProps = {
 
 const noMatchingOptionsText = "No matching options";
 
+function ensureKeyboardSelectionInView(
+    prevViewStartIndex: number,
+    reportedViewStartIndex: number,
+    keyboardFocusIndex: number,
+    viewSize: number
+) {
+    if (keyboardFocusIndex >= reportedViewStartIndex + viewSize) {
+        return Math.max(0, keyboardFocusIndex - viewSize + 1);
+    }
+    if (keyboardFocusIndex <= reportedViewStartIndex) {
+        return keyboardFocusIndex;
+    }
+    return prevViewStartIndex;
+}
+
 export const Select = withDefaults<SelectProps>()(defaultProps, (props) => {
     const { onChange } = props;
 
-    const [filter, setFilter] = React.useState<string>("");
+    const [filterString, setFilterString] = React.useState<string>("");
     const [hasFocus, setHasFocus] = React.useState<boolean>(false);
-    const [selected, setSelected] = React.useState<string[]>([]);
-    const [keysPressed, setKeysPressed] = React.useState<Key[]>([]);
-    const [startIndex, setStartIndex] = React.useState<number>(0);
-    const [lastShiftIndex, setLastShiftIndex] = React.useState<number>(-1);
-    const [currentIndex, setCurrentIndex] = React.useState<number>(0);
     const [options, setOptions] = React.useState<SelectOption[]>(props.options);
-    const [prevFilteredOptions, setPrevFilteredOptions] = React.useState<SelectOption[]>([]);
+    const [filteredOptions, setFilteredOptions] = React.useState<SelectOption[]>(props.options);
+    const [selectionAnchor, setSelectionAnchor] = React.useState<number | null>(null);
+    const [selectedOptions, setSelectedOptions] = React.useState<string[]>([]);
+    const [prevValue, setPrevValue] = React.useState<string[]>([]);
+    const [currentFocusIndex, setCurrentFocusIndex] = React.useState<number>(0);
+    const [virtualizationStartIndex, setVirtualizationStartIndex] = React.useState<number>(0);
+    const [reportedVirtualizationStartIndex, setReportedVirtualizationStartIndex] = React.useState<number>(0);
+    const [keysPressed, setKeysPressed] = React.useState<Key[]>([]);
 
     const ref = React.useRef<HTMLDivElement>(null);
     const noOptionsText = props.placeholder ?? "No options";
 
     if (!isEqual(props.options, options)) {
-        setOptions(props.options);
+        const newOptions = [...props.options];
+        setOptions(newOptions);
+        filterOptions(newOptions, filterString);
     }
 
-    const filteredOptions = React.useMemo(() => {
-        if (!props.filter) {
-            return options;
-        }
-        return options.filter((option) => option.label.toLowerCase().includes(filter.toLowerCase()));
-    }, [options, filter, props.filter]);
-
-    if (!isEqual(filteredOptions, prevFilteredOptions)) {
-        let newCurrentIndex = 0;
-        let newStartIndex = 0;
-        let oldCurrentValue = prevFilteredOptions[currentIndex]?.value;
-        if (props.value?.length >= 1) {
-            oldCurrentValue = props.value[0];
-        }
-        setPrevFilteredOptions(filteredOptions);
-        if (oldCurrentValue) {
-            const newIndex = filteredOptions.findIndex((option) => option.value === oldCurrentValue);
-            if (newIndex !== -1) {
-                newCurrentIndex = newIndex;
-                newStartIndex = newIndex;
-            }
-        }
-        setCurrentIndex(newCurrentIndex);
-        setStartIndex(newStartIndex);
+    if (props.value && !isEqual(props.value, prevValue)) {
+        setSelectedOptions([...props.value]);
+        setPrevValue([...props.value]);
     }
 
-    const toggleValue = React.useCallback(
-        function toggleValue(option: SelectOption, index: number) {
-            let newSelected = [...selected];
-            if (props.multiple) {
-                if (keysPressed.includes("Shift")) {
-                    const start = Math.min(lastShiftIndex, index);
-                    const end = Math.max(lastShiftIndex, index);
-                    newSelected = options
-                        .slice(start, end + 1)
-                        .filter((option) => !option.disabled)
-                        .map((option) => option.value);
-                } else if (!option.disabled) {
-                    if (keysPressed.includes("Control")) {
-                        if (!selected.includes(option.value)) {
-                            newSelected = [...selected, option.value];
-                        } else {
-                            newSelected = selected.filter((v) => v !== option.value);
-                        }
-                    } else {
-                        newSelected = [option.value];
+    React.useEffect(
+        function addKeyboardEventListeners() {
+            const refCurrent = ref.current;
+
+            let localKeysPressed: Key[] = keysPressed;
+
+            function makeKeyboardSelection(index: number) {
+                if (filteredOptions[index].disabled) {
+                    return;
+                }
+
+                if (!props.multiple) {
+                    const newSelectedOptions = [filteredOptions[index].value];
+                    setSelectedOptions(newSelectedOptions);
+                    setSelectionAnchor(null);
+                    if (onChange) {
+                        onChange(newSelectedOptions);
                     }
                 }
-            } else if (!option.disabled) {
-                newSelected = [option.value];
-            } else {
-                newSelected = [];
-            }
-            setCurrentIndex(index);
-            setSelected(newSelected);
-            if (onChange) {
-                if (props.multiple) {
-                    onChange(newSelected);
-                } else if (!option.disabled) {
-                    onChange([option.value]);
+
+                let newSelectedOptions: string[] = [];
+
+                if (localKeysPressed.includes("Shift") && selectionAnchor !== null) {
+                    const start = Math.min(index, selectionAnchor);
+                    const end = Math.max(index, selectionAnchor);
+                    newSelectedOptions = filteredOptions.slice(start, end + 1).map((option) => option.value);
                 } else {
-                    onChange([]);
+                    newSelectedOptions = [filteredOptions[index].value];
+                }
+
+                if (!localKeysPressed.includes("Shift") && !localKeysPressed.includes("Control")) {
+                    setSelectionAnchor(index);
+                }
+
+                if (onChange) {
+                    onChange(newSelectedOptions);
                 }
             }
-        },
-        [props.multiple, options, selected, onChange, keysPressed, lastShiftIndex, setCurrentIndex, setSelected]
-    );
 
-    React.useEffect(() => {
-        const handleKeyDown = (e: KeyboardEvent) => {
-            setKeysPressed((keysPressed) => [...keysPressed, e.key]);
+            function addKeyboardSelection(index: number) {
+                if (filteredOptions[index].disabled) {
+                    return;
+                }
 
-            if (e.key === "Shift") {
-                setLastShiftIndex(currentIndex);
+                if (!props.multiple) {
+                    const newSelectedOptions = [filteredOptions[index].value];
+                    setSelectedOptions(newSelectedOptions);
+                    setSelectionAnchor(null);
+                    if (onChange) {
+                        onChange(newSelectedOptions);
+                    }
+                }
+
+                setSelectionAnchor(index);
+
+                let newSelectedOptions: string[] = [];
+                if (selectedOptions.includes(filteredOptions[index].value)) {
+                    newSelectedOptions = selectedOptions.filter((value) => value !== filteredOptions[index].value);
+                } else {
+                    newSelectedOptions = [...selectedOptions, filteredOptions[index].value];
+                }
+                setSelectedOptions(newSelectedOptions);
+
+                if (onChange) {
+                    onChange(newSelectedOptions);
+                }
             }
 
-            if (hasFocus) {
+            function handleFocus() {
+                setHasFocus(true);
+            }
+
+            function handleBlur() {
+                setHasFocus(false);
+            }
+
+            function handleKeyDown(e: KeyboardEvent) {
+                localKeysPressed = [...localKeysPressed, e.key];
+                setKeysPressed(localKeysPressed);
+
                 if (e.key === "ArrowUp") {
                     e.preventDefault();
-                    const newIndex = Math.max(0, currentIndex - 1);
-                    toggleValue(filteredOptions[newIndex], newIndex);
-                    if (newIndex < startIndex) {
-                        setStartIndex(newIndex);
+                    const newIndex = Math.max(0, currentFocusIndex - 1);
+                    setCurrentFocusIndex(newIndex);
+                    setVirtualizationStartIndex((prev) =>
+                        ensureKeyboardSelectionInView(prev, reportedVirtualizationStartIndex, newIndex, props.size)
+                    );
+                    if (!localKeysPressed.includes("Control") || localKeysPressed.includes("Shift")) {
+                        makeKeyboardSelection(newIndex);
                     }
                 }
+
                 if (e.key === "ArrowDown") {
                     e.preventDefault();
-                    const newIndex = Math.min(filteredOptions.length - 1, currentIndex + 1);
-                    toggleValue(filteredOptions[newIndex], newIndex);
-                    if (newIndex >= startIndex + props.size - 1) {
-                        setStartIndex(Math.max(0, newIndex - props.size + 1));
+                    const newIndex = Math.min(filteredOptions.length - 1, currentFocusIndex + 1);
+                    setCurrentFocusIndex(newIndex);
+                    setVirtualizationStartIndex((prev) =>
+                        ensureKeyboardSelectionInView(prev, reportedVirtualizationStartIndex, newIndex, props.size)
+                    );
+                    if (!localKeysPressed.includes("Control") || localKeysPressed.includes("Shift")) {
+                        makeKeyboardSelection(newIndex);
                     }
                 }
-                if (e.key === "PageUp") {
+
+                if (e.key === " " && keysPressed.includes("Control")) {
                     e.preventDefault();
-                    const newIndex = Math.max(0, currentIndex - props.size);
-                    toggleValue(filteredOptions[newIndex], newIndex);
-                    if (newIndex < startIndex) {
-                        setStartIndex(newIndex);
-                    }
+                    addKeyboardSelection(currentFocusIndex);
                 }
+
                 if (e.key === "PageDown") {
                     e.preventDefault();
-                    const newIndex = Math.min(filteredOptions.length - 1, currentIndex + props.size);
-                    toggleValue(filteredOptions[newIndex], newIndex);
-                    if (newIndex >= startIndex + props.size - 1) {
-                        setStartIndex(Math.max(0, newIndex - props.size + 1));
+                    const newIndex = Math.min(filteredOptions.length - 1, currentFocusIndex + props.size);
+                    setCurrentFocusIndex(newIndex);
+                    setVirtualizationStartIndex((prev) =>
+                        ensureKeyboardSelectionInView(prev, reportedVirtualizationStartIndex, newIndex, props.size)
+                    );
+                    if (!localKeysPressed.includes("Control") || localKeysPressed.includes("Shift")) {
+                        makeKeyboardSelection(newIndex);
+                    }
+                }
+
+                if (e.key === "PageUp") {
+                    e.preventDefault();
+                    const newIndex = Math.max(0, currentFocusIndex - props.size);
+                    setCurrentFocusIndex(newIndex);
+                    setVirtualizationStartIndex((prev) =>
+                        ensureKeyboardSelectionInView(prev, reportedVirtualizationStartIndex, newIndex, props.size)
+                    );
+                    if (!localKeysPressed.includes("Control") || localKeysPressed.includes("Shift")) {
+                        makeKeyboardSelection(newIndex);
+                    }
+                }
+
+                if (e.key === "Home") {
+                    e.preventDefault();
+                    setCurrentFocusIndex(0);
+                    setVirtualizationStartIndex(0);
+                    if (!localKeysPressed.includes("Control") || localKeysPressed.includes("Shift")) {
+                        makeKeyboardSelection(0);
+                    }
+                }
+
+                if (e.key === "End") {
+                    e.preventDefault();
+                    const newIndex = filteredOptions.length - 1;
+                    setCurrentFocusIndex(newIndex);
+                    setVirtualizationStartIndex(Math.max(0, newIndex - props.size + 1));
+                    if (!localKeysPressed.includes("Control") || localKeysPressed.includes("Shift")) {
+                        makeKeyboardSelection(newIndex);
                     }
                 }
             }
-        };
 
-        const handleKeyUp = (e: KeyboardEvent) => {
-            setKeysPressed((keysPressed) => keysPressed.filter((key) => key !== e.key));
-        };
+            const handleKeyUp = (e: KeyboardEvent) => {
+                localKeysPressed = localKeysPressed.filter((key) => key !== e.key);
+                setKeysPressed(localKeysPressed);
+            };
 
-        window.addEventListener("keydown", handleKeyDown);
-        window.addEventListener("keyup", handleKeyUp);
+            if (ref.current) {
+                ref.current.addEventListener("focus", handleFocus);
+                ref.current.addEventListener("blur", handleBlur);
+                ref.current.addEventListener("keydown", handleKeyDown);
+                ref.current.addEventListener("keyup", handleKeyUp);
+            }
 
-        return () => {
-            window.removeEventListener("keydown", handleKeyDown);
-            window.removeEventListener("keyup", handleKeyUp);
-        };
-    }, [currentIndex, selected, filteredOptions, props.size, hasFocus, startIndex, toggleValue]);
+            return function removeKeyboardEventListeners() {
+                if (refCurrent) {
+                    refCurrent.removeEventListener("focus", handleFocus);
+                    refCurrent.removeEventListener("blur", handleBlur);
+                    refCurrent.removeEventListener("keydown", handleKeyDown);
+                    refCurrent.removeEventListener("keyup", handleKeyUp);
+                }
+            };
+        },
+        [
+            currentFocusIndex,
+            filteredOptions,
+            props.size,
+            keysPressed,
+            props.multiple,
+            onChange,
+            selectionAnchor,
+            selectedOptions,
+            reportedVirtualizationStartIndex,
+        ]
+    );
 
-    React.useLayoutEffect(() => {
-        if (props.value) {
-            setSelected(props.value);
+    function handleOptionClick(option: SelectOption, index: number) {
+        if (option.disabled) {
+            return;
         }
-    }, [props.value]);
 
-    const handleFilterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setFilter(e.target.value);
-        if (ref.current) {
-            ref.current.scrollTop = 0;
+        setCurrentFocusIndex(index);
+
+        if (!props.multiple) {
+            setSelectedOptions([option.value]);
+            if (onChange) {
+                onChange([option.value]);
+            }
+            return;
         }
-    };
+
+        let newSelectedOptions: string[] = [];
+        if (keysPressed.includes("Shift") && selectionAnchor !== null) {
+            const start = Math.min(index, selectionAnchor);
+            const end = Math.max(index, selectionAnchor);
+            newSelectedOptions = filteredOptions.slice(start, end + 1).map((option) => option.value);
+        } else if (keysPressed.includes("Control")) {
+            newSelectedOptions = selectedOptions.includes(option.value)
+                ? selectedOptions.filter((value) => value !== option.value)
+                : [...selectedOptions, option.value];
+        } else {
+            newSelectedOptions = [option.value];
+        }
+
+        if (!keysPressed.includes("Shift")) {
+            setSelectionAnchor(index);
+        }
+
+        if (onChange) {
+            onChange(newSelectedOptions);
+        }
+    }
+
+    function filterOptions(options: SelectOption[], filterString: string) {
+        let newCurrentKeyboardFocusIndex = 0;
+        let newVirtualizationStartIndex = 0;
+
+        let currentlySelectedOption = filteredOptions[currentFocusIndex]?.value;
+        if (selectedOptions.length > 0) {
+            currentlySelectedOption = selectedOptions[0];
+        }
+
+        const newFilteredOptions = options.filter((option) =>
+            option.label.toLowerCase().includes(filterString.toLowerCase())
+        );
+        setFilteredOptions(newFilteredOptions);
+
+        if (currentlySelectedOption) {
+            const firstSelectedOptionIndex = newFilteredOptions.findIndex(
+                (option) => option.value === currentlySelectedOption
+            );
+            if (firstSelectedOptionIndex !== -1) {
+                newCurrentKeyboardFocusIndex = firstSelectedOptionIndex;
+                newVirtualizationStartIndex = firstSelectedOptionIndex;
+            }
+        }
+
+        setCurrentFocusIndex(newCurrentKeyboardFocusIndex);
+        setVirtualizationStartIndex(newVirtualizationStartIndex);
+    }
+
+    function handleFilterChange(event: React.ChangeEvent<HTMLInputElement>) {
+        setFilterString(event.target.value);
+        filterOptions(options, event.target.value);
+    }
+
+    function handleVirtualizationScroll(index: number) {
+        setReportedVirtualizationStartIndex(index);
+    }
 
     return (
         <BaseComponent disabled={props.disabled}>
@@ -211,7 +358,7 @@ export const Select = withDefaults<SelectProps>()(defaultProps, (props) => {
                     <Input
                         id={props.id}
                         type="text"
-                        value={filter}
+                        value={filterString}
                         onChange={handleFilterChange}
                         placeholder="Filter options..."
                     />
@@ -220,19 +367,18 @@ export const Select = withDefaults<SelectProps>()(defaultProps, (props) => {
                     className="overflow-y-auto border border-gray-300 rounded-md w-full bg-white"
                     style={{ height: props.size * 24 + 2 }}
                     ref={ref}
-                    onFocus={() => setHasFocus(true)}
-                    onBlur={() => setHasFocus(false)}
                     tabIndex={0}
                 >
                     {filteredOptions.length === 0 && (
                         <div className="p-1 flex items-center text-gray-400 select-none">
-                            {options.length === 0 || filter === "" ? noOptionsText : noMatchingOptionsText}
+                            {options.length === 0 || filterString === "" ? noOptionsText : noMatchingOptionsText}
                         </div>
                     )}
                     <Virtualization
                         containerRef={ref}
                         items={filteredOptions}
                         itemSize={24}
+                        onScroll={handleVirtualizationScroll}
                         renderItem={(option, index) => {
                             return (
                                 <div
@@ -246,21 +392,15 @@ export const Select = withDefaults<SelectProps>()(defaultProps, (props) => {
                                         "items-center",
                                         "select-none",
                                         {
-                                            "hover:bg-blue-100": !selected.includes(option.value),
-                                            "bg-blue-600 text-white box-border hover:bg-blue-700": selected.includes(
-                                                option.value
-                                            ),
+                                            "hover:bg-blue-100": !selectedOptions.includes(option.value),
+                                            "bg-blue-600 text-white box-border hover:bg-blue-700":
+                                                selectedOptions.includes(option.value),
                                             "pointer-events-none": option.disabled,
                                             "text-gray-400": option.disabled,
-                                            "bg-blue-300": option.disabled && index === currentIndex,
+                                            outline: index === currentFocusIndex && hasFocus,
                                         }
                                     )}
-                                    onClick={() => {
-                                        if (option.disabled) {
-                                            return;
-                                        }
-                                        toggleValue(option, index);
-                                    }}
+                                    onClick={() => handleOptionClick(option, index)}
                                     style={{ height: 24 }}
                                 >
                                     {option.icon}
@@ -274,7 +414,7 @@ export const Select = withDefaults<SelectProps>()(defaultProps, (props) => {
                             );
                         }}
                         direction="vertical"
-                        startIndex={startIndex}
+                        startIndex={virtualizationStartIndex}
                     />
                 </div>
             </div>
