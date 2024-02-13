@@ -15,9 +15,9 @@ RUN useradd --create-home --uid 1234 appuser  # Changing to non-root user early
 
 USER 1234
 
-COPY --chown=appuser ./user_session/python /home/appuser/user_session
-COPY --chown=appuser ./user_session/grid.proto /home/appuser/user_session
-WORKDIR /home/appuser/user_session
+COPY --chown=appuser ./backend_python/user_grid3d /home/appuser/backend_python
+COPY --chown=appuser ./backend_python/grid.proto /home/appuser/backend_python
+WORKDIR /home/appuser/backend_python
 
 
 ENV PATH="${PATH}:/home/appuser/.local/bin"

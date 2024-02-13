@@ -71,7 +71,7 @@ async def grid_surface(
         "blob_store_base_uri": blob_store_base_uri,
         "grid_blob_id": blob_id,
     }
-
+    print(base_url)
     async with httpx.AsyncClient(base_url=base_url) as client:
         response: httpx.Response = await client.get(url="/grid_surface", params=query_params)
     print(response.content)

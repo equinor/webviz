@@ -54,10 +54,10 @@ services:
     volumes:
       - ./backend_go/surface_query:/home/appuser/backend_go/surface_query
 
-  backend-user-session:
+  user-grid3d:
     build:
       context: .
-      dockerfile: ./user_session/user_session_python.Dockerfile
+      dockerfile: ./backend_python/user-grid3d.Dockerfile
     ports:
       - 8000:8000
     environment:
@@ -73,7 +73,7 @@ services:
       - OTEL_SERVICE_NAME=user-session
       - OTEL_RESOURCE_ATTRIBUTES=service.namespace=local, service.version=dummy0.1.2
     volumes:
-      - ./user_session/python/src:/home/appuser/user_session/src
+      - ./backend_python/user_grid3d/src:/home/appuser/user_grid3d/src
 
   redis-user-session:
     image: bitnami/redis:6.2.10@sha256:bd42fcdab5959ce2b21b6ea8410d4b3ee87ecb2e320260326ec731ecfcffbd0e

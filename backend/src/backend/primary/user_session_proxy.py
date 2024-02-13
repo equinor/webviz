@@ -112,7 +112,7 @@ class RadixJobScheduler:
 
 
 # For now we only have one type of job:
-RADIX_JOB_SCHEDULER_INSTANCE = RadixJobScheduler("backend-user-session", 8000)
+RADIX_JOB_SCHEDULER_INSTANCE = RadixJobScheduler("user-grid3d", 8000)
 
 
 async def proxy_to_user_session(request: Request, authenticated_user: AuthenticatedUser) -> Any:
