@@ -3,9 +3,11 @@
 /* tslint:disable */
 /* eslint-disable */
 import type { Body_post_get_surface_intersection } from '../models/Body_post_get_surface_intersection';
+import type { Body_post_sample_surface_in_points } from '../models/Body_post_sample_surface_in_points';
 import type { SurfaceData } from '../models/SurfaceData';
 import type { SurfaceIntersectionData } from '../models/SurfaceIntersectionData';
 import type { SurfaceMeta } from '../models/SurfaceMeta';
+import type { SurfaceRealizationSampleValues } from '../models/SurfaceRealizationSampleValues';
 import type { SurfaceStatisticFunction } from '../models/SurfaceStatisticFunction';
 import type { CancelablePromise } from '../core/CancelablePromise';
 import type { BaseHttpRequest } from '../core/BaseHttpRequest';
@@ -225,6 +227,42 @@ export class SurfaceService {
                 'name': name,
                 'attribute': attribute,
                 'time_or_interval_str': timeOrIntervalStr,
+            },
+            body: requestBody,
+            mediaType: 'application/json',
+            errors: {
+                422: `Validation Error`,
+            },
+        });
+    }
+    /**
+     * Post Sample Surface In Points
+     * @param caseUuid Sumo case uuid
+     * @param ensembleName Ensemble name
+     * @param surfaceName Surface name
+     * @param surfaceAttribute Surface attribute
+     * @param realizationNums Realization numbers
+     * @param requestBody
+     * @returns SurfaceRealizationSampleValues Successful Response
+     * @throws ApiError
+     */
+    public postSampleSurfaceInPoints(
+        caseUuid: string,
+        ensembleName: string,
+        surfaceName: string,
+        surfaceAttribute: string,
+        realizationNums: Array<number>,
+        requestBody: Body_post_sample_surface_in_points,
+    ): CancelablePromise<Array<SurfaceRealizationSampleValues>> {
+        return this.httpRequest.request({
+            method: 'POST',
+            url: '/surface/sample_surface_in_points',
+            query: {
+                'case_uuid': caseUuid,
+                'ensemble_name': ensembleName,
+                'surface_name': surfaceName,
+                'surface_attribute': surfaceAttribute,
+                'realization_nums': realizationNums,
             },
             body: requestBody,
             mediaType: 'application/json',

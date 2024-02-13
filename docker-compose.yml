@@ -1,10 +1,9 @@
 # This configuration aims at being a good setup
 # for doing development of the frontend + backend in combination.
 
-version: '3.6'
+version: "3.6"
 
 services:
-
   frontend:
     build:
       context: .
@@ -45,6 +44,15 @@ services:
         "-c",
         "pip install debugpy && python -m debugpy --listen 0.0.0.0:5678 -m uvicorn --proxy-headers --host=0.0.0.0 $${UVICORN_ENTRYPOINT}",
       ]
+
+  surface-query:
+    build:
+      context: .
+      dockerfile: ./backend_go/surface-query-dev.Dockerfile
+    ports:
+      - 5001:5001
+    volumes:
+      - ./backend_go/surface_query:/home/appuser/backend_go/surface_query
 
   backend-user-session:
     build:

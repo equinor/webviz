@@ -1,7 +1,7 @@
 import logging
 from typing import List, Union, Optional
 
-from fastapi import APIRouter, Body, Depends, HTTPException, Query, Response
+from fastapi import APIRouter, Depends, HTTPException, Query, Response, Body
 
 from src.services.sumo_access.surface_access import SurfaceAccess
 from src.services.smda_access.stratigraphy_access import StratigraphyAccess
@@ -13,9 +13,12 @@ from src.services.utils.perf_timer import PerfTimer
 from src.backend.auth.auth_helper import AuthHelper
 from src.backend.utils.perf_metrics import PerfMetrics
 from src.services.sumo_access._helpers import SumoCase
+from src.services.surface_query_service.surface_query_service import batch_sample_surface_in_points_async
+from src.services.surface_query_service.surface_query_service import RealizationSampleResult
 
 from . import converters
 from . import schemas
+
 
 LOGGER = logging.getLogger(__name__)
 
@@ -236,3 +239,39 @@ async def post_get_surface_intersection(
     surface_intersection_response = converters.to_api_surface_intersection(surface_intersection)
 
     return surface_intersection_response
+
+
+@router.post("/sample_surface_in_points")
+async def post_sample_surface_in_points(
+    case_uuid: str = Query(description="Sumo case uuid"),
+    ensemble_name: str = Query(description="Ensemble name"),
+    surface_name: str = Query(description="Surface name"),
+    surface_attribute: str = Query(description="Surface attribute"),
+    realization_nums: List[int] = Query(description="Realization numbers"),
+    sample_points: schemas.PointSetXY = Body(embed=True),
+    authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
+) -> List[schemas.SurfaceRealizationSampleValues]:
+
+    sumo_access_token = authenticated_user.get_sumo_access_token()
+
+    result_arr: List[RealizationSampleResult] = await batch_sample_surface_in_points_async(
+        sumo_access_token=sumo_access_token,
+        case_uuid=case_uuid,
+        iteration_name=ensemble_name,
+        surface_name=surface_name,
+        surface_attribute=surface_attribute,
+        realizations=realization_nums,
+        x_coords=sample_points.x_points,
+        y_coords=sample_points.y_points,
+    )
+
+    intersections: List[schemas.SurfaceRealizationSampleValues] = []
+    for res in result_arr:
+        intersections.append(
+            schemas.SurfaceRealizationSampleValues(
+                realization=res.realization,
+                sampled_values=res.sampledValues,
+            )
+        )
+
+    return intersections
