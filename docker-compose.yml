@@ -35,7 +35,7 @@ services:
       - APPLICATIONINSIGHTS_CONNECTION_STRING
       - OTEL_SERVICE_NAME=primary-backend
       - OTEL_RESOURCE_ATTRIBUTES=service.namespace=local, service.version=dummy0.1.2
-      - CODESPACE_NAME  # Automatically set env. variable by GitHub codespace
+      - CODESPACE_NAME # Automatically set env. variable by GitHub codespace
     volumes:
       - ./backend/src:/home/appuser/backend/src
     command:
@@ -57,13 +57,13 @@ services:
   backend-user-session:
     build:
       context: .
-      dockerfile: backend.Dockerfile
+      dockerfile: ./user_session/user_session_python.Dockerfile
     ports:
       - 8000:8000
     environment:
       - UVICORN_PORT=8000
       - UVICORN_RELOAD=true
-      - UVICORN_ENTRYPOINT=src.backend.user_session.main:app
+      - UVICORN_ENTRYPOINT=src.backend.main:app
       - WEBVIZ_CLIENT_SECRET
       - WEBVIZ_SMDA_RESOURCE_SCOPE
       - WEBVIZ_SMDA_SUBSCRIPTION_KEY
@@ -73,7 +73,7 @@ services:
       - OTEL_SERVICE_NAME=user-session
       - OTEL_RESOURCE_ATTRIBUTES=service.namespace=local, service.version=dummy0.1.2
     volumes:
-      - ./backend/src:/home/appuser/backend/src
+      - ./user_session/python/src:/home/appuser/user_session/src
 
   redis-user-session:
     image: bitnami/redis:6.2.10@sha256:bd42fcdab5959ce2b21b6ea8410d4b3ee87ecb2e320260326ec731ecfcffbd0e
