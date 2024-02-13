@@ -16,8 +16,6 @@ import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { ChevronLeft, ChevronRight, GridView, Link, List, Palette, Settings, WebAsset } from "@mui/icons-material";
 import { useQueryClient } from "@tanstack/react-query";
 
-import { UserSessionState } from "./private-components/UserSessionState";
-
 type NavBarProps = {
     workbench: Workbench;
 };
@@ -251,7 +249,6 @@ export const NavBar: React.FC<NavBarProps> = (props) => {
                 <div className="flex-grow h-5" />
                 <div className={isDevMode() ? "mb-16" : ""}>
                     <NavBarDivider />
-                    <UserSessionState expanded={expanded} />
                 </div>
             </div>
             {ensembleDialogOpen && (

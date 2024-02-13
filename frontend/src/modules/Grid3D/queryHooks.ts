@@ -47,30 +47,6 @@ export function useGridParameter(
     });
 }
 
-export function useStatisticalGridParameter(
-    caseUuid: string | null,
-    ensembleName: string | null,
-    gridName: string | null,
-    parameterName: string | null,
-    realizations: string[] | null,
-    useStatistics: boolean
-): UseQueryResult<number[]> {
-    return useQuery({
-        queryKey: ["getStatisticalGridParameter", caseUuid, ensembleName, gridName, parameterName, realizations],
-        queryFn: () =>
-            apiService.grid.statisticalGridParameter(
-                caseUuid ?? "",
-                ensembleName ?? "",
-                gridName ?? "",
-                parameterName ?? "",
-                realizations ?? []
-            ),
-        staleTime: STALE_TIME,
-        gcTime: 0,
-        enabled: caseUuid && ensembleName && gridName && parameterName && realizations && useStatistics ? true : false,
-    });
-}
-
 export function useGridModelNames(caseUuid: string | null, ensembleName: string | null): UseQueryResult<string[]> {
     return useQuery({
         queryKey: ["getGridModelNames", caseUuid, ensembleName],

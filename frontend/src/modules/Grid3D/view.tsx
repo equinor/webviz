@@ -13,7 +13,7 @@ import { useFieldWellsTrajectoriesQuery } from "@modules/_shared/WellBore/queryH
 import SubsurfaceViewer from "@webviz/subsurface-viewer";
 import { ViewAnnotation } from "@webviz/subsurface-viewer/dist/components/ViewAnnotation";
 
-import { useGridParameter, useGridSurface, useStatisticalGridParameter } from "./queryHooks";
+import { useGridParameter, useGridSurface } from "./queryHooks";
 import state from "./state";
 
 //-----------------------------------------------------------------------------------------------------------
@@ -54,73 +54,10 @@ export function View({ moduleContext, workbenchSettings, workbenchSession }: Mod
         realizations ? realizations[0] : "0",
         useStatistics
     );
-    const statisticalGridParameterQuery = useStatisticalGridParameter(
-        firstCaseUuid,
-        firstEnsembleName,
-        gridName,
-        parameterName,
-        realizations,
-        useStatistics
-    );
-    const wellTrajectoriesQuery = useFieldWellsTrajectoriesQuery(firstCaseUuid ?? undefined);
-    const bounds = gridSurfaceQuery?.data
-        ? [
-              gridSurfaceQuery.data.xmin,
-              gridSurfaceQuery.data.ymin,
-              gridSurfaceQuery.data.zmin,
-              gridSurfaceQuery.data.xmax,
-              gridSurfaceQuery.data.ymax,
-              gridSurfaceQuery.data.zmax,
-          ]
-        : [0, 0, 0, 100, 100, 100];
 
-    const newLayers: Record<string, unknown>[] = [
-        createNorthArrowLayer(),
-        {
-            "@@type": "AxesLayer",
-            id: "axes-layer",
-            bounds: bounds,
-        },
-    ];
-
-    let propertiesArray: number[] = [0, 1];
-    if (!useStatistics && gridParameterQuery?.data) {
-        propertiesArray = Array.from(gridParameterQuery.data);
-    } else if (useStatistics && statisticalGridParameterQuery?.data) {
-        propertiesArray = Array.from(statisticalGridParameterQuery.data);
-    }
-
-    if (gridSurfaceQuery.data) {
-        const points: Float32Array = gridSurfaceQuery.data.pointsFloat32Arr;
-        const polys: Uint32Array = gridSurfaceQuery.data.polysUint32Arr;
-        newLayers.push({
-            "@@type": "Grid3DLayer",
-            id: "grid3d-layer",
-            material: false,
-            pointsData: Array.from(points),
-            polysData: Array.from(polys),
-            propertiesData: propertiesArray,
-            colorMapName: "Continuous",
-            ZIncreasingDownwards: false,
-        });
-    }
-
-    if (wellTrajectoriesQuery.data) {
-        const wellTrajectories: WellBoreTrajectory_api[] = wellTrajectoriesQuery.data.filter((well) =>
-            selectedWellUuids.includes(well.wellbore_uuid)
-        );
-        const wellTrajectoryLayer: Record<string, unknown> = createWellboreTrajectoryLayer(wellTrajectories);
-        const wellBoreHeaderLayer: Record<string, unknown> = createWellBoreHeaderLayer(wellTrajectories);
-        newLayers.push(wellTrajectoryLayer);
-        newLayers.push(wellBoreHeaderLayer);
-    }
-    const propertyRange = [
-        propertiesArray.reduce((a, b) => Math.min(a, b)),
-        propertiesArray.reduce((a, b) => Math.max(a, b)),
-    ];
     return (
         <div className="relative w-full h-full flex flex-col">
-            <SubsurfaceViewer
+            {/* <SubsurfaceViewer
                 id={viewIds.view}
                 bounds={[bounds[0], bounds[1], bounds[3], bounds[4]]}
                 colorTables={colorTables}
@@ -149,9 +86,7 @@ export function View({ moduleContext, workbenchSettings, workbenchSession }: Mod
                         cssLegendStyles={{ bottom: "0", right: "0" }}
                     />
                 </ViewAnnotation>
-            </SubsurfaceViewer>
-
-            <div className="absolute bottom-5 right-5 italic text-pink-400">{moduleContext.getInstanceIdString()}</div>
+            </SubsurfaceViewer> */}
         </div>
     );
 }
