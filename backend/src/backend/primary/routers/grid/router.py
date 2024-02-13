@@ -1,15 +1,16 @@
 from typing import List
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, HTTPException
 from starlette.requests import Request
-
+import httpx
 from src.services.utils.authenticated_user import AuthenticatedUser
 from src.backend.auth.auth_helper import AuthHelper
 from src.backend.primary.user_session_proxy import proxy_to_user_session
-
+from src.services.surface_query_service.surface_query_service import _get_sas_token_and_blob_store_base_uri_for_case
 from src.services.sumo_access.grid_access import GridAccess
+from src.services.sumo_access.queries.cpgrid import get_grid_geometry_blob_id
 from .schemas import GridSurface, GridIntersection
-
+from src.backend.primary.user_session_proxy import RADIX_JOB_SCHEDULER_INSTANCE
 router = APIRouter()
 
 
@@ -49,30 +50,30 @@ async def grid_surface(
     grid_name: str = Query(description="Grid name"),
     realization: str = Query(description="Realization"),
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
-) -> GridSurface:
+) -> str:
     """Get a grid"""
 
-    query_params = {
-        "case_uuid": case_uuid,
-        "ensemble_name": ensemble_name,
-        "grid_name": grid_name,
-        "realization": int(realization),
-    }
+    access = await GridAccess.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
+    
+    blob_id = await get_grid_geometry_blob_id(access._sumo_client, case_uuid, ensemble_name, realization, grid_name)
+    
+    sas_token, blob_store_base_uri = _get_sas_token_and_blob_store_base_uri_for_case(authenticated_user.get_sumo_access_token(), case_uuid)
 
-    # Add query parameters to the request URL
-    updated_request = Request(
-        scope={
-            "type": "http",
-            "method": request.method,
-            "path": request.url.path,
-            "query_string": request.url.include_query_params(**query_params).query.encode("utf-8"),
-            "headers": request.headers.raw,
-        },
-        receive=request._receive,  # pylint: disable=protected-access
+    base_url = await RADIX_JOB_SCHEDULER_INSTANCE.get_base_url(
+        authenticated_user._user_id  # pylint: disable=protected-access
     )
 
-    response = await proxy_to_user_session(updated_request, authenticated_user)
-    return response
+    
+    query_params = {
+        "sas_token": sas_token,
+        "blob_store_base_uri": blob_store_base_uri,
+        "grid_blob_id": blob_id,
+    }
+    
+    async with httpx.AsyncClient(base_url=base_url) as client:
+        response: httpx.Response = await client.get(url="/grid_surface",params=query_params)
+    
+    return ""
 
 
 @router.get("/grid_parameter")
@@ -216,3 +217,5 @@ async def statistical_grid_parameter(
 
     response = await proxy_to_user_session(updated_request, authenticated_user)
     return response
+
+

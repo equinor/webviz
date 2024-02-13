@@ -93,7 +93,7 @@ async def get_grid_geometry_blob_id(
 
     result = response.json()
     hits = result["hits"]["hits"]
-    print(hits)
+    
     if len(hits) != 1:
         raise ValueError(f"Expected 1 hit, got {len(hits)}")
     return [hit["_id"] for hit in hits][0]
