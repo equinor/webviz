@@ -18,7 +18,6 @@ from src.services.surface_query_service.surface_query_service import Realization
 
 from . import converters
 from . import schemas
-from . import dependencies
 
 LOGGER = logging.getLogger(__name__)
 
