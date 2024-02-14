@@ -2,7 +2,7 @@ import { atom } from "jotai";
 import { historicalVectorDataQueriesAtom, vectorDataQueriesAtom, vectorObservationsQueriesAtom, vectorStatisticsQueriesAtom } from "./queryAtoms";
 import { createLoadedVectorSpecificationAndDataArray } from "../utils/vectorSpecificationsAndQueriesUtils";
 import { parameterIdentAtom, selectedEnsemblesAtom, vectorSpecificationsAtom } from "./derivedSettingsAtoms";
-import { colorRealizationsByParameterAtom, visualizationModeAtom } from "./baseAtoms";
+import { colorRealizationsByParameterAtom, userSelectedActiveTimestampUtcMsAtom, visualizationModeAtom } from "./baseAtoms";
 import { VisualizationMode } from "../typesAndEnums";
 
 export const queryIsFetchingAtom = atom((get) => {
@@ -11,12 +11,19 @@ export const queryIsFetchingAtom = atom((get) => {
     const historicalVectorDataQueries = get(historicalVectorDataQueriesAtom);
     const vectorObservationsQueries = get(vectorObservationsQueriesAtom);
 
-    return (
-        vectorDataQueries.some((query) => query.isFetching) ||
-        vectorStatisticsQueries.some((query) => query.isFetching) ||
-        historicalVectorDataQueries.some((query) => query.isFetching) ||
-        vectorObservationsQueries.isFetching
+    const vectorDataIsFetching = vectorDataQueries.some((query) => query.isFetching);
+    const vectorStatisticsIsFetching = vectorStatisticsQueries.some((query) => query.isFetching);
+    const historicalVectorDataIsFetching = historicalVectorDataQueries.some((query) => query.isFetching);
+    const vectorObservationsIsFetching = vectorObservationsQueries.isFetching;
+
+    const isFetching = (
+        vectorDataIsFetching ||
+        vectorStatisticsIsFetching ||
+        historicalVectorDataIsFetching ||
+        vectorObservationsIsFetching
     );
+
+    return isFetching;
 });
 
 export const realizationsQueryHasErrorAtom = atom((get) => {
@@ -57,8 +64,6 @@ export const loadedVectorSpecificationsAndHistoricalDataAtom = atom((get) => {
 
     return createLoadedVectorSpecificationAndDataArray(vectorSpecifications, historicalVectorDataQueries);
 });
-
-export const userSelectedActiveTimestampUtcMsAtom = atom<number | null>(null);
 
 export const activeTimestampUtcMsAtom = atom<number | null>((get) => {
     const loadedVectorSpecificationsAndRealizationData = get(loadedVectorSpecificationsAndRealizationDataAtom);

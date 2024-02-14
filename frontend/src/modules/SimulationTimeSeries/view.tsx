@@ -16,11 +16,11 @@ import {
     colorByParameterAtom,
     realizationsQueryHasErrorAtom,
     statisticsQueryHasErrorAtom,
-    userSelectedActiveTimestampUtcMsAtom,
 } from "./atoms/derivedViewAtoms";
 import { useMakeViewStatusWriterMessages } from "./hooks/useMakeViewStatusWriterMessages";
 import { useSubplotBuilder } from "./hooks/useSubplotBuilder";
 import { EnsemblesContinuousParameterColoring } from "./utils/ensemblesContinuousParameterColoring";
+import { userSelectedActiveTimestampUtcMsAtom } from "./atoms/baseAtoms";
 
 export const View = ({ moduleContext, workbenchSettings }: ModuleFCProps<Record<string, never>>) => {
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);

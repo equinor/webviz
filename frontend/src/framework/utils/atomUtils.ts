@@ -37,15 +37,18 @@ export function atomWithQueries<
     getQueryClient?: (get: Getter) => QueryClient
 ): Atom<TCombinedResult> {
     const optionsAtom = atom(getOptions);
-    return atom((get) => {
+    const atoms = atom((get) => {
         const options = get(optionsAtom);
 
-        const atoms = atom(
+        const queries =
             options.queries.map((option) => {
                 return atomWithQuery<TQueryFnData, TError, TData, TQueryData, TQueryKey>(option, getQueryClient);
-            })
-        );
+            });
 
+        return queries;
+    });
+    return atom((get) => {
+        const options = get(optionsAtom);
         const results = get(atoms).map((atom) => get(atom));
 
         if (options.combine) {
@@ -53,5 +56,5 @@ export function atomWithQueries<
         }
 
         return results as TCombinedResult;
-    });
+    })
 }

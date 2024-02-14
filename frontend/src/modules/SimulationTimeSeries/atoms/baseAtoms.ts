@@ -30,3 +30,5 @@ export const selectedVectorNamesAtom = atomWithCompare<string[]>([], isEqual);
 export const filteredParameterIdentListAtom = atom<ParameterIdent[]>([]);
 
 export const userSelectedParameterIdentStringAtom = atom<string | null>(null);
+
+export const userSelectedActiveTimestampUtcMsAtom = atom<number | null>(null);
