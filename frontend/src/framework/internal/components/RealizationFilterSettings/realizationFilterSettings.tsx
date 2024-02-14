@@ -75,13 +75,12 @@ export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps>
 
     function handleSelectedEnsembleChange(newValue: string | undefined) {
         const ensembleIdent = newValue ? EnsembleIdent.fromString(newValue) : null;
+        setCandidateEnsembleIdent(ensembleIdent);
         if (hasUnsavedChanges) {
-            setCandidateEnsembleIdent(ensembleIdent);
             setDialogOpen(true);
             return;
         }
 
-        setCandidateEnsembleIdent(ensembleIdent);
         setStatesFromEnsembleIdent(ensembleIdent);
     }
 
