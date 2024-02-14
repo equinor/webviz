@@ -1,6 +1,7 @@
 import asyncio
 import datetime
 import logging
+import json
 from typing import Annotated
 
 import httpx
@@ -111,22 +112,35 @@ async def user_mock(
             info = res.json()
             print(info)
 
-            return info
+            return json.dumps(info)
 
-    if cmd == "create":
+    if cmd == "create" or cmd == "create-call":
         async with httpx.AsyncClient() as client:
             res = await client.post(
                 base_url,
                 json={
                     "resources": {
-                        "limits": {"memory": "2GiB", "cpu": "1"},
-                        "requests": {"memory": "2GiB", "cpu": "1"},
+                        "limits": {"memory": "1GiB", "cpu": "1"},
+                        "requests": {"memory": "1GiB", "cpu": "1"},
                     }
                 },
             )
             info = res.json()
+            print("------")
             print(info)
-            return info
+            print("------")
+
+            resp_text = "nada"
+            if cmd == "create-call":
+                job_name = info["name"]
+                call_url = f"http://{job_name}:8001"
+                res = await client.get(call_url)
+                resp_text = res.text()
+                print("------")
+                print(resp_text)
+                print("------")
+
+            return json.dumps(info) + "\n" + resp_text
 
     return "Unknown command"
 
