@@ -36,9 +36,9 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
         props.workbench.getGuiMessageBroker(),
         GuiState.DrawerContent
     );
-    const [settingsPanelWidth, setSettingsPanelWidth] = useGuiState(
+    const [leftSettingsPanelWidth, setLeftSettingsPanelWidth] = useGuiState(
         props.workbench.getGuiMessageBroker(),
-        GuiState.SettingsPanelWidthInPercent
+        GuiState.LeftSettingsPanelWidthInPercent
     );
 
     const guiMessageBroker = props.workbench.getGuiMessageBroker();
@@ -100,8 +100,8 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
         if (dataChannelConnectionsLayerVisible) {
             return;
         }
-        if (settingsPanelWidth <= 5) {
-            setSettingsPanelWidth(20);
+        if (leftSettingsPanelWidth <= 5) {
+            setLeftSettingsPanelWidth(20);
         }
         if (drawerContent !== DrawerContent.SyncSettings) {
             setDrawerContent(DrawerContent.ModuleSettings);

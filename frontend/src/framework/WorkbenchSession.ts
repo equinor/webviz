@@ -1,11 +1,16 @@
 import React from "react";
 
 import { Ensemble } from "./Ensemble";
+import { EnsembleIdent } from "./EnsembleIdent";
 import { EnsembleSet } from "./EnsembleSet";
+import { RealizationFilterSet } from "./RealizationFilterSet";
+
+export type EnsembleRealizationFilterFunction = (ensembleIdent: EnsembleIdent) => readonly number[];
 
 export enum WorkbenchSessionEvent {
     EnsembleSetChanged = "EnsembleSetChanged",
     EnsembleSetLoadingStateChanged = "EnsembleSetLoadingStateChanged",
+    RealizationFilterSetChanged = "RealizationFilterSetChanged",
 }
 
 export type WorkbenchSessionPayloads = {
@@ -17,9 +22,14 @@ export type WorkbenchSessionPayloads = {
 export class WorkbenchSession {
     private _subscribersMap: Map<keyof WorkbenchSessionEvent, Set<(payload: any) => void>> = new Map();
     protected _ensembleSet: EnsembleSet = new EnsembleSet([]);
+    protected _realizationFilterSet = new RealizationFilterSet();
 
     getEnsembleSet(): EnsembleSet {
         return this._ensembleSet;
+    }
+
+    getRealizationFilterSet(): RealizationFilterSet {
+        return this._realizationFilterSet;
     }
 
     subscribe<T extends Exclude<WorkbenchSessionEvent, keyof WorkbenchSessionPayloads>>(
@@ -54,6 +64,45 @@ export class WorkbenchSession {
             callbackFn(payload);
         }
     }
+}
+
+function createEnsembleRealizationFilterFuncForWorkbenchSession(workbenchSession: WorkbenchSession) {
+    return function ensembleRealizationFilterFunc(ensembleIdent: EnsembleIdent): readonly number[] {
+        const realizationFilterSet = workbenchSession.getRealizationFilterSet();
+        const realizationFilter = realizationFilterSet.getRealizationFilterForEnsembleIdent(ensembleIdent);
+
+        return realizationFilter.getFilteredRealizations();
+    };
+}
+
+export function useEnsembleRealizationFilterFunc(
+    workbenchSession: WorkbenchSession
+): EnsembleRealizationFilterFunction {
+    // With React.useState and filter function `S`, we have `S` = () => readonly number[].
+    // For React.useState, initialState (() => S) implies notation () => S, i.e. () => () => readonly number[].
+    const [storedEnsembleRealizationFilterFunc, setStoredEnsembleRealizationFilterFunc] =
+        React.useState<EnsembleRealizationFilterFunction>(() =>
+            createEnsembleRealizationFilterFuncForWorkbenchSession(workbenchSession)
+        );
+
+    React.useEffect(
+        function subscribeToEnsembleRealizationFilterSetChanges() {
+            function handleEnsembleRealizationFilterSetChanged() {
+                setStoredEnsembleRealizationFilterFunc(() =>
+                    createEnsembleRealizationFilterFuncForWorkbenchSession(workbenchSession)
+                );
+            }
+
+            const unsubFunc = workbenchSession.subscribe(
+                WorkbenchSessionEvent.RealizationFilterSetChanged,
+                handleEnsembleRealizationFilterSetChanged
+            );
+            return unsubFunc;
+        },
+        [workbenchSession]
+    );
+
+    return storedEnsembleRealizationFilterFunc;
 }
 
 export function useEnsembleSet(workbenchSession: WorkbenchSession): EnsembleSet {
