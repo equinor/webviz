@@ -5,38 +5,53 @@ import { Workbench } from "@framework/Workbench";
 import { ResizablePanels } from "@lib/components/ResizablePanels";
 
 import { Content } from "../Content";
-import { Settings } from "../Settings/settings";
+import { LeftSettingsPanel } from "../LeftSettingsPanel";
+import { RightSettingsPanel } from "../RightSettingsPanel";
 
 export type SettingsContentPanelsProps = {
     workbench: Workbench;
 };
 
 export const SettingsContentPanels: React.FC<SettingsContentPanelsProps> = (props) => {
-    const [settingsPanelWidth, setSettingsPanelWidth] = useGuiState(
+    const [leftSettingsPanelWidth, setLeftSettingsPanelWidth] = useGuiState(
         props.workbench.getGuiMessageBroker(),
-        GuiState.SettingsPanelWidthInPercent
+        GuiState.LeftSettingsPanelWidthInPercent
+    );
+    const [rightSettingsPanelWidth, setRightSettingsPanelWidth] = useGuiState(
+        props.workbench.getGuiMessageBroker(),
+        GuiState.RightSettingsPanelWidthInPercent
+    );
+    const [, setRightSettingsPanelExpanded] = useGuiState(
+        props.workbench.getGuiMessageBroker(),
+        GuiState.RightSettingsPanelExpanded
     );
 
-    const handleSettingsPanelResize = React.useCallback(
-        function handleSettingsPanelResize(sizes: number[]) {
-            setSettingsPanelWidth(sizes[0]);
-            localStorage.setItem("settingsPanelWidthInPercent", sizes[0].toString());
+    const handleResizablePanelsChange = React.useCallback(
+        function handleResizablePanelsChange(sizes: number[]) {
+            setLeftSettingsPanelWidth(sizes[0]);
+            setRightSettingsPanelWidth(sizes[2]);
+            setRightSettingsPanelExpanded(sizes[2] > 0.0);
         },
-        [setSettingsPanelWidth]
+        [setLeftSettingsPanelWidth, setRightSettingsPanelWidth, setRightSettingsPanelExpanded]
     );
 
     return (
         <ResizablePanels
             id="settings-content"
             direction="horizontal"
-            sizesInPercent={[settingsPanelWidth, 100 - settingsPanelWidth]}
-            minSizes={[300, 0]}
-            onSizesChange={handleSettingsPanelResize}
+            sizesInPercent={[
+                leftSettingsPanelWidth,
+                100 - leftSettingsPanelWidth - rightSettingsPanelWidth,
+                rightSettingsPanelWidth,
+            ]}
+            minSizes={[300, 0, 300]}
+            onSizesChange={handleResizablePanelsChange}
         >
-            <Settings workbench={props.workbench} />
+            <LeftSettingsPanel workbench={props.workbench} />
             <div className="flex flex-col flex-grow h-full">
                 <Content workbench={props.workbench} />
             </div>
+            <RightSettingsPanel workbench={props.workbench} />
         </ResizablePanels>
     );
 };

@@ -7,16 +7,16 @@ import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { Settings as SettingsIcon } from "@mui/icons-material";
 
 import { ColorPaletteSettings } from "./private-components/colorPaletteSettings";
+import { ModuleSettings } from "./private-components/moduleSettings";
 import { ModulesList } from "./private-components/modulesList";
-import { Setting } from "./private-components/setting";
 import { SyncSettings } from "./private-components/syncSettings";
 import { TemplatesList } from "./private-components/templatesList";
 
-type SettingsProps = {
+type LeftSettingsPanelProps = {
     workbench: Workbench;
 };
 
-export const Settings: React.FC<SettingsProps> = (props) => {
+export const LeftSettingsPanel: React.FC<LeftSettingsPanelProps> = (props) => {
     const moduleInstances = useModuleInstances(props.workbench);
     const activeModuleInstanceId = useGuiValue(props.workbench.getGuiMessageBroker(), GuiState.ActiveModuleInstanceId);
 
@@ -42,7 +42,7 @@ export const Settings: React.FC<SettingsProps> = (props) => {
                 )}
             >
                 {moduleInstances.map((instance) => (
-                    <Setting
+                    <ModuleSettings
                         key={instance.getId()}
                         moduleInstance={instance}
                         activeModuleInstanceId={activeModuleInstanceId}

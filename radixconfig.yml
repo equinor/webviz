@@ -88,6 +88,29 @@ spec:
               cpu:
                 averageUtilization: 80
 
+    - name: surface-query
+      dockerFileName: ./backend_go/surface-query-prod.Dockerfile
+      ports:
+        - name: http
+          port: 5001
+      resources:
+        requests:
+          memory: 8Gi
+          cpu: 2000m
+        limits:
+          # Even though the general advice is to leave cpu limit unspecified, here we set it to the same as requests.
+          # As of now, it seems that it's the cpu limit value that will be picked up by automaxprocs utilized in the go service.
+          memory: 8Gi
+          cpu: 2000m
+      horizontalScaling:
+        minReplicas: 1
+        maxReplicas: 4
+        resources:
+          memory:
+            averageUtilization: 60
+          cpu:
+            averageUtilization: 80
+
     - name: redis-user-session
       image: bitnami/redis:6.2.10@sha256:bd42fcdab5959ce2b21b6ea8410d4b3ee87ecb2e320260326ec731ecfcffbd0e
       ports:

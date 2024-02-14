@@ -18,7 +18,13 @@ export class WorkbenchSessionPrivate extends WorkbenchSession {
 
     setEnsembleSet(newEnsembleSet: EnsembleSet): void {
         this._ensembleSet = newEnsembleSet;
+        this._realizationFilterSet.synchronizeWithEnsembleSet(this._ensembleSet);
         this._atomStoreMaster.setAtomValue(EnsembleSetAtom, newEnsembleSet);
         this.notifySubscribers(WorkbenchSessionEvent.EnsembleSetChanged);
+        this.notifySubscribers(WorkbenchSessionEvent.RealizationFilterSetChanged);
+    }
+
+    notifyAboutEnsembleRealizationFilterChange(): void {
+        this.notifySubscribers(WorkbenchSessionEvent.RealizationFilterSetChanged);
     }
 }

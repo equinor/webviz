@@ -106,3 +106,13 @@ class SurfaceIntersectionCumulativeLengthPolyline(BaseModel):
     x_points: List[float]
     y_points: List[float]
     cum_lengths: List[float]
+
+
+class SurfaceRealizationSampleValues(BaseModel):
+    realization: int
+    sampled_values: list[float]
+
+
+class PointSetXY(BaseModel):
+    x_points: list[float]
+    y_points: list[float]

@@ -275,12 +275,3 @@ def _make_intersection(surface: xtgeo.RegularSurface, xtgeo_fencespec: np.ndarra
         zval=line[:, 1].tolist(),
     )
     return intersection
-
-
-def _make_intersections(
-    surfaces: List[xtgeo.RegularSurface], xtgeo_fencespec: np.ndarray
-) -> List[XtgeoSurfaceIntersectionResult]:
-    if len(surfaces) == 0:
-        return []
-
-    return [_make_intersection(surface, xtgeo_fencespec) for surface in surfaces]

@@ -9,7 +9,6 @@ import { ModuleInstance } from "./ModuleInstance";
 import { ModuleRegistry } from "./ModuleRegistry";
 import { Template } from "./TemplateRegistry";
 import { WorkbenchServices } from "./WorkbenchServices";
-import { WorkbenchSession } from "./WorkbenchSession";
 import { loadEnsembleSetMetadataFromBackend } from "./internal/EnsembleSetLoader";
 import { PrivateWorkbenchServices } from "./internal/PrivateWorkbenchServices";
 import { PrivateWorkbenchSettings } from "./internal/PrivateWorkbenchSettings";
@@ -68,7 +67,7 @@ export class Workbench {
         return this._atomStoreMaster;
     }
 
-    getWorkbenchSession(): WorkbenchSession {
+    getWorkbenchSession(): WorkbenchSessionPrivate {
         return this._workbenchSession;
     }
 
