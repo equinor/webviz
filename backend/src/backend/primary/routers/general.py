@@ -1,6 +1,7 @@
 import asyncio
 import datetime
 import logging
+from typing import Annotated
 
 import httpx
 import starsessions
@@ -89,3 +90,44 @@ async def user_session_container(
 ) -> StreamingResponse:
     """Get information about user session container (note that one is started if not already running)."""
     return await proxy_to_user_session(request, authenticated_user)
+
+
+@router.get("/user_mock")
+async def user_mock(
+    authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
+    cmd: Annotated[str, Query(description="Command")] = None
+) -> str:
+
+    print(f"{cmd=}")
+
+    if cmd is None:
+        return "No command given"
+
+    base_url = "http://user_mock:8001/api/v1/jobs"
+
+    if cmd == "list":
+        async with httpx.AsyncClient() as client:
+            res = await client.get(base_url)
+            info = res.json()
+            print(info)
+
+            return info
+
+    if cmd == "create":
+        async with httpx.AsyncClient() as client:
+            res = await client.post(
+                base_url,
+                json={
+                    "resources": {
+                        "limits": {"memory": "2GiB", "cpu": "1"},
+                        "requests": {"memory": "2GiB", "cpu": "1"},
+                    }
+                },
+            )
+            info = res.json()
+            print(info)
+            return info
+
+    return "Unknown command"
+
+

@@ -54,6 +54,15 @@ services:
     volumes:
       - ./backend_go/surface_query:/home/appuser/backend_go/surface_query
 
+  user-mock:
+    build:
+      context: .
+      dockerfile: ./backend_py/user_mock/user-mock.Dockerfile
+    ports:
+      - 8001:8001
+    volumes:
+      - ./backend_py/user_mock:/home/appuser/AAA
+
   backend-user-session:
     build:
       context: .

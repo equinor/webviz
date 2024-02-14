@@ -137,6 +137,13 @@ spec:
           memory: 2Gi
 
   jobs:
+    - name: user-mock
+      dockerFileName: ./backend_py/user_mock/user-mock.Dockerfile
+      schedulerPort: 8001
+      ports:
+        - name: http
+          port: 8001
+
     - name: backend-user-session
       dockerFileName: backend.Dockerfile
       schedulerPort: 8000
