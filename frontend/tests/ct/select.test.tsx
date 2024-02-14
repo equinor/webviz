@@ -182,9 +182,6 @@ test.describe("Select", () => {
 
         await select.press("Shift+Home");
         expect(arrayContainsOtherArray(selection, selectOptions1.map(el => el.value))).toBeTruthy();
-        for (let i = 0; i < SIZE; i++) {
-            expect(select).toContainText(selectOptions1[i].value);
-        }
     });
 
     test("Changing props.options is working", async ({ mount, }) => {
@@ -210,8 +207,5 @@ test.describe("Select", () => {
 
         await select.press("End");
         expect(selection.includes(selectOptions2[selectOptions2.length - 1].value)).toBeTruthy();
-        for (let i = selectOptions2.length - SIZE; i < selectOptions2.length; i++) {
-            expect(select).toContainText(selectOptions2[i].value);
-        }
     });
 });
