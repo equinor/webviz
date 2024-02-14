@@ -103,7 +103,7 @@ async def user_mock(
     if cmd is None:
         return "No command given"
 
-    base_url = "http://user_mock:8001/api/v1/jobs"
+    base_url = "http://user-mock:8001/api/v1/jobs"
 
     if cmd == "list":
         async with httpx.AsyncClient() as client:
