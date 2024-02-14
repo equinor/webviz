@@ -1,7 +1,7 @@
 from enum import Enum
 from typing import List, Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, validator
 
 from src.services.smda_access.types import StratigraphicFeature
 from src.services.utils.b64 import B64FloatArray
@@ -15,6 +15,62 @@ class SurfaceStatisticFunction(str, Enum):
     P10 = "P10"
     P90 = "P90"
     P50 = "P50"
+
+
+class SurfaceAddressType(str, Enum):
+    REALIZATION = "realization"
+    OBSERVATION = "observation"
+    STATISTICAL = "statistical"
+
+
+class RealizationSurfaceAddress(BaseModel):
+    address_type: SurfaceAddressType
+    case_uuid: str
+    ensemble_name: str
+    name: str
+    attribute: str
+    realization_num: int
+    iso_date_or_interval: Optional[str] = None
+
+    @validator("address_type", pre=True, always=True)
+    def set_address_type(cls, v):
+        if v != SurfaceAddressType.REALIZATION:
+            raise ValueError(f"address_type must be {SurfaceAddressType.REALIZATION}")
+        return v
+
+
+class StatisticalSurfaceAddress(BaseModel):
+    address_type: SurfaceAddressType
+    case_uuid: str
+    ensemble_name: str
+    name: str
+    attribute: str
+    iso_date_or_interval: Optional[str] = None
+    statistic_function: SurfaceStatisticFunction
+
+    @validator("address_type", pre=True, always=True)
+    def set_address_type(cls, v):
+        if v != SurfaceAddressType.STATISTICAL:
+            raise ValueError(f"address_type must be {SurfaceAddressType.STATISTICAL}")
+        return v
+
+
+class ObservationSurfaceAddress(BaseModel):
+    address_type: SurfaceAddressType
+    case_uuid: str
+    ensemble_name: str
+    name: str
+    attribute: str
+    iso_date_or_interval: Optional[str] = None
+
+    @validator("address_type", pre=True, always=True)
+    def set_address_type(cls, v):
+        if v != SurfaceAddressType.OBSERVATION:
+            raise ValueError(f"address_type must be {SurfaceAddressType.OBSERVATION}")
+        return v
+
+
+SurfaceAddress = RealizationSurfaceAddress | StatisticalSurfaceAddress | ObservationSurfaceAddress
 
 
 class SurfaceAttributeType(str, Enum):
@@ -116,3 +172,13 @@ class SurfaceRealizationSampleValues(BaseModel):
 class PointSetXY(BaseModel):
     x_points: list[float]
     y_points: list[float]
+
+
+class SurfaceGridDefinition(BaseModel):
+    ncol: int
+    nrow: int
+    xinc: float
+    yinc: float
+    xori: float
+    yori: float
+    rotation: float

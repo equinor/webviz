@@ -1,6 +1,6 @@
 import React from "react";
 
-import { PolygonData_api, WellBoreTrajectory_api } from "@api";
+import { PolygonData_api, SurfaceGridDefinition_api, WellBoreTrajectory_api } from "@api";
 import { ContinuousLegend } from "@emerson-eps/color-tables";
 import { ModuleFCProps } from "@framework/Module";
 import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
@@ -9,6 +9,7 @@ import { Button } from "@lib/components/Button";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { ColorScaleGradientType } from "@lib/utils/ColorScale";
 import { usePolygonsDataQueryByAddress } from "@modules/_shared/Polygons";
+import { useResampledSurfaceDataQueryByAddress } from "@modules/_shared/Surface/queryHooks";
 import { useFieldWellsTrajectoriesQuery } from "@modules/_shared/WellBore/queryHooks";
 import { useSurfaceDataQueryByAddress } from "@modules_shared/Surface";
 import { ViewAnnotation } from "@webviz/subsurface-viewer/dist/components/ViewAnnotation";
@@ -24,7 +25,6 @@ import {
     createWellboreTrajectoryLayer,
 } from "./_utils";
 import { SyncedSubsurfaceViewer } from "./components/SyncedSubsurfaceViewer";
-import { usePropertySurfaceDataByQueryAddress } from "./queryHooks";
 import { state } from "./state";
 
 type Bounds = [number, number, number, number];
@@ -84,11 +84,21 @@ export function View({ moduleContext, workbenchSettings, workbenchServices }: Mo
     const show3D: boolean = viewSettings?.show3d ?? true;
 
     const meshSurfDataQuery = useSurfaceDataQueryByAddress(meshSurfAddr);
+    let meshSurfaceGridSpec: SurfaceGridDefinition_api | null = null;
+    if (meshSurfDataQuery.data) {
+        meshSurfaceGridSpec = {
+            xinc: meshSurfDataQuery.data.x_inc,
+            yinc: meshSurfDataQuery.data.y_inc,
+            xori: meshSurfDataQuery.data.x_ori,
+            yori: meshSurfDataQuery.data.y_ori,
+            rotation: meshSurfDataQuery.data.rot_deg,
+            ncol: meshSurfDataQuery.data.x_count,
+            nrow: meshSurfDataQuery.data.y_count,
+        };
+    }
+    const propertySurfDataQuery = useResampledSurfaceDataQueryByAddress(propertySurfAddr, meshSurfaceGridSpec);
 
-    const hasMeshSurfData = meshSurfDataQuery?.data ? true : false;
-    const propertySurfDataQuery = usePropertySurfaceDataByQueryAddress(meshSurfAddr, propertySurfAddr, hasMeshSurfData);
-
-    const wellTrajectoriesQuery = useFieldWellsTrajectoriesQuery(meshSurfAddr?.caseUuid);
+    const wellTrajectoriesQuery = useFieldWellsTrajectoriesQuery(meshSurfAddr?.case_uuid);
     const polygonsQuery = usePolygonsDataQueryByAddress(polygonsAddr);
 
     const newLayers: Record<string, unknown>[] = [createNorthArrowLayer()];
@@ -216,11 +226,11 @@ export function View({ moduleContext, workbenchSettings, workbenchServices }: Mo
                 )}
             </div>
 
-            <div className="absolute top-0 right-0 z-10">
+            {/* <div className="absolute top-0 right-0 z-10">
                 <Button variant="contained" onClick={() => toggleResetBounds(!resetBounds)}>
                     Reset viewport bounds
                 </Button>
-            </div>
+            </div> */}
             <div className="z-1">
                 {show3D ? (
                     <SyncedSubsurfaceViewer
