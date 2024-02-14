@@ -29,7 +29,6 @@ export function useVectorListQueries(
 export function useVectorDataQueries(
     vectorSpecifications: VectorSpec[] | null,
     resampleFrequency: Frequency_api | null,
-    realizationsToInclude: number[] | null,
     allowEnable: boolean
 ): UseQueryResult<VectorRealizationData_api[]>[] {
     return useQueries({
@@ -41,7 +40,7 @@ export function useVectorDataQueries(
                     item.ensembleIdent.getEnsembleName(),
                     item.vectorName,
                     resampleFrequency,
-                    realizationsToInclude,
+                    item.selectedIndividualRealizations,
                 ],
                 queryFn: () =>
                     apiService.timeseries.getRealizationsVectorData(
@@ -49,7 +48,7 @@ export function useVectorDataQueries(
                         item.ensembleIdent.getEnsembleName() ?? "",
                         item.vectorName ?? "",
                         resampleFrequency ?? undefined,
-                        realizationsToInclude ?? undefined
+                        item.selectedIndividualRealizations
                     ),
                 staleTime: STALE_TIME,
                 gcTime: CACHE_TIME,
@@ -67,7 +66,6 @@ export function useVectorDataQueries(
 export function useStatisticalVectorDataQueries(
     vectorSpecifications: VectorSpec[] | null,
     resampleFrequency: Frequency_api | null,
-    realizationsToInclude: number[] | null,
     allowEnable: boolean
 ): UseQueryResult<VectorStatisticData_api>[] {
     return useQueries({
@@ -79,7 +77,7 @@ export function useStatisticalVectorDataQueries(
                     item.ensembleIdent.getEnsembleName(),
                     item.vectorName,
                     resampleFrequency,
-                    realizationsToInclude,
+                    item.selectedStatisticsRealizations,
                 ],
                 queryFn: () =>
                     apiService.timeseries.getStatisticalVectorData(
@@ -88,7 +86,7 @@ export function useStatisticalVectorDataQueries(
                         item.vectorName ?? "",
                         resampleFrequency ?? Frequency_api.MONTHLY,
                         undefined,
-                        realizationsToInclude ?? undefined
+                        item.selectedStatisticsRealizations
                     ),
                 staleTime: STALE_TIME,
                 gcTime: CACHE_TIME,

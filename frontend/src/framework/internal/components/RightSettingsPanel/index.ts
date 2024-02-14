@@ -1,0 +1,1 @@
+export { RightSettingsPanel } from "./rightSettingsPanel";

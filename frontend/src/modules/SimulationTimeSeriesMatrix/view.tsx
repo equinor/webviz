@@ -7,11 +7,13 @@ import { Ensemble } from "@framework/Ensemble";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { ModuleFCProps } from "@framework/Module";
 import { useViewStatusWriter } from "@framework/StatusWriter";
-import { useEnsembleSet } from "@framework/WorkbenchSession";
+import { useEnsembleRealizationFilterFunc, useEnsembleSet } from "@framework/WorkbenchSession";
 import { timestampUtcMsToCompactIsoString } from "@framework/utils/timestampUtils";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { ColorScaleGradientType } from "@lib/utils/ColorScale";
 import { ContentError } from "@modules/_shared/components/ContentMessage";
+
+import { isEqual } from "lodash";
 
 import { Annotations, Layout, PlotDatum, PlotMouseEvent, Shape } from "plotly.js";
 
@@ -37,6 +39,7 @@ export const View = ({ moduleContext, workbenchSession, workbenchSettings }: Mod
     const wrapperDivSize = useElementSize(wrapperDivRef);
 
     const ensembleSet = useEnsembleSet(workbenchSession);
+    const getFilteredEnsembleRealizationsFunc = useEnsembleRealizationFilterFunc(workbenchSession);
     const statusWriter = useViewStatusWriter(moduleContext);
 
     const [activeTimestampUtcMs, setActiveTimestampUtcMs] = React.useState<number | null>(null);
@@ -45,13 +48,28 @@ export const View = ({ moduleContext, workbenchSession, workbenchSettings }: Mod
     const vectorSpecifications = moduleContext.useStoreValue("vectorSpecifications");
     const groupBy = moduleContext.useStoreValue("groupBy");
     const resampleFrequency = moduleContext.useStoreValue("resamplingFrequency");
-    const realizationsToInclude = moduleContext.useStoreValue("realizationsToInclude");
     const visualizationMode = moduleContext.useStoreValue("visualizationMode");
     const showHistorical = moduleContext.useStoreValue("showHistorical");
     const showObservations = moduleContext.useStoreValue("showObservations");
     const statisticsSelection = moduleContext.useStoreValue("statisticsSelection");
     const parameterIdent = moduleContext.useStoreValue("parameterIdent");
     const colorRealizationsByParameter = moduleContext.useStoreValue("colorRealizationsByParameter");
+
+    // Apply realization filtering
+    vectorSpecifications?.forEach((vectorSpecification) => {
+        const filteredEnsembleRealizations = getFilteredEnsembleRealizationsFunc(vectorSpecification.ensembleIdent);
+        const ensembleRealizations = ensembleSet.findEnsemble(vectorSpecification.ensembleIdent)?.getRealizations();
+
+        // Check if no realizations are filtered out
+        const isAllRealizationsSelected = isEqual(filteredEnsembleRealizations, ensembleRealizations);
+
+        vectorSpecification.selectedIndividualRealizations = isAllRealizationsSelected
+            ? null
+            : [...filteredEnsembleRealizations];
+        vectorSpecification.selectedStatisticsRealizations = isAllRealizationsSelected
+            ? null
+            : [...filteredEnsembleRealizations];
+    });
 
     // Color palettes
     const colorSet = workbenchSettings.useColorSet();
@@ -73,16 +91,10 @@ export const View = ({ moduleContext, workbenchSession, workbenchSettings }: Mod
     });
 
     // Queries
-    const vectorDataQueries = useVectorDataQueries(
-        vectorSpecifications,
-        resampleFrequency,
-        realizationsToInclude,
-        true
-    );
+    const vectorDataQueries = useVectorDataQueries(vectorSpecifications, resampleFrequency, true);
     const vectorStatisticsQueries = useStatisticalVectorDataQueries(
         vectorSpecifications,
         resampleFrequency,
-        realizationsToInclude,
         visualizationMode === VisualizationMode.STATISTICAL_FANCHART ||
             visualizationMode === VisualizationMode.STATISTICAL_LINES ||
             visualizationMode === VisualizationMode.STATISTICS_AND_REALIZATIONS
