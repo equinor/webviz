@@ -61,8 +61,8 @@ export const Select = withDefaults<SelectProps>()(defaultProps, (props) => {
     const [options, setOptions] = React.useState<SelectOption[]>(props.options);
     const [filteredOptions, setFilteredOptions] = React.useState<SelectOption[]>(props.options);
     const [selectionAnchor, setSelectionAnchor] = React.useState<number | null>(null);
-    const [selectedOptions, setSelectedOptions] = React.useState<string[]>([]);
-    const [prevValue, setPrevValue] = React.useState<string[]>([]);
+    const [selectedOptionValues, setSelectedOptionValues] = React.useState<string[]>([]);
+    const [prevPropsValue, setPrevPropsValue] = React.useState<string[]>([]);
     const [currentFocusIndex, setCurrentFocusIndex] = React.useState<number>(0);
     const [virtualizationStartIndex, setVirtualizationStartIndex] = React.useState<number>(0);
     const [reportedVirtualizationStartIndex, setReportedVirtualizationStartIndex] = React.useState<number>(0);
@@ -77,9 +77,9 @@ export const Select = withDefaults<SelectProps>()(defaultProps, (props) => {
         filterOptions(newOptions, filterString);
     }
 
-    if (props.value && !isEqual(props.value, prevValue)) {
-        setSelectedOptions([...props.value]);
-        setPrevValue([...props.value]);
+    if (props.value && !isEqual(props.value, prevPropsValue)) {
+        setSelectedOptionValues([...props.value]);
+        setPrevPropsValue([...props.value]);
     }
 
     React.useEffect(
@@ -95,11 +95,15 @@ export const Select = withDefaults<SelectProps>()(defaultProps, (props) => {
 
                 if (!props.multiple) {
                     const newSelectedOptions = [filteredOptions[index].value];
-                    setSelectedOptions(newSelectedOptions);
+                    setSelectedOptionValues(newSelectedOptions);
                     setSelectionAnchor(null);
                     if (onChange) {
                         onChange(newSelectedOptions);
                     }
+                }
+
+                if (!(!localKeysPressed.includes("Control") || localKeysPressed.includes("Shift"))) {
+                    return;
                 }
 
                 let newSelectedOptions: string[] = [];
@@ -119,6 +123,8 @@ export const Select = withDefaults<SelectProps>()(defaultProps, (props) => {
                 if (onChange) {
                     onChange(newSelectedOptions);
                 }
+
+                setSelectedOptionValues(newSelectedOptions);
             }
 
             function addKeyboardSelection(index: number) {
@@ -128,7 +134,7 @@ export const Select = withDefaults<SelectProps>()(defaultProps, (props) => {
 
                 if (!props.multiple) {
                     const newSelectedOptions = [filteredOptions[index].value];
-                    setSelectedOptions(newSelectedOptions);
+                    setSelectedOptionValues(newSelectedOptions);
                     setSelectionAnchor(null);
                     if (onChange) {
                         onChange(newSelectedOptions);
@@ -138,12 +144,12 @@ export const Select = withDefaults<SelectProps>()(defaultProps, (props) => {
                 setSelectionAnchor(index);
 
                 let newSelectedOptions: string[] = [];
-                if (selectedOptions.includes(filteredOptions[index].value)) {
-                    newSelectedOptions = selectedOptions.filter((value) => value !== filteredOptions[index].value);
+                if (selectedOptionValues.includes(filteredOptions[index].value)) {
+                    newSelectedOptions = selectedOptionValues.filter((value) => value !== filteredOptions[index].value);
                 } else {
-                    newSelectedOptions = [...selectedOptions, filteredOptions[index].value];
+                    newSelectedOptions = [...selectedOptionValues, filteredOptions[index].value];
                 }
-                setSelectedOptions(newSelectedOptions);
+                setSelectedOptionValues(newSelectedOptions);
 
                 if (onChange) {
                     onChange(newSelectedOptions);
@@ -169,9 +175,7 @@ export const Select = withDefaults<SelectProps>()(defaultProps, (props) => {
                     setVirtualizationStartIndex((prev) =>
                         ensureKeyboardSelectionInView(prev, reportedVirtualizationStartIndex, newIndex, props.size)
                     );
-                    if (!localKeysPressed.includes("Control") || localKeysPressed.includes("Shift")) {
-                        makeKeyboardSelection(newIndex);
-                    }
+                    makeKeyboardSelection(newIndex);
                 }
 
                 if (e.key === "ArrowDown") {
@@ -181,9 +185,7 @@ export const Select = withDefaults<SelectProps>()(defaultProps, (props) => {
                     setVirtualizationStartIndex((prev) =>
                         ensureKeyboardSelectionInView(prev, reportedVirtualizationStartIndex, newIndex, props.size)
                     );
-                    if (!localKeysPressed.includes("Control") || localKeysPressed.includes("Shift")) {
-                        makeKeyboardSelection(newIndex);
-                    }
+                    makeKeyboardSelection(newIndex);
                 }
 
                 if (e.key === " " && keysPressed.includes("Control")) {
@@ -198,9 +200,7 @@ export const Select = withDefaults<SelectProps>()(defaultProps, (props) => {
                     setVirtualizationStartIndex((prev) =>
                         ensureKeyboardSelectionInView(prev, reportedVirtualizationStartIndex, newIndex, props.size)
                     );
-                    if (!localKeysPressed.includes("Control") || localKeysPressed.includes("Shift")) {
-                        makeKeyboardSelection(newIndex);
-                    }
+                    makeKeyboardSelection(newIndex);
                 }
 
                 if (e.key === "PageUp") {
@@ -210,18 +210,14 @@ export const Select = withDefaults<SelectProps>()(defaultProps, (props) => {
                     setVirtualizationStartIndex((prev) =>
                         ensureKeyboardSelectionInView(prev, reportedVirtualizationStartIndex, newIndex, props.size)
                     );
-                    if (!localKeysPressed.includes("Control") || localKeysPressed.includes("Shift")) {
-                        makeKeyboardSelection(newIndex);
-                    }
+                    makeKeyboardSelection(newIndex);
                 }
 
                 if (e.key === "Home") {
                     e.preventDefault();
                     setCurrentFocusIndex(0);
                     setVirtualizationStartIndex(0);
-                    if (!localKeysPressed.includes("Control") || localKeysPressed.includes("Shift")) {
-                        makeKeyboardSelection(0);
-                    }
+                    makeKeyboardSelection(0);
                 }
 
                 if (e.key === "End") {
@@ -229,9 +225,7 @@ export const Select = withDefaults<SelectProps>()(defaultProps, (props) => {
                     const newIndex = filteredOptions.length - 1;
                     setCurrentFocusIndex(newIndex);
                     setVirtualizationStartIndex(Math.max(0, newIndex - props.size + 1));
-                    if (!localKeysPressed.includes("Control") || localKeysPressed.includes("Shift")) {
-                        makeKeyboardSelection(newIndex);
-                    }
+                    makeKeyboardSelection(newIndex);
                 }
             }
 
@@ -264,7 +258,7 @@ export const Select = withDefaults<SelectProps>()(defaultProps, (props) => {
             props.multiple,
             onChange,
             selectionAnchor,
-            selectedOptions,
+            selectedOptionValues,
             reportedVirtualizationStartIndex,
         ]
     );
@@ -277,7 +271,7 @@ export const Select = withDefaults<SelectProps>()(defaultProps, (props) => {
         setCurrentFocusIndex(index);
 
         if (!props.multiple) {
-            setSelectedOptions([option.value]);
+            setSelectedOptionValues([option.value]);
             if (onChange) {
                 onChange([option.value]);
             }
@@ -290,9 +284,9 @@ export const Select = withDefaults<SelectProps>()(defaultProps, (props) => {
             const end = Math.max(index, selectionAnchor);
             newSelectedOptions = filteredOptions.slice(start, end + 1).map((option) => option.value);
         } else if (keysPressed.includes("Control")) {
-            newSelectedOptions = selectedOptions.includes(option.value)
-                ? selectedOptions.filter((value) => value !== option.value)
-                : [...selectedOptions, option.value];
+            newSelectedOptions = selectedOptionValues.includes(option.value)
+                ? selectedOptionValues.filter((value) => value !== option.value)
+                : [...selectedOptionValues, option.value];
         } else {
             newSelectedOptions = [option.value];
         }
@@ -304,6 +298,8 @@ export const Select = withDefaults<SelectProps>()(defaultProps, (props) => {
         if (onChange) {
             onChange(newSelectedOptions);
         }
+
+        setSelectedOptionValues(newSelectedOptions);
     }
 
     function filterOptions(options: SelectOption[], filterString: string) {
@@ -311,8 +307,8 @@ export const Select = withDefaults<SelectProps>()(defaultProps, (props) => {
         let newVirtualizationStartIndex = 0;
 
         let currentlySelectedOption = filteredOptions[currentFocusIndex]?.value;
-        if (selectedOptions.length > 0) {
-            currentlySelectedOption = selectedOptions[0];
+        if (selectedOptionValues.length > 0) {
+            currentlySelectedOption = selectedOptionValues[0];
         }
 
         const newFilteredOptions = options.filter((option) =>
@@ -392,9 +388,9 @@ export const Select = withDefaults<SelectProps>()(defaultProps, (props) => {
                                         "items-center",
                                         "select-none",
                                         {
-                                            "hover:bg-blue-100": !selectedOptions.includes(option.value),
+                                            "hover:bg-blue-100": !selectedOptionValues.includes(option.value),
                                             "bg-blue-600 text-white box-border hover:bg-blue-700":
-                                                selectedOptions.includes(option.value),
+                                                selectedOptionValues.includes(option.value),
                                             "pointer-events-none": option.disabled,
                                             "text-gray-400": option.disabled,
                                             outline: index === currentFocusIndex && hasFocus,

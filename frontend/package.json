@@ -16,7 +16,7 @@
         "test:e2e": "playwright test --config=tests/e2e/_playwright.config.ts",
         "test:e2e:ui": "playwright test --config=tests/e2e/_playwright.config.ts -- --ui",
         "test:ct": "playwright test -c playwright.ct.config.ts",
-        "test:ct:ui": "playwright test -c playwright.ct.config.ts -- --ui"
+        "test:ct:ui": "playwright test -c playwright.ct.config.ts --ui"
     },
     "dependencies": {
         "@equinor/esv-intersection": "^3.0.10",
