@@ -131,19 +131,36 @@ export class SurfaceDirectory {
         );
     }
 
-    // // Get min/max value for a given surface name and attribute.
-    // public getMinMax(
-    //     stratigraphicName: string | null,
-    //     surfaceAttribute: string | null,
-    // ): { min: number; max: number } {
-    //     if (!surfaceAttribute || !stratigraphicName) return { min: 0, max: 0 };
+    // Get min/max value for a given surface name and attribute.
+    public getMinMaxValues(
+        requireSurfaceName: string | null,
+        requireAttributeName: string | null,
+        requireTimeOrInterval: string | null
+    ): { min: number; max: number } {
+        let filteredList = this._surfaceList;
 
-    //     const filteredList = this.filterOnAttribute(this._surfaceList, surfaceAttribute);
-    //     filteredList = this.filterOnName(filteredList, stratigraphicName);
-    //     const min = Math.min(...filteredList.map((surface) => surface.value_min));
-    //     const max = Math.max(...filteredList.map((surface) => surface.value_max));
-    //     return { min, max };
-    // }
+        if (requireSurfaceName || requireAttributeName || requireTimeOrInterval) {
+            filteredList = filteredList.filter((surface) => {
+                const matchedOnSurfName = !requireSurfaceName || surface.name === requireSurfaceName;
+                const matchedOnAttrName = !requireAttributeName || surface.attribute_name === requireAttributeName;
+                const matchedOnTimeOrInterval =
+                    !requireTimeOrInterval || surface.iso_date_or_interval === requireTimeOrInterval;
+                return matchedOnSurfName && matchedOnAttrName && matchedOnTimeOrInterval;
+            });
+        }
+        if (filteredList.length === 0) {
+            return { min: 0, max: 0 };
+        }
+        const min = Math.min(
+            ...filteredList.map((surface) => surface.value_min).filter((value): value is number => value !== null)
+        );
+
+        const max = Math.max(
+            ...filteredList.map((surface) => surface.value_max).filter((value): value is number => value !== null)
+        );
+
+        return { min, max };
+    }
 }
 
 // Filters directory based on time type.

@@ -14,14 +14,22 @@ from . import schemas
 
 
 def resample_property_surface_to_mesh_surface(
-    mesh_surface: xtgeo.RegularSurface, property_surface: xtgeo.RegularSurface
+    mesh_surface_spec: schemas.SurfaceGridDefinition, property_surface: xtgeo.RegularSurface
 ) -> xtgeo.RegularSurface:
     """
-    Regrid property surface to mesh surface if topology is different
+    Regrid property surface to the mesh surface grid if topology is different
     """
+    mesh_surface = xtgeo.RegularSurface(
+        ncol=mesh_surface_spec.ncol,
+        nrow=mesh_surface_spec.nrow,
+        xinc=mesh_surface_spec.xinc,
+        yinc=mesh_surface_spec.yinc,
+        xori=mesh_surface_spec.xori,
+        yori=mesh_surface_spec.yori,
+        rotation=mesh_surface_spec.rotation,
+    )
     if mesh_surface.compare_topology(property_surface):
         return property_surface
-
     mesh_surface.resample(property_surface)
     return mesh_surface
 

@@ -53,6 +53,7 @@ export function createAxesLayer(
 }
 export function createSurfaceMeshLayer(
     surfaceMeta: SurfaceMeta,
+    colorRange: [number, number],
     mesh_data: number[],
     surfaceSettings?: SurfaceMeshLayerSettings | null,
     property_data?: number[] | null
@@ -76,6 +77,7 @@ export function createSurfaceMeshLayer(
         material: surfaceSettings.material,
         smoothShading: surfaceSettings.smoothShading,
         colorMapName: "Continuous",
+        colorMapRange: colorRange,
     };
 }
 export function createSurfacePolygonsLayer(surfacePolygons: PolygonData_api[]): Record<string, unknown> {

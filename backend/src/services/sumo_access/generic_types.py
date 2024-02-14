@@ -100,3 +100,11 @@ class SumoClass(str, Enum):
     @classmethod
     def has(cls, value: str) -> bool:
         return value in cls.values()
+
+
+class SumoContext(str, Enum):
+    """Enum for the different values of the `context` metadata key in a Sumo object."""
+
+    REALIZATION = "realization"  # The item belongs to a realization
+    ITERATION = "iteration"  # The item is an aggregation across realizations
+    CASE = "case"  # The item belongs to the case, i.e. it is an observation

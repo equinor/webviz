@@ -1,6 +1,6 @@
 import React from "react";
 
-import { PolygonData_api, WellBoreTrajectory_api } from "@api";
+import { PolygonData_api, SurfaceGridDefinition_api, WellBoreTrajectory_api } from "@api";
 import { ContinuousLegend } from "@emerson-eps/color-tables";
 import { ModuleFCProps } from "@framework/Module";
 import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
@@ -9,6 +9,7 @@ import { Button } from "@lib/components/Button";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { ColorScaleGradientType } from "@lib/utils/ColorScale";
 import { usePolygonsDataQueryByAddress } from "@modules/_shared/Polygons";
+import { useResampledSurfaceDataQueryByAddress } from "@modules/_shared/Surface/queryHooks";
 import { useFieldWellsTrajectoriesQuery } from "@modules/_shared/WellBore/queryHooks";
 import { useSurfaceDataQueryByAddress } from "@modules_shared/Surface";
 import { ViewAnnotation } from "@webviz/subsurface-viewer/dist/components/ViewAnnotation";
@@ -24,7 +25,6 @@ import {
     createWellboreTrajectoryLayer,
 } from "./_utils";
 import { SyncedSubsurfaceViewer } from "./components/SyncedSubsurfaceViewer";
-import { usePropertySurfaceDataByQueryAddress } from "./queryHooks";
 import { state } from "./state";
 
 type Bounds = [number, number, number, number];
@@ -72,56 +72,77 @@ export function View({ moduleContext, workbenchSettings, workbenchServices }: Mo
     const selectedWellUuids = moduleContext.useStoreValue("selectedWellUuids");
     const surfaceSettings = moduleContext.useStoreValue("surfaceSettings");
     const viewSettings = moduleContext.useStoreValue("viewSettings");
+    const surfaceColorScale = moduleContext.useStoreValue("surfaceColorScale");
     const [resetBounds, toggleResetBounds] = React.useState<boolean>(false);
     const [axesLayer, setAxesLayer] = React.useState<Record<string, unknown> | null>(null);
     const [viewportBounds, setviewPortBounds] = React.useState<[number, number, number, number] | undefined>(undefined);
     const syncedSettingKeys = moduleContext.useSyncedSettingKeys();
     const syncHelper = new SyncSettingsHelper(syncedSettingKeys, workbenchServices);
-    const surfaceColorScale = workbenchSettings.useContinuousColorScale({
-        gradientType: ColorScaleGradientType.Sequential,
-    });
-    const colorTables = createContinuousColorScaleForMap(surfaceColorScale);
+
     const show3D: boolean = viewSettings?.show3d ?? true;
 
     const meshSurfDataQuery = useSurfaceDataQueryByAddress(meshSurfAddr);
+    let meshSurfaceGridSpec: SurfaceGridDefinition_api | null = null;
+    if (meshSurfDataQuery.data) {
+        meshSurfaceGridSpec = {
+            xinc: meshSurfDataQuery.data.x_inc,
+            yinc: meshSurfDataQuery.data.y_inc,
+            xori: meshSurfDataQuery.data.x_ori,
+            yori: meshSurfDataQuery.data.y_ori,
+            rotation: meshSurfDataQuery.data.rot_deg,
+            ncol: meshSurfDataQuery.data.x_count,
+            nrow: meshSurfDataQuery.data.y_count,
+        };
+    }
+    const propertySurfDataQuery = useResampledSurfaceDataQueryByAddress(propertySurfAddr, meshSurfaceGridSpec);
 
-    const hasMeshSurfData = meshSurfDataQuery?.data ? true : false;
-    const propertySurfDataQuery = usePropertySurfaceDataByQueryAddress(meshSurfAddr, propertySurfAddr, hasMeshSurfData);
-
-    const wellTrajectoriesQuery = useFieldWellsTrajectoriesQuery(meshSurfAddr?.caseUuid);
+    const wellTrajectoriesQuery = useFieldWellsTrajectoriesQuery(meshSurfAddr?.case_uuid);
     const polygonsQuery = usePolygonsDataQueryByAddress(polygonsAddr);
 
     const newLayers: Record<string, unknown>[] = [createNorthArrowLayer()];
+    const workbenchColorScale = workbenchSettings.useContinuousColorScale({
+        gradientType: ColorScaleGradientType.Sequential,
+    });
+    const colorTables = surfaceColorScale
+        ? createContinuousColorScaleForMap(surfaceColorScale)
+        : createContinuousColorScaleForMap(workbenchColorScale);
 
     let colorRange: [number, number] | null = null;
-
+    if (surfaceColorScale) {
+        colorRange = [surfaceColorScale.getMin(), surfaceColorScale.getMax()];
+    }
     // Mesh data query should only trigger update if the property surface address is not set or if the property surface data is loaded
     if (meshSurfDataQuery.data && !propertySurfAddr) {
         // Drop conversion as soon as SubsurfaceViewer accepts typed arrays
         const newMeshData = Array.from(meshSurfDataQuery.data.valuesFloat32Arr);
-
+        if (!colorRange) {
+            colorRange = [meshSurfDataQuery.data.val_min, meshSurfDataQuery.data.val_max];
+        }
         const newSurfaceMetaData: SurfaceMeta = { ...meshSurfDataQuery.data };
         const surfaceLayer: Record<string, unknown> = createSurfaceMeshLayer(
             newSurfaceMetaData,
+            colorRange,
             newMeshData,
             surfaceSettings
         );
         newLayers.push(surfaceLayer);
-        colorRange = [meshSurfDataQuery.data.val_min, meshSurfDataQuery.data.val_max];
     } else if (meshSurfDataQuery.data && propertySurfDataQuery.data) {
         // Drop conversion as soon as SubsurfaceViewer accepts typed arrays
+        if (!colorRange) {
+            colorRange = [propertySurfDataQuery.data.val_min, propertySurfDataQuery.data.val_max];
+        }
         const newMeshData = Array.from(meshSurfDataQuery.data.valuesFloat32Arr);
         const newPropertyData = Array.from(propertySurfDataQuery.data.valuesFloat32Arr);
 
         const newSurfaceMetaData: SurfaceMeta = { ...meshSurfDataQuery.data };
         const surfaceLayer: Record<string, unknown> = createSurfaceMeshLayer(
             newSurfaceMetaData,
+            colorRange,
             newMeshData,
             surfaceSettings,
             newPropertyData
         );
         newLayers.push(surfaceLayer);
-        colorRange = [propertySurfDataQuery.data.val_min, propertySurfDataQuery.data.val_max];
     }
 
     // Calculate viewport bounds and axes layer from the surface bounds.
@@ -216,11 +237,11 @@ export function View({ moduleContext, workbenchSettings, workbenchServices }: Mo
                 )}
             </div>
 
-            <div className="absolute top-0 right-0 z-10">
+            {/* <div className="absolute top-0 right-0 z-10">
                 <Button variant="contained" onClick={() => toggleResetBounds(!resetBounds)}>
                     Reset viewport bounds
                 </Button>
-            </div>
+            </div> */}
             <div className="z-1">
                 {show3D ? (
                     <SyncedSubsurfaceViewer

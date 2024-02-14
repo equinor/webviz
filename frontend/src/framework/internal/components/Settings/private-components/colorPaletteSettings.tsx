@@ -17,7 +17,7 @@ import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { convertRemToPixels } from "@lib/utils/screenUnitConversions";
 import { ExpandMore, Palette } from "@mui/icons-material";
 
-enum ColorPaletteSelectorType {
+export enum ColorPaletteSelectorType {
     Categorical = "categorical",
     Continuous = "continuous",
     Discrete = "discrete",
@@ -81,7 +81,7 @@ type ColorPaletteSelectorProps = {
     steps?: number;
 };
 
-const ColorPaletteSelector: React.FC<ColorPaletteSelectorProps> = (props) => {
+export const ColorPaletteSelector: React.FC<ColorPaletteSelectorProps> = (props) => {
     const [open, setOpen] = React.useState<boolean>(false);
     const [selectedColorPalette, setSelectedColorPalette] = React.useState<ColorPalette>(
         props.colorPalettes.find((el) => el.getId() === props.selectedColorPaletteId) || props.colorPalettes[0]
@@ -141,7 +141,7 @@ const ColorPaletteSelector: React.FC<ColorPaletteSelectorProps> = (props) => {
     const marginTop = Math.max(-boundingRect.top, convertRemToPixels((-(props.colorPalettes.length - 1) * 3) / 2));
 
     return (
-        <div className="bg-slate-100 rounded p-2 flex items-center gap-4" ref={ref}>
+        <div className=" rounded p-2 flex items-center gap-4" ref={ref}>
             <div className="flex-grow">{makeColorPalettePreview(selectedColorPalette, props.type, props.steps)}</div>
             <IconButton onClick={handleChevronClick}>
                 <ExpandMore fontSize="small" className="flex-grow-0" />
@@ -149,7 +149,7 @@ const ColorPaletteSelector: React.FC<ColorPaletteSelectorProps> = (props) => {
             {open &&
                 createPortal(
                     <>
-                        <Overlay visible={true} />
+                        {/* <Overlay visible={true} /> */}
                         <div
                             ref={dropdownContentRef}
                             className="absolute z-[60] shadow bg-white rounded overflow-hidden"

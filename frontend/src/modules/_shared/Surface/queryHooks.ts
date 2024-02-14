@@ -1,9 +1,16 @@
-import { SurfaceData_api, SurfaceMeta_api } from "@api";
+import {
+    Body_post_get_resampled_surface_data_api,
+    ObservationSurfaceAddress_api,
+    RealizationSurfaceAddress_api,
+    StatisticalSurfaceAddress_api,
+    SurfaceData_api,
+    SurfaceGridDefinition_api,
+    SurfaceMeta_api,
+} from "@api";
 import { apiService } from "@framework/ApiService";
 import { QueryFunction, QueryKey, UseQueryResult, useQuery } from "@tanstack/react-query";
 
 import { SurfaceData_trans, transformSurfaceData } from "./queryDataTransforms";
-import { SurfaceAddress } from "./surfaceAddress";
 
 const STALE_TIME = 60 * 1000;
 const CACHE_TIME = 60 * 1000;
@@ -21,7 +28,9 @@ export function useSurfaceDirectoryQuery(
     });
 }
 
-export function useSurfaceDataQueryByAddress(surfAddr: SurfaceAddress | null): UseQueryResult<SurfaceData_trans> {
+export function useSurfaceDataQueryByAddress(
+    surfAddr: (RealizationSurfaceAddress_api | StatisticalSurfaceAddress_api | ObservationSurfaceAddress_api) | null
+): UseQueryResult<SurfaceData_trans> {
     function dummyApiCall(): Promise<SurfaceData_api> {
         return new Promise((_resolve, reject) => {
             reject(null);
@@ -34,46 +43,44 @@ export function useSurfaceDataQueryByAddress(surfAddr: SurfaceAddress | null): U
     if (surfAddr === null) {
         queryKey = ["getSurfaceData_DUMMY_ALWAYS_DISABLED"];
         queryFn = dummyApiCall;
-    } else if (surfAddr.addressType === "realization") {
-        queryKey = [
-            "getRealizationSurfaceData",
-            surfAddr.caseUuid,
-            surfAddr.ensemble,
-            surfAddr.realizationNum,
-            surfAddr.name,
-            surfAddr.attribute,
-            surfAddr.isoDateOrInterval,
-        ];
-        queryFn = () =>
-            apiService.surface.getRealizationSurfaceData(
-                surfAddr.caseUuid,
-                surfAddr.ensemble,
-                surfAddr.realizationNum,
-                surfAddr.name,
-                surfAddr.attribute,
-                surfAddr.isoDateOrInterval ?? undefined
-            );
-    } else if (surfAddr.addressType === "statistical") {
-        queryKey = [
-            "getStatisticalSurfaceData",
-            surfAddr.caseUuid,
-            surfAddr.ensemble,
-            surfAddr.statisticFunction,
-            surfAddr.name,
-            surfAddr.attribute,
-            surfAddr.isoDateOrInterval,
-        ];
-        queryFn = () =>
-            apiService.surface.getStatisticalSurfaceData(
-                surfAddr.caseUuid,
-                surfAddr.ensemble,
-                surfAddr.statisticFunction,
-                surfAddr.name,
-                surfAddr.attribute,
-                surfAddr.isoDateOrInterval ?? undefined
-            );
     } else {
-        throw new Error("Invalid surface address type");
+        queryKey = ["getSurfaceData", surfAddr];
+        queryFn = () => apiService.surface.postGetSurfaceData(surfAddr);
+    }
+
+    return useQuery({
+        queryKey: queryKey,
+        queryFn: queryFn,
+        select: transformSurfaceData,
+        staleTime: STALE_TIME,
+        gcTime: CACHE_TIME,
+        enabled: Boolean(surfAddr),
+    });
+}
+
+export function useResampledSurfaceDataQueryByAddress(
+    surfAddr: (RealizationSurfaceAddress_api | StatisticalSurfaceAddress_api | ObservationSurfaceAddress_api) | null,
+    gridDef: SurfaceGridDefinition_api | null
+): UseQueryResult<SurfaceData_trans> {
+    function dummyApiCall(): Promise<SurfaceData_api> {
+        return new Promise((_resolve, reject) => {
+            reject(null);
+        });
+    }
+
+    let queryFn: QueryFunction<SurfaceData_api> | null = null;
+    let queryKey: QueryKey | null = null;
+
+    if (surfAddr === null || gridDef === null) {
+        queryKey = ["getResampledSurfaceData_DUMMY_ALWAYS_DISABLED"];
+        queryFn = dummyApiCall;
+    } else {
+        queryKey = ["getResampledSurfaceData", surfAddr];
+        const body: Body_post_get_resampled_surface_data_api = {
+            surface_address: surfAddr,
+            grid_definition: gridDef,
+        };
+        queryFn = () => apiService.surface.postGetResampledSurfaceData(body);
     }
 
     return useQuery({

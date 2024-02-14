@@ -13,7 +13,7 @@ from src.services.utils.statistic_function import StatisticFunction
 
 from ._helpers import SumoEnsemble
 from .surface_types import SurfaceMeta, XtgeoSurfaceIntersectionResult, XtgeoSurfaceIntersectionPolyline
-from .generic_types import SumoContent
+from .generic_types import SumoContent, SumoContext
 
 
 LOGGER = logging.getLogger(__name__)
@@ -21,11 +21,22 @@ LOGGER = logging.getLogger(__name__)
 
 class SurfaceAccess(SumoEnsemble):
     async def get_surface_directory_async(self) -> List[SurfaceMeta]:
-        surface_collection: SurfaceCollection = self._case.surfaces.filter(
+        real_surface_collection: SurfaceCollection = self._case.surfaces.filter(
             iteration=self._iteration_name,
             aggregation=False,
             realization=self._case.get_realizations(iteration=self._iteration_name)[0],
+            stage=SumoContext.REALIZATION,
         )
+        observed_surface_collection: SurfaceCollection = self._case.surfaces.filter(stage=SumoContext.CASE)
+        surfs: List[SurfaceMeta] = []
+        surfs.extend(await self._surface_collection_to_surface_meta_list(real_surface_collection))
+        surfs.extend(await self._surface_collection_to_surface_meta_list(observed_surface_collection))
+
+        return surfs
+
+    async def _surface_collection_to_surface_meta_list(
+        self, surface_collection: SurfaceCollection
+    ) -> List[SurfaceMeta]:
 
         surfs: List[SurfaceMeta] = []
         async for surf in surface_collection:
@@ -108,27 +119,8 @@ class SurfaceAccess(SumoEnsemble):
         timer = PerfTimer()
         addr_str = self._make_addr_str(real_num, name, attribute, time_or_interval_str)
 
-        if time_or_interval_str is None:
-            time_filter = TimeFilter(TimeType.NONE)
+        time_filter = _time_or_interval_str_to_time_filter(time_or_interval_str)
 
-        else:
-            timestamp_arr = time_or_interval_str.split("/", 1)
-            if len(timestamp_arr) == 0 or len(timestamp_arr) > 2:
-                raise ValueError("time_or_interval_str must contain a single timestamp or interval")
-            if len(timestamp_arr) == 1:
-                time_filter = TimeFilter(
-                    TimeType.TIMESTAMP,
-                    start=timestamp_arr[0],
-                    end=timestamp_arr[0],
-                    exact=True,
-                )
-            else:
-                time_filter = TimeFilter(
-                    TimeType.INTERVAL,
-                    start=timestamp_arr[0],
-                    end=timestamp_arr[1],
-                    exact=True,
-                )
         # Remove this once Sumo enforces tagname (tagname-unset)
         # https://github.com/equinor/webviz/issues/433
         tagname = attribute if attribute != "Unknown" else ""
@@ -139,6 +131,7 @@ class SurfaceAccess(SumoEnsemble):
             name=name,
             tagname=tagname,
             time=time_filter,
+            stage=SumoContext.REALIZATION,
         )
 
         surf_count = await surface_collection.length_async()
@@ -169,6 +162,40 @@ class SurfaceAccess(SumoEnsemble):
 
         return xtgeo_surf
 
+    async def get_observed_surface_data_async(
+        self, name: str, attribute: str, time_or_interval_str: Optional[str] = None
+    ) -> Optional[xtgeo.RegularSurface]:
+        """
+        Get surface data for an observed surface
+        """
+        timer = PerfTimer()
+        time_filter = _time_or_interval_str_to_time_filter(time_or_interval_str)
+        surface_collection = self._case.surfaces.filter(
+            name=name,
+            tagname=attribute,
+            time=time_filter,
+            stage=SumoContext.CASE,
+        )
+
+        surf_count = await surface_collection.length_async()
+        if surf_count == 0:
+            LOGGER.warning(f"No observed surface found in Sumo for {name}--{attribute}--{time_or_interval_str}")
+            return None
+        if surf_count > 1:
+            LOGGER.warning(
+                f"Multiple ({surf_count}) surfaces found in Sumo for: {name}--{attribute}--{time_or_interval_str}. Returning first surface."
+            )
+
+        sumo_surf: Surface = await surface_collection.getitem_async(0)
+        byte_stream: BytesIO = await sumo_surf.blob_async
+        xtgeo_surf = xtgeo.surface_from_file(byte_stream)
+
+        LOGGER.debug(
+            f"Got observed surface from Sumo in: {timer.elapsed_ms()}ms ({name}--{attribute}--{time_or_interval_str})"
+        )
+
+        return xtgeo_surf
+
     async def get_statistical_surface_data_async(
         self,
         statistic_function: StatisticFunction,
@@ -182,34 +209,14 @@ class SurfaceAccess(SumoEnsemble):
         timer = PerfTimer()
         addr_str = self._make_addr_str(-1, name, attribute, time_or_interval_str)
 
-        if time_or_interval_str is None:
-            time_filter = TimeFilter(TimeType.NONE)
-
-        else:
-            timestamp_arr = time_or_interval_str.split("/", 1)
-            if len(timestamp_arr) == 0 or len(timestamp_arr) > 2:
-                raise ValueError("time_or_interval_str must contain a single timestamp or interval")
-            if len(timestamp_arr) == 1:
-                time_filter = TimeFilter(
-                    TimeType.TIMESTAMP,
-                    start=timestamp_arr[0],
-                    end=timestamp_arr[0],
-                    exact=True,
-                )
-            else:
-                time_filter = TimeFilter(
-                    TimeType.INTERVAL,
-                    start=timestamp_arr[0],
-                    end=timestamp_arr[1],
-                    exact=True,
-                )
-
+        time_filter = _time_or_interval_str_to_time_filter(time_or_interval_str)
         surface_collection = self._case.surfaces.filter(
             iteration=self._iteration_name,
             aggregation=False,
             name=name,
             tagname=attribute,
             time=time_filter,
+            stage=SumoContext.REALIZATION,
         )
 
         surf_count = await surface_collection.length_async()
@@ -241,6 +248,28 @@ class SurfaceAccess(SumoEnsemble):
     def _make_addr_str(self, real_num: int, name: str, attribute: str, date_str: Optional[str]) -> str:
         addr_str = f"R:{real_num}__N:{name}__A:{attribute}__D:{date_str}__I:{self._iteration_name}__C:{self._case_uuid}"
         return addr_str
+
+
+def _time_or_interval_str_to_time_filter(time_or_interval_str: Optional[str]) -> TimeFilter:
+    if time_or_interval_str is None:
+        return TimeFilter(TimeType.NONE)
+
+    timestamp_arr = time_or_interval_str.split("/", 1)
+    if len(timestamp_arr) == 0 or len(timestamp_arr) > 2:
+        raise ValueError("time_or_interval_str must contain a single timestamp or interval")
+    if len(timestamp_arr) == 1:
+        return TimeFilter(
+            TimeType.TIMESTAMP,
+            start=timestamp_arr[0],
+            end=timestamp_arr[0],
+            exact=True,
+        )
+    return TimeFilter(
+        TimeType.INTERVAL,
+        start=timestamp_arr[0],
+        end=timestamp_arr[1],
+        exact=True,
+    )
 
 
 async def _compute_statistical_surface_async(

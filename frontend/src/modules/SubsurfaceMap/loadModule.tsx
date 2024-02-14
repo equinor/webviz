@@ -1,4 +1,5 @@
 import { ModuleRegistry } from "@framework/ModuleRegistry";
+import { ColorScale } from "@lib/utils/ColorScale";
 
 import { Settings } from "./settings";
 import { state } from "./state";
@@ -7,6 +8,7 @@ import { View } from "./view";
 const defaultState: state = {
     meshSurfaceAddress: null,
     propertySurfaceAddress: null,
+    surfaceColorScale: null,
     polygonsAddress: null,
     selectedWellUuids: [],
     surfaceSettings: null,

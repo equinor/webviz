@@ -5,7 +5,12 @@ import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { ModuleFCProps } from "@framework/Module";
 import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
+import { defaultContinuousSequentialColorPalettes } from "@framework/WorkbenchSettings";
 import { SingleEnsembleSelect } from "@framework/components/SingleEnsembleSelect";
+import {
+    ColorPaletteSelector,
+    ColorPaletteSelectorType,
+} from "@framework/internal/components/Settings/private-components/colorPaletteSettings";
 import { fixupEnsembleIdent, maybeAssignFirstSyncedEnsemble } from "@framework/utils/ensembleUiHelpers";
 import { Button } from "@lib/components/Button";
 import { Checkbox } from "@lib/components/Checkbox";
@@ -16,6 +21,7 @@ import { Label } from "@lib/components/Label";
 import { QueryStateWrapper } from "@lib/components/QueryStateWrapper";
 import { RadioGroup } from "@lib/components/RadioGroup";
 import { Select, SelectOption } from "@lib/components/Select";
+import { ColorScaleGradientType } from "@lib/utils/ColorScale";
 import { PolygonsAddress, PolygonsDirectory, usePolygonsDirectoryQuery } from "@modules/_shared/Polygons";
 import {
     SurfaceAddress,
@@ -27,6 +33,7 @@ import {
 import { useWellHeadersQuery } from "@modules/_shared/WellBore/queryHooks";
 
 import { AggregationSelector } from "./components/AggregationSelector";
+import { SurfaceColorSelector } from "./components/SurfaceColorSelector";
 import { state } from "./state";
 
 //-----------------------------------------------------------------------------------------------------------
@@ -53,7 +60,12 @@ const SurfaceTimeTypeEnumToStringMapping = {
     [SurfaceTimeType.TimePoint]: "Time point",
     [SurfaceTimeType.Interval]: "Time interval",
 };
-export function Settings({ moduleContext, workbenchSession, workbenchServices }: ModuleFCProps<state>) {
+export function Settings({
+    moduleContext,
+    workbenchSession,
+    workbenchServices,
+    workbenchSettings,
+}: ModuleFCProps<state>) {
     const myInstanceIdStr = moduleContext.getInstanceIdString();
     console.debug(`${myInstanceIdStr} -- render TopographicMap settings`);
 
@@ -80,7 +92,7 @@ export function Settings({ moduleContext, workbenchSession, workbenchServices }:
     const [showSmoothShading, setShowSmoothShading] = React.useState(false);
     const [showMaterial, setShowMaterial] = React.useState(false);
     const [show3D, setShow3D] = React.useState(true);
-
+    const [surfaceColorScale, setSurfaceColorScale] = moduleContext.useStoreState("surfaceColorScale");
     const syncedSettingKeys = moduleContext.useSyncedSettingKeys();
     const syncHelper = new SyncSettingsHelper(syncedSettingKeys, workbenchServices);
     const syncedValueEnsembles = syncHelper.useValue(SyncSettingKey.ENSEMBLE, "global.syncValue.ensembles");
@@ -677,6 +689,28 @@ export function Settings({ moduleContext, workbenchSession, workbenchServices }:
                     </Label>
                 </QueryStateWrapper>
             </CollapsibleGroup>
+            <CollapsibleGroup expanded={true} title="Colors">
+                <SurfaceColorSelector
+                    initialColorPaletteId={workbenchSettings
+                        .useContinuousColorScale({ gradientType: ColorScaleGradientType.Sequential })
+                        .getColorPalette()
+                        .getId()}
+                    initialValueRange={
+                        usePropertySurface
+                            ? propertySurfaceDirectory.getMinMaxValues(
+                                  selectedPropertySurfaceName,
+                                  selectedPropertySurfaceAttribute,
+                                  null
+                              )
+                            : meshSurfaceDirectory.getMinMaxValues(
+                                  selectedMeshSurfaceName,
+                                  selectedMeshSurfaceAttribute,
+                                  null
+                              )
+                    }
+                    onChange={setSurfaceColorScale}
+                />
+            </CollapsibleGroup>
             <CollapsibleGroup expanded={false} title="View settings">
                 <div>
                     <div className="p-2">
@@ -689,28 +723,24 @@ export function Settings({ moduleContext, workbenchSession, workbenchServices }:
                         {showContour && (
                             <>
                                 <Label
-                                    wrapperClassName="  flex flex-row"
+                                    wrapperClassName="flex flex-row"
                                     labelClassName="text-xs"
-                                    text={"Contour start/increment"}
+                                    text="Contour start/increment"
                                 >
-                                    <>
-                                        <div className=" float-right">
-                                            <Input
-                                                className="text-xs"
-                                                type={"number"}
-                                                value={contourStartValue}
-                                                onChange={handleContourStartChange}
-                                            />
-                                        </div>
-                                        <div className=" float-right">
-                                            <Input
-                                                className="text-xs"
-                                                type={"number"}
-                                                value={contourIncValue}
-                                                onChange={handleContourIncChange}
-                                            />
-                                        </div>
-                                    </>
+                                    <div className="flex justify-end space-x-2">
+                                        <Input
+                                            className="text-xs"
+                                            type="number"
+                                            value={contourStartValue}
+                                            onChange={handleContourStartChange}
+                                        />
+                                        <Input
+                                            className="text-xs"
+                                            type="number"
+                                            value={contourIncValue}
+                                            onChange={handleContourIncChange}
+                                        />
+                                    </div>
                                 </Label>
                             </>
                         )}

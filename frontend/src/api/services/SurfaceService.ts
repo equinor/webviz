@@ -2,13 +2,16 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
+import type { Body_post_get_resampled_surface_data } from '../models/Body_post_get_resampled_surface_data';
 import type { Body_post_get_surface_intersection } from '../models/Body_post_get_surface_intersection';
 import type { Body_post_sample_surface_in_points } from '../models/Body_post_sample_surface_in_points';
+import type { ObservationSurfaceAddress } from '../models/ObservationSurfaceAddress';
+import type { RealizationSurfaceAddress } from '../models/RealizationSurfaceAddress';
+import type { StatisticalSurfaceAddress } from '../models/StatisticalSurfaceAddress';
 import type { SurfaceData } from '../models/SurfaceData';
 import type { SurfaceIntersectionData } from '../models/SurfaceIntersectionData';
 import type { SurfaceMeta } from '../models/SurfaceMeta';
 import type { SurfaceRealizationSampleValues } from '../models/SurfaceRealizationSampleValues';
-import type { SurfaceStatisticFunction } from '../models/SurfaceStatisticFunction';
 import type { CancelablePromise } from '../core/CancelablePromise';
 import type { BaseHttpRequest } from '../core/BaseHttpRequest';
 export class SurfaceService {
@@ -38,34 +41,19 @@ export class SurfaceService {
         });
     }
     /**
-     * Get Realization Surface Data
-     * @param caseUuid Sumo case uuid
-     * @param ensembleName Ensemble name
-     * @param realizationNum Realization number
-     * @param name Surface name
-     * @param attribute Surface attribute
-     * @param timeOrInterval Time point or time interval string
-     * @returns SurfaceData Successful Response
+     * Test2
+     * @param surfaceAddress User object
+     * @returns any Successful Response
      * @throws ApiError
      */
-    public getRealizationSurfaceData(
-        caseUuid: string,
-        ensembleName: string,
-        realizationNum: number,
-        name: string,
-        attribute: string,
-        timeOrInterval?: (string | null),
-    ): CancelablePromise<SurfaceData> {
+    public test2(
+        surfaceAddress: string,
+    ): CancelablePromise<any> {
         return this.httpRequest.request({
             method: 'GET',
-            url: '/surface/realization_surface_data/',
+            url: '/surface/test2',
             query: {
-                'case_uuid': caseUuid,
-                'ensemble_name': ensembleName,
-                'realization_num': realizationNum,
-                'name': name,
-                'attribute': attribute,
-                'time_or_interval': timeOrInterval,
+                'surface_address': surfaceAddress,
             },
             errors: {
                 422: `Validation Error`,
@@ -73,120 +61,38 @@ export class SurfaceService {
         });
     }
     /**
-     * Get Statistical Surface Data
-     * @param caseUuid Sumo case uuid
-     * @param ensembleName Ensemble name
-     * @param statisticFunction Statistics to calculate
-     * @param name Surface name
-     * @param attribute Surface attribute
-     * @param timeOrInterval Time point or time interval string
+     * Post Get Surface Data
+     * @param requestBody
      * @returns SurfaceData Successful Response
      * @throws ApiError
      */
-    public getStatisticalSurfaceData(
-        caseUuid: string,
-        ensembleName: string,
-        statisticFunction: SurfaceStatisticFunction,
-        name: string,
-        attribute: string,
-        timeOrInterval?: (string | null),
+    public postGetSurfaceData(
+        requestBody: (RealizationSurfaceAddress | StatisticalSurfaceAddress | ObservationSurfaceAddress),
     ): CancelablePromise<SurfaceData> {
         return this.httpRequest.request({
-            method: 'GET',
-            url: '/surface/statistical_surface_data/',
-            query: {
-                'case_uuid': caseUuid,
-                'ensemble_name': ensembleName,
-                'statistic_function': statisticFunction,
-                'name': name,
-                'attribute': attribute,
-                'time_or_interval': timeOrInterval,
-            },
+            method: 'POST',
+            url: '/surface/get_surface_data',
+            body: requestBody,
+            mediaType: 'application/json',
             errors: {
                 422: `Validation Error`,
             },
         });
     }
     /**
-     * Get Property Surface Resampled To Static Surface
-     * @param caseUuid Sumo case uuid
-     * @param ensembleName Ensemble name
-     * @param realizationNumMesh Realization number
-     * @param nameMesh Surface name
-     * @param attributeMesh Surface attribute
-     * @param realizationNumProperty Realization number
-     * @param nameProperty Surface name
-     * @param attributeProperty Surface attribute
-     * @param timeOrIntervalProperty Time point or time interval string
+     * Post Get Resampled Surface Data
+     * @param requestBody
      * @returns SurfaceData Successful Response
      * @throws ApiError
      */
-    public getPropertySurfaceResampledToStaticSurface(
-        caseUuid: string,
-        ensembleName: string,
-        realizationNumMesh: number,
-        nameMesh: string,
-        attributeMesh: string,
-        realizationNumProperty: number,
-        nameProperty: string,
-        attributeProperty: string,
-        timeOrIntervalProperty?: (string | null),
+    public postGetResampledSurfaceData(
+        requestBody: Body_post_get_resampled_surface_data,
     ): CancelablePromise<SurfaceData> {
         return this.httpRequest.request({
-            method: 'GET',
-            url: '/surface/property_surface_resampled_to_static_surface/',
-            query: {
-                'case_uuid': caseUuid,
-                'ensemble_name': ensembleName,
-                'realization_num_mesh': realizationNumMesh,
-                'name_mesh': nameMesh,
-                'attribute_mesh': attributeMesh,
-                'realization_num_property': realizationNumProperty,
-                'name_property': nameProperty,
-                'attribute_property': attributeProperty,
-                'time_or_interval_property': timeOrIntervalProperty,
-            },
-            errors: {
-                422: `Validation Error`,
-            },
-        });
-    }
-    /**
-     * Get Property Surface Resampled To Statistical Static Surface
-     * @param caseUuid Sumo case uuid
-     * @param ensembleName Ensemble name
-     * @param statisticFunction Statistics to calculate
-     * @param nameMesh Surface name
-     * @param attributeMesh Surface attribute
-     * @param nameProperty Surface name
-     * @param attributeProperty Surface attribute
-     * @param timeOrIntervalProperty Time point or time interval string
-     * @returns SurfaceData Successful Response
-     * @throws ApiError
-     */
-    public getPropertySurfaceResampledToStatisticalStaticSurface(
-        caseUuid: string,
-        ensembleName: string,
-        statisticFunction: SurfaceStatisticFunction,
-        nameMesh: string,
-        attributeMesh: string,
-        nameProperty: string,
-        attributeProperty: string,
-        timeOrIntervalProperty?: (string | null),
-    ): CancelablePromise<SurfaceData> {
-        return this.httpRequest.request({
-            method: 'GET',
-            url: '/surface/property_surface_resampled_to_statistical_static_surface/',
-            query: {
-                'case_uuid': caseUuid,
-                'ensemble_name': ensembleName,
-                'statistic_function': statisticFunction,
-                'name_mesh': nameMesh,
-                'attribute_mesh': attributeMesh,
-                'name_property': nameProperty,
-                'attribute_property': attributeProperty,
-                'time_or_interval_property': timeOrIntervalProperty,
-            },
+            method: 'POST',
+            url: '/surface/get_resampled_surface_data/',
+            body: requestBody,
+            mediaType: 'application/json',
             errors: {
                 422: `Validation Error`,
             },

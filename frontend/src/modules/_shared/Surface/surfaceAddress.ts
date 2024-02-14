@@ -1,26 +1,15 @@
-import { SurfaceStatisticFunction_api } from "@api";
+import {
+    ObservationSurfaceAddress_api,
+    RealizationSurfaceAddress_api,
+    StatisticalSurfaceAddress_api,
+    SurfaceAddressType_api,
+    SurfaceStatisticFunction_api,
+} from "@api";
 
-export interface RealizationSurfaceAddress {
-    addressType: "realization";
-    caseUuid: string;
-    ensemble: string;
-    name: string;
-    attribute: string;
-    realizationNum: number;
-    isoDateOrInterval: string | null;
-}
-
-export interface StatisticalSurfaceAddress {
-    addressType: "statistical";
-    caseUuid: string;
-    ensemble: string;
-    name: string;
-    attribute: string;
-    isoDateOrInterval: string | null;
-    statisticFunction: SurfaceStatisticFunction_api;
-}
-
-export type SurfaceAddress = RealizationSurfaceAddress | StatisticalSurfaceAddress;
+export type SurfaceAddress =
+    | RealizationSurfaceAddress_api
+    | StatisticalSurfaceAddress_api
+    | ObservationSurfaceAddress_api;
 
 export function makeSurfaceAddressString(addr: SurfaceAddress): string {
     const valueArr = Object.values(addr);
@@ -43,27 +32,36 @@ export class SurfaceAddressFactory {
         this._isoDateOrInterval = isoDateOrInterval;
     }
 
-    createRealizationAddress(realizationNum: number): RealizationSurfaceAddress {
+    createRealizationAddress(realizationNum: number): RealizationSurfaceAddress_api {
         return {
-            addressType: "realization",
-            caseUuid: this._caseUuid,
-            ensemble: this._ensemble,
+            address_type: SurfaceAddressType_api.REALIZATION,
+            case_uuid: this._caseUuid,
+            ensemble_name: this._ensemble,
             name: this._name,
             attribute: this._attribute,
-            realizationNum: realizationNum,
-            isoDateOrInterval: this._isoDateOrInterval,
+            realization_num: realizationNum,
+            iso_date_or_interval: this._isoDateOrInterval,
         };
     }
-
-    createStatisticalAddress(statFunction: SurfaceStatisticFunction_api): StatisticalSurfaceAddress {
+    createObservedAddress(): ObservationSurfaceAddress_api {
         return {
-            addressType: "statistical",
-            caseUuid: this._caseUuid,
-            ensemble: this._ensemble,
+            address_type: SurfaceAddressType_api.OBSERVATION,
+            case_uuid: this._caseUuid,
+            ensemble_name: this._ensemble,
             name: this._name,
             attribute: this._attribute,
-            isoDateOrInterval: this._isoDateOrInterval,
-            statisticFunction: statFunction,
+            iso_date_or_interval: this._isoDateOrInterval,
+        };
+    }
+    createStatisticalAddress(statFunction: SurfaceStatisticFunction_api): StatisticalSurfaceAddress_api {
+        return {
+            address_type: SurfaceAddressType_api.STATISTICAL,
+            case_uuid: this._caseUuid,
+            ensemble_name: this._ensemble,
+            name: this._name,
+            attribute: this._attribute,
+            iso_date_or_interval: this._isoDateOrInterval,
+            statistic_function: statFunction,
         };
     }
 }
