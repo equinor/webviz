@@ -120,8 +120,8 @@ async def user_mock(
                 base_url,
                 json={
                     "resources": {
-                        "limits": {"memory": "1GiB", "cpu": "1"},
-                        "requests": {"memory": "1GiB", "cpu": "1"},
+                        "limits": {"memory": "500M", "cpu": "100m"},
+                        "requests": {"memory": "500M", "cpu": "100m"},
                     }
                 },
             )
@@ -155,7 +155,7 @@ async def call_health_endpoint(client: httpx.AsyncClient, call_url: str) -> str:
         print(f"Error response {exc.response.status_code} while requesting {exc.request.url!r}.")
         return None
 
-    resp_text = response.text()
+    resp_text = response.text
     print("------")
     print(resp_text)
     print("------")
