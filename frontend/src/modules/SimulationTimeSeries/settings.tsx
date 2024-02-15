@@ -1,265 +1,347 @@
 import React from "react";
 
-import { Frequency_api, VectorDescription_api } from "@api";
+import { Frequency_api, StatisticFunction_api } from "@api";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
-import { ModuleFCProps } from "@framework/Module";
-import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
+import { Parameter, ParameterIdent } from "@framework/EnsembleParameters";
+import { ModuleSettingsProps } from "@framework/Module";
+import { useSettingsStatusWriter } from "@framework/StatusWriter";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
-import { SingleEnsembleSelect } from "@framework/components/SingleEnsembleSelect";
-import { fixupEnsembleIdent, maybeAssignFirstSyncedEnsemble } from "@framework/utils/ensembleUiHelpers";
+import { MultiEnsembleSelect } from "@framework/components/MultiEnsembleSelect";
+import { ParameterListFilter } from "@framework/components/ParameterListFilter";
+import { VectorSelector } from "@framework/components/VectorSelector";
 import { Checkbox } from "@lib/components/Checkbox";
 import { CircularProgress } from "@lib/components/CircularProgress";
-import { Dropdown, DropdownOption } from "@lib/components/Dropdown";
-import { Input } from "@lib/components/Input";
+import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
+import { Dropdown } from "@lib/components/Dropdown";
 import { Label } from "@lib/components/Label";
-import { QueryStateWrapper } from "@lib/components/QueryStateWrapper";
-import { Select, SelectOption } from "@lib/components/Select";
+import { QueriesErrorCriteria, QueryStateWrapper } from "@lib/components/QueryStateWrapper";
+import { RadioGroup } from "@lib/components/RadioGroup";
+import { Select } from "@lib/components/Select";
+import { SmartNodeSelectorSelection } from "@lib/components/SmartNodeSelector";
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
+import { FilterAlt } from "@mui/icons-material";
 
-import { sortBy, sortedUniq } from "lodash";
+import { useAtom, useAtomValue } from "jotai";
 
-import { useVectorListQuery } from "./queryHooks";
-import { State } from "./state";
+import {
+    colorRealizationsByParameterAtom,
+    filteredParameterIdentListAtom,
+    groupByAtom,
+    resampleFrequencyAtom,
+    selectedVectorNamesAtom,
+    showHistoricalAtom,
+    showObservationsAtom,
+    statisticsSelectionAtom,
+    userSelectedEnsembleIdentsAtom,
+    userSelectedParameterIdentStringAtom,
+    visualizationModeAtom,
+} from "./atoms/baseAtoms";
+import {
+    continuousAndNonConstantParametersUnionAtom,
+    ensembleVectorListsHelperAtom,
+    isVectorListQueriesFetchingAtom,
+    selectedEnsembleIdentsAtom,
+    selectedParameterIdentStringAtom,
+    statisticsTypeAtom,
+    vectorSelectorDataAtom,
+} from "./atoms/derivedSettingsAtoms";
+import { vectorListQueriesAtom } from "./atoms/queryAtoms";
+import { useMakeSettingsStatusWriterMessages } from "./hooks/useMakeSettingsStatusWriterMessages";
+import {
+    FanchartStatisticOption,
+    FanchartStatisticOptionEnumToStringMapping,
+    FrequencyEnumToStringMapping,
+    GroupBy,
+    GroupByEnumToStringMapping,
+    StatisticFunctionEnumToStringMapping,
+    StatisticsType,
+    VisualizationMode,
+    VisualizationModeEnumToStringMapping,
+} from "./typesAndEnums";
 
-//-----------------------------------------------------------------------------------------------------------
-export function Settings({ moduleContext, workbenchSession, workbenchServices }: ModuleFCProps<State>) {
-    const myInstanceIdStr = moduleContext.getInstanceIdString();
-    console.debug(`${myInstanceIdStr} -- render SimulationTimeSeries settings`);
-
+export function Settings({ settingsContext, workbenchSession }: ModuleSettingsProps<Record<string, never>>) {
     const ensembleSet = useEnsembleSet(workbenchSession);
-    const [selectedEnsembleIdent, setSelectedEnsembleIdent] = React.useState<EnsembleIdent | null>(null);
-    const [selectedVectorName, setSelectedVectorName] = React.useState<string>("");
-    const [resampleFrequency, setResamplingFrequency] = moduleContext.useStoreState("resamplingFrequency");
-    const [showStatistics, setShowStatistics] = moduleContext.useStoreState("showStatistics");
-    const [showRealizations, setShowRealizations] = moduleContext.useStoreState("showRealizations");
-    const [showHistorical, setShowHistorical] = moduleContext.useStoreState("showHistorical");
+    const statusWriter = useSettingsStatusWriter(settingsContext);
 
-    const syncedSettingKeys = moduleContext.useSyncedSettingKeys();
-    const syncHelper = new SyncSettingsHelper(syncedSettingKeys, workbenchServices);
-    const syncedValueEnsembles = syncHelper.useValue(SyncSettingKey.ENSEMBLE, "global.syncValue.ensembles");
-    const syncedValueSummaryVector = syncHelper.useValue(SyncSettingKey.TIME_SERIES, "global.syncValue.timeSeries");
-    console.debug(`${myInstanceIdStr} -- synced keys ${JSON.stringify(syncedSettingKeys)}`);
-    console.debug(`${myInstanceIdStr} -- syncedValueEnsembles=${JSON.stringify(syncedValueEnsembles)}`);
-    console.debug(`${myInstanceIdStr} -- syncedValueSummaryVector=${JSON.stringify(syncedValueSummaryVector)}`);
+    const [selectedVectorTags, setSelectedVectorTags] = React.useState<string[]>([]);
 
-    const candidateEnsembleIdent = maybeAssignFirstSyncedEnsemble(selectedEnsembleIdent, syncedValueEnsembles);
-    const computedEnsembleIdent = fixupEnsembleIdent(candidateEnsembleIdent, ensembleSet);
+    const [resampleFrequency, setResamplingFrequency] = useAtom(resampleFrequencyAtom);
+    const [groupBy, setGroupBy] = useAtom(groupByAtom);
+    const [colorRealizationsByParameter, setColorRealizationsByParameter] = useAtom(colorRealizationsByParameterAtom);
+    const [visualizationMode, setVisualizationMode] = useAtom(visualizationModeAtom);
+    const [showHistorical, setShowHistorical] = useAtom(showHistoricalAtom);
+    const [showObservations, setShowObservations] = useAtom(showObservationsAtom);
+    const [statisticsSelection, setStatisticsSelection] = useAtom(statisticsSelectionAtom);
+    const [selectedVectorNames, setSelectedVectorNames] = useAtom(selectedVectorNamesAtom);
+    const vectorSelectorData = useAtomValue(vectorSelectorDataAtom);
+    const statisticsType = useAtomValue(statisticsTypeAtom);
+    const [filteredParameterIdentList, setFilteredParameterIdentList] = useAtom(filteredParameterIdentListAtom);
+    const [, setUserSelectedEnsembleIdents] = useAtom(userSelectedEnsembleIdentsAtom);
+    const selectedEnsembleIdents = useAtomValue(selectedEnsembleIdentsAtom);
+    const continuousAndNonConstantParametersUnion = useAtomValue(continuousAndNonConstantParametersUnionAtom);
+    const vectorListQueries = useAtomValue(vectorListQueriesAtom);
+    const ensembleVectorListsHelper = useAtomValue(ensembleVectorListsHelperAtom);
+    const isVectorListQueriesFetching = useAtomValue(isVectorListQueriesFetchingAtom);
+    const [, setUserSelectedParameterIdentStr] = useAtom(userSelectedParameterIdentStringAtom);
+    const selectedParameterIdentStr = useAtomValue(selectedParameterIdentStringAtom);
 
-    const vectorListQuery = useVectorListQuery(
-        computedEnsembleIdent?.getCaseUuid(),
-        computedEnsembleIdent?.getEnsembleName()
-    );
+    useMakeSettingsStatusWriterMessages(statusWriter, selectedVectorTags);
 
-    let candidateVectorName = selectedVectorName;
-    if (syncedValueSummaryVector?.vectorName) {
-        console.debug(`${myInstanceIdStr} -- syncing timeSeries to ${syncedValueSummaryVector.vectorName}`);
-        candidateVectorName = syncedValueSummaryVector.vectorName;
-    }
-    const computedVectorName = fixupVectorName(candidateVectorName, vectorListQuery.data);
-
-    if (computedEnsembleIdent && !computedEnsembleIdent.equals(selectedEnsembleIdent)) {
-        setSelectedEnsembleIdent(computedEnsembleIdent);
-    }
-    if (computedVectorName && computedVectorName !== selectedVectorName) {
-        setSelectedVectorName(computedVectorName);
+    function handleGroupByChange(event: React.ChangeEvent<HTMLInputElement>) {
+        setGroupBy(event.target.value as GroupBy);
     }
 
-    const computedVectorNameHasHistoricalData = hasHistoricalVector(computedVectorName, vectorListQuery.data);
-
-    React.useEffect(
-        function propagateVectorSpecToView() {
-            if (computedEnsembleIdent && computedVectorName) {
-                moduleContext.getStateStore().setValue("vectorSpec", {
-                    ensembleIdent: computedEnsembleIdent,
-                    vectorName: computedVectorName,
-                    hasHistoricalVector: computedVectorNameHasHistoricalData,
-                });
-            } else {
-                moduleContext.getStateStore().setValue("vectorSpec", null);
-            }
-        },
-        [computedEnsembleIdent, computedVectorName, computedVectorNameHasHistoricalData, moduleContext]
-    );
-
-    const computedEnsemble = computedEnsembleIdent ? ensembleSet.findEnsemble(computedEnsembleIdent) : null;
-
-    function handleEnsembleSelectionChange(newEnsembleIdent: EnsembleIdent | null) {
-        console.debug("handleEnsembleSelectionChange()", newEnsembleIdent);
-        setSelectedEnsembleIdent(newEnsembleIdent);
-        if (newEnsembleIdent) {
-            syncHelper.publishValue(SyncSettingKey.ENSEMBLE, "global.syncValue.ensembles", [newEnsembleIdent]);
+    function handleColorByParameterChange(parameterIdentStrings: string[]) {
+        if (parameterIdentStrings.length !== 0) {
+            setUserSelectedParameterIdentStr(parameterIdentStrings[0]);
+            return;
         }
+        setUserSelectedParameterIdentStr(null);
     }
 
-    function handleVectorSelectionChange(selectedVecNames: string[]) {
-        console.debug("handleVectorSelectionChange()");
-        const newName = selectedVecNames[0] ?? "";
-        setSelectedVectorName(newName);
-        if (newName) {
-            syncHelper.publishValue(SyncSettingKey.TIME_SERIES, "global.syncValue.timeSeries", { vectorName: newName });
-        }
+    function handleEnsembleSelectChange(ensembleIdentArr: EnsembleIdent[]) {
+        setUserSelectedEnsembleIdents(ensembleIdentArr);
     }
 
-    function handleFrequencySelectionChange(newFreqStr: string) {
-        console.debug(`handleFrequencySelectionChange()  newFreqStr=${newFreqStr}`);
-        let newFreq: Frequency_api | null = null;
-        if (newFreqStr !== "RAW") {
-            newFreq = newFreqStr as Frequency_api;
-        }
-        console.debug(`handleFrequencySelectionChange()  newFreqStr=${newFreqStr}  newFreq=${newFreq}`);
+    function handleVectorSelectionChange(selection: SmartNodeSelectorSelection) {
+        setSelectedVectorNames(selection.selectedNodes);
+        setSelectedVectorTags(selection.selectedTags);
+    }
+
+    function handleFrequencySelectionChange(newFrequencyStr: string) {
+        const newFreq = newFrequencyStr !== "RAW" ? (newFrequencyStr as Frequency_api) : null;
         setResamplingFrequency(newFreq);
-    }
-
-    function handleShowStatisticsCheckboxChange(event: React.ChangeEvent<HTMLInputElement>) {
-        setShowStatistics(event.target.checked);
-    }
-
-    function handleShowRealizations(event: React.ChangeEvent<HTMLInputElement>) {
-        setShowRealizations(event.target.checked);
     }
 
     function handleShowHistorical(event: React.ChangeEvent<HTMLInputElement>) {
         setShowHistorical(event.target.checked);
     }
 
-    function handleRealizationRangeTextChanged(event: React.ChangeEvent<HTMLInputElement>) {
-        const realRangeStr = event.target.value;
-        console.debug("handleRealizationRangeTextChanged() " + realRangeStr);
-        let rangeArr: number[] | null = null;
-        if (realRangeStr) {
-            rangeArr = parseRealizationRangeString(realRangeStr, computedEnsemble?.getMaxRealizationNumber() ?? -1);
-        }
-        console.debug(rangeArr);
-        moduleContext.getStateStore().setValue("realizationsToInclude", rangeArr);
+    function handleShowObservations(event: React.ChangeEvent<HTMLInputElement>) {
+        setShowObservations(event.target.checked);
     }
+
+    function handleVisualizationModeChange(event: React.ChangeEvent<HTMLInputElement>) {
+        setVisualizationMode(event.target.value as VisualizationMode);
+    }
+
+    function handleFanchartStatisticsSelectionChange(
+        event: React.ChangeEvent<HTMLInputElement>,
+        statistic: FanchartStatisticOption
+    ) {
+        setStatisticsSelection((prev) => {
+            if (event.target.checked) {
+                return {
+                    IndividualStatisticsSelection: prev.IndividualStatisticsSelection,
+                    FanchartStatisticsSelection: prev.FanchartStatisticsSelection
+                        ? [...prev.FanchartStatisticsSelection, statistic]
+                        : [statistic],
+                };
+            } else {
+                return {
+                    IndividualStatisticsSelection: prev.IndividualStatisticsSelection,
+                    FanchartStatisticsSelection: prev.FanchartStatisticsSelection
+                        ? prev.FanchartStatisticsSelection.filter((item) => item !== statistic)
+                        : [],
+                };
+            }
+        });
+    }
+
+    const handleParameterListFilterChange = React.useCallback(
+        function handleParameterListFilterChange(filteredParameters: Parameter[]) {
+            const filteredParamIdents = filteredParameters.map((elm) =>
+                ParameterIdent.fromNameAndGroup(elm.name, elm.groupName)
+            );
+
+            setFilteredParameterIdentList(filteredParamIdents);
+        },
+        [setFilteredParameterIdentList]
+    );
+
+    function handleIndividualStatisticsSelectionChange(
+        event: React.ChangeEvent<HTMLInputElement>,
+        statistic: StatisticFunction_api
+    ) {
+        setStatisticsSelection((prev) => {
+            if (event.target.checked) {
+                return {
+                    IndividualStatisticsSelection: prev.IndividualStatisticsSelection
+                        ? [...prev.IndividualStatisticsSelection, statistic]
+                        : [statistic],
+                    FanchartStatisticsSelection: prev.FanchartStatisticsSelection,
+                };
+            } else {
+                return {
+                    IndividualStatisticsSelection: prev.IndividualStatisticsSelection
+                        ? prev.IndividualStatisticsSelection.filter((item) => item !== statistic)
+                        : [],
+                    FanchartStatisticsSelection: prev.FanchartStatisticsSelection,
+                };
+            }
+        });
+    }
+
+    function makeStatisticCheckboxes() {
+        if (statisticsType === StatisticsType.FANCHART) {
+            return Object.values(FanchartStatisticOption).map((value: FanchartStatisticOption) => {
+                return (
+                    <Checkbox
+                        key={value}
+                        label={FanchartStatisticOptionEnumToStringMapping[value]}
+                        checked={statisticsSelection?.FanchartStatisticsSelection?.includes(value)}
+                        onChange={(event) => {
+                            handleFanchartStatisticsSelectionChange(event, value);
+                        }}
+                    />
+                );
+            });
+        }
+        if (statisticsType === StatisticsType.INDIVIDUAL) {
+            return Object.values(StatisticFunction_api).map((value: StatisticFunction_api) => {
+                return (
+                    <Checkbox
+                        key={value}
+                        label={StatisticFunctionEnumToStringMapping[value]}
+                        checked={statisticsSelection?.IndividualStatisticsSelection.includes(value)}
+                        onChange={(event) => {
+                            handleIndividualStatisticsSelectionChange(event, value);
+                        }}
+                    />
+                );
+            });
+        }
+
+        return [];
+    }
+
+    const selectedVectorNamesHasHistorical =
+        !isVectorListQueriesFetching && ensembleVectorListsHelper.hasAnyHistoricalVector(selectedVectorNames);
 
     return (
-        <>
-            <Label
-                text="Ensemble"
-                labelClassName={syncHelper.isSynced(SyncSettingKey.ENSEMBLE) ? "bg-indigo-700 text-white" : ""}
-            >
-                <SingleEnsembleSelect
-                    ensembleSet={ensembleSet}
-                    value={computedEnsembleIdent}
-                    onChange={handleEnsembleSelectionChange}
+        <div className="flex flex-col gap-2 overflow-y-auto">
+            <CollapsibleGroup expanded={false} title="Group by">
+                <RadioGroup
+                    value={groupBy}
+                    options={Object.values(GroupBy).map((val: GroupBy) => {
+                        return { value: val, label: GroupByEnumToStringMapping[val] };
+                    })}
+                    onChange={handleGroupByChange}
                 />
-            </Label>
-            <QueryStateWrapper
-                queryResult={vectorListQuery}
-                errorComponent={"Error loading vector names"}
-                loadingComponent={<CircularProgress />}
-            >
-                <Label
-                    text="Vector"
-                    labelClassName={syncHelper.isSynced(SyncSettingKey.TIME_SERIES) ? "bg-indigo-700 text-white" : ""}
-                >
-                    <Select
-                        options={makeVectorOptionItems(vectorListQuery.data)}
-                        value={computedVectorName ? [computedVectorName] : []}
-                        onChange={handleVectorSelectionChange}
-                        filter={true}
-                        size={5}
-                    />
-                </Label>
-            </QueryStateWrapper>
-            <Label text="Frequency">
+            </CollapsibleGroup>
+            <CollapsibleGroup expanded={false} title="Resampling frequency">
                 <Dropdown
-                    options={makeFrequencyOptionItems()}
-                    value={resampleFrequency ?? "RAW"}
+                    options={[
+                        { value: "RAW", label: "None (raw)" },
+                        ...Object.values(Frequency_api).map((val: Frequency_api) => {
+                            return { value: val, label: FrequencyEnumToStringMapping[val] };
+                        }),
+                    ]}
+                    value={resampleFrequency ?? Frequency_api.MONTHLY}
                     onChange={handleFrequencySelectionChange}
                 />
-            </Label>
-            <Checkbox label="Show statistics" checked={showStatistics} onChange={handleShowStatisticsCheckboxChange} />
-            <Checkbox label="Show realizations" checked={showRealizations} onChange={handleShowRealizations} />
-            <Checkbox
-                label="Show historical"
-                checked={showHistorical}
-                disabled={!computedVectorNameHasHistoricalData}
-                onChange={handleShowHistorical}
-            />
-            <Label text={`Realizations (maxReal=${computedEnsemble?.getMaxRealizationNumber() ?? -1})`}>
-                <Input onChange={handleRealizationRangeTextChanged} />
-            </Label>
-        </>
+            </CollapsibleGroup>
+            <CollapsibleGroup expanded={true} title="Ensembles">
+                <MultiEnsembleSelect
+                    ensembleSet={ensembleSet}
+                    value={selectedEnsembleIdents}
+                    size={5}
+                    onChange={handleEnsembleSelectChange}
+                />
+            </CollapsibleGroup>
+            <CollapsibleGroup expanded={true} title="Vectors">
+                <Checkbox
+                    label="Show historical"
+                    checked={showHistorical}
+                    disabled={!selectedVectorNamesHasHistorical}
+                    onChange={handleShowHistorical}
+                />
+                <Checkbox label="Show observations" checked={showObservations} onChange={handleShowObservations} />
+                <div
+                    className={resolveClassNames({
+                        "pointer-events-none opacity-80": vectorListQueries.some((query) => query.isLoading),
+                    })}
+                >
+                    <QueryStateWrapper
+                        queryResults={vectorListQueries}
+                        loadingComponent={<CircularProgress />}
+                        showErrorWhen={QueriesErrorCriteria.ALL_QUERIES_HAVE_ERROR}
+                        errorComponent={"Could not load vectors for selected ensembles"}
+                    >
+                        <VectorSelector
+                            data={vectorSelectorData}
+                            placeholder="Add new vector..."
+                            maxNumSelectedNodes={50}
+                            numSecondsUntilSuggestionsAreShown={0.5}
+                            lineBreakAfterTag={true}
+                            onChange={handleVectorSelectionChange}
+                        />
+                    </QueryStateWrapper>
+                </div>
+            </CollapsibleGroup>
+            <CollapsibleGroup expanded={false} title="Color realization by parameter">
+                <Checkbox
+                    label="Enable"
+                    checked={colorRealizationsByParameter}
+                    disabled={visualizationMode !== VisualizationMode.INDIVIDUAL_REALIZATIONS}
+                    onChange={(event) => {
+                        setColorRealizationsByParameter(event.target.checked);
+                    }}
+                />
+                <div
+                    className={resolveClassNames({
+                        ["pointer-events-none opacity-70"]:
+                            !colorRealizationsByParameter ||
+                            visualizationMode !== VisualizationMode.INDIVIDUAL_REALIZATIONS,
+                    })}
+                >
+                    <div className="mt-4 mb-4">
+                        <CollapsibleGroup
+                            expanded={false}
+                            title="Parameter list filter"
+                            icon={<FilterAlt fontSize="small" />}
+                        >
+                            <ParameterListFilter
+                                parameters={continuousAndNonConstantParametersUnion}
+                                initialFilters={["Continuous", "Nonconstant"]}
+                                onChange={handleParameterListFilterChange}
+                            />
+                        </CollapsibleGroup>
+                    </div>
+                    <Select
+                        options={filteredParameterIdentList.map((elm) => {
+                            return {
+                                value: elm.toString(),
+                                label: elm.groupName ? `${elm.groupName}:${elm.name}` : elm.name,
+                            };
+                        })}
+                        size={4}
+                        value={selectedParameterIdentStr ? [selectedParameterIdentStr.toString()] : undefined}
+                        onChange={handleColorByParameterChange}
+                    />
+                </div>
+            </CollapsibleGroup>
+            <CollapsibleGroup expanded={false} title="Visualization">
+                <RadioGroup
+                    value={visualizationMode}
+                    options={Object.values(VisualizationMode).map((val: VisualizationMode) => {
+                        return { value: val, label: VisualizationModeEnumToStringMapping[val] };
+                    })}
+                    onChange={handleVisualizationModeChange}
+                />
+                <div className="mt-4">
+                    <Label text="Statistics Options">
+                        <div
+                            className={resolveClassNames({
+                                "pointer-events-none opacity-40":
+                                    visualizationMode === VisualizationMode.INDIVIDUAL_REALIZATIONS,
+                            })}
+                        >
+                            {makeStatisticCheckboxes()}
+                        </div>
+                    </Label>
+                </div>
+            </CollapsibleGroup>
+        </div>
     );
-}
-
-//-----------------------------------------------------------------------------------------------------------
-//-----------------------------------------------------------------------------------------------------------
-
-function fixupVectorName(currVectorName: string, vectorDescriptionsArr: VectorDescription_api[] | undefined): string {
-    if (!vectorDescriptionsArr || vectorDescriptionsArr.length === 0) {
-        return "";
-    }
-
-    if (vectorDescriptionsArr.find((item) => item.name === currVectorName)) {
-        return currVectorName;
-    }
-
-    return vectorDescriptionsArr[0].name;
-}
-
-function hasHistoricalVector(
-    nonHistoricalVectorName: string,
-    vectorDescriptionsArr: VectorDescription_api[] | undefined
-): boolean {
-    if (!vectorDescriptionsArr || vectorDescriptionsArr.length === 0) {
-        return false;
-    }
-
-    const foundItem = vectorDescriptionsArr.find((item) => item.name === nonHistoricalVectorName);
-    if (foundItem) {
-        return foundItem.has_historical;
-    }
-
-    return false;
-}
-
-function makeVectorOptionItems(vectorDescriptionsArr: VectorDescription_api[] | undefined): SelectOption[] {
-    const itemArr: SelectOption[] = [];
-    if (vectorDescriptionsArr) {
-        for (const vec of vectorDescriptionsArr) {
-            itemArr.push({ value: vec.name, label: vec.descriptive_name });
-            //itemArr.push({ value: vec.name, label: vec.descriptive_name + (vec.has_historical ? " (hasHist)" : "") });
-        }
-    }
-    return itemArr;
-}
-
-function makeFrequencyOptionItems(): DropdownOption[] {
-    const itemArr: DropdownOption[] = [
-        { value: Frequency_api.DAILY, label: "Daily" },
-        { value: Frequency_api.MONTHLY, label: "Monthly" },
-        { value: Frequency_api.QUARTERLY, label: "Quarterly" },
-        { value: Frequency_api.YEARLY, label: "Yearly" },
-        { value: "RAW", label: "None (raw)" },
-    ];
-    return itemArr;
-}
-
-// Parse realization ranges into array of numbers
-function parseRealizationRangeString(realRangeStr: string, maxLegalReal: number): number[] {
-    const realArr: number[] = [];
-
-    const rangeArr = realRangeStr.split(",");
-    for (const aRange of rangeArr) {
-        const rangeParts = aRange.split("-");
-        if (rangeParts.length === 1) {
-            const real = parseInt(rangeParts[0], 10);
-            if (real >= 0 && real <= maxLegalReal) {
-                realArr.push(real);
-            }
-        } else if (rangeParts.length === 2) {
-            const startReal = parseInt(rangeParts[0], 10);
-            const endReal = parseInt(rangeParts[1], 10);
-            if (startReal >= 0 && startReal <= maxLegalReal && endReal >= startReal) {
-                for (let i = startReal; i <= Math.min(endReal, maxLegalReal); i++) {
-                    realArr.push(i);
-                }
-            }
-        }
-    }
-
-    // Sort and remove duplicates
-    return sortedUniq(sortBy(realArr));
 }

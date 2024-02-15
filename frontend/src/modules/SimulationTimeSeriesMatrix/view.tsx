@@ -5,7 +5,7 @@ import { SummaryVectorObservations_api } from "@api";
 import { ChannelContentDefinition } from "@framework/DataChannelTypes";
 import { Ensemble } from "@framework/Ensemble";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
-import { ModuleFCProps } from "@framework/Module";
+import { ModuleViewProps } from "@framework/Module";
 import { useViewStatusWriter } from "@framework/StatusWriter";
 import { useEnsembleRealizationFilterFunc, useEnsembleSet } from "@framework/WorkbenchSession";
 import { timestampUtcMsToCompactIsoString } from "@framework/utils/timestampUtils";
@@ -14,7 +14,6 @@ import { ColorScaleGradientType } from "@lib/utils/ColorScale";
 import { ContentError } from "@modules/_shared/components/ContentMessage";
 
 import { isEqual } from "lodash";
-
 import { Annotations, Layout, PlotDatum, PlotMouseEvent, Shape } from "plotly.js";
 
 import { ChannelIds } from "./channelDefs";
@@ -34,26 +33,26 @@ import {
     filterVectorSpecificationAndIndividualStatisticsDataArray,
 } from "./utils/vectorSpecificationsAndQueriesUtils";
 
-export const View = ({ moduleContext, workbenchSession, workbenchSettings }: ModuleFCProps<State>) => {
+export const View = ({ viewContext, workbenchSession, workbenchSettings }: ModuleViewProps<State>) => {
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);
     const wrapperDivSize = useElementSize(wrapperDivRef);
 
     const ensembleSet = useEnsembleSet(workbenchSession);
     const getFilteredEnsembleRealizationsFunc = useEnsembleRealizationFilterFunc(workbenchSession);
-    const statusWriter = useViewStatusWriter(moduleContext);
+    const statusWriter = useViewStatusWriter(viewContext);
 
     const [activeTimestampUtcMs, setActiveTimestampUtcMs] = React.useState<number | null>(null);
 
     // Store values
-    const vectorSpecifications = moduleContext.useStoreValue("vectorSpecifications");
-    const groupBy = moduleContext.useStoreValue("groupBy");
-    const resampleFrequency = moduleContext.useStoreValue("resamplingFrequency");
-    const visualizationMode = moduleContext.useStoreValue("visualizationMode");
-    const showHistorical = moduleContext.useStoreValue("showHistorical");
-    const showObservations = moduleContext.useStoreValue("showObservations");
-    const statisticsSelection = moduleContext.useStoreValue("statisticsSelection");
-    const parameterIdent = moduleContext.useStoreValue("parameterIdent");
-    const colorRealizationsByParameter = moduleContext.useStoreValue("colorRealizationsByParameter");
+    const vectorSpecifications = viewContext.useStoreValue("vectorSpecifications");
+    const groupBy = viewContext.useStoreValue("groupBy");
+    const resampleFrequency = viewContext.useStoreValue("resamplingFrequency");
+    const visualizationMode = viewContext.useStoreValue("visualizationMode");
+    const showHistorical = viewContext.useStoreValue("showHistorical");
+    const showObservations = viewContext.useStoreValue("showObservations");
+    const statisticsSelection = viewContext.useStoreValue("statisticsSelection");
+    const parameterIdent = viewContext.useStoreValue("parameterIdent");
+    const colorRealizationsByParameter = viewContext.useStoreValue("colorRealizationsByParameter");
 
     // Apply realization filtering
     vectorSpecifications?.forEach((vectorSpecification) => {
@@ -181,7 +180,7 @@ export const View = ({ moduleContext, workbenchSession, workbenchSettings }: Mod
         ),
     }));
 
-    moduleContext.usePublishChannelContents({
+    viewContext.usePublishChannelContents({
         channelIdString: ChannelIds.TIME_SERIES,
         dependencies: [loadedVectorSpecificationsAndRealizationData, activeTimestampUtcMs],
         enabled: !isQueryFetching,
@@ -194,6 +193,7 @@ export const View = ({ moduleContext, workbenchSession, workbenchSettings }: Mod
         visualizationMode === VisualizationMode.INDIVIDUAL_REALIZATIONS &&
         parameterIdent !== null &&
         selectedEnsembles.some((ensemble) => ensemble.getParameters().hasParameter(parameterIdent));
+
     const ensemblesParameterColoring = doColorByParameter
         ? new EnsemblesContinuousParameterColoring(selectedEnsembles, parameterIdent, parameterColorScale)
         : null;
