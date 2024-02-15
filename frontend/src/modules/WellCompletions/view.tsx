@@ -1,6 +1,6 @@
 import React from "react";
 
-import { ModuleFCProps } from "@framework/Module";
+import { ModuleViewProps } from "@framework/Module";
 import { useViewStatusWriter } from "@framework/StatusWriter";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { ContentError } from "@modules/_shared/components/ContentMessage";
@@ -9,13 +9,13 @@ import { WellCompletionsPlot } from "@webviz/well-completions-plot";
 
 import { DataLoadingStatus, State } from "./state";
 
-export const View = ({ moduleContext }: ModuleFCProps<State>) => {
+export const View = ({ viewContext }: ModuleViewProps<State>) => {
     const wellCompletionsPlotId = React.useId();
-    const statusWriter = useViewStatusWriter(moduleContext);
+    const statusWriter = useViewStatusWriter(viewContext);
 
-    const plotData = moduleContext.useStoreValue("plotData");
-    const availableTimeSteps = moduleContext.useStoreValue("availableTimeSteps");
-    const dataLoadingStatus = moduleContext.useStoreValue("dataLoadingStatus");
+    const plotData = viewContext.useStoreValue("plotData");
+    const availableTimeSteps = viewContext.useStoreValue("availableTimeSteps");
+    const dataLoadingStatus = viewContext.useStoreValue("dataLoadingStatus");
 
     statusWriter.setLoading(dataLoadingStatus === DataLoadingStatus.Loading);
 

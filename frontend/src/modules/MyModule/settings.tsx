@@ -1,6 +1,6 @@
 import React from "react";
 
-import { ModuleFCProps } from "@framework/Module";
+import { ModuleSettingsProps } from "@framework/Module";
 import { ColorGradient } from "@lib/components/ColorGradient/colorGradient";
 import { Input } from "@lib/components/Input";
 import { Label } from "@lib/components/Label";
@@ -9,12 +9,12 @@ import { ColorScaleGradientType, ColorScaleType } from "@lib/utils/ColorScale";
 
 import { State } from "./state";
 
-export const settings = (props: ModuleFCProps<State>) => {
-    const [type, setType] = props.moduleContext.useStoreState("type");
-    const [gradientType, setGradientType] = props.moduleContext.useStoreState("gradientType");
-    const [min, setMin] = props.moduleContext.useStoreState("min");
-    const [max, setMax] = props.moduleContext.useStoreState("max");
-    const [divMidPoint, setDivMidPoint] = props.moduleContext.useStoreState("divMidPoint");
+export const settings = (props: ModuleSettingsProps<State>) => {
+    const [type, setType] = props.settingsContext.useStoreState("type");
+    const [gradientType, setGradientType] = props.settingsContext.useStoreState("gradientType");
+    const [min, setMin] = props.settingsContext.useStoreState("min");
+    const [max, setMax] = props.settingsContext.useStoreState("max");
+    const [divMidPoint, setDivMidPoint] = props.settingsContext.useStoreState("divMidPoint");
 
     function handleTypeChange(e: React.ChangeEvent<HTMLInputElement>) {
         setType(e.target.value as ColorScaleType);

@@ -17,14 +17,20 @@ import { ModuleInstance } from "./ModuleInstance";
 import { ModuleInstanceStatusController } from "./ModuleInstanceStatusController";
 import { StateBaseType, StateStore, useSetStoreValue, useStoreState, useStoreValue } from "./StateStore";
 import { SyncSettingKey } from "./SyncSettings";
+import {
+    InterfaceBaseType,
+    useInterfaceState,
+    useInterfaceValue,
+    useSetInterfaceValue,
+} from "./UniDirectionalSettingsToViewInterface";
 import { useChannelReceiver } from "./internal/DataChannels/hooks/useChannelReceiver";
 import { usePublishChannelContents } from "./internal/DataChannels/hooks/usePublishChannelContents";
 
-export class ModuleContext<S extends StateBaseType> {
-    private _moduleInstance: ModuleInstance<S>;
-    private _stateStore: StateStore<S>;
+export class ModuleContext<TStateType extends StateBaseType, TInterfaceType extends InterfaceBaseType> {
+    protected _moduleInstance: ModuleInstance<TStateType, TInterfaceType>;
+    private _stateStore: StateStore<TStateType>;
 
-    constructor(moduleInstance: ModuleInstance<S>, stateStore: StateStore<S>) {
+    constructor(moduleInstance: ModuleInstance<TStateType, TInterfaceType>, stateStore: StateStore<TStateType>) {
         this._moduleInstance = moduleInstance;
         this._stateStore = stateStore;
     }
@@ -33,19 +39,23 @@ export class ModuleContext<S extends StateBaseType> {
         return this._moduleInstance.getId();
     }
 
-    getStateStore(): StateStore<S> {
+    getStateStore(): StateStore<TStateType> {
         return this._stateStore;
     }
 
-    useStoreState<K extends keyof S>(key: K): [S[K], (value: S[K] | ((prev: S[K]) => S[K])) => void] {
+    useStoreState<K extends keyof TStateType>(
+        key: K
+    ): [TStateType[K], (value: TStateType[K] | ((prev: TStateType[K]) => TStateType[K])) => void] {
         return useStoreState(this._stateStore, key);
     }
 
-    useStoreValue<K extends keyof S>(key: K): S[K] {
+    useStoreValue<K extends keyof TStateType>(key: K): TStateType[K] {
         return useStoreValue(this._stateStore, key);
     }
 
-    useSetStoreValue<K extends keyof S>(key: K): (newValue: S[K] | ((prev: S[K]) => S[K])) => void {
+    useSetStoreValue<K extends keyof TStateType>(
+        key: K
+    ): (newValue: TStateType[K] | ((prev: TStateType[K]) => TStateType[K])) => void {
         return useSetStoreValue(this._stateStore, key);
     }
 
@@ -102,4 +112,36 @@ export class ModuleContext<S extends StateBaseType> {
             ...options,
         });
     }
+
+    useInterfaceState<TKey extends keyof TInterfaceType["baseStates"]>(
+        key: TKey
+    ): [Awaited<TInterfaceType["baseStates"][TKey]>, (value: TInterfaceType["baseStates"][TKey]) => void] {
+        return useInterfaceState(this._moduleInstance.getUniDirectionalSettingsToViewInterface(), key);
+    }
+
+    useInterfaceValue<TKey extends keyof TInterfaceType["baseStates"]>(key: TKey): TInterfaceType["baseStates"][TKey];
+    useInterfaceValue<TKey extends keyof TInterfaceType["derivedStates"]>(
+        key: TKey
+    ): TInterfaceType["derivedStates"][TKey];
+    useInterfaceValue<TKey extends keyof (TInterfaceType["baseStates"] | TInterfaceType["derivedStates"])>(
+        key: TKey
+    ): TInterfaceType["baseStates"][TKey] | TInterfaceType["derivedStates"][TKey] {
+        return useInterfaceValue(this._moduleInstance.getUniDirectionalSettingsToViewInterface(), key);
+    }
+
+    useSetInterfaceValue<TKey extends keyof TInterfaceType["baseStates"]>(
+        key: TKey
+    ): (value: TInterfaceType["baseStates"][TKey]) => void {
+        return useSetInterfaceValue(this._moduleInstance.getUniDirectionalSettingsToViewInterface(), key);
+    }
 }
+
+export type ViewContext<StateType extends StateBaseType, TInterfaceType extends InterfaceBaseType> = Omit<
+    ModuleContext<StateType, TInterfaceType>,
+    "useInterfaceState" | "useSetInterfaceValue"
+>;
+
+export type SettingsContext<StateType extends StateBaseType, TInterfaceType extends InterfaceBaseType> = ModuleContext<
+    StateType,
+    TInterfaceType
+>;

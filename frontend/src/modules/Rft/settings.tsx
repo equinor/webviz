@@ -1,7 +1,7 @@
 import React from "react";
 
 import { EnsembleIdent } from "@framework/EnsembleIdent";
-import { ModuleFCProps } from "@framework/Module";
+import { ModuleSettingsProps } from "@framework/Module";
 import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { SingleEnsembleSelect } from "@framework/components/SingleEnsembleSelect";
@@ -26,13 +26,13 @@ const timepointOptions = (timePoints: number[]): SelectOption[] => {
     }));
 };
 
-export function Settings({ moduleContext, workbenchServices, workbenchSession }: ModuleFCProps<state>) {
+export function Settings({ settingsContext, workbenchServices, workbenchSession }: ModuleSettingsProps<state>) {
     const ensembleSet = useEnsembleSet(workbenchSession);
-    const [rftWellAddress, setRftWellAddress] = moduleContext.useStoreState("rftWellAddress");
+    const [rftWellAddress, setRftWellAddress] = settingsContext.useStoreState("rftWellAddress");
     const [selectedEnsembleIdent, setSelectedEnsembleIdent] = React.useState<EnsembleIdent | null>(null);
     const [selectedWellName, setSelectedWellName] = React.useState<string | null>(null);
     const [selectedTimePoint, setSelectedTimePoint] = React.useState<number | null>(null);
-    const syncedSettingKeys = moduleContext.useSyncedSettingKeys();
+    const syncedSettingKeys = settingsContext.useSyncedSettingKeys();
     const syncHelper = new SyncSettingsHelper(syncedSettingKeys, workbenchServices);
     const syncedValueEnsembles = syncHelper.useValue(SyncSettingKey.ENSEMBLE, "global.syncValue.ensembles");
     const candidateEnsembleIdent = maybeAssignFirstSyncedEnsemble(selectedEnsembleIdent, syncedValueEnsembles);

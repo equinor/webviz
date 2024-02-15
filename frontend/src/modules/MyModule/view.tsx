@@ -1,7 +1,7 @@
 import React from "react";
 import Plot from "react-plotly.js";
 
-import { ModuleFCProps } from "@framework/Module";
+import { ModuleViewProps } from "@framework/Module";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { ColorScaleType } from "@lib/utils/ColorScale";
 
@@ -402,12 +402,12 @@ for (let i = 0; i < countryData.length; i += 2) {
     alcConsumption.push(countryData[i + 1] as number);
 }
 
-export const View = (props: ModuleFCProps<State>) => {
-    const type = props.moduleContext.useStoreValue("type");
-    const gradientType = props.moduleContext.useStoreValue("gradientType");
-    const min = props.moduleContext.useStoreValue("min");
-    const max = props.moduleContext.useStoreValue("max");
-    const divMidPoint = props.moduleContext.useStoreValue("divMidPoint");
+export const View = (props: ModuleViewProps<State>) => {
+    const type = props.viewContext.useStoreValue("type");
+    const gradientType = props.viewContext.useStoreValue("gradientType");
+    const min = props.viewContext.useStoreValue("min");
+    const max = props.viewContext.useStoreValue("max");
+    const divMidPoint = props.viewContext.useStoreValue("divMidPoint");
 
     const ref = React.useRef<HTMLDivElement>(null);
 
