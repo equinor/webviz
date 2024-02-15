@@ -7,6 +7,7 @@ import "./InplaceVolumetrics/registerModule";
 import "./Map/registerModule";
 import "./ParameterDistributionMatrix/registerModule";
 import "./Pvt/registerModule";
+import "./PvtRefactored/registerModule";
 import "./Rft/registerModule";
 import "./SeismicIntersection/registerModule";
 import "./SimulationTimeSeries/registerModule";
