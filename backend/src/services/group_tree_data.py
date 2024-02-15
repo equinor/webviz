@@ -7,8 +7,25 @@ import numpy as np
 import pandas as pd
 import pyarrow as pa
 from fastapi import HTTPException
+from pydantic import BaseModel
 from src.services.sumo_access.group_tree_access import GroupTreeAccess
 from src.services.sumo_access.summary_access import Frequency, SummaryAccess
+
+class GroupTreeMetadata(BaseModel):
+    key: str
+    label: str
+
+class RecursiveTreeNode(BaseModel):
+    node_type: str # Group or Well
+    node_label: str
+    edge_label: str
+    node_data: Dict[str, List[float]]
+    edge_data: Dict[str, List[float]]
+    children: List[Optional["RecursiveTreeNode"]]
+
+class DatedTree(BaseModel):
+    dates: List[str]
+    tree: RecursiveTreeNode
 
 LOGGER = logging.getLogger(__name__)
 
@@ -144,7 +161,7 @@ class GroupTreeData:
         node_types: List[NodeType],
         real: Optional[int] = None,
         stat_option: Optional[StatOptions] = None,
-    ) -> Tuple[List[Dict[Any, Any]], List[Dict[str, str]], List[Dict[str, str]]]:
+    ) -> Tuple[DatedTree, List[GroupTreeMetadata], List[GroupTreeMetadata]]:
         """This method is called when an event is triggered to create a new dataset
         to the GroupTree plugin. First there is a lot of filtering of the smry and
         grouptree data, before the filtered data is sent to the function that is
@@ -211,7 +228,7 @@ class GroupTreeData:
             await _create_dataset(smry, gruptree_filtered, self._sumvecs, self._terminal_node),
             self._get_edge_options(node_types),
             [
-                {"name": datatype.value, "label": _get_label(datatype)}
+                GroupTreeMetadata(key = datatype.value, label = _get_label(datatype))
                 for datatype in [DataType.PRESSURE, DataType.BHP, DataType.WMCTL]
             ],
         )
@@ -277,19 +294,15 @@ class GroupTreeData:
         options = []
         if NodeType.PROD in node_types:
             for rate in [DataType.OILRATE, DataType.GASRATE, DataType.WATERRATE]:
-                options.append({"name": rate.value, "label": _get_label(rate)})
+                options.append(GroupTreeMetadata(key=rate.value, label=_get_label(rate)))
         if NodeType.INJ in node_types and self._has_waterinj:
-            options.append(
-                {
-                    "name": DataType.WATERINJRATE.value,
-                    "label": _get_label(DataType.WATERINJRATE),
-                }
+            options.append(GroupTreeMetadata(key=DataType.WATERINJRATE.value, label=_get_label(DataType.WATERINJRATE))
             )
         if NodeType.INJ in node_types and self._has_gasinj:
-            options.append({"name": DataType.GASINJRATE.value, "label": _get_label(DataType.GASINJRATE)})
+            options.append(GroupTreeMetadata(key=DataType.GASINJRATE.value, label=_get_label(DataType.GASINJRATE)))
         if options:
             return options
-        return [{"name": DataType.OILRATE.value, "label": _get_label(DataType.OILRATE)}]
+        return [GroupTreeMetadata(key=DataType.OILRATE.value, label= _get_label(DataType.OILRATE))]
 
 
 def _add_nodetype(
@@ -642,7 +655,7 @@ async def _create_dataset(
     gruptree: pd.DataFrame,
     sumvecs: pd.DataFrame,
     terminal_node: str,
-) -> List[dict]:
+) -> List[DatedTree]:
     """The function puts together the GroupTree component input dataset.
 
     The gruptree dataframe includes complete networks for every time
@@ -660,10 +673,10 @@ async def _create_dataset(
         dates = list(smry_in_datespan.groups)
         if dates:
             trees.append(
-                {
-                    "dates": [date.strftime("%Y-%m-%d") for date in dates],
-                    "tree": await _extract_tree(gruptree_date, terminal_node, smry_in_datespan, dates, sumvecs),
-                }
+                DatedTree(
+                    dates=[date.strftime("%Y-%m-%d") for date in dates],
+                    tree= await  _extract_tree(gruptree_date, terminal_node, smry_in_datespan, dates, sumvecs)
+                )
             )
         else:
             LOGGER.info(f"""No summary data found for gruptree between {date} and {next_date}""")
@@ -676,7 +689,7 @@ async def _extract_tree(
     smry_in_datespan: Dict[Any, pd.DataFrame],
     dates: list,
     sumvecs: pd.DataFrame,
-) -> dict:
+) -> RecursiveTreeNode:
     """Extract the tree part of the GroupTree component dataset. This functions
     works recursively and is initially called with the terminal node of the tree
     (usually FIELD)
@@ -684,14 +697,6 @@ async def _extract_tree(
     # pylint: disable=too-many-locals
     node_sumvecs = sumvecs[sumvecs["NODENAME"] == nodename]
     nodedict = await _get_nodedict(gruptree, nodename)
-    # print(node_sumvecs)
-    # print(nodedict)
-
-    result: dict = {
-        "node_label": nodename,
-        "node_type": "Well" if nodedict["KEYWORD"] == "WELSPECS" else "Group",
-        "edge_label": nodedict["EDGE_LABEL"],
-    }
 
     edges = node_sumvecs[node_sumvecs["EDGE_NODE"] == EdgeOrNode.EDGE].to_dict("records")
     nodes = node_sumvecs[node_sumvecs["EDGE_NODE"] == EdgeOrNode.NODE].to_dict("records")
@@ -708,13 +713,17 @@ async def _extract_tree(
                 node_data[item["DATATYPE"].value].append(float(round(smry_at_date[item["SUMVEC"]].values[0], 2)))
             except KeyError:
                 node_data[item["DATATYPE"].value].append(np.nan)
-    result["edge_data"] = edge_data
-    result["node_data"] = node_data
+
     children = list(gruptree[gruptree["PARENT"] == nodename]["CHILD"].unique())
-    if children:
-        result["children"] = [
-            await _extract_tree(gruptree, child, smry_in_datespan, dates, sumvecs) for child in children
-        ]
+
+    result = RecursiveTreeNode(
+        node_label = nodename,
+        node_type = "Well" if nodedict["KEYWORD"] == "WELSPECS" else "Group",
+        edge_label = nodedict["EDGE_LABEL"],
+        edge_data = edge_data,
+        node_data = node_data,
+        children = [await _extract_tree(gruptree, child, smry_in_datespan, dates, sumvecs) for child in children]
+    )
     return result
 
 
