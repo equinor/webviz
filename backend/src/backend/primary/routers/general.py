@@ -206,7 +206,7 @@ async def user_mock(
 
 
 @router.get("/test")
-async def user_mock(
+async def test_func(
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)]
 ) -> str:
     redis_user_jobs = _RedisUserJobManager("AA123")
@@ -227,10 +227,11 @@ async def user_mock(
 
 
 @router.get("/delete")
-async def user_mock(
+async def delete_func(
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)]
 ) -> str:
-    delete_all_radix_job_instances("user-mock", 8001)
+    await delete_all_radix_job_instances("user-mock", 8001)
+    return "Delete done"
 
 
 
