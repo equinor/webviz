@@ -3,7 +3,7 @@ import datetime
 import logging
 import json
 import os
-from typing import Annotated
+from typing import Annotated, List
 
 import httpx
 import starsessions
@@ -204,6 +204,37 @@ async def user_mock(
     return resp_text
 
 
+
+@router.get("/test")
+async def user_mock(
+    authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)]
+) -> str:
+    redis_user_jobs = _RedisUserJobManager("AA123")
+    redis_user_jobs.set_job_info("user-mock", "myinst_1A", JobInfo(state=JobState.RUNNING_READY, radix_job_name="Auser-mock_111"))
+    redis_user_jobs.set_job_info("user-mock", "myinst_2A", JobInfo(state=JobState.RUNNING_READY, radix_job_name="Auser-mock_222"))
+    redis_user_jobs.set_job_info("user-mock", "myinst_3A", JobInfo(state=JobState.RUNNING_READY, radix_job_name="Auser-mock_333"))
+
+    redis_user_jobs = _RedisUserJobManager(authenticated_user._user_id)
+    redis_user_jobs.set_job_info("user-mock", "myinst_1", JobInfo(state=JobState.RUNNING_READY, radix_job_name="user-mock_111"))
+    redis_user_jobs.set_job_info("user-mock", "myinst_2", JobInfo(state=JobState.RUNNING_READY, radix_job_name="user-mock_222"))
+    redis_user_jobs.set_job_info("user-mock", "myinst_3", JobInfo(state=JobState.RUNNING_READY, radix_job_name="user-mock_333"))
+    
+    info_arr = redis_user_jobs.get_job_info_arr("user-mock")
+    print(f"{info_arr=}")
+
+    ret_str = f"User jobs: {info_arr}"
+    return ret_str
+
+
+@router.get("/delete")
+async def user_mock(
+    authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)]
+) -> str:
+    delete_all_radix_job_instances("user-mock", 8001)
+
+
+
+
 IS_RUNNING_IN_RADIX = True if os.getenv("RADIX_APP") is not None else False
 print(f"{IS_RUNNING_IN_RADIX=}")
 
@@ -269,6 +300,18 @@ async def get_or_create_user_service_url(user_id: str, job_component_name: str, 
     return None
 
 
+async def delete_all_radix_job_instances(job_component_name: str, job_schedulerPort: int) -> None:
+    async with httpx.AsyncClient() as client:
+        response = await client.get(f"http://{job_component_name}:{job_schedulerPort}/api/v1/jobs")
+        response.raise_for_status()
+        job_list = response.json()
+        for job in job_list:
+            job_name = job["name"]
+            print(f"------Deleting job {job_name}")
+            response = await client.delete(f"http://{job_component_name}:{job_schedulerPort}/api/v1/jobs/{job_name}")
+            response.raise_for_status()
+            print(f"------Deleted job {job_name} --- {response.text}")
+
 
 from enum import Enum
 
@@ -308,6 +351,21 @@ class _RedisUserJobManager:
         print(f"{type(info)=}")
         print(f"{info=}")
         return info
+
+    def get_job_info_arr(self, job_component_name: str) -> List[JobInfo]:
+        #pattern = f"user-jobs:{self._user_id}:{job_component_name}:*"
+        pattern = f"user-jobs:*:{job_component_name}:*"
+        print(f"{pattern=}")
+        
+        ret_list = []
+        for key in self._redis_client.scan_iter(pattern):
+            print(f"{key=}")
+            payload = self._redis_client.get(key)
+            print(f"{payload=}")
+            info = JobInfo.model_validate_json(payload)
+            ret_list.append(info)
+
+        return ret_list
 
     def _make_key(self, job_component_name: str, instance_identifier: str) -> str:
         return f"user-jobs:{self._user_id}:{job_component_name}:{instance_identifier}"
