@@ -146,7 +146,7 @@ async def user_mock(
 async def call_health_endpoint(client: httpx.AsyncClient, call_url: str) -> str:
     print(f"############################# calling {call_url=}")
     try:
-        response = await httpx.get(call_url)
+        response = await client.get(call_url)
         response.raise_for_status()
     except httpx.RequestError as exc:
         print(f"An error occurred while requesting {exc.request.url!r}.")
@@ -165,12 +165,13 @@ async def call_health_endpoint(client: httpx.AsyncClient, call_url: str) -> str:
 
 async def call_endpoint_with_retries(call_url: str) -> str | None:
     print(f"############################# call_endpoint_with_retries() with {call_url=}")
-    max_retries = 10
+    max_retries = 20
     async with httpx.AsyncClient() as client:
         for i in range(max_retries):
             resp_text = await call_health_endpoint(client, call_url)
             if resp_text is not None:
                 print(f"############################# call_endpoint_with_retries() SUCCESS with {call_url=}")
+                print(f"############################# call_endpoint_with_retries() {resp_text=}")
                 return resp_text
 
             await asyncio.sleep(1)
