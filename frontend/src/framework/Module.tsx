@@ -4,25 +4,60 @@ import { cloneDeep } from "lodash";
 
 import { ChannelDefinition, ChannelReceiverDefinition } from "./DataChannelTypes";
 import { InitialSettings } from "./InitialSettings";
-import { ModuleContext } from "./ModuleContext";
+import { SettingsContext, ViewContext } from "./ModuleContext";
 import { ModuleInstance } from "./ModuleInstance";
 import { DrawPreviewFunc } from "./Preview";
 import { StateBaseType, StateOptions } from "./StateStore";
 import { SyncSettingKey } from "./SyncSettings";
+import { InterfaceBaseType, InterfaceDefinition } from "./UniDirectionalSettingsToViewInterface";
 import { Workbench } from "./Workbench";
 import { WorkbenchServices } from "./WorkbenchServices";
 import { WorkbenchSession } from "./WorkbenchSession";
 import { WorkbenchSettings } from "./WorkbenchSettings";
 
-export type ModuleFCProps<StateType extends StateBaseType> = {
-    moduleContext: ModuleContext<StateType>;
+export type ModuleSettingsProps<
+    StateType extends StateBaseType,
+    TInterfaceType extends InterfaceBaseType = {
+        baseStates: Record<string, never>;
+        derivedStates: Record<string, never>;
+    }
+> = {
+    settingsContext: SettingsContext<StateType, TInterfaceType>;
     workbenchSession: WorkbenchSession;
     workbenchServices: WorkbenchServices;
     workbenchSettings: WorkbenchSettings;
     initialSettings?: InitialSettings;
 };
 
-export type ModuleFC<StateType extends StateBaseType> = React.FC<ModuleFCProps<StateType>>;
+export type ModuleViewProps<
+    StateType extends StateBaseType,
+    TInterfaceType extends InterfaceBaseType = {
+        baseStates: Record<string, never>;
+        derivedStates: Record<string, never>;
+    }
+> = {
+    viewContext: ViewContext<StateType, TInterfaceType>;
+    workbenchSession: WorkbenchSession;
+    workbenchServices: WorkbenchServices;
+    workbenchSettings: WorkbenchSettings;
+    initialSettings?: InitialSettings;
+};
+
+export type ModuleSettings<
+    StateType extends StateBaseType,
+    TInterfaceType extends InterfaceBaseType = {
+        baseStates: Record<string, never>;
+        derivedStates: Record<string, never>;
+    }
+> = React.FC<ModuleSettingsProps<StateType, TInterfaceType>>;
+
+export type ModuleView<
+    StateType extends StateBaseType,
+    TInterfaceType extends InterfaceBaseType = {
+        baseStates: Record<string, never>;
+        derivedStates: Record<string, never>;
+    }
+> = React.FC<ModuleViewProps<StateType, TInterfaceType>>;
 
 export enum ImportState {
     NotImported = "NotImported",
@@ -41,14 +76,15 @@ export interface ModuleOptions {
     channelReceiverDefinitions?: ChannelReceiverDefinition[];
 }
 
-export class Module<StateType extends StateBaseType> {
+export class Module<StateType extends StateBaseType, InterfaceType extends InterfaceBaseType> {
     private _name: string;
     private _defaultTitle: string;
-    public viewFC: ModuleFC<StateType>;
-    public settingsFC: ModuleFC<StateType>;
+    public viewFC: ModuleView<StateType, InterfaceType>;
+    public settingsFC: ModuleSettings<StateType, InterfaceType>;
     protected _importState: ImportState;
-    private _moduleInstances: ModuleInstance<StateType>[];
+    private _moduleInstances: ModuleInstance<StateType, InterfaceType>[];
     private _defaultState: StateType | null;
+    private _interface: InterfaceDefinition<InterfaceType> | null;
     private _stateOptions: StateOptions<StateType> | undefined;
     private _workbench: Workbench | null;
     private _syncableSettingKeys: SyncSettingKey[];
@@ -65,6 +101,7 @@ export class Module<StateType extends StateBaseType> {
         this._importState = ImportState.NotImported;
         this._moduleInstances = [];
         this._defaultState = null;
+        this._interface = null;
         this._workbench = null;
         this._syncableSettingKeys = options.syncableSettingKeys ?? [];
         this._drawPreviewFunc = options.drawPreviewFunc ?? null;
@@ -107,6 +144,10 @@ export class Module<StateType extends StateBaseType> {
         });
     }
 
+    setInterface(interfaceObj: InterfaceDefinition<InterfaceType>): void {
+        this._interface = interfaceObj;
+    }
+
     getSyncableSettingKeys(): SyncSettingKey[] {
         return this._syncableSettingKeys;
     }
@@ -115,12 +156,12 @@ export class Module<StateType extends StateBaseType> {
         return this._syncableSettingKeys.includes(key);
     }
 
-    makeInstance(instanceNumber: number): ModuleInstance<StateType> {
+    makeInstance(instanceNumber: number): ModuleInstance<StateType, InterfaceType> {
         if (!this._workbench) {
             throw new Error("Module must be added to a workbench before making an instance");
         }
 
-        const instance = new ModuleInstance<StateType>({
+        const instance = new ModuleInstance<StateType, InterfaceType>({
             module: this,
             workbench: this._workbench,
             instanceNumber,
@@ -147,8 +188,13 @@ export class Module<StateType extends StateBaseType> {
         if (this._importState !== ImportState.NotImported) {
             if (this._defaultState && this._importState === ImportState.Imported) {
                 this._moduleInstances.forEach((instance) => {
-                    if (this._defaultState && !instance.isInitialised()) {
-                        instance.setDefaultState(cloneDeep(this._defaultState), cloneDeep(this._stateOptions));
+                    if (!instance.isInitialised()) {
+                        if (this._defaultState) {
+                            instance.setDefaultState(cloneDeep(this._defaultState), cloneDeep(this._stateOptions));
+                        }
+                        if (this._interface) {
+                            instance.setInterface(this._interface);
+                        }
                     }
                 });
             }
@@ -161,8 +207,11 @@ export class Module<StateType extends StateBaseType> {
             .then(() => {
                 this.setImportState(ImportState.Imported);
                 this._moduleInstances.forEach((instance) => {
-                    if (this._defaultState && !instance.isInitialised()) {
+                    if (this._defaultState) {
                         instance.setDefaultState(cloneDeep(this._defaultState), cloneDeep(this._stateOptions));
+                    }
+                    if (this._interface) {
+                        instance.setInterface(this._interface);
                     }
                 });
             })

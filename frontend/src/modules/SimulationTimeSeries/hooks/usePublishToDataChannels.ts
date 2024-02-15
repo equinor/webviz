@@ -13,7 +13,7 @@ import {
 import { ChannelIds } from "../channelDefs";
 import { makeVectorGroupDataGenerator } from "../dataGenerators";
 
-export function usePublishToDataChannels(moduleContext: ModuleContext<any>) {
+export function usePublishToDataChannels(moduleContext: ModuleContext<any, any>) {
     const loadedVectorSpecificationsAndRealizationData = useAtomValue(loadedVectorSpecificationsAndRealizationDataAtom);
     const activeTimestampUtcMs = useAtomValue(activeTimestampUtcMsAtom);
     const isQueryFetching = useAtomValue(queryIsFetchingAtom);

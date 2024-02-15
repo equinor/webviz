@@ -1,74 +1,36 @@
 import React from "react";
 
-import { VectorDescription_api } from "@api";
-import { EnsembleIdent } from "@framework/EnsembleIdent";
-import { EnsembleSetAtom } from "@framework/GlobalAtoms";
-import { SingleEnsembleSelect } from "@framework/components/SingleEnsembleSelect";
+import { ModuleSettingsProps } from "@framework/Module";
+import { Input } from "@lib/components/Input";
 import { Label } from "@lib/components/Label";
-import { Select, SelectOption } from "@lib/components/Select";
 
-import { useAtom, useAtomValue } from "jotai";
+import { useAtom } from "jotai";
 
-import {
-    atomBasedOnVectors,
-    selectedEnsembleAtom,
-    selectedVectorAtom,
-    userSelectedVectorAtom,
-    vectorsAtom,
-} from "./atoms";
+import { textAtom } from "./atoms";
+import { Interface, State } from "./state";
 
-export const Settings = () => {
-    const ensembleSet = useAtomValue(EnsembleSetAtom);
-    const [selectedEnsemble, setSelectedEnsemble] = useAtom(selectedEnsembleAtom);
-    const [result] = useAtom(vectorsAtom);
-    const [isFetching] = useAtom(atomBasedOnVectors);
+export const Settings = (props: ModuleSettingsProps<State, Interface>) => {
+    const [atomText, setAtomText] = useAtom(textAtom);
+    const [stateText, setStateText] = props.settingsContext.useInterfaceState("text");
 
-    const [, setUserSelectedVector] = useAtom(userSelectedVectorAtom);
-    const [selectedVector] = useAtom(selectedVectorAtom);
-
-    function handleEnsembleSelectionChange(ensembleIdent: EnsembleIdent | null) {
-        setSelectedEnsemble(ensembleIdent);
+    function handleStateTextChange(event: React.ChangeEvent<HTMLInputElement>) {
+        setStateText(event.target.value);
     }
 
-    function handleVectorSelectionChange(selectedVectors: string[]) {
-        setUserSelectedVector(selectedVectors[0]);
+    function handleAtomTextChange(event: React.ChangeEvent<HTMLInputElement>) {
+        setAtomText(event.target.value);
     }
 
     return (
         <>
-            <Label text="Ensemble">
-                <SingleEnsembleSelect
-                    ensembleSet={ensembleSet}
-                    value={selectedEnsemble}
-                    onChange={handleEnsembleSelectionChange}
-                />
+            <Label text="Atom text">
+                <Input value={atomText} onChange={handleAtomTextChange} />
             </Label>
-            {isFetching ? (
-                <div>Loading...</div>
-            ) : (
-                <Label text="Vector">
-                    <Select
-                        options={makeVectorOptionItems(result.data)}
-                        filter={true}
-                        size={5}
-                        value={selectedVector ? [selectedVector] : undefined}
-                        onChange={handleVectorSelectionChange}
-                    />
-                </Label>
-            )}
+            <Label text="State text">
+                <Input value={stateText} onChange={handleStateTextChange} />
+            </Label>
         </>
     );
 };
-
-function makeVectorOptionItems(vectorDescriptionsArr: VectorDescription_api[] | undefined): SelectOption[] {
-    const itemArr: SelectOption[] = [];
-    if (vectorDescriptionsArr) {
-        for (const vec of vectorDescriptionsArr) {
-            itemArr.push({ value: vec.name, label: vec.descriptive_name });
-            //itemArr.push({ value: vec.name, label: vec.descriptive_name + (vec.has_historical ? " (hasHist)" : "") });
-        }
-    }
-    return itemArr;
-}
 
 Settings.displayName = "Settings";

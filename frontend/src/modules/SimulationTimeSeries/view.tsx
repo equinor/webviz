@@ -2,7 +2,7 @@ import React from "react";
 import Plot from "react-plotly.js";
 
 import { Ensemble } from "@framework/Ensemble";
-import { ModuleFCProps } from "@framework/Module";
+import { ModuleViewProps } from "@framework/Module";
 import { useViewStatusWriter } from "@framework/StatusWriter";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { ColorScaleGradientType } from "@lib/utils/ColorScale";
@@ -11,6 +11,7 @@ import { ContentError } from "@modules/_shared/components/ContentMessage";
 import { useAtom, useAtomValue } from "jotai";
 import { PlotDatum, PlotMouseEvent } from "plotly.js";
 
+import { userSelectedActiveTimestampUtcMsAtom } from "./atoms/baseAtoms";
 import { parameterIdentAtom, selectedEnsemblesAtom } from "./atoms/derivedSettingsAtoms";
 import {
     colorByParameterAtom,
@@ -20,13 +21,12 @@ import {
 import { useMakeViewStatusWriterMessages } from "./hooks/useMakeViewStatusWriterMessages";
 import { useSubplotBuilder } from "./hooks/useSubplotBuilder";
 import { EnsemblesContinuousParameterColoring } from "./utils/ensemblesContinuousParameterColoring";
-import { userSelectedActiveTimestampUtcMsAtom } from "./atoms/baseAtoms";
 
-export const View = ({ moduleContext, workbenchSettings }: ModuleFCProps<Record<string, never>>) => {
+export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Record<string, never>>) => {
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);
     const wrapperDivSize = useElementSize(wrapperDivRef);
 
-    const statusWriter = useViewStatusWriter(moduleContext);
+    const statusWriter = useViewStatusWriter(viewContext);
 
     const colorByParameter = useAtomValue(colorByParameterAtom);
     const parameterIdent = useAtomValue(parameterIdentAtom);

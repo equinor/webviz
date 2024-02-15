@@ -3,7 +3,7 @@ import React from "react";
 import { Frequency_api, StatisticFunction_api } from "@api";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { Parameter, ParameterIdent } from "@framework/EnsembleParameters";
-import { ModuleFCProps } from "@framework/Module";
+import { ModuleSettingsProps } from "@framework/Module";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { MultiEnsembleSelect } from "@framework/components/MultiEnsembleSelect";
@@ -59,9 +59,9 @@ import {
     VisualizationModeEnumToStringMapping,
 } from "./typesAndEnums";
 
-export function Settings({ moduleContext, workbenchSession }: ModuleFCProps<Record<string, never>>) {
+export function Settings({ settingsContext, workbenchSession }: ModuleSettingsProps<Record<string, never>>) {
     const ensembleSet = useEnsembleSet(workbenchSession);
-    const statusWriter = useSettingsStatusWriter(moduleContext);
+    const statusWriter = useSettingsStatusWriter(settingsContext);
 
     const [selectedVectorTags, setSelectedVectorTags] = React.useState<string[]>([]);
 

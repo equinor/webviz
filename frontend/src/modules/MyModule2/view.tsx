@@ -1,22 +1,22 @@
 import React from "react";
 
-import { useAtom } from "jotai";
+import { ModuleViewProps } from "@framework/Module";
+import { Label } from "@lib/components/Label";
 
-import { atomBasedOnVectors, ensembleSetDependentAtom } from "./atoms";
+import { Interface, State } from "./state";
 
-export const View = () => {
-    const [isFetching] = useAtom(atomBasedOnVectors);
-
-    const [firstEnsemble] = useAtom(ensembleSetDependentAtom);
+export const View = (props: ModuleViewProps<State, Interface>) => {
+    const text = props.viewContext.useInterfaceValue("text");
+    const derivedText = props.viewContext.useInterfaceValue("derivedText");
 
     return (
         <div className="h-full w-full flex flex-col justify-center items-center">
-            {firstEnsemble?.toString()}
-            {isFetching ? (
-                <div>Settings is loading...</div>
-            ) : (
-                <div className="text-4xl font-bold">Settings is ready</div>
-            )}
+            <Label text="Derived atom text">
+                <>{derivedText}</>
+            </Label>
+            <Label text="State text">
+                <>{text}</>
+            </Label>
         </div>
     );
 };

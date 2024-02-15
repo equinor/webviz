@@ -1,7 +1,7 @@
 import React from "react";
 
 import { IntersectionReferenceSystem, Trajectory } from "@equinor/esv-intersection";
-import { ModuleFCProps } from "@framework/Module";
+import { ModuleViewProps } from "@framework/Module";
 import { useViewStatusWriter } from "@framework/StatusWriter";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import {
@@ -18,18 +18,18 @@ import { EsvIntersection } from "./components/esvIntersection";
 import { useSampleSurfaceInPointsQueries } from "./queryHooks";
 import { State } from "./state";
 
-export const View = ({ moduleContext }: ModuleFCProps<State>) => {
+export const View = ({ viewContext }: ModuleViewProps<State>) => {
     const wrapperDivRef = React.useRef<HTMLDivElement | null>(null);
     const wrapperDivSize = useElementSize(wrapperDivRef);
 
-    const statusWriter = useViewStatusWriter(moduleContext);
+    const statusWriter = useViewStatusWriter(viewContext);
 
-    const surfaceSetAddress = moduleContext.useStoreValue("SurfaceSetAddress");
-    const visualizationMode = moduleContext.useStoreValue("visualizationMode");
-    const statisticFunctions = moduleContext.useStoreValue("statisticFunctions");
-    const wellboreAddress = moduleContext.useStoreValue("wellboreAddress");
-    const intersectionSettings = moduleContext.useStoreValue("intersectionSettings");
-    const stratigraphyColorMap = moduleContext.useStoreValue("stratigraphyColorMap");
+    const surfaceSetAddress = viewContext.useStoreValue("SurfaceSetAddress");
+    const visualizationMode = viewContext.useStoreValue("visualizationMode");
+    const statisticFunctions = viewContext.useStoreValue("statisticFunctions");
+    const wellboreAddress = viewContext.useStoreValue("wellboreAddress");
+    const intersectionSettings = viewContext.useStoreValue("intersectionSettings");
+    const stratigraphyColorMap = viewContext.useStoreValue("stratigraphyColorMap");
 
     // Extended wellbore trajectory for creating intersection/fence extended on both sides of wellbore
     const [extendedWellboreTrajectory, setExtendedWellboreTrajectory] = React.useState<Trajectory | null>(null);

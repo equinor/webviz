@@ -2,7 +2,7 @@ import React from "react";
 
 import { SurfaceAttributeType_api } from "@api";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
-import { ModuleFCProps } from "@framework/Module";
+import { ModuleSettingsProps } from "@framework/Module";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
 import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
 import { Wellbore } from "@framework/Wellbore";
@@ -59,20 +59,20 @@ const Z_SCALE_LIMITS = { min: 1, max: 100 }; // Minimum z-scale factor
 // Hardcoded surface time type - no surface as function of time
 const SURFACE_TIME_TYPE = SurfaceTimeType.None;
 
-export function Settings({ moduleContext, workbenchSession, workbenchServices }: ModuleFCProps<State>) {
-    const syncedSettingKeys = moduleContext.useSyncedSettingKeys();
+export function Settings({ settingsContext, workbenchSession, workbenchServices }: ModuleSettingsProps<State>) {
+    const syncedSettingKeys = settingsContext.useSyncedSettingKeys();
     const syncHelper = new SyncSettingsHelper(syncedSettingKeys, workbenchServices);
     const syncedValueEnsembles = syncHelper.useValue(SyncSettingKey.ENSEMBLE, "global.syncValue.ensembles");
     const ensembleSet = useEnsembleSet(workbenchSession);
-    const statusWriter = useSettingsStatusWriter(moduleContext);
+    const statusWriter = useSettingsStatusWriter(settingsContext);
 
-    const setSeismicAddress = moduleContext.useSetStoreValue("seismicAddress");
-    const setSurfaceAddress = moduleContext.useSetStoreValue("surfaceAddress");
-    const setWellboreAddress = moduleContext.useSetStoreValue("wellboreAddress");
-    const setWellborePickCaseUuid = moduleContext.useSetStoreValue("wellborePickCaseUuid");
-    const setWellborePickSelection = moduleContext.useSetStoreValue("wellborePickSelection");
-    const [extension, setExtension] = moduleContext.useStoreState("extension");
-    const [zScale, setZScale] = moduleContext.useStoreState("zScale");
+    const setSeismicAddress = settingsContext.useSetStoreValue("seismicAddress");
+    const setSurfaceAddress = settingsContext.useSetStoreValue("surfaceAddress");
+    const setWellboreAddress = settingsContext.useSetStoreValue("wellboreAddress");
+    const setWellborePickCaseUuid = settingsContext.useSetStoreValue("wellborePickCaseUuid");
+    const setWellborePickSelection = settingsContext.useSetStoreValue("wellborePickSelection");
+    const [extension, setExtension] = settingsContext.useStoreState("extension");
+    const [zScale, setZScale] = settingsContext.useStoreState("zScale");
 
     const [fetchedSurfaceNames, setFetchedSurfaceNames] = React.useState<string[]>([]);
     const [fetchedSurfaceAttributes, setFetchedSurfaceAttributes] = React.useState<string[]>([]);
@@ -83,10 +83,10 @@ export function Settings({ moduleContext, workbenchSession, workbenchServices }:
 
     const [seismicTimeType, setSeismicTimeType] = React.useState<SeismicTimeType>(SeismicTimeType.TimePoint);
     const [selectedWellboreAddress, setSelectedWellboreAddress] = React.useState<Wellbore | null>(
-        moduleContext.useStoreValue("wellboreAddress")
+        settingsContext.useStoreValue("wellboreAddress")
     );
     const [selectedWellborePickSelection, setSelectedWellborePickSelection] = React.useState<WellborePickSelectionType>(
-        moduleContext.useStoreValue("wellborePickSelection")
+        settingsContext.useStoreValue("wellborePickSelection")
     );
 
     const candidateEnsembleIdent = maybeAssignFirstSyncedEnsemble(selectedEnsembleIdent, syncedValueEnsembles);

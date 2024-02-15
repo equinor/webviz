@@ -5,6 +5,7 @@ import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 import { atom } from "jotai";
 import { atomWithQuery } from "jotai-tanstack-query";
 
+export const textAtom = atom<string>("I am an atom with text!");
 export const selectedEnsembleAtom = atom<EnsembleIdent | null>(null);
 export const vectorsAtom = atomWithQuery((get) => ({
     queryKey: ["ensembles", get(selectedEnsembleAtom)?.toString()],

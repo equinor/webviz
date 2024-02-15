@@ -14,7 +14,7 @@ import { Provider } from "jotai";
 import { CrashView } from "./crashView";
 
 type ViewContentProps = {
-    moduleInstance: ModuleInstance<any>;
+    moduleInstance: ModuleInstance<any, any>;
     workbench: Workbench;
 };
 
@@ -134,7 +134,7 @@ export const ViewContent = React.memo((props: ViewContentProps) => {
                     <Provider store={atomStore}>
                         <HydrateQueryClientAtom>
                             <View
-                                moduleContext={props.moduleInstance.getContext()}
+                                viewContext={props.moduleInstance.getContext()}
                                 workbenchSession={props.workbench.getWorkbenchSession()}
                                 workbenchServices={props.workbench.getWorkbenchServices()}
                                 workbenchSettings={props.workbench.getWorkbenchSettings()}

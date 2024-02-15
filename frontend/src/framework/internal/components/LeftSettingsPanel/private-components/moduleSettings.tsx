@@ -16,7 +16,7 @@ import { DebugProfiler } from "../../DebugProfiler";
 import { HydrateQueryClientAtom } from "../../HydrateQueryClientAtom";
 
 type ModuleSettingsProps = {
-    moduleInstance: ModuleInstance<any>;
+    moduleInstance: ModuleInstance<any, any>;
     activeModuleInstanceId: string;
     workbench: Workbench;
 };
@@ -106,7 +106,7 @@ export const ModuleSettings: React.FC<ModuleSettingsProps> = (props) => {
                             <Provider store={atomStore}>
                                 <HydrateQueryClientAtom>
                                     <Settings
-                                        moduleContext={props.moduleInstance.getContext()}
+                                        settingsContext={props.moduleInstance.getContext()}
                                         workbenchSession={props.workbench.getWorkbenchSession()}
                                         workbenchServices={props.workbench.getWorkbenchServices()}
                                         workbenchSettings={props.workbench.getWorkbenchSettings()}

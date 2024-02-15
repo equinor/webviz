@@ -1,6 +1,6 @@
 import React from "react";
 
-import { ModuleFCProps } from "@framework/Module";
+import { ModuleViewProps } from "@framework/Module";
 import { useViewStatusWriter } from "@framework/StatusWriter";
 import { ContentError, ContentInfo } from "@modules/_shared/components/ContentMessage";
 import { useSurfaceDataQueryByAddress } from "@modules_shared/Surface";
@@ -9,10 +9,10 @@ import SubsurfaceViewer from "@webviz/subsurface-viewer";
 import { MapState } from "./MapState";
 
 //-----------------------------------------------------------------------------------------------------------
-export function MapView(props: ModuleFCProps<MapState>) {
-    const surfaceAddress = props.moduleContext.useStoreValue("surfaceAddress");
+export function MapView(props: ModuleViewProps<MapState>) {
+    const surfaceAddress = props.viewContext.useStoreValue("surfaceAddress");
 
-    const statusWriter = useViewStatusWriter(props.moduleContext);
+    const statusWriter = useViewStatusWriter(props.viewContext);
     const surfDataQuery = useSurfaceDataQueryByAddress(surfaceAddress);
 
     const isLoading = surfDataQuery.isFetching;
