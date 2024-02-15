@@ -133,15 +133,47 @@ async def user_mock(
             resp_text = "nada"
             if cmd == "create-call":
                 job_name = info["name"]
+                print(f"#############################{job_name=}")
                 call_url = f"http://{job_name}:8001"
-                res = await client.get(call_url)
-                resp_text = res.text()
-                print("------")
-                print(resp_text)
-                print("------")
+                print(f"#############################{call_url=}")
+                resp_text = call_endpoint_with_retries(call_url)
 
             return json.dumps(info) + "\n" + resp_text
 
     return "Unknown command"
 
 
+async def call_health_endpoint(client: httpx.AsyncClient, call_url: str) -> str:
+    print(f"############################# calling {call_url=}")
+    try:
+        response = httpx.get(call_url)
+        response.raise_for_status()
+    except httpx.RequestError as exc:
+        print(f"An error occurred while requesting {exc.request.url!r}.")
+        return None
+    except httpx.HTTPStatusError as exc:
+        print(f"Error response {exc.response.status_code} while requesting {exc.request.url!r}.")
+        return None
+
+    resp_text = response.text()
+    print("------")
+    print(resp_text)
+    print("------")
+
+    return resp_text
+
+
+async def call_endpoint_with_retries(call_url: str) -> str | None:
+    print(f"############################# call_endpoint_with_retries() with {call_url=}")
+    max_retries = 10
+    async with httpx.AsyncClient() as client:
+        for i in range(max_retries):
+            resp_text = await call_health_endpoint(client, call_url)
+            if resp_text is not None:
+                print(f"############################# call_endpoint_with_retries() SUCCESS with {call_url=}")
+                return resp_text
+
+            await asyncio.sleep(1)
+
+    print(f"############################# call_endpoint_with_retries() FAILED with {call_url=}")
+    return None
