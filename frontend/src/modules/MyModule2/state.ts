@@ -1,4 +1,4 @@
-import { InterfaceDefinition } from "@framework/UniDirectionalSettingsToViewInterface";
+import { InterfaceHydration } from "@framework/UniDirectionalSettingsToViewInterface";
 
 import { textAtom } from "./atoms";
 
@@ -21,7 +21,7 @@ export type Interface = {
     };
 };
 
-export const interfaceDefinition: InterfaceDefinition<Interface> = {
+export const interfaceDefinition: InterfaceHydration<Interface> = {
     baseStates: {
         text: "Hello World",
     },

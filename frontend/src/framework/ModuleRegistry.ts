@@ -3,7 +3,7 @@ import { Module } from "./Module";
 import { DrawPreviewFunc } from "./Preview";
 import { StateBaseType, StateOptions } from "./StateStore";
 import { SyncSettingKey } from "./SyncSettings";
-import { InterfaceBaseType, InterfaceDefinition } from "./UniDirectionalSettingsToViewInterface";
+import { InterfaceBaseType, InterfaceHydration } from "./UniDirectionalSettingsToViewInterface";
 import { ModuleNotFoundPlaceholder } from "./internal/ModuleNotFoundPlaceholder";
 
 export type RegisterModuleOptions = {
@@ -63,13 +63,13 @@ export class ModuleRegistry {
         moduleName: string,
         defaultState: TStateType,
         options?: StateOptions<TStateType>,
-        interfaceDefinition?: InterfaceDefinition<TInterfaceType>
+        interfaceHydration?: InterfaceHydration<TInterfaceType>
     ): Module<TStateType, TInterfaceType> {
         const module = this._registeredModules[moduleName];
         if (module) {
             module.setDefaultState(defaultState, options);
-            if (interfaceDefinition) {
-                module.setInterface(interfaceDefinition);
+            if (interfaceHydration) {
+                module.setSettingsToViewInterfaceHydration(interfaceHydration);
             }
             return module as Module<TStateType, TInterfaceType>;
         }

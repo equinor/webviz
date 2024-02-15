@@ -11,7 +11,7 @@ import { StateBaseType, StateOptions, StateStore } from "./StateStore";
 import { SyncSettingKey } from "./SyncSettings";
 import {
     InterfaceBaseType,
-    InterfaceDefinition,
+    InterfaceHydration,
     UniDirectionalSettingsToViewInterface,
 } from "./UniDirectionalSettingsToViewInterface";
 import { Workbench } from "./Workbench";
@@ -25,37 +25,37 @@ export enum ModuleInstanceState {
     RESETTING,
 }
 
-export interface ModuleInstanceOptions<StateType extends StateBaseType, TInterfaceType extends InterfaceBaseType> {
-    module: Module<StateType, TInterfaceType>;
+export interface ModuleInstanceOptions<TStateType extends StateBaseType, TInterfaceType extends InterfaceBaseType> {
+    module: Module<TStateType, TInterfaceType>;
     workbench: Workbench;
     instanceNumber: number;
     channelDefinitions: ChannelDefinition[] | null;
     channelReceiverDefinitions: ChannelReceiverDefinition[] | null;
 }
 
-export class ModuleInstance<StateType extends StateBaseType, TInterfaceType extends InterfaceBaseType> {
+export class ModuleInstance<TStateType extends StateBaseType, TInterfaceType extends InterfaceBaseType> {
     private _id: string;
     private _title: string;
     private _initialised: boolean;
     private _moduleInstanceState: ModuleInstanceState;
     private _fatalError: { err: Error; errInfo: ErrorInfo } | null;
     private _syncedSettingKeys: SyncSettingKey[];
-    private _stateStore: StateStore<StateType> | null;
-    private _module: Module<StateType, TInterfaceType>;
-    private _context: ModuleContext<StateType, TInterfaceType> | null;
+    private _stateStore: StateStore<TStateType> | null;
+    private _module: Module<TStateType, TInterfaceType>;
+    private _context: ModuleContext<TStateType, TInterfaceType> | null;
     private _importStateSubscribers: Set<() => void>;
     private _moduleInstanceStateSubscribers: Set<(moduleInstanceState: ModuleInstanceState) => void>;
     private _syncedSettingsSubscribers: Set<(syncedSettings: SyncSettingKey[]) => void>;
     private _titleChangeSubscribers: Set<(title: string) => void>;
-    private _cachedDefaultState: StateType | null;
-    private _cachedStateStoreOptions?: StateOptions<StateType>;
+    private _cachedDefaultState: TStateType | null;
+    private _cachedStateStoreOptions?: StateOptions<TStateType>;
     private _initialSettings: InitialSettings | null;
     private _statusController: ModuleInstanceStatusControllerInternal;
     private _channelManager: ChannelManager;
     private _workbench: Workbench;
     private _settingsViewInterface: UniDirectionalSettingsToViewInterface<TInterfaceType> | null;
 
-    constructor(options: ModuleInstanceOptions<StateType, TInterfaceType>) {
+    constructor(options: ModuleInstanceOptions<TStateType, TInterfaceType>) {
         this._id = `${options.module.getName()}-${options.instanceNumber}`;
         this._title = options.module.getDefaultTitle();
         this._stateStore = null;
@@ -106,20 +106,20 @@ export class ModuleInstance<StateType extends StateBaseType, TInterfaceType exte
         return this._channelManager;
     }
 
-    setDefaultState(defaultState: StateType, options?: StateOptions<StateType>): void {
+    setDefaultState(defaultState: TStateType, options?: StateOptions<TStateType>): void {
         if (this._cachedDefaultState === null) {
             this._cachedDefaultState = defaultState;
             this._cachedStateStoreOptions = options;
         }
 
-        this._stateStore = new StateStore<StateType>(cloneDeep(defaultState), options);
-        this._context = new ModuleContext<StateType, TInterfaceType>(this, this._stateStore);
+        this._stateStore = new StateStore<TStateType>(cloneDeep(defaultState), options);
+        this._context = new ModuleContext<TStateType, TInterfaceType>(this, this._stateStore);
         this._initialised = true;
         this.setModuleInstanceState(ModuleInstanceState.OK);
     }
 
-    setInterface(interfaceObj: InterfaceDefinition<TInterfaceType>) {
-        this._settingsViewInterface = new UniDirectionalSettingsToViewInterface(interfaceObj);
+    makeSettingsToViewInterface(interfaceHydration: InterfaceHydration<TInterfaceType>) {
+        this._settingsViewInterface = new UniDirectionalSettingsToViewInterface(interfaceHydration);
     }
 
     addSyncedSetting(settingKey: SyncSettingKey): void {
@@ -155,11 +155,11 @@ export class ModuleInstance<StateType extends StateBaseType, TInterfaceType exte
         return this._initialised;
     }
 
-    getViewFC(): ModuleView<StateType, TInterfaceType> {
+    getViewFC(): ModuleView<TStateType, TInterfaceType> {
         return this._module.viewFC;
     }
 
-    getSettingsFC(): ModuleSettings<StateType, TInterfaceType> {
+    getSettingsFC(): ModuleSettings<TStateType, TInterfaceType> {
         return this._module.settingsFC;
     }
 
@@ -167,7 +167,7 @@ export class ModuleInstance<StateType extends StateBaseType, TInterfaceType exte
         return this._module.getImportState();
     }
 
-    getContext(): ModuleContext<StateType, TInterfaceType> {
+    getContext(): ModuleContext<TStateType, TInterfaceType> {
         if (!this._context) {
             throw `Module context is not available yet. Did you forget to init the module '${this._title}.'?`;
         }
@@ -204,7 +204,7 @@ export class ModuleInstance<StateType extends StateBaseType, TInterfaceType exte
         });
     }
 
-    getModule(): Module<StateType, TInterfaceType> {
+    getModule(): Module<TStateType, TInterfaceType> {
         return this._module;
     }
 
@@ -272,7 +272,7 @@ export class ModuleInstance<StateType extends StateBaseType, TInterfaceType exte
         this.setModuleInstanceState(ModuleInstanceState.RESETTING);
 
         return new Promise((resolve) => {
-            this.setDefaultState(this._cachedDefaultState as StateType, this._cachedStateStoreOptions);
+            this.setDefaultState(this._cachedDefaultState as TStateType, this._cachedStateStoreOptions);
             resolve();
         });
     }
