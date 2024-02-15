@@ -2,6 +2,7 @@ import asyncio
 import datetime
 import logging
 import json
+import os
 from typing import Annotated
 
 import httpx
@@ -10,6 +11,9 @@ from starlette.responses import StreamingResponse
 from fastapi import APIRouter, HTTPException, Request, status, Depends, Query
 from pydantic import BaseModel
 
+import redis
+
+from src import config
 from src.backend.auth.auth_helper import AuthHelper, AuthenticatedUser
 from src.backend.primary.user_session_proxy import proxy_to_user_session
 from src.services.graph_access.graph_access import GraphApiAccess
@@ -178,3 +182,134 @@ async def call_endpoint_with_retries(call_url: str) -> str | None:
 
     print(f"############################# call_endpoint_with_retries() FAILED with {call_url=}")
     return None
+
+
+@router.get("/job")
+async def user_mock(
+    authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)]
+) -> str:
+    
+    service_base_url = await get_or_create_user_service_url(authenticated_user._user_id, "user-mock", "myinst")
+    print("======================")
+    print(f"{service_base_url=}")
+    print("======================")
+    async with httpx.AsyncClient() as client:
+        response = await client.get(f"{service_base_url}/health/ready")
+        response.raise_for_status()
+
+    resp_text = response.text
+    print(f"{type(resp_text)=}")
+    print(f"{resp_text=}")
+
+    return resp_text
+
+
+IS_RUNNING_IN_RADIX = True if os.getenv("RADIX_APP") is not None else False
+print(f"{IS_RUNNING_IN_RADIX=}")
+
+
+def make_job_endpoint_url(radix_job_name: str) -> str:
+    return f"http://{radix_job_name}:8001"
+
+
+async def get_or_create_user_service_url(user_id: str, job_component_name: str, instance_identifier: str) -> str:
+    redis_user_jobs = _RedisUserJobManager(user_id)
+    job_info = redis_user_jobs.get_job_info(job_component_name, instance_identifier)
+    if job_info is not None:
+        print("##### Found a job, returning URL")
+        print(f"{job_info=}")
+        return make_job_endpoint_url(job_info.radix_job_name)
+
+    print("##### Did not find job, creating it")
+
+    job_info = JobInfo(state=JobState.CREATING_RADIX_JOB, radix_job_name=None)
+    redis_user_jobs.set_job_info(job_component_name, instance_identifier, job_info)
+
+    async with httpx.AsyncClient() as client:
+        if IS_RUNNING_IN_RADIX:
+            print("##### Creating job in radix")
+            radix_job_manager_url = f"http://{job_component_name}:8001/api/v1/jobs"
+            response = await client.post(
+                url=radix_job_manager_url,
+                json={
+                    "resources": {
+                        "limits": {"memory": "500M", "cpu": "100m"},
+                        "requests": {"memory": "500M", "cpu": "100m"},
+                    }
+                },
+            )
+
+            response_dict = response.json() 
+            print("------")
+            print(response_dict)
+            print("------")
+
+            print("##### Radix job created, will try and wait for it to come alive")
+
+            radix_job_name = response_dict["name"]
+            job_info.radix_job_name = radix_job_name
+            job_info.state = JobState.RUNNING_NOT_READY
+            redis_user_jobs.set_job_info(job_component_name, instance_identifier, job_info)
+        else:
+            print("##### Running locally, will not create radix job")
+            job_info.radix_job_name = job_component_name
+            job_info.state = JobState.RUNNING_NOT_READY
+            redis_user_jobs.set_job_info(job_component_name, instance_identifier, job_info)
+
+        call_url = make_job_endpoint_url(job_info.radix_job_name)
+        resp_text = await call_endpoint_with_retries(call_url)
+
+        if resp_text is not None:
+            job_info.state = JobState.RUNNING_READY
+            redis_user_jobs.set_job_info(job_component_name, instance_identifier, job_info)
+
+    if job_info.state == JobState.RUNNING_READY:
+        return make_job_endpoint_url(job_info.radix_job_name)
+    
+    return None
+
+
+
+from enum import Enum
+
+class JobState(str, Enum):
+    CREATING_RADIX_JOB = "CREATING_RADIX_JOB"
+    RUNNING_NOT_READY = "RUNNING_NOT_READY"
+    RUNNING_READY = "RUNNING_READY"
+
+
+class JobInfo(BaseModel):
+    state: JobState
+    radix_job_name: str | None
+
+
+class _RedisUserJobManager:
+    def __init__(self, user_id: str) -> None:
+        self._user_id = user_id
+        self._redis_client = redis.Redis.from_url(config.REDIS_USER_SESSION_URL, decode_responses=True)
+
+    def set_job_info(self, job_component_name: str, instance_identifier: str, job_info: JobInfo) -> None:
+        key = self._make_key(job_component_name, instance_identifier)
+        payload = job_info.model_dump_json()
+        print(f"{type(payload)=}")
+        print(f"{payload=}")
+
+        self._redis_client.set(key, payload)
+
+    def get_job_info(self, job_component_name: str, instance_identifier: str) -> JobInfo | None:
+        key = self._make_key(job_component_name, instance_identifier)
+        payload = self._redis_client.get(key)
+        if payload is None:
+            return None
+        
+        print(f"{type(payload)=}")
+        print(f"{payload=}")
+        info = JobInfo.model_validate_json(payload)
+        print(f"{type(info)=}")
+        print(f"{info=}")
+        return info
+
+    def _make_key(self, job_component_name: str, instance_identifier: str) -> str:
+        return f"user-jobs:{self._user_id}:{job_component_name}:{instance_identifier}"
+
+
