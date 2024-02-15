@@ -136,7 +136,7 @@ async def user_mock(
                 print(f"#############################{job_name=}")
                 call_url = f"http://{job_name}:8001"
                 print(f"#############################{call_url=}")
-                resp_text = call_endpoint_with_retries(call_url)
+                resp_text = await call_endpoint_with_retries(call_url)
 
             return json.dumps(info) + "\n" + resp_text
 
@@ -146,7 +146,7 @@ async def user_mock(
 async def call_health_endpoint(client: httpx.AsyncClient, call_url: str) -> str:
     print(f"############################# calling {call_url=}")
     try:
-        response = httpx.get(call_url)
+        response = await httpx.get(call_url)
         response.raise_for_status()
     except httpx.RequestError as exc:
         print(f"An error occurred while requesting {exc.request.url!r}.")
