@@ -171,7 +171,7 @@ async def call_endpoint_with_retries(call_url: str) -> str | None:
             resp_text = await call_health_endpoint(client, call_url)
             if resp_text is not None:
                 print(f"############################# call_endpoint_with_retries() SUCCESS with {call_url=}")
-                print(f"############################# call_endpoint_with_retries() {resp_text=}")
+                print(f"############################# call_endpoint_with_retries() info {resp_text=}")
                 return resp_text
 
             await asyncio.sleep(1)
