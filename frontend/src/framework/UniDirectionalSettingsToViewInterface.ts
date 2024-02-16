@@ -1,15 +1,15 @@
 import { Atom, Getter, PrimitiveAtom, atom, useAtom, useAtomValue } from "jotai";
 
 export type InterfaceBaseType = {
-    baseStates: Record<string, unknown>;
-    derivedStates: Record<string, unknown>;
+    baseStates?: Record<string, unknown>;
+    derivedStates?: Record<string, unknown>;
 };
 
 export type InterfaceHydration<T extends InterfaceBaseType> = {
-    baseStates: {
+    baseStates?: {
         [K in keyof T["baseStates"]]: T["baseStates"][K];
     };
-    derivedStates: {
+    derivedStates?: {
         [K in keyof T["derivedStates"]]: (get: Getter) => T["derivedStates"][K];
     };
 };

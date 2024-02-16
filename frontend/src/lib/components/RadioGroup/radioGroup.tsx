@@ -6,33 +6,16 @@ import { v4 } from "uuid";
 
 import { BaseComponent } from "../BaseComponent";
 import { BaseComponentProps } from "../BaseComponent";
-import { OptionalValues, withDefaults } from "../_component-utils/components";
 
-export type RadioGroupProps<T = string | number> = {
-    name?: string;
-    options: {
-        label: React.ReactNode;
-        value: T;
-        disabled?: boolean;
-    }[];
-    value: T;
-    onChange?: (event: React.ChangeEvent<HTMLInputElement>, value: string | number) => void;
-    direction?: "horizontal" | "vertical";
-} & BaseComponentProps;
-
-const defaultProps: OptionalValues<RadioGroupProps> = {
-    direction: "vertical",
-};
-
-export type RadioProps = {
+export type RadioProps<T extends string | number> = {
     name: string;
     label: React.ReactNode;
-    value: string | number;
+    value: T;
     checked: boolean;
-    onChange?: (event: React.ChangeEvent<HTMLInputElement>, value: string | number) => void;
+    onChange?: (event: React.ChangeEvent<HTMLInputElement>, value: T) => void;
 } & BaseComponentProps;
 
-export const Radio: React.FC<RadioProps> = (props) => {
+export function Radio<T extends string | number>(props: RadioProps<T>): React.ReactNode {
     return (
         <BaseComponent disabled={props.disabled}>
             <label className="relative inline-flex align-middle gap-2 items-center group">
@@ -73,9 +56,23 @@ export const Radio: React.FC<RadioProps> = (props) => {
             </label>
         </BaseComponent>
     );
+}
+
+export type RadioGroupOption<T> = {
+    label: React.ReactNode;
+    value: T;
+    disabled?: boolean;
 };
 
-export const RadioGroup = withDefaults<RadioGroupProps>()(defaultProps, (props) => {
+export type RadioGroupProps<T extends string | number> = {
+    name?: string;
+    options: RadioGroupOption<T>[];
+    value: T;
+    onChange?: (event: React.ChangeEvent<HTMLInputElement>, value: T) => void;
+    direction?: "horizontal" | "vertical";
+} & BaseComponentProps;
+
+export function RadioGroup<T extends string | number>(props: RadioGroupProps<T>): React.ReactNode {
     const name = React.useRef<string>(props.name || v4());
     return (
         <BaseComponent disabled={props.disabled}>
@@ -87,7 +84,7 @@ export const RadioGroup = withDefaults<RadioGroupProps>()(defaultProps, (props) 
                 <span>{props.name}</span>
                 <div
                     className={resolveClassNames("flex", "radio-group", "gap-1", {
-                        "flex-col": props.direction === "vertical",
+                        "flex-col": props.direction !== "horizontal",
                     })}
                 >
                     {props.options.map((option) => (
@@ -105,6 +102,4 @@ export const RadioGroup = withDefaults<RadioGroupProps>()(defaultProps, (props) 
             </div>
         </BaseComponent>
     );
-});
-
-RadioGroup.displayName = "RadioGroup";
+}

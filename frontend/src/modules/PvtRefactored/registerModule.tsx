@@ -1,6 +1,10 @@
 import { ModuleRegistry } from "@framework/ModuleRegistry";
 
 import { preview } from "./preview";
-import { State } from "./state";
+import { Interface, State } from "./state";
 
-ModuleRegistry.registerModule<State>({ moduleName: "PvtRefactored", defaultTitle: "PVT (refactored)", preview });
+ModuleRegistry.registerModule<State, Interface>({
+    moduleName: "PvtRefactored",
+    defaultTitle: "PVT (refactored)",
+    preview,
+});

@@ -3,6 +3,8 @@ import { apiService } from "@framework/ApiService";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { UseQueryResult, useQueries, useQuery } from "@tanstack/react-query";
 
+import { PvtTableCollection } from "./typesAndEnums";
+
 const STALE_TIME = 60 * 1000;
 const CACHE_TIME = 60 * 1000;
 
@@ -21,45 +23,48 @@ export function usePvtDataQuery(
 }
 
 export type CombinedPvtDataResult = {
-    pvtNums: number[];
+    tableCollections: PvtTableCollection[];
     isFetching: boolean;
+    someQueriesFailed: boolean;
+    allQueriesFailed: boolean;
 };
 
 export function usePvtDataQueries(ensembleIdents: EnsembleIdent[], realizations: number[]): CombinedPvtDataResult {
+    const ensembleIdentsAndRealizations: { ensembleIdent: EnsembleIdent; realization: number }[] = [];
+    for (const ensembleIdent of ensembleIdents) {
+        for (const realization of realizations) {
+            ensembleIdentsAndRealizations.push({ ensembleIdent, realization });
+        }
+    }
     return useQueries({
-        queries: ensembleIdents
-            .map((ensembleIdent) => {
-                return realizations.map((realization) => {
-                    return {
-                        queryKey: ["tableData", ensembleIdent.toString(), realization],
-                        queryFn: () =>
-                            apiService.pvt.tableData(
-                                ensembleIdent.getCaseUuid(),
-                                ensembleIdent.getEnsembleName(),
-                                realization
-                            ),
-                        staleTime: STALE_TIME,
-                        gcTime: CACHE_TIME,
-                        enabled: !!(ensembleIdent && realization !== null),
-                    };
-                });
+        queries: ensembleIdentsAndRealizations
+            .map((el) => {
+                return {
+                    queryKey: ["tableData", el.ensembleIdent.toString(), el.realization],
+                    queryFn: () =>
+                        apiService.pvt.tableData(
+                            el.ensembleIdent.getCaseUuid(),
+                            el.ensembleIdent.getEnsembleName(),
+                            el.realization
+                        ),
+                    staleTime: STALE_TIME,
+                    gcTime: CACHE_TIME,
+                    enabled: !!(el.ensembleIdent && el.realization !== null),
+                };
             })
             .flat(),
         combine: (results) => {
             return {
-                pvtNums: results.reduce((acc, result) => {
-                    const allPvtNums = result.data?.reduce((innerAcc, data) => {
-                        if (innerAcc.includes(data.pvtnum)) {
-                            return innerAcc;
-                        }
-                        return [...innerAcc, data.pvtnum];
-                    }, [] as number[]);
-                    if (!allPvtNums) {
-                        return acc;
-                    }
-                    return Array.from(new Set([...acc, ...allPvtNums]));
-                }, [] as number[]),
+                tableCollections: ensembleIdentsAndRealizations.map((el, idx) => {
+                    return {
+                        ensembleIdent: el.ensembleIdent,
+                        realization: el.realization,
+                        tables: results[idx]?.data ?? [],
+                    };
+                }),
                 isFetching: results.some((result) => result.isFetching),
+                someQueriesFailed: results.some((result) => result.isError),
+                allQueriesFailed: results.every((result) => result.isError),
             };
         },
     });
