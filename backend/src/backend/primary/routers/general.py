@@ -117,7 +117,7 @@ async def user_mock(
         LOGGER.debug("---")
         LOGGER.debug(job_list)
         LOGGER.debug("---")
-        return json.dumps(job_list)
+        return str(job_list)
 
     if cmd == "create" or cmd == "create-call":
         new_radix_job_name = await create_new_radix_job("user-mock", 8001)
@@ -134,7 +134,7 @@ async def user_mock(
             LOGGER.debug(f"#############################{call_url=}")
             resp_text = await call_endpoint_with_retries(call_url)
 
-        return json.dumps(radix_job_state) + "\n" + resp_text
+        return str(radix_job_state) + "\n" + resp_text
 
     return "Unknown command"
 

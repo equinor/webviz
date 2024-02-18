@@ -16,11 +16,12 @@ print(f"{IS_RUNNING_IN_RADIX=}")
 
 
 
+# The Waiting status is not documented, but it seems to be the status of a job that has been created but not yet running
 class RadixJobState(BaseModel):
     name: str
     started: str | None = None
     ended: str | None = None
-    status: Literal["Running", "Successful", "Failed"]
+    status: Literal["Waiting", "Running", "Successful", "Failed"]
 
 
 async def verify_that_named_radix_job_is_running(job_component_name: str, job_scheduler_port: int, radix_job_name: str) -> bool:
