@@ -18,8 +18,8 @@ print(f"{IS_RUNNING_IN_RADIX=}")
 
 class RadixJobState(BaseModel):
     name: str
-    started: str
-    ended: str
+    started: str | None
+    ended: str | None
     status: Literal["Running", "Successful", "Failed"]
 
 
@@ -94,6 +94,10 @@ async def get_all_radix_jobs(job_component_name: str, job_scheduler_port: int) -
     async with httpx.AsyncClient() as client:
         response = await client.get(url)
         response.raise_for_status()
+
+    LOGGER.debug("------")
+    response_list = response.json()
+    LOGGER.debug(f"{response_list=}")
 
     ta = TypeAdapter(List[RadixJobState])
     ret_list = ta.validate_json(response.content)
