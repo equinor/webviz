@@ -7,7 +7,7 @@ import httpx
 import redis
 
 from src import config
-from pydantic import BaseModel
+from pydantic import BaseModel, TypeAdapter
 
 LOGGER = logging.getLogger(__name__)
 
@@ -87,7 +87,7 @@ async def get_radix_job_state(job_component_name: str, job_scheduler_port: int, 
     return radix_job_state
 
 
-async def get_all_radix_jobs(job_component_name: str, job_scheduler_port: int) -> List[dict]:
+async def get_all_radix_jobs(job_component_name: str, job_scheduler_port: int) -> List[RadixJobState]:
     LOGGER.debug(f"##### get_all_radix_jobs()  {job_component_name=}")
 
     url = f"http://{job_component_name}:{job_scheduler_port}/api/v1/jobs"
@@ -95,8 +95,10 @@ async def get_all_radix_jobs(job_component_name: str, job_scheduler_port: int) -
         response = await client.get(url)
         response.raise_for_status()
 
-    job_list = response.json()
-    return job_list
+    ta = TypeAdapter(List[RadixJobState])
+    ret_list = ta.validate_json(response.content)
+
+    return ret_list
 
 
 async def delete_all_radix_job_instances(job_component_name: str, job_scheduler_port: int) -> None:
@@ -105,7 +107,7 @@ async def delete_all_radix_job_instances(job_component_name: str, job_scheduler_
     job_list = await get_all_radix_jobs(job_component_name, job_scheduler_port)
     async with httpx.AsyncClient() as client:
         for job in job_list:
-            job_name = job["name"]
+            job_name = job.name
             LOGGER.debug(f"------Deleting job {job_name}")
             url = f"http://{job_component_name}:{job_scheduler_port}/api/v1/jobs/{job_name}"
             response = await client.delete(url)

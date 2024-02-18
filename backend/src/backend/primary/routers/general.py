@@ -123,7 +123,7 @@ async def user_mock(
         new_radix_job_name = await create_new_radix_job("user-mock", 8001)
         LOGGER.debug(f"Created new job: {new_radix_job_name=}")
 
-        radix_job_state = get_radix_job_state("user-mock", 8001, new_radix_job_name)
+        radix_job_state = await get_radix_job_state("user-mock", 8001, new_radix_job_name)
         LOGGER.debug("---")
         LOGGER.debug(f"{radix_job_state=}")
         LOGGER.debug("---")
