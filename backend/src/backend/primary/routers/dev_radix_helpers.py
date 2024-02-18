@@ -65,9 +65,11 @@ async def create_new_radix_job(job_component_name: str, job_scheduler_port: int)
     # which should be "Running" if the job was started successfully.
     # Apparently this is not the case, as of Feb 2024, the only useful piece of information we're getting
     # back from this call is the name of the newly created job.
-    LOGGER.debug("------")
     response_dict = response.json()
-    LOGGER.debug(f"{response_dict=}")
+
+    # LOGGER.debug("------")
+    # LOGGER.debug(f"{response_dict=}")
+    # LOGGER.debug("------")
 
     radix_job_name = response_dict["name"]
     return radix_job_name
@@ -119,7 +121,7 @@ async def delete_radix_job_instance(client: httpx.AsyncClient, job_component_nam
         LOGGER.error(f"An error occurred while requesting {exc.request.url!r}.")
         return False
     except httpx.HTTPStatusError as exc:
-        print(f"Error HTTP status {exc.response.status_code} while requesting {exc.request.url!r}.")
+        LOGGER.error(f"Error HTTP status {exc.response.status_code} while requesting {exc.request.url!r}.")
         return False
 
 

@@ -2,7 +2,7 @@ import asyncio
 import datetime
 import logging
 import json
-from typing import Annotated, List
+from typing import Annotated, Tuple
 
 import httpx
 import starsessions
@@ -122,10 +122,13 @@ async def usermock_create(
     if new_radix_job_name is None:
         return "Failed to create new job"
 
-    radix_job_state = await get_radix_job_state("user-mock", 8001, new_radix_job_name)
-    LOGGER.debug("---")
-    LOGGER.debug(f"{radix_job_state=}")
-    LOGGER.debug("---")
+    LOGGER.debug(f"Polling job until receiving running status: {new_radix_job_name=}")
+    max_state_calls = 20
+    for i in range(max_state_calls):
+        radix_job_state = await get_radix_job_state("user-mock", 8001, new_radix_job_name)
+        status = radix_job_state.status if radix_job_state else "N/A"
+        LOGGER.debug(f"Status: {status=}")
+        await asyncio.sleep(0.1)
 
     return str(radix_job_state)
 
@@ -135,70 +138,57 @@ async def usermock_call(
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
 ) -> str:
     LOGGER.debug(f"usermock_call()")
+
     new_radix_job_name = await create_new_radix_job("user-mock", 8001)
     LOGGER.debug(f"Created new job: {new_radix_job_name=}")
     if new_radix_job_name is None:
         return "Failed to create new job"
 
-    max_state_calls = 5
-    for i in range(max_state_calls):
-        radix_job_state = await get_radix_job_state("user-mock", 8001, new_radix_job_name)
-        LOGGER.debug("---")
-        LOGGER.debug(f"{radix_job_state=}")
-        LOGGER.debug("---")
-        await asyncio.sleep(0.2)
+    call_url = f"http://{new_radix_job_name}:8001/health/ready"
+    LOGGER.debug(f"=========== {call_url=}")
+    success, msg_txt = await call_health_endpoint_with_retries(call_url)
+    LOGGER.debug(f"===========  {success=}, {msg_txt=}")
 
-    call_url = f"http://{new_radix_job_name}:8001"
-    LOGGER.debug(f"#############################{call_url=}")
-    resp_text = await call_endpoint_with_retries(call_url)
-
-    return str(radix_job_state) + "\n" + str(resp_text)
+    return f"{success=}, {msg_txt=}"
 
 
 @router.get("/usermock/delete")
 async def usermock_delete(
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)]
 ) -> str:
+    LOGGER.debug(f"usermock_delete()")
+
     await delete_all_radix_job_instances("user-mock", 8001)
     return "Delete done"
 
 
 
-async def call_health_endpoint(client: httpx.AsyncClient, call_url: str) -> str:
-    print(f"############################# calling {call_url=}")
-    try:
-        response = await client.get(call_url)
-        response.raise_for_status()
-    except httpx.RequestError as exc:
-        print(f"An error occurred while requesting {exc.request.url!r}.")
-        return None
-    except httpx.HTTPStatusError as exc:
-        print(f"Error response {exc.response.status_code} while requesting {exc.request.url!r}.")
-        return None
 
-    resp_text = response.text
-    print("------")
-    print(resp_text)
-    print("------")
+async def call_health_endpoint_with_retries(url_to_call: str) -> Tuple[bool, str]:
+    LOGGER.debug(f"## call_health_endpoint_with_retries()  {url_to_call=}")
 
-    return resp_text
-
-
-async def call_endpoint_with_retries(call_url: str) -> str | None:
-    print(f"############################# call_endpoint_with_retries() with {call_url=}")
     max_retries = 20
     async with httpx.AsyncClient() as client:
         for i in range(max_retries):
-            resp_text = await call_health_endpoint(client, call_url)
-            if resp_text is not None:
-                print(f"############################# call_endpoint_with_retries() SUCCESS with {call_url=}")
-                print(f"############################# call_endpoint_with_retries() info {resp_text=}")
-                return resp_text
-
+            success, msg_txt = await _call_health_endpoint(client, url_to_call)
+            if success:
+                return success, msg_txt
+            
+            LOGGER.debug(f"  attempt {i} failed with error: {msg_txt=}")
             await asyncio.sleep(1)
 
-    print(f"############################# call_endpoint_with_retries() FAILED with {call_url=}")
-    return None
+    return False, "Failed to call health endpoint"
+
+
+async def _call_health_endpoint(client: httpx.AsyncClient, call_health_endpoint_with_retries: str) -> Tuple[bool, str]:
+    try:
+        response = await client.get(call_health_endpoint_with_retries)
+        response.raise_for_status()
+        return True, response.text
+    except httpx.RequestError as exc:
+        return False, f"An error occurred while requesting {exc.request.url!r}"
+    except httpx.HTTPStatusError as exc:
+        return False, f"Error HTTP status {exc.response.status_code} while requesting {exc.request.url!r}"
 
 
 
