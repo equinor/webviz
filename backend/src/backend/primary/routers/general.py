@@ -16,6 +16,7 @@ from src.services.graph_access.graph_access import GraphApiAccess
 
 from .dev_radix_helpers import get_all_radix_jobs
 from .dev_radix_helpers import create_new_radix_job
+from .dev_radix_helpers import get_radix_job_state
 from .dev_radix_helpers import delete_all_radix_job_instances
 
 LOGGER = logging.getLogger(__name__)
@@ -119,14 +120,16 @@ async def user_mock(
         return json.dumps(job_list)
 
     if cmd == "create" or cmd == "create-call":
-        radix_job_state = await create_new_radix_job("user-mock", 8001)
+        new_radix_job_name = await create_new_radix_job("user-mock", 8001)
+        LOGGER.debug(f"Created new job: {new_radix_job_name=}")
+
+        radix_job_state = get_radix_job_state("user-mock", 8001, new_radix_job_name)
         LOGGER.debug("---")
-        LOGGER.debug(radix_job_state)
+        LOGGER.debug(f"{radix_job_state=}")
         LOGGER.debug("---")
 
         resp_text = "nada"
         if cmd == "create-call":
-            radix_job_name = radix_job_state.name
             call_url = f"http://{radix_job_name}:8001"
             LOGGER.debug(f"#############################{call_url=}")
             resp_text = await call_endpoint_with_retries(call_url)

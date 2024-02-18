@@ -44,7 +44,7 @@ async def verify_that_named_radix_job_is_running(job_component_name: str, job_sc
     return False
 
 
-async def create_new_radix_job(job_component_name: str, job_scheduler_port: int) -> RadixJobState | None:
+async def create_new_radix_job(job_component_name: str, job_scheduler_port: int) -> str | None:
     LOGGER.debug(f"##### create_new_radix_job()  {job_component_name=}")
 
     url = f"http://{job_component_name}:{job_scheduler_port}/api/v1/jobs"
@@ -59,16 +59,31 @@ async def create_new_radix_job(job_component_name: str, job_scheduler_port: int)
         response = await client.post(url=url, json=request_body)
         response.raise_for_status()
 
+    # According to doc it seems we should be getting a json back with a status field, which
+    # should be "Running" if the job was started successfully.
+    # Apparently this is not the case, as of Feb 2024, the only useful piece of information we're getting
+    # back from this call is the name of the newly created job
     LOGGER.debug("------")
-    
     response_dict = response.json()
-    LOGGER.debug(response_dict)
+    LOGGER.debug(f"{response_dict=}")
+
+    radix_job_name = response_dict["name"]
+    return radix_job_name
+
+
+async def get_radix_job_state(job_component_name: str, job_scheduler_port: int, radix_job_name: str) -> RadixJobState | None:
+    LOGGER.debug(f"##### get_radix_job_state()  {job_component_name=}, {radix_job_name=}")
+
+    url = f"http://{job_component_name}:{job_scheduler_port}/api/v1/jobs/{radix_job_name}"
+    async with httpx.AsyncClient() as client:
+        response = await client.get(url=url)
+        response.raise_for_status()
+
+    LOGGER.debug("------")
+    response_dict = response.json()
+    LOGGER.debug(f"{response_dict=}")
 
     radix_job_state = RadixJobState.model_validate_json(response.content)
-    LOGGER.debug(radix_job_state)
-
-    LOGGER.debug("------")
-
     return radix_job_state
 
 
