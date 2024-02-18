@@ -18,8 +18,8 @@ print(f"{IS_RUNNING_IN_RADIX=}")
 
 class RadixJobState(BaseModel):
     name: str
-    started: str | None
-    ended: str | None
+    started: str | None = None
+    ended: str | None = None
     status: Literal["Running", "Successful", "Failed"]
 
 
