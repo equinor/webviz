@@ -2,7 +2,6 @@ import asyncio
 import datetime
 import logging
 import json
-import os
 from typing import Annotated, List
 
 import httpx
@@ -11,12 +10,13 @@ from starlette.responses import StreamingResponse
 from fastapi import APIRouter, HTTPException, Request, status, Depends, Query
 from pydantic import BaseModel
 
-import redis
-
-from src import config
 from src.backend.auth.auth_helper import AuthHelper, AuthenticatedUser
 from src.backend.primary.user_session_proxy import proxy_to_user_session
 from src.services.graph_access.graph_access import GraphApiAccess
+
+from .dev_radix_helpers import get_all_radix_jobs
+from .dev_radix_helpers import create_new_radix_job
+from .dev_radix_helpers import delete_all_radix_job_instances
 
 LOGGER = logging.getLogger(__name__)
 
@@ -103,7 +103,8 @@ async def user_mock(
     cmd: Annotated[str, Query(description="Command")] = None
 ) -> str:
 
-    print(f"{cmd=}")
+    LOGGER.debug(f"user_mock()")
+    LOGGER.debug(f"{cmd=}")
 
     if cmd is None:
         return "No command given"
@@ -111,40 +112,37 @@ async def user_mock(
     base_url = "http://user-mock:8001/api/v1/jobs"
 
     if cmd == "list":
-        async with httpx.AsyncClient() as client:
-            res = await client.get(base_url)
-            info = res.json()
-            print(info)
-
-            return json.dumps(info)
+        job_list = await get_all_radix_jobs("user-mock", 8001)
+        LOGGER.debug("---")
+        LOGGER.debug(job_list)
+        LOGGER.debug("---")
+        return json.dumps(job_list)
 
     if cmd == "create" or cmd == "create-call":
-        async with httpx.AsyncClient() as client:
-            res = await client.post(
-                base_url,
-                json={
-                    "resources": {
-                        "limits": {"memory": "500M", "cpu": "100m"},
-                        "requests": {"memory": "500M", "cpu": "100m"},
-                    }
-                },
-            )
-            info = res.json()
-            print("------")
-            print(info)
-            print("------")
+        radix_job_state = await create_new_radix_job("user-mock", 8001)
+        LOGGER.debug("---")
+        LOGGER.debug(radix_job_state)
+        LOGGER.debug("---")
 
-            resp_text = "nada"
-            if cmd == "create-call":
-                job_name = info["name"]
-                print(f"#############################{job_name=}")
-                call_url = f"http://{job_name}:8001"
-                print(f"#############################{call_url=}")
-                resp_text = await call_endpoint_with_retries(call_url)
+        resp_text = "nada"
+        if cmd == "create-call":
+            radix_job_name = radix_job_state.name
+            call_url = f"http://{radix_job_name}:8001"
+            LOGGER.debug(f"#############################{call_url=}")
+            resp_text = await call_endpoint_with_retries(call_url)
 
-            return json.dumps(info) + "\n" + resp_text
+        return json.dumps(radix_job_state) + "\n" + resp_text
 
     return "Unknown command"
+
+
+@router.get("/delete")
+async def delete_func(
+    authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)]
+) -> str:
+    await delete_all_radix_job_instances("user-mock", 8001)
+    return "Delete done"
+
 
 
 async def call_health_endpoint(client: httpx.AsyncClient, call_url: str) -> str:
@@ -183,6 +181,10 @@ async def call_endpoint_with_retries(call_url: str) -> str | None:
     print(f"############################# call_endpoint_with_retries() FAILED with {call_url=}")
     return None
 
+
+
+
+"""
 
 @router.get("/job")
 async def user_mock(
@@ -226,149 +228,7 @@ async def test_func(
     return ret_str
 
 
-@router.get("/delete")
-async def delete_func(
-    authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)]
-) -> str:
-    await delete_all_radix_job_instances("user-mock", 8001)
-    return "Delete done"
+"""
 
-
-
-
-IS_RUNNING_IN_RADIX = True if os.getenv("RADIX_APP") is not None else False
-print(f"{IS_RUNNING_IN_RADIX=}")
-
-
-def make_job_endpoint_url(radix_job_name: str) -> str:
-    return f"http://{radix_job_name}:8001"
-
-
-async def get_or_create_user_service_url(user_id: str, job_component_name: str, instance_identifier: str) -> str:
-    redis_user_jobs = _RedisUserJobManager(user_id)
-    job_info = redis_user_jobs.get_job_info(job_component_name, instance_identifier)
-    if job_info is not None:
-        print("##### Found a job, returning URL")
-        print(f"{job_info=}")
-        return make_job_endpoint_url(job_info.radix_job_name)
-
-    print("##### Did not find job, creating it")
-
-    job_info = JobInfo(state=JobState.CREATING_RADIX_JOB, radix_job_name=None)
-    redis_user_jobs.set_job_info(job_component_name, instance_identifier, job_info)
-
-    async with httpx.AsyncClient() as client:
-        if IS_RUNNING_IN_RADIX:
-            print("##### Creating job in radix")
-            radix_job_manager_url = f"http://{job_component_name}:8001/api/v1/jobs"
-            response = await client.post(
-                url=radix_job_manager_url,
-                json={
-                    "resources": {
-                        "limits": {"memory": "500M", "cpu": "100m"},
-                        "requests": {"memory": "500M", "cpu": "100m"},
-                    }
-                },
-            )
-
-            response_dict = response.json() 
-            print("------")
-            print(response_dict)
-            print("------")
-
-            print("##### Radix job created, will try and wait for it to come alive")
-
-            radix_job_name = response_dict["name"]
-            job_info.radix_job_name = radix_job_name
-            job_info.state = JobState.RUNNING_NOT_READY
-            redis_user_jobs.set_job_info(job_component_name, instance_identifier, job_info)
-        else:
-            print("##### Running locally, will not create radix job")
-            job_info.radix_job_name = job_component_name
-            job_info.state = JobState.RUNNING_NOT_READY
-            redis_user_jobs.set_job_info(job_component_name, instance_identifier, job_info)
-
-        call_url = make_job_endpoint_url(job_info.radix_job_name)
-        resp_text = await call_endpoint_with_retries(call_url)
-
-        if resp_text is not None:
-            job_info.state = JobState.RUNNING_READY
-            redis_user_jobs.set_job_info(job_component_name, instance_identifier, job_info)
-
-    if job_info.state == JobState.RUNNING_READY:
-        return make_job_endpoint_url(job_info.radix_job_name)
-    
-    return None
-
-
-async def delete_all_radix_job_instances(job_component_name: str, job_schedulerPort: int) -> None:
-    async with httpx.AsyncClient() as client:
-        response = await client.get(f"http://{job_component_name}:{job_schedulerPort}/api/v1/jobs")
-        response.raise_for_status()
-        job_list = response.json()
-        for job in job_list:
-            job_name = job["name"]
-            print(f"------Deleting job {job_name}")
-            response = await client.delete(f"http://{job_component_name}:{job_schedulerPort}/api/v1/jobs/{job_name}")
-            response.raise_for_status()
-            print(f"------Deleted job {job_name} --- {response.text}")
-
-
-from enum import Enum
-
-class JobState(str, Enum):
-    CREATING_RADIX_JOB = "CREATING_RADIX_JOB"
-    RUNNING_NOT_READY = "RUNNING_NOT_READY"
-    RUNNING_READY = "RUNNING_READY"
-
-
-class JobInfo(BaseModel):
-    state: JobState
-    radix_job_name: str | None
-
-
-class _RedisUserJobManager:
-    def __init__(self, user_id: str) -> None:
-        self._user_id = user_id
-        self._redis_client = redis.Redis.from_url(config.REDIS_USER_SESSION_URL, decode_responses=True)
-
-    def set_job_info(self, job_component_name: str, instance_identifier: str, job_info: JobInfo) -> None:
-        key = self._make_key(job_component_name, instance_identifier)
-        payload = job_info.model_dump_json()
-        print(f"{type(payload)=}")
-        print(f"{payload=}")
-
-        self._redis_client.set(key, payload)
-
-    def get_job_info(self, job_component_name: str, instance_identifier: str) -> JobInfo | None:
-        key = self._make_key(job_component_name, instance_identifier)
-        payload = self._redis_client.get(key)
-        if payload is None:
-            return None
-        
-        print(f"{type(payload)=}")
-        print(f"{payload=}")
-        info = JobInfo.model_validate_json(payload)
-        print(f"{type(info)=}")
-        print(f"{info=}")
-        return info
-
-    def get_job_info_arr(self, job_component_name: str) -> List[JobInfo]:
-        #pattern = f"user-jobs:{self._user_id}:{job_component_name}:*"
-        pattern = f"user-jobs:*:{job_component_name}:*"
-        print(f"{pattern=}")
-        
-        ret_list = []
-        for key in self._redis_client.scan_iter(pattern):
-            print(f"{key=}")
-            payload = self._redis_client.get(key)
-            print(f"{payload=}")
-            info = JobInfo.model_validate_json(payload)
-            ret_list.append(info)
-
-        return ret_list
-
-    def _make_key(self, job_component_name: str, instance_identifier: str) -> str:
-        return f"user-jobs:{self._user_id}:{job_component_name}:{instance_identifier}"
 
 

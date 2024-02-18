@@ -38,6 +38,7 @@ setup_normal_log_levels()
 # temporarily set some loggers to DEBUG
 # logging.getLogger().setLevel(logging.DEBUG)
 logging.getLogger("src.services.sumo_access").setLevel(logging.DEBUG)
+logging.getLogger("src.backend.primary.routers").setLevel(logging.DEBUG)
 
 LOGGER = logging.getLogger(__name__)
 
