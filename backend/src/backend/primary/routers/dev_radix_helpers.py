@@ -2,6 +2,7 @@ import logging
 from enum import Enum
 from typing import Literal, List
 import os
+import asyncio
 
 import httpx
 import redis
@@ -60,10 +61,10 @@ async def create_new_radix_job(job_component_name: str, job_scheduler_port: int)
         response = await client.post(url=url, json=request_body)
         response.raise_for_status()
 
-    # According to doc it seems we should be getting a json back with a status field, which
-    # should be "Running" if the job was started successfully.
+    # According to doc it seems we should be getting a json back that contains a status field,
+    # which should be "Running" if the job was started successfully.
     # Apparently this is not the case, as of Feb 2024, the only useful piece of information we're getting
-    # back from this call is the name of the newly created job
+    # back from this call is the name of the newly created job.
     LOGGER.debug("------")
     response_dict = response.json()
     LOGGER.debug(f"{response_dict=}")
@@ -106,15 +107,43 @@ async def get_all_radix_jobs(job_component_name: str, job_scheduler_port: int) -
     return ret_list
 
 
+async def delete_radix_job_instance(client: httpx.AsyncClient, job_component_name: str, job_scheduler_port: int, radix_job_name: str) -> bool:
+    LOGGER.debug(f"##### delete_radix_job_instance()  {job_component_name=}, {radix_job_name=}")
+
+    url = f"http://{job_component_name}:{job_scheduler_port}/api/v1/jobs/{radix_job_name}"
+    try:
+        response = await client.delete(url)
+        response.raise_for_status()
+        return True
+    except httpx.RequestError as exc:
+        LOGGER.error(f"An error occurred while requesting {exc.request.url!r}.")
+        return False
+    except httpx.HTTPStatusError as exc:
+        print(f"Error HTTP status {exc.response.status_code} while requesting {exc.request.url!r}.")
+        return False
+
+
 async def delete_all_radix_job_instances(job_component_name: str, job_scheduler_port: int) -> None:
     LOGGER.debug(f"##### delete_all_radix_job_instances()  {job_component_name=}")
 
     job_list = await get_all_radix_jobs(job_component_name, job_scheduler_port)
+    delete_coros_arr = []
+
     async with httpx.AsyncClient() as client:
         for job in job_list:
             job_name = job.name
             LOGGER.debug(f"------Deleting job {job_name}")
-            url = f"http://{job_component_name}:{job_scheduler_port}/api/v1/jobs/{job_name}"
-            response = await client.delete(url)
-            response.raise_for_status()
-            LOGGER.debug(f"------Deleted job {job_name} --- {response.text}")
+            delete_coros_arr.append(delete_radix_job_instance(
+                client=client,
+                job_component_name=job_component_name,
+                job_scheduler_port=job_scheduler_port,
+                radix_job_name=job_name
+                )
+            )
+
+    result_arr = await asyncio.gather(*delete_coros_arr)
+
+    LOGGER.debug("------")
+    LOGGER.debug(f"{result_arr=}")
+    LOGGER.debug("------")
+

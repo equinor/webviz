@@ -98,49 +98,62 @@ async def user_session_container(
     return await proxy_to_user_session(request, authenticated_user)
 
 
-@router.get("/user_mock")
-async def user_mock(
+@router.get("/usermock/list")
+async def usermock_list(
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
-    cmd: Annotated[str, Query(description="Command")] = None
 ) -> str:
+    LOGGER.debug(f"usermock_list()")
 
-    LOGGER.debug(f"user_mock()")
-    LOGGER.debug(f"{cmd=}")
-
-    if cmd is None:
-        return "No command given"
-
-    base_url = "http://user-mock:8001/api/v1/jobs"
-
-    if cmd == "list":
-        job_list = await get_all_radix_jobs("user-mock", 8001)
-        LOGGER.debug("---")
-        LOGGER.debug(job_list)
-        LOGGER.debug("---")
-        return str(job_list)
-
-    if cmd == "create" or cmd == "create-call":
-        new_radix_job_name = await create_new_radix_job("user-mock", 8001)
-        LOGGER.debug(f"Created new job: {new_radix_job_name=}")
-
-        radix_job_state = await get_radix_job_state("user-mock", 8001, new_radix_job_name)
-        LOGGER.debug("---")
-        LOGGER.debug(f"{radix_job_state=}")
-        LOGGER.debug("---")
-
-        resp_text = "nada"
-        if cmd == "create-call":
-            call_url = f"http://{radix_job_name}:8001"
-            LOGGER.debug(f"#############################{call_url=}")
-            resp_text = await call_endpoint_with_retries(call_url)
-
-        return str(radix_job_state) + "\n" + resp_text
-
-    return "Unknown command"
+    job_list = await get_all_radix_jobs("user-mock", 8001)
+    LOGGER.debug("---")
+    LOGGER.debug(job_list)
+    LOGGER.debug("---")
+    return str(job_list)
 
 
-@router.get("/delete")
-async def delete_func(
+@router.get("/usermock/create")
+async def usermock_create(
+    authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
+) -> str:
+    LOGGER.debug(f"usermock_list()")
+
+    new_radix_job_name = await create_new_radix_job("user-mock", 8001)
+    LOGGER.debug(f"Created new job: {new_radix_job_name=}")
+    if new_radix_job_name is None:
+        return "Failed to create new job"
+
+    radix_job_state = await get_radix_job_state("user-mock", 8001, new_radix_job_name)
+    LOGGER.debug("---")
+    LOGGER.debug(f"{radix_job_state=}")
+    LOGGER.debug("---")
+
+    return str(radix_job_state)
+
+
+@router.get("/usermock/call")
+async def usermock_call(
+    authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
+) -> str:
+    LOGGER.debug(f"usermock_call()")
+    new_radix_job_name = await create_new_radix_job("user-mock", 8001)
+    LOGGER.debug(f"Created new job: {new_radix_job_name=}")
+    if new_radix_job_name is None:
+        return "Failed to create new job"
+
+    radix_job_state = await get_radix_job_state("user-mock", 8001, new_radix_job_name)
+    LOGGER.debug("---")
+    LOGGER.debug(f"{radix_job_state=}")
+    LOGGER.debug("---")
+
+    call_url = f"http://{new_radix_job_name}:8001"
+    LOGGER.debug(f"#############################{call_url=}")
+    resp_text = await call_endpoint_with_retries(call_url)
+
+    return str(radix_job_state) + "\n" + str(resp_text)
+
+
+@router.get("/usermock/delete")
+async def usermock_delete(
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)]
 ) -> str:
     await delete_all_radix_job_instances("user-mock", 8001)
