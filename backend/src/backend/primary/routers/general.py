@@ -140,10 +140,13 @@ async def usermock_call(
     if new_radix_job_name is None:
         return "Failed to create new job"
 
-    radix_job_state = await get_radix_job_state("user-mock", 8001, new_radix_job_name)
-    LOGGER.debug("---")
-    LOGGER.debug(f"{radix_job_state=}")
-    LOGGER.debug("---")
+    max_state_calls = 5
+    for i in range(max_state_calls):
+        radix_job_state = await get_radix_job_state("user-mock", 8001, new_radix_job_name)
+        LOGGER.debug("---")
+        LOGGER.debug(f"{radix_job_state=}")
+        LOGGER.debug("---")
+        await asyncio.sleep(0.2)
 
     call_url = f"http://{new_radix_job_name}:8001"
     LOGGER.debug(f"#############################{call_url=}")

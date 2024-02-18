@@ -133,15 +133,10 @@ async def delete_all_radix_job_instances(job_component_name: str, job_scheduler_
         for job in job_list:
             job_name = job.name
             LOGGER.debug(f"------Deleting job {job_name}")
-            delete_coros_arr.append(delete_radix_job_instance(
-                client=client,
-                job_component_name=job_component_name,
-                job_scheduler_port=job_scheduler_port,
-                radix_job_name=job_name
-                )
-            )
+            del_coro = delete_radix_job_instance(client=client, job_component_name=job_component_name, job_scheduler_port=job_scheduler_port, radix_job_name=job_name)
+            delete_coros_arr.append(del_coro)
 
-    result_arr = await asyncio.gather(*delete_coros_arr)
+        result_arr = await asyncio.gather(*delete_coros_arr)
 
     LOGGER.debug("------")
     LOGGER.debug(f"{result_arr=}")
