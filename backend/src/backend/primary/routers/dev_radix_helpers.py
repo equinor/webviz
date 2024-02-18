@@ -16,13 +16,15 @@ IS_RUNNING_IN_RADIX = True if os.getenv("RADIX_APP") is not None else False
 print(f"{IS_RUNNING_IN_RADIX=}")
 
 
-
-# The Waiting status is not documented, but it seems to be the status of a job that has been created but not yet running
+# Notes on the RadixJobState:
+#  * The 'Waiting' status is not documented, but it seems to be the status of a job that has been created but not yet running
+#  * Sometimes we get an extra (undocumented) field returned, 'message'
 class RadixJobState(BaseModel):
     name: str
+    status: Literal["Waiting", "Running", "Successful", "Failed"]
     started: str | None = None
     ended: str | None = None
-    status: Literal["Waiting", "Running", "Successful", "Failed"]
+    message: str | None = None
 
 
 async def verify_that_named_radix_job_is_running(job_component_name: str, job_scheduler_port: int, radix_job_name: str) -> bool:
@@ -83,9 +85,10 @@ async def get_radix_job_state(job_component_name: str, job_scheduler_port: int, 
         response = await client.get(url=url)
         response.raise_for_status()
 
-    LOGGER.debug("------")
-    response_dict = response.json()
-    LOGGER.debug(f"{response_dict=}")
+    # LOGGER.debug("------")
+    # response_dict = response.json()
+    # LOGGER.debug(f"{response_dict=}")
+    # LOGGER.debug("------")
 
     radix_job_state = RadixJobState.model_validate_json(response.content)
     return radix_job_state
@@ -118,10 +121,10 @@ async def delete_radix_job_instance(client: httpx.AsyncClient, job_component_nam
         response.raise_for_status()
         return True
     except httpx.RequestError as exc:
-        LOGGER.error(f"An error occurred while requesting {exc.request.url!r}.")
+        LOGGER.error(f"An error occurred while requesting DELETE {exc.request.url!r}.")
         return False
     except httpx.HTTPStatusError as exc:
-        LOGGER.error(f"Error HTTP status {exc.response.status_code} while requesting {exc.request.url!r}.")
+        LOGGER.error(f"Error HTTP status {exc.response.status_code} while requesting DELETE {exc.request.url!r}.")
         return False
 
 

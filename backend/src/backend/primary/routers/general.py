@@ -1,8 +1,7 @@
 import asyncio
 import datetime
 import logging
-import json
-from typing import Annotated, Tuple
+from typing import Annotated
 
 import httpx
 import starsessions
@@ -18,6 +17,8 @@ from .dev_radix_helpers import get_all_radix_jobs
 from .dev_radix_helpers import create_new_radix_job
 from .dev_radix_helpers import get_radix_job_state
 from .dev_radix_helpers import delete_all_radix_job_instances
+from .dev_user_jobs import get_or_create_user_service_url
+from .dev_user_jobs import call_endpoint_with_retries
 
 LOGGER = logging.getLogger(__name__)
 
@@ -115,7 +116,7 @@ async def usermock_list(
 async def usermock_create(
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
 ) -> str:
-    LOGGER.debug(f"usermock_list()")
+    LOGGER.debug(f"usermock_create()")
 
     new_radix_job_name = await create_new_radix_job("user-mock", 8001)
     LOGGER.debug(f"Created new job: {new_radix_job_name=}")
@@ -133,11 +134,11 @@ async def usermock_create(
     return str(radix_job_state)
 
 
-@router.get("/usermock/call")
-async def usermock_call(
+@router.get("/usermock/createcall")
+async def usermock_createcall(
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
 ) -> str:
-    LOGGER.debug(f"usermock_call()")
+    LOGGER.debug(f"usermock_createcall()")
 
     new_radix_job_name = await create_new_radix_job("user-mock", 8001)
     LOGGER.debug(f"Created new job: {new_radix_job_name=}")
@@ -146,7 +147,7 @@ async def usermock_call(
 
     call_url = f"http://{new_radix_job_name}:8001/health/ready"
     LOGGER.debug(f"=========== {call_url=}")
-    success, msg_txt = await call_health_endpoint_with_retries(call_url)
+    success, msg_txt = await call_endpoint_with_retries(call_url)
     LOGGER.debug(f"===========  {success=}, {msg_txt=}")
 
     return f"{success=}, {msg_txt=}"
@@ -162,58 +163,38 @@ async def usermock_delete(
     return "Delete done"
 
 
+@router.get("/usermock/call")
+async def usermock_call(
+    authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
+) -> str:
+    LOGGER.debug(f"usermock_call()")
 
+    service_base_url = await get_or_create_user_service_url(authenticated_user._user_id, "user-mock", "myinst")
+    endpoint = f"{service_base_url}/dowork"
 
-async def call_health_endpoint_with_retries(url_to_call: str) -> Tuple[bool, str]:
-    LOGGER.debug(f"## call_health_endpoint_with_retries()  {url_to_call=}")
+    LOGGER.debug("======================")
+    LOGGER.debug(f"{service_base_url=}")
+    LOGGER.debug(f"{endpoint=}")
+    LOGGER.debug("======================")
 
-    max_retries = 20
     async with httpx.AsyncClient() as client:
-        for i in range(max_retries):
-            success, msg_txt = await _call_health_endpoint(client, url_to_call)
-            if success:
-                return success, msg_txt
-            
-            LOGGER.debug(f"  attempt {i} failed with error: {msg_txt=}")
-            await asyncio.sleep(1)
-
-    return False, "Failed to call health endpoint"
-
-
-async def _call_health_endpoint(client: httpx.AsyncClient, call_health_endpoint_with_retries: str) -> Tuple[bool, str]:
-    try:
-        response = await client.get(call_health_endpoint_with_retries)
+        response = await client.get(endpoint)
         response.raise_for_status()
-        return True, response.text
-    except httpx.RequestError as exc:
-        return False, f"An error occurred while requesting {exc.request.url!r}"
-    except httpx.HTTPStatusError as exc:
-        return False, f"Error HTTP status {exc.response.status_code} while requesting {exc.request.url!r}"
+
+    resp_text = response.text
+    LOGGER.debug(f"{type(resp_text)=}")
+    LOGGER.debug(f"{resp_text=}")
+
+    return resp_text
+
+
+
+
 
 
 
 
 """
-
-@router.get("/job")
-async def user_mock(
-    authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)]
-) -> str:
-    
-    service_base_url = await get_or_create_user_service_url(authenticated_user._user_id, "user-mock", "myinst")
-    print("======================")
-    print(f"{service_base_url=}")
-    print("======================")
-    async with httpx.AsyncClient() as client:
-        response = await client.get(f"{service_base_url}/health/ready")
-        response.raise_for_status()
-
-    resp_text = response.text
-    print(f"{type(resp_text)=}")
-    print(f"{resp_text=}")
-
-    return resp_text
-
 
 
 @router.get("/test")

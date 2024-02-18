@@ -43,9 +43,16 @@ async def health_live() -> str:
 
 @app.get("/health/ready")
 async def health_ready() -> str:
-    ret_str = f"NOT_READY at: {datetime.datetime.now()}"
+    ret_str = f"READY at: {datetime.datetime.now()}"
     print(f"health_ready() returning {ret_str}")
     dump_env_vars()
+    return ret_str
+
+
+@app.get("/dowork")
+async def dowork() -> str:
+    ret_str = f"WORK DONE at: {datetime.datetime.now()}"
+    print(f"dowork() returning {ret_str}")
     return ret_str
 
 
