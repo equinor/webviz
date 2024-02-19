@@ -6,10 +6,10 @@ type MultiEnsembleSelectProps = {
     ensembleSet: EnsembleSet;
     value: EnsembleIdent[];
     onChange: (ensembleIdentArr: EnsembleIdent[]) => void;
-} & Omit<SelectProps, "options" | "value" | "onChange" | "multiple">;
+} & Omit<SelectProps, "options" | "value" | "onChange">;
 
 export function MultiEnsembleSelect(props: MultiEnsembleSelectProps): JSX.Element {
-    const { ensembleSet, value, onChange, ...rest } = props;
+    const { ensembleSet, value, onChange, multiple, ...rest } = props;
 
     function handleSelectionChanged(selectedEnsembleIdentStrArr: string[]) {
         const identArr: EnsembleIdent[] = [];
@@ -33,7 +33,15 @@ export function MultiEnsembleSelect(props: MultiEnsembleSelectProps): JSX.Elemen
         selectedArr.push(ident.toString());
     }
 
+    const isMultiple = multiple ?? true;
+
     return (
-        <Select options={optionsArr} value={selectedArr} onChange={handleSelectionChanged} multiple={true} {...rest} />
+        <Select
+            options={optionsArr}
+            value={selectedArr}
+            onChange={handleSelectionChanged}
+            multiple={isMultiple}
+            {...rest}
+        />
     );
 }

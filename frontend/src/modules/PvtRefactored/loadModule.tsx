@@ -1,6 +1,6 @@
 import { ModuleRegistry } from "@framework/ModuleRegistry";
 
-import { Settings } from "./settings";
+import { Settings } from "./settings/settings";
 import { Interface, State, interfaceHydration } from "./state";
 import { View } from "./view";
 

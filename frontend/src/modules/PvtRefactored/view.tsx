@@ -1,71 +1,73 @@
 import React from "react";
 
 import { ModuleViewProps } from "@framework/Module";
+import { useViewStatusWriter } from "@framework/StatusWriter";
+import { CircularProgress } from "@lib/components/CircularProgress";
 import { useElementSize } from "@lib/hooks/useElementSize";
-import { makeSubplots } from "@modules/_shared/Figure";
+import { ContentMessage, ContentMessageType } from "@modules/_shared/components/ContentMessage/contentMessage";
 
 import { usePvtDataQueries } from "./queryHooks";
 import { Interface, State } from "./state";
 import { PvtDataAccessor } from "./utils/PvtDataAccessor";
+import { PvtPlotBuilder } from "./utils/PvtPlotBuilder";
 
 //-----------------------------------------------------------------------------------------------------------
 
 export function View({ viewContext, workbenchSettings }: ModuleViewProps<State, Interface>) {
     const colorSet = workbenchSettings.useColorSet();
 
+    const statusWriter = useViewStatusWriter(viewContext);
+
     const selectedEnsembleIdents = viewContext.useInterfaceValue("selectedEnsembleIdents");
     const selectedRealizations = viewContext.useInterfaceValue("selectedRealizations");
     const selectedPvtNums = viewContext.useInterfaceValue("selectedPvtNums");
-    const selectedPhases = viewContext.useInterfaceValue("selectedPhases");
+    const selectedPhase = viewContext.useInterfaceValue("selectedPhase");
     const selectedColorBy = viewContext.useInterfaceValue("selectedColorBy");
     const selectedPlots = viewContext.useInterfaceValue("selectedPlots");
 
     const pvtDataQueries = usePvtDataQueries(selectedEnsembleIdents, selectedRealizations);
 
-    const pvtDataAccessor = new PvtDataAccessor(pvtDataQueries.tableCollections);
-
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);
     const wrapperDivSize = useElementSize(wrapperDivRef);
 
-    const numPlots = selectedPlots.length;
-    const numRows = Math.ceil(numPlots / 2);
-    const numCols = Math.min(numPlots, 2);
+    statusWriter.setLoading(pvtDataQueries.isFetching);
 
-    const figure = makeSubplots({
-        width: wrapperDivSize.width,
-        height: wrapperDivSize.height,
-        numRows,
-        numCols,
-        sharedXAxes: false,
-        sharedYAxes: false,
-        margin: { t: 20, b: 40, l: 40, r: 20 },
-    });
+    if (pvtDataQueries.allQueriesFailed) {
+        statusWriter.addError("Failed to load data.");
+    } else if (pvtDataQueries.someQueriesFailed) {
+        statusWriter.addWarning("Could not load PVT data for some realizations.");
+    }
 
-    //const pvtPlotBuilder = new PvtPlotBuilder(pvtDataAccessor);
-
-    for (let i = 0; i < numPlots; i++) {
-        const pvtPlot = selectedPlots[i];
-        const row = Math.floor(i / 2) + 1;
-        const col = (i % 2) + 1;
-
-        /*
-        figure.updateLayout({
-            title: DEPENDENT_VARIABLES_NAMES[pvtPlot],
-            [`xaxis${i + 1}`]: { title: "Pressure" },
-            [`yaxis${i + 1}`]: { title: pvtPlot },
-        });
-
-        const traces = pvtPlotBuilder.makeTraces(pvtPlot, selectedPvtNums, selectedPhases, colorSet);
-
-        for (const trace of traces) {
-            figure.addTrace(trace, row, col);
+    function makeContent() {
+        if (pvtDataQueries.isFetching) {
+            return (
+                <ContentMessage type={ContentMessageType.INFO}>
+                    <CircularProgress />
+                </ContentMessage>
+            );
         }
-        */
+        if (pvtDataQueries.tableCollections.length === 0) {
+            return <ContentMessage type={ContentMessageType.INFO}>No data loaded yet.</ContentMessage>;
+        }
+
+        if (pvtDataQueries.allQueriesFailed) {
+            return <ContentMessage type={ContentMessageType.ERROR}>Failed to load data.</ContentMessage>;
+        }
+
+        if (selectedPlots.length === 0) {
+            return <ContentMessage type={ContentMessageType.INFO}>No plots selected.</ContentMessage>;
+        }
+
+        const pvtPlotBuilder = new PvtPlotBuilder(new PvtDataAccessor(pvtDataQueries.tableCollections));
+        pvtPlotBuilder.makeLayout(selectedPlots, wrapperDivSize);
+        pvtPlotBuilder.makeTraces(selectedPlots, selectedPvtNums, selectedPhase, selectedColorBy, colorSet);
+
+        return pvtPlotBuilder.makePlot();
     }
 
     return (
         <div className="w-full h-full" ref={wrapperDivRef}>
-            {figure.makePlot()}
+            {makeContent()}
         </div>
     );
 }

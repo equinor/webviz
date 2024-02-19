@@ -21,9 +21,9 @@ export const PRESSURE_DEPENDENT_VARIABLE_TO_DISPLAY_NAME: Record<PressureDepende
 };
 
 export enum PhaseType {
-    OIL = "oil",
-    GAS = "gas",
-    WATER = "water",
+    OIL = "Oil",
+    GAS = "Gas",
+    WATER = "Water",
 }
 
 export const PHASE_TO_DISPLAY_NAME: Record<PhaseType, string> = {

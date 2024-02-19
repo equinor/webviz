@@ -25,6 +25,13 @@ export class UniDirectionalSettingsToViewInterface<TInterfaceType extends Interf
     > = new Map();
 
     constructor(hydration: InterfaceHydration<TInterfaceType>) {
+        // Make sure we don't have any overlapping keys
+        for (const key in hydration.baseStates) {
+            if (key in (hydration.derivedStates ?? {})) {
+                throw new Error(`Key '${String(key)}' is present in both baseStates and derivedStates`);
+            }
+        }
+
         for (const key in hydration.baseStates) {
             const value = hydration.baseStates[key];
             this._baseAtoms.set(key, atom(value as TInterfaceType["baseStates"][keyof TInterfaceType["baseStates"]]));
