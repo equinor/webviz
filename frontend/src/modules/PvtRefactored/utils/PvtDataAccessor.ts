@@ -27,6 +27,7 @@ export class PvtDataAccessor {
     }
 
     private extractUnits() {
+        // Do we have to compare the units of each table in order to make sure tables can be plotted together?
         for (const tableCollection of this._tableCollections) {
             for (const table of tableCollection.tables) {
                 this._units.set(PressureDependentVariable.FORMATION_VOLUME_FACTOR, table.volumefactor_unit);
@@ -34,6 +35,7 @@ export class PvtDataAccessor {
                 this._units.set(PressureDependentVariable.DENSITY, table.density_unit);
                 this._units.set(PressureDependentVariable.FLUID_RATIO, table.ratio_unit);
                 this._pressureUnit = table.pressure_unit;
+                return;
             }
         }
     }

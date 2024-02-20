@@ -13,15 +13,17 @@ import { Select, SelectOption } from "@lib/components/Select";
 import { useAtom, useAtomValue } from "jotai";
 
 import {
-    pvtDataAccessorAtom,
-    pvtDataQueriesAtom,
-    selectedEnsembleIdentsAtom,
-    selectedPvtNumsAtom,
-    selectedRealizationsAtom,
     userSelectedEnsembleIdentsAtom,
     userSelectedPvtNumsAtom,
     userSelectedRealizationsAtom,
-} from "./atoms";
+} from "./atoms/baseAtoms";
+import {
+    pvtDataAccessorAtom,
+    selectedEnsembleIdentsAtom,
+    selectedPvtNumsAtom,
+    selectedRealizationsAtom,
+} from "./atoms/derivedAtoms";
+import { pvtDataQueriesAtom } from "./atoms/queryAtoms";
 
 import { Plot, PlotsSelector } from "../components/PlotsSelector";
 import { Interface, State } from "../state";
@@ -66,8 +68,9 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
     }
 
     function handleMultiRealizationSelectionChange(values: string[]) {
-        setSelectedRealizations(values.map((value) => parseInt(value)));
-        setSelectedMultiRealizations(realizations);
+        const newRealizations = values.map((value) => parseInt(value) as number);
+        setSelectedRealizations(newRealizations);
+        setSelectedMultiRealizations(newRealizations);
     }
 
     function handleSingleRealizationSelectionChange(values: string[]) {

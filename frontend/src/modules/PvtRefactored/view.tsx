@@ -1,31 +1,33 @@
 import React from "react";
 
+import { Ensemble } from "@framework/Ensemble";
+import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { ModuleViewProps } from "@framework/Module";
 import { useViewStatusWriter } from "@framework/StatusWriter";
+import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { ContentMessage, ContentMessageType } from "@modules/_shared/components/ContentMessage/contentMessage";
+import { makeDistinguishableEnsembleDisplayName } from "@modules/_shared/ensembleNameUtils";
 
-import { usePvtDataQueries } from "./queryHooks";
 import { Interface, State } from "./state";
 import { PvtDataAccessor } from "./utils/PvtDataAccessor";
 import { PvtPlotBuilder } from "./utils/PvtPlotBuilder";
 
 //-----------------------------------------------------------------------------------------------------------
 
-export function View({ viewContext, workbenchSettings }: ModuleViewProps<State, Interface>) {
+export function View({ viewContext, workbenchSettings, workbenchSession }: ModuleViewProps<State, Interface>) {
     const colorSet = workbenchSettings.useColorSet();
 
     const statusWriter = useViewStatusWriter(viewContext);
+    const ensembleSet = useEnsembleSet(workbenchSession);
 
     const selectedEnsembleIdents = viewContext.useInterfaceValue("selectedEnsembleIdents");
-    const selectedRealizations = viewContext.useInterfaceValue("selectedRealizations");
     const selectedPvtNums = viewContext.useInterfaceValue("selectedPvtNums");
     const selectedPhase = viewContext.useInterfaceValue("selectedPhase");
     const selectedColorBy = viewContext.useInterfaceValue("selectedColorBy");
     const selectedPlots = viewContext.useInterfaceValue("selectedPlots");
-
-    const pvtDataQueries = usePvtDataQueries(selectedEnsembleIdents, selectedRealizations);
+    const pvtDataQueries = viewContext.useInterfaceValue("pvtDataQueries");
 
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);
     const wrapperDivSize = useElementSize(wrapperDivRef);
@@ -58,8 +60,23 @@ export function View({ viewContext, workbenchSettings }: ModuleViewProps<State, 
             return <ContentMessage type={ContentMessageType.INFO}>No plots selected.</ContentMessage>;
         }
 
-        const pvtPlotBuilder = new PvtPlotBuilder(new PvtDataAccessor(pvtDataQueries.tableCollections));
-        pvtPlotBuilder.makeLayout(selectedPlots, wrapperDivSize);
+        const selectedEnsembles: Ensemble[] = [];
+        for (const ensembleIdent of selectedEnsembleIdents) {
+            const ensemble = ensembleSet.findEnsemble(ensembleIdent);
+            if (ensemble) {
+                selectedEnsembles.push(ensemble);
+            }
+        }
+
+        function makeEnsembleDisplayName(ensembleIdent: EnsembleIdent): string {
+            return makeDistinguishableEnsembleDisplayName(ensembleIdent, selectedEnsembles);
+        }
+
+        const pvtPlotBuilder = new PvtPlotBuilder(
+            new PvtDataAccessor(pvtDataQueries.tableCollections),
+            makeEnsembleDisplayName
+        );
+        pvtPlotBuilder.makeLayout(selectedPhase, selectedPlots, wrapperDivSize);
         pvtPlotBuilder.makeTraces(selectedPlots, selectedPvtNums, selectedPhase, selectedColorBy, colorSet);
 
         return pvtPlotBuilder.makePlot();

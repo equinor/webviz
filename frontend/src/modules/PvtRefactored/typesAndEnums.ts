@@ -42,3 +42,10 @@ export type PvtTableCollection = {
     realization: number;
     tables: PvtData_api[];
 };
+
+export type CombinedPvtDataResult = {
+    tableCollections: PvtTableCollection[];
+    isFetching: boolean;
+    someQueriesFailed: boolean;
+    allQueriesFailed: boolean;
+};

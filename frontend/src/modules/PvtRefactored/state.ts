@@ -1,8 +1,9 @@
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { InterfaceHydration } from "@framework/UniDirectionalSettingsToViewInterface";
 
-import { selectedEnsembleIdentsAtom, selectedPvtNumsAtom, selectedRealizationsAtom } from "./settings/atoms";
-import { ColorBy, PhaseType, PressureDependentVariable } from "./typesAndEnums";
+import { selectedEnsembleIdentsAtom, selectedPvtNumsAtom } from "./settings/atoms/derivedAtoms";
+import { pvtDataQueriesAtom } from "./settings/atoms/queryAtoms";
+import { ColorBy, CombinedPvtDataResult, PhaseType, PressureDependentVariable } from "./typesAndEnums";
 
 export type State = Record<string, never>;
 
@@ -14,8 +15,8 @@ export type Interface = {
     };
     derivedStates: {
         selectedEnsembleIdents: EnsembleIdent[];
-        selectedRealizations: number[];
         selectedPvtNums: number[];
+        pvtDataQueries: CombinedPvtDataResult;
     };
 };
 
@@ -34,11 +35,11 @@ export const interfaceHydration: InterfaceHydration<Interface> = {
         selectedEnsembleIdents: (get) => {
             return get(selectedEnsembleIdentsAtom);
         },
-        selectedRealizations: (get) => {
-            return get(selectedRealizationsAtom);
-        },
         selectedPvtNums: (get) => {
             return get(selectedPvtNumsAtom);
+        },
+        pvtDataQueries: (get) => {
+            return get(pvtDataQueriesAtom);
         },
     },
 };
