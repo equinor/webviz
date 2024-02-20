@@ -10,8 +10,8 @@ export type EnsembleParameter = {
     is_logarithmic: boolean;
     is_numerical: boolean;
     is_constant: boolean;
-    group_name?: (string | null);
-    descriptive_name?: (string | null);
+    group_name: (string | null);
+    descriptive_name: (string | null);
     realizations: Array<number>;
     values: (Array<number> | Array<string>);
 };

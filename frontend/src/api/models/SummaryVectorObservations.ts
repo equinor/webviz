@@ -8,7 +8,7 @@ import type { SummaryVectorDateObservation } from './SummaryVectorDateObservatio
  */
 export type SummaryVectorObservations = {
     vector_name: string;
-    comment?: (string | null);
+    comment: (string | null);
     observations: Array<SummaryVectorDateObservation>;
 };
 

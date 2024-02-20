@@ -15,6 +15,8 @@ export const syncedSettingsLabels: { [key in keyof SyncedSettings]: string } = {
     attribute: "Surface attribute",
     timeOrInterval: "Time or Interval",
     realizationNum: "Realization",
+    colorRange: "Color range",
+    colorPaletteId: "Color palette",
 };
 
 export const SyncSettings: React.FC<SyncSettingsProps> = (props) => {

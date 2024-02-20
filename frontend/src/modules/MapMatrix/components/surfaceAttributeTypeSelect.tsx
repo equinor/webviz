@@ -3,40 +3,29 @@ import React from "react";
 import { SurfaceAttributeType_api } from "@api";
 import { Dropdown } from "@lib/components/Dropdown";
 import { Label } from "@lib/components/Label";
-import { TimeType } from "@modules/_shared/Surface";
+import { SurfaceTimeType } from "@modules/_shared/Surface";
+
+import { SurfaceAttributeType } from "../types";
 
 const SurfaceAttributeTypeToStringMapping = {
-    [SurfaceAttributeType_api.DEPTH]: "Depth surfaces",
-    [SurfaceAttributeType_api.TIME]: "Time surfaces",
-    [SurfaceAttributeType_api.PROPERTY]: "Extracted grid properties",
-    [SurfaceAttributeType_api.SEISMIC]: "Seismic attributes",
-    [SurfaceAttributeType_api.THICKNESS]: "Thickness surfaces??",
-    [SurfaceAttributeType_api.ISOCHORE]: "Isochores",
-    [SurfaceAttributeType_api.FLUID_CONTACT]: "Fluid contacts",
+    [SurfaceAttributeType.DEPTH_TIME]: "Depth/Time",
+    [SurfaceAttributeType.PROPERTY]: "Property",
 };
-
 export type SurfaceAttributeTypeSelectProps = {
-    onAttributeChange(attributeType: SurfaceAttributeType_api): void;
-    onTimeModeChange(timeMode: TimeType): void;
-    timeMode: TimeType;
-    attributeType: SurfaceAttributeType_api;
+    onAttributeChange(attributeType: SurfaceAttributeType): void;
+    onTimeModeChange(timeMode: SurfaceTimeType): void;
+    timeMode: SurfaceTimeType;
+    attributeType: SurfaceAttributeType;
 };
 export const SurfaceAttributeTypeSelect: React.FC<SurfaceAttributeTypeSelectProps> = (props) => {
     function handleTimeModeChange(val: string) {
-        props.onTimeModeChange(val as TimeType);
+        props.onTimeModeChange(val as SurfaceTimeType);
     }
 
     function handleSurfaceAttributeTypeChange(val: string) {
-        const newSurfaceAttributeType = val as SurfaceAttributeType_api;
-        if (
-            (newSurfaceAttributeType === SurfaceAttributeType_api.DEPTH ||
-                newSurfaceAttributeType === SurfaceAttributeType_api.TIME) &&
-            props.timeMode !== TimeType.None
-        ) {
-            props.onTimeModeChange(TimeType.None);
-        }
-        if (newSurfaceAttributeType === SurfaceAttributeType_api.SEISMIC && props.timeMode === TimeType.None) {
-            props.onTimeModeChange(TimeType.TimePoint);
+        const newSurfaceAttributeType = val as SurfaceAttributeType;
+        if (newSurfaceAttributeType === SurfaceAttributeType.DEPTH_TIME && props.timeMode !== SurfaceTimeType.None) {
+            props.onTimeModeChange(SurfaceTimeType.None);
         }
         props.onAttributeChange(newSurfaceAttributeType);
     }
@@ -45,7 +34,7 @@ export const SurfaceAttributeTypeSelect: React.FC<SurfaceAttributeTypeSelectProp
             <div className="flex-grow">
                 <Label text="Surface type">
                     <Dropdown
-                        options={Object.values(SurfaceAttributeType_api).map((val: SurfaceAttributeType_api) => {
+                        options={Object.values(SurfaceAttributeType).map((val: SurfaceAttributeType) => {
                             return { label: SurfaceAttributeTypeToStringMapping[val], value: val };
                         })}
                         onChange={handleSurfaceAttributeTypeChange}
@@ -58,17 +47,13 @@ export const SurfaceAttributeTypeSelect: React.FC<SurfaceAttributeTypeSelectProp
                     value={props.timeMode}
                     options={[
                         {
-                            value: TimeType.None,
+                            value: SurfaceTimeType.None,
                             label: "No time (static)",
-                            disabled: props.attributeType === SurfaceAttributeType_api.SEISMIC,
                         },
-                        { value: TimeType.TimePoint, label: "Time point" },
-                        { value: TimeType.Interval, label: "Time interval" },
+                        { value: SurfaceTimeType.TimePoint, label: "Time point" },
+                        { value: SurfaceTimeType.Interval, label: "Time interval" },
                     ]}
-                    disabled={
-                        props.attributeType === SurfaceAttributeType_api.DEPTH ||
-                        props.attributeType === SurfaceAttributeType_api.TIME
-                    }
+                    disabled={props.attributeType === SurfaceAttributeType.DEPTH_TIME}
                     onChange={handleTimeModeChange}
                 />
             </Label>

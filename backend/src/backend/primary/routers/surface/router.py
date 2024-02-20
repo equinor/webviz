@@ -199,6 +199,38 @@ async def get_statistical_surface_data_as_png(
     return surf_data_response
 
 
+@router.get("/observation_surface_data_as_png/")
+async def get_observation_surface_data_as_png(
+    response: Response,
+    authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
+    case_uuid: str = Query(description="Sumo case uuid"),
+    ensemble_name: str = Query(description="Ensemble name"),
+    name: str = Query(description="Surface name"),
+    attribute: str = Query(description="Surface attribute"),
+    time_or_interval: Optional[str] = Query(None, description="Time point or time interval string"),
+) -> schemas.SurfaceDataPng:
+    perf_metrics = PerfMetrics(response)
+
+    access = await SurfaceAccess.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
+
+    xtgeo_surf = await access.get_observation_surface_data_async(
+        name=name,
+        attribute=attribute,
+        time_or_interval_str=time_or_interval,
+    )
+    perf_metrics.record_lap("sumo-calc")
+
+    if not xtgeo_surf:
+        raise HTTPException(status_code=404, detail="Could not find or compute surface")
+
+    surf_data_response = converters.to_api_surface_data_as_png(xtgeo_surf)
+    perf_metrics.record_lap("convert")
+
+    LOGGER.info(f"Observed surface in: {perf_metrics.to_string()}")
+
+    return surf_data_response
+
+
 # pylint: disable=too-many-arguments
 @router.get("/property_surface_resampled_to_static_surface/")
 async def get_property_surface_resampled_to_static_surface(

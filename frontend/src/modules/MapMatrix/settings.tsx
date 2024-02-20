@@ -8,11 +8,11 @@ import { Button } from "@lib/components/Button";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { Label } from "@lib/components/Label";
+import { ColorScaleGradientType } from "@lib/utils/ColorScale";
 
 import { v4 as uuidv4 } from "uuid";
 
 import { SurfaceAttributeTypeSelect } from "./components/surfaceAttributeTypeSelect";
-import { SurfaceColorSelect } from "./components/surfaceColorSelect";
 import { SurfaceSelect } from "./components/surfaceSelect";
 import { SyncSettings } from "./components/syncSettings";
 import { useEnsembleSetSurfaceMetaQuery } from "./hooks/useEnsembleSetSurfaceMetaQuery";
@@ -20,13 +20,18 @@ import { useSurfaceReducer } from "./hooks/useSurfaceReducer";
 import { State } from "./state";
 import { EnsembleStageType, SurfaceSpecification, SyncedSettings } from "./types";
 
-export function settings({ moduleContext, workbenchSession }: ModuleFCProps<State>) {
+export function settings({ moduleContext, workbenchSession, workbenchSettings }: ModuleFCProps<State>) {
     const ensembleSet = useEnsembleSet(workbenchSession);
 
     const reducer = useSurfaceReducer();
 
     const ensembleSetSurfaceMetas = useEnsembleSetSurfaceMetaQuery(reducer.state.ensembleIdents);
-
+    const defaultColorScale = workbenchSettings
+        .useContinuousColorScale({
+            gradientType: ColorScaleGradientType.Sequential,
+        })
+        .getColorPalette()
+        .getId();
     function handleSyncedSettingsChange(syncedSettings: SyncedSettings) {
         reducer.setSyncedSettings(syncedSettings);
     }
@@ -40,8 +45,8 @@ export function settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
             uuid: uuidv4(),
             statisticFunction: SurfaceStatisticFunction_api.MEAN,
             ensembleStage: EnsembleStageType.Realization,
-            colorMin: 0,
-            colorMax: 0,
+            colorRange: null,
+            colorPaletteId: defaultColorScale,
         };
 
         if (reducer.state.surfaceSpecifications.length) {
@@ -65,12 +70,6 @@ export function settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
         },
         [reducer.state.surfaceSpecifications]
     );
-    React.useEffect(
-        function propogateColorPaletteTypeToView() {
-            moduleContext.getStateStore().setValue("colorScaleGradientType", reducer.state.colorScaleGradientType);
-        },
-        [reducer.state.colorScaleGradientType]
-    );
 
     return (
         <>
@@ -90,14 +89,7 @@ export function settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
                     attributeType={reducer.state.attributeType}
                 />
             </CollapsibleGroup>
-
-            <CollapsibleGroup expanded={false} title="Colors">
-                <SurfaceColorSelect
-                    colorScaleGradientType={reducer.state.colorScaleGradientType}
-                    onColorGradientTypeChange={reducer.setColorScaleGradientType}
-                />
-            </CollapsibleGroup>
-            <CollapsibleGroup expanded={false} title="Synchronization">
+            <CollapsibleGroup expanded={true} title="Synchronize settings">
                 <SyncSettings syncedSettings={reducer.state.syncedSettings} onChange={handleSyncedSettingsChange} />
             </CollapsibleGroup>
             <div className="m-2">

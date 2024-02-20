@@ -179,6 +179,38 @@ export class SurfaceService {
         });
     }
     /**
+     * Get Observation Surface Data As Png
+     * @param caseUuid Sumo case uuid
+     * @param ensembleName Ensemble name
+     * @param name Surface name
+     * @param attribute Surface attribute
+     * @param timeOrInterval Time point or time interval string
+     * @returns SurfaceDataPng Successful Response
+     * @throws ApiError
+     */
+    public getObservationSurfaceDataAsPng(
+        caseUuid: string,
+        ensembleName: string,
+        name: string,
+        attribute: string,
+        timeOrInterval?: (string | null),
+    ): CancelablePromise<SurfaceDataPng> {
+        return this.httpRequest.request({
+            method: 'GET',
+            url: '/surface/observation_surface_data_as_png/',
+            query: {
+                'case_uuid': caseUuid,
+                'ensemble_name': ensembleName,
+                'name': name,
+                'attribute': attribute,
+                'time_or_interval': timeOrInterval,
+            },
+            errors: {
+                422: `Validation Error`,
+            },
+        });
+    }
+    /**
      * Get Property Surface Resampled To Static Surface
      * @param caseUuid Sumo case uuid
      * @param ensembleName Ensemble name

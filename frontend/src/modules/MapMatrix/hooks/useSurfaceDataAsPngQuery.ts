@@ -39,7 +39,7 @@ export function useSurfaceDataSetQueryByAddresses(surfaceAddresses: SurfaceAddre
                         surfAddr.attribute,
                         surfAddr.isoDateOrInterval
                     );
-            } else {
+            } else if (surfAddr.addressType === "statistical") {
                 queryKey = [
                     "getStatisticalSurfaceDataAsPng",
                     surfAddr.caseUuid,
@@ -54,6 +54,23 @@ export function useSurfaceDataSetQueryByAddresses(surfaceAddresses: SurfaceAddre
                         surfAddr.caseUuid,
                         surfAddr.ensemble,
                         surfAddr.statisticFunction,
+                        surfAddr.name,
+                        surfAddr.attribute,
+                        surfAddr.isoDateOrInterval
+                    );
+            } else {
+                queryKey = [
+                    "getObservationSurfaceDataAsPng",
+                    surfAddr.caseUuid,
+                    surfAddr.ensemble,
+                    surfAddr.name,
+                    surfAddr.attribute,
+                    surfAddr.isoDateOrInterval,
+                ];
+                queryFn = () =>
+                    apiService.surface.getObservationSurfaceDataAsPng(
+                        surfAddr.caseUuid,
+                        surfAddr.ensemble,
                         surfAddr.name,
                         surfAddr.attribute,
                         surfAddr.isoDateOrInterval

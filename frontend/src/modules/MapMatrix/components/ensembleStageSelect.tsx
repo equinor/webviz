@@ -40,11 +40,11 @@ export const EnsembleStageSelect: React.FC<EnsembleStageSelectProps> = (props) =
                 realizationNums: [],
             });
         }
-        // if (stage == EnsembleStageType.Observation) {
-        //     props.onChange({
-        //         ensembleStage: EnsembleStageType.Observation,
-        //     });
-        // }
+        if (stage == EnsembleStageType.Observation) {
+            props.onChange({
+                ensembleStage: EnsembleStageType.Observation,
+            });
+        }
         if (stage == EnsembleStageType.Realization) {
             props.onChange({
                 ensembleStage: EnsembleStageType.Realization,
@@ -67,7 +67,7 @@ export const EnsembleStageSelect: React.FC<EnsembleStageSelectProps> = (props) =
                 <div className="flex-grow">
                     <Dropdown options={stageOptions} value={props.stage} onChange={handleStageChange} />
                 </div>
-                {props.stage == EnsembleStageType.Realization && (
+                {props.stage === EnsembleStageType.Realization && (
                     <div className="flex-grow">
                         <Dropdown
                             options={realizationOptions}
@@ -77,7 +77,7 @@ export const EnsembleStageSelect: React.FC<EnsembleStageSelectProps> = (props) =
                         />
                     </div>
                 )}
-                {props.stage == EnsembleStageType.Statistics && (
+                {props.stage === EnsembleStageType.Statistics && (
                     <div className="flex-grow">
                         <Dropdown
                             options={statisticOptions}
@@ -92,6 +92,7 @@ export const EnsembleStageSelect: React.FC<EnsembleStageSelectProps> = (props) =
                         />
                     </div>
                 )}
+                {props.stage === EnsembleStageType.Observation && <div className="flex-grow"></div>}
             </td>
 
             <td className="px-0 py-0 whitespace-nowrap text-right">

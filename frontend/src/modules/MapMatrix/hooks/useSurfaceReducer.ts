@@ -3,10 +3,10 @@ import { useReducer } from "react";
 import { SurfaceAttributeType_api } from "@api";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { ColorScaleGradientType } from "@lib/utils/ColorScale";
-import { TimeType } from "@modules/_shared/Surface";
+import { SurfaceTimeType } from "@modules/_shared/Surface";
 
 import { SurfaceReducerActionType, surfaceDispatcher } from "../reducers/surfaceReducer";
-import { SurfaceReducerState, SurfaceSpecification, SyncedSettings } from "../types";
+import { SurfaceAttributeType, SurfaceReducerState, SurfaceSpecification, SyncedSettings } from "../types";
 
 export const initialSurfaceReducerState: SurfaceReducerState = {
     ensembleIdents: [],
@@ -17,10 +17,11 @@ export const initialSurfaceReducerState: SurfaceReducerState = {
         attribute: false,
         timeOrInterval: false,
         realizationNum: false,
+        colorRange: false,
+        colorPaletteId: false,
     },
-    timeMode: TimeType.None,
-    attributeType: SurfaceAttributeType_api.DEPTH,
-    colorScaleGradientType: ColorScaleGradientType.Sequential,
+    timeMode: SurfaceTimeType.None,
+    attributeType: SurfaceAttributeType.PROPERTY,
 };
 
 export const useSurfaceReducer = () => {
@@ -60,23 +61,17 @@ export const useSurfaceReducer = () => {
         });
     };
 
-    const setTimeMode = (timeMode: TimeType) => {
+    const setTimeMode = (timeMode: SurfaceTimeType) => {
         dispatch({
             type: SurfaceReducerActionType.SetTimeMode,
             payload: { timeMode },
         });
     };
 
-    const setAttributeType = (attributeType: SurfaceAttributeType_api) => {
+    const setAttributeType = (attributeType: SurfaceAttributeType) => {
         dispatch({
             type: SurfaceReducerActionType.SetAttributeType,
             payload: { attributeType },
-        });
-    };
-    const setColorScaleGradientType = (colorScaleGradientType: ColorScaleGradientType) => {
-        dispatch({
-            type: SurfaceReducerActionType.SetColorScaleGradientType,
-            payload: { colorScaleGradientType },
         });
     };
 
@@ -89,6 +84,5 @@ export const useSurfaceReducer = () => {
         setSyncedSettings,
         setTimeMode,
         setAttributeType,
-        setColorScaleGradientType,
     };
 };

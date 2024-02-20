@@ -10,8 +10,7 @@ import { IconButton } from "@lib/components/IconButton";
 import { SyncedSubsurfaceViewer } from "@modules/SubsurfaceMap/components/SyncedSubsurfaceViewer";
 import { SurfaceAddress } from "@modules/_shared/Surface";
 import { SurfaceAddressFactory } from "@modules/_shared/Surface";
-// import { shouldUpdateViewPortBounds } from "@modules/_shared/Surface/subsurfaceMapUtils";
-import { createContinuousColorScaleForMap } from "@modules/_shared/Surface/subsurfaceMapUtils";
+import { createSubsurfaceMapColorPalettes } from "@modules/_shared/Surface/subsurfaceMapUtils";
 import { Home } from "@mui/icons-material";
 import { ViewportType, ViewsType } from "@webviz/subsurface-viewer";
 import { ViewFooter } from "@webviz/subsurface-viewer/dist/components/ViewFooter";
@@ -49,11 +48,6 @@ export function view({ moduleContext, workbenchServices, workbenchSettings }: Mo
         surfaceDataSet = prevSurfaceDataSetQueryByAddresses.data;
     }
 
-    const colorScaleGradientType = moduleContext.useStoreValue("colorScaleGradientType");
-    const surfaceColorScale = workbenchSettings.useContinuousColorScale({
-        gradientType: colorScaleGradientType,
-    });
-    const colorTables = createContinuousColorScaleForMap(surfaceColorScale);
     const views: ViewsType = makeEmptySurfaceViews(surfaceDataSet.length ?? 1);
     const viewAnnotations: JSX.Element[] = [];
     const layers: Record<string, unknown>[] = [
@@ -69,10 +63,10 @@ export function view({ moduleContext, workbenchServices, workbenchSettings }: Mo
             backgroundColor: [255, 255, 255, 255],
         },
     ];
-
+    const colorTables = createSubsurfaceMapColorPalettes();
     surfaceDataSet.forEach((surface, index) => {
-        const colorMin = surfaceSpecifications[index].colorMin ?? null;
-        const colorMax = surfaceSpecifications[index].colorMax ?? null;
+        const colorRange = surfaceSpecifications[index].colorRange ?? [null, null];
+
         const valueMin = surface?.surfaceData?.val_min ?? 0;
         const valueMax = surface?.surfaceData?.val_max ?? 0;
         if (surface.surfaceData) {
@@ -87,7 +81,15 @@ export function view({ moduleContext, workbenchServices, workbenchSettings }: Mo
             }
 
             layers.push(
-                createSurfaceImageLayer(`surface-${index}`, surface.surfaceData, valueMin, valueMax, colorMin, colorMax)
+                createSurfaceImageLayer(
+                    `surface-${index}`,
+                    surface.surfaceData,
+                    valueMin,
+                    valueMax,
+                    colorRange[0],
+                    colorRange[1],
+                    surfaceSpecifications[index].colorPaletteId ?? ""
+                )
             );
             views.viewports[index] = {
                 id: `${index}view`,
@@ -102,8 +104,8 @@ export function view({ moduleContext, workbenchServices, workbenchSettings }: Mo
                 `${index}view`,
                 surfaceSpecifications[index],
                 colorTables,
-                colorMin || valueMin,
-                colorMax || valueMax
+                colorRange[0] || valueMin,
+                colorRange[1] || valueMax
             )
         );
     });
@@ -144,9 +146,10 @@ function makeViewAnnotation(
         <View key={id} id={id}>
             <>
                 <ContinuousLegend
+                    id={`legend-${id}`}
                     min={colorMin}
                     max={colorMax}
-                    colorName="Continuous"
+                    colorName={surfaceSpecification.colorPaletteId ?? ""}
                     colorTables={colorTables}
                     cssLegendStyles={{ top: "20px", right: "0px", backgroundColor: "transparent" }}
                     legendScaleSize={0.1}
@@ -166,7 +169,8 @@ function createSurfaceImageLayer(
     valueMin: number | null,
     valueMax: number | null,
     colorMin: number | null,
-    colorMax: number | null
+    colorMax: number | null,
+    colorPaletteId: string
 ): Record<string, unknown> {
     return {
         "@@type": "ColormapLayer",
@@ -180,8 +184,8 @@ function createSurfaceImageLayer(
         ],
         rotDeg: surfaceData.rot_deg,
         valueRange: [valueMin, valueMax],
-        colorMapRange: [colorMin, colorMax],
-        colorMapName: "Continuous",
+        colorMapRange: [colorMin ?? valueMin, colorMax ?? valueMax],
+        colorMapName: colorPaletteId,
     };
 }
 
@@ -218,6 +222,10 @@ function createSurfaceAddressesFromSpecifications(surfaceSpecifications: Surface
             }
             if (surface.ensembleStage === EnsembleStageType.Statistics) {
                 const surfaceAddress = factory.createStatisticalAddress(surface.statisticFunction);
+                surfaceAddresses.push(surfaceAddress);
+            }
+            if (surface.ensembleStage === EnsembleStageType.Observation) {
+                const surfaceAddress = factory.createObservationAddress();
                 surfaceAddresses.push(surfaceAddress);
             }
         }

@@ -1,29 +1,37 @@
 import React from "react";
 
-import { SurfaceAttributeType_api, SurfaceStatisticFunction_api } from "@api";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { EnsembleSet } from "@framework/EnsembleSet";
 import { IconButton } from "@lib/components/IconButton";
-import { SurfaceDirectory, TimeType } from "@modules/_shared/Surface";
+import { SurfaceDirectory, SurfaceTimeType } from "@modules/_shared/Surface";
 import { Remove } from "@mui/icons-material";
 
 import { isEqual } from "lodash";
 
+import { ColorPaletteSelect } from "./colorPaletteSelect";
+import { ColorRangeSelect } from "./colorRangeSelect";
 import { EnsembleIdentSelectWithButtons } from "./ensembleIdentSelectWithButtons";
 import { EnsembleStageSelect } from "./ensembleStageSelect";
 import { SingleSelectWithButtons } from "./singleSelectWithButtons";
 
 import { isoStringToDateOrIntervalLabel } from "../_utils/isoString";
 import { EnsembleSetSurfaceMetas } from "../hooks/useEnsembleSetSurfaceMetaQuery";
-import { EnsembleStage, EnsembleStageType, SurfaceSpecification, SyncedSettings } from "../types";
+import {
+    EnsembleStage,
+    EnsembleStageType,
+    SurfaceAttributeType,
+    SurfaceAttributeTypeToApi,
+    SurfaceSpecification,
+    SyncedSettings,
+} from "../types";
 
 export type SurfaceSelectProps = {
     index: number;
     surfaceMetas: EnsembleSetSurfaceMetas;
     surfaceSpecification: SurfaceSpecification;
     ensembleIdents: EnsembleIdent[];
-    timeType: TimeType;
-    attributeType: SurfaceAttributeType_api;
+    timeType: SurfaceTimeType;
+    attributeType: SurfaceAttributeType;
     syncedSettings: SyncedSettings;
     onChange: (surfaceSpecification: SurfaceSpecification) => void;
     onRemove: (uuid: string) => void;
@@ -46,7 +54,7 @@ export const SurfaceSelect: React.FC<SurfaceSelectProps> = (props) => {
     const ensembleSurfaceDirectory = new SurfaceDirectory({
         surfaceMetas: ensembleSurfaceMetadata?.surfaceMetas ?? [],
         timeType: props.timeType,
-        includeAttributeTypes: [props.attributeType],
+        includeAttributeTypes: SurfaceAttributeTypeToApi[props.attributeType],
     });
 
     let computedSurfaceName = props.surfaceSpecification.surfaceName;
@@ -86,15 +94,16 @@ export const SurfaceSelect: React.FC<SurfaceSelectProps> = (props) => {
     }
 
     const valueRange = ensembleSurfaceDirectory.getValueRange(computedSurfaceName, computedSurfaceAttribute, null);
-    let computedValueMin: number | null = valueRange.min;
-    let computedValueMax: number | null = valueRange.max;
-    if (
-        props.surfaceSpecification.statisticFunction === SurfaceStatisticFunction_api.STD &&
-        props.surfaceSpecification.ensembleStage === EnsembleStageType.Statistics
-    ) {
-        computedValueMin = null;
-        computedValueMax = null;
-    }
+    let computedValueMin: number = valueRange.min;
+    let computedValueMax: number = valueRange.max;
+    let computedColorPaletteId: string = props.surfaceSpecification.colorPaletteId ?? "";
+    // if (
+    //     props.surfaceSpecification.statisticFunction === SurfaceStatisticFunction_api.STD &&
+    //     props.surfaceSpecification.ensembleStage === EnsembleStageType.Statistics
+    // ) {
+    //     computedValueMin = null;
+    //     computedValueMax = null;
+    // }
     const computedSurfaceSpecification: SurfaceSpecification = {
         ensembleIdent: computedEnsembleIdent,
         surfaceName: computedSurfaceName,
@@ -103,8 +112,8 @@ export const SurfaceSelect: React.FC<SurfaceSelectProps> = (props) => {
         realizationNum: computedRealizationNum,
         ensembleStage: props.surfaceSpecification.ensembleStage,
         statisticFunction: props.surfaceSpecification.statisticFunction,
-        colorMin: computedValueMin,
-        colorMax: computedValueMax,
+        colorRange: props.surfaceSpecification.colorRange,
+        colorPaletteId: props.surfaceSpecification.colorPaletteId,
         uuid: props.surfaceSpecification.uuid,
     };
 
@@ -131,9 +140,9 @@ export const SurfaceSelect: React.FC<SurfaceSelectProps> = (props) => {
                 ...{ ensembleStage: ensembleStage.ensembleStage, statisticFunction: ensembleStage.statisticFunction },
             });
         }
-        // if (ensembleStage.ensembleStage == EnsembleStageType.Observation) {
-        //     props.onChange({ ...props.surfaceSpecification, ...{ ensembleStage: ensembleStage.ensembleStage } });
-        // }
+        if (ensembleStage.ensembleStage == EnsembleStageType.Observation) {
+            props.onChange({ ...props.surfaceSpecification, ...{ ensembleStage: ensembleStage.ensembleStage } });
+        }
         if (ensembleStage.ensembleStage == EnsembleStageType.Realization) {
             props.onChange({
                 ...props.surfaceSpecification,
@@ -141,13 +150,21 @@ export const SurfaceSelect: React.FC<SurfaceSelectProps> = (props) => {
             });
         }
     }
+    function handleColorRangeChange(colorRange: [number, number]) {
+        props.onChange({ ...props.surfaceSpecification, colorRange });
+    }
+    function handleColorPaletteIdChange(colorPaletteId: string) {
+        props.onChange({ ...props.surfaceSpecification, colorPaletteId });
+    }
     function handleRemove() {
         props.onRemove(props.surfaceSpecification.uuid);
     }
+    const name = props.index === 0 ? "Surface 1 / Main" : `Surface ${props.index + 1}`;
+
     return (
         <>
             <tr className="bg-slate-100">
-                <td className="px-6 py-0 whitespace-nowrap">{`Surface ${props.index + 1}`}</td>
+                <td className="px-6 py-0 whitespace-nowrap">{name}</td>
                 <td></td>
                 <td>
                     <IconButton className="float-right" onClick={handleRemove} color="danger" title="Remove surface">
@@ -180,7 +197,7 @@ export const SurfaceSelect: React.FC<SurfaceSelectProps> = (props) => {
                     onChange={handleSurfaceAttributeChange}
                 />
             )}
-            {(!props.syncedSettings.timeOrInterval || props.index == 0) && props.timeType !== TimeType.None && (
+            {(!props.syncedSettings.timeOrInterval || props.index == 0) && props.timeType !== SurfaceTimeType.None && (
                 <SingleSelectWithButtons
                     name="Time/Interval"
                     options={ensembleSurfaceDirectory.getTimeOrIntervalStrings(
@@ -200,6 +217,16 @@ export const SurfaceSelect: React.FC<SurfaceSelectProps> = (props) => {
                 realizationNum={computedRealizationNum}
                 onChange={handleEnsembleStageChange}
             />
+            {(!props.syncedSettings.colorRange || props.index == 0) && (
+                <ColorRangeSelect
+                    valueMin={computedValueMin}
+                    valueMax={computedValueMax}
+                    onChange={handleColorRangeChange}
+                />
+            )}
+            {(!props.syncedSettings.colorPaletteId || props.index == 0) && (
+                <ColorPaletteSelect colorPaletteId={computedColorPaletteId} onChange={handleColorPaletteIdChange} />
+            )}
         </>
     );
 };

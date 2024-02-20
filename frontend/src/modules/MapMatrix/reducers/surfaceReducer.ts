@@ -1,9 +1,9 @@
 import { SurfaceAttributeType_api } from "@api";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { ColorScaleGradientType } from "@lib/utils/ColorScale";
-import { TimeType } from "@modules/_shared/Surface";
+import { SurfaceTimeType } from "@modules/_shared/Surface";
 
-import { SurfaceReducerState, SurfaceSpecification, SyncedSettings } from "../types";
+import { SurfaceAttributeType, SurfaceReducerState, SurfaceSpecification, SyncedSettings } from "../types";
 
 export enum SurfaceReducerActionType {
     SetEnsembleIdents,
@@ -13,7 +13,6 @@ export enum SurfaceReducerActionType {
     SetSyncedSettings,
     SetTimeMode,
     SetAttributeType,
-    SetColorScaleGradientType,
 }
 type SurfaceReducerPayload = {
     [SurfaceReducerActionType.SetEnsembleIdents]: { ensembleIdents: EnsembleIdent[] };
@@ -21,9 +20,8 @@ type SurfaceReducerPayload = {
     [SurfaceReducerActionType.RemoveSurface]: { id: string };
     [SurfaceReducerActionType.SetSurface]: { surfaceSpecification: SurfaceSpecification };
     [SurfaceReducerActionType.SetSyncedSettings]: { syncedSettings: SyncedSettings };
-    [SurfaceReducerActionType.SetTimeMode]: { timeMode: TimeType };
-    [SurfaceReducerActionType.SetAttributeType]: { attributeType: SurfaceAttributeType_api };
-    [SurfaceReducerActionType.SetColorScaleGradientType]: { colorScaleGradientType: ColorScaleGradientType };
+    [SurfaceReducerActionType.SetTimeMode]: { timeMode: SurfaceTimeType };
+    [SurfaceReducerActionType.SetAttributeType]: { attributeType: SurfaceAttributeType };
 };
 type SurfaceReducerActions = {
     [T in SurfaceReducerActionType]: {
@@ -55,18 +53,20 @@ export function surfaceDispatcher(state: SurfaceReducerState, action: SurfaceRed
         const updatedSurfaceSpecifications = state.surfaceSpecifications.map((surface) =>
             surface.uuid === action.payload.surfaceSpecification.uuid ? action.payload.surfaceSpecification : surface
         );
-        synchronizeSurfaceSpecifications(updatedSurfaceSpecifications, state.syncedSettings);
+
         return {
             ...state,
-            surfaceSpecifications: updatedSurfaceSpecifications,
+            surfaceSpecifications: synchronizeSurfaceSpecifications(updatedSurfaceSpecifications, state.syncedSettings),
         };
     }
     if (action.type === SurfaceReducerActionType.SetSyncedSettings) {
-        synchronizeSurfaceSpecifications(state.surfaceSpecifications, action.payload.syncedSettings);
         return {
             ...state,
             syncedSettings: action.payload.syncedSettings,
-            surfaceSpecifications: state.surfaceSpecifications,
+            surfaceSpecifications: synchronizeSurfaceSpecifications(
+                state.surfaceSpecifications,
+                action.payload.syncedSettings
+            ),
         };
     }
     if (action.type === SurfaceReducerActionType.SetTimeMode) {
@@ -81,12 +81,7 @@ export function surfaceDispatcher(state: SurfaceReducerState, action: SurfaceRed
             attributeType: action.payload.attributeType,
         };
     }
-    if (action.type === SurfaceReducerActionType.SetColorScaleGradientType) {
-        return {
-            ...state,
-            colorScaleGradientType: action.payload.colorScaleGradientType,
-        };
-    }
+
     return state;
 }
 
@@ -94,24 +89,46 @@ function synchronizeSurfaceSpecifications(
     surfaceSpecifications: SurfaceSpecification[],
     syncedSettings: SyncedSettings
 ) {
+    if (surfaceSpecifications.length === 0) {
+        return surfaceSpecifications;
+    }
     const firstSurfaceSpecification = surfaceSpecifications[0];
-    surfaceSpecifications.forEach((surface, index) => {
+
+    // Create a new array with updated objects to ensure changes are detected
+    const updatedSurfaceSpecifications = surfaceSpecifications.map((surface, index) => {
         if (index !== 0) {
+            const updatedSurface = { ...surface }; // Create a shallow copy
             if (syncedSettings.ensemble) {
-                surface.ensembleIdent = firstSurfaceSpecification.ensembleIdent;
+                updatedSurface.ensembleIdent = firstSurfaceSpecification.ensembleIdent;
             }
             if (syncedSettings.name) {
-                surface.surfaceName = firstSurfaceSpecification.surfaceName;
+                updatedSurface.surfaceName = firstSurfaceSpecification.surfaceName;
             }
             if (syncedSettings.attribute) {
-                surface.surfaceAttribute = firstSurfaceSpecification.surfaceAttribute;
+                updatedSurface.surfaceAttribute = firstSurfaceSpecification.surfaceAttribute;
             }
             if (syncedSettings.timeOrInterval) {
-                surface.surfaceTimeOrInterval = firstSurfaceSpecification.surfaceTimeOrInterval;
+                updatedSurface.surfaceTimeOrInterval = firstSurfaceSpecification.surfaceTimeOrInterval;
             }
             if (syncedSettings.realizationNum) {
-                surface.realizationNum = firstSurfaceSpecification.realizationNum;
+                updatedSurface.realizationNum = firstSurfaceSpecification.realizationNum;
             }
+            if (syncedSettings.colorRange) {
+                updatedSurface.colorRange = firstSurfaceSpecification.colorRange;
+            }
+            if (syncedSettings.colorPaletteId) {
+                console.log(
+                    "Color did change",
+                    updatedSurface.colorPaletteId,
+                    firstSurfaceSpecification.colorPaletteId,
+                    index
+                );
+                updatedSurface.colorPaletteId = firstSurfaceSpecification.colorPaletteId;
+            }
+            return updatedSurface;
         }
+        return surface;
     });
+
+    return updatedSurfaceSpecifications; // Return the new array for state update
 }
