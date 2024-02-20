@@ -7,17 +7,17 @@ import { colorTablesObj } from "@emerson-eps/color-tables";
 import { ModuleFCProps } from "@framework/Module";
 import { useViewStatusWriter } from "@framework/StatusWriter";
 import { IconButton } from "@lib/components/IconButton";
-import { SyncedSubsurfaceViewer } from "@modules/SubsurfaceMap/components/SyncedSubsurfaceViewer";
 import { SurfaceAddress } from "@modules/_shared/Surface";
 import { SurfaceAddressFactory } from "@modules/_shared/Surface";
+import { useFieldWellsTrajectoriesQuery } from "@modules/_shared/WellBore";
+import { SyncedSubsurfaceViewer } from "@modules/_shared/components/SubsurfaceViewer";
 import {
     createAxes2DLayer,
     createSubsurfaceMapColorPalettes,
     createSurfaceImageLayer,
     createWellBoreHeaderLayer,
     createWellboreTrajectoryLayer,
-} from "@modules/_shared/Surface/subsurfaceMapUtils";
-import { useFieldWellsTrajectoriesQuery } from "@modules/_shared/WellBore";
+} from "@modules/_shared/components/SubsurfaceViewer/utils";
 import { Home } from "@mui/icons-material";
 import { ViewportType, ViewsType } from "@webviz/subsurface-viewer";
 import { ViewFooter } from "@webviz/subsurface-viewer/dist/components/ViewFooter";

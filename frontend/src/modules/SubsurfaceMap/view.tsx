@@ -22,12 +22,13 @@ import {
     createWellBoreHeaderLayer,
     createWellboreTrajectoryLayer,
     shouldUpdateViewPortBounds,
-} from "@modules_shared/Surface/subsurfaceMapUtils";
+} from "@modules_shared/components/SubsurfaceViewer/utils";
 import { ViewAnnotation } from "@webviz/subsurface-viewer/dist/components/ViewAnnotation";
 
-import { SyncedSubsurfaceViewer } from "./components/SyncedSubsurfaceViewer";
 import { usePropertySurfaceDataByQueryAddress } from "./queryHooks";
 import { state } from "./state";
+
+import { SyncedSubsurfaceViewer } from "../_shared/components/SubsurfaceViewer";
 
 //-----------------------------------------------------------------------------------------------------------
 export function View({ moduleContext, workbenchSettings, workbenchServices }: ModuleFCProps<state>) {

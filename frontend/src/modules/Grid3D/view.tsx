@@ -3,13 +3,13 @@ import { ContinuousLegend } from "@emerson-eps/color-tables";
 import { ModuleFCProps } from "@framework/Module";
 import { useFirstEnsembleInEnsembleSet } from "@framework/WorkbenchSession";
 import { ColorScaleGradientType } from "@lib/utils/ColorScale";
+import { useFieldWellsTrajectoriesQuery } from "@modules/_shared/WellBore/queryHooks";
 import {
     createContinuousColorScaleForMap,
     createNorthArrowLayer,
     createWellBoreHeaderLayer,
     createWellboreTrajectoryLayer,
-} from "@modules/_shared/Surface/subsurfaceMapUtils";
-import { useFieldWellsTrajectoriesQuery } from "@modules/_shared/WellBore/queryHooks";
+} from "@modules/_shared/components/SubsurfaceViewer/utils";
 import SubsurfaceViewer from "@webviz/subsurface-viewer";
 import { ViewAnnotation } from "@webviz/subsurface-viewer/dist/components/ViewAnnotation";
 
