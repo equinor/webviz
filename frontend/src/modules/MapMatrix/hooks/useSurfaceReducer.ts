@@ -4,6 +4,7 @@ import { SurfaceAttributeType_api } from "@api";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { ColorScaleGradientType } from "@lib/utils/ColorScale";
 import { SurfaceTimeType } from "@modules/_shared/Surface";
+import { WellBoreAddress } from "@modules/_shared/WellBore/wellBoreAddress";
 
 import { SurfaceReducerActionType, surfaceDispatcher } from "../reducers/surfaceReducer";
 import { SurfaceAttributeType, SurfaceReducerState, SurfaceSpecification, SyncedSettings } from "../types";
@@ -22,6 +23,7 @@ export const initialSurfaceReducerState: SurfaceReducerState = {
     },
     timeMode: SurfaceTimeType.None,
     attributeType: SurfaceAttributeType.PROPERTY,
+    wellAddresses: [],
 };
 
 export const useSurfaceReducer = () => {
@@ -74,6 +76,12 @@ export const useSurfaceReducer = () => {
             payload: { attributeType },
         });
     };
+    const setWellBoreAddresses = (wellAddresses: WellBoreAddress[]) => {
+        dispatch({
+            type: SurfaceReducerActionType.SetWellBoreAddresses,
+            payload: { wellAddresses },
+        });
+    };
 
     return {
         state,
@@ -84,5 +92,6 @@ export const useSurfaceReducer = () => {
         setSyncedSettings,
         setTimeMode,
         setAttributeType,
+        setWellBoreAddresses,
     };
 };

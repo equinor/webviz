@@ -122,6 +122,19 @@ export function createAxesLayer(
     };
 }
 
+export function createAxes2DLayer(): Record<string, unknown> {
+    return {
+        "@@type": "Axes2DLayer",
+        id: "axes-layer2D",
+        marginH: 80,
+        marginV: 30,
+        isLeftRuler: true,
+        isRightRuler: false,
+        isBottomRuler: false,
+        isTopRuler: true,
+        backgroundColor: [255, 255, 255, 255],
+    };
+}
 export function createSurfaceMeshLayer(
     surfaceMeta: SurfaceMeta,
     mesh_data: number[],

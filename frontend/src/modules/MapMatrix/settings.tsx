@@ -12,6 +12,7 @@ import { ColorScaleGradientType } from "@lib/utils/ColorScale";
 
 import { v4 as uuidv4 } from "uuid";
 
+import { SmdaWellBoreSelect } from "./components/smdaWellBoreSelect";
 import { SurfaceAttributeTypeSelect } from "./components/surfaceAttributeTypeSelect";
 import { SurfaceSelect } from "./components/surfaceSelect";
 import { SyncSettings } from "./components/syncSettings";
@@ -22,7 +23,11 @@ import { EnsembleStageType, SurfaceSpecification, SyncedSettings } from "./types
 
 export function settings({ moduleContext, workbenchSession, workbenchSettings }: ModuleFCProps<State>) {
     const ensembleSet = useEnsembleSet(workbenchSession);
-
+    // Use the first ensemble to e.g. get the wellbores. This is fine as long as all ensembles are the same Sumo field.
+    // Not entirely sure how to handle the case where the ensembles are from different fields.
+    // Different fields might have different coordinate systems which would make it impossible to show them together without
+    // transforming the coordinates.
+    const firstEnsemble = ensembleSet.getEnsembleArr()[0];
     const reducer = useSurfaceReducer();
 
     const ensembleSetSurfaceMetas = useEnsembleSetSurfaceMetaQuery(reducer.state.ensembleIdents);
@@ -70,6 +75,12 @@ export function settings({ moduleContext, workbenchSession, workbenchSettings }:
         },
         [reducer.state.surfaceSpecifications]
     );
+    React.useEffect(
+        function propagateWellBoreAddressesToView() {
+            moduleContext.getStateStore().setValue("smdaWellBoreAddresses", reducer.state.wellAddresses);
+        },
+        [reducer.state.wellAddresses]
+    );
 
     return (
         <>
@@ -88,6 +99,13 @@ export function settings({ moduleContext, workbenchSession, workbenchSettings }:
                     timeMode={reducer.state.timeMode}
                     attributeType={reducer.state.attributeType}
                 />
+                <CollapsibleGroup expanded={true} title="Wellbores">
+                    <SmdaWellBoreSelect
+                        selectedWellAddresses={reducer.state.wellAddresses || []}
+                        onWellBoreChange={reducer.setWellBoreAddresses}
+                        ensembleIdent={firstEnsemble ? firstEnsemble.getIdent() : null}
+                    />
+                </CollapsibleGroup>
             </CollapsibleGroup>
             <CollapsibleGroup expanded={true} title="Synchronize settings">
                 <SyncSettings syncedSettings={reducer.state.syncedSettings} onChange={handleSyncedSettingsChange} />

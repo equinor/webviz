@@ -2,6 +2,7 @@ import { SurfaceAttributeType_api } from "@api";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { ColorScaleGradientType } from "@lib/utils/ColorScale";
 import { SurfaceTimeType } from "@modules/_shared/Surface";
+import { WellBoreAddress } from "@modules/_shared/WellBore/wellBoreAddress";
 
 import { SurfaceAttributeType, SurfaceReducerState, SurfaceSpecification, SyncedSettings } from "../types";
 
@@ -13,6 +14,7 @@ export enum SurfaceReducerActionType {
     SetSyncedSettings,
     SetTimeMode,
     SetAttributeType,
+    SetWellBoreAddresses,
 }
 type SurfaceReducerPayload = {
     [SurfaceReducerActionType.SetEnsembleIdents]: { ensembleIdents: EnsembleIdent[] };
@@ -22,6 +24,7 @@ type SurfaceReducerPayload = {
     [SurfaceReducerActionType.SetSyncedSettings]: { syncedSettings: SyncedSettings };
     [SurfaceReducerActionType.SetTimeMode]: { timeMode: SurfaceTimeType };
     [SurfaceReducerActionType.SetAttributeType]: { attributeType: SurfaceAttributeType };
+    [SurfaceReducerActionType.SetWellBoreAddresses]: { wellAddresses: WellBoreAddress[] };
 };
 type SurfaceReducerActions = {
     [T in SurfaceReducerActionType]: {
@@ -81,6 +84,12 @@ export function surfaceDispatcher(state: SurfaceReducerState, action: SurfaceRed
             attributeType: action.payload.attributeType,
         };
     }
+    if (action.type === SurfaceReducerActionType.SetWellBoreAddresses) {
+        return {
+            ...state,
+            wellAddresses: action.payload.wellAddresses,
+        };
+    }
 
     return state;
 }
@@ -117,12 +126,6 @@ function synchronizeSurfaceSpecifications(
                 updatedSurface.colorRange = firstSurfaceSpecification.colorRange;
             }
             if (syncedSettings.colorPaletteId) {
-                console.log(
-                    "Color did change",
-                    updatedSurface.colorPaletteId,
-                    firstSurfaceSpecification.colorPaletteId,
-                    index
-                );
                 updatedSurface.colorPaletteId = firstSurfaceSpecification.colorPaletteId;
             }
             return updatedSurface;

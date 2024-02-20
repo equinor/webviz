@@ -1,6 +1,6 @@
 import React from "react";
 
-import { SurfaceDataPng_api } from "@api";
+import { SurfaceDataPng_api, WellBoreTrajectory_api } from "@api";
 import { View } from "@deck.gl/core/typed";
 import { ContinuousLegend } from "@emerson-eps/color-tables";
 import { colorTablesObj } from "@emerson-eps/color-tables";
@@ -10,7 +10,14 @@ import { IconButton } from "@lib/components/IconButton";
 import { SyncedSubsurfaceViewer } from "@modules/SubsurfaceMap/components/SyncedSubsurfaceViewer";
 import { SurfaceAddress } from "@modules/_shared/Surface";
 import { SurfaceAddressFactory } from "@modules/_shared/Surface";
-import { createSubsurfaceMapColorPalettes, createSurfaceImageLayer } from "@modules/_shared/Surface/subsurfaceMapUtils";
+import {
+    createAxes2DLayer,
+    createSubsurfaceMapColorPalettes,
+    createSurfaceImageLayer,
+    createWellBoreHeaderLayer,
+    createWellboreTrajectoryLayer,
+} from "@modules/_shared/Surface/subsurfaceMapUtils";
+import { useFieldWellsTrajectoriesQuery } from "@modules/_shared/WellBore";
 import { Home } from "@mui/icons-material";
 import { ViewportType, ViewsType } from "@webviz/subsurface-viewer";
 import { ViewFooter } from "@webviz/subsurface-viewer/dist/components/ViewFooter";
@@ -25,10 +32,30 @@ import { EnsembleStageType, SurfaceSpecification } from "./types";
 export function view({ moduleContext, workbenchServices, workbenchSettings }: ModuleFCProps<State>) {
     const [viewportBounds, setviewPortBounds] = React.useState<[number, number, number, number] | undefined>(undefined);
     const surfaceSpecifications = moduleContext.useStoreValue("surfaceSpecifications");
-    const surfaceAddresses = createSurfaceAddressesFromSpecifications(surfaceSpecifications);
-    const surfaceDataSetQueryByAddresses = useSurfaceDataSetQueryByAddresses(surfaceAddresses);
+    const wellBoreAddresses = moduleContext.useStoreValue("smdaWellBoreAddresses");
 
+    const firstCaseUuid = surfaceSpecifications?.[0]?.ensembleIdent?.getCaseUuid() ?? undefined;
     const statusWriter = useViewStatusWriter(moduleContext);
+
+    const wellTrajectoriesQuery = useFieldWellsTrajectoriesQuery(firstCaseUuid);
+    statusWriter.setLoading(wellTrajectoriesQuery.isFetching);
+
+    const layers: Record<string, unknown>[] = [];
+    layers.push(createAxes2DLayer());
+
+    if (wellTrajectoriesQuery.data) {
+        const wellBoreUUids = wellBoreAddresses?.map((well) => well.uuid) ?? [];
+        const wellTrajectories: WellBoreTrajectory_api[] = wellTrajectoriesQuery.data.filter((well) =>
+            wellBoreUUids.includes(well.wellbore_uuid)
+        );
+        const wellTrajectoryLayer: Record<string, unknown> = createWellboreTrajectoryLayer(wellTrajectories);
+        const wellBoreHeaderLayer: Record<string, unknown> = createWellBoreHeaderLayer(wellTrajectories);
+        layers.push(wellTrajectoryLayer);
+        layers.push(wellBoreHeaderLayer);
+    }
+    const surfaceAddresses = createSurfaceAddressesFromSpecifications(surfaceSpecifications);
+
+    const surfaceDataSetQueryByAddresses = useSurfaceDataSetQueryByAddresses(surfaceAddresses);
     statusWriter.setLoading(surfaceDataSetQueryByAddresses.isFetching);
 
     const [prevSurfaceDataSetQueryByAddresses, setPrevSurfaceDataSetQueryByAddresses] =
@@ -50,19 +77,6 @@ export function view({ moduleContext, workbenchServices, workbenchSettings }: Mo
 
     const views: ViewsType = makeEmptySurfaceViews(surfaceDataSet.length ?? 1);
     const viewAnnotations: JSX.Element[] = [];
-    const layers: Record<string, unknown>[] = [
-        {
-            "@@type": "Axes2DLayer",
-            id: "axes-layer2D",
-            marginH: 80,
-            marginV: 30,
-            isLeftRuler: true,
-            isRightRuler: false,
-            isBottomRuler: false,
-            isTopRuler: true,
-            backgroundColor: [255, 255, 255, 255],
-        },
-    ];
     const colorTables = createSubsurfaceMapColorPalettes();
     surfaceDataSet.forEach((surface, index) => {
         const colorRange = surfaceSpecifications[index].colorRange ?? [null, null];
@@ -100,7 +114,7 @@ export function view({ moduleContext, workbenchServices, workbenchSettings }: Mo
                 id: `${index}view`,
                 show3D: false,
                 isSync: true,
-                layerIds: ["axes-layer2D", `surface-${index}`],
+                layerIds: ["axes-layer2D", `surface-${index}`, "wells-layer", "well-header-layer"],
                 name: `Surface ${index}`,
             };
         }

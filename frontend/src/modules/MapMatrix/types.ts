@@ -2,6 +2,7 @@ import { SurfaceAttributeType_api, SurfaceStatisticFunction_api } from "@api";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { ColorScaleGradientType } from "@lib/utils/ColorScale";
 import { SurfaceTimeType } from "@modules/_shared/Surface";
+import { WellBoreAddress } from "@modules/_shared/WellBore/wellBoreAddress";
 
 export enum SurfaceAttributeType {
     DEPTH_TIME = "Depth and time maps",
@@ -13,11 +14,14 @@ export const SurfaceAttributeTypeToApi = {
         SurfaceAttributeType_api.PROPERTY,
         SurfaceAttributeType_api.SEISMIC,
         SurfaceAttributeType_api.ISOCHORE,
+        SurfaceAttributeType_api.FLUID_CONTACT,
+        SurfaceAttributeType_api.THICKNESS,
     ],
 };
 export type SurfaceReducerState = {
     ensembleIdents: EnsembleIdent[];
     surfaceSpecifications: SurfaceSpecification[];
+    wellAddresses: WellBoreAddress[];
     syncedSettings: SyncedSettings;
     timeMode: SurfaceTimeType;
     attributeType: SurfaceAttributeType;
