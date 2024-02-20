@@ -10,7 +10,7 @@ import { IconButton } from "@lib/components/IconButton";
 import { SyncedSubsurfaceViewer } from "@modules/SubsurfaceMap/components/SyncedSubsurfaceViewer";
 import { SurfaceAddress } from "@modules/_shared/Surface";
 import { SurfaceAddressFactory } from "@modules/_shared/Surface";
-import { createSubsurfaceMapColorPalettes } from "@modules/_shared/Surface/subsurfaceMapUtils";
+import { createSubsurfaceMapColorPalettes, createSurfaceImageLayer } from "@modules/_shared/Surface/subsurfaceMapUtils";
 import { Home } from "@mui/icons-material";
 import { ViewportType, ViewsType } from "@webviz/subsurface-viewer";
 import { ViewFooter } from "@webviz/subsurface-viewer/dist/components/ViewFooter";
@@ -81,15 +81,20 @@ export function view({ moduleContext, workbenchServices, workbenchSettings }: Mo
             }
 
             layers.push(
-                createSurfaceImageLayer(
-                    `surface-${index}`,
-                    surface.surfaceData,
+                createSurfaceImageLayer({
+                    id: `surface-${index}`,
+                    base64ImageString: surface.surfaceData.base64_encoded_image,
+                    xMin: surface.surfaceData.x_min_surf_orient,
+                    yMin: surface.surfaceData.y_min_surf_orient,
+                    xMax: surface.surfaceData.x_max_surf_orient,
+                    yMax: surface.surfaceData.y_max_surf_orient,
+                    rotDeg: surface.surfaceData.rot_deg,
                     valueMin,
                     valueMax,
-                    colorRange[0],
-                    colorRange[1],
-                    surfaceSpecifications[index].colorPaletteId ?? ""
-                )
+                    colorMin: colorRange[0],
+                    colorMax: colorRange[1],
+                    colorPaletteId: surfaceSpecifications[index].colorPaletteId ?? "",
+                })
             );
             views.viewports[index] = {
                 id: `${index}view`,
@@ -161,32 +166,6 @@ function makeViewAnnotation(
             </>
         </View>
     );
-}
-
-function createSurfaceImageLayer(
-    id: string,
-    surfaceData: SurfaceDataPng_api,
-    valueMin: number | null,
-    valueMax: number | null,
-    colorMin: number | null,
-    colorMax: number | null,
-    colorPaletteId: string
-): Record<string, unknown> {
-    return {
-        "@@type": "ColormapLayer",
-        id: id,
-        image: `data:image/png;base64,${surfaceData.base64_encoded_image}`,
-        bounds: [
-            surfaceData.x_min_surf_orient,
-            surfaceData.y_min_surf_orient,
-            surfaceData.x_max_surf_orient,
-            surfaceData.y_max_surf_orient,
-        ],
-        rotDeg: surfaceData.rot_deg,
-        valueRange: [valueMin, valueMax],
-        colorMapRange: [colorMin ?? valueMin, colorMax ?? valueMax],
-        colorMapName: colorPaletteId,
-    };
 }
 
 function makeEmptySurfaceViews(numSubplots: number): ViewsType {

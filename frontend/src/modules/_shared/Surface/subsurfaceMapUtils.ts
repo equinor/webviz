@@ -121,6 +121,7 @@ export function createAxesLayer(
         bounds: bounds,
     };
 }
+
 export function createSurfaceMeshLayer(
     surfaceMeta: SurfaceMeta,
     mesh_data: number[],
@@ -148,6 +149,33 @@ export function createSurfaceMeshLayer(
         colorMapName: "Continuous",
     };
 }
+type SurfaceImageLayerOptions = {
+    id: string;
+    base64ImageString: string;
+    xMin: number;
+    yMin: number;
+    xMax: number;
+    yMax: number;
+    rotDeg: number;
+    valueMin: number | null;
+    valueMax: number | null;
+    colorMin: number | null;
+    colorMax: number | null;
+    colorPaletteId: string;
+};
+export function createSurfaceImageLayer(options: SurfaceImageLayerOptions): Record<string, unknown> {
+    return {
+        "@@type": "ColormapLayer",
+        id: options.id,
+        image: `data:image/png;base64,${options.base64ImageString}`,
+        bounds: [options.xMin, options.yMin, options.xMax, options.yMax],
+        rotDeg: options.rotDeg,
+        valueRange: [options.valueMin, options.valueMax],
+        colorMapRange: [options.colorMin ?? options.valueMin, options.colorMax ?? options.valueMax],
+        colorMapName: options.colorPaletteId,
+    };
+}
+
 export function createSurfacePolygonsLayer(surfacePolygons: PolygonData_api[]): Record<string, unknown> {
     const features: Record<string, unknown>[] = surfacePolygons.map((polygon) => {
         return surfacePolygonsToGeojson(polygon);

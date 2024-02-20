@@ -71,6 +71,9 @@ export const SurfaceSpecificationLabel: React.FC<SurfaceSpecificationLabelProps>
                             {`${StatisticFunctionToStringMapping[surfaceSpecification.statisticFunction]}`}
                         </div>
                     )}
+                    {surfaceSpecification.ensembleStage === EnsembleStageType.Observation && (
+                        <div className={`${baseClassNames} ${animations.statisticFunction}`}>Observation</div>
+                    )}
                 </>
             ) : (
                 <div className={`${baseClassNames} `}>No surface found</div>
