@@ -15,7 +15,7 @@ export type RadioProps<T extends string | number> = {
     onChange?: (event: React.ChangeEvent<HTMLInputElement>, value: T) => void;
 } & BaseComponentProps;
 
-export function Radio<T extends string | number>(props: RadioProps<T>): React.ReactNode {
+export function Radio<T extends string | number>(props: RadioProps<T>): JSX.Element {
     return (
         <BaseComponent disabled={props.disabled}>
             <label className="relative inline-flex align-middle gap-2 items-center group">
@@ -72,7 +72,7 @@ export type RadioGroupProps<T extends string | number> = {
     direction?: "horizontal" | "vertical";
 } & BaseComponentProps;
 
-export function RadioGroup<T extends string | number>(props: RadioGroupProps<T>): React.ReactNode {
+export function RadioGroup<T extends string | number>(props: RadioGroupProps<T>): JSX.Element {
     const name = React.useRef<string>(props.name || v4());
     return (
         <BaseComponent disabled={props.disabled}>

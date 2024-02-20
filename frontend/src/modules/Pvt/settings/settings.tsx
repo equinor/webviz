@@ -37,7 +37,6 @@ import { computeRealizationsIntersection } from "../utils/realizationsIntersecti
 
 export function Settings({ settingsContext, workbenchSession }: ModuleSettingsProps<State, Interface>) {
     const ensembleSet = useEnsembleSet(workbenchSession);
-
     const filterEnsembleRealizationsFunc = useEnsembleRealizationFilterFunc(workbenchSession);
 
     const selectedEnsembleIdents = useAtomValue(selectedEnsembleIdentsAtom);

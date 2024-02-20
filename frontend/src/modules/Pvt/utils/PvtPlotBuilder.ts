@@ -12,7 +12,6 @@ import {
     PRESSURE_DEPENDENT_VARIABLE_TO_DISPLAY_NAME,
     PhaseType,
     PressureDependentVariable,
-    PvtTableCollection,
 } from "../typesAndEnums";
 
 type TracePointData = {
@@ -22,17 +21,17 @@ type TracePointData = {
 };
 
 export class PvtPlotBuilder {
-    private _pvtDataAccessor: PvtDataAccessor;
+    private readonly _pvtDataAccessor: PvtDataAccessor;
     private _figure: Figure | null = null;
     private _numPlots = 0;
-    private _makeEnsembleDisplayNameFunc: (ensemble: EnsembleIdent) => string;
+    private readonly _makeEnsembleDisplayNameFunc: (ensemble: EnsembleIdent) => string;
 
     constructor(pvtDataAccessor: PvtDataAccessor, makeEnsembleDisplayNameFunc: (ensemble: EnsembleIdent) => string) {
         this._pvtDataAccessor = pvtDataAccessor;
         this._makeEnsembleDisplayNameFunc = makeEnsembleDisplayNameFunc;
     }
 
-    makeLayout(phase: PhaseType, dependentVariables: PressureDependentVariable[], size: Size2D): void {
+    makeLayout(phase: PhaseType, dependentVariables: readonly PressureDependentVariable[], size: Size2D): void {
         const adjustedDependentVariables = dependentVariables.filter((el) => {
             if (phase === PhaseType.WATER) {
                 return el !== PressureDependentVariable.FLUID_RATIO;
@@ -87,81 +86,18 @@ export class PvtPlotBuilder {
         }
     }
 
-    private makeHoverTemplate(
-        dependentVariable: PressureDependentVariable,
-        ratios: number[],
-        pvtNum: number,
-        phase: PhaseType,
-        ensembleIdent: EnsembleIdent,
-        realization: number
-    ): string[] {
-        const nameY = PRESSURE_DEPENDENT_VARIABLE_TO_DISPLAY_NAME[dependentVariable];
-        const ensembleDisplayName = this._makeEnsembleDisplayNameFunc(ensembleIdent);
-
-        return ratios.map((ratio) => {
-            if (phase === PhaseType.OIL) {
-                return `Pressure: <b>%{x}</b><br>${nameY}: <b>%{y}</b><br>Rs: <b>${ratio}</b><br>PVTNum: <b>${pvtNum}</b><br>Ensemble: <b>${ensembleDisplayName}</b> Realization: <b>${realization}</b>`;
-            } else if (phase === PhaseType.GAS) {
-                return `Pressure: <b>%{x}</b><br>${nameY}: <b>%{y}</b><br>Rv: <b>${ratio}</b><br>PVTNum: <b>${pvtNum}</b><br>Ensemble: <b>${ensembleDisplayName}</b> Realization: <b>${realization}</b>`;
-            }
-            return `Pressure: <b>%{x}</b><br>${nameY}: <b>%{y}</b><br>PVTNum: <b>${pvtNum}</b><br>Ensemble: <b>${ensembleDisplayName}</b> Realization: <b>${realization}</b>`;
-        });
-    }
-
-    private makeLegendTitle(colorBy: ColorBy) {
-        if (!this._figure) {
-            throw new Error("Layout not set");
-        }
-
-        let legendTitle = "Ens - Real";
-        if (colorBy === ColorBy.PVT_NUM) {
-            legendTitle = "PVTNum";
-        }
-
-        this._figure.updateLayout({
-            legend: {
-                title: {
-                    text: legendTitle,
-                },
-                orientation: "v",
-            },
-        });
-    }
-
-    private makeColorsArray(
-        colorBy: ColorBy,
-        colorSet: ColorSet,
-        pvtNumsLength: number,
-        tableCollectionsLength: number
-    ): string[] {
-        const colors: string[] = [];
-        colors.push(colorSet.getFirstColor());
-        if (colorBy === ColorBy.PVT_NUM) {
-            for (let i = 1; i < pvtNumsLength; i++) {
-                colors.push(colorSet.getNextColor());
-            }
-        } else {
-            for (let i = 1; i < tableCollectionsLength; i++) {
-                colors.push(colorSet.getNextColor());
-            }
-        }
-        return colors;
-    }
-
     makeTraces(
-        dependentVariables: PressureDependentVariable[],
-        pvtNums: number[],
+        dependentVariables: readonly PressureDependentVariable[],
+        pvtNums: readonly number[],
         phase: PhaseType,
         colorBy: ColorBy,
         colorSet: ColorSet
     ): void {
-        if (!this._figure) {
-            throw new Error("Layout not set");
-        }
+        const figure = this.getFigureAndAssertValidity();
 
         const tableCollections = this._pvtDataAccessor.getTableCollections();
 
-        this.makeLegendTitle(colorBy);
+        this.addLegendTitle(colorBy);
         const colors = this.makeColorsArray(colorBy, colorSet, pvtNums.length, tableCollections.length);
 
         let collectionIndex = 0;
@@ -258,7 +194,7 @@ export class PvtPlotBuilder {
                                 ),
                             };
 
-                            this._figure.addTrace(trace, row, col);
+                            figure.addTrace(trace, row, col);
                             borderTracePoints.push(tracePointDataArray[0]);
                         }
 
@@ -273,7 +209,7 @@ export class PvtPlotBuilder {
                             showlegend: false,
                         };
 
-                        this._figure.addTrace(borderTrace, row, col);
+                        figure.addTrace(borderTrace, row, col);
 
                         if (
                             i === 0 &&
@@ -289,7 +225,7 @@ export class PvtPlotBuilder {
                                 )} - ${tableCollection.realization}`;
                             }
 
-                            this._figure.addTrace({
+                            figure.addTrace({
                                 x: [null],
                                 y: [null],
                                 mode: "lines",
@@ -312,10 +248,75 @@ export class PvtPlotBuilder {
     }
 
     makePlot(): React.ReactNode {
-        if (!this._figure) {
-            throw new Error("Layout not set");
+        const figure = this.getFigureAndAssertValidity();
+        return figure.makePlot();
+    }
+
+    private makeHoverTemplate(
+        dependentVariable: PressureDependentVariable,
+        ratios: readonly number[],
+        pvtNum: number,
+        phase: PhaseType,
+        ensembleIdent: EnsembleIdent,
+        realization: number
+    ): string[] {
+        const nameY = PRESSURE_DEPENDENT_VARIABLE_TO_DISPLAY_NAME[dependentVariable];
+        const ensembleDisplayName = this._makeEnsembleDisplayNameFunc(ensembleIdent);
+
+        return ratios.map((ratio) => {
+            let ratioString = "";
+            if (phase === PhaseType.OIL) {
+                ratioString = `Rs: <b>${ratio}</b><br>`;
+            } else if (phase === PhaseType.GAS) {
+                ratioString = `Rv: <b>${ratio}</b><br>`;
+            }
+            return `Pressure: <b>%{x}</b><br>${nameY}: <b>%{y}</b><br>${ratioString}PVTNum: <b>${pvtNum}</b><br>Ensemble: <b>${ensembleDisplayName}</b> Realization: <b>${realization}</b>`;
+        });
+    }
+
+    private addLegendTitle(colorBy: ColorBy) {
+        const figure = this.getFigureAndAssertValidity();
+
+        let legendTitle = "Ens - Real";
+        if (colorBy === ColorBy.PVT_NUM) {
+            legendTitle = "PVTNum";
         }
 
-        return this._figure.makePlot();
+        figure.updateLayout({
+            legend: {
+                title: {
+                    text: legendTitle,
+                },
+                orientation: "v",
+            },
+        });
+    }
+
+    private makeColorsArray(
+        colorBy: ColorBy,
+        colorSet: ColorSet,
+        pvtNumsLength: number,
+        tableCollectionsLength: number
+    ): readonly string[] {
+        const colors: string[] = [];
+        colors.push(colorSet.getFirstColor());
+        if (colorBy === ColorBy.PVT_NUM) {
+            for (let i = 1; i < pvtNumsLength; i++) {
+                colors.push(colorSet.getNextColor());
+            }
+        } else {
+            for (let i = 1; i < tableCollectionsLength; i++) {
+                colors.push(colorSet.getNextColor());
+            }
+        }
+        return colors;
+    }
+
+    private getFigureAndAssertValidity(): Figure {
+        if (!this._figure) {
+            throw new Error("You have to call the `makeLayout` method first.");
+        }
+
+        return this._figure;
     }
 }

@@ -12,7 +12,7 @@ export type DependentVariableSelectorProps = {
     onChange: (selectedPlots: string[]) => void;
 };
 
-export function DependentVariableSelector(props: DependentVariableSelectorProps): React.ReactNode {
+export function DependentVariableSelector(props: DependentVariableSelectorProps): JSX.Element {
     const [selectedVariables, setSelectedVariables] = React.useState<PressureDependentVariable[]>(props.value);
     const [prevValue, setPrevValue] = React.useState<PressureDependentVariable[]>(props.value);
 

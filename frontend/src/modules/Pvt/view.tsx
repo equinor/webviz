@@ -14,11 +14,8 @@ import { Interface, State } from "./state";
 import { PvtDataAccessor } from "./utils/PvtDataAccessor";
 import { PvtPlotBuilder } from "./utils/PvtPlotBuilder";
 
-//-----------------------------------------------------------------------------------------------------------
-
 export function View({ viewContext, workbenchSettings, workbenchSession }: ModuleViewProps<State, Interface>) {
     const colorSet = workbenchSettings.useColorSet();
-
     const statusWriter = useViewStatusWriter(viewContext);
     const ensembleSet = useEnsembleSet(workbenchSession);
 
