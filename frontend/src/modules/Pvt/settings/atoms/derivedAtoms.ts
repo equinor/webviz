@@ -7,7 +7,7 @@ import { userSelectedEnsembleIdentsAtom, userSelectedPvtNumsAtom, userSelectedRe
 import { pvtDataQueriesAtom } from "./queryAtoms";
 
 import { PvtDataAccessor } from "../../utils/PvtDataAccessor";
-import { computeRealizationsIntersection } from "../../utils/settingsUtils";
+import { computeRealizationsIntersection } from "../../utils/realizationsIntersection";
 
 export const selectedEnsembleIdentsAtom = atom((get) => {
     const ensembleSet = get(EnsembleSetAtom);

@@ -25,7 +25,7 @@ import {
 } from "./atoms/derivedAtoms";
 import { pvtDataQueriesAtom } from "./atoms/queryAtoms";
 
-import { Plot, PlotsSelector } from "../components/PlotsSelector";
+import { DependentVariableSelector } from "../components/DependentVariableSelector/dependentVariableSelector";
 import { Interface, State } from "../state";
 import {
     ColorBy,
@@ -33,12 +33,12 @@ import {
     PhaseType,
     PressureDependentVariable,
 } from "../typesAndEnums";
-import { computeRealizationsIntersection } from "../utils/settingsUtils";
+import { computeRealizationsIntersection } from "../utils/realizationsIntersection";
 
 export function Settings({ settingsContext, workbenchSession }: ModuleSettingsProps<State, Interface>) {
     const ensembleSet = useEnsembleSet(workbenchSession);
 
-    const filterEnsembleRealizations = useEnsembleRealizationFilterFunc(workbenchSession);
+    const filterEnsembleRealizationsFunc = useEnsembleRealizationFilterFunc(workbenchSession);
 
     const selectedEnsembleIdents = useAtomValue(selectedEnsembleIdentsAtom);
     const [, setSelectedEnsembleIdents] = useAtom(userSelectedEnsembleIdentsAtom);
@@ -51,40 +51,29 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
 
     const [selectedPhase, setSelectedPhase] = settingsContext.useInterfaceState("selectedPhase");
     const [selectedColorBy, setSelectedColorBy] = settingsContext.useInterfaceState("selectedColorBy");
-    const [selectedPlots, setSelectedPlots] = settingsContext.useInterfaceState("selectedPlots");
+    const [selectedDependentVariables, setSelectedPlots] =
+        settingsContext.useInterfaceState("selectedDependentVariables");
 
     const [selectedMultiEnsembleIdents, setSelectedMultiEnsembleIdents] =
         React.useState<EnsembleIdent[]>(selectedEnsembleIdents);
     const [selectedMultiRealizations, setSelectedMultiRealizations] = React.useState<number[]>(selectedRealizations);
     const [selectedMultiPvtNums, setSelectedMultiPvtNums] = React.useState<number[]>(selectedPvtNums);
 
-    function handleMultiEnsembleSelectionChange(ensembleIdents: EnsembleIdent[]) {
+    function handleEnsembleSelectionChange(ensembleIdents: EnsembleIdent[]) {
         setSelectedEnsembleIdents(ensembleIdents);
         setSelectedMultiEnsembleIdents(ensembleIdents);
     }
 
-    function handleSingleEnsembleSelectionChange(ensembleIdents: EnsembleIdent[]) {
-        setSelectedEnsembleIdents(ensembleIdents);
-    }
-
-    function handleMultiRealizationSelectionChange(values: string[]) {
+    function handleRealizationSelectionChange(values: string[]) {
         const newRealizations = values.map((value) => parseInt(value) as number);
         setSelectedRealizations(newRealizations);
         setSelectedMultiRealizations(newRealizations);
     }
 
-    function handleSingleRealizationSelectionChange(values: string[]) {
-        setSelectedRealizations(values.map((value) => parseInt(value)));
-    }
-
-    function handleMultiPvtNumChange(values: string[]) {
+    function handlePvtNumChange(values: string[]) {
         const newPvtNums = values.map((value) => parseInt(value) as number);
         setSelectedPvtNums(newPvtNums);
         setSelectedMultiPvtNums(newPvtNums);
-    }
-
-    function handleSinglePvtNumChange(value: string[]) {
-        setSelectedPvtNums(value.map((value) => parseInt(value)));
     }
 
     function handleColorByChange(_: React.ChangeEvent<HTMLInputElement>, colorBy: ColorBy) {
@@ -114,80 +103,12 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
         setSelectedPlots(orderedPlots.filter((plot) => plots.includes(plot)));
     }
 
-    function makeEnsembleSelect() {
-        if (selectedColorBy === ColorBy.ENSEMBLE) {
-            return (
-                <MultiEnsembleSelect
-                    ensembleSet={ensembleSet}
-                    onChange={handleMultiEnsembleSelectionChange}
-                    value={selectedEnsembleIdents}
-                    size={5}
-                />
-            );
-        }
-        return (
-            <MultiEnsembleSelect
-                ensembleSet={ensembleSet}
-                onChange={handleSingleEnsembleSelectionChange}
-                value={selectedEnsembleIdents}
-                size={5}
-                multiple={false}
-            />
-        );
-    }
-
     let errorMessage = "";
     if (pvtDataQueries.allQueriesFailed) {
         errorMessage = "Failed to fetch PVT data. Make sure the selected ensemble has PVT data.";
     }
 
-    const realizations = computeRealizationsIntersection(selectedEnsembleIdents, filterEnsembleRealizations);
-
-    function makeRealizationSelect() {
-        if (selectedColorBy === ColorBy.ENSEMBLE) {
-            return (
-                <Select
-                    options={makeRealizationOptions(realizations)}
-                    value={selectedRealizations.map((el) => el.toString())}
-                    onChange={handleMultiRealizationSelectionChange}
-                    size={5}
-                    multiple
-                />
-            );
-        }
-
-        return (
-            <Select
-                options={makeRealizationOptions(realizations)}
-                value={selectedRealizations.map((el) => el.toString())}
-                onChange={handleSingleRealizationSelectionChange}
-                size={5}
-            />
-        );
-    }
-
-    function makePvtNumSelect() {
-        if (selectedColorBy === ColorBy.PVT_NUM) {
-            return (
-                <Select
-                    multiple
-                    options={makePvtNumOptions(pvtDataAccessor.getUniquePvtNums())}
-                    value={selectedPvtNums.map((el) => el.toString())}
-                    onChange={handleMultiPvtNumChange}
-                    size={5}
-                />
-            );
-        }
-
-        return (
-            <Select
-                options={makePvtNumOptions(pvtDataAccessor.getUniquePvtNums())}
-                value={selectedPvtNums.map((el) => el.toString())}
-                onChange={handleSinglePvtNumChange}
-                size={5}
-            />
-        );
-    }
+    const realizations = computeRealizationsIntersection(selectedEnsembleIdents, filterEnsembleRealizationsFunc);
 
     return (
         <div className="flex flex-col gap-2">
@@ -202,22 +123,40 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
                 />
             </CollapsibleGroup>
             <CollapsibleGroup title="Ensembles" expanded>
-                {makeEnsembleSelect()}
+                <MultiEnsembleSelect
+                    ensembleSet={ensembleSet}
+                    onChange={handleEnsembleSelectionChange}
+                    value={selectedEnsembleIdents}
+                    size={5}
+                    multiple={selectedColorBy === ColorBy.ENSEMBLE}
+                />
             </CollapsibleGroup>
             <CollapsibleGroup title="Realizations" expanded>
-                {makeRealizationSelect()}
+                <Select
+                    options={makeRealizationOptions(realizations)}
+                    value={selectedRealizations.map((el) => el.toString())}
+                    onChange={handleRealizationSelectionChange}
+                    size={5}
+                    multiple={selectedColorBy === ColorBy.ENSEMBLE}
+                />
             </CollapsibleGroup>
             <PendingWrapper isPending={pvtDataQueries.isFetching} errorMessage={errorMessage}>
                 <CollapsibleGroup title="PVT Num" expanded>
-                    {makePvtNumSelect()}
+                    <Select
+                        options={makePvtNumOptions(pvtDataAccessor.getUniquePvtNums())}
+                        value={selectedPvtNums.map((el) => el.toString())}
+                        onChange={handlePvtNumChange}
+                        size={5}
+                        multiple={selectedColorBy === ColorBy.PVT_NUM}
+                    />
                 </CollapsibleGroup>
                 <CollapsibleGroup title="Phase" expanded>
                     <Dropdown options={makePhaseOptions()} value={selectedPhase} onChange={handlePhasesChange} />
                 </CollapsibleGroup>
                 <CollapsibleGroup title="Show plot for" expanded>
-                    <PlotsSelector
-                        plots={makePlotOptions(selectedPhase)}
-                        value={selectedPlots}
+                    <DependentVariableSelector
+                        dependentVariables={makeDependentVariableOptions(selectedPhase)}
+                        value={selectedDependentVariables}
                         onChange={handleVisualizePlotsChange}
                     />
                 </CollapsibleGroup>
@@ -247,17 +186,14 @@ function makePhaseOptions(): SelectOption[] {
     ];
 }
 
-function makePlotOptions(phaseType: PhaseType): Plot[] {
-    const plots: Plot[] = [];
+function makeDependentVariableOptions(phaseType: PhaseType): PressureDependentVariable[] {
+    const plots: PressureDependentVariable[] = [];
 
     for (const variable of Object.keys(PRESSURE_DEPENDENT_VARIABLE_TO_DISPLAY_NAME)) {
         if (variable === PressureDependentVariable.FLUID_RATIO && phaseType === PhaseType.WATER) {
             continue;
         }
-        plots.push({
-            label: PRESSURE_DEPENDENT_VARIABLE_TO_DISPLAY_NAME[variable as PressureDependentVariable],
-            value: variable,
-        });
+        plots.push(variable as PressureDependentVariable);
     }
 
     return plots;

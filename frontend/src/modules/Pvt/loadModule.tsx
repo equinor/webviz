@@ -1,19 +1,13 @@
 import { ModuleRegistry } from "@framework/ModuleRegistry";
 
-import { Settings } from "./settings";
-import state from "./state";
+import { MODULE_NAME } from "./registerModule";
+import { Settings } from "./settings/settings";
+import { Interface, State, interfaceHydration } from "./state";
 import { View } from "./view";
 
-const defaultState: state = {
-    pvtVisualizations: ["volumefactor", "viscosity", "density", "ratio"],
-    pvtNum: 1,
-    pvtName: "Oil (PVTO)",
-    groupBy: "ENSEMBLE",
-    realization: 0,
-    activeDataSet: null,
-};
+const defaultState: State = {};
 
-const module = ModuleRegistry.initModule<state>("Pvt", defaultState, {});
+const module = ModuleRegistry.initModule<State, Interface>(MODULE_NAME, defaultState, {}, interfaceHydration);
 
 module.viewFC = View;
 module.settingsFC = Settings;
