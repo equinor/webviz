@@ -3,7 +3,7 @@ import React from "react";
 import { SurfaceStatisticFunction_api } from "@api";
 import { Dropdown } from "@lib/components/Dropdown";
 
-import { PrevNextButtonsProps } from "./previousNextButtons";
+import { PrevNextButtons } from "./previousNextButtons";
 
 import { EnsembleStage, EnsembleStageType } from "../types";
 
@@ -97,7 +97,7 @@ export const EnsembleStageSelect: React.FC<EnsembleStageSelectProps> = (props) =
 
             <td className="px-0 py-0 whitespace-nowrap text-right">
                 {props.stage == EnsembleStageType.Realization && (
-                    <PrevNextButtonsProps
+                    <PrevNextButtons
                         disabled={props.disableRealizationPicker}
                         onChange={handleRealizationNumChange}
                         options={realizationOptions.map((option) => option.value.toString())}

@@ -10,7 +10,7 @@ export type PrevNextButtonsProps = {
     value: string;
     disabled?: boolean;
 };
-export const PrevNextButtonsProps: React.FC<PrevNextButtonsProps> = (props) => {
+export const PrevNextButtons: React.FC<PrevNextButtonsProps> = (props) => {
     const changeSelection = (direction: "prev" | "next") => {
         const currentIndex = props.options.indexOf(props.value);
         let nextIndex = direction === "next" ? currentIndex + 1 : currentIndex - 1;

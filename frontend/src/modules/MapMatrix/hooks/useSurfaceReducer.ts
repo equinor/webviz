@@ -1,8 +1,6 @@
 import { useReducer } from "react";
 
-import { SurfaceAttributeType_api } from "@api";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
-import { ColorScaleGradientType } from "@lib/utils/ColorScale";
 import { SurfaceTimeType } from "@modules/_shared/Surface";
 import { WellBoreAddress } from "@modules/_shared/WellBore/wellBoreAddress";
 
