@@ -1,15 +1,15 @@
 import React from "react";
 
 import { useElementSize } from "@lib/hooks/useElementSize";
+import { Point2D } from "@lib/utils/geometry";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import { isEqual } from "lodash";
 
-type ResizablePanelsProps = {
+export type ResizablePanelsProps = {
     id: string;
     direction: "horizontal" | "vertical";
     children: React.ReactNode[];
-    initialSizesPercent?: number[];
     minSizes?: number[];
     sizesInPercent?: number[];
     onSizesChange?: (sizesInPercent: number[]) => void;
@@ -38,9 +38,9 @@ const DragBar: React.FC<DragBarProps> = (props) => {
     return (
         <div
             className={resolveClassNames(
-                "border border-solid relative z-40 transition-colors ease-in-out duration-100 hover:border-blue-600 hover:bg-blue-600 touch-none",
+                "relative z-40 transition-colors ease-in-out duration-100 hover:bg-sky-500 hover:outline hover:outline-2 hover:outline-sky-500 touch-none",
                 {
-                    "border-blue-600 bg-blue-600": props.isDragging,
+                    "bg-sky-500 outline outline-2 outline-sky-500": props.isDragging,
                     "border-transparent bg-gray-300": !props.isDragging,
                     "cursor-ew-resize w-px": props.direction === "horizontal",
                     "cursor-ns-resize h-px": props.direction === "vertical",
@@ -77,13 +77,11 @@ export const ResizablePanels: React.FC<ResizablePanelsProps> = (props) => {
         if (loadedSizes) {
             return loadedSizes;
         }
-        if (props.initialSizesPercent) {
-            return props.initialSizesPercent;
-        }
-        return Array(props.children.length).fill(1.0 / props.children.length);
+        return Array(props.children.length).fill(100.0 / props.children.length);
     }
 
     const [isDragging, setIsDragging] = React.useState<boolean>(false);
+    const [draggingIndex, setDraggingIndex] = React.useState<number>(0);
     const [sizes, setSizes] = React.useState<number[]>(getInitialSizes);
     const [prevSizes, setPrevSizes] = React.useState<number[]>(sizes);
     const [prevNumChildren, setPrevNumChildren] = React.useState<number>(props.children.length);
@@ -111,30 +109,13 @@ export const ResizablePanels: React.FC<ResizablePanelsProps> = (props) => {
         function handlePointerDown(e: PointerEvent) {
             if (e.target instanceof HTMLElement && e.target.dataset.handle) {
                 index = parseInt(e.target.dataset.handle, 10);
+                setDraggingIndex(index);
                 dragging = true;
                 setIsDragging(true);
                 e.preventDefault();
 
                 addEventListeners();
             }
-        }
-
-        function containSizesWithinBounds(sizes: number[]): number[] {
-            if (props.minSizes === undefined) {
-                return sizes;
-            }
-
-            const adjustedSizes: number[] = [];
-            for (let i = 0; i < sizes.length; i++) {
-                if (props.minSizes[i] === undefined && sizes[i] < props.minSizes[i]) {
-                    adjustedSizes.push(0);
-                    continue;
-                }
-
-                adjustedSizes.push(sizes[i]);
-            }
-
-            return adjustedSizes;
         }
 
         function handlePointerMove(e: PointerEvent) {
@@ -147,35 +128,48 @@ export const ResizablePanels: React.FC<ResizablePanelsProps> = (props) => {
             e.stopPropagation();
 
             let totalSize = 0;
+            const containerBoundingRect = resizablePanelsRef.current?.getBoundingClientRect();
             if (props.direction === "horizontal") {
-                totalSize = resizablePanelsRef.current?.getBoundingClientRect().width || 0;
+                totalSize = containerBoundingRect?.width || 0;
             } else if (props.direction === "vertical") {
-                totalSize = resizablePanelsRef.current?.getBoundingClientRect().height || 0;
+                totalSize = containerBoundingRect?.height || 0;
             }
 
             const firstElementBoundingRect = individualPanelRefs.current[index]?.getBoundingClientRect();
             const secondElementBoundingRect = individualPanelRefs.current[index + 1]?.getBoundingClientRect();
 
-            if (firstElementBoundingRect && secondElementBoundingRect) {
+            if (containerBoundingRect && firstElementBoundingRect && secondElementBoundingRect) {
+                const cursorWithinBounds: Point2D = {
+                    x: Math.max(
+                        containerBoundingRect.left,
+                        Math.min(e.clientX, containerBoundingRect.left + containerBoundingRect.width)
+                    ),
+                    y: Math.max(
+                        containerBoundingRect.top,
+                        Math.min(e.clientY, containerBoundingRect.top + containerBoundingRect.height)
+                    ),
+                };
+
                 setSizes((prev) => {
                     const minSizesToggleVisibilityValue =
                         100 * (props.direction === "horizontal" ? 50 / totalWidth : 50 / totalHeight);
 
                     const newSizes = prev.map((size, i) => {
                         if (i === index) {
-                            let newSize = e.clientX - firstElementBoundingRect.left;
+                            let newSize = cursorWithinBounds.x - firstElementBoundingRect.left;
                             if (props.direction === "vertical") {
-                                newSize = e.clientY - firstElementBoundingRect.top;
+                                newSize = cursorWithinBounds.y - firstElementBoundingRect.top;
                             }
                             return Math.max((newSize / totalSize) * 100, 0);
                         }
                         if (i === index + 1) {
                             let newSize =
-                                secondElementBoundingRect.right - Math.max(firstElementBoundingRect.left, e.clientX);
+                                secondElementBoundingRect.right -
+                                Math.max(firstElementBoundingRect.left, cursorWithinBounds.x);
                             if (props.direction === "vertical") {
                                 newSize =
                                     secondElementBoundingRect.bottom -
-                                    Math.max(firstElementBoundingRect.top, e.clientY);
+                                    Math.max(firstElementBoundingRect.top, cursorWithinBounds.y);
                             }
                             return Math.max((newSize / totalSize) * 100, 0);
                         }
@@ -228,7 +222,7 @@ export const ResizablePanels: React.FC<ResizablePanelsProps> = (props) => {
             dragging = false;
             setIsDragging(false);
             if (onSizesChange) {
-                onSizesChange(containSizesWithinBounds(changedSizes));
+                onSizesChange(changedSizes);
             }
             removeEventListeners();
         }
@@ -256,7 +250,9 @@ export const ResizablePanels: React.FC<ResizablePanelsProps> = (props) => {
 
     function maybeMakeDragBar(index: number) {
         if (index < props.children.length - 1) {
-            return <DragBar direction={props.direction} index={index} isDragging={isDragging} />;
+            return (
+                <DragBar direction={props.direction} index={index} isDragging={isDragging && draggingIndex === index} />
+            );
         }
         return null;
     }
@@ -265,12 +261,18 @@ export const ResizablePanels: React.FC<ResizablePanelsProps> = (props) => {
         const style: React.CSSProperties = {};
         const minSizesToggleVisibilityValue =
             100 * (props.direction === "horizontal" ? 50 / totalWidth : 50 / totalHeight);
+        let subtractHandleSize = 1;
+        if (index === 0 || index === props.children.length - 1) {
+            subtractHandleSize = 0.5;
+        }
         if (props.direction === "horizontal") {
-            style.width = `calc(${sizes[index]}% - 3px)`;
-            if (props.visible?.at(index) === false || sizes[index] < minSizesToggleVisibilityValue) {
-                style.minWidth = 0;
-            } else {
-                style.minWidth = props.minSizes?.at(index) || 0;
+            style.width = `calc(${sizes[index]}% - ${subtractHandleSize}px)`;
+            style.minWidth = 0;
+            if (props.visible?.at(index) !== false && sizes[index] >= minSizesToggleVisibilityValue) {
+                const minSize = props.minSizes?.at(index);
+                if (minSize) {
+                    style.minWidth = minSize - subtractHandleSize;
+                }
             }
 
             if (sizes[index] < minSizesToggleVisibilityValue && props.minSizes?.at(index)) {
@@ -281,11 +283,13 @@ export const ResizablePanels: React.FC<ResizablePanelsProps> = (props) => {
                 style.maxWidth = undefined;
             }
         } else {
-            style.height = `calc(${sizes[index]}% - 3px)`;
-            if (props.visible?.at(index) === false || sizes[index] < minSizesToggleVisibilityValue) {
-                style.minHeight = 0;
-            } else {
-                style.minHeight = props.minSizes?.at(index) || 0;
+            style.height = `calc(${sizes[index]}% - ${subtractHandleSize}px)`;
+            style.minHeight = 0;
+            if (props.visible?.at(index) !== false && sizes[index] >= minSizesToggleVisibilityValue) {
+                const minSize = props.minSizes?.at(index);
+                if (minSize) {
+                    style.minHeight = minSize - subtractHandleSize;
+                }
             }
 
             if (sizes[index] < minSizesToggleVisibilityValue && props.minSizes?.at(index)) {
@@ -302,27 +306,21 @@ export const ResizablePanels: React.FC<ResizablePanelsProps> = (props) => {
 
     return (
         <div
-            className={resolveClassNames(
-                "flex",
-                props.direction === "horizontal" ? "flex-row" : "flex-col",
-                "w-full",
-                "h-full",
-                "relative",
-                "align-stretch"
-            )}
+            className={resolveClassNames("flex w-full h-full relative align-stretch", {
+                "flex-row": props.direction === "horizontal",
+                "flex-col": props.direction === "vertical",
+            })}
             ref={resizablePanelsRef}
         >
             <div
-                className={resolveClassNames(
-                    "absolute",
-                    props.direction === "horizontal" ? "cursor-ew-resize" : "cursor-ns-resize",
-                    "z-50",
-                    "bg-transparent"
-                )}
+                className={resolveClassNames("absolute z-50 bg-transparent", {
+                    "cursor-ew-resize": props.direction === "horizontal",
+                    "cursor-ns-resize": props.direction === "vertical",
+                    hidden: !isDragging,
+                })}
                 style={{
                     width: totalWidth,
                     height: totalHeight,
-                    display: isDragging ? "block" : "none",
                 }}
             />
             {props.children.map((el: React.ReactNode, index: number) => (
