@@ -6,6 +6,8 @@ export interface VectorSpec {
     ensembleIdent: EnsembleIdent;
     vectorName: string;
     hasHistoricalVector: boolean;
+    selectedIndividualRealizations?: number[] | null;
+    selectedStatisticsRealizations?: number[] | null;
 }
 
 export enum VisualizationMode {
@@ -73,5 +75,4 @@ export interface State {
         IndividualStatisticsSelection: StatisticFunction_api[];
         FanchartStatisticsSelection: FanchartStatisticOption[];
     };
-    realizationsToInclude: number[] | null;
 }

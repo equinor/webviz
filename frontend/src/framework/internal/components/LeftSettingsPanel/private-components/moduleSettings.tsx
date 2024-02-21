@@ -12,13 +12,13 @@ import { Settings as SettingsIcon } from "@mui/icons-material";
 
 import { DebugProfiler } from "../../DebugProfiler";
 
-type SettingProps = {
+type ModuleSettingsProps = {
     moduleInstance: ModuleInstance<any>;
     activeModuleInstanceId: string;
     workbench: Workbench;
 };
 
-export const Setting: React.FC<SettingProps> = (props) => {
+export const ModuleSettings: React.FC<ModuleSettingsProps> = (props) => {
     const importState = useImportState(props.moduleInstance);
     const [moduleInstanceState, setModuleInstanceState] = React.useState<ModuleInstanceState>(
         ModuleInstanceState.INITIALIZING

@@ -3,7 +3,7 @@ import React from "react";
 import WebvizLogo from "@assets/webviz.svg";
 import { DrawerContent, GuiState } from "@framework/GuiMessageBroker";
 import { LayoutElement, Workbench } from "@framework/Workbench";
-import { NavBar } from "@framework/internal/components/NavBar";
+import { LeftNavBar, RightNavBar } from "@framework/internal/components/NavBar";
 import { SettingsContentPanels } from "@framework/internal/components/SettingsContentPanels";
 import { ToggleDevToolsButton } from "@framework/internal/components/ToggleDevToolsButton";
 import { AuthState, useAuthProvider } from "@framework/internal/providers/AuthProvider";
@@ -159,8 +159,9 @@ function App() {
                     "opacity-100": !isInitialisingApp,
                 })}
             >
-                <NavBar workbench={workbench.current} />
+                <LeftNavBar workbench={workbench.current} />
                 <SettingsContentPanels workbench={workbench.current} />
+                <RightNavBar workbench={workbench.current} />
             </div>
             <ToggleDevToolsButton guiMessageBroker={workbench.current.getGuiMessageBroker()} />
         </>

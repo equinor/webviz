@@ -1,7 +1,7 @@
 import React from "react";
 
 import { isDevMode } from "@lib/utils/devMode";
-import { Point } from "@lib/utils/geometry";
+import { Point2D, Size2D } from "@lib/utils/geometry";
 
 export enum DrawerContent {
     ModuleSettings = "ModuleSettings",
@@ -13,11 +13,13 @@ export enum DrawerContent {
 
 export enum GuiState {
     DrawerContent = "drawerContent",
-    SettingsPanelWidthInPercent = "settingsPanelWidthInPercent",
+    LeftSettingsPanelWidthInPercent = "leftSettingsPanelWidthInPercent",
     ActiveModuleInstanceId = "activeModuleInstanceId",
     DataChannelConnectionLayerVisible = "dataChannelConnectionLayerVisible",
     DevToolsVisible = "devToolsVisible",
     EditDataChannelConnections = "editDataChannelConnections",
+    RightSettingsPanelWidthInPercent = "rightSettingsPanelWidthInPercent",
+    RightSettingsPanelExpanded = "rightSettingsPanelExpanded",
 }
 
 export enum GuiEvent {
@@ -39,13 +41,15 @@ export enum GuiEvent {
 export type GuiEventPayloads = {
     [GuiEvent.ModuleHeaderPointerDown]: {
         moduleInstanceId: string;
-        elementPosition: Point;
-        pointerPosition: Point;
+        elementPosition: Point2D;
+        elementSize: Size2D;
+        pointerPosition: Point2D;
     };
     [GuiEvent.NewModulePointerDown]: {
         moduleName: string;
-        elementPosition: Point;
-        pointerPosition: Point;
+        elementPosition: Point2D;
+        elementSize: Size2D;
+        pointerPosition: Point2D;
     };
     [GuiEvent.RemoveModuleInstanceRequest]: {
         moduleInstanceId: string;
@@ -68,21 +72,30 @@ export type GuiEventPayloads = {
 
 type GuiStateValueTypes = {
     [GuiState.DrawerContent]: DrawerContent;
-    [GuiState.SettingsPanelWidthInPercent]: number;
+    [GuiState.LeftSettingsPanelWidthInPercent]: number;
     [GuiState.ActiveModuleInstanceId]: string;
     [GuiState.DataChannelConnectionLayerVisible]: boolean;
     [GuiState.DevToolsVisible]: boolean;
     [GuiState.EditDataChannelConnections]: boolean;
+    [GuiState.RightSettingsPanelWidthInPercent]: number;
+    [GuiState.RightSettingsPanelExpanded]: boolean;
 };
 
 const defaultStates: Map<GuiState, any> = new Map();
 defaultStates.set(GuiState.DrawerContent, DrawerContent.ModuleSettings);
-defaultStates.set(GuiState.SettingsPanelWidthInPercent, 30);
+defaultStates.set(GuiState.LeftSettingsPanelWidthInPercent, 30);
 defaultStates.set(GuiState.ActiveModuleInstanceId, "");
 defaultStates.set(GuiState.DataChannelConnectionLayerVisible, false);
 defaultStates.set(GuiState.DevToolsVisible, isDevMode());
+defaultStates.set(GuiState.RightSettingsPanelWidthInPercent, 0);
+defaultStates.set(GuiState.RightSettingsPanelExpanded, false);
 
-const persistentStates: GuiState[] = [GuiState.SettingsPanelWidthInPercent, GuiState.DevToolsVisible];
+const persistentStates: GuiState[] = [
+    GuiState.LeftSettingsPanelWidthInPercent,
+    GuiState.DevToolsVisible,
+    GuiState.RightSettingsPanelWidthInPercent,
+    GuiState.RightSettingsPanelExpanded,
+];
 
 export class GuiMessageBroker {
     private _eventListeners: Map<GuiEvent, Set<(event: any) => void>>;

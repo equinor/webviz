@@ -9,7 +9,7 @@ const defaultState: State = {
     groupBy: GroupBy.TIME_SERIES,
     colorRealizationsByParameter: false,
     parameterIdent: null,
-    visualizationMode: VisualizationMode.INDIVIDUAL_REALIZATIONS,
+    visualizationMode: VisualizationMode.STATISTICAL_FANCHART,
     vectorSpecifications: [],
     resamplingFrequency: Frequency_api.MONTHLY,
     showObservations: true,
@@ -18,7 +18,6 @@ const defaultState: State = {
         IndividualStatisticsSelection: Object.values(StatisticFunction_api),
         FanchartStatisticsSelection: Object.values(FanchartStatisticOption),
     },
-    realizationsToInclude: null,
 };
 
 const module = ModuleRegistry.initModule<State>("SimulationTimeSeriesMatrix", defaultState);

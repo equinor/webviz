@@ -1,1 +1,2 @@
-export { NavBar } from "./navBar";
+export { LeftNavBar } from "./leftNavBar";
+export { RightNavBar } from "./rightNavBar";
