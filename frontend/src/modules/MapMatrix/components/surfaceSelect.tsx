@@ -7,11 +7,14 @@ import { IconButton } from "@lib/components/IconButton";
 import { SurfaceDirectory, SurfaceTimeType } from "@modules/_shared/Surface";
 import { Remove } from "@mui/icons-material";
 
+import { isEqual } from "lodash";
+
 import { ColorPaletteSelect } from "./colorPaletteSelect";
 import { ColorRangeSelect } from "./colorRangeSelect";
 import { EnsembleStageSelect } from "./ensembleStageSelect";
 import { PrevNextButtons } from "./previousNextButtons";
 
+import { isoStringToDateOrIntervalLabel } from "../_utils/isoString";
 import { EnsembleSetSurfaceMetas } from "../hooks/useEnsembleSetSurfaceMetaQuery";
 import {
     EnsembleStage,
@@ -54,29 +57,28 @@ export const SurfaceSelect: React.FC<SurfaceSelectProps> = (props) => {
         includeAttributeTypes: SurfaceAttributeTypeToApi[props.attributeType],
     });
 
-    let computedSurfaceName = props.surfaceSpecification.surfaceName;
-    if (!computedSurfaceName || !ensembleSurfaceDirectory.getSurfaceNames(null).includes(computedSurfaceName)) {
-        computedSurfaceName = ensembleSurfaceDirectory.getSurfaceNames(null)[0];
-    }
-
     let computedSurfaceAttribute = props.surfaceSpecification.surfaceAttribute;
     if (
         !computedSurfaceAttribute ||
-        !ensembleSurfaceDirectory.getAttributeNames(computedSurfaceName).includes(computedSurfaceAttribute)
+        !ensembleSurfaceDirectory.getAttributeNames(null).includes(computedSurfaceAttribute)
     ) {
-        computedSurfaceAttribute = ensembleSurfaceDirectory.getAttributeNames(computedSurfaceName)[0];
+        computedSurfaceAttribute = ensembleSurfaceDirectory.getAttributeNames(null)[0];
+    }
+    let computedSurfaceName = props.surfaceSpecification.surfaceName;
+    if (
+        !computedSurfaceName ||
+        !ensembleSurfaceDirectory.getSurfaceNames(computedSurfaceAttribute).includes(computedSurfaceName)
+    ) {
+        computedSurfaceName = ensembleSurfaceDirectory.getSurfaceNames(computedSurfaceAttribute)[0];
     }
     let computedTimeOrInterval = props.surfaceSpecification.surfaceTimeOrInterval;
     if (
         !computedTimeOrInterval ||
         !ensembleSurfaceDirectory
-            .getTimeOrIntervalStrings(computedSurfaceName, computedSurfaceAttribute)
+            .getTimeOrIntervalStrings(null, computedSurfaceAttribute)
             .includes(computedTimeOrInterval)
     ) {
-        computedTimeOrInterval = ensembleSurfaceDirectory.getTimeOrIntervalStrings(
-            computedSurfaceName,
-            computedSurfaceAttribute
-        )[0];
+        computedTimeOrInterval = ensembleSurfaceDirectory.getTimeOrIntervalStrings(null, computedSurfaceAttribute)[0];
     }
     let computedRealizationNum = props.surfaceSpecification.realizationNum;
     let availableRealizationNums: number[] = [];
@@ -113,19 +115,7 @@ export const SurfaceSelect: React.FC<SurfaceSelectProps> = (props) => {
         colorPaletteId: props.surfaceSpecification.colorPaletteId,
         uuid: props.surfaceSpecification.uuid,
     };
-    if (
-        props.surfaceSpecification.ensembleIdent?.toString() !==
-            computedSurfaceSpecification.ensembleIdent?.toString() &&
-        props.surfaceSpecification.uuid === computedSurfaceSpecification.uuid &&
-        props.surfaceSpecification.surfaceName === computedSurfaceSpecification.surfaceName &&
-        props.surfaceSpecification.surfaceAttribute === computedSurfaceSpecification.surfaceAttribute &&
-        props.surfaceSpecification.surfaceTimeOrInterval === computedSurfaceSpecification.surfaceTimeOrInterval &&
-        props.surfaceSpecification.ensembleStage === computedSurfaceSpecification.ensembleStage &&
-        props.surfaceSpecification.statisticFunction === computedSurfaceSpecification.statisticFunction &&
-        props.surfaceSpecification.colorRange === computedSurfaceSpecification.colorRange &&
-        props.surfaceSpecification.colorPaletteId === computedSurfaceSpecification.colorPaletteId &&
-        props.surfaceSpecification.realizationNum === computedSurfaceSpecification.realizationNum
-    ) {
+    if (!isEqual(computedSurfaceSpecification, props.surfaceSpecification)) {
         props.onChange(computedSurfaceSpecification);
     }
     function handleEnsembleSelectionChange(identString: string) {
@@ -134,9 +124,28 @@ export const SurfaceSelect: React.FC<SurfaceSelectProps> = (props) => {
     }
 
     function handleSurfaceNameChange(surfaceName: string) {
-        props.onChange({ ...props.surfaceSpecification, surfaceName });
+        if (ensembleSurfaceDirectory.getSurfaceNames(computedSurfaceAttribute).includes(surfaceName)) {
+            props.onChange({ ...props.surfaceSpecification, surfaceName });
+        } else {
+            props.onChange({
+                ...props.surfaceSpecification,
+                surfaceName: ensembleSurfaceDirectory.getSurfaceNames(computedSurfaceAttribute)[0],
+            });
+        }
     }
     function handleSurfaceAttributeChange(surfaceAttribute: string) {
+        if (
+            computedSurfaceName &&
+            ensembleSurfaceDirectory.getSurfaceNames(surfaceAttribute).includes(computedSurfaceName)
+        ) {
+            props.onChange({ ...props.surfaceSpecification, surfaceAttribute });
+        } else {
+            props.onChange({
+                ...props.surfaceSpecification,
+                surfaceName: ensembleSurfaceDirectory.getSurfaceNames(surfaceAttribute)[0],
+                surfaceAttribute,
+            });
+        }
         props.onChange({ ...props.surfaceSpecification, surfaceAttribute });
     }
     function handleSurfaceTimeOrIntervalChange(surfaceTimeOrInterval: string) {
@@ -178,14 +187,14 @@ export const SurfaceSelect: React.FC<SurfaceSelectProps> = (props) => {
         label: ensemble.getDisplayName(),
     }));
     const surfaceNameOptions = ensembleSurfaceDirectory
-        .getSurfaceNames(null)
+        .getSurfaceNames(computedSurfaceAttribute)
         .map((name) => ({ value: name, label: name }));
-    const surfaceAttributeOptions = ensembleSurfaceDirectory.getAttributeNames(computedSurfaceName).map((name) => ({
+    const surfaceAttributeOptions = ensembleSurfaceDirectory.getAttributeNames(null).map((name) => ({
         value: name,
         label: name,
     }));
     const surfaceTimeOrIntervalOptions = ensembleSurfaceDirectory
-        .getTimeOrIntervalStrings(computedSurfaceName, computedSurfaceAttribute)
+        .getTimeOrIntervalStrings(null, computedSurfaceAttribute)
         .map((name) => ({ value: name, label: name }));
     return (
         <>
@@ -217,6 +226,25 @@ export const SurfaceSelect: React.FC<SurfaceSelectProps> = (props) => {
                     </td>
                 </tr>
             )}
+            {(!props.syncedSettings.attribute || props.index == 0) && (
+                <tr>
+                    <td className="px-6 py-0 whitespace-nowrap">Attribute</td>
+                    <td className="px-6 py-0 w-full whitespace-nowrap">
+                        <Dropdown
+                            options={surfaceAttributeOptions}
+                            value={computedSurfaceAttribute}
+                            onChange={handleSurfaceAttributeChange}
+                        />
+                    </td>
+                    <td className="px-0 py-0 whitespace-nowrap text-right">
+                        <PrevNextButtons
+                            onChange={handleSurfaceAttributeChange}
+                            options={surfaceAttributeOptions.map((option) => option.value)}
+                            value={computedSurfaceAttribute}
+                        />
+                    </td>
+                </tr>
+            )}
             {(!props.syncedSettings.name || props.index == 0) && (
                 <tr>
                     <td className="px-6 py-0 whitespace-nowrap">Name</td>
@@ -236,28 +264,10 @@ export const SurfaceSelect: React.FC<SurfaceSelectProps> = (props) => {
                     </td>
                 </tr>
             )}
-            {(!props.syncedSettings.attribute || props.index == 0) && (
-                <tr>
-                    <td className="px-6 py-0 whitespace-nowrap">Name</td>
-                    <td className="px-6 py-0 w-full whitespace-nowrap">
-                        <Dropdown
-                            options={surfaceAttributeOptions}
-                            value={computedSurfaceAttribute}
-                            onChange={handleSurfaceAttributeChange}
-                        />
-                    </td>
-                    <td className="px-0 py-0 whitespace-nowrap text-right">
-                        <PrevNextButtons
-                            onChange={handleSurfaceAttributeChange}
-                            options={surfaceAttributeOptions.map((option) => option.value)}
-                            value={computedSurfaceAttribute}
-                        />
-                    </td>
-                </tr>
-            )}
+
             {(!props.syncedSettings.timeOrInterval || props.index == 0) && props.timeType !== SurfaceTimeType.None && (
                 <tr>
-                    <td className="px-6 py-0 whitespace-nowrap">Name</td>
+                    <td className="px-6 py-0 whitespace-nowrap">Time</td>
                     <td className="px-6 py-0 w-full whitespace-nowrap">
                         <Dropdown
                             options={surfaceTimeOrIntervalOptions}

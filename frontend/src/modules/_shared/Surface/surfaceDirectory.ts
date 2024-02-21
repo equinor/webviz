@@ -155,12 +155,23 @@ export class SurfaceDirectory {
         const max = filteredListWithValues.length > 0 ? Math.max(...maxValues) : 0;
         return { min, max };
     }
-    // Checks if a given name and attribute pair exists.
-    public nameAttributePairExists(surfaceName: string | null, attributeName: string | null): boolean {
-        if (!attributeName || !surfaceName) return false;
-        return this._surfaceList.some(
-            (surface) => surface.name === surfaceName && surface.attribute_name === attributeName
-        );
+    // Checks if surfaces exists in the directory with optional filtering on surface name, attribute, and time/interval.
+    public hasSurface(
+        requireSurfaceName: string | null,
+        requireAttributeName: string | null,
+        requireTimeOrIntervalString: string | null
+    ): boolean {
+        let filteredList = this._surfaceList;
+        if (requireSurfaceName || requireAttributeName || requireTimeOrIntervalString) {
+            filteredList = filteredList.filter((surface) => {
+                const matchedOnSurfName = !requireSurfaceName || surface.name === requireSurfaceName;
+                const matchedOnAttrName = !requireAttributeName || surface.attribute_name === requireAttributeName;
+                const matchedOnTimeOrIntervalString =
+                    !requireTimeOrIntervalString || surface.iso_date_or_interval === requireTimeOrIntervalString;
+                return matchedOnSurfName && matchedOnAttrName && matchedOnTimeOrIntervalString;
+            });
+        }
+        return filteredList.length > 0;
     }
 
     public getSurfaceMetas(): SurfaceMeta_api[] {
