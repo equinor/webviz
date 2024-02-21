@@ -89,7 +89,7 @@ export function settings({ moduleContext, workbenchSession, workbenchSettings }:
 
     return (
         <>
-            <CollapsibleGroup expanded={true} title="Data selection">
+            <CollapsibleGroup expanded={true} title="Ensembles">
                 <Label text="Ensembles">
                     <MultiEnsembleSelect
                         ensembleSet={ensembleSet}
@@ -98,52 +98,58 @@ export function settings({ moduleContext, workbenchSession, workbenchSettings }:
                         size={4}
                     />
                 </Label>
-                <SurfaceAttributeTypeSelect
-                    onAttributeChange={reducer.setAttributeType}
-                    onTimeModeChange={reducer.setTimeMode}
-                    timeMode={reducer.state.timeMode}
-                    attributeType={reducer.state.attributeType}
-                />
-                <CollapsibleGroup expanded={true} title="Wellbores">
-                    <SmdaWellBoreSelect
-                        selectedWellAddresses={reducer.state.wellAddresses || []}
-                        onWellBoreChange={reducer.setWellBoreAddresses}
-                        ensembleIdent={reducer.state.ensembleIdents ? reducer.state.ensembleIdents[0] : null}
-                    />
-                </CollapsibleGroup>
             </CollapsibleGroup>
-            <CollapsibleGroup expanded={true} title="Synchronize settings">
+            <CollapsibleGroup expanded={false} title="Drilled Wellbores">
+                <SmdaWellBoreSelect
+                    selectedWellAddresses={reducer.state.wellAddresses || []}
+                    onWellBoreChange={reducer.setWellBoreAddresses}
+                    ensembleIdent={reducer.state.ensembleIdents ? reducer.state.ensembleIdents[0] : null}
+                />
+            </CollapsibleGroup>
+            <CollapsibleGroup expanded={false} title="Link settings">
                 <SyncSettings syncedSettings={reducer.state.syncedSettings} onChange={handleSyncedSettingsChange} />
             </CollapsibleGroup>
-            <div className="m-2">
-                <Button
-                    variant={"contained"}
-                    onClick={handleAddSurface}
-                    disabled={ensembleSetSurfaceMetas.isFetching && ensembleSet.getEnsembleArr().length > 0}
-                    startIcon={ensembleSetSurfaceMetas.isFetching ? <CircularProgress /> : null}
-                >
-                    Add Surface
-                </Button>
-            </div>
-            <table className="table-auto w-full divide-y divide-gray-200">
-                <tbody>
-                    {reducer.state.surfaceSpecifications.map((surfaceSpec, index) => (
-                        <SurfaceSelect
-                            index={index}
-                            key={surfaceSpec.uuid}
-                            surfaceMetas={ensembleSetSurfaceMetas}
-                            surfaceSpecification={surfaceSpec}
-                            ensembleIdents={reducer.state.ensembleIdents}
-                            timeType={reducer.state.timeMode}
-                            attributeType={reducer.state.attributeType}
-                            syncedSettings={reducer.state.syncedSettings}
-                            onChange={handleSurfaceSelectChange}
-                            onRemove={handleRemoveSurface}
-                            ensembleSet={ensembleSet}
-                        />
-                    ))}
-                </tbody>
-            </table>
+            <CollapsibleGroup expanded={true} title="Surface selections">
+                <>
+                    <SurfaceAttributeTypeSelect
+                        onAttributeChange={reducer.setAttributeType}
+                        onTimeModeChange={reducer.setTimeMode}
+                        attributeType={reducer.state.attributeType}
+                    />
+                    <div className="m-2 flex gap-2 items-center">
+                        <Button
+                            variant={"contained"}
+                            onClick={handleAddSurface}
+                            disabled={reducer.state.ensembleIdents.length === 0}
+                            startIcon={ensembleSetSurfaceMetas.isFetching ? <CircularProgress /> : null}
+                        >
+                            Add Surface
+                        </Button>
+                        {!reducer.state.ensembleIdents.length && "Select ensembles to add surfaces."}
+                    </div>
+                </>
+            </CollapsibleGroup>
+            <>
+                <table className="table-auto w-full divide-y divide-gray-200">
+                    <tbody>
+                        {reducer.state.surfaceSpecifications.map((surfaceSpec, index) => (
+                            <SurfaceSelect
+                                index={index}
+                                key={surfaceSpec.uuid}
+                                surfaceMetas={ensembleSetSurfaceMetas}
+                                surfaceSpecification={surfaceSpec}
+                                ensembleIdents={reducer.state.ensembleIdents}
+                                timeType={reducer.state.timeMode}
+                                attributeType={reducer.state.attributeType}
+                                syncedSettings={reducer.state.syncedSettings}
+                                onChange={handleSurfaceSelectChange}
+                                onRemove={handleRemoveSurface}
+                                ensembleSet={ensembleSet}
+                            />
+                        ))}
+                    </tbody>
+                </table>
+            </>
         </>
     );
 }

@@ -65,6 +65,11 @@ export const SurfaceSelect: React.FC<SurfaceSelectProps> = (props) => {
         computedSurfaceAttribute = ensembleSurfaceDirectory.getAttributeNames(null)[0];
     }
     let computedSurfaceName = props.surfaceSpecification.surfaceName;
+    if (props.syncedSettings.name && props.index !== 0) {
+        if (!ensembleSurfaceDirectory.getAttributeNames(computedSurfaceName).includes(computedSurfaceAttribute)) {
+            computedSurfaceAttribute = ensembleSurfaceDirectory.getAttributeNames(computedSurfaceName)[0];
+        }
+    }
     if (
         !computedSurfaceName ||
         !ensembleSurfaceDirectory.getSurfaceNames(computedSurfaceAttribute).includes(computedSurfaceName)

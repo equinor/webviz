@@ -18,7 +18,7 @@ export function useSurfaceDataSetQueryByAddresses(surfaceAddresses: SurfaceAddre
     const queryResults = useQueries({
         queries: surfaceAddresses.map((surfAddr: SurfaceAddress) => {
             let queryKey: QueryKey = ["dummy"];
-            let queryFn: () => Promise<SurfaceDataPng_api>;
+            let queryFn: () => Promise<SurfaceDataPng_api> | null = () => null;
 
             if (surfAddr.addressType === "realization") {
                 queryKey = [
@@ -58,7 +58,7 @@ export function useSurfaceDataSetQueryByAddresses(surfaceAddresses: SurfaceAddre
                         surfAddr.attribute,
                         surfAddr.isoDateOrInterval
                     );
-            } else {
+            } else if (surfAddr.addressType === "observation") {
                 queryKey = [
                     "getObservationSurfaceDataAsPng",
                     surfAddr.caseUuid,

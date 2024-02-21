@@ -6,11 +6,26 @@ import { WellBoreAddress } from "@modules/_shared/WellBore/wellBoreAddress";
 
 export enum SurfaceAttributeType {
     DEPTH_TIME = "Depth and time maps",
-    PROPERTY = "Attribute maps",
+    STATIC_ATTRIBUTE = "Static attribute maps",
+    TIMEPOINT_ATTRIBUTE = "Timepoint attribute maps",
+    TIMEINTERVAL_ATTRIBUTE = "Timeinterval attribute maps",
 }
 export const SurfaceAttributeTypeToApi = {
     [SurfaceAttributeType.DEPTH_TIME]: [SurfaceAttributeType_api.DEPTH, SurfaceAttributeType_api.TIME],
-    [SurfaceAttributeType.PROPERTY]: [
+    [SurfaceAttributeType.STATIC_ATTRIBUTE]: [
+        SurfaceAttributeType_api.PROPERTY,
+        SurfaceAttributeType_api.ISOCHORE,
+        SurfaceAttributeType_api.FLUID_CONTACT,
+        SurfaceAttributeType_api.THICKNESS,
+    ],
+    [SurfaceAttributeType.TIMEPOINT_ATTRIBUTE]: [
+        SurfaceAttributeType_api.PROPERTY,
+        SurfaceAttributeType_api.SEISMIC,
+        SurfaceAttributeType_api.ISOCHORE,
+        SurfaceAttributeType_api.FLUID_CONTACT,
+        SurfaceAttributeType_api.THICKNESS,
+    ],
+    [SurfaceAttributeType.TIMEINTERVAL_ATTRIBUTE]: [
         SurfaceAttributeType_api.PROPERTY,
         SurfaceAttributeType_api.SEISMIC,
         SurfaceAttributeType_api.ISOCHORE,

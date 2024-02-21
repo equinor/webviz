@@ -8,24 +8,31 @@ import { SurfaceTimeType } from "@modules/_shared/Surface";
 import { SurfaceAttributeType } from "../types";
 
 const SurfaceAttributeTypeToStringMapping = {
-    [SurfaceAttributeType.DEPTH_TIME]: "Depth/Time",
-    [SurfaceAttributeType.PROPERTY]: "Property",
+    [SurfaceAttributeType.DEPTH_TIME]: "Depth/Time surfaces",
+    [SurfaceAttributeType.STATIC_ATTRIBUTE]: "Static attribute maps",
+    [SurfaceAttributeType.TIMEPOINT_ATTRIBUTE]: "Time-point attribute maps",
+    [SurfaceAttributeType.TIMEINTERVAL_ATTRIBUTE]: "Time-interval attribute maps",
 };
+
 export type SurfaceAttributeTypeSelectProps = {
     onAttributeChange(attributeType: SurfaceAttributeType): void;
     onTimeModeChange(timeMode: SurfaceTimeType): void;
-    timeMode: SurfaceTimeType;
     attributeType: SurfaceAttributeType;
 };
 export const SurfaceAttributeTypeSelect: React.FC<SurfaceAttributeTypeSelectProps> = (props) => {
-    function handleTimeModeChange(val: string) {
-        props.onTimeModeChange(val as SurfaceTimeType);
-    }
-
     function handleSurfaceAttributeTypeChange(val: string) {
         const newSurfaceAttributeType = val as SurfaceAttributeType;
-        if (newSurfaceAttributeType === SurfaceAttributeType.DEPTH_TIME && props.timeMode !== SurfaceTimeType.None) {
+        if (newSurfaceAttributeType === SurfaceAttributeType.DEPTH_TIME) {
             props.onTimeModeChange(SurfaceTimeType.None);
+        }
+        if (newSurfaceAttributeType === SurfaceAttributeType.STATIC_ATTRIBUTE) {
+            props.onTimeModeChange(SurfaceTimeType.None);
+        }
+        if (newSurfaceAttributeType === SurfaceAttributeType.TIMEPOINT_ATTRIBUTE) {
+            props.onTimeModeChange(SurfaceTimeType.TimePoint);
+        }
+        if (newSurfaceAttributeType === SurfaceAttributeType.TIMEINTERVAL_ATTRIBUTE) {
+            props.onTimeModeChange(SurfaceTimeType.Interval);
         }
         props.onAttributeChange(newSurfaceAttributeType);
     }
@@ -42,21 +49,6 @@ export const SurfaceAttributeTypeSelect: React.FC<SurfaceAttributeTypeSelectProp
                     />
                 </Label>
             </div>
-            <Label text="Static / dynamic">
-                <Dropdown
-                    value={props.timeMode}
-                    options={[
-                        {
-                            value: SurfaceTimeType.None,
-                            label: "No time (static)",
-                        },
-                        { value: SurfaceTimeType.TimePoint, label: "Time point" },
-                        { value: SurfaceTimeType.Interval, label: "Time interval" },
-                    ]}
-                    disabled={props.attributeType === SurfaceAttributeType.DEPTH_TIME}
-                    onChange={handleTimeModeChange}
-                />
-            </Label>
         </div>
     );
 };

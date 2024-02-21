@@ -20,7 +20,7 @@ export const initialSurfaceReducerState: SurfaceReducerState = {
         colorPaletteId: false,
     },
     timeMode: SurfaceTimeType.None,
-    attributeType: SurfaceAttributeType.PROPERTY,
+    attributeType: SurfaceAttributeType.STATIC_ATTRIBUTE,
     wellAddresses: [],
 };
 
