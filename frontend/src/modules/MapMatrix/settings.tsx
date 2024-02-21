@@ -10,6 +10,7 @@ import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { Label } from "@lib/components/Label";
 import { ColorScaleGradientType } from "@lib/utils/ColorScale";
 
+import { isEqual } from "lodash";
 import { v4 as uuidv4 } from "uuid";
 
 import { SmdaWellBoreSelect } from "./components/smdaWellBoreSelect";
@@ -23,20 +24,23 @@ import { EnsembleStageType, SurfaceSpecification, SyncedSettings } from "./types
 
 export function settings({ moduleContext, workbenchSession, workbenchSettings }: ModuleFCProps<State>) {
     const ensembleSet = useEnsembleSet(workbenchSession);
-    // Use the first ensemble to e.g. get the wellbores. This is fine as long as all ensembles are the same Sumo field.
-    // Not entirely sure how to handle the case where the ensembles are from different fields.
-    // Different fields might have different coordinate systems which would make it impossible to show them together without
-    // transforming the coordinates.
-    const firstEnsemble = ensembleSet.getEnsembleArr()[0];
     const reducer = useSurfaceReducer();
 
-    const ensembleSetSurfaceMetas = useEnsembleSetSurfaceMetaQuery(reducer.state.ensembleIdents);
+    const ensembleArr = ensembleSet.getEnsembleArr();
+    const availableEnsembleIdents = ensembleArr.map((ensemble) => ensemble.getIdent());
+    // Check if the ensemble idents in the state are still available
+    const ensembleIdents = reducer.state.ensembleIdents.filter((ident) => availableEnsembleIdents.includes(ident));
+    if (!isEqual(ensembleIdents, reducer.state.ensembleIdents)) {
+        reducer.setEnsembleIdents(ensembleIdents);
+    }
+
     const defaultColorScale = workbenchSettings
         .useContinuousColorScale({
             gradientType: ColorScaleGradientType.Sequential,
         })
         .getColorPalette()
         .getId();
+
     function handleSyncedSettingsChange(syncedSettings: SyncedSettings) {
         reducer.setSyncedSettings(syncedSettings);
     }
@@ -81,6 +85,7 @@ export function settings({ moduleContext, workbenchSession, workbenchSettings }:
         },
         [reducer.state.wellAddresses]
     );
+    const ensembleSetSurfaceMetas = useEnsembleSetSurfaceMetaQuery(reducer.state.ensembleIdents);
 
     return (
         <>
@@ -103,7 +108,7 @@ export function settings({ moduleContext, workbenchSession, workbenchSettings }:
                     <SmdaWellBoreSelect
                         selectedWellAddresses={reducer.state.wellAddresses || []}
                         onWellBoreChange={reducer.setWellBoreAddresses}
-                        ensembleIdent={firstEnsemble ? firstEnsemble.getIdent() : null}
+                        ensembleIdent={reducer.state.ensembleIdents ? reducer.state.ensembleIdents[0] : null}
                     />
                 </CollapsibleGroup>
             </CollapsibleGroup>
