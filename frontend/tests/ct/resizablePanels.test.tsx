@@ -4,7 +4,7 @@ import { Point2D, Size2D } from "@lib/utils/geometry";
 import { ComponentFixtures, expect, test } from "@playwright/experimental-ct-react";
 import { Locator } from "@playwright/test";
 
-import { fuzzyCompare } from "tests/utils/fuzzyCompare";
+import { compareWithTolerance } from "tests/utils/compare";
 
 const viewPortSize = { width: 1920, height: 1080 };
 
@@ -68,10 +68,10 @@ function assertExpectedPositionAndSize(
             return false;
         }
         return (
-            fuzzyCompare(boundingBox.x, position.x, tolerance) &&
-            fuzzyCompare(boundingBox.y, position.y, tolerance) &&
-            fuzzyCompare(boundingBox.width, size.width, tolerance) &&
-            fuzzyCompare(boundingBox.height, size.height, tolerance)
+            compareWithTolerance(boundingBox.x, position.x, tolerance) &&
+            compareWithTolerance(boundingBox.y, position.y, tolerance) &&
+            compareWithTolerance(boundingBox.width, size.width, tolerance) &&
+            compareWithTolerance(boundingBox.height, size.height, tolerance)
         );
     });
 }
@@ -762,7 +762,9 @@ test.describe("ResizablePanels", () => {
         ];
 
         for (let i = 0; i < 3; i++) {
-            expect(fuzzyCompare(callbackSizes[i], (expectedWidths[i] / viewPortSize.width) * 100, 1.0)).toBeTruthy();
+            expect(
+                compareWithTolerance(callbackSizes[i], (expectedWidths[i] / viewPortSize.width) * 100, 1.0)
+            ).toBeTruthy();
         }
 
         await page.mouse.move(
@@ -783,7 +785,9 @@ test.describe("ResizablePanels", () => {
         ];
 
         for (let i = 0; i < 3; i++) {
-            expect(fuzzyCompare(callbackSizes[i], (expectedWidths[i] / viewPortSize.width) * 100, 1.0)).toBeTruthy();
+            expect(
+                compareWithTolerance(callbackSizes[i], (expectedWidths[i] / viewPortSize.width) * 100, 1.0)
+            ).toBeTruthy();
         }
     });
 });
