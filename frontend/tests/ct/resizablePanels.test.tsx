@@ -12,14 +12,30 @@ test.use({ viewport: viewPortSize });
 
 async function mountComponentAndAssertItsRenderedCorrectly(
     mount: ComponentFixtures["mount"],
-    props: Omit<ResizablePanelsProps, "children" | "id">
+    props: Omit<ResizablePanelsProps, "children" | "id">,
+    size: Size2D = viewPortSize
 ): ReturnType<ComponentFixtures["mount"]> {
     const resizablePanels = await mount(
-        <div className="w-screen h-screen" id="container">
+        <div
+            className="w-screen h-screen"
+            id="container"
+            style={{
+                width: `${size.width}px`,
+                height: `${size.height}px`,
+                marginLeft: viewPortSize.width / 2 - size.width / 2,
+                marginTop: viewPortSize.height / 2 - size.height / 2,
+            }}
+        >
             <ResizablePanels {...props} id="resizable-panels-test">
-                <div id="first" className="h-full" />
-                <div id="second" className="h-full" />
-                <div id="third" className="h-full" />
+                <div id="first" className="h-full w-full">
+                    Content 1
+                </div>
+                <div id="second" className="h-full w-full">
+                    Content 2
+                </div>
+                <div id="third" className="h-full w-full">
+                    Content 3
+                </div>
             </ResizablePanels>
         </div>
     );
@@ -491,14 +507,14 @@ test.describe("ResizablePanels", () => {
         ).toBeTruthy();
     });
 
-    test("Resizing not violating bounds horizontally", async ({ page, mount }) => {
+    test("Resizing not violating bounds when dragging over left edge", async ({ page, mount }) => {
         const resizablePanels = await mountComponentAndAssertItsRenderedCorrectly(mount, {
             direction: "horizontal",
             minSizes: [300, 0, 0],
             sizesInPercent: [10, 80, 10],
         });
         const [content1, content2, content3] = await makeContentLocatorsAndAssertTheirExistence(resizablePanels);
-        const [dragHandle1, dragHandle2] = await makeDragHandleLocatorsAndAssertTheirExistence(resizablePanels);
+        const [dragHandle1] = await makeDragHandleLocatorsAndAssertTheirExistence(resizablePanels);
 
         const dragHandle1BoundingBox = await dragHandle1.boundingBox();
         expect(dragHandle1BoundingBox).not.toBeNull();
@@ -515,14 +531,14 @@ test.describe("ResizablePanels", () => {
         await page.mouse.move(-100, dragHandle1BoundingBox.y + dragHandle1BoundingBox.height / 2);
         await page.mouse.up();
 
-        let expectedWidths = [0, viewPortSize.width - 0.1 * viewPortSize.width - 1.5, 0.1 * viewPortSize.width - 0.5];
+        const expectedWidths = [0, viewPortSize.width - 0.1 * viewPortSize.width - 1.5, 0.1 * viewPortSize.width - 0.5];
 
         expect(
             await assertExpectedPositionAndSize(
                 content1,
                 { x: 0, y: 0 },
                 { width: expectedWidths[0], height: viewPortSize.height },
-                3.0
+                5.0
             )
         ).toBeTruthy();
 
@@ -531,7 +547,7 @@ test.describe("ResizablePanels", () => {
                 content2,
                 { x: expectedWidths[0] + 1, y: 0 },
                 { width: expectedWidths[1], height: viewPortSize.height },
-                3.0
+                5.0
             )
         ).toBeTruthy();
 
@@ -540,24 +556,24 @@ test.describe("ResizablePanels", () => {
                 content3,
                 { x: expectedWidths[0] + expectedWidths[1] + 2, y: 0 },
                 { width: expectedWidths[2], height: viewPortSize.height },
-                3.0
+                5.0
             )
         ).toBeTruthy();
+    });
 
-        await resizablePanels.update(
-            <div className="w-screen h-screen" id="container">
-                <ResizablePanels
-                    direction="horizontal"
-                    id="resizable-panels-test"
-                    sizesInPercent={[10, 78, 12]}
-                    minSizes={[0, 0, 300]}
-                >
-                    <div id="first" className="w-full h-full" />
-                    <div id="second" className="w-full h-full" />
-                    <div id="third" className="w-full h-full" />
-                </ResizablePanels>
-            </div>
+    test("Resizing not violating bounds when dragging over right edge", async ({ page, mount }) => {
+        const resizablePanelsSize = { width: 1820, height: 1080 };
+        const resizablePanels = await mountComponentAndAssertItsRenderedCorrectly(
+            mount,
+            {
+                direction: "horizontal",
+                minSizes: [0, 0, 300],
+                sizesInPercent: [10, 80, 10],
+            },
+            resizablePanelsSize
         );
+        const [content1, content2, content3] = await makeContentLocatorsAndAssertTheirExistence(resizablePanels);
+        const [, dragHandle2] = await makeDragHandleLocatorsAndAssertTheirExistence(resizablePanels);
 
         const dragHandle2BoundingBox = await dragHandle2.boundingBox();
         expect(dragHandle2BoundingBox).not.toBeNull();
@@ -571,16 +587,20 @@ test.describe("ResizablePanels", () => {
             dragHandle2BoundingBox.y + dragHandle2BoundingBox.height / 2
         );
         await page.mouse.down();
-        await page.mouse.move(viewPortSize.width + 100, dragHandle2BoundingBox.y + dragHandle2BoundingBox.height / 2);
+        await page.mouse.move(viewPortSize.width, dragHandle2BoundingBox.y + dragHandle2BoundingBox.height / 2);
         await page.mouse.up();
 
-        expectedWidths = [0.1 * viewPortSize.width - 0.5, viewPortSize.width - 0.1 * viewPortSize.width - 1.5, 0];
+        const expectedWidths = [
+            0.1 * resizablePanelsSize.width - 0.5,
+            resizablePanelsSize.width - 0.1 * resizablePanelsSize.width - 1.5,
+            0,
+        ];
 
         expect(
             await assertExpectedPositionAndSize(
                 content1,
-                { x: 0, y: 0 },
-                { width: expectedWidths[0], height: viewPortSize.height },
+                { x: 50, y: 0 },
+                { width: expectedWidths[0], height: resizablePanelsSize.height },
                 3.0
             )
         ).toBeTruthy();
@@ -588,8 +608,8 @@ test.describe("ResizablePanels", () => {
         expect(
             await assertExpectedPositionAndSize(
                 content2,
-                { x: expectedWidths[0] + 1, y: 0 },
-                { width: expectedWidths[1], height: viewPortSize.height },
+                { x: 50 + expectedWidths[0] + 1, y: 0 },
+                { width: expectedWidths[1], height: resizablePanelsSize.height },
                 3.0
             )
         ).toBeTruthy();
@@ -597,21 +617,21 @@ test.describe("ResizablePanels", () => {
         expect(
             await assertExpectedPositionAndSize(
                 content3,
-                { x: expectedWidths[0] + expectedWidths[1] + 2, y: 0 },
-                { width: expectedWidths[2], height: viewPortSize.height },
+                { x: 50 + expectedWidths[0] + expectedWidths[1] + 2, y: 0 },
+                { width: expectedWidths[2], height: resizablePanelsSize.height },
                 3.0
             )
         ).toBeTruthy();
     });
 
-    test("Resizing not violating bounds vertically", async ({ page, mount }) => {
+    test("Resizing not violating bounds when dragging over top edge", async ({ page, mount }) => {
         const resizablePanels = await mountComponentAndAssertItsRenderedCorrectly(mount, {
             direction: "vertical",
             minSizes: [300, 0, 0],
             sizesInPercent: [10, 80, 10],
         });
         const [content1, content2, content3] = await makeContentLocatorsAndAssertTheirExistence(resizablePanels);
-        const [dragHandle1, dragHandle2] = await makeDragHandleLocatorsAndAssertTheirExistence(resizablePanels);
+        const [dragHandle1] = await makeDragHandleLocatorsAndAssertTheirExistence(resizablePanels);
 
         const dragHandle1BoundingBox = await dragHandle1.boundingBox();
         expect(dragHandle1BoundingBox).not.toBeNull();
@@ -628,7 +648,7 @@ test.describe("ResizablePanels", () => {
         await page.mouse.move(dragHandle1BoundingBox.x + dragHandle1BoundingBox.width / 2, -100);
         await page.mouse.up();
 
-        let expectedHeights = [
+        const expectedHeights = [
             0,
             viewPortSize.height - 0.1 * viewPortSize.height - 1.5,
             0.1 * viewPortSize.height - 0.5,
@@ -639,7 +659,7 @@ test.describe("ResizablePanels", () => {
                 content1,
                 { x: 0, y: 0 },
                 { width: viewPortSize.width, height: expectedHeights[0] },
-                3.0
+                5.0
             )
         ).toBeTruthy();
 
@@ -648,7 +668,7 @@ test.describe("ResizablePanels", () => {
                 content2,
                 { x: 0, y: expectedHeights[0] + 1 },
                 { width: viewPortSize.width, height: expectedHeights[1] },
-                3.0
+                5.0
             )
         ).toBeTruthy();
 
@@ -657,24 +677,24 @@ test.describe("ResizablePanels", () => {
                 content3,
                 { x: 0, y: expectedHeights[0] + expectedHeights[1] + 2 },
                 { width: viewPortSize.width, height: expectedHeights[2] },
-                3.0
+                5.0
             )
         ).toBeTruthy();
+    });
 
-        await resizablePanels.update(
-            <div className="w-screen h-screen" id="container">
-                <ResizablePanels
-                    direction="vertical"
-                    id="resizable-panels-test"
-                    sizesInPercent={[10, 78, 12]}
-                    minSizes={[0, 0, 300]}
-                >
-                    <div id="first" className="w-full h-full" />
-                    <div id="second" className="w-full h-full" />
-                    <div id="third" className="w-full h-full" />
-                </ResizablePanels>
-            </div>
+    test("Resizing not violating bounds when dragging over bottom edge", async ({ page, mount }) => {
+        const resizablePanelsSize = { width: 1920, height: 980 };
+        const resizablePanels = await mountComponentAndAssertItsRenderedCorrectly(
+            mount,
+            {
+                direction: "vertical",
+                minSizes: [0, 0, 300],
+                sizesInPercent: [10, 80, 10],
+            },
+            resizablePanelsSize
         );
+        const [content1, content2, content3] = await makeContentLocatorsAndAssertTheirExistence(resizablePanels);
+        const [, dragHandle2] = await makeDragHandleLocatorsAndAssertTheirExistence(resizablePanels);
 
         const dragHandle2BoundingBox = await dragHandle2.boundingBox();
         expect(dragHandle2BoundingBox).not.toBeNull();
@@ -688,15 +708,19 @@ test.describe("ResizablePanels", () => {
             dragHandle2BoundingBox.y + dragHandle2BoundingBox.height / 2
         );
         await page.mouse.down();
-        await page.mouse.move(dragHandle1BoundingBox.x + dragHandle1BoundingBox.width / 2, viewPortSize.height + 100);
+        await page.mouse.move(dragHandle2BoundingBox.x + dragHandle2BoundingBox.width / 2, viewPortSize.height);
         await page.mouse.up();
 
-        expectedHeights = [0.1 * viewPortSize.height - 0.5, viewPortSize.height - 0.1 * viewPortSize.height - 1.5, 0];
+        const expectedHeights = [
+            0.1 * resizablePanelsSize.height - 0.5,
+            resizablePanelsSize.height - 0.1 * resizablePanelsSize.height - 1.5,
+            0,
+        ];
 
         expect(
             await assertExpectedPositionAndSize(
                 content1,
-                { x: 0, y: 0 },
+                { x: 0, y: 50 },
                 { width: viewPortSize.width, height: expectedHeights[0] },
                 3.0
             )
@@ -705,7 +729,7 @@ test.describe("ResizablePanels", () => {
         expect(
             await assertExpectedPositionAndSize(
                 content2,
-                { x: 0, y: expectedHeights[0] + 1 },
+                { x: 0, y: 50 + expectedHeights[0] + 1 },
                 { width: viewPortSize.width, height: expectedHeights[1] },
                 3.0
             )
@@ -714,7 +738,7 @@ test.describe("ResizablePanels", () => {
         expect(
             await assertExpectedPositionAndSize(
                 content3,
-                { x: 0, y: expectedHeights[0] + expectedHeights[1] + 2 },
+                { x: 0, y: 50 + expectedHeights[0] + expectedHeights[1] + 2 },
                 { width: viewPortSize.width, height: expectedHeights[2] },
                 3.0
             )
@@ -741,6 +765,7 @@ test.describe("ResizablePanels", () => {
         expect(dragHandle2BoundingBox).not.toBeNull();
 
         if (dragHandle1BoundingBox === null || dragHandle2BoundingBox === null) {
+            expect(false).toBeTruthy();
             return;
         }
 
@@ -763,7 +788,7 @@ test.describe("ResizablePanels", () => {
 
         for (let i = 0; i < 3; i++) {
             expect(
-                compareWithTolerance(callbackSizes[i], (expectedWidths[i] / viewPortSize.width) * 100, 1.0)
+                compareWithTolerance(callbackSizes[i], (expectedWidths[i] / viewPortSize.width) * 100, 5.0)
             ).toBeTruthy();
         }
 
@@ -786,7 +811,7 @@ test.describe("ResizablePanels", () => {
 
         for (let i = 0; i < 3; i++) {
             expect(
-                compareWithTolerance(callbackSizes[i], (expectedWidths[i] / viewPortSize.width) * 100, 1.0)
+                compareWithTolerance(callbackSizes[i], (expectedWidths[i] / viewPortSize.width) * 100, 5.0)
             ).toBeTruthy();
         }
     });

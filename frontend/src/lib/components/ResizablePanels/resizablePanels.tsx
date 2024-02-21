@@ -230,13 +230,13 @@ export const ResizablePanels: React.FC<ResizablePanelsProps> = (props) => {
         function addEventListeners() {
             document.addEventListener("pointermove", handlePointerMove);
             document.addEventListener("pointerup", handlePointerUp);
-            document.addEventListener("blur", handlePointerUp);
+            window.addEventListener("blur", handlePointerUp);
         }
 
         function removeEventListeners() {
             document.removeEventListener("pointermove", handlePointerMove);
             document.removeEventListener("pointerup", handlePointerUp);
-            document.removeEventListener("blur", handlePointerUp);
+            window.removeEventListener("blur", handlePointerUp);
         }
 
         document.addEventListener("pointerdown", handlePointerDown);
@@ -267,7 +267,7 @@ export const ResizablePanels: React.FC<ResizablePanelsProps> = (props) => {
         }
         if (props.direction === "horizontal") {
             style.width = `calc(${sizes[index]}% - ${subtractHandleSize}px)`;
-            style.minWidth = 0;
+            style.minWidth = undefined;
             if (props.visible?.at(index) !== false && sizes[index] >= minSizesToggleVisibilityValue) {
                 const minSize = props.minSizes?.at(index);
                 if (minSize) {
@@ -284,7 +284,7 @@ export const ResizablePanels: React.FC<ResizablePanelsProps> = (props) => {
             }
         } else {
             style.height = `calc(${sizes[index]}% - ${subtractHandleSize}px)`;
-            style.minHeight = 0;
+            style.minHeight = undefined;
             if (props.visible?.at(index) !== false && sizes[index] >= minSizesToggleVisibilityValue) {
                 const minSize = props.minSizes?.at(index);
                 if (minSize) {
