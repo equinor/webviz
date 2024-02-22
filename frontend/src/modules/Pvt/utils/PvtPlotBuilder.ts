@@ -207,6 +207,7 @@ export class PvtPlotBuilder {
                                 color,
                             },
                             showlegend: false,
+                            hovertemplate: ""
                         };
 
                         figure.addTrace(borderTrace, row, col);

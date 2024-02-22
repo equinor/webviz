@@ -10,7 +10,7 @@ import { PendingWrapper } from "@lib/components/PendingWrapper";
 import { RadioGroup } from "@lib/components/RadioGroup";
 import { Select, SelectOption } from "@lib/components/Select";
 
-import { useAtom, useAtomValue } from "jotai";
+import { useAtom, useAtomValue, useSetAtom } from "jotai";
 
 import {
     userSelectedEnsembleIdentsAtom,
@@ -25,7 +25,7 @@ import {
 } from "./atoms/derivedAtoms";
 import { pvtDataQueriesAtom } from "./atoms/queryAtoms";
 
-import { DependentVariableSelector } from "../components/DependentVariableSelector/dependentVariableSelector";
+import { DependentVariableSelector } from "./components/DependentVariableSelector/dependentVariableSelector";
 import { Interface, State } from "../state";
 import {
     ColorBy,
@@ -40,13 +40,13 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
     const filterEnsembleRealizationsFunc = useEnsembleRealizationFilterFunc(workbenchSession);
 
     const selectedEnsembleIdents = useAtomValue(selectedEnsembleIdentsAtom);
-    const [, setSelectedEnsembleIdents] = useAtom(userSelectedEnsembleIdentsAtom);
     const selectedPvtNums = useAtomValue(selectedPvtNumsAtom);
-    const [, setSelectedPvtNums] = useAtom(userSelectedPvtNumsAtom);
     const pvtDataQueries = useAtomValue(pvtDataQueriesAtom);
     const pvtDataAccessor = useAtomValue(pvtDataAccessorAtom);
     const selectedRealizations = useAtomValue(selectedRealizationsAtom);
-    const [, setSelectedRealizations] = useAtom(userSelectedRealizationsAtom);
+    const setSelectedEnsembleIdents = useSetAtom(userSelectedEnsembleIdentsAtom);
+    const setSelectedRealizations = useSetAtom(userSelectedRealizationsAtom);
+    const setSelectedPvtNums = useSetAtom(userSelectedPvtNumsAtom);
 
     const [selectedPhase, setSelectedPhase] = settingsContext.useInterfaceState("selectedPhase");
     const [selectedColorBy, setSelectedColorBy] = settingsContext.useInterfaceState("selectedColorBy");

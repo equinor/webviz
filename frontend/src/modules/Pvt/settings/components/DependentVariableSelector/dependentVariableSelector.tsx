@@ -4,7 +4,7 @@ import { Checkbox } from "@lib/components/Checkbox";
 
 import { isEqual } from "lodash";
 
-import { PRESSURE_DEPENDENT_VARIABLE_TO_DISPLAY_NAME, PressureDependentVariable } from "../../typesAndEnums";
+import { PRESSURE_DEPENDENT_VARIABLE_TO_DISPLAY_NAME, PressureDependentVariable } from "../../../typesAndEnums";
 
 export type DependentVariableSelectorProps = {
     dependentVariables: PressureDependentVariable[];

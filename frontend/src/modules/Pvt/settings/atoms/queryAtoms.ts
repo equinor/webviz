@@ -25,7 +25,7 @@ export const pvtDataQueriesAtom = atomWithQueries((get) => {
     const queries = ensembleIdentsAndRealizations
         .map((el) => {
             return () => ({
-                queryKey: ["tableData", el.ensembleIdent.toString(), el.realization],
+                queryKey: ["pvtTableData", el.ensembleIdent.toString(), el.realization],
                 queryFn: () =>
                     apiService.pvt.tableData(
                         el.ensembleIdent.getCaseUuid(),
