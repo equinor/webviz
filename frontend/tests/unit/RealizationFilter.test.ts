@@ -6,6 +6,7 @@ import { describe, expect, test } from "vitest";
 const FIRST_ENSEMBLE_REALIZATIONS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 15];
 
 const FIRST_ENSEMBLE = new Ensemble(
+    "DROGON",
     "First ensemble UUID",
     "First case",
     "First ensemble",
