@@ -4,12 +4,14 @@ import { EnsembleSensitivities, Sensitivity } from "./EnsembleSensitivities";
 
 export class Ensemble {
     private _ensembleIdent: EnsembleIdent;
+    private _fieldIdentifier: string;
     private _caseName: string;
     private _realizationsArr: number[];
     private _parameters: EnsembleParameters;
     private _sensitivities: EnsembleSensitivities | null;
 
     constructor(
+        fieldIdentifier: string,
         caseUuid: string,
         caseName: string,
         ensembleName: string,
@@ -18,6 +20,7 @@ export class Ensemble {
         sensitivityArr: Sensitivity[] | null
     ) {
         this._ensembleIdent = new EnsembleIdent(caseUuid, ensembleName);
+        this._fieldIdentifier = fieldIdentifier;
         this._caseName = caseName;
         this._realizationsArr = Array.from(realizationsArr).sort((a, b) => a - b);
         this._parameters = new EnsembleParameters(parameterArr);
@@ -30,6 +33,10 @@ export class Ensemble {
 
     getIdent(): EnsembleIdent {
         return this._ensembleIdent;
+    }
+
+    getFieldIdentifier(): string {
+        return this._fieldIdentifier;
     }
 
     getDisplayName(): string {
