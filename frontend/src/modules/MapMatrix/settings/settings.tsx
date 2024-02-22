@@ -54,6 +54,7 @@ export function settings({ moduleContext, workbenchSession, workbenchSettings }:
             realizationNum: null,
             uuid: uuidv4(),
             statisticFunction: SurfaceStatisticFunction_api.MEAN,
+            realizationNumsStatistics: [],
             ensembleStage: EnsembleStageType.Realization,
             colorRange: null,
             colorPaletteId: defaultColorScale,

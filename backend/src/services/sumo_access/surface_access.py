@@ -230,6 +230,7 @@ class SurfaceAccess(SumoEnsemble):
         name: str,
         attribute: str,
         time_or_interval_str: Optional[str] = None,
+        realization_nums: Optional[List[int]] = None,
     ) -> Optional[xtgeo.RegularSurface]:
         """
         Compute statistic and return surface data
@@ -265,6 +266,7 @@ class SurfaceAccess(SumoEnsemble):
             name=name,
             tagname=attribute,
             time=time_filter,
+            realization=realization_nums,
         )
 
         surf_count = await surface_collection.length_async()

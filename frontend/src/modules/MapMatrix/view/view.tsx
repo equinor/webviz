@@ -38,7 +38,7 @@ export function view({ moduleContext, workbenchServices, workbenchSettings }: Mo
     const [viewportBounds, setviewPortBounds] = React.useState<[number, number, number, number] | undefined>(undefined);
     const surfaceSpecifications = moduleContext.useStoreValue("surfaceSpecifications");
     const wellBoreAddresses = moduleContext.useStoreValue("smdaWellBoreAddresses");
-
+    console.log(surfaceSpecifications);
     const firstCaseUuid = surfaceSpecifications?.[0]?.ensembleIdent?.getCaseUuid() ?? undefined;
     const statusWriter = useViewStatusWriter(moduleContext);
 
@@ -218,7 +218,10 @@ function createSurfaceAddressesFromSpecifications(
                 surfaceAddresses.push(surfaceAddress);
             }
             if (surface.ensembleStage === EnsembleStageType.Statistics) {
-                const surfaceAddress = factory.createStatisticalAddress(surface.statisticFunction);
+                const surfaceAddress = factory.createStatisticalAddress(
+                    surface.statisticFunction,
+                    surface.realizationNumsStatistics
+                );
                 surfaceAddresses.push(surfaceAddress);
             }
             if (surface.ensembleStage === EnsembleStageType.Observation) {

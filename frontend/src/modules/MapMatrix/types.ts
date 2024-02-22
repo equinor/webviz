@@ -57,6 +57,7 @@ export type SurfaceSpecification = {
     surfaceAttribute: string | null;
     surfaceTimeOrInterval: string | null;
     realizationNum: number | null;
+    realizationNumsStatistics: number[];
     uuid: string;
     statisticFunction: SurfaceStatisticFunction_api;
     ensembleStage: EnsembleStageType;

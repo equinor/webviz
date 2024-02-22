@@ -150,6 +150,7 @@ export class SurfaceService {
      * @param statisticFunction Statistics to calculate
      * @param name Surface name
      * @param attribute Surface attribute
+     * @param realizationNums Realization numbers
      * @param timeOrInterval Time point or time interval string
      * @returns SurfaceDataPng Successful Response
      * @throws ApiError
@@ -160,6 +161,7 @@ export class SurfaceService {
         statisticFunction: SurfaceStatisticFunction,
         name: string,
         attribute: string,
+        realizationNums?: (Array<number> | null),
         timeOrInterval?: (string | null),
     ): CancelablePromise<SurfaceDataPng> {
         return this.httpRequest.request({
@@ -169,6 +171,7 @@ export class SurfaceService {
                 'case_uuid': caseUuid,
                 'ensemble_name': ensembleName,
                 'statistic_function': statisticFunction,
+                'realization_nums': realizationNums,
                 'name': name,
                 'attribute': attribute,
                 'time_or_interval': timeOrInterval,

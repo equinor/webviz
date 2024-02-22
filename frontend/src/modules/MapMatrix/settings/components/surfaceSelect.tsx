@@ -40,6 +40,7 @@ export type SurfaceSelectProps = {
 };
 
 export const SurfaceSelect: React.FC<SurfaceSelectProps> = (props) => {
+    const isControlSurface = props.index === 0;
     let computedEnsembleIdent = props.surfaceSpecification.ensembleIdent;
 
     if (!computedEnsembleIdent || !props.ensembleIdents.some((el) => el.equals(computedEnsembleIdent))) {
@@ -66,7 +67,7 @@ export const SurfaceSelect: React.FC<SurfaceSelectProps> = (props) => {
         computedSurfaceAttribute = ensembleSurfaceDirectory.getAttributeNames(null)[0];
     }
     let computedSurfaceName = props.surfaceSpecification.surfaceName;
-    if (props.syncedSettings.name && props.index !== 0) {
+    if (props.syncedSettings.name && !isControlSurface) {
         if (!ensembleSurfaceDirectory.getAttributeNames(computedSurfaceName).includes(computedSurfaceAttribute)) {
             computedSurfaceAttribute = ensembleSurfaceDirectory.getAttributeNames(computedSurfaceName)[0];
         }
@@ -85,7 +86,7 @@ export const SurfaceSelect: React.FC<SurfaceSelectProps> = (props) => {
             .includes(computedTimeOrInterval)
     ) {
         // Currently, gives an invalid selection if time is synced and the selected name and attribute don't have the selected time
-        if (!props.syncedSettings.timeOrInterval || props.index === 0) {
+        if (!props.syncedSettings.timeOrInterval || isControlSurface) {
             computedTimeOrInterval = ensembleSurfaceDirectory.getTimeOrIntervalStrings(
                 computedSurfaceName,
                 computedSurfaceAttribute
@@ -123,6 +124,7 @@ export const SurfaceSelect: React.FC<SurfaceSelectProps> = (props) => {
         realizationNum: computedRealizationNum,
         ensembleStage: props.surfaceSpecification.ensembleStage,
         statisticFunction: props.surfaceSpecification.statisticFunction,
+        realizationNumsStatistics: props.surfaceSpecification.realizationNumsStatistics,
         colorRange: props.surfaceSpecification.colorRange,
         colorPaletteId: props.surfaceSpecification.colorPaletteId,
         uuid: props.surfaceSpecification.uuid,
@@ -164,10 +166,15 @@ export const SurfaceSelect: React.FC<SurfaceSelectProps> = (props) => {
         props.onChange({ ...props.surfaceSpecification, surfaceTimeOrInterval });
     }
     function handleEnsembleStageChange(ensembleStage: EnsembleStage) {
+        console.log(ensembleStage);
         if (ensembleStage.ensembleStage == EnsembleStageType.Statistics) {
             props.onChange({
                 ...props.surfaceSpecification,
-                ...{ ensembleStage: ensembleStage.ensembleStage, statisticFunction: ensembleStage.statisticFunction },
+                ...{
+                    ensembleStage: ensembleStage.ensembleStage,
+                    statisticFunction: ensembleStage.statisticFunction,
+                    realizationNumsStatistics: ensembleStage.realizationNums,
+                },
             });
         }
         if (ensembleStage.ensembleStage == EnsembleStageType.Observation) {
@@ -189,7 +196,7 @@ export const SurfaceSelect: React.FC<SurfaceSelectProps> = (props) => {
     function handleRemove() {
         props.onRemove(props.surfaceSpecification.uuid);
     }
-    const name = props.index === 0 ? "Surface 1 / Control" : `Surface ${props.index + 1}`;
+    const name = isControlSurface ? "Surface 1 / Control" : `Surface ${props.index + 1}`;
     const availableEnsembles = props.ensembleSet
         .getEnsembleArr()
         .filter((ensemble) => props.ensembleIdents.includes(ensemble.getIdent()));
@@ -208,13 +215,13 @@ export const SurfaceSelect: React.FC<SurfaceSelectProps> = (props) => {
     const surfaceTimeOrIntervalOptions = ensembleSurfaceDirectory
         .getTimeOrIntervalStrings(null, computedSurfaceAttribute)
         .map((name) => ({ value: name, label: isoStringToDateOrIntervalLabel(name) }));
-    const ensembleIsSynced = props.syncedSettings.ensemble && props.index !== 0;
-    const attributeIsSynced = props.syncedSettings.attribute && props.index !== 0;
-    const nameIsSynced = props.syncedSettings.name && props.index !== 0;
-    const timeOrIntervalIsSynced = props.syncedSettings.timeOrInterval && props.index !== 0;
-    const colorRangeIsSynced = props.syncedSettings.colorRange && props.index !== 0;
-    const colorPaletteIdIsSynced = props.syncedSettings.colorPaletteId && props.index !== 0;
-    const realizationNumIsSynced = props.syncedSettings.realizationNum && props.index !== 0;
+    const ensembleIsSynced = props.syncedSettings.ensemble && !isControlSurface;
+    const attributeIsSynced = props.syncedSettings.attribute && !isControlSurface;
+    const nameIsSynced = props.syncedSettings.name && !isControlSurface;
+    const timeOrIntervalIsSynced = props.syncedSettings.timeOrInterval && !isControlSurface;
+    const colorRangeIsSynced = props.syncedSettings.colorRange && !isControlSurface;
+    const colorPaletteIdIsSynced = props.syncedSettings.colorPaletteId && !isControlSurface;
+    const realizationNumIsSynced = props.syncedSettings.realizationNum && !isControlSurface;
 
     return (
         <>
@@ -239,12 +246,13 @@ export const SurfaceSelect: React.FC<SurfaceSelectProps> = (props) => {
                     />
                 </td>
                 <td className="px-0 py-0 whitespace-nowrap text-right">
-                    <PrevNextButtons
-                        onChange={handleEnsembleSelectionChange}
-                        options={availableEnsembleOptions.map((option) => option.value)}
-                        value={computedEnsembleIdent?.toString()}
-                        disabled={ensembleIsSynced}
-                    />
+                    {!ensembleIsSynced && (
+                        <PrevNextButtons
+                            onChange={handleEnsembleSelectionChange}
+                            options={availableEnsembleOptions.map((option) => option.value)}
+                            value={computedEnsembleIdent?.toString()}
+                        />
+                    )}
                 </td>
             </tr>
 
@@ -259,12 +267,14 @@ export const SurfaceSelect: React.FC<SurfaceSelectProps> = (props) => {
                     />
                 </td>
                 <td className="px-0 py-0 whitespace-nowrap text-right">
-                    <PrevNextButtons
-                        onChange={handleSurfaceAttributeChange}
-                        options={surfaceAttributeOptions.map((option) => option.value)}
-                        value={computedSurfaceAttribute}
-                        disabled={attributeIsSynced}
-                    />
+                    {!attributeIsSynced && (
+                        <PrevNextButtons
+                            onChange={handleSurfaceAttributeChange}
+                            options={surfaceAttributeOptions.map((option) => option.value)}
+                            value={computedSurfaceAttribute}
+                            disabled={attributeIsSynced}
+                        />
+                    )}
                 </td>
             </tr>
 
@@ -279,12 +289,13 @@ export const SurfaceSelect: React.FC<SurfaceSelectProps> = (props) => {
                     />
                 </td>
                 <td className="px-0 py-0 whitespace-nowrap text-right">
-                    <PrevNextButtons
-                        onChange={handleSurfaceNameChange}
-                        options={surfaceNameOptions.map((option) => option.value)}
-                        value={computedSurfaceName}
-                        disabled={nameIsSynced}
-                    />
+                    {!nameIsSynced && (
+                        <PrevNextButtons
+                            onChange={handleSurfaceNameChange}
+                            options={surfaceNameOptions.map((option) => option.value)}
+                            value={computedSurfaceName}
+                        />
+                    )}
                 </td>
             </tr>
             {props.timeType !== SurfaceTimeType.None && (
@@ -299,32 +310,34 @@ export const SurfaceSelect: React.FC<SurfaceSelectProps> = (props) => {
                         />
                     </td>
                     <td className="px-0 py-0 whitespace-nowrap text-right">
-                        <PrevNextButtons
-                            onChange={handleSurfaceTimeOrIntervalChange}
-                            options={surfaceTimeOrIntervalOptions.map((option) => option.value)}
-                            value={computedTimeOrInterval ?? ""}
-                            disabled={timeOrIntervalIsSynced}
-                        />
+                        {!timeOrIntervalIsSynced && (
+                            <PrevNextButtons
+                                onChange={handleSurfaceTimeOrIntervalChange}
+                                options={surfaceTimeOrIntervalOptions.map((option) => option.value)}
+                                value={computedTimeOrInterval ?? ""}
+                            />
+                        )}
                     </td>
                 </tr>
             )}
 
             <EnsembleStageSelect
+                ensemble={props.ensembleSet.findEnsemble(computedEnsembleIdent)}
                 stage={props.surfaceSpecification.ensembleStage}
                 statisticFunction={props.surfaceSpecification.statisticFunction}
                 availableRealizationNums={availableRealizationNums}
-                disableRealizationPicker={props.syncedSettings.realizationNum && props.index != 0}
+                disableRealizationPicker={realizationNumIsSynced}
                 realizationNum={computedRealizationNum}
                 onChange={handleEnsembleStageChange}
             />
-            {(!props.syncedSettings.colorRange || props.index == 0) && (
+            {!colorRangeIsSynced && (
                 <ColorRangeSelect
                     valueMin={computedValueMin}
                     valueMax={computedValueMax}
                     onChange={handleColorRangeChange}
                 />
             )}
-            {(!props.syncedSettings.colorPaletteId || props.index == 0) && (
+            {!colorPaletteIdIsSynced && (
                 <ColorPaletteSelect colorPaletteId={computedColorPaletteId} onChange={handleColorPaletteIdChange} />
             )}
         </>

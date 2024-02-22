@@ -168,6 +168,7 @@ async def get_statistical_surface_data_as_png(
     case_uuid: str = Query(description="Sumo case uuid"),
     ensemble_name: str = Query(description="Ensemble name"),
     statistic_function: schemas.SurfaceStatisticFunction = Query(description="Statistics to calculate"),
+    realization_nums: Optional[List[int]] = Query(None, description="Realization numbers"),
     name: str = Query(description="Surface name"),
     attribute: str = Query(description="Surface attribute"),
     time_or_interval: Optional[str] = Query(None, description="Time point or time interval string"),
@@ -185,6 +186,7 @@ async def get_statistical_surface_data_as_png(
         name=name,
         attribute=attribute,
         time_or_interval_str=time_or_interval,
+        realization_nums=realization_nums,
     )
     perf_metrics.record_lap("sumo-calc")
 

@@ -57,6 +57,7 @@ export function useSurfaceDataSetQueryByAddresses(
                     surfAddr.statisticFunction,
                     surfAddr.name,
                     surfAddr.attribute,
+                    surfAddr.realizationNums,
                     surfAddr.isoDateOrInterval,
                 ];
                 queryFn = () =>
@@ -66,6 +67,7 @@ export function useSurfaceDataSetQueryByAddresses(
                         surfAddr.statisticFunction,
                         surfAddr.name,
                         surfAddr.attribute,
+                        surfAddr.realizationNums,
                         surfAddr.isoDateOrInterval
                     );
             } else if (surfAddr.addressType === "observation") {
