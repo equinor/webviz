@@ -4,6 +4,7 @@ import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { EnsembleSet } from "@framework/EnsembleSet";
 import { Dropdown } from "@lib/components/Dropdown";
 import { IconButton } from "@lib/components/IconButton";
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { SurfaceDirectory, SurfaceTimeType } from "@modules/_shared/Surface";
 import { Remove } from "@mui/icons-material";
 
@@ -14,8 +15,8 @@ import { ColorRangeSelect } from "./colorRangeSelect";
 import { EnsembleStageSelect } from "./ensembleStageSelect";
 import { PrevNextButtons } from "./previousNextButtons";
 
-import { isoStringToDateOrIntervalLabel } from "../_utils/isoString";
-import { EnsembleSetSurfaceMetas } from "../hooks/useEnsembleSetSurfaceMetaQuery";
+import { isoStringToDateOrIntervalLabel } from "../../_utils/isoString";
+import { EnsembleSetSurfaceMetas } from "../../hooks/useEnsembleSetSurfaceMetaQuery";
 import {
     EnsembleStage,
     EnsembleStageType,
@@ -23,7 +24,7 @@ import {
     SurfaceAttributeTypeToApi,
     SurfaceSpecification,
     SyncedSettings,
-} from "../types";
+} from "../../types";
 
 export type SurfaceSelectProps = {
     index: number;
@@ -80,10 +81,16 @@ export const SurfaceSelect: React.FC<SurfaceSelectProps> = (props) => {
     if (
         !computedTimeOrInterval ||
         !ensembleSurfaceDirectory
-            .getTimeOrIntervalStrings(null, computedSurfaceAttribute)
+            .getTimeOrIntervalStrings(computedSurfaceName, computedSurfaceAttribute)
             .includes(computedTimeOrInterval)
     ) {
-        computedTimeOrInterval = ensembleSurfaceDirectory.getTimeOrIntervalStrings(null, computedSurfaceAttribute)[0];
+        // Currently, gives an invalid selection if time is synced and the selected name and attribute don't have the selected time
+        if (!props.syncedSettings.timeOrInterval || props.index === 0) {
+            computedTimeOrInterval = ensembleSurfaceDirectory.getTimeOrIntervalStrings(
+                computedSurfaceName,
+                computedSurfaceAttribute
+            )[0];
+        }
     }
     let computedRealizationNum = props.surfaceSpecification.realizationNum;
     let availableRealizationNums: number[] = [];
@@ -200,7 +207,15 @@ export const SurfaceSelect: React.FC<SurfaceSelectProps> = (props) => {
     }));
     const surfaceTimeOrIntervalOptions = ensembleSurfaceDirectory
         .getTimeOrIntervalStrings(null, computedSurfaceAttribute)
-        .map((name) => ({ value: name, label: name }));
+        .map((name) => ({ value: name, label: isoStringToDateOrIntervalLabel(name) }));
+    const ensembleIsSynced = props.syncedSettings.ensemble && props.index !== 0;
+    const attributeIsSynced = props.syncedSettings.attribute && props.index !== 0;
+    const nameIsSynced = props.syncedSettings.name && props.index !== 0;
+    const timeOrIntervalIsSynced = props.syncedSettings.timeOrInterval && props.index !== 0;
+    const colorRangeIsSynced = props.syncedSettings.colorRange && props.index !== 0;
+    const colorPaletteIdIsSynced = props.syncedSettings.colorPaletteId && props.index !== 0;
+    const realizationNumIsSynced = props.syncedSettings.realizationNum && props.index !== 0;
+
     return (
         <>
             <tr className="bg-slate-300">
@@ -212,83 +227,88 @@ export const SurfaceSelect: React.FC<SurfaceSelectProps> = (props) => {
                     </IconButton>
                 </td>
             </tr>
-            {(!props.syncedSettings.ensemble || props.index == 0) && (
-                <tr>
-                    <td className="px-6 py-0 whitespace-nowrap">Ensemble</td>
-                    <td className="px-6 py-0 w-full whitespace-nowrap">
-                        <Dropdown
-                            options={availableEnsembleOptions}
-                            value={computedEnsembleIdent?.toString()}
-                            onChange={handleEnsembleSelectionChange}
-                        />
-                    </td>
-                    <td className="px-0 py-0 whitespace-nowrap text-right">
-                        <PrevNextButtons
-                            onChange={handleEnsembleSelectionChange}
-                            options={availableEnsembleOptions.map((option) => option.value)}
-                            value={computedEnsembleIdent?.toString()}
-                        />
-                    </td>
-                </tr>
-            )}
-            {(!props.syncedSettings.attribute || props.index == 0) && (
-                <tr>
-                    <td className="px-6 py-0 whitespace-nowrap">Attribute</td>
-                    <td className="px-6 py-0 w-full whitespace-nowrap">
-                        <Dropdown
-                            options={surfaceAttributeOptions}
-                            value={computedSurfaceAttribute}
-                            onChange={handleSurfaceAttributeChange}
-                        />
-                    </td>
-                    <td className="px-0 py-0 whitespace-nowrap text-right">
-                        <PrevNextButtons
-                            onChange={handleSurfaceAttributeChange}
-                            options={surfaceAttributeOptions.map((option) => option.value)}
-                            value={computedSurfaceAttribute}
-                        />
-                    </td>
-                </tr>
-            )}
-            {(!props.syncedSettings.name || props.index == 0) && (
-                <tr>
-                    <td className="px-6 py-0 whitespace-nowrap">Name</td>
-                    <td className="px-6 py-0 w-full whitespace-nowrap">
-                        <Dropdown
-                            options={surfaceNameOptions}
-                            value={computedSurfaceName}
-                            onChange={handleSurfaceNameChange}
-                        />
-                    </td>
-                    <td className="px-0 py-0 whitespace-nowrap text-right">
-                        <PrevNextButtons
-                            onChange={handleSurfaceNameChange}
-                            options={surfaceNameOptions.map((option) => option.value)}
-                            value={computedSurfaceName}
-                        />
-                    </td>
-                </tr>
-            )}
 
-            {(!props.syncedSettings.timeOrInterval || props.index == 0) && props.timeType !== SurfaceTimeType.None && (
+            <tr>
+                <td className={getTitleClassNames(ensembleIsSynced)}>Ensemble</td>
+                <td className="px-6 py-0 w-full whitespace-nowrap">
+                    <Dropdown
+                        options={availableEnsembleOptions}
+                        value={computedEnsembleIdent?.toString()}
+                        onChange={handleEnsembleSelectionChange}
+                        disabled={ensembleIsSynced}
+                    />
+                </td>
+                <td className="px-0 py-0 whitespace-nowrap text-right">
+                    <PrevNextButtons
+                        onChange={handleEnsembleSelectionChange}
+                        options={availableEnsembleOptions.map((option) => option.value)}
+                        value={computedEnsembleIdent?.toString()}
+                        disabled={ensembleIsSynced}
+                    />
+                </td>
+            </tr>
+
+            <tr>
+                <td className={getTitleClassNames(attributeIsSynced)}>Attribute</td>
+                <td className="px-6 py-0 w-full whitespace-nowrap">
+                    <Dropdown
+                        options={surfaceAttributeOptions}
+                        value={computedSurfaceAttribute}
+                        onChange={handleSurfaceAttributeChange}
+                        disabled={attributeIsSynced}
+                    />
+                </td>
+                <td className="px-0 py-0 whitespace-nowrap text-right">
+                    <PrevNextButtons
+                        onChange={handleSurfaceAttributeChange}
+                        options={surfaceAttributeOptions.map((option) => option.value)}
+                        value={computedSurfaceAttribute}
+                        disabled={attributeIsSynced}
+                    />
+                </td>
+            </tr>
+
+            <tr>
+                <td className={getTitleClassNames(nameIsSynced)}>Name</td>
+                <td className="px-6 py-0 w-full whitespace-nowrap">
+                    <Dropdown
+                        options={surfaceNameOptions}
+                        value={computedSurfaceName}
+                        onChange={handleSurfaceNameChange}
+                        disabled={nameIsSynced}
+                    />
+                </td>
+                <td className="px-0 py-0 whitespace-nowrap text-right">
+                    <PrevNextButtons
+                        onChange={handleSurfaceNameChange}
+                        options={surfaceNameOptions.map((option) => option.value)}
+                        value={computedSurfaceName}
+                        disabled={nameIsSynced}
+                    />
+                </td>
+            </tr>
+            {props.timeType !== SurfaceTimeType.None && (
                 <tr>
-                    <td className="px-6 py-0 whitespace-nowrap">Time</td>
+                    <td className={getTitleClassNames(timeOrIntervalIsSynced)}>Time</td>
                     <td className="px-6 py-0 w-full whitespace-nowrap">
                         <Dropdown
                             options={surfaceTimeOrIntervalOptions}
-                            value={computedTimeOrInterval}
+                            value={computedTimeOrInterval ?? ""}
                             onChange={handleSurfaceTimeOrIntervalChange}
+                            disabled={timeOrIntervalIsSynced}
                         />
                     </td>
                     <td className="px-0 py-0 whitespace-nowrap text-right">
                         <PrevNextButtons
                             onChange={handleSurfaceTimeOrIntervalChange}
                             options={surfaceTimeOrIntervalOptions.map((option) => option.value)}
-                            value={computedTimeOrInterval}
+                            value={computedTimeOrInterval ?? ""}
+                            disabled={timeOrIntervalIsSynced}
                         />
                     </td>
                 </tr>
             )}
+
             <EnsembleStageSelect
                 stage={props.surfaceSpecification.ensembleStage}
                 statisticFunction={props.surfaceSpecification.statisticFunction}
@@ -310,3 +330,6 @@ export const SurfaceSelect: React.FC<SurfaceSelectProps> = (props) => {
         </>
     );
 };
+function getTitleClassNames(disabled: boolean): string {
+    return resolveClassNames("px-6", "py-0", "whitespace-nowrap", disabled ? "text-gray-400" : "");
+}

@@ -33,6 +33,15 @@ export const SurfaceAttributeTypeToApi = {
         SurfaceAttributeType_api.THICKNESS,
     ],
 };
+export const StatisticFunctionToStringMapping = {
+    [SurfaceStatisticFunction_api.MEAN]: "Mean",
+    [SurfaceStatisticFunction_api.MIN]: "Min",
+    [SurfaceStatisticFunction_api.MAX]: "Max",
+    [SurfaceStatisticFunction_api.STD]: "StdDev",
+    [SurfaceStatisticFunction_api.P10]: "P10",
+    [SurfaceStatisticFunction_api.P50]: "P50",
+    [SurfaceStatisticFunction_api.P90]: "P90",
+};
 export type SurfaceReducerState = {
     ensembleIdents: EnsembleIdent[];
     surfaceSpecifications: SurfaceSpecification[];

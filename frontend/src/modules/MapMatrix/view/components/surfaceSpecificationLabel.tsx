@@ -2,10 +2,8 @@ import React from "react";
 
 import "animate.css";
 
-import { StatisticFunctionToStringMapping } from "./ensembleStageSelect";
-
-import { isoStringToDateOrIntervalLabel } from "../_utils/isoString";
-import { EnsembleStageType, SurfaceSpecification } from "../types";
+import { isoStringToDateOrIntervalLabel } from "../../_utils/isoString";
+import { EnsembleStageType, StatisticFunctionToStringMapping, SurfaceSpecification } from "../../types";
 
 export type SurfaceSpecificationLabelProps = {
     surfaceSpecification?: SurfaceSpecification;

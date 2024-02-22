@@ -17,10 +17,11 @@ import { SmdaWellBoreSelect } from "./components/smdaWellBoreSelect";
 import { SurfaceAttributeTypeSelect } from "./components/surfaceAttributeTypeSelect";
 import { SurfaceSelect } from "./components/surfaceSelect";
 import { SyncSettings } from "./components/syncSettings";
-import { useEnsembleSetSurfaceMetaQuery } from "./hooks/useEnsembleSetSurfaceMetaQuery";
-import { useSurfaceReducer } from "./hooks/useSurfaceReducer";
-import { State } from "./state";
-import { EnsembleStageType, SurfaceSpecification, SyncedSettings } from "./types";
+
+import { useEnsembleSetSurfaceMetaQuery } from "../hooks/useEnsembleSetSurfaceMetaQuery";
+import { useSurfaceReducer } from "../hooks/useSurfaceReducer";
+import { State } from "../state";
+import { EnsembleStageType, SurfaceSpecification, SyncedSettings } from "../types";
 
 export function settings({ moduleContext, workbenchSession, workbenchSettings }: ModuleFCProps<State>) {
     const ensembleSet = useEnsembleSet(workbenchSession);

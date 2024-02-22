@@ -25,9 +25,10 @@ import { ViewFooter } from "@webviz/subsurface-viewer/dist/components/ViewFooter
 import { isEqual } from "lodash";
 
 import { SurfaceSpecificationLabel } from "./components/surfaceSpecificationLabel";
-import { IndexedSurfaceDatas, useSurfaceDataSetQueryByAddresses } from "./hooks/useSurfaceDataAsPngQuery";
-import { State } from "./state";
-import { EnsembleStageType, SurfaceSpecification } from "./types";
+
+import { IndexedSurfaceDatas, useSurfaceDataSetQueryByAddresses } from "../hooks/useSurfaceDataAsPngQuery";
+import { State } from "../state";
+import { EnsembleStageType, SurfaceSpecification } from "../types";
 
 export function view({ moduleContext, workbenchServices, workbenchSettings }: ModuleFCProps<State>) {
     const [viewportBounds, setviewPortBounds] = React.useState<[number, number, number, number] | undefined>(undefined);

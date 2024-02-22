@@ -5,7 +5,8 @@ import { Dropdown } from "@lib/components/Dropdown";
 
 import { PrevNextButtons } from "./previousNextButtons";
 
-import { EnsembleStage, EnsembleStageType } from "../types";
+import { EnsembleStage, EnsembleStageType } from "../../types";
+import { StatisticFunctionToStringMapping } from "../../types";
 
 export type EnsembleStageSelectProps = {
     stage: EnsembleStageType;
@@ -14,15 +15,6 @@ export type EnsembleStageSelectProps = {
     statisticFunction: SurfaceStatisticFunction_api;
     disableRealizationPicker?: boolean;
     onChange(stage: EnsembleStage): void;
-};
-export const StatisticFunctionToStringMapping = {
-    [SurfaceStatisticFunction_api.MEAN]: "Mean",
-    [SurfaceStatisticFunction_api.MIN]: "Min",
-    [SurfaceStatisticFunction_api.MAX]: "Max",
-    [SurfaceStatisticFunction_api.STD]: "StdDev",
-    [SurfaceStatisticFunction_api.P10]: "P10",
-    [SurfaceStatisticFunction_api.P50]: "P50",
-    [SurfaceStatisticFunction_api.P90]: "P90",
 };
 
 export const EnsembleStageSelect: React.FC<EnsembleStageSelectProps> = (props) => {
