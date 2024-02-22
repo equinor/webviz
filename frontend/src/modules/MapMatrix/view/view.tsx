@@ -26,7 +26,11 @@ import { isEqual } from "lodash";
 
 import { SurfaceSpecificationLabel } from "./components/surfaceSpecificationLabel";
 
-import { IndexedSurfaceDatas, useSurfaceDataSetQueryByAddresses } from "../hooks/useSurfaceDataAsPngQuery";
+import {
+    IndexedSurfaceData,
+    IndexedSurfaceDataQueryResults,
+    useSurfaceDataSetQueryByAddresses,
+} from "../hooks/useSurfaceDataAsPngQuery";
 import { State } from "../state";
 import { EnsembleStageType, SurfaceSpecification } from "../types";
 
@@ -60,12 +64,9 @@ export function view({ moduleContext, workbenchServices, workbenchSettings }: Mo
     statusWriter.setLoading(surfaceDataSetQueryByAddresses.isFetching);
 
     const [prevSurfaceDataSetQueryByAddresses, setPrevSurfaceDataSetQueryByAddresses] =
-        React.useState<IndexedSurfaceDatas | null>(null);
+        React.useState<IndexedSurfaceDataQueryResults | null>(null);
 
-    let surfaceDataSet: Array<{
-        index: number;
-        surfaceData: SurfaceDataPng_api | null;
-    }> = [];
+    let surfaceDataSet: IndexedSurfaceData[] = [];
     if (
         !surfaceDataSetQueryByAddresses.isFetching &&
         !isEqual(prevSurfaceDataSetQueryByAddresses, surfaceDataSetQueryByAddresses)
@@ -199,8 +200,10 @@ function makeEmptySurfaceViews(numSubplots: number): ViewsType {
     return { layout: [numRows, numColumns], showLabel: true, viewports: viewPorts };
 }
 
-function createSurfaceAddressesFromSpecifications(surfaceSpecifications: SurfaceSpecification[]): SurfaceAddress[] {
-    const surfaceAddresses: SurfaceAddress[] = [];
+function createSurfaceAddressesFromSpecifications(
+    surfaceSpecifications: SurfaceSpecification[]
+): Array<SurfaceAddress | null> {
+    const surfaceAddresses: Array<SurfaceAddress | null> = [];
     surfaceSpecifications.forEach((surface) => {
         if (surface.ensembleIdent && surface.surfaceName && surface.surfaceAttribute) {
             const factory = new SurfaceAddressFactory(
@@ -222,6 +225,8 @@ function createSurfaceAddressesFromSpecifications(surfaceSpecifications: Surface
                 const surfaceAddress = factory.createObservationAddress();
                 surfaceAddresses.push(surfaceAddress);
             }
+        } else {
+            surfaceAddresses.push(null);
         }
     });
     return surfaceAddresses;

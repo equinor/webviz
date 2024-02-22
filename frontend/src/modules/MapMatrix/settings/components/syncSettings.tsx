@@ -2,7 +2,7 @@ import React from "react";
 
 import { Switch } from "@lib/components/Switch";
 
-import { SyncedSettings } from "../types";
+import { SyncedSettings } from "../../types";
 
 type SyncSettingsProps = {
     syncedSettings: SyncedSettings;

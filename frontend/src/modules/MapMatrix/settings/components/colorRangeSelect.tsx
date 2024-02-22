@@ -8,6 +8,8 @@ type ColorRangeSelectProps = {
     valueMax: number;
     onChange: (valueRange: [number, number]) => void;
 };
+
+//TODO: Handle inputting negative numbers (Start with a minus sign)
 export const ColorRangeSelect: React.FC<ColorRangeSelectProps> = (props) => {
     const [useMin, setUseMin] = React.useState(false);
     const [useMax, setUseMax] = React.useState(false);

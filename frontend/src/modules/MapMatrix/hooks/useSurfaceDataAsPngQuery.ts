@@ -6,20 +6,30 @@ import { QueryKey, useQueries } from "@tanstack/react-query";
 const STALE_TIME = 60 * 1000;
 const CACHE_TIME = 60 * 1000;
 
-export type IndexedSurfaceDatas = {
-    data: Array<{
-        index: number;
-        surfaceData: SurfaceDataPng_api | null;
-    }>;
+export type IndexedSurfaceData = {
+    index: number;
+    surfaceData: SurfaceDataPng_api | null;
+};
+export type IndexedSurfaceDataQueryResults = {
+    data: IndexedSurfaceData[];
     isFetching: boolean;
 };
 
-export function useSurfaceDataSetQueryByAddresses(surfaceAddresses: SurfaceAddress[]): IndexedSurfaceDatas {
+export function useSurfaceDataSetQueryByAddresses(
+    surfaceAddresses: Array<SurfaceAddress | null>
+): IndexedSurfaceDataQueryResults {
     const queryResults = useQueries({
-        queries: surfaceAddresses.map((surfAddr: SurfaceAddress) => {
+        queries: surfaceAddresses.map((surfAddr: SurfaceAddress | null) => {
             let queryKey: QueryKey = ["dummy"];
             let queryFn: () => Promise<SurfaceDataPng_api> | null = () => null;
-
+            if (surfAddr === null) {
+                return {
+                    queryKey,
+                    queryFn,
+                    staleTime: STALE_TIME,
+                    gcTime: CACHE_TIME,
+                };
+            }
             if (surfAddr.addressType === "realization") {
                 queryKey = [
                     "getRealizationSurfaceDataAsPng",
@@ -85,7 +95,7 @@ export function useSurfaceDataSetQueryByAddresses(surfaceAddresses: SurfaceAddre
         }),
     });
 
-    const data: IndexedSurfaceDatas["data"] = queryResults.map((result, index) => ({
+    const data: IndexedSurfaceDataQueryResults["data"] = queryResults.map((result, index) => ({
         index: index,
         surfaceData: result.data ?? null,
     }));

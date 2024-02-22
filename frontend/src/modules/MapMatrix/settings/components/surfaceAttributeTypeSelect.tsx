@@ -5,7 +5,7 @@ import { Dropdown } from "@lib/components/Dropdown";
 import { Label } from "@lib/components/Label";
 import { SurfaceTimeType } from "@modules/_shared/Surface";
 
-import { SurfaceAttributeType } from "../types";
+import { SurfaceAttributeType } from "../../types";
 
 const SurfaceAttributeTypeToStringMapping = {
     [SurfaceAttributeType.DEPTH_TIME]: "Depth/Time surfaces",
