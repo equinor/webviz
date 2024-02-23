@@ -61,8 +61,15 @@ async def create_new_radix_job(job_component_name: str, job_scheduler_port: int)
     }
 
     async with httpx.AsyncClient() as client:
-        response = await client.post(url=url, json=request_body)
-        response.raise_for_status()
+        try:
+            response = await client.post(url=url, json=request_body)
+            response.raise_for_status()
+        except httpx.RequestError as exc:
+            LOGGER.error(f"An error occurred while requesting POST {exc.request.url!r}.")
+            return None
+        except httpx.HTTPStatusError as exc:
+            LOGGER.error(f"Error HTTP status {exc.response.status_code} while requesting POST {exc.request.url!r}.")
+            return None
 
     # According to doc it seems we should be getting a json back that contains a status field,
     # which should be "Running" if the job was started successfully.
@@ -70,9 +77,9 @@ async def create_new_radix_job(job_component_name: str, job_scheduler_port: int)
     # back from this call is the name of the newly created job.
     response_dict = response.json()
 
-    # LOGGER.debug("------")
-    # LOGGER.debug(f"{response_dict=}")
-    # LOGGER.debug("------")
+    LOGGER.debug("------")
+    LOGGER.debug(f"{response_dict=}")
+    LOGGER.debug("------")
 
     radix_job_name = response_dict["name"]
     return radix_job_name
