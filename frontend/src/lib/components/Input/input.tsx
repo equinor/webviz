@@ -15,6 +15,7 @@ export const Input = React.forwardRef((props: InputProps, ref: React.ForwardedRe
     const { startAdornment, endAdornment, wrapperStyle, value: propsValue, onChange, ...other } = props;
 
     const [value, setValue] = React.useState<unknown>(propsValue);
+    const [isValid, setIsValid] = React.useState<boolean>(true);
     const [prevValue, setPrevValue] = React.useState<unknown>(propsValue);
 
     if (propsValue !== prevValue) {
@@ -38,21 +39,24 @@ export const Input = React.forwardRef((props: InputProps, ref: React.ForwardedRe
     }, []);
 
     const handleInputChange = React.useCallback(
-        (event: React.ChangeEvent<HTMLInputElement>) => {
+        function handleInputChange(event: React.ChangeEvent<HTMLInputElement>) {
             if (props.type === "number") {
-                let newValue = parseFloat(event.target.value || "0");
-                if (props.min !== undefined) {
-                    newValue = Math.max(props.min, newValue);
+                let newValue: number = 0;
+                if (!isNaN(parseFloat(event.target.value))) {
+                    newValue = parseFloat(event.target.value || "0");
+                    if (props.min !== undefined) {
+                        newValue = Math.max(props.min, newValue);
+                    }
+
+                    if (props.max !== undefined) {
+                        newValue = Math.min(props.max, newValue);
+                    }
+                } else {
+                    setValue(event.target.value);
+                    return;
                 }
 
-                if (props.max !== undefined) {
-                    newValue = Math.min(props.max, newValue);
-                }
-
-                if (newValue !== prevValue) {
-                    setValue(newValue);
-                    setPrevValue(newValue);
-                }
+                setValue(newValue);
 
                 event.target.value = newValue.toString();
             }
@@ -103,8 +107,12 @@ export const Input = React.forwardRef((props: InputProps, ref: React.ForwardedRe
                             className: "grow",
                         },
                         input: {
-                            className:
+                            className: resolveClassNames(
                                 "h-full focus:border-indigo-500 block w-full sm:text-sm border-gray-300 outline-none",
+                                {
+                                    "border-red-300": !isValid,
+                                }
+                            ),
                         },
                     }}
                 />
