@@ -12,8 +12,9 @@ from pydantic import BaseModel, TypeAdapter
 
 LOGGER = logging.getLogger(__name__)
 
-IS_RUNNING_IN_RADIX = True if os.getenv("RADIX_APP") is not None else False
-print(f"{IS_RUNNING_IN_RADIX=}")
+# This is a bit of a hack, but it's one way to know if we're running in Radix or locally
+IS_ON_RADIX_PLATFORM = True if os.getenv("RADIX_APP") is not None else False
+print(f"{IS_ON_RADIX_PLATFORM=}")
 
 
 # Notes on the RadixJobState:

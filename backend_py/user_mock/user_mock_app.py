@@ -1,7 +1,10 @@
+import asyncio
 import datetime
 import os
+from typing import Annotated
 
 from fastapi import FastAPI
+from fastapi import Query
 
 
 RADIX_JOB_NAME = os.getenv("RADIX_JOB_NAME")
@@ -23,7 +26,9 @@ def dump_env_vars():
     print(f"{RADIX_ENVIRONMENT=}")
     print(f"{RADIX_COMPONENT=}")
 
+
 app = FastAPI()
+
 
 @app.get("/")
 async def root() -> str:
@@ -50,9 +55,12 @@ async def health_ready() -> str:
 
 
 @app.get("/dowork")
-async def dowork() -> str:
+async def dowork(
+    duration: Annotated[float, Query(description="Duration of work in seconds")] = 1.0,
+) -> str:
+    print(f"dowork() doing work for: {duration=}s")
+    await asyncio.sleep(duration)
+
     ret_str = f"WORK DONE at: {datetime.datetime.now()}"
     print(f"dowork() returning {ret_str}")
     return ret_str
-
-

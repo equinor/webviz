@@ -19,6 +19,7 @@ from .dev_radix_helpers import get_radix_job_state
 from .dev_radix_helpers import delete_all_radix_job_instances
 from .dev_user_jobs import get_or_create_user_service_url
 from .dev_user_jobs import call_endpoint_with_retries
+from .dev_redis_user_job_dir import RedisUserJobDirectory
 
 LOGGER = logging.getLogger(__name__)
 
@@ -166,26 +167,74 @@ async def usermock_delete(
 @router.get("/usermock/call")
 async def usermock_call(
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
+    instance_str: Annotated[str, Query(description="Instance string")] = "myInst",
 ) -> str:
-    LOGGER.debug(f"usermock_call()")
+    LOGGER.debug(f"usermock_call()  with {instance_str=}")
 
-    service_base_url = await get_or_create_user_service_url(authenticated_user._user_id, "user-mock", "myinst")
-    endpoint = f"{service_base_url}/dowork"
+    service_base_url = await get_or_create_user_service_url(authenticated_user._user_id, "user-mock", instance_str)
+    if service_base_url is None:
+        LOGGER.error("Failed to get user session service URL")
+        return "Failed to get user session service URL!!!!!"
+    
+    endpoint = f"{service_base_url}/dowork?duration=5"
 
     LOGGER.debug("======================")
     LOGGER.debug(f"{service_base_url=}")
     LOGGER.debug(f"{endpoint=}")
     LOGGER.debug("======================")
 
-    async with httpx.AsyncClient() as client:
+    LOGGER.debug(f"before call to: {endpoint=}")
+    async with httpx.AsyncClient(timeout=30) as client:
         response = await client.get(endpoint)
         response.raise_for_status()
+
+    LOGGER.debug(f"after call to: {endpoint=}")
 
     resp_text = response.text
     LOGGER.debug(f"{type(resp_text)=}")
     LOGGER.debug(f"{resp_text=}")
 
     return resp_text
+
+
+@router.get("/usermock/dirlist")
+async def usermock_dirlist(
+    authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
+) -> str:
+    LOGGER.debug(f"usermock_dirlist()")
+
+    job_dir = RedisUserJobDirectory(authenticated_user._user_id)
+    job_info_arr = job_dir.get_job_info_arr(None)
+
+    resp_text = ""
+
+    LOGGER.debug("======================")
+    for job_info in job_info_arr:
+        LOGGER.debug(f"{job_info=}")
+        resp_text += str(job_info) + "\n"
+    LOGGER.debug("======================")
+
+    return resp_text
+
+
+@router.get("/usermock/dirdel")
+async def usermock_dirdel(
+    authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
+) -> str:
+    LOGGER.debug(f"usermock_dirdel()")
+
+    job_dir = RedisUserJobDirectory(authenticated_user._user_id)
+
+    job_dir.delete_job_info(None)
+    
+    job_info_arr = job_dir.get_job_info_arr(None)
+    LOGGER.debug("======================")
+    for job_info in job_info_arr:
+        LOGGER.debug(f"{job_info=}")
+        resp_text += str(job_info) + "\n"
+    LOGGER.debug("======================")
+
+    return "Job info deleted"
 
 
 

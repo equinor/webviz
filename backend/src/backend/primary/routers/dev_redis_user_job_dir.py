@@ -1,6 +1,5 @@
 from enum import Enum
 import logging
-from typing import Tuple
 import asyncio
 from dataclasses import dataclass
 
@@ -55,12 +54,16 @@ class RedisJobInfoUpdater:
         return _make_redis_hash_name(user_id=self._user_id, job_component_name=self._job_component_name, instance_identifier=self._instance_identifier)
 
 
+_USER_JOBS_RADIX_PREFIX = "user-jobs"
+
 def _make_redis_hash_name(user_id: str, job_component_name: str, instance_identifier: str | None) -> str:
-    return f"user-jobs:{user_id}:{job_component_name}:{instance_identifier}"
+    return f"{_USER_JOBS_RADIX_PREFIX}:{user_id}:{job_component_name}:{instance_identifier}"
 
 
-@dataclass
+@dataclass(frozen=True, kw_only=True)
 class JobInfo:
+    job_component_name: str
+    instance_identifier: str
     state: JobState
     radix_job_name: str | None
 
@@ -72,7 +75,7 @@ class RedisUserJobDirectory:
 
     def get_job_info(self, job_component_name: str, instance_identifier: str) -> JobInfo | None:
         hash_name = _make_redis_hash_name(user_id=self._user_id, job_component_name=job_component_name, instance_identifier=instance_identifier)
-        value_dict = self._redis_client.hgetall(hash_name)
+        value_dict = self._redis_client.hgetall(name=hash_name)
         if not value_dict:
             return None
         
@@ -82,7 +85,53 @@ class RedisUserJobDirectory:
             return None
         
         state = JobState(state_str)
-        return JobInfo(state=state, radix_job_name=radix_job_name) 
+        return JobInfo(
+            job_component_name=job_component_name,
+            instance_identifier=instance_identifier,
+            state=state, 
+            radix_job_name=radix_job_name) 
+
+    def get_job_info_arr(self, job_component_name: str | None) -> list[JobInfo]:
+        LOGGER.debug("get_job_info_arr()")
+
+        if job_component_name is None:
+            job_component_name = "*"
+
+        pattern = f"{_USER_JOBS_RADIX_PREFIX}:{self._user_id}:{job_component_name}:*"
+        LOGGER.debug(f"Redis scan pattern pattern {pattern=}")
+        
+        ret_list: list[JobInfo] = []
+        for key in self._redis_client.scan_iter(pattern):
+            LOGGER.debug(f"{key=}")
+            key_parts = key.split(":")
+            assert len(key_parts) == 4
+            assert key_parts[0] == _USER_JOBS_RADIX_PREFIX
+            assert key_parts[1] == self._user_id
+            
+            matched_job_component_name = key_parts[2]
+            matched_instance_identifier = key_parts[3]
+            job_info = self.get_job_info(matched_job_component_name, matched_instance_identifier)
+            if job_info is not None:
+                ret_list.append(job_info)
+
+        return ret_list
+
+    def delete_job_info(self, job_component_name: str | None) -> None:
+        LOGGER.debug("delete_job_info()")
+
+        if job_component_name is None:
+            job_component_name = "*"
+
+        pattern = f"{_USER_JOBS_RADIX_PREFIX}:{self._user_id}:{job_component_name}:*"
+        LOGGER.debug(f"Redis scan pattern pattern {pattern=}")
+        
+        key_list = []
+        for key in self._redis_client.scan_iter(pattern):
+            LOGGER.debug(f"{key=}")
+            key_list.append(key)
+
+        self._redis_client.delete(*key_list)
+
 
     def get_redis_client(self) -> redis.Redis:
         return self._redis_client
@@ -100,58 +149,3 @@ class RedisUserJobDirectory:
 
 
 
-##############################################################################################
-##############################################################################################
-##############################################################################################
-##############################################################################################
-
-
-"""
-
-class _RedisUserJobManager:
-    def __init__(self, user_id: str) -> None:
-        self._user_id = user_id
-        self._redis_client = redis.Redis.from_url(config.REDIS_USER_SESSION_URL, decode_responses=True)
-
-    def set_job_info(self, job_component_name: str, instance_identifier: str, job_info: JobInfo) -> None:
-        key = self._make_key(job_component_name, instance_identifier)
-        payload = job_info.model_dump_json()
-        print(f"{type(payload)=}")
-        print(f"{payload=}")
-
-        self._redis_client.set(key, payload)
-
-    def get_job_info(self, job_component_name: str, instance_identifier: str) -> JobInfo | None:
-        key = self._make_key(job_component_name, instance_identifier)
-        payload = self._redis_client.get(key)
-        if payload is None:
-            return None
-        
-        print(f"{type(payload)=}")
-        print(f"{payload=}")
-        info = JobInfo.model_validate_json(payload)
-        print(f"{type(info)=}")
-        print(f"{info=}")
-        return info
-
-    def get_job_info_arr(self, job_component_name: str) -> List[JobInfo]:
-        #pattern = f"user-jobs:{self._user_id}:{job_component_name}:*"
-        pattern = f"user-jobs:*:{job_component_name}:*"
-        print(f"{pattern=}")
-        
-        ret_list = []
-        for key in self._redis_client.scan_iter(pattern):
-            print(f"{key=}")
-            payload = self._redis_client.get(key)
-            print(f"{payload=}")
-            info = JobInfo.model_validate_json(payload)
-            ret_list.append(info)
-
-        return ret_list
-
-    def _make_key(self, job_component_name: str, instance_identifier: str) -> str:
-        return f"user-jobs:{self._user_id}:{job_component_name}:{instance_identifier}"
-
-
-
-"""
