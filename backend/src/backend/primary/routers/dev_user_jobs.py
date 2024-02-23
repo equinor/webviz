@@ -104,6 +104,9 @@ async def get_or_create_user_service_url_localdev(user_id: str, job_component_na
 
 
 async def get_or_create_user_service_url(user_id: str, job_component_name: str, instance_identifier: str) -> str | None:
+    job_scheduler_port = 8001
+    actual_service_port = 8001
+
     LOGGER.debug(f"##### get_or_create_user_service_url()  {job_component_name=}")
 
     redis_job_dir = RedisUserJobDirectory(user_id)
@@ -122,13 +125,13 @@ async def get_or_create_user_service_url(user_id: str, job_component_name: str, 
     if job_info and job_info.state == JobState.RUNNING and job_info.radix_job_name:
         if IS_ON_RADIX_PLATFORM:
             LOGGER.debug("Found a matching user job entry, verifying its existence against radix job manager")
-            radix_job_is_running = await verify_that_named_radix_job_is_running(job_component_name, 8001, job_info.radix_job_name)
+            radix_job_is_running = await verify_that_named_radix_job_is_running(job_component_name, job_scheduler_port, job_info.radix_job_name)
             if radix_job_is_running:
                 LOGGER.debug("Job is running in radix, returning its endpoint")
                 LOGGER.debug(f"{job_info=}")
-                return f"http://{job_info.radix_job_name}:8001"
+                return f"http://{job_info.radix_job_name}:{actual_service_port}"
         else:
-            return f"http://{job_info.radix_job_name}:8001"
+            return f"http://{job_info.radix_job_name}:{actual_service_port}"
 
 
     # If we get here there is a few scenarios:
@@ -173,14 +176,14 @@ async def get_or_create_user_service_url(user_id: str, job_component_name: str, 
         redis_job_updater.set_state_creating()
 
         if IS_ON_RADIX_PLATFORM:
-            new_radix_job_name = await create_new_radix_job("user-mock", 8001)
-            LOGGER.debug(f"Created new job in radix: {new_radix_job_name=}")
+            LOGGER.debug(f"Trying to create new job using radix job manager ({job_component_name=}, {job_scheduler_port=})")
+            new_radix_job_name = await create_new_radix_job(job_component_name, job_scheduler_port)
             if new_radix_job_name is None:
-                LOGGER.error("Failed to create new job in radix")
+                LOGGER.error(f"Failed to create new job in radix {job_component_name=}, {job_scheduler_port=}")
                 redis_job_updater.delete_all_state()
                 return None
-        
-            LOGGER.debug("Radix job created, will try and wait for it to come alive")
+
+            LOGGER.debug(f"New radix job created, will try and wait for it to come alive {new_radix_job_name=}")
             redis_job_updater.set_state_waiting(new_radix_job_name)
         else:
             LOGGER.debug("Running locally, will not create radix job")
@@ -197,7 +200,7 @@ async def get_or_create_user_service_url(user_id: str, job_component_name: str, 
 
         # We must decide on how long we should wait here before giving up
         # This must be aliogned with the auto release time for our lock
-        ready_endpoint = f"http://{new_radix_job_name}:8001/health/ready"
+        ready_endpoint = f"http://{new_radix_job_name}:{actual_service_port}/health/ready"
         is_alive, msg = await call_endpoint_with_retries(ready_endpoint)
         if not is_alive:
             LOGGER.error("The newly created radix job failed to come online, giving up and deleting it")
@@ -221,5 +224,6 @@ async def get_or_create_user_service_url(user_id: str, job_component_name: str, 
             return None
 
         LOGGER.info(f"New radix job created and online: {job_info.radix_job_name=}")
-        return f"http://{job_info.radix_job_name}:8001"
+
+        return f"http://{job_info.radix_job_name}:{actual_service_port}"
 

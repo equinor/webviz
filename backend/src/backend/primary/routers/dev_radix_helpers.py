@@ -52,7 +52,7 @@ async def verify_that_named_radix_job_is_running(job_component_name: str, job_sc
 async def create_new_radix_job(job_component_name: str, job_scheduler_port: int) -> str | None:
     LOGGER.debug(f"##### create_new_radix_job()  {job_component_name=}")
 
-    url = f"http://{job_component_name}:{job_scheduler_port}/api/v1/jobs"
+    radix_job_manager_url = f"http://{job_component_name}:{job_scheduler_port}/api/v1/jobs"
     request_body = {
         "resources": {
             "limits": {"memory": "500M", "cpu": "100m"},
@@ -62,7 +62,7 @@ async def create_new_radix_job(job_component_name: str, job_scheduler_port: int)
 
     async with httpx.AsyncClient() as client:
         try:
-            response = await client.post(url=url, json=request_body)
+            response = await client.post(url=radix_job_manager_url, json=request_body)
             response.raise_for_status()
         except httpx.RequestError as exc:
             LOGGER.error(f"An error occurred while requesting POST {exc.request.url!r}.")
