@@ -234,9 +234,26 @@ export function createWellboreTrajectoryLayer(wellTrajectories: WellBoreTrajecto
         id: "wells-layer",
         data: data,
         refine: false,
-        lineStyle: { width: 2 },
+        lineStyle: { width: 4, color: [128, 128, 128] },
         wellHeadStyle: { size: 1 },
         pickable: true,
+        autoHighlight: true,
+        opacity: 1,
+        outline: false,
+        lineWidthScale: 1,
+        pointRadiusScale: 1,
+        // outline: true,
+        logRadius: 10,
+        logCurves: true,
+        visible: true,
+        wellNameVisible: false,
+        wellNameAtTop: false,
+        wellNameSize: 14,
+        wellNameColor: [0, 0, 0, 255],
+        selectedWell: "@@#editedData.selectedWells", // used to get data from deckgl layer
+        depthTest: true,
+        ZIncreasingDownwards: true,
+        simplifiedRendering: false,
     };
 }
 function wellTrajectoryToGeojson(wellTrajectory: WellBoreTrajectory_api): Record<string, unknown> {
