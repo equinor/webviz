@@ -47,50 +47,48 @@ class LockReleasingContext(AbstractContextManager):
         #     pass
 
 
-async def call_health_endpoint_with_retries(health_url_to_call: str, stop_after_delay_s: float) -> Tuple[bool, str]:
-    LOGGER.debug(f"call_health_endpoint_with_retries()  {health_url_to_call=} {stop_after_delay_s=}")
+async def call_health_endpoint_with_retries(health_url: str, stop_after_delay_s: float) -> Tuple[bool, str]:
+    LOGGER.debug(f"call_health_endpoint_with_retries()  {health_url=} {stop_after_delay_s=}")
 
     request_timeout_s = 2
     sleep_time_s = 1
     start_s = time.perf_counter()
     elapsed_s = 0
-    end_time_s = start_s + stop_after_delay_s
-    num_failed_calls = 0
+    num_calls = 0
 
     async with httpx.AsyncClient(timeout=request_timeout_s) as client:
         while True:
-            success, msg_txt = await _call_health_endpoint(client, health_url_to_call)
-            if success:
-                return success, msg_txt
-            
-            num_failed_calls += 1
-            LOGGER.debug(f"call_health_endpoint_with_retries() - attempt {num_failed_calls} failed with error: {msg_txt=}")
-
+            num_calls += 1
+            success, msg = await _call_health_endpoint(client, health_url)
             elapsed_s = time.perf_counter() - start_s
+            if success:
+                LOGGER.debug(f"call_health_endpoint_with_retries() - succeeded on attempt {num_calls}, time spent: {elapsed_s:.2f}s, {msg=}")
+                return success, msg
+
+            LOGGER.debug(f"call_health_endpoint_with_retries() - attempt {num_calls} failed with error: {msg=}")
+
             if elapsed_s + sleep_time_s + request_timeout_s > stop_after_delay_s:
-                LOGGER.debug(f"call_health_endpoint_with_retries() - giving up after {num_failed_calls} failed attempts, time spent: {elapsed_s:.2f}s")
-                return False, f"Giving up after {num_failed_calls} failed attempts, time spent: {elapsed_s:.2f}s"
+                LOGGER.debug(f"call_health_endpoint_with_retries() - giving up after {num_calls} failed attempts, time spent: {elapsed_s:.2f}s")
+                return False, f"Giving up after {num_calls} failed attempts, time spent: {elapsed_s:.2f}s"
 
             await asyncio.sleep(sleep_time_s)
 
 
-async def call_health_endpoint(health_url_to_call: str) -> Tuple[bool, str]:
+async def call_health_endpoint(health_url: str) -> Tuple[bool, str]:
     async with httpx.AsyncClient() as client:
-        return await _call_health_endpoint(client, health_url_to_call)
+        return await _call_health_endpoint(client, health_url)
 
 
-async def _call_health_endpoint(client: httpx.AsyncClient, health_url_to_call: str) -> Tuple[bool, str]:
+async def _call_health_endpoint(client: httpx.AsyncClient, health_url: str) -> Tuple[bool, str]:
     try:
-        response = await client.get(health_url_to_call)
-        LOGGER.debug(f"_call_health_endpoint() result: {response.status_code=}, {response.text=}")
+        response = await client.get(health_url)
         if response.status_code == 200:
             return True, f"{response.text=}"
 
         return False, f"{response.status_code=}, {response.text=}"
 
-    except httpx.RequestError as exc:
-        LOGGER.debug(f"_call_health_endpoint() request error: {exc=}")
-        return False, f"Request error: {exc=}"
+    except httpx.RequestError as exception:
+        return False, f"Request error: {exception=}"
 
 
 
@@ -127,8 +125,8 @@ async def get_or_create_user_service_url(user_id: str, job_component_name: str, 
                 # Can we afford the more extensive live check against the service's health endpoint?
                 live_endpoint = f"{service_url}/health/live"
                 LOGGER.debug(f"Job is running in radix, trying to probe service health endpoint at {live_endpoint=}")
-                is_alive, msg = await call_health_endpoint(live_endpoint)
-                if is_alive:
+                is_ready, msg = await call_health_endpoint(live_endpoint)
+                if is_ready:
                     LOGGER.debug("Service is alive, returning its endpoint")
                     return service_url
                 else:
@@ -206,8 +204,8 @@ async def get_or_create_user_service_url(user_id: str, job_component_name: str, 
         # We must decide on how long we should wait here before giving up
         # This must be aligned with the auto release time for our lock and also the polling for job info that is done against redis
         ready_endpoint = f"http://{new_radix_job_name}:{actual_service_port}/health/ready"
-        is_alive, msg = await call_health_endpoint_with_retries(health_url_to_call=ready_endpoint, stop_after_delay_s=30)
-        if not is_alive:
+        is_ready, msg = await call_health_endpoint_with_retries(health_url=ready_endpoint, stop_after_delay_s=10)
+        if not is_ready:
             LOGGER.error("The newly created radix job failed to come online, giving up and deleting it")
             # Should delete the radix job as well 
             redis_job_updater.delete_all_state()
