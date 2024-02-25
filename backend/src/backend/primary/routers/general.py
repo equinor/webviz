@@ -97,7 +97,8 @@ async def user_session_container(
     request: Request, authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user)
 ) -> StreamingResponse:
     """Get information about user session container (note that one is started if not already running)."""
-    return await proxy_to_user_session(request, authenticated_user)
+    raise HTTPException(status_code=status.HTTP_501_NOT_IMPLEMENTED, detail="Temporarily disabled!!")
+    #return await proxy_to_user_session(request, authenticated_user)
 
 
 @router.get("/usermock/list")
@@ -174,7 +175,7 @@ async def usermock_call(
     service_base_url = await get_or_create_user_service_url(authenticated_user._user_id, "user-mock", instance_str)
     if service_base_url is None:
         LOGGER.error("Failed to get user session service URL")
-        return "Failed to get user session service URL!!!!!"
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Failed to get user session service URL")
     
     endpoint = f"{service_base_url}/dowork?duration=5"
 
