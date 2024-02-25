@@ -64,7 +64,7 @@ async def call_health_endpoint_with_retries(health_url_to_call: str) -> Tuple[bo
 
 async def call_health_endpoint(health_url_to_call: str) -> Tuple[bool, str]:
     async with httpx.AsyncClient() as client:
-        return _call_health_endpoint(client, health_url_to_call)
+        return await _call_health_endpoint(client, health_url_to_call)
 
 
 async def _call_health_endpoint(client: httpx.AsyncClient, health_url_to_call: str) -> Tuple[bool, str]:
