@@ -46,13 +46,13 @@ class LockReleasingContext(AbstractContextManager):
         #     pass
 
 
-async def call_endpoint_with_retries(url_to_call: str) -> Tuple[bool, str]:
-    LOGGER.debug(f"## call_health_endpoint_with_retries()  {url_to_call=}")
+async def call_health_endpoint_with_retries(health_url_to_call: str) -> Tuple[bool, str]:
+    LOGGER.debug(f"## call_health_endpoint_with_retries()  {health_url_to_call=}")
 
     max_retries = 20
     async with httpx.AsyncClient() as client:
         for i in range(max_retries):
-            success, msg_txt = await _call_endpoint(client, url_to_call)
+            success, msg_txt = await _call_health_endpoint(client, health_url_to_call)
             if success:
                 return success, msg_txt
             
@@ -62,9 +62,14 @@ async def call_endpoint_with_retries(url_to_call: str) -> Tuple[bool, str]:
     return False, "Failed to call health endpoint"
 
 
-async def _call_endpoint(client: httpx.AsyncClient, call_health_endpoint_with_retries: str) -> Tuple[bool, str]:
+async def call_health_endpoint(health_url_to_call: str) -> Tuple[bool, str]:
+    async with httpx.AsyncClient() as client:
+        return _call_health_endpoint(client, health_url_to_call)
+
+
+async def _call_health_endpoint(client: httpx.AsyncClient, health_url_to_call: str) -> Tuple[bool, str]:
     try:
-        response = await client.get(call_health_endpoint_with_retries)
+        response = await client.get(health_url_to_call)
         response.raise_for_status()
         return True, response.text
     except httpx.RequestError as exc:
@@ -124,12 +129,25 @@ async def get_or_create_user_service_url(user_id: str, job_component_name: str, 
 
     if job_info and job_info.state == JobState.RUNNING and job_info.radix_job_name:
         if IS_ON_RADIX_PLATFORM:
-            LOGGER.debug("Found a matching user job entry, verifying its existence against radix job manager")
+            LOGGER.debug("Found a matching user job entry in directory, verifying its existence against radix job manager")
             radix_job_is_running = await verify_that_named_radix_job_is_running(job_component_name, job_scheduler_port, job_info.radix_job_name)
             if radix_job_is_running:
-                LOGGER.debug("Job is running in radix, returning its endpoint")
                 LOGGER.debug(f"{job_info=}")
-                return f"http://{job_info.radix_job_name}:{actual_service_port}"
+                service_url = f"http://{job_info.radix_job_name}:{actual_service_port}"
+                # LOGGER.debug("Job is running in radix, returning its endpoint")
+                # return service_url
+
+                # Can we afford the more extensive live check against the service's health endpoint?
+                live_endpoint = f"{service_url}/health/live"
+                LOGGER.debug(f"Job is running in radix, trying to probe service health endpoint at {live_endpoint=}")
+                is_alive, msg = await call_health_endpoint(live_endpoint)
+                if is_alive:
+                    LOGGER.debug("Service is alive, returning its endpoint")
+                    return service_url
+                else:
+                    LOGGER.debug(f"Service seems to be dead, so will try and start a new radix job {msg=}")
+            else:
+                LOGGER.debug("Could not find running job in radix radix job manager so will try and start a new radix job")
         else:
             return f"http://{job_info.radix_job_name}:{actual_service_port}"
 
@@ -201,7 +219,7 @@ async def get_or_create_user_service_url(user_id: str, job_component_name: str, 
         # We must decide on how long we should wait here before giving up
         # This must be aliogned with the auto release time for our lock
         ready_endpoint = f"http://{new_radix_job_name}:{actual_service_port}/health/ready"
-        is_alive, msg = await call_endpoint_with_retries(ready_endpoint)
+        is_alive, msg = await call_health_endpoint_with_retries(ready_endpoint)
         if not is_alive:
             LOGGER.error("The newly created radix job failed to come online, giving up and deleting it")
             # Should delete the radix job as well 

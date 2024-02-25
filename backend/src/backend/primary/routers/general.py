@@ -18,8 +18,9 @@ from .dev_radix_helpers import create_new_radix_job
 from .dev_radix_helpers import get_radix_job_state
 from .dev_radix_helpers import delete_all_radix_job_instances
 from .dev_user_jobs import get_or_create_user_service_url
-from .dev_user_jobs import call_endpoint_with_retries
+from .dev_user_jobs import call_health_endpoint_with_retries
 from .dev_redis_user_job_dir import RedisUserJobDirectory
+from src.services.utils.perf_timer import PerfTimer
 
 LOGGER = logging.getLogger(__name__)
 
@@ -149,7 +150,7 @@ async def usermock_createcall(
 
     call_url = f"http://{new_radix_job_name}:8001/health/ready"
     LOGGER.debug(f"=========== {call_url=}")
-    success, msg_txt = await call_endpoint_with_retries(call_url)
+    success, msg_txt = await call_health_endpoint_with_retries(call_url)
     LOGGER.debug(f"===========  {success=}, {msg_txt=}")
 
     return f"{success=}, {msg_txt=}"
@@ -172,11 +173,15 @@ async def usermock_call(
 ) -> str:
     LOGGER.debug(f"usermock_call()  with {instance_str=}")
 
+    timer = PerfTimer()
+
     service_base_url = await get_or_create_user_service_url(authenticated_user._user_id, "user-mock", instance_str)
     if service_base_url is None:
         LOGGER.error("Failed to get user session service URL")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to get user session service URL")
-    
+
+    LOGGER.debug(f"Call to get_or_create_user_service_url() took: {timer.elapsed_ms()}ms")
+
     endpoint = f"{service_base_url}/dowork?duration=5"
 
     LOGGER.debug("======================")
