@@ -1,3 +1,4 @@
+import time
 from enum import Enum
 import logging
 from typing import Tuple
@@ -46,20 +47,31 @@ class LockReleasingContext(AbstractContextManager):
         #     pass
 
 
-async def call_health_endpoint_with_retries(health_url_to_call: str) -> Tuple[bool, str]:
-    LOGGER.debug(f"## call_health_endpoint_with_retries()  {health_url_to_call=}")
+async def call_health_endpoint_with_retries(health_url_to_call: str, stop_after_delay_s: float) -> Tuple[bool, str]:
+    LOGGER.debug(f"call_health_endpoint_with_retries()  {health_url_to_call=} {stop_after_delay_s=}")
 
-    max_retries = 20
-    async with httpx.AsyncClient() as client:
-        for i in range(max_retries):
+    request_timeout_s = 2
+    sleep_time_s = 1
+    start_s = time.perf_counter()
+    elapsed_s = 0
+    end_time_s = start_s + stop_after_delay_s
+    num_failed_calls = 0
+
+    async with httpx.AsyncClient(timeout=request_timeout_s) as client:
+        while True:
             success, msg_txt = await _call_health_endpoint(client, health_url_to_call)
             if success:
                 return success, msg_txt
             
-            LOGGER.debug(f"  attempt {i} failed with error: {msg_txt=}")
-            await asyncio.sleep(1)
+            num_failed_calls += 1
+            LOGGER.debug(f"call_health_endpoint_with_retries() - attempt {num_failed_calls} failed with error: {msg_txt=}")
 
-    return False, "Failed to call health endpoint"
+            elapsed_s = time.perf_counter() - start_s
+            if elapsed_s + sleep_time_s + request_timeout_s > stop_after_delay_s:
+                LOGGER.debug(f"call_health_endpoint_with_retries() - giving up after {num_failed_calls} failed attempts, time spent: {elapsed_s:.2f}s")
+                return False, f"Giving up after {num_failed_calls} failed attempts, time spent: {elapsed_s:.2f}s"
+
+            await asyncio.sleep(sleep_time_s)
 
 
 async def call_health_endpoint(health_url_to_call: str) -> Tuple[bool, str]:
@@ -70,42 +82,17 @@ async def call_health_endpoint(health_url_to_call: str) -> Tuple[bool, str]:
 async def _call_health_endpoint(client: httpx.AsyncClient, health_url_to_call: str) -> Tuple[bool, str]:
     try:
         response = await client.get(health_url_to_call)
-        response.raise_for_status()
-        return True, response.text
+        LOGGER.debug(f"_call_health_endpoint() result: {response.status_code=}, {response.text=}")
+        if response.status_code == 200:
+            return True, f"{response.text=}"
+
+        return False, f"{response.status_code=}, {response.text=}"
+
     except httpx.RequestError as exc:
-        return False, f"An error occurred while requesting {exc.request.url!r}"
-    except httpx.HTTPStatusError as exc:
-        return False, f"Error HTTP status {exc.response.status_code} while requesting {exc.request.url!r}"
+        LOGGER.debug(f"_call_health_endpoint() request error: {exc=}")
+        return False, f"Request error: {exc=}"
 
 
-"""
-async def get_or_create_user_service_url_localdev(user_id: str, job_component_name: str, instance_identifier: str) -> str:
-    LOGGER.debug(f"##### get_or_create_user_service_url_localdev()  {job_component_name=}")
-
-    redis_job_dir = RedisUserJobDirectory(user_id)
-    job_info = redis_job_dir.get_job_info(job_component_name, instance_identifier)
-    LOGGER.debug(f"{job_info=}")
-
-    if job_info and job_info.state == JobState.RUNNING:
-        service_url = f"http://{job_info.radix_job_name}:8001"
-        LOGGER.debug(f"Job info found in running state, so returning URL: {service_url=}")
-        return service_url
-
-    redis_client = redis_job_dir.get_redis_client()
-    lock_key_name: str = redis_job_dir.make_lock_key(job_component_name, instance_identifier)
-    my_lock = Redlock(key=lock_key_name, masters={redis_client}, auto_release_time=10, context_manager_timeout=5)
-
-    LOGGER.debug(f"Trying to acquire lock {lock_key_name=}")
-    with my_lock:
-        redis_job_updater = redis_job_dir.create_job_info_updater(job_component_name, instance_identifier)
-        redis_job_updater.delete_all_state()
-        await asyncio.sleep(8)
-        redis_job_updater.set_state_waiting(job_component_name)
-        redis_job_updater.set_state_running()
-
-    job_info = redis_job_dir.get_job_info(job_component_name, instance_identifier)
-    return f"http://{job_info.radix_job_name}:8001"
-"""
 
 
 async def get_or_create_user_service_url(user_id: str, job_component_name: str, instance_identifier: str) -> str | None:
@@ -217,9 +204,9 @@ async def get_or_create_user_service_url(user_id: str, job_component_name: str, 
         LOGGER.debug(f"lock status, {my_lock.locked()=}")
 
         # We must decide on how long we should wait here before giving up
-        # This must be aliogned with the auto release time for our lock
+        # This must be aligned with the auto release time for our lock and also the polling for job info that is done against redis
         ready_endpoint = f"http://{new_radix_job_name}:{actual_service_port}/health/ready"
-        is_alive, msg = await call_health_endpoint_with_retries(ready_endpoint)
+        is_alive, msg = await call_health_endpoint_with_retries(health_url_to_call=ready_endpoint, stop_after_delay_s=30)
         if not is_alive:
             LOGGER.error("The newly created radix job failed to come online, giving up and deleting it")
             # Should delete the radix job as well 
