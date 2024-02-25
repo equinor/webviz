@@ -28,11 +28,11 @@ class LockReleasingContext(AbstractContextManager):
         assert self._acquired_lock.locked()
         
     def __enter__(self) -> Redlock:
-        print("__enter__()")
+        LOGGER.debug("LockReleasingContext.__enter__()")
         return self._acquired_lock
     
     def __exit__(self, _exc_type: type[BaseException] | None, _exc_value: BaseException | None, _traceback: TracebackType | None) -> bool | None:
-        print("__exit__() ...releasing lock")
+        LOGGER.debug("LockReleasingContext.__exit__() ...releasing lock")
         self._acquired_lock.release()
 
         # What is the correct return value here?
