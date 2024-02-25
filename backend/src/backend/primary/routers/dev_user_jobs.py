@@ -179,7 +179,7 @@ async def get_or_create_user_service_url(user_id: str, job_component_name: str, 
             LOGGER.debug(f"Trying to create new job using radix job manager ({job_component_name=}, {job_scheduler_port=})")
             new_radix_job_name = await create_new_radix_job(job_component_name, job_scheduler_port)
             if new_radix_job_name is None:
-                LOGGER.error(f"Failed to create new job in radix {job_component_name=}, {job_scheduler_port=}")
+                LOGGER.error(f"Failed to create new job in radix ({job_component_name=}, {job_scheduler_port=})")
                 redis_job_updater.delete_all_state()
                 return None
 

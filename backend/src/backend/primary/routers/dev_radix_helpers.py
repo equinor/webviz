@@ -65,10 +65,10 @@ async def create_new_radix_job(job_component_name: str, job_scheduler_port: int)
             response = await client.post(url=radix_job_manager_url, json=request_body)
             response.raise_for_status()
         except httpx.RequestError as exc:
-            LOGGER.error(f"An error occurred while requesting POST {exc.request.url!r}.")
+            LOGGER.error(f"Request error occurred for POST to: {exc.request.url!r}")
             return None
         except httpx.HTTPStatusError as exc:
-            LOGGER.error(f"Error HTTP status {exc.response.status_code} while requesting POST {exc.request.url!r}.")
+            LOGGER.error(f"Request returned HTTP error {exc.response.status_code} for POST to {exc.request.url!r}")
             return None
 
     # According to doc it seems we should be getting a json back that contains a status field,
