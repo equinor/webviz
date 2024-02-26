@@ -19,10 +19,11 @@ print(f"{IS_ON_RADIX_PLATFORM=}")
 
 # Notes on the RadixJobState:
 #  * The 'Waiting' status is not documented, but it seems to be the status of a job that has been created but not yet running
+#  * We're not always getting a job status, in particular when querying the status of a named job, so include a None entry for status
 #  * Sometimes we get an extra (undocumented) field returned, 'message'
 class RadixJobState(BaseModel):
     name: str
-    status: Literal["Waiting", "Running", "Successful", "Failed"]
+    status: Literal["Waiting", "Running", "Successful", "Failed"] | None = None
     started: str | None = None
     ended: str | None = None
     message: str | None = None
@@ -98,8 +99,7 @@ async def get_radix_job_state(job_component_name: str, job_scheduler_port: int, 
     LOGGER.debug(f"{response_dict=}")
     LOGGER.debug("------")
 
-    # Have a suspicion that the may not alwqys contain an entry for status
-    # This must be verified, but if that is the case, we must re-assess the RadixJobState pydantic model.
+    # Note that the response we're getting back does not always contain an entry for status
     radix_job_state = RadixJobState.model_validate_json(response.content)
     return radix_job_state
 
