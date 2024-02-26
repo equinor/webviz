@@ -150,7 +150,7 @@ async def usermock_createcall(
 
     call_url = f"http://{new_radix_job_name}:8001/health/ready"
     LOGGER.debug(f"=========== {call_url=}")
-    success, msg_txt = await call_health_endpoint_with_retries(call_url)
+    success, msg_txt = await call_health_endpoint_with_retries(call_url, stop_after_delay_s=30)
     LOGGER.debug(f"===========  {success=}, {msg_txt=}")
 
     return f"{success=}, {msg_txt=}"
@@ -237,7 +237,6 @@ async def usermock_dirdel(
     LOGGER.debug("======================")
     for job_info in job_info_arr:
         LOGGER.debug(f"{job_info=}")
-        resp_text += str(job_info) + "\n"
     LOGGER.debug("======================")
 
     return "Job info deleted"

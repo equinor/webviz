@@ -21,6 +21,20 @@ from .dev_redis_user_job_dir import RedisUserJobDirectory, JobState
 LOGGER = logging.getLogger(__name__)
 
 
+class TimeCounter:
+    def __init__(self, duration_s: float) -> None:
+        self._start_s = time.perf_counter()
+        self._end_s = self._start_s + duration_s
+
+    def elapsed_s(self) -> float:
+        return time.perf_counter() - self._start_s
+
+    def remaining_s(self) -> float:
+        time_now = time.perf_counter()
+        remaining = self._end_s - time_now
+        return remaining if remaining > 0 else 0
+
+
 class LockReleasingContext(AbstractContextManager):
     def __init__(self, acquired_lock: Redlock) -> None:
         self._acquired_lock: Redlock = acquired_lock
@@ -48,40 +62,43 @@ class LockReleasingContext(AbstractContextManager):
 
 
 async def call_health_endpoint_with_retries(health_url: str, stop_after_delay_s: float) -> Tuple[bool, str]:
-    LOGGER.debug(f"call_health_endpoint_with_retries()  {health_url=} {stop_after_delay_s=}")
+    LOGGER.debug(f"call_health_endpoint_with_retries() - {health_url=} {stop_after_delay_s=}")
 
-    request_timeout_s = 2
+    target_request_timeout_s = 3
+    min_request_timeout_s = 0.5
     sleep_time_s = 1
-    start_s = time.perf_counter()
-    elapsed_s = 0
+
+    time_counter = TimeCounter(stop_after_delay_s)
     num_calls = 0
 
-    async with httpx.AsyncClient(timeout=request_timeout_s) as client:
+    async with httpx.AsyncClient(timeout=target_request_timeout_s) as client:
         while True:
+            request_timeout_s = min(target_request_timeout_s, max(min_request_timeout_s, time_counter.remaining_s()))
+            LOGGER.debug(f"call_health_endpoint_with_retries() - querying endpoint with {request_timeout_s=}")
+            success, msg = await _call_health_endpoint(client, health_url, request_timeout_s)
             num_calls += 1
-            success, msg = await _call_health_endpoint(client, health_url)
-            elapsed_s = time.perf_counter() - start_s
             if success:
-                LOGGER.debug(f"call_health_endpoint_with_retries() - succeeded on attempt {num_calls}, time spent: {elapsed_s:.2f}s, {msg=}")
+                LOGGER.debug(f"call_health_endpoint_with_retries() - succeeded on attempt {num_calls}, time spent: {time_counter.elapsed_s():.2f}s, {msg=}")
                 return success, msg
 
             LOGGER.debug(f"call_health_endpoint_with_retries() - attempt {num_calls} failed with error: {msg=}")
 
-            if elapsed_s + sleep_time_s + request_timeout_s > stop_after_delay_s:
+            elapsed_s = time_counter.elapsed_s()
+            if elapsed_s + sleep_time_s + min_request_timeout_s > stop_after_delay_s:
                 LOGGER.debug(f"call_health_endpoint_with_retries() - giving up after {num_calls} failed attempts, time spent: {elapsed_s:.2f}s")
                 return False, f"Giving up after {num_calls} failed attempts, time spent: {elapsed_s:.2f}s"
 
             await asyncio.sleep(sleep_time_s)
 
 
-async def call_health_endpoint(health_url: str) -> Tuple[bool, str]:
+async def call_health_endpoint(health_url: str, timeout_s: float) -> Tuple[bool, str]:
     async with httpx.AsyncClient() as client:
-        return await _call_health_endpoint(client, health_url)
+        return await _call_health_endpoint(client, health_url, timeout_s)
 
 
-async def _call_health_endpoint(client: httpx.AsyncClient, health_url: str) -> Tuple[bool, str]:
+async def _call_health_endpoint(client: httpx.AsyncClient, health_url: str, timeout_s: float) -> Tuple[bool, str]:
     try:
-        response = await client.get(health_url)
+        response = await client.get(url=health_url, timeout=timeout_s)
         if response.status_code == 200:
             return True, f"{response.text=}"
 
@@ -125,7 +142,7 @@ async def get_or_create_user_service_url(user_id: str, job_component_name: str, 
                 # Can we afford the more extensive live check against the service's health endpoint?
                 live_endpoint = f"{service_url}/health/live"
                 LOGGER.debug(f"Job is running in radix, trying to probe service health endpoint at {live_endpoint=}")
-                is_ready, msg = await call_health_endpoint(live_endpoint)
+                is_ready, msg = await call_health_endpoint(live_endpoint, timeout_s=2)
                 if is_ready:
                     LOGGER.debug("Service is alive, returning its endpoint")
                     return service_url
