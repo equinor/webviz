@@ -11,4 +11,4 @@ ENV PATH="${PATH}:/home/appuser/.local/bin"
 
 RUN pip install -r requirements.txt
 
-CMD ["uvicorn", "user_grid3d_ri_app:app", "--reload", "--host", "0.0.0.0", "--port", "8001"]
+CMD ["uvicorn", "user_grid3d_ri_app:app", "--reload", "--host", "0.0.0.0", "--port", "8002"]
