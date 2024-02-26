@@ -138,14 +138,14 @@ spec:
 
   jobs:
     - name: user-mock
-      dockerFileName: ./backend_py/user_mock/user-mock.Dockerfile
+      dockerFileName: ./backend_py/user_mock/Dockerfile
       schedulerPort: 8001
       ports:
         - name: http
           port: 8001
 
     - name: user-grid3d-ri
-      dockerFileName: ./backend_py/user_grid3d-ri/user-grid3d-ri.Dockerfile
+      dockerFileName: ./backend_py/user_grid3d_ri/Dockerfile
       schedulerPort: 8002
       ports:
         - name: http
