@@ -57,11 +57,20 @@ services:
   user-mock:
     build:
       context: .
-      dockerfile: ./backend_py/user_mock/user-mock.Dockerfile
+      dockerfile: ./backend_py/user_mock/Dockerfile
     ports:
       - 8001:8001
     volumes:
-      - ./backend_py/user_mock:/home/appuser/AAA
+      - ./backend_py/user_mock:/home/appuser/backend_py/user_mock
+
+  user-grid3d-ri:
+    build:
+      context: .
+      dockerfile: ./backend_py/user_grid3d_ri/Dockerfile
+    ports:
+      - 8002:8002
+    volumes:
+      - ./backend_py/user_grid3d_ri:/home/appuser/backend_py/user_grid3d_ri
 
   backend-user-session:
     build:

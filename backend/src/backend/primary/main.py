@@ -30,6 +30,7 @@ from .routers.polygons.router import router as polygons_router
 from .routers.graph.router import router as graph_router
 from .routers.observations.router import router as observations_router
 from .routers.rft.router import router as rft_router
+from .routers.dev.router import router as dev_router
 
 
 ensure_console_log_handler_is_configured()
@@ -81,6 +82,7 @@ app.include_router(polygons_router, prefix="/polygons", tags=["polygons"])
 app.include_router(graph_router, prefix="/graph", tags=["graph"])
 app.include_router(observations_router, prefix="/observations", tags=["observations"])
 app.include_router(rft_router, prefix="/rft", tags=["rft"])
+app.include_router(dev_router, prefix="/dev", tags=["dev"], include_in_schema=False)
 
 authHelper = AuthHelper()
 app.include_router(authHelper.router)

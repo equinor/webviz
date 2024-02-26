@@ -3,10 +3,11 @@ FROM python:3.11-slim
 RUN useradd --create-home --uid 1234 appuser
 USER 1234
 
-COPY --chown=appuser ./backend_py/user_mock /home/appuser/user_mock
+COPY --chown=appuser ./backend_py/user_mock /home/appuser/backend_py/user_mock
 
-WORKDIR /home/appuser/user_mock
+WORKDIR /home/appuser/backend_py/user_mock
 
+# For the benefit of running the installed uvicorn 
 ENV PATH="${PATH}:/home/appuser/.local/bin"
 
 RUN pip install -r requirements.txt

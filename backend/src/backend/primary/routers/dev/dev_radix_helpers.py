@@ -1,14 +1,14 @@
-import logging
-from enum import Enum
-from typing import Literal, List
-import os
 import asyncio
+import logging
+import os
+from enum import Enum
+from typing import List, Literal
 
 import httpx
 import redis
+from pydantic import BaseModel, TypeAdapter
 
 from src import config
-from pydantic import BaseModel, TypeAdapter
 
 LOGGER = logging.getLogger(__name__)
 

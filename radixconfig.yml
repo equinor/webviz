@@ -144,6 +144,13 @@ spec:
         - name: http
           port: 8001
 
+    - name: user-grid3d-ri
+      dockerFileName: ./backend_py/user_grid3d-ri/user-grid3d-ri.Dockerfile
+      schedulerPort: 8002
+      ports:
+        - name: http
+          port: 8002
+
     - name: backend-user-session
       dockerFileName: backend.Dockerfile
       schedulerPort: 8000

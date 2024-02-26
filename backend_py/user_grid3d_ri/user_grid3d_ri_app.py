@@ -1,6 +1,5 @@
 import asyncio
 import datetime
-import os
 import logging
 from typing import Annotated
 
@@ -10,31 +9,12 @@ from fastapi import Query
 LOGGER = logging.getLogger(__name__)
 
 
-RADIX_JOB_NAME = os.getenv("RADIX_JOB_NAME")
-RADIX_APP = os.getenv("RADIX_APP")
-RADIX_ENVIRONMENT = os.getenv("RADIX_ENVIRONMENT")
-RADIX_COMPONENT = os.getenv("RADIX_COMPONENT")
-
-LOGGER.debug(f"{RADIX_JOB_NAME=}")
-LOGGER.debug(f"{RADIX_APP=}")
-LOGGER.debug(f"{RADIX_ENVIRONMENT=}")
-LOGGER.debug(f"{RADIX_COMPONENT=}")
-
-
-def dump_env_vars():
-    LOGGER.debug(f"{RADIX_JOB_NAME=}")
-    LOGGER.debug(f"{RADIX_APP=}")
-    LOGGER.debug(f"{RADIX_ENVIRONMENT=}")
-    LOGGER.debug(f"{RADIX_COMPONENT=}")
-
-
 app = FastAPI()
 
 
 @app.get("/")
 async def root() -> str:
-    dump_env_vars()
-    ret_str = f"user-mock is alive at this time: {datetime.datetime.now()}  [RADIX_JOB_NAME={RADIX_JOB_NAME}]  [RADIX_APP={RADIX_APP}]  [RADIX_ENVIRONMENT={RADIX_ENVIRONMENT}]  [RADIX_COMPONENT={RADIX_COMPONENT}"
+    ret_str = f"user-grid3d-ri is alive at this time: {datetime.datetime.now()}"
     LOGGER.debug("Sending: ", ret_str)
     return ret_str
 
@@ -64,9 +44,9 @@ async def health_ready() -> str:
 async def dowork(
     duration: Annotated[float, Query(description="Duration of work in seconds")] = 1.0,
 ) -> str:
-    LOGGER.debug(f"dowork() doing MOCK work for: {duration=}s")
+    LOGGER.debug(f"dowork() doing fake GRID3D work for: {duration=}s")
     await asyncio.sleep(duration)
 
-    ret_str = f"MOCK work done at: {datetime.datetime.now()}"
-    LOGGER.debug(f"dowork() MOCK returning: {ret_str!r}")
+    ret_str = f"GRID3D work done at: {datetime.datetime.now()}"
+    LOGGER.debug(f"dowork() GRID3D returning: {ret_str!r}")
     return ret_str
