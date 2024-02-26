@@ -65,7 +65,7 @@ async def call_health_endpoint_with_retries(health_url: str, stop_after_delay_s:
     LOGGER.debug(f"call_health_endpoint_with_retries() - {health_url=} {stop_after_delay_s=}")
 
     target_request_timeout_s = 3
-    min_request_timeout_s = 0.5
+    min_request_timeout_s = 1
     sleep_time_s = 1
 
     time_counter = TimeCounter(stop_after_delay_s)
@@ -221,7 +221,7 @@ async def get_or_create_user_service_url(user_id: str, job_component_name: str, 
         # We must decide on how long we should wait here before giving up
         # This must be aligned with the auto release time for our lock and also the polling for job info that is done against redis
         ready_endpoint = f"http://{new_radix_job_name}:{actual_service_port}/health/ready"
-        is_ready, msg = await call_health_endpoint_with_retries(health_url=ready_endpoint, stop_after_delay_s=10)
+        is_ready, msg = await call_health_endpoint_with_retries(health_url=ready_endpoint, stop_after_delay_s=30)
         if not is_ready:
             LOGGER.error("The newly created radix job failed to come online, giving up and deleting it")
             # Should delete the radix job as well 
