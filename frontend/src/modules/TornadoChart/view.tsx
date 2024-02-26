@@ -3,7 +3,7 @@ import React from "react";
 import { KeyKind } from "@framework/DataChannelTypes";
 import { Ensemble } from "@framework/Ensemble";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
-import { ModuleFCProps } from "@framework/Module";
+import { ModuleViewProps } from "@framework/Module";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { Tag } from "@lib/components/Tag";
 import { useElementSize } from "@lib/hooks/useElementSize";
@@ -16,22 +16,22 @@ import { DisplayComponentType, State } from "./state";
 
 import { createSensitivityColorMap } from "../_shared/sensitivityColors";
 
-export const View = ({ moduleContext, workbenchSession, workbenchSettings }: ModuleFCProps<State>) => {
-    const showLabels = moduleContext.useStoreValue("showLabels");
-    const hideZeroY = moduleContext.useStoreValue("hideZeroY");
-    const showRealizationPoints = moduleContext.useStoreValue("showRealizationPoints");
-    const displayComponentType = moduleContext.useStoreValue("displayComponentType");
-    const referenceSensitivityName = moduleContext.useStoreValue("referenceSensitivityName");
+export const View = ({ viewContext, workbenchSession, workbenchSettings }: ModuleViewProps<State>) => {
+    const showLabels = viewContext.useStoreValue("showLabels");
+    const hideZeroY = viewContext.useStoreValue("hideZeroY");
+    const showRealizationPoints = viewContext.useStoreValue("showRealizationPoints");
+    const displayComponentType = viewContext.useStoreValue("displayComponentType");
+    const referenceSensitivityName = viewContext.useStoreValue("referenceSensitivityName");
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);
     const wrapperDivSize = useElementSize(wrapperDivRef);
     const ensembleSet = useEnsembleSet(workbenchSession);
 
-    const responseReceiver = moduleContext.useChannelReceiver({
+    const responseReceiver = viewContext.useChannelReceiver({
         receiverIdString: "response",
         expectedKindsOfKeys: [KeyKind.REALIZATION],
     });
 
-    const setSelectedSensitivity = moduleContext.useSetStoreValue("selectedSensitivity");
+    const setSelectedSensitivity = viewContext.useSetStoreValue("selectedSensitivity");
 
     const realizations: number[] = [];
     const values: number[] = [];
@@ -76,7 +76,7 @@ export const View = ({ moduleContext, workbenchSession, workbenchSettings }: Mod
     }
 
     function makeContent() {
-        moduleContext.setInstanceTitle(`Tornado chart`);
+        viewContext.setInstanceTitle(`Tornado chart`);
         if (!responseReceiver.channel) {
             return (
                 <ContentInfo>
@@ -94,7 +94,7 @@ export const View = ({ moduleContext, workbenchSession, workbenchSettings }: Mod
         }
 
         if (computedSensitivityResponseDataset && displayComponentType === DisplayComponentType.TornadoChart) {
-            moduleContext.setInstanceTitle(`Tornado chart for ${computedSensitivityResponseDataset.responseName}`);
+            viewContext.setInstanceTitle(`Tornado chart for ${computedSensitivityResponseDataset.responseName}`);
             return (
                 <SensitivityChart
                     sensitivityResponseDataset={computedSensitivityResponseDataset}
@@ -110,7 +110,7 @@ export const View = ({ moduleContext, workbenchSession, workbenchSettings }: Mod
         }
 
         if (computedSensitivityResponseDataset && displayComponentType === DisplayComponentType.Table) {
-            moduleContext.setInstanceTitle(`Sensitivity table for ${computedSensitivityResponseDataset.responseName}`);
+            viewContext.setInstanceTitle(`Sensitivity table for ${computedSensitivityResponseDataset.responseName}`);
             return (
                 <div className="text-sm">
                     <SensitivityTable

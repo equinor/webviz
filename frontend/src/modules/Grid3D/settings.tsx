@@ -1,7 +1,7 @@
 import React from "react";
 
 import { EnsembleIdent } from "@framework/EnsembleIdent";
-import { ModuleFCProps } from "@framework/Module";
+import { ModuleSettingsProps } from "@framework/Module";
 import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { fixupEnsembleIdent, maybeAssignFirstSyncedEnsemble } from "@framework/utils/ensembleUiHelpers";
@@ -18,18 +18,18 @@ import { useGridModelNames, useGridParameterNames } from "./queryHooks";
 import state from "./state";
 
 //-----------------------------------------------------------------------------------------------------------
-export function Settings({ moduleContext, workbenchServices, workbenchSession }: ModuleFCProps<state>) {
+export function Settings({ settingsContext, workbenchServices, workbenchSession }: ModuleSettingsProps<state>) {
     // From Workbench
 
     const ensembleSet = useEnsembleSet(workbenchSession);
     const [selectedEnsembleIdent, setSelectedEnsembleIdent] = React.useState<EnsembleIdent | null>(null);
     // State
-    const [gridName, setGridName] = moduleContext.useStoreState("gridName");
-    const [parameterName, setParameterName] = moduleContext.useStoreState("parameterName");
-    const [realizations, setRealizations] = moduleContext.useStoreState("realizations");
-    const [useStatistics, setUseStatistics] = moduleContext.useStoreState("useStatistics");
-    const [selectedWellUuids, setSelectedWellUuids] = moduleContext.useStoreState("selectedWellUuids");
-    const syncedSettingKeys = moduleContext.useSyncedSettingKeys();
+    const [gridName, setGridName] = settingsContext.useStoreState("gridName");
+    const [parameterName, setParameterName] = settingsContext.useStoreState("parameterName");
+    const [realizations, setRealizations] = settingsContext.useStoreState("realizations");
+    const [useStatistics, setUseStatistics] = settingsContext.useStoreState("useStatistics");
+    const [selectedWellUuids, setSelectedWellUuids] = settingsContext.useStoreState("selectedWellUuids");
+    const syncedSettingKeys = settingsContext.useSyncedSettingKeys();
     const syncHelper = new SyncSettingsHelper(syncedSettingKeys, workbenchServices);
     const syncedValueEnsembles = syncHelper.useValue(SyncSettingKey.ENSEMBLE, "global.syncValue.ensembles");
 

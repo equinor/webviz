@@ -1,16 +1,16 @@
 import React from "react";
 
-import { ModuleFCProps } from "@framework/Module";
+import { ModuleViewProps } from "@framework/Module";
 import { useElementSize } from "@lib/hooks/useElementSize";
 
 import { ParameterDistributionPlot } from "./components/ParameterDistributionPlot";
 import { EnsembleParameterValues, ParameterDataArr, State } from "./state";
 
-export function View({ moduleContext, workbenchSession, workbenchSettings }: ModuleFCProps<State>) {
+export function View({ viewContext, workbenchSession, workbenchSettings }: ModuleViewProps<State>) {
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);
     const wrapperDivSize = useElementSize(wrapperDivRef);
 
-    const ensembleSetParameterIdents = moduleContext.useStoreValue("ensembleSetParameterIdents");
+    const ensembleSetParameterIdents = viewContext.useStoreValue("ensembleSetParameterIdents");
     const colorSet = workbenchSettings.useColorSet();
     const ensembleColors = new Map<string, string>();
 

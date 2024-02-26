@@ -2,7 +2,7 @@ import React from "react";
 import Plot from "react-plotly.js";
 
 import { VectorHistoricalData_api, VectorRealizationData_api, VectorStatisticData_api } from "@api";
-import { ModuleFCProps } from "@framework/Module";
+import { ModuleViewProps } from "@framework/Module";
 import { useSubscribedValue } from "@framework/WorkbenchServices";
 import { useElementSize } from "@lib/hooks/useElementSize";
 
@@ -19,7 +19,7 @@ interface MyPlotData extends Partial<PlotData> {
     legendrank?: number;
 }
 
-export const View = ({ moduleContext, workbenchSession, workbenchServices }: ModuleFCProps<State>) => {
+export const View = ({ viewContext, workbenchSession, workbenchServices }: ModuleViewProps<State>) => {
     // Leave this in until we get a feeling for React18/Plotly
     const renderCount = React.useRef(0);
     React.useEffect(function incrementRenderCount() {
@@ -28,12 +28,12 @@ export const View = ({ moduleContext, workbenchSession, workbenchServices }: Mod
 
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);
     const wrapperDivSize = useElementSize(wrapperDivRef);
-    const vectorSpec = moduleContext.useStoreValue("vectorSpec");
-    const resampleFrequency = moduleContext.useStoreValue("resamplingFrequency");
-    const showStatistics = moduleContext.useStoreValue("showStatistics");
-    const showRealizations = moduleContext.useStoreValue("showRealizations");
-    const showHistorical = moduleContext.useStoreValue("showHistorical");
-    const realizationsToInclude = moduleContext.useStoreValue("realizationsToInclude");
+    const vectorSpec = viewContext.useStoreValue("vectorSpec");
+    const resampleFrequency = viewContext.useStoreValue("resamplingFrequency");
+    const showStatistics = viewContext.useStoreValue("showStatistics");
+    const showRealizations = viewContext.useStoreValue("showRealizations");
+    const showHistorical = viewContext.useStoreValue("showHistorical");
+    const realizationsToInclude = viewContext.useStoreValue("realizationsToInclude");
 
     const vectorQuery = useVectorDataQuery(
         vectorSpec?.ensembleIdent.getCaseUuid(),
@@ -82,7 +82,7 @@ export const View = ({ moduleContext, workbenchSession, workbenchServices }: Mod
         };
     }
 
-    moduleContext.usePublishChannelContents({
+    viewContext.usePublishChannelContents({
         channelIdString: ChannelIds.REALIZATION_VALUE,
         dependencies: [vectorQuery.data, ensemble, vectorSpec],
         enabled: vectorSpec !== null,
@@ -195,10 +195,10 @@ export const View = ({ moduleContext, workbenchSession, workbenchServices }: Mod
         function updateInstanceTitle() {
             if (ensemble && vectorSpec && hasGotAnyRequestedData) {
                 const ensembleDisplayName = ensemble.getDisplayName();
-                moduleContext.setInstanceTitle(`${ensembleDisplayName} - ${vectorSpec.vectorName}`);
+                viewContext.setInstanceTitle(`${ensembleDisplayName} - ${vectorSpec.vectorName}`);
             }
         },
-        [hasGotAnyRequestedData, ensemble, vectorSpec, moduleContext]
+        [hasGotAnyRequestedData, ensemble, vectorSpec, viewContext]
     );
 
     const layout: Partial<Layout> = {

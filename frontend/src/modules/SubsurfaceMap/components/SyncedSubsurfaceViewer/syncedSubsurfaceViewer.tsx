@@ -1,17 +1,17 @@
-import { ModuleContext } from "@framework/ModuleContext";
+import { ViewContext } from "@framework/ModuleContext";
 import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
 import { WorkbenchServices } from "@framework/WorkbenchServices";
 import SubsurfaceViewer, { SubsurfaceViewerProps } from "@webviz/subsurface-viewer";
 import { ViewStateType } from "@webviz/subsurface-viewer/dist/components/Map";
 
 export type SyncedSubsurfaceViewerProps = {
-    moduleContext: ModuleContext<any>;
+    viewContext: ViewContext<any, any>;
     workbenchServices: WorkbenchServices;
 } & SubsurfaceViewerProps;
 
 export function SyncedSubsurfaceViewer(props: SyncedSubsurfaceViewerProps): JSX.Element {
-    const { moduleContext, workbenchServices, ...rest } = props;
-    const syncedSettingKeys = moduleContext.useSyncedSettingKeys();
+    const { viewContext, workbenchServices, ...rest } = props;
+    const syncedSettingKeys = viewContext.useSyncedSettingKeys();
     const syncHelper = new SyncSettingsHelper(syncedSettingKeys, workbenchServices);
 
     function onCameraChange(viewport: ViewStateType) {

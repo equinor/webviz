@@ -2,7 +2,7 @@ import React from "react";
 
 import { EnsembleParameterDescription_api, VectorDescription_api } from "@api";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
-import { ModuleFCProps } from "@framework/Module";
+import { ModuleSettingsProps } from "@framework/Module";
 import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { SingleEnsembleSelect } from "@framework/components/SingleEnsembleSelect";
@@ -18,15 +18,15 @@ import { useGetParameterNamesQuery, useTimestampsListQuery, useVectorsQuery } fr
 import { State } from "./state";
 
 //-----------------------------------------------------------------------------------------------------------
-export function Settings({ moduleContext, workbenchSession, workbenchServices }: ModuleFCProps<State>) {
+export function Settings({ settingsContext, workbenchSession, workbenchServices }: ModuleSettingsProps<State>) {
     const ensembleSet = useEnsembleSet(workbenchSession);
     const [selectedEnsemble, setSelectedEnsemble] = React.useState<EnsembleIdent | null>(null);
 
     const [selectedVectorName, setSelectedVectorName] = React.useState<string>("");
-    const [timestampUctMs, setTimestampUtcMs] = moduleContext.useStoreState("timestampUtcMs");
-    const [parameterName, setParameterName] = moduleContext.useStoreState("parameterName");
+    const [timestampUctMs, setTimestampUtcMs] = settingsContext.useStoreState("timestampUtcMs");
+    const [parameterName, setParameterName] = settingsContext.useStoreState("parameterName");
 
-    const syncedSettingKeys = moduleContext.useSyncedSettingKeys();
+    const syncedSettingKeys = settingsContext.useSyncedSettingKeys();
     const syncHelper = new SyncSettingsHelper(syncedSettingKeys, workbenchServices);
     const syncedValueEnsembles = syncHelper.useValue(SyncSettingKey.ENSEMBLE, "global.syncValue.ensembles");
     const syncedValueSummaryVector = syncHelper.useValue(SyncSettingKey.TIME_SERIES, "global.syncValue.timeSeries");
@@ -59,17 +59,17 @@ export function Settings({ moduleContext, workbenchSession, workbenchServices }:
     React.useEffect(
         function propagateVectorSpecToView() {
             if (computedEnsemble && computedVectorName) {
-                moduleContext.getStateStore().setValue("vectorSpec", {
+                settingsContext.getStateStore().setValue("vectorSpec", {
                     caseUuid: computedEnsemble.getCaseUuid(),
                     caseName: ensembleSet.findCaseName(computedEnsemble),
                     ensembleName: computedEnsemble.getEnsembleName(),
                     vectorName: computedVectorName,
                 });
             } else {
-                moduleContext.getStateStore().setValue("vectorSpec", null);
+                settingsContext.getStateStore().setValue("vectorSpec", null);
             }
         },
-        [computedEnsemble, computedVectorName, moduleContext, ensembleSet]
+        [computedEnsemble, computedVectorName, settingsContext, ensembleSet]
     );
 
     function handleEnsembleSelectionChange(newEnsembleIdent: EnsembleIdent | null) {

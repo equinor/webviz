@@ -2,7 +2,7 @@ import React from "react";
 
 import { Ensemble } from "@framework/Ensemble";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
-import { ModuleFCProps } from "@framework/Module";
+import { ModuleSettingsProps } from "@framework/Module";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
 import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
@@ -29,17 +29,17 @@ enum RealizationSelection {
 }
 
 export const Settings = ({
-    moduleContext,
+    settingsContext,
     workbenchSession,
     workbenchServices,
     workbenchSettings,
-}: ModuleFCProps<State>) => {
+}: ModuleSettingsProps<State>) => {
     const ensembleSet = useEnsembleSet(workbenchSession);
-    const statusWriter = useSettingsStatusWriter(moduleContext);
+    const statusWriter = useSettingsStatusWriter(settingsContext);
 
-    const [availableTimeSteps, setAvailableTimeSteps] = moduleContext.useStoreState("availableTimeSteps");
-    const setDataLoadingStatus = moduleContext.useSetStoreValue("dataLoadingStatus");
-    const setPlotData = moduleContext.useSetStoreValue("plotData");
+    const [availableTimeSteps, setAvailableTimeSteps] = settingsContext.useStoreState("availableTimeSteps");
+    const setDataLoadingStatus = settingsContext.useSetStoreValue("dataLoadingStatus");
+    const setPlotData = settingsContext.useSetStoreValue("plotData");
 
     const stratigraphyColorSet = workbenchSettings.useColorSet();
 
@@ -65,7 +65,7 @@ export const Settings = ({
 
     const timeAggregationOptions = makeTimeAggregationOptionItems();
 
-    const syncedSettingKeys = moduleContext.useSyncedSettingKeys();
+    const syncedSettingKeys = settingsContext.useSyncedSettingKeys();
     const syncHelper = new SyncSettingsHelper(syncedSettingKeys, workbenchServices);
     const syncedValueEnsembles = syncHelper.useValue(SyncSettingKey.ENSEMBLE, "global.syncValue.ensembles");
 

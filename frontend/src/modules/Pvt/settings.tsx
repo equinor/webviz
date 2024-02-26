@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 
-import { ModuleFCProps } from "@framework/Module";
+import { ModuleSettingsProps } from "@framework/Module";
 import { useFirstEnsembleInEnsembleSet } from "@framework/WorkbenchSession";
 import { Checkbox } from "@lib/components/Checkbox";
 import { Dropdown, DropdownOption } from "@lib/components/Dropdown";
@@ -22,19 +22,19 @@ const numberToOptions = (numbers: number[]): DropdownOption[] => {
     return numbers.map((number) => ({ label: number.toString(), value: number.toString() }));
 };
 
-export function Settings({ moduleContext, workbenchSession }: ModuleFCProps<state>) {
+export function Settings({ settingsContext, workbenchSession }: ModuleSettingsProps<state>) {
     //Just using the first ensemble for now
     const firstEnsemble = useFirstEnsembleInEnsembleSet(workbenchSession);
 
     // Settings state. Initialized/currently selected values
-    const [activeRealization, setActiveRealization] = moduleContext.useStoreState("realization"); // Should be a query. not implemented
-    const [activePvtName, setActivePvtName] = moduleContext.useStoreState("pvtName");
-    const [activePvtPlots, setActivePvtPlots] = moduleContext.useStoreState("pvtVisualizations");
-    const [activePvtNum, setActivePvtNum] = moduleContext.useStoreState("pvtNum");
-    //const [groupBy, setGroupBy] = moduleContext.useStoreState("groupBy"); // not implemented
+    const [activeRealization, setActiveRealization] = settingsContext.useStoreState("realization"); // Should be a query. not implemented
+    const [activePvtName, setActivePvtName] = settingsContext.useStoreState("pvtName");
+    const [activePvtPlots, setActivePvtPlots] = settingsContext.useStoreState("pvtVisualizations");
+    const [activePvtNum, setActivePvtNum] = settingsContext.useStoreState("pvtNum");
+    //const [groupBy, setGroupBy] = settingsContext.useStoreState("groupBy"); // not implemented
 
     // Plot data state for view
-    const setPvtPlotDataSet = moduleContext.useSetStoreValue("activeDataSet");
+    const setPvtPlotDataSet = settingsContext.useSetStoreValue("activeDataSet");
 
     // Local state to handle available options
     const [availablePvtNums, setAvailablePvtNums] = React.useState<number[]>([]);

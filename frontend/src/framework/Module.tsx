@@ -4,25 +4,60 @@ import { cloneDeep } from "lodash";
 
 import { ChannelDefinition, ChannelReceiverDefinition } from "./DataChannelTypes";
 import { InitialSettings } from "./InitialSettings";
-import { ModuleContext } from "./ModuleContext";
+import { SettingsContext, ViewContext } from "./ModuleContext";
 import { ModuleInstance } from "./ModuleInstance";
 import { DrawPreviewFunc } from "./Preview";
 import { StateBaseType, StateOptions } from "./StateStore";
 import { SyncSettingKey } from "./SyncSettings";
+import { InterfaceBaseType, InterfaceHydration } from "./UniDirectionalSettingsToViewInterface";
 import { Workbench } from "./Workbench";
 import { WorkbenchServices } from "./WorkbenchServices";
 import { WorkbenchSession } from "./WorkbenchSession";
 import { WorkbenchSettings } from "./WorkbenchSettings";
 
-export type ModuleFCProps<StateType extends StateBaseType> = {
-    moduleContext: ModuleContext<StateType>;
+export type ModuleSettingsProps<
+    TTStateType extends StateBaseType,
+    TInterfaceType extends InterfaceBaseType = {
+        baseStates: Record<string, never>;
+        derivedStates: Record<string, never>;
+    }
+> = {
+    settingsContext: SettingsContext<TTStateType, TInterfaceType>;
     workbenchSession: WorkbenchSession;
     workbenchServices: WorkbenchServices;
     workbenchSettings: WorkbenchSettings;
     initialSettings?: InitialSettings;
 };
 
-export type ModuleFC<StateType extends StateBaseType> = React.FC<ModuleFCProps<StateType>>;
+export type ModuleViewProps<
+    TTStateType extends StateBaseType,
+    TInterfaceType extends InterfaceBaseType = {
+        baseStates: Record<string, never>;
+        derivedStates: Record<string, never>;
+    }
+> = {
+    viewContext: ViewContext<TTStateType, TInterfaceType>;
+    workbenchSession: WorkbenchSession;
+    workbenchServices: WorkbenchServices;
+    workbenchSettings: WorkbenchSettings;
+    initialSettings?: InitialSettings;
+};
+
+export type ModuleSettings<
+    TTStateType extends StateBaseType,
+    TInterfaceType extends InterfaceBaseType = {
+        baseStates: Record<string, never>;
+        derivedStates: Record<string, never>;
+    }
+> = React.FC<ModuleSettingsProps<TTStateType, TInterfaceType>>;
+
+export type ModuleView<
+    TTStateType extends StateBaseType,
+    TInterfaceType extends InterfaceBaseType = {
+        baseStates: Record<string, never>;
+        derivedStates: Record<string, never>;
+    }
+> = React.FC<ModuleViewProps<TTStateType, TInterfaceType>>;
 
 export enum ImportState {
     NotImported = "NotImported",
@@ -41,15 +76,16 @@ export interface ModuleOptions {
     channelReceiverDefinitions?: ChannelReceiverDefinition[];
 }
 
-export class Module<StateType extends StateBaseType> {
+export class Module<TStateType extends StateBaseType, TInterfaceType extends InterfaceBaseType> {
     private _name: string;
     private _defaultTitle: string;
-    public viewFC: ModuleFC<StateType>;
-    public settingsFC: ModuleFC<StateType>;
+    public viewFC: ModuleView<TStateType, TInterfaceType>;
+    public settingsFC: ModuleSettings<TStateType, TInterfaceType>;
     protected _importState: ImportState;
-    private _moduleInstances: ModuleInstance<StateType>[];
-    private _defaultState: StateType | null;
-    private _stateOptions: StateOptions<StateType> | undefined;
+    private _moduleInstances: ModuleInstance<TStateType, TInterfaceType>[];
+    private _defaultState: TStateType | null;
+    private _settingsToViewInterfaceHydration: InterfaceHydration<TInterfaceType> | null;
+    private _stateOptions: StateOptions<TStateType> | undefined;
     private _workbench: Workbench | null;
     private _syncableSettingKeys: SyncSettingKey[];
     private _drawPreviewFunc: DrawPreviewFunc | null;
@@ -65,6 +101,7 @@ export class Module<StateType extends StateBaseType> {
         this._importState = ImportState.NotImported;
         this._moduleInstances = [];
         this._defaultState = null;
+        this._settingsToViewInterfaceHydration = null;
         this._workbench = null;
         this._syncableSettingKeys = options.syncableSettingKeys ?? [];
         this._drawPreviewFunc = options.drawPreviewFunc ?? null;
@@ -97,7 +134,7 @@ export class Module<StateType extends StateBaseType> {
         this._workbench = workbench;
     }
 
-    setDefaultState(defaultState: StateType, options?: StateOptions<StateType>): void {
+    setDefaultState(defaultState: TStateType, options?: StateOptions<TStateType>): void {
         this._defaultState = defaultState;
         this._stateOptions = options;
         this._moduleInstances.forEach((instance) => {
@@ -105,6 +142,10 @@ export class Module<StateType extends StateBaseType> {
                 instance.setDefaultState(cloneDeep(this._defaultState), cloneDeep(this._stateOptions));
             }
         });
+    }
+
+    setSettingsToViewInterfaceHydration(interfaceHydration: InterfaceHydration<TInterfaceType>): void {
+        this._settingsToViewInterfaceHydration = interfaceHydration;
     }
 
     getSyncableSettingKeys(): SyncSettingKey[] {
@@ -115,13 +156,14 @@ export class Module<StateType extends StateBaseType> {
         return this._syncableSettingKeys.includes(key);
     }
 
-    makeInstance(instanceNumber: number): ModuleInstance<StateType> {
+    makeInstance(instanceNumber: number): ModuleInstance<TStateType, TInterfaceType> {
         if (!this._workbench) {
             throw new Error("Module must be added to a workbench before making an instance");
         }
 
-        const instance = new ModuleInstance<StateType>({
+        const instance = new ModuleInstance<TStateType, TInterfaceType>({
             module: this,
+            workbench: this._workbench,
             instanceNumber,
             channelDefinitions: this._channelDefinitions,
             channelReceiverDefinitions: this._channelReceiverDefinitions,
@@ -146,8 +188,13 @@ export class Module<StateType extends StateBaseType> {
         if (this._importState !== ImportState.NotImported) {
             if (this._defaultState && this._importState === ImportState.Imported) {
                 this._moduleInstances.forEach((instance) => {
-                    if (this._defaultState && !instance.isInitialised()) {
-                        instance.setDefaultState(cloneDeep(this._defaultState), cloneDeep(this._stateOptions));
+                    if (!instance.isInitialised()) {
+                        if (this._defaultState) {
+                            instance.setDefaultState(cloneDeep(this._defaultState), cloneDeep(this._stateOptions));
+                        }
+                        if (this._settingsToViewInterfaceHydration) {
+                            instance.makeSettingsToViewInterface(this._settingsToViewInterfaceHydration);
+                        }
                     }
                 });
             }
@@ -160,8 +207,11 @@ export class Module<StateType extends StateBaseType> {
             .then(() => {
                 this.setImportState(ImportState.Imported);
                 this._moduleInstances.forEach((instance) => {
-                    if (this._defaultState && !instance.isInitialised()) {
+                    if (this._defaultState) {
                         instance.setDefaultState(cloneDeep(this._defaultState), cloneDeep(this._stateOptions));
+                    }
+                    if (this._settingsToViewInterfaceHydration) {
+                        instance.makeSettingsToViewInterface(this._settingsToViewInterfaceHydration);
                     }
                 });
             })

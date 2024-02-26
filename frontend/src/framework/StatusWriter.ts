@@ -1,6 +1,6 @@
 import React from "react";
 
-import { ModuleContext } from "./ModuleContext";
+import { SettingsContext, ViewContext } from "./ModuleContext";
 import { ModuleInstanceStatusController, StatusMessageType, StatusSource } from "./ModuleInstanceStatusController";
 
 export class ViewStatusWriter {
@@ -47,7 +47,7 @@ export class SettingsStatusWriter {
     }
 }
 
-export function useViewStatusWriter(moduleContext: ModuleContext<any>): ViewStatusWriter {
+export function useViewStatusWriter(moduleContext: ViewContext<any, any>): ViewStatusWriter {
     const statusController = moduleContext.getStatusController();
 
     const statusWriter = React.useRef<ViewStatusWriter>(new ViewStatusWriter(statusController));
@@ -62,7 +62,7 @@ export function useViewStatusWriter(moduleContext: ModuleContext<any>): ViewStat
     return statusWriter.current;
 }
 
-export function useSettingsStatusWriter(moduleContext: ModuleContext<any>): SettingsStatusWriter {
+export function useSettingsStatusWriter(moduleContext: SettingsContext<any, any>): SettingsStatusWriter {
     const statusController = moduleContext.getStatusController();
 
     const statusWriter = React.useRef<SettingsStatusWriter>(new SettingsStatusWriter(statusController));

@@ -2,7 +2,7 @@ import React from "react";
 
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { Parameter, ParameterIdent, ParameterType } from "@framework/EnsembleParameters";
-import { ModuleFCProps } from "@framework/Module";
+import { ModuleSettingsProps } from "@framework/Module";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { MultiEnsembleSelect } from "@framework/components/MultiEnsembleSelect";
@@ -16,13 +16,13 @@ import { isEqual } from "lodash";
 import { EnsembleSetParameterIdents, State } from "./state";
 
 const MAX_PARAMETERS = 50;
-export function Settings({ moduleContext, workbenchSession }: ModuleFCProps<State>) {
-    const statusWriter = useSettingsStatusWriter(moduleContext);
+export function Settings({ settingsContext, workbenchSession }: ModuleSettingsProps<State>) {
+    const statusWriter = useSettingsStatusWriter(settingsContext);
 
     const ensembleSet = useEnsembleSet(workbenchSession);
     const [selectedEnsembleIdents, setSelectedEnsembleIdents] = React.useState<EnsembleIdent[]>([]);
     const [filteredParameterIdentList, setFilteredParameterIdentList] = React.useState<ParameterIdent[]>([]);
-    const setEnsembleSetParameterIdents = moduleContext.useSetStoreValue("ensembleSetParameterIdents");
+    const setEnsembleSetParameterIdents = settingsContext.useSetStoreValue("ensembleSetParameterIdents");
 
     const availableEnsembleIdents = ensembleSet.getEnsembleArr().map((ens) => ens.getIdent());
 

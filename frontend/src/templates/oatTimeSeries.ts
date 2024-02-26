@@ -2,7 +2,7 @@ import { KeyKind } from "@framework/DataChannelTypes";
 import { SyncSettingKey } from "@framework/SyncSettings";
 import { Template, TemplateRegistry } from "@framework/TemplateRegistry";
 import { PlotType } from "@modules/DistributionPlot/state";
-import { ChannelIds } from "@modules/SimulationTimeSeries/channelDefs";
+import { ChannelIds } from "@modules/SimulationTimeSeriesSensitivity/channelDefs";
 
 const template: Template = {
     description:
