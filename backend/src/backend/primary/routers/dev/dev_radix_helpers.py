@@ -71,8 +71,8 @@ async def create_new_radix_job(job_component_name: str, job_scheduler_port: int)
             LOGGER.error(f"Request returned HTTP error {exc.response.status_code} for POST to {exc.request.url!r}")
             return None
 
-    # According to doc it seems we should be getting a json back that contains a status field,
-    # which should be "Running" if the job was started successfully.
+    # According to the docs it seems we should be getting a json back that contains a
+    #  status field, which should be "Running" if the job was started successfully.
     # Apparently this is not the case, as of Feb 2024, the only useful piece of information we're getting
     # back from this call is the name of the newly created job.
     response_dict = response.json()
@@ -93,11 +93,13 @@ async def get_radix_job_state(job_component_name: str, job_scheduler_port: int, 
         response = await client.get(url=url)
         response.raise_for_status()
 
-    # LOGGER.debug("------")
-    # response_dict = response.json()
-    # LOGGER.debug(f"{response_dict=}")
-    # LOGGER.debug("------")
+    LOGGER.debug("------")
+    response_dict = response.json()
+    LOGGER.debug(f"{response_dict=}")
+    LOGGER.debug("------")
 
+    # Have a suspicion that the may not alwqys contain an entry for status
+    # This must be verified, but if that is the case, we must re-assess the RadixJobState pydantic model.
     radix_job_state = RadixJobState.model_validate_json(response.content)
     return radix_job_state
 
