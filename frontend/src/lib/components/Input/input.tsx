@@ -15,7 +15,6 @@ export const Input = React.forwardRef((props: InputProps, ref: React.ForwardedRe
     const { startAdornment, endAdornment, wrapperStyle, value: propsValue, onChange, ...other } = props;
 
     const [value, setValue] = React.useState<unknown>(propsValue);
-    const [isValid, setIsValid] = React.useState<boolean>(true);
     const [prevValue, setPrevValue] = React.useState<unknown>(propsValue);
 
     if (propsValue !== prevValue) {
@@ -108,10 +107,7 @@ export const Input = React.forwardRef((props: InputProps, ref: React.ForwardedRe
                         },
                         input: {
                             className: resolveClassNames(
-                                "h-full focus:border-indigo-500 block w-full sm:text-sm border-gray-300 outline-none",
-                                {
-                                    "border-red-300": !isValid,
-                                }
+                                "h-full focus:border-indigo-500 block w-full sm:text-sm border-gray-300 outline-none"
                             ),
                         },
                     }}
