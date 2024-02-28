@@ -40,7 +40,7 @@ export const Input = React.forwardRef((props: InputProps, ref: React.ForwardedRe
     const handleInputChange = React.useCallback(
         function handleInputChange(event: React.ChangeEvent<HTMLInputElement>) {
             if (props.type === "number") {
-                let newValue: number = 0;
+                let newValue = 0;
                 if (!isNaN(parseFloat(event.target.value))) {
                     newValue = parseFloat(event.target.value || "0");
                     if (props.min !== undefined) {
@@ -63,7 +63,7 @@ export const Input = React.forwardRef((props: InputProps, ref: React.ForwardedRe
                 onChange(event);
             }
         },
-        [props.min, props.max, onChange, props.type, prevValue]
+        [props.min, props.max, onChange, props.type]
     );
 
     return (
