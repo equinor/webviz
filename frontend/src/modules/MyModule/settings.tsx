@@ -2,7 +2,6 @@ import React from "react";
 
 import { ModuleFCProps } from "@framework/Module";
 import { ColorGradient } from "@lib/components/ColorGradient/colorGradient";
-import { ColorSelect } from "@lib/components/ColorSelect";
 import { Input } from "@lib/components/Input";
 import { Label } from "@lib/components/Label";
 import { RadioGroup } from "@lib/components/RadioGroup";
@@ -25,8 +24,6 @@ export const settings = (props: ModuleFCProps<State>) => {
         setGradientType(e.target.value as ColorScaleGradientType);
     }
 
-    const colorSet = props.workbenchSettings.useColorSet();
-
     const colorScale =
         type === ColorScaleType.Continuous
             ? props.workbenchSettings.useContinuousColorScale({
@@ -38,11 +35,6 @@ export const settings = (props: ModuleFCProps<State>) => {
 
     return (
         <div className="flex flex-col gap-4">
-            <ColorSelect
-                value={colorSet.getFirstColor()}
-                colors={colorSet.getColorArray()}
-                onChange={(color) => console.debug(color)}
-            />
             <Label text="Type">
                 <RadioGroup
                     value={type}
@@ -107,7 +99,6 @@ export const settings = (props: ModuleFCProps<State>) => {
                     />
                 </Label>
             )}
-            <ColorSelect value={colorSet.getFirstColor()} onChange={(color) => console.debug(color)} />
         </div>
     );
 };

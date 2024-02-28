@@ -9,6 +9,7 @@ export class Ensemble {
     private _realizationsArr: number[];
     private _parameters: EnsembleParameters;
     private _sensitivities: EnsembleSensitivities | null;
+    private _color: string;
 
     constructor(
         fieldIdentifier: string,
@@ -17,13 +18,15 @@ export class Ensemble {
         ensembleName: string,
         realizationsArr: number[],
         parameterArr: Parameter[],
-        sensitivityArr: Sensitivity[] | null
+        sensitivityArr: Sensitivity[] | null,
+        color: string
     ) {
         this._ensembleIdent = new EnsembleIdent(caseUuid, ensembleName);
         this._fieldIdentifier = fieldIdentifier;
         this._caseName = caseName;
         this._realizationsArr = Array.from(realizationsArr).sort((a, b) => a - b);
         this._parameters = new EnsembleParameters(parameterArr);
+        this._color = color;
 
         this._sensitivities = null;
         if (sensitivityArr && sensitivityArr.length > 0) {
@@ -77,5 +80,9 @@ export class Ensemble {
 
     getSensitivities(): EnsembleSensitivities | null {
         return this._sensitivities;
+    }
+
+    getColor(): string {
+        return this._color;
     }
 }

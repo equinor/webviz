@@ -1,5 +1,6 @@
 import { EnsembleDetails_api, EnsembleParameter_api, EnsembleSensitivity_api } from "@api";
 import { apiService } from "@framework/ApiService";
+import { ColorSet } from "@lib/utils/ColorSet";
 import { QueryClient } from "@tanstack/react-query";
 
 import { Ensemble } from "../Ensemble";
@@ -10,7 +11,8 @@ import { EnsembleSet } from "../EnsembleSet";
 
 export async function loadEnsembleSetMetadataFromBackend(
     queryClient: QueryClient,
-    ensembleIdentsToLoad: EnsembleIdent[]
+    ensembleIdentsToLoad: EnsembleIdent[],
+    colorSet: ColorSet
 ): Promise<EnsembleSet> {
     console.debug("loadEnsembleSetMetadataFromBackend", ensembleIdentsToLoad);
 
@@ -96,7 +98,8 @@ export async function loadEnsembleSetMetadataFromBackend(
                 ensembleDetails.name,
                 ensembleDetails.realizations,
                 parameterArr,
-                sensitivityArr
+                sensitivityArr,
+                colorSet.getColor(i)
             )
         );
     }

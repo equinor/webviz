@@ -5,9 +5,9 @@ import { EnsembleSet } from "@framework/EnsembleSet";
 import { describe, expect, test } from "vitest";
 
 const ensembleArr = [
-    new Ensemble("DROGON", "11111111-aaaa-4444-aaaa-aaaaaaaaaaaa", "case1", "ens1", [], [], null),
-    new Ensemble("DROGON", "11111111-aaaa-4444-aaaa-aaaaaaaaaaaa", "case1", "ens2", [], [], null),
-    new Ensemble("DROGON", "22222222-aaaa-4444-aaaa-aaaaaaaaaaaa", "case2", "ens1", [], [], null),
+    new Ensemble("DROGON", "11111111-aaaa-4444-aaaa-aaaaaaaaaaaa", "case1", "ens1", [], [], null, ""),
+    new Ensemble("DROGON", "11111111-aaaa-4444-aaaa-aaaaaaaaaaaa", "case1", "ens2", [], [], null, ""),
+    new Ensemble("DROGON", "22222222-aaaa-4444-aaaa-aaaaaaaaaaaa", "case2", "ens1", [], [], null, ""),
 ];
 
 describe("EnsembleSet tests", () => {

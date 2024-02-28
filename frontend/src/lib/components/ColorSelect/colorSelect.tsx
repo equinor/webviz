@@ -2,9 +2,8 @@ import React from "react";
 
 import { Button } from "@lib/components/Button";
 import { ColorTile } from "@lib/components/ColorTile";
+import { Dropdown } from "@lib/components/Dropdown";
 import { ExpandMore } from "@mui/icons-material";
-
-import { Dropdown } from "../Dropdown";
 
 export type ColorSelectProps = {
     value: string;
@@ -38,7 +37,7 @@ export function ColorSelect(props: ColorSelectProps): JSX.Element {
         props.onChange(color);
     }
 
-    function makeSelectionComponent() {
+    function makeSelectComponent() {
         if (props.colors === undefined) {
             return (
                 <>
@@ -65,5 +64,5 @@ export function ColorSelect(props: ColorSelectProps): JSX.Element {
         return <Dropdown options={options} value={selectedColor} onChange={handleDropdownColorChange} />;
     }
 
-    return <div className="relative">{makeSelectionComponent()}</div>;
+    return <div className="relative">{makeSelectComponent()}</div>;
 }

@@ -1,3 +1,4 @@
+import { ColorSet } from "@lib/utils/ColorSet";
 import { QueryClient } from "@tanstack/react-query";
 
 import { EnsembleIdent } from "./EnsembleIdent";
@@ -8,6 +9,7 @@ import { ModuleInstance } from "./ModuleInstance";
 import { ModuleRegistry } from "./ModuleRegistry";
 import { Template } from "./TemplateRegistry";
 import { WorkbenchServices } from "./WorkbenchServices";
+import { ColorPaletteType } from "./WorkbenchSettings";
 import { loadEnsembleSetMetadataFromBackend } from "./internal/EnsembleSetLoader";
 import { PrivateWorkbenchServices } from "./internal/PrivateWorkbenchServices";
 import { PrivateWorkbenchSettings } from "./internal/PrivateWorkbenchSettings";
@@ -38,9 +40,9 @@ export class Workbench {
 
     constructor() {
         this._moduleInstances = [];
+        this._workbenchSettings = new PrivateWorkbenchSettings();
         this._workbenchSession = new WorkbenchSessionPrivate();
         this._workbenchServices = new PrivateWorkbenchServices(this);
-        this._workbenchSettings = new PrivateWorkbenchSettings();
         this._guiMessageBroker = new GuiMessageBroker();
         this._subscribersMap = {};
         this._layout = [];
@@ -212,7 +214,11 @@ export class Workbench {
 
         console.debug("loadAndSetupEnsembleSetInSession - starting load");
         this._workbenchSession.setEnsembleSetLoadingState(true);
-        const newEnsembleSet = await loadEnsembleSetMetadataFromBackend(queryClient, ensembleIdentsToLoad);
+        const newEnsembleSet = await loadEnsembleSetMetadataFromBackend(
+            queryClient,
+            ensembleIdentsToLoad,
+            new ColorSet(this._workbenchSettings.getSelectedColorPalette(ColorPaletteType.Categorical))
+        );
         console.debug("loadAndSetupEnsembleSetInSession - loading done");
         console.debug("loadAndSetupEnsembleSetInSession - publishing");
         this._workbenchSession.setEnsembleSetLoadingState(false);

@@ -43,6 +43,7 @@ export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
     const ensembleSet = useEnsembleSet(props.workbench.getWorkbenchSession());
 
     const queryClient = useQueryClient();
+    const colorSet = props.workbench.getWorkbenchSettings().useColorSet();
 
     React.useEffect(
         function reactToModuleInstancesChanged() {
@@ -113,6 +114,7 @@ export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
         caseUuid: ens.getCaseUuid(),
         caseName: ens.getCaseName(),
         ensembleName: ens.getEnsembleName(),
+        color: ens.getColor(),
     }));
 
     function loadAndSetupEnsembles(selectedEnsembles: EnsembleItem[]): Promise<void> {
@@ -259,6 +261,7 @@ export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
                     loadAndSetupEnsembles={loadAndSetupEnsembles}
                     selectedEnsembles={fixedSelectedEnsembles}
                     onClose={handleEnsembleDialogClose}
+                    colorSet={colorSet}
                 />
             )}
         </div>
