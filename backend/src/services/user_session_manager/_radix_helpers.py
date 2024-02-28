@@ -1,20 +1,18 @@
 import asyncio
 import logging
 import os
-from enum import Enum
 from typing import List, Literal
 
 import httpx
-import redis
 from pydantic import BaseModel, TypeAdapter
 
-from src import config
-
 LOGGER = logging.getLogger(__name__)
+
 
 # This is a bit of a hack, but it's one way to know if we're running in Radix or locally
 IS_ON_RADIX_PLATFORM = True if os.getenv("RADIX_APP") is not None else False
 print(f"{IS_ON_RADIX_PLATFORM=}")
+
 
 
 # Notes on the RadixJobState:
