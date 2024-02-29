@@ -195,6 +195,7 @@ export function Settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
 
                     newVectorSpecifications.push({
                         ensembleIdent: ensembleIdent,
+                        color: ensembleSet.findEnsemble(ensembleIdent)?.getColor() ?? null,
                         vectorName: vector,
                         hasHistoricalVector: ensembleVectorListsHelper.current.hasHistoricalVector(
                             ensembleIdent,

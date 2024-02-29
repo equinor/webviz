@@ -1,5 +1,6 @@
 import { EnsembleDetails_api, EnsembleParameter_api, EnsembleSensitivity_api } from "@api";
 import { apiService } from "@framework/ApiService";
+import { UserEnsembleSetting } from "@framework/Workbench";
 import { ColorSet } from "@lib/utils/ColorSet";
 import { QueryClient } from "@tanstack/react-query";
 
@@ -11,9 +12,10 @@ import { EnsembleSet } from "../EnsembleSet";
 
 export async function loadEnsembleSetMetadataFromBackend(
     queryClient: QueryClient,
-    ensembleIdentsToLoad: EnsembleIdent[],
-    colorSet: ColorSet
+    userEnsembleSettings: UserEnsembleSetting[]
 ): Promise<EnsembleSet> {
+    const ensembleIdentsToLoad: EnsembleIdent[] = userEnsembleSettings.map((setting) => setting.ensembleIdent);
+
     console.debug("loadEnsembleSetMetadataFromBackend", ensembleIdentsToLoad);
 
     const STALE_TIME = 5 * 60 * 1000;
@@ -99,7 +101,8 @@ export async function loadEnsembleSetMetadataFromBackend(
                 ensembleDetails.realizations,
                 parameterArr,
                 sensitivityArr,
-                colorSet.getColor(i)
+                userEnsembleSettings[i].color,
+                userEnsembleSettings[i].customName
             )
         );
     }

@@ -9,6 +9,7 @@ import { ColorSelect } from "@lib/components/ColorSelect";
 import { Dialog } from "@lib/components/Dialog";
 import { Dropdown } from "@lib/components/Dropdown";
 import { IconButton } from "@lib/components/IconButton";
+import { Input } from "@lib/components/Input";
 import { Label } from "@lib/components/Label";
 import { Overlay } from "@lib/components/Overlay";
 import { QueryStateWrapper } from "@lib/components/QueryStateWrapper";
@@ -29,6 +30,7 @@ export type EnsembleItem = {
     caseName: string;
     ensembleName: string;
     color: string;
+    customName: string | null;
 };
 
 export type SelectEnsemblesDialogProps = {
@@ -147,7 +149,8 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                     caseUuid: selectedCaseId,
                     caseName: caseName,
                     ensembleName: selectedEnsembleName,
-                    color: props.colorSet.getColor(newlySelectedEnsembles.length - 1),
+                    color: props.colorSet.getColor(newlySelectedEnsembles.length),
+                    customName: null,
                 },
             ];
             setNewlySelectedEnsembles((prev) => [...prev, ...ensArr]);
@@ -226,6 +229,17 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
         );
     }
 
+    function handleEnsembleCustomNameChange(caseUuid: string, ensembleName: string, customName: string) {
+        setNewlySelectedEnsembles((prev) => {
+            return prev.map((e) => {
+                if (e.caseUuid === caseUuid && e.ensembleName === ensembleName) {
+                    return { ...e, customName: customName === "" ? null : customName };
+                }
+                return e;
+            });
+        });
+    }
+
     const fieldOpts = fieldsQuery.data?.map((f) => ({ value: f.field_identifier, label: f.field_identifier })) ?? [];
     const caseOpts: TableSelectOption[] =
         filterCases(casesQuery.data)?.map((el) => ({
@@ -244,11 +258,8 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
     function makeApplyButtonStartIcon() {
         if (isLoadingEnsembles) {
             return <CircularProgress size="small" />;
-        } else if (checkIfAnyChanges()) {
-            return <Check fontSize="small" />;
-        } else {
-            return undefined;
         }
+        return <Check fontSize="small" />;
     }
 
     return (
@@ -368,7 +379,8 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                                 <thead>
                                     <tr>
                                         <th className="w-20 text-left p-2 bg-slate-300">Color</th>
-                                        <th className="min-w-1/2 text-left p-2 bg-slate-300">Case</th>
+                                        <th className="min-w-1/3 text-left p-2 bg-slate-300">Custom name</th>
+                                        <th className="min-w-1/3 text-left p-2 bg-slate-300">Case</th>
                                         <th className="min-w-1/4 text-left p-2 bg-slate-300">Ensemble</th>
                                         <th className="w-20 text-left p-2 bg-slate-300">Actions</th>
                                     </tr>
@@ -384,6 +396,19 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                                                     value={item.color}
                                                     onChange={(value) =>
                                                         handleColorChange(item.caseUuid, item.ensembleName, value)
+                                                    }
+                                                />
+                                            </td>
+                                            <td className="p-2">
+                                                <Input
+                                                    placeholder="Give a custom name..."
+                                                    defaultValue={item.customName ?? ""}
+                                                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                                                        handleEnsembleCustomNameChange(
+                                                            item.caseUuid,
+                                                            item.ensembleName,
+                                                            e.target.value
+                                                        )
                                                     }
                                                 />
                                             </td>

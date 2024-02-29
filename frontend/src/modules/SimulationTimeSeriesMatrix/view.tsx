@@ -14,7 +14,6 @@ import { ColorScaleGradientType } from "@lib/utils/ColorScale";
 import { ContentError } from "@modules/_shared/components/ContentMessage";
 
 import { isEqual } from "lodash";
-
 import { Annotations, Layout, PlotDatum, PlotMouseEvent, Shape } from "plotly.js";
 
 import { ChannelIds } from "./channelDefs";
@@ -215,11 +214,20 @@ export const View = ({ moduleContext, workbenchSession, workbenchSettings }: Mod
         const ensembleNameCount = selectedEnsembles.filter(
             (ensemble) => ensemble.getEnsembleName() === ensembleIdent.getEnsembleName()
         ).length;
+
+        const ensemble = ensembleSet.findEnsemble(ensembleIdent);
+
+        if (ensemble) {
+            const customName = ensemble.getCustomName();
+            if (customName) {
+                return customName;
+            }
+        }
+
         if (ensembleNameCount === 1) {
             return ensembleIdent.getEnsembleName();
         }
 
-        const ensemble = ensembleSet.findEnsemble(ensembleIdent);
         if (!ensemble) {
             return ensembleIdent.getEnsembleName();
         }

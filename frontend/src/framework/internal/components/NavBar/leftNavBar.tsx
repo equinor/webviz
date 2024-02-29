@@ -3,14 +3,16 @@ import React from "react";
 import WebvizLogo from "@assets/webviz.svg";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { DrawerContent, GuiState, useGuiState } from "@framework/GuiMessageBroker";
-import { Workbench, WorkbenchEvents } from "@framework/Workbench";
+import { UserEnsembleSetting, Workbench, WorkbenchEvents } from "@framework/Workbench";
 import { useEnsembleSet, useIsEnsembleSetLoading } from "@framework/WorkbenchSession";
+import { ColorPaletteType } from "@framework/WorkbenchSettings";
 import { LoginButton } from "@framework/internal/components/LoginButton";
 import { SelectEnsemblesDialog } from "@framework/internal/components/SelectEnsemblesDialog";
 import { EnsembleItem } from "@framework/internal/components/SelectEnsemblesDialog/selectEnsemblesDialog";
 import { Badge } from "@lib/components/Badge";
 import { Button } from "@lib/components/Button";
 import { CircularProgress } from "@lib/components/CircularProgress";
+import { ColorSet } from "@lib/utils/ColorSet";
 import { isDevMode } from "@lib/utils/devMode";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { ChevronLeft, ChevronRight, GridView, Link, List, Palette, Settings, WebAsset } from "@mui/icons-material";
@@ -115,14 +117,17 @@ export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
         caseName: ens.getCaseName(),
         ensembleName: ens.getEnsembleName(),
         color: ens.getColor(),
+        customName: ens.getCustomName(),
     }));
 
-    function loadAndSetupEnsembles(selectedEnsembles: EnsembleItem[]): Promise<void> {
-        setNewSelectedEnsembles(selectedEnsembles);
-        const selectedEnsembleIdents = selectedEnsembles.map(
-            (ens) => new EnsembleIdent(ens.caseUuid, ens.ensembleName)
-        );
-        return props.workbench.loadAndSetupEnsembleSetInSession(queryClient, selectedEnsembleIdents);
+    function loadAndSetupEnsembles(ensembleItems: EnsembleItem[]): Promise<void> {
+        setNewSelectedEnsembles(ensembleItems);
+        const ensembleSettings: UserEnsembleSetting[] = ensembleItems.map((ens) => ({
+            ensembleIdent: new EnsembleIdent(ens.caseUuid, ens.ensembleName),
+            customName: ens.customName,
+            color: ens.color,
+        }));
+        return props.workbench.loadAndSetupEnsembleSetInSession(queryClient, ensembleSettings);
     }
 
     let fixedSelectedEnsembles = selectedEnsembles;

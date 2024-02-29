@@ -1,3 +1,4 @@
+import { ColorPalette } from "@lib/utils/ColorPalette";
 import { ColorSet } from "@lib/utils/ColorSet";
 import { QueryClient } from "@tanstack/react-query";
 
@@ -26,6 +27,18 @@ export type LayoutElement = {
     relY: number;
     relHeight: number;
     relWidth: number;
+};
+
+export type UserEnsembleSetting = {
+    ensembleIdent: EnsembleIdent;
+    customName: string | null;
+    color: string;
+};
+
+export type StoredUserEnsembleSetting = {
+    ensembleIdent: string;
+    customName: string;
+    color: string;
 };
 
 export class Workbench {
@@ -203,39 +216,36 @@ export class Workbench {
 
     async loadAndSetupEnsembleSetInSession(
         queryClient: QueryClient,
-        specifiedEnsembleIdents: EnsembleIdent[]
+        userEnsembleSettings: UserEnsembleSetting[]
     ): Promise<void> {
-        this.storeEnsembleSetInLocalStorage(specifiedEnsembleIdents);
-
-        const ensembleIdentsToLoad: EnsembleIdent[] = [];
-        for (const ensSpec of specifiedEnsembleIdents) {
-            ensembleIdentsToLoad.push(new EnsembleIdent(ensSpec.getCaseUuid(), ensSpec.getEnsembleName()));
-        }
+        this.storeEnsembleSetInLocalStorage(userEnsembleSettings);
 
         console.debug("loadAndSetupEnsembleSetInSession - starting load");
         this._workbenchSession.setEnsembleSetLoadingState(true);
-        const newEnsembleSet = await loadEnsembleSetMetadataFromBackend(
-            queryClient,
-            ensembleIdentsToLoad,
-            new ColorSet(this._workbenchSettings.getSelectedColorPalette(ColorPaletteType.Categorical))
-        );
+        const newEnsembleSet = await loadEnsembleSetMetadataFromBackend(queryClient, userEnsembleSettings);
         console.debug("loadAndSetupEnsembleSetInSession - loading done");
         console.debug("loadAndSetupEnsembleSetInSession - publishing");
         this._workbenchSession.setEnsembleSetLoadingState(false);
         return this._workbenchSession.setEnsembleSet(newEnsembleSet);
     }
 
-    private storeEnsembleSetInLocalStorage(specifiedEnsembleIdents: EnsembleIdent[]): void {
-        const ensembleIdentsToStore = specifiedEnsembleIdents.map((el) => el.toString());
-        localStorage.setItem("ensembleIdents", JSON.stringify(ensembleIdentsToStore));
+    private storeEnsembleSetInLocalStorage(ensemblesToStore: UserEnsembleSetting[]): void {
+        const ensembleIdentsToStore = ensemblesToStore.map((el) => ({
+            ...el,
+            ensembleIdent: el.ensembleIdent.toString(),
+        }));
+        localStorage.setItem("userEnsembleSettings", JSON.stringify(ensembleIdentsToStore));
     }
 
-    maybeLoadEnsembleSetFromLocalStorage(): EnsembleIdent[] | null {
-        const ensembleIdentsString = localStorage.getItem("ensembleIdents");
-        if (!ensembleIdentsString) return null;
+    maybeLoadEnsembleSettingsFromLocalStorage(): UserEnsembleSetting[] | null {
+        const ensembleSettingsString = localStorage.getItem("userEnsembleSettings");
+        if (!ensembleSettingsString) return null;
 
-        const ensembleIdents = JSON.parse(ensembleIdentsString) as string[];
-        const ensembleIdentsParsed = ensembleIdents.map((el) => EnsembleIdent.fromString(el));
+        const ensembleIdents = JSON.parse(ensembleSettingsString) as StoredUserEnsembleSetting[];
+        const ensembleIdentsParsed = ensembleIdents.map((el) => ({
+            ...el,
+            ensembleIdent: EnsembleIdent.fromString(el.ensembleIdent),
+        }));
 
         return ensembleIdentsParsed;
     }

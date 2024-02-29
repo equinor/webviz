@@ -3,12 +3,14 @@ import React from "react";
 import WebvizLogo from "@assets/webviz.svg";
 import { DrawerContent, GuiState } from "@framework/GuiMessageBroker";
 import { LayoutElement, Workbench } from "@framework/Workbench";
+import { ColorPaletteType } from "@framework/WorkbenchSettings";
 import { LeftNavBar, RightNavBar } from "@framework/internal/components/NavBar";
 import { SettingsContentPanels } from "@framework/internal/components/SettingsContentPanels";
 import { ToggleDevToolsButton } from "@framework/internal/components/ToggleDevToolsButton";
 import { AuthState, useAuthProvider } from "@framework/internal/providers/AuthProvider";
 import { Button } from "@lib/components/Button";
 import { WebvizSpinner } from "@lib/components/WebvizSpinner";
+import { ColorSet } from "@lib/utils/ColorSet";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -44,23 +46,24 @@ enum InitAppState {
 
 const layout: LayoutElement[] = [];
 
+const WORKBENCH = new Workbench();
+
 function App() {
     const [isMounted, setIsMounted] = React.useState<boolean>(false);
     const [initAppState, setInitAppState] = React.useState<InitAppState>(InitAppState.CheckingIfUserIsSignedIn);
 
-    const workbench = React.useRef<Workbench>(new Workbench());
     const queryClient = useQueryClient();
     const { authState } = useAuthProvider();
 
     function initApp() {
-        if (!workbench.current.loadLayoutFromLocalStorage()) {
-            workbench.current.makeLayout(layout);
+        if (!WORKBENCH.loadLayoutFromLocalStorage()) {
+            WORKBENCH.makeLayout(layout);
         }
 
-        if (workbench.current.getLayout().length === 0) {
-            workbench.current.getGuiMessageBroker().setState(GuiState.DrawerContent, DrawerContent.ModulesList);
+        if (WORKBENCH.getLayout().length === 0) {
+            WORKBENCH.getGuiMessageBroker().setState(GuiState.DrawerContent, DrawerContent.ModulesList);
         } else {
-            workbench.current.getGuiMessageBroker().setState(GuiState.DrawerContent, DrawerContent.ModuleSettings);
+            WORKBENCH.getGuiMessageBroker().setState(GuiState.DrawerContent, DrawerContent.ModuleSettings);
         }
         setInitAppState(InitAppState.InitCompleted);
     }
@@ -71,18 +74,16 @@ function App() {
 
     React.useEffect(
         function handleMountWhenSignedIn() {
-            const workbenchRef = workbench.current;
-
             if (authState !== AuthState.LoggedIn || isMounted) {
                 return;
             }
 
             setIsMounted(true);
 
-            const storedEnsembleIdents = workbench.current.maybeLoadEnsembleSetFromLocalStorage();
+            const storedEnsembleIdents = WORKBENCH.maybeLoadEnsembleSettingsFromLocalStorage();
             if (storedEnsembleIdents) {
                 setInitAppState(InitAppState.LoadingEnsembles);
-                workbench.current.loadAndSetupEnsembleSetInSession(queryClient, storedEnsembleIdents).finally(() => {
+                WORKBENCH.loadAndSetupEnsembleSetInSession(queryClient, storedEnsembleIdents).finally(() => {
                     initApp();
                 });
             } else {
@@ -90,8 +91,8 @@ function App() {
             }
 
             return function handleUnmount() {
-                workbenchRef.clearLayout();
-                workbenchRef.resetModuleInstanceNumbers();
+                WORKBENCH.clearLayout();
+                WORKBENCH.resetModuleInstanceNumbers();
             };
         },
         [authState, isMounted, queryClient]
@@ -159,11 +160,11 @@ function App() {
                     "opacity-100": !isInitialisingApp,
                 })}
             >
-                <LeftNavBar workbench={workbench.current} />
-                <SettingsContentPanels workbench={workbench.current} />
-                <RightNavBar workbench={workbench.current} />
+                <LeftNavBar workbench={WORKBENCH} />
+                <SettingsContentPanels workbench={WORKBENCH} />
+                <RightNavBar workbench={WORKBENCH} />
             </div>
-            <ToggleDevToolsButton guiMessageBroker={workbench.current.getGuiMessageBroker()} />
+            <ToggleDevToolsButton guiMessageBroker={WORKBENCH.getGuiMessageBroker()} />
         </>
     );
 }

@@ -102,7 +102,11 @@ export class SubplotBuilder {
             this._vectorHexColors[vectorName] = color;
         });
         this._uniqueEnsembleIdents.forEach((ensembleIdent, index) => {
-            const color = index === 0 ? colorSet.getFirstColor() : colorSet.getNextColor();
+            let color = index === 0 ? colorSet.getFirstColor() : colorSet.getNextColor();
+            const ensemble = selectedVectorSpecifications.find((vec) => vec.ensembleIdent.equals(ensembleIdent));
+            if (ensemble && ensemble.color) {
+                color = ensemble.color;
+            }
             this._ensembleIdentHexColors.set(ensembleIdent, color);
         });
 
