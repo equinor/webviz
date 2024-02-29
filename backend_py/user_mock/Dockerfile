@@ -12,4 +12,4 @@ ENV PATH="${PATH}:/home/appuser/.local/bin"
 
 RUN pip install -r requirements.txt
 
-CMD ["uvicorn", "user_mock_app:app", "--reload", "--host", "0.0.0.0", "--port", "8001"]
+CMD ["uvicorn", "user_mock.user_mock_app:app", "--reload", "--host", "0.0.0.0", "--port", "8001"]

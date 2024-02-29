@@ -7,14 +7,18 @@ from typing import Annotated
 from fastapi import FastAPI
 from fastapi import Query
 
+from .inactivity_shutdown import InactivityShutdown
+
 LOGGER = logging.getLogger(__name__)
 
+
+# Seems to be one way of know if we're running in Radix or locally
+IS_ON_RADIX_PLATFORM = True if os.getenv("RADIX_APP") is not None else False
 
 RADIX_JOB_NAME = os.getenv("RADIX_JOB_NAME")
 RADIX_APP = os.getenv("RADIX_APP")
 RADIX_ENVIRONMENT = os.getenv("RADIX_ENVIRONMENT")
 RADIX_COMPONENT = os.getenv("RADIX_COMPONENT")
-
 LOGGER.debug(f"{RADIX_JOB_NAME=}")
 LOGGER.debug(f"{RADIX_APP=}")
 LOGGER.debug(f"{RADIX_ENVIRONMENT=}")
@@ -70,3 +74,7 @@ async def dowork(
     ret_str = f"MOCK work done at: {datetime.datetime.now()}"
     LOGGER.debug(f"dowork() MOCK returning: {ret_str!r}")
     return ret_str
+
+
+if IS_ON_RADIX_PLATFORM:
+    InactivityShutdown(app, inactivity_limit_minutes=2)
