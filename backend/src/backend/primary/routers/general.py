@@ -88,5 +88,8 @@ async def user_session_container(
     request: Request, authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user)
 ) -> StreamingResponse:
     """Get information about user session container (note that one is started if not already running)."""
+
+    # !!!!!!
+    # !!!!!!
     raise HTTPException(status_code=status.HTTP_501_NOT_IMPLEMENTED, detail="Temporarily disabled!!")
-    #return await proxy_to_user_session(request, authenticated_user)
+    # return await proxy_to_user_session(request, authenticated_user)

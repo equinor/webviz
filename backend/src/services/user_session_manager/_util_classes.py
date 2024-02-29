@@ -5,7 +5,6 @@ from types import TracebackType
 
 from pottery import Redlock
 
-
 LOGGER = logging.getLogger(__name__)
 
 
@@ -49,4 +48,3 @@ class LockReleasingContext(AbstractContextManager):
         #     self._acquired_lock.release()
         # except ReleaseUnlockedLock:
         #     pass
-
