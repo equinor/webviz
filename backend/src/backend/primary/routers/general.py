@@ -9,7 +9,7 @@ from fastapi import APIRouter, HTTPException, Request, status, Depends, Query
 from pydantic import BaseModel
 
 from src.backend.auth.auth_helper import AuthHelper, AuthenticatedUser
-from src.backend.primary.user_session_proxy import proxy_to_user_session
+#from src.backend.primary.user_session_proxy import proxy_to_user_session
 from src.services.graph_access.graph_access import GraphApiAccess
 
 LOGGER = logging.getLogger(__name__)

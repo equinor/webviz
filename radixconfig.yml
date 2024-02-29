@@ -143,6 +143,8 @@ spec:
       ports:
         - name: http
           port: 8001
+      variables:
+        UVICORN_PORT: 8001
 
     - name: user-grid3d-ri
       dockerFileName: ./backend_py/user_grid3d_ri/Dockerfile
@@ -150,6 +152,8 @@ spec:
       ports:
         - name: http
           port: 8002
+      variables:
+        UVICORN_PORT: 8002
 
     - name: backend-user-session
       dockerFileName: backend.Dockerfile

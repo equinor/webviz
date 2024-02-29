@@ -60,6 +60,9 @@ services:
       dockerfile: ./backend_py/user_mock/Dockerfile
     ports:
       - 8001:8001
+    environment:
+      - UVICORN_PORT=8001
+      - UVICORN_RELOAD=true
     volumes:
       - ./backend_py/user_mock:/home/appuser/backend_py/user_mock
 
@@ -69,6 +72,9 @@ services:
       dockerfile: ./backend_py/user_grid3d_ri/Dockerfile
     ports:
       - 8002:8002
+    environment:
+      - UVICORN_PORT=8002
+      - UVICORN_RELOAD=true
     volumes:
       - ./backend_py/user_grid3d_ri:/home/appuser/backend_py/user_grid3d_ri
 

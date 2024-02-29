@@ -20,14 +20,14 @@ class InactivityShutdown:
             return await call_next(request)
 
         LOGGER.info(f"Enabled shutdown after {inactivity_limit_minutes} min of inactivity")
-        Timer(60.0, self.check_inactivity_threshold).start()
+        Timer(10.0, self.check_inactivity_threshold).start()
 
     def check_inactivity_threshold(self) -> None:
-        inactive_time = time.time() - self._time_last_request
-        #LOGGER.debug(f"check_inactivity_threshold() {inactive_time=:.2f}")
+        inactive_time_s = time.time() - self._time_last_request
+        LOGGER.debug(f"check_inactivity_threshold() {inactive_time_s=:.2f}")
 
-        if inactive_time > self._inactivity_limit_seconds:
-            LOGGER.info(f"Shutting down due to inactivity {inactive_time=:.2f}, {self._inactivity_limit_seconds=:.2f}")
+        if inactive_time_s > self._inactivity_limit_seconds:
+            LOGGER.info(f"Shutting down due to inactivity for {inactive_time_s=:.2f}")
             os._exit(0)
 
-        Timer(60.0, self.check_inactivity_threshold).start()
+        Timer(10.0, self.check_inactivity_threshold).start()
