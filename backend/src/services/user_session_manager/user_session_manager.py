@@ -9,12 +9,15 @@ from pottery import Redlock
 
 from src.services.utils.perf_timer import PerfTimer
 
-from ._radix_helpers import IS_ON_RADIX_PLATFORM, is_radix_job_running
+from ._radix_helpers import IS_ON_RADIX_PLATFORM
 from ._radix_helpers import create_new_radix_job, RadixResourceRequests
+from ._radix_helpers import is_radix_job_running, delete_named_radix_job
 from ._user_session_directory import SessionInfo, SessionRunState, UserSessionDirectory
 from ._util_classes import LockReleasingContext, TimeCounter
 
 LOGGER = logging.getLogger(__name__)
+
+background_tasks = set()
 
 
 class UserComponent(str, Enum):
@@ -91,19 +94,6 @@ class UserSessionManager:
         )
 
         return session_url
-
-        # session_url = await get_or_create_user_session_url(
-        #     user_id=self._user_id,
-        #     job_component_name=session_def.job_component_name,
-        #     job_scheduler_port=session_def.port,
-        #     instance_identifier=effective_instance_str,
-        #     actual_service_port=session_def.port,
-        # )
-
-        # LOGGER.debug(f"get_or_create_session_async() {session_url=}")
-        # LOGGER.debug(f"get_or_create_session_async() took: {timer.elapsed_ms()}ms")
-
-        # return session_url
 
 
 # Look for existing session info, possibly waiting for a partially created session to come online
@@ -196,12 +186,34 @@ async def _create_new_session(
     with LockReleasingContext(distributed_lock):
         # Now that we have the lock, kill off existing job info and start creating new job
         # Before proceeding, try and whack the radix job if possible
-        """
-        job_info = redis_job_dir.get_job_info(job_component_name, instance_identifier)
-        if job_info and job_info.radix_job_name:
-            # see https://docs.python.org/3/library/asyncio-task.html#asyncio.create_task
-            #delete_specific_radix_job()
-        """
+
+
+        ##!!!!!!!!!!!!!!!!!!!!!!!!
+        ##!!!!!!!!!!!!!!!!!!!!!!!!
+        ##!!!!!!!!!!!!!!!!!!!!!!!!
+
+        # see https://docs.python.org/3/library/asyncio-task.html#asyncio.create_task
+        #delete_specific_radix_job()
+        session_info = session_dir.get_session_info(job_component_name, instance_str)
+        if session_info and session_info.radix_job_name:
+            LOGGER.warning(f"Deleting existing radix job {session_info.radix_job_name=}")
+            LOGGER.warning(f"before {len(background_tasks)=}")
+
+            coro = delete_named_radix_job(job_component_name, job_scheduler_port, session_info.radix_job_name)
+            task = asyncio.create_task(coro)
+
+            # Add task to the set. This creates a strong reference.
+            background_tasks.add(task)
+            LOGGER.warning(f"after {len(background_tasks)=}")
+
+            # To prevent keeping references to finished tasks forever, make each task remove its 
+            # own reference from the set after completion
+            task.add_done_callback(background_tasks.discard)
+
+        ##!!!!!!!!!!!!!!!!!!!!!!!!
+        ##!!!!!!!!!!!!!!!!!!!!!!!!
+        ##!!!!!!!!!!!!!!!!!!!!!!!!
+
 
         session_info_updater = session_dir.create_session_info_updater(job_component_name, instance_str)
         session_info_updater.delete_all_state()
