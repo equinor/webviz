@@ -9,7 +9,8 @@ from pottery import Redlock
 
 from src.services.utils.perf_timer import PerfTimer
 
-from ._radix_helpers import IS_ON_RADIX_PLATFORM, create_new_radix_job, is_radix_job_running
+from ._radix_helpers import IS_ON_RADIX_PLATFORM, is_radix_job_running
+from ._radix_helpers import create_new_radix_job, RadixResourceRequests
 from ._user_session_directory import SessionInfo, SessionRunState, UserSessionDirectory
 from ._util_classes import LockReleasingContext, TimeCounter
 
@@ -24,14 +25,19 @@ class UserComponent(str, Enum):
 @dataclass(frozen=True, kw_only=True)
 class _UserSessionDef:
     # fmt:off
-    job_component_name: str  # The job's component name in radix, or the service name in docker compose, e.g. "user-mock"
-    port: int                # The port number for the radix job manager AND the actual port of the service. These must be the same for our current docker compose setup
+    job_component_name: str             # The job's component name in radix, or the service name in docker compose, e.g. "user-mock"
+    port: int                           # The port number for the radix job manager AND the actual port of the service. These must be the same for our current docker compose setup
+    resource_req: RadixResourceRequests # The resource requests for the radix job
     # fmt:on
 
 
 _USER_SESSION_DEFS: dict[UserComponent, _UserSessionDef] = {
-    UserComponent.MOCK: _UserSessionDef(job_component_name="user-mock", port=8001),
-    UserComponent.GRID3D_RI: _UserSessionDef(job_component_name="user-grid3d-ri", port=8002),
+    UserComponent.MOCK: _UserSessionDef(
+        job_component_name="user-mock", port=8001, resource_req=RadixResourceRequests(cpu="100m", memory="200Mi")
+    ),
+    UserComponent.GRID3D_RI: _UserSessionDef(
+        job_component_name="user-grid3d-ri", port=8002, resource_req=RadixResourceRequests(cpu="200m", memory="400Mi")
+    ),
 }
 
 

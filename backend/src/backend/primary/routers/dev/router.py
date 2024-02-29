@@ -9,7 +9,7 @@ from src.backend.auth.auth_helper import AuthenticatedUser, AuthHelper
 from src.services.user_session_manager.user_session_manager import UserSessionManager
 from src.services.user_session_manager.user_session_manager import UserComponent
 from src.services.user_session_manager.user_session_manager import _USER_SESSION_DEFS
-from src.services.user_session_manager._radix_helpers import create_new_radix_job
+from src.services.user_session_manager._radix_helpers import create_new_radix_job, RadixResourceRequests
 from src.services.user_session_manager._radix_helpers import get_all_radix_jobs, get_radix_job_state
 from src.services.user_session_manager._radix_helpers import delete_all_radix_jobs
 from src.services.user_session_manager._user_session_directory import UserSessionDirectory
@@ -75,7 +75,8 @@ async def usersession_radixcreate(user_component: UserComponent) -> str:
 
     session_def = _USER_SESSION_DEFS[user_component]
 
-    new_radix_job_name = await create_new_radix_job(session_def.job_component_name, session_def.port)
+    resource_req = RadixResourceRequests(cpu="50m", memory="100Mi")
+    new_radix_job_name = await create_new_radix_job(session_def.job_component_name, session_def.port, resource_req)
     LOGGER.debug(f"Created new job: {new_radix_job_name=}")
     if new_radix_job_name is None:
         return "Failed to create new job"

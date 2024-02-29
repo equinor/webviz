@@ -14,26 +14,51 @@ IS_ON_RADIX_PLATFORM = True if os.getenv("RADIX_APP") is not None else False
 print(f"{IS_ON_RADIX_PLATFORM=}")
 
 
+# Notes on RadixResourceRequests:
+#  * cpu: typical units are 'm' or no unit. '100m' means 100 milli-cpu, which is 0.1 cpu. 1000m is 1 cpu
+#  * memory: typical units are 'Mi' or 'Gi'. 500Mi means 500 Mebibytes, 4Gi means 4 Gibibyte (i.e. 4 * 1024^3 bytes)
+class RadixResourceRequests(BaseModel):
+    cpu: str
+    memory: str
+
+
 # Notes on RadixJobState:
 #  * The 'Waiting' status is not documented, but it seems to be the status of a job that has been created but not yet running
 #  * We're not always getting a job status, in particular when querying the status of a named job, so include a None entry for status
 #  * Sometimes we get an extra (undocumented) field returned, 'message'
 class RadixJobState(BaseModel):
     name: str
-    status: Literal["Waiting", "Running", "Successful", "Failed"] | None = None
+    status: Literal["Waiting", "Running", "Succeeded", "Failed"] | None = None
     started: str | None = None
     ended: str | None = None
     message: str | None = None
 
 
-async def create_new_radix_job(job_component_name: str, job_scheduler_port: int) -> str | None:
-    LOGGER.debug(f"##### create_new_radix_job()  {job_component_name=}")
+async def create_new_radix_job(
+    job_component_name: str, job_scheduler_port: int, resource_req: RadixResourceRequests
+) -> str | None:
+    LOGGER.debug(f"create_new_radix_job() - {job_component_name=}, {resource_req=}")
 
     radix_job_manager_url = f"http://{job_component_name}:{job_scheduler_port}/api/v1/jobs"
+
+    # Setting memory request equal to memory limit on purpose
+    # Also, cpu limit is omitted on purpose.
+    # Following advice here:
+    #   https://home.robusta.dev/blog/kubernetes-memory-limit
+    #   https://home.robusta.dev/blog/stop-using-cpu-limits
+    #
+    # Note that this might not be the best solution if we end up running golang apps inside the jobs since there
+    # we might want to auto discover the number of available cpus and set the GOMAXPROCS environment variable accordingly.
+    # As of now, it seems that it's the cpu limit value that will be picked up by for example by automaxprocs.
     request_body = {
         "resources": {
-            "limits": {"memory": "500M", "cpu": "100m"},
-            "requests": {"memory": "500M", "cpu": "100m"},
+            "requests": {
+                "memory": resource_req.memory,
+                "cpu": resource_req.cpu,
+            },
+            "limits": {
+                "memory": resource_req.memory,
+            },
         }
     }
 

@@ -9,7 +9,7 @@ from fastapi import APIRouter, HTTPException, Request, status, Depends, Query
 from pydantic import BaseModel
 
 from src.backend.auth.auth_helper import AuthHelper, AuthenticatedUser
-#from src.backend.primary.user_session_proxy import proxy_to_user_session
+from src.backend.primary.user_session_proxy import proxy_to_user_session
 from src.services.graph_access.graph_access import GraphApiAccess
 
 LOGGER = logging.getLogger(__name__)
@@ -88,8 +88,4 @@ async def user_session_container(
     request: Request, authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user)
 ) -> StreamingResponse:
     """Get information about user session container (note that one is started if not already running)."""
-
-    # !!!!!!
-    # !!!!!!
-    raise HTTPException(status_code=status.HTTP_501_NOT_IMPLEMENTED, detail="Temporarily disabled!!")
-    # return await proxy_to_user_session(request, authenticated_user)
+    return await proxy_to_user_session(request, authenticated_user)

@@ -7,7 +7,6 @@ COPY --chown=appuser ./backend_py/user_mock /home/appuser/backend_py/user_mock
 
 WORKDIR /home/appuser/backend_py/user_mock
 
-# For the benefit of running the installed uvicorn 
 ENV PATH="${PATH}:/home/appuser/.local/bin"
 
 RUN pip install -r requirements.txt
