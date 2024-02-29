@@ -25,6 +25,8 @@ import { isEqual } from "lodash";
 
 import { UserAvatar } from "./private-components/userAvatar";
 
+import { LoadingOverlay } from "../LoadingOverlay";
+
 export type EnsembleItem = {
     caseUuid: string;
     caseName: string;
@@ -449,7 +451,7 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                         )}
                     </div>
                 </div>
-                <Overlay visible={isLoadingEnsembles} />
+                {isLoadingEnsembles && <LoadingOverlay />}
             </Dialog>
             {
                 <Dialog
