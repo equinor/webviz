@@ -76,6 +76,7 @@ class UserSessionManager:
             session_dir=session_dir,
             job_component_name=session_def.job_component_name,
             job_scheduler_port=session_def.port,
+            resource_req=session_def.resource_req,
             instance_str=effective_instance_str,
             actual_service_port=actual_service_port,
         )
@@ -169,6 +170,7 @@ async def _create_new_session(
     session_dir: UserSessionDirectory,
     job_component_name: str,
     job_scheduler_port: int,
+    resource_req: RadixResourceRequests,
     instance_str: str,
     actual_service_port: int,
 ) -> SessionInfo | None:
@@ -209,7 +211,7 @@ async def _create_new_session(
             LOGGER.debug(
                 f"Trying to create new job using radix job manager ({job_component_name=}, {job_scheduler_port=})"
             )
-            new_radix_job_name = await create_new_radix_job(job_component_name, job_scheduler_port)
+            new_radix_job_name = await create_new_radix_job(job_component_name, job_scheduler_port, resource_req)
             if new_radix_job_name is None:
                 LOGGER.error(f"Failed to create new job in radix ({job_component_name=}, {job_scheduler_port=})")
                 session_info_updater.delete_all_state()
