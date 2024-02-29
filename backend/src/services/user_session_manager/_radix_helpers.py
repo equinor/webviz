@@ -14,8 +14,7 @@ IS_ON_RADIX_PLATFORM = True if os.getenv("RADIX_APP") is not None else False
 print(f"{IS_ON_RADIX_PLATFORM=}")
 
 
-
-# Notes on the RadixJobState:
+# Notes on RadixJobState:
 #  * The 'Waiting' status is not documented, but it seems to be the status of a job that has been created but not yet running
 #  * We're not always getting a job status, in particular when querying the status of a named job, so include a None entry for status
 #  * Sometimes we get an extra (undocumented) field returned, 'message'
@@ -25,27 +24,6 @@ class RadixJobState(BaseModel):
     started: str | None = None
     ended: str | None = None
     message: str | None = None
-
-
-async def verify_that_named_radix_job_is_running(job_component_name: str, job_scheduler_port: int, radix_job_name: str) -> bool:
-    radix_job_manager_url = f"http://{job_component_name}:{job_scheduler_port}/api/v1/jobs/{radix_job_name}"
-    async with httpx.AsyncClient() as client:
-        try:
-            response = await client.get(radix_job_manager_url)
-            response.raise_for_status()
-            response_dict = response.json()
-            status_str = response_dict["status"]
-            print(f"------{radix_job_name} is {status_str}")
-            if (response_dict["status"] == "Running"):
-                return True
-        except httpx.RequestError as exc:
-            print(f"verifyjobrunning An error occurred while requesting {exc.request.url!r}.")
-            return False
-        except httpx.HTTPStatusError as exc:
-            print(f"verifyjobrunning Error response {exc.response.status_code} while requesting {exc.request.url!r}.")
-            return False
-
-    return False
 
 
 async def create_new_radix_job(job_component_name: str, job_scheduler_port: int) -> str | None:
@@ -64,16 +42,16 @@ async def create_new_radix_job(job_component_name: str, job_scheduler_port: int)
             response = await client.post(url=radix_job_manager_url, json=request_body)
             response.raise_for_status()
         except httpx.RequestError as exc:
-            LOGGER.error(f"Request error occurred for POST to: {exc.request.url!r}")
+            LOGGER.error(f"Request error occurred for POST to: {exc.request.url}")
             return None
         except httpx.HTTPStatusError as exc:
-            LOGGER.error(f"Request returned HTTP error {exc.response.status_code} for POST to {exc.request.url!r}")
+            LOGGER.error(f"Request returned HTTP error {exc.response.status_code} for POST to {exc.request.url}")
             return None
 
-    # According to the docs it seems we should be getting a json back that contains a
-    #  status field, which should be "Running" if the job was started successfully.
-    # Apparently this is not the case, as of Feb 2024, the only useful piece of information we're getting
-    # back from this call is the name of the newly created job.
+    # According to the docs it seems we should be getting a json back that contains
+    # a status field, which should be "Running" if the job was started successfully.
+    # Apparently this is not the case, as of Feb 2024, the only useful piece of information we're
+    # getting back from this call is the name of the newly created job.
     response_dict = response.json()
 
     LOGGER.debug("------")
@@ -84,35 +62,58 @@ async def create_new_radix_job(job_component_name: str, job_scheduler_port: int)
     return radix_job_name
 
 
-async def get_radix_job_state(job_component_name: str, job_scheduler_port: int, radix_job_name: str) -> RadixJobState | None:
-    LOGGER.debug(f"##### get_radix_job_state()  {job_component_name=}, {radix_job_name=}")
+async def get_radix_job_state(
+    job_component_name: str, job_scheduler_port: int, radix_job_name: str
+) -> RadixJobState | None:
+    LOGGER.debug(f"get_radix_job_state() - {job_component_name=}, {radix_job_name=}")
 
     url = f"http://{job_component_name}:{job_scheduler_port}/api/v1/jobs/{radix_job_name}"
-    async with httpx.AsyncClient() as client:
-        response = await client.get(url=url)
-        response.raise_for_status()
 
-    LOGGER.debug("------")
-    response_dict = response.json()
-    LOGGER.debug(f"{response_dict=}")
-    LOGGER.debug("------")
+    async with httpx.AsyncClient() as client:
+        try:
+            response = await client.get(url=url)
+            response.raise_for_status()
+        except httpx.HTTPError as exception:
+            LOGGER.debug(f"get_radix_job_state() - Could not get job state, {exception=}")
+            return None
+
+    # LOGGER.debug("------")
+    # LOGGER.debug(f"{response.json()=}")
+    # LOGGER.debug("------")
 
     # Note that the response we're getting back does not always contain an entry for status
+    # Therefore we're allowing None for the status field of RadixJobState
     radix_job_state = RadixJobState.model_validate_json(response.content)
+    LOGGER.debug(f"get_radix_job_state() - Got job state, {radix_job_state=}")
     return radix_job_state
 
 
+async def is_radix_job_running(job_component_name: str, job_scheduler_port: int, radix_job_name: str) -> bool:
+    radix_job_state = await get_radix_job_state(job_component_name, job_scheduler_port, radix_job_name)
+    if radix_job_state and radix_job_state.status == "Running":
+        return True
+
+    return False
+
+
 async def get_all_radix_jobs(job_component_name: str, job_scheduler_port: int) -> List[RadixJobState]:
-    LOGGER.debug(f"##### get_all_radix_jobs()  {job_component_name=}")
+    LOGGER.debug(f"get_all_radix_jobs()  {job_component_name=}")
 
     url = f"http://{job_component_name}:{job_scheduler_port}/api/v1/jobs"
     async with httpx.AsyncClient() as client:
-        response = await client.get(url)
-        response.raise_for_status()
+        try:
+            response = await client.get(url)
+            response.raise_for_status()
+        except httpx.RequestError as exc:
+            LOGGER.error(f"Request error occurred for GET to: {exc.request.url}")
+            return []
+        except httpx.HTTPStatusError as exc:
+            LOGGER.error(f"Request returned HTTP error {exc.response.status_code} for GET to {exc.request.url}")
+            return []
 
     LOGGER.debug("------")
-    response_list = response.json()
-    LOGGER.debug(f"{response_list=}")
+    LOGGER.debug(f"{response.json()=}")
+    LOGGER.debug("------")
 
     ta = TypeAdapter(List[RadixJobState])
     ret_list = ta.validate_json(response.content)
@@ -120,8 +121,15 @@ async def get_all_radix_jobs(job_component_name: str, job_scheduler_port: int) -
     return ret_list
 
 
-async def delete_radix_job_instance(client: httpx.AsyncClient, job_component_name: str, job_scheduler_port: int, radix_job_name: str) -> bool:
-    LOGGER.debug(f"##### delete_radix_job_instance()  {job_component_name=}, {radix_job_name=}")
+async def delete_named_radix_job(job_component_name: str, job_scheduler_port: int, radix_job_name: str) -> bool:
+    async with httpx.AsyncClient() as client:
+        return await _delete_named_radix_job_with_client(client, job_component_name, job_scheduler_port, radix_job_name)
+
+
+async def _delete_named_radix_job_with_client(
+    client: httpx.AsyncClient, job_component_name: str, job_scheduler_port: int, radix_job_name: str
+) -> bool:
+    LOGGER.debug(f"delete_named_radix_job() - {job_component_name=}, {radix_job_name=}")
 
     url = f"http://{job_component_name}:{job_scheduler_port}/api/v1/jobs/{radix_job_name}"
     try:
@@ -129,24 +137,33 @@ async def delete_radix_job_instance(client: httpx.AsyncClient, job_component_nam
         response.raise_for_status()
         return True
     except httpx.RequestError as exc:
-        LOGGER.error(f"An error occurred while requesting DELETE {exc.request.url!r}.")
+        LOGGER.error(f"Request error occurred for DELETE to: {exc.request.url}.")
         return False
     except httpx.HTTPStatusError as exc:
-        LOGGER.error(f"Error HTTP status {exc.response.status_code} while requesting DELETE {exc.request.url!r}.")
+        LOGGER.error(f"Request returned HTTP error {exc.response.status_code} for DELETE to {exc.request.url}")
         return False
 
 
-async def delete_all_radix_job_instances(job_component_name: str, job_scheduler_port: int) -> None:
-    LOGGER.debug(f"##### delete_all_radix_job_instances()  {job_component_name=}")
+async def delete_all_radix_jobs(job_component_name: str, job_scheduler_port: int) -> None:
+    LOGGER.debug(f"delete_all_radix_jobs() - {job_component_name=}")
 
     job_list = await get_all_radix_jobs(job_component_name, job_scheduler_port)
+    if not job_list:
+        LOGGER.debug(f"delete_all_radix_jobs() - no jobs to delete")
+        return
+
     delete_coros_arr = []
 
     async with httpx.AsyncClient() as client:
         for job in job_list:
-            job_name = job.name
-            LOGGER.debug(f"------Deleting job {job_name}")
-            del_coro = delete_radix_job_instance(client=client, job_component_name=job_component_name, job_scheduler_port=job_scheduler_port, radix_job_name=job_name)
+            radix_job_name = job.name
+            LOGGER.debug(f"delete_all_radix_jobs() - deleting job {radix_job_name}")
+            del_coro = _delete_named_radix_job_with_client(
+                client=client,
+                job_component_name=job_component_name,
+                job_scheduler_port=job_scheduler_port,
+                radix_job_name=radix_job_name,
+            )
             delete_coros_arr.append(del_coro)
 
         result_arr = await asyncio.gather(*delete_coros_arr)
@@ -154,4 +171,3 @@ async def delete_all_radix_job_instances(job_component_name: str, job_scheduler_
     LOGGER.debug("------")
     LOGGER.debug(f"{result_arr=}")
     LOGGER.debug("------")
-

@@ -10,8 +10,8 @@ from src.services.user_session_manager.user_session_manager import UserSessionMa
 from src.services.user_session_manager.user_session_manager import UserComponent
 from src.services.user_session_manager.user_session_manager import _USER_SESSION_DEFS
 from src.services.user_session_manager._radix_helpers import create_new_radix_job
-from src.services.user_session_manager._radix_helpers import delete_all_radix_job_instances
 from src.services.user_session_manager._radix_helpers import get_all_radix_jobs, get_radix_job_state
+from src.services.user_session_manager._radix_helpers import delete_all_radix_jobs
 from src.services.user_session_manager._user_session_directory import UserSessionDirectory
 
 LOGGER = logging.getLogger(__name__)
@@ -99,7 +99,7 @@ async def usersession_radixdelete(user_component: UserComponent) -> str:
 
     session_def = _USER_SESSION_DEFS[user_component]
 
-    await delete_all_radix_job_instances(session_def.job_component_name, session_def.port)
+    await delete_all_radix_jobs(session_def.job_component_name, session_def.port)
     return "Delete done"
 
 

@@ -9,11 +9,15 @@ from fastapi import Query
 
 from .inactivity_shutdown import InactivityShutdown
 
-LOGGER = logging.getLogger(__name__)
 
+logging.basicConfig(format="%(asctime)s %(levelname)-3s [%(name)s]: %(message)s", datefmt="%H:%M:%S")
+logging.getLogger().setLevel(logging.DEBUG)
 
 # Seems to be one way of know if we're running in Radix or locally
 IS_ON_RADIX_PLATFORM = True if os.getenv("RADIX_APP") is not None else False
+
+LOGGER = logging.getLogger(__name__)
+
 
 RADIX_JOB_NAME = os.getenv("RADIX_JOB_NAME")
 RADIX_APP = os.getenv("RADIX_APP")
@@ -69,6 +73,7 @@ async def dowork(
     duration: Annotated[float, Query(description="Duration of work in seconds")] = 1.0,
 ) -> str:
     LOGGER.debug(f"dowork() doing MOCK work for: {duration=}s")
+
     await asyncio.sleep(duration)
 
     ret_str = f"MOCK work done at: {datetime.datetime.now()}"

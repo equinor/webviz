@@ -6,6 +6,9 @@ from typing import Annotated
 from fastapi import FastAPI
 from fastapi import Query
 
+logging.basicConfig(format="%(asctime)s %(levelname)-3s [%(name)s]: %(message)s", datefmt="%H:%M:%S")
+logging.getLogger().setLevel(logging.DEBUG)
+
 LOGGER = logging.getLogger(__name__)
 
 
