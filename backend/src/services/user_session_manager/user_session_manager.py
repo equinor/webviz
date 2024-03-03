@@ -14,6 +14,7 @@ from ._radix_helpers import create_new_radix_job, RadixResourceRequests
 from ._radix_helpers import is_radix_job_running, delete_named_radix_job
 from ._user_session_directory import SessionInfo, SessionRunState, UserSessionDirectory
 from ._util_classes import LockReleasingContext, TimeCounter
+from ._background_tasks import run_in_background_task
 
 LOGGER = logging.getLogger(__name__)
 
@@ -175,7 +176,6 @@ async def _create_new_session(
     # Using redlock in our case is a bit overkill, but it's a good way to learn how to use it and there's a ready implementation
     # For our use case it is probably better to implement our own locking akin to this: https://redis.io/commands/set/#patterns
     #
-    #
     LOGGER.debug(f"Trying to acquire distributed redlock {lock_key_name=}")
     distributed_lock = Redlock(key=lock_key_name, masters={redis_client}, auto_release_time=60)
     got_the_lock = distributed_lock.acquire(blocking=False, timeout=-1)
@@ -185,44 +185,20 @@ async def _create_new_session(
 
     with LockReleasingContext(distributed_lock):
         # Now that we have the lock, kill off existing job info and start creating new job
-        # Before proceeding, try and whack the radix job if possible
-
-
-        ##!!!!!!!!!!!!!!!!!!!!!!!!
-        ##!!!!!!!!!!!!!!!!!!!!!!!!
-        ##!!!!!!!!!!!!!!!!!!!!!!!!
-
-        # see https://docs.python.org/3/library/asyncio-task.html#asyncio.create_task
-        #delete_specific_radix_job()
-        session_info = session_dir.get_session_info(job_component_name, instance_str)
-        if session_info and session_info.radix_job_name:
-            LOGGER.warning(f"Deleting existing radix job {session_info.radix_job_name=}")
-            LOGGER.warning(f"before {len(background_tasks)=}")
-
-            coro = delete_named_radix_job(job_component_name, job_scheduler_port, session_info.radix_job_name)
-            task = asyncio.create_task(coro)
-
-            # Add task to the set. This creates a strong reference.
-            background_tasks.add(task)
-            LOGGER.warning(f"after {len(background_tasks)=}")
-
-            # To prevent keeping references to finished tasks forever, make each task remove its 
-            # own reference from the set after completion
-            task.add_done_callback(background_tasks.discard)
-
-        ##!!!!!!!!!!!!!!!!!!!!!!!!
-        ##!!!!!!!!!!!!!!!!!!!!!!!!
-        ##!!!!!!!!!!!!!!!!!!!!!!!!
-
-
+        # But before proceeding, grab the old session info so we can try and whack the radix job if possible
+        old_session_info = session_dir.get_session_info(job_component_name, instance_str)
         session_info_updater = session_dir.create_session_info_updater(job_component_name, instance_str)
         session_info_updater.delete_all_state()
         session_info_updater.set_state_creating()
 
         if IS_ON_RADIX_PLATFORM:
-            LOGGER.debug(
-                f"Trying to create new job using radix job manager ({job_component_name=}, {job_scheduler_port=})"
-            )
+            if old_session_info and old_session_info.radix_job_name:
+                LOGGER.debug(f"Trying to delete old radix job {old_session_info.radix_job_name=}")
+                run_in_background_task(
+                    delete_named_radix_job(job_component_name, job_scheduler_port, old_session_info.radix_job_name)
+                )
+
+            LOGGER.debug(f"Creating new job using radix job manager ({job_component_name=}, {job_scheduler_port=})")
             new_radix_job_name = await create_new_radix_job(job_component_name, job_scheduler_port, resource_req)
             if new_radix_job_name is None:
                 LOGGER.error(f"Failed to create new job in radix ({job_component_name=}, {job_scheduler_port=})")
@@ -238,15 +214,17 @@ async def _create_new_session(
 
         LOGGER.debug(f"lock status, {distributed_lock.locked()=}")
 
+        # !!!!!!!!!!!!!
+        # !!!!!!!!!!!!!
         # We must decide on how long we should wait here before giving up
         # This must be aligned with the auto release time for our lock and also the polling for job info that is done against redis
         ready_endpoint = f"http://{new_radix_job_name}:{actual_service_port}/health/ready"
         is_ready, msg = await call_health_endpoint_with_retries(health_url=ready_endpoint, stop_after_delay_s=30)
         if not is_ready:
             LOGGER.error("The newly created radix job failed to come online, giving up and deleting it")
-            # !!!!!!!!!!
-            # Should delete the radix job as well
             session_info_updater.delete_all_state()
+            # Should delete the radix job as well
+            run_in_background_task(delete_named_radix_job(job_component_name, job_scheduler_port, new_radix_job_name))
             return None
 
         session_info_updater.set_state_running()

@@ -13,6 +13,7 @@ from src.services.user_session_manager._radix_helpers import create_new_radix_jo
 from src.services.user_session_manager._radix_helpers import get_all_radix_jobs, get_radix_job_state
 from src.services.user_session_manager._radix_helpers import delete_all_radix_jobs
 from src.services.user_session_manager._user_session_directory import UserSessionDirectory
+from src.services.user_session_manager._background_tasks import run_in_background_task
 
 LOGGER = logging.getLogger(__name__)
 
@@ -150,3 +151,21 @@ async def usersession_dirdel(
     LOGGER.debug("======================")
 
     return "Session info deleted"
+
+
+@router.get("/bgtask")
+async def bgtask() -> str:
+    LOGGER.debug(f"bgtask() - start")
+
+    async def funcThatThrows() -> None:
+        raise ValueError("This is a test error")
+
+    async def funcThatLogs(msg: str) -> None:
+        LOGGER.debug(f"This is a test log {msg=}")
+
+    run_in_background_task(funcThatThrows())
+    run_in_background_task(funcThatLogs(msg="HELO HELLO"))
+
+    LOGGER.debug(f"bgtask() - done")
+
+    return "Background tasks were run"
