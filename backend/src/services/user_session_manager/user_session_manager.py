@@ -144,9 +144,6 @@ async def _get_info_for_running_session(
     if not session_info or not session_info.radix_job_name:
         return None
 
-    assert session_info.run_state == SessionRunState.RUNNING
-    assert session_info.radix_job_name is not None
-
     if IS_ON_RADIX_PLATFORM:
         LOGGER.debug("Found user session, verifying its existence against radix job manager")
         radix_job_is_running = await is_radix_job_running(
@@ -189,7 +186,6 @@ async def _create_new_session(
     # May have to look closer into the auto release timeout here
     # Using redlock in our case is probably a bit overkill, there's a ready implementation
     # For our use case it may be better to implement our own locking akin to this: https://redis.io/commands/set/#patterns
-    #
     LOGGER.debug(f"Trying to acquire distributed redlock {lock_key_name=}")
     distributed_lock = Redlock(key=lock_key_name, masters={redis_client}, auto_release_time=approx_timeout_s + 30)
     got_the_lock = distributed_lock.acquire(blocking=False, timeout=-1)

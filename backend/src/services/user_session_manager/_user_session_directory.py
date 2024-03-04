@@ -18,8 +18,34 @@ class SessionRunState(str, Enum):
 _USER_SESSIONS_REDIS_PREFIX = "user-session"
 
 
-def _make_redis_hash_name(user_id: str, job_component_name: str, instance_str: str) -> str:
-    return f"{_USER_SESSIONS_REDIS_PREFIX}:{user_id}:{job_component_name}:{instance_str}"
+@dataclass(frozen=True, kw_only=True)
+class JobAddress:
+    user_id: str
+    job_component_name: str
+    instance_str: str
+
+
+def _encode_redis_hash_name_str(address: JobAddress) -> str:
+    if not address.user_id:
+        raise ValueError("address.user_id cannot be empty")
+    if address.user_id.find(":") != -1:
+        raise ValueError("address.user_id cannot contain ':'")
+
+    return f"{_USER_SESSIONS_REDIS_PREFIX}:{address.user_id}:{address.job_component_name}:{address.instance_str}"
+
+
+def _decode_redis_hash_name_str(hash_name_str: str) -> JobAddress:
+    key_parts = hash_name_str.split(":")
+    if len(key_parts) != 4:
+        raise ValueError(f"Unexpected hash_name_str format {hash_name_str=}")
+    if key_parts[0] != _USER_SESSIONS_REDIS_PREFIX:
+        raise ValueError(f"Unexpected hash_name_str format, wrong prefix, {hash_name_str=}")
+    if not key_parts[1]:
+        raise ValueError(f"Unexpected hash_name_str format, empty user_id, {hash_name_str=}")
+    if not key_parts[2]:
+        raise ValueError(f"Unexpected hash_name_str format, empty job_component_name, {hash_name_str=}")
+
+    return JobAddress(user_id=key_parts[1], job_component_name=key_parts[2], instance_str=key_parts[3])
 
 
 class SessionInfoUpdater:
@@ -63,9 +89,10 @@ class SessionInfoUpdater:
         )
 
     def _make_hash_name(self) -> str:
-        return _make_redis_hash_name(
+        addr = JobAddress(
             user_id=self._user_id, job_component_name=self._job_component_name, instance_str=self._instance_str
         )
+        return _encode_redis_hash_name_str(addr)
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -82,9 +109,8 @@ class UserSessionDirectory:
         self._redis_client = redis.Redis.from_url(config.REDIS_USER_SESSION_URL, decode_responses=True)
 
     def get_session_info(self, job_component_name: str, instance_str: str) -> SessionInfo | None:
-        hash_name = _make_redis_hash_name(
-            user_id=self._user_id, job_component_name=job_component_name, instance_str=instance_str
-        )
+        addr = JobAddress(user_id=self._user_id, job_component_name=job_component_name, instance_str=instance_str)
+        hash_name = _encode_redis_hash_name_str(addr)
         value_dict = self._redis_client.hgetall(name=hash_name)
         if not value_dict:
             return None
@@ -112,14 +138,12 @@ class UserSessionDirectory:
         ret_list: list[SessionInfo] = []
         for key in self._redis_client.scan_iter(pattern):
             LOGGER.debug(f"{key=}")
-            key_parts = key.split(":")
-            assert len(key_parts) == 4
-            assert key_parts[0] == _USER_SESSIONS_REDIS_PREFIX
-            assert key_parts[1] == self._user_id
-
-            matched_job_component_name = key_parts[2]
-            matched_instance_identifier = key_parts[3]
-            job_info = self.get_session_info(matched_job_component_name, matched_instance_identifier)
+            job_address = _decode_redis_hash_name_str(key)
+            if job_address.user_id != self._user_id:
+                raise ValueError(f"Unexpected key format, mismatch in user_id {key=}")
+            matched_job_component_name = job_address.job_component_name
+            matched_instance_str = job_address.instance_str
+            job_info = self.get_session_info(matched_job_component_name, matched_instance_str)
             if job_info is not None:
                 ret_list.append(job_info)
 
@@ -140,9 +164,8 @@ class UserSessionDirectory:
         self._redis_client.delete(*key_list)
 
     def make_lock_key(self, job_component_name: str, instance_str: str) -> str:
-        hash_name = _make_redis_hash_name(
-            user_id=self._user_id, job_component_name=job_component_name, instance_str=instance_str
-        )
+        addr = JobAddress(user_id=self._user_id, job_component_name=job_component_name, instance_str=instance_str)
+        hash_name = _encode_redis_hash_name_str(addr)
         return f"{hash_name}:lock"
 
     def create_session_info_updater(self, job_component_name: str, instance_str: str) -> SessionInfoUpdater:

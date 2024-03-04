@@ -142,8 +142,8 @@ async def get_all_radix_jobs(job_component_name: str, job_scheduler_port: int) -
     # LOGGER.debug(f"{response.json()=}")
     # LOGGER.debug("------")
 
-    ta = TypeAdapter(List[RadixJobState])
-    ret_list = ta.validate_json(response.content)
+    tadapter = TypeAdapter(List[RadixJobState])
+    ret_list = tadapter.validate_json(response.content)
 
     LOGGER.debug(f"get_all_radix_jobs() - got list with {len(ret_list)} jobs")
 
