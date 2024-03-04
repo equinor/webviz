@@ -65,6 +65,7 @@ class UserSessionManager:
             job_scheduler_port=session_def.port,
             instance_str=effective_instance_str,
             actual_service_port=actual_service_port,
+            approx_timeout_s=40,
         )
         if existing_session_info:
             session_url = f"http://{existing_session_info.radix_job_name}:{actual_service_port}"
@@ -83,6 +84,7 @@ class UserSessionManager:
             resource_req=session_def.resource_req,
             instance_str=effective_instance_str,
             actual_service_port=actual_service_port,
+            approx_timeout_s=30,
         )
 
         if not new_session_info:
@@ -111,9 +113,14 @@ async def _get_info_for_running_session(
     job_scheduler_port: int,
     instance_str: str,
     actual_service_port: int,
+    approx_timeout_s: float
 ) -> SessionInfo | None:
 
+    time_counter = TimeCounter(approx_timeout_s)
+    sleep_time_s = 1
+
     session_info = session_dir.get_session_info(job_component_name, instance_str)
+    num_calls += 1
     if not session_info:
         return None
 
@@ -122,8 +129,14 @@ async def _get_info_for_running_session(
     # We will need to add a timeout to this!!!!!
     # How much time should we spend here before giving up?
     while session_info and session_info.run_state != SessionRunState.RUNNING:
-        LOGGER.debug("Found user session, but it's not running so trying to wait...")
-        await asyncio.sleep(1)
+        elapsed_s = time_counter.elapsed_s()
+        if elapsed_s + sleep_time_s > approx_timeout_s:
+            LOGGER.debug("Giving up waiting for user session to enter running state after {num_calls} failed attempts, time spent: {elapsed_s:.2f}s")
+            return None
+
+        num_calls += 1
+        LOGGER.debug(f"Waiting for user session to enter running state, attempt {num_calls}")
+        await asyncio.sleep(sleep_time_s)
         session_info = session_dir.get_session_info(job_component_name, instance_str)
 
     # So by now the session either evaporated from the directory, or it has entered the running state
@@ -164,20 +177,21 @@ async def _create_new_session(
     resource_req: RadixResourceRequests,
     instance_str: str,
     actual_service_port: int,
+    approx_timeout_s: float,
 ) -> SessionInfo | None:
+
+    time_counter = TimeCounter(approx_timeout_s)
 
     # We're going to be modifying the directory which means we need to acquire a lock
     redis_client = session_dir.get_redis_client()
     lock_key_name: str = session_dir.make_lock_key(job_component_name, instance_str)
 
-    # !!!!!!!!!!!!!!!!!
-    # !!!!!!!!!!!!!!!!!
-    # Need much longer auto release timeout here !!!!!!!!!!!!!!
-    # Using redlock in our case is a bit overkill, but it's a good way to learn how to use it and there's a ready implementation
-    # For our use case it is probably better to implement our own locking akin to this: https://redis.io/commands/set/#patterns
+    # May have to look closer into the auto release timeout here
+    # Using redlock in our case is probably a bit overkill, there's a ready implementation
+    # For our use case it may be better to implement our own locking akin to this: https://redis.io/commands/set/#patterns
     #
     LOGGER.debug(f"Trying to acquire distributed redlock {lock_key_name=}")
-    distributed_lock = Redlock(key=lock_key_name, masters={redis_client}, auto_release_time=60)
+    distributed_lock = Redlock(key=lock_key_name, masters={redis_client}, auto_release_time=approx_timeout_s + 30)
     got_the_lock = distributed_lock.acquire(blocking=False, timeout=-1)
     if not got_the_lock:
         LOGGER.error(f"Failed to acquire distributed redlock {lock_key_name=}")
@@ -214,12 +228,11 @@ async def _create_new_session(
 
         LOGGER.debug(f"lock status, {distributed_lock.locked()=}")
 
-        # !!!!!!!!!!!!!
-        # !!!!!!!!!!!!!
-        # We must decide on how long we should wait here before giving up
+        # It is a bit hard to decide on how long we should wait here before giving up
         # This must be aligned with the auto release time for our lock and also the polling for job info that is done against redis
         ready_endpoint = f"http://{new_radix_job_name}:{actual_service_port}/health/ready"
-        is_ready, msg = await call_health_endpoint_with_retries(health_url=ready_endpoint, stop_after_delay_s=30)
+        time_budget_for_ready_probe_s = time_counter.remaining_s()
+        is_ready, msg = await call_health_endpoint_with_retries(health_url=ready_endpoint, stop_after_delay_s=time_budget_for_ready_probe_s)
         if not is_ready:
             LOGGER.error("The newly created radix job failed to come online, giving up and deleting it")
             session_info_updater.delete_all_state()
