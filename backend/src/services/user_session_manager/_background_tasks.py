@@ -8,7 +8,7 @@ LOGGER = logging.getLogger(__name__)
 _background_tasks: set[asyncio.Task] = set()
 
 
-def _task_done_cb(task: asyncio.Task):
+def _task_done_cb(task: asyncio.Task) -> None:
     # To prevent keeping references to finished tasks forever, make each task remove its
     # own reference from the set after completion
     _background_tasks.discard(task)

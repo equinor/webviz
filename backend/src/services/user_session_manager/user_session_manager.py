@@ -18,8 +18,6 @@ from ._background_tasks import run_in_background_task
 
 LOGGER = logging.getLogger(__name__)
 
-background_tasks = set()
-
 
 class UserComponent(str, Enum):
     GRID3D_RI = "GRID3D_RI"
@@ -113,14 +111,14 @@ async def _get_info_for_running_session(
     job_scheduler_port: int,
     instance_str: str,
     actual_service_port: int,
-    approx_timeout_s: float
+    approx_timeout_s: float,
 ) -> SessionInfo | None:
 
     time_counter = TimeCounter(approx_timeout_s)
     sleep_time_s = 1
+    num_calls = 1
 
     session_info = session_dir.get_session_info(job_component_name, instance_str)
-    num_calls += 1
     if not session_info:
         return None
 
@@ -131,7 +129,9 @@ async def _get_info_for_running_session(
     while session_info and session_info.run_state != SessionRunState.RUNNING:
         elapsed_s = time_counter.elapsed_s()
         if elapsed_s + sleep_time_s > approx_timeout_s:
-            LOGGER.debug("Giving up waiting for user session to enter running state after {num_calls} failed attempts, time spent: {elapsed_s:.2f}s")
+            LOGGER.debug(
+                "Giving up waiting for user session to enter running state after {num_calls} failed attempts, time spent: {elapsed_s:.2f}s"
+            )
             return None
 
         num_calls += 1
@@ -228,11 +228,11 @@ async def _create_new_session(
 
         LOGGER.debug(f"lock status, {distributed_lock.locked()=}")
 
-        # It is a bit hard to decide on how long we should wait here before giving up
-        # This must be aligned with the auto release time for our lock and also the polling for job info that is done against redis
+        # It is a bit hard to decide on how long we should wait here before giving up.
+        # This must be aligned with the auto release time for our lock and also the polling for session info that is done against redis
         ready_endpoint = f"http://{new_radix_job_name}:{actual_service_port}/health/ready"
-        time_budget_for_ready_probe_s = time_counter.remaining_s()
-        is_ready, msg = await call_health_endpoint_with_retries(health_url=ready_endpoint, stop_after_delay_s=time_budget_for_ready_probe_s)
+        probe_time_budget_s = time_counter.remaining_s()
+        is_ready, msg = await call_health_endpoint_with_retries(ready_endpoint, probe_time_budget_s)
         if not is_ready:
             LOGGER.error("The newly created radix job failed to come online, giving up and deleting it")
             session_info_updater.delete_all_state()
