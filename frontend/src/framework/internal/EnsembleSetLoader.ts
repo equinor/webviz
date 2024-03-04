@@ -90,6 +90,7 @@ export async function loadEnsembleSetMetadataFromBackend(
 
         outEnsembleArr.push(
             new Ensemble(
+                ensembleDetails.field_identifier,
                 ensembleDetails.case_uuid,
                 ensembleDetails.case_name,
                 ensembleDetails.name,

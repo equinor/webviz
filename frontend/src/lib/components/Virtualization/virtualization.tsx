@@ -12,6 +12,7 @@ export type VirtualizationProps<T = any> = {
     itemSize: number;
     direction: "vertical" | "horizontal";
     startIndex?: number;
+    onScroll?: (newStartIndex: number) => void;
 };
 
 const defaultProps = {
@@ -39,6 +40,9 @@ function checkEqualityOfProps(a: VirtualizationPropsSubset, b: VirtualizationPro
 }
 
 export const Virtualization = withDefaults<VirtualizationProps>()(defaultProps, (props) => {
+    const { onScroll } = props;
+
+    const [isProgrammaticScroll, setIsProgrammaticScroll] = React.useState(false);
     const [range, setRange] = React.useState<{ start: number; end: number }>({ start: props.startIndex, end: 0 });
     const [prevPropsSubset, setPrevPropsSubset] = React.useState<VirtualizationPropsSubset>(null);
     const [placeholderSizes, setPlaceholderSizes] = React.useState<{ start: number; end: number }>({
@@ -95,6 +99,7 @@ export const Virtualization = withDefaults<VirtualizationProps>()(defaultProps, 
 
     React.useEffect(() => {
         if (props.containerRef.current && initialScrollPositions) {
+            setIsProgrammaticScroll(true);
             props.containerRef.current.scrollTop = initialScrollPositions.top;
             props.containerRef.current.scrollLeft = initialScrollPositions.left;
         }
@@ -102,7 +107,11 @@ export const Virtualization = withDefaults<VirtualizationProps>()(defaultProps, 
 
     React.useEffect(() => {
         let lastScrollPosition = -1;
-        const handleScroll = () => {
+        function handleScroll() {
+            if (isProgrammaticScroll) {
+                setIsProgrammaticScroll(false);
+                return;
+            }
             if (props.containerRef.current) {
                 const scrollPosition =
                     props.direction === "vertical"
@@ -128,8 +137,12 @@ export const Virtualization = withDefaults<VirtualizationProps>()(defaultProps, 
                     start: startIndex * props.itemSize,
                     end: (props.items.length - 1 - endIndex) * props.itemSize,
                 });
+
+                if (onScroll) {
+                    onScroll(startIndex);
+                }
             }
-        };
+        }
 
         if (props.containerRef.current) {
             props.containerRef.current.addEventListener("scroll", handleScroll);
@@ -141,7 +154,16 @@ export const Virtualization = withDefaults<VirtualizationProps>()(defaultProps, 
                 props.containerRef.current.removeEventListener("scroll", handleScroll);
             }
         };
-    }, [props.containerRef, props.direction, props.items, props.itemSize, containerSize.height, containerSize.width]);
+    }, [
+        props.containerRef,
+        props.direction,
+        props.items,
+        props.itemSize,
+        containerSize.height,
+        containerSize.width,
+        onScroll,
+        isProgrammaticScroll,
+    ]);
 
     const makeStyle = (size: number) => {
         if (props.direction === "vertical") {
