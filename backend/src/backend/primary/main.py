@@ -40,7 +40,7 @@ setup_normal_log_levels()
 # logging.getLogger().setLevel(logging.DEBUG)
 logging.getLogger("src.services.sumo_access").setLevel(logging.DEBUG)
 logging.getLogger("src.services.user_session_manager").setLevel(logging.DEBUG)
-logging.getLogger("src.backend.primary.routers").setLevel(logging.DEBUG)
+logging.getLogger("src.backend.primary.routers.dev").setLevel(logging.DEBUG)
 
 LOGGER = logging.getLogger(__name__)
 

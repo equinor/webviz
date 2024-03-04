@@ -199,8 +199,8 @@ async def delete_all_radix_jobs(job_component_name: str, job_scheduler_port: int
 
         result_arr = await asyncio.gather(*delete_coros_arr)
 
-    LOGGER.debug("------")
-    LOGGER.debug(f"{result_arr=}")
-    LOGGER.debug("------")
+    # LOGGER.debug("------")
+    # LOGGER.debug(f"{result_arr=}")
+    # LOGGER.debug("------")
 
     LOGGER.debug(f"delete_all_radix_jobs() - finished")
