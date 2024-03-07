@@ -57,6 +57,10 @@ class UserSessionManager:
 
         session_dir = UserSessionDirectory(self._user_id)
 
+        # Note that currently the timeout values (approx_timeout_s) used here are purely experimental at the moment.
+        # We may be able to get some insights from the Radix team on this, but still this will have to
+        # be weighed up against how long a timeout is acceptable from a user standpoint.
+
         existing_session_info = await _get_info_for_running_session(
             session_dir=session_dir,
             job_component_name=session_def.job_component_name,
@@ -124,8 +128,8 @@ async def _get_info_for_running_session(
 
     # Given that we found info on the session and it's not in the running state, we will try and wait for it to come online.
     # The job/session might be in the process of being created and spinning up, so we will try and wait for it.
-    # We will need to add a timeout to this!!!!!
-    # How much time should we spend here before giving up?
+    # How much time should we spend here before giving up? Currently we just consume an approximate timeout here, and
+    # leave it to the caller to decide how much time should be allowed.
     while session_info and session_info.run_state != SessionRunState.RUNNING:
         elapsed_s = time_counter.elapsed_s()
         if elapsed_s + sleep_time_s > approx_timeout_s:
