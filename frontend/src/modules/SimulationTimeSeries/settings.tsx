@@ -2,7 +2,7 @@ import React from "react";
 
 import { Frequency_api, VectorDescription_api } from "@api";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
-import { ModuleFCProps } from "@framework/Module";
+import { ModuleSettingsProps } from "@framework/Module";
 import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { SingleEnsembleSelect } from "@framework/components/SingleEnsembleSelect";
@@ -21,19 +21,19 @@ import { useVectorListQuery } from "./queryHooks";
 import { State } from "./state";
 
 //-----------------------------------------------------------------------------------------------------------
-export function Settings({ moduleContext, workbenchSession, workbenchServices }: ModuleFCProps<State>) {
-    const myInstanceIdStr = moduleContext.getInstanceIdString();
+export function Settings({ settingsContext, workbenchSession, workbenchServices }: ModuleSettingsProps<State>) {
+    const myInstanceIdStr = settingsContext.getInstanceIdString();
     console.debug(`${myInstanceIdStr} -- render SimulationTimeSeries settings`);
 
     const ensembleSet = useEnsembleSet(workbenchSession);
     const [selectedEnsembleIdent, setSelectedEnsembleIdent] = React.useState<EnsembleIdent | null>(null);
     const [selectedVectorName, setSelectedVectorName] = React.useState<string>("");
-    const [resampleFrequency, setResamplingFrequency] = moduleContext.useStoreState("resamplingFrequency");
-    const [showStatistics, setShowStatistics] = moduleContext.useStoreState("showStatistics");
-    const [showRealizations, setShowRealizations] = moduleContext.useStoreState("showRealizations");
-    const [showHistorical, setShowHistorical] = moduleContext.useStoreState("showHistorical");
+    const [resampleFrequency, setResamplingFrequency] = settingsContext.useStoreState("resamplingFrequency");
+    const [showStatistics, setShowStatistics] = settingsContext.useStoreState("showStatistics");
+    const [showRealizations, setShowRealizations] = settingsContext.useStoreState("showRealizations");
+    const [showHistorical, setShowHistorical] = settingsContext.useStoreState("showHistorical");
 
-    const syncedSettingKeys = moduleContext.useSyncedSettingKeys();
+    const syncedSettingKeys = settingsContext.useSyncedSettingKeys();
     const syncHelper = new SyncSettingsHelper(syncedSettingKeys, workbenchServices);
     const syncedValueEnsembles = syncHelper.useValue(SyncSettingKey.ENSEMBLE, "global.syncValue.ensembles");
     const syncedValueSummaryVector = syncHelper.useValue(SyncSettingKey.TIME_SERIES, "global.syncValue.timeSeries");
@@ -68,16 +68,16 @@ export function Settings({ moduleContext, workbenchSession, workbenchServices }:
     React.useEffect(
         function propagateVectorSpecToView() {
             if (computedEnsembleIdent && computedVectorName) {
-                moduleContext.getStateStore().setValue("vectorSpec", {
+                settingsContext.getStateStore().setValue("vectorSpec", {
                     ensembleIdent: computedEnsembleIdent,
                     vectorName: computedVectorName,
                     hasHistoricalVector: computedVectorNameHasHistoricalData,
                 });
             } else {
-                moduleContext.getStateStore().setValue("vectorSpec", null);
+                settingsContext.getStateStore().setValue("vectorSpec", null);
             }
         },
-        [computedEnsembleIdent, computedVectorName, computedVectorNameHasHistoricalData, moduleContext]
+        [computedEnsembleIdent, computedVectorName, computedVectorNameHasHistoricalData, settingsContext]
     );
 
     const computedEnsemble = computedEnsembleIdent ? ensembleSet.findEnsemble(computedEnsembleIdent) : null;
@@ -129,7 +129,7 @@ export function Settings({ moduleContext, workbenchSession, workbenchServices }:
             rangeArr = parseRealizationRangeString(realRangeStr, computedEnsemble?.getMaxRealizationNumber() ?? -1);
         }
         console.debug(rangeArr);
-        moduleContext.getStateStore().setValue("realizationsToInclude", rangeArr);
+        settingsContext.getStateStore().setValue("realizationsToInclude", rangeArr);
     }
 
     return (

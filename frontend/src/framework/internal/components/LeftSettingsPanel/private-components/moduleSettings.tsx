@@ -10,10 +10,13 @@ import { CircularProgress } from "@lib/components/CircularProgress";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { Settings as SettingsIcon } from "@mui/icons-material";
 
+import { Provider } from "jotai";
+
 import { DebugProfiler } from "../../DebugProfiler";
+import { HydrateQueryClientAtom } from "../../HydrateQueryClientAtom";
 
 type ModuleSettingsProps = {
-    moduleInstance: ModuleInstance<any>;
+    moduleInstance: ModuleInstance<any, any>;
     activeModuleInstanceId: string;
     workbench: Workbench;
 };
@@ -23,6 +26,7 @@ export const ModuleSettings: React.FC<ModuleSettingsProps> = (props) => {
     const [moduleInstanceState, setModuleInstanceState] = React.useState<ModuleInstanceState>(
         ModuleInstanceState.INITIALIZING
     );
+    const atomStore = props.moduleInstance.getAtomStore();
 
     React.useEffect(() => {
         setModuleInstanceState(props.moduleInstance.getModuleInstanceState());
@@ -99,13 +103,17 @@ export const ModuleSettings: React.FC<ModuleSettingsProps> = (props) => {
                             statusController={props.moduleInstance.getStatusController()}
                             guiMessageBroker={props.workbench.getGuiMessageBroker()}
                         >
-                            <Settings
-                                moduleContext={props.moduleInstance.getContext()}
-                                workbenchSession={props.workbench.getWorkbenchSession()}
-                                workbenchServices={props.workbench.getWorkbenchServices()}
-                                workbenchSettings={props.workbench.getWorkbenchSettings()}
-                                initialSettings={props.moduleInstance.getInitialSettings() || undefined}
-                            />
+                            <Provider store={atomStore}>
+                                <HydrateQueryClientAtom>
+                                    <Settings
+                                        settingsContext={props.moduleInstance.getContext()}
+                                        workbenchSession={props.workbench.getWorkbenchSession()}
+                                        workbenchServices={props.workbench.getWorkbenchServices()}
+                                        workbenchSettings={props.workbench.getWorkbenchSettings()}
+                                        initialSettings={props.moduleInstance.getInitialSettings() || undefined}
+                                    />
+                                </HydrateQueryClientAtom>
+                            </Provider>
                         </DebugProfiler>
                     </div>
                 </div>

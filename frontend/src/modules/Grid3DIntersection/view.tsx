@@ -1,6 +1,6 @@
 import React from "react";
 
-import { ModuleFCProps } from "@framework/Module";
+import { ModuleViewProps } from "@framework/Module";
 import { useFirstEnsembleInEnsembleSet } from "@framework/WorkbenchSession";
 import { useElementSize } from "@lib/hooks/useElementSize";
 
@@ -9,7 +9,7 @@ import { useGridIntersection, useStatisticalGridIntersection } from "./queryHook
 import state from "./state";
 
 //-----------------------------------------------------------------------------------------------------------
-export function View({ moduleContext, workbenchSession }: ModuleFCProps<state>) {
+export function View({ viewContext, workbenchSession }: ModuleViewProps<state>) {
     // Viewport size
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);
     const wrapperDivSize = useElementSize(wrapperDivRef);
@@ -18,10 +18,10 @@ export function View({ moduleContext, workbenchSession }: ModuleFCProps<state>) 
     const firstEnsemble = useFirstEnsembleInEnsembleSet(workbenchSession);
 
     // State
-    const gridName = moduleContext.useStoreValue("gridName");
-    const parameterName = moduleContext.useStoreValue("parameterName");
-    const realizations = moduleContext.useStoreValue("realizations");
-    const useStatistics = moduleContext.useStoreValue("useStatistics");
+    const gridName = viewContext.useStoreValue("gridName");
+    const parameterName = viewContext.useStoreValue("parameterName");
+    const realizations = viewContext.useStoreValue("realizations");
+    const useStatistics = viewContext.useStoreValue("useStatistics");
 
     // Queries
     const firstCaseUuid = firstEnsemble?.getCaseUuid() ?? null;
@@ -62,7 +62,7 @@ export function View({ moduleContext, workbenchSession }: ModuleFCProps<state>) 
                 width={wrapperDivSize.width}
                 height={wrapperDivSize.height}
             />
-            <div className="absolute bottom-5 right-5 italic text-pink-400">{moduleContext.getInstanceIdString()}</div>
+            <div className="absolute bottom-5 right-5 italic text-pink-400">{viewContext.getInstanceIdString()}</div>
         </div>
     );
 }

@@ -6,12 +6,15 @@ import { StatusSource } from "@framework/ModuleInstanceStatusController";
 import { Workbench } from "@framework/Workbench";
 import { DebugProfiler } from "@framework/internal/components/DebugProfiler";
 import { ErrorBoundary } from "@framework/internal/components/ErrorBoundary";
+import { HydrateQueryClientAtom } from "@framework/internal/components/HydrateQueryClientAtom";
 import { CircularProgress } from "@lib/components/CircularProgress";
+
+import { Provider } from "jotai";
 
 import { CrashView } from "./crashView";
 
 type ViewContentProps = {
-    moduleInstance: ModuleInstance<any>;
+    moduleInstance: ModuleInstance<any, any>;
     workbench: Workbench;
 };
 
@@ -20,6 +23,8 @@ export const ViewContent = React.memo((props: ViewContentProps) => {
     const [moduleInstanceState, setModuleInstanceState] = React.useState<ModuleInstanceState>(
         ModuleInstanceState.INITIALIZING
     );
+
+    const atomStore = props.moduleInstance.getAtomStore();
 
     React.useEffect(
         function handleMount() {
@@ -126,13 +131,17 @@ export const ViewContent = React.memo((props: ViewContentProps) => {
                     source={StatusSource.View}
                     guiMessageBroker={props.workbench.getGuiMessageBroker()}
                 >
-                    <View
-                        moduleContext={props.moduleInstance.getContext()}
-                        workbenchSession={props.workbench.getWorkbenchSession()}
-                        workbenchServices={props.workbench.getWorkbenchServices()}
-                        workbenchSettings={props.workbench.getWorkbenchSettings()}
-                        initialSettings={props.moduleInstance.getInitialSettings() || undefined}
-                    />
+                    <Provider store={atomStore}>
+                        <HydrateQueryClientAtom>
+                            <View
+                                viewContext={props.moduleInstance.getContext()}
+                                workbenchSession={props.workbench.getWorkbenchSession()}
+                                workbenchServices={props.workbench.getWorkbenchServices()}
+                                workbenchSettings={props.workbench.getWorkbenchSettings()}
+                                initialSettings={props.moduleInstance.getInitialSettings() || undefined}
+                            />
+                        </HydrateQueryClientAtom>
+                    </Provider>
                 </DebugProfiler>
             </div>
         </ErrorBoundary>

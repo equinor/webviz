@@ -1,6 +1,6 @@
 import React from "react";
 
-import { ModuleFCProps } from "@framework/Module";
+import { ModuleSettingsProps } from "@framework/Module";
 import { useFirstEnsembleInEnsembleSet } from "@framework/WorkbenchSession";
 import { Checkbox } from "@lib/components/Checkbox";
 import { CircularProgress } from "@lib/components/CircularProgress";
@@ -12,15 +12,15 @@ import { useGridModelNames, useGridParameterNames } from "./queryHooks";
 import state from "./state";
 
 //-----------------------------------------------------------------------------------------------------------
-export function Settings({ moduleContext, workbenchSession }: ModuleFCProps<state>) {
+export function Settings({ settingsContext, workbenchSession }: ModuleSettingsProps<state>) {
     // From Workbench
     const firstEnsemble = useFirstEnsembleInEnsembleSet(workbenchSession);
 
     // State
-    const [gridName, setGridName] = moduleContext.useStoreState("gridName");
-    const [parameterName, setParameterName] = moduleContext.useStoreState("parameterName");
-    const [realizations, setRealizations] = moduleContext.useStoreState("realizations");
-    const [useStatistics, setUseStatistics] = moduleContext.useStoreState("useStatistics");
+    const [gridName, setGridName] = settingsContext.useStoreState("gridName");
+    const [parameterName, setParameterName] = settingsContext.useStoreState("parameterName");
+    const [realizations, setRealizations] = settingsContext.useStoreState("realizations");
+    const [useStatistics, setUseStatistics] = settingsContext.useStoreState("useStatistics");
 
     // Queries
     const firstCaseUuid = firstEnsemble?.getCaseUuid() ?? null;

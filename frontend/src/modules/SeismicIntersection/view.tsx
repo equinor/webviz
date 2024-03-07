@@ -7,7 +7,7 @@ import {
     WellBorePicksAndStratigraphicUnits_api,
 } from "@api";
 import { Controller, IntersectionReferenceSystem, Trajectory } from "@equinor/esv-intersection";
-import { ModuleFCProps } from "@framework/Module";
+import { ModuleViewProps } from "@framework/Module";
 import { useViewStatusWriter } from "@framework/StatusWriter";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { ColorScaleGradientType } from "@lib/utils/ColorScale";
@@ -43,21 +43,21 @@ import {
     useGenerateSeismicSliceImageData,
 } from "./utils/esvIntersectionHooks";
 
-export const View = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>) => {
+export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<State>) => {
     const wrapperDivRef = React.useRef<HTMLDivElement | null>(null);
     const wrapperDivSize = useElementSize(wrapperDivRef);
     const esvIntersectionContainerRef = React.useRef<HTMLDivElement | null>(null);
     const esvIntersectionControllerRef = React.useRef<Controller | null>(null);
 
-    const statusWriter = useViewStatusWriter(moduleContext);
+    const statusWriter = useViewStatusWriter(viewContext);
 
-    const seismicAddress = moduleContext.useStoreValue("seismicAddress");
-    const surfaceAddress = moduleContext.useStoreValue("surfaceAddress");
-    const wellboreAddress = moduleContext.useStoreValue("wellboreAddress");
-    const wellborePickCaseUuid = moduleContext.useStoreValue("wellborePickCaseUuid");
-    const wellborePickSelection = moduleContext.useStoreValue("wellborePickSelection");
-    const extension = moduleContext.useStoreValue("extension");
-    const zScale = moduleContext.useStoreValue("zScale");
+    const seismicAddress = viewContext.useStoreValue("seismicAddress");
+    const surfaceAddress = viewContext.useStoreValue("surfaceAddress");
+    const wellboreAddress = viewContext.useStoreValue("wellboreAddress");
+    const wellborePickCaseUuid = viewContext.useStoreValue("wellborePickCaseUuid");
+    const wellborePickSelection = viewContext.useStoreValue("wellborePickSelection");
+    const extension = viewContext.useStoreValue("extension");
+    const zScale = viewContext.useStoreValue("zScale");
 
     const seismicColorScale = workbenchSettings.useDiscreteColorScale({
         gradientType: ColorScaleGradientType.Diverging,
