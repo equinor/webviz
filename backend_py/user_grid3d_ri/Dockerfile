@@ -33,8 +33,8 @@ ENV RESINSIGHT_EXECUTABLE=/home/appuser/ri_bin/ResInsight
 
 
 WORKDIR /home/appuser/backend_py/user_grid3d_ri
-COPY --chown=appuser ./backend_py/user_grid3d_ri/pyproject.toml  /home/appuser/backend_py/user_grid3d_ri
-COPY --chown=appuser ./backend_py/user_grid3d_ri/poetry.lock     /home/appuser/backend_py/user_grid3d_ri
+COPY --chown=appuser ./backend_py/user_grid3d_ri/pyproject.toml  /home/appuser/backend_py/user_grid3d_ri/pyproject.toml
+COPY --chown=appuser ./backend_py/user_grid3d_ri/poetry.lock     /home/appuser/backend_py/user_grid3d_ri/poetry.lock
 RUN poetry install --only main --no-root --no-directory
 
 # More or less the same as activating the virtual env that poetry creates
