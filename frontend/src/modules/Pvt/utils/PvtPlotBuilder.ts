@@ -59,11 +59,23 @@ export class PvtPlotBuilder {
                 subplotTitles.push(title);
                 const xUnit = this._pvtDataAccessor.getPressureUnit();
                 const yUnit = this._pvtDataAccessor.getDependentVariableUnit(dependentVariable);
-                const patch: Partial<Layout> = {
+                let patch: Partial<Layout> = {
                     title,
-                    [`xaxis${axisIndex}`]: { title: "Pressure [" + xUnit + "]" },
                     [`yaxis${axisIndex}`]: { title: `[${yUnit}]` },
                 };
+
+                // Last plot in vertical direction? - note the reversed order of rows
+                const evenNumberOfPlotsAndFirstRow = this._numPlots % 2 === 0 && row === 1;
+                const unevenNumberOfPlotsAndLastRowAndLastColumn =
+                    this._numPlots % 2 !== 0 && row === 2 && col === numCols;
+                const unevenNumberOfPlotsAndFirstRowAndFirstColumn = this._numPlots % 2 !== 0 && row === 1 && col === 1;
+                const lastPlotInVerticalDirection =
+                    evenNumberOfPlotsAndFirstRow ||
+                    unevenNumberOfPlotsAndLastRowAndLastColumn ||
+                    unevenNumberOfPlotsAndFirstRowAndFirstColumn;
+                if (lastPlotInVerticalDirection) {
+                    patch = { ...patch, [`xaxis${axisIndex}`]: { title: "Pressure [" + xUnit + "]" } };
+                }
 
                 patches.push(patch);
             }
@@ -207,7 +219,7 @@ export class PvtPlotBuilder {
                                 color,
                             },
                             showlegend: false,
-                            hovertemplate: ""
+                            hovertemplate: "",
                         };
 
                         figure.addTrace(borderTrace, row, col);
