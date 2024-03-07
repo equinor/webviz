@@ -22,20 +22,21 @@ RUN python3 -m pipx ensurepath
 
 RUN pipx install poetry==1.8.2
 
-RUN poetry config virtualenvs.in-project true
+#RUN poetry config virtualenvs.in-project true
 
 
-ADD --chown=appuser https://nightly.link/OPM/ResInsight/workflows/ResInsightWithCache/grid-geometry-extraction/ResInsight-Ubuntu_20.04_gcc.zip  /home/appuser/ri_bin/dist_archive/
-WORKDIR /home/appuser/ri_bin
-RUN unzip ./dist_archive/ResInsight*.zip
-RUN chmod +x ResInsight
-ENV RESINSIGHT_EXECUTABLE=/home/appuser/ri_bin/ResInsight
+# ADD --chown=appuser https://nightly.link/OPM/ResInsight/workflows/ResInsightWithCache/grid-geometry-extraction/ResInsight-Ubuntu_20.04_gcc.zip  /home/appuser/ri_bin/dist_archive/
+# WORKDIR /home/appuser/ri_bin
+# RUN unzip ./dist_archive/ResInsight*.zip
+# RUN chmod +x ResInsight
+# ENV RESINSIGHT_EXECUTABLE=/home/appuser/ri_bin/ResInsight
 
 
 WORKDIR /home/appuser/backend_py/user_grid3d_ri
-COPY --chown=appuser ./backend_py/user_grid3d_ri/pyproject.toml  /home/appuser/backend_py/user_grid3d_ri/pyproject.toml
-COPY --chown=appuser ./backend_py/user_grid3d_ri/poetry.lock     /home/appuser/backend_py/user_grid3d_ri/poetry.lock
-RUN poetry install --only main --no-root --no-directory
+COPY --chown=appuser ./backend_py/user_grid3d_ri/pyproject.toml  /home/appuser/backend_py/user_grid3d_ri
+COPY --chown=appuser ./backend_py/user_grid3d_ri/poetry.lock     /home/appuser/backend_py/user_grid3d_ri
+#RUN poetry install --only main --no-root --no-directory
+RUN poetry install
 
 # More or less the same as activating the virtual env that poetry creates
 ENV VIRTUAL_ENV=/home/appuser/backend_py/user_grid3d_ri/.venv
