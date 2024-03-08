@@ -1,13 +1,16 @@
-import { ChannelDefinition, KeyKind } from "@framework/DataChannelTypes";
+// import { ChannelDefinitions, Genre, Type } from "@framework/DataChannelTypes";
 
-export enum ChannelIds {
-    RESPONSE = "Response (per realization)",
-}
+// export enum Channels {
+//     ResponseValuePerRealization = "Response value (per realization)",
+// }
 
-export const channelDefs: ChannelDefinition[] = [
-    {
-        idString: ChannelIds.RESPONSE,
-        displayName: "Response (per realization)",
-        kindOfKey: KeyKind.REALIZATION,
-    },
-];
+// export const channelDefs = {
+//     [Channels.ResponseValuePerRealization]: {
+//         name: "Response value (per realization)",
+//         genre: Genre.Realization,
+//         dataType: Type.Number,
+//         metaData: {},
+//     },
+// } as const;
+
+// export type ChannelDefs = typeof channelDefs;

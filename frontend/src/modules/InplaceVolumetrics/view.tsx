@@ -1,124 +1,126 @@
 import React from "react";
 import Plot from "react-plotly.js";
 
-import { Body_get_realizations_response_api } from "@api";
-import { DataElement, KeyType } from "@framework/DataChannelTypes";
 import { ModuleFCProps } from "@framework/Module";
-import { useSubscribedValue } from "@framework/WorkbenchServices";
+import { useViewStatusWriter } from "@framework/StatusWriter";
+import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { QueryStateWrapper } from "@lib/components/QueryStateWrapper";
+import { TableHeading } from "@lib/components/Table/table";
 import { useElementSize } from "@lib/hooks/useElementSize";
+import { ContentInfo } from "@modules/_shared/components/ContentMessage";
 
-import { Layout, PlotData, PlotHoverEvent } from "plotly.js";
+import { isEqual } from "lodash";
+import { Layout, PlotData, Shape } from "plotly.js";
 
-import { ChannelIds } from "./channelDefs";
-import { useRealizationsResponseQuery } from "./queryHooks";
-import { VolumetricResponseAbbreviations } from "./settings";
+import { addHistogramTrace, addStatisticallines } from "./components/plotlyHistogram";
+// import { ChannelDefs, Channels } from "./channelDefs";
+import { useRealizationsResponses } from "./hooks/useRealizationResponses";
 import { State } from "./state";
+import { findValidRealizations } from "./utils/findValidRealizations";
 
-export const View = (props: ModuleFCProps<State>) => {
+export const view = (props: ModuleFCProps<State>) => {
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);
     const wrapperDivSize = useElementSize(wrapperDivRef);
-    const ensembleIdent = props.moduleContext.useStoreValue("ensembleIdent");
-    const tableName = props.moduleContext.useStoreValue("tableName");
-    const responseName = props.moduleContext.useStoreValue("responseName");
-    const categoryFilter = props.moduleContext.useStoreValue("categoricalFilter");
-    const responseBody: Body_get_realizations_response_api = { categorical_filter: categoryFilter || undefined };
-    const realizationsResponseQuery = useRealizationsResponseQuery(
-        ensembleIdent?.getCaseUuid() ?? "",
-        ensembleIdent?.getEnsembleName() ?? "",
-        tableName,
-        responseName,
-        responseBody,
-        true
-    );
-    const subscribedPlotlyRealization = useSubscribedValue("global.hoverRealization", props.workbenchServices);
-    const tracesDataArr: Partial<PlotData>[] = [];
-    if (realizationsResponseQuery.data && realizationsResponseQuery.data.realizations.length > 0) {
-        const x: number[] = [];
-        const y: number[] = [];
-        const color: string[] = [];
-        for (let i = 0; i < realizationsResponseQuery.data.realizations.length; i++) {
-            const realization = realizationsResponseQuery.data.realizations[i];
-            const curveColor = realization === subscribedPlotlyRealization?.realization ? "red" : "green";
-            x.push(realization);
-            y.push(realizationsResponseQuery.data.values[i]);
-            color.push(curveColor);
-        }
-        const trace: Partial<PlotData> = {
-            x: x,
-            y: y,
-            type: "bar",
-            marker: {
-                color: color,
-            },
-        };
-        tracesDataArr.push(trace);
-    }
+    const responseNames = props.moduleContext.useStoreValue("selectedResponseNames");
+    const tableNames = props.moduleContext.useStoreValue("selectedTableNames");
+    const ensembleIdents = props.moduleContext.useStoreValue("selectedEnsembleIdents");
+    const categoricalMetadata = props.moduleContext.useStoreValue("selectedCategoricalMetadata");
+    const ref = React.useRef<HTMLDivElement>(null);
 
-    React.useEffect(() => {
-        props.moduleContext.setInstanceTitle(
-            VolumetricResponseAbbreviations[responseName as keyof typeof VolumetricResponseAbbreviations] || ""
-        );
-    }, [props.moduleContext, responseName]);
+    const statusWriter = useViewStatusWriter(props.moduleContext);
+    const ensembleSet = useEnsembleSet(props.workbenchSession);
+    const realizations: number[] = Array.from(findValidRealizations(ensembleIdents, ensembleSet).values());
 
-    const handleHover = (e: PlotHoverEvent) => {
-        const realization = e.points[0].x;
-        if (typeof realization === "number") {
-            props.workbenchServices.publishGlobalData("global.hoverRealization", {
-                realization: realization,
-            });
-        }
-    };
+    const tableData = useRealizationsResponses(ensembleIdents, tableNames, responseNames, realizations, {
+        categorical_filter: categoricalMetadata,
+    });
 
-    function handleUnHover() {
-        props.workbenchServices.publishGlobalData("global.hoverRealization", { realization: -1 });
-    }
+    statusWriter.setLoading(tableData.isFetching);
 
-    const ensemble = ensembleIdent ? props.workbenchSession.getEnsembleSet().findEnsemble(ensembleIdent) : null;
+    // props.moduleContext.usePublish({
+    //     dependencies: [tableData.data, tableData.isFetching],
 
-    function dataGenerator() {
-        const data: DataElement<KeyType.NUMBER>[] = [];
-        if (realizationsResponseQuery.data) {
-            realizationsResponseQuery.data.realizations.forEach((realization, index) => {
-                data.push({
-                    key: realization,
-                    value: realizationsResponseQuery.data.values[index],
+    //     channelIdent: Channels.ResponseValuePerRealization,
+    //     contents: responseNames.map((el) => ({ ident: el, name: el })),
+    //     dataGenerator: (contentIdent: string) => {
+    //         const data = tableData.data?.find((el) => el.responseName === contentIdent);
+    //         if (data && data.responses) {
+    //             return data.responses.realizations.map((el, index) => ({
+    //                 key: el,
+    //                 value: data.responses?.values[index] ?? 0,
+    //             }));
+    //         }
+    //         return [];
+    //     },
+    // });
+
+    const [tracesDataArr, setTracesDataArr] = React.useState<Partial<PlotData>[]>([]);
+    const [shapes, setShapes] = React.useState<Partial<Shape>[]>([]);
+    const [minValue, setMinValue] = React.useState<number>(0);
+    const [maxValue, setMaxValue] = React.useState<number>(0);
+
+    if (!tableData.isFetching && tableData.data) {
+        const newTracesDataArr: Partial<PlotData>[] = [];
+        const newShapes: Partial<Shape>[] = [];
+        const newMinValue: number =
+            tableData.data
+                ?.map((responseData) => responseData.responses?.result_per_realization.map((realData) => realData[1]))
+                .flat()
+                .reduce((a, b) => Math.min(a, b), Infinity) ?? 0;
+        const newMaxValue: number =
+            tableData.data
+                ?.map((responseData) => responseData.responses?.result_per_realization.map((realData) => realData[1]))
+                .flat()
+                .reduce((a, b) => Math.max(a, b), -Infinity) ?? 0;
+
+        const tempColors = ["green", "red", "blue", "orange"];
+
+        for (let i = 0; i < tableData.data.length; i++) {
+            const responseData = tableData.data[i];
+            const ensemble = responseData.ensembleIdent?.toString() ?? "";
+            const table = responseData.tableName ?? "";
+            const responseName = responseData.responseName ?? "";
+
+            const resultValues: number[] = [];
+            if (responseData.responses) {
+                responseData.responses.result_per_realization.forEach((realData) => {
+                    resultValues.push(realData[1]);
                 });
-            });
+            }
+            newTracesDataArr.push(addHistogramTrace(resultValues, newMinValue, newMaxValue, tempColors[i]));
+            newShapes.push(...addStatisticallines(resultValues, tempColors[i]));
         }
-        return { data: data, metaData: { ensembleIdentString: ensembleIdent?.toString() ?? "" } };
+        if (!isEqual(tracesDataArr, newTracesDataArr)) {
+            setTracesDataArr(newTracesDataArr);
+        }
+        if (!isEqual(shapes, newShapes)) {
+            setShapes(newShapes);
+        }
+        if (minValue !== newMinValue) {
+            setMinValue(newMinValue);
+        }
+        if (maxValue !== newMaxValue) {
+            setMaxValue(newMaxValue);
+        }
     }
-
-    if (ensemble && tableName && responseName) {
-        props.moduleContext.usePublishChannelContents({
-            channelIdString: ChannelIds.RESPONSE,
-            dependencies: [realizationsResponseQuery.data, ensemble, tableName, responseName],
-            contents: [{ contentIdString: responseName, displayName: responseName, dataGenerator }],
-        });
-    }
-
     const layout: Partial<Layout> = {
         width: wrapperDivSize.width,
         height: wrapperDivSize.height,
         margin: { t: 0, r: 0, l: 40, b: 40 },
-        xaxis: { title: "Realization" },
+        xaxis: { title: "Realization", range: [minValue, maxValue] },
+        shapes: shapes,
+        barmode: "overlay",
     };
     return (
         <div className="w-full h-full" ref={wrapperDivRef}>
-            <QueryStateWrapper
-                queryResult={realizationsResponseQuery}
-                loadingComponent={<CircularProgress />}
-                errorComponent={"feil"}
-            >
-                <Plot
-                    data={tracesDataArr}
-                    layout={layout}
-                    config={{ scrollZoom: true }}
-                    onHover={handleHover}
-                    onUnhover={handleUnHover}
-                />
-            </QueryStateWrapper>
+            <Plot
+                data={tracesDataArr}
+                layout={layout}
+                config={{ scrollZoom: true }}
+                // onHover={handleHover}
+                // onUnhover={handleUnHover}
+            />
         </div>
     );
 };

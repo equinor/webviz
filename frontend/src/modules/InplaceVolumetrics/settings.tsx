@@ -1,218 +1,142 @@
 import React from "react";
 
-import { InplaceVolumetricsCategoricalMetaData_api, InplaceVolumetricsTableMetaData_api } from "@api";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
+import { EnsembleSet } from "@framework/EnsembleSet";
 import { ModuleFCProps } from "@framework/Module";
-import { useEnsembleSet } from "@framework/WorkbenchSession";
-import { SingleEnsembleSelect } from "@framework/components/SingleEnsembleSelect";
-import { fixupEnsembleIdent } from "@framework/utils/ensembleUiHelpers";
+import { useSettingsStatusWriter } from "@framework/StatusWriter";
+import { useEnsembleSet, useIsEnsembleSetLoading } from "@framework/WorkbenchSession";
+import { MultiEnsembleSelect } from "@framework/components/MultiEnsembleSelect";
+import { RealizationPicker } from "@framework/components/RealizationPicker/realizationPicker";
 import { CircularProgress } from "@lib/components/CircularProgress";
-import { Dropdown } from "@lib/components/Dropdown";
+import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { Label } from "@lib/components/Label";
-import { QueryStateWrapper } from "@lib/components/QueryStateWrapper";
-import { Select } from "@lib/components/Select";
-import { UseQueryResult } from "@tanstack/react-query";
+import { FilterAlt } from "@mui/icons-material";
 
-import { useTableDescriptionsQuery } from "./queryHooks";
+import FilterSelect from "./components/filterSelect";
+import { useTableNameAndMetadataFilterOptions } from "./hooks/useTableNameAndMetadataFilterOptions";
+import { useTableNamesAndMetadata } from "./hooks/useTableNamesAndMetadata";
 import { State } from "./state";
+import { findValidRealizations } from "./utils/findValidRealizations";
 
-//-----------------------------------------------------------------------------------------------------------
+export const settings = ({ workbenchSession, moduleContext }: ModuleFCProps<State>) => {
+    const [selectedEnsembleIdents, setSelectedEnsembleIdents] = moduleContext.useStoreState("selectedEnsembleIdents");
+    const [selectedResponseNames, setSelectedResponseNames] = moduleContext.useStoreState("selectedResponseNames");
+    const [selectedTableNames, setSelectedTableNames] = moduleContext.useStoreState("selectedTableNames");
+    const [selectedCategoricalMetadata, setSelectedCategoricalMetadata] =
+        moduleContext.useStoreState("selectedCategoricalMetadata");
+    const [selectedFluidZones, setSelectedFluidZones] = React.useState<string[]>([]);
 
-export enum VolumetricResponseAbbreviations {
-    //a bit future proff
-    STOIIP_OIL = "Stock tank oil initially in place (oil zone)",
-    GIIP_GAS = "Gas initially in place (gas zone)",
-    BULK_OIL = "Bulk volume (oil zone)",
-    BULK_GAS = "Bulk volume (gas zone)",
-    BULK_TOTAL = "Bulk volume (total)",
-    NET_OIL = "Net volume (oil zone)",
-    NET_GAS = "Net volume (gas zone)",
-    NET_TOTAL = "Net volume (total)",
-    // PORV_OIL = "Pore volume (oil zone)",
-    // PORV_GAS = "Pore volume (gas zone)",
-    // PORV_TOTAL = "Pore volume (total)",
-    PORE_OIL = "Pore volume (oil zone)",
-    PORE_GAS = "Pore volume (gas zone)",
-    PORE_TOTAL = "Pore volume (total)",
-    HCPV_OIL = "Hydro carbon pore volume (oil zone)",
-    HCPV_GAS = "Hydro carbon pore volume (gas zone)",
-    HCPV_TOTAL = "Hydro carbon pore volume (total zone)",
-    STOIIP_GAS = "Stock tank oil initially in place (gas zone)",
-    STOIIP_TOTAL = "Stock tank oil initially in place (total)",
-    GIIP_OIL = "Gas initially in place (oil zone)",
-    GIIP_TOTAL = "Gas initially in place (total)",
-    RECOVERABLE_OIL = "Recoverable volume (oil zone)",
-    RECOVERABLE_GAS = "Recoverable volume (gas zone)",
-    RECOVERABLE_TOTAL = "Recoverable volume (total)",
-    BULK = "Bulk volume",
-    NET = "Net volume",
-    PORV = "Pore volume",
-    HCPV = "Hydro carbon pore volume",
-    STOIIP = "Stock tank oil initially in place",
-    GIIP = "Gas initially in place",
-    RECOVERABLE = "Recoverable volume",
-    ASSOCIATEDGAS = "Associated gas",
-    ASSOCIATEDOIL = "Associated oil",
-    PORO = "Porosity",
-    SW = "Water saturation",
-    NTG = "Net to gross",
-    BO = "Oil formation volume factor",
-    BG = "Gas formation volume factor",
-}
-function sortedResponses(responses: string[]): string[] {
-    return Object.keys(VolumetricResponseAbbreviations).filter((response) => responses.includes(response));
-}
-function responsesToSelectOptions(responses: string[]): { value: string; label: string }[] {
-    return (
-        responses.map((response: string) => ({
-            value: response,
-            label: VolumetricResponseAbbreviations[response as keyof typeof VolumetricResponseAbbreviations],
-        })) ?? []
-    );
-}
-function getTableNameOptions(
-    tableDescriptionsQuery: UseQueryResult<InplaceVolumetricsTableMetaData_api[]>
-): { value: string; label: string }[] {
-    return (
-        tableDescriptionsQuery.data?.map((table: InplaceVolumetricsTableMetaData_api) => ({
-            value: table.name,
-            label: table.name,
-        })) ?? []
-    );
-}
-function getTableCategoricalOptions(
-    tableDescriptionsQuery: UseQueryResult<InplaceVolumetricsTableMetaData_api[]>,
-    tableName: string | null
-): InplaceVolumetricsCategoricalMetaData_api[] {
-    const tableDescription = tableDescriptionsQuery.data?.find((table) => table.name === tableName);
-    return tableDescription?.categorical_column_metadata ?? [];
-}
-function getTableResponseOptions(
-    tableDescriptionsQuery: UseQueryResult<InplaceVolumetricsTableMetaData_api[]>,
-    tableName: string | null
-): { value: string; label: string }[] {
-    const tableDescription = tableDescriptionsQuery.data?.find((table) => table.name === tableName);
-    const responses = sortedResponses(tableDescription?.numerical_column_names ?? []);
-    return responsesToSelectOptions(responses);
-}
-
-export function Settings({ moduleContext, workbenchSession }: ModuleFCProps<State>) {
+    const isEnsembleSetLoading = useIsEnsembleSetLoading(workbenchSession);
     const ensembleSet = useEnsembleSet(workbenchSession);
-    const [ensembleIdent, setEnsembleIdent] = moduleContext.useStoreState("ensembleIdent");
-    const [tableName, setTableName] = moduleContext.useStoreState("tableName");
-    const [categoricalFilter, setCategoricalFilter] = moduleContext.useStoreState("categoricalFilter");
-    const [responseName, setResponseName] = moduleContext.useStoreState("responseName");
 
-    const tableDescriptionsQuery = useTableDescriptionsQuery(ensembleIdent, true);
+    const stateWriter = useSettingsStatusWriter(moduleContext);
 
-    React.useEffect(
-        function selectDefaultEnsemble() {
-            const fixedEnsembleIdent = fixupEnsembleIdent(ensembleIdent, ensembleSet);
-            if (fixedEnsembleIdent !== ensembleIdent) {
-                setEnsembleIdent(fixedEnsembleIdent);
+    const tableNamesAndMetadata = useTableNamesAndMetadata(selectedEnsembleIdents);
+    const filterOptions = useTableNameAndMetadataFilterOptions(tableNamesAndMetadata);
+
+    const filteredResponses =
+        filterOptions?.responses?.reduce((acc, el) => {
+            if (selectedFluidZones.includes(el.fluidZone)) {
+                acc.add(el.response);
             }
-        },
-        [ensembleSet, ensembleIdent, setEnsembleIdent]
-    );
+            return acc;
+        }, new Set<string>()) ?? [];
 
-    React.useEffect(
-        function selectDefaultTable() {
-            if (tableDescriptionsQuery.data) {
-                setTableName(tableDescriptionsQuery.data[0].name);
-                const responses = tableDescriptionsQuery.data[0].numerical_column_names;
-                setResponseName(sortedResponses(responses)[0]);
-            } else {
-                setTableName(null);
-                setResponseName(null);
-            }
-        },
-        [tableDescriptionsQuery.data, setTableName, setResponseName]
-    );
-
-    function handleEnsembleSelectionChange(newEnsembleIdent: EnsembleIdent | null) {
-        setEnsembleIdent(newEnsembleIdent);
-    }
-    function handleTableChange(tableName: string) {
-        setTableName(tableName);
-    }
-    function handleResponseChange(responseName: string) {
-        setResponseName(responseName);
+    function handleEnsembleSelectionChange(ensembleIdents: EnsembleIdent[]) {
+        setSelectedEnsembleIdents(ensembleIdents);
     }
 
-    const handleSelectionChange = React.useCallback(
-        function handleSelectionChange(categoryName: string, categoryValues: string[]) {
-            let currentCategoryFilter = categoricalFilter;
-            if (currentCategoryFilter) {
-                const categoryIndex = currentCategoryFilter.findIndex((category) => category.name === categoryName);
-                if (categoryIndex > -1) {
-                    currentCategoryFilter[categoryIndex].unique_values = categoryValues;
-                } else {
-                    currentCategoryFilter.push({ name: categoryName, unique_values: categoryValues });
-                }
-            } else {
-                currentCategoryFilter = [];
-                currentCategoryFilter.push({ name: categoryName, unique_values: categoryValues });
+    function makeCategoricalSelect(categoryName: string, options: (string | number)[]) {
+        const stringifiedOptions = options.map((option) => `${option}`);
+        return (
+            <FilterSelect
+                key={categoryName}
+                name={categoryName}
+                options={stringifiedOptions}
+                size={5}
+                onChange={(values) => handleCategoricalMetadataChange(categoryName, values)}
+            />
+        );
+    }
+
+    function handleSourceChange(values: string[]) {
+        setSelectedTableNames(values);
+    }
+
+    function handleFluidZoneChange(values: string[]) {
+        setSelectedFluidZones(values);
+    }
+
+    function handleResponsesChange(values: string[]) {
+        const newSelectedResponseNames: string[] = [];
+        for (const value of values) {
+            for (const fluidZone of selectedFluidZones) {
+                newSelectedResponseNames.push(`${value}_${fluidZone}`);
             }
+        }
+        setSelectedResponseNames(newSelectedResponseNames);
+    }
 
-            setCategoricalFilter(currentCategoryFilter);
-        },
-        [categoricalFilter, setCategoricalFilter]
-    );
+    function handleCategoricalMetadataChange(name: string, uniqueValues: (string | number)[]) {
+        const newSelectedCategoricalMetadata = selectedCategoricalMetadata.filter((el) => el.category_name !== name);
+        newSelectedCategoricalMetadata.push({ category_name: name, unique_values: uniqueValues });
+        setSelectedCategoricalMetadata(newSelectedCategoricalMetadata);
+    }
 
-    const tableNameOptions = getTableNameOptions(tableDescriptionsQuery);
-    const tableCategoricalOptions = getTableCategoricalOptions(tableDescriptionsQuery, tableName);
-    const responseOptions = getTableResponseOptions(tableDescriptionsQuery, tableName);
+    const validRealizations = findValidRealizations(selectedEnsembleIdents, ensembleSet);
 
     return (
-        <>
-            <Label text="Ensemble">
-                <SingleEnsembleSelect
-                    ensembleSet={ensembleSet}
-                    value={ensembleIdent}
-                    onChange={handleEnsembleSelectionChange}
-                />
-            </Label>
-            <QueryStateWrapper
-                queryResult={tableDescriptionsQuery}
-                loadingComponent={<CircularProgress />}
-                errorComponent={"Could not load table descriptions"}
-                className="flex flex-col gap-4"
-            >
-                <Label text="Volumetric table">
-                    <Dropdown
-                        options={tableNameOptions}
-                        value={tableName ?? ""}
-                        onChange={(tableName) => handleTableChange(tableName as string)}
+        <div className="w-full h-full flex flex-col gap-4">
+            <CollapsibleGroup title="Filter" icon={<FilterAlt fontSize="small" />} expanded>
+                <div className="flex flex-col gap-2">
+                    <Label text="Ensembles">
+                        {/* <LoadingStateWrapper isLoading={isEnsembleSetLoading} loadingComponent={<CircularProgress />}> */}
+                        <MultiEnsembleSelect
+                            ensembleSet={ensembleSet}
+                            value={selectedEnsembleIdents}
+                            onChange={handleEnsembleSelectionChange}
+                            size={5}
+                            filter
+                        />
+                        {/* </LoadingStateWrapper> */}
+                    </Label>
+                    {/* <LoadingStateWrapper
+                        isLoading={tableNamesAndMetadata.isFetching}
+                        loadingComponent={<CircularProgress />}
+                        className="flex flex-col gap-2"
+                    > */}
+                    <FilterSelect
+                        name="Fluid zones"
+                        options={filterOptions?.fluidZones || []}
+                        size={2}
+                        onChange={handleFluidZoneChange}
                     />
-                </Label>
-                <Label text="Volume response">
-                    <Dropdown
-                        options={responseOptions}
-                        value={responseName ?? ""}
-                        onChange={(responseName) => handleResponseChange(responseName as string)}
+                    <FilterSelect
+                        name="Tables"
+                        options={filterOptions?.tables || []}
+                        size={3}
+                        onChange={handleSourceChange}
                     />
-                </Label>
-                <h6>Filters</h6>
-                {tableCategoricalOptions?.map((category) => {
-                    return (
-                        <Label key={category.name} text={category.name}>
-                            <Select
-                                key={category.name}
-                                options={category.unique_values.map((value) => ({
-                                    value: value as string,
-                                    label: value as string,
-                                }))}
-                                value={category.unique_values as string[]}
-                                onChange={(unique_values) =>
-                                    handleSelectionChange(category.name, unique_values as string[])
-                                }
-                                size={5}
-                                multiple={true}
+                    {filterOptions &&
+                        Object.entries(filterOptions.categories).map(([category, values]) =>
+                            makeCategoricalSelect(category, values)
+                        )}
+                    {/* <Label text="Realizations">
+                            <RealizationPicker
+                                ensembleIdents={selectedEnsembleIdents}
+                                validRealizations={validRealizations}
+                                debounceTimeMs={1000}
                             />
-                        </Label>
-                    );
-                })}
-            </QueryStateWrapper>
-        </>
+                        </Label> */}
+                    <FilterSelect
+                        name="Responses"
+                        options={Array.from(filteredResponses)}
+                        size={5}
+                        onChange={handleResponsesChange}
+                    />
+                    {/* </LoadingStateWrapper> */}
+                </div>
+            </CollapsibleGroup>
+        </div>
     );
-}
+};
