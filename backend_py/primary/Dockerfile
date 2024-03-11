@@ -15,6 +15,6 @@ RUN pip install poetry \
     && poetry export -f requirements.txt -o requirements.txt \
     && pip install -r requirements.txt
 
-COPY --chown=appuser ./backend_py/primary/primary /home/appuser//backend_py/primary/primary
+COPY --chown=appuser ./backend_py/primary /home/appuser/backend_py/primary
 
 CMD exec uvicorn --proxy-headers --host=0.0.0.0 primary.main:app
