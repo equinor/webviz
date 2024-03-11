@@ -2,7 +2,7 @@ import numpy as np
 import pyarrow as pa
 import pyarrow.compute as pc
 
-from services.sumo_access._resampling import (
+from backend.services.sumo_access._resampling import (
     Frequency,
     generate_normalized_sample_dates,
     interpolate_backfill,

@@ -1,12 +1,12 @@
 from typing import List
 import pytest
 
-from services.smda_access.stratigraphy_utils import (
+from backend.services.smda_access.stratigraphy_utils import (
     sort_stratigraphic_names_by_hierarchy,
     sort_stratigraphic_units_by_hierarchy,
 )
-from services.smda_access.types import StratigraphicUnit, StratigraphicSurface, StratigraphicFeature
-from services.smda_access.mocked_drogon_smda_access._mocked_stratigraphy_access import DROGON_STRAT_UNITS
+from backend.services.smda_access.types import StratigraphicUnit, StratigraphicSurface, StratigraphicFeature
+from backend.services.smda_access.mocked_drogon_smda_access._mocked_stratigraphy_access import DROGON_STRAT_UNITS
 
 
 @pytest.mark.parametrize(

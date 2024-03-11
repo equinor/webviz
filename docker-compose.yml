@@ -41,7 +41,7 @@ services:
       [
         "sh",
         "-c",
-        "pip install debugpy && python -m debugpy --listen 0.0.0.0:5678 -m uvicorn --proxy-headers --host=0.0.0.0 src.backend.primary.main:app",
+        "pip install debugpy && python -m debugpy --listen 0.0.0.0:5678 -m uvicorn --proxy-headers --host=0.0.0.0 backend.main:app",
       ]
 
   surface-query:
