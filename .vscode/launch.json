@@ -7,8 +7,8 @@
       "connect": { "host": "localhost", "port": 5678 },
       "pathMappings": [
         {
-          "localRoot": "${workspaceFolder}/backend",
-          "remoteRoot": "/home/appuser/backend"
+          "localRoot": "${workspaceFolder}/backend_py/primary",
+          "remoteRoot": "/home/appuser/backend_py/primary"
         }
       ]
     },

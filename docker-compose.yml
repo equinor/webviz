@@ -19,7 +19,7 @@ services:
   backend-primary:
     build:
       context: .
-      dockerfile: backend.Dockerfile
+      dockerfile: ./backend_py/primary/Dockerfile
     ports:
       - 5000:5000
       - 5678:5678
@@ -36,12 +36,12 @@ services:
       - OTEL_RESOURCE_ATTRIBUTES=service.namespace=local, service.version=dummy0.1.2
       - CODESPACE_NAME  # Automatically set env. variable by GitHub codespace
     volumes:
-      - ./backend/src:/home/appuser/backend/src
+      - ./backend_py/primary/primary:/home/appuser/backend_py/primary/primary
     command:
       [
         "sh",
         "-c",
-        "pip install debugpy && python -m debugpy --listen 0.0.0.0:5678 -m uvicorn --proxy-headers --host=0.0.0.0 backend.main:app",
+        "pip install debugpy && python -m debugpy --listen 0.0.0.0:5678 -m uvicorn --proxy-headers --host=0.0.0.0 primary.main:app",
       ]
 
   surface-query:

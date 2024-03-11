@@ -20,7 +20,7 @@ spec:
           port: 8080
 
     - name: backend-primary
-      dockerFileName: backend.Dockerfile
+      dockerFileName:  ./backend_py/primary/Dockerfile
       ports:
         - name: http
           port: 5000
