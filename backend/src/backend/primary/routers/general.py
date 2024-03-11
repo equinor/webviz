@@ -4,12 +4,10 @@ import logging
 
 import httpx
 import starsessions
-from starlette.responses import StreamingResponse
-from fastapi import APIRouter, HTTPException, Request, status, Depends, Query
+from fastapi import APIRouter, HTTPException, Request, status, Query
 from pydantic import BaseModel
 
-from src.backend.auth.auth_helper import AuthHelper, AuthenticatedUser
-from src.backend.primary.user_session_proxy import proxy_to_user_session
+from src.backend.auth.auth_helper import AuthHelper
 from src.services.graph_access.graph_access import GraphApiAccess
 
 LOGGER = logging.getLogger(__name__)
@@ -81,11 +79,3 @@ async def logged_in_user(
             print("Error while fetching user avatar and info from Microsoft Graph API (Invalid URL):\n", exc)
 
     return user_info
-
-
-@router.get("/user_session_container")
-async def user_session_container(
-    request: Request, authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user)
-) -> StreamingResponse:
-    """Get information about user session container (note that one is started if not already running)."""
-    return await proxy_to_user_session(request, authenticated_user)

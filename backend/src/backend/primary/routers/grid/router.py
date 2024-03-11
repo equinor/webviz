@@ -1,11 +1,10 @@
 from typing import List
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, HTTPException, status
 from starlette.requests import Request
 
 from src.services.utils.authenticated_user import AuthenticatedUser
 from src.backend.auth.auth_helper import AuthHelper
-from src.backend.primary.user_session_proxy import proxy_to_user_session
 
 from src.services.sumo_access.grid_access import GridAccess
 from .schemas import GridSurface, GridIntersection
@@ -71,8 +70,7 @@ async def grid_surface(
         receive=request._receive,  # pylint: disable=protected-access
     )
 
-    response = await proxy_to_user_session(updated_request, authenticated_user)
-    return response
+    raise HTTPException(status.HTTP_501_NOT_IMPLEMENTED)
 
 
 @router.get("/grid_parameter")
@@ -107,8 +105,7 @@ async def grid_parameter(
         receive=request._receive,  # pylint: disable=protected-access
     )
 
-    response = await proxy_to_user_session(updated_request, authenticated_user)
-    return response
+    raise HTTPException(status.HTTP_501_NOT_IMPLEMENTED)
 
 
 @router.get("/grid_parameter_intersection")
@@ -143,8 +140,7 @@ async def grid_parameter_intersection(
         receive=request._receive,  # pylint: disable=protected-access
     )
 
-    response = await proxy_to_user_session(updated_request, authenticated_user)
-    return response
+    raise HTTPException(status.HTTP_501_NOT_IMPLEMENTED)
 
 
 @router.get("/statistical_grid_parameter_intersection")
@@ -179,8 +175,7 @@ async def statistical_grid_parameter_intersection(
         receive=request._receive,  # pylint: disable=protected-access
     )
 
-    response = await proxy_to_user_session(updated_request, authenticated_user)
-    return response
+    raise HTTPException(status.HTTP_501_NOT_IMPLEMENTED)
 
 
 @router.get("/statistical_grid_parameter")
@@ -214,5 +209,4 @@ async def statistical_grid_parameter(
         receive=request._receive,  # pylint: disable=protected-access
     )
 
-    response = await proxy_to_user_session(updated_request, authenticated_user)
-    return response
+    raise HTTPException(status.HTTP_501_NOT_IMPLEMENTED)
