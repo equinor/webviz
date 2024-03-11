@@ -7,9 +7,9 @@ import pyarrow as pa
 import pyarrow.compute as pc
 import pyarrow.parquet as pq
 from fmu.sumo.explorer.objects import Case, TableCollection
+from webviz.core_utils.perf_timer import PerfTimer
 
 from ._helpers import SumoEnsemble
-from ..utils.perf_timer import PerfTimer
 from .rft_types import RftInfo, RftRealizationData
 
 LOGGER = logging.getLogger(__name__)

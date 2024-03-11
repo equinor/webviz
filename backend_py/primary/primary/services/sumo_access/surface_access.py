@@ -8,7 +8,7 @@ import numpy as np
 from fmu.sumo.explorer import TimeFilter, TimeType
 from fmu.sumo.explorer.objects import SurfaceCollection, Surface
 
-from primary.services.utils.perf_timer import PerfTimer
+from webviz.core_utils.perf_timer import PerfTimer
 from primary.services.utils.statistic_function import StatisticFunction
 
 from ._helpers import SumoEnsemble

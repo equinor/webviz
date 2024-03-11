@@ -595,6 +595,22 @@ test = ["Pillow", "matplotlib", "pytest"]
 test-no-images = ["pytest"]
 
 [[package]]
+name = "core-utils"
+version = "0.0.1"
+description = "Package with general Webviz utilities"
+optional = false
+python-versions = "*"
+files = []
+develop = true
+
+[package.dependencies]
+pydantic = "^2.3.0"
+
+[package.source]
+type = "directory"
+url = "../libs/core_utils"
+
+[[package]]
 name = "cryptography"
 version = "39.0.0"
 description = "cryptography is a package which provides cryptographic recipes and primitives to Python developers."
@@ -3435,4 +3451,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "86eb7120a80dc71d06118f761ec44031fdb149e85f0506d1f2381e5deae94c63"
+content-hash = "0138b0a8902575704f558577c37e40fc9128819a11bde186e407ce839da40cf3"

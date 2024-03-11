@@ -1,6 +1,6 @@
 from typing import List
 
-from primary.services.utils.perf_timer import PerfTimer
+from webviz.core_utils.perf_timer import PerfTimer
 from ..types import StratigraphicUnit
 from ._get_request import get
 

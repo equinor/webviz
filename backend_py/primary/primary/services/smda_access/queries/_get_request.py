@@ -2,9 +2,9 @@ from typing import List
 
 import httpx
 from dotenv import load_dotenv
+from webviz.core_utils.perf_timer import PerfTimer
 
 from primary import config
-from primary.services.utils.perf_timer import PerfTimer
 
 load_dotenv()
 

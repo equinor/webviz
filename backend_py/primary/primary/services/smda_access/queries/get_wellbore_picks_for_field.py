@@ -1,6 +1,6 @@
 from typing import List, Optional
 
-from primary.services.utils.perf_timer import PerfTimer
+from webviz.core_utils.perf_timer import PerfTimer
 from ..types import WellBorePick
 from ._get_request import get
 

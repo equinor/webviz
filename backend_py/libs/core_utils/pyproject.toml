@@ -1,0 +1,13 @@
+[tool.poetry]
+name = "core-utils"
+version = "0.0.1"
+description = "Package with general Webviz utilities"
+authors = ["R&T Equinor", "Ceetron Solutions AS"]
+packages = [ { include = "webviz" } ]
+
+[tool.poetry.dependencies]
+pydantic = "^2.3.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

@@ -37,6 +37,7 @@ services:
       - CODESPACE_NAME  # Automatically set env. variable by GitHub codespace
     volumes:
       - ./backend_py/primary/primary:/home/appuser/backend_py/primary/primary
+      - ./backend_py/libs:/home/appuser/backend_py/libs
     command:
       [
         "sh",

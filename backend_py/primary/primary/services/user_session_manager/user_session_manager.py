@@ -7,7 +7,7 @@ from typing import Tuple
 import httpx
 from pottery import Redlock
 
-from primary.services.utils.perf_timer import PerfTimer
+from webviz.core_utils.perf_timer import PerfTimer
 
 from ._radix_helpers import IS_ON_RADIX_PLATFORM
 from ._radix_helpers import create_new_radix_job, RadixResourceRequests

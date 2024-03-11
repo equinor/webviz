@@ -2,9 +2,9 @@ from enum import Enum
 from typing import List, Optional
 
 from pydantic import BaseModel
+from webviz.core_utils.b64 import B64FloatArray
 
 from primary.services.smda_access.types import StratigraphicFeature
-from primary.services.utils.b64 import B64FloatArray
 
 
 class SurfaceStatisticFunction(str, Enum):

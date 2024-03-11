@@ -2,6 +2,7 @@ import logging
 from typing import List, Union, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Response, Body
+from webviz.core_utils.perf_timer import PerfTimer
 
 from primary.services.sumo_access.surface_access import SurfaceAccess
 from primary.services.smda_access.stratigraphy_access import StratigraphyAccess
@@ -9,7 +10,6 @@ from primary.services.smda_access.stratigraphy_utils import sort_stratigraphic_n
 from primary.services.smda_access.mocked_drogon_smda_access import _mocked_stratigraphy_access
 from primary.services.utils.statistic_function import StatisticFunction
 from primary.services.utils.authenticated_user import AuthenticatedUser
-from primary.services.utils.perf_timer import PerfTimer
 from primary.auth.auth_helper import AuthHelper
 from primary.utils.perf_metrics import PerfMetrics
 from primary.services.sumo_access._helpers import SumoCase

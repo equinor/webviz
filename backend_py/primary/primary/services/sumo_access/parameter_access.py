@@ -6,7 +6,7 @@ import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
 
-from ..utils.perf_timer import PerfTimer
+from webviz.core_utils.perf_timer import PerfTimer
 from ._helpers import SumoEnsemble
 from .parameter_types import (
     EnsembleParameter,

@@ -1,18 +1,17 @@
 import logging
 from typing import List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Body
+from fastapi import APIRouter, Body, Depends, HTTPException, Query
+from webviz.core_utils.b64 import b64_encode_float_array_as_float32
 
-from primary.services.sumo_access.seismic_access import SeismicAccess, VdsHandle
-from primary.services.vds_access.vds_access import VdsAccess
-from primary.services.utils.authenticated_user import AuthenticatedUser
 from primary.auth.auth_helper import AuthHelper
-from primary.services.utils.b64 import b64_encode_float_array_as_float32
+from primary.services.sumo_access.seismic_access import SeismicAccess, VdsHandle
+from primary.services.utils.authenticated_user import AuthenticatedUser
+from primary.services.vds_access.request_types import VdsCoordinates, VdsCoordinateSystem
 from primary.services.vds_access.response_types import VdsMetadata
-from primary.services.vds_access.request_types import VdsCoordinateSystem, VdsCoordinates
+from primary.services.vds_access.vds_access import VdsAccess
 
 from . import schemas
-
 
 LOGGER = logging.getLogger(__name__)
 

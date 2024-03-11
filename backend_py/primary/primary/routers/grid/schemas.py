@@ -1,8 +1,7 @@
 from typing import List
 
 from pydantic import BaseModel
-
-from primary.services.utils.b64 import B64FloatArray, B64UintArray
+from webviz.core_utils.b64 import B64FloatArray, B64UintArray
 
 
 class GridSurface(BaseModel):

@@ -4,7 +4,7 @@ from typing import List
 
 import xtgeo
 
-from primary.services.utils.perf_timer import PerfTimer
+from webviz.core_utils.perf_timer import PerfTimer
 
 from ._helpers import SumoEnsemble
 from .queries.cpgrid import (
