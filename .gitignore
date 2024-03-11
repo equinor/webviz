@@ -122,3 +122,6 @@ playwright-report/
 
 # Ignore Jupyter Notebook checkpoints (hidden directories)
 .ipynb_checkpoints/
+
+# Python virtual environments
+.venv
