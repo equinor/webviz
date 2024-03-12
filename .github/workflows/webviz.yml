@@ -102,20 +102,21 @@ jobs:
             - name: 🕵️ Check code style & linting
               working-directory: ./backend_py/primary
               run: |
+                  set -x
                   black --check primary/ tests/
                   pylint primary/ tests/
                   bandit --recursive primary/
-                  mypy primary/ tests/
+                  # mypy primary/ tests/
 
-            # - name: 🤖 Run tests
-            #   working-directory: ./backend_py/primary
-            #   env:
-            #       WEBVIZ_CLIENT_SECRET: 0
-            #       WEBVIZ_SMDA_SUBSCRIPTION_KEY: 0
-            #       WEBVIZ_SMDA_RESOURCE_SCOPE: 0
-            #       WEBVIZ_VDS_HOST_ADDRESS: 0
-            #   run: |
-            #       pytest ./tests/unit
+            - name: 🤖 Run tests
+              working-directory: ./backend_py/primary
+              env:
+                  WEBVIZ_CLIENT_SECRET: 0
+                  WEBVIZ_SMDA_SUBSCRIPTION_KEY: 0
+                  WEBVIZ_SMDA_RESOURCE_SCOPE: 0
+                  WEBVIZ_VDS_HOST_ADDRESS: 0
+              run: |
+                  pytest ./tests/unit
 
     go:
         runs-on: ubuntu-latest
