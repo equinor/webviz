@@ -88,6 +88,30 @@ spec:
               cpu:
                 averageUtilization: 80
 
+        - environment: dev
+          secretRefs:
+            azureKeyVaults:
+              - name: webviz
+                items:
+                  - name: WEBVIZ-INSIGHTS-CONNECTIONSTRING-DEV
+                    envVar: APPLICATIONINSIGHTS_CONNECTION_STRING
+          variables:
+            OTEL_RESOURCE_ATTRIBUTES: service.name=primary-backend, service.namespace=dev, service.version=tbd0.1.2
+          resources:
+            requests:
+              memory: 4Gi
+              cpu: 500m
+            limits:
+              memory: 4Gi
+          horizontalScaling:
+            minReplicas: 1
+            maxReplicas: 3
+            resources:
+              memory:
+                averageUtilization: 60
+              cpu:
+                averageUtilization: 80
+
     - name: surface-query
       dockerFileName: ./backend_go/surface-query-prod.Dockerfile
       ports:
@@ -202,6 +226,21 @@ spec:
                     envVar: APPLICATIONINSIGHTS_CONNECTION_STRING
           variables:
             OTEL_RESOURCE_ATTRIBUTES: service.name=user-session, service.namespace=review, service.version=tbd0.1.2
+          volumeMounts:
+            - name: webvizcache
+              path: /tmp/webvizcache/
+              blobfuse2:
+                container: cache
+                uid: 1234
+        - environment: dev
+          secretRefs:
+            azureKeyVaults:
+              - name: webviz
+                items:
+                  - name: WEBVIZ-INSIGHTS-CONNECTIONSTRING-DEV
+                    envVar: APPLICATIONINSIGHTS_CONNECTION_STRING
+          variables:
+            OTEL_RESOURCE_ATTRIBUTES: service.name=user-session, service.namespace=dev, service.version=tbd0.1.2
           volumeMounts:
             - name: webvizcache
               path: /tmp/webvizcache/
