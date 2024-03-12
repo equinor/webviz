@@ -1,4 +1,5 @@
-from primary.services.utils.arrow_helpers import is_date_column_monotonically_increasing, find_first_non_increasing_date_pair
+from primary.services.utils.arrow_helpers import is_date_column_monotonically_increasing
+from primary.services.utils.arrow_helpers import find_first_non_increasing_date_pair
 from primary.services.utils.arrow_helpers import detect_missing_realizations
 
 import pyarrow as pa
