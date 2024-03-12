@@ -30,7 +30,7 @@ export enum ColorScaleDiscreteSteps {
     Diverging = "diverging",
 }
 
-const defaultColorPalettes = [
+export const defaultColorPalettes = [
     new ColorPalette({
         name: "Retro Metro",
         colors: ["#ea5545", "#f46a9b", "#ef9b20", "#edbf33", "#ede15b", "#bdcf32", "#87bc45", "#27aeef", "#b33dc6"],
@@ -85,7 +85,7 @@ const defaultColorPalettes = [
     }),
 ];
 
-const defaultContinuousSequentialColorPalettes = [
+export const defaultContinuousSequentialColorPalettes = [
     new ColorPalette({
         name: "Blue to Yellow",
         colors: ["#115f9a", "#1984c5", "#22a7f0", "#48b5c4", "#76c68f", "#a6d75b", "#c9e52f", "#d0ee11", "#f4f100"],
@@ -113,7 +113,7 @@ const defaultContinuousSequentialColorPalettes = [
     }),
 ];
 
-const defaultContinuousDivergingColorPalettes = [
+export const defaultContinuousDivergingColorPalettes = [
     new ColorPalette({
         name: "Berlin",
         colors: ["#b9c6ff", "#2f799d", "#150e0d", "#944834", "#ffeded"],

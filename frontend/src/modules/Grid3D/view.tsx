@@ -3,13 +3,13 @@ import { ContinuousLegend } from "@emerson-eps/color-tables";
 import { ModuleFCProps } from "@framework/Module";
 import { useFirstEnsembleInEnsembleSet } from "@framework/WorkbenchSession";
 import { ColorScaleGradientType } from "@lib/utils/ColorScale";
+import { useFieldWellsTrajectoriesQuery } from "@modules/_shared/WellBore/queryHooks";
 import {
     createContinuousColorScaleForMap,
     createNorthArrowLayer,
     createWellBoreHeaderLayer,
     createWellboreTrajectoryLayer,
-} from "@modules/SubsurfaceMap/_utils";
-import { useFieldWellsTrajectoriesQuery } from "@modules/_shared/WellBore/queryHooks";
+} from "@modules/_shared/components/SubsurfaceViewer/utils";
 import SubsurfaceViewer from "@webviz/subsurface-viewer";
 import { ViewAnnotation } from "@webviz/subsurface-viewer/dist/components/ViewAnnotation";
 
@@ -125,7 +125,6 @@ export function View({ moduleContext, workbenchSettings, workbenchSession }: Mod
                 bounds={[bounds[0], bounds[1], bounds[3], bounds[4]]}
                 colorTables={colorTables}
                 layers={newLayers}
-                toolbar={{ visible: true }}
                 views={{
                     layout: [1, 1],
                     showLabel: false,

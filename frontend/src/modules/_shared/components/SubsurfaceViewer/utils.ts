@@ -1,5 +1,75 @@
 import { PolygonData_api, WellBoreTrajectory_api } from "@api";
+import { colorTablesObj } from "@emerson-eps/color-tables";
+import {
+    defaultContinuousDivergingColorPalettes,
+    defaultContinuousSequentialColorPalettes,
+} from "@framework/WorkbenchSettings";
+import { ColorPalette } from "@lib/utils/ColorPalette";
+import { ColorScale, ColorScaleGradientType, ColorScaleType } from "@lib/utils/ColorScale";
 
+import { Color, Rgb, parse } from "culori";
+
+export function createContinuousColorScaleForMap(colorScale: ColorScale): colorTablesObj[] {
+    const hexColors = colorScale.getPlotlyColorScale();
+    const rgbArr: [number, number, number, number][] = [];
+    hexColors.forEach((hexColor) => {
+        const color: Color | undefined = parse(hexColor[1]); // Returns object with r, g, b items for hex strings
+
+        if (color && "r" in color && "g" in color && "b" in color) {
+            const rgbColor = color as Rgb;
+            rgbArr.push([hexColor[0], rgbColor.r * 255, rgbColor.g * 255, rgbColor.b * 255]);
+        }
+    });
+
+    return [{ name: "Continuous", discrete: false, colors: rgbArr }];
+}
+function createColorScale(colorPalette: ColorPalette): ColorScale {
+    const colorScale = new ColorScale({
+        type: ColorScaleType.Continuous,
+        colorPalette: colorPalette,
+        gradientType: ColorScaleGradientType.Sequential,
+        steps: 10,
+    });
+    return colorScale;
+}
+
+export function createSubsurfaceMapColorPalettes(): colorTablesObj[] {
+    const colorPalettes = [...defaultContinuousSequentialColorPalettes, ...defaultContinuousDivergingColorPalettes];
+    const colorTables: colorTablesObj[] = [];
+    colorPalettes.forEach((colorPalette) => {
+        const colorScale = createColorScale(colorPalette);
+        const hexColors = colorScale.getPlotlyColorScale();
+        const rgbArr: [number, number, number, number][] = [];
+        hexColors.forEach((hexColor, index) => {
+            const color: Color | undefined = parse(hexColor[1]); // Returns object with r, g, b items for hex strings
+
+            if (color && "r" in color && "g" in color && "b" in color) {
+                const rgbColor = color as Rgb;
+                rgbArr.push([index, rgbColor.r * 255, rgbColor.g * 255, rgbColor.b * 255]);
+            }
+        });
+        colorTables.push({ name: colorPalette.getId(), discrete: true, colors: rgbArr });
+    });
+    return colorTables;
+}
+
+export type Bounds = [number, number, number, number];
+export const shouldUpdateViewPortBounds = (existingViewPortBounds: Bounds | undefined, newBounds: Bounds): boolean => {
+    if (!existingViewPortBounds) {
+        return true;
+    }
+    // Check if bounds overlap, update if not
+    if (
+        existingViewPortBounds[2] < newBounds[0] ||
+        existingViewPortBounds[0] > newBounds[2] ||
+        existingViewPortBounds[3] < newBounds[1] ||
+        existingViewPortBounds[1] > newBounds[3]
+    ) {
+        return true;
+    }
+
+    return false;
+};
 export type SurfaceMeshLayerSettings = {
     contours?: boolean | number[];
     gridLines?: boolean;
@@ -51,6 +121,20 @@ export function createAxesLayer(
         bounds: bounds,
     };
 }
+
+export function createAxes2DLayer(): Record<string, unknown> {
+    return {
+        "@@type": "Axes2DLayer",
+        id: "axes-layer2D",
+        marginH: 80,
+        marginV: 30,
+        isLeftRuler: true,
+        isRightRuler: false,
+        isBottomRuler: false,
+        isTopRuler: true,
+        backgroundColor: [255, 255, 255, 255],
+    };
+}
 export function createSurfaceMeshLayer(
     surfaceMeta: SurfaceMeta,
     mesh_data: number[],
@@ -78,6 +162,33 @@ export function createSurfaceMeshLayer(
         colorMapName: "Continuous",
     };
 }
+type SurfaceImageLayerOptions = {
+    id: string;
+    base64ImageString: string;
+    xMin: number;
+    yMin: number;
+    xMax: number;
+    yMax: number;
+    rotDeg: number;
+    valueMin: number | null;
+    valueMax: number | null;
+    colorMin: number | null;
+    colorMax: number | null;
+    colorPaletteId: string;
+};
+export function createSurfaceImageLayer(options: SurfaceImageLayerOptions): Record<string, unknown> {
+    return {
+        "@@type": "ColormapLayer",
+        id: options.id,
+        image: `data:image/png;base64,${options.base64ImageString}`,
+        bounds: [options.xMin, options.yMin, options.xMax, options.yMax],
+        rotDeg: options.rotDeg,
+        valueRange: [options.valueMin, options.valueMax],
+        colorMapRange: [options.colorMin ?? options.valueMin, options.colorMax ?? options.valueMax],
+        colorMapName: options.colorPaletteId,
+    };
+}
+
 export function createSurfacePolygonsLayer(surfacePolygons: PolygonData_api[]): Record<string, unknown> {
     const features: Record<string, unknown>[] = surfacePolygons.map((polygon) => {
         return surfacePolygonsToGeojson(polygon);
@@ -123,9 +234,26 @@ export function createWellboreTrajectoryLayer(wellTrajectories: WellBoreTrajecto
         id: "wells-layer",
         data: data,
         refine: false,
-        lineStyle: { width: 2 },
+        lineStyle: { width: 4, color: [128, 128, 128] },
         wellHeadStyle: { size: 1 },
         pickable: true,
+        autoHighlight: true,
+        opacity: 1,
+        outline: false,
+        lineWidthScale: 1,
+        pointRadiusScale: 1,
+        // outline: true,
+        logRadius: 10,
+        logCurves: true,
+        visible: true,
+        wellNameVisible: false,
+        wellNameAtTop: false,
+        wellNameSize: 14,
+        wellNameColor: [0, 0, 0, 255],
+        selectedWell: "@@#editedData.selectedWells", // used to get data from deckgl layer
+        depthTest: true,
+        ZIncreasingDownwards: true,
+        simplifiedRendering: false,
     };
 }
 function wellTrajectoryToGeojson(wellTrajectory: WellBoreTrajectory_api): Record<string, unknown> {

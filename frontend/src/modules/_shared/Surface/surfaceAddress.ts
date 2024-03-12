@@ -18,9 +18,19 @@ export interface StatisticalSurfaceAddress {
     attribute: string;
     isoDateOrInterval: string | null;
     statisticFunction: SurfaceStatisticFunction_api;
+    realizationNums: number[] | null;
 }
 
-export type SurfaceAddress = RealizationSurfaceAddress | StatisticalSurfaceAddress;
+export interface ObservationSurfaceAddress {
+    addressType: "observation";
+    caseUuid: string;
+    ensemble: string;
+    name: string;
+    attribute: string;
+    isoDateOrInterval: string | null;
+}
+
+export type SurfaceAddress = RealizationSurfaceAddress | StatisticalSurfaceAddress | ObservationSurfaceAddress;
 
 export function makeSurfaceAddressString(addr: SurfaceAddress): string {
     const valueArr = Object.values(addr);
@@ -55,7 +65,10 @@ export class SurfaceAddressFactory {
         };
     }
 
-    createStatisticalAddress(statFunction: SurfaceStatisticFunction_api): StatisticalSurfaceAddress {
+    createStatisticalAddress(
+        statFunction: SurfaceStatisticFunction_api,
+        realizationNums?: number[]
+    ): StatisticalSurfaceAddress {
         return {
             addressType: "statistical",
             caseUuid: this._caseUuid,
@@ -64,6 +77,17 @@ export class SurfaceAddressFactory {
             attribute: this._attribute,
             isoDateOrInterval: this._isoDateOrInterval,
             statisticFunction: statFunction,
+            realizationNums: realizationNums ?? null,
+        };
+    }
+    createObservationAddress(): ObservationSurfaceAddress {
+        return {
+            addressType: "observation",
+            caseUuid: this._caseUuid,
+            ensemble: this._ensemble,
+            name: this._name,
+            attribute: this._attribute,
+            isoDateOrInterval: this._isoDateOrInterval,
         };
     }
 }

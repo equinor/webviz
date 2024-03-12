@@ -52,11 +52,11 @@ export class EnsembleSensitivities {
         return sensitivity;
     }
 
-    getCaseByName(sensitivityName: string, caseName: string): SensitivityCase {
+    getCaseByName(sensitivityName: string, caseName: string): SensitivityCase | null {
         const sensitivity = this.getSensitivityByName(sensitivityName);
         const sensitivityCase = sensitivity.cases.find((sensCase) => sensCase.name === caseName);
         if (!sensitivityCase) {
-            throw new Error(`Case ${caseName} not found in sensitivity ${sensitivityName}`);
+            return null;
         }
         return sensitivityCase;
     }
