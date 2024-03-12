@@ -91,7 +91,7 @@ jobs:
                   cache: pip
 
             - name: 📦 Install poetry and dependencies
-              working-directory: ./backend
+              working-directory: ./backend_py/primary
               run: |
                   pip install --upgrade pip
                   pip install poetry
@@ -100,15 +100,15 @@ jobs:
                   poetry install --with dev
 
             - name: 🕵️ Check code style & linting
-              working-directory: ./backend
+              working-directory: ./backend_py/primary
               run: |
-                  black --check src/ tests/
-                  pylint src/ tests/
-                  bandit --recursive src/
-                  mypy src/ tests/
+                  black --check primary/ tests/
+                  pylint primary/ tests/
+                  bandit --recursive primary/
+                  mypy primary/ tests/
 
             - name: 🤖 Run tests
-              working-directory: ./backend
+              working-directory: ./backend_py/primary
               env:
                   WEBVIZ_CLIENT_SECRET: 0
                   WEBVIZ_SMDA_SUBSCRIPTION_KEY: 0
@@ -148,4 +148,4 @@ jobs:
             - name: 🐳 Verify Docker images build
               run: |
                   docker build -f frontend-prod.Dockerfile .
-                  docker build -f backend.Dockerfile .
+                  docker build -f ./backend_py/primary/Dockerfile .
