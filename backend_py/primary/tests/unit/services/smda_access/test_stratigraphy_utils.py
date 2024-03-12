@@ -48,7 +48,7 @@ def test_sort_stratigraphic_units_by_hierarchy(
     ],
 )
 def test_sort_stratigraphic_names_by_hierarchy(
-    strat_units: List[StratigraphicUnit], expected_output: List[StratigraphicUnit]
+    strat_units: List[StratigraphicUnit], expected_output: List[StratigraphicSurface]
 ) -> None:
     sorted_surfaces = sort_stratigraphic_names_by_hierarchy(strat_units)
     sorted_surface_names = [surf.name for surf in sorted_surfaces]
