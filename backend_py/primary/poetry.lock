@@ -599,11 +599,12 @@ name = "core-utils"
 version = "0.0.1"
 description = "Package with general Webviz utilities"
 optional = false
-python-versions = "*"
+python-versions = "^3.11"
 files = []
 develop = true
 
 [package.dependencies]
+numpy = "^1.24.1"
 pydantic = "^2.3.0"
 
 [package.source]
