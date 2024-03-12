@@ -10,6 +10,9 @@ spec:
     - name: review
       build:
         from: review
+    - name: dev
+      build:
+        from: dev
 
   components:
     - name: frontend
