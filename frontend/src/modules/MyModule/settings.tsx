@@ -83,7 +83,13 @@ export const settings = (props: ModuleFCProps<State>) => {
                 />
             </Label>
             <Label text="Min">
-                <Input type="number" value={min} onChange={(e) => setMin(parseFloat(e.target.value))} />
+                <Input
+                    type="number"
+                    min={-1}
+                    max={10}
+                    value={min}
+                    onChange={(e) => setMin(parseFloat(e.target.value))}
+                />
             </Label>
             <Label text="Max">
                 <Input type="number" value={max} onChange={(e) => setMax(parseFloat(e.target.value))} />
