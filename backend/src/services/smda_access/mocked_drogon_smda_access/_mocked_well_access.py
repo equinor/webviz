@@ -1,6 +1,6 @@
 from typing import List, Optional
 
-from ..types import WellBorePick, WellBoreTrajectory, WellBoreHeader
+from ..types import WellBorePick, WellBoreTrajectory, WellBoreHeader, WellBoreCompletion
 
 from ._mocked_wellbore_picks import mocked_wellbore_picks
 
@@ -93,3 +93,26 @@ class WellAccess:
                 well_northing=5930542.294,
             ),
         ]
+
+    async def get_completions_for_wellbore(self, wellbore_uuid: str) -> List[WellBoreCompletion]:
+        """Get Drogon completions"""
+        completions: List[WellBoreCompletion] = []
+        if wellbore_uuid == "drogon_horizontal":
+            completions = [
+                WellBoreCompletion(
+                    wellbore_uuid="drogon_horizontal",
+                    unique_wellbore_identifier="55/33-A-4",
+                    wellbore_status="operating",
+                    wellbore_purpose="production",
+                    completion_type="perforation",
+                    completion_open_flag=True,
+                    top_depth_md=1700,
+                    base_depth_md=1800,
+                    md_unit="m",
+                    date_opened="2018-01-14T22:00:00",
+                    date_closed=None,
+                ),
+            ]
+        elif wellbore_uuid == "drogon_vertical":
+            completions = []
+        return completions

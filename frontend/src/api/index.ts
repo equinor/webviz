@@ -67,6 +67,7 @@ export type { VectorHistoricalData as VectorHistoricalData_api } from './models/
 export type { VectorRealizationData as VectorRealizationData_api } from './models/VectorRealizationData';
 export type { VectorStatisticData as VectorStatisticData_api } from './models/VectorStatisticData';
 export type { VectorStatisticSensitivityData as VectorStatisticSensitivityData_api } from './models/VectorStatisticSensitivityData';
+export type { WellBoreCompletion as WellBoreCompletion_api } from './models/WellBoreCompletion';
 export type { WellBoreHeader as WellBoreHeader_api } from './models/WellBoreHeader';
 export type { WellBorePick as WellBorePick_api } from './models/WellBorePick';
 export type { WellBorePicksAndStratigraphicUnits as WellBorePicksAndStratigraphicUnits_api } from './models/WellBorePicksAndStratigraphicUnits';
