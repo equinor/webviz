@@ -8,7 +8,7 @@ import msal
 import starsessions
 from fastapi import APIRouter, Request, Response
 from fastapi.responses import RedirectResponse
-from webviz.core_utils.perf_timer import PerfTimer
+from webviz_pkg.core_utils.perf_timer import PerfTimer
 
 from primary import config
 from primary.services.utils.authenticated_user import AuthenticatedUser

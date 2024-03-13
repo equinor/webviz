@@ -1,7 +1,7 @@
 from typing import List
 
 
-from webviz.core_utils.perf_timer import PerfTimer
+from webviz_pkg.core_utils.perf_timer import PerfTimer
 from ..types import WellBoreHeader
 from ._get_request import get
 

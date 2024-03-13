@@ -2,7 +2,7 @@ import logging
 from typing import List, Optional
 
 from fastapi import APIRouter, Body, Depends, HTTPException, Query
-from webviz.core_utils.b64 import b64_encode_float_array_as_float32
+from webviz_pkg.core_utils.b64 import b64_encode_float_array_as_float32
 
 from primary.auth.auth_helper import AuthHelper
 from primary.services.sumo_access.seismic_access import SeismicAccess, VdsHandle

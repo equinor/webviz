@@ -6,7 +6,7 @@ import pandas as pd
 import xtgeo
 from fmu.sumo.explorer.objects import PolygonsCollection
 
-from webviz.core_utils.perf_timer import PerfTimer
+from webviz_pkg.core_utils.perf_timer import PerfTimer
 
 from ._helpers import SumoEnsemble
 from .polygons_types import PolygonsMeta

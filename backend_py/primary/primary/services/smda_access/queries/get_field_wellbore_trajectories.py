@@ -2,7 +2,7 @@ from typing import List, Optional
 
 import pandas as pd
 
-from webviz.core_utils.perf_timer import PerfTimer
+from webviz_pkg.core_utils.perf_timer import PerfTimer
 from ..types import WellBoreTrajectory
 from ._get_request import get
 

@@ -1,7 +1,7 @@
 from typing import List
 
 from pydantic import BaseModel
-from webviz.core_utils.b64 import B64FloatArray
+from webviz_pkg.core_utils.b64 import B64FloatArray
 
 
 class SeismicCubeMeta(BaseModel):

@@ -6,7 +6,7 @@ import numpy as np
 import pyarrow as pa
 import pyarrow.compute as pc
 from fmu.sumo.explorer.objects import Case, TableCollection, Table
-from webviz.core_utils.perf_timer import PerfTimer
+from webviz_pkg.core_utils.perf_timer import PerfTimer
 
 from primary.services.utils.arrow_helpers import sort_table_on_real_then_date, is_date_column_monotonically_increasing
 from primary.services.utils.arrow_helpers import find_first_non_increasing_date_pair

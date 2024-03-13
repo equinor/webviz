@@ -2,7 +2,7 @@ import logging
 from typing import List, Union
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from webviz.core_utils.perf_timer import PerfTimer
+from webviz_pkg.core_utils.perf_timer import PerfTimer
 
 from primary.auth.auth_helper import AuthHelper
 from primary.services.smda_access.mocked_drogon_smda_access import _mocked_stratigraphy_access

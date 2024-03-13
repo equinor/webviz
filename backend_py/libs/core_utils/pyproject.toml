@@ -3,7 +3,7 @@ name = "core-utils"
 version = "0.0.1"
 description = "Package with general Webviz utilities"
 authors = ["R&T Equinor", "Ceetron Solutions AS"]
-packages = [ { include = "webviz" } ]
+packages = [ { include = "webviz_pkg" } ]
 
 [tool.poetry.dependencies]
 python = "^3.11"

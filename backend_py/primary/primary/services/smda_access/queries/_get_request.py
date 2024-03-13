@@ -2,7 +2,7 @@ from typing import List
 
 import httpx
 from dotenv import load_dotenv
-from webviz.core_utils.perf_timer import PerfTimer
+from webviz_pkg.core_utils.perf_timer import PerfTimer
 
 from primary import config
 

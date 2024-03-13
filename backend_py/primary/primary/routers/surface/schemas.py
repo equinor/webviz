@@ -2,7 +2,7 @@ from enum import Enum
 from typing import List, Optional
 
 from pydantic import BaseModel
-from webviz.core_utils.b64 import B64FloatArray
+from webviz_pkg.core_utils.b64 import B64FloatArray
 
 from primary.services.smda_access.types import StratigraphicFeature
 

@@ -2,7 +2,7 @@ import logging
 from typing import List, Union, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Response, Body
-from webviz.core_utils.perf_timer import PerfTimer
+from webviz_pkg.core_utils.perf_timer import PerfTimer
 
 from primary.services.sumo_access.surface_access import SurfaceAccess
 from primary.services.smda_access.stratigraphy_access import StratigraphyAccess
