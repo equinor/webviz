@@ -10,6 +10,9 @@ spec:
     - name: review
       build:
         from: review
+    - name: dev
+      build:
+        from: dev
 
   components:
     - name: frontend
@@ -72,6 +75,30 @@ spec:
                     envVar: APPLICATIONINSIGHTS_CONNECTION_STRING
           variables:
             OTEL_RESOURCE_ATTRIBUTES: service.name=primary-backend, service.namespace=review, service.version=tbd0.1.2
+          resources:
+            requests:
+              memory: 4Gi
+              cpu: 500m
+            limits:
+              memory: 4Gi
+          horizontalScaling:
+            minReplicas: 1
+            maxReplicas: 3
+            resources:
+              memory:
+                averageUtilization: 60
+              cpu:
+                averageUtilization: 80
+
+        - environment: dev
+          secretRefs:
+            azureKeyVaults:
+              - name: webviz
+                items:
+                  - name: WEBVIZ-INSIGHTS-CONNECTIONSTRING-DEV
+                    envVar: APPLICATIONINSIGHTS_CONNECTION_STRING
+          variables:
+            OTEL_RESOURCE_ATTRIBUTES: service.name=primary-backend, service.namespace=dev, service.version=tbd0.1.2
           resources:
             requests:
               memory: 4Gi
