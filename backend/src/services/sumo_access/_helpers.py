@@ -2,6 +2,7 @@ from typing import List, Sequence, Tuple
 
 from sumo.wrapper import SumoClient
 from fmu.sumo.explorer.objects import CaseCollection, Case
+from fmu.sumo.explorer.explorer import Pit
 
 from src import config
 from src.services.service_exceptions import Service, NoDataError, MultipleDataMatchesError
@@ -15,7 +16,7 @@ def create_sumo_client_instance(access_token: str) -> SumoClient:
 
 async def _init_helper(access_token: str, case_uuid: str) -> Tuple[SumoClient, Case]:
     sumo_client: SumoClient = create_sumo_client_instance(access_token)
-    case_collection = CaseCollection(sumo_client).filter(uuid=case_uuid)
+    case_collection = CaseCollection(sumo_client, pit=Pit(sumo_client, keep_alive="1m")).filter(uuid=case_uuid)
 
     matching_case_count = await case_collection.length_async()
     if matching_case_count == 0:

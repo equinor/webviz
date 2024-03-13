@@ -30,6 +30,9 @@ class AuthenticatedUser:
     def __eq__(self, other: Any) -> bool:
         return isinstance(other, AuthenticatedUser) and self._user_id == other._user_id
 
+    def get_user_id(self) -> str:
+        return self._user_id
+
     def get_username(self) -> str:
         return self._username
 
