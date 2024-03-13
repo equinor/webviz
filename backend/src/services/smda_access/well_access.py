@@ -1,12 +1,13 @@
 from typing import List, Optional
 
-from .types import WellBorePick, WellBoreTrajectory, WellBoreHeader
+from .types import WellBorePick, WellBoreTrajectory, WellBoreHeader, WellBoreCompletion
 
 from .queries.get_well_headers import get_well_headers
 from .queries.get_wellbore_picks_for_field import get_wellbore_picks_for_field
 from .queries.get_field_wellbore_trajectories import get_field_wellbore_trajectories
 from .queries.get_wellbore_trajectory import get_wellbore_trajectories
 from .queries.get_picks_for_wellbore import get_picks_for_wellbore
+from .queries.get_completions_for_wellbore import get_completions_for_wellbore
 
 
 class WellAccess:
@@ -44,3 +45,6 @@ class WellAccess:
         return await get_picks_for_wellbore(
             access_token=self._smda_token, wellbore_uuid=wellbore_uuid, pick_identifier=None
         )
+
+    async def get_completions_for_wellbore(self, wellbore_uuid: str) -> List[WellBoreCompletion]:
+        return await get_completions_for_wellbore(access_token=self._smda_token, wellbore_uuid=wellbore_uuid)

@@ -2,6 +2,7 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
+import type { WellBoreCompletion } from '../models/WellBoreCompletion';
 import type { WellBoreHeader } from '../models/WellBoreHeader';
 import type { WellBorePicksAndStratigraphicUnits } from '../models/WellBorePicksAndStratigraphicUnits';
 import type { WellBoreTrajectory } from '../models/WellBoreTrajectory';
@@ -92,6 +93,26 @@ export class WellService {
             url: '/well/wellbore_picks_and_stratigraphic_units/',
             query: {
                 'case_uuid': caseUuid,
+                'wellbore_uuid': wellboreUuid,
+            },
+            errors: {
+                422: `Validation Error`,
+            },
+        });
+    }
+    /**
+     * Get Wellbore Completions
+     * @param wellboreUuid Wellbore uuid
+     * @returns WellBoreCompletion Successful Response
+     * @throws ApiError
+     */
+    public getWellboreCompletions(
+        wellboreUuid: string,
+    ): CancelablePromise<Array<WellBoreCompletion>> {
+        return this.httpRequest.request({
+            method: 'GET',
+            url: '/well/wellbore_completions/',
+            query: {
                 'wellbore_uuid': wellboreUuid,
             },
             errors: {

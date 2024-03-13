@@ -115,3 +115,18 @@ async def get_wellbore_picks_and_stratigraphic_units(
         wellbore_picks=converters.convert_wellbore_picks_to_schema(wellbore_picks),
         stratigraphic_units=converters.convert_stratigraphic_units_to_schema(stratigraphic_units),
     )
+
+
+@router.get("/wellbore_completions/")
+async def get_wellbore_completions(
+    authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
+    wellbore_uuid: str = Query(description="Wellbore uuid"),
+) -> List[schemas.WellBoreCompletion]:
+    # Handle DROGON
+    if wellbore_uuid in ["drogon_horizontal", "drogon_vertical"]:
+        well_access = mocked_drogon_smda_access.WellAccess(authenticated_user.get_smda_access_token())
+    else:
+        well_access = WellAccess(authenticated_user.get_smda_access_token())
+
+    completions = await well_access.get_completions_for_wellbore(wellbore_uuid)
+    return completions
