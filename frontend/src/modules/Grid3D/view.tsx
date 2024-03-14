@@ -70,7 +70,7 @@ export function View({ moduleContext, workbenchSettings, workbenchSession }: Mod
               gridSurfaceQuery.data.zmin,
               gridSurfaceQuery.data.xmax,
               gridSurfaceQuery.data.ymax,
-              gridSurfaceQuery.data.zmax,
+              0,
           ]
         : [0, 0, 0, 100, 100, 100];
 
@@ -80,6 +80,7 @@ export function View({ moduleContext, workbenchSettings, workbenchSession }: Mod
             "@@type": "AxesLayer",
             id: "axes-layer",
             bounds: bounds,
+            ZIncreasingDownwards: false,
         },
     ];
 

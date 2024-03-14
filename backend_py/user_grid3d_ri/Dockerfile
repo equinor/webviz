@@ -38,7 +38,7 @@ COPY --chown=appuser ./backend_py/user_grid3d_ri/poetry.lock     /home/appuser/b
 RUN poetry install --only main --no-root --no-directory
 
 WORKDIR /home/appuser/ri_bin/Python
-RUN python3 -m pip install -r requirements.txt
+#RUN python3 -m pip install -r requirements.txt
 RUN python3 -m pip install .
 
 COPY --chown=appuser ./backend_py/user_grid3d_ri/user_grid3d_ri /home/appuser/backend_py/user_grid3d_ri/user_grid3d_ri

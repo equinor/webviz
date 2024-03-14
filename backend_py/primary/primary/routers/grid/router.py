@@ -7,7 +7,10 @@ from primary.services.utils.authenticated_user import AuthenticatedUser
 from primary.auth.auth_helper import AuthHelper
 
 from primary.services.sumo_access.grid_access import GridAccess
+from primary.services.user_grid3d_service.user_grid3d_service import UserGrid3dService, IJKIndexFilter
+
 from .schemas import GridSurface, GridIntersection
+
 
 router = APIRouter()
 
@@ -54,26 +57,30 @@ async def grid_surface(
 ) -> GridSurface:
     """Get a grid"""
 
-    query_params = {
-        "case_uuid": case_uuid,
-        "ensemble_name": ensemble_name,
-        "grid_name": grid_name,
-        "realization": int(realization),
-    }
+    ijk_index_filter = None
+    if grid_name == "Geogrid":
+        # 92 146 69
+        #ijk_index_filter = IJKIndexFilter(min_i=0, max_i=91, min_j=0, max_j=145, min_k=0, max_k=0)
+        ijk_index_filter = IJKIndexFilter(min_i=0, max_i=0, min_j=0, max_j=145, min_k=0, max_k=68)
 
-    # Add query parameters to the request URL
-    updated_request = Request(
-        scope={
-            "type": "http",
-            "method": request.method,
-            "path": request.url.path,
-            "query_string": request.url.include_query_params(**query_params).query.encode("utf-8"),
-            "headers": request.headers.raw,
-        },
-        receive=request._receive,  # pylint: disable=protected-access
+    grid_service = await UserGrid3dService.create_async(authenticated_user, case_uuid)
+    grid_geometry = await grid_service.get_grid_geometry_async(
+        ensemble_name=ensemble_name,
+        realization=realization,
+        grid_name=grid_name,
+        ijk_index_filter=ijk_index_filter
     )
 
-    raise HTTPException(status.HTTP_501_NOT_IMPLEMENTED)
+    return GridSurface(
+        points_b64arr=grid_geometry.vertices_b64arr,
+        polys_b64arr=grid_geometry.polys_b64arr,
+        xmin=grid_geometry.bounding_box.min_x,
+        xmax=grid_geometry.bounding_box.max_x,
+        ymin=grid_geometry.bounding_box.min_y,
+        ymax=grid_geometry.bounding_box.max_y,
+        zmin=grid_geometry.bounding_box.min_z,
+        zmax=grid_geometry.bounding_box.max_z,
+    )
 
 
 @router.get("/grid_parameter")
@@ -88,27 +95,20 @@ async def grid_parameter(
 ) -> List[float]:
     """Get a grid parameter"""
 
-    query_params = {
-        "case_uuid": case_uuid,
-        "ensemble_name": ensemble_name,
-        "grid_name": grid_name,
-        "parameter_name": parameter_name,
-        "realization": int(realization),
-    }
+    ijk_index_filter = None
+    if grid_name == "Geogrid":
+        ijk_index_filter = IJKIndexFilter(min_i=0, max_i=91, min_j=0, max_j=145, min_k=0, max_k=0)
 
-    # Add query parameters to the request URL
-    updated_request = Request(
-        scope={
-            "type": "http",
-            "method": request.method,
-            "path": request.url.path,
-            "query_string": request.url.include_query_params(**query_params).query.encode("utf-8"),
-            "headers": request.headers.raw,
-        },
-        receive=request._receive,  # pylint: disable=protected-access
+    grid_service = await UserGrid3dService.create_async(authenticated_user, case_uuid)
+    grid_properties = await grid_service.get_mapped_grid_properties_async(
+        ensemble_name=ensemble_name,
+        realization=realization,
+        grid_name=grid_name,
+        property_name=parameter_name,
+        ijk_index_filter=ijk_index_filter
     )
 
-    raise HTTPException(status.HTTP_501_NOT_IMPLEMENTED)
+    return grid_properties.poly_props_arr
 
 
 @router.get("/grid_parameter_intersection")
