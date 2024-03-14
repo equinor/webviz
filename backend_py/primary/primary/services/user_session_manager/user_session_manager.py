@@ -38,7 +38,7 @@ _USER_SESSION_DEFS: dict[UserComponent, _UserSessionDef] = {
         job_component_name="user-mock", port=8001, resource_req=RadixResourceRequests(cpu="100m", memory="200Mi")
     ),
     UserComponent.GRID3D_RI: _UserSessionDef(
-        job_component_name="user-grid3d-ri", port=8002, resource_req=RadixResourceRequests(cpu="200m", memory="400Mi")
+        job_component_name="user-grid3d-ri", port=8002, resource_req=RadixResourceRequests(cpu="4", memory="16Gi")
     ),
 }
 
