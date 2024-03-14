@@ -6,8 +6,7 @@ from starlette.requests import Request
 from primary.services.utils.authenticated_user import AuthenticatedUser
 from primary.auth.auth_helper import AuthHelper
 
-from primary.services.sumo_access.grid_access import GridAccess
-from .schemas import GridSurface, GridIntersection
+from .schemas_vtk import GridSurfaceVtk, GridIntersectionVtk
 
 router = APIRouter()
 
@@ -15,43 +14,16 @@ router = APIRouter()
 # pylint: disable=unused-variable
 
 
-@router.get("/grid_model_names/")
-async def get_grid_model_names(
-    authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
-    case_uuid: str = Query(description="Sumo case uuid"),
-    ensemble_name: str = Query(description="Ensemble name"),
-) -> List[str]:
-    """
-    Get a list of grid model names
-    """
-    access = await GridAccess.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
-    return await access.grid_model_names()
-
-
-@router.get("/parameter_names/")
-async def get_parameter_names(
-    authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
-    case_uuid: str = Query(description="Sumo case uuid"),
-    ensemble_name: str = Query(description="Ensemble name"),
-    grid_name: str = Query(description="Grid name"),
-) -> List[str]:
-    """
-    Get a list of grid parameter names
-    """
-    access = await GridAccess.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
-    return await access.static_parameter_names(grid_name)
-
-
 # Primary backend
-@router.get("/grid_surface")
-async def grid_surface(
+@router.get("/grid_surface_vtk")
+async def grid_surface_vtk(
     request: Request,
     case_uuid: str = Query(description="Sumo case uuid"),
     ensemble_name: str = Query(description="Ensemble name"),
     grid_name: str = Query(description="Grid name"),
     realization: str = Query(description="Realization"),
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
-) -> GridSurface:
+) -> GridSurfaceVtk:
     """Get a grid"""
 
     query_params = {
@@ -76,8 +48,8 @@ async def grid_surface(
     raise HTTPException(status.HTTP_501_NOT_IMPLEMENTED)
 
 
-@router.get("/grid_parameter")
-async def grid_parameter(
+@router.get("/grid_parameter_vtk")
+async def grid_parameter_vtk(
     request: Request,
     case_uuid: str = Query(description="Sumo case uuid"),
     ensemble_name: str = Query(description="Ensemble name"),
@@ -111,8 +83,8 @@ async def grid_parameter(
     raise HTTPException(status.HTTP_501_NOT_IMPLEMENTED)
 
 
-@router.get("/grid_parameter_intersection")
-async def grid_parameter_intersection(
+@router.get("/grid_parameter_intersection_vtk")
+async def grid_parameter_intersection_vtk(
     request: Request,
     case_uuid: str = Query(description="Sumo case uuid"),
     ensemble_name: str = Query(description="Ensemble name"),
@@ -120,7 +92,7 @@ async def grid_parameter_intersection(
     parameter_name: str = Query(description="Grid parameter"),
     realization: str = Query(description="Realization"),
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
-) -> GridIntersection:
+) -> GridIntersectionVtk:
     """Get a grid parameter"""
 
     query_params = {
@@ -146,8 +118,8 @@ async def grid_parameter_intersection(
     raise HTTPException(status.HTTP_501_NOT_IMPLEMENTED)
 
 
-@router.get("/statistical_grid_parameter_intersection")
-async def statistical_grid_parameter_intersection(
+@router.get("/statistical_grid_parameter_intersection_vtk")
+async def statistical_grid_parameter_intersection_vtk(
     request: Request,
     case_uuid: str = Query(description="Sumo case uuid"),
     ensemble_name: str = Query(description="Ensemble name"),
@@ -155,7 +127,7 @@ async def statistical_grid_parameter_intersection(
     parameter_name: str = Query(description="Grid parameter"),
     realizations: List[str] = Query(description="Realizations"),
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
-) -> GridIntersection:
+) -> GridIntersectionVtk:
     """Get a grid parameter"""
 
     query_params = {
@@ -181,8 +153,8 @@ async def statistical_grid_parameter_intersection(
     raise HTTPException(status.HTTP_501_NOT_IMPLEMENTED)
 
 
-@router.get("/statistical_grid_parameter")
-async def statistical_grid_parameter(
+@router.get("/statistical_grid_parameter_vtk")
+async def statistical_grid_parameter_vtk(
     request: Request,
     case_uuid: str = Query(description="Sumo case uuid"),
     ensemble_name: str = Query(description="Ensemble name"),

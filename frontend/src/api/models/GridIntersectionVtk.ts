@@ -2,7 +2,7 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-export type GridIntersection = {
+export type GridIntersectionVtk = {
     image: string;
     polyline_x: Array<number>;
     polyline_y: Array<number>;

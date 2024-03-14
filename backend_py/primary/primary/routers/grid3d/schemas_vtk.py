@@ -4,7 +4,7 @@ from pydantic import BaseModel
 from webviz_pkg.core_utils.b64 import B64FloatArray, B64UintArray
 
 
-class GridSurface(BaseModel):
+class GridSurfaceVtk(BaseModel):
     polys_b64arr: B64UintArray
     points_b64arr: B64FloatArray
     xmin: float
@@ -15,7 +15,7 @@ class GridSurface(BaseModel):
     zmax: float
 
 
-class GridIntersection(BaseModel):
+class GridIntersectionVtk(BaseModel):
     image: str
     polyline_x: List[float]
     polyline_y: List[float]

@@ -1,22 +1,40 @@
-import { GridIntersectionVtk_api } from "@api";
 import { apiService } from "@framework/ApiService";
 import { UseQueryResult, useQuery } from "@tanstack/react-query";
+
+import { GridSurfaceVtk_trans, transformGridSurface } from "./queryDataTransforms";
 
 const STALE_TIME = 60 * 1000;
 const CACHE_TIME = 60 * 1000;
 
-export function useGridIntersection(
+export function useGridSurfaceVtk(
+    caseUuid: string | null,
+    ensembleName: string | null,
+    gridName: string | null,
+    realization: string | null
+): UseQueryResult<GridSurfaceVtk_trans> {
+    return useQuery({
+        queryKey: ["getGridSurfaceVtk", caseUuid, ensembleName, gridName, realization],
+        queryFn: () =>
+            apiService.grid3D.gridSurfaceVtk(caseUuid ?? "", ensembleName ?? "", gridName ?? "", realization ?? ""),
+        select: transformGridSurface,
+        staleTime: STALE_TIME,
+        gcTime: 0,
+        enabled: caseUuid && ensembleName && gridName && realization ? true : false,
+    });
+}
+
+export function useGridParameterVtk(
     caseUuid: string | null,
     ensembleName: string | null,
     gridName: string | null,
     parameterName: string | null,
     realization: string | null,
     useStatistics: boolean
-): UseQueryResult<GridIntersectionVtk_api> {
+): UseQueryResult<number[]> {
     return useQuery({
-        queryKey: ["gridParameterIntersection", caseUuid, ensembleName, gridName, parameterName, realization],
+        queryKey: ["gridParameterVtk", caseUuid, ensembleName, gridName, parameterName, realization],
         queryFn: () =>
-            apiService.grid3D.gridParameterIntersectionVtk(
+            apiService.grid3D.gridParameterVtk(
                 caseUuid ?? "",
                 ensembleName ?? "",
                 gridName ?? "",
@@ -24,29 +42,23 @@ export function useGridIntersection(
                 realization ?? ""
             ),
         staleTime: STALE_TIME,
-        gcTime: CACHE_TIME,
+        gcTime: 0,
         enabled: caseUuid && ensembleName && gridName && parameterName && realization && !useStatistics ? true : false,
     });
 }
-export function useStatisticalGridIntersection(
+
+export function useStatisticalGridParameterVtk(
     caseUuid: string | null,
     ensembleName: string | null,
     gridName: string | null,
     parameterName: string | null,
     realizations: string[] | null,
     useStatistics: boolean
-): UseQueryResult<GridIntersectionVtk_api> {
+): UseQueryResult<number[]> {
     return useQuery({
-        queryKey: [
-            "statisticalGridParameterIntersection",
-            caseUuid,
-            ensembleName,
-            gridName,
-            parameterName,
-            realizations,
-        ],
+        queryKey: ["getStatisticalGridParameterVtk", caseUuid, ensembleName, gridName, parameterName, realizations],
         queryFn: () =>
-            apiService.grid3D.statisticalGridParameterIntersectionVtk(
+            apiService.grid3D.statisticalGridParameterVtk(
                 caseUuid ?? "",
                 ensembleName ?? "",
                 gridName ?? "",
@@ -54,7 +66,7 @@ export function useStatisticalGridIntersection(
                 realizations ?? []
             ),
         staleTime: STALE_TIME,
-        gcTime: CACHE_TIME,
+        gcTime: 0,
         enabled: caseUuid && ensembleName && gridName && parameterName && realizations && useStatistics ? true : false,
     });
 }

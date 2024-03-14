@@ -21,6 +21,7 @@ LOGGER = logging.getLogger(__name__)
 
 class UserComponent(str, Enum):
     GRID3D_RI = "GRID3D_RI"
+    GRID3D_VTK = "GRID3D_VTK"
     MOCK = "MOCK"
 
 
@@ -39,6 +40,9 @@ _USER_SESSION_DEFS: dict[UserComponent, _UserSessionDef] = {
     ),
     UserComponent.GRID3D_RI: _UserSessionDef(
         job_component_name="user-grid3d-ri", port=8002, resource_req=RadixResourceRequests(cpu="200m", memory="400Mi")
+    ),
+    UserComponent.GRID3D_VTK: _UserSessionDef(
+        job_component_name="user-grid3d-vtk", port=8003, resource_req=RadixResourceRequests(cpu="200m", memory="400Mi")
     ),
 }
 

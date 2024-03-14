@@ -13,14 +13,14 @@ ENV VIRTUAL_ENV=/home/appuser/venv
 RUN python3 -m venv $VIRTUAL_ENV
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 
-WORKDIR /home/appuser/backend_py/user_mock
+WORKDIR /home/appuser/backend_py/user_grid3d_vtk
 
-COPY --chown=appuser ./backend_py/user_mock/pyproject.toml  /home/appuser/backend_py/user_mock
-COPY --chown=appuser ./backend_py/user_mock/poetry.lock     /home/appuser/backend_py/user_mock
+COPY --chown=appuser ./backend_py/user_grid3d_vtk/pyproject.toml  /home/appuser/backend_py/user_grid3d_vtk
+COPY --chown=appuser ./backend_py/user_grid3d_vtk/poetry.lock     /home/appuser/backend_py/user_grid3d_vtk
 RUN poetry install --only main --no-root --no-directory
 
-COPY --chown=appuser ./backend_py/user_mock/user_mock /home/appuser/backend_py/user_mock/user_mock
+COPY --chown=appuser ./backend_py/user_grid3d_vtk/user_grid3d_vtk /home/appuser/backend_py/user_grid3d_vtk/user_grid3d_vtk
 RUN poetry install --only main
 
 # Relevant uvicorn environment variables are: UVICORN_PORT, UVICORN_RELOAD
-CMD ["uvicorn", "user_mock.user_mock_app:app", "--host", "0.0.0.0"]
+CMD ["uvicorn", "user_grid3d_vtk.fastapi_app:app", "--host", "0.0.0.0"]
