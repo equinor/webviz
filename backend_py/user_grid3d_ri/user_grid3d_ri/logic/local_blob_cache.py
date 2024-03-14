@@ -5,7 +5,7 @@ import aiofiles
 import aiofiles.os
 import httpx
 
-from user_grid3d_ri.shared_utils.perf_timer import PerfTimer
+from webviz_pkg.core_utils.perf_timer import PerfTimer
 
 LOGGER = logging.getLogger(__name__)
 
@@ -20,7 +20,7 @@ class LocalBlobCache:
         self._root_dir = _CACHE_ROOOT_DIR
         os.makedirs(self._root_dir, exist_ok=True)
 
-    async def ensure_blob_downloaded(self, object_uuid: str, file_suffix: str | None) -> str | None:
+    async def ensure_blob_downloaded(self, object_uuid: str, file_suffix: str) -> str | None:
         local_blob_filename = object_uuid + file_suffix
         local_blob_path = os.path.join(self._root_dir, local_blob_filename)
         if _does_file_exist(local_blob_path):

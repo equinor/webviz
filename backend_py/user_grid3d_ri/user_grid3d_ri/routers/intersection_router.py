@@ -7,10 +7,11 @@ from fastapi import APIRouter
 from rips.generated import GridGeometryExtraction_pb2, GridGeometryExtraction_pb2_grpc
 from rips.instance import *
 
+from webviz_pkg.core_utils.perf_timer import PerfTimer
+
 from user_grid3d_ri.logic.grid_properties import GridPropertiesExtractor
 from user_grid3d_ri.logic.local_blob_cache import LocalBlobCache
 from user_grid3d_ri.logic.resinsight_manager import RESINSIGHT_MANAGER
-from user_grid3d_ri.shared_utils.perf_timer import PerfTimer
 
 from . import api_schemas
 

@@ -77,6 +77,7 @@ services:
       - UVICORN_RELOAD=true
     volumes:
       - ./backend_py/user_grid3d_ri/user_grid3d_ri:/home/appuser/backend_py/user_grid3d_ri/user_grid3d_ri
+      - ./backend_py/libs:/home/appuser/backend_py/libs
 
   redis-user-session:
     image: bitnami/redis:6.2.10@sha256:bd42fcdab5959ce2b21b6ea8410d4b3ee87ecb2e320260326ec731ecfcffbd0e

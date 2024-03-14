@@ -1,3 +1,4 @@
+from typing import Iterator
 import logging
 from dataclasses import dataclass
 import os
@@ -6,12 +7,14 @@ import subprocess
 import grpc
 import psutil
 
+
+
 from rips.generated import App_pb2_grpc, Definitions_pb2
 
 LOGGER = logging.getLogger(__name__)
 
 
-_RI_EXECUTABLE = os.environ.get("RESINSIGHT_EXECUTABLE")
+_RI_EXECUTABLE = os.environ["RESINSIGHT_EXECUTABLE"]
 _RI_PORT = 50099
 
 
@@ -73,25 +76,28 @@ class ResInsightManager:
 
 
 def _kill_competing_ri_processes() -> None:
-    all_processes = psutil.process_iter(["pid", "ppid", "name", "exe", "cmdline"])
 
     terminated_procs: list[psutil.Process] = []
 
+    all_processes: Iterator[psutil.Process] = psutil.process_iter(["pid", "ppid", "name", "exe", "cmdline"])
     for proc in all_processes:
-        if proc.info["exe"] == _RI_EXECUTABLE:
-            if "--server" in proc.info["cmdline"] and f"{_RI_PORT}" in proc.info["cmdline"]:
-                LOGGER.debug(f"Terminating ResInsight process with PID: {proc.info['pid']}")
+        # The info dict gets added by the psutil.process_iter() function
+        info_dict = proc.info # type: ignore[attr-defined]
+        if info_dict["exe"] == _RI_EXECUTABLE:
+            if "--server" in info_dict["cmdline"] and f"{_RI_PORT}" in info_dict["cmdline"]:
+                LOGGER.debug(f"Terminating ResInsight process with PID: {info_dict['pid']}")
                 proc.terminate()
                 terminated_procs.append(proc)
 
     _gone, alive = psutil.wait_procs(terminated_procs, timeout=5, callback=_on_terminate)
     for proc in alive:
-        LOGGER.debug(f"KILLING ResInsight process with PID: {proc.info['pid']}")
+        LOGGER.debug(f"KILLING ResInsight process with PID: {proc.pid}")
         proc.kill()
 
 
 def _on_terminate(proc: psutil.Process):
-    LOGGER.debug(f"process {proc} terminated with exit code {proc.returncode}")
+    # returncode is added just for this callback, it is not part of the original psutil.Process class
+    LOGGER.debug(f"process {proc} terminated with exit code {proc.returncode}") # type: ignore[attr-defined]
 
 
 def _launch_ri_instance() -> int:

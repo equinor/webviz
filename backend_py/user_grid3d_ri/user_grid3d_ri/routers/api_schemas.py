@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 
-from user_grid3d_ri.shared_utils.b64 import B64FloatArray, B64UintArray
+from webviz_pkg.core_utils.b64 import B64FloatArray, B64UintArray
 
 
 class BoundingBox3D(BaseModel):

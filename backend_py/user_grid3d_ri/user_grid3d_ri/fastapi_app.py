@@ -14,6 +14,7 @@ from .routers import dev_router
 logging.getLogger().setLevel(logging.DEBUG)
 logging.getLogger("httpcore").setLevel(logging.INFO)
 logging.getLogger("httpx").setLevel(logging.INFO)
+logging.getLogger("xtgeo").setLevel(logging.INFO)
 
 
 LOGGER = logging.getLogger(__name__)
@@ -30,5 +31,5 @@ app.include_router(dev_router.router)
 @app.get("/")
 async def root() -> str:
     ret_str = f"user-grid3d-ri is alive at this time: {datetime.datetime.now()}"
-    LOGGER.debug("Sending: ", ret_str)
+    LOGGER.debug(f"Sending: {ret_str}")
     return ret_str
