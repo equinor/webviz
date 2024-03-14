@@ -11,4 +11,3 @@ class GridSurface(BaseModel):
     ymax: float
     zmin: float
     zmax: float
-

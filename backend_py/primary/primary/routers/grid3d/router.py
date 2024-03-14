@@ -66,5 +66,3 @@ async def grid_parameter(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
 ) -> List[float]:
     raise HTTPException(status.HTTP_501_NOT_IMPLEMENTED)
-
-
