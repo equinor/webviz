@@ -1,0 +1,65 @@
+[tool.poetry]
+package-mode = false
+name = "primary"
+authors = ["R&T Equinor", "Ceetron Solutions AS"]
+readme = "README.md"
+
+
+[tool.poetry.dependencies]
+python = "^3.11"
+fastapi = "^0.103.1"
+uvicorn = "^0.20.0"
+msal = "1.20.0" # Lock version until we fix issues introduced by 1.21.0, see https://github.com/equinor/webviz/issues/105
+starsessions = "^2.1.2"
+redis = "^4.6.0"
+pyarrow = "^12.0.1"
+python-dotenv = "^0.21.0"
+pyjwt = "^2.6.0"
+pydantic = "^2.3.0"
+numpy = "^1.24.1"
+orjson = "^3.8.10"
+pandas = {version = "2.0.1", extras = ["performance"]}
+httpx = "^0.24.0"
+fmu-sumo = "1.0.3"
+sumo-wrapper-python = "1.0.6"
+azure-monitor-opentelemetry = "^1.1.0"
+requests-toolbelt = "^1.0.0"
+pottery = "^3.0.0"
+core_utils = {path = "../libs/core_utils", develop = true}
+
+[tool.poetry.group.dev.dependencies]
+black = "^22.12.0"
+pylint = "^2.15.10"
+pytest = "^7.2.1"
+mypy = "^1.5.1"
+bandit = "^1.7.5"
+types-requests = "^2.31.0.1"
+types-redis = "^4.6.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.black]
+line-length = 120
+
+[tool.pylint]
+disable = ["missing-docstring", "line-too-long", "logging-fstring-interpolation", "duplicate-code"]
+extension-pkg-whitelist = "pydantic"
+ignored-modules = "pyarrow.compute"
+good-names = ["i", "x", "df", "xy"]
+min-public-methods = 0
+max-args = 9
+max-locals = 19
+max-branches = 14
+
+[tool.mypy]
+ignore_missing_imports = true
+disallow_untyped_defs = true
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+filterwarnings = "ignore::DeprecationWarning:pkg_resources"
+
+
