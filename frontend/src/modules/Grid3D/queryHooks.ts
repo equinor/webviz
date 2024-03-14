@@ -29,7 +29,6 @@ export function useGridParameter(
     gridName: string | null,
     parameterName: string | null,
     realization: string | null,
-    useStatistics: boolean
 ): UseQueryResult<number[]> {
     return useQuery({
         queryKey: ["getGridParameter", caseUuid, ensembleName, gridName, parameterName, realization],
@@ -43,31 +42,7 @@ export function useGridParameter(
             ),
         staleTime: STALE_TIME,
         gcTime: 0,
-        enabled: caseUuid && ensembleName && gridName && parameterName && realization && !useStatistics ? true : false,
-    });
-}
-
-export function useStatisticalGridParameter(
-    caseUuid: string | null,
-    ensembleName: string | null,
-    gridName: string | null,
-    parameterName: string | null,
-    realizations: string[] | null,
-    useStatistics: boolean
-): UseQueryResult<number[]> {
-    return useQuery({
-        queryKey: ["getStatisticalGridParameter", caseUuid, ensembleName, gridName, parameterName, realizations],
-        queryFn: () =>
-            apiService.grid3D.statisticalGridParameter(
-                caseUuid ?? "",
-                ensembleName ?? "",
-                gridName ?? "",
-                parameterName ?? "",
-                realizations ?? []
-            ),
-        staleTime: STALE_TIME,
-        gcTime: 0,
-        enabled: caseUuid && ensembleName && gridName && parameterName && realizations && useStatistics ? true : false,
+        enabled: caseUuid && ensembleName && gridName && parameterName && realization ? true : false,
     });
 }
 

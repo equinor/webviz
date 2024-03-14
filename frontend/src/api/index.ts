@@ -28,8 +28,9 @@ export type { EnsembleSensitivityCase as EnsembleSensitivityCase_api } from './m
 export type { FieldInfo as FieldInfo_api } from './models/FieldInfo';
 export { Frequency as Frequency_api } from './models/Frequency';
 export type { GraphUserPhoto as GraphUserPhoto_api } from './models/GraphUserPhoto';
-export type { GridIntersection as GridIntersection_api } from './models/GridIntersection';
+export type { GridIntersectionVtk as GridIntersectionVtk_api } from './models/GridIntersectionVtk';
 export type { GridSurface as GridSurface_api } from './models/GridSurface';
+export type { GridSurfaceVtk as GridSurfaceVtk_api } from './models/GridSurfaceVtk';
 export type { HTTPValidationError as HTTPValidationError_api } from './models/HTTPValidationError';
 export type { InplaceVolumetricsCategoricalMetaData as InplaceVolumetricsCategoricalMetaData_api } from './models/InplaceVolumetricsCategoricalMetaData';
 export type { InplaceVolumetricsTableMetaData as InplaceVolumetricsTableMetaData_api } from './models/InplaceVolumetricsTableMetaData';

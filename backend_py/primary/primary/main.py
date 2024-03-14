@@ -18,6 +18,7 @@ from primary.routers.explore import router as explore_router
 from primary.routers.general import router as general_router
 from primary.routers.graph.router import router as graph_router
 from primary.routers.grid3d.router import router as grid3d_router
+from primary.routers.grid3d.router_vtk import router as grid3d_router_vtk
 from primary.routers.inplace_volumetrics.router import router as inplace_volumetrics_router
 from primary.routers.observations.router import router as observations_router
 from primary.routers.parameters.router import router as parameters_router
@@ -75,6 +76,7 @@ app.include_router(surface_router, prefix="/surface", tags=["surface"])
 app.include_router(parameters_router, prefix="/parameters", tags=["parameters"])
 app.include_router(correlations_router, prefix="/correlations", tags=["correlations"])
 app.include_router(grid3d_router, prefix="/grid3d", tags=["grid3d"])
+app.include_router(grid3d_router_vtk, prefix="/grid3d", tags=["grid3d"])
 app.include_router(pvt_router, prefix="/pvt", tags=["pvt"])
 app.include_router(well_completions_router, prefix="/well_completions", tags=["well_completions"])
 app.include_router(well_router, prefix="/well", tags=["well"])
