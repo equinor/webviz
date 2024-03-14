@@ -15,7 +15,7 @@ export function useGridSurface(
     return useQuery({
         queryKey: ["getGridSurface", caseUuid, ensembleName, gridName, realization],
         queryFn: () =>
-            apiService.grid.gridSurface(caseUuid ?? "", ensembleName ?? "", gridName ?? "", realization ?? ""),
+            apiService.grid3D.gridSurface(caseUuid ?? "", ensembleName ?? "", gridName ?? "", realization ?? ""),
         select: transformGridSurface,
         staleTime: STALE_TIME,
         gcTime: 0,
@@ -34,7 +34,7 @@ export function useGridParameter(
     return useQuery({
         queryKey: ["getGridParameter", caseUuid, ensembleName, gridName, parameterName, realization],
         queryFn: () =>
-            apiService.grid.gridParameter(
+            apiService.grid3D.gridParameter(
                 caseUuid ?? "",
                 ensembleName ?? "",
                 gridName ?? "",
@@ -58,7 +58,7 @@ export function useStatisticalGridParameter(
     return useQuery({
         queryKey: ["getStatisticalGridParameter", caseUuid, ensembleName, gridName, parameterName, realizations],
         queryFn: () =>
-            apiService.grid.statisticalGridParameter(
+            apiService.grid3D.statisticalGridParameter(
                 caseUuid ?? "",
                 ensembleName ?? "",
                 gridName ?? "",
@@ -74,7 +74,7 @@ export function useStatisticalGridParameter(
 export function useGridModelNames(caseUuid: string | null, ensembleName: string | null): UseQueryResult<string[]> {
     return useQuery({
         queryKey: ["getGridModelNames", caseUuid, ensembleName],
-        queryFn: () => apiService.grid.getGridModelNames(caseUuid ?? "", ensembleName ?? ""),
+        queryFn: () => apiService.grid3D.getGridModelNames(caseUuid ?? "", ensembleName ?? ""),
         staleTime: STALE_TIME,
         gcTime: CACHE_TIME,
         enabled: caseUuid && ensembleName ? true : false,
@@ -88,7 +88,7 @@ export function useGridParameterNames(
 ): UseQueryResult<string[]> {
     return useQuery({
         queryKey: ["getParameterNames", caseUuid, ensembleName, gridName],
-        queryFn: () => apiService.grid.getParameterNames(caseUuid ?? "", ensembleName ?? "", gridName ?? ""),
+        queryFn: () => apiService.grid3D.getParameterNames(caseUuid ?? "", ensembleName ?? "", gridName ?? ""),
         staleTime: STALE_TIME,
         gcTime: CACHE_TIME,
         enabled: caseUuid && ensembleName && gridName ? true : false,

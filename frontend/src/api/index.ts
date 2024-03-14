@@ -80,7 +80,7 @@ export type { WellCompletionsZone as WellCompletionsZone_api } from './models/We
 export { DefaultService } from './services/DefaultService';
 export { ExploreService } from './services/ExploreService';
 export { GraphService } from './services/GraphService';
-export { GridService } from './services/GridService';
+export { Grid3DService } from './services/Grid3DService';
 export { InplaceVolumetricsService } from './services/InplaceVolumetricsService';
 export { ObservationsService } from './services/ObservationsService';
 export { ParametersService } from './services/ParametersService';

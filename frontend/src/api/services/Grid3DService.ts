@@ -6,7 +6,7 @@ import type { GridIntersection } from '../models/GridIntersection';
 import type { GridSurface } from '../models/GridSurface';
 import type { CancelablePromise } from '../core/CancelablePromise';
 import type { BaseHttpRequest } from '../core/BaseHttpRequest';
-export class GridService {
+export class Grid3DService {
     constructor(public readonly httpRequest: BaseHttpRequest) {}
     /**
      * Get Grid Model Names
@@ -22,7 +22,7 @@ export class GridService {
     ): CancelablePromise<Array<string>> {
         return this.httpRequest.request({
             method: 'GET',
-            url: '/grid/grid_model_names/',
+            url: '/grid3d/grid_model_names/',
             query: {
                 'case_uuid': caseUuid,
                 'ensemble_name': ensembleName,
@@ -48,7 +48,7 @@ export class GridService {
     ): CancelablePromise<Array<string>> {
         return this.httpRequest.request({
             method: 'GET',
-            url: '/grid/parameter_names/',
+            url: '/grid3d/parameter_names/',
             query: {
                 'case_uuid': caseUuid,
                 'ensemble_name': ensembleName,
@@ -77,7 +77,7 @@ export class GridService {
     ): CancelablePromise<GridSurface> {
         return this.httpRequest.request({
             method: 'GET',
-            url: '/grid/grid_surface',
+            url: '/grid3d/grid_surface',
             query: {
                 'case_uuid': caseUuid,
                 'ensemble_name': ensembleName,
@@ -109,7 +109,7 @@ export class GridService {
     ): CancelablePromise<Array<number>> {
         return this.httpRequest.request({
             method: 'GET',
-            url: '/grid/grid_parameter',
+            url: '/grid3d/grid_parameter',
             query: {
                 'case_uuid': caseUuid,
                 'ensemble_name': ensembleName,
@@ -142,7 +142,7 @@ export class GridService {
     ): CancelablePromise<GridIntersection> {
         return this.httpRequest.request({
             method: 'GET',
-            url: '/grid/grid_parameter_intersection',
+            url: '/grid3d/grid_parameter_intersection',
             query: {
                 'case_uuid': caseUuid,
                 'ensemble_name': ensembleName,
@@ -175,7 +175,7 @@ export class GridService {
     ): CancelablePromise<GridIntersection> {
         return this.httpRequest.request({
             method: 'GET',
-            url: '/grid/statistical_grid_parameter_intersection',
+            url: '/grid3d/statistical_grid_parameter_intersection',
             query: {
                 'case_uuid': caseUuid,
                 'ensemble_name': ensembleName,
@@ -208,7 +208,7 @@ export class GridService {
     ): CancelablePromise<Array<number>> {
         return this.httpRequest.request({
             method: 'GET',
-            url: '/grid/statistical_grid_parameter',
+            url: '/grid3d/statistical_grid_parameter',
             query: {
                 'case_uuid': caseUuid,
                 'ensemble_name': ensembleName,
