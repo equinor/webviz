@@ -13,7 +13,7 @@ import { useFieldWellsTrajectoriesQuery } from "@modules/_shared/WellBore/queryH
 import SubsurfaceViewer from "@webviz/subsurface-viewer";
 import { ViewAnnotation } from "@webviz/subsurface-viewer/dist/components/ViewAnnotation";
 
-import { useGridParameter, useGridSurface } from "./queryHooks";
+import { useGridParameterVtk, useGridSurfaceVtk, useStatisticalGridParameterVtk } from "./queryHooks";
 import state from "./state";
 
 //-----------------------------------------------------------------------------------------------------------
@@ -30,6 +30,7 @@ export function View({ moduleContext, workbenchSettings, workbenchSession }: Mod
     const gridName = moduleContext.useStoreValue("gridName");
     const parameterName = moduleContext.useStoreValue("parameterName");
     const realizations = moduleContext.useStoreValue("realizations");
+    const useStatistics = moduleContext.useStoreValue("useStatistics");
     const selectedWellUuids = moduleContext.useStoreValue("selectedWellUuids");
     const colorScale = workbenchSettings.useContinuousColorScale({
         gradientType: ColorScaleGradientType.Sequential,
@@ -39,18 +40,27 @@ export function View({ moduleContext, workbenchSettings, workbenchSession }: Mod
     //Queries
     const firstCaseUuid = firstEnsemble?.getCaseUuid() ?? null;
     const firstEnsembleName = firstEnsemble?.getEnsembleName() ?? null;
-    const gridSurfaceQuery = useGridSurface(
+    const gridSurfaceQuery = useGridSurfaceVtk(
         firstCaseUuid,
         firstEnsembleName,
         gridName,
         realizations ? realizations[0] : "0"
     );
-    const gridParameterQuery = useGridParameter(
+    const gridParameterQuery = useGridParameterVtk(
         firstCaseUuid,
         firstEnsembleName,
         gridName,
         parameterName,
-        realizations ? realizations[0] : "0"
+        realizations ? realizations[0] : "0",
+        useStatistics
+    );
+    const statisticalGridParameterQuery = useStatisticalGridParameterVtk(
+        firstCaseUuid,
+        firstEnsembleName,
+        gridName,
+        parameterName,
+        realizations,
+        useStatistics
     );
     const wellTrajectoriesQuery = useFieldWellsTrajectoriesQuery(firstCaseUuid ?? undefined);
     const bounds = gridSurfaceQuery?.data
@@ -60,7 +70,7 @@ export function View({ moduleContext, workbenchSettings, workbenchSession }: Mod
               gridSurfaceQuery.data.zmin,
               gridSurfaceQuery.data.xmax,
               gridSurfaceQuery.data.ymax,
-              0,
+              gridSurfaceQuery.data.zmax,
           ]
         : [0, 0, 0, 100, 100, 100];
 
@@ -70,13 +80,14 @@ export function View({ moduleContext, workbenchSettings, workbenchSession }: Mod
             "@@type": "AxesLayer",
             id: "axes-layer",
             bounds: bounds,
-            ZIncreasingDownwards: false,
         },
     ];
 
     let propertiesArray: number[] = [0, 1];
-    if (gridParameterQuery?.data) {
+    if (!useStatistics && gridParameterQuery?.data) {
         propertiesArray = Array.from(gridParameterQuery.data);
+    } else if (useStatistics && statisticalGridParameterQuery?.data) {
+        propertiesArray = Array.from(statisticalGridParameterQuery.data);
     }
 
     if (gridSurfaceQuery.data) {
