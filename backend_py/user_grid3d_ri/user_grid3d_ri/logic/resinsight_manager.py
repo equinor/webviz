@@ -2,6 +2,8 @@ from typing import Iterator
 import logging
 from dataclasses import dataclass
 import os
+import sys
+import time
 import subprocess
 
 import grpc
@@ -108,6 +110,10 @@ def _on_terminate(proc: psutil.Process):
 
 def _launch_ri_instance() -> int:
     proc: subprocess.Popen = subprocess.Popen([_RI_EXECUTABLE, "--console", "--server", f"{_RI_PORT}"])
+
+    # Quick and dirty, redirect to our own stdout
+    # proc: subprocess.Popen = subprocess.Popen(["stdbuf", "-oL", _RI_EXECUTABLE, "--console", "--server", f"{_RI_PORT}"], stdout=sys.stdout, stderr=sys.stderr, bufsize=1, text=True)
+
     if not proc:
         return -1
 
@@ -127,6 +133,23 @@ def _probe_grpc_alive(channel: grpc.Channel) -> bool:
         pass
 
     return False
+
+
+
+def _launch_ri_instance_try_with_logging() -> int:
+
+    # Currently, does not work without stdbuf -oL
+    proc: subprocess.Popen = subprocess.Popen(["stdbuf", "-oL", _RI_EXECUTABLE, "--console", "--server", f"{_RI_PORT}"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, bufsize=1, text=True)
+
+    if not proc:
+        return -1
+
+    time.sleep(3)
+    LOGGER.info("BEFORE")
+    for line in proc.stdout:
+        LOGGER.info("got a line")
+        LOGGER.info(line) # process line here    
+    LOGGER.info("AFTER")
 
 
 RESINSIGHT_MANAGER = ResInsightManager()
