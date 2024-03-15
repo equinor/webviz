@@ -7,6 +7,7 @@ from typing import Tuple
 import httpx
 from pottery import Redlock
 
+from webviz_pkg.core_utils.background_tasks import run_in_background_task
 from webviz_pkg.core_utils.perf_timer import PerfTimer
 
 from ._radix_helpers import IS_ON_RADIX_PLATFORM
@@ -14,7 +15,6 @@ from ._radix_helpers import create_new_radix_job, RadixResourceRequests
 from ._radix_helpers import is_radix_job_running, delete_named_radix_job
 from ._user_session_directory import SessionInfo, SessionRunState, UserSessionDirectory
 from ._util_classes import LockReleasingContext, TimeCounter
-from ._background_tasks import run_in_background_task
 
 LOGGER = logging.getLogger(__name__)
 

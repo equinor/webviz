@@ -5,6 +5,8 @@ from typing import Annotated
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, Query, Path
 
+from webviz_pkg.core_utils.background_tasks import run_in_background_task
+
 from primary.auth.auth_helper import AuthenticatedUser, AuthHelper
 from primary.services.user_session_manager.user_session_manager import UserSessionManager
 from primary.services.user_session_manager.user_session_manager import UserComponent
@@ -13,7 +15,6 @@ from primary.services.user_session_manager._radix_helpers import create_new_radi
 from primary.services.user_session_manager._radix_helpers import get_all_radix_jobs, get_radix_job_state
 from primary.services.user_session_manager._radix_helpers import delete_all_radix_jobs
 from primary.services.user_session_manager._user_session_directory import UserSessionDirectory
-from primary.services.user_session_manager._background_tasks import run_in_background_task
 from primary.services.user_grid3d_service.user_grid3d_service import UserGrid3dService, IJKIndexFilter
 
 LOGGER = logging.getLogger(__name__)

@@ -41,7 +41,7 @@ async def post_get_polyline_intersection(
     LOGGER.debug(f"{property_path_name=}")
     et_get_blobs_s = timer.lap_s()
 
-    grpc_channel: grpc.Channel = RESINSIGHT_MANAGER.get_channel_for_running_ri_instance()
+    grpc_channel: grpc.Channel = await RESINSIGHT_MANAGER.get_channel_for_running_ri_instance_async()
     et_get_ri_s = timer.lap_s()
 
     grid_geometry_extraction_stub = GridGeometryExtraction_pb2_grpc.GridGeometryExtractionStub(grpc_channel)

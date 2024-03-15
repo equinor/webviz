@@ -2,12 +2,12 @@ from typing import Iterator
 import logging
 from dataclasses import dataclass
 import os
-import sys
-import time
-import subprocess
+import asyncio
 
 import grpc
 import psutil
+
+from webviz_pkg.core_utils.background_tasks import run_in_background_task
 
 
 from rips.generated import App_pb2_grpc, Definitions_pb2
@@ -29,29 +29,31 @@ class ResInsightManager:
     def __init__(self) -> None:
         self._instance_info: _InstanceInfo | None = None
 
-    def get_channel_for_running_ri_instance(self) -> grpc.Channel | None:
-        instance = self._get_or_create_ri_instance()
+    async def get_channel_for_running_ri_instance_async(self) -> grpc.Channel | None:
+        instance = await self._get_or_create_ri_instance()
         if not instance:
             return None
 
         return instance.channel
 
-    def get_port_of_running_ri_instance(self) -> int | None:
-        instance = self._get_or_create_ri_instance()
+    async def get_port_of_running_ri_instance_async(self) -> int | None:
+        instance = await self._get_or_create_ri_instance()
         if not instance:
             return None
 
         return _RI_PORT
 
-    def _get_or_create_ri_instance(self) -> _InstanceInfo | None:
-        LOGGER.debug(f"_get_or_create_ri_instance() - has running instance: {'YES' if self._instance_info else 'NO'}")
+    async def _get_or_create_ri_instance(self) -> _InstanceInfo | None:
+        LOGGER.debug(f"_get_or_create_ri_instance() - has a registered instance: {'YES' if self._instance_info else 'NO'}")
         if self._instance_info:
-            process = psutil.Process(self._instance_info.pid)
-            LOGGER.debug(f"_get_or_create_ri_instance() - {process.status()=}")
-            LOGGER.debug(f"_get_or_create_ri_instance() - {process=}")
-            if process.is_running() and process.status() != psutil.STATUS_ZOMBIE:
-                LOGGER.debug(f"_get_or_create_ri_instance() - process is already running, pid={self._instance_info.pid}")
-                return self._instance_info
+            try:
+                process = psutil.Process(self._instance_info.pid)
+                LOGGER.debug(f"_get_or_create_ri_instance() - {process=}")
+                if process.is_running() and process.status() != psutil.STATUS_ZOMBIE:
+                    LOGGER.debug(f"_get_or_create_ri_instance() - process is already running, pid={self._instance_info.pid}")
+                    return self._instance_info
+            except psutil.NoSuchProcess:
+                pass
 
             LOGGER.debug(f"_get_or_create_ri_instance() - process does NOT seem to be running, pid={self._instance_info.pid}")
 
@@ -64,7 +66,7 @@ class ResInsightManager:
         _kill_competing_ri_processes()
 
         LOGGER.debug(f"_get_or_create_ri_instance() - launching new ResInsight instance")
-        new_pid = _launch_ri_instance()
+        new_pid = await _launch_ri_instance()
         if new_pid < 0:
             LOGGER.error("Failed to launch ResInsight instance")
             return None
@@ -90,7 +92,7 @@ def _kill_competing_ri_processes() -> None:
     all_processes: Iterator[psutil.Process] = psutil.process_iter(["pid", "ppid", "name", "exe", "cmdline"])
     for proc in all_processes:
         # The info dict gets added by the psutil.process_iter() function
-        info_dict = proc.info # type: ignore[attr-defined]
+        info_dict = proc.info  # type: ignore[attr-defined]
         if info_dict["exe"] == _RI_EXECUTABLE:
             if "--server" in info_dict["cmdline"] and f"{_RI_PORT}" in info_dict["cmdline"]:
                 LOGGER.debug(f"Terminating ResInsight process with PID: {info_dict['pid']}")
@@ -105,14 +107,26 @@ def _kill_competing_ri_processes() -> None:
 
 def _on_terminate(proc: psutil.Process):
     # returncode is added just for this callback, it is not part of the original psutil.Process class
-    LOGGER.debug(f"process {proc} terminated with exit code {proc.returncode}") # type: ignore[attr-defined]
+    LOGGER.debug(f"process {proc} terminated with exit code {proc.returncode}")  # type: ignore[attr-defined]
 
 
-def _launch_ri_instance() -> int:
-    proc: subprocess.Popen = subprocess.Popen([_RI_EXECUTABLE, "--console", "--server", f"{_RI_PORT}"])
+async def _stream_watcher(stream: asyncio.streams.StreamReader, stream_name) -> None:
+    async for data in stream:
+        line = data.decode("ascii").rstrip()
+        LOGGER.debug(f"ResInsight({stream_name})--{line}")
+
+    LOGGER.debug(f"_stream_watcher() for {stream_name=} exiting")
+
+
+async def _launch_ri_instance() -> int:
+    # proc: asyncio.subprocess.Process = await asyncio.create_subprocess_exec(_RI_EXECUTABLE, "--console", "--server", f"{_RI_PORT}", stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.STDOUT)
+    proc: asyncio.subprocess.Process = await asyncio.create_subprocess_exec("stdbuf", "-oL", _RI_EXECUTABLE, "--console", "--server", f"{_RI_PORT}", stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
 
     # Quick and dirty, redirect to our own stdout
     # proc: subprocess.Popen = subprocess.Popen(["stdbuf", "-oL", _RI_EXECUTABLE, "--console", "--server", f"{_RI_PORT}"], stdout=sys.stdout, stderr=sys.stderr, bufsize=1, text=True)
+
+    _stdout_task = run_in_background_task(_stream_watcher(proc.stdout, "stdout"))
+    _stderr_task = run_in_background_task(_stream_watcher(proc.stderr, "stderr"))
 
     if not proc:
         return -1
@@ -133,23 +147,6 @@ def _probe_grpc_alive(channel: grpc.Channel) -> bool:
         pass
 
     return False
-
-
-
-def _launch_ri_instance_try_with_logging() -> int:
-
-    # Currently, does not work without stdbuf -oL
-    proc: subprocess.Popen = subprocess.Popen(["stdbuf", "-oL", _RI_EXECUTABLE, "--console", "--server", f"{_RI_PORT}"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, bufsize=1, text=True)
-
-    if not proc:
-        return -1
-
-    time.sleep(3)
-    LOGGER.info("BEFORE")
-    for line in proc.stdout:
-        LOGGER.info("got a line")
-        LOGGER.info(line) # process line here    
-    LOGGER.info("AFTER")
 
 
 RESINSIGHT_MANAGER = ResInsightManager()

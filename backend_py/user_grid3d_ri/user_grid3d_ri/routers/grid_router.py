@@ -41,11 +41,11 @@ async def post_get_grid_geometry(
     LOGGER.debug(f"{grid_path_name=}")
     et_get_blob_s = timer.lap_s()
 
-    grpc_channel: grpc.Channel = RESINSIGHT_MANAGER.get_channel_for_running_ri_instance()
+    grpc_channel: grpc.Channel = await RESINSIGHT_MANAGER.get_channel_for_running_ri_instance_async()
     et_get_ri_s = timer.lap_s()
 
     # !!!!!!!!!!!!!!!!!!!!!!!
-    ri_instance = rips.Instance(port=RESINSIGHT_MANAGER.get_port_of_running_ri_instance(), launched=True)
+    ri_instance = rips.Instance(port=await RESINSIGHT_MANAGER.get_port_of_running_ri_instance_async(), launched=True)
     LOGGER.debug(f"{ri_instance.client_version_string()=}")
     LOGGER.debug(f"{ri_instance.version_string()=}")
     LOGGER.debug(f"{len(ri_instance.project.views())=}")
@@ -179,7 +179,7 @@ async def post_get_mapped_grid_properties(
     et_grid_geo_s = -1
     et_write_cache_s = -1
     if source_cell_indices_np is None:
-        grpc_channel: grpc.Channel = RESINSIGHT_MANAGER.get_channel_for_running_ri_instance()
+        grpc_channel: grpc.Channel = await RESINSIGHT_MANAGER.get_channel_for_running_ri_instance_async()
         et_get_ri_s = timer.lap_s()
 
         effective_ijk_index_filter = None
