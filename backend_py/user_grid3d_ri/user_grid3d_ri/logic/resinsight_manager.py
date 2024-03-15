@@ -119,12 +119,11 @@ async def _stream_watcher(stream: asyncio.streams.StreamReader, stream_name) -> 
 
 
 async def _launch_ri_instance() -> int:
-    # proc: asyncio.subprocess.Process = await asyncio.create_subprocess_exec(_RI_EXECUTABLE, "--console", "--server", f"{_RI_PORT}", stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.STDOUT)
-    proc: asyncio.subprocess.Process = await asyncio.create_subprocess_exec("stdbuf", "-oL", _RI_EXECUTABLE, "--console", "--server", f"{_RI_PORT}", stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
 
     # Quick and dirty, redirect to our own stdout
-    # proc: subprocess.Popen = subprocess.Popen(["stdbuf", "-oL", _RI_EXECUTABLE, "--console", "--server", f"{_RI_PORT}"], stdout=sys.stdout, stderr=sys.stderr, bufsize=1, text=True)
+    # proc: asyncio.subprocess.Process = await asyncio.create_subprocess_exec(_RI_EXECUTABLE, "--console", "--server", f"{_RI_PORT}", stdout=sys.stdout, stderr=sys.stderr)
 
+    proc: asyncio.subprocess.Process = await asyncio.create_subprocess_exec(_RI_EXECUTABLE, "--console", "--server", f"{_RI_PORT}", stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
     _stdout_task = run_in_background_task(_stream_watcher(proc.stdout, "stdout"))
     _stderr_task = run_in_background_task(_stream_watcher(proc.stderr, "stderr"))
 
