@@ -1,13 +1,13 @@
 import { ChannelDefinition, KeyKind } from "@framework/DataChannelTypes";
 
 export enum ChannelIds {
-    REALIZATION_VALUE = "Value (per realization)",
+    TIME_SERIES = "TimeSeries (with value per realization)",
 }
 
 export const channelDefs: ChannelDefinition[] = [
     {
-        idString: ChannelIds.REALIZATION_VALUE,
-        displayName: "Value (per realization)",
+        idString: ChannelIds.TIME_SERIES,
+        displayName: "Time series (with value per realization)",
         kindOfKey: KeyKind.REALIZATION,
     },
 ];

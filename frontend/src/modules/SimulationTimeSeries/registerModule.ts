@@ -1,15 +1,13 @@
 import { ModuleRegistry } from "@framework/ModuleRegistry";
-import { SyncSettingKey } from "@framework/SyncSettings";
 
 import { channelDefs } from "./channelDefs";
+// import { SyncSettingKey } from "@framework/SyncSettings";
+// import { broadcastChannelsDef } from "./channelDefs";
 import { preview } from "./preview";
-import { State } from "./state";
 
-ModuleRegistry.registerModule<State>({
+ModuleRegistry.registerModule<never>({
     moduleName: "SimulationTimeSeries",
-    defaultTitle: "Simulation time series",
-    syncableSettingKeys: [SyncSettingKey.ENSEMBLE, SyncSettingKey.TIME_SERIES],
-    channelDefinitions: channelDefs,
+    defaultTitle: "Simulation Time Series",
     preview,
-    description: "Time series of simulation results",
+    channelDefinitions: channelDefs,
 });
