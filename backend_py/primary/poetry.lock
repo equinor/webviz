@@ -760,20 +760,6 @@ files = [
 graph = ["objgraph (>=1.7.2)"]
 
 [[package]]
-name = "ecl-data-io"
-version = "2.1.0"
-description = "A (lazy) parser and writer for the ecl output format."
-optional = false
-python-versions = "*"
-files = [
-    {file = "ecl-data-io-2.1.0.tar.gz", hash = "sha256:e71fb6d59295afa95ec474367787ff2fe07cffa29380e3b0cab303b5d215f0ab"},
-    {file = "ecl_data_io-2.1.0-py3-none-any.whl", hash = "sha256:5b8a8c905f54bbdecc6a985dfe43f841231a94f66ff997222bf869df9c7ce2ed"},
-]
-
-[package.dependencies]
-numpy = "*"
-
-[[package]]
 name = "fastapi"
 version = "0.103.2"
 description = "FastAPI framework, high performance, easy to learn, fast to code, ready for production"
@@ -1075,6 +1061,17 @@ python-versions = ">=3.7"
 files = [
     {file = "itsdangerous-2.1.2-py3-none-any.whl", hash = "sha256:2c2349112351b88699d8d4b6b075022c0808887cb7ad10069318a8b0bc88db44"},
     {file = "itsdangerous-2.1.2.tar.gz", hash = "sha256:5dbbc68b317e5e42f327f9021763545dc3fc3bfe22e6deb96aaf1fc38874156a"},
+]
+
+[[package]]
+name = "joblib"
+version = "1.3.2"
+description = "Lightweight pipelining with Python functions"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "joblib-1.3.2-py3-none-any.whl", hash = "sha256:ef4331c65f239985f3f2220ecc87db222f08fd22097a3dd5698f693875f8cbb9"},
+    {file = "joblib-1.3.2.tar.gz", hash = "sha256:92f865e621e17784e7955080b6d042489e3b8e294949cc44c6eac304f59772b1"},
 ]
 
 [[package]]
@@ -2841,6 +2838,24 @@ files = [
 requests = ">=2.0.1,<3.0.0"
 
 [[package]]
+name = "resfo"
+version = "4.1.0"
+description = "A (lazy) parser and writer for reservoir simulator fortran output format."
+optional = false
+python-versions = "*"
+files = [
+    {file = "resfo-4.1.0-py3-none-any.whl", hash = "sha256:2a2156f740eef21ebfff8c1e1dee276aa57fc7a6569ae56bd7e73c73cced6ade"},
+    {file = "resfo-4.1.0.tar.gz", hash = "sha256:61c9a594210129aef3199d632f475469654dece7fe869bd9430248b6a89d48bf"},
+]
+
+[package.dependencies]
+numpy = "<2"
+
+[package.extras]
+dev = ["hypothesis", "pre-commit", "pytest", "tox"]
+doc = ["sphinx", "sphinx-rtd-theme"]
+
+[[package]]
 name = "rich"
 version = "13.3.5"
 description = "Render rich text, tables, progress bars, syntax highlighting, markdown and more to the terminal"
@@ -2957,6 +2972,24 @@ files = [
 
 [package.dependencies]
 numpy = ">=1.10"
+
+[[package]]
+name = "server-schemas"
+version = "0.0.1"
+description = "Package with shared schemas for server messages/requests/responses"
+optional = false
+python-versions = "^3.11"
+files = []
+develop = true
+
+[package.dependencies]
+core_utils = {path = "../core_utils", develop = true}
+numpy = "^1.24.1"
+pydantic = "^2.3.0"
+
+[package.source]
+type = "directory"
+url = "../libs/server_schemas"
 
 [[package]]
 name = "setuptools"
@@ -3393,46 +3426,74 @@ files = [
 
 [[package]]
 name = "xtgeo"
-version = "3.0.0"
+version = "3.8.0"
 description = "XTGeo is a Python library for 3D grids, surfaces, wells, etc"
 optional = false
-python-versions = "*"
+python-versions = ">=3.8"
 files = [
-    {file = "xtgeo-3.0.0-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:fa3408c5253a0008a9655c5a7acea726c3a6a9648409e40c3a41078e306c3b9d"},
-    {file = "xtgeo-3.0.0-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:8e550a8f027108d1ee1db7ae6028cdb7686d7f19ae89e7c4c96fbfb1e460f674"},
-    {file = "xtgeo-3.0.0-cp310-cp310-win_amd64.whl", hash = "sha256:5ad5e7b28e27ca4727dcfa7233419df992608843f95abfcecf1fecfc35c28c45"},
-    {file = "xtgeo-3.0.0-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:dad559af5e7aaf3af8d8332ba19414ad5418bcbf4e764b648c2d33226d8273ac"},
-    {file = "xtgeo-3.0.0-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:20b3c6e32753f9263c0515c4f1efbd0a296ad8bec5417e8587b4141f898ecea4"},
-    {file = "xtgeo-3.0.0-cp311-cp311-win_amd64.whl", hash = "sha256:94427d6d31b3fab39527a3d28bdef295d8c13f54621c7f3117b016a62d71bfe0"},
-    {file = "xtgeo-3.0.0-cp37-cp37m-macosx_10_9_x86_64.whl", hash = "sha256:760cfeb6998cc7136a3d2b6aeb7aa9ab4c8efcf9ae289498a09f6ce4f571f06c"},
-    {file = "xtgeo-3.0.0-cp37-cp37m-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:604f7805a44ce2b2d5a70efd338b56faf24fa4f2040c0cfac4225e9435d6ee4f"},
-    {file = "xtgeo-3.0.0-cp37-cp37m-win_amd64.whl", hash = "sha256:50db8d6f90f006feea8615a92eca07ac2c028124bd4a6bcc4b0dbe802ce7bc3f"},
-    {file = "xtgeo-3.0.0-cp38-cp38-macosx_10_9_x86_64.whl", hash = "sha256:3f3e2873e228822484436c6604affd0e1894b4f5119f91dd8ddf86da2fa3eef8"},
-    {file = "xtgeo-3.0.0-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:30094339d44318e7caf9111a0accd0e3eaedcbbfb52bdcc47bd06954b87e2470"},
-    {file = "xtgeo-3.0.0-cp38-cp38-win_amd64.whl", hash = "sha256:bdf69c41566f612cf8c619a1261b132522b59b43c643f8a1e1a71f070b2d7e5d"},
-    {file = "xtgeo-3.0.0-cp39-cp39-macosx_10_9_x86_64.whl", hash = "sha256:466e13693f888a78084ed1970af0e346b1b259e211b425ea66c0c72b17407557"},
-    {file = "xtgeo-3.0.0-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:8c1dd2c5218024cf0e7a91923f337c79026c95d0746b097e527dde8e483d94a3"},
-    {file = "xtgeo-3.0.0-cp39-cp39-win_amd64.whl", hash = "sha256:0ad5b5e618c648ecee653190e54dc38d39261ebd42812db3fc98a1d150e99c8d"},
+    {file = "xtgeo-3.8.0-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:e749476b3a3c78dac0df3641ad63fe5f9ebca2b5a098c6f458e2ff62ac5db6c9"},
+    {file = "xtgeo-3.8.0-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:7a869f3ba8a8fbd4e1500cfa3072cac815a784f5943f1ca1d377335e6e53283e"},
+    {file = "xtgeo-3.8.0-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:c3838232d54d163cd89d21586bb29f8bc31a92306feb52dc54a71e598993e122"},
+    {file = "xtgeo-3.8.0-cp310-cp310-win_amd64.whl", hash = "sha256:46fff34b3e28a156e2648e6b6647f208836a5a93053d0dde60b281bbf13fb250"},
+    {file = "xtgeo-3.8.0-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:8d29e58946bccdedef7d0c06e8e94ecee67a677efddd848bc3d613977eaf69b4"},
+    {file = "xtgeo-3.8.0-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:0d3f7330583f23c65635dafd558670797044351593191498a31c9932dd70b130"},
+    {file = "xtgeo-3.8.0-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:8dda56fd457c20cb2359ad4d4ce832a6ee759dce0867b2e24486a1a44909e29b"},
+    {file = "xtgeo-3.8.0-cp311-cp311-win_amd64.whl", hash = "sha256:360aed6e6b78f37c5846a907ef5a4fc18c6e87288957e5b1bc7c434935a3e2b3"},
+    {file = "xtgeo-3.8.0-cp312-cp312-macosx_10_9_x86_64.whl", hash = "sha256:ee9a7fecfe18c981f07b855c0c2acf03c789f2e649c0acc5bedae103792a818d"},
+    {file = "xtgeo-3.8.0-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:edda1437827f52b9c3f3fd14bbc00ad0fd602731a446d9aa3d99727804172724"},
+    {file = "xtgeo-3.8.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:82c5b44089b58c3d50f4df49e0e7bed488047921ee2c293c2c5c3a96e452941e"},
+    {file = "xtgeo-3.8.0-cp312-cp312-win_amd64.whl", hash = "sha256:616a7cafbcb19f1ee10afcdcd2eb3d717269c6cf88e44331d04f82ac74d3c4d1"},
+    {file = "xtgeo-3.8.0-cp38-cp38-macosx_10_9_x86_64.whl", hash = "sha256:b81cf8a585b6c1659b42707bd66380824abecf6efcb87fb478e08ebe064b26b2"},
+    {file = "xtgeo-3.8.0-cp38-cp38-macosx_11_0_arm64.whl", hash = "sha256:3c9f839e3683fa3e12803fd59629dcfb30bf74061d3512c327c95129f723b90c"},
+    {file = "xtgeo-3.8.0-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:fc3f2d53c49c69f9c67b250c5706cfc1f5b7813658c2bb0aab772d63553f37c8"},
+    {file = "xtgeo-3.8.0-cp38-cp38-win_amd64.whl", hash = "sha256:3604838e718cc38398f722bb939db5c829ac60fee012ced91bb14f6b0bea7242"},
+    {file = "xtgeo-3.8.0-cp39-cp39-macosx_10_9_x86_64.whl", hash = "sha256:a07cb70d74e5a555d6774564e655ec7ce04e2395e390cc9f3e61cea497dbe62e"},
+    {file = "xtgeo-3.8.0-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:058426f9c19ffc99cfaf526823df2d3ec83b9bbcc37673086970f8ad131dc170"},
+    {file = "xtgeo-3.8.0-cp39-cp39-win_amd64.whl", hash = "sha256:a904006d4a7140e4a9923d8473f33b4fce7b2f04c7b56a15495511f309d00599"},
 ]
 
 [package.dependencies]
 deprecation = "*"
-ecl-data-io = ">=2.1"
 h5py = ">=3"
 hdf5plugin = ">=2.3"
+joblib = "*"
 matplotlib = ">=3.3"
-numpy = ">=1.19"
+numpy = "<2"
 pandas = ">=1.1"
+resfo = ">=4.0.0"
 roffio = ">=0.0.2"
 scipy = ">=1.5"
 segyio = ">1.8.0"
 shapely = ">=1.6.2"
-tables = ">=3.5.1"
-typing-extensions = "*"
+tables = {version = "*", markers = "platform_system != \"Darwin\" and python_version > \"3.8\""}
+typing_extensions = "*"
+xtgeoviz = "*"
 
 [package.extras]
-docs = ["Sphinx (<4.0)", "autoclasstoc", "cmake (>=3.13.3)", "myst-parser", "ninja", "pydocstyle", "scikit-build", "setuptools (>=43)", "setuptools-scm", "sphinx-rtd-theme", "sphinx-toolbox"]
-tests = ["hypothesis", "pytest", "pytest-benchmark", "pytest-mock", "pytest-snapshot"]
+dev = ["clang-format", "cmake-format", "coverage (>=4.1)", "hypothesis", "mypy", "pandas-stubs", "pydocstyle", "pytest", "pytest-benchmark", "pytest-cov", "pytest-mock", "pytest-runner", "pytest-snapshot", "pytest-xdist", "ruff"]
+docs = ["autoclasstoc", "myst-parser", "pydocstyle", "sphinx", "sphinx-autodoc-typehints", "sphinx-rtd-theme", "sphinx-tabs (<3.4.5)", "sphinx-toolbox"]
+
+[[package]]
+name = "xtgeoviz"
+version = "0.1.0"
+description = "Plotting library for xtgeo objects"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "xtgeoviz-0.1.0-py3-none-any.whl", hash = "sha256:86d59e3b3927cf34308c2eb6e6936fa03ce8fc717015c3c87529d6bded008a39"},
+    {file = "xtgeoviz-0.1.0.tar.gz", hash = "sha256:da96ba81cbf00d3c5de40ee3345c88c2725a50dab208832b4db15c2abe06eac2"},
+]
+
+[package.dependencies]
+matplotlib = ">=3.3.2"
+numpy = "<2"
+PyYAML = "*"
+scipy = ">=1.5.3"
+xtgeo = "*"
+
+[package.extras]
+docs = ["autoapi", "myst-parser", "sphinx", "sphinx-argparse", "sphinx-autodoc-typehints", "sphinx-copybutton", "sphinx-rtd-theme", "sphinx-togglebutton", "sphinxcontrib-apidoc"]
+tests = ["black", "coverage (>=4.1)", "flake8", "isort", "mypy", "pylint", "pytest", "pytest-cov", "pytest-mock", "pytest-runner", "pytest-xdist", "rstcheck", "types-PyYAML"]
 
 [[package]]
 name = "zipp"
@@ -3452,4 +3513,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "0138b0a8902575704f558577c37e40fc9128819a11bde186e407ce839da40cf3"
+content-hash = "3c5750b0ff14870e96887faf4db490337fad5e135d7eb36aa32bf43ff53bb02a"

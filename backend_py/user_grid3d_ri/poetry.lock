@@ -1493,6 +1493,24 @@ files = [
 numpy = ">=1.10"
 
 [[package]]
+name = "server-schemas"
+version = "0.0.1"
+description = "Package with shared schemas for server messages/requests/responses"
+optional = false
+python-versions = "^3.11"
+files = []
+develop = true
+
+[package.dependencies]
+core_utils = {path = "../core_utils", develop = true}
+numpy = "^1.24.1"
+pydantic = "^2.3.0"
+
+[package.source]
+type = "directory"
+url = "../libs/server_schemas"
+
+[[package]]
 name = "setuptools"
 version = "69.2.0"
 description = "Easily download, build, install, upgrade, and uninstall Python packages"
@@ -1776,4 +1794,4 @@ tests = ["black", "coverage (>=4.1)", "flake8", "isort", "mypy", "pylint", "pyte
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "cd370d887d129ae2ff0738dfd12b54e0598756bb68b7883fd4217eb9fc95f62e"
+content-hash = "b22394df6f0293673a802809394a738b0de1f40c9f452643f27cce04d5c1a9c9"

@@ -7,6 +7,7 @@ from pydantic import BaseModel
 from sumo.wrapper import SumoClient
 from webviz_pkg.core_utils.perf_timer import PerfTimer
 from webviz_pkg.core_utils.b64 import B64FloatArray, B64UintArray
+from webviz_pkg.server_schemas.user_grid3d_ri import api_schemas as server_api_schemas
 
 from primary.auth.auth_helper import AuthenticatedUser
 from primary.services.user_session_manager.user_session_manager import UserSessionManager, UserComponent
@@ -17,8 +18,6 @@ from primary.services.sumo_access._helpers import create_sumo_client_instance
 from primary.services.sumo_access.queries.cpgrid import get_grid_geometry_blob_id
 from primary.services.sumo_access.queries.cpgrid import get_grid_parameter_blob_id
 from primary.services.surface_query_service.surface_query_service import _get_sas_token_and_blob_store_base_uri_for_case
-
-from . import server_api_schemas
 
 LOGGER = logging.getLogger(__name__)
 

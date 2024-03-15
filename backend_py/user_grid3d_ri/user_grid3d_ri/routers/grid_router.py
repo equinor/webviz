@@ -9,13 +9,12 @@ import rips
 
 from webviz_pkg.core_utils.b64 import b64_encode_float_array_as_float32, b64_encode_uint_array_as_smallest_size
 from webviz_pkg.core_utils.perf_timer import PerfTimer
+from webviz_pkg.server_schemas.user_grid3d_ri import api_schemas
 
 from user_grid3d_ri.logic.data_cache import DataCache
 from user_grid3d_ri.logic.grid_properties import GridPropertiesExtractor
 from user_grid3d_ri.logic.local_blob_cache import LocalBlobCache
 from user_grid3d_ri.logic.resinsight_manager import RESINSIGHT_MANAGER
-
-from . import api_schemas
 
 LOGGER = logging.getLogger(__name__)
 

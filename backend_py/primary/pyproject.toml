@@ -25,7 +25,9 @@ sumo-wrapper-python = "1.0.6"
 azure-monitor-opentelemetry = "^1.1.0"
 requests-toolbelt = "^1.0.0"
 pottery = "^3.0.0"
+xtgeo = "^3.8.0"
 core_utils = {path = "../libs/core_utils", develop = true}
+server_schemas = {path = "../libs/server_schemas", develop = true}
 
 [tool.poetry.group.dev.dependencies]
 black = "^22.12.0"
