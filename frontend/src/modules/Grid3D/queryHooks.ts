@@ -10,14 +10,21 @@ export function useGridSurface(
     caseUuid: string | null,
     ensembleName: string | null,
     gridName: string | null,
-    realization: string | null
+    realization: string | null,
+    singleKLayer: number = -1
 ): UseQueryResult<GridSurface_trans> {
     return useQuery({
-        queryKey: ["getGridSurface", caseUuid, ensembleName, gridName, realization],
+        queryKey: ["getGridSurface", caseUuid, ensembleName, gridName, realization, singleKLayer],
         queryFn: () =>
-            apiService.grid3D.gridSurface(caseUuid ?? "", ensembleName ?? "", gridName ?? "", realization ?? ""),
+            apiService.grid3D.gridSurface(
+                caseUuid ?? "",
+                ensembleName ?? "",
+                gridName ?? "",
+                realization ?? "",
+                singleKLayer
+            ),
         select: transformGridSurface,
-        staleTime: STALE_TIME,
+        staleTime: 0,
         gcTime: 0,
         enabled: caseUuid && ensembleName && gridName && realization ? true : false,
     });
@@ -29,18 +36,20 @@ export function useGridParameter(
     gridName: string | null,
     parameterName: string | null,
     realization: string | null,
+    singleKLayer: number = -1
 ): UseQueryResult<number[]> {
     return useQuery({
-        queryKey: ["getGridParameter", caseUuid, ensembleName, gridName, parameterName, realization],
+        queryKey: ["getGridParameter", caseUuid, ensembleName, gridName, parameterName, realization, singleKLayer],
         queryFn: () =>
             apiService.grid3D.gridParameter(
                 caseUuid ?? "",
                 ensembleName ?? "",
                 gridName ?? "",
                 parameterName ?? "",
-                realization ?? ""
+                realization ?? "",
+                singleKLayer
             ),
-        staleTime: STALE_TIME,
+        staleTime: 0,
         gcTime: 0,
         enabled: caseUuid && ensembleName && gridName && parameterName && realization ? true : false,
     });

@@ -21,6 +21,9 @@ LOGGER = logging.getLogger(__name__)
 
 router = APIRouter()
 
+def _proto_msg_as_oneliner(msg):
+    return str(msg).replace("\n", ", ")
+
 
 @router.post("/get_grid_geometry")
 async def post_get_grid_geometry(
@@ -51,17 +54,18 @@ async def post_get_grid_geometry(
     LOGGER.debug(f"{len(ri_instance.project.views())=}")
     LOGGER.debug(f"{len(ri_instance.project.cases())=}")
 
-    data_cache = DataCache()
-    response = data_cache.get_message_GetGridSurfaceResponse(req_body.grid_blob_object_uuid)
-    response = None  # force re-fetch
-    et_read_cache_s = timer.lap_s()
+    # data_cache = DataCache()
+    # response = data_cache.get_message_GetGridSurfaceResponse(req_body.grid_blob_object_uuid)
+    # et_read_cache_s = timer.lap_s()
+    response = None
+    et_read_cache_s = -1
 
     if response is None:
         grid_geometry_extraction_stub = GridGeometryExtraction_pb2_grpc.GridGeometryExtractionStub(grpc_channel)
 
-        effective_ijk_index_filter = None
+        grpc_ijk_index_filter = None
         if req_body.ijk_index_filter:
-            effective_ijk_index_filter = GridGeometryExtraction_pb2.IJKIndexFilter(
+            grpc_ijk_index_filter = GridGeometryExtraction_pb2.IJKIndexFilter(
                 iMin=req_body.ijk_index_filter.min_i,
                 iMax=req_body.ijk_index_filter.max_i,
                 jMin=req_body.ijk_index_filter.min_j,
@@ -69,13 +73,13 @@ async def post_get_grid_geometry(
                 kMin=req_body.ijk_index_filter.min_k,
                 kMax=req_body.ijk_index_filter.max_k,
             )
-        LOGGER.debug(f"{effective_ijk_index_filter=}")
+        LOGGER.debug(f"grpc_ijk_index_filter: {_proto_msg_as_oneliner(grpc_ijk_index_filter)}")
 
         timer.lap_s()
 
         request = GridGeometryExtraction_pb2.GetGridSurfaceRequest(
             gridFilename=grid_path_name,
-            ijkIndexFilter=effective_ijk_index_filter,
+            ijkIndexFilter=grpc_ijk_index_filter,
             cellIndexFilter=None,
             propertyFilter=None,
         )
@@ -86,12 +90,13 @@ async def post_get_grid_geometry(
 
     et_grid_geo_s = timer.lap_s()
 
-    data_cache.set_message_GetGridSurfaceResponse(req_body.grid_blob_object_uuid, response)
-    et_write_cache_s = timer.lap_s()
+    # data_cache.set_message_GetGridSurfaceResponse(req_body.grid_blob_object_uuid, response)
+    # et_write_cache_s = timer.lap_s()
+    et_write_cache_s = -1
 
     grid_dims = response.gridDimensions
     cell_count = grid_dims.i * grid_dims.j * grid_dims.k
-    LOGGER.debug(f"{grid_dims=}")
+    LOGGER.debug(f"grid_dims: {_proto_msg_as_oneliner(grid_dims)}")
     LOGGER.debug(f"{cell_count=}")
 
     LOGGER.debug(f"{len(response.quadIndicesArr)=}")
@@ -182,9 +187,9 @@ async def post_get_mapped_grid_properties(
         grpc_channel: grpc.Channel = await RESINSIGHT_MANAGER.get_channel_for_running_ri_instance_async()
         et_get_ri_s = timer.lap_s()
 
-        effective_ijk_index_filter = None
+        grpc_ijk_index_filter = None
         if req_body.ijk_index_filter:
-            effective_ijk_index_filter = GridGeometryExtraction_pb2.IJKIndexFilter(
+            grpc_ijk_index_filter = GridGeometryExtraction_pb2.IJKIndexFilter(
                 iMin=req_body.ijk_index_filter.min_i,
                 iMax=req_body.ijk_index_filter.max_i,
                 jMin=req_body.ijk_index_filter.min_j,
@@ -192,12 +197,12 @@ async def post_get_mapped_grid_properties(
                 kMin=req_body.ijk_index_filter.min_k,
                 kMax=req_body.ijk_index_filter.max_k,
             )
-        LOGGER.debug(f"{effective_ijk_index_filter=}")
+        LOGGER.debug(f"grpc_ijk_index_filter: {_proto_msg_as_oneliner(grpc_ijk_index_filter)}")
 
         grid_geometry_extraction_stub = GridGeometryExtraction_pb2_grpc.GridGeometryExtractionStub(grpc_channel)
         request = GridGeometryExtraction_pb2.GetGridSurfaceRequest(
             gridFilename=grid_path_name,
-            ijkIndexFilter=effective_ijk_index_filter,
+            ijkIndexFilter=grpc_ijk_index_filter,
             cellIndexFilter=None,
             propertyFilter=None,
         )

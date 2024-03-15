@@ -62,10 +62,12 @@ export class Grid3DService {
     }
     /**
      * Grid Surface
+     * Get a grid
      * @param caseUuid Sumo case uuid
      * @param ensembleName Ensemble name
      * @param gridName Grid name
      * @param realization Realization
+     * @param singleKLayer Show only a single k layer
      * @returns GridSurface Successful Response
      * @throws ApiError
      */
@@ -74,6 +76,7 @@ export class Grid3DService {
         ensembleName: string,
         gridName: string,
         realization: string,
+        singleKLayer: number = -1,
     ): CancelablePromise<GridSurface> {
         return this.httpRequest.request({
             method: 'GET',
@@ -83,6 +86,7 @@ export class Grid3DService {
                 'ensemble_name': ensembleName,
                 'grid_name': gridName,
                 'realization': realization,
+                'single_k_layer': singleKLayer,
             },
             errors: {
                 422: `Validation Error`,
@@ -91,11 +95,13 @@ export class Grid3DService {
     }
     /**
      * Grid Parameter
+     * Get a grid parameter
      * @param caseUuid Sumo case uuid
      * @param ensembleName Ensemble name
      * @param gridName Grid name
      * @param parameterName Grid parameter
      * @param realization Realization
+     * @param singleKLayer Show only a single k layer
      * @returns number Successful Response
      * @throws ApiError
      */
@@ -105,6 +111,7 @@ export class Grid3DService {
         gridName: string,
         parameterName: string,
         realization: string,
+        singleKLayer: number = -1,
     ): CancelablePromise<Array<number>> {
         return this.httpRequest.request({
             method: 'GET',
@@ -115,6 +122,7 @@ export class Grid3DService {
                 'grid_name': gridName,
                 'parameter_name': parameterName,
                 'realization': realization,
+                'single_k_layer': singleKLayer,
             },
             errors: {
                 422: `Validation Error`,

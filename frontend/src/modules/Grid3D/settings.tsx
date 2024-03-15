@@ -6,9 +6,9 @@ import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { fixupEnsembleIdent, maybeAssignFirstSyncedEnsemble } from "@framework/utils/ensembleUiHelpers";
 import { Button } from "@lib/components/Button";
-import { Checkbox } from "@lib/components/Checkbox";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
+import { Input } from "@lib/components/Input";
 import { Label } from "@lib/components/Label";
 import { QueryStateWrapper } from "@lib/components/QueryStateWrapper";
 import { Select, SelectOption } from "@lib/components/Select";
@@ -27,7 +27,7 @@ export function Settings({ moduleContext, workbenchServices, workbenchSession }:
     const [gridName, setGridName] = moduleContext.useStoreState("gridName");
     const [parameterName, setParameterName] = moduleContext.useStoreState("parameterName");
     const [realizations, setRealizations] = moduleContext.useStoreState("realizations");
-    const [useStatistics, setUseStatistics] = moduleContext.useStoreState("useStatistics");
+    const [singleKLayer, setSingleKLayer] = moduleContext.useStoreState("singleKLayer");
     const [selectedWellUuids, setSelectedWellUuids] = moduleContext.useStoreState("selectedWellUuids");
     const syncedSettingKeys = moduleContext.useSyncedSettingKeys();
     const syncHelper = new SyncSettingsHelper(syncedSettingKeys, workbenchServices);
@@ -91,7 +91,7 @@ export function Settings({ moduleContext, workbenchServices, workbenchSession }:
     const gridNames: string[] = gridNamesQuery.data ? gridNamesQuery.data : [];
     return (
         <div>
-            <CollapsibleGroup expanded={false} title="Realization / ensemble statistics">
+            <CollapsibleGroup expanded={false} title="Realizations">
                 <Label text="Realizations">
                     <Select
                         options={stringToOptions(allRealizations || [])}
@@ -99,15 +99,9 @@ export function Settings({ moduleContext, workbenchServices, workbenchSession }:
                         onChange={(reals) => setRealizations(reals)}
                         filter={true}
                         size={5}
-                        multiple={useStatistics}
+                        multiple={false}
                     />
                 </Label>
-                <Checkbox
-                    label="Show mean parameter"
-                    checked={useStatistics}
-                    onChange={(event: React.ChangeEvent<HTMLInputElement>) => setUseStatistics(event.target.checked)}
-                />
-                {"(Select multiple realizations)"}
             </CollapsibleGroup>
             <CollapsibleGroup expanded={true} title="Grid data">
                 <QueryStateWrapper
@@ -132,6 +126,15 @@ export function Settings({ moduleContext, workbenchServices, workbenchSession }:
                             onChange={(pnames) => setParameterName(pnames[0])}
                             filter={true}
                             size={5}
+                        />
+                    </Label>
+
+                    <Label text="Single K layer">
+                        <Input
+                            type={"number"}
+                            min={-1}
+                            max={100}
+                            onChange={(e) => setSingleKLayer(parseInt(e.target.value))}
                         />
                     </Label>
                 </QueryStateWrapper>

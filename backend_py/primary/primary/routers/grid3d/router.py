@@ -1,15 +1,20 @@
+import logging
 from typing import List
+from typing import Annotated
 
 from fastapi import APIRouter, Depends, Query, HTTPException, status
 from starlette.requests import Request
 
+from webviz_pkg.core_utils.perf_timer import PerfTimer
+
 from primary.services.utils.authenticated_user import AuthenticatedUser
 from primary.auth.auth_helper import AuthHelper
-
 from primary.services.sumo_access.grid_access import GridAccess
 from primary.services.user_grid3d_service.user_grid3d_service import UserGrid3dService, IJKIndexFilter
 
 from .schemas import GridSurface
+
+LOGGER = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -19,9 +24,9 @@ router = APIRouter()
 
 @router.get("/grid_model_names/")
 async def get_grid_model_names(
-    authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
-    case_uuid: str = Query(description="Sumo case uuid"),
-    ensemble_name: str = Query(description="Ensemble name"),
+    authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
+    case_uuid: Annotated[str, Query(description="Sumo case uuid")],
+    ensemble_name: Annotated[str, Query(description="Ensemble name")],
 ) -> List[str]:
     """
     Get a list of grid model names
@@ -32,10 +37,10 @@ async def get_grid_model_names(
 
 @router.get("/parameter_names/")
 async def get_parameter_names(
-    authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
-    case_uuid: str = Query(description="Sumo case uuid"),
-    ensemble_name: str = Query(description="Ensemble name"),
-    grid_name: str = Query(description="Grid name"),
+    authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
+    case_uuid: Annotated[str, Query(description="Sumo case uuid")],
+    ensemble_name: Annotated[str, Query(description="Ensemble name")],
+    grid_name: Annotated[str, Query(description="Grid name")],
 ) -> List[str]:
     """
     Get a list of grid parameter names
@@ -47,20 +52,20 @@ async def get_parameter_names(
 # Primary backend
 @router.get("/grid_surface")
 async def grid_surface(
-    request: Request,
-    case_uuid: str = Query(description="Sumo case uuid"),
-    ensemble_name: str = Query(description="Ensemble name"),
-    grid_name: str = Query(description="Grid name"),
-    realization: str = Query(description="Realization"),
-    authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
+    authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
+    case_uuid: Annotated[str, Query(description="Sumo case uuid")],
+    ensemble_name: Annotated[str, Query(description="Ensemble name")],
+    grid_name: Annotated[str, Query(description="Grid name")],
+    realization: Annotated[str, Query(description="Realization")],
+    single_k_layer: Annotated[int, Query(description="Show only a single k layer")] = -1,
 ) -> GridSurface:
     """Get a grid"""
 
+    timer = PerfTimer()
+
     ijk_index_filter = None
-    if grid_name == "Geogrid":
-        # 92 146 69
-        #ijk_index_filter = IJKIndexFilter(min_i=0, max_i=91, min_j=0, max_j=145, min_k=0, max_k=0)
-        ijk_index_filter = IJKIndexFilter(min_i=0, max_i=0, min_j=0, max_j=145, min_k=0, max_k=68)
+    if single_k_layer >= 0:
+        ijk_index_filter = IJKIndexFilter(min_i=-1, max_i=-1, min_j=-1, max_j=-1, min_k=single_k_layer, max_k=single_k_layer)
 
     grid_service = await UserGrid3dService.create_async(authenticated_user, case_uuid)
     grid_geometry = await grid_service.get_grid_geometry_async(
@@ -70,7 +75,7 @@ async def grid_surface(
         ijk_index_filter=ijk_index_filter
     )
 
-    return GridSurface(
+    response = GridSurface(
         points_b64arr=grid_geometry.vertices_b64arr,
         polys_b64arr=grid_geometry.polys_b64arr,
         xmin=grid_geometry.bounding_box.min_x,
@@ -81,22 +86,28 @@ async def grid_surface(
         zmax=grid_geometry.bounding_box.max_z,
     )
 
+    LOGGER.debug(f"------------------ GRID3D - grid_surface took: {timer.elapsed_s():.2f}s")
+
+    return response
+
 
 @router.get("/grid_parameter")
 async def grid_parameter(
-    request: Request,
-    case_uuid: str = Query(description="Sumo case uuid"),
-    ensemble_name: str = Query(description="Ensemble name"),
-    grid_name: str = Query(description="Grid name"),
-    parameter_name: str = Query(description="Grid parameter"),
-    realization: str = Query(description="Realization"),
-    authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
+    authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
+    case_uuid: Annotated[str, Query(description="Sumo case uuid")],
+    ensemble_name: Annotated[str, Query(description="Ensemble name")],
+    grid_name: Annotated[str, Query(description="Grid name")],
+    parameter_name: Annotated[str, Query(description="Grid parameter")],
+    realization: Annotated[str, Query(description="Realization")],
+    single_k_layer: Annotated[int, Query(description="Show only a single k layer")] = -1,
 ) -> List[float]:
     """Get a grid parameter"""
 
+    timer = PerfTimer()
+
     ijk_index_filter = None
-    if grid_name == "Geogrid":
-        ijk_index_filter = IJKIndexFilter(min_i=0, max_i=91, min_j=0, max_j=145, min_k=0, max_k=0)
+    if single_k_layer >= 0:
+        ijk_index_filter = IJKIndexFilter(min_i=-1, max_i=-1, min_j=-1, max_j=-1, min_k=single_k_layer, max_k=single_k_layer)
 
     grid_service = await UserGrid3dService.create_async(authenticated_user, case_uuid)
     grid_properties = await grid_service.get_mapped_grid_properties_async(
@@ -106,5 +117,7 @@ async def grid_parameter(
         property_name=parameter_name,
         ijk_index_filter=ijk_index_filter
     )
+
+    LOGGER.debug(f"------------------ GRID3D - grid_parameter took: {timer.elapsed_s():.2f}s")
 
     return grid_properties.poly_props_arr

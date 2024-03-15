@@ -30,10 +30,9 @@ export function View({ moduleContext, workbenchSettings, workbenchSession }: Mod
     const gridName = moduleContext.useStoreValue("gridName");
     const parameterName = moduleContext.useStoreValue("parameterName");
     const realizations = moduleContext.useStoreValue("realizations");
+    const singleKLayer = moduleContext.useStoreValue("singleKLayer");
     const selectedWellUuids = moduleContext.useStoreValue("selectedWellUuids");
-    const colorScale = workbenchSettings.useContinuousColorScale({
-        gradientType: ColorScaleGradientType.Sequential,
-    });
+    const colorScale = workbenchSettings.useContinuousColorScale({ gradientType: ColorScaleGradientType.Sequential });
     const colorTables = createContinuousColorScaleForMap(colorScale);
 
     //Queries
@@ -43,14 +42,16 @@ export function View({ moduleContext, workbenchSettings, workbenchSession }: Mod
         firstCaseUuid,
         firstEnsembleName,
         gridName,
-        realizations ? realizations[0] : "0"
+        realizations ? realizations[0] : "0",
+        singleKLayer
     );
     const gridParameterQuery = useGridParameter(
         firstCaseUuid,
         firstEnsembleName,
         gridName,
         parameterName,
-        realizations ? realizations[0] : "0"
+        realizations ? realizations[0] : "0",
+        singleKLayer
     );
     const wellTrajectoriesQuery = useFieldWellsTrajectoriesQuery(firstCaseUuid ?? undefined);
     const bounds = gridSurfaceQuery?.data

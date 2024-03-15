@@ -3,5 +3,5 @@ export default interface state {
     parameterName: string | null;
     selectedWellUuids: string[];
     realizations: string[] | null;
-    useStatistics: boolean;
+    singleKLayer: number;
 }

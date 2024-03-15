@@ -9,7 +9,7 @@ const defaultState: state = {
     parameterName: "PORO",
     selectedWellUuids: [],
     realizations: ["1"],
-    useStatistics: false,
+    singleKLayer: -1,
 };
 
 const module = ModuleRegistry.initModule<state>("Grid3D", defaultState, {});
