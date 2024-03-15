@@ -17,7 +17,7 @@ for (let i = 0; i < 100; i++) {
 const SIZE = 10;
 
 function arrayContainsOtherArray<T>(array: T[], otherArray: T[]): boolean {
-    return otherArray.every(item => array.includes(item));
+    return otherArray.every((item) => array.includes(item));
 }
 
 test.describe("Select", () => {
@@ -26,11 +26,11 @@ test.describe("Select", () => {
 
         // Make sure our component is mounted
         await expect(select).toBeVisible();
-        const firstDiv = await select.locator("div").first();
-        const secondDiv = await firstDiv.locator("div").first();
+        const firstDiv = select.locator("div").first();
+        const secondDiv = firstDiv.locator("div").first();
 
         // Virtualization does always hold more elements than visible in the view, so we expect to have at least "size" visible elements
-        await expect((await secondDiv.locator("div").count()) > SIZE).toBeTruthy();
+        expect((await secondDiv.locator("div").count()) > SIZE).toBeTruthy();
     });
 
     test("Single select is working", async ({ mount }) => {
@@ -71,7 +71,6 @@ test.describe("Select", () => {
         expect(selection.includes(selectOptions1[0].value)).toBeTruthy();
         expect(select).toContainText(selectOptions1[0].value);
 
-
         // Make sure End is working
         await select.press("End");
         expect(selection.includes(selectOptions1[selectOptions1.length - 1].value)).toBeTruthy();
@@ -96,7 +95,7 @@ test.describe("Select", () => {
         const select = await mount(<Select options={selectOptions1} size={SIZE} onChange={handleChange} multiple />);
 
         // Click on first element and expect selection
-        const options = await select.locator("div").first().locator("div").first().locator("div");
+        const options = select.locator("div").first().locator("div").first().locator("div");
         await options.first().click();
         expect(selection.includes(selectOptions1[0].value)).toBeTruthy();
 
@@ -117,7 +116,13 @@ test.describe("Select", () => {
         await select.press("Control+ArrowDown");
         await select.press("Control+ArrowDown");
         await select.press("Control+Space");
-        expect(arrayContainsOtherArray(selection, [selectOptions1[0].value, selectOptions1[1].value, selectOptions1[2].value])).toBeTruthy();
+        expect(
+            arrayContainsOtherArray(selection, [
+                selectOptions1[0].value,
+                selectOptions1[1].value,
+                selectOptions1[2].value,
+            ])
+        ).toBeTruthy();
 
         // Make sure Home is working
         await select.press("Home");
@@ -144,7 +149,7 @@ test.describe("Select", () => {
 
         // Make sure selections with PageDown are working
         await select.press("Shift+PageDown");
-        const expectedSelection = selectOptions1.slice(0, SIZE).map(el => el.value);
+        const expectedSelection = selectOptions1.slice(0, SIZE).map((el) => el.value);
         expect(arrayContainsOtherArray(selection, expectedSelection)).toBeTruthy();
         for (let i = 0; i < expectedSelection.length; i++) {
             expect(select).toContainText(expectedSelection[i]);
@@ -171,7 +176,12 @@ test.describe("Select", () => {
         expect(select).toContainText(selectOptions1[0].value);
 
         await select.press("Shift+End");
-        expect(arrayContainsOtherArray(selection, selectOptions1.map(el => el.value))).toBeTruthy();
+        expect(
+            arrayContainsOtherArray(
+                selection,
+                selectOptions1.map((el) => el.value)
+            )
+        ).toBeTruthy();
         for (let i = selectOptions1.length - SIZE; i < selectOptions1.length; i++) {
             expect(select).toContainText(selectOptions1[i].value);
         }
@@ -181,10 +191,15 @@ test.describe("Select", () => {
         expect(select).toContainText(selectOptions1[selectOptions1.length - 1].value);
 
         await select.press("Shift+Home");
-        expect(arrayContainsOtherArray(selection, selectOptions1.map(el => el.value))).toBeTruthy();
+        expect(
+            arrayContainsOtherArray(
+                selection,
+                selectOptions1.map((el) => el.value)
+            )
+        ).toBeTruthy();
     });
 
-    test("Changing props.options is working", async ({ mount, }) => {
+    test("Changing props.options is working", async ({ mount }) => {
         let selection: string[] = [];
         function handleChange(values: string[]) {
             selection = values;
@@ -201,7 +216,7 @@ test.describe("Select", () => {
         }
 
         // Click on first element and expect selection
-        const options = await select.locator("div").first().locator("div").first().locator("div");
+        const options = select.locator("div").first().locator("div").first().locator("div");
         await options.first().click();
         expect(selection.includes(selectOptions1[0].value)).toBeTruthy();
 

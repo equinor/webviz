@@ -15,6 +15,6 @@ test.describe("Checkbox", () => {
         const checkBox = await mount(<Checkbox label="Checkbox" onChange={handleChange} />);
         await expect(checkBox).toContainText("Checkbox");
         await checkBox.locator("label").click();
-        await expect(programmaticallyChecked).toBe(true);
+        expect(programmaticallyChecked).toBe(true);
     });
 });
