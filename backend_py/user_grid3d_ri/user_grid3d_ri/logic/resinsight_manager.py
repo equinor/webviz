@@ -8,7 +8,6 @@ import grpc
 import psutil
 
 
-
 from rips.generated import App_pb2_grpc, Definitions_pb2
 
 LOGGER = logging.getLogger(__name__)
@@ -49,16 +48,20 @@ class ResInsightManager:
             LOGGER.debug(f"_get_or_create_ri_instance() - {process.status()=}")
             LOGGER.debug(f"_get_or_create_ri_instance() - {process=}")
             if process.is_running() and process.status() != psutil.STATUS_ZOMBIE:
-                LOGGER.debug(f"_get_or_create_ri_instance() - process is running, pid={self._instance_info.pid}")
+                LOGGER.debug(f"_get_or_create_ri_instance() - process is already running, pid={self._instance_info.pid}")
                 return self._instance_info
+
+            LOGGER.debug(f"_get_or_create_ri_instance() - process does NOT seem to be running, pid={self._instance_info.pid}")
 
         # Either we don't have a process or the process is dead, so we'll clean up and try to launch a new one
         if self._instance_info and self._instance_info.channel:
+            LOGGER.debug(f"_get_or_create_ri_instance() - trying to close existing grpc channel")
             self._instance_info.channel.close()
 
         self._instance_info = None
-
         _kill_competing_ri_processes()
+
+        LOGGER.debug(f"_get_or_create_ri_instance() - launching new ResInsight instance")
         new_pid = _launch_ri_instance()
         if new_pid < 0:
             LOGGER.error("Failed to launch ResInsight instance")
@@ -69,9 +72,12 @@ class ResInsightManager:
             options=[("grpc.enable_http_proxy", False), ("grpc.max_receive_message_length", 64 * 1024 * 1024)],
         )
         if not _probe_grpc_alive(new_channel):
+            LOGGER.error("Probe against newly launched ResInsight failed")
             return None
 
         self._instance_info = _InstanceInfo(pid=new_pid, channel=new_channel)
+        LOGGER.debug(f"_get_or_create_ri_instance() - successfully launched new ResInsight instance, pid={self._instance_info.pid}")
+
         return self._instance_info
 
 
@@ -113,8 +119,8 @@ def _probe_grpc_alive(channel: grpc.Channel) -> bool:
 
     try:
         LOGGER.debug(f"_probe_grpc_alive() - probing ...")
-        response = app_stub.GetVersion(Definitions_pb2.Empty(), timeout=4.0, wait_for_ready=True)
-        LOGGER.debug(f"_probe_grpc_alive() - {response=}")
+        grpc_response = app_stub.GetVersion(Definitions_pb2.Empty(), timeout=4.0, wait_for_ready=True)
+        LOGGER.debug(f"_probe_grpc_alive() - {str(grpc_response)=}")
         return True
     except grpc.RpcError:
         LOGGER.error(f"_probe_grpc_alive() - probe failed!!!")
