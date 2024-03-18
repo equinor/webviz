@@ -2,10 +2,12 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
+import type { Body_post_get_polyline_intersection } from '../models/Body_post_get_polyline_intersection';
 import type { GridIntersectionVtk } from '../models/GridIntersectionVtk';
 import type { GridParameter } from '../models/GridParameter';
 import type { GridSurface } from '../models/GridSurface';
 import type { GridSurfaceVtk } from '../models/GridSurfaceVtk';
+import type { PolylineIntersection } from '../models/PolylineIntersection';
 import type { CancelablePromise } from '../core/CancelablePromise';
 import type { BaseHttpRequest } from '../core/BaseHttpRequest';
 export class Grid3DService {
@@ -125,6 +127,42 @@ export class Grid3DService {
                 'realization': realization,
                 'single_k_layer': singleKLayer,
             },
+            errors: {
+                422: `Validation Error`,
+            },
+        });
+    }
+    /**
+     * Post Get Polyline Intersection
+     * @param caseUuid Sumo case uuid
+     * @param ensembleName Ensemble name
+     * @param gridName Grid name
+     * @param parameterName Grid parameter
+     * @param realization Realization
+     * @param requestBody
+     * @returns PolylineIntersection Successful Response
+     * @throws ApiError
+     */
+    public postGetPolylineIntersection(
+        caseUuid: string,
+        ensembleName: string,
+        gridName: string,
+        parameterName: string,
+        realization: string,
+        requestBody: Body_post_get_polyline_intersection,
+    ): CancelablePromise<PolylineIntersection> {
+        return this.httpRequest.request({
+            method: 'POST',
+            url: '/grid3d/get_polyline_intersection',
+            query: {
+                'case_uuid': caseUuid,
+                'ensemble_name': ensembleName,
+                'grid_name': gridName,
+                'parameter_name': parameterName,
+                'realization': realization,
+            },
+            body: requestBody,
+            mediaType: 'application/json',
             errors: {
                 422: `Validation Error`,
             },

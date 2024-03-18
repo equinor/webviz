@@ -53,6 +53,24 @@ class MappedGridProperties(BaseModel):
     # max_value: float
 
 
+class FenceMeshSection(BaseModel):
+    # U-axis defined by unit length vector from start to end, Z is global Z
+    vertices_uz_arr: list[float]
+    polys_arr: list[int]
+    poly_source_cell_indices_arr: list[int]
+    poly_props_arr: list[float]
+    start_utm_x: float
+    start_utm_y: float
+    end_utm_x: float
+    end_utm_y: float
+
+
+class PolylineIntersection(BaseModel):
+    fence_mesh_sections: list[FenceMeshSection]
+    min_grid_prop_value: float
+    max_grid_prop_value: float
+
+
 class UserGrid3dService:
     def __init__(
         self, session_base_url: str, sumo_client: SumoClient, case_uuid: str, sas_token: str, blob_store_base_uri: str
@@ -197,7 +215,7 @@ class UserGrid3dService:
 
     async def get_polyline_intersection_async(
         self, ensemble_name: str, realization: int, grid_name: str, property_name: str, polyline_utm_xy: list[float]
-    ) -> None:
+    ) -> PolylineIntersection:
         timer = PerfTimer()
 
         grid_blob_object_uuid = await get_grid_geometry_blob_id(
@@ -227,9 +245,24 @@ class UserGrid3dService:
         )
         et_call_user_session_s = timer.lap_s()
 
-        LOGGER.debug(
-            f"UserGrid3dService.get_polyline_intersection_async() took {timer.elapsed_s():.2f}s [{et_blob_ids_s=:.2f}s, {et_call_user_session_s=:.2f}s]"
+        # Not sure how we should be doing this wrt performance.
+        # Right now we end up doing one validation here and another when creating the return object.
+        server_obj = server_api_schemas.PolylineIntersectionResponse.model_validate_json(response.content)
+        et_convert1_s = timer.lap_s()
+
+        ret_mesh_section_list = [ FenceMeshSection.model_validate(sect.model_dump()) for sect in server_obj.fence_mesh_sections]
+        ret_obj = PolylineIntersection(
+            fence_mesh_sections=ret_mesh_section_list,
+            min_grid_prop_value=server_obj.min_grid_prop_value,
+            max_grid_prop_value=server_obj.max_grid_prop_value,
         )
+        et_convert2_s = timer.lap_s()
+
+        LOGGER.debug(
+            f"UserGrid3dService.get_polyline_intersection_async() took {timer.elapsed_s():.2f}s [{et_blob_ids_s=:.2f}s, {et_call_user_session_s=:.2f}s, {et_convert1_s=:.4f}s, {et_convert2_s=:.4f}s]"
+        )
+
+        return ret_obj
 
     async def _call_service_endpoint_get(
         self, endpoint: str, query_params: dict[str, str], operation_descr: str

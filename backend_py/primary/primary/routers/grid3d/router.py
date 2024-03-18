@@ -2,7 +2,7 @@ import logging
 from typing import List
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Query, HTTPException, status
+from fastapi import APIRouter, Depends, Query, HTTPException, status, Body
 from starlette.requests import Request
 
 from webviz_pkg.core_utils.perf_timer import PerfTimer
@@ -11,7 +11,11 @@ from webviz_pkg.core_utils.b64 import b64_decode_float_array_to_list
 from primary.services.utils.authenticated_user import AuthenticatedUser
 from primary.auth.auth_helper import AuthHelper
 from primary.services.sumo_access.grid_access import GridAccess
-from primary.services.user_grid3d_service.user_grid3d_service import UserGrid3dService, IJKIndexFilter
+from primary.services.user_grid3d_service.user_grid3d_service import (
+    UserGrid3dService,
+    IJKIndexFilter,
+    PolylineIntersection,
+)
 
 from . import schemas
 
@@ -129,3 +133,29 @@ async def grid_parameter(
     LOGGER.debug(f"------------------ GRID3D - grid_parameter took: {timer.elapsed_s():.2f}s")
 
     return response
+
+
+@router.post("/get_polyline_intersection")
+async def post_get_polyline_intersection(
+    authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
+    case_uuid: Annotated[str, Query(description="Sumo case uuid")],
+    ensemble_name: Annotated[str, Query(description="Ensemble name")],
+    grid_name: Annotated[str, Query(description="Grid name")],
+    parameter_name: Annotated[str, Query(description="Grid parameter")],
+    realization: Annotated[str, Query(description="Realization")],
+    polyline_utm_xy: list[float] = Body(embed=True),
+) -> PolylineIntersection:
+    timer = PerfTimer()
+
+    grid_service = await UserGrid3dService.create_async(authenticated_user, case_uuid)
+    polyline_intersection = await grid_service.get_polyline_intersection_async(
+        ensemble_name=ensemble_name,
+        realization=realization,
+        grid_name=grid_name,
+        property_name=parameter_name,
+        polyline_utm_xy=polyline_utm_xy,
+    )
+
+    LOGGER.debug(f"------------------ GRID3D - get_polyline_intersection took: {timer.elapsed_s():.2f}s")
+
+    return polyline_intersection
