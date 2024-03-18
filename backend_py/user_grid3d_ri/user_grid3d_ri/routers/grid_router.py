@@ -227,7 +227,6 @@ async def post_get_mapped_grid_properties(
 
     ret_obj = api_schemas.MappedGridPropertiesResponse(
         poly_props_b64arr=b64_encode_float_array_as_float32(poly_prop_vals),
-        dbg_poly_props_arr=poly_prop_vals,
         min_grid_prop_value=prop_extractor.get_min_global_val(),
         max_grid_prop_value=prop_extractor.get_max_global_val(),
     )

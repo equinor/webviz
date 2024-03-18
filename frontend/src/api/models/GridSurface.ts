@@ -7,6 +7,7 @@ import type { B64UintArray } from './B64UintArray';
 export type GridSurface = {
     polys_b64arr: B64UintArray;
     points_b64arr: B64FloatArray;
+    poly_source_cell_indices_b64arr: B64UintArray;
     xmin: number;
     xmax: number;
     ymin: number;

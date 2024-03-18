@@ -43,13 +43,12 @@ class BoundingBox3D(BaseModel):
 class GridGeometry(BaseModel):
     vertices_b64arr: B64FloatArray
     polys_b64arr: B64UintArray
-    poly_cell_indices_b64arr: B64UintArray
+    poly_source_cell_indices_b64arr: B64UintArray
     bounding_box: BoundingBox3D
 
 
-class SurfaceProperties(BaseModel):
-    # poly_props_b64arr: B64FloatArray
-    poly_props_arr: list[float]
+class MappedGridProperties(BaseModel):
+    poly_props_b64arr: B64FloatArray
     # min_value: float
     # max_value: float
 
@@ -136,7 +135,7 @@ class UserGrid3dService:
         ret_obj = GridGeometry(
             vertices_b64arr=server_obj.vertices_b64arr,
             polys_b64arr=server_obj.polys_b64arr,
-            poly_cell_indices_b64arr=server_obj.poly_source_cell_indices_b64arr,
+            poly_source_cell_indices_b64arr=server_obj.poly_source_cell_indices_b64arr,
             bounding_box=BoundingBox3D.model_validate(server_obj.bounding_box.model_dump()),
         )
 
@@ -153,7 +152,7 @@ class UserGrid3dService:
         grid_name: str,
         property_name: str,
         ijk_index_filter: IJKIndexFilter | None,
-    ) -> SurfaceProperties:
+    ) -> MappedGridProperties:
         timer = PerfTimer()
 
         grid_blob_object_uuid = await get_grid_geometry_blob_id(
@@ -188,7 +187,7 @@ class UserGrid3dService:
 
         server_obj = server_api_schemas.MappedGridPropertiesResponse.model_validate_json(response.content)
 
-        ret_obj = SurfaceProperties(poly_props_arr=server_obj.dbg_poly_props_arr)
+        ret_obj = MappedGridProperties(poly_props_b64arr=server_obj.poly_props_b64arr)
 
         LOGGER.debug(
             f"UserGrid3dService.get_mapped_grid_properties_async() took {timer.elapsed_s():.2f}s [{et_blob_ids_s=:.2f}s, {et_call_user_session_s=:.2f}s]"

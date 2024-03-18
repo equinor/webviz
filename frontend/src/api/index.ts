@@ -29,6 +29,7 @@ export type { FieldInfo as FieldInfo_api } from './models/FieldInfo';
 export { Frequency as Frequency_api } from './models/Frequency';
 export type { GraphUserPhoto as GraphUserPhoto_api } from './models/GraphUserPhoto';
 export type { GridIntersectionVtk as GridIntersectionVtk_api } from './models/GridIntersectionVtk';
+export type { GridParameter as GridParameter_api } from './models/GridParameter';
 export type { GridSurface as GridSurface_api } from './models/GridSurface';
 export type { GridSurfaceVtk as GridSurfaceVtk_api } from './models/GridSurfaceVtk';
 export type { HTTPValidationError as HTTPValidationError_api } from './models/HTTPValidationError';

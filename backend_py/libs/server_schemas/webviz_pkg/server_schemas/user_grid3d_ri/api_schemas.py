@@ -47,7 +47,6 @@ class MappedGridPropertiesRequest(BaseModel):
 
 class MappedGridPropertiesResponse(BaseModel):
     poly_props_b64arr: B64FloatArray
-    dbg_poly_props_arr: list[float]
     min_grid_prop_value: float
     max_grid_prop_value: float
 

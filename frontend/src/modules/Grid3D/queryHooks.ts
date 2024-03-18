@@ -2,6 +2,7 @@ import { apiService } from "@framework/ApiService";
 import { UseQueryResult, useQuery } from "@tanstack/react-query";
 
 import { GridSurface_trans, transformGridSurface } from "./queryDataTransforms";
+import { GridParameter_api } from "@api";
 
 const STALE_TIME = 60 * 1000;
 const CACHE_TIME = 60 * 1000;
@@ -37,7 +38,7 @@ export function useGridParameter(
     parameterName: string | null,
     realization: string | null,
     singleKLayer: number = -1
-): UseQueryResult<number[]> {
+): UseQueryResult<GridParameter_api> {
     return useQuery({
         queryKey: ["getGridParameter", caseUuid, ensembleName, gridName, parameterName, realization, singleKLayer],
         queryFn: () =>

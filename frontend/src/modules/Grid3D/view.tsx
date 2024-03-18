@@ -77,7 +77,7 @@ export function View({ moduleContext, workbenchSettings, workbenchSession }: Mod
 
     let propertiesArray: number[] = [0, 1];
     if (gridParameterQuery?.data) {
-        propertiesArray = Array.from(gridParameterQuery.data);
+        propertiesArray = Array.from(gridParameterQuery.data.poly_props_arr);
     }
 
     if (gridSurfaceQuery.data) {

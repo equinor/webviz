@@ -3,6 +3,7 @@
 /* tslint:disable */
 /* eslint-disable */
 import type { GridIntersectionVtk } from '../models/GridIntersectionVtk';
+import type { GridParameter } from '../models/GridParameter';
 import type { GridSurface } from '../models/GridSurface';
 import type { GridSurfaceVtk } from '../models/GridSurfaceVtk';
 import type { CancelablePromise } from '../core/CancelablePromise';
@@ -102,7 +103,7 @@ export class Grid3DService {
      * @param parameterName Grid parameter
      * @param realization Realization
      * @param singleKLayer Show only a single k layer
-     * @returns number Successful Response
+     * @returns GridParameter Successful Response
      * @throws ApiError
      */
     public gridParameter(
@@ -112,7 +113,7 @@ export class Grid3DService {
         parameterName: string,
         realization: string,
         singleKLayer: number = -1,
-    ): CancelablePromise<Array<number>> {
+    ): CancelablePromise<GridParameter> {
         return this.httpRequest.request({
             method: 'GET',
             url: '/grid3d/grid_parameter',
