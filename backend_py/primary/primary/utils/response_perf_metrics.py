@@ -3,7 +3,7 @@ from starlette.responses import MutableHeaders, Response
 from webviz_pkg.core_utils.perf_timer import PerfTimer
 
 
-class PerfMetrics:
+class ResponsePerfMetrics:
     def __init__(self, target_response_for_metrics: Response | None = None):
         """
         You can pass a reference to a FastAPI Response object to this class, and the
