@@ -21,6 +21,14 @@ class IJKIndexFilter(BaseModel):
     max_k: int
 
 
+class Stats(BaseModel):
+    # All timings are in milliseconds
+    total_time: int
+    perf_metrics: dict[str, int]
+    ri_total_time: int | None = None
+    ri_perf_metrics: dict[str, int] | None = None
+
+
 class GridGeometryRequest(BaseModel):
     sas_token: str
     blob_store_base_uri: str
@@ -35,6 +43,7 @@ class GridGeometryResponse(BaseModel):
     origin_utm_x: float
     origin_utm_y: float
     bounding_box: BoundingBox3D
+    stats: Stats | None
 
 
 class MappedGridPropertiesRequest(BaseModel):
@@ -49,6 +58,7 @@ class MappedGridPropertiesResponse(BaseModel):
     poly_props_b64arr: B64FloatArray
     min_grid_prop_value: float
     max_grid_prop_value: float
+    stats: Stats | None
 
 
 class PolylineIntersectionRequest(BaseModel):
@@ -75,3 +85,4 @@ class PolylineIntersectionResponse(BaseModel):
     fence_mesh_sections: list[FenceMeshSection]
     min_grid_prop_value: float
     max_grid_prop_value: float
+    stats: Stats | None

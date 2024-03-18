@@ -4,11 +4,11 @@ import grpc
 import numpy as np
 from fastapi import APIRouter
 
-from rips.generated import GridGeometryExtraction_pb2, GridGeometryExtraction_pb2_grpc
 import rips
+from rips.generated import GridGeometryExtraction_pb2, GridGeometryExtraction_pb2_grpc
 
 from webviz_pkg.core_utils.b64 import b64_encode_float_array_as_float32, b64_encode_uint_array_as_smallest_size
-from webviz_pkg.core_utils.perf_timer import PerfTimer
+from webviz_pkg.core_utils.perf_metrics import PerfMetrics
 from webviz_pkg.server_schemas.user_grid3d_ri import api_schemas
 
 from user_grid3d_ri.logic.data_cache import DataCache
@@ -21,6 +21,7 @@ LOGGER = logging.getLogger(__name__)
 
 router = APIRouter()
 
+
 def _proto_msg_as_oneliner(msg):
     return str(msg).replace("\n", ", ")
 
@@ -30,35 +31,34 @@ async def post_get_grid_geometry(
     req_body: api_schemas.GridGeometryRequest,
 ) -> api_schemas.GridGeometryResponse:
 
-    timer = PerfTimer()
+    perf_metrics = PerfMetrics()
 
     LOGGER.debug(f"post_get_grid_geometry()")
-    LOGGER.debug(f"{req_body.sas_token=}")
-    LOGGER.debug(f"{req_body.blob_store_base_uri=}")
-    LOGGER.debug(f"{req_body.grid_blob_object_uuid=}")
-    LOGGER.debug(f"{req_body.ijk_index_filter=}")
+    # LOGGER.debug(f"{req_body.sas_token=}")
+    # LOGGER.debug(f"{req_body.blob_store_base_uri=}")
+    # LOGGER.debug(f"{req_body.grid_blob_object_uuid=}")
+    # LOGGER.debug(f"{req_body.ijk_index_filter=}")
 
     blob_cache = LocalBlobCache(req_body.sas_token, req_body.blob_store_base_uri)
 
     grid_path_name = await blob_cache.ensure_blob_downloaded(req_body.grid_blob_object_uuid, ".roff")
     LOGGER.debug(f"{grid_path_name=}")
-    et_get_blob_s = timer.lap_s()
+    perf_metrics.record_lap("get-blob")
 
     grpc_channel: grpc.Channel = await RESINSIGHT_MANAGER.get_channel_for_running_ri_instance_async()
-    et_get_ri_s = timer.lap_s()
+    perf_metrics.record_lap("get-ri")
 
     # !!!!!!!!!!!!!!!!!!!!!!!
-    ri_instance = rips.Instance(port=await RESINSIGHT_MANAGER.get_port_of_running_ri_instance_async(), launched=True)
-    LOGGER.debug(f"{ri_instance.client_version_string()=}")
-    LOGGER.debug(f"{ri_instance.version_string()=}")
-    LOGGER.debug(f"{len(ri_instance.project.views())=}")
-    LOGGER.debug(f"{len(ri_instance.project.cases())=}")
+    # ri_instance = rips.Instance(port=await RESINSIGHT_MANAGER.get_port_of_running_ri_instance_async(), launched=True)
+    # LOGGER.debug(f"{ri_instance.client_version_string()=}")
+    # LOGGER.debug(f"{ri_instance.version_string()=}")
+    # LOGGER.debug(f"{len(ri_instance.project.views())=}")
+    # LOGGER.debug(f"{len(ri_instance.project.cases())=}")
 
     # data_cache = DataCache()
     # response = data_cache.get_message_GetGridSurfaceResponse(req_body.grid_blob_object_uuid)
     # et_read_cache_s = timer.lap_s()
     response = None
-    et_read_cache_s = -1
 
     if response is None:
         grid_geometry_extraction_stub = GridGeometryExtraction_pb2_grpc.GridGeometryExtractionStub(grpc_channel)
@@ -75,7 +75,7 @@ async def post_get_grid_geometry(
             )
         LOGGER.debug(f"grpc_ijk_index_filter: {_proto_msg_as_oneliner(grpc_ijk_index_filter)}")
 
-        timer.lap_s()
+        perf_metrics.reset_lap_timer()
 
         request = GridGeometryExtraction_pb2.GetGridSurfaceRequest(
             gridFilename=grid_path_name,
@@ -88,11 +88,10 @@ async def post_get_grid_geometry(
             request
         )
 
-    et_grid_geo_s = timer.lap_s()
+    perf_metrics.record_lap("grid-geo")
 
     # data_cache.set_message_GetGridSurfaceResponse(req_body.grid_blob_object_uuid, response)
     # et_write_cache_s = timer.lap_s()
-    et_write_cache_s = -1
 
     grid_dims = response.gridDimensions
     cell_count = grid_dims.i * grid_dims.j * grid_dims.k
@@ -117,13 +116,13 @@ async def post_get_grid_geometry(
     LOGGER.debug(f"{min_coord=}")
     LOGGER.debug(f"{max_coord=}")
 
-    et_proc_verts_s = timer.lap_s()
+    perf_metrics.record_lap("proc-verts")
 
     poly_indices_np = np.asarray(response.quadIndicesArr, dtype=np.int32)
     poly_indices_np = poly_indices_np.reshape(-1, 4)
     poly_indices_np = np.insert(poly_indices_np, 0, 4, axis=1).reshape(-1)
     # LOGGER.debug(f"{poly_indices_np[:20]=}")
-    et_proc_indices_s = timer.lap_s()
+    perf_metrics.record_lap("proc-indices")
 
     source_cell_indices_np = np.asarray(response.sourceCellIndicesArr, dtype=np.uint32)
 
@@ -141,13 +140,13 @@ async def post_get_grid_geometry(
             max_y=max_coord[1],
             max_z=max_coord[2],
         ),
+        stats=None,
     )
+    perf_metrics.record_lap("encode")
 
-    et_encode_s = timer.lap_s()
+    ret_obj.stats = api_schemas.Stats(total_time=perf_metrics.get_elapsed_ms(), perf_metrics=perf_metrics.to_dict())
 
-    LOGGER.debug(
-        f"Got grid geometry in {timer.elapsed_s():.2f}s [{et_get_blob_s=:.2f}, {et_get_ri_s=:.2f}, {et_read_cache_s=:.2f}, {et_write_cache_s=:.2f}, {et_grid_geo_s=:.2f}, {et_proc_verts_s=:.2f}, {et_proc_indices_s=:.2f}, {et_encode_s=:.2f}]"
-    )
+    LOGGER.debug(f"Got grid geometry in: {perf_metrics.to_string_s()}")
 
     return ret_obj
 
@@ -158,13 +157,13 @@ async def post_get_mapped_grid_properties(
 ) -> api_schemas.MappedGridPropertiesResponse:
 
     LOGGER.debug(f"post_get_mapped_grid_properties()")
-    LOGGER.debug(f"{req_body.sas_token=}")
-    LOGGER.debug(f"{req_body.blob_store_base_uri=}")
-    LOGGER.debug(f"{req_body.grid_blob_object_uuid=}")
-    LOGGER.debug(f"{req_body.property_blob_object_uuid=}")
-    LOGGER.debug(f"{req_body.ijk_index_filter=}")
+    # LOGGER.debug(f"{req_body.sas_token=}")
+    # LOGGER.debug(f"{req_body.blob_store_base_uri=}")
+    # LOGGER.debug(f"{req_body.grid_blob_object_uuid=}")
+    # LOGGER.debug(f"{req_body.property_blob_object_uuid=}")
+    # LOGGER.debug(f"{req_body.ijk_index_filter=}")
 
-    timer = PerfTimer()
+    perf_metrics = PerfMetrics()
 
     blob_cache = LocalBlobCache(req_body.sas_token, req_body.blob_store_base_uri)
 
@@ -172,20 +171,16 @@ async def post_get_mapped_grid_properties(
     LOGGER.debug(f"{grid_path_name=}")
     property_path_name = await blob_cache.ensure_blob_downloaded(req_body.property_blob_object_uuid, ".roff")
     LOGGER.debug(f"{property_path_name=}")
-    et_get_blobs_s = timer.lap_s()
+    perf_metrics.record_lap("get-blobs")
 
     # data_cache = DataCache()
     # source_cell_indices_np = data_cache.get_uint32_numpy_arr(grid_blob_object_uuid)
     # et_read_cache_s = timer.lap_s()
     source_cell_indices_np = None
-    et_read_cache_s = -1
 
-    et_get_ri_s = -1
-    et_grid_geo_s = -1
-    et_write_cache_s = -1
     if source_cell_indices_np is None:
         grpc_channel: grpc.Channel = await RESINSIGHT_MANAGER.get_channel_for_running_ri_instance_async()
-        et_get_ri_s = timer.lap_s()
+        perf_metrics.record_lap("get-ri")
 
         grpc_ijk_index_filter = None
         if req_body.ijk_index_filter:
@@ -211,7 +206,7 @@ async def post_get_mapped_grid_properties(
             request
         )
 
-        et_grid_geo_s = timer.lap_s()
+        perf_metrics.record_lap("grid-geo")
 
         source_cell_indices_np = np.asarray(response.sourceCellIndicesArr, dtype=np.uint32)
         # data_cache.set_uint32_numpy_arr(grid_blob_object_uuid, source_cell_indices_np)
@@ -223,18 +218,24 @@ async def post_get_mapped_grid_properties(
     prop_extractor = GridPropertiesExtractor.from_roff_property_file(property_path_name)
     poly_prop_vals = prop_extractor.get_prop_values_for_cells(source_cell_indices_np)
     # LOGGER.debug(f"{poly_prop_vals[:20]=}")
-    et_proc_props_s = timer.lap_s()
+    perf_metrics.record_lap("proc-props")
 
     ret_obj = api_schemas.MappedGridPropertiesResponse(
         poly_props_b64arr=b64_encode_float_array_as_float32(poly_prop_vals),
         min_grid_prop_value=prop_extractor.get_min_global_val(),
         max_grid_prop_value=prop_extractor.get_max_global_val(),
+        stats=None,
+    )
+    perf_metrics.record_lap("encode")
+
+    fake_ri_perf_metrics = {"fake-open-file": 123, "fake-calc": 123}
+    ret_obj.stats = api_schemas.Stats(
+        total_time=perf_metrics.get_elapsed_ms(),
+        perf_metrics=perf_metrics.to_dict(),
+        ri_total_time=888,
+        ri_perf_metrics=fake_ri_perf_metrics,
     )
 
-    et_encode_s = timer.lap_s()
-
-    LOGGER.debug(
-        f"Got mapped grid properties in {timer.elapsed_s():.2f}s [{et_get_blobs_s=:.2f}, {et_get_ri_s=:.2f}, {et_read_cache_s=:.2f}, {et_grid_geo_s=:.2f}, {et_write_cache_s=:.2f}, {et_proc_props_s=:.2f}, {et_encode_s=:.2f}]"
-    )
+    LOGGER.debug(f"Got mapped grid properties in: {perf_metrics.to_string_s()}")
 
     return ret_obj

@@ -7,7 +7,7 @@ from fastapi import APIRouter
 from rips.generated import GridGeometryExtraction_pb2, GridGeometryExtraction_pb2_grpc
 from rips.instance import *
 
-from webviz_pkg.core_utils.perf_timer import PerfTimer
+from webviz_pkg.core_utils.perf_metrics import PerfMetrics
 from webviz_pkg.server_schemas.user_grid3d_ri import api_schemas
 
 from user_grid3d_ri.logic.grid_properties import GridPropertiesExtractor
@@ -24,14 +24,14 @@ async def post_get_polyline_intersection(
     req_body: api_schemas.PolylineIntersectionRequest,
 ) -> api_schemas.PolylineIntersectionResponse:
 
-    LOGGER.debug(f"get_polyline_intersection()")
-    LOGGER.debug(f"{req_body.sas_token=}")
-    LOGGER.debug(f"{req_body.blob_store_base_uri=}")
-    LOGGER.debug(f"{req_body.grid_blob_object_uuid=}")
-    LOGGER.debug(f"{req_body.property_blob_object_uuid=}")
-    LOGGER.debug(f"{len(req_body.polyline_utm_xy)=}")
+    LOGGER.debug(f"post_get_polyline_intersection()")
+    # LOGGER.debug(f"{req_body.sas_token=}")
+    # LOGGER.debug(f"{req_body.blob_store_base_uri=}")
+    # LOGGER.debug(f"{req_body.grid_blob_object_uuid=}")
+    # LOGGER.debug(f"{req_body.property_blob_object_uuid=}")
+    # LOGGER.debug(f"{len(req_body.polyline_utm_xy)=}")
 
-    timer = PerfTimer()
+    perf_metrics = PerfMetrics()
 
     blob_cache = LocalBlobCache(req_body.sas_token, req_body.blob_store_base_uri)
 
@@ -39,10 +39,10 @@ async def post_get_polyline_intersection(
     LOGGER.debug(f"{grid_path_name=}")
     property_path_name = await blob_cache.ensure_blob_downloaded(req_body.property_blob_object_uuid, ".roff")
     LOGGER.debug(f"{property_path_name=}")
-    et_get_blobs_s = timer.lap_s()
+    perf_metrics.record_lap("get-blobs")
 
     grpc_channel: grpc.Channel = await RESINSIGHT_MANAGER.get_channel_for_running_ri_instance_async()
-    et_get_ri_s = timer.lap_s()
+    perf_metrics.record_lap("get-ri")
 
     grid_geometry_extraction_stub = GridGeometryExtraction_pb2_grpc.GridGeometryExtractionStub(grpc_channel)
     grpc_request = GridGeometryExtraction_pb2.CutAlongPolylineRequest(
@@ -54,7 +54,7 @@ async def post_get_polyline_intersection(
         grpc_request
     )
 
-    et_cut_s = timer.lap_s()
+    perf_metrics.record_lap("ri-cut")
 
     LOGGER.debug(f"{len(grpc_response.fenceMeshSections)=}")
 
@@ -104,17 +104,16 @@ async def post_get_polyline_intersection(
         )
         ret_sections.append(section)
 
-    et_process_s = timer.lap_s()
+    perf_metrics.record_lap("process")
 
     ret_obj = api_schemas.PolylineIntersectionResponse(
         fence_mesh_sections=ret_sections,
         min_grid_prop_value=prop_extractor.get_min_global_val(),
         max_grid_prop_value=prop_extractor.get_max_global_val(),
+        stats=api_schemas.Stats(total_time=perf_metrics.get_elapsed_ms(), perf_metrics=perf_metrics.to_dict()),
     )
 
-    LOGGER.debug(
-        f"Got polyline intersection in {timer.elapsed_s():.2f}s [{et_get_blobs_s=:.2f}, {et_get_ri_s=:.2f}, {et_cut_s=:.2f}, {et_process_s=:.2f}]"
-    )
+    LOGGER.debug(f"Got polyline intersection in: {perf_metrics.to_string_s()}")
 
     # with open("/home/appuser/polyline_intersection.json", "w") as f:
     #     f.write(ret_obj.model_dump_json())

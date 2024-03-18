@@ -5,13 +5,14 @@ import httpx
 from pydantic import BaseModel
 
 from sumo.wrapper import SumoClient
-from webviz_pkg.core_utils.perf_timer import PerfTimer
+from webviz_pkg.core_utils.perf_metrics import PerfMetrics, make_metrics_string_s
 from webviz_pkg.core_utils.b64 import B64FloatArray, B64UintArray
 from webviz_pkg.server_schemas.user_grid3d_ri import api_schemas as server_api_schemas
 
 from primary.auth.auth_helper import AuthenticatedUser
 from primary.services.user_session_manager.user_session_manager import UserSessionManager, UserComponent
-from primary.services.service_exceptions import Service, ServiceUnavailableError, ServiceTimeoutError, ServiceRequestError
+from primary.services.service_exceptions import Service
+from primary.services.service_exceptions import ServiceUnavailableError, ServiceTimeoutError, ServiceRequestError
 
 # Dirty imports!!
 from primary.services.sumo_access._helpers import create_sumo_client_instance
@@ -84,22 +85,20 @@ class UserGrid3dService:
 
     @classmethod
     async def create_async(cls, authenticated_user: AuthenticatedUser, case_uuid: str) -> "UserGrid3dService":
-        timer = PerfTimer()
+        perf_metrics = PerfMetrics()
 
         session_manager = UserSessionManager(authenticated_user.get_user_id())
         session_base_url = await session_manager.get_or_create_session_async(UserComponent.GRID3D_RI, None)
         if session_base_url is None:
             raise ServiceUnavailableError("Failed to get user session URL", Service.USER_SESSION)
-        et_user_session_s = timer.lap_s()
+        perf_metrics.record_lap("get-session")
 
         sumo_access_token = authenticated_user.get_sumo_access_token()
         sumo_client = create_sumo_client_instance(sumo_access_token)
-        et_sumo_client_s = timer.lap_s()
+        perf_metrics.record_lap("sumo-client")
 
         sas_token, blob_store_base_uri = _get_sas_token_and_blob_store_base_uri_for_case(sumo_access_token, case_uuid)
-        LOGGER.debug(f"{sas_token=}")
-        LOGGER.debug(f"{blob_store_base_uri=}")
-        et_sas_token_s = timer.lap_s()
+        perf_metrics.record_lap("sas-token")
 
         service_object = UserGrid3dService(
             session_base_url=session_base_url,
@@ -109,22 +108,20 @@ class UserGrid3dService:
             blob_store_base_uri=blob_store_base_uri,
         )
 
-        LOGGER.debug(
-            f"UserGrid3dService.create_async() took: {timer.elapsed_s():.2f}s [{et_user_session_s=:.2f}s, {et_sumo_client_s=:.2f}s, {et_sas_token_s=:.2f}s]"
-        )
+        LOGGER.debug(f".create_async() took: {perf_metrics.to_string_s()}")
 
         return service_object
 
     async def get_grid_geometry_async(
         self, ensemble_name: str, realization: int, grid_name: str, ijk_index_filter: IJKIndexFilter | None
     ) -> GridGeometry:
-        timer = PerfTimer()
+        perf_metrics = PerfMetrics()
 
         grid_blob_object_uuid = await get_grid_geometry_blob_id(
             self._sumo_client, self._case_uuid, ensemble_name, realization, grid_name
         )
-        LOGGER.debug(f"{grid_blob_object_uuid=}")
-        et_blob_id_s = timer.lap_s()
+        LOGGER.debug(f".get_grid_geometry_async() - {grid_blob_object_uuid=}")
+        perf_metrics.record_lap("blob-id")
 
         effective_ijk_index_filter: server_api_schemas.IJKIndexFilter | None = None
         if ijk_index_filter:
@@ -142,24 +139,18 @@ class UserGrid3dService:
             body_pydantic_model=request_body,
             operation_descr="getting grid geometry from grid3d user session",
         )
-        et_call_user_session_s = timer.lap_s()
-
-        server_obj = server_api_schemas.GridGeometryResponse.model_validate_json(response.content)
-
-        # bb1 = BoundingBox3D(min_x=0, min_y=1, min_z=2, max_x=3, max_y=4, max_z=5)
-        # bb = BoundingBox3D.model_validate(bb1)
-        # bb = BoundingBox3D(**server_obj.bounding_box)
+        api_obj = server_api_schemas.GridGeometryResponse.model_validate_json(response.content)
+        perf_metrics.record_lap("call-user-session")
 
         ret_obj = GridGeometry(
-            vertices_b64arr=server_obj.vertices_b64arr,
-            polys_b64arr=server_obj.polys_b64arr,
-            poly_source_cell_indices_b64arr=server_obj.poly_source_cell_indices_b64arr,
-            bounding_box=BoundingBox3D.model_validate(server_obj.bounding_box.model_dump()),
+            vertices_b64arr=api_obj.vertices_b64arr,
+            polys_b64arr=api_obj.polys_b64arr,
+            poly_source_cell_indices_b64arr=api_obj.poly_source_cell_indices_b64arr,
+            bounding_box=BoundingBox3D.model_validate(api_obj.bounding_box.model_dump()),
         )
 
-        LOGGER.debug(
-            f"UserGrid3dService.get_grid_geometry_async() took {timer.elapsed_s():.2f}s [{et_blob_id_s=:.2f}s, {et_call_user_session_s=:.2f}s]"
-        )
+        self._log_perf_messages(".get_grid_geometry_async()", perf_metrics, api_obj.stats)
+        perf_metrics.record_lap("convert")
 
         return ret_obj
 
@@ -171,19 +162,19 @@ class UserGrid3dService:
         property_name: str,
         ijk_index_filter: IJKIndexFilter | None,
     ) -> MappedGridProperties:
-        timer = PerfTimer()
+        perf_metrics = PerfMetrics()
 
         grid_blob_object_uuid = await get_grid_geometry_blob_id(
             self._sumo_client, self._case_uuid, ensemble_name, realization, grid_name
         )
-        LOGGER.debug(f"{grid_blob_object_uuid=}")
+        LOGGER.debug(f".get_mapped_grid_properties_async() - {grid_blob_object_uuid=}")
 
         property_blob_object_uuid = await get_grid_parameter_blob_id(
             self._sumo_client, self._case_uuid, ensemble_name, realization, grid_name, property_name
         )
-        LOGGER.debug(f"{property_blob_object_uuid=}")
+        LOGGER.debug(f".get_mapped_grid_properties_async() - {property_blob_object_uuid=}")
 
-        et_blob_ids_s = timer.lap_s()
+        perf_metrics.record_lap("blob-ids")
 
         effective_ijk_index_filter: server_api_schemas.IJKIndexFilter | None = None
         if ijk_index_filter:
@@ -201,34 +192,32 @@ class UserGrid3dService:
             body_pydantic_model=request_body,
             operation_descr="getting mapped grid properties from grid3d user session",
         )
-        et_call_user_session_s = timer.lap_s()
+        api_obj = server_api_schemas.MappedGridPropertiesResponse.model_validate_json(response.content)
+        perf_metrics.record_lap("call-user-session")
 
-        server_obj = server_api_schemas.MappedGridPropertiesResponse.model_validate_json(response.content)
+        ret_obj = MappedGridProperties(poly_props_b64arr=api_obj.poly_props_b64arr)
+        perf_metrics.record_lap("convert")
 
-        ret_obj = MappedGridProperties(poly_props_b64arr=server_obj.poly_props_b64arr)
-
-        LOGGER.debug(
-            f"UserGrid3dService.get_mapped_grid_properties_async() took {timer.elapsed_s():.2f}s [{et_blob_ids_s=:.2f}s, {et_call_user_session_s=:.2f}s]"
-        )
+        self._log_perf_messages(".get_mapped_grid_properties_async()", perf_metrics, api_obj.stats)
 
         return ret_obj
 
     async def get_polyline_intersection_async(
         self, ensemble_name: str, realization: int, grid_name: str, property_name: str, polyline_utm_xy: list[float]
     ) -> PolylineIntersection:
-        timer = PerfTimer()
+        perf_metrics = PerfMetrics()
 
         grid_blob_object_uuid = await get_grid_geometry_blob_id(
             self._sumo_client, self._case_uuid, ensemble_name, realization, grid_name
         )
-        LOGGER.debug(f"{grid_blob_object_uuid=}")
+        LOGGER.debug(f".get_polyline_intersection_async() - {grid_blob_object_uuid=}")
 
         property_blob_object_uuid = await get_grid_parameter_blob_id(
             self._sumo_client, self._case_uuid, ensemble_name, realization, grid_name, property_name
         )
-        LOGGER.debug(f"{property_blob_object_uuid=}")
+        LOGGER.debug(f".get_polyline_intersection_async() - {property_blob_object_uuid=}")
 
-        et_blob_ids_s = timer.lap_s()
+        perf_metrics.record_lap("blob-ids")
 
         request_body = server_api_schemas.PolylineIntersectionRequest(
             sas_token=self._sas_token,
@@ -243,26 +232,36 @@ class UserGrid3dService:
             body_pydantic_model=request_body,
             operation_descr="getting polyline intersection from grid3d user session",
         )
-        et_call_user_session_s = timer.lap_s()
+        api_obj = server_api_schemas.PolylineIntersectionResponse.model_validate_json(response.content)
+        perf_metrics.record_lap("call-user-session")
 
         # Not sure how we should be doing this wrt performance.
         # Right now we end up doing one validation here and another when creating the return object.
-        server_obj = server_api_schemas.PolylineIntersectionResponse.model_validate_json(response.content)
-        et_convert1_s = timer.lap_s()
-
-        ret_mesh_section_list = [ FenceMeshSection.model_validate(sect.model_dump()) for sect in server_obj.fence_mesh_sections]
+        ret_mesh_section_list = [
+            FenceMeshSection.model_validate(sect.model_dump()) for sect in api_obj.fence_mesh_sections
+        ]
         ret_obj = PolylineIntersection(
             fence_mesh_sections=ret_mesh_section_list,
-            min_grid_prop_value=server_obj.min_grid_prop_value,
-            max_grid_prop_value=server_obj.max_grid_prop_value,
+            min_grid_prop_value=api_obj.min_grid_prop_value,
+            max_grid_prop_value=api_obj.max_grid_prop_value,
         )
-        et_convert2_s = timer.lap_s()
+        perf_metrics.record_lap("convert")
 
-        LOGGER.debug(
-            f"UserGrid3dService.get_polyline_intersection_async() took {timer.elapsed_s():.2f}s [{et_blob_ids_s=:.2f}s, {et_call_user_session_s=:.2f}s, {et_convert1_s=:.4f}s, {et_convert2_s=:.4f}s]"
-        )
+        self._log_perf_messages(".get_polyline_intersection_async()", perf_metrics, api_obj.stats)
 
         return ret_obj
+
+    def _log_perf_messages(self, prefix: str, metrics: PerfMetrics, stats: server_api_schemas.Stats | None) -> None:
+        user_session_details = "na"
+        resinsight_details = "na"
+        if stats and stats.perf_metrics:
+            user_session_details = make_metrics_string_s(stats.perf_metrics, stats.total_time)
+        if stats and stats.ri_perf_metrics:
+            resinsight_details = make_metrics_string_s(stats.ri_perf_metrics, stats.ri_total_time)
+
+        LOGGER.debug(f"{prefix} took: {metrics.to_string_s()}")
+        LOGGER.debug(f"{prefix}   - user sess.: {user_session_details}")
+        LOGGER.debug(f"{prefix}   - resinsight: {resinsight_details}")
 
     async def _call_service_endpoint_get(
         self, endpoint: str, query_params: dict[str, str], operation_descr: str
@@ -296,7 +295,7 @@ class UserGrid3dService:
     ) -> httpx.Response:
 
         url = f"{self._base_url}/{endpoint}"
-        LOGGER.debug(f"_make_request_to_service_endpoint() - {method=}, {endpoint=}, {url=}")
+        LOGGER.debug(f"._make_request_to_service_endpoint() - {method=}, {endpoint=}, {url=}")
 
         post_content: str | None = None
         if method == "POST" and post_body_pydantic_model is not None:
@@ -331,6 +330,6 @@ class UserGrid3dService:
                 )
                 raise ServiceRequestError(f"Error {operation_descr}", Service.USER_SESSION) from e
 
-        LOGGER.debug(f"_make_request_to_service_endpoint() succeeded - {method=}, {endpoint=}, {url=}")
+        LOGGER.debug(f"._make_request_to_service_endpoint() succeeded - {method=}, {endpoint=}, {url=}")
 
         return response
