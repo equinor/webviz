@@ -89,6 +89,27 @@ def b64_encode_uint_array_as_smallest_size(
     return B64UintArray(element_type=element_type, data_b64str=base64_str)
 
 
+def b64_decode_float_array(base64_arr: B64FloatArray) -> NDArray[np.floating]:
+    decoded_bytes = _base64_decode_b64str_to_bytes(base64_arr.data_b64str)
+    if base64_arr.element_type == "float32":
+        np_array = np.frombuffer(decoded_bytes, dtype=np.float32)
+        return np_array
+    elif base64_arr.element_type == "float64":
+        np_array = np.frombuffer(decoded_bytes, dtype=np.float64)
+        return np_array
+
+    raise ValueError(f"Unknown element_type: {base64_arr.element_type}")
+
+
+def b64_decode_float_array_to_list(base64_arr: B64FloatArray) -> list[float]:
+    return b64_decode_float_array(base64_arr).tolist()
+
+
 def _base64_encode_numpy_arr_to_str(np_arr: NDArray) -> str:
     base64_bytes: bytes = base64.b64encode(np_arr.ravel(order="C").data)
     return base64_bytes.decode("ascii")
+
+
+def _base64_decode_b64str_to_bytes(b64str: str) -> bytes:
+    decoded_bytes: bytes = base64.b64decode(b64str)
+    return decoded_bytes
