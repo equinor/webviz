@@ -58,9 +58,9 @@ async def post_get_grid_geometry(
     # data_cache = DataCache()
     # response = data_cache.get_message_GetGridSurfaceResponse(req_body.grid_blob_object_uuid)
     # et_read_cache_s = timer.lap_s()
-    response = None
+    grpc_response = None
 
-    if response is None:
+    if grpc_response is None:
         grid_geometry_extraction_stub = GridGeometryExtraction_pb2_grpc.GridGeometryExtractionStub(grpc_channel)
 
         grpc_ijk_index_filter = None
@@ -84,31 +84,25 @@ async def post_get_grid_geometry(
             propertyFilter=None,
         )
 
-        response: GridGeometryExtraction_pb2.GetGridSurfaceResponse = grid_geometry_extraction_stub.GetGridSurface(
+        grpc_response: GridGeometryExtraction_pb2.GetGridSurfaceResponse = grid_geometry_extraction_stub.GetGridSurface(
             request
         )
 
-    perf_metrics.record_lap("grid-geo")
+    perf_metrics.record_lap("ri-grid-geo")
 
     # data_cache.set_message_GetGridSurfaceResponse(req_body.grid_blob_object_uuid, response)
     # et_write_cache_s = timer.lap_s()
 
-    grid_dims = response.gridDimensions
+    grid_dims = grpc_response.gridDimensions
     cell_count = grid_dims.i * grid_dims.j * grid_dims.k
     LOGGER.debug(f"grid_dims: {_proto_msg_as_oneliner(grid_dims)}")
     LOGGER.debug(f"{cell_count=}")
 
-    LOGGER.debug(f"{len(response.quadIndicesArr)=}")
-    LOGGER.debug(f"{len(response.sourceCellIndicesArr)=}")
+    LOGGER.debug(f"{len(grpc_response.quadIndicesArr)=}")
+    LOGGER.debug(f"{len(grpc_response.sourceCellIndicesArr)=}")
 
-    vertices_np = np.asarray(response.vertexArray, dtype=np.float32)
+    vertices_np = np.asarray(grpc_response.vertexArray, dtype=np.float32)
     vertices_np = vertices_np.reshape(-1, 3)
-    # LOGGER.debug(f"{vertices_np[:5]=}")
-
-    # !!!!
-    # HACK, adding UTM origin to vertices
-    origin_utm = response.originUtm
-    vertices_np = np.add(vertices_np, [origin_utm.x, origin_utm.y, origin_utm.z])
     # LOGGER.debug(f"{vertices_np[:5]=}")
 
     min_coord = np.min(vertices_np, axis=0)
@@ -118,20 +112,20 @@ async def post_get_grid_geometry(
 
     perf_metrics.record_lap("proc-verts")
 
-    poly_indices_np = np.asarray(response.quadIndicesArr, dtype=np.int32)
+    poly_indices_np = np.asarray(grpc_response.quadIndicesArr, dtype=np.int32)
     poly_indices_np = poly_indices_np.reshape(-1, 4)
     poly_indices_np = np.insert(poly_indices_np, 0, 4, axis=1).reshape(-1)
     # LOGGER.debug(f"{poly_indices_np[:20]=}")
     perf_metrics.record_lap("proc-indices")
 
-    source_cell_indices_np = np.asarray(response.sourceCellIndicesArr, dtype=np.uint32)
+    source_cell_indices_np = np.asarray(grpc_response.sourceCellIndicesArr, dtype=np.uint32)
 
     ret_obj = api_schemas.GridGeometryResponse(
         vertices_b64arr=b64_encode_float_array_as_float32(vertices_np),
         polys_b64arr=b64_encode_uint_array_as_smallest_size(poly_indices_np),
         poly_source_cell_indices_b64arr=b64_encode_uint_array_as_smallest_size(source_cell_indices_np),
-        origin_utm_x=origin_utm.x,
-        origin_utm_y=origin_utm.y,
+        origin_utm_x=grpc_response.originUtm.x,
+        origin_utm_y=grpc_response.originUtm.y,
         bounding_box=api_schemas.BoundingBox3D(
             min_x=min_coord[0],
             min_y=min_coord[1],

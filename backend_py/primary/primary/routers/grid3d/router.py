@@ -83,6 +83,8 @@ async def grid_surface(
         points_b64arr=grid_geometry.vertices_b64arr,
         polys_b64arr=grid_geometry.polys_b64arr,
         poly_source_cell_indices_b64arr=grid_geometry.poly_source_cell_indices_b64arr,
+        origin_utm_x=grid_geometry.origin_utm_x,
+        origin_utm_y=grid_geometry.origin_utm_y,
         xmin=grid_geometry.bounding_box.min_x,
         xmax=grid_geometry.bounding_box.max_x,
         ymin=grid_geometry.bounding_box.min_y,

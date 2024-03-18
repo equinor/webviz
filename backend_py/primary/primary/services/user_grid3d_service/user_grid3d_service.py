@@ -45,6 +45,8 @@ class GridGeometry(BaseModel):
     vertices_b64arr: B64FloatArray
     polys_b64arr: B64UintArray
     poly_source_cell_indices_b64arr: B64UintArray
+    origin_utm_x: float
+    origin_utm_y: float
     bounding_box: BoundingBox3D
 
 
@@ -134,23 +136,28 @@ class UserGrid3dService:
             ijk_index_filter=effective_ijk_index_filter,
         )
 
+        perf_metrics.reset_lap_timer()
         response = await self._call_service_endpoint_post(
             endpoint="get_grid_geometry",
             body_pydantic_model=request_body,
             operation_descr="getting grid geometry from grid3d user session",
         )
-        api_obj = server_api_schemas.GridGeometryResponse.model_validate_json(response.content)
         perf_metrics.record_lap("call-user-session")
+
+        api_obj = server_api_schemas.GridGeometryResponse.model_validate_json(response.content)
+        perf_metrics.record_lap("parse-response")
 
         ret_obj = GridGeometry(
             vertices_b64arr=api_obj.vertices_b64arr,
             polys_b64arr=api_obj.polys_b64arr,
             poly_source_cell_indices_b64arr=api_obj.poly_source_cell_indices_b64arr,
+            origin_utm_x=api_obj.origin_utm_x,
+            origin_utm_y=api_obj.origin_utm_y,
             bounding_box=BoundingBox3D.model_validate(api_obj.bounding_box.model_dump()),
         )
+        perf_metrics.record_lap("convert")
 
         self._log_perf_messages(".get_grid_geometry_async()", perf_metrics, api_obj.stats)
-        perf_metrics.record_lap("convert")
 
         return ret_obj
 
@@ -187,13 +194,17 @@ class UserGrid3dService:
             property_blob_object_uuid=property_blob_object_uuid,
             ijk_index_filter=effective_ijk_index_filter,
         )
+
+        perf_metrics.reset_lap_timer()
         response = await self._call_service_endpoint_post(
             endpoint="get_mapped_grid_properties",
             body_pydantic_model=request_body,
             operation_descr="getting mapped grid properties from grid3d user session",
         )
-        api_obj = server_api_schemas.MappedGridPropertiesResponse.model_validate_json(response.content)
         perf_metrics.record_lap("call-user-session")
+
+        api_obj = server_api_schemas.MappedGridPropertiesResponse.model_validate_json(response.content)
+        perf_metrics.record_lap("parse-response")
 
         ret_obj = MappedGridProperties(poly_props_b64arr=api_obj.poly_props_b64arr)
         perf_metrics.record_lap("convert")

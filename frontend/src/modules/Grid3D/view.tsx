@@ -56,11 +56,11 @@ export function View({ moduleContext, workbenchSettings, workbenchSession }: Mod
     const wellTrajectoriesQuery = useFieldWellsTrajectoriesQuery(firstCaseUuid ?? undefined);
     const bounds = gridSurfaceQuery?.data
         ? [
-              gridSurfaceQuery.data.xmin,
-              gridSurfaceQuery.data.ymin,
+              gridSurfaceQuery.data.xmin + gridSurfaceQuery.data.origin_utm_x,
+              gridSurfaceQuery.data.ymin + gridSurfaceQuery.data.origin_utm_y,
               gridSurfaceQuery.data.zmin,
-              gridSurfaceQuery.data.xmax,
-              gridSurfaceQuery.data.ymax,
+              gridSurfaceQuery.data.xmax + gridSurfaceQuery.data.origin_utm_x,
+              gridSurfaceQuery.data.ymax + gridSurfaceQuery.data.origin_utm_y,
               0,
           ]
         : [0, 0, 0, 100, 100, 100];
@@ -81,14 +81,15 @@ export function View({ moduleContext, workbenchSettings, workbenchSession }: Mod
     }
 
     if (gridSurfaceQuery.data) {
-        const points: Float32Array = gridSurfaceQuery.data.pointsFloat32Arr;
-        const polys: Uint32Array = gridSurfaceQuery.data.polysUint32Arr;
+        const offsetXyz = [gridSurfaceQuery.data.origin_utm_x, gridSurfaceQuery.data.origin_utm_y, 0];
+        const pointsNumberArray = Array.from(gridSurfaceQuery.data.pointsFloat32Arr, (val, i) => (val + offsetXyz[i%3]));
+        const polysNumberArray = Array.from(gridSurfaceQuery.data.polysUint32Arr);
         newLayers.push({
             "@@type": "Grid3DLayer",
             id: "grid3d-layer",
             material: false,
-            pointsData: Array.from(points),
-            polysData: Array.from(polys),
+            pointsData: pointsNumberArray,
+            polysData: polysNumberArray,
             propertiesData: propertiesArray,
             colorMapName: "Continuous",
             ZIncreasingDownwards: false,
