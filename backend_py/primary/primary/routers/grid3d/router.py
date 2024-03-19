@@ -9,7 +9,7 @@ from starlette.requests import Request
 from webviz_pkg.core_utils.perf_metrics import PerfMetrics
 from webviz_pkg.core_utils.b64 import b64_decode_float_array_to_list
 from webviz_pkg.core_utils.perf_timer import PerfTimer
-from webviz_pkg.core_utils.b64 import b64_decode_float_array, b64_decode_int_array
+from webviz_pkg.core_utils.b64 import b64_encode_float_array_as_float32, b64_decode_int_array
 from webviz_pkg.core_utils.b64 import B64FloatArray, B64IntArray
 
 from primary.services.utils.authenticated_user import AuthenticatedUser
@@ -79,16 +79,19 @@ async def grid_surface(
         ijk_index_filter = IJKIndexFilter(
             min_i=-1, max_i=-1, min_j=-1, max_j=-1, min_k=single_k_layer, max_k=single_k_layer
         )
+
     access = await Grid3dAccess.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
     grid_blob_object_uuid = await access.get_geometry_blob_id_async(grid_name, realization_num)
-    LOGGER.debug(f".get_grid_geometry_blob_id_async() - {grid_blob_object_uuid=}")
-    perf_metrics.record_lap("blob-ids")
+    LOGGER.debug(f"{grid_blob_object_uuid=}")
+    perf_metrics.record_lap("get-blob-id")
 
-    perf_metrics.reset_lap_timer()
     grid_service = await UserGrid3dService.create_async(authenticated_user, case_uuid)
+    perf_metrics.record_lap("create-service")
+
     grid_geometry = await grid_service.get_grid_geometry_async(
         grid_blob_object_uuid=grid_blob_object_uuid, ijk_index_filter=ijk_index_filter
     )
+    perf_metrics.record_lap("call-service")
 
     response = schemas.Grid3dGeometry(
         points_b64arr=grid_geometry.vertices_b64arr,
@@ -104,7 +107,7 @@ async def grid_surface(
         zmax=grid_geometry.bounding_box.max_z,
     )
 
-    LOGGER.debug(f"------------------ GRID3D - grid_surface took: {perf_metrics.get_elapsed_ms():.2f}ms")
+    LOGGER.debug(f"------------------ GRID3D - grid_surface took: {perf_metrics.to_string_s()}")
 
     return response
 
@@ -128,31 +131,31 @@ async def grid_parameter(
         ijk_index_filter = IJKIndexFilter(
             min_i=-1, max_i=-1, min_j=-1, max_j=-1, min_k=single_k_layer, max_k=single_k_layer
         )
-    sumo_grid_access = await Grid3dAccess.from_case_uuid(
-        authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
-    )
 
-    grid_blob_object_uuid = await sumo_grid_access.get_geometry_blob_id_async(grid_name, realization_num)
-    LOGGER.debug(f".get_grid_geometry_blob_id_async() - {grid_blob_object_uuid=}")
-    property_blob_object_uuid = await sumo_grid_access.get_property_uuid_async(
-        grid_name, parameter_name, realization_num
-    )
-    LOGGER.debug(f".get_mapped_grid_properties_blob_id_async() - {property_blob_object_uuid=}")
-    perf_metrics.record_lap("blob-ids")
+    access = await Grid3dAccess.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
+    grid_blob_object_uuid = await access.get_geometry_blob_id_async(grid_name, realization_num)
+    LOGGER.debug(f"{grid_blob_object_uuid=}")
+    property_blob_object_uuid = await access.get_property_uuid_async(grid_name, parameter_name, realization_num)
+    LOGGER.debug(f"{property_blob_object_uuid=}")
+    perf_metrics.record_lap("get-blob-ids")
 
-    perf_metrics.reset_lap_timer()
     grid_service = await UserGrid3dService.create_async(authenticated_user, case_uuid)
+    perf_metrics.record_lap("create-service")
 
     mapped_grid_properties = await grid_service.get_mapped_grid_properties_async(
         grid_blob_object_uuid=grid_blob_object_uuid,
         property_blob_object_uuid=property_blob_object_uuid,
         ijk_index_filter=ijk_index_filter,
     )
+    perf_metrics.record_lap("call-service")
 
-    # Until the response schema is updated to use the b64 encoded array, we need to decode it here
-    response = schemas.Grid3dMappedProperty(poly_props_b64arr=mapped_grid_properties.poly_props_b64arr)
+    # Until the response schema is updated to support int b64 encoded array we force it to float
+    float_poly_props_b64arr = _hack_ensure_b64_property_array_is_float(
+        mapped_grid_properties.poly_props_b64arr, mapped_grid_properties.undefined_int_value
+    )
+    response = schemas.Grid3dMappedProperty(poly_props_b64arr=float_poly_props_b64arr)
 
-    LOGGER.debug(f"------------------ GRID3D - grid_parameter took: {perf_metrics.get_elapsed_ms():.2f}ms")
+    LOGGER.debug(f"------------------ GRID3D - grid_parameter took: {perf_metrics.to_string_s()}")
 
     return response
 
@@ -174,40 +177,36 @@ async def post_get_polyline_intersection(
     )
 
     grid_blob_object_uuid = await sumo_grid_access.get_geometry_blob_id_async(grid_name, realization_num)
-    LOGGER.debug(f".get_grid_geometry_blob_id_async() - {grid_blob_object_uuid=}")
+    LOGGER.debug(f"{grid_blob_object_uuid=}")
     property_blob_object_uuid = await sumo_grid_access.get_property_uuid_async(
         grid_name, parameter_name, realization_num
     )
-    LOGGER.debug(f".get_mapped_grid_properties_blob_id_async() - {property_blob_object_uuid=}")
-    perf_metrics.record_lap("blob-ids")
+    LOGGER.debug(f"{property_blob_object_uuid=}")
+    perf_metrics.record_lap("get-blob-ids")
 
     grid_service = await UserGrid3dService.create_async(authenticated_user, case_uuid)
+    perf_metrics.record_lap("create-service")
+
     polyline_intersection = await grid_service.get_polyline_intersection_async(
         grid_blob_object_uuid=grid_blob_object_uuid,
         property_blob_object_uuid=property_blob_object_uuid,
         polyline_utm_xy=polyline_utm_xy,
     )
+    perf_metrics.record_lap("call-service")
 
-    LOGGER.debug(f"------------------ GRID3D - get_polyline_intersection took: {perf_metrics.get_elapsed_ms():.2f}ms")
+    LOGGER.debug(f"------------------ GRID3D - get_polyline_intersection took: {perf_metrics.to_string_s()}")
 
     return polyline_intersection
 
 
-def _hack_convert_b64_property_array_to_float_list(
+def _hack_ensure_b64_property_array_is_float(
     props_b64arr: B64FloatArray | B64IntArray, undefined_int_value: int | None
-) -> List[float]:
-    float_props_list: list[float]
-    if type(props_b64arr) == B64FloatArray:
-        LOGGER.debug(f"Decoding float array")
-        float_arr_np = b64_decode_float_array(props_b64arr)
-        float_arr_np = np.nan_to_num(float_arr_np, nan=0)
-        float_props_list = float_arr_np.tolist()
-    elif type(props_b64arr) == B64IntArray:
-        LOGGER.debug(f"Decoding int array")
+) -> B64FloatArray:
+    if type(props_b64arr) == B64IntArray:
+        LOGGER.debug(f"Repacking B64 int array to float")
         int_arr_np = b64_decode_int_array(props_b64arr)
         int_arr_np = np.where(int_arr_np == undefined_int_value, -1, int_arr_np)
-        float_props_list = np.asarray(int_arr_np, dtype=np.float32).tolist()
-    else:
-        raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, "Unknown element_type")
+        float_arr_np = np.asarray(int_arr_np, dtype=np.float32)
+        return b64_encode_float_array_as_float32(float_arr_np)
 
-    return float_props_list
+    return props_b64arr

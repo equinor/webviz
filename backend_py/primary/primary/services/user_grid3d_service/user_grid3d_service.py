@@ -4,7 +4,6 @@ from typing import Literal
 import httpx
 from pydantic import BaseModel
 
-from sumo.wrapper import SumoClient
 from webviz_pkg.core_utils.perf_metrics import PerfMetrics, make_metrics_string_s
 from webviz_pkg.core_utils.b64 import B64FloatArray, B64UintArray, B64IntArray
 from webviz_pkg.server_schemas.user_grid3d_ri import api_schemas as server_api_schemas
@@ -15,8 +14,6 @@ from primary.services.service_exceptions import Service
 from primary.services.service_exceptions import ServiceUnavailableError, ServiceTimeoutError, ServiceRequestError
 
 # Dirty imports!!
-from primary.services.sumo_access._helpers import create_sumo_client_instance
-
 from primary.services.surface_query_service.surface_query_service import _get_sas_token_and_blob_store_base_uri_for_case
 
 LOGGER = logging.getLogger(__name__)
@@ -76,10 +73,9 @@ class PolylineIntersection(BaseModel):
 
 class UserGrid3dService:
     def __init__(
-        self, session_base_url: str, sumo_client: SumoClient, case_uuid: str, sas_token: str, blob_store_base_uri: str
+        self, session_base_url: str, case_uuid: str, sas_token: str, blob_store_base_uri: str
     ) -> None:
         self._base_url = session_base_url
-        self._sumo_client = sumo_client
         self._case_uuid = case_uuid
         self._sas_token = sas_token
         self._blob_store_base_uri = blob_store_base_uri
@@ -96,15 +92,11 @@ class UserGrid3dService:
         perf_metrics.record_lap("get-session")
 
         sumo_access_token = authenticated_user.get_sumo_access_token()
-        sumo_client = create_sumo_client_instance(sumo_access_token)
-        perf_metrics.record_lap("sumo-client")
-
         sas_token, blob_store_base_uri = _get_sas_token_and_blob_store_base_uri_for_case(sumo_access_token, case_uuid)
         perf_metrics.record_lap("sas-token")
 
         service_object = UserGrid3dService(
             session_base_url=session_base_url,
-            sumo_client=sumo_client,
             case_uuid=case_uuid,
             sas_token=sas_token,
             blob_store_base_uri=blob_store_base_uri,

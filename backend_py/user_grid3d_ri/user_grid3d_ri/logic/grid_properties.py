@@ -46,24 +46,41 @@ class GridPropertiesExtractor:
         )
         return new_object
 
-    def get_prop_values_for_cells(
-        self, cell_indices: NDArray[np.integer] | list[int]
-    ) -> NDArray[np.floating] | NDArray[np.integer]:
-        ret_arr = np.take(self._flat_prop_arr, cell_indices)
+    def is_discrete(self) -> bool:
+        return self._is_discrete
 
+    def get_float_prop_values_for_cells(self, cell_indices: NDArray[np.integer] | list[int]) -> NDArray[np.float32]:
         if self._is_discrete:
-            return ret_arr.astype(np.int32)
-        else:
-            return ret_arr.astype(np.float32)
+            raise TypeError("Property is discrete, use get_discrete_prop_values_for_cells() method instead")
 
-    def get_min_global_val(self) -> float | int:
-        return self._min_global_prop_val
+        ret_arr = np.take(self._flat_prop_arr, cell_indices)
+        return ret_arr.astype(np.float32)
 
-    def get_max_global_val(self) -> float | int:
-        return self._max_global_prop_val
+    def get_discrete_prop_values_for_cells(self, cell_indices: NDArray[np.integer] | list[int]) -> NDArray[np.int32]:
+        if not self._is_discrete:
+            raise TypeError("Property is not discrete, use get_float_prop_values_for_cells() method instead")
+
+        ret_arr = np.take(self._flat_prop_arr, cell_indices)
+        return ret_arr.astype(np.int32)
 
     def get_discrete_undef_value(self) -> int | None:
         if self._is_discrete:
             return _DISCRETE_PROP_UNDEF_VALUE
         else:
             return None
+
+    def get_prop_values_for_cells_forced_to_float_list(
+        self, cell_indices: NDArray[np.integer] | list[int]
+    ) -> list[float]:
+        ret_arr = np.take(self._flat_prop_arr, cell_indices)
+
+        if not self._is_discrete:
+            ret_arr = np.nan_to_num(ret_arr, nan=0)
+
+        return ret_arr.astype(np.float32).tolist()
+
+    def get_min_global_val(self) -> float | int:
+        return self._min_global_prop_val
+
+    def get_max_global_val(self) -> float | int:
+        return self._max_global_prop_val

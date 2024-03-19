@@ -89,7 +89,7 @@ async def post_get_polyline_intersection(
 
         source_cell_indices = grpc_section.sourceCellIndicesArr
         LOGGER.debug(f"{len(source_cell_indices)=}")
-        prop_vals = prop_extractor.get_prop_values_for_cells(source_cell_indices)
+        prop_vals = prop_extractor.get_prop_values_for_cells_forced_to_float_list(source_cell_indices)
         LOGGER.debug(f"{len(prop_vals)=}")
 
         section = api_schemas.FenceMeshSection(
