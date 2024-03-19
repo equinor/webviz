@@ -1,5 +1,7 @@
 import math
 
+import numpy as np
+
 from webviz_pkg.core_utils import b64
 
 
@@ -7,6 +9,9 @@ def test_encode_as_float32() -> None:
     input_list = [1.0, 2.0, 3.0, 4.0]
     b64_arr = b64.b64_encode_float_array_as_float32(input_list)
     assert b64_arr.element_type == "float32"
+
+    decoded_arr = b64.b64_decode_float_array(b64_arr)
+    assert decoded_arr.dtype == np.float32
 
     decoded_list = b64.b64_decode_float_array_to_list(b64_arr)
     assert input_list == decoded_list
@@ -16,7 +21,21 @@ def test_encode_as_float64() -> None:
     b64_arr = b64.b64_encode_float_array_as_float64(input_list)
     assert b64_arr.element_type == "float64"
 
+    decoded_arr = b64.b64_decode_float_array(b64_arr)
+    assert decoded_arr.dtype == np.float64
+
     decoded_list = b64.b64_decode_float_array_to_list(b64_arr)
+    assert input_list == decoded_list
+
+def test_encode_as_int32() -> None:
+    input_list = [1, 2, 3, 4]
+    b64_arr = b64.b64_encode_int_array_as_int32(input_list)
+    assert b64_arr.element_type == "int32"
+
+    decoded_arr = b64.b64_decode_int_array(b64_arr)
+    assert decoded_arr.dtype == np.int32
+
+    decoded_list = b64.b64_decode_int_array_to_list(b64_arr)
     assert input_list == decoded_list
 
 def test_float_array_with_nan() -> None:

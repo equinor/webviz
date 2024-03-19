@@ -7,7 +7,8 @@ from fastapi import APIRouter
 import rips
 from rips.generated import GridGeometryExtraction_pb2, GridGeometryExtraction_pb2_grpc
 
-from webviz_pkg.core_utils.b64 import b64_encode_float_array_as_float32, b64_encode_uint_array_as_smallest_size
+from webviz_pkg.core_utils.b64 import B64FloatArray, B64IntArray
+from webviz_pkg.core_utils.b64 import b64_encode_float_array_as_float32, b64_encode_uint_array_as_smallest_size, b64_encode_int_array_as_int32
 from webviz_pkg.core_utils.perf_metrics import PerfMetrics
 from webviz_pkg.server_schemas.user_grid3d_ri import api_schemas
 
@@ -223,11 +224,20 @@ async def post_get_mapped_grid_properties(
 
     prop_extractor = GridPropertiesExtractor.from_roff_property_file(property_path_name)
     poly_prop_vals = prop_extractor.get_prop_values_for_cells(source_cell_indices_np)
-    # LOGGER.debug(f"{poly_prop_vals[:20]=}")
+    
+    poly_props_b64arr: B64FloatArray | B64IntArray
+    undefined_int_value: int | None = None
+    if np.issubdtype(poly_prop_vals.dtype, np.integer):
+        poly_props_b64arr = b64_encode_int_array_as_int32(poly_prop_vals)
+        undefined_int_value = prop_extractor.get_discrete_undef_value()
+    else:
+        poly_props_b64arr = b64_encode_float_array_as_float32(poly_prop_vals)
+
     perf_metrics.record_lap("proc-props")
 
     ret_obj = api_schemas.MappedGridPropertiesResponse(
-        poly_props_b64arr=b64_encode_float_array_as_float32(poly_prop_vals),
+        poly_props_b64arr=poly_props_b64arr,
+        undefined_int_value=undefined_int_value,
         min_grid_prop_value=prop_extractor.get_min_global_val(),
         max_grid_prop_value=prop_extractor.get_max_global_val(),
         stats=None,

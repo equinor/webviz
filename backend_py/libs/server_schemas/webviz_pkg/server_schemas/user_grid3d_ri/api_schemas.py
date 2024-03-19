@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 
-from webviz_pkg.core_utils.b64 import B64FloatArray, B64UintArray
+from webviz_pkg.core_utils.b64 import B64FloatArray, B64UintArray, B64IntArray
 
 
 class BoundingBox3D(BaseModel):
@@ -55,9 +55,10 @@ class MappedGridPropertiesRequest(BaseModel):
 
 
 class MappedGridPropertiesResponse(BaseModel):
-    poly_props_b64arr: B64FloatArray
-    min_grid_prop_value: float
-    max_grid_prop_value: float
+    poly_props_b64arr: B64FloatArray | B64IntArray
+    undefined_int_value: int | None
+    min_grid_prop_value: float | int
+    max_grid_prop_value: float | int
     stats: Stats | None
 
 
