@@ -85,6 +85,7 @@ class LocalBlobCache:
 
         size_mb = num_bytes_downloaded / (1024 * 1024)
         LOGGER.info(f"Blob downloaded in {timer.elapsed_s():.2f}s  [{size_mb=:.2f}, {local_blob_path=}]")
+
         return local_blob_path
 
 
