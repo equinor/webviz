@@ -30,9 +30,14 @@ export type { FenceMeshSection as FenceMeshSection_api } from './models/FenceMes
 export type { FieldInfo as FieldInfo_api } from './models/FieldInfo';
 export { Frequency as Frequency_api } from './models/Frequency';
 export type { GraphUserPhoto as GraphUserPhoto_api } from './models/GraphUserPhoto';
+export type { Grid3dBoundingBox as Grid3dBoundingBox_api } from './models/Grid3dBoundingBox';
+export type { Grid3dDimensions as Grid3dDimensions_api } from './models/Grid3dDimensions';
+export type { Grid3dGeometry as Grid3dGeometry_api } from './models/Grid3dGeometry';
+export type { Grid3dInfo as Grid3dInfo_api } from './models/Grid3dInfo';
+export type { Grid3dMappedProperty as Grid3dMappedProperty_api } from './models/Grid3dMappedProperty';
+export type { Grid3dPropertyInfo as Grid3dPropertyInfo_api } from './models/Grid3dPropertyInfo';
+export type { Grid3dZone as Grid3dZone_api } from './models/Grid3dZone';
 export type { GridIntersectionVtk as GridIntersectionVtk_api } from './models/GridIntersectionVtk';
-export type { GridParameter as GridParameter_api } from './models/GridParameter';
-export type { GridSurface as GridSurface_api } from './models/GridSurface';
 export type { GridSurfaceVtk as GridSurfaceVtk_api } from './models/GridSurfaceVtk';
 export type { HTTPValidationError as HTTPValidationError_api } from './models/HTTPValidationError';
 export type { InplaceVolumetricsCategoricalMetaData as InplaceVolumetricsCategoricalMetaData_api } from './models/InplaceVolumetricsCategoricalMetaData';

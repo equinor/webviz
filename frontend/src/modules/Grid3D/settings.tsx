@@ -14,7 +14,9 @@ import { QueryStateWrapper } from "@lib/components/QueryStateWrapper";
 import { Select, SelectOption } from "@lib/components/Select";
 import { useWellHeadersQuery } from "@modules/_shared/WellBore/queryHooks";
 
-import { useGridModelNames, useGridParameterNames } from "./queryHooks";
+import { isEqual } from "lodash";
+
+import { useGridModelInfos } from "./queryHooks";
 import state from "./state";
 
 //-----------------------------------------------------------------------------------------------------------
@@ -24,9 +26,7 @@ export function Settings({ moduleContext, workbenchServices, workbenchSession }:
     const ensembleSet = useEnsembleSet(workbenchSession);
     const [selectedEnsembleIdent, setSelectedEnsembleIdent] = React.useState<EnsembleIdent | null>(null);
     // State
-    const [gridName, setGridName] = moduleContext.useStoreState("gridName");
-    const [parameterName, setParameterName] = moduleContext.useStoreState("parameterName");
-    const [realizations, setRealizations] = moduleContext.useStoreState("realizations");
+
     const [singleKLayer, setSingleKLayer] = moduleContext.useStoreState("singleKLayer");
     const [selectedWellUuids, setSelectedWellUuids] = moduleContext.useStoreState("selectedWellUuids");
     const syncedSettingKeys = moduleContext.useSyncedSettingKeys();
@@ -39,32 +39,56 @@ export function Settings({ moduleContext, workbenchServices, workbenchSession }:
         setSelectedEnsembleIdent(computedEnsembleIdent);
     }
 
-    // Queries
-    const firstCaseUuid = computedEnsembleIdent?.getCaseUuid() ?? null;
-    const firstEnsembleName = computedEnsembleIdent?.getEnsembleName() ?? null;
-    const gridNamesQuery = useGridModelNames(firstCaseUuid, firstEnsembleName);
-    const parameterNamesQuery = useGridParameterNames(firstCaseUuid, firstEnsembleName, gridName);
-    const wellHeadersQuery = useWellHeadersQuery(computedEnsembleIdent?.getCaseUuid());
-    // Handle Linked query
-    React.useEffect(() => {
-        if (parameterNamesQuery.data) {
-            if (gridName && parameterNamesQuery.data.find((name) => name === parameterName)) {
-                // New grid has same parameter
-            } else {
-                // New grid has different parameter. Set to first
-                setParameterName(parameterNamesQuery.data[0]);
-            }
-        }
-    }, [parameterNamesQuery.data, parameterName, gridName, setParameterName]);
-
-    const parameterNames = parameterNamesQuery.data ? parameterNamesQuery.data : [];
-    const allRealizations = computedEnsembleIdent
-        ? ensembleSet
-              .findEnsemble(computedEnsembleIdent)
-              ?.getRealizations()
-              .map((real) => JSON.stringify(real)) ?? []
+    const [realization, setRealization] = moduleContext.useStoreState("realization");
+    const realizations = computedEnsembleIdent
+        ? ensembleSet.findEnsemble(computedEnsembleIdent)?.getRealizations() ?? []
         : [];
 
+    if (realizations.length > 0 && realization === null) {
+        setRealization(realizations[0]);
+    }
+
+    const gridModelInfosQuery = useGridModelInfos(
+        computedEnsembleIdent?.getCaseUuid() ?? null,
+        computedEnsembleIdent?.getEnsembleName() ?? null,
+        realization
+    );
+
+    const [gridName, setGridName] = moduleContext.useStoreState("gridName");
+    const [parameterName, setParameterName] = moduleContext.useStoreState("parameterName");
+    const [boundingBox, setBoundingBox] = moduleContext.useStoreState("boundingBox");
+    const [polyLine, setPolyLine] = moduleContext.useStoreState("polyLine");
+    if (!polyLine.length && boundingBox) {
+        setPolyLine([boundingBox.xmin, boundingBox.ymin, boundingBox.xmax, boundingBox.ymax]);
+    }
+    const gridModelNames: string[] = [];
+    const parameterNames: string[] = [];
+    if (gridModelInfosQuery.data) {
+        gridModelInfosQuery.data.forEach((gridModelInfo) => {
+            gridModelNames.push(gridModelInfo.grid_name);
+        });
+
+        if (gridModelNames.length > 0 && (!gridName || !gridModelNames.includes(gridName))) {
+            setGridName(gridModelNames[0]);
+        }
+
+        const gridModelInfo = gridName
+            ? gridModelInfosQuery.data.find((gridModelInfo) => gridModelInfo.grid_name === gridName)
+            : null;
+        if (gridModelInfo) {
+            if (!isEqual(boundingBox, gridModelInfo.bbox)) {
+                setBoundingBox(gridModelInfo.bbox);
+            }
+            gridModelInfo.property_info_arr.forEach((propInfo) => {
+                parameterNames.push(propInfo.property_name);
+            });
+        }
+        if (parameterNames.length > 0 && (!parameterName || !parameterNames.includes(parameterName))) {
+            setParameterName(parameterNames[0]);
+        }
+    }
+
+    const wellHeadersQuery = useWellHeadersQuery(computedEnsembleIdent?.getCaseUuid());
     let wellHeaderOptions: SelectOption[] = [];
 
     if (wellHeadersQuery.data) {
@@ -88,15 +112,20 @@ export function Settings({ moduleContext, workbenchServices, workbenchSession }:
     function hideAllWells() {
         setSelectedWellUuids([]);
     }
-    const gridNames: string[] = gridNamesQuery.data ? gridNamesQuery.data : [];
+    function handleRealizationChange(realizationStrAsArr: string[]) {
+        setRealization(parseInt(realizationStrAsArr[0]));
+    }
     return (
         <div>
             <CollapsibleGroup expanded={false} title="Realizations">
                 <Label text="Realizations">
                     <Select
-                        options={stringToOptions(allRealizations || [])}
-                        value={realizations ? (realizations as string[]) : [allRealizations[1]]}
-                        onChange={(reals) => setRealizations(reals)}
+                        options={realizations.map((realization) => ({
+                            label: realization.toString(),
+                            value: realization.toString(),
+                        }))}
+                        value={realization !== null ? [realization.toString()] : ["0"]}
+                        onChange={(reals) => handleRealizationChange(reals)}
                         filter={true}
                         size={5}
                         multiple={false}
@@ -105,14 +134,14 @@ export function Settings({ moduleContext, workbenchServices, workbenchSession }:
             </CollapsibleGroup>
             <CollapsibleGroup expanded={true} title="Grid data">
                 <QueryStateWrapper
-                    queryResult={gridNamesQuery}
+                    queryResult={gridModelInfosQuery}
                     errorComponent={"Error loading grid models"}
                     loadingComponent={<CircularProgress />}
                 >
                     <Label text="Grid model">
                         <Select
-                            options={stringToOptions(gridNames)}
-                            value={[gridName || gridNames[0]]}
+                            options={stringToOptions(gridModelNames)}
+                            value={[gridName || gridModelNames[0]]}
                             onChange={(gridnames) => setGridName(gridnames[0])}
                             filter={true}
                             size={5}

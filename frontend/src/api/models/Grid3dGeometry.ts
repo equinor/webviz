@@ -4,7 +4,7 @@
 /* eslint-disable */
 import type { B64FloatArray } from './B64FloatArray';
 import type { B64UintArray } from './B64UintArray';
-export type GridSurface = {
+export type Grid3dGeometry = {
     polys_b64arr: B64UintArray;
     points_b64arr: B64FloatArray;
     poly_source_cell_indices_b64arr: B64UintArray;
