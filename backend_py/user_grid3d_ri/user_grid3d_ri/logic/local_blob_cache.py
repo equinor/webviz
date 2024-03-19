@@ -29,17 +29,26 @@ class LocalBlobCache:
 
         timer = PerfTimer()
         num_bytes_downloaded = 0
+        num_bytes_written = 0
         url = f"{self._blob_store_base_uri}/{object_uuid}?{self._sas_token}"
 
-        async with aiofiles.tempfile.NamedTemporaryFile(prefix=local_blob_filename, delete=False) as tmp_file:
+        async with aiofiles.tempfile.NamedTemporaryFile(prefix=f"{local_blob_filename}___", delete=False) as tmp_file:
             tmp_blob_path = tmp_file.name
             LOGGER.debug(f"Downloading blob into temp file: {tmp_blob_path}")
             async with httpx.AsyncClient() as client:
                 try:
                     async with client.stream("GET", url=url) as response:
                         response.raise_for_status()
-                        async for chunk in response.aiter_bytes(chunk_size=4096):
+                        # What should we do about chunk size here?
+                        # Leave it to the content or force a higher value?
+                        async for chunk in response.aiter_bytes(chunk_size=1024*1024):
                             await tmp_file.write(chunk)
+                            num_bytes_written += len(chunk)
+                            LOGGER.debug(f"  - downloading  {tmp_blob_path=}  {num_bytes_written=}  {len(chunk)=}")
+
+                            if _does_file_exist(local_blob_path):
+                                LOGGER.debug(f"Blob SUDDENLY present in cache, returning immediately: {local_blob_path}")
+                                return local_blob_path
 
                         num_bytes_downloaded = response.num_bytes_downloaded
 
