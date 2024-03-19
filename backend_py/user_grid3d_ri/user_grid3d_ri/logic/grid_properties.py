@@ -6,19 +6,21 @@ from numpy.typing import NDArray
 
 LOGGER = logging.getLogger(__name__)
 
+_DISCRETE_PROP_UNDEF_VALUE: int = -1
+
 
 class GridPropertiesExtractor:
     def __init__(
         self,
         flat_prop_arr: NDArray[np.floating] | NDArray[np.integer],
         is_discrete: bool,
-        min_global_prop_val: float,
-        max_global_prop_val: float,
+        min_global_prop_val: float | int,
+        max_global_prop_val: float | int,
     ) -> None:
         self._flat_prop_arr: NDArray[np.floating] | NDArray[np.integer] = flat_prop_arr
         self._is_discrete: bool = is_discrete
-        self._min_global_prop_val: float = min_global_prop_val
-        self._max_global_prop_val: float = max_global_prop_val
+        self._min_global_prop_val: float | int = min_global_prop_val
+        self._max_global_prop_val: float | int = max_global_prop_val
 
     @classmethod
     def from_roff_property_file(cls, roff_prop_file: str) -> "GridPropertiesExtractor":
@@ -30,8 +32,7 @@ class GridPropertiesExtractor:
         # Note that the values array is masked
         # What is the correct fill value for discrete data?
         is_discrete = xtg_grid_prop.isdiscrete
-        # fill_value = -1 if is_discrete else np.nan
-        fill_value = -1 if is_discrete else 0
+        fill_value = _DISCRETE_PROP_UNDEF_VALUE if is_discrete else np.nan
         unmasked_value_arr = xtg_grid_prop.values.filled(fill_value=fill_value)
 
         # Flatten array
@@ -55,8 +56,14 @@ class GridPropertiesExtractor:
         else:
             return ret_arr.astype(np.float32)
 
-    def get_min_global_val(self) -> float:
+    def get_min_global_val(self) -> float | int:
         return self._min_global_prop_val
 
-    def get_max_global_val(self) -> float:
+    def get_max_global_val(self) -> float | int:
         return self._max_global_prop_val
+
+    def get_discrete_undef_value(self) -> int | None:
+        if self._is_discrete:
+            return _DISCRETE_PROP_UNDEF_VALUE
+        else:
+            return None

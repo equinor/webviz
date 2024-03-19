@@ -6,7 +6,7 @@ from pydantic import BaseModel
 
 from sumo.wrapper import SumoClient
 from webviz_pkg.core_utils.perf_metrics import PerfMetrics, make_metrics_string_s
-from webviz_pkg.core_utils.b64 import B64FloatArray, B64UintArray
+from webviz_pkg.core_utils.b64 import B64FloatArray, B64UintArray, B64IntArray
 from webviz_pkg.server_schemas.user_grid3d_ri import api_schemas as server_api_schemas
 
 from primary.auth.auth_helper import AuthenticatedUser
@@ -51,9 +51,10 @@ class GridGeometry(BaseModel):
 
 
 class MappedGridProperties(BaseModel):
-    poly_props_b64arr: B64FloatArray
-    # min_value: float
-    # max_value: float
+    poly_props_b64arr: B64FloatArray | B64IntArray
+    undefined_int_value: int | None
+    min_grid_prop_value: float | int
+    max_grid_prop_value: float | int
 
 
 class FenceMeshSection(BaseModel):
@@ -206,7 +207,12 @@ class UserGrid3dService:
         api_obj = server_api_schemas.MappedGridPropertiesResponse.model_validate_json(response.content)
         perf_metrics.record_lap("parse-response")
 
-        ret_obj = MappedGridProperties(poly_props_b64arr=api_obj.poly_props_b64arr)
+        ret_obj = MappedGridProperties(
+            poly_props_b64arr=api_obj.poly_props_b64arr,
+            undefined_int_value=api_obj.undefined_int_value,
+            max_grid_prop_value=api_obj.max_grid_prop_value,
+            min_grid_prop_value=api_obj.min_grid_prop_value,
+        )
         perf_metrics.record_lap("convert")
 
         self._log_perf_messages(".get_mapped_grid_properties_async()", perf_metrics, api_obj.stats)

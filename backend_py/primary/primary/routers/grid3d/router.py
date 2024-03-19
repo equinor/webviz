@@ -2,11 +2,13 @@ import logging
 from typing import List
 from typing import Annotated
 
+import numpy as np
 from fastapi import APIRouter, Depends, Query, HTTPException, status, Body
 from starlette.requests import Request
 
 from webviz_pkg.core_utils.perf_timer import PerfTimer
-from webviz_pkg.core_utils.b64 import b64_decode_float_array_to_list
+from webviz_pkg.core_utils.b64 import b64_decode_float_array, b64_decode_int_array
+from webviz_pkg.core_utils.b64 import B64FloatArray, B64IntArray
 
 from primary.services.utils.authenticated_user import AuthenticatedUser
 from primary.auth.auth_helper import AuthHelper
@@ -128,9 +130,10 @@ async def grid_parameter(
     )
 
     # Until the response schema is updated to use the b64 encoded array, we need to decode it here
-    response = schemas.GridParameter(
-        poly_props_arr=b64_decode_float_array_to_list(mapped_grid_properties.poly_props_b64arr)
+    poly_props_float_list: list[float] = _hack_convert_b64_property_array_to_float_list(
+        mapped_grid_properties.poly_props_b64arr, mapped_grid_properties.undefined_int_value
     )
+    response = schemas.GridParameter(poly_props_arr=poly_props_float_list)
 
     LOGGER.debug(f"------------------ GRID3D - grid_parameter took: {timer.elapsed_s():.2f}s")
 
@@ -161,3 +164,23 @@ async def post_get_polyline_intersection(
     LOGGER.debug(f"------------------ GRID3D - get_polyline_intersection took: {timer.elapsed_s():.2f}s")
 
     return polyline_intersection
+
+
+def _hack_convert_b64_property_array_to_float_list(
+    props_b64arr: B64FloatArray | B64IntArray, undefined_int_value: int | None
+) -> List[float]:
+    float_props_list: list[float]
+    if type(props_b64arr) == B64FloatArray:
+        LOGGER.debug(f"Decoding float array")
+        float_arr_np = b64_decode_float_array(props_b64arr)
+        float_arr_np = np.nan_to_num(float_arr_np, nan=0)
+        float_props_list = float_arr_np.tolist()
+    elif type(props_b64arr) == B64IntArray:
+        LOGGER.debug(f"Decoding int array")
+        int_arr_np = b64_decode_int_array(props_b64arr)
+        int_arr_np = np.where(int_arr_np == undefined_int_value, -1, int_arr_np)
+        float_props_list = np.asarray(int_arr_np, dtype=np.float32).tolist()
+    else:
+        raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, "Unknown element_type")
+
+    return float_props_list
