@@ -82,7 +82,10 @@ export function View({ moduleContext, workbenchSettings, workbenchSession }: Mod
 
     if (gridSurfaceQuery.data) {
         const offsetXyz = [gridSurfaceQuery.data.origin_utm_x, gridSurfaceQuery.data.origin_utm_y, 0];
-        const pointsNumberArray = Array.from(gridSurfaceQuery.data.pointsFloat32Arr, (val, i) => (val + offsetXyz[i%3]));
+        const pointsNumberArray = Array.from(
+            gridSurfaceQuery.data.pointsFloat32Arr,
+            (val, i) => val + offsetXyz[i % 3]
+        );
         const polysNumberArray = Array.from(gridSurfaceQuery.data.polysUint32Arr);
         newLayers.push({
             "@@type": "Grid3DLayer",
@@ -116,7 +119,6 @@ export function View({ moduleContext, workbenchSettings, workbenchSession }: Mod
                 bounds={[bounds[0], bounds[1], bounds[3], bounds[4]]}
                 colorTables={colorTables}
                 layers={newLayers}
-                toolbar={{ visible: true }}
                 views={{
                     layout: [1, 1],
                     showLabel: false,
