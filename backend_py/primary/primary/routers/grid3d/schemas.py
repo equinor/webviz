@@ -21,8 +21,7 @@ class Grid3dGeometry(BaseModel):
 
 # Rename?
 class Grid3dMappedProperty(BaseModel):
-    # poly_props_b64arr: B64FloatArray
-    poly_props_arr: list[float]
+    poly_props_b64arr: B64FloatArray
 
 
 class Grid3dBoundingBox(BaseModel):

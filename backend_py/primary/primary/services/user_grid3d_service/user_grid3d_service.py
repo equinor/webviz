@@ -16,8 +16,7 @@ from primary.services.service_exceptions import ServiceUnavailableError, Service
 
 # Dirty imports!!
 from primary.services.sumo_access._helpers import create_sumo_client_instance
-from primary.services.sumo_access.queries.cpgrid import get_grid_geometry_blob_id
-from primary.services.sumo_access.queries.cpgrid import get_grid_parameter_blob_id
+
 from primary.services.surface_query_service.surface_query_service import _get_sas_token_and_blob_store_base_uri_for_case
 
 LOGGER = logging.getLogger(__name__)
@@ -115,15 +114,9 @@ class UserGrid3dService:
         return service_object
 
     async def get_grid_geometry_async(
-        self, ensemble_name: str, realization: int, grid_name: str, ijk_index_filter: IJKIndexFilter | None
+        self, grid_blob_object_uuid: str, ijk_index_filter: IJKIndexFilter | None
     ) -> GridGeometry:
         perf_metrics = PerfMetrics()
-
-        grid_blob_object_uuid = await get_grid_geometry_blob_id(
-            self._sumo_client, self._case_uuid, ensemble_name, realization, grid_name
-        )
-        LOGGER.debug(f".get_grid_geometry_async() - {grid_blob_object_uuid=}")
-        perf_metrics.record_lap("blob-id")
 
         effective_ijk_index_filter: server_api_schemas.IJKIndexFilter | None = None
         if ijk_index_filter:
@@ -163,25 +156,11 @@ class UserGrid3dService:
 
     async def get_mapped_grid_properties_async(
         self,
-        ensemble_name: str,
-        realization: int,
-        grid_name: str,
-        property_name: str,
+        grid_blob_object_uuid: str,
+        property_blob_object_uuid: str,
         ijk_index_filter: IJKIndexFilter | None,
     ) -> MappedGridProperties:
         perf_metrics = PerfMetrics()
-
-        grid_blob_object_uuid = await get_grid_geometry_blob_id(
-            self._sumo_client, self._case_uuid, ensemble_name, realization, grid_name
-        )
-        LOGGER.debug(f".get_mapped_grid_properties_async() - {grid_blob_object_uuid=}")
-
-        property_blob_object_uuid = await get_grid_parameter_blob_id(
-            self._sumo_client, self._case_uuid, ensemble_name, realization, grid_name, property_name
-        )
-        LOGGER.debug(f".get_mapped_grid_properties_async() - {property_blob_object_uuid=}")
-
-        perf_metrics.record_lap("blob-ids")
 
         effective_ijk_index_filter: server_api_schemas.IJKIndexFilter | None = None
         if ijk_index_filter:
@@ -214,18 +193,10 @@ class UserGrid3dService:
         return ret_obj
 
     async def get_polyline_intersection_async(
-        self, ensemble_name: str, realization: int, grid_name: str, property_name: str, polyline_utm_xy: list[float]
+        self, grid_blob_object_uuid: str, property_blob_object_uuid: str, polyline_utm_xy: list[float]
     ) -> PolylineIntersection:
         perf_metrics = PerfMetrics()
 
-        grid_blob_object_uuid = await get_grid_geometry_blob_id(
-            self._sumo_client, self._case_uuid, ensemble_name, realization, grid_name
-        )
-        LOGGER.debug(f".get_polyline_intersection_async() - {grid_blob_object_uuid=}")
-
-        property_blob_object_uuid = await get_grid_parameter_blob_id(
-            self._sumo_client, self._case_uuid, ensemble_name, realization, grid_name, property_name
-        )
         LOGGER.debug(f".get_polyline_intersection_async() - {property_blob_object_uuid=}")
 
         perf_metrics.record_lap("blob-ids")
