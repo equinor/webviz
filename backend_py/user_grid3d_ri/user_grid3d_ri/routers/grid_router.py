@@ -105,6 +105,12 @@ async def post_get_grid_geometry(
     vertices_np = vertices_np.reshape(-1, 3)
     # LOGGER.debug(f"{vertices_np[:5]=}")
 
+    # !!!!
+    # Slight hack, utilizing the returned UTM origin to get correct absolute Z value
+    # ResInsight should probably be returning absolute Z values in the first place
+    origin_utm = grpc_response.originUtm
+    vertices_np = np.add(vertices_np, [0, 0, origin_utm.z])
+
     min_coord = np.min(vertices_np, axis=0)
     max_coord = np.max(vertices_np, axis=0)
     LOGGER.debug(f"{min_coord=}")
@@ -124,8 +130,8 @@ async def post_get_grid_geometry(
         vertices_b64arr=b64_encode_float_array_as_float32(vertices_np),
         polys_b64arr=b64_encode_uint_array_as_smallest_size(poly_indices_np),
         poly_source_cell_indices_b64arr=b64_encode_uint_array_as_smallest_size(source_cell_indices_np),
-        origin_utm_x=grpc_response.originUtm.x,
-        origin_utm_y=grpc_response.originUtm.y,
+        origin_utm_x=origin_utm.x,
+        origin_utm_y=origin_utm.y,
         bounding_box=api_schemas.BoundingBox3D(
             min_x=min_coord[0],
             min_y=min_coord[1],
