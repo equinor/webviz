@@ -110,7 +110,16 @@ async def post_get_polyline_intersection(
         fence_mesh_sections=ret_sections,
         min_grid_prop_value=prop_extractor.get_min_global_val(),
         max_grid_prop_value=prop_extractor.get_max_global_val(),
-        stats=api_schemas.Stats(total_time=perf_metrics.get_elapsed_ms(), perf_metrics=perf_metrics.to_dict()),
+        stats=None,
+    )
+    perf_metrics.record_lap("make-response")
+
+    grpc_timeElapsedInfo = grpc_response.timeElapsedInfo
+    ret_obj.stats = api_schemas.Stats(
+        total_time=perf_metrics.get_elapsed_ms(),
+        perf_metrics=perf_metrics.to_dict(),
+        ri_total_time=grpc_timeElapsedInfo.totalTimeElapsedMs,
+        ri_perf_metrics=dict(grpc_timeElapsedInfo.namedEventsAndTimeElapsedMs),
     )
 
     LOGGER.debug(f"Got polyline intersection in: {perf_metrics.to_string_s()}")

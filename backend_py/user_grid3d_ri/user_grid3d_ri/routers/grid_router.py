@@ -136,9 +136,15 @@ async def post_get_grid_geometry(
         ),
         stats=None,
     )
-    perf_metrics.record_lap("encode")
+    perf_metrics.record_lap("make-response")
 
-    ret_obj.stats = api_schemas.Stats(total_time=perf_metrics.get_elapsed_ms(), perf_metrics=perf_metrics.to_dict())
+    grpc_timeElapsedInfo = grpc_response.timeElapsedInfo
+    ret_obj.stats = api_schemas.Stats(
+        total_time=perf_metrics.get_elapsed_ms(),
+        perf_metrics=perf_metrics.to_dict(),
+        ri_total_time=grpc_timeElapsedInfo.totalTimeElapsedMs,
+        ri_perf_metrics=dict(grpc_timeElapsedInfo.namedEventsAndTimeElapsedMs),
+    )
 
     LOGGER.debug(f"Got grid geometry in: {perf_metrics.to_string_s()}")
 
@@ -196,13 +202,13 @@ async def post_get_mapped_grid_properties(
             propertyFilter=None,
         )
 
-        response: GridGeometryExtraction_pb2.GetGridSurfaceResponse = grid_geometry_extraction_stub.GetGridSurface(
+        grpc_response: GridGeometryExtraction_pb2.GetGridSurfaceResponse = grid_geometry_extraction_stub.GetGridSurface(
             request
         )
 
-        perf_metrics.record_lap("grid-geo")
+        perf_metrics.record_lap("ri-grid-geo")
 
-        source_cell_indices_np = np.asarray(response.sourceCellIndicesArr, dtype=np.uint32)
+        source_cell_indices_np = np.asarray(grpc_response.sourceCellIndicesArr, dtype=np.uint32)
         # data_cache.set_uint32_numpy_arr(grid_blob_object_uuid, source_cell_indices_np)
         # et_write_cache_s = timer.lap_s()
 
@@ -220,14 +226,14 @@ async def post_get_mapped_grid_properties(
         max_grid_prop_value=prop_extractor.get_max_global_val(),
         stats=None,
     )
-    perf_metrics.record_lap("encode")
+    perf_metrics.record_lap("make-response")
 
-    fake_ri_perf_metrics = {"fake-open-file": 123, "fake-calc": 123}
+    grpc_timeElapsedInfo = grpc_response.timeElapsedInfo
     ret_obj.stats = api_schemas.Stats(
         total_time=perf_metrics.get_elapsed_ms(),
         perf_metrics=perf_metrics.to_dict(),
-        ri_total_time=888,
-        ri_perf_metrics=fake_ri_perf_metrics,
+        ri_total_time=grpc_timeElapsedInfo.totalTimeElapsedMs,
+        ri_perf_metrics=dict(grpc_timeElapsedInfo.namedEventsAndTimeElapsedMs),
     )
 
     LOGGER.debug(f"Got mapped grid properties in: {perf_metrics.to_string_s()}")
