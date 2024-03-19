@@ -38,6 +38,6 @@ async def root() -> str:
     return ret_str
 
 
-LOGGER.debug("{IS_ON_RADIX_PLATFORM=}")
+LOGGER.debug(f"{IS_ON_RADIX_PLATFORM=}")
 if IS_ON_RADIX_PLATFORM:
     InactivityShutdown(app, inactivity_limit_minutes=5.0)

@@ -101,8 +101,21 @@ def b64_decode_float_array(base64_arr: B64FloatArray) -> NDArray[np.floating]:
     raise ValueError(f"Unknown element_type: {base64_arr.element_type}")
 
 
+def b64_decode_int_array(base64_arr: B64IntArray) -> NDArray[np.integer]:
+    decoded_bytes = _base64_decode_b64str_to_bytes(base64_arr.data_b64str)
+    if base64_arr.element_type == "int32":
+        np_array = np.frombuffer(decoded_bytes, dtype=np.int32)
+        return np_array
+
+    raise ValueError(f"Unknown element_type: {base64_arr.element_type}")
+
+
 def b64_decode_float_array_to_list(base64_arr: B64FloatArray) -> list[float]:
     return b64_decode_float_array(base64_arr).tolist()
+
+
+def b64_decode_int_array_to_list(base64_arr: B64IntArray) -> list[int]:
+    return b64_decode_int_array(base64_arr).tolist()
 
 
 def _base64_encode_numpy_arr_to_str(np_arr: NDArray) -> str:
