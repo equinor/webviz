@@ -8,7 +8,8 @@ import rips
 from rips.generated import GridGeometryExtraction_pb2, GridGeometryExtraction_pb2_grpc
 
 from webviz_pkg.core_utils.b64 import B64FloatArray, B64IntArray
-from webviz_pkg.core_utils.b64 import b64_encode_float_array_as_float32, b64_encode_uint_array_as_smallest_size, b64_encode_int_array_as_int32
+from webviz_pkg.core_utils.b64 import b64_encode_float_array_as_float32
+from webviz_pkg.core_utils.b64 import b64_encode_uint_array_as_smallest_size, b64_encode_int_array_as_smallest_size
 from webviz_pkg.core_utils.perf_metrics import PerfMetrics
 from webviz_pkg.server_schemas.user_grid3d_ri import api_schemas
 
@@ -227,7 +228,7 @@ async def post_get_mapped_grid_properties(
     undefined_int_value: int | None = None
     if prop_extractor.is_discrete():
         int_prop_arr_np = prop_extractor.get_discrete_prop_values_for_cells(source_cell_indices_np)
-        poly_props_b64arr = b64_encode_int_array_as_int32(int_prop_arr_np)
+        poly_props_b64arr = b64_encode_int_array_as_smallest_size(int_prop_arr_np)
         undefined_int_value = prop_extractor.get_discrete_undef_value()
     else:
         float_prop_arr_np = prop_extractor.get_float_prop_values_for_cells(source_cell_indices_np)
