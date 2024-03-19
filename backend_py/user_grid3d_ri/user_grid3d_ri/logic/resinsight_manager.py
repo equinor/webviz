@@ -94,7 +94,8 @@ def _kill_competing_ri_processes() -> None:
         # The info dict gets added by the psutil.process_iter() function
         info_dict = proc.info  # type: ignore[attr-defined]
         if info_dict["exe"] == _RI_EXECUTABLE:
-            if "--server" in info_dict["cmdline"] and f"{_RI_PORT}" in info_dict["cmdline"]:
+            cmd_line = info_dict.get("cmdline")
+            if cmd_line is not None and  "--server" in cmd_line and f"{_RI_PORT}" in cmd_line:
                 LOGGER.debug(f"Terminating ResInsight process with PID: {info_dict['pid']}")
                 proc.terminate()
                 terminated_procs.append(proc)
