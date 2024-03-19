@@ -10,12 +10,13 @@ from webviz_pkg.core_utils.b64 import b64_decode_float_array_to_list
 
 from primary.services.utils.authenticated_user import AuthenticatedUser
 from primary.auth.auth_helper import AuthHelper
-from primary.services.sumo_access.grid_access import GridAccess
+
 from primary.services.user_grid3d_service.user_grid3d_service import (
     UserGrid3dService,
     IJKIndexFilter,
     PolylineIntersection,
 )
+from primary.services.sumo_access.grid3d_access import Grid3dAccess
 
 from . import schemas
 
@@ -27,31 +28,32 @@ router = APIRouter()
 # pylint: disable=unused-variable
 
 
-@router.get("/grid_model_names/")
-async def get_grid_model_names(
+@router.get("/grid_models_info/")
+async def get_grid_models_info(
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
     case_uuid: Annotated[str, Query(description="Sumo case uuid")],
     ensemble_name: Annotated[str, Query(description="Ensemble name")],
-) -> List[str]:
+    realization: int = Query(description="Realization"),
+) -> List[schemas.Grid3dInfo]:
     """
-    Get a list of grid model names
+    Get metadata for all 3D grid models, including bbox, dimensions and properties
     """
-    access = await GridAccess.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
-    return await access.grid_model_names()
+    access = await Grid3dAccess.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
+    return await access.get_models_info_arr_async(realization)
 
 
-@router.get("/parameter_names/")
-async def get_parameter_names(
+@router.get("/is_grid_geometry_shared/")
+async def is_grid_geometry_shared(
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
     case_uuid: Annotated[str, Query(description="Sumo case uuid")],
     ensemble_name: Annotated[str, Query(description="Ensemble name")],
     grid_name: Annotated[str, Query(description="Grid name")],
-) -> List[str]:
+) -> bool:
     """
-    Get a list of grid parameter names
+    Check if a 3D grid geometry is shared across realizations
     """
-    access = await GridAccess.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
-    return await access.static_parameter_names(grid_name)
+    access = await Grid3dAccess.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
+    return await access.is_geometry_shared_async(grid_name)
 
 
 # Primary backend
@@ -63,7 +65,7 @@ async def grid_surface(
     grid_name: Annotated[str, Query(description="Grid name")],
     realization: Annotated[str, Query(description="Realization")],
     single_k_layer: Annotated[int, Query(description="Show only a single k layer")] = -1,
-) -> schemas.GridSurface:
+) -> schemas.Grid3dGeometry:
     """Get a grid"""
 
     timer = PerfTimer()
@@ -107,7 +109,7 @@ async def grid_parameter(
     parameter_name: Annotated[str, Query(description="Grid parameter")],
     realization: Annotated[str, Query(description="Realization")],
     single_k_layer: Annotated[int, Query(description="Show only a single k layer")] = -1,
-) -> schemas.GridParameter:
+) -> schemas.Grid3dMappedProperty:
     """Get a grid parameter"""
 
     timer = PerfTimer()
@@ -128,7 +130,7 @@ async def grid_parameter(
     )
 
     # Until the response schema is updated to use the b64 encoded array, we need to decode it here
-    response = schemas.GridParameter(
+    response = schemas.Grid3dMappedProperty(
         poly_props_arr=b64_decode_float_array_to_list(mapped_grid_properties.poly_props_b64arr)
     )
 
