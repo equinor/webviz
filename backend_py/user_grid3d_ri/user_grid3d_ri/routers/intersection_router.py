@@ -35,9 +35,9 @@ async def post_get_polyline_intersection(
 
     blob_cache = LocalBlobCache(req_body.sas_token, req_body.blob_store_base_uri)
 
-    grid_path_name = await blob_cache.ensure_blob_downloaded(req_body.grid_blob_object_uuid, ".roff")
+    grid_path_name = await blob_cache.ensure_grid_blob_downloaded_async(req_body.grid_blob_object_uuid)
     LOGGER.debug(f"{grid_path_name=}")
-    property_path_name = await blob_cache.ensure_blob_downloaded(req_body.property_blob_object_uuid, ".roff")
+    property_path_name = await blob_cache.ensure_property_blob_downloaded_async(req_body.property_blob_object_uuid)
     LOGGER.debug(f"{property_path_name=}")
     perf_metrics.record_lap("get-blobs")
 
