@@ -3,7 +3,7 @@ from typing import Literal
 
 import httpx
 from pydantic import BaseModel
-
+from sumo.wrapper import SumoClient
 from webviz_pkg.core_utils.perf_metrics import PerfMetrics, make_metrics_string_s
 from webviz_pkg.core_utils.b64 import B64FloatArray, B64UintArray, B64IntArray
 from webviz_pkg.server_schemas.user_grid3d_ri import api_schemas as server_api_schemas
@@ -15,6 +15,11 @@ from primary.services.service_exceptions import ServiceUnavailableError, Service
 
 # Dirty imports!!
 from primary.services.surface_query_service.surface_query_service import _get_sas_token_and_blob_store_base_uri_for_case
+from primary.services.sumo_access._helpers import create_sumo_client_instance
+from primary.services.sumo_access.queries.grid3d import (
+    get_grid_geometry_and_property_blob_ids_async,
+    get_grid_geometry_blob_id_async,
+)
 
 LOGGER = logging.getLogger(__name__)
 
@@ -73,9 +78,10 @@ class PolylineIntersection(BaseModel):
 
 class UserGrid3dService:
     def __init__(
-        self, session_base_url: str, case_uuid: str, sas_token: str, blob_store_base_uri: str
+        self, session_base_url: str, sumo_client: SumoClient, case_uuid: str, sas_token: str, blob_store_base_uri: str
     ) -> None:
         self._base_url = session_base_url
+        self._sumo_client = sumo_client
         self._case_uuid = case_uuid
         self._sas_token = sas_token
         self._blob_store_base_uri = blob_store_base_uri
@@ -92,11 +98,13 @@ class UserGrid3dService:
         perf_metrics.record_lap("get-session")
 
         sumo_access_token = authenticated_user.get_sumo_access_token()
+        sumo_client = create_sumo_client_instance(sumo_access_token)
         sas_token, blob_store_base_uri = _get_sas_token_and_blob_store_base_uri_for_case(sumo_access_token, case_uuid)
         perf_metrics.record_lap("sas-token")
 
         service_object = UserGrid3dService(
             session_base_url=session_base_url,
+            sumo_client=sumo_client,
             case_uuid=case_uuid,
             sas_token=sas_token,
             blob_store_base_uri=blob_store_base_uri,
@@ -107,13 +115,19 @@ class UserGrid3dService:
         return service_object
 
     async def get_grid_geometry_async(
-        self, grid_blob_object_uuid: str, ijk_index_filter: IJKIndexFilter | None
+        self, ensemble_name: str, realization: int, grid_name: str, ijk_index_filter: IJKIndexFilter | None
     ) -> GridGeometry:
         perf_metrics = PerfMetrics()
 
         effective_ijk_index_filter: server_api_schemas.IJKIndexFilter | None = None
         if ijk_index_filter:
             effective_ijk_index_filter = server_api_schemas.IJKIndexFilter.model_validate(ijk_index_filter.model_dump())
+
+        grid_blob_object_uuid = await get_grid_geometry_blob_id_async(
+            self._sumo_client, self._case_uuid, ensemble_name, realization, grid_name
+        )
+        LOGGER.debug(f".get_grid_geometry_blob_id_async() - {grid_blob_object_uuid=}")
+        perf_metrics.record_lap("blob-id")
 
         request_body = server_api_schemas.GridGeometryRequest(
             sas_token=self._sas_token,
@@ -149,8 +163,10 @@ class UserGrid3dService:
 
     async def get_mapped_grid_properties_async(
         self,
-        grid_blob_object_uuid: str,
-        property_blob_object_uuid: str,
+        ensemble_name: str,
+        realization: int,
+        grid_name: str,
+        property_name: str,
         ijk_index_filter: IJKIndexFilter | None,
     ) -> MappedGridProperties:
         perf_metrics = PerfMetrics()
@@ -158,6 +174,12 @@ class UserGrid3dService:
         effective_ijk_index_filter: server_api_schemas.IJKIndexFilter | None = None
         if ijk_index_filter:
             effective_ijk_index_filter = server_api_schemas.IJKIndexFilter.model_validate(ijk_index_filter.model_dump())
+
+        grid_blob_object_uuid, property_blob_object_uuid = await get_grid_geometry_and_property_blob_ids_async(
+            self._sumo_client, self._case_uuid, ensemble_name, realization, grid_name, property_name
+        )
+        LOGGER.debug(f".get_grid_geometry_and_property_blob_ids() - {property_blob_object_uuid=}")
+        perf_metrics.record_lap("blob-ids")
 
         request_body = server_api_schemas.MappedGridPropertiesRequest(
             sas_token=self._sas_token,
@@ -191,12 +213,14 @@ class UserGrid3dService:
         return ret_obj
 
     async def get_polyline_intersection_async(
-        self, grid_blob_object_uuid: str, property_blob_object_uuid: str, polyline_utm_xy: list[float]
+        self, ensemble_name: str, realization: int, grid_name: str, property_name: str, polyline_utm_xy: list[float]
     ) -> PolylineIntersection:
         perf_metrics = PerfMetrics()
 
-        LOGGER.debug(f".get_polyline_intersection_async() - {property_blob_object_uuid=}")
-
+        grid_blob_object_uuid, property_blob_object_uuid = await get_grid_geometry_and_property_blob_ids_async(
+            self._sumo_client, self._case_uuid, ensemble_name, realization, grid_name, property_name
+        )
+        LOGGER.debug(f".get_grid_geometry_and_property_blob_ids() - {property_blob_object_uuid=}")
         perf_metrics.record_lap("blob-ids")
 
         request_body = server_api_schemas.PolylineIntersectionRequest(

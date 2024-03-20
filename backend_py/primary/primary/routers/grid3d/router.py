@@ -86,19 +86,14 @@ async def grid_surface(
             min_i=-1, max_i=-1, min_j=-1, max_j=-1, min_k=single_k_layer, max_k=single_k_layer
         )
 
-    # get sas token
-    # get blob ids
-    # call service
-    access = await Grid3dAccess.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
-    grid_blob_object_uuid = await access.get_geometry_blob_id_async(grid_name, realization_num)
-    LOGGER.debug(f"{grid_blob_object_uuid=}")
-    perf_metrics.record_lap("get-blob-id")
-
     grid_service = await UserGrid3dService.create_async(authenticated_user, case_uuid)
     perf_metrics.record_lap("create-service")
 
     grid_geometry = await grid_service.get_grid_geometry_async(
-        grid_blob_object_uuid=grid_blob_object_uuid, ijk_index_filter=ijk_index_filter
+        ensemble_name=ensemble_name,
+        grid_name=grid_name,
+        realization=realization_num,
+        ijk_index_filter=ijk_index_filter,
     )
     perf_metrics.record_lap("call-service")
 
@@ -141,19 +136,14 @@ async def grid_parameter(
             min_i=-1, max_i=-1, min_j=-1, max_j=-1, min_k=single_k_layer, max_k=single_k_layer
         )
 
-    access = await Grid3dAccess.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
-    grid_blob_object_uuid = await access.get_geometry_blob_id_async(grid_name, realization_num)
-    LOGGER.debug(f"{grid_blob_object_uuid=}")
-    property_blob_object_uuid = await access.get_property_blob_id_async(grid_name, parameter_name, realization_num)
-    LOGGER.debug(f"{property_blob_object_uuid=}")
-    perf_metrics.record_lap("get-blob-ids")
-
     grid_service = await UserGrid3dService.create_async(authenticated_user, case_uuid)
     perf_metrics.record_lap("create-service")
 
     mapped_grid_properties = await grid_service.get_mapped_grid_properties_async(
-        grid_blob_object_uuid=grid_blob_object_uuid,
-        property_blob_object_uuid=property_blob_object_uuid,
+        ensemble_name=ensemble_name,
+        grid_name=grid_name,
+        property_name=parameter_name,
+        realization=realization_num,
         ijk_index_filter=ijk_index_filter,
     )
     perf_metrics.record_lap("call-service")
@@ -181,24 +171,14 @@ async def post_get_polyline_intersection(
 ) -> PolylineIntersection:
     perf_metrics = PerfMetrics()
 
-    sumo_grid_access = await Grid3dAccess.from_case_uuid(
-        authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
-    )
-
-    grid_blob_object_uuid = await sumo_grid_access.get_geometry_blob_id_async(grid_name, realization_num)
-    LOGGER.debug(f"{grid_blob_object_uuid=}")
-    property_blob_object_uuid = await sumo_grid_access.get_property_blob_id_async(
-        grid_name, parameter_name, realization_num
-    )
-    LOGGER.debug(f"{property_blob_object_uuid=}")
-    perf_metrics.record_lap("get-blob-ids")
-
     grid_service = await UserGrid3dService.create_async(authenticated_user, case_uuid)
     perf_metrics.record_lap("create-service")
 
     polyline_intersection = await grid_service.get_polyline_intersection_async(
-        grid_blob_object_uuid=grid_blob_object_uuid,
-        property_blob_object_uuid=property_blob_object_uuid,
+        ensemble_name=ensemble_name,
+        grid_name=grid_name,
+        property_name=parameter_name,
+        realization=realization_num,
         polyline_utm_xy=polyline_utm_xy,
     )
     perf_metrics.record_lap("call-service")
