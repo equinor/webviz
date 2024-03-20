@@ -73,7 +73,7 @@ class ResInsightManager:
 
         new_channel: grpc.Channel = grpc.insecure_channel(
             f"localhost:{_RI_PORT}",
-            options=[("grpc.enable_http_proxy", False), ("grpc.max_receive_message_length", 64 * 1024 * 1024)],
+            options=[("grpc.enable_http_proxy", False), ("grpc.max_receive_message_length", 512 * 1024 * 1024)],
         )
         if not _probe_grpc_alive(new_channel):
             LOGGER.error("Probe against newly launched ResInsight failed")
