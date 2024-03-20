@@ -2,7 +2,7 @@ import logging
 
 import grpc
 import numpy as np
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 
 from rips.generated import GridGeometryExtraction_pb2, GridGeometryExtraction_pb2_grpc
 from rips.instance import *
@@ -24,7 +24,8 @@ async def post_get_polyline_intersection(
     req_body: api_schemas.PolylineIntersectionRequest,
 ) -> api_schemas.PolylineIntersectionResponse:
 
-    LOGGER.debug(f"post_get_polyline_intersection()")
+    myfunc = "post_get_mapped_grid_properties()"
+    LOGGER.debug(f"{myfunc}")
     # LOGGER.debug(f"{req_body.sas_token=}")
     # LOGGER.debug(f"{req_body.blob_store_base_uri=}")
     # LOGGER.debug(f"{req_body.grid_blob_object_uuid=}")
@@ -36,9 +37,15 @@ async def post_get_polyline_intersection(
     blob_cache = LocalBlobCache(req_body.sas_token, req_body.blob_store_base_uri)
 
     grid_path_name = await blob_cache.ensure_grid_blob_downloaded_async(req_body.grid_blob_object_uuid)
-    LOGGER.debug(f"{grid_path_name=}")
     property_path_name = await blob_cache.ensure_property_blob_downloaded_async(req_body.property_blob_object_uuid)
-    LOGGER.debug(f"{property_path_name=}")
+
+    if grid_path_name is None:
+        raise HTTPException(status_code=500, detail=f"Failed to download grid blob: {req_body.grid_blob_object_uuid=}")
+    if property_path_name is None:
+        raise HTTPException(status_code=500, detail=f"Failed to download property blob: {req_body.property_blob_object_uuid=}")
+
+    LOGGER.debug(f"{myfunc} - {grid_path_name=}")
+    LOGGER.debug(f"{myfunc} - {property_path_name=}")
     perf_metrics.record_lap("get-blobs")
 
     grpc_channel: grpc.Channel = await RESINSIGHT_MANAGER.get_channel_for_running_ri_instance_async()
@@ -62,9 +69,9 @@ async def post_get_polyline_intersection(
 
     prop_extractor = GridPropertiesExtractor.from_roff_property_file(property_path_name)
     for fence_idx, grpc_section in enumerate(grpc_response.fenceMeshSections):
-        LOGGER.debug(f"{len(grpc_section.vertexArrayUZ)=}")
-        LOGGER.debug(f"{len(grpc_section.polyIndicesArr)=}")
-        LOGGER.debug(f"{len(grpc_section.verticesPerPolygonArr)=}")
+        LOGGER.debug(f"{myfunc} - {len(grpc_section.vertexArrayUZ)=}")
+        LOGGER.debug(f"{myfunc} - {len(grpc_section.polyIndicesArr)=}")
+        LOGGER.debug(f"{myfunc} - {len(grpc_section.verticesPerPolygonArr)=}")
         # LOGGER.debug(f"{section.startUtmXY=}")
         # LOGGER.debug(f"{section.endUtmXY=}")
 
@@ -88,9 +95,9 @@ async def post_get_polyline_intersection(
             dst_idx += num_verts_in_poly
 
         source_cell_indices = grpc_section.sourceCellIndicesArr
-        LOGGER.debug(f"{len(source_cell_indices)=}")
+        LOGGER.debug(f"{myfunc} {len(source_cell_indices)=}")
         prop_vals = prop_extractor.get_prop_values_for_cells_forced_to_float_list(source_cell_indices)
-        LOGGER.debug(f"{len(prop_vals)=}")
+        LOGGER.debug(f"{myfunc} {len(prop_vals)=}")
 
         section = api_schemas.FenceMeshSection(
             vertices_uz_arr=grpc_section.vertexArrayUZ,
@@ -122,7 +129,7 @@ async def post_get_polyline_intersection(
         ri_perf_metrics=dict(grpc_timeElapsedInfo.namedEventsAndTimeElapsedMs),
     )
 
-    LOGGER.debug(f"Got polyline intersection in: {perf_metrics.to_string_s()}")
+    LOGGER.debug(f"{myfunc} - Got polyline intersection in: {perf_metrics.to_string_s()}")
 
     # with open("/home/appuser/polyline_intersection.json", "w") as f:
     #     f.write(ret_obj.model_dump_json())

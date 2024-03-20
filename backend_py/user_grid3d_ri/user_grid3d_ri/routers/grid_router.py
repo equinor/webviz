@@ -2,7 +2,7 @@ import logging
 
 import grpc
 import numpy as np
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 
 import rips
 from rips.generated import GridGeometryExtraction_pb2, GridGeometryExtraction_pb2_grpc
@@ -45,6 +45,8 @@ async def post_get_grid_geometry(
     blob_cache = LocalBlobCache(req_body.sas_token, req_body.blob_store_base_uri)
 
     grid_path_name = await blob_cache.ensure_grid_blob_downloaded_async(req_body.grid_blob_object_uuid)
+    if grid_path_name is None:
+        raise HTTPException(status_code=500, detail=f"Failed to download grid blob: {req_body.grid_blob_object_uuid=}")
     LOGGER.debug(f"{myfunc} - {grid_path_name=}")
     perf_metrics.record_lap("get-blob")
 
@@ -172,10 +174,17 @@ async def post_get_mapped_grid_properties(
     blob_cache = LocalBlobCache(req_body.sas_token, req_body.blob_store_base_uri)
 
     grid_path_name = await blob_cache.ensure_grid_blob_downloaded_async(req_body.grid_blob_object_uuid)
-    LOGGER.debug(f"{myfunc} - {grid_path_name=}")
     property_path_name = await blob_cache.ensure_property_blob_downloaded_async(req_body.property_blob_object_uuid)
+
+    if grid_path_name is None:
+        raise HTTPException(status_code=500, detail=f"Failed to download grid blob: {req_body.grid_blob_object_uuid=}")
+    if property_path_name is None:
+        raise HTTPException(status_code=500, detail=f"Failed to download property blob: {req_body.property_blob_object_uuid=}")
+
+    LOGGER.debug(f"{myfunc} - {grid_path_name=}")
     LOGGER.debug(f"{myfunc} - {property_path_name=}")
     perf_metrics.record_lap("get-blobs")
+
 
     # data_cache = DataCache()
     # source_cell_indices_np = data_cache.get_uint32_numpy_arr(grid_blob_object_uuid)
