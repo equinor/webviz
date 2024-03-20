@@ -5,7 +5,7 @@
 /**
  * Bounding box for a 3D grid geometry
  */
-export type Grid3dBoundingBox = {
+export type BoundingBox3d = {
     xmin: number;
     ymin: number;
     zmin: number;

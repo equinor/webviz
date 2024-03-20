@@ -2,7 +2,7 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-import type { Grid3dBoundingBox } from './Grid3dBoundingBox';
+import type { BoundingBox3d } from './BoundingBox3d';
 import type { Grid3dDimensions } from './Grid3dDimensions';
 import type { Grid3dPropertyInfo } from './Grid3dPropertyInfo';
 /**
@@ -10,7 +10,7 @@ import type { Grid3dPropertyInfo } from './Grid3dPropertyInfo';
  */
 export type Grid3dInfo = {
     grid_name: string;
-    bbox: Grid3dBoundingBox;
+    bbox: BoundingBox3d;
     dimensions: Grid3dDimensions;
     property_info_arr: Array<Grid3dPropertyInfo>;
 };

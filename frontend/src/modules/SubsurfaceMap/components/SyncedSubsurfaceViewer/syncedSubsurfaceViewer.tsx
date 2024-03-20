@@ -1,3 +1,5 @@
+import React from "react";
+
 import { ModuleContext } from "@framework/ModuleContext";
 import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
 import { WorkbenchServices } from "@framework/WorkbenchServices";
@@ -14,6 +16,8 @@ export function SyncedSubsurfaceViewer(props: SyncedSubsurfaceViewerProps): JSX.
     const syncedSettingKeys = moduleContext.useSyncedSettingKeys();
     const syncHelper = new SyncSettingsHelper(syncedSettingKeys, workbenchServices);
 
+    const [cameraPosition, setCameraPosition] = React.useState<ViewStateType | undefined>(undefined);
+
     function onCameraChange(viewport: ViewStateType) {
         syncHelper.publishValue(SyncSettingKey.CAMERA_POSITION_MAP, "global.syncValue.cameraPositionMap", {
             target: viewport.target,
@@ -21,14 +25,15 @@ export function SyncedSubsurfaceViewer(props: SyncedSubsurfaceViewerProps): JSX.
             rotationX: viewport.rotationX,
             rotationOrbit: viewport.rotationOrbit,
         });
+        setCameraPosition(viewport);
     }
-    const cameraPosition3D =
-        syncHelper.useValue(SyncSettingKey.CAMERA_POSITION_MAP, "global.syncValue.cameraPositionMap") || undefined;
+    const computedCameraPosition =
+        syncHelper.useValue(SyncSettingKey.CAMERA_POSITION_MAP, "global.syncValue.cameraPositionMap") || cameraPosition;
 
     return (
         <SubsurfaceViewer
             getCameraPosition={onCameraChange}
-            cameraPosition={cameraPosition3D}
+            cameraPosition={computedCameraPosition}
             {...rest}
         ></SubsurfaceViewer>
     );

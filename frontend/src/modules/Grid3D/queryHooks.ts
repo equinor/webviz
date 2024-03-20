@@ -1,4 +1,4 @@
-import { Grid3dInfo_api, Grid3dMappedProperty_api, PolylineIntersection_api } from "@api";
+import { Grid3dInfo_api, PolylineIntersection_api } from "@api";
 import { apiService } from "@framework/ApiService";
 import { UseQueryResult, useQuery } from "@tanstack/react-query";
 

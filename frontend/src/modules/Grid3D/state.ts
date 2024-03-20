@@ -1,11 +1,13 @@
-import { Grid3dBoundingBox_api } from "@api";
+import { BoundingBox3d_api } from "@api";
 
+export type Point = { x: number; y: number };
 export default interface state {
     gridName: string | null;
-    boundingBox: Grid3dBoundingBox_api | null;
+    boundingBox: BoundingBox3d_api | null;
     parameterName: string | null;
     selectedWellUuids: string[];
+    showGridLines: boolean;
     realization: number;
     singleKLayer: number;
-    polyLine: number[];
+    polyLine: Point[];
 }

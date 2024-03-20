@@ -192,7 +192,7 @@ class Grid3dAccess(SumoEnsemble):
         grid_geometry = await grid_geometry_as_collection.getitem_async(0)
         return grid_geometry.uuid
 
-    async def get_property_uuid_async(self, grid3d_geometry_name: str, property_name: str, realization: int) -> str:
+    async def get_property_blob_id_async(self, grid3d_geometry_name: str, property_name: str, realization: int) -> str:
         """Get the uuid of a grid property"""
         grid3d_properties_collection: Grid3dPropertyCollection = Grid3dPropertyCollection(
             sumo=self._sumo_client, case_uuid=self._case_uuid, grid3d_geometry_name=grid3d_geometry_name

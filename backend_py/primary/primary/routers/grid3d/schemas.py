@@ -24,7 +24,7 @@ class Grid3dMappedProperty(BaseModel):
     poly_props_b64arr: B64FloatArray
 
 
-class Grid3dBoundingBox(BaseModel):
+class BoundingBox3d(BaseModel):
     """Bounding box for a 3D grid geometry"""
 
     xmin: float
@@ -63,6 +63,6 @@ class Grid3dInfo(BaseModel):
     """Metadata for a 3D grid model, including its properties and geometry"""
 
     grid_name: str
-    bbox: Grid3dBoundingBox
+    bbox: BoundingBox3d
     dimensions: Grid3dDimensions
     property_info_arr: List[Grid3dPropertyInfo]

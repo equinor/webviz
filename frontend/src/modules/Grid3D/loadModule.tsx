@@ -9,6 +9,7 @@ const defaultState: state = {
     boundingBox: null,
     parameterName: null,
     selectedWellUuids: [],
+    showGridLines: false,
     realization: 0,
     singleKLayer: -1,
     polyLine: [],

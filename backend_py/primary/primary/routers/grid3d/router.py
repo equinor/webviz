@@ -42,8 +42,14 @@ async def get_grid_models_info(
     """
     Get metadata for all 3D grid models, including bbox, dimensions and properties
     """
+    perf_metrics = PerfMetrics()
     access = await Grid3dAccess.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
-    return await access.get_models_info_arr_async(realization_num)
+    perf_metrics.record_lap("get-grid-access")
+    model_infos = await access.get_models_info_arr_async(realization_num)
+
+    perf_metrics.record_lap("get-model-infos")
+    LOGGER.debug(f"------------------ GRID3D - model_infos took: {perf_metrics.to_string_s()}")
+    return model_infos
 
 
 @router.get("/is_grid_geometry_shared/")
@@ -80,6 +86,9 @@ async def grid_surface(
             min_i=-1, max_i=-1, min_j=-1, max_j=-1, min_k=single_k_layer, max_k=single_k_layer
         )
 
+    # get sas token
+    # get blob ids
+    # call service
     access = await Grid3dAccess.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
     grid_blob_object_uuid = await access.get_geometry_blob_id_async(grid_name, realization_num)
     LOGGER.debug(f"{grid_blob_object_uuid=}")
@@ -135,7 +144,7 @@ async def grid_parameter(
     access = await Grid3dAccess.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
     grid_blob_object_uuid = await access.get_geometry_blob_id_async(grid_name, realization_num)
     LOGGER.debug(f"{grid_blob_object_uuid=}")
-    property_blob_object_uuid = await access.get_property_uuid_async(grid_name, parameter_name, realization_num)
+    property_blob_object_uuid = await access.get_property_blob_id_async(grid_name, parameter_name, realization_num)
     LOGGER.debug(f"{property_blob_object_uuid=}")
     perf_metrics.record_lap("get-blob-ids")
 
@@ -178,7 +187,7 @@ async def post_get_polyline_intersection(
 
     grid_blob_object_uuid = await sumo_grid_access.get_geometry_blob_id_async(grid_name, realization_num)
     LOGGER.debug(f"{grid_blob_object_uuid=}")
-    property_blob_object_uuid = await sumo_grid_access.get_property_uuid_async(
+    property_blob_object_uuid = await sumo_grid_access.get_property_blob_id_async(
         grid_name, parameter_name, realization_num
     )
     LOGGER.debug(f"{property_blob_object_uuid=}")

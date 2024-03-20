@@ -17,6 +17,7 @@ export type { Body_post_get_polyline_intersection as Body_post_get_polyline_inte
 export type { Body_post_get_seismic_fence as Body_post_get_seismic_fence_api } from './models/Body_post_get_seismic_fence';
 export type { Body_post_get_surface_intersection as Body_post_get_surface_intersection_api } from './models/Body_post_get_surface_intersection';
 export type { Body_post_sample_surface_in_points as Body_post_sample_surface_in_points_api } from './models/Body_post_sample_surface_in_points';
+export type { BoundingBox3d as BoundingBox3d_api } from './models/BoundingBox3d';
 export type { CaseInfo as CaseInfo_api } from './models/CaseInfo';
 export type { Completions as Completions_api } from './models/Completions';
 export type { EnsembleDetails as EnsembleDetails_api } from './models/EnsembleDetails';
@@ -30,7 +31,6 @@ export type { FenceMeshSection as FenceMeshSection_api } from './models/FenceMes
 export type { FieldInfo as FieldInfo_api } from './models/FieldInfo';
 export { Frequency as Frequency_api } from './models/Frequency';
 export type { GraphUserPhoto as GraphUserPhoto_api } from './models/GraphUserPhoto';
-export type { Grid3dBoundingBox as Grid3dBoundingBox_api } from './models/Grid3dBoundingBox';
 export type { Grid3dDimensions as Grid3dDimensions_api } from './models/Grid3dDimensions';
 export type { Grid3dGeometry as Grid3dGeometry_api } from './models/Grid3dGeometry';
 export type { Grid3dInfo as Grid3dInfo_api } from './models/Grid3dInfo';
