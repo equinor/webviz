@@ -48,6 +48,7 @@ export function View({ moduleContext, workbenchSettings, workbenchServices, work
     const realization = moduleContext.useStoreValue("realization");
     const boundingBox = moduleContext.useStoreValue("boundingBox");
     const polyLine = moduleContext.useStoreValue("polyLine");
+
     const singleKLayer = moduleContext.useStoreValue("singleKLayer");
     const selectedWellUuids = moduleContext.useStoreValue("selectedWellUuids");
     const showGridLines = moduleContext.useStoreValue("showGridLines");

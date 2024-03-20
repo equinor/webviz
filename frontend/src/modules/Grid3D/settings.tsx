@@ -61,20 +61,10 @@ export function Settings({ moduleContext, workbenchServices, workbenchSession }:
     const [parameterName, setParameterName] = moduleContext.useStoreState("parameterName");
     const [boundingBox, setBoundingBox] = moduleContext.useStoreState("boundingBox");
     const [showGridLines, setShowGridLines] = moduleContext.useStoreState("showGridLines");
-    const setPolyLine = moduleContext.useSetStoreValue("polyLine");
-
-    const [angle, setAngle] = React.useState(0);
-    const [samples, setSamples] = React.useState(1);
-    React.useEffect(() => {
-        if (boundingBox) {
-            setPolyLine(createSampledRotatingLine(boundingBox, angle, samples));
-        } else {
-            setPolyLine([]);
-        }
-    }, [angle, boundingBox, samples]);
 
     const gridModelNames: string[] = [];
     const parameterNames: string[] = [];
+    let computedBoundingBox = boundingBox;
     if (gridModelInfosQuery.data) {
         gridModelInfosQuery.data.forEach((gridModelInfo) => {
             gridModelNames.push(gridModelInfo.grid_name);
@@ -88,9 +78,8 @@ export function Settings({ moduleContext, workbenchServices, workbenchSession }:
             ? gridModelInfosQuery.data.find((gridModelInfo) => gridModelInfo.grid_name === gridName)
             : null;
         if (gridModelInfo) {
-            if (!isEqual(boundingBox, gridModelInfo.bbox)) {
-                setBoundingBox(gridModelInfo.bbox);
-            }
+            computedBoundingBox = gridModelInfo.bbox;
+
             gridModelInfo.property_info_arr.forEach((propInfo) => {
                 parameterNames.push(propInfo.property_name);
             });
@@ -99,7 +88,21 @@ export function Settings({ moduleContext, workbenchServices, workbenchSession }:
             setParameterName(parameterNames[0]);
         }
     }
+    if (!isEqual(boundingBox, computedBoundingBox)) {
+        setBoundingBox(computedBoundingBox);
+    }
+    const setPolyLine = moduleContext.useSetStoreValue("polyLine");
 
+    const [angle, setAngle] = React.useState(0);
+    const [samples, setSamples] = React.useState(1);
+
+    React.useEffect(() => {
+        if (computedBoundingBox) {
+            setPolyLine(createSampledRotatingLine(computedBoundingBox, angle, samples));
+        } else {
+            setPolyLine([]);
+        }
+    }, [angle, computedBoundingBox, samples]);
     const wellHeadersQuery = useWellHeadersQuery(computedEnsembleIdent?.getCaseUuid());
     let wellHeaderOptions: SelectOption[] = [];
 
