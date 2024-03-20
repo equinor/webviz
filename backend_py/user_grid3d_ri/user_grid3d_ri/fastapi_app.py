@@ -16,6 +16,8 @@ logging.getLogger().setLevel(logging.DEBUG)
 logging.getLogger("httpcore").setLevel(logging.INFO)
 logging.getLogger("httpx").setLevel(logging.INFO)
 logging.getLogger("xtgeo").setLevel(logging.INFO)
+logging.getLogger("azure.core.pipeline.policies.http_logging_policy").setLevel(logging.WARNING)
+
 
 LOGGER = logging.getLogger(__name__)
 
