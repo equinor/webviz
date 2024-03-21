@@ -1,7 +1,9 @@
 import logging
+from typing import Sequence
 
 import grpc
 import numpy as np
+from numpy.typing import NDArray
 from fastapi import APIRouter, HTTPException
 
 from rips.generated import GridGeometryExtraction_pb2, GridGeometryExtraction_pb2_grpc
@@ -24,7 +26,7 @@ async def post_get_polyline_intersection(
     req_body: api_schemas.PolylineIntersectionRequest,
 ) -> api_schemas.PolylineIntersectionResponse:
 
-    myfunc = "post_get_mapped_grid_properties()"
+    myfunc = "post_get_polyline_intersection()"
     LOGGER.debug(f"{myfunc}")
     # LOGGER.debug(f"{req_body.sas_token=}")
     # LOGGER.debug(f"{req_body.blob_store_base_uri=}")
@@ -62,52 +64,25 @@ async def post_get_polyline_intersection(
     grpc_response: GridGeometryExtraction_pb2.GetGridSurfaceResponse = grid_geometry_extraction_stub.CutAlongPolyline(
         grpc_request
     )
-
     perf_metrics.record_lap("ri-cut")
 
     LOGGER.debug(f"{len(grpc_response.fenceMeshSections)=}")
 
-    ret_sections: list[api_schemas.FenceMeshSection] = []
-
     prop_extractor = GridPropertiesExtractor.from_roff_property_file(property_path_name)
+    perf_metrics.record_lap("read-props")
+
+    ret_sections: list[api_schemas.FenceMeshSection] = []
     tot_num_vertices: int = 0
     tot_num_polys: int = 0
     for fence_idx, grpc_section in enumerate(grpc_response.fenceMeshSections):
-        LOGGER.debug(f"{myfunc} - {len(grpc_section.vertexArrayUZ)=}")
-        LOGGER.debug(f"{myfunc} - {len(grpc_section.polyIndicesArr)=}")
-        LOGGER.debug(f"{myfunc} - {len(grpc_section.verticesPerPolygonArr)=}")
-        # LOGGER.debug(f"{section.startUtmXY=}")
-        # LOGGER.debug(f"{section.endUtmXY=}")
-
-        # if fence_idx == 0:
-        #     LOGGER.debug(f"----------------------------------------------------")
-        #     LOGGER.debug(f"{grpc_section.polyIndicesArr=}")
-        #     LOGGER.debug(f"{grpc_section.verticesPerPolygonArr=}")
-        #     LOGGER.debug(f"----------------------------------------------------")
-
-        num_polys = len(grpc_section.verticesPerPolygonArr)
-        src_idx = 0
-        dst_idx = 0
-        polys_arr = np.empty(num_polys + len(grpc_section.polyIndicesArr), dtype=np.uint32)
-        for num_verts_in_poly in grpc_section.verticesPerPolygonArr:
-            polys_arr[dst_idx] = num_verts_in_poly
-            dst_idx += 1
-            for i in range(num_verts_in_poly):
-                polys_arr[dst_idx + i] = grpc_section.polyIndicesArr[src_idx + i]
-
-            src_idx += num_verts_in_poly
-            dst_idx += num_verts_in_poly
-
-        source_cell_indices = grpc_section.sourceCellIndicesArr
-        LOGGER.debug(f"{myfunc} {len(source_cell_indices)=}")
-        prop_vals = prop_extractor.get_prop_values_for_cells_forced_to_float_list(source_cell_indices)
-        LOGGER.debug(f"{myfunc} {len(prop_vals)=}")
+        polys_arr_np = _build_vtk_style_polys(grpc_section.polyIndicesArr, grpc_section.verticesPerPolygonArr)
+        prop_vals_list = prop_extractor.get_prop_values_for_cells_forced_to_float_list(grpc_section.sourceCellIndicesArr)
 
         section = api_schemas.FenceMeshSection(
-            vertices_uz_arr=grpc_section.vertexArrayUZ,
-            polys_arr=polys_arr,
-            poly_source_cell_indices_arr=source_cell_indices,
-            poly_props_arr=prop_vals,
+            vertices_uz_arr=list(grpc_section.vertexArrayUZ),
+            polys_arr=polys_arr_np.tolist(),
+            poly_source_cell_indices_arr=list(grpc_section.sourceCellIndicesArr),
+            poly_props_arr=prop_vals_list,
             start_utm_x=grpc_section.startUtmXY.x,
             start_utm_y=grpc_section.startUtmXY.y,
             end_utm_x=grpc_section.endUtmXY.x,
@@ -116,10 +91,11 @@ async def post_get_polyline_intersection(
         ret_sections.append(section)
 
         tot_num_vertices += int(len(grpc_section.vertexArrayUZ) / 2)
-        tot_num_polys += num_polys
+        tot_num_polys += len(grpc_section.sourceCellIndicesArr)
 
-    perf_metrics.record_lap("process")
+    perf_metrics.record_lap("process-sections")
 
+    # This actually takes a bit of time (for many sections) - could use model_construct() for a slight perf gain
     ret_obj = api_schemas.PolylineIntersectionResponse(
         fence_mesh_sections=ret_sections,
         min_grid_prop_value=prop_extractor.get_min_global_val(),
@@ -145,7 +121,21 @@ async def post_get_polyline_intersection(
 
     LOGGER.debug(f"{myfunc} - Got polyline intersection in: {perf_metrics.to_string_s()}")
 
-    # with open("/home/appuser/polyline_intersection.json", "w") as f:
-    #     f.write(ret_obj.model_dump_json())
-
     return ret_obj
+
+
+def _build_vtk_style_polys(poly_indices_arr_np: Sequence[int], vertices_per_poly_arr_np: Sequence[int]) -> NDArray[np.uint32]:
+    num_polys = len(vertices_per_poly_arr_np)
+    polys_arr = np.empty(num_polys + len(poly_indices_arr_np), dtype=np.uint32)
+
+    src_idx = 0
+    dst_idx = 0
+    for num_verts_in_poly in vertices_per_poly_arr_np:
+        polys_arr[dst_idx] = num_verts_in_poly
+        dst_idx += 1
+        polys_arr[dst_idx : dst_idx + num_verts_in_poly] = poly_indices_arr_np[src_idx : src_idx + num_verts_in_poly]
+        src_idx += num_verts_in_poly
+        dst_idx += num_verts_in_poly
+
+    return polys_arr
+
