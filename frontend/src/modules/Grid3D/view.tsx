@@ -143,8 +143,8 @@ export function View({ moduleContext, workbenchSettings, workbenchServices, work
             colorMapName: "Continuous",
             ZIncreasingDownwards: false,
             gridLines: showGridLines,
-        }) as unknown as WorkingGrid3dLayer;
-        layers.push(grid3dLayer);
+        });
+        layers.push(grid3dLayer as unknown as WorkingGrid3dLayer);
     }
 
     // Grid intersection
@@ -157,43 +157,59 @@ export function View({ moduleContext, workbenchSettings, workbenchServices, work
         polyLinePoints
     );
 
-    // Todo use typed arrays
-    const pointsFloat32Arr: number[] = [];
-    const polysUint32Arr: number[] = [];
-    const polyPropsFloat32Arr: number[] = [];
     if (gridPolylineIntersectionQuery.data) {
-        let currentPointIndexOffset = 0;
+        // Calculate sizes of typed arrays
+        let totalPoints = 0;
+        let totalPolys = 0;
+        let totalProps = 0;
 
-        // Todo cleanup
-        gridPolylineIntersectionQuery.data.fence_mesh_sections.map((section, idx) => {
+        gridPolylineIntersectionQuery.data.fence_mesh_sections.forEach((section) => {
+            totalPoints += (section.vertices_uz_arr.length / 2) * 3; // divid by uz and multiply by xyz
+            totalPolys += section.polys_arr.length;
+            totalProps += section.poly_props_arr.length;
+        });
+
+        const pointsFloat32Arr = new Float32Array(totalPoints);
+        const polysUint32Arr = new Uint32Array(totalPolys);
+        const polyPropsFloat32Arr = new Float32Array(totalProps);
+
+        let pointsIndex = 0;
+        let polysIndex = 0;
+        let propsIndex = 0;
+
+        gridPolylineIntersectionQuery.data.fence_mesh_sections.forEach((section) => {
+            // uv to xyz
             const directionX = section.end_utm_x - section.start_utm_x;
             const directionY = section.end_utm_y - section.start_utm_y;
             const magnitude = Math.sqrt(directionX ** 2 + directionY ** 2);
             const unitDirectionX = directionX / magnitude;
             const unitDirectionY = directionY / magnitude;
-            const pointsFloat32ArrSeg = [];
 
             for (let i = 0; i < section.vertices_uz_arr.length; i += 2) {
                 const u = section.vertices_uz_arr[i];
+                const z = section.vertices_uz_arr[i + 1];
                 const x = u * unitDirectionX + section.start_utm_x;
                 const y = u * unitDirectionY + section.start_utm_y;
-                const z = section.vertices_uz_arr[i + 1];
-                pointsFloat32ArrSeg.push(x, y, z);
-            }
-            const polyPropsFloat32ArrSeg = section.poly_props_arr;
-            let i = 0;
-            while (i < section.polys_arr.length) {
-                const count = section.polys_arr[i];
-                polysUint32Arr.push(count);
-                i++;
 
-                for (let j = 0; j < count; j++, i++) {
-                    polysUint32Arr.push(section.polys_arr[i] + currentPointIndexOffset);
+                pointsFloat32Arr[pointsIndex++] = x;
+                pointsFloat32Arr[pointsIndex++] = y;
+                pointsFloat32Arr[pointsIndex++] = z;
+            }
+            // Fix poly indexes for each section
+            let polyIndex = 0;
+            while (polyIndex < section.polys_arr.length) {
+                const count = section.polys_arr[polyIndex++];
+                polysUint32Arr[polysIndex++] = count;
+
+                for (let j = 0; j < count; j++) {
+                    polysUint32Arr[polysIndex++] =
+                        section.polys_arr[polyIndex++] + (pointsIndex / 3 - section.vertices_uz_arr.length / 2);
                 }
             }
-            pointsFloat32ArrSeg.forEach((val) => pointsFloat32Arr.push(val));
-            currentPointIndexOffset = pointsFloat32Arr.length / 3;
-            polyPropsFloat32Arr.push(...polyPropsFloat32ArrSeg);
+
+            section.poly_props_arr.forEach((prop) => {
+                polyPropsFloat32Arr[propsIndex++] = prop;
+            });
         });
 
         const grid3dIntersectionLayer = new Grid3DLayer({
@@ -204,8 +220,8 @@ export function View({ moduleContext, workbenchSettings, workbenchServices, work
             colorMapName: "Continuous",
             ZIncreasingDownwards: false,
             gridLines: showGridLines,
-        }) as unknown as WorkingGrid3dLayer;
-        layers.push(grid3dIntersectionLayer);
+        });
+        layers.push(grid3dIntersectionLayer as unknown as WorkingGrid3dLayer);
     }
 
     return (
