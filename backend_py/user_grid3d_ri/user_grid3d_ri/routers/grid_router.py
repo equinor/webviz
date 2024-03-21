@@ -131,6 +131,11 @@ async def post_get_grid_geometry(
         poly_source_cell_indices_b64arr=b64_encode_uint_array_as_smallest_size(source_cell_indices_np),
         origin_utm_x=grpc_response.originUtmXy.x,
         origin_utm_y=grpc_response.originUtmXy.y,
+        grid_dimensions=api_schemas.GridDimensions(
+            i_count=grpc_response.gridDimensions.i,
+            j_count=grpc_response.gridDimensions.j,
+            k_count=grpc_response.gridDimensions.k,
+        ),
         bounding_box=api_schemas.BoundingBox3D(
             min_x=min_coord[0],
             min_y=min_coord[1],
@@ -149,6 +154,8 @@ async def post_get_grid_geometry(
         perf_metrics=perf_metrics.to_dict(),
         ri_total_time=grpc_timeElapsedInfo.totalTimeElapsedMs,
         ri_perf_metrics=dict(grpc_timeElapsedInfo.namedEventsAndTimeElapsedMs),
+        vertex_count=int(len(vertices_np) / 3),
+        poly_count=int(len(source_cell_indices_np)),
     )
 
     LOGGER.debug(f"{myfunc} - Got grid geometry in: {perf_metrics.to_string_s()}")
@@ -184,7 +191,6 @@ async def post_get_mapped_grid_properties(
     LOGGER.debug(f"{myfunc} - {grid_path_name=}")
     LOGGER.debug(f"{myfunc} - {property_path_name=}")
     perf_metrics.record_lap("get-blobs")
-
 
     # data_cache = DataCache()
     # source_cell_indices_np = data_cache.get_uint32_numpy_arr(grid_blob_object_uuid)
@@ -256,6 +262,8 @@ async def post_get_mapped_grid_properties(
         perf_metrics=perf_metrics.to_dict(),
         ri_total_time=grpc_timeElapsedInfo.totalTimeElapsedMs,
         ri_perf_metrics=dict(grpc_timeElapsedInfo.namedEventsAndTimeElapsedMs),
+        vertex_count=-1,
+        poly_count=int(len(source_cell_indices_np)),
     )
 
     LOGGER.debug(f"{myfunc} - Got mapped grid properties in: {perf_metrics.to_string_s()}")

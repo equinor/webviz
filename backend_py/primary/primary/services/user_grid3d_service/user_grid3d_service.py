@@ -159,6 +159,7 @@ class UserGrid3dService:
         )
         perf_metrics.record_lap("convert")
 
+        self._log_grid_and_poly_info(".get_grid_geometry_async()", api_obj.grid_dimensions, api_obj.stats)
         self._log_perf_messages(".get_grid_geometry_async()", perf_metrics, api_obj.stats)
 
         return ret_obj
@@ -211,6 +212,7 @@ class UserGrid3dService:
         )
         perf_metrics.record_lap("convert")
 
+        self._log_grid_and_poly_info(".get_mapped_grid_properties_async()", None, api_obj.stats)
         self._log_perf_messages(".get_mapped_grid_properties_async()", perf_metrics, api_obj.stats)
 
         return ret_obj
@@ -255,6 +257,7 @@ class UserGrid3dService:
         )
         perf_metrics.record_lap("convert")
 
+        self._log_grid_and_poly_info(".get_polyline_intersection_async()", api_obj.grid_dimensions, api_obj.stats)
         self._log_perf_messages(".get_polyline_intersection_async()", perf_metrics, api_obj.stats)
 
         return ret_obj
@@ -270,6 +273,20 @@ class UserGrid3dService:
         LOGGER.debug(f"{prefix} took: {metrics.to_string_s()}")
         LOGGER.debug(f"{prefix}   - user sess.: {user_session_details}")
         LOGGER.debug(f"{prefix}   - resinsight: {resinsight_details}")
+
+    def _log_grid_and_poly_info(
+        self, prefix: str, grid_dims: server_api_schemas.GridDimensions | None, stats: server_api_schemas.Stats | None
+    ) -> None:
+        if grid_dims:
+            cell_count = grid_dims.i_count * grid_dims.j_count * grid_dims.k_count
+            msg = f"gridSize: {grid_dims.i_count}x{grid_dims.j_count}x{grid_dims.k_count}, cellCount: {cell_count}"
+        else:
+            msg = "gridSize: na"
+
+        if stats:
+            msg += f", polyCount: {stats.poly_count}, vertexCount: {stats.vertex_count}"
+
+        LOGGER.debug(f"{prefix} {msg}")
 
     async def _call_service_endpoint_get(
         self, endpoint: str, query_params: dict[str, str], operation_descr: str

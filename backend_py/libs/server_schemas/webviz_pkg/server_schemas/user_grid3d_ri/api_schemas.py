@@ -12,6 +12,12 @@ class BoundingBox3D(BaseModel):
     max_z: float
 
 
+class GridDimensions(BaseModel):
+    i_count: int
+    j_count: int
+    k_count: int
+
+
 class IJKIndexFilter(BaseModel):
     min_i: int
     max_i: int
@@ -27,13 +33,15 @@ class Stats(BaseModel):
     perf_metrics: dict[str, int]
     ri_total_time: int | None = None
     ri_perf_metrics: dict[str, int] | None = None
+    vertex_count: int
+    poly_count: int
 
 
 class GridGeometryRequest(BaseModel):
     sas_token: str
     blob_store_base_uri: str
     grid_blob_object_uuid: str
-    ijk_index_filter: IJKIndexFilter | None;
+    ijk_index_filter: IJKIndexFilter | None
 
 
 class GridGeometryResponse(BaseModel):
@@ -42,6 +50,7 @@ class GridGeometryResponse(BaseModel):
     poly_source_cell_indices_b64arr: B64UintArray
     origin_utm_x: float
     origin_utm_y: float
+    grid_dimensions: GridDimensions
     bounding_box: BoundingBox3D
     stats: Stats | None
 
@@ -51,7 +60,7 @@ class MappedGridPropertiesRequest(BaseModel):
     blob_store_base_uri: str
     grid_blob_object_uuid: str
     property_blob_object_uuid: str
-    ijk_index_filter: IJKIndexFilter | None;
+    ijk_index_filter: IJKIndexFilter | None
 
 
 class MappedGridPropertiesResponse(BaseModel):
@@ -84,6 +93,7 @@ class FenceMeshSection(BaseModel):
 
 class PolylineIntersectionResponse(BaseModel):
     fence_mesh_sections: list[FenceMeshSection]
+    grid_dimensions: GridDimensions
     min_grid_prop_value: float
     max_grid_prop_value: float
     stats: Stats | None

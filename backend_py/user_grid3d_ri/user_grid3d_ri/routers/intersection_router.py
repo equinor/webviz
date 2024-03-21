@@ -42,7 +42,9 @@ async def post_get_polyline_intersection(
     if grid_path_name is None:
         raise HTTPException(status_code=500, detail=f"Failed to download grid blob: {req_body.grid_blob_object_uuid=}")
     if property_path_name is None:
-        raise HTTPException(status_code=500, detail=f"Failed to download property blob: {req_body.property_blob_object_uuid=}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to download property blob: {req_body.property_blob_object_uuid=}"
+        )
 
     LOGGER.debug(f"{myfunc} - {grid_path_name=}")
     LOGGER.debug(f"{myfunc} - {property_path_name=}")
@@ -68,6 +70,8 @@ async def post_get_polyline_intersection(
     ret_sections: list[api_schemas.FenceMeshSection] = []
 
     prop_extractor = GridPropertiesExtractor.from_roff_property_file(property_path_name)
+    tot_num_vertices: int = 0
+    tot_num_polys: int = 0
     for fence_idx, grpc_section in enumerate(grpc_response.fenceMeshSections):
         LOGGER.debug(f"{myfunc} - {len(grpc_section.vertexArrayUZ)=}")
         LOGGER.debug(f"{myfunc} - {len(grpc_section.polyIndicesArr)=}")
@@ -111,12 +115,20 @@ async def post_get_polyline_intersection(
         )
         ret_sections.append(section)
 
+        tot_num_vertices += int(len(grpc_section.vertexArrayUZ) / 2)
+        tot_num_polys += num_polys
+
     perf_metrics.record_lap("process")
 
     ret_obj = api_schemas.PolylineIntersectionResponse(
         fence_mesh_sections=ret_sections,
         min_grid_prop_value=prop_extractor.get_min_global_val(),
         max_grid_prop_value=prop_extractor.get_max_global_val(),
+        grid_dimensions=api_schemas.GridDimensions(
+            i_count=grpc_response.gridDimensions.i,
+            j_count=grpc_response.gridDimensions.j,
+            k_count=grpc_response.gridDimensions.k,
+        ),
         stats=None,
     )
     perf_metrics.record_lap("make-response")
@@ -127,6 +139,8 @@ async def post_get_polyline_intersection(
         perf_metrics=perf_metrics.to_dict(),
         ri_total_time=grpc_timeElapsedInfo.totalTimeElapsedMs,
         ri_perf_metrics=dict(grpc_timeElapsedInfo.namedEventsAndTimeElapsedMs),
+        vertex_count=tot_num_vertices,
+        poly_count=tot_num_polys,
     )
 
     LOGGER.debug(f"{myfunc} - Got polyline intersection in: {perf_metrics.to_string_s()}")
