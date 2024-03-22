@@ -1,4 +1,6 @@
 import logging
+import io
+import aiofiles
 
 import numpy as np
 import xtgeo
@@ -23,8 +25,12 @@ class GridPropertiesExtractor:
         self._max_global_prop_val: float | int = max_global_prop_val
 
     @classmethod
-    def from_roff_property_file(cls, roff_prop_file: str) -> "GridPropertiesExtractor":
-        xtg_grid_prop: xtgeo.GridProperty = xtgeo.gridproperty_from_file(roff_prop_file, fformat="roff")
+    async def from_roff_property_file_async(cls, roff_prop_file: str) -> "GridPropertiesExtractor":
+        async with aiofiles.open(roff_prop_file, mode="rb") as f:
+            file_contents: bytes = await f.read()
+
+        byte_stream = io.BytesIO(file_contents)
+        xtg_grid_prop: xtgeo.GridProperty = xtgeo.gridproperty_from_file(byte_stream, fformat="roff")
 
         min_prop_val = xtg_grid_prop.values.min()
         max_prop_val = xtg_grid_prop.values.max()
@@ -69,9 +75,7 @@ class GridPropertiesExtractor:
         else:
             return None
 
-    def get_prop_values_for_cells_as_float_list(
-        self, cell_indices: NDArray[np.integer] | list[int]
-    ) -> list[float]:
+    def get_prop_values_for_cells_as_float_list(self, cell_indices: NDArray[np.integer] | list[int]) -> list[float]:
         ret_arr = np.take(self._flat_prop_arr, cell_indices)
 
         if not self._is_discrete:

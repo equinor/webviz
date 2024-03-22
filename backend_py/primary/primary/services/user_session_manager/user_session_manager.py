@@ -87,7 +87,7 @@ class UserSessionManager:
             job_scheduler_port=session_def.port,
             instance_str=effective_instance_str,
             actual_service_port=actual_service_port,
-            approx_timeout_s=40,
+            approx_timeout_s=60,
         )
         if existing_session_info:
             session_url = f"http://{existing_session_info.radix_job_name}:{actual_service_port}"
@@ -107,7 +107,7 @@ class UserSessionManager:
             job_payload_dict=session_def.payload_dict,
             instance_str=effective_instance_str,
             actual_service_port=actual_service_port,
-            approx_timeout_s=30,
+            approx_timeout_s=50,
         )
 
         if not new_session_info:

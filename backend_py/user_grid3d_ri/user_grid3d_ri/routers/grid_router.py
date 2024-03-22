@@ -230,7 +230,9 @@ async def post_get_mapped_grid_properties(
     LOGGER.debug(f"{type(source_cell_indices_np)=}")
     LOGGER.debug(f"{source_cell_indices_np.dtype=}")
 
-    prop_extractor = GridPropertiesExtractor.from_roff_property_file(property_path_name)
+    prop_extractor = await GridPropertiesExtractor.from_roff_property_file_async(property_path_name)
+    perf_metrics.record_lap("read-props")
+
     poly_props_b64arr: B64FloatArray | B64IntArray
     undefined_int_value: int | None = None
     if prop_extractor.is_discrete():

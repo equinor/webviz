@@ -64,7 +64,7 @@ async def post_get_polyline_intersection(
 
     LOGGER.debug(f"{len(grpc_response.fenceMeshSections)=}")
 
-    prop_extractor = GridPropertiesExtractor.from_roff_property_file(property_path_name)
+    prop_extractor = await GridPropertiesExtractor.from_roff_property_file_async(property_path_name)
     perf_metrics.record_lap("read-props")
 
     ret_sections: list[api_schemas.FenceMeshSection] = []
