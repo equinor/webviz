@@ -28,6 +28,7 @@ class _RiInstanceInfo:
 class ResInsightManager:
     def __init__(self) -> None:
         self._ri_info: _RiInstanceInfo | None = None
+        self._mutex_lock = asyncio.Lock()
 
     async def get_channel_for_running_ri_instance_async(self) -> grpc.aio.Channel | None:
         instance = await self._get_or_create_ri_instance()
@@ -44,47 +45,48 @@ class ResInsightManager:
         return _RI_PORT
 
     async def _get_or_create_ri_instance(self) -> _RiInstanceInfo | None:
-        LOGGER.debug(f"_get_or_create_ri_instance() - has a registered instance: {'YES' if self._ri_info else 'NO'}")
-        if self._ri_info:
-            try:
-                process = psutil.Process(self._ri_info.pid)
-                LOGGER.debug(f"_get_or_create_ri_instance() - {process=}")
-                if process.is_running() and process.status() != psutil.STATUS_ZOMBIE:
-                    LOGGER.debug(f"_get_or_create_ri_instance() - process is already running, pid={self._ri_info.pid}")
-                    return self._ri_info
-            except psutil.NoSuchProcess:
-                pass
+        async with self._mutex_lock:
+            LOGGER.debug(f"_get_or_create_ri_instance() - has a registered instance: {'YES' if self._ri_info else 'NO'}")
+            if self._ri_info:
+                try:
+                    process = psutil.Process(self._ri_info.pid)
+                    LOGGER.debug(f"_get_or_create_ri_instance() - {process=}")
+                    if process.is_running() and process.status() != psutil.STATUS_ZOMBIE:
+                        LOGGER.debug(f"_get_or_create_ri_instance() - process is already running, pid={self._ri_info.pid}")
+                        return self._ri_info
+                except psutil.NoSuchProcess:
+                    pass
 
-            LOGGER.debug(f"_get_or_create_ri_instance() - process does NOT seem to be running, pid={self._ri_info.pid}")
+                LOGGER.debug(f"_get_or_create_ri_instance() - process does NOT seem to be running, pid={self._ri_info.pid}")
 
-        # Either we don't have a process or the process is dead, so we'll clean up and try to launch a new one
-        if self._ri_info and self._ri_info.channel:
-            LOGGER.debug(f"_get_or_create_ri_instance() - trying to close existing grpc channel")
-            await self._ri_info.channel.close()
+            # Either we don't have a process or the process is dead, so we'll clean up and try to launch a new one
+            if self._ri_info and self._ri_info.channel:
+                LOGGER.debug(f"_get_or_create_ri_instance() - trying to close existing grpc channel")
+                await self._ri_info.channel.close()
 
-        self._ri_info = None
-        _kill_competing_ri_processes()
+            self._ri_info = None
+            _kill_competing_ri_processes()
 
-        LOGGER.debug(f"_get_or_create_ri_instance() - launching new ResInsight process")
-        new_pid = await _launch_ri_instance()
-        if new_pid < 0:
-            LOGGER.error("Failed to launch ResInsight process")
-            return None
+            LOGGER.debug(f"_get_or_create_ri_instance() - launching new ResInsight process")
+            new_pid = await _launch_ri_instance()
+            if new_pid < 0:
+                LOGGER.error("Failed to launch ResInsight process")
+                return None
 
-        new_channel: grpc.aio.Channel = grpc.aio.insecure_channel(
-            f"localhost:{_RI_PORT}",
-            options=[("grpc.enable_http_proxy", False), ("grpc.max_receive_message_length", 512 * 1024 * 1024)],
-        )
-        if not await _probe_grpc_alive(new_channel):
-            LOGGER.error("Probe against newly launched ResInsight process failed")
-            return None
+            new_channel: grpc.aio.Channel = grpc.aio.insecure_channel(
+                f"localhost:{_RI_PORT}",
+                options=[("grpc.enable_http_proxy", False), ("grpc.max_receive_message_length", 512 * 1024 * 1024)],
+            )
+            if not await _probe_grpc_alive(new_channel):
+                LOGGER.error("Probe against newly launched ResInsight process failed")
+                return None
 
-        self._ri_info = _RiInstanceInfo(pid=new_pid, channel=new_channel)
-        LOGGER.debug(
-            f"_get_or_create_ri_instance() - successfully launched new ResInsight process, pid={self._ri_info.pid}"
-        )
+            self._ri_info = _RiInstanceInfo(pid=new_pid, channel=new_channel)
+            LOGGER.debug(
+                f"_get_or_create_ri_instance() - successfully launched new ResInsight process, pid={self._ri_info.pid}"
+            )
 
-        return self._ri_info
+            return self._ri_info
 
 
 def _kill_competing_ri_processes() -> None:
@@ -161,8 +163,8 @@ async def _probe_grpc_alive(channel: grpc.aio.Channel) -> bool:
         grpc_response = await app_stub.GetVersion(Definitions_pb2.Empty(), timeout=4.0, wait_for_ready=True)
         LOGGER.debug(f"_probe_grpc_alive() - {str(grpc_response)=}")
         return True
-    except grpc.aio.RpcError:
-        LOGGER.error(f"_probe_grpc_alive() - probe failed!!!")
+    except grpc.aio.AioRpcError as exception:
+        LOGGER.error(f"_probe_grpc_alive() - probe failed!!!  {exception=}")
         pass
 
     return False
