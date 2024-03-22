@@ -92,6 +92,7 @@ class LocalBlobCache:
         # We don't have the blob in our local cache yet, so we'll need to download it
         # Provided that no download of this blob is in progress, we'll start one
         if not blob_key in _blob_keys_in_flight:
+            LOGGER.debug(f"Starting download of {blob_kind} blob {object_uuid=}")
             _blob_keys_in_flight.add(blob_key)
             try:
                 dl_res = await self._download_blob(blob_item)
@@ -111,7 +112,7 @@ class LocalBlobCache:
 
         # A download of this blob is already in progress, we'll try and wait for it to finish
         time_countdown = TimeCountdown(duration_s=self._timeout, action_interval_s=2)
-        LOGGER.debug(f"Download of {blob_kind} blob is already in progress, waiting for it to finish")
+        LOGGER.debug(f"Download of {blob_kind} blob is already in progress, waiting for it to finish {object_uuid=}")
         while blob_key in _blob_keys_in_flight and not time_countdown.is_finished():
             if time_countdown.is_action_due():
                 LOGGER.debug(
