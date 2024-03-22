@@ -35,6 +35,12 @@ class _UserSessionDef:
     # fmt:on
 
 
+# Maximum limits in "resources" for a Radix job is as of May 2023
+# The specs of a single Standard_E16as_v4 node, i.e.:
+#  * vCPU: 16
+#  * memory: 128 GiB
+#  * temp storage (SSD): 256 GiB
+#
 _USER_SESSION_DEFS: dict[UserComponent, _UserSessionDef] = {
     UserComponent.MOCK: _UserSessionDef(
         job_component_name="user-mock",
@@ -229,7 +235,9 @@ async def _create_new_session(
                 )
 
             LOGGER.debug(f"Creating new job using radix job manager ({job_component_name=}, {job_scheduler_port=})")
-            new_radix_job_name = await create_new_radix_job(job_component_name, job_scheduler_port, resource_req)
+            new_radix_job_name = await create_new_radix_job(
+                job_component_name, job_scheduler_port, resource_req, job_payload_dict
+            )
             if new_radix_job_name is None:
                 LOGGER.error(f"Failed to create new job in radix ({job_component_name=}, {job_scheduler_port=})")
                 session_info_updater.delete_all_state()

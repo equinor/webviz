@@ -125,16 +125,24 @@ async def _stream_watcher(stream: asyncio.streams.StreamReader, stream_name) -> 
 
 async def _launch_ri_instance() -> int:
 
-    # !!!!!!!!!!!!!!!!!
-    _read_radix_payload_as_json()
-
     # Quick and dirty, redirect to our own stdout
     # proc: asyncio.subprocess.Process = await asyncio.create_subprocess_exec(_RI_EXECUTABLE, "--console", "--server", f"{_RI_PORT}", stdout=sys.stdout, stderr=sys.stderr)
+
+    env_dict = None
+
+    # !!!!!!!!!!!!!!!!!
+    payload_dict = _read_radix_payload_as_json()
+    LOGGER.debug(f"_launch_ri_instance() - {payload_dict=}")
+
+    if payload_dict and "ri_omp_num_treads" in payload_dict:
+        ri_omp_num_treads = payload_dict["ri_omp_num_treads"]
+        env_dict = {"OMP_NUM_THREADS": str(ri_omp_num_treads)}
 
     # Must figure ou a way to propagate this from caller before enabling!!
     # num_cores_to_use = 4
     # env_dict = {"OMP_NUM_THREADS": str(num_cores_to_use)}
-    env_dict = None
+
+    LOGGER.debug(f"_launch_ri_instance() - {env_dict=}")
 
     proc: asyncio.subprocess.Process = await asyncio.create_subprocess_exec(
         _RI_EXECUTABLE,
