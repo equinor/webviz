@@ -3,6 +3,7 @@ import logging
 from dataclasses import dataclass
 import os
 import asyncio
+import json
 
 import grpc
 import psutil
@@ -122,6 +123,9 @@ async def _stream_watcher(stream: asyncio.streams.StreamReader, stream_name) -> 
 
 async def _launch_ri_instance() -> int:
 
+    # !!!!!!!!!!!!!!!!!
+    _read_radix_payload_as_json()
+
     # Quick and dirty, redirect to our own stdout
     # proc: asyncio.subprocess.Process = await asyncio.create_subprocess_exec(_RI_EXECUTABLE, "--console", "--server", f"{_RI_PORT}", stdout=sys.stdout, stderr=sys.stderr)
 
@@ -162,6 +166,26 @@ async def _probe_grpc_alive(channel: grpc.aio.Channel) -> bool:
         pass
 
     return False
+
+
+def _read_radix_payload_as_json() -> dict | None:
+    payload_filename = "/compute/args/payload"
+
+    LOGGER.debug(f"_read_radix_payload_as_json() - {payload_filename=}")
+
+    try:
+        with open(payload_filename) as f:
+            file_contents = f.read()
+            LOGGER.debug(f"_read_radix_payload_as_json() - {file_contents=}")
+
+            payload_dict = json.loads(file_contents)
+            LOGGER.debug(f"_read_radix_payload_as_json() - {payload_dict=}")
+
+            return payload_dict
+
+    except Exception as exception:
+        LOGGER.error(f"_read_radix_payload_as_json() - Failed to read payload file, {exception=}")
+        return None
 
 
 RESINSIGHT_MANAGER = ResInsightManager()

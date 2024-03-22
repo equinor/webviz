@@ -1,6 +1,7 @@
 import asyncio
 import logging
 import os
+import json
 from typing import List, Literal
 
 import httpx
@@ -50,6 +51,13 @@ async def create_new_radix_job(
     # Note that this might not be the best solution if we end up running golang apps inside the jobs since there
     # we might want to auto discover the number of available cpus and set the GOMAXPROCS environment variable accordingly.
     # As of now, it seems that it's the cpu limit value that will be picked up by for example by automaxprocs.
+
+    test_payload_dict = {
+        "available_core_count": 4,
+        "some_other_prop": 99,
+    }
+    payload_str = json.dumps(test_payload_dict)
+
     request_body = {
         "resources": {
             "requests": {
@@ -59,7 +67,8 @@ async def create_new_radix_job(
             "limits": {
                 "memory": resource_req.memory,
             },
-        }
+        },
+        "payload": payload_str,
     }
 
     async with httpx.AsyncClient() as client:
