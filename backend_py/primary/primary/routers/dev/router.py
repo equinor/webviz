@@ -5,6 +5,8 @@ from typing import Annotated
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, Query, Path
 
+from webviz_pkg.core_utils.background_tasks import run_in_background_task
+
 from primary.auth.auth_helper import AuthenticatedUser, AuthHelper
 from primary.services.user_session_manager.user_session_manager import UserSessionManager
 from primary.services.user_session_manager.user_session_manager import UserComponent
@@ -13,7 +15,7 @@ from primary.services.user_session_manager._radix_helpers import create_new_radi
 from primary.services.user_session_manager._radix_helpers import get_all_radix_jobs, get_radix_job_state
 from primary.services.user_session_manager._radix_helpers import delete_all_radix_jobs
 from primary.services.user_session_manager._user_session_directory import UserSessionDirectory
-from primary.services.user_session_manager._background_tasks import run_in_background_task
+from primary.services.user_grid3d_service.user_grid3d_service import UserGrid3dService, IJKIndexFilter
 
 LOGGER = logging.getLogger(__name__)
 
@@ -169,3 +171,61 @@ async def bgtask() -> str:
     LOGGER.debug(f"bgtask() - done")
 
     return "Background tasks were run"
+
+
+@router.get("/ri_surf")
+async def ri_surf(
+    authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
+) -> str:
+    LOGGER.debug(f"ri_surf() - start")
+
+    case_uuid = "485041ce-ad72-48a3-ac8c-484c0ed95cf8"
+    ensemble_name = "iter-0"
+    realization = 1
+    # grid_name = "Simgrid"
+    # property_name = "PORO"
+    grid_name = "Geogrid"
+    property_name = "Region"
+
+    ijk_index_filter = IJKIndexFilter(min_i=0, max_i=0, min_j=0, max_j=0, min_k=0, max_k=0)
+
+    grid_service = await UserGrid3dService.create_async(authenticated_user, case_uuid)
+    await grid_service.get_grid_geometry_async(ensemble_name, realization, grid_name, ijk_index_filter)
+    await grid_service.get_mapped_grid_properties_async(
+        ensemble_name, realization, grid_name, property_name, ijk_index_filter
+    )
+
+    return "OK"
+
+
+@router.get("/ri_isect")
+async def ri_isect(
+    authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
+) -> str:
+    LOGGER.debug(f"ri_isect() - start")
+
+    case_uuid = "485041ce-ad72-48a3-ac8c-484c0ed95cf8"
+    ensemble_name = "iter-0"
+    realization = 1
+    # grid_name = "Simgrid"
+    # property_name = "PORO"
+    grid_name = "Geogrid"
+    property_name = "Region"
+
+    # Polyline for testing
+    # fmt:off
+    xy_arr = [
+        463156.911, 5929542.294,
+        463564.402, 5931057.803,
+        463637.925, 5931184.235,
+        463690.658, 5931278.837,
+        463910.452, 5931688.122,
+        464465.876, 5932767.761,
+        464765.876, 5934767.761,
+    ]
+    # fmt:on
+
+    grid_service = await UserGrid3dService.create_async(authenticated_user, case_uuid)
+    await grid_service.get_polyline_intersection_async(ensemble_name, realization, grid_name, property_name, xy_arr)
+
+    return "OK"

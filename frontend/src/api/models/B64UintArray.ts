@@ -8,6 +8,7 @@ export type B64UintArray = {
 };
 export namespace B64UintArray {
     export enum element_type {
+        UINT8 = 'uint8',
         UINT16 = 'uint16',
         UINT32 = 'uint32',
         UINT64 = 'uint64',

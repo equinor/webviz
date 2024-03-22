@@ -64,7 +64,7 @@ services:
       - UVICORN_PORT=8001
       - UVICORN_RELOAD=true
     volumes:
-      - ./backend_py/user_mock:/home/appuser/backend_py/user_mock
+      - ./backend_py/user_mock/user_mock:/home/appuser/backend_py/user_mock/user_mock
 
   user-grid3d-ri:
     build:
@@ -76,7 +76,8 @@ services:
       - UVICORN_PORT=8002
       - UVICORN_RELOAD=true
     volumes:
-      - ./backend_py/user_grid3d_ri:/home/appuser/backend_py/user_grid3d_ri
+      - ./backend_py/user_grid3d_ri/user_grid3d_ri:/home/appuser/backend_py/user_grid3d_ri/user_grid3d_ri
+      - ./backend_py/libs:/home/appuser/backend_py/libs
 
   user-grid3d-vtk:
     build:

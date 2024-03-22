@@ -7,6 +7,7 @@ from typing import Tuple
 import httpx
 from pottery import Redlock
 
+from webviz_pkg.core_utils.background_tasks import run_in_background_task
 from webviz_pkg.core_utils.perf_timer import PerfTimer
 
 from ._radix_helpers import IS_ON_RADIX_PLATFORM
@@ -14,7 +15,6 @@ from ._radix_helpers import create_new_radix_job, RadixResourceRequests
 from ._radix_helpers import is_radix_job_running, delete_named_radix_job
 from ._user_session_directory import SessionInfo, SessionRunState, UserSessionDirectory
 from ._util_classes import LockReleasingContext, TimeCounter
-from ._background_tasks import run_in_background_task
 
 LOGGER = logging.getLogger(__name__)
 
@@ -31,18 +31,34 @@ class _UserSessionDef:
     job_component_name: str             # The job's component name in radix, or the service name in docker compose, e.g. "user-mock"
     port: int                           # The port number for the radix job manager AND the actual port of the service. These must be the same for our current docker compose setup
     resource_req: RadixResourceRequests # The resource requests for the radix job
+    payload_dict: dict | None           # The payload to be sent to the radix job manager
     # fmt:on
 
 
+# Maximum limits in "resources" for a Radix job is as of May 2023
+# The specs of a single Standard_E16as_v4 node, i.e.:
+#  * vCPU: 16
+#  * memory: 128 GiB
+#  * temp storage (SSD): 256 GiB
+#
 _USER_SESSION_DEFS: dict[UserComponent, _UserSessionDef] = {
     UserComponent.MOCK: _UserSessionDef(
-        job_component_name="user-mock", port=8001, resource_req=RadixResourceRequests(cpu="100m", memory="200Mi")
+        job_component_name="user-mock",
+        port=8001,
+        resource_req=RadixResourceRequests(cpu="100m", memory="200Mi"),
+        payload_dict=None,
     ),
     UserComponent.GRID3D_RI: _UserSessionDef(
-        job_component_name="user-grid3d-ri", port=8002, resource_req=RadixResourceRequests(cpu="200m", memory="400Mi")
+        job_component_name="user-grid3d-ri",
+        port=8002,
+        resource_req=RadixResourceRequests(cpu="4", memory="16Gi"),
+        payload_dict={"ri_omp_num_treads": 4},
     ),
     UserComponent.GRID3D_VTK: _UserSessionDef(
-        job_component_name="user-grid3d-vtk", port=8003, resource_req=RadixResourceRequests(cpu="200m", memory="400Mi")
+        job_component_name="user-grid3d-vtk",
+        port=8003,
+        resource_req=RadixResourceRequests(cpu="200m", memory="400Mi"),
+        payload_dict=None,
     ),
 }
 
@@ -71,7 +87,7 @@ class UserSessionManager:
             job_scheduler_port=session_def.port,
             instance_str=effective_instance_str,
             actual_service_port=actual_service_port,
-            approx_timeout_s=40,
+            approx_timeout_s=60,
         )
         if existing_session_info:
             session_url = f"http://{existing_session_info.radix_job_name}:{actual_service_port}"
@@ -88,9 +104,10 @@ class UserSessionManager:
             job_component_name=session_def.job_component_name,
             job_scheduler_port=session_def.port,
             resource_req=session_def.resource_req,
+            job_payload_dict=session_def.payload_dict,
             instance_str=effective_instance_str,
             actual_service_port=actual_service_port,
-            approx_timeout_s=30,
+            approx_timeout_s=50,
         )
 
         if not new_session_info:
@@ -138,7 +155,7 @@ async def _get_info_for_running_session(
         elapsed_s = time_counter.elapsed_s()
         if elapsed_s + sleep_time_s > approx_timeout_s:
             LOGGER.debug(
-                "Giving up waiting for user session to enter running state after {num_calls} failed attempts, time spent: {elapsed_s:.2f}s"
+                f"Giving up waiting for user session to enter running state after {num_calls} failed attempts, time spent: {elapsed_s:.2f}s"
             )
             return None
 
@@ -180,6 +197,7 @@ async def _create_new_session(
     job_component_name: str,
     job_scheduler_port: int,
     resource_req: RadixResourceRequests,
+    job_payload_dict: dict | None,
     instance_str: str,
     actual_service_port: int,
     approx_timeout_s: float,
@@ -217,7 +235,9 @@ async def _create_new_session(
                 )
 
             LOGGER.debug(f"Creating new job using radix job manager ({job_component_name=}, {job_scheduler_port=})")
-            new_radix_job_name = await create_new_radix_job(job_component_name, job_scheduler_port, resource_req)
+            new_radix_job_name = await create_new_radix_job(
+                job_component_name, job_scheduler_port, resource_req, job_payload_dict
+            )
             if new_radix_job_name is None:
                 LOGGER.error(f"Failed to create new job in radix ({job_component_name=}, {job_scheduler_port=})")
                 session_info_updater.delete_all_state()

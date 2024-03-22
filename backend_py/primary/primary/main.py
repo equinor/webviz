@@ -45,6 +45,8 @@ setup_normal_log_levels()
 # logging.getLogger().setLevel(logging.DEBUG)
 logging.getLogger("primary.services.sumo_access").setLevel(logging.DEBUG)
 logging.getLogger("primary.services.user_session_manager").setLevel(logging.DEBUG)
+logging.getLogger("primary.services.user_grid3d_service").setLevel(logging.DEBUG)
+logging.getLogger("primary.routers.grid3d").setLevel(logging.DEBUG)
 logging.getLogger("primary.routers.dev").setLevel(logging.DEBUG)
 
 LOGGER = logging.getLogger(__name__)

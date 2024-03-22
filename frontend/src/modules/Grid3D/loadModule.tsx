@@ -5,11 +5,14 @@ import state from "./state";
 import { View } from "./view";
 
 const defaultState: state = {
-    gridName: "Simgrid",
-    parameterName: "PORO",
+    gridName: null,
+    boundingBox: null,
+    parameterName: null,
     selectedWellUuids: [],
-    realizations: ["1"],
-    useStatistics: false,
+    showGridLines: false,
+    realization: 0,
+    singleKLayer: -1,
+    polyLine: [],
 };
 
 const module = ModuleRegistry.initModule<state>("Grid3D", defaultState, {});

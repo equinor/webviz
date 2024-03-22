@@ -1,0 +1,16 @@
+[tool.poetry]
+name = "server-schemas"
+version = "0.0.1"
+description = "Package with shared schemas for server messages/requests/responses"
+authors = ["R&T Equinor", "Ceetron Solutions AS"]
+packages = [ { include = "webviz_pkg" } ]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+numpy = "^1.24.1"
+pydantic = "^2.3.0"
+core_utils = {path = "../core_utils", develop = true}
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

@@ -6,7 +6,7 @@ import pyarrow.compute as pc
 from fastapi import APIRouter, Depends, HTTPException, Query, Response
 
 from primary.auth.auth_helper import AuthHelper
-from primary.utils.perf_metrics import PerfMetrics
+from primary.utils.response_perf_metrics import ResponsePerfMetrics
 from primary.services.summary_vector_statistics import compute_vector_statistics
 from primary.services.sumo_access.generic_types import EnsembleScalarResponse
 from primary.services.sumo_access.parameter_access import ParameterAccess
@@ -54,7 +54,7 @@ async def get_realizations_vector_data(
 ) -> list[schemas.VectorRealizationData]:
     """Get vector data per realization"""
 
-    perf_metrics = PerfMetrics(response)
+    perf_metrics = ResponsePerfMetrics(response)
     access = await SummaryAccess.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
 
     sumo_freq = Frequency.from_string_value(resampling_frequency.value if resampling_frequency else "dummy")
@@ -146,7 +146,7 @@ async def get_statistical_vector_data(
 ) -> schemas.VectorStatisticData:
     """Get statistical vector data for an ensemble"""
 
-    perf_metrics = PerfMetrics(response)
+    perf_metrics = ResponsePerfMetrics(response)
 
     access = await SummaryAccess.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
 

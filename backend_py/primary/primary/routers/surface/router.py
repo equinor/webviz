@@ -11,7 +11,7 @@ from primary.services.smda_access.mocked_drogon_smda_access import _mocked_strat
 from primary.services.utils.statistic_function import StatisticFunction
 from primary.services.utils.authenticated_user import AuthenticatedUser
 from primary.auth.auth_helper import AuthHelper
-from primary.utils.perf_metrics import PerfMetrics
+from primary.utils.response_perf_metrics import ResponsePerfMetrics
 from primary.services.sumo_access._helpers import SumoCase
 from primary.services.surface_query_service.surface_query_service import batch_sample_surface_in_points_async
 from primary.services.surface_query_service.surface_query_service import RealizationSampleResult
@@ -64,7 +64,7 @@ async def get_realization_surface_data(
     attribute: str = Query(description="Surface attribute"),
     time_or_interval: Optional[str] = Query(None, description="Time point or time interval string"),
 ) -> schemas.SurfaceData:
-    perf_metrics = PerfMetrics(response)
+    perf_metrics = ResponsePerfMetrics(response)
 
     access = await SurfaceAccess.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
     xtgeo_surf = await access.get_realization_surface_data_async(
@@ -94,7 +94,7 @@ async def get_statistical_surface_data(
     attribute: str = Query(description="Surface attribute"),
     time_or_interval: Optional[str] = Query(None, description="Time point or time interval string"),
 ) -> schemas.SurfaceData:
-    perf_metrics = PerfMetrics(response)
+    perf_metrics = ResponsePerfMetrics(response)
 
     access = await SurfaceAccess.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
 
@@ -136,7 +136,7 @@ async def get_property_surface_resampled_to_static_surface(
     attribute_property: str = Query(description="Surface attribute"),
     time_or_interval_property: Optional[str] = Query(None, description="Time point or time interval string"),
 ) -> schemas.SurfaceData:
-    perf_metrics = PerfMetrics(response)
+    perf_metrics = ResponsePerfMetrics(response)
 
     access = await SurfaceAccess.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
     xtgeo_surf_mesh = await access.get_realization_surface_data_async(

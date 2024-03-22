@@ -2,31 +2,38 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
+import type { Body_post_get_polyline_intersection } from '../models/Body_post_get_polyline_intersection';
+import type { Grid3dGeometry } from '../models/Grid3dGeometry';
+import type { Grid3dInfo } from '../models/Grid3dInfo';
+import type { Grid3dMappedProperty } from '../models/Grid3dMappedProperty';
 import type { GridIntersectionVtk } from '../models/GridIntersectionVtk';
-import type { GridSurface } from '../models/GridSurface';
 import type { GridSurfaceVtk } from '../models/GridSurfaceVtk';
+import type { PolylineIntersection } from '../models/PolylineIntersection';
 import type { CancelablePromise } from '../core/CancelablePromise';
 import type { BaseHttpRequest } from '../core/BaseHttpRequest';
 export class Grid3DService {
     constructor(public readonly httpRequest: BaseHttpRequest) {}
     /**
-     * Get Grid Model Names
-     * Get a list of grid model names
+     * Get Grid Models Info
+     * Get metadata for all 3D grid models, including bbox, dimensions and properties
      * @param caseUuid Sumo case uuid
      * @param ensembleName Ensemble name
-     * @returns string Successful Response
+     * @param realizationNum Realization
+     * @returns Grid3dInfo Successful Response
      * @throws ApiError
      */
-    public getGridModelNames(
+    public getGridModelsInfo(
         caseUuid: string,
         ensembleName: string,
-    ): CancelablePromise<Array<string>> {
+        realizationNum: number,
+    ): CancelablePromise<Array<Grid3dInfo>> {
         return this.httpRequest.request({
             method: 'GET',
-            url: '/grid3d/grid_model_names/',
+            url: '/grid3d/grid_models_info/',
             query: {
                 'case_uuid': caseUuid,
                 'ensemble_name': ensembleName,
+                'realization_num': realizationNum,
             },
             errors: {
                 422: `Validation Error`,
@@ -34,22 +41,22 @@ export class Grid3DService {
         });
     }
     /**
-     * Get Parameter Names
-     * Get a list of grid parameter names
+     * Is Grid Geometry Shared
+     * Check if a 3D grid geometry is shared across realizations
      * @param caseUuid Sumo case uuid
      * @param ensembleName Ensemble name
      * @param gridName Grid name
-     * @returns string Successful Response
+     * @returns boolean Successful Response
      * @throws ApiError
      */
-    public getParameterNames(
+    public isGridGeometryShared(
         caseUuid: string,
         ensembleName: string,
         gridName: string,
-    ): CancelablePromise<Array<string>> {
+    ): CancelablePromise<boolean> {
         return this.httpRequest.request({
             method: 'GET',
-            url: '/grid3d/parameter_names/',
+            url: '/grid3d/is_grid_geometry_shared/',
             query: {
                 'case_uuid': caseUuid,
                 'ensemble_name': ensembleName,
@@ -62,19 +69,22 @@ export class Grid3DService {
     }
     /**
      * Grid Surface
+     * Get a grid
      * @param caseUuid Sumo case uuid
      * @param ensembleName Ensemble name
      * @param gridName Grid name
-     * @param realization Realization
-     * @returns GridSurface Successful Response
+     * @param realizationNum Realization
+     * @param singleKLayer Show only a single k layer
+     * @returns Grid3dGeometry Successful Response
      * @throws ApiError
      */
     public gridSurface(
         caseUuid: string,
         ensembleName: string,
         gridName: string,
-        realization: string,
-    ): CancelablePromise<GridSurface> {
+        realizationNum: number,
+        singleKLayer: number = -1,
+    ): CancelablePromise<Grid3dGeometry> {
         return this.httpRequest.request({
             method: 'GET',
             url: '/grid3d/grid_surface',
@@ -82,7 +92,8 @@ export class Grid3DService {
                 'case_uuid': caseUuid,
                 'ensemble_name': ensembleName,
                 'grid_name': gridName,
-                'realization': realization,
+                'realization_num': realizationNum,
+                'single_k_layer': singleKLayer,
             },
             errors: {
                 422: `Validation Error`,
@@ -91,12 +102,14 @@ export class Grid3DService {
     }
     /**
      * Grid Parameter
+     * Get a grid parameter
      * @param caseUuid Sumo case uuid
      * @param ensembleName Ensemble name
      * @param gridName Grid name
      * @param parameterName Grid parameter
-     * @param realization Realization
-     * @returns number Successful Response
+     * @param realizationNum Realization
+     * @param singleKLayer Show only a single k layer
+     * @returns Grid3dMappedProperty Successful Response
      * @throws ApiError
      */
     public gridParameter(
@@ -104,8 +117,9 @@ export class Grid3DService {
         ensembleName: string,
         gridName: string,
         parameterName: string,
-        realization: string,
-    ): CancelablePromise<Array<number>> {
+        realizationNum: number,
+        singleKLayer: number = -1,
+    ): CancelablePromise<Grid3dMappedProperty> {
         return this.httpRequest.request({
             method: 'GET',
             url: '/grid3d/grid_parameter',
@@ -114,8 +128,45 @@ export class Grid3DService {
                 'ensemble_name': ensembleName,
                 'grid_name': gridName,
                 'parameter_name': parameterName,
-                'realization': realization,
+                'realization_num': realizationNum,
+                'single_k_layer': singleKLayer,
             },
+            errors: {
+                422: `Validation Error`,
+            },
+        });
+    }
+    /**
+     * Post Get Polyline Intersection
+     * @param caseUuid Sumo case uuid
+     * @param ensembleName Ensemble name
+     * @param gridName Grid name
+     * @param parameterName Grid parameter
+     * @param realizationNum Realization
+     * @param requestBody
+     * @returns PolylineIntersection Successful Response
+     * @throws ApiError
+     */
+    public postGetPolylineIntersection(
+        caseUuid: string,
+        ensembleName: string,
+        gridName: string,
+        parameterName: string,
+        realizationNum: number,
+        requestBody: Body_post_get_polyline_intersection,
+    ): CancelablePromise<PolylineIntersection> {
+        return this.httpRequest.request({
+            method: 'POST',
+            url: '/grid3d/get_polyline_intersection',
+            query: {
+                'case_uuid': caseUuid,
+                'ensemble_name': ensembleName,
+                'grid_name': gridName,
+                'parameter_name': parameterName,
+                'realization_num': realizationNum,
+            },
+            body: requestBody,
+            mediaType: 'application/json',
             errors: {
                 422: `Validation Error`,
             },

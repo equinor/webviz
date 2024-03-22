@@ -6,6 +6,7 @@ class Service(str, Enum):
     SUMO = "sumo"
     SMDA = "smda"
     VDS = "vds"
+    USER_SESSION = "user_session"
 
 
 class ServiceLayerException(Exception):
@@ -40,6 +41,12 @@ class ServiceTimeoutError(ServiceLayerException):
 class ServiceUnavailableError(ServiceLayerException):
     """
     Some underlying service is unavailable, eg. Sumo is down.
+    """
+
+
+class ServiceRequestError(ServiceLayerException):
+    """
+    An error occurred while make a call/request to some underlying service, eg. when making an REST call to a user session service
     """
 
 
