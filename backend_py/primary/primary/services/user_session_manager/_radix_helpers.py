@@ -36,9 +36,9 @@ class RadixJobState(BaseModel):
 
 
 async def create_new_radix_job(
-    job_component_name: str, job_scheduler_port: int, resource_req: RadixResourceRequests
+    job_component_name: str, job_scheduler_port: int, resource_req: RadixResourceRequests, payload_dict: dict | None
 ) -> str | None:
-    LOGGER.debug(f"create_new_radix_job() - {job_component_name=}, {resource_req=}")
+    LOGGER.debug(f"create_new_radix_job() - {job_component_name=}, {resource_req=}, {payload_dict=}")
 
     radix_job_manager_url = f"http://{job_component_name}:{job_scheduler_port}/api/v1/jobs"
 
@@ -52,13 +52,11 @@ async def create_new_radix_job(
     # we might want to auto discover the number of available cpus and set the GOMAXPROCS environment variable accordingly.
     # As of now, it seems that it's the cpu limit value that will be picked up by for example by automaxprocs.
 
-    test_payload_dict = {
-        "available_core_count": 4,
-        "some_other_prop": 99,
-    }
-    payload_str = json.dumps(test_payload_dict)
+    payload_as_str = json.dumps(payload_dict)
 
     request_body = {
+        "payload": payload_as_str,
+        "jobId": "my-test-job-id",
         "resources": {
             "requests": {
                 "memory": resource_req.memory,
@@ -68,7 +66,6 @@ async def create_new_radix_job(
                 "memory": resource_req.memory,
             },
         },
-        "payload": payload_str,
     }
 
     async with httpx.AsyncClient() as client:
@@ -147,9 +144,9 @@ async def get_all_radix_jobs(job_component_name: str, job_scheduler_port: int) -
             LOGGER.error(f"Error getting radix jobs, HTTP error {e.response.status_code} for GET to {e.request.url}")
             return []
 
-    # LOGGER.debug("------")
-    # LOGGER.debug(f"{response.json()=}")
-    # LOGGER.debug("------")
+    LOGGER.debug("------")
+    LOGGER.debug(f"{response.json()=}")
+    LOGGER.debug("------")
 
     tadapter = TypeAdapter(List[RadixJobState])
     ret_list = tadapter.validate_json(response.content)

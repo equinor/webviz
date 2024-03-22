@@ -31,18 +31,28 @@ class _UserSessionDef:
     job_component_name: str             # The job's component name in radix, or the service name in docker compose, e.g. "user-mock"
     port: int                           # The port number for the radix job manager AND the actual port of the service. These must be the same for our current docker compose setup
     resource_req: RadixResourceRequests # The resource requests for the radix job
+    payload_dict: dict | None           # The payload to be sent to the radix job manager
     # fmt:on
 
 
 _USER_SESSION_DEFS: dict[UserComponent, _UserSessionDef] = {
     UserComponent.MOCK: _UserSessionDef(
-        job_component_name="user-mock", port=8001, resource_req=RadixResourceRequests(cpu="100m", memory="200Mi")
+        job_component_name="user-mock",
+        port=8001,
+        resource_req=RadixResourceRequests(cpu="100m", memory="200Mi"),
+        payload_dict=None,
     ),
     UserComponent.GRID3D_RI: _UserSessionDef(
-        job_component_name="user-grid3d-ri", port=8002, resource_req=RadixResourceRequests(cpu="4", memory="16Gi")
+        job_component_name="user-grid3d-ri",
+        port=8002,
+        resource_req=RadixResourceRequests(cpu="4", memory="16Gi"),
+        payload_dict={"ri_omp_num_treads": 4},
     ),
     UserComponent.GRID3D_VTK: _UserSessionDef(
-        job_component_name="user-grid3d-vtk", port=8003, resource_req=RadixResourceRequests(cpu="200m", memory="400Mi")
+        job_component_name="user-grid3d-vtk",
+        port=8003,
+        resource_req=RadixResourceRequests(cpu="200m", memory="400Mi"),
+        payload_dict=None,
     ),
 }
 
@@ -88,6 +98,7 @@ class UserSessionManager:
             job_component_name=session_def.job_component_name,
             job_scheduler_port=session_def.port,
             resource_req=session_def.resource_req,
+            job_payload_dict=session_def.payload_dict,
             instance_str=effective_instance_str,
             actual_service_port=actual_service_port,
             approx_timeout_s=30,
@@ -180,6 +191,7 @@ async def _create_new_session(
     job_component_name: str,
     job_scheduler_port: int,
     resource_req: RadixResourceRequests,
+    job_payload_dict: dict | None,
     instance_str: str,
     actual_service_port: int,
     approx_timeout_s: float,
