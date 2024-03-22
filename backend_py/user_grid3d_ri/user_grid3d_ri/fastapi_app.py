@@ -1,10 +1,10 @@
 import datetime
 import logging
-import os
 
 from fastapi import FastAPI
 
-from .inactivity_shutdown import InactivityShutdown
+from .utils.inactivity_shutdown import InactivityShutdown
+from .utils.radix_utils import IS_ON_RADIX_PLATFORM
 from .routers import health_router
 from .routers import grid_router
 from .routers import intersection_router
@@ -20,9 +20,6 @@ logging.getLogger("azure.core.pipeline.policies.http_logging_policy").setLevel(l
 
 
 LOGGER = logging.getLogger(__name__)
-
-# Seems to be one way of know if we're running in Radix or locally
-IS_ON_RADIX_PLATFORM = True if os.getenv("RADIX_APP") is not None else False
 
 
 app = FastAPI()
