@@ -42,6 +42,10 @@ async def create_new_radix_job(
 
     radix_job_manager_url = f"http://{job_component_name}:{job_scheduler_port}/api/v1/jobs"
 
+    payload_as_str: str | None = None
+    if payload_dict:
+        payload_as_str = json.dumps(payload_dict)
+
     # Setting memory request equal to memory limit on purpose
     # Also, cpu limit is omitted on purpose.
     # Following advice here:
@@ -51,12 +55,9 @@ async def create_new_radix_job(
     # Note that this might not be the best solution if we end up running golang apps inside the jobs since there
     # we might want to auto discover the number of available cpus and set the GOMAXPROCS environment variable accordingly.
     # As of now, it seems that it's the cpu limit value that will be picked up by for example by automaxprocs.
-
-    payload_as_str = json.dumps(payload_dict)
-
     request_body = {
+        "jobId": "my-dummy-job-id",
         "payload": payload_as_str,
-        "jobId": "my-test-job-id",
         "resources": {
             "requests": {
                 "memory": resource_req.memory,

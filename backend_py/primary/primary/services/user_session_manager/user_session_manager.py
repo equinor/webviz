@@ -51,8 +51,8 @@ _USER_SESSION_DEFS: dict[UserComponent, _UserSessionDef] = {
     UserComponent.GRID3D_RI: _UserSessionDef(
         job_component_name="user-grid3d-ri",
         port=8002,
-        resource_req=RadixResourceRequests(cpu="4", memory="16Gi"),
-        payload_dict={"ri_omp_num_treads": 4},
+        resource_req=RadixResourceRequests(cpu="8", memory="32Gi"),
+        payload_dict={"ri_omp_num_treads": 8},
     ),
     UserComponent.GRID3D_VTK: _UserSessionDef(
         job_component_name="user-grid3d-vtk",
@@ -155,7 +155,7 @@ async def _get_info_for_running_session(
         elapsed_s = time_counter.elapsed_s()
         if elapsed_s + sleep_time_s > approx_timeout_s:
             LOGGER.debug(
-                "Giving up waiting for user session to enter running state after {num_calls} failed attempts, time spent: {elapsed_s:.2f}s"
+                f"Giving up waiting for user session to enter running state after {num_calls} failed attempts, time spent: {elapsed_s:.2f}s"
             )
             return None
 
