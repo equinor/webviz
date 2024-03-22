@@ -46,11 +46,11 @@ async def post_get_grid_geometry(
 
     grid_path_name = await blob_cache.ensure_grid_blob_downloaded_async(req_body.grid_blob_object_uuid)
     if grid_path_name is None:
-        raise HTTPException(status_code=500, detail=f"Failed to download grid blob: {req_body.grid_blob_object_uuid=}")
+        raise HTTPException(500, detail=f"Failed to download grid blob: {req_body.grid_blob_object_uuid=}")
     LOGGER.debug(f"{myfunc} - {grid_path_name=}")
     perf_metrics.record_lap("get-blob")
 
-    grpc_channel: grpc.Channel = await RESINSIGHT_MANAGER.get_channel_for_running_ri_instance_async()
+    grpc_channel: grpc.aio.Channel = await RESINSIGHT_MANAGER.get_channel_for_running_ri_instance_async()
     perf_metrics.record_lap("get-ri")
 
     # !!!!!!!!!!!!!!!!!!!!!!!
@@ -66,7 +66,6 @@ async def post_get_grid_geometry(
     grpc_response = None
 
     if grpc_response is None:
-        grid_geometry_extraction_stub = GridGeometryExtraction_pb2_grpc.GridGeometryExtractionStub(grpc_channel)
 
         grpc_ijk_index_filter = None
         if req_body.ijk_index_filter:
@@ -89,9 +88,8 @@ async def post_get_grid_geometry(
             propertyFilter=None,
         )
 
-        grpc_response: GridGeometryExtraction_pb2.GetGridSurfaceResponse = grid_geometry_extraction_stub.GetGridSurface(
-            request
-        )
+        geo_extraction_stub = GridGeometryExtraction_pb2_grpc.GridGeometryExtractionStub(grpc_channel)
+        grpc_response = await geo_extraction_stub.GetGridSurface(request)
 
     perf_metrics.record_lap("ri-grid-geo")
 
@@ -184,9 +182,9 @@ async def post_get_mapped_grid_properties(
     property_path_name = await blob_cache.ensure_property_blob_downloaded_async(req_body.property_blob_object_uuid)
 
     if grid_path_name is None:
-        raise HTTPException(status_code=500, detail=f"Failed to download grid blob: {req_body.grid_blob_object_uuid=}")
+        raise HTTPException(500, detail=f"Failed to download grid blob: {req_body.grid_blob_object_uuid=}")
     if property_path_name is None:
-        raise HTTPException(status_code=500, detail=f"Failed to download property blob: {req_body.property_blob_object_uuid=}")
+        raise HTTPException(500, detail=f"Failed to download property blob: {req_body.property_blob_object_uuid=}")
 
     LOGGER.debug(f"{myfunc} - {grid_path_name=}")
     LOGGER.debug(f"{myfunc} - {property_path_name=}")
@@ -198,7 +196,7 @@ async def post_get_mapped_grid_properties(
     source_cell_indices_np = None
 
     if source_cell_indices_np is None:
-        grpc_channel: grpc.Channel = await RESINSIGHT_MANAGER.get_channel_for_running_ri_instance_async()
+        grpc_channel: grpc.aio.Channel = await RESINSIGHT_MANAGER.get_channel_for_running_ri_instance_async()
         perf_metrics.record_lap("get-ri")
 
         grpc_ijk_index_filter = None
@@ -213,7 +211,6 @@ async def post_get_mapped_grid_properties(
             )
         LOGGER.debug(f"{myfunc} - grpc_ijk_index_filter: {_proto_msg_as_oneliner(grpc_ijk_index_filter)}")
 
-        grid_geometry_extraction_stub = GridGeometryExtraction_pb2_grpc.GridGeometryExtractionStub(grpc_channel)
         request = GridGeometryExtraction_pb2.GetGridSurfaceRequest(
             gridFilename=grid_path_name,
             ijkIndexFilter=grpc_ijk_index_filter,
@@ -221,9 +218,8 @@ async def post_get_mapped_grid_properties(
             propertyFilter=None,
         )
 
-        grpc_response: GridGeometryExtraction_pb2.GetGridSurfaceResponse = grid_geometry_extraction_stub.GetGridSurface(
-            request
-        )
+        geo_extraction_stub = GridGeometryExtraction_pb2_grpc.GridGeometryExtractionStub(grpc_channel)
+        grpc_response = await geo_extraction_stub.GetGridSurface(request)
 
         perf_metrics.record_lap("ri-grid-geo")
 

@@ -39,31 +39,27 @@ async def post_get_polyline_intersection(
     blob_cache = LocalBlobCache(req_body.sas_token, req_body.blob_store_base_uri)
 
     grid_path_name = await blob_cache.ensure_grid_blob_downloaded_async(req_body.grid_blob_object_uuid)
-    property_path_name = await blob_cache.ensure_property_blob_downloaded_async(req_body.property_blob_object_uuid)
-
-    if grid_path_name is None:
-        raise HTTPException(status_code=500, detail=f"Failed to download grid blob: {req_body.grid_blob_object_uuid=}")
-    if property_path_name is None:
-        raise HTTPException(
-            status_code=500, detail=f"Failed to download property blob: {req_body.property_blob_object_uuid=}"
-        )
-
     LOGGER.debug(f"{myfunc} - {grid_path_name=}")
+    if grid_path_name is None:
+        raise HTTPException(500, detail=f"Failed to download grid blob: {req_body.grid_blob_object_uuid=}")
+    perf_metrics.record_lap("get-grid-blob")
+
+    property_path_name = await blob_cache.ensure_property_blob_downloaded_async(req_body.property_blob_object_uuid)
     LOGGER.debug(f"{myfunc} - {property_path_name=}")
-    perf_metrics.record_lap("get-blobs")
+    if property_path_name is None:
+        raise HTTPException(500, detail=f"Failed to download property blob: {req_body.property_blob_object_uuid=}")
+    perf_metrics.record_lap("get-prop-blob")
 
     grpc_channel: grpc.Channel = await RESINSIGHT_MANAGER.get_channel_for_running_ri_instance_async()
     perf_metrics.record_lap("get-ri")
 
-    grid_geometry_extraction_stub = GridGeometryExtraction_pb2_grpc.GridGeometryExtractionStub(grpc_channel)
     grpc_request = GridGeometryExtraction_pb2.CutAlongPolylineRequest(
         gridFilename=grid_path_name,
         fencePolylineUtmXY=req_body.polyline_utm_xy,
     )
 
-    grpc_response: GridGeometryExtraction_pb2.GetGridSurfaceResponse = grid_geometry_extraction_stub.CutAlongPolyline(
-        grpc_request
-    )
+    geo_extraction_stub = GridGeometryExtraction_pb2_grpc.GridGeometryExtractionStub(grpc_channel)
+    grpc_response = await geo_extraction_stub.CutAlongPolyline(grpc_request)
     perf_metrics.record_lap("ri-cut")
 
     LOGGER.debug(f"{len(grpc_response.fenceMeshSections)=}")
@@ -76,7 +72,7 @@ async def post_get_polyline_intersection(
     tot_num_polys: int = 0
     for fence_idx, grpc_section in enumerate(grpc_response.fenceMeshSections):
         polys_arr_np = _build_vtk_style_polys(grpc_section.polyIndicesArr, grpc_section.verticesPerPolygonArr)
-        prop_vals_list = prop_extractor.get_prop_values_for_cells_forced_to_float_list(grpc_section.sourceCellIndicesArr)
+        prop_vals_list = prop_extractor.get_prop_values_for_cells_as_float_list(grpc_section.sourceCellIndicesArr)
 
         section = api_schemas.FenceMeshSection(
             vertices_uz_arr=list(grpc_section.vertexArrayUZ),
@@ -124,7 +120,9 @@ async def post_get_polyline_intersection(
     return ret_obj
 
 
-def _build_vtk_style_polys(poly_indices_arr_np: Sequence[int], vertices_per_poly_arr_np: Sequence[int]) -> NDArray[np.uint32]:
+def _build_vtk_style_polys(
+    poly_indices_arr_np: Sequence[int], vertices_per_poly_arr_np: Sequence[int]
+) -> NDArray[np.uint32]:
     num_polys = len(vertices_per_poly_arr_np)
     polys_arr = np.empty(num_polys + len(poly_indices_arr_np), dtype=np.uint32)
 
@@ -138,4 +136,3 @@ def _build_vtk_style_polys(poly_indices_arr_np: Sequence[int], vertices_per_poly
         dst_idx += num_verts_in_poly
 
     return polys_arr
-

@@ -69,7 +69,7 @@ class GridPropertiesExtractor:
         else:
             return None
 
-    def get_prop_values_for_cells_forced_to_float_list(
+    def get_prop_values_for_cells_as_float_list(
         self, cell_indices: NDArray[np.integer] | list[int]
     ) -> list[float]:
         ret_arr = np.take(self._flat_prop_arr, cell_indices)
