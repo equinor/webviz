@@ -1,4 +1,4 @@
-import { GridIntersection_api } from "@api";
+import { GridIntersectionVtk_api } from "@api";
 import { apiService } from "@framework/ApiService";
 import { UseQueryResult, useQuery } from "@tanstack/react-query";
 
@@ -12,11 +12,11 @@ export function useGridIntersection(
     parameterName: string | null,
     realization: string | null,
     useStatistics: boolean
-): UseQueryResult<GridIntersection_api> {
+): UseQueryResult<GridIntersectionVtk_api> {
     return useQuery({
         queryKey: ["gridParameterIntersection", caseUuid, ensembleName, gridName, parameterName, realization],
         queryFn: () =>
-            apiService.grid.gridParameterIntersection(
+            apiService.grid3D.gridParameterIntersectionVtk(
                 caseUuid ?? "",
                 ensembleName ?? "",
                 gridName ?? "",
@@ -35,7 +35,7 @@ export function useStatisticalGridIntersection(
     parameterName: string | null,
     realizations: string[] | null,
     useStatistics: boolean
-): UseQueryResult<GridIntersection_api> {
+): UseQueryResult<GridIntersectionVtk_api> {
     return useQuery({
         queryKey: [
             "statisticalGridParameterIntersection",
@@ -46,7 +46,7 @@ export function useStatisticalGridIntersection(
             realizations,
         ],
         queryFn: () =>
-            apiService.grid.statisticalGridParameterIntersection(
+            apiService.grid3D.statisticalGridParameterIntersectionVtk(
                 caseUuid ?? "",
                 ensembleName ?? "",
                 gridName ?? "",
@@ -62,7 +62,7 @@ export function useStatisticalGridIntersection(
 export function useGridModelNames(caseUuid: string | null, ensembleName: string | null): UseQueryResult<string[]> {
     return useQuery({
         queryKey: ["getGridModelNames", caseUuid, ensembleName],
-        queryFn: () => apiService.grid.getGridModelNames(caseUuid ?? "", ensembleName ?? ""),
+        queryFn: () => apiService.grid3D.getGridModelNames(caseUuid ?? "", ensembleName ?? ""),
         staleTime: STALE_TIME,
         gcTime: CACHE_TIME,
         enabled: caseUuid && ensembleName ? true : false,
@@ -76,7 +76,7 @@ export function useGridParameterNames(
 ): UseQueryResult<string[]> {
     return useQuery({
         queryKey: ["getParameterNames", caseUuid, ensembleName, gridName],
-        queryFn: () => apiService.grid.getParameterNames(caseUuid ?? "", ensembleName ?? "", gridName ?? ""),
+        queryFn: () => apiService.grid3D.getParameterNames(caseUuid ?? "", ensembleName ?? "", gridName ?? ""),
         staleTime: STALE_TIME,
         gcTime: CACHE_TIME,
         enabled: caseUuid && ensembleName && gridName ? true : false,

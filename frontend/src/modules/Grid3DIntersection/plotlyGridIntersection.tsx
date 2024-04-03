@@ -1,12 +1,12 @@
 import React from "react";
 import Plot from "react-plotly.js";
 
-import { GridIntersection_api } from "@api";
+import { GridIntersectionVtk_api } from "@api";
 
 import { Layout, PlotData } from "plotly.js";
 
 export interface PlotlyGridIntersectionProps {
-    data: GridIntersection_api;
+    data: GridIntersectionVtk_api;
     width?: number | 100;
     height?: number | 100;
 }

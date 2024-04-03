@@ -11,7 +11,7 @@ import { Interface, State } from "./state";
 
 export const Settings = (props: ModuleSettingsProps<State, Interface>) => {
     const [atomText, setAtomText] = useAtom(textAtom);
-    const [stateText, setStateText] = props.settingsContext.useInterfaceState("text");
+    const [stateText, setStateText] = props.settingsContext.useSettingsToViewInterfaceState("text");
 
     function handleStateTextChange(event: React.ChangeEvent<HTMLInputElement>) {
         setStateText(event.target.value);

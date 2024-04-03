@@ -11,7 +11,7 @@ import { StateBaseType, StateOptions, StateStore } from "./StateStore";
 import { SyncSettingKey } from "./SyncSettings";
 import {
     InterfaceBaseType,
-    InterfaceHydration,
+    InterfaceInitialization,
     UniDirectionalSettingsToViewInterface,
 } from "./UniDirectionalSettingsToViewInterface";
 import { Workbench } from "./Workbench";
@@ -118,8 +118,8 @@ export class ModuleInstance<TStateType extends StateBaseType, TInterfaceType ext
         this.setModuleInstanceState(ModuleInstanceState.OK);
     }
 
-    makeSettingsToViewInterface(interfaceHydration: InterfaceHydration<TInterfaceType>) {
-        this._settingsViewInterface = new UniDirectionalSettingsToViewInterface(interfaceHydration);
+    makeSettingsToViewInterface(interfaceInitialization: InterfaceInitialization<TInterfaceType>) {
+        this._settingsViewInterface = new UniDirectionalSettingsToViewInterface(interfaceInitialization);
     }
 
     addSyncedSetting(settingKey: SyncSettingKey): void {
@@ -151,7 +151,7 @@ export class ModuleInstance<TStateType extends StateBaseType, TInterfaceType ext
         };
     }
 
-    isInitialised(): boolean {
+    isInitialized(): boolean {
         return this._initialised;
     }
 
