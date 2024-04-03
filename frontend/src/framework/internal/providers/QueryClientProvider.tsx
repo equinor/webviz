@@ -3,7 +3,11 @@ import React from "react";
 import { QueryCache, QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 
+import { Provider } from "jotai";
+
 import { AuthState, useAuthProvider } from "./AuthProvider";
+
+import { HydrateQueryClientAtom } from "../components/HydrateQueryClientAtom";
 
 type QueryError = {
     url: string;
@@ -40,7 +44,9 @@ export const CustomQueryClientProvider: React.FC<{ children: React.ReactElement 
 
     return (
         <QueryClientProvider client={queryClient.current}>
-            {props.children}
+            <Provider>
+                <HydrateQueryClientAtom>{props.children}</HydrateQueryClientAtom>
+            </Provider>
             <ReactQueryDevtools initialIsOpen={false} key="react-query-devtools" />
         </QueryClientProvider>
     );
