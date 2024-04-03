@@ -1,6 +1,6 @@
 import { WellBoreTrajectory_api } from "@api";
 import { ContinuousLegend } from "@emerson-eps/color-tables";
-import { ModuleFCProps } from "@framework/Module";
+import { ModuleViewProps } from "@framework/Module";
 import { useFirstEnsembleInEnsembleSet } from "@framework/WorkbenchSession";
 import { ColorScaleGradientType } from "@lib/utils/ColorScale";
 import {
@@ -17,8 +17,8 @@ import { useGridParameterVtk, useGridSurfaceVtk, useStatisticalGridParameterVtk 
 import state from "./state";
 
 //-----------------------------------------------------------------------------------------------------------
-export function View({ moduleContext, workbenchSettings, workbenchSession }: ModuleFCProps<state>) {
-    const myInstanceIdStr = moduleContext.getInstanceIdString();
+export function View({ viewContext, workbenchSettings, workbenchSession }: ModuleViewProps<state>) {
+    const myInstanceIdStr = viewContext.getInstanceIdString();
     const viewIds = {
         view: `${myInstanceIdStr}--view`,
         annotation: `${myInstanceIdStr}--annotation`,
@@ -27,11 +27,11 @@ export function View({ moduleContext, workbenchSettings, workbenchSession }: Mod
     const firstEnsemble = useFirstEnsembleInEnsembleSet(workbenchSession);
 
     // State
-    const gridName = moduleContext.useStoreValue("gridName");
-    const parameterName = moduleContext.useStoreValue("parameterName");
-    const realizations = moduleContext.useStoreValue("realizations");
-    const useStatistics = moduleContext.useStoreValue("useStatistics");
-    const selectedWellUuids = moduleContext.useStoreValue("selectedWellUuids");
+    const gridName = viewContext.useStoreValue("gridName");
+    const parameterName = viewContext.useStoreValue("parameterName");
+    const realizations = viewContext.useStoreValue("realizations");
+    const useStatistics = viewContext.useStoreValue("useStatistics");
+    const selectedWellUuids = viewContext.useStoreValue("selectedWellUuids");
     const colorScale = workbenchSettings.useContinuousColorScale({
         gradientType: ColorScaleGradientType.Sequential,
     });
@@ -151,7 +151,7 @@ export function View({ moduleContext, workbenchSettings, workbenchSession }: Mod
                 </ViewAnnotation>
             </SubsurfaceViewer>
 
-            <div className="absolute bottom-5 right-5 italic text-pink-400">{moduleContext.getInstanceIdString()}</div>
+            <div className="absolute bottom-5 right-5 italic text-pink-400">{viewContext.getInstanceIdString()}</div>
         </div>
     );
 }
