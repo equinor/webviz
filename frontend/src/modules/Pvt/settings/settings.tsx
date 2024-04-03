@@ -24,8 +24,8 @@ import {
     selectedRealizationsAtom,
 } from "./atoms/derivedAtoms";
 import { pvtDataQueriesAtom } from "./atoms/queryAtoms";
-
 import { DependentVariableSelector } from "./components/DependentVariableSelector/dependentVariableSelector";
+
 import { Interface, State } from "../state";
 import {
     ColorBy,
@@ -48,10 +48,10 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
     const setSelectedRealizations = useSetAtom(userSelectedRealizationsAtom);
     const setSelectedPvtNums = useSetAtom(userSelectedPvtNumsAtom);
 
-    const [selectedPhase, setSelectedPhase] = settingsContext.useInterfaceState("selectedPhase");
-    const [selectedColorBy, setSelectedColorBy] = settingsContext.useInterfaceState("selectedColorBy");
+    const [selectedPhase, setSelectedPhase] = settingsContext.useSettingsToViewInterfaceState("selectedPhase");
+    const [selectedColorBy, setSelectedColorBy] = settingsContext.useSettingsToViewInterfaceState("selectedColorBy");
     const [selectedDependentVariables, setSelectedPlots] =
-        settingsContext.useInterfaceState("selectedDependentVariables");
+        settingsContext.useSettingsToViewInterfaceState("selectedDependentVariables");
 
     const [selectedMultiEnsembleIdents, setSelectedMultiEnsembleIdents] =
         React.useState<EnsembleIdent[]>(selectedEnsembleIdents);

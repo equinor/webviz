@@ -1,5 +1,5 @@
 import { EnsembleIdent } from "@framework/EnsembleIdent";
-import { InterfaceHydration } from "@framework/UniDirectionalSettingsToViewInterface";
+import { InterfaceInitialization } from "@framework/UniDirectionalSettingsToViewInterface";
 
 import { selectedEnsembleIdentsAtom, selectedPvtNumsAtom } from "./settings/atoms/derivedAtoms";
 import { pvtDataQueriesAtom } from "./settings/atoms/queryAtoms";
@@ -20,7 +20,7 @@ export type Interface = {
     };
 };
 
-export const interfaceHydration: InterfaceHydration<Interface> = {
+export const interfaceInitialization: InterfaceInitialization<Interface> = {
     baseStates: {
         selectedPhase: PhaseType.OIL,
         selectedColorBy: ColorBy.ENSEMBLE,

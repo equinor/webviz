@@ -1,4 +1,3 @@
-import { apiService } from "@framework/ApiService";
 import { Memory } from "@mui/icons-material";
 
 export const UserSessionState = ({ expanded }: { expanded: boolean }) => {

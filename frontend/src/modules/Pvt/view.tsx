@@ -19,12 +19,12 @@ export function View({ viewContext, workbenchSettings, workbenchSession }: Modul
     const statusWriter = useViewStatusWriter(viewContext);
     const ensembleSet = useEnsembleSet(workbenchSession);
 
-    const selectedEnsembleIdents = viewContext.useInterfaceValue("selectedEnsembleIdents");
-    const selectedPvtNums = viewContext.useInterfaceValue("selectedPvtNums");
-    const selectedPhase = viewContext.useInterfaceValue("selectedPhase");
-    const selectedColorBy = viewContext.useInterfaceValue("selectedColorBy");
-    const selectedPlots = viewContext.useInterfaceValue("selectedDependentVariables");
-    const pvtDataQueries = viewContext.useInterfaceValue("pvtDataQueries");
+    const selectedEnsembleIdents = viewContext.useSettingsToViewInterfaceValue("selectedEnsembleIdents");
+    const selectedPvtNums = viewContext.useSettingsToViewInterfaceValue("selectedPvtNums");
+    const selectedPhase = viewContext.useSettingsToViewInterfaceValue("selectedPhase");
+    const selectedColorBy = viewContext.useSettingsToViewInterfaceValue("selectedColorBy");
+    const selectedPlots = viewContext.useSettingsToViewInterfaceValue("selectedDependentVariables");
+    const pvtDataQueries = viewContext.useSettingsToViewInterfaceValue("pvtDataQueries");
 
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);
     const wrapperDivSize = useElementSize(wrapperDivRef);
