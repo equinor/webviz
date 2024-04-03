@@ -108,9 +108,10 @@ dist
 .tern-port
 
 # .vscode
-.vscode/
+**/.vscode/*
 !.vscode/tasks.json
 !.vscode/launch.json
+!backend_py/primary/.vscode/launch.json
 
 # playwright results
 playwright-report/
@@ -122,3 +123,6 @@ playwright-report/
 
 # Ignore Jupyter Notebook checkpoints (hidden directories)
 .ipynb_checkpoints/
+
+# Python virtual environments
+.venv

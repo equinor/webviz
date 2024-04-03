@@ -13,7 +13,7 @@ import { useFieldWellsTrajectoriesQuery } from "@modules/_shared/WellBore/queryH
 import SubsurfaceViewer from "@webviz/subsurface-viewer";
 import { ViewAnnotation } from "@webviz/subsurface-viewer/dist/components/ViewAnnotation";
 
-import { useGridParameter, useGridSurface, useStatisticalGridParameter } from "./queryHooks";
+import { useGridParameter, useGridSurface } from "./queryHooks";
 import state from "./state";
 
 //-----------------------------------------------------------------------------------------------------------
@@ -30,7 +30,6 @@ export function View({ moduleContext, workbenchSettings, workbenchSession }: Mod
     const gridName = moduleContext.useStoreValue("gridName");
     const parameterName = moduleContext.useStoreValue("parameterName");
     const realizations = moduleContext.useStoreValue("realizations");
-    const useStatistics = moduleContext.useStoreValue("useStatistics");
     const selectedWellUuids = moduleContext.useStoreValue("selectedWellUuids");
     const colorScale = workbenchSettings.useContinuousColorScale({
         gradientType: ColorScaleGradientType.Sequential,
@@ -51,16 +50,7 @@ export function View({ moduleContext, workbenchSettings, workbenchSession }: Mod
         firstEnsembleName,
         gridName,
         parameterName,
-        realizations ? realizations[0] : "0",
-        useStatistics
-    );
-    const statisticalGridParameterQuery = useStatisticalGridParameter(
-        firstCaseUuid,
-        firstEnsembleName,
-        gridName,
-        parameterName,
-        realizations,
-        useStatistics
+        realizations ? realizations[0] : "0"
     );
     const wellTrajectoriesQuery = useFieldWellsTrajectoriesQuery(firstCaseUuid ?? undefined);
     const bounds = gridSurfaceQuery?.data
@@ -84,10 +74,8 @@ export function View({ moduleContext, workbenchSettings, workbenchSession }: Mod
     ];
 
     let propertiesArray: number[] = [0, 1];
-    if (!useStatistics && gridParameterQuery?.data) {
+    if (gridParameterQuery?.data) {
         propertiesArray = Array.from(gridParameterQuery.data);
-    } else if (useStatistics && statisticalGridParameterQuery?.data) {
-        propertiesArray = Array.from(statisticalGridParameterQuery.data);
     }
 
     if (gridSurfaceQuery.data) {
