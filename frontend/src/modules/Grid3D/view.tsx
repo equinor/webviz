@@ -113,7 +113,6 @@ export function View({ viewContext, workbenchSettings, workbenchSession }: Modul
                 bounds={[bounds[0], bounds[1], bounds[3], bounds[4]]}
                 colorTables={colorTables}
                 layers={newLayers}
-                toolbar={{ visible: true }}
                 views={{
                     layout: [1, 1],
                     showLabel: false,

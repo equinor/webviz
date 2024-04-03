@@ -230,7 +230,6 @@ export function View({ viewContext, workbenchSettings, workbenchServices }: Modu
                         bounds={viewportBounds}
                         layers={newLayers}
                         colorTables={colorTables}
-                        toolbar={{ visible: true }}
                         views={{
                             layout: [1, 1],
                             showLabel: false,
@@ -263,7 +262,6 @@ export function View({ viewContext, workbenchSettings, workbenchServices }: Modu
                         bounds={viewportBounds}
                         layers={newLayers}
                         colorTables={colorTables}
-                        toolbar={{ visible: true }}
                         views={{
                             layout: [1, 1],
                             showLabel: false,
