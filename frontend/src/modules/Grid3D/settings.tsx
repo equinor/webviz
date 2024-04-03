@@ -1,7 +1,7 @@
 import React from "react";
 
 import { EnsembleIdent } from "@framework/EnsembleIdent";
-import { ModuleFCProps } from "@framework/Module";
+import { ModuleSettingsProps } from "@framework/Module";
 import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { fixupEnsembleIdent, maybeAssignFirstSyncedEnsemble } from "@framework/utils/ensembleUiHelpers";
@@ -23,16 +23,16 @@ import state from "./state";
 import { Point } from "./state";
 
 //-----------------------------------------------------------------------------------------------------------
-export function Settings({ moduleContext, workbenchServices, workbenchSession }: ModuleFCProps<state>) {
+export function Settings({ settingsContext, workbenchServices, workbenchSession }: ModuleSettingsProps<state>) {
     // From Workbench
 
     const ensembleSet = useEnsembleSet(workbenchSession);
     const [selectedEnsembleIdent, setSelectedEnsembleIdent] = React.useState<EnsembleIdent | null>(null);
     // State
 
-    const [singleKLayer, setSingleKLayer] = moduleContext.useStoreState("singleKLayer");
-    const [selectedWellUuids, setSelectedWellUuids] = moduleContext.useStoreState("selectedWellUuids");
-    const syncedSettingKeys = moduleContext.useSyncedSettingKeys();
+    const [singleKLayer, setSingleKLayer] = settingsContext.useStoreState("singleKLayer");
+    const [selectedWellUuids, setSelectedWellUuids] = settingsContext.useStoreState("selectedWellUuids");
+    const syncedSettingKeys = settingsContext.useSyncedSettingKeys();
     const syncHelper = new SyncSettingsHelper(syncedSettingKeys, workbenchServices);
     const syncedValueEnsembles = syncHelper.useValue(SyncSettingKey.ENSEMBLE, "global.syncValue.ensembles");
 
@@ -42,7 +42,7 @@ export function Settings({ moduleContext, workbenchServices, workbenchSession }:
         setSelectedEnsembleIdent(computedEnsembleIdent);
     }
 
-    const [realization, setRealization] = moduleContext.useStoreState("realization");
+    const [realization, setRealization] = settingsContext.useStoreState("realization");
     const realizations = computedEnsembleIdent
         ? ensembleSet.findEnsemble(computedEnsembleIdent)?.getRealizations() ?? []
         : [];
@@ -57,10 +57,10 @@ export function Settings({ moduleContext, workbenchServices, workbenchSession }:
         realization
     );
 
-    const [gridName, setGridName] = moduleContext.useStoreState("gridName");
-    const [parameterName, setParameterName] = moduleContext.useStoreState("parameterName");
-    const [boundingBox, setBoundingBox] = moduleContext.useStoreState("boundingBox");
-    const [showGridLines, setShowGridLines] = moduleContext.useStoreState("showGridLines");
+    const [gridName, setGridName] = settingsContext.useStoreState("gridName");
+    const [parameterName, setParameterName] = settingsContext.useStoreState("parameterName");
+    const [boundingBox, setBoundingBox] = settingsContext.useStoreState("boundingBox");
+    const [showGridLines, setShowGridLines] = settingsContext.useStoreState("showGridLines");
 
     const gridModelNames: string[] = [];
     const parameterNames: string[] = [];
@@ -91,7 +91,7 @@ export function Settings({ moduleContext, workbenchServices, workbenchSession }:
     if (!isEqual(boundingBox, computedBoundingBox)) {
         setBoundingBox(computedBoundingBox);
     }
-    const setPolyLine = moduleContext.useSetStoreValue("polyLine");
+    const setPolyLine = settingsContext.useSetStoreValue("polyLine");
 
     const [angle, setAngle] = React.useState(0);
     const [samples, setSamples] = React.useState(1);

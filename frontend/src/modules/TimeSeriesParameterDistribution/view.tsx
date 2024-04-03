@@ -1,19 +1,19 @@
 import React from "react";
 
-import { ModuleFCProps } from "@framework/Module";
+import { ModuleViewProps } from "@framework/Module";
 import { useElementSize } from "@lib/hooks/useElementSize";
 
 import PlotlyScatter from "./plotlyScatterChart";
 import { useParameterQuery, useVectorAtTimestampQuery } from "./queryHooks";
 import { State } from "./state";
 
-export const View = ({ moduleContext }: ModuleFCProps<State>) => {
+export const View = ({ viewContext }: ModuleViewProps<State>) => {
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);
     const wrapperDivSize = useElementSize(wrapperDivRef);
-    const vectorSpec = moduleContext.useStoreValue("vectorSpec");
+    const vectorSpec = viewContext.useStoreValue("vectorSpec");
     const [highlightedRealization, setHighlightedRealization] = React.useState(-1);
-    const parameterName = moduleContext.useStoreValue("parameterName");
-    const timestampUtcMs = moduleContext.useStoreValue("timestampUtcMs");
+    const parameterName = viewContext.useStoreValue("parameterName");
+    const timestampUtcMs = viewContext.useStoreValue("timestampUtcMs");
 
     const vectorAtTimestampQuery = useVectorAtTimestampQuery(
         vectorSpec?.caseUuid,

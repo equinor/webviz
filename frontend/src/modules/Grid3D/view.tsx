@@ -4,7 +4,7 @@ import { WellBoreTrajectory_api } from "@api";
 import { Layer } from "@deck.gl/core/typed";
 import { GeoJsonLayer } from "@deck.gl/layers/typed";
 import { ContinuousLegend } from "@emerson-eps/color-tables";
-import { ModuleFCProps } from "@framework/Module";
+import { ModuleViewProps } from "@framework/Module";
 import { useFirstEnsembleInEnsembleSet } from "@framework/WorkbenchSession";
 import { ColorScaleGradientType } from "@lib/utils/ColorScale";
 import {
@@ -33,8 +33,9 @@ type WorkingGrid3dLayer = {
     colorMapName: string;
     ZIncreasingDownwards: boolean;
 } & Layer;
-export function View({ moduleContext, workbenchSettings, workbenchServices, workbenchSession }: ModuleFCProps<state>) {
-    const myInstanceIdStr = moduleContext.getInstanceIdString();
+
+export function View({ viewContext, workbenchSettings, workbenchServices, workbenchSession }: ModuleViewProps<state>) {
+    const myInstanceIdStr = viewContext.getInstanceIdString();
     const viewIds = {
         view: `${myInstanceIdStr}--view`,
         annotation: `${myInstanceIdStr}--annotation`,
@@ -43,15 +44,15 @@ export function View({ moduleContext, workbenchSettings, workbenchServices, work
     const firstEnsemble = useFirstEnsembleInEnsembleSet(workbenchSession);
 
     // State
-    const gridName = moduleContext.useStoreValue("gridName");
-    const parameterName = moduleContext.useStoreValue("parameterName");
-    const realization = moduleContext.useStoreValue("realization");
-    const boundingBox = moduleContext.useStoreValue("boundingBox");
-    const polyLine = moduleContext.useStoreValue("polyLine");
+    const gridName = viewContext.useStoreValue("gridName");
+    const parameterName = viewContext.useStoreValue("parameterName");
+    const realization = viewContext.useStoreValue("realization");
+    const boundingBox = viewContext.useStoreValue("boundingBox");
+    const polyLine = viewContext.useStoreValue("polyLine");
 
-    const singleKLayer = moduleContext.useStoreValue("singleKLayer");
-    const selectedWellUuids = moduleContext.useStoreValue("selectedWellUuids");
-    const showGridLines = moduleContext.useStoreValue("showGridLines");
+    const singleKLayer = viewContext.useStoreValue("singleKLayer");
+    const selectedWellUuids = viewContext.useStoreValue("selectedWellUuids");
+    const showGridLines = viewContext.useStoreValue("showGridLines");
     const colorScale = workbenchSettings.useContinuousColorScale({ gradientType: ColorScaleGradientType.Sequential });
     const colorTables = createContinuousColorScaleForMap(colorScale);
 
@@ -227,7 +228,7 @@ export function View({ moduleContext, workbenchSettings, workbenchServices, work
     return (
         <div className="relative w-full h-full flex flex-col">
             <SyncedSubsurfaceViewer
-                moduleContext={moduleContext}
+                viewContext={viewContext}
                 workbenchServices={workbenchServices}
                 id={viewIds.view}
                 bounds={
@@ -286,7 +287,7 @@ export function View({ moduleContext, workbenchSettings, workbenchServices, work
                 </ViewAnnotation> */}
             </SyncedSubsurfaceViewer>
 
-            <div className="absolute bottom-5 right-5 italic text-pink-400">{moduleContext.getInstanceIdString()}</div>
+            <div className="absolute bottom-5 right-5 italic text-pink-400">{viewContext.getInstanceIdString()}</div>
         </div>
     );
 }
