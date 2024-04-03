@@ -9,7 +9,7 @@ import { ModuleInstance } from "./ModuleInstance";
 import { DrawPreviewFunc } from "./Preview";
 import { StateBaseType, StateOptions } from "./StateStore";
 import { SyncSettingKey } from "./SyncSettings";
-import { InterfaceBaseType, InterfaceHydration } from "./UniDirectionalSettingsToViewInterface";
+import { InterfaceBaseType, InterfaceInitialization } from "./UniDirectionalSettingsToViewInterface";
 import { Workbench } from "./Workbench";
 import { WorkbenchServices } from "./WorkbenchServices";
 import { WorkbenchSession } from "./WorkbenchSession";
@@ -84,7 +84,7 @@ export class Module<TStateType extends StateBaseType, TInterfaceType extends Int
     protected _importState: ImportState;
     private _moduleInstances: ModuleInstance<TStateType, TInterfaceType>[];
     private _defaultState: TStateType | null;
-    private _settingsToViewInterfaceHydration: InterfaceHydration<TInterfaceType> | null;
+    private _settingsToViewInterfaceInitialization: InterfaceInitialization<TInterfaceType> | null;
     private _stateOptions: StateOptions<TStateType> | undefined;
     private _workbench: Workbench | null;
     private _syncableSettingKeys: SyncSettingKey[];
@@ -101,7 +101,7 @@ export class Module<TStateType extends StateBaseType, TInterfaceType extends Int
         this._importState = ImportState.NotImported;
         this._moduleInstances = [];
         this._defaultState = null;
-        this._settingsToViewInterfaceHydration = null;
+        this._settingsToViewInterfaceInitialization = null;
         this._workbench = null;
         this._syncableSettingKeys = options.syncableSettingKeys ?? [];
         this._drawPreviewFunc = options.drawPreviewFunc ?? null;
@@ -138,14 +138,14 @@ export class Module<TStateType extends StateBaseType, TInterfaceType extends Int
         this._defaultState = defaultState;
         this._stateOptions = options;
         this._moduleInstances.forEach((instance) => {
-            if (this._defaultState && !instance.isInitialised()) {
+            if (this._defaultState && !instance.isInitialized()) {
                 instance.setDefaultState(cloneDeep(this._defaultState), cloneDeep(this._stateOptions));
             }
         });
     }
 
-    setSettingsToViewInterfaceHydration(interfaceHydration: InterfaceHydration<TInterfaceType>): void {
-        this._settingsToViewInterfaceHydration = interfaceHydration;
+    setSettingsToViewInterfaceInitialization(interfaceInitialization: InterfaceInitialization<TInterfaceType>): void {
+        this._settingsToViewInterfaceInitialization = interfaceInitialization;
     }
 
     getSyncableSettingKeys(): SyncSettingKey[] {
@@ -188,13 +188,14 @@ export class Module<TStateType extends StateBaseType, TInterfaceType extends Int
         if (this._importState !== ImportState.NotImported) {
             if (this._defaultState && this._importState === ImportState.Imported) {
                 this._moduleInstances.forEach((instance) => {
-                    if (!instance.isInitialised()) {
-                        if (this._defaultState) {
-                            instance.setDefaultState(cloneDeep(this._defaultState), cloneDeep(this._stateOptions));
-                        }
-                        if (this._settingsToViewInterfaceHydration) {
-                            instance.makeSettingsToViewInterface(this._settingsToViewInterfaceHydration);
-                        }
+                    if (instance.isInitialized()) {
+                        return;
+                    }
+                    if (this._defaultState) {
+                        instance.setDefaultState(cloneDeep(this._defaultState), cloneDeep(this._stateOptions));
+                    }
+                    if (this._settingsToViewInterfaceInitialization) {
+                        instance.makeSettingsToViewInterface(this._settingsToViewInterfaceInitialization);
                     }
                 });
             }
@@ -210,8 +211,8 @@ export class Module<TStateType extends StateBaseType, TInterfaceType extends Int
                     if (this._defaultState) {
                         instance.setDefaultState(cloneDeep(this._defaultState), cloneDeep(this._stateOptions));
                     }
-                    if (this._settingsToViewInterfaceHydration) {
-                        instance.makeSettingsToViewInterface(this._settingsToViewInterfaceHydration);
+                    if (this._settingsToViewInterfaceInitialization) {
+                        instance.makeSettingsToViewInterface(this._settingsToViewInterfaceInitialization);
                     }
                 });
             })

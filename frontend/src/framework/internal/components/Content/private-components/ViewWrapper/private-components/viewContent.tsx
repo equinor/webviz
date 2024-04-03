@@ -77,11 +77,11 @@ export const ViewContent = React.memo((props: ViewContentProps) => {
         );
     }
 
-    if (!props.moduleInstance.isInitialised()) {
+    if (!props.moduleInstance.isInitialized()) {
         return (
             <div className="h-full w-full flex flex-col justify-center items-center">
                 <CircularProgress />
-                <div className="mt-4">Initialising...</div>
+                <div className="mt-4">Initializing...</div>
             </div>
         );
     }
@@ -89,7 +89,7 @@ export const ViewContent = React.memo((props: ViewContentProps) => {
     if (importState === ImportState.Failed) {
         return (
             <div className="h-full w-full flex justify-center items-center">
-                Module could not be imported. Please check the spelling when registering and initialising the module.
+                Module could not be imported. Please check the spelling when registering and initializing the module.
             </div>
         );
     }

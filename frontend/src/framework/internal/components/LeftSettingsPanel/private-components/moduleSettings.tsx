@@ -42,7 +42,7 @@ export const ModuleSettings: React.FC<ModuleSettingsProps> = (props) => {
         return unsubscribeFunc;
     }, [props.moduleInstance]);
 
-    if (importState !== ImportState.Imported || !props.moduleInstance.isInitialised()) {
+    if (importState !== ImportState.Imported || !props.moduleInstance.isInitialized()) {
         return null;
     }
 

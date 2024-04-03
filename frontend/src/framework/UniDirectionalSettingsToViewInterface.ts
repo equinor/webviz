@@ -5,7 +5,7 @@ export type InterfaceBaseType = {
     derivedStates: Record<string, unknown>;
 };
 
-export type InterfaceHydration<T extends InterfaceBaseType> = {
+export type InterfaceInitialization<T extends InterfaceBaseType> = {
     baseStates: {
         [K in keyof T["baseStates"]]: T["baseStates"][K];
     };
@@ -24,14 +24,14 @@ export class UniDirectionalSettingsToViewInterface<TInterfaceType extends Interf
         Atom<TInterfaceType["derivedStates"][keyof TInterfaceType["derivedStates"]]>
     > = new Map();
 
-    constructor(hydration: InterfaceHydration<TInterfaceType>) {
-        for (const key in hydration.baseStates) {
-            const value = hydration.baseStates[key];
+    constructor(initialization: InterfaceInitialization<TInterfaceType>) {
+        for (const key in initialization.baseStates) {
+            const value = initialization.baseStates[key];
             this._baseAtoms.set(key, atom(value as TInterfaceType["baseStates"][keyof TInterfaceType["baseStates"]]));
         }
 
-        for (const key in hydration.derivedStates) {
-            const value = hydration.derivedStates[key];
+        for (const key in initialization.derivedStates) {
+            const value = initialization.derivedStates[key];
             this._derivedAtoms.set(
                 key,
                 atom((get) => value(get))
@@ -39,7 +39,7 @@ export class UniDirectionalSettingsToViewInterface<TInterfaceType extends Interf
         }
     }
 
-    getAtom<T extends keyof TInterfaceType["baseStates"]>(key: T): Atom<TInterfaceType["baseStates"][T]>;
+    getAtom<T extends keyof TInterfaceType["baseStates"]>(key: T): PrimitiveAtom<TInterfaceType["baseStates"][T]>;
     getAtom<T extends keyof TInterfaceType["derivedStates"]>(key: T): Atom<TInterfaceType["derivedStates"][T]> {
         const derivedAtom = this._derivedAtoms.get(key);
         if (derivedAtom) {
@@ -48,30 +48,21 @@ export class UniDirectionalSettingsToViewInterface<TInterfaceType extends Interf
 
         const baseAtom = this._baseAtoms.get(key);
         if (baseAtom) {
-            return baseAtom as PrimitiveAtom<TInterfaceType[T]>;
-        }
-
-        throw new Error(`Atom for key ${String(key)} not found`);
-    }
-
-    getBaseAtom<T extends keyof TInterfaceType["baseStates"]>(key: T): PrimitiveAtom<TInterfaceType["baseStates"][T]> {
-        const baseAtom = this._baseAtoms.get(key);
-        if (baseAtom) {
             return baseAtom as PrimitiveAtom<TInterfaceType["baseStates"][T]>;
         }
 
-        throw new Error(`Atom for key ${String(key)} not found`);
+        throw new Error(`Atom for key '${String(key)}' not found`);
     }
 }
 
-export function useInterfaceState<
+export function useSettingsToViewInterfaceState<
     TInterfaceType extends InterfaceBaseType,
     TKey extends keyof TInterfaceType["baseStates"]
 >(
     interfaceInstance: UniDirectionalSettingsToViewInterface<TInterfaceType>,
     key: TKey
 ): [Awaited<TInterfaceType["baseStates"][TKey]>, (value: TInterfaceType["baseStates"][TKey]) => void] {
-    const [value, set] = useAtom(interfaceInstance.getBaseAtom(key));
+    const [value, set] = useAtom(interfaceInstance.getAtom(key));
 
     return [
         value,
@@ -81,18 +72,18 @@ export function useInterfaceState<
     ];
 }
 
-export function useInterfaceValue<
+export function useSettingsToViewInterfaceValue<
     TInterfaceType extends InterfaceBaseType,
     TKey extends keyof TInterfaceType["baseStates"]
 >(
     interfaceInstance: UniDirectionalSettingsToViewInterface<TInterfaceType>,
     key: TKey
 ): TInterfaceType["baseStates"][TKey];
-export function useInterfaceValue<
+export function useSettingsToViewInterfaceValue<
     InterfaceType extends InterfaceBaseType,
     K extends keyof InterfaceType["derivedStates"]
 >(interfaceInstance: UniDirectionalSettingsToViewInterface<InterfaceType>, key: K): InterfaceType["derivedStates"][K];
-export function useInterfaceValue<
+export function useSettingsToViewInterfaceValue<
     InterfaceType extends InterfaceBaseType,
     K extends keyof InterfaceType["baseStates"] | keyof InterfaceType["derivedStates"]
 >(
@@ -102,14 +93,14 @@ export function useInterfaceValue<
     return useAtomValue(interfaceInstance.getAtom(key));
 }
 
-export function useSetInterfaceValue<
+export function useSetSettingsToViewInterfaceValue<
     TInterfaceType extends InterfaceBaseType,
     TKey extends keyof TInterfaceType["baseStates"]
 >(
     interfaceInstance: UniDirectionalSettingsToViewInterface<TInterfaceType>,
     key: TKey
 ): (value: TInterfaceType["baseStates"][TKey]) => void {
-    const [, set] = useAtom(interfaceInstance.getBaseAtom(key));
+    const [, set] = useAtom(interfaceInstance.getAtom(key));
 
     return (value: TInterfaceType["baseStates"][TKey]) => {
         set(value);
