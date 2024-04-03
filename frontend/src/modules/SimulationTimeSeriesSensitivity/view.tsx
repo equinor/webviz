@@ -1,7 +1,7 @@
 import React from "react";
 
 import { StatisticFunction_api, VectorRealizationData_api, VectorStatisticSensitivityData_api } from "@api";
-import { ModuleFCProps } from "@framework/Module";
+import { ModuleViewProps } from "@framework/Module";
 import { useSubscribedValue } from "@framework/WorkbenchServices";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { createSensitivityColorMap } from "@modules/_shared/sensitivityColors";
@@ -20,11 +20,11 @@ import { createLineTrace, createRealizationLineTraces } from "./simulationTimeSe
 import { State } from "./state";
 
 export const View = ({
-    moduleContext,
+    viewContext,
     workbenchSession,
     workbenchSettings,
     workbenchServices,
-}: ModuleFCProps<State>) => {
+}: ModuleViewProps<State>) => {
     // Leave this in until we get a feeling for React18/Plotly
     const renderCount = React.useRef(0);
     React.useEffect(function incrementRenderCount() {
@@ -33,12 +33,12 @@ export const View = ({
 
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);
     const wrapperDivSize = useElementSize(wrapperDivRef);
-    const vectorSpec = moduleContext.useStoreValue("vectorSpec");
-    const resampleFrequency = moduleContext.useStoreValue("resamplingFrequency");
-    const showStatistics = moduleContext.useStoreValue("showStatistics");
-    const showRealizations = moduleContext.useStoreValue("showRealizations");
-    const selectedSensitivities = moduleContext.useStoreValue("selectedSensitivities");
-    const showHistorical = moduleContext.useStoreValue("showHistorical");
+    const vectorSpec = viewContext.useStoreValue("vectorSpec");
+    const resampleFrequency = viewContext.useStoreValue("resamplingFrequency");
+    const showStatistics = viewContext.useStoreValue("showStatistics");
+    const showRealizations = viewContext.useStoreValue("showRealizations");
+    const selectedSensitivities = viewContext.useStoreValue("selectedSensitivities");
+    const showHistorical = viewContext.useStoreValue("showHistorical");
     const [activeTimestampUtcMs, setActiveTimestampUtcMs] = React.useState<number | null>(null);
     const subscribedHoverTimestampUtcMs = useSubscribedValue("global.hoverTimestamp", workbenchServices);
 
@@ -94,7 +94,7 @@ export const View = ({
         };
     }
 
-    moduleContext.usePublishChannelContents({
+    viewContext.usePublishChannelContents({
         channelIdString: ChannelIds.REALIZATION_VALUE,
         dependencies: [vectorSpec, realizationsQuery.data, ensemble, activeTimestampUtcMs],
         contents: [

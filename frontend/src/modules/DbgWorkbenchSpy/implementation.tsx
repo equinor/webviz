@@ -1,7 +1,7 @@
 import React from "react";
 
 import { EnsembleSet } from "@framework/EnsembleSet";
-import { ModuleFCProps } from "@framework/Module";
+import { ModuleSettingsProps, ModuleViewProps } from "@framework/Module";
 import { AllTopicDefinitions, WorkbenchServices } from "@framework/WorkbenchServices";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { timestampUtcMsToIsoString } from "@framework/utils/timestampUtils";
@@ -12,8 +12,8 @@ export type SharedState = {
 };
 
 //-----------------------------------------------------------------------------------------------------------
-export function WorkbenchSpySettings(props: ModuleFCProps<SharedState>) {
-    const setRefreshCounter = props.moduleContext.useSetStoreValue("triggeredRefreshCounter");
+export function WorkbenchSpySettings(props: ModuleSettingsProps<SharedState>) {
+    const setRefreshCounter = props.settingsContext.useSetStoreValue("triggeredRefreshCounter");
     return (
         <div>
             <Button onClick={() => setRefreshCounter((prev: number) => prev + 1)}>Trigger Refresh</Button>
@@ -22,14 +22,14 @@ export function WorkbenchSpySettings(props: ModuleFCProps<SharedState>) {
 }
 
 //-----------------------------------------------------------------------------------------------------------
-export function WorkbenchSpyView(props: ModuleFCProps<SharedState>) {
+export function WorkbenchSpyView(props: ModuleViewProps<SharedState>) {
     const ensembleSet = useEnsembleSet(props.workbenchSession);
     const [hoverRealization, hoverRealization_TS] = useServiceValueWithTS(
         "global.hoverRealization",
         props.workbenchServices
     );
     const [hoverTimestamp, hoverTimestamp_TS] = useServiceValueWithTS("global.hoverTimestamp", props.workbenchServices);
-    const triggeredRefreshCounter = props.moduleContext.useStoreValue("triggeredRefreshCounter");
+    const triggeredRefreshCounter = props.viewContext.useStoreValue("triggeredRefreshCounter");
 
     const componentRenderCount = React.useRef(0);
     React.useEffect(function incrementComponentRenderCount() {
@@ -48,7 +48,10 @@ export function WorkbenchSpyView(props: ModuleFCProps<SharedState>) {
                 <tbody>
                     {makeTableRow("hoverRealization", hoverRealization?.realization, hoverRealization_TS)}
                     {makeTableRow("hoverTimestamp", hoverTimestamp?.timestampUtcMs, hoverTimestamp_TS)}
-                    {makeTableRow("hoverTimestamp isoStr", hoverTimestamp ? timestampUtcMsToIsoString(hoverTimestamp.timestampUtcMs) : "UNDEF")}
+                    {makeTableRow(
+                        "hoverTimestamp isoStr",
+                        hoverTimestamp ? timestampUtcMsToIsoString(hoverTimestamp.timestampUtcMs) : "UNDEF"
+                    )}
                 </tbody>
             </table>
             <br />

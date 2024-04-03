@@ -4,7 +4,7 @@ import { Frequency_api, StatisticFunction_api } from "@api";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { Parameter, ParameterIdent } from "@framework/EnsembleParameters";
 import { EnsembleSet } from "@framework/EnsembleSet";
-import { ModuleFCProps } from "@framework/Module";
+import { ModuleSettingsProps } from "@framework/Module";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { MultiEnsembleSelect } from "@framework/components/MultiEnsembleSelect";
@@ -50,21 +50,21 @@ enum StatisticsType {
     FANCHART = "Fanchart",
 }
 
-export function Settings({ moduleContext, workbenchSession }: ModuleFCProps<State>) {
+export function Settings({ settingsContext, workbenchSession }: ModuleSettingsProps<State>) {
     const ensembleSet = useEnsembleSet(workbenchSession);
-    const statusWriter = useSettingsStatusWriter(moduleContext);
+    const statusWriter = useSettingsStatusWriter(settingsContext);
 
     // Store state/values
-    const [resampleFrequency, setResamplingFrequency] = moduleContext.useStoreState("resamplingFrequency");
-    const [groupBy, setGroupBy] = moduleContext.useStoreState("groupBy");
+    const [resampleFrequency, setResamplingFrequency] = settingsContext.useStoreState("resamplingFrequency");
+    const [groupBy, setGroupBy] = settingsContext.useStoreState("groupBy");
     const [colorRealizationsByParameter, setColorRealizationsByParameter] =
-        moduleContext.useStoreState("colorRealizationsByParameter");
-    const [visualizationMode, setVisualizationMode] = moduleContext.useStoreState("visualizationMode");
-    const [showHistorical, setShowHistorical] = moduleContext.useStoreState("showHistorical");
-    const [showObservations, setShowObservations] = moduleContext.useStoreState("showObservations");
-    const [statisticsSelection, setStatisticsSelection] = moduleContext.useStoreState("statisticsSelection");
-    const setParameterIdent = moduleContext.useSetStoreValue("parameterIdent");
-    const setVectorSpecifications = moduleContext.useSetStoreValue("vectorSpecifications");
+        settingsContext.useStoreState("colorRealizationsByParameter");
+    const [visualizationMode, setVisualizationMode] = settingsContext.useStoreState("visualizationMode");
+    const [showHistorical, setShowHistorical] = settingsContext.useStoreState("showHistorical");
+    const [showObservations, setShowObservations] = settingsContext.useStoreState("showObservations");
+    const [statisticsSelection, setStatisticsSelection] = settingsContext.useStoreState("statisticsSelection");
+    const setParameterIdent = settingsContext.useSetStoreValue("parameterIdent");
+    const setVectorSpecifications = settingsContext.useSetStoreValue("vectorSpecifications");
 
     // Transitions
     const [isPendingGetParameters, startGetParametersTransition] = React.useTransition();

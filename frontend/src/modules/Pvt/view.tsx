@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 
-import { ModuleFCProps } from "@framework/Module";
+import { ModuleViewProps } from "@framework/Module";
 import { useFirstEnsembleInEnsembleSet } from "@framework/WorkbenchSession";
 import { useElementSize } from "@lib/hooks/useElementSize";
 
@@ -12,15 +12,15 @@ import state from "./state";
 
 //-----------------------------------------------------------------------------------------------------------
 
-export function View({ moduleContext, workbenchSession }: ModuleFCProps<state>) {
+export function View({ viewContext, workbenchSession }: ModuleViewProps<state>) {
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);
     const wrapperDivSize = useElementSize(wrapperDivRef);
 
     //Just using the first ensemble for now
     const firstEnsemble = useFirstEnsembleInEnsembleSet(workbenchSession);
 
-    const activeDataSet = moduleContext.useStoreValue("activeDataSet");
-    const activeRealization = moduleContext.useStoreValue("realization");
+    const activeDataSet = viewContext.useStoreValue("activeDataSet");
+    const activeRealization = viewContext.useStoreValue("realization");
 
     const [plotData, setPlotData] = React.useState<PlotDataType[]>([]);
     const pvtDataQuery = usePvtDataQuery(

@@ -2,7 +2,7 @@ import React from "react";
 
 import { KeyKind } from "@framework/DataChannelTypes";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
-import { ModuleFCProps } from "@framework/Module";
+import { ModuleSettingsProps } from "@framework/Module";
 import { Checkbox } from "@lib/components/Checkbox";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { Dropdown } from "@lib/components/Dropdown";
@@ -10,12 +10,12 @@ import { RadioGroup } from "@lib/components/RadioGroup";
 
 import { DisplayComponentType, State } from "./state";
 
-export function Settings({ moduleContext, workbenchSession }: ModuleFCProps<State>) {
-    const [displayComponentType, setDisplayComponentType] = moduleContext.useStoreState("displayComponentType");
-    const [hideZeroY, setHideZeroY] = moduleContext.useStoreState("hideZeroY");
-    const [showLabels, setShowLabels] = moduleContext.useStoreState("showLabels");
-    const [showRealizationPoints, setShowRealizationPoints] = moduleContext.useStoreState("showRealizationPoints");
-    const setModuleReferenceSensitivityName = moduleContext.useSetStoreValue("referenceSensitivityName");
+export function Settings({ settingsContext, workbenchSession }: ModuleSettingsProps<State>) {
+    const [displayComponentType, setDisplayComponentType] = settingsContext.useStoreState("displayComponentType");
+    const [hideZeroY, setHideZeroY] = settingsContext.useStoreState("hideZeroY");
+    const [showLabels, setShowLabels] = settingsContext.useStoreState("showLabels");
+    const [showRealizationPoints, setShowRealizationPoints] = settingsContext.useStoreState("showRealizationPoints");
+    const setModuleReferenceSensitivityName = settingsContext.useSetStoreValue("referenceSensitivityName");
     const [referenceSensitivityName, setReferenceSensitivityName] = React.useState<string | null>(null);
 
     const ensembleSet = workbenchSession.getEnsembleSet();
@@ -27,7 +27,7 @@ export function Settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
         [referenceSensitivityName, setModuleReferenceSensitivityName]
     );
 
-    const responseReceiver = moduleContext.useChannelReceiver({
+    const responseReceiver = settingsContext.useChannelReceiver({
         receiverIdString: "response",
         expectedKindsOfKeys: [KeyKind.REALIZATION],
     });
