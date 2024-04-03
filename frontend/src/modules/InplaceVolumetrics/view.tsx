@@ -3,7 +3,7 @@ import Plot from "react-plotly.js";
 
 import { Body_get_realizations_response_api } from "@api";
 import { DataElement, KeyType } from "@framework/DataChannelTypes";
-import { ModuleFCProps } from "@framework/Module";
+import { ModuleViewProps } from "@framework/Module";
 import { useSubscribedValue } from "@framework/WorkbenchServices";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { QueryStateWrapper } from "@lib/components/QueryStateWrapper";
@@ -16,13 +16,13 @@ import { useRealizationsResponseQuery } from "./queryHooks";
 import { VolumetricResponseAbbreviations } from "./settings";
 import { State } from "./state";
 
-export const View = (props: ModuleFCProps<State>) => {
+export const View = (props: ModuleViewProps<State>) => {
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);
     const wrapperDivSize = useElementSize(wrapperDivRef);
-    const ensembleIdent = props.moduleContext.useStoreValue("ensembleIdent");
-    const tableName = props.moduleContext.useStoreValue("tableName");
-    const responseName = props.moduleContext.useStoreValue("responseName");
-    const categoryFilter = props.moduleContext.useStoreValue("categoricalFilter");
+    const ensembleIdent = props.viewContext.useStoreValue("ensembleIdent");
+    const tableName = props.viewContext.useStoreValue("tableName");
+    const responseName = props.viewContext.useStoreValue("responseName");
+    const categoryFilter = props.viewContext.useStoreValue("categoricalFilter");
     const responseBody: Body_get_realizations_response_api = { categorical_filter: categoryFilter || undefined };
     const realizationsResponseQuery = useRealizationsResponseQuery(
         ensembleIdent?.getCaseUuid() ?? "",
@@ -57,10 +57,10 @@ export const View = (props: ModuleFCProps<State>) => {
     }
 
     React.useEffect(() => {
-        props.moduleContext.setInstanceTitle(
+        props.viewContext.setInstanceTitle(
             VolumetricResponseAbbreviations[responseName as keyof typeof VolumetricResponseAbbreviations] || ""
         );
-    }, [props.moduleContext, responseName]);
+    }, [props.viewContext, responseName]);
 
     const handleHover = (e: PlotHoverEvent) => {
         const realization = e.points[0].x;
@@ -91,7 +91,7 @@ export const View = (props: ModuleFCProps<State>) => {
     }
 
     if (ensemble && tableName && responseName) {
-        props.moduleContext.usePublishChannelContents({
+        props.viewContext.usePublishChannelContents({
             channelIdString: ChannelIds.RESPONSE,
             dependencies: [realizationsResponseQuery.data, ensemble, tableName, responseName],
             contents: [{ contentIdString: responseName, displayName: responseName, dataGenerator }],

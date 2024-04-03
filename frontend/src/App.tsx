@@ -126,7 +126,7 @@ function App() {
         );
     }
 
-    const isInitialisingApp = initAppState !== InitAppState.InitCompleted;
+    const isInitializingApp = initAppState !== InitAppState.InitCompleted;
 
     return (
         <>
@@ -138,12 +138,12 @@ function App() {
                     <DevLabel />
                 </div>
             ) : (
-                isInitialisingApp && (
+                isInitializingApp && (
                     <div
                         className={resolveClassNames(
                             "absolute inset-0 w-screen h-screen flex flex-col items-center justify-center gap-8",
                             {
-                                hidden: !isInitialisingApp,
+                                hidden: !isInitializingApp,
                             }
                         )}
                     >
@@ -155,8 +155,8 @@ function App() {
             )}
             <div
                 className={resolveClassNames("h-screen flex flex-row transition-opacity ease-in-out duration-1000", {
-                    "opacity-0": isInitialisingApp,
-                    "opacity-100": !isInitialisingApp,
+                    "opacity-0": isInitializingApp,
+                    "opacity-100": !isInitializingApp,
                 })}
             >
                 <LeftNavBar workbench={workbench.current} />
