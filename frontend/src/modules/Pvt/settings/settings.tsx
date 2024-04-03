@@ -3,7 +3,7 @@ import React from "react";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { ModuleSettingsProps } from "@framework/Module";
 import { useEnsembleRealizationFilterFunc, useEnsembleSet } from "@framework/WorkbenchSession";
-import { MultiEnsembleSelect } from "@framework/components/MultiEnsembleSelect";
+import { EnsembleSelect } from "@framework/components/EnsembleSelect";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { Dropdown } from "@lib/components/Dropdown";
 import { PendingWrapper } from "@lib/components/PendingWrapper";
@@ -29,6 +29,7 @@ import { DependentVariableSelector } from "./components/DependentVariableSelecto
 import { Interface, State } from "../state";
 import {
     ColorBy,
+    PHASE_TO_DISPLAY_NAME,
     PRESSURE_DEPENDENT_VARIABLE_TO_DISPLAY_NAME,
     PhaseType,
     PressureDependentVariable,
@@ -122,7 +123,7 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
                 />
             </CollapsibleGroup>
             <CollapsibleGroup title="Ensembles" expanded>
-                <MultiEnsembleSelect
+                <EnsembleSelect
                     ensembleSet={ensembleSet}
                     onChange={handleEnsembleSelectionChange}
                     value={selectedEnsembleIdents}
@@ -169,20 +170,9 @@ function makePvtNumOptions(pvtNums: number[]): SelectOption[] {
 }
 
 function makePhaseOptions(): SelectOption[] {
-    return [
-        {
-            label: "Oil (PVTO)",
-            value: PhaseType.OIL,
-        },
-        {
-            label: "Gas (PVTG)",
-            value: PhaseType.GAS,
-        },
-        {
-            label: "Water (PVTW)",
-            value: PhaseType.WATER,
-        },
-    ];
+    return Object.values(PhaseType).map((phase: PhaseType) => {
+        return { value: phase, label: PHASE_TO_DISPLAY_NAME[phase] };
+    });
 }
 
 function makeDependentVariableOptions(phaseType: PhaseType): PressureDependentVariable[] {

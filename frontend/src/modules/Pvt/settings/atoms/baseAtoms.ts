@@ -3,7 +3,7 @@ import { atomWithCompare } from "@framework/utils/atomUtils";
 
 import { isEqual } from "lodash";
 
-function ensembleIdentsListsAreEqual(a: EnsembleIdent[], b: EnsembleIdent[]) {
+function areEnsembleIdentListsEqual(a: EnsembleIdent[], b: EnsembleIdent[]) {
     if (a.length !== b.length) {
         return false;
     }
@@ -15,6 +15,6 @@ function ensembleIdentsListsAreEqual(a: EnsembleIdent[], b: EnsembleIdent[]) {
     return true;
 }
 
-export const userSelectedEnsembleIdentsAtom = atomWithCompare<EnsembleIdent[]>([], ensembleIdentsListsAreEqual);
+export const userSelectedEnsembleIdentsAtom = atomWithCompare<EnsembleIdent[]>([], areEnsembleIdentListsEqual);
 export const userSelectedRealizationsAtom = atomWithCompare<number[]>([], isEqual);
 export const userSelectedPvtNumsAtom = atomWithCompare<number[]>([], isEqual);

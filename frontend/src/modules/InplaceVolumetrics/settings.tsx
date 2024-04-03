@@ -4,7 +4,7 @@ import { InplaceVolumetricsCategoricalMetaData_api, InplaceVolumetricsTableMetaD
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { ModuleSettingsProps } from "@framework/Module";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
-import { SingleEnsembleSelect } from "@framework/components/SingleEnsembleSelect";
+import { EnsembleDropdown } from "@framework/components/EnsembleDropdown";
 import { fixupEnsembleIdent } from "@framework/utils/ensembleUiHelpers";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { Dropdown } from "@lib/components/Dropdown";
@@ -166,7 +166,7 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
     return (
         <>
             <Label text="Ensemble">
-                <SingleEnsembleSelect
+                <EnsembleDropdown
                     ensembleSet={ensembleSet}
                     value={ensembleIdent}
                     onChange={handleEnsembleSelectionChange}

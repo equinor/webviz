@@ -2,13 +2,13 @@ import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { EnsembleSet } from "@framework/EnsembleSet";
 import { Select, SelectOption, SelectProps } from "@lib/components/Select";
 
-type MultiEnsembleSelectProps = {
+type EnsembleSelectProps = {
     ensembleSet: EnsembleSet;
     value: EnsembleIdent[];
     onChange: (ensembleIdentArr: EnsembleIdent[]) => void;
 } & Omit<SelectProps, "options" | "value" | "onChange">;
 
-export function MultiEnsembleSelect(props: MultiEnsembleSelectProps): JSX.Element {
+export function EnsembleSelect(props: EnsembleSelectProps): JSX.Element {
     const { ensembleSet, value, onChange, multiple, ...rest } = props;
 
     function handleSelectionChanged(selectedEnsembleIdentStrArr: string[]) {

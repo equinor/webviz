@@ -5,7 +5,7 @@ import { Parameter, ParameterIdent, ParameterType } from "@framework/EnsemblePar
 import { ModuleSettingsProps } from "@framework/Module";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
-import { MultiEnsembleSelect } from "@framework/components/MultiEnsembleSelect";
+import { EnsembleSelect } from "@framework/components/EnsembleSelect";
 import { ParameterListFilter } from "@framework/components/ParameterListFilter";
 import { fixupEnsembleIdents } from "@framework/utils/ensembleUiHelpers";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
@@ -148,7 +148,7 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
     return (
         <>
             <CollapsibleGroup expanded={true} title="Ensembles">
-                <MultiEnsembleSelect
+                <EnsembleSelect
                     ensembleSet={ensembleSet}
                     value={selectedEnsembleIdents}
                     size={5}

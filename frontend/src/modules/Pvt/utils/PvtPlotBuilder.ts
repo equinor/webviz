@@ -1,3 +1,4 @@
+import { PvtData_api } from "@api";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { ColorSet } from "@lib/utils/ColorSet";
 import { Size2D } from "@lib/utils/geometry";
@@ -98,6 +99,33 @@ export class PvtPlotBuilder {
         }
     }
 
+    private getDependentVariableValue(
+        dependentVariable: PressureDependentVariable,
+        index: number,
+        table: PvtData_api
+    ): number | null {
+        if (index < 0 || index >= table.pressure.length) {
+            return null;
+        }
+
+        let column: number[] = [];
+        if (dependentVariable === PressureDependentVariable.FORMATION_VOLUME_FACTOR) {
+            column = table.volumefactor;
+        } else if (dependentVariable === PressureDependentVariable.VISCOSITY) {
+            column = table.viscosity;
+        } else if (dependentVariable === PressureDependentVariable.DENSITY) {
+            column = table.density;
+        } else if (dependentVariable === PressureDependentVariable.FLUID_RATIO) {
+            column = table.ratio;
+        }
+
+        if (index < column.length) {
+            return column[index];
+        }
+
+        return null;
+    }
+
     makeTraces(
         dependentVariables: readonly PressureDependentVariable[],
         pvtNums: readonly number[],
@@ -112,9 +140,8 @@ export class PvtPlotBuilder {
         this.addLegendTitle(colorBy);
         const colors = this.makeColorsArray(colorBy, colorSet, pvtNums.length, tableCollections.length);
 
-        let collectionIndex = 0;
         let pvtNumIndex = 0;
-        for (const tableCollection of tableCollections) {
+        for (const [collectionIndex, tableCollection] of tableCollections.entries()) {
             pvtNumIndex = 0;
             for (const table of tableCollection.tables) {
                 if (pvtNums.includes(table.pvtnum) && phase === table.phase) {
@@ -129,20 +156,10 @@ export class PvtPlotBuilder {
                                 continue;
                             }
 
-                            let dependentVariableValue = 0;
-                            switch (dependentVariable) {
-                                case PressureDependentVariable.FORMATION_VOLUME_FACTOR:
-                                    dependentVariableValue = table.volumefactor[i];
-                                    break;
-                                case PressureDependentVariable.VISCOSITY:
-                                    dependentVariableValue = table.viscosity[i];
-                                    break;
-                                case PressureDependentVariable.DENSITY:
-                                    dependentVariableValue = table.density[i];
-                                    break;
-                                case PressureDependentVariable.FLUID_RATIO:
-                                    dependentVariableValue = table.ratio[i];
-                                    break;
+                            const dependentVariableValue = this.getDependentVariableValue(dependentVariable, i, table);
+
+                            if (dependentVariableValue === null) {
+                                continue;
                             }
 
                             let dependentVariableMap = groupedTracesMaps.get(dependentVariable);
@@ -187,6 +204,10 @@ export class PvtPlotBuilder {
                         const col = (i % 2) + 1;
                         const borderTracePoints: TracePointData[] = [];
                         for (const [, tracePointDataArray] of dependentVariableMap) {
+                            if (tracePointDataArray.length === 0) {
+                                continue;
+                            }
+
                             const trace: Partial<PlotData> = {
                                 x: tracePointDataArray.map((el) => el.pressure),
                                 y: tracePointDataArray.map((el) => el.dependentVariableValue),
@@ -256,7 +277,6 @@ export class PvtPlotBuilder {
                     pvtNumIndex++;
                 }
             }
-            collectionIndex++;
         }
     }
 
