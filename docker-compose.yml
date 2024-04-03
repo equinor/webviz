@@ -19,14 +19,13 @@ services:
   backend-primary:
     build:
       context: .
-      dockerfile: backend.Dockerfile
+      dockerfile: ./backend_py/primary/Dockerfile
     ports:
       - 5000:5000
       - 5678:5678
     environment:
       - UVICORN_PORT=5000
       - UVICORN_RELOAD=true
-      - UVICORN_ENTRYPOINT=src.backend.primary.main:app
       - WEBVIZ_CLIENT_SECRET
       - WEBVIZ_SMDA_RESOURCE_SCOPE
       - WEBVIZ_SMDA_SUBSCRIPTION_KEY
@@ -37,12 +36,13 @@ services:
       - OTEL_RESOURCE_ATTRIBUTES=service.namespace=local, service.version=dummy0.1.2
       - CODESPACE_NAME  # Automatically set env. variable by GitHub codespace
     volumes:
-      - ./backend/src:/home/appuser/backend/src
+      - ./backend_py/primary/primary:/home/appuser/backend_py/primary/primary
+      - ./backend_py/libs:/home/appuser/backend_py/libs
     command:
       [
         "sh",
         "-c",
-        "pip install debugpy && python -m debugpy --listen 0.0.0.0:5678 -m uvicorn --proxy-headers --host=0.0.0.0 $${UVICORN_ENTRYPOINT}",
+        "pip install debugpy && python -m debugpy --listen 0.0.0.0:5678 -m uvicorn --proxy-headers --host=0.0.0.0 primary.main:app",
       ]
 
   surface-query:
@@ -54,26 +54,41 @@ services:
     volumes:
       - ./backend_go/surface_query:/home/appuser/backend_go/surface_query
 
-  backend-user-session:
+  user-mock:
     build:
       context: .
-      dockerfile: backend.Dockerfile
+      dockerfile: ./backend_py/user_mock/Dockerfile
     ports:
-      - 8000:8000
+      - 8001:8001
     environment:
-      - UVICORN_PORT=8000
+      - UVICORN_PORT=8001
       - UVICORN_RELOAD=true
-      - UVICORN_ENTRYPOINT=src.backend.user_session.main:app
-      - WEBVIZ_CLIENT_SECRET
-      - WEBVIZ_SMDA_RESOURCE_SCOPE
-      - WEBVIZ_SMDA_SUBSCRIPTION_KEY
-      - WEBVIZ_SUMO_ENV
-      - WEBVIZ_VDS_HOST_ADDRESS
-      - APPLICATIONINSIGHTS_CONNECTION_STRING
-      - OTEL_SERVICE_NAME=user-session
-      - OTEL_RESOURCE_ATTRIBUTES=service.namespace=local, service.version=dummy0.1.2
     volumes:
-      - ./backend/src:/home/appuser/backend/src
+      - ./backend_py/user_mock:/home/appuser/backend_py/user_mock
+
+  user-grid3d-ri:
+    build:
+      context: .
+      dockerfile: ./backend_py/user_grid3d_ri/Dockerfile
+    ports:
+      - 8002:8002
+    environment:
+      - UVICORN_PORT=8002
+      - UVICORN_RELOAD=true
+    volumes:
+      - ./backend_py/user_grid3d_ri:/home/appuser/backend_py/user_grid3d_ri
+
+  user-grid3d-vtk:
+    build:
+      context: .
+      dockerfile: ./backend_py/user_grid3d_vtk/Dockerfile
+    ports:
+      - 8003:8003
+    environment:
+      - UVICORN_PORT=8003
+      - UVICORN_RELOAD=true
+    volumes:
+      - ./backend_py/user_grid3d_vtk:/home/appuser/backend_py/user_grid3d_vtk
 
   redis-user-session:
     image: bitnami/redis:6.2.10@sha256:bd42fcdab5959ce2b21b6ea8410d4b3ee87ecb2e320260326ec731ecfcffbd0e
