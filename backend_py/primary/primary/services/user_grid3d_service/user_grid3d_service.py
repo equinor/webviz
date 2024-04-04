@@ -1,11 +1,19 @@
 import logging
-from typing import Literal
+from typing import Literal, Sequence
 
+import numpy as np
+from numpy.typing import NDArray
 import httpx
 from pydantic import BaseModel
 from sumo.wrapper import SumoClient
 from webviz_pkg.core_utils.perf_metrics import PerfMetrics, make_metrics_string_s
 from webviz_pkg.core_utils.b64 import B64FloatArray, B64UintArray, B64IntArray
+from webviz_pkg.core_utils.b64 import (
+    b64_decode_float_array,
+    b64_decode_uint_array,
+    b64_decode_float_array_to_list,
+    b64_decode_int_array,
+)
 from webviz_pkg.server_schemas.user_grid3d_ri import api_schemas as server_api_schemas
 
 from primary.auth.auth_helper import AuthenticatedUser
@@ -242,14 +250,36 @@ class UserGrid3dService:
             body_pydantic_model=request_body,
             operation_descr="getting polyline intersection from grid3d user session",
         )
-        api_obj = server_api_schemas.PolylineIntersectionResponse.model_validate_json(response.content)
         perf_metrics.record_lap("call-user-session")
+
+        api_obj = server_api_schemas.PolylineIntersectionResponse.model_validate_json(response.content)
+        perf_metrics.record_lap("validate-response")
 
         # Not sure how we should be doing this wrt performance.
         # Right now we end up doing one validation here and another when creating the return object.
-        ret_mesh_section_list = [
-            FenceMeshSection.model_validate(sect.model_dump()) for sect in api_obj.fence_mesh_sections
-        ]
+        ret_mesh_section_list: list[FenceMeshSection] = []
+        for api_sect in api_obj.fence_mesh_sections:
+            poly_indices_arr_np = b64_decode_uint_array(api_sect.poly_indices_b64arr)
+            vertices_per_poly_arr_np = b64_decode_uint_array(api_sect.vertices_per_poly_b64arr)
+            polys_arr_np = _build_vtk_style_polys(poly_indices_arr_np, vertices_per_poly_arr_np)
+
+            if isinstance(api_sect.poly_props_b64arr, B64FloatArray):
+                poly_props_float_list = b64_decode_float_array_to_list(api_sect.poly_props_b64arr)
+            else:
+                poly_props_float_list = b64_decode_int_array(api_sect.poly_props_b64arr).astype(float).tolist()
+
+            sect = FenceMeshSection(
+                vertices_uz_arr=b64_decode_float_array(api_sect.vertices_uz_b64arr),
+                polys_arr=polys_arr_np,
+                poly_source_cell_indices_arr=b64_decode_uint_array(api_sect.poly_source_cell_indices_b64arr),
+                poly_props_arr=poly_props_float_list,
+                start_utm_x=api_sect.start_utm_x,
+                start_utm_y=api_sect.start_utm_y,
+                end_utm_x=api_sect.end_utm_x,
+                end_utm_y=api_sect.end_utm_y,
+            )
+            ret_mesh_section_list.append(sect)
+
         ret_obj = PolylineIntersection(
             fence_mesh_sections=ret_mesh_section_list,
             min_grid_prop_value=api_obj.min_grid_prop_value,
@@ -358,3 +388,21 @@ class UserGrid3dService:
         LOGGER.debug(f"._make_request_to_service_endpoint() succeeded - {method=}, {endpoint=}, {url=}")
 
         return response
+
+
+def _build_vtk_style_polys(
+    poly_indices_arr_np: Sequence[int], vertices_per_poly_arr_np: Sequence[int]
+) -> NDArray[np.uint32]:
+    num_polys = len(vertices_per_poly_arr_np)
+    polys_arr = np.empty(num_polys + len(poly_indices_arr_np), dtype=np.uint32)
+
+    src_idx = 0
+    dst_idx = 0
+    for num_verts_in_poly in vertices_per_poly_arr_np:
+        polys_arr[dst_idx] = num_verts_in_poly
+        dst_idx += 1
+        polys_arr[dst_idx : dst_idx + num_verts_in_poly] = poly_indices_arr_np[src_idx : src_idx + num_verts_in_poly]
+        src_idx += num_verts_in_poly
+        dst_idx += num_verts_in_poly
+
+    return polys_arr

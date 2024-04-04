@@ -116,7 +116,7 @@ export function View({ viewContext, workbenchSettings, workbenchServices, workbe
         layers.push(wellsLayer);
     }
 
-    // Grid surface
+    // Grid surface queries
     const gridSurfaceQuery = useGridSurface(
         firstEnsemble?.getCaseUuid() ?? null,
         firstEnsemble?.getEnsembleName() ?? null,
@@ -132,6 +132,29 @@ export function View({ viewContext, workbenchSettings, workbenchServices, workbe
         realization,
         singleKLayer
     );
+
+    // Grid intersection query
+    const gridPolylineIntersectionQuery = useGridPolylineIntersection(
+        firstEnsemble?.getCaseUuid() ?? null,
+        firstEnsemble?.getEnsembleName() ?? null,
+        gridName,
+        parameterName,
+        realization,
+        polyLinePoints
+    );
+
+    let minPropValue = Number.MAX_VALUE;
+    let maxPropValue = -Number.MAX_VALUE;
+    if (gridParameterQuery.data) {
+        minPropValue = Math.min(gridParameterQuery.data.min_grid_prop_value, minPropValue);
+        maxPropValue = Math.max(gridParameterQuery.data.max_grid_prop_value, maxPropValue);
+    }
+    if (gridPolylineIntersectionQuery.data) {
+        minPropValue = Math.min(gridPolylineIntersectionQuery.data.min_grid_prop_value, minPropValue);
+        maxPropValue = Math.max(gridPolylineIntersectionQuery.data.max_grid_prop_value, maxPropValue);
+    }
+    console.log(`minMaxPropValue=${minPropValue <= maxPropValue ? `${minPropValue}, ${maxPropValue}` : "N/A"}`);
+
     if (gridSurfaceQuery.data && gridParameterQuery.data) {
         const offsetXyz = [gridSurfaceQuery.data.origin_utm_x, gridSurfaceQuery.data.origin_utm_y, 0];
         const pointsNumberArray = gridSurfaceQuery.data.pointsFloat32Arr.map((val, i) => val + offsetXyz[i % 3]);
@@ -142,21 +165,12 @@ export function View({ viewContext, workbenchSettings, workbenchServices, workbe
             polysData: polysNumberArray,
             propertiesData: gridParameterQuery.data.polyPropsFloat32Arr,
             colorMapName: "Continuous",
+            colorMapRange: [minPropValue, maxPropValue],
             ZIncreasingDownwards: false,
             gridLines: showGridLines,
         });
         layers.push(grid3dLayer as unknown as WorkingGrid3dLayer);
     }
-
-    // Grid intersection
-    const gridPolylineIntersectionQuery = useGridPolylineIntersection(
-        firstEnsemble?.getCaseUuid() ?? null,
-        firstEnsemble?.getEnsembleName() ?? null,
-        gridName,
-        parameterName,
-        realization,
-        polyLinePoints
-    );
 
     if (gridPolylineIntersectionQuery.data) {
         // Calculate sizes of typed arrays
@@ -219,6 +233,7 @@ export function View({ viewContext, workbenchSettings, workbenchServices, workbe
             polysData: polysUint32Arr,
             propertiesData: polyPropsFloat32Arr,
             colorMapName: "Continuous",
+            colorMapRange: [minPropValue, maxPropValue],
             ZIncreasingDownwards: false,
             gridLines: showGridLines,
         });
@@ -275,16 +290,16 @@ export function View({ viewContext, workbenchSettings, workbenchServices, workbe
                     ],
                 }}
             >
-                {/* {" "}
                 <ViewAnnotation id={viewIds.annotation}>
                     <ContinuousLegend
                         colorTables={colorTables}
                         colorName="Continuous"
-                        // min={propertyRange ? propertyRange[0] : undefined}
-                        // max={propertyRange ? propertyRange[1] : undefined}
+                        min={minPropValue}
+                        max={maxPropValue}
+                        isRangeShown={minPropValue <= maxPropValue}
                         cssLegendStyles={{ bottom: "0", right: "0" }}
                     />
-                </ViewAnnotation> */}
+                </ViewAnnotation>
             </SyncedSubsurfaceViewer>
 
             <div className="absolute bottom-5 right-5 italic text-pink-400">{viewContext.getInstanceIdString()}</div>

@@ -1,14 +1,15 @@
 import logging
-from typing import Sequence
 
 import grpc
-import numpy as np
-from numpy.typing import NDArray
 from fastapi import APIRouter, HTTPException
 
 from rips.generated import GridGeometryExtraction_pb2, GridGeometryExtraction_pb2_grpc
 from rips.instance import *
 
+from webviz_pkg.core_utils.b64 import B64FloatArray, B64IntArray
+from webviz_pkg.core_utils.b64 import b64_encode_float_array_as_float32
+from webviz_pkg.core_utils.b64 import b64_encode_uint_array_as_uint32, b64_encode_uint_array_as_uint8
+from webviz_pkg.core_utils.b64 import b64_encode_uint_array_as_smallest_size, b64_encode_int_array_as_smallest_size
 from webviz_pkg.core_utils.perf_metrics import PerfMetrics
 from webviz_pkg.server_schemas.user_grid3d_ri import api_schemas
 
@@ -62,23 +63,44 @@ async def post_get_polyline_intersection(
     grpc_response = await geo_extraction_stub.CutAlongPolyline(grpc_request)
     perf_metrics.record_lap("ri-cut")
 
-    LOGGER.debug(f"{len(grpc_response.fenceMeshSections)=}")
+    LOGGER.debug(f"{myfunc} - {len(grpc_response.fenceMeshSections)=}")
 
     prop_extractor = await GridPropertiesExtractor.from_roff_property_file_async(property_path_name)
     perf_metrics.record_lap("read-props")
+
+    min_global_prop_value = prop_extractor.get_min_global_val()
+    max_global_prop_value = prop_extractor.get_max_global_val()
+    undefined_int_value: int | None = None
+    if prop_extractor.is_discrete():
+        undefined_int_value = prop_extractor.get_discrete_undef_value()
+
+    LOGGER.debug(f"{myfunc} - {prop_extractor.is_discrete()=}")
+    LOGGER.debug(f"{myfunc} - {min_global_prop_value=}")
+    LOGGER.debug(f"{myfunc} - {max_global_prop_value=}")
+    LOGGER.debug(f"{myfunc} - {undefined_int_value=}")
 
     ret_sections: list[api_schemas.FenceMeshSection] = []
     tot_num_vertices: int = 0
     tot_num_polys: int = 0
     for fence_idx, grpc_section in enumerate(grpc_response.fenceMeshSections):
-        polys_arr_np = _build_vtk_style_polys(grpc_section.polyIndicesArr, grpc_section.verticesPerPolygonArr)
-        prop_vals_list = prop_extractor.get_prop_values_for_cells_as_float_list(grpc_section.sourceCellIndicesArr)
+        poly_props_b64arr: B64FloatArray | B64IntArray
+        if prop_extractor.is_discrete():
+            int_prop_arr_np = prop_extractor.get_discrete_prop_values_for_cells(grpc_section.sourceCellIndicesArr)
+            min_int_val = int(min_global_prop_value)
+            max_int_val = int(max_global_prop_value)
+            poly_props_b64arr = b64_encode_int_array_as_smallest_size(int_prop_arr_np, min_int_val, max_int_val)
+        else:
+            float_prop_arr_np = prop_extractor.get_float_prop_values_for_cells(grpc_section.sourceCellIndicesArr)
+            poly_props_b64arr = b64_encode_float_array_as_float32(float_prop_arr_np)
+
+        max_vertex_index = int(len(grpc_section.vertexArrayUZ) / 2) - 1
 
         section = api_schemas.FenceMeshSection(
-            vertices_uz_arr=list(grpc_section.vertexArrayUZ),
-            polys_arr=polys_arr_np.tolist(),
-            poly_source_cell_indices_arr=list(grpc_section.sourceCellIndicesArr),
-            poly_props_arr=prop_vals_list,
+            vertices_uz_b64arr=b64_encode_float_array_as_float32(grpc_section.vertexArrayUZ),
+            poly_indices_b64arr=b64_encode_uint_array_as_smallest_size(grpc_section.polyIndicesArr, max_vertex_index),
+            vertices_per_poly_b64arr=b64_encode_uint_array_as_uint8(grpc_section.verticesPerPolygonArr),
+            poly_source_cell_indices_b64arr=b64_encode_uint_array_as_uint32(grpc_section.sourceCellIndicesArr),
+            poly_props_b64arr=poly_props_b64arr,
             start_utm_x=grpc_section.startUtmXY.x,
             start_utm_y=grpc_section.startUtmXY.y,
             end_utm_x=grpc_section.endUtmXY.x,
@@ -94,8 +116,9 @@ async def post_get_polyline_intersection(
     # This actually takes a bit of time (for many sections) - could use model_construct() for a slight perf gain
     ret_obj = api_schemas.PolylineIntersectionResponse(
         fence_mesh_sections=ret_sections,
-        min_grid_prop_value=prop_extractor.get_min_global_val(),
-        max_grid_prop_value=prop_extractor.get_max_global_val(),
+        undefined_int_value=undefined_int_value,
+        min_grid_prop_value=min_global_prop_value,
+        max_grid_prop_value=max_global_prop_value,
         grid_dimensions=api_schemas.GridDimensions(
             i_count=grpc_response.gridDimensions.i,
             j_count=grpc_response.gridDimensions.j,
@@ -118,21 +141,3 @@ async def post_get_polyline_intersection(
     LOGGER.debug(f"{myfunc} - Got polyline intersection in: {perf_metrics.to_string_s()}")
 
     return ret_obj
-
-
-def _build_vtk_style_polys(
-    poly_indices_arr_np: Sequence[int], vertices_per_poly_arr_np: Sequence[int]
-) -> NDArray[np.uint32]:
-    num_polys = len(vertices_per_poly_arr_np)
-    polys_arr = np.empty(num_polys + len(poly_indices_arr_np), dtype=np.uint32)
-
-    src_idx = 0
-    dst_idx = 0
-    for num_verts_in_poly in vertices_per_poly_arr_np:
-        polys_arr[dst_idx] = num_verts_in_poly
-        dst_idx += 1
-        polys_arr[dst_idx : dst_idx + num_verts_in_poly] = poly_indices_arr_np[src_idx : src_idx + num_verts_in_poly]
-        src_idx += num_verts_in_poly
-        dst_idx += num_verts_in_poly
-
-    return polys_arr

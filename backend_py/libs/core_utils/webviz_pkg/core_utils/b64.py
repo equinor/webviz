@@ -61,9 +61,9 @@ def b64_encode_int_array_as_smallest_size(
     If the minimum and maximum values are known, they can be specified in the min_value and max_value parameter.
     """
     if min_value is None:
-        min_value = np.amin(input_arr)
+        min_value = np.amin(input_arr) if len(input_arr) > 0 else 0
     if max_value is None:
-        max_value = np.amax(input_arr)
+        max_value = np.amax(input_arr) if len(input_arr) > 0 else 0
 
     element_type: Literal["int8", "int16", "int32"]
 
@@ -91,6 +91,15 @@ def b64_encode_uint_array_as_uint32(input_arr: NDArray[np.unsignedinteger] | lis
     return B64UintArray(element_type="uint32", data_b64str=base64_str)
 
 
+def b64_encode_uint_array_as_uint8(input_arr: NDArray[np.unsignedinteger] | list[int]) -> B64UintArray:
+    """
+    Base64 encodes an array of unsigned integers using 8 bit uint element size.
+    """
+    np_arr: NDArray[np.uint32] = np.asarray(input_arr, dtype=np.uint8)
+    base64_str = _base64_encode_numpy_arr_to_str(np_arr)
+    return B64UintArray(element_type="uint8", data_b64str=base64_str)
+
+
 def b64_encode_uint_array_as_smallest_size(
     input_arr: NDArray[np.unsignedinteger] | list[int], max_value: int | None = None
 ) -> B64UintArray:
@@ -99,7 +108,7 @@ def b64_encode_uint_array_as_smallest_size(
     If the maximum value in the array is known, it can be specified in the max_value parameter.
     """
     if max_value is None:
-        max_value = np.amax(input_arr)
+        max_value = np.amax(input_arr) if len(input_arr) > 0 else 0
 
     element_type: Literal["uint8", "uint16", "uint32", "uint64"]
 

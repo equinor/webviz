@@ -152,7 +152,11 @@ async def grid_parameter(
     float_poly_props_b64arr = _hack_ensure_b64_property_array_is_float(
         mapped_grid_properties.poly_props_b64arr, mapped_grid_properties.undefined_int_value
     )
-    response = schemas.Grid3dMappedProperty(poly_props_b64arr=float_poly_props_b64arr)
+    response = schemas.Grid3dMappedProperty(
+        poly_props_b64arr=float_poly_props_b64arr,
+        min_grid_prop_value=mapped_grid_properties.min_grid_prop_value,
+        max_grid_prop_value=mapped_grid_properties.max_grid_prop_value,
+    )
 
     LOGGER.debug(f"------------------ GRID3D - grid_parameter took: {perf_metrics.to_string_s()}")
 

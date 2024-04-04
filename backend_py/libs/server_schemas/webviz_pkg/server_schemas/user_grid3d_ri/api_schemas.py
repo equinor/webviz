@@ -81,10 +81,11 @@ class PolylineIntersectionRequest(BaseModel):
 
 class FenceMeshSection(BaseModel):
     # U-axis defined by unit length vector from start to end, Z is global Z
-    vertices_uz_arr: list[float]
-    polys_arr: list[int]
-    poly_source_cell_indices_arr: list[int]
-    poly_props_arr: list[float]
+    vertices_uz_b64arr: B64FloatArray
+    poly_indices_b64arr: B64UintArray
+    vertices_per_poly_b64arr: B64UintArray
+    poly_source_cell_indices_b64arr: B64UintArray
+    poly_props_b64arr: B64FloatArray | B64IntArray
     start_utm_x: float
     start_utm_y: float
     end_utm_x: float
@@ -94,6 +95,7 @@ class FenceMeshSection(BaseModel):
 class PolylineIntersectionResponse(BaseModel):
     fence_mesh_sections: list[FenceMeshSection]
     grid_dimensions: GridDimensions
+    undefined_int_value: int | None
     min_grid_prop_value: float
     max_grid_prop_value: float
     stats: Stats | None
