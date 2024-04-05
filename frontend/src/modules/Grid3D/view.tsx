@@ -7,12 +7,7 @@ import { ContinuousLegend } from "@emerson-eps/color-tables";
 import { ModuleViewProps } from "@framework/Module";
 import { useFirstEnsembleInEnsembleSet } from "@framework/WorkbenchSession";
 import { ColorScaleGradientType } from "@lib/utils/ColorScale";
-import {
-    createContinuousColorScaleForMap,
-    createNorthArrowLayer,
-    createWellBoreHeaderLayer,
-    createWellboreTrajectoryLayer,
-} from "@modules/SubsurfaceMap/_utils";
+import { createContinuousColorScaleForMap } from "@modules/SubsurfaceMap/_utils";
 import { wellTrajectoryToGeojson } from "@modules/SubsurfaceMap/_utils/subsurfaceMap";
 import { SyncedSubsurfaceViewer } from "@modules/SubsurfaceMap/components/SyncedSubsurfaceViewer";
 import { useFieldWellsTrajectoriesQuery } from "@modules/_shared/WellBore/queryHooks";
@@ -21,8 +16,8 @@ import { ViewAnnotation } from "@webviz/subsurface-viewer/dist/components/ViewAn
 import { AxesLayer, Grid3DLayer, NorthArrow3DLayer, WellsLayer } from "@webviz/subsurface-viewer/dist/layers/";
 
 import { FeatureCollection } from "geojson";
-import { isEqual } from "lodash";
 
+import { FenceMeshSection_trans } from "./queryDataTransforms";
 import { useGridPolylineIntersection, useGridProperty, useGridSurface } from "./queryHooks";
 import state from "./state";
 
@@ -173,65 +168,12 @@ export function View({ viewContext, workbenchSettings, workbenchServices, workbe
     }
 
     if (gridPolylineIntersectionQuery.data) {
-        // Calculate sizes of typed arrays
-        let totalPoints = 0;
-        let totalPolys = 0;
-        let totalProps = 0;
-
-        gridPolylineIntersectionQuery.data.fence_mesh_sections.forEach((section) => {
-            totalPoints += (section.vertices_uz_arr.length / 2) * 3; // divid by uz and multiply by xyz
-            totalPolys += section.polys_arr.length;
-            totalProps += section.poly_props_arr.length;
-        });
-
-        const pointsFloat32Arr = new Float32Array(totalPoints);
-        const polysUint32Arr = new Uint32Array(totalPolys);
-        const polyPropsFloat32Arr = new Float32Array(totalProps);
-
-        let pointsIndex = 0;
-        let polysIndex = 0;
-        let propsIndex = 0;
-
-        gridPolylineIntersectionQuery.data.fence_mesh_sections.forEach((section) => {
-            // uv to xyz
-            const directionX = section.end_utm_x - section.start_utm_x;
-            const directionY = section.end_utm_y - section.start_utm_y;
-            const magnitude = Math.sqrt(directionX ** 2 + directionY ** 2);
-            const unitDirectionX = directionX / magnitude;
-            const unitDirectionY = directionY / magnitude;
-
-            for (let i = 0; i < section.vertices_uz_arr.length; i += 2) {
-                const u = section.vertices_uz_arr[i];
-                const z = section.vertices_uz_arr[i + 1];
-                const x = u * unitDirectionX + section.start_utm_x;
-                const y = u * unitDirectionY + section.start_utm_y;
-
-                pointsFloat32Arr[pointsIndex++] = x;
-                pointsFloat32Arr[pointsIndex++] = y;
-                pointsFloat32Arr[pointsIndex++] = z;
-            }
-            // Fix poly indexes for each section
-            let polyIndex = 0;
-            while (polyIndex < section.polys_arr.length) {
-                const count = section.polys_arr[polyIndex++];
-                polysUint32Arr[polysIndex++] = count;
-
-                for (let j = 0; j < count; j++) {
-                    polysUint32Arr[polysIndex++] =
-                        section.polys_arr[polyIndex++] + (pointsIndex / 3 - section.vertices_uz_arr.length / 2);
-                }
-            }
-
-            section.poly_props_arr.forEach((prop) => {
-                polyPropsFloat32Arr[propsIndex++] = prop;
-            });
-        });
-
+        const polyData = buildVtkStylePolyDataFromFenceSections(gridPolylineIntersectionQuery.data.fenceMeshSections);
         const grid3dIntersectionLayer = new Grid3DLayer({
             id: "grid-3d-intersection-layer",
-            pointsData: pointsFloat32Arr,
-            polysData: polysUint32Arr,
-            propertiesData: polyPropsFloat32Arr,
+            pointsData: polyData.points,
+            polysData: polyData.polys,
+            propertiesData: polyData.props,
             colorMapName: "Continuous",
             colorMapRange: [minPropValue, maxPropValue],
             ZIncreasingDownwards: false,
@@ -252,7 +194,7 @@ export function View({ viewContext, workbenchSettings, workbenchServices, workbe
                 colorTables={colorTables}
                 layers={layers}
                 views={{
-                    layout: [3, 1],
+                    layout: [2, 1],
                     showLabel: false,
 
                     viewports: [
@@ -268,18 +210,18 @@ export function View({ viewContext, workbenchSettings, workbenchServices, workbe
                                 "grid-3d-intersection-layer",
                             ],
                         },
-                        {
-                            id: "view_2d",
-                            isSync: false,
-                            show3D: false,
-                            layerIds: [
-                                "north-arrow-layer",
-                                "axes-layer",
-                                "wells-layer",
-                                "polyline-layer",
-                                "grid-3d-layer",
-                            ],
-                        },
+                        // {
+                        //     id: "view_2d",
+                        //     isSync: false,
+                        //     show3D: false,
+                        //     layerIds: [
+                        //         "north-arrow-layer",
+                        //         "axes-layer",
+                        //         "wells-layer",
+                        //         "polyline-layer",
+                        //         "grid-3d-layer",
+                        //     ],
+                        // },
                         {
                             id: "view_3d_intersect",
                             isSync: true,
@@ -328,5 +270,77 @@ function polyLineToGeojsonLineString(polyLine: number[]): FeatureCollection {
                 },
             },
         ],
+    };
+}
+
+interface PolyDataVtk {
+    points: Float32Array;
+    polys: Uint32Array;
+    props: Float32Array;
+}
+
+function buildVtkStylePolyDataFromFenceSections(fenceSections: FenceMeshSection_trans[]): PolyDataVtk {
+    const startTS = performance.now();
+
+    // Calculate sizes of typed arrays
+    let totNumVertices = 0;
+    let totNumPolygons = 0;
+    let totNumConnectivities = 0;
+    for (const section of fenceSections) {
+        totNumVertices += section.verticesUzFloat32Arr.length / 2;
+        totNumPolygons += section.verticesPerPolyUintArr.length;
+        totNumConnectivities += section.polyIndicesUintArr.length;
+    }
+
+    const pointsFloat32Arr = new Float32Array(3 * totNumVertices);
+    const polysUint32Arr = new Uint32Array(totNumPolygons + totNumConnectivities);
+    const polyPropsFloat32Arr = new Float32Array(totNumPolygons);
+
+    let floatPointsDstIdx = 0;
+    let polysDstIdx = 0;
+    let propsDstIdx = 0;
+    for (const section of fenceSections) {
+        // uv to xyz
+        const directionX = section.end_utm_x - section.start_utm_x;
+        const directionY = section.end_utm_y - section.start_utm_y;
+        const magnitude = Math.sqrt(directionX ** 2 + directionY ** 2);
+        const unitDirectionX = directionX / magnitude;
+        const unitDirectionY = directionY / magnitude;
+
+        const connOffset = floatPointsDstIdx / 3;
+
+        for (let i = 0; i < section.verticesUzFloat32Arr.length; i += 2) {
+            const u = section.verticesUzFloat32Arr[i];
+            const z = section.verticesUzFloat32Arr[i + 1];
+            const x = u * unitDirectionX + section.start_utm_x;
+            const y = u * unitDirectionY + section.start_utm_y;
+
+            pointsFloat32Arr[floatPointsDstIdx++] = x;
+            pointsFloat32Arr[floatPointsDstIdx++] = y;
+            pointsFloat32Arr[floatPointsDstIdx++] = z;
+        }
+
+        // Fix poly indexes for each section
+        const numPolysInSection = section.verticesPerPolyUintArr.length;
+        let srcIdx = 0;
+        for (let i = 0; i < numPolysInSection; i++) {
+            const numVertsInPoly = section.verticesPerPolyUintArr[i];
+            polysUint32Arr[polysDstIdx++] = numVertsInPoly;
+
+            for (let j = 0; j < numVertsInPoly; j++) {
+                polysUint32Arr[polysDstIdx++] = section.polyIndicesUintArr[srcIdx++] + connOffset;
+            }
+        }
+
+        polyPropsFloat32Arr.set(section.polyPropsFloat32Arr, propsDstIdx);
+        propsDstIdx += numPolysInSection;
+    }
+
+    console.debug(`buildVtkStylePolyDataFromFenceSections() took: ${(performance.now() - startTS).toFixed(1)}ms`);
+
+    return {
+        points: pointsFloat32Arr,
+        polys: polysUint32Arr,
+        props: polyPropsFloat32Arr,
     };
 }

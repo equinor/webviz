@@ -8,12 +8,8 @@ from pydantic import BaseModel
 from sumo.wrapper import SumoClient
 from webviz_pkg.core_utils.perf_metrics import PerfMetrics, make_metrics_string_s
 from webviz_pkg.core_utils.b64 import B64FloatArray, B64UintArray, B64IntArray
-from webviz_pkg.core_utils.b64 import (
-    b64_decode_float_array,
-    b64_decode_uint_array,
-    b64_decode_float_array_to_list,
-    b64_decode_int_array,
-)
+from webviz_pkg.core_utils.b64 import b64_decode_float_array_to_list, b64_decode_int_array
+from webviz_pkg.core_utils.b64 import b64_encode_float_array_as_float32
 from webviz_pkg.server_schemas.user_grid3d_ri import api_schemas as server_api_schemas
 
 from primary.auth.auth_helper import AuthenticatedUser
@@ -68,10 +64,11 @@ class MappedGridProperties(BaseModel):
 
 class FenceMeshSection(BaseModel):
     # U-axis defined by unit length vector from start to end, Z is global Z
-    vertices_uz_arr: list[float]
-    polys_arr: list[int]
-    poly_source_cell_indices_arr: list[int]
-    poly_props_arr: list[float]
+    vertices_uz_b64arr: B64FloatArray
+    poly_indices_b64arr: B64UintArray
+    vertices_per_poly_b64arr: B64UintArray
+    poly_source_cell_indices_b64arr: B64UintArray
+    poly_props_b64arr: B64FloatArray
     start_utm_x: float
     start_utm_y: float
     end_utm_x: float
@@ -259,20 +256,17 @@ class UserGrid3dService:
         # Right now we end up doing one validation here and another when creating the return object.
         ret_mesh_section_list: list[FenceMeshSection] = []
         for api_sect in api_obj.fence_mesh_sections:
-            poly_indices_arr_np = b64_decode_uint_array(api_sect.poly_indices_b64arr)
-            vertices_per_poly_arr_np = b64_decode_uint_array(api_sect.vertices_per_poly_b64arr)
-            polys_arr_np = _build_vtk_style_polys(poly_indices_arr_np, vertices_per_poly_arr_np)
-
             if isinstance(api_sect.poly_props_b64arr, B64FloatArray):
                 poly_props_float_list = b64_decode_float_array_to_list(api_sect.poly_props_b64arr)
             else:
                 poly_props_float_list = b64_decode_int_array(api_sect.poly_props_b64arr).astype(float).tolist()
 
             sect = FenceMeshSection(
-                vertices_uz_arr=b64_decode_float_array(api_sect.vertices_uz_b64arr),
-                polys_arr=polys_arr_np,
-                poly_source_cell_indices_arr=b64_decode_uint_array(api_sect.poly_source_cell_indices_b64arr),
-                poly_props_arr=poly_props_float_list,
+                vertices_uz_b64arr=api_sect.vertices_uz_b64arr,
+                poly_indices_b64arr=api_sect.poly_indices_b64arr,
+                vertices_per_poly_b64arr=api_sect.vertices_per_poly_b64arr,
+                poly_source_cell_indices_b64arr=api_sect.poly_source_cell_indices_b64arr,
+                poly_props_b64arr=b64_encode_float_array_as_float32(poly_props_float_list),
                 start_utm_x=api_sect.start_utm_x,
                 start_utm_y=api_sect.start_utm_y,
                 end_utm_x=api_sect.end_utm_x,

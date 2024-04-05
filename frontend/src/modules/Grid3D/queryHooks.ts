@@ -1,13 +1,10 @@
-import { Grid3dInfo_api, PolylineIntersection_api } from "@api";
+import { Grid3dInfo_api } from "@api";
 import { apiService } from "@framework/ApiService";
 import { UseQueryResult, useQuery } from "@tanstack/react-query";
 
-import {
-    GridMappedProperty_trans,
-    GridSurface_trans,
-    transformGridMappedProperty,
-    transformGridSurface,
-} from "./queryDataTransforms";
+import { GridSurface_trans, transformGridSurface } from "./queryDataTransforms";
+import { GridMappedProperty_trans, transformGridMappedProperty } from "./queryDataTransforms";
+import { PolylineIntersection_trans, transformPolylineIntersection } from "./queryDataTransforms";
 
 const STALE_TIME = 60 * 1000;
 const CACHE_TIME = 60 * 1000;
@@ -83,7 +80,7 @@ export function useGridPolylineIntersection(
     parameterName: string | null,
     realizationNum: number | null,
     polylineXyz: number[]
-): UseQueryResult<PolylineIntersection_api> {
+): UseQueryResult<PolylineIntersection_trans> {
     return useQuery({
         queryKey: [
             "getGridPolylineIntersection",
@@ -103,6 +100,7 @@ export function useGridPolylineIntersection(
                 realizationNum ?? 0,
                 { polyline_utm_xy: polylineXyz }
             ),
+        select: transformPolylineIntersection,
         staleTime: 0,
         gcTime: 0,
         enabled: caseUuid && ensembleName && gridName && realizationNum !== null && polylineXyz.length ? true : false,

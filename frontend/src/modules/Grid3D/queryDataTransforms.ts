@@ -1,5 +1,8 @@
-import { Grid3dGeometry_api, Grid3dMappedProperty_api, Grid3dPropertyInfo_api } from "@api";
-import { b64DecodeFloatArrayToFloat32, b64DecodeUintArrayToUint32 } from "@modules_shared/base64";
+import { Grid3dGeometry_api, Grid3dMappedProperty_api } from "@api";
+import { FenceMeshSection_api, PolylineIntersection_api } from "@api";
+import { b64DecodeFloatArrayToFloat32 } from "@modules_shared/base64";
+import { b64DecodeUintArrayToUint32, b64DecodeUintArrayToUint32OrLess } from "@modules_shared/base64";
+
 
 // Data structure for the transformed GridSurface data
 // Removes the base64 encoded data and replaces them with typed arrays
@@ -45,5 +48,70 @@ export function transformGridMappedProperty(apiData: Grid3dMappedProperty_api): 
     return {
         ...untransformedData,
         polyPropsFloat32Arr: polyPropsFloat32Arr,
+    };
+}
+
+export type FenceMeshSection_trans = Omit<
+    FenceMeshSection_api,
+    | "vertices_uz_b64arr"
+    | "poly_indices_b64arr"
+    | "vertices_per_poly_b64arr"
+    | "poly_source_cell_indices_b64arr"
+    | "poly_props_b64arr"
+> & {
+    verticesUzFloat32Arr: Float32Array;
+    polyIndicesUintArr: Uint32Array | Uint16Array | Uint8Array;
+    verticesPerPolyUintArr: Uint32Array | Uint16Array | Uint8Array;
+    polySourceCellIndicesUint32Arr: Uint32Array;
+    polyPropsFloat32Arr: Float32Array;
+};
+
+export type PolylineIntersection_trans = Omit<PolylineIntersection_api, "fence_mesh_sections"> & {
+    fenceMeshSections: Array<FenceMeshSection_trans>;
+};
+
+function transformFenceMeshSection(apiData: FenceMeshSection_api): FenceMeshSection_trans {
+    const {
+        vertices_uz_b64arr,
+        poly_indices_b64arr,
+        vertices_per_poly_b64arr,
+        poly_source_cell_indices_b64arr,
+        poly_props_b64arr,
+        ...untransformedData
+    } = apiData;
+
+    const verticesUzFloat32Arr = b64DecodeFloatArrayToFloat32(vertices_uz_b64arr);
+    const polyIndicesUintArr = b64DecodeUintArrayToUint32OrLess(poly_indices_b64arr);
+    const verticesPerPolyUintArr = b64DecodeUintArrayToUint32OrLess(vertices_per_poly_b64arr);
+    const polySourceCellIndicesUint32Arr = b64DecodeUintArrayToUint32(poly_source_cell_indices_b64arr);
+    const polyPropsFloat32Arr = b64DecodeFloatArrayToFloat32(poly_props_b64arr);
+
+    return {
+        ...untransformedData,
+        verticesUzFloat32Arr: verticesUzFloat32Arr,
+        polyIndicesUintArr: polyIndicesUintArr,
+        verticesPerPolyUintArr: verticesPerPolyUintArr,
+        polySourceCellIndicesUint32Arr: polySourceCellIndicesUint32Arr,
+        polyPropsFloat32Arr: polyPropsFloat32Arr,
+    };
+}
+
+export function transformPolylineIntersection(apiData: PolylineIntersection_api): PolylineIntersection_trans {
+    const startTS = performance.now();
+
+    const { fence_mesh_sections, ...untransformedData } = apiData;
+
+    const transMeshSections: FenceMeshSection_trans[] = [];
+
+    for (const apiSection of fence_mesh_sections) {
+        const transformedSection = transformFenceMeshSection(apiSection);
+        transMeshSections.push(transformedSection);
+    }
+
+    console.debug(`transformPolylineIntersection() took: ${(performance.now() - startTS).toFixed(1)}ms`);
+
+    return {
+        ...untransformedData,
+        fenceMeshSections: transMeshSections,
     };
 }
