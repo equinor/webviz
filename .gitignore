@@ -125,4 +125,4 @@ playwright-report/
 .ipynb_checkpoints/
 
 # Python virtual environments
-.venv
+.venv*
