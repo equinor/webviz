@@ -163,6 +163,7 @@ export function View({ viewContext, workbenchSettings, workbenchServices, workbe
             colorMapRange: [minPropValue, maxPropValue],
             ZIncreasingDownwards: false,
             gridLines: showGridLines,
+            material: { ambient: 0.4, diffuse: 0.7, shininess: 8, specularColor: [25, 25, 25] },
         });
         layers.push(grid3dLayer as unknown as WorkingGrid3dLayer);
     }
@@ -178,6 +179,7 @@ export function View({ viewContext, workbenchSettings, workbenchServices, workbe
             colorMapRange: [minPropValue, maxPropValue],
             ZIncreasingDownwards: false,
             gridLines: showGridLines,
+            material: { ambient: 0.4, diffuse: 0.7, shininess: 8, specularColor: [25, 25, 25] },
         });
         layers.push(grid3dIntersectionLayer as unknown as WorkingGrid3dLayer);
     }
@@ -193,6 +195,12 @@ export function View({ viewContext, workbenchSettings, workbenchServices, workbe
                 }
                 colorTables={colorTables}
                 layers={layers}
+                lights={{
+                    headLight: { intensity: 1.0 },
+                    ambientLight: { intensity: 1.0 },
+                    // ambientLight: { intensity: 0.6 },
+                    // directionalLights: [{ intensity: 0.4, direction: [0, 0, -1] }],
+                }}
                 views={{
                     layout: [2, 1],
                     showLabel: false,
