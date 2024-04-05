@@ -7,7 +7,7 @@ import { useSettingsStatusWriter } from "@framework/StatusWriter";
 import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
 import { Wellbore } from "@framework/Wellbore";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
-import { SingleEnsembleSelect } from "@framework/components/SingleEnsembleSelect";
+import { EnsembleDropdown } from "@framework/components/EnsembleDropdown";
 import { fixupEnsembleIdent, maybeAssignFirstSyncedEnsemble } from "@framework/utils/ensembleUiHelpers";
 import { Checkbox } from "@lib/components/Checkbox";
 import { CircularProgress } from "@lib/components/CircularProgress";
@@ -239,7 +239,7 @@ export function Settings({
             <CollapsibleGroup title="Ensemble and Realization" expanded={true}>
                 <div className="flex flex-col gap-4 overflow-y-auto">
                     <Label text="Ensemble" synced={syncHelper.isSynced(SyncSettingKey.ENSEMBLE)}>
-                        <SingleEnsembleSelect
+                        <EnsembleDropdown
                             ensembleSet={ensembleSet}
                             value={computedEnsembleIdent ? computedEnsembleIdent : null}
                             onChange={handleEnsembleSelectionChange}

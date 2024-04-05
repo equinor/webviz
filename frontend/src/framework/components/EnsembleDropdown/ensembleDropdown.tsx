@@ -2,13 +2,13 @@ import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { EnsembleSet } from "@framework/EnsembleSet";
 import { Dropdown, DropdownOption, DropdownProps } from "@lib/components/Dropdown";
 
-type SingleEnsembleSelectProps = {
+type EnsembleDropdownProps = {
     ensembleSet: EnsembleSet;
     value: EnsembleIdent | null;
     onChange: (ensembleIdent: EnsembleIdent | null) => void;
 } & Omit<DropdownProps, "options" | "value" | "onChange">;
 
-export function SingleEnsembleSelect(props: SingleEnsembleSelectProps): JSX.Element {
+export function EnsembleDropdown(props: EnsembleDropdownProps): JSX.Element {
     const { ensembleSet, value, onChange, ...rest } = props;
 
     function handleSelectionChanged(selectedEnsembleIdentStr: string) {

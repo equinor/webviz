@@ -12,6 +12,7 @@ import { timestampUtcMsToCompactIsoString } from "@framework/utils/timestampUtil
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { ColorScaleGradientType } from "@lib/utils/ColorScale";
 import { ContentError } from "@modules/_shared/components/ContentMessage";
+import { makeDistinguishableEnsembleDisplayName } from "@modules/_shared/ensembleNameUtils";
 
 import { isEqual } from "lodash";
 import { Annotations, Layout, PlotDatum, PlotMouseEvent, Shape } from "plotly.js";
@@ -211,19 +212,7 @@ export const View = ({ viewContext, workbenchSession, workbenchSettings }: Modul
 
     // Callback function for ensemble display name
     function makeEnsembleDisplayName(ensembleIdent: EnsembleIdent): string {
-        const ensembleNameCount = selectedEnsembles.filter(
-            (ensemble) => ensemble.getEnsembleName() === ensembleIdent.getEnsembleName()
-        ).length;
-        if (ensembleNameCount === 1) {
-            return ensembleIdent.getEnsembleName();
-        }
-
-        const ensemble = ensembleSet.findEnsemble(ensembleIdent);
-        if (!ensemble) {
-            return ensembleIdent.getEnsembleName();
-        }
-
-        return ensemble.getDisplayName();
+        return makeDistinguishableEnsembleDisplayName(ensembleIdent, selectedEnsembles);
     }
 
     // Create Plot Builder

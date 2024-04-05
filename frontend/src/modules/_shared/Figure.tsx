@@ -1,7 +1,7 @@
 import Plot from "react-plotly.js";
 
 import { merge } from "lodash";
-import { Layout, PlotData } from "plotly.js";
+import { Annotations, Layout, PlotData } from "plotly.js";
 
 export class Figure {
     private _plotData: Partial<PlotData>[];
@@ -89,6 +89,7 @@ function makeDomain(numElements: number, index: number, spacing: number, margin:
 export interface MakeSubplotOptions {
     numRows?: number;
     numCols?: number;
+    subplotTitles?: string[];
     sharedXAxes?: boolean | "all";
     sharedYAxes?: boolean | "all";
     width?: number;
@@ -110,6 +111,8 @@ export function makeSubplots(options: MakeSubplotOptions): Figure {
             b: 0,
         },
     };
+
+    const annotations: Partial<Annotations>[] = [];
 
     const gridAxesMapping: number[][] = [];
 
@@ -217,8 +220,29 @@ export function makeSubplots(options: MakeSubplotOptions): Figure {
                 };
             }
 
+            if (options.subplotTitles && options.subplotTitles.length > index) {
+                const title = `<b>${options.subplotTitles[index]}</b>`;
+                annotations.push({
+                    xanchor: "center",
+                    yanchor: "top",
+                    xref: "paper",
+                    yref: "paper",
+                    x: xDomainStart + (xDomainEnd - xDomainStart) / 2,
+                    y: yDomainEnd + 0.02,
+                    text: title,
+                    showarrow: false,
+                    font: {
+                        size: 14,
+                    },
+                });
+            }
+
             gridAxesMapping[row].push(index + 1);
         }
+    }
+
+    if (options.subplotTitles) {
+        layout.annotations = annotations;
     }
 
     return new Figure({
