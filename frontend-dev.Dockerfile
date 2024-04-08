@@ -4,13 +4,15 @@ FROM node:${NODE_TAG}
 
 USER node
 
-COPY --chown=node:node . /usr/src/app
-
 WORKDIR /usr/src/app/frontend
 
 RUN npm config set fetch-retry-mintimeout 100000
 RUN npm config set fetch-retry-maxtimeout 600000
 
+COPY --chown=node:node ./frontend/package*.json ./
+
 RUN npm ci --ignore-scripts
+
+COPY --chown=node:node ./frontend/ ./
 
 CMD ["npm", "run", "dev"]
