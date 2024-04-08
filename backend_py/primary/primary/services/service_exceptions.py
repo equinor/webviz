@@ -6,6 +6,7 @@ class Service(str, Enum):
     SUMO = "sumo"
     SMDA = "smda"
     VDS = "vds"
+    SSDL = "ssdl"
 
 
 class ServiceLayerException(Exception):

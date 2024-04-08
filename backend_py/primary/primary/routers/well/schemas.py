@@ -59,3 +59,21 @@ class WellBoreCasing(BaseModel):
     total_depth_md: float
     start_depth: float
     end_depth: float
+
+
+class WellBoreLogCurveInfo(BaseModel):
+    log_name: str
+    curve_name: str
+    curve_unit: str
+
+
+class WellBoreLogCurveData(BaseModel):
+    index_min: float
+    index_max: float
+    min_curve_value: float
+    max_curve_value: float
+    DataPoints: list[list[float | None]]
+    curve_alias: str
+    curve_description: str
+    index_unit: str
+    no_data_value: float
