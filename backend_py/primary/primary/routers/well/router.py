@@ -135,8 +135,28 @@ async def get_wellbore_completions(
     if wellbore_uuid in ["drogon_horizontal", "drogon_vertical"]:
         return []
     else:
-        well_access = SsdlWellAccess(authenticated_user.get_smda_access_token())
+        well_access = SsdlWellAccess(authenticated_user.get_ssdl_access_token())
 
     wellbore_completions = await well_access.get_completions_for_wellbore(wellbore_uuid=wellbore_uuid)
     print(wellbore_completions)
     return []
+
+
+@router.get("/wellbore_casing/")
+async def get_wellbore_casing(
+    # fmt:off
+    authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
+    wellbore_uuid: str = Query(description="Wellbore uuid"),
+    # fmt:on
+) -> List[schemas.WellBoreCasing]:
+    """Get well bore casing for a single well bore"""
+
+    # Handle DROGON
+    if wellbore_uuid in ["drogon_horizontal", "drogon_vertical"]:
+        return []
+    else:
+        well_access = SsdlWellAccess(authenticated_user.get_ssdl_access_token())
+
+    wellbore_casing = await well_access.get_casing_for_wellbore(wellbore_uuid=wellbore_uuid)
+    print(wellbore_casing)
+    return wellbore_casing

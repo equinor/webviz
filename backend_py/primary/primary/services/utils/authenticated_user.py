@@ -23,6 +23,7 @@ class AuthenticatedUser:
         self._graph_access_token = access_tokens.get("graph_access_token")
         self._sumo_access_token = access_tokens.get("sumo_access_token")
         self._smda_access_token = access_tokens.get("smda_access_token")
+        self._ssdl_access_token = access_tokens.get("ssdl_access_token")
 
     def __hash__(self) -> int:
         return hash(self._user_id)
@@ -71,6 +72,19 @@ class AuthenticatedUser:
     def has_smda_access_token(self) -> bool:
         try:
             self.get_smda_access_token()
+            return True
+        except:
+            return False
+
+    def get_ssdl_access_token(self) -> str:
+        if isinstance(self._ssdl_access_token, str) and len(self._ssdl_access_token) > 0:
+            return self._ssdl_access_token
+
+        raise AuthorizationError("User has no ssdl access token", Service.GENERAL)
+
+    def has_ssdl_access_token(self) -> bool:
+        try:
+            self.get_ssdl_access_token()
             return True
         except:
             return False
