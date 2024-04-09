@@ -22,7 +22,7 @@ class WellBoreLogCurveInfo(BaseModel):
 
 class WellBoreLogCurveData(BaseModel):
     index_min: float
-    index_max: float
+    index_max: str
     min_curve_value: float
     max_curve_value: float
     DataPoints: list[list[float | None]]
