@@ -1,32 +1,5 @@
 import { IntersectedItem, IntersectionCalculator, IntersectionItemShape } from "../types/types";
-
-function pointIsInPolygon(point: number[], polygon: number[][]): boolean {
-    const numVertices = polygon.length;
-    const x = point[0];
-    const y = point[1];
-    let inside = false;
-
-    let p1 = polygon[0];
-    let p2 = [0, 0];
-    for (let i = 1; i <= numVertices; i++) {
-        const idx = i % numVertices;
-        p2 = polygon[idx];
-        if (y > Math.min(p1[1], p2[1])) {
-            if (y <= Math.max(p1[1], p2[1])) {
-                if (x <= Math.max(p1[0], p2[0])) {
-                    const xIntersection = ((y - p1[1]) * (p2[0] - p1[0])) / (p2[1] - p1[1]) + p1[0];
-                    if (p1[0] === p2[0] || x <= xIntersection) {
-                        inside = !inside;
-                    }
-                }
-            }
-        }
-
-        p1 = p2;
-    }
-
-    return inside;
-}
+import { isPointInPolygon } from "../utils/geometry";
 
 export interface PolygonIntersectedItem extends IntersectedItem {
     shape: IntersectionItemShape.POLYGON;
@@ -41,7 +14,7 @@ export class PolygonIntersectionCalculator implements IntersectionCalculator {
     }
 
     calcIntersection(point: number[]): PolygonIntersectedItem | null {
-        if (pointIsInPolygon(point, this._polygon)) {
+        if (isPointInPolygon(point, this._polygon)) {
             return {
                 shape: IntersectionItemShape.POLYGON,
                 point,

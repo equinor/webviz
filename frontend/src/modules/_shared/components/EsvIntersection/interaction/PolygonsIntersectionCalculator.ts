@@ -14,7 +14,7 @@ function polygonFromVerticesAndIndices(
     return polygon;
 }
 
-function pointIsInPolygon(
+function isPointInPolygon(
     point: number[],
     startOffset: number,
     vertices: Float32Array,
@@ -73,7 +73,7 @@ export class PolygonsIntersectionCalculator implements IntersectionCalculator {
         while (idx < this._data.polygonIndices.length) {
             const numVertices = this._data.polygonSizes[polygonIndex];
             const polygonIndices = this._data.polygonIndices.subarray(idx, idx + numVertices);
-            if (pointIsInPolygon(point, this._data.xMin, this._data.vertices, polygonIndices)) {
+            if (isPointInPolygon(point, this._data.xMin, this._data.vertices, polygonIndices)) {
                 return {
                     shape: IntersectionItemShape.POLYGONS,
                     point,

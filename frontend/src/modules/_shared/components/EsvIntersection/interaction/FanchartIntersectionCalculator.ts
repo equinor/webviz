@@ -1,7 +1,7 @@
 import { LineIntersectionCalculator } from "./LineIntersectionCalculator";
 
 import { IntersectedItem, IntersectionCalculator, IntersectionItemShape } from "../types/types";
-import { calcDistance, pointIsInPolygon } from "../utils/geometry";
+import { calcDistance, isPointInPolygon } from "../utils/geometry";
 
 export interface FanchartIntersectedItem extends IntersectedItem {
     shape: IntersectionItemShape.FANCHART;
@@ -50,7 +50,7 @@ export class FanchartIntersectionCalculator implements IntersectionCalculator {
     }
 
     calcIntersection(point: number[]): FanchartIntersectedItem | null {
-        if (!pointIsInPolygon(point, this._hull)) {
+        if (!isPointInPolygon(point, this._hull)) {
             return null;
         }
 
