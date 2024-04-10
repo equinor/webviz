@@ -13,14 +13,19 @@ class WellAccess:
     def __init__(self, access_token: str):
         self._ssdl_token = access_token
 
-    # async def get_completions_for_wellbore(self, wellbore_uuid: str) -> List[schemas.WellBoreCompletion]:
-    #     endpoint = f"Wellbores/{wellbore_uuid}/completion"
-    #     params = {"normalized_data": True}
-    #     timer = PerfTimer()
-    #     result = await fetch_from_ssdl(access_token=self._ssdl_token, endpoint=endpoint, params=params)
-    #     print(f"TIME SSDL fetch completions for wellbore {wellbore_uuid} took {timer.lap_s():.2f} seconds")
+    async def get_completions_for_wellbore(self, wellbore_uuid: str) -> List[schemas.WellBoreCompletion]:
+        endpoint = f"Wellbores/{wellbore_uuid}/completion"
+        params = {"normalized_data": True}
 
-    #     return result
+        result = await fetch_from_ssdl(access_token=self._ssdl_token, endpoint=endpoint, params=params)
+        print(result)
+        try:
+            result = [schemas.WellBoreCompletion.model_validate(casing) for casing in result]
+        except ValidationError as e:
+            raise InvalidDataError(f"Invalid completion data for wellbore {wellbore_uuid} {e}", Service.SSDL) from e
+        return result
+
+        return result
 
     async def get_casing_for_wellbore(self, wellbore_uuid: str) -> List[schemas.WellBoreCasing]:
         endpoint = f"Wellbores/{wellbore_uuid}/casing"
@@ -28,6 +33,18 @@ class WellAccess:
         result = await fetch_from_ssdl(access_token=self._ssdl_token, endpoint=endpoint, params=params)
         try:
             result = [schemas.WellBoreCasing.model_validate(casing) for casing in result]
+        except ValidationError as e:
+            raise InvalidDataError(f"Invalid casing data for wellbore {wellbore_uuid}", Service.SSDL) from e
+        return result
+
+    async def get_perforations_for_wellbore(self, wellbore_uuid: str) -> List[schemas.WellBorePerforation]:
+        endpoint = f"Wellbores/{wellbore_uuid}/perforations"
+        params = {"normalized-data": False, "details": True}
+
+        result = await fetch_from_ssdl(access_token=self._ssdl_token, endpoint=endpoint, params=params)
+        print(result)
+        try:
+            result = [schemas.WellBorePerforation.model_validate(casing) for casing in result]
         except ValidationError as e:
             raise InvalidDataError(f"Invalid casing data for wellbore {wellbore_uuid}", Service.SSDL) from e
         return result
@@ -58,6 +75,6 @@ class WellAccess:
             result = schemas.WellBoreLogCurveData.model_validate(result)
         except ValidationError as e:
             raise InvalidDataError(
-                f"Invalid log curve data for wellbore {wellbore_uuid} and curve {curve_name} {e}", Service.SSDL
+                f"Invalid log curve data for wellbore {wellbore_uuid} and curve {curve_name}", Service.SSDL
             ) from e
         return result

@@ -1,6 +1,16 @@
 from pydantic import BaseModel
 
 
+class WellBoreCompletion(BaseModel):
+    md_top: float
+    md_bottom: float
+    tvd_top: float | None
+    tvd_bottom: float | None
+    description: str | None
+    symbol_name: str | None
+    comment: str | None
+
+
 class WellBoreCasing(BaseModel):
     item_type: str  # Casing type
     diameter_numeric: float
@@ -12,6 +22,15 @@ class WellBoreCasing(BaseModel):
     total_depth_md: float
     start_depth: float
     end_depth: float
+
+
+class WellBorePerforation(BaseModel):
+    md_top: float
+    md_bottom: float
+    tvd_top: float
+    tvd_bottom: float
+    status: str
+    completion_mode: str
 
 
 class WellBoreLogCurveInfo(BaseModel):
