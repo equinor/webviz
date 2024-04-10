@@ -221,6 +221,8 @@ export function EsvIntersection(props: EsvIntersectionProps): React.ReactNode {
         ) {
             esvController.setReferenceSystem(props.intersectionReferenceSystem);
             setPrevIntersectionReferenceSystem(props.intersectionReferenceSystem);
+            // In order to rerender
+            esvController.adjustToSize(containerSize.width, containerSize.height);
         }
 
         if (!isEqual(prevAxesOptions, props.axesOptions)) {
