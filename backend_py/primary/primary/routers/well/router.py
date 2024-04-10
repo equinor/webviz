@@ -128,7 +128,7 @@ async def get_wellbore_completions(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     wellbore_uuid: str = Query(description="Wellbore uuid"),
     # fmt:on
-) -> List[schemas.WellBoreCompletion]:
+) -> List[schemas.WellboreCompletion]:
     """Get well bore completions for a single well bore"""
 
     # Handle DROGON
@@ -147,7 +147,7 @@ async def get_wellbore_casing(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     wellbore_uuid: str = Query(description="Wellbore uuid"),
     # fmt:on
-) -> List[schemas.WellBoreCasing]:
+) -> List[schemas.WellboreCasing]:
     """Get well bore casing for a single well bore"""
 
     # Handle DROGON
@@ -167,7 +167,7 @@ async def get_wellbore_perforations(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     wellbore_uuid: str = Query(description="Wellbore uuid"),
     # fmt:on
-) -> List[schemas.WellBorePerforation]:
+) -> List[schemas.WellborePerforation]:
     """Get well bore casing for a single well bore"""
 
     # Handle DROGON
