@@ -1,9 +1,9 @@
 import React from "react";
 import Plot from "react-plotly.js";
 
-import { ParameterDataArr } from "@modules/ParameterDistributionMatrix/state";
-
 import { PlotType } from "plotly.js";
+
+import { ParameterDataArr } from "../../typesAndEnums";
 
 type ParameterDistributionPlotProps = {
     dataArr: ParameterDataArr[];
