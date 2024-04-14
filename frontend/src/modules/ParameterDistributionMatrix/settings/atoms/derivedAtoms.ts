@@ -25,10 +25,11 @@ export const intersectedParameterIdentsAtom = atom((get) => {
     const ensembleSet = get(EnsembleSetAtom);
     const selectedEnsembleIdents = get(selectedEnsembleIdentsAtom);
     const showConstantParameters = get(showConstantParametersAtom);
+
     if (selectedEnsembleIdents.length === 0) return [];
 
     const parameterSets = [];
-    console.log(showConstantParameters);
+
     for (const ensembleIdent of selectedEnsembleIdents) {
         const ensemble = ensembleSet.findEnsemble(ensembleIdent);
         if (!ensemble) continue;
