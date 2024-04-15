@@ -46,12 +46,19 @@ class BoundingBox3D(BaseModel):
     max_z: float
 
 
+class GridDimensions(BaseModel):
+    i_count: int
+    j_count: int
+    k_count: int
+
+
 class GridGeometry(BaseModel):
     vertices_b64arr: B64FloatArray
     polys_b64arr: B64UintArray
     poly_source_cell_indices_b64arr: B64UintArray
     origin_utm_x: float
     origin_utm_y: float
+    grid_dimensions: GridDimensions
     bounding_box: BoundingBox3D
 
 
@@ -77,6 +84,7 @@ class FenceMeshSection(BaseModel):
 
 class PolylineIntersection(BaseModel):
     fence_mesh_sections: list[FenceMeshSection]
+    grid_dimensions: GridDimensions
     min_grid_prop_value: float
     max_grid_prop_value: float
 
@@ -160,6 +168,7 @@ class UserGrid3dService:
             poly_source_cell_indices_b64arr=api_obj.poly_source_cell_indices_b64arr,
             origin_utm_x=api_obj.origin_utm_x,
             origin_utm_y=api_obj.origin_utm_y,
+            grid_dimensions=GridDimensions.model_validate(api_obj.grid_dimensions.model_dump()),
             bounding_box=BoundingBox3D.model_validate(api_obj.bounding_box.model_dump()),
         )
         perf_metrics.record_lap("convert")
@@ -276,6 +285,7 @@ class UserGrid3dService:
 
         ret_obj = PolylineIntersection(
             fence_mesh_sections=ret_mesh_section_list,
+            grid_dimensions=GridDimensions.model_validate(api_obj.grid_dimensions.model_dump()),
             min_grid_prop_value=api_obj.min_grid_prop_value,
             max_grid_prop_value=api_obj.max_grid_prop_value,
         )
