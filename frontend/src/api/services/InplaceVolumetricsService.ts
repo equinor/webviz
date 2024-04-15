@@ -1,32 +1,37 @@
 /* generated using openapi-typescript-codegen -- do no edit */
+
 /* istanbul ignore file */
+
 /* tslint:disable */
+
 /* eslint-disable */
-import type { Body_get_realizations_response } from '../models/Body_get_realizations_response';
-import type { EnsembleScalarResponse } from '../models/EnsembleScalarResponse';
-import type { InplaceVolumetricsTableMetaData } from '../models/InplaceVolumetricsTableMetaData';
-import type { CancelablePromise } from '../core/CancelablePromise';
-import type { BaseHttpRequest } from '../core/BaseHttpRequest';
+import type { BaseHttpRequest } from "../core/BaseHttpRequest";
+import type { CancelablePromise } from "../core/CancelablePromise";
+import type { Body_get_result_data_per_realization } from "../models/Body_get_result_data_per_realization";
+import type { InplaceVolumetricData } from "../models/InplaceVolumetricData";
+import type { InplaceVolumetricResponseNames } from "../models/InplaceVolumetricResponseNames";
+import type { InplaceVolumetricTableDefinition } from "../models/InplaceVolumetricTableDefinition";
+
 export class InplaceVolumetricsService {
     constructor(public readonly httpRequest: BaseHttpRequest) {}
     /**
-     * Get Table Names And Descriptions
-     * Get all volumetric tables for a given ensemble.
+     * Get Table Definitions
+     * Get the volumetric tables definitions for a given ensemble.
      * @param caseUuid Sumo case uuid
      * @param ensembleName Ensemble name
-     * @returns InplaceVolumetricsTableMetaData Successful Response
+     * @returns InplaceVolumetricTableDefinition Successful Response
      * @throws ApiError
      */
-    public getTableNamesAndDescriptions(
+    public getTableDefinitions(
         caseUuid: string,
-        ensembleName: string,
-    ): CancelablePromise<Array<InplaceVolumetricsTableMetaData>> {
+        ensembleName: string
+    ): CancelablePromise<Array<InplaceVolumetricTableDefinition>> {
         return this.httpRequest.request({
-            method: 'GET',
-            url: '/inplace_volumetrics/table_names_and_descriptions/',
+            method: "GET",
+            url: "/inplace_volumetrics/table_definitions/",
             query: {
-                'case_uuid': caseUuid,
-                'ensemble_name': ensembleName,
+                case_uuid: caseUuid,
+                ensemble_name: ensembleName,
             },
             errors: {
                 422: `Validation Error`,
@@ -34,34 +39,37 @@ export class InplaceVolumetricsService {
         });
     }
     /**
-     * Get Realizations Response
-     * Get response for a given table and index filter.
+     * Get Result Data Per Realization
+     * Get volumetric data summed per realization for a given table, result and categories/index filter.
      * @param caseUuid Sumo case uuid
      * @param ensembleName Ensemble name
      * @param tableName Table name
-     * @param responseName Response name
+     * @param resultName The name of the volumetric result/response
+     * @param realizations Realizations
      * @param requestBody
-     * @returns EnsembleScalarResponse Successful Response
+     * @returns InplaceVolumetricData Successful Response
      * @throws ApiError
      */
-    public getRealizationsResponse(
+    public getResultDataPerRealization(
         caseUuid: string,
         ensembleName: string,
         tableName: string,
-        responseName: string,
-        requestBody?: Body_get_realizations_response,
-    ): CancelablePromise<EnsembleScalarResponse> {
+        resultName: InplaceVolumetricResponseNames,
+        realizations: Array<number>,
+        requestBody: Body_get_result_data_per_realization
+    ): CancelablePromise<InplaceVolumetricData> {
         return this.httpRequest.request({
-            method: 'POST',
-            url: '/inplace_volumetrics/realizations_response/',
+            method: "POST",
+            url: "/inplace_volumetrics/result_data_per_realization/",
             query: {
-                'case_uuid': caseUuid,
-                'ensemble_name': ensembleName,
-                'table_name': tableName,
-                'response_name': responseName,
+                case_uuid: caseUuid,
+                ensemble_name: ensembleName,
+                table_name: tableName,
+                result_name: resultName,
+                realizations: realizations,
             },
             body: requestBody,
-            mediaType: 'application/json',
+            mediaType: "application/json",
             errors: {
                 422: `Validation Error`,
             },

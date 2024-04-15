@@ -12,7 +12,7 @@ export type { OpenAPIConfig } from './core/OpenAPI';
 
 export { B64FloatArray as B64FloatArray_api } from './models/B64FloatArray';
 export { B64UintArray as B64UintArray_api } from './models/B64UintArray';
-export type { Body_get_realizations_response as Body_get_realizations_response_api } from './models/Body_get_realizations_response';
+export type { Body_get_result_data_per_realization as Body_get_result_data_per_realization_api } from './models/Body_get_result_data_per_realization';
 export type { Body_post_get_seismic_fence as Body_post_get_seismic_fence_api } from './models/Body_post_get_seismic_fence';
 export type { Body_post_get_surface_intersection as Body_post_get_surface_intersection_api } from './models/Body_post_get_surface_intersection';
 export type { Body_post_sample_surface_in_points as Body_post_sample_surface_in_points_api } from './models/Body_post_sample_surface_in_points';
@@ -32,8 +32,10 @@ export type { GridIntersectionVtk as GridIntersectionVtk_api } from './models/Gr
 export type { GridSurface as GridSurface_api } from './models/GridSurface';
 export type { GridSurfaceVtk as GridSurfaceVtk_api } from './models/GridSurfaceVtk';
 export type { HTTPValidationError as HTTPValidationError_api } from './models/HTTPValidationError';
-export type { InplaceVolumetricsCategoricalMetaData as InplaceVolumetricsCategoricalMetaData_api } from './models/InplaceVolumetricsCategoricalMetaData';
-export type { InplaceVolumetricsTableMetaData as InplaceVolumetricsTableMetaData_api } from './models/InplaceVolumetricsTableMetaData';
+export type { InplaceVolumetricData as InplaceVolumetricData_api } from './models/InplaceVolumetricData';
+export { InplaceVolumetricResponseNames as InplaceVolumetricResponseNames_api } from './models/InplaceVolumetricResponseNames';
+export type { InplaceVolumetricsCategoryValues as InplaceVolumetricsCategoryValues_api } from './models/InplaceVolumetricsCategoryValues';
+export type { InplaceVolumetricTableDefinition as InplaceVolumetricTableDefinition_api } from './models/InplaceVolumetricTableDefinition';
 export type { Observations as Observations_api } from './models/Observations';
 export type { PointSetXY as PointSetXY_api } from './models/PointSetXY';
 export type { PolygonData as PolygonData_api } from './models/PolygonData';
