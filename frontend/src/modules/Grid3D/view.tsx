@@ -125,7 +125,8 @@ export function View({ viewContext, workbenchSettings, workbenchServices, workbe
         gridName,
         parameterName,
         realization,
-        singleKLayer
+        singleKLayer,
+        gridSurfaceQuery.data ? true : false
     );
 
     // Grid intersection query

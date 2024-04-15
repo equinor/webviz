@@ -39,7 +39,8 @@ export function useGridProperty(
     gridName: string | null,
     parameterName: string | null,
     realizationNum: number | null,
-    singleKLayer: number = -1
+    singleKLayer: number,
+    allowEnable: boolean
 ): UseQueryResult<GridMappedProperty_trans> {
     return useQuery({
         queryKey: ["useGridProperty", caseUuid, ensembleName, gridName, parameterName, realizationNum, singleKLayer],
@@ -55,7 +56,7 @@ export function useGridProperty(
         select: transformGridMappedProperty,
         staleTime: 0,
         gcTime: 0,
-        enabled: caseUuid && ensembleName && gridName && parameterName && realizationNum !== null ? true : false,
+        enabled: allowEnable && caseUuid && ensembleName && gridName && parameterName && realizationNum !== null ? true : false,
     });
 }
 
