@@ -252,7 +252,7 @@ async def _create_new_session(
             # Try and poll Radix job manager here to verify that it enter the running state
             job_manager_says_job_is_running = False
             while not job_manager_says_job_is_running and time_counter.remaining_s() > 0:
-                await asyncio.sleep(sleep_time_s)
+                await asyncio.sleep(1)
                 radix_job_state = await get_radix_job_state(job_component_name, job_scheduler_port, new_radix_job_name)
 
                 job_status = radix_job_state.status if radix_job_state else "NA"
