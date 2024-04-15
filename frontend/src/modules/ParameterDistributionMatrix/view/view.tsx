@@ -9,9 +9,9 @@ import { useElementSize } from "@lib/hooks/useElementSize";
 
 import { ParameterDistributionPlot } from "./components/ParameterDistributionPlot";
 
-import { Interface } from "../settingstoViewInterface";
+import { Interface } from "../settingsToViewInterface";
 import { State } from "../state";
-import { EnsembleParameterValues, ParameterDataArr } from "../typesAndEnums";
+import { ParameterDataArr } from "../typesAndEnums";
 
 export function View(props: ModuleViewProps<State, Interface>) {
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);
@@ -19,6 +19,7 @@ export function View(props: ModuleViewProps<State, Interface>) {
 
     const selectedEnsembleIdents = props.viewContext.useSettingsToViewInterfaceValue("selectedEnsembleIdents");
     const selectedParameterIdents = props.viewContext.useSettingsToViewInterfaceValue("selectedParameterIdents");
+    const selectedVisualizationType = props.viewContext.useSettingsToViewInterfaceValue("selectedVisualizationType");
     const ensembleSet = props.workbenchSession.getEnsembleSet();
     const filterEnsembleRealizationsFunc = useEnsembleRealizationFilterFunc(props.workbenchSession);
 
@@ -41,12 +42,14 @@ export function View(props: ModuleViewProps<State, Interface>) {
             <ParameterDistributionPlot
                 dataArr={parameterDataArr}
                 ensembleColors={ensembleColors}
+                plotType={selectedVisualizationType}
                 width={wrapperDivSize.width}
                 height={wrapperDivSize.height}
             ></ParameterDistributionPlot>
         </div>
     );
 }
+
 function makeParameterDataArr(
     ensembleSet: EnsembleSet,
     ensembleIdents: EnsembleIdent[],

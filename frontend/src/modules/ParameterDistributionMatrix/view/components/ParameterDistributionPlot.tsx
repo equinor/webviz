@@ -3,14 +3,25 @@ import Plot from "react-plotly.js";
 
 import { PlotType } from "plotly.js";
 
-import { ParameterDataArr } from "../../typesAndEnums";
+import { ParameterDataArr, ParameterDistributionPlotType } from "../../typesAndEnums";
 
 type ParameterDistributionPlotProps = {
     dataArr: ParameterDataArr[];
     ensembleColors: Map<string, string>;
+    plotType: ParameterDistributionPlotType;
     width: number;
     height: number;
 };
+
+function convertToPlotlyPlotType(plotType: ParameterDistributionPlotType): PlotType {
+    if (plotType == ParameterDistributionPlotType.BOX_PLOT) {
+        return "box" as PlotType;
+    }
+    if (plotType == ParameterDistributionPlotType.DISTRIBUTION_PLOT) {
+        return "violin" as PlotType;
+    }
+    throw new Error(`Unknown plot type: ${plotType}`);
+}
 
 export const ParameterDistributionPlot: React.FC<ParameterDistributionPlotProps> = (props) => {
     const numSubplots = props.dataArr.length;
@@ -23,25 +34,32 @@ export const ParameterDistributionPlot: React.FC<ParameterDistributionPlotProps>
 
         let subplotIndex = 1;
 
+        const convertedPlotType = convertToPlotlyPlotType(props.plotType);
+        const hoverInfo = props.plotType == ParameterDistributionPlotType.BOX_PLOT ? "" : "none";
+
         props.dataArr.forEach((parameterData) => {
-            parameterData.ensembleParameterValues.forEach((ensembleValue) => {
+            parameterData.ensembleParameterValues.forEach((ensembleValue, index) => {
                 const shouldShowLegend = !addedLegendNames.has(ensembleValue.ensembleDisplayName);
                 if (shouldShowLegend) {
                     addedLegendNames.add(ensembleValue.ensembleDisplayName);
                 }
 
+                let verticalPosition = 0;
+                if (props.plotType == ParameterDistributionPlotType.BOX_PLOT) {
+                    verticalPosition = index * (2 + 1); // 2 is the height of each box + 1 space
+                }
+
                 const trace = {
                     x: ensembleValue.values,
-                    type: "violin" as PlotType,
+                    type: convertedPlotType,
                     name: ensembleValue.ensembleDisplayName,
-
+                    legendgroup: ensembleValue.ensembleDisplayName,
                     marker: { color: props.ensembleColors.get(ensembleValue.ensembleDisplayName) },
                     xaxis: `x${subplotIndex}`,
                     yaxis: `y${subplotIndex}`,
                     showlegend: shouldShowLegend,
-                    y0: 0,
-                    // hoveron: "violins",
-                    hoverinfo: "none",
+                    y0: verticalPosition,
+                    hoverinfo: hoverInfo,
                     meanline_visible: true,
                     orientation: "h",
                     side: "positive",

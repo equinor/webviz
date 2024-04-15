@@ -1,13 +1,11 @@
-import React from "react";
-
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { ParameterIdent } from "@framework/EnsembleParameters";
-import { EnsembleSet } from "@framework/EnsembleSet";
 import { ModuleSettingsProps } from "@framework/Module";
-import { useEnsembleRealizationFilterFunc, useEnsembleSet } from "@framework/WorkbenchSession";
+import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { EnsembleSelect } from "@framework/components/EnsembleSelect";
 import { Checkbox } from "@lib/components/Checkbox";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
+import { RadioGroup } from "@lib/components/RadioGroup";
 import { Select, SelectOption } from "@lib/components/Select";
 
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
@@ -23,22 +21,24 @@ import {
     selectedParameterIdentsAtom,
 } from "./atoms/derivedAtoms";
 
-import { Interface } from "../settingstoViewInterface";
+import { Interface } from "../settingsToViewInterface";
 import { State } from "../state";
+import { ParameterDistributionPlotType, ParameterDistributionPlotTypeEnumToStringMapping } from "../typesAndEnums";
 
 const MAX_PARAMETERS = 50;
 export function Settings({ settingsContext, workbenchSession }: ModuleSettingsProps<State, Interface>) {
     const ensembleSet = useEnsembleSet(workbenchSession);
-    const filterEnsembleRealizationsFunc = useEnsembleRealizationFilterFunc(workbenchSession);
 
     const selectedEnsembleIdents = useAtomValue(selectedEnsembleIdentsAtom);
-
     const setSelectedEnsembleIdents = useSetAtom(userSelectedEnsembleIdentsAtom);
-
     const intersectedParameterIdents = useAtomValue(intersectedParameterIdentsAtom);
     const setSelectedParameterIdents = useSetAtom(userSelectedParameterIdentsAtom);
     const selectedParameterIdents = useAtomValue(selectedParameterIdentsAtom);
     const [showConstantParameters, setShowConstantParameters] = useAtom(showConstantParametersAtom);
+
+    const [selectedVisualizationType, setSelectedVisualizationType] =
+        settingsContext.useSettingsToViewInterfaceState("selectedVisualizationType");
+
     function handleEnsembleSelectionChange(ensembleIdents: EnsembleIdent[]) {
         setSelectedEnsembleIdents(ensembleIdents);
     }
@@ -52,9 +52,21 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
     function handleShowConstantParametersChange() {
         setShowConstantParameters((prev) => !prev);
     }
+    function handleVisualizationTypeChange(event: React.ChangeEvent<HTMLInputElement>) {
+        setSelectedVisualizationType(event.target.value as ParameterDistributionPlotType);
+    }
 
     return (
         <div className="flex flex-col gap-2">
+            <CollapsibleGroup title="Visualization Type" expanded>
+                <RadioGroup
+                    options={Object.values(ParameterDistributionPlotType).map((type: ParameterDistributionPlotType) => {
+                        return { value: type, label: ParameterDistributionPlotTypeEnumToStringMapping[type] };
+                    })}
+                    value={selectedVisualizationType}
+                    onChange={handleVisualizationTypeChange}
+                />
+            </CollapsibleGroup>
             <CollapsibleGroup title="Ensembles" expanded>
                 <EnsembleSelect
                     ensembleSet={ensembleSet}

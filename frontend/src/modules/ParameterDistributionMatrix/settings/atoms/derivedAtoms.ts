@@ -28,11 +28,13 @@ export const intersectedParameterIdentsAtom = atom((get) => {
 
     if (selectedEnsembleIdents.length === 0) return [];
 
-    const parameterSets = [];
+    // Find set of parameter idents per ensemble
+    const ensembleParameterSets: Set<ParameterIdent>[] = [];
 
     for (const ensembleIdent of selectedEnsembleIdents) {
         const ensemble = ensembleSet.findEnsemble(ensembleIdent);
         if (!ensemble) continue;
+
         const parameters = ensemble
             .getParameters()
             .getParameterArr()
@@ -46,16 +48,17 @@ export const intersectedParameterIdentsAtom = atom((get) => {
         }
         const parameterIdents = new Set(identArr);
         if (parameterIdents.size > 0) {
-            parameterSets.push(parameterIdents);
+            ensembleParameterSets.push(parameterIdents);
         }
     }
 
-    if (parameterSets.length === 0) return [];
+    if (ensembleParameterSets.length === 0) return [];
 
-    const intersectedParameterIdents = parameterSets.reduce((acc, set) => {
+    // Intersection of parameters across ensembles
+    const intersectedParameterIdents = ensembleParameterSets.reduce((acc, set) => {
         if (acc === null) return set;
         return new Set([...acc].filter((ident1) => [...set].some((ident2) => ident1.equals(ident2))));
-    }, parameterSets[0] || new Set());
+    }, ensembleParameterSets[0] || new Set());
 
     return Array.from(intersectedParameterIdents).sort((a, b) => a.toString().localeCompare(b.toString()));
 });

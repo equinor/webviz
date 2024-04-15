@@ -3,9 +3,12 @@ import { ParameterIdent } from "@framework/EnsembleParameters";
 import { InterfaceInitialization } from "@framework/UniDirectionalSettingsToViewInterface";
 
 import { selectedEnsembleIdentsAtom, selectedParameterIdentsAtom } from "./settings/atoms/derivedAtoms";
+import { ParameterDistributionPlotType } from "./typesAndEnums";
 
 export type Interface = {
-    baseStates: {};
+    baseStates: {
+        selectedVisualizationType: ParameterDistributionPlotType;
+    };
     derivedStates: {
         selectedEnsembleIdents: EnsembleIdent[];
         selectedParameterIdents: ParameterIdent[];
@@ -13,7 +16,9 @@ export type Interface = {
 };
 
 export const interfaceInitialization: InterfaceInitialization<Interface> = {
-    baseStates: {},
+    baseStates: {
+        selectedVisualizationType: ParameterDistributionPlotType.DISTRIBUTION_PLOT,
+    },
     derivedStates: {
         selectedEnsembleIdents: (get) => {
             return get(selectedEnsembleIdentsAtom);

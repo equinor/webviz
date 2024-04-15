@@ -1,6 +1,6 @@
 import { ModuleRegistry } from "@framework/ModuleRegistry";
 
-import { Interface } from "./settingstoViewInterface";
+import { Interface } from "./settingsToViewInterface";
 import { State } from "./state";
 
 export const MODULE_NAME = "ParameterDistributionMatrix";
