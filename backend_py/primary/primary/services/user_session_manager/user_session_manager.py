@@ -12,7 +12,7 @@ from webviz_pkg.core_utils.perf_timer import PerfTimer
 
 from ._radix_helpers import IS_ON_RADIX_PLATFORM
 from ._radix_helpers import create_new_radix_job, RadixResourceRequests
-from ._radix_helpers import is_radix_job_running, delete_named_radix_job
+from ._radix_helpers import is_radix_job_running, delete_named_radix_job, get_radix_job_state
 from ._user_session_directory import SessionInfo, SessionRunState, UserSessionDirectory
 from ._util_classes import LockReleasingContext, TimeCounter
 
@@ -245,6 +245,29 @@ async def _create_new_session(
 
             LOGGER.debug(f"New radix job created, will try and wait for it to come alive {new_radix_job_name=}")
             session_info_updater.set_state_waiting(new_radix_job_name)
+
+            # !!!!!!!!!!!!!!!
+            # !!!!!!!!!!!!!!!
+            # !!!!!!!!!!!!!!!
+            # Try and poll Radix job manager here to verify that it enter the running state
+            job_manager_says_job_is_running = False
+            while not job_manager_says_job_is_running and time_counter.remaining_s() > 0:
+                await asyncio.sleep(sleep_time_s)
+                radix_job_state = await get_radix_job_state(job_component_name, job_scheduler_port, new_radix_job_name)
+
+                job_status = radix_job_state.status if radix_job_state else "NA"
+                LOGGER.debug(f"------ polling for job state gave {job_status=}")
+
+                if radix_job_state and radix_job_state.status == "Running":
+                    job_manager_says_job_is_running = True
+
+            if not job_manager_says_job_is_running:
+                LOGGER.error("Radix job manager NEVER transitioned the job to the running state")
+                session_info_updater.delete_all_state()
+                return None
+            # !!!!!!!!!!!!!!!!
+            # !!!!!!!!!!!!!!!!
+
         else:
             LOGGER.debug("Running locally, will not create a radix job")
             new_radix_job_name = job_component_name
