@@ -102,6 +102,7 @@ async def get_radix_job_state(
     LOGGER.debug(f"get_radix_job_state() - {job_component_name=}, {radix_job_name=}")
 
     url = f"http://{job_component_name}:{job_scheduler_port}/api/v1/jobs/{radix_job_name}"
+    LOGGER.debug(f"get_radix_job_state() - {url=}")
 
     async with httpx.AsyncClient() as client:
         try:
@@ -111,9 +112,12 @@ async def get_radix_job_state(
             LOGGER.debug(f"get_radix_job_state() - could not get job state {exception=}")
             return None
 
-    # LOGGER.debug("------")
-    # LOGGER.debug(f"{response.json()=}")
-    # LOGGER.debug("------")
+    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    LOGGER.debug("------")
+    LOGGER.debug(f"{response.json()=}")
+    LOGGER.debug("------")
 
     # Note that the response we're getting back does not always contain an entry for status
     # Therefore we're allowing None for the status field of RadixJobState
