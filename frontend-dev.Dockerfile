@@ -8,6 +8,9 @@ COPY --chown=node:node . /usr/src/app
 
 WORKDIR /usr/src/app/frontend
 
+RUN npm config set fetch-retry-mintimeout 100000
+RUN npm config set fetch-retry-maxtimeout 600000
+
 RUN npm ci --ignore-scripts
 
 CMD ["npm", "run", "dev"]

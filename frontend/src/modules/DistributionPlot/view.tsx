@@ -7,6 +7,7 @@ import { Tag } from "@lib/components/Tag";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { ColorScaleGradientType } from "@lib/utils/ColorScale";
 import { Size2D } from "@lib/utils/geometry";
+import { makeSubplots } from "@modules/_shared/Figure";
 import { ContentInfo } from "@modules/_shared/components/ContentMessage";
 import { ContentWarning } from "@modules/_shared/components/ContentMessage/contentMessage";
 import { Warning } from "@mui/icons-material";
@@ -14,7 +15,6 @@ import { Warning } from "@mui/icons-material";
 import { Layout, PlotData } from "plotly.js";
 
 import { PlotType, State } from "./state";
-import { makeSubplots } from "./utils/Figure";
 import { makeHistogramTrace } from "./utils/histogram";
 import { makeHoverText, makeHoverTextWithColor, makeTitleFromChannelContent } from "./utils/stringUtils";
 import { calcTextSize } from "./utils/textSize";

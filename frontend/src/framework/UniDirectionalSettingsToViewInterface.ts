@@ -1,15 +1,14 @@
 import { Atom, Getter, PrimitiveAtom, atom, useAtom, useAtomValue } from "jotai";
 
 export type InterfaceBaseType = {
-    baseStates: Record<string, unknown>;
-    derivedStates: Record<string, unknown>;
+    baseStates?: Record<string, unknown>;
+    derivedStates?: Record<string, unknown>;
 };
-
 export type InterfaceInitialization<T extends InterfaceBaseType> = {
-    baseStates: {
+    baseStates?: {
         [K in keyof T["baseStates"]]: T["baseStates"][K];
     };
-    derivedStates: {
+    derivedStates?: {
         [K in keyof T["derivedStates"]]: (get: Getter) => T["derivedStates"][K];
     };
 };
@@ -25,6 +24,13 @@ export class UniDirectionalSettingsToViewInterface<TInterfaceType extends Interf
     > = new Map();
 
     constructor(initialization: InterfaceInitialization<TInterfaceType>) {
+        // Make sure we don't have any overlapping keys
+        for (const key in initialization.baseStates) {
+            if (key in (initialization.derivedStates ?? {})) {
+                throw new Error(`Key '${String(key)}' is present in both baseStates and derivedStates`);
+            }
+        }
+
         for (const key in initialization.baseStates) {
             const value = initialization.baseStates[key];
             this._baseAtoms.set(key, atom(value as TInterfaceType["baseStates"][keyof TInterfaceType["baseStates"]]));

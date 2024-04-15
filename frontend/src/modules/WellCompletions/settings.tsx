@@ -6,7 +6,7 @@ import { ModuleSettingsProps } from "@framework/Module";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
 import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
-import { SingleEnsembleSelect } from "@framework/components/SingleEnsembleSelect";
+import { EnsembleDropdown } from "@framework/components/EnsembleDropdown";
 import { maybeAssignFirstSyncedEnsemble } from "@framework/utils/ensembleUiHelpers";
 import { DiscreteSlider } from "@lib/components/DiscreteSlider";
 import { Dropdown, DropdownOption } from "@lib/components/Dropdown";
@@ -309,7 +309,7 @@ export const Settings = ({
                 text="Ensemble:"
                 labelClassName={syncHelper.isSynced(SyncSettingKey.ENSEMBLE) ? "bg-indigo-700 text-white" : ""}
             >
-                <SingleEnsembleSelect
+                <EnsembleDropdown
                     ensembleSet={ensembleSet}
                     value={computedEnsembleIdent}
                     onChange={handleEnsembleSelectionChange}

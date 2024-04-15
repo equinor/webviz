@@ -5,7 +5,7 @@ import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { ModuleSettingsProps } from "@framework/Module";
 import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
-import { SingleEnsembleSelect } from "@framework/components/SingleEnsembleSelect";
+import { EnsembleDropdown } from "@framework/components/EnsembleDropdown";
 import { VectorSelector, createVectorSelectorDataFromVectors } from "@framework/components/VectorSelector";
 import { fixupEnsembleIdent, maybeAssignFirstSyncedEnsemble } from "@framework/utils/ensembleUiHelpers";
 import { Checkbox } from "@lib/components/Checkbox";
@@ -146,7 +146,7 @@ export function Settings({ settingsContext, workbenchSession, workbenchServices 
     return (
         <>
             <CollapsibleGroup expanded={true} title="Ensemble">
-                <SingleEnsembleSelect
+                <EnsembleDropdown
                     ensembleSet={ensembleSet}
                     value={computedEnsembleIdent}
                     onChange={handleEnsembleSelectionChange}
