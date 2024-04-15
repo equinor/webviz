@@ -11,7 +11,6 @@ import { createContinuousColorScaleForMap } from "@modules/SubsurfaceMap/_utils"
 import { wellTrajectoryToGeojson } from "@modules/SubsurfaceMap/_utils/subsurfaceMap";
 import { SyncedSubsurfaceViewer } from "@modules/SubsurfaceMap/components/SyncedSubsurfaceViewer";
 import { useFieldWellsTrajectoriesQuery } from "@modules/_shared/WellBore/queryHooks";
-import SubsurfaceViewer, { ViewStateType, ViewportType } from "@webviz/subsurface-viewer";
 import { ViewAnnotation } from "@webviz/subsurface-viewer/dist/components/ViewAnnotation";
 import { AxesLayer, Grid3DLayer, NorthArrow3DLayer, WellsLayer } from "@webviz/subsurface-viewer/dist/layers/";
 
@@ -149,7 +148,7 @@ export function View({ viewContext, workbenchSettings, workbenchServices, workbe
         minPropValue = Math.min(gridPolylineIntersectionQuery.data.min_grid_prop_value, minPropValue);
         maxPropValue = Math.max(gridPolylineIntersectionQuery.data.max_grid_prop_value, maxPropValue);
     }
-    console.log(`minMaxPropValue=${minPropValue <= maxPropValue ? `${minPropValue}, ${maxPropValue}` : "N/A"}`);
+    console.debug(`minMaxPropValue=${minPropValue <= maxPropValue ? `${minPropValue}, ${maxPropValue}` : "N/A"}`);
 
     if (gridSurfaceQuery.data && gridParameterQuery.data) {
         const offsetXyz = [gridSurfaceQuery.data.origin_utm_x, gridSurfaceQuery.data.origin_utm_y, 0];

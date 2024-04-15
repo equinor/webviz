@@ -14,7 +14,6 @@ import { QueryStateWrapper } from "@lib/components/QueryStateWrapper";
 import { Select, SelectOption } from "@lib/components/Select";
 import { Switch } from "@lib/components/Switch";
 import { useWellHeadersQuery } from "@modules/_shared/WellBore/queryHooks";
-import { CheckBox } from "@mui/icons-material";
 
 import { isEqual } from "lodash";
 
@@ -91,18 +90,16 @@ export function Settings({ settingsContext, workbenchServices, workbenchSession 
     if (!isEqual(boundingBox, computedBoundingBox)) {
         setBoundingBox(computedBoundingBox);
     }
-    const setPolyLine = settingsContext.useSetStoreValue("polyLine");
-
     const [angle, setAngle] = React.useState(0);
     const [samples, setSamples] = React.useState(1);
 
     React.useEffect(() => {
         if (computedBoundingBox) {
-            setPolyLine(createSampledRotatingLine(computedBoundingBox, angle, samples));
+            settingsContext.getStateStore().setValue("polyLine", createSampledRotatingLine(computedBoundingBox, angle, samples));
         } else {
-            setPolyLine([]);
+            settingsContext.getStateStore().setValue("polyLine", []);
         }
-    }, [angle, computedBoundingBox, samples]);
+    }, [angle, computedBoundingBox, samples, settingsContext]);
     const wellHeadersQuery = useWellHeadersQuery(computedEnsembleIdent?.getCaseUuid());
     let wellHeaderOptions: SelectOption[] = [];
 
@@ -175,9 +172,10 @@ export function Settings({ settingsContext, workbenchServices, workbenchSession 
 
                     <Label text="Single K layer">
                         <Input
+                            value={singleKLayer}
                             type={"number"}
                             min={-1}
-                            max={100}
+                            max={500}
                             onChange={(e) => setSingleKLayer(parseInt(e.target.value))}
                         />
                     </Label>
@@ -277,8 +275,8 @@ function createSampledRotatingLine(bbox: BoundingBox2D, angleDegrees: number, n:
 
     const radius = Math.max(center.x - bbox.xmin, center.y - bbox.ymin);
 
-    let start: Point = rotatePoint({ x: center.x - radius, y: center.y }, center, angleDegrees);
-    let end: Point = rotatePoint({ x: center.x + radius, y: center.y }, center, angleDegrees);
+    const start: Point = rotatePoint({ x: center.x - radius, y: center.y }, center, angleDegrees);
+    const end: Point = rotatePoint({ x: center.x + radius, y: center.y }, center, angleDegrees);
 
     return interpolatePoints(start, end, n);
 }
