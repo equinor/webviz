@@ -27,10 +27,9 @@ RUN python3.11 -m pipx ensurepath
 RUN pipx install poetry==1.8.2
 
 # This can probably be optimized wrt space usage by fetching and preparing Resinsight using a multi-stage build
-ADD --chown=appuser https://nightly.link/OPM/ResInsight/workflows/ResInsightWithCache/grid-geometry-extraction/ResInsight-Ubuntu_20.04_gcc.zip  /home/appuser/ri_bin/dist_archive/
+ADD --chown=appuser https://github.com/CeetronSolutions/ResInsight/releases/download/webviz.test.0.0.1/ResInsight-Ubuntu_20.04_gcc.tar.gz /home/appuser/ri_bin/dist_archive/
 WORKDIR /home/appuser/ri_bin
-RUN unzip ./dist_archive/ResInsight*.zip
-RUN chmod +x ResInsight
+RUN tar xvf ./dist_archive/ResInsight*.tar.gz
 ENV RESINSIGHT_EXECUTABLE=/home/appuser/ri_bin/ResInsight
 
 ENV VIRTUAL_ENV=/home/appuser/venv
