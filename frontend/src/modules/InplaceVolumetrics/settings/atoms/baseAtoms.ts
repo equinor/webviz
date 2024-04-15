@@ -1,3 +1,4 @@
+import { InplaceVolumetricsCategoryValues_api } from "@api";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { atomWithCompare } from "@framework/utils/atomUtils";
 
@@ -25,3 +26,4 @@ export const groupByAtom = atomWithCompare<PlotGroupingEnum>(PlotGroupingEnum.EN
 export const colorByAtom = atomWithCompare<PlotGroupingEnum>(PlotGroupingEnum.None, (a, b) => a === b);
 export const userSelectedInplaceTableNameAtom = atom<string | null>(null);
 export const userSelectedInplaceResponseAtom = atom<string | null>(null);
+export const userSelectedInplaceCategoriesAtom = atom<InplaceVolumetricsCategoryValues_api[]>([]);

@@ -4,6 +4,7 @@ import { atom } from "jotai";
 
 import {
     userSelectedEnsembleIdentsAtom,
+    userSelectedInplaceCategoriesAtom,
     userSelectedInplaceResponseAtom,
     userSelectedInplaceTableNameAtom,
 } from "./baseAtoms";
@@ -67,4 +68,23 @@ export const availableInplaceCategoriesAtom = atom((get) => {
     const selectedInplaceTableName = get(selectedInplaceTableNameAtom);
     const selectedTable = intersectedTables.find((table) => table.name === selectedInplaceTableName);
     return Array.from(new Set(selectedTable?.categories));
+});
+
+export const selectedInplaceCategoriesAtom = atom((get) => {
+    const availableInplaceCategories = get(availableInplaceCategoriesAtom);
+    const userSelectedInplaceCategories = get(userSelectedInplaceCategoriesAtom);
+
+    if (userSelectedInplaceCategories.length) {
+        return availableInplaceCategories.map((category) => {
+            const userSelectedCategory = userSelectedInplaceCategories.find(
+                (selectedCategory) => selectedCategory.category_name === category.category_name
+            );
+            if (userSelectedCategory) {
+                return userSelectedCategory;
+            }
+            return category;
+        });
+    }
+
+    return availableInplaceCategories;
 });

@@ -10,7 +10,12 @@ import { EnsembleRealizationFilterFunctionAtom, EnsembleSetAtom } from "@framewo
 import { atomWithQueries } from "@framework/utils/atomUtils";
 import { UseQueryResult } from "@tanstack/react-query";
 
-import { selectedEnsembleIdentsAtom, selectedInplaceResponseAtom, selectedInplaceTableNameAtom } from "./derivedAtoms";
+import {
+    selectedEnsembleIdentsAtom,
+    selectedInplaceCategoriesAtom,
+    selectedInplaceResponseAtom,
+    selectedInplaceTableNameAtom,
+} from "./derivedAtoms";
 
 import { CombinedInplaceDataResults, CombinedInplaceVolTableInfoResults } from "../../typesAndEnums";
 
@@ -61,11 +66,11 @@ export const inplaceTableDataSetQueryAtom = atomWithQueries((get) => {
     const selectedEnsembleIdents = get(selectedEnsembleIdentsAtom);
     const selectedInplaceTableName = get(selectedInplaceTableNameAtom);
     const selectedInplaceResponse = get(selectedInplaceResponseAtom);
-
+    const selectedInplaceCategories = get(selectedInplaceCategoriesAtom);
     const ensembleSet = get(EnsembleSetAtom);
     const ensembleRealizationFilterFunction = get(EnsembleRealizationFilterFunctionAtom);
 
-    const categorical_filter = {};
+    const categorical_filter = selectedInplaceCategories;
     const queries = selectedEnsembleIdents
         .map((ensembleIdent) => {
             const realizations = ensembleRealizationFilterFunction
@@ -86,9 +91,9 @@ export const inplaceTableDataSetQueryAtom = atomWithQueries((get) => {
                         ensembleIdent.getCaseUuid(),
                         ensembleIdent.getEnsembleName(),
                         selectedInplaceTableName ?? "",
-                        InplaceVolumetricResponseNames_api.STOIIP_OIL,
+                        selectedInplaceResponse as InplaceVolumetricResponseNames_api,
                         realizations.map((realization) => realization),
-                        { categorical_filter: [] }
+                        { categorical_filter: selectedInplaceCategories }
                     ),
                 staleTime: STALE_TIME,
                 gcTime: CACHE_TIME,

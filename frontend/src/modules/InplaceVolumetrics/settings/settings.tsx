@@ -17,6 +17,7 @@ import {
     colorByAtom,
     groupByAtom,
     userSelectedEnsembleIdentsAtom,
+    userSelectedInplaceCategoriesAtom,
     userSelectedInplaceResponseAtom,
     userSelectedInplaceTableNameAtom,
 } from "./atoms/baseAtoms";
@@ -25,6 +26,7 @@ import {
     availableInplaceResponsesAtom,
     availableInplaceTableNamesAtom,
     selectedEnsembleIdentsAtom,
+    selectedInplaceCategoriesAtom,
     selectedInplaceResponseAtom,
     selectedInplaceTableNameAtom,
 } from "./atoms/derivedAtoms";
@@ -52,8 +54,11 @@ export function Settings(props: ModuleSettingsProps<State, Interface>) {
     const availableInplaceResponses = useAtomValue(availableInplaceResponsesAtom);
     const setSelectedInplaceResponse = useSetAtom(userSelectedInplaceResponseAtom);
     const selectedInplaceResponse = useAtomValue(selectedInplaceResponseAtom);
-    const availableInplaceCategories = useAtomValue(availableInplaceCategoriesAtom);
 
+    const availableInplaceCategories = useAtomValue(availableInplaceCategoriesAtom);
+    const setSelectedInplaceCategories = useSetAtom(userSelectedInplaceCategoriesAtom);
+    const selectedInplaceCategories = useAtomValue(selectedInplaceCategoriesAtom);
+    console.log(selectedInplaceCategories);
     function handleEnsembleSelectionChange(ensembleIdents: EnsembleIdent[]) {
         setSelectedEnsembleIdents(ensembleIdents);
     }
@@ -68,6 +73,24 @@ export function Settings(props: ModuleSettingsProps<State, Interface>) {
     }
     function handleInplaceResponseChange(name: string) {
         setSelectedInplaceResponse(name);
+    }
+
+    function handleInplaceCategoriesChange(categoryName: string, values: string[]) {
+        // Find category in selected and update it
+        const categoryIndex = selectedInplaceCategories.findIndex(
+            (category) => category.category_name === categoryName
+        );
+        if (categoryIndex !== -1) {
+            const newCategories = [...selectedInplaceCategories];
+            newCategories[categoryIndex].unique_values = values;
+            setSelectedInplaceCategories(newCategories);
+        } else {
+            // Add new category
+            setSelectedInplaceCategories([
+                ...selectedInplaceCategories,
+                { category_name: categoryName, unique_values: values },
+            ]);
+        }
     }
     let tableInfosErrorMessage = "";
     if (inplaceTableInfosQuery.allQueriesFailed) {
@@ -125,6 +148,7 @@ export function Settings(props: ModuleSettingsProps<State, Interface>) {
                             name={category.category_name}
                             options={category.unique_values as string[]}
                             size={min([category.unique_values.length, 10]) || 5}
+                            onChange={(values) => handleInplaceCategoriesChange(category.category_name, values)}
                         />
                     ))}
                 </CollapsibleGroup>
