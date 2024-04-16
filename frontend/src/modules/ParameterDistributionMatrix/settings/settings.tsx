@@ -73,7 +73,7 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
                     onChange={handleEnsembleSelectionChange}
                     value={selectedEnsembleIdents}
                     size={5}
-                    multiple
+                    multiple={true}
                 />
             </CollapsibleGroup>
             <CollapsibleGroup title="Parameters" expanded>
@@ -84,12 +84,12 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
                 />
                 {`${MAX_PARAMETERS} parameters max`}
                 <Select
-                    multiple
+                    multiple={true}
                     options={makeParameterIdentsOptions(intersectedParameterIdents)}
                     value={selectedParameterIdents.map((parameterIdent) => parameterIdent.toString())}
                     onChange={handleParameterIdentsChange}
                     size={20}
-                    filter
+                    filter={true}
                 ></Select>
             </CollapsibleGroup>
         </div>
