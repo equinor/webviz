@@ -41,13 +41,14 @@ export function Settings(props: ModuleSettingsProps<State, Interface>) {
     const ensembleSet = useEnsembleSet(props.workbenchSession);
 
     const selectedEnsembleIdents = useAtomValue(selectedEnsembleIdentsAtom);
-
     const setSelectedEnsembleIdents = useSetAtom(userSelectedEnsembleIdentsAtom);
+
     const [groupBy, setGroupBy] = useAtom(groupByAtom);
     const [colorBy, setColorBy] = useAtom(colorByAtom);
-    const inplaceTableInfosQuery = useAtomValue(inplaceTableInfosQueryAtom);
-    const availableInplaceTableNames = useAtomValue(availableInplaceTableNamesAtom);
 
+    const inplaceTableInfosQuery = useAtomValue(inplaceTableInfosQueryAtom);
+
+    const availableInplaceTableNames = useAtomValue(availableInplaceTableNamesAtom);
     const setSelectedInplaceTableName = useSetAtom(userSelectedInplaceTableNameAtom);
     const selectedInplaceTableName = useAtomValue(selectedInplaceTableNameAtom);
 
@@ -58,7 +59,9 @@ export function Settings(props: ModuleSettingsProps<State, Interface>) {
     const availableInplaceCategories = useAtomValue(availableInplaceCategoriesAtom);
     const setSelectedInplaceCategories = useSetAtom(userSelectedInplaceCategoriesAtom);
     const selectedInplaceCategories = useAtomValue(selectedInplaceCategoriesAtom);
-    console.log(selectedInplaceCategories);
+
+    console.log("selectedInplaceCategories settings", selectedInplaceCategories);
+
     function handleEnsembleSelectionChange(ensembleIdents: EnsembleIdent[]) {
         setSelectedEnsembleIdents(ensembleIdents);
     }
@@ -76,27 +79,29 @@ export function Settings(props: ModuleSettingsProps<State, Interface>) {
     }
 
     function handleInplaceCategoriesChange(categoryName: string, values: string[]) {
-        // Find category in selected and update it
         const categoryIndex = selectedInplaceCategories.findIndex(
             (category) => category.category_name === categoryName
         );
+
         if (categoryIndex !== -1) {
-            const newCategories = [...selectedInplaceCategories];
-            newCategories[categoryIndex].unique_values = values;
+            const newCategories = selectedInplaceCategories.map((category, index) =>
+                index === categoryIndex ? { ...category, unique_values: values } : category
+            );
             setSelectedInplaceCategories(newCategories);
         } else {
-            // Add new category
             setSelectedInplaceCategories([
                 ...selectedInplaceCategories,
                 { category_name: categoryName, unique_values: values },
             ]);
         }
     }
+
     let tableInfosErrorMessage = "";
     if (inplaceTableInfosQuery.allQueriesFailed) {
         tableInfosErrorMessage =
             "Failed to fetch inplace volumetrics info. Make sure the selected ensembles has inplace volumetrics data.";
     }
+    console.log("availableInplaceCategories settings", availableInplaceCategories);
     return (
         <div className="flex flex-col gap-2">
             <CollapsibleGroup title="Ensembles" expanded>
@@ -142,13 +147,13 @@ export function Settings(props: ModuleSettingsProps<State, Interface>) {
                     />
                 </CollapsibleGroup>
                 <CollapsibleGroup title="Zone/Region filters" expanded>
-                    {availableInplaceCategories.map((category) => (
-                        <FilterSelect
-                            key={category.category_name}
-                            name={category.category_name}
-                            options={category.unique_values as string[]}
-                            size={min([category.unique_values.length, 10]) || 5}
-                            onChange={(values) => handleInplaceCategoriesChange(category.category_name, values)}
+                    {availableInplaceCategories.map((categoryData) => (
+                        <Select
+                            key={categoryData.category_name}
+                            options={categoryValuesToOptions(categoryData.unique_values)}
+                            size={5}
+                            onChange={(values) => handleInplaceCategoriesChange(categoryData.category_name, values)}
+                            multiple
                         />
                     ))}
                 </CollapsibleGroup>
@@ -158,4 +163,11 @@ export function Settings(props: ModuleSettingsProps<State, Interface>) {
 }
 function plotGroupingEnumToOptions(): DropdownOption[] {
     return Object.values(PlotGroupingEnum).map((value) => ({ value, label: value }));
+}
+
+function categoryValuesToOptions(values: (string | number)[]): DropdownOption[] {
+    return values.map((value) => ({
+        value: value.toString(),
+        label: value.toString(),
+    }));
 }

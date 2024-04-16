@@ -67,6 +67,13 @@ export function View(props: ModuleViewProps<State, Interface>) {
     );
 }
 
+type GroupedInplaceData = {
+    realizations: number[];
+    values: number[];
+    subplotLabel: string;
+    traceColor: string;
+};
+
 function getEnsembleColors(ensembleSet: EnsembleSet, colorSet: ColorSet) {
     const ensembleColors = new Map<string, string>();
     ensembleSet.getEnsembleArr().forEach((ensemble, index) => {
