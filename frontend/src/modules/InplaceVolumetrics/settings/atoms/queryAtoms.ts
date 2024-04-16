@@ -2,7 +2,6 @@ import {
     InplaceVolumetricData_api,
     InplaceVolumetricResponseNames_api,
     InplaceVolumetricTableDefinition_api,
-    PvtData_api,
 } from "@api";
 import { apiService } from "@framework/ApiService";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
@@ -10,6 +9,7 @@ import { EnsembleRealizationFilterFunctionAtom, EnsembleSetAtom } from "@framewo
 import { atomWithQueries } from "@framework/utils/atomUtils";
 import { UseQueryResult } from "@tanstack/react-query";
 
+import { colorByAtom, groupByAtom } from "./baseAtoms";
 import {
     selectedEnsembleIdentsAtom,
     selectedInplaceCategoriesAtom,
@@ -17,7 +17,7 @@ import {
     selectedInplaceTableNameAtom,
 } from "./derivedAtoms";
 
-import { CombinedInplaceDataResults, CombinedInplaceVolTableInfoResults } from "../../typesAndEnums";
+import { CombinedInplaceDataResults, CombinedInplaceVolTableInfoResults, PlotGroupingEnum } from "../../typesAndEnums";
 
 const STALE_TIME = 0;
 const CACHE_TIME = 0;
@@ -67,6 +67,9 @@ export const inplaceTableDataSetQueryAtom = atomWithQueries((get) => {
     const selectedInplaceTableName = get(selectedInplaceTableNameAtom);
     const selectedInplaceResponse = get(selectedInplaceResponseAtom);
     const selectedInplaceCategories = get(selectedInplaceCategoriesAtom);
+    const groupBy = get(groupByAtom);
+    const colorBy = get(colorByAtom);
+
     const ensembleSet = get(EnsembleSetAtom);
     const ensembleRealizationFilterFunction = get(EnsembleRealizationFilterFunctionAtom);
 

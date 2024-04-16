@@ -1,4 +1,4 @@
-from typing import List, Union, Tuple
+from typing import List, Union, Optional
 from enum import Enum
 
 from pydantic import BaseModel
@@ -20,13 +20,19 @@ class InplaceVolumetricTableDefinition(BaseModel):
     result_names: List[str]
 
 
-class InplaceVolumetricData(BaseModel):
-    """Volumetric data for a given table, volumetric response and category/index filter"""
+class InplaceVolumetricDataEntry(BaseModel):
+    realization: int
+    value: float
+    primary_group_value: Optional[str] = None  # Value for the primary group
+    secondary_group_value: Optional[str] = None  # Value for the secondary group
 
+
+class InplaceVolumetricData(BaseModel):
     vol_table_name: str
     result_name: str
-    result_per_realization: List[Tuple[int, float]]
-    categories: List[InplaceVolumetricsCategoryValues]
+    entries: List[InplaceVolumetricDataEntry]
+    primary_group_by: Optional[str] = None  # Column used for primary grouping
+    secondary_group_by: Optional[str] = None  # Column used for secondary grouping
 
 
 class InplaceVolumetricResponseNames(str, Enum):

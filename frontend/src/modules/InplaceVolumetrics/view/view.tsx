@@ -1,4 +1,5 @@
 import React from "react";
+import Plot from "react-plotly.js";
 
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { ParameterIdent } from "@framework/EnsembleParameters";
@@ -9,10 +10,13 @@ import { useElementSize } from "@lib/hooks/useElementSize";
 import { ColorSet } from "@lib/utils/ColorSet";
 import { computeQuantile } from "@modules/_shared/statistics";
 
+import { group } from "console";
+
 import { InplaceHistogramPlot } from "./components/inplaceHistogramPlot";
 
 import { Interface } from "../settingsToViewInterface";
 import { State } from "../state";
+import { PlotGroupingEnum } from "../typesAndEnums";
 
 export function View(props: ModuleViewProps<State, Interface>) {
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);
@@ -20,14 +24,34 @@ export function View(props: ModuleViewProps<State, Interface>) {
 
     const colorBy = props.viewContext.useSettingsToViewInterfaceValue("colorBy");
     const groupBy = props.viewContext.useSettingsToViewInterfaceValue("groupBy");
+    const selectedEnsembleIdents = props.viewContext.useSettingsToViewInterfaceValue("selectedEnsembleIdents");
+    const selectedInplaceCategories = props.viewContext.useSettingsToViewInterfaceValue("selectedInplaceCategories");
     const inplaceDataSetResultQuery = props.viewContext.useSettingsToViewInterfaceValue("inplaceTableDataSetQuery");
+    let numSubplots = 1;
+    if (groupBy === PlotGroupingEnum.ENSEMBLE) {
+        numSubplots = selectedEnsembleIdents.length;
+    }
+    if (groupBy === PlotGroupingEnum.ZONE) {
+        numSubplots =
+            selectedInplaceCategories.find((category) => category.category_name === "ZONE")?.unique_values.length || 1;
+    }
+    if (groupBy === PlotGroupingEnum.REGION) {
+        numSubplots =
+            selectedInplaceCategories.find((category) => category.category_name === "REGION")?.unique_values.length ||
+            1;
+    }
+
+    const numColumns = Math.ceil(Math.sqrt(numSubplots));
+    const numRows = Math.ceil(numSubplots / numColumns);
+
     console.log(inplaceDataSetResultQuery);
     const ensembleSet = props.workbenchSession.getEnsembleSet();
 
     const colorSet = props.workbenchSettings.useColorSet();
     const ensembleColors = getEnsembleColors(ensembleSet, colorSet);
+
     const resultValues: number[] = inplaceDataSetResultQuery.dataCollections
-        .map((ensembleResults) => ensembleResults.tableData?.result_per_realization.map((realData) => realData[1]))
+        .map((ensembleResults) => ensembleResults.tableData?.entries.map((entry) => entry.value) || [])
         .flat();
 
     return (

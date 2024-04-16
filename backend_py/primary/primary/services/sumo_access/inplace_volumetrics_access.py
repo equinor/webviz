@@ -70,11 +70,19 @@ class InplaceVolumetricsTableDefinition(BaseModel):
     result_names: List[str]
 
 
+class InplaceVolumetricDataEntry(BaseModel):
+    realization: int
+    value: float
+    primary_group_value: Optional[str] = None  # Value for the primary group
+    secondary_group_value: Optional[str] = None  # Value for the secondary group
+
+
 class InplaceVolumetricData(BaseModel):
     vol_table_name: str
-    categories: Optional[List[InplaceVolumetricsCategoryValues]] = None
     result_name: str
-    result_per_realization: List[Tuple[int, float]]
+    entries: List[InplaceVolumetricDataEntry]
+    primary_group_by: Optional[str] = None  # Column used for primary grouping
+    secondary_group_by: Optional[str] = None  # Column used for secondary grouping
 
 
 LOGGER = logging.getLogger(__name__)
@@ -190,17 +198,33 @@ class InplaceVolumetricsAccess(SumoEnsemble):
                     )
                 arrow_table = _filter_arrow_table(arrow_table, category.category_name, category.unique_values)
 
-        summed_on_real_table = arrow_table.group_by("REAL").aggregate([(result_name, "sum")]).sort_by("REAL")
+        arrow_table = (
+            arrow_table.group_by(["ZONE", "REGION", "REAL"]).aggregate([(result_name, "sum")]).sort_by("REAL")
+        )
+        primary_group_by="ZONE"
+        secondary_group_by="REGION"
+        # Accessing columns directly
+        realization_column = arrow_table.column('REAL')
+        result_sum_column = arrow_table.column(f'{result_name}_sum')
+        primary_group_column = arrow_table.column(primary_group_by) if primary_group_by in arrow_table.column_names else None
+        secondary_group_column = arrow_table.column(secondary_group_by) if secondary_group_by in arrow_table.column_names else None
 
+        num_entries = arrow_table.num_rows
+        entries = [
+            InplaceVolumetricDataEntry(
+                realization=realization_column[i].as_py(),
+                value=result_sum_column[i].as_py(),
+                primary_group_value=primary_group_column[i].as_py() if primary_group_column else None,
+                secondary_group_value=secondary_group_column[i].as_py() if secondary_group_column else None
+            ) for i in range(num_entries)
+        ]
         return InplaceVolumetricData(
             vol_table_name=table_name,
             result_name=result_name,
-            result_per_realization=zip(
-                summed_on_real_table["REAL"].to_pylist(), summed_on_real_table[f"{result_name}_sum"].to_pylist()
-            ),
-            categories=categories,
+            entries=entries,
+            primary_group_by=primary_group_by,
+            secondary_group_by=secondary_group_by
         )
-
     async def _get_sumo_table_async(self, table_name: str, result_name: Optional[str] = None) -> Table:
         """Get a sumo table object. Expecting only one table to be found.
         A result_name(column) is optional. If provided, the table will be filtered based on the result_name.

@@ -1,17 +1,13 @@
 /* generated using openapi-typescript-codegen -- do no edit */
-
 /* istanbul ignore file */
-
 /* tslint:disable */
-
 /* eslint-disable */
-import type { BaseHttpRequest } from "../core/BaseHttpRequest";
-import type { CancelablePromise } from "../core/CancelablePromise";
-import type { Body_get_result_data_per_realization } from "../models/Body_get_result_data_per_realization";
-import type { InplaceVolumetricData } from "../models/InplaceVolumetricData";
-import type { InplaceVolumetricResponseNames } from "../models/InplaceVolumetricResponseNames";
-import type { InplaceVolumetricTableDefinition } from "../models/InplaceVolumetricTableDefinition";
-
+import type { Body_get_result_data_per_realization } from '../models/Body_get_result_data_per_realization';
+import type { InplaceVolumetricData } from '../models/InplaceVolumetricData';
+import type { InplaceVolumetricResponseNames } from '../models/InplaceVolumetricResponseNames';
+import type { InplaceVolumetricTableDefinition } from '../models/InplaceVolumetricTableDefinition';
+import type { CancelablePromise } from '../core/CancelablePromise';
+import type { BaseHttpRequest } from '../core/BaseHttpRequest';
 export class InplaceVolumetricsService {
     constructor(public readonly httpRequest: BaseHttpRequest) {}
     /**
@@ -24,14 +20,14 @@ export class InplaceVolumetricsService {
      */
     public getTableDefinitions(
         caseUuid: string,
-        ensembleName: string
+        ensembleName: string,
     ): CancelablePromise<Array<InplaceVolumetricTableDefinition>> {
         return this.httpRequest.request({
-            method: "GET",
-            url: "/inplace_volumetrics/table_definitions/",
+            method: 'GET',
+            url: '/inplace_volumetrics/table_definitions/',
             query: {
-                case_uuid: caseUuid,
-                ensemble_name: ensembleName,
+                'case_uuid': caseUuid,
+                'ensemble_name': ensembleName,
             },
             errors: {
                 422: `Validation Error`,
@@ -56,20 +52,20 @@ export class InplaceVolumetricsService {
         tableName: string,
         resultName: InplaceVolumetricResponseNames,
         realizations: Array<number>,
-        requestBody: Body_get_result_data_per_realization
+        requestBody: Body_get_result_data_per_realization,
     ): CancelablePromise<InplaceVolumetricData> {
         return this.httpRequest.request({
-            method: "POST",
-            url: "/inplace_volumetrics/result_data_per_realization/",
+            method: 'POST',
+            url: '/inplace_volumetrics/result_data_per_realization/',
             query: {
-                case_uuid: caseUuid,
-                ensemble_name: ensembleName,
-                table_name: tableName,
-                result_name: resultName,
-                realizations: realizations,
+                'case_uuid': caseUuid,
+                'ensemble_name': ensembleName,
+                'table_name': tableName,
+                'result_name': resultName,
+                'realizations': realizations,
             },
             body: requestBody,
-            mediaType: "application/json",
+            mediaType: 'application/json',
             errors: {
                 422: `Validation Error`,
             },

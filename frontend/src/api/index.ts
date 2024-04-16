@@ -33,6 +33,7 @@ export type { GridSurface as GridSurface_api } from './models/GridSurface';
 export type { GridSurfaceVtk as GridSurfaceVtk_api } from './models/GridSurfaceVtk';
 export type { HTTPValidationError as HTTPValidationError_api } from './models/HTTPValidationError';
 export type { InplaceVolumetricData as InplaceVolumetricData_api } from './models/InplaceVolumetricData';
+export type { InplaceVolumetricDataEntry as InplaceVolumetricDataEntry_api } from './models/InplaceVolumetricDataEntry';
 export { InplaceVolumetricResponseNames as InplaceVolumetricResponseNames_api } from './models/InplaceVolumetricResponseNames';
 export type { InplaceVolumetricsCategoryValues as InplaceVolumetricsCategoryValues_api } from './models/InplaceVolumetricsCategoryValues';
 export type { InplaceVolumetricTableDefinition as InplaceVolumetricTableDefinition_api } from './models/InplaceVolumetricTableDefinition';

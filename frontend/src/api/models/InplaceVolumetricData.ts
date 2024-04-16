@@ -2,14 +2,12 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-import type { InplaceVolumetricsCategoryValues } from './InplaceVolumetricsCategoryValues';
-/**
- * Volumetric data for a given table, volumetric response and category/index filter
- */
+import type { InplaceVolumetricDataEntry } from './InplaceVolumetricDataEntry';
 export type InplaceVolumetricData = {
     vol_table_name: string;
     result_name: string;
-    result_per_realization: Array<any[]>;
-    categories: Array<InplaceVolumetricsCategoryValues>;
+    entries: Array<InplaceVolumetricDataEntry>;
+    primary_group_by: (string | null);
+    secondary_group_by: (string | null);
 };
 
