@@ -8,6 +8,7 @@ import { ParameterDistributionPlotType } from "./typesAndEnums";
 export type Interface = {
     baseStates: {
         selectedVisualizationType: ParameterDistributionPlotType;
+        showIndividualRealizationValues: boolean;
     };
     derivedStates: {
         selectedEnsembleIdents: EnsembleIdent[];
@@ -18,6 +19,7 @@ export type Interface = {
 export const interfaceInitialization: InterfaceInitialization<Interface> = {
     baseStates: {
         selectedVisualizationType: ParameterDistributionPlotType.DISTRIBUTION_PLOT,
+        showIndividualRealizationValues: false,
     },
     derivedStates: {
         selectedEnsembleIdents: (get) => {

@@ -1,12 +1,13 @@
 import { ParameterIdent } from "@framework/EnsembleParameters";
 
-export type EnsembleParameterValues = {
+export type EnsembleParameterRealizationsAndValues = {
     ensembleDisplayName: string;
+    realizations: number[];
     values: number[];
 };
 export type ParameterDataArr = {
     parameterIdent: ParameterIdent;
-    ensembleParameterValues: EnsembleParameterValues[];
+    ensembleParameterRealizationAndValues: EnsembleParameterRealizationsAndValues[];
 };
 
 export enum ParameterDistributionPlotType {

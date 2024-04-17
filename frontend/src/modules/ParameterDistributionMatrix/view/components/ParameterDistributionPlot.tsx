@@ -9,19 +9,10 @@ type ParameterDistributionPlotProps = {
     dataArr: ParameterDataArr[];
     ensembleColors: Map<string, string>;
     plotType: ParameterDistributionPlotType;
+    showIndividualRealizationValues: boolean;
     width: number;
     height: number;
 };
-
-function convertToPlotlyPlotType(plotType: ParameterDistributionPlotType): PlotType {
-    if (plotType == ParameterDistributionPlotType.BOX_PLOT) {
-        return "box" as PlotType;
-    }
-    if (plotType == ParameterDistributionPlotType.DISTRIBUTION_PLOT) {
-        return "violin" as PlotType;
-    }
-    throw new Error(`Unknown plot type: ${plotType}`);
-}
 
 export const ParameterDistributionPlot: React.FC<ParameterDistributionPlotProps> = (props) => {
     const numSubplots = props.dataArr.length;
@@ -29,29 +20,94 @@ export const ParameterDistributionPlot: React.FC<ParameterDistributionPlotProps>
     const numRows = Math.ceil(numSubplots / numColumns);
     const addedLegendNames: Set<string> = new Set();
 
-    function generateTraces(): any {
-        const traces: any = [];
-
+    function generateDistributionPlotTraces(): any[] {
+        const traces: any[] = [];
         let subplotIndex = 1;
 
-        const convertedPlotType = convertToPlotlyPlotType(props.plotType);
-        const hoverInfo = props.plotType == ParameterDistributionPlotType.BOX_PLOT ? "" : "none";
-
         props.dataArr.forEach((parameterData) => {
-            parameterData.ensembleParameterValues.forEach((ensembleValue, index) => {
+            parameterData.ensembleParameterRealizationAndValues.forEach((ensembleValue, index) => {
                 const shouldShowLegend = !addedLegendNames.has(ensembleValue.ensembleDisplayName);
                 if (shouldShowLegend) {
                     addedLegendNames.add(ensembleValue.ensembleDisplayName);
                 }
 
-                let verticalPosition = 0;
-                if (props.plotType == ParameterDistributionPlotType.BOX_PLOT) {
-                    verticalPosition = index * (2 + 1); // 2 is the height of each box + 1 space
+                const distributionTrace = {
+                    x: ensembleValue.values,
+                    type: "violin" as PlotType,
+                    name: ensembleValue.ensembleDisplayName,
+                    legendgroup: ensembleValue.ensembleDisplayName,
+                    marker: { color: props.ensembleColors.get(ensembleValue.ensembleDisplayName) },
+                    xaxis: `x${subplotIndex}`,
+                    yaxis: `y${subplotIndex}`,
+                    showlegend: shouldShowLegend,
+                    y0: 0,
+                    hoverinfo: "none",
+                    meanline_visible: true,
+                    orientation: "h",
+                    side: "positive",
+                    width: 2,
+                    points: false,
+                };
+                traces.push(distributionTrace);
+
+                if (props.showIndividualRealizationValues) {
+                    const hoverText = ensembleValue.values.map(
+                        (_, index) => `Realization: ${ensembleValue.realizations[index]}`
+                    );
+
+                    // Distribution plot shows positive values, thus the rug plot is placed below 0
+                    // Align the realization values horizontally below the distribution plot
+                    const yValues = ensembleValue.values.map(() => -0.1 - index * 0.1); // Align horizontally below 0
+
+                    const rugTrace = {
+                        x: ensembleValue.values, // Use the same x values as your main trace
+                        y: yValues,
+                        type: "rug", // Set type to 'rug' for the rug plot
+                        name: ensembleValue.ensembleDisplayName,
+                        legendgroup: ensembleValue.ensembleDisplayName,
+                        xaxis: `x${subplotIndex}`,
+                        yaxis: `y${subplotIndex}`,
+                        hovertext: hoverText,
+                        hoverinfo: "x+text+name",
+                        mode: "markers",
+                        marker: {
+                            color: props.ensembleColors.get(ensembleValue.ensembleDisplayName),
+                            symbol: "line-ns-open",
+                        },
+                        showlegend: false,
+                    };
+                    traces.push(rugTrace);
                 }
+            });
+            subplotIndex++;
+        });
+
+        return traces;
+    }
+
+    function generateBoxPlotTraces(): any[] {
+        const traces: any[] = [];
+        let subplotIndex = 1;
+
+        props.dataArr.forEach((parameterData) => {
+            parameterData.ensembleParameterRealizationAndValues.forEach((ensembleValue, index) => {
+                const shouldShowLegend = !addedLegendNames.has(ensembleValue.ensembleDisplayName);
+                if (shouldShowLegend) {
+                    addedLegendNames.add(ensembleValue.ensembleDisplayName);
+                }
+
+                if (ensembleValue.values.length !== ensembleValue.realizations.length) {
+                    throw new Error("Realizations and values must have the same length");
+                }
+
+                const verticalPosition = index * (2 + 1); // 2 is the height of each box + 1 space
+                const hoverText = ensembleValue.values.map(
+                    (_, index) => `Realization: ${ensembleValue.realizations[index]}`
+                );
 
                 const trace = {
                     x: ensembleValue.values,
-                    type: convertedPlotType,
+                    type: "box",
                     name: ensembleValue.ensembleDisplayName,
                     legendgroup: ensembleValue.ensembleDisplayName,
                     marker: { color: props.ensembleColors.get(ensembleValue.ensembleDisplayName) },
@@ -59,12 +115,14 @@ export const ParameterDistributionPlot: React.FC<ParameterDistributionPlotProps>
                     yaxis: `y${subplotIndex}`,
                     showlegend: shouldShowLegend,
                     y0: verticalPosition,
-                    hoverinfo: hoverInfo,
+                    hoverinfo: "x+text+name",
+                    hovertext: hoverText,
                     meanline_visible: true,
                     orientation: "h",
                     side: "positive",
                     width: 2,
                     points: false,
+                    boxpoints: props.showIndividualRealizationValues ? "all" : false,
                 };
                 traces.push(trace);
             });
@@ -89,18 +147,24 @@ export const ParameterDistributionPlot: React.FC<ParameterDistributionPlotProps>
                 title: props.dataArr[i - 1].parameterIdent,
                 mirror: true,
                 showline: true,
+                zeroline: false,
                 linewidth: 1,
                 linecolor: "black",
             };
+
+            const showYAxisZeroLine =
+                props.showIndividualRealizationValues &&
+                props.plotType == ParameterDistributionPlotType.DISTRIBUTION_PLOT;
             layout[`yaxis${i}`] = {
                 showticklabels: false,
                 showgrid: false,
-                zeroline: false,
+                zeroline: showYAxisZeroLine,
                 mirror: true,
                 showline: true,
                 linewidth: 1,
                 linecolor: "black",
             };
+
             layout.annotations.push({
                 text: props.dataArr[i - 1].parameterIdent.name,
                 showarrow: false,
@@ -114,7 +178,13 @@ export const ParameterDistributionPlot: React.FC<ParameterDistributionPlotProps>
         return layout;
     }
 
-    const data = generateTraces();
+    let data = [];
+    if (props.plotType == ParameterDistributionPlotType.DISTRIBUTION_PLOT) {
+        data = generateDistributionPlotTraces();
+    }
+    if (props.plotType == ParameterDistributionPlotType.BOX_PLOT) {
+        data = generateBoxPlotTraces();
+    }
     const layout = generateLayout();
 
     return <Plot data={data} layout={layout} config={{ displayModeBar: false }} />;

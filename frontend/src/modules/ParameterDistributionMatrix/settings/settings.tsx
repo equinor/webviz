@@ -38,6 +38,8 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
 
     const [selectedVisualizationType, setSelectedVisualizationType] =
         settingsContext.useSettingsToViewInterfaceState("selectedVisualizationType");
+    const [showIndividualRealizationValues, setShowIndividualRealizationValues] =
+        settingsContext.useSettingsToViewInterfaceState("showIndividualRealizationValues");
 
     function handleEnsembleSelectionChange(ensembleIdents: EnsembleIdent[]) {
         setSelectedEnsembleIdents(ensembleIdents);
@@ -55,6 +57,9 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
     function handleVisualizationTypeChange(event: React.ChangeEvent<HTMLInputElement>) {
         setSelectedVisualizationType(event.target.value as ParameterDistributionPlotType);
     }
+    function handleShowIndividualRealizationValuesChange(_: React.ChangeEvent<HTMLInputElement>, checked: boolean) {
+        setShowIndividualRealizationValues(checked);
+    }
 
     return (
         <div className="flex flex-col gap-2">
@@ -65,6 +70,13 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
                     })}
                     value={selectedVisualizationType}
                     onChange={handleVisualizationTypeChange}
+                />
+            </CollapsibleGroup>
+            <CollapsibleGroup title="Plot options" expanded>
+                <Checkbox
+                    label="Show individual realization values"
+                    checked={showIndividualRealizationValues}
+                    onChange={handleShowIndividualRealizationValuesChange}
                 />
             </CollapsibleGroup>
             <CollapsibleGroup title="Ensembles" expanded>
