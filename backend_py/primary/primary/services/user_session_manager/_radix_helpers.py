@@ -56,7 +56,7 @@ async def create_new_radix_job(
     # we might want to auto discover the number of available cpus and set the GOMAXPROCS environment variable accordingly.
     # As of now, it seems that it's the cpu limit value that will be picked up by for example by automaxprocs.
     request_body = {
-        "jobId": "my-dummy-job-id",
+        #"jobId": "my-dummy-job-id",
         "payload": payload_as_str,
         "resources": {
             "requests": {
