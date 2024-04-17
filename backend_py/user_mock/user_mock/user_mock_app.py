@@ -82,4 +82,4 @@ async def dowork(
 
 
 if IS_ON_RADIX_PLATFORM:
-    InactivityShutdown(app, inactivity_limit_minutes=1.0)
+    InactivityShutdown(app, inactivity_limit_minutes=60.0)
