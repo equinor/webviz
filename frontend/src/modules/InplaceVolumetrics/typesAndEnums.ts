@@ -1,9 +1,9 @@
-import { InplaceVolumetricTableDefinition_api } from "@api";
+import { InplaceVolumetricsTableDefinition_api } from "@api";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 
 export type InplaceVolTableInfoCollection = {
     ensembleIdent: EnsembleIdent;
-    tableInfos: InplaceVolumetricTableDefinition_api[];
+    tableInfos: InplaceVolumetricsTableDefinition_api[];
 };
 
 export type CombinedInplaceVolTableInfoResults = {

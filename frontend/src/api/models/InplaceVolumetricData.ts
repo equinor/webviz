@@ -6,8 +6,8 @@ import type { InplaceVolumetricDataEntry } from './InplaceVolumetricDataEntry';
 export type InplaceVolumetricData = {
     vol_table_name: string;
     result_name: string;
-    primary_group_by: (string | null);
-    secondary_group_by: (string | null);
+    realizations: Array<number>;
+    index_names: Array<string>;
     entries: Array<InplaceVolumetricDataEntry>;
 };
 

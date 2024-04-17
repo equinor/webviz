@@ -230,6 +230,7 @@ export function View({ viewContext, workbenchSettings, workbenchServices }: Modu
                         bounds={viewportBounds}
                         layers={newLayers}
                         colorTables={colorTables}
+                        getTooltip={undefined}
                         views={{
                             layout: [1, 1],
                             showLabel: false,

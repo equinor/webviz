@@ -2,13 +2,13 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-import type { InplaceVolumetricsCategoryValues } from './InplaceVolumetricsCategoryValues';
+import type { InplaceVolumetricsIndex } from './InplaceVolumetricsIndex';
 /**
  * Definition of a volumetric table
  */
-export type InplaceVolumetricTableDefinition = {
+export type InplaceVolumetricsTableDefinition = {
     name: string;
-    categories: Array<InplaceVolumetricsCategoryValues>;
+    indexes: Array<InplaceVolumetricsIndex>;
     result_names: Array<string>;
 };
 

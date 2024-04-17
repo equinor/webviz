@@ -2,7 +2,7 @@ import {
     Body_get_result_data_per_realization_api,
     InplaceVolumetricData_api,
     InplaceVolumetricResponseNames_api,
-    InplaceVolumetricsCategoryValues_api,
+    InplaceVolumetricsIndex_api,
 } from "@api";
 import { apiService } from "@framework/ApiService";
 import { EnsembleIdentWithRealizations, PlotGroupingEnum } from "@modules/InplaceVolumetrics/typesAndEnums";
@@ -16,7 +16,7 @@ export function useInplaceDataResultsQuery(
     ensembleIdentsWithRealizations: EnsembleIdentWithRealizations[],
     tableName: string | null,
     responseName: InplaceVolumetricResponseNames_api | null,
-    categoryFilters: InplaceVolumetricsCategoryValues_api[],
+    categoryFilters: InplaceVolumetricsIndex_api[],
     groupBy: PlotGroupingEnum | undefined,
     colorBy: PlotGroupingEnum | undefined
 ): UseQueryResult<InplaceVolumetricData_api>[] {
@@ -38,7 +38,7 @@ export function createQueryForInplaceDataResults(
     ensIdentWithReals: EnsembleIdentWithRealizations,
     tableName: string | null,
     responseName: InplaceVolumetricResponseNames_api | null,
-    categoryFilters: InplaceVolumetricsCategoryValues_api[],
+    categoryFilters: InplaceVolumetricsIndex_api[],
     groupBy: string | undefined,
     colorBy: string | undefined
 ) {

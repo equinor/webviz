@@ -4,36 +4,34 @@ from enum import Enum
 from pydantic import BaseModel
 
 
-class InplaceVolumetricsCategoryValues(BaseModel):
-    """Unique values for an category (index column) in a volumetric table
+class InplaceVolumetricsIndex(BaseModel):
+    """Unique values for an index column in a volumetric table
     All values should ideally be strings, but it is commmon to see integers, especially for REGION"""
 
-    category_name: str
-    unique_values: List[Union[str, int]]
+    index_name: str
+    values: List[Union[str, int]]
 
 
-class InplaceVolumetricTableDefinition(BaseModel):
+class InplaceVolumetricsTableDefinition(BaseModel):
     """Definition of a volumetric table"""
 
     name: str
-    categories: List[InplaceVolumetricsCategoryValues]
+    indexes: List[InplaceVolumetricsIndex]
     result_names: List[str]
 
 
 class InplaceVolumetricDataEntry(BaseModel):
     result_values: List[float]
-    realizations: List[int]
-    primary_group_value: Optional[str] = None  # Value for the primary group
-    secondary_group_value: Optional[str] = None  # Value for the secondary group
+    index_values: List[Union[str, int]]
 
 
 class InplaceVolumetricData(BaseModel):
     vol_table_name: str
     result_name: str
-    primary_group_by: Optional[str] = None  # Column used for primary grouping
-    secondary_group_by: Optional[str] = None  # Column used for secondary grouping
+    realizations: List[int]
+    index_names: List[str]
     entries: List[InplaceVolumetricDataEntry]
-    
+
 
 class InplaceVolumetricResponseNames(str, Enum):
     """Allowed volumetric response names"""

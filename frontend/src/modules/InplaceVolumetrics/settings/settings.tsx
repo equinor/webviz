@@ -79,9 +79,7 @@ export function Settings(props: ModuleSettingsProps<State, Interface>) {
     }
 
     function handleInplaceCategoriesChange(categoryName: string, values: string[]) {
-        const categoryIndex = selectedInplaceCategories.findIndex(
-            (category) => category.category_name === categoryName
-        );
+        const categoryIndex = selectedInplaceCategories.findIndex((category) => category.index_name === categoryName);
 
         if (categoryIndex !== -1) {
             const newCategories = selectedInplaceCategories.map((category, index) =>
@@ -89,10 +87,7 @@ export function Settings(props: ModuleSettingsProps<State, Interface>) {
             );
             setSelectedInplaceCategories(newCategories);
         } else {
-            setSelectedInplaceCategories([
-                ...selectedInplaceCategories,
-                { category_name: categoryName, unique_values: values },
-            ]);
+            setSelectedInplaceCategories([...selectedInplaceCategories, { index_name: categoryName, values: values }]);
         }
     }
 
@@ -149,10 +144,10 @@ export function Settings(props: ModuleSettingsProps<State, Interface>) {
                 <CollapsibleGroup title="Zone/Region filters" expanded>
                     {availableInplaceCategories.map((categoryData) => (
                         <Select
-                            key={categoryData.category_name}
-                            options={categoryValuesToOptions(categoryData.unique_values)}
+                            key={categoryData.index_name}
+                            options={categoryValuesToOptions(categoryData.values)}
                             size={5}
-                            onChange={(values) => handleInplaceCategoriesChange(categoryData.category_name, values)}
+                            onChange={(values) => handleInplaceCategoriesChange(categoryData.index_name, values)}
                             multiple
                         />
                     ))}

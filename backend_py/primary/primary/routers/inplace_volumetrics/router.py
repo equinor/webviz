@@ -19,7 +19,7 @@ async def get_table_definitions(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     case_uuid: str = Query(description="Sumo case uuid"),
     ensemble_name: str = Query(description="Ensemble name"),
-) -> List[schemas.InplaceVolumetricTableDefinition]:
+) -> List[schemas.InplaceVolumetricsTableDefinition]:
     """Get the volumetric tables definitions for a given ensemble."""
 
     access = await InplaceVolumetricsAccess.from_case_uuid(
@@ -38,14 +38,11 @@ async def get_result_data_per_realization(
     table_name: str = Query(description="Table name"),
     result_name: schemas.InplaceVolumetricResponseNames = Query(
         description="The name of the volumetric result/response"
-    ),    primary_group_by: str = Query(description="Primary group by column", default=None),
-    secondary_group_by: str = Query(description="Secondary group by column", default=None),   
-    realizations: List[int] = Query(description="Realizations"),
-
- 
-    categorical_filter: List[schemas.InplaceVolumetricsCategoryValues] = Body(
-        embed=True, description="Categorical filter"
     ),
+    primary_group_by: str = Query(description="Primary group by column", default=None),
+    secondary_group_by: str = Query(description="Secondary group by column", default=None),
+    realizations: List[int] = Query(description="Realizations"),
+    categorical_filter: List[schemas.InplaceVolumetricsIndex] = Body(embed=True, description="Categorical filter"),
 ) -> schemas.InplaceVolumetricData:
     """Get volumetric data summed per realization for a given table, result and categories/index filter."""
     access = await InplaceVolumetricsAccess.from_case_uuid(
@@ -56,7 +53,7 @@ async def get_result_data_per_realization(
     data = await access.get_volumetric_data_async(
         table_name=table_name,
         result_name=result_name.value,
-        categories=sumo_categorical_filter,
+        indexes=sumo_categorical_filter,
         realizations=realizations,
         primary_group_by=primary_group_by,
         secondary_group_by=secondary_group_by,

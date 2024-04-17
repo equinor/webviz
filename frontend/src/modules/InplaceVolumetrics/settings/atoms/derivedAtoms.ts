@@ -67,8 +67,8 @@ export const availableInplaceCategoriesAtom = atom((get) => {
     const intersectedTables = get(intersectedTablesAtom);
     const selectedInplaceTableName = get(selectedInplaceTableNameAtom);
     const selectedTable = intersectedTables.find((table) => table.name === selectedInplaceTableName);
-    console.log("availableInplaceCategoriesAtom derivedAtoms", selectedTable?.categories ?? []);
-    return selectedTable?.categories ?? [];
+    console.log("availableInplaceCategoriesAtom derivedAtoms", selectedTable?.indexes ?? []);
+    return selectedTable?.indexes ?? [];
 });
 
 export const selectedInplaceCategoriesAtom = atom((get) => {
@@ -79,7 +79,7 @@ export const selectedInplaceCategoriesAtom = atom((get) => {
     if (userSelectedInplaceCategories.length) {
         return availableInplaceCategories.map((category) => {
             const userSelectedCategory = userSelectedInplaceCategories.find(
-                (selectedCategory) => selectedCategory.category_name === category.category_name
+                (selectedCategory) => selectedCategory.index_name === category.index_name
             );
             if (userSelectedCategory) {
                 return userSelectedCategory;

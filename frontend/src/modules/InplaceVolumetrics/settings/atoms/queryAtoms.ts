@@ -1,4 +1,4 @@
-import { InplaceVolumetricResponseNames_api, InplaceVolumetricTableDefinition_api } from "@api";
+import { InplaceVolumetricResponseNames_api, InplaceVolumetricsTableDefinition_api } from "@api";
 import { apiService } from "@framework/ApiService";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { EnsembleRealizationFilterFunctionAtom, EnsembleSetAtom } from "@framework/GlobalAtoms";
@@ -38,7 +38,7 @@ export const inplaceTableInfosQueryAtom = atomWithQueries((get) => {
         .flat();
 
     function combine(
-        results: UseQueryResult<InplaceVolumetricTableDefinition_api[], Error>[]
+        results: UseQueryResult<InplaceVolumetricsTableDefinition_api[], Error>[]
     ): CombinedInplaceVolTableInfoResults {
         return {
             tableInfoCollections: selectedEnsembleIdents.map((ensembleIdent, idx) => {

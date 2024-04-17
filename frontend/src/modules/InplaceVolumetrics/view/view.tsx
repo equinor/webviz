@@ -61,13 +61,10 @@ export function View(props: ModuleViewProps<State, Interface>) {
         numSubplots = selectedEnsembleIdents.length;
     }
     if (groupBy === PlotGroupingEnum.ZONE) {
-        numSubplots =
-            selectedInplaceCategories.find((category) => category.category_name === "ZONE")?.unique_values.length || 1;
+        numSubplots = selectedInplaceCategories.find((index) => index.index_name === "ZONE")?.values.length || 1;
     }
     if (groupBy === PlotGroupingEnum.REGION) {
-        numSubplots =
-            selectedInplaceCategories.find((category) => category.category_name === "REGION")?.unique_values.length ||
-            1;
+        numSubplots = selectedInplaceCategories.find((index) => index.index_name === "REGION")?.values.length || 1;
     }
     datasetResults.map((datasetResult) => {
         datasetResult.entries.map((entry) => {
@@ -80,36 +77,36 @@ export function View(props: ModuleViewProps<State, Interface>) {
     const ensembleColors = getEnsembleColors(ensembleSet, colorSet);
 
     const subplotData: (GroupedInplaceData | null)[] = [];
-
-    if (groupBy === PlotGroupingEnum.None) {
-        const values: number[] = [];
-        const realizations: number[] = [];
-        datasetResults.forEach((datasetResult) =>
-            datasetResult.entries.forEach((entry) => {
-                entry.result_values.forEach((value) => values.push(value));
-                entry.realizations.forEach((realization) => realizations.push(realization));
-            })
-        );
-        subplotData.push({ realizations, values, plotLabel: "All", traceColor: "rgba(0,0,0,0.5)" });
-    }
-    if (groupBy === PlotGroupingEnum.ENSEMBLE) {
-        selectedEnsembleIdents.forEach((ensembleIdent, i) => {
-            const datasetResult = inplaceDataSetResultQuery[i];
-            if (!datasetResult.data) {
-                subplotData.push(null);
-            } else {
-                const dataResult = datasetResult.data;
-                dataResult.entries.forEach((entry) => {
-                    subplotData.push({
-                        realizations: entry.realizations,
-                        values: entry.result_values,
-                        plotLabel: ensembleIdent.toString(),
-                        traceColor: "rgba(0,0,0,0.5)",
-                    });
-                });
-            }
-        });
-    }
+    console.log(inplaceDataSetResultQuery);
+    // if (groupBy === PlotGroupingEnum.None) {
+    //     const values: number[] = [];
+    //     const realizations: number[] = [];
+    //     datasetResults.forEach((datasetResult) =>
+    //         datasetResult.entries.forEach((entry) => {
+    //             entry.result_values.forEach((value) => values.push(value));
+    //             entry.realizations.forEach((realization) => realizations.push(realization));
+    //         })
+    //     );
+    //     subplotData.push({ realizations, values, plotLabel: "All", traceColor: "rgba(0,0,0,0.5)" });
+    // }
+    // if (groupBy === PlotGroupingEnum.ENSEMBLE) {
+    //     selectedEnsembleIdents.forEach((ensembleIdent, i) => {
+    //         const datasetResult = inplaceDataSetResultQuery[i];
+    //         if (!datasetResult.data) {
+    //             subplotData.push(null);
+    //         } else {
+    //             const dataResult = datasetResult.data;
+    //             dataResult.entries.forEach((entry) => {
+    //                 subplotData.push({
+    //                     realizations: entry.realizations,
+    //                     values: entry.result_values,
+    //                     plotLabel: ensembleIdent.toString(),
+    //                     traceColor: "rgba(0,0,0,0.5)",
+    //                 });
+    //             });
+    //         }
+    //     });
+    // }
     console.log(subplotData);
     console.log(inplaceDataSetResultQuery);
     return (

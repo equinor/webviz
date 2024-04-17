@@ -2,11 +2,11 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-import type { InplaceVolumetricsCategoryValues } from './InplaceVolumetricsCategoryValues';
+import type { InplaceVolumetricsIndex } from './InplaceVolumetricsIndex';
 export type Body_get_result_data_per_realization = {
     /**
      * Categorical filter
      */
-    categorical_filter: Array<InplaceVolumetricsCategoryValues>;
+    categorical_filter: Array<InplaceVolumetricsIndex>;
 };
 

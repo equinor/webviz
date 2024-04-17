@@ -54,36 +54,34 @@ IGNORED_COLUMN_NAMES = [
 ]
 
 
-class InplaceVolumetricsCategoryValues(BaseModel):
-    """Unique values for an category (index column) in a volumetric table
+class InplaceVolumetricsIndex(BaseModel):
+    """Unique values for an index column in a volumetric table
     All values should ideally be strings, but it is commmon to see integers, especially for REGION"""
 
-    category_name: str
-    unique_values: List[Union[str, int]]
+    index_name: str
+    values: List[Union[str, int]]
 
 
 class InplaceVolumetricsTableDefinition(BaseModel):
     """Definition of a volumetric table"""
 
     name: str
-    categories: List[InplaceVolumetricsCategoryValues]
+    indexes: List[InplaceVolumetricsIndex]
     result_names: List[str]
 
 
 class InplaceVolumetricDataEntry(BaseModel):
     result_values: List[float]
-    realizations: List[int]
-    primary_group_value: Optional[str] = None  # Value for the primary group
-    secondary_group_value: Optional[str] = None  # Value for the secondary group
+    index_values: List[Union[str, int]]
 
 
 class InplaceVolumetricData(BaseModel):
     vol_table_name: str
     result_name: str
-    primary_group_by: Optional[str] = None  # Column used for primary grouping
-    secondary_group_by: Optional[str] = None  # Column used for secondary grouping
+    realizations: List[int]
+    index_names: List[str]
     entries: List[InplaceVolumetricDataEntry]
-    
+
 
 LOGGER = logging.getLogger(__name__)
 
@@ -92,7 +90,7 @@ class InplaceVolumetricsAccess(SumoEnsemble):
     async def get_inplace_volumetrics_table_definitions_async(self) -> List[InplaceVolumetricsTableDefinition]:
         """Retrieve the table definitions for the volumetric tables"""
         vol_table_collections: TableCollection = self._case.tables.filter(
-            aggregation="collection", tagname=["vol", "volumes"], iteration=self._iteration_name
+            aggregation="collection", tagname=["vol", "volumes", "inplace"], iteration=self._iteration_name
         )
         vol_table_names = await vol_table_collections.names_async
         if len(vol_table_names) == 0:
@@ -108,7 +106,7 @@ class InplaceVolumetricsAccess(SumoEnsemble):
             vol_table_as_collection: TableCollection = self._case.tables.filter(
                 aggregation="collection",
                 name=vol_table_name,
-                tagname=["vol", "volumes"],
+                tagname=["vol", "volumes", "inplace"],
                 iteration=self._iteration_name,
             )
             vol_table_name_as_arr = await vol_table_as_collection.names_async
@@ -133,9 +131,9 @@ class InplaceVolumetricsAccess(SumoEnsemble):
                 #     f"Invalid column names found in the volumetric table case={self._case_uuid}, iteration={self._iteration_name}, {invalid_column_names}",
                 #     Service.SUMO,
                 # )
-            category_names = [col for col in vol_table_column_names if col in ALLOWED_CATEGORY_COLUMN_NAMES]
+            index_names = [col for col in vol_table_column_names if col in ALLOWED_CATEGORY_COLUMN_NAMES]
 
-            if len(category_names) == 0:
+            if len(index_names) == 0:
                 raise InvalidDataError(
                     f"No index columns found in the volumetric table {self._case_uuid}, {vol_table_name}",
                     Service.SUMO,
@@ -148,23 +146,21 @@ class InplaceVolumetricsAccess(SumoEnsemble):
                     Service.SUMO,
                 )
 
-            categories = []
+            indexes = []
 
             # Need to download the table to get the unique index values
             # Picking a random result column to get the table
             sumo_table_obj = await self._get_sumo_table_async(vol_table_name, result_column_names[0])
             arrow_table = await _fetch_arrow_table_async(sumo_table_obj)
-            for index_column_name in category_names:
+            print(arrow_table)
+            print(vol_table_column_names)
+            for index_column_name in index_names:
                 unique_values = arrow_table[index_column_name].unique()
-                categories.append(
-                    InplaceVolumetricsCategoryValues(
-                        category_name=index_column_name, unique_values=unique_values.to_pylist()
-                    )
-                )
+                indexes.append(InplaceVolumetricsIndex(index_name=index_column_name, values=unique_values.to_pylist()))
             table_definitions.append(
                 InplaceVolumetricsTableDefinition(
                     name=vol_table_name,
-                    categories=categories,
+                    indexes=indexes,
                     result_names=result_column_names,
                 )
             )
@@ -174,7 +170,7 @@ class InplaceVolumetricsAccess(SumoEnsemble):
         self,
         table_name: str,
         result_name: str,
-        categories: List[InplaceVolumetricsCategoryValues],
+        indexes: List[InplaceVolumetricsIndex],
         realizations: Sequence[int],
         primary_group_by: Optional[str] = None,
         secondary_group_by: Optional[str] = None,
@@ -191,28 +187,49 @@ class InplaceVolumetricsAccess(SumoEnsemble):
         if realizations is not None:
             arrow_table = _filter_arrow_table(arrow_table, "REAL", realizations)
 
-        if categories is not None:
-            for category in categories:
-                if category.category_name not in ALLOWED_CATEGORY_COLUMN_NAMES:
+        if indexes is not None:
+            for index in indexes:
+                if index.index_name not in ALLOWED_CATEGORY_COLUMN_NAMES:
                     raise InvalidDataError(
-                        f"Invalid category name {category.category_name} for the volumetric table {self._case_uuid}, {table_name}",
+                        f"Invalid index name {index.index_name} for the volumetric table {self._case_uuid}, {table_name}",
                         Service.SUMO,
                     )
-                arrow_table = _filter_arrow_table(arrow_table, category.category_name, category.unique_values)
+                arrow_table = _filter_arrow_table(arrow_table, index.index_name, index.values)
+        index_columns = [index.index_name for index in indexes]
+        grouped_table = arrow_table.group_by(index_columns + ["REAL"]).aggregate([(result_name, "sum")]).sort_by("REAL")
+        arrow_table = grouped_table.group_by(index_columns).aggregate(
+            [(result_name + "_sum", "list"), ("REAL", "list")]
+        )
+        # Rename columns'
+        arrow_table = arrow_table.rename_columns([*index_columns, "result_values", "realizations"])
+        data_dict = arrow_table.to_pydict()
+        num_entries = len(data_dict[next(iter(data_dict))])
+        if num_entries == 0:
+            raise NoDataError(
+                f"No data found in the volumetric table {self._case_uuid}, {table_name}, {result_name}",
+                Service.SUMO,
+            )
+        realizations_sequence = data_dict["realizations"][0]
+        entries: List[InplaceVolumetricDataEntry] = []
+        for i in range(num_entries):
+            # Build each entry by accessing elements by index
+            entry = InplaceVolumetricDataEntry(
+                result_values=data_dict.get("result_values")[i],
+                index_values=[data_dict.get(index_name)[i] for index_name in index_columns],
+            )
+            entries.append(entry)
 
-
-        
-        entries = group_and_aggregate(arrow_table,  result_name,primary_group_by=primary_group_by,secondary_group_by=secondary_group_by)
+        # entries = group_and_aggregate(arrow_table, result_name)
 
         volumetric_data = InplaceVolumetricData(
             vol_table_name=table_name,
             result_name=result_name,
             entries=entries,
-            primary_group_by=primary_group_by,
-            secondary_group_by=secondary_group_by,
-            
+            index_names=[index.index_name for index in indexes],
+            realizations=realizations_sequence,
         )
         return volumetric_data
+
     async def _get_sumo_table_async(self, table_name: str, result_name: Optional[str] = None) -> Table:
         """Get a sumo table object. Expecting only one table to be found.
         A result_name(column) is optional. If provided, the table will be filtered based on the result_name.
@@ -221,7 +238,7 @@ class InplaceVolumetricsAccess(SumoEnsemble):
         vol_table_as_collection: TableCollection = self._case.tables.filter(
             aggregation="collection",
             name=table_name,
-            tagname=["vol", "volumes"],
+            tagname=["vol", "volumes", "inplace"],
             iteration=self._iteration_name,
             column=result_name,
         )
@@ -253,7 +270,13 @@ def _filter_arrow_table(arrow_table: pa.Table, column_name: str, column_values: 
     arrow_table = arrow_table.filter(mask)
     return arrow_table
 
-def group_and_aggregate(arrow_table:pa.Table, result_name:str,primary_group_by:Optional[str]=None,secondary_group_by:Optional[str]=None)->List[InplaceVolumetricDataEntry]:
+
+def group_and_aggregate(
+    arrow_table: pa.Table,
+    result_name: str,
+    primary_group_by: Optional[str] = None,
+    secondary_group_by: Optional[str] = None,
+) -> List[InplaceVolumetricDataEntry]:
     entries = []
     group_columns = []
     if primary_group_by:
@@ -264,38 +287,22 @@ def group_and_aggregate(arrow_table:pa.Table, result_name:str,primary_group_by:O
         # Group by provided columns and REAL, then sum the results
         grouped_table = arrow_table.group_by(group_columns + ["REAL"]).aggregate([(result_name, "sum")]).sort_by("REAL")
         # Remove REAL from the grouping and collect sums and realizations into lists
-        arrow_table = grouped_table.group_by(group_columns).aggregate([
-            (result_name + "_sum", "list"),
-            ("REAL", "list")
-        ])
-        #Rename columns'
-        arrow_table = arrow_table.rename_columns([
-            *group_columns,
-            'result_values',
-            'realizations'
-        ])
+        arrow_table = grouped_table.group_by(group_columns).aggregate(
+            [(result_name + "_sum", "list"), ("REAL", "list")]
+        )
+        # Rename columns'
+        arrow_table = arrow_table.rename_columns([*group_columns, "result_values", "realizations"])
         data_dict = arrow_table.to_pydict()
         num_entries = len(data_dict[next(iter(data_dict))])
-        
+
         for i in range(num_entries):
-        # Build each entry by accessing elements by index
+            # Build each entry by accessing elements by index
             entry = InplaceVolumetricDataEntry(
-            result_values=data_dict.get("result_values")[i],
-            realizations=data_dict['realizations'][i],
-            primary_group_value=data_dict.get(primary_group_by)[i] if primary_group_by else None,
-            secondary_group_value=data_dict.get(secondary_group_by)[i] if secondary_group_by else None
-        )
+                result_values=data_dict.get("result_values")[i],
+                realizations=data_dict["realizations"][i],
+                primary_group_value=data_dict.get(primary_group_by)[i] if primary_group_by else None,
+                secondary_group_value=data_dict.get(secondary_group_by)[i] if secondary_group_by else None,
+            )
             entries.append(entry)
-        
-    else:
-        # No grouping
-        arrow_table = arrow_table.group_by(["REAL"]).aggregate([(result_name, "sum")]).sort_by("REAL")
-        arrow_table = arrow_table.rename_columns([
-            
-            'realizations','result_values',
-        ])
-        entries.append(InplaceVolumetricDataEntry(
-            result_values=arrow_table['result_values'].to_pylist(),
-            realizations=arrow_table['realizations'].to_pylist(),
-        ))
+
     return entries

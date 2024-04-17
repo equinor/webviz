@@ -5,7 +5,7 @@
 import type { Body_get_result_data_per_realization } from '../models/Body_get_result_data_per_realization';
 import type { InplaceVolumetricData } from '../models/InplaceVolumetricData';
 import type { InplaceVolumetricResponseNames } from '../models/InplaceVolumetricResponseNames';
-import type { InplaceVolumetricTableDefinition } from '../models/InplaceVolumetricTableDefinition';
+import type { InplaceVolumetricsTableDefinition } from '../models/InplaceVolumetricsTableDefinition';
 import type { CancelablePromise } from '../core/CancelablePromise';
 import type { BaseHttpRequest } from '../core/BaseHttpRequest';
 export class InplaceVolumetricsService {
@@ -15,13 +15,13 @@ export class InplaceVolumetricsService {
      * Get the volumetric tables definitions for a given ensemble.
      * @param caseUuid Sumo case uuid
      * @param ensembleName Ensemble name
-     * @returns InplaceVolumetricTableDefinition Successful Response
+     * @returns InplaceVolumetricsTableDefinition Successful Response
      * @throws ApiError
      */
     public getTableDefinitions(
         caseUuid: string,
         ensembleName: string,
-    ): CancelablePromise<Array<InplaceVolumetricTableDefinition>> {
+    ): CancelablePromise<Array<InplaceVolumetricsTableDefinition>> {
         return this.httpRequest.request({
             method: 'GET',
             url: '/inplace_volumetrics/table_definitions/',

@@ -35,8 +35,8 @@ export type { HTTPValidationError as HTTPValidationError_api } from './models/HT
 export type { InplaceVolumetricData as InplaceVolumetricData_api } from './models/InplaceVolumetricData';
 export type { InplaceVolumetricDataEntry as InplaceVolumetricDataEntry_api } from './models/InplaceVolumetricDataEntry';
 export { InplaceVolumetricResponseNames as InplaceVolumetricResponseNames_api } from './models/InplaceVolumetricResponseNames';
-export type { InplaceVolumetricsCategoryValues as InplaceVolumetricsCategoryValues_api } from './models/InplaceVolumetricsCategoryValues';
-export type { InplaceVolumetricTableDefinition as InplaceVolumetricTableDefinition_api } from './models/InplaceVolumetricTableDefinition';
+export type { InplaceVolumetricsIndex as InplaceVolumetricsIndex_api } from './models/InplaceVolumetricsIndex';
+export type { InplaceVolumetricsTableDefinition as InplaceVolumetricsTableDefinition_api } from './models/InplaceVolumetricsTableDefinition';
 export type { Observations as Observations_api } from './models/Observations';
 export type { PointSetXY as PointSetXY_api } from './models/PointSetXY';
 export type { PolygonData as PolygonData_api } from './models/PolygonData';

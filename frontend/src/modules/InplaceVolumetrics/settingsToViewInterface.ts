@@ -1,4 +1,4 @@
-import { InplaceVolumetricsCategoryValues_api } from "@api";
+import { InplaceVolumetricsIndex_api } from "@api";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { InterfaceInitialization } from "@framework/UniDirectionalSettingsToViewInterface";
 
@@ -19,7 +19,7 @@ export type Interface = {
         selectedEnsembleIdents: EnsembleIdent[];
         selectedInplaceTableName: string | null;
         selectedInplaceResponseName: string | null;
-        selectedInplaceCategories: InplaceVolumetricsCategoryValues_api[];
+        selectedInplaceCategories: InplaceVolumetricsIndex_api[];
     };
 };
 
