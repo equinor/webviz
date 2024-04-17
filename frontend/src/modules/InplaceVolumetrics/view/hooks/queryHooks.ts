@@ -1,51 +1,47 @@
-import {
-    Body_get_result_data_per_realization_api,
-    InplaceVolumetricData_api,
-    InplaceVolumetricResponseNames_api,
-    InplaceVolumetricsIndex_api,
-} from "@api";
+import { InplaceVolumetricResponseNames_api } from "@api";
 import { apiService } from "@framework/ApiService";
-import { EnsembleIdentWithRealizations, PlotGroupingEnum } from "@modules/InplaceVolumetrics/typesAndEnums";
-import { UseQueryResult, useQueries } from "@tanstack/react-query";
-
-import { groupBy } from "lodash";
+import {
+    CombinedInplaceVolDataEnsembleSetResults,
+    EnsembleIdentWithRealizations,
+    InplaceVolDataEnsembleSet,
+} from "@modules/InplaceVolumetrics/typesAndEnums";
+import { useQueries } from "@tanstack/react-query";
 
 const STALE_TIME = 60 * 1000;
 const CACHE_TIME = 60 * 1000;
 export function useInplaceDataResultsQuery(
     ensembleIdentsWithRealizations: EnsembleIdentWithRealizations[],
     tableName: string | null,
-    responseName: InplaceVolumetricResponseNames_api | null,
-    categoryFilters: InplaceVolumetricsIndex_api[],
-    groupBy: PlotGroupingEnum | undefined,
-    colorBy: PlotGroupingEnum | undefined
-): UseQueryResult<InplaceVolumetricData_api>[] {
-    if (groupBy === PlotGroupingEnum.ENSEMBLE || groupBy === PlotGroupingEnum.None) {
-        groupBy = undefined;
-    }
-    if (colorBy === PlotGroupingEnum.ENSEMBLE || colorBy === PlotGroupingEnum.None) {
-        colorBy = undefined;
-    }
-
+    responseName: InplaceVolumetricResponseNames_api | null
+): CombinedInplaceVolDataEnsembleSetResults {
     return useQueries({
-        queries: (ensembleIdentsWithRealizations ?? []).map((el) =>
-            createQueryForInplaceDataResults(el, tableName, responseName, categoryFilters, groupBy, colorBy)
+        queries: ensembleIdentsWithRealizations.map((ensembleIdentWithReals) =>
+            createQueryForInplaceDataResults(ensembleIdentWithReals, tableName, responseName)
         ),
+        combine: (results) => {
+            const combinedResult: InplaceVolDataEnsembleSet[] = [];
+            results.forEach((result, index) => {
+                combinedResult.push({
+                    ensembleIdent: ensembleIdentsWithRealizations[index].ensembleIdent,
+                    data: result.data ? result.data : null,
+                });
+            });
+
+            return {
+                someQueriesFailed: results.some((result) => result.isError),
+                allQueriesFailed: results.every((result) => result.isError),
+                isFetching: results.some((result) => result.isFetching),
+                ensembleSetData: combinedResult,
+            };
+        },
     });
 }
 
 export function createQueryForInplaceDataResults(
     ensIdentWithReals: EnsembleIdentWithRealizations,
     tableName: string | null,
-    responseName: InplaceVolumetricResponseNames_api | null,
-    categoryFilters: InplaceVolumetricsIndex_api[],
-    groupBy: string | undefined,
-    colorBy: string | undefined
+    responseName: InplaceVolumetricResponseNames_api | null
 ) {
-    const bodyCategoryFilters: Body_get_result_data_per_realization_api = {
-        categorical_filter: categoryFilters ?? [],
-    };
-
     return {
         queryKey: [
             "getInplaceDataResults",
@@ -53,9 +49,6 @@ export function createQueryForInplaceDataResults(
             tableName,
             responseName,
             ensIdentWithReals.realizations,
-            bodyCategoryFilters,
-            groupBy,
-            colorBy,
         ],
         queryFn: () =>
             apiService.inplaceVolumetrics.getResultDataPerRealization(
@@ -63,13 +56,10 @@ export function createQueryForInplaceDataResults(
                 ensIdentWithReals.ensembleIdent.getEnsembleName(),
                 tableName ?? "",
                 responseName ?? InplaceVolumetricResponseNames_api.STOIIP_OIL,
-                ensIdentWithReals.realizations ?? [],
-                bodyCategoryFilters,
-                groupBy,
-                colorBy
+                ensIdentWithReals.realizations ?? []
             ),
         staleTime: STALE_TIME,
         cacheTime: CACHE_TIME,
-        enabled: Boolean(ensIdentWithReals && tableName && responseName && categoryFilters),
+        enabled: Boolean(ensIdentWithReals && tableName && responseName),
     };
 }

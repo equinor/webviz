@@ -4,6 +4,6 @@
 /* eslint-disable */
 export type InplaceVolumetricDataEntry = {
     result_values: Array<number>;
-    index_values: Array<Array<(string | number)>>;
+    index_values: Array<(string | number)>;
 };
 

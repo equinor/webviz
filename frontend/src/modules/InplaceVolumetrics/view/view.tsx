@@ -20,6 +20,7 @@ import { useInplaceDataResultsQuery } from "./hooks/queryHooks";
 import { Interface } from "../settingsToViewInterface";
 import { State } from "../state";
 import { PlotGroupingEnum } from "../typesAndEnums";
+import { InplaceDataAccesser } from "../utils/inplaceVolDataEnsembleSetAccessor";
 
 export function View(props: ModuleViewProps<State, Interface>) {
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);
@@ -41,19 +42,12 @@ export function View(props: ModuleViewProps<State, Interface>) {
     const inplaceDataSetResultQuery = useInplaceDataResultsQuery(
         ensembleIdentsWithRealizations,
         selectedInplaceTableName,
-        selectedInplaceResponseName as InplaceVolumetricResponseNames_api,
-        selectedInplaceCategories,
-        groupBy,
-        colorBy
+        selectedInplaceResponseName as InplaceVolumetricResponseNames_api
     );
-    const datasetResults: InplaceVolumetricData_api[] = [];
-    for (const query of inplaceDataSetResultQuery) {
-        if (query.isError) {
-            console.error("Error in query", query.error);
-        }
-        if (query.data) {
-            datasetResults.push(query.data);
-        }
+
+    if (!inplaceDataSetResultQuery.someQueriesFailed) {
+        const inplaceDataAccessor = new InplaceDataAccesser(inplaceDataSetResultQuery.ensembleSetData);
+        console.log(inplaceDataAccessor.getTable());
     }
     let numSubplots = 1;
     const data: number[] = [];
@@ -66,11 +60,11 @@ export function View(props: ModuleViewProps<State, Interface>) {
     if (groupBy === PlotGroupingEnum.REGION) {
         numSubplots = selectedInplaceCategories.find((index) => index.index_name === "REGION")?.values.length || 1;
     }
-    datasetResults.map((datasetResult) => {
-        datasetResult.entries.map((entry) => {
-            console.log(entry);
-        });
-    });
+    // datasetResults.map((datasetResult) => {
+    //     datasetResult.entries.map((entry) => {
+    //         console.log(entry);
+    //     });
+    // });
     const ensembleSet = props.workbenchSession.getEnsembleSet();
 
     const colorSet = props.workbenchSettings.useColorSet();

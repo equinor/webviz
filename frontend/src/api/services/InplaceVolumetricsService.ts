@@ -2,7 +2,6 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-import type { Body_get_result_data_per_realization } from '../models/Body_get_result_data_per_realization';
 import type { InplaceVolumetricData } from '../models/InplaceVolumetricData';
 import type { InplaceVolumetricResponseNames } from '../models/InplaceVolumetricResponseNames';
 import type { InplaceVolumetricsTableDefinition } from '../models/InplaceVolumetricsTableDefinition';
@@ -42,9 +41,6 @@ export class InplaceVolumetricsService {
      * @param tableName Table name
      * @param resultName The name of the volumetric result/response
      * @param realizations Realizations
-     * @param requestBody
-     * @param primaryGroupBy Primary group by column
-     * @param secondaryGroupBy Secondary group by column
      * @returns InplaceVolumetricData Successful Response
      * @throws ApiError
      */
@@ -54,24 +50,17 @@ export class InplaceVolumetricsService {
         tableName: string,
         resultName: InplaceVolumetricResponseNames,
         realizations: Array<number>,
-        requestBody: Body_get_result_data_per_realization,
-        primaryGroupBy?: string,
-        secondaryGroupBy?: string,
     ): CancelablePromise<InplaceVolumetricData> {
         return this.httpRequest.request({
-            method: 'POST',
+            method: 'GET',
             url: '/inplace_volumetrics/result_data_per_realization/',
             query: {
                 'case_uuid': caseUuid,
                 'ensemble_name': ensembleName,
                 'table_name': tableName,
                 'result_name': resultName,
-                'primary_group_by': primaryGroupBy,
-                'secondary_group_by': secondaryGroupBy,
                 'realizations': realizations,
             },
-            body: requestBody,
-            mediaType: 'application/json',
             errors: {
                 422: `Validation Error`,
             },

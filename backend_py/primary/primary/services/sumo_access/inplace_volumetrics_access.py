@@ -19,7 +19,7 @@ from ._helpers import SumoEnsemble
 
 
 # Allowed categories (index column names) for the volumetric tables
-ALLOWED_CATEGORY_COLUMN_NAMES = ["ZONE", "REGION", "FACIES", "LICENSE"]
+ALLOWED_CATEGORY_COLUMN_NAMES = ["ZONE", "REGION", "FACIES"]  # , "LICENSE"]
 
 # Allowed result names for the volumetric tables
 ALLOWED_RESULT_COLUMN_NAMES = [
@@ -152,8 +152,7 @@ class InplaceVolumetricsAccess(SumoEnsemble):
             # Picking a random result column to get the table
             sumo_table_obj = await self._get_sumo_table_async(vol_table_name, result_column_names[0])
             arrow_table = await _fetch_arrow_table_async(sumo_table_obj)
-            print(arrow_table)
-            print(vol_table_column_names)
+
             for index_column_name in index_names:
                 unique_values = arrow_table[index_column_name].unique()
                 indexes.append(InplaceVolumetricsIndex(index_name=index_column_name, values=unique_values.to_pylist()))
@@ -170,10 +169,7 @@ class InplaceVolumetricsAccess(SumoEnsemble):
         self,
         table_name: str,
         result_name: str,
-        indexes: List[InplaceVolumetricsIndex],
         realizations: Sequence[int],
-        primary_group_by: Optional[str] = None,
-        secondary_group_by: Optional[str] = None,
     ) -> InplaceVolumetricData:
         """Retrieve the volumetric data for a single result (e.g. STOIIP_OIL), optionally filtered by realizations and category values."""
         if result_name not in ALLOWED_RESULT_COLUMN_NAMES:
@@ -187,19 +183,15 @@ class InplaceVolumetricsAccess(SumoEnsemble):
         if realizations is not None:
             arrow_table = _filter_arrow_table(arrow_table, "REAL", realizations)
 
-        if indexes is not None:
-            for index in indexes:
-                if index.index_name not in ALLOWED_CATEGORY_COLUMN_NAMES:
-                    raise InvalidDataError(
-                        f"Invalid index name {index.index_name} for the volumetric table {self._case_uuid}, {table_name}",
-                        Service.SUMO,
-                    )
-                arrow_table = _filter_arrow_table(arrow_table, index.index_name, index.values)
-        index_columns = [index.index_name for index in indexes]
+        # Get the index columns
+        index_columns = [col for col in arrow_table.column_names if col in ALLOWED_CATEGORY_COLUMN_NAMES]
+        print(arrow_table.schema)
         grouped_table = arrow_table.group_by(index_columns + ["REAL"]).aggregate([(result_name, "sum")]).sort_by("REAL")
+
         arrow_table = grouped_table.group_by(index_columns).aggregate(
             [(result_name + "_sum", "list"), ("REAL", "list")]
         )
+
         # Rename columns'
         arrow_table = arrow_table.rename_columns([*index_columns, "result_values", "realizations"])
         data_dict = arrow_table.to_pydict()
@@ -225,7 +217,7 @@ class InplaceVolumetricsAccess(SumoEnsemble):
             vol_table_name=table_name,
             result_name=result_name,
             entries=entries,
-            index_names=[index.index_name for index in indexes],
+            index_names=index_columns,
             realizations=realizations_sequence,
         )
         return volumetric_data
@@ -268,6 +260,8 @@ def _filter_arrow_table(arrow_table: pa.Table, column_name: str, column_values: 
     """Filter arrow table based on column values."""
     mask = pc.is_in(arrow_table[column_name], value_set=pa.array(column_values))
     arrow_table = arrow_table.filter(mask)
+    print("-------------------------------------", column_name, column_values)
+
     return arrow_table
 
 
