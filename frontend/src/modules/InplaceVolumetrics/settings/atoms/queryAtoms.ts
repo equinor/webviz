@@ -15,8 +15,8 @@ import {
 
 import { CombinedInplaceVolTableInfoResults, PlotGroupingEnum } from "../../typesAndEnums";
 
-const STALE_TIME = 0;
-const CACHE_TIME = 0;
+const STALE_TIME = 60 * 1000;
+const CACHE_TIME = 60 * 1000;
 
 export const inplaceTableInfosQueryAtom = atomWithQueries((get) => {
     const selectedEnsembleIdents = get(selectedEnsembleIdentsAtom);

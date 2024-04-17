@@ -14,9 +14,7 @@ export type CombinedInplaceVolTableInfoResults = {
 };
 
 export enum PlotGroupingEnum {
-    None = "None",
     ENSEMBLE = "Ensemble",
-    // TABLE = "Table",
     ZONE = "ZONE",
     REGION = "REGION",
 }
@@ -27,7 +25,7 @@ export type EnsembleIdentWithRealizations = {
 };
 
 export type InplaceVolDataEnsembleSet = {
-    ensembleIdent: EnsembleIdent;
+    ensembleIdentString: string;
     data: InplaceVolumetricData_api | null;
 };
 export type CombinedInplaceVolDataEnsembleSetResults = {

@@ -14,13 +14,18 @@ import { computeQuantile } from "@modules/_shared/statistics";
 
 import { group } from "console";
 
-import { HistogramPlotData, InplaceHistogramPlot, addHistogramTrace } from "./components/inplaceHistogramPlot";
+import {
+    HistogramPlotData,
+    InplaceHistogramPlot,
+    InplaceResultValues,
+    addHistogramTrace,
+} from "./components/inplaceHistogramPlot";
 import { useInplaceDataResultsQuery } from "./hooks/queryHooks";
 
 import { Interface } from "../settingsToViewInterface";
 import { State } from "../state";
 import { PlotGroupingEnum } from "../typesAndEnums";
-import { InplaceDataAccesser } from "../utils/inplaceVolDataEnsembleSetAccessor";
+import { InplaceVolGroupedResultValues, getGroupedInplaceVolResults } from "../utils/inplaceVolDataEnsembleSetAccessor";
 
 export function View(props: ModuleViewProps<State, Interface>) {
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);
@@ -44,68 +49,22 @@ export function View(props: ModuleViewProps<State, Interface>) {
         selectedInplaceTableName,
         selectedInplaceResponseName as InplaceVolumetricResponseNames_api
     );
-
+    let data: InplaceVolGroupedResultValues[] = [];
     if (!inplaceDataSetResultQuery.someQueriesFailed) {
-        const inplaceDataAccessor = new InplaceDataAccesser(inplaceDataSetResultQuery.ensembleSetData);
-        console.log(inplaceDataAccessor.getTable());
+        data = getGroupedInplaceVolResults(inplaceDataSetResultQuery.ensembleSetData, groupBy, colorBy);
     }
-    let numSubplots = 1;
-    const data: number[] = [];
-    if (groupBy === PlotGroupingEnum.ENSEMBLE) {
-        numSubplots = selectedEnsembleIdents.length;
-    }
-    if (groupBy === PlotGroupingEnum.ZONE) {
-        numSubplots = selectedInplaceCategories.find((index) => index.index_name === "ZONE")?.values.length || 1;
-    }
-    if (groupBy === PlotGroupingEnum.REGION) {
-        numSubplots = selectedInplaceCategories.find((index) => index.index_name === "REGION")?.values.length || 1;
-    }
-    // datasetResults.map((datasetResult) => {
-    //     datasetResult.entries.map((entry) => {
-    //         console.log(entry);
-    //     });
-    // });
-    const ensembleSet = props.workbenchSession.getEnsembleSet();
-
-    const colorSet = props.workbenchSettings.useColorSet();
-    const ensembleColors = getEnsembleColors(ensembleSet, colorSet);
-
-    const subplotData: (GroupedInplaceData | null)[] = [];
-    console.log(inplaceDataSetResultQuery);
-    // if (groupBy === PlotGroupingEnum.None) {
-    //     const values: number[] = [];
-    //     const realizations: number[] = [];
-    //     datasetResults.forEach((datasetResult) =>
-    //         datasetResult.entries.forEach((entry) => {
-    //             entry.result_values.forEach((value) => values.push(value));
-    //             entry.realizations.forEach((realization) => realizations.push(realization));
-    //         })
-    //     );
-    //     subplotData.push({ realizations, values, plotLabel: "All", traceColor: "rgba(0,0,0,0.5)" });
-    // }
-    // if (groupBy === PlotGroupingEnum.ENSEMBLE) {
-    //     selectedEnsembleIdents.forEach((ensembleIdent, i) => {
-    //         const datasetResult = inplaceDataSetResultQuery[i];
-    //         if (!datasetResult.data) {
-    //             subplotData.push(null);
-    //         } else {
-    //             const dataResult = datasetResult.data;
-    //             dataResult.entries.forEach((entry) => {
-    //                 subplotData.push({
-    //                     realizations: entry.realizations,
-    //                     values: entry.result_values,
-    //                     plotLabel: ensembleIdent.toString(),
-    //                     traceColor: "rgba(0,0,0,0.5)",
-    //                 });
-    //             });
-    //         }
-    //     });
-    // }
-    console.log(subplotData);
-    console.log(inplaceDataSetResultQuery);
+    const resultValues: InplaceResultValues = {
+        groupName: groupBy,
+        subGroupName: colorBy,
+        groupedValues: data,
+    };
     return (
         <div className="w-full h-full" ref={wrapperDivRef}>
-            <InplaceHistogramPlot values={subplotData} width={wrapperDivSize.width} height={wrapperDivSize.height} />
+            <InplaceHistogramPlot
+                resultValues={resultValues}
+                width={wrapperDivSize.width}
+                height={wrapperDivSize.height}
+            />
         </div>
     );
 }

@@ -23,7 +23,7 @@ function areEnsembleIdentListsEqual(a: EnsembleIdent[], b: EnsembleIdent[]) {
 export const userSelectedEnsembleIdentsAtom = atomWithCompare<EnsembleIdent[]>([], areEnsembleIdentListsEqual);
 
 export const groupByAtom = atomWithCompare<PlotGroupingEnum>(PlotGroupingEnum.ENSEMBLE, (a, b) => a === b);
-export const colorByAtom = atomWithCompare<PlotGroupingEnum>(PlotGroupingEnum.None, (a, b) => a === b);
+export const colorByAtom = atomWithCompare<PlotGroupingEnum>(PlotGroupingEnum.ENSEMBLE, (a, b) => a === b);
 export const userSelectedInplaceTableNameAtom = atom<string | null>(null);
 export const userSelectedInplaceResponseAtom = atom<string | null>(null);
 export const userSelectedInplaceCategoriesAtom = atom<InplaceVolumetricsIndex_api[]>([]);

@@ -1,41 +1,68 @@
 import Plot from "react-plotly.js";
 
+import { InplaceVolGroupedResultValues } from "@modules/InplaceVolumetrics/utils/inplaceVolDataEnsembleSetAccessor";
 import { computeQuantile } from "@modules/_shared/statistics";
 
 import { Layout, PlotData, PlotType, Shape } from "plotly.js";
 
-import { GroupedInplaceData } from "../view";
+const colorPalette = [
+    "#1f77b4", // muted blue
+    "#ff7f0e", // safety orange
+    "#2ca02c", // cooked asparagus green
+    "#d62728", // brick red
+    "#9467bd", // muted purple
+    "#8c564b", // chestnut brown
+    "#e377c2", // raspberry yogurt pink
+    "#7f7f7f", // middle gray
+    "#bcbd22", // curry yellow-green
+    "#17becf", // blue-teal
+];
 
+export type InplaceResultValues = {
+    groupName: string;
+    subGroupName: string;
+    groupedValues: InplaceVolGroupedResultValues[];
+};
 export type InplaceHistogramPlotProps = {
-    values: (GroupedInplaceData | null)[];
-
+    resultValues: InplaceResultValues;
     width: number;
     height: number;
 };
 export function InplaceHistogramPlot(props: InplaceHistogramPlotProps) {
-    const numSubplots = props.values.length;
+    const numSubplots = props.resultValues.groupedValues.length;
     const numColumns = Math.ceil(Math.sqrt(numSubplots));
     const numRows = Math.ceil(numSubplots / numColumns);
     const addedLegendNames: Set<string> = new Set();
-    const tracesDataArr: Partial<PlotData>[] = [];
     function generateTraces(): any {
         const traces: any = [];
-
         let subplotIndex = 1;
+        let colorIndex = 0;
 
-        props.values.forEach((subPlot) => {
+        props.resultValues.groupedValues.forEach((subPlot) => {
             if (subPlot) {
-                const trace = {
-                    x: subPlot.values,
-                    type: "histogram" as PlotType,
-                    name: subPlot.plotLabel,
-
-                    marker: { color: subPlot.traceColor },
-                    xaxis: `x${subplotIndex}`,
-                    yaxis: `y${subplotIndex}`,
-                    showlegend: true,
-                };
-                traces.push(trace);
+                subPlot.subgroups.forEach((subgroup) => {
+                    const shouldShowLegend = !addedLegendNames.has(subgroup.subgroupName.toString());
+                    if (shouldShowLegend) {
+                        addedLegendNames.add(subgroup.subgroupName.toString());
+                    }
+                    const trace = {
+                        x: subgroup.resultValues,
+                        type: "histogram" as PlotType,
+                        histnorm: "percent",
+                        opacity: 0.7,
+                        nbinsx: 15,
+                        name: subgroup.subgroupName,
+                        showlegend: shouldShowLegend,
+                        marker: {
+                            color: colorPalette[colorIndex % colorPalette.length],
+                            line: { width: 1, color: "black" },
+                        },
+                        xaxis: `x${subplotIndex}`,
+                        yaxis: `y${subplotIndex}`,
+                    };
+                    traces.push(trace);
+                    colorIndex++;
+                });
             }
             subplotIndex++;
         });
@@ -53,9 +80,9 @@ export function InplaceHistogramPlot(props: InplaceHistogramPlotProps) {
             annotations: [],
         };
 
-        for (let i = 1; i <= props.values.length; i++) {
+        for (let i = 1; i <= props.resultValues.groupedValues.length; i++) {
             layout[`xaxis${i}`] = {
-                title: "",
+                title: props.resultValues.groupedValues[i - 1].groupName,
                 mirror: true,
                 showline: true,
                 linewidth: 1,

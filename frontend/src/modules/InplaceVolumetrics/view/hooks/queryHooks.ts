@@ -22,7 +22,7 @@ export function useInplaceDataResultsQuery(
             const combinedResult: InplaceVolDataEnsembleSet[] = [];
             results.forEach((result, index) => {
                 combinedResult.push({
-                    ensembleIdent: ensembleIdentsWithRealizations[index].ensembleIdent,
+                    ensembleIdentString: ensembleIdentsWithRealizations[index].ensembleIdent.toString(),
                     data: result.data ? result.data : null,
                 });
             });
