@@ -1,6 +1,7 @@
 import React from "react";
 import Plot from "react-plotly.js";
 
+import { InplaceVolumetricData_api, InplaceVolumetricResponseNames_api } from "@api";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { ParameterIdent } from "@framework/EnsembleParameters";
 import { EnsembleSet } from "@framework/EnsembleSet";
@@ -8,11 +9,13 @@ import { ModuleViewProps } from "@framework/Module";
 import { EnsembleRealizationFilterFunction, useEnsembleRealizationFilterFunc } from "@framework/WorkbenchSession";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { ColorSet } from "@lib/utils/ColorSet";
+import { makeSubplots } from "@modules/_shared/Figure";
 import { computeQuantile } from "@modules/_shared/statistics";
 
 import { group } from "console";
 
-import { InplaceHistogramPlot } from "./components/inplaceHistogramPlot";
+import { HistogramPlotData, InplaceHistogramPlot, addHistogramTrace } from "./components/inplaceHistogramPlot";
+import { useInplaceDataResultsQuery } from "./hooks/queryHooks";
 
 import { Interface } from "../settingsToViewInterface";
 import { State } from "../state";
@@ -25,9 +28,35 @@ export function View(props: ModuleViewProps<State, Interface>) {
     const colorBy = props.viewContext.useSettingsToViewInterfaceValue("colorBy");
     const groupBy = props.viewContext.useSettingsToViewInterfaceValue("groupBy");
     const selectedEnsembleIdents = props.viewContext.useSettingsToViewInterfaceValue("selectedEnsembleIdents");
+    const selectedInplaceTableName = props.viewContext.useSettingsToViewInterfaceValue("selectedInplaceTableName");
+    const selectedInplaceResponseName =
+        props.viewContext.useSettingsToViewInterfaceValue("selectedInplaceResponseName");
     const selectedInplaceCategories = props.viewContext.useSettingsToViewInterfaceValue("selectedInplaceCategories");
-    const inplaceDataSetResultQuery = props.viewContext.useSettingsToViewInterfaceValue("inplaceTableDataSetQuery");
+
+    const ensembleIdentsWithRealizations = selectedEnsembleIdents.map((ensembleIdent) => {
+        const realizationFilterFunc = useEnsembleRealizationFilterFunc(props.workbenchSession);
+        const realizations = realizationFilterFunc(ensembleIdent).map((realization) => realization);
+        return { ensembleIdent, realizations };
+    });
+    const inplaceDataSetResultQuery = useInplaceDataResultsQuery(
+        ensembleIdentsWithRealizations,
+        selectedInplaceTableName,
+        selectedInplaceResponseName as InplaceVolumetricResponseNames_api,
+        selectedInplaceCategories,
+        groupBy,
+        colorBy
+    );
+    const datasetResults: InplaceVolumetricData_api[] = [];
+    for (const query of inplaceDataSetResultQuery) {
+        if (query.isError) {
+            console.error("Error in query", query.error);
+        }
+        if (query.data) {
+            datasetResults.push(query.data);
+        }
+    }
     let numSubplots = 1;
+    const data: number[] = [];
     if (groupBy === PlotGroupingEnum.ENSEMBLE) {
         numSubplots = selectedEnsembleIdents.length;
     }
@@ -40,37 +69,60 @@ export function View(props: ModuleViewProps<State, Interface>) {
             selectedInplaceCategories.find((category) => category.category_name === "REGION")?.unique_values.length ||
             1;
     }
-
-    const numColumns = Math.ceil(Math.sqrt(numSubplots));
-    const numRows = Math.ceil(numSubplots / numColumns);
-
-    console.log(inplaceDataSetResultQuery);
+    datasetResults.map((datasetResult) => {
+        datasetResult.entries.map((entry) => {
+            console.log(entry);
+        });
+    });
     const ensembleSet = props.workbenchSession.getEnsembleSet();
 
     const colorSet = props.workbenchSettings.useColorSet();
     const ensembleColors = getEnsembleColors(ensembleSet, colorSet);
 
-    const resultValues: number[] = inplaceDataSetResultQuery.dataCollections
-        .map((ensembleResults) => ensembleResults.tableData?.entries.map((entry) => entry.value) || [])
-        .flat();
+    const subplotData: (GroupedInplaceData | null)[] = [];
 
+    if (groupBy === PlotGroupingEnum.None) {
+        const values: number[] = [];
+        const realizations: number[] = [];
+        datasetResults.forEach((datasetResult) =>
+            datasetResult.entries.forEach((entry) => {
+                entry.result_values.forEach((value) => values.push(value));
+                entry.realizations.forEach((realization) => realizations.push(realization));
+            })
+        );
+        subplotData.push({ realizations, values, plotLabel: "All", traceColor: "rgba(0,0,0,0.5)" });
+    }
+    if (groupBy === PlotGroupingEnum.ENSEMBLE) {
+        selectedEnsembleIdents.forEach((ensembleIdent, i) => {
+            const datasetResult = inplaceDataSetResultQuery[i];
+            if (!datasetResult.data) {
+                subplotData.push(null);
+            } else {
+                const dataResult = datasetResult.data;
+                dataResult.entries.forEach((entry) => {
+                    subplotData.push({
+                        realizations: entry.realizations,
+                        values: entry.result_values,
+                        plotLabel: ensembleIdent.toString(),
+                        traceColor: "rgba(0,0,0,0.5)",
+                    });
+                });
+            }
+        });
+    }
+    console.log(subplotData);
+    console.log(inplaceDataSetResultQuery);
     return (
         <div className="w-full h-full" ref={wrapperDivRef}>
-            <InplaceHistogramPlot
-                values={resultValues}
-                width={wrapperDivSize.width}
-                height={wrapperDivSize.height}
-                colorBy={colorBy}
-                groupBy={groupBy}
-            />
+            <InplaceHistogramPlot values={subplotData} width={wrapperDivSize.width} height={wrapperDivSize.height} />
         </div>
     );
 }
 
-type GroupedInplaceData = {
+export type GroupedInplaceData = {
     realizations: number[];
     values: number[];
-    subplotLabel: string;
+    plotLabel: string;
     traceColor: string;
 };
 

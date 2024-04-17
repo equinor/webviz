@@ -38,8 +38,11 @@ async def get_result_data_per_realization(
     table_name: str = Query(description="Table name"),
     result_name: schemas.InplaceVolumetricResponseNames = Query(
         description="The name of the volumetric result/response"
-    ),
+    ),    primary_group_by: str = Query(description="Primary group by column", default=None),
+    secondary_group_by: str = Query(description="Secondary group by column", default=None),   
     realizations: List[int] = Query(description="Realizations"),
+
+ 
     categorical_filter: List[schemas.InplaceVolumetricsCategoryValues] = Body(
         embed=True, description="Categorical filter"
     ),
@@ -49,10 +52,13 @@ async def get_result_data_per_realization(
         authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
     )
     sumo_categorical_filter = converters.api_category_filter_to_sumo_category_filter(categorical_filter)
+    print("primary_group_by", primary_group_by)
     data = await access.get_volumetric_data_async(
         table_name=table_name,
         result_name=result_name.value,
         categories=sumo_categorical_filter,
         realizations=realizations,
+        primary_group_by=primary_group_by,
+        secondary_group_by=secondary_group_by,
     )
     return data

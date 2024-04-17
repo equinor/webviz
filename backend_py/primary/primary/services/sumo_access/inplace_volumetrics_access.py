@@ -71,8 +71,8 @@ class InplaceVolumetricsTableDefinition(BaseModel):
 
 
 class InplaceVolumetricDataEntry(BaseModel):
-    realization: int
-    value: float
+    result_values: List[float]
+    realizations: List[int]
     primary_group_value: Optional[str] = None  # Value for the primary group
     secondary_group_value: Optional[str] = None  # Value for the secondary group
 
@@ -80,10 +80,10 @@ class InplaceVolumetricDataEntry(BaseModel):
 class InplaceVolumetricData(BaseModel):
     vol_table_name: str
     result_name: str
-    entries: List[InplaceVolumetricDataEntry]
     primary_group_by: Optional[str] = None  # Column used for primary grouping
     secondary_group_by: Optional[str] = None  # Column used for secondary grouping
-
+    entries: List[InplaceVolumetricDataEntry]
+    
 
 LOGGER = logging.getLogger(__name__)
 
@@ -176,6 +176,8 @@ class InplaceVolumetricsAccess(SumoEnsemble):
         result_name: str,
         categories: List[InplaceVolumetricsCategoryValues],
         realizations: Sequence[int],
+        primary_group_by: Optional[str] = None,
+        secondary_group_by: Optional[str] = None,
     ) -> InplaceVolumetricData:
         """Retrieve the volumetric data for a single result (e.g. STOIIP_OIL), optionally filtered by realizations and category values."""
         if result_name not in ALLOWED_RESULT_COLUMN_NAMES:
@@ -198,33 +200,19 @@ class InplaceVolumetricsAccess(SumoEnsemble):
                     )
                 arrow_table = _filter_arrow_table(arrow_table, category.category_name, category.unique_values)
 
-        arrow_table = (
-            arrow_table.group_by(["ZONE", "REGION", "REAL"]).aggregate([(result_name, "sum")]).sort_by("REAL")
-        )
-        primary_group_by="ZONE"
-        secondary_group_by="REGION"
-        # Accessing columns directly
-        realization_column = arrow_table.column('REAL')
-        result_sum_column = arrow_table.column(f'{result_name}_sum')
-        primary_group_column = arrow_table.column(primary_group_by) if primary_group_by in arrow_table.column_names else None
-        secondary_group_column = arrow_table.column(secondary_group_by) if secondary_group_by in arrow_table.column_names else None
 
-        num_entries = arrow_table.num_rows
-        entries = [
-            InplaceVolumetricDataEntry(
-                realization=realization_column[i].as_py(),
-                value=result_sum_column[i].as_py(),
-                primary_group_value=primary_group_column[i].as_py() if primary_group_column else None,
-                secondary_group_value=secondary_group_column[i].as_py() if secondary_group_column else None
-            ) for i in range(num_entries)
-        ]
-        return InplaceVolumetricData(
+        
+        entries = group_and_aggregate(arrow_table,  result_name,primary_group_by=primary_group_by,secondary_group_by=secondary_group_by)
+
+        volumetric_data = InplaceVolumetricData(
             vol_table_name=table_name,
             result_name=result_name,
             entries=entries,
             primary_group_by=primary_group_by,
-            secondary_group_by=secondary_group_by
+            secondary_group_by=secondary_group_by,
+            
         )
+        return volumetric_data
     async def _get_sumo_table_async(self, table_name: str, result_name: Optional[str] = None) -> Table:
         """Get a sumo table object. Expecting only one table to be found.
         A result_name(column) is optional. If provided, the table will be filtered based on the result_name.
@@ -264,3 +252,50 @@ def _filter_arrow_table(arrow_table: pa.Table, column_name: str, column_values: 
     mask = pc.is_in(arrow_table[column_name], value_set=pa.array(column_values))
     arrow_table = arrow_table.filter(mask)
     return arrow_table
+
+def group_and_aggregate(arrow_table:pa.Table, result_name:str,primary_group_by:Optional[str]=None,secondary_group_by:Optional[str]=None)->List[InplaceVolumetricDataEntry]:
+    entries = []
+    group_columns = []
+    if primary_group_by:
+        group_columns.append(primary_group_by)
+    if secondary_group_by:
+        group_columns.append(secondary_group_by)
+    if group_columns:
+        # Group by provided columns and REAL, then sum the results
+        grouped_table = arrow_table.group_by(group_columns + ["REAL"]).aggregate([(result_name, "sum")]).sort_by("REAL")
+        # Remove REAL from the grouping and collect sums and realizations into lists
+        arrow_table = grouped_table.group_by(group_columns).aggregate([
+            (result_name + "_sum", "list"),
+            ("REAL", "list")
+        ])
+        #Rename columns'
+        arrow_table = arrow_table.rename_columns([
+            *group_columns,
+            'result_values',
+            'realizations'
+        ])
+        data_dict = arrow_table.to_pydict()
+        num_entries = len(data_dict[next(iter(data_dict))])
+        
+        for i in range(num_entries):
+        # Build each entry by accessing elements by index
+            entry = InplaceVolumetricDataEntry(
+            result_values=data_dict.get("result_values")[i],
+            realizations=data_dict['realizations'][i],
+            primary_group_value=data_dict.get(primary_group_by)[i] if primary_group_by else None,
+            secondary_group_value=data_dict.get(secondary_group_by)[i] if secondary_group_by else None
+        )
+            entries.append(entry)
+        
+    else:
+        # No grouping
+        arrow_table = arrow_table.group_by(["REAL"]).aggregate([(result_name, "sum")]).sort_by("REAL")
+        arrow_table = arrow_table.rename_columns([
+            
+            'realizations','result_values',
+        ])
+        entries.append(InplaceVolumetricDataEntry(
+            result_values=arrow_table['result_values'].to_pylist(),
+            realizations=arrow_table['realizations'].to_pylist(),
+        ))
+    return entries

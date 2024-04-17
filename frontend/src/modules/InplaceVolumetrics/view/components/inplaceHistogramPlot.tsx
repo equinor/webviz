@@ -2,35 +2,97 @@ import Plot from "react-plotly.js";
 
 import { computeQuantile } from "@modules/_shared/statistics";
 
-import { Layout, PlotData, Shape } from "plotly.js";
+import { Layout, PlotData, PlotType, Shape } from "plotly.js";
+
+import { GroupedInplaceData } from "../view";
 
 export type InplaceHistogramPlotProps = {
-    values: number[];
-    groupBy: string | null;
-    colorBy: string | null;
+    values: (GroupedInplaceData | null)[];
+
     width: number;
     height: number;
 };
 export function InplaceHistogramPlot(props: InplaceHistogramPlotProps) {
+    const numSubplots = props.values.length;
+    const numColumns = Math.ceil(Math.sqrt(numSubplots));
+    const numRows = Math.ceil(numSubplots / numColumns);
+    const addedLegendNames: Set<string> = new Set();
     const tracesDataArr: Partial<PlotData>[] = [];
+    function generateTraces(): any {
+        const traces: any = [];
 
-    tracesDataArr.push(addHistogramTrace(props.values));
-    const shapes: Partial<Shape>[] = props.values.length > 0 ? addStatisticallines(props.values) : [];
-    const layout: Partial<Layout> = {
-        margin: { t: 0, r: 0, l: 40, b: 40 },
-        xaxis: { title: "Realization", range: [Math.min(...props.values), Math.max(...props.values)] },
-        shapes: shapes,
-        width: props.width,
-        height: props.height,
-    };
-    return <Plot data={tracesDataArr} layout={layout} config={{ scrollZoom: true }} />;
+        let subplotIndex = 1;
+
+        props.values.forEach((subPlot) => {
+            if (subPlot) {
+                const trace = {
+                    x: subPlot.values,
+                    type: "histogram" as PlotType,
+                    name: subPlot.plotLabel,
+
+                    marker: { color: subPlot.traceColor },
+                    xaxis: `x${subplotIndex}`,
+                    yaxis: `y${subplotIndex}`,
+                    showlegend: true,
+                };
+                traces.push(trace);
+            }
+            subplotIndex++;
+        });
+
+        return traces;
+    }
+
+    function generateLayout(): any {
+        const layout: any = {
+            height: props.height,
+            width: props.width,
+            showlegend: true,
+            margin: { l: 50, r: 0, b: 50, t: 50 },
+            grid: { rows: numRows, columns: numColumns, pattern: "independent" },
+            annotations: [],
+        };
+
+        for (let i = 1; i <= props.values.length; i++) {
+            layout[`xaxis${i}`] = {
+                title: "",
+                mirror: true,
+                showline: true,
+                linewidth: 1,
+                linecolor: "black",
+            };
+            layout[`yaxis${i}`] = {
+                showticklabels: false,
+                showgrid: false,
+                zeroline: false,
+                mirror: true,
+                showline: true,
+                linewidth: 1,
+                linecolor: "black",
+            };
+            layout.annotations.push({
+                text: "",
+                showarrow: false,
+                x: 0,
+                xref: `x${i} domain`,
+                y: 1.1,
+                yref: `y${i} domain`,
+            });
+        }
+
+        return layout;
+    }
+    const data = generateTraces();
+    console.log(data);
+    const layout = generateLayout();
+    return <Plot data={data} layout={layout} config={{ displayModeBar: false }} />;
 }
 
 export interface HistogramPlotData extends Partial<PlotData> {
     nbinsx: number;
 }
 
-function addHistogramTrace(values: number[]): Partial<HistogramPlotData> {
+export function addHistogramTrace(values: number[]): Partial<HistogramPlotData> {
     return {
         x: values,
         type: "histogram",

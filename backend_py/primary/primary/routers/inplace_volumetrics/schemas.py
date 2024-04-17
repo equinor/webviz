@@ -21,8 +21,8 @@ class InplaceVolumetricTableDefinition(BaseModel):
 
 
 class InplaceVolumetricDataEntry(BaseModel):
-    realization: int
-    value: float
+    result_values: List[float]
+    realizations: List[int]
     primary_group_value: Optional[str] = None  # Value for the primary group
     secondary_group_value: Optional[str] = None  # Value for the secondary group
 
@@ -30,10 +30,10 @@ class InplaceVolumetricDataEntry(BaseModel):
 class InplaceVolumetricData(BaseModel):
     vol_table_name: str
     result_name: str
-    entries: List[InplaceVolumetricDataEntry]
     primary_group_by: Optional[str] = None  # Column used for primary grouping
     secondary_group_by: Optional[str] = None  # Column used for secondary grouping
-
+    entries: List[InplaceVolumetricDataEntry]
+    
 
 class InplaceVolumetricResponseNames(str, Enum):
     """Allowed volumetric response names"""

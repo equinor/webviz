@@ -43,6 +43,8 @@ export class InplaceVolumetricsService {
      * @param resultName The name of the volumetric result/response
      * @param realizations Realizations
      * @param requestBody
+     * @param primaryGroupBy Primary group by column
+     * @param secondaryGroupBy Secondary group by column
      * @returns InplaceVolumetricData Successful Response
      * @throws ApiError
      */
@@ -53,6 +55,8 @@ export class InplaceVolumetricsService {
         resultName: InplaceVolumetricResponseNames,
         realizations: Array<number>,
         requestBody: Body_get_result_data_per_realization,
+        primaryGroupBy?: string,
+        secondaryGroupBy?: string,
     ): CancelablePromise<InplaceVolumetricData> {
         return this.httpRequest.request({
             method: 'POST',
@@ -62,6 +66,8 @@ export class InplaceVolumetricsService {
                 'ensemble_name': ensembleName,
                 'table_name': tableName,
                 'result_name': resultName,
+                'primary_group_by': primaryGroupBy,
+                'secondary_group_by': secondaryGroupBy,
                 'realizations': realizations,
             },
             body: requestBody,
