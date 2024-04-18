@@ -38,9 +38,8 @@ export function View(props: ModuleViewProps<State, Interface>) {
     const selectedInplaceResponseName =
         props.viewContext.useSettingsToViewInterfaceValue("selectedInplaceResponseName");
     const selectedInplaceCategories = props.viewContext.useSettingsToViewInterfaceValue("selectedInplaceCategories");
-
+    const realizationFilterFunc = useEnsembleRealizationFilterFunc(props.workbenchSession);
     const ensembleIdentsWithRealizations = selectedEnsembleIdents.map((ensembleIdent) => {
-        const realizationFilterFunc = useEnsembleRealizationFilterFunc(props.workbenchSession);
         const realizations = realizationFilterFunc(ensembleIdent).map((realization) => realization);
         return { ensembleIdent, realizations };
     });

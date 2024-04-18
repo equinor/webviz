@@ -1,5 +1,6 @@
 import React from "react";
 
+import { InplaceVolumetricsIndexNames_api } from "@api";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { ModuleSettingsProps } from "@framework/Module";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
@@ -87,7 +88,10 @@ export function Settings(props: ModuleSettingsProps<State, Interface>) {
             );
             setSelectedInplaceCategories(newCategories);
         } else {
-            setSelectedInplaceCategories([...selectedInplaceCategories, { index_name: categoryName, values: values }]);
+            setSelectedInplaceCategories([
+                ...selectedInplaceCategories,
+                { index_name: categoryName as InplaceVolumetricsIndexNames_api, values: values },
+            ]);
         }
     }
 

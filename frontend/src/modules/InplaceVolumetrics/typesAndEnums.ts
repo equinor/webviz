@@ -17,6 +17,7 @@ export enum PlotGroupingEnum {
     ENSEMBLE = "Ensemble",
     ZONE = "ZONE",
     REGION = "REGION",
+    FACIES = "FACIES",
 }
 
 export type EnsembleIdentWithRealizations = {

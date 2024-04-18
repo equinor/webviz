@@ -1,4 +1,5 @@
 import logging
+from enum import Enum
 from io import BytesIO
 from typing import List, Optional, Sequence, Union, Tuple
 
@@ -20,6 +21,14 @@ from ._helpers import SumoEnsemble
 
 # Allowed categories (index column names) for the volumetric tables
 ALLOWED_CATEGORY_COLUMN_NAMES = ["ZONE", "REGION", "FACIES"]  # , "LICENSE"]
+
+
+class InplaceVolumetricsIndexNames(str, Enum):
+    ZONE = "ZONE"
+    REGION = "REGION"
+    FACIES = "FACIES"
+    LICENSE = "LICENSE"
+
 
 # Allowed result names for the volumetric tables
 ALLOWED_RESULT_COLUMN_NAMES = [
@@ -58,7 +67,7 @@ class InplaceVolumetricsIndex(BaseModel):
     """Unique values for an index column in a volumetric table
     All values should ideally be strings, but it is commmon to see integers, especially for REGION"""
 
-    index_name: str
+    index_name: InplaceVolumetricsIndexNames
     values: List[Union[str, int]]
 
 

@@ -78,6 +78,7 @@ export function InplaceHistogramPlot(props: InplaceHistogramPlotProps) {
             margin: { l: 50, r: 0, b: 50, t: 50 },
             grid: { rows: numRows, columns: numColumns, pattern: "independent" },
             annotations: [],
+            barmode: "overlay",
         };
 
         for (let i = 1; i <= props.resultValues.groupedValues.length; i++) {

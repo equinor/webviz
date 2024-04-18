@@ -4,11 +4,18 @@ from enum import Enum
 from pydantic import BaseModel
 
 
+class InplaceVolumetricsIndexNames(str, Enum):
+    ZONE = "ZONE"
+    REGION = "REGION"
+    FACIES = "FACIES"
+    LICENSE = "LICENSE"
+
+
 class InplaceVolumetricsIndex(BaseModel):
     """Unique values for an index column in a volumetric table
     All values should ideally be strings, but it is commmon to see integers, especially for REGION"""
 
-    index_name: str
+    index_name: InplaceVolumetricsIndexNames
     values: List[Union[str, int]]
 
 
