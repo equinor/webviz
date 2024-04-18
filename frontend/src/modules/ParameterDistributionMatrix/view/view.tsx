@@ -23,6 +23,9 @@ export function View(props: ModuleViewProps<State, Interface>) {
     const showIndividualRealizationValues = props.viewContext.useSettingsToViewInterfaceValue(
         "showIndividualRealizationValues"
     );
+    const showPercentilesAndMeanLines =
+        props.viewContext.useSettingsToViewInterfaceValue("showPercentilesAndMeanLines");
+
     const ensembleSet = props.workbenchSession.getEnsembleSet();
     const filterEnsembleRealizationsFunc = useEnsembleRealizationFilterFunc(props.workbenchSession);
 
@@ -47,6 +50,7 @@ export function View(props: ModuleViewProps<State, Interface>) {
                 ensembleColors={ensembleColors}
                 plotType={selectedVisualizationType}
                 showIndividualRealizationValues={showIndividualRealizationValues}
+                showPercentilesAndMeanLines={showPercentilesAndMeanLines}
                 width={wrapperDivSize.width}
                 height={wrapperDivSize.height}
             ></ParameterDistributionPlot>

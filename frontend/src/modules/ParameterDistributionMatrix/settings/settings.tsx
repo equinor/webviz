@@ -40,6 +40,8 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
         settingsContext.useSettingsToViewInterfaceState("selectedVisualizationType");
     const [showIndividualRealizationValues, setShowIndividualRealizationValues] =
         settingsContext.useSettingsToViewInterfaceState("showIndividualRealizationValues");
+    const [showPercentilesAndMeanLines, setShowPercentilesAndMeanLines] =
+        settingsContext.useSettingsToViewInterfaceState("showPercentilesAndMeanLines");
 
     function handleEnsembleSelectionChange(ensembleIdents: EnsembleIdent[]) {
         setSelectedEnsembleIdents(ensembleIdents);
@@ -60,6 +62,9 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
     function handleShowIndividualRealizationValuesChange(_: React.ChangeEvent<HTMLInputElement>, checked: boolean) {
         setShowIndividualRealizationValues(checked);
     }
+    function handleShowPercentilesAndMeanLinesChange(_: React.ChangeEvent<HTMLInputElement>, checked: boolean) {
+        setShowPercentilesAndMeanLines(checked);
+    }
 
     return (
         <div className="flex flex-col gap-2">
@@ -77,6 +82,11 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
                     label="Show individual realization values"
                     checked={showIndividualRealizationValues}
                     onChange={handleShowIndividualRealizationValuesChange}
+                />
+                <Checkbox
+                    label="Show P10, Mean, P90 lines"
+                    checked={showPercentilesAndMeanLines}
+                    onChange={handleShowPercentilesAndMeanLinesChange}
                 />
             </CollapsibleGroup>
             <CollapsibleGroup title="Ensembles" expanded>
