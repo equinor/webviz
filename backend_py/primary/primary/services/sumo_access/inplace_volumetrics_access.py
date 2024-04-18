@@ -20,8 +20,10 @@ from ._helpers import SumoEnsemble
 
 
 # Allowed categories (index column names) for the volumetric tables
-ALLOWED_CATEGORY_COLUMN_NAMES = ["ZONE", "REGION", "FACIES"]  # , "LICENSE"]
+ALLOWED_INDEX_COLUMN_NAMES = ["ZONE", "REGION", "FACIES"]  # , "LICENSE"]
 
+# Index column values to ignore, i.e. remove from the volumetric tables
+IGNORED_INDEX_COLUMN_VALUES = ["Totals"]
 
 class InplaceVolumetricsIndexNames(str, Enum):
     ZONE = "ZONE"
@@ -130,7 +132,7 @@ class InplaceVolumetricsAccess(SumoEnsemble):
             for col in vol_table_column_names:
                 if col in IGNORED_COLUMN_NAMES:
                     continue
-                if col not in ALLOWED_CATEGORY_COLUMN_NAMES + ALLOWED_RESULT_COLUMN_NAMES:
+                if col not in ALLOWED_INDEX_COLUMN_NAMES + ALLOWED_RESULT_COLUMN_NAMES:
                     invalid_column_names.append(col)
             if invalid_column_names:
                 LOGGER.warning(
@@ -140,8 +142,8 @@ class InplaceVolumetricsAccess(SumoEnsemble):
                 #     f"Invalid column names found in the volumetric table case={self._case_uuid}, iteration={self._iteration_name}, {invalid_column_names}",
                 #     Service.SUMO,
                 # )
-            index_names = [col for col in vol_table_column_names if col in ALLOWED_CATEGORY_COLUMN_NAMES]
-
+            index_names = [col for col in vol_table_column_names if col in ALLOWED_INDEX_COLUMN_NAMES]
+            
             if len(index_names) == 0:
                 raise InvalidDataError(
                     f"No index columns found in the volumetric table {self._case_uuid}, {vol_table_name}",
@@ -161,10 +163,15 @@ class InplaceVolumetricsAccess(SumoEnsemble):
             # Picking a random result column to get the table
             sumo_table_obj = await self._get_sumo_table_async(vol_table_name, result_column_names[0])
             arrow_table = await _fetch_arrow_table_async(sumo_table_obj)
-
+            
             for index_column_name in index_names:
-                unique_values = arrow_table[index_column_name].unique()
-                indexes.append(InplaceVolumetricsIndex(index_name=index_column_name, values=unique_values.to_pylist()))
+                unique_values = arrow_table[index_column_name].unique().to_pylist()
+                # Check for invalid data
+                if any([val in IGNORED_INDEX_COLUMN_VALUES for val in unique_values]):
+                    LOGGER.warning(
+                        f"Invalid index values found in the volumetric table case={self._case_uuid}, iteration={self._iteration_name}, table_name={vol_table_name}, index_name={index_column_name}, {unique_values}"
+                    )
+                indexes.append(InplaceVolumetricsIndex(index_name=index_column_name, values=unique_values))
             table_definitions.append(
                 InplaceVolumetricsTableDefinition(
                     name=vol_table_name,
@@ -180,7 +187,7 @@ class InplaceVolumetricsAccess(SumoEnsemble):
         result_name: str,
         realizations: Sequence[int],
     ) -> InplaceVolumetricData:
-        """Retrieve the volumetric data for a single result (e.g. STOIIP_OIL), optionally filtered by realizations and category values."""
+        """Retrieve the volumetric data for a single result (e.g. STOIIP_OIL), optionally filtered by realizations and index values."""
         if result_name not in ALLOWED_RESULT_COLUMN_NAMES:
             raise InvalidDataError(
                 f"Invalid result name {result_name} for the volumetric table {self._case_uuid}, {table_name}",
@@ -189,12 +196,16 @@ class InplaceVolumetricsAccess(SumoEnsemble):
         sumo_table_obj = await self._get_sumo_table_async(table_name, result_name)
         arrow_table = await _fetch_arrow_table_async(sumo_table_obj)
 
+        
         if realizations is not None:
-            arrow_table = _filter_arrow_table(arrow_table, "REAL", realizations)
+            arrow_table = _filter_arrow_table_by_inclusion(arrow_table, "REAL", realizations)
 
         # Get the index columns
-        index_columns = [col for col in arrow_table.column_names if col in ALLOWED_CATEGORY_COLUMN_NAMES]
-        print(arrow_table.schema)
+        index_columns = [col for col in arrow_table.column_names if col in ALLOWED_INDEX_COLUMN_NAMES]
+     
+        # Filter invalid data. Hopefully TMP
+        for index_column in index_columns:
+            arrow_table = _filter_arrow_table_by_exclusion(arrow_table,index_column,IGNORED_INDEX_COLUMN_VALUES)
         grouped_table = arrow_table.group_by(index_columns + ["REAL"]).aggregate([(result_name, "sum")]).sort_by("REAL")
 
         arrow_table = grouped_table.group_by(index_columns).aggregate(
@@ -213,15 +224,13 @@ class InplaceVolumetricsAccess(SumoEnsemble):
         realizations_sequence = data_dict["realizations"][0]
         entries: List[InplaceVolumetricDataEntry] = []
         for i in range(num_entries):
-            # Build each entry by accessing elements by index
             entry = InplaceVolumetricDataEntry(
                 result_values=data_dict.get("result_values")[i],
                 index_values=[data_dict.get(index_name)[i] for index_name in index_columns],
             )
             entries.append(entry)
 
-        # entries = group_and_aggregate(arrow_table, result_name)
-
+    
         volumetric_data = InplaceVolumetricData(
             vol_table_name=table_name,
             result_name=result_name,
@@ -265,14 +274,18 @@ async def _fetch_arrow_table_async(sumo_table_obj: Table) -> pa.Table:
     return arrow_table
 
 
-def _filter_arrow_table(arrow_table: pa.Table, column_name: str, column_values: List[Union[str, float]]) -> pa.Table:
-    """Filter arrow table based on column values."""
+def _filter_arrow_table_by_inclusion(arrow_table: pa.Table, column_name: str, column_values: List[Union[str, float]]) -> pa.Table:
+    """Filter arrow table to only include specific values."""
     mask = pc.is_in(arrow_table[column_name], value_set=pa.array(column_values))
     arrow_table = arrow_table.filter(mask)
-    print("-------------------------------------", column_name, column_values)
-
     return arrow_table
 
+def _filter_arrow_table_by_exclusion(arrow_table: pa.Table, column_name: str, column_values: List[Union[str, float]]) -> pa.Table:
+    """Filter arrow table to exclude specific values."""
+    mask = pc.is_in(arrow_table[column_name], value_set=pa.array(column_values))
+    mask = pc.invert(mask)
+    arrow_table = arrow_table.filter(mask)
+    return arrow_table
 
 def group_and_aggregate(
     arrow_table: pa.Table,
@@ -309,3 +322,4 @@ def group_and_aggregate(
             entries.append(entry)
 
     return entries
+
