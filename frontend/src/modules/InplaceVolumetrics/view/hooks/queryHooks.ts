@@ -22,7 +22,7 @@ export function useInplaceDataResultsQuery(
             const combinedResult: InplaceVolDataEnsembleSet[] = [];
             results.forEach((result, index) => {
                 combinedResult.push({
-                    ensembleIdentString: ensembleIdentsWithRealizations[index].ensembleIdent.toString(),
+                    ensembleIdentString: ensembleIdentsWithRealizations[index]?.ensembleIdent.toString() || "",
                     data: result.data ? result.data : null,
                 });
             });
@@ -48,7 +48,7 @@ export function createQueryForInplaceDataResults(
             ensIdentWithReals.ensembleIdent.toString(),
             tableName,
             responseName,
-            ensIdentWithReals.realizations,
+            JSON.stringify(ensIdentWithReals.realizations),
         ],
         queryFn: () =>
             apiService.inplaceVolumetrics.getResultDataPerRealization(
@@ -59,7 +59,7 @@ export function createQueryForInplaceDataResults(
                 ensIdentWithReals.realizations ?? []
             ),
         staleTime: STALE_TIME,
-        cacheTime: CACHE_TIME,
+        gcTime: CACHE_TIME,
         enabled: Boolean(ensIdentWithReals && tableName && responseName),
     };
 }

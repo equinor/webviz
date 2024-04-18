@@ -31,30 +31,39 @@ export function View(props: ModuleViewProps<State, Interface>) {
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);
     const wrapperDivSize = useElementSize(wrapperDivRef);
 
-    const colorBy = props.viewContext.useSettingsToViewInterfaceValue("colorBy");
-    const groupBy = props.viewContext.useSettingsToViewInterfaceValue("groupBy");
     const selectedEnsembleIdents = props.viewContext.useSettingsToViewInterfaceValue("selectedEnsembleIdents");
-    const selectedInplaceTableName = props.viewContext.useSettingsToViewInterfaceValue("selectedInplaceTableName");
-    const selectedInplaceResponseName =
-        props.viewContext.useSettingsToViewInterfaceValue("selectedInplaceResponseName");
-    const selectedInplaceCategories = props.viewContext.useSettingsToViewInterfaceValue("selectedInplaceCategories");
     const realizationFilterFunc = useEnsembleRealizationFilterFunc(props.workbenchSession);
     const ensembleIdentsWithRealizations = selectedEnsembleIdents.map((ensembleIdent) => {
         const realizations = realizationFilterFunc(ensembleIdent).map((realization) => realization);
         return { ensembleIdent, realizations };
     });
+    const selectedInplaceTableName = props.viewContext.useSettingsToViewInterfaceValue("selectedInplaceTableName");
+    const selectedInplaceResponseName =
+        props.viewContext.useSettingsToViewInterfaceValue("selectedInplaceResponseName");
+
     const inplaceDataSetResultQuery = useInplaceDataResultsQuery(
         ensembleIdentsWithRealizations,
         selectedInplaceTableName,
         selectedInplaceResponseName as InplaceVolumetricResponseNames_api
     );
-    let data: InplaceVolGroupedResultValues[] = [];
-    if (!inplaceDataSetResultQuery.someQueriesFailed) {
-        data = getGroupedInplaceVolResults(inplaceDataSetResultQuery.ensembleSetData, groupBy, colorBy);
-    }
+
+    const colorBy = props.viewContext.useSettingsToViewInterfaceValue("colorBy");
+    const groupBy = props.viewContext.useSettingsToViewInterfaceValue("groupBy");
+
+    const selectedInplaceIndexesValues = props.viewContext.useSettingsToViewInterfaceValue("selectedInplaceCategories");
+
+    const data: InplaceVolGroupedResultValues[] = inplaceDataSetResultQuery.someQueriesFailed
+        ? []
+        : getGroupedInplaceVolResults(
+              inplaceDataSetResultQuery.ensembleSetData,
+              selectedInplaceIndexesValues,
+              groupBy,
+              colorBy
+          );
+
     const resultValues: InplaceResultValues = {
-        groupName: groupBy,
-        subGroupName: colorBy,
+        groupByName: groupBy,
+        colorByName: colorBy,
         groupedValues: data,
     };
     return (

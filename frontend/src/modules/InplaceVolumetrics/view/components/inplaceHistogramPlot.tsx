@@ -4,6 +4,7 @@ import { InplaceVolGroupedResultValues } from "@modules/InplaceVolumetrics/utils
 import { computeQuantile } from "@modules/_shared/statistics";
 
 import { Layout, PlotData, PlotType, Shape } from "plotly.js";
+import { R } from "vitest/dist/reporters-qc5Smpt5";
 
 const colorPalette = [
     "#1f77b4", // muted blue
@@ -19,8 +20,8 @@ const colorPalette = [
 ];
 
 export type InplaceResultValues = {
-    groupName: string;
-    subGroupName: string;
+    groupByName: string;
+    colorByName: string;
     groupedValues: InplaceVolGroupedResultValues[];
 };
 export type InplaceHistogramPlotProps = {
@@ -28,16 +29,29 @@ export type InplaceHistogramPlotProps = {
     width: number;
     height: number;
 };
-export function InplaceHistogramPlot(props: InplaceHistogramPlotProps) {
+export function InplaceHistogramPlot(props: InplaceHistogramPlotProps): React.ReactElement {
     const numSubplots = props.resultValues.groupedValues.length;
     const numColumns = Math.ceil(Math.sqrt(numSubplots));
     const numRows = Math.ceil(numSubplots / numColumns);
-    const addedLegendNames: Set<string> = new Set();
-    function generateTraces(): any {
-        const traces: any = [];
+
+    function generateTraces(): Partial<PlotData>[] {
+        const addedLegendNames: Set<string> = new Set();
+        const traces: Partial<PlotData>[] = [];
         let subplotIndex = 1;
         let colorIndex = 0;
+        let globalMin = Number.POSITIVE_INFINITY;
+        let globalMax = Number.NEGATIVE_INFINITY;
 
+        props.resultValues.groupedValues.forEach((subPlot) => {
+            subPlot.subgroups.forEach((subgroup) => {
+                const min = Math.min(...subgroup.resultValues);
+                const max = Math.max(...subgroup.resultValues);
+                globalMin = Math.min(globalMin, min);
+                globalMax = Math.max(globalMax, max);
+            });
+        });
+
+        const binSize = (globalMax - globalMin) / 20;
         props.resultValues.groupedValues.forEach((subPlot) => {
             if (subPlot) {
                 subPlot.subgroups.forEach((subgroup) => {
@@ -45,13 +59,12 @@ export function InplaceHistogramPlot(props: InplaceHistogramPlotProps) {
                     if (shouldShowLegend) {
                         addedLegendNames.add(subgroup.subgroupName.toString());
                     }
-                    const trace = {
+                    const trace: Partial<PlotData> = {
                         x: subgroup.resultValues,
-                        type: "histogram" as PlotType,
+                        type: "histogram",
                         histnorm: "percent",
                         opacity: 0.7,
-                        nbinsx: 15,
-                        name: subgroup.subgroupName,
+                        name: subgroup.subgroupName.toString(),
                         showlegend: shouldShowLegend,
                         marker: {
                             color: colorPalette[colorIndex % colorPalette.length],
@@ -59,8 +72,14 @@ export function InplaceHistogramPlot(props: InplaceHistogramPlotProps) {
                         },
                         xaxis: `x${subplotIndex}`,
                         yaxis: `y${subplotIndex}`,
+                        xbins: {
+                            start: globalMin,
+                            end: globalMax,
+                            size: binSize,
+                        },
                     };
                     traces.push(trace);
+
                     colorIndex++;
                 });
             }
@@ -70,7 +89,7 @@ export function InplaceHistogramPlot(props: InplaceHistogramPlotProps) {
         return traces;
     }
 
-    function generateLayout(): any {
+    function generateLayout(): Layout {
         const layout: any = {
             height: props.height,
             width: props.width,
@@ -82,8 +101,9 @@ export function InplaceHistogramPlot(props: InplaceHistogramPlotProps) {
         };
 
         for (let i = 1; i <= props.resultValues.groupedValues.length; i++) {
+            const resultGroup = props.resultValues.groupedValues[i - 1];
             layout[`xaxis${i}`] = {
-                title: props.resultValues.groupedValues[i - 1].groupName,
+                title: resultGroup.groupName,
                 mirror: true,
                 showline: true,
                 linewidth: 1,
@@ -111,7 +131,6 @@ export function InplaceHistogramPlot(props: InplaceHistogramPlotProps) {
         return layout;
     }
     const data = generateTraces();
-    console.log(data);
     const layout = generateLayout();
     return <Plot data={data} layout={layout} config={{ displayModeBar: false }} />;
 }

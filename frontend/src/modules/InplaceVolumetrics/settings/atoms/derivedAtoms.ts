@@ -3,6 +3,8 @@ import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 import { atom } from "jotai";
 
 import {
+    colorByAtom,
+    groupByAtom,
     userSelectedEnsembleIdentsAtom,
     userSelectedInplaceCategoriesAtom,
     userSelectedInplaceResponseAtom,
@@ -10,17 +12,21 @@ import {
 } from "./baseAtoms";
 import { inplaceTableInfosQueryAtom } from "./queryAtoms";
 
-import { PlotGroupingEnum } from "../../typesAndEnums";
 import { findCommonTablesAcrossCollections } from "../../utils/intersectTableInfos";
 
 export const selectedEnsembleIdentsAtom = atom((get) => {
     const ensembleSet = get(EnsembleSetAtom);
     const userSelectedEnsembleIdents = get(userSelectedEnsembleIdentsAtom);
-
+    const groupBy = get(groupByAtom);
+    const colorBy = get(colorByAtom);
     let computedEnsembleIdents = userSelectedEnsembleIdents.filter((el) => ensembleSet.hasEnsemble(el));
     if (computedEnsembleIdents.length === 0 && ensembleSet.getEnsembleArr().length > 0) {
         computedEnsembleIdents = [ensembleSet.getEnsembleArr()[0].getIdent()];
     }
+    if (computedEnsembleIdents.length > 1 && groupBy !== "Ensemble" && colorBy !== "Ensemble") {
+        computedEnsembleIdents = [computedEnsembleIdents[0]];
+    }
+
     return computedEnsembleIdents;
 });
 
@@ -67,7 +73,6 @@ export const availableInplaceCategoriesAtom = atom((get) => {
     const intersectedTables = get(intersectedTablesAtom);
     const selectedInplaceTableName = get(selectedInplaceTableNameAtom);
     const selectedTable = intersectedTables.find((table) => table.name === selectedInplaceTableName);
-    console.log("availableInplaceCategoriesAtom derivedAtoms", selectedTable?.indexes ?? []);
     return selectedTable?.indexes ?? [];
 });
 
@@ -81,7 +86,7 @@ export const selectedInplaceCategoriesAtom = atom((get) => {
             const userSelectedCategory = userSelectedInplaceCategories.find(
                 (selectedCategory) => selectedCategory.index_name === category.index_name
             );
-            if (userSelectedCategory) {
+            if (userSelectedCategory && userSelectedCategory.values.length) {
                 return userSelectedCategory;
             }
             return category;

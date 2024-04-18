@@ -12,7 +12,7 @@ import { PendingWrapper } from "@lib/components/PendingWrapper";
 import { Select } from "@lib/components/Select";
 
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
-import { min } from "lodash";
+import { max } from "lodash";
 
 import {
     colorByAtom,
@@ -84,7 +84,7 @@ export function Settings(props: ModuleSettingsProps<State, Interface>) {
 
         if (categoryIndex !== -1) {
             const newCategories = selectedInplaceCategories.map((category, index) =>
-                index === categoryIndex ? { ...category, unique_values: values } : category
+                index === categoryIndex ? { ...category, values } : category
             );
             setSelectedInplaceCategories(newCategories);
         } else {
@@ -145,15 +145,22 @@ export function Settings(props: ModuleSettingsProps<State, Interface>) {
                         onChange={handleInplaceResponseChange}
                     />
                 </CollapsibleGroup>
-                <CollapsibleGroup title="Zone/Region filters" expanded>
+                <CollapsibleGroup title="Index filters" expanded>
                     {availableInplaceCategories.map((categoryData) => (
-                        <Select
-                            key={categoryData.index_name}
-                            options={categoryValuesToOptions(categoryData.values)}
-                            size={5}
-                            onChange={(values) => handleInplaceCategoriesChange(categoryData.index_name, values)}
-                            multiple
-                        />
+                        <CollapsibleGroup key={categoryData.index_name} title={categoryData.index_name}>
+                            <Select
+                                key={categoryData.index_name}
+                                options={categoryValuesToOptions(categoryData.values)}
+                                size={max([categoryData.values.length, 5])}
+                                value={
+                                    (selectedInplaceCategories.find(
+                                        (category) => category.index_name === categoryData.index_name
+                                    )?.values as string[]) || []
+                                }
+                                onChange={(values) => handleInplaceCategoriesChange(categoryData.index_name, values)}
+                                multiple
+                            />
+                        </CollapsibleGroup>
                     ))}
                 </CollapsibleGroup>
             </PendingWrapper>

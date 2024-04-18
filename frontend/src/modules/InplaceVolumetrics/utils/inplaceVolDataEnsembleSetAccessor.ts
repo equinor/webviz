@@ -1,3 +1,4 @@
+import { InplaceVolumetricsIndexNames_api, InplaceVolumetricsIndex_api } from "@api";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 
 import { InplaceVolDataEnsembleSet, PlotGroupingEnum } from "../typesAndEnums";
@@ -16,9 +17,9 @@ type InplaceVolSubgroupResultValues = {
     resultValues: number[];
     realizations: number[];
 };
-
 export function getGroupedInplaceVolResults(
     tableCollections: InplaceVolDataEnsembleSet[],
+    indexFilters: InplaceVolumetricsIndex_api[],
     groupBy: PlotGroupingEnum,
     subgroupBy: string
 ): InplaceVolGroupedResultValues[] {
@@ -28,8 +29,13 @@ export function getGroupedInplaceVolResults(
             throw new Error("Only one table collection is allowed when groupBy and subgroupBy are not ENSEMBLE");
         }
     }
+
     const table = createTable(tableCollections);
-    const groupedRows = getTableGroupingValues(table, groupBy);
+    console.log(table);
+    const filteredTable = filterOnIndexValues(table, indexFilters);
+    console.log(indexFilters);
+    console.log(filteredTable);
+    const groupedRows = getTableGroupingValues(filteredTable, groupBy);
     const subgroups = groupedRows.map((group) => ({
         groupName: group.key,
         subgroups: getSubgroups(group.rows, subgroupBy),
@@ -55,7 +61,17 @@ function getTableGroupingValues(
     });
     return Object.entries(acc).map(([key, rows]) => ({ key, rows }));
 }
-
+function filterOnIndexValues(
+    rows: InplaceVolTableRow[],
+    indexFilters: InplaceVolumetricsIndex_api[]
+): InplaceVolTableRow[] {
+    return rows.filter((row) => {
+        return indexFilters.every((filter) => {
+            const value = row[filter.index_name];
+            return value !== undefined && filter.values.includes(value as string | number);
+        });
+    });
+}
 function getSubgroups(
     rows: InplaceVolTableRow[],
     subgroupBy: keyof InplaceVolTableRow
