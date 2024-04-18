@@ -20,6 +20,9 @@ export const ParameterDistributionPlot: React.FC<ParameterDistributionPlotProps>
     const numRows = Math.ceil(numSubplots / numColumns);
     const addedLegendNames: Set<string> = new Set();
 
+    const showRugTraces =
+        props.plotType == ParameterDistributionPlotType.DISTRIBUTION_PLOT && props.showIndividualRealizationValues;
+
     function generateDistributionPlotTraces(): any[] {
         const traces: any[] = [];
         let subplotIndex = 1;
@@ -34,6 +37,7 @@ export const ParameterDistributionPlot: React.FC<ParameterDistributionPlotProps>
                 const distributionTrace = {
                     x: ensembleValue.values,
                     type: "violin" as PlotType,
+                    spanmode: "hard",
                     name: ensembleValue.ensembleDisplayName,
                     legendgroup: ensembleValue.ensembleDisplayName,
                     marker: { color: props.ensembleColors.get(ensembleValue.ensembleDisplayName) },
@@ -122,7 +126,7 @@ export const ParameterDistributionPlot: React.FC<ParameterDistributionPlotProps>
                     side: "positive",
                     width: 2,
                     points: false,
-                    boxpoints: props.showIndividualRealizationValues ? "all" : false,
+                    boxpoints: props.showIndividualRealizationValues ? "all" : "outliers",
                 };
                 traces.push(trace);
             });
@@ -152,13 +156,10 @@ export const ParameterDistributionPlot: React.FC<ParameterDistributionPlotProps>
                 linecolor: "black",
             };
 
-            const showYAxisZeroLine =
-                props.showIndividualRealizationValues &&
-                props.plotType == ParameterDistributionPlotType.DISTRIBUTION_PLOT;
             layout[`yaxis${i}`] = {
                 showticklabels: false,
                 showgrid: false,
-                zeroline: showYAxisZeroLine,
+                zeroline: showRugTraces,
                 mirror: true,
                 showline: true,
                 linewidth: 1,
