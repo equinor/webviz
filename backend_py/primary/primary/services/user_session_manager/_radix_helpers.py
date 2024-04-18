@@ -29,10 +29,13 @@ class RadixResourceRequests(BaseModel):
 #  * Sometimes we get an extra (undocumented) field returned, 'message'
 class RadixJobState(BaseModel):
     name: str
-    status: Literal["Waiting", "Running", "Succeeded", "Stopped", "Failed"] | None = None
+    status: Literal["Active", "Waiting", "Running", "Succeeded", "Stopped", "Failed"] | None = None
+    created: str | None = None
     started: str | None = None
     ended: str | None = None
+    updated: str | None = None
     message: str | None = None
+    podStatuses: list[dict] | None = None
 
 
 async def create_new_radix_job(
