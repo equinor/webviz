@@ -23,9 +23,6 @@ export const ParameterDistributionPlot: React.FC<ParameterDistributionPlotProps>
     const numRows = Math.ceil(numSubplots / numColumns);
     const addedLegendNames: Set<string> = new Set();
 
-    const p90Dash = "dashdot";
-    const p10Dash = "dash";
-    const meanDash = "dot";
     const showRugTraces =
         props.plotType == ParameterDistributionPlotType.DISTRIBUTION_PLOT && props.showIndividualRealizationValues;
 
@@ -39,6 +36,7 @@ export const ParameterDistributionPlot: React.FC<ParameterDistributionPlotProps>
                 if (shouldShowLegend) {
                     addedLegendNames.add(ensembleData.ensembleDisplayName);
                 }
+                const ensembleColor = props.ensembleColors.get(ensembleData.ensembleDisplayName);
 
                 const distributionTrace = {
                     x: ensembleData.values,
@@ -46,19 +44,32 @@ export const ParameterDistributionPlot: React.FC<ParameterDistributionPlotProps>
                     spanmode: "hard",
                     name: ensembleData.ensembleDisplayName,
                     legendgroup: ensembleData.ensembleDisplayName,
-                    marker: { color: props.ensembleColors.get(ensembleData.ensembleDisplayName) },
+                    marker: { color: ensembleColor },
                     xaxis: `x${subplotIndex}`,
                     yaxis: `y${subplotIndex}`,
                     showlegend: shouldShowLegend,
                     y0: 0,
                     hoverinfo: "none",
-                    meanline_visible: true,
+                    meanline: { visible: true },
                     orientation: "h",
                     side: "positive",
                     width: 2,
                     points: false,
                 };
                 traces.push(distributionTrace);
+
+                if (props.showPercentilesAndMeanLines) {
+                    const yPosition = 0;
+                    traces.push(
+                        ...createQuantileAndMeanMarkerTraces(
+                            ensembleData.values,
+                            yPosition,
+                            ensembleData.ensembleDisplayName,
+                            ensembleColor,
+                            subplotIndex
+                        )
+                    );
+                }
 
                 if (props.showIndividualRealizationValues) {
                     const hoverText = ensembleData.values.map(
@@ -90,6 +101,7 @@ export const ParameterDistributionPlot: React.FC<ParameterDistributionPlotProps>
                     traces.push(rugTrace);
                 }
             });
+
             subplotIndex++;
         });
 
@@ -111,6 +123,8 @@ export const ParameterDistributionPlot: React.FC<ParameterDistributionPlotProps>
                     throw new Error("Realizations and values must have the same length");
                 }
 
+                const ensembleColor = props.ensembleColors.get(ensembleData.ensembleDisplayName);
+
                 const verticalPosition = index * (2 + 1); // 2 is the height of each box + 1 space
                 const hoverText = ensembleData.values.map(
                     (_, index) => `Realization: ${ensembleData.realizations[index]}`
@@ -121,7 +135,7 @@ export const ParameterDistributionPlot: React.FC<ParameterDistributionPlotProps>
                     type: "box",
                     name: ensembleData.ensembleDisplayName,
                     legendgroup: ensembleData.ensembleDisplayName,
-                    marker: { color: props.ensembleColors.get(ensembleData.ensembleDisplayName) },
+                    marker: { color: ensembleColor },
                     xaxis: `x${subplotIndex}`,
                     yaxis: `y${subplotIndex}`,
                     showlegend: shouldShowLegend,
@@ -136,6 +150,18 @@ export const ParameterDistributionPlot: React.FC<ParameterDistributionPlotProps>
                     boxpoints: props.showIndividualRealizationValues ? "all" : "outliers",
                 };
                 traces.push(trace);
+
+                if (props.showPercentilesAndMeanLines) {
+                    traces.push(
+                        ...createQuantileAndMeanMarkerTraces(
+                            ensembleData.values,
+                            verticalPosition,
+                            ensembleData.ensembleDisplayName,
+                            ensembleColor,
+                            subplotIndex
+                        )
+                    );
+                }
             });
             subplotIndex++;
         });
@@ -143,98 +169,54 @@ export const ParameterDistributionPlot: React.FC<ParameterDistributionPlotProps>
         return traces;
     }
 
-    function generatePercentileShapes(): any {
-        const shapes: any[] = [];
-        let subplotIndex = 1;
-
-        props.dataArr.forEach((parameterData) => {
-            const defaultShape = {
-                type: "line",
-                xref: `x${subplotIndex}`, // Reference for x-coordinates is the x-axis
-                yref: `y${subplotIndex} domain`, // Reference for y-coordinates is local domain
-                y0: 0, // y-coordinate for the start of the line (bottom of the plot)
-                y1: 1.0, // y-coordinate for the end of the line (top of the plot)
-            };
-
-            parameterData.ensembleParameterRealizationAndValues.forEach((ensembleData) => {
-                const p90 = computeQuantile(ensembleData.values, 0.9);
-                const p10 = computeQuantile(ensembleData.values, 0.1);
-                const mean = ensembleData.values.reduce((a, b) => a + b, 0) / ensembleData.values.length;
-                shapes.push(
-                    ...[
-                        {
-                            ...defaultShape,
-                            x0: p90,
-                            x1: p90,
-                            line: {
-                                color: props.ensembleColors.get(ensembleData.ensembleDisplayName),
-                                width: 2,
-                                dash: p90Dash,
-                            },
-                        },
-                        {
-                            ...defaultShape,
-                            x0: p10,
-                            x1: p10,
-                            line: {
-                                color: props.ensembleColors.get(ensembleData.ensembleDisplayName),
-                                width: 2,
-                                dash: p10Dash,
-                            },
-                        },
-                        {
-                            ...defaultShape,
-                            x0: mean,
-                            x1: mean,
-                            line: {
-                                color: props.ensembleColors.get(ensembleData.ensembleDisplayName),
-                                width: 2,
-                                dash: meanDash,
-                            },
-                        },
-                    ]
-                );
-            });
-
-            subplotIndex++;
-        });
-
-        return shapes;
-    }
-
-    function generatePercentileEmptyTracesForLegend(): any {
-        const defaultEmptyTrace = {
-            x: [NaN], // x-coordinate of the shape (empty array because it's a non-data trace)
-            y: [NaN], // y-coordinate of the shape (empty array because it's a non-data trace)
-            mode: "lines", // Set mode to 'markers' to have no lines connecting points
+    function createQuantileAndMeanMarkerTraces(
+        parameterValues: number[],
+        yPosition: number,
+        ensembleName: string,
+        ensembleColor: string | undefined,
+        subplotIndex: number
+    ): any[] {
+        const p90 = computeQuantile(parameterValues, 0.9);
+        const p10 = computeQuantile(parameterValues, 0.1);
+        const mean = parameterValues.reduce((a, b) => a + b, 0) / parameterValues.length;
+        const p10Trace = {
+            x: [p10],
+            y: [yPosition],
+            type: "scatter",
+            hoverinfo: "x+text",
+            hovertext: "P10",
+            showlegend: false,
+            legendgroup: ensembleName,
+            xaxis: `x${subplotIndex}`,
+            yaxis: `y${subplotIndex}`,
+            marker: { color: ensembleColor, symbol: "x", size: 10 },
+        };
+        const meanTrace = {
+            x: [mean],
+            y: [yPosition],
+            type: "scatter",
+            hoverinfo: "x+text",
+            hovertext: "Mean",
+            showlegend: false,
+            legendgroup: ensembleName,
+            xaxis: `x${subplotIndex}`,
+            yaxis: `y${subplotIndex}`,
+            marker: { color: ensembleColor, symbol: "x", size: 10 },
+        };
+        const p90Trace = {
+            x: [p90],
+            y: [yPosition],
+            type: "scatter",
+            hoverinfo: "x+text",
+            hovertext: "P90",
+            showlegend: false,
+            legendgroup: ensembleName,
+            xaxis: `x${subplotIndex}`,
+            yaxis: `y${subplotIndex}`,
+            marker: { color: ensembleColor, symbol: "x", size: 10 },
         };
 
-        return [
-            {
-                ...defaultEmptyTrace,
-                line: {
-                    dash: p10Dash, // Set the line style for legend
-                    color: "black",
-                },
-                name: "P10", // Set name to display in the legend
-            },
-            {
-                ...defaultEmptyTrace,
-                line: {
-                    dash: meanDash, // Set the line style for legend
-                    color: "black",
-                },
-                name: "Mean", // Set name to display in the legend
-            },
-            {
-                ...defaultEmptyTrace,
-                line: {
-                    dash: p90Dash, // Set the line style for legend
-                    color: "black",
-                },
-                name: "P90", // Set name to display in the legend
-            },
-        ];
+        return [p10Trace, meanTrace, p90Trace];
     }
 
     function generateLayout(): any {
@@ -289,10 +271,6 @@ export const ParameterDistributionPlot: React.FC<ParameterDistributionPlotProps>
     }
 
     const layout = generateLayout();
-    if (props.showPercentilesAndMeanLines) {
-        layout["shapes"] = generatePercentileShapes();
-        data.push(...generatePercentileEmptyTracesForLegend());
-    }
 
     return <Plot data={data} layout={layout} config={{ displayModeBar: false }} />;
 };

@@ -78,16 +78,19 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
                 />
             </CollapsibleGroup>
             <CollapsibleGroup title="Plot options" expanded>
-                <Checkbox
-                    label="Show individual realization values"
-                    checked={showIndividualRealizationValues}
-                    onChange={handleShowIndividualRealizationValuesChange}
-                />
-                <Checkbox
-                    label="Show P10, Mean, P90 lines"
-                    checked={showPercentilesAndMeanLines}
-                    onChange={handleShowPercentilesAndMeanLinesChange}
-                />
+                <div className="flex flex-col gap-2">
+                    {"Show additional data"}
+                    <Checkbox
+                        label="Individual realization values"
+                        checked={showIndividualRealizationValues}
+                        onChange={handleShowIndividualRealizationValuesChange}
+                    />
+                    <Checkbox
+                        label="Markers P10, Mean, P90"
+                        checked={showPercentilesAndMeanLines}
+                        onChange={handleShowPercentilesAndMeanLinesChange}
+                    />
+                </div>
             </CollapsibleGroup>
             <CollapsibleGroup title="Ensembles" expanded>
                 <EnsembleSelect
