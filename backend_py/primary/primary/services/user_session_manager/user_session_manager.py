@@ -10,10 +10,7 @@ from pottery import Redlock
 from webviz_pkg.core_utils.background_tasks import run_in_background_task
 from webviz_pkg.core_utils.perf_timer import PerfTimer
 
-from ._radix_helpers import IS_ON_RADIX_PLATFORM
-from ._radix_helpers import create_new_radix_job, RadixResourceRequests
-from ._radix_helpers import is_radix_job_running, poll_radix_job_state_until_running
-from ._radix_helpers import delete_named_radix_job
+from ._radix_helpers import IS_ON_RADIX_PLATFORM, RadixResourceRequests, RadixJobApi
 from ._user_session_directory import SessionInfo, SessionRunState, UserSessionDirectory
 from ._util_classes import LockReleasingContext, TimeCounter
 
@@ -172,9 +169,8 @@ async def _get_info_for_running_session(
 
     if IS_ON_RADIX_PLATFORM:
         LOGGER.debug("Found user session, verifying its existence against radix job manager")
-        radix_job_is_running = await is_radix_job_running(
-            job_component_name, job_scheduler_port, session_info.radix_job_name
-        )
+        radix_job_api = RadixJobApi(job_component_name, job_scheduler_port)
+        radix_job_is_running = await radix_job_api.is_radix_job_running(session_info.radix_job_name)
         if not radix_job_is_running:
             LOGGER.debug("Could not find running job in radix job manager")
             return None
@@ -229,16 +225,14 @@ async def _create_new_session(
         session_info_updater.set_state_creating()
 
         if IS_ON_RADIX_PLATFORM:
+            radix_job_api = RadixJobApi(job_component_name, job_scheduler_port)
+
             if old_session_info and old_session_info.radix_job_name:
                 LOGGER.debug(f"Trying to delete old radix job {old_session_info.radix_job_name=}")
-                run_in_background_task(
-                    delete_named_radix_job(job_component_name, job_scheduler_port, old_session_info.radix_job_name)
-                )
+                run_in_background_task(radix_job_api.delete_named_job(old_session_info.radix_job_name))
 
             LOGGER.debug(f"Creating new job using radix job manager ({job_component_name=}, {job_scheduler_port=})")
-            new_radix_job_name = await create_new_radix_job(
-                job_component_name, job_scheduler_port, resource_req, job_payload_dict
-            )
+            new_radix_job_name = await radix_job_api.create_new_job(resource_req, job_payload_dict)
             if new_radix_job_name is None:
                 LOGGER.error(f"Failed to create new job in radix ({job_component_name=}, {job_scheduler_port=})")
                 session_info_updater.delete_all_state()
@@ -249,17 +243,13 @@ async def _create_new_session(
 
             # Try and poll the radix job manager here to verify that the job transitions to the running state
             polling_time_budget_s = time_counter.remaining_s()
-            radix_job_is_running = await poll_radix_job_state_until_running(
-                job_component_name, job_scheduler_port, new_radix_job_name, polling_time_budget_s
-            )
+            radix_job_is_running = await radix_job_api.poll_until_job_running(new_radix_job_name, polling_time_budget_s)
             if not radix_job_is_running:
                 LOGGER.error(
                     "The new radix job did not enter running state within time limit of {polling_time_budget_s:.2f}s, giving up and deleting it"
                 )
                 session_info_updater.delete_all_state()
-                run_in_background_task(
-                    delete_named_radix_job(job_component_name, job_scheduler_port, new_radix_job_name)
-                )
+                run_in_background_task(radix_job_api.delete_named_job(new_radix_job_name))
                 return None
 
             LOGGER.debug(
@@ -282,7 +272,7 @@ async def _create_new_session(
             LOGGER.error("The newly created radix job failed to come online, giving up and deleting it")
             session_info_updater.delete_all_state()
             # Should delete the radix job as well
-            run_in_background_task(delete_named_radix_job(job_component_name, job_scheduler_port, new_radix_job_name))
+            run_in_background_task(radix_job_api.delete_named_job(new_radix_job_name))
             return None
 
         session_info_updater.set_state_running()

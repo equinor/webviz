@@ -11,9 +11,7 @@ from primary.auth.auth_helper import AuthenticatedUser, AuthHelper
 from primary.services.user_session_manager.user_session_manager import UserSessionManager
 from primary.services.user_session_manager.user_session_manager import UserComponent
 from primary.services.user_session_manager.user_session_manager import _USER_SESSION_DEFS
-from primary.services.user_session_manager._radix_helpers import create_new_radix_job, RadixResourceRequests
-from primary.services.user_session_manager._radix_helpers import get_all_radix_jobs, get_radix_job_state
-from primary.services.user_session_manager._radix_helpers import delete_all_radix_jobs
+from backend_py.primary.primary.services.user_session_manager._radix_helpers import RadixResourceRequests, RadixJobApi
 from primary.services.user_session_manager._user_session_directory import UserSessionDirectory
 from primary.services.user_grid3d_service.user_grid3d_service import UserGrid3dService, IJKIndexFilter
 
@@ -64,8 +62,9 @@ async def usersession_radixlist(user_component: UserComponent) -> list:
     LOGGER.debug(f"usersession_radixlist() {user_component=}")
 
     session_def = _USER_SESSION_DEFS[user_component]
+    radix_job_api = RadixJobApi(session_def.job_component_name, session_def.port)
 
-    job_list = await get_all_radix_jobs(session_def.job_component_name, session_def.port)
+    job_list = await radix_job_api.get_all_jobs()
 
     LOGGER.debug("======================")
     LOGGER.debug(job_list)
@@ -79,11 +78,9 @@ async def usersession_radixcreate(user_component: UserComponent) -> str:
     LOGGER.debug(f"usersession_radixcreate() {user_component=}")
 
     session_def = _USER_SESSION_DEFS[user_component]
-
+    radix_job_api = RadixJobApi(session_def.job_component_name, session_def.port)
     resource_req = RadixResourceRequests(cpu="50m", memory="100Mi")
-    new_radix_job_name = await create_new_radix_job(
-        session_def.job_component_name, session_def.port, resource_req, None
-    )
+    new_radix_job_name = await radix_job_api.create_new_job(resource_req, None)
     LOGGER.debug(f"Created new job: {new_radix_job_name=}")
     if new_radix_job_name is None:
         return "Failed to create new job"
@@ -91,9 +88,7 @@ async def usersession_radixcreate(user_component: UserComponent) -> str:
     LOGGER.debug(f"Polling job until receiving running status: {new_radix_job_name=}")
     max_state_calls = 20
     for _i in range(max_state_calls):
-        radix_job_state = await get_radix_job_state(
-            session_def.job_component_name, session_def.port, new_radix_job_name
-        )
+        radix_job_state = await radix_job_api.get_job_state(new_radix_job_name)
         session_status = radix_job_state.status if radix_job_state else "N/A"
         LOGGER.debug(f"Status: {session_status=}")
         await asyncio.sleep(0.1)
@@ -106,8 +101,9 @@ async def usersession_radixdelete(user_component: UserComponent) -> str:
     LOGGER.debug(f"usersession_radixdelete() {user_component=}")
 
     session_def = _USER_SESSION_DEFS[user_component]
+    radix_job_api = RadixJobApi(session_def.job_component_name, session_def.port)
 
-    await delete_all_radix_jobs(session_def.job_component_name, session_def.port)
+    await radix_job_api.delete_all_jobs()
 
     return "Delete done"
 
