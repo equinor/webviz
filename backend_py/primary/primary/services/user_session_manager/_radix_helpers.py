@@ -7,6 +7,8 @@ from typing import List, Literal
 import httpx
 from pydantic import BaseModel, TypeAdapter
 
+from ._util_classes import TimeCounter
+
 LOGGER = logging.getLogger(__name__)
 
 
@@ -89,9 +91,9 @@ async def create_new_radix_job(
     # getting back from this call is the name of the newly created job.
     response_dict = response.json()
 
-    LOGGER.debug("------")
-    LOGGER.debug(f"{response_dict=}")
-    LOGGER.debug("------")
+    # LOGGER.debug("------")
+    # LOGGER.debug(f"{response_dict=}")
+    # LOGGER.debug("------")
 
     radix_job_name = response_dict["name"]
     LOGGER.debug(f"create_new_radix_job() - new job created {radix_job_name=}")
@@ -102,7 +104,7 @@ async def create_new_radix_job(
 async def get_radix_job_state(
     job_component_name: str, job_scheduler_port: int, radix_job_name: str
 ) -> RadixJobState | None:
-    
+
     url = f"http://{job_component_name}:{job_scheduler_port}/api/v1/jobs/{radix_job_name}"
     LOGGER.debug(f"get_radix_job_state() - {job_component_name=}, {radix_job_name=}, {url=}")
 
@@ -132,6 +134,44 @@ async def is_radix_job_running(job_component_name: str, job_scheduler_port: int,
         return True
 
     return False
+
+
+async def poll_radix_job_state_until_running(
+    job_component_name: str, job_scheduler_port: int, radix_job_name: str, stop_after_delay_s: float
+) -> bool:
+
+    LOGGER.debug(
+        f"poll_radix_job_state_until_running() - {job_component_name=}, {radix_job_name=}, {stop_after_delay_s=:.2f}"
+    )
+
+    # Default timeout of get_radix_job_state() is 5s
+    state_query_timeout_s = 5
+    sleep_time_s = 1
+
+    time_counter = TimeCounter(stop_after_delay_s)
+    num_calls = 0
+
+    while True:
+        radix_job_state = await get_radix_job_state(job_component_name, job_scheduler_port, radix_job_name)
+        num_calls += 1
+
+        if radix_job_state and radix_job_state.status == "Running":
+            LOGGER.debug(
+                f"poll_radix_job_state_until_running() - succeeded on attempt {num_calls}, time spent: {time_counter.elapsed_s():.2f}s"
+            )
+            return True
+
+        job_status = radix_job_state.status if radix_job_state else "NA"
+        LOGGER.debug(f"poll_radix_job_state_until_running() - attempt {num_calls} gave status {job_status=}")
+
+        elapsed_s = time_counter.elapsed_s()
+        if elapsed_s + sleep_time_s + state_query_timeout_s > stop_after_delay_s:
+            LOGGER.debug(
+                f"poll_radix_job_state_until_running() - giving up after {num_calls}, time spent: {elapsed_s:.2f}s"
+            )
+            return False
+
+        await asyncio.sleep(sleep_time_s)
 
 
 async def get_all_radix_jobs(job_component_name: str, job_scheduler_port: int) -> List[RadixJobState]:

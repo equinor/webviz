@@ -12,7 +12,8 @@ from webviz_pkg.core_utils.perf_timer import PerfTimer
 
 from ._radix_helpers import IS_ON_RADIX_PLATFORM
 from ._radix_helpers import create_new_radix_job, RadixResourceRequests
-from ._radix_helpers import is_radix_job_running, delete_named_radix_job, get_radix_job_state
+from ._radix_helpers import is_radix_job_running, poll_radix_job_state_until_running
+from ._radix_helpers import delete_named_radix_job
 from ._user_session_directory import SessionInfo, SessionRunState, UserSessionDirectory
 from ._util_classes import LockReleasingContext, TimeCounter
 
@@ -181,7 +182,7 @@ async def _get_info_for_running_session(
         # Can we afford the more extensive live check against the service's health endpoint?
         live_endpoint = f"http://{session_info.radix_job_name}:{actual_service_port}/health/live"
         LOGGER.debug(f"Job is running in radix, probing health endpoint of contained service at: {live_endpoint=}")
-        is_ready, msg = await call_health_endpoint(live_endpoint, timeout_s=2)
+        is_ready, msg = await _call_health_endpoint(live_endpoint, timeout_s=2)
         if not is_ready:
             LOGGER.debug(f"Contained service seems to be dead {msg=}")
             return None
@@ -243,12 +244,12 @@ async def _create_new_session(
                 session_info_updater.delete_all_state()
                 return None
 
-            LOGGER.debug(f"New radix job was created, will wait for it to enter running state {new_radix_job_name=}")
+            LOGGER.debug(f"New radix job was created, will wait for it to enter running state ({new_radix_job_name=})")
             session_info_updater.set_state_waiting(new_radix_job_name)
 
             # Try and poll the radix job manager here to verify that the job transitions to the running state
             polling_time_budget_s = time_counter.remaining_s()
-            radix_job_is_running = poll_radix_job_state_until_running(
+            radix_job_is_running = await poll_radix_job_state_until_running(
                 job_component_name, job_scheduler_port, new_radix_job_name, polling_time_budget_s
             )
             if not radix_job_is_running:
@@ -262,7 +263,7 @@ async def _create_new_session(
                 return None
 
             LOGGER.debug(
-                f"Radix job has entered running state, will try and wait for it to come alive {new_radix_job_name=}"
+                f"Radix job has entered running state, will try and wait for it to come alive ({new_radix_job_name=})"
             )
 
         else:
@@ -276,7 +277,7 @@ async def _create_new_session(
         # This must be aligned with the auto release time for our lock and also the polling for session info that is done against redis
         ready_endpoint = f"http://{new_radix_job_name}:{actual_service_port}/health/ready"
         probe_time_budget_s = time_counter.remaining_s()
-        is_ready, msg = await call_health_endpoint_with_retries(ready_endpoint, probe_time_budget_s)
+        is_ready, msg = await _call_health_endpoint_with_retries(ready_endpoint, probe_time_budget_s)
         if not is_ready:
             LOGGER.error("The newly created radix job failed to come online, giving up and deleting it")
             session_info_updater.delete_all_state()
@@ -304,38 +305,9 @@ async def _create_new_session(
         return session_info
 
 
-async def poll_radix_job_state_until_running(job_component_name: str, job_scheduler_port: int, radix_job_name: str, stop_after_delay_s: float) -> bool:
+async def _call_health_endpoint_with_retries(health_url: str, stop_after_delay_s: float) -> Tuple[bool, str]:
 
-    LOGGER.debug(f"poll_radix_job_state_until_running() - {job_component_name=}, {radix_job_name=}, {stop_after_delay_s=:.2f}")
-
-    # Default timeout of 5s
-    state_query_timeout_s = 5
-    sleep_time_s = 1
-
-    time_counter = TimeCounter(stop_after_delay_s)
-    num_calls = 0
-
-    while True:
-        radix_job_state = await get_radix_job_state(job_component_name, job_scheduler_port, radix_job_name)
-        num_calls += 1
-
-        if radix_job_state and radix_job_state.status == "Running":
-            LOGGER.debug(f"poll_radix_job_state_until_running() - succeeded on attempt {num_calls}, time spent: {time_counter.elapsed_s():.2f}s")
-            return True, ""
-
-        job_status = radix_job_state.status if radix_job_state else "NA"
-        LOGGER.debug(f"poll_radix_job_state_until_running() - attempt {num_calls} gave status {job_status=}")
-
-        elapsed_s = time_counter.elapsed_s()
-        if elapsed_s + sleep_time_s + state_query_timeout_s > stop_after_delay_s:
-            LOGGER.debug(f"poll_radix_job_state_until_running() - giving up after {num_calls}, time spent: {elapsed_s:.2f}s")
-            return False
-
-        await asyncio.sleep(sleep_time_s)
-
-
-async def call_health_endpoint_with_retries(health_url: str, stop_after_delay_s: float) -> Tuple[bool, str]:
-    LOGGER.debug(f"call_health_endpoint_with_retries() - {health_url=} {stop_after_delay_s=:.2f}")
+    LOGGER.debug(f"_call_health_endpoint_with_retries() - {health_url=} {stop_after_delay_s=:.2f}")
 
     target_request_timeout_s = 3
     min_request_timeout_s = 1
@@ -347,28 +319,28 @@ async def call_health_endpoint_with_retries(health_url: str, stop_after_delay_s:
     async with httpx.AsyncClient(timeout=target_request_timeout_s) as client:
         while True:
             request_timeout_s = min(target_request_timeout_s, max(min_request_timeout_s, time_counter.remaining_s()))
-            LOGGER.debug(f"call_health_endpoint_with_retries() - querying endpoint with {request_timeout_s=}")
+            LOGGER.debug(f"_call_health_endpoint_with_retries() - querying endpoint with {request_timeout_s=}")
             success, msg = await _call_health_endpoint_with_client(client, health_url, request_timeout_s)
             num_calls += 1
             if success:
                 LOGGER.debug(
-                    f"call_health_endpoint_with_retries() - succeeded on attempt {num_calls}, time spent: {time_counter.elapsed_s():.2f}s, {msg=}"
+                    f"_call_health_endpoint_with_retries() - succeeded on attempt {num_calls}, time spent: {time_counter.elapsed_s():.2f}s, {msg=}"
                 )
                 return success, msg
 
-            LOGGER.debug(f"call_health_endpoint_with_retries() - attempt {num_calls} failed with error: {msg=}")
+            LOGGER.debug(f"_call_health_endpoint_with_retries() - attempt {num_calls} failed with error: {msg=}")
 
             elapsed_s = time_counter.elapsed_s()
             if elapsed_s + sleep_time_s + min_request_timeout_s > stop_after_delay_s:
                 LOGGER.debug(
-                    f"call_health_endpoint_with_retries() - giving up after {num_calls} failed attempts, time spent: {elapsed_s:.2f}s"
+                    f"_call_health_endpoint_with_retries() - giving up after {num_calls} failed attempts, time spent: {elapsed_s:.2f}s"
                 )
                 return False, f"Giving up after {num_calls} failed attempts, time spent: {elapsed_s:.2f}s"
 
             await asyncio.sleep(sleep_time_s)
 
 
-async def call_health_endpoint(health_url: str, timeout_s: float) -> Tuple[bool, str]:
+async def _call_health_endpoint(health_url: str, timeout_s: float) -> Tuple[bool, str]:
     async with httpx.AsyncClient() as client:
         return await _call_health_endpoint_with_client(client, health_url, timeout_s)
 
