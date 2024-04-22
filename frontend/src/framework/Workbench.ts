@@ -1,5 +1,6 @@
 import { QueryClient } from "@tanstack/react-query";
 
+import { AtomStoreMaster } from "./AtomStoreMaster";
 import { EnsembleIdent } from "./EnsembleIdent";
 import { GuiMessageBroker, GuiState } from "./GuiMessageBroker";
 import { InitialSettings } from "./InitialSettings";
@@ -27,7 +28,7 @@ export type LayoutElement = {
 };
 
 export class Workbench {
-    private _moduleInstances: ModuleInstance<any>[];
+    private _moduleInstances: ModuleInstance<any, any>[];
     private _workbenchSession: WorkbenchSessionPrivate;
     private _workbenchServices: PrivateWorkbenchServices;
     private _workbenchSettings: PrivateWorkbenchSettings;
@@ -35,10 +36,12 @@ export class Workbench {
     private _subscribersMap: { [key: string]: Set<() => void> };
     private _layout: LayoutElement[];
     private _perModuleRunningInstanceNumber: Record<string, number>;
+    private _atomStoreMaster: AtomStoreMaster;
 
     constructor() {
         this._moduleInstances = [];
-        this._workbenchSession = new WorkbenchSessionPrivate();
+        this._atomStoreMaster = new AtomStoreMaster();
+        this._workbenchSession = new WorkbenchSessionPrivate(this._atomStoreMaster);
         this._workbenchServices = new PrivateWorkbenchServices(this);
         this._workbenchSettings = new PrivateWorkbenchSettings();
         this._guiMessageBroker = new GuiMessageBroker();
@@ -58,6 +61,10 @@ export class Workbench {
 
     getLayout(): LayoutElement[] {
         return this._layout;
+    }
+
+    getAtomStoreMaster(): AtomStoreMaster {
+        return this._atomStoreMaster;
     }
 
     getWorkbenchSession(): WorkbenchSessionPrivate {
@@ -94,11 +101,11 @@ export class Workbench {
         };
     }
 
-    getModuleInstances(): ModuleInstance<any>[] {
+    getModuleInstances(): ModuleInstance<any, any>[] {
         return this._moduleInstances;
     }
 
-    getModuleInstance(id: string): ModuleInstance<any> | undefined {
+    getModuleInstance(id: string): ModuleInstance<any, any> | undefined {
         return this._moduleInstances.find((moduleInstance) => moduleInstance.getId() === id);
     }
 
@@ -122,6 +129,7 @@ export class Workbench {
 
             module.setWorkbench(this);
             const moduleInstance = module.makeInstance(this.getNextModuleInstanceNumber(module.getName()));
+            this._atomStoreMaster.makeAtomStoreForModuleInstance(moduleInstance.getId());
             this._moduleInstances.push(moduleInstance);
             this._layout[index] = { ...this._layout[index], moduleInstanceId: moduleInstance.getId() };
             this.notifySubscribers(WorkbenchEvents.ModuleInstancesChanged);
@@ -143,7 +151,7 @@ export class Workbench {
         this.notifySubscribers(WorkbenchEvents.ModuleInstancesChanged);
     }
 
-    makeAndAddModuleInstance(moduleName: string, layout: LayoutElement): ModuleInstance<any> {
+    makeAndAddModuleInstance(moduleName: string, layout: LayoutElement): ModuleInstance<any, any> {
         const module = ModuleRegistry.getModule(moduleName);
         if (!module) {
             throw new Error(`Module ${moduleName} not found`);
@@ -152,6 +160,7 @@ export class Workbench {
         module.setWorkbench(this);
 
         const moduleInstance = module.makeInstance(this.getNextModuleInstanceNumber(module.getName()));
+        this._atomStoreMaster.makeAtomStoreForModuleInstance(moduleInstance.getId());
         this._moduleInstances.push(moduleInstance);
 
         this._layout.push({ ...layout, moduleInstanceId: moduleInstance.getId() });
@@ -168,6 +177,8 @@ export class Workbench {
         }
 
         this._moduleInstances = this._moduleInstances.filter((el) => el.getId() !== moduleInstanceId);
+
+        this._atomStoreMaster.removeAtomStoreForModuleInstance(moduleInstanceId);
 
         const newLayout = this._layout.filter((el) => el.moduleInstanceId !== moduleInstanceId);
         this.setLayout(newLayout);

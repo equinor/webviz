@@ -1,6 +1,12 @@
 import { ModuleRegistry } from "@framework/ModuleRegistry";
 
 import { preview } from "./preview";
-import state from "./state";
+import { Interface, State } from "./state";
 
-ModuleRegistry.registerModule<state>({ moduleName: "Pvt", defaultTitle: "PVT", preview });
+export const MODULE_NAME = "Pvt";
+
+ModuleRegistry.registerModule<State, Interface>({
+    moduleName: MODULE_NAME,
+    defaultTitle: "PVT",
+    preview,
+});

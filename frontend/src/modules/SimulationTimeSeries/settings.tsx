@@ -5,10 +5,12 @@ import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { Parameter, ParameterIdent } from "@framework/EnsembleParameters";
 import { ModuleSettingsProps } from "@framework/Module";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
+import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
-import { MultiEnsembleSelect } from "@framework/components/MultiEnsembleSelect";
-import { ParameterListFilter } from "@framework/components/ParameterListFilter";
 import { VectorSelector } from "@framework/components/VectorSelector";
+import { EnsembleDropdown } from "@framework/components/EnsembleDropdown";
+import { ParameterListFilter } from "@framework/components/ParameterListFilter";
+import { fixupEnsembleIdent, maybeAssignFirstSyncedEnsemble } from "@framework/utils/ensembleUiHelpers";
 import { Checkbox } from "@lib/components/Checkbox";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
@@ -64,6 +66,13 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
     const statusWriter = useSettingsStatusWriter(settingsContext);
 
     const [selectedVectorTags, setSelectedVectorTags] = React.useState<string[]>([]);
+    const syncedSettingKeys = settingsContext.useSyncedSettingKeys();
+    const syncHelper = new SyncSettingsHelper(syncedSettingKeys, workbenchServices);
+    const syncedValueEnsembles = syncHelper.useValue(SyncSettingKey.ENSEMBLE, "global.syncValue.ensembles");
+    const syncedValueSummaryVector = syncHelper.useValue(SyncSettingKey.TIME_SERIES, "global.syncValue.timeSeries");
+    console.debug(`${myInstanceIdStr} -- synced keys ${JSON.stringify(syncedSettingKeys)}`);
+    console.debug(`${myInstanceIdStr} -- syncedValueEnsembles=${JSON.stringify(syncedValueEnsembles)}`);
+    console.debug(`${myInstanceIdStr} -- syncedValueSummaryVector=${JSON.stringify(syncedValueSummaryVector)}`);
 
     const [resampleFrequency, setResamplingFrequency] = useAtom(resampleFrequencyAtom);
     const [groupBy, setGroupBy] = useAtom(groupByAtom);

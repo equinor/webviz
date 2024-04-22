@@ -2,10 +2,10 @@ import React from "react";
 
 import { SurfaceAttributeType_api, SurfaceStatisticFunction_api } from "@api";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
-import { ModuleFCProps } from "@framework/Module";
+import { ModuleSettingsProps } from "@framework/Module";
 import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
-import { SingleEnsembleSelect } from "@framework/components/SingleEnsembleSelect";
+import { EnsembleDropdown } from "@framework/components/EnsembleDropdown";
 import { fixupEnsembleIdent, maybeAssignFirstSyncedEnsemble } from "@framework/utils/ensembleUiHelpers";
 import { Button } from "@lib/components/Button";
 import { Checkbox } from "@lib/components/Checkbox";
@@ -53,8 +53,8 @@ const SurfaceTimeTypeEnumToStringMapping = {
     [SurfaceTimeType.TimePoint]: "Time point",
     [SurfaceTimeType.Interval]: "Time interval",
 };
-export function Settings({ moduleContext, workbenchSession, workbenchServices }: ModuleFCProps<state>) {
-    const myInstanceIdStr = moduleContext.getInstanceIdString();
+export function Settings({ settingsContext, workbenchSession, workbenchServices }: ModuleSettingsProps<state>) {
+    const myInstanceIdStr = settingsContext.getInstanceIdString();
     console.debug(`${myInstanceIdStr} -- render TopographicMap settings`);
 
     const ensembleSet = useEnsembleSet(workbenchSession);
@@ -69,7 +69,7 @@ export function Settings({ moduleContext, workbenchSession, workbenchServices }:
     const [selectedPolygonName, setSelectedPolygonName] = React.useState<string | null>(null);
     const [selectedPolygonAttribute, setSelectedPolygonAttribute] = React.useState<string | null>(null);
     const [linkPolygonNameToSurfaceName, setLinkPolygonNameToSurfaceName] = React.useState<boolean>(true);
-    const [selectedWellUuids, setSelectedWellUuids] = moduleContext.useStoreState("selectedWellUuids");
+    const [selectedWellUuids, setSelectedWellUuids] = settingsContext.useStoreState("selectedWellUuids");
     const [showPolygon, setShowPolygon] = React.useState<boolean>(true);
     const [realizationNum, setRealizationNum] = React.useState<number>(0);
     const [aggregation, setAggregation] = React.useState<SurfaceStatisticFunction_api | null>(null);
@@ -81,7 +81,7 @@ export function Settings({ moduleContext, workbenchSession, workbenchServices }:
     const [showMaterial, setShowMaterial] = React.useState(false);
     const [show3D, setShow3D] = React.useState(true);
 
-    const syncedSettingKeys = moduleContext.useSyncedSettingKeys();
+    const syncedSettingKeys = settingsContext.useSyncedSettingKeys();
     const syncHelper = new SyncSettingsHelper(syncedSettingKeys, workbenchServices);
     const syncedValueEnsembles = syncHelper.useValue(SyncSettingKey.ENSEMBLE, "global.syncValue.ensembles");
     const syncedValueSurface = syncHelper.useValue(SyncSettingKey.SURFACE, "global.syncValue.surface");
@@ -261,7 +261,7 @@ export function Settings({ moduleContext, workbenchSession, workbenchServices }:
             }
 
             console.debug(`propagateSurfaceSelectionToView() => ${surfAddr ? "valid surfAddr" : "NULL surfAddr"}`);
-            moduleContext.getStateStore().setValue("meshSurfaceAddress", surfAddr);
+            settingsContext.getStateStore().setValue("meshSurfaceAddress", surfAddr);
         },
         [
             selectedEnsembleIdent,
@@ -272,14 +272,14 @@ export function Settings({ moduleContext, workbenchSession, workbenchServices }:
             computedEnsembleIdent,
             computedMeshSurfaceName,
             computedMeshSurfaceAttribute,
-            moduleContext,
+            settingsContext,
         ]
     );
     React.useEffect(
         function propagatePropertySurfaceSelectionToView() {
             let surfAddr: SurfaceAddress | null = null;
             if (!usePropertySurface) {
-                moduleContext.getStateStore().setValue("propertySurfaceAddress", surfAddr);
+                settingsContext.getStateStore().setValue("propertySurfaceAddress", surfAddr);
                 return;
             }
             if (computedEnsembleIdent && computedPropertySurfaceName && computedPropertySurfaceAttribute) {
@@ -299,7 +299,7 @@ export function Settings({ moduleContext, workbenchSession, workbenchServices }:
             }
 
             console.debug(`propagateSurfaceSelectionToView() => ${surfAddr ? "valid surfAddr" : "NULL surfAddr"}`);
-            moduleContext.getStateStore().setValue("propertySurfaceAddress", surfAddr);
+            settingsContext.getStateStore().setValue("propertySurfaceAddress", surfAddr);
         },
         [
             selectedEnsembleIdent,
@@ -313,7 +313,7 @@ export function Settings({ moduleContext, workbenchSession, workbenchServices }:
             computedPropertySurfaceName,
             computedPropertySurfaceAttribute,
             computedPropertyTimeOrInterval,
-            moduleContext,
+            settingsContext,
         ]
     );
     React.useEffect(
@@ -329,7 +329,7 @@ export function Settings({ moduleContext, workbenchSession, workbenchServices }:
                 };
             }
 
-            moduleContext.getStateStore().setValue("polygonsAddress", polygonAddr);
+            settingsContext.getStateStore().setValue("polygonsAddress", polygonAddr);
         },
         [
             selectedEnsembleIdent,
@@ -344,27 +344,27 @@ export function Settings({ moduleContext, workbenchSession, workbenchServices }:
             computedMeshSurfaceName,
             computedPolygonsName,
             computedPolygonsAttribute,
-            moduleContext,
+            settingsContext,
         ]
     );
     React.useEffect(
         function propogateSurfaceSettingsToView() {
-            moduleContext.getStateStore().setValue("surfaceSettings", {
+            settingsContext.getStateStore().setValue("surfaceSettings", {
                 contours: showContour ? [contourStartValue, contourIncValue] : false,
                 gridLines: showGrid,
                 smoothShading: showSmoothShading,
                 material: showMaterial,
             });
         },
-        [showContour, contourStartValue, contourIncValue, showGrid, showSmoothShading, showMaterial, moduleContext]
+        [showContour, contourStartValue, contourIncValue, showGrid, showSmoothShading, showMaterial, settingsContext]
     );
     React.useEffect(
         function propogateSubsurfaceMapViewSettingsToView() {
-            moduleContext.getStateStore().setValue("viewSettings", {
+            settingsContext.getStateStore().setValue("viewSettings", {
                 show3d: show3D,
             });
         },
-        [show3D, moduleContext]
+        [show3D, settingsContext]
     );
 
     const wellHeadersQuery = useWellHeadersQuery(computedEnsembleIdent?.getCaseUuid());
@@ -473,7 +473,7 @@ export function Settings({ moduleContext, workbenchSession, workbenchServices }:
         <div className="flex flex-col gap-2 overflow-y-auto">
             <CollapsibleGroup expanded={true} title="Ensemble and realization">
                 <Label text="Ensemble" synced={syncHelper.isSynced(SyncSettingKey.ENSEMBLE)}>
-                    <SingleEnsembleSelect
+                    <EnsembleDropdown
                         ensembleSet={ensembleSet}
                         value={computedEnsembleIdent ? computedEnsembleIdent : null}
                         onChange={handleEnsembleSelectionChange}

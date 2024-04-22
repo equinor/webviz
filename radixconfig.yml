@@ -10,6 +10,9 @@ spec:
     - name: review
       build:
         from: review
+    - name: dev
+      build:
+        from: dev
 
   components:
     - name: frontend
@@ -20,7 +23,7 @@ spec:
           port: 8080
 
     - name: backend-primary
-      dockerFileName: backend.Dockerfile
+      dockerFileName:  ./backend_py/primary/Dockerfile
       ports:
         - name: http
           port: 5000
@@ -38,7 +41,6 @@ spec:
                 envVar: WEBVIZ_VDS_HOST_ADDRESS
       variables:
         UVICORN_PORT: 5000
-        UVICORN_ENTRYPOINT: src.backend.primary.main:app
       environmentConfig:
         - environment: prod
           secretRefs:
@@ -73,6 +75,30 @@ spec:
                     envVar: APPLICATIONINSIGHTS_CONNECTION_STRING
           variables:
             OTEL_RESOURCE_ATTRIBUTES: service.name=primary-backend, service.namespace=review, service.version=tbd0.1.2
+          resources:
+            requests:
+              memory: 4Gi
+              cpu: 500m
+            limits:
+              memory: 4Gi
+          horizontalScaling:
+            minReplicas: 1
+            maxReplicas: 3
+            resources:
+              memory:
+                averageUtilization: 60
+              cpu:
+                averageUtilization: 80
+
+        - environment: dev
+          secretRefs:
+            azureKeyVaults:
+              - name: webviz
+                items:
+                  - name: WEBVIZ-INSIGHTS-CONNECTIONSTRING-DEV
+                    envVar: APPLICATIONINSIGHTS_CONNECTION_STRING
+          variables:
+            OTEL_RESOURCE_ATTRIBUTES: service.name=primary-backend, service.namespace=dev, service.version=tbd0.1.2
           resources:
             requests:
               memory: 4Gi
@@ -137,59 +163,32 @@ spec:
           memory: 2Gi
 
   jobs:
-    - name: backend-user-session
-      dockerFileName: backend.Dockerfile
-      schedulerPort: 8000
+    - name: user-mock
+      dockerFileName: ./backend_py/user_mock/Dockerfile
+      schedulerPort: 8001
       ports:
         - name: http
-          port: 8000
-      secretRefs:
-        azureKeyVaults:
-          - name: webviz
-            items:
-              - name: WEBVIZ-CLIENT-SECRET
-                envVar: WEBVIZ_CLIENT_SECRET
-              - name: WEBVIZ-SMDA-RESOURCE-SCOPE
-                envVar: WEBVIZ_SMDA_RESOURCE_SCOPE
-              - name: WEBVIZ-SMDA-SUBSCRIPTION-KEY
-                envVar: WEBVIZ_SMDA_SUBSCRIPTION_KEY
-              - name: WEBVIZ-VDS-HOST-ADDRESS
-                envVar: WEBVIZ_VDS_HOST_ADDRESS
+          port: 8001
       variables:
-        UVICORN_PORT: 8000
-        UVICORN_ENTRYPOINT: src.backend.user_session.main:app
-      environmentConfig:
-        # As of October 2023 in radix, these settings need to be duplicated for both environments.
-        - environment: prod
-          secretRefs:
-            azureKeyVaults:
-              - name: webviz
-                items:
-                  - name: WEBVIZ-INSIGHTS-CONNECTIONSTRING-PROD
-                    envVar: APPLICATIONINSIGHTS_CONNECTION_STRING
-          variables:
-            OTEL_RESOURCE_ATTRIBUTES: service.name=user-session, service.namespace=prod, service.version=tbd0.1.2
-          volumeMounts:
-            - name: webvizcache
-              path: /tmp/webvizcache/
-              blobfuse2:
-                container: cache
-                uid: 1234
-        - environment: review
-          secretRefs:
-            azureKeyVaults:
-              - name: webviz
-                items:
-                  - name: WEBVIZ-INSIGHTS-CONNECTIONSTRING-REVIEW
-                    envVar: APPLICATIONINSIGHTS_CONNECTION_STRING
-          variables:
-            OTEL_RESOURCE_ATTRIBUTES: service.name=user-session, service.namespace=review, service.version=tbd0.1.2
-          volumeMounts:
-            - name: webvizcache
-              path: /tmp/webvizcache/
-              blobfuse2:
-                container: cache
-                uid: 1234
+        UVICORN_PORT: 8001
+
+    - name: user-grid3d-ri
+      dockerFileName: ./backend_py/user_grid3d_ri/Dockerfile
+      schedulerPort: 8002
+      ports:
+        - name: http
+          port: 8002
+      variables:
+        UVICORN_PORT: 8002
+
+    - name: user-grid3d-vtk
+      dockerFileName: ./backend_py/user_grid3d_vtk/Dockerfile
+      schedulerPort: 8003
+      ports:
+        - name: http
+          port: 8003
+      variables:
+        UVICORN_PORT: 8003
 
   dnsAppAlias:
     environment: prod

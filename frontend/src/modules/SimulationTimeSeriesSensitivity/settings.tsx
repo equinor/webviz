@@ -2,10 +2,10 @@ import React from "react";
 
 import { Frequency_api } from "@api";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
-import { ModuleFCProps } from "@framework/Module";
+import { ModuleSettingsProps } from "@framework/Module";
 import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
-import { SingleEnsembleSelect } from "@framework/components/SingleEnsembleSelect";
+import { EnsembleDropdown } from "@framework/components/EnsembleDropdown";
 import { VectorSelector, createVectorSelectorDataFromVectors } from "@framework/components/VectorSelector";
 import { fixupEnsembleIdent, maybeAssignFirstSyncedEnsemble } from "@framework/utils/ensembleUiHelpers";
 import { Checkbox } from "@lib/components/Checkbox";
@@ -24,7 +24,7 @@ import { State } from "./state";
 
 //-----------------------------------------------------------------------------------------------------------
 
-export function Settings({ moduleContext, workbenchSession, workbenchServices }: ModuleFCProps<State>) {
+export function Settings({ settingsContext, workbenchSession, workbenchServices }: ModuleSettingsProps<State>) {
     const ensembleSet = useEnsembleSet(workbenchSession);
 
     const [selectedEnsembleIdent, setSelectedEnsembleIdent] = React.useState<EnsembleIdent | null>(null);
@@ -33,12 +33,12 @@ export function Settings({ moduleContext, workbenchSession, workbenchServices }:
     const [vectorSelectorData, setVectorSelectorData] = React.useState<TreeDataNode[]>([]);
     const [selectInitialVector, setSelectInitialVector] = React.useState<boolean>(true);
 
-    const [selectedSensitivities, setSelectedSensitivities] = moduleContext.useStoreState("selectedSensitivities");
-    const [resampleFrequency, setResamplingFrequency] = moduleContext.useStoreState("resamplingFrequency");
-    const [showStatistics, setShowStatistics] = moduleContext.useStoreState("showStatistics");
-    const [showRealizations, setShowRealizations] = moduleContext.useStoreState("showRealizations");
-    const [showHistorical, setShowHistorical] = moduleContext.useStoreState("showHistorical");
-    const syncedSettingKeys = moduleContext.useSyncedSettingKeys();
+    const [selectedSensitivities, setSelectedSensitivities] = settingsContext.useStoreState("selectedSensitivities");
+    const [resampleFrequency, setResamplingFrequency] = settingsContext.useStoreState("resamplingFrequency");
+    const [showStatistics, setShowStatistics] = settingsContext.useStoreState("showStatistics");
+    const [showRealizations, setShowRealizations] = settingsContext.useStoreState("showRealizations");
+    const [showHistorical, setShowHistorical] = settingsContext.useStoreState("showHistorical");
+    const syncedSettingKeys = settingsContext.useSyncedSettingKeys();
     const syncHelper = new SyncSettingsHelper(syncedSettingKeys, workbenchServices);
     const syncedValueEnsembles = syncHelper.useValue(SyncSettingKey.ENSEMBLE, "global.syncValue.ensembles");
     const syncedValueSummaryVector = syncHelper.useValue(SyncSettingKey.TIME_SERIES, "global.syncValue.timeSeries");
@@ -109,16 +109,16 @@ export function Settings({ moduleContext, workbenchSession, workbenchServices }:
     React.useEffect(
         function propagateVectorSpecToView() {
             if (hasComputedVectorName && computedEnsembleIdent && computedVectorName) {
-                moduleContext.getStateStore().setValue("vectorSpec", {
+                settingsContext.getStateStore().setValue("vectorSpec", {
                     ensembleIdent: computedEnsembleIdent,
                     vectorName: computedVectorName,
                     hasHistorical: hasHistoricalVector,
                 });
             } else {
-                moduleContext.getStateStore().setValue("vectorSpec", null);
+                settingsContext.getStateStore().setValue("vectorSpec", null);
             }
         },
-        [computedEnsembleIdent, computedVectorName, hasComputedVectorName, hasHistoricalVector, moduleContext]
+        [computedEnsembleIdent, computedVectorName, hasComputedVectorName, hasHistoricalVector, settingsContext]
     );
 
     function handleEnsembleSelectionChange(newEnsembleIdent: EnsembleIdent | null) {
@@ -146,7 +146,7 @@ export function Settings({ moduleContext, workbenchSession, workbenchServices }:
     return (
         <>
             <CollapsibleGroup expanded={true} title="Ensemble">
-                <SingleEnsembleSelect
+                <EnsembleDropdown
                     ensembleSet={ensembleSet}
                     value={computedEnsembleIdent}
                     onChange={handleEnsembleSelectionChange}

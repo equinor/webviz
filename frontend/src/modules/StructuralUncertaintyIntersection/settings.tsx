@@ -2,12 +2,12 @@ import React from "react";
 
 import { StatisticFunction_api, SurfaceAttributeType_api } from "@api";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
-import { ModuleFCProps } from "@framework/Module";
+import { ModuleSettingsProps } from "@framework/Module";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
 import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
 import { Wellbore } from "@framework/Wellbore";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
-import { SingleEnsembleSelect } from "@framework/components/SingleEnsembleSelect";
+import { EnsembleDropdown } from "@framework/components/EnsembleDropdown";
 import { fixupEnsembleIdent, maybeAssignFirstSyncedEnsemble } from "@framework/utils/ensembleUiHelpers";
 import { Checkbox } from "@lib/components/Checkbox";
 import { CircularProgress } from "@lib/components/CircularProgress";
@@ -36,31 +36,31 @@ import {
 } from "./types";
 
 export function Settings({
-    moduleContext,
+    settingsContext,
     workbenchSession,
     workbenchSettings,
     workbenchServices,
-}: ModuleFCProps<State>) {
-    const syncedSettingKeys = moduleContext.useSyncedSettingKeys();
+}: ModuleSettingsProps<State>) {
+    const syncedSettingKeys = settingsContext.useSyncedSettingKeys();
     const syncHelper = new SyncSettingsHelper(syncedSettingKeys, workbenchServices);
     const syncedValueEnsembles = syncHelper.useValue(SyncSettingKey.ENSEMBLE, "global.syncValue.ensembles");
     const ensembleSet = useEnsembleSet(workbenchSession);
 
-    const statusWriter = useSettingsStatusWriter(moduleContext);
+    const statusWriter = useSettingsStatusWriter(settingsContext);
     const colorSet = workbenchSettings.useColorSet();
     const wellboreType = "smda";
 
-    const [statisticFunctions, setStatisticFunctions] = moduleContext.useStoreState("statisticFunctions");
-    const [visualizationMode, setVisualizationMode] = moduleContext.useStoreState("visualizationMode");
+    const [statisticFunctions, setStatisticFunctions] = settingsContext.useStoreState("statisticFunctions");
+    const [visualizationMode, setVisualizationMode] = settingsContext.useStoreState("visualizationMode");
 
-    const setWellboreAddress = moduleContext.useSetStoreValue("wellboreAddress");
-    const setSurfaceSetAddress = moduleContext.useSetStoreValue("SurfaceSetAddress");
-    const [intersectionSettings, setIntersectionSettings] = moduleContext.useStoreState("intersectionSettings");
+    const setWellboreAddress = settingsContext.useSetStoreValue("wellboreAddress");
+    const setSurfaceSetAddress = settingsContext.useSetStoreValue("SurfaceSetAddress");
+    const [intersectionSettings, setIntersectionSettings] = settingsContext.useStoreState("intersectionSettings");
 
     const [selectedEnsembleIdent, setSelectedEnsembleIdent] = React.useState<EnsembleIdent | null>(null);
 
     const [selectedWellboreAddress, setSelectedWellboreAddress] = React.useState<Wellbore | null>(
-        moduleContext.useStoreValue("wellboreAddress")
+        settingsContext.useStoreValue("wellboreAddress")
     );
 
     const candidateEnsembleIdent = maybeAssignFirstSyncedEnsemble(selectedEnsembleIdent, syncedValueEnsembles);
@@ -172,7 +172,7 @@ export function Settings({
     React.useEffect(function propogateColorsToView() {
         if (surfaceDirectory && realizationsSurfaceNames) {
             const surfaceColorMap = createStratigraphyColors(availableSurfaceNames?.sort() ?? [], colorSet);
-            moduleContext.getStateStore().setValue("stratigraphyColorMap", surfaceColorMap);
+            settingsContext.getStateStore().setValue("stratigraphyColorMap", surfaceColorMap);
         }
     });
 
@@ -239,7 +239,7 @@ export function Settings({
             <CollapsibleGroup title="Ensemble and Realization" expanded={true}>
                 <div className="flex flex-col gap-4 overflow-y-auto">
                     <Label text="Ensemble" synced={syncHelper.isSynced(SyncSettingKey.ENSEMBLE)}>
-                        <SingleEnsembleSelect
+                        <EnsembleDropdown
                             ensembleSet={ensembleSet}
                             value={computedEnsembleIdent ? computedEnsembleIdent : null}
                             onChange={handleEnsembleSelectionChange}

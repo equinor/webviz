@@ -2,7 +2,7 @@ import React from "react";
 
 import { PolygonData_api, WellBoreTrajectory_api } from "@api";
 import { ContinuousLegend } from "@emerson-eps/color-tables";
-import { ModuleFCProps } from "@framework/Module";
+import { ModuleViewProps } from "@framework/Module";
 import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
 import { Wellbore } from "@framework/Wellbore";
 import { Button } from "@lib/components/Button";
@@ -56,8 +56,8 @@ const updateViewPortBounds = (
     return existingViewPortBounds;
 };
 //-----------------------------------------------------------------------------------------------------------
-export function View({ moduleContext, workbenchSettings, workbenchServices }: ModuleFCProps<state>) {
-    const myInstanceIdStr = moduleContext.getInstanceIdString();
+export function View({ viewContext, workbenchSettings, workbenchServices }: ModuleViewProps<state>) {
+    const myInstanceIdStr = viewContext.getInstanceIdString();
     console.debug(`${myInstanceIdStr} -- render TopographicMap view`);
     const viewIds = {
         view2D: `${myInstanceIdStr} -- view2D`,
@@ -66,16 +66,16 @@ export function View({ moduleContext, workbenchSettings, workbenchServices }: Mo
         annotation3D: `${myInstanceIdStr} -- annotation3D`,
     };
 
-    const meshSurfAddr = moduleContext.useStoreValue("meshSurfaceAddress");
-    const propertySurfAddr = moduleContext.useStoreValue("propertySurfaceAddress");
-    const polygonsAddr = moduleContext.useStoreValue("polygonsAddress");
-    const selectedWellUuids = moduleContext.useStoreValue("selectedWellUuids");
-    const surfaceSettings = moduleContext.useStoreValue("surfaceSettings");
-    const viewSettings = moduleContext.useStoreValue("viewSettings");
+    const meshSurfAddr = viewContext.useStoreValue("meshSurfaceAddress");
+    const propertySurfAddr = viewContext.useStoreValue("propertySurfaceAddress");
+    const polygonsAddr = viewContext.useStoreValue("polygonsAddress");
+    const selectedWellUuids = viewContext.useStoreValue("selectedWellUuids");
+    const surfaceSettings = viewContext.useStoreValue("surfaceSettings");
+    const viewSettings = viewContext.useStoreValue("viewSettings");
     const [resetBounds, toggleResetBounds] = React.useState<boolean>(false);
     const [axesLayer, setAxesLayer] = React.useState<Record<string, unknown> | null>(null);
     const [viewportBounds, setviewPortBounds] = React.useState<[number, number, number, number] | undefined>(undefined);
-    const syncedSettingKeys = moduleContext.useSyncedSettingKeys();
+    const syncedSettingKeys = viewContext.useSyncedSettingKeys();
     const syncHelper = new SyncSettingsHelper(syncedSettingKeys, workbenchServices);
     const surfaceColorScale = workbenchSettings.useContinuousColorScale({
         gradientType: ColorScaleGradientType.Sequential,
@@ -224,13 +224,12 @@ export function View({ moduleContext, workbenchSettings, workbenchServices }: Mo
             <div className="z-1">
                 {show3D ? (
                     <SyncedSubsurfaceViewer
-                        moduleContext={moduleContext}
+                        viewContext={viewContext}
                         workbenchServices={workbenchServices}
                         id={viewIds.view3D}
                         bounds={viewportBounds}
                         layers={newLayers}
                         colorTables={colorTables}
-                        toolbar={{ visible: true }}
                         views={{
                             layout: [1, 1],
                             showLabel: false,
@@ -257,13 +256,12 @@ export function View({ moduleContext, workbenchSettings, workbenchServices }: Mo
                     </SyncedSubsurfaceViewer>
                 ) : (
                     <SyncedSubsurfaceViewer
-                        moduleContext={moduleContext}
+                        viewContext={viewContext}
                         workbenchServices={workbenchServices}
                         id={viewIds.view2D}
                         bounds={viewportBounds}
                         layers={newLayers}
                         colorTables={colorTables}
-                        toolbar={{ visible: true }}
                         views={{
                             layout: [1, 1],
                             showLabel: false,

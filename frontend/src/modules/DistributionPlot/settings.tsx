@@ -1,7 +1,7 @@
 import React from "react";
 
 import { useApplyInitialSettingsToState } from "@framework/InitialSettings";
-import { ModuleFCProps } from "@framework/Module";
+import { ModuleSettingsProps } from "@framework/Module";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { Dropdown } from "@lib/components/Dropdown";
 import { Label } from "@lib/components/Label";
@@ -30,10 +30,10 @@ const plotTypes = [
 ];
 
 //-----------------------------------------------------------------------------------------------------------
-export function Settings({ moduleContext, initialSettings }: ModuleFCProps<State>) {
-    const [plotType, setPlotType] = moduleContext.useStoreState("plotType");
-    const [numBins, setNumBins] = moduleContext.useStoreState("numBins");
-    const [orientation, setOrientation] = moduleContext.useStoreState("orientation");
+export function Settings({ settingsContext, initialSettings }: ModuleSettingsProps<State>) {
+    const [plotType, setPlotType] = settingsContext.useStoreState("plotType");
+    const [numBins, setNumBins] = settingsContext.useStoreState("numBins");
+    const [orientation, setOrientation] = settingsContext.useStoreState("orientation");
 
     useApplyInitialSettingsToState(initialSettings, "plotType", "string", setPlotType);
     useApplyInitialSettingsToState(initialSettings, "numBins", "number", setNumBins);

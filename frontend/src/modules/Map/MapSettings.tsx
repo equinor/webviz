@@ -2,11 +2,11 @@ import React from "react";
 
 import { SurfaceStatisticFunction_api } from "@api";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
-import { ModuleFCProps } from "@framework/Module";
+import { ModuleSettingsProps } from "@framework/Module";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
 import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
-import { SingleEnsembleSelect } from "@framework/components/SingleEnsembleSelect";
+import { EnsembleDropdown } from "@framework/components/EnsembleDropdown";
 import { fixupEnsembleIdent, maybeAssignFirstSyncedEnsemble } from "@framework/utils/ensembleUiHelpers";
 import { Checkbox } from "@lib/components/Checkbox";
 import { CircularProgress } from "@lib/components/CircularProgress";
@@ -32,12 +32,12 @@ const SurfaceTimeTypeEnumToStringMapping = {
     [SurfaceTimeType.Interval]: "Time interval",
 };
 //-----------------------------------------------------------------------------------------------------------
-export function MapSettings(props: ModuleFCProps<MapState>) {
+export function MapSettings(props: ModuleSettingsProps<MapState>) {
     const ensembleSet = useEnsembleSet(props.workbenchSession);
     const [selectedEnsembleIdent, setSelectedEnsembleIdent] = React.useState<EnsembleIdent | null>(null);
     const [timeType, setTimeType] = React.useState<SurfaceTimeType>(SurfaceTimeType.None);
 
-    const statusWriter = useSettingsStatusWriter(props.moduleContext);
+    const statusWriter = useSettingsStatusWriter(props.settingsContext);
 
     const [selectedSurfaceName, setSelectedSurfaceName] = React.useState<string | null>(null);
     const [selectedSurfaceAttribute, setSelectedSurfaceAttribute] = React.useState<string | null>(null);
@@ -45,7 +45,7 @@ export function MapSettings(props: ModuleFCProps<MapState>) {
     const [selectedTimeOrInterval, setSelectedTimeOrInterval] = React.useState<string | null>(null);
     const [aggregation, setAggregation] = React.useState<SurfaceStatisticFunction_api | null>(null);
     const [useObserved, toggleUseObserved] = React.useState(false);
-    const syncedSettingKeys = props.moduleContext.useSyncedSettingKeys();
+    const syncedSettingKeys = props.settingsContext.useSyncedSettingKeys();
     const syncHelper = new SyncSettingsHelper(syncedSettingKeys, props.workbenchServices);
     const syncedValueEnsembles = syncHelper.useValue(SyncSettingKey.ENSEMBLE, "global.syncValue.ensembles");
     const syncedValueSurface = syncHelper.useValue(SyncSettingKey.SURFACE, "global.syncValue.surface");
@@ -117,7 +117,7 @@ export function MapSettings(props: ModuleFCProps<MapState>) {
         }
 
         console.debug(`propagateSurfaceSelectionToView() => ${surfaceAddress ? "valid surfAddr" : "NULL surfAddr"}`);
-        props.moduleContext.getStateStore().setValue("surfaceAddress", surfaceAddress);
+        props.settingsContext.getStateStore().setValue("surfaceAddress", surfaceAddress);
     });
 
     function handleEnsembleSelectionChange(newEnsembleIdent: EnsembleIdent | null) {
@@ -220,7 +220,7 @@ export function MapSettings(props: ModuleFCProps<MapState>) {
                 text="Ensemble:"
                 labelClassName={syncHelper.isSynced(SyncSettingKey.ENSEMBLE) ? "bg-indigo-700 text-white" : ""}
             >
-                <SingleEnsembleSelect
+                <EnsembleDropdown
                     ensembleSet={ensembleSet}
                     value={computedEnsembleIdent}
                     onChange={handleEnsembleSelectionChange}
