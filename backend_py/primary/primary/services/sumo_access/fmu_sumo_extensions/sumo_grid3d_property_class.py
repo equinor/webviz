@@ -18,7 +18,7 @@ class Grid3dProperty(Child):
         return self._get_property(["data", "spec"])
 
     @property
-    def timestamp(self) -> str:
+    def timestamp(self) -> str | None:
         """Grid property timestamp data"""
         t0 = self._get_property(["data", "time", "t0", "value"])
         t1 = self._get_property(["data", "time", "t1", "value"])
@@ -29,7 +29,7 @@ class Grid3dProperty(Child):
         return None
 
     @property
-    def interval(self) -> str:
+    def interval(self) -> tuple[str, str] | None:
         """Grid property interval data"""
         t0 = self._get_property(["data", "time", "t0", "value"])
         t1 = self._get_property(["data", "time", "t1", "value"])

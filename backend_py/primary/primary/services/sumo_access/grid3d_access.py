@@ -3,17 +3,12 @@ from typing import List, Optional
 
 from pydantic import BaseModel
 
-from ._helpers import SumoEnsemble
-from primary.services.service_exceptions import (
-    Service,
-    NoDataError,
-    MultipleDataMatchesError,
-)
+from primary.services.service_exceptions import MultipleDataMatchesError, NoDataError, Service
 
+from ._helpers import SumoEnsemble
+from .fmu_sumo_extensions.sumo_grid3d_geometry_class import Grid3dGeometry
 from .fmu_sumo_extensions.sumo_grid3d_geometry_collection_class import Grid3dGeometryCollection
 from .fmu_sumo_extensions.sumo_grid3d_property_collection_class import Grid3dPropertyCollection
-from .fmu_sumo_extensions.sumo_grid3d_geometry_class import Grid3dGeometry
-
 
 LOGGER = logging.getLogger(__name__)
 

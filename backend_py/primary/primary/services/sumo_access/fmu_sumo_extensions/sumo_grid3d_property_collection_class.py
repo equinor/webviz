@@ -23,8 +23,8 @@ class Grid3dPropertyCollection(ChildCollection):
         grid3d_geometry_name: str,
         sumo: SumoClient,
         case_uuid: str,
-        query: Dict = None,
-        pit: Pit = None,
+        query: Dict | None = None,
+        pit: Pit | None = None,
     ):
         """
         Args:
@@ -38,9 +38,9 @@ class Grid3dPropertyCollection(ChildCollection):
         self._grid3d_geometry_name = grid3d_geometry_name
         super().__init__("cpgrid_property", sumo, case_uuid, query, pit)
 
-        self._aggregation_cache = {}
+        # self._aggregation_cache = {}
 
-    def __getitem__(self, index) -> Grid3dProperty:
+    def __getitem__(self, index: int) -> Grid3dProperty:
         doc = super().__getitem__(index)
         return Grid3dProperty(self._sumo, doc)
 
@@ -82,7 +82,7 @@ class Grid3dPropertyCollection(ChildCollection):
         )
 
         buckets = res.json()["aggregations"]["t0"]["buckets"]
-        intervals = []
+        intervals: List[Tuple] = []
 
         for bucket in buckets:
             t0 = bucket["key_as_string"]
@@ -116,7 +116,7 @@ class Grid3dPropertyCollection(ChildCollection):
         )
 
         buckets = res.json()["aggregations"]["t0"]["buckets"]
-        intervals = []
+        intervals: List[Tuple] = []
 
         for bucket in buckets:
             t0 = bucket["key_as_string"]
@@ -128,16 +128,16 @@ class Grid3dPropertyCollection(ChildCollection):
 
     def filter(
         self,
-        name: Union[str, List[str], bool] = None,
-        vertical_domain: Union[str, List[str], bool] = None,
-        iteration: Union[str, List[str], bool] = None,
-        realization: Union[int, List[int], bool] = None,
-        aggregation: Union[str, List[str], bool] = None,
-        stage: Union[str, List[str], bool] = None,
-        time: TimeFilter = None,
-        uuid: Union[str, List[str], bool] = None,
-        is_observation: bool = None,
-        is_prediction: bool = None,
+        name: Union[str, List[str], bool, None] = None,
+        vertical_domain: Union[str, List[str], bool, None] = None,
+        iteration: Union[str, List[str], bool, None] = None,
+        realization: Union[int, List[int], bool, None] = None,
+        aggregation: Union[str, List[str], bool, None] = None,
+        stage: Union[str, List[str], bool, None] = None,
+        time: TimeFilter | None = None,
+        uuid: Union[str, List[str], bool, None] = None,
+        is_observation: bool | None = None,
+        is_prediction: bool | None = None,
     ) -> "Grid3dPropertyCollection":
         """Filter grid properties
 

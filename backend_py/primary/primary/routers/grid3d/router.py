@@ -3,12 +3,9 @@ from typing import List
 from typing import Annotated
 
 import numpy as np
-from fastapi import APIRouter, Depends, Query, HTTPException, status, Body
-from starlette.requests import Request
+from fastapi import APIRouter, Depends, Query, Body
 
 from webviz_pkg.core_utils.perf_metrics import PerfMetrics
-from webviz_pkg.core_utils.b64 import b64_decode_float_array_to_list
-from webviz_pkg.core_utils.perf_timer import PerfTimer
 from webviz_pkg.core_utils.b64 import b64_encode_float_array_as_float32, b64_decode_int_array
 from webviz_pkg.core_utils.b64 import B64FloatArray, B64IntArray
 
@@ -195,8 +192,8 @@ async def post_get_polyline_intersection(
 def _hack_ensure_b64_property_array_is_float(
     props_b64arr: B64FloatArray | B64IntArray, undefined_int_value: int | None
 ) -> B64FloatArray:
-    if type(props_b64arr) == B64IntArray:
-        LOGGER.debug(f"Repacking B64 int array to float")
+    if isinstance(props_b64arr, B64IntArray):
+        LOGGER.debug("Repacking B64 int array to float")
         int_arr_np = b64_decode_int_array(props_b64arr)
         int_arr_np = np.where(int_arr_np == undefined_int_value, -1, int_arr_np)
         float_arr_np = np.asarray(int_arr_np, dtype=np.float32)

@@ -81,7 +81,9 @@ async def usersession_radixcreate(user_component: UserComponent) -> str:
     session_def = _USER_SESSION_DEFS[user_component]
 
     resource_req = RadixResourceRequests(cpu="50m", memory="100Mi")
-    new_radix_job_name = await create_new_radix_job(session_def.job_component_name, session_def.port, resource_req, None)
+    new_radix_job_name = await create_new_radix_job(
+        session_def.job_component_name, session_def.port, resource_req, None
+    )
     LOGGER.debug(f"Created new job: {new_radix_job_name=}")
     if new_radix_job_name is None:
         return "Failed to create new job"

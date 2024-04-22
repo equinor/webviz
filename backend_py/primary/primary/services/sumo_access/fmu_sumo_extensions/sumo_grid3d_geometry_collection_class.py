@@ -21,8 +21,8 @@ class Grid3dGeometryCollection(ChildCollection):
         self,
         sumo: SumoClient,
         case_uuid: str,
-        query: Dict = None,
-        pit: Pit = None,
+        query: Dict | None = None,
+        pit: Pit | None = None,
     ):
         """
         Args:
@@ -33,9 +33,9 @@ class Grid3dGeometryCollection(ChildCollection):
         """
         super().__init__("cpgrid", sumo, case_uuid, query, pit)
 
-        self._aggregation_cache = {}
+        # self._aggregation_cache = {}
 
-    def __getitem__(self, index) -> Grid3dGeometry:
+    def __getitem__(self, index: int) -> Grid3dGeometry:
         doc = super().__getitem__(index)
         return Grid3dGeometry(self._sumo, doc)
 
@@ -45,14 +45,14 @@ class Grid3dGeometryCollection(ChildCollection):
 
     def filter(
         self,
-        name: Union[str, List[str], bool] = None,
-        tagname: Union[str, List[str], bool] = None,
-        vertical_domain: Union[str, List[str], bool] = None,
-        iteration: Union[str, List[str], bool] = None,
-        realization: Union[int, List[int], bool] = None,
-        aggregation: Union[str, List[str], bool] = None,
-        stage: Union[str, List[str], bool] = None,
-        uuid: Union[str, List[str], bool] = None,
+        name: Union[str, List[str], bool, None] = None,
+        tagname: Union[str, List[str], bool, None] = None,
+        vertical_domain: Union[str, List[str], bool, None] = None,
+        iteration: Union[str, List[str], bool, None] = None,
+        realization: Union[int, List[int], bool, None] = None,
+        aggregation: Union[str, List[str], bool, None] = None,
+        stage: Union[str, List[str], bool, None] = None,
+        uuid: Union[str, List[str], bool, None] = None,
     ) -> "Grid3dGeometryCollection":
         """Filter grid geometries
 
