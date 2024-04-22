@@ -33,7 +33,7 @@ server_schemas = {path = "../libs/server_schemas", develop = true}
 black = "^22.12.0"
 pylint = "^2.15.10"
 pytest = "^7.2.1"
-mypy = "^1.5.1"
+mypy = "^1.9.0"
 bandit = "^1.7.5"
 types-requests = "^2.31.0.1"
 types-redis = "^4.6.0"
