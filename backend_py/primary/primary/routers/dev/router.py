@@ -60,16 +60,18 @@ async def usersession_call(
 
 
 @router.get("/usersession/{user_component}/radixlist")
-async def usersession_radixlist(user_component: UserComponent) -> str:
+async def usersession_radixlist(user_component: UserComponent) -> list:
     LOGGER.debug(f"usersession_radixlist() {user_component=}")
 
     session_def = _USER_SESSION_DEFS[user_component]
 
     job_list = await get_all_radix_jobs(session_def.job_component_name, session_def.port)
-    LOGGER.debug("---")
+
+    LOGGER.debug("======================")
     LOGGER.debug(job_list)
-    LOGGER.debug("---")
-    return str(job_list)
+    LOGGER.debug("======================")
+
+    return job_list
 
 
 @router.get("/usersession/{user_component}/radixcreate")
@@ -79,7 +81,7 @@ async def usersession_radixcreate(user_component: UserComponent) -> str:
     session_def = _USER_SESSION_DEFS[user_component]
 
     resource_req = RadixResourceRequests(cpu="50m", memory="100Mi")
-    new_radix_job_name = await create_new_radix_job(session_def.job_component_name, session_def.port, resource_req)
+    new_radix_job_name = await create_new_radix_job(session_def.job_component_name, session_def.port, resource_req, None)
     LOGGER.debug(f"Created new job: {new_radix_job_name=}")
     if new_radix_job_name is None:
         return "Failed to create new job"
@@ -104,6 +106,7 @@ async def usersession_radixdelete(user_component: UserComponent) -> str:
     session_def = _USER_SESSION_DEFS[user_component]
 
     await delete_all_radix_jobs(session_def.job_component_name, session_def.port)
+
     return "Delete done"
 
 
@@ -111,7 +114,7 @@ async def usersession_radixdelete(user_component: UserComponent) -> str:
 async def usersession_dirlist(
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
     user_component: UserComponent | None = None,
-) -> str:
+) -> list:
     LOGGER.debug(f"usersession_dirlist() {user_component=}")
 
     job_component_name: str | None = None
@@ -121,15 +124,12 @@ async def usersession_dirlist(
     session_dir = UserSessionDirectory(authenticated_user.get_user_id())
     session_info_arr = session_dir.get_session_info_arr(job_component_name)
 
-    resp_text = ""
-
     LOGGER.debug("======================")
     for session_info in session_info_arr:
         LOGGER.debug(f"{session_info=}")
-        resp_text += str(session_info) + "\n"
     LOGGER.debug("======================")
 
-    return resp_text
+    return session_info_arr
 
 
 @router.get("/usersession/dirdel")

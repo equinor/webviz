@@ -87,7 +87,7 @@ class UserSessionManager:
             job_scheduler_port=session_def.port,
             instance_str=effective_instance_str,
             actual_service_port=actual_service_port,
-            approx_timeout_s=60,
+            approx_timeout_s=120,
         )
         if existing_session_info:
             session_url = f"http://{existing_session_info.radix_job_name}:{actual_service_port}"
@@ -107,7 +107,7 @@ class UserSessionManager:
             job_payload_dict=session_def.payload_dict,
             instance_str=effective_instance_str,
             actual_service_port=actual_service_port,
-            approx_timeout_s=50,
+            approx_timeout_s=110,
         )
 
         if not new_session_info:
@@ -243,30 +243,27 @@ async def _create_new_session(
                 session_info_updater.delete_all_state()
                 return None
 
-            LOGGER.debug(f"New radix job created, will try and wait for it to come alive {new_radix_job_name=}")
+            LOGGER.debug(f"New radix job was created, will wait for it to enter running state {new_radix_job_name=}")
             session_info_updater.set_state_waiting(new_radix_job_name)
 
-            # !!!!!!!!!!!!!!!
-            # !!!!!!!!!!!!!!!
-            # !!!!!!!!!!!!!!!
-            # Try and poll Radix job manager here to verify that it enter the running state
-            job_manager_says_job_is_running = False
-            while not job_manager_says_job_is_running and time_counter.remaining_s() > 0:
-                await asyncio.sleep(1)
-                radix_job_state = await get_radix_job_state(job_component_name, job_scheduler_port, new_radix_job_name)
-
-                job_status = radix_job_state.status if radix_job_state else "NA"
-                LOGGER.debug(f"------ polling for job state gave {job_status=}")
-
-                if radix_job_state and radix_job_state.status == "Running":
-                    job_manager_says_job_is_running = True
-
-            if not job_manager_says_job_is_running:
-                LOGGER.error("Radix job manager NEVER transitioned the job to the running state")
+            # Try and poll the radix job manager here to verify that the job transitions to the running state
+            polling_time_budget_s = time_counter.remaining_s()
+            radix_job_is_running = poll_radix_job_state_until_running(
+                job_component_name, job_scheduler_port, new_radix_job_name, polling_time_budget_s
+            )
+            if not radix_job_is_running:
+                LOGGER.error(
+                    "The new radix job did not enter running state within time limit of {polling_time_budget_s:.2f}s, giving up and deleting it"
+                )
                 session_info_updater.delete_all_state()
+                run_in_background_task(
+                    delete_named_radix_job(job_component_name, job_scheduler_port, new_radix_job_name)
+                )
                 return None
-            # !!!!!!!!!!!!!!!!
-            # !!!!!!!!!!!!!!!!
+
+            LOGGER.debug(
+                f"Radix job has entered running state, will try and wait for it to come alive {new_radix_job_name=}"
+            )
 
         else:
             LOGGER.debug("Running locally, will not create a radix job")
@@ -307,8 +304,38 @@ async def _create_new_session(
         return session_info
 
 
+async def poll_radix_job_state_until_running(job_component_name: str, job_scheduler_port: int, radix_job_name: str, stop_after_delay_s: float) -> bool:
+
+    LOGGER.debug(f"poll_radix_job_state_until_running() - {job_component_name=}, {radix_job_name=}, {stop_after_delay_s=:.2f}")
+
+    # Default timeout of 5s
+    state_query_timeout_s = 5
+    sleep_time_s = 1
+
+    time_counter = TimeCounter(stop_after_delay_s)
+    num_calls = 0
+
+    while True:
+        radix_job_state = await get_radix_job_state(job_component_name, job_scheduler_port, radix_job_name)
+        num_calls += 1
+
+        if radix_job_state and radix_job_state.status == "Running":
+            LOGGER.debug(f"poll_radix_job_state_until_running() - succeeded on attempt {num_calls}, time spent: {time_counter.elapsed_s():.2f}s")
+            return True, ""
+
+        job_status = radix_job_state.status if radix_job_state else "NA"
+        LOGGER.debug(f"poll_radix_job_state_until_running() - attempt {num_calls} gave status {job_status=}")
+
+        elapsed_s = time_counter.elapsed_s()
+        if elapsed_s + sleep_time_s + state_query_timeout_s > stop_after_delay_s:
+            LOGGER.debug(f"poll_radix_job_state_until_running() - giving up after {num_calls}, time spent: {elapsed_s:.2f}s")
+            return False
+
+        await asyncio.sleep(sleep_time_s)
+
+
 async def call_health_endpoint_with_retries(health_url: str, stop_after_delay_s: float) -> Tuple[bool, str]:
-    LOGGER.debug(f"call_health_endpoint_with_retries() - {health_url=} {stop_after_delay_s=}")
+    LOGGER.debug(f"call_health_endpoint_with_retries() - {health_url=} {stop_after_delay_s=:.2f}")
 
     target_request_timeout_s = 3
     min_request_timeout_s = 1

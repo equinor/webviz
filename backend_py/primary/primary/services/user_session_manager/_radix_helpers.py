@@ -12,7 +12,6 @@ LOGGER = logging.getLogger(__name__)
 
 # This is a bit of a hack, but it's one way to know if we're running in Radix or locally
 IS_ON_RADIX_PLATFORM = True if os.getenv("RADIX_APP") is not None else False
-print(f"{IS_ON_RADIX_PLATFORM=}")
 
 
 # Notes on RadixResourceRequests:
@@ -24,18 +23,19 @@ class RadixResourceRequests(BaseModel):
 
 
 # Notes on RadixJobState:
-#  * The 'Waiting' status is not documented, but it seems to be the status of a job that has been created but not yet running
 #  * We're not always getting a job status, in particular when querying the status of a named job, so include a None entry for status
-#  * Sometimes we get an extra (undocumented) field returned, 'message'
+#  * Currently the documentation lists the status 'Successful' while in reality it seems we're getting 'Succeeded'
 class RadixJobState(BaseModel):
     name: str
-    status: Literal["Active", "Waiting", "Running", "Succeeded", "Stopped", "Failed"] | None = None
+    status: (
+        Literal["Active", "Waiting", "Running", "Succeeded", "Stopping", "Stopped", "Failed", "DeadlineExceeded"] | None
+    ) = None
     created: str | None = None
     started: str | None = None
     ended: str | None = None
     updated: str | None = None
     message: str | None = None
-    podStatuses: list[dict] | None = None
+    # podStatuses: list[dict] | None = None
 
 
 async def create_new_radix_job(
@@ -59,7 +59,7 @@ async def create_new_radix_job(
     # we might want to auto discover the number of available cpus and set the GOMAXPROCS environment variable accordingly.
     # As of now, it seems that it's the cpu limit value that will be picked up by for example by automaxprocs.
     request_body = {
-        #"jobId": "my-dummy-job-id",
+        # "jobId": "my-dummy-job-id",
         "payload": payload_as_str,
         "resources": {
             "requests": {
@@ -102,10 +102,9 @@ async def create_new_radix_job(
 async def get_radix_job_state(
     job_component_name: str, job_scheduler_port: int, radix_job_name: str
 ) -> RadixJobState | None:
-    LOGGER.debug(f"get_radix_job_state() - {job_component_name=}, {radix_job_name=}")
-
+    
     url = f"http://{job_component_name}:{job_scheduler_port}/api/v1/jobs/{radix_job_name}"
-    LOGGER.debug(f"get_radix_job_state() - {url=}")
+    LOGGER.debug(f"get_radix_job_state() - {job_component_name=}, {radix_job_name=}, {url=}")
 
     async with httpx.AsyncClient() as client:
         try:
@@ -115,8 +114,6 @@ async def get_radix_job_state(
             LOGGER.debug(f"get_radix_job_state() - could not get job state {exception=}")
             return None
 
-    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     LOGGER.debug("------")
     LOGGER.debug(f"{response.json()=}")
