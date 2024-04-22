@@ -1,24 +1,26 @@
 import { ChannelContentDefinition } from "@framework/DataChannelTypes";
-import { ModuleContext } from "@framework/ModuleContext";
+import { ViewContext } from "@framework/ModuleContext";
+import { Interface } from "@modules/SimulationTimeSeries/settingsToViewInterface";
+import { State } from "@modules/SimulationTimeSeries/state";
 
 import { useAtomValue } from "jotai";
 
 import { useMakeEnsembleDisplayNameFunc } from "./useMakeEnsembleDisplayNameFunc";
 
+import { ChannelIds } from "../../channelDefs";
+import { makeVectorGroupDataGenerator } from "../../dataGenerators";
 import {
     activeTimestampUtcMsAtom,
     loadedVectorSpecificationsAndRealizationDataAtom,
     queryIsFetchingAtom,
-} from "../atoms/derivedViewAtoms";
-import { ChannelIds } from "../channelDefs";
-import { makeVectorGroupDataGenerator } from "../dataGenerators";
+} from "../atoms/derivedAtoms";
 
-export function usePublishToDataChannels(moduleContext: ModuleContext<any, any>) {
+export function usePublishToDataChannels(viewContext: ViewContext<State, Interface>) {
     const loadedVectorSpecificationsAndRealizationData = useAtomValue(loadedVectorSpecificationsAndRealizationDataAtom);
     const activeTimestampUtcMs = useAtomValue(activeTimestampUtcMsAtom);
     const isQueryFetching = useAtomValue(queryIsFetchingAtom);
 
-    const makeEnsembleDisplayName = useMakeEnsembleDisplayNameFunc();
+    const makeEnsembleDisplayName = useMakeEnsembleDisplayNameFunc(viewContext);
 
     const contents: ChannelContentDefinition[] = loadedVectorSpecificationsAndRealizationData.map((el) => ({
         contentIdString: `${el.vectorSpecification.vectorName}-::-${el.vectorSpecification.ensembleIdent}`,
@@ -33,7 +35,7 @@ export function usePublishToDataChannels(moduleContext: ModuleContext<any, any>)
         ),
     }));
 
-    moduleContext.usePublishChannelContents({
+    viewContext.usePublishChannelContents({
         channelIdString: ChannelIds.TIME_SERIES,
         dependencies: [loadedVectorSpecificationsAndRealizationData, activeTimestampUtcMs],
         enabled: !isQueryFetching,

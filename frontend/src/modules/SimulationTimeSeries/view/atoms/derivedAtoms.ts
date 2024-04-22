@@ -1,9 +1,19 @@
 import { atom } from "jotai";
-import { historicalVectorDataQueriesAtom, vectorDataQueriesAtom, vectorObservationsQueriesAtom, vectorStatisticsQueriesAtom } from "./queryAtoms";
+
+import {
+    colorRealizationsByParameterAtom,
+    userSelectedActiveTimestampUtcMsAtom,
+    visualizationModeAtom,
+} from "../../settings/atoms/baseAtoms";
+import { parameterIdentAtom, selectedEnsemblesAtom, vectorSpecificationsAtom } from "../../settings/atoms/derivedAtoms";
+import {
+    historicalVectorDataQueriesAtom,
+    vectorDataQueriesAtom,
+    vectorObservationsQueriesAtom,
+    vectorStatisticsQueriesAtom,
+} from "../../settings/atoms/queryAtoms";
+import { VisualizationMode } from "../../typesAndEnums";
 import { createLoadedVectorSpecificationAndDataArray } from "../utils/vectorSpecificationsAndQueriesUtils";
-import { parameterIdentAtom, selectedEnsemblesAtom, vectorSpecificationsAtom } from "./derivedSettingsAtoms";
-import { colorRealizationsByParameterAtom, userSelectedActiveTimestampUtcMsAtom, visualizationModeAtom } from "./baseAtoms";
-import { VisualizationMode } from "../typesAndEnums";
 
 export const queryIsFetchingAtom = atom((get) => {
     const vectorDataQueries = get(vectorDataQueriesAtom);
@@ -16,12 +26,11 @@ export const queryIsFetchingAtom = atom((get) => {
     const historicalVectorDataIsFetching = historicalVectorDataQueries.some((query) => query.isFetching);
     const vectorObservationsIsFetching = vectorObservationsQueries.isFetching;
 
-    const isFetching = (
+    const isFetching =
         vectorDataIsFetching ||
         vectorStatisticsIsFetching ||
         historicalVectorDataIsFetching ||
-        vectorObservationsIsFetching
-    );
+        vectorObservationsIsFetching;
 
     return isFetching;
 });

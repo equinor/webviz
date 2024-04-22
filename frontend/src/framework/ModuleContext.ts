@@ -26,11 +26,19 @@ import {
 import { useChannelReceiver } from "./internal/DataChannels/hooks/useChannelReceiver";
 import { usePublishChannelContents } from "./internal/DataChannels/hooks/usePublishChannelContents";
 
-export class ModuleContext<TStateType extends StateBaseType, TInterfaceType extends InterfaceBaseType> {
-    protected _moduleInstance: ModuleInstance<TStateType, TInterfaceType>;
+export class ModuleContext<
+    TStateType extends StateBaseType,
+    TInterfaceType extends InterfaceBaseType,
+    TSettingsAtomsType extends Record<string, unknown>,
+    TViewAtomsType extends Record<string, unknown>
+> {
+    protected _moduleInstance: ModuleInstance<TStateType, TInterfaceType, TSettingsAtomsType, TViewAtomsType>;
     private _stateStore: StateStore<TStateType>;
 
-    constructor(moduleInstance: ModuleInstance<TStateType, TInterfaceType>, stateStore: StateStore<TStateType>) {
+    constructor(
+        moduleInstance: ModuleInstance<TStateType, TInterfaceType, TSettingsAtomsType, TViewAtomsType>,
+        stateStore: StateStore<TStateType>
+    ) {
         this._moduleInstance = moduleInstance;
         this._stateStore = stateStore;
     }
@@ -138,12 +146,19 @@ export class ModuleContext<TStateType extends StateBaseType, TInterfaceType exte
     }
 }
 
-export type ViewContext<StateType extends StateBaseType, TInterfaceType extends InterfaceBaseType> = Omit<
-    ModuleContext<StateType, TInterfaceType>,
-    "useInterfaceState" | "useSetInterfaceValue"
+export type ViewContext<
+    StateType extends StateBaseType,
+    TInterfaceType extends InterfaceBaseType,
+    TSettingsAtomsType extends Record<string, unknown>,
+    TViewAtomsType extends Record<string, unknown>
+> = Omit<
+    ModuleContext<StateType, TInterfaceType, TSettingsAtomsType, TViewAtomsType>,
+    "useSettingsToViewInterfaceState" | "useSetSettingsToViewInterfaceValue"
 >;
 
-export type SettingsContext<StateType extends StateBaseType, TInterfaceType extends InterfaceBaseType> = ModuleContext<
-    StateType,
-    TInterfaceType
->;
+export type SettingsContext<
+    StateType extends StateBaseType,
+    TInterfaceType extends InterfaceBaseType,
+    TSettingsAtomsType extends Record<string, unknown>,
+    TViewAtomsType extends Record<string, unknown>
+> = ModuleContext<StateType, TInterfaceType, TSettingsAtomsType, TViewAtomsType>;

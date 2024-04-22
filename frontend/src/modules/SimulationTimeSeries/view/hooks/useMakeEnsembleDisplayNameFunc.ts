@@ -1,12 +1,15 @@
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
+import { ViewContext } from "@framework/ModuleContext";
+import { Interface } from "@modules/SimulationTimeSeries/settingsToViewInterface";
+import { State } from "@modules/SimulationTimeSeries/state";
 
 import { useAtomValue } from "jotai";
 
-import { selectedEnsemblesAtom } from "../atoms/derivedSettingsAtoms";
-
-export function useMakeEnsembleDisplayNameFunc(): (ensembleIdent: EnsembleIdent) => string {
-    const selectedEnsembles = useAtomValue(selectedEnsemblesAtom);
+export function useMakeEnsembleDisplayNameFunc(
+    viewContext: ViewContext<State, Interface>
+): (ensembleIdent: EnsembleIdent) => string {
+    const selectedEnsembles = viewContext.useSettingsToViewInterfaceValue("selectedEnsembles");
     const ensembleSet = useAtomValue(EnsembleSetAtom);
 
     return function makeEnsembleDisplayName(ensembleIdent: EnsembleIdent) {

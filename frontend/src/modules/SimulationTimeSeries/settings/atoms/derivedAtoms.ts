@@ -1,18 +1,25 @@
-import { EnsembleIdent } from "@framework/EnsembleIdent";
-import { StatisticsType, VectorSpec, VisualizationMode } from "../typesAndEnums";
-import { filteredParameterIdentListAtom, selectedVectorNamesAtom, userSelectedEnsembleIdentsAtom, userSelectedParameterIdentStringAtom, visualizationModeAtom } from "./baseAtoms";
-import { EnsembleSetAtom } from "@framework/GlobalAtoms";
-import { fixupEnsembleIdents } from "@framework/utils/ensembleUiHelpers";
+import { VectorDescription_api } from "@api";
 import { Ensemble } from "@framework/Ensemble";
+import { EnsembleIdent } from "@framework/EnsembleIdent";
+import { Parameter, ParameterIdent, ParameterType } from "@framework/EnsembleParameters";
+import { EnsembleSetAtom } from "@framework/GlobalAtoms";
+import { createVectorSelectorDataFromVectors } from "@framework/components/VectorSelector";
+import { fixupEnsembleIdents } from "@framework/utils/ensembleUiHelpers";
 
 import { atom } from "jotai";
-
 import { isEqual } from "lodash";
-import { Parameter, ParameterIdent, ParameterType } from "@framework/EnsembleParameters";
+
+import {
+    filteredParameterIdentListAtom,
+    selectedVectorNamesAtom,
+    userSelectedEnsembleIdentsAtom,
+    userSelectedParameterIdentStringAtom,
+    visualizationModeAtom,
+} from "./baseAtoms";
 import { vectorListQueriesAtom } from "./queryAtoms";
-import { VectorDescription_api } from "@api";
-import { createVectorSelectorDataFromVectors } from "@framework/components/VectorSelector";
-import { EnsembleVectorListsHelper } from "../utils/ensemblesVectorListHelper";
+
+import { StatisticsType, VectorSpec, VisualizationMode } from "../../typesAndEnums";
+import { EnsembleVectorListsHelper } from "../../utils/ensemblesVectorListHelper";
 
 export const statisticsTypeAtom = atom<StatisticsType>((get) => {
     const visualizationMode = get(visualizationModeAtom);
@@ -23,7 +30,6 @@ export const statisticsTypeAtom = atom<StatisticsType>((get) => {
 
     return StatisticsType.INDIVIDUAL;
 });
-
 
 export const selectedEnsembleIdentsAtom = atom<EnsembleIdent[]>((get) => {
     const ensembleSet = get(EnsembleSetAtom);
@@ -85,7 +91,6 @@ export const continuousAndNonConstantParametersUnionAtom = atom<Parameter[]>((ge
     return continuousAndNonConstantParametersUnion;
 });
 
-
 export const vectorListDataAtom = atom<(VectorDescription_api[] | null)[]>((get) => {
     const vectorListQueries = get(vectorListQueriesAtom);
     const oldVectorListData: (VectorDescription_api[] | null)[] = get(vectorListDataAtom);
@@ -132,7 +137,6 @@ export const ensembleVectorListsHelperAtom = atom((get) => {
 
     return new EnsembleVectorListsHelper(selectedEnsembleIdents, vectorListQueries);
 });
-
 
 export const vectorSpecificationsAtom = atom<VectorSpec[]>((get) => {
     const ensembleVectorListsHelper = get(ensembleVectorListsHelperAtom);

@@ -5,12 +5,10 @@ import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { Parameter, ParameterIdent } from "@framework/EnsembleParameters";
 import { ModuleSettingsProps } from "@framework/Module";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
-import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
-import { VectorSelector } from "@framework/components/VectorSelector";
-import { EnsembleDropdown } from "@framework/components/EnsembleDropdown";
+import { EnsembleSelect } from "@framework/components/EnsembleSelect";
 import { ParameterListFilter } from "@framework/components/ParameterListFilter";
-import { fixupEnsembleIdent, maybeAssignFirstSyncedEnsemble } from "@framework/utils/ensembleUiHelpers";
+import { VectorSelector } from "@framework/components/VectorSelector";
 import { Checkbox } from "@lib/components/Checkbox";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
@@ -46,9 +44,11 @@ import {
     selectedParameterIdentStringAtom,
     statisticsTypeAtom,
     vectorSelectorDataAtom,
-} from "./atoms/derivedSettingsAtoms";
+} from "./atoms/derivedAtoms";
 import { vectorListQueriesAtom } from "./atoms/queryAtoms";
 import { useMakeSettingsStatusWriterMessages } from "./hooks/useMakeSettingsStatusWriterMessages";
+
+import { Interface } from "../settingsToViewInterface";
 import {
     FanchartStatisticOption,
     FanchartStatisticOptionEnumToStringMapping,
@@ -59,20 +59,13 @@ import {
     StatisticsType,
     VisualizationMode,
     VisualizationModeEnumToStringMapping,
-} from "./typesAndEnums";
+} from "../typesAndEnums";
 
-export function Settings({ settingsContext, workbenchSession }: ModuleSettingsProps<Record<string, never>>) {
+export function Settings({ settingsContext, workbenchSession }: ModuleSettingsProps<Record<string, never>, Interface>) {
     const ensembleSet = useEnsembleSet(workbenchSession);
     const statusWriter = useSettingsStatusWriter(settingsContext);
 
     const [selectedVectorTags, setSelectedVectorTags] = React.useState<string[]>([]);
-    const syncedSettingKeys = settingsContext.useSyncedSettingKeys();
-    const syncHelper = new SyncSettingsHelper(syncedSettingKeys, workbenchServices);
-    const syncedValueEnsembles = syncHelper.useValue(SyncSettingKey.ENSEMBLE, "global.syncValue.ensembles");
-    const syncedValueSummaryVector = syncHelper.useValue(SyncSettingKey.TIME_SERIES, "global.syncValue.timeSeries");
-    console.debug(`${myInstanceIdStr} -- synced keys ${JSON.stringify(syncedSettingKeys)}`);
-    console.debug(`${myInstanceIdStr} -- syncedValueEnsembles=${JSON.stringify(syncedValueEnsembles)}`);
-    console.debug(`${myInstanceIdStr} -- syncedValueSummaryVector=${JSON.stringify(syncedValueSummaryVector)}`);
 
     const [resampleFrequency, setResamplingFrequency] = useAtom(resampleFrequencyAtom);
     const [groupBy, setGroupBy] = useAtom(groupByAtom);
@@ -251,7 +244,7 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
                 />
             </CollapsibleGroup>
             <CollapsibleGroup expanded={true} title="Ensembles">
-                <MultiEnsembleSelect
+                <EnsembleSelect
                     ensembleSet={ensembleSet}
                     value={selectedEnsembleIdents}
                     size={5}

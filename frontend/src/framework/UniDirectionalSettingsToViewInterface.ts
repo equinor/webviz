@@ -46,7 +46,8 @@ export class UniDirectionalSettingsToViewInterface<TInterfaceType extends Interf
     }
 
     getAtom<T extends keyof TInterfaceType["baseStates"]>(key: T): PrimitiveAtom<TInterfaceType["baseStates"][T]>;
-    getAtom<T extends keyof TInterfaceType["derivedStates"]>(key: T): Atom<TInterfaceType["derivedStates"][T]> {
+    getAtom<T extends keyof TInterfaceType["derivedStates"]>(key: T): Atom<TInterfaceType["derivedStates"][T]>;
+    getAtom<T extends keyof TInterfaceType["baseStates"] | keyof TInterfaceType["derivedStates"]>(key: T): Atom<any> {
         const derivedAtom = this._derivedAtoms.get(key);
         if (derivedAtom) {
             return derivedAtom as Atom<TInterfaceType["derivedStates"][T]>;

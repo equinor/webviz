@@ -1,26 +1,28 @@
 import { Ensemble } from "@framework/Ensemble";
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
+import { ViewContext } from "@framework/ModuleContext";
 import { ViewStatusWriter } from "@framework/StatusWriter";
+import { Interface } from "@modules/SimulationTimeSeries/settingsToViewInterface";
+import { State } from "@modules/SimulationTimeSeries/state";
 
 import { useAtomValue } from "jotai";
 
-import { showObservationsAtom } from "../atoms/baseAtoms";
 import {
     historicalDataQueryHasErrorAtom,
     queryIsFetchingAtom,
     realizationsQueryHasErrorAtom,
     statisticsQueryHasErrorAtom,
-} from "../atoms/derivedViewAtoms";
-import { vectorObservationsQueriesAtom } from "../atoms/queryAtoms";
+} from "../atoms/derivedAtoms";
 
 export function useMakeViewStatusWriterMessages(
+    viewContext: ViewContext<State, Interface>,
     statusWriter: ViewStatusWriter,
     parameterDisplayName: string | null,
     ensemblesWithoutParameter: Ensemble[]
 ) {
     const ensembleSet = useAtomValue(EnsembleSetAtom);
-    const showObservations = useAtomValue(showObservationsAtom);
-    const vectorObservationsQueries = useAtomValue(vectorObservationsQueriesAtom);
+    const showObservations = viewContext.useSettingsToViewInterfaceValue("showObservations");
+    const vectorObservationsQueries = viewContext.useSettingsToViewInterfaceValue("vectorObservationsQueries");
     const isQueryFetching = useAtomValue(queryIsFetchingAtom);
     const hasHistoricalVectorQueryError = useAtomValue(historicalDataQueryHasErrorAtom);
     const hasRealizationsQueryError = useAtomValue(realizationsQueryHasErrorAtom);

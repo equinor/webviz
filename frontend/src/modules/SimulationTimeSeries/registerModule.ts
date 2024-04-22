@@ -1,12 +1,15 @@
 import { ModuleRegistry } from "@framework/ModuleRegistry";
 
+import { SettingsAtoms, ViewAtoms } from "./atomDefinitions";
 import { channelDefs } from "./channelDefs";
-// import { SyncSettingKey } from "@framework/SyncSettings";
-// import { broadcastChannelsDef } from "./channelDefs";
 import { preview } from "./preview";
+import { Interface } from "./settingsToViewInterface";
+import { State } from "./state";
 
-ModuleRegistry.registerModule<never>({
-    moduleName: "SimulationTimeSeries",
+export const MODULE_NAME = "SimulationTimeSeries";
+
+ModuleRegistry.registerModule<State, Interface, SettingsAtoms, ViewAtoms>({
+    moduleName: MODULE_NAME,
     defaultTitle: "Simulation Time Series",
     preview,
     channelDefinitions: channelDefs,

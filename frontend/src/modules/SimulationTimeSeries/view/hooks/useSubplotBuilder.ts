@@ -1,29 +1,23 @@
 import { SummaryVectorObservations_api } from "@api";
+import { ViewContext } from "@framework/ModuleContext";
 import { ColorSet } from "@lib/utils/ColorSet";
 import { Size2D } from "@lib/utils/geometry";
+import { Interface } from "@modules/SimulationTimeSeries/settingsToViewInterface";
+import { State } from "@modules/SimulationTimeSeries/state";
 
 import { useAtomValue } from "jotai";
 import { Layout } from "plotly.js";
 
 import { useMakeEnsembleDisplayNameFunc } from "./useMakeEnsembleDisplayNameFunc";
 
-import {
-    groupByAtom,
-    showHistoricalAtom,
-    showObservationsAtom,
-    statisticsSelectionAtom,
-    visualizationModeAtom,
-} from "../atoms/baseAtoms";
-import { vectorSpecificationsAtom } from "../atoms/derivedSettingsAtoms";
+import { GroupBy, VectorSpec, VisualizationMode } from "../../typesAndEnums";
 import {
     activeTimestampUtcMsAtom,
     colorByParameterAtom,
     loadedVectorSpecificationsAndHistoricalDataAtom,
     loadedVectorSpecificationsAndRealizationDataAtom,
     loadedVectorSpecificationsAndStatisticsDataAtom,
-} from "../atoms/derivedViewAtoms";
-import { vectorObservationsQueriesAtom } from "../atoms/queryAtoms";
-import { GroupBy, VectorSpec, VisualizationMode } from "../typesAndEnums";
+} from "../atoms/derivedAtoms";
 import { EnsemblesContinuousParameterColoring } from "../utils/ensemblesContinuousParameterColoring";
 import { SubplotBuilder, SubplotOwner } from "../utils/subplotBuilder";
 import { TimeSeriesPlotData } from "../utils/timeSeriesPlotData";
@@ -33,24 +27,25 @@ import {
 } from "../utils/vectorSpecificationsAndQueriesUtils";
 
 export function useSubplotBuilder(
+    viewContext: ViewContext<State, Interface>,
     wrapperDivSize: Size2D,
     colorSet: ColorSet,
     ensemblesParameterColoring: EnsemblesContinuousParameterColoring | null
 ): [Partial<TimeSeriesPlotData>[], Partial<Layout>] {
-    const groupBy = useAtomValue(groupByAtom);
-    const visualizationMode = useAtomValue(visualizationModeAtom);
-    const showObservations = useAtomValue(showObservationsAtom);
-    const vectorSpecifications = useAtomValue(vectorSpecificationsAtom);
-    const showHistorical = useAtomValue(showHistoricalAtom);
-    const statisticsSelection = useAtomValue(statisticsSelectionAtom);
-    const vectorObservationsQueries = useAtomValue(vectorObservationsQueriesAtom);
+    const groupBy = viewContext.useSettingsToViewInterfaceValue("groupBy");
+    const visualizationMode = viewContext.useSettingsToViewInterfaceValue("visualizationMode");
+    const showObservations = viewContext.useSettingsToViewInterfaceValue("showObservations");
+    const vectorSpecifications = viewContext.useSettingsToViewInterfaceValue("vectorSpecifications");
+    const showHistorical = viewContext.useSettingsToViewInterfaceValue("showHistorical");
+    const statisticsSelection = viewContext.useSettingsToViewInterfaceValue("statisticsSelection");
+    const vectorObservationsQueries = viewContext.useSettingsToViewInterfaceValue("vectorObservationsQueries");
     const loadedVectorSpecificationsAndRealizationData = useAtomValue(loadedVectorSpecificationsAndRealizationDataAtom);
     const loadedVectorSpecificationsAndStatisticsData = useAtomValue(loadedVectorSpecificationsAndStatisticsDataAtom);
     const loadedVectorSpecificationsAndHistoricalData = useAtomValue(loadedVectorSpecificationsAndHistoricalDataAtom);
-    const colorByParameter = useAtomValue(colorByParameterAtom);
+    const colorByParameter = viewContext.useSettingsToViewInterfaceValue("colorByParameter");
     const activeTimestampUtcMs = useAtomValue(activeTimestampUtcMsAtom);
 
-    const makeEnsembleDisplayName = useMakeEnsembleDisplayNameFunc();
+    const makeEnsembleDisplayName = useMakeEnsembleDisplayNameFunc(viewContext);
 
     const subplotOwner = groupBy === GroupBy.TIME_SERIES ? SubplotOwner.VECTOR : SubplotOwner.ENSEMBLE;
 

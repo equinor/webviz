@@ -1,10 +1,12 @@
 import { Frequency_api, StatisticFunction_api } from "@api";
+import { EnsembleIdent } from "@framework/EnsembleIdent";
+import { ParameterIdent } from "@framework/EnsembleParameters";
+import { atomWithCompare } from "@framework/utils/atomUtils";
+
 import { atom } from "jotai";
 import { isEqual } from "lodash";
-import { FanchartStatisticOption, GroupBy, StatisticsSelection, VisualizationMode } from "../typesAndEnums";
-import { EnsembleIdent } from "@framework/EnsembleIdent";
-import { atomWithCompare } from "@framework/utils/atomUtils";
-import { ParameterIdent } from "@framework/EnsembleParameters";
+
+import { FanchartStatisticOption, GroupBy, StatisticsSelection, VisualizationMode } from "../../typesAndEnums";
 
 export const resampleFrequencyAtom = atom<Frequency_api | null>(Frequency_api.MONTHLY);
 
