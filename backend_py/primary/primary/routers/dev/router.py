@@ -11,7 +11,7 @@ from primary.auth.auth_helper import AuthenticatedUser, AuthHelper
 from primary.services.user_session_manager.user_session_manager import UserSessionManager
 from primary.services.user_session_manager.user_session_manager import UserComponent
 from primary.services.user_session_manager.user_session_manager import _USER_SESSION_DEFS
-from backend_py.primary.primary.services.user_session_manager._radix_helpers import RadixResourceRequests, RadixJobApi
+from primary.services.user_session_manager._radix_helpers import RadixResourceRequests, RadixJobApi
 from primary.services.user_session_manager._user_session_directory import UserSessionDirectory
 from primary.services.user_grid3d_service.user_grid3d_service import UserGrid3dService, IJKIndexFilter
 
