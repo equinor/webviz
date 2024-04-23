@@ -79,12 +79,12 @@ export const ParameterDistributionPlot: React.FC<ParameterDistributionPlotProps>
                     // Distribution plot shows positive values, thus the rug plot is placed below 0.
                     // Align the realization values horizontally below the distribution plot
                     const yPosition = -0.1 - index * 0.1; // Offset -0.1, and 0.1 between each ensemble
-                    const yValues = ensembleData.values.map(() => yPosition); // Align all values to the same y-position
+                    const yValues = ensembleData.values.map(() => yPosition); // Align horizontally with same y-position
 
                     const rugTrace = {
                         x: ensembleData.values, // Use the same x values as your main trace
                         y: yValues,
-                        type: "rug", // Set type to 'rug' for the rug plot
+                        type: "rug",
                         name: ensembleData.ensembleDisplayName,
                         legendgroup: ensembleData.ensembleDisplayName,
                         xaxis: `x${subplotIndex}`,
