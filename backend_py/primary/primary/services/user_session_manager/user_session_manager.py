@@ -101,10 +101,10 @@ class UserSessionManager:
         # Experiment with forming a job id that contains the user info and the instance string
         job_id = f"{self._username}//{effective_instance_str}//{self._user_id}"
 
-        LOGGER.debug(
+        LOGGER.info(
             f"Unable to get existing user session, creating new session for: {user_component=}, {instance_str=}"
         )
-        new_session_info = await _create_new_session(
+        creation_result = await _create_new_session(
             session_dir=session_dir,
             job_component_name=session_def.job_component_name,
             job_scheduler_port=session_def.port,
@@ -116,16 +116,37 @@ class UserSessionManager:
             approx_timeout_s=110,
         )
 
-        if not new_session_info:
-            LOGGER.error(f"Failed to create new user session for: {user_component=}, {instance_str=}")
-            return None
+        if creation_result.session_info:
+            session_url = f"http://{creation_result.session_info.radix_job_name}:{actual_service_port}"
+            LOGGER.info(
+                f"Created new user session in: {timer.elapsed_ms()}ms ({user_component=}, {instance_str=}, {session_url=})"
+            )
+            return session_url
 
-        session_url = f"http://{new_session_info.radix_job_name}:{actual_service_port}"
-        LOGGER.info(
-            f"Created new user session in: {timer.elapsed_ms()}ms ({user_component=}, {instance_str=}, {session_url=})"
-        )
+        # We might have a race condition where someone else is trying to create the new session and we therefore
+        # failed to acquire the lock. In this case, do a bit of sleep and try another wait cycle before giving up
+        if creation_result.session_info is None and creation_result.failed_due_to_acquire_lock:
+            LOGGER.info(
+                f"Creation lock was unavailable, trying to wait for session to enter running state ({user_component=}, {instance_str=})"
+            )
+            await asyncio.sleep(5)
+            session_info = await _get_info_for_running_session(
+                session_dir=session_dir,
+                job_component_name=session_def.job_component_name,
+                job_scheduler_port=session_def.port,
+                instance_str=effective_instance_str,
+                actual_service_port=actual_service_port,
+                approx_timeout_s=110,
+            )
+            if session_info:
+                session_url = f"http://{session_info.radix_job_name}:{actual_service_port}"
+                LOGGER.info(
+                    f"Session did enter running state, returning it: ({user_component=}, {instance_str=}, {session_url=})"
+                )
+                return session_url
 
-        return session_url
+        LOGGER.error(f"Failed to create new user session for: {user_component=}, {instance_str=}")
+        return None
 
 
 # Look for existing session info, possibly waiting for a partially created session to come online
@@ -196,6 +217,12 @@ async def _get_info_for_running_session(
     return session_info
 
 
+@dataclass(frozen=True)
+class SessionCreationResult:
+    session_info: SessionInfo | None
+    failed_due_to_acquire_lock: bool = False
+
+
 # Try and create a new session with a new radix job and wait for it to come online
 async def _create_new_session(
     session_dir: UserSessionDirectory,
@@ -207,7 +234,7 @@ async def _create_new_session(
     instance_str: str,
     actual_service_port: int,
     approx_timeout_s: float,
-) -> SessionInfo | None:
+) -> SessionCreationResult:
 
     time_countdown = TimeCountdown(approx_timeout_s, None)
 
@@ -223,7 +250,7 @@ async def _create_new_session(
     got_the_lock = distributed_lock.acquire(blocking=False, timeout=-1)
     if not got_the_lock:
         LOGGER.error(f"Failed to acquire distributed redlock {lock_key_name=}")
-        return None
+        return SessionCreationResult(None, failed_due_to_acquire_lock=True)
 
     with RedlockReleasingContext(distributed_lock):
         # Now that we have the lock, kill off existing job info and start creating new job
@@ -245,7 +272,7 @@ async def _create_new_session(
             if new_radix_job_name is None:
                 LOGGER.error(f"Failed to create new job in radix ({job_component_name=}, {job_scheduler_port=})")
                 session_info_updater.delete_all_state()
-                return None
+                return SessionCreationResult(None)
 
             LOGGER.debug(f"New radix job was created, will wait for it to enter running state ({new_radix_job_name=})")
             session_info_updater.set_state_waiting(new_radix_job_name)
@@ -259,7 +286,7 @@ async def _create_new_session(
                 )
                 session_info_updater.delete_all_state()
                 run_in_background_task(radix_job_api.delete_named_job(new_radix_job_name))
-                return None
+                return SessionCreationResult(None)
 
             LOGGER.debug(
                 f"Radix job has entered running state, will try and wait for it to come alive ({new_radix_job_name=})"
@@ -280,28 +307,27 @@ async def _create_new_session(
         if not is_ready:
             LOGGER.error("The newly created radix job failed to come online, giving up and deleting it")
             session_info_updater.delete_all_state()
-            # Should delete the radix job as well
             run_in_background_task(radix_job_api.delete_named_job(new_radix_job_name))
-            return None
+            return SessionCreationResult(None)
 
         session_info_updater.set_state_running()
 
         session_info = session_dir.get_session_info(job_component_name, instance_str)
         if not session_info:
             LOGGER.error("Failed to get session info after creating new radix job")
-            return None
+            return SessionCreationResult(None)
 
         if session_info.run_state != SessionRunState.RUNNING:
             LOGGER.error(f"Unexpected session info, expected run_state to be running but got {session_info.run_state=}")
-            return None
+            return SessionCreationResult(None)
 
         if not session_info.radix_job_name:
             LOGGER.error("Unexpected empty radix_job_name in session info after creating new radix job")
-            return None
+            return SessionCreationResult(None)
 
         LOGGER.debug(f"New radix job created and online: {session_info.radix_job_name=}")
 
-        return session_info
+        return SessionCreationResult(session_info)
 
 
 async def _call_health_endpoint_with_retries(health_url: str, stop_after_delay_s: float) -> Tuple[bool, str]:
