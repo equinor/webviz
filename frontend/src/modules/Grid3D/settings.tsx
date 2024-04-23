@@ -80,7 +80,10 @@ export function Settings({ settingsContext, workbenchServices, workbenchSession 
             computedBoundingBox = gridModelInfo.bbox;
 
             gridModelInfo.property_info_arr.forEach((propInfo) => {
-                parameterNames.push(propInfo.property_name);
+                // Ignore properties with date/time until backend support them
+                if (propInfo.iso_date_or_interval == null) {
+                    parameterNames.push(propInfo.property_name);
+                }
             });
         }
         if (parameterNames.length > 0 && (!parameterName || !parameterNames.includes(parameterName))) {
