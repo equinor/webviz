@@ -1,6 +1,6 @@
 import React from "react";
 
-import { Atom, PrimitiveAtom } from "jotai";
+import { Atom, PrimitiveAtom, WritableAtom } from "jotai";
 import { cloneDeep } from "lodash";
 
 import { ChannelDefinition, ChannelReceiverDefinition } from "./DataChannelTypes";
@@ -53,7 +53,7 @@ export type ModuleViewProps<
 };
 
 export type ModuleAtoms<TAtoms extends Record<string, unknown>> = {
-    [K in keyof TAtoms]: Atom<TAtoms[K]> | PrimitiveAtom<TAtoms[K]>;
+    [K in keyof TAtoms]: Atom<TAtoms[K]> | WritableAtom<TAtoms[K], [TAtoms[K]], void> | PrimitiveAtom<TAtoms[K]>;
 };
 
 export type AtomsInitialization<TAtoms extends Record<string, unknown>, TInterfaceType extends InterfaceBaseType> = (
@@ -65,16 +65,20 @@ export type ModuleSettings<
     TInterfaceType extends InterfaceBaseType = {
         baseStates: Record<string, never>;
         derivedStates: Record<string, never>;
-    }
-> = React.FC<ModuleSettingsProps<TTStateType, TInterfaceType>>;
+    },
+    TSettingsAtomsType extends Record<string, unknown> = Record<string, never>,
+    TViewAtomsType extends Record<string, unknown> = Record<string, never>
+> = React.FC<ModuleSettingsProps<TTStateType, TInterfaceType, TSettingsAtomsType, TViewAtomsType>>;
 
 export type ModuleView<
     TTStateType extends StateBaseType,
     TInterfaceType extends InterfaceBaseType = {
         baseStates: Record<string, never>;
         derivedStates: Record<string, never>;
-    }
-> = React.FC<ModuleViewProps<TTStateType, TInterfaceType>>;
+    },
+    TSettingsAtomsType extends Record<string, unknown> = Record<string, never>,
+    TViewAtomsType extends Record<string, unknown> = Record<string, never>
+> = React.FC<ModuleViewProps<TTStateType, TInterfaceType, TSettingsAtomsType, TViewAtomsType>>;
 
 export enum ImportState {
     NotImported = "NotImported",
@@ -101,8 +105,8 @@ export class Module<
 > {
     private _name: string;
     private _defaultTitle: string;
-    public viewFC: ModuleView<TStateType, TInterfaceType>;
-    public settingsFC: ModuleSettings<TStateType, TInterfaceType>;
+    public viewFC: ModuleView<TStateType, TInterfaceType, TSettingsAtomsType, TViewAtomsType>;
+    public settingsFC: ModuleSettings<TStateType, TInterfaceType, TSettingsAtomsType, TViewAtomsType>;
     protected _importState: ImportState;
     private _moduleInstances: ModuleInstance<TStateType, TInterfaceType, TSettingsAtomsType, TViewAtomsType>[];
     private _defaultState: TStateType | null;
@@ -232,6 +236,12 @@ export class Module<
                     }
                     if (this._settingsToViewInterfaceInitialization) {
                         instance.makeSettingsToViewInterface(this._settingsToViewInterfaceInitialization);
+                        if (this._settingsAtomsInitialization) {
+                            instance.makeSettingsAtoms(this._settingsAtomsInitialization);
+                        }
+                        if (this._viewAtomsInitialization) {
+                            instance.makeViewAtoms(this._viewAtomsInitialization);
+                        }
                     }
                 });
             }
@@ -249,6 +259,12 @@ export class Module<
                     }
                     if (this._settingsToViewInterfaceInitialization) {
                         instance.makeSettingsToViewInterface(this._settingsToViewInterfaceInitialization);
+                        if (this._settingsAtomsInitialization) {
+                            instance.makeSettingsAtoms(this._settingsAtomsInitialization);
+                        }
+                        if (this._viewAtomsInitialization) {
+                            instance.makeViewAtoms(this._viewAtomsInitialization);
+                        }
                     }
                 });
             })

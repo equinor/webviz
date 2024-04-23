@@ -116,12 +116,18 @@ export class ModuleInstance<
         return this._settingsViewInterface;
     }
 
-    getSettingsAtoms(): ModuleAtoms<TSettingsAtomsType> | null {
-        return this._settingsAtoms;
+    getSettingsAtom<TKey extends keyof TSettingsAtomsType>(key: TKey): ModuleAtoms<TSettingsAtomsType>[TKey] {
+        if (!this._settingsAtoms) {
+            throw `Module instance '${this._title}' does not have initialized settings atoms yet. Did you forget to add an atom initialization when registering the module?`;
+        }
+        return this._settingsAtoms[key];
     }
 
-    getViewAtoms(): ModuleAtoms<TViewAtomsType> | null {
-        return this._viewAtoms;
+    getViewAtom<TKey extends keyof TViewAtomsType>(key: TKey): ModuleAtoms<TViewAtomsType>[TKey] {
+        if (!this._viewAtoms) {
+            throw `Module instance '${this._title}' does not have initialized view atoms yet. Did you forget to add an atom initialization when registering the module?`;
+        }
+        return this._viewAtoms[key];
     }
 
     getChannelManager(): ChannelManager {
@@ -194,11 +200,11 @@ export class ModuleInstance<
         return this._initialised;
     }
 
-    getViewFC(): ModuleView<TStateType, TInterfaceType> {
+    getViewFC(): ModuleView<TStateType, TInterfaceType, TSettingsAtomsType, TViewAtomsType> {
         return this._module.viewFC;
     }
 
-    getSettingsFC(): ModuleSettings<TStateType, TInterfaceType> {
+    getSettingsFC(): ModuleSettings<TStateType, TInterfaceType, TSettingsAtomsType, TViewAtomsType> {
         return this._module.settingsFC;
     }
 

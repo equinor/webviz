@@ -24,7 +24,7 @@ import { scaleHexColorLightness } from "./colorUtils";
 import { EnsemblesContinuousParameterColoring } from "./ensemblesContinuousParameterColoring";
 import { TimeSeriesPlotData } from "./timeSeriesPlotData";
 
-import { VectorSpec } from "../typesAndEnums";
+import { VectorSpec } from "../../typesAndEnums";
 
 type VectorNameUnitMap = { [vectorName: string]: string };
 type HexColorMap = { [key: string]: string };

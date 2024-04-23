@@ -1,13 +1,13 @@
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 import { SettingsStatusWriter } from "@framework/StatusWriter";
+import { joinStringArrayToHumanReadableString } from "@modules/SimulationTimeSeries/utils/stringUtils";
 
 import { useAtomValue } from "jotai";
 
 import { selectedVectorNamesAtom } from "../atoms/baseAtoms";
-import { ensembleVectorListsHelperAtom, selectedEnsembleIdentsAtom } from "../atoms/derivedSettingsAtoms";
+import { ensembleVectorListsHelperAtom, selectedEnsembleIdentsAtom } from "../atoms/derivedAtoms";
 import { vectorListQueriesAtom } from "../atoms/queryAtoms";
-import { joinStringArrayToHumanReadableString } from "../utils/stringUtils";
 
 export function useMakeSettingsStatusWriterMessages(statusWriter: SettingsStatusWriter, selectedVectorTags: string[]) {
     const ensembleSet = useAtomValue(EnsembleSetAtom);

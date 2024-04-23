@@ -1,10 +1,11 @@
 import { ModuleRegistry } from "@framework/ModuleRegistry";
 
-import { SettingsAtoms, ViewAtoms, settingsAtomsInitialization } from "./atomDefinitions";
 import { MODULE_NAME } from "./registerModule";
+import { SettingsAtoms, settingsAtomsInitialization } from "./settings/atoms/atomDefinitions";
 import { Settings } from "./settings/settings";
 import { Interface, interfaceInitialization } from "./settingsToViewInterface";
 import { State } from "./state";
+import { ViewAtoms, viewAtomsInitialization } from "./view/atoms/atomDefinitions";
 import { View } from "./view/view";
 
 const module = ModuleRegistry.initModule<State, Interface, SettingsAtoms, ViewAtoms>(
@@ -12,7 +13,8 @@ const module = ModuleRegistry.initModule<State, Interface, SettingsAtoms, ViewAt
     {},
     undefined,
     interfaceInitialization,
-    settingsAtomsInitialization
+    settingsAtomsInitialization,
+    viewAtomsInitialization
 );
 
 module.viewFC = View;

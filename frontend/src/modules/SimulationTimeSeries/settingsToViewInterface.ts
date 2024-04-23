@@ -1,3 +1,4 @@
+import { Frequency_api } from "@api";
 import { Ensemble } from "@framework/Ensemble";
 import { ParameterIdent } from "@framework/EnsembleParameters";
 import { InterfaceInitialization } from "@framework/UniDirectionalSettingsToViewInterface";
@@ -5,6 +6,7 @@ import { InterfaceInitialization } from "@framework/UniDirectionalSettingsToView
 import {
     colorRealizationsByParameterAtom,
     groupByAtom,
+    resampleFrequencyAtom,
     showHistoricalAtom,
     showObservationsAtom,
     statisticsSelectionAtom,
@@ -16,7 +18,6 @@ import { GroupBy, StatisticsSelection, VectorSpec, VisualizationMode } from "./t
 export type State = Record<string, never>;
 
 export type Interface = {
-    baseStates: {};
     derivedStates: {
         groupBy: GroupBy;
         visualizationMode: VisualizationMode;
@@ -27,11 +28,11 @@ export type Interface = {
         colorByParameter: boolean;
         parameterIdent: ParameterIdent | null;
         selectedEnsembles: Ensemble[];
+        resampleFrequency: Frequency_api | null;
     };
 };
 
 export const interfaceInitialization: InterfaceInitialization<Interface> = {
-    baseStates: {},
     derivedStates: {
         groupBy: (get) => {
             return get(groupByAtom);
@@ -59,6 +60,9 @@ export const interfaceInitialization: InterfaceInitialization<Interface> = {
         },
         selectedEnsembles: (get) => {
             return get(selectedEnsemblesAtom);
+        },
+        resampleFrequency: (get) => {
+            return get(resampleFrequencyAtom);
         },
     },
 };

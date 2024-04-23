@@ -2,31 +2,27 @@ import { Ensemble } from "@framework/Ensemble";
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 import { ViewContext } from "@framework/ModuleContext";
 import { ViewStatusWriter } from "@framework/StatusWriter";
+import { SettingsAtoms } from "@modules/SimulationTimeSeries/settings/atoms/atomDefinitions";
 import { Interface } from "@modules/SimulationTimeSeries/settingsToViewInterface";
 import { State } from "@modules/SimulationTimeSeries/state";
 
 import { useAtomValue } from "jotai";
 
-import {
-    historicalDataQueryHasErrorAtom,
-    queryIsFetchingAtom,
-    realizationsQueryHasErrorAtom,
-    statisticsQueryHasErrorAtom,
-} from "../atoms/derivedAtoms";
+import { ViewAtoms } from "../atoms/atomDefinitions";
 
 export function useMakeViewStatusWriterMessages(
-    viewContext: ViewContext<State, Interface>,
+    viewContext: ViewContext<State, Interface, SettingsAtoms, ViewAtoms>,
     statusWriter: ViewStatusWriter,
     parameterDisplayName: string | null,
     ensemblesWithoutParameter: Ensemble[]
 ) {
     const ensembleSet = useAtomValue(EnsembleSetAtom);
     const showObservations = viewContext.useSettingsToViewInterfaceValue("showObservations");
-    const vectorObservationsQueries = viewContext.useSettingsToViewInterfaceValue("vectorObservationsQueries");
-    const isQueryFetching = useAtomValue(queryIsFetchingAtom);
-    const hasHistoricalVectorQueryError = useAtomValue(historicalDataQueryHasErrorAtom);
-    const hasRealizationsQueryError = useAtomValue(realizationsQueryHasErrorAtom);
-    const hasStatisticsQueryError = useAtomValue(statisticsQueryHasErrorAtom);
+    const vectorObservationsQueries = viewContext.useViewAtomValue("vectorObservationsQueries");
+    const isQueryFetching = viewContext.useViewAtomValue("queryIsFetching");
+    const hasHistoricalVectorQueryError = viewContext.useViewAtomValue("historicalDataQueryHasError");
+    const hasRealizationsQueryError = viewContext.useViewAtomValue("realizationsQueryHasError");
+    const hasStatisticsQueryError = viewContext.useViewAtomValue("statisticsQueryHasError");
 
     statusWriter.setLoading(isQueryFetching);
     if (hasRealizationsQueryError) {

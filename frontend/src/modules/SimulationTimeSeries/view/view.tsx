@@ -8,18 +8,21 @@ import { useElementSize } from "@lib/hooks/useElementSize";
 import { ColorScaleGradientType } from "@lib/utils/ColorScale";
 import { ContentError } from "@modules/_shared/components/ContentMessage";
 
-import { useAtom } from "jotai";
 import { PlotDatum, PlotMouseEvent } from "plotly.js";
 
-import { userSelectedActiveTimestampUtcMsAtom } from "./atoms/baseAtoms";
+import { ViewAtoms } from "./atoms/atomDefinitions";
 import { useMakeViewStatusWriterMessages } from "./hooks/useMakeViewStatusWriterMessages";
 import { usePublishToDataChannels } from "./hooks/usePublishToDataChannels";
 import { useSubplotBuilder } from "./hooks/useSubplotBuilder";
 import { EnsemblesContinuousParameterColoring } from "./utils/ensemblesContinuousParameterColoring";
 
+import { SettingsAtoms } from "../settings/atoms/atomDefinitions";
 import { Interface } from "../settingsToViewInterface";
 
-export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Record<string, never>, Interface>) => {
+export const View = ({
+    viewContext,
+    workbenchSettings,
+}: ModuleViewProps<Record<string, never>, Interface, SettingsAtoms, ViewAtoms>) => {
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);
     const wrapperDivSize = useElementSize(wrapperDivRef);
 
@@ -28,10 +31,10 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Record<
     const colorByParameter = viewContext.useSettingsToViewInterfaceValue("colorByParameter");
     const parameterIdent = viewContext.useSettingsToViewInterfaceValue("parameterIdent");
     const selectedEnsembles = viewContext.useSettingsToViewInterfaceValue("selectedEnsembles");
-    const hasRealizationsQueryError = viewContext.useSettingsToViewInterfaceValue("hasRealizationsQueryError");
-    const hasStatisticsQueryError = viewContext.useSettingsToViewInterfaceValue("hasStatisticsQueryError");
+    const hasRealizationsQueryError = viewContext.useViewAtomValue("realizationsQueryHasError");
+    const hasStatisticsQueryError = viewContext.useViewAtomValue("statisticsQueryHasError");
 
-    const [, setActiveTimestampUtcMs] = useAtom(userSelectedActiveTimestampUtcMsAtom);
+    const setActiveTimestampUtcMs = viewContext.useSetViewAtom("userSelectedActiveTimestampUtcMs");
 
     // Color palettes
     const colorSet = workbenchSettings.useColorSet();

@@ -1,24 +1,21 @@
 import { ChannelContentDefinition } from "@framework/DataChannelTypes";
 import { ViewContext } from "@framework/ModuleContext";
+import { SettingsAtoms } from "@modules/SimulationTimeSeries/settings/atoms/atomDefinitions";
 import { Interface } from "@modules/SimulationTimeSeries/settingsToViewInterface";
 import { State } from "@modules/SimulationTimeSeries/state";
-
-import { useAtomValue } from "jotai";
 
 import { useMakeEnsembleDisplayNameFunc } from "./useMakeEnsembleDisplayNameFunc";
 
 import { ChannelIds } from "../../channelDefs";
 import { makeVectorGroupDataGenerator } from "../../dataGenerators";
-import {
-    activeTimestampUtcMsAtom,
-    loadedVectorSpecificationsAndRealizationDataAtom,
-    queryIsFetchingAtom,
-} from "../atoms/derivedAtoms";
+import { ViewAtoms } from "../atoms/atomDefinitions";
 
-export function usePublishToDataChannels(viewContext: ViewContext<State, Interface>) {
-    const loadedVectorSpecificationsAndRealizationData = useAtomValue(loadedVectorSpecificationsAndRealizationDataAtom);
-    const activeTimestampUtcMs = useAtomValue(activeTimestampUtcMsAtom);
-    const isQueryFetching = useAtomValue(queryIsFetchingAtom);
+export function usePublishToDataChannels(viewContext: ViewContext<State, Interface, SettingsAtoms, ViewAtoms>) {
+    const loadedVectorSpecificationsAndRealizationData = viewContext.useViewAtomValue(
+        "loadedVectorSpecificationsAndRealizationData"
+    );
+    const activeTimestampUtcMs = viewContext.useViewAtomValue("activeTimestampUtcMs");
+    const isQueryFetching = viewContext.useViewAtomValue("queryIsFetching");
 
     const makeEnsembleDisplayName = useMakeEnsembleDisplayNameFunc(viewContext);
 
