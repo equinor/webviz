@@ -41,6 +41,7 @@ class GridGeometryRequest(BaseModel):
     sas_token: str
     blob_store_base_uri: str
     grid_blob_object_uuid: str
+    include_inactive_cells: bool
     ijk_index_filter: IJKIndexFilter | None
 
 
@@ -60,6 +61,7 @@ class MappedGridPropertiesRequest(BaseModel):
     blob_store_base_uri: str
     grid_blob_object_uuid: str
     property_blob_object_uuid: str
+    include_inactive_cells: bool
     ijk_index_filter: IJKIndexFilter | None
 
 
@@ -76,6 +78,7 @@ class PolylineIntersectionRequest(BaseModel):
     blob_store_base_uri: str
     grid_blob_object_uuid: str
     property_blob_object_uuid: str
+    include_inactive_cells: bool
     polyline_utm_xy: list[float]
 
 

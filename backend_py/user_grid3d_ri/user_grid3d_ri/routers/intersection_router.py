@@ -33,6 +33,7 @@ async def post_get_polyline_intersection(
     # LOGGER.debug(f"{req_body.blob_store_base_uri=}")
     # LOGGER.debug(f"{req_body.grid_blob_object_uuid=}")
     # LOGGER.debug(f"{req_body.property_blob_object_uuid=}")
+    # LOGGER.debug(f"{req_body.include_inactive_cells=}")
     # LOGGER.debug(f"{len(req_body.polyline_utm_xy)=}")
 
     perf_metrics = PerfMetrics()
@@ -56,6 +57,7 @@ async def post_get_polyline_intersection(
 
     grpc_request = GridGeometryExtraction_pb2.CutAlongPolylineRequest(
         gridFilename=grid_path_name,
+        includeInactiveCells=req_body.include_inactive_cells,
         fencePolylineUtmXY=req_body.polyline_utm_xy,
     )
 

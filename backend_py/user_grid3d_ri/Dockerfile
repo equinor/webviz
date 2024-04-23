@@ -27,7 +27,7 @@ RUN python3.11 -m pipx ensurepath
 RUN pipx install poetry==1.8.2
 
 # This can probably be optimized wrt space usage by fetching and preparing Resinsight using a multi-stage build
-ADD --chown=appuser https://github.com/CeetronSolutions/ResInsight/releases/download/webviz.test.0.0.1/ResInsight-Ubuntu_20.04_gcc.tar.gz /home/appuser/ri_bin/dist_archive/
+ADD --chown=appuser https://github.com/CeetronSolutions/ResInsight/releases/download/webviz.test.0.0.2/ResInsight-Ubuntu_20.04_gcc.tar.gz /home/appuser/ri_bin/dist_archive/
 WORKDIR /home/appuser/ri_bin
 RUN tar xvf ./dist_archive/ResInsight*.tar.gz
 ENV RESINSIGHT_EXECUTABLE=/home/appuser/ri_bin/ResInsight

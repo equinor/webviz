@@ -96,6 +96,7 @@ class UserGrid3dService:
         self._sas_token = sas_token
         self._blob_store_base_uri = blob_store_base_uri
         self._call_timeout = 60
+        self._include_inactive_cells = False
 
     @classmethod
     async def create_async(cls, authenticated_user: AuthenticatedUser, case_uuid: str) -> "UserGrid3dService":
@@ -145,6 +146,7 @@ class UserGrid3dService:
             sas_token=self._sas_token,
             blob_store_base_uri=self._blob_store_base_uri,
             grid_blob_object_uuid=grid_blob_object_uuid,
+            include_inactive_cells=self._include_inactive_cells,
             ijk_index_filter=effective_ijk_index_filter,
         )
 
@@ -201,6 +203,7 @@ class UserGrid3dService:
             blob_store_base_uri=self._blob_store_base_uri,
             grid_blob_object_uuid=grid_blob_object_uuid,
             property_blob_object_uuid=property_blob_object_uuid,
+            include_inactive_cells=self._include_inactive_cells,
             ijk_index_filter=effective_ijk_index_filter,
         )
 
@@ -245,6 +248,7 @@ class UserGrid3dService:
             blob_store_base_uri=self._blob_store_base_uri,
             grid_blob_object_uuid=grid_blob_object_uuid,
             property_blob_object_uuid=property_blob_object_uuid,
+            include_inactive_cells=self._include_inactive_cells,
             polyline_utm_xy=polyline_utm_xy,
         )
 

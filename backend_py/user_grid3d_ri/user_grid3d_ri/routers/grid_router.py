@@ -40,6 +40,7 @@ async def post_get_grid_geometry(
     # LOGGER.debug(f"{req_body.sas_token=}")
     # LOGGER.debug(f"{req_body.blob_store_base_uri=}")
     # LOGGER.debug(f"{req_body.grid_blob_object_uuid=}")
+    # LOGGER.debug(f"{req_body.include_inactive_cells=}")
     # LOGGER.debug(f"{req_body.ijk_index_filter=}")
 
     perf_metrics = PerfMetrics()
@@ -71,6 +72,7 @@ async def post_get_grid_geometry(
 
     request = GridGeometryExtraction_pb2.GetGridSurfaceRequest(
         gridFilename=grid_path_name,
+        includeInactiveCells=req_body.include_inactive_cells,
         ijkIndexFilter=grpc_ijk_index_filter,
         cellIndexFilter=None,
         propertyFilter=None,
@@ -105,7 +107,11 @@ async def post_get_grid_geometry(
 
     source_cell_indices_np = np.asarray(grpc_response.sourceCellIndicesArr, dtype=np.uint32)
 
-    data_cache_key = _make_grid_geo_key(req_body.grid_blob_object_uuid, req_body.ijk_index_filter)
+    data_cache_key = _make_grid_geo_key(
+        grid_blob_object_uuid=req_body.grid_blob_object_uuid,
+        include_inactive_cells=req_body.include_inactive_cells,
+        filter=req_body.ijk_index_filter,
+    )
     LOGGER.debug(f"{myfunc} - {data_cache_key=}")
     DATA_CACHE.set_uint32_numpy_arr(data_cache_key, source_cell_indices_np)
     perf_metrics.record_lap("write-cache")
@@ -159,6 +165,7 @@ async def post_get_mapped_grid_properties(
     # LOGGER.debug(f"{req_body.blob_store_base_uri=}")
     # LOGGER.debug(f"{req_body.grid_blob_object_uuid=}")
     # LOGGER.debug(f"{req_body.property_blob_object_uuid=}")
+    # LOGGER.debug(f"{req_body.include_inactive_cells=}")
     # LOGGER.debug(f"{req_body.ijk_index_filter=}")
 
     perf_metrics = PerfMetrics()
@@ -178,7 +185,11 @@ async def post_get_mapped_grid_properties(
     perf_metrics.record_lap("get-blobs")
 
     source_cell_indices_np = None
-    data_cache_key = _make_grid_geo_key(req_body.grid_blob_object_uuid, req_body.ijk_index_filter)
+    data_cache_key = _make_grid_geo_key(
+        grid_blob_object_uuid=req_body.grid_blob_object_uuid,
+        include_inactive_cells=req_body.include_inactive_cells,
+        filter=req_body.ijk_index_filter,
+    )
     LOGGER.debug(f"{myfunc} - {data_cache_key=}")
     source_cell_indices_np = DATA_CACHE.get_uint32_numpy_arr(data_cache_key)
     perf_metrics.record_lap("read-cache")
@@ -204,6 +215,7 @@ async def post_get_mapped_grid_properties(
 
         request = GridGeometryExtraction_pb2.GetGridSurfaceRequest(
             gridFilename=grid_path_name,
+            includeInactiveCells=req_body.include_inactive_cells,
             ijkIndexFilter=grpc_ijk_index_filter,
             cellIndexFilter=None,
             propertyFilter=None,
@@ -258,11 +270,13 @@ async def post_get_mapped_grid_properties(
     return ret_obj
 
 
-def _make_grid_geo_key(grid_blob_object_uuid: str, filter: api_schemas.IJKIndexFilter | None) -> str:
+def _make_grid_geo_key(
+    grid_blob_object_uuid: str, include_inactive_cells: bool, filter: api_schemas.IJKIndexFilter | None
+) -> str:
     filter_str = "NoFilter"
     if filter:
         filter_str = (
             f"I[{filter.min_i},{filter.max_i}]-J[{filter.min_j},{filter.max_j}]-K[{filter.min_k},{filter.max_k}]"
         )
 
-    return f"{grid_blob_object_uuid}--{filter_str}"
+    return f"{grid_blob_object_uuid}--IncludeInactive{include_inactive_cells}--{filter_str}"
