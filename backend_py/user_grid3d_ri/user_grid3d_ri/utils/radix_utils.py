@@ -24,5 +24,5 @@ def read_radix_job_payload_as_json() -> dict | None:
             return payload_dict
 
     except Exception as exception:
-        LOGGER.error(f"read_radix_job_payload_as_json() - Failed to read payload file: {payload_filename}, {exception=}")
+        LOGGER.error(f"Failed to read radix payload file: {payload_filename}, {exception=}")
         return None

@@ -30,8 +30,8 @@ class DataCache:
         # What expiry should we set here?
         # Maybe just skip it and relay on the cache eviction policy?
         # For now, experiment with 5 minutes
-        self._cache.set(use_key, byte_stream.getvalue(), expire=5*60)
-        #self._cache.set(use_key, byte_stream.getvalue())
+        self._cache.set(use_key, byte_stream.getvalue(), expire=5 * 60)
+        # self._cache.set(use_key, byte_stream.getvalue())
 
     def get_uint32_numpy_arr(self, key: str) -> NDArray[np.unsignedinteger] | None:
         use_key = "nparr_uint32_" + key

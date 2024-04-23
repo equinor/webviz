@@ -53,7 +53,7 @@ class TimeCountdown:
         time_now = time.perf_counter()
         return time_now >= self._end_s
 
-    def is_action_due(self):
+    def is_action_due(self) -> bool:
         if self.action_interval_s is None:
             return False
 
@@ -96,7 +96,7 @@ class LocalBlobCache:
             _blob_keys_in_flight.add(blob_key)
             try:
                 dl_res = await self._download_blob(blob_item)
-                #dl_res = await self._download_blob_using_ms_stuff(blob_item)
+                # dl_res = await self._experiment_download_blob_using_ms_stuff(blob_item)
             finally:
                 _blob_keys_in_flight.discard(blob_key)
 
@@ -143,7 +143,11 @@ class LocalBlobCache:
         url = f"{self._blob_store_base_uri}/{object_uuid}?{self._sas_token}"
 
         async with aiofiles.tempfile.NamedTemporaryFile(prefix=f"{local_blob_filename}__", delete=False) as tmp_file:
-            tmp_blob_path = tmp_file.name
+            # Apparently (from the typings) the name attribute may be a file descriptor, but we don't handle that
+            if isinstance(tmp_file.name, int):
+                raise TypeError("Temporary file with file descriptor as name is not supported")
+            tmp_blob_path: str = os.fsdecode(tmp_file.name)
+
             LOGGER.debug(f"Downloading {blob_kind} blob into temp file: {tmp_blob_path}")
             async with httpx.AsyncClient(timeout=self._timeout) as client:
                 try:
@@ -194,7 +198,7 @@ class LocalBlobCache:
 
         return DownloadResult.SUCCEEDED
 
-    async def _download_blob_using_ms_stuff(self, blob_item: _BlobItem) -> DownloadResult:
+    async def _experiment_download_blob_using_ms_stuff(self, blob_item: _BlobItem) -> DownloadResult:
         object_uuid = blob_item.object_uuid
         blob_kind = blob_item.blob_kind
         local_blob_filename = _make_local_blob_filename(blob_item)
@@ -203,11 +207,13 @@ class LocalBlobCache:
         timer = PerfTimer()
         num_bytes_downloaded = 0
         num_bytes_written = 0
-        #full_blob_url = f"{self._blob_store_base_uri}/{object_uuid}"
+        # full_blob_url = f"{self._blob_store_base_uri}/{object_uuid}"
         full_blob_url = f"{self._blob_store_base_uri}/{object_uuid}?{self._sas_token}"
 
         async with aiofiles.tempfile.NamedTemporaryFile(prefix=f"{local_blob_filename}__", delete=False) as tmp_file:
-            tmp_blob_path = tmp_file.name
+            if isinstance(tmp_file.name, int):
+                raise TypeError("Temporary file with file descriptor as name is not supported")
+            tmp_blob_path: str = os.fsdecode(tmp_file.name)
             LOGGER.debug(f"Downloading {blob_kind} blob into temp file: {tmp_blob_path}")
 
             async with BlobClient.from_blob_url(blob_url=full_blob_url) as blob_client:
@@ -233,7 +239,9 @@ class LocalBlobCache:
             return DownloadResult.FAILED
 
         size_mb = num_bytes_downloaded / (1024 * 1024)
-        LOGGER.info(f"M$$$$$$ Downloaded {blob_kind} blob in {timer.elapsed_s():.2f}s  [{size_mb=:.2f}, {local_blob_path=}]")
+        LOGGER.info(
+            f"M$$$$$$ Downloaded {blob_kind} blob in {timer.elapsed_s():.2f}s  [{size_mb=:.2f}, {local_blob_path=}]"
+        )
 
         return DownloadResult.SUCCEEDED
 
@@ -241,7 +249,7 @@ class LocalBlobCache:
         local_blob_path = self._make_local_blob_path(blob_item)
         return await _does_file_exist(local_blob_path)
 
-    def _make_local_blob_path(self, blob_item: _BlobItem) -> bool:
+    def _make_local_blob_path(self, blob_item: _BlobItem) -> str:
         local_blob_filename = _make_local_blob_filename(blob_item)
         local_blob_path = os.path.join(self._cache_root_dir, local_blob_filename)
         return local_blob_path

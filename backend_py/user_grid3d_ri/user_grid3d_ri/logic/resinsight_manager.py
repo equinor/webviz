@@ -47,18 +47,18 @@ class ResInsightManager:
 
     async def _get_or_create_ri_instance(self) -> _RiInstanceInfo | None:
         async with self._mutex_lock:
-            LOGGER.debug(f"_get_or_create_ri_instance() - has a registered instance: {'YES' if self._ri_info else 'NO'}")
+            LOGGER.debug(f"_get_or_create_ri_instance() - has registered instance: {'YES' if self._ri_info else 'NO'}")
             if self._ri_info:
                 try:
                     process = psutil.Process(self._ri_info.pid)
                     LOGGER.debug(f"_get_or_create_ri_instance() - {process=}")
                     if process.is_running() and process.status() != psutil.STATUS_ZOMBIE:
-                        LOGGER.debug(f"_get_or_create_ri_instance() - process is already running, pid={self._ri_info.pid}")
+                        LOGGER.debug(f"_get_or_create_ri_instance() - process already running, pid={self._ri_info.pid}")
                         return self._ri_info
                 except psutil.NoSuchProcess:
                     pass
 
-                LOGGER.debug(f"_get_or_create_ri_instance() - process does NOT seem to be running, pid={self._ri_info.pid}")
+                LOGGER.debug(f"_get_or_create_ri_instance() - process is NOT running, pid={self._ri_info.pid}")
 
             # Either we don't have a process or the process is dead, so we'll clean up and try to launch a new one
             if self._ri_info and self._ri_info.channel:
@@ -111,12 +111,12 @@ def _kill_competing_ri_processes() -> None:
         proc.kill()
 
 
-def _on_terminate(proc: psutil.Process):
+def _on_terminate(proc: psutil.Process) -> None:
     # returncode is added just for this callback, it is not part of the original psutil.Process class
     LOGGER.debug(f"process {proc} terminated with exit code {proc.returncode}")  # type: ignore[attr-defined]
 
 
-async def _stream_watcher(stream: asyncio.streams.StreamReader, stream_name) -> None:
+async def _stream_watcher(stream: asyncio.streams.StreamReader, stream_name: str) -> None:
     async for data in stream:
         line = data.decode("ascii").rstrip()
         LOGGER.debug(f"ResInsight({stream_name})--{line}")
@@ -150,8 +150,10 @@ async def _launch_ri_instance() -> int:
         env=env_dict,
     )
 
-    _stdout_task = run_in_background_task(_stream_watcher(proc.stdout, "stdout"))
-    _stderr_task = run_in_background_task(_stream_watcher(proc.stderr, "stderr"))
+    if proc.stdout is not None:
+        _stdout_task = run_in_background_task(_stream_watcher(proc.stdout, "stdout"))
+    if proc.stderr is not None:
+        _stderr_task = run_in_background_task(_stream_watcher(proc.stderr, "stderr"))
 
     if not proc:
         return -1

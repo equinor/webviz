@@ -1,4 +1,5 @@
 import logging
+from typing import Any
 
 import grpc
 import numpy as np
@@ -25,8 +26,8 @@ DATA_CACHE = DataCache()
 router = APIRouter()
 
 
-def _proto_msg_as_oneliner(msg):
-    return str(msg).replace("\n", ", ")
+def _proto_msg_as_oneliner(proto_msg: Any) -> str:
+    return str(proto_msg).replace("\n", ", ")
 
 
 @router.post("/get_grid_geometry")
@@ -105,6 +106,7 @@ async def post_get_grid_geometry(
     source_cell_indices_np = np.asarray(grpc_response.sourceCellIndicesArr, dtype=np.uint32)
 
     data_cache_key = _make_grid_geo_key(req_body.grid_blob_object_uuid, req_body.ijk_index_filter)
+    LOGGER.debug(f"{myfunc} - {data_cache_key=}")
     DATA_CACHE.set_uint32_numpy_arr(data_cache_key, source_cell_indices_np)
     perf_metrics.record_lap("write-cache")
 
@@ -179,7 +181,6 @@ async def post_get_mapped_grid_properties(
     data_cache_key = _make_grid_geo_key(req_body.grid_blob_object_uuid, req_body.ijk_index_filter)
     LOGGER.debug(f"{myfunc} - {data_cache_key=}")
     source_cell_indices_np = DATA_CACHE.get_uint32_numpy_arr(data_cache_key)
-    LOGGER.debug(f"{myfunc} - cache: {len(source_cell_indices_np) if source_cell_indices_np is not None else 'NO'}")
     perf_metrics.record_lap("read-cache")
 
     ri_total_time: int | None = None
@@ -211,16 +212,13 @@ async def post_get_mapped_grid_properties(
         geo_extraction_stub = GridGeometryExtraction_pb2_grpc.GridGeometryExtractionStub(grpc_channel)
         grpc_response = await geo_extraction_stub.GetGridSurface(request)
 
-        ri_total_time=grpc_response.timeElapsedInfo.totalTimeElapsedMs
-        ri_perf_metrics=dict(grpc_response.timeElapsedInfo.namedEventsAndTimeElapsedMs)
+        ri_total_time = grpc_response.timeElapsedInfo.totalTimeElapsedMs
+        ri_perf_metrics = dict(grpc_response.timeElapsedInfo.namedEventsAndTimeElapsedMs)
         perf_metrics.record_lap("ri-grid-geo")
 
         source_cell_indices_np = np.asarray(grpc_response.sourceCellIndicesArr, dtype=np.uint32)
         DATA_CACHE.set_uint32_numpy_arr(data_cache_key, source_cell_indices_np)
         perf_metrics.record_lap("write-cache")
-
-    LOGGER.debug(f"{type(source_cell_indices_np)=}")
-    LOGGER.debug(f"{source_cell_indices_np.dtype=}")
 
     prop_extractor = await GridPropertiesExtractor.from_roff_property_file_async(property_path_name)
     perf_metrics.record_lap("read-props")
