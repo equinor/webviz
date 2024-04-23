@@ -28,8 +28,9 @@ async def usersession_call(
     instance_str: Annotated[str, Query(description="Instance string")] = "myInst",
 ) -> str:
     LOGGER.debug(f"usersession_call() {user_component=}, {instance_str=}")
+    LOGGER.debug(f"usersession_call() {authenticated_user.get_user_id()=}, {authenticated_user.get_username()=}")
 
-    manager = UserSessionManager(authenticated_user.get_user_id())
+    manager = UserSessionManager(authenticated_user.get_user_id(), authenticated_user.get_username())
     session_base_url = await manager.get_or_create_session_async(user_component, instance_str)
     if session_base_url is None:
         LOGGER.error("Failed to get user session URL")
@@ -80,7 +81,9 @@ async def usersession_radixcreate(user_component: UserComponent) -> str:
     session_def = _USER_SESSION_DEFS[user_component]
     radix_job_api = RadixJobApi(session_def.job_component_name, session_def.port)
     resource_req = RadixResourceRequests(cpu="50m", memory="100Mi")
-    new_radix_job_name = await radix_job_api.create_new_job(resource_req, None)
+    new_radix_job_name = await radix_job_api.create_new_job(
+        resource_req=resource_req, job_id="dummyJobId", payload_dict=None
+    )
     LOGGER.debug(f"Created new job: {new_radix_job_name=}")
     if new_radix_job_name is None:
         return "Failed to create new job"

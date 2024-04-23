@@ -45,8 +45,8 @@ class RadixJobApi:
         self._job_component_name = job_component_name
         self._job_manager_base_url = f"http://{job_component_name}:{job_scheduler_port}"
 
-    async def create_new_job(self, resource_req: RadixResourceRequests, payload_dict: dict | None) -> str | None:
-        LOGGER.debug(f".create_new_job() - {self._job_component_name=}, {resource_req=}, {payload_dict=}")
+    async def create_new_job(self, resource_req: RadixResourceRequests, job_id: str | None, payload_dict: dict | None) -> str | None:
+        LOGGER.debug(f".create_new_job() - {self._job_component_name=}, {resource_req=}, {job_id=}, {payload_dict=}")
 
         payload_as_str: str | None = None
         if payload_dict:
@@ -62,7 +62,7 @@ class RadixJobApi:
         # we might want to auto discover the number of available cpus and set the GOMAXPROCS environment variable accordingly.
         # As of now, it seems that it's the cpu limit value that will be picked up by for example by automaxprocs.
         request_body = {
-            # "jobId": "my-dummy-job-id",
+            "jobId": job_id,
             "payload": payload_as_str,
             "resources": {
                 "requests": {

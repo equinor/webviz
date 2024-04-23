@@ -102,7 +102,7 @@ class UserGrid3dService:
     async def create_async(cls, authenticated_user: AuthenticatedUser, case_uuid: str) -> "UserGrid3dService":
         perf_metrics = PerfMetrics()
 
-        session_manager = UserSessionManager(authenticated_user.get_user_id())
+        session_manager = UserSessionManager(authenticated_user.get_user_id(), authenticated_user.get_username())
         session_base_url = await session_manager.get_or_create_session_async(UserComponent.GRID3D_RI, None)
         if session_base_url is None:
             raise ServiceUnavailableError("Failed to get user session URL", Service.USER_SESSION)

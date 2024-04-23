@@ -63,12 +63,15 @@ _USER_SESSION_DEFS: dict[UserComponent, _UserSessionDef] = {
 
 
 class UserSessionManager:
-    def __init__(self, user_id: str) -> None:
+    def __init__(self, user_id: str, username: str | None) -> None:
         self._user_id = user_id
+        self._username = username
 
     async def get_or_create_session_async(self, user_component: UserComponent, instance_str: str | None) -> str | None:
         timer = PerfTimer()
-        LOGGER.debug(f"Get or create user session for: {user_component=}, {instance_str=}")
+        LOGGER.debug(
+            f"Get or create user session for: {user_component=}, {instance_str=}, {self._username=}, {self._user_id=}"
+        )
 
         session_def = _USER_SESSION_DEFS[user_component]
         effective_instance_str = instance_str if instance_str else "DEFAULT"
@@ -95,14 +98,18 @@ class UserSessionManager:
             )
             return session_url
 
+        # Experiment with forming a job id that contains the user info and the instance string
+        job_id = f"{self._username}//{effective_instance_str}//{self._user_id}"
+
         LOGGER.debug(
-            f"Unable to get existing user session, starting new session for: {user_component=}, {instance_str=}"
+            f"Unable to get existing user session, creating new session for: {user_component=}, {instance_str=}"
         )
         new_session_info = await _create_new_session(
             session_dir=session_dir,
             job_component_name=session_def.job_component_name,
             job_scheduler_port=session_def.port,
             resource_req=session_def.resource_req,
+            job_id=job_id,
             job_payload_dict=session_def.payload_dict,
             instance_str=effective_instance_str,
             actual_service_port=actual_service_port,
@@ -195,6 +202,7 @@ async def _create_new_session(
     job_component_name: str,
     job_scheduler_port: int,
     resource_req: RadixResourceRequests,
+    job_id: str | None,
     job_payload_dict: dict | None,
     instance_str: str,
     actual_service_port: int,
@@ -233,7 +241,7 @@ async def _create_new_session(
                 run_in_background_task(radix_job_api.delete_named_job(old_session_info.radix_job_name))
 
             LOGGER.debug(f"Creating new job using radix job manager ({job_component_name=}, {job_scheduler_port=})")
-            new_radix_job_name = await radix_job_api.create_new_job(resource_req, job_payload_dict)
+            new_radix_job_name = await radix_job_api.create_new_job(resource_req, job_id, job_payload_dict)
             if new_radix_job_name is None:
                 LOGGER.error(f"Failed to create new job in radix ({job_component_name=}, {job_scheduler_port=})")
                 session_info_updater.delete_all_state()
