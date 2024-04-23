@@ -65,9 +65,9 @@ class LocalBlobCache:
             LOGGER.debug(f"Starting download of {blob_kind} blob {object_uuid=}")
             _blob_keys_in_flight.add(blob_key)
             try:
-                # dl_res = await self._download_blob_simple(blob_item)
+                dl_res = await self._download_blob_simple(blob_item)
                 # dl_res = await self._download_blob_using_ms_client_lib(blob_item)
-                dl_res = await self._download_blob_with_queued_writer(blob_item)
+                # dl_res = await self._download_blob_with_queued_writer(blob_item)
             finally:
                 _blob_keys_in_flight.discard(blob_key)
 
@@ -129,7 +129,7 @@ class LocalBlobCache:
 
                         # What should we do about chunk size here?
                         # Leave it to the content or force a higher value?
-                        async for chunk in response.aiter_bytes(chunk_size=1024 * 1024):
+                        async for chunk in response.aiter_bytes(chunk_size=5 * 1024 * 1024):
                             await tmp_file.write(chunk)
                             num_bytes_in_chunk = len(chunk)
                             num_bytes_written += num_bytes_in_chunk
