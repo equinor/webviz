@@ -7,7 +7,7 @@ import asyncio
 import aiofiles
 import aiofiles.os
 import httpx
-from azure.storage.blob.aio import BlobServiceClient, BlobClient, ContainerClient
+from azure.storage.blob.aio import BlobClient
 
 from webviz_pkg.core_utils.background_tasks import run_in_background_task
 from webviz_pkg.core_utils.perf_timer import PerfTimer
@@ -65,9 +65,9 @@ class LocalBlobCache:
             LOGGER.debug(f"Starting download of {blob_kind} blob {object_uuid=}")
             _blob_keys_in_flight.add(blob_key)
             try:
-                # dl_res = await self._download_blob(blob_item)
-                dl_res = await self._experiment_download_blob_using_ms_stuff(blob_item)
-                # dl_res = await self._experiment_download_blob_with_queue(blob_item)
+                # dl_res = await self._download_blob_simple(blob_item)
+                # dl_res = await self._download_blob_using_ms_client_lib(blob_item)
+                dl_res = await self._download_blob_with_queued_writer(blob_item)
             finally:
                 _blob_keys_in_flight.discard(blob_key)
 
@@ -102,7 +102,7 @@ class LocalBlobCache:
         LOGGER.error(f"Timed out while waiting for {blob_kind} blob to appear in cache")
         return None
 
-    async def _download_blob(self, blob_item: _BlobItem) -> DownloadResult:
+    async def _download_blob_simple(self, blob_item: _BlobItem) -> DownloadResult:
         object_uuid = blob_item.object_uuid
         blob_kind = blob_item.blob_kind
         local_blob_filename = _make_local_blob_filename(blob_item)
@@ -138,12 +138,6 @@ class LocalBlobCache:
                                 f"  - downloading {blob_kind} blob {object_uuid}  {num_mb_written:.2f}MB of {total_size_mb:.2f}MB  {num_bytes_in_chunk=}  {tmp_blob_path=}"
                             )
 
-                            # Should we be doing this check here?
-                            # Probably not since it does take time and currently we're guarding the download using _blob_keys_in_flight
-                            # if await self._is_blob_in_cache(blob_item):
-                            #     LOGGER.debug(f"SUDDENLY found {blob_kind} blob in cache, stopping")
-                            #     return DownloadResult.ABANDONED
-
                         num_bytes_downloaded = response.num_bytes_downloaded
 
                 # Need to refine exceptions here
@@ -170,12 +164,12 @@ class LocalBlobCache:
         dl_size_mb = num_bytes_downloaded / (1024 * 1024)
         dl_speed_mbs = dl_size_mb / core_download_time_s
         LOGGER.info(
-            f"Downloaded {blob_kind} blob in {timer.elapsed_s():.2f}s  [{dl_speed_mbs:.2f}MB/s, {dl_size_mb:.2f}MB, {local_blob_path=}]"
+            f"Downloaded {blob_kind} blob in {timer.elapsed_s():.2f}s  [{dl_speed_mbs:.2f}MB/s, {dl_size_mb:.2f}MB, ImplSimple, {local_blob_path=}]"
         )
 
         return DownloadResult.SUCCEEDED
 
-    async def _experiment_download_blob_using_ms_stuff(self, blob_item: _BlobItem) -> DownloadResult:
+    async def _download_blob_using_ms_client_lib(self, blob_item: _BlobItem) -> DownloadResult:
         object_uuid = blob_item.object_uuid
         blob_kind = blob_item.blob_kind
         local_blob_filename = _make_local_blob_filename(blob_item)
@@ -222,44 +216,31 @@ class LocalBlobCache:
         dl_size_mb = num_bytes_downloaded / (1024 * 1024)
         dl_speed_mbs = dl_size_mb / core_download_time_s
         LOGGER.info(
-            f"M$$$$$$$$$$ downloaded {blob_kind} blob in {timer.elapsed_s():.2f}s  [{dl_speed_mbs:.2f}MB/s, {dl_size_mb:.2f}MB, {local_blob_path=}]"
+            f"Downloaded {blob_kind} blob in {timer.elapsed_s():.2f}s  [{dl_speed_mbs:.2f}MB/s, {dl_size_mb:.2f}MB, ImplMSClientLib, {local_blob_path=}]"
         )
 
         return DownloadResult.SUCCEEDED
 
-    async def _is_blob_in_cache(self, blob_item: _BlobItem) -> bool:
-        local_blob_path = self._make_local_blob_path(blob_item)
-        return await _does_file_exist(local_blob_path)
-
-    def _make_local_blob_path(self, blob_item: _BlobItem) -> str:
-        local_blob_filename = _make_local_blob_filename(blob_item)
-        local_blob_path = os.path.join(self._cache_root_dir, local_blob_filename)
-        return local_blob_path
-
-    async def _experiment_download_blob_with_queue(self, blob_item: _BlobItem) -> DownloadResult:
+    async def _download_blob_with_queued_writer(self, blob_item: _BlobItem) -> DownloadResult:
         object_uuid = blob_item.object_uuid
         blob_kind = blob_item.blob_kind
         local_blob_filename = _make_local_blob_filename(blob_item)
         local_blob_path = self._make_local_blob_path(blob_item)
 
-        timer = PerfTimer()
-        num_bytes_downloaded = 0
-        num_bytes_written = 0
-        url = f"{self._blob_store_base_uri}/{object_uuid}?{self._sas_token}"
-
-
-        async def chunk_writer_worker(target_file, queue):
+        async def chunk_writer_worker(target_async_file_like, chunk_queue):
             num_bytes_written = 0
             while True:
-                chunk_bytes = await queue.get()
-                num_bytes_in_chunk = len(chunk_bytes)
-                await target_file.write(chunk_bytes)
-                queue.task_done()
+                chunk_bytes = await chunk_queue.get()
+                await target_async_file_like.write(chunk_bytes)
+                chunk_queue.task_done()
 
-                num_bytes_written += num_bytes_in_chunk
+                num_bytes_written += len(chunk_bytes)
                 num_mb_written = num_bytes_written / (1024 * 1024)
-                LOGGER.debug(f"chunk_writer_worker -->   - {num_mb_written:.2f}MB")
+                LOGGER.debug(f"  -     writing {blob_kind} blob {object_uuid}  {num_mb_written:.2f}MB")
 
+        timer = PerfTimer()
+        num_bytes_downloaded = 0
+        url = f"{self._blob_store_base_uri}/{object_uuid}?{self._sas_token}"
 
         async with aiofiles.tempfile.NamedTemporaryFile(prefix=f"{local_blob_filename}__", delete=False) as tmp_file:
             # Apparently (from the typings) the name attribute may be a file descriptor, but we don't handle that
@@ -267,8 +248,8 @@ class LocalBlobCache:
                 raise TypeError("Temporary file with file descriptor as name is not supported")
             tmp_blob_path: str = os.fsdecode(tmp_file.name)
 
-            queue = asyncio.Queue()
-            task = asyncio.create_task(chunk_writer_worker(tmp_file, queue))
+            chunk_queue = asyncio.Queue()
+            writer_task = asyncio.create_task(chunk_writer_worker(tmp_file, chunk_queue))
 
             LOGGER.debug(f"Downloading {blob_kind} blob into temp file: {tmp_blob_path}")
             async with httpx.AsyncClient(timeout=self._timeout) as client:
@@ -279,16 +260,15 @@ class LocalBlobCache:
                         total_size_mb = total_size_bytes / (1024 * 1024)
 
                         async for chunk in response.aiter_bytes(chunk_size=5 * 1024 * 1024):
-                            num_bytes_in_chunk = len(chunk)
-                            num_bytes_downloaded += num_bytes_in_chunk
+                            num_bytes_downloaded += len(chunk)
                             num_mb_downloaded = num_bytes_downloaded / (1024 * 1024)
                             LOGGER.debug(
-                                f"  - downloading {blob_kind} blob {object_uuid}  {num_mb_downloaded:.2f}MB of {total_size_mb:.2f}MB  {num_bytes_in_chunk=}  {tmp_blob_path=}"
+                                f"  - downloading {blob_kind} blob {object_uuid}  {num_mb_downloaded:.2f}MB of {total_size_mb:.2f}MB  {tmp_blob_path=}"
                             )
-                            queue.put_nowait(chunk)
+                            chunk_queue.put_nowait(chunk)
 
-                        await queue.join()
-                        task.cancel()
+                        await chunk_queue.join()
+                        writer_task.cancel()
 
                         num_bytes_downloaded = response.num_bytes_downloaded
 
@@ -316,10 +296,19 @@ class LocalBlobCache:
         dl_size_mb = num_bytes_downloaded / (1024 * 1024)
         dl_speed_mbs = dl_size_mb / core_download_time_s
         LOGGER.info(
-            f"Downloaded {blob_kind} blob in {timer.elapsed_s():.2f}s  [{dl_speed_mbs:.2f}MB/s, {dl_size_mb:.2f}MB, {local_blob_path=}]"
+            f"Downloaded {blob_kind} blob in {timer.elapsed_s():.2f}s  [{dl_speed_mbs:.2f}MB/s, {dl_size_mb:.2f}MB, ImplQueuedWriter, {local_blob_path=}]"
         )
 
         return DownloadResult.SUCCEEDED
+
+    async def _is_blob_in_cache(self, blob_item: _BlobItem) -> bool:
+        local_blob_path = self._make_local_blob_path(blob_item)
+        return await _does_file_exist(local_blob_path)
+
+    def _make_local_blob_path(self, blob_item: _BlobItem) -> str:
+        local_blob_filename = _make_local_blob_filename(blob_item)
+        local_blob_path = os.path.join(self._cache_root_dir, local_blob_filename)
+        return local_blob_path
 
 
 def _make_local_blob_filename(blob_item: _BlobItem) -> str:
