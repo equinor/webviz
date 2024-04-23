@@ -65,8 +65,8 @@ class LocalBlobCache:
             LOGGER.debug(f"Starting download of {blob_kind} blob {object_uuid=}")
             _blob_keys_in_flight.add(blob_key)
             try:
-                dl_res = await self._download_blob_simple(blob_item)
-                # dl_res = await self._download_blob_using_ms_client_lib(blob_item)
+                # dl_res = await self._download_blob_simple(blob_item)
+                dl_res = await self._download_blob_using_ms_client_lib(blob_item)
                 # dl_res = await self._download_blob_with_queued_writer(blob_item)
             finally:
                 _blob_keys_in_flight.discard(blob_key)
