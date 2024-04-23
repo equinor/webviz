@@ -2,7 +2,7 @@ from .perf_timer import PerfTimer
 
 
 class PerfMetrics:
-    def __init__(self):
+    def __init__(self) -> None:
         self._perf_timer = PerfTimer()
         self._metrics_dict: dict[str, int] = {}
 

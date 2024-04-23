@@ -1,7 +1,6 @@
 from enum import Enum
 import logging
 import os
-import time
 
 from dataclasses import dataclass
 import asyncio
@@ -12,6 +11,7 @@ from azure.storage.blob.aio import BlobServiceClient, BlobClient, ContainerClien
 
 from webviz_pkg.core_utils.background_tasks import run_in_background_task
 from webviz_pkg.core_utils.perf_timer import PerfTimer
+from webviz_pkg.core_utils.time_countdown import TimeCountdown
 
 LOGGER = logging.getLogger(__name__)
 
@@ -32,36 +32,6 @@ class _BlobItem:
     object_uuid: str
     blob_kind: str
     file_suffix: str
-
-
-class TimeCountdown:
-    def __init__(self, duration_s: float, action_interval_s: float | None) -> None:
-        self._start_s = time.perf_counter()
-        self._end_s = self._start_s + duration_s
-        self.action_interval_s: float | None = action_interval_s
-        self.last_action_time_s = self._start_s
-
-    def elapsed_s(self) -> float:
-        return time.perf_counter() - self._start_s
-
-    def remaining_s(self) -> float:
-        time_now = time.perf_counter()
-        remaining = self._end_s - time_now
-        return remaining if remaining > 0 else 0
-
-    def is_finished(self) -> bool:
-        time_now = time.perf_counter()
-        return time_now >= self._end_s
-
-    def is_action_due(self) -> bool:
-        if self.action_interval_s is None:
-            return False
-
-        time_now = time.perf_counter()
-        if time_now - self.last_action_time_s >= self.action_interval_s:
-            self.last_action_time_s = time_now
-            return True
-        return False
 
 
 class LocalBlobCache:

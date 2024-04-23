@@ -9,10 +9,11 @@ from pottery import Redlock
 
 from webviz_pkg.core_utils.background_tasks import run_in_background_task
 from webviz_pkg.core_utils.perf_timer import PerfTimer
+from webviz_pkg.core_utils.time_countdown import TimeCountdown
 
 from ._radix_helpers import IS_ON_RADIX_PLATFORM, RadixResourceRequests, RadixJobApi
+from ._redlock_releasing_context import RedlockReleasingContext
 from ._user_session_directory import SessionInfo, SessionRunState, UserSessionDirectory
-from ._util_classes import LockReleasingContext, TimeCounter
 
 LOGGER = logging.getLogger(__name__)
 
@@ -137,7 +138,7 @@ async def _get_info_for_running_session(
     approx_timeout_s: float,
 ) -> SessionInfo | None:
 
-    time_counter = TimeCounter(approx_timeout_s)
+    time_countdown = TimeCountdown(approx_timeout_s, None)
     sleep_time_s = 1
     num_calls = 1
 
@@ -150,7 +151,7 @@ async def _get_info_for_running_session(
     # How much time should we spend here before giving up? Currently we just consume an approximate timeout here, and
     # leave it to the caller to decide how much time should be allowed.
     while session_info and session_info.run_state != SessionRunState.RUNNING:
-        elapsed_s = time_counter.elapsed_s()
+        elapsed_s = time_countdown.elapsed_s()
         if elapsed_s + sleep_time_s > approx_timeout_s:
             LOGGER.debug(
                 f"Giving up waiting for user session to enter running state after {num_calls} failed attempts, time spent: {elapsed_s:.2f}s"
@@ -200,7 +201,7 @@ async def _create_new_session(
     approx_timeout_s: float,
 ) -> SessionInfo | None:
 
-    time_counter = TimeCounter(approx_timeout_s)
+    time_countdown = TimeCountdown(approx_timeout_s, None)
 
     # We're going to be modifying the directory which means we need to acquire a lock
     redis_client = session_dir.get_redis_client()
@@ -216,7 +217,7 @@ async def _create_new_session(
         LOGGER.error(f"Failed to acquire distributed redlock {lock_key_name=}")
         return None
 
-    with LockReleasingContext(distributed_lock):
+    with RedlockReleasingContext(distributed_lock):
         # Now that we have the lock, kill off existing job info and start creating new job
         # But before proceeding, grab the old session info so we can try and whack the radix job if possible
         old_session_info = session_dir.get_session_info(job_component_name, instance_str)
@@ -242,7 +243,7 @@ async def _create_new_session(
             session_info_updater.set_state_waiting(new_radix_job_name)
 
             # Try and poll the radix job manager here to verify that the job transitions to the running state
-            polling_time_budget_s = time_counter.remaining_s()
+            polling_time_budget_s = time_countdown.remaining_s()
             radix_job_is_running = await radix_job_api.poll_until_job_running(new_radix_job_name, polling_time_budget_s)
             if not radix_job_is_running:
                 LOGGER.error(
@@ -266,7 +267,7 @@ async def _create_new_session(
         # It is a bit hard to decide on how long we should wait here before giving up.
         # This must be aligned with the auto release time for our lock and also the polling for session info that is done against redis
         ready_endpoint = f"http://{new_radix_job_name}:{actual_service_port}/health/ready"
-        probe_time_budget_s = time_counter.remaining_s()
+        probe_time_budget_s = time_countdown.remaining_s()
         is_ready, msg = await _call_health_endpoint_with_retries(ready_endpoint, probe_time_budget_s)
         if not is_ready:
             LOGGER.error("The newly created radix job failed to come online, giving up and deleting it")
@@ -303,24 +304,24 @@ async def _call_health_endpoint_with_retries(health_url: str, stop_after_delay_s
     min_request_timeout_s = 1
     sleep_time_s = 1
 
-    time_counter = TimeCounter(stop_after_delay_s)
+    time_countdown = TimeCountdown(stop_after_delay_s, None)
     num_calls = 0
 
     async with httpx.AsyncClient(timeout=target_request_timeout_s) as client:
         while True:
-            request_timeout_s = min(target_request_timeout_s, max(min_request_timeout_s, time_counter.remaining_s()))
+            request_timeout_s = min(target_request_timeout_s, max(min_request_timeout_s, time_countdown.remaining_s()))
             LOGGER.debug(f"_call_health_endpoint_with_retries() - querying endpoint with {request_timeout_s=}")
             success, msg = await _call_health_endpoint_with_client(client, health_url, request_timeout_s)
             num_calls += 1
             if success:
                 LOGGER.debug(
-                    f"_call_health_endpoint_with_retries() - succeeded on attempt {num_calls}, time spent: {time_counter.elapsed_s():.2f}s, {msg=}"
+                    f"_call_health_endpoint_with_retries() - succeeded on attempt {num_calls}, time spent: {time_countdown.elapsed_s():.2f}s, {msg=}"
                 )
                 return success, msg
 
             LOGGER.debug(f"_call_health_endpoint_with_retries() - attempt {num_calls} failed with error: {msg=}")
 
-            elapsed_s = time_counter.elapsed_s()
+            elapsed_s = time_countdown.elapsed_s()
             if elapsed_s + sleep_time_s + min_request_timeout_s > stop_after_delay_s:
                 LOGGER.debug(
                     f"_call_health_endpoint_with_retries() - giving up after {num_calls} failed attempts, time spent: {elapsed_s:.2f}s"

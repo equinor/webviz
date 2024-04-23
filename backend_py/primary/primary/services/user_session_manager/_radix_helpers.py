@@ -7,7 +7,7 @@ from typing import List, Literal
 import httpx
 from pydantic import BaseModel, TypeAdapter
 
-from ._util_classes import TimeCounter
+from webviz_pkg.core_utils.time_countdown import TimeCountdown
 
 LOGGER = logging.getLogger(__name__)
 
@@ -141,7 +141,7 @@ class RadixJobApi:
         state_query_timeout_s = 5
         sleep_time_s = 1
 
-        time_counter = TimeCounter(timeout_s)
+        time_countdown = TimeCountdown(timeout_s, None)
         num_calls = 0
 
         while True:
@@ -150,14 +150,14 @@ class RadixJobApi:
 
             if radix_job_state and radix_job_state.status == "Running":
                 LOGGER.debug(
-                    f".poll_until_job_running() - success on attempt {num_calls}, time spent: {time_counter.elapsed_s():.2f}s"
+                    f".poll_until_job_running() - success on attempt {num_calls}, time spent: {time_countdown.elapsed_s():.2f}s"
                 )
                 return True
 
             job_status = radix_job_state.status if radix_job_state else "NA"
             LOGGER.debug(f".poll_until_job_running() - attempt {num_calls} gave status {job_status=}")
 
-            elapsed_s = time_counter.elapsed_s()
+            elapsed_s = time_countdown.elapsed_s()
             if elapsed_s + sleep_time_s + state_query_timeout_s > timeout_s:
                 LOGGER.debug(f".poll_until_job_running() - giving up after {num_calls}, time spent: {elapsed_s:.2f}s")
                 return False

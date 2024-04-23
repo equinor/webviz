@@ -135,7 +135,7 @@ def b64_decode_float_array(base64_arr: B64FloatArray) -> NDArray[np.floating]:
     if base64_arr.element_type == "float32":
         np_array = np.frombuffer(decoded_bytes, dtype=np.float32)
         return np_array
-    elif base64_arr.element_type == "float64":
+    if base64_arr.element_type == "float64":
         np_array = np.frombuffer(decoded_bytes, dtype=np.float64)
         return np_array
 
@@ -147,10 +147,10 @@ def b64_decode_int_array(base64_arr: B64IntArray) -> NDArray[np.integer]:
     if base64_arr.element_type == "int8":
         np_array = np.frombuffer(decoded_bytes, dtype=np.int8)
         return np_array
-    elif base64_arr.element_type == "int16":
+    if base64_arr.element_type == "int16":
         np_array = np.frombuffer(decoded_bytes, dtype=np.int16)
         return np_array
-    elif base64_arr.element_type == "int32":
+    if base64_arr.element_type == "int32":
         np_array = np.frombuffer(decoded_bytes, dtype=np.int32)
         return np_array
 
@@ -162,13 +162,13 @@ def b64_decode_uint_array(base64_arr: B64UintArray) -> NDArray[np.unsignedintege
     if base64_arr.element_type == "uint8":
         np_array = np.frombuffer(decoded_bytes, dtype=np.uint8)
         return np_array
-    elif base64_arr.element_type == "uint16":
+    if base64_arr.element_type == "uint16":
         np_array = np.frombuffer(decoded_bytes, dtype=np.uint16)
         return np_array
-    elif base64_arr.element_type == "uint32":
+    if base64_arr.element_type == "uint32":
         np_array = np.frombuffer(decoded_bytes, dtype=np.uint32)
         return np_array
-    elif base64_arr.element_type == "uint64":
+    if base64_arr.element_type == "uint64":
         np_array = np.frombuffer(decoded_bytes, dtype=np.uint64)
         return np_array
 
