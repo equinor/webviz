@@ -18,6 +18,7 @@ import "./SubsurfaceMap/registerModule";
 import "./TimeSeriesParameterDistribution/registerModule";
 import "./TornadoChart/registerModule";
 import "./WellCompletions/registerModule";
+import "./GroupTree/registerModule";
 
 if (isDevMode()) {
     await import("./MyModule/registerModule");
