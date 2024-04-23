@@ -65,8 +65,8 @@ class LocalBlobCache:
             LOGGER.debug(f"Starting download of {blob_kind} blob {object_uuid=}")
             _blob_keys_in_flight.add(blob_key)
             try:
-                dl_res = await self._download_blob(blob_item)
-                # dl_res = await self._experiment_download_blob_using_ms_stuff(blob_item)
+                # dl_res = await self._download_blob(blob_item)
+                dl_res = await self._experiment_download_blob_using_ms_stuff(blob_item)
             finally:
                 _blob_keys_in_flight.discard(blob_key)
 
@@ -176,8 +176,6 @@ class LocalBlobCache:
 
         timer = PerfTimer()
         num_bytes_downloaded = 0
-        num_bytes_written = 0
-        # full_blob_url = f"{self._blob_store_base_uri}/{object_uuid}"
         full_blob_url = f"{self._blob_store_base_uri}/{object_uuid}?{self._sas_token}"
 
         async with aiofiles.tempfile.NamedTemporaryFile(prefix=f"{local_blob_filename}__", delete=False) as tmp_file:
@@ -187,12 +185,9 @@ class LocalBlobCache:
             LOGGER.debug(f"Downloading {blob_kind} blob into temp file: {tmp_blob_path}")
 
             async with BlobClient.from_blob_url(blob_url=full_blob_url) as blob_client:
-                et_client_ms = timer.lap_ms()
                 stream_downloader = await blob_client.download_blob(max_concurrency=16)
-                et_downloader_ms = timer.lap_ms()
                 the_bytes = await stream_downloader.readall()
                 await tmp_file.write(the_bytes)
-                et_get_bytes_ms = timer.lap_ms()
                 num_bytes_downloaded = len(the_bytes)
 
         if await self._is_blob_in_cache(blob_item):
@@ -210,7 +205,7 @@ class LocalBlobCache:
 
         size_mb = num_bytes_downloaded / (1024 * 1024)
         LOGGER.info(
-            f"M$$$$$$ Downloaded {blob_kind} blob in {timer.elapsed_s():.2f}s  [{size_mb=:.2f}, {local_blob_path=}]"
+            f"M$$$$$$$$$$ Downloaded {blob_kind} blob in {timer.elapsed_s():.2f}s  [{size_mb=:.2f}, {local_blob_path=}]"
         )
 
         return DownloadResult.SUCCEEDED
