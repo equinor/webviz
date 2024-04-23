@@ -38,6 +38,10 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
 
     const [selectedVisualizationType, setSelectedVisualizationType] =
         settingsContext.useSettingsToViewInterfaceState("selectedVisualizationType");
+    const [showIndividualRealizationValues, setShowIndividualRealizationValues] =
+        settingsContext.useSettingsToViewInterfaceState("showIndividualRealizationValues");
+    const [showPercentilesAndMeanLines, setShowPercentilesAndMeanLines] =
+        settingsContext.useSettingsToViewInterfaceState("showPercentilesAndMeanLines");
 
     function handleEnsembleSelectionChange(ensembleIdents: EnsembleIdent[]) {
         setSelectedEnsembleIdents(ensembleIdents);
@@ -55,6 +59,12 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
     function handleVisualizationTypeChange(event: React.ChangeEvent<HTMLInputElement>) {
         setSelectedVisualizationType(event.target.value as ParameterDistributionPlotType);
     }
+    function handleShowIndividualRealizationValuesChange(_: React.ChangeEvent<HTMLInputElement>, checked: boolean) {
+        setShowIndividualRealizationValues(checked);
+    }
+    function handleShowPercentilesAndMeanLinesChange(_: React.ChangeEvent<HTMLInputElement>, checked: boolean) {
+        setShowPercentilesAndMeanLines(checked);
+    }
 
     return (
         <div className="flex flex-col gap-2">
@@ -66,6 +76,21 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
                     value={selectedVisualizationType}
                     onChange={handleVisualizationTypeChange}
                 />
+            </CollapsibleGroup>
+            <CollapsibleGroup title="Plot options" expanded>
+                <div className="flex flex-col gap-2">
+                    {"Show additional data"}
+                    <Checkbox
+                        label="Individual realization values"
+                        checked={showIndividualRealizationValues}
+                        onChange={handleShowIndividualRealizationValuesChange}
+                    />
+                    <Checkbox
+                        label="Markers P10, Mean, P90"
+                        checked={showPercentilesAndMeanLines}
+                        onChange={handleShowPercentilesAndMeanLinesChange}
+                    />
+                </div>
             </CollapsibleGroup>
             <CollapsibleGroup title="Ensembles" expanded>
                 <EnsembleSelect
