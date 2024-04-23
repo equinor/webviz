@@ -66,8 +66,8 @@ class LocalBlobCache:
             _blob_keys_in_flight.add(blob_key)
             try:
                 # dl_res = await self._download_blob(blob_item)
-                # dl_res = await self._experiment_download_blob_using_ms_stuff(blob_item)
-                dl_res = await self._experiment_download_blob_with_queue(blob_item)
+                dl_res = await self._experiment_download_blob_using_ms_stuff(blob_item)
+                # dl_res = await self._experiment_download_blob_with_queue(blob_item)
             finally:
                 _blob_keys_in_flight.discard(blob_key)
 
@@ -92,7 +92,7 @@ class LocalBlobCache:
 
             await asyncio.sleep(0.2)
             if await self._is_blob_in_cache(blob_item):
-                LOGGER.debug(f"While waiting {blob_kind} blob appeared in cache, returning: {local_blob_path}")
+                LOGGER.debug(f"While waiting for {blob_kind} blob it appeared in cache, returning: {local_blob_path}")
                 return local_blob_path
 
         if not blob_key in _blob_keys_in_flight:
@@ -278,9 +278,9 @@ class LocalBlobCache:
                         total_size_bytes = int(response.headers["Content-Length"])
                         total_size_mb = total_size_bytes / (1024 * 1024)
 
-                        async for chunk in response.aiter_bytes(chunk_size=5*1024 * 1024):
+                        async for chunk in response.aiter_bytes(chunk_size=5 * 1024 * 1024):
                             num_bytes_in_chunk = len(chunk)
-                            num_bytes_downloaded  += num_bytes_in_chunk
+                            num_bytes_downloaded += num_bytes_in_chunk
                             num_mb_downloaded = num_bytes_downloaded / (1024 * 1024)
                             LOGGER.debug(
                                 f"  - downloading {blob_kind} blob {object_uuid}  {num_mb_downloaded:.2f}MB of {total_size_mb:.2f}MB  {num_bytes_in_chunk=}  {tmp_blob_path=}"
