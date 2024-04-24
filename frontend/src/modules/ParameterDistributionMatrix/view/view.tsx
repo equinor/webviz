@@ -20,6 +20,12 @@ export function View(props: ModuleViewProps<State, Interface>) {
     const selectedEnsembleIdents = props.viewContext.useSettingsToViewInterfaceValue("selectedEnsembleIdents");
     const selectedParameterIdents = props.viewContext.useSettingsToViewInterfaceValue("selectedParameterIdents");
     const selectedVisualizationType = props.viewContext.useSettingsToViewInterfaceValue("selectedVisualizationType");
+    const showIndividualRealizationValues = props.viewContext.useSettingsToViewInterfaceValue(
+        "showIndividualRealizationValues"
+    );
+    const showPercentilesAndMeanLines =
+        props.viewContext.useSettingsToViewInterfaceValue("showPercentilesAndMeanLines");
+
     const ensembleSet = props.workbenchSession.getEnsembleSet();
     const filterEnsembleRealizationsFunc = useEnsembleRealizationFilterFunc(props.workbenchSession);
 
@@ -43,6 +49,8 @@ export function View(props: ModuleViewProps<State, Interface>) {
                 dataArr={parameterDataArr}
                 ensembleColors={ensembleColors}
                 plotType={selectedVisualizationType}
+                showIndividualRealizationValues={showIndividualRealizationValues}
+                showPercentilesAndMeanLines={showPercentilesAndMeanLines}
                 width={wrapperDivSize.width}
                 height={wrapperDivSize.height}
             ></ParameterDistributionPlot>
@@ -61,7 +69,7 @@ function makeParameterDataArr(
     for (const parameterIdent of parameterIdents) {
         const parameterDataArrEntry: ParameterDataArr = {
             parameterIdent: parameterIdent,
-            ensembleParameterValues: [],
+            ensembleParameterRealizationAndValues: [],
         };
 
         for (const ensembleIdent of ensembleIdents) {
@@ -71,28 +79,28 @@ function makeParameterDataArr(
             const ensembleParameters = ensemble.getParameters();
             if (!ensembleParameters.hasParameter(parameterIdent)) continue;
 
+            const filteredRealizations = new Set(filterEnsembleRealizations(ensembleIdent));
             const parameter = ensembleParameters.getParameter(parameterIdent);
 
-            const filteredRealizations = new Set(filterEnsembleRealizations(ensembleIdent));
-
-            const parameterValues = parameter.realizations
-                .map((realization, index) => {
-                    if (filteredRealizations.has(realization)) {
-                        return parameter.values[index] as number;
-                    }
-                    return null;
-                })
-                .filter((value) => value !== null);
+            const parameterValues: number[] = [];
+            const realizationNumbers: number[] = [];
+            parameter.realizations.forEach((realization, index) => {
+                if (filteredRealizations.has(realization)) {
+                    parameterValues.push(parameter.values[index] as number);
+                    realizationNumbers.push(realization);
+                }
+            });
 
             const ensembleParameterValues = {
                 ensembleDisplayName: ensemble.getDisplayName(),
-                values: parameterValues as number[],
+                values: parameterValues,
+                realizations: realizationNumbers,
             };
 
-            parameterDataArrEntry.ensembleParameterValues.push(ensembleParameterValues);
+            parameterDataArrEntry.ensembleParameterRealizationAndValues.push(ensembleParameterValues);
         }
 
-        if (parameterDataArrEntry.ensembleParameterValues.length > 0) {
+        if (parameterDataArrEntry.ensembleParameterRealizationAndValues.length > 0) {
             parameterDataArr.push(parameterDataArrEntry);
         }
     }
