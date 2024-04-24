@@ -1,20 +1,13 @@
 import { ModuleRegistry } from "@framework/ModuleRegistry";
 
-import { settings } from "./settings";
-import { State, QueryStatus } from "./state";
-import { view } from "./view";
+import { MODULE_NAME } from "./registerModule";
+import { Settings } from "./settings/settings";
+import { Interface, State, interfaceInitialization } from "./settingsToViewInterface";
+import { View } from "./view";
 
-const initialState: State = {
-    edgeMetadataList: [],
-    nodeMetadataList: [],
-    datedTrees: [],
-    selectedEdgeKey: "",
-    selectedNodeKey: "",
-    selectedDateTime: "",
-    queryStatus: QueryStatus.Idle
-};
+const defaultState: State = {};
 
-const module = ModuleRegistry.initModule<State>("GroupTree", initialState);
+const module = ModuleRegistry.initModule<State, Interface>(MODULE_NAME, defaultState, {}, interfaceInitialization);
 
-module.viewFC = view;
-module.settingsFC = settings;
+module.viewFC = View;
+module.settingsFC = Settings;

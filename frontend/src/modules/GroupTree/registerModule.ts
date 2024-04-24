@@ -1,6 +1,7 @@
 import { ModuleRegistry } from "@framework/ModuleRegistry";
 
 import { preview } from "./preview";
-import { State } from "./state";
+import { Interface, State } from "./settingsToViewInterface";
 
-ModuleRegistry.registerModule<State>({ moduleName: "GroupTree", defaultTitle: "GroupTree", preview });
+export const MODULE_NAME = "GroupTree";
+ModuleRegistry.registerModule<State, Interface>({ moduleName: MODULE_NAME, defaultTitle: "GroupTree", preview });

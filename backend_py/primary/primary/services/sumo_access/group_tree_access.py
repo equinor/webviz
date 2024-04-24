@@ -2,7 +2,7 @@ import logging
 from typing import Optional
 
 import pandas as pd
-from src.services.utils.perf_timer import PerfTimer
+from webviz_pkg.core_utils.perf_timer import PerfTimer
 
 from ._helpers import SumoEnsemble
 

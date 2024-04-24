@@ -1,17 +1,14 @@
+/* generated using openapi-typescript-codegen -- do no edit */
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
 import type { Frequency } from '../models/Frequency';
 import type { GroupTreeData } from '../models/GroupTreeData';
 import type { StatOption } from '../models/StatOption';
-
 import type { CancelablePromise } from '../core/CancelablePromise';
 import type { BaseHttpRequest } from '../core/BaseHttpRequest';
-
 export class GroupTreeService {
-
     constructor(public readonly httpRequest: BaseHttpRequest) {}
-
     /**
      * Get Realization Group Tree Data
      * @param caseUuid Sumo case uuid
@@ -41,7 +38,6 @@ export class GroupTreeService {
             },
         });
     }
-
     /**
      * Get Statistical Group Tree Data
      * @param caseUuid Sumo case uuid
@@ -71,5 +67,4 @@ export class GroupTreeService {
             },
         });
     }
-
 }

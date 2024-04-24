@@ -1,6 +1,6 @@
 from typing import Any, Dict, List, Union, Optional
 from enum import Enum
-from src.services.group_tree_data import GroupTreeMetadata, DatedTree
+from primary.services.group_tree_data import GroupTreeMetadata, DatedTree
 from pydantic import BaseModel
 
 

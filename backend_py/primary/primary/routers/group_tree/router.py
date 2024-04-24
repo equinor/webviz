@@ -1,11 +1,11 @@
 from typing import Annotated, List, Optional
 
 from fastapi import APIRouter, Depends, Query
-from src.backend.auth.auth_helper import AuthHelper
-from src.services.group_tree_data import GroupTreeData, NodeType, StatOptions, TreeModeOptions
-from src.services.sumo_access.group_tree_access import GroupTreeAccess
-from src.services.sumo_access.summary_access import Frequency, SummaryAccess
-from src.services.utils.authenticated_user import AuthenticatedUser
+from primary.auth.auth_helper import AuthHelper
+from primary.services.group_tree_data import GroupTreeData, NodeType, StatOptions, TreeModeOptions
+from primary.services.sumo_access.group_tree_access import GroupTreeAccess
+from primary.services.sumo_access.summary_access import Frequency, SummaryAccess
+from primary.services.utils.authenticated_user import AuthenticatedUser
 
 from . import schemas
 
