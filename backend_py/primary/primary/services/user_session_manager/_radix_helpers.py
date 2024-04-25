@@ -45,7 +45,9 @@ class RadixJobApi:
         self._job_component_name = job_component_name
         self._job_manager_base_url = f"http://{job_component_name}:{job_scheduler_port}"
 
-    async def create_new_job(self, resource_req: RadixResourceRequests, job_id: str | None, payload_dict: dict | None) -> str | None:
+    async def create_new_job(
+        self, resource_req: RadixResourceRequests, job_id: str | None, payload_dict: dict | None
+    ) -> str | None:
         LOGGER.debug(f".create_new_job() - {self._job_component_name=}, {resource_req=}, {job_id=}, {payload_dict=}")
 
         payload_as_str: str | None = None
