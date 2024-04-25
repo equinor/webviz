@@ -44,7 +44,7 @@ export class GroupTreeService {
      * @param ensembleName Ensemble name
      * @param statOption Statistical option
      * @param resamplingFrequency Resampling frequency. If not specified, yearly data will be used.
-     * @returns any Successful Response
+     * @returns GroupTreeData Successful Response
      * @throws ApiError
      */
     public getStatisticalGroupTreeData(
@@ -52,7 +52,7 @@ export class GroupTreeService {
         ensembleName: string,
         statOption: StatOption,
         resamplingFrequency?: (Frequency | null),
-    ): CancelablePromise<Array<any>> {
+    ): CancelablePromise<GroupTreeData> {
         return this.httpRequest.request({
             method: 'GET',
             url: '/group_tree/statistical_group_tree_data/',

@@ -57,7 +57,7 @@ async def get_statistical_group_tree_data(
     stat_option: schemas.StatOption = Query(description="Statistical option"),
     resampling_frequency: Annotated[schemas.Frequency | None, Query(description="Resampling frequency. If not specified, yearly data will be used.")] = None,
     # fmt:on
-) -> List:
+) -> schemas.GroupTreeData:
     grouptree_access = await GroupTreeAccess.from_case_uuid(
         authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
     )

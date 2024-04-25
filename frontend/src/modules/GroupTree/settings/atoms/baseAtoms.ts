@@ -1,4 +1,4 @@
-import { Frequency_api, StatisticFunction_api } from "@api";
+import { Frequency_api, StatOption_api } from "@api";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { atomWithCompare } from "@framework/utils/atomUtils";
 
@@ -13,13 +13,13 @@ function areEnsembleIdentsEqual(a: EnsembleIdent | null, b: EnsembleIdent | null
     return a.equals(b);
 }
 
-export const selectedStatisticOptionAtom = atom<StatisticFunction_api>(StatisticFunction_api.MEAN);
+export const selectedStatisticOptionAtom = atom<StatOption_api>(StatOption_api.MEAN);
 
-export const selectedDataTypeOptionAtom = atom<GroupTreeDataTypeOption>(GroupTreeDataTypeOption.REALIZATION);
+export const selectedDataTypeOptionAtom = atom<GroupTreeDataTypeOption>(GroupTreeDataTypeOption.INDIVIDUAL_REALIZATION);
 
 export const selectedResamplingFrequencyAtom = atom<Frequency_api>(Frequency_api.YEARLY);
 
-export const userSelectedDateTimeAtom = atom<string>("");
+export const userSelectedDateTimeAtom = atom<string | null>(null);
 
 export const userSelectedRealizationNumberAtom = atom<number | null>(null);
 

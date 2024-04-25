@@ -14,15 +14,6 @@ import { QueryStatus } from "./types";
 
 export type State = Record<string, never>;
 
-// export type Interface = {
-//     derivedStates: {
-//         selectedEdgeKey: string;
-//         selectedNodeKey: string;
-//         selectedDateTime: string;
-//         queryStatus: string;
-//     };
-// };
-
 export type Interface = {
     baseStates: Record<string, never>;
     derivedStates: {

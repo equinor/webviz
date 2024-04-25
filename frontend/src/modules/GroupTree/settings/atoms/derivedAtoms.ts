@@ -6,15 +6,25 @@ import { DatedTree, EdgeMetadata, NodeMetadata } from "@webviz/group-tree-plot";
 import { atom } from "jotai";
 
 import {
+    selectedDataTypeOptionAtom,
     userSelectedDateTimeAtom,
     userSelectedEdgeKeyAtom,
     userSelectedEnsembleIdentAtom,
     userSelectedNodeKeyAtom,
     userSelectedRealizationNumberAtom,
 } from "./baseAtoms";
-import { realizationGroupTreeQueryAtom } from "./queryAtoms";
+import { realizationGroupTreeQueryAtom, statisticalGroupTreeQueryAtom } from "./queryAtoms";
 
-import { QueryStatus } from "../../types";
+import { GroupTreeDataTypeOption, QueryStatus } from "../../types";
+
+export const groupTreeQueryResultAtom = atom((get) => {
+    const selectedDataTypeOption = get(selectedDataTypeOptionAtom);
+
+    if (selectedDataTypeOption === GroupTreeDataTypeOption.INDIVIDUAL_REALIZATION) {
+        return get(realizationGroupTreeQueryAtom);
+    }
+    return get(statisticalGroupTreeQueryAtom);
+});
 
 export const selectedEnsembleIdentAtom = atom<EnsembleIdent | null>((get) => {
     const ensembleSet = get(EnsembleSetAtom);
@@ -29,13 +39,15 @@ export const selectedRealizationNumberAtom = atom<number | null>((get) => {
     const selectedEnsembleIdent = get(selectedEnsembleIdentAtom);
     const userSelectedRealizationNumber = get(userSelectedRealizationNumberAtom);
 
-    if (!selectedEnsembleIdent || userSelectedRealizationNumber === null) {
+    const selectedEnsemble = selectedEnsembleIdent ? ensembleSet.findEnsemble(selectedEnsembleIdent) : null;
+    if (!selectedEnsemble) {
         return null;
     }
 
-    const selectedEnsemble = ensembleSet.findEnsemble(selectedEnsembleIdent);
-    if (!selectedEnsemble) {
-        return null;
+    if (userSelectedRealizationNumber === null) {
+        const firstRealization =
+            selectedEnsemble.getRealizationCount() > 0 ? selectedEnsemble.getRealizations()[0] : null;
+        return firstRealization;
     }
 
     const validRealizationNumber =
@@ -43,32 +55,25 @@ export const selectedRealizationNumberAtom = atom<number | null>((get) => {
     return validRealizationNumber;
 });
 
-export const isRealizationGroupTreeQueryFetchingAtom = atom<boolean>((get) => {
-    const realizationGroupTreeQuery = get(realizationGroupTreeQueryAtom);
-    return realizationGroupTreeQuery.isFetching;
-});
-
 export const queryStatusAtom = atom<QueryStatus>((get) => {
-    const realizationGroupTreeQuery = get(realizationGroupTreeQueryAtom);
+    const groupTreeQueryResult = get(groupTreeQueryResultAtom);
 
-    if (realizationGroupTreeQuery.isFetching) {
+    if (groupTreeQueryResult.isFetching) {
         return QueryStatus.Loading;
     }
-    if (realizationGroupTreeQuery.isError) {
+    if (groupTreeQueryResult.isError) {
         return QueryStatus.Error;
     }
     return QueryStatus.Idle;
 });
 
-// TODO: Handle based on selectedDataTypeOptionAtom and correct query atom in future
-// NOTE: How to only update array when new query data arrives? I.e. prevent reset of array before new data arrives
 export const availableDateTimesAtom = atom<string[]>((get) => {
-    const realizationGroupTreeQuery = get(realizationGroupTreeQueryAtom);
+    const groupTreeQueryResult = get(groupTreeQueryResultAtom);
 
-    if (!realizationGroupTreeQuery.data) return [];
+    if (!groupTreeQueryResult.data) return [];
 
     const dateTimes = new Set<string>();
-    realizationGroupTreeQuery.data.dated_trees.forEach((datedTree) => {
+    groupTreeQueryResult.data.dated_trees.forEach((datedTree) => {
         datedTree.dates.forEach((date) => {
             dateTimes.add(date);
         });
@@ -92,8 +97,8 @@ export const selectedDateTimeAtom = atom<string | null>((get) => {
 });
 
 export const availableEdgeKeysAtom = atom<string[]>((get) => {
-    const realizationGroupTreeQuery = get(realizationGroupTreeQueryAtom);
-    return realizationGroupTreeQuery.data?.edge_metadata_list.map((item) => item.key) ?? [];
+    const groupTreeQueryResult = get(groupTreeQueryResultAtom);
+    return groupTreeQueryResult.data?.edge_metadata_list.map((item) => item.key) ?? [];
 });
 
 export const selectedEdgeKeyAtom = atom<string | null>((get) => {
@@ -111,8 +116,8 @@ export const selectedEdgeKeyAtom = atom<string | null>((get) => {
 });
 
 export const availableNodeKeysAtom = atom<string[]>((get) => {
-    const realizationGroupTreeQuery = get(realizationGroupTreeQueryAtom);
-    return realizationGroupTreeQuery.data?.node_metadata_list.map((item) => item.key) ?? [];
+    const groupTreeQueryResult = get(groupTreeQueryResultAtom);
+    return groupTreeQueryResult.data?.node_metadata_list.map((item) => item.key) ?? [];
 });
 
 export const selectedNodeKeyAtom = atom<string | null>((get) => {
@@ -130,16 +135,16 @@ export const selectedNodeKeyAtom = atom<string | null>((get) => {
 });
 
 export const edgeMetadataListAtom = atom<EdgeMetadata[]>((get) => {
-    const realizationGroupTreeQuery = get(realizationGroupTreeQueryAtom);
-    return realizationGroupTreeQuery.data?.edge_metadata_list ?? [];
+    const groupTreeQueryResult = get(groupTreeQueryResultAtom);
+    return groupTreeQueryResult.data?.edge_metadata_list ?? [];
 });
 
 export const nodeMetadataListAtom = atom<NodeMetadata[]>((get) => {
-    const realizationGroupTreeQuery = get(realizationGroupTreeQueryAtom);
-    return realizationGroupTreeQuery.data?.node_metadata_list ?? [];
+    const groupTreeQueryResult = get(groupTreeQueryResultAtom);
+    return groupTreeQueryResult.data?.node_metadata_list ?? [];
 });
 
 export const datedTreesAtom = atom<DatedTree[]>((get) => {
-    const realizationGroupTreeQuery = get(realizationGroupTreeQueryAtom);
-    return realizationGroupTreeQuery.data?.dated_trees ?? [];
+    const groupTreeQueryResult = get(groupTreeQueryResultAtom);
+    return groupTreeQueryResult.data?.dated_trees ?? [];
 });
