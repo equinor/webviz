@@ -11,6 +11,8 @@ from pydantic import BaseModel
 from primary.services.sumo_access.group_tree_access import GroupTreeAccess
 from primary.services.sumo_access.summary_access import Frequency, SummaryAccess
 
+LOGGER = logging.getLogger(__name__)
+
 
 class GroupTreeMetadata(BaseModel):
     key: str
@@ -29,9 +31,6 @@ class RecursiveTreeNode(BaseModel):
 class DatedTree(BaseModel):
     dates: List[str]
     tree: RecursiveTreeNode
-
-
-LOGGER = logging.getLogger(__name__)
 
 
 class TreeType(Enum):
@@ -96,6 +95,12 @@ class GroupTreeData:
         self._excl_well_endswith = excl_well_endswith
         self._resampling_frequency = resampling_frequency
 
+        self._has_waterinj = False
+        self._has_gasinj = False
+        self._grouptree: pd.DataFrame | None = None
+        self._grouptree_model: GroupTreeModel | None = None
+        self._sumvecs: pd.DataFrame | None = None
+
     async def initialize_data(self) -> None:
         grouptree_df = await self._grouptree_access.get_group_tree_table(realization=self._realization)
         if grouptree_df is None:
@@ -109,14 +114,14 @@ class GroupTreeData:
             excl_well_endswith=self._excl_well_endswith,
         )
 
-        self._wells: List[str] = self._grouptree[self._grouptree["KEYWORD"] == "WELSPECS"]["CHILD"].unique()
+        wells: List[str] = self._grouptree[self._grouptree["KEYWORD"] == "WELSPECS"]["CHILD"].unique()
 
         vector_info_arr = await self._summary_access.get_available_vectors_async()
         self._all_vectors: List[str] = [vec.name for vec in vector_info_arr]
 
         # Check that all WSTAT summary vectors exist
         # They are used to determine which summary vector are needed next.
-        wstat_vecs = [f"WSTAT:{well}" for well in self._wells]
+        wstat_vecs = [f"WSTAT:{well}" for well in wells]
         self._check_that_sumvecs_exists(wstat_vecs)
 
         wstat_df, _ = await self._summary_access.get_single_real_vectors_table_async(
@@ -127,13 +132,11 @@ class GroupTreeData:
             ),
         )
 
-        wstat_unique = {well: pa.compute.unique(wstat_df[f"WSTAT:{well}"]).to_pylist() for well in self._wells}
+        wstat_unique = {well: pa.compute.unique(wstat_df[f"WSTAT:{well}"]).to_pylist() for well in wells}
 
         # Add nodetypes IS_PROD, IS_INJ and IS_OTHER to gruptree
-        self._grouptree = _add_nodetype(self._grouptree, wstat_unique, self._wells, self._terminal_node)
+        self._grouptree = _add_nodetype(self._grouptree, wstat_unique, wells, self._terminal_node)
 
-        self._has_waterinj = False
-        self._has_gasinj = False
         if True in self._grouptree["IS_INJ"].unique():
             # If there is injection in the tree we need to determine
             # which kind of injection. For that wee need FWIR and FGIR
@@ -356,7 +359,7 @@ def _add_nodetype(
 
 
 def _create_leafnodetype_maps(
-    leafnodes: pd.DataFrame, wstat_unique: Dict[str, List[int]], all_wells: List[str]
+    leafnodes: pd.DataFrame, wstat_unique: Dict[str, List[int]], __all_wells: List[str]
 ) -> Tuple[Dict[str, Any], Dict[str, Any], Dict[str, Any]]:
     """Returns three dictionaries classifying leaf nodes as producer,
     injector and/or other (f.ex observation well).
@@ -404,9 +407,9 @@ def _create_leafnodetype_maps(
             #     None,
             # )
 
-            sumprod = sum([smry[sumvec].sum() for sumvec in prod_sumvecs if sumvec in smry.columns])
+            sumprod = sum(smry[sumvec].sum() for sumvec in prod_sumvecs if sumvec in smry.columns)
 
-            suminj = sum([smry[sumvec].sum() for sumvec in inj_sumvecs if sumvec in smry.columns])
+            suminj = sum(smry[sumvec].sum() for sumvec in inj_sumvecs if sumvec in smry.columns)
 
             is_prod_map[nodename] = sumprod > 0
             is_inj_map[nodename] = suminj > 0
