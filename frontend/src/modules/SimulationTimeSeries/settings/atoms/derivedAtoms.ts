@@ -1,4 +1,3 @@
-import { VectorDescription_api } from "@api";
 import { Ensemble } from "@framework/Ensemble";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { Parameter, ParameterIdent, ParameterType } from "@framework/EnsembleParameters";
@@ -7,7 +6,6 @@ import { createVectorSelectorDataFromVectors } from "@framework/components/Vecto
 import { fixupEnsembleIdents } from "@framework/utils/ensembleUiHelpers";
 
 import { atom } from "jotai";
-import { isEqual } from "lodash";
 
 import {
     filteredParameterIdentListAtom,
@@ -89,21 +87,6 @@ export const continuousAndNonConstantParametersUnionAtom = atom<Parameter[]>((ge
     }
 
     return continuousAndNonConstantParametersUnion;
-});
-
-export const vectorListDataAtom = atom<(VectorDescription_api[] | null)[]>((get) => {
-    const vectorListQueries = get(vectorListQueriesAtom);
-    const oldVectorListData: (VectorDescription_api[] | null)[] = get(vectorListDataAtom);
-
-    const newVectorListData = vectorListQueries.map((query) => {
-        return query.data ?? null;
-    });
-
-    if (isEqual(newVectorListData, oldVectorListData)) {
-        return oldVectorListData;
-    }
-
-    return newVectorListData;
 });
 
 export const isVectorListQueriesFetchingAtom = atom<boolean>((get) => {

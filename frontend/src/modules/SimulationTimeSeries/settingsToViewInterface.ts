@@ -15,8 +15,6 @@ import {
 import { parameterIdentAtom, selectedEnsemblesAtom, vectorSpecificationsAtom } from "./settings/atoms/derivedAtoms";
 import { GroupBy, StatisticsSelection, VectorSpec, VisualizationMode } from "./typesAndEnums";
 
-export type State = Record<string, never>;
-
 export type Interface = {
     derivedStates: {
         groupBy: GroupBy;

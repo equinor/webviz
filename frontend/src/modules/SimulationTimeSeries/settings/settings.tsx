@@ -21,7 +21,7 @@ import { SmartNodeSelectorSelection } from "@lib/components/SmartNodeSelector";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { FilterAlt } from "@mui/icons-material";
 
-import { useAtom, useAtomValue } from "jotai";
+import { useAtom, useAtomValue, useSetAtom } from "jotai";
 
 import {
     colorRealizationsByParameterAtom,
@@ -78,13 +78,13 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
     const vectorSelectorData = useAtomValue(vectorSelectorDataAtom);
     const statisticsType = useAtomValue(statisticsTypeAtom);
     const [filteredParameterIdentList, setFilteredParameterIdentList] = useAtom(filteredParameterIdentListAtom);
-    const [, setUserSelectedEnsembleIdents] = useAtom(userSelectedEnsembleIdentsAtom);
+    const setUserSelectedEnsembleIdents = useSetAtom(userSelectedEnsembleIdentsAtom);
     const selectedEnsembleIdents = useAtomValue(selectedEnsembleIdentsAtom);
     const continuousAndNonConstantParametersUnion = useAtomValue(continuousAndNonConstantParametersUnionAtom);
     const vectorListQueries = useAtomValue(vectorListQueriesAtom);
     const ensembleVectorListsHelper = useAtomValue(ensembleVectorListsHelperAtom);
     const isVectorListQueriesFetching = useAtomValue(isVectorListQueriesFetchingAtom);
-    const [, setUserSelectedParameterIdentStr] = useAtom(userSelectedParameterIdentStringAtom);
+    const setUserSelectedParameterIdentStr = useSetAtom(userSelectedParameterIdentStringAtom);
     const selectedParameterIdentStr = useAtomValue(selectedParameterIdentStringAtom);
 
     useMakeSettingsStatusWriterMessages(statusWriter, selectedVectorTags);
