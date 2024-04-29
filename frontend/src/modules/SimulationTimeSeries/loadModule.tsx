@@ -1,20 +1,21 @@
-import { Frequency_api } from "@api";
 import { ModuleRegistry } from "@framework/ModuleRegistry";
 
-import { Settings } from "./settings";
+import { MODULE_NAME } from "./registerModule";
+import { SettingsAtoms, settingsAtomsInitialization } from "./settings/atoms/atomDefinitions";
+import { Settings } from "./settings/settings";
+import { Interface, interfaceInitialization } from "./settingsToViewInterface";
 import { State } from "./state";
-import { View } from "./view";
+import { ViewAtoms, viewAtomsInitialization } from "./view/atoms/atomDefinitions";
+import { View } from "./view/view";
 
-const defaultState: State = {
-    vectorSpec: null,
-    resamplingFrequency: Frequency_api.MONTHLY,
-    showStatistics: true,
-    showRealizations: false,
-    showHistorical: true,
-    realizationsToInclude: null,
-};
-
-const module = ModuleRegistry.initModule<State>("SimulationTimeSeries", defaultState);
+const module = ModuleRegistry.initModule<State, Interface, SettingsAtoms, ViewAtoms>(
+    MODULE_NAME,
+    {},
+    undefined,
+    interfaceInitialization,
+    settingsAtomsInitialization,
+    viewAtomsInitialization
+);
 
 module.viewFC = View;
 module.settingsFC = Settings;
