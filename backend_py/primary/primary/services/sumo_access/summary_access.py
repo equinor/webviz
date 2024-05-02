@@ -24,6 +24,7 @@ from ._helpers import SumoEnsemble
 from ._resampling import resample_segmented_multi_real_table, resample_single_real_table
 from .generic_types import EnsembleScalarResponse
 from .summary_types import Frequency, VectorInfo, RealizationVector, HistoricalVector, VectorMetadata
+from .queries.summary import get_timeseries_column_names_for_realization
 
 LOGGER = logging.getLogger(__name__)
 
@@ -38,7 +39,6 @@ class SummaryAccess(SumoEnsemble):
             tagname="summary",
             iteration=self._iteration_name,
             aggregation="collection",
-            # stage="realization",
         )
 
         table_names = await smry_table_collection.names_async
@@ -51,8 +51,13 @@ class SummaryAccess(SumoEnsemble):
                 f"Multiple summary tables found in case={self._case_uuid}, iteration={self._iteration_name}: {table_names=}",
                 Service.SUMO,
             )
+        realizations = await self._case.get_realizations_async(iteration=self._iteration_name)
+        first_real = realizations[0]
+        et_get_realizations = timer.lap_ms()
 
-        column_names = await smry_table_collection.columns_async
+        column_names = await get_timeseries_column_names_for_realization(
+            self._sumo_client, self._case_uuid, table_names[0], self._iteration_name, realization=first_real
+        )
         et_get_column_names_ms = timer.lap_ms()
 
         ret_info_arr: List[VectorInfo] = []
@@ -72,7 +77,7 @@ class SummaryAccess(SumoEnsemble):
 
         LOGGER.debug(
             f"Got vector names from Sumo in: {timer.elapsed_ms()}ms "
-            f"(get_table_names={et_get_table_names_ms}ms, get_column_names={et_get_column_names_ms}ms) "
+            f"(get_table_names={et_get_table_names_ms}ms, get_valid_realizations={et_get_realizations}ms, get_column_names={et_get_column_names_ms}ms) "
             f"(total_column_count={len(column_names)})"
         )
 
