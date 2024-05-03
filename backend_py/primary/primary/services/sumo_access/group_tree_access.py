@@ -34,7 +34,7 @@ class GroupTreeAccess(SumoEnsemble):
 
             _validate_group_tree_df(group_tree_df)
 
-            LOGGER.debug(f"Loaded gruptree table from Sumo in: {timer.elapsed_ms()}ms (")
+            LOGGER.debug(f"Loaded gruptree table from Sumo in: {timer.elapsed_ms()}ms")
             return group_tree_df
 
         # If no realization is specified, get all tables and merge them
@@ -51,7 +51,7 @@ class GroupTreeAccess(SumoEnsemble):
 
         _validate_group_tree_df(group_tree_df)
 
-        LOGGER.debug(f"Loaded gruptree table from Sumo in: {timer.elapsed_ms()}ms (")
+        LOGGER.debug(f"Loaded gruptree table from Sumo in: {timer.elapsed_ms()}ms")
         return group_tree_df
 
 

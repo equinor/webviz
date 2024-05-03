@@ -3,6 +3,8 @@ from enum import Enum
 from functools import reduce
 from typing import Any, Callable, Dict, Literal, List, Optional, Tuple
 
+import asyncio
+
 import numpy as np
 import pandas as pd
 import pyarrow as pa
@@ -11,8 +13,9 @@ from pydantic import BaseModel
 from primary.services.sumo_access.group_tree_access import GroupTreeAccess
 from primary.services.sumo_access.summary_access import Frequency, SummaryAccess
 
-LOGGER = logging.getLogger(__name__)
+from webviz_pkg.core_utils.perf_timer import PerfTimer
 
+LOGGER = logging.getLogger(__name__)
 
 class GroupTreeMetadata(BaseModel):
     key: str
@@ -73,6 +76,50 @@ class EdgeOrNode(Enum):
     EDGE = "edge"
     NODE = "node"
 
+GROUP_TREE_FIELD_DATATYPE_TO_VECTOR_MAP = {
+    DataType.OILRATE: "FOPR",
+    DataType.GASRATE: "FGPR",
+    DataType.WATERRATE: "FWPR",
+    DataType.WATERINJRATE: "FWIR",
+    DataType.GASINJRATE: "FGIR",
+    DataType.PRESSURE: "GPR:FIELD"
+}
+
+GROUP_TREE_KEYWORD_DATATYPE_TO_VECTOR_MAP = {
+    "GRUPTREE": {
+        DataType.OILRATE: "GOPR",
+        DataType.GASRATE: "GGPR",
+        DataType.WATERRATE: "GWPR",
+        DataType.WATERINJRATE: "GWIR",
+        DataType.GASINJRATE: "GGIR",
+        DataType.PRESSURE: "GPR",
+    },
+    # BRANPROP can not be used for injection, but the nodes
+    # might also be GNETINJE and could therefore have injection.
+    "BRANPROP": {
+        DataType.OILRATE: "GOPRNB",
+        DataType.GASRATE: "GGPRNB",
+        DataType.WATERRATE: "GWPRNB",
+        DataType.PRESSURE: "GPR",
+        DataType.WATERINJRATE: "GWIR",
+        DataType.GASINJRATE: "GGIR",
+    },
+    "WELSPECS": {
+        DataType.OILRATE: "WOPR",
+        DataType.GASRATE: "WGPR",
+        DataType.WATERRATE: "WWPR",
+        DataType.WATERINJRATE: "WWIR",
+        DataType.GASINJRATE: "WGIR",
+        DataType.PRESSURE: "WTHP",
+        DataType.BHP: "WBHP",
+        DataType.WMCTL: "WMCTL",
+    },
+}
+
+FIELD_VECTORS_OF_INTEREST: List[str] = list(GROUP_TREE_FIELD_DATATYPE_TO_VECTOR_MAP.values())
+WELLS_VECTORS_OF_INTEREST: List[str] = list(GROUP_TREE_KEYWORD_DATATYPE_TO_VECTOR_MAP["WELSPECS"].values())
+GROUP_VECTORS_OF_INTEREST = [v for kw in ["GRUPTREE", "BRANPROP"] for v in GROUP_TREE_KEYWORD_DATATYPE_TO_VECTOR_MAP[kw].values()]
+
 
 class GroupTreeData:
     def __init__(
@@ -95,35 +142,214 @@ class GroupTreeData:
         self._excl_well_endswith = excl_well_endswith
         self._resampling_frequency = resampling_frequency
 
+        self._tree_mode: TreeModeOptions | None = None
+
         self._has_waterinj = False
         self._has_gasinj = False
-        self._grouptree: pd.DataFrame | None = None
+        self._grouptree_df: pd.DataFrame | None = None
         self._grouptree_model: GroupTreeModel | None = None
         self._sumvecs: pd.DataFrame | None = None
 
-    async def initialize_data(self) -> None:
+        self._all_vectors: List[str] | None = None        
+        self._initialized_single_realization_vectors_table: pa.Table | None = None
+        
+
+    async def _fetch_vector_table_async(self, vector_name: str, resampling_frequency: Frequency)-> pa.Table:
+        table, _ = await self._summary_access.get_vector_table_async(
+            vector_name=vector_name,
+            resampling_frequency=resampling_frequency,
+            realizations=None,
+        )
+        return table
+    
+    async def _initialize_all_vectors_list_async(self) -> None:
+        # NOTE: Retrieving all available vector names can be slow, could it be improved?
+        # - Fetch names simultaneously as vector data? Will then get all data, so might not be good?
+        vector_info_arr = await self._summary_access.get_available_vectors_async()
+        self._all_vectors: List[str] = [vec.name for vec in vector_info_arr]
+
+    async def _initialize_injection_states_async(self) -> None:
+        if self._grouptree_df is None:
+            raise ValueError("Group tree data has not been initialized")
+        
+        # Check if there is water and gas injection in the tree
+        # Async for loop to fetch the vectors
+        timer = PerfTimer()
+        if True in self._grouptree_df["IS_INJ"].unique():
+            # If there is injection in the tree we need to determine
+            # which kind of injection. For that we need FWIR and FGIR
+            vectors = ["FWIR", "FGIR"]
+            self._check_that_sumvecs_exists(vectors)
+            smry = {}
+            tasks = [self._fetch_vector_table_async(vec, self._resampling_frequency) for vec in vectors]
+            results = await asyncio.gather(*tasks)
+            smry = {vec: table for vec, table in zip(vectors, results)}
+
+            self._has_waterinj = pa.compute.sum(smry["FWIR"]["FWIR"]).as_py() > 0
+            self._has_gasinj = pa.compute.sum(smry["FGIR"]["FGIR"]).as_py() > 0
+        
+        et_water_gas_inj_info = timer.elapsed_ms()
+        LOGGER.info(f"Water and gas injection info fetched in: {et_water_gas_inj_info}ms")
+
+    async def initialize_single_realization_data_async(self, realization: int) -> None:
+        self._realization = realization
+        self._tree_mode = TreeModeOptions.SINGLE_REAL
+
+        await self._initialize_all_vectors_list_async()
+        if self._all_vectors is None:
+            raise ValueError("List of summary vectors has not been initialized")
+
+        # **************************************
+        #
+        # Initialize data for single realization
+        #
+        # **************************************
+        
         grouptree_df = await self._grouptree_access.get_group_tree_table(realization=self._realization)
         if grouptree_df is None:
             raise HTTPException(status_code=404, detail="Group tree data not found")
 
         self._grouptree_model = GroupTreeModel(grouptree_df, self._tree_type)
-
-        self._grouptree = self._grouptree_model.get_filtered_dataframe(
+        self._grouptree_df = self._grouptree_model.get_filtered_dataframe(
             terminal_node=self._terminal_node,
             excl_well_startswith=self._excl_well_startswith,
             excl_well_endswith=self._excl_well_endswith,
         )
 
-        wells: List[str] = self._grouptree[self._grouptree["KEYWORD"] == "WELSPECS"]["CHILD"].unique()
+        group_tree_wells: List[str] = self._grouptree_df[self._grouptree_df["KEYWORD"] == "WELSPECS"]["CHILD"].unique()
+        group_tree_groups: List[str] = list(set(self._grouptree_df[self._grouptree_df["KEYWORD"].isin(["GRUPTREE", "BRANPROP" ])]["CHILD"].unique()))
 
-        vector_info_arr = await self._summary_access.get_available_vectors_async()
-        self._all_vectors: List[str] = [vec.name for vec in vector_info_arr]
+        # def is_valid_vector(candidate: str, prefix: str, valid_vectors: List[str]) -> bool:
+        #     vector_elms = candidate.split(":")
+        #     if len(vector_elms) == 2 and vector_elms[0].startswith(prefix) and vector_elms[1] in valid_vectors:
+        #         return True
+        #     return False
+        
+        # Find all summary vectors with group tree wells
+        # - Starting with "W" and has ":" in name, and the well name is in group tree wells
+        # well_prefix = "W"
+        # group_tree_well_vectors = [name for name in self._all_vectors if is_valid_vector(name, well_prefix, group_tree_wells)]
+
+        # Find all summary vectors with group tree groups
+        # - Starting with "G" and has ":" in name, and the group name is in group tree groups
+        # group_prefix = "G"
+        # group_tree_group_vectors =[name for name in self._all_vectors if is_valid_vector(name, group_prefix, group_tree_groups)]
+        
+        def create_well_vector_candidates(vector_candidates: List[str], well_candidates:List[str])-> List[str]:
+            result: List[str] = []
+            for vector in vector_candidates:
+                for well in well_candidates:
+                    result.append(f"{vector}:{well}")
+            return result
+
+        # Find all summary vectors with group tree wells
+        group_tree_well_vector_candidates = create_well_vector_candidates(WELLS_VECTORS_OF_INTEREST, group_tree_wells)
+        group_tree_well_vectors = [elm for elm in group_tree_well_vector_candidates if elm in self._all_vectors]
+
+        # Find all summary vectors with group tree groups
+        group_tree_group_vector_candidates = create_well_vector_candidates(GROUP_VECTORS_OF_INTEREST, group_tree_groups)
+        group_tree_group_vectors = [elm for elm in group_tree_group_vector_candidates if elm in self._all_vectors]
+
+        group_tree_field_vectors = FIELD_VECTORS_OF_INTEREST
 
         # Check that all WSTAT summary vectors exist
         # They are used to determine which summary vector are needed next.
-        wstat_vecs = [f"WSTAT:{well}" for well in wells]
+        wstat_vecs = [f"WSTAT:{well}" for well in group_tree_wells]
+        self._check_that_sumvecs_exists(wstat_vecs)
+        
+        # Vectors of interes to perform single get_single_real_vectors_table_async call
+        vectors_of_interest = group_tree_well_vectors + group_tree_group_vectors + group_tree_field_vectors + wstat_vecs
+        vectors_of_interest = list(set(vectors_of_interest))
+
+        # Get summary vectors for all data simultaneously to obtain one request from Sumo
+        vectors_table,_= await self._summary_access.get_single_real_vectors_table_async(
+            vector_names=vectors_of_interest,
+            resampling_frequency=self._resampling_frequency,
+            realization=self._realization,
+        )
+        self._initialized_single_realization_vectors_table = vectors_table
+
+        # Add nodetypes IS_PROD, IS_INJ and IS_OTHER to gruptree
+        wstat_unique = {well: pa.compute.unique(vectors_table[f"WSTAT:{well}"]).to_pylist() for well in group_tree_wells}
+        self._grouptree_df = _add_nodetype(self._grouptree_df, wstat_unique, group_tree_wells, self._terminal_node)
+
+        # Initialize injection states based on group tree data
+        await self._initialize_injection_states_async()
+
+        # Add edge label
+        self._grouptree_df["EDGE_LABEL"] = self._grouptree_df.apply(_get_edge_label, axis=1)
+
+         # Get summary data with metadata (nodename, datatype, edge_or_node)
+        self._sumvecs: pd.DataFrame = self._get_sumvecs_with_metadata()
+
+        # Check that all edge summary vectors exist
+        self._check_that_sumvecs_exists(list(self._sumvecs[self._sumvecs["EDGE_NODE"] == EdgeOrNode.EDGE]["SUMVEC"]))
+    
+    async def create_single_realization_group_tree_dataset(
+        self,
+        node_types: List[NodeType],
+    ) -> Tuple[DatedTree, List[GroupTreeMetadata], List[GroupTreeMetadata]]:
+        if self._tree_mode != TreeModeOptions.SINGLE_REAL:
+            raise ValueError("Tree mode must be SINGLE_REAL to create a single realization dataset")
+        
+        if self._initialized_single_realization_vectors_table is None:
+            raise ValueError("Singel realization vectors table has not been initialized")
+
+        # Get vectors from initialized data
+        vectors_df: pd.DataFrame = self._initialized_single_realization_vectors_table.to_pandas()
+
+        # Get columns of
+        valid_vectors: List[str] = [sumvec for sumvec in self._sumvecs["SUMVEC"] if sumvec in vectors_df.columns] + ["DATE"]
+        smry_df = vectors_df[valid_vectors]
+
+        # Filter nodetype prod, inj and/or other
+        dfs = []
+        for tpe in node_types:
+            dfs.append(self._grouptree_df[self._grouptree_df[f"IS_{tpe.value}".upper()]])
+        gruptree_filtered = pd.concat(dfs).drop_duplicates()
+
+        return (
+            _create_dataset(smry_df, gruptree_filtered, self._sumvecs, self._terminal_node),
+            self._get_edge_options(node_types),
+            [
+                GroupTreeMetadata(key=datatype.value, label=_get_label(datatype))
+                for datatype in [DataType.PRESSURE, DataType.BHP, DataType.WMCTL]
+            ],
+        )
+            
+    async def initialize_statistics_data_async(self) -> None:
+        self._realization = None
+        self._tree_mode = TreeModeOptions.STATISTICS
+
+        await self._initialize_all_vectors_list_async()
+        if self._all_vectors is None:
+            raise ValueError("List of summary vectors has not been initialized")
+
+        # **************************************
+        #
+        # Initialize data for statistics group tree
+        #
+        # **************************************
+
+        grouptree_df = await self._grouptree_access.get_group_tree_table(realization=None)
+        if grouptree_df is None:
+            raise HTTPException(status_code=404, detail="Group tree data not found")
+        
+        self._grouptree_model = GroupTreeModel(grouptree_df, self._tree_type)
+        self._grouptree_df = self._grouptree_model.get_filtered_dataframe(
+            terminal_node=self._terminal_node,
+            excl_well_startswith=self._excl_well_startswith,
+            excl_well_endswith=self._excl_well_endswith,
+        )
+
+        group_tree_wells: List[str] = self._grouptree_df[self._grouptree_df["KEYWORD"] == "WELSPECS"]["CHILD"].unique()
+
+        # Check that all WSTAT summary vectors exist
+        # They are used to determine which summary vector are needed next.
+        wstat_vecs = [f"WSTAT:{well}" for well in group_tree_wells]
         self._check_that_sumvecs_exists(wstat_vecs)
 
+        # NOTE: This only retrieves WSTAT vectors for singel realization
         wstat_df, _ = await self._summary_access.get_single_real_vectors_table_async(
             vector_names=wstat_vecs,
             resampling_frequency=self._resampling_frequency,
@@ -132,29 +358,16 @@ class GroupTreeData:
             ),
         )
 
-        wstat_unique = {well: pa.compute.unique(wstat_df[f"WSTAT:{well}"]).to_pylist() for well in wells}
+        wstat_unique = {well: pa.compute.unique(wstat_df[f"WSTAT:{well}"]).to_pylist() for well in group_tree_wells}
 
         # Add nodetypes IS_PROD, IS_INJ and IS_OTHER to gruptree
-        self._grouptree = _add_nodetype(self._grouptree, wstat_unique, wells, self._terminal_node)
+        self._grouptree_df = _add_nodetype(self._grouptree_df, wstat_unique, group_tree_wells, self._terminal_node)
 
-        if True in self._grouptree["IS_INJ"].unique():
-            # If there is injection in the tree we need to determine
-            # which kind of injection. For that wee need FWIR and FGIR
-            self._check_that_sumvecs_exists(["FWIR", "FGIR"])
-            smry = {}
-            for vec in ["FWIR", "FGIR"]:
-                table, _ = await self._summary_access.get_vector_table_async(
-                    vector_name=vec,
-                    resampling_frequency=self._resampling_frequency,
-                    realizations=None,
-                )
-                smry[vec] = table
-
-            self._has_waterinj = pa.compute.sum(smry["FWIR"]["FWIR"]).as_py() > 0
-            self._has_gasinj = pa.compute.sum(smry["FGIR"]["FGIR"]).as_py() > 0
+        # Initialize injection states based on group tree data
+        await self._initialize_injection_states_async()
 
         # Add edge label
-        self._grouptree["EDGE_LABEL"] = self._grouptree.apply(_get_edge_label, axis=1)
+        self._grouptree_df["EDGE_LABEL"] = self._grouptree_df.apply(_get_edge_label, axis=1)
 
         # Get summary data with metadata (nodename, datatype, edge_or_node)
         self._sumvecs: pd.DataFrame = self._get_sumvecs_with_metadata()
@@ -162,77 +375,48 @@ class GroupTreeData:
         # Check that all edge summary vectors exist
         self._check_that_sumvecs_exists(list(self._sumvecs[self._sumvecs["EDGE_NODE"] == EdgeOrNode.EDGE]["SUMVEC"]))
 
-    async def create_group_tree_dataset(
+
+    async def create_statistics_group_tree_dataset(
         self,
-        tree_mode: TreeModeOptions,
+        stat_option: StatOptions,
         node_types: List[NodeType],
-        real: Optional[int] = None,
-        stat_option: Optional[StatOptions] = None,
-    ) -> Tuple[DatedTree, List[GroupTreeMetadata], List[GroupTreeMetadata]]:
-        """This method is called when an event is triggered to create a new dataset
-        to the GroupTree plugin. First there is a lot of filtering of the smry and
-        grouptree data, before the filtered data is sent to the function that is
-        actually creating the dataset.
-
-        Returns the group tree data and two lists with dropdown options for what
-        to display on the edges and nodes.
-
-        A sample data set can be found here:
-        https://github.com/equinor/webviz-subsurface-components/blob/master/react/src/demo/example-data/group-tree.json
-        """  # noqa
-
-        if tree_mode == TreeModeOptions.SINGLE_REAL and real is None:
-            raise ValueError("Realization cannot be None when Tree mode is SINGLE REAL")
-
-        if tree_mode == TreeModeOptions.STATISTICS and not self._grouptree_model._tree_is_equivalent_in_all_real:
-            raise ValueError(
-                "Statistics cannot be calculated because the Group Tree is not equivalent in all realizations."
-            )
-
-        # Filter smry
+    )-> Tuple[DatedTree, List[GroupTreeMetadata], List[GroupTreeMetadata]]:
+        if self._tree_mode != TreeModeOptions.STATISTICS:
+            raise ValueError("Tree mode must be STATISTICS to create a statistics dataset")
+        
+        if self._all_vectors is None:
+            raise ValueError("List of summary vectors has not been initialized")        
+        
         vectors = [sumvec for sumvec in self._sumvecs["SUMVEC"] if sumvec in self._all_vectors]
 
-        if tree_mode == TreeModeOptions.SINGLE_REAL:
-            table, _ = await self._summary_access.get_single_real_vectors_table_async(
-                vector_names=vectors,
-                resampling_frequency=self._resampling_frequency,
-                realization=self._realization,
-            )
-            smry = table.to_pandas()
+        dfs = []
+        tasks = [self._fetch_vector_table_async(vec, self._resampling_frequency) for vec in vectors]
+        results = await asyncio.gather(*tasks)
+        for table in results:
+            dfs.append(table.to_pandas())
 
-        elif tree_mode == TreeModeOptions.STATISTICS:
-            dfs = []
-            for vec in vectors:
-                table, _ = await self._summary_access.get_vector_table_async(
-                    vector_name=vec,
-                    resampling_frequency=self._resampling_frequency,
-                    realizations=None,
-                )
-                dfs.append(table.to_pandas())
-
-            smry = reduce(lambda left, right: pd.merge(left, right, on=["DATE", "REAL"]), dfs)
-
-            if tree_mode is TreeModeOptions.STATISTICS:
-                if stat_option is StatOptions.MEAN:
-                    smry = smry.groupby("DATE").mean().reset_index()
-                elif stat_option in [StatOptions.P50, StatOptions.P10, StatOptions.P90]:
-                    quantile = {"p50": 0.5, "p10": 0.9, "p90": 0.1}[stat_option.value]
-                    smry = smry.groupby("DATE").quantile(quantile).reset_index()
-                elif stat_option is StatOptions.MAX:
-                    smry = smry.groupby("DATE").max().reset_index()
-                elif stat_option is StatOptions.MIN:
-                    smry = smry.groupby("DATE").min().reset_index()
-                else:
-                    raise ValueError(f"Statistical option: {stat_option.value} not implemented")
+        smry = reduce(lambda left, right: pd.merge(left, right, on=["DATE", "REAL"]), dfs)
+        
+        if stat_option is StatOptions.MEAN:
+            smry = smry.groupby("DATE").mean().reset_index()
+        elif stat_option in [StatOptions.P50, StatOptions.P10, StatOptions.P90]:
+            quantile = {StatOptions.P50.value: 0.5, StatOptions.P10.value: 0.9, StatOptions.P90.value: 0.1}[stat_option.value]
+            smry = smry.groupby("DATE").quantile(quantile).reset_index()
+        elif stat_option is StatOptions.MAX:
+            smry = smry.groupby("DATE").max().reset_index()
+        elif stat_option is StatOptions.MIN:
+            smry = smry.groupby("DATE").min().reset_index()
+        else:
+            raise ValueError(f"Statistical option: {stat_option.value} not implemented")
 
         # Filter nodetype prod, inj and/or other
         dfs = []
         for tpe in node_types:
-            dfs.append(self._grouptree[self._grouptree[f"IS_{tpe.value}".upper()]])
+            dfs.append(self._grouptree_df[self._grouptree_df[f"IS_{tpe.value}".upper()]])
         gruptree_filtered = pd.concat(dfs).drop_duplicates()
 
         return (
-            await _create_dataset(smry, gruptree_filtered, self._sumvecs, self._terminal_node),
+            _create_dataset(smry, gruptree_filtered, self._sumvecs, self._terminal_node),
             self._get_edge_options(node_types),
             [
                 GroupTreeMetadata(key=datatype.value, label=_get_label(datatype))
@@ -264,7 +448,7 @@ class GroupTreeData:
         """
         records = []
 
-        unique_nodes = self._grouptree.drop_duplicates(subset=["CHILD", "KEYWORD"])
+        unique_nodes = self._grouptree_df.drop_duplicates(subset=["CHILD", "KEYWORD"])
         for _, noderow in unique_nodes.iterrows():
             nodename = noderow["CHILD"]
             keyword = noderow["KEYWORD"]
@@ -408,7 +592,6 @@ def _create_leafnodetype_maps(
             # )
 
             sumprod = sum(smry[sumvec].sum() for sumvec in prod_sumvecs if sumvec in smry.columns)
-
             suminj = sum(smry[sumvec].sum() for sumvec in inj_sumvecs if sumvec in smry.columns)
 
             is_prod_map[nodename] = sumprod > 0
@@ -489,51 +672,14 @@ def _get_sumvec(
     * nodename: FIELD, well name or group name in Eclipse network
     * keyword: GRUPTREE, BRANPROP or WELSPECS
     """
-    datatype_map = {
-        "FIELD": {
-            DataType.OILRATE: "FOPR",
-            DataType.GASRATE: "FGPR",
-            DataType.WATERRATE: "FWPR",
-            DataType.WATERINJRATE: "FWIR",
-            DataType.GASINJRATE: "FGIR",
-            DataType.PRESSURE: "GPR",
-        },
-        "GRUPTREE": {
-            DataType.OILRATE: "GOPR",
-            DataType.GASRATE: "GGPR",
-            DataType.WATERRATE: "GWPR",
-            DataType.WATERINJRATE: "GWIR",
-            DataType.GASINJRATE: "GGIR",
-            DataType.PRESSURE: "GPR",
-        },
-        # BRANPROP can not be used for injection, but the nodes
-        # might also be GNETINJE and could therefore have injection.
-        "BRANPROP": {
-            DataType.OILRATE: "GOPRNB",
-            DataType.GASRATE: "GGPRNB",
-            DataType.WATERRATE: "GWPRNB",
-            DataType.PRESSURE: "GPR",
-            DataType.WATERINJRATE: "GWIR",
-            DataType.GASINJRATE: "GGIR",
-        },
-        "WELSPECS": {
-            DataType.OILRATE: "WOPR",
-            DataType.GASRATE: "WGPR",
-            DataType.WATERRATE: "WWPR",
-            DataType.WATERINJRATE: "WWIR",
-            DataType.GASINJRATE: "WGIR",
-            DataType.PRESSURE: "WTHP",
-            DataType.BHP: "WBHP",
-            DataType.WMCTL: "WMCTL",
-        },
-    }
+    
     if nodename == "FIELD":
-        datatype_ecl = datatype_map["FIELD"][datatype]
+        datatype_ecl = GROUP_TREE_FIELD_DATATYPE_TO_VECTOR_MAP[datatype]
         if datatype == "pressure":
             return f"{datatype_ecl}:{nodename}"
         return datatype_ecl
     try:
-        datatype_ecl = datatype_map[keyword][datatype]
+        datatype_ecl = GROUP_TREE_KEYWORD_DATATYPE_TO_VECTOR_MAP[keyword][datatype]
     except KeyError as exc:
         error = (
             f"Summary vector not found for eclipse keyword: {keyword}, "
@@ -656,7 +802,7 @@ class GroupTreeModel:
         return branch_nodes
 
 
-async def _create_dataset(
+def _create_dataset(
     smry: pd.DataFrame,
     gruptree: pd.DataFrame,
     sumvecs: pd.DataFrame,
@@ -681,7 +827,7 @@ async def _create_dataset(
             trees.append(
                 DatedTree(
                     dates=[date.strftime("%Y-%m-%d") for date in dates],
-                    tree=await _extract_tree(gruptree_date, terminal_node, smry_in_datespan, dates, sumvecs),
+                    tree=_extract_tree(gruptree_date, terminal_node, smry_in_datespan, dates, sumvecs),
                 )
             )
         else:
@@ -689,7 +835,7 @@ async def _create_dataset(
     return trees
 
 
-async def _extract_tree(
+def _extract_tree(
     gruptree: pd.DataFrame,
     nodename: str,
     smry_in_datespan: Dict[Any, pd.DataFrame],
@@ -702,7 +848,7 @@ async def _extract_tree(
     """
     # pylint: disable=too-many-locals
     node_sumvecs = sumvecs[sumvecs["NODENAME"] == nodename]
-    nodedict = await _get_nodedict(gruptree, nodename)
+    nodedict = _get_nodedict(gruptree, nodename)
 
     edges = node_sumvecs[node_sumvecs["EDGE_NODE"] == EdgeOrNode.EDGE].to_dict("records")
     nodes = node_sumvecs[node_sumvecs["EDGE_NODE"] == EdgeOrNode.NODE].to_dict("records")
@@ -728,12 +874,12 @@ async def _extract_tree(
         edge_label=nodedict["EDGE_LABEL"],
         edge_data=edge_data,
         node_data=node_data,
-        children=[await _extract_tree(gruptree, child, smry_in_datespan, dates, sumvecs) for child in children],
+        children=[_extract_tree(gruptree, child, smry_in_datespan, dates, sumvecs) for child in children],
     )
     return result
 
 
-async def _get_nodedict(gruptree: pd.DataFrame, nodename: str) -> Dict[str, Any]:
+def _get_nodedict(gruptree: pd.DataFrame, nodename: str) -> Dict[str, Any]:
     """Returns the node data from a row in the gruptree dataframe as a dictionary.
     This function also checks that there is exactly one element with the given name.
     """
