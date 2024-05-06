@@ -3,7 +3,7 @@ import React from "react";
 import { Frequency_api, StatOption_api } from "@api";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { ModuleSettingsProps } from "@framework/Module";
-import { useEnsembleSet } from "@framework/WorkbenchSession";
+import { useEnsembleRealizationFilterFunc, useEnsembleSet } from "@framework/WorkbenchSession";
 import { EnsembleDropdown } from "@framework/components/EnsembleDropdown";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
@@ -24,6 +24,7 @@ import {
     userSelectedEnsembleIdentAtom,
     userSelectedNodeKeyAtom,
     userSelectedRealizationNumberAtom,
+    validRealizationNumbersAtom,
 } from "./atoms/baseAtoms";
 import {
     availableDateTimesAtom,
@@ -72,6 +73,11 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<State, Interf
     const setUserSelectedDateTime = useSetAtom(userSelectedDateTimeAtom);
 
     const groupTreeQueryResult = useAtomValue(groupTreeQueryResultAtom);
+
+    const setValidRealizationNumbersAtom = useSetAtom(validRealizationNumbersAtom);
+    const filterEnsembleRealizationsFunc = useEnsembleRealizationFilterFunc(workbenchSession);
+    const validRealizations = selectedEnsembleIdent ? [...filterEnsembleRealizationsFunc(selectedEnsembleIdent)] : null;
+    setValidRealizationNumbersAtom(validRealizations);
 
     function handleSelectedNodeKeyChange(value: string) {
         setUserSelectedNodeKey(value);
@@ -161,14 +167,9 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<State, Interf
                         <Dropdown
                             disabled={selectedDataTypeOption != GroupTreeDataTypeOption.INDIVIDUAL_REALIZATION}
                             options={
-                                selectedEnsembleIdent
-                                    ? ensembleSet
-                                          .findEnsemble(selectedEnsembleIdent)
-                                          ?.getRealizations()
-                                          .map((real) => {
-                                              return { value: real.toString(), label: real.toString() };
-                                          }) ?? []
-                                    : []
+                                validRealizations?.map((real) => {
+                                    return { value: real.toString(), label: real.toString() };
+                                }) ?? []
                             }
                             value={selectedRealizationNumber?.toString() ?? undefined}
                             onChange={handleRealizationNumberChange}

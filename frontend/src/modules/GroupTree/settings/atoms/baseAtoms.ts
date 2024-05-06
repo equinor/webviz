@@ -23,6 +23,8 @@ export const userSelectedDateTimeAtom = atom<string | null>(null);
 
 export const userSelectedRealizationNumberAtom = atom<number | null>(null);
 
+export const validRealizationNumbersAtom = atom<number[] | null>(null);
+
 export const userSelectedEnsembleIdentAtom = atomWithCompare<EnsembleIdent | null>(null, areEnsembleIdentsEqual);
 
 export const userSelectedEdgeKeyAtom = atom<string | null>(null);

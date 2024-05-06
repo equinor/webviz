@@ -9,7 +9,9 @@ export class ModuleNotFoundPlaceholder extends Module<
     {
         baseStates: Record<string, never>;
         derivedStates: Record<string, never>;
-    }
+    },
+    Record<string, never>,
+    Record<string, never>
 > {
     constructor(moduleName: string) {
         super({
@@ -24,7 +26,9 @@ export class ModuleNotFoundPlaceholder extends Module<
         {
             baseStates: Record<string, never>;
             derivedStates: Record<string, never>;
-        }
+        },
+        Record<string, never>,
+        Record<string, never>
     > {
         const instance = super.makeInstance(instanceNumber);
         instance.setDefaultState({});

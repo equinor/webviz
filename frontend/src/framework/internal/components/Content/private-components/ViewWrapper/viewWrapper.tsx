@@ -14,7 +14,7 @@ import { ViewWrapperPlaceholder } from "../viewWrapperPlaceholder";
 
 type ViewWrapperProps = {
     isActive: boolean;
-    moduleInstance: ModuleInstance<any, any>;
+    moduleInstance: ModuleInstance<any, any, any, any>;
     workbench: Workbench;
     width: number;
     height: number;
