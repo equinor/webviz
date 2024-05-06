@@ -1,4 +1,4 @@
-import { Frequency_api, StatOption_api } from "@api";
+import { Frequency_api, NodeType_api, StatOption_api } from "@api";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { atomWithCompare } from "@framework/utils/atomUtils";
 
@@ -18,6 +18,10 @@ export const selectedStatisticOptionAtom = atom<StatOption_api>(StatOption_api.M
 export const selectedDataTypeOptionAtom = atom<GroupTreeDataTypeOption>(GroupTreeDataTypeOption.INDIVIDUAL_REALIZATION);
 
 export const selectedResamplingFrequencyAtom = atom<Frequency_api>(Frequency_api.YEARLY);
+
+export const selectedNodeTypesAtom = atom<Set<NodeType_api>>(
+    new Set([NodeType_api.INJ, NodeType_api.PROD, NodeType_api.OTHER])
+);
 
 export const userSelectedDateTimeAtom = atom<string | null>(null);
 

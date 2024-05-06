@@ -235,7 +235,7 @@ export const RealizationPicker: React.FC<RealizationPickerProps> = (props) => {
 
             const range = value.split("-");
             if (range.length === 1) {
-                if (parseInt(range[0]) < 1) {
+                if (parseInt(range[0]) < 0) {
                     return {
                         validity: SelectionValidity.InputError,
                         numMatchedRealizations: 0,
@@ -257,7 +257,7 @@ export const RealizationPicker: React.FC<RealizationPickerProps> = (props) => {
                     numMatchedValidRealizations: 1,
                 };
             } else if (range.length === 2) {
-                if (parseInt(range[0]) < 1 || parseInt(range[1]) <= parseInt(range[0])) {
+                if (parseInt(range[0]) < 0 || parseInt(range[1]) <= parseInt(range[0])) {
                     return {
                         validity: SelectionValidity.InputError,
                         numMatchedRealizations: 0,

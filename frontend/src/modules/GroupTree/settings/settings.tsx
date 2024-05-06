@@ -1,6 +1,6 @@
 import React from "react";
 
-import { Frequency_api, StatOption_api } from "@api";
+import { Frequency_api, NodeType_api, StatOption_api } from "@api";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { ModuleSettingsProps } from "@framework/Module";
 import { useEnsembleRealizationFilterFunc, useEnsembleSet } from "@framework/WorkbenchSession";
@@ -12,11 +12,13 @@ import { Dropdown } from "@lib/components/Dropdown";
 import { Label } from "@lib/components/Label";
 import { QueryStateWrapper } from "@lib/components/QueryStateWrapper";
 import { RadioGroup } from "@lib/components/RadioGroup";
+import { Select } from "@lib/components/Select";
 
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 
 import {
     selectedDataTypeOptionAtom,
+    selectedNodeTypesAtom,
     selectedResamplingFrequencyAtom,
     selectedStatisticOptionAtom,
     userSelectedDateTimeAtom,
@@ -43,6 +45,7 @@ import {
     FrequencyEnumToStringMapping,
     GroupTreeDataTypeOption,
     GroupTreeDataTypeOptionEnumToStringMapping,
+    NodeTypeEnumToStringMapping,
     StatOptionEnumToStringMapping,
 } from "../types";
 
@@ -56,6 +59,7 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<State, Interf
     const [selectedDataTypeOption, setSelectedDataTypeOption] = useAtom(selectedDataTypeOptionAtom);
     const [selectedStatisticOption, setSelectedStatisticOption] = useAtom(selectedStatisticOptionAtom);
     const [selectedResamplingFrequency, setSelectedResamplingFrequency] = useAtom(selectedResamplingFrequencyAtom);
+    const [selectedNodeTypes, setSelectedNodeTypes] = useAtom(selectedNodeTypesAtom);
 
     const selectedEdgeKey = useAtomValue(selectedEdgeKeyAtom);
     const setUserSelectedEdgeKey = useSetAtom(userSelectedEdgeKeyAtom);
@@ -116,6 +120,11 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<State, Interf
         setSelectedStatisticOption(value);
     }
 
+    function handleSelectedNodeTypesChange(values: string[]) {
+        const newNodeTypes = new Set(values.map((val) => val as NodeType_api));
+        setSelectedNodeTypes(newNodeTypes);
+    }
+
     const createValueLabelFormat = React.useCallback(
         function createValueLabelFormat(value: number): string {
             if (!availableDateTimes || availableDateTimes.length === 0 || value >= availableDateTimes.length) return "";
@@ -145,7 +154,7 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<State, Interf
                     onChange={handleFrequencySelectionChange}
                 />
             </CollapsibleGroup>
-            <CollapsibleGroup expanded={true} title="Data Options">
+            <CollapsibleGroup expanded={true} title="Data Fetching Options">
                 <div className="flex flex-col gap-2">
                     <RadioGroup
                         value={selectedDataTypeOption}
@@ -185,9 +194,19 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<State, Interf
                             onChange={(_, value) => handleSelectedStatisticOptionChange(value)}
                         />
                     </CollapsibleGroup>
+                    <CollapsibleGroup expanded={true} title="Node Types">
+                        <Select
+                            options={Object.values(NodeType_api).map((val: NodeType_api) => {
+                                return { value: val, label: NodeTypeEnumToStringMapping[val] };
+                            })}
+                            multiple={true}
+                            value={Array.from(selectedNodeTypes).map((val: string) => val)}
+                            onChange={handleSelectedNodeTypesChange}
+                            size={3}
+                        />
+                    </CollapsibleGroup>
                 </div>
             </CollapsibleGroup>
-
             <CollapsibleGroup expanded={true} title="Edge, node and date selections">
                 <QueryStateWrapper
                     queryResult={groupTreeQueryResult}

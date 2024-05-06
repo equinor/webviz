@@ -2,7 +2,12 @@ import { apiService } from "@framework/ApiService";
 
 import { atomWithQuery } from "jotai-tanstack-query";
 
-import { selectedDataTypeOptionAtom, selectedResamplingFrequencyAtom, selectedStatisticOptionAtom } from "./baseAtoms";
+import {
+    selectedDataTypeOptionAtom,
+    selectedNodeTypesAtom,
+    selectedResamplingFrequencyAtom,
+    selectedStatisticOptionAtom,
+} from "./baseAtoms";
 import { selectedEnsembleIdentAtom, selectedRealizationNumberAtom } from "./derivedAtoms";
 
 import { GroupTreeDataTypeOption } from "../../types";
@@ -15,6 +20,7 @@ export const realizationGroupTreeQueryAtom = atomWithQuery((get) => {
     const selectedEnsembleIdent = get(selectedEnsembleIdentAtom);
     const selectedRealizationNumber = get(selectedRealizationNumberAtom);
     const selectedResamplingFrequency = get(selectedResamplingFrequencyAtom);
+    const selectedNodeTypes = get(selectedNodeTypesAtom);
 
     const query = {
         queryKey: [
@@ -23,13 +29,15 @@ export const realizationGroupTreeQueryAtom = atomWithQuery((get) => {
             selectedEnsembleIdent?.getEnsembleName(),
             selectedRealizationNumber,
             selectedResamplingFrequency,
+            Array.from(selectedNodeTypes),
         ],
         queryFn: () =>
             apiService.groupTree.getRealizationGroupTreeData(
                 selectedEnsembleIdent?.getCaseUuid() ?? "",
                 selectedEnsembleIdent?.getEnsembleName() ?? "",
                 selectedRealizationNumber ?? 0,
-                selectedResamplingFrequency
+                selectedResamplingFrequency,
+                Array.from(selectedNodeTypes)
             ),
         staleTime: STALE_TIME,
         gcTime: CACHE_TIME,
@@ -37,7 +45,8 @@ export const realizationGroupTreeQueryAtom = atomWithQuery((get) => {
             selectedDataTypeOption === GroupTreeDataTypeOption.INDIVIDUAL_REALIZATION &&
             selectedEnsembleIdent?.getCaseUuid() &&
             selectedEnsembleIdent?.getEnsembleName() &&
-            selectedRealizationNumber !== null
+            selectedRealizationNumber !== null &&
+            selectedNodeTypes.size > 0
         ),
     };
     return query;
@@ -48,6 +57,7 @@ export const statisticalGroupTreeQueryAtom = atomWithQuery((get) => {
     const selectedStatisticOption = get(selectedStatisticOptionAtom);
     const selectedResamplingFrequency = get(selectedResamplingFrequencyAtom);
     const selectedDataTypeOption = get(selectedDataTypeOptionAtom);
+    const selectedNodeTypes = get(selectedNodeTypesAtom);
 
     const query = {
         queryKey: [
@@ -56,20 +66,23 @@ export const statisticalGroupTreeQueryAtom = atomWithQuery((get) => {
             selectedEnsembleIdent?.getEnsembleName(),
             selectedStatisticOption,
             selectedResamplingFrequency,
+            Array.from(selectedNodeTypes),
         ],
         queryFn: () =>
             apiService.groupTree.getStatisticalGroupTreeData(
                 selectedEnsembleIdent?.getCaseUuid() ?? "",
                 selectedEnsembleIdent?.getEnsembleName() ?? "",
                 selectedStatisticOption,
-                selectedResamplingFrequency
+                selectedResamplingFrequency,
+                Array.from(selectedNodeTypes)
             ),
         staleTime: STALE_TIME,
         gcTime: CACHE_TIME,
         enabled: !!(
             selectedDataTypeOption === GroupTreeDataTypeOption.STATISTICS &&
             selectedEnsembleIdent?.getCaseUuid() &&
-            selectedEnsembleIdent?.getEnsembleName()
+            selectedEnsembleIdent?.getEnsembleName() &&
+            selectedNodeTypes.size > 0
         ),
     };
 

@@ -36,12 +36,9 @@ export const selectedEnsembleIdentAtom = atom<EnsembleIdent | null>((get) => {
 });
 
 export const selectedRealizationNumberAtom = atom<number | null>((get) => {
-    // const ensembleSet = get(EnsembleSetAtom);
-    // const selectedEnsembleIdent = get(selectedEnsembleIdentAtom);
     const userSelectedRealizationNumber = get(userSelectedRealizationNumberAtom);
     const validRealizationNumbers = get(validRealizationNumbersAtom);
 
-    // const selectedEnsemble = selectedEnsembleIdent ? ensembleSet.findEnsemble(selectedEnsembleIdent) : null;
     if (!validRealizationNumbers) {
         return null;
     }

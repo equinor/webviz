@@ -4,6 +4,7 @@
 /* eslint-disable */
 import type { Frequency } from '../models/Frequency';
 import type { GroupTreeData } from '../models/GroupTreeData';
+import type { NodeType } from '../models/NodeType';
 import type { StatOption } from '../models/StatOption';
 import type { CancelablePromise } from '../core/CancelablePromise';
 import type { BaseHttpRequest } from '../core/BaseHttpRequest';
@@ -14,7 +15,8 @@ export class GroupTreeService {
      * @param caseUuid Sumo case uuid
      * @param ensembleName Ensemble name
      * @param realization Realization
-     * @param resamplingFrequency Resampling frequency. If not specified, yearly data will be used.
+     * @param resamplingFrequency Resampling frequency
+     * @param nodeTypeSet Node types
      * @returns GroupTreeData Successful Response
      * @throws ApiError
      */
@@ -22,7 +24,8 @@ export class GroupTreeService {
         caseUuid: string,
         ensembleName: string,
         realization: number,
-        resamplingFrequency?: (Frequency | null),
+        resamplingFrequency: Frequency,
+        nodeTypeSet: Array<NodeType>,
     ): CancelablePromise<GroupTreeData> {
         return this.httpRequest.request({
             method: 'GET',
@@ -32,6 +35,7 @@ export class GroupTreeService {
                 'ensemble_name': ensembleName,
                 'realization': realization,
                 'resampling_frequency': resamplingFrequency,
+                'node_type_set': nodeTypeSet,
             },
             errors: {
                 422: `Validation Error`,
@@ -43,7 +47,8 @@ export class GroupTreeService {
      * @param caseUuid Sumo case uuid
      * @param ensembleName Ensemble name
      * @param statOption Statistical option
-     * @param resamplingFrequency Resampling frequency. If not specified, yearly data will be used.
+     * @param resamplingFrequency Resampling frequency
+     * @param nodeTypeSet Node types
      * @returns GroupTreeData Successful Response
      * @throws ApiError
      */
@@ -51,7 +56,8 @@ export class GroupTreeService {
         caseUuid: string,
         ensembleName: string,
         statOption: StatOption,
-        resamplingFrequency?: (Frequency | null),
+        resamplingFrequency: Frequency,
+        nodeTypeSet: Array<NodeType>,
     ): CancelablePromise<GroupTreeData> {
         return this.httpRequest.request({
             method: 'GET',
@@ -61,6 +67,7 @@ export class GroupTreeService {
                 'ensemble_name': ensembleName,
                 'stat_option': statOption,
                 'resampling_frequency': resamplingFrequency,
+                'node_type_set': nodeTypeSet,
             },
             errors: {
                 422: `Validation Error`,

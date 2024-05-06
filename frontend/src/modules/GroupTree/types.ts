@@ -1,4 +1,4 @@
-import { Frequency_api, StatOption_api } from "@api";
+import { Frequency_api, NodeType_api, StatOption_api } from "@api";
 
 export const FrequencyEnumToStringMapping = {
     [Frequency_api.YEARLY]: "Yearly",
@@ -15,6 +15,12 @@ export const StatOptionEnumToStringMapping = {
     [StatOption_api.P10]: "P10",
     [StatOption_api.P90]: "P90",
     [StatOption_api.P50]: "P50",
+};
+
+export const NodeTypeEnumToStringMapping = {
+    [NodeType_api.INJ]: "Injector",
+    [NodeType_api.PROD]: "Producer",
+    [NodeType_api.OTHER]: "Other",
 };
 
 export enum GroupTreeDataTypeOption {
