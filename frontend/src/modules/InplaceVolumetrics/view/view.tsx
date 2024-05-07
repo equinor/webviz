@@ -14,17 +14,11 @@ import { computeQuantile } from "@modules/_shared/statistics";
 
 import { group } from "console";
 
-import {
-    HistogramPlotData,
-    InplaceHistogramPlot,
-    InplaceResultValues,
-    addHistogramTrace,
-} from "./components/inplaceHistogramPlot";
+import { InplaceHistogramPlot, InplaceResultValues, addHistogramTrace } from "./components/inplaceHistogramPlot";
 import { useInplaceDataResultsQuery } from "./hooks/queryHooks";
 
 import { Interface } from "../settingsToViewInterface";
 import { State } from "../state";
-import { PlotGroupingEnum } from "../typesAndEnums";
 import { InplaceVolGroupedResultValues, getGroupedInplaceVolResults } from "../utils/inplaceVolDataEnsembleSetAccessor";
 
 export function View(props: ModuleViewProps<State, Interface>) {

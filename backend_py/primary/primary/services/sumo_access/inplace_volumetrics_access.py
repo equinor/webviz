@@ -3,12 +3,14 @@ from enum import Enum
 from io import BytesIO
 from typing import List, Optional, Sequence, Union, Tuple
 
+import asyncio
 import pyarrow as pa
 import pyarrow.compute as pc
 import pyarrow.parquet as pq
 from fmu.sumo.explorer.objects import TableCollection, Table
 from pydantic import BaseModel
 
+from webviz_pkg.core_utils.perf_timer import PerfTimer
 from ..service_exceptions import (
     Service,
     NoDataError,
@@ -100,20 +102,36 @@ LOGGER = logging.getLogger(__name__)
 class InplaceVolumetricsAccess(SumoEnsemble):
     async def get_inplace_volumetrics_table_definitions_async(self) -> List[InplaceVolumetricsTableDefinition]:
         """Retrieve the table definitions for the volumetric tables"""
+        
+        timer = PerfTimer()
         vol_table_collections: TableCollection = self._case.tables.filter(
             aggregation="collection", tagname=["vol", "volumes", "inplace"], iteration=self._iteration_name
         )
+        et_get_all_collections_ms = timer.lap_ms()
+
         vol_table_names = await vol_table_collections.names_async
+        et_get_all_names_ms = timer.lap_ms()
+        
         if len(vol_table_names) == 0:
             raise NoDataError(
                 f"No inplace volumetrics tables found in case={self._case_uuid}, iteration={self._iteration_name}",
                 Service.SUMO,
             )
 
-        table_definitions = []
-
-        # Need to iterate through each table to get colum names and unique index values
-        for vol_table_name in vol_table_names:
+        tasks = [asyncio.create_task(self.get_table_definition(vol_table_name)) for vol_table_name in vol_table_names]
+        table_definitions = await asyncio.gather(*tasks)
+        et_get_all_table_definitions_ms = timer.lap_ms()
+        
+        LOGGER.debug(
+            f"get_inplace_volumetrics_table_definitions_async: case_uuid={self._case_uuid}"
+            f"iteration_name={self._iteration_name}"
+            f"et_get_all_collections_ms={et_get_all_collections_ms}"
+            f"et_get_all_names_ms={et_get_all_names_ms}"
+            f"et_get_all_table_definitions_ms={et_get_all_table_definitions_ms}"
+        )
+        
+        return table_definitions
+    async def get_table_definition(self, vol_table_name: str) -> InplaceVolumetricsTableDefinition:
             vol_table_as_collection: TableCollection = self._case.tables.filter(
                 aggregation="collection",
                 name=vol_table_name,
@@ -172,15 +190,12 @@ class InplaceVolumetricsAccess(SumoEnsemble):
                         f"Invalid index values found in the volumetric table case={self._case_uuid}, iteration={self._iteration_name}, table_name={vol_table_name}, index_name={index_column_name}, {unique_values}"
                     )
                 indexes.append(InplaceVolumetricsIndex(index_name=index_column_name, values=unique_values))
-            table_definitions.append(
-                InplaceVolumetricsTableDefinition(
+            return InplaceVolumetricsTableDefinition(
                     name=vol_table_name,
                     indexes=indexes,
                     result_names=result_column_names,
                 )
-            )
-        return table_definitions
-
+            
     async def get_volumetric_data_async(
         self,
         table_name: str,
@@ -188,14 +203,18 @@ class InplaceVolumetricsAccess(SumoEnsemble):
         realizations: Sequence[int],
     ) -> InplaceVolumetricData:
         """Retrieve the volumetric data for a single result (e.g. STOIIP_OIL), optionally filtered by realizations and index values."""
+        timer = PerfTimer()
         if result_name not in ALLOWED_RESULT_COLUMN_NAMES:
             raise InvalidDataError(
                 f"Invalid result name {result_name} for the volumetric table {self._case_uuid}, {table_name}",
                 Service.SUMO,
             )
+            
         sumo_table_obj = await self._get_sumo_table_async(table_name, result_name)
+        et_get_table_metadata_ms = timer.lap_ms()
+        
         arrow_table = await _fetch_arrow_table_async(sumo_table_obj)
-
+        et_fetch_arrow_table_ms = timer.lap_ms()
         
         if realizations is not None:
             arrow_table = _filter_arrow_table_by_inclusion(arrow_table, "REAL", realizations)
@@ -237,6 +256,10 @@ class InplaceVolumetricsAccess(SumoEnsemble):
             entries=entries,
             index_names=index_columns,
             realizations=realizations_sequence,
+        )
+        et_group_and_aggregate_ms = timer.lap_ms()
+        LOGGER.debug(
+            f"get_volumetric_data_async: case_uuid={self._case_uuid}, iteration_name={self._iteration_name}, et_get_table_metadata_ms={et_get_table_metadata_ms}, et_fetch_arrow_table_ms={et_fetch_arrow_table_ms}, et_group_and_aggregate_ms={et_group_and_aggregate_ms}"
         )
         return volumetric_data
 
