@@ -1,28 +1,84 @@
 import React from "react";
 
+import { Atom, PrimitiveAtom, WritableAtom } from "jotai";
 import { cloneDeep } from "lodash";
 
 import { ChannelDefinition, ChannelReceiverDefinition } from "./DataChannelTypes";
 import { InitialSettings } from "./InitialSettings";
-import { ModuleContext } from "./ModuleContext";
+import { SettingsContext, ViewContext } from "./ModuleContext";
 import { ModuleInstance } from "./ModuleInstance";
 import { DrawPreviewFunc } from "./Preview";
 import { StateBaseType, StateOptions } from "./StateStore";
 import { SyncSettingKey } from "./SyncSettings";
+import {
+    InterfaceBaseType,
+    InterfaceInitialization,
+    UniDirectionalSettingsToViewInterface,
+} from "./UniDirectionalSettingsToViewInterface";
 import { Workbench } from "./Workbench";
 import { WorkbenchServices } from "./WorkbenchServices";
 import { WorkbenchSession } from "./WorkbenchSession";
 import { WorkbenchSettings } from "./WorkbenchSettings";
 
-export type ModuleFCProps<StateType extends StateBaseType> = {
-    moduleContext: ModuleContext<StateType>;
+export type ModuleSettingsProps<
+    TTStateType extends StateBaseType,
+    TInterfaceType extends InterfaceBaseType = {
+        baseStates: Record<string, never>;
+        derivedStates: Record<string, never>;
+    },
+    TSettingsAtomsType extends Record<string, unknown> = Record<string, never>,
+    TViewAtomsType extends Record<string, unknown> = Record<string, never>
+> = {
+    settingsContext: SettingsContext<TTStateType, TInterfaceType, TSettingsAtomsType, TViewAtomsType>;
     workbenchSession: WorkbenchSession;
     workbenchServices: WorkbenchServices;
     workbenchSettings: WorkbenchSettings;
     initialSettings?: InitialSettings;
 };
 
-export type ModuleFC<StateType extends StateBaseType> = React.FC<ModuleFCProps<StateType>>;
+export type ModuleViewProps<
+    TTStateType extends StateBaseType,
+    TInterfaceType extends InterfaceBaseType = {
+        baseStates: Record<string, never>;
+        derivedStates: Record<string, never>;
+    },
+    TSettingsAtomsType extends Record<string, unknown> = Record<string, never>,
+    TViewAtomsType extends Record<string, unknown> = Record<string, never>
+> = {
+    viewContext: ViewContext<TTStateType, TInterfaceType, TSettingsAtomsType, TViewAtomsType>;
+    workbenchSession: WorkbenchSession;
+    workbenchServices: WorkbenchServices;
+    workbenchSettings: WorkbenchSettings;
+    initialSettings?: InitialSettings;
+};
+
+export type ModuleAtoms<TAtoms extends Record<string, unknown>> = {
+    [K in keyof TAtoms]: Atom<TAtoms[K]> | WritableAtom<TAtoms[K], [TAtoms[K]], void> | PrimitiveAtom<TAtoms[K]>;
+};
+
+export type AtomsInitialization<TAtoms extends Record<string, unknown>, TInterfaceType extends InterfaceBaseType> = (
+    settingsToViewInterface: UniDirectionalSettingsToViewInterface<TInterfaceType>
+) => ModuleAtoms<TAtoms>;
+
+export type ModuleSettings<
+    TTStateType extends StateBaseType,
+    TInterfaceType extends InterfaceBaseType = {
+        baseStates: Record<string, never>;
+        derivedStates: Record<string, never>;
+    },
+    TSettingsAtomsType extends Record<string, unknown> = Record<string, never>,
+    TViewAtomsType extends Record<string, unknown> = Record<string, never>
+> = React.FC<ModuleSettingsProps<TTStateType, TInterfaceType, TSettingsAtomsType, TViewAtomsType>>;
+
+export type ModuleView<
+    TTStateType extends StateBaseType,
+    TInterfaceType extends InterfaceBaseType = {
+        baseStates: Record<string, never>;
+        derivedStates: Record<string, never>;
+    },
+    TSettingsAtomsType extends Record<string, unknown> = Record<string, never>,
+    TViewAtomsType extends Record<string, unknown> = Record<string, never>
+> = React.FC<ModuleViewProps<TTStateType, TInterfaceType, TSettingsAtomsType, TViewAtomsType>>;
 
 export enum ImportState {
     NotImported = "NotImported",
@@ -41,15 +97,23 @@ export interface ModuleOptions {
     channelReceiverDefinitions?: ChannelReceiverDefinition[];
 }
 
-export class Module<StateType extends StateBaseType> {
+export class Module<
+    TStateType extends StateBaseType,
+    TInterfaceType extends InterfaceBaseType,
+    TSettingsAtomsType extends Record<string, unknown>,
+    TViewAtomsType extends Record<string, unknown>
+> {
     private _name: string;
     private _defaultTitle: string;
-    public viewFC: ModuleFC<StateType>;
-    public settingsFC: ModuleFC<StateType>;
+    public viewFC: ModuleView<TStateType, TInterfaceType, TSettingsAtomsType, TViewAtomsType>;
+    public settingsFC: ModuleSettings<TStateType, TInterfaceType, TSettingsAtomsType, TViewAtomsType>;
     protected _importState: ImportState;
-    private _moduleInstances: ModuleInstance<StateType>[];
-    private _defaultState: StateType | null;
-    private _stateOptions: StateOptions<StateType> | undefined;
+    private _moduleInstances: ModuleInstance<TStateType, TInterfaceType, TSettingsAtomsType, TViewAtomsType>[];
+    private _defaultState: TStateType | null;
+    private _settingsToViewInterfaceInitialization: InterfaceInitialization<TInterfaceType> | null;
+    private _settingsAtomsInitialization: AtomsInitialization<TSettingsAtomsType, TInterfaceType> | null;
+    private _viewAtomsInitialization: AtomsInitialization<TViewAtomsType, TInterfaceType> | null;
+    private _stateOptions: StateOptions<TStateType> | undefined;
     private _workbench: Workbench | null;
     private _syncableSettingKeys: SyncSettingKey[];
     private _drawPreviewFunc: DrawPreviewFunc | null;
@@ -65,6 +129,9 @@ export class Module<StateType extends StateBaseType> {
         this._importState = ImportState.NotImported;
         this._moduleInstances = [];
         this._defaultState = null;
+        this._settingsToViewInterfaceInitialization = null;
+        this._settingsAtomsInitialization = null;
+        this._viewAtomsInitialization = null;
         this._workbench = null;
         this._syncableSettingKeys = options.syncableSettingKeys ?? [];
         this._drawPreviewFunc = options.drawPreviewFunc ?? null;
@@ -97,14 +164,26 @@ export class Module<StateType extends StateBaseType> {
         this._workbench = workbench;
     }
 
-    setDefaultState(defaultState: StateType, options?: StateOptions<StateType>): void {
+    setDefaultState(defaultState: TStateType, options?: StateOptions<TStateType>): void {
         this._defaultState = defaultState;
         this._stateOptions = options;
         this._moduleInstances.forEach((instance) => {
-            if (this._defaultState && !instance.isInitialised()) {
+            if (this._defaultState && !instance.isInitialized()) {
                 instance.setDefaultState(cloneDeep(this._defaultState), cloneDeep(this._stateOptions));
             }
         });
+    }
+
+    setSettingsToViewInterfaceInitialization(interfaceInitialization: InterfaceInitialization<TInterfaceType>): void {
+        this._settingsToViewInterfaceInitialization = interfaceInitialization;
+    }
+
+    setSettingsAtomsInitialization(atomsInitialization: AtomsInitialization<TSettingsAtomsType, TInterfaceType>): void {
+        this._settingsAtomsInitialization = atomsInitialization;
+    }
+
+    setViewAtomsInitialization(atomsInitialization: AtomsInitialization<TViewAtomsType, TInterfaceType>): void {
+        this._viewAtomsInitialization = atomsInitialization;
     }
 
     getSyncableSettingKeys(): SyncSettingKey[] {
@@ -115,13 +194,16 @@ export class Module<StateType extends StateBaseType> {
         return this._syncableSettingKeys.includes(key);
     }
 
-    makeInstance(instanceNumber: number): ModuleInstance<StateType> {
+    makeInstance(
+        instanceNumber: number
+    ): ModuleInstance<TStateType, TInterfaceType, TSettingsAtomsType, TViewAtomsType> {
         if (!this._workbench) {
             throw new Error("Module must be added to a workbench before making an instance");
         }
 
-        const instance = new ModuleInstance<StateType>({
+        const instance = new ModuleInstance<TStateType, TInterfaceType, TSettingsAtomsType, TViewAtomsType>({
             module: this,
+            workbench: this._workbench,
             instanceNumber,
             channelDefinitions: this._channelDefinitions,
             channelReceiverDefinitions: this._channelReceiverDefinitions,
@@ -146,8 +228,20 @@ export class Module<StateType extends StateBaseType> {
         if (this._importState !== ImportState.NotImported) {
             if (this._defaultState && this._importState === ImportState.Imported) {
                 this._moduleInstances.forEach((instance) => {
-                    if (this._defaultState && !instance.isInitialised()) {
+                    if (instance.isInitialized()) {
+                        return;
+                    }
+                    if (this._defaultState) {
                         instance.setDefaultState(cloneDeep(this._defaultState), cloneDeep(this._stateOptions));
+                    }
+                    if (this._settingsToViewInterfaceInitialization) {
+                        instance.makeSettingsToViewInterface(this._settingsToViewInterfaceInitialization);
+                        if (this._settingsAtomsInitialization) {
+                            instance.makeSettingsAtoms(this._settingsAtomsInitialization);
+                        }
+                        if (this._viewAtomsInitialization) {
+                            instance.makeViewAtoms(this._viewAtomsInitialization);
+                        }
                     }
                 });
             }
@@ -160,8 +254,17 @@ export class Module<StateType extends StateBaseType> {
             .then(() => {
                 this.setImportState(ImportState.Imported);
                 this._moduleInstances.forEach((instance) => {
-                    if (this._defaultState && !instance.isInitialised()) {
+                    if (this._defaultState) {
                         instance.setDefaultState(cloneDeep(this._defaultState), cloneDeep(this._stateOptions));
+                    }
+                    if (this._settingsToViewInterfaceInitialization) {
+                        instance.makeSettingsToViewInterface(this._settingsToViewInterfaceInitialization);
+                        if (this._settingsAtomsInitialization) {
+                            instance.makeSettingsAtoms(this._settingsAtomsInitialization);
+                        }
+                        if (this._viewAtomsInitialization) {
+                            instance.makeViewAtoms(this._viewAtomsInitialization);
+                        }
                     }
                 });
             })

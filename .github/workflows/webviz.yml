@@ -70,9 +70,9 @@ jobs:
 
             - name: 🕵️ Check auto-generated frontend code is in sync with backend
               run: |
-                  docker build -f backend.Dockerfile -t backend:latest .
-                  CONTAINER_ID=$(docker run --detach -p 5000:5000 --env UVICORN_PORT=5000 --env UVICORN_ENTRYPOINT=src.backend.primary.main:app --env WEBVIZ_CLIENT_SECRET=0 --env WEBVIZ_SMDA_SUBSCRIPTION_KEY=0 --env WEBVIZ_SMDA_RESOURCE_SCOPE=0 --env WEBVIZ_VDS_HOST_ADDRESS=0 backend:latest)
-                  sleep 5  # Ensure the backend server is up and running exposing /openapi.json
+                  docker build -f ./backend_py/primary/Dockerfile -t backend:latest .
+                  CONTAINER_ID=$(docker run --detach -p 5000:5000 --env UVICORN_PORT=5000 --env WEBVIZ_CLIENT_SECRET=0 --env WEBVIZ_SMDA_SUBSCRIPTION_KEY=0 --env WEBVIZ_SMDA_RESOURCE_SCOPE=0 --env WEBVIZ_VDS_HOST_ADDRESS=0 backend:latest)
+                  sleep 10  # Ensure the backend server is up and running exposing /openapi.json
                   npm run generate-api --prefix ./frontend
                   docker stop $CONTAINER_ID
                   git diff --exit-code ./frontend/src/api || exit 1
@@ -91,7 +91,7 @@ jobs:
                   cache: pip
 
             - name: 📦 Install poetry and dependencies
-              working-directory: ./backend
+              working-directory: ./backend_py/primary
               run: |
                   pip install --upgrade pip
                   pip install poetry
@@ -100,15 +100,16 @@ jobs:
                   poetry install --with dev
 
             - name: 🕵️ Check code style & linting
-              working-directory: ./backend
+              working-directory: ./backend_py/primary
               run: |
-                  black --check src/ tests/
-                  pylint src/ tests/
-                  bandit --recursive src/
-                  mypy src/ tests/
+                  set -x
+                  black --check primary/ tests/
+                  pylint primary/ tests/
+                  bandit --recursive primary/
+                  mypy primary/ tests/
 
             - name: 🤖 Run tests
-              working-directory: ./backend
+              working-directory: ./backend_py/primary
               env:
                   WEBVIZ_CLIENT_SECRET: 0
                   WEBVIZ_SMDA_SUBSCRIPTION_KEY: 0
@@ -148,4 +149,4 @@ jobs:
             - name: 🐳 Verify Docker images build
               run: |
                   docker build -f frontend-prod.Dockerfile .
-                  docker build -f backend.Dockerfile .
+                  docker build -f ./backend_py/primary/Dockerfile .

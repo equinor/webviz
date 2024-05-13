@@ -6,12 +6,15 @@ import { StatusSource } from "@framework/ModuleInstanceStatusController";
 import { Workbench } from "@framework/Workbench";
 import { DebugProfiler } from "@framework/internal/components/DebugProfiler";
 import { ErrorBoundary } from "@framework/internal/components/ErrorBoundary";
+import { HydrateQueryClientAtom } from "@framework/internal/components/HydrateQueryClientAtom";
 import { CircularProgress } from "@lib/components/CircularProgress";
+
+import { Provider } from "jotai";
 
 import { CrashView } from "./crashView";
 
 type ViewContentProps = {
-    moduleInstance: ModuleInstance<any>;
+    moduleInstance: ModuleInstance<any, any, any, any>;
     workbench: Workbench;
 };
 
@@ -20,6 +23,8 @@ export const ViewContent = React.memo((props: ViewContentProps) => {
     const [moduleInstanceState, setModuleInstanceState] = React.useState<ModuleInstanceState>(
         ModuleInstanceState.INITIALIZING
     );
+
+    const atomStore = props.moduleInstance.getAtomStore();
 
     React.useEffect(
         function handleMount() {
@@ -72,11 +77,11 @@ export const ViewContent = React.memo((props: ViewContentProps) => {
         );
     }
 
-    if (!props.moduleInstance.isInitialised()) {
+    if (!props.moduleInstance.isInitialized()) {
         return (
             <div className="h-full w-full flex flex-col justify-center items-center">
                 <CircularProgress />
-                <div className="mt-4">Initialising...</div>
+                <div className="mt-4">Initializing...</div>
             </div>
         );
     }
@@ -84,7 +89,7 @@ export const ViewContent = React.memo((props: ViewContentProps) => {
     if (importState === ImportState.Failed) {
         return (
             <div className="h-full w-full flex justify-center items-center">
-                Module could not be imported. Please check the spelling when registering and initialising the module.
+                Module could not be imported. Please check the spelling when registering and initializing the module.
             </div>
         );
     }
@@ -126,13 +131,17 @@ export const ViewContent = React.memo((props: ViewContentProps) => {
                     source={StatusSource.View}
                     guiMessageBroker={props.workbench.getGuiMessageBroker()}
                 >
-                    <View
-                        moduleContext={props.moduleInstance.getContext()}
-                        workbenchSession={props.workbench.getWorkbenchSession()}
-                        workbenchServices={props.workbench.getWorkbenchServices()}
-                        workbenchSettings={props.workbench.getWorkbenchSettings()}
-                        initialSettings={props.moduleInstance.getInitialSettings() || undefined}
-                    />
+                    <Provider store={atomStore}>
+                        <HydrateQueryClientAtom>
+                            <View
+                                viewContext={props.moduleInstance.getContext()}
+                                workbenchSession={props.workbench.getWorkbenchSession()}
+                                workbenchServices={props.workbench.getWorkbenchServices()}
+                                workbenchSettings={props.workbench.getWorkbenchSettings()}
+                                initialSettings={props.moduleInstance.getInitialSettings() || undefined}
+                            />
+                        </HydrateQueryClientAtom>
+                    </Provider>
                 </DebugProfiler>
             </div>
         </ErrorBoundary>

@@ -1,15 +1,17 @@
 import { ModuleRegistry } from "@framework/ModuleRegistry";
-import { SyncSettingKey } from "@framework/SyncSettings";
 
 import { channelDefs } from "./channelDefs";
 import { preview } from "./preview";
+import { SettingsAtoms } from "./settings/atoms/atomDefinitions";
+import { Interface } from "./settingsToViewInterface";
 import { State } from "./state";
+import { ViewAtoms } from "./view/atoms/atomDefinitions";
 
-ModuleRegistry.registerModule<State>({
-    moduleName: "SimulationTimeSeries",
-    defaultTitle: "Simulation time series",
-    syncableSettingKeys: [SyncSettingKey.ENSEMBLE, SyncSettingKey.TIME_SERIES],
-    channelDefinitions: channelDefs,
+export const MODULE_NAME = "SimulationTimeSeries";
+
+ModuleRegistry.registerModule<State, Interface, SettingsAtoms, ViewAtoms>({
+    moduleName: MODULE_NAME,
+    defaultTitle: "Simulation Time Series",
     preview,
-    description: "Time series of simulation results",
+    channelDefinitions: channelDefs,
 });

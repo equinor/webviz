@@ -128,7 +128,7 @@ export function createWellboreTrajectoryLayer(wellTrajectories: WellBoreTrajecto
         pickable: true,
     };
 }
-function wellTrajectoryToGeojson(wellTrajectory: WellBoreTrajectory_api): Record<string, unknown> {
+export function wellTrajectoryToGeojson(wellTrajectory: WellBoreTrajectory_api): Record<string, unknown> {
     const point: Record<string, unknown> = {
         type: "Point",
         coordinates: [wellTrajectory.easting_arr[0], wellTrajectory.northing_arr[0], -wellTrajectory.tvd_msl_arr[0]],

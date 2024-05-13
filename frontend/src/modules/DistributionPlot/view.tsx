@@ -1,12 +1,13 @@
 import React from "react";
 
 import { ChannelReceiverChannelContent, KeyKind } from "@framework/DataChannelTypes";
-import { ModuleFCProps } from "@framework/Module";
+import { ModuleViewProps } from "@framework/Module";
 import { useViewStatusWriter } from "@framework/StatusWriter";
 import { Tag } from "@lib/components/Tag";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { ColorScaleGradientType } from "@lib/utils/ColorScale";
 import { Size2D } from "@lib/utils/geometry";
+import { makeSubplots } from "@modules/_shared/Figure";
 import { ContentInfo } from "@modules/_shared/components/ContentMessage";
 import { ContentWarning } from "@modules/_shared/components/ContentMessage/contentMessage";
 import { Warning } from "@mui/icons-material";
@@ -14,7 +15,6 @@ import { Warning } from "@mui/icons-material";
 import { Layout, PlotData } from "plotly.js";
 
 import { PlotType, State } from "./state";
-import { makeSubplots } from "./utils/Figure";
 import { makeHistogramTrace } from "./utils/histogram";
 import { makeHoverText, makeHoverTextWithColor, makeTitleFromChannelContent } from "./utils/stringUtils";
 import { calcTextSize } from "./utils/textSize";
@@ -33,7 +33,7 @@ const MaxNumberPlotsExceededMessage: React.FC = () => {
 
 MaxNumberPlotsExceededMessage.displayName = "MaxNumberPlotsExceededMessage";
 
-export const View = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>) => {
+export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<State>) => {
     const [isPending, startTransition] = React.useTransition();
     const [content, setContent] = React.useState<React.ReactNode>(null);
     const [revNumberX, setRevNumberX] = React.useState<number>(0);
@@ -44,11 +44,11 @@ export const View = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
     const [prevOrientation, setPrevOrientation] = React.useState<"v" | "h" | null>(null);
     const [prevSize, setPrevSize] = React.useState<Size2D | null>(null);
 
-    const plotType = moduleContext.useStoreValue("plotType");
-    const numBins = moduleContext.useStoreValue("numBins");
-    const orientation = moduleContext.useStoreValue("orientation");
+    const plotType = viewContext.useStoreValue("plotType");
+    const numBins = viewContext.useStoreValue("numBins");
+    const orientation = viewContext.useStoreValue("orientation");
 
-    const statusWriter = useViewStatusWriter(moduleContext);
+    const statusWriter = useViewStatusWriter(viewContext);
 
     const colorSet = workbenchSettings.useColorSet();
     const seqColorScale = workbenchSettings.useContinuousColorScale({
@@ -58,15 +58,15 @@ export const View = ({ moduleContext, workbenchSettings }: ModuleFCProps<State>)
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);
     const wrapperDivSize = useElementSize(wrapperDivRef);
 
-    const receiverX = moduleContext.useChannelReceiver({
+    const receiverX = viewContext.useChannelReceiver({
         receiverIdString: "channelX",
         expectedKindsOfKeys: [KeyKind.REALIZATION],
     });
-    const receiverY = moduleContext.useChannelReceiver({
+    const receiverY = viewContext.useChannelReceiver({
         receiverIdString: "channelY",
         expectedKindsOfKeys: [KeyKind.REALIZATION],
     });
-    const receiverColorMapping = moduleContext.useChannelReceiver({
+    const receiverColorMapping = viewContext.useChannelReceiver({
         receiverIdString: "channelColorMapping",
         expectedKindsOfKeys: [KeyKind.REALIZATION],
     });

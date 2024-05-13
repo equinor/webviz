@@ -1,61 +1,87 @@
-import React, { useEffect } from "react";
+import React from "react";
 
-import { ModuleFCProps } from "@framework/Module";
-import { useFirstEnsembleInEnsembleSet } from "@framework/WorkbenchSession";
+import { Ensemble } from "@framework/Ensemble";
+import { EnsembleIdent } from "@framework/EnsembleIdent";
+import { ModuleViewProps } from "@framework/Module";
+import { useViewStatusWriter } from "@framework/StatusWriter";
+import { useEnsembleSet } from "@framework/WorkbenchSession";
+import { CircularProgress } from "@lib/components/CircularProgress";
 import { useElementSize } from "@lib/hooks/useElementSize";
+import { ContentMessage, ContentMessageType } from "@modules/_shared/components/ContentMessage/contentMessage";
+import { makeDistinguishableEnsembleDisplayName } from "@modules/_shared/ensembleNameUtils";
 
-import PlotlyPvtScatter from "./plotlyPvtScatter";
-import { PlotDataType, PvtPlotAccessor } from "./pvtPlotDataAccessor";
-import { PvtQueryDataAccessor } from "./pvtQueryDataAccessor";
-import { usePvtDataQuery } from "./queryHooks";
-import state from "./state";
+import { Interface, State } from "./state";
+import { PvtDataAccessor } from "./utils/PvtDataAccessor";
+import { PvtPlotBuilder } from "./utils/PvtPlotBuilder";
 
-//-----------------------------------------------------------------------------------------------------------
+export function View({ viewContext, workbenchSettings, workbenchSession }: ModuleViewProps<State, Interface>) {
+    const colorSet = workbenchSettings.useColorSet();
+    const statusWriter = useViewStatusWriter(viewContext);
+    const ensembleSet = useEnsembleSet(workbenchSession);
 
-export function View({ moduleContext, workbenchSession }: ModuleFCProps<state>) {
+    const selectedEnsembleIdents = viewContext.useSettingsToViewInterfaceValue("selectedEnsembleIdents");
+    const selectedPvtNums = viewContext.useSettingsToViewInterfaceValue("selectedPvtNums");
+    const selectedPhase = viewContext.useSettingsToViewInterfaceValue("selectedPhase");
+    const selectedColorBy = viewContext.useSettingsToViewInterfaceValue("selectedColorBy");
+    const selectedPlots = viewContext.useSettingsToViewInterfaceValue("selectedDependentVariables");
+    const pvtDataQueries = viewContext.useSettingsToViewInterfaceValue("pvtDataQueries");
+
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);
     const wrapperDivSize = useElementSize(wrapperDivRef);
 
-    //Just using the first ensemble for now
-    const firstEnsemble = useFirstEnsembleInEnsembleSet(workbenchSession);
+    statusWriter.setLoading(pvtDataQueries.isFetching);
 
-    const activeDataSet = moduleContext.useStoreValue("activeDataSet");
-    const activeRealization = moduleContext.useStoreValue("realization");
+    if (pvtDataQueries.allQueriesFailed) {
+        statusWriter.addError("Failed to load data.");
+    } else if (pvtDataQueries.someQueriesFailed) {
+        statusWriter.addWarning("Could not load PVT data for some realizations.");
+    }
 
-    const [plotData, setPlotData] = React.useState<PlotDataType[]>([]);
-    const pvtDataQuery = usePvtDataQuery(
-        firstEnsemble?.getCaseUuid() ?? null,
-        firstEnsemble?.getEnsembleName() ?? null,
-        activeRealization
-    );
-
-    useEffect(() => {
-        if (activeDataSet && pvtDataQuery.data) {
-            const pvtQueryDataAccessor = new PvtQueryDataAccessor(pvtDataQuery.data);
-            const PvtPlotData = [];
-            for (const pvtPlotData of activeDataSet) {
-                const pvtData = pvtQueryDataAccessor.getPvtData(pvtPlotData.pvtName, pvtPlotData.pvtNum);
-                const pvtPlotAccessor = new PvtPlotAccessor(pvtData);
-                PvtPlotData.push(pvtPlotAccessor.getPlotData(pvtPlotData.pvtPlot));
-            }
-            setPlotData(PvtPlotData);
+    function makeContent() {
+        if (pvtDataQueries.isFetching) {
+            return (
+                <ContentMessage type={ContentMessageType.INFO}>
+                    <CircularProgress />
+                </ContentMessage>
+            );
         }
-    }, [activeDataSet, pvtDataQuery.data]);
-    if (!pvtDataQuery.data || !activeDataSet || activeDataSet.length == 0) {
-        return <div>no pvt data</div>;
+        if (pvtDataQueries.tableCollections.length === 0) {
+            return <ContentMessage type={ContentMessageType.INFO}>No data loaded yet.</ContentMessage>;
+        }
+
+        if (pvtDataQueries.allQueriesFailed) {
+            return <ContentMessage type={ContentMessageType.ERROR}>Failed to load data.</ContentMessage>;
+        }
+
+        if (selectedPlots.length === 0) {
+            return <ContentMessage type={ContentMessageType.INFO}>No plots selected.</ContentMessage>;
+        }
+
+        const selectedEnsembles: Ensemble[] = [];
+        for (const ensembleIdent of selectedEnsembleIdents) {
+            const ensemble = ensembleSet.findEnsemble(ensembleIdent);
+            if (ensemble) {
+                selectedEnsembles.push(ensemble);
+            }
+        }
+
+        function makeEnsembleDisplayName(ensembleIdent: EnsembleIdent): string {
+            return makeDistinguishableEnsembleDisplayName(ensembleIdent, selectedEnsembles);
+        }
+
+        const pvtPlotBuilder = new PvtPlotBuilder(
+            new PvtDataAccessor(pvtDataQueries.tableCollections),
+            makeEnsembleDisplayName
+        );
+        pvtPlotBuilder.makeLayout(selectedPhase, selectedPlots, wrapperDivSize);
+        pvtPlotBuilder.makeTraces(selectedPlots, selectedPvtNums, selectedPhase, selectedColorBy, colorSet);
+
+        return pvtPlotBuilder.makePlot();
     }
 
     return (
-        <div className="flex flex-wrap h-full w-full" ref={wrapperDivRef}>
-            {plotData.map((pvtPlotData, idx) => (
-                <div className="w-1/2" key={idx}>
-                    <PlotlyPvtScatter
-                        data={pvtPlotData}
-                        width={wrapperDivSize.width / 2}
-                        height={wrapperDivSize.height / 2}
-                    />
-                </div>
-            ))}
+        <div className="w-full h-full" ref={wrapperDivRef}>
+            {makeContent()}
         </div>
     );
 }

@@ -2,9 +2,9 @@ import React from "react";
 
 import { InplaceVolumetricsCategoricalMetaData_api, InplaceVolumetricsTableMetaData_api } from "@api";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
-import { ModuleFCProps } from "@framework/Module";
+import { ModuleSettingsProps } from "@framework/Module";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
-import { SingleEnsembleSelect } from "@framework/components/SingleEnsembleSelect";
+import { EnsembleDropdown } from "@framework/components/EnsembleDropdown";
 import { fixupEnsembleIdent } from "@framework/utils/ensembleUiHelpers";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { Dropdown } from "@lib/components/Dropdown";
@@ -96,12 +96,12 @@ function getTableResponseOptions(
     return responsesToSelectOptions(responses);
 }
 
-export function Settings({ moduleContext, workbenchSession }: ModuleFCProps<State>) {
+export function Settings({ settingsContext, workbenchSession }: ModuleSettingsProps<State>) {
     const ensembleSet = useEnsembleSet(workbenchSession);
-    const [ensembleIdent, setEnsembleIdent] = moduleContext.useStoreState("ensembleIdent");
-    const [tableName, setTableName] = moduleContext.useStoreState("tableName");
-    const [categoricalFilter, setCategoricalFilter] = moduleContext.useStoreState("categoricalFilter");
-    const [responseName, setResponseName] = moduleContext.useStoreState("responseName");
+    const [ensembleIdent, setEnsembleIdent] = settingsContext.useStoreState("ensembleIdent");
+    const [tableName, setTableName] = settingsContext.useStoreState("tableName");
+    const [categoricalFilter, setCategoricalFilter] = settingsContext.useStoreState("categoricalFilter");
+    const [responseName, setResponseName] = settingsContext.useStoreState("responseName");
 
     const tableDescriptionsQuery = useTableDescriptionsQuery(ensembleIdent, true);
 
@@ -166,7 +166,7 @@ export function Settings({ moduleContext, workbenchSession }: ModuleFCProps<Stat
     return (
         <>
             <Label text="Ensemble">
-                <SingleEnsembleSelect
+                <EnsembleDropdown
                     ensembleSet={ensembleSet}
                     value={ensembleIdent}
                     onChange={handleEnsembleSelectionChange}
