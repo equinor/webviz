@@ -58,6 +58,7 @@ export class Workbench {
         this._atomStoreMaster = new AtomStoreMaster();
         this._workbenchSession = new WorkbenchSessionPrivate(this._atomStoreMaster);
         this._workbenchServices = new PrivateWorkbenchServices(this);
+        this._workbenchSettings = new PrivateWorkbenchSettings();
         this._guiMessageBroker = new GuiMessageBroker();
         this._subscribersMap = {};
         this._layout = [];

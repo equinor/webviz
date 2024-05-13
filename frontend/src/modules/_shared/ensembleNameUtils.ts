@@ -14,5 +14,10 @@ export function makeDistinguishableEnsembleDisplayName(ensembleIdent: EnsembleId
         return ensembleIdent.getEnsembleName();
     }
 
+    const customName = ensemble.getCustomName();
+    if (customName) {
+        return customName;
+    }
+
     return ensemble.getDisplayName();
 }

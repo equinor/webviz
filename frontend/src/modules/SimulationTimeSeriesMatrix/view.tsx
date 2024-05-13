@@ -214,28 +214,6 @@ export const View = ({ viewContext, workbenchSession, workbenchSettings }: Modul
     // Callback function for ensemble display name
     function makeEnsembleDisplayName(ensembleIdent: EnsembleIdent): string {
         return makeDistinguishableEnsembleDisplayName(ensembleIdent, selectedEnsembles);
-        const ensembleNameCount = selectedEnsembles.filter(
-            (ensemble) => ensemble.getEnsembleName() === ensembleIdent.getEnsembleName()
-        ).length;
-
-        const ensemble = ensembleSet.findEnsemble(ensembleIdent);
-
-        if (ensemble) {
-            const customName = ensemble.getCustomName();
-            if (customName) {
-                return customName;
-            }
-        }
-
-        if (ensembleNameCount === 1) {
-            return ensembleIdent.getEnsembleName();
-        }
-
-        if (!ensemble) {
-            return ensembleIdent.getEnsembleName();
-        }
-
-        return ensemble.getDisplayName();
     }
 
     // Create Plot Builder
