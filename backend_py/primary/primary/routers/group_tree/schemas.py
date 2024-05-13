@@ -1,6 +1,6 @@
 from typing import List
 from enum import Enum
-from primary.services.group_tree_data import GroupTreeMetadata, DatedTree
+from primary.services.sumo_access.group_tree.group_tree_assembler import GroupTreeMetadata, DatedTree
 from pydantic import BaseModel
 
 
@@ -19,6 +19,7 @@ class StatOption(str, Enum):
     P50 = "P50"
     MIN = "MIN"
     MAX = "MAX"
+
 
 class NodeType(str, Enum):
     PROD = "prod"

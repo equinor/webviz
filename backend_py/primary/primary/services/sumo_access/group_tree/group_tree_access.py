@@ -4,7 +4,7 @@ from typing import Optional
 import pandas as pd
 from webviz_pkg.core_utils.perf_timer import PerfTimer
 
-from ._helpers import SumoEnsemble
+from .._helpers import SumoEnsemble
 
 LOGGER = logging.getLogger(__name__)
 

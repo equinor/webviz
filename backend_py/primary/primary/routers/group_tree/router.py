@@ -2,8 +2,13 @@ from typing import Annotated, List, Optional
 
 from fastapi import APIRouter, Depends, Query
 from primary.auth.auth_helper import AuthHelper
-from primary.services.group_tree_data import GroupTreeData, NodeType, StatOptions, TreeModeOptions
-from primary.services.sumo_access.group_tree_access import GroupTreeAccess
+from primary.services.sumo_access.group_tree.group_tree_assembler import (
+    GroupTreeAssembler,
+    NodeType,
+    StatOptions,
+    TreeModeOptions,
+)
+from primary.services.sumo_access.group_tree.group_tree_access import GroupTreeAccess
 from primary.services.sumo_access.summary_access import Frequency, SummaryAccess
 from primary.services.utils.authenticated_user import AuthenticatedUser
 
@@ -37,7 +42,7 @@ async def get_realization_group_tree_data(
         authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
     )
     sumo_freq = Frequency.from_string_value(resampling_frequency.value if resampling_frequency else "YEARLY")
-    grouptree_data = GroupTreeData(
+    grouptree_data = GroupTreeAssembler(
         grouptree_access=grouptree_access,
         summary_access=summary_access,
         realization=realization,
@@ -47,12 +52,19 @@ async def get_realization_group_tree_data(
     # Ensure no duplicate node types
     unique_node_types = list(set(node_type_set))
 
+    timer.lap_ms()
     await grouptree_data.initialize_single_realization_data_async(realization=realization)
+    initialize_time_ms = timer.lap_ms()
+
     dated_trees, edge_metadata, node_metadata = await grouptree_data.create_single_realization_group_tree_dataset(
         node_types=unique_node_types
     )
+    create_group_tree_time = timer.lap_ms()
 
-    LOGGER.info(f"Grouptree data for single realization fetched and processed in: {timer.elapsed_ms()}ms")
+    LOGGER.info(
+        f"Grouptree data for single realization fetched and processed in: {timer.elapsed_ms()}ms "
+        f"(initialize={initialize_time_ms}ms, create_group_tree={create_group_tree_time}ms "
+    )
 
     return schemas.GroupTreeData(
         edge_metadata_list=edge_metadata, node_metadata_list=node_metadata, dated_trees=dated_trees
@@ -80,7 +92,7 @@ async def get_statistical_group_tree_data(
     )
     sumo_freq = Frequency.from_string_value(resampling_frequency.value if resampling_frequency else "YEARLY")
 
-    grouptree_data = GroupTreeData(
+    grouptree_data = GroupTreeAssembler(
         grouptree_access=grouptree_access,
         summary_access=summary_access,
         resampling_frequency=sumo_freq,
