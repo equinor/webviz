@@ -1,12 +1,9 @@
 import { EnsembleIdent } from "@framework/EnsembleIdent";
-import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 import { ViewContext } from "@framework/ModuleContext";
 import { SettingsAtoms } from "@modules/SimulationTimeSeries/settings/atoms/atomDefinitions";
 import { Interface } from "@modules/SimulationTimeSeries/settingsToViewInterface";
 import { State } from "@modules/SimulationTimeSeries/state";
 import { makeDistinguishableEnsembleDisplayName } from "@modules/_shared/ensembleNameUtils";
-
-import { useAtomValue } from "jotai";
 
 import { ViewAtoms } from "../atoms/atomDefinitions";
 
