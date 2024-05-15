@@ -42,23 +42,24 @@ async def get_realization_group_tree_data(
         authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
     )
     sumo_freq = Frequency.from_string_value(resampling_frequency.value if resampling_frequency else "YEARLY")
+
+    # Ensure no duplicate node types
+    unique_node_types = set(node_type_set)
+
     grouptree_data = GroupTreeAssembler(
         grouptree_access=grouptree_access,
         summary_access=summary_access,
+        node_types=unique_node_types,
         realization=realization,
+        group_tree_mode=TreeModeOptions.SINGLE_REAL,
         resampling_frequency=sumo_freq,
     )
 
-    # Ensure no duplicate node types
-    unique_node_types = list(set(node_type_set))
-
     timer.lap_ms()
-    await grouptree_data.initialize_single_realization_data_async(realization=realization)
+    await grouptree_data.initialize_single_realization_data_async()
     initialize_time_ms = timer.lap_ms()
 
-    dated_trees, edge_metadata, node_metadata = await grouptree_data.create_single_realization_group_tree_dataset(
-        node_types=unique_node_types
-    )
+    dated_trees, edge_metadata, node_metadata = await grouptree_data.create_single_realization_group_tree_data()
     create_group_tree_time = timer.lap_ms()
 
     LOGGER.info(
@@ -96,6 +97,9 @@ async def get_statistical_group_tree_data(
         grouptree_access=grouptree_access,
         summary_access=summary_access,
         resampling_frequency=sumo_freq,
+        node_types=set(node_type_set),
+        group_tree_mode=TreeModeOptions.STATISTICS,
+
     )
     await grouptree_data.initialize_statistics_data_async()
 
