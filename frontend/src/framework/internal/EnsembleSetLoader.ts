@@ -1,7 +1,6 @@
 import { EnsembleDetails_api, EnsembleParameter_api, EnsembleSensitivity_api } from "@api";
 import { apiService } from "@framework/ApiService";
 import { UserEnsembleSetting } from "@framework/Workbench";
-import { ColorSet } from "@lib/utils/ColorSet";
 import { QueryClient } from "@tanstack/react-query";
 
 import { Ensemble } from "../Ensemble";

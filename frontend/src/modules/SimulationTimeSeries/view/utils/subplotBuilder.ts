@@ -50,7 +50,6 @@ export class SubplotBuilder {
     private _uniqueEnsembleIdents: EnsembleIdent[] = [];
     private _uniqueVectorNames: string[] = [];
 
-    private _ensembleIdentHexColors = new Map<EnsembleIdent, string>();
     private _vectorHexColors: HexColorMap = {};
 
     private _makeEnsembleDisplayName: (ensembleIdent: EnsembleIdent) => string;
@@ -103,10 +102,6 @@ export class SubplotBuilder {
         this._uniqueVectorNames.forEach((vectorName, index) => {
             const color = index === 0 ? colorSet.getFirstColor() : colorSet.getNextColor();
             this._vectorHexColors[vectorName] = color;
-        });
-        this._uniqueEnsembleIdents.forEach((ensembleIdent, index) => {
-            const color = index === 0 ? colorSet.getFirstColor() : colorSet.getNextColor();
-            this._ensembleIdentHexColors.set(ensembleIdent, color);
         });
 
         this._subplotOwner = subplotOwner;
@@ -219,7 +214,9 @@ export class SubplotBuilder {
                 this._addedEnsemblesLegendTracker.forEach((ensembleIdent) => {
                     const legendGroup = ensembleIdent.toString();
                     const legendName = this._makeEnsembleDisplayName(ensembleIdent);
-                    const legendColor = this._ensembleIdentHexColors.get(ensembleIdent) ?? this._traceFallbackColor;
+                    const legendColor =
+                        this._selectedVectorSpecifications.find((el) => el.ensembleIdent === ensembleIdent)?.color ??
+                        this._traceFallbackColor;
                     this._plotData.push(
                         this.createLegendTrace(legendName, legendGroup, legendColor, currentLegendRank++)
                     );
@@ -587,7 +584,7 @@ export class SubplotBuilder {
 
     private getHexColor(vectorSpecification: VectorSpec): string {
         if (this._subplotOwner === SubplotOwner.VECTOR) {
-            const hexColor = this._ensembleIdentHexColors.get(vectorSpecification.ensembleIdent);
+            const hexColor = vectorSpecification.color;
             return hexColor ?? this._traceFallbackColor;
         } else if (this._subplotOwner === SubplotOwner.ENSEMBLE) {
             return this._vectorHexColors[vectorSpecification.vectorName];

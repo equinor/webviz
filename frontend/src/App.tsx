@@ -3,14 +3,12 @@ import React from "react";
 import WebvizLogo from "@assets/webviz.svg";
 import { DrawerContent, GuiState } from "@framework/GuiMessageBroker";
 import { LayoutElement, Workbench } from "@framework/Workbench";
-import { ColorPaletteType } from "@framework/WorkbenchSettings";
 import { LeftNavBar, RightNavBar } from "@framework/internal/components/NavBar";
 import { SettingsContentPanels } from "@framework/internal/components/SettingsContentPanels";
 import { ToggleDevToolsButton } from "@framework/internal/components/ToggleDevToolsButton";
 import { AuthState, useAuthProvider } from "@framework/internal/providers/AuthProvider";
 import { Button } from "@lib/components/Button";
 import { WebvizSpinner } from "@lib/components/WebvizSpinner";
-import { ColorSet } from "@lib/utils/ColorSet";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -142,7 +140,7 @@ function App() {
                 isInitializingApp && (
                     <div
                         className={resolveClassNames(
-                            "absolute inset-0 w-screen h-screen flex flex-col items-center justify-center gap-8",
+                            "absolute inset-0 w-screen h-screen flex flex-col items-center justify-center gap-8 z-50",
                             {
                                 hidden: !isInitializingApp,
                             }

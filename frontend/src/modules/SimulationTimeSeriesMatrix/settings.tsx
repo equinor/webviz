@@ -206,7 +206,7 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
             }
             setVectorSpecifications(newVectorSpecifications);
         },
-        [selectedEnsembleIdents, selectedVectorNames, numberOfQueriesWithData, setVectorSpecifications]
+        [selectedEnsembleIdents, selectedVectorNames, numberOfQueriesWithData, setVectorSpecifications, ensembleSet]
     );
 
     React.useEffect(

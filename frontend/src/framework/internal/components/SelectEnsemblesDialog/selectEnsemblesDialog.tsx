@@ -11,7 +11,6 @@ import { Dropdown } from "@lib/components/Dropdown";
 import { IconButton } from "@lib/components/IconButton";
 import { Input } from "@lib/components/Input";
 import { Label } from "@lib/components/Label";
-import { Overlay } from "@lib/components/Overlay";
 import { QueryStateWrapper } from "@lib/components/QueryStateWrapper";
 import { Select } from "@lib/components/Select";
 import { Switch } from "@lib/components/Switch";

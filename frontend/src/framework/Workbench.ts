@@ -1,5 +1,3 @@
-import { ColorPalette } from "@lib/utils/ColorPalette";
-import { ColorSet } from "@lib/utils/ColorSet";
 import { QueryClient } from "@tanstack/react-query";
 
 import { AtomStoreMaster } from "./AtomStoreMaster";
@@ -11,7 +9,6 @@ import { ModuleInstance } from "./ModuleInstance";
 import { ModuleRegistry } from "./ModuleRegistry";
 import { Template } from "./TemplateRegistry";
 import { WorkbenchServices } from "./WorkbenchServices";
-import { ColorPaletteType } from "./WorkbenchSettings";
 import { loadEnsembleSetMetadataFromBackend } from "./internal/EnsembleSetLoader";
 import { PrivateWorkbenchServices } from "./internal/PrivateWorkbenchServices";
 import { PrivateWorkbenchSettings } from "./internal/PrivateWorkbenchSettings";
