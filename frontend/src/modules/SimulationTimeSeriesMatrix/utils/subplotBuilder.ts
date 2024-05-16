@@ -5,11 +5,12 @@ import {
     VectorStatisticData_api,
 } from "@api";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
+import { timestampUtcMsToCompactIsoString } from "@framework/utils/timestampUtils";
 import { ColorSet } from "@lib/utils/ColorSet";
 import { simulationUnitReformat, simulationVectorDescription } from "@modules/_shared/reservoirSimulationStringUtils";
 
 import { PlotMarker } from "plotly.js";
-import { Annotations, Layout } from "plotly.js";
+import { Annotations, Layout, Shape } from "plotly.js";
 
 import {
     createHistoricalVectorTrace,
@@ -49,7 +50,6 @@ export class SubplotBuilder {
     private _uniqueEnsembleIdents: EnsembleIdent[] = [];
     private _uniqueVectorNames: string[] = [];
 
-    private _ensembleIdentHexColors = new Map<EnsembleIdent, string>();
     private _vectorHexColors: HexColorMap = {};
 
     private _makeEnsembleDisplayName: (ensembleIdent: EnsembleIdent) => string;
@@ -73,6 +73,8 @@ export class SubplotBuilder {
     private _traceFallbackColor = "#000000";
 
     private _vectorNameUnitMap: VectorNameUnitMap = {};
+
+    private _timeAnnotationTimestamps: number[] = [];
 
     constructor(
         subplotOwner: SubplotOwner,
@@ -100,10 +102,6 @@ export class SubplotBuilder {
         this._uniqueVectorNames.forEach((vectorName, index) => {
             const color = index === 0 ? colorSet.getFirstColor() : colorSet.getNextColor();
             this._vectorHexColors[vectorName] = color;
-        });
-        this._uniqueEnsembleIdents.forEach((ensembleIdent, index) => {
-            const color = index === 0 ? colorSet.getFirstColor() : colorSet.getNextColor();
-            this._ensembleIdentHexColors.set(ensembleIdent, color);
         });
 
         this._subplotOwner = subplotOwner;
@@ -136,7 +134,8 @@ export class SubplotBuilder {
             margin: { t: 30, r: 0, l: 40, b: 40 },
             xaxis: { type: "date" },
             grid: { rows: this._numberOfSubplots, columns: 1, pattern: "coupled" },
-            annotations: this.createSubplotTitles(),
+            annotations: [...this.createSubplotTitles(), ...this.createTimeAnnotations()],
+            shapes: this.createTimeShapes(),
             title: this.createSubplotTitles().length === 0 ? "Select a vector to visualize" : undefined,
             // uirevision: "true", // NOTE: Only works if vector data is cached, as Plot might receive empty data on rerender
         };
@@ -215,7 +214,9 @@ export class SubplotBuilder {
                 this._addedEnsemblesLegendTracker.forEach((ensembleIdent) => {
                     const legendGroup = ensembleIdent.toString();
                     const legendName = this._makeEnsembleDisplayName(ensembleIdent);
-                    const legendColor = this._ensembleIdentHexColors.get(ensembleIdent) ?? this._traceFallbackColor;
+                    const legendColor =
+                        this._selectedVectorSpecifications.find((el) => el.ensembleIdent === ensembleIdent)?.color ??
+                        this._traceFallbackColor;
                     this._plotData.push(
                         this.createLegendTrace(legendName, legendGroup, legendColor, currentLegendRank++)
                     );
@@ -504,6 +505,55 @@ export class SubplotBuilder {
         }
     }
 
+    addTimeAnnotation(timestampUtcMs: number): void {
+        this._timeAnnotationTimestamps.push(timestampUtcMs);
+    }
+
+    private createTimeAnnotations(): Partial<Annotations>[] {
+        const timeAnnotations: Partial<Annotations>[] = [];
+
+        for (const timestampUtcMs of this._timeAnnotationTimestamps) {
+            timeAnnotations.push({
+                xref: "x",
+                yref: "paper",
+                x: timestampUtcMs,
+                y: 0 - 22 / this._height,
+                text: timestampUtcMsToCompactIsoString(timestampUtcMs),
+                showarrow: false,
+                arrowhead: 0,
+                bgcolor: "rgba(255, 255, 255, 1)",
+                bordercolor: "rgba(255, 0, 0, 1)",
+                borderwidth: 2,
+                borderpad: 4,
+            });
+        }
+
+        return timeAnnotations;
+    }
+
+    private createTimeShapes(): Partial<Shape>[] {
+        const timeShapes: Partial<Shape>[] = [];
+
+        for (const timestampUtcMs of this._timeAnnotationTimestamps) {
+            timeShapes.push({
+                type: "line",
+                xref: "x",
+                yref: "paper",
+                x0: timestampUtcMs,
+                y0: 0,
+                x1: timestampUtcMs,
+                y1: 1,
+                line: {
+                    color: "red",
+                    width: 3,
+                    dash: "dot",
+                },
+            });
+        }
+
+        return timeShapes;
+    }
+
     private getSubplotIndex(vectorSpecification: VectorSpec) {
         if (this._subplotOwner === SubplotOwner.VECTOR) {
             return this._uniqueVectorNames.indexOf(vectorSpecification.vectorName);
@@ -534,7 +584,7 @@ export class SubplotBuilder {
 
     private getHexColor(vectorSpecification: VectorSpec): string {
         if (this._subplotOwner === SubplotOwner.VECTOR) {
-            const hexColor = this._ensembleIdentHexColors.get(vectorSpecification.ensembleIdent);
+            const hexColor = vectorSpecification.color;
             return hexColor ?? this._traceFallbackColor;
         } else if (this._subplotOwner === SubplotOwner.ENSEMBLE) {
             return this._vectorHexColors[vectorSpecification.vectorName];

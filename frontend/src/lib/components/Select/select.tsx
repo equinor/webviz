@@ -11,7 +11,7 @@ import { withDefaults } from "../_component-utils/components";
 
 export type SelectOption = {
     value: string;
-    icon?: React.ReactNode;
+    adornment?: React.ReactNode;
     label: string;
     disabled?: boolean;
 };
@@ -399,10 +399,10 @@ export const Select = withDefaults<SelectProps>()(defaultProps, (props) => {
                                     onClick={() => handleOptionClick(option, index)}
                                     style={{ height: 24 }}
                                 >
-                                    {option.icon}
+                                    {option.adornment}
                                     <span
                                         title={option.label}
-                                        className="min-w-0 text-ellipsis overflow-hidden whitespace-nowrap"
+                                        className="min-w-0 text-ellipsis overflow-hidden whitespace-nowrap flex-grow"
                                     >
                                         {option.label}
                                     </span>

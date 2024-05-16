@@ -12,7 +12,8 @@ const FIRST_ENSEMBLE = new Ensemble(
     "First ensemble",
     FIRST_ENSEMBLE_REALIZATIONS,
     [],
-    null
+    null,
+    ""
 );
 
 describe("Test functionality of Realization Filter class", () => {

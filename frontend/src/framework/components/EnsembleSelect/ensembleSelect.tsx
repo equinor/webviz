@@ -1,5 +1,6 @@
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { EnsembleSet } from "@framework/EnsembleSet";
+import { ColorTile } from "@lib/components/ColorTile";
 import { Select, SelectOption, SelectProps } from "@lib/components/Select";
 
 type EnsembleSelectProps = {
@@ -25,7 +26,15 @@ export function EnsembleSelect(props: EnsembleSelectProps): JSX.Element {
 
     const optionsArr: SelectOption[] = [];
     for (const ens of ensembleSet.getEnsembleArr()) {
-        optionsArr.push({ value: ens.getIdent().toString(), label: ens.getDisplayName() });
+        optionsArr.push({
+            value: ens.getIdent().toString(),
+            label: ens.getDisplayName(),
+            adornment: (
+                <span className="w-5">
+                    <ColorTile color={ens.getColor()} />
+                </span>
+            ),
+        });
     }
 
     const selectedArr: string[] = [];

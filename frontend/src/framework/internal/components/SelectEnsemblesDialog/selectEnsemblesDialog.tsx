@@ -5,16 +5,18 @@ import { apiService } from "@framework/ApiService";
 import { useAuthProvider } from "@framework/internal/providers/AuthProvider";
 import { Button } from "@lib/components/Button";
 import { CircularProgress } from "@lib/components/CircularProgress";
+import { ColorSelect } from "@lib/components/ColorSelect";
 import { Dialog } from "@lib/components/Dialog";
 import { Dropdown } from "@lib/components/Dropdown";
 import { IconButton } from "@lib/components/IconButton";
+import { Input } from "@lib/components/Input";
 import { Label } from "@lib/components/Label";
-import { Overlay } from "@lib/components/Overlay";
 import { QueryStateWrapper } from "@lib/components/QueryStateWrapper";
 import { Select } from "@lib/components/Select";
 import { Switch } from "@lib/components/Switch";
 import { TableSelect, TableSelectOption } from "@lib/components/TableSelect";
 import { useValidState } from "@lib/hooks/useValidState";
+import { ColorSet } from "@lib/utils/ColorSet";
 import { Add, Check, Remove } from "@mui/icons-material";
 import { useQuery } from "@tanstack/react-query";
 
@@ -22,16 +24,21 @@ import { isEqual } from "lodash";
 
 import { UserAvatar } from "./private-components/userAvatar";
 
+import { LoadingOverlay } from "../LoadingOverlay";
+
 export type EnsembleItem = {
     caseUuid: string;
     caseName: string;
     ensembleName: string;
+    color: string;
+    customName: string | null;
 };
 
 export type SelectEnsemblesDialogProps = {
     loadAndSetupEnsembles: (selectedEnsembles: EnsembleItem[]) => Promise<void>;
     onClose: () => void;
     selectedEnsembles: EnsembleItem[];
+    colorSet: ColorSet;
 };
 
 const STALE_TIME = 0;
@@ -138,7 +145,15 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
     function handleAddEnsemble() {
         if (!checkIfEnsembleAlreadySelected()) {
             const caseName = casesQuery.data?.find((c) => c.uuid === selectedCaseId)?.name ?? "UNKNOWN";
-            const ensArr = [{ caseUuid: selectedCaseId, caseName: caseName, ensembleName: selectedEnsembleName }];
+            const ensArr = [
+                {
+                    caseUuid: selectedCaseId,
+                    caseName: caseName,
+                    ensembleName: selectedEnsembleName,
+                    color: props.colorSet.getColor(newlySelectedEnsembles.length),
+                    customName: null,
+                },
+            ];
             setNewlySelectedEnsembles((prev) => [...prev, ...ensArr]);
         }
     }
@@ -204,6 +219,28 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
         return filteredCases;
     }
 
+    function handleColorChange(caseUuid: string, ensembleName: string, color: string) {
+        setNewlySelectedEnsembles((prev) =>
+            prev.map((e) => {
+                if (e.caseUuid === caseUuid && e.ensembleName === ensembleName) {
+                    return { ...e, color: color };
+                }
+                return e;
+            })
+        );
+    }
+
+    function handleEnsembleCustomNameChange(caseUuid: string, ensembleName: string, customName: string) {
+        setNewlySelectedEnsembles((prev) => {
+            return prev.map((e) => {
+                if (e.caseUuid === caseUuid && e.ensembleName === ensembleName) {
+                    return { ...e, customName: customName === "" ? null : customName };
+                }
+                return e;
+            });
+        });
+    }
+
     const fieldOpts = fieldsQuery.data?.map((f) => ({ value: f.field_identifier, label: f.field_identifier })) ?? [];
     const caseOpts: TableSelectOption[] =
         filterCases(casesQuery.data)?.map((el) => ({
@@ -222,11 +259,8 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
     function makeApplyButtonStartIcon() {
         if (isLoadingEnsembles) {
             return <CircularProgress size="small" />;
-        } else if (checkIfAnyChanges()) {
-            return <Check fontSize="small" />;
-        } else {
-            return undefined;
         }
+        return <Check fontSize="small" />;
     }
 
     return (
@@ -345,7 +379,9 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                             <table className="w-full border border-collapse table-fixed text-sm">
                                 <thead>
                                     <tr>
-                                        <th className="min-w-1/2 text-left p-2 bg-slate-300">Case</th>
+                                        <th className="w-20 text-left p-2 bg-slate-300">Color</th>
+                                        <th className="min-w-1/3 text-left p-2 bg-slate-300">Custom name</th>
+                                        <th className="min-w-1/3 text-left p-2 bg-slate-300">Case</th>
                                         <th className="min-w-1/4 text-left p-2 bg-slate-300">Ensemble</th>
                                         <th className="w-20 text-left p-2 bg-slate-300">Actions</th>
                                     </tr>
@@ -356,6 +392,27 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                                             key={`${item.caseName}-${item.ensembleName}`}
                                             className="hover:bg-slate-100 odd:bg-slate-50 align-center"
                                         >
+                                            <td className="p-2">
+                                                <ColorSelect
+                                                    value={item.color}
+                                                    onChange={(value) =>
+                                                        handleColorChange(item.caseUuid, item.ensembleName, value)
+                                                    }
+                                                />
+                                            </td>
+                                            <td className="p-2">
+                                                <Input
+                                                    placeholder="Give a custom name..."
+                                                    defaultValue={item.customName ?? ""}
+                                                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                                                        handleEnsembleCustomNameChange(
+                                                            item.caseUuid,
+                                                            item.ensembleName,
+                                                            e.target.value
+                                                        )
+                                                    }
+                                                />
+                                            </td>
                                             <td className="p-2">
                                                 <div
                                                     className="text-ellipsis overflow-hidden whitespace-nowrap"
@@ -393,7 +450,7 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                         )}
                     </div>
                 </div>
-                <Overlay visible={isLoadingEnsembles} />
+                {isLoadingEnsembles && <LoadingOverlay />}
             </Dialog>
             {
                 <Dialog

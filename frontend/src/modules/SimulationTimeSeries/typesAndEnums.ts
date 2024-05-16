@@ -28,6 +28,7 @@ export type VectorObservationsQueriesResult = {
 
 export interface VectorSpec {
     ensembleIdent: EnsembleIdent;
+    color: string | null;
     vectorName: string;
     hasHistoricalVector: boolean;
 }
