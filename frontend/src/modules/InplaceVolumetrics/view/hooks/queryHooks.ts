@@ -7,16 +7,19 @@ import {
 } from "@modules/InplaceVolumetrics/typesAndEnums";
 import { useQueries } from "@tanstack/react-query";
 
+import { InplaceVolumetricsIndex } from "src/api/models/InplaceVolumetricsIndex";
+
 const STALE_TIME = 60 * 1000;
 const CACHE_TIME = 60 * 1000;
 export function useInplaceDataResultsQuery(
     ensembleIdentsWithRealizations: EnsembleIdentWithRealizations[],
     tableName: string | null,
-    responseName: InplaceVolumetricResponseNames_api | null
+    responseName: InplaceVolumetricResponseNames_api | null,
+    indexFilter: InplaceVolumetricsIndex[] | null
 ): CombinedInplaceVolDataEnsembleSetResults {
     return useQueries({
         queries: ensembleIdentsWithRealizations.map((ensembleIdentWithReals) =>
-            createQueryForInplaceDataResults(ensembleIdentWithReals, tableName, responseName)
+            createQueryForInplaceDataResults(ensembleIdentWithReals, tableName, responseName, indexFilter)
         ),
         combine: (results) => {
             const combinedResult: InplaceVolDataEnsembleSet[] = [];
@@ -40,8 +43,12 @@ export function useInplaceDataResultsQuery(
 export function createQueryForInplaceDataResults(
     ensIdentWithReals: EnsembleIdentWithRealizations,
     tableName: string | null,
-    responseName: InplaceVolumetricResponseNames_api | null
+    responseName: InplaceVolumetricResponseNames_api | null,
+    indexFilter: InplaceVolumetricsIndex[] | null
 ) {
+    console.log(Boolean(ensIdentWithReals && tableName && responseName && indexFilter !== null));
+    console.log(indexFilter);
+    console.log(indexFilter ? { index_filter: indexFilter } : { index_filter: [] });
     return {
         queryKey: [
             "getInplaceDataResults",
@@ -49,6 +56,7 @@ export function createQueryForInplaceDataResults(
             tableName,
             responseName,
             JSON.stringify(ensIdentWithReals.realizations),
+            JSON.stringify(indexFilter),
         ],
         queryFn: () =>
             apiService.inplaceVolumetrics.getResultDataPerRealization(
@@ -56,10 +64,11 @@ export function createQueryForInplaceDataResults(
                 ensIdentWithReals.ensembleIdent.getEnsembleName(),
                 tableName ?? "",
                 responseName ?? InplaceVolumetricResponseNames_api.STOIIP_OIL,
-                ensIdentWithReals.realizations ?? []
+                ensIdentWithReals.realizations ?? [],
+                indexFilter ? { index_filter: indexFilter } : { index_filter: [] }
             ),
         staleTime: STALE_TIME,
         gcTime: CACHE_TIME,
-        enabled: Boolean(ensIdentWithReals && tableName && responseName),
+        enabled: Boolean(ensIdentWithReals && tableName && responseName && indexFilter),
     };
 }

@@ -131,6 +131,7 @@ class InplaceVolumetricsAccess(SumoEnsemble):
         )
         
         return table_definitions
+    
     async def get_table_definition(self, vol_table_name: str) -> InplaceVolumetricsTableDefinition:
             vol_table_as_collection: TableCollection = self._case.tables.filter(
                 aggregation="collection",
@@ -201,6 +202,7 @@ class InplaceVolumetricsAccess(SumoEnsemble):
         table_name: str,
         result_name: str,
         realizations: Sequence[int],
+                index_filter: List[InplaceVolumetricsIndex],
     ) -> InplaceVolumetricData:
         """Retrieve the volumetric data for a single result (e.g. STOIIP_OIL), optionally filtered by realizations and index values."""
         timer = PerfTimer()
@@ -225,6 +227,11 @@ class InplaceVolumetricsAccess(SumoEnsemble):
         # Filter invalid data. Hopefully TMP
         for index_column in index_columns:
             arrow_table = _filter_arrow_table_by_exclusion(arrow_table,index_column,IGNORED_INDEX_COLUMN_VALUES)
+        
+        # Filter on selected index
+        for index in index_filter:
+            arrow_table = _filter_arrow_table_by_inclusion(arrow_table, index.index_name, index.values)
+            
         grouped_table = arrow_table.group_by(index_columns + ["REAL"]).aggregate([(result_name, "sum")]).sort_by("REAL")
 
         arrow_table = grouped_table.group_by(index_columns).aggregate(

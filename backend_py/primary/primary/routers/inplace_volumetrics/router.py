@@ -29,7 +29,7 @@ async def get_table_definitions(
     return table_names
 
 
-@router.get("/result_data_per_realization/", tags=["inplace_volumetrics"])
+@router.post("/result_data_per_realization/", tags=["inplace_volumetrics"])
 async def get_result_data_per_realization(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     case_uuid: str = Query(description="Sumo case uuid"),
@@ -39,6 +39,9 @@ async def get_result_data_per_realization(
         description="The name of the volumetric result/response"
     ),
     realizations: List[int] = Query(description="Realizations"),
+        index_filter: List[schemas.InplaceVolumetricsIndex] = Body(
+        embed=True, description="Categorical filter"
+    ),
 ) -> schemas.InplaceVolumetricData:
     """Get volumetric data summed per realization for a given table, result and categories/index filter."""
     access = await InplaceVolumetricsAccess.from_case_uuid(
@@ -49,5 +52,6 @@ async def get_result_data_per_realization(
         table_name=table_name,
         result_name=result_name.value,
         realizations=realizations,
+        index_filter=index_filter
     )
     return data

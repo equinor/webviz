@@ -35,16 +35,17 @@ export function View(props: ModuleViewProps<State, Interface>) {
     const selectedInplaceResponseName =
         props.viewContext.useSettingsToViewInterfaceValue("selectedInplaceResponseName");
 
+    const selectedInplaceIndexesValues = props.viewContext.useSettingsToViewInterfaceValue("selectedInplaceCategories");
+
     const inplaceDataSetResultQuery = useInplaceDataResultsQuery(
         ensembleIdentsWithRealizations,
         selectedInplaceTableName,
-        selectedInplaceResponseName as InplaceVolumetricResponseNames_api
+        selectedInplaceResponseName as InplaceVolumetricResponseNames_api,
+        selectedInplaceIndexesValues
     );
 
     const colorBy = props.viewContext.useSettingsToViewInterfaceValue("colorBy");
     const groupBy = props.viewContext.useSettingsToViewInterfaceValue("groupBy");
-
-    const selectedInplaceIndexesValues = props.viewContext.useSettingsToViewInterfaceValue("selectedInplaceCategories");
 
     const data: InplaceVolGroupedResultValues[] = inplaceDataSetResultQuery.someQueriesFailed
         ? []

@@ -2,6 +2,7 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
+import type { Body_get_result_data_per_realization } from '../models/Body_get_result_data_per_realization';
 import type { InplaceVolumetricData } from '../models/InplaceVolumetricData';
 import type { InplaceVolumetricResponseNames } from '../models/InplaceVolumetricResponseNames';
 import type { InplaceVolumetricsTableDefinition } from '../models/InplaceVolumetricsTableDefinition';
@@ -41,6 +42,7 @@ export class InplaceVolumetricsService {
      * @param tableName Table name
      * @param resultName The name of the volumetric result/response
      * @param realizations Realizations
+     * @param requestBody
      * @returns InplaceVolumetricData Successful Response
      * @throws ApiError
      */
@@ -50,9 +52,10 @@ export class InplaceVolumetricsService {
         tableName: string,
         resultName: InplaceVolumetricResponseNames,
         realizations: Array<number>,
+        requestBody: Body_get_result_data_per_realization,
     ): CancelablePromise<InplaceVolumetricData> {
         return this.httpRequest.request({
-            method: 'GET',
+            method: 'POST',
             url: '/inplace_volumetrics/result_data_per_realization/',
             query: {
                 'case_uuid': caseUuid,
@@ -61,6 +64,8 @@ export class InplaceVolumetricsService {
                 'result_name': resultName,
                 'realizations': realizations,
             },
+            body: requestBody,
+            mediaType: 'application/json',
             errors: {
                 422: `Validation Error`,
             },
