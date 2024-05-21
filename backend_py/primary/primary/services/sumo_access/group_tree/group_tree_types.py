@@ -8,7 +8,7 @@ class GroupTreeMetadata(BaseModel):
     key: str
     label: str
 
-
+# TODO: Rename to TreeNode
 class RecursiveTreeNode(BaseModel):
     node_type: Literal["Group", "Well"]
     node_label: str
