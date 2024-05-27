@@ -1,13 +1,6 @@
-from typing import Annotated, List, Optional
-
 from fastapi import APIRouter, Depends, Query
 from primary.auth.auth_helper import AuthHelper
-from primary.services.sumo_access.group_tree.group_tree_assembler import (
-    GroupTreeAssembler,
-    NodeType,
-    StatOptions,
-    TreeModeOptions,
-)
+from primary.services.sumo_access.group_tree.group_tree_assembler import GroupTreeAssembler, TreeModeOptions
 from primary.services.sumo_access.group_tree.group_tree_access import GroupTreeAccess
 from primary.services.sumo_access.summary_access import Frequency, SummaryAccess
 from primary.services.utils.authenticated_user import AuthenticatedUser
@@ -35,7 +28,7 @@ async def get_realization_group_tree_data(
 ) -> schemas.GroupTreeData:
     timer = PerfTimer()
 
-    grouptree_access = await GroupTreeAccess.from_case_uuid(
+    group_tree_access = await GroupTreeAccess.from_case_uuid(
         authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
     )
     summary_access = await SummaryAccess.from_case_uuid(
@@ -46,8 +39,8 @@ async def get_realization_group_tree_data(
     # Ensure no duplicate node types
     unique_node_types = set(node_type_set)
 
-    grouptree_data = GroupTreeAssembler(
-        grouptree_access=grouptree_access,
+    group_tree_data = GroupTreeAssembler(
+        group_tree_access=group_tree_access,
         summary_access=summary_access,
         node_types=unique_node_types,
         realization=realization,
@@ -56,10 +49,10 @@ async def get_realization_group_tree_data(
     )
 
     timer.lap_ms()
-    await grouptree_data.initialize_single_realization_data_async()
+    await group_tree_data.fetch_and_initialize_single_realization_data_async()
     initialize_time_ms = timer.lap_ms()
 
-    dated_trees, edge_metadata, node_metadata = await grouptree_data.create_single_realization_group_tree_data()
+    dated_trees, edge_metadata, node_metadata = await group_tree_data.create_single_realization_dated_trees_and_metadata_lists()
     create_group_tree_time = timer.lap_ms()
 
     LOGGER.info(
@@ -83,36 +76,4 @@ async def get_statistical_group_tree_data(
     node_type_set: set[schemas.NodeType] = Query(description="Node types"),
     # fmt:on
 ) -> schemas.GroupTreeData:
-    timer = PerfTimer()
-
-    grouptree_access = await GroupTreeAccess.from_case_uuid(
-        authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
-    )
-    summary_access = await SummaryAccess.from_case_uuid(
-        authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
-    )
-    sumo_freq = Frequency.from_string_value(resampling_frequency.value if resampling_frequency else "YEARLY")
-
-    grouptree_data = GroupTreeAssembler(
-        grouptree_access=grouptree_access,
-        summary_access=summary_access,
-        resampling_frequency=sumo_freq,
-        node_types=set(node_type_set),
-        group_tree_mode=TreeModeOptions.STATISTICS,
-
-    )
-    await grouptree_data.initialize_statistics_data_async()
-
-    # Ensure no duplicate node types
-    unique_node_types = list(set(node_type_set))
-
-    dated_trees, edge_metadata, node_metadata = await grouptree_data.create_statistics_group_tree_dataset(
-        node_types=unique_node_types,
-        stat_option=StatOptions[stat_option.value],
-    )
-
-    LOGGER.info(f"Grouptree data for statistics fetched and processed in: {timer.elapsed_ms()}ms")
-
-    return schemas.GroupTreeData(
-        edge_metadata_list=edge_metadata, node_metadata_list=node_metadata, dated_trees=dated_trees
-    )
+    raise NotImplementedError("This endpoint is not implemented yet")

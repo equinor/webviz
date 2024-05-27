@@ -10,7 +10,6 @@ GROUP_TREE_FIELD_DATATYPE_TO_VECTOR_MAP = {
     DataType.WATERRATE: "FWPR",
     DataType.WATERINJRATE: "FWIR",
     DataType.GASINJRATE: "FGIR",
-    # DataType.PRESSURE: "GPR:FIELD",
     DataType.PRESSURE: "GPR",
 }
 
