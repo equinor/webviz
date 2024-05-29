@@ -1,6 +1,7 @@
-from typing import Callable, List, Optional
+from typing import Callable, Dict, List, Optional
 
 import pandas as pd
+import numpy as np
 
 from primary.services.sumo_access.group_tree_types import DataType, TreeType
 
@@ -206,6 +207,31 @@ class GroupTreeDataframeModel:
             df = filter_wells(df, lambda x: x.str.endswith(excl_well_endswith_tuple))
 
         return df.copy()
+    
+    def create_node_edge_label_dict(self) -> Dict[str, str]:
+        """Create a dictionary with the node as key and the edge label as value
+        
+        Assuming unique edge label for node across all dates.
+        """
+        
+        unique_node_names = self._grouptree_df["CHILD"].unique().tolist()
+        node_names_column_list = self._grouptree_df["CHILD"].tolist()
+        vfp_table_column_list = self._grouptree_df["VFP_TABLE"].tolist()
+
+        if "VFP_TABLE" not in self._grouptree_df.columns:
+            return {node_name: "" for node_name in unique_node_names}
+        
+        
+        node_name_to_edge_label_map: Dict[str,str]={}
+        for node_name in unique_node_names:
+            index = node_names_column_list.index(node_name)
+            vfp_nb = vfp_table_column_list[index]
+            if vfp_nb in [None, 9999] or np.isnan(vfp_nb):
+                node_name_to_edge_label_map[node_name] = ""
+            else:
+                node_name_to_edge_label_map[node_name] = f"VFP {int(vfp_nb)}"
+
+        return node_name_to_edge_label_map
 
     def create_vector_of_interest_list(self) -> List[str]:
         """
