@@ -1,4 +1,4 @@
-import React, { Children } from "react";
+import React from "react";
 
 import { DrawerContent, GuiEvent, GuiMessageBroker, GuiState, useGuiValue } from "@framework/GuiMessageBroker";
 import { Module, ModuleCategory, ModuleDevState } from "@framework/Module";
@@ -9,7 +9,6 @@ import { Workbench } from "@framework/Workbench";
 import { Drawer } from "@framework/internal/components/Drawer";
 import { Checkbox } from "@lib/components/Checkbox";
 import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
-import { useElementSize } from "@lib/hooks/useElementSize";
 import { createPortal } from "@lib/utils/createPortal";
 import {
     MANHATTAN_LENGTH,
@@ -26,7 +25,6 @@ import {
     CheckCircle,
     Close,
     Code,
-    DragIndicator,
     ExpandLess,
     ExpandMore,
     Help,
@@ -447,16 +445,10 @@ const MODULE_CATEGORIES: { category: ModuleCategory; label: string }[] = [
     { category: ModuleCategory.DEBUG, label: "Debug modules" },
 ];
 
-/*
-    @rmt: This component does probably need virtualization and therefore refactoring. 
-    As this includes a lot more implementation, 
-    I will skip it for now and come back to it when it becomes a problem.
-*/
 export const ModulesList: React.FC<ModulesListProps> = (props) => {
     const drawerContent = useGuiValue(props.workbench.getGuiMessageBroker(), GuiState.DrawerContent);
 
     const ref = React.useRef<HTMLDivElement>(null);
-    const timeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
     const boundingClientRect = useElementBoundingRect(ref);
 
     const [searchQuery, setSearchQuery] = React.useState("");
