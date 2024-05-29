@@ -2,7 +2,7 @@ from typing import Callable, List, Optional
 
 import pandas as pd
 
-from .group_tree_types import DataType, TreeType
+from primary.services.sumo_access.group_tree_types import DataType, TreeType
 
 GROUP_TREE_FIELD_DATATYPE_TO_VECTOR_MAP = {
     DataType.OILRATE: "FOPR",
@@ -52,7 +52,7 @@ GROUP_VECTOR_DATATYPES_OF_INTEREST = [
 ]
 
 
-class GroupTreeModel:
+class GroupTreeDataframeModel:
     """Facilitates loading of gruptree tables. Can be reused in all
     plugins that are using grouptree data and extended with additional
     functionality and filtering options if necessary.
@@ -147,11 +147,16 @@ class GroupTreeModel:
         return self.tree_is_equivalent_in_all_real
 
     @property
-    def grouptree_wells(self) -> List[str]:
+    def group_tree_wells(self) -> List[str]:
         return self._grouptree_wells
 
     @property
     def wstat_vectors(self) -> List[str]:
+        """
+        Returns the well state indicator vectors for all wells in the group tree
+
+        The vectors are of the form "WSTAT:{well_name}"
+        """
         return self._grouptree_wstat_vectors
 
     def create_filtered_dataframe(
@@ -238,7 +243,7 @@ class GroupTreeModel:
 
     def _create_branch_nodes(self, terminal_node: str) -> List[str]:
         """The function is using recursion to find all wells below the node
-        in the three.
+        in the tree.
         """
         branch_nodes = [terminal_node]
 

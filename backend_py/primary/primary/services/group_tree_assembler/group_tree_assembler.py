@@ -8,10 +8,8 @@ import pyarrow as pa
 import pyarrow.compute as pc
 
 from fastapi import HTTPException
-from primary.services.sumo_access.group_tree.group_tree_access import GroupTreeAccess
-from primary.services.sumo_access.summary_access import Frequency, SummaryAccess
-
-from .group_tree_types import (
+from primary.services.sumo_access.group_tree_access import GroupTreeAccess
+from primary.services.sumo_access.group_tree_types import (
     DataType,
     DatedTree,
     EdgeOrNode,
@@ -21,8 +19,10 @@ from .group_tree_types import (
     TreeModeOptions,
     TreeType,
 )
-from .group_tree_model import (
-    GroupTreeModel,
+from primary.services.sumo_access.summary_access import Frequency, SummaryAccess
+
+from ._group_tree_dataframe_model import (
+    GroupTreeDataframeModel,
     GROUP_TREE_FIELD_DATATYPE_TO_VECTOR_MAP,
     TREE_TYPE_DATATYPE_TO_GROUP_VECTOR_DATATYPE_MAP,
     GROUPTREE_DATATYPE_TO_WELL_VECTOR_DATATYPE_MAP,
@@ -34,7 +34,23 @@ LOGGER = logging.getLogger(__name__)
 
 
 @dataclass
+class WellClassification:
+    """
+    Classification of a well over time, can be producer, injector and other over a time period.
+    """
+
+    IS_PROD: bool
+    IS_INJ: bool
+    IS_OTHER: bool
+
+
+@dataclass
 class NodeClassification:
+    """
+    Classification of a node in the group tree.
+    Can be producer, injector and other over the time period of the group tree.
+    """
+
     IS_PROD: bool
     IS_INJ: bool
     IS_OTHER: bool
@@ -51,6 +67,16 @@ class NodeSummaryVectorsInfo(TypedDict):
     # Dict with summary vector name as key, and its metadata as values
     # E.g.: {sumvec_1: SummaryVectorInfo, sumvec_2: SummaryVectorInfo, ...}
     SUMMARY_VECTORS_INFO: Dict[str, SummaryVectorInfo]
+
+@dataclass
+class StaticNodeWorkingData:
+    """
+    Static working data for a node in the group tree.
+    """
+    node_name: str
+    edge_label: str
+    node_classification: NodeClassification
+    node_summary_vectors_info: Dict[str, SummaryVectorInfo]
 
 
 class GroupTreeAssembler:
@@ -109,6 +135,13 @@ class GroupTreeAssembler:
         self._all_vectors: List[str] = [vec.name for vec in vector_info_arr]
 
     async def fetch_and_initialize_single_realization_data_async(self) -> None:
+        """
+        Fetch group tree and summary data from Sumo, and initialize the data structures needed to build the single realization
+        group tree.
+
+        This method initialize and create data structures for optimized access and performance for the single realization group tree
+        with summary data.
+        """
         if self._tree_mode != TreeModeOptions.SINGLE_REAL:
             raise ValueError("Tree mode must be SINGLE_REAL to initialize single realization data")
         if self._realization is None:
@@ -121,24 +154,25 @@ class GroupTreeAssembler:
         timer = PerfTimer()
 
         # Get group tree data from Sumo
-        group_tree_df = await self._group_tree_access.get_group_tree_table(realization=self._realization)
-        if group_tree_df is None:
+        group_tree_table_df = await self._group_tree_access.get_group_tree_table(realization=self._realization)
+        if group_tree_table_df is None:
             raise HTTPException(status_code=404, detail="Group tree data not found")
 
         timer.lap_ms()
 
-        # Initialize model
-        group_tree_model = GroupTreeModel(group_tree_df, self._tree_type)
+        # Initialize dataframe model
+        group_tree_df_model = GroupTreeDataframeModel(group_tree_table_df, self._tree_type)
         initialize_grouptree_model_time_ms = timer.lap_ms()
 
-        # Ensure "WSTAT" vectors exist among summary vectors
-        _verify_that_sumvecs_exists(group_tree_model.wstat_vectors, self._all_vectors)
+        # Ensure "WSTAT" vectors expected for group tree exist among summary vectors
+        _verify_that_sumvecs_exists(group_tree_df_model.wstat_vectors, self._all_vectors)
 
         # Get all vectors of interest existing in the summary data
-        vectors_of_interest = group_tree_model.create_vector_of_interest_list()
+        vectors_of_interest = group_tree_df_model.create_vector_of_interest_list()
         vectors_of_interest = [vec for vec in vectors_of_interest if vec in self._all_vectors]
 
         # Get summary vectors for all data simultaneously to obtain one request from Sumo
+        # Many summary vectors might not be needed, but will be filtered out later on. This is the most efficient way to get the data
         # NOTE: "WSTAT" vectors are enumerated well state indicator, thus interpolated values might create issues (should be resolved by resampling-code)
         single_realization_vectors_table, _ = await self._summary_access.get_single_real_vectors_table_async(
             vector_names=vectors_of_interest,
@@ -146,18 +180,23 @@ class GroupTreeAssembler:
             realization=self._realization,
         )
 
-        # Create list of column names in the table once
+        # Create list of column names in the table once (for performance)
         vectors_table_column_names = single_realization_vectors_table.column_names
 
-        # Dict with well as key, and set of wstat state indicators as value
-        wstat_well_state_set_dict: Dict[str, set[float]] = {
-            well: set(pc.unique(single_realization_vectors_table[well]).to_pylist())
-            for well in group_tree_model.wstat_vectors
-        }
+        # Dict with well node as key, and classification as value
+        well_node_classifications: Dict[str, WellClassification] = {}
+        for wstat_vector in group_tree_df_model.wstat_vectors:
+            well = wstat_vector.split(":")[1]
+            well_states = set(single_realization_vectors_table[wstat_vector].to_pylist())
+            well_node_classifications[well] = WellClassification(
+                IS_PROD=1.0 in well_states,
+                IS_INJ=2.0 in well_states,
+                IS_OTHER=(1.0 not in well_states) and (2.0 not in well_states),
+            )
 
         # Create filtered group tree df from model
         timer.lap_ms()
-        self._group_tree_df = group_tree_model.create_filtered_dataframe(
+        group_tree_df = group_tree_df_model.create_filtered_dataframe(
             terminal_node=self._terminal_node,
             excl_well_startswith=self._excl_well_startswith,
             excl_well_endswith=self._excl_well_endswith,
@@ -165,13 +204,14 @@ class GroupTreeAssembler:
         create_filtered_dataframe_time_ms = timer.lap_ms()
 
         # Add node types as columns "IS_PROD", "IS_INJ" and "IS_OTHER" to group tree df
-        self._group_tree_df = _add_nodetype_columns_to_df(
-            self._group_tree_df, wstat_well_state_set_dict, group_tree_model.grouptree_wells
+        group_tree_df = _add_nodetype_columns_to_df(
+            group_tree_df, well_node_classifications, group_tree_df_model.group_tree_wells
         )
         add_nodetype_columns_time_ms = timer.lap_ms()
 
         # Initialize injection states based on group tree data
-        is_inj_in_grouptree = True in self._group_tree_df["IS_INJ"].unique()
+        # TODO: Ask root node (terminal_node)
+        is_inj_in_grouptree = True in group_tree_df["IS_INJ"].unique()
         if is_inj_in_grouptree and "FWIR" in vectors_table_column_names:
             self._has_waterinj = pc.sum(single_realization_vectors_table["FWIR"]).as_py() > 0
         if is_inj_in_grouptree and "FGIR" in vectors_table_column_names:
@@ -179,18 +219,18 @@ class GroupTreeAssembler:
 
         # Add edge labels to group tree df
         timer.lap_ms()
-        if "VFP_TABLE" not in self._group_tree_df.columns:
-            num_rows = self._group_tree_df.shape[0]
-            self._group_tree_df["EDGE_LABEL"] = [""] * num_rows
+        if "VFP_TABLE" not in group_tree_df.columns:
+            num_rows = group_tree_df.shape[0]
+            group_tree_df["EDGE_LABEL"] = [""] * num_rows
         else:
-            self._group_tree_df["EDGE_LABEL"] = _create_edge_label_list_from_vfp_table_column(
-                self._group_tree_df["VFP_TABLE"]
-            )
+            group_tree_df["EDGE_LABEL"] = _create_edge_label_list_from_vfp_table_column(group_tree_df["VFP_TABLE"])
         add_edge_label_time_ms = timer.lap_ms()
 
         # Get nodes with summary vectors and their metadata, and all summary vectors, and edge summary vectors
         self._node_sumvec_info_dict, all_sumvecs, edge_sumvecs = (
-            self._create_node_sumvecs_info_dict_and_sumvec_set_from_grouptree_df()
+            _create_node_sumvecs_info_dict_and_sumvec_set_from_grouptree_with_nodetype_info_df(
+                group_tree_df, self._terminal_node, self._has_waterinj, self._has_gasinj
+            )
         )
         get_sumvecs_with_metadata_time_ms = timer.lap_ms()
 
@@ -200,17 +240,29 @@ class GroupTreeAssembler:
             raise ValueError(f"Missing summary vectors for edges in the GroupTree: {', '.join(missing_sumvecs)}.")
 
         # Find group tree vectors existing in summary data
-        # Find columns of interest in the summary data
         valid_sumvecs = [sumvec for sumvec in all_sumvecs if sumvec in vectors_table_column_names]
         columns_of_interest = list(valid_sumvecs) + ["DATE"]
         self._smry_table_sorted_by_date = single_realization_vectors_table.select(columns_of_interest).sort_by("DATE")
 
-        # Filter nodetype prod, inj and/or other
+        # Based on which elements are present in node types, filter the group tree dataframe, i.e. Include IS_PROD, IS_INJ, IS_OTHER
         timer.lap_ms()
-        dfs = []
-        for tpe in self._node_types:
-            dfs.append(self._group_tree_df[self._group_tree_df[f"IS_{tpe.value}".upper()]])
-        self._group_tree_df = pd.concat(dfs).drop_duplicates()
+        filter_expr = None
+        if NodeType.PROD in self._node_types:
+            filter_expr = group_tree_df["IS_PROD"]
+        if NodeType.INJ in self._node_types:
+            if filter_expr is None:
+                filter_expr = group_tree_df["IS_INJ"]
+            else:
+                filter_expr = filter_expr | group_tree_df["IS_INJ"]
+        if NodeType.OTHER in self._node_types:
+            if filter_expr is None:
+                filter_expr = group_tree_df["IS_OTHER"]
+            else:
+                filter_expr = filter_expr | group_tree_df["IS_OTHER"]
+
+        # Filter dataframe based on nodetype prod, inj and/or other
+        self._group_tree_df = group_tree_df[filter_expr]
+
         time_filter_node_types = timer.lap_ms()
 
         LOGGER.info(
@@ -259,61 +311,6 @@ class GroupTreeAssembler:
             ],
         )
 
-    def _create_node_sumvecs_info_dict_and_sumvec_set_from_grouptree_df(
-        self,
-    ) -> Tuple[Dict[str, NodeSummaryVectorsInfo], set[str], set[str]]:
-        """
-        TODO: Use grouptree pa.Table instead?
-
-        Extract summary vector info from the group tree dataframe.
-
-        Returns a typed dictionary structure with summary vectors and their info for each named node in the group tree,
-        and the set of all summary vector names (to prevent iterating the dictionary for unique vector names).
-
-        Rates are not required for the terminal node since they will not be used.
-
-        `Returns`:
-        node_sumvecs_info_dict: Dict[str, NodeSummaryVectorsInfo]
-        all_sumvecs: set[str]
-        edge_sumvecs: set[str]
-        """
-        node_sumvecs_info_dict: Dict[str, NodeSummaryVectorsInfo] = {}
-        all_sumvecs: set[str] = set()
-        edge_sumvecs: set[str] = set()
-
-        unique_nodes = self._group_tree_df.drop_duplicates(subset=["CHILD", "KEYWORD"])
-        for _, noderow in unique_nodes.iterrows():
-            nodename = noderow["CHILD"]
-            keyword = noderow["KEYWORD"]
-
-            if not isinstance(nodename, str) or not isinstance(keyword, str):
-                raise ValueError("Nodename and keyword must be strings")
-
-            datatypes = [DataType.PRESSURE]
-            if noderow["IS_PROD"] and nodename != self._terminal_node:
-                datatypes += [DataType.OILRATE, DataType.GASRATE, DataType.WATERRATE]
-            if noderow["IS_INJ"] and self._has_waterinj and nodename != self._terminal_node:
-                datatypes.append(DataType.WATERINJRATE)
-            if noderow["IS_INJ"] and self._has_gasinj and nodename != self._terminal_node:
-                datatypes.append(DataType.GASINJRATE)
-            if keyword == "WELSPECS":
-                datatypes += [DataType.BHP, DataType.WMCTL]
-
-            if len(datatypes) > 0:
-                node_sumvecs_info_dict[nodename] = NodeSummaryVectorsInfo(SUMMARY_VECTORS_INFO={})
-
-            for datatype in datatypes:
-                sumvec_name = _create_sumvec_from_datatype_nodename_and_keyword(datatype, nodename, keyword)
-                edge_or_node = _get_edge_node(datatype)
-                all_sumvecs.add(sumvec_name)
-                if edge_or_node == EdgeOrNode.EDGE:
-                    edge_sumvecs.add(sumvec_name)
-                node_sumvecs_info_dict[nodename]["SUMMARY_VECTORS_INFO"][sumvec_name] = SummaryVectorInfo(
-                    DATATYPE=datatype, EDGE_NODE=edge_or_node
-                )
-
-        return node_sumvecs_info_dict, all_sumvecs, edge_sumvecs
-
     def _get_edge_options(self, node_types: List[NodeType]) -> List[GroupTreeMetadata]:
         """Returns a list with edge node options for the dropdown
         menu in the GroupTree component.
@@ -337,6 +334,86 @@ class GroupTreeAssembler:
         return [GroupTreeMetadata(key=DataType.OILRATE.value, label=_get_label(DataType.OILRATE))]
 
 
+def _create_node_sumvecs_info_dict_and_sumvec_set_from_grouptree_with_nodetype_info_df(
+    group_tree_with_nodetype_info_df: pd.DataFrame,
+    terminal_node: str,
+    has_waterinj: bool,
+    has_gasinj: bool,
+) -> Tuple[Dict[str, NodeSummaryVectorsInfo], set[str], set[str]]:
+    """
+    Extract summary vector info from the provided group tree dataframe. The group tree dataframe must have columns
+    "CHILD", "KEYWORD", "IS_PROD", "IS_INJ".
+
+    Returns a typed dictionary structure with summary vectors and their info for each named node in the group tree,
+    and the set of all summary vector names (to prevent iterating the dictionary for unique vector names).
+
+    Rates are not required for the terminal node since they will not be used.
+
+    `Arguments`:
+    group_tree_with_nodetype_info_df: pd.DataFrame - Group tree dataframe. Expected columns are: ["CHILD", "KEYWORD", "IS_PROD", "IS_INJ"]
+    terminal_node: str - Name of the terminal node in the group tree
+    has_waterinj: bool - True if water injection is present in the group tree
+    has_gasinj: bool - True if gas injection is present in the group tree
+
+    `Returns`:
+    node_sumvecs_info_dict: Dict[str, NodeSummaryVectorsInfo]
+    all_sumvecs: set[str]
+    edge_sumvecs: set[str]
+    """
+    node_sumvecs_info_dict: Dict[str, NodeSummaryVectorsInfo] = {}
+    all_sumvecs: set[str] = set()
+    edge_sumvecs: set[str] = set()
+
+    unique_nodes = group_tree_with_nodetype_info_df.drop_duplicates(subset=["CHILD", "KEYWORD"])
+
+    node_names = unique_nodes["CHILD"].to_numpy()
+    node_keyword = unique_nodes["KEYWORD"].to_numpy()
+    node_is_prod_states = unique_nodes["IS_PROD"].to_numpy()
+    node_is_inj_states = unique_nodes["IS_INJ"].to_numpy()
+
+    if (
+        len(node_names) != len(node_keyword)
+        or len(node_names) != len(node_is_prod_states)
+        or len(node_names) != len(node_is_inj_states)
+    ):
+        raise ValueError("Length of node names, keywords, IS_PROD and IS_INJ must be equal.")
+
+    num_nodes = len(node_names)
+    for i in range(num_nodes):
+        nodename = node_names[i]
+        keyword = node_keyword[i]
+        is_prod = node_is_prod_states[i]
+        is_inj = node_is_inj_states[i]
+
+        if not isinstance(nodename, str) or not isinstance(keyword, str):
+            raise ValueError("Nodename and keyword must be strings")
+
+        datatypes = [DataType.PRESSURE]
+        if is_prod and nodename != terminal_node:
+            datatypes += [DataType.OILRATE, DataType.GASRATE, DataType.WATERRATE]
+        if is_inj and has_waterinj and nodename != terminal_node:
+            datatypes.append(DataType.WATERINJRATE)
+        if is_inj and has_gasinj and nodename != terminal_node:
+            datatypes.append(DataType.GASINJRATE)
+        if keyword == "WELSPECS":
+            datatypes += [DataType.BHP, DataType.WMCTL]
+
+        if len(datatypes) > 0:
+            node_sumvecs_info_dict[nodename] = NodeSummaryVectorsInfo(SUMMARY_VECTORS_INFO={})
+
+        for datatype in datatypes:
+            sumvec_name = _create_sumvec_from_datatype_nodename_and_keyword(datatype, nodename, keyword)
+            edge_or_node = _get_edge_node(datatype)
+            all_sumvecs.add(sumvec_name)
+            if edge_or_node == EdgeOrNode.EDGE:
+                edge_sumvecs.add(sumvec_name)
+            node_sumvecs_info_dict[nodename]["SUMMARY_VECTORS_INFO"][sumvec_name] = SummaryVectorInfo(
+                DATATYPE=datatype, EDGE_NODE=edge_or_node
+            )
+
+    return node_sumvecs_info_dict, all_sumvecs, edge_sumvecs
+
+
 def _verify_that_sumvecs_exists(check_sumvecs: Sequence[str], valid_sumvecs: Sequence[str]) -> None:
     """
     Takes in a list of summary vectors and checks if they are present among the valid summary vectors.
@@ -352,7 +429,7 @@ def _verify_that_sumvecs_exists(check_sumvecs: Sequence[str], valid_sumvecs: Seq
 
 def _add_nodetype_columns_to_df(
     group_tree_df: pd.DataFrame,
-    wstat_well_state_set_dict: Dict[str, set[float]],
+    well_node_classifications: Dict[str, WellClassification],
     all_wells: List[str],
 ) -> pd.DataFrame:
     """Adds nodetype columns "IS_PROD", "IS_INJ" and "IS_OTHER" to the provided group tree dataframe.
@@ -366,7 +443,7 @@ def _add_nodetype_columns_to_df(
 
     `Arguments`:
     group_tree_df: pd.DataFrame - Group tree df to modify. Expected columns: ["PARENT", "CHILD", "KEYWORD", "DATE"]
-    wstat_well_state_set_dict: Dict[str, set[float]] - Dictionary with well as key, and set of wstat state indicators as value
+    well_node_classifications: Dict[str, WellClassification] - Dictionary with well node as key, and classification as value
     all_wells: List[str] - List of all wells in the group tree
     """
 
@@ -404,7 +481,7 @@ def _add_nodetype_columns_to_df(
 
     # Classify leaf nodes as producer, injector or other
     leaf_node_classification_map = _create_leaf_node_classification_map(
-        leaf_node_list, leaf_node_keyword_list, wstat_well_state_set_dict, all_wells
+        leaf_node_list, leaf_node_keyword_list, well_node_classifications, all_wells
     )
 
     classifying_leafnodes_time_ms = timer.lap_ms()
@@ -464,7 +541,7 @@ def _add_nodetype_columns_to_df(
     classify_remaining_nodes_time_ms = timer.lap_ms()
 
     # Get maps from node classifications
-    is_prod_map = {}
+    is_prod_map: Dict[str, bool] = {}
     is_inj_map = {}
     is_other_map = {}
     for node_name, classification in node_classifications.items():
@@ -489,7 +566,7 @@ def _add_nodetype_columns_to_df(
 def _create_leaf_node_classification_map(
     leaf_nodes: List[str],
     leaf_node_keywords: List[str],
-    wstat_well_state_set_dict: Dict[str, set[float]],
+    well_node_classifications: Dict[str, WellClassification],
     all_wells: List[str],
 ) -> Dict[str, NodeClassification]:
     """Creates a dictionary with node names as keys and NodeClassification as values.
@@ -499,7 +576,7 @@ def _create_leaf_node_classification_map(
     `Arguments`:
     leaf_nodes: List[str] - List of leaf node names
     leaf_node_keywords: List[str] - List of keywords for the leaf nodes
-    wstat_well_state_set_dict: Dict[str, set[float]] - Dictionary with well as key, and set of wstat state indicators as value
+    well_node_classifications: Dict[str, WellClassification] - Dictionary with well node as key, and classification as value
     all_wells: List[str] - List of all wells in the group tree
 
     `Return`:
@@ -510,12 +587,12 @@ def _create_leaf_node_classification_map(
 
     node_classifications: Dict[str, NodeClassification] = {}
     for i, node in enumerate(leaf_nodes):
-        wstat_states = wstat_well_state_set_dict.get(node)
-        if leaf_node_keywords[i] == "WELSPECS" and wstat_states is not None:
+        well_classification = well_node_classifications.get(node)
+        if leaf_node_keywords[i] == "WELSPECS" and well_classification is not None:
             node_classifications[node] = NodeClassification(
-                IS_PROD=1.0 in wstat_states,
-                IS_INJ=2.0 in wstat_states,
-                IS_OTHER=(1.0 not in wstat_states) and (2.0 not in wstat_states),
+                IS_PROD=well_classification.IS_PROD,
+                IS_INJ=well_classification.IS_INJ,
+                IS_OTHER=well_classification.IS_OTHER,
             )
         else:
             prod_sumvecs = [
@@ -636,7 +713,7 @@ def _create_sumvec_from_datatype_nodename_and_keyword(
 
 def _create_dataset(
     smry_sorted_by_date: pa.Table,
-    gruptree: pd.DataFrame,
+    group_tree_df: pd.DataFrame,
     node_sumvec_info_dict: Dict[str, NodeSummaryVectorsInfo],
     terminal_node: str,
 ) -> List[DatedTree]:
@@ -652,14 +729,15 @@ def _create_dataset(
     # loop trees
     timer = PerfTimer()
 
-    grouptree_per_date = gruptree.groupby("DATE")
-    grouptree_dates = gruptree["DATE"].unique()
+    # Group the group tree data by date
+    grouptree_per_date = group_tree_df.groupby("DATE")
+    grouptree_dates = group_tree_df["DATE"].unique()
 
     initial_grouping_and_dates_extract_time_ms = timer.lap_ms()
 
     # NOTE: What if resampling freq of gruptree data is higher than summary data?
     # A lot of "No summary data found for gruptree between {date} and {next_date}" is printed
-    # Pick the latest grup tree state or? Can a node change states prod/inj in between and details are
+    # Pick the latest group tree state or? Can a node change states prod/inj in between and details are
     timer.lap_ms()
     total_create_dated_trees_time_ms = 0
     total_smry_table_filtering_ms = 0
@@ -670,7 +748,7 @@ def _create_dataset(
         timer.lap_ms()
         next_date = grouptree_dates[grouptree_dates > date].min()
         if pd.isna(next_date):
-            # Pick last smry date fro sorted date column
+            # Pick last smry date from sorted date column
             next_date = smry_sorted_by_date["DATE"][-1]
         total_find_next_date_time_ms += timer.lap_ms()
 
