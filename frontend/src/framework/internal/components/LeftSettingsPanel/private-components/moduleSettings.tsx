@@ -52,7 +52,7 @@ export const ModuleSettings: React.FC<ModuleSettingsProps> = (props) => {
     ) {
         const text = moduleInstanceState === ModuleInstanceState.INITIALIZING ? "Initializing..." : "Resetting...";
         return (
-            <div className="h-full w-full flex flex-col justify-center items-center">
+            <div className="h-full w-full flex flex-col justify-center items-center m-2">
                 <CircularProgress />
                 <div className="mt-4">{text}</div>
             </div>
@@ -64,7 +64,7 @@ export const ModuleSettings: React.FC<ModuleSettingsProps> = (props) => {
         if (errorObject) {
             return (
                 <div
-                    className="text-red-600"
+                    className="text-red-600 m-2"
                     style={{
                         display: props.activeModuleInstanceId === props.moduleInstance.getId() ? "flex" : "none",
                     }}

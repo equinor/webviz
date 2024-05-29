@@ -15,7 +15,6 @@ import "./SimulationTimeSeriesMatrix/registerModule";
 import "./SimulationTimeSeriesSensitivity/registerModule";
 import "./StructuralUncertaintyIntersection/registerModule";
 import "./SubsurfaceMap/registerModule";
-import "./TimeSeriesParameterDistribution/registerModule";
 import "./TornadoChart/registerModule";
 import "./WellCompletions/registerModule";
 
