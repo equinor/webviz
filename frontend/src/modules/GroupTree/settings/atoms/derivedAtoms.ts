@@ -6,7 +6,6 @@ import { DatedTree, EdgeMetadata, NodeMetadata } from "@webviz/group-tree-plot";
 import { atom } from "jotai";
 
 import {
-    selectedDataTypeOptionAtom,
     userSelectedDateTimeAtom,
     userSelectedEdgeKeyAtom,
     userSelectedEnsembleIdentAtom,
@@ -14,17 +13,12 @@ import {
     userSelectedRealizationNumberAtom,
     validRealizationNumbersAtom,
 } from "./baseAtoms";
-import { realizationGroupTreeQueryAtom, statisticalGroupTreeQueryAtom } from "./queryAtoms";
+import { realizationGroupTreeQueryAtom } from "./queryAtoms";
 
-import { GroupTreeDataTypeOption, QueryStatus } from "../../types";
+import { QueryStatus } from "../../types";
 
 export const groupTreeQueryResultAtom = atom((get) => {
-    const selectedDataTypeOption = get(selectedDataTypeOptionAtom);
-
-    if (selectedDataTypeOption === GroupTreeDataTypeOption.INDIVIDUAL_REALIZATION) {
-        return get(realizationGroupTreeQueryAtom);
-    }
-    return get(statisticalGroupTreeQueryAtom);
+    return get(realizationGroupTreeQueryAtom);
 });
 
 export const selectedEnsembleIdentAtom = atom<EnsembleIdent | null>((get) => {

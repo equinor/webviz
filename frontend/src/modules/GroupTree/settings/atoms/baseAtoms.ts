@@ -1,10 +1,8 @@
-import { Frequency_api, NodeType_api, StatOption_api } from "@api";
+import { Frequency_api, NodeType_api } from "@api";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { atomWithCompare } from "@framework/utils/atomUtils";
 
 import { atom } from "jotai";
-
-import { GroupTreeDataTypeOption } from "../../types";
 
 function areEnsembleIdentsEqual(a: EnsembleIdent | null, b: EnsembleIdent | null) {
     if (a === null) {
@@ -12,10 +10,6 @@ function areEnsembleIdentsEqual(a: EnsembleIdent | null, b: EnsembleIdent | null
     }
     return a.equals(b);
 }
-
-export const selectedStatisticOptionAtom = atom<StatOption_api>(StatOption_api.MEAN);
-
-export const selectedDataTypeOptionAtom = atom<GroupTreeDataTypeOption>(GroupTreeDataTypeOption.INDIVIDUAL_REALIZATION);
 
 export const selectedResamplingFrequencyAtom = atom<Frequency_api>(Frequency_api.YEARLY);
 

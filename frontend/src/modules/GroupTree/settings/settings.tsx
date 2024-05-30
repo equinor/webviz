@@ -1,6 +1,6 @@
 import React from "react";
 
-import { Frequency_api, NodeType_api, StatOption_api } from "@api";
+import { Frequency_api, NodeType_api } from "@api";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { ModuleSettingsProps } from "@framework/Module";
 import { useEnsembleRealizationFilterFunc, useEnsembleSet } from "@framework/WorkbenchSession";
@@ -11,16 +11,13 @@ import { DiscreteSlider } from "@lib/components/DiscreteSlider";
 import { Dropdown } from "@lib/components/Dropdown";
 import { Label } from "@lib/components/Label";
 import { QueryStateWrapper } from "@lib/components/QueryStateWrapper";
-import { RadioGroup } from "@lib/components/RadioGroup";
 import { Select } from "@lib/components/Select";
 
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 
 import {
-    selectedDataTypeOptionAtom,
     selectedNodeTypesAtom,
     selectedResamplingFrequencyAtom,
-    selectedStatisticOptionAtom,
     userSelectedDateTimeAtom,
     userSelectedEdgeKeyAtom,
     userSelectedEnsembleIdentAtom,
@@ -41,13 +38,7 @@ import {
 } from "./atoms/derivedAtoms";
 
 import { Interface, State } from "../settingsToViewInterface";
-import {
-    FrequencyEnumToStringMapping,
-    GroupTreeDataTypeOption,
-    GroupTreeDataTypeOptionEnumToStringMapping,
-    NodeTypeEnumToStringMapping,
-    StatOptionEnumToStringMapping,
-} from "../types";
+import { FrequencyEnumToStringMapping, NodeTypeEnumToStringMapping } from "../types";
 
 export function Settings({ workbenchSession }: ModuleSettingsProps<State, Interface>) {
     const ensembleSet = useEnsembleSet(workbenchSession);
@@ -56,8 +47,6 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<State, Interf
     const availableEdgeKeys = useAtomValue(availableEdgeKeysAtom);
     const availableNodeKeys = useAtomValue(availableNodeKeysAtom);
 
-    const [selectedDataTypeOption, setSelectedDataTypeOption] = useAtom(selectedDataTypeOptionAtom);
-    const [selectedStatisticOption, setSelectedStatisticOption] = useAtom(selectedStatisticOptionAtom);
     const [selectedResamplingFrequency, setSelectedResamplingFrequency] = useAtom(selectedResamplingFrequencyAtom);
     const [selectedNodeTypes, setSelectedNodeTypes] = useAtom(selectedNodeTypesAtom);
 
@@ -112,14 +101,6 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<State, Interf
         setUserSelectedDateTime(newDateTime);
     }
 
-    function handleSelectedDataTypeOptionChange(value: GroupTreeDataTypeOption) {
-        setSelectedDataTypeOption(value);
-    }
-
-    function handleSelectedStatisticOptionChange(value: StatOption_api) {
-        setSelectedStatisticOption(value);
-    }
-
     function handleSelectedNodeTypesChange(values: string[]) {
         const newNodeTypes = new Set(values.map((val) => val as NodeType_api));
         setSelectedNodeTypes(newNodeTypes);
@@ -156,25 +137,8 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<State, Interf
             </CollapsibleGroup>
             <CollapsibleGroup expanded={true} title="Data Fetching Options">
                 <div className="flex flex-col gap-2">
-                    <RadioGroup
-                        value={selectedDataTypeOption}
-                        options={[
-                            {
-                                value: GroupTreeDataTypeOption.INDIVIDUAL_REALIZATION,
-                                label: GroupTreeDataTypeOptionEnumToStringMapping[
-                                    GroupTreeDataTypeOption.INDIVIDUAL_REALIZATION
-                                ],
-                            },
-                            {
-                                value: GroupTreeDataTypeOption.STATISTICS,
-                                label: GroupTreeDataTypeOptionEnumToStringMapping[GroupTreeDataTypeOption.STATISTICS],
-                            },
-                        ]}
-                        onChange={(_, value) => handleSelectedDataTypeOptionChange(value)}
-                    />
-                    <CollapsibleGroup expanded={true} title="Realization Number">
+                    <Label text="Realization Number">
                         <Dropdown
-                            disabled={selectedDataTypeOption != GroupTreeDataTypeOption.INDIVIDUAL_REALIZATION}
                             options={
                                 validRealizations?.map((real) => {
                                     return { value: real.toString(), label: real.toString() };
@@ -183,18 +147,8 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<State, Interf
                             value={selectedRealizationNumber?.toString() ?? undefined}
                             onChange={handleRealizationNumberChange}
                         />
-                    </CollapsibleGroup>
-                    <CollapsibleGroup expanded={true} title="Statistical Function">
-                        <RadioGroup
-                            disabled={selectedDataTypeOption !== GroupTreeDataTypeOption.STATISTICS}
-                            value={selectedStatisticOption}
-                            options={Object.values(StatOption_api).map((val: StatOption_api) => {
-                                return { value: val, label: StatOptionEnumToStringMapping[val] };
-                            })}
-                            onChange={(_, value) => handleSelectedStatisticOptionChange(value)}
-                        />
-                    </CollapsibleGroup>
-                    <CollapsibleGroup expanded={true} title="Node Types">
+                    </Label>
+                    <Label text="Node Types">
                         <Select
                             options={Object.values(NodeType_api).map((val: NodeType_api) => {
                                 return { value: val, label: NodeTypeEnumToStringMapping[val] };
@@ -204,7 +158,7 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<State, Interf
                             onChange={handleSelectedNodeTypesChange}
                             size={3}
                         />
-                    </CollapsibleGroup>
+                    </Label>
                 </div>
             </CollapsibleGroup>
             <CollapsibleGroup expanded={true} title="Edge, node and date selections">

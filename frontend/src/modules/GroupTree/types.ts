@@ -1,4 +1,4 @@
-import { Frequency_api, NodeType_api, StatOption_api } from "@api";
+import { Frequency_api, NodeType_api } from "@api";
 
 export const FrequencyEnumToStringMapping = {
     [Frequency_api.YEARLY]: "Yearly",
@@ -6,15 +6,6 @@ export const FrequencyEnumToStringMapping = {
     [Frequency_api.MONTHLY]: "Monthly",
     [Frequency_api.DAILY]: "Daily",
     [Frequency_api.WEEKLY]: "Weekly",
-};
-
-export const StatOptionEnumToStringMapping = {
-    [StatOption_api.MEAN]: "Mean",
-    [StatOption_api.MIN]: "Min",
-    [StatOption_api.MAX]: "Max",
-    [StatOption_api.P10]: "P10",
-    [StatOption_api.P90]: "P90",
-    [StatOption_api.P50]: "P50",
 };
 
 export const NodeTypeEnumToStringMapping = {

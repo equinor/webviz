@@ -53,7 +53,9 @@ async def get_realization_group_tree_data(
     await group_tree_data.fetch_and_initialize_single_realization_data_async()
     initialize_time_ms = timer.lap_ms()
 
-    dated_trees, edge_metadata, node_metadata = await group_tree_data.create_single_realization_dated_trees_and_metadata_lists()
+    dated_trees, edge_metadata, node_metadata = (
+        await group_tree_data.create_single_realization_dated_trees_and_metadata_lists()
+    )
     create_group_tree_time = timer.lap_ms()
 
     LOGGER.info(
@@ -64,17 +66,3 @@ async def get_realization_group_tree_data(
     return schemas.GroupTreeData(
         edge_metadata_list=edge_metadata, node_metadata_list=node_metadata, dated_trees=dated_trees
     )
-
-
-@router.get("/statistical_group_tree_data/")
-async def get_statistical_group_tree_data(
-    # fmt:off
-    authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
-    case_uuid: str = Query(description="Sumo case uuid"),
-    ensemble_name: str = Query(description="Ensemble name"),
-    stat_option: schemas.StatOption = Query(description="Statistical option"),
-    resampling_frequency: schemas.Frequency = Query(description="Resampling frequency"),
-    node_type_set: set[schemas.NodeType] = Query(description="Node types"),
-    # fmt:on
-) -> schemas.GroupTreeData:
-    raise NotImplementedError("This endpoint is not implemented yet")

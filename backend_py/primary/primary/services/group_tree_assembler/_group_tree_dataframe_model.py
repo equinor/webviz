@@ -1,7 +1,6 @@
-from typing import Callable, Dict, List, Optional
+from typing import Callable, List, Optional
 
 import pandas as pd
-import numpy as np
 
 from primary.services.sumo_access.group_tree_types import DataType, TreeType
 
@@ -54,9 +53,10 @@ GROUP_VECTOR_DATATYPES_OF_INTEREST = [
 
 
 class GroupTreeDataframeModel:
-    """Facilitates loading of gruptree tables. Can be reused in all
-    plugins that are using grouptree data and extended with additional
-    functionality and filtering options if necessary.
+    """
+    A helper class for handling group tree dataframes retrieved from Sumo.
+
+    Provides a set of methods for filtering and extracting data from the dataframe.
 
     The group tree dataframe in model has to have the following columns:
 
@@ -121,11 +121,18 @@ class GroupTreeDataframeModel:
         if "REAL" not in self._grouptree_df.columns or self._grouptree_df["REAL"].nunique() == 1:
             self._tree_is_equivalent_in_all_real = True
 
-        self._grouptree_wells = self._grouptree_df[self._grouptree_df["KEYWORD"] == "WELSPECS"]["CHILD"].unique()
-        self._grouptree_groups = list(
-            set(self._grouptree_df[self._grouptree_df["KEYWORD"].isin(["GRUPTREE", "BRANPROP"])]["CHILD"].unique())
-        )
+        group_tree_wells: set = set()
+        group_tree_groups: set = set()
+        group_tree_keywords = self._grouptree_df["KEYWORD"]
+        group_tree_nodes = self._grouptree_df["CHILD"]
+        for keyword, node in zip(group_tree_keywords, group_tree_nodes):
+            if keyword == "WELSPECS":
+                group_tree_wells.add(node)
+            elif keyword in ["GRUPTREE", "BRANPROP"]:
+                group_tree_groups.add(node)
 
+        self._grouptree_wells = list(group_tree_wells)
+        self._grouptree_groups = list(group_tree_groups)
         self._grouptree_wstat_vectors = [f"WSTAT:{well}" for well in self._grouptree_wells]
 
     @property
@@ -185,7 +192,7 @@ class GroupTreeDataframeModel:
                     f"Terminal node '{terminal_node}' not found in 'CHILD' column " "of the gruptree data."
                 )
             if terminal_node != "FIELD":
-                branch_nodes = self._create_branch_nodes(terminal_node)
+                branch_nodes = self._create_branch_node_list(terminal_node)
                 df = self._grouptree_df[self._grouptree_df["CHILD"].isin(branch_nodes)]
 
         def filter_wells(dframe: pd.DataFrame, well_name_criteria: Callable) -> pd.DataFrame:
@@ -207,31 +214,6 @@ class GroupTreeDataframeModel:
             df = filter_wells(df, lambda x: x.str.endswith(excl_well_endswith_tuple))
 
         return df.copy()
-    
-    def create_node_edge_label_dict(self) -> Dict[str, str]:
-        """Create a dictionary with the node as key and the edge label as value
-        
-        Assuming unique edge label for node across all dates.
-        """
-        
-        unique_node_names = self._grouptree_df["CHILD"].unique().tolist()
-        node_names_column_list = self._grouptree_df["CHILD"].tolist()
-        vfp_table_column_list = self._grouptree_df["VFP_TABLE"].tolist()
-
-        if "VFP_TABLE" not in self._grouptree_df.columns:
-            return {node_name: "" for node_name in unique_node_names}
-        
-        
-        node_name_to_edge_label_map: Dict[str,str]={}
-        for node_name in unique_node_names:
-            index = node_names_column_list.index(node_name)
-            vfp_nb = vfp_table_column_list[index]
-            if vfp_nb in [None, 9999] or np.isnan(vfp_nb):
-                node_name_to_edge_label_map[node_name] = ""
-            else:
-                node_name_to_edge_label_map[node_name] = f"VFP {int(vfp_nb)}"
-
-        return node_name_to_edge_label_map
 
     def create_vector_of_interest_list(self) -> List[str]:
         """
@@ -267,19 +249,29 @@ class GroupTreeDataframeModel:
         unique_vectors_of_interst = list(set(all_vectors_of_interest))
         return unique_vectors_of_interst
 
-    def _create_branch_nodes(self, terminal_node: str) -> List[str]:
-        """The function is using recursion to find all wells below the node
-        in the tree.
+    def _create_branch_node_list(self, terminal_node: str) -> List[str]:
         """
-        branch_nodes = [terminal_node]
+        This function lists all nodes in a branch of the group tree starting from the terminal node.
+        """
+        branch_node_set = set(terminal_node)
 
-        children = self._grouptree_df[self._grouptree_df["PARENT"] == terminal_node].drop_duplicates(
-            subset=["CHILD"], keep="first"
-        )
+        nodes_array = self._grouptree_df["CHILD"].to_numpy()
+        parents_array = self._grouptree_df["PARENT"].to_numpy()
 
-        for _, childrow in children.iterrows():
-            branch_nodes.extend(self._create_branch_nodes(childrow["CHILD"]))
-        return branch_nodes
+        if terminal_node not in parents_array:
+            return list(branch_node_set)
+
+        current_parents = [terminal_node]
+        while len(current_parents) > 0:
+            # Find all indexes matching the current parents
+            children_indices = set([i for i, x in enumerate(parents_array) if x in current_parents])
+
+            # Find all children of the current parents
+            children = nodes_array[list(children_indices)]
+            branch_node_set.update(children)
+            current_parents = children
+
+        return list(branch_node_set)
 
 
 def _create_vector_candidates(vector_datatype_candidates: List[str], vector_node_candidates: List[str]) -> List[str]:
