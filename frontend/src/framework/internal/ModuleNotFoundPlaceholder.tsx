@@ -1,4 +1,4 @@
-import { ImportState, Module } from "@framework/Module";
+import { ImportState, Module, ModuleCategory, ModuleDevState } from "@framework/Module";
 import { ModuleInstance } from "@framework/ModuleInstance";
 import { Button } from "@lib/components/Button";
 import { Tag } from "@lib/components/Tag";
@@ -17,6 +17,8 @@ export class ModuleNotFoundPlaceholder extends Module<
         super({
             name: moduleName,
             defaultTitle: moduleName,
+            category: ModuleCategory.MAIN,
+            devState: ModuleDevState.PROD,
         });
         this._importState = ImportState.Imported;
     }

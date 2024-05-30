@@ -72,15 +72,15 @@ export const SyncSettings: React.FC<ModulesListProps> = (props) => {
         const syncableSettingKeys = activeModuleInstance?.getModule().getSyncableSettingKeys() ?? [];
 
         if (activeModuleInstanceId === "" || activeModuleInstance === undefined) {
-            return <div className="text-gray-500">No module selected</div>;
+            return <div className="text-gray-500 m-2">No module selected</div>;
         }
 
         if (syncableSettingKeys.length === 0) {
-            return <div className="text-gray-500">No syncable settings</div>;
+            return <div className="text-gray-500 m-2">No syncable settings</div>;
         }
 
         return (
-            <table className="w-full">
+            <table className="w-full m-2">
                 <thead>
                     <tr className="border-b">
                         <th className="border-r p-2 w-6" title="Sync for all module instances">
