@@ -39,7 +39,7 @@ const makeStyle = (isDragged: boolean, dragSize: Size2D, dragPosition: Point2D):
             height: dragSize.height,
             left: dragPosition.x,
             top: dragPosition.y,
-            zIndex: 1,
+            zIndex: 50,
             opacity: 0.5,
             position: "absolute",
         };
@@ -187,12 +187,12 @@ const ModulesListItem: React.FC<ModulesListItemProps> = (props) => {
             const pixels = convertRemToPixels(2.5);
             return props.drawPreviewFunc(pixels, pixels);
         }
-        return <div className="border bg-slate-300 flex items-center justify-center w-full h-full" />;
+        return <div className="border bg-slate-200 border-slate-300 flex items-center justify-center w-full h-full" />;
     }
 
     return (
         <>
-            {isDragged && <div ref={ref} className="bg-red-300 w-full h-12" />}
+            {isDragged && <div ref={ref} className="bg-blue-300 w-full h-12" />}
             <div
                 ref={isDragged ? undefined : ref}
                 className={resolveClassNames(
@@ -393,7 +393,7 @@ function DetailsPopup(props: DetailsPopupProps): React.ReactNode {
             const tagObj = ModuleDataTags.find((el) => el.id === tag);
             if (tagObj) {
                 tags.push(
-                    <div key={tag} style={{ color: tagObj.color }}>
+                    <div key={tag} className="font-bold text-indigo-600">
                         #{tagObj.name}
                     </div>
                 );
@@ -404,8 +404,8 @@ function DetailsPopup(props: DetailsPopupProps): React.ReactNode {
     }
 
     const adjustedTop =
-        window.innerHeight - props.top < convertRemToPixels(56 / 4)
-            ? window.innerHeight - convertRemToPixels(60 / 4)
+        window.innerHeight - props.top < convertRemToPixels(32 / 4)
+            ? window.innerHeight - convertRemToPixels(34 / 4)
             : props.top;
 
     const previewFunc = props.module.getDrawPreviewFunc();
@@ -415,7 +415,7 @@ function DetailsPopup(props: DetailsPopupProps): React.ReactNode {
             className="absolute bg-white border border-gray-300 shadow-lg p-4 inset-0 z-50 w-96 text-sm flex gap-4 h-32"
             style={{ left: props.left, top: adjustedTop }}
         >
-            <div className="">{previewFunc && previewFunc(64, 64)}</div>
+            <div>{previewFunc && previewFunc(64, 64)}</div>
             <div className="flex-grow">
                 <div className="flex items-center">
                     <span className="font-bold flex-grow">{props.module.getDefaultTitle()}</span>
