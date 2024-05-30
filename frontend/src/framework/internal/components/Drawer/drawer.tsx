@@ -11,6 +11,7 @@ export type DrawerProps = {
     filterPlaceholder?: string;
     onFilterChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
     onClose?: () => void;
+    headerChildren?: React.ReactNode;
     children: React.ReactNode;
 };
 
@@ -38,7 +39,8 @@ export const Drawer: React.FC<DrawerProps> = (props) => {
                         />
                     </div>
                 )}
-                <div className="p-2 flex-grow min-h-0 overflow-y-auto max-h-full h-0">{props.children}</div>
+                {props.headerChildren && <div className="p-2 bg-slate-50">{props.headerChildren}</div>}
+                <div className="flex-grow min-h-0 overflow-y-auto max-h-full h-0">{props.children}</div>
             </div>
         </div>
     );

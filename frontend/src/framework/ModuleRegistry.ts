@@ -1,5 +1,6 @@
 import { ChannelDefinition, ChannelReceiverDefinition } from "./DataChannelTypes";
-import { AtomsInitialization, Module } from "./Module";
+import { AtomsInitialization, Module, ModuleCategory, ModuleDevState } from "./Module";
+import { ModuleDataTagId } from "./ModuleDataTags";
 import { DrawPreviewFunc } from "./Preview";
 import { StateBaseType, StateOptions } from "./StateStore";
 import { SyncSettingKey } from "./SyncSettings";
@@ -8,6 +9,9 @@ import { ModuleNotFoundPlaceholder } from "./internal/ModuleNotFoundPlaceholder"
 
 export type RegisterModuleOptions = {
     moduleName: string;
+    category: ModuleCategory;
+    devState: ModuleDevState;
+    dataTagIds?: ModuleDataTagId[];
     defaultTitle: string;
     syncableSettingKeys?: SyncSettingKey[];
     channelDefinitions?: ChannelDefinition[];
@@ -45,6 +49,9 @@ export class ModuleRegistry {
         const module = new Module<TStateType, TInterfaceType, TSettingsAtomsType, TViewAtomsType>({
             name: options.moduleName,
             defaultTitle: options.defaultTitle,
+            category: options.category,
+            devState: options.devState,
+            dataTagIds: options.dataTagIds,
             syncableSettingKeys: options.syncableSettingKeys ?? [],
             channelDefinitions: options.channelDefinitions,
             channelReceiverDefinitions: options.channelReceiverDefinitions,

@@ -9,6 +9,7 @@ import {
     rectContainsPoint,
     rectsAreEqual,
 } from "@lib/utils/geometry";
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 function layoutElementToRect(layoutElement: LayoutElement): Rect2D {
     return {
@@ -909,7 +910,10 @@ export const LayoutBoxComponents: React.FC<{
         const hovered = rectContainsPoint(rect, props.pointer);
         return (
             <div
-                className="bg-transparent absolute pointer-events-none flex justify-center items-center text-white"
+                className={resolveClassNames(
+                    "absolute pointer-events-none flex justify-center items-center text-white",
+                    { "bg-blue-300": hovered, "bg-transparent": !hovered }
+                )}
                 key={flatBoxes[0].toString()}
                 style={{
                     left: rect.x,
@@ -917,7 +921,6 @@ export const LayoutBoxComponents: React.FC<{
                     width: rect.width,
                     height: rect.height,
                     zIndex: props.zIndex,
-                    backgroundColor: hovered ? "#DA8582" : "transparent",
                 }}
             >
                 Drag a module here
