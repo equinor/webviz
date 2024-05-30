@@ -24,9 +24,7 @@ import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { convertRemToPixels } from "@lib/utils/screenUnitConversions";
 import {
     Attribution,
-    CheckCircle,
     Close,
-    Code,
     ExpandLess,
     ExpandMore,
     Help,
