@@ -10,6 +10,7 @@ import { Drawer } from "@framework/internal/components/Drawer";
 import { Checkbox } from "@lib/components/Checkbox";
 import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
 import { createPortal } from "@lib/utils/createPortal";
+import { isDevMode } from "@lib/utils/devMode";
 import {
     MANHATTAN_LENGTH,
     Point2D,
@@ -205,8 +206,8 @@ const ModulesListItem: React.FC<ModulesListItemProps> = (props) => {
                 style={makeStyle(isDragged, dragSize, dragPosition)}
                 onMouseOver={handleHover}
             >
-                <div ref={ref} className="px-1 flex items-center h-full text-sm gap-2">
-                    <div className="w-12 h-12 overflow-hidden p-1">{makePreviewImage()}</div>
+                <div ref={ref} className="px-2 flex items-center h-full text-sm gap-2">
+                    <div className="h-12 w-12 overflow-hidden p-1">{makePreviewImage()}</div>
                     <span className="flex-grow text-ellipsis whitespace-nowrap overflow-hidden">
                         {props.displayName}
                     </span>
@@ -403,17 +404,19 @@ function DetailsPopup(props: DetailsPopupProps): React.ReactNode {
         return tags;
     }
 
-    const adjustedTop =
-        window.innerHeight - props.top < convertRemToPixels(32 / 4)
-            ? window.innerHeight - convertRemToPixels(34 / 4)
-            : props.top;
+    const style: React.CSSProperties = { left: props.left };
+    if (props.top > window.innerHeight / 2) {
+        style.bottom = window.innerHeight - props.top - convertRemToPixels(3);
+    } else {
+        style.top = props.top;
+    }
 
     const previewFunc = props.module.getDrawPreviewFunc();
 
     return (
         <div
-            className="absolute bg-white border border-gray-300 shadow-lg p-4 inset-0 z-50 w-96 text-sm flex gap-4 h-32"
-            style={{ left: props.left, top: adjustedTop }}
+            className="absolute bg-white border border-gray-300 shadow-lg p-4 z-50 w-96 text-sm flex gap-4"
+            style={style}
         >
             <div>{previewFunc && previewFunc(64, 64)}</div>
             <div className="flex-grow">
@@ -445,6 +448,12 @@ const MODULE_CATEGORIES: { category: ModuleCategory; label: string }[] = [
     { category: ModuleCategory.DEBUG, label: "Debug modules" },
 ];
 
+const INITIAL_DEV_STATES = [ModuleDevState.PROD];
+if (isDevMode()) {
+    INITIAL_DEV_STATES.push(ModuleDevState.DEV);
+    INITIAL_DEV_STATES.push(ModuleDevState.DEPRECATED);
+}
+
 export const ModulesList: React.FC<ModulesListProps> = (props) => {
     const drawerContent = useGuiValue(props.workbench.getGuiMessageBroker(), GuiState.DrawerContent);
 
@@ -452,11 +461,7 @@ export const ModulesList: React.FC<ModulesListProps> = (props) => {
     const boundingClientRect = useElementBoundingRect(ref);
 
     const [searchQuery, setSearchQuery] = React.useState("");
-    const [devStates, setDevStates] = React.useState<ModuleDevState[]>([
-        ModuleDevState.PROD,
-        ModuleDevState.DEPRECATED,
-        ModuleDevState.DEV,
-    ]);
+    const [devStates, setDevStates] = React.useState<ModuleDevState[]>(INITIAL_DEV_STATES);
     const [showDetailsForModule, setShowDetailsForModule] = React.useState<string | null>(null);
     const [detailsPosY, setDetailsPosY] = React.useState<number>(0);
 
