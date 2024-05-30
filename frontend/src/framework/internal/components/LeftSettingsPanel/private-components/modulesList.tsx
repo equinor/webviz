@@ -23,6 +23,7 @@ import {
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { convertRemToPixels } from "@lib/utils/screenUnitConversions";
 import {
+    Attribution,
     CheckCircle,
     Close,
     Code,
@@ -30,6 +31,7 @@ import {
     ExpandMore,
     Help,
     HistoryToggleOff,
+    Science,
     WebAsset,
 } from "@mui/icons-material";
 
@@ -206,8 +208,8 @@ const ModulesListItem: React.FC<ModulesListItemProps> = (props) => {
                 style={makeStyle(isDragged, dragSize, dragPosition)}
                 onMouseOver={handleHover}
             >
-                <div ref={ref} className="px-2 flex items-center h-full text-sm gap-2">
-                    <div className="h-12 w-12 overflow-hidden p-1">{makePreviewImage()}</div>
+                <div ref={ref} className="px-2 flex items-center h-full text-sm gap-2" title={props.displayName}>
+                    <div className="h-12 w-12 min-w-12 overflow-hidden p-1 flex-shrink-0">{makePreviewImage()}</div>
                     <span className="flex-grow text-ellipsis whitespace-nowrap overflow-hidden">
                         {props.displayName}
                     </span>
@@ -264,8 +266,10 @@ function DevStatesFilter(props: DevStatesFilterProps): React.ReactNode {
                     <Checkbox
                         label={
                             <div className="flex gap-2 items-center">
-                                <span className="text-green-600">{makeDevStateIcon(ModuleDevState.PROD)}</span>
-                                Ready for user testing
+                                <span className="text-green-600 flex items-center">
+                                    {makeDevStateIcon(ModuleDevState.PROD)}
+                                </span>
+                                <span className="mt-[0.2rem]">Ready for user testing</span>
                             </div>
                         }
                         onChange={() => handleFilterChange(ModuleDevState.PROD)}
@@ -275,7 +279,7 @@ function DevStatesFilter(props: DevStatesFilterProps): React.ReactNode {
                         label={
                             <div className="flex gap-2 items-center">
                                 <span className="text-orange-600">{makeDevStateIcon(ModuleDevState.DEPRECATED)}</span>
-                                Deprecated
+                                <span className="mt-[0.2rem]">Deprecated</span>
                             </div>
                         }
                         onChange={() => handleFilterChange(ModuleDevState.DEPRECATED)}
@@ -284,8 +288,10 @@ function DevStatesFilter(props: DevStatesFilterProps): React.ReactNode {
                     <Checkbox
                         label={
                             <div className="flex gap-2 items-center">
-                                <span className="text-teal-600">{makeDevStateIcon(ModuleDevState.DEV)}</span>
-                                Under development
+                                <span className="text-teal-600 inline-block align-middle">
+                                    {makeDevStateIcon(ModuleDevState.DEV)}
+                                </span>
+                                <span className="mt-[0.2rem]">Under development</span>
                             </div>
                         }
                         onChange={() => handleFilterChange(ModuleDevState.DEV)}
@@ -330,22 +336,22 @@ function ModulesListCategory(props: ModulesListCategoryProps): React.ReactNode {
 function makeDevStateIcon(devState: ModuleDevState): React.ReactNode {
     if (devState === ModuleDevState.PROD) {
         return (
-            <span title="Ready for user testing">
-                <CheckCircle fontSize="inherit" />
+            <span title="Ready for user testing" className="inline-block align-middle text-base">
+                <Attribution fontSize="inherit" />
             </span>
         );
     }
     if (devState === ModuleDevState.DEPRECATED) {
         return (
-            <span title="Deprecated">
+            <span title="Deprecated" className="inline-block align-middle text-base">
                 <HistoryToggleOff fontSize="inherit" />
             </span>
         );
     }
     if (devState === ModuleDevState.DEV) {
         return (
-            <span title="Under development">
-                <Code fontSize="inherit" />
+            <span title="Under development" className="inline-block align-middle text-base">
+                <Science fontSize="inherit" />
             </span>
         );
     }
@@ -364,17 +370,17 @@ function DetailsPopup(props: DetailsPopupProps): React.ReactNode {
     function makeDevState(devState: ModuleDevState): React.ReactNode {
         if (devState === ModuleDevState.PROD) {
             return (
-                <div className="flex gap-1 text-green-600 text-xs items-center">
+                <div className="flex gap-2 text-green-600 text-xs items-center">
                     {makeDevStateIcon(devState)}
-                    Ready for user testing
+                    <span className="mt-[0.2rem]">Ready for user testing</span>
                 </div>
             );
         }
         if (devState === ModuleDevState.DEPRECATED) {
             return (
-                <div className="flex gap-1 text-orange-600 text-xs items-center">
+                <div className="flex gap-2 text-orange-600 text-xs items-center">
                     {makeDevStateIcon(devState)}
-                    Deprecated
+                    <span className="mt-[0.2rem]">Deprecated</span>
                 </div>
             );
         }
@@ -382,7 +388,7 @@ function DetailsPopup(props: DetailsPopupProps): React.ReactNode {
             return (
                 <div className="flex items-center gap-2 text-teal-600 text-xs">
                     {makeDevStateIcon(devState)}
-                    Under development
+                    <span className="mt-[0.2rem]">Under development</span>
                 </div>
             );
         }
