@@ -54,7 +54,6 @@ export { PolygonsAttributeType as PolygonsAttributeType_api } from './models/Pol
 export type { PolygonsMeta as PolygonsMeta_api } from './models/PolygonsMeta';
 export type { PolylineIntersection as PolylineIntersection_api } from './models/PolylineIntersection';
 export type { PvtData as PvtData_api } from './models/PvtData';
-export { RecursiveTreeNode as RecursiveTreeNode_api } from './models/RecursiveTreeNode';
 export type { RftInfo as RftInfo_api } from './models/RftInfo';
 export type { RftObservation as RftObservation_api } from './models/RftObservation';
 export type { RftObservations as RftObservations_api } from './models/RftObservations';
@@ -76,6 +75,7 @@ export type { SurfaceIntersectionData as SurfaceIntersectionData_api } from './m
 export type { SurfaceMeta as SurfaceMeta_api } from './models/SurfaceMeta';
 export type { SurfaceRealizationSampleValues as SurfaceRealizationSampleValues_api } from './models/SurfaceRealizationSampleValues';
 export { SurfaceStatisticFunction as SurfaceStatisticFunction_api } from './models/SurfaceStatisticFunction';
+export { TreeNode as TreeNode_api } from './models/TreeNode';
 export type { UserInfo as UserInfo_api } from './models/UserInfo';
 export type { ValidationError as ValidationError_api } from './models/ValidationError';
 export type { VectorDescription as VectorDescription_api } from './models/VectorDescription';

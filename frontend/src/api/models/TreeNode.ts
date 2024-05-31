@@ -2,15 +2,15 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-export type RecursiveTreeNode = {
-    node_type: RecursiveTreeNode.node_type;
+export type TreeNode = {
+    node_type: TreeNode.node_type;
     node_label: string;
     edge_label: string;
     node_data: Record<string, Array<number>>;
     edge_data: Record<string, Array<number>>;
-    children: Array<RecursiveTreeNode>;
+    children: Array<TreeNode>;
 };
-export namespace RecursiveTreeNode {
+export namespace TreeNode {
     export enum node_type {
         GROUP = 'Group',
         WELL = 'Well',

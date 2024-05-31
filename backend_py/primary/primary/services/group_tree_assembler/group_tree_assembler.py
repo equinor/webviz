@@ -1,5 +1,5 @@
 import logging
-from typing import Dict, List, Optional, Sequence, Tuple
+from typing import Dict, List, Literal, Optional, Sequence, Tuple
 from dataclasses import dataclass
 
 import numpy as np
@@ -15,7 +15,7 @@ from primary.services.sumo_access.group_tree_types import (
     EdgeOrNode,
     GroupTreeMetadata,
     NodeType,
-    RecursiveTreeNode,
+    TreeNode,
     TreeModeOptions,
     TreeType,
 )
@@ -103,32 +103,29 @@ class GroupTreeAssembler:
         self,
         group_tree_access: GroupTreeAccess,
         summary_access: SummaryAccess,
-        resampling_frequency: Frequency,
+        realization: int,
+        summary_frequency: Frequency,
         node_types: set[NodeType],
         group_tree_mode: TreeModeOptions,
-        realization: Optional[int] = None,
         terminal_node: str = "FIELD",
         tree_type: TreeType = TreeType.GRUPTREE,
         excl_well_startswith: Optional[List[str]] = None,
         excl_well_endswith: Optional[List[str]] = None,
     ):
         self._tree_mode = group_tree_mode
-        self._realization = realization
 
         # NOTE: Temporary only supporting single real
         if self._tree_mode != TreeModeOptions.SINGLE_REAL:
             raise ValueError("Only SINGLE_REAL mode is supported at the moment.")
 
-        if self._tree_mode == TreeModeOptions.SINGLE_REAL and self._realization is None:
-            raise ValueError("Realization must be provided in SINGLE_REAL mode")
-
+        self._realization = realization
         self._group_tree_access = group_tree_access
         self._summary_access = summary_access
         self._terminal_node = terminal_node
         self._tree_type = tree_type
         self._excl_well_startswith = excl_well_startswith
         self._excl_well_endswith = excl_well_endswith
-        self._resampling_frequency = resampling_frequency
+        self._summary_resampling_frequency = summary_frequency
         self._node_types = node_types
 
         self._has_waterinj = False
@@ -143,9 +140,9 @@ class GroupTreeAssembler:
     async def _initialize_all_vectors_list_async(self) -> None:
         # NOTE: Retrieving all available vector names can be slow, could it be improved?
         vector_info_arr = await self._summary_access.get_available_vectors_async()
-        self._all_vectors: List[str] = [vec.name for vec in vector_info_arr]
+        self._all_vectors = [vec.name for vec in vector_info_arr]
 
-    async def fetch_and_initialize_single_realization_data_async(self) -> None:
+    async def fetch_and_initialize_async(self) -> None:
         """
         Fetch group tree and summary data from Sumo, and initialize the data structures needed to build the single realization
         group tree.
@@ -187,7 +184,7 @@ class GroupTreeAssembler:
         # NOTE: "WSTAT" vectors are enumerated well state indicator, thus interpolated values might create issues (should be resolved by resampling-code)
         single_realization_vectors_table, _ = await self._summary_access.get_single_real_vectors_table_async(
             vector_names=vectors_of_interest,
-            resampling_frequency=self._resampling_frequency,
+            resampling_frequency=self._summary_resampling_frequency,
             realization=self._realization,
         )
 
@@ -282,9 +279,9 @@ class GroupTreeAssembler:
             f"and get sumvecs with metadata in: {get_sumvecs_with_metadata_time_ms}ms, "
         )
 
-    async def create_single_realization_dated_trees_and_metadata_lists(
+    async def create_dated_trees_and_metadata_lists(
         self,
-    ) -> Tuple[DatedTree, List[GroupTreeMetadata], List[GroupTreeMetadata]]:
+    ) -> Tuple[List[DatedTree], List[GroupTreeMetadata], List[GroupTreeMetadata]]:
         """
         This method creates the dated trees and metadata lists for the single realization dataset.
 
@@ -302,7 +299,7 @@ class GroupTreeAssembler:
 
         timer = PerfTimer()
 
-        data_set = _create_dated_trees(
+        dated_tree_list = _create_dated_trees(
             self._smry_table_sorted_by_date,
             self._group_tree_df,
             self._node_static_working_data_dict,
@@ -315,7 +312,7 @@ class GroupTreeAssembler:
         LOGGER.info(f"Single realization dataset created in: {time_create_dataset_ms}ms ")
 
         return (
-            data_set,
+            dated_tree_list,
             self._get_edge_options(self._node_types),
             [
                 GroupTreeMetadata(key=datatype.value, label=_get_label(datatype))
@@ -323,7 +320,7 @@ class GroupTreeAssembler:
             ],
         )
 
-    def _get_edge_options(self, node_types: List[NodeType]) -> List[GroupTreeMetadata]:
+    def _get_edge_options(self, node_types: set[NodeType]) -> List[GroupTreeMetadata]:
         """Returns a list with edge node options for the dropdown
         menu in the GroupTree component.
 
@@ -457,8 +454,8 @@ def _create_node_classification_dict(
 
     The states are found for the leaf nodes, and then the parent nodes are classified based on the leaf nodes. "Bottom-up" approach.
 
-    Leaf wells are classified from the well_node_classifications dictionary. A leaf node of group is expected to be found in
-    the field_leaf_node_classifications dictionary.
+    Well leaf nodes are classified from the well_node_classifications dictionary. A group leaf node is defined by summary vectors
+    for the node.
 
     `Arguments`:
     `group_tree_df: pd.DataFrame - Group tree df to modify. Expected columns: ["PARENT", "CHILD", "KEYWORD", "DATE"]
@@ -579,6 +576,9 @@ def _create_leaf_node_classification_map(
 
     The leaf nodes and keywords must be sorted and have the same length. I.e. pairwise by index.
 
+    Well leaf nodes are classified from the well_node_classifications dictionary. A group leaf node is defined by summary vectors
+    for the node.
+
     `Arguments`:
     - `leaf_nodes`: List[str] - List of leaf node names
     - `leaf_node_keywords`: List[str] - List of keywords for the leaf nodes
@@ -599,6 +599,7 @@ def _create_leaf_node_classification_map(
         if leaf_node_keywords[i] == "WELSPECS" and well_node_classification is not None:
             leaf_node_classifications[node] = well_node_classification
         else:
+            # For groups, classify based on summary vectors
             prod_sumvecs = [
                 _create_sumvec_from_datatype_nodename_and_keyword(datatype, node, leaf_node_keywords[i])
                 for datatype in [DataType.OILRATE, DataType.GASRATE, DataType.WATERRATE]
@@ -695,7 +696,7 @@ def _create_dated_trees(
     smry_sorted_by_date: pa.Table,
     group_tree_df: pd.DataFrame,
     node_static_working_data_dict: Dict[str, StaticNodeWorkingData],
-    valid_node_types: List[NodeType],
+    valid_node_types: set[NodeType],
     terminal_node: str,
 ) -> List[DatedTree]:
     """
@@ -710,7 +711,7 @@ def _create_dated_trees(
     - `smry_sorted_by_date`. pa.Table - Summary data table sorted by date. Expected columns: [DATE, summary_vector_1, ... , summary_vector_n]
     - `group_tree_df`: Dataframe with group tree for dates - expected columns: [KEYWORD, CHILD, PARENT], optional column: [VFP_TABLE]
     - `node_static_working_data_dict`: Dictionary with node name as key and its static work data for building group trees
-    - `valid_node_types`: List of valid node types for the group tree
+    - `valid_node_types`: Set of valid node types for the group tree
     - `terminal_node`: Name of the terminal node in the group tree
 
     `Returns`:
@@ -795,9 +796,9 @@ def _create_dated_tree(
     smry_for_grouptree_sorted_by_date: pa.Table,
     number_of_dates_in_smry: int,
     node_static_working_data_dict: Dict[str, StaticNodeWorkingData],
-    valid_node_types: List[NodeType],
+    valid_node_types: set[NodeType],
     terminal_node: str,
-) -> RecursiveTreeNode:
+) -> TreeNode:
     """
     Create a static group tree with summary data for a set of dates.
 
@@ -810,7 +811,7 @@ def _create_dated_tree(
     sorted by date, which implies unique dates, ordered by date. Thereby each node or edge is a column in the summary dataframe.
     - number_of_dates_in_smry: Number of unique dates in the summary data df. To be used for filling missing data - i.e. num rows of smry_sorted_by_date
     - node_static_working_data_dict: Dictionary with node name as key and its static work data for building group tree
-    - valid_node_types: List of valid node types for the group tree
+    - valid_node_types: Set of valid node types for the group tree
     - terminal_node: Name of the terminal node in the group tree
 
     `Returns`:
@@ -818,7 +819,7 @@ def _create_dated_tree(
     """
     # Dictionary of node name, with info about parent nodename RecursiveTreeNode with empty child array
     # I.e. iterate over rows in df (better than recursive search)
-    nodes_dict: Dict[str, Tuple[str, RecursiveTreeNode]] = {}
+    nodes_dict: Dict[str, Tuple[str, TreeNode]] = {}
 
     # Extract columns as numpy arrays for index access resulting in faster processing
     # NOTE: Expect all columns to be 1D arrays and present in the dataframe
@@ -874,13 +875,13 @@ def _create_dated_tree(
                         node_data[datatype] = list([np.nan] * number_of_dates_in_smry)
                         continue
 
-            node_type = "Well" if keywords[i] == "WELSPECS" else "Group"
+            node_type: Literal["Well", "Group"] = "Well" if keywords[i] == "WELSPECS" else "Group"
             edge_label = edge_labels[i]
 
             # children = [], and are added below after each node is created, to prevent recursive search
             nodes_dict[node_name] = (
                 parent_name,
-                RecursiveTreeNode(
+                TreeNode(
                     node_label=node_name,
                     node_type=node_type,
                     edge_label=edge_label,
@@ -908,7 +909,7 @@ def _create_dated_tree(
     return result
 
 
-def _is_valid_node_type(node_classification: NodeClassification, valid_node_types: List[NodeType]) -> bool:
+def _is_valid_node_type(node_classification: NodeClassification, valid_node_types: set[NodeType]) -> bool:
     """Returns True if the node classification is a valid node type"""
     if node_classification.IS_PROD and NodeType.PROD in valid_node_types:
         return True

@@ -2,9 +2,9 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-import type { RecursiveTreeNode } from './RecursiveTreeNode';
+import type { TreeNode } from './TreeNode';
 export type DatedTree = {
     dates: Array<string>;
-    tree: RecursiveTreeNode;
+    tree: TreeNode;
 };
 

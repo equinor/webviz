@@ -1,26 +1,26 @@
-from pydantic import BaseModel
-
-from typing import Dict, List, Literal
 from enum import StrEnum
+from typing import Dict, List, Literal
+
+from pydantic import BaseModel
 
 
 class GroupTreeMetadata(BaseModel):
     key: str
     label: str
 
-# TODO: Rename to TreeNode
-class RecursiveTreeNode(BaseModel):
+
+class TreeNode(BaseModel):
     node_type: Literal["Group", "Well"]
     node_label: str
     edge_label: str
     node_data: Dict[str, List[float]]
     edge_data: Dict[str, List[float]]
-    children: List["RecursiveTreeNode"]
+    children: List["TreeNode"]
 
 
 class DatedTree(BaseModel):
     dates: List[str]
-    tree: RecursiveTreeNode
+    tree: TreeNode
 
 
 class TreeType(StrEnum):

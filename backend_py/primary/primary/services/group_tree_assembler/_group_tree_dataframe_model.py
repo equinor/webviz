@@ -28,9 +28,9 @@ TREE_TYPE_DATATYPE_TO_GROUP_VECTOR_DATATYPE_MAP = {
         DataType.OILRATE: "GOPRNB",
         DataType.GASRATE: "GGPRNB",
         DataType.WATERRATE: "GWPRNB",
-        DataType.PRESSURE: "GPR",
         DataType.WATERINJRATE: "GWIR",
         DataType.GASINJRATE: "GGIR",
+        DataType.PRESSURE: "GPR",
     },
 }
 
@@ -73,7 +73,6 @@ class GroupTreeDataframeModel:
 
     _grouptree_df: pd.DataFrame
     _terminal_node: Optional[str]
-    _tree_is_equivalent_in_all_real: bool
     _tree_type: TreeType
 
     _grouptree_wells: List[str] = []
@@ -102,6 +101,10 @@ class GroupTreeDataframeModel:
                 f"Columns found: {grouptree_dataframe.columns}"
             )
 
+        # Note: Only support single realization for now
+        if "REAL" in grouptree_dataframe.columns:
+            raise ValueError("Only single realization is supported for group tree now.")
+
         self._grouptree_df = grouptree_dataframe
 
         if tree_type.value not in self._grouptree_df["KEYWORD"].unique():
@@ -116,10 +119,6 @@ class GroupTreeDataframeModel:
         elif self._tree_type == TreeType.BRANPROP:
             # Filter out GRUPTREE entries
             self._grouptree_df = self._grouptree_df[self._grouptree_df["KEYWORD"] != TreeType.GRUPTREE.value]
-
-        self._tree_is_equivalent_in_all_real = False
-        if "REAL" not in self._grouptree_df.columns or self._grouptree_df["REAL"].nunique() == 1:
-            self._tree_is_equivalent_in_all_real = True
 
         group_tree_wells: set = set()
         group_tree_groups: set = set()
