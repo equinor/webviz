@@ -155,14 +155,16 @@ class GroupTreeAssembler:
         if self._realization is None:
             raise ValueError("GroupTreeAssembler missing realization")
 
+        timer = PerfTimer()
+
         await self._initialize_all_vectors_list_async()
+        get_summary_vector_list_time_ms = timer.lap_ms()
         if self._all_vectors is None:
             raise ValueError("List of summary vectors has not been initialized")
 
-        timer = PerfTimer()
-
         # Get group tree data from Sumo
         group_tree_table_df = await self._group_tree_access.get_group_tree_table(realization=self._realization)
+        get_group_tree_table_time_ms = timer.lap_ms()
         if group_tree_table_df is None:
             raise HTTPException(status_code=404, detail="Group tree data not found")
 
@@ -182,11 +184,13 @@ class GroupTreeAssembler:
         # Get summary vectors for all data simultaneously to obtain one request from Sumo
         # Many summary vectors might not be needed, but will be filtered out later on. This is the most efficient way to get the data
         # NOTE: "WSTAT" vectors are enumerated well state indicator, thus interpolated values might create issues (should be resolved by resampling-code)
+        timer.lap_ms()
         single_realization_vectors_table, _ = await self._summary_access.get_single_real_vectors_table_async(
             vector_names=vectors_of_interest,
             resampling_frequency=self._summary_resampling_frequency,
             realization=self._realization,
         )
+        get_summary_vectors_time_ms = timer.lap_ms()
 
         # Create list of column names in the table once (for performance)
         vectors_table_column_names = single_realization_vectors_table.column_names
@@ -215,7 +219,7 @@ class GroupTreeAssembler:
         node_classification_dict = _create_node_classification_dict(
             group_tree_df, well_node_classifications, single_realization_vectors_table
         )
-        add_nodetype_columns_time_ms = timer.lap_ms()
+        create_node_classifications_time_ms = timer.lap_ms()
 
         # Initialize injection states based on group tree data
         if self._terminal_node in node_classification_dict:
@@ -230,7 +234,7 @@ class GroupTreeAssembler:
         _group_tree_summary_vectors_info = _create_group_tree_summary_vectors_info(
             group_tree_df, node_classification_dict, self._terminal_node, self._has_waterinj, self._has_gasinj
         )
-        get_sumvecs_with_metadata_time_ms = timer.lap_ms()
+        create_group_tree_summary_vectors_info_tims_ms = timer.lap_ms()
 
         # Check if all edges is subset of initialized single realization vectors column names
         if not _group_tree_summary_vectors_info.edge_summary_vectors.issubset(vectors_table_column_names):
@@ -272,11 +276,20 @@ class GroupTreeAssembler:
         # Assign group tree dataframe
         self._group_tree_df = group_tree_df
 
+        # Log download from Sumo times
+        LOGGER.info(
+            f"Total time to fetch data from Sumo: {get_summary_vector_list_time_ms+get_summary_vectors_time_ms+get_group_tree_table_time_ms}ms, "
+            f"Get summary vector list in: {get_summary_vector_list_time_ms}ms, "
+            f"Get group tree table in: {get_group_tree_table_time_ms}ms, "
+            f"Get summary vectors in: {get_summary_vectors_time_ms}ms"
+        )
+
+        # Log initialization of data structures times
         LOGGER.info(
             f"Initialize GroupTreeModel in: {initialize_grouptree_model_time_ms}ms, "
-            f"and create filtered dataframe in: {create_filtered_dataframe_time_ms}ms, "
-            f"and add nodetype columns in: {add_nodetype_columns_time_ms}ms, "
-            f"and get sumvecs with metadata in: {get_sumvecs_with_metadata_time_ms}ms, "
+            f"Create filtered dataframe in: {create_filtered_dataframe_time_ms}ms, "
+            f"Create node classifications in: {create_node_classifications_time_ms}ms, "
+            f"Create group tree summary vectors info in: {create_group_tree_summary_vectors_info_tims_ms}ms"
         )
 
     async def create_dated_trees_and_metadata_lists(
@@ -297,8 +310,6 @@ class GroupTreeAssembler:
         if self._node_static_working_data_dict is None:
             raise ValueError("Static working data for nodes has not been initialized")
 
-        timer = PerfTimer()
-
         dated_tree_list = _create_dated_trees(
             self._smry_table_sorted_by_date,
             self._group_tree_df,
@@ -306,10 +317,6 @@ class GroupTreeAssembler:
             self._node_types,
             self._terminal_node,
         )
-
-        time_create_dataset_ms = timer.lap_ms()
-
-        LOGGER.info(f"Single realization dataset created in: {time_create_dataset_ms}ms ")
 
         return (
             dated_tree_list,
@@ -779,10 +786,8 @@ def _create_dated_trees(
     total_loop_time_ms = timer.elapsed_ms() - total_loop_time_ms_start
 
     LOGGER.info(
-        f"Total time create dataset: {timer.elapsed_ms()}ms "
-        f"Time group by date and find dates vec: {initial_grouping_and_dates_extract_time_ms}ms "
-        f"Total loop time: {total_loop_time_ms}ms "
-        f"Total find next date: {total_find_next_date_time_ms}ms "
+        f"Total time create_dated_trees func: {timer.elapsed_ms()}ms, "
+        f"Total loop time for grouptree_per_date: {total_loop_time_ms}ms, "
         f"Total filter smry table: {total_smry_table_filtering_ms}ms "
         f"Total create dated tree: {total_create_dated_trees_time_ms}ms "
     )

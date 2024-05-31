@@ -60,11 +60,11 @@ async def get_realization_group_tree_data(
         edge_metadata,
         node_metadata,
     ) = await group_tree_data.create_dated_trees_and_metadata_lists()
-    create_group_tree_time = timer.lap_ms()
+    create_data_time_ms = timer.lap_ms()
 
     LOGGER.info(
-        f"Grouptree data for single realization fetched and processed in: {timer.elapsed_ms()}ms "
-        f"(initialize={initialize_time_ms}ms, create_group_tree={create_group_tree_time}ms "
+        f"Group tree data for single realization fetched and processed in: {timer.elapsed_ms()}ms "
+        f"(initialize={initialize_time_ms}ms, create group tree={create_data_time_ms}ms)"
     )
 
     return schemas.GroupTreeData(
