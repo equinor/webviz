@@ -122,6 +122,7 @@ export const ensembleVectorListsHelperAtom = atom((get) => {
 });
 
 export const vectorSpecificationsAtom = atom<VectorSpec[]>((get) => {
+    const ensembleSet = get(EnsembleSetAtom);
     const ensembleVectorListsHelper = get(ensembleVectorListsHelperAtom);
     const selectedEnsembleIdents = get(selectedEnsembleIdentsAtom);
     const selectedVectorNames = get(selectedVectorNamesAtom);
@@ -136,6 +137,7 @@ export const vectorSpecificationsAtom = atom<VectorSpec[]>((get) => {
 
             vectorSpecifications.push({
                 ensembleIdent,
+                color: ensembleSet.findEnsemble(ensembleIdent)?.getColor() ?? null,
                 vectorName,
                 hasHistoricalVector: ensembleVectorListsHelper.hasHistoricalVector(ensembleIdent, vectorName),
             });

@@ -18,7 +18,7 @@ export const ViewWrapperPlaceholder: React.FC<ViewWrapperPlaceholderProps> = (pr
                 top: props.y,
             }}
         >
-            <div className="bg-red-300 h-full w-full" />
+            <div className="bg-blue-300 h-full w-full" />
         </div>
     );
 };

@@ -195,6 +195,7 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
 
                     newVectorSpecifications.push({
                         ensembleIdent: ensembleIdent,
+                        color: ensembleSet.findEnsemble(ensembleIdent)?.getColor() ?? null,
                         vectorName: vector,
                         hasHistoricalVector: ensembleVectorListsHelper.current.hasHistoricalVector(
                             ensembleIdent,
@@ -205,7 +206,7 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
             }
             setVectorSpecifications(newVectorSpecifications);
         },
-        [selectedEnsembleIdents, selectedVectorNames, numberOfQueriesWithData, setVectorSpecifications]
+        [selectedEnsembleIdents, selectedVectorNames, numberOfQueriesWithData, setVectorSpecifications, ensembleSet]
     );
 
     React.useEffect(

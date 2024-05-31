@@ -44,23 +44,24 @@ enum InitAppState {
 
 const layout: LayoutElement[] = [];
 
+const WORKBENCH = new Workbench();
+
 function App() {
     const [isMounted, setIsMounted] = React.useState<boolean>(false);
     const [initAppState, setInitAppState] = React.useState<InitAppState>(InitAppState.CheckingIfUserIsSignedIn);
 
-    const workbench = React.useRef<Workbench>(new Workbench());
     const queryClient = useQueryClient();
     const { authState } = useAuthProvider();
 
     function initApp() {
-        if (!workbench.current.loadLayoutFromLocalStorage()) {
-            workbench.current.makeLayout(layout);
+        if (!WORKBENCH.loadLayoutFromLocalStorage()) {
+            WORKBENCH.makeLayout(layout);
         }
 
-        if (workbench.current.getLayout().length === 0) {
-            workbench.current.getGuiMessageBroker().setState(GuiState.DrawerContent, DrawerContent.ModulesList);
+        if (WORKBENCH.getLayout().length === 0) {
+            WORKBENCH.getGuiMessageBroker().setState(GuiState.DrawerContent, DrawerContent.ModulesList);
         } else {
-            workbench.current.getGuiMessageBroker().setState(GuiState.DrawerContent, DrawerContent.ModuleSettings);
+            WORKBENCH.getGuiMessageBroker().setState(GuiState.DrawerContent, DrawerContent.ModuleSettings);
         }
         setInitAppState(InitAppState.InitCompleted);
     }
@@ -71,18 +72,16 @@ function App() {
 
     React.useEffect(
         function handleMountWhenSignedIn() {
-            const workbenchRef = workbench.current;
-
             if (authState !== AuthState.LoggedIn || isMounted) {
                 return;
             }
 
             setIsMounted(true);
 
-            const storedEnsembleIdents = workbench.current.maybeLoadEnsembleSetFromLocalStorage();
+            const storedEnsembleIdents = WORKBENCH.maybeLoadEnsembleSettingsFromLocalStorage();
             if (storedEnsembleIdents) {
                 setInitAppState(InitAppState.LoadingEnsembles);
-                workbench.current.loadAndSetupEnsembleSetInSession(queryClient, storedEnsembleIdents).finally(() => {
+                WORKBENCH.loadAndSetupEnsembleSetInSession(queryClient, storedEnsembleIdents).finally(() => {
                     initApp();
                 });
             } else {
@@ -90,8 +89,8 @@ function App() {
             }
 
             return function handleUnmount() {
-                workbenchRef.clearLayout();
-                workbenchRef.resetModuleInstanceNumbers();
+                WORKBENCH.clearLayout();
+                WORKBENCH.resetModuleInstanceNumbers();
             };
         },
         [authState, isMounted, queryClient]
@@ -141,7 +140,7 @@ function App() {
                 isInitializingApp && (
                     <div
                         className={resolveClassNames(
-                            "absolute inset-0 w-screen h-screen flex flex-col items-center justify-center gap-8",
+                            "absolute inset-0 w-screen h-screen flex flex-col items-center justify-center gap-8 z-50",
                             {
                                 hidden: !isInitializingApp,
                             }
@@ -159,11 +158,11 @@ function App() {
                     "opacity-100": !isInitializingApp,
                 })}
             >
-                <LeftNavBar workbench={workbench.current} />
-                <SettingsContentPanels workbench={workbench.current} />
-                <RightNavBar workbench={workbench.current} />
+                <LeftNavBar workbench={WORKBENCH} />
+                <SettingsContentPanels workbench={WORKBENCH} />
+                <RightNavBar workbench={WORKBENCH} />
             </div>
-            <ToggleDevToolsButton guiMessageBroker={workbench.current.getGuiMessageBroker()} />
+            <ToggleDevToolsButton guiMessageBroker={WORKBENCH.getGuiMessageBroker()} />
         </>
     );
 }

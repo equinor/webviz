@@ -224,7 +224,7 @@ export const TableSelect = withDefaults<TableSelectProps>()(defaultProps, (props
     function handleFilterChange(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>, index: number) {
         setFilters((prev) => {
             const newFilters = [...prev];
-            prev[index] = e.target.value;
+            newFilters[index] = e.target.value;
             return newFilters;
         });
         if (ref.current) {

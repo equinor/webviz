@@ -205,7 +205,7 @@ export const ColorPaletteSettings: React.FC<ColorPaletteSettingsProps> = (props)
             icon={<Palette />}
             visible={drawerContent === DrawerContent.ColorPaletteSettings}
         >
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-2 m-2">
                 <Label text="Categorical colors">
                     <ColorPaletteSelector
                         selectedColorPaletteId={selectedColorPaletteIds[ColorPaletteSelectorType.Categorical]}

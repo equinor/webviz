@@ -6,6 +6,7 @@ import { cloneDeep } from "lodash";
 import { ChannelDefinition, ChannelReceiverDefinition } from "./DataChannelTypes";
 import { InitialSettings } from "./InitialSettings";
 import { SettingsContext, ViewContext } from "./ModuleContext";
+import { ModuleDataTagId } from "./ModuleDataTags";
 import { ModuleInstance } from "./ModuleInstance";
 import { DrawPreviewFunc } from "./Preview";
 import { StateBaseType, StateOptions } from "./StateStore";
@@ -19,6 +20,18 @@ import { Workbench } from "./Workbench";
 import { WorkbenchServices } from "./WorkbenchServices";
 import { WorkbenchSession } from "./WorkbenchSession";
 import { WorkbenchSettings } from "./WorkbenchSettings";
+
+export enum ModuleCategory {
+    MAIN = "main",
+    SUB = "sub",
+    DEBUG = "debug",
+}
+
+export enum ModuleDevState {
+    PROD = "prod",
+    DEV = "dev",
+    DEPRECATED = "deprecated",
+}
 
 export type ModuleSettingsProps<
     TTStateType extends StateBaseType,
@@ -90,6 +103,9 @@ export enum ImportState {
 export interface ModuleOptions {
     name: string;
     defaultTitle: string;
+    category: ModuleCategory;
+    devState: ModuleDevState;
+    dataTagIds?: ModuleDataTagId[];
     syncableSettingKeys?: SyncSettingKey[];
     drawPreviewFunc?: DrawPreviewFunc;
     description?: string;
@@ -120,10 +136,15 @@ export class Module<
     private _description: string | null;
     private _channelDefinitions: ChannelDefinition[] | null;
     private _channelReceiverDefinitions: ChannelReceiverDefinition[] | null;
+    private _category: ModuleCategory;
+    private _devState: ModuleDevState;
+    private _dataTagIds: ModuleDataTagId[];
 
     constructor(options: ModuleOptions) {
         this._name = options.name;
         this._defaultTitle = options.defaultTitle;
+        this._category = options.category;
+        this._devState = options.devState;
         this.viewFC = () => <div>Not defined</div>;
         this.settingsFC = () => <div>Not defined</div>;
         this._importState = ImportState.NotImported;
@@ -138,6 +159,7 @@ export class Module<
         this._description = options.description ?? null;
         this._channelDefinitions = options.channelDefinitions ?? null;
         this._channelReceiverDefinitions = options.channelReceiverDefinitions ?? null;
+        this._dataTagIds = options.dataTagIds ?? [];
     }
 
     getDrawPreviewFunc(): DrawPreviewFunc | null {
@@ -154,6 +176,18 @@ export class Module<
 
     getDefaultTitle(): string {
         return this._defaultTitle;
+    }
+
+    getCategory(): ModuleCategory {
+        return this._category;
+    }
+
+    getDevState(): ModuleDevState {
+        return this._devState;
+    }
+
+    getDataTagIds(): ModuleDataTagId[] {
+        return this._dataTagIds;
     }
 
     getDescription(): string | null {
