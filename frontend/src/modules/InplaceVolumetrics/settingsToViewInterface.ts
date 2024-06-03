@@ -2,18 +2,19 @@ import { InplaceVolumetricsIndex_api } from "@api";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { InterfaceInitialization } from "@framework/UniDirectionalSettingsToViewInterface";
 
-import { colorByAtom, groupByAtom } from "./settings/atoms/baseAtoms";
+import { colorByAtom, groupByAtom, plotTypeAtom } from "./settings/atoms/baseAtoms";
 import {
     selectedEnsembleIdentsAtom,
     selectedInplaceCategoriesAtom,
     selectedInplaceResponseAtom,
     selectedInplaceTableNameAtom,
 } from "./settings/atoms/derivedAtoms";
-import { PlotGroupingEnum } from "./typesAndEnums";
+import { PlotGroupingEnum, PlotTypeEnum } from "./typesAndEnums";
 
 export type Interface = {
     baseStates: {};
     derivedStates: {
+        plotType: PlotTypeEnum;
         colorBy: PlotGroupingEnum;
         groupBy: PlotGroupingEnum;
         selectedEnsembleIdents: EnsembleIdent[];
@@ -26,6 +27,9 @@ export type Interface = {
 export const interfaceInitialization: InterfaceInitialization<Interface> = {
     baseStates: {},
     derivedStates: {
+        plotType: (get) => {
+            return get(plotTypeAtom);
+        },
         colorBy: (get) => {
             return get(colorByAtom);
         },

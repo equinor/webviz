@@ -46,9 +46,6 @@ export function createQueryForInplaceDataResults(
     responseName: InplaceVolumetricResponseNames_api | null,
     indexFilter: InplaceVolumetricsIndex[] | null
 ) {
-    console.log(Boolean(ensIdentWithReals && tableName && responseName && indexFilter !== null));
-    console.log(indexFilter);
-    console.log(indexFilter ? { index_filter: indexFilter } : { index_filter: [] });
     return {
         queryKey: [
             "getInplaceDataResults",

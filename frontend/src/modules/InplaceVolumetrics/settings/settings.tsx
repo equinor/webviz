@@ -17,6 +17,7 @@ import { max } from "lodash";
 import {
     colorByAtom,
     groupByAtom,
+    plotTypeAtom,
     userSelectedEnsembleIdentsAtom,
     userSelectedInplaceCategoriesAtom,
     userSelectedInplaceResponseAtom,
@@ -36,7 +37,7 @@ import FilterSelect from "./components/filterSelect";
 
 import { Interface } from "../settingsToViewInterface";
 import { State } from "../state";
-import { PlotGroupingEnum } from "../typesAndEnums";
+import { PlotGroupingEnum, PlotTypeEnum } from "../typesAndEnums";
 
 export function Settings(props: ModuleSettingsProps<State, Interface>) {
     const ensembleSet = useEnsembleSet(props.workbenchSession);
@@ -44,6 +45,7 @@ export function Settings(props: ModuleSettingsProps<State, Interface>) {
     const selectedEnsembleIdents = useAtomValue(selectedEnsembleIdentsAtom);
     const setSelectedEnsembleIdents = useSetAtom(userSelectedEnsembleIdentsAtom);
 
+    const [plotType, setPlotType] = useAtom(plotTypeAtom);
     const [groupBy, setGroupBy] = useAtom(groupByAtom);
     const [colorBy, setColorBy] = useAtom(colorByAtom);
 
@@ -65,6 +67,9 @@ export function Settings(props: ModuleSettingsProps<State, Interface>) {
 
     function handleEnsembleSelectionChange(ensembleIdents: EnsembleIdent[]) {
         setSelectedEnsembleIdents(ensembleIdents);
+    }
+    function onPlotTypeChange(plotTypeString: string) {
+        setPlotType(plotTypeString as PlotTypeEnum);
     }
     function onGroupByChange(groupByString: string) {
         setGroupBy(groupByString as PlotGroupingEnum);
@@ -120,7 +125,12 @@ export function Settings(props: ModuleSettingsProps<State, Interface>) {
                         onChange={handleInplaceTableSelectionChange}
                     />
                 </CollapsibleGroup>
-                <CollapsibleGroup title="Subplots and coloring" expanded>
+                <CollapsibleGroup title="Plotting" expanded>
+                    <div className="flex gap-4">
+                        <Label position="above" text="Plot type">
+                            <Dropdown value={plotType} onChange={onPlotTypeChange} options={plotTypeToOptions()} />
+                        </Label>
+                    </div>
                     <div className="flex gap-4">
                         <Label position="above" text="Subplot category">
                             <Dropdown
@@ -176,4 +186,8 @@ function categoryValuesToOptions(values: (string | number)[]): DropdownOption[] 
         value: value.toString(),
         label: value.toString(),
     }));
+}
+
+function plotTypeToOptions(): DropdownOption[] {
+    return Object.values(PlotTypeEnum).map((value) => ({ value, label: value }));
 }

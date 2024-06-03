@@ -6,7 +6,7 @@ import { atom } from "jotai";
 
 import { availableInplaceResponsesAtom } from "./derivedAtoms";
 
-import { PlotGroupingEnum } from "../../typesAndEnums";
+import { PlotGroupingEnum, PlotTypeEnum } from "../../typesAndEnums";
 
 function areEnsembleIdentListsEqual(a: EnsembleIdent[], b: EnsembleIdent[]) {
     if (a.length !== b.length) {
@@ -21,7 +21,7 @@ function areEnsembleIdentListsEqual(a: EnsembleIdent[], b: EnsembleIdent[]) {
 }
 
 export const userSelectedEnsembleIdentsAtom = atomWithCompare<EnsembleIdent[]>([], areEnsembleIdentListsEqual);
-
+export const plotTypeAtom = atom<PlotTypeEnum>(PlotTypeEnum.HISTOGRAM);
 export const groupByAtom = atomWithCompare<PlotGroupingEnum>(PlotGroupingEnum.ENSEMBLE, (a, b) => a === b);
 export const colorByAtom = atomWithCompare<PlotGroupingEnum>(PlotGroupingEnum.ENSEMBLE, (a, b) => a === b);
 export const userSelectedInplaceTableNameAtom = atom<string | null>(null);

@@ -12,7 +12,10 @@ export type CombinedInplaceVolTableInfoResults = {
     someQueriesFailed: boolean;
     allQueriesFailed: boolean;
 };
-
+export enum PlotTypeEnum {
+    HISTOGRAM = "Histogram",
+    Box = "Box",
+}
 export enum PlotGroupingEnum {
     ENSEMBLE = "Ensemble",
     ZONE = "ZONE",
