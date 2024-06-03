@@ -30,6 +30,11 @@ export const ModuleDataTags: ModuleDataTag[] = [
         description: "3D grid model",
     },
     {
+        id: ModuleDataTagId.GROUP_TREE,
+        name: "Group tree",
+        description: "Group tree data",
+    },
+    {
         id: ModuleDataTagId.DRILLED_WELLS,
         name: "Drilled wells",
         description: "Drilled wells as available in SMDA",

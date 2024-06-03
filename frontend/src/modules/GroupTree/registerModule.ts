@@ -7,7 +7,7 @@ import { Interface, State } from "./settingsToViewInterface";
 
 export const MODULE_NAME = "GroupTree";
 
-const description = "Visualizes group tree data over time.";
+const description = "Visualizes dated group trees over time.";
 
 ModuleRegistry.registerModule<State, Interface>({
     moduleName: MODULE_NAME,
