@@ -6,12 +6,12 @@ import xtgeo
 import numpy as np
 
 from fmu.sumo.explorer import TimeFilter, TimeType
-from fmu.sumo.explorer.objects import SurfaceCollection, Surface
+from fmu.sumo.explorer.objects import Case, SurfaceCollection, Surface
 
 from webviz_pkg.core_utils.perf_timer import PerfTimer
 from primary.services.utils.statistic_function import StatisticFunction
 
-from ._helpers import SumoEnsemble
+from ._helpers import create_sumo_client, create_sumo_case_async
 from .surface_types import SurfaceMeta, XtgeoSurfaceIntersectionResult, XtgeoSurfaceIntersectionPolyline
 from .generic_types import SumoContent
 
@@ -19,7 +19,18 @@ from .generic_types import SumoContent
 LOGGER = logging.getLogger(__name__)
 
 
-class SurfaceAccess(SumoEnsemble):
+class SurfaceAccess:
+    def __init__(self, case: Case, case_uuid: str, iteration_name: str):
+        self._case: Case = case
+        self._case_uuid: str = case_uuid
+        self._iteration_name: str = iteration_name
+
+    @classmethod
+    async def from_case_uuid_async(cls, access_token: str, case_uuid: str, iteration_name: str) -> "SurfaceAccess":
+        sumo_client = create_sumo_client(access_token)
+        case: Case = await create_sumo_case_async(client=sumo_client, case_uuid=case_uuid, want_keepalive_pit=True)
+        return SurfaceAccess(case=case, case_uuid=case_uuid, iteration_name=iteration_name)
+
     async def get_surface_directory_async(self) -> List[SurfaceMeta]:
         surface_collection: SurfaceCollection = self._case.surfaces.filter(
             iteration=self._iteration_name,

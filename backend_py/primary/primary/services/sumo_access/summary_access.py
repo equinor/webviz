@@ -5,6 +5,7 @@ from typing import List, Optional, Sequence, Tuple, Set
 import numpy as np
 import pyarrow as pa
 import pyarrow.compute as pc
+from fmu.sumo.explorer.explorer import SumoClient
 from fmu.sumo.explorer.objects import Case, TableCollection, Table
 from webviz_pkg.core_utils.perf_timer import PerfTimer
 
@@ -20,21 +21,34 @@ from primary.services.service_exceptions import (
 
 
 from ._field_metadata import create_vector_metadata_from_field_meta
-from ._helpers import SumoEnsemble
+from ._helpers import create_sumo_client, create_sumo_case_async
 from ._resampling import resample_segmented_multi_real_table, resample_single_real_table
 from .generic_types import EnsembleScalarResponse
 from .summary_types import Frequency, VectorInfo, RealizationVector, HistoricalVector, VectorMetadata
+from .queries.summary import find_summary_vector_tables_async
 
 LOGGER = logging.getLogger(__name__)
 
 
-class SummaryAccess(SumoEnsemble):
-    async def get_available_vectors_async(self) -> List[VectorInfo]:
+class SummaryAccess:
+    def __init__(self, sumo_client: SumoClient, case_uuid: str, iteration_name: str):
+        self._sumo_client: SumoClient = sumo_client
+        self._case_uuid: str = case_uuid
+        self._iteration_name: str = iteration_name
+        self._cached_case: Case | None = None
+
+    @classmethod
+    def from_case_uuid(cls, access_token: str, case_uuid: str, iteration_name: str) -> "SummaryAccess":
+        sumo_client: SumoClient = create_sumo_client(access_token)
+        return SummaryAccess(sumo_client=sumo_client, case_uuid=case_uuid, iteration_name=iteration_name)
+
+    async def get_available_vectors_async_OLD(self) -> List[VectorInfo]:
         timer = PerfTimer()
 
         # For now, only consider the collection-aggregated tables even if we will also be accessing and
         # returning data for the per-realization summary tables.
-        smry_table_collection: TableCollection = self._case.tables.filter(
+        case = await self._get_or_create_case_object()
+        smry_table_collection: TableCollection = case.tables.filter(
             tagname="summary",
             iteration=self._iteration_name,
             aggregation="collection",
@@ -78,6 +92,53 @@ class SummaryAccess(SumoEnsemble):
 
         return ret_info_arr
 
+    async def get_available_vectors_async(self) -> List[VectorInfo]:
+        timer = PerfTimer()
+
+        # For now, the search below only considers the collection-aggregated tables even if we will
+        #  also be accessing and returning data for the per-realization summary tables.
+        table_info_arr = await find_summary_vector_tables_async(
+            self._sumo_client, self._case_uuid, self._iteration_name
+        )
+        et_get_table_info_ms = timer.lap_ms()
+
+        if len(table_info_arr) == 0:
+            LOGGER.warning(f"No summary tables found in case={self._case_uuid}, iteration={self._iteration_name}")
+            return []
+        if len(table_info_arr) > 1:
+            table_names = [ti.table_name for ti in table_info_arr]
+            raise MultipleDataMatchesError(
+                f"Multiple summary tables found in case={self._case_uuid}, iteration={self._iteration_name}: {table_names=}",
+                Service.SUMO,
+            )
+
+        table_info = table_info_arr[0]
+
+        ret_info_arr: List[VectorInfo] = []
+        hist_vectors: Set[str] = set()
+
+        for vec_name in table_info.column_names:
+            if vec_name not in ["DATE", "REAL"]:
+                if _is_historical_vector_name(vec_name):
+                    hist_vectors.add(vec_name)
+                else:
+                    ret_info_arr.append(VectorInfo(name=vec_name, has_historical=False))
+
+        for info in ret_info_arr:
+            hist_vec_name = _construct_historical_vector_name(info.name)
+            if hist_vec_name in hist_vectors:
+                info.has_historical = True
+
+        et_build_return_info_ms = timer.lap_ms()
+
+        LOGGER.debug(
+            f"Got available vectors in: {timer.elapsed_ms()}ms "
+            f"(get_table_info={et_get_table_info_ms}ms, build_return_info={et_build_return_info_ms}ms) "
+            f"(total_column_count={len(table_info.column_names)})"
+        )
+
+        return ret_info_arr
+
     async def get_vector_table_async(
         self,
         vector_name: str,
@@ -94,7 +155,8 @@ class SummaryAccess(SumoEnsemble):
         """
         timer = PerfTimer()
 
-        table = await _load_all_real_arrow_table_from_sumo(self._case, self._iteration_name, vector_name)
+        case = await self._get_or_create_case_object()
+        table = await _load_all_real_arrow_table_from_sumo(case, self._iteration_name, vector_name)
         et_loading_ms = timer.lap_ms()
 
         if realizations is not None:
@@ -189,8 +251,9 @@ class SummaryAccess(SumoEnsemble):
 
         timer = PerfTimer()
 
+        case = await self._get_or_create_case_object()
         full_table: pa.Table = await _load_single_real_full_arrow_table_from_sumo(
-            self._case, self._iteration_name, realization
+            case, self._iteration_name, realization
         )
         et_loading_ms = timer.lap_ms()
 
@@ -247,7 +310,8 @@ class SummaryAccess(SumoEnsemble):
         if not hist_vec_name:
             return None
 
-        table = await _load_all_real_arrow_table_from_sumo(self._case, self._iteration_name, hist_vec_name)
+        case = await self._get_or_create_case_object()
+        table = await _load_all_real_arrow_table_from_sumo(case, self._iteration_name, hist_vec_name)
         et_load_table_ms = timer.lap_ms()
 
         # Use data from the first realization
@@ -319,6 +383,13 @@ class SummaryAccess(SumoEnsemble):
         )
 
         return pc.unique(table.column("DATE")).to_numpy().astype(int).tolist()
+
+    async def _get_or_create_case_object(self) -> Case:
+        if not self._cached_case:
+            self._cached_case = await create_sumo_case_async(
+                client=self._sumo_client, case_uuid=self._case_uuid, want_keepalive_pit=True
+            )
+        return self._cached_case
 
 
 async def _load_all_real_arrow_table_from_sumo(case: Case, iteration_name: str, vector_name: str) -> pa.Table:

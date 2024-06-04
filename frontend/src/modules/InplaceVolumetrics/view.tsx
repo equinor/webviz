@@ -90,14 +90,12 @@ export const View = (props: ModuleViewProps<State>) => {
         return { data: data, metaData: { ensembleIdentString: ensembleIdent?.toString() ?? "" } };
     }
 
-    if (ensemble && tableName && responseName) {
-        props.viewContext.usePublishChannelContents({
-            channelIdString: ChannelIds.RESPONSE,
-            dependencies: [realizationsResponseQuery.data, ensemble, tableName, responseName],
-            contents: [{ contentIdString: responseName, displayName: responseName, dataGenerator }],
-        });
-    }
-
+    props.viewContext.usePublishChannelContents({
+        channelIdString: ChannelIds.RESPONSE,
+        dependencies: [realizationsResponseQuery.data, ensemble, tableName, responseName],
+        contents: [{ contentIdString: responseName || "", displayName: responseName || "", dataGenerator }],
+    });
+    
     const layout: Partial<Layout> = {
         width: wrapperDivSize.width,
         height: wrapperDivSize.height,

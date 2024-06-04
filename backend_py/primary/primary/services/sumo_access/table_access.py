@@ -2,15 +2,26 @@ import logging
 from typing import List
 
 import pyarrow as pa
+from fmu.sumo.explorer.objects import Case
 
-from ._helpers import SumoEnsemble
+from ._helpers import create_sumo_client, create_sumo_case_async
 from .generic_types import SumoTableSchema
 
 LOGGER = logging.getLogger(__name__)
 
 
-class TableAccess(SumoEnsemble):
+class TableAccess:
     """Generic access to Sumo tables"""
+
+    def __init__(self, case: Case, iteration_name: str):
+        self._case: Case = case
+        self._iteration_name: str = iteration_name
+
+    @classmethod
+    async def from_case_uuid_async(cls, access_token: str, case_uuid: str, iteration_name: str) -> "TableAccess":
+        sumo_client = create_sumo_client(access_token)
+        case: Case = await create_sumo_case_async(client=sumo_client, case_uuid=case_uuid, want_keepalive_pit=False)
+        return TableAccess(case=case, iteration_name=iteration_name)
 
     async def get_table_schemas_single_realization(self, realization: int = 0) -> List[SumoTableSchema]:
         """Get all table descriptions for a given realization"""

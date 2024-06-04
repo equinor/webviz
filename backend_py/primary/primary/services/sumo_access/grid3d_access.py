@@ -2,10 +2,11 @@ import logging
 from typing import List, Optional
 
 from pydantic import BaseModel
+from fmu.sumo.explorer.explorer import SumoClient
 
 from primary.services.service_exceptions import MultipleDataMatchesError, NoDataError, Service
 
-from ._helpers import SumoEnsemble
+from ._helpers import create_sumo_client
 from .fmu_sumo_extensions.sumo_grid3d_geometry_class import Grid3dGeometry
 from .fmu_sumo_extensions.sumo_grid3d_geometry_collection_class import Grid3dGeometryCollection
 from .fmu_sumo_extensions.sumo_grid3d_property_collection_class import Grid3dPropertyCollection
@@ -57,7 +58,17 @@ class Grid3dInfo(BaseModel):
     property_info_arr: List[Grid3dPropertyInfo]
 
 
-class Grid3dAccess(SumoEnsemble):
+class Grid3dAccess:
+    def __init__(self, sumo_client: SumoClient, case_uuid: str, iteration_name: str):
+        self._sumo_client: SumoClient = sumo_client
+        self._case_uuid: str = case_uuid
+        self._iteration_name: str = iteration_name
+
+    @classmethod
+    async def from_case_uuid_async(cls, access_token: str, case_uuid: str, iteration_name: str) -> "Grid3dAccess":
+        sumo_client: SumoClient = create_sumo_client(access_token)
+        return Grid3dAccess(sumo_client=sumo_client, case_uuid=case_uuid, iteration_name=iteration_name)
+
     async def get_models_info_arr_async(self, realization: int) -> List[Grid3dInfo]:
         """Get metadata for all 3D grid models, including bbox, dimensions and properties"""
         grid_geometries_collection: Grid3dGeometryCollection = Grid3dGeometryCollection(

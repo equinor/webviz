@@ -9,7 +9,8 @@ from fmu.sumo.explorer.explorer import SumoClient
 
 from primary.services.summary_vector_statistics import compute_vector_statistics_table, compute_vector_statistics
 from ..summary_access import SummaryAccess, RealizationVector, Frequency
-from ..sumo_explore import SumoExplore
+from ..sumo_inspector import SumoInspector
+from ..case_inspector import CaseInspector
 
 
 async def test_summary_access(summary_access: SummaryAccess) -> None:
@@ -102,19 +103,19 @@ async def main() -> None:
 
     logging.getLogger("src.services.sumo_access").setLevel(level=logging.DEBUG)
 
-    dummy_sumo_client = SumoClient("prod")
+    dummy_sumo_client = SumoClient(env="prod", interactive=False, verbosity="DEBUG")
     access_token = dummy_sumo_client.auth.get_token()
 
-    explore = SumoExplore(access_token=access_token)
-    # case_list = await explore.get_cases(field_identifier="DROGON")
-    # case_list = await explore.get_cases(field_identifier="JOHAN SVERDRUP")
-    case_list = await explore.get_cases(field_identifier="SNORRE")
+    sumo_inspector = SumoInspector(access_token=access_token)
+    # case_list = await sumo_inspector.get_cases(field_identifier="DROGON")
+    # case_list = await sumo_inspector.get_cases(field_identifier="JOHAN SVERDRUP")
+    case_list = await sumo_inspector.get_cases_async(field_identifier="SNORRE")
     # for case_info in case_list:
     #     print(case_info)
 
     sumo_case_id = "11167ec3-41f7-452c-8a08-38466df6bb97"
     sumo_case_id = "e2c7ca0a-8087-4e78-a0f5-121632af3d7b"  # Sverdrup, no vectors
-    sumo_case_id = "010d73c1-33aa-4fa9-9288-6b99e1436780"  # Snorre
+    sumo_case_id = "9c7ac93c-1bc2-4fdc-a827-787a68f19a21"  # Snorre
     sumo_case_name = None
     for case_info in case_list:
         if case_info.uuid == sumo_case_id:
@@ -124,13 +125,14 @@ async def main() -> None:
         print("The sumo case id was not found")
         sys.exit(1)
 
-    iteration_list = await explore.get_iterations(sumo_case_id)
+    case_inspector = await CaseInspector.from_case_uuid_async(access_token, sumo_case_id)
+    iteration_list = await case_inspector.get_iterations_async()
     print("\n\n")
     for iteration_info in iteration_list:
         print(iteration_info)
 
     iteration_name = iteration_list[0].name
-    summary_access = await SummaryAccess.from_case_uuid(
+    summary_access = SummaryAccess.from_case_uuid(
         access_token=access_token, case_uuid=sumo_case_id, iteration_name=iteration_name
     )
     await test_summary_access(summary_access)

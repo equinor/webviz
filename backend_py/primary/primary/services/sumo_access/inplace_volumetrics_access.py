@@ -9,10 +9,10 @@ import pandas as pd
 import pyarrow as pa
 import pyarrow.compute as pc
 import pyarrow.parquet as pq
-from fmu.sumo.explorer.objects import TableCollection
+from fmu.sumo.explorer.objects import Case, TableCollection
 from pydantic import ConfigDict, BaseModel
 
-from ._helpers import SumoEnsemble
+from ._helpers import create_sumo_client, create_sumo_case_async
 from .generic_types import EnsembleScalarResponse
 
 # from fmu.sumo.explorer.objects.table import AggregatedTable
@@ -67,14 +67,27 @@ class InplaceVolumetricsTableMetaData(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-class InplaceVolumetricsAccess(SumoEnsemble):
+class InplaceVolumetricsAccess:
+    def __init__(self, case: Case, case_uuid: str, iteration_name: str):
+        self._case: Case = case
+        self._case_uuid: str = case_uuid
+        self._iteration_name: str = iteration_name
+
+    @classmethod
+    async def from_case_uuid_async(cls, access_token: str, case_uuid: str, iteration_name: str) -> "InplaceVolumetricsAccess":
+        sumo_client = create_sumo_client(access_token)
+        case: Case = await create_sumo_case_async(client=sumo_client, case_uuid=case_uuid, want_keepalive_pit=False)
+        return InplaceVolumetricsAccess(case=case, case_uuid=case_uuid, iteration_name=iteration_name)
+
     async def get_table_names_and_metadata(self) -> List[InplaceVolumetricsTableMetaData]:
         """Retrieve the available volumetric tables names and corresponding metadata for the case"""
         vol_table_collections: TableCollection = self._case.tables.filter(
             aggregation="collection", tagname="vol", iteration=self._iteration_name
         )
+
         vol_tables_metadata = []
-        async for vol_table_name in vol_table_collections.names:
+        table_names = await vol_table_collections.names_async
+        for vol_table_name in table_names:
             vol_table_collection: TableCollection = self._case.tables.filter(
                 aggregation="collection",
                 name=vol_table_name,
@@ -102,6 +115,7 @@ class InplaceVolumetricsAccess(SumoEnsemble):
             )
 
             vol_tables_metadata.append(vol_table_metadata)
+
         return vol_tables_metadata
 
     def get_table(self, table_name: str, column_name: str) -> pa.Table:

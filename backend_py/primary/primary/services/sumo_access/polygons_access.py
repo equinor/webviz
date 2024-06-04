@@ -4,18 +4,29 @@ from typing import List, Optional
 
 import pandas as pd
 import xtgeo
-from fmu.sumo.explorer.objects import PolygonsCollection
+from fmu.sumo.explorer.objects import Case, PolygonsCollection
 
 from webviz_pkg.core_utils.perf_timer import PerfTimer
 
-from ._helpers import SumoEnsemble
+from ._helpers import create_sumo_client, create_sumo_case_async
 from .polygons_types import PolygonsMeta
 from .generic_types import SumoContent
 
 LOGGER = logging.getLogger(__name__)
 
 
-class PolygonsAccess(SumoEnsemble):
+class PolygonsAccess:
+    def __init__(self, case: Case, case_uuid: str, iteration_name: str):
+        self._case: Case = case
+        self._case_uuid: str = case_uuid
+        self._iteration_name: str = iteration_name
+
+    @classmethod
+    async def from_case_uuid_async(cls, access_token: str, case_uuid: str, iteration_name: str) -> "PolygonsAccess":
+        sumo_client = create_sumo_client(access_token)
+        case: Case = await create_sumo_case_async(client=sumo_client, case_uuid=case_uuid, want_keepalive_pit=False)
+        return PolygonsAccess(case=case, case_uuid=case_uuid, iteration_name=iteration_name)
+
     async def get_polygons_directory_async(self) -> List[PolygonsMeta]:
         polygons_collection: PolygonsCollection = self._case.polygons.filter(
             iteration=self._iteration_name,
