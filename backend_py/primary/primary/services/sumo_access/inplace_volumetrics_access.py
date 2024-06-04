@@ -74,7 +74,8 @@ class InplaceVolumetricsAccess(SumoEnsemble):
             aggregation="collection", tagname="vol", iteration=self._iteration_name
         )
         vol_tables_metadata = []
-        async for vol_table_name in vol_table_collections.names:
+        table_names = await vol_table_collections.names_async
+        for vol_table_name in table_names:
             vol_table_collection: TableCollection = self._case.tables.filter(
                 aggregation="collection",
                 name=vol_table_name,

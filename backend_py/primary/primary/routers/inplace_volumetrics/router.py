@@ -29,7 +29,7 @@ async def get_table_names_and_descriptions(
     access = await InplaceVolumetricsAccess.from_case_uuid(
         authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
     )
-    table_names = access.get_table_names_and_metadata()
+    table_names = await access.get_table_names_and_metadata()
     return table_names
 
 
