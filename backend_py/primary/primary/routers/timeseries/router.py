@@ -74,6 +74,18 @@ async def get_realizations_vector_data(
     )
     perf_metrics.record_lap("get-vector")
 
+    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # TESTING
+    # TESTING
+    # TESTING
+    await access.get_single_real_vectors_table_async(
+        [vector_name],
+        resampling_frequency=sumo_freq,
+        realization=0,
+    )
+
     ret_arr: list[schemas.VectorRealizationData] = []
     for vec in sumo_vec_arr:
         ret_arr.append(
