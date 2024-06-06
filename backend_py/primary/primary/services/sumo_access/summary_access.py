@@ -390,7 +390,7 @@ async def _load_all_real_arrow_table_from_sumo(
 
 
 async def _load_single_real_arrow_table_from_sumo(
-    sumo_client: SumoClient, case_uuid: str, iteration_name: str, vector_names: list[str], realization: int
+    sumo_client: SumoClient, case_uuid: str, iteration_name: str, vector_names: Sequence[str], realization: int
 ) -> pa.Table:
     timer = PerfTimer()
 
