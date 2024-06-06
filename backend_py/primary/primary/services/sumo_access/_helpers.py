@@ -11,12 +11,7 @@ LOGGER = logging.getLogger(__name__)
 
 
 def create_sumo_client(access_token: str) -> SumoClient:
-    timer = PerfTimer()
-
     sumo_client = SumoClient(env=config.SUMO_ENV, token=access_token, interactive=False)
-
-    LOGGER.debug(f"create_sumo_client() took {timer.elapsed_ms()}ms")
-
     return sumo_client
 
 
