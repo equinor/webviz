@@ -23,7 +23,7 @@ from primary.services.service_exceptions import (
 
 
 from ._field_metadata import create_vector_metadata_from_field_meta
-from ._helpers import create_sumo_client, create_sumo_case_async
+from ._helpers import create_sumo_client
 from ._resampling import resample_segmented_multi_real_table, resample_single_real_table
 from .generic_types import EnsembleScalarResponse
 from .summary_types import Frequency, VectorInfo, RealizationVector, HistoricalVector, VectorMetadata
@@ -415,7 +415,7 @@ async def _load_single_real_arrow_table_from_sumo(
     table: pa.Table
     try:
         table = pf.read_table(byte_stream, columns=columns_to_get)
-    except pa.lib.ArrowInvalid:
+    except pa.ArrowInvalid:
         table = pq.read_table(byte_stream, columns=columns_to_get)
     et_read_ms = timer.lap_ms()
 
