@@ -74,7 +74,9 @@ class InplaceVolumetricsAccess:
         self._iteration_name: str = iteration_name
 
     @classmethod
-    async def from_case_uuid_async(cls, access_token: str, case_uuid: str, iteration_name: str) -> "InplaceVolumetricsAccess":
+    async def from_case_uuid_async(
+        cls, access_token: str, case_uuid: str, iteration_name: str
+    ) -> "InplaceVolumetricsAccess":
         sumo_client = create_sumo_client(access_token)
         case: Case = await create_sumo_case_async(client=sumo_client, case_uuid=case_uuid, want_keepalive_pit=False)
         return InplaceVolumetricsAccess(case=case, case_uuid=case_uuid, iteration_name=iteration_name)
