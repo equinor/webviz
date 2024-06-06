@@ -203,14 +203,10 @@ class SummaryAccess:
 
         timer = PerfTimer()
 
-        full_table: pa.Table = await _load_single_real_full_arrow_table_from_sumo(
-            self._sumo_client, self._case_uuid, self._iteration_name, realization
+        table: pa.Table = await _load_single_real_arrow_table_from_sumo(
+            self._sumo_client, self._case_uuid, self._iteration_name, vector_names, realization
         )
         et_loading_ms = timer.lap_ms()
-
-        columns_to_get = ["DATE"]
-        columns_to_get.extend(vector_names)
-        table = full_table.select(columns_to_get)
 
         # Verify that the column datatypes are as we expect
         schema = table.schema
@@ -393,8 +389,8 @@ async def _load_all_real_arrow_table_from_sumo(
     return table
 
 
-async def _load_single_real_full_arrow_table_from_sumo(
-    sumo_client: SumoClient, case_uuid: str, iteration_name: str, realization: int
+async def _load_single_real_arrow_table_from_sumo(
+    sumo_client: SumoClient, case_uuid: str, iteration_name: str, vector_names: list[str], realization: int
 ) -> pa.Table:
     timer = PerfTimer()
 
@@ -412,24 +408,23 @@ async def _load_single_real_full_arrow_table_from_sumo(
     blob_size_mb = byte_stream.getbuffer().nbytes / (1024 * 1024)
     et_download_ms = timer.lap_ms()
 
-    # At the moment we read all the columns regardless of which columns in the table we will actually use.
+    columns_to_get = ["DATE"]
+    columns_to_get.extend(vector_names)
+
     # Currently (spring 2024) these are stored in feather format, but will transition to parquet
     table: pa.Table
     try:
-        table = pf.read_table(byte_stream)
+        table = pf.read_table(byte_stream, columns=columns_to_get)
     except pa.lib.ArrowInvalid:
-        table = pq.read_table(byte_stream)
+        table = pq.read_table(byte_stream, columns=columns_to_get)
     et_read_ms = timer.lap_ms()
 
-    # Verify that we got the expected DATE column and no REAL column
+    # Verify that we got the expected DATE column
     if not "DATE" in table.column_names:
         raise InvalidDataError("Table does not contain a DATE column", Service.SUMO)
     date_field: pa.Field = table.field("DATE")
     if date_field.type != pa.timestamp("ms"):
         raise InvalidDataError(f"Unexpected type for DATE column {date_field.type=}", Service.SUMO)
-
-    if "REAL" in table.column_names:
-        raise InvalidDataError("Table contains an unexpected REAL column", Service.SUMO)
 
     LOGGER.debug(
         f"Loaded single realization arrow table from Sumo in: {timer.elapsed_ms()}ms "
@@ -503,4 +498,3 @@ async def _locate_single_real_sumo_table(
         )
 
     return await table_collection.getitem_async(0)
-
