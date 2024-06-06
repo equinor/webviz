@@ -39,10 +39,10 @@ async def find_summary_vector_tables_async(
         "query": query_dict,
         "aggs": {
             "smry_tables": {
-                "terms": {"field": "data.name.keyword", "size": 65000},
+                "terms": {"field": "data.name.keyword"},
                 "aggs": {
                     "smry_columns": {
-                        "terms": {"field": "data.spec.columns.keyword", "size": 65000},
+                        "terms": {"field": "data.spec.columns.keyword", "size": 65535},
                     },
                 },
             },
