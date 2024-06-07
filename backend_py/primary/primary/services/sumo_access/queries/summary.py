@@ -22,14 +22,13 @@ async def find_summary_vector_tables_async(
     query_dict = {
         "bool": {
             "must": [
-                {"match": {"class": "table"}},
-                {"match": {"_sumo.parent_object.keyword": case_uuid}},
-                {"match": {"fmu.iteration.name.keyword": ensemble_name}},
-                {"match": {"fmu.context.stage.keyword": "iteration"}},
-                {"match": {"fmu.aggregation.operation.keyword": "collection"}},
-                {"match": {"data.tagname.keyword": "summary"}},
-                # Note! content is tagged wrong on DROGON ("unset" instead of "timeseries")
-                # {"match": {"data.content": "timeseries"}},
+                {"term": {"class": "table"}},
+                {"term": {"_sumo.parent_object.keyword": case_uuid}},
+                {"term": {"fmu.iteration.name.keyword": ensemble_name}},
+                {"term": {"fmu.context.stage.keyword": "iteration"}},
+                {"term": {"fmu.aggregation.operation.keyword": "collection"}},
+                {"term": {"data.tagname.keyword": "summary"}},
+                {"term": {"data.content.keyword": "timeseries"}},
             ],
         }
     }
@@ -57,11 +56,6 @@ async def find_summary_vector_tables_async(
     perf_metrics.set_metric("elastic-took", response_dict["took"])
     perf_metrics.record_lap("search-roundtrip")
 
-    # print("-----------------")
-    # # _delete_key_from_dict_recursive(response_dict, "realization_ids")
-    # print(json.dumps(response_dict, indent=2))
-    # print("-----------------")
-
     table_info_arr: list[SummaryTableInfo] = []
     for table_bucket in response_dict["aggregations"]["smry_tables"]["buckets"]:
         table_name = table_bucket["key"]
@@ -83,14 +77,3 @@ async def find_summary_vector_tables_async(
 
     return table_info_arr
 
-
-def _delete_key_from_dict_recursive(the_dict: dict, key_to_delete: str) -> None:
-    if isinstance(the_dict, dict):
-        for key, value in list(the_dict.items()):
-            if key == key_to_delete:
-                del the_dict[key]
-            else:
-                _delete_key_from_dict_recursive(value, key_to_delete)
-    elif isinstance(the_dict, list):
-        for item in the_dict:
-            _delete_key_from_dict_recursive(item, key_to_delete)
