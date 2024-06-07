@@ -18,7 +18,6 @@ async def get_observations(
     # fmt:off
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     case_uuid: str = Query(description="Sumo case uuid"),
-    ensemble_name: str = Query(description="Ensemble name"),
     # fmt:on
 ) -> schemas.Observations:
     """Retrieve all observations found in sumo case"""
@@ -26,5 +25,4 @@ async def get_observations(
     observations = await access.get_observations()
 
     ret_observations = schemas.Observations.model_validate(observations.model_dump())
-
     return ret_observations
