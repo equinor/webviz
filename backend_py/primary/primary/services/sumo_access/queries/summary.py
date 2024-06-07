@@ -76,4 +76,3 @@ async def find_summary_vector_tables_async(
     LOGGER.debug(f"find_summary_vector_tables_async() took: {perf_metrics.to_string_s()}")
 
     return table_info_arr
-
