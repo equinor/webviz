@@ -4,6 +4,7 @@ from typing import List, Union, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query, Response, Body
 from webviz_pkg.core_utils.perf_timer import PerfTimer
 
+from primary.services.sumo_access.case_inspector import CaseInspector
 from primary.services.sumo_access.surface_access import SurfaceAccess
 from primary.services.smda_access.stratigraphy_access import StratigraphyAccess
 from primary.services.smda_access.stratigraphy_utils import sort_stratigraphic_names_by_hierarchy
@@ -12,7 +13,6 @@ from primary.services.utils.statistic_function import StatisticFunction
 from primary.services.utils.authenticated_user import AuthenticatedUser
 from primary.auth.auth_helper import AuthHelper
 from primary.utils.response_perf_metrics import ResponsePerfMetrics
-from primary.services.sumo_access._helpers import SumoCase
 from primary.services.surface_query_service.surface_query_service import batch_sample_surface_in_points_async
 from primary.services.surface_query_service.surface_query_service import RealizationSampleResult
 
@@ -34,13 +34,13 @@ async def get_surface_directory(
     """
     Get a directory of surfaces in a Sumo ensemble
     """
-    surface_access = await SurfaceAccess.from_case_uuid(
+    surface_access = await SurfaceAccess.from_case_uuid_async(
         authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
     )
     sumo_surf_dir = await surface_access.get_surface_directory_async()
 
-    case_inspector = await SumoCase.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid)
-    strat_column_identifier = await case_inspector.get_stratigraphic_column_identifier()
+    case_inspector = await CaseInspector.from_case_uuid_async(authenticated_user.get_sumo_access_token(), case_uuid)
+    strat_column_identifier = await case_inspector.get_stratigraphic_column_identifier_async()
     strat_access: Union[StratigraphyAccess, _mocked_stratigraphy_access.StratigraphyAccess]
 
     if strat_column_identifier == "DROGON_HAS_NO_STRATCOLUMN":
@@ -66,7 +66,9 @@ async def get_realization_surface_data(
 ) -> schemas.SurfaceData:
     perf_metrics = ResponsePerfMetrics(response)
 
-    access = await SurfaceAccess.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
+    access = await SurfaceAccess.from_case_uuid_async(
+        authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
+    )
     xtgeo_surf = await access.get_realization_surface_data_async(
         real_num=realization_num, name=name, attribute=attribute, time_or_interval_str=time_or_interval
     )
@@ -96,7 +98,9 @@ async def get_statistical_surface_data(
 ) -> schemas.SurfaceData:
     perf_metrics = ResponsePerfMetrics(response)
 
-    access = await SurfaceAccess.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
+    access = await SurfaceAccess.from_case_uuid_async(
+        authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
+    )
 
     service_stat_func_to_compute = StatisticFunction.from_string_value(statistic_function)
     if service_stat_func_to_compute is None:
@@ -138,7 +142,9 @@ async def get_property_surface_resampled_to_static_surface(
 ) -> schemas.SurfaceData:
     perf_metrics = ResponsePerfMetrics(response)
 
-    access = await SurfaceAccess.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
+    access = await SurfaceAccess.from_case_uuid_async(
+        authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
+    )
     xtgeo_surf_mesh = await access.get_realization_surface_data_async(
         real_num=realization_num_mesh, name=name_mesh, attribute=attribute_mesh
     )
@@ -181,7 +187,9 @@ async def get_property_surface_resampled_to_statistical_static_surface(
 ) -> schemas.SurfaceData:
     timer = PerfTimer()
 
-    access = await SurfaceAccess.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
+    access = await SurfaceAccess.from_case_uuid_async(
+        authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
+    )
     service_stat_func_to_compute = StatisticFunction.from_string_value(statistic_function)
     if service_stat_func_to_compute is not None:
         xtgeo_surf_mesh = await access.get_statistical_surface_data_async(
@@ -224,7 +232,9 @@ async def post_get_surface_intersection(
     The surface intersection data for surface name contains: An array of z-points, i.e. one z-value/depth per (x, y)-point in polyline,
     and cumulative lengths, the accumulated length at each z-point in the array.
     """
-    access = await SurfaceAccess.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
+    access = await SurfaceAccess.from_case_uuid_async(
+        authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
+    )
 
     intersection_polyline = converters.from_api_cumulative_length_polyline_to_xtgeo_polyline(cumulative_length_polyline)
 

@@ -185,12 +185,11 @@ export function viewAtomsInitialization(
 
         const queries = uniqueEnsembleIdents.map((item) => {
             return () => ({
-                queryKey: ["getObservations", item.getCaseUuid(), item.getEnsembleName()],
-                queryFn: () =>
-                    apiService.observations.getObservations(item.getCaseUuid() ?? "", item.getEnsembleName() ?? ""),
+                queryKey: ["getObservations", item.getCaseUuid()],
+                queryFn: () => apiService.observations.getObservations(item.getCaseUuid() ?? ""),
                 staleTime: STALE_TIME,
                 gcTime: CACHE_TIME,
-                enabled: !!(showObservations && item.getCaseUuid() && item.getEnsembleName()),
+                enabled: !!(showObservations && item.getCaseUuid()),
             });
         });
 

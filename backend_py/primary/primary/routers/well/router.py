@@ -8,7 +8,7 @@ from primary.services.smda_access.well_access import WellAccess
 from primary.services.smda_access.stratigraphy_access import StratigraphyAccess
 from primary.services.utils.authenticated_user import AuthenticatedUser
 from primary.auth.auth_helper import AuthHelper
-from primary.services.sumo_access._helpers import SumoCase
+from primary.services.sumo_access.case_inspector import CaseInspector
 from primary.services.smda_access.types import WellBoreHeader, WellBoreTrajectory
 
 from . import schemas
@@ -29,8 +29,8 @@ async def get_well_headers(
 ) -> List[WellBoreHeader]:
     """Get well headers for all wells in the field"""
 
-    case_inspector = await SumoCase.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid)
-    field_identifier = (await case_inspector.get_field_identifiers())[0]
+    case_inspector = await CaseInspector.from_case_uuid_async(authenticated_user.get_sumo_access_token(), case_uuid)
+    field_identifier = (await case_inspector.get_field_identifiers_async())[0]
     well_access: Union[WellAccess, mocked_drogon_smda_access.WellAccess]
     if field_identifier == "DROGON":
         # Handle DROGON
@@ -50,8 +50,8 @@ async def get_field_well_trajectories(
     # fmt:on
 ) -> List[WellBoreTrajectory]:
     """Get well trajectories for field"""
-    case_inspector = await SumoCase.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid)
-    field_identifier = (await case_inspector.get_field_identifiers())[0]
+    case_inspector = await CaseInspector.from_case_uuid_async(authenticated_user.get_sumo_access_token(), case_uuid)
+    field_identifier = (await case_inspector.get_field_identifiers_async())[0]
     well_access: Union[WellAccess, mocked_drogon_smda_access.WellAccess]
     if field_identifier == "DROGON":
         # Handle DROGON
@@ -95,11 +95,11 @@ async def get_wellbore_picks_and_stratigraphic_units(
     well_access: Union[WellAccess, mocked_drogon_smda_access.WellAccess]
     stratigraphy_access: Union[StratigraphyAccess, mocked_drogon_smda_access.StratigraphyAccess]
 
-    sumo_case = await SumoCase.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid)
-    stratigraphic_column_identifier = await sumo_case.get_stratigraphic_column_identifier()
+    case_inspector = await CaseInspector.from_case_uuid_async(authenticated_user.get_sumo_access_token(), case_uuid)
+    stratigraphic_column_identifier = await case_inspector.get_stratigraphic_column_identifier_async()
 
     # Handle DROGON
-    field_identifiers = await sumo_case.get_field_identifiers()
+    field_identifiers = await case_inspector.get_field_identifiers_async()
     if "DROGON" in field_identifiers:
         well_access = mocked_drogon_smda_access.WellAccess(authenticated_user.get_smda_access_token())
         stratigraphy_access = mocked_drogon_smda_access.StratigraphyAccess(authenticated_user.get_smda_access_token())

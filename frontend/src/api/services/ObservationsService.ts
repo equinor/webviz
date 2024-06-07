@@ -11,20 +11,17 @@ export class ObservationsService {
      * Get Observations
      * Retrieve all observations found in sumo case
      * @param caseUuid Sumo case uuid
-     * @param ensembleName Ensemble name
      * @returns Observations Successful Response
      * @throws ApiError
      */
     public getObservations(
         caseUuid: string,
-        ensembleName: string,
     ): CancelablePromise<Observations> {
         return this.httpRequest.request({
             method: 'GET',
             url: '/observations/observations/',
             query: {
                 'case_uuid': caseUuid,
-                'ensemble_name': ensembleName,
             },
             errors: {
                 422: `Validation Error`,

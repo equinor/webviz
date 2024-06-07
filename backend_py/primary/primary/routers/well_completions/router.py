@@ -20,7 +20,7 @@ async def get_well_completions_data(
     realization: Optional[int] = Query(None, description="Optional realization to include. If not specified, all realizations will be returned."),
     # fmt:on
 ) -> WellCompletionsData:
-    access = await WellCompletionsAccess.from_case_uuid(
+    access = await WellCompletionsAccess.from_case_uuid_async(
         authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
     )
     well_completions_data = access.get_well_completions_data(realization=realization)

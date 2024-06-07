@@ -2,9 +2,10 @@ import logging
 from typing import List, Dict
 
 import json
+from fmu.sumo.explorer.objects import Case
 from fmu.sumo.explorer.objects.dictionary import Dictionary
 
-from ._helpers import SumoEnsemble
+from ._helpers import create_sumo_client, create_sumo_case_async
 from .observation_types import (
     Observations,
     SummaryVectorDateObservation,
@@ -16,7 +17,17 @@ from .observation_types import (
 LOGGER = logging.getLogger(__name__)
 
 
-class ObservationAccess(SumoEnsemble):
+class ObservationAccess:
+    def __init__(self, case: Case, case_uuid: str):
+        self._case: Case = case
+        self._case_uuid: str = case_uuid
+
+    @classmethod
+    async def from_case_uuid_async(cls, access_token: str, case_uuid: str) -> "ObservationAccess":
+        sumo_client = create_sumo_client(access_token)
+        case: Case = await create_sumo_case_async(client=sumo_client, case_uuid=case_uuid, want_keepalive_pit=False)
+        return cls(case=case, case_uuid=case_uuid)
+
     async def get_observations(self) -> Observations:
         """Retrieve all observations found in sumo case"""
         observations_collection = self._case.dictionaries.filter(
