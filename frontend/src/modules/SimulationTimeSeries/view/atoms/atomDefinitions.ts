@@ -62,6 +62,11 @@ export function viewAtomsInitialization(
     const vectorDataQueriesAtom = atomWithQueries((get) => {
         const vectorSpecifications = get(settingsToViewInterface.getAtom("vectorSpecifications"));
         const resampleFrequency = get(settingsToViewInterface.getAtom("resampleFrequency"));
+        const visualizationMode = get(settingsToViewInterface.getAtom("visualizationMode"));
+
+        const enabled =
+            visualizationMode === VisualizationMode.INDIVIDUAL_REALIZATIONS ||
+            visualizationMode === VisualizationMode.STATISTICS_AND_REALIZATIONS;
 
         const queries = vectorSpecifications.map((item) => {
             return () => ({
@@ -82,6 +87,7 @@ export function viewAtomsInitialization(
                 staleTime: STALE_TIME,
                 gcTime: CACHE_TIME,
                 enabled: !!(
+                    enabled &&
                     item.vectorName &&
                     item.ensembleIdent.getCaseUuid() &&
                     item.ensembleIdent.getEnsembleName()
@@ -185,12 +191,11 @@ export function viewAtomsInitialization(
 
         const queries = uniqueEnsembleIdents.map((item) => {
             return () => ({
-                queryKey: ["getObservations", item.getCaseUuid(), item.getEnsembleName()],
-                queryFn: () =>
-                    apiService.observations.getObservations(item.getCaseUuid() ?? "", item.getEnsembleName() ?? ""),
+                queryKey: ["getObservations", item.getCaseUuid()],
+                queryFn: () => apiService.observations.getObservations(item.getCaseUuid() ?? ""),
                 staleTime: STALE_TIME,
                 gcTime: CACHE_TIME,
-                enabled: !!(showObservations && item.getCaseUuid() && item.getEnsembleName()),
+                enabled: !!(showObservations && item.getCaseUuid()),
             });
         });
 

@@ -9,13 +9,23 @@ import pyarrow.parquet as pq
 from fmu.sumo.explorer.objects import Case, TableCollection
 from webviz_pkg.core_utils.perf_timer import PerfTimer
 
-from ._helpers import SumoEnsemble
+from ._helpers import create_sumo_client, create_sumo_case_async
 from .rft_types import RftInfo, RftRealizationData
 
 LOGGER = logging.getLogger(__name__)
 
 
-class RftAccess(SumoEnsemble):
+class RftAccess:
+    def __init__(self, case: Case, iteration_name: str):
+        self._case: Case = case
+        self._iteration_name: str = iteration_name
+
+    @classmethod
+    async def from_case_uuid_async(cls, access_token: str, case_uuid: str, iteration_name: str) -> "RftAccess":
+        sumo_client = create_sumo_client(access_token)
+        case: Case = await create_sumo_case_async(client=sumo_client, case_uuid=case_uuid, want_keepalive_pit=False)
+        return RftAccess(case=case, iteration_name=iteration_name)
+
     async def get_rft_info(self) -> list[RftInfo]:
         table = await get_concatenated_rft_table(self._case, self._iteration_name, column_names=["PRESSURE"])
         rft_well_infos: list[RftInfo] = []
@@ -33,7 +43,7 @@ class RftAccess(SumoEnsemble):
         self,
         well_name: str,
         response_name: str,
-        timestamps_utc_ms: Optional[int],
+        timestamps_utc_ms: Optional[Sequence[int]],
         realizations: Optional[Sequence[int]],
     ) -> List[RftRealizationData]:
         column_names = [response_name, "DEPTH"]
@@ -65,7 +75,7 @@ class RftAccess(SumoEnsemble):
         self,
         well_names: List[str],
         column_names: List[str],
-        timestamps_utc_ms: Optional[int],
+        timestamps_utc_ms: Optional[Sequence[int]],
         realizations: Optional[Sequence[int]],
     ) -> pa.table:
         table = await get_concatenated_rft_table(self._case, self._iteration_name, column_names)

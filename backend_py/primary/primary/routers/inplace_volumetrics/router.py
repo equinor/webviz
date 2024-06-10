@@ -1,5 +1,5 @@
 from typing import List, Optional, Sequence
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, HTTPException
 
 from primary.services.sumo_access.inplace_volumetrics_access import (
     InplaceVolumetricsAccess,
@@ -26,10 +26,13 @@ async def get_table_names_and_descriptions(
 ) -> List[InplaceVolumetricsTableMetaData]:
     """Get all volumetric tables for a given ensemble."""
 
-    access = await InplaceVolumetricsAccess.from_case_uuid(
+    access = await InplaceVolumetricsAccess.from_case_uuid_async(
         authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
     )
-    table_names = access.get_table_names_and_metadata()
+    table_names = await access.get_table_names_and_metadata()
+    if len(table_names) == 0:
+        raise HTTPException(status_code=404, detail="No volumetric tables found")
+
     return table_names
 
 
@@ -46,7 +49,7 @@ async def get_realizations_response(
     # fmt:on
 ) -> EnsembleScalarResponse:
     """Get response for a given table and index filter."""
-    access = await InplaceVolumetricsAccess.from_case_uuid(
+    access = await InplaceVolumetricsAccess.from_case_uuid_async(
         authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
     )
     response = access.get_response(table_name, response_name, categorical_filter, realizations)

@@ -178,12 +178,11 @@ export function useVectorObservationsQueries(
     return useQueries({
         queries: (uniqueEnsembleIdents ?? []).map((item) => {
             return {
-                queryKey: ["getObservations", item.getCaseUuid(), item.getEnsembleName()],
-                queryFn: () =>
-                    apiService.observations.getObservations(item.getCaseUuid() ?? "", item.getEnsembleName() ?? ""),
+                queryKey: ["getObservations", item.getCaseUuid()],
+                queryFn: () => apiService.observations.getObservations(item.getCaseUuid() ?? ""),
                 staleTime: STALE_TIME,
                 cacheTime: CACHE_TIME,
-                enabled: !!(allowEnable && item.getCaseUuid() && item.getEnsembleName()),
+                enabled: !!(allowEnable && item.getCaseUuid()),
             };
         }),
         combine: (results) => {

@@ -20,10 +20,14 @@ async def get_rft_info(
     case_uuid: Annotated[str, Query(description="Sumo case uuid")],
     ensemble_name: Annotated[str, Query(description="Ensemble name")],
 ) -> list[schemas.RftInfo]:
-    access = await RftAccess.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
+    access = await RftAccess.from_case_uuid_async(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
     rft_well_list = await access.get_rft_info()
 
-    return rft_well_list
+    ret_rft_well_list: list[schemas.RftInfo] = []
+    for rftinfo in rft_well_list:
+        ret_rft_well_list.append(schemas.RftInfo.model_validate(rftinfo.model_dump()))
+
+    return ret_rft_well_list
 
 
 @router.get("/realization_data")
@@ -36,7 +40,7 @@ async def get_realization_data(
     timestamps_utc_ms: Annotated[list[int] | None, Query(description="Timestamps utc ms")] = None,
     realizations: Annotated[list[int] | None, Query(description="Realizations")] = None,
 ) -> list[schemas.RftRealizationData]:
-    access = await RftAccess.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
+    access = await RftAccess.from_case_uuid_async(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
     data = await access.get_rft_well_realization_data(
         well_name=well_name,
         response_name=response_name,
@@ -44,4 +48,16 @@ async def get_realization_data(
         realizations=realizations,
     )
 
-    return data
+    ret_data: list[schemas.RftRealizationData] = []
+    for item in data:
+        ret_data.append(
+            schemas.RftRealizationData(
+                well_name=item.well_name,
+                realization=item.realization,
+                timestamp_utc_ms=item.timestamp_utc_ms,
+                depth_arr=item.depth_arr,
+                value_arr=item.value_arr,
+            )
+        )
+
+    return ret_data

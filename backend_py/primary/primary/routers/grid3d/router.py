@@ -40,13 +40,21 @@ async def get_grid_models_info(
     Get metadata for all 3D grid models, including bbox, dimensions and properties
     """
     perf_metrics = PerfMetrics()
-    access = await Grid3dAccess.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
+    access = await Grid3dAccess.from_case_uuid_async(
+        authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
+    )
     perf_metrics.record_lap("get-grid-access")
-    model_infos = await access.get_models_info_arr_async(realization_num)
 
+    model_infos = await access.get_models_info_arr_async(realization_num)
     perf_metrics.record_lap("get-model-infos")
+
+    ret_model_infos: List[schemas.Grid3dInfo] = []
+    for modelinfo in model_infos:
+        ret_model_infos.append(schemas.Grid3dInfo.model_validate(modelinfo.model_dump()))
+    perf_metrics.record_lap("convert-model-infos")
+
     LOGGER.debug(f"------------------ GRID3D - model_infos took: {perf_metrics.to_string_s()}")
-    return model_infos
+    return ret_model_infos
 
 
 @router.get("/is_grid_geometry_shared/")
@@ -59,7 +67,9 @@ async def is_grid_geometry_shared(
     """
     Check if a 3D grid geometry is shared across realizations
     """
-    access = await Grid3dAccess.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
+    access = await Grid3dAccess.from_case_uuid_async(
+        authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
+    )
     return await access.is_geometry_shared_async(grid_name)
 
 
