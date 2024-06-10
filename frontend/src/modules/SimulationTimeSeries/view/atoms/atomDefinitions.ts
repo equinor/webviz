@@ -62,6 +62,11 @@ export function viewAtomsInitialization(
     const vectorDataQueriesAtom = atomWithQueries((get) => {
         const vectorSpecifications = get(settingsToViewInterface.getAtom("vectorSpecifications"));
         const resampleFrequency = get(settingsToViewInterface.getAtom("resampleFrequency"));
+        const visualizationMode = get(settingsToViewInterface.getAtom("visualizationMode"));
+
+        const enabled =
+            visualizationMode === VisualizationMode.INDIVIDUAL_REALIZATIONS ||
+            visualizationMode === VisualizationMode.STATISTICS_AND_REALIZATIONS;
 
         const queries = vectorSpecifications.map((item) => {
             return () => ({
@@ -82,6 +87,7 @@ export function viewAtomsInitialization(
                 staleTime: STALE_TIME,
                 gcTime: CACHE_TIME,
                 enabled: !!(
+                    enabled &&
                     item.vectorName &&
                     item.ensembleIdent.getCaseUuid() &&
                     item.ensembleIdent.getEnsembleName()
