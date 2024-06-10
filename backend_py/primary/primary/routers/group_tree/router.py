@@ -29,12 +29,10 @@ async def get_realization_group_tree_data(
 ) -> schemas.GroupTreeData:
     timer = PerfTimer()
 
-    group_tree_access = await GroupTreeAccess.from_case_uuid(
+    group_tree_access = await GroupTreeAccess.from_case_uuid_async(
         authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
     )
-    summary_access = await SummaryAccess.from_case_uuid(
-        authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
-    )
+    summary_access = SummaryAccess.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
     summary_frequency = Frequency.from_string_value(resampling_frequency.value)
     if summary_frequency is None:
         summary_frequency = Frequency.YEARLY

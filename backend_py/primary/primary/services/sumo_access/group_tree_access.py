@@ -2,19 +2,32 @@ import logging
 from typing import Optional
 
 import pandas as pd
+from fmu.sumo.explorer.objects import Case
+
+from ._helpers import create_sumo_client, create_sumo_case_async
+
 from webviz_pkg.core_utils.perf_timer import PerfTimer
 
-from ._helpers import SumoEnsemble
 
 LOGGER = logging.getLogger(__name__)
 
 
-class GroupTreeAccess(SumoEnsemble):
+class GroupTreeAccess:
     """
     Class for accessing and retrieving group tree data
     """
 
     TAGNAME = "gruptree"
+
+    def __init__(self, case: Case, iteration_name: str):
+        self._case = case
+        self._iteration_name = iteration_name
+
+    @classmethod
+    async def from_case_uuid_async(cls, access_token: str, case_uuid: str, iteration_name: str) -> "GroupTreeAccess":
+        sumo_client = create_sumo_client(access_token)
+        case: Case = await create_sumo_case_async(sumo_client, case_uuid, want_keepalive_pit=False)
+        return GroupTreeAccess(case, iteration_name)
 
     async def get_group_tree_table(self, realization: Optional[int]) -> Optional[pd.DataFrame]:
         """Get well group tree data for case and iteration"""

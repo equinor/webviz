@@ -138,7 +138,6 @@ class GroupTreeAssembler:
         self._node_static_working_data_dict: Dict[str, StaticNodeWorkingData] | None = None
 
     async def _initialize_all_vectors_list_async(self) -> None:
-        # NOTE: Retrieving all available vector names can be slow, could it be improved?
         vector_info_arr = await self._summary_access.get_available_vectors_async()
         self._all_vectors = [vec.name for vec in vector_info_arr]
 
