@@ -11,6 +11,7 @@ class AccessTokens(TypedDict):
     smda_access_token: Optional[str]
     ssdl_access_token: Optional[str]
 
+
 class AuthenticatedUser:
     def __init__(
         self,

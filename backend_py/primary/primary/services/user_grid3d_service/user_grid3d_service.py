@@ -189,7 +189,13 @@ class UserGrid3dService:
         perf_metrics = PerfMetrics()
 
         grid_blob_object_uuid, property_blob_object_uuid = await get_grid_geometry_and_property_blob_ids_async(
-            self._sumo_client, self._case_uuid, ensemble_name, realization, grid_name, property_name, property_time_or_interval_str
+            self._sumo_client,
+            self._case_uuid,
+            ensemble_name,
+            realization,
+            grid_name,
+            property_name,
+            property_time_or_interval_str,
         )
         LOGGER.debug(f".get_mapped_grid_properties_async() - {grid_blob_object_uuid=}")
         LOGGER.debug(f".get_mapped_grid_properties_async() - {property_blob_object_uuid=}")
@@ -233,12 +239,24 @@ class UserGrid3dService:
         return ret_obj
 
     async def get_polyline_intersection_async(
-        self, ensemble_name: str, realization: int, grid_name: str, property_name: str, property_time_or_interval_str: str | None, polyline_utm_xy: list[float]
+        self,
+        ensemble_name: str,
+        realization: int,
+        grid_name: str,
+        property_name: str,
+        property_time_or_interval_str: str | None,
+        polyline_utm_xy: list[float],
     ) -> PolylineIntersection:
         perf_metrics = PerfMetrics()
 
         grid_blob_object_uuid, property_blob_object_uuid = await get_grid_geometry_and_property_blob_ids_async(
-            self._sumo_client, self._case_uuid, ensemble_name, realization, grid_name, property_name, property_time_or_interval_str
+            self._sumo_client,
+            self._case_uuid,
+            ensemble_name,
+            realization,
+            grid_name,
+            property_name,
+            property_time_or_interval_str,
         )
         LOGGER.debug(f".get_polyline_intersection_async() - {grid_blob_object_uuid=}")
         LOGGER.debug(f".get_polyline_intersection_async() - {property_blob_object_uuid=}")
