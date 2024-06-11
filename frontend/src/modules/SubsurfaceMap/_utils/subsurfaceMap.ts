@@ -1,4 +1,4 @@
-import { PolygonData_api, WellBoreTrajectory_api } from "@api";
+import { PolygonData_api, WellboreTrajectory_api } from "@api";
 
 export type SurfaceMeshLayerSettings = {
     contours?: boolean | number[];
@@ -109,7 +109,7 @@ function surfacePolygonsToGeojson(surfacePolygon: PolygonData_api): Record<strin
     };
     return data;
 }
-export function createWellboreTrajectoryLayer(wellTrajectories: WellBoreTrajectory_api[]): Record<string, unknown> {
+export function createWellboreTrajectoryLayer(wellTrajectories: WellboreTrajectory_api[]): Record<string, unknown> {
     const features: Record<string, unknown>[] = wellTrajectories.map((wellTrajectory) => {
         return wellTrajectoryToGeojson(wellTrajectory);
     });
@@ -128,7 +128,7 @@ export function createWellboreTrajectoryLayer(wellTrajectories: WellBoreTrajecto
         pickable: true,
     };
 }
-export function wellTrajectoryToGeojson(wellTrajectory: WellBoreTrajectory_api): Record<string, unknown> {
+export function wellTrajectoryToGeojson(wellTrajectory: WellboreTrajectory_api): Record<string, unknown> {
     const point: Record<string, unknown> = {
         type: "Point",
         coordinates: [wellTrajectory.easting_arr[0], wellTrajectory.northing_arr[0], -wellTrajectory.tvd_msl_arr[0]],
@@ -155,7 +155,7 @@ export function wellTrajectoryToGeojson(wellTrajectory: WellBoreTrajectory_api):
 
     return geometryCollection;
 }
-export function createWellBoreHeaderLayer(wellTrajectories: WellBoreTrajectory_api[]): Record<string, unknown> {
+export function createWellBoreHeaderLayer(wellTrajectories: WellboreTrajectory_api[]): Record<string, unknown> {
     const data: Record<string, unknown>[] = wellTrajectories.map((wellTrajectory) => {
         return wellHeaderMarkerToGeojson(
             wellTrajectory.easting_arr[0],

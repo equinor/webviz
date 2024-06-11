@@ -9,6 +9,10 @@ export class ColorSet {
         this._runningIndex = 0;
     }
 
+    getColorPalette(): ColorPalette {
+        return this._colorPalette;
+    }
+
     getColorArray(): string[] {
         return this._colorPalette.getColors();
     }

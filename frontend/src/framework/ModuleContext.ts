@@ -10,12 +10,15 @@
  */
 
 /* eslint-disable react-hooks/rules-of-hooks */
-import React from "react";
-
 import { WritableAtom, useAtom, useAtomValue, useSetAtom } from "jotai";
 
 import { ChannelContentDefinition, KeyKind } from "./DataChannelTypes";
-import { ModuleInstance } from "./ModuleInstance";
+import {
+    ModuleInstance,
+    ModuleInstanceTopic,
+    ModuleInstanceTopicValueTypes,
+    useModuleInstanceTopicValue,
+} from "./ModuleInstance";
 import { ModuleInstanceStatusController } from "./ModuleInstanceStatusController";
 import { StateBaseType, StateStore, useSetStoreValue, useStoreState, useStoreValue } from "./StateStore";
 import { SyncSettingKey } from "./SyncSettings";
@@ -69,19 +72,12 @@ export class ModuleContext<
         return useSetStoreValue(this._stateStore, key);
     }
 
+    useModuleInstanceTopic<T extends ModuleInstanceTopic>(topic: T): ModuleInstanceTopicValueTypes[T] {
+        return useModuleInstanceTopicValue(this._moduleInstance, topic);
+    }
+
     useSyncedSettingKeys(): SyncSettingKey[] {
-        const [keyArr, setKeyArr] = React.useState<SyncSettingKey[]>([]);
-
-        React.useEffect(() => {
-            function handleNewValue(newArr: SyncSettingKey[]) {
-                setKeyArr([...newArr]);
-            }
-
-            const unsubscribeFunc = this._moduleInstance.subscribeToSyncedSettingKeysChange(handleNewValue);
-            return unsubscribeFunc;
-        }, []);
-
-        return keyArr;
+        return useModuleInstanceTopicValue(this._moduleInstance, ModuleInstanceTopic.SYNCED_SETTINGS);
     }
 
     setInstanceTitle(title: string): void {

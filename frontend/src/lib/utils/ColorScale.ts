@@ -15,6 +15,12 @@ export enum ColorScalePlotlyType {
     Map = "map",
 }
 
+export type ColorStop = {
+    offset: number;
+    color: string;
+    value: number;
+};
+
 export type PlotlyMarkerColorScaleObject = {
     colorscale: Array<[number, string]>;
     cmin: number;
@@ -98,7 +104,9 @@ export class ColorScale {
             color = colors[colorIndex];
         } else {
             const normalizedValue = this.calcNormalizedValue(value, this._min, this._max);
-            color = this._colorPalette.getInterpolatedColor(normalizedValue);
+            // Clamp normalized value to [0,1] to avoid out of bounds errors
+            const clampedNormalizedValue = Math.min(Math.max(normalizedValue, 0), 1);
+            color = this._colorPalette.getInterpolatedColor(clampedNormalizedValue);
         }
 
         return color;
@@ -112,8 +120,20 @@ export class ColorScale {
         return this._max;
     }
 
+    getType(): ColorScaleType {
+        return this._type;
+    }
+
+    getGradientType(): ColorScaleGradientType {
+        return this._gradientType;
+    }
+
     getDivMidPoint(): number {
         return this._divMidPoint;
+    }
+
+    getNumSteps(): number {
+        return this._steps;
     }
 
     setRange(min: number, max: number) {
@@ -135,6 +155,39 @@ export class ColorScale {
             colors.push(this._colorPalette.getInterpolatedColor(startPos + (endPos - startPos) / 2));
         }
         return colors;
+    }
+
+    getColorStops(): ColorStop[] {
+        const colorStops: ColorStop[] = [];
+        if (this._gradientType === ColorScaleGradientType.Diverging) {
+            for (let i = 0; i < 50; i++) {
+                const value = this._min + (this._divMidPoint - this._min) * (i / 50);
+                colorStops.push({
+                    offset: (value - this._min) / (this._max - this._min),
+                    color: this.getColorForValue(value),
+                    value,
+                });
+            }
+            for (let i = 50; i <= 100; i++) {
+                const value = this._divMidPoint + (this._max - this._divMidPoint) * ((i - 50) / 50);
+                colorStops.push({
+                    offset: (value - this._min) / (this._max - this._min),
+                    color: this.getColorForValue(value),
+                    value,
+                });
+            }
+        } else {
+            for (let i = 0; i <= 100; i++) {
+                const value = this._min + (this._max - this._min) * (i / 100);
+                colorStops.push({
+                    offset: (value - this._min) / (this._max - this._min),
+                    color: this.getColorForValue(value),
+                    value,
+                });
+            }
+        }
+
+        return colorStops;
     }
 
     getPlotlyColorScale(): [number, string][] {
@@ -197,5 +250,14 @@ export class ColorScale {
                       }
                     : undefined,
         };
+    }
+
+    clone(): ColorScale {
+        return new ColorScale({
+            type: this._type,
+            colorPalette: this._colorPalette,
+            gradientType: this._gradientType,
+            steps: this._steps,
+        });
     }
 }

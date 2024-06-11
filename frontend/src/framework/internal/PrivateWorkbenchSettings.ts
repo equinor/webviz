@@ -74,10 +74,6 @@ export class PrivateWorkbenchSettings extends WorkbenchSettings {
         });
     }
 
-    getColorPalettes(): { [key: string]: ColorPalette[] } {
-        return this._colorPalettes;
-    }
-
     getSelectedColorPalette(type: ColorPaletteType): ColorPalette {
         const colorPalette = this._colorPalettes[type].find((el) => el.getId() === this._selectedColorPalettes[type]);
         if (!colorPalette) {

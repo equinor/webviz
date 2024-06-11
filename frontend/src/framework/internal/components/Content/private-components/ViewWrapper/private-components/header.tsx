@@ -1,9 +1,9 @@
 import React from "react";
 
-import { GuiEvent, GuiMessageBroker } from "@framework/GuiMessageBroker";
-import { ModuleInstance } from "@framework/ModuleInstance";
+import { DrawerContent, GuiEvent, GuiMessageBroker, GuiState } from "@framework/GuiMessageBroker";
+import { ModuleInstance, ModuleInstanceTopic, useModuleInstanceTopicValue } from "@framework/ModuleInstance";
 import { StatusMessageType } from "@framework/ModuleInstanceStatusController";
-import { SyncSettingKey, SyncSettingsMeta } from "@framework/SyncSettings";
+import { SyncSettingsMeta } from "@framework/SyncSettings";
 import { useStatusControllerStateValue } from "@framework/internal/ModuleInstanceStatusControllerInternal";
 import { Badge } from "@lib/components/Badge";
 import { CircularProgress } from "@lib/components/CircularProgress";
@@ -24,10 +24,6 @@ export type HeaderProps = {
 
 export const Header: React.FC<HeaderProps> = (props) => {
     const dataChannelOriginRef = React.useRef<HTMLDivElement>(null);
-    const [syncedSettings, setSyncedSettings] = React.useState<SyncSettingKey[]>(
-        props.moduleInstance.getSyncedSettingKeys()
-    );
-    const [title, setTitle] = React.useState<string>(props.moduleInstance.getTitle());
     const isLoading = useStatusControllerStateValue(props.moduleInstance.getStatusController(), "loading");
     const statusMessages = useStatusControllerStateValue(props.moduleInstance.getStatusController(), "messages");
     const [statusMessagesVisible, setStatusMessagesVisible] = React.useState<boolean>(false);
@@ -35,31 +31,19 @@ export const Header: React.FC<HeaderProps> = (props) => {
     const ref = React.useRef<HTMLDivElement>(null);
     const boundingRect = useElementBoundingRect(ref);
 
-    React.useEffect(
-        function handleMount() {
-            function handleSyncedSettingsChange(newSyncedSettings: SyncSettingKey[]) {
-                setSyncedSettings([...newSyncedSettings]);
-            }
-
-            function handleTitleChange(newTitle: string) {
-                setTitle(newTitle);
-            }
-
-            const unsubscribeFromSyncSettingsChange =
-                props.moduleInstance.subscribeToSyncedSettingKeysChange(handleSyncedSettingsChange);
-            const unsubscribeFromTitleChange = props.moduleInstance.subscribeToTitleChange(handleTitleChange);
-
-            return function handleUnmount() {
-                unsubscribeFromSyncSettingsChange();
-                unsubscribeFromTitleChange();
-            };
-        },
-        [props.moduleInstance]
-    );
+    const syncedSettings = useModuleInstanceTopicValue(props.moduleInstance, ModuleInstanceTopic.SYNCED_SETTINGS);
+    const title = useModuleInstanceTopicValue(props.moduleInstance, ModuleInstanceTopic.TITLE);
 
     function handlePointerDown(e: React.PointerEvent<HTMLDivElement>) {
         props.onPointerDown(e);
         setStatusMessagesVisible(false);
+    }
+
+    function handleDoubleClick(e: React.PointerEvent<HTMLDivElement>) {
+        setStatusMessagesVisible(false);
+        props.guiMessageBroker.setState(GuiState.DrawerContent, DrawerContent.ModuleSettings);
+        e.preventDefault();
+        e.stopPropagation();
     }
 
     function handleDataChannelOriginPointerDown(e: React.PointerEvent<HTMLDivElement>) {
@@ -179,6 +163,7 @@ export const Header: React.FC<HeaderProps> = (props) => {
                 "bg-slate-100": !hasErrors,
             })}
             onPointerDown={handlePointerDown}
+            onDoubleClick={handleDoubleClick}
             ref={ref}
         >
             <div

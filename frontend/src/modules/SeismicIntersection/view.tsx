@@ -4,7 +4,7 @@ import {
     SeismicFencePolyline_api,
     SurfaceIntersectionCumulativeLengthPolyline_api,
     SurfaceIntersectionData_api,
-    WellBorePicksAndStratigraphicUnits_api,
+    WellborePicksAndStratigraphicUnits_api,
 } from "@api";
 import { Controller, IntersectionReferenceSystem, Trajectory } from "@equinor/esv-intersection";
 import { ModuleViewProps } from "@framework/Module";
@@ -12,8 +12,8 @@ import { useViewStatusWriter } from "@framework/StatusWriter";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { ColorScaleGradientType } from "@lib/utils/ColorScale";
 import {
-    useWellTrajectoriesQuery,
     useWellborePicksAndStratigraphicUnitsQuery,
+    useWellboreTrajectoriesQuery,
 } from "@modules/_shared/WellBore/queryHooks";
 import { ContentError } from "@modules/_shared/components/ContentMessage";
 
@@ -105,7 +105,7 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<State>)
     }, []);
 
     // Get well trajectories query
-    const wellTrajectoriesQuery = useWellTrajectoriesQuery(wellboreAddress ? [wellboreAddress.uuid] : undefined);
+    const wellTrajectoriesQuery = useWellboreTrajectoriesQuery(wellboreAddress ? [wellboreAddress.uuid] : undefined);
     if (wellTrajectoriesQuery.isError) {
         statusWriter.addError("Error loading well trajectories");
     }
@@ -197,7 +197,7 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<State>)
     }
 
     // Filter wellbore picks and stratigraphic units based on selected surface names
-    const selectedWellborePicksAndStratigraphicUnits: WellBorePicksAndStratigraphicUnits_api | null =
+    const selectedWellborePicksAndStratigraphicUnits: WellborePicksAndStratigraphicUnits_api | null =
         React.useMemo(() => {
             if (
                 !wellborePicksAndStratigraphicUnitsQuery.data ||

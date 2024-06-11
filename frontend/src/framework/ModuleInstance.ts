@@ -1,4 +1,4 @@
-import { ErrorInfo } from "react";
+import React, { ErrorInfo } from "react";
 
 import { cloneDeep } from "lodash";
 
@@ -24,6 +24,20 @@ export enum ModuleInstanceState {
     ERROR,
     RESETTING,
 }
+
+export enum ModuleInstanceTopic {
+    TITLE = "title",
+    SYNCED_SETTINGS = "synced-settings",
+    STATE = "state",
+    IMPORT_STATE = "import-state",
+}
+
+export type ModuleInstanceTopicValueTypes = {
+    [ModuleInstanceTopic.TITLE]: string;
+    [ModuleInstanceTopic.SYNCED_SETTINGS]: SyncSettingKey[];
+    [ModuleInstanceTopic.STATE]: ModuleInstanceState;
+    [ModuleInstanceTopic.IMPORT_STATE]: ImportState;
+};
 
 export interface ModuleInstanceOptions<
     TStateType extends StateBaseType,
@@ -53,10 +67,7 @@ export class ModuleInstance<
     private _stateStore: StateStore<TStateType> | null;
     private _module: Module<TStateType, TInterfaceType, TSettingsAtomsType, TViewAtomsType>;
     private _context: ModuleContext<TStateType, TInterfaceType, TSettingsAtomsType, TViewAtomsType> | null;
-    private _importStateSubscribers: Set<() => void>;
-    private _moduleInstanceStateSubscribers: Set<(moduleInstanceState: ModuleInstanceState) => void>;
-    private _syncedSettingsSubscribers: Set<(syncedSettings: SyncSettingKey[]) => void>;
-    private _titleChangeSubscribers: Set<(title: string) => void>;
+    private _subscribers: Map<keyof ModuleInstanceTopicValueTypes, Set<() => void>> = new Map();
     private _cachedDefaultState: TStateType | null;
     private _cachedStateStoreOptions?: StateOptions<TStateType>;
     private _initialSettings: InitialSettings | null;
@@ -72,13 +83,9 @@ export class ModuleInstance<
         this._title = options.module.getDefaultTitle();
         this._stateStore = null;
         this._module = options.module;
-        this._importStateSubscribers = new Set();
         this._context = null;
         this._initialised = false;
         this._syncedSettingKeys = [];
-        this._syncedSettingsSubscribers = new Set();
-        this._moduleInstanceStateSubscribers = new Set();
-        this._titleChangeSubscribers = new Set();
         this._moduleInstanceState = ModuleInstanceState.INITIALIZING;
         this._fatalError = null;
         this._cachedDefaultState = null;
@@ -169,7 +176,7 @@ export class ModuleInstance<
 
     addSyncedSetting(settingKey: SyncSettingKey): void {
         this._syncedSettingKeys.push(settingKey);
-        this.notifySubscribersAboutSyncedSettingKeysChange();
+        this.notifySubscribers(ModuleInstanceTopic.SYNCED_SETTINGS);
     }
 
     getSyncedSettingKeys(): SyncSettingKey[] {
@@ -182,18 +189,7 @@ export class ModuleInstance<
 
     removeSyncedSetting(settingKey: SyncSettingKey): void {
         this._syncedSettingKeys = this._syncedSettingKeys.filter((a) => a !== settingKey);
-        this.notifySubscribersAboutSyncedSettingKeysChange();
-    }
-
-    subscribeToSyncedSettingKeysChange(cb: (syncedSettings: SyncSettingKey[]) => void): () => void {
-        this._syncedSettingsSubscribers.add(cb);
-
-        // Trigger callback immediately with our current set of keys
-        cb(this._syncedSettingKeys);
-
-        return () => {
-            this._syncedSettingsSubscribers.delete(cb);
-        };
+        this.notifySubscribers(ModuleInstanceTopic.SYNCED_SETTINGS);
     }
 
     isInitialized(): boolean {
@@ -233,20 +229,50 @@ export class ModuleInstance<
 
     setTitle(title: string): void {
         this._title = title;
-        this.notifySubscribersAboutTitleChange();
+        this.notifySubscribers(ModuleInstanceTopic.TITLE);
     }
 
-    subscribeToTitleChange(cb: (title: string) => void): () => void {
-        this._titleChangeSubscribers.add(cb);
-        return () => {
-            this._titleChangeSubscribers.delete(cb);
+    notifySubscribers(topic: ModuleInstanceTopic): void {
+        const subscribers = this._subscribers.get(topic);
+        if (subscribers) {
+            subscribers.forEach((subscriber) => {
+                subscriber();
+            });
+        }
+    }
+
+    makeSubscriberFunction(topic: ModuleInstanceTopic): (onStoreChangeCallback: () => void) => () => void {
+        // Using arrow function in order to keep "this" in context
+        const subscriber = (onStoreChangeCallback: () => void): (() => void) => {
+            const subscribers = this._subscribers.get(topic) || new Set();
+            subscribers.add(onStoreChangeCallback);
+            this._subscribers.set(topic, subscribers);
+
+            return () => {
+                subscribers.delete(onStoreChangeCallback);
+            };
         };
+
+        return subscriber;
     }
 
-    notifySubscribersAboutTitleChange(): void {
-        this._titleChangeSubscribers.forEach((subscriber) => {
-            subscriber(this._title);
-        });
+    makeSnapshotGetter<T extends ModuleInstanceTopic>(topic: T): () => ModuleInstanceTopicValueTypes[T] {
+        const snapshotGetter = (): any => {
+            if (topic === ModuleInstanceTopic.TITLE) {
+                return this.getTitle();
+            }
+            if (topic === ModuleInstanceTopic.SYNCED_SETTINGS) {
+                return this.getSyncedSettingKeys();
+            }
+            if (topic === ModuleInstanceTopic.STATE) {
+                return this.getModuleInstanceState();
+            }
+            if (topic === ModuleInstanceTopic.IMPORT_STATE) {
+                return this.getImportState();
+            }
+        };
+
+        return snapshotGetter;
     }
 
     getModule(): Module<TStateType, TInterfaceType, TSettingsAtomsType, TViewAtomsType> {
@@ -257,41 +283,9 @@ export class ModuleInstance<
         return this._statusController;
     }
 
-    subscribeToImportStateChange(cb: () => void): () => void {
-        this._importStateSubscribers.add(cb);
-        return () => {
-            this._importStateSubscribers.delete(cb);
-        };
-    }
-
-    notifySubscribersAboutImportStateChange(): void {
-        this._importStateSubscribers.forEach((subscriber) => {
-            subscriber();
-        });
-    }
-
-    notifySubscribersAboutSyncedSettingKeysChange(): void {
-        this._syncedSettingsSubscribers.forEach((subscriber) => {
-            subscriber(this._syncedSettingKeys);
-        });
-    }
-
-    subscribeToModuleInstanceStateChange(cb: () => void): () => void {
-        this._moduleInstanceStateSubscribers.add(cb);
-        return () => {
-            this._moduleInstanceStateSubscribers.delete(cb);
-        };
-    }
-
-    notifySubscribersAboutModuleInstanceStateChange(): void {
-        this._moduleInstanceStateSubscribers.forEach((subscriber) => {
-            subscriber(this._moduleInstanceState);
-        });
-    }
-
     private setModuleInstanceState(moduleInstanceState: ModuleInstanceState): void {
         this._moduleInstanceState = moduleInstanceState;
-        this.notifySubscribersAboutModuleInstanceStateChange();
+        this.notifySubscribers(ModuleInstanceTopic.STATE);
     }
 
     getModuleInstanceState(): ModuleInstanceState {
@@ -329,4 +323,16 @@ export class ModuleInstance<
     getInitialSettings(): InitialSettings | null {
         return this._initialSettings;
     }
+}
+
+export function useModuleInstanceTopicValue<T extends ModuleInstanceTopic>(
+    moduleInstance: ModuleInstance<any, any, any, any>,
+    topic: T
+): ModuleInstanceTopicValueTypes[T] {
+    const value = React.useSyncExternalStore<ModuleInstanceTopicValueTypes[T]>(
+        moduleInstance.makeSubscriberFunction(topic),
+        moduleInstance.makeSnapshotGetter(topic)
+    );
+
+    return value;
 }

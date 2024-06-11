@@ -1,10 +1,13 @@
 import React from "react";
 
+import { Viewport } from "@framework/components/EsvIntersection/esvIntersection";
+
 import { isEqual } from "lodash";
 
 import { EnsembleIdent } from "./EnsembleIdent";
-import { Wellbore } from "./Wellbore";
 import { Workbench } from "./Workbench";
+import { Intersection } from "./types/intersection";
+import { Wellbore } from "./types/wellbore";
 
 export type NavigatorTopicDefinitions = {
     "navigator.dummyPlaceholder": string;
@@ -14,6 +17,7 @@ export type GlobalTopicDefinitions = {
     "global.infoMessage": string;
     "global.hoverRealization": { realization: number } | null;
     "global.hoverTimestamp": { timestampUtcMs: number } | null;
+    "global.hoverMd": { wellboreUuid: string; md: number } | null;
 
     "global.syncValue.ensembles": EnsembleIdent[];
     "global.syncValue.date": { timeOrInterval: string };
@@ -26,6 +30,9 @@ export type GlobalTopicDefinitions = {
         rotationOrbit: number;
     };
     "global.syncValue.wellBore": Wellbore;
+    "global.syncValue.intersection": Intersection;
+    "global.syncValue.cameraPositionIntersection": Viewport;
+    "global.syncValue.verticalScale": number;
 };
 
 export type AllTopicDefinitions = NavigatorTopicDefinitions & GlobalTopicDefinitions;
@@ -36,11 +43,16 @@ export type TopicDefinitionsType<T extends keyof AllTopicDefinitions> = T extend
     ? NavigatorTopicDefinitions[T]
     : never;
 
+export type SubscriberCallbackElement<T extends keyof AllTopicDefinitions> = {
+    subscriberId?: string;
+    callbackFn: CallbackFunction<T>;
+};
+
 export type CallbackFunction<T extends keyof AllTopicDefinitions> = (value: AllTopicDefinitions[T] | null) => void;
 
 export class WorkbenchServices {
     protected _workbench: Workbench;
-    protected _subscribersMap: Map<string, Set<CallbackFunction<any>>>;
+    protected _subscribersMap: Map<string, Set<SubscriberCallbackElement<any>>>;
     protected _topicValueCache: Map<string, any>;
 
     protected constructor(workbench: Workbench) {
@@ -49,9 +61,13 @@ export class WorkbenchServices {
         this._topicValueCache = new Map();
     }
 
-    subscribe<T extends keyof AllTopicDefinitions>(topic: T, callbackFn: CallbackFunction<T>) {
+    subscribe<T extends keyof AllTopicDefinitions>(topic: T, callbackFn: CallbackFunction<T>, subscriberId?: string) {
         const subscribersSet = this._subscribersMap.get(topic) || new Set();
-        subscribersSet.add(callbackFn);
+        const newElement = {
+            subscriberId,
+            callbackFn,
+        };
+        subscribersSet.add(newElement);
         this._subscribersMap.set(topic, subscribersSet);
 
         // If we already have a value for this topic, trigger the callback immediately
@@ -61,15 +77,23 @@ export class WorkbenchServices {
         }
 
         return () => {
-            subscribersSet.delete(callbackFn);
+            subscribersSet.delete(newElement);
         };
     }
 
-    publishGlobalData<T extends keyof GlobalTopicDefinitions>(topic: T, value: TopicDefinitionsType<T>) {
-        this.internalPublishAnyTopic(topic, value);
+    publishGlobalData<T extends keyof GlobalTopicDefinitions>(
+        topic: T,
+        value: TopicDefinitionsType<T>,
+        publisherId?: string
+    ) {
+        this.internalPublishAnyTopic(topic, value, publisherId);
     }
 
-    protected internalPublishAnyTopic<T extends keyof AllTopicDefinitions>(topic: T, value: TopicDefinitionsType<T>) {
+    protected internalPublishAnyTopic<T extends keyof AllTopicDefinitions>(
+        topic: T,
+        value: TopicDefinitionsType<T>,
+        publisherId?: string
+    ) {
         // Always do compression so that if the value is the same as the last value, don't publish
         // Serves as a sensible default behavior until we see a need for more complex behavior
         if (this._topicValueCache.has(topic)) {
@@ -85,15 +109,18 @@ export class WorkbenchServices {
         if (!subscribersSet) {
             return;
         }
-        for (const callbackFn of subscribersSet) {
-            callbackFn(value);
+        for (const { subscriberId, callbackFn } of subscribersSet) {
+            if (subscriberId === undefined || publisherId === undefined || subscriberId !== publisherId) {
+                callbackFn(value);
+            }
         }
     }
 }
 
 export function useSubscribedValue<T extends keyof AllTopicDefinitions>(
     topic: T,
-    workbenchServices: WorkbenchServices
+    workbenchServices: WorkbenchServices,
+    subscriberId?: string
 ): AllTopicDefinitions[T] | null {
     const [latestValue, setLatestValue] = React.useState<AllTopicDefinitions[T] | null>(null);
 
@@ -102,10 +129,10 @@ export function useSubscribedValue<T extends keyof AllTopicDefinitions>(
             function handleNewValue(newValue: AllTopicDefinitions[T] | null) {
                 setLatestValue(newValue);
             }
-            const unsubscribeFunc = workbenchServices.subscribe(topic, handleNewValue);
+            const unsubscribeFunc = workbenchServices.subscribe(topic, handleNewValue, subscriberId);
             return unsubscribeFunc;
         },
-        [topic, workbenchServices]
+        [topic, workbenchServices, subscriberId]
     );
 
     return latestValue;
@@ -114,7 +141,8 @@ export function useSubscribedValue<T extends keyof AllTopicDefinitions>(
 export function useSubscribedValueConditionally<T extends keyof AllTopicDefinitions>(
     topic: T,
     enable: boolean,
-    workbenchServices: WorkbenchServices
+    workbenchServices: WorkbenchServices,
+    subscriberId?: string
 ): AllTopicDefinitions[T] | null {
     const [latestValue, setLatestValue] = React.useState<AllTopicDefinitions[T] | null>(null);
 
@@ -129,12 +157,12 @@ export function useSubscribedValueConditionally<T extends keyof AllTopicDefiniti
                 setLatestValue(newValue);
             }
 
-            const unsubscribeFunc = workbenchServices.subscribe(topic, handleNewValue);
+            const unsubscribeFunc = workbenchServices.subscribe(topic, handleNewValue, subscriberId);
             return () => {
                 unsubscribeFunc();
             };
         },
-        [topic, enable, workbenchServices]
+        [topic, enable, workbenchServices, subscriberId]
     );
 
     return latestValue;

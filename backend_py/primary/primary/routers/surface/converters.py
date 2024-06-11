@@ -88,6 +88,10 @@ def _sort_by_stratigraphical_order(
                     stratigraphic_identifier=strat_surface.strat_unit_identifier,
                     attribute_name=sumo_surface_meta.tagname,
                     attribute_type=schemas.SurfaceAttributeType(sumo_surface_meta.content.value),
+                    x_min=sumo_surface_meta.xmin,
+                    x_max=sumo_surface_meta.xmax,
+                    y_min=sumo_surface_meta.ymin,
+                    y_max=sumo_surface_meta.ymax,
                 )
                 surface_metas_with_official_strat_name.append(surface_meta)
 
@@ -107,6 +111,10 @@ def _sort_by_stratigraphical_order(
                 stratigraphic_identifier=None,
                 attribute_name=sumo_surface_meta.tagname,
                 attribute_type=schemas.SurfaceAttributeType(sumo_surface_meta.content.value),
+                x_min=sumo_surface_meta.xmin,
+                x_max=sumo_surface_meta.xmax,
+                y_min=sumo_surface_meta.ymin,
+                y_max=sumo_surface_meta.ymax,
             )
 
             surface_metas_with_custom_names.append(surface_meta)

@@ -1,13 +1,13 @@
 from typing import List
 
-from primary.services.smda_access.types import WellBorePick, StratigraphicUnit
+from primary.services.smda_access.types import WellborePick, StratigraphicUnit
 
 from . import schemas
 
 
-def convert_wellbore_picks_to_schema(wellbore_picks: List[WellBorePick]) -> List[schemas.WellBorePick]:
+def convert_wellbore_picks_to_schema(wellbore_picks: List[WellborePick]) -> List[schemas.WellborePick]:
     return [
-        schemas.WellBorePick(
+        schemas.WellborePick(
             northing=pick.northing,
             easting=pick.easting,
             tvd=pick.tvd,

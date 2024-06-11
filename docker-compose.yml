@@ -29,12 +29,14 @@ services:
       - WEBVIZ_CLIENT_SECRET
       - WEBVIZ_SMDA_RESOURCE_SCOPE
       - WEBVIZ_SMDA_SUBSCRIPTION_KEY
+      - WEBVIZ_ENTERPRISE_SUBSCRIPTION_KEY
+      - WEBVIZ_SSDL_RESOURCE_SCOPE
       - WEBVIZ_SUMO_ENV
       - WEBVIZ_VDS_HOST_ADDRESS
       - APPLICATIONINSIGHTS_CONNECTION_STRING
       - OTEL_SERVICE_NAME=primary-backend
       - OTEL_RESOURCE_ATTRIBUTES=service.namespace=local, service.version=dummy0.1.2
-      - CODESPACE_NAME  # Automatically set env. variable by GitHub codespace
+      - CODESPACE_NAME # Automatically set env. variable by GitHub codespace
     volumes:
       - ./backend_py/primary/primary:/home/appuser/backend_py/primary/primary
       - ./backend_py/libs:/home/appuser/backend_py/libs

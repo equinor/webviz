@@ -3,7 +3,7 @@ from typing import List, Optional
 from pydantic import BaseModel
 
 
-class WellBorePick(BaseModel):
+class WellborePick(BaseModel):
     """
     Wellbore pick from SMDA
 
@@ -23,7 +23,7 @@ class WellBorePick(BaseModel):
     md_unit: str
 
 
-class WellBoreTrajectory(BaseModel):
+class WellboreTrajectory(BaseModel):
     wellbore_uuid: str
     unique_wellbore_identifier: str
     tvd_msl_arr: List[float]
@@ -32,13 +32,15 @@ class WellBoreTrajectory(BaseModel):
     northing_arr: List[float]
 
 
-class WellBoreHeader(BaseModel):
+class WellboreHeader(BaseModel):
     wellbore_uuid: str
     unique_wellbore_identifier: str
     well_uuid: str
     unique_well_identifier: str
     well_easting: float
     well_northing: float
+    depth_reference_point: str
+    depth_reference_elevation: float
 
 
 class StratigraphicUnit(BaseModel):

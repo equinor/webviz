@@ -1,6 +1,33 @@
-from typing import Tuple
+from typing import Tuple, Optional
 
 from sumo.wrapper import SumoClient
+from fmu.sumo.explorer import TimeFilter, TimeType
+from fmu.sumo.explorer._utils import Utils
+
+
+def get_time_filter(time_or_interval_str: Optional[str]) -> TimeFilter:
+    if time_or_interval_str is None:
+        time_filter = TimeFilter(TimeType.NONE)
+
+    else:
+        timestamp_arr = time_or_interval_str.split("/", 1)
+        if len(timestamp_arr) == 0 or len(timestamp_arr) > 2:
+            raise ValueError("time_or_interval_str must contain a single timestamp or interval")
+        if len(timestamp_arr) == 1:
+            time_filter = TimeFilter(
+                TimeType.TIMESTAMP,
+                start=timestamp_arr[0],
+                end=timestamp_arr[0],
+                exact=True,
+            )
+        else:
+            time_filter = TimeFilter(
+                TimeType.INTERVAL,
+                start=timestamp_arr[0],
+                end=timestamp_arr[1],
+                exact=True,
+            )
+    return time_filter
 
 
 async def get_grid_geometry_blob_id_async(
@@ -40,40 +67,50 @@ async def get_grid_geometry_and_property_blob_ids_async(
     iteration: str,
     realization: int,
     grid_name: str,
-    property_name: str,
+    parameter_name: str,
+    parameter_time_or_interval_str: Optional[str] = None,
 ) -> Tuple[str, str]:
     """Get the blob ids for both grid geometry and grid property in a case, iteration, and realization"""
+    query = {
+        "bool": {
+            "should": [
+                {
+                    "bool": {
+                        "must": [
+                            {"match": {"_sumo.parent_object.keyword": case_id}},
+                            {"match": {"class": "cpgrid"}},
+                            {"match": {"fmu.iteration.name": iteration}},
+                            {"match": {"fmu.realization.id": realization}},
+                            {"match": {"data.name.keyword": grid_name}},
+                        ]
+                    }
+                },
+                {
+                    "bool": {
+                        "must": [
+                            {"match": {"_sumo.parent_object.keyword": case_id}},
+                            {"match": {"class": "cpgrid_property"}},
+                            {"match": {"fmu.iteration.name": iteration}},
+                            {"match": {"fmu.realization.id": realization}},
+                            {"match": {"data.name.keyword": parameter_name}},
+                            {"match": {"data.tagname.keyword": grid_name}},
+                        ]
+                    }
+                },
+            ],
+            "minimum_should_match": 1,
+        }
+    }
+
+    time_filter = get_time_filter(parameter_time_or_interval_str)
+
+    if time_filter.time_type != TimeType.NONE:
+        query["bool"]["should"][1]["bool"]["must"].append({"term": {"data.time.t0.value": time_filter.start}})
+    if time_filter.time_type == TimeType.INTERVAL:
+        query["bool"]["should"][1]["bool"]["must"].append({"term": {"data.time.t1.value": time_filter.end}})
+
     payload = {
-        "query": {
-            "bool": {
-                "should": [
-                    {
-                        "bool": {
-                            "must": [
-                                {"match": {"_sumo.parent_object.keyword": case_id}},
-                                {"match": {"class": "cpgrid"}},
-                                {"match": {"fmu.iteration.name": iteration}},
-                                {"match": {"fmu.realization.id": realization}},
-                                {"match": {"data.name.keyword": grid_name}},
-                            ]
-                        }
-                    },
-                    {
-                        "bool": {
-                            "must": [
-                                {"match": {"_sumo.parent_object.keyword": case_id}},
-                                {"match": {"class": "cpgrid_property"}},
-                                {"match": {"fmu.iteration.name": iteration}},
-                                {"match": {"fmu.realization.id": realization}},
-                                {"match": {"data.name.keyword": property_name}},
-                                {"match": {"data.tagname.keyword": grid_name}},
-                            ]
-                        }
-                    },
-                ],
-                "minimum_should_match": 1,
-            }
-        },
+        "query": query,
         "size": 2,
     }
     response = await sumo_client.post_async("/search", json=payload)

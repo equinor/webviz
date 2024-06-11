@@ -1,8 +1,7 @@
-import { Wellbore } from "@framework/Wellbore";
+import { StatisticFunction_api } from "@api";
+import { Wellbore } from "@framework/types/wellbore";
 
 import { IntersectionSettings, SurfaceSetAddress, VisualizationMode } from "./types";
-import { StatisticFunction_api } from "@api";
-
 
 export interface State {
     wellboreAddress: Wellbore | null;
@@ -12,5 +11,3 @@ export interface State {
     statisticFunctions: StatisticFunction_api[];
     intersectionSettings: IntersectionSettings;
 }
-
-

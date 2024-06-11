@@ -1,4 +1,4 @@
-import { SurfaceIntersectionData_api, WellBorePicksAndStratigraphicUnits_api, WellBoreTrajectory_api } from "@api";
+import { SurfaceIntersectionData_api, WellborePicksAndStratigraphicUnits_api, WellboreTrajectory_api } from "@api";
 import { IntersectionReferenceSystem, Trajectory } from "@equinor/esv-intersection";
 
 import { SurfaceIntersectionData } from "./esvIntersectionControllerUtils";
@@ -114,7 +114,7 @@ function addStartAndEndPointsToTrajectoryForVerticalLine(
  * @param wellboreTrajectory - Wellbore trajectory object
  * @returns Array of 3D coordinates [x,y,z] - with [x,y,z] = [easting, northing, tvd_msl]
  */
-export function makeTrajectoryXyzPointsFromWellboreTrajectory(wellboreTrajectory: WellBoreTrajectory_api): number[][] {
+export function makeTrajectoryXyzPointsFromWellboreTrajectory(wellboreTrajectory: WellboreTrajectory_api): number[][] {
     const eastingArr = wellboreTrajectory.easting_arr;
     const northingArr = wellboreTrajectory.northing_arr;
     const tvdArr = wellboreTrajectory.tvd_msl_arr;
@@ -234,7 +234,7 @@ export function createEsvSurfaceIntersectionDataArrayFromSurfaceIntersectionData
  * Converts the API data to the format required by the esv intersection layer.
  */
 export function createEsvWellborePicksAndStratigraphicUnits(
-    wellborePicksAndStratigraphicUnits_api: WellBorePicksAndStratigraphicUnits_api
+    wellborePicksAndStratigraphicUnits_api: WellborePicksAndStratigraphicUnits_api
 ): { wellborePicks: Pick[]; stratigraphicUnits: Unit[] } {
     const wellborePicks: Pick[] = wellborePicksAndStratigraphicUnits_api.wellbore_picks.map((pick) => {
         return {

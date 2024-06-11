@@ -1,6 +1,6 @@
 from typing import List, Optional
 
-from ..types import WellBorePick
+from ..types import WellborePick
 from ._get_request import get
 
 
@@ -9,7 +9,7 @@ async def get_picks_for_wellbore(
     wellbore_uuid: str,
     pick_identifier: Optional[str] = None,
     interpreter: str = "STAT",
-) -> List[WellBorePick]:
+) -> List[WellborePick]:
     """
     Returns wellbore picks for a given wellbore uuid. I.e. picks for each pick identifier (surface)
     with the matching wellbore uuid.
@@ -27,5 +27,5 @@ async def get_picks_for_wellbore(
         params["pick_identifier"] = pick_identifier
 
     results = await get(access_token=access_token, endpoint=endpoint, params=params)
-    picks = [WellBorePick(**result) for result in results]
+    picks = [WellborePick(**result) for result in results]
     return picks

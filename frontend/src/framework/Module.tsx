@@ -7,7 +7,7 @@ import { ChannelDefinition, ChannelReceiverDefinition } from "./DataChannelTypes
 import { InitialSettings } from "./InitialSettings";
 import { SettingsContext, ViewContext } from "./ModuleContext";
 import { ModuleDataTagId } from "./ModuleDataTags";
-import { ModuleInstance } from "./ModuleInstance";
+import { ModuleInstance, ModuleInstanceTopic } from "./ModuleInstance";
 import { DrawPreviewFunc } from "./Preview";
 import { StateBaseType, StateOptions } from "./StateStore";
 import { SyncSettingKey } from "./SyncSettings";
@@ -250,7 +250,7 @@ export class Module<
     private setImportState(state: ImportState): void {
         this._importState = state;
         this._moduleInstances.forEach((instance) => {
-            instance.notifySubscribersAboutImportStateChange();
+            instance.notifySubscribers(ModuleInstanceTopic.IMPORT_STATE);
         });
 
         if (this._workbench && state === ImportState.Imported) {

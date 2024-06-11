@@ -3,8 +3,11 @@ import React from "react";
 import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
 import { createPortal } from "@lib/utils/createPortal";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
+import { convertRemToPixels } from "@lib/utils/screenUnitConversions";
 import { getTextWidthWithFont } from "@lib/utils/textSize";
-import { ExpandLess, ExpandMore } from "@mui/icons-material";
+import { ArrowDropDown, ArrowDropUp, ExpandLess, ExpandMore } from "@mui/icons-material";
+
+import { isEqual } from "lodash";
 
 import { BaseComponent, BaseComponentProps } from "../BaseComponent";
 import { IconButton } from "../IconButton";
@@ -27,6 +30,8 @@ export type DropdownProps = {
     onChange?: (value: string) => void;
     filter?: boolean;
     width?: string | number;
+    showArrows?: boolean;
+    debounceTimeMs?: number;
 } & BaseComponentProps;
 
 const defaultProps = {
@@ -60,6 +65,8 @@ export const Dropdown = withDefaults<DropdownProps>()(defaultProps, (props) => {
     });
     const [filter, setFilter] = React.useState<string | null>(null);
     const [selection, setSelection] = React.useState<string | number>(props.value);
+    const [prevValue, setPrevValue] = React.useState<string | number>(props.value);
+    const [prevFilteredOptions, setPrevFilteredOptions] = React.useState<DropdownOption[]>(props.options);
     const [selectionIndex, setSelectionIndex] = React.useState<number>(-1);
     const [filteredOptions, setFilteredOptions] = React.useState<DropdownOption[]>(props.options);
     const [optionIndexWithFocus, setOptionIndexWithFocus] = React.useState<number>(-1);
@@ -68,6 +75,7 @@ export const Dropdown = withDefaults<DropdownProps>()(defaultProps, (props) => {
 
     const inputRef = React.useRef<HTMLInputElement>(null);
     const dropdownRef = React.useRef<HTMLDivElement>(null);
+    const debounceTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
     const inputBoundingRect = useElementBoundingRect(inputRef);
 
@@ -80,12 +88,16 @@ export const Dropdown = withDefaults<DropdownProps>()(defaultProps, (props) => {
         [filteredOptions, selection]
     );
 
-    React.useEffect(
-        function handleValueChange() {
-            setSelection(props.value);
-        },
-        [props.value]
-    );
+    if (prevValue !== props.value) {
+        setSelection(props.value);
+        setSelectionIndex(props.options.findIndex((option) => option.value === props.value));
+        setPrevValue(props.value);
+    }
+
+    if (!isEqual(prevFilteredOptions, filteredOptions)) {
+        setOptionIndexWithFocusToCurrentSelection();
+        setPrevFilteredOptions(filteredOptions);
+    }
 
     React.useEffect(
         function handleOptionsChange() {
@@ -116,8 +128,10 @@ export const Dropdown = withDefaults<DropdownProps>()(defaultProps, (props) => {
         function updateDropdownRectWidth() {
             let longestOptionWidth = props.options.reduce((prev, current) => {
                 const labelWidth = getTextWidthWithFont(current.label, "Equinor", 1);
-                if (labelWidth > prev) {
-                    return labelWidth;
+                const adornmentWidth = current.adornment ? convertRemToPixels((5 + 2) / 4) : 0;
+                const totalWidth = labelWidth + adornmentWidth;
+                if (totalWidth > prev) {
+                    return totalWidth;
                 }
                 return prev;
             }, 0);
@@ -195,6 +209,23 @@ export const Dropdown = withDefaults<DropdownProps>()(defaultProps, (props) => {
         ]
     );
 
+    const handleOnChange = React.useCallback(
+        function handleOnChange(value: string) {
+            if (!onChange) {
+                return;
+            }
+
+            if (debounceTimerRef.current) {
+                clearTimeout(debounceTimerRef.current);
+            }
+
+            debounceTimerRef.current = setTimeout(() => {
+                onChange(value);
+            }, props.debounceTimeMs ?? 0);
+        },
+        [onChange, props.debounceTimeMs]
+    );
+
     const handleOptionClick = React.useCallback(
         function handleOptionClick(value: string) {
             setSelection(value);
@@ -202,13 +233,11 @@ export const Dropdown = withDefaults<DropdownProps>()(defaultProps, (props) => {
             setDropdownVisible(false);
             setFilter(null);
             setFilteredOptions(props.options);
-            if (onChange) {
-                onChange(value);
-            }
             setOptionIndexWithFocus(-1);
+
+            handleOnChange(value);
         },
         [
-            onChange,
             props.options,
             setOptionIndexWithFocus,
             setSelectionIndex,
@@ -216,6 +245,7 @@ export const Dropdown = withDefaults<DropdownProps>()(defaultProps, (props) => {
             setFilter,
             setFilteredOptions,
             setSelection,
+            handleOnChange,
         ]
     );
 
@@ -310,23 +340,80 @@ export const Dropdown = withDefaults<DropdownProps>()(defaultProps, (props) => {
         return selectedOption?.adornment || null;
     }
 
+    function handleSelectPreviousOption() {
+        const newIndex = Math.max(0, selectionIndex - 1);
+        const newValue = filteredOptions[newIndex].value;
+        setSelectionIndex(newIndex);
+        setSelection(newValue);
+        handleOnChange(newValue);
+        setOptionIndexWithFocus(-1);
+    }
+
+    function handleSelectNextOption() {
+        const newIndex = Math.min(filteredOptions.length - 1, selectionIndex + 1);
+        const newValue = filteredOptions[newIndex].value;
+        setSelectionIndex(newIndex);
+        setSelection(newValue);
+        handleOnChange(newValue);
+        setOptionIndexWithFocus(-1);
+    }
+
     return (
         <BaseComponent disabled={props.disabled}>
-            <div style={{ width: props.width }} id={props.wrapperId}>
-                <Input
-                    ref={inputRef}
-                    id={props.id}
-                    error={selection !== "" && props.options.find((option) => option.value === selection) === undefined}
-                    onClick={() => handleInputClick()}
-                    startAdornment={makeInputAdornment()}
-                    endAdornment={
-                        <IconButton size="small" onClick={() => setDropdownVisible((prev) => !prev)}>
-                            {dropdownVisible ? <ExpandLess /> : <ExpandMore />}
-                        </IconButton>
-                    }
-                    onChange={handleInputChange}
-                    value={makeInputValue()}
-                />
+            <div style={{ width: props.width }} id={props.wrapperId} className="flex">
+                <div className="flex-grow">
+                    <Input
+                        ref={inputRef}
+                        id={props.id}
+                        error={
+                            selection !== "" &&
+                            props.options.find((option) => option.value === selection) === undefined &&
+                            props.options.length > 0
+                        }
+                        onClick={() => handleInputClick()}
+                        startAdornment={makeInputAdornment()}
+                        endAdornment={
+                            <IconButton size="small" onClick={() => setDropdownVisible((prev) => !prev)}>
+                                {dropdownVisible ? (
+                                    <ExpandLess fontSize="inherit" />
+                                ) : (
+                                    <ExpandMore fontSize="inherit" />
+                                )}
+                            </IconButton>
+                        }
+                        onChange={handleInputChange}
+                        value={makeInputValue()}
+                        rounded={props.showArrows ? "left" : "all"}
+                    />
+                </div>
+                {props.showArrows && (
+                    <div className="flex flex-col h-full text-xs rounded-r">
+                        <div
+                            className={resolveClassNames(
+                                "border border-gray-300 hover:bg-blue-100 rounded-tr cursor-pointer",
+                                {
+                                    "pointer-events-none": selectionIndex <= 0,
+                                    "text-gray-400": selectionIndex <= 0,
+                                }
+                            )}
+                            onClick={handleSelectPreviousOption}
+                        >
+                            <ArrowDropUp fontSize="inherit" />
+                        </div>
+                        <div
+                            className={resolveClassNames(
+                                "border border-gray-300 hover:bg-blue-100 rounded-tr cursor-pointer",
+                                {
+                                    "pointer-events-none": selectionIndex >= filteredOptions.length - 1,
+                                    "text-gray-400": selectionIndex >= filteredOptions.length - 1,
+                                }
+                            )}
+                            onClick={handleSelectNextOption}
+                        >
+                            <ArrowDropDown fontSize="inherit" />
+                        </div>
+                    </div>
+                )}
                 {dropdownVisible &&
                     createPortal(
                         <div
@@ -379,7 +466,11 @@ export const Dropdown = withDefaults<DropdownProps>()(defaultProps, (props) => {
                                         title={option.label}
                                     >
                                         <span className="whitespace-nowrap text-ellipsis overflow-hidden min-w-0 flex gap-2">
-                                            {option.adornment}
+                                            {option.adornment && (
+                                                <span className="max-w-5 max-h-5 overflow-hidden">
+                                                    {option.adornment}
+                                                </span>
+                                            )}
                                             {option.label}
                                         </span>
                                     </div>

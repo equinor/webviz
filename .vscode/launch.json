@@ -1,23 +1,23 @@
 {
-  "configurations": [
-    {
-      "name": "Python: Remote Attach",
-      "type": "python",
-      "request": "attach",
-      "connect": { "host": "localhost", "port": 5678 },
-      "pathMappings": [
+    "configurations": [
         {
-          "localRoot": "${workspaceFolder}/backend_py/primary",
-          "remoteRoot": "/home/appuser/backend_py/primary"
+            "name": "Python: Remote Attach",
+            "type": "python",
+            "request": "attach",
+            "connect": { "host": "localhost", "port": 5678 },
+            "pathMappings": [
+                {
+                    "localRoot": "${workspaceFolder}/backend_py/primary",
+                    "remoteRoot": "/home/appuser/backend_py/primary"
+                }
+            ]
+        },
+        {
+            "name": "TS: Launch Chrome and Attach",
+            "request": "launch",
+            "type": "chrome",
+            "webRoot": "${workspaceFolder}/frontend",
+            "url": "http://localhost:8080"
         }
-      ]
-    },
-    {
-      "name": "TS: Launch Chrome and Attach",
-      "request": "launch",
-      "type": "chrome",
-      "webRoot": "${workspaceFolder}/frontend",
-      "url": "http://localhost:8080"
-    }
-  ]
+    ]
 }

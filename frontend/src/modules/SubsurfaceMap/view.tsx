@@ -1,15 +1,15 @@
 import React from "react";
 
-import { PolygonData_api, WellBoreTrajectory_api } from "@api";
+import { PolygonData_api, WellboreTrajectory_api } from "@api";
 import { ContinuousLegend } from "@emerson-eps/color-tables";
 import { ModuleViewProps } from "@framework/Module";
 import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
-import { Wellbore } from "@framework/Wellbore";
+import { Wellbore } from "@framework/types/wellbore";
 import { Button } from "@lib/components/Button";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { ColorScaleGradientType } from "@lib/utils/ColorScale";
 import { usePolygonsDataQueryByAddress } from "@modules/_shared/Polygons";
-import { useFieldWellsTrajectoriesQuery } from "@modules/_shared/WellBore/queryHooks";
+import { useFieldWellboreTrajectoriesQuery } from "@modules/_shared/WellBore/queryHooks";
 import { useSurfaceDataQueryByAddress } from "@modules_shared/Surface";
 import { ViewAnnotation } from "@webviz/subsurface-viewer/dist/components/ViewAnnotation";
 
@@ -88,7 +88,7 @@ export function View({ viewContext, workbenchSettings, workbenchServices }: Modu
     const hasMeshSurfData = meshSurfDataQuery?.data ? true : false;
     const propertySurfDataQuery = usePropertySurfaceDataByQueryAddress(meshSurfAddr, propertySurfAddr, hasMeshSurfData);
 
-    const wellTrajectoriesQuery = useFieldWellsTrajectoriesQuery(meshSurfAddr?.caseUuid);
+    const wellTrajectoriesQuery = useFieldWellboreTrajectoriesQuery(meshSurfAddr?.caseUuid);
     const polygonsQuery = usePolygonsDataQueryByAddress(polygonsAddr);
 
     const newLayers: Record<string, unknown>[] = [createNorthArrowLayer()];
@@ -154,7 +154,7 @@ export function View({ viewContext, workbenchSettings, workbenchServices }: Modu
         newLayers.push(polygonsLayer);
     }
     if (wellTrajectoriesQuery.data) {
-        const wellTrajectories: WellBoreTrajectory_api[] = wellTrajectoriesQuery.data.filter((well) =>
+        const wellTrajectories: WellboreTrajectory_api[] = wellTrajectoriesQuery.data.filter((well) =>
             selectedWellUuids.includes(well.wellbore_uuid)
         );
         const wellTrajectoryLayer: Record<string, unknown> = createWellboreTrajectoryLayer(wellTrajectories);

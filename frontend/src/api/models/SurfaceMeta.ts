@@ -17,5 +17,9 @@ export type SurfaceMeta = {
     is_observation: boolean;
     value_min: (number | null);
     value_max: (number | null);
+    x_min: (number | null);
+    x_max: (number | null);
+    y_min: (number | null);
+    y_max: (number | null);
 };
 

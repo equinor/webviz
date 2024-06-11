@@ -76,6 +76,10 @@ class SurfaceAccess:
                 is_stratigraphic=surf["data"]["stratigraphic"],
                 zmin=surf["data"]["bbox"]["zmin"],
                 zmax=surf["data"]["bbox"]["zmax"],
+                xmin=surf["data"]["bbox"]["xmin"],
+                xmax=surf["data"]["bbox"]["xmax"],
+                ymin=surf["data"]["bbox"]["ymin"],
+                ymax=surf["data"]["bbox"]["ymax"],
             )
 
             surfs.append(surf_meta)
