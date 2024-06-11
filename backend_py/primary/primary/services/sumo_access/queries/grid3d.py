@@ -1,4 +1,4 @@
-from typing import Tuple, Optional
+from typing import Any, Dict, Tuple, Optional
 
 from sumo.wrapper import SumoClient
 from fmu.sumo.explorer import TimeFilter, TimeType
@@ -70,7 +70,7 @@ async def get_grid_geometry_and_property_blob_ids_async(
     parameter_time_or_interval_str: Optional[str] = None,
 ) -> Tuple[str, str]:
     """Get the blob ids for both grid geometry and grid property in a case, iteration, and realization"""
-    query = {
+    query: Dict[str, Any] = {
         "bool": {
             "should": [
                 {

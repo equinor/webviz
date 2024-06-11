@@ -42,7 +42,11 @@ async def get_drilled_wellbore_headers(
     else:
         well_access = SmdaWellAccess(authenticated_user.get_smda_access_token())
 
-    return await well_access.get_wellbore_headers(field_identifier=field_identifier)
+    wellbore_headers = await well_access.get_wellbore_headers(field_identifier=field_identifier)
+
+    ret_arr = [schemas.WellboreHeader(**wellbore_header) for wellbore_header in wellbore_headers]
+
+    return ret_arr
 
 
 @router.get("/field_well_trajectories/")
@@ -63,9 +67,13 @@ async def get_field_well_trajectories(
     else:
         well_access = SmdaWellAccess(authenticated_user.get_smda_access_token())
 
-    return await well_access.get_field_wellbore_trajectories(
+    wellbore_trajectories = await well_access.get_field_wellbore_trajectories(
         field_identifier=field_identifier, unique_wellbore_identifiers=unique_wellbore_identifiers
     )
+
+    ret_arr = [schemas.WellboreTrajectory(**wellbore_trajectory) for wellbore_trajectory in wellbore_trajectories]
+
+    return ret_arr
 
 
 @router.get("/well_trajectories/")
@@ -84,7 +92,11 @@ async def get_well_trajectories(
     else:
         well_access = SmdaWellAccess(authenticated_user.get_smda_access_token())
 
-    return await well_access.get_wellbore_trajectories(wellbore_uuids=wellbore_uuids)
+    wellbore_trajectories = await well_access.get_wellbore_trajectories(wellbore_uuids=wellbore_uuids)
+
+    ret_arr = [schemas.WellboreTrajectory(**wellbore_trajectory) for wellbore_trajectory in wellbore_trajectories]
+
+    return ret_arr
 
 
 @router.get("/wellbore_picks_and_stratigraphic_units/")
