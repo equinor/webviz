@@ -69,12 +69,8 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
     const [isPendingGetParameters, startGetParametersTransition] = React.useTransition();
 
     // States
-    const [isStatisticsOptionsExpanded, setIsStatisticsOptionsExpanded] = React.useState(
-        visualizationMode !== VisualizationMode.INDIVIDUAL_REALIZATIONS
-    );
-    const [isColorByParameterExpanded, setIsColorByParameterExpanded] = React.useState(
-        visualizationMode === VisualizationMode.INDIVIDUAL_REALIZATIONS
-    );
+    const [isUserSelectedStatisticsOptionsExpanded, setIsUserSelectedStatisticsOptionsExpanded] = React.useState(true);
+    const [isUserSelectedColorByParameterExpanded, setIsUserSelectedColorByParameterExpanded] = React.useState(true);
     const [previousEnsembleSet, setPreviousEnsembleSet] = React.useState<EnsembleSet>(ensembleSet);
     const [selectedEnsembleIdents, setSelectedEnsembleIdents] = React.useState<EnsembleIdent[]>([]);
     const [selectedVectorNames, setSelectedVectorNames] = React.useState<string[]>([]);
@@ -282,30 +278,14 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
     function handleVisualizationModeChange(event: React.ChangeEvent<HTMLInputElement>) {
         const newVisualizationMode = event.target.value as VisualizationMode;
         setVisualizationMode(newVisualizationMode);
-
-        // Handle expansion of visualization mode specific settings
-        if (newVisualizationMode === VisualizationMode.INDIVIDUAL_REALIZATIONS) {
-            setIsStatisticsOptionsExpanded(false);
-            setIsColorByParameterExpanded(true);
-        }
-        if (newVisualizationMode !== VisualizationMode.INDIVIDUAL_REALIZATIONS) {
-            // Open only when switching from individual realizations to statistical visualization
-            const previousVisualizationMode = visualizationMode;
-            const doExpandStatisticsOptions =
-                previousVisualizationMode === VisualizationMode.INDIVIDUAL_REALIZATIONS || isStatisticsOptionsExpanded;
-            setIsStatisticsOptionsExpanded(doExpandStatisticsOptions);
-            setIsColorByParameterExpanded(false);
-        }
     }
 
     function handleStatisticsOptionsCollapseExpandChange(expanded: boolean) {
-        const isEnabled = visualizationMode !== VisualizationMode.INDIVIDUAL_REALIZATIONS;
-        setIsStatisticsOptionsExpanded(expanded && isEnabled);
+        setIsUserSelectedStatisticsOptionsExpanded(expanded);
     }
 
     function handleColorByParameterCollapseExpandChange(expanded: boolean) {
-        const isEnabled = visualizationMode === VisualizationMode.INDIVIDUAL_REALIZATIONS;
-        setIsColorByParameterExpanded(expanded && isEnabled);
+        setIsUserSelectedColorByParameterExpanded(expanded);
     }
 
     function handleFanchartStatisticsSelectionChange(
@@ -471,7 +451,10 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
                     <CollapsibleGroup
                         title="Statistics Options"
                         disabled={visualizationMode === VisualizationMode.INDIVIDUAL_REALIZATIONS}
-                        expanded={isStatisticsOptionsExpanded}
+                        expanded={
+                            isUserSelectedStatisticsOptionsExpanded &&
+                            visualizationMode !== VisualizationMode.INDIVIDUAL_REALIZATIONS
+                        }
                         onChange={handleStatisticsOptionsCollapseExpandChange}
                     >
                         {makeStatisticCheckboxes()}
@@ -479,7 +462,10 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
                     <CollapsibleGroup
                         title="Color individual realizations by parameter"
                         disabled={visualizationMode !== VisualizationMode.INDIVIDUAL_REALIZATIONS}
-                        expanded={isColorByParameterExpanded}
+                        expanded={
+                            isUserSelectedColorByParameterExpanded &&
+                            visualizationMode === VisualizationMode.INDIVIDUAL_REALIZATIONS
+                        }
                         onChange={handleColorByParameterCollapseExpandChange}
                     >
                         <Checkbox
