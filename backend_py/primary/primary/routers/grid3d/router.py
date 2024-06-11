@@ -74,6 +74,7 @@ async def is_grid_geometry_shared(
 
 # Primary backend
 @router.get("/grid_surface")
+# pylint: disable=too-many-arguments
 async def grid_surface(
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
     case_uuid: Annotated[str, Query(description="Sumo case uuid")],
@@ -124,6 +125,7 @@ async def grid_surface(
 
 
 @router.get("/grid_parameter")
+# pylint: disable=too-many-arguments
 async def grid_parameter(
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
     case_uuid: Annotated[str, Query(description="Sumo case uuid")],
@@ -211,8 +213,8 @@ async def post_get_polyline_intersection(
 def _hack_ensure_b64_property_array_is_float(
     props_b64arr: B64FloatArray | B64IntArray, undefined_int_value: int | None
 ) -> B64FloatArray:
-    if type(props_b64arr) == B64IntArray:
-        LOGGER.debug(f"Repacking B64 int array to float")
+    if isinstance(props_b64arr, B64IntArray):
+        LOGGER.debug("Repacking B64 int array to float")
         int_arr_np = b64_decode_int_array(props_b64arr)
         int_arr_np = np.where(int_arr_np == undefined_int_value, -1, int_arr_np)
         float_arr_np = np.asarray(int_arr_np, dtype=np.float32)

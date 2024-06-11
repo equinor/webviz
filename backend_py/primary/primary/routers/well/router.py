@@ -133,8 +133,8 @@ async def get_wellbore_completions(
     # Handle DROGON
     if wellbore_uuid in ["drogon_horizontal", "drogon_vertical"]:
         return []
-    else:
-        well_access = SsdlWellAccess(authenticated_user.get_ssdl_access_token())
+
+    well_access = SsdlWellAccess(authenticated_user.get_ssdl_access_token())
 
     wellbore_completions = await well_access.get_completions_for_wellbore(wellbore_uuid=wellbore_uuid)
     return wellbore_completions
@@ -152,8 +152,8 @@ async def get_wellbore_casing(
     # Handle DROGON
     if wellbore_uuid in ["drogon_horizontal", "drogon_vertical"]:
         return []
-    else:
-        well_access = SsdlWellAccess(authenticated_user.get_ssdl_access_token())
+
+    well_access = SsdlWellAccess(authenticated_user.get_ssdl_access_token())
 
     wellbore_casing = await well_access.get_casing_for_wellbore(wellbore_uuid=wellbore_uuid)
 
@@ -172,8 +172,8 @@ async def get_wellbore_perforations(
     # Handle DROGON
     if wellbore_uuid in ["drogon_horizontal", "drogon_vertical"]:
         return []
-    else:
-        well_access = SsdlWellAccess(authenticated_user.get_ssdl_access_token())
+
+    well_access = SsdlWellAccess(authenticated_user.get_ssdl_access_token())
 
     wellbore_perforations = await well_access.get_perforations_for_wellbore(wellbore_uuid=wellbore_uuid)
 
@@ -192,8 +192,8 @@ async def get_wellbore_log_curve_headers(
     # Handle DROGON
     if wellbore_uuid in ["drogon_horizontal", "drogon_vertical"]:
         return []
-    else:
-        well_access = SsdlWellAccess(authenticated_user.get_ssdl_access_token())
+
+    well_access = SsdlWellAccess(authenticated_user.get_ssdl_access_token())
 
     wellbore_casing = await well_access.get_log_curve_headers_for_wellbore(wellbore_uuid=wellbore_uuid)
 
@@ -213,8 +213,8 @@ async def get_log_curve_data(
     # Handle DROGON
     if wellbore_uuid in ["drogon_horizontal", "drogon_vertical"]:
         return []
-    else:
-        well_access = SsdlWellAccess(authenticated_user.get_ssdl_access_token())
+
+    well_access = SsdlWellAccess(authenticated_user.get_ssdl_access_token())
 
     log_curve = await well_access.get_log_curve_data(wellbore_uuid=wellbore_uuid, curve_name=log_curve_name)
 

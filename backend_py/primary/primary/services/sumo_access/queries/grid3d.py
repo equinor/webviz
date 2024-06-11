@@ -2,7 +2,6 @@ from typing import Tuple, Optional
 
 from sumo.wrapper import SumoClient
 from fmu.sumo.explorer import TimeFilter, TimeType
-from fmu.sumo.explorer._utils import Utils
 
 
 def get_time_filter(time_or_interval_str: Optional[str]) -> TimeFilter:
