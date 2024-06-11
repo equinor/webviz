@@ -10,6 +10,7 @@ from primary.services.smda_access.stratigraphy_access import StratigraphyAccess
 from primary.services.smda_access.stratigraphy_utils import sort_stratigraphic_names_by_hierarchy
 from primary.services.smda_access.mocked_drogon_smda_access import _mocked_stratigraphy_access
 from primary.services.utils.statistic_function import StatisticFunction
+from primary.services.utils.surface_intersect_with_polyline import intersect_surface_with_polyline
 from primary.services.utils.authenticated_user import AuthenticatedUser
 from primary.auth.auth_helper import AuthHelper
 from primary.utils.response_perf_metrics import ResponsePerfMetrics
@@ -236,15 +237,17 @@ async def post_get_surface_intersection(
         authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
     )
 
-    intersection_polyline = converters.from_api_cumulative_length_polyline_to_xtgeo_polyline(cumulative_length_polyline)
-
-    surface_intersection = await access.get_realization_surface_intersection_async(
-        real_num=realization_num,
-        name=name,
-        attribute=attribute,
-        polyline=intersection_polyline,
-        time_or_interval_str=time_or_interval_str,
+    surface = await access.get_realization_surface_data_async(
+        real_num=realization_num, name=name, attribute=attribute, time_or_interval_str=time_or_interval_str
     )
+    if surface is None:
+        raise HTTPException(status_code=404, detail="Surface '{name}' not found")
+
+    # Ensure name is applied
+    surface.name = name
+
+    intersection_polyline = converters.from_api_cumulative_length_polyline_to_xtgeo_polyline(cumulative_length_polyline)
+    surface_intersection = intersect_surface_with_polyline(surface, intersection_polyline)
 
     surface_intersection_response = converters.to_api_surface_intersection(surface_intersection)
 
