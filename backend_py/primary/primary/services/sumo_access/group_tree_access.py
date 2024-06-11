@@ -4,9 +4,9 @@ from typing import Optional
 import pandas as pd
 from fmu.sumo.explorer.objects import Case
 
-from ._helpers import create_sumo_client, create_sumo_case_async
-
 from webviz_pkg.core_utils.perf_timer import PerfTimer
+
+from ._helpers import create_sumo_client, create_sumo_case_async
 
 
 LOGGER = logging.getLogger(__name__)
