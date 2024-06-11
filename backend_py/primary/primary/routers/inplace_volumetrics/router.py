@@ -39,9 +39,7 @@ async def get_result_data_per_realization(
         description="The name of the volumetric result/response"
     ),
     realizations: List[int] = Query(description="Realizations"),
-        index_filter: List[schemas.InplaceVolumetricsIndex] = Body(
-        embed=True, description="Categorical filter"
-    ),
+    index_filter: List[schemas.InplaceVolumetricsIndex] = Body(embed=True, description="Categorical filter"),
 ) -> schemas.InplaceVolumetricData:
     """Get volumetric data summed per realization for a given table, result and categories/index filter."""
     access = await InplaceVolumetricsAccess.from_case_uuid(
@@ -49,9 +47,35 @@ async def get_result_data_per_realization(
     )
 
     data = await access.get_volumetric_data_async(
-        table_name=table_name,
-        result_name=result_name.value,
-        realizations=realizations,
-        index_filter=index_filter
+        table_name=table_name, result_name=result_name.value, realizations=realizations, index_filter=index_filter
     )
+    return data
+
+
+@router.post("/get_aggregated_table_data/", tags=["inplace_volumetrics"])
+async def post_get_aggregated_table_data(
+    authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
+    case_uuid: str = Query(description="Sumo case uuid"),
+    ensemble_name: str = Query(description="Ensemble name"),
+    table_name: str = Query(description="Table name"),
+    response_names: List[schemas.InplaceVolumetricResponseNames] = Query(
+        description="The name of the volumetric result/response"
+    ),
+    aggregate_by: List[str] = Query(description="The index types to aggregate by"),
+    realizations: List[int] = Query(description="Realizations"),
+    index_filter: List[schemas.InplaceVolumetricsIndex] = Body(embed=True, description="Categorical filter"),
+) -> schemas.InplaceVolumetricData:
+    """Get aggregated volumetric data for a given table, result and categories/index filter."""
+    access = await InplaceVolumetricsAccess.from_case_uuid(
+        authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
+    )
+
+    data = await access.get_aggregated_volumetric_table_data_async(
+        table_name=table_name,
+        response_names=response_names,
+        aggregate_by=aggregate_by,
+        realizations=realizations,
+        index_filter=index_filter,
+    )
+
     return data

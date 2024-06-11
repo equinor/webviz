@@ -158,7 +158,7 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                             onChange={handleSelectedTableTypeChange}
                         />
                     </Label>
-                    <Label text="Aggregate By">
+                    <Label text="Aggregate By Each">
                         <Select
                             multiple={true}
                             size={5}
