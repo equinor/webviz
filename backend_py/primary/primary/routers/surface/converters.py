@@ -7,7 +7,8 @@ from webviz_pkg.core_utils.b64 import b64_encode_float_array_as_float32
 
 from primary.services.smda_access.types import StratigraphicSurface
 from primary.services.sumo_access.surface_types import SurfaceMeta as SumoSurfaceMeta
-from primary.services.utils.surface_intersect_with_polyline import XtgeoSurfaceIntersectionPolyline, XtgeoSurfaceIntersectionResult
+from primary.services.utils.surface_intersect_with_polyline import XtgeoSurfaceIntersectionPolyline
+from primary.services.utils.surface_intersect_with_polyline import XtgeoSurfaceIntersectionResult
 from primary.services.utils.surface_to_float32 import surface_to_float32_numpy_array
 
 from . import schemas
