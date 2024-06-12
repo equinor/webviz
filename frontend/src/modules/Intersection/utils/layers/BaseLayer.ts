@@ -1,5 +1,6 @@
 import React from "react";
 
+import { isDevMode } from "@lib/utils/devMode";
 import { QueryClient } from "@tanstack/query-core";
 
 import { cloneDeep, isEqual } from "lodash";
@@ -42,6 +43,7 @@ export class BaseLayer<TSettings extends LayerSettings, TData> {
     protected _data: TData | null = null;
     protected _settings: TSettings = {} as TSettings;
     private _lastDataFetchSettings: TSettings;
+    private _queryKeys: unknown[][] = [];
 
     constructor(name: string, settings: TSettings, queryClient: QueryClient) {
         this._id = v4();
@@ -118,8 +120,22 @@ export class BaseLayer<TSettings extends LayerSettings, TData> {
         }
         if (Object.keys(patchesToApply).length > 0) {
             this._settings = { ...this._settings, ...patchesToApply };
+            this.maybeCancelQuery();
         }
+
         this.notifySubscribers(LayerTopic.SETTINGS);
+    }
+
+    protected registerQueryKey(queryKey: unknown[]): void {
+        this._queryKeys.push(queryKey);
+    }
+
+    private maybeCancelQuery(): void {
+        if (this._queryKeys) {
+            for (const queryKey of this._queryKeys) {
+                this._queryClient.cancelQueries({ queryKey });
+            }
+        }
     }
 
     subscribe(topic: LayerTopic, callback: () => void): () => void {
@@ -170,6 +186,12 @@ export class BaseLayer<TSettings extends LayerSettings, TData> {
         this.notifySubscribers(LayerTopic.STATUS);
         try {
             this._data = await this.fetchData();
+            if (this._queryKeys.length === null && isDevMode()) {
+                console.warn(
+                    "Did you forget to use 'setQueryKeys' in your layer implementation of 'fetchData'? This will cause the queries to not be cancelled when settings change and might lead to undesired behaviour."
+                );
+            }
+            this._queryKeys = [];
             this.notifySubscribers(LayerTopic.DATA);
             this._status = LayerStatus.SUCCESS;
         } catch (error) {

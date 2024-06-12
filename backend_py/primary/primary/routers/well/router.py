@@ -44,9 +44,7 @@ async def get_drilled_wellbore_headers(
 
     wellbore_headers = await well_access.get_wellbore_headers(field_identifier=field_identifier)
 
-    ret_arr = [schemas.WellboreHeader(**wellbore_header) for wellbore_header in wellbore_headers]
-
-    return ret_arr
+    return [converters.convert_wellbore_header_to_schema(wellbore_header) for wellbore_header in wellbore_headers]
 
 
 @router.get("/field_well_trajectories/")
@@ -71,9 +69,10 @@ async def get_field_well_trajectories(
         field_identifier=field_identifier, unique_wellbore_identifiers=unique_wellbore_identifiers
     )
 
-    ret_arr = [schemas.WellboreTrajectory(**wellbore_trajectory) for wellbore_trajectory in wellbore_trajectories]
-
-    return ret_arr
+    return [
+        converters.convert_well_trajectory_to_schema(wellbore_trajectory)
+        for wellbore_trajectory in wellbore_trajectories
+    ]
 
 
 @router.get("/well_trajectories/")
@@ -94,9 +93,10 @@ async def get_well_trajectories(
 
     wellbore_trajectories = await well_access.get_wellbore_trajectories(wellbore_uuids=wellbore_uuids)
 
-    ret_arr = [schemas.WellboreTrajectory(**wellbore_trajectory) for wellbore_trajectory in wellbore_trajectories]
-
-    return ret_arr
+    return [
+        converters.convert_well_trajectory_to_schema(wellbore_trajectory)
+        for wellbore_trajectory in wellbore_trajectories
+    ]
 
 
 @router.get("/wellbore_picks_and_stratigraphic_units/")
@@ -128,8 +128,11 @@ async def get_wellbore_picks_and_stratigraphic_units(
     wellbore_picks = await well_access.get_all_picks_for_wellbore(wellbore_uuid=wellbore_uuid)
 
     return schemas.WellborePicksAndStratigraphicUnits(
-        wellbore_picks=converters.convert_wellbore_picks_to_schema(wellbore_picks),
-        stratigraphic_units=converters.convert_stratigraphic_units_to_schema(stratigraphic_units),
+        wellbore_picks=[converters.convert_wellbore_pick_to_schema(wellbore_pick) for wellbore_pick in wellbore_picks],
+        stratigraphic_units=[
+            converters.convert_stratigraphic_unit_to_schema(stratigraphic_unit)
+            for stratigraphic_unit in stratigraphic_units
+        ],
     )
 
 
@@ -149,17 +152,20 @@ async def get_wellbore_completions(
     well_access = SsdlWellAccess(authenticated_user.get_ssdl_access_token())
 
     wellbore_completions = await well_access.get_completions_for_wellbore(wellbore_uuid=wellbore_uuid)
-    return wellbore_completions
+    return [
+        converters.convert_wellbore_completion_to_schema(wellbore_completion)
+        for wellbore_completion in wellbore_completions
+    ]
 
 
-@router.get("/wellbore_casing/")
-async def get_wellbore_casing(
+@router.get("/wellbore_casings/")
+async def get_wellbore_casings(
     # fmt:off
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     wellbore_uuid: str = Query(description="Wellbore uuid"),
     # fmt:on
 ) -> List[schemas.WellboreCasing]:
-    """Get well bore casing for a single well bore"""
+    """Get well bore casings for a single well bore"""
 
     # Handle DROGON
     if wellbore_uuid in ["drogon_horizontal", "drogon_vertical"]:
@@ -167,9 +173,9 @@ async def get_wellbore_casing(
 
     well_access = SsdlWellAccess(authenticated_user.get_ssdl_access_token())
 
-    wellbore_casing = await well_access.get_casing_for_wellbore(wellbore_uuid=wellbore_uuid)
+    wellbore_casings = await well_access.get_casings_for_wellbore(wellbore_uuid=wellbore_uuid)
 
-    return wellbore_casing
+    return [converters.convert_wellbore_casing_to_schema(wellbore_casing) for wellbore_casing in wellbore_casings]
 
 
 @router.get("/wellbore_perforations/")
@@ -189,7 +195,10 @@ async def get_wellbore_perforations(
 
     wellbore_perforations = await well_access.get_perforations_for_wellbore(wellbore_uuid=wellbore_uuid)
 
-    return wellbore_perforations
+    return [
+        converters.convert_wellbore_perforation_to_schema(wellbore_perforation)
+        for wellbore_perforation in wellbore_perforations
+    ]
 
 
 @router.get("/wellbore_log_curve_headers/")
@@ -198,7 +207,7 @@ async def get_wellbore_log_curve_headers(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     wellbore_uuid: str = Query(description="Wellbore uuid"),
     # fmt:on
-) -> List[schemas.WellboreLogCurveInfo]:
+) -> List[schemas.WellboreLogCurveHeader]:
     """Get all log curve headers for a single well bore"""
 
     # Handle DROGON
@@ -207,9 +216,12 @@ async def get_wellbore_log_curve_headers(
 
     well_access = SsdlWellAccess(authenticated_user.get_ssdl_access_token())
 
-    wellbore_casing = await well_access.get_log_curve_headers_for_wellbore(wellbore_uuid=wellbore_uuid)
+    wellbore_log_curve_headers = await well_access.get_log_curve_headers_for_wellbore(wellbore_uuid=wellbore_uuid)
 
-    return wellbore_casing
+    return [
+        converters.convert_wellbore_log_curve_header_to_schema(wellbore_log_curve_header)
+        for wellbore_log_curve_header in wellbore_log_curve_headers
+    ]
 
 
 @router.get("/log_curve_data/")
@@ -224,10 +236,10 @@ async def get_log_curve_data(
 
     # Handle DROGON
     if wellbore_uuid in ["drogon_horizontal", "drogon_vertical"]:
-        return []
+        raise NotImplementedError("DROGON log curve data not implemented")
 
     well_access = SsdlWellAccess(authenticated_user.get_ssdl_access_token())
 
     log_curve = await well_access.get_log_curve_data(wellbore_uuid=wellbore_uuid, curve_name=log_curve_name)
 
-    return log_curve
+    return converters.convert_wellbore_log_curve_data_to_schema(log_curve)

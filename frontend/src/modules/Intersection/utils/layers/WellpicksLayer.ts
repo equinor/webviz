@@ -54,7 +54,6 @@ export class WellpicksLayer extends BaseLayer<WellpicksLayerSettings, WellPicksL
 
         if (this._settings.filterPicks) {
             return {
-                ...data,
                 unitPicks: data.unitPicks.filter((pick) => this._settings.selectedUnitPicks.includes(pick.name)),
                 nonUnitPicks: data.nonUnitPicks.filter((pick) =>
                     this._settings.selectedNonUnitPicks.includes(pick.identifier)
@@ -66,13 +65,16 @@ export class WellpicksLayer extends BaseLayer<WellpicksLayerSettings, WellPicksL
     }
 
     protected async fetchData(): Promise<WellPicksLayerData> {
+        const queryKey = [
+            "getWellborePicksAndStratigraphicUnits",
+            this._settings.ensembleIdent?.getCaseUuid(),
+            this._settings.wellboreUuid,
+        ];
+        this.registerQueryKey(queryKey);
+
         return this._queryClient
             .fetchQuery({
-                queryKey: [
-                    "getWellborePicksAndStratigraphicUnits",
-                    this._settings.ensembleIdent?.getCaseUuid(),
-                    this._settings.wellboreUuid,
-                ],
+                queryKey,
                 queryFn: () =>
                     apiService.well.getWellborePicksAndStratigraphicUnits(
                         this._settings.ensembleIdent?.getCaseUuid() ?? "",

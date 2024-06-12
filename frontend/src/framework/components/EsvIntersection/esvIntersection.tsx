@@ -326,6 +326,11 @@ export function EsvIntersection(props: EsvIntersectionProps): React.ReactNode {
             let newLayerIds = layerIds;
             automaticChanges.current = true;
 
+            // Remove pixi render layer fixup
+            if (esvController.getLayer("pixi-render")) {
+                esvController.removeLayer("pixi-render");
+            }
+
             // Remove layers that are not in the new list
             if (prevLayers) {
                 for (const layer of prevLayers) {
@@ -362,6 +367,8 @@ export function EsvIntersection(props: EsvIntersectionProps): React.ReactNode {
                             if (layer.options.order !== undefined) {
                                 existingLayer.order = layer.options.order + 1;
                             }
+                            existingLayer?.element?.setAttribute("width", containerSize.width.toString());
+                            existingLayer?.element?.setAttribute("height", containerSize.height.toString());
                             interactionHandler.removeLayer(layer.id);
                             if (layer.hoverable) {
                                 interactionHandler.addLayer(existingLayer);
@@ -369,6 +376,12 @@ export function EsvIntersection(props: EsvIntersectionProps): React.ReactNode {
                         }
                     }
                 }
+            }
+
+            // Add pixi render layer fixup
+            if (!esvController.getLayer("pixi-render")) {
+                const newLayer = new GeomodelLayerV2(pixiRenderApplication, "pixi-render");
+                esvController.addLayer(newLayer);
             }
 
             setLayerIds(newLayerIds);
@@ -394,7 +407,7 @@ export function EsvIntersection(props: EsvIntersectionProps): React.ReactNode {
             const oldOnRescaleFunction = newEsvController.zoomPanHandler.onRescale;
 
             newEsvController.zoomPanHandler.onRescale = function handleRescale(event: OnRescaleEvent) {
-                if (onViewportChange && !automaticChanges.current) {
+                if (!automaticChanges.current) {
                     const k = event.transform.k;
                     const xSpan = newEsvController.zoomPanHandler.xSpan;
                     const displ = xSpan / k;
@@ -433,6 +446,14 @@ export function EsvIntersection(props: EsvIntersectionProps): React.ReactNode {
             setEsvController(newEsvController);
             setPixiRenderApplication(newPixiRenderApplication);
 
+            const newInteractionHandler = new InteractionHandler(newEsvController, containerRef.current, {
+                intersectionOptions: {
+                    threshold: props.intersectionThreshold ?? 10,
+                },
+            });
+
+            setInteractionHandler(newInteractionHandler);
+
             return function handleUnmount() {
                 setEsvController(null);
                 setLayerIds([]);
@@ -444,25 +465,20 @@ export function EsvIntersection(props: EsvIntersectionProps): React.ReactNode {
                 setPrevViewport(undefined);
                 setPrevShowAxesLabels(undefined);
                 setPrevShowAxes(undefined);
-                newPixiRenderApplication.destroy();
+                setInteractionHandler(null);
+                newInteractionHandler.destroy();
                 newEsvController.removeAllLayers();
                 newEsvController.destroy();
             };
         },
-        [onViewportChange, props.intersectionThreshold]
+        [props.intersectionThreshold]
     );
 
     React.useEffect(
         function handleReadoutFunctionChange() {
-            if (!esvController || !containerRef.current) {
+            if (!interactionHandler) {
                 return;
             }
-
-            const newInteractionHandler = new InteractionHandler(esvController, containerRef.current, {
-                intersectionOptions: {
-                    threshold: props.intersectionThreshold ?? 10,
-                },
-            });
 
             function handleReadoutItemsChange(
                 payload: InteractionHandlerTopicPayload[InteractionHandlerTopic.READOUT_ITEMS_CHANGE]
@@ -472,18 +488,16 @@ export function EsvIntersection(props: EsvIntersectionProps): React.ReactNode {
                 }
             }
 
-            newInteractionHandler.subscribe(InteractionHandlerTopic.READOUT_ITEMS_CHANGE, handleReadoutItemsChange);
+            const unsubscribe = interactionHandler.subscribe(
+                InteractionHandlerTopic.READOUT_ITEMS_CHANGE,
+                handleReadoutItemsChange
+            );
 
-            setInteractionHandler(newInteractionHandler);
-
-            return function handleUnmount() {
-                setInteractionHandler(null);
-                newInteractionHandler.destroy();
-                setLayerIds([]);
-                setPrevLayers([]);
+            return function handleRemoveReadoutFunction() {
+                unsubscribe();
             };
         },
-        [onReadout, props.intersectionThreshold, esvController]
+        [onReadout, interactionHandler]
     );
 
     React.useEffect(
@@ -508,24 +522,12 @@ export function EsvIntersection(props: EsvIntersectionProps): React.ReactNode {
                     pixiRenderApplication.renderer.resize(size.width, size.height);
                     pixiRenderApplication.render();
                 }
-                for (const layerId of layerIds ?? []) {
-                    const layer = esvController.getLayer(layerId);
-                    layer?.element?.setAttribute("width", size.width.toString());
-                    layer?.element?.setAttribute("height", size.height.toString());
-                }
                 const gridLayer = esvController.getLayer("grid");
                 gridLayer?.element?.setAttribute("width", size.width.toString());
                 gridLayer?.element?.setAttribute("height", size.height.toString());
             }
         },
-        [
-            props.intersectionReferenceSystem,
-            containerSize.width,
-            containerSize.height,
-            esvController,
-            pixiRenderApplication,
-            layerIds,
-        ]
+        [containerSize.width, containerSize.height, esvController, pixiRenderApplication]
     );
 
     return (

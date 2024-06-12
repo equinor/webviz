@@ -9,8 +9,6 @@ import { Switch } from "@lib/components/Switch";
 import { LayerStatus, useLayerStatus } from "@modules/Intersection/utils/layers/BaseLayer";
 import { WellpicksLayer, WellpicksLayerSettings } from "@modules/Intersection/utils/layers/WellpicksLayer";
 
-import { isEqual } from "lodash";
-
 export type WellpicksLayerSettingsComponentProps = {
     layer: WellpicksLayer;
     ensembleSet: EnsembleSet;
@@ -19,14 +17,8 @@ export type WellpicksLayerSettingsComponentProps = {
 };
 
 export function WellpicksLayerSettingsComponent(props: WellpicksLayerSettingsComponentProps): React.ReactNode {
-    const [newSettings, setNewSettings] = React.useState<WellpicksLayerSettings>(props.layer.getSettings());
+    const [newSettings, setNewSettings] = React.useState<Partial<WellpicksLayerSettings>>({});
     const settings = props.layer.getSettings();
-    const [prevSettings, setPrevSettings] = React.useState<WellpicksLayerSettings>(settings);
-
-    if (!isEqual(settings, prevSettings)) {
-        setPrevSettings(settings);
-        setNewSettings(settings);
-    }
 
     const status = useLayerStatus(props.layer);
 
@@ -34,6 +26,7 @@ export function WellpicksLayerSettingsComponent(props: WellpicksLayerSettingsCom
         function propagateSettingsChange() {
             props.layer.maybeUpdateSettings(newSettings);
             props.layer.maybeRefetchData();
+            setNewSettings({});
         },
         [newSettings, props.layer]
     );
@@ -74,7 +67,7 @@ export function WellpicksLayerSettingsComponent(props: WellpicksLayerSettingsCom
             <div className="table-row">
                 <div className="table-cell align-middle w-24">Filter picks</div>
                 <div className="table-cell">
-                    <Switch checked={newSettings.filterPicks} onChange={handleToggleFilterPicks} />
+                    <Switch checked={settings.filterPicks} onChange={handleToggleFilterPicks} />
                 </div>
             </div>
             <div className="table-row">
@@ -83,11 +76,11 @@ export function WellpicksLayerSettingsComponent(props: WellpicksLayerSettingsCom
                     <PendingWrapper isPending={status === LayerStatus.LOADING}>
                         <Select
                             options={unitPicksFilterOptions}
-                            value={newSettings.selectedUnitPicks}
+                            value={settings.selectedUnitPicks}
                             onChange={handleUnitPickSelectionChange}
                             multiple
                             size={5}
-                            disabled={!newSettings.filterPicks}
+                            disabled={!settings.filterPicks}
                             debounceTimeMs={600}
                         />
                     </PendingWrapper>
@@ -99,11 +92,11 @@ export function WellpicksLayerSettingsComponent(props: WellpicksLayerSettingsCom
                     <PendingWrapper isPending={status === LayerStatus.LOADING}>
                         <Select
                             options={nonUnitPicksFilterOptions}
-                            value={newSettings.selectedNonUnitPicks}
+                            value={settings.selectedNonUnitPicks}
                             onChange={handleNonUnitPickSelectionChange}
                             multiple
                             size={5}
-                            disabled={!newSettings.filterPicks}
+                            disabled={!settings.filterPicks}
                             debounceTimeMs={600}
                         />
                     </PendingWrapper>

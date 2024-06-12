@@ -115,9 +115,9 @@ function addStartAndEndPointsToTrajectoryForVerticalLine(
  * @returns Array of 3D coordinates [x,y,z] - with [x,y,z] = [easting, northing, tvd_msl]
  */
 export function makeTrajectoryXyzPointsFromWellboreTrajectory(wellboreTrajectory: WellboreTrajectory_api): number[][] {
-    const eastingArr = wellboreTrajectory.easting_arr;
-    const northingArr = wellboreTrajectory.northing_arr;
-    const tvdArr = wellboreTrajectory.tvd_msl_arr;
+    const eastingArr = wellboreTrajectory.eastingArr;
+    const northingArr = wellboreTrajectory.northingArr;
+    const tvdArr = wellboreTrajectory.tvdMslArr;
 
     if (eastingArr.length !== northingArr.length && northingArr.length !== tvdArr.length) {
         throw new Error("Wellbore trajectory coordinate arrays are not of same length");

@@ -24,23 +24,23 @@ class StratigraphicUnit(BaseModel):
 
 
 class WellboreHeader(BaseModel):
-    wellbore_uuid: str
-    unique_wellbore_identifier: str
-    well_uuid: str
-    unique_well_identifier: str
-    well_easting: float
-    well_northing: float
-    depth_reference_point: str
-    depth_reference_elevation: float
+    wellboreUuid: str
+    uniqueWellboreIdentifier: str
+    wellUuid: str
+    uniqueWellIdentifier: str
+    wellEasting: float
+    wellNorthing: float
+    depthReferencePoint: str
+    depthReferenceElevation: float
 
 
 class WellboreTrajectory(BaseModel):
-    wellbore_uuid: str
-    unique_wellbore_identifier: str
-    tvd_msl_arr: List[float]
-    md_arr: List[float]
-    easting_arr: List[float]
-    northing_arr: List[float]
+    wellboreUuid: str
+    uniqueWellboreIdentifier: str
+    tvdMslArr: List[float]
+    mdArr: List[float]
+    eastingArr: List[float]
+    northingArr: List[float]
 
 
 class WellborePick(BaseModel):
@@ -69,50 +69,50 @@ class WellborePicksAndStratigraphicUnits(BaseModel):
 
 
 class WellboreCompletion(BaseModel):
-    md_top: float
-    md_bottom: float
-    tvd_top: float | None
-    tvd_bottom: float | None
+    mdTop: float
+    mdBottom: float
+    tvdTop: float | None
+    tvdBottom: float | None
     description: str | None
-    symbol_name: str | None
+    symbolName: str | None
     comment: str | None
 
 
 class WellboreCasing(BaseModel):
-    item_type: str  # Casing type
-    diameter_numeric: float
-    diameter_inner: float
+    itemType: str  # Casing type
+    diameterNumeric: float
+    diameterInner: float
     description: str | None = None
     remark: str | None = None
-    depth_top_md: float
-    depth_bottom_md: float
-    total_depth_md: float
-    start_depth: float
-    end_depth: float
+    depthTopMd: float
+    depthBottomMd: float
+    totalDepthMd: float
+    startDepth: float
+    endDepth: float
 
 
 class WellborePerforation(BaseModel):
-    md_top: float
-    md_bottom: float
-    tvd_top: float
-    tvd_bottom: float
+    mdTop: float
+    mdBottom: float
+    tvdTop: float
+    tvdBottom: float
     status: str
-    completion_mode: str
+    completionMode: str
 
 
-class WellboreLogCurveInfo(BaseModel):
-    log_name: str
-    curve_name: str
-    curve_unit: str
+class WellboreLogCurveHeader(BaseModel):
+    logName: str
+    curveName: str
+    curveUnit: str
 
 
 class WellboreLogCurveData(BaseModel):
-    index_min: float
-    index_max: float
-    min_curve_value: float
-    max_curve_value: float
-    DataPoints: list[list[float | None]]
-    curve_alias: str
-    curve_description: str
-    index_unit: str
-    no_data_value: float
+    indexMin: float
+    indexMax: float
+    minCurveValue: float
+    maxCurveValue: float
+    dataPoints: list[list[float | None]]
+    curveAlias: str
+    curveDescription: str
+    indexUnit: str
+    noDataValue: float

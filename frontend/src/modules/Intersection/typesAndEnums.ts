@@ -27,19 +27,14 @@ export const LAYER_TYPE_TO_STRING_MAPPING = {
     [LayerType.WELLPICKS]: "Wellpicks",
 };
 
-export type LayerBoundingBox = {
-    x: [number, number];
-    y: [number, number];
-};
-
 export enum LayerActionType {
     ADD_LAYER = "add-layer",
     REMOVE_LAYER = "remove-layer",
     TOGGLE_LAYER_VISIBILITY = "toggle-layer-visibility",
     TOGGLE_LAYER_SETTINGS_VISIBILITY = "toggle-layer-settings-visibility",
     UPDATE_SETTING = "update-settings",
-    UPDATE_BOUNDING_BOX = "update-bounding-box",
     MOVE_LAYER = "move-layer",
+    CHANGE_ORDER = "change-order",
 }
 
 export type LayerActionPayloads = {
@@ -48,8 +43,8 @@ export type LayerActionPayloads = {
     [LayerActionType.TOGGLE_LAYER_VISIBILITY]: { id: string };
     [LayerActionType.TOGGLE_LAYER_SETTINGS_VISIBILITY]: { id: string };
     [LayerActionType.UPDATE_SETTING]: { id: string; settings: Record<string, unknown> };
-    [LayerActionType.UPDATE_BOUNDING_BOX]: { id: string; boundingBox: LayerBoundingBox };
     [LayerActionType.MOVE_LAYER]: { id: string; moveToIndex: number };
+    [LayerActionType.CHANGE_ORDER]: { orderedIds: string[] };
 };
 
 export type LayerAction<T extends LayerActionType> = {

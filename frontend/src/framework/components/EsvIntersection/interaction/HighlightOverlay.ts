@@ -152,6 +152,9 @@ export class HighlightOverlay {
 
     destroy() {
         this.removeEventHandlers();
+        if (this._indicatorOverlay.parentElement) {
+            this._indicatorOverlay.parentElement.removeChild(this._indicatorOverlay);
+        }
         this._controller.overlay.remove("indicator-overlay");
     }
 

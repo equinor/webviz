@@ -55,7 +55,7 @@ export const selectedWellboreUuidsAtom = atom((get) => {
         return [];
     }
 
-    return userSelectedWellboreUuids.filter((uuid) => wellboreHeaders.data.some((el) => el.wellbore_uuid === uuid));
+    return userSelectedWellboreUuids.filter((uuid) => wellboreHeaders.data.some((el) => el.wellboreUuid === uuid));
 });
 export const selectedGridModelNameAtom = atom((get) => {
     const gridModelInfos = get(gridModelInfosQueryAtom);

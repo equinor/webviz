@@ -39,43 +39,58 @@ export type ReadoutWrapperProps = {
 export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
     const [readoutItems, setReadoutItems] = React.useState<ReadoutItem[]>([]);
 
-    const [hoveredMd, setHoveredMd] = React.useState<number | null>(null);
-    const [prevHoveredMd, setPrevHoveredMd] = React.useState<GlobalTopicDefinitions["global.hoverMd"] | null>(null);
-    const syncedHoveredMd = useSubscribedValue(
+    const [syncedHoveredMd, setSyncedHoveredMd] = React.useState<number | null>(null);
+    const [readoutMd, setReadoutMd] = React.useState<number | null>(null);
+    const [prevSyncedHoveredMd, setPrevSyncedHoveredMd] = React.useState<
+        GlobalTopicDefinitions["global.hoverMd"] | null
+    >(null);
+
+    const syncedHoverMd = useSubscribedValue(
         "global.hoverMd",
         props.workbenchServices,
         props.viewContext.getInstanceIdString()
     );
 
-    if (!isEqual(syncedHoveredMd, prevHoveredMd)) {
-        setPrevHoveredMd(syncedHoveredMd);
-        if (syncedHoveredMd?.wellboreUuid === props.wellboreHeaderUuid) {
-            setHoveredMd(syncedHoveredMd?.md ?? null);
+    if (!isEqual(syncedHoveredMd, prevSyncedHoveredMd)) {
+        setPrevSyncedHoveredMd(syncedHoverMd);
+        if (syncedHoverMd?.wellboreUuid === props.wellboreHeaderUuid) {
+            setSyncedHoveredMd(syncedHoverMd?.md ?? null);
         } else {
-            setHoveredMd(null);
+            setSyncedHoveredMd(null);
         }
     }
 
     const moduleInstanceId = props.viewContext.getInstanceIdString();
 
-    const handleReadoutItemsChange = React.useCallback(
-        function handleReadoutItemsChange(event: EsvIntersectionReadoutEvent): void {
-            setReadoutItems(event.readoutItems);
-            const items = event.readoutItems;
-            const wellboreReadoutItem = items.find((item) => isWellborepathLayer(item.layer));
-            const md = wellboreReadoutItem?.md;
-            if (!md || !props.wellboreHeaderUuid) {
+    React.useEffect(
+        function propagateReadoutMdChange() {
+            if (!readoutMd || !props.wellboreHeaderUuid) {
                 props.workbenchServices.publishGlobalData("global.hoverMd", null);
                 return;
             }
             props.workbenchServices.publishGlobalData(
                 "global.hoverMd",
-                { wellboreUuid: props.wellboreHeaderUuid, md: md },
+                { wellboreUuid: props.wellboreHeaderUuid, md: readoutMd },
                 moduleInstanceId
             );
+
+            return function resetPublishedHoverMd() {
+                props.workbenchServices.publishGlobalData("global.hoverMd", null, moduleInstanceId);
+            };
         },
-        [moduleInstanceId, props.wellboreHeaderUuid, props.workbenchServices]
+        [readoutMd, props.workbenchServices, props.viewContext, props.wellboreHeaderUuid, moduleInstanceId]
     );
+
+    const handleReadoutItemsChange = React.useCallback(function handleReadoutItemsChange(
+        event: EsvIntersectionReadoutEvent
+    ): void {
+        setReadoutItems(event.readoutItems);
+        const items = event.readoutItems;
+        const wellboreReadoutItem = items.find((item) => isWellborepathLayer(item.layer));
+        const md = wellboreReadoutItem?.md;
+        setReadoutMd(md ?? null);
+    },
+    []);
 
     const makeLabelFromLayer = React.useCallback(
         function makeLabelFromLayer(layer: Layer<any>): string | null {
@@ -85,8 +100,8 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
     );
 
     const highlightItems: HighlightItem[] = [];
-    if (props.referenceSystem && hoveredMd) {
-        const point = props.referenceSystem.project(hoveredMd);
+    if (props.referenceSystem && syncedHoveredMd) {
+        const point = props.referenceSystem.project(syncedHoveredMd);
         highlightItems.push({
             point: [point[0], point[1]],
             color: "red",

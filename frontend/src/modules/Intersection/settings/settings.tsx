@@ -183,8 +183,8 @@ export function Settings(
 
 function makeWellHeaderOptions(wellHeaders: WellboreHeader_api[]): SelectOption[] {
     return wellHeaders.map((wellHeader) => ({
-        value: wellHeader.wellbore_uuid,
-        label: wellHeader.unique_wellbore_identifier,
+        value: wellHeader.wellboreUuid,
+        label: wellHeader.uniqueWellboreIdentifier,
     }));
 }
 

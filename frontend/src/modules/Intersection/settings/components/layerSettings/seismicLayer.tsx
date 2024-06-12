@@ -13,6 +13,7 @@ import { PendingWrapper } from "@lib/components/PendingWrapper";
 import { RadioGroup } from "@lib/components/RadioGroup";
 import { SelectOption } from "@lib/components/Select";
 import { ColorScale } from "@lib/utils/ColorScale";
+import { useLayerSettings } from "@modules/Intersection/utils/layers/BaseLayer";
 import {
     SeismicDataType,
     SeismicLayer,
@@ -23,7 +24,7 @@ import { ColorScaleSelector } from "@modules/_shared/components/ColorScaleSelect
 import { isoIntervalStringToDateLabel, isoStringToDateLabel } from "@modules/_shared/utils/isoDatetimeStringFormatting";
 import { useQuery } from "@tanstack/react-query";
 
-import { isEqual } from "lodash";
+import { cloneDeep, isEqual } from "lodash";
 
 import { fixupSetting } from "./utils";
 
@@ -45,9 +46,9 @@ export type SeismicLayerSettingsProps = {
 };
 
 export function SeismicLayerSettingsComponent(props: SeismicLayerSettingsProps): React.ReactNode {
-    const [newSettings, setNewSettings] = React.useState<SeismicLayerSettings>(props.layer.getSettings());
-    const settings = props.layer.getSettings();
-    const [prevSettings, setPrevSettings] = React.useState<SeismicLayerSettings>(settings);
+    const settings = useLayerSettings(props.layer);
+    const [newSettings, setNewSettings] = React.useState<SeismicLayerSettings>(cloneDeep(settings));
+    const [prevSettings, setPrevSettings] = React.useState<SeismicLayerSettings>(cloneDeep(settings));
 
     if (!isEqual(settings, prevSettings)) {
         setPrevSettings(settings);
@@ -142,7 +143,7 @@ export function SeismicLayerSettingsComponent(props: SeismicLayerSettingsProps):
 
     React.useEffect(
         function propagateSettingsChange() {
-            props.layer.maybeUpdateSettings(newSettings);
+            props.layer.maybeUpdateSettings(cloneDeep(newSettings));
         },
         [newSettings, props.layer]
     );

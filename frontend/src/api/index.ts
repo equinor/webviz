@@ -82,7 +82,7 @@ export type { WellboreCasing as WellboreCasing_api } from './models/WellboreCasi
 export type { WellboreCompletion as WellboreCompletion_api } from './models/WellboreCompletion';
 export type { WellboreHeader as WellboreHeader_api } from './models/WellboreHeader';
 export type { WellboreLogCurveData as WellboreLogCurveData_api } from './models/WellboreLogCurveData';
-export type { WellboreLogCurveInfo as WellboreLogCurveInfo_api } from './models/WellboreLogCurveInfo';
+export type { WellboreLogCurveHeader as WellboreLogCurveHeader_api } from './models/WellboreLogCurveHeader';
 export type { WellborePerforation as WellborePerforation_api } from './models/WellborePerforation';
 export type { WellborePick as WellborePick_api } from './models/WellborePick';
 export type { WellborePicksAndStratigraphicUnits as WellborePicksAndStratigraphicUnits_api } from './models/WellborePicksAndStratigraphicUnits';

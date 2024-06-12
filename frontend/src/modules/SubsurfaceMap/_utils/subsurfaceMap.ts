@@ -131,11 +131,11 @@ export function createWellboreTrajectoryLayer(wellTrajectories: WellboreTrajecto
 export function wellTrajectoryToGeojson(wellTrajectory: WellboreTrajectory_api): Record<string, unknown> {
     const point: Record<string, unknown> = {
         type: "Point",
-        coordinates: [wellTrajectory.easting_arr[0], wellTrajectory.northing_arr[0], -wellTrajectory.tvd_msl_arr[0]],
+        coordinates: [wellTrajectory.eastingArr[0], wellTrajectory.northingArr[0], -wellTrajectory.tvdMslArr[0]],
     };
     const coordinates: Record<string, unknown> = {
         type: "LineString",
-        coordinates: zipCoords(wellTrajectory.easting_arr, wellTrajectory.northing_arr, wellTrajectory.tvd_msl_arr),
+        coordinates: zipCoords(wellTrajectory.eastingArr, wellTrajectory.northingArr, wellTrajectory.tvdMslArr),
     };
     const geometryCollection: Record<string, unknown> = {
         type: "Feature",
@@ -144,12 +144,12 @@ export function wellTrajectoryToGeojson(wellTrajectory: WellboreTrajectory_api):
             geometries: [point, coordinates],
         },
         properties: {
-            uuid: wellTrajectory.wellbore_uuid,
-            name: wellTrajectory.unique_wellbore_identifier,
-            uwi: wellTrajectory.unique_wellbore_identifier,
+            uuid: wellTrajectory.wellboreUuid,
+            name: wellTrajectory.uniqueWellboreIdentifier,
+            uwi: wellTrajectory.uniqueWellboreIdentifier,
 
             color: [0, 0, 0, 100],
-            md: [wellTrajectory.md_arr],
+            md: [wellTrajectory.mdArr],
         },
     };
 
@@ -158,11 +158,11 @@ export function wellTrajectoryToGeojson(wellTrajectory: WellboreTrajectory_api):
 export function createWellBoreHeaderLayer(wellTrajectories: WellboreTrajectory_api[]): Record<string, unknown> {
     const data: Record<string, unknown>[] = wellTrajectories.map((wellTrajectory) => {
         return wellHeaderMarkerToGeojson(
-            wellTrajectory.easting_arr[0],
-            wellTrajectory.northing_arr[0],
-            -wellTrajectory.tvd_msl_arr[0],
-            wellTrajectory.unique_wellbore_identifier,
-            wellTrajectory.wellbore_uuid
+            wellTrajectory.eastingArr[0],
+            wellTrajectory.northingArr[0],
+            -wellTrajectory.tvdMslArr[0],
+            wellTrajectory.uniqueWellboreIdentifier,
+            wellTrajectory.wellboreUuid
         );
     });
 

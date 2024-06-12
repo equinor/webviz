@@ -155,7 +155,7 @@ export function View({ viewContext, workbenchSettings, workbenchServices }: Modu
     }
     if (wellTrajectoriesQuery.data) {
         const wellTrajectories: WellboreTrajectory_api[] = wellTrajectoriesQuery.data.filter((well) =>
-            selectedWellUuids.includes(well.wellbore_uuid)
+            selectedWellUuids.includes(well.wellboreUuid)
         );
         const wellTrajectoryLayer: Record<string, unknown> = createWellboreTrajectoryLayer(wellTrajectories);
         const wellBoreHeaderLayer: Record<string, unknown> = createWellBoreHeaderLayer(wellTrajectories);

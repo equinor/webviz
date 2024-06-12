@@ -145,6 +145,8 @@ export class GridLayer extends BaseLayer<GridLayerSettings, AdjustedPolylineInte
             this._settings.parameterName !== null &&
             this._settings.realizationNum !== null &&
             this._settings.polyline.polylineUtmXy.length > 0 &&
+            this._settings.polyline.actualSectionLengths.length ===
+                this._settings.polyline.polylineUtmXy.length / 2 - 1 &&
             this._settings.extensionLength !== null
         );
     }
@@ -152,9 +154,12 @@ export class GridLayer extends BaseLayer<GridLayerSettings, AdjustedPolylineInte
     protected async fetchData(): Promise<AdjustedPolylineIntersection> {
         super.setBoundingBox(null);
 
+        const queryKey = ["getGridPolylineIntersection", ...Object.entries(this._settings)];
+        this.registerQueryKey(queryKey);
+
         return this._queryClient
             .fetchQuery({
-                queryKey: ["getGridPolylineIntersection", ...Object.entries(this._settings)],
+                queryKey,
                 queryFn: () =>
                     apiService.grid3D.postGetPolylineIntersection(
                         this._settings.ensembleIdent?.getCaseUuid() ?? "",

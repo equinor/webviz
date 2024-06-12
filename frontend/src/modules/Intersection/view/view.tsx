@@ -4,12 +4,15 @@ import { ModuleViewProps } from "@framework/Module";
 import { useViewStatusWriter } from "@framework/StatusWriter";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { IntersectionType } from "@framework/types/intersection";
+import { CircularProgress } from "@lib/components/CircularProgress";
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import { useAtomValue } from "jotai";
 
 import { ViewAtoms } from "./atoms/atomDefinitions";
+import { wellboreTrajectoryQueryAtom } from "./atoms/queryAtoms";
 import { LayersWrapper } from "./components/layersWrapper";
-import { useWellboreCasingQuery } from "./queries/wellboreSchematicsQueries";
+import { useWellboreCasingsQuery } from "./queries/wellboreSchematicsQueries";
 
 import { SettingsToViewInterface } from "../settingsToViewInterface";
 import { selectedWellboreAtom } from "../sharedAtoms/sharedAtoms";
@@ -25,6 +28,7 @@ export function View(
     const ensembleIdent = props.viewContext.useSettingsToViewInterfaceValue("ensembleIdent");
     const intersectionReferenceSystem = props.viewContext.useViewAtomValue("intersectionReferenceSystemAtom");
     const wellboreHeader = useAtomValue(selectedWellboreAtom);
+    const wellboreTrajectoryQuery = useAtomValue(wellboreTrajectoryQueryAtom);
 
     const layers = props.viewContext.useViewAtomValue("layers");
     const layersStatuses = useLayersStatuses(layers);
@@ -61,27 +65,35 @@ export function View(
     }
 
     // Wellbore casing query
-    const wellboreCasingQuery = useWellboreCasingQuery(wellboreHeader?.uuid ?? undefined);
+    const wellboreCasingQuery = useWellboreCasingsQuery(wellboreHeader?.uuid ?? undefined);
 
     // Set loading status
-    statusWriter.setLoading(
-        wellboreCasingQuery.isFetching || layersStatuses.some((status) => status.status === LayerStatus.LOADING)
-    );
+    const mainElementsLoading =
+        wellboreTrajectoryQuery.isFetching || layersStatuses.some((status) => status.status === LayerStatus.LOADING);
+    statusWriter.setLoading(mainElementsLoading || wellboreCasingQuery.isFetching);
 
     const potentialIntersectionExtensionLength =
         intersectionType === IntersectionType.WELLBORE ? intersectionExtensionLength : 0;
 
     return (
-        <div className="w-full h-full">
+        <div className="w-full h-full relative">
+            <div
+                className={resolveClassNames(
+                    "absolute w-full h-full z-10 bg-white opacity-50 flex items-center justify-center",
+                    { hidden: !mainElementsLoading }
+                )}
+            >
+                <CircularProgress />
+            </div>
             <LayersWrapper
-                referenceSystem={intersectionReferenceSystem}
-                layers={layers}
+                referenceSystem={wellboreTrajectoryQuery.isFetching ? null : intersectionReferenceSystem}
+                layers={wellboreTrajectoryQuery.isFetching ? [] : layers}
                 wellboreCasingData={wellboreCasingQuery.data ?? null}
                 intersectionExtensionLength={potentialIntersectionExtensionLength}
                 intersectionType={intersectionType}
                 workbenchServices={props.workbenchServices}
                 viewContext={props.viewContext}
-                wellboreHeaderUuid={wellboreHeader?.uuid ?? null}
+                wellboreHeaderUuid={wellboreTrajectoryQuery.isFetching ? null : wellboreHeader?.uuid ?? null}
                 wellboreHeaderDepthReferencePoint={wellboreHeader?.depthReferencePoint ?? null}
                 wellboreHeaderDepthReferenceElevation={wellboreHeader?.depthReferenceElevation ?? null}
             />

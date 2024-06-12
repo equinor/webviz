@@ -13,7 +13,7 @@ export type WellboreSelectorProps = {
 
 export function WellboreSelector(props: WellboreSelectorProps): React.ReactNode {
     function handleSelectAll() {
-        props.onSelectedWellboreUuidsChange(props.wellboreHeaders.map((header) => header.wellbore_uuid));
+        props.onSelectedWellboreUuidsChange(props.wellboreHeaders.map((header) => header.wellboreUuid));
     }
     function handleUnselectAll() {
         props.onSelectedWellboreUuidsChange([]);
@@ -54,7 +54,7 @@ export function WellboreSelector(props: WellboreSelectorProps): React.ReactNode 
 }
 function makeWellHeadersOptions(wellHeaders: WellboreHeader_api[]): SelectOption[] {
     return wellHeaders.map((wellHeader) => ({
-        label: wellHeader.unique_wellbore_identifier,
-        value: wellHeader.wellbore_uuid,
+        label: wellHeader.uniqueWellboreIdentifier,
+        value: wellHeader.wellboreUuid,
     }));
 }

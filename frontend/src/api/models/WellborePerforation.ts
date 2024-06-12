@@ -3,11 +3,11 @@
 /* tslint:disable */
 /* eslint-disable */
 export type WellborePerforation = {
-    md_top: number;
-    md_bottom: number;
-    tvd_top: number;
-    tvd_bottom: number;
+    mdTop: number;
+    mdBottom: number;
+    tvdTop: number;
+    tvdBottom: number;
     status: string;
-    completion_mode: string;
+    completionMode: string;
 };
 

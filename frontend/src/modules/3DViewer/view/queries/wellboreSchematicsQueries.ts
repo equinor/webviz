@@ -5,10 +5,10 @@ import { UseQueryResult, useQuery } from "@tanstack/react-query";
 const STALE_TIME = 60 * 1000;
 const CACHE_TIME = 60 * 1000;
 
-export function useWellboreCasingQuery(wellUuid: string | undefined): UseQueryResult<WellboreCasing_api[]> {
+export function useWellboreCasingsQuery(wellUuid: string | undefined): UseQueryResult<WellboreCasing_api[]> {
     return useQuery({
         queryKey: ["getWellboreCasing", wellUuid],
-        queryFn: () => apiService.well.getWellboreCasing(wellUuid ?? ""),
+        queryFn: () => apiService.well.getWellboreCasings(wellUuid ?? ""),
         staleTime: STALE_TIME,
         gcTime: CACHE_TIME,
         enabled: wellUuid ? true : false,

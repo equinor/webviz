@@ -110,14 +110,14 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
     });
 
     if (props.wellboreCasingData) {
-        const casingData = props.wellboreCasingData.filter((casing) => casing.item_type === "Casing");
+        const casingData = props.wellboreCasingData.filter((casing) => casing.itemType === "Casing");
 
         const casings: Casing[] = casingData.map((casing, index) => ({
             id: `casing-${index}`,
-            diameter: casing.diameter_numeric,
-            start: casing.depth_top_md,
-            end: casing.depth_bottom_md,
-            innerDiameter: casing.diameter_inner,
+            diameter: casing.diameterNumeric,
+            start: casing.depthTopMd,
+            end: casing.depthBottomMd,
+            innerDiameter: casing.diameterInner,
             kind: "casing",
             hasShoe: false,
         }));

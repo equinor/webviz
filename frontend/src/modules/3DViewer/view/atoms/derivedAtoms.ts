@@ -34,18 +34,18 @@ export const intersectionReferenceSystemAtom = atom((get) => {
         }
 
         const wellboreTrajectory = fieldWellboreTrajectories.data.find(
-            (wellbore) => wellbore.wellbore_uuid === wellboreUuid
+            (wellbore) => wellbore.wellboreUuid === wellboreUuid
         );
 
         if (wellboreTrajectory) {
             const path: number[][] = [];
-            for (const [index, northing] of wellboreTrajectory.northing_arr.entries()) {
-                const easting = wellboreTrajectory.easting_arr[index];
-                const tvd_msl = wellboreTrajectory.tvd_msl_arr[index];
+            for (const [index, northing] of wellboreTrajectory.northingArr.entries()) {
+                const easting = wellboreTrajectory.eastingArr[index];
+                const tvd_msl = wellboreTrajectory.tvdMslArr[index];
 
                 path.push([easting, northing, tvd_msl]);
             }
-            const offset = wellboreTrajectory.tvd_msl_arr[0];
+            const offset = wellboreTrajectory.tvdMslArr[0];
 
             const referenceSystem = new IntersectionReferenceSystem(path);
             referenceSystem.offset = offset;

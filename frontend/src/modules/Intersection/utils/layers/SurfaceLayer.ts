@@ -166,18 +166,21 @@ export class SurfaceLayer extends BaseLayer<SurfaceLayerSettings, SurfaceInterse
         };
 
         for (const surfaceName of this._settings.surfaceNames) {
+            const queryKey = [
+                "getSurfaceIntersection",
+                this._settings.ensembleIdent?.getCaseUuid() ?? "",
+                this._settings.ensembleIdent?.getEnsembleName() ?? "",
+                this._settings.realizationNum ?? 0,
+                surfaceName,
+                this._settings.attribute ?? "",
+                this._settings.polylineUtmXy,
+                this._settings.extensionLength,
+                this._settings.resolution,
+            ];
+            this.registerQueryKey(queryKey);
+
             const promise = this._queryClient.fetchQuery({
-                queryKey: [
-                    "getSurfaceIntersection",
-                    this._settings.ensembleIdent?.getCaseUuid() ?? "",
-                    this._settings.ensembleIdent?.getEnsembleName() ?? "",
-                    this._settings.realizationNum ?? 0,
-                    surfaceName,
-                    this._settings.attribute ?? "",
-                    this._settings.polylineUtmXy,
-                    this._settings.extensionLength,
-                    this._settings.resolution,
-                ],
+                queryKey,
                 queryFn: () =>
                     apiService.surface.postGetSurfaceIntersection(
                         this._settings.ensembleIdent?.getCaseUuid() ?? "",

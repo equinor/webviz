@@ -30,12 +30,13 @@ export class IntersectionHandler {
     private _intersectionCalculators: Map<string, IntersectionCalculator> = new Map();
     private _subscribers: Map<IntersectionHandlerTopic, Set<(payload: any) => void>> = new Map();
     private _previousIntersections: Intersection[] = [];
+    private _overlay: HTMLElement;
 
     constructor(controller: Controller, options?: IntersectionHandlerOptions) {
         this._controller = controller;
         this._options = options || { threshold: 10 };
 
-        this.makeOverlay();
+        this._overlay = this.makeOverlay();
     }
 
     addIntersectionItem(intersectionItem: IntersectionItem) {
@@ -72,10 +73,13 @@ export class IntersectionHandler {
     }
 
     destroy() {
+        if (this._overlay.parentElement) {
+            this._overlay.parentElement.removeChild(this._overlay);
+        }
         this._controller.overlay.remove("intersection-overlay");
     }
 
-    private makeOverlay() {
+    private makeOverlay(): HTMLElement {
         const overlay = this._controller.overlay.create("intersection-overlay", {
             onMouseMove: this.handleMouseMove.bind(this),
             onMouseExit: this.handleMouseExit.bind(this),
@@ -90,6 +94,8 @@ export class IntersectionHandler {
         overlay.style.pointerEvents = "none";
         overlay.style.visibility = "hidden";
         overlay.style.zIndex = "100";
+
+        return overlay;
     }
 
     private calcMd(point: number[]): number {

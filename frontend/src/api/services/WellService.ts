@@ -6,7 +6,7 @@ import type { WellboreCasing } from '../models/WellboreCasing';
 import type { WellboreCompletion } from '../models/WellboreCompletion';
 import type { WellboreHeader } from '../models/WellboreHeader';
 import type { WellboreLogCurveData } from '../models/WellboreLogCurveData';
-import type { WellboreLogCurveInfo } from '../models/WellboreLogCurveInfo';
+import type { WellboreLogCurveHeader } from '../models/WellboreLogCurveHeader';
 import type { WellborePerforation } from '../models/WellborePerforation';
 import type { WellborePicksAndStratigraphicUnits } from '../models/WellborePicksAndStratigraphicUnits';
 import type { WellboreTrajectory } from '../models/WellboreTrajectory';
@@ -126,18 +126,18 @@ export class WellService {
         });
     }
     /**
-     * Get Wellbore Casing
-     * Get well bore casing for a single well bore
+     * Get Wellbore Casings
+     * Get well bore casings for a single well bore
      * @param wellboreUuid Wellbore uuid
      * @returns WellboreCasing Successful Response
      * @throws ApiError
      */
-    public getWellboreCasing(
+    public getWellboreCasings(
         wellboreUuid: string,
     ): CancelablePromise<Array<WellboreCasing>> {
         return this.httpRequest.request({
             method: 'GET',
-            url: '/well/wellbore_casing/',
+            url: '/well/wellbore_casings/',
             query: {
                 'wellbore_uuid': wellboreUuid,
             },
@@ -171,12 +171,12 @@ export class WellService {
      * Get Wellbore Log Curve Headers
      * Get all log curve headers for a single well bore
      * @param wellboreUuid Wellbore uuid
-     * @returns WellboreLogCurveInfo Successful Response
+     * @returns WellboreLogCurveHeader Successful Response
      * @throws ApiError
      */
     public getWellboreLogCurveHeaders(
         wellboreUuid: string,
-    ): CancelablePromise<Array<WellboreLogCurveInfo>> {
+    ): CancelablePromise<Array<WellboreLogCurveHeader>> {
         return this.httpRequest.request({
             method: 'GET',
             url: '/well/wellbore_log_curve_headers/',

@@ -37,12 +37,8 @@ export type SeismicFenceData_trans = Omit<SeismicFenceData_api, "fence_traces_b6
 };
 
 export function transformSeismicFenceData(apiData: SeismicFenceData_api): SeismicFenceData_trans {
-    const startTS = performance.now();
-
     const { fence_traces_b64arr, ...untransformedData } = apiData;
     const dataFloat32Arr = b64DecodeFloatArrayToFloat32(fence_traces_b64arr);
-
-    console.debug(`transformSurfaceData() took: ${(performance.now() - startTS).toFixed(1)}ms`);
 
     return {
         ...untransformedData,
@@ -194,7 +190,7 @@ export class SeismicLayer extends BaseLayer<SeismicLayerSettings, SeismicLayerDa
         return (
             this._settings.ensembleIdent !== null &&
             this._settings.realizationNum !== null &&
-            this._settings.polylineUtmXy !== null &&
+            this._settings.polylineUtmXy.length > 0 &&
             this._settings.attribute !== null &&
             this._settings.dateOrInterval !== null &&
             this._settings.extensionLength > 0 &&
@@ -321,21 +317,24 @@ export class SeismicLayer extends BaseLayer<SeismicLayerSettings, SeismicLayerDa
             yPoints.push(point[1]);
         }
 
+        const queryKey = [
+            "postGetSeismicFence",
+            this._settings.ensembleIdent?.getCaseUuid() ?? "",
+            this._settings.ensembleIdent?.getEnsembleName() ?? "",
+            this._settings.realizationNum ?? 0,
+            this._settings.attribute ?? "",
+            this._settings.dateOrInterval ?? "",
+            this._settings.polylineUtmXy,
+            this._settings.extensionLength,
+            this._settings.surveyType,
+            this._settings.dataType,
+            this._settings.resolution,
+        ];
+        this.registerQueryKey(queryKey);
+
         return this._queryClient
             .fetchQuery({
-                queryKey: [
-                    "postGetSeismicFence",
-                    this._settings.ensembleIdent?.getCaseUuid() ?? "",
-                    this._settings.ensembleIdent?.getEnsembleName() ?? "",
-                    this._settings.realizationNum ?? 0,
-                    this._settings.attribute ?? "",
-                    this._settings.dateOrInterval ?? "",
-                    this._settings.polylineUtmXy,
-                    this._settings.extensionLength,
-                    this._settings.surveyType,
-                    this._settings.dataType,
-                    this._settings.resolution,
-                ],
+                queryKey,
                 queryFn: () =>
                     apiService.seismic.postGetSeismicFence(
                         this._settings.ensembleIdent?.getCaseUuid() ?? "",

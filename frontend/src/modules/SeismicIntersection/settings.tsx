@@ -134,8 +134,8 @@ export function Settings({ settingsContext, workbenchSession, workbenchServices 
     const availableWellboreList: Wellbore[] =
         wellHeadersQuery.data?.map((wellbore) => ({
             type: WELLBORE_TYPE,
-            uwi: wellbore.unique_wellbore_identifier,
-            uuid: wellbore.wellbore_uuid,
+            uwi: wellbore.uniqueWellboreIdentifier,
+            uuid: wellbore.wellboreUuid,
         })) || [];
     const computedWellboreAddress = fixupSyncedOrSelectedOrFirstWellbore(
         syncedWellBore || null,

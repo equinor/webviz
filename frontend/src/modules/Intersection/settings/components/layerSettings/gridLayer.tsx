@@ -12,12 +12,13 @@ import { PendingWrapper } from "@lib/components/PendingWrapper";
 import { Switch } from "@lib/components/Switch";
 import { ColorScale } from "@lib/utils/ColorScale";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
+import { useLayerSettings } from "@modules/Intersection/utils/layers/BaseLayer";
 import { GridLayer, GridLayerSettings } from "@modules/Intersection/utils/layers/GridLayer";
 import { ColorScaleSelector } from "@modules/_shared/components/ColorScaleSelector/colorScaleSelector";
 import { isoIntervalStringToDateLabel, isoStringToDateLabel } from "@modules/_shared/utils/isoDatetimeStringFormatting";
 import { useQuery } from "@tanstack/react-query";
 
-import { isEqual } from "lodash";
+import { cloneDeep, isEqual } from "lodash";
 
 import { fixupSetting } from "./utils";
 
@@ -29,13 +30,13 @@ export type GridLayerSettingsComponentProps = {
 };
 
 export function GridLayerSettingsComponent(props: GridLayerSettingsComponentProps): React.ReactNode {
-    const settings = props.layer.getSettings();
-    const [newSettings, setNewSettings] = React.useState<GridLayerSettings>(props.layer.getSettings());
-    const [prevSettings, setPrevSettings] = React.useState<GridLayerSettings>(settings);
+    const settings = useLayerSettings(props.layer);
+    const [newSettings, setNewSettings] = React.useState<GridLayerSettings>(cloneDeep(settings));
+    const [prevSettings, setPrevSettings] = React.useState<GridLayerSettings>(cloneDeep(settings));
 
     if (!isEqual(settings, prevSettings)) {
-        setPrevSettings(settings);
-        setNewSettings(settings);
+        setPrevSettings(cloneDeep(settings));
+        setNewSettings(cloneDeep(settings));
     }
 
     const ensembleFilterFunc = useEnsembleRealizationFilterFunc(props.workbenchSession);
@@ -99,7 +100,7 @@ export function GridLayerSettingsComponent(props: GridLayerSettingsComponentProp
 
     React.useEffect(
         function propagateSettingsChange() {
-            props.layer.maybeUpdateSettings(newSettings);
+            props.layer.maybeUpdateSettings(cloneDeep(newSettings));
         },
         [newSettings, props.layer]
     );

@@ -148,8 +148,6 @@ function transformFenceMeshSection(apiData: FenceMeshSection_api): FenceMeshSect
 }
 
 export function transformPolylineIntersection(apiData: PolylineIntersection_api): PolylineIntersection_trans {
-    const startTS = performance.now();
-
     const { fence_mesh_sections, ...untransformedData } = apiData;
 
     const transMeshSections: FenceMeshSection_trans[] = [];
@@ -158,8 +156,6 @@ export function transformPolylineIntersection(apiData: PolylineIntersection_api)
         const transformedSection = transformFenceMeshSection(apiSection);
         transMeshSections.push(transformedSection);
     }
-
-    console.debug(`transformPolylineIntersection() took: ${(performance.now() - startTS).toFixed(1)}ms`);
 
     return {
         ...untransformedData,
@@ -181,10 +177,7 @@ export function transformPolylineIntersectionResult(
     polylineIntersection: PolylineIntersection_trans,
     actualSectionLengths: number[]
 ): AdjustedPolylineIntersection {
-    const startTS = performance.now();
-
     const fenceMeshSections: AdjustedFenceMeshSection[] = [];
-    let totalError = 0;
 
     // Section with a length of 0 are not included in the results - remove
     const adjustedActualSectionLengths = actualSectionLengths.filter((length) => length > 0);
@@ -204,8 +197,6 @@ export function transformPolylineIntersectionResult(
 
         const scale = actualSectionLength / simplifiedSectionLength;
 
-        totalError += actualSectionLength - simplifiedSectionLength;
-
         let minZ = Number.MAX_VALUE;
         let maxZ = Number.MIN_VALUE;
         for (let i = 0; i < section.verticesUzFloat32Arr.length; i += 2) {
@@ -222,10 +213,6 @@ export function transformPolylineIntersectionResult(
             maxZ,
         });
     }
-
-    console.debug(`Total error: ${totalError.toFixed(2)}`);
-
-    console.debug(`transformPolylineIntersectionResult() took: ${(performance.now() - startTS).toFixed(1)}ms`);
 
     return {
         ...polylineIntersection,

@@ -3,12 +3,12 @@
 /* tslint:disable */
 /* eslint-disable */
 export type WellboreCompletion = {
-    md_top: number;
-    md_bottom: number;
-    tvd_top: (number | null);
-    tvd_bottom: (number | null);
+    mdTop: number;
+    mdBottom: number;
+    tvdTop: (number | null);
+    tvdBottom: (number | null);
     description: (string | null);
-    symbol_name: (string | null);
+    symbolName: (string | null);
     comment: (string | null);
 };
 

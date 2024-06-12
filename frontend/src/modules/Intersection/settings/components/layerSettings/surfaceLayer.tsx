@@ -15,10 +15,11 @@ import { PendingWrapper } from "@lib/components/PendingWrapper";
 import { Select } from "@lib/components/Select";
 import { ColorPalette } from "@lib/utils/ColorPalette";
 import { ColorSet } from "@lib/utils/ColorSet";
+import { useLayerSettings } from "@modules/Intersection/utils/layers/BaseLayer";
 import { SurfaceLayer, SurfaceLayerSettings } from "@modules/Intersection/utils/layers/SurfaceLayer";
 import { UseQueryResult, useQuery } from "@tanstack/react-query";
 
-import { isEqual } from "lodash";
+import { cloneDeep, isEqual } from "lodash";
 
 import { fixupSetting } from "./utils";
 
@@ -30,9 +31,9 @@ export type SurfaceLayerSettingsComponentProps = {
 };
 
 export function SurfaceLayerSettingsComponent(props: SurfaceLayerSettingsComponentProps): React.ReactNode {
-    const [newSettings, setNewSettings] = React.useState<SurfaceLayerSettings>(props.layer.getSettings());
-    const settings = props.layer.getSettings();
-    const [prevSettings, setPrevSettings] = React.useState<SurfaceLayerSettings>(settings);
+    const settings = useLayerSettings(props.layer);
+    const [newSettings, setNewSettings] = React.useState<SurfaceLayerSettings>(cloneDeep(settings));
+    const [prevSettings, setPrevSettings] = React.useState<SurfaceLayerSettings>(cloneDeep(settings));
 
     if (!isEqual(settings, prevSettings)) {
         setPrevSettings(settings);
@@ -103,7 +104,7 @@ export function SurfaceLayerSettingsComponent(props: SurfaceLayerSettingsCompone
 
     React.useEffect(
         function propagateSettingsChange() {
-            props.layer.maybeUpdateSettings(newSettings);
+            props.layer.maybeUpdateSettings(cloneDeep(newSettings));
         },
         [newSettings, props.layer]
     );

@@ -3,15 +3,15 @@
 /* tslint:disable */
 /* eslint-disable */
 export type WellboreCasing = {
-    item_type: string;
-    diameter_numeric: number;
-    diameter_inner: number;
+    itemType: string;
+    diameterNumeric: number;
+    diameterInner: number;
     description: (string | null);
     remark: (string | null);
-    depth_top_md: number;
-    depth_bottom_md: number;
-    total_depth_md: number;
-    start_depth: number;
+    depthTopMd: number;
+    depthBottomMd: number;
+    totalDepthMd: number;
+    startDepth: number;
     end_depth: number;
 };
 

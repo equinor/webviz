@@ -2,9 +2,9 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-export type WellboreLogCurveInfo = {
-    log_name: string;
-    curve_name: string;
-    curve_unit: string;
+export type WellboreLogCurveHeader = {
+    logName: string;
+    curveName: string;
+    curveUnit: string;
 };
 

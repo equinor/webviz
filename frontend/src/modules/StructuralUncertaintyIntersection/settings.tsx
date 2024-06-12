@@ -95,8 +95,8 @@ export function Settings({
     const availableWellboreList: Wellbore[] =
         wellHeadersQuery.data?.map((wellbore) => ({
             type: wellboreType,
-            uwi: wellbore.unique_wellbore_identifier,
-            uuid: wellbore.wellbore_uuid,
+            uwi: wellbore.uniqueWellboreIdentifier,
+            uuid: wellbore.wellboreUuid,
         })) || [];
     const computedWellboreAddress = fixupSyncedOrSelectedOrFirstWellbore(
         syncedWellBore || null,

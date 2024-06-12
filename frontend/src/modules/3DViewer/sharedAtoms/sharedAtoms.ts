@@ -33,9 +33,9 @@ export const selectedHighlightedWellboreUuidAtom = atom((get) => {
 
     if (
         !userSelectedHighlightedWellboreUuid ||
-        !wellboreHeaders.data.some((el) => el.wellbore_uuid === userSelectedHighlightedWellboreUuid)
+        !wellboreHeaders.data.some((el) => el.wellboreUuid === userSelectedHighlightedWellboreUuid)
     ) {
-        return wellboreHeaders.data[0].wellbore_uuid ?? null;
+        return wellboreHeaders.data[0].wellboreUuid ?? null;
     }
 
     return userSelectedHighlightedWellboreUuid;

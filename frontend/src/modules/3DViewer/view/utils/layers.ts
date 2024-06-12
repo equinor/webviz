@@ -1,5 +1,5 @@
 import { BoundingBox3d_api, WellboreTrajectory_api } from "@api";
-import { Layer, PickingInfo } from "@deck.gl/core/typed";
+import { Layer } from "@deck.gl/core/typed";
 import { TGrid3DColoringMode } from "@webviz/subsurface-viewer";
 import { AxesLayer, Grid3DLayer, WellsLayer } from "@webviz/subsurface-viewer/dist/layers";
 
@@ -79,10 +79,6 @@ export function makeIntersectionLayer(
     showGridLines: boolean,
     gridMinAndMaxPropValues: [number, number]
 ): WorkingGrid3dLayer {
-    function handleHover(pickingInfo: PickingInfo) {
-        console.debug("Hovering over intersection layer", pickingInfo);
-    }
-
     const polyData = buildVtkStylePolyDataFromFenceSections(polylineIntersectionData.fenceMeshSections);
     const grid3dIntersectionLayer = new Grid3DLayer({
         id: "grid-3d-intersection-layer",
@@ -97,7 +93,6 @@ export function makeIntersectionLayer(
         gridLines: showGridLines,
         material: { ambient: 0.4, diffuse: 0.7, shininess: 8, specularColor: [25, 25, 25] },
         pickable: false,
-        onHover: handleHover,
     });
     return grid3dIntersectionLayer as unknown as WorkingGrid3dLayer;
 }
@@ -107,7 +102,7 @@ export function makeWellsLayer(
     selectedWellboreUuid: string | null
 ): WellsLayer {
     const tempWorkingWellsData = fieldWellboreTrajectoriesData.filter(
-        (el) => el.unique_wellbore_identifier !== "NO 34/4-K-3 AH"
+        (el) => el.uniqueWellboreIdentifier !== "NO 34/4-K-3 AH"
     );
     const wellLayerDataFeatures = tempWorkingWellsData.map((well) =>
         wellTrajectoryToGeojson(well, selectedWellboreUuid)
@@ -157,17 +152,17 @@ export function wellTrajectoryToGeojson(
 ): Record<string, unknown> {
     const point: Record<string, unknown> = {
         type: "Point",
-        coordinates: [wellTrajectory.easting_arr[0], wellTrajectory.northing_arr[0], -wellTrajectory.tvd_msl_arr[0]],
+        coordinates: [wellTrajectory.eastingArr[0], wellTrajectory.northingArr[0], -wellTrajectory.tvdMslArr[0]],
     };
     const coordinates: Record<string, unknown> = {
         type: "LineString",
-        coordinates: zipCoords(wellTrajectory.easting_arr, wellTrajectory.northing_arr, wellTrajectory.tvd_msl_arr),
+        coordinates: zipCoords(wellTrajectory.eastingArr, wellTrajectory.northingArr, wellTrajectory.tvdMslArr),
     };
 
     let color = [150, 150, 150];
     let lineWidth = 2;
     let wellHeadSize = 1;
-    if (wellTrajectory.wellbore_uuid === selectedWellboreUuid) {
+    if (wellTrajectory.wellboreUuid === selectedWellboreUuid) {
         color = [255, 0, 0];
         lineWidth = 5;
         wellHeadSize = 10;
@@ -180,11 +175,11 @@ export function wellTrajectoryToGeojson(
             geometries: [point, coordinates],
         },
         properties: {
-            uuid: wellTrajectory.wellbore_uuid,
-            name: wellTrajectory.unique_wellbore_identifier,
-            uwi: wellTrajectory.unique_wellbore_identifier,
+            uuid: wellTrajectory.wellboreUuid,
+            name: wellTrajectory.uniqueWellboreIdentifier,
+            uwi: wellTrajectory.uniqueWellboreIdentifier,
             color,
-            md: [wellTrajectory.md_arr],
+            md: [wellTrajectory.mdArr],
             lineWidth,
             wellHeadSize,
         },
@@ -209,8 +204,6 @@ interface PolyDataVtk {
 }
 
 function buildVtkStylePolyDataFromFenceSections(fenceSections: FenceMeshSection_trans[]): PolyDataVtk {
-    const startTS = performance.now();
-
     // Calculate sizes of typed arrays
     let totNumVertices = 0;
     let totNumPolygons = 0;
@@ -264,8 +257,6 @@ function buildVtkStylePolyDataFromFenceSections(fenceSections: FenceMeshSection_
         polyPropsFloat32Arr.set(section.polyPropsFloat32Arr, propsDstIdx);
         propsDstIdx += numPolysInSection;
     }
-
-    console.debug(`buildVtkStylePolyDataFromFenceSections() took: ${(performance.now() - startTS).toFixed(1)}ms`);
 
     return {
         points: pointsFloat32Arr,

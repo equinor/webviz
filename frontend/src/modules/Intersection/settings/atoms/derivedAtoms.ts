@@ -58,20 +58,20 @@ export const selectedWellboreAtom = atom((get) => {
         return null;
     }
 
-    const userSelectedWellboreHeader = wellboreHeaders.data.find((el) => el.wellbore_uuid === userSelectedWellboreUuid);
+    const userSelectedWellboreHeader = wellboreHeaders.data.find((el) => el.wellboreUuid === userSelectedWellboreUuid);
 
     if (!userSelectedWellboreUuid || !userSelectedWellboreHeader) {
         if (wellboreHeaders.data.length === 0) {
             return null;
         }
         return {
-            uuid: wellboreHeaders.data[0].wellbore_uuid,
-            identifier: wellboreHeaders.data[0].unique_wellbore_identifier,
+            uuid: wellboreHeaders.data[0].wellboreUuid,
+            identifier: wellboreHeaders.data[0].uniqueWellboreIdentifier,
         };
     }
 
     return {
         uuid: userSelectedWellboreUuid,
-        identifier: userSelectedWellboreHeader.unique_wellbore_identifier,
+        identifier: userSelectedWellboreHeader.uniqueWellboreIdentifier,
     };
 });

@@ -20,7 +20,7 @@ import { useAtom, useAtomValue } from "jotai";
 import { SyncedSettingsUpdateWrapper } from "./components/SyncedSettingsUpdateWrapper";
 import { useGridParameterQuery, useGridSurfaceQuery } from "./queries/gridQueries";
 import { useGridPolylineIntersection as useGridPolylineIntersectionQuery } from "./queries/polylineIntersection";
-import { useWellboreCasingQuery } from "./queries/wellboreSchematicsQueries";
+import { useWellboreCasingsQuery } from "./queries/wellboreSchematicsQueries";
 import { makeAxesLayer, makeGrid3DLayer, makeIntersectionLayer, makeWellsLayer } from "./utils/layers";
 
 import { userSelectedCustomIntersectionPolylineIdAtom } from "../settings/atoms/baseAtoms";
@@ -103,7 +103,7 @@ export function View(props: ModuleViewProps<State, SettingsToViewInterface>): Re
         displayedWellboreUuid.push(highlightedWellboreUuid);
     }
     const filteredFieldWellBoreTrajectories = fieldWellboreTrajectoriesQuery.data?.filter((wellbore) =>
-        displayedWellboreUuid.includes(wellbore.wellbore_uuid)
+        displayedWellboreUuid.includes(wellbore.wellboreUuid)
     );
 
     const polylineUtmXy: number[] = [];
@@ -115,17 +115,17 @@ export function View(props: ModuleViewProps<State, SettingsToViewInterface>): Re
     if (intersectionType === IntersectionType.WELLBORE) {
         if (filteredFieldWellBoreTrajectories && highlightedWellboreUuid) {
             const wellboreTrajectory = filteredFieldWellBoreTrajectories.find(
-                (wellbore) => wellbore.wellbore_uuid === highlightedWellboreUuid
+                (wellbore) => wellbore.wellboreUuid === highlightedWellboreUuid
             );
             if (wellboreTrajectory) {
                 const path: number[][] = [];
-                for (const [index, northing] of wellboreTrajectory.northing_arr.entries()) {
-                    const easting = wellboreTrajectory.easting_arr[index];
-                    const tvd_msl = wellboreTrajectory.tvd_msl_arr[index];
+                for (const [index, northing] of wellboreTrajectory.northingArr.entries()) {
+                    const easting = wellboreTrajectory.eastingArr[index];
+                    const tvd_msl = wellboreTrajectory.tvdMslArr[index];
 
                     path.push([easting, northing, tvd_msl]);
                 }
-                const offset = wellboreTrajectory.tvd_msl_arr[0];
+                const offset = wellboreTrajectory.tvdMslArr[0];
 
                 intersectionReferenceSystem = new IntersectionReferenceSystem(path);
                 intersectionReferenceSystem.offset = offset;
@@ -178,7 +178,7 @@ export function View(props: ModuleViewProps<State, SettingsToViewInterface>): Re
     }
 
     // Wellbore casing query
-    const wellboreCasingQuery = useWellboreCasingQuery(highlightedWellboreUuid ?? undefined);
+    const wellboreCasingQuery = useWellboreCasingsQuery(highlightedWellboreUuid ?? undefined);
     if (wellboreCasingQuery.isError) {
         statusWriter.addError(wellboreCasingQuery.error.message);
     }

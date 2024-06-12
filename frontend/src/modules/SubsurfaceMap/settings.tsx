@@ -372,8 +372,8 @@ export function Settings({ settingsContext, workbenchSession, workbenchServices 
 
     if (wellHeadersQuery.data) {
         wellHeaderOptions = wellHeadersQuery.data.map((header) => ({
-            label: header.unique_wellbore_identifier,
-            value: header.wellbore_uuid,
+            label: header.uniqueWellboreIdentifier,
+            value: header.wellboreUuid,
         }));
     }
 

@@ -66,6 +66,7 @@ export function Layers(props: LayersProps): React.ReactNode {
     const [dragPosition, setDragPosition] = React.useState<Point2D>({ x: 0, y: 0 });
     const [prevLayers, setPrevLayers] = React.useState<BaseLayer<any, any>[]>(layers);
     const [currentScrollPosition, setCurrentScrollPosition] = React.useState<number>(0);
+    const [layerOrder, setLayerOrder] = React.useState<string[]>(layers.map((layer) => layer.getId()));
 
     const parentDivRef = React.useRef<HTMLDivElement>(null);
     const scrollDivRef = React.useRef<HTMLDivElement>(null);
@@ -74,6 +75,7 @@ export function Layers(props: LayersProps): React.ReactNode {
 
     if (!isEqual(prevLayers, layers)) {
         setPrevLayers(layers);
+        setLayerOrder(layers.map((layer) => layer.getId()));
         if (scrollDivRef.current) {
             scrollDivRef.current.scrollTop = currentScrollPosition;
         }
@@ -99,6 +101,7 @@ export function Layers(props: LayersProps): React.ReactNode {
             let pointerDownPositionRelativeToElement: Point2D = { x: 0, y: 0 };
             let draggingActive: boolean = false;
             let layerId: string | null = null;
+            let newLayerOrder: string[] = layers.map((layer) => layer.getId());
 
             let scrollTimeout: ReturnType<typeof setTimeout> | null = null;
             let doScroll: boolean = false;
@@ -130,6 +133,30 @@ export function Layers(props: LayersProps): React.ReactNode {
                 document.addEventListener("pointerup", handlePointerUp);
             }
 
+            function moveLayerToIndex(id: string, moveToIndex: number) {
+                const layer = layers.find((layer) => layer.getId() === id);
+                if (!layer) {
+                    return;
+                }
+
+                const index = newLayerOrder.indexOf(layer.getId());
+                if (index === moveToIndex) {
+                    return;
+                }
+
+                if (moveToIndex <= 0) {
+                    newLayerOrder = [id, ...newLayerOrder.filter((el) => el !== id)];
+                } else if (moveToIndex >= layers.length - 1) {
+                    newLayerOrder = [...newLayerOrder.filter((el) => el !== id), id];
+                } else {
+                    newLayerOrder = [...newLayerOrder];
+                    newLayerOrder.splice(index, 1);
+                    newLayerOrder.splice(moveToIndex, 0, id);
+                }
+
+                setLayerOrder(newLayerOrder);
+            }
+
             function handleElementDrag(id: string, position: Point2D) {
                 if (parentDivRef.current === null) {
                     return;
@@ -154,9 +181,9 @@ export function Layers(props: LayersProps): React.ReactNode {
                         }
 
                         if (position.y <= childBoundingRect.y + childBoundingRect.height / 2) {
-                            dispatch({ type: LayerActionType.MOVE_LAYER, payload: { id, moveToIndex: index } });
+                            moveLayerToIndex(id, index);
                         } else {
-                            dispatch({ type: LayerActionType.MOVE_LAYER, payload: { id, moveToIndex: index + 1 } });
+                            moveLayerToIndex(id, index + 1);
                         }
                         index++;
                     }
@@ -247,6 +274,7 @@ export function Layers(props: LayersProps): React.ReactNode {
                 setDraggingLayerId(null);
                 document.removeEventListener("pointermove", handlePointerMove);
                 document.removeEventListener("pointerup", handlePointerUp);
+                dispatch({ type: LayerActionType.CHANGE_ORDER, payload: { orderedIds: newLayerOrder } });
             }
 
             currentParentDivRef.addEventListener("pointerdown", handlePointerDown);
@@ -259,7 +287,7 @@ export function Layers(props: LayersProps): React.ReactNode {
                 setDraggingLayerId(null);
             };
         },
-        [dispatch]
+        [dispatch, layers]
     );
 
     function handleScroll(e: React.UIEvent<HTMLDivElement>) {
@@ -312,21 +340,26 @@ export function Layers(props: LayersProps): React.ReactNode {
                     onScroll={handleScroll}
                 >
                     <div className="flex flex-col border border-slate-100 relative max-h-0" ref={parentDivRef}>
-                        {layers.map((layer) => {
-                            return (
-                                <LayerItem
-                                    key={layer.getId()}
-                                    layer={layer}
-                                    ensembleSet={props.ensembleSet}
-                                    workbenchSession={props.workbenchSession}
-                                    workbenchSettings={props.workbenchSettings}
-                                    onRemoveLayer={handleRemoveLayer}
-                                    dispatch={dispatch}
-                                    isDragging={draggingLayerId === layer.getId()}
-                                    dragPosition={dragPosition}
-                                />
-                            );
-                        })}
+                        {layerOrder
+                            .map((id) => layers.find((el) => el.getId() === id))
+                            .map((layer) => {
+                                if (!layer) {
+                                    return null;
+                                }
+                                return (
+                                    <LayerItem
+                                        key={layer.getId()}
+                                        layer={layer}
+                                        ensembleSet={props.ensembleSet}
+                                        workbenchSession={props.workbenchSession}
+                                        workbenchSettings={props.workbenchSettings}
+                                        onRemoveLayer={handleRemoveLayer}
+                                        dispatch={dispatch}
+                                        isDragging={draggingLayerId === layer.getId()}
+                                        dragPosition={dragPosition}
+                                    />
+                                );
+                            })}
                     </div>
                     {layers.length === 0 && (
                         <div className="flex h-full -mt-1 justify-center text-sm items-center gap-1">
@@ -488,7 +521,7 @@ function LayerItem(props: LayerItemProps): React.ReactNode {
     return (
         <div ref={divRef} className={resolveClassNames("relative")} data-layer-id={props.layer.getId()}>
             <div
-                className={resolveClassNames("bg-blue-300 z-10 w-full h-full absolute left-0 top-0", {
+                className={resolveClassNames("bg-blue-300 z-30 w-full h-full absolute left-0 top-0", {
                     hidden: !props.isDragging,
                 })}
             ></div>
