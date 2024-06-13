@@ -12,6 +12,6 @@ export type WellboreCasing = {
     depthBottomMd: number;
     totalDepthMd: number;
     startDepth: number;
-    end_depth: number;
+    endDepth: number;
 };
 
