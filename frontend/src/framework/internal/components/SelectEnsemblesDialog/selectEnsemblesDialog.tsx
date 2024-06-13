@@ -50,6 +50,18 @@ interface CaseFilterSettings {
     users: string[];
 }
 
+function readInitialStateFromLocalStorage(stateName: string): string {
+    const storedState = localStorage.getItem(stateName);
+    if (storedState && typeof storedState === "string") {
+        return storedState;
+    }
+    return "";
+}
+
+function storeStateInLocalStorage(stateName: string, value: string) {
+    localStorage.setItem(stateName, value);
+}
+
 export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (props) => {
     const [isLoadingEnsembles, setIsLoadingEnsembles] = React.useState<boolean>(false);
     const [confirmCancel, setConfirmCancel] = React.useState<boolean>(false);
@@ -74,7 +86,7 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
     });
 
     const [selectedField, setSelectedField] = useValidState<string>({
-        initialState: "",
+        initialState: readInitialStateFromLocalStorage("selectedField"),
         validStates: fieldsQuery.data?.map((item) => item.field_identifier) ?? [],
         keepStateWhenInvalid: true,
     });
@@ -94,7 +106,7 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
 
     const [selectedCaseId, setSelectedCaseId] = useValidState<string>({
         initialState: "",
-        validStates: casesQuery.data?.map((item) => item.uuid) ?? [],
+        validStates: filterCases(casesQuery.data)?.map((item) => item.uuid) ?? [],
         keepStateWhenInvalid: true,
     });
 
@@ -118,6 +130,7 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
     });
 
     function handleFieldChanged(fieldIdentifier: string) {
+        storeStateInLocalStorage("selectedField", fieldIdentifier);
         setSelectedField(fieldIdentifier);
     }
 

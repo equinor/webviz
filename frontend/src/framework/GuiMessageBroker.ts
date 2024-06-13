@@ -20,6 +20,7 @@ export enum GuiState {
     EditDataChannelConnections = "editDataChannelConnections",
     RightSettingsPanelWidthInPercent = "rightSettingsPanelWidthInPercent",
     RightSettingsPanelExpanded = "rightSettingsPanelExpanded",
+    AppInitialized = "appInitialized",
 }
 
 export enum GuiEvent {
@@ -79,6 +80,7 @@ type GuiStateValueTypes = {
     [GuiState.EditDataChannelConnections]: boolean;
     [GuiState.RightSettingsPanelWidthInPercent]: number;
     [GuiState.RightSettingsPanelExpanded]: boolean;
+    [GuiState.AppInitialized]: boolean;
 };
 
 const defaultStates: Map<GuiState, any> = new Map();
@@ -89,6 +91,7 @@ defaultStates.set(GuiState.DataChannelConnectionLayerVisible, false);
 defaultStates.set(GuiState.DevToolsVisible, isDevMode());
 defaultStates.set(GuiState.RightSettingsPanelWidthInPercent, 0);
 defaultStates.set(GuiState.RightSettingsPanelExpanded, false);
+defaultStates.set(GuiState.AppInitialized, false);
 
 const persistentStates: GuiState[] = [
     GuiState.LeftSettingsPanelWidthInPercent,

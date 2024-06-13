@@ -64,6 +64,7 @@ export const TableSelect = withDefaults<TableSelectProps>()(defaultProps, (props
     const [lastShiftIndex, setLastShiftIndex] = React.useState<number>(-1);
     const [currentIndex, setCurrentIndex] = React.useState<number>(0);
     const [prevFilteredOptions, setPrevFilteredOptions] = React.useState<TableSelectOption[]>([]);
+    const [prevValue, setPrevValue] = React.useState<string[] | undefined>(props.value);
 
     if (!isEqual(prevHeaderLabels, props.headerLabels)) {
         setPrevHeaderLabels(props.headerLabels);
@@ -91,6 +92,18 @@ export const TableSelect = withDefaults<TableSelectProps>()(defaultProps, (props
         },
         [props.options, filters, props.filter]
     );
+
+    if (!isEqual(prevValue, props.value)) {
+        setPrevValue(props.value);
+        setSelected(props.value ?? []);
+        if (props.value?.length === 1) {
+            const newIndex = filteredOptions.findIndex((option) => option.id === props.value[0]);
+            if (newIndex !== -1) {
+                setCurrentIndex(newIndex);
+                setStartIndex(newIndex);
+            }
+        }
+    }
 
     if (!checkForEqualityWithoutAdornment(filteredOptions, prevFilteredOptions)) {
         let newCurrentIndex = 0;
@@ -210,15 +223,6 @@ export const TableSelect = withDefaults<TableSelectProps>()(defaultProps, (props
             };
         },
         [currentIndex, selected, filteredOptions, props.size, hasFocus, startIndex, toggleValue]
-    );
-
-    React.useLayoutEffect(
-        function handleInitialSelection() {
-            if (props.value) {
-                setSelected(props.value);
-            }
-        },
-        [props.value]
     );
 
     function handleFilterChange(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>, index: number) {
