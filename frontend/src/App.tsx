@@ -158,9 +158,13 @@ function App() {
                     "opacity-100": !isInitializingApp,
                 })}
             >
-                <LeftNavBar workbench={WORKBENCH} />
-                <SettingsContentPanels workbench={WORKBENCH} />
-                <RightNavBar workbench={WORKBENCH} />
+                {!isInitializingApp && (
+                    <>
+                        <LeftNavBar workbench={WORKBENCH} />
+                        <SettingsContentPanels workbench={WORKBENCH} />
+                        <RightNavBar workbench={WORKBENCH} />
+                    </>
+                )}
             </div>
             <ToggleDevToolsButton guiMessageBroker={WORKBENCH.getGuiMessageBroker()} />
         </>

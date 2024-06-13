@@ -27,10 +27,13 @@ const NavBarDivider: React.FC = () => {
 };
 
 export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
-    const [ensembleDialogOpen, setEnsembleDialogOpen] = React.useState<boolean>(false);
+    const ensembleSet = useEnsembleSet(props.workbench.getWorkbenchSession());
+    const [ensembleDialogOpen, setEnsembleDialogOpen] = React.useState<boolean>(
+        ensembleSet.getEnsembleArr().length === 0
+    );
     const [newSelectedEnsembles, setNewSelectedEnsembles] = React.useState<EnsembleItem[]>([]);
     const [layoutEmpty, setLayoutEmpty] = React.useState<boolean>(props.workbench.getLayout().length === 0);
-    const [expanded, setExpanded] = React.useState<boolean>(localStorage.getItem("navBarExpanded") === "true");
+    const [collapsed, setCollapsed] = React.useState<boolean>(localStorage.getItem("navBarCollapsed") === "true");
     const loadingEnsembleSet = useIsEnsembleSetLoading(props.workbench.getWorkbenchSession());
     const [drawerContent, setDrawerContent] = useGuiState(
         props.workbench.getGuiMessageBroker(),
@@ -40,7 +43,6 @@ export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
         props.workbench.getGuiMessageBroker(),
         GuiState.LeftSettingsPanelWidthInPercent
     );
-    const ensembleSet = useEnsembleSet(props.workbench.getWorkbenchSession());
 
     const queryClient = useQueryClient();
     const colorSet = props.workbench.getWorkbenchSettings().useColorSet();
@@ -106,8 +108,8 @@ export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
     }
 
     function handleCollapseOrExpand() {
-        setExpanded(!expanded);
-        localStorage.setItem("navBarExpanded", (!expanded).toString());
+        setCollapsed(!collapsed);
+        localStorage.setItem("navBarCollapsed", (!collapsed).toString());
     }
 
     const selectedEnsembles: EnsembleItem[] = ensembleSet.getEnsembleArr().map((ens) => ({
@@ -137,7 +139,7 @@ export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
         <div
             className={resolveClassNames(
                 "bg-white p-2 border-r-2 border-slate-200 z-50 shadow-lg flex flex-col",
-                expanded ? "w-64" : "w-[4.5rem]"
+                collapsed ? "w-[4.5rem]" : "w-64"
             )}
         >
             <div className="flex flex-col gap-2 flex-grow">
@@ -154,9 +156,9 @@ export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
                     <Button
                         onClick={handleCollapseOrExpand}
                         className="!text-slate-800"
-                        title={expanded ? "Collapse menu" : "Expand menu"}
+                        title={collapsed ? "Expand menu" : "Collapse menu"}
                     >
-                        {expanded ? <ChevronLeft fontSize="small" /> : <ChevronRight fontSize="small" />}
+                        {collapsed ? <ChevronRight fontSize="small" /> : <ChevronLeft fontSize="small" />}
                     </Button>
                 </div>
                 <NavBarDivider />
@@ -184,7 +186,7 @@ export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
                         )
                     }
                 >
-                    {expanded ? "Ensembles" : ""}
+                    {!collapsed ? "Ensembles" : ""}
                 </Button>
                 <NavBarDivider />
                 <Button
@@ -198,7 +200,7 @@ export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
                     )}
                     disabled={layoutEmpty}
                 >
-                    {expanded ? "Module settings" : ""}
+                    {!collapsed ? "Module settings" : ""}
                 </Button>
                 <Button
                     title="Show sync settings"
@@ -211,7 +213,7 @@ export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
                     )}
                     disabled={layoutEmpty}
                 >
-                    {expanded ? "Sync settings" : ""}
+                    {!collapsed ? "Sync settings" : ""}
                 </Button>
                 <NavBarDivider />
                 <Button
@@ -224,7 +226,7 @@ export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
                         drawerContent === DrawerContent.ModulesList ? "text-cyan-600" : "!text-slate-800"
                     )}
                 >
-                    {expanded ? "Add modules" : ""}
+                    {!collapsed ? "Add modules" : ""}
                 </Button>
                 <Button
                     title="Show templates list"
@@ -236,7 +238,7 @@ export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
                         drawerContent === DrawerContent.TemplatesList ? "text-cyan-600" : "!text-slate-800"
                     )}
                 >
-                    {expanded ? "Use templates" : ""}
+                    {!collapsed ? "Use templates" : ""}
                 </Button>
                 <NavBarDivider />
                 <Button
@@ -249,14 +251,14 @@ export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
                         drawerContent === DrawerContent.ColorPaletteSettings ? "text-cyan-600" : "!text-slate-800"
                     )}
                 >
-                    {expanded ? "Color settings" : ""}
+                    {!collapsed ? "Color settings" : ""}
                 </Button>
                 <NavBarDivider />
-                <LoginButton className="w-full !text-slate-800 h-10" showText={expanded} />
+                <LoginButton className="w-full !text-slate-800 h-10" showText={!collapsed} />
                 <div className="flex-grow h-5" />
                 <div className={isDevMode() ? "mb-16" : ""}>
                     <NavBarDivider />
-                    <UserSessionState expanded={expanded} />
+                    <UserSessionState expanded={!collapsed} />
                 </div>
             </div>
             {ensembleDialogOpen && (
