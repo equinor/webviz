@@ -227,9 +227,14 @@ export const Dropdown = withDefaults<DropdownProps>()(defaultProps, (props) => {
                 clearTimeout(debounceTimerRef.current);
             }
 
+            if (!props.debounceTimeMs) {
+                onChange(value);
+                return;
+            }
+
             debounceTimerRef.current = setTimeout(() => {
                 onChange(value);
-            }, props.debounceTimeMs ?? 0);
+            }, props.debounceTimeMs);
         },
         [onChange, props.debounceTimeMs]
     );

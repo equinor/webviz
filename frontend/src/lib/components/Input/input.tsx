@@ -82,9 +82,14 @@ export const Input = React.forwardRef((props: InputProps, ref: React.ForwardedRe
                 clearTimeout(debounceTimerRef.current);
             }
 
+            if (!debounceTimeMs) {
+                onChange(event);
+                return;
+            }
+
             debounceTimerRef.current = setTimeout(() => {
                 onChange(event);
-            }, debounceTimeMs ?? 0);
+            }, debounceTimeMs);
         },
         [props.min, props.max, onChange, props.type, debounceTimeMs]
     );

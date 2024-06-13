@@ -170,10 +170,15 @@ export const Slider = React.forwardRef((props: SliderProps, ref: React.Forwarded
             clearTimeout(debounceTimerRef.current);
         }
 
+        if (!props.debounceTimeMs) {
+            props.onChange?.(event, value, activeThumb);
+            return;
+        }
+
         debounceTimerRef.current = setTimeout(() => {
             debounceTimerRef.current = null;
             props.onChange?.(event, value, activeThumb);
-        }, debounceTimeMs ?? 0);
+        }, debounceTimeMs);
     }
 
     function makeLabel(): React.ReactNode {

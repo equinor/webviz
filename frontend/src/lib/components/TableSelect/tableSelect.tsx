@@ -124,9 +124,14 @@ export const TableSelect = withDefaults<TableSelectProps>()(defaultProps, (props
                 clearTimeout(debounceTimerRef.current);
             }
 
+            if (!props.debounceTimeMs) {
+                onChange(values);
+                return;
+            }
+
             debounceTimerRef.current = setTimeout(() => {
                 onChange(values);
-            }, props.debounceTimeMs ?? 0);
+            }, props.debounceTimeMs);
         },
         [onChange, props.debounceTimeMs]
     );
