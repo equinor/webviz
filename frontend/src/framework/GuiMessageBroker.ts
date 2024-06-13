@@ -131,7 +131,7 @@ export class GuiMessageBroker {
             // For now, persistent states are only stored in localStorage
             // However, in the future, we may want to store at least some of them in a database on the server
             const stateValue = this._storedValues.get(state);
-            if (stateValue === undefined) {
+            if (stateValue === undefined || stateValue === null) {
                 return;
             }
             localStorage.setItem(state, JSON.stringify(stateValue));
