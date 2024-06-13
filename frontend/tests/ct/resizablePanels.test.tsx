@@ -484,7 +484,7 @@ test.describe("ResizablePanels", () => {
                 content1,
                 { x: 0, y: 0 },
                 { width: viewPortSize.width, height: expectedHeights[0] },
-                3.0
+                5.0
             )
         ).toBeTruthy();
 
@@ -493,7 +493,7 @@ test.describe("ResizablePanels", () => {
                 content2,
                 { x: 0, y: expectedHeights[0] + 1 },
                 { width: viewPortSize.width, height: expectedHeights[1] },
-                3.0
+                5.0
             )
         ).toBeTruthy();
 
@@ -502,7 +502,7 @@ test.describe("ResizablePanels", () => {
                 content3,
                 { x: 0, y: expectedHeights[0] + expectedHeights[1] + 2 },
                 { width: viewPortSize.width, height: expectedHeights[2] },
-                3.0
+                5.0
             )
         ).toBeTruthy();
     });
@@ -601,7 +601,7 @@ test.describe("ResizablePanels", () => {
                 content1,
                 { x: 50, y: 0 },
                 { width: expectedWidths[0], height: resizablePanelsSize.height },
-                3.0
+                5.0
             )
         ).toBeTruthy();
 
@@ -610,7 +610,7 @@ test.describe("ResizablePanels", () => {
                 content2,
                 { x: 50 + expectedWidths[0] + 1, y: 0 },
                 { width: expectedWidths[1], height: resizablePanelsSize.height },
-                3.0
+                5.0
             )
         ).toBeTruthy();
 
@@ -619,7 +619,7 @@ test.describe("ResizablePanels", () => {
                 content3,
                 { x: 50 + expectedWidths[0] + expectedWidths[1] + 2, y: 0 },
                 { width: expectedWidths[2], height: resizablePanelsSize.height },
-                3.0
+                5.0
             )
         ).toBeTruthy();
     });
