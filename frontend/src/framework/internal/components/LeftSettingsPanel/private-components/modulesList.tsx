@@ -7,6 +7,7 @@ import { ModuleRegistry } from "@framework/ModuleRegistry";
 import { DrawPreviewFunc } from "@framework/Preview";
 import { Workbench } from "@framework/Workbench";
 import { Drawer } from "@framework/internal/components/Drawer";
+import { useModuleInstances } from "@framework/internal/hooks/workbenchHooks";
 import { Checkbox } from "@lib/components/Checkbox";
 import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
 import { createPortal } from "@lib/utils/createPortal";
@@ -460,6 +461,7 @@ if (isDevMode()) {
 
 export const ModulesList: React.FC<ModulesListProps> = (props) => {
     const drawerContent = useGuiValue(props.workbench.getGuiMessageBroker(), GuiState.DrawerContent);
+    const moduleInstances = useModuleInstances(props.workbench);
 
     const ref = React.useRef<HTMLDivElement>(null);
     const boundingClientRect = useElementBoundingRect(ref);
@@ -500,6 +502,10 @@ export const ModulesList: React.FC<ModulesListProps> = (props) => {
         setDetailsPosY(yPos);
     }
 
+    function handleNotificationClick() {
+        props.workbench.getGuiMessageBroker().setState(GuiState.DrawerContent, DrawerContent.ModuleSettings);
+    }
+
     const handleDraggingStart = React.useCallback(function handleDraggingStart() {
         setShowDetailsForModule(null);
     }, []);
@@ -524,7 +530,12 @@ export const ModulesList: React.FC<ModulesListProps> = (props) => {
                 showFilter
                 filterPlaceholder="Filter modules..."
                 onFilterChange={handleSearchQueryChange}
-                headerChildren={<DevStatesFilter onFilterChange={handleDevStatesChange} initialDevStates={devStates} />}
+                headerChildren={
+                    <>
+                        <Notification onClick={handleNotificationClick} visible={moduleInstances.length > 0} />
+                        <DevStatesFilter onFilterChange={handleDevStatesChange} initialDevStates={devStates} />
+                    </>
+                }
             >
                 <>
                     {MODULE_CATEGORIES.map((el) => (
@@ -563,3 +574,23 @@ export const ModulesList: React.FC<ModulesListProps> = (props) => {
         </div>
     );
 };
+
+type NotificationProps = {
+    visible: boolean;
+    onClick: () => void;
+};
+
+function Notification(props: NotificationProps): React.ReactNode {
+    if (!props.visible) {
+        return null;
+    }
+    return (
+        <div
+            className="bg-green-600 hover:bg-green-500 p-2 mb-4 text-sm cursor-pointer text-white"
+            onClick={props.onClick}
+        >
+            <p className="font-bold mb-1">Done editing?</p>
+            Click here or on a module header to start using your dashboard.
+        </div>
+    );
+}

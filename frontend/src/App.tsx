@@ -64,6 +64,7 @@ function App() {
             WORKBENCH.getGuiMessageBroker().setState(GuiState.DrawerContent, DrawerContent.ModuleSettings);
         }
         setInitAppState(InitAppState.InitCompleted);
+        WORKBENCH.getGuiMessageBroker().setState(GuiState.AppInitialized, true);
     }
 
     function signIn() {
@@ -158,9 +159,11 @@ function App() {
                     "opacity-100": !isInitializingApp,
                 })}
             >
-                <LeftNavBar workbench={WORKBENCH} />
-                <SettingsContentPanels workbench={WORKBENCH} />
-                <RightNavBar workbench={WORKBENCH} />
+                <>
+                    <LeftNavBar workbench={WORKBENCH} />
+                    <SettingsContentPanels workbench={WORKBENCH} />
+                    <RightNavBar workbench={WORKBENCH} />
+                </>
             </div>
             <ToggleDevToolsButton guiMessageBroker={WORKBENCH.getGuiMessageBroker()} />
         </>
