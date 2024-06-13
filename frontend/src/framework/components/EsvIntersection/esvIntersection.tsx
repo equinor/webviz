@@ -205,6 +205,7 @@ function makeLayer<T extends keyof LayerDataTypeMap>(
 }
 
 export function EsvIntersection(props: EsvIntersectionProps): React.ReactNode {
+    console.debug("esv intersection render");
     const { onReadout, onViewportChange } = props;
 
     const [prevAxesOptions, setPrevAxesOptions] = React.useState<AxisOptions | undefined>(undefined);
@@ -385,7 +386,7 @@ export function EsvIntersection(props: EsvIntersectionProps): React.ReactNode {
             }
 
             setLayerIds(newLayerIds);
-            setPrevLayers(cloneDeep(props.layers));
+            setPrevLayers(props.layers);
         }
     }
 
