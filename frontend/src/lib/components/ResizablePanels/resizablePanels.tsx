@@ -50,8 +50,8 @@ const DragBar: React.FC<DragBarProps> = (props) => {
             <div
                 data-handle={props.index}
                 className={resolveClassNames("z-40 touch-none absolute bg-transparent", {
-                    "cursor-ew-resize w-5 -left-2 top-0 h-full": props.direction === "horizontal",
-                    "cursor-ns-resize h-5 left-0 -top-2 w-full": props.direction === "vertical",
+                    "cursor-ew-resize w-1 -left-0.25 top-0 h-full": props.direction === "horizontal",
+                    "cursor-ns-resize h-2 left-0 -top-0.25 w-full": props.direction === "vertical",
                 })}
             />
         </div>

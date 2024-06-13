@@ -2,7 +2,7 @@ import React from "react";
 
 import WebvizLogo from "@assets/webviz.svg";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
-import { DrawerContent, GuiState, useGuiState } from "@framework/GuiMessageBroker";
+import { DrawerContent, GuiState, useGuiState, useGuiValue } from "@framework/GuiMessageBroker";
 import { UserEnsembleSetting, Workbench, WorkbenchEvents } from "@framework/Workbench";
 import { useEnsembleSet, useIsEnsembleSetLoading } from "@framework/WorkbenchSession";
 import { LoginButton } from "@framework/internal/components/LoginButton";
@@ -28,12 +28,11 @@ const NavBarDivider: React.FC = () => {
 
 export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
     const ensembleSet = useEnsembleSet(props.workbench.getWorkbenchSession());
-    const [ensembleDialogOpen, setEnsembleDialogOpen] = React.useState<boolean>(
-        ensembleSet.getEnsembleArr().length === 0
-    );
+    const [ensembleDialogOpen, setEnsembleDialogOpen] = React.useState<boolean>(false);
     const [newSelectedEnsembles, setNewSelectedEnsembles] = React.useState<EnsembleItem[]>([]);
     const [layoutEmpty, setLayoutEmpty] = React.useState<boolean>(props.workbench.getLayout().length === 0);
     const [collapsed, setCollapsed] = React.useState<boolean>(localStorage.getItem("navBarCollapsed") === "true");
+    const [prevIsAppInitialized, setPrevIsAppInitialized] = React.useState<boolean>(false);
     const loadingEnsembleSet = useIsEnsembleSetLoading(props.workbench.getWorkbenchSession());
     const [drawerContent, setDrawerContent] = useGuiState(
         props.workbench.getGuiMessageBroker(),
@@ -43,6 +42,12 @@ export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
         props.workbench.getGuiMessageBroker(),
         GuiState.LeftSettingsPanelWidthInPercent
     );
+    const isAppInitialized = useGuiValue(props.workbench.getGuiMessageBroker(), GuiState.AppInitialized);
+
+    if (isAppInitialized !== prevIsAppInitialized) {
+        setEnsembleDialogOpen(ensembleSet.getEnsembleArr().length === 0);
+        setPrevIsAppInitialized(isAppInitialized);
+    }
 
     const queryClient = useQueryClient();
     const colorSet = props.workbench.getWorkbenchSettings().useColorSet();
