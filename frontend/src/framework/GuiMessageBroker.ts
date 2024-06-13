@@ -113,8 +113,15 @@ export class GuiMessageBroker {
     private loadPersistentStates() {
         persistentStates.forEach((state) => {
             const value = localStorage.getItem(state);
-            if (value) {
-                this._storedValues.set(state, JSON.parse(value));
+            if (value && value !== "undefined" && value !== "null") {
+                try {
+                    this._storedValues.set(state, JSON.parse(value));
+                } catch (e) {
+                    console.error(
+                        `Failed to parse value for state ${state}: ${value} - removing invalid state from local storage and using default value instead.`
+                    );
+                    localStorage.removeItem(state);
+                }
             }
         });
     }
@@ -123,7 +130,11 @@ export class GuiMessageBroker {
         if (persistentStates.includes(state)) {
             // For now, persistent states are only stored in localStorage
             // However, in the future, we may want to store at least some of them in a database on the server
-            localStorage.setItem(state, JSON.stringify(this._storedValues.get(state)));
+            const stateValue = this._storedValues.get(state);
+            if (stateValue === undefined) {
+                return;
+            }
+            localStorage.setItem(state, JSON.stringify(stateValue));
         }
     }
 

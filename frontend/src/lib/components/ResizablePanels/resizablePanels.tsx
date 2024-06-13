@@ -218,7 +218,9 @@ export const ResizablePanels: React.FC<ResizablePanelsProps> = (props) => {
             if (!dragging) {
                 return;
             }
-            storeConfigurationInLocalStorage(props.id, changedSizes);
+            if (changedSizes) {
+                storeConfigurationInLocalStorage(props.id, changedSizes);
+            }
             dragging = false;
             setIsDragging(false);
             if (onSizesChange) {
@@ -243,7 +245,6 @@ export const ResizablePanels: React.FC<ResizablePanelsProps> = (props) => {
 
         return () => {
             document.removeEventListener("pointerdown", handlePointerDown);
-
             removeEventListeners();
         };
     }, [props.direction, props.id, props.minSizes, onSizesChange, totalWidth, totalHeight, props.visible]);
