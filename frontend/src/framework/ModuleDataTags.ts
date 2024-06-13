@@ -1,6 +1,7 @@
 export enum ModuleDataTagId {
     SURFACE = "surface",
     GRID3D = "grid3d",
+    GROUP_TREE = "group-tree",
     DRILLED_WELLS = "drilled-wells",
     SUMMARY = "summary",
     INPLACE_VOLUMETRICS = "inplace-volumetrics",
@@ -27,6 +28,11 @@ export const ModuleDataTags: ModuleDataTag[] = [
         id: ModuleDataTagId.GRID3D,
         name: "3D grid model",
         description: "3D grid model",
+    },
+    {
+        id: ModuleDataTagId.GROUP_TREE,
+        name: "Group tree",
+        description: "Group tree data",
     },
     {
         id: ModuleDataTagId.DRILLED_WELLS,
