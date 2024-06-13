@@ -113,12 +113,12 @@ export class GuiMessageBroker {
     private loadPersistentStates() {
         persistentStates.forEach((state) => {
             const value = localStorage.getItem(state);
-            if (value && value !== "undefined" && value !== "null") {
+            if (value) {
                 try {
                     this._storedValues.set(state, JSON.parse(value));
                 } catch (e) {
                     console.error(
-                        `Failed to parse value for state ${state}: ${value} - removing invalid state from local storage and using default value instead.`
+                        `Failed to parse value for state '${state}': ${value} - removing invalid state from local storage and using default value instead.`
                     );
                     localStorage.removeItem(state);
                 }
