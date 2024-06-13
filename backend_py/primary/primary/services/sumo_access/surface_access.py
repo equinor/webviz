@@ -3,7 +3,6 @@ from io import BytesIO
 from typing import List, Optional
 
 import xtgeo
-import numpy as np
 
 from fmu.sumo.explorer import TimeFilter, TimeType
 from fmu.sumo.explorer.objects import Case, SurfaceCollection, Surface
@@ -12,7 +11,7 @@ from webviz_pkg.core_utils.perf_timer import PerfTimer
 from primary.services.utils.statistic_function import StatisticFunction
 
 from ._helpers import create_sumo_client, create_sumo_case_async
-from .surface_types import SurfaceMeta, XtgeoSurfaceIntersectionResult, XtgeoSurfaceIntersectionPolyline
+from .surface_types import SurfaceMeta
 from .generic_types import SumoContent
 
 
@@ -85,34 +84,6 @@ class SurfaceAccess:
             surfs.append(surf_meta)
 
         return surfs
-
-    async def get_realization_surface_intersection_async(
-        self,
-        real_num: int,
-        name: str,
-        attribute: str,
-        polyline: XtgeoSurfaceIntersectionPolyline,
-        time_or_interval_str: Optional[str] = None,
-    ) -> xtgeo.RegularSurface:
-        """
-        Get intersection of realization surface for requested surface name
-        """
-        surface = await self.get_realization_surface_data_async(
-            real_num=real_num, name=name, attribute=attribute, time_or_interval_str=time_or_interval_str
-        )
-
-        if surface is None:
-            raise ValueError(f'Surface "{name}" not found in sumo')
-
-        # Ensure name is applied
-        surface.name = name
-
-        # The input fencespec is a 2D numpy where each row is X, Y, Z, HLEN,
-        # where X, Y are UTM coordinates, Z is depth/time, and HLEN is a
-        # length along the fence.
-        xtgeo_fencespec = np.array([polyline.X, polyline.Y, polyline.Z, polyline.HLEN]).T
-
-        return _make_intersection(surface, xtgeo_fencespec)
 
     async def get_realization_surface_data_async(
         self, real_num: int, name: str, attribute: str, time_or_interval_str: Optional[str] = None
@@ -280,13 +251,3 @@ async def _compute_statistical_surface_async(
         raise ValueError("Unhandled statistic function")
 
     return xtgeo_surf
-
-
-def _make_intersection(surface: xtgeo.RegularSurface, xtgeo_fencespec: np.ndarray) -> XtgeoSurfaceIntersectionResult:
-    line = surface.get_randomline(xtgeo_fencespec)
-    intersection = XtgeoSurfaceIntersectionResult(
-        name=f"{surface.name}",
-        distance=line[:, 0].tolist(),
-        zval=line[:, 1].tolist(),
-    )
-    return intersection
