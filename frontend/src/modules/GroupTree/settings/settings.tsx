@@ -72,6 +72,15 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<State, Interf
     const validRealizations = selectedEnsembleIdent ? [...filterEnsembleRealizationsFunc(selectedEnsembleIdent)] : null;
     setValidRealizationNumbersAtom(validRealizations);
 
+    const timeStepSliderDebounceTimeMs = 10;
+    const timeStepSliderDebounceTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+
+    React.useEffect(() => {
+        if (timeStepSliderDebounceTimerRef.current) {
+            clearTimeout(timeStepSliderDebounceTimerRef.current);
+        }
+    });
+
     function handleSelectedNodeKeyChange(value: string) {
         setUserSelectedNodeKey(value);
     }
@@ -98,7 +107,14 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<State, Interf
         const singleValue = typeof value === "number" ? value : value.length > 0 ? value[0] : 0;
         const validIndex = singleValue >= 0 && singleValue < availableDateTimes.length ? singleValue : null;
         const newDateTime = validIndex !== null ? availableDateTimes[validIndex] : null;
-        setUserSelectedDateTime(newDateTime);
+
+        if (timeStepSliderDebounceTimerRef.current) {
+            clearTimeout(timeStepSliderDebounceTimerRef.current);
+        }
+
+        timeStepSliderDebounceTimerRef.current = setTimeout(() => {
+            setUserSelectedDateTime(newDateTime);
+        }, timeStepSliderDebounceTimeMs);
     }
 
     function handleSelectedNodeTypesChange(values: string[]) {

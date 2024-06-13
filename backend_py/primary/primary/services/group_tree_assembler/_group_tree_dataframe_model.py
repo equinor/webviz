@@ -120,10 +120,10 @@ class GroupTreeDataframeModel:
             # Filter out GRUPTREE entries
             self._grouptree_df = self._grouptree_df[self._grouptree_df["KEYWORD"] != TreeType.GRUPTREE.value]
 
-        group_tree_wells: set = set()
-        group_tree_groups: set = set()
-        group_tree_keywords = self._grouptree_df["KEYWORD"]
-        group_tree_nodes = self._grouptree_df["CHILD"]
+        group_tree_wells: set[str] = set()
+        group_tree_groups: set[str] = set()
+        group_tree_keywords: List[str] = self._grouptree_df["KEYWORD"].to_list()
+        group_tree_nodes: List[str] = self._grouptree_df["CHILD"].to_list()
         for keyword, node in zip(group_tree_keywords, group_tree_nodes):
             if keyword == "WELSPECS":
                 group_tree_wells.add(node)
@@ -150,12 +150,12 @@ class GroupTreeDataframeModel:
         return self._grouptree_df
 
     @property
-    def tree_is_equivalent_in_all_real(self) -> bool:
-        return self.tree_is_equivalent_in_all_real
-
-    @property
     def group_tree_wells(self) -> List[str]:
         return self._grouptree_wells
+
+    @property
+    def group_tree_groups(self) -> List[str]:
+        return self._grouptree_groups
 
     @property
     def wstat_vectors(self) -> List[str]:

@@ -180,6 +180,23 @@ class GroupTreeAssembler:
         vectors_of_interest = group_tree_df_model.create_vector_of_interest_list()
         vectors_of_interest = [vec for vec in vectors_of_interest if vec in self._all_vectors]
 
+        # Has any water injection or gas injection vectors among vectors of interest
+        has_wi_vectors = False
+        has_gi_vectors = False
+        for vec in vectors_of_interest:
+            if has_wi_vectors and has_gi_vectors:
+                break
+            if vec.startswith("WWIR") or vec.startswith("GWIR"):
+                has_wi_vectors = True
+            if vec.startswith("WGIR") or vec.startswith("GGIR"):
+                has_gi_vectors = True
+
+        # If any water or gas injection vectors exist, require field injection vectors exist
+        if has_wi_vectors and "FWIR" not in vectors_of_interest:
+            raise ValueError("Water injection vectors (WWIR/GWIR) found, but missing expected: FWIR")
+        if has_gi_vectors and "FGIR" not in vectors_of_interest:
+            raise ValueError("Gas injection vectors (WGIR/GGIR) found, but missing expected: FGIR")
+
         # Get summary vectors for all data simultaneously to obtain one request from Sumo
         # Many summary vectors might not be needed, but will be filtered out later on. This is the most efficient way to get the data
         # NOTE: "WSTAT" vectors are enumerated well state indicator, thus interpolated values might create issues (should be resolved by resampling-code)
