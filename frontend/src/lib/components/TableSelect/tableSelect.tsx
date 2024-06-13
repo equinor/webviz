@@ -165,6 +165,14 @@ export const TableSelect = withDefaults<TableSelectProps>()(defaultProps, (props
         [props.multiple, props.options, selected, keysPressed, lastShiftIndex, handleOnChange]
     );
 
+    React.useEffect(function handleMount() {
+        return function handleUnmount() {
+            if (debounceTimerRef.current) {
+                clearTimeout(debounceTimerRef.current);
+            }
+        };
+    }, []);
+
     React.useEffect(
         function handleKeyActions() {
             const handleKeyDown = (e: KeyboardEvent) => {

@@ -133,6 +133,9 @@ export const Slider = React.forwardRef((props: SliderProps, ref: React.Forwarded
             divRefCurrent.addEventListener("pointerdown", handlePointerDown);
         }
         return () => {
+            if (debounceTimerRef.current) {
+                clearTimeout(debounceTimerRef.current);
+            }
             if (divRefCurrent) {
                 divRefCurrent.removeEventListener("pointerover", handlePointerOver);
                 divRefCurrent.removeEventListener("pointerout", handlePointerOut);

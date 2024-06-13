@@ -33,6 +33,14 @@ export const Input = React.forwardRef((props: InputProps, ref: React.ForwardedRe
 
     const debounceTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
+    React.useEffect(function handleMount() {
+        return function handleUnmount() {
+            if (debounceTimerRef.current) {
+                clearTimeout(debounceTimerRef.current);
+            }
+        };
+    }, []);
+
     const handleAdornmentClick = React.useCallback((event: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
         if (internalRef.current) {
             internalRef.current.focus();

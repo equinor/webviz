@@ -102,6 +102,14 @@ export const Select = withDefaults<SelectProps>()(defaultProps, (props) => {
         [onChange, props.debounceTimeMs]
     );
 
+    React.useEffect(function handleMount() {
+        return function handleUnmount() {
+            if (debounceTimerRef.current) {
+                clearTimeout(debounceTimerRef.current);
+            }
+        };
+    }, []);
+
     React.useEffect(
         function addKeyboardEventListeners() {
             const refCurrent = ref.current;

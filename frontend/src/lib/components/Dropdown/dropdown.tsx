@@ -99,6 +99,14 @@ export const Dropdown = withDefaults<DropdownProps>()(defaultProps, (props) => {
         setPrevFilteredOptions(filteredOptions);
     }
 
+    React.useEffect(function handleMount() {
+        return function handleUnmount() {
+            if (debounceTimerRef.current) {
+                clearTimeout(debounceTimerRef.current);
+            }
+        };
+    }, []);
+
     React.useEffect(
         function handleOptionsChange() {
             function handleMouseDown(event: MouseEvent) {
