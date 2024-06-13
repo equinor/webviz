@@ -117,7 +117,7 @@ export class GuiMessageBroker {
                 try {
                     this._storedValues.set(state, JSON.parse(value));
                 } catch (e) {
-                    console.error(
+                    console.warn(
                         `Failed to parse value for state '${state}': ${value} - removing invalid state from local storage and using default value instead.`
                     );
                     localStorage.removeItem(state);
