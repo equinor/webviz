@@ -74,6 +74,14 @@ export class InteractionHandler {
         }
     }
 
+    removeAllLayers() {
+        for (const layerDataObject of this._layerDataItems) {
+            this._intersectionHandler.removeIntersectionObject(layerDataObject.id);
+        }
+        this._layerDataItems = [];
+        this._schematicLayer = null;
+    }
+
     setStaticHighlightItems(highlightItems: HighlightItem[]) {
         this._staticHighlightItems = highlightItems;
         this._highlightOverlay.setHighlightItems([...this._staticHighlightItems]);

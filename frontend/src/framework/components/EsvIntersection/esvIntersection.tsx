@@ -204,6 +204,14 @@ function makeLayer<T extends keyof LayerDataTypeMap>(
     throw new Error("Unsupported layer type");
 }
 
+function isPixiLayer(layer: Layer<unknown>): boolean {
+    return (
+        layer instanceof GeomodelLayerV2 ||
+        layer instanceof SchematicLayer ||
+        layer instanceof PolylineIntersectionLayer
+    );
+}
+
 export function EsvIntersection(props: EsvIntersectionProps): React.ReactNode {
     console.debug("esv intersection render");
     const { onReadout, onViewportChange } = props;
@@ -327,11 +335,6 @@ export function EsvIntersection(props: EsvIntersectionProps): React.ReactNode {
             let newLayerIds = layerIds;
             automaticChanges.current = true;
 
-            // Remove pixi render layer fixup
-            if (esvController.getLayer("pixi-render")) {
-                esvController.removeLayer("pixi-render");
-            }
-
             // Remove layers that are not in the new list
             if (prevLayers) {
                 for (const layer of prevLayers) {
@@ -364,12 +367,27 @@ export function EsvIntersection(props: EsvIntersectionProps): React.ReactNode {
                     } else {
                         const existingLayer = esvController.getLayer(layer.id);
                         if (existingLayer) {
-                            existingLayer.onUpdate({ data: cloneDeep(layer.options.data) });
-                            if (layer.options.order !== undefined) {
-                                existingLayer.order = layer.options.order + 1;
+                            if (isPixiLayer(existingLayer)) {
+                                esvController.removeLayer(layer.id);
+                                const newLayerOptions = cloneDeep(layer.options);
+                                if (newLayerOptions.order !== undefined) {
+                                    newLayerOptions.order = newLayerOptions.order + 1;
+                                }
+                                const newLayer = makeLayer(
+                                    layer.type,
+                                    layer.id,
+                                    newLayerOptions,
+                                    pixiRenderApplication
+                                );
+                                esvController.addLayer(newLayer);
+                            } else {
+                                existingLayer.onUpdate({ data: cloneDeep(layer.options.data) });
+                                if (layer.options.order !== undefined) {
+                                    existingLayer.order = layer.options.order + 1;
+                                }
+                                existingLayer?.element?.setAttribute("width", containerSize.width.toString());
+                                existingLayer?.element?.setAttribute("height", containerSize.height.toString());
                             }
-                            existingLayer?.element?.setAttribute("width", containerSize.width.toString());
-                            existingLayer?.element?.setAttribute("height", containerSize.height.toString());
                             interactionHandler.removeLayer(layer.id);
                             if (layer.hoverable) {
                                 interactionHandler.addLayer(existingLayer);
@@ -377,12 +395,6 @@ export function EsvIntersection(props: EsvIntersectionProps): React.ReactNode {
                         }
                     }
                 }
-            }
-
-            // Add pixi render layer fixup
-            if (!esvController.getLayer("pixi-render")) {
-                const newLayer = new GeomodelLayerV2(pixiRenderApplication, "pixi-render");
-                esvController.addLayer(newLayer);
             }
 
             setLayerIds(newLayerIds);

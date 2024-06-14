@@ -109,7 +109,7 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
         },
     });
 
-    if (props.wellboreCasingData) {
+    if (props.wellboreCasingData && props.referenceSystem) {
         const casingData = props.wellboreCasingData.filter((casing) => casing.itemType === "Casing");
 
         const casings: Casing[] = casingData.map((casing, index) => ({
@@ -138,6 +138,7 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
                         perforations: [],
                     },
                     order: 5 + layers.length,
+                    referenceSystem: props.referenceSystem,
                 },
             });
         }
