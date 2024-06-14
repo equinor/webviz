@@ -6,7 +6,7 @@ import { WorkbenchSettings } from "@framework/WorkbenchSettings";
 import { PendingWrapper } from "@lib/components/PendingWrapper";
 import { Select, SelectOption } from "@lib/components/Select";
 import { Switch } from "@lib/components/Switch";
-import { LayerStatus, useLayerStatus } from "@modules/Intersection/utils/layers/BaseLayer";
+import { LayerStatus, useLayerSettings, useLayerStatus } from "@modules/Intersection/utils/layers/BaseLayer";
 import { WellpicksLayer, WellpicksLayerSettings } from "@modules/Intersection/utils/layers/WellpicksLayer";
 
 export type WellpicksLayerSettingsComponentProps = {
@@ -17,8 +17,8 @@ export type WellpicksLayerSettingsComponentProps = {
 };
 
 export function WellpicksLayerSettingsComponent(props: WellpicksLayerSettingsComponentProps): React.ReactNode {
+    const settings = useLayerSettings(props.layer);
     const [newSettings, setNewSettings] = React.useState<Partial<WellpicksLayerSettings>>({});
-    const settings = props.layer.getSettings();
 
     const status = useLayerStatus(props.layer);
 
@@ -47,7 +47,7 @@ export function WellpicksLayerSettingsComponent(props: WellpicksLayerSettingsCom
     const unitPicksFilterOptions: SelectOption[] = [];
     const nonUnitPicksFilterOptions: SelectOption[] = [];
     const data = props.layer.getData();
-    if (data) {
+    if (data && props.layer.getStatus() === LayerStatus.SUCCESS) {
         unitPicksFilterOptions.push(
             ...Array.from(new Set(data.unitPicks.map((pick) => pick.name))).map((name) => ({
                 label: name,
