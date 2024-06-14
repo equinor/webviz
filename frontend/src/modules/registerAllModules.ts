@@ -2,7 +2,7 @@ import { isDevMode } from "@lib/utils/devMode";
 
 import "./DistributionPlot/registerModule";
 import "./Grid3D/registerModule";
-// import "./Grid3DIntersection/registerModule";
+import "./FlowNetwork/registerModule";
 // import "./Grid3DVTK/registerModule";
 import "./InplaceVolumetrics/registerModule";
 import "./Map/registerModule";
@@ -17,7 +17,6 @@ import "./StructuralUncertaintyIntersection/registerModule";
 import "./SubsurfaceMap/registerModule";
 import "./TornadoChart/registerModule";
 import "./WellCompletions/registerModule";
-import "./GroupTree/registerModule";
 
 if (isDevMode()) {
     await import("./MyModule/registerModule");
