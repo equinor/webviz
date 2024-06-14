@@ -2,6 +2,7 @@ import { AtomStoreMaster } from "@framework/AtomStoreMaster";
 import { UserCreatedItemSet } from "@framework/UserCreatedItems";
 
 import { atom } from "jotai";
+import { cloneDeep } from "lodash";
 import { v4 } from "uuid";
 
 export type IntersectionPolyline = {
@@ -80,14 +81,14 @@ export class IntersectionPolylines implements UserCreatedItemSet {
     }
 
     private notifySubscribers(event: IntersectionPolylinesEvent): void {
+        this._atomStoreMaster.setAtomValue(IntersectionPolylinesAtom, cloneDeep(this._polylines));
+
         const subscribersSet = this._subscribersMap.get(event);
         if (!subscribersSet) return;
 
         for (const callbackFn of subscribersSet) {
             callbackFn();
         }
-
-        this._atomStoreMaster.setAtomValue(IntersectionPolylinesAtom, this._polylines);
     }
 }
 
