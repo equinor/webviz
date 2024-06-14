@@ -11,6 +11,7 @@ export enum LayerStatus {
     LOADING = "LOADING",
     ERROR = "ERROR",
     SUCCESS = "SUCCESS",
+    INVALID_SETTINGS = "INVALID_SETTINGS",
 }
 
 export enum LayerTopic {
@@ -179,6 +180,7 @@ export class BaseLayer<TSettings extends LayerSettings, TData> {
         this._lastDataFetchSettings = cloneDeep(this._settings);
 
         if (!this.areSettingsValid()) {
+            this._status = LayerStatus.INVALID_SETTINGS;
             return;
         }
 

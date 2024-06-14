@@ -124,6 +124,7 @@ export function viewAtomsInitialization(
         const wellbore = get(settingsToViewInterface.getAtom("wellboreHeader"));
         const polyline = get(polylineAtom);
         const extensionLength = get(settingsToViewInterface.getAtom("intersectionExtensionLength"));
+        const intersectionType = get(settingsToViewInterface.getAtom("intersectionType"));
 
         for (const layer of layers) {
             if (isGridLayer(layer)) {
@@ -136,7 +137,10 @@ export function viewAtomsInitialization(
                 layer.maybeUpdateSettings({ polylineUtmXy: polyline.polylineUtmXy, extensionLength });
             }
             if (isWellpicksLayer(layer)) {
-                layer.maybeUpdateSettings({ ensembleIdent, wellboreUuid: wellbore?.uuid });
+                layer.maybeUpdateSettings({
+                    ensembleIdent,
+                    wellboreUuid: intersectionType === IntersectionType.WELLBORE ? wellbore?.uuid : null,
+                });
             }
             layer.maybeRefetchData();
         }
