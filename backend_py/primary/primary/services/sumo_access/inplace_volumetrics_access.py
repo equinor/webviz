@@ -211,15 +211,17 @@ class InplaceVolumetricsAccess(SumoEnsemble):
         self,
         table_name: str,
         response_names: List[str],
-        aggregate_by_each_list: Sequence[AggregateByEach] = None,
         realizations: Sequence[int] = None,
         index_filter: List[InplaceVolumetricsIndex] = None,
+        aggregate_by_each_list: Sequence[AggregateByEach] = None,
     ) -> Dict[str, List[str | int | float]]:
         """Retrieve the aggregated volumetric data for a single table, optionally filtered by realizations and index values.
 
         Returns a dictionary with column name as key, and column array as value.
 
         Column array: List[str|int|float]
+
+        NOTE: "FLUID_ZONE" response name not handled yet
 
         NOTE: Name response or result_name?
         """
@@ -280,7 +282,7 @@ class InplaceVolumetricsAccess(SumoEnsemble):
             realization_mask = pc.is_in(vol_table["REAL"], value_set=pa.array(realizations))
             mask = pc.and_(mask, realization_mask)
 
-        # TODO: Add mask to remote IGNORED_INDEX_COLUMN_VALUES?
+        # TODO: Add mask to remove IGNORED_INDEX_COLUMN_VALUES? Probably handled by existing index column filter
 
         filtered_vol_table = vol_table.filter(mask)
         table_index_columns = ["FACIES", "REGION", "ZONE", "REAL"]
@@ -306,11 +308,30 @@ class InplaceVolumetricsAccess(SumoEnsemble):
         if len(aggregate_by_each_list) == 0:
             return filtered_vol_table
 
-        # Group by each of the index columns
-        aggregate_by_each = [col.value for col in aggregate_by_each_list]
-        aggregated_vol_table = filtered_vol_table.group_by(aggregate_by_each).aggregate(
-            [(result_name, "mean") for result_name in response_names_set]
+        # Group by each of the index columns (always aggregate by realization)
+        aggregate_by_each = set([col.value for col in aggregate_by_each_list])
+
+        columns_to_group_by_for_sum = aggregate_by_each.copy()
+        if "REAL" not in columns_to_group_by_for_sum:
+            columns_to_group_by_for_sum.add("REAL")
+
+        # Aggregate sum for each response name after grouping
+        aggregated_vol_table = filtered_vol_table.group_by(columns_to_group_by_for_sum).aggregate(
+            [(response_name, "sum") for response_name in response_names_set]
         )
+        suffix_to_remove = "_sum"
+
+        # If aggregate_by_each does not contain "REAL", then aggregate mean across realizations
+        if "REAL" not in aggregate_by_each:
+            aggregated_vol_table = aggregated_vol_table.group_by(aggregate_by_each).aggregate(
+                [(f"{response_name}_sum", "mean") for response_name in response_names_set]
+            )
+            suffix_to_remove = "_sum_mean"
+
+        # Remove suffix from column names
+        column_names = aggregated_vol_table.column_names
+        new_column_names = [column_name.replace(suffix_to_remove, "") for column_name in column_names]
+        aggregated_vol_table = aggregated_vol_table.rename_columns(new_column_names)
 
         # Convert to dict with column name as key, and column array as value
         aggregated_vol_table_dict = aggregated_vol_table.to_pydict()
