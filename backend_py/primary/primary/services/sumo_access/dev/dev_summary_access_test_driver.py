@@ -125,7 +125,7 @@ async def main() -> None:
         print("The sumo case id was not found")
         sys.exit(1)
 
-    case_inspector = await CaseInspector.from_case_uuid_async(access_token, sumo_case_id)
+    case_inspector = CaseInspector.from_case_uuid(access_token, sumo_case_id)
     iteration_list = await case_inspector.get_iterations_async()
     print("\n\n")
     for iteration_info in iteration_list:
