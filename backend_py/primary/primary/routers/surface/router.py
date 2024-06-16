@@ -40,7 +40,7 @@ async def get_surface_directory(
     )
     sumo_surf_dir = await surface_access.get_surface_directory_async()
 
-    case_inspector = await CaseInspector.from_case_uuid_async(authenticated_user.get_sumo_access_token(), case_uuid)
+    case_inspector = CaseInspector.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid)
     strat_column_identifier = await case_inspector.get_stratigraphic_column_identifier_async()
     strat_access: Union[StratigraphyAccess, _mocked_stratigraphy_access.StratigraphyAccess]
 
