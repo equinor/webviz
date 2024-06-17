@@ -1,10 +1,10 @@
 from enum import Enum
 from typing import List, Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from webviz_pkg.core_utils.b64 import B64FloatArray
 
-from primary.services.smda_access.types import StratigraphicFeature
+from primary.services.sumo_access.generic_types import SumoContent
 
 
 class SurfaceStatisticFunction(str, Enum):
@@ -26,7 +26,6 @@ class SurfaceAttributeType(str, Enum):
     available in the metadata.
 
     To be revisited later when the metadata is more mature.
-
     """
 
     DEPTH = "depth"  # Values are depths
@@ -36,15 +35,21 @@ class SurfaceAttributeType(str, Enum):
     THICKNESS = "thickness"  # Values are isochores (real or conceptual difference between two depth surfaces)
     ISOCHORE = "isochore"  # Values are isochores (real or conceptual difference between two depth surfaces)
     FLUID_CONTACT = "fluid_contact"  # Values are fluid contacts (oil-water, gas-water, etc.)
+    UNKNOWN = "UNKNOWN"
+
+    @classmethod
+    def from_sumo_content(cls, sumo_content_enum: SumoContent) -> "SurfaceAttributeType":
+        try:
+            return SurfaceAttributeType(sumo_content_enum)
+        except ValueError:
+            return SurfaceAttributeType.UNKNOWN
 
 
 class SurfaceMeta(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     name: str  # Svarte fm. top / Svarte fm. / Svarte fm. base
     name_is_stratigraphic_offical: bool
-    stratigraphic_identifier: Optional[str] = None  # Svarte fm.
-    relative_stratigraphic_level: Optional[int] = None
-    parent_stratigraphic_identifier: Optional[str] = None
-    stratigraphic_feature: Optional[StratigraphicFeature] = None  # Distinguish between horizon and unit
     attribute_name: str
     attribute_type: SurfaceAttributeType
     iso_date_or_interval: Optional[str] = None

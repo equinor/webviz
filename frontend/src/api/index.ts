@@ -64,7 +64,6 @@ export type { SeismicFencePolyline as SeismicFencePolyline_api } from './models/
 export { SensitivityType as SensitivityType_api } from './models/SensitivityType';
 export { StatisticFunction as StatisticFunction_api } from './models/StatisticFunction';
 export type { StatisticValueObject as StatisticValueObject_api } from './models/StatisticValueObject';
-export { StratigraphicFeature as StratigraphicFeature_api } from './models/StratigraphicFeature';
 export type { StratigraphicUnit as StratigraphicUnit_api } from './models/StratigraphicUnit';
 export type { SummaryVectorDateObservation as SummaryVectorDateObservation_api } from './models/SummaryVectorDateObservation';
 export type { SummaryVectorObservations as SummaryVectorObservations_api } from './models/SummaryVectorObservations';

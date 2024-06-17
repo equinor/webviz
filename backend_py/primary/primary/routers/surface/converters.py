@@ -83,12 +83,8 @@ def _sort_by_stratigraphical_order(
                     value_min=sumo_surface_meta.zmin,
                     value_max=sumo_surface_meta.zmax,
                     name_is_stratigraphic_offical=True,
-                    stratigraphic_feature=strat_surface.feature,
-                    relative_stratigraphic_level=strat_surface.relative_strat_unit_level,
-                    parent_stratigraphic_identifier=strat_surface.strat_unit_parent,
-                    stratigraphic_identifier=strat_surface.strat_unit_identifier,
                     attribute_name=sumo_surface_meta.tagname,
-                    attribute_type=schemas.SurfaceAttributeType(sumo_surface_meta.content.value),
+                    attribute_type=schemas.SurfaceAttributeType.from_sumo_content(sumo_surface_meta.content),
                 )
                 surface_metas_with_official_strat_name.append(surface_meta)
 
@@ -102,12 +98,8 @@ def _sort_by_stratigraphical_order(
                 value_min=sumo_surface_meta.zmin,
                 value_max=sumo_surface_meta.zmax,
                 name_is_stratigraphic_offical=False,
-                stratigraphic_feature=None,
-                relative_stratigraphic_level=None,
-                parent_stratigraphic_identifier=None,
-                stratigraphic_identifier=None,
                 attribute_name=sumo_surface_meta.tagname,
-                attribute_type=schemas.SurfaceAttributeType(sumo_surface_meta.content.value),
+                attribute_type=schemas.SurfaceAttributeType.from_sumo_content(sumo_surface_meta.content),
             )
 
             surface_metas_with_custom_names.append(surface_meta)
