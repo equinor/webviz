@@ -92,8 +92,6 @@ class SumoContent(str, Enum):
     VOLUMES = "volumes"
     WELLPICKS = "wellpicks"
 
-    # Added by us
-    ISOCHORE = "isochore"
     UNKNOWN = "UNKNOWN"
 
     @classmethod
