@@ -65,8 +65,9 @@ def flatten_hierarchical_structure_to_surface_name(
 
     for hierarchical_unit in units:
         unit = hierarchical_unit.unit
-        LOGGER.info(f"Ordered stratigraphic top: {idx * ' '}{unit.top}")
-        LOGGER.info(f"Ordered stratigraphic identifier: {idx * ' '}{unit.identifier}")
+        # Temporarily disabled logging
+        # LOGGER.info(f"Ordered stratigraphic top: {idx * ' '}{unit.top}")
+        # LOGGER.info(f"Ordered stratigraphic identifier: {idx * ' '}{unit.identifier}")
         flattened_list.append(
             StratigraphicSurface(
                 name=unit.top,
@@ -95,7 +96,8 @@ def flatten_hierarchical_structure_to_surface_name(
                 strat_unit_identifier=unit.identifier,
             )
         )
-        LOGGER.info(f"Ordered stratigraphic base: {idx * ' '}{unit.base}")
+        # Temporarily disabled logging
+        # LOGGER.info(f"Ordered stratigraphic base: {idx * ' '}{unit.base}")
 
     return flattened_list
 
