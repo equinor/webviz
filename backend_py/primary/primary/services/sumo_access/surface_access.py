@@ -17,9 +17,7 @@ from ._helpers import create_sumo_client
 from .surface_types import SurfaceMeta, SurfaceMetaSet
 from .generic_types import SumoContent
 from .queries.surface_queries import SurfTimeType, SurfInfoEx, TimePoint, TimeInterval
-from .queries.surface_queries import find_realization_surf_info, find_observed_surf_info
-from .queries.surface_queries import find_realization_surf_time_points, find_realization_surf_time_intervals
-from .queries.surface_queries import find_observed_surf_time_points, find_observed_surf_time_intervals
+from .queries.surface_queries import RealizationSurfQueries, ObservedSurfQueries
 
 LOGGER = logging.getLogger(__name__)
 
@@ -42,23 +40,26 @@ class SurfaceAccess:
 
     async def get_realization_surfaces_metadata_async(self) -> SurfaceMetaSet:
         if not self._iteration_name:
-            raise InvalidParameterError("Iteration name must be set to get metadata for realization surfaces", Service.SUMO)
+            raise InvalidParameterError(
+                "Iteration name must be set to get metadata for realization surfaces", Service.SUMO
+            )
 
         perf_metrics = PerfMetrics()
 
         async with asyncio.TaskGroup() as tg:
-            static_surfs_task = tg.create_task(find_realization_surf_info(self._sumo_client, self._case_uuid, self._iteration_name, SurfTimeType.NO_TIME))
-            time_point_surfs_task = tg.create_task(find_realization_surf_info(self._sumo_client, self._case_uuid, self._iteration_name, SurfTimeType.TIME_POINT))
-            interval_surfs_task = tg.create_task(find_realization_surf_info(self._sumo_client, self._case_uuid, self._iteration_name, SurfTimeType.INTERVAL))
-            time_points_task = tg.create_task(find_realization_surf_time_points(self._sumo_client, self._case_uuid, self._iteration_name))
-            intervals_task = tg.create_task(find_realization_surf_time_intervals(self._sumo_client, self._case_uuid, self._iteration_name))
+            queries = RealizationSurfQueries(self._sumo_client, self._case_uuid, self._iteration_name)
+            static_surfs_task = tg.create_task(queries.find_surf_info(SurfTimeType.NO_TIME))
+            time_point_surfs_task = tg.create_task(queries.find_surf_info(SurfTimeType.TIME_POINT))
+            interval_surfs_task = tg.create_task(queries.find_surf_info(SurfTimeType.INTERVAL))
+            time_points_task = tg.create_task(queries.find_surf_time_points())
+            intervals_task = tg.create_task(queries.find_surf_time_intervals())
 
         perf_metrics.record_lap("queries")
 
         surf_meta_arr: list[SurfaceMeta] = []
-        surf_meta_arr.extend(_build_surface_meta_arr(static_surfs_task.result(), SurfTimeType.NO_TIME, are_observations=False))
-        surf_meta_arr.extend(_build_surface_meta_arr(time_point_surfs_task.result(), SurfTimeType.TIME_POINT, are_observations=False))
-        surf_meta_arr.extend(_build_surface_meta_arr(interval_surfs_task.result(), SurfTimeType.INTERVAL, are_observations=False))
+        surf_meta_arr.extend(_build_surface_meta_arr(static_surfs_task.result(), SurfTimeType.NO_TIME, False))
+        surf_meta_arr.extend(_build_surface_meta_arr(time_point_surfs_task.result(), SurfTimeType.TIME_POINT, False))
+        surf_meta_arr.extend(_build_surface_meta_arr(interval_surfs_task.result(), SurfTimeType.INTERVAL, False))
 
         src_time_points: list[TimePoint] = time_points_task.result()
         time_points_iso_strings = [timepoint.t0_isostr for timepoint in src_time_points]
@@ -69,12 +70,14 @@ class SurfaceAccess:
         surf_meta_set = SurfaceMetaSet(
             surfaces=surf_meta_arr,
             time_points_iso_str=time_points_iso_strings,
-            time_intervals_iso_str=intervals_iso_strings
+            time_intervals_iso_str=intervals_iso_strings,
         )
 
         perf_metrics.record_lap("build-meta")
 
-        LOGGER.debug(f"Got metadata for realization surfaces in: {perf_metrics.to_string()} [{len(surf_meta_arr)} entries]")
+        LOGGER.debug(
+            f"Got metadata for realization surfaces in: {perf_metrics.to_string()} [{len(surf_meta_arr)} entries]"
+        )
 
         return surf_meta_set
 
@@ -82,16 +85,17 @@ class SurfaceAccess:
         perf_metrics = PerfMetrics()
 
         async with asyncio.TaskGroup() as tg:
-            time_point_surfs_task = tg.create_task(find_observed_surf_info(self._sumo_client, self._case_uuid, SurfTimeType.TIME_POINT))
-            interval_surfs_task = tg.create_task(find_observed_surf_info(self._sumo_client, self._case_uuid, SurfTimeType.INTERVAL))
-            time_points_task = tg.create_task(find_observed_surf_time_points(self._sumo_client, self._case_uuid))
-            intervals_task = tg.create_task(find_observed_surf_time_intervals(self._sumo_client, self._case_uuid))
+            queries = ObservedSurfQueries(self._sumo_client, self._case_uuid)
+            time_point_surfs_task = tg.create_task(queries.find_surf_info(SurfTimeType.TIME_POINT))
+            interval_surfs_task = tg.create_task(queries.find_surf_info(SurfTimeType.INTERVAL))
+            time_points_task = tg.create_task(queries.find_surf_time_points())
+            intervals_task = tg.create_task(queries.find_surf_time_intervals())
 
         perf_metrics.record_lap("queries")
 
         surf_meta_arr: list[SurfaceMeta] = []
-        surf_meta_arr.extend(_build_surface_meta_arr(time_point_surfs_task.result(), SurfTimeType.TIME_POINT, are_observations=True))
-        surf_meta_arr.extend(_build_surface_meta_arr(interval_surfs_task.result(), SurfTimeType.INTERVAL, are_observations=True))
+        surf_meta_arr.extend(_build_surface_meta_arr(time_point_surfs_task.result(), SurfTimeType.TIME_POINT, True))
+        surf_meta_arr.extend(_build_surface_meta_arr(interval_surfs_task.result(), SurfTimeType.INTERVAL, True))
 
         src_time_points: list[TimePoint] = time_points_task.result()
         time_points_iso_strings = [timepoint.t0_isostr for timepoint in src_time_points]
@@ -102,15 +106,16 @@ class SurfaceAccess:
         surf_meta_set = SurfaceMetaSet(
             surfaces=surf_meta_arr,
             time_points_iso_str=time_points_iso_strings,
-            time_intervals_iso_str=intervals_iso_strings
+            time_intervals_iso_str=intervals_iso_strings,
         )
 
         perf_metrics.record_lap("build-meta")
 
-        LOGGER.debug(f"Got metadata for observed surfaces in: {perf_metrics.to_string()} [{len(surf_meta_arr)} entries]")
+        LOGGER.debug(
+            f"Got metadata for observed surfaces in: {perf_metrics.to_string()} [{len(surf_meta_arr)} entries]"
+        )
 
         return surf_meta_set
-
 
     async def get_realization_surface_data_async(
         self, real_num: int, name: str, attribute: str, time_or_interval_str: Optional[str] = None
@@ -139,7 +144,7 @@ class SurfaceAccess:
 
         surf_count = await surface_collection.length_async()
         if surf_count > 1:
-            raise MultipleDataMatchesError(f"Multiple ({surf_count}) surfaces found in Sumo for: {surf_str}")
+            raise MultipleDataMatchesError(f"Multiple ({surf_count}) surfaces found in Sumo for: {surf_str}", Service.SUMO)
         if surf_count == 0:
             LOGGER.warning(f"No realization surface found in Sumo for {surf_str}")
             return None
@@ -182,7 +187,7 @@ class SurfaceAccess:
 
         surf_count = await surface_collection.length_async()
         if surf_count > 1:
-            raise MultipleDataMatchesError(f"Multiple ({surf_count}) surfaces found in Sumo for: {surf_str}")
+            raise MultipleDataMatchesError(f"Multiple ({surf_count}) surfaces found in Sumo for: {surf_str}", Service.SUMO)
         if surf_count == 0:
             LOGGER.warning(f"No observed surface found in Sumo for: {surf_str}")
             return None
@@ -264,7 +269,9 @@ class SurfaceAccess:
         return addr_str
 
 
-def _build_surface_meta_arr(src_surf_info_arr: list[SurfInfoEx], time_type: SurfTimeType, are_observations: bool) -> list[SurfaceMeta]:
+def _build_surface_meta_arr(
+    src_surf_info_arr: list[SurfInfoEx], time_type: SurfTimeType, are_observations: bool
+) -> list[SurfaceMeta]:
     ret_arr: list[SurfaceMeta] = []
 
     for info in src_surf_info_arr:
@@ -290,16 +297,18 @@ def _build_surface_meta_arr(src_surf_info_arr: list[SurfInfoEx], time_type: Surf
                     f"Surface {info.name} (tagname={info.tagname}) has unrecognized content: {content_str}, defaulting to UNKNOWN."
                 )
 
-        ret_arr.append(SurfaceMeta(
-            name=info.name,
-            attribute_name=info.tagname,
-            content=content_enum,
-            time_type=time_type,
-            is_observation=are_observations,
-            is_stratigraphic=info.is_stratigraphic,
-            global_min_val=info.global_min_val,
-            global_max_val=info.global_max_val
-        ))
+        ret_arr.append(
+            SurfaceMeta(
+                name=info.name,
+                attribute_name=info.tagname,
+                content=content_enum,
+                time_type=time_type,
+                is_observation=are_observations,
+                is_stratigraphic=info.is_stratigraphic,
+                global_min_val=info.global_min_val,
+                global_max_val=info.global_max_val,
+            )
+        )
 
     return ret_arr
 

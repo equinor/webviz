@@ -48,15 +48,68 @@ class TimePoint:
 
 
 
+class RealizationSurfQueries:
+    def __init__(self, sumo_client: SumoClient, case_uuid: str, iteration_name: str):
+        self._sumo_client: SumoClient = sumo_client
+        self._case_uuid: str = case_uuid
+        self._iteration_name: str = iteration_name
+
+    async def find_surf_info(self, time_type: SurfTimeType) -> list[SurfInfoEx]:
+        query_dict = _build_realization_surfs_query_dict(case_uuid=self._case_uuid, iteration_name=self._iteration_name, time_type=time_type)
+        info_arr = await _run_query_and_aggregate_surf_info(self._sumo_client, query_dict=query_dict)
+
+        ret_arr: list[SurfInfoEx] = []
+        for surf_info in info_arr:
+            ret_arr.append(SurfInfoEx(**asdict(surf_info), tmp_time_type=time_type, tmp_is_observation=False))
+
+        return ret_arr
+
+    async def find_surf_time_points(self) -> list[TimePoint]:
+        query_dict = _build_realization_surfs_query_dict(case_uuid=self._case_uuid, iteration_name=self._iteration_name, time_type=SurfTimeType.TIME_POINT)
+        ret_arr = await _run_query_and_aggregate_time_points(self._sumo_client, query_dict=query_dict)
+        return ret_arr
+
+    async def find_surf_time_intervals(self) -> list[TimeInterval]:
+        query_dict = _build_realization_surfs_query_dict(case_uuid=self._case_uuid, iteration_name=self._iteration_name, time_type=SurfTimeType.INTERVAL)
+        ret_arr = await _run_query_and_aggregate_time_intervals(self._sumo_client, query_dict=query_dict)
+        return ret_arr
+
+
+class ObservedSurfQueries:
+    def __init__(self, sumo_client: SumoClient, case_uuid: str):
+        self._sumo_client: SumoClient = sumo_client
+        self._case_uuid: str = case_uuid
+
+    async def find_surf_info(self, time_type: SurfTimeType) -> list[SurfInfoEx]:
+        query_dict = _build_observed_surfs_query_dict(case_uuid=self._case_uuid, time_type=time_type)
+        info_arr = await _run_query_and_aggregate_surf_info(self._sumo_client, query_dict=query_dict)
+
+        ret_arr: list[SurfInfoEx] = []
+        for surf_info in info_arr:
+            ret_arr.append(SurfInfoEx(**asdict(surf_info), tmp_time_type=time_type, tmp_is_observation=True))
+
+        return ret_arr
+
+    async def find_surf_time_points(self) -> list[TimePoint]:
+        query_dict = _build_observed_surfs_query_dict(case_uuid=self._case_uuid, time_type=SurfTimeType.TIME_POINT)
+        ret_arr = await _run_query_and_aggregate_time_points(self._sumo_client, query_dict=query_dict)
+        return ret_arr
+
+    async def find_surf_time_intervals(self) -> list[TimeInterval]:
+        query_dict = _build_observed_surfs_query_dict(case_uuid=self._case_uuid, time_type=SurfTimeType.INTERVAL)
+        ret_arr = await _run_query_and_aggregate_time_intervals(self._sumo_client, query_dict=query_dict)
+        return ret_arr
+
+
 # --------------------------------------------------------------------------------------
-def _build_realization_surfs_query_dict(case_uuid: str, ensemble_name: str, time_type: SurfTimeType) -> dict:
+def _build_realization_surfs_query_dict(case_uuid: str, iteration_name: str, time_type: SurfTimeType) -> dict:
     must_arr: list[dict] = []
     should_arr: list[dict] = []
     must_not_arr: list[dict] = []
 
     must_arr.append({"match": {"class.keyword": "surface"}})
     must_arr.append({"match": {"_sumo.parent_object.keyword": case_uuid}})
-    must_arr.append({"match": {"fmu.iteration.name.keyword": ensemble_name}})
+    must_arr.append({"match": {"fmu.iteration.name.keyword": iteration_name}})
     must_arr.append({"match": {"data.is_observation": False}})
     must_arr.append({"exists": {"field": "fmu.realization.id"}})
 
@@ -143,6 +196,10 @@ async def _run_query_and_aggregate_surf_info(sumo_client: SumoClient, query_dict
                         { "k_name": { "terms": { "field": "data.name.keyword" } } },
                         { "k_content": { "terms": { "field": "data.content.keyword" } } },
                         { "k_tagname": { "terms": { "field": "data.tagname.keyword" } } },
+
+                        # Experimental - including the available time points/intervals intervals in aggregation
+                        # { "k_t0": { "terms": { "field": "data.time.t0.value" } } },
+                        # { "k_t1": { "terms": { "field": "data.time.t1.value" } } },
                     ],
                 },
                 "aggs": {
@@ -155,6 +212,17 @@ async def _run_query_and_aggregate_surf_info(sumo_client: SumoClient, query_dict
                     "agg_z_val_min": { "min": { "field": "data.bbox.zmin" } },
                     "agg_z_val_max": { "max": { "field": "data.bbox.zmax" } },
                     "agg_is_stratigraphic_min": { "min": { "field": "data.stratigraphic" } },
+
+                    # Experimental - including the available time points/intervals intervals in aggregation
+                    # "sig_unique_t0s": {
+                    #     "terms": {"field": "data.time.t0.value", "size": 65000},
+                    # },
+                    # "sig_unique_intervals": {
+                    #     "multi_terms": {
+                    #         "size": 65000,
+                    #         "terms": [{"field": "data.time.t0.value" }, {"field": "data.time.t1.value"}],
+                    #     }
+                    # },
                 },
             },
         },
@@ -273,68 +341,15 @@ async def _run_query_and_aggregate_time_points(sumo_client: SumoClient, query_di
     return ret_arr
 
 
-
-# --------------------------------------------------------------------------------------
-async def find_realization_surf_info(sumo_client: SumoClient, case_uuid: str, ensemble_name: str, time_type: SurfTimeType) -> list[SurfInfoEx]:
-    query_dict = _build_realization_surfs_query_dict(case_uuid=case_uuid, ensemble_name=ensemble_name, time_type=time_type)
-    info_arr = await _run_query_and_aggregate_surf_info(sumo_client, query_dict=query_dict)
-
-    ret_arr: list[SurfInfoEx] = []
-    for surf_info in info_arr:
-        ret_arr.append(SurfInfoEx(**asdict(surf_info), tmp_time_type=time_type, tmp_is_observation=False))
-
-    return ret_arr
-
-
-# --------------------------------------------------------------------------------------
-async def find_observed_surf_info(sumo_client: SumoClient, case_uuid: str, time_type: SurfTimeType) -> list[SurfInfoEx]:
-    query_dict = _build_observed_surfs_query_dict(case_uuid=case_uuid, time_type=time_type)
-    info_arr = await _run_query_and_aggregate_surf_info(sumo_client, query_dict=query_dict)
-
-    ret_arr: list[SurfInfoEx] = []
-    for surf_info in info_arr:
-        ret_arr.append(SurfInfoEx(**asdict(surf_info), tmp_time_type=time_type, tmp_is_observation=True))
-
-    return ret_arr
-
-
-# --------------------------------------------------------------------------------------
-async def find_realization_surf_time_points(sumo_client: SumoClient, case_uuid: str, ensemble_name: str) -> list[TimePoint]:
-    query_dict = _build_realization_surfs_query_dict(case_uuid, ensemble_name, SurfTimeType.TIME_POINT)
-    ret_arr = await _run_query_and_aggregate_time_points(sumo_client, query_dict=query_dict)
-    return ret_arr
-
-
-# --------------------------------------------------------------------------------------
-async def find_realization_surf_time_intervals(sumo_client: SumoClient, case_uuid: str, ensemble_name: str) -> list[TimeInterval]:
-    query_dict = _build_realization_surfs_query_dict(case_uuid, ensemble_name, SurfTimeType.INTERVAL)
-    ret_arr = await _run_query_and_aggregate_time_intervals(sumo_client, query_dict=query_dict)
-    return ret_arr
-
-
-# --------------------------------------------------------------------------------------
-async def find_observed_surf_time_points(sumo_client: SumoClient, case_uuid: str) -> list[TimePoint]:
-    query_dict = _build_observed_surfs_query_dict(case_uuid, SurfTimeType.TIME_POINT)
-    ret_arr = await _run_query_and_aggregate_time_points(sumo_client, query_dict=query_dict)
-    return ret_arr
-
-
-# --------------------------------------------------------------------------------------
-async def find_observed_surf_time_intervals(sumo_client: SumoClient, case_uuid: str) -> list[TimeInterval]:
-    query_dict = _build_observed_surfs_query_dict(case_uuid, SurfTimeType.INTERVAL)
-    ret_arr = await _run_query_and_aggregate_time_intervals(sumo_client, query_dict=query_dict)
-    return ret_arr
-
-
-def delete_key_from_dict_recursive(d: dict, key_to_delete: str) -> None:
-    if isinstance(d, dict):
-        for key, value in list(d.items()):
+def delete_key_from_dict_recursive(the_dict: dict, key_to_delete: str) -> None:
+    if isinstance(the_dict, dict):
+        for key, value in list(the_dict.items()):
             if key == key_to_delete:
-                del d[key]
+                del the_dict[key]
             else:
                 delete_key_from_dict_recursive(value, key_to_delete)
-    elif isinstance(d, list):
-        for item in d:
+    elif isinstance(the_dict, list):
+        for item in the_dict:
             delete_key_from_dict_recursive(item, key_to_delete)
 
 
@@ -367,40 +382,45 @@ def timestamp_utc_ms_to_iso_str(timestamp_utc_ms: int) -> str:
 # https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-bool-query.html
 
 
-
+# ----------------------------------------
+# ----------------------------------------
 # ----------------------------------------
 
 async def my_test() -> None:
 
     sumo_client = SumoClient(env="prod", interactive=True)
 
-    case_uuid = "88f940d4-e57b-44ce-8e62-b3e30cf2c1ec" # DROGON, 01_drogon_ahm_sumo_eclmaps
-    ensemble_name= "iter-0"
+    # case_uuid = "88f940d4-e57b-44ce-8e62-b3e30cf2c1ec" # DROGON, 01_drogon_ahm_sumo_eclmaps
+    # ensemble_name= "iter-0"
 
     # case_uuid = "6e26c07a-a026-47f8-91d8-d0e977701002" # JOHAN SVERDRUP, 2022a_r011p3p0_history
     # ensemble_name= "iter-0"
 
-    # case_uuid = "9c7ac93c-1bc2-4fdc-a827-787a68f19a21" # SNORRE, 240422_sim2seis
-    # ensemble_name= "iter-0"
+    case_uuid = "9c7ac93c-1bc2-4fdc-a827-787a68f19a21" # SNORRE, 240422_sim2seis
+    ensemble_name= "iter-0"
 
 
     LOGGER.debug("\n##### Starting")
     start_s = time.perf_counter()
 
+
+
     async with asyncio.TaskGroup() as tg:
-        real_static_surfs_task = tg.create_task(find_realization_surf_info(sumo_client, case_uuid, ensemble_name, SurfTimeType.NO_TIME))
-        # real_time_point_surfs_task = tg.create_task(find_realization_surf_info(sumo_client, case_uuid, ensemble_name, SurfTimeType.TIME_POINT))
-        # real_interval_surfs_task = tg.create_task(find_realization_surf_info(sumo_client, case_uuid, ensemble_name, SurfTimeType.INTERVAL))
+        real_queries = RealizationSurfQueries(sumo_client, case_uuid, ensemble_name)
+        real_static_surfs_task = tg.create_task(real_queries.find_surf_info(SurfTimeType.NO_TIME))
+        real_time_point_surfs_task = tg.create_task(real_queries.find_surf_info(SurfTimeType.TIME_POINT))
+        real_interval_surfs_task = tg.create_task(real_queries.find_surf_info(SurfTimeType.INTERVAL))
 
-        # obs_time_point_surfs_task = tg.create_task(find_observed_surf_info(sumo_client, case_uuid, SurfTimeType.TIME_POINT))
-        # obs_interval_surfs_task = tg.create_task(find_observed_surf_info(sumo_client, case_uuid, SurfTimeType.INTERVAL))
+        obs_queries = ObservedSurfQueries(sumo_client, case_uuid)
+        obs_time_point_surfs_task = tg.create_task(obs_queries.find_surf_info(SurfTimeType.TIME_POINT))
+        obs_interval_surfs_task = tg.create_task(obs_queries.find_surf_info(SurfTimeType.INTERVAL))
 
-        # real_time_points_task = tg.create_task(find_realization_surf_time_points(sumo_client, case_uuid, ensemble_name))
-        # real_time_intervals_task = tg.create_task(find_realization_surf_time_intervals(sumo_client, case_uuid, ensemble_name))
-        # obs_time_points_task = tg.create_task(find_observed_surf_time_points(sumo_client, case_uuid))
-        # obs_time_intervals_task = tg.create_task(find_observed_surf_time_intervals(sumo_client, case_uuid))
+        real_time_points_task = tg.create_task(real_queries.find_surf_time_points())
+        real_time_intervals_task = tg.create_task(real_queries.find_surf_time_intervals())
+        obs_time_points_task = tg.create_task(obs_queries.find_surf_time_points())
+        obs_time_intervals_task = tg.create_task(obs_queries.find_surf_time_intervals())
 
-    print_surf_info_arr(real_static_surfs_task.result())
+    # print_surf_info_arr(real_static_surfs_task.result())
     # print_surf_info_arr(real_time_point_surfs_task.result())
     # print_surf_info_arr(real_interval_surfs_task.result())
 

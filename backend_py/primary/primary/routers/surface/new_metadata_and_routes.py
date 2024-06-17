@@ -1,8 +1,7 @@
 from enum import Enum
-from typing import List, Optional, Any
+from typing import Optional, Any
 
 from pydantic import BaseModel
-from webviz_pkg.core_utils.b64 import B64FloatArray
 
 from primary.services.smda_access.types import StratigraphicFeature
 
@@ -153,6 +152,3 @@ class SurfaceDirectory(BaseModel):
     straigraphic_stuff
 # ===============================================================================================
 """
-
-
-
