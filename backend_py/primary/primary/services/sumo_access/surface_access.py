@@ -144,7 +144,9 @@ class SurfaceAccess:
 
         surf_count = await surface_collection.length_async()
         if surf_count > 1:
-            raise MultipleDataMatchesError(f"Multiple ({surf_count}) surfaces found in Sumo for: {surf_str}", Service.SUMO)
+            raise MultipleDataMatchesError(
+                f"Multiple ({surf_count}) surfaces found in Sumo for: {surf_str}", Service.SUMO
+            )
         if surf_count == 0:
             LOGGER.warning(f"No realization surface found in Sumo for {surf_str}")
             return None
@@ -187,7 +189,9 @@ class SurfaceAccess:
 
         surf_count = await surface_collection.length_async()
         if surf_count > 1:
-            raise MultipleDataMatchesError(f"Multiple ({surf_count}) surfaces found in Sumo for: {surf_str}", Service.SUMO)
+            raise MultipleDataMatchesError(
+                f"Multiple ({surf_count}) surfaces found in Sumo for: {surf_str}", Service.SUMO
+            )
         if surf_count == 0:
             LOGGER.warning(f"No observed surface found in Sumo for: {surf_str}")
             return None

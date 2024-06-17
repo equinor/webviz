@@ -58,7 +58,6 @@ class SurfaceMeta(BaseModel):
     global_max_value: float | None = None
 
 
-
 # !!!!!!!!!!!!!!!!!
 # !!!!!!!!!!!!!!!!!
 # !!!!!!!!!!!!!!!!!
@@ -68,7 +67,6 @@ class SurfaceDirectory(BaseModel):
     time_points: list[str]
     time_intervals: list[str]
     sorted_surface_names: list[str]
-
 
 
 class SurfaceDirectoryKladd(BaseModel):

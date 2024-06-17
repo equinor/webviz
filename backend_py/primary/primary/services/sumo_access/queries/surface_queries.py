@@ -157,9 +157,7 @@ def _build_observed_surfs_query_dict(case_uuid: str, time_type: SurfTimeType) ->
 async def _run_query_and_aggregate_surf_info(sumo_client: SumoClient, query_dict: dict) -> list[SurfInfo]:
     search_payload = {
         "track_total_hits": True,
-
         "query": query_dict,
-
         # "fields": [
         #     "data.stratigraphic",
         #     "data.is_observation",
@@ -167,7 +165,6 @@ async def _run_query_and_aggregate_surf_info(sumo_client: SumoClient, query_dict
         #     "data.tagname.keyword",
         #     "data.content.keyword",
         # ],
-
         # Do a slight trick below in order to capture the boolean data.stratigraphic field
         # It seems that the "min" aggregation handles boolean fields correctly, reporting the min value as either 0 or 1
         "aggs": {
@@ -206,7 +203,6 @@ async def _run_query_and_aggregate_surf_info(sumo_client: SumoClient, query_dict
                 },
             },
         },
-
         "_source": True,
         "size": 0,
     }
@@ -325,8 +321,8 @@ async def _run_query_and_aggregate_time_points(sumo_client: SumoClient, query_di
 
 # --------------------------------------------------------------------------------------
 def _timestamp_utc_ms_to_iso_str(timestamp_utc_ms: int) -> str:
-    isostr = datetime.datetime.fromtimestamp(timestamp_utc_ms/1000, datetime.timezone.utc).isoformat()
-    #isostr = isostr..replace("+00:00", "Z")
+    isostr = datetime.datetime.fromtimestamp(timestamp_utc_ms / 1000, datetime.timezone.utc).isoformat()
+    # isostr = isostr..replace("+00:00", "Z")
     isostr = isostr.replace("+00:00", "")
     return isostr
 
@@ -342,7 +338,6 @@ def _delete_key_from_dict_recursive(the_dict: dict, key_to_delete: str) -> None:
     elif isinstance(the_dict, list):
         for item in the_dict:
             _delete_key_from_dict_recursive(item, key_to_delete)
-
 
 
 # ----------------------------------------
