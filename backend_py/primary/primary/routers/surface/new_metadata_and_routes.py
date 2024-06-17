@@ -31,6 +31,9 @@ from .schemas import SurfaceAttributeType
 # getDeltaStatisticalSurfaceData(partialSurfAddr1: string, realizations1: list[int], partialSurfAddr2: string, realizations2: list[int], statistical_functions: list[int]): list[SurfaceData]
 #
 # getMisfitSurfaceData(observedAddr: string, partialAddr: string, realizations: list[int], statistical_functions: list[int]): list[SurfaceData]
+#
+# Additional optional parameter to all endpoints, resampleToSurface/mapToSurface: SurfaceGridDefinition
+#
 
 
 class SurfaceTimeType(Enum):
