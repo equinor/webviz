@@ -24,7 +24,7 @@ import {
     SurfaceTimeType,
     useSurfaceDirectoryQuery,
 } from "@modules/_shared/Surface";
-import { useWellHeadersQuery } from "@modules/_shared/WellBore/queryHooks";
+import { useDrilledWellboreHeadersQuery } from "@modules/_shared/WellBore/queryHooks";
 
 import { AggregationSelector } from "./components/AggregationSelector";
 import { state } from "./state";
@@ -367,13 +367,13 @@ export function Settings({ settingsContext, workbenchSession, workbenchServices 
         [show3D, settingsContext]
     );
 
-    const wellHeadersQuery = useWellHeadersQuery(computedEnsembleIdent?.getCaseUuid());
+    const wellHeadersQuery = useDrilledWellboreHeadersQuery(computedEnsembleIdent?.getCaseUuid());
     let wellHeaderOptions: SelectOption[] = [];
 
     if (wellHeadersQuery.data) {
         wellHeaderOptions = wellHeadersQuery.data.map((header) => ({
-            label: header.unique_wellbore_identifier,
-            value: header.wellbore_uuid,
+            label: header.uniqueWellboreIdentifier,
+            value: header.wellboreUuid,
         }));
     }
 

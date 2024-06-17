@@ -28,6 +28,7 @@ export type TableSelectProps = {
     multiple?: boolean;
     width?: string | number;
     columnSizesInPercent?: number[];
+    debounceTimeMs?: number;
 } & BaseComponentProps;
 
 const defaultProps = {
@@ -78,6 +79,8 @@ export const TableSelect = withDefaults<TableSelectProps>()(defaultProps, (props
     const columnSizesPerc = props.columnSizesInPercent ?? props.headerLabels.map(() => 100 / props.headerLabels.length);
 
     const ref = React.useRef<HTMLDivElement>(null);
+    const debounceTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+
     const noOptionsText = props.placeholder ?? "No options";
     const filteredOptions = React.useMemo(
         function filterOptions() {
@@ -124,6 +127,28 @@ export const TableSelect = withDefaults<TableSelectProps>()(defaultProps, (props
         setStartIndex(newStartIndex);
     }
 
+    const handleOnChange = React.useCallback(
+        function handleOnChange(values: string[]) {
+            if (!onChange) {
+                return;
+            }
+
+            if (debounceTimerRef.current) {
+                clearTimeout(debounceTimerRef.current);
+            }
+
+            if (!props.debounceTimeMs) {
+                onChange(values);
+                return;
+            }
+
+            debounceTimerRef.current = setTimeout(() => {
+                onChange(values);
+            }, props.debounceTimeMs);
+        },
+        [onChange, props.debounceTimeMs]
+    );
+
     const toggleValue = React.useCallback(
         function toggleValue(option: TableSelectOption, index: number) {
             let newSelected = [...selected];
@@ -153,18 +178,18 @@ export const TableSelect = withDefaults<TableSelectProps>()(defaultProps, (props
             }
             setCurrentIndex(index);
             setSelected(newSelected);
-            if (onChange) {
-                if (props.multiple) {
-                    onChange(newSelected);
-                } else if (!option.disabled) {
-                    onChange([option.id]);
-                } else {
-                    onChange([]);
-                }
-            }
+            handleOnChange(newSelected);
         },
-        [props.multiple, props.options, selected, onChange, keysPressed, lastShiftIndex]
+        [props.multiple, props.options, selected, keysPressed, lastShiftIndex, handleOnChange]
     );
+
+    React.useEffect(function handleMount() {
+        return function handleUnmount() {
+            if (debounceTimerRef.current) {
+                clearTimeout(debounceTimerRef.current);
+            }
+        };
+    }, []);
 
     React.useEffect(
         function handleKeyActions() {

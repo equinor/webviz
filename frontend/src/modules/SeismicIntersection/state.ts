@@ -1,4 +1,4 @@
-import { Wellbore } from "@framework/Wellbore";
+import { Wellbore } from "@framework/types/wellbore";
 
 import { SeismicAddress, SurfaceAddress } from "./types";
 

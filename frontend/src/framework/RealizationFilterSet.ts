@@ -1,3 +1,5 @@
+import { isEqual } from "lodash";
+
 import { EnsembleIdent } from "./EnsembleIdent";
 import { EnsembleSet } from "./EnsembleSet";
 import { RealizationFilter } from "./RealizationFilter";
@@ -43,5 +45,22 @@ export class RealizationFilterSet {
         }
 
         return filter;
+    }
+
+    isEqual(other: RealizationFilterSet): boolean {
+        if (
+            this._ensembleIdentStringRealizationFilterMap.size !== other._ensembleIdentStringRealizationFilterMap.size
+        ) {
+            return false;
+        }
+
+        for (const [ensembleIdentString, realizationFilter] of this._ensembleIdentStringRealizationFilterMap) {
+            const otherRealizationFilter = other._ensembleIdentStringRealizationFilterMap.get(ensembleIdentString);
+            if (!otherRealizationFilter || isEqual(realizationFilter, otherRealizationFilter)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 }

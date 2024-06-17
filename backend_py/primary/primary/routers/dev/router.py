@@ -193,7 +193,7 @@ async def ri_surf(
     grid_service = await UserGrid3dService.create_async(authenticated_user, case_uuid)
     await grid_service.get_grid_geometry_async(ensemble_name, realization, grid_name, ijk_index_filter)
     await grid_service.get_mapped_grid_properties_async(
-        ensemble_name, realization, grid_name, property_name, ijk_index_filter
+        ensemble_name, realization, grid_name, property_name, None, ijk_index_filter
     )
 
     return "OK"
@@ -227,6 +227,8 @@ async def ri_isect(
     # fmt:on
 
     grid_service = await UserGrid3dService.create_async(authenticated_user, case_uuid)
-    await grid_service.get_polyline_intersection_async(ensemble_name, realization, grid_name, property_name, xy_arr)
+    await grid_service.get_polyline_intersection_async(
+        ensemble_name, realization, grid_name, property_name, None, xy_arr
+    )
 
     return "OK"

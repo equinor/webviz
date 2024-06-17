@@ -1,10 +1,11 @@
 import { isDevMode } from "@lib/utils/devMode";
 
+import "./3DViewer/registerModule";
 import "./DistributionPlot/registerModule";
-import "./Grid3D/registerModule";
 import "./FlowNetwork/registerModule";
 // import "./Grid3DVTK/registerModule";
 import "./InplaceVolumetrics/registerModule";
+import "./Intersection/registerModule";
 import "./Map/registerModule";
 import "./ParameterDistributionMatrix/registerModule";
 import "./Pvt/registerModule";

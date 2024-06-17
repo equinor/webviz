@@ -10,11 +10,22 @@ export type ButtonProps = {
     startIcon?: React.ReactNode;
     endIcon?: React.ReactNode;
     color?: "primary" | "danger" | "success" | string;
+    size?: "small" | "medium" | "large";
 } & ButtonUnstyledProps;
 
 export const Button = React.forwardRef((props: ButtonProps, ref: React.ForwardedRef<HTMLButtonElement>) => {
     const { disabled, variant, children, startIcon, endIcon, color, ...rest } = props;
-    const classNames = ["inline-flex", "items-center", "px-4", "py-2", "font-medium", "rounded-md"];
+    const classNames = [
+        "inline-flex",
+        "items-center",
+        ...(props.size === "medium"
+            ? ["px-2", "py-1"]
+            : props.size === "small"
+            ? ["px-1", "py-0.5"]
+            : ["px-4", "py-2"]),
+        "font-medium",
+        "rounded-md",
+    ];
 
     if (variant === "outlined") {
         classNames.push("border", "bg-transparent");

@@ -1,6 +1,5 @@
 import logging
-from typing import List
-from typing import Annotated
+from typing import Annotated, List, Optional
 
 import numpy as np
 from fastapi import APIRouter, Depends, Query, Body
@@ -75,26 +74,28 @@ async def is_grid_geometry_shared(
 
 # Primary backend
 @router.get("/grid_surface")
+# pylint: disable=too-many-arguments
 async def grid_surface(
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
     case_uuid: Annotated[str, Query(description="Sumo case uuid")],
     ensemble_name: Annotated[str, Query(description="Ensemble name")],
     grid_name: Annotated[str, Query(description="Grid name")],
     realization_num: Annotated[int, Query(description="Realization")],
-    single_k_layer: Annotated[int, Query(description="Show only a single k layer")] = -1,
+    i_min: Annotated[int, Query(description="Min i index")] = 0,
+    i_max: Annotated[int, Query(description="Max i index")] = -1,
+    j_min: Annotated[int, Query(description="Min j index")] = 0,
+    j_max: Annotated[int, Query(description="Max j index")] = -1,
+    k_min: Annotated[int, Query(description="Min k index")] = 0,
+    k_max: Annotated[int, Query(description="Max k index")] = -1,
 ) -> schemas.Grid3dGeometry:
     """Get a grid"""
 
     perf_metrics = PerfMetrics()
 
-    ijk_index_filter = None
-    if single_k_layer >= 0:
-        ijk_index_filter = IJKIndexFilter(
-            min_i=-1, max_i=-1, min_j=-1, max_j=-1, min_k=single_k_layer, max_k=single_k_layer
-        )
-
     grid_service = await UserGrid3dService.create_async(authenticated_user, case_uuid)
     perf_metrics.record_lap("create-service")
+
+    ijk_index_filter = IJKIndexFilter(min_i=i_min, max_i=i_max, min_j=j_min, max_j=j_max, min_k=k_min, max_k=k_max)
 
     grid_geometry = await grid_service.get_grid_geometry_async(
         ensemble_name=ensemble_name,
@@ -124,6 +125,7 @@ async def grid_surface(
 
 
 @router.get("/grid_parameter")
+# pylint: disable=too-many-arguments
 async def grid_parameter(
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
     case_uuid: Annotated[str, Query(description="Sumo case uuid")],
@@ -131,17 +133,21 @@ async def grid_parameter(
     grid_name: Annotated[str, Query(description="Grid name")],
     parameter_name: Annotated[str, Query(description="Grid parameter")],
     realization_num: Annotated[int, Query(description="Realization")],
-    single_k_layer: Annotated[int, Query(description="Show only a single k layer")] = -1,
+    parameter_time_or_interval_str: Annotated[
+        Optional[str], Query(description="Time point or time interval string")
+    ] = None,
+    i_min: Annotated[int, Query(description="Min i index")] = 0,
+    i_max: Annotated[int, Query(description="Max i index")] = -1,
+    j_min: Annotated[int, Query(description="Min j index")] = 0,
+    j_max: Annotated[int, Query(description="Max j index")] = -1,
+    k_min: Annotated[int, Query(description="Min k index")] = 0,
+    k_max: Annotated[int, Query(description="Max k index")] = -1,
 ) -> schemas.Grid3dMappedProperty:
     """Get a grid parameter"""
 
     perf_metrics = PerfMetrics()
 
-    ijk_index_filter = None
-    if single_k_layer >= 0:
-        ijk_index_filter = IJKIndexFilter(
-            min_i=-1, max_i=-1, min_j=-1, max_j=-1, min_k=single_k_layer, max_k=single_k_layer
-        )
+    ijk_index_filter = IJKIndexFilter(min_i=i_min, max_i=i_max, min_j=j_min, max_j=j_max, min_k=k_min, max_k=k_max)
 
     grid_service = await UserGrid3dService.create_async(authenticated_user, case_uuid)
     perf_metrics.record_lap("create-service")
@@ -150,6 +156,7 @@ async def grid_parameter(
         ensemble_name=ensemble_name,
         grid_name=grid_name,
         property_name=parameter_name,
+        property_time_or_interval_str=parameter_time_or_interval_str,
         realization=realization_num,
         ijk_index_filter=ijk_index_filter,
     )
@@ -178,6 +185,9 @@ async def post_get_polyline_intersection(
     grid_name: Annotated[str, Query(description="Grid name")],
     parameter_name: Annotated[str, Query(description="Grid parameter")],
     realization_num: Annotated[int, Query(description="Realization")],
+    parameter_time_or_interval_str: Annotated[
+        Optional[str], Query(description="Time point or time interval string")
+    ] = None,
     polyline_utm_xy: list[float] = Body(embed=True),
 ) -> PolylineIntersection:
     perf_metrics = PerfMetrics()
@@ -189,6 +199,7 @@ async def post_get_polyline_intersection(
         ensemble_name=ensemble_name,
         grid_name=grid_name,
         property_name=parameter_name,
+        property_time_or_interval_str=parameter_time_or_interval_str,
         realization=realization_num,
         polyline_utm_xy=polyline_utm_xy,
     )

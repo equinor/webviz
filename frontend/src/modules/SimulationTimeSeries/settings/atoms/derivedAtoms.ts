@@ -56,8 +56,6 @@ export const selectedEnsemblesAtom = atom((get) => {
     return selectedEnsembles;
 });
 
-// NOTE: The previous implementation of SimulationTimeSeries-module used React.useTransition() triggered when calculating
-// the following union. The atom is calculated without any transition. Handle transition/signalling of slow calculation if needed.
 export const continuousAndNonConstantParametersUnionAtom = atom<Parameter[]>((get) => {
     const ensembleSet = get(EnsembleSetAtom);
     const selectedEnsembleIdents = get(selectedEnsembleIdentsAtom);

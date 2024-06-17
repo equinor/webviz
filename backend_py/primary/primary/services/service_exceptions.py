@@ -7,6 +7,7 @@ class Service(str, Enum):
     SMDA = "smda"
     VDS = "vds"
     USER_SESSION = "user_session"
+    SSDL = "ssdl"
 
 
 class ServiceLayerException(Exception):

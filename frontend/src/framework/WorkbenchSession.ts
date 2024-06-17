@@ -1,9 +1,11 @@
 import React from "react";
 
+import { AtomStoreMaster } from "./AtomStoreMaster";
 import { Ensemble } from "./Ensemble";
 import { EnsembleIdent } from "./EnsembleIdent";
 import { EnsembleSet } from "./EnsembleSet";
 import { RealizationFilterSet } from "./RealizationFilterSet";
+import { UserCreatedItems } from "./UserCreatedItems";
 
 export type EnsembleRealizationFilterFunction = (ensembleIdent: EnsembleIdent) => readonly number[];
 
@@ -23,6 +25,11 @@ export class WorkbenchSession {
     private _subscribersMap: Map<keyof WorkbenchSessionEvent, Set<(payload: any) => void>> = new Map();
     protected _ensembleSet: EnsembleSet = new EnsembleSet([]);
     protected _realizationFilterSet = new RealizationFilterSet();
+    protected _userCreatedItems: UserCreatedItems;
+
+    constructor(atomStoreMaster: AtomStoreMaster) {
+        this._userCreatedItems = new UserCreatedItems(atomStoreMaster);
+    }
 
     getEnsembleSet(): EnsembleSet {
         return this._ensembleSet;
@@ -30,6 +37,10 @@ export class WorkbenchSession {
 
     getRealizationFilterSet(): RealizationFilterSet {
         return this._realizationFilterSet;
+    }
+
+    getUserCreatedItems(): UserCreatedItems {
+        return this._userCreatedItems;
     }
 
     subscribe<T extends Exclude<WorkbenchSessionEvent, keyof WorkbenchSessionPayloads>>(
@@ -93,11 +104,11 @@ export function useEnsembleRealizationFilterFunc(
                 );
             }
 
-            const unsubFunc = workbenchSession.subscribe(
+            const unsubscribeFunc = workbenchSession.subscribe(
                 WorkbenchSessionEvent.RealizationFilterSetChanged,
                 handleEnsembleRealizationFilterSetChanged
             );
-            return unsubFunc;
+            return unsubscribeFunc;
         },
         [workbenchSession]
     );

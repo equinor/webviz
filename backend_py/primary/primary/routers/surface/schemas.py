@@ -36,6 +36,7 @@ class SurfaceAttributeType(str, Enum):
     THICKNESS = "thickness"  # Values are isochores (real or conceptual difference between two depth surfaces)
     ISOCHORE = "isochore"  # Values are isochores (real or conceptual difference between two depth surfaces)
     FLUID_CONTACT = "fluid_contact"  # Values are fluid contacts (oil-water, gas-water, etc.)
+    VOLUMES = "volumes"
 
 
 class SurfaceMeta(BaseModel):
@@ -51,6 +52,10 @@ class SurfaceMeta(BaseModel):
     is_observation: bool  # Can only be true for seismic surfaces
     value_min: Optional[float] = None
     value_max: Optional[float] = None
+    x_min: Optional[float] = None
+    x_max: Optional[float] = None
+    y_min: Optional[float] = None
+    y_max: Optional[float] = None
 
 
 class SurfaceData(BaseModel):

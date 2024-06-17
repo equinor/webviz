@@ -1,3 +1,4 @@
+from typing import Optional
 from pydantic import BaseModel
 from .generic_types import SumoContent
 
@@ -9,5 +10,9 @@ class SurfaceMeta(BaseModel):
     content: SumoContent
     is_observation: bool
     is_stratigraphic: bool
-    zmin: float | None = None
-    zmax: float | None = None
+    zmin: Optional[float] = None
+    zmax: Optional[float] = None
+    xmin: Optional[float] = None
+    xmax: Optional[float] = None
+    ymin: Optional[float] = None
+    ymax: Optional[float] = None

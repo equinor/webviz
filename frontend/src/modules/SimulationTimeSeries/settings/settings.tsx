@@ -13,6 +13,7 @@ import { Checkbox } from "@lib/components/Checkbox";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { Dropdown } from "@lib/components/Dropdown";
+import { Label } from "@lib/components/Label";
 import { QueriesErrorCriteria, QueryStateWrapper } from "@lib/components/QueryStateWrapper";
 import { RadioGroup } from "@lib/components/RadioGroup";
 import { Select } from "@lib/components/Select";
@@ -64,6 +65,8 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
     const ensembleSet = useEnsembleSet(workbenchSession);
     const statusWriter = useSettingsStatusWriter(settingsContext);
 
+    const [selectedVectorTags, setSelectedVectorTags] = React.useState<string[]>([]);
+
     const [resampleFrequency, setResamplingFrequency] = useAtom(resampleFrequencyAtom);
     const [groupBy, setGroupBy] = useAtom(groupByAtom);
     const [colorRealizationsByParameter, setColorRealizationsByParameter] = useAtom(colorRealizationsByParameterAtom);
@@ -83,10 +86,6 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
     const isVectorListQueriesFetching = useAtomValue(isVectorListQueriesFetchingAtom);
     const setUserSelectedParameterIdentStr = useSetAtom(userSelectedParameterIdentStringAtom);
     const selectedParameterIdentStr = useAtomValue(selectedParameterIdentStringAtom);
-
-    const [selectedVectorTags, setSelectedVectorTags] = React.useState<string[]>([]);
-    const [isUserSelectedStatisticsOptionsExpanded, setIsUserSelectedStatisticsOptionsExpanded] = React.useState(true);
-    const [isUserSelectedColorByParameterExpanded, setIsUserSelectedColorByParameterExpanded] = React.useState(true);
 
     useMakeSettingsStatusWriterMessages(statusWriter, selectedVectorTags);
 
@@ -125,16 +124,7 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
     }
 
     function handleVisualizationModeChange(event: React.ChangeEvent<HTMLInputElement>) {
-        const newVisualizationMode = event.target.value as VisualizationMode;
-        setVisualizationMode(newVisualizationMode);
-    }
-
-    function handleStatisticsOptionsCollapseExpandChange(expanded: boolean) {
-        setIsUserSelectedStatisticsOptionsExpanded(expanded);
-    }
-
-    function handleColorByParameterCollapseExpandChange(expanded: boolean) {
-        setIsUserSelectedColorByParameterExpanded(expanded);
+        setVisualizationMode(event.target.value as VisualizationMode);
     }
 
     function handleFanchartStatisticsSelectionChange(
@@ -291,69 +281,67 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
                     </QueryStateWrapper>
                 </div>
             </CollapsibleGroup>
-            <CollapsibleGroup expanded={true} title="Visualization">
-                <div className="flex flex-col gap-2 overflow-y-auto">
-                    <RadioGroup
-                        value={visualizationMode}
-                        options={Object.values(VisualizationMode).map((val: VisualizationMode) => {
-                            return { value: val, label: VisualizationModeEnumToStringMapping[val] };
-                        })}
-                        onChange={handleVisualizationModeChange}
-                    />
-                    <CollapsibleGroup
-                        title="Statistics Options"
-                        disabled={visualizationMode === VisualizationMode.INDIVIDUAL_REALIZATIONS}
-                        expanded={
-                            isUserSelectedStatisticsOptionsExpanded &&
-                            visualizationMode !== VisualizationMode.INDIVIDUAL_REALIZATIONS
-                        }
-                        onChange={handleStatisticsOptionsCollapseExpandChange}
-                    >
-                        {makeStatisticCheckboxes()}
-                    </CollapsibleGroup>
-                    <CollapsibleGroup
-                        title="Color individual realizations by parameter"
-                        disabled={visualizationMode !== VisualizationMode.INDIVIDUAL_REALIZATIONS}
-                        expanded={
-                            isUserSelectedColorByParameterExpanded &&
-                            visualizationMode === VisualizationMode.INDIVIDUAL_REALIZATIONS
-                        }
-                        onChange={handleColorByParameterCollapseExpandChange}
-                    >
-                        <Checkbox
-                            label="Enable"
-                            checked={colorRealizationsByParameter}
-                            onChange={(event) => {
-                                setColorRealizationsByParameter(event.target.checked);
-                            }}
-                        />
-                        <div>
-                            <div className="mt-4 mb-4">
-                                <CollapsibleGroup
-                                    expanded={true}
-                                    title="Parameter list filter"
-                                    icon={<FilterAlt fontSize="small" />}
-                                >
-                                    <ParameterListFilter
-                                        parameters={continuousAndNonConstantParametersUnion}
-                                        initialFilters={["Continuous", "Nonconstant"]}
-                                        onChange={handleParameterListFilterChange}
-                                    />
-                                </CollapsibleGroup>
-                            </div>
-                            <Select
-                                options={filteredParameterIdentList.map((elm) => {
-                                    return {
-                                        value: elm.toString(),
-                                        label: elm.groupName ? `${elm.groupName}:${elm.name}` : elm.name,
-                                    };
-                                })}
-                                size={4}
-                                value={selectedParameterIdentStr ? [selectedParameterIdentStr.toString()] : undefined}
-                                onChange={handleColorByParameterChange}
+            <CollapsibleGroup expanded={false} title="Color realization by parameter">
+                <Checkbox
+                    label="Enable"
+                    checked={colorRealizationsByParameter}
+                    disabled={visualizationMode !== VisualizationMode.INDIVIDUAL_REALIZATIONS}
+                    onChange={(event) => {
+                        setColorRealizationsByParameter(event.target.checked);
+                    }}
+                />
+                <div
+                    className={resolveClassNames({
+                        ["pointer-events-none opacity-70"]:
+                            !colorRealizationsByParameter ||
+                            visualizationMode !== VisualizationMode.INDIVIDUAL_REALIZATIONS,
+                    })}
+                >
+                    <div className="mt-4 mb-4">
+                        <CollapsibleGroup
+                            expanded={false}
+                            title="Parameter list filter"
+                            icon={<FilterAlt fontSize="small" />}
+                        >
+                            <ParameterListFilter
+                                parameters={continuousAndNonConstantParametersUnion}
+                                initialFilters={["Continuous", "Nonconstant"]}
+                                onChange={handleParameterListFilterChange}
                             />
+                        </CollapsibleGroup>
+                    </div>
+                    <Select
+                        options={filteredParameterIdentList.map((elm) => {
+                            return {
+                                value: elm.toString(),
+                                label: elm.groupName ? `${elm.groupName}:${elm.name}` : elm.name,
+                            };
+                        })}
+                        size={4}
+                        value={selectedParameterIdentStr ? [selectedParameterIdentStr.toString()] : undefined}
+                        onChange={handleColorByParameterChange}
+                    />
+                </div>
+            </CollapsibleGroup>
+            <CollapsibleGroup expanded={false} title="Visualization">
+                <RadioGroup
+                    value={visualizationMode}
+                    options={Object.values(VisualizationMode).map((val: VisualizationMode) => {
+                        return { value: val, label: VisualizationModeEnumToStringMapping[val] };
+                    })}
+                    onChange={handleVisualizationModeChange}
+                />
+                <div className="mt-4">
+                    <Label text="Statistics Options">
+                        <div
+                            className={resolveClassNames({
+                                "pointer-events-none opacity-40":
+                                    visualizationMode === VisualizationMode.INDIVIDUAL_REALIZATIONS,
+                            })}
+                        >
+                            {makeStatisticCheckboxes()}
                         </div>
-                    </CollapsibleGroup>
+                    </Label>
                 </div>
             </CollapsibleGroup>
         </div>

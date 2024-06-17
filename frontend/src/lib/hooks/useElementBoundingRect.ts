@@ -20,7 +20,7 @@ export function useElementBoundingRect(ref: React.RefObject<HTMLElement | SVGSVG
 
                 const newRect = ref.current.getBoundingClientRect();
 
-                if (isHidden && domRectsAreEqual(currentRect, newRect)) {
+                if (domRectsAreEqual(currentRect, newRect)) {
                     isHidden = false;
                     return;
                 }
