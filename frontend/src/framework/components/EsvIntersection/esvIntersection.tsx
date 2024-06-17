@@ -368,7 +368,7 @@ export function EsvIntersection(props: EsvIntersectionProps): React.ReactNode {
                         const existingLayer = esvController.getLayer(layer.id);
                         if (existingLayer) {
                             // The last pixi layer does always hold the canvas element. If the last layer is removed and the other pixi layers are only updated,
-                            // they don't have a canvas to draw in anymore. Hence, in order to add a new canvas, the old layer gets removed and a new one added.
+                            // they don't have a canvas to draw to anymore. Hence, in order to add a new canvas, the old layer gets removed and a new one added.
                             if (isPixiLayer(existingLayer)) {
                                 esvController.removeLayer(layer.id);
                                 const newLayerOptions = cloneDeep(layer.options);

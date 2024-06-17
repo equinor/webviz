@@ -1,5 +1,5 @@
 import { SeismicFenceData_api } from "@api";
-import { SeismicInfo, generateSeismicSliceImage, getSeismicInfo } from "@equinor/esv-intersection";
+import { SeismicInfo, findIndexOfSample, getSeismicInfo } from "@equinor/esv-intersection";
 import { apiService } from "@framework/ApiService";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { defaultContinuousDivergingColorPalettes } from "@framework/utils/colorPalettes";
@@ -9,6 +9,7 @@ import { b64DecodeFloatArrayToFloat32 } from "@modules/_shared/base64";
 import { ColorScaleWithName } from "@modules/_shared/utils/ColorScaleWithName";
 import { QueryClient } from "@tanstack/query-core";
 
+import { Rgb, parse } from "culori";
 import { isEqual } from "lodash";
 
 import { BaseLayer, BoundingBox, LayerStatus, LayerTopic } from "./BaseLayer";
@@ -252,13 +253,18 @@ export class SeismicLayer extends BaseLayer<SeismicLayerSettings, SeismicLayerDa
             trajectory: trajectoryFenceProjection,
             colorScale: this.getColorScale(),
         };
-        const colormap = options.colorScale.sampleColors(options.colorScale.getNumSteps() || 10);
 
-        const image = await generateSeismicSliceImage({ ...options }, options.trajectory, colormap, {
-            isLeftToRight: true,
-            seismicMin: this.getUseCustomColorScaleBoundaries() ? options.colorScale.getMin() : undefined,
-            seismicMax: this.getUseCustomColorScaleBoundaries() ? options.colorScale.getMax() : undefined,
-        })
+        const useCustomColorScaleBoundaries = this.getUseCustomColorScaleBoundaries();
+
+        const image = await generateSeismicSliceImage(
+            { ...options },
+            options.trajectory,
+            options.colorScale.clone(),
+            useCustomColorScaleBoundaries,
+            {
+                isLeftToRight: true,
+            }
+        )
             .then((result) => {
                 return result ?? null;
             })
@@ -416,4 +422,95 @@ export function createSeismicSliceImageYAxisValuesArrayFromFenceData(fenceData: 
         yAxisValues.push(minDepth + ((maxDepth - minDepth) / numSamples) * i);
     }
     return yAxisValues;
+}
+
+export async function generateSeismicSliceImage(
+    data: { datapoints: number[][]; yAxisValues: number[] },
+    trajectory: number[][],
+    colorScale: ColorScale,
+    useCustomColorScaleBoundaries: boolean,
+    options: {
+        isLeftToRight: boolean;
+        seismicRange?: number;
+        seismicMin?: number;
+        seismicMax?: number;
+    } = { isLeftToRight: true }
+): Promise<ImageBitmap | undefined> {
+    if (!(data && data.datapoints && data.datapoints.length > 0)) {
+        return undefined;
+    }
+    const { datapoints: dp } = data;
+
+    const min =
+        options?.seismicMin ||
+        options?.seismicRange ||
+        dp.reduce((val: number, array: number[]) => Math.min(...array, val), 0);
+    const max =
+        options?.seismicMax ||
+        options?.seismicRange ||
+        dp.reduce((val: number, array: number[]) => Math.max(...array, val), 0);
+
+    const absMax = Math.max(Math.abs(min), Math.abs(max));
+
+    const dmin = -absMax;
+    const dmax = absMax;
+
+    if (!useCustomColorScaleBoundaries) {
+        colorScale.setRange(dmin, dmax);
+    }
+
+    const length = trajectory[0]?.[0]! - trajectory[trajectory.length - 1]?.[0]!;
+    const width = Math.abs(Math.floor(length / 5));
+    const height = data.yAxisValues.length;
+
+    // Generate image
+    const imageDataUint8Arr = new Uint8ClampedArray(width * height * 4);
+
+    let offset = 0;
+
+    let pos = options?.isLeftToRight ? trajectory[0]?.[0]! : trajectory[trajectory.length - 1]?.[0]!;
+
+    const step = (length / width) * (options?.isLeftToRight ? -1 : 1);
+
+    let val1: number;
+    let val2: number;
+    let val: number;
+    let color: number[];
+    const black = [0, 0, 0];
+    let opacity: number;
+
+    for (let x = 0; x < width; x++) {
+        offset = x * 4;
+        const index = findIndexOfSample(trajectory, pos);
+        const x1 = trajectory[index]?.[0]!;
+        const x2 = trajectory[index + 1]?.[0]!;
+        const span = x2 - x1;
+        const dx = pos - x1;
+        const ratio = dx / span;
+
+        for (let y = 0; y < height; y++) {
+            val1 = dp[y]?.[index]!;
+            val2 = dp[y]?.[index + 1]!;
+            color = black;
+            opacity = 0;
+            if (val1 !== null && val2 !== null) {
+                val = val1 * (1 - ratio) + val2 * ratio;
+                const hexColor = colorScale.getColorForValue(val);
+                const rgbColor = parse(hexColor) as Rgb | undefined;
+                if (rgbColor) {
+                    color = [rgbColor.r * 255, rgbColor.g * 255, rgbColor.b * 255];
+                    opacity = 255;
+                }
+            }
+
+            imageDataUint8Arr.set([color[0]!, color[1]!, color[2]!, opacity], offset);
+
+            offset += width * 4;
+        }
+        pos += step;
+    }
+    const imageData = new ImageData(imageDataUint8Arr, width, height);
+    const image = await createImageBitmap(imageData, 0, 0, width, height);
+
+    return image;
 }

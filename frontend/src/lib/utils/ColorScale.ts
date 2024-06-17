@@ -44,6 +44,9 @@ export type ColorScaleOptions = {
     colorPalette: ColorPalette;
     gradientType: ColorScaleGradientType;
     steps: number;
+    min?: number;
+    max?: number;
+    divMidPoint?: number;
 };
 
 export class ColorScale {
@@ -57,11 +60,11 @@ export class ColorScale {
 
     constructor(options: ColorScaleOptions) {
         this._colorPalette = options.colorPalette;
-        this._min = 0;
-        this._max = 1;
+        this._min = options.min ?? 0;
+        this._max = options.max ?? 1;
         this._type = options.type;
         this._gradientType = options.gradientType;
-        this._divMidPoint = 0.5;
+        this._divMidPoint = options.divMidPoint ?? 0.5;
         this._steps = options.steps;
     }
 
@@ -210,6 +213,10 @@ export class ColorScale {
         return plotlyColorScale;
     }
 
+    getColorMap(): string[] {
+        return this.getPlotlyColorScale().map((color) => color[1]);
+    }
+
     getAsPlotlyColorScaleMarkerObject(): PlotlyMarkerColorScaleObject {
         return {
             colorscale: this.getPlotlyColorScale(),
@@ -258,6 +265,9 @@ export class ColorScale {
             colorPalette: this._colorPalette,
             gradientType: this._gradientType,
             steps: this._steps,
+            min: this._min,
+            max: this._max,
+            divMidPoint: this._divMidPoint,
         });
     }
 }

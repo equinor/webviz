@@ -47,8 +47,6 @@ export class PolylineIntersectionLayer extends PixiLayer<PolylineIntersectionDat
 
     constructor(ctx: PixiRenderApplication, id: string, options: PolylineIntersectionLayerOptions) {
         super(ctx, id, options);
-
-        this.data?.colorScale.setRange(options.data?.minGridPropValue ?? 0, options.data?.maxGridPropValue ?? 1000);
     }
 
     override onRescale(event: OnRescaleEvent): void {

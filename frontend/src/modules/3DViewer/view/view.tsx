@@ -261,23 +261,22 @@ export function View(props: ModuleViewProps<State, SettingsToViewInterface>): Re
     const axesLayer = makeAxesLayer(gridModelBoundingBox3d);
 
     const layers: Layer[] = [northArrowLayer, axesLayer];
+    const colorScaleClone = colorScale.clone();
 
     if (gridSurfaceQuery.data && gridParameterQuery.data) {
         const minPropValue = gridParameterQuery.data.min_grid_prop_value;
         const maxPropValue = gridParameterQuery.data.max_grid_prop_value;
         if (!useCustomBounds) {
-            colorScale.setRangeAndMidPoint(
+            colorScaleClone.setRangeAndMidPoint(
                 minPropValue,
                 maxPropValue,
                 minPropValue + (maxPropValue - minPropValue) / 2
             );
         }
-        layers.push(makeGrid3DLayer(gridSurfaceQuery.data, gridParameterQuery.data, showGridLines));
+        layers.push(makeGrid3DLayer(gridSurfaceQuery.data, gridParameterQuery.data, showGridLines, colorScaleClone));
 
         if (polylineIntersectionQuery.data && showIntersection) {
-            layers.push(
-                makeIntersectionLayer(polylineIntersectionQuery.data, showGridLines, [minPropValue, maxPropValue])
-            );
+            layers.push(makeIntersectionLayer(polylineIntersectionQuery.data, showGridLines, colorScaleClone));
         }
     }
 
@@ -286,7 +285,10 @@ export function View(props: ModuleViewProps<State, SettingsToViewInterface>): Re
         layers.push(makeWellsLayer(filteredFieldWellBoreTrajectories, maybeWellboreUuid));
     }
 
-    const colorScaleWithName = ColorScaleWithName.fromColorScale(colorScale, gridModelParameterName ?? "Grid model");
+    const colorScaleWithName = ColorScaleWithName.fromColorScale(
+        colorScaleClone,
+        gridModelParameterName ?? "Grid model"
+    );
 
     return (
         <div className="w-full h-full">

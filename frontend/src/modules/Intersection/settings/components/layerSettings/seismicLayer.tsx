@@ -187,8 +187,8 @@ export function SeismicLayerSettingsComponent(props: SeismicLayerSettingsProps):
     }
 
     function handleColorScaleChange(newColorScale: ColorScale, areBoundariesUserDefined: boolean) {
-        props.layer.setColorScale(newColorScale);
         props.layer.setUseCustomColorScaleBoundaries(areBoundariesUserDefined);
+        props.layer.setColorScale(newColorScale);
     }
 
     return (

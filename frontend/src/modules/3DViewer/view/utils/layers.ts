@@ -1,5 +1,6 @@
 import { BoundingBox3d_api, WellboreTrajectory_api } from "@api";
 import { Layer } from "@deck.gl/core/typed";
+import { ColorScale } from "@lib/utils/ColorScale";
 import { TGrid3DColoringMode } from "@webviz/subsurface-viewer";
 import { AxesLayer, Grid3DLayer, WellsLayer } from "@webviz/subsurface-viewer/dist/layers";
 
@@ -43,7 +44,8 @@ type WorkingGrid3dLayer = {
 export function makeGrid3DLayer(
     gridSurfaceData: GridSurface_trans,
     gridParameterData: GridMappedProperty_trans,
-    showGridLines: boolean
+    showGridLines: boolean,
+    colorScale: ColorScale
 ): WorkingGrid3dLayer {
     const offsetXyz = [gridSurfaceData.origin_utm_x, gridSurfaceData.origin_utm_y, 0];
     const pointsNumberArray = gridSurfaceData.pointsFloat32Arr.map((val, i) => val + offsetXyz[i % 3]);
@@ -59,6 +61,7 @@ export function makeGrid3DLayer(
         pickable: true,
         colorMapName: "Continuous",
         colorMapClampColor: true,
+        colorMapRange: [colorScale.getMin(), colorScale.getMax()],
         /*
         colorMapFunction: (value: number) => {
             const interpolatedColor = colorScale.getColorPalette().getInterpolatedColor(value);
@@ -77,7 +80,7 @@ export function makeGrid3DLayer(
 export function makeIntersectionLayer(
     polylineIntersectionData: PolylineIntersection_trans,
     showGridLines: boolean,
-    gridMinAndMaxPropValues: [number, number]
+    colorScale: ColorScale
 ): WorkingGrid3dLayer {
     const polyData = buildVtkStylePolyDataFromFenceSections(polylineIntersectionData.fenceMeshSections);
     const grid3dIntersectionLayer = new Grid3DLayer({
@@ -86,7 +89,7 @@ export function makeIntersectionLayer(
         polysData: polyData.polys as unknown as number[],
         propertiesData: polyData.props as unknown as number[],
         colorMapName: "Continuous",
-        colorMapRange: gridMinAndMaxPropValues,
+        colorMapRange: [colorScale.getMin(), colorScale.getMax()],
         colorMapClampColor: true,
         coloringMode: TGrid3DColoringMode.Property,
         ZIncreasingDownwards: false,
