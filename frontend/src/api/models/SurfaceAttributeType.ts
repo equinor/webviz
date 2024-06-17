@@ -14,11 +14,15 @@
  */
 export enum SurfaceAttributeType {
     DEPTH = 'depth',
-    TIME = 'time',
+    FACIES_THICKNESS = 'facies_thickness',
+    FLUID_CONTACT = 'fluid_contact',
+    PINCHOUT = 'pinchout',
     PROPERTY = 'property',
     SEISMIC = 'seismic',
+    SUBCROP = 'subcrop',
     THICKNESS = 'thickness',
-    ISOCHORE = 'isochore',
-    FLUID_CONTACT = 'fluid_contact',
+    TIME = 'time',
+    VELOCITY = 'velocity',
+    VOLUMES = 'volumes',
     UNKNOWN = 'UNKNOWN',
 }

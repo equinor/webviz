@@ -1,4 +1,4 @@
-import { SurfaceAttributeType_api, SurfaceMeta_api } from "@api";
+import { SurfaceAttributeType_api, SurfaceMeta_api, SurfaceMetaSet_api, SurfaceTimeType_api  } from "@api";
 import { isIsoStringInterval } from "@framework/utils/timestampUtils";
 
 export enum SurfaceTimeType {
@@ -7,23 +7,31 @@ export enum SurfaceTimeType {
     Interval = "Interval",
 }
 
-export type SurfaceDirectoryOptions = {
-    surfaceMetas: SurfaceMeta_api[];
-    timeType: SurfaceTimeType;
+export class SurfaceDirectoryOptions {
+    timeType: SurfaceTimeType = SurfaceTimeType.None;
+    realizationMetaSet?: SurfaceMetaSet_api;
+    observedMetaSet?: SurfaceMetaSet_api;
+    useObservedSurfaces?: boolean = false;
     includeAttributeTypes?: SurfaceAttributeType_api[];
     excludeAttributeTypes?: SurfaceAttributeType_api[];
-    useObservedSurfaces?: boolean;
-};
+}
 
 // Class responsible for managing a directory of surfaces.
 export class SurfaceDirectory {
     private _surfaceList: SurfaceMeta_api[] = [];
+    private _isoDateOrIntervalStringArr: string[] = [];
+    private _surfNamesInStratOrder: string[] = [];
 
     // Constructs a SurfaceDirectory with optional content filter criteria.
-    constructor(options: SurfaceDirectoryOptions | null) {
-        if (!options) return;
+    constructor(options: SurfaceDirectoryOptions) {
+        const srcMetaSet = options.useObservedSurfaces ? options.observedMetaSet : options.realizationMetaSet;
+        if (!srcMetaSet) {
+            return;
+        }
 
-        let filteredList = filterOnTimeType(options.surfaceMetas, options.timeType);
+        const startTS = performance.now();
+
+        let filteredList = filterOnTimeType(srcMetaSet.surfaces, options.timeType);
 
         if (options.includeAttributeTypes && options.includeAttributeTypes.length > 0) {
             const includeAttributeTypes = options.includeAttributeTypes;
@@ -41,6 +49,16 @@ export class SurfaceDirectory {
         }
 
         this._surfaceList = filteredList;
+        this._surfNamesInStratOrder = srcMetaSet.surface_names_in_strat_order;
+
+        if (options.timeType === SurfaceTimeType.TimePoint) {
+            this._isoDateOrIntervalStringArr = srcMetaSet.time_points_iso_str;
+        }
+        else if (options.timeType === SurfaceTimeType.Interval) {
+            this._isoDateOrIntervalStringArr = srcMetaSet.time_intervals_iso_str;
+        }
+
+        console.debug(`SurfaceDirectory.constructor() took: ${(performance.now() - startTS).toFixed(3)}ms`);
     }
 
     // Retrieves unique attribute names with optional filtering on surface name.
@@ -92,35 +110,30 @@ export class SurfaceDirectory {
 
     // Retrieves unique surface names with optional filtering on surface attribute.
     public getSurfaceNames(requireAttributeName: string | null): string[] {
-        let filteredList = this._surfaceList;
-        if (requireAttributeName) {
-            filteredList = filterOnAttribute(filteredList, requireAttributeName);
+        const startTS = performance.now();
+
+        const uniqueSurfaceNames = new Set<string>();
+        for (const surf of this._surfaceList) {
+            if (requireAttributeName == null || surf.attribute_name === requireAttributeName) {
+                uniqueSurfaceNames.add(surf.name);
+            }
         }
-        return [...new Set(filteredList.map((surface) => surface.name))];
+
+        const retArr: string[] = [];
+        for (const surfName of this._surfNamesInStratOrder) {
+            if (uniqueSurfaceNames.has(surfName)) {
+                retArr.push(surfName);
+            }
+        }
+
+        console.debug(`SurfaceDirectory.getSurfaceNames() took: ${(performance.now() - startTS).toFixed(3)}ms`);
+
+        return retArr;
     }
 
-    // Retrieves unique time points or intervals with optional filtering on surface name and/or attribute.
-    public getTimeOrIntervalStrings(requireSurfaceName: string | null, requireAttributeName: string | null): string[] {
-        let filteredList = this._surfaceList;
-
-        if (requireSurfaceName || requireAttributeName) {
-            filteredList = filteredList.filter((surface) => {
-                const matchedOnSurfName = !requireSurfaceName || surface.name === requireSurfaceName;
-                const matchedOnAttrName = !requireAttributeName || surface.attribute_name === requireAttributeName;
-                return matchedOnSurfName && matchedOnAttrName;
-            });
-        }
-        if (filteredList.length === 0) {
-            return [];
-        }
-
-        const timeOrIntervalsSet: Set<string> = new Set();
-        filteredList.forEach((surface) => {
-            if (surface.iso_date_or_interval) {
-                timeOrIntervalsSet.add(surface.iso_date_or_interval);
-            }
-        });
-        return [...timeOrIntervalsSet].sort();
+    // Retrieves unique time points or intervals
+    public getTimeOrIntervalStrings(): string[] {
+        return this._isoDateOrIntervalStringArr.sort();
     }
 
     // Checks if a given name and attribute pair exists.
@@ -150,15 +163,11 @@ export class SurfaceDirectory {
 function filterOnTimeType(surfaceList: SurfaceMeta_api[], timeType: SurfaceTimeType): SurfaceMeta_api[] {
     switch (timeType) {
         case SurfaceTimeType.None:
-            return surfaceList.filter((surface) => !surface.iso_date_or_interval);
+            return surfaceList.filter((surface) => surface.time_type===SurfaceTimeType_api.NO_TIME);
         case SurfaceTimeType.TimePoint:
-            return surfaceList.filter(
-                (surface) => surface.iso_date_or_interval && !isIsoStringInterval(surface.iso_date_or_interval)
-            );
+            return surfaceList.filter((surface) => surface.time_type===SurfaceTimeType_api.TIME_POINT);
         case SurfaceTimeType.Interval:
-            return surfaceList.filter(
-                (surface) => surface.iso_date_or_interval && isIsoStringInterval(surface.iso_date_or_interval)
-            );
+            return surfaceList.filter((surface) => surface.time_type===SurfaceTimeType_api.INTERVAL);
         default:
             throw new Error("Invalid TimeType");
     }

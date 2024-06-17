@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import List, Optional
+from typing import List
 
 from pydantic import BaseModel, ConfigDict
 from webviz_pkg.core_utils.b64 import B64FloatArray
@@ -29,12 +29,16 @@ class SurfaceAttributeType(str, Enum):
     """
 
     DEPTH = "depth"  # Values are depths
-    TIME = "time"  # Values are time (ms)
+    FACIES_THICKNESS = "facies_thickness"
+    FLUID_CONTACT = "fluid_contact"  # Values are fluid contacts (oil-water, gas-water, etc.)
+    PINCHOUT = "pinchout"
     PROPERTY = "property"  # Values are generic, but typically extracted from a gridmodel
     SEISMIC = "seismic"  # Values are extracted from a seismic cube
+    SUBCROP = "subcrop"
     THICKNESS = "thickness"  # Values are isochores (real or conceptual difference between two depth surfaces)
-    ISOCHORE = "isochore"  # Values are isochores (real or conceptual difference between two depth surfaces)
-    FLUID_CONTACT = "fluid_contact"  # Values are fluid contacts (oil-water, gas-water, etc.)
+    TIME = "time"  # Values are time (ms)
+    VELOCITY = "velocity"
+    VOLUMES = "volumes"
     UNKNOWN = "UNKNOWN"
 
     @classmethod
@@ -45,6 +49,12 @@ class SurfaceAttributeType(str, Enum):
             return SurfaceAttributeType.UNKNOWN
 
 
+class SurfaceTimeType(str, Enum):
+    NO_TIME = "NO_TIME"
+    TIME_POINT = "TIME_POINT"
+    INTERVAL = "INTERVAL"
+
+
 class SurfaceMeta(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -52,10 +62,19 @@ class SurfaceMeta(BaseModel):
     name_is_stratigraphic_offical: bool
     attribute_name: str
     attribute_type: SurfaceAttributeType
-    iso_date_or_interval: Optional[str] = None
+    time_type: SurfaceTimeType
     is_observation: bool  # Can only be true for seismic surfaces
-    value_min: Optional[float] = None
-    value_max: Optional[float] = None
+    value_min: float | None
+    value_max: float | None
+
+
+class SurfaceMetaSet(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    surfaces: list[SurfaceMeta]
+    time_points_iso_str: list[str]
+    time_intervals_iso_str: list[str]
+    surface_names_in_strat_order: list[str]
 
 
 class SurfaceData(BaseModel):
