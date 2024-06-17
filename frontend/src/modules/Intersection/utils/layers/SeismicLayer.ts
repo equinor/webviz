@@ -482,8 +482,8 @@ export async function generateSeismicSliceImage(
     for (let x = 0; x < width; x++) {
         offset = x * 4;
         const index = findIndexOfSample(trajectory, pos);
-        const x1 = trajectory[index]?.[0];
-        const x2 = trajectory[index + 1]?.[0];
+        const x1 = trajectory[index][0];
+        const x2 = trajectory[index + 1][0];
 
         if (x1 === undefined || x2 === undefined) {
             throw new Error("Invalid trajectory");
