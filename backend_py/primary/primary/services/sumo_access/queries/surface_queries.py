@@ -11,10 +11,10 @@ from sumo.wrapper import SumoClient
 LOGGER = logging.getLogger(__name__)
 
 
-class SurfTimeType(Enum):
-    NO_TIME = 1
-    TIME_POINT = 2
-    INTERVAL = 3
+class SurfTimeType(str, Enum):
+    NO_TIME = "NO_TIME"
+    TIME_POINT = "TIME_POINT"
+    INTERVAL = "INTERVAL"
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -126,14 +126,15 @@ async def _run_query_and_aggregate_surf_info(sumo_client: SumoClient, query_dict
         "query": query_dict,
 
         # "fields": [
+        #     "data.stratigraphic",
+        #     "data.is_observation",
         #     "data.name.keyword",
         #     "data.tagname.keyword",
         #     "data.content.keyword",
-        #     "data.is_observation",
-        #     "data.stratigraphic",
         # ],
 
-        # Seems that we can handle missing values for data.tagname by using the "missing_bucket" parameter
+        # Do a slight trick below in order to capture the boolean data.stratigraphic field
+        # It seems that the "min" aggregation handles boolean fields correctly, reporting the min value as either 0 or 1
         "aggs": {
             "key_combinations": {
                 "composite": {
@@ -141,8 +142,7 @@ async def _run_query_and_aggregate_surf_info(sumo_client: SumoClient, query_dict
                     "sources": [
                         { "k_name": { "terms": { "field": "data.name.keyword" } } },
                         { "k_content": { "terms": { "field": "data.content.keyword" } } },
-                        { "k_tagname": { "terms": { "field": "data.tagname.keyword", "missing_bucket": True, } } },
-                        { "k_is_stratigraphic": { "terms": { "field": "data.stratigraphic" } } },
+                        { "k_tagname": { "terms": { "field": "data.tagname.keyword" } } },
                     ],
                 },
                 "aggs": {
@@ -152,8 +152,9 @@ async def _run_query_and_aggregate_surf_info(sumo_client: SumoClient, query_dict
                     #         "size": 1,
                     #     }
                     # },
-                    "agg_min_z_val": { "min": { "field": "data.bbox.zmin" } },
-                    "agg_max_z_val": { "max": { "field": "data.bbox.zmax" } },
+                    "agg_z_val_min": { "min": { "field": "data.bbox.zmin" } },
+                    "agg_z_val_max": { "max": { "field": "data.bbox.zmax" } },
+                    "agg_is_stratigraphic_min": { "min": { "field": "data.stratigraphic" } },
                 },
             },
         },
@@ -176,13 +177,14 @@ async def _run_query_and_aggregate_surf_info(sumo_client: SumoClient, query_dict
 
     ret_arr: list[SurfInfo] = []
     for bucket in response_dict["aggregations"]["key_combinations"]["buckets"]:
+        is_stratigraphic: bool = bucket["agg_is_stratigraphic_min"]["value"] == 1
         ret_arr.append(SurfInfo(
             name=bucket["key"]["k_name"],
             tagname=bucket["key"]["k_tagname"],
             content=bucket["key"]["k_content"],
-            is_stratigraphic=bucket["key"]["k_is_stratigraphic"],
-            global_min_val=bucket["agg_min_z_val"]["value"],
-            global_max_val=bucket["agg_max_z_val"]["value"]))
+            is_stratigraphic=is_stratigraphic,
+            global_min_val=bucket["agg_z_val_min"]["value"],
+            global_max_val=bucket["agg_z_val_max"]["value"]))
 
     return ret_arr
 
@@ -387,28 +389,28 @@ async def my_test() -> None:
 
     async with asyncio.TaskGroup() as tg:
         real_static_surfs_task = tg.create_task(find_realization_surf_info(sumo_client, case_uuid, ensemble_name, SurfTimeType.NO_TIME))
-        real_time_point_surfs_task = tg.create_task(find_realization_surf_info(sumo_client, case_uuid, ensemble_name, SurfTimeType.TIME_POINT))
-        real_interval_surfs_task = tg.create_task(find_realization_surf_info(sumo_client, case_uuid, ensemble_name, SurfTimeType.INTERVAL))
+        # real_time_point_surfs_task = tg.create_task(find_realization_surf_info(sumo_client, case_uuid, ensemble_name, SurfTimeType.TIME_POINT))
+        # real_interval_surfs_task = tg.create_task(find_realization_surf_info(sumo_client, case_uuid, ensemble_name, SurfTimeType.INTERVAL))
 
-        obs_time_point_surfs_task = tg.create_task(find_observed_surf_info(sumo_client, case_uuid, SurfTimeType.TIME_POINT))
-        obs_interval_surfs_task = tg.create_task(find_observed_surf_info(sumo_client, case_uuid, SurfTimeType.INTERVAL))
+        # obs_time_point_surfs_task = tg.create_task(find_observed_surf_info(sumo_client, case_uuid, SurfTimeType.TIME_POINT))
+        # obs_interval_surfs_task = tg.create_task(find_observed_surf_info(sumo_client, case_uuid, SurfTimeType.INTERVAL))
 
-        real_time_points_task = tg.create_task(find_realization_surf_time_points(sumo_client, case_uuid, ensemble_name))
-        real_time_intervals_task = tg.create_task(find_realization_surf_time_intervals(sumo_client, case_uuid, ensemble_name))
-        obs_time_points_task = tg.create_task(find_observed_surf_time_points(sumo_client, case_uuid))
-        obs_time_intervals_task = tg.create_task(find_observed_surf_time_intervals(sumo_client, case_uuid))
+        # real_time_points_task = tg.create_task(find_realization_surf_time_points(sumo_client, case_uuid, ensemble_name))
+        # real_time_intervals_task = tg.create_task(find_realization_surf_time_intervals(sumo_client, case_uuid, ensemble_name))
+        # obs_time_points_task = tg.create_task(find_observed_surf_time_points(sumo_client, case_uuid))
+        # obs_time_intervals_task = tg.create_task(find_observed_surf_time_intervals(sumo_client, case_uuid))
 
     print_surf_info_arr(real_static_surfs_task.result())
-    print_surf_info_arr(real_time_point_surfs_task.result())
-    print_surf_info_arr(real_interval_surfs_task.result())
+    # print_surf_info_arr(real_time_point_surfs_task.result())
+    # print_surf_info_arr(real_interval_surfs_task.result())
 
-    print_surf_info_arr(obs_time_point_surfs_task.result())
-    print_surf_info_arr(obs_interval_surfs_task.result())
+    # print_surf_info_arr(obs_time_point_surfs_task.result())
+    # print_surf_info_arr(obs_interval_surfs_task.result())
 
-    print_time_point_arr(real_time_points_task.result())
-    print_time_interval_arr(real_time_intervals_task.result())
-    print_time_point_arr(obs_time_points_task.result())
-    print_time_interval_arr(obs_time_intervals_task.result())
+    # print_time_point_arr(real_time_points_task.result())
+    # print_time_interval_arr(real_time_intervals_task.result())
+    # print_time_point_arr(obs_time_points_task.result())
+    # print_time_interval_arr(obs_time_intervals_task.result())
 
     elapsed_s = time.perf_counter() - start_s
     LOGGER.debug(f"##### DONE in {elapsed_s:.2f}s")
