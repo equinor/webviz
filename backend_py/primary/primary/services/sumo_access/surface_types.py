@@ -5,6 +5,7 @@ from .queries.surface_queries import SurfTimeType
 
 
 @dataclass(frozen=True, kw_only=True)
+# pylint: disable=too-many-instance-attributes
 class SurfaceMeta:
     name: str
     attribute_name: str
