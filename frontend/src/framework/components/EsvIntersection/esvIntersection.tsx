@@ -58,7 +58,7 @@ export enum LayerType {
     GEOMODEL_CANVAS = "geomodel-canvas",
     GEOMODEL_LABELS = "geomodel-labels",
     GEOMODEL_V2 = "geomodel-v2",
-    POLYLINE_INTERSECTION = "grid-intersection",
+    POLYLINE_INTERSECTION = "polyline-intersection",
     IMAGE_CANVAS = "image-canvas",
     REFERENCE_LINE = "reference-line",
     SCHEMATIC = "schematic-layer",

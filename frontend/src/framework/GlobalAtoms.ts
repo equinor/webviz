@@ -21,7 +21,7 @@ export const EnsembleRealizationFilterFunctionAtom = atom<EnsembleRealizationFil
         realizationFilterSet.getRealizationFilterForEnsembleIdent(ensembleIdent).getFilteredRealizations();
 });
 
-export const RealizationFilterSetAtom = atomWithCompare<RealizationFilterSet | null>(null, (a, b) => {
+function areRealizationFilterSetsEqual(a: RealizationFilterSet | null, b: RealizationFilterSet | null): boolean {
     if (a === null && b === null) {
         return true;
     }
@@ -31,4 +31,9 @@ export const RealizationFilterSetAtom = atomWithCompare<RealizationFilterSet | n
     }
 
     return a.isEqual(b);
-});
+}
+
+export const RealizationFilterSetAtom = atomWithCompare<RealizationFilterSet | null>(
+    null,
+    areRealizationFilterSetsEqual
+);
