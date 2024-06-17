@@ -71,7 +71,7 @@ async def get_ensembles(
     case_uuid: str = Path(description="Sumo case uuid"),
 ) -> List[EnsembleInfo]:
     """Get list of ensembles for a case"""
-    case_inspector = await CaseInspector.from_case_uuid_async(authenticated_user.get_sumo_access_token(), case_uuid)
+    case_inspector = CaseInspector.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid)
     iteration_info_arr = await case_inspector.get_iterations_async()
 
     print(iteration_info_arr)
@@ -87,8 +87,8 @@ async def get_ensemble_details(
 ) -> EnsembleDetails:
     """Get more detailed information for an ensemble"""
 
-    case_inspector = await CaseInspector.from_case_uuid_async(authenticated_user.get_sumo_access_token(), case_uuid)
-    case_name = case_inspector.get_case_name()
+    case_inspector = CaseInspector.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid)
+    case_name = await case_inspector.get_case_name_async()
     realizations = await case_inspector.get_realizations_in_iteration_async(ensemble_name)
     field_identifiers = await case_inspector.get_field_identifiers_async()
 

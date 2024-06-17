@@ -14,23 +14,35 @@ class IterationInfo(BaseModel):
 
 
 class CaseInspector:
-    def __init__(self, sumo_client: SumoClient, case: Case, case_uuid: str):
+    def __init__(self, sumo_client: SumoClient, case_uuid: str):
         self._sumo_client = sumo_client
-        self._case = case
         self._case_uuid = case_uuid
+        self._cached_case_obj: Case | None = None
 
     @classmethod
-    async def from_case_uuid_async(cls, access_token: str, case_uuid: str) -> "CaseInspector":
+    def from_case_uuid(cls, access_token: str, case_uuid: str) -> "CaseInspector":
         sumo_client: SumoClient = create_sumo_client(access_token)
-        case: Case = await create_sumo_case_async(client=sumo_client, case_uuid=case_uuid, want_keepalive_pit=False)
-        return CaseInspector(sumo_client=sumo_client, case=case, case_uuid=case_uuid)
+        return CaseInspector(sumo_client=sumo_client, case_uuid=case_uuid)
 
-    def get_case_name(self) -> str:
+    async def _get_or_create_case_obj(self) -> Case:
+        if not self._cached_case_obj:
+            self._cached_case_obj = await create_sumo_case_async(
+                client=self._sumo_client, case_uuid=self._case_uuid, want_keepalive_pit=False
+            )
+
+        return self._cached_case_obj
+
+    async def get_case_name_async(self) -> str:
         """Get name of the case"""
-        return self._case.name
+        case: Case = await self._get_or_create_case_obj()
+        return case.name
 
     async def get_iterations_async(self) -> list[IterationInfo]:
-        iterations = await self._case.iterations_async
+        case: Case = await self._get_or_create_case_obj()
+
+        # Stick with the sync version for now, since there is a bug in the async version of SumoExplorer
+        # See: https://github.com/equinor/fmu-sumo/issues/326
+        iterations = case.iterations
 
         iter_info_arr: list[IterationInfo] = []
         for iteration in iterations:
@@ -45,7 +57,8 @@ class CaseInspector:
 
     async def get_realizations_in_iteration_async(self, iteration_name: str) -> list[int]:
         """Get list of realizations for the specified iteration"""
-        realization_list = await self._case.get_realizations_async(iteration_name)
+        case: Case = await self._get_or_create_case_obj()
+        realization_list = await case.get_realizations_async(iteration_name)
         return sorted([int(real) for real in realization_list])
 
     async def get_stratigraphic_column_identifier_async(self) -> str:

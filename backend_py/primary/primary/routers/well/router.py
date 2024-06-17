@@ -33,7 +33,7 @@ async def get_drilled_wellbore_headers(
 ) -> List[schemas.WellboreHeader]:
     """Get wellbore headers for all wells in the field"""
 
-    case_inspector = await CaseInspector.from_case_uuid_async(authenticated_user.get_sumo_access_token(), case_uuid)
+    case_inspector = CaseInspector.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid)
     field_identifier = (await case_inspector.get_field_identifiers_async())[0]
     well_access: Union[SmdaWellAccess, MockedSmdaWellAccess]
     if field_identifier == "DROGON":
@@ -56,7 +56,7 @@ async def get_field_well_trajectories(
     # fmt:on
 ) -> List[schemas.WellboreTrajectory]:
     """Get well trajectories for field"""
-    case_inspector = await CaseInspector.from_case_uuid_async(authenticated_user.get_sumo_access_token(), case_uuid)
+    case_inspector = CaseInspector.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid)
     field_identifier = (await case_inspector.get_field_identifiers_async())[0]
     well_access: Union[SmdaWellAccess, MockedSmdaWellAccess]
     if field_identifier == "DROGON":
@@ -111,7 +111,7 @@ async def get_wellbore_picks_and_stratigraphic_units(
     well_access: Union[SmdaWellAccess, MockedSmdaWellAccess]
     stratigraphy_access: Union[StratigraphyAccess, MockedStratigraphyAccess]
 
-    case_inspector = await CaseInspector.from_case_uuid_async(authenticated_user.get_sumo_access_token(), case_uuid)
+    case_inspector = CaseInspector.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid)
     stratigraphic_column_identifier = await case_inspector.get_stratigraphic_column_identifier_async()
 
     # Handle DROGON
