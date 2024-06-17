@@ -266,7 +266,7 @@ export class SeismicLayer extends BaseLayer<SeismicLayerSettings, SeismicLayerDa
             }
         )
             .then((result) => {
-                return result ?? null;
+                return result;
             })
             .catch(() => {
                 return null;
@@ -435,9 +435,9 @@ export async function generateSeismicSliceImage(
         seismicMin?: number;
         seismicMax?: number;
     } = { isLeftToRight: true }
-): Promise<ImageBitmap | undefined> {
-    if (!(data && data.datapoints && data.datapoints.length > 0)) {
-        return undefined;
+): Promise<ImageBitmap | null> {
+    if (!(data.datapoints.length > 0 && trajectory.length > 1)) {
+        return null;
     }
     const { datapoints: dp } = data;
 
@@ -459,7 +459,7 @@ export async function generateSeismicSliceImage(
         colorScale.setRange(dmin, dmax);
     }
 
-    const length = trajectory[0]?.[0]! - trajectory[trajectory.length - 1]?.[0]!;
+    const length = trajectory[0][0] - trajectory[trajectory.length - 1][0];
     const width = Math.abs(Math.floor(length / 5));
     const height = data.yAxisValues.length;
 
@@ -468,32 +468,37 @@ export async function generateSeismicSliceImage(
 
     let offset = 0;
 
-    let pos = options?.isLeftToRight ? trajectory[0]?.[0]! : trajectory[trajectory.length - 1]?.[0]!;
+    let pos = options?.isLeftToRight ? trajectory[0][0] : trajectory[trajectory.length - 1][0];
 
     const step = (length / width) * (options?.isLeftToRight ? -1 : 1);
 
     let val1: number;
     let val2: number;
     let val: number;
-    let color: number[];
-    const black = [0, 0, 0];
+    let color: [number, number, number];
+    const black: [number, number, number] = [0, 0, 0];
     let opacity: number;
 
     for (let x = 0; x < width; x++) {
         offset = x * 4;
         const index = findIndexOfSample(trajectory, pos);
-        const x1 = trajectory[index]?.[0]!;
-        const x2 = trajectory[index + 1]?.[0]!;
+        const x1 = trajectory[index]?.[0];
+        const x2 = trajectory[index + 1]?.[0];
+
+        if (x1 === undefined || x2 === undefined) {
+            throw new Error("Invalid trajectory");
+        }
+
         const span = x2 - x1;
         const dx = pos - x1;
         const ratio = dx / span;
 
         for (let y = 0; y < height; y++) {
-            val1 = dp[y]?.[index]!;
-            val2 = dp[y]?.[index + 1]!;
+            val1 = dp[y]?.[index];
+            val2 = dp[y]?.[index + 1];
             color = black;
             opacity = 0;
-            if (val1 !== null && val2 !== null) {
+            if (val1 !== undefined && val2 !== undefined) {
                 val = val1 * (1 - ratio) + val2 * ratio;
                 const hexColor = colorScale.getColorForValue(val);
                 const rgbColor = parse(hexColor) as Rgb | undefined;
@@ -503,7 +508,7 @@ export async function generateSeismicSliceImage(
                 }
             }
 
-            imageDataUint8Arr.set([color[0]!, color[1]!, color[2]!, opacity], offset);
+            imageDataUint8Arr.set([color[0], color[1], color[2], opacity], offset);
 
             offset += width * 4;
         }
