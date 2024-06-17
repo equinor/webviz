@@ -1,10 +1,12 @@
 from enum import Enum
-from typing import List, Optional
+from typing import List, Optional, Any
 
 from pydantic import BaseModel
 from webviz_pkg.core_utils.b64 import B64FloatArray
 
 from primary.services.smda_access.types import StratigraphicFeature
+
+from .schemas import SurfaceAttributeType
 
 
 # Surface addresses are used to identify a surface in Sumo
@@ -30,6 +32,67 @@ from primary.services.smda_access.types import StratigraphicFeature
 #
 # getMisfitSurfaceData(observedAddr: string, partialAddr: string, realizations: list[int], statistical_functions: list[int]): list[SurfaceData]
 
+
+class SurfaceTimeType(Enum):
+    NO_TIME = 1
+    TIME_POINT = 2
+    INTERVAL = 3
+
+
+class SurfaceMeta(BaseModel):
+    name: str  # Svarte fm. top / Svarte fm. / Svarte fm. base
+    name_is_stratigraphic_offical: bool
+
+    stratigraphic_identifier: Optional[str] = None  # Svarte fm.
+    relative_stratigraphic_level: Optional[int] = None
+    parent_stratigraphic_identifier: Optional[str] = None
+    stratigraphic_feature: Optional[StratigraphicFeature] = None  # Distinguish between horizon and unit
+
+    attribute_name: str
+    attribute_type: SurfaceAttributeType
+    time_type: SurfaceTimeType
+    is_observation: bool  # Can only be true for seismic surfaces
+    global_min_value: float | None = None
+    global_max_value: float | None = None
+
+
+
+# !!!!!!!!!!!!!!!!!
+# !!!!!!!!!!!!!!!!!
+# !!!!!!!!!!!!!!!!!
+# Two separate endpoints, one for observed, one for real
+class SurfaceDirectory(BaseModel):
+    surfaces: list[SurfaceMeta]
+    time_points: list[str]
+    time_intervals: list[str]
+    sorted_surface_names: list[str]
+
+
+
+class SurfaceDirectoryKladd(BaseModel):
+    # All surfaces, with and without time and both real and observed
+    surfaces: list[SurfaceMeta]
+
+    # or
+    # All real surfaces bundled together and all observed surfaces bundled together
+    real_surfaces: list[SurfaceMeta]
+    obs_surfaces: list[SurfaceMeta]
+
+    # or
+    # Split into real and observed and then split into static, time point and time interval
+    real_static_surfaces: list[SurfaceMeta]
+    real_time_point_surfaces: list[SurfaceMeta]
+    real_time_interval_surfaces: list[SurfaceMeta]
+    obs_time_point_surfaces: list[SurfaceMeta]
+    obs_time_interval_surfaces: list[SurfaceMeta]
+
+    # Strings or timestamps?
+    real_time_points: list[str]
+    real_time_intervals: list[str]
+    obs_time_points: list[str]
+    obs_time_intervals: list[str]
+
+    stratigraphic_stuff: Any
 
 
 """
