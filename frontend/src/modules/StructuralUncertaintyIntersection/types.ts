@@ -1,5 +1,3 @@
-import { StatisticFunction_api } from "@api";
-
 export type SeismicAddress = {
     caseUuid: string;
     ensemble: string;
@@ -16,19 +14,23 @@ export type SurfaceSetAddress = {
     realizationNums: number[] | null;
 };
 
-
 export type IntersectionSettings = {
     extension: number;
     zScale: number;
 };
 
+export enum StatisticOption {
+    MEAN = "Mean",
+    MIN_MAX = "Min/Max",
+    P10_P90 = "P10/P90",
+    P50 = "P50",
+}
+
 export const StatisticFunctionEnumToStringMapping = {
-    [StatisticFunction_api.MEAN]: "Mean",
-    [StatisticFunction_api.MIN]: "Min",
-    [StatisticFunction_api.MAX]: "Max",
-    [StatisticFunction_api.P10]: "P10",
-    [StatisticFunction_api.P50]: "P50",
-    [StatisticFunction_api.P90]: "P90",
+    [StatisticOption.MEAN]: "Mean",
+    [StatisticOption.MIN_MAX]: "Min/Max",
+    [StatisticOption.P10_P90]: "P10/P90",
+    [StatisticOption.P50]: "P50",
 };
 
 export enum VisualizationMode {

@@ -1,18 +1,22 @@
 import { ModuleCategory, ModuleDevState } from "@framework/Module";
-import { ModuleDataTagId } from "@framework/ModuleDataTags";
 import { ModuleRegistry } from "@framework/ModuleRegistry";
 import { SyncSettingKey } from "@framework/SyncSettings";
 
 import { State } from "./state";
 
-const description = "Visualization of structural uncertainty in an intersection";
+export const MODULE_NAME = "StructuralUncertaintyIntersection";
 
 ModuleRegistry.registerModule<State>({
-    moduleName: "StructuralUncertaintyIntersection",
+    moduleName: MODULE_NAME,
     defaultTitle: "Structural Uncertainty Intersection",
     category: ModuleCategory.MAIN,
     devState: ModuleDevState.DEV,
-    dataTagIds: [ModuleDataTagId.SURFACE, ModuleDataTagId.DRILLED_WELLS],
-    syncableSettingKeys: [SyncSettingKey.ENSEMBLE],
-    description,
+    description: "Structural Uncertainty Intersection",
+    // preview,
+    syncableSettingKeys: [
+        SyncSettingKey.ENSEMBLE,
+        SyncSettingKey.INTERSECTION,
+        SyncSettingKey.CAMERA_POSITION_INTERSECTION,
+        SyncSettingKey.VERTICAL_SCALE,
+    ],
 });

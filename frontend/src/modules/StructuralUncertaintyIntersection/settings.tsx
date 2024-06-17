@@ -1,6 +1,6 @@
 import React from "react";
 
-import { StatisticFunction_api, SurfaceAttributeType_api } from "@api";
+import { SurfaceAttributeType_api } from "@api";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { ModuleSettingsProps } from "@framework/Module";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
@@ -29,6 +29,7 @@ import { RealizationsSelect } from "./components/realizationsSelect";
 import { State } from "./state";
 import {
     StatisticFunctionEnumToStringMapping,
+    StatisticOption,
     StratigraphyColorMap,
     SurfaceSetAddress,
     VisualizationMode,
@@ -208,7 +209,7 @@ export function Settings({
         syncHelper.publishValue(SyncSettingKey.WELLBORE, "global.syncValue.wellBore", newWellboreAddress);
     }
     function makeStatisticCheckboxes() {
-        return Object.values(StatisticFunction_api).map((value: StatisticFunction_api) => {
+        return Object.values(StatisticOption).map((value: StatisticOption) => {
             return (
                 <Checkbox
                     key={value}
@@ -222,7 +223,7 @@ export function Settings({
         });
     }
 
-    function handleStatisticsChange(event: React.ChangeEvent<HTMLInputElement>, statistic: StatisticFunction_api) {
+    function handleStatisticsChange(event: React.ChangeEvent<HTMLInputElement>, statistic: StatisticOption) {
         setStatisticFunctions((prev) => {
             if (event.target.checked) {
                 return prev ? [...prev, statistic] : [statistic];

@@ -2,15 +2,14 @@ import { ModuleRegistry } from "@framework/ModuleRegistry";
 
 import { Settings } from "./settings";
 import { State } from "./state";
+import { StatisticOption, VisualizationMode } from "./types";
 import { View } from "./view";
-import { VisualizationMode } from "./types";
-import { StatisticFunction_api } from "@api";
 
 const defaultState: State = {
     wellboreAddress: { uwi: "55/33-A-4", uuid: "drogon_horizontal", type: "smda" },
     SurfaceSetAddress: null,
     visualizationMode: VisualizationMode.STATISTICAL_LINES,
-    statisticFunctions: [StatisticFunction_api.MEAN],
+    statisticFunctions: [StatisticOption.MEAN, StatisticOption.MIN_MAX, StatisticOption.P10_P90, StatisticOption.P50],
     stratigraphyColorMap: {},
     intersectionSettings: {
         extension: 1000,
