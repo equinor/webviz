@@ -106,7 +106,7 @@ export class SurfaceService {
         caseUuid: string,
         name: string,
         attribute: string,
-        timeOrInterval?: (string | null),
+        timeOrInterval: string,
     ): CancelablePromise<SurfaceData> {
         return this.httpRequest.request({
             method: 'GET',

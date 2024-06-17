@@ -76,7 +76,7 @@ export function useSurfaceDataQueryByAddress(surfAddr: SurfaceAddress | null): U
                 surfAddr.caseUuid,
                 surfAddr.name,
                 surfAddr.attribute,
-                surfAddr.isoDateOrInterval
+                surfAddr.isoDateOrInterval ?? ""
             );
     } else if (surfAddr.addressType === "statistical") {
         queryKey = [

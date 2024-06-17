@@ -16,7 +16,7 @@ from primary.services.service_exceptions import Service, MultipleDataMatchesErro
 from ._helpers import create_sumo_client
 from .surface_types import SurfaceMeta, SurfaceMetaSet
 from .generic_types import SumoContent
-from .queries.surface_queries import SurfTimeType, SurfInfoEx, TimePoint, TimeInterval
+from .queries.surface_queries import SurfTimeType, SurfInfo, TimePoint, TimeInterval
 from .queries.surface_queries import RealizationSurfQueries, ObservedSurfQueries
 
 LOGGER = logging.getLogger(__name__)
@@ -270,7 +270,7 @@ class SurfaceAccess:
 
 
 def _build_surface_meta_arr(
-    src_surf_info_arr: list[SurfInfoEx], time_type: SurfTimeType, are_observations: bool
+    src_surf_info_arr: list[SurfInfo], time_type: SurfTimeType, are_observations: bool
 ) -> list[SurfaceMeta]:
     ret_arr: list[SurfaceMeta] = []
 

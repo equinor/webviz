@@ -128,7 +128,7 @@ async def get_observed_surface_data(
     case_uuid: str = Query(description="Sumo case uuid"),
     name: str = Query(description="Surface name"),
     attribute: str = Query(description="Surface attribute"),
-    time_or_interval: Optional[str] = Query(None, description="Time point or time interval string"),
+    time_or_interval: str = Query(description="Time point or time interval string"),
 ) -> schemas.SurfaceData:
     perf_metrics = ResponsePerfMetrics(response)
 
