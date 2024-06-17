@@ -60,19 +60,41 @@ class SumoTableSchema(BaseModel):
 
 
 class SumoContent(str, Enum):
-    """Enum for the different values of the `content` metadata key in a Sumo object."""
+    """
+    Enum for the different values of the `content` metadata key in a Sumo object.
+    Updated as of June 2024 from: https://github.com/equinor/fmu-dataio/blob/main/src/fmu/dataio/datastructure/meta/enums.py
+    """
 
     DEPTH = "depth"
-    TIME = "time"
-    PROPERTY = "property"
-    SEISMIC = "seismic"
-    THICKNESS = "thickness"
-    ISOCHORE = "isochore"
-    FLUID_CONTACT = "fluid_contact"
-    FIELD_OUTLINE = "field_outline"
-    PINCHOUT = "pinchout"
-    SUBCROP = "subcrop"
+    FACIES_THICKNESS = "facies_thickness"
     FAULT_LINES = "fault_lines"
+    FAULT_PROPERTIES = "fault_properties"
+    FIELD_OUTLINE = "field_outline"
+    FIELD_REGION = "field_region"
+    FLUID_CONTACT = "fluid_contact"
+    KHPRODUCT = "khproduct"
+    LIFT_CURVES = "lift_curves"
+    NAMED_AREA = "named_area"
+    PARAMETERS = "parameters"
+    PINCHOUT = "pinchout"
+    PROPERTY = "property"
+    PVT = "pvt"
+    REGIONS = "regions"
+    RELPERM = "relperm"
+    RFT = "rft"
+    SEISMIC = "seismic"
+    SUBCROP = "subcrop"
+    THICKNESS = "thickness"
+    TIME = "time"
+    TIMESERIES = "timeseries"
+    TRANSMISSIBILITIES = "transmissibilities"
+    VELOCITY = "velocity"
+    VOLUMES = "volumes"
+    WELLPICKS = "wellpicks"
+
+    # Added by us
+    ISOCHORE = "isochore"
+    UNKNOWN = "UNKNOWN"
 
     @classmethod
     def values(cls) -> List[str]:
