@@ -5,15 +5,15 @@ import { ModuleRegistry } from "@framework/ModuleRegistry";
 import { preview } from "./preview";
 import { Interface, State } from "./settingsToViewInterface";
 
-export const MODULE_NAME = "GroupTree";
+export const MODULE_NAME = "FlowNetwork";
 
 const description = "Visualizes dated group trees over time.";
 
 ModuleRegistry.registerModule<State, Interface>({
     moduleName: MODULE_NAME,
-    defaultTitle: "Group Tree",
+    defaultTitle: "Flow Network",
     category: ModuleCategory.MAIN,
-    devState: ModuleDevState.DEV,
+    devState: ModuleDevState.PROD,
     dataTagIds: [ModuleDataTagId.GROUP_TREE, ModuleDataTagId.SUMMARY],
     preview,
     description,
