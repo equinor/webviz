@@ -12,4 +12,3 @@ class SurfaceMeta(BaseModel):
     is_stratigraphic: bool
     zmin: Optional[float] = None
     zmax: Optional[float] = None
-
