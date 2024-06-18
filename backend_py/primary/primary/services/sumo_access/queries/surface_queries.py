@@ -212,8 +212,8 @@ async def _run_query_and_aggregate_surf_info(sumo_client: SumoClient, query_dict
     response_dict = response.json()
 
     # LOGGER.debug("-----------------")
-    # delete_key_from_dict_recursive(response_dict, "parameters")
-    # delete_key_from_dict_recursive(response_dict, "realization_ids")
+    # _delete_key_from_dict_recursive(response_dict, "parameters")
+    # _delete_key_from_dict_recursive(response_dict, "realization_ids")
     # LOGGER.debug(json.dumps(response_dict, indent=2))
     # LOGGER.debug("-----------------")
 
@@ -257,12 +257,16 @@ async def _run_query_and_aggregate_time_intervals(sumo_client: SumoClient, query
         "size": 0,
     }
 
+    # LOGGER.debug("-----------------")
+    # LOGGER.debug(json.dumps(search_payload, indent=2))
+    # LOGGER.debug("-----------------")
+
     response = await sumo_client.post_async("/search", json=search_payload)
     response_dict = response.json()
 
     # LOGGER.debug("-----------------")
-    # delete_key_from_dict_recursive(response_dict, "parameters")
-    # delete_key_from_dict_recursive(response_dict, "realization_ids")
+    # _delete_key_from_dict_recursive(response_dict, "parameters")
+    # _delete_key_from_dict_recursive(response_dict, "realization_ids")
     # LOGGER.debug(json.dumps(response_dict, indent=2))
     # LOGGER.debug("-----------------")
 
@@ -303,8 +307,8 @@ async def _run_query_and_aggregate_time_points(sumo_client: SumoClient, query_di
     response_dict = response.json()
 
     # LOGGER.debug("-----------------")
-    # delete_key_from_dict_recursive(response_dict, "parameters")
-    # delete_key_from_dict_recursive(response_dict, "realization_ids")
+    # _delete_key_from_dict_recursive(response_dict, "parameters")
+    # _delete_key_from_dict_recursive(response_dict, "realization_ids")
     # LOGGER.debug(json.dumps(response_dict, indent=2))
     # LOGGER.debug("-----------------")
 
