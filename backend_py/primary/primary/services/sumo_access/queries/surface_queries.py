@@ -87,15 +87,15 @@ def _build_realization_surfs_query_dict(case_uuid: str, iteration_name: str, tim
     should_arr: list[dict] = []
     must_not_arr: list[dict] = []
 
-    must_arr.append({"match": {"class.keyword": "surface"}})
-    must_arr.append({"match": {"_sumo.parent_object.keyword": case_uuid}})
-    must_arr.append({"match": {"fmu.iteration.name.keyword": iteration_name}})
-    must_arr.append({"match": {"data.is_observation": False}})
+    must_arr.append({"term": {"class.keyword": "surface"}})
+    must_arr.append({"term": {"_sumo.parent_object.keyword": case_uuid}})
+    must_arr.append({"term": {"fmu.iteration.name.keyword": iteration_name}})
+    must_arr.append({"term": {"data.is_observation": False}})
     must_arr.append({"exists": {"field": "fmu.realization.id"}})
 
     # There are some (old) documents that don't have the fmu.context.stage field so allow this,
     # but if it does exist, make sure the context is realization
-    should_arr.append({"match": {"fmu.context.stage.keyword": "realization"}})
+    should_arr.append({"term": {"fmu.context.stage.keyword": "realization"}})
     should_arr.append({"bool": {"must_not": [{"exists": {"field": "fmu.context.stage"}}]}})
 
     if time_type == SurfTimeType.NO_TIME:
@@ -125,10 +125,10 @@ def _build_observed_surfs_query_dict(case_uuid: str, time_type: SurfTimeType) ->
     must_arr: list[dict] = []
     must_not_arr: list[dict] = []
 
-    must_arr.append({"match": {"class.keyword": "surface"}})
-    must_arr.append({"match": {"_sumo.parent_object.keyword": case_uuid}})
-    must_arr.append({"match": {"fmu.context.stage.keyword": "case"}})
-    must_arr.append({"match": {"data.is_observation": True}})
+    must_arr.append({"term": {"class.keyword": "surface"}})
+    must_arr.append({"term": {"_sumo.parent_object.keyword": case_uuid}})
+    must_arr.append({"term": {"fmu.context.stage.keyword": "case"}})
+    must_arr.append({"term": {"data.is_observation": True}})
 
     must_not_arr.append({"exists": {"field": "fmu.iteration.name.keyword"}})
     must_not_arr.append({"exists": {"field": "fmu.realization.id"}})
@@ -173,6 +173,7 @@ async def _run_query_and_aggregate_surf_info(sumo_client: SumoClient, query_dict
                         {"k_content": {"terms": {"field": "data.content.keyword"}}},
                         {"k_tagname": {"terms": {"field": "data.tagname.keyword"}}},
                         # Experimental - including the available time points/intervals intervals in aggregation
+                        # This is probably not wise since it might explode the number of buckets
                         # { "k_t0": { "terms": { "field": "data.time.t0.value" } } },
                         # { "k_t1": { "terms": { "field": "data.time.t1.value" } } },
                     ],
@@ -188,13 +189,20 @@ async def _run_query_and_aggregate_surf_info(sumo_client: SumoClient, query_dict
                     "agg_z_val_max": {"max": {"field": "data.bbox.zmax"}},
                     "agg_is_stratigraphic_min": {"min": {"field": "data.stratigraphic"}},
                     # Experimental - including the available time points/intervals intervals in aggregation
+                    # Seems we cannot use composite aggregation as a nested aggregation
                     # "sig_unique_t0s": {
-                    #     "terms": {"field": "data.time.t0.value", "size": 65000},
+                    #     "terms": {"field": "data.time.t0.value", "size": 65535},
                     # },
                     # "sig_unique_intervals": {
                     #     "multi_terms": {
-                    #         "size": 65000,
+                    #         "size": 65535,
                     #         "terms": [{"field": "data.time.t0.value" }, {"field": "data.time.t1.value"}],
+                    #     }
+                    # },
+                    # "sig_unique_intervals_handles_missing": {
+                    #     "multi_terms": {
+                    #         "size": 65535,
+                    #         "terms": [{"field": "data.time.t0.value", "missing": 0 }, {"field": "data.time.t1.value", "missing": 0}],
                     #     }
                     # },
                 },
