@@ -1,17 +1,4 @@
-import { PolylineIntersection_trans } from "./view/queries/queryDataTransforms";
-
 export const CURVE_FITTING_EPSILON = 5; // meters
-
-export enum IntersectionType {
-    CUSTOM_POLYLINE = "custom-polyline",
-    WELLBORE = "wellbore",
-}
-
-export type CustomIntersectionPolyline = {
-    id: string;
-    name: string;
-    polyline: number[][];
-};
 
 export enum LayerType {
     GRID = "grid",
@@ -57,15 +44,3 @@ export type LayerActions = {
         ? { type: K }
         : { type: K; payload: LayerActionPayloads[K] };
 }[keyof LayerActionPayloads];
-
-export type PolylineIntersectionResult = {
-    id: string;
-    polylineIntersection: PolylineIntersection_trans | undefined;
-};
-
-export type CombinedPolylineIntersectionResults = {
-    combinedPolylineIntersectionResults: PolylineIntersectionResult[];
-    isFetching: boolean;
-    someQueriesFailed: boolean;
-    allQueriesFailed: boolean;
-};

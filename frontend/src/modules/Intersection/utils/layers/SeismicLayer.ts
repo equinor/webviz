@@ -314,6 +314,8 @@ export class SeismicLayer extends BaseLayer<SeismicLayerSettings, SeismicLayerDa
     }
 
     protected async fetchData(): Promise<SeismicLayerData> {
+        super.setBoundingBox(null);
+
         const sampledPolyline = this.samplePolyline();
 
         const xPoints: number[] = [];

@@ -115,6 +115,8 @@ export class SurfaceLayer extends BaseLayer<SurfaceLayerSettings, SurfaceInterse
     protected async fetchData(): Promise<SurfaceIntersectionData_api[]> {
         const promises: Promise<SurfaceIntersectionData_api>[] = [];
 
+        super.setBoundingBox(null);
+
         const polyline = this._settings.polylineUtmXy;
 
         const xPoints: number[] = [];
