@@ -1,8 +1,5 @@
-import asyncio
 from enum import Enum
-import time
 import datetime
-import json
 import logging
 from dataclasses import dataclass
 
@@ -207,6 +204,10 @@ async def _run_query_and_aggregate_surf_info(sumo_client: SumoClient, query_dict
         "size": 0,
     }
 
+    # LOGGER.debug("-----------------")
+    # LOGGER.debug(json.dumps(search_payload, indent=2))
+    # LOGGER.debug("-----------------")
+
     response = await sumo_client.post_async("/search", json=search_payload)
     response_dict = response.json()
 
@@ -338,84 +339,3 @@ def _delete_key_from_dict_recursive(the_dict: dict, key_to_delete: str) -> None:
     elif isinstance(the_dict, list):
         for item in the_dict:
             _delete_key_from_dict_recursive(item, key_to_delete)
-
-
-# ----------------------------------------
-# ----------------------------------------
-# ----------------------------------------
-# ----------------------------------------
-# ----------------------------------------
-
-# https://www.elastic.co/guide/en/elasticsearch/reference/current/search-fields.html#search-fields-request
-# https://www.elastic.co/guide/en/elasticsearch/reference/current/search-fields.html#script-fields
-# https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-bucket-multi-terms-aggregation.html
-# https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-bool-query.html
-
-
-def print_surf_info_arr(surf_info_arr: list[SurfInfo]) -> None:
-    for surf_info in surf_info_arr:
-        LOGGER.debug(f"{surf_info}")
-
-
-def print_time_interval_arr(time_interval_arr: list[TimeInterval]) -> None:
-    for entry in time_interval_arr:
-        LOGGER.debug(f"{entry}")
-
-
-def print_time_point_arr(time_point_arr: list[TimePoint]) -> None:
-    for entry in time_point_arr:
-        LOGGER.debug(f"{entry}")
-
-
-async def my_test() -> None:
-
-    sumo_client = SumoClient(env="prod", interactive=True)
-
-    # case_uuid = "88f940d4-e57b-44ce-8e62-b3e30cf2c1ec" # DROGON, 01_drogon_ahm_sumo_eclmaps
-    # ensemble_name= "iter-0"
-
-    # case_uuid = "6e26c07a-a026-47f8-91d8-d0e977701002" # JOHAN SVERDRUP, 2022a_r011p3p0_history
-    # ensemble_name= "iter-0"
-
-    case_uuid = "9c7ac93c-1bc2-4fdc-a827-787a68f19a21"  # SNORRE, 240422_sim2seis
-    ensemble_name = "iter-0"
-
-    LOGGER.debug("\n##### Starting")
-    start_s = time.perf_counter()
-
-    async with asyncio.TaskGroup() as tg:
-        real_queries = RealizationSurfQueries(sumo_client, case_uuid, ensemble_name)
-        real_static_surfs_task = tg.create_task(real_queries.find_surf_info(SurfTimeType.NO_TIME))
-        real_time_point_surfs_task = tg.create_task(real_queries.find_surf_info(SurfTimeType.TIME_POINT))
-        real_interval_surfs_task = tg.create_task(real_queries.find_surf_info(SurfTimeType.INTERVAL))
-
-        obs_queries = ObservedSurfQueries(sumo_client, case_uuid)
-        obs_time_point_surfs_task = tg.create_task(obs_queries.find_surf_info(SurfTimeType.TIME_POINT))
-        obs_interval_surfs_task = tg.create_task(obs_queries.find_surf_info(SurfTimeType.INTERVAL))
-
-        real_time_points_task = tg.create_task(real_queries.find_surf_time_points())
-        real_time_intervals_task = tg.create_task(real_queries.find_surf_time_intervals())
-        obs_time_points_task = tg.create_task(obs_queries.find_surf_time_points())
-        obs_time_intervals_task = tg.create_task(obs_queries.find_surf_time_intervals())
-
-    # print_surf_info_arr(real_static_surfs_task.result())
-    # print_surf_info_arr(real_time_point_surfs_task.result())
-    # print_surf_info_arr(real_interval_surfs_task.result())
-
-    # print_surf_info_arr(obs_time_point_surfs_task.result())
-    # print_surf_info_arr(obs_interval_surfs_task.result())
-
-    # print_time_point_arr(real_time_points_task.result())
-    # print_time_interval_arr(real_time_intervals_task.result())
-    # print_time_point_arr(obs_time_points_task.result())
-    # print_time_interval_arr(obs_time_intervals_task.result())
-
-    elapsed_s = time.perf_counter() - start_s
-    LOGGER.debug(f"##### DONE in {elapsed_s:.2f}s")
-
-
-if __name__ == "__main__":
-    logging.basicConfig(level=logging.WARNING, format="%(levelname)-3s: %(message)s")
-    logging.getLogger(__name__).setLevel(logging.DEBUG)
-
-    asyncio.run(my_test())
