@@ -14,13 +14,18 @@ import { GlobalTopicDefinitions, TopicDefinitionsType } from "@framework/Workben
 import { useSubscribedValueConditionally } from "@framework/WorkbenchServices";
 import { WorkbenchServices } from "@framework/WorkbenchServices";
 
+import { SettingsContext, ViewContext } from "./ModuleContext";
+
 export enum SyncSettingKey {
     ENSEMBLE = "ENSEMBLE",
     DATE = "DATE",
     TIME_SERIES = "TIME_SERIES",
     SURFACE = "SURFACE",
     CAMERA_POSITION_MAP = "SUBSURFACE_MAP_CAMERA_POSITION",
+    CAMERA_POSITION_INTERSECTION = "INTERSECTION_CAMERA_POSITION",
     WELLBORE = "WELLBORE",
+    INTERSECTION = "INTERSECTION",
+    VERTICAL_SCALE = "VERTICAL_SCALE",
 }
 
 export const SyncSettingsMeta = {
@@ -30,15 +35,27 @@ export const SyncSettingsMeta = {
     [SyncSettingKey.SURFACE]: { name: "Surface", abbreviation: "SURF" },
     [SyncSettingKey.CAMERA_POSITION_MAP]: { name: "Camera Position Map", abbreviation: "CAM_POS_MAP" },
     [SyncSettingKey.WELLBORE]: { name: "Wellbore", abbreviation: "WELLBORE" },
+    [SyncSettingKey.INTERSECTION]: { name: "Intersection", abbreviation: "INT" },
+    [SyncSettingKey.CAMERA_POSITION_INTERSECTION]: {
+        name: "Camera Position Intersection",
+        abbreviation: "CAM",
+    },
+    [SyncSettingKey.VERTICAL_SCALE]: { name: "Vertical Scale", abbreviation: "VSCAL" },
 };
 
 export class SyncSettingsHelper {
     private _workbenchServices: WorkbenchServices;
+    private _moduleContext: SettingsContext<any, any, any, any> | ViewContext<any, any, any, any> | null;
     private _activeSyncedKeys: SyncSettingKey[];
 
-    constructor(activeSyncedKeys: SyncSettingKey[], workbenchServices: WorkbenchServices) {
+    constructor(
+        activeSyncedKeys: SyncSettingKey[],
+        workbenchServices: WorkbenchServices,
+        moduleContext?: SettingsContext<any, any, any, any> | ViewContext<any, any, any, any>
+    ) {
         this._activeSyncedKeys = activeSyncedKeys;
         this._workbenchServices = workbenchServices;
+        this._moduleContext = moduleContext ?? null;
     }
 
     isSynced(key: SyncSettingKey): boolean {
@@ -47,7 +64,12 @@ export class SyncSettingsHelper {
 
     useValue<T extends keyof GlobalTopicDefinitions>(key: SyncSettingKey, topic: T): GlobalTopicDefinitions[T] | null {
         const isSyncActiveForKey = this._activeSyncedKeys.includes(key);
-        return useSubscribedValueConditionally(topic, isSyncActiveForKey, this._workbenchServices);
+        return useSubscribedValueConditionally(
+            topic,
+            isSyncActiveForKey,
+            this._workbenchServices,
+            this._moduleContext?.getInstanceIdString()
+        );
     }
 
     publishValue<T extends keyof GlobalTopicDefinitions>(
@@ -57,7 +79,7 @@ export class SyncSettingsHelper {
     ) {
         const isSyncActiveForKey = this._activeSyncedKeys.includes(key);
         if (isSyncActiveForKey) {
-            this._workbenchServices.publishGlobalData(topic, value);
+            this._workbenchServices.publishGlobalData(topic, value, this._moduleContext?.getInstanceIdString());
         }
     }
 }

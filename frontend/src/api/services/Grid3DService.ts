@@ -74,7 +74,12 @@ export class Grid3DService {
      * @param ensembleName Ensemble name
      * @param gridName Grid name
      * @param realizationNum Realization
-     * @param singleKLayer Show only a single k layer
+     * @param iMin Min i index
+     * @param iMax Max i index
+     * @param jMin Min j index
+     * @param jMax Max j index
+     * @param kMin Min k index
+     * @param kMax Max k index
      * @returns Grid3dGeometry Successful Response
      * @throws ApiError
      */
@@ -83,7 +88,12 @@ export class Grid3DService {
         ensembleName: string,
         gridName: string,
         realizationNum: number,
-        singleKLayer: number = -1,
+        iMin?: number,
+        iMax: number = -1,
+        jMin?: number,
+        jMax: number = -1,
+        kMin?: number,
+        kMax: number = -1,
     ): CancelablePromise<Grid3dGeometry> {
         return this.httpRequest.request({
             method: 'GET',
@@ -93,7 +103,12 @@ export class Grid3DService {
                 'ensemble_name': ensembleName,
                 'grid_name': gridName,
                 'realization_num': realizationNum,
-                'single_k_layer': singleKLayer,
+                'i_min': iMin,
+                'i_max': iMax,
+                'j_min': jMin,
+                'j_max': jMax,
+                'k_min': kMin,
+                'k_max': kMax,
             },
             errors: {
                 422: `Validation Error`,
@@ -108,7 +123,13 @@ export class Grid3DService {
      * @param gridName Grid name
      * @param parameterName Grid parameter
      * @param realizationNum Realization
-     * @param singleKLayer Show only a single k layer
+     * @param parameterTimeOrIntervalStr Time point or time interval string
+     * @param iMin Min i index
+     * @param iMax Max i index
+     * @param jMin Min j index
+     * @param jMax Max j index
+     * @param kMin Min k index
+     * @param kMax Max k index
      * @returns Grid3dMappedProperty Successful Response
      * @throws ApiError
      */
@@ -118,7 +139,13 @@ export class Grid3DService {
         gridName: string,
         parameterName: string,
         realizationNum: number,
-        singleKLayer: number = -1,
+        parameterTimeOrIntervalStr?: (string | null),
+        iMin?: number,
+        iMax: number = -1,
+        jMin?: number,
+        jMax: number = -1,
+        kMin?: number,
+        kMax: number = -1,
     ): CancelablePromise<Grid3dMappedProperty> {
         return this.httpRequest.request({
             method: 'GET',
@@ -129,7 +156,13 @@ export class Grid3DService {
                 'grid_name': gridName,
                 'parameter_name': parameterName,
                 'realization_num': realizationNum,
-                'single_k_layer': singleKLayer,
+                'parameter_time_or_interval_str': parameterTimeOrIntervalStr,
+                'i_min': iMin,
+                'i_max': iMax,
+                'j_min': jMin,
+                'j_max': jMax,
+                'k_min': kMin,
+                'k_max': kMax,
             },
             errors: {
                 422: `Validation Error`,
@@ -144,6 +177,7 @@ export class Grid3DService {
      * @param parameterName Grid parameter
      * @param realizationNum Realization
      * @param requestBody
+     * @param parameterTimeOrIntervalStr Time point or time interval string
      * @returns PolylineIntersection Successful Response
      * @throws ApiError
      */
@@ -154,6 +188,7 @@ export class Grid3DService {
         parameterName: string,
         realizationNum: number,
         requestBody: Body_post_get_polyline_intersection,
+        parameterTimeOrIntervalStr?: (string | null),
     ): CancelablePromise<PolylineIntersection> {
         return this.httpRequest.request({
             method: 'POST',
@@ -164,6 +199,7 @@ export class Grid3DService {
                 'grid_name': gridName,
                 'parameter_name': parameterName,
                 'realization_num': realizationNum,
+                'parameter_time_or_interval_str': parameterTimeOrIntervalStr,
             },
             body: requestBody,
             mediaType: 'application/json',

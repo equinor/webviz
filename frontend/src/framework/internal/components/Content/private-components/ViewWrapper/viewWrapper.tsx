@@ -197,8 +197,8 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
                         className={resolveClassNames(
                             "absolute w-full h-full z-10 inset-0 bg-transparent box-border border-solid border-2 pointer-events-none",
                             {
-                                "border-blue-500": showAsActive && drawerContent === DrawerContent.ModuleSettings,
-                                "border-transparent": !showAsActive || drawerContent !== DrawerContent.ModuleSettings,
+                                "border-blue-500": showAsActive,
+                                "border-transparent": !showAsActive,
                             }
                         )}
                     />

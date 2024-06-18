@@ -5,9 +5,9 @@ import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { ModuleSettingsProps } from "@framework/Module";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
 import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
-import { Wellbore } from "@framework/Wellbore";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { EnsembleDropdown } from "@framework/components/EnsembleDropdown";
+import { Wellbore } from "@framework/types/wellbore";
 import { fixupEnsembleIdent, maybeAssignFirstSyncedEnsemble } from "@framework/utils/ensembleUiHelpers";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
@@ -21,7 +21,7 @@ import { useValidArrayState } from "@lib/hooks/useValidArrayState";
 import { useValidState } from "@lib/hooks/useValidState";
 import { SurfaceDirectory, SurfaceTimeType } from "@modules/_shared/Surface";
 import { useRealizationSurfacesMetadataQuery } from "@modules/_shared/Surface";
-import { useWellHeadersQuery } from "@modules/_shared/WellBore";
+import { useDrilledWellboreHeadersQuery } from "@modules/_shared/WellBore";
 
 import { isEqual } from "lodash";
 
@@ -103,7 +103,7 @@ export function Settings({ settingsContext, workbenchSession, workbenchServices 
     }
 
     // Queries
-    const wellHeadersQuery = useWellHeadersQuery(computedEnsembleIdent?.getCaseUuid());
+    const wellHeadersQuery = useDrilledWellboreHeadersQuery(computedEnsembleIdent?.getCaseUuid());
     const seismicCubeMetaListQuery = useSeismicCubeMetaListQuery(
         computedEnsembleIdent?.getCaseUuid(),
         computedEnsembleIdent?.getEnsembleName()
@@ -134,8 +134,8 @@ export function Settings({ settingsContext, workbenchSession, workbenchServices 
     const availableWellboreList: Wellbore[] =
         wellHeadersQuery.data?.map((wellbore) => ({
             type: WELLBORE_TYPE,
-            uwi: wellbore.unique_wellbore_identifier,
-            uuid: wellbore.wellbore_uuid,
+            uwi: wellbore.uniqueWellboreIdentifier,
+            uuid: wellbore.wellboreUuid,
         })) || [];
     const computedWellboreAddress = fixupSyncedOrSelectedOrFirstWellbore(
         syncedWellBore || null,

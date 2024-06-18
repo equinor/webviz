@@ -9,10 +9,12 @@ export type InputProps = InputUnstyledProps & {
     wrapperStyle?: React.CSSProperties;
     min?: number;
     max?: number;
+    rounded?: "all" | "left" | "right" | "none";
+    debounceTimeMs?: number;
 };
 
 export const Input = React.forwardRef((props: InputProps, ref: React.ForwardedRef<HTMLInputElement>) => {
-    const { startAdornment, endAdornment, wrapperStyle, value: propsValue, onChange, ...other } = props;
+    const { startAdornment, endAdornment, wrapperStyle, value: propsValue, onChange, debounceTimeMs, ...other } = props;
 
     const [value, setValue] = React.useState<unknown>(propsValue);
     const [prevValue, setPrevValue] = React.useState<unknown>(propsValue);
@@ -28,6 +30,16 @@ export const Input = React.forwardRef((props: InputProps, ref: React.ForwardedRe
         HTMLInputElement | HTMLTextAreaElement | null,
         HTMLInputElement | HTMLTextAreaElement | null
     >(props.inputRef, () => internalRef.current);
+
+    const debounceTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+
+    React.useEffect(function handleMount() {
+        return function handleUnmount() {
+            if (debounceTimerRef.current) {
+                clearTimeout(debounceTimerRef.current);
+            }
+        };
+    }, []);
 
     const handleAdornmentClick = React.useCallback((event: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
         if (internalRef.current) {
@@ -58,12 +70,28 @@ export const Input = React.forwardRef((props: InputProps, ref: React.ForwardedRe
                 setValue(newValue);
 
                 event.target.value = newValue.toString();
+            } else {
+                setValue(event.target.value);
             }
-            if (onChange) {
+
+            if (!onChange) {
+                return;
+            }
+
+            if (debounceTimerRef.current) {
+                clearTimeout(debounceTimerRef.current);
+            }
+
+            if (!debounceTimeMs) {
                 onChange(event);
+                return;
             }
+
+            debounceTimerRef.current = setTimeout(() => {
+                onChange(event);
+            }, debounceTimeMs);
         },
-        [props.min, props.max, onChange, props.type]
+        [props.min, props.max, onChange, props.type, debounceTimeMs]
     );
 
     return (
@@ -72,27 +100,32 @@ export const Input = React.forwardRef((props: InputProps, ref: React.ForwardedRe
                 ref={ref}
                 className={resolveClassNames(
                     "flex",
+                    "justify-center",
                     "gap-2",
                     "bg-white",
                     "border",
                     "border-gray-300",
-                    "rounded",
                     "shadow-sm",
                     "focus:border-indigo-500",
                     "w-full",
+                    "h-full",
                     "sm:text-sm",
-                    "p-2",
+                    "px-2",
+                    "py-1.5",
                     "outline-none",
                     "cursor-text",
                     {
                         "border-red-300": props.error,
                         "border-2": props.error,
+                        "rounded-l": props.rounded === "left",
+                        "rounded-r": props.rounded === "right",
+                        rounded: props.rounded === "all" || !props.rounded,
                     }
                 )}
                 style={wrapperStyle}
             >
                 {startAdornment && (
-                    <div className="flex items-center" onClick={handleAdornmentClick}>
+                    <div className="flex items-center h-full" onClick={handleAdornmentClick}>
                         {startAdornment}
                     </div>
                 )}
@@ -113,7 +146,7 @@ export const Input = React.forwardRef((props: InputProps, ref: React.ForwardedRe
                     }}
                 />
                 {endAdornment && (
-                    <div className="flex items-center" onClick={handleAdornmentClick}>
+                    <div className="flex items-center h-full" onClick={handleAdornmentClick}>
                         {endAdornment}
                     </div>
                 )}

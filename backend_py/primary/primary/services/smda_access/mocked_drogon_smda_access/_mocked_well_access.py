@@ -1,6 +1,6 @@
 from typing import List, Optional
 
-from ..types import WellBorePick, WellBoreTrajectory, WellBoreHeader
+from ..types import WellborePick, WellboreTrajectory, WellboreHeader
 
 from ._mocked_wellbore_picks import mocked_wellbore_picks
 
@@ -11,7 +11,7 @@ class WellAccess:
 
     # type: ignore
     # pylint: disable=unused-argument
-    async def get_all_picks_for_wellbore(self, wellbore_uuid: str) -> List[WellBorePick]:
+    async def get_all_picks_for_wellbore(self, wellbore_uuid: str) -> List[WellborePick]:
         """Get Drogon picks"""
         if wellbore_uuid == "drogon_horizontal":
             well_picks = [pick for pick in mocked_wellbore_picks if pick.unique_wellbore_identifier == "55/33-A-4"]
@@ -23,10 +23,10 @@ class WellAccess:
     # pylint: disable=unused-argument
     async def get_field_wellbore_trajectories(
         self, field_identifier: str, unique_wellbore_identifiers: Optional[List[str]] = None
-    ) -> List[WellBoreTrajectory]:
+    ) -> List[WellboreTrajectory]:
         """Get all Drogon trajectories"""
         return [
-            WellBoreTrajectory(
+            WellboreTrajectory(
                 wellbore_uuid="drogon_vertical",
                 unique_wellbore_identifier="55/33-1",
                 tvd_msl_arr=[-25.0, 1774.5],
@@ -34,7 +34,7 @@ class WellAccess:
                 easting_arr=[462480.0, 462480.0],
                 northing_arr=[5934232.0, 5934232.0],
             ),
-            WellBoreTrajectory(
+            WellboreTrajectory(
                 wellbore_uuid="drogon_horizontal",
                 unique_wellbore_identifier="55/33-A-4",
                 tvd_msl_arr=[-49.0, 1293.4185, 1536.9384, 1616.4998, 1630.5153, 1656.9874],
@@ -44,12 +44,12 @@ class WellAccess:
             ),
         ]
 
-    async def get_wellbore_trajectories(self, wellbore_uuids: List[str]) -> List[WellBoreTrajectory]:
+    async def get_wellbore_trajectories(self, wellbore_uuids: List[str]) -> List[WellboreTrajectory]:
         """Get Drogon trajectory"""
-        trajs: List[WellBoreTrajectory] = []
+        trajs: List[WellboreTrajectory] = []
         if "drogon_horizontal" in wellbore_uuids:
             trajs.append(
-                WellBoreTrajectory(
+                WellboreTrajectory(
                     wellbore_uuid="drogon_horizontal",
                     unique_wellbore_identifier="55/33-A-4",
                     tvd_msl_arr=[-49.0, 1293.4185, 1536.9384, 1616.4998, 1630.5153, 1656.9874],
@@ -60,7 +60,7 @@ class WellAccess:
             )
         if "drogon_vertical" in wellbore_uuids:
             trajs.append(
-                WellBoreTrajectory(
+                WellboreTrajectory(
                     wellbore_uuid="drogon_vertical",
                     unique_wellbore_identifier="55/33-1",
                     tvd_msl_arr=[-25.0, 1774.5],
@@ -73,23 +73,27 @@ class WellAccess:
 
     # type: ignore
     # pylint: disable=unused-argument
-    async def get_well_headers(self, field_identifier: str) -> List[WellBoreHeader]:
-        """Get Drogon well headers"""
+    async def get_wellbore_headers(self, field_identifier: str) -> List[WellboreHeader]:
+        """Get Drogon wellbore headers"""
         return [
-            WellBoreHeader(
+            WellboreHeader(
                 wellbore_uuid="drogon_vertical",
                 unique_wellbore_identifier="55/33-1",
                 well_uuid="drogon_vertical",
                 unique_well_identifier="55/33-1",
                 well_easting=462480.000,
                 well_northing=5934232.000,
+                depth_reference_point="RKB",
+                depth_reference_elevation=25.0,
             ),
-            WellBoreHeader(
+            WellboreHeader(
                 wellbore_uuid="drogon_horizontal",
                 unique_wellbore_identifier="55/33-A-4",
                 well_uuid="drogon_horizontal",
                 unique_well_identifier="55/33-A-4",
                 well_easting=463256.911,
                 well_northing=5930542.294,
+                depth_reference_point="RKB",
+                depth_reference_elevation=49.0,
             ),
         ]

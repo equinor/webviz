@@ -8,7 +8,7 @@ import {
     makeExtendedTrajectoryFromTrajectoryXyzPoints,
     makeTrajectoryXyzPointsFromWellboreTrajectory,
 } from "@modules/SeismicIntersection/utils/esvIntersectionDataConversion";
-import { useWellTrajectoriesQuery } from "@modules/_shared/WellBore/queryHooks";
+import { useWellboreTrajectoriesQuery } from "@modules/_shared/WellBore/queryHooks";
 import { ContentError } from "@modules/_shared/components/ContentMessage";
 
 import { isEqual } from "lodash";
@@ -41,7 +41,7 @@ export const View = ({ viewContext }: ModuleViewProps<State>) => {
     const height = wrapperDivSize.height - 100;
 
     // Get well trajectories query
-    const getWellTrajectoriesQuery = useWellTrajectoriesQuery(wellboreAddress ? [wellboreAddress.uuid] : undefined);
+    const getWellTrajectoriesQuery = useWellboreTrajectoriesQuery(wellboreAddress ? [wellboreAddress.uuid] : undefined);
     if (getWellTrajectoriesQuery.isError) {
         statusWriter.addError("Error loading well trajectories");
     }

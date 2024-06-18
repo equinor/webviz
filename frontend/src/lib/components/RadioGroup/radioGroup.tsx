@@ -83,7 +83,7 @@ export function RadioGroup<T extends string | number>(props: RadioGroupProps<T>)
             >
                 <span>{props.name}</span>
                 <div
-                    className={resolveClassNames("flex", "radio-group", "gap-1", {
+                    className={resolveClassNames("flex", "radio-group", "gap-3", {
                         "flex-col": props.direction !== "horizontal",
                     })}
                 >

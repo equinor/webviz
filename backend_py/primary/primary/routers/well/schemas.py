@@ -23,7 +23,27 @@ class StratigraphicUnit(BaseModel):
     lithologyType: int | float | str = "unknown"
 
 
-class WellBorePick(BaseModel):
+class WellboreHeader(BaseModel):
+    wellboreUuid: str
+    uniqueWellboreIdentifier: str
+    wellUuid: str
+    uniqueWellIdentifier: str
+    wellEasting: float
+    wellNorthing: float
+    depthReferencePoint: str
+    depthReferenceElevation: float
+
+
+class WellboreTrajectory(BaseModel):
+    wellboreUuid: str
+    uniqueWellboreIdentifier: str
+    tvdMslArr: List[float]
+    mdArr: List[float]
+    eastingArr: List[float]
+    northingArr: List[float]
+
+
+class WellborePick(BaseModel):
     """
     Wellbore pick from SMDA
 
@@ -43,6 +63,56 @@ class WellBorePick(BaseModel):
     mdUnit: str
 
 
-class WellBorePicksAndStratigraphicUnits(BaseModel):
-    wellbore_picks: List[WellBorePick] = []
+class WellborePicksAndStratigraphicUnits(BaseModel):
+    wellbore_picks: List[WellborePick] = []
     stratigraphic_units: List[StratigraphicUnit] = []
+
+
+class WellboreCompletion(BaseModel):
+    mdTop: float
+    mdBottom: float
+    tvdTop: float | None
+    tvdBottom: float | None
+    description: str | None
+    symbolName: str | None
+    comment: str | None
+
+
+class WellboreCasing(BaseModel):
+    itemType: str  # Casing type
+    diameterNumeric: float
+    diameterInner: float
+    description: str | None = None
+    remark: str | None = None
+    depthTopMd: float
+    depthBottomMd: float
+    totalDepthMd: float
+    startDepth: float
+    endDepth: float
+
+
+class WellborePerforation(BaseModel):
+    mdTop: float
+    mdBottom: float
+    tvdTop: float
+    tvdBottom: float
+    status: str
+    completionMode: str
+
+
+class WellboreLogCurveHeader(BaseModel):
+    logName: str
+    curveName: str
+    curveUnit: str
+
+
+class WellboreLogCurveData(BaseModel):
+    indexMin: float
+    indexMax: float
+    minCurveValue: float
+    maxCurveValue: float
+    dataPoints: list[list[float | None]]
+    curveAlias: str
+    curveDescription: str
+    indexUnit: str
+    noDataValue: float

@@ -15,6 +15,12 @@ export enum ColorScalePlotlyType {
     Map = "map",
 }
 
+export type ColorStop = {
+    offset: number;
+    color: string;
+    value: number;
+};
+
 export type PlotlyMarkerColorScaleObject = {
     colorscale: Array<[number, string]>;
     cmin: number;
@@ -38,6 +44,9 @@ export type ColorScaleOptions = {
     colorPalette: ColorPalette;
     gradientType: ColorScaleGradientType;
     steps: number;
+    min?: number;
+    max?: number;
+    divMidPoint?: number;
 };
 
 export class ColorScale {
@@ -51,11 +60,11 @@ export class ColorScale {
 
     constructor(options: ColorScaleOptions) {
         this._colorPalette = options.colorPalette;
-        this._min = 0;
-        this._max = 1;
+        this._min = options.min ?? 0;
+        this._max = options.max ?? 1;
         this._type = options.type;
         this._gradientType = options.gradientType;
-        this._divMidPoint = 0.5;
+        this._divMidPoint = options.divMidPoint ?? 0.5;
         this._steps = options.steps;
     }
 
@@ -98,7 +107,9 @@ export class ColorScale {
             color = colors[colorIndex];
         } else {
             const normalizedValue = this.calcNormalizedValue(value, this._min, this._max);
-            color = this._colorPalette.getInterpolatedColor(normalizedValue);
+            // Clamp normalized value to [0,1] to avoid out of bounds errors
+            const clampedNormalizedValue = Math.min(Math.max(normalizedValue, 0), 1);
+            color = this._colorPalette.getInterpolatedColor(clampedNormalizedValue);
         }
 
         return color;
@@ -112,8 +123,20 @@ export class ColorScale {
         return this._max;
     }
 
+    getType(): ColorScaleType {
+        return this._type;
+    }
+
+    getGradientType(): ColorScaleGradientType {
+        return this._gradientType;
+    }
+
     getDivMidPoint(): number {
         return this._divMidPoint;
+    }
+
+    getNumSteps(): number {
+        return this._steps;
     }
 
     setRange(min: number, max: number) {
@@ -137,6 +160,39 @@ export class ColorScale {
         return colors;
     }
 
+    getColorStops(): ColorStop[] {
+        const colorStops: ColorStop[] = [];
+        if (this._gradientType === ColorScaleGradientType.Diverging) {
+            for (let i = 0; i < 50; i++) {
+                const value = this._min + (this._divMidPoint - this._min) * (i / 50);
+                colorStops.push({
+                    offset: (value - this._min) / (this._max - this._min),
+                    color: this.getColorForValue(value),
+                    value,
+                });
+            }
+            for (let i = 50; i <= 100; i++) {
+                const value = this._divMidPoint + (this._max - this._divMidPoint) * ((i - 50) / 50);
+                colorStops.push({
+                    offset: (value - this._min) / (this._max - this._min),
+                    color: this.getColorForValue(value),
+                    value,
+                });
+            }
+        } else {
+            for (let i = 0; i <= 100; i++) {
+                const value = this._min + (this._max - this._min) * (i / 100);
+                colorStops.push({
+                    offset: (value - this._min) / (this._max - this._min),
+                    color: this.getColorForValue(value),
+                    value,
+                });
+            }
+        }
+
+        return colorStops;
+    }
+
     getPlotlyColorScale(): [number, string][] {
         if (this._min === this._max) {
             return [
@@ -155,6 +211,10 @@ export class ColorScale {
             plotlyColorScale.push([i / 100, this.getColorForValue(this._min + (this._max - this._min) * (i / 100))]);
         }
         return plotlyColorScale;
+    }
+
+    getColorMap(): string[] {
+        return this.getPlotlyColorScale().map((color) => color[1]);
     }
 
     getAsPlotlyColorScaleMarkerObject(): PlotlyMarkerColorScaleObject {
@@ -197,5 +257,17 @@ export class ColorScale {
                       }
                     : undefined,
         };
+    }
+
+    clone(): ColorScale {
+        return new ColorScale({
+            type: this._type,
+            colorPalette: this._colorPalette,
+            gradientType: this._gradientType,
+            steps: this._steps,
+            min: this._min,
+            max: this._max,
+            divMidPoint: this._divMidPoint,
+        });
     }
 }

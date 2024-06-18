@@ -11,10 +11,22 @@ import { BaseComponent } from "../BaseComponent";
 export type SliderProps = {
     valueLabelDisplay?: "auto" | "off";
     valueLabelFormat?: string | ((value: number) => React.ReactNode);
+    debounceTimeMs?: number;
 } & Omit<SliderUnstyledProps, "valueLabelFormat">;
 
 export const Slider = React.forwardRef((props: SliderProps, ref: React.ForwardedRef<HTMLDivElement>) => {
-    const { valueLabelDisplay, value: propsValue, max, min, valueLabelFormat, orientation, track, ...rest } = props;
+    const {
+        valueLabelDisplay,
+        value: propsValue,
+        max,
+        min,
+        valueLabelFormat,
+        orientation,
+        track,
+        debounceTimeMs,
+        ...rest
+    } = props;
+    const debounceTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
     const [value, setValue] = React.useState<number | number[]>(propsValue ?? 0);
     const [currentlyActiveThumb, setCurrentlyActiveThumb] = React.useState<number>(0);
@@ -48,7 +60,8 @@ export const Slider = React.forwardRef((props: SliderProps, ref: React.Forwarded
                             element ===
                                 document
                                     .elementsFromPoint(e.clientX, e.clientY)
-                                    .filter((el) => el.classList.contains("MuiSlider-thumb"))[0] ??
+                                    .filter((el) => el.classList.contains("MuiSlider-thumb"))
+                                    .at(0) ??
                             elements[0] ??
                             elements.item(0)
                     );
@@ -85,7 +98,8 @@ export const Slider = React.forwardRef((props: SliderProps, ref: React.Forwarded
                             element ===
                                 document
                                     .elementsFromPoint(e.clientX, e.clientY)
-                                    .filter((el) => el.classList.contains("MuiSlider-thumb"))[0] ??
+                                    .filter((el) => el.classList.contains("MuiSlider-thumb"))
+                                    .at(0) ??
                             elements[0] ??
                             elements.item(0)
                     );
@@ -119,6 +133,9 @@ export const Slider = React.forwardRef((props: SliderProps, ref: React.Forwarded
             divRefCurrent.addEventListener("pointerdown", handlePointerDown);
         }
         return () => {
+            if (debounceTimerRef.current) {
+                clearTimeout(debounceTimerRef.current);
+            }
             if (divRefCurrent) {
                 divRefCurrent.removeEventListener("pointerover", handlePointerOver);
                 divRefCurrent.removeEventListener("pointerout", handlePointerOut);
@@ -148,7 +165,20 @@ export const Slider = React.forwardRef((props: SliderProps, ref: React.Forwarded
                 sliderRect.top +
                 1,
         });
-        props.onChange?.(event, value, activeThumb);
+
+        if (debounceTimerRef.current) {
+            clearTimeout(debounceTimerRef.current);
+        }
+
+        if (!props.debounceTimeMs) {
+            props.onChange?.(event, value, activeThumb);
+            return;
+        }
+
+        debounceTimerRef.current = setTimeout(() => {
+            debounceTimerRef.current = null;
+            props.onChange?.(event, value, activeThumb);
+        }, debounceTimeMs);
     }
 
     function makeLabel(): React.ReactNode {
@@ -164,6 +194,14 @@ export const Slider = React.forwardRef((props: SliderProps, ref: React.Forwarded
 
         return adjustedValue;
     }
+
+    React.useEffect(function handleMount() {
+        return function handleUnmount() {
+            if (debounceTimerRef.current) {
+                clearTimeout(debounceTimerRef.current);
+            }
+        };
+    }, []);
 
     return (
         <BaseComponent disabled={props.disabled}>
