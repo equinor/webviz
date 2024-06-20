@@ -91,6 +91,7 @@ def _build_realization_surfs_query_dict(case_uuid: str, iteration_name: str, tim
     must_arr.append({"term": {"_sumo.parent_object.keyword": case_uuid}})
     must_arr.append({"term": {"fmu.iteration.name.keyword": iteration_name}})
     must_arr.append({"term": {"data.is_observation": False}})
+    must_arr.append({"term": {"data.format": "irap_binary"}})
     must_arr.append({"exists": {"field": "fmu.realization.id"}})
 
     # There are some (old) documents that don't have the fmu.context.stage field so allow this,
@@ -129,7 +130,7 @@ def _build_observed_surfs_query_dict(case_uuid: str, time_type: SurfTimeType) ->
     must_arr.append({"term": {"_sumo.parent_object.keyword": case_uuid}})
     must_arr.append({"term": {"fmu.context.stage.keyword": "case"}})
     must_arr.append({"term": {"data.is_observation": True}})
-
+    must_arr.append({"term": {"data.format": "irap_binary"}})
     must_not_arr.append({"exists": {"field": "fmu.iteration.name.keyword"}})
     must_not_arr.append({"exists": {"field": "fmu.realization.id"}})
 

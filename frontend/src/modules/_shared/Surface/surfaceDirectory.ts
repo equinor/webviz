@@ -1,4 +1,4 @@
-import { SurfaceAttributeType_api, SurfaceMeta_api, SurfaceMetaSet_api, SurfaceTimeType_api  } from "@api";
+import { SurfaceAttributeType_api, SurfaceMetaSet_api, SurfaceMeta_api, SurfaceTimeType_api } from "@api";
 import { isIsoStringInterval } from "@framework/utils/timestampUtils";
 
 export enum SurfaceTimeType {
@@ -53,8 +53,7 @@ export class SurfaceDirectory {
 
         if (options.timeType === SurfaceTimeType.TimePoint) {
             this._isoDateOrIntervalStringArr = srcMetaSet.time_points_iso_str;
-        }
-        else if (options.timeType === SurfaceTimeType.Interval) {
+        } else if (options.timeType === SurfaceTimeType.Interval) {
             this._isoDateOrIntervalStringArr = srcMetaSet.time_intervals_iso_str;
         }
 
@@ -163,11 +162,11 @@ export class SurfaceDirectory {
 function filterOnTimeType(surfaceList: SurfaceMeta_api[], timeType: SurfaceTimeType): SurfaceMeta_api[] {
     switch (timeType) {
         case SurfaceTimeType.None:
-            return surfaceList.filter((surface) => surface.time_type===SurfaceTimeType_api.NO_TIME);
+            return surfaceList.filter((surface) => surface.time_type === SurfaceTimeType_api.NO_TIME);
         case SurfaceTimeType.TimePoint:
-            return surfaceList.filter((surface) => surface.time_type===SurfaceTimeType_api.TIME_POINT);
+            return surfaceList.filter((surface) => surface.time_type === SurfaceTimeType_api.TIME_POINT);
         case SurfaceTimeType.Interval:
-            return surfaceList.filter((surface) => surface.time_type===SurfaceTimeType_api.INTERVAL);
+            return surfaceList.filter((surface) => surface.time_type === SurfaceTimeType_api.INTERVAL);
         default:
             throw new Error("Invalid TimeType");
     }

@@ -15,6 +15,7 @@ async def get_stratigraphic_units(access_token: str, stratigraphic_column_identi
     }
     results = await get(access_token=access_token, endpoint=endpoint, params=params)
     timer = PerfTimer()
+
     strat_units = [StratigraphicUnit(**result) for result in results]
     print(f"TIME SMDA validate stratigraphic units {timer.lap_s():.2f} seconds")
     return strat_units
