@@ -226,8 +226,8 @@ async def _run_query_and_aggregate_surf_info(sumo_client: SumoClient, query_dict
     # LOGGER.debug(json.dumps(response_dict, indent=2))
     # LOGGER.debug("-----------------")
 
-    LOGGER.debug(f"{response_dict['took']=}")
-    LOGGER.debug(f"{len(response_dict['aggregations']['key_combinations']['buckets'])=}")
+    # LOGGER.debug(f"{response_dict['took']=}")
+    # LOGGER.debug(f"{len(response_dict['aggregations']['key_combinations']['buckets'])=}")
 
     ret_arr: list[SurfInfo] = []
     for bucket in response_dict["aggregations"]["key_combinations"]["buckets"]:
@@ -279,8 +279,8 @@ async def _run_query_and_aggregate_time_intervals(sumo_client: SumoClient, query
     # LOGGER.debug(json.dumps(response_dict, indent=2))
     # LOGGER.debug("-----------------")
 
-    LOGGER.debug(f"{response_dict['took']=}")
-    LOGGER.debug(f"{len(response_dict['aggregations']['unique_time_intervals']['buckets'])=}")
+    # LOGGER.debug(f"{response_dict['took']=}")
+    # LOGGER.debug(f"{len(response_dict['aggregations']['unique_time_intervals']['buckets'])=}")
 
     ret_arr: list[TimeInterval] = []
     for bucket in response_dict["aggregations"]["unique_time_intervals"]["buckets"]:
@@ -321,8 +321,8 @@ async def _run_query_and_aggregate_time_points(sumo_client: SumoClient, query_di
     # LOGGER.debug(json.dumps(response_dict, indent=2))
     # LOGGER.debug("-----------------")
 
-    LOGGER.debug(f"{response_dict['took']=}")
-    LOGGER.debug(f"{len(response_dict['aggregations']['unique_time_points']['buckets'])=}")
+    # LOGGER.debug(f"{response_dict['took']=}")
+    # LOGGER.debug(f"{len(response_dict['aggregations']['unique_time_points']['buckets'])=}")
 
     ret_arr: list[TimePoint] = []
     for bucket in response_dict["aggregations"]["unique_time_points"]["buckets"]:

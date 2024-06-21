@@ -1,5 +1,4 @@
 import { SurfaceAttributeType_api, SurfaceMetaSet_api, SurfaceMeta_api, SurfaceTimeType_api } from "@api";
-import { isIsoStringInterval } from "@framework/utils/timestampUtils";
 
 export enum SurfaceTimeType {
     None = "None",
@@ -29,8 +28,6 @@ export class SurfaceDirectory {
             return;
         }
 
-        const startTS = performance.now();
-
         let filteredList = filterOnTimeType(srcMetaSet.surfaces, options.timeType);
 
         if (options.includeAttributeTypes && options.includeAttributeTypes.length > 0) {
@@ -53,11 +50,10 @@ export class SurfaceDirectory {
 
         if (options.timeType === SurfaceTimeType.TimePoint) {
             this._isoDateOrIntervalStringArr = srcMetaSet.time_points_iso_str;
-        } else if (options.timeType === SurfaceTimeType.Interval) {
+        }
+        else if (options.timeType === SurfaceTimeType.Interval) {
             this._isoDateOrIntervalStringArr = srcMetaSet.time_intervals_iso_str;
         }
-
-        console.debug(`SurfaceDirectory.constructor() took: ${(performance.now() - startTS).toFixed(3)}ms`);
     }
 
     // Retrieves unique attribute names with optional filtering on surface name.
@@ -109,8 +105,6 @@ export class SurfaceDirectory {
 
     // Retrieves unique surface names with optional filtering on surface attribute.
     public getSurfaceNames(requireAttributeName: string | null): string[] {
-        const startTS = performance.now();
-
         const uniqueSurfaceNames = new Set<string>();
         for (const surf of this._surfaceList) {
             if (requireAttributeName == null || surf.attribute_name === requireAttributeName) {
@@ -124,8 +118,6 @@ export class SurfaceDirectory {
                 retArr.push(surfName);
             }
         }
-
-        console.debug(`SurfaceDirectory.getSurfaceNames() took: ${(performance.now() - startTS).toFixed(3)}ms`);
 
         return retArr;
     }
@@ -173,9 +165,9 @@ function filterOnTimeType(surfaceList: SurfaceMeta_api[], timeType: SurfaceTimeT
 }
 
 // Filters directory based on a specific surface attribute.
-function filterOnAttribute(surfaceList: SurfaceMeta_api[], surfaceAttribute: string): SurfaceMeta_api[] {
-    return surfaceList.filter((surface) => surface.attribute_name === surfaceAttribute);
-}
+// function filterOnAttribute(surfaceList: SurfaceMeta_api[], surfaceAttribute: string): SurfaceMeta_api[] {
+//     return surfaceList.filter((surface) => surface.attribute_name === surfaceAttribute);
+// }
 
 // Filters directory based on a specific surface name.
 function filterOnName(surfaceList: SurfaceMeta_api[], surfaceName: string): SurfaceMeta_api[] {
