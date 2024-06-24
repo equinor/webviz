@@ -1,4 +1,4 @@
-import { SurfaceData_api, SurfaceMeta_api } from "@api";
+import { SurfaceData_api, SurfaceMetaSet_api } from "@api";
 import { apiService } from "@framework/ApiService";
 import { QueryFunction, QueryKey, UseQueryResult, useQuery } from "@tanstack/react-query";
 
@@ -8,16 +8,26 @@ import { SurfaceAddress } from "./surfaceAddress";
 const STALE_TIME = 60 * 1000;
 const CACHE_TIME = 60 * 1000;
 
-export function useSurfaceDirectoryQuery(
+export function useRealizationSurfacesMetadataQuery(
     caseUuid: string | undefined,
     ensembleName: string | undefined
-): UseQueryResult<SurfaceMeta_api[]> {
+): UseQueryResult<SurfaceMetaSet_api> {
     return useQuery({
-        queryKey: ["getSurfaceDirectory", caseUuid, ensembleName],
-        queryFn: () => apiService.surface.getSurfaceDirectory(caseUuid ?? "", ensembleName ?? ""),
+        queryKey: ["getRealizationSurfacesMetadata", caseUuid, ensembleName],
+        queryFn: () => apiService.surface.getRealizationSurfacesMetadata(caseUuid ?? "", ensembleName ?? ""),
         staleTime: STALE_TIME,
         gcTime: CACHE_TIME,
         enabled: caseUuid && ensembleName ? true : false,
+    });
+}
+
+export function useObservedSurfacesMetadataQuery(caseUuid: string | undefined): UseQueryResult<SurfaceMetaSet_api> {
+    return useQuery({
+        queryKey: ["getObservedSurfacesMetadata", caseUuid],
+        queryFn: () => apiService.surface.getObservedSurfacesMetadata(caseUuid ?? ""),
+        staleTime: STALE_TIME,
+        gcTime: CACHE_TIME,
+        enabled: caseUuid ? true : false,
     });
 }
 
@@ -52,6 +62,21 @@ export function useSurfaceDataQueryByAddress(surfAddr: SurfaceAddress | null): U
                 surfAddr.name,
                 surfAddr.attribute,
                 surfAddr.isoDateOrInterval ?? undefined
+            );
+    } else if (surfAddr.addressType === "observed") {
+        queryKey = [
+            "getObservedSurfaceData",
+            surfAddr.caseUuid,
+            surfAddr.name,
+            surfAddr.attribute,
+            surfAddr.isoDateOrInterval,
+        ];
+        queryFn = () =>
+            apiService.surface.getObservedSurfaceData(
+                surfAddr.caseUuid,
+                surfAddr.name,
+                surfAddr.attribute,
+                surfAddr.isoDateOrInterval ?? ""
             );
     } else if (surfAddr.addressType === "statistical") {
         queryKey = [

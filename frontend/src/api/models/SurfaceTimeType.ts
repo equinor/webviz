@@ -2,10 +2,8 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-/**
- * The stratigraphic feature of a surface
- */
-export enum StratigraphicFeature {
-    ZONE = 'zone',
-    HORIZON = 'horizon',
+export enum SurfaceTimeType {
+    NO_TIME = 'NO_TIME',
+    TIME_POINT = 'TIME_POINT',
+    INTERVAL = 'INTERVAL',
 }

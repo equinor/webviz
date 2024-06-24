@@ -64,7 +64,6 @@ export type { SeismicFencePolyline as SeismicFencePolyline_api } from './models/
 export { SensitivityType as SensitivityType_api } from './models/SensitivityType';
 export { StatisticFunction as StatisticFunction_api } from './models/StatisticFunction';
 export type { StatisticValueObject as StatisticValueObject_api } from './models/StatisticValueObject';
-export { StratigraphicFeature as StratigraphicFeature_api } from './models/StratigraphicFeature';
 export type { StratigraphicUnit as StratigraphicUnit_api } from './models/StratigraphicUnit';
 export type { SummaryVectorDateObservation as SummaryVectorDateObservation_api } from './models/SummaryVectorDateObservation';
 export type { SummaryVectorObservations as SummaryVectorObservations_api } from './models/SummaryVectorObservations';
@@ -73,8 +72,10 @@ export type { SurfaceData as SurfaceData_api } from './models/SurfaceData';
 export type { SurfaceIntersectionCumulativeLengthPolyline as SurfaceIntersectionCumulativeLengthPolyline_api } from './models/SurfaceIntersectionCumulativeLengthPolyline';
 export type { SurfaceIntersectionData as SurfaceIntersectionData_api } from './models/SurfaceIntersectionData';
 export type { SurfaceMeta as SurfaceMeta_api } from './models/SurfaceMeta';
+export type { SurfaceMetaSet as SurfaceMetaSet_api } from './models/SurfaceMetaSet';
 export type { SurfaceRealizationSampleValues as SurfaceRealizationSampleValues_api } from './models/SurfaceRealizationSampleValues';
 export { SurfaceStatisticFunction as SurfaceStatisticFunction_api } from './models/SurfaceStatisticFunction';
+export { SurfaceTimeType as SurfaceTimeType_api } from './models/SurfaceTimeType';
 export { TreeNode as TreeNode_api } from './models/TreeNode';
 export type { UserInfo as UserInfo_api } from './models/UserInfo';
 export type { ValidationError as ValidationError_api } from './models/ValidationError';

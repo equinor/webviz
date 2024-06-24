@@ -15,13 +15,8 @@ import { Label } from "@lib/components/Label";
 import { QueryStateWrapper } from "@lib/components/QueryStateWrapper";
 import { RadioGroup } from "@lib/components/RadioGroup";
 import { Select, SelectOption } from "@lib/components/Select";
-import {
-    SurfaceAddress,
-    SurfaceAddressFactory,
-    SurfaceDirectory,
-    SurfaceTimeType,
-    useSurfaceDirectoryQuery,
-} from "@modules/_shared/Surface";
+import { SurfaceAddress, SurfaceAddressFactory, SurfaceDirectory, SurfaceTimeType } from "@modules/_shared/Surface";
+import { useObservedSurfacesMetadataQuery, useRealizationSurfacesMetadataQuery } from "@modules/_shared/Surface";
 
 import { MapState } from "./MapState";
 import { AggregationDropdown } from "./UiComponents";
@@ -53,21 +48,25 @@ export function MapSettings(props: ModuleSettingsProps<MapState>) {
 
     const candidateEnsembleIdent = maybeAssignFirstSyncedEnsemble(selectedEnsembleIdent, syncedValueEnsembles);
     const computedEnsembleIdent = fixupEnsembleIdent(candidateEnsembleIdent, ensembleSet);
-    const surfaceDirectoryQuery = useSurfaceDirectoryQuery(
+    const realizationSurfacesMetaQuery = useRealizationSurfacesMetadataQuery(
         computedEnsembleIdent?.getCaseUuid(),
         computedEnsembleIdent?.getEnsembleName()
     );
+    const observedSurfacesMetaQuery = useObservedSurfacesMetadataQuery(computedEnsembleIdent?.getCaseUuid());
 
-    const isError = surfaceDirectoryQuery.isError;
-    if (isError) {
-        statusWriter.addError("Error loading surface directory");
+    if (realizationSurfacesMetaQuery.isError) {
+        statusWriter.addError("Error loading metadata for realization surfaces");
+    }
+    if (observedSurfacesMetaQuery.isError) {
+        statusWriter.addError("Error loading metadata for observed surfaces");
     }
 
-    const surfaceDirectory = new SurfaceDirectory(
-        surfaceDirectoryQuery.data
-            ? { surfaceMetas: surfaceDirectoryQuery.data, timeType: timeType, useObservedSurfaces: useObserved }
-            : null
-    );
+    const surfaceDirectory = new SurfaceDirectory({
+        realizationMetaSet: realizationSurfacesMetaQuery.data,
+        observedMetaSet: observedSurfacesMetaQuery.data,
+        timeType: timeType,
+        useObservedSurfaces: useObserved,
+    });
 
     const fixedSurfSpec = fixupSurface(
         surfaceDirectory,
@@ -110,7 +109,11 @@ export function MapSettings(props: ModuleSettingsProps<MapState>) {
                 computedTimeOrInterval
             );
             if (aggregation === null) {
-                surfaceAddress = addrFactory.createRealizationAddress(realizationNum);
+                if (useObserved) {
+                    surfaceAddress = addrFactory.createObservedAddress();
+                } else {
+                    surfaceAddress = addrFactory.createRealizationAddress(realizationNum);
+                }
             } else {
                 surfaceAddress = addrFactory.createStatisticalAddress(aggregation);
             }
@@ -194,15 +197,13 @@ export function MapSettings(props: ModuleSettingsProps<MapState>) {
     }));
 
     if (timeType === SurfaceTimeType.Interval || timeType === SurfaceTimeType.TimePoint) {
-        timeOrIntervalOptions = surfaceDirectory
-            .getTimeOrIntervalStrings(computedSurfaceName, computedSurfaceAttribute)
-            .map((interval) => ({
-                value: interval,
-                label:
-                    timeType === SurfaceTimeType.TimePoint
-                        ? isoStringToDateLabel(interval)
-                        : isoIntervalStringToDateLabel(interval),
-            }));
+        timeOrIntervalOptions = surfaceDirectory.getTimeOrIntervalStrings().map((interval) => ({
+            value: interval,
+            label:
+                timeType === SurfaceTimeType.TimePoint
+                    ? isoStringToDateLabel(interval)
+                    : isoIntervalStringToDateLabel(interval),
+        }));
     }
 
     let chooseRealizationElement: JSX.Element | null = null;
@@ -244,8 +245,8 @@ export function MapSettings(props: ModuleSettingsProps<MapState>) {
             </Label>
 
             <QueryStateWrapper
-                queryResult={surfaceDirectoryQuery}
-                errorComponent={"Error loading surface directory"}
+                queryResult={realizationSurfacesMetaQuery}
+                errorComponent={"Error loading surface directoryAAA"}
                 loadingComponent={<CircularProgress />}
             >
                 <Label
@@ -321,10 +322,7 @@ function fixupSurface(
         );
     }
     if (finalSurfaceName && finalSurfaceAttribute) {
-        const selectedTimeOrIntervals = surfaceDirectory.getTimeOrIntervalStrings(
-            finalSurfaceName,
-            finalSurfaceAttribute
-        );
+        const selectedTimeOrIntervals = surfaceDirectory.getTimeOrIntervalStrings();
         finalTimeOrInterval = fixupSyncedOrSelectedOrFirstValue(
             syncedSurface.timeOrInterval,
             selectedSurface.timeOrInterval,
