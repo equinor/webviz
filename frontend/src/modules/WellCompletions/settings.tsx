@@ -305,6 +305,7 @@ export const Settings = ({
     );
 
     const computedEnsemble = computedEnsembleIdent ? ensembleSet.findEnsemble(computedEnsembleIdent) : null;
+    const isSingleRealizationSelection = realizationSelection === RealizationSelection.Single;
 
     return (
         <div className="flex flex-col gap-2 overflow-y-auto">
@@ -325,20 +326,16 @@ export const Settings = ({
                         value={realizationSelection}
                         onChange={handleRealizationSelectionChange}
                     />
-                    <Label
-                        text={
-                            realizationSelection === RealizationSelection.Single
-                                ? "Realization"
-                                : "Realization (disabled)"
-                        }
-                    >
-                        <Dropdown
-                            disabled={realizationSelection !== RealizationSelection.Single}
-                            options={computedEnsemble === null ? [] : makeRealizationOptionItems(computedEnsemble)}
-                            value={selectedRealizationNumber?.toString() ?? undefined}
-                            onChange={handleSelectedRealizationNumberChange}
-                        />
-                    </Label>
+                    <div className={isSingleRealizationSelection ? "" : "pointer-events-none"}>
+                        <Label text={isSingleRealizationSelection ? "Realization" : "Realization (disabled)"}>
+                            <Dropdown
+                                disabled={!isSingleRealizationSelection}
+                                options={computedEnsemble === null ? [] : makeRealizationOptionItems(computedEnsemble)}
+                                value={selectedRealizationNumber?.toString() ?? undefined}
+                                onChange={handleSelectedRealizationNumberChange}
+                            />
+                        </Label>
+                    </div>
                 </div>
             </CollapsibleGroup>
             <CollapsibleGroup expanded={true} title="Completions selections">
