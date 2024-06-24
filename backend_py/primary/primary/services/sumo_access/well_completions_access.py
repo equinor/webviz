@@ -43,7 +43,7 @@ class WellCompletionsAccess:
             well_completions_tables = self._case.tables.filter(
                 tagname=WellCompletionsAccess.TAGNAME, realization=realization, iteration=self._iteration_name
             )
-            well_completions_df = well_completions_tables[0].to_pandas if len(well_completions_tables) > 0 else None
+            well_completions_df = well_completions_tables[0].to_pandas() if len(well_completions_tables) > 0 else None
             if well_completions_df is None:
                 return None
 
@@ -59,8 +59,8 @@ class WellCompletionsAccess:
             return None
 
         expected_common_columns = set(["WELL", "DATE", "ZONE", "REAL"])
-        first_df = well_completions_tables[0].to_pandas
-        second_df = well_completions_tables[1].to_pandas
+        first_df = well_completions_tables[0].to_pandas()
+        second_df = well_completions_tables[1].to_pandas()
 
         # Validate columns and ensure equal column content in both tables
         self._validate_common_dataframe_columns(expected_common_columns, first_df, second_df)
