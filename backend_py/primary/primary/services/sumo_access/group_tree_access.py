@@ -43,7 +43,7 @@ class GroupTreeAccess:
             if await table_collection.length_async() > 1:
                 raise ValueError("Multiple tables found.")
 
-            group_tree_df = table_collection[0].to_pandas
+            group_tree_df = table_collection[0].to_pandas()
 
             _validate_group_tree_df(group_tree_df)
 
@@ -55,9 +55,9 @@ class GroupTreeAccess:
             tagname=GroupTreeAccess.TAGNAME, aggregation="collection", iteration=self._iteration_name
         )
 
-        df0 = table_collection[0].to_pandas
-        df1 = table_collection[1].to_pandas
-        df2 = table_collection[2].to_pandas
+        df0 = table_collection[0].to_pandas()
+        df1 = table_collection[1].to_pandas()
+        df2 = table_collection[2].to_pandas()
 
         group_tree_df = pd.merge(df0, df1, left_index=True, right_index=True)
         group_tree_df = pd.merge(group_tree_df, df2, left_index=True, right_index=True)
