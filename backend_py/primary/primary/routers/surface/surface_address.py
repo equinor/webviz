@@ -110,6 +110,91 @@ class PartialSurfAddr:
         return "~".join(component_arr)
 
 
+
+
+def parse_int_list_string(int_arr_str: str) -> list[int]:
+    """
+    Parse a string containing an array of comma separated integers and integer ranges.
+    """
+    elements = int_arr_str.split(',')
+    int_arr: list[int] = []
+    for element in elements:
+        if '-' in element:
+            start, end = element.split('-')
+            start, end = int(start), int(end)
+            int_arr.extend(range(start, end + 1))
+        else:
+            int_arr.append(int(element))
+    
+    ret_arr = sorted(set(int_arr))
+
+    return ret_arr
+
+
+def encode_int_list_to_string(int_list: list[int]) -> str:
+    """
+    Encode a list of integers into a string, utilizing ranges to make it more compact
+    """
+    if not int_list:
+        return ""
+    
+    # Remove duplicates and sort
+    int_list = sorted(set(int_list))  
+
+    encoded_parts = []
+    start_val = int_list[0]
+    end_val = start_val
+    
+    for val in int_list[1:]:
+        if val == end_val + 1:
+            end_val = val
+        else:
+            if start_val == end_val:
+                encoded_parts.append(f"{start_val}")
+            else:
+                encoded_parts.append(f"{start_val}-{end_val}")
+            start_val = val
+            end_val = val
+    
+    # Add the last one
+    if start_val == end_val:
+        encoded_parts.append(f"{start_val}")
+    else:
+        encoded_parts.append(f"{start_val}-{end_val}")
+    
+    return ','.join(encoded_parts)
+
+
+
+
+# // Parse page ranges into array of numbers
+# function parseRealizationRangeString(realRangeStr: string, maxLegalReal: number): number[] {
+#     const realArr: number[] = [];
+
+#     const rangeArr = realRangeStr.split(",");
+#     for (const aRange of rangeArr) {
+#         const rangeParts = aRange.split("-");
+#         if (rangeParts.length === 1) {
+#             const real = parseInt(rangeParts[0], 10);
+#             if (real >= 0 && real <= maxLegalReal) {
+#                 realArr.push(real);
+#             }
+#         } else if (rangeParts.length === 2) {
+#             const startReal = parseInt(rangeParts[0], 10);
+#             const endReal = parseInt(rangeParts[1], 10);
+#             if (startReal >= 0 && startReal <= maxLegalReal && endReal >= startReal) {
+#                 for (let i = startReal; i <= Math.min(endReal, maxLegalReal); i++) {
+#                     realArr.push(i);
+#                 }
+#             }
+#         }
+#     }
+
+#     // Sort and remove duplicates
+#     return sortedUniq(sortBy(realArr));
+# }
+
+
 if __name__ == "__main__":
     print("Testing SurfAddr\n")
 
@@ -123,7 +208,16 @@ if __name__ == "__main__":
     # print(f"{type(a0)=}  {a0.to_addr_str()=}")
     # print(f"{type(a1)=}  {a1=}")
 
-    a0 = RealSurfAddr("88f940d4-e57b-44ce-8e62-b3e30cf2c1ec", "iter-0", "some.surface.name", "my_attr_name", realization=1, iso_date_or_interval=None)
-    a1 = PartialSurfAddr.from_addr_str(a0.to_addr_str())
-    print(f"{type(a0)=}  {a0.to_addr_str()=}")
-    print(f"{type(a1)=}  {a1=}")
+    # a0 = RealSurfAddr("88f940d4-e57b-44ce-8e62-b3e30cf2c1ec", "iter-0", "some.surface.name", "my_attr_name", realization=1, iso_date_or_interval=None)
+    # a1 = RealSurfAddr.from_addr_str(a0.to_addr_str())
+    # print(f"{type(a0)=}  {a0.to_addr_str()=}")
+    # print(f"{type(a1)=}  {a1=}")
+
+    print(parse_int_list_string("1,2,3-6,1,6-8"))
+
+    int_list = [1,2,3,10,5,7,8,1,-2,-3]
+    as_str = encode_int_list_to_string(int_list)
+    back_to_list = parse_int_list_string(as_str)
+    print(f"{int_list=}")
+    print(f"{as_str=}")
+    print(f"{back_to_list=}")
