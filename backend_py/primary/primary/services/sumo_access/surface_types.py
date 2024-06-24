@@ -1,14 +1,24 @@
-from typing import Optional
-from pydantic import BaseModel
+from dataclasses import dataclass
+
 from .generic_types import SumoContent
+from .queries.surface_queries import SurfTimeType
 
 
-class SurfaceMeta(BaseModel):
+@dataclass(frozen=True, kw_only=True)
+# pylint: disable=too-many-instance-attributes
+class SurfaceMeta:
     name: str
-    tagname: str
-    iso_date_or_interval: str | None = None
+    attribute_name: str
     content: SumoContent
+    time_type: SurfTimeType
     is_observation: bool
     is_stratigraphic: bool
-    zmin: Optional[float] = None
-    zmax: Optional[float] = None
+    global_min_val: float | None
+    global_max_val: float | None
+
+
+@dataclass(frozen=True, kw_only=True)
+class SurfaceMetaSet:
+    surfaces: list[SurfaceMeta]
+    time_points_iso_str: list[str]
+    time_intervals_iso_str: list[str]

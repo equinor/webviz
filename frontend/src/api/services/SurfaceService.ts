@@ -6,7 +6,7 @@ import type { Body_post_get_surface_intersection } from '../models/Body_post_get
 import type { Body_post_sample_surface_in_points } from '../models/Body_post_sample_surface_in_points';
 import type { SurfaceData } from '../models/SurfaceData';
 import type { SurfaceIntersectionData } from '../models/SurfaceIntersectionData';
-import type { SurfaceMeta } from '../models/SurfaceMeta';
+import type { SurfaceMetaSet } from '../models/SurfaceMetaSet';
 import type { SurfaceRealizationSampleValues } from '../models/SurfaceRealizationSampleValues';
 import type { SurfaceStatisticFunction } from '../models/SurfaceStatisticFunction';
 import type { CancelablePromise } from '../core/CancelablePromise';
@@ -14,23 +14,44 @@ import type { BaseHttpRequest } from '../core/BaseHttpRequest';
 export class SurfaceService {
     constructor(public readonly httpRequest: BaseHttpRequest) {}
     /**
-     * Get Surface Directory
-     * Get a directory of surfaces in a Sumo ensemble
+     * Get Realization Surfaces Metadata
+     * Get metadata for realization surfaces in a Sumo ensemble
      * @param caseUuid Sumo case uuid
      * @param ensembleName Ensemble name
-     * @returns SurfaceMeta Successful Response
+     * @returns SurfaceMetaSet Successful Response
      * @throws ApiError
      */
-    public getSurfaceDirectory(
+    public getRealizationSurfacesMetadata(
         caseUuid: string,
         ensembleName: string,
-    ): CancelablePromise<Array<SurfaceMeta>> {
+    ): CancelablePromise<SurfaceMetaSet> {
         return this.httpRequest.request({
             method: 'GET',
-            url: '/surface/surface_directory/',
+            url: '/surface/realization_surfaces_metadata/',
             query: {
                 'case_uuid': caseUuid,
                 'ensemble_name': ensembleName,
+            },
+            errors: {
+                422: `Validation Error`,
+            },
+        });
+    }
+    /**
+     * Get Observed Surfaces Metadata
+     * Get metadata for observed surfaces in a Sumo case
+     * @param caseUuid Sumo case uuid
+     * @returns SurfaceMetaSet Successful Response
+     * @throws ApiError
+     */
+    public getObservedSurfacesMetadata(
+        caseUuid: string,
+    ): CancelablePromise<SurfaceMetaSet> {
+        return this.httpRequest.request({
+            method: 'GET',
+            url: '/surface/observed_surfaces_metadata/',
+            query: {
+                'case_uuid': caseUuid,
             },
             errors: {
                 422: `Validation Error`,
@@ -63,6 +84,35 @@ export class SurfaceService {
                 'case_uuid': caseUuid,
                 'ensemble_name': ensembleName,
                 'realization_num': realizationNum,
+                'name': name,
+                'attribute': attribute,
+                'time_or_interval': timeOrInterval,
+            },
+            errors: {
+                422: `Validation Error`,
+            },
+        });
+    }
+    /**
+     * Get Observed Surface Data
+     * @param caseUuid Sumo case uuid
+     * @param name Surface name
+     * @param attribute Surface attribute
+     * @param timeOrInterval Time point or time interval string
+     * @returns SurfaceData Successful Response
+     * @throws ApiError
+     */
+    public getObservedSurfaceData(
+        caseUuid: string,
+        name: string,
+        attribute: string,
+        timeOrInterval: string,
+    ): CancelablePromise<SurfaceData> {
+        return this.httpRequest.request({
+            method: 'GET',
+            url: '/surface/observed_surface_data/',
+            query: {
+                'case_uuid': caseUuid,
                 'name': name,
                 'attribute': attribute,
                 'time_or_interval': timeOrInterval,
@@ -219,7 +269,7 @@ export class SurfaceService {
     ): CancelablePromise<SurfaceIntersectionData> {
         return this.httpRequest.request({
             method: 'POST',
-            url: '/surfaceget_surface_intersection',
+            url: '/surface/get_surface_intersection',
             query: {
                 'case_uuid': caseUuid,
                 'ensemble_name': ensembleName,

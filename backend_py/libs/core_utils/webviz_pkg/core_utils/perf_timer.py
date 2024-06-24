@@ -14,13 +14,16 @@ class PerfTimer:
         """Get the time elapsed since the start, in milliseconds"""
         return int(1000 * self.elapsed_s())
 
-    def lap_s(self) -> float:
+    def lap_s(self, reset_lap_timer: bool = True) -> float:
         """Get elapsed time since last lap, in seconds"""
         time_now = time.perf_counter()
         elapsed = time_now - self._lap_s
-        self._lap_s = time_now
+
+        if (reset_lap_timer):
+            self._lap_s = time_now
+
         return elapsed
 
-    def lap_ms(self) -> int:
+    def lap_ms(self, reset_lap_timer: bool = True) -> int:
         """Get elapsed time since last lap, in milliseconds"""
-        return int(1000 * self.lap_s())
+        return int(1000 * self.lap_s(reset_lap_timer=reset_lap_timer))

@@ -1,12 +1,14 @@
+import asyncio
 import logging
-from typing import List, Union, Optional
+from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Response, Body
 from webviz_pkg.core_utils.perf_timer import PerfTimer
+from webviz_pkg.core_utils.perf_metrics import PerfMetrics
 
 from primary.services.sumo_access.case_inspector import CaseInspector
 from primary.services.sumo_access.surface_access import SurfaceAccess
-from primary.services.smda_access.stratigraphy_access import StratigraphyAccess
+from primary.services.smda_access.stratigraphy_access import StratigraphyAccess, StratigraphicUnit
 from primary.services.smda_access.stratigraphy_utils import sort_stratigraphic_names_by_hierarchy
 from primary.services.smda_access.mocked_drogon_smda_access import _mocked_stratigraphy_access
 from primary.services.utils.statistic_function import StatisticFunction
@@ -26,32 +28,69 @@ LOGGER = logging.getLogger(__name__)
 router = APIRouter()
 
 
-@router.get("/surface_directory/")
-async def get_surface_directory(
+@router.get("/realization_surfaces_metadata/")
+async def get_realization_surfaces_metadata(
+    response: Response,
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     case_uuid: str = Query(description="Sumo case uuid"),
     ensemble_name: str = Query(description="Ensemble name"),
-) -> List[schemas.SurfaceMeta]:
+) -> schemas.SurfaceMetaSet:
     """
-    Get a directory of surfaces in a Sumo ensemble
+    Get metadata for realization surfaces in a Sumo ensemble
     """
-    surface_access = await SurfaceAccess.from_case_uuid_async(
-        authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
-    )
-    sumo_surf_dir = await surface_access.get_surface_directory_async()
+    perf_metrics = ResponsePerfMetrics(response)
 
-    case_inspector = CaseInspector.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid)
-    strat_column_identifier = await case_inspector.get_stratigraphic_column_identifier_async()
-    strat_access: Union[StratigraphyAccess, _mocked_stratigraphy_access.StratigraphyAccess]
+    async with asyncio.TaskGroup() as tg:
+        access = SurfaceAccess.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
+        surf_meta_task = tg.create_task(access.get_realization_surfaces_metadata_async())
+        surf_meta_task.add_done_callback(lambda _: perf_metrics.record_lap_no_reset("get-meta"))
 
-    if strat_column_identifier == "DROGON_HAS_NO_STRATCOLUMN":
-        strat_access = _mocked_stratigraphy_access.StratigraphyAccess(authenticated_user.get_smda_access_token())
-    else:
-        strat_access = StratigraphyAccess(authenticated_user.get_smda_access_token())
-    strat_units = await strat_access.get_stratigraphic_units(strat_column_identifier)
+        strat_units_task = tg.create_task(_get_stratigraphic_units_for_case_async(authenticated_user, case_uuid))
+        strat_units_task.add_done_callback(lambda _: perf_metrics.record_lap_no_reset("get-strat"))
+
+    perf_metrics.reset_lap_timer()
+    sumo_surf_meta_set = surf_meta_task.result()
+    strat_units = strat_units_task.result()
+
     sorted_stratigraphic_surfaces = sort_stratigraphic_names_by_hierarchy(strat_units)
+    api_surf_meta_set = converters.to_api_surface_meta_set(sumo_surf_meta_set, sorted_stratigraphic_surfaces)
+    perf_metrics.record_lap("compose")
 
-    return converters.to_api_surface_directory(sumo_surf_dir, sorted_stratigraphic_surfaces)
+    LOGGER.info(f"Got metadata for realization surfaces in: {perf_metrics.to_string()}")
+
+    return api_surf_meta_set
+
+
+@router.get("/observed_surfaces_metadata/")
+async def get_observed_surfaces_metadata(
+    response: Response,
+    authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
+    case_uuid: str = Query(description="Sumo case uuid"),
+) -> schemas.SurfaceMetaSet:
+    """
+    Get metadata for observed surfaces in a Sumo case
+    """
+    perf_metrics = ResponsePerfMetrics(response)
+
+    async with asyncio.TaskGroup() as tg:
+        access = SurfaceAccess.from_case_uuid_no_iteration(authenticated_user.get_sumo_access_token(), case_uuid)
+        surf_meta_task = tg.create_task(access.get_observed_surfaces_metadata_async())
+        surf_meta_task.add_done_callback(lambda _: perf_metrics.record_lap_no_reset("get-meta"))
+
+        strat_units_task = tg.create_task(_get_stratigraphic_units_for_case_async(authenticated_user, case_uuid))
+        strat_units_task.add_done_callback(lambda _: perf_metrics.record_lap_no_reset("get-strat"))
+
+    perf_metrics.reset_lap_timer()
+    sumo_surf_meta_set = surf_meta_task.result()
+    strat_units = strat_units_task.result()
+
+    sorted_stratigraphic_surfaces = sort_stratigraphic_names_by_hierarchy(strat_units)
+    api_surf_meta_set = converters.to_api_surface_meta_set(sumo_surf_meta_set, sorted_stratigraphic_surfaces)
+    perf_metrics.record_lap("compose")
+
+    LOGGER.info(f"Got metadata for observed surfaces in: {perf_metrics.to_string()}")
+
+    return api_surf_meta_set
 
 
 @router.get("/realization_surface_data/")
@@ -67,9 +106,7 @@ async def get_realization_surface_data(
 ) -> schemas.SurfaceData:
     perf_metrics = ResponsePerfMetrics(response)
 
-    access = await SurfaceAccess.from_case_uuid_async(
-        authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
-    )
+    access = SurfaceAccess.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
     xtgeo_surf = await access.get_realization_surface_data_async(
         real_num=realization_num, name=name, attribute=attribute, time_or_interval_str=time_or_interval
     )
@@ -82,6 +119,34 @@ async def get_realization_surface_data(
     perf_metrics.record_lap("convert")
 
     LOGGER.info(f"Loaded realization surface in: {perf_metrics.to_string()}")
+
+    return surf_data_response
+
+
+@router.get("/observed_surface_data/")
+async def get_observed_surface_data(
+    response: Response,
+    authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
+    case_uuid: str = Query(description="Sumo case uuid"),
+    name: str = Query(description="Surface name"),
+    attribute: str = Query(description="Surface attribute"),
+    time_or_interval: str = Query(description="Time point or time interval string"),
+) -> schemas.SurfaceData:
+    perf_metrics = ResponsePerfMetrics(response)
+
+    access = SurfaceAccess.from_case_uuid_no_iteration(authenticated_user.get_sumo_access_token(), case_uuid)
+    xtgeo_surf = await access.get_observed_surface_data_async(
+        name=name, attribute=attribute, time_or_interval_str=time_or_interval
+    )
+    perf_metrics.record_lap("get-surf")
+
+    if not xtgeo_surf:
+        raise HTTPException(status_code=404, detail="Surface not found")
+
+    surf_data_response = converters.to_api_surface_data(xtgeo_surf)
+    perf_metrics.record_lap("convert")
+
+    LOGGER.info(f"Loaded observed surface in: {perf_metrics.to_string()}")
 
     return surf_data_response
 
@@ -99,9 +164,7 @@ async def get_statistical_surface_data(
 ) -> schemas.SurfaceData:
     perf_metrics = ResponsePerfMetrics(response)
 
-    access = await SurfaceAccess.from_case_uuid_async(
-        authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
-    )
+    access = SurfaceAccess.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
 
     service_stat_func_to_compute = StatisticFunction.from_string_value(statistic_function)
     if service_stat_func_to_compute is None:
@@ -143,9 +206,7 @@ async def get_property_surface_resampled_to_static_surface(
 ) -> schemas.SurfaceData:
     perf_metrics = ResponsePerfMetrics(response)
 
-    access = await SurfaceAccess.from_case_uuid_async(
-        authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
-    )
+    access = SurfaceAccess.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
     xtgeo_surf_mesh = await access.get_realization_surface_data_async(
         real_num=realization_num_mesh, name=name_mesh, attribute=attribute_mesh
     )
@@ -188,9 +249,7 @@ async def get_property_surface_resampled_to_statistical_static_surface(
 ) -> schemas.SurfaceData:
     timer = PerfTimer()
 
-    access = await SurfaceAccess.from_case_uuid_async(
-        authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
-    )
+    access = SurfaceAccess.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
     service_stat_func_to_compute = StatisticFunction.from_string_value(statistic_function)
     if service_stat_func_to_compute is not None:
         xtgeo_surf_mesh = await access.get_statistical_surface_data_async(
@@ -217,7 +276,7 @@ async def get_property_surface_resampled_to_statistical_static_surface(
     return surf_data_response
 
 
-@router.post("get_surface_intersection")
+@router.post("/get_surface_intersection")
 async def post_get_surface_intersection(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     case_uuid: str = Query(description="Sumo case uuid"),
@@ -233,9 +292,7 @@ async def post_get_surface_intersection(
     The surface intersection data for surface name contains: An array of z-points, i.e. one z-value/depth per (x, y)-point in polyline,
     and cumulative lengths, the accumulated length at each z-point in the array.
     """
-    access = await SurfaceAccess.from_case_uuid_async(
-        authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
-    )
+    access = SurfaceAccess.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
 
     surface = await access.get_realization_surface_data_async(
         real_num=realization_num, name=name, attribute=attribute, time_or_interval_str=time_or_interval_str
@@ -288,3 +345,26 @@ async def post_sample_surface_in_points(
         )
 
     return intersections
+
+
+async def _get_stratigraphic_units_for_case_async(
+    authenticated_user: AuthenticatedUser, case_uuid: str
+) -> list[StratigraphicUnit]:
+    perf_metrics = PerfMetrics()
+
+    case_inspector = CaseInspector.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid)
+    strat_column_identifier = await case_inspector.get_stratigraphic_column_identifier_async()
+    perf_metrics.record_lap("get-strat-ident")
+
+    strat_access: StratigraphyAccess | _mocked_stratigraphy_access.StratigraphyAccess
+    if strat_column_identifier == "DROGON_HAS_NO_STRATCOLUMN":
+        strat_access = _mocked_stratigraphy_access.StratigraphyAccess(authenticated_user.get_smda_access_token())
+    else:
+        strat_access = StratigraphyAccess(authenticated_user.get_smda_access_token())
+
+    strat_units = await strat_access.get_stratigraphic_units(strat_column_identifier)
+    perf_metrics.record_lap("get-strat-units")
+
+    LOGGER.info(f"Got stratigraphic units for case in : {perf_metrics.to_string()}")
+
+    return strat_units

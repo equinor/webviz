@@ -1,6 +1,6 @@
 import React from "react";
 
-import { SurfaceAttributeType_api, SurfaceMeta_api } from "@api";
+import { SurfaceAttributeType_api, SurfaceMetaSet_api } from "@api";
 import { apiService } from "@framework/ApiService";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { EnsembleSet } from "@framework/EnsembleSet";
@@ -42,7 +42,7 @@ export function SurfaceLayerSettingsComponent(props: SurfaceLayerSettingsCompone
 
     const ensembleFilterFunc = useEnsembleRealizationFilterFunc(props.workbenchSession);
 
-    const surfaceDirectoryQuery = useSurfaceDirectoryQuery(
+    const surfaceDirectoryQuery = useRealizationSurfacesMetadataQuery(
         newSettings.ensembleIdent?.getCaseUuid(),
         newSettings.ensembleIdent?.getEnsembleName()
     );
@@ -70,7 +70,7 @@ export function SurfaceLayerSettingsComponent(props: SurfaceLayerSettingsCompone
         availableAttributes.push(
             ...Array.from(
                 new Set(
-                    surfaceDirectoryQuery.data
+                    surfaceDirectoryQuery.data.surfaces
                         .filter((el) => el.attribute_type === SurfaceAttributeType_api.DEPTH)
                         .map((el) => el.attribute_name)
                 )
@@ -87,7 +87,7 @@ export function SurfaceLayerSettingsComponent(props: SurfaceLayerSettingsCompone
         availableSurfaceNames.push(
             ...Array.from(
                 new Set(
-                    surfaceDirectoryQuery.data
+                    surfaceDirectoryQuery.data.surfaces
                         .filter((el) => el.attribute_name === newSettings.attribute)
                         .map((el) => el.name)
                 )
@@ -251,13 +251,13 @@ function makeSurfaceNameOptions(surfaceNames: string[]): DropdownOption[] {
 const STALE_TIME = 60 * 1000;
 const CACHE_TIME = 60 * 1000;
 
-export function useSurfaceDirectoryQuery(
+export function useRealizationSurfacesMetadataQuery(
     caseUuid: string | undefined,
     ensembleName: string | undefined
-): UseQueryResult<SurfaceMeta_api[]> {
+): UseQueryResult<SurfaceMetaSet_api> {
     return useQuery({
-        queryKey: ["getSurfaceDirectory", caseUuid, ensembleName],
-        queryFn: () => apiService.surface.getSurfaceDirectory(caseUuid ?? "", ensembleName ?? ""),
+        queryKey: ["getRealizationSurfacesMetadata", caseUuid, ensembleName],
+        queryFn: () => apiService.surface.getRealizationSurfacesMetadata(caseUuid ?? "", ensembleName ?? ""),
         staleTime: STALE_TIME,
         gcTime: CACHE_TIME,
         enabled: Boolean(caseUuid && ensembleName),
