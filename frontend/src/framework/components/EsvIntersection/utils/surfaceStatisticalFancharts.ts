@@ -26,7 +26,7 @@ export function makeSurfaceStatisticalFanchartFromRealizationSurface(
     realizationSamplePoints: number[][],
     cumulatedLength: number[],
     surfaceName: string,
-    stratColorMap: StratigraphyColorMap,
+    color: string,
     visibility?: {
         mean: boolean;
         minMax: boolean;
@@ -36,12 +36,12 @@ export function makeSurfaceStatisticalFanchartFromRealizationSurface(
 ): SurfaceStatisticalFanchart {
     const numPoints = realizationSamplePoints[0]?.length || 0;
 
-    const mean = new Array(numPoints).fill(0);
+    const mean = new Array(numPoints).fill(undefined);
     const min = new Array(numPoints).fill(Infinity);
     const max = new Array(numPoints).fill(-Infinity);
-    const p10 = new Array(numPoints).fill(0);
-    const p50 = new Array(numPoints).fill(0);
-    const p90 = new Array(numPoints).fill(0);
+    const p10 = new Array(numPoints).fill(undefined);
+    const p50 = new Array(numPoints).fill(undefined);
+    const p90 = new Array(numPoints).fill(undefined);
 
     for (let i = 0; i < numPoints; i++) {
         const values = realizationSamplePoints.map((el) => el[i]);
@@ -55,8 +55,6 @@ export function makeSurfaceStatisticalFanchartFromRealizationSurface(
         p50[i] = calcPercentile(values, 50);
         p90[i] = calcPercentile(values, 90);
     }
-
-    const color = stratColorMap[surfaceName] || "black";
 
     return {
         color,

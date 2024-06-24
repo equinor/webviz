@@ -16,14 +16,14 @@ export function useDrilledWellboreHeadersQuery(caseUuid: string | undefined): Us
 }
 
 export function useFieldWellboreTrajectoriesQuery(
-    caseUuid: string | undefined
+    fieldIdentifier: string | undefined
 ): UseQueryResult<WellboreTrajectory_api[]> {
     return useQuery({
-        queryKey: ["getFieldWellsTrajectories", caseUuid],
-        queryFn: () => apiService.well.getFieldWellTrajectories(caseUuid ?? ""),
+        queryKey: ["getFieldWellsTrajectories", fieldIdentifier],
+        queryFn: () => apiService.well.getFieldWellTrajectories(fieldIdentifier ?? ""),
         staleTime: STALE_TIME,
         gcTime: CACHE_TIME,
-        enabled: caseUuid ? true : false,
+        enabled: fieldIdentifier ? true : false,
     });
 }
 

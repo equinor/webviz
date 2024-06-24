@@ -21,7 +21,7 @@ export type WellpicksLayerSettings = {
 export type WellPicksLayerData = ReturnType<typeof transformFormationData>;
 
 export class WellpicksLayer extends BaseLayer<WellpicksLayerSettings, WellPicksLayerData> {
-    constructor(name: string, queryClient: QueryClient) {
+    constructor(name: string) {
         const defaultSettings = {
             ensembleIdent: null,
             wellboreUuid: null,
@@ -29,7 +29,7 @@ export class WellpicksLayer extends BaseLayer<WellpicksLayerSettings, WellPicksL
             selectedUnitPicks: [],
             selectedNonUnitPicks: [],
         };
-        super(name, defaultSettings, queryClient);
+        super(name, defaultSettings);
     }
 
     protected areSettingsValid(): boolean {
@@ -64,7 +64,7 @@ export class WellpicksLayer extends BaseLayer<WellpicksLayerSettings, WellPicksL
         return data;
     }
 
-    protected async fetchData(): Promise<WellPicksLayerData> {
+    protected async fetchData(queryClient: QueryClient): Promise<WellPicksLayerData> {
         const queryKey = [
             "getWellborePicksAndStratigraphicUnits",
             this._settings.ensembleIdent?.getCaseUuid(),
@@ -72,7 +72,7 @@ export class WellpicksLayer extends BaseLayer<WellpicksLayerSettings, WellPicksL
         ];
         this.registerQueryKey(queryKey);
 
-        return this._queryClient
+        return queryClient
             .fetchQuery({
                 queryKey,
                 queryFn: () =>

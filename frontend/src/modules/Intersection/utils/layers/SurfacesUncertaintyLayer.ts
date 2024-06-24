@@ -1,4 +1,4 @@
-import { SurfaceIntersectionData_api } from "@api";
+import { SurfaceRealizationSampleValues_api } from "@api";
 import { apiService } from "@framework/ApiService";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { defaultColorPalettes } from "@framework/utils/colorPalettes";
@@ -13,9 +13,9 @@ import { BaseLayer, BoundingBox, LayerTopic } from "./BaseLayer";
 const STALE_TIME = 60 * 1000;
 const CACHE_TIME = 60 * 1000;
 
-export type SurfaceLayerSettings = {
+export type SurfacesUncertaintyLayerSettings = {
     ensembleIdent: EnsembleIdent | null;
-    realizationNum: number | null;
+    realizationNums: number[];
     polyline: {
         polylineUtmXy: number[];
         actualSectionLengths: number[];
@@ -26,13 +26,32 @@ export type SurfaceLayerSettings = {
     resolution: number;
 };
 
-export class SurfaceLayer extends BaseLayer<SurfaceLayerSettings, SurfaceIntersectionData_api[]> {
+export type SurfaceUncertaintyData = {
+    surfaceName: string;
+    cumulatedLengths: number[];
+    sampledValues: number[][];
+};
+
+function transformData(
+    cumulatedLengths: number[],
+    surfaceName: string,
+    data: SurfaceRealizationSampleValues_api[]
+): SurfaceUncertaintyData {
+    const sampledValues: number[][] = data.map((realization) => realization.sampled_values);
+    return {
+        surfaceName: surfaceName,
+        cumulatedLengths,
+        sampledValues,
+    };
+}
+
+export class SurfacesUncertaintyLayer extends BaseLayer<SurfacesUncertaintyLayerSettings, SurfaceUncertaintyData[]> {
     private _colorSet: ColorSet;
 
     constructor(name: string) {
         const defaultSettings = {
             ensembleIdent: null,
-            realizationNum: null,
+            realizationNums: [],
             polyline: {
                 polylineUtmXy: [],
                 actualSectionLengths: [],
@@ -67,11 +86,26 @@ export class SurfaceLayer extends BaseLayer<SurfaceLayerSettings, SurfaceInterse
         let maxY = Number.MIN_VALUE;
 
         for (const surface of this._data) {
-            minX = Math.min(minX, surface.cum_lengths[0]);
-            maxX = Math.max(maxX, surface.cum_lengths[surface.cum_lengths.length - 1]);
-            for (const z of surface.z_points) {
-                minY = Math.min(minY, z);
-                maxY = Math.max(maxY, z);
+            let totalLength = 0;
+            for (let i = 2; i < this._settings.polyline.polylineUtmXy.length; i += 2) {
+                totalLength += pointDistance(
+                    {
+                        x: this._settings.polyline.polylineUtmXy[i],
+                        y: this._settings.polyline.polylineUtmXy[i + 1],
+                    },
+                    {
+                        x: this._settings.polyline.polylineUtmXy[i - 2],
+                        y: this._settings.polyline.polylineUtmXy[i - 1],
+                    }
+                );
+            }
+            minX = -this._settings.extensionLength;
+            maxX = Math.max(maxX, totalLength + this._settings.extensionLength);
+            for (const real of surface.sampledValues) {
+                for (const z of real) {
+                    minY = Math.min(minY, z);
+                    maxY = Math.max(maxY, z);
+                }
             }
         }
 
@@ -97,7 +131,7 @@ export class SurfaceLayer extends BaseLayer<SurfaceLayerSettings, SurfaceInterse
             this._settings.ensembleIdent !== null &&
             this._settings.attribute !== null &&
             this._settings.surfaceNames.length > 0 &&
-            this._settings.realizationNum !== null &&
+            this._settings.realizationNums.length > 0 &&
             this._settings.polyline.polylineUtmXy.length > 0 &&
             this._settings.polyline.actualSectionLengths.length ===
                 this._settings.polyline.polylineUtmXy.length / 2 - 1 &&
@@ -106,13 +140,13 @@ export class SurfaceLayer extends BaseLayer<SurfaceLayerSettings, SurfaceInterse
     }
 
     protected doSettingsChangesRequireDataRefetch(
-        prevSettings: SurfaceLayerSettings,
-        newSettings: SurfaceLayerSettings
+        prevSettings: SurfacesUncertaintyLayerSettings,
+        newSettings: SurfacesUncertaintyLayerSettings
     ): boolean {
         return (
             !isEqual(prevSettings.surfaceNames, newSettings.surfaceNames) ||
             prevSettings.attribute !== newSettings.attribute ||
-            prevSettings.realizationNum !== newSettings.realizationNum ||
+            !isEqual(prevSettings.realizationNums, newSettings.realizationNums) ||
             !isEqual(prevSettings.ensembleIdent, newSettings.ensembleIdent) ||
             prevSettings.extensionLength !== newSettings.extensionLength ||
             !isEqual(prevSettings.polyline.polylineUtmXy, newSettings.polyline.polylineUtmXy) ||
@@ -120,8 +154,8 @@ export class SurfaceLayer extends BaseLayer<SurfaceLayerSettings, SurfaceInterse
         );
     }
 
-    protected async fetchData(queryClient: QueryClient): Promise<SurfaceIntersectionData_api[]> {
-        const promises: Promise<SurfaceIntersectionData_api>[] = [];
+    protected async fetchData(queryClient: QueryClient): Promise<SurfaceUncertaintyData[]> {
+        const promises: Promise<SurfaceUncertaintyData>[] = [];
 
         super.setBoundingBox(null);
 
@@ -170,10 +204,9 @@ export class SurfaceLayer extends BaseLayer<SurfaceLayerSettings, SurfaceInterse
         }
 
         const queryBody = {
-            cumulative_length_polyline: {
+            sample_points: {
                 x_points: xPoints,
                 y_points: yPoints,
-                cum_lengths: cumulatedHorizontalPolylineLengthArr,
             },
         };
 
@@ -182,7 +215,7 @@ export class SurfaceLayer extends BaseLayer<SurfaceLayerSettings, SurfaceInterse
                 "getSurfaceIntersection",
                 this._settings.ensembleIdent?.getCaseUuid() ?? "",
                 this._settings.ensembleIdent?.getEnsembleName() ?? "",
-                this._settings.realizationNum ?? 0,
+                this._settings.realizationNums,
                 surfaceName,
                 this._settings.attribute ?? "",
                 this._settings.polyline.polylineUtmXy,
@@ -191,20 +224,22 @@ export class SurfaceLayer extends BaseLayer<SurfaceLayerSettings, SurfaceInterse
             ];
             this.registerQueryKey(queryKey);
 
-            const promise = queryClient.fetchQuery({
-                queryKey,
-                queryFn: () =>
-                    apiService.surface.postGetSurfaceIntersection(
-                        this._settings.ensembleIdent?.getCaseUuid() ?? "",
-                        this._settings.ensembleIdent?.getEnsembleName() ?? "",
-                        this._settings.realizationNum ?? 0,
-                        surfaceName,
-                        this._settings.attribute ?? "",
-                        queryBody
-                    ),
-                staleTime: STALE_TIME,
-                gcTime: CACHE_TIME,
-            });
+            const promise = queryClient
+                .fetchQuery({
+                    queryKey,
+                    queryFn: () =>
+                        apiService.surface.postSampleSurfaceInPoints(
+                            this._settings.ensembleIdent?.getCaseUuid() ?? "",
+                            this._settings.ensembleIdent?.getEnsembleName() ?? "",
+                            surfaceName,
+                            this._settings.attribute ?? "",
+                            this._settings.realizationNums,
+                            queryBody
+                        ),
+                    staleTime: STALE_TIME,
+                    gcTime: CACHE_TIME,
+                })
+                .then((data) => transformData(cumulatedHorizontalPolylineLengthArr, surfaceName, data));
             promises.push(promise);
         }
 
@@ -212,6 +247,6 @@ export class SurfaceLayer extends BaseLayer<SurfaceLayerSettings, SurfaceInterse
     }
 }
 
-export function isSurfaceLayer(layer: BaseLayer<any, any>): layer is SurfaceLayer {
-    return layer instanceof SurfaceLayer;
+export function isSurfacesUncertaintyLayer(layer: BaseLayer<any, any>): layer is SurfacesUncertaintyLayer {
+    return layer instanceof SurfacesUncertaintyLayer;
 }

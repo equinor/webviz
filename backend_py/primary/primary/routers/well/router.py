@@ -27,14 +27,11 @@ router = APIRouter()
 async def get_drilled_wellbore_headers(
     # fmt:off
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
-    case_uuid: str = Query(description="Sumo case uuid"),
+    field_identifier: str = Query(description="Sumo field identifier"),
     # Should be field identifier
     # fmt:on
 ) -> List[schemas.WellboreHeader]:
     """Get wellbore headers for all wells in the field"""
-
-    case_inspector = CaseInspector.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid)
-    field_identifier = (await case_inspector.get_field_identifiers_async())[0]
     well_access: Union[SmdaWellAccess, MockedSmdaWellAccess]
     if field_identifier == "DROGON":
         # Handle DROGON
@@ -51,13 +48,11 @@ async def get_drilled_wellbore_headers(
 async def get_field_well_trajectories(
     # fmt:off
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
-    case_uuid: str = Query(description="Sumo case uuid"), # Should be field identifier?
+    field_identifier: str = Query(description="Sumo field identifier"),
     unique_wellbore_identifiers:List[str] =  Query(None, description="Optional subset of well names")
     # fmt:on
 ) -> List[schemas.WellboreTrajectory]:
     """Get well trajectories for field"""
-    case_inspector = CaseInspector.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid)
-    field_identifier = (await case_inspector.get_field_identifiers_async())[0]
     well_access: Union[SmdaWellAccess, MockedSmdaWellAccess]
     if field_identifier == "DROGON":
         # Handle DROGON
