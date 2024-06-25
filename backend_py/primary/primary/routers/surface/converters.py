@@ -1,13 +1,12 @@
-from typing import List
-
 import numpy as np
 import xtgeo
 from numpy.typing import NDArray
 from webviz_pkg.core_utils.b64 import b64_encode_float_array_as_float32
 
 from primary.services.smda_access.types import StratigraphicSurface
-from primary.services.sumo_access.surface_types import SurfaceMeta as SumoSurfaceMeta
-from primary.services.sumo_access.surface_types import XtgeoSurfaceIntersectionPolyline, XtgeoSurfaceIntersectionResult
+from primary.services.sumo_access.surface_types import SurfaceMetaSet
+from primary.services.utils.surface_intersect_with_polyline import XtgeoSurfaceIntersectionPolyline
+from primary.services.utils.surface_intersect_with_polyline import XtgeoSurfaceIntersectionResult
 from primary.services.utils.surface_to_float32 import surface_to_float32_numpy_array
 
 from . import schemas
@@ -52,66 +51,49 @@ def to_api_surface_data(xtgeo_surf: xtgeo.RegularSurface) -> schemas.SurfaceData
     )
 
 
-def to_api_surface_directory(
-    sumo_surface_dir: List[SumoSurfaceMeta], stratigraphical_names: List[StratigraphicSurface]
-) -> List[schemas.SurfaceMeta]:
+def to_api_surface_meta_set(
+    sumo_surf_meta_set: SurfaceMetaSet, ordered_stratigraphic_surfaces: list[StratigraphicSurface]
+) -> schemas.SurfaceMetaSet:
     """
-    Convert Sumo surface directory to API surface directory
+    Convert surface metadata directory from Sumo access layer to API surface directory
+    At the same time, we build a list of the surface names ordered by stratigraphy where the names of
+    non-stratigraphic surfaces is appended at the end of the list (in alphabetical order).
     """
-
-    surface_metas = _sort_by_stratigraphical_order(sumo_surface_dir, stratigraphical_names)
-    return surface_metas
-
-
-def _sort_by_stratigraphical_order(
-    sumo_surface_metas: List[SumoSurfaceMeta], stratigraphic_surfaces: List[StratigraphicSurface]
-) -> List[schemas.SurfaceMeta]:
-    """Sort the Sumo surface meta list by the order they appear in the stratigraphic column.
-    Non-stratigraphical surfaces are appended at the end of the list."""
-
-    surface_metas_with_official_strat_name = []
-    surface_metas_with_custom_names = []
-
-    for strat_surface in stratigraphic_surfaces:
-        for sumo_surface_meta in sumo_surface_metas:
-            if sumo_surface_meta.name == strat_surface.name:
-                surface_meta = schemas.SurfaceMeta(
-                    name=sumo_surface_meta.name,
-                    is_observation=sumo_surface_meta.is_observation,
-                    iso_date_or_interval=sumo_surface_meta.iso_date_or_interval,
-                    value_min=sumo_surface_meta.zmin,
-                    value_max=sumo_surface_meta.zmax,
-                    name_is_stratigraphic_offical=True,
-                    stratigraphic_feature=strat_surface.feature,
-                    relative_stratigraphic_level=strat_surface.relative_strat_unit_level,
-                    parent_stratigraphic_identifier=strat_surface.strat_unit_parent,
-                    stratigraphic_identifier=strat_surface.strat_unit_identifier,
-                    attribute_name=sumo_surface_meta.tagname,
-                    attribute_type=schemas.SurfaceAttributeType(sumo_surface_meta.content.value),
-                )
-                surface_metas_with_official_strat_name.append(surface_meta)
-
-    # Append non-official strat names
-    for sumo_surface_meta in sumo_surface_metas:
-        if sumo_surface_meta.name not in [s.name for s in surface_metas_with_official_strat_name]:
-            surface_meta = schemas.SurfaceMeta(
-                name=sumo_surface_meta.name,
-                is_observation=sumo_surface_meta.is_observation,
-                iso_date_or_interval=sumo_surface_meta.iso_date_or_interval,
-                value_min=sumo_surface_meta.zmin,
-                value_max=sumo_surface_meta.zmax,
-                name_is_stratigraphic_offical=False,
-                stratigraphic_feature=None,
-                relative_stratigraphic_level=None,
-                parent_stratigraphic_identifier=None,
-                stratigraphic_identifier=None,
-                attribute_name=sumo_surface_meta.tagname,
-                attribute_type=schemas.SurfaceAttributeType(sumo_surface_meta.content.value),
+    api_meta_arr: list[schemas.SurfaceMeta] = []
+    all_sumo_surf_names: set[str] = set()
+    stratigraphic_sumo_surf_names: set[str] = set()
+    for sumo_surf in sumo_surf_meta_set.surfaces:
+        api_meta_arr.append(
+            schemas.SurfaceMeta(
+                name=sumo_surf.name,
+                name_is_stratigraphic_offical=sumo_surf.is_stratigraphic,
+                attribute_name=sumo_surf.attribute_name,
+                attribute_type=schemas.SurfaceAttributeType.from_sumo_content(sumo_surf.content),
+                time_type=schemas.SurfaceTimeType(sumo_surf.time_type.value),
+                is_observation=sumo_surf.is_observation,
+                value_min=sumo_surf.global_min_val,
+                value_max=sumo_surf.global_max_val,
             )
+        )
 
-            surface_metas_with_custom_names.append(surface_meta)
+        all_sumo_surf_names.add(sumo_surf.name)
+        if sumo_surf.is_stratigraphic:
+            stratigraphic_sumo_surf_names.add(sumo_surf.name)
 
-    return surface_metas_with_official_strat_name + surface_metas_with_custom_names
+    names_ordered_by_stratigraphy: list[str] = []
+    for strat_surf in ordered_stratigraphic_surfaces:
+        if strat_surf.name in stratigraphic_sumo_surf_names:
+            names_ordered_by_stratigraphy.append(strat_surf.name)
+
+    remaining_sumo_surf_names: set[str] = all_sumo_surf_names.difference(names_ordered_by_stratigraphy)
+    remaining_names_sorted: list[str] = sorted(remaining_sumo_surf_names)
+
+    return schemas.SurfaceMetaSet(
+        surfaces=api_meta_arr,
+        time_points_iso_str=sumo_surf_meta_set.time_points_iso_str,
+        time_intervals_iso_str=sumo_surf_meta_set.time_intervals_iso_str,
+        surface_names_in_strat_order=names_ordered_by_stratigraphy + remaining_names_sorted,
+    )
 
 
 def from_api_cumulative_length_polyline_to_xtgeo_polyline(

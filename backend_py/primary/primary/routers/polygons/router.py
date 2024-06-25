@@ -8,7 +8,7 @@ from primary.auth.auth_helper import AuthHelper
 from primary.services.smda_access.mocked_drogon_smda_access import _mocked_stratigraphy_access
 from primary.services.smda_access.stratigraphy_access import StratigraphyAccess
 from primary.services.smda_access.stratigraphy_utils import sort_stratigraphic_names_by_hierarchy
-from primary.services.sumo_access._helpers import SumoCase
+from primary.services.sumo_access.case_inspector import CaseInspector
 from primary.services.sumo_access.polygons_access import PolygonsAccess
 from primary.services.utils.authenticated_user import AuthenticatedUser
 
@@ -28,11 +28,13 @@ async def get_polygons_directory(
     """
     Get a directory of polygons in a Sumo ensemble
     """
-    access = await PolygonsAccess.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
+    access = await PolygonsAccess.from_case_uuid_async(
+        authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
+    )
     polygons_dir = await access.get_polygons_directory_async()
 
-    case_inspector = await SumoCase.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid)
-    strat_column_identifier = await case_inspector.get_stratigraphic_column_identifier()
+    case_inspector = CaseInspector.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid)
+    strat_column_identifier = await case_inspector.get_stratigraphic_column_identifier_async()
     strat_access: Union[StratigraphyAccess, _mocked_stratigraphy_access.StratigraphyAccess]
 
     if strat_column_identifier == "DROGON_HAS_NO_STRATCOLUMN":
@@ -56,7 +58,9 @@ async def get_polygons_data(
 ) -> List[schemas.PolygonData]:
     timer = PerfTimer()
 
-    access = await PolygonsAccess.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
+    access = await PolygonsAccess.from_case_uuid_async(
+        authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
+    )
     xtgeo_poly = await access.get_polygons_async(real_num=realization_num, name=name, attribute=attribute)
 
     if not xtgeo_poly:

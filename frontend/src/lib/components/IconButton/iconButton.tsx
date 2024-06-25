@@ -35,8 +35,8 @@ export const IconButton = React.forwardRef(
                                 "p-1",
                                 "focus:outline-none",
                                 {
-                                    "w-6 h-6": size === "small",
-                                    "w-9 h-9": size === "medium" || !size,
+                                    "w-4 h-4": size === "small",
+                                    "w-6 h-6": size === "medium" || !size,
                                     "w-12 h-12": size === "large",
                                 }
                             ),

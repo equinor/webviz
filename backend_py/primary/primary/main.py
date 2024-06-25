@@ -19,6 +19,7 @@ from primary.routers.general import router as general_router
 from primary.routers.graph.router import router as graph_router
 from primary.routers.grid3d.router import router as grid3d_router
 from primary.routers.grid3d.router_vtk import router as grid3d_router_vtk
+from primary.routers.group_tree.router import router as group_tree_router
 from primary.routers.inplace_volumetrics.router import router as inplace_volumetrics_router
 from primary.routers.observations.router import router as observations_router
 from primary.routers.parameters.router import router as parameters_router
@@ -45,6 +46,8 @@ setup_normal_log_levels()
 # logging.getLogger().setLevel(logging.DEBUG)
 logging.getLogger("primary.services.sumo_access").setLevel(logging.DEBUG)
 logging.getLogger("primary.services.user_session_manager").setLevel(logging.DEBUG)
+logging.getLogger("primary.services.user_grid3d_service").setLevel(logging.DEBUG)
+logging.getLogger("primary.routers.grid3d").setLevel(logging.DEBUG)
 logging.getLogger("primary.routers.dev").setLevel(logging.DEBUG)
 
 LOGGER = logging.getLogger(__name__)
@@ -77,6 +80,7 @@ app.include_router(parameters_router, prefix="/parameters", tags=["parameters"])
 app.include_router(correlations_router, prefix="/correlations", tags=["correlations"])
 app.include_router(grid3d_router, prefix="/grid3d", tags=["grid3d"])
 app.include_router(grid3d_router_vtk, prefix="/grid3d", tags=["grid3d"])
+app.include_router(group_tree_router, prefix="/group_tree", tags=["group_tree"])
 app.include_router(pvt_router, prefix="/pvt", tags=["pvt"])
 app.include_router(well_completions_router, prefix="/well_completions", tags=["well_completions"])
 app.include_router(well_router, prefix="/well", tags=["well"])

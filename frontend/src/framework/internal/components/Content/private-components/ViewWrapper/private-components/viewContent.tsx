@@ -1,7 +1,12 @@
 import React from "react";
 
 import { ImportState } from "@framework/Module";
-import { ModuleInstance, ModuleInstanceState } from "@framework/ModuleInstance";
+import {
+    ModuleInstance,
+    ModuleInstanceState,
+    ModuleInstanceTopic,
+    useModuleInstanceTopicValue,
+} from "@framework/ModuleInstance";
 import { StatusSource } from "@framework/ModuleInstanceStatusController";
 import { Workbench } from "@framework/Workbench";
 import { DebugProfiler } from "@framework/internal/components/DebugProfiler";
@@ -14,52 +19,19 @@ import { Provider } from "jotai";
 import { CrashView } from "./crashView";
 
 type ViewContentProps = {
-    moduleInstance: ModuleInstance<any, any>;
+    moduleInstance: ModuleInstance<any, any, any, any>;
     workbench: Workbench;
 };
 
 export const ViewContent = React.memo((props: ViewContentProps) => {
-    const [importState, setImportState] = React.useState<ImportState>(props.moduleInstance.getImportState());
-    const [moduleInstanceState, setModuleInstanceState] = React.useState<ModuleInstanceState>(
-        ModuleInstanceState.INITIALIZING
-    );
+    const importState = useModuleInstanceTopicValue(props.moduleInstance, ModuleInstanceTopic.IMPORT_STATE);
+    const moduleInstanceState = useModuleInstanceTopicValue(props.moduleInstance, ModuleInstanceTopic.STATE);
 
     const atomStore = props.moduleInstance.getAtomStore();
 
-    React.useEffect(
-        function handleMount() {
-            setModuleInstanceState(props.moduleInstance.getModuleInstanceState());
-            setImportState(props.moduleInstance.getImportState());
-
-            function handleModuleInstanceImportStateChange() {
-                setImportState(props.moduleInstance.getImportState());
-            }
-
-            function handleModuleInstanceStateChange() {
-                setModuleInstanceState(props.moduleInstance.getModuleInstanceState());
-            }
-
-            const unsubscribeFromImportStateChange = props.moduleInstance.subscribeToImportStateChange(
-                handleModuleInstanceImportStateChange
-            );
-
-            const unsubscribeFromModuleInstanceStateChange = props.moduleInstance.subscribeToModuleInstanceStateChange(
-                handleModuleInstanceStateChange
-            );
-
-            return function handleUnmount() {
-                unsubscribeFromImportStateChange();
-                unsubscribeFromModuleInstanceStateChange();
-            };
-        },
-        [props.moduleInstance]
-    );
-
     const handleModuleInstanceReload = React.useCallback(
         function handleModuleInstanceReload() {
-            props.moduleInstance.reset().then(() => {
-                setModuleInstanceState(props.moduleInstance.getModuleInstanceState());
-            });
+            props.moduleInstance.reset();
         },
         [props.moduleInstance]
     );

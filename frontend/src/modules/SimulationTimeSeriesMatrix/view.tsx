@@ -91,13 +91,22 @@ export const View = ({ viewContext, workbenchSession, workbenchSettings }: Modul
     });
 
     // Queries
-    const vectorDataQueries = useVectorDataQueries(vectorSpecifications, resampleFrequency, true);
+    const doFetchIndividualRealizationsData =
+        visualizationMode === VisualizationMode.INDIVIDUAL_REALIZATIONS ||
+        visualizationMode === VisualizationMode.STATISTICS_AND_REALIZATIONS;
+    const doFetchStatisticsData =
+        visualizationMode === VisualizationMode.STATISTICAL_FANCHART ||
+        visualizationMode === VisualizationMode.STATISTICAL_LINES ||
+        visualizationMode === VisualizationMode.STATISTICS_AND_REALIZATIONS;
+    const vectorDataQueries = useVectorDataQueries(
+        vectorSpecifications,
+        resampleFrequency,
+        doFetchIndividualRealizationsData
+    );
     const vectorStatisticsQueries = useStatisticalVectorDataQueries(
         vectorSpecifications,
         resampleFrequency,
-        visualizationMode === VisualizationMode.STATISTICAL_FANCHART ||
-            visualizationMode === VisualizationMode.STATISTICAL_LINES ||
-            visualizationMode === VisualizationMode.STATISTICS_AND_REALIZATIONS
+        doFetchStatisticsData
     );
 
     const vectorSpecificationsWithHistoricalData = vectorSpecifications?.filter((vec) => vec.hasHistoricalVector);
@@ -194,6 +203,7 @@ export const View = ({ viewContext, workbenchSession, workbenchSettings }: Modul
         visualizationMode === VisualizationMode.INDIVIDUAL_REALIZATIONS &&
         parameterIdent !== null &&
         selectedEnsembles.some((ensemble) => ensemble.getParameters().hasParameter(parameterIdent));
+
     const ensemblesParameterColoring = doColorByParameter
         ? new EnsemblesContinuousParameterColoring(selectedEnsembles, parameterIdent, parameterColorScale)
         : null;

@@ -1,7 +1,7 @@
 from typing import List, Optional
 
 from webviz_pkg.core_utils.perf_timer import PerfTimer
-from ..types import WellBorePick
+from ..types import WellborePick
 from ._get_request import get
 
 
@@ -11,7 +11,7 @@ async def get_wellbore_picks_for_field(
     pick_identifier: str,
     interpreter: str = "STAT",
     obs_no: Optional[int] = None,
-) -> List[WellBorePick]:
+) -> List[WellborePick]:
     """
     Returns wellbore picks for a given identifier(formation top/base)
     for all wells in a field
@@ -28,6 +28,6 @@ async def get_wellbore_picks_for_field(
 
     results = await get(access_token=access_token, endpoint=endpoint, params=params)
     timer = PerfTimer()
-    picks = [WellBorePick(**result) for result in results]
+    picks = [WellborePick(**result) for result in results]
     print(f"TIME SMDA validate wellbore picks took {timer.lap_s():.2f} seconds")
     return picks

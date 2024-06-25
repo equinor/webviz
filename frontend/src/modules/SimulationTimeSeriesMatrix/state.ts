@@ -4,6 +4,7 @@ import { ParameterIdent } from "@framework/EnsembleParameters";
 
 export interface VectorSpec {
     ensembleIdent: EnsembleIdent;
+    color: string | null;
     vectorName: string;
     hasHistoricalVector: boolean;
     selectedIndividualRealizations?: number[] | null;

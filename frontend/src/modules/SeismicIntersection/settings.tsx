@@ -5,9 +5,9 @@ import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { ModuleSettingsProps } from "@framework/Module";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
 import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
-import { Wellbore } from "@framework/Wellbore";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { EnsembleDropdown } from "@framework/components/EnsembleDropdown";
+import { Wellbore } from "@framework/types/wellbore";
 import { fixupEnsembleIdent, maybeAssignFirstSyncedEnsemble } from "@framework/utils/ensembleUiHelpers";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
@@ -20,8 +20,8 @@ import { Select, SelectOption } from "@lib/components/Select";
 import { useValidArrayState } from "@lib/hooks/useValidArrayState";
 import { useValidState } from "@lib/hooks/useValidState";
 import { SurfaceDirectory, SurfaceTimeType } from "@modules/_shared/Surface";
-import { useSurfaceDirectoryQuery } from "@modules/_shared/Surface";
-import { useWellHeadersQuery } from "@modules/_shared/WellBore";
+import { useRealizationSurfacesMetadataQuery } from "@modules/_shared/Surface";
+import { useDrilledWellboreHeadersQuery } from "@modules/_shared/WellBore";
 
 import { isEqual } from "lodash";
 
@@ -103,12 +103,12 @@ export function Settings({ settingsContext, workbenchSession, workbenchServices 
     }
 
     // Queries
-    const wellHeadersQuery = useWellHeadersQuery(computedEnsembleIdent?.getCaseUuid());
+    const wellHeadersQuery = useDrilledWellboreHeadersQuery(computedEnsembleIdent?.getCaseUuid());
     const seismicCubeMetaListQuery = useSeismicCubeMetaListQuery(
         computedEnsembleIdent?.getCaseUuid(),
         computedEnsembleIdent?.getEnsembleName()
     );
-    const surfaceDirectoryQuery = useSurfaceDirectoryQuery(
+    const surfaceMetadataQuery = useRealizationSurfacesMetadataQuery(
         computedEnsembleIdent?.getCaseUuid(),
         computedEnsembleIdent?.getEnsembleName()
     );
@@ -118,14 +118,14 @@ export function Settings({ settingsContext, workbenchSession, workbenchServices 
     if (seismicCubeMetaListQuery.isError) {
         statusWriter.addError("Error loading seismic cube meta list");
     }
-    if (surfaceDirectoryQuery.isError) {
-        statusWriter.addError("Error loading surface directory");
+    if (surfaceMetadataQuery.isError) {
+        statusWriter.addError("Error loading metadata for surfaces");
     }
 
     if (seismicCubeMetaListQuery.data && seismicCubeMetaListQuery.data.length === 0) {
         statusWriter.addWarning("No seismic cubes found for ensemble");
     }
-    if (surfaceDirectoryQuery.data && surfaceDirectoryQuery.data.length === 0) {
+    if (surfaceMetadataQuery.data && surfaceMetadataQuery.data.surfaces.length === 0) {
         statusWriter.addWarning("No surfaces found for ensemble");
     }
 
@@ -134,8 +134,8 @@ export function Settings({ settingsContext, workbenchSession, workbenchServices 
     const availableWellboreList: Wellbore[] =
         wellHeadersQuery.data?.map((wellbore) => ({
             type: WELLBORE_TYPE,
-            uwi: wellbore.unique_wellbore_identifier,
-            uuid: wellbore.wellbore_uuid,
+            uwi: wellbore.uniqueWellboreIdentifier,
+            uuid: wellbore.wellboreUuid,
         })) || [];
     const computedWellboreAddress = fixupSyncedOrSelectedOrFirstWellbore(
         syncedWellBore || null,
@@ -148,21 +148,17 @@ export function Settings({ settingsContext, workbenchSession, workbenchServices 
     }
 
     // Create surface directory (depth and time to match attributes for seismic cube)
-    const surfaceDirectory = new SurfaceDirectory(
-        surfaceDirectoryQuery.data
-            ? {
-                  surfaceMetas: surfaceDirectoryQuery.data,
-                  timeType: SURFACE_TIME_TYPE,
-                  includeAttributeTypes: [SurfaceAttributeType_api.DEPTH, SurfaceAttributeType_api.TIME],
-              }
-            : null
-    );
+    const surfaceDirectory = new SurfaceDirectory({
+        realizationMetaSet: surfaceMetadataQuery.data,
+        timeType: SURFACE_TIME_TYPE,
+        includeAttributeTypes: [SurfaceAttributeType_api.DEPTH, SurfaceAttributeType_api.TIME],
+    });
 
     // Get attributes for available surfaces and set valid state hook
     let computedSurfaceAttributes: string[] = fetchedSurfaceAttributes;
     const noSurfaceNameFilter = null; // No filter for surface attributes
     const candidateSurfaceAttributes = surfaceDirectory.getAttributeNames(noSurfaceNameFilter);
-    if (surfaceDirectoryQuery.data && !isEqual(computedSurfaceAttributes, candidateSurfaceAttributes)) {
+    if (surfaceMetadataQuery.data && !isEqual(computedSurfaceAttributes, candidateSurfaceAttributes)) {
         computedSurfaceAttributes = candidateSurfaceAttributes;
         setFetchedSurfaceAttributes(candidateSurfaceAttributes);
     }
@@ -174,7 +170,7 @@ export function Settings({ settingsContext, workbenchSession, workbenchServices 
     // Find surface names which has selected attribute and set valid state hook
     let computedSurfaceNames: string[] = fetchedSurfaceNames;
     const candidateSurfaceNames = surfaceDirectory.getSurfaceNames(selectedSurfaceAttribute);
-    if (surfaceDirectoryQuery.data && !isEqual(computedSurfaceNames, candidateSurfaceNames)) {
+    if (surfaceMetadataQuery.data && !isEqual(computedSurfaceNames, candidateSurfaceNames)) {
         computedSurfaceNames = candidateSurfaceNames;
         setFetchedSurfaceNames(candidateSurfaceNames);
     }
@@ -405,8 +401,8 @@ export function Settings({ settingsContext, workbenchSession, workbenchServices 
             </CollapsibleGroup>
             <CollapsibleGroup title="Surface specifications">
                 <QueryStateWrapper
-                    queryResult={surfaceDirectoryQuery}
-                    errorComponent={"Error loading surface directory"}
+                    queryResult={surfaceMetadataQuery}
+                    errorComponent={"Error loading metadata for surfaces"}
                     loadingComponent={<CircularProgress />}
                 >
                     <div className="flex flex-col gap-4 overflow-y-auto">

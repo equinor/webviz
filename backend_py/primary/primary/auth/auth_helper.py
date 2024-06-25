@@ -145,13 +145,6 @@ class AuthHelper:
         if time.time() > expiration_time - 60:
             # It seems we can get a new ID token by passing in our application/client ID
             token_dict = cca.acquire_token_silent(scopes=[config.CLIENT_ID], account=accounts[0])
-
-            # print("..................")
-            # decoded_id_token = _decode_jwt(token_dict["id_token"])
-            # print(f"{decoded_id_token=}")
-            # print(f"{token_dict['id_token_claims']=}")
-            # print("..................")
-
             id_token_claims = token_dict.get("id_token_claims") if token_dict else None
             request_with_session.session["logged_in_user_id_token_claims"] = id_token_claims
             if not id_token_claims:
@@ -160,22 +153,17 @@ class AuthHelper:
         timer.lap_ms()
 
         token_dict = cca.acquire_token_silent(scopes=config.RESOURCE_SCOPES_DICT["sumo"], account=accounts[0])
-        # print("---------------------SUMO------------------------")
-        # print(token_dict)
-        # print("------")
-        # print(_decode_jwt(token_dict["access_token"]))
-        # print("-------------------------------------------------")
         sumo_token = token_dict.get("access_token") if token_dict else None
 
         smda_token = None
         if config.RESOURCE_SCOPES_DICT.get("smda"):
             token_dict = cca.acquire_token_silent(scopes=config.RESOURCE_SCOPES_DICT["smda"], account=accounts[0])
-            # print("---------------------SMDA------------------------")
-            # print(token_dict)
-            # print("------")
-            # print(_decode_jwt(token_dict["access_token"]))
-            # print("-------------------------------------------------")
             smda_token = token_dict.get("access_token") if token_dict else None
+
+        ssdl_token = None
+        if config.RESOURCE_SCOPES_DICT.get("ssdl"):
+            token_dict = cca.acquire_token_silent(scopes=config.RESOURCE_SCOPES_DICT["ssdl"], account=accounts[0])
+            ssdl_token = token_dict.get("access_token") if token_dict else None
 
         token_dict = cca.acquire_token_silent(scopes=config.GRAPH_SCOPES, account=accounts[0])
         graph_token = token_dict.get("access_token") if token_dict else None
@@ -198,6 +186,7 @@ class AuthHelper:
                 "graph_access_token": graph_token,
                 "sumo_access_token": sumo_token,
                 "smda_access_token": smda_token,
+                "ssdl_access_token": ssdl_token,
             },
         )
 

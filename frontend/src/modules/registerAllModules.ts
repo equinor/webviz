@@ -1,11 +1,12 @@
 import { isDevMode } from "@lib/utils/devMode";
 
+import "./3DViewer/registerModule";
 import "./DistributionPlot/registerModule";
+import "./FlowNetwork/registerModule";
+// import "./Grid3DVTK/registerModule";
 import "./InplaceVolumetrics/registerModule";
 import "./InplaceVolumetricsTable/registerModule";
-// import "./Grid3D/registerModule";
-// import "./Grid3DIntersection/registerModule";
-// import "./Grid3DVTK/registerModule";
+import "./Intersection/registerModule";
 import "./Map/registerModule";
 import "./ParameterDistributionMatrix/registerModule";
 import "./Pvt/registerModule";
@@ -16,7 +17,6 @@ import "./SimulationTimeSeriesMatrix/registerModule";
 import "./SimulationTimeSeriesSensitivity/registerModule";
 import "./StructuralUncertaintyIntersection/registerModule";
 import "./SubsurfaceMap/registerModule";
-import "./TimeSeriesParameterDistribution/registerModule";
 import "./TornadoChart/registerModule";
 import "./WellCompletions/registerModule";
 

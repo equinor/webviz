@@ -1,9 +1,9 @@
 from typing import List
 
-from primary.services.smda_access.types import WellBorePick
+from primary.services.smda_access.types import WellborePick
 
-mocked_wellbore_picks: List[WellBorePick] = [
-    WellBorePick(
+mocked_wellbore_picks: List[WellborePick] = [
+    WellborePick(
         northing=462480.0,
         easting=5934232.0,
         tvd=1645.44,
@@ -16,7 +16,7 @@ mocked_wellbore_picks: List[WellBorePick] = [
         depth_reference_point="RKB",
         md_unit="m",
     ),
-    WellBorePick(
+    WellborePick(
         northing=462480.0,
         easting=5934232.0,
         tvd=0.0,
@@ -29,7 +29,7 @@ mocked_wellbore_picks: List[WellBorePick] = [
         depth_reference_point="RKB",
         md_unit="m",
     ),
-    WellBorePick(
+    WellborePick(
         northing=462480.0,
         easting=5934232.0,
         tvd=1620.08,
@@ -42,7 +42,7 @@ mocked_wellbore_picks: List[WellBorePick] = [
         depth_reference_point="RKB",
         md_unit="m",
     ),
-    WellBorePick(
+    WellborePick(
         northing=462480.0,
         easting=5934232.0,
         tvd=1600.57,
@@ -55,7 +55,7 @@ mocked_wellbore_picks: List[WellBorePick] = [
         depth_reference_point="RKB",
         md_unit="m",
     ),
-    WellBorePick(
+    WellborePick(
         northing=462480.0,
         easting=5934232.0,
         tvd=1630.44,
@@ -68,7 +68,7 @@ mocked_wellbore_picks: List[WellBorePick] = [
         depth_reference_point="RKB",
         md_unit="m",
     ),
-    WellBorePick(
+    WellborePick(
         northing=463256.9114,
         easting=5930542.2944,
         tvd=0.0,
@@ -81,7 +81,7 @@ mocked_wellbore_picks: List[WellBorePick] = [
         depth_reference_point="RKB",
         md_unit="m",
     ),
-    WellBorePick(
+    WellborePick(
         northing=464220.0686875976,
         easting=5932289.733486914,
         tvd=1641.19,
@@ -94,7 +94,7 @@ mocked_wellbore_picks: List[WellBorePick] = [
         depth_reference_point="RKB",
         md_unit="m",
     ),
-    WellBorePick(
+    WellborePick(
         northing=463849.68880478514,
         easting=5931573.151211523,
         tvd=1628.2,
@@ -107,7 +107,7 @@ mocked_wellbore_picks: List[WellBorePick] = [
         depth_reference_point="RKB",
         md_unit="m",
     ),
-    WellBorePick(
+    WellborePick(
         northing=464220.0686875976,
         easting=5932289.733486914,
         tvd=1641.19,
@@ -120,7 +120,7 @@ mocked_wellbore_picks: List[WellBorePick] = [
         depth_reference_point="RKB",
         md_unit="m",
     ),
-    WellBorePick(
+    WellborePick(
         northing=463256.9114,
         easting=5930542.2944,
         tvd=1828.2,
@@ -133,7 +133,7 @@ mocked_wellbore_picks: List[WellBorePick] = [
         depth_reference_point="RKB",
         md_unit="m",
     ),
-    WellBorePick(
+    WellborePick(
         northing=464220.0686875976,
         easting=5932289.733486914,
         tvd=1841.19,
@@ -146,7 +146,7 @@ mocked_wellbore_picks: List[WellBorePick] = [
         depth_reference_point="RKB",
         md_unit="m",
     ),
-    WellBorePick(
+    WellborePick(
         northing=463849.68880478514,
         easting=5931573.151211523,
         tvd=1628.2,
@@ -159,7 +159,7 @@ mocked_wellbore_picks: List[WellBorePick] = [
         depth_reference_point="RKB",
         md_unit="m",
     ),
-    WellBorePick(
+    WellborePick(
         northing=464220.0686875976,
         easting=5932289.733486914,
         tvd=1641.19,

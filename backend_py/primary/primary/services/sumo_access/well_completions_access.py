@@ -1,8 +1,9 @@
 from typing import Dict, List, Optional, Set, Tuple
 
 import pandas as pd
+from fmu.sumo.explorer.objects import Case
 
-from ._helpers import SumoEnsemble
+from ._helpers import create_sumo_client, create_sumo_case_async
 
 from .well_completions_types import (
     Completions,
@@ -15,12 +16,24 @@ from .well_completions_types import (
 )
 
 
-class WellCompletionsAccess(SumoEnsemble):
+class WellCompletionsAccess:
     """
     Class for accessing and retrieving well completions data
     """
 
     TAGNAME = "wellcompletiondata"
+
+    def __init__(self, case: Case, iteration_name: str):
+        self._case: Case = case
+        self._iteration_name: str = iteration_name
+
+    @classmethod
+    async def from_case_uuid_async(
+        cls, access_token: str, case_uuid: str, iteration_name: str
+    ) -> "WellCompletionsAccess":
+        sumo_client = create_sumo_client(access_token)
+        case: Case = await create_sumo_case_async(client=sumo_client, case_uuid=case_uuid, want_keepalive_pit=False)
+        return WellCompletionsAccess(case=case, iteration_name=iteration_name)
 
     def get_well_completions_data(self, realization: Optional[int]) -> Optional[WellCompletionsData]:
         """Get well completions data for case and iteration"""
@@ -30,7 +43,7 @@ class WellCompletionsAccess(SumoEnsemble):
             well_completions_tables = self._case.tables.filter(
                 tagname=WellCompletionsAccess.TAGNAME, realization=realization, iteration=self._iteration_name
             )
-            well_completions_df = well_completions_tables[0].to_pandas if len(well_completions_tables) > 0 else None
+            well_completions_df = well_completions_tables[0].to_pandas() if len(well_completions_tables) > 0 else None
             if well_completions_df is None:
                 return None
 
@@ -46,8 +59,8 @@ class WellCompletionsAccess(SumoEnsemble):
             return None
 
         expected_common_columns = set(["WELL", "DATE", "ZONE", "REAL"])
-        first_df = well_completions_tables[0].to_pandas
-        second_df = well_completions_tables[1].to_pandas
+        first_df = well_completions_tables[0].to_pandas()
+        second_df = well_completions_tables[1].to_pandas()
 
         # Validate columns and ensure equal column content in both tables
         self._validate_common_dataframe_columns(expected_common_columns, first_df, second_df)

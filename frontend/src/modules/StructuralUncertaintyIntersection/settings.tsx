@@ -5,9 +5,9 @@ import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { ModuleSettingsProps } from "@framework/Module";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
 import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
-import { Wellbore } from "@framework/Wellbore";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { EnsembleDropdown } from "@framework/components/EnsembleDropdown";
+import { Wellbore } from "@framework/types/wellbore";
 import { fixupEnsembleIdent, maybeAssignFirstSyncedEnsemble } from "@framework/utils/ensembleUiHelpers";
 import { Checkbox } from "@lib/components/Checkbox";
 import { CircularProgress } from "@lib/components/CircularProgress";
@@ -19,8 +19,8 @@ import { Select } from "@lib/components/Select";
 import { useValidState } from "@lib/hooks/useValidState";
 import { ColorSet } from "@lib/utils/ColorSet";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-import { SurfaceDirectory, SurfaceTimeType, useSurfaceDirectoryQuery } from "@modules/_shared/Surface";
-import { useWellHeadersQuery } from "@modules/_shared/WellBore";
+import { SurfaceDirectory, SurfaceTimeType, useRealizationSurfacesMetadataQuery } from "@modules/_shared/Surface";
+import { useDrilledWellboreHeadersQuery } from "@modules/_shared/WellBore";
 
 import { isEqual } from "lodash";
 
@@ -78,16 +78,16 @@ export function Settings({
         setSelectedReals(availableReals.map((real) => real));
     }
     // Queries
-    const wellHeadersQuery = useWellHeadersQuery(computedEnsembleIdent?.getCaseUuid());
-    const surfaceDirectoryQuery = useSurfaceDirectoryQuery(
+    const wellHeadersQuery = useDrilledWellboreHeadersQuery(computedEnsembleIdent?.getCaseUuid());
+    const surfaceMetaQuery = useRealizationSurfacesMetadataQuery(
         computedEnsembleIdent?.getCaseUuid(),
         computedEnsembleIdent?.getEnsembleName()
     );
     if (wellHeadersQuery.isError) {
         statusWriter.addError("Error loading well headers");
     }
-    if (surfaceDirectoryQuery.isError) {
-        statusWriter.addError("Error loading surface directory");
+    if (surfaceMetaQuery.isError) {
+        statusWriter.addError("Error loading metadata for surfaces");
     }
 
     // Handling well headers query
@@ -95,8 +95,8 @@ export function Settings({
     const availableWellboreList: Wellbore[] =
         wellHeadersQuery.data?.map((wellbore) => ({
             type: wellboreType,
-            uwi: wellbore.unique_wellbore_identifier,
-            uuid: wellbore.wellbore_uuid,
+            uwi: wellbore.uniqueWellboreIdentifier,
+            uuid: wellbore.wellboreUuid,
         })) || [];
     const computedWellboreAddress = fixupSyncedOrSelectedOrFirstWellbore(
         syncedWellBore || null,
@@ -108,9 +108,9 @@ export function Settings({
         setSelectedWellboreAddress(computedWellboreAddress);
     }
 
-    const surfaceDirectory = surfaceDirectoryQuery.data
+    const surfaceDirectory = surfaceMetaQuery.data
         ? new SurfaceDirectory({
-              surfaceMetas: surfaceDirectoryQuery.data,
+              realizationMetaSet: surfaceMetaQuery.data,
               timeType: SurfaceTimeType.None,
               includeAttributeTypes: [SurfaceAttributeType_api.DEPTH],
           })
@@ -277,7 +277,7 @@ export function Settings({
             </CollapsibleGroup>
             <CollapsibleGroup title="Surfaces" expanded>
                 <QueryStateWrapper
-                    queryResult={surfaceDirectoryQuery}
+                    queryResult={surfaceMetaQuery}
                     errorComponent={"Error loading seismic directory"}
                     loadingComponent={<CircularProgress />}
                 >

@@ -23,6 +23,10 @@ export type Rect2D = {
 export const ORIGIN = Object.freeze({ x: 0, y: 0 });
 export const MANHATTAN_LENGTH = 13.11;
 
+export function arrayPointToPoint2D(arrayPoint: number[] | [number, number]): Point2D {
+    return { x: arrayPoint[0], y: arrayPoint[1] };
+}
+
 export function pointerEventToPoint(event: PointerEvent): Point2D {
     return { x: event.pageX, y: event.pageY };
 }
@@ -45,6 +49,11 @@ export function vectorSum(vector1: Vector2D, vector2: Vector2D): Vector2D {
 
 export function vectorAddScalarToComponents(vector: Vector2D, scalar: number): Vector2D {
     return { x: vector.x + scalar, y: vector.y + scalar };
+}
+
+export function vectorNormalize(vector: Vector2D): Vector2D {
+    const length = vectorLength(vector);
+    return { x: vector.x / length, y: vector.y / length };
 }
 
 export function pointMultiplyComponentsWithIndividualScalars(

@@ -22,7 +22,7 @@ async def get_table_definitions(
 ) -> List[schemas.InplaceVolumetricsTableDefinition]:
     """Get the volumetric tables definitions for a given ensemble."""
 
-    access = await InplaceVolumetricsAccess.from_case_uuid(
+    access = await InplaceVolumetricsAccess.from_case_uuid_async(
         authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
     )
     table_names = await access.get_inplace_volumetrics_table_definitions_async()

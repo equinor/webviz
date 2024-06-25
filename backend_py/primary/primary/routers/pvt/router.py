@@ -26,7 +26,9 @@ async def table_data(
 ) -> List[PvtData]:
     """Get pvt table data for a given Sumo ensemble and realization"""
 
-    access = await TableAccess.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
+    access = await TableAccess.from_case_uuid_async(
+        authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
+    )
 
     # Get all table schemas for a given realization and find the pvt table
     table_schemas = await access.get_table_schemas_single_realization(realization=realization)
@@ -57,7 +59,9 @@ async def realizations_tables_are_equal(
 ) -> bool:
     """Check if all realizations has the same pvt table"""
 
-    access = await TableAccess.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
+    access = await TableAccess.from_case_uuid_async(
+        authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
+    )
 
     # Get all table schemas for a given realization and find the pvt table
     table_schemas = await access.get_table_schemas_single_realization(realization=0)

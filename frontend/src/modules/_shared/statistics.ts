@@ -7,7 +7,7 @@ export const computeQuantile = (data: number[], quantile: number): number => {
     if (data.length === 0) {
         return 0;
     }
-    if (data.length === 0) {
+    if (data.length === 1) {
         return data[0];
     }
     const sortedValues = data.sort((a, b) => a - b);
@@ -24,4 +24,4 @@ export const computeQuantile = (data: number[], quantile: number): number => {
         const fraction = rank - lowerRank;
         return sortedValues[lowerRank] * (1 - fraction) + sortedValues[lowerRank + 1] * fraction;
     }
-}
+};

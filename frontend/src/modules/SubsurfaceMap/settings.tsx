@@ -17,14 +17,9 @@ import { QueryStateWrapper } from "@lib/components/QueryStateWrapper";
 import { RadioGroup } from "@lib/components/RadioGroup";
 import { Select, SelectOption } from "@lib/components/Select";
 import { PolygonsAddress, PolygonsDirectory, usePolygonsDirectoryQuery } from "@modules/_shared/Polygons";
-import {
-    SurfaceAddress,
-    SurfaceAddressFactory,
-    SurfaceDirectory,
-    SurfaceTimeType,
-    useSurfaceDirectoryQuery,
-} from "@modules/_shared/Surface";
-import { useWellHeadersQuery } from "@modules/_shared/WellBore/queryHooks";
+import { SurfaceAddress, SurfaceAddressFactory, SurfaceDirectory, SurfaceTimeType } from "@modules/_shared/Surface";
+import { useRealizationSurfacesMetadataQuery } from "@modules/_shared/Surface";
+import { useDrilledWellboreHeadersQuery } from "@modules/_shared/WellBore/queryHooks";
 
 import { AggregationSelector } from "./components/AggregationSelector";
 import { state } from "./state";
@@ -91,19 +86,15 @@ export function Settings({ settingsContext, workbenchSession, workbenchServices 
         setSelectedEnsembleIdent(computedEnsembleIdent);
     }
     // Mesh surface
-    const meshSurfDirQuery = useSurfaceDirectoryQuery(
+    const meshSurfMetaQuery = useRealizationSurfacesMetadataQuery(
         computedEnsembleIdent?.getCaseUuid(),
         computedEnsembleIdent?.getEnsembleName()
     );
-    const meshSurfaceDirectory = new SurfaceDirectory(
-        meshSurfDirQuery.data
-            ? {
-                  surfaceMetas: meshSurfDirQuery.data,
-                  timeType: SurfaceTimeType.None,
-                  includeAttributeTypes: [SurfaceAttributeType_api.DEPTH],
-              }
-            : null
-    );
+    const meshSurfaceDirectory = new SurfaceDirectory({
+        realizationMetaSet: meshSurfMetaQuery.data,
+        timeType: SurfaceTimeType.None,
+        includeAttributeTypes: [SurfaceAttributeType_api.DEPTH],
+    });
 
     const fixedMeshSurfSpec = fixupSurface(
         meshSurfaceDirectory,
@@ -136,21 +127,15 @@ export function Settings({ settingsContext, workbenchSession, workbenchServices 
         .map((attr) => ({ value: attr, label: attr }));
 
     // Property surface
-    // TODO add timestamp and time interval surfaces
-    const propertySurfDirQuery = useSurfaceDirectoryQuery(
+    const propertySurfMetaQuery = useRealizationSurfacesMetadataQuery(
         computedEnsembleIdent?.getCaseUuid(),
         computedEnsembleIdent?.getEnsembleName()
     );
-
-    const propertySurfaceDirectory = new SurfaceDirectory(
-        propertySurfDirQuery.data
-            ? {
-                  surfaceMetas: propertySurfDirQuery.data,
-                  timeType: timeType,
-                  excludeAttributeTypes: [SurfaceAttributeType_api.DEPTH],
-              }
-            : null
-    );
+    const propertySurfaceDirectory = new SurfaceDirectory({
+        realizationMetaSet: propertySurfMetaQuery.data,
+        timeType: timeType,
+        excludeAttributeTypes: [SurfaceAttributeType_api.DEPTH],
+    });
 
     const fixedPropertySurfSpec = fixupSurface(
         propertySurfaceDirectory,
@@ -189,15 +174,13 @@ export function Settings({ settingsContext, workbenchSession, workbenchServices 
         .getAttributeNames(computedPropertySurfaceName)
         .map((attr) => ({ value: attr, label: attr }));
     if (timeType === SurfaceTimeType.Interval || timeType === SurfaceTimeType.TimePoint) {
-        propertySurfTimeOrIntervalOptions = propertySurfaceDirectory
-            .getTimeOrIntervalStrings(computedPropertySurfaceName, computedPropertySurfaceAttribute)
-            .map((interval) => ({
-                value: interval,
-                label:
-                    timeType === SurfaceTimeType.TimePoint
-                        ? isoStringToDateLabel(interval)
-                        : isoIntervalStringToDateLabel(interval),
-            }));
+        propertySurfTimeOrIntervalOptions = propertySurfaceDirectory.getTimeOrIntervalStrings().map((interval) => ({
+            value: interval,
+            label:
+                timeType === SurfaceTimeType.TimePoint
+                    ? isoStringToDateLabel(interval)
+                    : isoIntervalStringToDateLabel(interval),
+        }));
     }
 
     // Polygon
@@ -367,13 +350,13 @@ export function Settings({ settingsContext, workbenchSession, workbenchServices 
         [show3D, settingsContext]
     );
 
-    const wellHeadersQuery = useWellHeadersQuery(computedEnsembleIdent?.getCaseUuid());
+    const wellHeadersQuery = useDrilledWellboreHeadersQuery(computedEnsembleIdent?.getCaseUuid());
     let wellHeaderOptions: SelectOption[] = [];
 
     if (wellHeadersQuery.data) {
         wellHeaderOptions = wellHeadersQuery.data.map((header) => ({
-            label: header.unique_wellbore_identifier,
-            value: header.wellbore_uuid,
+            label: header.uniqueWellboreIdentifier,
+            value: header.wellboreUuid,
         }));
     }
 
@@ -491,7 +474,7 @@ export function Settings({ settingsContext, workbenchSession, workbenchServices 
             </CollapsibleGroup>
             <CollapsibleGroup expanded={true} title="Depth surface">
                 <QueryStateWrapper
-                    queryResult={meshSurfDirQuery}
+                    queryResult={meshSurfMetaQuery}
                     errorComponent={"Error loading surface directory"}
                     loadingComponent={<CircularProgress />}
                 >
@@ -535,7 +518,7 @@ export function Settings({ settingsContext, workbenchSession, workbenchServices 
                     </Label>
                     {usePropertySurface && (
                         <QueryStateWrapper
-                            queryResult={propertySurfDirQuery}
+                            queryResult={propertySurfMetaQuery}
                             errorComponent={"Error loading surface directory"}
                             loadingComponent={<CircularProgress />}
                         >
@@ -772,10 +755,7 @@ function fixupSurface(
         );
     }
     if (finalSurfaceName && finalSurfaceAttribute) {
-        const selectedTimeOrIntervals = surfaceDirectory.getTimeOrIntervalStrings(
-            finalSurfaceName,
-            finalSurfaceAttribute
-        );
+        const selectedTimeOrIntervals = surfaceDirectory.getTimeOrIntervalStrings();
         finalTimeOrInterval = fixupSyncedOrSelectedOrFirstValue(
             syncedSurface.timeOrInterval,
             selectedSurface.timeOrInterval,

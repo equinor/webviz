@@ -3,15 +3,27 @@ import logging
 from typing import List
 
 from fmu.sumo.explorer import TimeFilter, TimeType
+from fmu.sumo.explorer.objects import Case
 from fmu.sumo.explorer.objects.cube_collection import CubeCollection
 
-from ._helpers import SumoEnsemble
+from ._helpers import create_sumo_client, create_sumo_case_async
 from .seismic_types import SeismicCubeMeta, VdsHandle
 
 LOGGER = logging.getLogger(__name__)
 
 
-class SeismicAccess(SumoEnsemble):
+class SeismicAccess:
+    def __init__(self, case: Case, case_uuid: str, iteration_name: str):
+        self._case: Case = case
+        self._case_uuid: str = case_uuid
+        self._iteration_name: str = iteration_name
+
+    @classmethod
+    async def from_case_uuid_async(cls, access_token: str, case_uuid: str, iteration_name: str) -> "SeismicAccess":
+        sumo_client = create_sumo_client(access_token)
+        case: Case = await create_sumo_case_async(client=sumo_client, case_uuid=case_uuid, want_keepalive_pit=False)
+        return SeismicAccess(case=case, case_uuid=case_uuid, iteration_name=iteration_name)
+
     async def get_seismic_cube_meta_list_async(self) -> List[SeismicCubeMeta]:
         seismic_cube_collection: CubeCollection = self._case.cubes.filter(iteration=self._iteration_name, realization=0)
         seismic_cube_meta_list: List[SeismicCubeMeta] = []

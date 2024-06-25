@@ -1,11 +1,15 @@
 import React from "react";
 
 import { ImportState } from "@framework/Module";
-import { ModuleInstance, ModuleInstanceState } from "@framework/ModuleInstance";
+import {
+    ModuleInstance,
+    ModuleInstanceState,
+    ModuleInstanceTopic,
+    useModuleInstanceTopicValue,
+} from "@framework/ModuleInstance";
 import { StatusSource } from "@framework/ModuleInstanceStatusController";
 import { Workbench } from "@framework/Workbench";
 import { ErrorBoundary } from "@framework/internal/components/ErrorBoundary";
-import { useImportState } from "@framework/internal/hooks/moduleHooks";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { Settings as SettingsIcon } from "@mui/icons-material";
@@ -16,31 +20,15 @@ import { DebugProfiler } from "../../DebugProfiler";
 import { HydrateQueryClientAtom } from "../../HydrateQueryClientAtom";
 
 type ModuleSettingsProps = {
-    moduleInstance: ModuleInstance<any, any>;
+    moduleInstance: ModuleInstance<any, any, any, any>;
     activeModuleInstanceId: string;
     workbench: Workbench;
 };
 
 export const ModuleSettings: React.FC<ModuleSettingsProps> = (props) => {
-    const importState = useImportState(props.moduleInstance);
-    const [moduleInstanceState, setModuleInstanceState] = React.useState<ModuleInstanceState>(
-        ModuleInstanceState.INITIALIZING
-    );
+    const importState = useModuleInstanceTopicValue(props.moduleInstance, ModuleInstanceTopic.IMPORT_STATE);
+    const moduleInstanceState = useModuleInstanceTopicValue(props.moduleInstance, ModuleInstanceTopic.STATE);
     const atomStore = props.moduleInstance.getAtomStore();
-
-    React.useEffect(() => {
-        setModuleInstanceState(props.moduleInstance.getModuleInstanceState());
-
-        function handleModuleInstanceStateChange() {
-            setModuleInstanceState(props.moduleInstance.getModuleInstanceState());
-        }
-
-        const unsubscribeFunc = props.moduleInstance.subscribeToModuleInstanceStateChange(
-            handleModuleInstanceStateChange
-        );
-
-        return unsubscribeFunc;
-    }, [props.moduleInstance]);
 
     if (importState !== ImportState.Imported || !props.moduleInstance.isInitialized()) {
         return null;
@@ -52,7 +40,7 @@ export const ModuleSettings: React.FC<ModuleSettingsProps> = (props) => {
     ) {
         const text = moduleInstanceState === ModuleInstanceState.INITIALIZING ? "Initializing..." : "Resetting...";
         return (
-            <div className="h-full w-full flex flex-col justify-center items-center">
+            <div className="h-full w-full flex flex-col justify-center items-center m-2">
                 <CircularProgress />
                 <div className="mt-4">{text}</div>
             </div>
@@ -64,7 +52,7 @@ export const ModuleSettings: React.FC<ModuleSettingsProps> = (props) => {
         if (errorObject) {
             return (
                 <div
-                    className="text-red-600"
+                    className="text-red-600 m-2"
                     style={{
                         display: props.activeModuleInstanceId === props.moduleInstance.getId() ? "flex" : "none",
                     }}
@@ -95,8 +83,8 @@ export const ModuleSettings: React.FC<ModuleSettingsProps> = (props) => {
                         {props.moduleInstance.getTitle()}
                     </span>
                 </div>
-                <div className="flex flex-col gap-4 overflow-auto">
-                    <div className="p-2">
+                <div className="flex flex-col gap-4 overflow-auto flex-grow">
+                    <div className="p-2 flex-grow">
                         <DebugProfiler
                             id={`${props.moduleInstance.getId()}-settings`}
                             source={StatusSource.Settings}

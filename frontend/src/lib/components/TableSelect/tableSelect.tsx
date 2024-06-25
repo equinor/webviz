@@ -28,6 +28,7 @@ export type TableSelectProps = {
     multiple?: boolean;
     width?: string | number;
     columnSizesInPercent?: number[];
+    debounceTimeMs?: number;
 } & BaseComponentProps;
 
 const defaultProps = {
@@ -64,6 +65,7 @@ export const TableSelect = withDefaults<TableSelectProps>()(defaultProps, (props
     const [lastShiftIndex, setLastShiftIndex] = React.useState<number>(-1);
     const [currentIndex, setCurrentIndex] = React.useState<number>(0);
     const [prevFilteredOptions, setPrevFilteredOptions] = React.useState<TableSelectOption[]>([]);
+    const [prevValue, setPrevValue] = React.useState<string[] | undefined>(props.value);
 
     if (!isEqual(prevHeaderLabels, props.headerLabels)) {
         setPrevHeaderLabels(props.headerLabels);
@@ -77,6 +79,8 @@ export const TableSelect = withDefaults<TableSelectProps>()(defaultProps, (props
     const columnSizesPerc = props.columnSizesInPercent ?? props.headerLabels.map(() => 100 / props.headerLabels.length);
 
     const ref = React.useRef<HTMLDivElement>(null);
+    const debounceTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+
     const noOptionsText = props.placeholder ?? "No options";
     const filteredOptions = React.useMemo(
         function filterOptions() {
@@ -91,6 +95,18 @@ export const TableSelect = withDefaults<TableSelectProps>()(defaultProps, (props
         },
         [props.options, filters, props.filter]
     );
+
+    if (!isEqual(prevValue, props.value)) {
+        setPrevValue(props.value);
+        setSelected(props.value ?? []);
+        if (props.value?.length === 1) {
+            const newIndex = filteredOptions.findIndex((option) => option.id === props.value[0]);
+            if (newIndex !== -1) {
+                setCurrentIndex(newIndex);
+                setStartIndex(newIndex);
+            }
+        }
+    }
 
     if (!checkForEqualityWithoutAdornment(filteredOptions, prevFilteredOptions)) {
         let newCurrentIndex = 0;
@@ -110,6 +126,28 @@ export const TableSelect = withDefaults<TableSelectProps>()(defaultProps, (props
         setCurrentIndex(newCurrentIndex);
         setStartIndex(newStartIndex);
     }
+
+    const handleOnChange = React.useCallback(
+        function handleOnChange(values: string[]) {
+            if (!onChange) {
+                return;
+            }
+
+            if (debounceTimerRef.current) {
+                clearTimeout(debounceTimerRef.current);
+            }
+
+            if (!props.debounceTimeMs) {
+                onChange(values);
+                return;
+            }
+
+            debounceTimerRef.current = setTimeout(() => {
+                onChange(values);
+            }, props.debounceTimeMs);
+        },
+        [onChange, props.debounceTimeMs]
+    );
 
     const toggleValue = React.useCallback(
         function toggleValue(option: TableSelectOption, index: number) {
@@ -140,18 +178,18 @@ export const TableSelect = withDefaults<TableSelectProps>()(defaultProps, (props
             }
             setCurrentIndex(index);
             setSelected(newSelected);
-            if (onChange) {
-                if (props.multiple) {
-                    onChange(newSelected);
-                } else if (!option.disabled) {
-                    onChange([option.id]);
-                } else {
-                    onChange([]);
-                }
-            }
+            handleOnChange(newSelected);
         },
-        [props.multiple, props.options, selected, onChange, keysPressed, lastShiftIndex]
+        [props.multiple, props.options, selected, keysPressed, lastShiftIndex, handleOnChange]
     );
+
+    React.useEffect(function handleMount() {
+        return function handleUnmount() {
+            if (debounceTimerRef.current) {
+                clearTimeout(debounceTimerRef.current);
+            }
+        };
+    }, []);
 
     React.useEffect(
         function handleKeyActions() {
@@ -212,19 +250,10 @@ export const TableSelect = withDefaults<TableSelectProps>()(defaultProps, (props
         [currentIndex, selected, filteredOptions, props.size, hasFocus, startIndex, toggleValue]
     );
 
-    React.useLayoutEffect(
-        function handleInitialSelection() {
-            if (props.value) {
-                setSelected(props.value);
-            }
-        },
-        [props.value]
-    );
-
     function handleFilterChange(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>, index: number) {
         setFilters((prev) => {
             const newFilters = [...prev];
-            prev[index] = e.target.value;
+            newFilters[index] = e.target.value;
             return newFilters;
         });
         if (ref.current) {

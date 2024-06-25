@@ -11,7 +11,7 @@ import { withDefaults } from "../_component-utils/components";
 
 export type SelectOption = {
     value: string;
-    icon?: React.ReactNode;
+    adornment?: React.ReactNode;
     label: string;
     disabled?: boolean;
 };
@@ -27,6 +27,7 @@ export type SelectProps = {
     size?: number;
     multiple?: boolean;
     width?: string | number;
+    debounceTimeMs?: number;
 } & BaseComponentProps;
 
 const defaultProps = {
@@ -69,6 +70,8 @@ export const Select = withDefaults<SelectProps>()(defaultProps, (props) => {
     const [keysPressed, setKeysPressed] = React.useState<Key[]>([]);
 
     const ref = React.useRef<HTMLDivElement>(null);
+    const debounceTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+
     const noOptionsText = props.placeholder ?? "No options";
 
     if (!isEqual(props.options, options)) {
@@ -81,6 +84,36 @@ export const Select = withDefaults<SelectProps>()(defaultProps, (props) => {
         setSelectedOptionValues([...props.value]);
         setPrevPropsValue([...props.value]);
     }
+
+    const handleOnChange = React.useCallback(
+        function handleOnChange(values: string[]) {
+            if (!onChange) {
+                return;
+            }
+
+            if (debounceTimerRef.current) {
+                clearTimeout(debounceTimerRef.current);
+            }
+
+            if (!props.debounceTimeMs) {
+                onChange(values);
+                return;
+            }
+
+            debounceTimerRef.current = setTimeout(() => {
+                onChange(values);
+            }, props.debounceTimeMs);
+        },
+        [onChange, props.debounceTimeMs]
+    );
+
+    React.useEffect(function handleMount() {
+        return function handleUnmount() {
+            if (debounceTimerRef.current) {
+                clearTimeout(debounceTimerRef.current);
+            }
+        };
+    }, []);
 
     React.useEffect(
         function addKeyboardEventListeners() {
@@ -97,9 +130,7 @@ export const Select = withDefaults<SelectProps>()(defaultProps, (props) => {
                     const newSelectedOptions = [filteredOptions[index].value];
                     setSelectedOptionValues(newSelectedOptions);
                     setSelectionAnchor(null);
-                    if (onChange) {
-                        onChange(newSelectedOptions);
-                    }
+                    handleOnChange(newSelectedOptions);
                 }
 
                 if (!(!localKeysPressed.includes("Control") || localKeysPressed.includes("Shift"))) {
@@ -120,9 +151,7 @@ export const Select = withDefaults<SelectProps>()(defaultProps, (props) => {
                     setSelectionAnchor(index);
                 }
 
-                if (onChange) {
-                    onChange(newSelectedOptions);
-                }
+                handleOnChange(newSelectedOptions);
 
                 setSelectedOptionValues(newSelectedOptions);
             }
@@ -136,9 +165,7 @@ export const Select = withDefaults<SelectProps>()(defaultProps, (props) => {
                     const newSelectedOptions = [filteredOptions[index].value];
                     setSelectedOptionValues(newSelectedOptions);
                     setSelectionAnchor(null);
-                    if (onChange) {
-                        onChange(newSelectedOptions);
-                    }
+                    handleOnChange(newSelectedOptions);
                 }
 
                 setSelectionAnchor(index);
@@ -150,10 +177,7 @@ export const Select = withDefaults<SelectProps>()(defaultProps, (props) => {
                     newSelectedOptions = [...selectedOptionValues, filteredOptions[index].value];
                 }
                 setSelectedOptionValues(newSelectedOptions);
-
-                if (onChange) {
-                    onChange(newSelectedOptions);
-                }
+                handleOnChange(newSelectedOptions);
             }
 
             function handleFocus() {
@@ -256,7 +280,7 @@ export const Select = withDefaults<SelectProps>()(defaultProps, (props) => {
             props.size,
             keysPressed,
             props.multiple,
-            onChange,
+            handleOnChange,
             selectionAnchor,
             selectedOptionValues,
             reportedVirtualizationStartIndex,
@@ -272,9 +296,7 @@ export const Select = withDefaults<SelectProps>()(defaultProps, (props) => {
 
         if (!props.multiple) {
             setSelectedOptionValues([option.value]);
-            if (onChange) {
-                onChange([option.value]);
-            }
+            handleOnChange([option.value]);
             return;
         }
 
@@ -295,9 +317,7 @@ export const Select = withDefaults<SelectProps>()(defaultProps, (props) => {
             setSelectionAnchor(index);
         }
 
-        if (onChange) {
-            onChange(newSelectedOptions);
-        }
+        handleOnChange(newSelectedOptions);
 
         setSelectedOptionValues(newSelectedOptions);
     }
@@ -399,10 +419,10 @@ export const Select = withDefaults<SelectProps>()(defaultProps, (props) => {
                                     onClick={() => handleOptionClick(option, index)}
                                     style={{ height: 24 }}
                                 >
-                                    {option.icon}
+                                    {option.adornment}
                                     <span
                                         title={option.label}
-                                        className="min-w-0 text-ellipsis overflow-hidden whitespace-nowrap"
+                                        className="min-w-0 text-ellipsis overflow-hidden whitespace-nowrap flex-grow"
                                     >
                                         {option.label}
                                     </span>

@@ -20,7 +20,7 @@ export function useElementBoundingRect(ref: React.RefObject<HTMLElement | SVGSVG
 
                 const newRect = ref.current.getBoundingClientRect();
 
-                if (isHidden && domRectsAreEqual(currentRect, newRect)) {
+                if (domRectsAreEqual(currentRect, newRect)) {
                     isHidden = false;
                     return;
                 }
@@ -44,8 +44,8 @@ export function useElementBoundingRect(ref: React.RefObject<HTMLElement | SVGSVG
 
         const resizeObserver = new ResizeObserver(handleResizeAndScroll);
         const mutationObserver = new MutationObserver(handleMutations);
-        window.addEventListener("resize", handleResizeAndScroll);
-        window.addEventListener("scroll", handleResizeAndScroll);
+        window.addEventListener("resize", handleResizeAndScroll, true);
+        window.addEventListener("scroll", handleResizeAndScroll, true);
 
         if (ref.current) {
             handleResizeAndScroll();
@@ -61,8 +61,8 @@ export function useElementBoundingRect(ref: React.RefObject<HTMLElement | SVGSVG
         return () => {
             resizeObserver.disconnect();
             mutationObserver.disconnect();
-            window.removeEventListener("resize", handleResizeAndScroll);
-            window.removeEventListener("scroll", handleResizeAndScroll);
+            window.removeEventListener("resize", handleResizeAndScroll, true);
+            window.removeEventListener("scroll", handleResizeAndScroll, true);
         };
     }, [ref]);
 

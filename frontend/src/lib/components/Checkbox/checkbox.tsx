@@ -9,7 +9,7 @@ import { BaseComponent, BaseComponentProps } from "../BaseComponent";
 export type CheckboxProps = {
     id?: string;
     name?: string;
-    label?: string;
+    label?: React.ReactNode;
     checked?: boolean;
     indeterminate?: boolean;
     onChange?: (event: React.ChangeEvent<HTMLInputElement>, checked: boolean) => void;
@@ -27,10 +27,12 @@ export const Checkbox: React.FC<CheckboxProps> = (props) => {
 
     const handleChange = React.useCallback(
         (event: React.ChangeEvent<HTMLInputElement>) => {
-            setChecked(event.target.checked);
+            if (props.checked === undefined) {
+                setChecked(event.target.checked);
+            }
             onChange && onChange(event, event.target.checked);
         },
-        [setChecked, onChange]
+        [setChecked, onChange, props.checked]
     );
 
     return (

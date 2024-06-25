@@ -5,9 +5,10 @@ from typing import List, Optional
 import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
+from fmu.sumo.explorer.objects import Case
 
 from webviz_pkg.core_utils.perf_timer import PerfTimer
-from ._helpers import SumoEnsemble
+from ._helpers import create_sumo_client, create_sumo_case_async
 from .parameter_types import (
     EnsembleParameter,
     EnsembleParameters,
@@ -19,7 +20,17 @@ from .parameter_types import (
 LOGGER = logging.getLogger(__name__)
 
 
-class ParameterAccess(SumoEnsemble):
+class ParameterAccess:
+    def __init__(self, case: Case, iteration_name: str):
+        self._case: Case = case
+        self._iteration_name: str = iteration_name
+
+    @classmethod
+    async def from_case_uuid_async(cls, access_token: str, case_uuid: str, iteration_name: str) -> "ParameterAccess":
+        sumo_client = create_sumo_client(access_token)
+        case: Case = await create_sumo_case_async(client=sumo_client, case_uuid=case_uuid, want_keepalive_pit=False)
+        return ParameterAccess(case=case, iteration_name=iteration_name)
+
     async def get_parameters_and_sensitivities(self) -> EnsembleParameters:
         """Retrieve parameters for an ensemble"""
         timer = PerfTimer()

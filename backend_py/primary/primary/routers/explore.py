@@ -4,9 +4,9 @@ from fastapi import APIRouter, Depends, Path, Query
 from pydantic import BaseModel
 
 from primary.auth.auth_helper import AuthHelper
-from primary.services.sumo_access.sumo_explore import SumoExplore
+from primary.services.sumo_access.case_inspector import CaseInspector
+from primary.services.sumo_access.sumo_inspector import SumoInspector
 from primary.services.utils.authenticated_user import AuthenticatedUser
-from primary.services.sumo_access._helpers import SumoEnsemble
 
 router = APIRouter()
 
@@ -42,8 +42,8 @@ async def get_fields(
     """
     Get list of fields
     """
-    sumo_discovery = SumoExplore(authenticated_user.get_sumo_access_token())
-    field_ident_arr = await sumo_discovery.get_fields()
+    sumo_inspector = SumoInspector(authenticated_user.get_sumo_access_token())
+    field_ident_arr = await sumo_inspector.get_fields_async()
     ret_arr = [FieldInfo(field_identifier=field_ident.identifier) for field_ident in field_ident_arr]
 
     return ret_arr
@@ -55,8 +55,8 @@ async def get_cases(
     field_identifier: str = Query(description="Field identifier"),
 ) -> List[CaseInfo]:
     """Get list of cases for specified field"""
-    sumo_discovery = SumoExplore(authenticated_user.get_sumo_access_token())
-    case_info_arr = await sumo_discovery.get_cases(field_identifier=field_identifier)
+    sumo_inspector = SumoInspector(authenticated_user.get_sumo_access_token())
+    case_info_arr = await sumo_inspector.get_cases_async(field_identifier=field_identifier)
 
     ret_arr: List[CaseInfo] = []
 
@@ -71,8 +71,8 @@ async def get_ensembles(
     case_uuid: str = Path(description="Sumo case uuid"),
 ) -> List[EnsembleInfo]:
     """Get list of ensembles for a case"""
-    sumo_discovery = SumoExplore(authenticated_user.get_sumo_access_token())
-    iteration_info_arr = await sumo_discovery.get_iterations(case_uuid=case_uuid)
+    case_inspector = CaseInspector.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid)
+    iteration_info_arr = await case_inspector.get_iterations_async()
 
     print(iteration_info_arr)
 
@@ -87,10 +87,10 @@ async def get_ensemble_details(
 ) -> EnsembleDetails:
     """Get more detailed information for an ensemble"""
 
-    iteration = await SumoEnsemble.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
-    case_name = iteration.get_case_name()
-    realizations = iteration.get_realizations()
-    field_identifiers = await iteration.get_field_identifiers()
+    case_inspector = CaseInspector.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid)
+    case_name = await case_inspector.get_case_name_async()
+    realizations = await case_inspector.get_realizations_in_iteration_async(ensemble_name)
+    field_identifiers = await case_inspector.get_field_identifiers_async()
 
     if len(field_identifiers) != 1:
         raise NotImplementedError("Multiple field identifiers not supported")
